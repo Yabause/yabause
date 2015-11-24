@@ -851,7 +851,7 @@ void FASTCALL SmpcWriteLong(USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
 int SmpcSaveState(FILE *fp)
 {
    int offset;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    offset = StateWriteHeader(fp, "SMPC", 3);
 
@@ -878,7 +878,7 @@ int SmpcSaveState(FILE *fp)
 
 int SmpcLoadState(FILE *fp, int version, int size)
 {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
    int internalsizev2 = sizeof(SmpcInternal) - 8;
 
    // Read registers

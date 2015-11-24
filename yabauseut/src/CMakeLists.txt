@@ -1,4 +1,4 @@
-project(YabauseUT)
+project(YabauseUT C)
 
 enable_language(ASM)
 set(YabauseUT_SOURCES
