@@ -39,13 +39,15 @@ typedef struct
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
-   const char *netlinksetting;
+   const char *modemip;
+	const char *modemport;
    int videoformattype;
    int frameskip;
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
    int usethreads;
    int osdcoretype;
+   int skip_load;//skip loading in YabauseInit so tests can be run without a bios
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0

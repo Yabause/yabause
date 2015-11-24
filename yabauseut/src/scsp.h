@@ -23,6 +23,7 @@
 void scsp_test();
 void scsp_timing_test();
 void scsp_misc_test();
+void scsp_dsp_test();
 
 void scu_interrupt_test(void);
 void scsp_timer_a_test();

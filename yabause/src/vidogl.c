@@ -199,10 +199,11 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	u8 END = ((cmd->CMDPMOD & 0x80) != 0);
 	u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
 	u32 alpha = 0xFF;
-	VDP1LOG("Making new sprite %08X\n", charAddr);
-
 	u32 color = 0x00;
 	int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+
+	VDP1LOG("Making new sprite %08X\n", charAddr);
+
 	Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 	alpha = 0xF8;
 	if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
@@ -2470,11 +2471,8 @@ static void Vdp2DrawPlane(vdp2draw_struct *info, YglTexture *texture)
 static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2498,7 +2496,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 
 
-	i = 0;
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
 		Vdp2 * regs;
@@ -2574,11 +2571,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2602,7 +2596,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	//info->coordincx = 1.0f;
 
-	i = 0;
 	for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh){
 		int targetv = 0;
 		sx = info->x;
@@ -2708,7 +2701,7 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-FASTCALL DoColorOffset(void *info, u32 pixel)
+static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 {
     return pixel;
 }
@@ -3571,6 +3564,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    u16 color2;
    int i;
    float col[4*4];
+   int isSquare;
    
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
@@ -3600,7 +3594,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
-   int isSquare = 1;
+   isSquare = 1;
 
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
@@ -3615,13 +3609,16 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    }
 
    if (isSquare){
+	   float minx;
+	   float miny;
+	   int lt_index;
 	   
 	   sprite.dst = 0;
 
 	   // find upper left opsition
-	   float minx = 65535.0f;
-	   float miny = 65535.0f;
-	   int lt_index = -1;
+	   minx = 65535.0f;
+	   miny = 65535.0f;
+	   lt_index = -1;
 	   for( i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3632,6 +3629,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
 	   for (i = 0; i < 4; i++){
 		   if (i != lt_index){
+			   float nx;
+			   float ny;
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
@@ -3641,8 +3640,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3770,6 +3769,7 @@ void VIDOGLVdp1PolygonDraw(void)
    short CMDYB;
    short CMDYC;
    short CMDYD;
+   int isSquare;
 
    vdp1cmd_struct cmd;
 
@@ -3800,7 +3800,7 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
-   int isSquare = 1;
+   isSquare = 1;
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
 	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
@@ -3813,13 +3813,13 @@ void VIDOGLVdp1PolygonDraw(void)
 	   }
    }
    if (isSquare){
-
-	   sprite.dst = 0;
-
 	   // find upper left opsition
 	   float minx = 65535.0f;
 	   float miny = 65535.0f;
 	   int lt_index = -1;
+
+	   sprite.dst = 0;
+
 	   for (i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3833,14 +3833,16 @@ void VIDOGLVdp1PolygonDraw(void)
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+			   float nx;
+			   float ny;
 
 			   // normalize
 			   float len = fabsf(sqrtf(dx*dx + dy*dy));
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3986,6 +3988,14 @@ void VIDOGLVdp1PolygonDraw(void)
 
 
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
+	float dx;
+	float dy;
+	float len;
+	float nx;
+	float ny;
+	float ex;
+	float ey;
+	float offset;
 
 	if (v1[0] == v2[0] && v1[1] == v2[1]){
 		outv[0] = v1[0];
@@ -4000,11 +4010,11 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 	}
 
 	// vectorize;
-	float dx = v2[0] - v1[0];
-	float dy = v2[1] - v1[1];
+	dx = v2[0] - v1[0];
+	dy = v2[1] - v1[1];
 
 	// normalize
-	float len = fabs( sqrtf((dx*dx) + (dy*dy)) );
+	len = fabs( sqrtf((dx*dx) + (dy*dy)) );
 	if (len < EPSILON ){
 		// fail;
 		outv[0] = v1[0];
@@ -4018,19 +4028,19 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 		return;
 	}
 
-	float nx = dx / len;
-	float ny = dy / len;
+	nx = dx / len;
+	ny = dy / len;
 
 	// turn
 	dx = ny  * 0.5f;
 	dy = -nx * 0.5f;
 
 	// extend
-	float ex = nx * 0.5f;
-	float ey = ny * 0.5f;
+	ex = nx * 0.5f;
+	ey = ny * 0.5f;
 
 	// offset
-	float offset = 0.5f;
+	offset = 0.5f;
 
 	// triangle
 	outv[0] = v1[0] - ex - dx + offset;
@@ -4452,7 +4462,7 @@ void VIDOGLVdp2DrawEnd(void)
 static void Vdp2DrawBackScreen(void)
 {
    u32 scrAddr;
-   int dot, y;
+   int dot;
   
    static unsigned char lineColors[512 * 3];
    static int line[512*4];
@@ -4461,7 +4471,6 @@ static void Vdp2DrawBackScreen(void)
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x7) << 16) | Vdp2Regs->BKTAL) * 2;
    else
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x3) << 16) | Vdp2Regs->BKTAL) * 2;
-
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
    dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -4473,6 +4482,8 @@ static void Vdp2DrawBackScreen(void)
 #else
    if (Vdp2Regs->BKTAU & 0x8000)
    {
+		int y;
+
       for(y = 0; y < vdp2height; y++)
       {
          dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -4540,6 +4551,9 @@ static void Vdp2DrawLineColorScreen(void)
   if( line_pixel_data == NULL ){
       return;
   }
+
+  if (!line_pixel_data)
+	  return;
 
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
