@@ -30,4 +30,6 @@ extern VideoInterface_struct VIDSoft;
 
 void VIDSoftVdp2DrawScreen(int screen);
 
+void VIDSoftSetBilinear(int b);
+
 #endif

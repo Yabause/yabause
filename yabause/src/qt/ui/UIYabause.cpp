@@ -31,6 +31,7 @@
 #include "UIDebugM68K.h"
 #include "UIDebugSCUDSP.h"
 #include "UIDebugSCSP.h"
+#include "UIDebugSCSPDSP.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
@@ -108,13 +109,20 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setWidget( teLog );
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
+	mCanLog = true;
+	oldMouseX = oldMouseY = 0;
+
+#ifndef SH2_TRACE
+	aTraceLogging->setVisible(false);
+#endif
+
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
 	// create hide mouse timer
 	hideMouseTimer = new QTimer();
 	// create mouse cursor timer
 	mouseCursorTimer = new QTimer();
-	// connectionsdd
+	// connections
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( mYabauseThread, SIGNAL( requestVolumeChange( int ) ), this, SLOT( on_sVolume_valueChanged( int ) ) );
@@ -157,6 +165,13 @@ UIYabause::UIYabause( QWidget* parent )
 	mouseSensitivity = vs->value( "Input/GunMouseSensitivity", 100 ).toInt();
 	showMenuBarHeight = menubar->height();
 	translations = QtYabause::getTranslationList();
+	
+	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
+}
+
+UIYabause::~UIYabause()
+{
+	mCanLog = false;
 }
 
 void UIYabause::showEvent( QShowEvent* e )
@@ -282,6 +297,14 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 	}
 }
 
+void UIYabause::resizeEvent( QResizeEvent* event )
+{
+	if (event->oldSize().width() != event->size().width())
+		fixAspectRatio(event->size().width());
+
+	QMainWindow::resizeEvent( event );
+}
+
 void UIYabause::swapBuffers()
 { 
 	mYabauseGL->swapBuffers(); 
@@ -290,6 +313,12 @@ void UIYabause::swapBuffers()
 
 void UIYabause::appendLog( const char* s )
 {
+	if (! mCanLog)
+	{
+		qWarning( s );
+		return;
+	}
+
 	teLog->moveCursor( QTextCursor::End );
 	teLog->append( s );
 
@@ -322,8 +351,7 @@ void UIYabause::sizeRequested( const QSize& s )
 	int width, height;
 	if (s.isNull())
 	{
-		width=640;
-		height=480;
+		return;
 	}
 	else
 	{
@@ -340,7 +368,44 @@ void UIYabause::sizeRequested( const QSize& s )
 		height += menubar->height();
 	if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
 		height += toolBar->height();
+
 	resize( width, height ); 
+}
+
+void UIYabause::fixAspectRatio( int width )
+{
+	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio").toInt();
+
+	switch( aspectRatio )
+	{
+		case 0:
+			setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
+			setMinimumSize( 0,0 );
+			break;
+		case 1:
+		case 2:
+		{
+			int heightOffset = toolBar->height()+menubar->height();
+			int height;
+
+			if ( aspectRatio == 1 )
+				height = 3 * ((float) width / 4);
+			else
+				height = 9 * ((float) width / 16);
+
+			mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
+
+			// Compensate for menubar and toolbar
+			VolatileSettings* vs = QtYabause::volatileSettings();
+			if (vs->value( "View/Menubar" ).toInt() != BD_ALWAYSHIDE)
+				height += menubar->height();
+			if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
+				height += toolBar->height();
+
+			setFixedHeight( height );
+			break;
+		}
+	}
 }
 
 void UIYabause::getSupportedResolutions()
@@ -477,8 +542,12 @@ void UIYabause::fullscreenRequested( bool f )
 #endif
 		VolatileSettings* vs = QtYabause::volatileSettings();
 
+		setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
+		setMinimumSize( 0,0 );
+
 		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
 						f, vs->value("Video/VideoFormat").toInt());
+
 		showFullScreen();
 
 		if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS )
@@ -636,6 +705,7 @@ void UIYabause::on_aFileSettings_triggered()
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
 			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
 			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
+		fixAspectRatio( rect().width() );
 		
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
@@ -764,12 +834,22 @@ void UIYabause::on_aFileScreenshot_triggered()
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
 	// request a file to save to to user
-	const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+	QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+
+	// if the user didn't provide a filename extension, we force it to png
+	QFileInfo qfi( s );
+	if ( qfi.suffix().isEmpty() )
+		s += ".png";
 	
 	// write image if ok
 	if ( !s.isEmpty() )
-		if ( !screenshot.save( s ) )
-			CommonDialogs::information( QtYabause::translate( "An error occur while writing the screenshot." ) );
+	{
+		QImageWriter iw( s );
+		if ( !iw.write( screenshot ))
+		{
+			CommonDialogs::information( QtYabause::translate( "An error occur while writing the screenshot: " + iw.errorString()) );
+		}
+	}
 }
 
 void UIYabause::on_aFileQuit_triggered()
@@ -902,6 +982,13 @@ void UIYabause::breakpointHandlerSCUDSP()
 	UIDebugSCUDSP( mYabauseThread, this ).exec();
 }
 
+void UIYabause::breakpointHandlerSCSPDSP()
+{
+	YabauseLocker locker( mYabauseThread );
+	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSCSPDSP( mYabauseThread, this ).exec();
+}
+
 void UIYabause::on_aViewDebugMSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
@@ -944,14 +1031,26 @@ void UIYabause::on_aViewDebugSCSP_triggered()
 	UIDebugSCSP( this ).exec();
 }
 
+void UIYabause::on_aViewDebugSCSPDSP_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSCSPDSP( mYabauseThread, this ).exec();
+}
+
 void UIYabause::on_aViewDebugMemoryEditor_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	UIMemoryEditor( mYabauseThread, this ).exec();
 }
 
-void UIYabause::on_aHelpEmuCompatibility_triggered()
-{ QDesktopServices::openUrl( QUrl( aHelpEmuCompatibility->statusTip() ) ); }
+void UIYabause::on_aTraceLogging_triggered( bool toggled )
+{
+	SetInsTracingToggle(toggled? 1 : 0);
+	return;
+}
+
+void UIYabause::on_aHelpCompatibilityList_triggered()
+{ QDesktopServices::openUrl( QUrl( aHelpCompatibilityList->statusTip() ) ); }
 
 void UIYabause::on_aHelpAbout_triggered()
 {
@@ -1034,4 +1133,3 @@ void UIYabause::toggleEmulateMouse( bool enable )
 {
 	emulateMouse = enable;
 }
-

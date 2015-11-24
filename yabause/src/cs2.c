@@ -553,7 +553,7 @@ void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *netlinksetting) {
+int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *modemip, const char *modemport) {
    int ret;
 
    if ((Cs2Area = (Cs2 *) malloc(sizeof(Cs2))) == NULL)
@@ -572,12 +572,12 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
    // If Modem is connected, set the registers
    if(Cs2Area->carttype == CART_NETLINK)
    {
-      if ((ret = NetlinkInit(netlinksetting)) != 0)
+      if ((ret = NetlinkInit(modemip, modemport)) != 0)
          return ret;
    }
    else if (Cs2Area->carttype == CART_JAPMODEM)
    {
-      if ((ret = JapModemInit(netlinksetting)) != 0)
+      if ((ret = JapModemInit(modemip, modemport)) != 0)
          return ret;
    }
 
@@ -1581,7 +1581,7 @@ void Cs2SeekDisc(void) {
      if (Cs2Area->reg.CR2 >> 8)
      {
         // Seek by index
-		 Cs2Area->status = CDB_STAT_PAUSE;
+        Cs2Area->status = CDB_STAT_PAUSE;
         Cs2SetupDefaultPlayStats((Cs2Area->reg.CR2 >> 8), 1);
         Cs2Area->index = Cs2Area->reg.CR2 & 0xFF;
      }
@@ -2728,7 +2728,7 @@ void Cs2GetMPEGRom(void) {
      fseek(mpgfp, readoffset * Cs2Area->getsectsize, SEEK_SET);
      if ((mpgpartition = Cs2GetPartition(Cs2Area->outconmpegrom)) != NULL && !Cs2Area->isbufferfull)
      {
-        IOCheck_struct check;
+        IOCheck_struct check = { 0, 0 };
         mpgpartition->size = 0;
 
         for (i = 0; i < readsize; i++)
@@ -3532,22 +3532,26 @@ u8 Cs2GetIP(int autoregion) {
          cdip->firstprogsize = (buf[0xF4] << 24) | (buf[0xF5] << 16) |
                                (buf[0xF6] << 8) | buf[0xF7];
 
-		 if (cdip->msh2stack == 0 ){
-			 cdip->msh2stack = 0x6002000;
-		 }
+         if (cdip->msh2stack == 0 )
+         {
+            cdip->msh2stack = 0x6002000;
+         }
 
-		 // for Panzer Dragoon Zwei. This operation is not written in the document. 
-		 if (cdip->msh2stack & 0x80000000){
-			 cdip->msh2stack = 0x06000000 + (cdip->msh2stack & 0x0000FFFF );
-		 }
-		   
-		 if (cdip->ssh2stack == 0 ) {
-			 cdip->ssh2stack = 0x6001000;
-		 }
+         // for Panzer Dragoon Zwei. This operation is not written in the document. 
+         if (cdip->msh2stack & 0x80000000)
+         {
+            cdip->msh2stack = 0x06000000 + (cdip->msh2stack & 0x0000FFFF );
+         }
 
-		 if (cdip->ssh2stack & 0x80000000){
-			 cdip->ssh2stack = 0x06000000 + (cdip->ssh2stack & 0x0000FFFF);
-		 }
+         if (cdip->ssh2stack == 0 )
+         {
+            cdip->ssh2stack = 0x6001000;
+         }
+
+         if (cdip->ssh2stack & 0x80000000)
+         {
+            cdip->ssh2stack = 0x06000000 + (cdip->ssh2stack & 0x0000FFFF);
+         }
 #endif
 
          if (autoregion)
@@ -3608,7 +3612,7 @@ u8 Cs2GetRegionID(void)
 
 int Cs2SaveState(FILE * fp) {
    int offset, i;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 
@@ -3706,7 +3710,7 @@ int Cs2SaveState(FILE * fp) {
 
 int Cs2LoadState(FILE * fp, int version, int size) {
    int i, i2;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 

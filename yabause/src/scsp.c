@@ -97,6 +97,7 @@
 #include "scu.h"
 #include "yabause.h"
 #include "scsp.h"
+#include "scspdsp.h"
 
 #if 0
 #include "windows/aviout.h"
@@ -2631,6 +2632,49 @@ scsp_w_w (u32 a, u16 d)
     {
 
     }
+  else if (a >= 0x700 && a < 0x780)
+  {
+     u32 address = (a - 0x700) / 2;
+     scsp_dsp.coef[address] = d & 0xfff8;//lower 3 bits seem to be discarded
+  }
+  else if (a >= 0x780 && a < 0x7A0)
+  {
+     u32 address = (a - 0x780) / 2;
+     scsp_dsp.madrs[address] = d;
+  }
+  else if (a >= 0x7A0 && a < 0x7C0)
+  {
+     //madrs mirror
+     u32 address = (a - 0x7A0) / 2;
+     scsp_dsp.madrs[address] = d;
+  }
+  else if (a >= 0x800 && a < 0xC00)
+  {
+     u32 address = (a - 0x800) / 8;
+     u64 current_val = scsp_dsp.mpro[address];
+
+     switch (a & 0xf)
+     {
+     case 0:
+     case 8:
+        scsp_dsp.mpro[address] = (current_val & 0x0000ffffffffffff) | (u64)d << (u64)48;
+        break;
+     case 2:
+     case 0xa:
+        scsp_dsp.mpro[address] = (current_val & 0xffff0000ffffffff) | (u64)d << (u64)32;
+        break;
+     case 4:
+     case 0xc:
+        scsp_dsp.mpro[address] = (current_val  & 0xffffffff0000ffff) | (u64)d << (u64)16;
+        break;
+     case 6:
+     case 0xe:
+        scsp_dsp.mpro[address] = (current_val & 0xffffffffffff0000) | d;
+        break;
+     default:
+        break;
+     }
+  }
   else if (a < 0xee4)
     {
       a &= 0x3ff;
@@ -2737,6 +2781,48 @@ scsp_r_w (u32 a)
     {
 
     }
+  else if (a >= 0x700 && a < 0x780)
+  {
+     u32 address = (a - 0x700) / 2;
+     return scsp_dsp.coef[address];
+  }
+  else if (a >= 0x780 && a < 0x7A0)
+  {
+     u32 address = (a - 0x780) / 2;
+     return scsp_dsp.madrs[address];
+  }
+  else if (a >= 0x7A0 && a < 0x7C0)
+  {
+     //madrs mirror
+     u32 address = (a - 0x7A0) / 2;
+     return scsp_dsp.madrs[address];
+  }
+  else if (a >= 0x800 && a < 0xC00)
+  {
+     u32 address = (a - 0x800) / 8;
+
+     switch (a & 0xf)
+     {
+     case 0:
+     case 8:
+        return (scsp_dsp.mpro[address] >> (u64)48) & 0xffff;
+        break;
+     case 2:
+     case 0xa:
+        return (scsp_dsp.mpro[address] >> (u64)32) & 0xffff;
+        break;
+     case 4:
+     case 0xc:
+        return (scsp_dsp.mpro[address] >> (u64)16) & 0xffff;
+        break;
+     case 6:
+     case 0xe:
+        return scsp_dsp.mpro[address] & 0xffff;
+        break;
+     default:
+        break;
+     }
+  }
   else if (a < 0xee4)
     {
 
@@ -3859,7 +3945,7 @@ SoundSaveState (FILE *fp)
   u32 temp;
   int offset;
   u8 nextphase;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   offset = StateWriteHeader (fp, "SCSP", 2);
 
@@ -3978,7 +4064,7 @@ SoundLoadState (FILE *fp, int version, int size)
   int i, i2;
   u32 temp;
   u8 nextphase;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   // Read 68k registers first
   yread (&check, (void *)&IsM68KRunning, 1, 1, fp);
@@ -4380,7 +4466,7 @@ ScspSlotDebugSaveRegisters (u8 slotnum, const char *filename)
 {
   FILE *fp;
   int i;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   if ((fp = fopen (filename, "wb")) == NULL)
     return -1;
@@ -4401,8 +4487,10 @@ ScspSlotDebugSaveRegisters (u8 slotnum, const char *filename)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32
-ScspSlotDebugAudio (slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
+static slot_t debugslot;
+
+u32
+ScspSlotDebugAudio (u32 *workbuf, s16 *buf, u32 len)
 {
   u32 *bufL, *bufR;
 
@@ -4411,14 +4499,14 @@ ScspSlotDebugAudio (slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
   scsp_bufL = (s32 *)bufL;
   scsp_bufR = (s32 *)bufR;
 
-  if (slot->ecnt >= SCSP_ENV_DE)
+  if (debugslot.ecnt >= SCSP_ENV_DE)
     {
       // envelope null...
       memset (buf, 0, sizeof(s16) * 2 * len);
       return 0;
     }
 
-  if (slot->ssctl)
+  if (debugslot.ssctl)
     {
       memset (buf, 0, sizeof(s16) * 2 * len);
       return 0; // not yet supported!
@@ -4428,19 +4516,19 @@ ScspSlotDebugAudio (slot_t *slot, u32 *workbuf, s16 *buf, u32 len)
   scsp_buf_pos = 0;
 
   // take effect sound volume if no direct sound volume...
-  if ((slot->disll == 31) && (slot->dislr == 31))
+  if ((debugslot.disll == 31) && (debugslot.dislr == 31))
     {
-      slot->disll = slot->efsll;
-      slot->dislr = slot->efslr;
+      debugslot.disll = debugslot.efsll;
+      debugslot.dislr = debugslot.efslr;
     }
 
   memset (bufL, 0, sizeof(u32) * len);
   memset (bufR, 0, sizeof(u32) * len);
-  scsp_slot_update_p[(slot->lfofms == 31)?0:1]
-                    [(slot->lfoems == 31)?0:1]
-                    [(slot->pcm8b == 0)?1:0]
-                    [(slot->disll == 31)?0:1]
-                    [(slot->dislr == 31)?0:1](slot);
+  scsp_slot_update_p[(debugslot.lfofms == 31)?0:1]
+                    [(debugslot.lfoems == 31)?0:1]
+                    [(debugslot.pcm8b == 0)?1:0]
+                    [(debugslot.disll == 31)?0:1]
+                    [(debugslot.dislr == 31)?0:1](&debugslot);
   ScspConvert32uto16s ((s32 *)bufL, (s32 *)bufR, (s16 *)buf, len);
 
   return len;
@@ -4473,19 +4561,34 @@ typedef struct
 
 //////////////////////////////////////////////////////////////////////////////
 
+void 
+ScspSlotResetDebug(u8 slotnum)
+{
+  memcpy (&debugslot, &scsp.slot[slotnum], sizeof(slot_t));
+
+  // Clear out the phase counter, etc.
+  debugslot.fcnt = 0;
+  debugslot.ecnt = SCSP_ENV_AS;
+  debugslot.einc = &debugslot.einca;
+  debugslot.ecmp = SCSP_ENV_AE;
+  debugslot.ecurp = SCSP_ENV_ATTACK;
+  debugslot.enxt = scsp_attack_next;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int
 ScspSlotDebugAudioSaveWav (u8 slotnum, const char *filename)
 {
   u32 workbuf[512*2*2];
   s16 buf[512*2];
-  slot_t slot;
   FILE *fp;
   u32 counter = 0;
   waveheader_struct waveheader;
   fmt_struct fmt;
   chunk_struct data;
   long length;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   if (scsp.slot[slotnum].lea == 0)
     return 0;
@@ -4515,25 +4618,17 @@ ScspSlotDebugAudioSaveWav (u8 slotnum, const char *filename)
   data.size = 0; // we'll fix this at the end
   ywrite (&check, (void *)&data, 1, sizeof(chunk_struct), fp);
 
-  memcpy (&slot, &scsp.slot[slotnum], sizeof(slot_t));
-
-  // Clear out the phase counter, etc.
-  slot.fcnt = 0;
-  slot.ecnt = SCSP_ENV_AS;
-  slot.einc = &slot.einca;
-  slot.ecmp = SCSP_ENV_AE;
-  slot.ecurp = SCSP_ENV_ATTACK;
-  slot.enxt = scsp_attack_next;
+  ScspSlotResetDebug(slotnum);
 
   // Mix the audio, and then write it to the file
   for (;;)
     {
-      if (ScspSlotDebugAudio (&slot, workbuf, buf, 512) == 0)
+      if (ScspSlotDebugAudio (workbuf, buf, 512) == 0)
         break;
 
       counter += 512;
       ywrite (&check, (void *)buf, 2, 512 * 2, fp);
-      if (slot.lpctl != 0 && counter >= (44100 * 2 * 5))
+      if (debugslot.lpctl != 0 && counter >= (44100 * 2 * 5))
         break;
     }
 

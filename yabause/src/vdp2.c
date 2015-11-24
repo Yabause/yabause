@@ -1197,7 +1197,7 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
 int Vdp2SaveState(FILE *fp)
 {
    int offset;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    offset = StateWriteHeader(fp, "VDP2", 1);
 
@@ -1220,7 +1220,7 @@ int Vdp2SaveState(FILE *fp)
 
 int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
 {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // Read registers
    yread(&check, (void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
