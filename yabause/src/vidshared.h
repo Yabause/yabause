@@ -143,6 +143,9 @@ typedef struct
    int specialprimode;
    float maxzoom;
    int linecheck_mask;
+   int titan_which_layer;
+   int titan_shadow_type;
+   int titan_shadow_enabled;
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int);
