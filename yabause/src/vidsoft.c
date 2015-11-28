@@ -101,6 +101,7 @@ void VIDSoftVdp2SetResolution(u16 TVMD);
 void VIDSoftGetGlSize(int *width, int *height);
 void VIDSoftVdp1SwapFrameBuffer(void);
 void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer);
+void VIDSoftSetFilterMode(int type){};
 
 VideoInterface_struct VIDSoft = {
 VIDCORE_SOFT,
@@ -132,6 +133,7 @@ VIDSoftVdp2DrawStart,
 VIDSoftVdp2DrawEnd,
 VIDSoftVdp2DrawScreens,
 VIDSoftGetGlSize,
+VIDSoftSetFilterMode,
 };
 
 pixel_t *dispbuffer=NULL;
