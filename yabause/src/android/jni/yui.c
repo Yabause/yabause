@@ -81,6 +81,7 @@ int g_minorminor_version=0;
 
 int g_EnagleFPS = 0;
 int g_CpuType = 2;
+int g_VideoFilter = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -957,6 +958,7 @@ int initEgl( ANativeWindow* window )
     yinit.frameskip = 0;
     yinit.usethreads = 1;
     yinit.skip_load = 0;
+    yinit.video_filter_type = g_VideoFilter;
     
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1129,6 +1131,13 @@ Java_org_uoyabause_android_YabauseRunnable_setCpu( JNIEnv* env, jobject obj, jin
 {
     g_CpuType = cpu;
 }
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setFilter( JNIEnv* env, jobject obj, jint filter )
+{
+    g_VideoFilter = filter;
+}
+
 
 void
 Java_org_uoyabause_android_YabauseRunnable_enableFrameskip( JNIEnv* env, jobject obj, jint enable )

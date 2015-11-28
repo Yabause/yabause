@@ -86,6 +86,7 @@ void VIDOGLVdp2DrawScreens(void);
 void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+void VIDOGLSetFilterMode(int type);
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -112,7 +113,8 @@ VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
 VIDOGLVdp2DrawScreens,
-YglGetGlSize
+YglGetGlSize,
+VIDOGLSetFilterMode
 };
 
 float vdp1wratio=1;
@@ -6215,3 +6217,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
 
 #endif
 
+void VIDOGLSetFilterMode(int type){
+	_Ygl->aamode = type;
+	return;
+}

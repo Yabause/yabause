@@ -673,6 +673,8 @@ int YglGenFrameBuffer() {
 	glFinish();
 	glGetError();
 
+	//--------------------------------------------------------------------------
+	// VDP1 FBO
 	if (_Ygl->vdp1FrameBuff[0] == 0) {
 		glGenTextures(2, _Ygl->vdp1FrameBuff);
 	}
@@ -724,7 +726,6 @@ int YglGenFrameBuffer() {
 			abort();
 		}
 
-
 	}
 	else{
 		if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
@@ -741,7 +742,6 @@ int YglGenFrameBuffer() {
 			YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__, error);
 			abort();
 		}
-
 	}
 
 	if (_Ygl->vdp1fbo != 0)
@@ -773,6 +773,10 @@ int YglGenFrameBuffer() {
 		abort();
 	}
 
+	if (_Ygl->aamode == AA_FXAA){
+		YglGenerateAABuffer();
+	}
+
 	YGLDEBUG("YglGLInit OK");
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
@@ -788,6 +792,84 @@ int YglGLInit(int width, int height) {
    rebuild_frame_buffer = 1;
 
    return 0;
+}
+
+int YglGenerateAABuffer(){
+
+	int status;
+	YglMatrix pers;
+	GLuint error;
+
+	//--------------------------------------------------------------------------------
+	// FXAA
+	if (_Ygl->fxaa_fbotex == 0) {
+		glGenTextures(1, &_Ygl->fxaa_fbotex);
+	}
+	glGetError();
+	glBindTexture(GL_TEXTURE_2D, _Ygl->fxaa_fbotex);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail to YglGLInit at %d %04X %d %d", __LINE__, error, GlWidth, GlHeight);
+		abort();
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GlWidth, GlHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail to YglGLInit at %d %04X %d %d", __LINE__, error, GlWidth, GlHeight);
+		abort();
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	if (strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
+	{
+		if (_Ygl->fxaa_depth != 0) glDeleteRenderbuffers(1, &_Ygl->fxaa_depth);
+		glGenRenderbuffers(1, &_Ygl->fxaa_depth);
+		glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->fxaa_depth);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, GlWidth, GlHeight);
+		_Ygl->fxaa_stencil = _Ygl->fxaa_depth;
+		if ((error = glGetError()) != GL_NO_ERROR)
+		{
+			YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__, error);
+			abort();
+		}
+	}
+	else{
+		if (_Ygl->fxaa_depth != 0) glDeleteRenderbuffers(1, &_Ygl->fxaa_depth);
+		glGenRenderbuffers(1, &_Ygl->fxaa_depth);
+		glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->fxaa_depth);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, GlWidth, GlHeight);
+
+		if (_Ygl->fxaa_stencil != 0) glDeleteRenderbuffers(1, &_Ygl->fxaa_stencil);
+		glGenRenderbuffers(1, &_Ygl->fxaa_stencil);
+		glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->fxaa_stencil);
+		glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, GlWidth, GlHeight);
+		if ((error = glGetError()) != GL_NO_ERROR)
+		{
+			YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__, error);
+			abort();
+		}
+
+	}
+
+	if (_Ygl->fxaa_fbo != 0)
+		glDeleteFramebuffers(1, &_Ygl->fxaa_fbo);
+
+	glGenFramebuffers(1, &_Ygl->fxaa_fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->fxaa_fbotex, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->fxaa_depth);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->fxaa_stencil);
+	status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status);
+		abort();
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -938,6 +1020,9 @@ int YglInit(int width, int height, unsigned int depth) {
    glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
    _Ygl->st = 0;
    _Ygl->msglength = 0;
+
+   _Ygl->aamode = AA_NONE;
+   //_Ygl->aamode = AA_FXAA;
 
    return 0;
 }
@@ -2265,7 +2350,16 @@ void YglRender(void) {
 
    YGLLOG("YglRender\n");
 
-   glBindFramebuffer(GL_FRAMEBUFFER,0);
+   if (_Ygl->aamode == AA_FXAA){
+	   if (_Ygl->fxaa_fbotex == 0){
+		   YglGenerateAABuffer();
+	   }
+	   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
+   }
+   else{
+	   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   }
+
 
    glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
    glClearDepthf(0.0f);
@@ -2350,7 +2444,7 @@ void YglRender(void) {
 							glEnable(GL_BLEND);
 							glBlendFunc(GL_ONE, GL_ONE);
 						}
-					}
+					} 
 
 					glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
 					glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
@@ -2372,6 +2466,11 @@ void YglRender(void) {
 		glEnable(GL_BLEND);
 		glBlendFunc(blendfunc_src, blendfunc_dst);
 		if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+	}
+
+	if (_Ygl->aamode == AA_FXAA){
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
 	}
 
    glDisable(GL_TEXTURE_2D);
