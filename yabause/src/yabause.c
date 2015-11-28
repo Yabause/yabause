@@ -188,6 +188,12 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+   if (VideoSetFilterType(init->video_filter_type) != 0)
+   {
+	   YabSetError(YAB_ERR_CANNOTINIT, _("Video"));
+	   return -1;
+   }
+
    // Initialize input core
    if (PerInit(init->percoretype) != 0)
    {

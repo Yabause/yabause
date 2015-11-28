@@ -258,6 +258,12 @@ void Vdp1Reset(void) {
    VIDCore->Vdp1Reset();
 }
 
+int VideoSetFilterType( int video_filter_type )
+{
+	if (VIDCore) VIDCore->SetFilterType(video_filter_type);
+	return 0;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp1ReadByte(u32 addr) {
@@ -1368,6 +1374,7 @@ void VIDDummyVdp2DrawScreens(void);
 void VIDDummyGetGlSize(int *width, int *height);
 void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
+void VIDDummSetFilterMode(int type){};
 
 VideoInterface_struct VIDDummy = {
 VIDCORE_DUMMY,
@@ -1394,7 +1401,8 @@ VIDDummyVdp2Reset,
 VIDDummyVdp2DrawStart,
 VIDDummyVdp2DrawEnd,
 VIDDummyVdp2DrawScreens,
-VIDDummyGetGlSize
+VIDDummyGetGlSize,
+VIDDummSetFilterMode,
 };
 
 //////////////////////////////////////////////////////////////////////////////
