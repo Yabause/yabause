@@ -542,8 +542,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
     YabThreadLock( _Ygl->mutex );
 
-    glGenFramebuffers(1, &_Ygl->smallfbo);
-    YGLDEBUG("glGenFramebuffers %d\n", _Ygl->smallfbo );
     glGenTextures(1, &_Ygl->smallfbotex);
     YGLDEBUG("glGenTextures %d\n",_Ygl->smallfbotex );
     glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
@@ -553,10 +551,12 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 	if ((error = glGetError()) != GL_NO_ERROR)
 	{
 		YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
-		abort();
+		//abort();
 	}
     YGLDEBUG("glTexImage2D %d\n",_Ygl->smallfbotex );
 
+	glGenFramebuffers(1, &_Ygl->smallfbo);
+	YGLDEBUG("glGenFramebuffers %d\n", _Ygl->smallfbo);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
 
