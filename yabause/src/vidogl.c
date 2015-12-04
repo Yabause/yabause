@@ -3766,26 +3766,17 @@ void VIDOGLVdp1PolygonDraw(void)
    float col[4*4];
    int gouraud=0;
    int priority;
-   short CMDYA;
-   short CMDYB;
-   short CMDYC;
-   short CMDYD;
 
    vdp1cmd_struct cmd;
 
    sprite.linescreen = 0;
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
-
-   CMDYA = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
-   CMDYB = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
-   CMDYC = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
-   CMDYD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
-   
-   if ((CMDYA & 0x800)) CMDYA |= 0xF800; else CMDYA &= ~(0xF800);
-   if ((CMDYC & 0x800)) CMDYC |= 0xF800; else CMDYC &= ~(0xF800);
-   if ((CMDYB & 0x800)) CMDYB |= 0xF800; else CMDYB &= ~(0xF800);
-   if ((CMDYD & 0x800)) CMDYD |= 0xF800; else CMDYD &= ~(0xF800);
+    
+   if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
+   if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
+   if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
+   if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
 
    sprite.blendmode = 0;
    sprite.dst = 0;
