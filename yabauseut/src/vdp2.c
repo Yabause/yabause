@@ -19,6 +19,7 @@
 
 #include "tests.h"
 #include "main.h"
+#include "smpc.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -639,6 +640,7 @@ void vdp2_line_color_screen_test()
    int update_nbg_ratios = 1;
    int nbg_ratio[4] = {0};
    char ratio_status_str[64];
+   int lsmd = 0;
 
 #ifdef BUILD_AUTOMATED_TESTING
    vdp2_line_color_write_regs(ccctl, lnclen, lcclmd, table_address);
@@ -647,6 +649,8 @@ void vdp2_line_color_screen_test()
    for (;;)
    {
       vdp_vsync();
+
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | 0;
 
       vdp2_line_color_write_regs(ccctl, lnclen, lcclmd, table_address);
 
@@ -781,6 +785,14 @@ void vdp2_line_color_screen_test()
          update_nbg_ratios = 1;
          lcclmd = 1;
          lnclen = 0x3f;
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
       }
 
       if (per[0].but_push_once & PAD_START)
@@ -1303,6 +1315,9 @@ void vdp2_sprite_priority_shadow_test()
 
    int tvm = 0;
    int hreso = 0;
+   int lsmd = 0;
+   int die = 0;
+   int dil = 0;
 
    for (;;)
    {
@@ -1310,7 +1325,9 @@ void vdp2_sprite_priority_shadow_test()
 
       VDP1_REG_TVMR = tvm;
 
-      VDP2_REG_TVMD = (1 << 15) | hreso;
+      VDP1_REG_FBCR = ((die&1) << 3) | ((dil&1) << 2);
+
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | hreso;
 
       if (tvm == 0)
          VDP2_REG_SPCTL = (spccs << 12) | (spccn << 8) | (0 << 5) | 7;
@@ -1407,6 +1424,24 @@ void vdp2_sprite_priority_shadow_test()
       if (per[0].but_push_once & PAD_Y)
       {
          reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_Z)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
+      }
+
+      if (per[0].but_push_once & PAD_UP)
+      {
+         die = !die;
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         dil = !dil;
       }
 
       if (per[0].but_push_once & PAD_START)
@@ -1956,6 +1991,7 @@ void vdp2_line_window_test()
    };
 
    int preset = 0;
+   int lsmd = 0;
 
    ra_do_preset(&s, presets[preset]);
 
@@ -1980,7 +2016,7 @@ void vdp2_line_window_test()
    {
       vdp_vsync();
 
-      VDP2_REG_TVMD = (1 << 15) | hreso;
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | hreso;
 
       vdp2_line_window_write_regs(v, line_window_table_address);
 
@@ -2014,6 +2050,14 @@ void vdp2_line_window_test()
       if (per[0].but_push_once & PAD_Y)
       {
          reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_DOWN)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
       }
    }
 
@@ -2197,12 +2241,13 @@ void vdp2_line_scroll_test()
 #else
 
    int hreso = 0;
+   int lsmd = 0;
 
    for (;;)
    {
       vdp_vsync();
 
-      VDP2_REG_TVMD = (1 << 15) | hreso;
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | hreso;
 
       counter++;
 
@@ -2238,6 +2283,14 @@ void vdp2_line_scroll_test()
       if (per[0].but_push_once & PAD_Y)
       {
          reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         if (lsmd == 3)
+            lsmd = 0;
+         else
+            lsmd = 3;
       }
    }
 #endif
@@ -2481,6 +2534,341 @@ void vdp2_window_test ()
    vdp_nbg0_deinit();
    vdp_nbg1_deinit();
    yabauseut_init();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void draw_square_sprite(int x, int y, int size, int bank, int vdp1_tile_address, int offset, int msb)
+{
+   sprite_struct quad = { 0 };
+
+   int top_right_x = x * 8;
+   int top_right_y = y * 8;
+
+   quad.x = top_right_x;
+   quad.y = top_right_y;
+   quad.x2 = top_right_x + size - 1;
+   quad.y2 = top_right_y;
+   quad.x3 = top_right_x + size - 1;
+   quad.y3 = top_right_y + size - 1;
+   quad.x4 = top_right_x;
+   quad.y4 = top_right_y + size - 1;
+
+   quad.addr = vdp1_tile_address + offset;
+   quad.bank = bank << 4;
+   quad.width = 8;
+   quad.height = 8;
+   quad.attr = (msb << 15);
+
+   vdp_draw_distorted_sprite(&quad);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+struct Wctl {
+   int logic;
+   int w0_enable;
+   int w1_enable;
+   int sw_enable;
+   int w0_area;
+   int w1_area;
+   int sw_area;
+};
+
+u8 make_wctl(struct Wctl bg)
+{
+   return
+      (bg.w0_area << 0) |
+      (bg.w0_enable << 1) |
+      (bg.w1_area << 2)|
+      (bg.w1_enable << 3) |
+      (bg.sw_area << 4) |
+      (bg.sw_enable << 5) |
+      (bg.logic << 7);
+}
+      
+void vdp2_sprite_window_test()
+{
+   const u32 vdp2_tile_address = 0x40000;
+   vdp2_basic_tile_scroll_setup(vdp2_tile_address);
+
+   const u32 vdp1_tile_address = 0x10000;
+   load_font_8x8_to_vram_1bpp_to_4bpp(vdp1_tile_address, VDP1_RAM);
+
+   VDP1_REG_PTMR = 0x02;//draw automatically with frame change
+
+   vdp_start_draw_list();
+
+   sprite_struct spr;
+   spr.x = 0;
+   spr.y = 0;
+   vdp_local_coordinate(&spr);
+
+   draw_square_sprite(2, 4, 8 * 12, 4, vdp1_tile_address, (2 * 32), 0);
+   draw_square_sprite(2, 2, 8 * 12, 4, vdp1_tile_address, (2 * 32), 1);
+
+   vdp_end_draw_list();
+
+   volatile u16 * color_ram_ptr = (volatile u16 *)VDP2_CRAM;
+   color_ram_ptr[0] = 0x3105;
+   
+   int i;
+   for (i = 0; i < 32; i += 2)
+   {
+      write_str_as_pattern_name_data_special(0, 0 + i, "\n\n\n\nNBG2\n\n\n\n\n\n\n\n", 5, 0x008000, vdp2_tile_address, 0, 0);
+      write_str_as_pattern_name_data_special(0, 1 + i, "\n\n\n\nNBG3\n\n\n\n\n\n\n\n", 6, 0x00C000, vdp2_tile_address, 0, 0);
+   }
+
+   //vars for reg adjuster
+   struct {
+      int sprite_window_enable;
+      struct Wctl nbg[2];
+      struct Wctl spr;
+   }v = { 0 };
+
+   struct RegAdjusterState s = { 0 };
+
+   ra_add_var(&s, &v.sprite_window_enable, "Sprite window enabl", 1);
+
+   for (i = 0; i < 2; i++)
+   {
+      char str[64] = { 0 };
+      sprintf(str, "NBG%d spr win enabl ", i + 2);
+      ra_add_var(&s, &v.nbg[i].sw_enable, str, 1);
+      sprintf(str, "NBG%d spr win area  ", i + 2);
+      ra_add_var(&s, &v.nbg[i].sw_area, str, 1);
+      sprintf(str, "NBG%d transp logic  ", i + 2);
+      ra_add_var(&s, &v.nbg[i].logic, str, 1);
+      sprintf(str, "NBG%d w0 enable  ", i + 2);
+      ra_add_var(&s, &v.nbg[i].w0_enable, str, 1);
+      sprintf(str, "NBG%d w1 enable  ", i + 2);
+      ra_add_var(&s, &v.nbg[i].w1_enable, str, 1);
+      sprintf(str, "NBG%d w0 area  ", i + 2);
+      ra_add_var(&s, &v.nbg[i].w0_area, str, 1);
+      sprintf(str, "NBG%d w1 area  ", i + 2);
+      ra_add_var(&s, &v.nbg[i].w1_area, str, 1);
+   }
+
+   ra_add_var(&s, &v.spr.logic, "sprite transp logic", 1);
+   ra_add_var(&s, &v.spr.sw_enable, "spr use spr win", 1);
+   ra_add_var(&s, &v.spr.sw_area, "spr sprite win area", 1);
+   ra_add_var(&s, &v.spr.w1_enable, "sprite w1 enab", 1);
+   ra_add_var(&s, &v.spr.w1_area, "sprite w1 area", 1);
+   ra_add_var(&s, &v.spr.w0_enable, "sprite w0 enab", 1);
+   ra_add_var(&s, &v.spr.w0_area, "sprite w0 area", 1);
+
+   int presets[][22] =
+   {
+      //preset 0
+      {
+         //sprite window enable
+         0,
+         //nbg2
+         0, 0, 0, 0, 0, 0, 0,
+         //nbg3
+         0, 0, 0, 0, 0, 0, 0,
+         //sprite
+         0, 0, 0, 0, 0, 0, 0
+      },
+      {
+         //sprite window enable
+         0,
+         //nbg2
+         0, 0, 0, 0, 0, 0, 0,
+         //nbg3
+         0, 0, 0, 0, 0, 0, 0,
+         //sprite
+         1, 0, 1, 0, 0, 0, 0
+      }
+   };
+
+   int preset = 0;
+
+   ra_do_preset(&s, presets[preset]);
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      VDP2_REG_SPCTL = (v.sprite_window_enable << 4) | 7;
+
+      VDP2_REG_WCTLB = (make_wctl(v.nbg[1]) << 8) | make_wctl(v.nbg[0]);
+
+      VDP2_REG_WCTLC = make_wctl(v.spr) << 8;
+
+      VDP2_REG_WPSX0 = (1*8)*2;
+      VDP2_REG_WPSY0 = 1*8;
+      VDP2_REG_WPEX0 = ((9 * 8) * 2)-1;
+      VDP2_REG_WPEY0 = (8*9)-1;
+
+      VDP2_REG_WPSX1 = (7 * 8) * 2;
+      VDP2_REG_WPSY1 = 1*8;
+      VDP2_REG_WPEX1 = ((14 * 8) * 2)-1;
+      VDP2_REG_WPEY1 = (8*9)-1;
+
+      ra_update_vars(&s);
+
+      ra_do_menu(&s, 17, 0, 0);
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         preset++;
+
+         if (preset > 1)
+            preset = 0;
+
+         ra_do_preset(&s, presets[preset]);
+      }
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         reset_system();
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+volatile int linecount_hlines_since_vblank_out = 0;
+volatile int linecount_hlines_since_vblank_in = 0;
+volatile int linecount_vblank_in_occurred = 0;
+
+volatile int vblank_out_results[10] = { 0 };
+volatile int vblank_out_results_pos = 0;
+volatile int vblank_in_results[10] = { 0 };
+volatile int vblank_in_results_pos = 0;
+
+volatile int lines_between_vblank_out_and_vblank_in_results[10] = { 0 };
+volatile int lines_between_vblank_out_and_vblank_in_results_pos = 0;
+
+volatile int lines_between_vblank_in_and_vblank_out_results[10] = { 0 };
+volatile int lines_between_vblank_in_and_vblank_out_results_pos = 0;
+
+//////////////////////////////////////////////////////////////////////////////
+
+void linecount_test_vblank_out_handler()
+{
+   vblank_out_results[vblank_out_results_pos++] = linecount_hlines_since_vblank_out;
+   lines_between_vblank_in_and_vblank_out_results[lines_between_vblank_in_and_vblank_out_results_pos++] = linecount_hlines_since_vblank_in;
+   linecount_hlines_since_vblank_out = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void linecount_test_vblank_in_handler()
+{
+   linecount_vblank_in_occurred = 1;
+   vblank_in_results[vblank_in_results_pos++] = linecount_hlines_since_vblank_in;
+   lines_between_vblank_out_and_vblank_in_results[lines_between_vblank_out_and_vblank_in_results_pos++] = linecount_hlines_since_vblank_out;
+   linecount_hlines_since_vblank_in = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void linecount_test_hblank_in_handler()
+{
+   linecount_hlines_since_vblank_out++;
+   linecount_hlines_since_vblank_in++;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void linecount_test_set_interrupts()
+{
+   interrupt_set_level_mask(0xF);
+   bios_change_scu_interrupt_mask(0xFFFFFFFF, MASK_VBLANKOUT | MASK_HBLANKIN | MASK_VBLANKIN);
+   bios_set_scu_interrupt(0x40, linecount_test_vblank_in_handler);
+   bios_set_scu_interrupt(0x41, linecount_test_vblank_out_handler);
+   bios_set_scu_interrupt(0x42, linecount_test_hblank_in_handler);
+   bios_change_scu_interrupt_mask(~(MASK_VBLANKOUT | MASK_HBLANKIN | MASK_VBLANKIN), 0);
+   interrupt_set_level_mask(0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void linecount_wait()
+{
+   while (!linecount_vblank_in_occurred){}
+   linecount_vblank_in_occurred = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void linecount_run_test(int * current_line)
+{
+   int i;
+
+   vblank_out_results_pos = 0;
+   vblank_in_results_pos = 0;
+   lines_between_vblank_out_and_vblank_in_results_pos = 0;
+   lines_between_vblank_in_and_vblank_out_results_pos = 0;
+
+   disable_iapetus_handler();
+   test_disp_font.transparent = 0;
+
+   linecount_test_set_interrupts();
+
+   int count = 0;
+
+   for (;;)
+   {
+      linecount_wait();
+
+      count++;
+
+      if (count > 8)
+         break;
+   }
+
+   //the counters take a couple of frames to get inititalized fully so we start from 2
+   for (i = 2; i < 7; i++)
+   {
+      vdp_printf(&test_disp_font, 0 * 8, *current_line * 8, 15, "%04d %04d %04d %04d",
+         vblank_out_results[i],
+         vblank_in_results[i],
+         lines_between_vblank_in_and_vblank_out_results[i],
+         lines_between_vblank_out_and_vblank_in_results[i]);
+
+      *current_line = *current_line + 1;
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void linecount_test()
+{
+   int current_line = 0;
+
+   //test 224 line mode
+   vdp_printf(&test_disp_font, 0 * 8, current_line * 8, 15, "TVMD = 224 Lines");
+   current_line++;
+   VDP2_REG_TVMD = 0x8000 | (0 << 4);
+   linecount_run_test(&current_line);
+
+   //test 240 line mode
+   vdp_printf(&test_disp_font, 0 * 8, current_line * 8, 15, "TVMD = 240 Lines");
+   current_line++;
+   VDP2_REG_TVMD = 0x8000 | (1 << 4);
+   linecount_run_test(&current_line);
+
+   VDP2_REG_TVMD = 0x8000 | (0 << 4);
+
+   current_line++;
+   vdp_printf(&test_disp_font, 0 * 8, current_line * 8, 15, "column 3: lines between vblank in/out");
+   current_line++;
+   vdp_printf(&test_disp_font, 0 * 8, current_line * 8, 15, "column 4: lines between vblank out/in");
+
+   per_init();
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         reset_system();
+      }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

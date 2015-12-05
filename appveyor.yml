@@ -33,6 +33,7 @@ shallow_clone: true
 init:
   # cmake errors if sh on the path
   - rm "C:\Program Files (x86)\Git\bin\sh.exe"
+  - rm "C:\Program Files\Git\usr\bin\sh.exe"
   # cpack won't work because of chocolatey sharing the same name
   - rm "C:\ProgramData\chocolatey\bin\cpack.exe"
   - set Path=%MINGW%\bin;%Path%

@@ -315,7 +315,7 @@ void UIYabause::appendLog( const char* s )
 {
 	if (! mCanLog)
 	{
-		qWarning( s );
+		qWarning( "%s", s );
 		return;
 	}
 
@@ -697,6 +697,25 @@ void UIYabause::on_aFileSettings_triggered()
 		
 		if(newhash["General/ShowFPS"] != hash["General/ShowFPS"])
 			SetOSDToggle(newhash["General/ShowFPS"].toBool());
+
+		if (newhash["General/EnableMultiThreading"] != hash["General/EnableMultiThreading"] ||
+			 newhash["General/NumThreads"] != hash["General/NumThreads"])
+		{
+			if (newhash["General/EnableMultiThreading"].toBool())
+			{
+				int num = newhash["General/NumThreads"].toInt() < 1 ? 1 : newhash["General/NumThreads"].toInt();
+				VIDSoftSetVdp1ThreadEnable(num == 1 ? 0 : 1);
+				VIDSoftSetNumLayerThreads(num);
+				VIDSoftSetNumPriorityThreads(num);
+			}
+			else
+			{
+				VIDSoftSetVdp1ThreadEnable(0);
+				VIDSoftSetNumLayerThreads(1);
+				VIDSoftSetNumPriorityThreads(1);
+			}
+		}
+
 		
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
