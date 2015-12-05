@@ -1,7 +1,10 @@
 project(yabause)
 
+include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
+
+cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
@@ -15,14 +18,14 @@ set(yabause_HEADERS
 	netlink.h
 	osdcore.h
 	peripheral.h profile.h
-	scsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
+	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h)
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "gtk;qt;dreamcast;cocoa" CACHE STRING "List of ports to build")
+set(YAB_PORTS "gtk;qt;dreamcast;cocoa;runner" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
@@ -35,7 +38,7 @@ set(yabause_SOURCES
 	netlink.c
 	osdcore.c
 	peripheral.c profile.c
-	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
+	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c )
@@ -127,9 +130,27 @@ if (STRICMP_OK)
 endif ()
 
 # __builtin_bswap16
-check_function_exists(__builtin_bswap16 BSWAP16_OK)
+check_c_source_compiles (
+	"
+	int main(void) {
+		return !__builtin_bswap16(0xabcd) == 0xcdab;
+	}
+	"
+	BSWAP16_OK)
 if (BSWAP16_OK)
 	add_definitions(-DHAVE_BUILTIN_BSWAP16=1)
+endif()
+
+# __builtin_bswap32
+check_c_source_compiles (
+	"
+	int main(void) {
+		return !__builtin_bswap32(0xdeadbeef) == 0xefbeadde;
+	}
+	"
+	BSWAP32_OK)
+if (BSWAP32_OK)
+	add_definitions(-DHAVE_BUILTIN_BSWAP32=1)
 endif()
 
 # sys/time.h
@@ -143,6 +164,9 @@ check_include_file("stdint.h" STDINT_H_FOUND)
 if (STDINT_H_FOUND)
 	add_definitions(-DHAVE_STDINT_H=1)
 endif()
+
+find_package(Threads)
+set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 # 16BPP
 set(YAB_RGB "" CACHE STRING "Bit configuration of pixels in the display buffer.")
@@ -162,6 +186,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 
 		include(FindGLUT)
 		if (GLUT_FOUND)
+			message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
 			include_directories(${GLUT_INCLUDE_DIR})
 			add_definitions(-DHAVE_LIBGLUT=1)
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLUT_LIBRARIES})
@@ -205,11 +230,13 @@ if (YAB_WANT_SDL)
 	include(FindSDL2 OPTIONAL)
 
 	if (SDL2_FOUND)
+		add_definitions(-DHAVE_LIBSDL2=1)
 		include_directories(${SDL2_INCLUDE_DIR})
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL2_LIBRARY})
 	else()
 		include(FindSDL)
 		if (SDL_FOUND)
+			message (WARNING "Deprecated version of SDL found. Support will be removed in the future. ")
 			include_directories(${SDL_INCLUDE_DIR})
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL_LIBRARY})
 		endif()
@@ -227,12 +254,11 @@ option(YAB_WANT_OPENAL "use OpenAL sound core if available" ON)
 if (YAB_WANT_OPENAL)
 	include(FindOpenAL)
 	if (OPENAL_FOUND)
-		find_package(Threads)
 		add_definitions(-DHAVE_LIBAL=1)
 		include_directories(${OPENAL_INCLUDE_DIR})
 		set(yabause_SOURCES ${yabause_SOURCES} sndal.c)
 		set(yabause_HEADERS ${yabause_HEADERS} sndal.h)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY})
 	endif (OPENAL_FOUND)
 endif (YAB_WANT_OPENAL)
 
@@ -250,12 +276,14 @@ if (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI
 endif (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI18N_LIBRARY STREQUAL "MINI18N_LIBRARY-NOTFOUND")
 
 # xrandr
-find_library(XRANDR_LIBRARY Xrandr)
-if(XRANDR_LIBRARY)
-	add_definitions(-DHAVE_LIBXRANDR=1)
-	set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
-	set(yabause_HEADERS ${yabause_HEADERS} screen.h)
-	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
+if (NOT APPLE)
+	find_library(XRANDR_LIBRARY Xrandr)
+	if(XRANDR_LIBRARY)
+		add_definitions(-DHAVE_LIBXRANDR=1)
+		set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
+		set(yabause_HEADERS ${yabause_HEADERS} screen.h)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
+	endif()
 endif()
 
 if (MINI18N_FOUND)
@@ -303,6 +331,8 @@ if (WIN32)
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
+		message (WARNING "Windows DDK/WDK use is deprecated. Support will be removed in the future. ")
+
 		# Find ntddcdrm.h
 		find_path(ntddcdrm_INCLUDE_DIR ntddcdrm.h
 			PATHS "${DDK_DIR}" "${DDK_DIR}/inc" PATH_SUFFIXES ddk api)
@@ -390,13 +420,6 @@ if (WIN32)
 	endif()
 
 endif (WIN32)
-
-if (WII)
-	set(CMAKE_C_FLAGS "-mrvl -mcpu=750 -meabi -mhard-float")
-	add_definitions(-DGEKKO=1)
-	# that shouldn't be hardcoded, either use an ENV variable or try to detect it...
-	include_directories(/opt/devkitpro/libogc/include/)
-endif()
 
 option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 
@@ -538,6 +561,18 @@ if (YAB_OPTIMIZED_DMA)
 	add_definitions(-DOPTIMIZED_DMA=1)
 endif()
 
+# SH2 Trace
+option(SH2_TRACE "Enable SH2 tracing" ON)
+if (SH2_TRACE)
+	add_definitions(-DSH2_TRACE=1)
+endif()
+
+# SH2 UBC
+option(SH2_UBC "Enable SH2 User Break Controller" OFF)
+if (SH2_UBC)
+	add_definitions(-DSH2_UBC=1)
+endif()
+
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
@@ -608,6 +643,27 @@ if (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244")
 endif ()
 
+# Turn string format security warnings into errors. Some Linux distros enable this by default and travis-ci, etc. needs a way to catch them
+option(YAB_FORCE_SECURE_STRINGS "Turns all string format warnings into errors." OFF)
+if (CMAKE_COMPILER_IS_GNUCC AND YAB_FORCE_SECURE_STRINGS)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security")
+endif()
+
+if (NOT ANDROID)
+    option(YAB_WANT_VIDSOFT_PRIORITY_THREADING "Use threads for vidsoft priority" OFF)
+    option(YAB_WANT_VIDSOFT_LAYER_THREADING "Use threads for vidsoft layers" OFF)
+
+    if (YAB_WANT_VIDSOFT_PRIORITY_THREADING)
+        add_definitions(-DWANT_VIDSOFT_PRIORITY_THREADING)
+        message(STATUS "Using vidsoft priority threading")
+    endif()
+
+    if (YAB_WANT_VIDSOFT_LAYER_THREADING)
+        add_definitions(-DWANT_VIDSOFT_LAYER_THREADING)
+        message(STATUS "Using vidsoft layer threading")
+    endif()
+endif()
+
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
@@ -657,8 +713,14 @@ endif()
 if (YAB_WANT_OPENSL)
     set(HAVE_OPENSL ON)
 endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 if (YAB_NETWORK AND UNIX)
     set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "socket")
+endif()
+
+option(YAB_TESTS "Build test programs for cores" OFF)
+if (YAB_TESTS)
+	add_subdirectory("tools")
 endif()

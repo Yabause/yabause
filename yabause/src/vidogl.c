@@ -70,15 +70,15 @@ int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
 void VIDOGLVdp1DrawStart(void);
 void VIDOGLVdp1DrawEnd(void);
-void VIDOGLVdp1NormalSpriteDraw(void);
-void VIDOGLVdp1ScaledSpriteDraw(void);
-void VIDOGLVdp1DistortedSpriteDraw(void);
-void VIDOGLVdp1PolygonDraw(void);
-void VIDOGLVdp1PolylineDraw(void);
-void VIDOGLVdp1LineDraw(void);
-void VIDOGLVdp1UserClipping(void);
-void VIDOGLVdp1SystemClipping(void);
-void VIDOGLVdp1LocalCoordinate(void);
+void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs);
+void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs);
+void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 int VIDOGLVdp2Reset(void);
 void VIDOGLVdp2DrawStart(void);
 void VIDOGLVdp2DrawEnd(void);
@@ -107,6 +107,7 @@ VIDOGLVdp1UserClipping,
 VIDOGLVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
 VIDOGLVdp1ReadFrameBuffer,
+NULL,
 VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
@@ -199,10 +200,11 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	u8 END = ((cmd->CMDPMOD & 0x80) != 0);
 	u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
 	u32 alpha = 0xFF;
-	VDP1LOG("Making new sprite %08X\n", charAddr);
-
 	u32 color = 0x00;
 	int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+
+	VDP1LOG("Making new sprite %08X\n", charAddr);
+
 	Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 	alpha = 0xF8;
 	if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
@@ -2470,11 +2472,8 @@ static void Vdp2DrawPlane(vdp2draw_struct *info, YglTexture *texture)
 static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2498,7 +2497,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 
 
-	i = 0;
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
 		Vdp2 * regs;
@@ -2522,7 +2520,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
 		info->draww = (int)((float)vdp2width / info->coordincx);
 
-		regs = Vdp2RestoreRegs(v);
+		regs = Vdp2RestoreRegs(v, Vdp2Lines);
 		if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
 		// determine which chara shoud be used.
@@ -2560,7 +2558,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 			charx = dot_on_pagex & page_mask;
 			if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
-			info->PlaneAddr(info, info->mapwh * mapy + mapx);
+			info->PlaneAddr(info, info->mapwh * mapy + mapx, Vdp2Regs);
 			Vdp2PatternAddrPos(info, planex,pagex, planey,pagey);
 			Vdp2DrawPatternPos(info, texture, h, v, charx, chary);
 
@@ -2574,11 +2572,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2602,7 +2597,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	//info->coordincx = 1.0f;
 
-	i = 0;
 	for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh){
 		int targetv = 0;
 		sx = info->x;
@@ -2651,7 +2645,7 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 			charx = dot_on_pagex & page_mask;
 			if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
-			info->PlaneAddr(info, info->mapwh * mapy + mapx);
+			info->PlaneAddr(info, info->mapwh * mapy + mapx, Vdp2Regs);
 			Vdp2PatternAddrPos(info, planex, pagex, planey, pagey);
 			Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0);
 
@@ -2687,7 +2681,7 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
       while( xx < vdp2width )
       {
          info->y = Y;
-         info->PlaneAddr(info, info->mapwh * i + j);
+         info->PlaneAddr(info, info->mapwh * i + j, Vdp2Regs);
          Vdp2DrawPlane(info, texture);
          j++;
          j &= (info->mapwh-1);
@@ -2708,7 +2702,7 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-FASTCALL DoColorOffset(void *info, u32 pixel)
+static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 {
     return pixel;
 }
@@ -2885,7 +2879,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       patternshift = 0;      
    }
    
-   regs = Vdp2RestoreRegs(3);
+   regs = Vdp2RestoreRegs(3, Vdp2Lines);
    if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
    line_texture.textdata = NULL;
@@ -3253,6 +3247,8 @@ void VIDOGLVdp1DrawStart(void)
    }
    else // color offset disable
       vdp1cor = vdp1cog = vdp1cob = 0;
+
+   Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3264,7 +3260,7 @@ void VIDOGLVdp1DrawEnd(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1NormalSpriteDraw(void)
+void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    vdp1cmd_struct cmd;
    YglSprite sprite;
@@ -3280,7 +3276,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    short CMDYA;
 
    
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    sprite.dst=0;
    sprite.blendmode=0;
    sprite.linescreen = 0;
@@ -3375,7 +3371,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1ScaledSpriteDraw(void)
+void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    vdp1cmd_struct cmd;
    YglSprite sprite;
@@ -3389,7 +3385,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    float col[4*4];
    int i;
 
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    sprite.dst=0;
    sprite.blendmode=0;
    sprite.linescreen = 0;
@@ -3560,7 +3556,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1DistortedSpriteDraw(void)
+void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    vdp1cmd_struct cmd;
    YglSprite sprite;
@@ -3571,9 +3567,10 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    u16 color2;
    int i;
    float col[4*4];
+   int isSquare;
    
 
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    sprite.blendmode=0;
    sprite.linescreen = 0; 
    sprite.dst = 1;
@@ -3600,7 +3597,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
-   int isSquare = 1;
+   isSquare = 1;
 
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
@@ -3615,13 +3612,16 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    }
 
    if (isSquare){
+	   float minx;
+	   float miny;
+	   int lt_index;
 	   
 	   sprite.dst = 0;
 
 	   // find upper left opsition
-	   float minx = 65535.0f;
-	   float miny = 65535.0f;
-	   int lt_index = -1;
+	   minx = 65535.0f;
+	   miny = 65535.0f;
+	   lt_index = -1;
 	   for( i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3632,6 +3632,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
 	   for (i = 0; i < 4; i++){
 		   if (i != lt_index){
+			   float nx;
+			   float ny;
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
@@ -3641,8 +3643,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3752,7 +3754,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 #define IS_REPLACE_OR_HALF_TRANSPARENT(a) ((a&0x03)==0x03)
 
 
-void VIDOGLVdp1PolygonDraw(void)
+void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    s16 X[4];
    s16 Y[4];
@@ -3766,12 +3768,13 @@ void VIDOGLVdp1PolygonDraw(void)
    float col[4*4];
    int gouraud=0;
    int priority;
+   int isSquare;
 
    vdp1cmd_struct cmd;
 
    sprite.linescreen = 0;
 
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
     
    if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
    if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
@@ -3791,7 +3794,7 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
-   int isSquare = 1;
+   isSquare = 1;
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
 	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
@@ -3804,13 +3807,13 @@ void VIDOGLVdp1PolygonDraw(void)
 	   }
    }
    if (isSquare){
-
-	   sprite.dst = 0;
-
 	   // find upper left opsition
 	   float minx = 65535.0f;
 	   float miny = 65535.0f;
 	   int lt_index = -1;
+
+	   sprite.dst = 0;
+
 	   for (i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3824,14 +3827,16 @@ void VIDOGLVdp1PolygonDraw(void)
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+			   float nx;
+			   float ny;
 
 			   // normalize
 			   float len = fabsf(sqrtf(dx*dx + dy*dy));
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3977,6 +3982,14 @@ void VIDOGLVdp1PolygonDraw(void)
 
 
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
+	float dx;
+	float dy;
+	float len;
+	float nx;
+	float ny;
+	float ex;
+	float ey;
+	float offset;
 
 	if (v1[0] == v2[0] && v1[1] == v2[1]){
 		outv[0] = v1[0];
@@ -3991,11 +4004,11 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 	}
 
 	// vectorize;
-	float dx = v2[0] - v1[0];
-	float dy = v2[1] - v1[1];
+	dx = v2[0] - v1[0];
+	dy = v2[1] - v1[1];
 
 	// normalize
-	float len = fabs( sqrtf((dx*dx) + (dy*dy)) );
+	len = fabs( sqrtf((dx*dx) + (dy*dy)) );
 	if (len < EPSILON ){
 		// fail;
 		outv[0] = v1[0];
@@ -4009,19 +4022,19 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 		return;
 	}
 
-	float nx = dx / len;
-	float ny = dy / len;
+	nx = dx / len;
+	ny = dy / len;
 
 	// turn
 	dx = ny  * 0.5f;
 	dy = -nx * 0.5f;
 
 	// extend
-	float ex = nx * 0.5f;
-	float ey = ny * 0.5f;
+	ex = nx * 0.5f;
+	ey = ny * 0.5f;
 
 	// offset
-	float offset = 0.5f;
+	offset = 0.5f;
 
 	// triangle
 	outv[0] = v1[0] - ex - dx + offset;
@@ -4036,7 +4049,7 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 
 }
 
-void VIDOGLVdp1PolylineDraw(void)
+void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    s16 v[8];
    float line_poygon[8];
@@ -4161,7 +4174,7 @@ void VIDOGLVdp1PolylineDraw(void)
    if (color & 0x8000)
 	   *texture.textdata = SAT2YAB1(alpha, color);
    else{
-	   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+      Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
 
@@ -4273,7 +4286,7 @@ void VIDOGLVdp1PolylineDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1LineDraw(void)
+void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    s16 v[4];
    u16 color;
@@ -4378,14 +4391,14 @@ void VIDOGLVdp1LineDraw(void)
    if (color & 0x8000)
       *texture.textdata = SAT2YAB1(alpha,color);
    else{
-	   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+      Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1UserClipping(void)
+void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs)
 {
    Vdp1Regs->userclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
    Vdp1Regs->userclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
@@ -4395,7 +4408,7 @@ void VIDOGLVdp1UserClipping(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1SystemClipping(void)
+void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
    Vdp1Regs->systemclipX1 = 0;
    Vdp1Regs->systemclipY1 = 0;
@@ -4405,7 +4418,7 @@ void VIDOGLVdp1SystemClipping(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1LocalCoordinate(void)
+void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
 {
    Vdp1Regs->localX = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
    Vdp1Regs->localY = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
@@ -4443,7 +4456,7 @@ void VIDOGLVdp2DrawEnd(void)
 static void Vdp2DrawBackScreen(void)
 {
    u32 scrAddr;
-   int dot, y;
+   int dot;
   
    static unsigned char lineColors[512 * 3];
    static int line[512*4];
@@ -4452,7 +4465,6 @@ static void Vdp2DrawBackScreen(void)
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x7) << 16) | Vdp2Regs->BKTAL) * 2;
    else
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x3) << 16) | Vdp2Regs->BKTAL) * 2;
-
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
    dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -4464,6 +4476,8 @@ static void Vdp2DrawBackScreen(void)
 #else
    if (Vdp2Regs->BKTAU & 0x8000)
    {
+		int y;
+
       for(y = 0; y < vdp2height; y++)
       {
          dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -4532,6 +4546,9 @@ static void Vdp2DrawLineColorScreen(void)
       return;
   }
 
+  if (!line_pixel_data)
+	  return;
+
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
   } else{
@@ -4577,7 +4594,7 @@ static void Vdp2DrawNBG0(void)
       info.enable = Vdp2Regs->BGON & 0x20;
 
       // Read in Parameter B
-      Vdp2ReadRotationTable(1, &parameter);
+      Vdp2ReadRotationTable(1, &parameter, Vdp2Regs, Vdp2Ram);
 
       if((info.isbitmap = Vdp2Regs->CHCTLA & 0x2) != 0)
       {
@@ -4599,7 +4616,7 @@ static void Vdp2DrawNBG0(void)
       }
 
       info.rotatenum = 1;
-      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+      info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
       parameter.coefenab = Vdp2Regs->KTCTL & 0x100;
 
       info.LineColorBase = 0x00;
@@ -4665,7 +4682,7 @@ static void Vdp2DrawNBG0(void)
       else
          info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
       
-      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG0PlaneAddr;            
+      info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
    }
    else
       // Not enabled
@@ -4910,7 +4927,7 @@ static void Vdp2DrawNBG1(void)
       
       
    info.priority = (Vdp2Regs->PRINA >> 8) & 0x7;;
-   info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG1PlaneAddr;
+   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
       (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
@@ -5069,7 +5086,7 @@ static void Vdp2DrawNBG2(void)
    info.coordincx = info.coordincy = 1;
 
    info.priority = Vdp2Regs->PRINB & 0x7;;
-   info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG2PlaneAddr;
+   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
       (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
@@ -5157,7 +5174,7 @@ static void Vdp2DrawNBG3(void)
    info.coordincx = info.coordincy = 1;
 
    info.priority = (Vdp2Regs->PRINB >> 8) & 0x7;
-   info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG3PlaneAddr;
+   info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2NBG3PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
       (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
@@ -5222,10 +5239,10 @@ static void Vdp2DrawRBG0(void)
    info.linescrolltbl = 0;
    info.lineinc = 0;   
    
-   Vdp2ReadRotationTable(0, &paraA);
-   Vdp2ReadRotationTable(1, &paraB);
-   paraA.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
-   paraB.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+   Vdp2ReadRotationTable(0, &paraA, Vdp2Regs, Vdp2Ram);
+   Vdp2ReadRotationTable(1, &paraB, Vdp2Regs, Vdp2Ram);
+   paraA.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
+   paraB.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
    paraA.charaddr = (Vdp2Regs->MPOFR & 0x7) * 0x20000;
    paraB.charaddr = (Vdp2Regs->MPOFR & 0x70) * 0x2000;
    ReadPlaneSizeR(&paraA,Vdp2Regs->PLSZ >> 8);
@@ -5343,13 +5360,13 @@ static void Vdp2DrawRBG0(void)
          // Parameter A
          info.rotatenum = 0;
 		 info.rotatemode = 0;
-         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
          break;
       case 1:
          // Parameter B
          info.rotatenum = 1;
 		 info.rotatemode = 0;
-         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
          break;
       case 2:
          // Parameter A+B switched via coefficients
@@ -5361,7 +5378,7 @@ static void Vdp2DrawRBG0(void)
          VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
          info.rotatenum = 0;
 		 info.rotatemode = 1 + (Vdp2Regs->RPMD & 0x1);
-         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
          break;
    }
 
@@ -5427,9 +5444,9 @@ static void Vdp2DrawRBG0(void)
 	   
 	   for( i=0; i<16; i++ )
        {
-         paraA.PlaneAddr(&info,i);
+         paraA.PlaneAddr(&info,i, Vdp2Regs);
          paraA.PlaneAddrv[i] = info.addr;
-         paraB.PlaneAddr(&info,i);
+         paraB.PlaneAddr(&info, i, Vdp2Regs);
          paraB.PlaneAddrv[i] = info.addr;
        }
    }

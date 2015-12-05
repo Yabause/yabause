@@ -26,54 +26,6 @@
 #define VIDCORE_DEFAULT         -1
 #define VIDCORE_DUMMY           0
 
-typedef struct
-{
-   int id;
-   const char *Name;
-   int (*Init)(void);
-   void (*DeInit)(void);
-   void (*Resize)(unsigned int, unsigned int, int);
-   int (*IsFullscreen)(void);
-   // VDP1 specific
-   int (*Vdp1Reset)(void);
-   void (*Vdp1DrawStart)(void);
-   void (*Vdp1DrawEnd)(void);
-   void (*Vdp1NormalSpriteDraw)(void);
-   void (*Vdp1ScaledSpriteDraw)(void);
-   void (*Vdp1DistortedSpriteDraw)(void);
-   void (*Vdp1PolygonDraw)(void);
-   void (*Vdp1PolylineDraw)(void);
-   void (*Vdp1LineDraw)(void);
-   void (*Vdp1UserClipping)(void);
-   void (*Vdp1SystemClipping)(void);
-   void (*Vdp1LocalCoordinate)(void);
-   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
-   // VDP2 specific
-   int (*Vdp2Reset)(void);
-   void (*Vdp2DrawStart)(void);
-   void (*Vdp2DrawEnd)(void);
-   void (*Vdp2DrawScreens)(void);
-   void (*GetGlSize)(int *width, int *height);
-} VideoInterface_struct;
-
-extern VideoInterface_struct *VIDCore;
-extern VideoInterface_struct VIDDummy;
-
-extern u8 * Vdp1Ram;
-
-u8 FASTCALL	Vdp1RamReadByte(u32);
-u16 FASTCALL	Vdp1RamReadWord(u32);
-u32 FASTCALL	Vdp1RamReadLong(u32);
-void FASTCALL	Vdp1RamWriteByte(u32, u8);
-void FASTCALL	Vdp1RamWriteWord(u32, u16);
-void FASTCALL	Vdp1RamWriteLong(u32, u32);
-u8 FASTCALL Vdp1FrameBufferReadByte(u32);
-u16 FASTCALL Vdp1FrameBufferReadWord(u32);
-u32 FASTCALL Vdp1FrameBufferReadLong(u32);
-void FASTCALL Vdp1FrameBufferWriteByte(u32, u8);
-void FASTCALL Vdp1FrameBufferWriteWord(u32, u16);
-void FASTCALL Vdp1FrameBufferWriteLong(u32, u32);
-
 typedef struct {
    u16 TVMR;
    u16 FBCR;
@@ -103,6 +55,58 @@ typedef struct {
    u16 userclipX2;
    u16 userclipY2;
 } Vdp1;
+
+typedef struct
+{
+   int id;
+   const char *Name;
+   int (*Init)(void);
+   void (*DeInit)(void);
+   void (*Resize)(unsigned int, unsigned int, int);
+   int (*IsFullscreen)(void);
+   // VDP1 specific
+   int (*Vdp1Reset)(void);
+   void (*Vdp1DrawStart)(void);
+   void (*Vdp1DrawEnd)(void);
+   void(*Vdp1NormalSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1ScaledSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolygonDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolylineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1LineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1UserClipping)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1SystemClipping)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
+   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
+   // VDP2 specific
+   int (*Vdp2Reset)(void);
+   void (*Vdp2DrawStart)(void);
+   void (*Vdp2DrawEnd)(void);
+   void (*Vdp2DrawScreens)(void);
+   void (*GetGlSize)(int *width, int *height);
+} VideoInterface_struct;
+
+extern VideoInterface_struct *VIDCore;
+extern VideoInterface_struct VIDDummy;
+
+extern u8 * Vdp1Ram;
+
+u8 FASTCALL	Vdp1RamReadByte(u32);
+u16 FASTCALL	Vdp1RamReadWord(u32);
+u32 FASTCALL	Vdp1RamReadLong(u32);
+void FASTCALL	Vdp1RamWriteByte(u32, u8);
+void FASTCALL	Vdp1RamWriteWord(u32, u16);
+void FASTCALL	Vdp1RamWriteLong(u32, u32);
+u8 FASTCALL Vdp1FrameBufferReadByte(u32);
+u16 FASTCALL Vdp1FrameBufferReadWord(u32);
+u32 FASTCALL Vdp1FrameBufferReadLong(u32);
+void FASTCALL Vdp1FrameBufferWriteByte(u32, u8);
+void FASTCALL Vdp1FrameBufferWriteWord(u32, u16);
+void FASTCALL Vdp1FrameBufferWriteLong(u32, u32);
+
+void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
 
 extern Vdp1 * Vdp1Regs;
 
@@ -150,7 +154,7 @@ void FASTCALL	Vdp1WriteLong(u32, u32);
 
 void Vdp1Draw(void);
 void Vdp1NoDraw(void);
-void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr);
+void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
 
 int Vdp1SaveState(FILE *fp);
 int Vdp1LoadState(FILE *fp, int version, int size);
