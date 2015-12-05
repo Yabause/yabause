@@ -5627,7 +5627,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W( vdp2rotationparameter_
    float kval;
    int   kdata;
       
-   kdata = T1ReadLong(Vdp2Ram, (param->coeftbladdr&0x7FFFF) + (index<<2) );
+   kdata = T1ReadLong(Vdp2Ram, (param->coeftbladdr+(index << 2))& 0x7FFFF) ;
    if( kdata & 0x80000000 ) return NULL;
 
    kval = (float) (int) ((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536.0f;
@@ -5655,7 +5655,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W( vdp2rotationparameter_
    float kval;
    u16   kdata;
   
-   kdata = T1ReadWord(Vdp2Ram, param->coeftbladdr + (index<<1) );
+   kdata = T1ReadWord(Vdp2Ram, (param->coeftbladdr + (index<<1)) & 0x7FFFF );
    if( kdata & 0x8000 ) return NULL;
 
    kval = (float) (signed) ((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
