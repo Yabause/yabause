@@ -71,7 +71,7 @@ typedef struct
    int screenover;
    int msb;
    
-   void FASTCALL (* PlaneAddr)(void *, int);
+   void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
    u32 charaddr;
    int planew, planew_bits, planeh, planeh_bits;
    int MaxH,MaxV;
@@ -148,7 +148,7 @@ typedef struct
    int titan_shadow_enabled;
 
    float coordincx, coordincy;
-   void FASTCALL (* PlaneAddr)(void *, int);
+   void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
    u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int );
    u32 FASTCALL (*PostPixelFetchCalc)(void *, u32);
    int patternpixelwh;
@@ -183,7 +183,7 @@ typedef struct
    vdp2rotationparameter_struct * FASTCALL (*GetRParam)(void *, int h,int v);
    u32 LineColorBase;
    
-   void (*LoadLineParams)(void *, int line);
+   void (*LoadLineParams)(void *, int line, Vdp2* lines);
 } vdp2draw_struct;
 
 
@@ -231,7 +231,7 @@ typedef struct
    int msb;
    int linescreen;
 
-   void FASTCALL (* PlaneAddr)(void *, int);
+   void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
 } vdp2rotationparameterfp_struct;
 
 typedef struct
@@ -248,16 +248,16 @@ typedef struct
 #define divfixed(a,b) (((s64)(a) << FP_SIZE) / (b))
 #define decipart(v) (v & ((1 << FP_SIZE) - 1))
 
-void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i);
-void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i);
-void FASTCALL Vdp2NBG2PlaneAddr(vdp2draw_struct *info, int i);
-void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i);
-void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter);
-void Vdp2ReadRotationTableFP(int which, vdp2rotationparameterfp_struct *parameter);
-void FASTCALL Vdp2ParameterAPlaneAddr(vdp2draw_struct *info, int i);
-void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i);
-float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr);
-fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, u32 addr);
+void FASTCALL Vdp2NBG0PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
+void FASTCALL Vdp2NBG1PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
+void FASTCALL Vdp2NBG2PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
+void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
+void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, Vdp2* regs, u8* ram);
+void Vdp2ReadRotationTableFP(int which, vdp2rotationparameterfp_struct *parameter, Vdp2* regs, u8* ram);
+void FASTCALL Vdp2ParameterAPlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
+void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
+float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr, u8* ram);
+fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, u32 addr, u8* ram);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -497,12 +497,12 @@ static INLINE void ReadPatternData(vdp2draw_struct *info, u16 pnc, int chctlwh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadMosaicData(vdp2draw_struct *info, u16 mask)
+static INLINE void ReadMosaicData(vdp2draw_struct *info, u16 mask, Vdp2* regs)
 {
-   if (Vdp2Regs->MZCTL & mask)
+   if (regs->MZCTL & mask)
    {  
-      info->mosaicxmask = ((Vdp2Regs->MZCTL >> 8) & 0xF) + 1;
-      info->mosaicymask = (Vdp2Regs->MZCTL >> 12) + 1;
+      info->mosaicxmask = ((regs->MZCTL >> 8) & 0xF) + 1;
+      info->mosaicymask = (regs->MZCTL >> 12) + 1;
    }
    else
    {
@@ -531,26 +531,26 @@ static INLINE void ReadLineScrollData(vdp2draw_struct *info, u16 mask, u32 tbl)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadWindowCoordinates(int num, clipping_struct * clip)
+static INLINE void ReadWindowCoordinates(int num, clipping_struct * clip, Vdp2* regs)
 {
    if (num == 0)
    {
       // Window 0
-      clip->xstart = Vdp2Regs->WPSX0;
-      clip->ystart = Vdp2Regs->WPSY0 & 0x1FF;
-      clip->xend = Vdp2Regs->WPEX0;
-      clip->yend = Vdp2Regs->WPEY0 & 0x1FF;
+      clip->xstart = regs->WPSX0;
+      clip->ystart = regs->WPSY0 & 0x1FF;
+      clip->xend = regs->WPEX0;
+      clip->yend = regs->WPEY0 & 0x1FF;
    }
    else
    {
       // Window 1
-      clip->xstart = Vdp2Regs->WPSX1;
-      clip->ystart = Vdp2Regs->WPSY1 & 0x1FF;
-      clip->xend = Vdp2Regs->WPEX1;
-      clip->yend = Vdp2Regs->WPEY1 & 0x1FF;
+      clip->xstart = regs->WPSX1;
+      clip->ystart = regs->WPSY1 & 0x1FF;
+      clip->xend = regs->WPEX1;
+      clip->yend = regs->WPEY1 & 0x1FF;
    }
 
-   switch ((Vdp2Regs->TVMD >> 1) & 0x3)
+   switch ((regs->TVMD >> 1) & 0x3)
    {
       case 0: // Normal
          clip->xstart = (clip->xstart >> 1) & 0x1FF;
@@ -569,30 +569,23 @@ static INLINE void ReadWindowCoordinates(int num, clipping_struct * clip)
          clip->xend = (clip->xend & 0x3FF) >> 1;
          break;
    }
-
-   if ((Vdp2Regs->TVMD & 0xC0) == 0xC0)
-   {
-      // Double-density interlace
-      clip->ystart >>= 1;
-      clip->yend >>= 1;
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadWindowData(int wctl, clipping_struct *clip)
+static INLINE void ReadWindowData(int wctl, clipping_struct *clip, Vdp2* regs)
 {
    clip[0].xstart = clip[0].ystart = clip[0].xend = clip[0].yend = 0;
    clip[1].xstart = clip[1].ystart = clip[1].xend = clip[1].yend = 0;
 
    if (wctl & 0x2)
    {
-      ReadWindowCoordinates(0, clip);
+      ReadWindowCoordinates(0, clip, regs);
    }
 
    if (wctl & 0x8)
    {
-      ReadWindowCoordinates(1, clip + 1);
+      ReadWindowCoordinates(1, clip + 1, regs);
    }
 
    if (wctl & 0x20)
@@ -603,29 +596,29 @@ static INLINE void ReadWindowData(int wctl, clipping_struct *clip)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadLineWindowData(int *islinewindow, int wctl, u32 *linewnd0addr, u32 *linewnd1addr)
+static INLINE void ReadLineWindowData(int *islinewindow, int wctl, u32 *linewnd0addr, u32 *linewnd1addr, Vdp2* regs)
 {
    islinewindow[0] = 0;
 
-   if (wctl & 0x2 && Vdp2Regs->LWTA0.all & 0x80000000)
+   if (wctl & 0x2 && regs->LWTA0.all & 0x80000000)
    {
       islinewindow[0] |= 0x1;
-      linewnd0addr[0] = (Vdp2Regs->LWTA0.all & 0x7FFFE) << 1;
+      linewnd0addr[0] = (regs->LWTA0.all & 0x7FFFE) << 1;
    }
-   if (wctl & 0x8 && Vdp2Regs->LWTA1.all & 0x80000000)
+   if (wctl & 0x8 && regs->LWTA1.all & 0x80000000)
    {
       islinewindow[0] |= 0x2;
-      linewnd1addr[0] = (Vdp2Regs->LWTA1.all & 0x7FFFE) << 1;
+      linewnd1addr[0] = (regs->LWTA1.all & 0x7FFFE) << 1;
    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void ReadOneLineWindowClip(clipping_struct *clip, u32 *linewndaddr)
+static INLINE void ReadOneLineWindowClip(clipping_struct *clip, u32 *linewndaddr, u8* ram, Vdp2* regs)
 {
-   clip->xstart = T1ReadWord(Vdp2Ram, *linewndaddr);
+   clip->xstart = T1ReadWord(ram, *linewndaddr);
    *linewndaddr += 2;
-   clip->xend = T1ReadWord(Vdp2Ram, *linewndaddr);
+   clip->xend = T1ReadWord(ram, *linewndaddr);
    *linewndaddr += 2;
 
    /* Ok... that looks insane... but there's at least two games (3D Baseball and
@@ -641,7 +634,7 @@ static INLINE void ReadOneLineWindowClip(clipping_struct *clip, u32 *linewndaddr
    clip->xstart &= 0x3FF;
    clip->xend &= 0x3FF;
 
-   switch ((Vdp2Regs->TVMD >> 1) & 0x3)
+   switch ((regs->TVMD >> 1) & 0x3)
    {
       case 0: // Normal
          clip->xstart = (clip->xstart >> 1) & 0x1FF;
@@ -662,17 +655,17 @@ static INLINE void ReadOneLineWindowClip(clipping_struct *clip, u32 *linewndaddr
    }
 }
 
-static INLINE void ReadLineWindowClip(int islinewindow, clipping_struct *clip, u32 *linewnd0addr, u32 *linewnd1addr)
+static INLINE void ReadLineWindowClip(int islinewindow, clipping_struct *clip, u32 *linewnd0addr, u32 *linewnd1addr, u8* ram, Vdp2* regs)
 {
    if (islinewindow)
    {
       // Fetch new xstart and xend values from table
       if (islinewindow & 0x1)
          // Window 0
-         ReadOneLineWindowClip(clip, linewnd0addr);
+         ReadOneLineWindowClip(clip, linewnd0addr, ram, regs);
       if (islinewindow & 0x2)
          // Window 1
-         ReadOneLineWindowClip(clip + 1, linewnd1addr);
+         ReadOneLineWindowClip(clip + 1, linewnd1addr, ram, regs);
    }
 }
 
@@ -710,18 +703,18 @@ static INLINE int IsScreenRotatedFP(vdp2rotationparameterfp_struct *parameter)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void Vdp2ReadCoefficient(vdp2rotationparameter_struct *parameter, u32 addr)
+static INLINE void Vdp2ReadCoefficient(vdp2rotationparameter_struct *parameter, u32 addr, u8* ram)
 {
    switch (parameter->coefmode)
    {
       case 0: // coefficient for kx and ky
-         parameter->kx = parameter->ky = Vdp2ReadCoefficientMode0_2(parameter, addr);
+         parameter->kx = parameter->ky = Vdp2ReadCoefficientMode0_2(parameter, addr, ram);
          break;
       case 1: // coefficient for kx
-         parameter->kx = Vdp2ReadCoefficientMode0_2(parameter, addr);
+         parameter->kx = Vdp2ReadCoefficientMode0_2(parameter, addr, ram);
          break;
       case 2: // coefficient for ky
-         parameter->ky = Vdp2ReadCoefficientMode0_2(parameter, addr);
+         parameter->ky = Vdp2ReadCoefficientMode0_2(parameter, addr, ram);
          break;
       case 3: // coefficient for Xp
       {
@@ -729,13 +722,13 @@ static INLINE void Vdp2ReadCoefficient(vdp2rotationparameter_struct *parameter, 
 
          if (parameter->coefdatasize == 2)
          {
-            i = T1ReadWord(Vdp2Ram, addr);
+            i = T1ReadWord(ram, addr);
             parameter->msb = (i >> 15) & 0x1;
             parameter->Xp = (float) (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) / 4;
          }
          else
          {
-            i = T1ReadLong(Vdp2Ram, addr);
+            i = T1ReadLong(ram, addr);
             parameter->msb = (i >> 31) & 0x1;
             parameter->Xp = (float) (signed) ((i & 0x007FFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) / 256;
          }
@@ -746,18 +739,18 @@ static INLINE void Vdp2ReadCoefficient(vdp2rotationparameter_struct *parameter, 
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void Vdp2ReadCoefficientFP(vdp2rotationparameterfp_struct *parameter, u32 addr)
+static INLINE void Vdp2ReadCoefficientFP(vdp2rotationparameterfp_struct *parameter, u32 addr, u8* ram)
 {
    switch (parameter->coefmode)
    {
       case 0: // coefficient for kx and ky
-         parameter->kx = parameter->ky = Vdp2ReadCoefficientMode0_2FP(parameter, addr);
+         parameter->kx = parameter->ky = Vdp2ReadCoefficientMode0_2FP(parameter, addr, ram);
          break;
       case 1: // coefficient for kx
-         parameter->kx = Vdp2ReadCoefficientMode0_2FP(parameter, addr);
+         parameter->kx = Vdp2ReadCoefficientMode0_2FP(parameter, addr, ram);
          break;
       case 2: // coefficient for ky
-         parameter->ky = Vdp2ReadCoefficientMode0_2FP(parameter, addr);
+         parameter->ky = Vdp2ReadCoefficientMode0_2FP(parameter, addr, ram);
          break;
       case 3: // coefficient for Xp
       {
@@ -765,13 +758,13 @@ static INLINE void Vdp2ReadCoefficientFP(vdp2rotationparameterfp_struct *paramet
 
          if (parameter->coefdatasize == 2)
          {
-            i = T1ReadWord(Vdp2Ram, addr);
+            i = T1ReadWord(ram, addr);
             parameter->msb = (i >> 15) & 0x1;
             parameter->Xp = (signed) ((i & 0x7FFF) | (i & 0x4000 ? 0xFFFFC000 : 0x00000000)) * 16384;
          }
          else
          {
-            i = T1ReadLong(Vdp2Ram, addr);
+            i = T1ReadLong(ram, addr);
             parameter->msb = (i >> 31) & 0x1;
             parameter->linescreen = (i >> 24) & 0x7F;
             parameter->Xp = (signed) ((i & 0x007FFFFF) | (i & 0x00800000 ? 0xFF800000 : 0x00000000)) * 256;

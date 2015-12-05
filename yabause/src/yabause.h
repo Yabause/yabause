@@ -46,6 +46,7 @@ typedef struct
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
    int usethreads;
+   int numthreads;
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
 } yabauseinit_struct;
@@ -93,6 +94,7 @@ typedef struct
    int CurSH2FreqType;
    int IsPal;
    u8 UseThreads;
+   int NumThreads;
    u8 IsSSH2Running;
    u64 OneFrameTime;
    u64 tickfreq;
