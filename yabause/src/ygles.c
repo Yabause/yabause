@@ -536,6 +536,7 @@ void YglTMAllocate(YglTexture * output, unsigned int w, unsigned int h, unsigned
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   if (_Ygl->smallfbo == 0) {
 
+	  GLuint error;
     YabThreadLock( _Ygl->mutex );
 
     glGenTextures(1, &_Ygl->smallfbotex);
