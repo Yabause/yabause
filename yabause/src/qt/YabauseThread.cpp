@@ -36,6 +36,8 @@ YabauseThread::YabauseThread( QObject* o )
 	mPause = true;
 	mTimerId = -1;
 	mInit = -1;
+	memset(&mYabauseConf, 0, sizeof(mYabauseConf));
+	showFPS = false;
 }
 
 YabauseThread::~YabauseThread()
@@ -312,9 +314,13 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
 	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() ); 
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
+	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
+	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
 	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
+	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
+	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
 	
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
@@ -356,6 +362,10 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.mpegpath = 0;
 	mYabauseConf.cartpath = 0;
 	mYabauseConf.videoformattype = VIDEOFORMATTYPE_NTSC;
+	mYabauseConf.skip_load = 0;
+	int numThreads = QThread::idealThreadCount();	
+	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;
+	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

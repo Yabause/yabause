@@ -41,12 +41,13 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
-static Vdp2 Vdp2Lines[270];
+Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
 static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
+int vdp2_is_odd_frame = 0;
 
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
@@ -262,7 +263,7 @@ void Vdp2Reset(void) {
    Vdp2Regs->COBG = 0x0000;
    Vdp2Regs->COBB = 0x0000;
 
-   yabsys.VBlankLineCount = 224;
+   yabsys.VBlankLineCount = 225;
    Vdp2Internal.ColorMode = 0;
 
    Vdp2External.disptoggle = 0xFF;
@@ -383,8 +384,8 @@ void Vdp2HBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-Vdp2 * Vdp2RestoreRegs(int line) {
-   return line > 270 ? NULL : Vdp2Lines + line;
+Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
+   return line > 270 ? NULL : lines + line;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -552,7 +553,12 @@ void Vdp2VBlankOUT(void) {
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
 
-   Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
+   if (vdp2_is_odd_frame)
+      vdp2_is_odd_frame = 0;
+   else
+      vdp2_is_odd_frame = 1;
+
+   Vdp2Regs->TVSTAT = ((Vdp2Regs->TVSTAT & ~0x0008) & ~0x0002) | (vdp2_is_odd_frame << 1);
 
    if (skipnextframe && (! saved))
    {
@@ -743,7 +749,7 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
    {
       case 0x000:
          Vdp2Regs->TVMD = val;
-         yabsys.VBlankLineCount = 224+(val & 0x30);
+         yabsys.VBlankLineCount = 225+(val & 0x30);
          return;
       case 0x002:
          Vdp2Regs->EXTEN = val;
@@ -1197,7 +1203,7 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
 int Vdp2SaveState(FILE *fp)
 {
    int offset;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    offset = StateWriteHeader(fp, "VDP2", 1);
 
@@ -1220,7 +1226,7 @@ int Vdp2SaveState(FILE *fp)
 
 int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
 {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // Read registers
    yread(&check, (void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
