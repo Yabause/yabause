@@ -263,16 +263,19 @@ void UICheatSearch::on_pbRestart_clicked()
 
 void UICheatSearch::on_pbSearch_clicked()
 {
-   // Search low wram and high wram areas
-   setSearchTypes();
-   
-   for (int i = 0; i < search.count(); i++)
-   {
-      search[i].results = MappedMemorySearch(search[i].startAddr, search[i].endAddr, searchType,
-         leSearchValue->text().toLatin1(), search[i].results, &search[i].numResults);
-   }
+	if (LowWram && HighWram)
+	{
+		// Search low wram and high wram areas
+		setSearchTypes();
 
-   listResults();
+		for (int i = 0; i < search.count(); i++)
+		{
+			search[i].results = MappedMemorySearch(search[i].startAddr, search[i].endAddr, searchType,
+				leSearchValue->text().toLatin1(), search[i].results, &search[i].numResults);
+		}
+
+		listResults();
+	}
 }
 
 void UICheatSearch::on_pbAddCheat_clicked()
