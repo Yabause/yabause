@@ -334,6 +334,12 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                      {
                         // Transfer Data
                         const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+
+                        if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
+                        {
+                           CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
+                           return 0;
+                        }
 #ifdef WORDS_BIGENDIAN
                         val = *((const u32 *) ptr);
 #else
