@@ -106,6 +106,12 @@ void YglTMDeInit(void);
 void YglTMReset(void);
 void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 
+#define VDP1_COLOR_CL_REPLACE 0x00
+#define VDP1_COLOR_CL_SHADOW 0x10
+#define VDP1_COLOR_CL_HALF_LUMINACE 0x20
+#define VDP1_COLOR_CL_GROW_LUMINACE 0x30
+#define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
+
 enum
 {
    PG_NORMAL=1,
@@ -114,6 +120,7 @@ enum
    PG_VFP1_STARTUSERCLIP,
    PG_VFP1_ENDUSERCLIP,
    PG_VFP1_HALFTRANS,    
+   PG_VFP1_SHADOW,
    PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
    PG_VDP2_ADDBLEND,
    PG_VDP2_DRAWFRAMEBUFF,    

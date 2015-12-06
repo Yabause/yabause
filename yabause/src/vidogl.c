@@ -137,6 +137,7 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
+static INLINE u16 Vdp2ColorRamGetColorRaw(u32 colorindex);
 
 // Window Parameter
 static vdp2WindowInfo * m_vWindinfo0 = NULL;
@@ -261,7 +262,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorBank + colorOffset) << 2) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -366,7 +367,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -402,7 +403,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -438,7 +439,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -594,7 +595,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   *texture->textdata++ = SAT2YAB1(alpha, colorindex);
 				   }else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -632,7 +633,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -853,7 +854,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -902,7 +903,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -953,7 +954,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -1296,6 +1297,25 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+static u16 Vdp2ColorRamGetColorRaw(u32 colorindex){
+	switch (Vdp2Internal.ColorMode)
+	{
+	case 0:
+	case 1:
+	{
+		colorindex <<= 1;
+		return T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+	}
+	case 2:
+	{
+		colorindex <<= 2;
+		colorindex &= 0xFFF;
+		return T2ReadWord(Vdp2ColorRam, colorindex);
+	}
+	default: break;
+	}
+	return 0;
+}
 
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
 {
@@ -3278,7 +3298,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    sprite.dst=0;
-   sprite.blendmode=0;
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
 
    CMDXA = cmd.CMDXA;
@@ -3317,7 +3337,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       tmp |= 0x00010000;
-      sprite.blendmode = 0x80;
+	  sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }
    
    if((CMDPMOD & 0x8000) != 0)
@@ -3387,7 +3407,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    sprite.dst=0;
-   sprite.blendmode=0;
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
 
    if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
@@ -3497,7 +3517,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       tmp |= 0x00010000;
-      sprite.blendmode = 0x80;
+	  sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }  
    
    // MSB
@@ -3571,7 +3591,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-   sprite.blendmode=0;
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0; 
    sprite.dst = 1;
    sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
@@ -3697,7 +3717,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
       tmp |= 0x00010000;
-      sprite.blendmode = 0x80;
+	  sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }   
 
    // MSB
@@ -3781,7 +3801,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
    if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
 
-   sprite.blendmode = 0;
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.dst = 0;
 
 
@@ -3878,7 +3898,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    // Half trans parent to VDP1 Framebuffer
    if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
-	   sprite.blendmode = 0x80;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }   
 
    // Check if the Gouraud shading bit is set and the color mode is RGB
@@ -3918,9 +3938,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.cog = 0x00;
    sprite.cob = 0x00;
 
-
                      // VDP2 Pallet Only
-   if (color == 0 || ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)==0x00) )
+   if (IS_REPLACE(CMDPMOD) && (color == 0 || ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20) == 0x00)) )
    {
 	  YglQuad(&sprite, &texture, NULL);
       alpha = 0;   
@@ -3929,8 +3948,26 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  return;
    }
 
-
    alpha = 0xF8;
+   if (IS_REPLACE(CMDPMOD)){
+	   alpha = 0xF8;
+   }
+   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
+	   alpha = 0xF8;
+	   sprite.blendmode = VDP1_COLOR_CL_SHADOW;
+   }
+   else if (IS_HALF_LUMINANCE(CMDPMOD)){
+	   alpha = 0xF8;
+
+   }
+   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
+	   alpha = 0x80;
+   }
+
+   if (IS_MESH(CMDPMOD)){
+	   alpha = 0x80;
+   }
+
    if (gouraud == 1)
    {
 	   YglQuadGrowShading(&sprite, &texture, col, NULL);
@@ -3938,26 +3975,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    else{
 	   YglQuadGrowShading(&sprite, &texture, NULL, NULL);
    }
-
-   if (IS_REPLACE(CMDPMOD)){
-	   alpha = 0xF8;
-   }
-   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
-	   alpha = 0x00;
-   }
-   else if (IS_HALF_LUMINANCE(CMDPMOD)){
-	   alpha = 0xF8;
-	   
-   }
-   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
-	   alpha = 0x80;
-   }
-   
-   if (IS_MESH(CMDPMOD)){
-	   alpha = 0x80;
-   }
-
-
 
    if (Vdp2Regs->SDCTL & 0x100 ){
    }
@@ -4066,7 +4083,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int gouraud = 0;
    u16 color2;
 
-   polygon.blendmode=0;   
+   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
    polygon.linescreen = 0;
    polygon.dst = 0;
    v[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C) );
@@ -4086,7 +4103,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    // Half trans parent to VDP1 Framebuffer
    if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
-      polygon.blendmode = 0x80;
+	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }     
       
    if (color & 0x8000)
@@ -4301,7 +4318,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int gouraud = 0;
    u16 color2;
 
-   polygon.blendmode=0;
+   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
    polygon.linescreen = 0;
    polygon.dst = 0;
    v[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
@@ -4316,7 +4333,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    // Half trans parent to VDP1 Framebuffer
    if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
    {
-      polygon.blendmode = 0x80;
+	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }  
 
    if (color & 0x8000)
