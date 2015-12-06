@@ -1185,7 +1185,8 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    if( (input->blendmode&0x03) == 2 )
    {
       prg = PG_VDP2_ADDBLEND;
-   }else if( input->blendmode == 0x80 )
+   }
+   else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
       prg = PG_VFP1_HALFTRANS;
    }else if( input->priority == 8 )
@@ -1331,9 +1332,13 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    if( (input->blendmode&0x03) == 2 )
    {
       prg = PG_VDP2_ADDBLEND;
-   }else if( input->blendmode == 0x80 )
+   }
+   else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
       prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+   }
+   else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
+	   prg = PG_VFP1_SHADOW;
    }
 
    if (input->linescreen){
@@ -1607,7 +1612,8 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
    if( (input->blendmode&0x03) == 2 )
    {
       prg = PG_VDP2_ADDBLEND;
-   }else if( input->blendmode == 0x80 )
+   }
+   else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
       prg = PG_VFP1_HALFTRANS;
    }else if( input->priority == 8 )
@@ -1720,10 +1726,14 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
   if( (input->blendmode&0x03) == 2 )
    {
       prg = PG_VDP2_ADDBLEND;
-   }else if( input->blendmode == 0x80 )
-   {
+  }
+  else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
+  {
       prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
-   }
+  }
+  else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
+	  prg = PG_VFP1_SHADOW;
+  }
 
    if (input->linescreen){
      prg = PG_LINECOLOR_INSERT;

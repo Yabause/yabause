@@ -541,6 +541,97 @@ int Ygl_cleanupHalfTrans(void * p )
 }
 
 /*------------------------------------------------------------------------------------
+*  VDP1 Shadow Operation
+*    hard/vdp1/hon/p06_37.htm
+* ----------------------------------------------------------------------------------*/
+static int id_sh_sprite;
+static int id_sh_fbo;
+static int id_sh_fbowidth;
+static int id_sh_fboheight;
+
+const GLchar Yglprg_vdp1_shadow_v[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"uniform mat4 u_mvpMatrix;                \n"
+"layout (location = 0) in vec4 a_position;               \n"
+"layout (location = 1) in vec4 a_texcoord;               \n"
+"layout (location = 2) in vec4 a_grcolor;                \n"
+"out  vec4 v_texcoord;               \n"
+"out  vec4 v_vtxcolor;               \n"
+"void main() {                            \n"
+"   v_vtxcolor  = a_grcolor;              \n"
+"   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+"   v_texcoord.s  = v_texcoord.s/2048.0; \n"
+"   v_texcoord.t  = v_texcoord.t/1024.0; \n"
+"   gl_Position = a_position*u_mvpMatrix; \n"
+"}\n";
+
+const GLchar * pYglprg_vdp1_shadow_v[] = { Yglprg_vdp1_shadow_v, NULL };
+
+const GLchar Yglprg_vdp1_shadow_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                                                                     \n"
+"uniform sampler2D u_sprite;                                                                  \n"
+"uniform sampler2D u_fbo;                                                                     \n"
+"uniform int u_fbowidth;                                                                      \n"
+"uniform int u_fbohegiht;                                                                     \n"
+"in vec4 v_texcoord;                                                                     \n"
+"out vec4 fragColor; \n "
+"void main() {                                                                                \n"
+"  vec2 addr = v_texcoord.st;                                                                 \n"
+"  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));   \n"
+"  addr.s = addr.s / (v_texcoord.q);                                                          \n"
+"  addr.t = addr.t / (v_texcoord.q);                                                          \n"
+"  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
+"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+"  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
+"  if( fboColor.a > 0.0 && spriteColor.a > 0.0 )                                              \n"
+"  {                                                                                          \n"
+"    fragColor = vec4(fboColor.r/2,fboColor.g/2,fboColor.b/2,1.0);                                           \n"
+"    fragColor.a = fboColor.a;                                                             \n"
+"  }else{                                                                                     \n"
+"    fragColor = vec4(1.0,0.0,0.0,1.0); //fboColor;                                                              \n"
+"  }                                                                                          \n"
+"}\n";
+const GLchar * pYglprg_vdp1_shadow_f[] = { Yglprg_vdp1_shadow_f, NULL };
+
+int Ygl_uniformVdp1Shadow(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	glEnableVertexAttribArray(prg->vertexp);
+	glEnableVertexAttribArray(prg->texcoordp);
+
+	glUniform1i(id_hf_sprite, 0);
+	glUniform1i(id_hf_fbo, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
+	glUniform1i(id_hf_fbowidth, GlWidth);
+	glUniform1i(id_hf_fboheight, GlHeight);
+	glActiveTexture(GL_TEXTURE0);
+#if !defined(_OGLES3_)
+	if (glTextureBarrierNV) glTextureBarrierNV();
+#endif
+	return 0;
+}
+
+int Ygl_cleanupVdp1Shadow(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+	return 0;
+}
+
+
+/*------------------------------------------------------------------------------------
  *  VDP1 UserClip Operation
  * ----------------------------------------------------------------------------------*/
 int Ygl_uniformStartUserClip(void * p )
@@ -1128,6 +1219,18 @@ int YglProgramInit()
    id_hf_fbowidth = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS], (const GLchar *)"u_fbowidth");
    id_hf_fboheight = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS], (const GLchar *)"u_fbohegiht");
 
+   YGLLOG("PG_VFP1_SHADOW\n");
+
+   //
+   if (YglInitShader(PG_VFP1_SHADOW, pYglprg_vdp1_shadow_v, pYglprg_vdp1_shadow_f) != 0)
+	   return -1;
+
+   id_sh_sprite = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_sprite");
+   id_sh_fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbo");
+   id_sh_fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbowidth");
+   id_sh_fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbohegiht");
+
+
    YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS\n");
 
    if( YglInitShader( PG_VFP1_GOURAUDSAHDING_HALFTRANS, pYglprg_vdp1_gouraudshading_hf_v, pYglprg_vdp1_gouraudshading_hf_f ) != 0 )
@@ -1299,6 +1402,16 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_VFP1_HALFTRANS],(const GLchar *)"u_texMatrix");
+
+   }
+   else if (prgid == PG_VFP1_SHADOW)
+   {
+	   level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1Shadow;
+	   level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1Shadow;
+	   current->vertexp = 0;
+	   current->texcoordp = 1;
+	   current->mtxModelView = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_mvpMatrix");
+	   current->mtxTexture = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_texMatrix");
 
    }
    else if( prgid == PG_VFP1_GOURAUDSAHDING_HALFTRANS )
