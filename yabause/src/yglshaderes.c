@@ -45,7 +45,7 @@ static void Ygl_printShaderError( GLuint shader )
     if (infoLog != NULL) {
       GLsizei length;
       glGetShaderInfoLog(shader, bufSize, &length, infoLog);
-      YGLLOG("Shaderlog:\n%s\n", infoLog);
+	  YGLLOG("Shaderlog:\n%s\n", infoLog);
       free(infoLog);
     }
   }
@@ -594,10 +594,8 @@ const GLchar Yglprg_vdp1_shadow_f[] =
 "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
 "  if( fboColor.a > 0.0 && spriteColor.a > 0.0 )                                              \n"
 "  {                                                                                          \n"
-"    fragColor = vec4(fboColor.r/2,fboColor.g/2,fboColor.b/2,1.0);                                           \n"
-"    fragColor.a = fboColor.a;                                                             \n"
+"    fragColor = vec4(fboColor.r*0.5,fboColor.g*0.5,fboColor.b*0.5,fboColor.a);                                           \n"
 "  }else{                                                                                     \n"
-"    fragColor = vec4(1.0,0.0,0.0,1.0); //fboColor;                                                              \n"
 "  }                                                                                          \n"
 "}\n";
 const GLchar * pYglprg_vdp1_shadow_f[] = { Yglprg_vdp1_shadow_f, NULL };
