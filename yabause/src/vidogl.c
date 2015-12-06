@@ -262,7 +262,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -835,26 +835,25 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x3F;
+				dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-			   else if (dot == 0x0000){ *texture->textdata++ = 0x00; }
                else if( (dot == 0x3F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
-			   else if ((dot | colorBank) == nromal_shadow){
+			   else if (((dot & 0x3F)|colorBank) == nromal_shadow){
 				   u32 talpha = (u8)0xF8 - (u8)0x80;
 				   talpha |= priority;
 				   *texture->textdata++ = (talpha << 24);
 			   }
 			   else{
-				   const int colorindex = (dot | colorBank) + colorOffset;
+				   const int colorindex = ((dot&0x3F)|colorBank)+colorOffset;
 				   if ((colorindex & 0x8000) && (Vdp2Regs->SPCTL & 0x20)){
 					   *texture->textdata++ = SAT2YAB1(alpha, colorindex);
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -885,25 +884,24 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) &0x7F;
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-			   else if (dot == 0x0000){ *texture->textdata++ = 0x00; }
                else if( (dot == 0x7F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
-			   else if ((dot | colorBank) == nromal_shadow){
+			   else if (((dot & 0x7F) | colorBank) == nromal_shadow){
 				   u32 talpha = (u8)0xF8 - (u8)0x80;
 				   talpha |= priority;
 				   *texture->textdata++ = (talpha << 24);
 			   }else{
-				   const int colorindex = (dot | colorBank) + colorOffset;
+				   const int colorindex = ((dot&0x7F)|colorBank) + colorOffset;
 				   if ((colorindex & 0x8000) && (Vdp2Regs->SPCTL & 0x20)){
 					   *texture->textdata++ = SAT2YAB1(alpha, colorindex);
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
