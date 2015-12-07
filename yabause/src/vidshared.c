@@ -133,13 +133,52 @@ void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+int Vdp2GetBank(Vdp2* regs, u32 addr){
+	
+	// 4Mbit mode
+	if ( (regs->VRSIZE&0x8000) == 0){
+
+		if (addr >= 0 && addr < 0x20000){
+			return VDP2_VRAM_A0;
+		}
+		else if (addr >= 0x20000 && addr < 0x40000){
+			return VDP2_VRAM_A1;
+		}
+		else if (addr >= 0x40000 && addr < 0x60000){
+			return VDP2_VRAM_B0;
+		}
+		else if (addr >= 0x60000 && addr < 0x80000){
+			return VDP2_VRAM_B1;
+		}
+
+	}
+	// 8mbit mode
+	else{
+		if (addr >= 0 && addr < 0x40000){
+			return VDP2_VRAM_A0;
+		}
+		else if (addr >= 0x40000 && addr < 0x80000){
+			return VDP2_VRAM_A1;
+		}
+		else if (addr >= 0x80000 && addr < 0xc0000){
+			return VDP2_VRAM_B0;
+		}
+		else if (addr >= 0xc0000 && addr < 0x100000){
+			return VDP2_VRAM_B1;
+		}
+	}
+
+	return 0;
+}
 
 void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, Vdp2* regs, u8* ram)
 {
    s32 i;
    u32 addr;
+   int bank;
 
    addr = regs->RPTA.all << 1;
+   bank = Vdp2GetBank(regs, addr);
 
    if (which == 0)
    {
@@ -250,6 +289,8 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
 
    if (parameter->coefenab)
    {
+	  int perdot = 0;
+
       // Read in coefficient values
       i = T1ReadLong(ram, addr);
       parameter->KAst = (float)(unsigned)(i & 0xFFFFFFC0) / 65536;
@@ -259,27 +300,31 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
       parameter->deltaKAst = (float) (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
       addr += 4;     
 
-      i = T1ReadLong(ram, addr);
-      parameter->deltaKAx = (float) (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
-	  addr += 4;
-
-	  // <workaround>
-	  // I hate this code. but this special operation is needed for Sonic R to avoid show stopper.
-	  // I hope this issue will be solved in a proper way. 
-	  // My investigation result is here https://github.com/devmiyax/yabause/issues/18
-	  // devMiyax.
-		#define YGAMEID_SONICR_J (0x00303731392d5347)
-		#define YGAMEID_SONICR_EU (0x30303831382d4b4d)
-		#define YGAMEID_SONICR_BR (0x0000363033313931)
-		#define YGAMEID_SONICR_US (0x0000003030383138)
-	  u64 gameid = Cs2GetGameId();
-	  if (gameid == YGAMEID_SONICR_J || 
-		  gameid == YGAMEID_SONICR_BR ||
-		  gameid == YGAMEID_SONICR_EU ||
-		  gameid == YGAMEID_SONICR_US ){
-	  	parameter->deltaKAx = 0.0f;
+	  // hard/vdp2/hon/p06_20.htm#no6_21
+	  switch (bank)
+	  {
+	  case VDP2_VRAM_A0:
+		  perdot = (regs->RAMCTL&0x03);
+		  break;
+	  case VDP2_VRAM_A1:
+		  perdot = ((regs->RAMCTL>>2) & 0x03);
+		  break;
+	  case VDP2_VRAM_B0:
+		  perdot = ((regs->RAMCTL >> 4) & 0x03);
+		  break;
+	  case VDP2_VRAM_B1:
+		  perdot = ((regs->RAMCTL >> 6) & 0x03);
+		  break;
 	  }
-	  // </workaround>
+
+	  if (perdot != 1){
+		  parameter->deltaKAx = 0.0f;
+	  }
+	  else{
+		  i = T1ReadLong(ram, addr);
+		  parameter->deltaKAx = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
+	  }
+	  addr += 4;
 
       if (which == 0)
       {
@@ -292,10 +337,14 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
          parameter->coefdatasize = (regs->KTCTL & 0x200 ? 2 : 4);
          parameter->coeftbladdr = (((regs->KTAOF >> 8) & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
          parameter->coefmode = (regs->KTCTL >> 10) & 0x3;
+		 if (regs->RPMD == 0x02){
+			 parameter->deltaKAx = 0.0f; // hard/vdp2/hon/p06_35.htm#RPMD_
+		 }
       }
+
+
    }
    
-
    VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n"
        "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n"
        "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n"
