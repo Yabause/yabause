@@ -957,4 +957,12 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
 
 //////////////////////////////////////////////////////////////////////////////
 
+
+#define VDP2_VRAM_A0 (0)
+#define VDP2_VRAM_A1 (1)
+#define VDP2_VRAM_B0 (2)
+#define VDP2_VRAM_B1 (3)
+
+int Vdp2GetBank(Vdp2* regs, u32 addr);
+
 #endif
