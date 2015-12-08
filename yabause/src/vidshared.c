@@ -142,13 +142,24 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_A0;
 		}
 		else if (addr >= 0x20000 && addr < 0x40000){
-			return VDP2_VRAM_A1;
+			if (regs->RAMCTL & 0x10){
+				return VDP2_VRAM_A1;
+			}
+			else{
+				return VDP2_VRAM_A0;
+			}
+			
 		}
 		else if (addr >= 0x40000 && addr < 0x60000){
 			return VDP2_VRAM_B0;
 		}
 		else if (addr >= 0x60000 && addr < 0x80000){
-			return VDP2_VRAM_B1;
+			if (regs->RAMCTL & 0x20){
+				return VDP2_VRAM_B1;
+			}
+			else{
+				return VDP2_VRAM_B0;
+			}
 		}
 
 	}
@@ -158,13 +169,23 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_A0;
 		}
 		else if (addr >= 0x40000 && addr < 0x80000){
-			return VDP2_VRAM_A1;
+			if (regs->RAMCTL & 0x10){
+				return VDP2_VRAM_A1;
+			}
+			else{
+				return VDP2_VRAM_A0;
+			}
 		}
 		else if (addr >= 0x80000 && addr < 0xc0000){
 			return VDP2_VRAM_B0;
 		}
 		else if (addr >= 0xc0000 && addr < 0x100000){
-			return VDP2_VRAM_B1;
+			if (regs->RAMCTL & 0x20){
+				return VDP2_VRAM_B1;
+			}
+			else{
+				return VDP2_VRAM_B0;
+			}
 		}
 	}
 
