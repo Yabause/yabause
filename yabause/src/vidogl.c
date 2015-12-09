@@ -273,7 +273,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 					}
 				}
 				else{
-					color = Vdp2ColorRamGetColor(colorBank + colorOffset, alpha);
+					color =  Vdp2ColorRamGetColor(colorBank + colorOffset, alpha);
 				}
 			}
 		}
@@ -3834,6 +3834,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    sprite.linescreen = 0;
 
+
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
     
    if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
@@ -3972,7 +3973,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.cob = 0x00;
 
                      // VDP2 Pallet Only
-   if (IS_REPLACE(CMDPMOD) && (color == 0 || ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20) == 0x00)) )
+   if (IS_REPLACE(CMDPMOD) && (color == 0 || ((color == 0x8000) && (Vdp2Regs->SPCTL & 0x20) == 0x00)) )
    {
 	  YglQuad(&sprite, &texture, NULL);
       alpha = 0;   
@@ -3980,6 +3981,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  *texture.textdata = 0;
 	  return;
    }
+
 
    alpha = 0xF8;
    if (IS_REPLACE(CMDPMOD)){
@@ -4023,7 +4025,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    
    alpha |= priority;
-   if (color & 0x8000){
+   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20) ){
 	   *texture.textdata = SAT2YAB1(alpha, color);
    }else{
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
@@ -4233,7 +4235,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    alpha |= priority;
 
-   if (color & 0x8000)
+   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20) )
 	   *texture.textdata = SAT2YAB1(alpha, color);
    else{
       Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -4466,7 +4468,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    
 
 
-   if (color & 0x8000)
+   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20) )
       *texture.textdata = SAT2YAB1(alpha,color);
    else{
       Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
