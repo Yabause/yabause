@@ -595,7 +595,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   *texture->textdata++ = SAT2YAB1(alpha, colorindex);
 				   }else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -633,7 +633,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
