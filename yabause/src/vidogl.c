@@ -3970,6 +3970,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
 
    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+   color = cmd.CMDCOLR;
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
@@ -3989,7 +3990,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.cor = 0x00;
    sprite.cog = 0x00;
    sprite.cob = 0x00;
-
                      // VDP2 Pallet Only
    if (IS_REPLACE(CMDPMOD) && (color == 0 || ((color == 0x8000) && (Vdp2Regs->SPCTL & 0x20) == 0x00)) )
    {
@@ -3999,7 +3999,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  *texture.textdata = 0;
 	  return;
    }
-
 
    alpha = 0xF8;
    if (IS_REPLACE(CMDPMOD)){
@@ -4169,6 +4168,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    
 
    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+   color = cmd.CMDCOLR;
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
@@ -4424,6 +4424,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }  
 
    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+   color = cmd.CMDCOLR;
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
