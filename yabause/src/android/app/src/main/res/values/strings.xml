@@ -19,7 +19,8 @@
     <string name="input_device_title_player2">Player2 Input Device</string>
     <string name="input_device">Choose</string>
     <string name="input_device_setting">Edit Key Map</string>
-    <string name="onscrenn_pad_setting">Edit OnScreen Pad</string>    
+    <string name="onscrenn_pad_setting">Edit OnScreen Pad</string>
+    <string name="nopad">None</string>
     <string name="bios">Bios</string>
     <string name="cartridge">Cartridge</string>
     <string name="cpu_core">Cpu Core</string>
