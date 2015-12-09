@@ -2058,6 +2058,9 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * (info->cellw>>2)) << 1);
 			for (j = 0; j < info->cellw; j += 4)
 			{
+				if (baseaddr > 0x80000){ // max vram
+					baseaddr = info->charaddr;
+				}
 				Vdp2GetPixel4bpp(info, baseaddr, texture);
 				baseaddr += 2;
 			}
@@ -2066,6 +2069,9 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * (info->cellw>>1)) << 1);
 			for (j = 0; j < info->cellw; j += 2)
 			{
+				if (baseaddr > 0x80000){ // max vram
+					baseaddr = info->charaddr;
+				}
 				Vdp2GetPixel8bpp(info, baseaddr, texture);
 				baseaddr += 2;
 			}
@@ -2074,6 +2080,9 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * info->cellw) << 1);
 			for (j = 0; j < info->cellw; j++)
 			{
+				if (baseaddr > 0x80000){ // max vram
+					baseaddr = info->charaddr;
+				}
 				*texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
 				baseaddr += 2;
 
@@ -2083,6 +2092,9 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * info->cellw) << 1);
 			for (j = 0; j < info->cellw; j++)
 			{
+				if (baseaddr > 0x80000){ // max vram
+					baseaddr = info->charaddr;
+				}
 				*texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
 				baseaddr += 2;
 			}
@@ -2091,6 +2103,9 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * info->cellw) << 2);
 			for (j = 0; j < info->cellw; j++)
 			{
+				if (baseaddr > 0x80000){ // max vram
+					baseaddr = info->charaddr;
+				}
 				*texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr);
 				baseaddr += 4;
 			}
@@ -3639,7 +3654,11 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
    if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
    if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
-
+   
+   if ((cmd.CMDXA & 0x800)) cmd.CMDXA |= 0xF800; else cmd.CMDXA &= ~(0xF800);
+   if ((cmd.CMDXC & 0x800)) cmd.CMDXC |= 0xF800; else cmd.CMDXC &= ~(0xF800);
+   if ((cmd.CMDXB & 0x800)) cmd.CMDXB |= 0xF800; else cmd.CMDXB &= ~(0xF800);
+   if ((cmd.CMDXD & 0x800)) cmd.CMDXD |= 0xF800; else cmd.CMDXD &= ~(0xF800);
 
    sprite.vertices[0] = (s16)cmd.CMDXA;
    sprite.vertices[1] = (s16)cmd.CMDYA;
@@ -3827,9 +3846,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int i;
    float col[4*4];
    int gouraud=0;
-   int priority;
-   int isSquare;
-
+   int priority = 0;
+   int isSquare = 0;
+   int shadow = 0;
+   int colorcalc = 0;
    vdp1cmd_struct cmd;
 
    sprite.linescreen = 0;
@@ -3949,13 +3969,11 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       gouraud = 1;
    }
 
+   Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
    {
-      int shadow, colorcalc;
-      priority = 0;  // Avoid compiler warning
-      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
       priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;
 #else
@@ -4024,9 +4042,20 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    */
 
    
-   alpha |= priority;
    if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20) ){
-	   *texture.textdata = SAT2YAB1(alpha, color);
+
+	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+	   if (SPCCCS == 0x03){
+		   u32 talpha = 0xF8 - ((colorcalc << 3) & 0xF8);
+		   talpha |= priority;
+		   *texture.textdata = SAT2YAB1(talpha, color);
+	   }
+	   else{
+		   alpha |= priority;
+		   *texture.textdata = SAT2YAB1(alpha, color);
+	   }
+
+
    }else{
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
@@ -4113,12 +4142,14 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    YglSprite polygon;
    YglTexture texture;
    YglCache c;
-   int priority;
+   int priority = 0;
    vdp1cmd_struct cmd;
    float col[4 * 4];
    float linecol[4 * 4];
    int gouraud = 0;
    u16 color2;
+   int shadow = 0;
+   int colorcalc = 0;
 
    polygon.blendmode = VDP1_COLOR_CL_REPLACE;
    polygon.linescreen = 0;
@@ -4136,15 +4167,12 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    polygon.uclipmode=(CMDPMOD>>9)&0x03;
    
-      
+
+   Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
    {
-      int shadow, colorcalc;
-
-      priority = 0;  // Avoid compiler warning
-      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
       priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;
 #else
@@ -4235,8 +4263,18 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    alpha |= priority;
 
-   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20) )
-	   *texture.textdata = SAT2YAB1(alpha, color);
+   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20)){
+	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+	   if (SPCCCS == 0x03){
+		   u32 talpha = 0xF8 - ((colorcalc << 3) & 0xF8);
+		   talpha |= priority;
+		   *texture.textdata = SAT2YAB1(talpha, color);
+	   }
+	   else{
+		   alpha |= priority;
+		   *texture.textdata = SAT2YAB1(alpha, color);
+	   }
+   }
    else{
       Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
@@ -4358,11 +4396,13 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u8 alpha;
    YglSprite polygon;
    YglTexture texture;
-   int priority;
+   int priority = 0;
    float line_poygon[8];
    vdp1cmd_struct cmd;
    float col[4 * 2];
    int gouraud = 0;
+   int shadow = 0;
+   int colorcalc = 0;
    u16 color2;
 
    polygon.blendmode = VDP1_COLOR_CL_REPLACE;
@@ -4383,14 +4423,12 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }  
 
+   Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
    {
-      int shadow, colorcalc;
 
-      priority = 0;  // Avoid compiler warning
-      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
       priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;
 #else
@@ -4468,8 +4506,19 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    
 
 
-   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20) )
-      *texture.textdata = SAT2YAB1(alpha,color);
+   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20)){
+	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+	   if (SPCCCS == 0x03){
+		   u32 talpha = 0xF8 - ((colorcalc << 3) & 0xF8);
+		   talpha |= priority;
+		   *texture.textdata = SAT2YAB1(talpha, color);
+	   }
+	   else{
+		   alpha |= priority;
+		   *texture.textdata = SAT2YAB1(alpha, color);
+	   }
+	   *texture.textdata = SAT2YAB1(alpha, color);
+   }
    else{
       Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
