@@ -1501,7 +1501,7 @@ static void Vdp2GenerateWindowInfo(void)
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
-						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd+1;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
 
@@ -1511,17 +1511,17 @@ static void Vdp2GenerateWindowInfo(void)
 						if ((v - 1) != _Ygl->win0v[(_Ygl->win0_vertexcnt - 1) * 2 + 1])
 						{
 							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
-							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v - 1;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 							_Ygl->win0_vertexcnt++;
-							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd;
-							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v - 1;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd+1;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 							_Ygl->win0_vertexcnt++;
 						}
 
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
-						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd+1;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
 					}
@@ -1656,7 +1656,7 @@ static void Vdp2GenerateWindowInfo(void)
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HStart;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
                            _Ygl->win1_vertexcnt++;
-                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd+1;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
                            _Ygl->win1_vertexcnt++;
                            
@@ -1665,17 +1665,17 @@ static void Vdp2GenerateWindowInfo(void)
                            if( (v-1) != _Ygl->win1v[(_Ygl->win1_vertexcnt-1)*2+1] )
                            {
                               _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHStart;
-                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v-1;                    
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
                               _Ygl->win1_vertexcnt++;
-                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHEnd;
-                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v-1; 
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHEnd+1;
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
                               _Ygl->win1_vertexcnt++;                           
                            }
                            
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HStart;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
                            _Ygl->win1_vertexcnt++;
-                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd+1;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
                            _Ygl->win1_vertexcnt++;                           
                         }
@@ -1926,11 +1926,11 @@ INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture
 	
 	if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 }
 
 
