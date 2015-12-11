@@ -107,6 +107,8 @@ int SoundLoadState(FILE *fp, int version, int size);
 void ScspSlotDebugStats(u8 slotnum, char *outstring);
 void ScspCommonControlRegisterDebugStats(char *outstring);
 int ScspSlotDebugSaveRegisters(u8 slotnum, const char *filename);
+u32 ScspSlotDebugAudio (u32 *workbuf, s16 *buf, u32 len);
+void ScspSlotResetDebug(u8 slotnum);
 int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename);
 void ScspMuteAudio(int flags);
 void ScspUnMuteAudio(int flags);

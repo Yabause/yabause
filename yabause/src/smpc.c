@@ -46,6 +46,7 @@
 Smpc * SmpcRegs;
 u8 * SmpcRegsT;
 SmpcInternal * SmpcInternalVars;
+int intback_wait_for_line = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -508,6 +509,16 @@ static void SmpcRESDISA(void) {
 
 void SmpcExec(s32 t) {
    if (SmpcInternalVars->timing > 0) {
+
+      if (intback_wait_for_line)
+      {
+         if (yabsys.LineCount == 207)
+         {
+            SmpcInternalVars->timing = -1;
+            intback_wait_for_line = 0;
+         }
+      }
+
       SmpcInternalVars->timing -= t;
       if (SmpcInternalVars->timing <= 0) {
          switch(SmpcRegs->COMREG) {
@@ -622,21 +633,30 @@ static void SmpcSetTiming(void) {
          SmpcInternalVars->timing = 1; // this has to be tested on a real saturn
          return;
       case 0x10:
-         if (SmpcInternalVars->intback)
-            SmpcInternalVars->timing = 20; // this will need to be verified
+         if (SmpcInternalVars->intback)//continue was issued
+         {
+            SmpcInternalVars->timing = 16000;
+            intback_wait_for_line = 1;
+         }
          else {
             // Calculate timing based on what data is being retrieved
 
-            SmpcInternalVars->timing = 1;
-
-            // If retrieving non-peripheral data, add 0.2 milliseconds
-            if (SmpcRegs->IREG[0] == 0x01)
-               SmpcInternalVars->timing += 2;
-
-            // If retrieving peripheral data, add 15 milliseconds
-            if (SmpcRegs->IREG[1] & 0x8)
-               SmpcInternalVars->timing += 16000; // Strangely enough, this works better
-//               SmpcInternalVars->timing += 150;
+            if ((SmpcRegs->IREG[0] == 0x01) && (SmpcRegs->IREG[1] & 0x8))
+            {
+               //status followed by peripheral data
+               SmpcInternalVars->timing = 250;
+            }
+            else if ((SmpcRegs->IREG[0] == 0x01) && ((SmpcRegs->IREG[1] & 0x8) == 0))
+            {
+               //status only
+               SmpcInternalVars->timing = 250;
+            }
+            else if ((SmpcRegs->IREG[0] == 0) && (SmpcRegs->IREG[1] & 0x8))
+            {
+               //peripheral only
+               SmpcInternalVars->timing = 16000;
+               intback_wait_for_line = 1;
+            }
          }
          return;
       case 0x17:
@@ -831,7 +851,7 @@ void FASTCALL SmpcWriteLong(USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
 int SmpcSaveState(FILE *fp)
 {
    int offset;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    offset = StateWriteHeader(fp, "SMPC", 3);
 
@@ -858,7 +878,7 @@ int SmpcSaveState(FILE *fp)
 
 int SmpcLoadState(FILE *fp, int version, int size)
 {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
    int internalsizev2 = sizeof(SmpcInternal) - 8;
 
    // Read registers
