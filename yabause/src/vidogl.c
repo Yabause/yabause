@@ -5024,10 +5024,10 @@ static void Vdp2DrawNBG0(void)
 				  info.y = 0;
 			  }
 
-			  yy = 0; // info.y;
+			  yy = info.y;
 			  while (yy + info.y < vdp2height)
 			  {
-				  xx = 0; // info.x;
+				  xx = info.x;
 				  while (xx + info.x < vdp2width)
 				  {
 					  info.vertices[0] = xx;
@@ -5257,10 +5257,10 @@ static void Vdp2DrawNBG1(void)
 			   info.y = 0;
 		   }
 
-		   yy = 0; // info.y;
+		   yy = info.y;
 		   while (yy + info.y < vdp2height)
 		   {
-			   xx = 0; // info.x;
+			   xx = info.x;
 			   while (xx + info.x < vdp2width)
 			   {
 				   info.vertices[0] = xx;
