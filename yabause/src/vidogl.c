@@ -5226,8 +5226,8 @@ static void Vdp2DrawNBG1(void)
    if (info.isbitmap)
    {
 	   if (info.coordincx != 1.0f || info.coordincy != 1.0f){
-		   info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
-		   info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+		   info.sh = (Vdp2Regs->SCXIN1 & 0x7FF);
+		   info.sv = (Vdp2Regs->SCYIN1 & 0x7FF);
 		   info.x = 0;
 		   info.y = 0;
 		   info.vertices[0] = 0;
@@ -5251,8 +5251,8 @@ static void Vdp2DrawNBG1(void)
 
 		   if (info.islinescroll) // Nights Movie
 		   {
-			   info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
-			   info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+			   info.sh = (Vdp2Regs->SCXIN1 & 0x7FF);
+			   info.sv = (Vdp2Regs->SCYIN1 & 0x7FF);
 			   info.x = 0;
 			   info.y = 0;
 		   }
