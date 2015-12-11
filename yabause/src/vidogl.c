@@ -1899,27 +1899,43 @@ void Vdp2GenLineinfo( vdp2draw_struct *info )
 INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture ){
 
 	u32 color;
+
+	if (addr > 0x80000){
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		return 0;
+	}
+
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 
 	
 	if (!(dot & 0xF000) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF000) >> 12)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xF00) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF00) >> 8)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xF0) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF0) >> 4)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xF) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
+	return 0;
 }
 
 INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture){
+
+	if (addr > 0x80000){
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		return 0;
+	}
 
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
@@ -1931,35 +1947,43 @@ INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture
 	if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
 	*texture->textdata++ = color;
+	return 0;
 }
 
 
 INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
-
+	if (addr > 0x80000){
+		return 0;
+	}
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	if ((dot == 0) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + dot, info->alpha);
-	return info->PostPixelFetchCalc(info, color);
+	return color;
 }
 
 INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
+	if (addr > 0x80000){
+		return 0;
+	}
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
 	else color = SAT2YAB1(0xFF, dot);
-	return info->PostPixelFetchCalc(info, color);
+	return color;
 }
 
 INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
-
+	if (addr > 0x80000){
+		return 0;
+	}
 	u32 color;
 	u16 dot1, dot2;
 	dot1 = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	dot2 = T1ReadWord(Vdp2Ram, addr+2 & 0x7FFFF);
 	if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
 	else color = SAT2YAB2(info->alpha, dot1, dot2);
-	return info->PostPixelFetchCalc(info, color);
+	return color;
 }
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
@@ -2056,23 +2080,17 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 
 		switch (info->colornumber){
 		case 0:
-			baseaddr += ((sh + sv * (info->cellw>>2)) << 1);
+			baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
 			for (j = 0; j < info->cellw; j += 4)
 			{
-				if (baseaddr > 0x80000){ // max vram
-					baseaddr = info->charaddr;
-				}
 				Vdp2GetPixel4bpp(info, baseaddr, texture);
 				baseaddr += 2;
 			}
 			break;
 		case 1:
-			baseaddr += ((sh + sv * (info->cellw>>1)) << 1);
+			baseaddr += ((sh + sv * (info->cellw >> 1)) << 1);
 			for (j = 0; j < info->cellw; j += 2)
 			{
-				if (baseaddr > 0x80000){ // max vram
-					baseaddr = info->charaddr;
-				}
 				Vdp2GetPixel8bpp(info, baseaddr, texture);
 				baseaddr += 2;
 			}
@@ -2081,9 +2099,6 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * info->cellw) << 1);
 			for (j = 0; j < info->cellw; j++)
 			{
-				if (baseaddr > 0x80000){ // max vram
-					baseaddr = info->charaddr;
-				}
 				*texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
 				baseaddr += 2;
 
@@ -2093,9 +2108,6 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * info->cellw) << 1);
 			for (j = 0; j < info->cellw; j++)
 			{
-				if (baseaddr > 0x80000){ // max vram
-					baseaddr = info->charaddr;
-				}
 				*texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
 				baseaddr += 2;
 			}
@@ -2104,11 +2116,90 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			baseaddr += ((sh + sv * info->cellw) << 2);
 			for (j = 0; j < info->cellw; j++)
 			{
-				if (baseaddr > 0x80000){ // max vram
-					baseaddr = info->charaddr;
-				}
 				*texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr);
 				baseaddr += 4;
+			}
+			break;
+		}
+		texture->textdata += texture->w;
+	}
+}
+
+
+static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTexture *texture)
+{
+	u32 color;
+	int i, j;
+
+	int incv = 1.0 / info->coordincy*255.0;
+	int inch = 1.0 / info->coordincx*255.0;
+
+	for (i = 0; i < vdp2height; i++)
+	{
+		int sh, sv;
+		int v;
+		u32 baseaddr;
+		vdp2Lineinfo * line;
+		baseaddr = (u32)info->charaddr;
+		line = &(info->lineinfo[i*info->lineinc]);
+
+		v = (i*incv)>>8;
+
+		if (VDPLINE_SX(info->islinescroll))
+			sh = line->LineScrollValH + info->sh;
+		else
+			sh = info->sh;
+
+		if (VDPLINE_SY(info->islinescroll))
+			sv = line->LineScrollValV;
+		else
+			sv = info->sv + v;
+
+		sh &= (info->cellw - 1);
+		sv &= (info->cellh - 1);
+		if (VDPLINE_SX(info->islinescroll) && line->LineScrollValH < sh) sv -= 1;
+
+		switch (info->colornumber){
+		case 0:
+			baseaddr += (((sh>>2) + sv * (info->cellw>>2)) << 1);
+			for (j = 0; j < (vdp2width>>2); j += 4)
+			{
+				int h = (j*inch >> 8) << 1;
+				Vdp2GetPixel4bpp(info, baseaddr+h, texture);
+				baseaddr += 2;
+			}
+			break;
+		case 1:
+			baseaddr += (((sh>>1) + sv * (info->cellw >> 1)) << 1);
+			for (j = 0; j < (vdp2width>>1) ; j++)
+			{
+				int h = (j*inch>>8)<<1;
+				Vdp2GetPixel8bpp(info, baseaddr+h, texture);
+			}
+			break;
+		case 2:
+			baseaddr += ((sh + sv * info->cellw) << 1);
+			for (j = 0; j < vdp2width; j++)
+			{
+				int h = (j*inch >> 8) << 1;
+				*texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr+h);
+
+			}
+			break;
+		case 3:
+			baseaddr += ((sh + sv * info->cellw) << 1);
+			for (j = 0; j < vdp2width; j++)
+			{
+				int h = (j*inch >> 8) << 1;
+				*texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr+h);
+			}
+			break;
+		case 4:
+			baseaddr += ((sh + sv * info->cellw) << 2);
+			for (j = 0; j < vdp2width; j++)
+			{
+				int h = (j*inch >> 8) << 2;
+				*texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr+h);
 			}
 			break;
 		}
@@ -4811,12 +4902,12 @@ static void Vdp2DrawNBG0(void)
          break;
       case 1:
 		  info.maxzoom = 0.5f;
-         if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+         //if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
          break;
       case 2:
       case 3:
 		  info.maxzoom = 0.25f;
-         if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+         //if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
          break;
       }
 
@@ -4901,49 +4992,72 @@ static void Vdp2DrawNBG0(void)
       // NBG0 draw
       if (info.isbitmap)
       {
-         int xx,yy;
-         int isCached = 0;
-      
-         if(info.islinescroll) // Nights Movie
-         {
-            info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
-            info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
-            info.x = 0;
-            info.y = 0;
-         }
+		  if (info.coordincx != 1.0f || info.coordincy != 1.0f){
+			  info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+			  info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+			  info.x = 0;
+			  info.y = 0;
+			  info.vertices[0] = 0;
+			  info.vertices[1] = 0;
+			  info.vertices[2] = vdp2width;
+			  info.vertices[3] = 0;
+			  info.vertices[4] = vdp2width;
+			  info.vertices[5] = vdp2height;
+			  info.vertices[6] = 0;
+			  info.vertices[7] = vdp2height;
+			  vdp2draw_struct infotmp = info;
+			  infotmp.cellw = vdp2width;
+			  infotmp.cellh = vdp2height;
+			  YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
+			  Vdp2DrawBitmapCoordinateInc(&info, &texture);
+		  }
+		  else{
 
-         yy = info.y;
-         while( yy < vdp2height )
-         {
-            xx = info.x;
-            while( xx < vdp2width )
-            {
-               info.vertices[0] = xx * info.coordincx;
-               info.vertices[1] = yy * info.coordincy;
-               info.vertices[2] = (xx + info.cellw) * info.coordincx;
-               info.vertices[3] = yy * info.coordincy;
-               info.vertices[4] = (xx + info.cellw) * info.coordincx;
-               info.vertices[5] = (yy + info.cellh) * info.coordincy;
-               info.vertices[6] = xx * info.coordincx;
-               info.vertices[7] = (yy + info.cellh) * info.coordincy;            
+			  int xx, yy;
+			  int isCached = 0;
 
-               if( isCached == 0 )
-               {
-                  YglQuad((YglSprite *)&info, &texture,&tmpc);
-				  if (info.islinescroll){
-					  Vdp2DrawBitmapLineScroll(&info, &texture);
-				  }else{
-					  Vdp2DrawCell(&info, &texture);
+			  if (info.islinescroll) // Nights Movie
+			  {
+				  info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+				  info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+				  info.x = 0;
+				  info.y = 0;
+			  }
+
+			  yy = 0; // info.y;
+			  while (yy + info.y < vdp2height)
+			  {
+				  xx = 0; // info.x;
+				  while (xx + info.x < vdp2width)
+				  {
+					  info.vertices[0] = xx;
+					  info.vertices[1] = yy;
+					  info.vertices[2] = (xx + info.cellw);
+					  info.vertices[3] = yy;
+					  info.vertices[4] = (xx + info.cellw);
+					  info.vertices[5] = (yy + info.cellh);
+					  info.vertices[6] = xx;
+					  info.vertices[7] = (yy + info.cellh);
+
+					  if (isCached == 0)
+					  {
+						  YglQuad((YglSprite *)&info, &texture, &tmpc);
+						  if (info.islinescroll){
+							  Vdp2DrawBitmapLineScroll(&info, &texture);
+						  }
+						  else{
+							  Vdp2DrawCell(&info, &texture);
+						  }
+						  isCached = 1;
+					  }
+					  else{
+						  YglCachedQuad((YglSprite *)&info, &tmpc);
+					  }
+					  xx += info.cellw;
 				  }
-                  isCached = 1;
-               }else{
-                  YglCachedQuad((YglSprite *)&info, &tmpc);
-               }
-               xx += info.cellw* info.coordincx;
-            }
-            yy += info.cellh* info.coordincy;
-         }
-      
+				  yy += info.cellh;
+			  }
+		  }
       }
       else
       {
@@ -5054,12 +5168,12 @@ static void Vdp2DrawNBG1(void)
       break;
    case 1:
 	   info.maxzoom = 0.5f;
-      if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+//      if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
       break;
    case 2:
    case 3:
 	   info.maxzoom = 0.25f;
-      if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+//      if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
       break;
    }
 
@@ -5111,49 +5225,72 @@ static void Vdp2DrawNBG1(void)
    
    if (info.isbitmap)
    {
-      int xx,yy;
-      int isCached = 0;
-      if(info.islinescroll)
-      {
-          info.sh = (Vdp2Regs->SCXIN1 & 0x7FF);
-          info.sv = (Vdp2Regs->SCYIN1 & 0x7FF);
-          info.x = 0;
-          info.y = 0;
-      }
-      
-      yy = info.y;
-      while( yy < vdp2height )
-      {
-         xx = info.x;
-         while( xx < vdp2width )
-         {
-            info.vertices[0] = xx * info.coordincx;
-            info.vertices[1] = yy * info.coordincy;
-            info.vertices[2] = (xx + info.cellw) * info.coordincx;
-            info.vertices[3] = yy * info.coordincy;
-            info.vertices[4] = (xx + info.cellw) * info.coordincx;
-            info.vertices[5] = (yy + info.cellh) * info.coordincy;
-            info.vertices[6] = xx * info.coordincx;
-            info.vertices[7] = (yy + info.cellh) * info.coordincy;            
+	   if (info.coordincx != 1.0f || info.coordincy != 1.0f){
+		   info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+		   info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+		   info.x = 0;
+		   info.y = 0;
+		   info.vertices[0] = 0;
+		   info.vertices[1] = 0;
+		   info.vertices[2] = vdp2width;
+		   info.vertices[3] = 0;
+		   info.vertices[4] = vdp2width;
+		   info.vertices[5] = vdp2height;
+		   info.vertices[6] = 0;
+		   info.vertices[7] = vdp2height;
+		   vdp2draw_struct infotmp = info;
+		   infotmp.cellw = vdp2width;
+		   infotmp.cellh = vdp2height;
+		   YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
+		   Vdp2DrawBitmapCoordinateInc(&info, &texture);
+	   }
+	   else{
 
-            if( isCached == 0 )
-            {
-				YglQuad((YglSprite *)&info, &texture, &tmpc);
-				if (info.islinescroll){
-					Vdp2DrawBitmapLineScroll(&info, &texture);
-				}
-				else{
-					Vdp2DrawCell(&info, &texture);
-				}
-               isCached = 1;
-            }else{
-               YglCachedQuad((YglSprite *)&info, &tmpc);
-            }
-            xx += info.cellw* info.coordincx;
-         }
-         yy += info.cellh* info.coordincy;
-      }
-      
+		   int xx, yy;
+		   int isCached = 0;
+
+		   if (info.islinescroll) // Nights Movie
+		   {
+			   info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+			   info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+			   info.x = 0;
+			   info.y = 0;
+		   }
+
+		   yy = 0; // info.y;
+		   while (yy + info.y < vdp2height)
+		   {
+			   xx = 0; // info.x;
+			   while (xx + info.x < vdp2width)
+			   {
+				   info.vertices[0] = xx;
+				   info.vertices[1] = yy;
+				   info.vertices[2] = (xx + info.cellw);
+				   info.vertices[3] = yy;
+				   info.vertices[4] = (xx + info.cellw);
+				   info.vertices[5] = (yy + info.cellh);
+				   info.vertices[6] = xx;
+				   info.vertices[7] = (yy + info.cellh);
+
+				   if (isCached == 0)
+				   {
+					   YglQuad((YglSprite *)&info, &texture, &tmpc);
+					   if (info.islinescroll){
+						   Vdp2DrawBitmapLineScroll(&info, &texture);
+					   }
+					   else{
+						   Vdp2DrawCell(&info, &texture);
+					   }
+					   isCached = 1;
+				   }
+				   else{
+					   YglCachedQuad((YglSprite *)&info, &tmpc);
+				   }
+				   xx += info.cellw;
+			   }
+			   yy += info.cellh;
+	   }
+   }
    }
    else{
 	   if (info.islinescroll){
