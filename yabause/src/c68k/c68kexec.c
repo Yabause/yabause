@@ -222,7 +222,7 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
 
         line = CPU->IRQLine;
 
-        if ((line == 7) || (line > CPU->flag_I))
+        if ((line == 7) || (line > (s32)CPU->flag_I))
         {
             PRE_IO
 
@@ -246,7 +246,7 @@ s32 FASTCALL C68k_Exec(c68k_struc *cpu, s32 cycle)
             }
 
             /* push PC and SR */
-            PUSH_32_F(PC - CPU->BasePC)
+            PUSH_32_F((u32)(PC - CPU->BasePC))
             PUSH_16_F(GET_SR)
 
             /* adjust SR */

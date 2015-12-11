@@ -263,8 +263,11 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
         List<CharSequence> Inputlabels_p2 = new ArrayList<CharSequence>();
         List<CharSequence> Inputvalues_p2 = new ArrayList<CharSequence>();
-      
-        String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
+
+        Inputlabels_p2.add(res.getString(R.string.nopad));
+        Inputvalues_p2.add("-1");
+
+        String selInputdevice = sharedPref.getString("pref_player2_inputdevice", "65535");
 
         for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
         	

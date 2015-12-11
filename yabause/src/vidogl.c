@@ -70,15 +70,15 @@ int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
 void VIDOGLVdp1DrawStart(void);
 void VIDOGLVdp1DrawEnd(void);
-void VIDOGLVdp1NormalSpriteDraw(void);
-void VIDOGLVdp1ScaledSpriteDraw(void);
-void VIDOGLVdp1DistortedSpriteDraw(void);
-void VIDOGLVdp1PolygonDraw(void);
-void VIDOGLVdp1PolylineDraw(void);
-void VIDOGLVdp1LineDraw(void);
-void VIDOGLVdp1UserClipping(void);
-void VIDOGLVdp1SystemClipping(void);
-void VIDOGLVdp1LocalCoordinate(void);
+void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs);
+void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs);
+void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 int VIDOGLVdp2Reset(void);
 void VIDOGLVdp2DrawStart(void);
 void VIDOGLVdp2DrawEnd(void);
@@ -107,6 +107,7 @@ VIDOGLVdp1UserClipping,
 VIDOGLVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
 VIDOGLVdp1ReadFrameBuffer,
+NULL,
 VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
@@ -136,6 +137,7 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
+static INLINE u16 Vdp2ColorRamGetColorRaw(u32 colorindex);
 
 // Window Parameter
 static vdp2WindowInfo * m_vWindinfo0 = NULL;
@@ -199,10 +201,11 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	u8 END = ((cmd->CMDPMOD & 0x80) != 0);
 	u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
 	u32 alpha = 0xFF;
-	VDP1LOG("Making new sprite %08X\n", charAddr);
-
 	u32 color = 0x00;
 	int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+
+	VDP1LOG("Making new sprite %08X\n", charAddr);
+
 	Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 	alpha = 0xF8;
 	if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
@@ -259,7 +262,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorBank + colorOffset) << 2) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -270,7 +273,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 					}
 				}
 				else{
-					color = Vdp2ColorRamGetColor(colorBank + colorOffset, alpha);
+					color =  Vdp2ColorRamGetColor(colorBank + colorOffset, alpha);
 				}
 			}
 		}
@@ -364,7 +367,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -400,7 +403,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -436,7 +439,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 			else{
 				if (SPCCCS == 0x03){
-					u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+					u16 checkcol = Vdp2ColorRamGetColorRaw(colorBank + colorOffset);
 					if (checkcol & 0x8000){
 						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 						talpha |= priority;
@@ -592,7 +595,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   *texture->textdata++ = SAT2YAB1(alpha, colorindex);
 				   }else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -630,7 +633,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -832,26 +835,25 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) & 0x3F;
+				dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-			   else if (dot == 0x0000){ *texture->textdata++ = 0x00; }
                else if( (dot == 0x3F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
-			   else if ((dot | colorBank) == nromal_shadow){
+			   else if (((dot & 0x3F)|colorBank) == nromal_shadow){
 				   u32 talpha = (u8)0xF8 - (u8)0x80;
 				   talpha |= priority;
 				   *texture->textdata++ = (talpha << 24);
 			   }
 			   else{
-				   const int colorindex = (dot | colorBank) + colorOffset;
+				   const int colorindex = ((dot&0x3F)|colorBank)+colorOffset;
 				   if ((colorindex & 0x8000) && (Vdp2Regs->SPCTL & 0x20)){
 					   *texture->textdata++ = SAT2YAB1(alpha, colorindex);
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -882,25 +884,24 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          {
             for(j = 0;j < sprite->w;j++)
             {
-               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF) &0x7F;
+               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-			   else if (dot == 0x0000){ *texture->textdata++ = 0x00; }
                else if( (dot == 0x7F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
-			   else if ((dot | colorBank) == nromal_shadow){
+			   else if (((dot & 0x7F) | colorBank) == nromal_shadow){
 				   u32 talpha = (u8)0xF8 - (u8)0x80;
 				   talpha |= priority;
 				   *texture->textdata++ = (talpha << 24);
 			   }else{
-				   const int colorindex = (dot | colorBank) + colorOffset;
+				   const int colorindex = ((dot&0x7F)|colorBank) + colorOffset;
 				   if ((colorindex & 0x8000) && (Vdp2Regs->SPCTL & 0x20)){
 					   *texture->textdata++ = SAT2YAB1(alpha, colorindex);
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -951,7 +952,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   }
 				   else{
 					   if (SPCCCS == 0x03){
-						   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((colorindex) << Vdp2Internal.ColorMode) & 0xFFF);
+						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
@@ -1038,6 +1039,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
    {
       // RGB data, use register 0
       *priority = Vdp2Regs->PRISA & 0x7;
+	  *colorcl = cclist[0] & 0x1F;
       return;
    }
 
@@ -1294,6 +1296,25 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+static u16 Vdp2ColorRamGetColorRaw(u32 colorindex){
+	switch (Vdp2Internal.ColorMode)
+	{
+	case 0:
+	case 1:
+	{
+		colorindex <<= 1;
+		return T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+	}
+	case 2:
+	{
+		colorindex <<= 2;
+		colorindex &= 0xFFF;
+		return T2ReadWord(Vdp2ColorRam, colorindex);
+	}
+	default: break;
+	}
+	return 0;
+}
 
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
 {
@@ -1480,7 +1501,7 @@ static void Vdp2GenerateWindowInfo(void)
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
-						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd+1;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
 
@@ -1490,17 +1511,17 @@ static void Vdp2GenerateWindowInfo(void)
 						if ((v - 1) != _Ygl->win0v[(_Ygl->win0_vertexcnt - 1) * 2 + 1])
 						{
 							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
-							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v - 1;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 							_Ygl->win0_vertexcnt++;
-							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd;
-							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v - 1;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd+1;
+							_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 							_Ygl->win0_vertexcnt++;
 						}
 
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
-						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd;
+						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd+1;
 						_Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
 						_Ygl->win0_vertexcnt++;
 					}
@@ -1635,7 +1656,7 @@ static void Vdp2GenerateWindowInfo(void)
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HStart;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
                            _Ygl->win1_vertexcnt++;
-                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd+1;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
                            _Ygl->win1_vertexcnt++;
                            
@@ -1644,17 +1665,17 @@ static void Vdp2GenerateWindowInfo(void)
                            if( (v-1) != _Ygl->win1v[(_Ygl->win1_vertexcnt-1)*2+1] )
                            {
                               _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHStart;
-                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v-1;                    
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
                               _Ygl->win1_vertexcnt++;
-                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHEnd;
-                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v-1; 
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= preHEnd+1;
+                              _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
                               _Ygl->win1_vertexcnt++;                           
                            }
                            
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HStart;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v;                    
                            _Ygl->win1_vertexcnt++;
-                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd;
+                           _Ygl->win1v[_Ygl->win1_vertexcnt*2+0]= HEnd+1;
                            _Ygl->win1v[_Ygl->win1_vertexcnt*2+1]= v; 
                            _Ygl->win1_vertexcnt++;                           
                         }
@@ -1878,67 +1899,91 @@ void Vdp2GenLineinfo( vdp2draw_struct *info )
 INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture ){
 
 	u32 color;
+
+	if (addr > 0x80000){
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		return 0;
+	}
+
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 
 	
 	if (!(dot & 0xF000) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF000) >> 12)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xF00) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF00) >> 8)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xF0) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF0) >> 4)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xF) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
+	return 0;
 }
 
 INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture){
+
+	if (addr > 0x80000){
+		*texture->textdata++ = 0;
+		*texture->textdata++ = 0;
+		return 0;
+	}
 
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	
 	if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
 
 	if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
-	*texture->textdata++ = info->PostPixelFetchCalc(info, color);
+	*texture->textdata++ = color;
+	return 0;
 }
 
 
 INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
-
+	if (addr > 0x80000){
+		return 0;
+	}
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	if ((dot == 0) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + dot, info->alpha);
-	return info->PostPixelFetchCalc(info, color);
+	return color;
 }
 
 INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
+	if (addr > 0x80000){
+		return 0;
+	}
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
 	else color = SAT2YAB1(0xFF, dot);
-	return info->PostPixelFetchCalc(info, color);
+	return color;
 }
 
 INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
-
+	if (addr > 0x80000){
+		return 0;
+	}
 	u32 color;
 	u16 dot1, dot2;
 	dot1 = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	dot2 = T1ReadWord(Vdp2Ram, addr+2 & 0x7FFFF);
 	if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
 	else color = SAT2YAB2(info->alpha, dot1, dot2);
-	return info->PostPixelFetchCalc(info, color);
+	return color;
 }
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
@@ -2035,7 +2080,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 
 		switch (info->colornumber){
 		case 0:
-			baseaddr += ((sh + sv * (info->cellw>>2)) << 1);
+			baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
 			for (j = 0; j < info->cellw; j += 4)
 			{
 				Vdp2GetPixel4bpp(info, baseaddr, texture);
@@ -2043,7 +2088,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			}
 			break;
 		case 1:
-			baseaddr += ((sh + sv * (info->cellw>>1)) << 1);
+			baseaddr += ((sh + sv * (info->cellw >> 1)) << 1);
 			for (j = 0; j < info->cellw; j += 2)
 			{
 				Vdp2GetPixel8bpp(info, baseaddr, texture);
@@ -2073,6 +2118,88 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			{
 				*texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr);
 				baseaddr += 4;
+			}
+			break;
+		}
+		texture->textdata += texture->w;
+	}
+}
+
+
+static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTexture *texture)
+{
+	u32 color;
+	int i, j;
+
+	int incv = 1.0 / info->coordincy*255.0;
+	int inch = 1.0 / info->coordincx*255.0;
+
+	for (i = 0; i < vdp2height; i++)
+	{
+		int sh, sv;
+		int v;
+		u32 baseaddr;
+		vdp2Lineinfo * line;
+		baseaddr = (u32)info->charaddr;
+		line = &(info->lineinfo[i*info->lineinc]);
+
+		v = (i*incv)>>8;
+
+		if (VDPLINE_SX(info->islinescroll))
+			sh = line->LineScrollValH + info->sh;
+		else
+			sh = info->sh;
+
+		if (VDPLINE_SY(info->islinescroll))
+			sv = line->LineScrollValV;
+		else
+			sv = info->sv + v;
+
+		sh &= (info->cellw - 1);
+		sv &= (info->cellh - 1);
+		if (VDPLINE_SX(info->islinescroll) && line->LineScrollValH < sh) sv -= 1;
+
+		switch (info->colornumber){
+		case 0:
+			baseaddr += (((sh>>2) + sv * (info->cellw>>2)) << 1);
+			for (j = 0; j < (vdp2width>>2); j += 4)
+			{
+				int h = (j*inch >> 8) << 1;
+				Vdp2GetPixel4bpp(info, baseaddr+h, texture);
+				baseaddr += 2;
+			}
+			break;
+		case 1:
+			baseaddr += (((sh>>1) + sv * (info->cellw >> 1)) << 1);
+			for (j = 0; j < (vdp2width>>1) ; j++)
+			{
+				int h = (j*inch>>8)<<1;
+				Vdp2GetPixel8bpp(info, baseaddr+h, texture);
+			}
+			break;
+		case 2:
+			baseaddr += ((sh + sv * info->cellw) << 1);
+			for (j = 0; j < vdp2width; j++)
+			{
+				int h = (j*inch >> 8) << 1;
+				*texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr+h);
+
+			}
+			break;
+		case 3:
+			baseaddr += ((sh + sv * info->cellw) << 1);
+			for (j = 0; j < vdp2width; j++)
+			{
+				int h = (j*inch >> 8) << 1;
+				*texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr+h);
+			}
+			break;
+		case 4:
+			baseaddr += ((sh + sv * info->cellw) << 2);
+			for (j = 0; j < vdp2width; j++)
+			{
+				int h = (j*inch >> 8) << 2;
+				*texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr+h);
 			}
 			break;
 		}
@@ -2470,11 +2597,8 @@ static void Vdp2DrawPlane(vdp2draw_struct *info, YglTexture *texture)
 static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2498,7 +2622,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 
 
-	i = 0;
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
 		Vdp2 * regs;
@@ -2522,7 +2645,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
 		info->draww = (int)((float)vdp2width / info->coordincx);
 
-		regs = Vdp2RestoreRegs(v);
+		regs = Vdp2RestoreRegs(v, Vdp2Lines);
 		if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
 		// determine which chara shoud be used.
@@ -2560,7 +2683,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 			charx = dot_on_pagex & page_mask;
 			if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
-			info->PlaneAddr(info, info->mapwh * mapy + mapx);
+			info->PlaneAddr(info, info->mapwh * mapy + mapx, Vdp2Regs);
 			Vdp2PatternAddrPos(info, planex,pagex, planey,pagey);
 			Vdp2DrawPatternPos(info, texture, h, v, charx, chary);
 
@@ -2574,11 +2697,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	int lineindex = 0;
-	int i, j;
-	int X, Y;
-	int xx, yy;
 
-	int sx, sy;
+	int sx; //, sy;
 	int mapx, mapy;
 	int planex, planey;
 	int pagex, pagey;
@@ -2602,7 +2722,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 	//info->coordincx = 1.0f;
 
-	i = 0;
 	for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh){
 		int targetv = 0;
 		sx = info->x;
@@ -2651,7 +2770,7 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 			charx = dot_on_pagex & page_mask;
 			if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
-			info->PlaneAddr(info, info->mapwh * mapy + mapx);
+			info->PlaneAddr(info, info->mapwh * mapy + mapx, Vdp2Regs);
 			Vdp2PatternAddrPos(info, planex, pagex, planey, pagey);
 			Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0);
 
@@ -2687,7 +2806,7 @@ static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
       while( xx < vdp2width )
       {
          info->y = Y;
-         info->PlaneAddr(info, info->mapwh * i + j);
+         info->PlaneAddr(info, info->mapwh * i + j, Vdp2Regs);
          Vdp2DrawPlane(info, texture);
          j++;
          j &= (info->mapwh-1);
@@ -2708,7 +2827,7 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 
 //////////////////////////////////////////////////////////////////////////////
 
-FASTCALL DoColorOffset(void *info, u32 pixel)
+static u32 FASTCALL DoColorOffset(void *info, u32 pixel)
 {
     return pixel;
 }
@@ -2885,7 +3004,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
       patternshift = 0;      
    }
    
-   regs = Vdp2RestoreRegs(3);
+   regs = Vdp2RestoreRegs(3, Vdp2Lines);
    if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
    line_texture.textdata = NULL;
@@ -3253,6 +3372,8 @@ void VIDOGLVdp1DrawStart(void)
    }
    else // color offset disable
       vdp1cor = vdp1cog = vdp1cob = 0;
+
+   Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3262,9 +3383,16 @@ void VIDOGLVdp1DrawEnd(void)
   YglRenderVDP1();
 }
 
+#define IS_MESH(a) (a&0x100)
+#define IS_GLOWSHADING(a) (a&0x04)
+#define IS_REPLACE(a) ((a&0x03)==0x00)
+#define IS_DONOT_DRAW_OR_SHADOW(a) ((a&0x03)==0x01)
+#define IS_HALF_LUMINANCE(a)   ((a&0x03)==0x02)
+#define IS_REPLACE_OR_HALF_TRANSPARENT(a) ((a&0x03)==0x03)
+
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1NormalSpriteDraw(void)
+void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    vdp1cmd_struct cmd;
    YglSprite sprite;
@@ -3280,9 +3408,9 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    short CMDYA;
 
    
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    sprite.dst=0;
-   sprite.blendmode=0;
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
 
    CMDXA = cmd.CMDXA;
@@ -3317,17 +3445,29 @@ void VIDOGLVdp1NormalSpriteDraw(void)
    
    sprite.uclipmode=(CMDPMOD>>9)&0x03;
    
-   // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
-   {
-      tmp |= 0x00010000;
-      sprite.blendmode = 0x80;
-   }
-   
    if((CMDPMOD & 0x8000) != 0)
    {
       tmp |= 0x00020000;
    }
+
+   if (IS_REPLACE(CMDPMOD)){
+	   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+   }
+   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
+	   sprite.blendmode = VDP1_COLOR_CL_SHADOW;
+   }
+   else if (IS_HALF_LUMINANCE(CMDPMOD)){
+	   // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+   }
+   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
+	   tmp |= 0x00010000;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
+   }
+   if (IS_MESH(CMDPMOD)){
+	   tmp |= 0x00010000;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+   }
+
 
    if( (CMDPMOD & 4)  )
    {
@@ -3375,7 +3515,7 @@ void VIDOGLVdp1NormalSpriteDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1ScaledSpriteDraw(void)
+void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    vdp1cmd_struct cmd;
    YglSprite sprite;
@@ -3389,9 +3529,9 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    float col[4*4];
    int i;
 
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    sprite.dst=0;
-   sprite.blendmode=0;
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
 
    if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
@@ -3497,19 +3637,29 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
    
    sprite.priority = 8;
    
-   // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
-   {
-      tmp |= 0x00010000;
-      sprite.blendmode = 0x80;
-   }  
-   
    // MSB
    if((CMDPMOD & 0x8000) != 0)
    {
       tmp |= 0x00020000;
    }
    
+   if (IS_REPLACE(CMDPMOD)){
+	   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+   }
+   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
+	   sprite.blendmode = VDP1_COLOR_CL_SHADOW;
+   }
+   else if (IS_HALF_LUMINANCE(CMDPMOD)){
+	   // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+   }
+   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
+	   tmp |= 0x00010000;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
+   }
+   if (IS_MESH(CMDPMOD)){
+	   tmp |= 0x00010000;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+   }
    
    if ( (CMDPMOD & 4) )
    {
@@ -3560,7 +3710,7 @@ void VIDOGLVdp1ScaledSpriteDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1DistortedSpriteDraw(void)
+void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    vdp1cmd_struct cmd;
    YglSprite sprite;
@@ -3571,10 +3721,11 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    u16 color2;
    int i;
    float col[4*4];
+   int isSquare;
    
 
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
-   sprite.blendmode=0;
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0; 
    sprite.dst = 1;
    sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
@@ -3583,13 +3734,23 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.cog = 0;
    sprite.cob = 0;
 
+   // ??? sakatuku2 new scene bug ???
+   if (sprite.h != 0 && sprite.w == 0){
+	   sprite.w = 8;
+	   sprite.h = 8;
+   }
+
    sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
    if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
    if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
    if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
    if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
-
+   
+   if ((cmd.CMDXA & 0x800)) cmd.CMDXA |= 0xF800; else cmd.CMDXA &= ~(0xF800);
+   if ((cmd.CMDXC & 0x800)) cmd.CMDXC |= 0xF800; else cmd.CMDXC &= ~(0xF800);
+   if ((cmd.CMDXB & 0x800)) cmd.CMDXB |= 0xF800; else cmd.CMDXB &= ~(0xF800);
+   if ((cmd.CMDXD & 0x800)) cmd.CMDXD |= 0xF800; else cmd.CMDXD &= ~(0xF800);
 
    sprite.vertices[0] = (s16)cmd.CMDXA;
    sprite.vertices[1] = (s16)cmd.CMDYA;
@@ -3600,7 +3761,7 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
-   int isSquare = 1;
+   isSquare = 1;
 
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
@@ -3615,13 +3776,16 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    }
 
    if (isSquare){
+	   float minx;
+	   float miny;
+	   int lt_index;
 	   
 	   sprite.dst = 0;
 
 	   // find upper left opsition
-	   float minx = 65535.0f;
-	   float miny = 65535.0f;
-	   int lt_index = -1;
+	   minx = 65535.0f;
+	   miny = 65535.0f;
+	   lt_index = -1;
 	   for( i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3632,6 +3796,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
 	   for (i = 0; i < 4; i++){
 		   if (i != lt_index){
+			   float nx;
+			   float ny;
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
@@ -3641,8 +3807,8 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3691,19 +3857,31 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
    
    sprite.uclipmode=(CMDPMOD>>9)&0x03;
    
-   // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
-   {
-      tmp |= 0x00010000;
-      sprite.blendmode = 0x80;
-   }   
-
    // MSB
    if((CMDPMOD & 0x8000) != 0)
    {
       tmp |= 0x00020000;
    }
    
+   if (IS_REPLACE(CMDPMOD)){
+	   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+   }
+   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
+	   sprite.blendmode = VDP1_COLOR_CL_SHADOW;
+   }
+   else if (IS_HALF_LUMINANCE(CMDPMOD)){
+	   // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+   }
+   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
+	   tmp |= 0x00010000;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
+   }
+   if (IS_MESH(CMDPMOD)){
+	   tmp |= 0x00010000;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+   }
+
+
    // Check if the Gouraud shading bit is set and the color mode is RGB
    if ( (CMDPMOD & 4) )
    {
@@ -3744,15 +3922,10 @@ void VIDOGLVdp1DistortedSpriteDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-#define IS_MESH(a) (a&0x100)
-#define IS_GLOWSHADING(a) (a&0x04)
-#define IS_REPLACE(a) ((a&0x03)==0x00)
-#define IS_DONOT_DRAW_OR_SHADOW(a) ((a&0x03)==0x01)
-#define IS_HALF_LUMINANCE(a)   ((a&0x03)==0x02)
-#define IS_REPLACE_OR_HALF_TRANSPARENT(a) ((a&0x03)==0x03)
 
 
-void VIDOGLVdp1PolygonDraw(void)
+
+void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    s16 X[4];
    s16 Y[4];
@@ -3765,29 +3938,23 @@ void VIDOGLVdp1PolygonDraw(void)
    int i;
    float col[4*4];
    int gouraud=0;
-   int priority;
-   short CMDYA;
-   short CMDYB;
-   short CMDYC;
-   short CMDYD;
-
+   int priority = 0;
+   int isSquare = 0;
+   int shadow = 0;
+   int colorcalc = 0;
    vdp1cmd_struct cmd;
 
    sprite.linescreen = 0;
 
-   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
 
-   CMDYA = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
-   CMDYB = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x12);
-   CMDYC = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x16);
-   CMDYD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1A);
-   
-   if ((CMDYA & 0x800)) CMDYA |= 0xF800; else CMDYA &= ~(0xF800);
-   if ((CMDYC & 0x800)) CMDYC |= 0xF800; else CMDYC &= ~(0xF800);
-   if ((CMDYB & 0x800)) CMDYB |= 0xF800; else CMDYB &= ~(0xF800);
-   if ((CMDYD & 0x800)) CMDYD |= 0xF800; else CMDYD &= ~(0xF800);
+   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+    
+   if ((cmd.CMDYA & 0x800)) cmd.CMDYA |= 0xF800; else cmd.CMDYA &= ~(0xF800);
+   if ((cmd.CMDYC & 0x800)) cmd.CMDYC |= 0xF800; else cmd.CMDYC &= ~(0xF800);
+   if ((cmd.CMDYB & 0x800)) cmd.CMDYB |= 0xF800; else cmd.CMDYB &= ~(0xF800);
+   if ((cmd.CMDYD & 0x800)) cmd.CMDYD |= 0xF800; else cmd.CMDYD &= ~(0xF800);
 
-   sprite.blendmode = 0;
+   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.dst = 0;
 
 
@@ -3800,7 +3967,7 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
 
-   int isSquare = 1;
+   isSquare = 1;
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
 	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
@@ -3813,13 +3980,13 @@ void VIDOGLVdp1PolygonDraw(void)
 	   }
    }
    if (isSquare){
-
-	   sprite.dst = 0;
-
 	   // find upper left opsition
 	   float minx = 65535.0f;
 	   float miny = 65535.0f;
 	   int lt_index = -1;
+
+	   sprite.dst = 0;
+
 	   for (i = 0; i < 4; i++){
 		   if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
 			   minx = sprite.vertices[(i << 1) + 0];
@@ -3833,14 +4000,16 @@ void VIDOGLVdp1PolygonDraw(void)
 			   // vectorize
 			   float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
 			   float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+			   float nx;
+			   float ny;
 
 			   // normalize
 			   float len = fabsf(sqrtf(dx*dx + dy*dy));
 			   if (len <= EPSILON){
 				   continue;
 			   }
-			   float nx = dx / len;
-			   float ny = dy / len;
+			   nx = dx / len;
+			   ny = dy / len;
 			   if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
 			   if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
 
@@ -3877,13 +4046,6 @@ void VIDOGLVdp1PolygonDraw(void)
    color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
-   
- 
-   // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
-   {
-	   sprite.blendmode = 0x80;
-   }   
 
    // Check if the Gouraud shading bit is set and the color mode is RGB
    if( (CMDPMOD & 4) )
@@ -3903,9 +4065,7 @@ void VIDOGLVdp1PolygonDraw(void)
       priority = Vdp2Regs->PRISA & 0x7;
    else
    {
-      int shadow, colorcalc;
-      priority = 0;  // Avoid compiler warning
-      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+	  Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
       priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;
 #else
@@ -3921,10 +4081,9 @@ void VIDOGLVdp1PolygonDraw(void)
    sprite.cor = 0x00;
    sprite.cog = 0x00;
    sprite.cob = 0x00;
-
-
-                     // VDP2 Pallet Only
-   if (color == 0 || ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)==0x00) )
+                  
+   // Pallet mode
+   if (IS_REPLACE(CMDPMOD) && color == 0 ) 
    {
 	  YglQuad(&sprite, &texture, NULL);
       alpha = 0;   
@@ -3933,8 +4092,44 @@ void VIDOGLVdp1PolygonDraw(void)
 	  return;
    }
 
+   // RGB mode
+   if (color & 0x8000){
+
+	   int vdp1spritetype = Vdp2Regs->SPCTL & 0xF;
+	   if (color != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(Vdp2Regs->SPCTL & 0x10)) ){
+	   }
+	   else{
+		   YglQuad(&sprite, &texture, NULL);
+		   alpha = 0;
+		   priority = 0;
+		   *texture.textdata = 0;
+		   return;
+	   }
+   }
+
 
    alpha = 0xF8;
+   if (IS_REPLACE(CMDPMOD)){
+	   alpha = 0xF8;
+   }
+   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
+	   alpha = 0xF8;
+	   sprite.blendmode = VDP1_COLOR_CL_SHADOW;
+   }
+   else if (IS_HALF_LUMINANCE(CMDPMOD)){
+	   alpha = 0xF8;
+	   // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+   }
+   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
+	   alpha = 0x80;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
+   }
+
+   if (IS_MESH(CMDPMOD)){
+	   alpha = 0x80;
+	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+   }
+
    if (gouraud == 1)
    {
 	   YglQuadGrowShading(&sprite, &texture, col, NULL);
@@ -3942,26 +4137,6 @@ void VIDOGLVdp1PolygonDraw(void)
    else{
 	   YglQuadGrowShading(&sprite, &texture, NULL, NULL);
    }
-
-   if (IS_REPLACE(CMDPMOD)){
-	   alpha = 0xF8;
-   }
-   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
-	   alpha = 0x00;
-   }
-   else if (IS_HALF_LUMINANCE(CMDPMOD)){
-	   alpha = 0xF8;
-	   
-   }
-   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
-	   alpha = 0x80;
-   }
-   
-   if (IS_MESH(CMDPMOD)){
-	   alpha = 0x80;
-   }
-
-
 
    if (Vdp2Regs->SDCTL & 0x100 ){
    }
@@ -3974,9 +4149,20 @@ void VIDOGLVdp1PolygonDraw(void)
    */
 
    
-   alpha |= priority;
-   if (color & 0x8000){
-	   *texture.textdata = SAT2YAB1(alpha, color);
+   if ( (color&0x8000) && (Vdp2Regs->SPCTL & 0x20) ){
+	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+	   if (SPCCCS == 0x03){
+		   int colorcl;
+		   int nromal_shadow;
+		   Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
+		   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		   talpha |= priority;
+		   *texture.textdata = SAT2YAB1(talpha, color);
+	   }
+	   else{
+		   alpha |= priority;
+		   *texture.textdata = SAT2YAB1(alpha, color);
+	   }
    }else{
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
@@ -3986,6 +4172,14 @@ void VIDOGLVdp1PolygonDraw(void)
 
 
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
+	float dx;
+	float dy;
+	float len;
+	float nx;
+	float ny;
+	float ex;
+	float ey;
+	float offset;
 
 	if (v1[0] == v2[0] && v1[1] == v2[1]){
 		outv[0] = v1[0];
@@ -4000,11 +4194,11 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 	}
 
 	// vectorize;
-	float dx = v2[0] - v1[0];
-	float dy = v2[1] - v1[1];
+	dx = v2[0] - v1[0];
+	dy = v2[1] - v1[1];
 
 	// normalize
-	float len = fabs( sqrtf((dx*dx) + (dy*dy)) );
+	len = fabs( sqrtf((dx*dx) + (dy*dy)) );
 	if (len < EPSILON ){
 		// fail;
 		outv[0] = v1[0];
@@ -4018,19 +4212,19 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 		return;
 	}
 
-	float nx = dx / len;
-	float ny = dy / len;
+	nx = dx / len;
+	ny = dy / len;
 
 	// turn
 	dx = ny  * 0.5f;
 	dy = -nx * 0.5f;
 
 	// extend
-	float ex = nx * 0.5f;
-	float ey = ny * 0.5f;
+	ex = nx * 0.5f;
+	ey = ny * 0.5f;
 
 	// offset
-	float offset = 0.5f;
+	offset = 0.5f;
 
 	// triangle
 	outv[0] = v1[0] - ex - dx + offset;
@@ -4045,7 +4239,7 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv){
 
 }
 
-void VIDOGLVdp1PolylineDraw(void)
+void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    s16 v[8];
    float line_poygon[8];
@@ -4055,14 +4249,16 @@ void VIDOGLVdp1PolylineDraw(void)
    YglSprite polygon;
    YglTexture texture;
    YglCache c;
-   int priority;
+   int priority = 0;
    vdp1cmd_struct cmd;
    float col[4 * 4];
    float linecol[4 * 4];
    int gouraud = 0;
    u16 color2;
+   int shadow = 0;
+   int colorcalc = 0;
 
-   polygon.blendmode=0;   
+   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
    polygon.linescreen = 0;
    polygon.dst = 0;
    v[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C) );
@@ -4078,21 +4274,11 @@ void VIDOGLVdp1PolylineDraw(void)
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    polygon.uclipmode=(CMDPMOD>>9)&0x03;
    
-
-   // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
-   {
-      polygon.blendmode = 0x80;
-   }     
-      
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
    {
-      int shadow, colorcalc;
-
-      priority = 0;  // Avoid compiler warning
-      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+	   Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
       priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;
 #else
@@ -4128,6 +4314,22 @@ void VIDOGLVdp1PolylineDraw(void)
    polygon.vertices[5] = line_poygon[5] * vdp1hratio;
    polygon.vertices[6] = line_poygon[6] * vdp1wratio;
    polygon.vertices[7] = line_poygon[7] * vdp1hratio;
+
+   if (IS_REPLACE(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
+   }
+   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_SHADOW;
+   }
+   else if (IS_HALF_LUMINANCE(CMDPMOD)){
+	   // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+   }
+   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
+   }
+   if (IS_MESH(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+   }
 
    if (gouraud){
 	   linecol[0] = col[(0 << 2) + 0];
@@ -4167,10 +4369,23 @@ void VIDOGLVdp1PolylineDraw(void)
 
    alpha |= priority;
 
-   if (color & 0x8000)
-	   *texture.textdata = SAT2YAB1(alpha, color);
+   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20)){
+	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+	   if (SPCCCS == 0x03){
+		   int colorcl;
+		   int nromal_shadow;
+		   Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
+		   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		   talpha |= priority;
+		   *texture.textdata = SAT2YAB1(talpha, color);
+	   }
+	   else{
+		   alpha |= priority;
+		   *texture.textdata = SAT2YAB1(alpha, color);
+	   }
+   }
    else{
-	   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+      Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
 
@@ -4282,7 +4497,7 @@ void VIDOGLVdp1PolylineDraw(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1LineDraw(void)
+void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    s16 v[4];
    u16 color;
@@ -4290,14 +4505,16 @@ void VIDOGLVdp1LineDraw(void)
    u8 alpha;
    YglSprite polygon;
    YglTexture texture;
-   int priority;
+   int priority = 0;
    float line_poygon[8];
    vdp1cmd_struct cmd;
    float col[4 * 2];
    int gouraud = 0;
+   int shadow = 0;
+   int colorcalc = 0;
    u16 color2;
 
-   polygon.blendmode=0;
+   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
    polygon.linescreen = 0;
    polygon.dst = 0;
    v[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
@@ -4309,20 +4526,11 @@ void VIDOGLVdp1LineDraw(void)
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    polygon.uclipmode=(CMDPMOD>>9)&0x03;
 
-   // Half trans parent to VDP1 Framebuffer
-   if( (CMDPMOD & 0x3)==0x03 || (CMDPMOD & 0x100) )
-   {
-      polygon.blendmode = 0x80;
-   }  
-
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
    {
-      int shadow, colorcalc;
-
-      priority = 0;  // Avoid compiler warning
-      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+	   Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
       priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1] & 0x7;
 #else
@@ -4362,6 +4570,22 @@ void VIDOGLVdp1LineDraw(void)
    polygon.h = 1;
    polygon.flip = 0;
 
+   if (IS_REPLACE(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
+   }
+   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_SHADOW;
+   }
+   else if (IS_HALF_LUMINANCE(CMDPMOD)){
+	   // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+   }
+   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
+   }
+   if (IS_MESH(CMDPMOD)){
+	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+   }
+
    if (gouraud == 1){
 	   YglQuadGrowShading(&polygon, &texture, col, NULL);
    }
@@ -4384,17 +4608,31 @@ void VIDOGLVdp1LineDraw(void)
    
 
 
-   if (color & 0x8000)
-      *texture.textdata = SAT2YAB1(alpha,color);
+   if (color & 0x8000 && (Vdp2Regs->SPCTL & 0x20)){
+	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
+	   if (SPCCCS == 0x03){
+		   int colorcl;
+		   int nromal_shadow;
+		   Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
+		   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		   talpha |= priority;
+		   *texture.textdata = SAT2YAB1(talpha, color);
+	   }
+	   else{
+		   alpha |= priority;
+		   *texture.textdata = SAT2YAB1(alpha, color);
+	   }
+	   *texture.textdata = SAT2YAB1(alpha, color);
+   }
    else{
-	   Vdp1ReadCommand(&cmd, Vdp1Regs->addr);
+      Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1UserClipping(void)
+void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs)
 {
    Vdp1Regs->userclipX1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
    Vdp1Regs->userclipY1 = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
@@ -4404,7 +4642,7 @@ void VIDOGLVdp1UserClipping(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1SystemClipping(void)
+void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
    Vdp1Regs->systemclipX1 = 0;
    Vdp1Regs->systemclipY1 = 0;
@@ -4414,7 +4652,7 @@ void VIDOGLVdp1SystemClipping(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp1LocalCoordinate(void)
+void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
 {
    Vdp1Regs->localX = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
    Vdp1Regs->localY = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
@@ -4452,7 +4690,7 @@ void VIDOGLVdp2DrawEnd(void)
 static void Vdp2DrawBackScreen(void)
 {
    u32 scrAddr;
-   int dot, y;
+   int dot;
   
    static unsigned char lineColors[512 * 3];
    static int line[512*4];
@@ -4461,7 +4699,6 @@ static void Vdp2DrawBackScreen(void)
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x7) << 16) | Vdp2Regs->BKTAL) * 2;
    else
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x3) << 16) | Vdp2Regs->BKTAL) * 2;
-
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
    dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -4473,6 +4710,8 @@ static void Vdp2DrawBackScreen(void)
 #else
    if (Vdp2Regs->BKTAU & 0x8000)
    {
+		int y;
+
       for(y = 0; y < vdp2height; y++)
       {
          dot = T1ReadWord(Vdp2Ram, scrAddr);
@@ -4541,6 +4780,9 @@ static void Vdp2DrawLineColorScreen(void)
       return;
   }
 
+  if (!line_pixel_data)
+	  return;
+
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
   } else{
@@ -4586,7 +4828,7 @@ static void Vdp2DrawNBG0(void)
       info.enable = Vdp2Regs->BGON & 0x20;
 
       // Read in Parameter B
-      Vdp2ReadRotationTable(1, &parameter);
+      Vdp2ReadRotationTable(1, &parameter, Vdp2Regs, Vdp2Ram);
 
       if((info.isbitmap = Vdp2Regs->CHCTLA & 0x2) != 0)
       {
@@ -4608,7 +4850,7 @@ static void Vdp2DrawNBG0(void)
       }
 
       info.rotatenum = 1;
-      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+      info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
       parameter.coefenab = Vdp2Regs->KTCTL & 0x100;
 
       info.LineColorBase = 0x00;
@@ -4660,12 +4902,12 @@ static void Vdp2DrawNBG0(void)
          break;
       case 1:
 		  info.maxzoom = 0.5f;
-         if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+         //if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
          break;
       case 2:
       case 3:
 		  info.maxzoom = 0.25f;
-         if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+         //if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
          break;
       }
 
@@ -4674,7 +4916,7 @@ static void Vdp2DrawNBG0(void)
       else
          info.coordincy = (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00);
       
-      info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG0PlaneAddr;            
+      info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
    }
    else
       // Not enabled
@@ -4750,49 +4992,72 @@ static void Vdp2DrawNBG0(void)
       // NBG0 draw
       if (info.isbitmap)
       {
-         int xx,yy;
-         int isCached = 0;
-      
-         if(info.islinescroll) // Nights Movie
-         {
-            info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
-            info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
-            info.x = 0;
-            info.y = 0;
-         }
+		  if (info.coordincx != 1.0f || info.coordincy != 1.0f){
+			  info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+			  info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+			  info.x = 0;
+			  info.y = 0;
+			  info.vertices[0] = 0;
+			  info.vertices[1] = 0;
+			  info.vertices[2] = vdp2width;
+			  info.vertices[3] = 0;
+			  info.vertices[4] = vdp2width;
+			  info.vertices[5] = vdp2height;
+			  info.vertices[6] = 0;
+			  info.vertices[7] = vdp2height;
+			  vdp2draw_struct infotmp = info;
+			  infotmp.cellw = vdp2width;
+			  infotmp.cellh = vdp2height;
+			  YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
+			  Vdp2DrawBitmapCoordinateInc(&info, &texture);
+		  }
+		  else{
 
-         yy = info.y;
-         while( yy < vdp2height )
-         {
-            xx = info.x;
-            while( xx < vdp2width )
-            {
-               info.vertices[0] = xx * info.coordincx;
-               info.vertices[1] = yy * info.coordincy;
-               info.vertices[2] = (xx + info.cellw) * info.coordincx;
-               info.vertices[3] = yy * info.coordincy;
-               info.vertices[4] = (xx + info.cellw) * info.coordincx;
-               info.vertices[5] = (yy + info.cellh) * info.coordincy;
-               info.vertices[6] = xx * info.coordincx;
-               info.vertices[7] = (yy + info.cellh) * info.coordincy;            
+			  int xx, yy;
+			  int isCached = 0;
 
-               if( isCached == 0 )
-               {
-                  YglQuad((YglSprite *)&info, &texture,&tmpc);
-				  if (info.islinescroll){
-					  Vdp2DrawBitmapLineScroll(&info, &texture);
-				  }else{
-					  Vdp2DrawCell(&info, &texture);
+			  if (info.islinescroll) // Nights Movie
+			  {
+				  info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+				  info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+				  info.x = 0;
+				  info.y = 0;
+			  }
+
+			  yy = 0; // info.y;
+			  while (yy + info.y < vdp2height)
+			  {
+				  xx = 0; // info.x;
+				  while (xx + info.x < vdp2width)
+				  {
+					  info.vertices[0] = xx;
+					  info.vertices[1] = yy;
+					  info.vertices[2] = (xx + info.cellw);
+					  info.vertices[3] = yy;
+					  info.vertices[4] = (xx + info.cellw);
+					  info.vertices[5] = (yy + info.cellh);
+					  info.vertices[6] = xx;
+					  info.vertices[7] = (yy + info.cellh);
+
+					  if (isCached == 0)
+					  {
+						  YglQuad((YglSprite *)&info, &texture, &tmpc);
+						  if (info.islinescroll){
+							  Vdp2DrawBitmapLineScroll(&info, &texture);
+						  }
+						  else{
+							  Vdp2DrawCell(&info, &texture);
+						  }
+						  isCached = 1;
+					  }
+					  else{
+						  YglCachedQuad((YglSprite *)&info, &tmpc);
+					  }
+					  xx += info.cellw;
 				  }
-                  isCached = 1;
-               }else{
-                  YglCachedQuad((YglSprite *)&info, &tmpc);
-               }
-               xx += info.cellw* info.coordincx;
-            }
-            yy += info.cellh* info.coordincy;
-         }
-      
+				  yy += info.cellh;
+			  }
+		  }
       }
       else
       {
@@ -4903,12 +5168,12 @@ static void Vdp2DrawNBG1(void)
       break;
    case 1:
 	   info.maxzoom = 0.5f;
-      if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+//      if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
       break;
    case 2:
    case 3:
 	   info.maxzoom = 0.25f;
-      if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+//      if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
       break;
    }
 
@@ -4919,7 +5184,7 @@ static void Vdp2DrawNBG1(void)
       
       
    info.priority = (Vdp2Regs->PRINA >> 8) & 0x7;;
-   info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG1PlaneAddr;
+   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
       (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
@@ -4960,49 +5225,72 @@ static void Vdp2DrawNBG1(void)
    
    if (info.isbitmap)
    {
-      int xx,yy;
-      int isCached = 0;
-      if(info.islinescroll)
-      {
-          info.sh = (Vdp2Regs->SCXIN1 & 0x7FF);
-          info.sv = (Vdp2Regs->SCYIN1 & 0x7FF);
-          info.x = 0;
-          info.y = 0;
-      }
-      
-      yy = info.y;
-      while( yy < vdp2height )
-      {
-         xx = info.x;
-         while( xx < vdp2width )
-         {
-            info.vertices[0] = xx * info.coordincx;
-            info.vertices[1] = yy * info.coordincy;
-            info.vertices[2] = (xx + info.cellw) * info.coordincx;
-            info.vertices[3] = yy * info.coordincy;
-            info.vertices[4] = (xx + info.cellw) * info.coordincx;
-            info.vertices[5] = (yy + info.cellh) * info.coordincy;
-            info.vertices[6] = xx * info.coordincx;
-            info.vertices[7] = (yy + info.cellh) * info.coordincy;            
+	   if (info.coordincx != 1.0f || info.coordincy != 1.0f){
+		   info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+		   info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+		   info.x = 0;
+		   info.y = 0;
+		   info.vertices[0] = 0;
+		   info.vertices[1] = 0;
+		   info.vertices[2] = vdp2width;
+		   info.vertices[3] = 0;
+		   info.vertices[4] = vdp2width;
+		   info.vertices[5] = vdp2height;
+		   info.vertices[6] = 0;
+		   info.vertices[7] = vdp2height;
+		   vdp2draw_struct infotmp = info;
+		   infotmp.cellw = vdp2width;
+		   infotmp.cellh = vdp2height;
+		   YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
+		   Vdp2DrawBitmapCoordinateInc(&info, &texture);
+	   }
+	   else{
 
-            if( isCached == 0 )
-            {
-				YglQuad((YglSprite *)&info, &texture, &tmpc);
-				if (info.islinescroll){
-					Vdp2DrawBitmapLineScroll(&info, &texture);
-				}
-				else{
-					Vdp2DrawCell(&info, &texture);
-				}
-               isCached = 1;
-            }else{
-               YglCachedQuad((YglSprite *)&info, &tmpc);
-            }
-            xx += info.cellw* info.coordincx;
-         }
-         yy += info.cellh* info.coordincy;
-      }
-      
+		   int xx, yy;
+		   int isCached = 0;
+
+		   if (info.islinescroll) // Nights Movie
+		   {
+			   info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
+			   info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
+			   info.x = 0;
+			   info.y = 0;
+		   }
+
+		   yy = 0; // info.y;
+		   while (yy + info.y < vdp2height)
+		   {
+			   xx = 0; // info.x;
+			   while (xx + info.x < vdp2width)
+			   {
+				   info.vertices[0] = xx;
+				   info.vertices[1] = yy;
+				   info.vertices[2] = (xx + info.cellw);
+				   info.vertices[3] = yy;
+				   info.vertices[4] = (xx + info.cellw);
+				   info.vertices[5] = (yy + info.cellh);
+				   info.vertices[6] = xx;
+				   info.vertices[7] = (yy + info.cellh);
+
+				   if (isCached == 0)
+				   {
+					   YglQuad((YglSprite *)&info, &texture, &tmpc);
+					   if (info.islinescroll){
+						   Vdp2DrawBitmapLineScroll(&info, &texture);
+					   }
+					   else{
+						   Vdp2DrawCell(&info, &texture);
+					   }
+					   isCached = 1;
+				   }
+				   else{
+					   YglCachedQuad((YglSprite *)&info, &tmpc);
+				   }
+				   xx += info.cellw;
+			   }
+			   yy += info.cellh;
+	   }
+   }
    }
    else{
 	   if (info.islinescroll){
@@ -5078,7 +5366,7 @@ static void Vdp2DrawNBG2(void)
    info.coordincx = info.coordincy = 1;
 
    info.priority = Vdp2Regs->PRINB & 0x7;;
-   info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG2PlaneAddr;
+   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
       (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
@@ -5166,7 +5454,7 @@ static void Vdp2DrawNBG3(void)
    info.coordincx = info.coordincy = 1;
 
    info.priority = (Vdp2Regs->PRINB >> 8) & 0x7;
-   info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2NBG3PlaneAddr;
+   info.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2NBG3PlaneAddr;
 
    if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
       (Vdp2Regs->BGON & 0x1 && (Vdp2Regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
@@ -5231,10 +5519,10 @@ static void Vdp2DrawRBG0(void)
    info.linescrolltbl = 0;
    info.lineinc = 0;   
    
-   Vdp2ReadRotationTable(0, &paraA);
-   Vdp2ReadRotationTable(1, &paraB);
-   paraA.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
-   paraB.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+   Vdp2ReadRotationTable(0, &paraA, Vdp2Regs, Vdp2Ram);
+   Vdp2ReadRotationTable(1, &paraB, Vdp2Regs, Vdp2Ram);
+   paraA.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
+   paraB.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
    paraA.charaddr = (Vdp2Regs->MPOFR & 0x7) * 0x20000;
    paraB.charaddr = (Vdp2Regs->MPOFR & 0x70) * 0x2000;
    ReadPlaneSizeR(&paraA,Vdp2Regs->PLSZ >> 8);
@@ -5352,13 +5640,13 @@ static void Vdp2DrawRBG0(void)
          // Parameter A
          info.rotatenum = 0;
 		 info.rotatemode = 0;
-         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
          break;
       case 1:
          // Parameter B
          info.rotatenum = 1;
 		 info.rotatemode = 0;
-         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterBPlaneAddr;
+       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
          break;
       case 2:
          // Parameter A+B switched via coefficients
@@ -5370,7 +5658,7 @@ static void Vdp2DrawRBG0(void)
          VDP2LOG("Rotation Parameter Mode %d not supported!\n", Vdp2Regs->RPMD & 0x3);
          info.rotatenum = 0;
 		 info.rotatemode = 1 + (Vdp2Regs->RPMD & 0x1);
-         info.PlaneAddr = (void FASTCALL (*)(void *, int))&Vdp2ParameterAPlaneAddr;
+       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
          break;
    }
 
@@ -5436,9 +5724,9 @@ static void Vdp2DrawRBG0(void)
 	   
 	   for( i=0; i<16; i++ )
        {
-         paraA.PlaneAddr(&info,i);
+         paraA.PlaneAddr(&info,i, Vdp2Regs);
          paraA.PlaneAddrv[i] = info.addr;
-         paraB.PlaneAddr(&info,i);
+         paraB.PlaneAddr(&info, i, Vdp2Regs);
          paraB.PlaneAddrv[i] = info.addr;
        }
    }
@@ -5619,7 +5907,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W( vdp2rotationparameter_
    float kval;
    int   kdata;
       
-   kdata = T1ReadLong(Vdp2Ram, (param->coeftbladdr&0x7FFFF) + (index<<2) );
+   kdata = T1ReadLong(Vdp2Ram, (param->coeftbladdr+(index << 2))& 0x7FFFF) ;
    if( kdata & 0x80000000 ) return NULL;
 
    kval = (float) (int) ((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536.0f;
@@ -5647,7 +5935,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W( vdp2rotationparameter_
    float kval;
    u16   kdata;
   
-   kdata = T1ReadWord(Vdp2Ram, param->coeftbladdr + (index<<1) );
+   kdata = T1ReadWord(Vdp2Ram, (param->coeftbladdr + (index<<1)) & 0x7FFFF );
    if( kdata & 0x8000 ) return NULL;
 
    kval = (float) (signed) ((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
