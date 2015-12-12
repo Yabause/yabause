@@ -599,10 +599,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+							   *texture->textdata++ = SAT2YAB1(talpha, checkcol);
 						   }
 						   else{
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+							   *texture->textdata++ = SAT2YAB1(alpha, checkcol);  
 						   }
 					   }
 					   else{
@@ -637,10 +637,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+							   *texture->textdata++ = SAT2YAB1(talpha, checkcol);
 						   }
 						   else{
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+							   *texture->textdata++ = SAT2YAB1(alpha, checkcol);
 						   }
 					   }
 					   else{
@@ -4021,10 +4021,11 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
 
    // Line Polygon
-   if ( (sprite.vertices[1] == sprite.vertices[3]) &&
-	   (sprite.vertices[3]  == sprite.vertices[5]) &&
-	   (sprite.vertices[5]  == sprite.vertices[7])) {
-	   sprite.vertices[5] += 1;
+   if ( (sprite.vertices[1] == sprite.vertices[3]) && // Y1 == Y2
+	   (sprite.vertices[3]  == sprite.vertices[5]) && // Y2 == Y3
+	   (sprite.vertices[5]  == sprite.vertices[7]))   // Y3 == Y4
+   {
+	   sprite.vertices[3] += 1;
 	   sprite.vertices[7] += 1;
    }
    // Line Polygon
