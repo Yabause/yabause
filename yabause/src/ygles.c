@@ -931,7 +931,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
    if (YglProgramInit() != 0)
    {
-	   YuiErrorMsg("Fail to YglProgramInit\n");
+	   YGLDEBUG("Fail to YglProgramInit\n");
 	   abort();
    }
    glBindFramebuffer(GL_FRAMEBUFFER, 0 );
@@ -2006,20 +2006,8 @@ void YglRenderVDP1(void) {
    }
    level->prgcurrent = 0;
    
-#if 0
-   if ( (((Vdp1Regs->TVMR & 0x08)==0) && ((Vdp1Regs->FBCR & 0x03)==0x03) )
-	)
-   {
-	   u32 current_drawframe = 0;
-	   current_drawframe = _Ygl->drawframe;
-	   _Ygl->drawframe = _Ygl->readframe;
-	   _Ygl->readframe = current_drawframe;
-     Vdp1External.manualchange = 0;
-     YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
-   }
-#endif
    if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
-	   ((Vdp1Regs->FBCR & 2) == 0) || 
+	   ((Vdp1Regs->FBCR & 2) == 0) ||
 	   Vdp1External.manualchange)
    {
 	   u32 current_drawframe = 0;
@@ -2211,19 +2199,19 @@ void YglRenderFrameBuffer( int from , int to ) {
    }
 
    // render
-   vertices[0] = 0;
-   vertices[1] = 0;
-   vertices[2] = _Ygl->rwidth+1;
-   vertices[3] = 0;
-   vertices[4] = _Ygl->rwidth+1;
-   vertices[5] = _Ygl->rheight+1;
+   vertices[0] = 0 -0.5;
+   vertices[1] = 0 -0.5;
+   vertices[2] = _Ygl->rwidth+1 -0.5;
+   vertices[3] = 0 - 0.5;
+   vertices[4] = _Ygl->rwidth + 1 - 0.5;
+   vertices[5] = _Ygl->rheight + 1 - 0.5;
 
-   vertices[6] = 0;
-   vertices[7] = 0;
-   vertices[8] = _Ygl->rwidth+1;
-   vertices[9] = _Ygl->rheight+1;
-   vertices[10] = 0;
-   vertices[11] = _Ygl->rheight+1;
+   vertices[6] = 0-0.5;
+   vertices[7] = 0 - 0.5;
+   vertices[8] = _Ygl->rwidth + 1 - 0.5;
+   vertices[9] = _Ygl->rheight + 1 - 0.5;
+   vertices[10] = 0 - 0.5;
+   vertices[11] = _Ygl->rheight + 1 - 0.5;
 
 
    texcord[0] = 0.0f;
