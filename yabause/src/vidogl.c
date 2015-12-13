@@ -599,10 +599,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+							   *texture->textdata++ = SAT2YAB1(talpha, checkcol);
 						   }
 						   else{
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+							   *texture->textdata++ = SAT2YAB1(alpha, checkcol);  
 						   }
 					   }
 					   else{
@@ -637,10 +637,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+							   *texture->textdata++ = SAT2YAB1(talpha, checkcol);
 						   }
 						   else{
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+							   *texture->textdata++ = SAT2YAB1(alpha, checkcol);
 						   }
 					   }
 					   else{
@@ -3465,7 +3465,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    if (IS_MESH(CMDPMOD)){
 	   tmp |= 0x00010000;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
 
 
@@ -3658,7 +3658,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    if (IS_MESH(CMDPMOD)){
 	   tmp |= 0x00010000;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
    
    if ( (CMDPMOD & 4) )
@@ -3878,7 +3878,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    if (IS_MESH(CMDPMOD)){
 	   tmp |= 0x00010000;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
 
 
@@ -4021,10 +4021,11 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
 
    // Line Polygon
-   if ( (sprite.vertices[1] == sprite.vertices[3]) &&
-	   (sprite.vertices[3]  == sprite.vertices[5]) &&
-	   (sprite.vertices[5]  == sprite.vertices[7])) {
-	   sprite.vertices[5] += 1;
+   if ( (sprite.vertices[1] == sprite.vertices[3]) && // Y1 == Y2
+	   (sprite.vertices[3]  == sprite.vertices[5]) && // Y2 == Y3
+	   (sprite.vertices[5]  == sprite.vertices[7]))   // Y3 == Y4
+   {
+	   sprite.vertices[3] += 1;
 	   sprite.vertices[7] += 1;
    }
    // Line Polygon
@@ -4127,7 +4128,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    if (IS_MESH(CMDPMOD)){
 	   alpha = 0x80;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
    }
 
    if (gouraud == 1)
@@ -4150,19 +4151,36 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    
    if ( (color&0x8000) && (Vdp2Regs->SPCTL & 0x20) ){
+
+	   int colorcl;
+	   int nromal_shadow;
+	   Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
 	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
-	   if (SPCCCS == 0x03){
-		   int colorcl;
-		   int nromal_shadow;
-		   Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
-		   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-		   talpha |= priority;
-		   *texture.textdata = SAT2YAB1(talpha, color);
+
+	   if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
+	   {
+		   switch (SPCCCS)
+		   {
+		   case 0:
+			   if (priority <= ((Vdp2Regs->SPCTL >> 8) & 0x07))
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   case 1:
+			   if (priority == ((Vdp2Regs->SPCTL >> 8) & 0x07))
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   case 2:
+			   if (priority >= ((Vdp2Regs->SPCTL >> 8) & 0x07))
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   case 3:
+			   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   }
 	   }
-	   else{
-		   alpha |= priority;
-		   *texture.textdata = SAT2YAB1(alpha, color);
-	   }
+	   alpha |= priority;
+	   *texture.textdata = SAT2YAB1(alpha, color);
+
    }else{
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
@@ -4328,7 +4346,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }
    if (IS_MESH(CMDPMOD)){
-	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   polygon.blendmode = VDP1_COLOR_CL_MESH;
    }
 
    if (gouraud){
@@ -4583,7 +4601,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }
    if (IS_MESH(CMDPMOD)){
-	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   polygon.blendmode = VDP1_COLOR_CL_MESH;
    }
 
    if (gouraud == 1){
