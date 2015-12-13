@@ -540,6 +540,103 @@ int Ygl_cleanupHalfTrans(void * p )
    return 0;
 }
 
+
+/*------------------------------------------------------------------------------------
+*  VDP1 Mesh Operaion
+* ----------------------------------------------------------------------------------*/
+const GLchar Yglprg_vdp1_mesh_v[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"uniform mat4 u_mvpMatrix;                \n"
+"uniform mat4 u_texMatrix;                \n"
+"layout (location = 0) in vec4 a_position;               \n"
+"layout (location = 1) in vec4 a_texcoord;               \n"
+"layout (location = 2) in vec4 a_grcolor;                \n"
+"out  vec4 v_texcoord;               \n"
+"out  vec4 v_vtxcolor;               \n"
+"void main() {                            \n"
+"   v_vtxcolor  = a_grcolor;              \n"
+"   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+"   v_texcoord.s  = v_texcoord.s/2048.0; \n"
+"   v_texcoord.t  = v_texcoord.t/1024.0; \n"
+"   gl_Position = a_position*u_mvpMatrix; \n"
+"}\n";
+const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
+
+const GLchar Yglprg_vdp1_mesh_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                                                                     \n"
+"uniform sampler2D u_sprite;                                                                  \n"
+"uniform sampler2D u_fbo;                                                                     \n"
+"uniform int u_fbowidth;                                                                      \n"
+"uniform int u_fbohegiht;                                                                     \n"
+"in vec4 v_texcoord;                                                                     \n"
+"in vec4 v_vtxcolor;                                                                     \n"
+"out vec4 fragColor; \n "
+"void main() {                                                                                \n"
+"  vec2 addr = v_texcoord.st;                                                                 \n"
+"  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));   \n"
+"  addr.s = addr.s / (v_texcoord.q);                                                          \n"
+"  addr.t = addr.t / (v_texcoord.q);                                                          \n"
+"  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
+"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+"  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
+"  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
+"  if( fboColor.a > 0.0  )                                                               \n"
+"  {                                                                                          \n"
+"    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
+"    fragColor.a = fboColor.a;                                                             \n"
+"  }else{                                                                                     \n"
+"    fragColor = spriteColor;                                                              \n"
+"    int additional = int(spriteColor.a * 255.0);                                            \n"
+"    fragColor.a = (120.0 + float(additional & 0x07)) / 255.0 ;                              \n"
+"  }                                                                                          \n"
+"}\n";
+const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
+static int id_mesh_sprite=0;
+static int id_mesh_fbo=0;
+static int id_mesh_fbowidth = 0;
+static int id_mesh_fboheight = 0;
+
+int Ygl_uniformMesh(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+	glEnableVertexAttribArray(prg->vertexp);
+	glEnableVertexAttribArray(prg->texcoordp);
+	if (prg->vertexAttribute != NULL)
+	{
+		glEnableVertexAttribArray(prg->vaid);
+	}
+	glUniform1i(id_mesh_sprite, 0);
+	glUniform1i(id_mesh_fbo, 1);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
+	glUniform1i(id_mesh_fbowidth, GlWidth);
+	glUniform1i(id_mesh_fboheight, GlHeight);
+	glActiveTexture(GL_TEXTURE0);
+#if !defined(_OGLES3_)
+	if (glTextureBarrierNV) glTextureBarrierNV();
+#endif
+
+}
+
+int Ygl_cleanupMesh(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+	glDisableVertexAttribArray(prg->vaid);
+	return 0;
+}
+
+
 /*------------------------------------------------------------------------------------
 *  VDP1 Shadow Operation
 *    hard/vdp1/hon/p06_37.htm
@@ -1239,6 +1336,17 @@ int YglProgramInit()
    id_fbowidth = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS], (const GLchar *)"u_fbowidth");
    id_fboheight = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS], (const GLchar *)"u_fbohegiht");
 
+   YGLLOG("PG_VFP1_MESH\n");
+
+   if (YglInitShader(PG_VFP1_MESH, pYglprg_vdp1_mesh_v, pYglprg_vdp1_mesh_f) != 0)
+	   return -1;
+
+   id_mesh_sprite = glGetUniformLocation(_prgid[PG_VFP1_MESH], (const GLchar *)"u_sprite");
+   id_mesh_fbo = glGetUniformLocation(_prgid[PG_VFP1_MESH], (const GLchar *)"u_fbo");
+   id_mesh_fbowidth = glGetUniformLocation(_prgid[PG_VFP1_MESH], (const GLchar *)"u_fbowidth");
+   id_mesh_fboheight = glGetUniformLocation(_prgid[PG_VFP1_MESH], (const GLchar *)"u_fbohegiht");
+
+
    YGLLOG("PG_WINDOW\n");
    //
    if( YglInitShader( PG_WINDOW, pYglprg_window_v, pYglprg_window_f ) != 0 )
@@ -1411,6 +1519,16 @@ int YglProgramChange( YglLevel * level, int prgid )
 	   current->mtxModelView = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_mvpMatrix");
 	   current->mtxTexture = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_texMatrix");
 
+   }
+   else if (prgid == PG_VFP1_MESH)
+   {
+	   level->prg[level->prgcurrent].setupUniform = Ygl_uniformMesh;
+	   level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupMesh;
+	   current->vertexp = 0;
+	   current->texcoordp = 1;
+	   level->prg[level->prgcurrent].vaid = 2;
+	   current->mtxModelView = glGetUniformLocation(_prgid[PG_VFP1_MESH], (const GLchar *)"u_mvpMatrix");
+	   current->mtxTexture = glGetUniformLocation(_prgid[PG_VFP1_MESH], (const GLchar *)"u_texMatrix");
    }
    else if( prgid == PG_VFP1_GOURAUDSAHDING_HALFTRANS )
    {

@@ -111,6 +111,7 @@ void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, uns
 #define VDP1_COLOR_CL_HALF_LUMINACE 0x20
 #define VDP1_COLOR_CL_GROW_LUMINACE 0x30
 #define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
+#define VDP1_COLOR_CL_MESH 0x80
 
 enum
 {
@@ -122,6 +123,7 @@ enum
    PG_VFP1_HALFTRANS,    
    PG_VFP1_SHADOW,
    PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
+   PG_VFP1_MESH,
    PG_VDP2_ADDBLEND,
    PG_VDP2_DRAWFRAMEBUFF,    
    PG_VDP2_STARTWINDOW,
