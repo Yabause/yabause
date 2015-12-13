@@ -44,6 +44,6 @@ android {
 
 crashlytics {
     enableNdk true
-    androidNdkOut 'src/main/obj'
-    androidNdkLibsOut 'src/main/libs'
+    androidNdkOut 'src/main/jniLibs'
+    androidNdkLibsOut 'src/main/jniLibs'
 }
