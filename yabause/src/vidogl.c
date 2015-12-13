@@ -3465,7 +3465,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    if (IS_MESH(CMDPMOD)){
 	   tmp |= 0x00010000;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
 
 
@@ -3658,7 +3658,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    if (IS_MESH(CMDPMOD)){
 	   tmp |= 0x00010000;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
    
    if ( (CMDPMOD & 4) )
@@ -3878,7 +3878,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    if (IS_MESH(CMDPMOD)){
 	   tmp |= 0x00010000;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
 
 
@@ -4128,7 +4128,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    if (IS_MESH(CMDPMOD)){
 	   alpha = 0x80;
-	   sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
    }
 
    if (gouraud == 1)
@@ -4346,7 +4346,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }
    if (IS_MESH(CMDPMOD)){
-	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   polygon.blendmode = VDP1_COLOR_CL_MESH;
    }
 
    if (gouraud){
@@ -4601,7 +4601,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
    }
    if (IS_MESH(CMDPMOD)){
-	   polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT; // zzzz
+	   polygon.blendmode = VDP1_COLOR_CL_MESH;
    }
 
    if (gouraud == 1){
