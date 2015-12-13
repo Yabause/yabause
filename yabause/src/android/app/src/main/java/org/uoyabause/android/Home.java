@@ -31,11 +31,6 @@ import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.ndk.CrashlyticsNdk;
 import io.fabric.sdk.android.Fabric;
 
-//import com.crashlytics.android.Crashlytics;
-//import com.crashlytics.android.ndk.CrashlyticsNdk;
-//import io.fabric.sdk.android.Fabric;
-//import org.uoyabause.android.GameList;
-
 public class Home extends Activity
 {
     private static final String TAG = "Yabause";
@@ -45,7 +40,6 @@ public class Home extends Activity
     {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
-        //Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
         setContentView(R.layout.home);
         String vname = getVersionName(this);
         this.setTitle("uoYabause "+vname);
