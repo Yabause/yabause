@@ -1259,10 +1259,11 @@ int YabLoadStateStream(FILE *fp)
    }
 
 #ifdef WORDS_BIGENDIAN
-   if (endian == 1)
+   int test_endian = endian == 1;
 #else
-   if (endian == 0)
+   int test_endian = endian == 0;
 #endif
+   if (test_endian)
    {
       // should setup reading so it's byte-swapped
       YabSetError(YAB_ERR_OTHER, (void *)"Load State byteswapping not supported");
