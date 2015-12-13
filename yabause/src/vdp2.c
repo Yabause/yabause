@@ -48,7 +48,7 @@ static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
-
+int vbalnk_wait = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 static u64 syncticks = 0;       // CPU time sync for real time.
@@ -324,7 +324,7 @@ void vdp2VBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
-
+   vbalnk_wait = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -336,10 +336,11 @@ void Vdp2VBlankIN(void) {
         evqueue = YabThreadCreateQueue(32);
         YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
+	vbalnk_wait = 0;
    YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
-   while( (Vdp2Regs->TVSTAT & 0x0008) == 0x00 ){
+   while( vbalnk_wait == 0 ){
        YabThreadYield();
    }
 
@@ -530,7 +531,12 @@ void Vdp2VBlankOUT(void) {
        YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
    }
 
-   Vdp2Regs->TVSTAT = (Vdp2Regs->TVSTAT & ~0x0008) | 0x0002;
+   if (vdp2_is_odd_frame)
+	   vdp2_is_odd_frame = 0;
+   else
+	   vdp2_is_odd_frame = 1;
+
+   Vdp2Regs->TVSTAT = ((Vdp2Regs->TVSTAT & ~0x0008) & ~0x0002) | (vdp2_is_odd_frame << 1);
 
    ScuSendVBlankOUT();
 
