@@ -4151,19 +4151,36 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    
    if ( (color&0x8000) && (Vdp2Regs->SPCTL & 0x20) ){
+
+	   int colorcl;
+	   int nromal_shadow;
+	   Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
 	   int SPCCCS = (Vdp2Regs->SPCTL >> 12) & 0x3;
-	   if (SPCCCS == 0x03){
-		   int colorcl;
-		   int nromal_shadow;
-		   Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
-		   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-		   talpha |= priority;
-		   *texture.textdata = SAT2YAB1(talpha, color);
+
+	   if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
+	   {
+		   switch (SPCCCS)
+		   {
+		   case 0:
+			   if (priority <= ((Vdp2Regs->SPCTL >> 8) & 0x07))
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   case 1:
+			   if (priority == ((Vdp2Regs->SPCTL >> 8) & 0x07))
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   case 2:
+			   if (priority >= ((Vdp2Regs->SPCTL >> 8) & 0x07))
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   case 3:
+			   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   break;
+		   }
 	   }
-	   else{
-		   alpha |= priority;
-		   *texture.textdata = SAT2YAB1(alpha, color);
-	   }
+	   alpha |= priority;
+	   *texture.textdata = SAT2YAB1(alpha, color);
+
    }else{
 	   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
    }
