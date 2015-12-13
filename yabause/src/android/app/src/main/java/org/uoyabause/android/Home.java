@@ -27,8 +27,14 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.view.View;
 import android.os.Bundle;
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.ndk.CrashlyticsNdk;
+import io.fabric.sdk.android.Fabric;
 
-import org.uoyabause.android.GameList;
+//import com.crashlytics.android.Crashlytics;
+//import com.crashlytics.android.ndk.CrashlyticsNdk;
+//import io.fabric.sdk.android.Fabric;
+//import org.uoyabause.android.GameList;
 
 public class Home extends Activity
 {
@@ -38,6 +44,8 @@ public class Home extends Activity
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
+        //Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
         setContentView(R.layout.home);
         String vname = getVersionName(this);
         this.setTitle("uoYabause "+vname);
