@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.uoyabause.android"
-      android:versionCode="10"
-      android:versionName="0.1.9">
+      android:versionCode="34"
+      android:versionName="0.1.19_crash">
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.INTERNET" /> 
@@ -46,6 +46,9 @@
 
         <uses-library android:required="false" android:name="com.sec.android.app.multiwindow"> </uses-library>
         <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="48a0bc807b377344d2600f7b2bbd561564869433" />
     </application>
     <uses-feature android:name="android.software.leanback" android:required="false" />    
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
