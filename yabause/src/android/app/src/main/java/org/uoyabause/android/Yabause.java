@@ -221,6 +221,30 @@ public class Yabause extends Activity implements OnPadListener
         audio.unmute(audio.SYSTEM);
     }
 
+    public void SendLoagcatMail(){
+
+        // save logcat in file
+        File outputFile = new File(Environment.getExternalStorageDirectory(),
+                "logcat.txt");
+        try {
+            Runtime.getRuntime().exec(
+                    "logcat -f " + outputFile.getAbsolutePath());
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        //send file using email
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        String to[] = {"smiyaxdev@gmail.com"};
+        emailIntent .putExtra(Intent.EXTRA_EMAIL, to);
+        // the attachment
+        emailIntent .putExtra(Intent.EXTRA_STREAM, outputFile.getAbsolutePath());
+        // the mail subject
+        emailIntent .putExtra(Intent.EXTRA_SUBJECT, "Subject");
+        startActivity(Intent.createChooser(emailIntent, "Send email..."));
+    }
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)    
@@ -309,6 +333,7 @@ public class Yabause extends Activity implements OnPadListener
     @Override
     public void onDestroy()
     {
+
     	Log.v(TAG, "this is the end...");
         yabauseThread.destroy();
         super.onDestroy();
@@ -384,6 +409,7 @@ public class Yabause extends Activity implements OnPadListener
                 }
                 //moveTaskToBack(true);
                 //finish();
+                SendLoagcatMail();
                 android.os.Process.killProcess(android.os.Process.myPid());
                 return true;
             }
@@ -736,7 +762,9 @@ public class Yabause extends Activity implements OnPadListener
  
     static {
         System.loadLibrary("yabause_native");   
-    }  
+    }
+
+
      
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
