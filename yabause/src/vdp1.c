@@ -399,7 +399,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
-            VIDCore->Vdp1DrawEnd();
             regs->LOPR = regs->addr >> 3;
             regs->COPR = regs->addr >> 3;
             return;
