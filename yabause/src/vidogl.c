@@ -332,7 +332,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 							break;
 						case 3:
 						{
-							u16 checkcol = T2ReadWord(Vdp2ColorRam, ((temp + colorOffset) << Vdp2Internal.ColorMode) & 0xFFF);
+							u16 checkcol = Vdp2ColorRamGetColorRaw(temp + colorOffset);
 							if (checkcol & 0x8000){
 								alpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							}
@@ -727,7 +727,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                               break;
 						   case 3:
 						   {
-							   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((temp + colorOffset) << Vdp2Internal.ColorMode) & 0xFFF);
+							   u16 checkcol = Vdp2ColorRamGetColorRaw((temp + colorOffset));
 							   if (checkcol & 0x8000){
 								   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   }
@@ -801,7 +801,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                               break;
 						   case 3:
 						   {
-							   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((temp + colorOffset) << Vdp2Internal.ColorMode) & 0xFFF);
+							   u16 checkcol = Vdp2ColorRamGetColorRaw((temp + colorOffset));
 							   if (checkcol & 0x8000){
 								   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   }
@@ -2881,7 +2881,6 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int m
 		  if (regs->COAB & 0x100)
             info->cob |= 0xFFFFFF00;
       }
-
       info->PostPixelFetchCalc = &DoColorOffset;
    }
    else{ // color offset disable
