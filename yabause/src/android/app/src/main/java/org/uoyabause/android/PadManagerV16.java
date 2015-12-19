@@ -195,127 +195,32 @@ class PadManagerV16 extends PadManager {
     	if( playerindex == -1 ) return 0;
     	
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
-        	
-        	//Log.d(TAG,"id:" + playerindex + "  X=" + event.getAxisValue( MotionEvent.AXIS_HAT_X ) +":Y=" + event.getAxisValue( MotionEvent.AXIS_HAT_Y )
-        	//		+ "  AX=" + event.getAxisValue( MotionEvent.AXIS_X ) +": AY=" + event.getAxisValue( MotionEvent.AXIS_Y ) 
-        	//		+ "  AXIS_Z=" + event.getAxisValue( MotionEvent.AXIS_RZ ) +": AXIS_RZ=" + event.getAxisValue( MotionEvent.AXIS_RZ ) );
-        			
-            // Use the hat axis value to find the D-pad direction
-            MotionEvent motionEvent = (MotionEvent) event;
-            float xaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_X);
-            float yaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_Y);
-            
 
-            // Check if the AXIS_HAT_X value is -1 or 1, and set the D-pad
-            // LEFT and RIGHT direction accordingly.
-            if (Float.compare(xaxis, -1.0f) == 0) {
-	           	Integer PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_X | 0x8000 ));
-            	if( PadKey != null ) {
-            		YabauseRunnable.press(PadKey,playerindex);
-            		rtn = 0;
-            	}            	
-            } else if (Float.compare(xaxis, 1.0f) == 0) {
-	           	Integer PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_X));
-            	if( PadKey != null ) {
-            		YabauseRunnable.press(PadKey,playerindex);
-            		rtn = 0;
-            	}            	
-            } else if( Float.compare(xaxis, 0.0f) == 0){
-	           	Integer PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_X));
-            	if( PadKey != null ) {
-            		YabauseRunnable.release(PadKey,playerindex);
-            		rtn = 1;
-            	}            	
-	           	PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_X | 0x8000 ));
-            	if( PadKey != null ) {
-            		YabauseRunnable.release(PadKey,playerindex);
-            		rtn = 1;
-            	}            	
-            	
-            }
-            
-            // Check if the AXIS_HAT_Y value is -1 or 1, and set the D-pad
-            // UP and DOWN direction accordingly.
-            if (Float.compare(yaxis, -1.0f) == 0) {
-	           	Integer PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_Y | 0x8000 ));
-            	if( PadKey != null ) {
-            		YabauseRunnable.press(PadKey,playerindex);
-            		rtn = 1;
-            	}            	
-            } else if (Float.compare(yaxis, 1.0f) == 0) {
-	           	Integer PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_Y ));
-            	if( PadKey != null ) {
-            		YabauseRunnable.press(PadKey,playerindex);
-            		rtn = 1;
-            	}            	
+			MotionEvent motionEvent = (MotionEvent) event;
+			for(HashMap.Entry<Integer, Integer> e : Keymap.get(playerindex).entrySet()) {
+				//System.out.println(e.getKey() + " : " + e.getValue());
+				int btn = e.getKey();
+				if( (btn&0x80000000) != 0 ) {
+					float motion_value = motionEvent.getAxisValue((btn&0x00007FFF));
+					if( (btn&0x8000) != 0 ){
 
-            }else if( Float.compare(yaxis, 0.0f) == 0){
-	           	Integer PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_Y));
-            	if( PadKey != null ) {
-            		YabauseRunnable.release(PadKey,playerindex);
-            		rtn = 1;
-            	}            	
-	           	PadKey = Keymap.get(playerindex).get((MotionEvent.AXIS_HAT_Y | 0x8000 ));
-            	if( PadKey != null ) {
-            		YabauseRunnable.release(PadKey,playerindex);
-            		rtn = 1;
-            	}            	
-            	
-            }   
-            
-        	
-        	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
-        	  if( newLeftTrigger != input[playerindex]._oldLeftTrigger ){
-        		  //Log.d(TAG,"AXIS_LTRIGGER = " + newLeftTrigger);
-        		  
-        		  // On
-        		  if( input[playerindex]._oldLeftTrigger < newLeftTrigger /*&& _oldLeftTrigger < 0.001*/ ){
-        			
-        	           	Integer PadKey = Keymap.get(playerindex).get(MotionEvent.AXIS_LTRIGGER);
-                    	if( PadKey != null ) {
-                    	   	//pe = new PadEvent(0, PadKey);
-                    		YabauseRunnable.press(PadKey,playerindex);
-                    		rtn = 1;
-                    	}			  
-        		  }
-        		  
-        		  // Off
-        		  else if( input[playerindex]._oldLeftTrigger > newLeftTrigger /*&& newLeftTrigger > 0.5*/ ){
-	      	           	Integer PadKey = Keymap.get(playerindex).get(MotionEvent.AXIS_LTRIGGER);
-	                  	if( PadKey != null ) {
-	                  	   	//pe = new PadEvent(1, PadKey);
-	                  		YabauseRunnable.release(PadKey,playerindex);
-	                  		rtn = 1;
-	                  	}   			  
-        		  }
-        		  
-        		  input[playerindex]._oldLeftTrigger = newLeftTrigger;
-        	  }
-        	  
-        	  float newRightTrigger = event.getAxisValue( MotionEvent.AXIS_RTRIGGER );
-        	  if( newRightTrigger != input[playerindex]._oldRightTrigger ){
-        		  //Log.d(TAG,"AXIS_LTRIGGER = " + newRightTrigger);
+						if (Float.compare(motion_value, -1.0f) == 0) { // ON
+							YabauseRunnable.press(e.getValue(),playerindex);
+						}
+						else if( Float.compare(motion_value, 0.0f) == 0 ){ // OFF
+							YabauseRunnable.release(e.getValue(),playerindex);
+						}
+					}else{
+						if (Float.compare(motion_value, 1.0f) == 0) {  // ON
+							YabauseRunnable.press(e.getValue(),playerindex);
+						}
+						else if( Float.compare(motion_value, 0.0f) == 0 ){ // OFF
+							YabauseRunnable.release(e.getValue(),playerindex);
+						}
+					}
+				}
 
-        		  // On
-        		  if( input[playerindex]._oldRightTrigger < newRightTrigger /*&& _oldRightTrigger < 0.001*/ ){
-        			
-        	           	Integer PadKey = Keymap.get(playerindex).get(MotionEvent.AXIS_RTRIGGER);
-                    	if( PadKey != null ) {
-                    		YabauseRunnable.press(PadKey,playerindex);
-                    		rtn = 1;
-                    	}			  
-        		  }
-        		  
-        		  // Off
-        		  else if( input[playerindex]._oldRightTrigger > newRightTrigger /*&& newRightTrigger > 0.5*/ ){
-	      	           	Integer PadKey = Keymap.get(playerindex).get(MotionEvent.AXIS_RTRIGGER);
-	                  	if( PadKey != null ) {
-	                  	  YabauseRunnable.release(PadKey,playerindex);
-	                  	  rtn = 1;
-	                  	}   			  
-        		  }
-        		  input[playerindex]._oldRightTrigger = newRightTrigger;
-        	  }
+			}
         }
     	return rtn;
     }
@@ -339,8 +244,7 @@ class PadManagerV16 extends PadManager {
             		YabauseRunnable.press(PadKey,playerindex);
             		if( keyCode == KeyEvent.KEYCODE_BUTTON_B){ 
             			return 1;
-            	}
-
+	            	}
             		return 0;
             	}else{
             		return 0;
@@ -398,7 +302,7 @@ class PadManagerV16 extends PadManager {
 	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_L1, PadEvent.BUTTON_Z);   
     }
     
-    void loadSettings(){
+    public void loadSettings(){
         try {
         	
             File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
