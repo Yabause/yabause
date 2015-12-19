@@ -359,6 +359,11 @@ import android.view.LayoutInflater;
                 		return true; // ignore
                 	}
 
+					// ipega needs to ignore L2,R2. this event is duped at onGenericMotion.
+					else if( keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2 ){
+						return false; // ignore
+					}
+
                 	                	
                 	Integer PadKey = Keymap.get(keyCode);
                 	if( PadKey != null ) {
