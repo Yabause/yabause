@@ -289,7 +289,7 @@ public class Yabause extends Activity implements OnPadListener
         yabauseThread = new YabauseRunnable(this);
 
         padm = PadManager.getPadManager();
-         
+        padm.loadSettings();
         waiting_reault = false;   
  
         getActionBar().addOnMenuVisibilityListener(new OnMenuVisibilityListener() {
