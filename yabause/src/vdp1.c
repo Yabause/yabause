@@ -84,7 +84,7 @@ void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
 
 u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer){
+   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u8 val;
      VIDCore->Vdp1ReadFrameBuffer(0, addr, &val);
      return val;
@@ -96,11 +96,11 @@ u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
 
 u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer){
+   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u16 val;
      VIDCore->Vdp1ReadFrameBuffer(1, addr, &val);
      return val;
-   }   
+   } 
    return T1ReadWord(Vdp1FrameBuffer, addr);
 }
 
@@ -108,7 +108,7 @@ u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
 
 u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer){
+   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u32 val;
      VIDCore->Vdp1ReadFrameBuffer(2, addr, &val);
      return val;
