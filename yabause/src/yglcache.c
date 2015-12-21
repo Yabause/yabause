@@ -26,7 +26,7 @@
 
 #define HASHSIZE  (0xFFFF)
 typedef struct _YglCacheHash {
-  u32 addr;
+  u64 addr;
   float x;
   float y;
   struct _YglCacheHash * next;
@@ -36,7 +36,7 @@ YglCacheHash *HashTable[HASHSIZE] = { 0 };
 YglCacheHash CashLink[HASHSIZE*2] = { 0 };
 u32 CashLink_index = 0;
 
-static int YglgetHash(u32 addr)
+static u32 YglgetHash(u64 addr)
 {
   return ((addr>>4) & HASHSIZE);
 }
@@ -54,7 +54,7 @@ static YglCacheHash * YglgetNewCash() {
   return rtn;
 }
 
-int YglIsCached(u32 addr, YglCache * c ) {
+int YglIsCached(u64 addr, YglCache * c ) {
 
   u32 hashkey;
   hashkey = YglgetHash(addr);  /* get hash */
@@ -80,7 +80,7 @@ int YglIsCached(u32 addr, YglCache * c ) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglCacheAdd(u32 addr, YglCache * c) {
+void YglCacheAdd(u64 addr, YglCache * c) {
 
   u32 hashkey;
   YglCacheHash *add;
