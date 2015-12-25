@@ -2209,7 +2209,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy  )
 {
-	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable;
+	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable | ((info->patternpixelwh>> 4) << 1);
 	YglCache c;
 	YglSprite tile;
 	int winmode = 0;
@@ -2220,7 +2220,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
 	tile.w = tile.h = info->patternpixelwh;
 	tile.flip = info->flipfunction;
-
 
 	if (info->specialprimode == 1)
 		tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
@@ -3398,7 +3397,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    YglSprite sprite;
    YglTexture texture;
    YglCache cash;
-   u32 tmp;
+   u64 tmp;
    s16 x, y;
    u16 CMDPMOD;
    u16 color2;
@@ -3438,6 +3437,8 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    tmp = cmd.CMDSRCA;
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
+   tmp <<= 16;
+   tmp |= cmd.CMDSIZE;
 
    sprite.priority = 8;
 
@@ -3521,7 +3522,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    YglSprite sprite;
    YglTexture texture;
    YglCache cash;
-   u32 tmp;
+   u64 tmp;
    s16 rw=0, rh=0;
    s16 x, y;
    u16 CMDPMOD;
@@ -3549,8 +3550,10 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    switch ((cmd.CMDCTRL & 0xF00) >> 8)
    {
       case 0x0: // Only two coordinates
-         rw = cmd.CMDXC - x + Vdp1Regs->localX + 1;
-         rh = cmd.CMDYC - y + Vdp1Regs->localY + 1;
+         rw = cmd.CMDXC - x + Vdp1Regs->localX;
+         rh = cmd.CMDYC - y + Vdp1Regs->localY;
+		 if (cmd.CMDXA < cmd.CMDXC) rw += 1; else rw -= 1;
+		 if (cmd.CMDYA < cmd.CMDYC) rh += 1; else rh -= 1;
          break;
       case 0x5: // Upper-left
          rw = cmd.CMDXB + 1;
@@ -3631,6 +3634,8 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    tmp = cmd.CMDSRCA;
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
+   tmp <<= 16;
+   tmp |= cmd.CMDSIZE;
 
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    sprite.uclipmode=(CMDPMOD>>9)&0x03;
@@ -3660,7 +3665,10 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   tmp |= 0x00010000;
 	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
+
    
+
+
    if ( (CMDPMOD & 4) )
    {
       for (i=0; i<4; i++)
@@ -3690,8 +3698,10 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
+
       if (sprite.w > 0 && sprite.h > 0)
       {
+
          if (1 == YglIsCached(tmp,&cash) )
          {
             YglCacheQuadGrowShading(&sprite, NULL,&cash);
@@ -3700,7 +3710,6 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
          YglQuadGrowShading(&sprite, &texture,NULL,&cash);
          YglCacheAdd(tmp,&cash);
-
          Vdp1ReadTexture(&cmd, &sprite, &texture);
 	  }
 
@@ -3716,7 +3725,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    YglSprite sprite;
    YglTexture texture;
    YglCache cash;
-   u32 tmp;
+   u64 tmp;
    u16 CMDPMOD;
    u16 color2;
    int i;
@@ -3847,9 +3856,11 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 
    tmp = cmd.CMDSRCA;
-
    tmp <<= 16;
    tmp |= cmd.CMDCOLR;
+   tmp <<= 16;
+   tmp |= cmd.CMDSIZE;
+
 
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    
@@ -4838,7 +4849,6 @@ static void Vdp2DrawNBG0(void)
    info.cor = 0;
    info.cog = 0;
    info.cob = 0;
-
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -5835,6 +5845,7 @@ void VIDOGLVdp2DrawScreens(void)
    Vdp2DrawNBG1();
    Vdp2DrawNBG0();
    Vdp2DrawRBG0();
+   
 }
 
 //////////////////////////////////////////////////////////////////////////////
