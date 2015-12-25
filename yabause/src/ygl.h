@@ -258,8 +258,8 @@ void YglEndWindow( vdp2draw_struct * info );
 
 void YglCacheInit(void);
 void YglCacheDeInit(void);
-int YglIsCached(u32,YglCache *);
-void YglCacheAdd(u32,YglCache *);
+int YglIsCached(u64,YglCache *);
+void YglCacheAdd(u64,YglCache *);
 void YglCacheReset(void);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add 

@@ -29,7 +29,6 @@ import android.view.View;
 import android.os.Bundle;
 
 import org.uoyabause.android.GameList;
-
 public class Home extends Activity
 {
     private static final String TAG = "Yabause";
