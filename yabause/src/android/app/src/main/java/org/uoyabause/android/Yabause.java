@@ -409,7 +409,7 @@ public class Yabause extends Activity implements OnPadListener
                 }
                 //moveTaskToBack(true);
                 //finish();
-                SendLoagcatMail();
+                //SendLoagcatMail();
                 android.os.Process.killProcess(android.os.Process.myPid());
                 return true;
             }
