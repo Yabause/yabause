@@ -18,14 +18,15 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-
-
+   
+ 
 //#ifdef __ANDROID__
 #include <stdlib.h>
 #include <math.h>
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
+#include "shaders/FXAA_DefaultES.h"
 
 extern float vdp1wratio;
 extern float vdp1hratio;
@@ -1586,6 +1587,7 @@ int YglProgramChange( YglLevel * level, int prgid )
 
 }
 
+//----------------------------------------------------------------------------------------
 static int blit_prg = -1;
 static int u_w;
 static int u_h;
@@ -1622,9 +1624,6 @@ static const char fblit_img[] =
 "  vec4 src = texture2D( u_Src, v_Uv ); \n"
 "  fragColor = src; \n"
 "}\n";
-
-
-
 
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
@@ -1721,3 +1720,125 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   return 0;
 }
 
+
+
+//----------------------------------------------------------------------------------------
+static int fxaa_prg = -1;
+static int u_frame = 0;
+static int a_PosCoord = 0;
+static int a_TexCoord = 0;
+
+int YglBlitFXAA(u32 sourceTexture, float w, float h) {
+
+	float aspectRatio = 1.0;
+	float vb[] = { 0, 0,
+		2.0, 0.0,
+		2.0, 2.0,
+		0, 2.0, };
+
+	float tb[] = { 0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0 };
+
+	if (fxaa_prg == -1){
+		GLuint vshader;
+		GLuint fshader;
+		GLint compiled, linked;
+
+		const GLchar * fxaa_v[] = { Yglprg_fxaa_v, NULL };
+		const GLchar * fxaa_f[] = { Yglprg_fxaa_f, NULL };
+
+		fxaa_prg = glCreateProgram();
+		if (fxaa_prg == 0) return -1;
+
+		glUseProgram(fxaa_prg);
+		vshader = glCreateShader(GL_VERTEX_SHADER);
+		fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+		glShaderSource(vshader, 1, fxaa_v, NULL);
+		glCompileShader(vshader);
+		glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			printf("Compile error in vertex shader.\n");
+			Ygl_printShaderError(vshader);
+			fxaa_prg = -1;
+			return -1;
+		}
+
+		glShaderSource(fshader, 1, fxaa_f, NULL);
+		glCompileShader(fshader);
+		glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			printf("Compile error in fragment shader.\n");
+			Ygl_printShaderError(fshader);
+			fxaa_prg = -1;
+			return -1;
+		}
+
+		glAttachShader(fxaa_prg, vshader);
+		glAttachShader(fxaa_prg, fshader);
+		glLinkProgram(fxaa_prg);
+		glGetProgramiv(fxaa_prg, GL_LINK_STATUS, &linked);
+		if (linked == GL_FALSE) {
+			printf("Link error..\n");
+			Ygl_printShaderError(fxaa_prg);
+			fxaa_prg = -1;
+			return -1;
+		}
+
+		glUniform1i(glGetUniformLocation(fxaa_prg, "uSourceTex"), 0);
+		u_frame = glGetUniformLocation(fxaa_prg, "RCPFrame");
+		a_PosCoord = glGetAttribLocation(fxaa_prg,"aPosition");
+		a_TexCoord = glGetAttribLocation(fxaa_prg, "aTexCoord");
+
+	}
+	else{
+		glUseProgram(fxaa_prg);
+	}
+
+
+	float const vertexPosition[] = {
+		aspectRatio, -1.0f,
+		-aspectRatio, -1.0f,
+		aspectRatio, 1.0f,
+		-aspectRatio, 1.0f };
+
+	float const textureCoord[] = {
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f };
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, sourceTexture);
+
+	glUniform1i(glGetUniformLocation(fxaa_prg, "uSourceTex"), 0);
+	glUniform2f(u_frame, (float)(1.0 / (float)(w)), (float)(1.0 / (float)(h)));
+
+
+	glVertexAttribPointer(a_PosCoord, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+	glVertexAttribPointer(a_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+	glEnableVertexAttribArray(a_PosCoord);
+	glEnableVertexAttribArray(a_TexCoord);
+	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(3);
+
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	glDisableVertexAttribArray(a_PosCoord);
+	glDisableVertexAttribArray(a_TexCoord);
+
+
+	// Clean up
+	glActiveTexture(GL_TEXTURE0);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+
+	return 0;
+}

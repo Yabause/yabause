@@ -86,6 +86,7 @@ void VIDOGLVdp2DrawScreens(void);
 void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+void VIDOGLSetFilterMode(int type);
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -112,7 +113,8 @@ VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
 VIDOGLVdp2DrawScreens,
-YglGetGlSize
+YglGetGlSize,
+VIDOGLSetFilterMode
 };
 
 float vdp1wratio=1;
@@ -330,7 +332,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 							break;
 						case 3:
 						{
-							u16 checkcol = T2ReadWord(Vdp2ColorRam, ((temp + colorOffset) << Vdp2Internal.ColorMode) & 0xFFF);
+							u16 checkcol = Vdp2ColorRamGetColorRaw(temp + colorOffset);
 							if (checkcol & 0x8000){
 								alpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							}
@@ -725,7 +727,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                               break;
 						   case 3:
 						   {
-							   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((temp + colorOffset) << Vdp2Internal.ColorMode) & 0xFFF);
+							   u16 checkcol = Vdp2ColorRamGetColorRaw((temp + colorOffset));
 							   if (checkcol & 0x8000){
 								   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   }
@@ -799,7 +801,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                               break;
 						   case 3:
 						   {
-							   u16 checkcol = T2ReadWord(Vdp2ColorRam, ((temp + colorOffset) << Vdp2Internal.ColorMode) & 0xFFF);
+							   u16 checkcol = Vdp2ColorRamGetColorRaw((temp + colorOffset));
 							   if (checkcol & 0x8000){
 								   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   }
@@ -2879,7 +2881,6 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int m
 		  if (regs->COAB & 0x100)
             info->cob |= 0xFFFFFF00;
       }
-
       info->PostPixelFetchCalc = &DoColorOffset;
    }
    else{ // color offset disable
@@ -6215,3 +6216,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
 
 #endif
 
+void VIDOGLSetFilterMode(int type){
+	_Ygl->aamode = type;
+	return;
+}

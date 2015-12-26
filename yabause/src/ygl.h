@@ -135,6 +135,12 @@ enum
    PG_MAX,
 };
 
+typedef enum 
+{
+	AA_NONE=0,
+	AA_FXAA
+} AAMODE;
+
 typedef struct {
    int prgid;
    GLuint prg;
@@ -207,6 +213,11 @@ typedef struct {
    GLuint vdp1pixelBufferID;
    void * pFrameBuffer;
 
+   GLuint fxaa_fbo;
+   GLuint fxaa_fbotex;
+   GLuint fxaa_stencil;
+   GLuint fxaa_depth;
+
    // Message Layer
    int msgwidth;
    int msgheight;
@@ -233,6 +244,8 @@ typedef struct {
    u32 lincolor_tex;
    u32 linecolor_pbo;
    u32 * lincolor_buf;
+
+   AAMODE aamode;
 
 }  Ygl;
 
@@ -290,6 +303,7 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
+int YglBlitFXAA(u32 sourceTexture, float w, float h);
 
 void YglRenderVDP1(void);
 u32 * YglGetLineColorPointer();

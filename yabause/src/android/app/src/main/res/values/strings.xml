@@ -79,6 +79,12 @@
 	
 	<string name="menu_save_screenshot">ScreenShot</string>
     <string name="menu_report">Report</string>
+
+    <string name="video_filter">Filter</string>
+    <string name="choose_video_filter">Choose Video Filter</string>
+
+    <string name="video_filter_none">None</string>
+    <string name="video_filter_fxaa">FXAA</string>
 	
 		
 </resources>

@@ -2873,13 +2873,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       opcodes[context->instruction](context);
       context->pchistory[(++context->pchistory_index) & 0xFF] = context->regs.PC;
 
-		//if (MappedMemoryReadLong(0x06000930) == 0x00000009)
-		if (context->regs.PC == 0x060273AA)
-		{
-			int test=0;
-			test = 1;
-		}
-
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
 	     SH2UBCInterrupt(context, ubcflag);

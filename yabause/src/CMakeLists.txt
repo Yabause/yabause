@@ -21,7 +21,9 @@ set(yabause_HEADERS
 	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
-	yabause.h ygl.h yui.h)
+	yabause.h ygl.h yui.h
+	shaders/FXAA_DefaultES.h
+)
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
