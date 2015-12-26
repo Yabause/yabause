@@ -84,7 +84,7 @@
     <string name="choose_video_filter">Choose Video Filter</string>
 
     <string name="video_filter_none">None</string>
-    <string name="video_filter_fxaa">FXAA</string>
+    <string name="video_filter_fxaa">FXAA(works only NVIDIA devices)</string>
 	
 		
 </resources>
