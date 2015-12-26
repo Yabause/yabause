@@ -242,10 +242,7 @@ class PadManagerV16 extends PadManager {
             	if( PadKey != null ) {
             		event.startTracking();
             		YabauseRunnable.press(PadKey,playerindex);
-            		if( keyCode == KeyEvent.KEYCODE_BUTTON_B){ 
-            			return 1;
-	            	}
-            		return 0;
+             		return 1;  // ignore this input
             	}else{
             		return 0;
             	}
@@ -270,12 +267,7 @@ class PadManagerV16 extends PadManager {
             	Integer PadKey = Keymap.get(playerindex).get(keyCode);
             	if( PadKey != null ) {
             	   	YabauseRunnable.release(PadKey,playerindex);
-
-            		if( keyCode == KeyEvent.KEYCODE_BUTTON_B){ 
-                			return 1;
-                	}
-                	            	   	
-            		return 0;
+          		    return 1; // ignore this input
             	}else{
             		return 0;
             	}            	
