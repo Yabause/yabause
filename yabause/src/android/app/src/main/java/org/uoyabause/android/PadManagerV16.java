@@ -204,14 +204,14 @@ class PadManagerV16 extends PadManager {
 					float motion_value = motionEvent.getAxisValue((btn&0x00007FFF));
 					if( (btn&0x8000) != 0 ){
 
-						if (Float.compare(motion_value, -1.0f) == 0) { // ON
+						if (Float.compare(motion_value, -0.8f) < 0) { // ON
 							YabauseRunnable.press(e.getValue(),playerindex);
 						}
 						else if( Float.compare(motion_value, -0.5f) > 0 ){ // OFF
 							YabauseRunnable.release(e.getValue(),playerindex);
 						}
 					}else{
-						if (Float.compare(motion_value, 1.0f) == 0) {  // ON
+						if (Float.compare(motion_value, 0.8f) > 0) {  // ON
 							YabauseRunnable.press(e.getValue(),playerindex);
 						}
 						else if( Float.compare(motion_value, 0.5f) < 0 ){ // OFF
