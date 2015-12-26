@@ -53,6 +53,14 @@ import android.view.LayoutInflater;
     private String save_filename = "keymap";
     private int playerid = 0;
 
+	class MotionMap{
+		MotionMap( int id ){
+			this.id = id;
+		}
+		int id = 0;
+		float oldval = 0.0f;
+	};
+
     public void setPlayerAndFileame( int playerid, String fname ){
     	this.playerid = playerid;
     	this.save_filename = fname;
@@ -70,7 +78,8 @@ import android.view.LayoutInflater;
 		super(context,attrs,defStyle);
 		InitObjects(context);
 	}
-	
+
+	ArrayList<MotionMap> motions;
 	void InitObjects( Context context){
 		index = 0;
 		context_m = context;
@@ -93,6 +102,50 @@ import android.view.LayoutInflater;
     	setPositiveButtonText(null);  // OKボタンを非表示にする	
     	
     	setDialogLayoutResource(R.layout.keymap);
+
+		motions = new ArrayList<MotionMap>();
+		motions.add( new MotionMap(MotionEvent.AXIS_Y));
+		motions.add( new MotionMap(MotionEvent.AXIS_PRESSURE));
+		motions.add( new MotionMap(MotionEvent.AXIS_SIZE));
+		motions.add( new MotionMap(MotionEvent.AXIS_TOUCH_MAJOR));
+		motions.add( new MotionMap(MotionEvent.AXIS_TOUCH_MINOR));
+		motions.add( new MotionMap(MotionEvent.AXIS_TOOL_MAJOR));
+		motions.add( new MotionMap(MotionEvent.AXIS_TOOL_MINOR));
+		motions.add( new MotionMap(MotionEvent.AXIS_ORIENTATION));
+		motions.add( new MotionMap(MotionEvent.AXIS_VSCROLL));
+		motions.add( new MotionMap(MotionEvent.AXIS_HSCROLL ));
+		motions.add( new MotionMap(MotionEvent.AXIS_Z ));
+		motions.add( new MotionMap(MotionEvent.AXIS_RX ));
+		motions.add( new MotionMap(MotionEvent.AXIS_RY ));
+		motions.add( new MotionMap(MotionEvent.AXIS_RZ ));
+		motions.add( new MotionMap(MotionEvent.AXIS_HAT_X ));
+		motions.add( new MotionMap(MotionEvent.AXIS_HAT_Y ));
+		motions.add( new MotionMap(MotionEvent.AXIS_LTRIGGER ));
+		motions.add( new MotionMap(MotionEvent.AXIS_RTRIGGER ));
+		motions.add( new MotionMap(MotionEvent.AXIS_THROTTLE ));
+		motions.add( new MotionMap(MotionEvent.AXIS_RUDDER ));
+		motions.add( new MotionMap(MotionEvent.AXIS_WHEEL ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GAS ));
+		motions.add( new MotionMap(MotionEvent.AXIS_BRAKE ));
+		motions.add( new MotionMap(MotionEvent.AXIS_DISTANCE ));
+		motions.add( new MotionMap(MotionEvent.AXIS_TILT ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_1 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_2 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_3 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_4 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_5 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_6 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_7 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_8 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_9 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_10 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_11 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_12 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_13 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_14 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_15 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_16 ));
+
     	
    	
 	}
@@ -295,14 +348,21 @@ import android.view.LayoutInflater;
                 			return false;
                 		}
                 		
-                	// Don't use DPAD which has problems for multi player	
+
                 	}
-                	else if( keyCode == KeyEvent.KEYCODE_DPAD_UP || 
+
+					// Don't use DPAD which has problems for multi player
+					else if( keyCode == KeyEvent.KEYCODE_DPAD_UP ||
                 		keyCode == KeyEvent.KEYCODE_DPAD_DOWN || 
                 		keyCode == KeyEvent.KEYCODE_DPAD_LEFT || 
                 		keyCode ==  KeyEvent.KEYCODE_DPAD_RIGHT ){
-                		return false;
+                		return true; // ignore
                 	}
+
+					// ipega needs to ignore L2,R2. this event is duped at onGenericMotion.
+					else if( keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2 ){
+						return false; // ignore
+					}
 
                 	                	
                 	Integer PadKey = Keymap.get(keyCode);
@@ -315,78 +375,37 @@ import android.view.LayoutInflater;
             }
         	return false; 
 	}
-	
-	protected float _oldLeftTrigger = 0.0f;
-	protected float _oldRightTrigger = 0.0f;
-	
+
 	@Override
 	public boolean onGenericMotion(View v, MotionEvent event) {
-		
-		
+
 		if( event.getDeviceId() != _selected_device_id ) return false;
 		
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
-       	
-            // Use the hat axis value to find the D-pad direction
-            MotionEvent motionEvent = (MotionEvent) event;
-            float xaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_X);
-            float yaxis = motionEvent.getAxisValue(MotionEvent.AXIS_HAT_Y);
-
-            // Check if the AXIS_HAT_X value is -1 or 1, and set the D-pad
-            // LEFT and RIGHT direction accordingly.
-            if (Float.compare(xaxis, -1.0f) == 0) {
-            	return setKeymap(MotionEvent.AXIS_HAT_X | 0x8000 );
-            } else if (Float.compare(xaxis, 1.0f) == 0) {
-            	return setKeymap(MotionEvent.AXIS_HAT_X);
-            }
-            // Check if the AXIS_HAT_Y value is -1 or 1, and set the D-pad
-            // UP and DOWN direction accordingly.
-            else if (Float.compare(yaxis, -1.0f) == 0) {
-            	return setKeymap(MotionEvent.AXIS_HAT_Y | 0x8000  );
-            } else if (Float.compare(yaxis, 1.0f) == 0) {
-            	return setKeymap(MotionEvent.AXIS_HAT_Y);
-            }        	
-       	
-      	  float newLeftTrigger = event.getAxisValue( MotionEvent.AXIS_LTRIGGER );
-      	  if( newLeftTrigger != _oldLeftTrigger ){
-     		  
-      		  // On
-      		  if( _oldLeftTrigger < newLeftTrigger && _oldLeftTrigger < 0.001 ){
-      			
-      			    _oldLeftTrigger = newLeftTrigger;
-      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_LTRIGGER);
-                	if( PadKey != null ) {
-                		Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
-                		_oldLeftTrigger = newLeftTrigger;
-                		return true;
-                	} 
-                	_oldLeftTrigger = newLeftTrigger;
-                	return setKeymap(MotionEvent.AXIS_LTRIGGER); 
-                	
-      		  } 
-      		  _oldLeftTrigger = newLeftTrigger;
-      	  }
-      	  
-      	  float newRightTrigger = event.getAxisValue( MotionEvent.AXIS_RTRIGGER );
-      	  if( newRightTrigger != _oldRightTrigger ){
-
-      		  // On
-      		  if( _oldRightTrigger < newRightTrigger && _oldRightTrigger < 0.001 ){
-      			
-          		  	_oldRightTrigger = newRightTrigger;
-      	           	Integer PadKey = Keymap.get(MotionEvent.AXIS_RTRIGGER);
-                	if( PadKey != null ) {
-                		Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
-                		_oldRightTrigger = newRightTrigger;
-                		return true;
-                	}	
-                	_oldRightTrigger = newRightTrigger;
-                	return setKeymap(MotionEvent.AXIS_RTRIGGER); 
-      		  }
-      		  _oldRightTrigger = newRightTrigger;
-      	  }
-      }
-
+			for( int i=0; i< motions.size(); i++ ){
+				float value = event.getAxisValue( motions.get(i).id );
+				if( Float.compare(value,-1.0f) == 0) {
+					motions.get(i).oldval = value;
+					Integer PadKey = Keymap.get(motions.get(i).id|0x8000|0x80000000);
+					if( PadKey != null ) {
+						Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
+						return true;
+					}else{
+						return setKeymap(motions.get(i).id|0x8000|0x80000000);
+					}
+				}
+				if( Float.compare(value,1.0f) == 0) {
+					motions.get(i).oldval = value;
+					Integer PadKey = Keymap.get(motions.get(i).id|0x80000000);
+					if( PadKey != null ) {
+						Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
+						return true;
+					}else{
+						return setKeymap(motions.get(i).id|0x80000000);
+					}
+				}
+			}
+		}
 		return false;
 	}
 

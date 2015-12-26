@@ -118,6 +118,7 @@ class YabauseRunnable implements Runnable
     public static native void enableFPS(int enable);
     public static native void enableFrameskip(int enable);
     public static native void setCpu( int cpu );
+    public static native void setFilter( int filter );
     public static native void setVolume(int volume);
     public static native int screenshot( String filename );
     public static native String getCurrentGameCode();
@@ -289,7 +290,7 @@ public class Yabause extends Activity implements OnPadListener
         yabauseThread = new YabauseRunnable(this);
 
         padm = PadManager.getPadManager();
-         
+        padm.loadSettings();
         waiting_reault = false;   
  
         getActionBar().addOnMenuVisibilityListener(new OnMenuVisibilityListener() {
@@ -655,6 +656,10 @@ public class Yabause extends Activity implements OnPadListener
         String cpu = sharedPref.getString("pref_cpu", "2");
         Integer icpu = new Integer(cpu);
         YabauseRunnable.setCpu(icpu.intValue());
+
+        String sfilter = sharedPref.getString("pref_filter", "0");
+        Integer ifilter = new Integer(sfilter);
+        YabauseRunnable.setFilter(ifilter);
 
         boolean audioout = sharedPref.getBoolean("pref_audio", true);
         if (audioout) {

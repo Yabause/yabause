@@ -2155,24 +2155,24 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
    return size;
 }
 
-FILE * history = NULL;
+
 
 void SH2DumpHistory(SH2_struct *context){
-  if (history == NULL){
-    history = fopen("history.txt", "w");
-  }
-  if (history){
-    int index = context->pchistory_index;
-	int i;
-    for (i = 0; i < 0xFF; i++){
-      char lineBuf[128];
-      SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, &context->regs, lineBuf);
-      fprintf(history,lineBuf);
-      fprintf(history, "\n");
-      index--;
-    }
-    fflush(history);
-  }
+
+	FILE * history = NULL;
+	history = fopen("history.txt", "w");
+	if (history){
+		int i;
+		int index = context->pchistory_index;
+		for (i = 0; i < 0xFF; i++){
+		  char lineBuf[128];
+		  SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, &context->regs, lineBuf);
+		  fprintf(history,lineBuf);
+		  fprintf(history, "\n");
+		  index--;
+	    }
+		fclose(history);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
