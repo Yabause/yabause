@@ -175,7 +175,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         /* Filter */
         ListPreference filter_setting = (ListPreference) getPreferenceManager().findPreference("pref_filter");
         filter_setting.setSummary(filter_setting.getEntry());
-        if( video_cart.getValue() == "1" ){
+        if( video_cart.getValue().equals("1") ){
             filter_setting.setEnabled(true);
         }else{
             filter_setting.setEnabled(false);
@@ -321,7 +321,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
             if( key.equals("pref_video")   ){
                 ListPreference filter_setting = (ListPreference) getPreferenceManager().findPreference("pref_filter");
-                if( pref.getValue() == "1"){
+                if( pref.getValue().equals("1")){
                     filter_setting.setEnabled(true);
                 }else{
                     filter_setting.setEnabled(false);
