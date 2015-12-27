@@ -460,8 +460,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	case 5:
 	{
 		// 16 bpp Bank mode
-		u32 charAddr = cmd->CMDSRCA * 8;
-		u16 dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
+		u16 dot = cmd->CMDCOLR;
 		//if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
 		if (!(dot & 0x8000) && !SPD) color = 0x00;
 		else if ((dot == 0x7FFF) && !END) color = 0x0;
@@ -2213,7 +2212,8 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy  )
 {
-	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable | ((info->patternpixelwh>> 4) << 1);
+	u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable | ((info->patternpixelwh >> 4) << 1) | (((info->coloroffset >> 8) & 0x07) << 32);
+	
 	YglCache c;
 	YglSprite tile;
 	int winmode = 0;
@@ -3848,6 +3848,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   isSquare = 1;
    }
 
+
    sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
    sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
    sprite.vertices[2] = (sprite.vertices[2] + Vdp1Regs->localX) * vdp1wratio;
@@ -4305,7 +4306,10 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    polygon.uclipmode=(CMDPMOD>>9)&0x03;
-   
+   polygon.cor = 0x00;
+   polygon.cog = 0x00;
+   polygon.cob = 0x00;
+
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
@@ -4540,11 +4544,15 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int priority = 0;
    float line_poygon[8];
    vdp1cmd_struct cmd;
-   float col[4 * 2];
+   float col[4 * 2 * 2];
    int gouraud = 0;
    int shadow = 0;
    int colorcalc = 0;
    u16 color2;
+   polygon.cor = 0x00;
+   polygon.cog = 0x00;
+   polygon.cob = 0x00;
+
 
    polygon.blendmode = VDP1_COLOR_CL_REPLACE;
    polygon.linescreen = 0;
@@ -4576,13 +4584,17 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if ((CMDPMOD & 4))
    {
 	   int i;
-	   for (i = 0; i<2; i++)
+	   for (i = 0; i<4; i+=2)
 	   {
 		   color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
 		   col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
 		   col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
 		   col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
 		   col[(i << 2) + 3] = 1.0f;
+		   col[((i + 1) << 2) + 0] = col[(i << 2) + 0];
+		   col[((i + 1) << 2) + 1] = col[(i << 2) + 1];
+		   col[((i + 1) << 2) + 2] = col[(i << 2) + 2];
+		   col[((i + 1) << 2) + 3] = 1.0f;
 	   }
 	   gouraud = 1;
    }
@@ -4654,7 +4666,6 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		   alpha |= priority;
 		   *texture.textdata = SAT2YAB1(alpha, color);
 	   }
-	   *texture.textdata = SAT2YAB1(alpha, color);
    }
    else{
       Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -5850,6 +5861,7 @@ void VIDOGLVdp2DrawScreens(void)
    Vdp2GenerateWindowInfo();
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
+
 
    Vdp2DrawNBG3();
    Vdp2DrawNBG2();
