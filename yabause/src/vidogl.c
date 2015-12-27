@@ -2136,7 +2136,10 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 	int incv = 1.0 / info->coordincy*255.0;
 	int inch = 1.0 / info->coordincx*255.0;
 
-	for (i = 0; i < vdp2height; i++)
+	int height = vdp2height;
+	if (height >= 448) height >>= 1;
+
+	for (i = 0; i < height; i++)
 	{
 		int sh, sv;
 		int v;
@@ -2164,11 +2167,10 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 		switch (info->colornumber){
 		case 0:
 			baseaddr += (((sh>>2) + sv * (info->cellw>>2)) << 1);
-			for (j = 0; j < (vdp2width>>2); j += 4)
+			for (j = 0; j < (vdp2width>>2); j++)
 			{
 				int h = (j*inch >> 8) << 1;
 				Vdp2GetPixel4bpp(info, baseaddr+h, texture);
-				baseaddr += 2;
 			}
 			break;
 		case 1:
@@ -5036,7 +5038,10 @@ static void Vdp2DrawNBG0(void)
 			  info.vertices[7] = vdp2height;
 			  vdp2draw_struct infotmp = info;
 			  infotmp.cellw = vdp2width;
-			  infotmp.cellh = vdp2height;
+			  if (vdp2height >= 448)
+				  infotmp.cellh = (vdp2height >> 1);
+			  else
+				  infotmp.cellh = vdp2height;
 			  YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
 			  Vdp2DrawBitmapCoordinateInc(&info, &texture);
 		  }
@@ -5254,6 +5259,7 @@ static void Vdp2DrawNBG1(void)
    
    if (info.isbitmap)
    {
+
 	   if (info.coordincx != 1.0f || info.coordincy != 1.0f){
 		   info.sh = (Vdp2Regs->SCXIN1 & 0x7FF);
 		   info.sv = (Vdp2Regs->SCYIN1 & 0x7FF);
@@ -5269,7 +5275,11 @@ static void Vdp2DrawNBG1(void)
 		   info.vertices[7] = vdp2height;
 		   vdp2draw_struct infotmp = info;
 		   infotmp.cellw = vdp2width;
-		   infotmp.cellh = vdp2height;
+		   if (vdp2height >= 448 )
+			   infotmp.cellh = (vdp2height>>1);
+		   else	
+				infotmp.cellh = vdp2height;
+
 		   YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
 		   Vdp2DrawBitmapCoordinateInc(&info, &texture);
 	   }
