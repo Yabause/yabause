@@ -52,11 +52,10 @@ int vbalnk_wait = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 static u64 syncticks = 0;       // CPU time sync for real time.
-static int running = 0;         // rendring thread runing flag.
 void VdpProc( void *arg );      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
-
+static int vdp_proc_running = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -165,6 +164,11 @@ int Vdp2Init(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2DeInit(void) {
+#if defined(YAB_ASYNC_RENDERING)
+   //YabAddEventQueue(evqueue,VDPEV_FINSH);
+   vdp_proc_running = 0;
+   YabThreadWait(YAB_THREAD_VDP);
+#endif
    if (Vdp2Regs)
       free(Vdp2Regs);
    Vdp2Regs = NULL;
@@ -176,10 +180,7 @@ void Vdp2DeInit(void) {
    if (Vdp2ColorRam)
       T2MemoryDeInit(Vdp2ColorRam);
    Vdp2ColorRam = NULL;
-#if defined(YAB_ASYNC_RENDERING)
-   YabAddEventQueue(evqueue,VDPEV_FINSH);
-   YabThreadWait(YAB_THREAD_VDP);
-#endif
+
 
 }
 
@@ -281,8 +282,8 @@ void VdpProc( void *arg ){
         return;
     }
 
-    running = 1;
-    while( running ){
+    vdp_proc_running = 1;
+    while( vdp_proc_running ){
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
@@ -301,7 +302,7 @@ void VdpProc( void *arg ){
             YuiRevokeOGLOnThisThread();
             break;
         case VDPEV_FINSH:
-            running = 0;
+            vdp_proc_running = 0;
             break;
         }
     }
@@ -331,7 +332,7 @@ void vdp2VBlankIN(void) {
 void Vdp2VBlankIN(void) {
     LOG("VDP2:VDPEV_VBLANK_IN\n");
 #if defined(YAB_ASYNC_RENDERING)
-    if( running == 0 ){
+    if( vdp_proc_running == 0 ){
         YuiRevokeOGLOnThisThread();
         evqueue = YabThreadCreateQueue(32);
         YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
@@ -525,7 +526,7 @@ void Vdp2VBlankOUT(void) {
     //LOG("VDP2:VDPEV_VBLANK_OUT\n");
 #if defined(YAB_ASYNC_RENDERING)
 
-   if( running == 0 ){
+   if( vdp_proc_running == 0 ){
        YuiRevokeOGLOnThisThread();
        evqueue = YabThreadCreateQueue(32);
        YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
