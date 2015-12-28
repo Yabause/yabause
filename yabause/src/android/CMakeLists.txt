@@ -26,24 +26,47 @@ project(yabause-android)
 yab_port_start()
 
 set( LIBRARY_NAME yabause_native )
+
+set( ImageLibrarySOURCES 
+	jni/libpng/png.c
+	jni/libpng/pngerror.c
+	jni/libpng/pngget.c
+	jni/libpng/pngmem.c
+	jni/libpng/pngpread.c
+	jni/libpng/pngread.c 
+	jni/libpng/pngrio.c 
+	jni/libpng/pngrtran.c 
+	jni/libpng/pngrutil.c 
+	jni/libpng/pngset.c 
+	jni/libpng/pngtest.c 
+	jni/libpng/pngtrans.c 
+	jni/libpng/pngwio.c
+	jni/libpng/pngwrite.c 
+	jni/libpng/pngwtran.c 
+	jni/libpng/pngwutil.c
+)
+
 set( SOURCES 
+ ${ImageLibrarySOURCES}
  jni/yui.c
  jni/sndaudiotrack.c
  jni/sndopensl.c
  jni/osdcore.c
 )
 
+
 set (PORT_LIBRARIES
  log
  jnigraphics
- GLESv3
- EGL
  OpenSLES
  android
+ GLESv3
+ EGL
+ z
 )
 
 
-set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME} )
+set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_NDK_ABI_NAME} )
 #set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 #include(AndroidNdkGdb)
 #android_ndk_gdb_enable()
@@ -52,15 +75,10 @@ add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
 #android_ndk_gdb_debuggable(${LIBRARY_NAME})
 
 include_directories( ${YABAUSE_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/../ ${PROJECT_SOURCE_DIR}/../ )
-target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES} 
+	${PORT_LIBRARIES}
+#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
+   )
 
 
-# copy library to the android java directoy
-#add_custom_command(
-# TARGET 
-# ${LIBRARY_NAME} 
-# POST_BUILD 
-# COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
-# COMMAND ${CMAKE_COMMAND} -E copy  $<TARGET_FILE:${LIBRARY_NAME}> ${PROJECT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}
-#)
 

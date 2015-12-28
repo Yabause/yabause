@@ -31,7 +31,8 @@
 
 #define OSDMSG_FPS       0
 #define OSDMSG_STATUS    1
-#define OSDMSG_COUNT     2
+#define OSDMSG_DEBUG     2
+#define OSDMSG_COUNT     3
 
 typedef struct {
    int type;
@@ -49,14 +50,14 @@ typedef struct {
 	void (*DeInit)(void);
 	void (*Reset)(void);
 
-    void (*DisplayMessage)(OSDMessage_struct * message);
+    void (*DisplayMessage)(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
 } OSD_struct;
 
 int OSDInit(int coreid);
 int OSDChangeCore(int coreid);
 
 void OSDPushMessage(int msgtype, int ttl, const char * message, ...);
-void OSDDisplayMessages(void);
+int  OSDDisplayMessages(pixel_t * buffer, int w, int h);
 void OSDToggle(int what);
 int  OSDIsVisible(int what);
 void OSDSetVisible(int what, int visible);

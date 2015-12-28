@@ -256,12 +256,13 @@ typedef struct {
    u32 ssh2stack;
    u32 firstprogaddr;
    u32 firstprogsize;
+   u64 gameid;
 } ip_struct;
 
 extern Cs2 * Cs2Area;
 extern ip_struct * cdip;
 
-int Cs2Init(int, int, const char *, const char *, const char *);
+int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *modemip, const char *modemport);
 int Cs2ChangeCDCore(int coreid, const char *cdpath);
 void Cs2DeInit(void);
 
@@ -378,5 +379,8 @@ u8 Cs2GetIP(int autoregion);
 u8 Cs2GetRegionID(void);
 int Cs2SaveState(FILE *);
 int Cs2LoadState(FILE *, int, int);
-
+u32 Cs2GetMasterStackAdress(void);
+u32 Cs2GetSlaveStackAdress(void);
+u64 Cs2GetGameId();
+char * Cs2GetCurrentGmaecode();
 #endif

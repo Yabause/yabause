@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="entries_cpu_list_preference">
+        <item>@string/dynrec_cpu_interface</item>
+        <item>@string/software_cpu_interface</item>
+    </string-array>
+    <string-array name="entryvalues_cpu_list_preference">
+        <item>2</item>
+        <item>0</item>
+    </string-array>
+    <string-array name="entries_video_filte_list_preference">
+        <item>@string/video_filter_none</item>
+        <item>@string/video_filter_fxaa</item>
+    </string-array>
+    <string-array name="entryvalues_video_filte_list_preference">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+</resources>

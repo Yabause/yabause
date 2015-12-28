@@ -361,6 +361,8 @@ typedef struct {
 
 extern Vdp2Internal_struct Vdp2Internal;
 extern u64 lastticks;
+extern int vdp2_is_odd_frame;
+extern Vdp2 Vdp2Lines[270];
 
 // struct for Vdp2 part that shouldn't be saved
 typedef struct {
@@ -400,17 +402,18 @@ void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
 void VdpResume(void);
 
-Vdp2 * Vdp2RestoreRegs(int line);
+Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 
 #include "threads.h"
 void VdpProc( void *arg );
 
 // Ansyc VDP
-#define VDPEV_VBLANK_IN 0
-#define VDPEV_VBLANK_OUT 1
-#define VDPEV_DIRECT_DRAW 2
-#define VDPEV_MAKECURRENT 3
-#define VDPEV_FINSH 0xFF
+#define VDPEV_VBLANK_IN 0x000
+#define VDPEV_VBLANK_OUT 0x100
+#define VDPEV_DIRECT_DRAW 0x200
+#define VDPEV_MAKECURRENT 0x300
+#define VDPEV_REVOKE 0x400
+#define VDPEV_FINSH 0xFF00
 
 extern YabEventQueue * evqueue;
 

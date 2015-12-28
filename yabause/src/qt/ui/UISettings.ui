@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>451</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,6 +24,13 @@
        <string>General</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout1">
+       <item row="19" column="0">
+        <widget class="QCheckBox" name="cbEnableMultiThreading">
+         <property name="text">
+          <string>Enable Multithreading</string>
+         </property>
+        </widget>
+       </item>
        <item row="17" column="0">
         <widget class="QCheckBox" name="cbClockSync">
          <property name="text">
@@ -31,7 +38,7 @@
          </property>
         </widget>
        </item>
-       <item row="19" column="0">
+       <item row="21" column="0">
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -188,6 +195,16 @@
           <bool>true</bool>
          </property>
         </widget>
+       </item>
+       <item row="20" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="text">
+          <string>Number of Threads</string>
+         </property>
+        </widget>
+       </item>
+       <item row="20" column="1">
+        <widget class="QSpinBox" name="sbNumberOfThreads"/>
        </item>
       </layout>
      </widget>
@@ -384,36 +401,51 @@
        <string>Cart/Memory</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout3">
-       <item row="0" column="0" colspan="2">
-        <widget class="QLabel" name="lCartridge">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Cartridge</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0" colspan="2">
-        <widget class="QComboBox" name="cbCartridge"/>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLineEdit" name="leCartridge"/>
-       </item>
-       <item row="2" column="1">
+       <item row="5" column="3">
         <widget class="QToolButton" name="tbCartridge">
          <property name="text">
           <string>...</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="0" colspan="2">
+       <item row="7" column="3">
+        <widget class="QToolButton" name="tbMemory">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0" colspan="3">
+        <widget class="QLineEdit" name="leMemory"/>
+       </item>
+       <item row="9" column="3">
+        <widget class="QToolButton" name="tbMpegROM">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="5" column="0" colspan="3">
+        <widget class="QLineEdit" name="leCartridge">
+         <property name="inputMask">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="4">
         <widget class="QLabel" name="lMemory">
          <property name="font">
           <font>
@@ -429,17 +461,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
-        <widget class="QLineEdit" name="leMemory"/>
-       </item>
-       <item row="4" column="1">
-        <widget class="QToolButton" name="tbMemory">
-         <property name="text">
-          <string>...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0" colspan="2">
+       <item row="8" column="0" colspan="4">
         <widget class="QLabel" name="lMpegROM">
          <property name="font">
           <font>
@@ -455,28 +477,67 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="0">
-        <widget class="QLineEdit" name="leMpegROM"/>
-       </item>
-       <item row="6" column="1">
-        <widget class="QToolButton" name="tbMpegROM">
+       <item row="0" column="0" colspan="4">
+        <widget class="QLabel" name="lCartridge">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="text">
-          <string>...</string>
+          <string>Cartridge</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+       <item row="9" column="0" colspan="3">
+        <widget class="QLineEdit" name="leMpegROM"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="lCartridgeModemIP">
+         <property name="text">
+          <string>Default Dial IP</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>2</height>
-          </size>
+        </widget>
+       </item>
+       <item row="2" column="2" colspan="2">
+        <widget class="QLineEdit" name="leCartridgeModemIP">
+         <property name="toolTip">
+          <string/>
          </property>
-        </spacer>
+         <property name="inputMask">
+          <string/>
+         </property>
+         <property name="maxLength">
+          <number>15</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="4">
+        <widget class="QComboBox" name="cbCartridge"/>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="lCartridgeModemPort">
+         <property name="text">
+          <string>Port</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="2" colspan="2">
+        <widget class="QLineEdit" name="leCartridgeModemPort">
+         <property name="toolTip">
+          <string/>
+         </property>
+         <property name="text">
+          <string notr="true"/>
+         </property>
+         <property name="maxLength">
+          <number>5</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
