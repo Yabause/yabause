@@ -2379,8 +2379,8 @@ void YglRender(void) {
    
    YglSetVdp2Window();
 
-	// 12.14 CCRTMD                               // MSB perpxel transparent is not suported yet
-   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 && ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03) ){
+	// 12.14 CCRTMD                               // MSB perpxel transparent is not uported yet
+   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
 		YglRenderDestinationAlpha();
 	}
 	else{
@@ -2519,8 +2519,14 @@ void YglRenderDestinationAlpha(void) {
 	for (i = 0; i < _Ygl->depth; i++)
 	{
 		level = _Ygl->levels + i;
-		if (level->prgcurrent != 0){
-			highpri = i;
+		if (level->prgcurrent != 0 ){
+
+			for (j = 0; j < (level->prgcurrent + 1); j++){
+				if (level->prg[j].blendmode == 1){
+					highpri = i;
+				}
+			}
+			
 		}
 	}
 
