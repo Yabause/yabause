@@ -1752,6 +1752,8 @@ static void Vdp2GenerateWindowInfo(void)
 // 0 .. outside,1 .. inside
 static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area, vdp2WindowInfo * vWindinfo )
 {
+    if( y<0 ) return 0;
+    if( y>= vdp2height ) return 0;
    // inside
     if( area == 1 )
     {
