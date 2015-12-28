@@ -1445,6 +1445,7 @@ int YglProgramChange( YglLevel * level, int prgid )
       if( tmp == NULL ) return -1;
       memset(tmp,0,sizeof(YglProgram)*level->prgcount);
       memcpy(tmp,level->prg,sizeof(YglProgram)*(level->prgcount-1));
+      free(level->prg);
       level->prg = tmp;
 
       level->prg[level->prgcurrent].currentQuad = 0;
