@@ -253,4 +253,15 @@ YabMutex * YabThreadCreateMutex(){
 #endif
 }
 
+void YabThreadFreeMutex( YabMutex * mtx ){
+#if 1
+    // Todo: implement Windows version
+#else    
+    if( mtx != NULL ){
+        pthread_mutex_destroy(&mtx->mutex);
+        free(mtx);
+    }
+#endif    
+}
+
 //////////////////////////////////////////////////////////////////////////////

@@ -1752,6 +1752,8 @@ static void Vdp2GenerateWindowInfo(void)
 // 0 .. outside,1 .. inside
 static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area, vdp2WindowInfo * vWindinfo )
 {
+    if( y<0 ) return 0;
+    if( y>= vdp2height ) return 0;
    // inside
     if( area == 1 )
     {
@@ -1898,7 +1900,7 @@ void Vdp2GenLineinfo( vdp2draw_struct *info )
 }
 
 
-INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture ){
+static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture ){
 
 	u32 color;
 
@@ -1931,7 +1933,7 @@ INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture
 	return 0;
 }
 
-INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture){
+static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture){
 
 	if (addr > 0x80000){
 		*texture->textdata++ = 0;
@@ -1953,7 +1955,7 @@ INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture
 }
 
 
-INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
+static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
 	if (addr > 0x80000){
 		return 0;
 	}
@@ -1964,7 +1966,7 @@ INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
 	return color;
 }
 
-INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
+static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
 	if (addr > 0x80000){
 		return 0;
 	}
@@ -1975,7 +1977,7 @@ INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
 	return color;
 }
 
-INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
+static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
 	if (addr > 0x80000){
 		return 0;
 	}
