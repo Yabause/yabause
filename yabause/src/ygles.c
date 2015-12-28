@@ -246,7 +246,7 @@ extern int vdp1cob;
 #define IS_ZERO(a) ( (a) < EPS && (a) > -EPS)
 
 // AXB = |A||B|sin
-INLINE float cross2d( float veca[2], float vecb[2] )
+static INLINE float cross2d( float veca[2], float vecb[2] )
 {
    return (veca[0]*vecb[1])-(vecb[0]*veca[1]);
 }
@@ -469,8 +469,7 @@ int YglCalcTextureQ(
 
 void YglTMInit(unsigned int w, unsigned int h) {
    YglTM = (YglTextureManager *) malloc(sizeof(YglTextureManager));
-   YglTM->texture = (unsigned int *) malloc(sizeof(unsigned int) * w * h);
-   memset(YglTM->texture,0,sizeof(unsigned int) * w * h);
+   memset(YglTM,0,sizeof(YglTextureManager));
    YglTM->width = w;
    YglTM->height = h;
 
@@ -480,7 +479,6 @@ void YglTMInit(unsigned int w, unsigned int h) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglTMDeInit(void) {
-   //free(YglTM->texture);
     if( YglTM->texture != NULL ) {
         glUnmapBuffer (GL_PIXEL_UNPACK_BUFFER);
         YglTM->texture = NULL;
@@ -936,7 +934,9 @@ int YglInit(int width, int height, unsigned int depth) {
       }
    }
 
-   _Ygl->mutex = YabThreadCreateMutex();
+   if( _Ygl->mutex == NULL){
+        _Ygl->mutex = YabThreadCreateMutex();
+   } 
 
 #if defined(_USEGLEW_)
    glewInit();
@@ -1037,6 +1037,8 @@ void YglDeInit(void) {
 
    if (_Ygl)
    {
+      if(_Ygl->mutex) YabThreadFreeMutex(_Ygl->mutex );
+      
       if (_Ygl->levels)
       {
          for (i = 0; i < (_Ygl->depth+1); i++)

@@ -43,10 +43,11 @@ extern "C" {
   //static char cdpath[256] = "E:/gameiso/Sonic 3D Blast (U)(Saturn)/125 Sonic 3D Blast (U).bin";
   //static char cdpath[256] = "E:/gameiso/sonicjam.iso";
 #else
-static char biospath[256] = "/dat2/project/src/bios.bin";
+//static char biospath[256] = "/dat2/project/src/bios.bin";
+static char * biospath = NULL;
 //static char cdpath[256] = "/dat2/iso/nights.img";
-//static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
-static char cdpath[256] = "/media/shinya/d-main/gameiso/brtrck.bin";
+static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
+//static char cdpath[256] = "/media/shinya/d-main1/gameiso/brtrck.bin";
 #endif
 
 
@@ -179,6 +180,8 @@ int yabauseinit()
 	yinit.cartpath = cartpath;
 	yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
+    yinit.usethreads = 1;
+    yinit.skip_load = 0;    
 	res = YabauseInit(&yinit);
     if( res == -1)
     {
