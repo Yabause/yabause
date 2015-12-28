@@ -172,7 +172,7 @@ class YabauseHandler extends Handler {
 }
 
 
-public class Yabause extends Activity implements OnPadListener
+public class Yabause extends Activity implements OnPadListener  
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
@@ -260,10 +260,7 @@ public class Yabause extends Activity implements OnPadListener
         setContentView(R.layout.main);
 
         audio = new YabauseAudio(this);
- 
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        readPreferences();  
- 
+
         Intent intent = getIntent();  
         String game = intent.getStringExtra("org.uoyabause.android.FileName");
 
@@ -277,6 +274,9 @@ public class Yabause extends Activity implements OnPadListener
         if( exgame != null ){
         	gamepath = exgame;  
         }
+
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        readPreferences();
 /*        
         ActivityManager activityManager = ((ActivityManager) getSystemService(ACTIVITY_SERVICE));
         PackageManager pm = getPackageManager();
@@ -649,17 +649,21 @@ public class Yabause extends Activity implements OnPadListener
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean fps = sharedPref.getBoolean("pref_fps", false);
         YabauseRunnable.enableFPS(fps ? 1 : 0);
+        Log.d(TAG,"enable FPS " + fps);
 
         boolean frameskip = sharedPref.getBoolean("pref_frameskip", false);
         YabauseRunnable.enableFrameskip(frameskip ? 1 : 0);
+        Log.d(TAG, "enable enableFrameskip " + frameskip);
 
         String cpu = sharedPref.getString("pref_cpu", "2");
         Integer icpu = new Integer(cpu);
         YabauseRunnable.setCpu(icpu.intValue());
+        Log.d(TAG, "cpu " + icpu.toString());
 
         String sfilter = sharedPref.getString("pref_filter", "0");
         Integer ifilter = new Integer(sfilter);
         YabauseRunnable.setFilter(ifilter);
+        Log.d(TAG, "setFilter " + ifilter.toString());
 
         boolean audioout = sharedPref.getBoolean("pref_audio", true);
         if (audioout) {
@@ -667,13 +671,16 @@ public class Yabause extends Activity implements OnPadListener
         } else {
             audio.mute(audio.USER);
         }
+        Log.d(TAG, "Audio " + audioout);
 
         String bios = sharedPref.getString("pref_bios", "");
         if (bios.length() > 0) {
             YabauseStorage storage = YabauseStorage.getStorage();
             biospath = storage.getBiosPath(bios);
         } else
-            biospath = ""; 
+            biospath = "";
+
+        Log.d(TAG, "bios " + bios);
 
         String cart = sharedPref.getString("pref_cart", "");
         if (cart.length() > 0) {
@@ -681,6 +688,8 @@ public class Yabause extends Activity implements OnPadListener
             carttype = i.intValue();
         } else
             carttype = -1;
+
+        Log.d(TAG, "cart " + cart);
 
         final ActivityManager activityManager = (ActivityManager) getSystemService(this.ACTIVITY_SERVICE);
         final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
@@ -700,12 +709,14 @@ public class Yabause extends Activity implements OnPadListener
             video_interface = -1;
         }
 
+        Log.d(TAG, "video " + video);
+
         // InputDevice
         YabausePad pad = (YabausePad) findViewById(R.id.yabause_pad);
         pad.setOnPadListener(this);
     	String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
     	padm = PadManager.getPadManager();
-    	
+        Log.d(TAG, "input " + selInputdevice);
     	// First time
     	if( selInputdevice.equals("65535") ){
     		// if game pad is connected use it.
@@ -728,13 +739,19 @@ public class Yabause extends Activity implements OnPadListener
         }else{
             padm.setPlayer1InputDevice( null );
         }
-        
+
+
         String selInputdevice2 = sharedPref.getString("pref_player2_inputdevice", "65535");
         if( !selInputdevice.equals("65535") ){
         	padm.setPlayer2InputDevice( selInputdevice2 );
         }else{
         	padm.setPlayer2InputDevice( null );
         }
+        Log.d(TAG, "input " + selInputdevice2);
+
+        Log.d(TAG, "getGamePath " + getGamePath());
+        Log.d(TAG, "getMemoryPath " + getMemoryPath());
+        Log.d(TAG, "getCartridgePath " + getCartridgePath());
     }
 
     public String getBiosPath() {
