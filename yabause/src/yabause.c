@@ -340,6 +340,10 @@ void YabFlushBackups(void)
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseDeInit(void) {
+   
+   Vdp2DeInit();
+   Vdp1DeInit();
+   
    SH2DeInit();
 
    if (BiosRom)
@@ -362,13 +366,11 @@ void YabauseDeInit(void) {
       T1MemoryDeInit(BupRam);
    }
    BupRam = NULL;
-
+ 
    CartDeInit();
    Cs2DeInit();
    ScuDeInit();
    ScspDeInit();
-   Vdp1DeInit();
-   Vdp2DeInit();
    SmpcDeInit();
    PerDeInit();
    VideoDeInit();
