@@ -334,6 +334,12 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                      {
                         // Transfer Data
                         const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+
+                        if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
+                        {
+                           CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
+                           return 0;
+                        }
 #ifdef WORDS_BIGENDIAN
                         val = *((const u32 *) ptr);
 #else
@@ -553,7 +559,7 @@ void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *netlinksetting) {
+int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *modemip, const char *modemport) {
    int ret;
 
    if ((Cs2Area = (Cs2 *) malloc(sizeof(Cs2))) == NULL)
@@ -572,12 +578,12 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
    // If Modem is connected, set the registers
    if(Cs2Area->carttype == CART_NETLINK)
    {
-      if ((ret = NetlinkInit(netlinksetting)) != 0)
+      if ((ret = NetlinkInit(modemip, modemport)) != 0)
          return ret;
    }
    else if (Cs2Area->carttype == CART_JAPMODEM)
    {
-      if ((ret = JapModemInit(netlinksetting)) != 0)
+      if ((ret = JapModemInit(modemip, modemport)) != 0)
          return ret;
    }
 
@@ -1581,7 +1587,7 @@ void Cs2SeekDisc(void) {
      if (Cs2Area->reg.CR2 >> 8)
      {
         // Seek by index
-		 Cs2Area->status = CDB_STAT_PAUSE;
+        Cs2Area->status = CDB_STAT_PAUSE;
         Cs2SetupDefaultPlayStats((Cs2Area->reg.CR2 >> 8), 1);
         Cs2Area->index = Cs2Area->reg.CR2 & 0xFF;
      }
@@ -2728,7 +2734,7 @@ void Cs2GetMPEGRom(void) {
      fseek(mpgfp, readoffset * Cs2Area->getsectsize, SEEK_SET);
      if ((mpgpartition = Cs2GetPartition(Cs2Area->outconmpegrom)) != NULL && !Cs2Area->isbufferfull)
      {
-        IOCheck_struct check;
+        IOCheck_struct check = { 0, 0 };
         mpgpartition->size = 0;
 
         for (i = 0; i < readsize; i++)
@@ -3473,8 +3479,12 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
   return -1;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+char * Cs2GetCurrentGmaecode(){
+	if(cdip==NULL) return NULL; 
+	return cdip->itemnum;
+}
 
+//////////////////////////////////////////////////////////////////////////////
 u8 Cs2GetIP(int autoregion) {
    partition_struct * gripartition;
    u8 ret = 0;
@@ -3485,6 +3495,7 @@ u8 Cs2GetIP(int autoregion) {
    // read in lba 0/FAD 150
    if ((gripartition = Cs2ReadUnFilteredSector(150)) != NULL)
    {
+	   int i;
       char *buf=(char*)gripartition->block[gripartition->numblocks - 1]->data;
 
       // Make sure we're dealing with a saturn game
@@ -3495,6 +3506,12 @@ u8 Cs2GetIP(int autoregion) {
          memcpy(cdip->company, buf+0x10, 16);
          cdip->company[16]='\0';
          sscanf(buf+0x20, "%s", cdip->itemnum);
+		 
+		 // make gameid as u64
+		 cdip->gameid = 0;
+		 for (i = 0; i < 8; i++){
+			 cdip->gameid |= ((u64)cdip->itemnum[i]) << (i * 8);
+		 }
          memcpy(cdip->version, buf+0x2A, 6);
          cdip->version[6]='\0';
          sprintf(cdip->date, "%c%c/%c%c/%c%c%c%c", buf[0x34], buf[0x35], buf[0x36], buf[0x37], buf[0x30], buf[0x31], buf[0x32], buf[0x33]);
@@ -3601,7 +3618,7 @@ u8 Cs2GetRegionID(void)
 
 int Cs2SaveState(FILE * fp) {
    int offset, i;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 
@@ -3699,7 +3716,7 @@ int Cs2SaveState(FILE * fp) {
 
 int Cs2LoadState(FILE * fp, int version, int size) {
    int i, i2;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
 
@@ -3829,6 +3846,7 @@ int Cs2LoadState(FILE * fp, int version, int size) {
 
 u32 Cs2GetMasterStackAdress(){ if (cdip) return cdip->msh2stack; else return 0x6002000; }
 u32 Cs2GetSlaveStackAdress(){ if (cdip) return cdip->ssh2stack; else return 0x6001000; }
+u64 Cs2GetGameId(){ if (cdip) return cdip->gameid; else return 0x00; }
 
 //////////////////////////////////////////////////////////////////////////////
 

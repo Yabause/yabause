@@ -59,10 +59,18 @@ static char * wcsdupstr(const wchar_t * path)
 static FILE * _wfopen(const wchar_t *wpath, const wchar_t *wmode)
 {
    FILE * fd;
-   char * path = wcsdupstr(wpath);
-   char * mode = wcsdupstr(wmode);
+   char * path;
+   char * mode;
 
-   if ((path == NULL) || (mode == NULL)) return NULL;
+   path = wcsdupstr(wpath);
+   if (path == NULL) return NULL;
+
+   mode = wcsdupstr(wmode);
+   if (mode == NULL)
+   {
+      free(path);
+      return NULL;
+   }
 
    fd = fopen(path, mode);
 
@@ -369,6 +377,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    int file_size;
    int i;
    FILE * bin_file;
+   int matched = 0;
 
 	memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
@@ -461,7 +470,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
    // Go back, retrieve image filename
    fseek(iso_file, 0, SEEK_SET);
-   fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
+   matched = fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
 
    // Now go and open up the image file, figure out its size, etc.
    if ((bin_file = fopen(temp_buffer, "rb")) == NULL)
@@ -1080,7 +1089,6 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 
 	fclose(iso_file);
 
-
 	return 0;
 }
 
@@ -1109,6 +1117,7 @@ static int ISOCDInit(const char * iso) {
    char *ext;
    int ret;
    FILE *iso_file;
+   size_t num_read = 0;
 
    memset(isoTOC, 0xFF, 0xCC * 2);
    memset(&disc, 0, sizeof(disc));
@@ -1122,7 +1131,7 @@ static int ISOCDInit(const char * iso) {
       return -1;
    }
 
-   fread((void *)header, 1, 6, iso_file);
+   num_read = fread((void *)header, 1, 6, iso_file);
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
@@ -1214,6 +1223,7 @@ static s32 ISOCDReadTOC(u32 * TOC) {
 
 static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    int i,j;
+   size_t num_read = 0;
    track_info_struct *track=NULL;
 
    assert(disc.session);
@@ -1248,11 +1258,11 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
 		{
 			if (track->sub_fp)
 			{
-				fread(buffer, 2352, 1, track->fp);
-				fread((char *)buffer+2352, 96, 1, track->sub_fp);
+            num_read = fread(buffer, 2352, 1, track->fp);
+            num_read = fread((char *)buffer + 2352, 96, 1, track->sub_fp);
 			}
 			else
-            fread(buffer, 2448, 1, track->fp);
+            num_read = fread(buffer, 2448, 1, track->fp);
 		}
       else
       {
@@ -1268,13 +1278,13 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
          };
          u8 subcode_buffer[96 * 3];
 
-         fread(buffer, 2352, 1, track->fp);
+         num_read = fread(buffer, 2352, 1, track->fp);
 
-         fread(subcode_buffer, 96, 1, track->fp);
+         num_read = fread(subcode_buffer, 96, 1, track->fp);
          fseek(track->fp, 2352, SEEK_CUR);
-         fread(subcode_buffer+96, 96, 1, track->fp);
+         num_read = fread(subcode_buffer + 96, 96, 1, track->fp);
          fseek(track->fp, 2352, SEEK_CUR);
-         fread(subcode_buffer+192, 96, 1, track->fp);
+         num_read = fread(subcode_buffer + 192, 96, 1, track->fp);
          for (i = 0; i < 96; i++)
             ((u8 *)buffer)[2352+i] = subcode_buffer[deint_offsets[i]];
       }
@@ -1282,12 +1292,12 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    else if (track->sector_size == 2352)
    {
       // Generate subcodes here
-      fread(buffer, 2352, 1, track->fp);
+      num_read = fread(buffer, 2352, 1, track->fp);
    }
    else if (track->sector_size == 2048)
    {
       memcpy(buffer, syncHdr, 12);
-      fread((char *)buffer + 0x10, 2048, 1, track->fp);
+      num_read = fread((char *)buffer + 0x10, 2048, 1, track->fp);
    }
 	return 1;
 }

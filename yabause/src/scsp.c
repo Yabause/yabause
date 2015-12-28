@@ -354,7 +354,9 @@ static void scsp_slot_update_keyon(slot_t *slot);
 
 static int scsp_mute_flags = 0;
 static int scsp_volume = 100;
-
+static int thread_running = 0;
+static int scsp_sample_count = 0;
+static int scsp_checktime = 0;
 ////////////////////////////////////////////////////////////////
 // Misc
 
@@ -2394,6 +2396,7 @@ scsp_update_monitor(void)
 void
 scsp_update_timer (u32 len)
 {
+   scsp_sample_count += len;
    scsp.timacnt += len << (8 - scsp.timasd);
 
    if (scsp.timacnt >= 0xFF00)
@@ -3048,6 +3051,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
     scsp_tl_table[i] = scsp_round(pow(10, ((double)i * -0.3762) / 20) * 1024.0);
 
   scsp_reset();
+  thread_running = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3379,6 +3383,9 @@ ScspSetFrameAccurate (int on)
 void
 ScspDeInit (void)
 {
+  scsp_mute_flags = 0;
+  thread_running = 0; 
+
   if (scspchannel[0].data32)
     free(scspchannel[0].data32);
   scspchannel[0].data32 = NULL;
@@ -3450,8 +3457,12 @@ __attribute__((noinline))
 #endif
 static s32 FASTCALL M68KExecBP (s32 cycles);
 
-void
-M68KExec (s32 cycles)
+#if defined(ASYNC_SCSP)
+void M68KExec(s32 cycles){}
+void MM68KExec(s32 cycles)
+#else
+void M68KExec(s32 cycles)
+#endif
 {
   s32 newcycles = savedcycles - cycles;
   if (LIKELY(IsM68KRunning))
@@ -3507,11 +3518,17 @@ M68KStep (void)
 //////////////////////////////////////////////////////////////////////////////
 
 // Wait for background execution to finish (used on PSP)
-void
-M68KSync (void)
+#if defined(ASYNC_SCSP)
+void M68KSync(void){}
+void MM68KSync (void)
+#else
+void M68KSync(void)
+#endif
 {
   M68K->Sync();
 }
+
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3581,23 +3598,80 @@ ScspReceiveCDDA (const u8 *sector)
     }
 }
 
+
 //////////////////////////////////////////////////////////////////////////////
-
-void
-ScspExec ()
+#if !defined(ASYNC_SCSP)
+void ScspExec()
 {
-  u32 audiosize;
+	u32 audiosize;
 
-  ScspInternalVars->scsptiming2 +=
-    ((scspsoundlen << 16) + scsplines / 2) / scsplines;
-  scsp_update_timer (ScspInternalVars->scsptiming2 >> 16); // Pass integer part
-  ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
-  ScspInternalVars->scsptiming1++;
+	ScspInternalVars->scsptiming2 += ((scspsoundlen << 16) + scsplines / 2) / scsplines;
+	scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
+	ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
+	ScspInternalVars->scsptiming1++;
+
+#else
+
+#include <time.h>  
+#include "threads.h"
+
+void ScspAsynMain( void * p ){
+
+	struct timespec before;
+	struct timespec now;
+	int difftime;
+
+	nice(10);
+
+	clock_gettime(CLOCK_MONOTONIC, &before);
+	while (thread_running){
+		int m68kclock = 11000000 / 60 / scsplines;
+		int need_to_sync = 0;
+		MM68KExec(m68kclock);
+		ScspInternalVars->scsptiming2 += ((scspsoundlen << 16) + scsplines / 2) / scsplines;
+		scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
+		scsp_sample_count += (ScspInternalVars->scsptiming2 >> 16);
+		ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
+		ScspInternalVars->scsptiming1++;
+		if (ScspInternalVars->scsptiming1 >= scsplines){
+			need_to_sync = 1;
+		}
+		ScspExecAsync();
+		if( need_to_sync){
+			clock_gettime(CLOCK_MONOTONIC, &now);
+			if ((now.tv_nsec - before.tv_nsec) < 0){
+				difftime = now.tv_nsec - before.tv_nsec + 1000000000;
+			}else{
+				difftime = now.tv_nsec - before.tv_nsec;
+			}
+			int sleeptime = (16666666 - difftime);
+			if (sleeptime > 0){
+				struct timespec sleeptime_ts;
+				sleeptime_ts.tv_sec = 0;
+				sleeptime_ts.tv_nsec = sleeptime;
+				nanosleep(&sleeptime_ts,NULL);
+			}
+			//yprintf("vsynctime = %d %d/%d", sleeptime, scsp_sample_count, scspsoundlen);
+			scsp_sample_count = 0;
+			clock_gettime(CLOCK_MONOTONIC, &before);
+		}
+	}
+}
+
+void ScspExec(){
+
+	if (thread_running == 0){
+		thread_running = 1;
+		YabThreadStart(YAB_THREAD_SCSP, ScspAsynMain, NULL);
+	}
+}
+void ScspExecAsync() {
+  u32 audiosize;
+#endif
 
   if (ScspInternalVars->scsptiming1 >= scsplines)
-    {
+  {
       s32 *bufL, *bufR;
-
       ScspInternalVars->scsptiming1 -= scsplines;
       ScspInternalVars->scsptiming2 = 0;
 
@@ -3676,6 +3750,9 @@ ScspExec ()
     }  // if (scspframeaccurate)
 
   scsp_update_monitor ();
+#if defined(ASYNC_SCSP)
+  while (scsp_mute_flags){ usleep(16666); }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3868,7 +3945,7 @@ SoundSaveState (FILE *fp)
   u32 temp;
   int offset;
   u8 nextphase;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   offset = StateWriteHeader (fp, "SCSP", 2);
 
@@ -3987,7 +4064,7 @@ SoundLoadState (FILE *fp, int version, int size)
   int i, i2;
   u32 temp;
   u8 nextphase;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   // Read 68k registers first
   yread (&check, (void *)&IsM68KRunning, 1, 1, fp);
@@ -4389,7 +4466,7 @@ ScspSlotDebugSaveRegisters (u8 slotnum, const char *filename)
 {
   FILE *fp;
   int i;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   if ((fp = fopen (filename, "wb")) == NULL)
     return -1;
@@ -4511,7 +4588,7 @@ ScspSlotDebugAudioSaveWav (u8 slotnum, const char *filename)
   fmt_struct fmt;
   chunk_struct data;
   long length;
-  IOCheck_struct check;
+  IOCheck_struct check = { 0, 0 };
 
   if (scsp.slot[slotnum].lea == 0)
     return 0;

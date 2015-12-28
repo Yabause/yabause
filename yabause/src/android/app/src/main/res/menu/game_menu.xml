@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+   <item android:id="@+id/save_screen"
+         android:title="@string/menu_save_screenshot" />
+
+    <item android:id="@+id/report"
+        android:title="@string/menu_report" />
+
+   <item android:id="@+id/save_state"
+         android:title="@string/menu_save_state" />
+   
+   <item android:id="@+id/load_state"
+         android:title="@string/menu_load_state" />
+   
+   <item android:id="@+id/exit"
+         android:title="@string/menu_exit" />
+   
+</menu>

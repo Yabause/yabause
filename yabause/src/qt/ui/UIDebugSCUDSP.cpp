@@ -129,16 +129,16 @@ void UIDebugSCUDSP::updateRegList()
    str.sprintf("CT = %02X:%02X:%02X:%02X", regs.CT[0], regs.CT[1], regs.CT[2], regs.CT[3]);
    lwRegisters->addItem(str);
 
-   str.sprintf("RA =   %08lX", regs.RA0);
+   str.sprintf("RA =   %08X", regs.RA0);
    lwRegisters->addItem(str);
 
-   str.sprintf("WA =   %08lX", regs.WA0);
+   str.sprintf("WA =   %08X", regs.WA0);
    lwRegisters->addItem(str);
 
-   str.sprintf("RX =   %08lX", regs.RX);
+   str.sprintf("RX =   %08X", regs.RX);
    lwRegisters->addItem(str);
 
-   str.sprintf("RY =   %08lX", regs.RX);
+   str.sprintf("RY =   %08X", regs.RX);
    lwRegisters->addItem(str);
 
    str.sprintf("PH =       %04X", regs.P.part.H & 0xFFFF);

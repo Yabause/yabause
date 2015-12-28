@@ -106,6 +106,13 @@ void YglTMDeInit(void);
 void YglTMReset(void);
 void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 
+#define VDP1_COLOR_CL_REPLACE 0x00
+#define VDP1_COLOR_CL_SHADOW 0x10
+#define VDP1_COLOR_CL_HALF_LUMINACE 0x20
+#define VDP1_COLOR_CL_GROW_LUMINACE 0x30
+#define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
+#define VDP1_COLOR_CL_MESH 0x80
+
 enum
 {
    PG_NORMAL=1,
@@ -114,7 +121,9 @@ enum
    PG_VFP1_STARTUSERCLIP,
    PG_VFP1_ENDUSERCLIP,
    PG_VFP1_HALFTRANS,    
+   PG_VFP1_SHADOW,
    PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
+   PG_VFP1_MESH,
    PG_VDP2_ADDBLEND,
    PG_VDP2_DRAWFRAMEBUFF,    
    PG_VDP2_STARTWINDOW,
@@ -125,6 +134,12 @@ enum
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
    PG_MAX,
 };
+
+typedef enum 
+{
+	AA_NONE=0,
+	AA_FXAA
+} AAMODE;
 
 typedef struct {
    int prgid;
@@ -188,6 +203,7 @@ typedef struct {
    int rwidth;
    int rheight;
    int drawframe;
+   int readframe;
    GLuint rboid_depth;
    GLuint rboid_stencil;
    GLuint vdp1fbo;
@@ -196,6 +212,11 @@ typedef struct {
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
    void * pFrameBuffer;
+
+   GLuint fxaa_fbo;
+   GLuint fxaa_fbotex;
+   GLuint fxaa_stencil;
+   GLuint fxaa_depth;
 
    // Message Layer
    int msgwidth;
@@ -224,6 +245,8 @@ typedef struct {
    u32 linecolor_pbo;
    u32 * lincolor_buf;
 
+   AAMODE aamode;
+
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -248,8 +271,8 @@ void YglEndWindow( vdp2draw_struct * info );
 
 void YglCacheInit(void);
 void YglCacheDeInit(void);
-int YglIsCached(u32,YglCache *);
-void YglCacheAdd(u32,YglCache *);
+int YglIsCached(u64,YglCache *);
+void YglCacheAdd(u64,YglCache *);
 void YglCacheReset(void);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add 
@@ -280,6 +303,7 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
+int YglBlitFXAA(u32 sourceTexture, float w, float h);
 
 void YglRenderVDP1(void);
 u32 * YglGetLineColorPointer();

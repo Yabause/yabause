@@ -4,6 +4,8 @@ include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
+cmake_minimum_required(VERSION 2.8)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
 set(yabause_HEADERS
@@ -19,7 +21,9 @@ set(yabause_HEADERS
 	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
-	yabause.h ygl.h yui.h)
+	yabause.h ygl.h yui.h
+	shaders/FXAA_DefaultES.h
+)
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
@@ -41,6 +45,7 @@ set(yabause_SOURCES
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c )
 if (ANDROID)
+    add_definitions(-DANDROID=1)
 	add_definitions(-DYAB_PORT_OSD)
 	add_definitions(-D_OGLES3_)
 	add_definitions(-DYAB_ASYNC_RENDERING)
@@ -184,6 +189,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 
 		include(FindGLUT)
 		if (GLUT_FOUND)
+			message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
 			include_directories(${GLUT_INCLUDE_DIR})
 			add_definitions(-DHAVE_LIBGLUT=1)
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLUT_LIBRARIES})
@@ -233,6 +239,7 @@ if (YAB_WANT_SDL)
 	else()
 		include(FindSDL)
 		if (SDL_FOUND)
+			message (WARNING "Deprecated version of SDL found. Support will be removed in the future. ")
 			include_directories(${SDL_INCLUDE_DIR})
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL_LIBRARY})
 		endif()
@@ -327,6 +334,8 @@ if (WIN32)
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
+		message (WARNING "Windows DDK/WDK use is deprecated. Support will be removed in the future. ")
+
 		# Find ntddcdrm.h
 		find_path(ntddcdrm_INCLUDE_DIR ntddcdrm.h
 			PATHS "${DDK_DIR}" "${DDK_DIR}/inc" PATH_SUFFIXES ddk api)
@@ -415,13 +424,6 @@ if (WIN32)
 
 endif (WIN32)
 
-if (WII)
-	set(CMAKE_C_FLAGS "-mrvl -mcpu=750 -meabi -mhard-float")
-	add_definitions(-DGEKKO=1)
-	# that shouldn't be hardcoded, either use an ENV variable or try to detect it...
-	include_directories(/opt/devkitpro/libogc/include/)
-endif()
-
 option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 
 # SH2 dynamic recompiler
@@ -466,7 +468,7 @@ if (SH2_DYNAREC)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1 -DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
 		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-		if (ANDROID)
+		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
 			enable_language(ASM-ATT)
 			set(yabause_SOURCES ${yabause_SOURCES}
 				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s)
@@ -474,11 +476,20 @@ if (SH2_DYNAREC)
 				sh2_dynarec/sh2_dynarec.h)
 			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
 			add_definitions(-DSH2_DYNAREC=1)
-			add_definitions(-DANDROID=1)
 			if (YAB_WANT_ARM7)
 				add_definitions(-DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
 			endif()
 		endif ()
+		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
+			add_definitions(-DSH2_DYNAREC=0)
+			#enable_language(ASM-ATT)
+			#set(yabause_SOURCES ${yabause_SOURCES}
+		#		sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm64.s)
+		#	set(yabause_HEADERS ${yabause_HEADERS}
+		#		sh2_dynarec/sh2_dynarec.h)
+		#	set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
+		#	add_definitions(-DSH2_DYNAREC=1)			
+		endif()
 	endif( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
 endif (SH2_DYNAREC)
 
@@ -502,7 +513,8 @@ if (YAB_WANT_C68K)
 	if (MSVC)
 		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "/Od /wd4146")
 	else()
-		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "-O0")
+		#set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "-O0")
+		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "-O3")
 	endif()
 endif(YAB_WANT_C68K)
 
@@ -629,9 +641,13 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
     set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=softfp")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-if(ANDROID)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a9 -mfpu=neon -ffast-math")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -mcpu=cortex-a9 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti  ")
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a9 -mfpu=neon -ffast-math")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -mcpu=cortex-a9 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti  ")
+endif()
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a -ffast-math")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -ffast-math -fno-exceptions -fno-rtti  ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC
@@ -643,6 +659,27 @@ if (MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /wd4018 /wd4244")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4244")
 endif ()
+
+# Turn string format security warnings into errors. Some Linux distros enable this by default and travis-ci, etc. needs a way to catch them
+option(YAB_FORCE_SECURE_STRINGS "Turns all string format warnings into errors." OFF)
+if (CMAKE_COMPILER_IS_GNUCC AND YAB_FORCE_SECURE_STRINGS)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security")
+endif()
+
+if (NOT ANDROID)
+    option(YAB_WANT_VIDSOFT_PRIORITY_THREADING "Use threads for vidsoft priority" OFF)
+    option(YAB_WANT_VIDSOFT_LAYER_THREADING "Use threads for vidsoft layers" OFF)
+
+    if (YAB_WANT_VIDSOFT_PRIORITY_THREADING)
+        add_definitions(-DWANT_VIDSOFT_PRIORITY_THREADING)
+        message(STATUS "Using vidsoft priority threading")
+    endif()
+
+    if (YAB_WANT_VIDSOFT_LAYER_THREADING)
+        add_definitions(-DWANT_VIDSOFT_LAYER_THREADING)
+        message(STATUS "Using vidsoft layer threading")
+    endif()
+endif()
 
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
@@ -693,6 +730,7 @@ endif()
 if (YAB_WANT_OPENSL)
     set(HAVE_OPENSL ON)
 endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 if (YAB_NETWORK AND UNIX)
