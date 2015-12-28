@@ -481,6 +481,7 @@ static INLINE void SH2HandleBreakpoints(SH2_struct *context)
 
       if ((context->regs.PC == context->bp.codebreakpoint[i].addr) && context->bp.inbreakpoint == 0) {
          context->bp.inbreakpoint = 1;
+		 SH2DumpHistory(context);
          if (context->bp.BreakpointCallBack)
              context->bp.BreakpointCallBack(context, context->bp.codebreakpoint[i].addr, context->bp.BreakpointUserData);
          context->bp.inbreakpoint = 0;

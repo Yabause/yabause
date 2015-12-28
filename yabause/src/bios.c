@@ -27,6 +27,7 @@
 #include "sh2core.h"
 #include "bios.h"
 #include "smpc.h"
+#include "yabause.h"
 
 static u8 sh2masklist[0x20] = {
 0xF0, 0xE0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80,
@@ -1905,6 +1906,7 @@ int BupImportSave(UNUSED u32 device, const char *filename)
    FILE *fp;
    u32 filesize;
    u8 *buffer;
+   size_t num_read = 0;
 
    if (!filename)
       return -1;
@@ -1923,7 +1925,7 @@ int BupImportSave(UNUSED u32 device, const char *filename)
       return -2;
    }
 
-   fread((void *)buffer, 1, filesize, fp);
+   num_read = fread((void *)buffer, 1, filesize, fp);
    fclose(fp);
 
    // Write save here

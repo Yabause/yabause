@@ -150,7 +150,7 @@ static INLINE void yread(IOCheck_struct * check, void * ptr, size_t size, size_t
 }
 
 static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
    fprintf(fp, "%s", name);
    check.done = 0;
    check.size = 0;
@@ -160,7 +160,7 @@ static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {
 }
 
 static INLINE int StateFinishHeader(FILE *fp, int offset) {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
    int size = 0;
    size = ftell(fp) - offset;
    fseek(fp, offset - 4, SEEK_SET);

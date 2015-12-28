@@ -24,6 +24,11 @@
 
 #include "core.h"
 
+typedef enum {
+	FILTER_NONE=0,
+	FILTER_FXAA,
+} yabause_filter_type;
+
 typedef struct
 {
    int percoretype;
@@ -39,14 +44,17 @@ typedef struct
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
-   const char *netlinksetting;
+   const char *modemip;
+	const char *modemport;
    int videoformattype;
    int frameskip;
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
    int usethreads;
+   int numthreads;
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
+   yabause_filter_type video_filter_type;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -92,6 +100,7 @@ typedef struct
    int CurSH2FreqType;
    int IsPal;
    u8 UseThreads;
+   int NumThreads;
    u8 IsSSH2Running;
    u64 OneFrameTime;
    u64 tickfreq;
