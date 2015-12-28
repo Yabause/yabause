@@ -22,7 +22,7 @@ set(yabause_glfw_SOURCES
 
 
 add_executable(yabause-glfw ${yabause_glfw_SOURCES})
-target_link_libraries(yabause-glfw yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES})
+target_link_libraries(yabause-glfw yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} -lasan )
 
 yab_port_success(yabause-glfw)
 configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)
