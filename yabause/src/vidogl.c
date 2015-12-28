@@ -4969,19 +4969,32 @@ static void Vdp2DrawNBG0(void)
    info.specialcolormode = Vdp2Regs->SFCCMD & 0x3;
 
    info.colornumber = (Vdp2Regs->CHCTLA & 0x70) >> 4;
+   int dest_alpha = ((Vdp2Regs->CCCTL >> 9) & 0x01);
 
-   
+   // Enable Color Calculation
    if(Vdp2Regs->CCCTL & 0x1)
    {
+	   // Color calculation ratio
       info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
-      if(Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
-         info.blendmode=2;
-      else
-         info.blendmode=1;
+
+	  // Color calculation mode bit
+	  if (Vdp2Regs->CCCTL & 0x100){ // Add Color
+			  info.blendmode = 2; 
+	  }else{ // Use Color calculation ratio
+		  if (info.specialcolormode != 0 && dest_alpha){ // Just currently not supported
+			  info.blendmode = 0;
+		  }else{
+			  info.blendmode = 1;
+		  }
+	  }
+   // Disable Color Calculation
    }else{
 
-	   // 12.14 CCRTMD
-	   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+	   // Use Destination Alpha 12.14 CCRTMD
+	   if (dest_alpha){
+
+		   // Color calculation will not be operated.
+		   // But need to write alpha value
 		   info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
 	   }else{
 		   info.alpha = 0xFF;
