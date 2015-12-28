@@ -2622,7 +2622,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 	info->draww = (int)((float)vdp2width / info->coordincx);
 	info->drawh = (int)((float)vdp2height / info->coordincy);
 
-
+	int res_shift = 0;
+	if (vdp2height >= 440) res_shift = 1;
 
 
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
@@ -2648,7 +2649,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
 		info->draww = (int)((float)vdp2width / info->coordincx);
 
-		regs = Vdp2RestoreRegs(v, Vdp2Lines);
+		regs = Vdp2RestoreRegs((v >> res_shift), Vdp2Lines);
 		if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
 		// determine which chara shoud be used.
