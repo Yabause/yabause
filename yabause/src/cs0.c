@@ -1423,9 +1423,10 @@ int CartSaveState(FILE * fp)
 int CartLoadState(FILE * fp, UNUSED int version, int size)
 {
    int newtype;
+   size_t num_read = 0;
 
    // Read cart type
-   fread((void *)&newtype, 4, 1, fp);
+   num_read = fread((void *)&newtype, 4, 1, fp);
 
    // Check to see if old cart type and new cart type match, if they don't,
    // reallocate memory areas

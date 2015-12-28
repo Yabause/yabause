@@ -110,6 +110,7 @@ UIYabause::UIYabause( QWidget* parent )
 	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
 	mLogDock->setVisible( false );
 	mCanLog = true;
+	oldMouseX = oldMouseY = 0;
 
 #ifndef SH2_TRACE
 	aTraceLogging->setVisible(false);
@@ -314,7 +315,7 @@ void UIYabause::appendLog( const char* s )
 {
 	if (! mCanLog)
 	{
-		qWarning( s );
+		qWarning( "%s", s );
 		return;
 	}
 
@@ -696,6 +697,25 @@ void UIYabause::on_aFileSettings_triggered()
 		
 		if(newhash["General/ShowFPS"] != hash["General/ShowFPS"])
 			SetOSDToggle(newhash["General/ShowFPS"].toBool());
+
+		if (newhash["General/EnableMultiThreading"] != hash["General/EnableMultiThreading"] ||
+			 newhash["General/NumThreads"] != hash["General/NumThreads"])
+		{
+			if (newhash["General/EnableMultiThreading"].toBool())
+			{
+				int num = newhash["General/NumThreads"].toInt() < 1 ? 1 : newhash["General/NumThreads"].toInt();
+				VIDSoftSetVdp1ThreadEnable(num == 1 ? 0 : 1);
+				VIDSoftSetNumLayerThreads(num);
+				VIDSoftSetNumPriorityThreads(num);
+			}
+			else
+			{
+				VIDSoftSetVdp1ThreadEnable(0);
+				VIDSoftSetNumLayerThreads(1);
+				VIDSoftSetNumPriorityThreads(1);
+			}
+		}
+
 		
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
@@ -833,12 +853,22 @@ void UIYabause::on_aFileScreenshot_triggered()
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
 	// request a file to save to to user
-	const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+	QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+
+	// if the user didn't provide a filename extension, we force it to png
+	QFileInfo qfi( s );
+	if ( qfi.suffix().isEmpty() )
+		s += ".png";
 	
 	// write image if ok
 	if ( !s.isEmpty() )
-		if ( !screenshot.save( s ) )
-			CommonDialogs::information( QtYabause::translate( "An error occur while writing the screenshot." ) );
+	{
+		QImageWriter iw( s );
+		if ( !iw.write( screenshot ))
+		{
+			CommonDialogs::information( QtYabause::translate( "An error occur while writing the screenshot: " + iw.errorString()) );
+		}
+	}
 }
 
 void UIYabause::on_aFileQuit_triggered()

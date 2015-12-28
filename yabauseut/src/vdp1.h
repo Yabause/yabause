@@ -24,4 +24,5 @@ void vdp1_test();
 void vdp1_draw_test();
 void vdp1_clip_test();
 void vdp1_misc_test();
+void vdp1_framebuffer_tests();
 #endif

@@ -281,12 +281,14 @@ static void FlipToggle(NSMenuItem *item) {
         /* Set up the cartridge stuff based on what was selected. */
         if(yinit.carttype == CART_NETLINK) {
             yinit.cartpath = NULL;
-            yinit.netlinksetting = ([cart length] > 0) ?
+            yinit.modemip = ([cart length] > 0) ?
                 [cart UTF8String] : NULL;
+            yinit.modemport = NULL;
         }
         else {
             yinit.cartpath = ([cart length] > 0) ? [cart UTF8String] : NULL;
-            yinit.netlinksetting = NULL;
+            yinit.modemip = NULL;
+            yinit.modemport = NULL;
         }
 
         if(cdcore == CDCORE_DUMMY && !yinit.biospath) {

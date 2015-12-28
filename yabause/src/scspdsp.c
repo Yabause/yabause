@@ -184,6 +184,7 @@ void ScspDspAssembleFromFile(char * filename, u64* output)
       char * result = fgets(line, sizeof(line), fp);
       output[i] = ScspDspAssembleLine(line);
    }
+   fclose(fp);
 }
 
 void ScspDspDisasm(u8 addr, char *outstring)

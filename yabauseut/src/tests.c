@@ -157,6 +157,16 @@ void auto_test_take_screenshot(int frames_to_wait)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void auto_test_get_framebuffer()
+{
+#ifdef BUILD_AUTOMATED_TESTING
+   auto_test_send_message("FRAMEBUFFER", "");
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+
 void init_test(void)
 {
    // Put saturn in a minimalized state
