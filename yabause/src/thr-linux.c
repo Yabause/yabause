@@ -202,6 +202,15 @@ YabMutex * YabThreadCreateMutex(){
     return (YabMutex *)mtx;
 }
 
+void YabThreadFreeMutex( YabMutex * mtx ){
+    if( mtx != NULL ){
+        YabMutex_pthread * pmtx;
+        pmtx = (YabMutex_pthread *)mtx;        
+        pthread_mutex_destroy(&pmtx->mutex);
+        free(pmtx);
+    }
+}
+
 
 
 
