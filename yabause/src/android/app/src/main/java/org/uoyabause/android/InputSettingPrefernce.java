@@ -330,6 +330,7 @@ import android.view.LayoutInflater;
 
     private final int KEYCODE_L2 = 104;
     private final int KEYCODE_R2 = 105;
+	boolean onkey = false;
 
 	@Override
 	public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
@@ -338,9 +339,15 @@ import android.view.LayoutInflater;
 		
     if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
+
+				if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_UP) {
+					onkey = false;
+				}
+
                 if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
-                	
-                	
+
+					onkey = true;
+/*
                 	// for PS3 Controller needs to ignore L2,R2. this event is duped at onGenericMotion.
                 	InputDevice dev = InputDevice.getDevice(event.getDeviceId());
                 	if( dev.getProductId() == 616 ){
@@ -363,7 +370,7 @@ import android.view.LayoutInflater;
 					else if( keyCode == KEYCODE_L2 || keyCode == KEYCODE_R2 ){
 						return false; // ignore
 					}
-
+*/
                 	                	
                 	Integer PadKey = Keymap.get(keyCode);
                 	if( PadKey != null ) {
@@ -380,6 +387,7 @@ import android.view.LayoutInflater;
 	public boolean onGenericMotion(View v, MotionEvent event) {
 
 		if( event.getDeviceId() != _selected_device_id ) return false;
+		if( onkey ) return false;
 		
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
 			for( int i=0; i< motions.size(); i++ ){
