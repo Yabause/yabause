@@ -1213,7 +1213,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
             *priority = sprprilist[sprite_register] & 0x7;
 #endif
             *colorcl =  cclist[0]&0x1F;
-			*normal_shadow = 0x3E;
+			*normal_shadow = 0xFE;
             if (not_lut) cmd->CMDCOLR &= 0xFF;
             break;
          case 13:
