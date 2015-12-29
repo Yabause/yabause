@@ -460,8 +460,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	case 5:
 	{
 		// 16 bpp Bank mode
-		u32 charAddr = cmd->CMDSRCA * 8;
-		u16 dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
+		u16 dot = cmd->CMDCOLR;
 		//if (!(dot & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
 		if (!(dot & 0x8000) && !SPD) color = 0x00;
 		else if ((dot == 0x7FFF) && !END) color = 0x0;
@@ -1752,6 +1751,8 @@ static void Vdp2GenerateWindowInfo(void)
 // 0 .. outside,1 .. inside
 static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area, vdp2WindowInfo * vWindinfo )
 {
+    if( y<0 ) return 0;
+    if( y>= vdp2height ) return 0;
    // inside
     if( area == 1 )
     {
@@ -1898,7 +1899,7 @@ void Vdp2GenLineinfo( vdp2draw_struct *info )
 }
 
 
-INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture ){
+static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture ){
 
 	u32 color;
 
@@ -1931,7 +1932,7 @@ INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture
 	return 0;
 }
 
-INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture){
+static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture){
 
 	if (addr > 0x80000){
 		*texture->textdata++ = 0;
@@ -1953,7 +1954,7 @@ INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture
 }
 
 
-INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
+static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
 	if (addr > 0x80000){
 		return 0;
 	}
@@ -1964,7 +1965,7 @@ INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
 	return color;
 }
 
-INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
+static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
 	if (addr > 0x80000){
 		return 0;
 	}
@@ -1975,7 +1976,7 @@ INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
 	return color;
 }
 
-INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
+static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
 	if (addr > 0x80000){
 		return 0;
 	}
@@ -2136,7 +2137,10 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 	int incv = 1.0 / info->coordincy*255.0;
 	int inch = 1.0 / info->coordincx*255.0;
 
-	for (i = 0; i < vdp2height; i++)
+	int height = vdp2height;
+	if (height >= 448) height >>= 1;
+
+	for (i = 0; i < height; i++)
 	{
 		int sh, sv;
 		int v;
@@ -2164,11 +2168,10 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 		switch (info->colornumber){
 		case 0:
 			baseaddr += (((sh>>2) + sv * (info->cellw>>2)) << 1);
-			for (j = 0; j < (vdp2width>>2); j += 4)
+			for (j = 0; j < (vdp2width>>2); j++)
 			{
 				int h = (j*inch >> 8) << 1;
 				Vdp2GetPixel4bpp(info, baseaddr+h, texture);
-				baseaddr += 2;
 			}
 			break;
 		case 1:
@@ -2211,7 +2214,10 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy  )
 {
-	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable | ((info->patternpixelwh>> 4) << 1);
+	u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) | 
+		(info->paladdr << 20) | info->charaddr | info->transparencyenable | 
+		((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
+	
 	YglCache c;
 	YglSprite tile;
 	int winmode = 0;
@@ -2287,7 +2293,9 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
 static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
 {
-	u32 cacheaddr = ((u32)(info->alpha >> 3) << 27) | (info->paladdr << 20) | info->charaddr | info->transparencyenable;
+	u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
+		(info->paladdr << 20) | info->charaddr | info->transparencyenable |
+		((info->patternpixelwh >> 4) << 1) | (u64)(((info->coloroffset >> 8) & 0x07) << 32);
    YglCache c;
    YglSprite tile;
    int winmode=0;
@@ -2620,7 +2628,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 	info->draww = (int)((float)vdp2width / info->coordincx);
 	info->drawh = (int)((float)vdp2height / info->coordincy);
 
-
+	int res_shift = 0;
+	if (vdp2height >= 440) res_shift = 1;
 
 
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
@@ -2646,7 +2655,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 		if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
 		info->draww = (int)((float)vdp2width / info->coordincx);
 
-		regs = Vdp2RestoreRegs(v, Vdp2Lines);
+		regs = Vdp2RestoreRegs((v >> res_shift), Vdp2Lines);
 		if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
 		// determine which chara shoud be used.
@@ -3846,6 +3855,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   isSquare = 1;
    }
 
+
    sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
    sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
    sprite.vertices[2] = (sprite.vertices[2] + Vdp1Regs->localX) * vdp1wratio;
@@ -4303,7 +4313,10 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
    CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
    polygon.uclipmode=(CMDPMOD>>9)&0x03;
-   
+   polygon.cor = 0x00;
+   polygon.cog = 0x00;
+   polygon.cob = 0x00;
+
    if (color & 0x8000)
       priority = Vdp2Regs->PRISA & 0x7;
    else
@@ -4538,11 +4551,15 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int priority = 0;
    float line_poygon[8];
    vdp1cmd_struct cmd;
-   float col[4 * 2];
+   float col[4 * 2 * 2];
    int gouraud = 0;
    int shadow = 0;
    int colorcalc = 0;
    u16 color2;
+   polygon.cor = 0x00;
+   polygon.cog = 0x00;
+   polygon.cob = 0x00;
+
 
    polygon.blendmode = VDP1_COLOR_CL_REPLACE;
    polygon.linescreen = 0;
@@ -4574,13 +4591,17 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if ((CMDPMOD & 4))
    {
 	   int i;
-	   for (i = 0; i<2; i++)
+	   for (i = 0; i<4; i+=2)
 	   {
 		   color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
 		   col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
 		   col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
 		   col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
 		   col[(i << 2) + 3] = 1.0f;
+		   col[((i + 1) << 2) + 0] = col[(i << 2) + 0];
+		   col[((i + 1) << 2) + 1] = col[(i << 2) + 1];
+		   col[((i + 1) << 2) + 2] = col[(i << 2) + 2];
+		   col[((i + 1) << 2) + 3] = 1.0f;
 	   }
 	   gouraud = 1;
    }
@@ -4652,7 +4673,6 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		   alpha |= priority;
 		   *texture.textdata = SAT2YAB1(alpha, color);
 	   }
-	   *texture.textdata = SAT2YAB1(alpha, color);
    }
    else{
       Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -4956,19 +4976,32 @@ static void Vdp2DrawNBG0(void)
    info.specialcolormode = Vdp2Regs->SFCCMD & 0x3;
 
    info.colornumber = (Vdp2Regs->CHCTLA & 0x70) >> 4;
+   int dest_alpha = ((Vdp2Regs->CCCTL >> 9) & 0x01);
 
-   
+   // Enable Color Calculation
    if(Vdp2Regs->CCCTL & 0x1)
    {
+	   // Color calculation ratio
       info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
-      if(Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
-         info.blendmode=2;
-      else
-         info.blendmode=1;
+
+	  // Color calculation mode bit
+	  if (Vdp2Regs->CCCTL & 0x100){ // Add Color
+			  info.blendmode = 2; 
+	  }else{ // Use Color calculation ratio
+		  if (info.specialcolormode != 0 && dest_alpha){ // Just currently not supported
+			  info.blendmode = 0;
+		  }else{
+			  info.blendmode = 1;
+		  }
+	  }
+   // Disable Color Calculation
    }else{
 
-	   // 12.14 CCRTMD
-	   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+	   // Use Destination Alpha 12.14 CCRTMD
+	   if (dest_alpha){
+
+		   // Color calculation will not be operated.
+		   // But need to write alpha value
 		   info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
 	   }else{
 		   info.alpha = 0xFF;
@@ -5036,7 +5069,10 @@ static void Vdp2DrawNBG0(void)
 			  info.vertices[7] = vdp2height;
 			  vdp2draw_struct infotmp = info;
 			  infotmp.cellw = vdp2width;
-			  infotmp.cellh = vdp2height;
+			  if (vdp2height >= 448)
+				  infotmp.cellh = (vdp2height >> 1);
+			  else
+				  infotmp.cellh = vdp2height;
 			  YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
 			  Vdp2DrawBitmapCoordinateInc(&info, &texture);
 		  }
@@ -5254,6 +5290,7 @@ static void Vdp2DrawNBG1(void)
    
    if (info.isbitmap)
    {
+
 	   if (info.coordincx != 1.0f || info.coordincy != 1.0f){
 		   info.sh = (Vdp2Regs->SCXIN1 & 0x7FF);
 		   info.sv = (Vdp2Regs->SCYIN1 & 0x7FF);
@@ -5269,7 +5306,11 @@ static void Vdp2DrawNBG1(void)
 		   info.vertices[7] = vdp2height;
 		   vdp2draw_struct infotmp = info;
 		   infotmp.cellw = vdp2width;
-		   infotmp.cellh = vdp2height;
+		   if (vdp2height >= 448 )
+			   infotmp.cellh = (vdp2height>>1);
+		   else	
+				infotmp.cellh = vdp2height;
+
 		   YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
 		   Vdp2DrawBitmapCoordinateInc(&info, &texture);
 	   }
@@ -5840,6 +5881,7 @@ void VIDOGLVdp2DrawScreens(void)
    Vdp2GenerateWindowInfo();
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
+
 
    Vdp2DrawNBG3();
    Vdp2DrawNBG2();
