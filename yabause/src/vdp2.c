@@ -532,10 +532,14 @@ void Vdp2VBlankOUT(void) {
        YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
    }
 
-   if (vdp2_is_odd_frame)
-	   vdp2_is_odd_frame = 0;
-   else
+   if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
+   }else{ // p02_50.htm#TVSTAT_
+	   if (vdp2_is_odd_frame)
+		   vdp2_is_odd_frame = 0;
+	   else
+		   vdp2_is_odd_frame = 1;
+   }
 
    Vdp2Regs->TVSTAT = ((Vdp2Regs->TVSTAT & ~0x0008) & ~0x0002) | (vdp2_is_odd_frame << 1);
 
@@ -560,13 +564,16 @@ void Vdp2VBlankOUT(void) {
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
 
-   if (vdp2_is_odd_frame)
-      vdp2_is_odd_frame = 0;
-   else
-      vdp2_is_odd_frame = 1;
-
+   if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
+	   vdp2_is_odd_frame = 1;
+   }else{ // p02_50.htm#TVSTAT_
+	   if (vdp2_is_odd_frame)
+		   vdp2_is_odd_frame = 0;
+	   else
+		   vdp2_is_odd_frame = 1;
+   }
+   
    Vdp2Regs->TVSTAT = ((Vdp2Regs->TVSTAT & ~0x0008) & ~0x0002) | (vdp2_is_odd_frame << 1);
-
    if (skipnextframe && (! saved))
    {
       saved = VIDCore;
@@ -719,7 +726,7 @@ u16 FASTCALL Vdp2ReadWord(u32 addr) {
       case 0x006:         
          return Vdp2Regs->VRSIZE;
       case 0x008:
-         return Vdp2Regs->HCNT;
+		  return Vdp2Regs->HCNT;
       case 0x00A:
          return Vdp2Regs->VCNT;
       default:
