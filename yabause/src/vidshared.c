@@ -352,18 +352,23 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
          parameter->coefdatasize = (regs->KTCTL & 0x2 ? 2 : 4);
          parameter->coeftbladdr = ((regs->KTAOF & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
          parameter->coefmode = (regs->KTCTL >> 2) & 0x3;
+		 parameter->use_coef_for_linecolor = (regs->KTCTL>>4) & 0x01;
       }
       else
       {
          parameter->coefdatasize = (regs->KTCTL & 0x200 ? 2 : 4);
          parameter->coeftbladdr = (((regs->KTAOF >> 8) & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
          parameter->coefmode = (regs->KTCTL >> 10) & 0x3;
+		 parameter->use_coef_for_linecolor = (regs->KTCTL >> 12) & 0x01;
 		 if (regs->RPMD == 0x02){
 			 parameter->deltaKAx = 0.0f; // hard/vdp2/hon/p06_35.htm#RPMD_
 		 }
       }
 
 
+   }
+   else{
+	   parameter->use_coef_for_linecolor = 0;
    }
    
    VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n"

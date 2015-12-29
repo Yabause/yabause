@@ -2966,6 +2966,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 	   linecl = ((~Vdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
    }
 
+   if (vdp2height >= 448) lineInc <<= 1;
    if( vdp2height >= 448 ) vres = (vdp2height>>1); else vres = vdp2height;
    if( vdp2width >= 640 ) hres = (vdp2width>>1); else hres = vdp2width;
    info->vertices[0] = 0;
@@ -3076,13 +3077,12 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
                   
          paraB.KtablV = paraB.deltaKAst * j;   
       }
-      
 
-      if( (Vdp2Regs->LCTA.part.U & 0x8000) != 0 && info->LineColorBase !=0 )
-      {
-		  LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);
-		 info->LineColorBase += lineInc;
-      }      
+	  if ((Vdp2Regs->LCTA.part.U & 0x8000) != 0 && info->LineColorBase != 0) 
+	  {
+		  LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase );
+		  info->LineColorBase += lineInc;
+	  }
 
 //	  Vdp2 * regs = Vdp2RestoreRegs(j);
 //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
@@ -3099,6 +3099,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
 		  h = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
 		  v = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
+
 
 		  if (info->isbitmap)
 		  {
@@ -3222,8 +3223,10 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 			  }else{
 				  if (parameter->lineaddr != 0xFFFFFFFF)
 				  {
-					  u32 linecolor = Vdp2ColorRamGetColor(LineColorRamAdress | parameter->lineaddr, linecl);
-					  *(line_texture.textdata++) = linecolor;
+					  if (parameter->use_coef_for_linecolor)
+						  *(line_texture.textdata++) = Vdp2ColorRamGetColor((LineColorRamAdress & 0x780) | parameter->lineaddr, linecl);
+					  else
+						  *(line_texture.textdata++) = Vdp2ColorRamGetColor(LineColorRamAdress, linecl);
 				  } else{
 					  *(line_texture.textdata++) = 0x0 | (linecl << 24);
 				  }
