@@ -1035,7 +1035,7 @@ const GLchar Yglprg_vdp2_drawfb_linecolor_f[] =
 "     fragColor = fbColor;                            \n"
 "     fragColor += u_coloroffset;  \n"
 "     fragColor += lncol; \n"
-"     fragColor.a = 1.0; \n"
+"     fragColor.a = alpha + 7.0/255.0; /*1.0;*/ \n"
 "     gl_FragDepth =  (depth+1.0)/2.0;\n"
 "  } else { \n"
 "     discard;\n"
@@ -1064,7 +1064,7 @@ void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, fl
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
   glActiveTexture(GL_TEXTURE0);
-  glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
   _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"u_mvpMatrix");
 
 }
