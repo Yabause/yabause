@@ -9,6 +9,7 @@ import java.io.FilenameFilter;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import android.content.res.Resources;
 import android.os.Environment;
 import android.util.Log;
 
@@ -106,7 +107,10 @@ public class YabauseStorage {
         String[] selfiles  = new String[]{other_dir_string}; 
         String[] allLists = new String[selfiles.length + gamefiles.length];
         System.arraycopy(selfiles, 0, allLists, 0, selfiles.length);
-        System.arraycopy(gamefiles, 0, allLists, selfiles.length, gamefiles.length);        
+        System.arraycopy(gamefiles, 0, allLists, selfiles.length, gamefiles.length);
+
+        generateGameDB();
+
         return allLists;
     }
 
@@ -137,5 +141,51 @@ public class YabauseStorage {
     
     public String getScreenshotPath() {
         return screenshots + File.separator;
-    }        
+    }
+
+
+    void generateGameDB(){
+
+        String[] gamefiles = games.list(new GameFilter());
+        if( gamefiles == null ) return;
+
+        int i=0;
+
+        // inDirect Format
+        for( i=0; i< gamefiles.length; i++ ){
+            if( gamefiles[i].endsWith("CUE") || gamefiles[i].endsWith("cue") ){
+                GameInfo tmp = GameInfo.getFromFileName( getGamePath() + gamefiles[i]);
+                if( tmp == null ) {
+                    GameInfo gameinfo = GameInfo.genGameInfoFromCUE( getGamePath() + gamefiles[i]);
+                    if( gameinfo != null )
+                        gameinfo.save();
+                }
+            }else if( gamefiles[i].endsWith("MDS") || gamefiles[i].endsWith("mds") ){
+                GameInfo tmp = GameInfo.getFromFileName( getGamePath() + gamefiles[i]);
+                if( tmp == null ) {
+                    GameInfo gameinfo = GameInfo.genGameInfoFromMDS(getGamePath() + gamefiles[i]);
+                    if( gameinfo != null )
+                        gameinfo.save();
+                }
+            }else if( gamefiles[i].endsWith("CCD") || gamefiles[i].endsWith("ccd") ) {
+                GameInfo tmp = GameInfo.getFromFileName(getGamePath() + gamefiles[i]);
+                if (tmp == null) {
+                    GameInfo gameinfo = GameInfo.genGameInfoFromMDS(getGamePath() + gamefiles[i]);
+                    if (gameinfo != null)
+                        gameinfo.save();
+                }
+            }
+        }
+
+        // Direct Format
+        for( i=0; i< gamefiles.length; i++ ){
+            GameInfo tmp = GameInfo.getFromInDirectFileName( getGamePath() + gamefiles[i]);
+            if( tmp == null ) {
+                GameInfo gameinfo = GameInfo.genGameInfoFromIso( getGamePath() + gamefiles[i]);
+                  if( gameinfo != null )
+                        gameinfo.save();
+            }
+        }
+    }
 }
+
