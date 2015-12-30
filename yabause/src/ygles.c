@@ -2385,7 +2385,8 @@ void YglRender(void) {
    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
 		YglRenderDestinationAlpha();
 	}
-	else{
+	else
+	{
 		glEnable(GL_BLEND);
 		int blendfunc_src = GL_SRC_ALPHA;
 		int blendfunc_dst = GL_ONE_MINUS_SRC_ALPHA;
@@ -2612,9 +2613,45 @@ void YglRenderDestinationAlpha(void) {
 
 	}
 
-	glEnable(GL_BLEND);
-	glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-	if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+	for (i = from; i < 9; i++){
+		if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01){
+			switch ((Vdp2Regs->SPCTL >> 12) & 0x3){
+			case 0:
+				if (i <= ((Vdp2Regs->SPCTL >> 8) & 0x07)){
+					glEnable(GL_BLEND);
+					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				}
+				else{
+					glDisable(GL_BLEND);
+				}
+				break;
+			case 1:
+				if (i == ((Vdp2Regs->SPCTL >> 8) & 0x07)){
+					glEnable(GL_BLEND);
+					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				}
+				else{
+					glDisable(GL_BLEND);
+				}
+				break;
+			case 2:
+				if (i >= ((Vdp2Regs->SPCTL >> 8) & 0x07)){
+					glEnable(GL_BLEND);
+					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				}
+				else{
+					glDisable(GL_BLEND);
+				}
+				break;
+			case 3:
+				// ToDO: MSB color cacuration
+				glEnable(GL_BLEND);
+				glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				break;
+			}
+		}
+		if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+	}
 
 	return;
 }
