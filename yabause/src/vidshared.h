@@ -64,6 +64,7 @@ typedef struct
    int coefenab;
    int coefmode;
    int coefdatasize;
+   int use_coef_for_linecolor;
    float Xp;
    float Yp;
    float dX;
