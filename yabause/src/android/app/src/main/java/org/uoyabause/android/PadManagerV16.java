@@ -114,7 +114,10 @@ class PadManagerV16 extends PadManager {
     	for (Integer val : deviceIds.values()) {
     	    if( counter == index){
     	    	InputDevice dev = InputDevice.getDevice(val);
-    	    	return dev.getName();
+                if( dev != null)
+    	    	    return dev.getName();
+                else
+                    return null;
     	    }
     	    counter++;
     	}
