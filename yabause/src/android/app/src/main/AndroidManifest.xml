@@ -7,7 +7,11 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.INTERNET" /> 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="21"/>
-    <application android:label="@string/app_name" android:icon="@drawable/icon" android:logo="@drawable/banner" android:isGame="true" >
+    <application android:label="@string/app_name" android:name="org.uoyabause.android.YabauseApplication" android:icon="@drawable/icon" android:logo="@drawable/banner" android:isGame="true" >
+
+        <meta-data android:name="AA_DB_NAME" android:value="localgameinfo.db" />
+        <meta-data android:name="AA_DB_VERSION" android:value="1" />
+        <meta-data android:name="AA_MODELS"  android:value="org.uoyabause.android.GameInfo" />
 
         <activity android:name="Home"
                   android:screenOrientation="landscape"
