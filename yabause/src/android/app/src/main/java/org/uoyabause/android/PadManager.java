@@ -42,6 +42,9 @@ abstract class PadManager {
     	
     	return _instance;
     }
+
+    public abstract String getStatusString();
+    public abstract void setTestMode( boolean mode );
    
 
 }

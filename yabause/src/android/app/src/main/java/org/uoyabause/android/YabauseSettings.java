@@ -247,7 +247,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             	selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
                 if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
                 	inputsetting.setEnabled(true);
-                	onscreen_pad.setEnabled(false);
+                	onscreen_pad.setEnabled(true);
                 }else{
                 	inputsetting.setEnabled(false);
                 	onscreen_pad.setEnabled(true);
