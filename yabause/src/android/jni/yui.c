@@ -339,7 +339,6 @@ void YuiSwapBuffers(void)
    if( s_vidcoretype == VIDCORE_SOFT ){
        YuidrawSoftwareBuffer();
    }
-   //YUI_LOG("eglSwapBuffers() %08x,%08x", g_Display,g_Surface);   
    eglSwapBuffers(g_Display,g_Surface);
 }
 
@@ -956,7 +955,7 @@ int initEgl( ANativeWindow* window )
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
-    yinit.usethreads = 1;
+    yinit.usethreads = 0;
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
     
@@ -1395,7 +1394,7 @@ int saveScreenshot( const char * filename ){
     png_set_IHDR(png_ptr, info_ptr, width, height,
         bit_depth, color_type, PNG_INTERLACE_NONE,
         PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
-    png_set_gAMA(png_ptr, info_ptr, 1.0);
+    //png_set_gAMA(png_ptr, info_ptr, 1.0);
     {
         png_text text[3];
         int txt_fields = 0;

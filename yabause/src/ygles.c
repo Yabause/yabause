@@ -31,6 +31,8 @@
 //#define YGLDEBUG LOG
 //#define YGLDEBUG yprintf
 
+extern u8 * Vdp1FrameBuffer;
+
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(void);;
 
@@ -616,6 +618,24 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
   const int Pix = ((addr & 0x3FF) >> 1); // *((float)(GlWidth) / (float)_Ygl->rwidth);
   const int index = (_Ygl->rheight - 1 - Line)*(_Ygl->rwidth* 4) + Pix * 4;
+  if (index >= _Ygl->rwidth *  _Ygl->rheight * 4){
+	  switch (type)
+	  {
+	  case 0:
+		  return T1ReadByte(Vdp1FrameBuffer, addr);
+		  break;
+	  case 1:
+		  return T1ReadWord(Vdp1FrameBuffer, addr);
+		  break;
+	  case 2:
+		  return T1ReadLong(Vdp1FrameBuffer, addr);
+		  break;
+	  default:
+		  return 0;
+		  break;
+	  }
+
+  }
 
   switch (type)
   {
