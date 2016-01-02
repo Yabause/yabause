@@ -599,7 +599,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 						   if (checkcol & 0x8000){
 							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
 							   talpha |= priority;
-							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
 						   }
 						   else{
 							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
