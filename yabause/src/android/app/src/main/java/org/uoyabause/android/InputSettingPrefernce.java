@@ -246,7 +246,23 @@ import android.view.LayoutInflater;
     	
     	JSONObject jsonObject = new JSONObject();
     	try {
-    	
+
+			// Inisiazlie
+			Integer dmykey = 65535;
+			jsonObject.put("BUTTON_UP", dmykey);
+			jsonObject.put("BUTTON_DOWN", dmykey);
+			jsonObject.put("BUTTON_LEFT", dmykey);
+			jsonObject.put("BUTTON_RIGHT", dmykey);
+			jsonObject.put("BUTTON_LEFT_TRIGGER", dmykey);
+			jsonObject.put("BUTTON_RIGHT_TRIGGER", dmykey);
+			jsonObject.put("BUTTON_START", dmykey);
+			jsonObject.put("BUTTON_A", dmykey);
+			jsonObject.put("BUTTON_B", dmykey);
+			jsonObject.put("BUTTON_C", dmykey);
+			jsonObject.put("BUTTON_X", dmykey);
+			jsonObject.put("BUTTON_Y", dmykey);
+			jsonObject.put("BUTTON_Z", dmykey);
+
 	    	for (HashMap.Entry<Integer,Integer> entry : Keymap.entrySet()) {
 	    	    // キーを取得
 	    		Integer key = entry.getKey();
@@ -340,11 +356,16 @@ import android.view.LayoutInflater;
     if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
 
+
+				Log.d("Yabause", "key:" + event.getScanCode() + " value: " + event.getAction() );
+
 				if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_UP) {
 					onkey = false;
 				}
 
                 if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_DOWN) {
+
+
 
 					onkey = true;
 /*
@@ -371,7 +392,10 @@ import android.view.LayoutInflater;
 						return false; // ignore
 					}
 */
-                	                	
+
+					if( keyCode == 0 ){
+						keyCode = event.getScanCode();
+					}
                 	Integer PadKey = Keymap.get(keyCode);
                 	if( PadKey != null ) {
                 		Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
@@ -392,7 +416,12 @@ import android.view.LayoutInflater;
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
 			for( int i=0; i< motions.size(); i++ ){
 				float value = event.getAxisValue( motions.get(i).id );
-				if( Float.compare(value,-1.0f) == 0) {
+
+				if( value != 0.0 ) {
+					Log.d("Yabause", "key:" + motions.get(i).id + " value:" + value);
+				}
+
+				if( Float.compare(value,-1.0f) <= 0) {
 					motions.get(i).oldval = value;
 					Integer PadKey = Keymap.get(motions.get(i).id|0x8000|0x80000000);
 					if( PadKey != null ) {
@@ -402,7 +431,7 @@ import android.view.LayoutInflater;
 						return setKeymap(motions.get(i).id|0x8000|0x80000000);
 					}
 				}
-				if( Float.compare(value,1.0f) == 0) {
+				if( Float.compare(value,1.0f) >= 0) {
 					motions.get(i).oldval = value;
 					Integer PadKey = Keymap.get(motions.get(i).id|0x80000000);
 					if( PadKey != null ) {
