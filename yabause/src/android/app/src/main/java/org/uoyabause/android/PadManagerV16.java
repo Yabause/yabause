@@ -238,6 +238,7 @@ class PadManagerV16 extends PadManager {
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
 
 			MotionEvent motionEvent = (MotionEvent) event;
+
 			for(HashMap.Entry<Integer, Integer> e : Keymap.get(playerindex).entrySet()) {
 				//System.out.println(e.getKey() + " : " + e.getValue());
 				int btn = e.getKey();
@@ -299,6 +300,10 @@ class PadManagerV16 extends PadManager {
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
 
+                if( keyCode == 0 ){
+                    keyCode = event.getScanCode();
+                }
+
             	Integer PadKey = Keymap.get(playerindex).get(keyCode);
 
                	if( PadKey != null ) {
@@ -332,6 +337,9 @@ class PadManagerV16 extends PadManager {
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
 
+            if( keyCode == 0 ){
+                keyCode = event.getScanCode();
+            }
 
         	if( !event.isCanceled() ){
             	Integer PadKey = Keymap.get(playerindex).get(keyCode);
