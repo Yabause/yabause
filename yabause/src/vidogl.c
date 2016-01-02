@@ -1902,16 +1902,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
 
 	u32 color;
 
-	if (addr > 0x80000){
-		*texture->textdata++ = 0;
-		*texture->textdata++ = 0;
-		*texture->textdata++ = 0;
-		*texture->textdata++ = 0;
-		return 0;
-	}
-
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
-
 	
 	if (!(dot & 0xF000) && info->transparencyenable) color = 0x00000000;
 	else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF000) >> 12)), info->alpha);
@@ -1933,12 +1924,6 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
 
 static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture){
 
-	if (addr > 0x80000){
-		*texture->textdata++ = 0;
-		*texture->textdata++ = 0;
-		return 0;
-	}
-
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	
@@ -1954,9 +1939,6 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
 
 
 static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
-	if (addr > 0x80000){
-		return 0;
-	}
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	if ((dot == 0) && info->transparencyenable) color = 0x00000000;
@@ -1965,9 +1947,6 @@ static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr){
 }
 
 static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
-	if (addr > 0x80000){
-		return 0;
-	}
 	u32 color;
 	u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 	if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
@@ -1976,9 +1955,6 @@ static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr){
 }
 
 static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
-	if (addr > 0x80000){
-		return 0;
-	}
 	u32 color;
 	u16 dot1, dot2;
 	dot1 = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
@@ -2072,7 +2048,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 			sh = info->sh;
 
 		if (VDPLINE_SY(info->islinescroll))
-			sv = line->LineScrollValV;
+			sv = info->sv + line->LineScrollValV;
 		else
 			sv = i + info->sv;
 
@@ -2133,8 +2109,8 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 	u32 color;
 	int i, j;
 
-	int incv = 1.0 / info->coordincy*255.0;
-	int inch = 1.0 / info->coordincx*255.0;
+	int incv = 1.0 / info->coordincy*256.0;
+	int inch = 1.0 / info->coordincx*256.0;
 
 	int height = vdp2height;
 	if (height >= 448) height >>= 1;
@@ -2149,43 +2125,64 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 		line = &(info->lineinfo[i*info->lineinc]);
 
 		v = (i*incv)>>8;
+		if (VDPLINE_SZ(info->islinescroll))
+			inch = line->CoordinateIncH;
 
 		if (VDPLINE_SX(info->islinescroll))
-			sh = line->LineScrollValH + info->sh;
+			sh = info->sh + line->LineScrollValH;
 		else
 			sh = info->sh;
 
 		if (VDPLINE_SY(info->islinescroll))
-			sv = line->LineScrollValV;
+			sv = info->sv + line->LineScrollValV;
 		else
-			sv = info->sv + v;
+			sv = v + info->sv;
 
 		sh &= (info->cellw - 1);
 		sv &= (info->cellh - 1);
-		if (VDPLINE_SX(info->islinescroll) && line->LineScrollValH < sh) sv -= 1;
 
 		switch (info->colornumber){
 		case 0:
-			baseaddr += (((sh>>2) + sv * (info->cellw>>2)) << 1);
-			for (j = 0; j < (vdp2width>>2); j++)
+			baseaddr = baseaddr + (sh>>1) + (sv * (info->cellw >> 1));
+			for (j = 0; j < vdp2width; j++)
 			{
-				int h = (j*inch >> 8) << 1;
-				Vdp2GetPixel4bpp(info, baseaddr+h, texture);
+				u32 h = ((j*inch)>>8);
+				u32 addr = (baseaddr + (h >> 1));
+				if (addr >= 0x80000){
+					*texture->textdata++ = 0x0000;
+				}else{
+					u8 dot = T1ReadByte(Vdp2Ram, addr);
+					if (h & 0x01){
+						if (!(dot & 0x0F) && info->transparencyenable) color = 0x00000000;
+						else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0x0F) >> 0)), info->alpha);
+						*texture->textdata++ = color;
+					}
+					else{
+						if (!(dot & 0xF0) && info->transparencyenable) color = 0x00000000;
+						else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xF0) >> 4)), info->alpha);
+						*texture->textdata++ = color;
+					}
+				}
+
 			}
 			break;
 		case 1:
-			baseaddr += (((sh>>1) + sv * (info->cellw >> 1)) << 1);
-			for (j = 0; j < (vdp2width>>1) ; j++)
+			baseaddr += sh + sv * info->cellw;
+			for (j = 0; j < vdp2width ; j++)
 			{
-				int h = (j*inch>>8)<<1;
-				Vdp2GetPixel8bpp(info, baseaddr+h, texture);
+				int h = ((j*inch) >> 8);
+				u8 dot = T1ReadByte(Vdp2Ram, baseaddr+h);
+				if (!dot && info->transparencyenable) color = 0x00000000;
+				else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | dot ), info->alpha);
+				*texture->textdata++ = color;
 			}
+
 			break;
 		case 2:
 			baseaddr += ((sh + sv * info->cellw) << 1);
 			for (j = 0; j < vdp2width; j++)
 			{
-				int h = (j*inch >> 8) << 1;
+				int h = ((j*inch) >> 8) << 1;
 				*texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr+h);
 
 			}
@@ -2194,7 +2191,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 			baseaddr += ((sh + sv * info->cellw) << 1);
 			for (j = 0; j < vdp2width; j++)
 			{
-				int h = (j*inch >> 8) << 1;
+				int h = ((j*inch) >> 8) << 1;
 				*texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr+h);
 			}
 			break;
@@ -5085,7 +5082,7 @@ static void Vdp2DrawNBG0(void)
       // NBG0 draw
       if (info.isbitmap)
       {
-		  if (info.coordincx != 1.0f || info.coordincy != 1.0f){
+		  if (info.coordincx != 1.0f || info.coordincy != 1.0f || VDPLINE_SZ(info.islinescroll) ){
 			  info.sh = (Vdp2Regs->SCXIN0 & 0x7FF);
 			  info.sv = (Vdp2Regs->SCYIN0 & 0x7FF);
 			  info.x = 0;
