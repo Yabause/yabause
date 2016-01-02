@@ -198,6 +198,8 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	int ednmode;
 	int endcnt = 0;
 	int nromal_shadow = 0;
+	u32 talpha = 0x00; // MSB Color calcuration mode
+	u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
 
 	u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
 	u8 END = ((cmd->CMDPMOD & 0x80) != 0);
@@ -210,30 +212,56 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 
 	Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 	alpha = 0xF8;
+	talpha = 0xF8;
 	if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
 	{
 		switch (SPCCCS)
 		{
 		case 0:
 			if (priority <= ((Vdp2Regs->SPCTL >> 8) & 0x07))
-				alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-			break;
+				if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+					alpha = 0x80;  // Key value for color calcuration
+				}
+				else{
+					alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+				}
+				break;
 		case 1:
 			if (priority == ((Vdp2Regs->SPCTL >> 8) & 0x07))
-				alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-			break;
+				if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+					alpha = 0x80;  // Key value for color calcuration
+				}
+				else{
+					alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+				}
+				break;
 		case 2:
 			if (priority >= ((Vdp2Regs->SPCTL >> 8) & 0x07))
-				alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-			break;
+				if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+					alpha = 0x80;  // Key value for color calcuration
+				}
+				else{
+					alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+				}
+				break;
 		case 3:
-			//if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
-			//   alpha = 0xF8-((colorcl<<3)&0xF8);      
+			if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+				talpha = 0x80;  // Key value for color calcuration
+			}
+			else{
+				talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			}
 			break;
+		}
+
+		if (Vdp2Regs->CCCTL & 0x200) { // Color calculation ratio mode bit ( Destination Alpha mode )
+			alpha = 0xF8 - ((colorcl << 3) & 0xF8);
 		}
 	}
 
 	alpha |= priority;
+	talpha |= priority;
+	shadow_alpha |= priority;
 
 	switch ((cmd->CMDPMOD >> 3) & 0x7)
 	{
@@ -249,9 +277,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			color = SAT2YAB1(priority, colorBank);
 		}
 		else if (colorBank == nromal_shadow){
-			u32 talpha = (u8)0xF8 - (u8)0x80;
-			talpha |= priority;
-			color = (talpha << 24);
+			color = (shadow_alpha << 24);
 		}
 		else{
 			int colorindex = colorBank + colorOffset;
@@ -262,8 +288,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 				if (SPCCCS == 0x03){
 					u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 					if (checkcol & 0x8000){
-						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-						talpha |= priority;
 						color = Vdp2ColorRamGetColor(colorindex, talpha);
 					}
 					else{
@@ -295,9 +319,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 				Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &priority, &colorcl);
 				if (shadow != 0)
 				{
-					u32 talpha = (u8)0xF8 - (u8)0x80;
-					talpha |= priority;
-					color = (talpha << 24);
+					color = (shadow_alpha << 24);
 				}
 				else{
 #ifdef WORDS_BIGENDIAN
@@ -354,9 +376,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			color = SAT2YAB1(priority, colorBank);
 		}
 		else if ( colorBank == nromal_shadow){
-			u32 talpha = (u8)0xF8 - (u8)0x80;
-			talpha |= priority;
-			color = (talpha << 24);
+			color = (shadow_alpha << 24);
 		}else{
 			const int colorindex = (colorBank) + colorOffset;
 			if ((colorindex & 0x8000) && (Vdp2Regs->SPCTL & 0x20)){
@@ -366,8 +386,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 				if (SPCCCS == 0x03){
 					u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 					if (checkcol & 0x8000){
-						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-						talpha |= priority;
 						color = Vdp2ColorRamGetColor(colorindex, talpha);
 					}
 					else{
@@ -391,9 +409,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			color = SAT2YAB1(priority, colorBank);
 		}
 		else if (colorBank == nromal_shadow){
-			u32 talpha = (u8)0xF8 - (u8)0x80;
-			talpha |= priority;
-			color = (talpha << 24);
+			color = (shadow_alpha << 24);
 		}
 		else{
 			const int colorindex = (colorBank)+colorOffset;
@@ -404,8 +420,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 				if (SPCCCS == 0x03){
 					u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 					if (checkcol & 0x8000){
-						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-						talpha |= priority;
 						color = Vdp2ColorRamGetColor(colorindex, talpha);
 					}
 					else{
@@ -429,9 +443,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			color = SAT2YAB1(priority, colorBank);
 		}
 		else if (color == nromal_shadow){
-			u32 talpha = (u8)0xF8 - (u8)0x80;
-			talpha |= priority;
-			color = (talpha << 24);
+			color = (shadow_alpha << 24);
 		}
 		else{
 			const int colorindex = (colorBank)+colorOffset;
@@ -442,8 +454,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 				if (SPCCCS == 0x03){
 					u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 					if (checkcol & 0x8000){
-						u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-						talpha |= priority;
 						color = Vdp2ColorRamGetColor(colorindex, talpha);
 					}
 					else{
@@ -465,17 +475,13 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 		}
 		else if (MSB) color = (alpha << 24);
 		else if (dot == nromal_shadow){
-			u32 talpha = (u8)0xF8 - (u8)0x80;
-			talpha |= priority;
-			color = (talpha << 24);
-		}else if (SPCCCS == 0x03 && (dot & 0x8000)){
-			u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-			talpha |= priority;
+			color = (shadow_alpha << 24);
+		}else if (SPCCCS == 0x03){
 			if (dot & 0x8000){
 				color = SAT2YAB1(talpha, dot);
 			}
 			else{
-				color = Vdp2ColorRamGetColor(dot, talpha);
+				color = Vdp2ColorRamGetColor(dot, alpha);
 			}
 
 		}
@@ -508,7 +514,8 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    int ednmode;
    int endcnt = 0;
    int nromal_shadow = 0;
-
+   u32 talpha = 0x00; // MSB Color calcuration mode
+   u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
    u32 charAddr = cmd->CMDSRCA * 8;
    u32 dot;
    u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
@@ -528,36 +535,56 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
    
    alpha = 0xF8;
+   talpha = 0xF8;
    if( ((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01  )
    {
 	   switch (SPCCCS)
       {
       case 0:
          if( priority <= ((Vdp2Regs->SPCTL>>8)&0x07) )
-         alpha = 0xF8-((colorcl<<3)&0xF8);      
+		 if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+			 alpha = 0x80;  // Key value for color calcuration
+		 }
+		 else{
+			 alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		 }
          break;
       case 1:
          if( priority == ((Vdp2Regs->SPCTL>>8)&0x07) )
-         alpha = 0xF8-((colorcl<<3)&0xF8);      
+		 if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+			 alpha = 0x80;  // Key value for color calcuration
+		 }
+		 else{
+			 alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		 }
          break;
       case 2:
-         if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
-         alpha = 0xF8-((colorcl<<3)&0xF8);      
-         break;
+		if( priority >= ((Vdp2Regs->SPCTL>>8)&0x07) )
+		if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+			alpha = 0x80;  // Key value for color calcuration
+		}else{
+			alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		}
+        break;
       case 3:
-         //if( priority <= (Vdp2Regs->SPCTL>>8)&0x07 )
-      //   alpha = 0xF8-((colorcl<<3)&0xF8);      
-         break;
+		if ((Vdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
+		  talpha = 0x80;  // Key value for color calcuration
+		}
+		else{
+		  talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		}
+		break;
       }
 
-	   if (Vdp2Regs->CCCTL & 0x200) {
+	  if (Vdp2Regs->CCCTL & 0x200) { // Color calculation ratio mode bit ( Destination Alpha mode )
 		   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-	   }
-		   
+	  }
    }
 
    alpha |= priority;
-   
+   talpha |= priority;
+   shadow_alpha |= priority;
+
    switch((cmd->CMDPMOD >> 3) & 0x7)
    {
       case 0:
@@ -585,9 +612,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
 			   }
 			   else if (((dot >> 4) | colorBank) == nromal_shadow){
-				   u32 talpha = (u8)0xF8 - (u8)0x80;
-				   talpha |= priority;
-				   *texture->textdata++ = (talpha << 24);
+				   *texture->textdata++ = (shadow_alpha << 24);
 			   }
 			   else{
 				   int colorindex = ((dot >> 4) | colorBank) + colorOffset;
@@ -597,8 +622,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   if (SPCCCS == 0x03){
 						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
-							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-							   talpha |= priority;
 							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
 						   }
 						   else{
@@ -622,9 +645,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 				   *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
 			   }
 			   else if (((dot & 0xF) | colorBank) == nromal_shadow){
-				   u32 talpha = (u8)0xF8 - (u8)0x80;
-				   talpha |= priority;
-				   *texture->textdata++ = (talpha << 24);
+				   *texture->textdata++ = (shadow_alpha << 24);
 			   }
 			   else{
 				   int colorindex = ((dot & 0xF) | colorBank) + colorOffset;
@@ -635,8 +656,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   if (SPCCCS == 0x03){
 						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
-							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-							   talpha |= priority;
 							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
 						   }
 						   else{
@@ -695,9 +714,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &priority, &colorcl);
                      if( shadow != 0 ) 
                      {
-						 u32 talpha = (u8)0xF8 - (u8)0x80;
-						 talpha |= priority;
-						 *texture->textdata++ = (talpha << 24);
+						 *texture->textdata++ = (shadow_alpha << 24);
                      }else{
 #ifdef WORDS_BIGENDIAN
                         priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1]&0x7;
@@ -769,9 +786,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                      Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &priority, &colorcl);
                      if( shadow != 0 ) 
                      {
-						 u32 talpha = (u8)0xF8 - (u8)0x80;
-						 talpha |= priority;
-						 *texture->textdata++ = (talpha << 24);
+						 *texture->textdata++ = (shadow_alpha << 24);
                      }else{                     
 #ifdef WORDS_BIGENDIAN
                         priority = ((u8 *)&Vdp2Regs->PRISA)[priority^1]&0x7;
@@ -842,9 +857,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                else if( (dot == 0x3F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
 			   else if (((dot & 0x3F)|colorBank) == nromal_shadow){
-				   u32 talpha = (u8)0xF8 - (u8)0x80;
-				   talpha |= priority;
-				   *texture->textdata++ = (talpha << 24);
+				   *texture->textdata++ = (shadow_alpha << 24);
 			   }
 			   else{
 				   const int colorindex = ((dot&0x3F)|colorBank)+colorOffset;
@@ -855,8 +868,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   if (SPCCCS == 0x03){
 						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
-							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-							   talpha |= priority;
 							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
 						   }
 						   else{
@@ -891,9 +902,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                else if( (dot == 0x7F) && !END ) *texture->textdata++ = 0x00;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
 			   else if (((dot & 0x7F) | colorBank) == nromal_shadow){
-				   u32 talpha = (u8)0xF8 - (u8)0x80;
-				   talpha |= priority;
-				   *texture->textdata++ = (talpha << 24);
+				   *texture->textdata++ = (shadow_alpha << 24);
 			   }else{
 				   const int colorindex = ((dot&0x7F)|colorBank) + colorOffset;
 				   if ((colorindex & 0x8000) && (Vdp2Regs->SPCTL & 0x20)){
@@ -903,8 +912,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   if (SPCCCS == 0x03){
 						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
-							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-							   talpha |= priority;
 							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
 						   }
 						   else{
@@ -941,9 +948,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x0;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
 			   else if ((dot | colorBank) == nromal_shadow){
-				   u32 talpha = (u8)0xF8 - (u8)0x80;
-				   talpha |= priority;
-				   *texture->textdata++ = (talpha << 24);
+				   *texture->textdata++ = (shadow_alpha << 24);
 			   }
 			   else{
 				   const int colorindex = (dot | colorBank) + colorOffset;
@@ -954,8 +959,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 					   if (SPCCCS == 0x03){
 						   u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
 						   if (checkcol & 0x8000){
-							   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-							   talpha |= priority;
 							   *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
 						   }
 						   else{
@@ -989,19 +992,15 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                else if( (dot == 0x7FFF) && !END ) *texture->textdata++ = 0x0;
                else if( MSB ) *texture->textdata++ = (alpha<<24);
 			   else if (dot == nromal_shadow){
-				   u32 talpha = (u8)0xF8 - (u8)0x80;
-				   talpha |= priority;
-				   *texture->textdata++ = (talpha << 24);
+				   *texture->textdata++ = (shadow_alpha << 24);
 			   }
 			   else if (SPCCCS == 0x03 && (dot&0x8000) ){
-				   u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-				   talpha |= priority;
-				   if (dot & 0x8000){
+				   //if (dot & 0x8000){
 					   *texture->textdata++ = SAT2YAB1(talpha, dot);
-				   }
-				   else{
-					   *texture->textdata++ = Vdp2ColorRamGetColor(dot, talpha);
-				   }
+				   //}
+				   //else{
+				   //	   *texture->textdata++ = Vdp2ColorRamGetColor(dot, talpha);
+				   //}
 			   }
 			   else{
 				   if (dot & 0x8000){
@@ -4116,7 +4115,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  YglQuad(&sprite, &texture, NULL);
       alpha = 0;   
       priority = 0;
-	  *texture.textdata = 0;
+	  *texture.textdata = 0x0;
 	  return;
    }
 
