@@ -89,7 +89,7 @@ public class PadTestActivity extends Activity implements OnPadListener {
                 PadTestActivity.super.onBackPressed();
             }
         });
-        alert.show(); 
+        alert.show();
 		
 		
 	}
