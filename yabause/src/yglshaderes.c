@@ -238,7 +238,6 @@ int Ygl_uniformWindow(void * p )
    YglProgram * prg;
    prg = p;
    glUseProgram(prg->prgid );
-   glUniform1i(prg->tex0, 0);
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
    glDisableVertexAttribArray(2);

@@ -2086,6 +2086,7 @@ void VIDSoftSetBilinear(int b)
 
 void VIDSoftSetupGL(void)
 {
+#if !defined(ANDROID)
 #ifdef USE_OPENGL
    GLint status;
    GLint texAttrib;
@@ -2180,6 +2181,7 @@ void VIDSoftSetupGL(void)
 
    glUniform1i(glGetUniformLocation(gl_shader_prog, "sattex"), 0);
 #endif
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2197,6 +2199,8 @@ void VIDSoftDeInit(void)
 
    if (vdp1framebuffer[1])
       free(vdp1framebuffer[1]);
+  
+#if !defined(ANDROID)  
 #ifdef USE_OPENGL
    if (gl_texture_id) { glDeleteTextures(1, &gl_texture_id); }
    if (gl_shader_prog) { glDeleteProgram(gl_shader_prog); }
@@ -2204,6 +2208,7 @@ void VIDSoftDeInit(void)
    if (fshader) { glDeleteShader(fshader); }
    if (vao) { glDeleteVertexArrays(1, &vao); }
    if (vbo) { glDeleteBuffers(1, &vbo); }
+#endif
 #endif
 }
 
@@ -3728,17 +3733,18 @@ void VIDSoftVdp2DrawEnd(void)
 
    if (OSDUseBuffer())
       OSDDisplayMessages(dispbuffer, vdp2width, vdp2height);
-
+#if !defined(ANDROID)
 #ifdef USE_OPENGL	
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vdp2width, vdp2height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
    glClear(GL_COLOR_BUFFER_BIT);
    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+#endif
+#endif
    if (! OSDUseBuffer())
       OSDDisplayMessages(NULL, -1, -1);
-#endif
-
+  
    YuiSwapBuffers();
 }
 
