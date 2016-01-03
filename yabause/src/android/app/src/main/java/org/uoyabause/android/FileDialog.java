@@ -9,6 +9,8 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.os.Environment;
+import android.widget.Toast;
 
 import java.util.logging.FileHandler;
 
@@ -64,7 +66,7 @@ public class FileDialog {
 
     /**
      * @param activity
-     * @param initialPath
+     * @param path
      */
     public FileDialog(Activity activity, String path) {
         this.activity = activity; 
@@ -153,11 +155,16 @@ public class FileDialog {
     }
 
     private void loadFileList(File path) {
+        if( path == null || path.isDirectory() == false ){
+            path = new File(Environment.getExternalStorageDirectory(), "yabause");
+            if (! path.exists()) path.mkdir();
+        }
         this.currentPath = path;
         List<String> r = new ArrayList<String>();
         if (path.exists()) {
             if (path.getParentFile() != null)
                 r.add(PARENT_DIR);
+
             FilenameFilter filter = new FilenameFilter() {
                 public boolean accept(File dir, String filename) {
                     File sel = new File(dir, filename);
@@ -173,8 +180,10 @@ public class FileDialog {
                 }
             };
             String[] fileList1 = path.list(filter);
-            for (String file : fileList1) {
-                r.add(file);
+            if(fileList1 != null){
+                for (String file : fileList1) r.add(file);
+            }else{
+                Toast.makeText(this.activity,path.getAbsolutePath() + " is not readable. ",Toast.LENGTH_LONG );
             }
         }
         fileList = (String[]) r.toArray(new String[] {});
