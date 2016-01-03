@@ -31,6 +31,8 @@
 //#define YGLDEBUG LOG
 //#define YGLDEBUG yprintf
 
+extern u8 * Vdp1FrameBuffer;
+
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(void);;
 
@@ -616,6 +618,24 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
   const int Pix = ((addr & 0x3FF) >> 1); // *((float)(GlWidth) / (float)_Ygl->rwidth);
   const int index = (_Ygl->rheight - 1 - Line)*(_Ygl->rwidth* 4) + Pix * 4;
+  if (index >= _Ygl->rwidth *  _Ygl->rheight * 4){
+	  switch (type)
+	  {
+	  case 0:
+		  return T1ReadByte(Vdp1FrameBuffer, addr);
+		  break;
+	  case 1:
+		  return T1ReadWord(Vdp1FrameBuffer, addr);
+		  break;
+	  case 2:
+		  return T1ReadLong(Vdp1FrameBuffer, addr);
+		  break;
+	  default:
+		  return 0;
+		  break;
+	  }
+
+  }
 
   switch (type)
   {
@@ -2385,7 +2405,8 @@ void YglRender(void) {
    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
 		YglRenderDestinationAlpha();
 	}
-	else{
+	else
+	{
 		glEnable(GL_BLEND);
 		int blendfunc_src = GL_SRC_ALPHA;
 		int blendfunc_dst = GL_ONE_MINUS_SRC_ALPHA;
@@ -2612,9 +2633,45 @@ void YglRenderDestinationAlpha(void) {
 
 	}
 
-	glEnable(GL_BLEND);
-	glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-	if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+	for (i = from; i < 9; i++){
+		if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01){
+			switch ((Vdp2Regs->SPCTL >> 12) & 0x3){
+			case 0:
+				if (i <= ((Vdp2Regs->SPCTL >> 8) & 0x07)){
+					glEnable(GL_BLEND);
+					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				}
+				else{
+					glDisable(GL_BLEND);
+				}
+				break;
+			case 1:
+				if (i == ((Vdp2Regs->SPCTL >> 8) & 0x07)){
+					glEnable(GL_BLEND);
+					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				}
+				else{
+					glDisable(GL_BLEND);
+				}
+				break;
+			case 2:
+				if (i >= ((Vdp2Regs->SPCTL >> 8) & 0x07)){
+					glEnable(GL_BLEND);
+					glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				}
+				else{
+					glDisable(GL_BLEND);
+				}
+				break;
+			case 3:
+				// ToDO: MSB color cacuration
+				glEnable(GL_BLEND);
+				glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
+				break;
+			}
+		}
+		if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+	}
 
 	return;
 }
