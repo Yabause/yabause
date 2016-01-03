@@ -45,13 +45,41 @@ class PadManagerV16 extends PadManager {
     private HashMap<String,Integer> deviceIds;
      final String TAG = "PadManagerV16";
     String DebugMesage = new String();
-    
+    boolean _testmode = false;
+
+    int current_msg_index = 0;
+    final int max_msg_index = 24;
+    String [] DebugMesageArray;
+
     final int player_count = 2; 
     List<HashMap<Integer,Integer>> Keymap;
     
     InputInfo input[];
+
+    public void setTestMode( boolean mode ){ _testmode = mode; }
+    void addDebugString( String msg){
+        DebugMesageArray[current_msg_index]= msg;
+        current_msg_index++;
+        if( current_msg_index >= max_msg_index) current_msg_index=0;
+    }
+
+    public String getStatusString(){
+        DebugMesage = "";
+        int start = current_msg_index;
+        for( int i=0; i<max_msg_index; i++ ){
+            if( !DebugMesageArray[start].equals("") ){
+                DebugMesage = DebugMesageArray[start] + "\n" + DebugMesage;
+                start--;
+                if( start < 0 ){
+                    start = (max_msg_index-1);
+                }
+            }
+        }
+        return DebugMesage;
+    }
     
     PadManagerV16() {
+
         deviceIds = new HashMap<String,Integer>();
         
         input = new InputInfo[player_count];
@@ -61,7 +89,7 @@ class PadManagerV16 extends PadManager {
         	input[i]._selected_device_id = invalid_device_id;
         	HashMap<Integer,Integer> akymap = new HashMap<Integer,Integer>();
         	Keymap.add(akymap);
-        }
+        }  
         
 
         int[] ids = InputDevice.getDeviceIds();
@@ -90,6 +118,16 @@ class PadManagerV16 extends PadManager {
             		" isJoyStick?:" + isGameJoyStick + "\n";
             
         }
+
+        // Setting moe
+        current_msg_index =0;
+        DebugMesageArray = new String[max_msg_index];
+        for( int i=0; i<max_msg_index; i++ ) {
+            DebugMesageArray[i] = "";
+        }
+        _testmode = false;
+
+
         loadSettings();
     }
 
@@ -114,7 +152,10 @@ class PadManagerV16 extends PadManager {
     	for (Integer val : deviceIds.values()) {
     	    if( counter == index){
     	    	InputDevice dev = InputDevice.getDevice(val);
-    	    	return dev.getName();
+                if( dev != null)
+    	    	    return dev.getName();
+                else
+                    return null;
     	    }
     	    counter++;
     	}
@@ -197,6 +238,7 @@ class PadManagerV16 extends PadManager {
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
 
 			MotionEvent motionEvent = (MotionEvent) event;
+
 			for(HashMap.Entry<Integer, Integer> e : Keymap.get(playerindex).entrySet()) {
 				//System.out.println(e.getKey() + " : " + e.getValue());
 				int btn = e.getKey();
@@ -205,17 +247,37 @@ class PadManagerV16 extends PadManager {
 					if( (btn&0x8000) != 0 ){
 
 						if (Float.compare(motion_value, -0.8f) < 0) { // ON
-							YabauseRunnable.press(e.getValue(),playerindex);
+                            if( _testmode)
+                                addDebugString("onGenericMotionEvent: On  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+							    YabauseRunnable.press(e.getValue(), playerindex);
+
+                            rtn = 1;
 						}
 						else if( Float.compare(motion_value, -0.5f) > 0 ){ // OFF
-							YabauseRunnable.release(e.getValue(),playerindex);
+                            if( _testmode)
+                                addDebugString("onGenericMotionEvent: Off  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+							    YabauseRunnable.release(e.getValue(), playerindex);
+
+                            rtn = 1;
 						}
 					}else{
 						if (Float.compare(motion_value, 0.8f) > 0) {  // ON
-							YabauseRunnable.press(e.getValue(),playerindex);
+                            if( _testmode)
+                                addDebugString("onGenericMotionEvent: On  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+							    YabauseRunnable.press(e.getValue(), playerindex);
+
+                            rtn = 1;
 						}
 						else if( Float.compare(motion_value, 0.5f) < 0 ){ // OFF
-							YabauseRunnable.release(e.getValue(),playerindex);
+                            if( _testmode)
+                                addDebugString("onGenericMotionEvent: Off  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+							    YabauseRunnable.release(e.getValue(), playerindex);
+
+                            rtn = 1;
 						}
 					}
 				}
@@ -237,13 +299,25 @@ class PadManagerV16 extends PadManager {
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
-        	
+
+                if( keyCode == 0 ){
+                    keyCode = event.getScanCode();
+                }
+
             	Integer PadKey = Keymap.get(playerindex).get(keyCode);
-            	if( PadKey != null ) {
+
+               	if( PadKey != null ) {
             		event.startTracking();
-            		YabauseRunnable.press(PadKey,playerindex);
+                    if( _testmode)
+                        addDebugString("onKeyDown: " + keyCode + " Satpad: " + PadKey.toString());
+                    else
+            		    YabauseRunnable.press(PadKey, playerindex);
+
+
              		return 1;  // ignore this input
             	}else{
+                    if( _testmode)
+                        addDebugString("onKeyDown: " + keyCode+ " Satpad: none");
             		return 0;
             	}
         }
@@ -262,13 +336,22 @@ class PadManagerV16 extends PadManager {
 
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
             ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
-                 	
+
+            if( keyCode == 0 ){
+                keyCode = event.getScanCode();
+            }
+
         	if( !event.isCanceled() ){
             	Integer PadKey = Keymap.get(playerindex).get(keyCode);
             	if( PadKey != null ) {
-            	   	YabauseRunnable.release(PadKey,playerindex);
-          		    return 1; // ignore this input
+                    if( _testmode)
+                        addDebugString("onKeyUp: " + keyCode + " Satpad: " + PadKey.toString());
+                    else
+            	   	    YabauseRunnable.release(PadKey, playerindex);
+
+                    return 1; // ignore this input
             	}else{
+                    if( _testmode) addDebugString("onKeyUp: " + keyCode+ " Satpad: none");
             		return 0;
             	}            	
         	}
@@ -293,7 +376,8 @@ class PadManagerV16 extends PadManager {
 	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_Y, PadEvent.BUTTON_Y);
 	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_L1, PadEvent.BUTTON_Z);   
     }
-    
+
+
     public void loadSettings(){
         try {
         	
