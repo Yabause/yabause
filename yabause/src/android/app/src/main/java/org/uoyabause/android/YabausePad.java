@@ -156,7 +156,7 @@ class YabausePad extends View implements OnTouchListener {
     private PadButton buttons[];
     private OnPadListener listener = null;
     private HashMap<Integer, Integer> active;
-    private DisplayMetrics metrics = null;
+   // private DisplayMetrics metrics = null;
     
     Bitmap bitmap_pad_left = null;
     Bitmap bitmap_pad_right = null;
@@ -175,6 +175,16 @@ class YabausePad extends View implements OnTouchListener {
     private float hscale;  
     boolean testmode = false;
     private String status;
+
+    public void show( boolean b ){
+        if( b==false ){
+            bitmap_pad_left = null;
+            bitmap_pad_right= null;
+        }else{
+            bitmap_pad_left = BitmapFactory.decodeResource(getResources(), R.drawable.pad_l);
+            bitmap_pad_right= BitmapFactory.decodeResource(getResources(), R.drawable.pad_r);
+        }
+    }
     
     public YabausePad(Context context) {
         super(context);
@@ -209,56 +219,47 @@ class YabausePad extends View implements OnTouchListener {
 
     private void init() {
 
-    	metrics = new DisplayMetrics();
-    	Activity current = (Activity)getContext();
-    	current.getWindowManager().getDefaultDisplay().getMetrics(metrics);
-
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(current);
-        base_scale= sharedPref.getFloat("pref_pad_scale", 0.5f);
-        
-	    paint.setARGB(0x00, 0x0, 0x0, 0x0);
-	    apaint.setARGB(0x00, 0x0, 0x00, 0x00);
-	    tpaint.setARGB(0x80, 0xFF, 0xFF, 0xFF);
-	
         setOnTouchListener(this);
 
-         
-        buttons = new PadButton[PadEvent.BUTTON_LAST];
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        base_scale= sharedPref.getFloat("pref_pad_scale", 0.5f);
 
+        buttons = new PadButton[PadEvent.BUTTON_LAST];
         buttons[PadEvent.BUTTON_UP]    = new DPadButton();
         buttons[PadEvent.BUTTON_RIGHT] = new DPadButton();
         buttons[PadEvent.BUTTON_DOWN]  = new DPadButton();
         buttons[PadEvent.BUTTON_LEFT]  = new DPadButton();
-
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER] = new DPadButton();
         buttons[PadEvent.BUTTON_LEFT_TRIGGER]  = new DPadButton();
-
         buttons[PadEvent.BUTTON_START] = new StartButton();
-
         buttons[PadEvent.BUTTON_A] = new ActionButton((int)(100), "", 40);
         buttons[PadEvent.BUTTON_B] = new ActionButton((int)(100), "", 40);
         buttons[PadEvent.BUTTON_C] = new ActionButton((int)(100), "", 40);
-
         buttons[PadEvent.BUTTON_X] = new ActionButton((int)(72), "", 25);
         buttons[PadEvent.BUTTON_Y] = new ActionButton((int)(72), "", 25);
         buttons[PadEvent.BUTTON_Z] = new ActionButton((int)(72), "", 25);
 
         active = new HashMap<Integer, Integer>();
-        
-        bitmap_pad_left = BitmapFactory.decodeResource(getResources(), R.drawable.pad_l);
-        bitmap_pad_right= BitmapFactory.decodeResource(getResources(), R.drawable.pad_r);    
-        
+
+    }
+
+    @Override protected void onAttachedToWindow (){
+        paint.setARGB(0x00, 0x0, 0x0, 0x0);
+        apaint.setARGB(0x00, 0x0, 0x00, 0x00);
+        tpaint.setARGB(0x80, 0xFF, 0xFF, 0xFF);
+        //bitmap_pad_left = BitmapFactory.decodeResource(getResources(), R.drawable.pad_l);
+        //bitmap_pad_right= BitmapFactory.decodeResource(getResources(), R.drawable.pad_r);
         mPaint.setAntiAlias(true);
         mPaint.setFilterBitmap(true);
-        mPaint.setDither(true);        
-        
-        
+        mPaint.setDither(true);
     }
 
     @Override public void onDraw(Canvas canvas) {
 
-    	
-       
+        if( bitmap_pad_left == null || bitmap_pad_right == null ){
+            return;
+        }
+
         canvas.drawBitmap(bitmap_pad_left, matrix_left, mPaint);
         canvas.drawBitmap(bitmap_pad_right, matrix_right, mPaint);
         
@@ -283,7 +284,6 @@ class YabausePad extends View implements OnTouchListener {
         buttons[PadEvent.BUTTON_Z].draw(canvas, paint, apaint, tpaint);        
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER].draw(canvas, paint, apaint, tpaint);
 
-        
     }
 
     public void setOnPadListener(OnPadListener listener) {
@@ -373,6 +373,12 @@ class YabausePad extends View implements OnTouchListener {
     }
 
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+
+        if( bitmap_pad_left == null || bitmap_pad_right == null ){
+            super.onMeasure(widthMeasureSpec,heightMeasureSpec);
+            return;
+        }
+
         int width = MeasureSpec.getSize(widthMeasureSpec);
         int height = MeasureSpec.getSize(heightMeasureSpec);
         

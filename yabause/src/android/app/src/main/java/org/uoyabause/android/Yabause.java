@@ -35,9 +35,12 @@ import java.io.FileOutputStream;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -73,7 +76,10 @@ import android.app.ActivityManager;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
+import android.widget.FrameLayout;
 import android.widget.Toast;
+
+import com.bumptech.glide.load.engine.Resource;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -85,24 +91,10 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
-
-class InputHandler extends Handler {
-    private YabauseRunnable yr;
-
-    public InputHandler(YabauseRunnable yr) {
-        this.yr = yr;
-    }
-/*
-    public void handleMessage(Message msg) {
-        //Log.v("Yabause", "received message: " + msg.arg1 + " " + msg.arg2);
-        if (msg.arg1 == 0) {
-        	YabauseRunnable.press(msg.arg2);
-        } else if (msg.arg1 == 1) {
-        	YabauseRunnable.release(msg.arg2);
-        }
-    }
-*/    
-}  
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.Logger;
+import com.google.android.gms.analytics.Tracker;
+import com.google.android.gms.analytics.HitBuilders;
 
 class YabauseRunnable implements Runnable
 {  
@@ -130,11 +122,9 @@ class YabauseRunnable implements Runnable
 
     private boolean inited;
     private boolean paused;
-    public InputHandler handler;
 
     public YabauseRunnable(Yabause yabause)
     {
-        handler = new InputHandler(this);
         int ok = init(yabause);
         Log.v("Yabause", "init = " + ok);
         inited = (ok == 0);
@@ -152,8 +142,6 @@ class YabauseRunnable implements Runnable
         if (inited && (! paused))
         {
             exec();
-
-            handler.post(this);
         }
     }
 
@@ -172,7 +160,7 @@ class YabauseHandler extends Handler {
 }
 
 
-public class Yabause extends Activity implements OnPadListener  
+public class Yabause extends Activity
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
@@ -184,6 +172,7 @@ public class Yabause extends Activity implements OnPadListener
     private PadManager padm;
     private int video_interface;
     private boolean waiting_reault = false;
+    private Tracker mTracker;
 
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
@@ -218,52 +207,26 @@ public class Yabause extends Activity implements OnPadListener
                 break;
 
         }
-        YabauseRunnable.resume();
-        audio.unmute(audio.SYSTEM);
+        showBottomMenu();
     }
 
-    public void SendLoagcatMail(){
-
-        // save logcat in file
-        File outputFile = new File(Environment.getExternalStorageDirectory(),
-                "logcat.txt");
-        try {
-            Runtime.getRuntime().exec(
-                    "logcat -f " + outputFile.getAbsolutePath());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-        //send file using email
-        Intent emailIntent = new Intent(Intent.ACTION_SEND);
-        String to[] = {"smiyaxdev@gmail.com"};
-        emailIntent .putExtra(Intent.EXTRA_EMAIL, to);
-        // the attachment
-        emailIntent .putExtra(Intent.EXTRA_STREAM, outputFile.getAbsolutePath());
-        // the mail subject
-        emailIntent .putExtra(Intent.EXTRA_SUBJECT, "Subject");
-        startActivity(Intent.createChooser(emailIntent, "Send email..."));
-    }
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)    
     {
-        super.onCreate(savedInstanceState);  
-        
-        // Immersive mode 
-        View decor = this.getWindow().getDecorView();
-        decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION  | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        super.onCreate(savedInstanceState);
+        System.gc();
+
+        YabauseApplication application = (YabauseApplication) getApplication();
+        mTracker = application.getDefaultTracker();
 
         setContentView(R.layout.main);
 
         audio = new YabauseAudio(this);
 
-        Intent intent = getIntent();  
+        Intent intent = getIntent();
         String game = intent.getStringExtra("org.uoyabause.android.FileName");
-
         if (game != null && game.length() > 0) {
             YabauseStorage storage = YabauseStorage.getStorage();
             gamepath = storage.getGamePath(game);
@@ -275,45 +238,93 @@ public class Yabause extends Activity implements OnPadListener
         	gamepath = exgame;  
         }
 
+
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         readPreferences();
-/*        
-        ActivityManager activityManager = ((ActivityManager) getSystemService(ACTIVITY_SERVICE));
-        PackageManager pm = getPackageManager();
-        List<ApplicationInfo> appList = pm.getInstalledApplications(0);
-        for (int i = 0; i < appList.size(); i++){
-            activityManager.killBackgroundProcesses(appList.get(i).packageName);
-        }
-*/              
-        System.gc(); // Clear Memory Before run
-        handler = new YabauseHandler(this);
-        yabauseThread = new YabauseRunnable(this);
 
         padm = PadManager.getPadManager();
         padm.loadSettings();
-        waiting_reault = false;   
- 
-        getActionBar().addOnMenuVisibilityListener(new OnMenuVisibilityListener() {
+        waiting_reault = false;
+        View v = findViewById(R.id.menu_view);
+        v.setVisibility(View.GONE);
+        View.OnClickListener ScreenshotClickListener = new View.OnClickListener() {
             @Override
-                public void onMenuVisibilityChanged(boolean isVisible) {
-            		if( isVisible == false ){
-            			if( waiting_reault == false ){
-            				YabauseRunnable.resume();
-            				audio.unmute(audio.SYSTEM);
-            			}
-            		}else{
-            			YabauseRunnable.pause();
-            			audio.mute(audio.SYSTEM);
-            		}
+            public void onClick(View v) {
+                DateFormat dateFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
+                Date date = new Date();
+
+                String screen_shot_save_path = YabauseStorage.getStorage().getScreenshotPath()
+                        + YabauseRunnable.getCurrentGameCode() +
+                        dateFormat.format(date) + ".png";
+
+                if (YabauseRunnable.screenshot(screen_shot_save_path) != 0) {
+                    return;
+                }
+
+                waiting_reault = true;
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_SEND);
+                ContentResolver cr = getContentResolver();
+                ContentValues cv = new ContentValues();
+                cv.put(MediaStore.Images.Media.TITLE, YabauseRunnable.getCurrentGameCode());
+                cv.put(MediaStore.Images.Media.DISPLAY_NAME, YabauseRunnable.getCurrentGameCode());
+                cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
+                cv.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                cv.put(MediaStore.Images.Media.DATA, screen_shot_save_path);
+                Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                shareIntent.setType("image/png");
+                startActivityForResult(Intent.createChooser(shareIntent, "share screenshot to"), R.id.save_screen);
+            }
+        };
+        findViewById(R.id.button_screen_shot).setOnClickListener(ScreenshotClickListener);
+
+        View.OnClickListener SaveStateClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String save_path = YabauseStorage.getStorage().getStateSavePath();
+                YabauseRunnable.savestate(save_path);
+                Yabause.this.showBottomMenu();
+            }
+        };
+        findViewById(R.id.button_save_sate).setOnClickListener(SaveStateClickListener);
+
+        View.OnClickListener LoadStateClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String save_path = YabauseStorage.getStorage().getStateSavePath();
+                YabauseRunnable.loadstate(save_path);
+                Yabause.this.showBottomMenu();
+            }
+        };
+        findViewById(R.id.button_load_state).setOnClickListener(LoadStateClickListener);
+
+        View.OnClickListener ExitClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                YabauseRunnable.deinit();
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
 
                 }
-            });
+                //android.os.Process.killProcess(android.os.Process.myPid());
+                finish();
+            }
+        };
+        findViewById(R.id.button_exit).setOnClickListener(ExitClickListener);
 
+        View.OnClickListener ReportClickListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startReport();
+            }
+        };
+        findViewById(R.id.button_report).setOnClickListener(ReportClickListener);
 
+        handler = new YabauseHandler(this);
+        yabauseThread = new YabauseRunnable(this);
     }
-    
-
-
 
     @Override
     public void onPause()
@@ -327,6 +338,8 @@ public class Yabause extends Activity implements OnPadListener
     public void onResume()
     {
         super.onResume();
+        mTracker.setScreenName(TAG);
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
         audio.unmute(audio.SYSTEM);
         YabauseRunnable.resume();
     }
@@ -359,112 +372,14 @@ public class Yabause extends Activity implements OnPadListener
         return alert; 
     }
 
-    @Override public boolean onPad(PadEvent event) {
-        //Message message = handler.obtainMessage();
-        //message.arg1 = event.getAction();
-        //message.arg2 = event.getKey();
-        //yabauseThread.handler.sendMessage(message);
-        return true;
-    }
-
-
-    
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.game_menu, menu);
-        super.onCreateOptionsMenu(menu);
-        return true;
-    }
-    @Override
-    public boolean onPrepareOptionsMenu (Menu menu){
-		//YabauseRunnable.pause();
-		//audio.mute(audio.SYSTEM);
-    	return super.onPrepareOptionsMenu(menu);
-    }
-    
-    @Override
-    public void onOptionsMenuClosed (Menu menu){
-    	if( waiting_reault == false ){
-    		YabauseRunnable.resume();
-    		audio.unmute(audio.SYSTEM);
-    	}
-    	super.onOptionsMenuClosed(menu);
-    	return;
-    }
-
-    public void onFinishReport(){
-
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
-        switch (item.getItemId()) {
-            case R.id.exit: {
-                YabauseRunnable.deinit();
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-
-                }
-                //moveTaskToBack(true);
-                //finish();
-                //SendLoagcatMail();
-                android.os.Process.killProcess(android.os.Process.myPid());
-                return true;
-            }
-            case R.id.save_state: {
-                String save_path = YabauseStorage.getStorage().getStateSavePath();
-                YabauseRunnable.savestate(save_path);
-                return true;
-            }
-            case R.id.load_state: {
-                String save_path = YabauseStorage.getStorage().getStateSavePath();
-                YabauseRunnable.loadstate(save_path);
-                return true;
-            }
-            case R.id.save_screen: {
-                DateFormat dateFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
-                Date date = new Date();
-
-                String screen_shot_save_path = YabauseStorage.getStorage().getScreenshotPath()
-                        + YabauseRunnable.getCurrentGameCode() +
-                        dateFormat.format(date) + ".png";
-
-                if (YabauseRunnable.screenshot(screen_shot_save_path) != 0) {
-                    return true;
-                }
-
-                waiting_reault = true;
-                Intent shareIntent = new Intent();
-                shareIntent.setAction(Intent.ACTION_SEND);
-                ContentResolver cr = getContentResolver();
-                ContentValues cv = new ContentValues();
-                cv.put(MediaStore.Images.Media.TITLE, YabauseRunnable.getCurrentGameCode());
-                cv.put(MediaStore.Images.Media.DISPLAY_NAME, YabauseRunnable.getCurrentGameCode());
-                cv.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis());
-                cv.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
-                cv.put(MediaStore.Images.Media.DATA, screen_shot_save_path);
-                Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
-                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
-                shareIntent.setType("image/png");
-                startActivityForResult(Intent.createChooser(shareIntent, "share screenshot to"), R.id.save_screen);
-                return true;
-            }
-
-            case R.id.report:
-                startReport();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
     void startReport(){
         waiting_reault = true;
         DialogFragment newFragment = new ReportDialog();
         newFragment.show(getFragmentManager(), "Report");
+    }
+
+    public void onFinishReport(){
+
     }
 
     class ReportContents{
@@ -491,8 +406,6 @@ public class Yabause extends Activity implements OnPadListener
         current_report._message = message;
         current_report._screenshot = screenshot;
         _report_status = REPORT_STATE_INIT;
-
-
 
         String gameinfo = YabauseRunnable.getGameinfo();
         if (gameinfo != null){
@@ -560,20 +473,20 @@ public class Yabause extends Activity implements OnPadListener
         audio.unmute(audio.SYSTEM);
     }
 
-
-
     @Override
     protected void onActivityResult( int requestCode, int resultCode, Intent data) {
     	switch(requestCode){
     	    case R.id.save_screen:
-                YabauseRunnable.resume();
-                audio.unmute(audio.SYSTEM);
-                waiting_reault = false;
+                 showBottomMenu();
                 break;
     	}
     }
      
     @Override public boolean onGenericMotionEvent(MotionEvent event) {
+
+        if( menu_showing ){
+            return super.onGenericMotionEvent(event);
+        }
 
     	int rtn = padm.onGenericMotionEvent(event);
         if (rtn != 0) {
@@ -581,13 +494,24 @@ public class Yabause extends Activity implements OnPadListener
         }
         return super.onGenericMotionEvent(event);
     }
-    
+
     @Override
     public boolean dispatchKeyEvent (KeyEvent event){
-    	
 
-    	int action =event.getAction(); 
-    	int keyCode = event.getKeyCode();
+        int action =event.getAction();
+        int keyCode = event.getKeyCode();
+
+        if ( keyCode == KeyEvent.KEYCODE_BACK) {
+            if( event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0 ){
+                showBottomMenu();
+            }
+            return true;
+        }
+
+        if( menu_showing ){
+            return super.dispatchKeyEvent(event);
+        }
+
     	//Log.d("dispatchKeyEvent","device:" + event.getDeviceId() + ",action:" + action +",keyCoe:" + keyCode );
     	if( action == KeyEvent.ACTION_UP){
             int rtn = padm.onKeyUp(keyCode, event);
@@ -596,53 +520,88 @@ public class Yabause extends Activity implements OnPadListener
             }   		
     	}else if( action == KeyEvent.ACTION_MULTIPLE ){
     		
-    	}else if( action == KeyEvent.ACTION_DOWN ){
-            
-    		if ( keyCode == KeyEvent.KEYCODE_BACK) {
-                openOptionsMenu();
-                return true;
-            }  
-            
+    	}else if( action == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0 ){
             int rtn =  padm.onKeyDown(keyCode, event);
             if (rtn != 0) {
                 return true;
             }  
-          
     	}
-    
     	return super.dispatchKeyEvent(event);
     }
 
-    /*
-    @Override public boolean onKeyDown(int keyCode, KeyEvent event) {
-       
-        int rtn =  padm.onKeyDown(keyCode, event);
-        if (rtn != 0) {
-            return true;
-        }
-        if ( keyCode == KeyEvent.KEYCODE_BACK) {
-            openOptionsMenu();
-            return false;
-        } 
-        return super.onKeyDown(keyCode, event);
-    }
-
-    @Override public boolean onKeyUp(int keyCode, KeyEvent event) {
-        int rtn = padm.onKeyUp(keyCode, event);
-        if (rtn != 0) {
-            return true;
+    @Override
+    public void onTrimMemory (int level){
+        super.onTrimMemory(level);
+        switch(level){
+            case TRIM_MEMORY_RUNNING_MODERATE:
+                break;
+            case TRIM_MEMORY_RUNNING_LOW :
+                break;
+            case TRIM_MEMORY_RUNNING_CRITICAL :
+                break;
+            case TRIM_MEMORY_UI_HIDDEN :
+                break;
+            case TRIM_MEMORY_BACKGROUND :
+                break;
+            case TRIM_MEMORY_COMPLETE :
+                break;
         }
 
-        return super.onKeyUp(keyCode, event);
     }
-    */
- 
-    private void errorMsg(String msg) {
+
+    private boolean menu_showing = false;
+    private void showBottomMenu(){
+        View v = findViewById(R.id.menu_view);
+
+        if(menu_showing == false) {
+            YabauseRunnable.pause();
+            audio.mute(audio.SYSTEM);
+
+            v.setVisibility(View.VISIBLE);
+            v.setTranslationY(0);
+            v.invalidate();
+
+            //ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(v, "translationY", v.getHeight(), 0);
+            //objectAnimator.setDuration(1000);
+            //objectAnimator.start();
+
+            View button = findViewById(R.id.button_screen_shot);
+            button.requestFocus();
+            menu_showing = true;
+        }else{
+            YabauseRunnable.resume();
+            audio.unmute(audio.SYSTEM);
+
+            v.setVisibility(View.GONE);
+            v.setTranslationY(v.getHeight());
+            v.invalidate();
+
+            //ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(v, "translationY", 0, v.getHeight());
+            //objectAnimator.setDuration(1000);
+            //objectAnimator.start();
+
+            View button = findViewById(R.id.yabause_view);
+            button.requestFocus();
+            menu_showing = false;
+        }
+    }
+
+    private String errmsg;
+    public void errorMsg(String msg) {
+        errmsg = msg;
+        Log.d(TAG, "errorMsg " + msg);
+        runOnUiThread(new Runnable() {
+            public void run() {
+                Toast.makeText(Yabause.this, Yabause.this.errmsg, Toast.LENGTH_LONG).show();
+            }
+        });
+/*
         Message message = handler.obtainMessage();
         Bundle bundle = new Bundle();
         bundle.putString("message", msg);
         message.setData(bundle);
         handler.sendMessage(message);
+*/
     }
 
     private void readPreferences() {
@@ -712,8 +671,6 @@ public class Yabause extends Activity implements OnPadListener
         Log.d(TAG, "video " + video);
 
         // InputDevice
-        YabausePad pad = (YabausePad) findViewById(R.id.yabause_pad);
-        pad.setOnPadListener(this);
     	String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");
     	padm = PadManager.getPadManager();
         Log.d(TAG, "input " + selInputdevice);
@@ -732,11 +689,16 @@ public class Yabause extends Activity implements OnPadListener
    			 	editor.commit();
     		}
     	}
-    	
+
+        YabausePad pad = (YabausePad)findViewById(R.id.yabause_pad);
+
         if( padm.getDeviceCount() > 0 && !selInputdevice.equals("-1") ){
-            pad.setVisibility(View.INVISIBLE);
-        	padm.setPlayer1InputDevice( selInputdevice );
+            pad.show(false);
+            Log.d(TAG, "ScreenPad Disable");
+        	padm.setPlayer1InputDevice(selInputdevice);
         }else{
+            pad.show(true);
+            Log.d(TAG, "ScreenPad Enable");
             padm.setPlayer1InputDevice( null );
         }
 
@@ -748,7 +710,6 @@ public class Yabause extends Activity implements OnPadListener
         	padm.setPlayer2InputDevice( null );
         }
         Log.d(TAG, "input " + selInputdevice2);
-
         Log.d(TAG, "getGamePath " + getGamePath());
         Log.d(TAG, "getMemoryPath " + getMemoryPath());
         Log.d(TAG, "getCartridgePath " + getCartridgePath());
@@ -786,19 +747,18 @@ public class Yabause extends Activity implements OnPadListener
         System.loadLibrary("yabause_native");   
     }
 
-
-     
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
-            super.onWindowFocusChanged(hasFocus);
+        super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-        	View decor = this.getWindow().getDecorView();
-        	decor.setSystemUiVisibility(
+            View decorView = findViewById(R.id.yabause_view);
+            decorView.setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);}
     }
+
 }
