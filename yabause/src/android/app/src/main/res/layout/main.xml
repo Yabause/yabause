@@ -1,18 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main_view"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<org.uoyabause.android.YabauseView
-    android:id="@+id/yabause_view"
-    android:layout_width="wrap_content"
-    android:layout_height="fill_parent"
-    android:layout_gravity="center"
+    <org.uoyabause.android.YabauseView
+        android:id="@+id/yabause_view"
+        android:layout_width="wrap_content"
+        android:layout_height="fill_parent"
+        android:layout_gravity="center"
     />
-<org.uoyabause.android.YabausePad
-    android:id="@+id/yabause_pad"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
+
+    <org.uoyabause.android.YabausePad
+        android:id="@+id/yabause_pad"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
     />
+
+    <LinearLayout
+        android:id="@+id/menu_view"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:translationY="80dp"
+        android:layout_gravity="center"
+        android:background="#444444">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Screen Shot"
+            android:id="@+id/button_screen_shot"
+            android:layout_gravity="center" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Report"
+            android:id="@+id/button_report"
+            android:layout_gravity="center" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save State"
+            android:id="@+id/button_save_sate"
+            android:layout_gravity="center" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Load State"
+            android:id="@+id/button_load_state"
+            android:layout_gravity="center" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Exit"
+            android:id="@+id/button_exit"
+            android:layout_gravity="center" />
+    </LinearLayout>
+
+
+
 </FrameLayout>
 
