@@ -186,8 +186,8 @@ int yprintf( const char * fmt, ... )
    return result;
 }
 
-//#define YUI_LOG yprintf
-#define YUI_LOG
+#define YUI_LOG yprintf
+//#define YUI_LOG
 
 const char * GetBiosPath()
 {
@@ -313,18 +313,22 @@ int GetPlayer2Device(){
 
 void YuiErrorMsg(const char *string)
 {
+	//YUI_LOG("YuiErrorMsg %s",string);
+	
     jclass yclass;
     jmethodID errorMsg;
     jstring message;
     JNIEnv * env;
-    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK) {
-        return;
-    }
 
+	(*yvm)->AttachCurrentThread(yvm, &env, NULL);	
+
+	YUI_LOG("YuiErrorMsg2 %s",string);
+	
     yclass = (*env)->GetObjectClass(env, yabause);
     errorMsg = (*env)->GetMethodID(env, yclass, "errorMsg", "(Ljava/lang/String;)V");
     message = (*env)->NewStringUTF(env, string);
     (*env)->CallVoidMethod(env, yabause, errorMsg, message);
+	(*yvm)->DetachCurrentThread(yvm);
 }
 
 void* threadStartCallback(void *myself);
@@ -576,9 +580,11 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( 
 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
 {
-    pthread_mutex_lock(&g_mtxGlLock);
+	yprintf("sending MSG_PAUSE 1");
+    //pthread_mutex_lock(&g_mtxGlLock);
+	yprintf("sending MSG_PAUSE 2");
     g_msg = MSG_PAUSE;
-    pthread_mutex_unlock(&g_mtxGlLock);
+    //pthread_mutex_unlock(&g_mtxGlLock);
 }
 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv* env )
