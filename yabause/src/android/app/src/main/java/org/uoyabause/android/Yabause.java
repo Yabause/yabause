@@ -310,6 +310,7 @@ public class Yabause extends Activity
                 }
                 //android.os.Process.killProcess(android.os.Process.myPid());
                 finish();
+                android.os.Process.killProcess(android.os.Process.myPid());
             }
         };
         findViewById(R.id.button_exit).setOnClickListener(ExitClickListener);
