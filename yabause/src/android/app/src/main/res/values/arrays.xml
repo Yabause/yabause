@@ -4,15 +4,15 @@
         <item>@string/dynrec_cpu_interface</item>
         <item>@string/software_cpu_interface</item>
     </string-array>
-    <string-array name="entryvalues_cpu_list_preference">
+    <string-array name="entryvalues_cpu_list_preference" translatable="false" >
         <item>2</item>
         <item>0</item>
     </string-array>
-    <string-array name="entries_video_filte_list_preference">
+    <string-array name="entries_video_filte_list_preference" translatable="false">
         <item>@string/video_filter_none</item>
         <item>@string/video_filter_fxaa</item>
     </string-array>
-    <string-array name="entryvalues_video_filte_list_preference">
+    <string-array name="entryvalues_video_filte_list_preference" translatable="false">
         <item>0</item>
         <item>1</item>
     </string-array>
