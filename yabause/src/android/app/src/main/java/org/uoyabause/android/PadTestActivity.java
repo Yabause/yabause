@@ -47,6 +47,7 @@ public class PadTestActivity extends Activity implements OnPadListener {
         mPadView = (YabausePad)findViewById(R.id.yabause_pad);
         mPadView.setTestmode(true);
         mPadView.setOnPadListener(this);
+        mPadView.show(true);
         mSlide   = (SeekBar)findViewById(R.id.button_scale);
         
         mSlide.setProgress( (int)(mPadView.getScale()*100.0f) );

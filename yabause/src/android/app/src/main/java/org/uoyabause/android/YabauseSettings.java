@@ -19,9 +19,12 @@
 
 package org.uoyabause.android;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -29,6 +32,8 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -45,8 +50,18 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.app.Dialog;
 
+import org.uoyabause.android.tv.GameSelectFragment;
+
 public class YabauseSettings extends PreferenceActivity implements SharedPreferences.OnSharedPreferenceChangeListener{
 
+    boolean dirlist_status = false;
+    public void setDireListChangeStatus( boolean status ) {
+        dirlist_status = status;
+        if( dirlist_status==true ){
+            Intent resultIntent = new Intent();
+            setResult(  GameSelectFragment.GAMELIST_NEED_TO_UPDATED , resultIntent);
+        }
+    }
   public static class WarningDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -75,6 +90,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         }catch( Exception e ){
         	e.printStackTrace();
         }
+
+        GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
+        dires.setActivity(this);
+
       
     	InputSettingPrefernce inputsetting1 = (InputSettingPrefernce)findPreference("pref_inputdef_file");
         inputsetting1.setPlayerAndFileame(0,"keymap");
@@ -193,16 +212,41 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             @Override
             public boolean onPreferenceClick(Preference preference) {
                 Intent nextActivity = new Intent(
-                		YabauseSettings.this,
+                        YabauseSettings.this,
                         PadTestActivity.class);
-     
+
                 startActivity(nextActivity);
                 return true;
             }
         });
-        
+
+        Preference select_image = findPreference("select_image");
+        select_image.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                int PICK_IMAGE = 1;
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
+
+                return true;
+            }
+        });
+
       }
-    
+
+    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
+        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+
+        if (resultCode == RESULT_OK) {
+            Uri selectedImage = imageReturnedIntent.getData();
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            sp.edit().putString("select_image", selectedImage.toString()).commit();
+        }
+    }
+
     private void SyncInputDevice(){
         
     	SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
