@@ -40,4 +40,5 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:3.4.+'
     compile 'commons-io:commons-io:2.4'
     compile 'com.google.android.gms:play-services-analytics:8.1.0'
+    compile 'com.google.android.gms:play-services-ads:8.1.0'
 }

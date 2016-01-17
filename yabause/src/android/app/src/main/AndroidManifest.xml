@@ -2,29 +2,28 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="org.uoyabause.android"
-    android:versionCode="45"
+    android:versionCode="46"
     android:versionName="0.2.0beta">
 
     <uses-sdk
         android:minSdkVersion="19"
         android:targetSdkVersion="22" />
 
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.vending.BILLING" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
-    <uses-feature
-        android:name="android.software.leanback"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.touchscreen"
-        android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.nfc" android:required="false"/>
+    <uses-feature android:name="android.hardware.gps" android:required="false"/>
+    <uses-feature android:name="android.hardware.microphone" android:required="false"/>
     <uses-feature android:name="android.hardware.gamepad" />
     <uses-feature android:glEsVersion="0x00030000" />
 
@@ -36,7 +35,8 @@
         android:logo="@drawable/banner"
         android:supportsRtl="true"
         android:theme="@style/Theme.Leanback">
-
+        <meta-data android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
         <meta-data
             android:name="AA_DB_NAME"
             android:value="localgameinfo.db" />
@@ -78,7 +78,8 @@
         <activity
             android:name=".GameList"
             android:screenOrientation="landscape" />
-        <activity android:name="DonateActivity" />
+        <activity android:name="DonateActivity"
+            android:screenOrientation="landscape" />
         <activity
             android:name=".Yabause"
             android:configChanges="orientation|keyboardHidden"
@@ -107,6 +108,9 @@
 
         <activity android:name=".tv.BrowseErrorActivity" />
 
+        <activity android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:theme="@android:style/Theme.Translucent" />
     </application>
 
 </manifest>
