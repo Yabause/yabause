@@ -25,11 +25,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.ProgressDialog;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -64,6 +66,7 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
+import org.uoyabause.android.DonateActivity;
 import org.uoyabause.android.FileDialog;
 import org.uoyabause.android.GameInfo;
 import org.uoyabause.android.GameList;
@@ -72,6 +75,10 @@ import org.uoyabause.android.Yabause;
 import org.uoyabause.android.YabauseApplication;
 import org.uoyabause.android.YabauseSettings;
 import org.uoyabause.android.YabauseStorage;
+
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
@@ -94,6 +101,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private URI mBackgroundURI;
     private BackgroundManager mBackgroundManager;
     private Tracker mTracker;
+    private InterstitialAd mInterstitialAd;
 
     static public int refresh_level = 2;
 
@@ -152,6 +160,17 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         setupUIElements();
         setupEventListeners();
 
+        mInterstitialAd = new InterstitialAd(getActivity());
+        mInterstitialAd.setAdUnitId(getActivity().getString(R.string.banner_ad_unit_id));
+        requestNewInterstitial();
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+            }
+        });
+
         myHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -174,8 +193,6 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             mUpdateThread = new UpdateGameDatabaseTask();
             mUpdateThread.execute("init");
         }
-
-
     }
 
     @Override
@@ -411,6 +428,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
 */
     final int SETTING_ACTIVITY = 0x01;
+    final int YABAUSE_ACTIVITY = 0x02;
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
@@ -430,7 +448,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
                 Intent intent = new Intent(getActivity(), Yabause.class);
                 intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
-                startActivity(intent);
+                startActivityForResult(intent, YABAUSE_ACTIVITY);
             } else if (item instanceof String) {
                 if (((String) item).indexOf(getString(R.string.setting)) >= 0) {
                     Intent intent = new Intent(getActivity(), YabauseSettings.class);
@@ -550,12 +568,25 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         //Bundle bundle = data.getExtras();
-
         switch (requestCode) {
             case SETTING_ACTIVITY:
                 if( resultCode == GAMELIST_NEED_TO_UPDATED ){
                     refresh_level = 3;
                     updateGameList();
+                }
+                break;
+            case YABAUSE_ACTIVITY:
+                double rn = Math.random();
+                if( rn <= 0.3333 ) {
+                    UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+                    if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+                        if (mInterstitialAd.isLoaded()) {
+                            mInterstitialAd.show();
+                        }
+                    }
+                }else if( rn > 0.3333 && rn <= 0.6666 ){
+                    Intent intent = new Intent(getActivity(), DonateActivity.class);
+                    startActivity(intent);
                 }
                 break;
             default:
@@ -565,4 +596,10 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
 
 
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                //.addTestDevice("YOUR_DEVICE_HASH")
+                .build();
+        mInterstitialAd.loadAd(adRequest);
+    }
 }
