@@ -152,7 +152,7 @@ interface OnPadListener {
     public abstract boolean onPad(PadEvent event);
 }
 
-class YabausePad extends View implements OnTouchListener {
+public class YabausePad extends View implements OnTouchListener {
     private PadButton buttons[];
     private OnPadListener listener = null;
     private HashMap<Integer, Integer> active;
