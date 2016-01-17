@@ -123,5 +123,6 @@ public class GameList extends ListActivity implements FileSelectedListener
 		Intent intent = new Intent(this, Yabause.class);
 		intent.putExtra("org.uoyabause.android.FileNameEx", string);
 		startActivity(intent);
-	}    
+	}
+
 }

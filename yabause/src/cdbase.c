@@ -973,8 +973,13 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 
 	if (fp == NULL)
 	{
-		YabSetError(YAB_ERR_FILEREAD, img_filename);
-		return -1;
+		ext = strrchr(img_filename, '.');
+		strcpy(ext, ".iso");
+		fp = fopen(img_filename, "rb");
+		if (fp == NULL){
+			YabSetError(YAB_ERR_FILEREAD, img_filename);
+			return -1;
+		}
 	}
 
 	fseek(iso_file, 0, SEEK_SET);
