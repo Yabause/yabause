@@ -10,7 +10,9 @@ android {
         minSdkVersion 19
         targetSdkVersion 22
     }
-
+    lintOptions {
+        disable 'MissingTranslation'
+    }
     buildTypes {
         release {
             minifyEnabled false
