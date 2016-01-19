@@ -1541,6 +1541,8 @@ static void Vdp2GenerateWindowInfo(void)
                 m_b0WindowChg = 1;
             }
 
+			
+
             for( v = 0; v < vdp2height; v++ )
             {
 
@@ -1556,14 +1558,26 @@ static void Vdp2GenerateWindowInfo(void)
                 }
             }
             
-            _Ygl->win0v[0]= Vdp2Regs->WPSX0 >> HShift;
-            _Ygl->win0v[1]= Vdp2Regs->WPSY0;
-            _Ygl->win0v[2]= (Vdp2Regs->WPEX0 >> HShift) + 1;
-            _Ygl->win0v[3]= Vdp2Regs->WPSY0;
-            _Ygl->win0v[4]= Vdp2Regs->WPSX0 >> HShift;
-            _Ygl->win0v[5]= Vdp2Regs->WPEY0 + 1;
-            _Ygl->win0v[6]= (Vdp2Regs->WPEX0 >> HShift) + 1;
-            _Ygl->win0v[7]= Vdp2Regs->WPEY0 + 1;
+			if ( Vdp2Regs->WPSX0 < Vdp2Regs->WPEX0 ) {
+				_Ygl->win0v[0] = Vdp2Regs->WPSX0 >> HShift;
+				_Ygl->win0v[1] = Vdp2Regs->WPSY0;
+				_Ygl->win0v[2] = (Vdp2Regs->WPEX0 >> HShift) + 1;
+				_Ygl->win0v[3] = Vdp2Regs->WPSY0;
+				_Ygl->win0v[4] = Vdp2Regs->WPSX0 >> HShift;
+				_Ygl->win0v[5] = Vdp2Regs->WPEY0 + 1;
+				_Ygl->win0v[6] = (Vdp2Regs->WPEX0 >> HShift) + 1;
+				_Ygl->win0v[7] = Vdp2Regs->WPEY0 + 1;
+			}
+			else{
+				_Ygl->win0v[0] = 0;
+				_Ygl->win0v[1] = 0;
+				_Ygl->win0v[2] = 0;
+				_Ygl->win0v[3] = 0;
+				_Ygl->win0v[4] = 0;
+				_Ygl->win0v[5] = 0;
+				_Ygl->win0v[6] = 0;
+				_Ygl->win0v[7] = 0;
+			}
             _Ygl->win0_vertexcnt = 4;
 
         }
@@ -1708,14 +1722,26 @@ static void Vdp2GenerateWindowInfo(void)
                 }
             }
             
-            _Ygl->win1v[0]= Vdp2Regs->WPSX1 >> HShift;
-            _Ygl->win1v[1]= Vdp2Regs->WPSY1;
-            _Ygl->win1v[2]= (Vdp2Regs->WPEX1 >> HShift) + 1;
-            _Ygl->win1v[3]= Vdp2Regs->WPSY1;
-            _Ygl->win1v[4]= Vdp2Regs->WPSX1 >> HShift;
-            _Ygl->win1v[5]= Vdp2Regs->WPEY1 + 1;
-            _Ygl->win1v[6]= (Vdp2Regs->WPEX1 >> HShift) + 1;
-            _Ygl->win1v[7]= Vdp2Regs->WPEY1 + 1;
+			if (Vdp2Regs->WPSX1 < Vdp2Regs->WPEX1) {
+				_Ygl->win1v[0] = Vdp2Regs->WPSX1 >> HShift;
+				_Ygl->win1v[1] = Vdp2Regs->WPSY1;
+				_Ygl->win1v[2] = (Vdp2Regs->WPEX1 >> HShift) + 1;
+				_Ygl->win1v[3] = Vdp2Regs->WPSY1;
+				_Ygl->win1v[4] = Vdp2Regs->WPSX1 >> HShift;
+				_Ygl->win1v[5] = Vdp2Regs->WPEY1 + 1;
+				_Ygl->win1v[6] = (Vdp2Regs->WPEX1 >> HShift) + 1;
+				_Ygl->win1v[7] = Vdp2Regs->WPEY1 + 1;
+			}
+			else{
+				_Ygl->win1v[0] = 0;
+				_Ygl->win1v[1] = 0;
+				_Ygl->win1v[2] = 0;
+				_Ygl->win1v[3] = 0;
+				_Ygl->win1v[4] = 0;
+				_Ygl->win1v[5] = 0;
+				_Ygl->win1v[6] = 0;
+				_Ygl->win1v[7] = 0;
+			}
             _Ygl->win1_vertexcnt = 4;            
 
         }
