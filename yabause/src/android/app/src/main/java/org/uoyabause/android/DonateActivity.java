@@ -156,18 +156,18 @@ public class DonateActivity extends Activity {
         selectSpinner.setAdapter(adapter);
         h = new Handler();
         // Spawn a thread that triggers the Spinner to open after 5 seconds...
-        new Thread(new Runnable() {
-            public void run() {
+        //new Thread(new Runnable() {
+         //   public void run() {
                 // DO NOT ATTEMPT TO DIRECTLY UPDATE THE UI HERE, IT WON'T WORK!
                 // YOU MUST POST THE WORK TO THE UI THREAD'S HANDLER
-                h.postDelayed(new Runnable() {
-                    public void run() {
-                        // Open the Spinner...
-                        selectSpinner.performClick();
-                    }
-                }, 1000);
-            }
-        }).start();
+         //       h.postDelayed(new Runnable() {
+          //          public void run() {
+          //              // Open the Spinner...
+          //              selectSpinner.performClick();
+          //          }
+          //      }, 1000);
+         //   }
+        //}).start();
 
         // Start setup. This is asynchronous and the specified listener
         // will be called once setup completes.
