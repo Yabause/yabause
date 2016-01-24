@@ -326,6 +326,7 @@ void vdp2VBlankIN(void) {
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
    vbalnk_wait = 1;
+   YglSync();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -355,7 +356,7 @@ void Vdp2VBlankIN(void) {
    if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
-
+   YglSync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
    ScuSendVBlankIN();

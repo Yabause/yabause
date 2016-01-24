@@ -266,8 +266,6 @@ const GLchar Yglprg_vdp1_normal_v[] =
       "{                            \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord; \n"
-      "   v_texcoord.s  = v_texcoord.s/2048.0; \n"
-      "   v_texcoord.t  = v_texcoord.t/1024.0; \n"
       "} ";
 const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 
