@@ -266,6 +266,8 @@ typedef struct {
 
    AAMODE aamode;
 
+   YglTextureManager * texture_manager;
+
 }  Ygl;
 
 extern Ygl * _Ygl;
