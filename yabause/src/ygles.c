@@ -227,6 +227,7 @@ void YglLoadIdentity(YglMatrix *result)
 
 
 YglTextureManager * YglTM;
+YglTextureManager * YglTM_vdp1;
 Ygl * _Ygl;
 
 typedef struct
@@ -469,65 +470,101 @@ int YglCalcTextureQ(
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglTMInit(unsigned int w, unsigned int h) {
-   YglTM = (YglTextureManager *) malloc(sizeof(YglTextureManager));
-   memset(YglTM,0,sizeof(YglTextureManager));
-   YglTM->width = w;
-   YglTM->height = h;
+YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
-   YglTMReset();
+	GLuint error;
+	YglTextureManager * tm;
+	tm = (YglTextureManager *)malloc(sizeof(YglTextureManager));
+	memset(tm, 0, sizeof(YglTextureManager));
+	tm->width = w;
+	tm->height = h;
+
+	YglTMReset(tm);
+
+	glGenBuffers(1, &tm->pixelBufferID);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+	glGenTextures(1, &tm->textureID);
+	glBindTexture(GL_TEXTURE_2D, tm->textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail to init YglTM->textureID %04X", error);
+		abort();
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glBindTexture(GL_TEXTURE_2D, tm->textureID);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+	tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLDEBUG("Fail to init YglTM->texture %04X", error);
+		abort();
+	}
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+	return tm;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglTMDeInit(void) {
-    if( YglTM->texture != NULL ) {
+void YglTMDeInit(YglTextureManager * tm) {
+	if (tm->texture != NULL) {
+		glBindTexture(GL_TEXTURE_2D, tm->textureID);
         glUnmapBuffer (GL_PIXEL_UNPACK_BUFFER);
-        YglTM->texture = NULL;
+		tm->texture = NULL;
     }
 
-   free(YglTM);
+	glDeleteTextures(1, &tm->textureID);
+	glDeleteBuffers(1, &tm->pixelBufferID);
+	free(tm);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglTMReset(void) {
-   YglTM->currentX = 0;
-   YglTM->currentY = 0;
-   YglTM->yMax = 0;
+void YglTMReset(YglTextureManager * tm) {
+	tm->currentX = 0;
+	tm->currentY = 0;
+	tm->yMax = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglTMAllocate(YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
-   if ((YglTM->height - YglTM->currentY) < h) {
+void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
+	if ((tm->height - tm->currentY) < h) {
       fprintf(stderr, "can't allocate texture: %dx%d\n", w, h);
       *x = *y = 0;
       output->w = 0;
-      output->textdata = YglTM->texture;
+	  output->textdata = tm->texture;
       return;
    }
 
-   if ((YglTM->width - YglTM->currentX) >= w) {
-      *x = YglTM->currentX;
-      *y = YglTM->currentY;
-      output->w = YglTM->width - w;
-      output->textdata = YglTM->texture + YglTM->currentY * YglTM->width + YglTM->currentX;
-      YglTM->currentX += w;
+	if ((tm->width - tm->currentX) >= w) {
+		*x = tm->currentX;
+		*y = tm->currentY;
+		output->w = tm->width - w;
+		output->textdata = tm->texture + tm->currentY * tm->width + tm->currentX;
+		tm->currentX += w;
       //YglTM->currentX += 0x0F;
       //YglTM->currentX &= ~(0x0F);
 
-      if ((YglTM->currentY + h) > YglTM->yMax)
+		if ((tm->currentY + h) > tm->yMax)
       {
-         YglTM->yMax = YglTM->currentY + h;
+		  tm->yMax = tm->currentY + h;
          //YglTM->yMax += 0x0F;
          //YglTM->yMax &= ~(0x0F);
       }
    }
    else {
-      YglTM->currentX = 0;
-      YglTM->currentY = YglTM->yMax;
-      YglTMAllocate(output, w, h, x, y);
+	   tm->currentX = 0;
+	   tm->currentY = tm->yMax;
+	   YglTMAllocate(tm, output, w, h, x, y);
    }
 }
 
@@ -797,7 +834,7 @@ int YglGenFrameBuffer() {
 
 	YGLDEBUG("YglGLInit OK");
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 	rebuild_frame_buffer = 0;
 	return 0;
 }
@@ -916,7 +953,6 @@ int YglInit(int width, int height, unsigned int depth) {
 	GLuint error;
    YGLLOG("YglInit(%d,%d,%d);",width,height,depth );
 
-   YglTMInit(width, height);
 
    if ((_Ygl = (Ygl *) malloc(sizeof(Ygl))) == NULL)
       return -1;
@@ -991,40 +1027,8 @@ int YglInit(int width, int height, unsigned int depth) {
    glPixelStorei(GL_PACK_ALIGNMENT, 1);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-   
-   if( _Ygl->pixelBufferID == 0 )
-	glGenBuffers(1, &_Ygl->pixelBufferID);
-
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-  glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_STREAM_DRAW);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-  
-   if( _Ygl->texture == 0 )
-      glGenTextures(1, &_Ygl->texture);
-
-   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-   if( (error = glGetError()) != GL_NO_ERROR )
-   {
-      YGLDEBUG("Fail to init YglTM->texture %04X", error);
-      abort();
-   }
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-   glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
-   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-
-   YglTM->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
-   if( (error = glGetError()) != GL_NO_ERROR )
-   {
-      YGLDEBUG("Fail to init YglTM->texture %04X", error);
-      abort();
-   }
-   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+   YglTM = YglTMInit(512, 2048);
+   YglTM_vdp1 = YglTMInit(512, 256);
    
    _Ygl->smallfbo = 0;
    _Ygl->smallfbotex = 0;
@@ -1037,7 +1041,7 @@ int YglInit(int width, int height, unsigned int depth) {
 	   abort();
    }
    glBindFramebuffer(GL_FRAMEBUFFER, 0 );
-   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+   glBindTexture(GL_TEXTURE_2D, 0);
    _Ygl->st = 0;
    _Ygl->msglength = 0;
 
@@ -1053,7 +1057,8 @@ int YglInit(int width, int height, unsigned int depth) {
 void YglDeInit(void) {
    unsigned int i,j;
 
-   YglTMDeInit();
+   YglTMDeInit(YglTM);
+   YglTMDeInit(YglTM_vdp1);
 
    if (_Ygl)
    {
@@ -1164,9 +1169,9 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 	   level->prg[level->prgcurrent].blendmode = input->blendmode;
   }
 // for polygon debug
-//   else if (prg == PG_VFP1_GOURAUDSAHDING ){
-//	   YglProgramChange(level, prg);
-//   }
+  else if (prg == PG_VFP1_GOURAUDSAHDING ){
+	   YglProgramChange(level, prg);
+   }
    program = &level->prg[level->prgcurrent];
 
    if (program->currentQuad == program->maxQuad) {
@@ -1174,7 +1179,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 	  program->quads = (float *)realloc(program->quads, program->maxQuad * sizeof(float));
       program->textcoords = (float *) realloc(program->textcoords, program->maxQuad * sizeof(float) * 2);
       program->vertexAttribute = (float *) realloc(program->vertexAttribute, program->maxQuad * sizeof(float)*2);
-      YglCacheReset();
+	  YglCacheReset(YglTM);
    }
 
    return program;
@@ -1232,7 +1237,7 @@ void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx,
 	tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
 
 	program->currentQuad += 12;
-	YglTMAllocate(output, input->w, input->h, &x, &y);
+	YglTMAllocate(YglTM,output, input->w, input->h, &x, &y);
 	if (output->textdata == NULL){
 		abort();
 	}
@@ -1335,7 +1340,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
 
    program->currentQuad += 12;
-   YglTMAllocate(output, input->w, input->h, &x, &y);
+   YglTMAllocate(YglTM,output, input->w, input->h, &x, &y);
    if (output->textdata == NULL){
 	   abort();
    }
@@ -1549,23 +1554,23 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
 
    program->currentQuad += 12;
 
-   YglTMAllocate(output, input->w, input->h, &x, &y);
+   YglTMAllocate(YglTM, output, input->w, input->h, &x, &y);
 
    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
 
    if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w)-ATLAS_BIAS;
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
+	   tmp[0].s = tmp[3].s = tmp[5].s = (float)((x + input->w) - ATLAS_BIAS) ;
+	   tmp[1].s = tmp[2].s = tmp[4].s = (float)((x)+ATLAS_BIAS) ;
    } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
+	   tmp[0].s = tmp[3].s = tmp[5].s = (float)((x)+ATLAS_BIAS) ;
+	   tmp[1].s = tmp[2].s = tmp[4].s = (float)((x + input->w) - ATLAS_BIAS);
    }
    if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
+	   tmp[0].t = tmp[1].t = tmp[3].t = (float)((y + input->h) - ATLAS_BIAS);
+	   tmp[2].t = tmp[4].t = tmp[5].t = (float)((y)+ATLAS_BIAS);
    } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
+	   tmp[0].t = tmp[1].t = tmp[3].t = (float)((y)+ATLAS_BIAS);
+	   tmp[2].t = tmp[4].t = tmp[5].t = (float)((y + input->h) - ATLAS_BIAS);
    }
 
    if( c != NULL )
@@ -1591,9 +1596,21 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    }
 
 
+   tmp[0].s /= (float)YglTM->width;
+   tmp[0].t /= (float)YglTM->height;
+   tmp[1].s /= (float)YglTM->width;
+   tmp[1].t /= (float)YglTM->height;
+   tmp[2].s /= (float)YglTM->width;
+   tmp[2].t /= (float)YglTM->height;
+   tmp[3].s /= (float)YglTM->width;
+   tmp[3].t /= (float)YglTM->height;
+   tmp[4].s /= (float)YglTM->width;
+   tmp[4].t /= (float)YglTM->height;
+   tmp[5].s /= (float)YglTM->width;
+   tmp[5].t /= (float)YglTM->height;
 
 
-   if( input->dst == 1 )
+   if( 0 ) //input->dst == 1 )
    {
       YglCalcTextureQ(input->vertices,q);
 
@@ -1924,20 +1941,22 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors,YglCache * cache)
 
   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
 
-   if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w)-ATLAS_BIAS;
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
-   } else {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
-   }
-   if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
-   } else {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
-   }
+  if (input->flip & 0x1) {
+	  tmp[0].s = tmp[3].s = tmp[5].s = (float)((x + input->w) - ATLAS_BIAS) / (float)YglTM->width;
+	  tmp[1].s = tmp[2].s = tmp[4].s = (float)((x)+ATLAS_BIAS) / (float)YglTM->width;
+  }
+  else {
+	  tmp[0].s = tmp[3].s = tmp[5].s = (float)((x)+ATLAS_BIAS) / (float)YglTM->width;
+	  tmp[1].s = tmp[2].s = tmp[4].s = (float)((x + input->w) - ATLAS_BIAS) / (float)YglTM->width;
+  }
+  if (input->flip & 0x2) {
+	  tmp[0].t = tmp[1].t = tmp[3].t = (float)((y + input->h) - ATLAS_BIAS) / (float)YglTM->height;
+	  tmp[2].t = tmp[4].t = tmp[5].t = (float)((y)+ATLAS_BIAS) / (float)YglTM->height;
+  }
+  else {
+	  tmp[0].t = tmp[1].t = tmp[3].t = (float)((y)+ATLAS_BIAS) / (float)YglTM->height;
+	  tmp[2].t = tmp[4].t = tmp[5].t = (float)((y + input->h) - ATLAS_BIAS) / (float)YglTM->height;
+  }
 
    if( input->dst == 1 )
    {
@@ -1993,9 +2012,9 @@ void YglRenderVDP1(void) {
    level = &(_Ygl->levels[_Ygl->depth]);
    glDisable(GL_STENCIL_TEST);
    glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
    if (YglTM->texture != NULL) {
-     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
+	   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, YglTM->pixelBufferID);
      glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, YglTM->width, YglTM->yMax, GL_RGBA, GL_UNSIGNED_BYTE, 0);
      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -2390,9 +2409,9 @@ void YglRender(void) {
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
 
    glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
    if (YglTM->texture != NULL) {
-     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
+	   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, YglTM->pixelBufferID);
      glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, YglTM->width, YglTM->yMax, GL_RGBA, GL_UNSIGNED_BYTE, 0);
      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -2430,7 +2449,7 @@ void YglRender(void) {
 				// clean up
 				cprg = -1;
 				glUseProgram(0);
-				glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+				glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
 			}
 
@@ -2509,8 +2528,8 @@ void YglRender(void) {
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    YuiSwapBuffers();
 
-   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-   YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
+   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, YglTM->pixelBufferID);
+   YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, YglTM->width * YglTM->height * 4, GL_MAP_WRITE_BIT);
    if (YglTM->texture == NULL){
 	   abort();
    }
@@ -2573,7 +2592,7 @@ void YglRenderDestinationAlpha(void) {
 			// clean up
 			cprg = -1;
 			glUseProgram(0);
-			glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
+			glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 		}
 		glDisable(GL_STENCIL_TEST);
 		for (j = 0; j<(level->prgcurrent + 1); j++)
@@ -2683,7 +2702,7 @@ void YglReset(void) {
    YglLevel * level;
    unsigned int i,j;
 
-   YglTMReset();
+   YglTMReset(YglTM);
 
    for(i = 0;i < (_Ygl->depth+1) ;i++) {
      level = _Ygl->levels + i;
@@ -2738,7 +2757,7 @@ u32 * YglGetLineColorPointer(){
   _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
   if ((error = glGetError()) != GL_NO_ERROR)
   {
-    YGLLOG("Fail to init YglTM->texture %04X", error);
+    YGLLOG("Fail to init YglTM->lincolor_buf %04X", error);
     return NULL;
   }
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
