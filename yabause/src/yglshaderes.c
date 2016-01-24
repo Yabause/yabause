@@ -72,8 +72,6 @@ const GLchar Yglprg_normal_v[] =
       "{                            \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
-      "   v_texcoord.s  = v_texcoord.s; ///2048.0; \n"
-      "   v_texcoord.t  = v_texcoord.t; ///1024.0; \n"
       "} ";
 const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
@@ -319,24 +317,22 @@ int Ygl_cleanupVdp1Normal(void * p )
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_v[] =
 #if defined(_OGLES3_)
-      "#version 300 es \n"
+"#version 300 es \n"
 #else
-      "#version 330 \n"
+"#version 330 \n"
 #endif
-      "uniform mat4 u_mvpMatrix;                \n"
-      "uniform mat4 u_texMatrix;                \n"
-      "layout (location = 0) in vec4 a_position;               \n"
-      "layout (location = 1) in vec4 a_texcoord;               \n"
-      "layout (location = 2) in vec4 a_grcolor;                \n"
-      "out  vec4 v_texcoord;               \n"
-      "out  vec4 v_vtxcolor;               \n"
-      "void main() {                            \n"
-      "   v_vtxcolor  = a_grcolor;              \n"
-      "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
-      "   v_texcoord.s  = v_texcoord.s/2048.0; \n"
-      "   v_texcoord.t  = v_texcoord.t/1024.0; \n"
-      "   gl_Position = a_position*u_mvpMatrix; \n"
-      "}\n";
+"uniform mat4 u_mvpMatrix;                \n"
+"uniform mat4 u_texMatrix;                \n"
+"layout (location = 0) in vec4 a_position;               \n"
+"layout (location = 1) in vec4 a_texcoord;               \n"
+"layout (location = 2) in vec4 a_grcolor;                \n"
+"out  vec4 v_texcoord;               \n"
+"out  vec4 v_vtxcolor;               \n"
+"void main() {                            \n"
+"   v_vtxcolor  = a_grcolor;              \n"
+"   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+"   gl_Position = a_position*u_mvpMatrix; \n"
+"}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
@@ -409,8 +405,6 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
       "void main() {                            \n"
       "   v_vtxcolor  = a_grcolor;              \n"
       "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
-      "   v_texcoord.s  = v_texcoord.s/2048.0; \n"
-      "   v_texcoord.t  = v_texcoord.t/1024.0; \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
@@ -504,8 +498,6 @@ const GLchar Yglprg_vdp1_halftrans_v[] =
         "void main() {                            \n"
         "   v_vtxcolor  = a_grcolor;              \n"
         "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
-        "   v_texcoord.s  = v_texcoord.s/2048.0; \n"
-        "   v_texcoord.t  = v_texcoord.t/1024.0; \n"
         "   gl_Position = a_position*u_mvpMatrix; \n"
         "}\n";
 
@@ -590,8 +582,6 @@ const GLchar Yglprg_vdp1_mesh_v[] =
 "void main() {                            \n"
 "   v_vtxcolor  = a_grcolor;              \n"
 "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
-"   v_texcoord.s  = v_texcoord.s/2048.0; \n"
-"   v_texcoord.t  = v_texcoord.t/1024.0; \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "}\n";
 const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
@@ -691,8 +681,6 @@ const GLchar Yglprg_vdp1_shadow_v[] =
 "void main() {                            \n"
 "   v_vtxcolor  = a_grcolor;              \n"
 "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
-"   v_texcoord.s  = v_texcoord.s/2048.0; \n"
-"   v_texcoord.t  = v_texcoord.t/1024.0; \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "}\n";
 
