@@ -118,6 +118,9 @@ YglTextureManager * YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(YglTextureManager * tm );
 void YglTMReset( YglTextureManager * tm );
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
+void YglTmPush(YglTextureManager * tm);
+void YglTmPull(YglTextureManager * tm);
+
 
 void YglCacheInit(YglTextureManager * tm);
 void YglCacheDeInit(YglTextureManager * tm);

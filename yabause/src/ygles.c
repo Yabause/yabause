@@ -521,7 +521,6 @@ void YglTMDeInit(YglTextureManager * tm) {
         glUnmapBuffer (GL_PIXEL_UNPACK_BUFFER);
 		tm->texture = NULL;
     }
-
 	glDeleteTextures(1, &tm->textureID);
 	glDeleteBuffers(1, &tm->pixelBufferID);
 	free(tm);
@@ -529,10 +528,66 @@ void YglTMDeInit(YglTextureManager * tm) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglTMReset(YglTextureManager * tm) {
+void YglTMReset(YglTextureManager * tm  ) {
 	tm->currentX = 0;
 	tm->currentY = 0;
 	tm->yMax = 0;
+}
+
+void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
+
+	GLuint new_textureID;
+	GLuint new_pixelBufferID;
+	GLuint new_texture;
+	GLuint error;
+
+	YglTmPull(tm); // copy to dram
+
+	glGenBuffers(1, &new_pixelBufferID);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * height * 4, NULL, GL_STREAM_DRAW);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+	glGenTextures(1, &new_textureID);
+	glBindTexture(GL_TEXTURE_2D, new_textureID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	if ((error = glGetError()) != GL_NO_ERROR){
+		YGLDEBUG("Fail to init YglTM->textureID %04X", error);
+		abort();
+	}
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
+	new_texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	if ((error = glGetError()) != GL_NO_ERROR){
+		YGLDEBUG("Fail to init YglTM->texture %04X", error);
+		abort();
+	}
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+	memcpy(new_texture, tm->texture, tm->width * tm->height * 4);
+	tm->height = height;
+
+	// Free textures
+	glBindTexture(GL_TEXTURE_2D, tm->textureID);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+
+	tm->texture = NULL;
+	glDeleteTextures(1, &tm->textureID);
+	glDeleteBuffers(1, &tm->pixelBufferID);
+
+	tm->texture = new_texture;
+	tm->textureID = new_textureID;
+	tm->pixelBufferID = new_pixelBufferID;
+	glBindTexture(GL_TEXTURE_2D, tm->textureID);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+	return;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -540,10 +595,8 @@ void YglTMReset(YglTextureManager * tm) {
 void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
 	if ((tm->height - tm->currentY) < h) {
       fprintf(stderr, "can't allocate texture: %dx%d\n", w, h);
-      *x = *y = 0;
-      output->w = 0;
-	  output->textdata = tm->texture;
-	  abort();
+	  YglTMRealloc( tm, tm->height*2);
+	  YglTMAllocate(tm, output, w, h, x, y);
       return;
    }
 
@@ -1024,8 +1077,8 @@ int YglInit(int width, int height, unsigned int depth) {
    glPixelStorei(GL_PACK_ALIGNMENT, 1);
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-   YglTM = YglTMInit(512, 2048);
-   YglTM_vdp1 = YglTMInit(512, 1024);
+   YglTM = YglTMInit(512, 512);
+   YglTM_vdp1 = YglTMInit(512, 512);
    
    _Ygl->smallfbo = 0;
    _Ygl->smallfbotex = 0;
