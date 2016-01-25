@@ -643,7 +643,7 @@ int Ygl_uniformMesh(void * p)
 #if !defined(_OGLES3_)
 	if (glTextureBarrierNV) glTextureBarrierNV();
 #endif
-
+	return 0;
 }
 
 int Ygl_cleanupMesh(void * p)
@@ -1116,10 +1116,12 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, floa
 	_Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_mvpMatrix");
 
 	glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+	return 0;
 }
 
 int Ygl_cleanupVDP2DrawFramebuffer_addcolor(void * p){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	return 0;
 }
 
 /*------------------------------------------------------------------------------------
