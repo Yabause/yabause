@@ -541,7 +541,13 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
 	GLuint new_texture;
 	GLuint error;
 
-	YglTmPull(tm); // copy to dram
+	// copy to dram
+	if (tm->texture == NULL){
+		glBindTexture(GL_TEXTURE_2D, tm->textureID);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_READ_BIT);
+	}
+	glGetError();
 
 	glGenBuffers(1, &new_pixelBufferID);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
@@ -573,19 +579,14 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
 	tm->height = height;
 
 	// Free textures
-	glBindTexture(GL_TEXTURE_2D, tm->textureID);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-
-	tm->texture = NULL;
 	glDeleteTextures(1, &tm->textureID);
 	glDeleteBuffers(1, &tm->pixelBufferID);
 
 	tm->texture = new_texture;
 	tm->textureID = new_textureID;
 	tm->pixelBufferID = new_pixelBufferID;
-	glBindTexture(GL_TEXTURE_2D, tm->textureID);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+
+	//printf("reallocated texture:%08x,%08x,%08x\n", tm->texture, tm->textureID, tm->pixelBufferID);
 	return;
 
 }
@@ -594,7 +595,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
 
 void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
 	if ((tm->height - tm->currentY) < h) {
-      fprintf(stderr, "can't allocate texture: %dx%d\n", w, h);
+	  YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
 	  YglTMRealloc( tm, tm->height*2);
 	  YglTMAllocate(tm, output, w, h, x, y);
       return;
@@ -2057,7 +2058,7 @@ void YglTmPull(YglTextureManager * tm){
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tm->textureID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT /*| GL_MAP_UNSYNCHRONIZED_BIT*/);
+		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 		if (tm->texture == NULL){
 			abort();
 		}
