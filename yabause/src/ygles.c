@@ -27,7 +27,7 @@
 #include "vidshared.h"
 #include "debug.h"
 
-#define YGLDEBUG
+#define YGLDEBUG printf
 //#define YGLDEBUG LOG
 //#define YGLDEBUG yprintf
 
@@ -538,7 +538,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
 
 	GLuint new_textureID;
 	GLuint new_pixelBufferID;
-	GLuint new_texture;
+	unsigned int * new_texture;
 	GLuint error;
 
 	// copy to dram
@@ -546,35 +546,33 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
 		glBindTexture(GL_TEXTURE_2D, tm->textureID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
 		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_READ_BIT);
+        YGLDEBUG("?????\n");
 	}
 	glGetError();
 
-	glGenBuffers(1, &new_pixelBufferID);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
-	glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * height * 4, NULL, GL_STREAM_DRAW);
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
 	glGenTextures(1, &new_textureID);
 	glBindTexture(GL_TEXTURE_2D, new_textureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	if ((error = glGetError()) != GL_NO_ERROR){
-		YGLDEBUG("Fail to init YglTM->textureID %04X", error);
+		YGLDEBUG("Fail to init new_textureID %d, %04X(%d,%d)\n", new_textureID, error,tm->width, height);
 		abort();
 	}
-
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+
+	glGenBuffers(1, &new_pixelBufferID);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
+	glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * height * 4, NULL, GL_STREAM_DRAW);
 	new_texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 	if ((error = glGetError()) != GL_NO_ERROR){
-		YGLDEBUG("Fail to init YglTM->texture %04X", error);
+		YGLDEBUG("Fail to init new_texture %04X", error);
 		abort();
 	}
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
+	
 	memcpy(new_texture, tm->texture, tm->width * tm->height * 4);
 	tm->height = height;
 
@@ -586,7 +584,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
 	tm->textureID = new_textureID;
 	tm->pixelBufferID = new_pixelBufferID;
 
-	//printf("reallocated texture:%08x,%08x,%08x\n", tm->texture, tm->textureID, tm->pixelBufferID);
+	printf("reallocated texture:%08x(%08x),%08x,%08x\n", tm->texture, tm->width * height * 4, tm->textureID, tm->pixelBufferID);
 	return;
 
 }
