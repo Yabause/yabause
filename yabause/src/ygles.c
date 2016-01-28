@@ -515,12 +515,6 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglTMDeInit(YglTextureManager * tm) {
-	if (tm->texture != NULL) {
-		glBindTexture(GL_TEXTURE_2D, tm->textureID);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-        glUnmapBuffer (GL_PIXEL_UNPACK_BUFFER);
-		tm->texture = NULL;
-    }
 	glDeleteTextures(1, &tm->textureID);
 	glDeleteBuffers(1, &tm->pixelBufferID);
 	free(tm);
@@ -553,6 +547,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int height ){
 
 	glGenTextures(1, &new_textureID);
 	glBindTexture(GL_TEXTURE_2D, new_textureID);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	if ((error = glGetError()) != GL_NO_ERROR){
 		YGLDEBUG("Fail to init new_textureID %d, %04X(%d,%d)\n", new_textureID, error,tm->width, height);
@@ -618,17 +613,17 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
 }
 
 
-
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
+    
   if (_Ygl->smallfbo == 0) {
 
 	  GLuint error;
     YabThreadLock( _Ygl->mutex );
 
     glGenTextures(1, &_Ygl->smallfbotex);
-    YGLLOG("glGenTextures %d\n",_Ygl->smallfbotex );
+    YGLDEBUG("glGenTextures %d\n",_Ygl->smallfbotex );
     glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
-
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 	glGetError();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	if ((error = glGetError()) != GL_NO_ERROR)
@@ -675,13 +670,13 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->readframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     YGLLOG("glReadPixels %d\n",_Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     YGLLOG("VIDOGLVdp1ReadFrameBuffer %d\n", _Ygl->drawframe);
     _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-
     YabThreadUnLock( _Ygl->mutex );
 
     if (_Ygl->pFrameBuffer==NULL)
@@ -1218,9 +1213,9 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 	   level->prg[level->prgcurrent].blendmode = input->blendmode;
   }
 // for polygon debug
-  else if (prg == PG_VFP1_GOURAUDSAHDING ){
-	   YglProgramChange(level, prg);
-   }
+//  else if (prg == PG_VFP1_GOURAUDSAHDING ){
+//	   YglProgramChange(level, prg);
+//   }
    program = &level->prg[level->prgcurrent];
 
    if (program->currentQuad == program->maxQuad) {
@@ -2333,6 +2328,7 @@ void YglRenderFrameBuffer( int from , int to ) {
      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
    }
    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
+   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
    //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
 
    YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, _Ygl->readframe);
@@ -2472,7 +2468,8 @@ void YglRender(void) {
    glEnable(GL_DEPTH_TEST);
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
-
+   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+   
    YglSetVdp2Window();
 
 	// 12.14 CCRTMD                               // MSB perpxel transparent is not uported yet
@@ -2505,6 +2502,7 @@ void YglRender(void) {
 				cprg = -1;
 				glUseProgram(0);
 				glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+                glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
 			}
 
@@ -2642,6 +2640,7 @@ void YglRenderDestinationAlpha(void) {
 			cprg = -1;
 			glUseProgram(0);
 			glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 		}
 		glDisable(GL_STENCIL_TEST);
 		for (j = 0; j<(level->prgcurrent + 1); j++)
@@ -2834,8 +2833,8 @@ void YglSetLineColor(u32 * pbuf, int size){
 void YglChangeResolution(int w, int h) {
    YglLoadIdentity(&_Ygl->mtxModelView);
    YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
-
    if( _Ygl->rwidth != w || _Ygl->rheight != h ) {
+       YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
          glDeleteFramebuffers(1, &_Ygl->smallfbo);
          _Ygl->smallfbo = 0;
