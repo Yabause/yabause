@@ -120,7 +120,7 @@ enum RenderThreadMessage {
 
 };
 
-int g_msg = MSG_NONE;
+volatile int g_msg = MSG_NONE;
 pthread_t _threadId;
 
 M68K_struct * M68KCoreList[] = {

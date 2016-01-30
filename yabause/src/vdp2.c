@@ -443,14 +443,12 @@ void vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
-   VIDCore->Vdp2DrawStart();
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
+   VIDCore->Vdp2DrawStart();
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
-      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
-   else
-      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
@@ -586,14 +584,12 @@ void Vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    VIDCore->Vdp2DrawStart();
 
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
-      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
-   else
-	   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
