@@ -51,6 +51,7 @@ int vdp2_is_odd_frame = 0;
 int vbalnk_wait = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
+YabEventQueue * rcv_evqueue = NULL;
 static u64 syncticks = 0;       // CPU time sync for real time.
 void VdpProc( void *arg );      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
@@ -157,6 +158,9 @@ int Vdp2Init(void) {
 
    Vdp2Reset();
 
+#if defined(YAB_ASYNC_RENDERING)
+   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(1);
+#endif
 
    return 0;
 }
@@ -325,8 +329,8 @@ void vdp2VBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
-   vbalnk_wait = 1;
-   YglSync();
+   YabAddEventQueue(rcv_evqueue, 0);
+   VIDCore->Sync();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -342,9 +346,7 @@ void Vdp2VBlankIN(void) {
    YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
-   while( vbalnk_wait == 0 ){
-       YabThreadYield();
-   }
+   YabWaitEventQueue(rcv_evqueue);
 
 #else
    /* this should be done after a frame change or a plot trigger */
@@ -356,7 +358,7 @@ void Vdp2VBlankIN(void) {
    if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
-   YglSync();
+   VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
    ScuSendVBlankIN();

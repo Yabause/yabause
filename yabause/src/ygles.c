@@ -2858,7 +2858,7 @@ void YglOnScreenDebugMessage(char *string, ...) {
    _Ygl->msglength = (int)strlen(_Ygl->message);
 }
 
-void YglSync(){
+void VIDOGLSync(){
 	YglTmPull(YglTM_vdp1);
 	YglTmPull(YglTM);
 }

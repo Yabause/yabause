@@ -86,6 +86,7 @@ typedef struct
    void (*Vdp2DrawScreens)(void);
    void (*GetGlSize)(int *width, int *height);
    void (*SetFilterType)(int type);
+   void(*Sync)();
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
