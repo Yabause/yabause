@@ -86,6 +86,7 @@ void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDOGLSetFilterMode(int type);
+void VIDOGLSync();
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -113,7 +114,8 @@ VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
 VIDOGLVdp2DrawScreens,
 YglGetGlSize,
-VIDOGLSetFilterMode
+VIDOGLSetFilterMode,
+VIDOGLSync
 };
 
 float vdp1wratio=1;
