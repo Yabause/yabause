@@ -24,46 +24,36 @@
 #include "yui.h"
 #include "vidshared.h"
 
-#define HASHSIZE  (0xFFFF)
-typedef struct _YglCacheHash {
-  u64 addr;
-  float x;
-  float y;
-  struct _YglCacheHash * next;
-} YglCacheHash;
 
-YglCacheHash *HashTable[HASHSIZE] = { 0 }; 
-YglCacheHash CashLink[HASHSIZE*2] = { 0 };
-u32 CashLink_index = 0;
 
 static u32 YglgetHash(u64 addr)
 {
   return ((addr>>4) & HASHSIZE);
 }
 
-static YglCacheHash * YglgetNewCash() {
+static YglCacheHash * YglgetNewCash(YglTextureManager * tm) {
 
   YglCacheHash * rtn;
 
-  if (CashLink_index >= HASHSIZE*2){
+  if (tm->CashLink_index >= HASHSIZE * 2){
     printf("not enough cash");
     return NULL;
   }
-  rtn = &CashLink[CashLink_index];
-  CashLink_index++;
+  rtn = &tm->CashLink[tm->CashLink_index];
+  tm->CashLink_index++;
   return rtn;
 }
 
-int YglIsCached(u64 addr, YglCache * c ) {
+int YglIsCached(YglTextureManager * tm, u64 addr, YglCache * c) {
 
   u32 hashkey;
   hashkey = YglgetHash(addr);  /* get hash */
 
-  if (HashTable[hashkey] == NULL) {  /* Empty Hash */
+  if (tm->HashTable[hashkey] == NULL) {  /* Empty Hash */
     return 0;        /* Not Found */
   }
   else {  /* needs liner search */
-    YglCacheHash *at = HashTable[hashkey];  
+	  YglCacheHash *at = tm->HashTable[hashkey];
     while (at != NULL) {
       if (at->addr == addr) {  /* Find! */
         c->x = at->x;
@@ -80,22 +70,22 @@ int YglIsCached(u64 addr, YglCache * c ) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglCacheAdd(u64 addr, YglCache * c) {
+void YglCacheAdd(YglTextureManager * tm, u64 addr, YglCache * c) {
 
   u32 hashkey;
   YglCacheHash *add;
   hashkey = YglgetHash(addr);
 
-  if (HashTable[hashkey] == NULL){
-    add = YglgetNewCash();
+  if (tm->HashTable[hashkey] == NULL){
+	add = YglgetNewCash(tm);
     add->addr = addr;
     add->x = c->x;
     add->y = c->y;
     add->next = NULL;
-    HashTable[hashkey] = add;   
+	tm->HashTable[hashkey] = add;
   }
   else{
-    YglCacheHash *at = HashTable[hashkey];
+	  YglCacheHash *at = tm->HashTable[hashkey];
     while (at != NULL) {
       if (at->addr == addr  ) { 
         at->addr = addr;
@@ -106,21 +96,21 @@ void YglCacheAdd(u64 addr, YglCache * c) {
       at = at->next; 
     }
 
-    add = YglgetNewCash();
+	add = YglgetNewCash(tm);
     add->addr = addr;
     add->x = c->x;
     add->y = c->y;
-    add->next = HashTable[hashkey];
-    HashTable[hashkey] = add;      
+	add->next = tm->HashTable[hashkey];
+	tm->HashTable[hashkey] = add;
   }
 
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglCacheReset(void) {
-  memset(HashTable, 0, sizeof(HashTable));
-  CashLink_index = 0;
+void YglCacheReset(YglTextureManager * tm) {
+	memset(tm->HashTable, 0, sizeof(tm->HashTable));
+	tm->CashLink_index = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

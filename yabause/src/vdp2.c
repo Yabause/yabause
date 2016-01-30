@@ -326,6 +326,7 @@ void vdp2VBlankIN(void) {
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
    vbalnk_wait = 1;
+   YglSync();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -355,7 +356,7 @@ void Vdp2VBlankIN(void) {
    if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
-
+   YglSync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
    ScuSendVBlankIN();
@@ -442,14 +443,12 @@ void vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
-   VIDCore->Vdp2DrawStart();
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
+   VIDCore->Vdp2DrawStart();
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
-      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
-   else
-      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
@@ -585,14 +584,12 @@ void Vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    VIDCore->Vdp2DrawStart();
 
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
-      if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
-   else
-	   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))

@@ -22,7 +22,6 @@
 /*! \file vidogl.c
     \brief OpenGL video renderer
 */
-
 #if defined(HAVE_LIBGL) || defined(__ANDROID__)
 
 #include <math.h>
@@ -2284,14 +2283,14 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	tile.cob = info->cob;
 
 
-	if (1 == YglIsCached(cacheaddr, &c))
+	if (1 == YglIsCached(_Ygl->texture_manager, cacheaddr, &c))
 	{
 		YglCachedQuadOffset(&tile, &c, cx, cy, info->coordincx, info->coordincy);
 		return;
 	}
 
 	YglQuadOffset(&tile, texture, &c, cx, cy, info->coordincx, info->coordincy);
-	YglCacheAdd(cacheaddr, &c);
+	YglCacheAdd(_Ygl->texture_manager, cacheaddr, &c);
 
 	switch (info->patternwh)
 	{
@@ -2371,7 +2370,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    tile.cog = info->cog;
    tile.cob = info->cob;
 
-   if (1 == YglIsCached(cacheaddr,&c) )
+   if (1 == YglIsCached(_Ygl->texture_manager, cacheaddr, &c))
    {
       YglCachedQuad(&tile, &c);
       info->x += tile.w;
@@ -2380,7 +2379,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    }
 
    YglQuad(&tile, texture, &c);
-   YglCacheAdd(cacheaddr, &c);
+   YglCacheAdd(_Ygl->texture_manager, cacheaddr, &c);
 
    switch(info->patternwh)
    {
@@ -3287,7 +3286,7 @@ static void SetSaturnResolution(int width, int height)
 int VIDOGLInit(void)
 {
 
-   if (YglInit(2048, 1024, 8) != 0)
+	if (YglInit(2048, 1024, 8) != 0)
       return -1;
 
    SetSaturnResolution(320, 224);
@@ -3351,19 +3350,12 @@ void VIDOGLVdp1DrawStart(void)
    int maxpri;
    int minpri;
    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
+   YabThreadLock(_Ygl->mutex);
 
-   if (YglTM->texture == NULL) {
-     glActiveTexture(GL_TEXTURE0);
-     glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
-     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-     YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
-	 if (YglTM->texture == NULL){
-		 abort();
-	 }
-   }
-
-   YglCacheReset();
-   
+   YglTmPull(YglTM_vdp1);
+   YglTMReset(YglTM_vdp1);
+   YglCacheReset(YglTM_vdp1);
+   _Ygl->texture_manager = YglTM_vdp1;
 
    maxpri = 0x00;
    minpri = 0x07;   
@@ -3413,13 +3405,18 @@ void VIDOGLVdp1DrawStart(void)
       vdp1cor = vdp1cog = vdp1cob = 0;
 
    Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
+   YabThreadUnLock(_Ygl->mutex);
+   
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDOGLVdp1DrawEnd(void)
 {
-  YglRenderVDP1();
+	YabThreadLock(_Ygl->mutex);
+	YglTmPush(YglTM_vdp1);
+	YglRenderVDP1();
+	YabThreadUnLock(_Ygl->mutex);
 }
 
 #define IS_MESH(a) (a&0x100)
@@ -3523,14 +3520,14 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      
       if (sprite.w > 0 && sprite.h > 0)
       {
-         if (1 == YglIsCached(tmp,&cash) )
+		  if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
          {
             YglCacheQuadGrowShading(&sprite, col,&cash);
             return;
          }
 
          YglQuadGrowShading(&sprite, &texture,col,&cash);
-         YglCacheAdd(tmp,&cash);
+		 YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
       }
@@ -3540,14 +3537,14 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    {
       if (sprite.w > 0 && sprite.h > 0)
       {
-         if (1 == YglIsCached(tmp,&cash) )
+		  if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
          {
             YglCacheQuadGrowShading(&sprite, NULL,&cash);
             return;
          }
 
          YglQuadGrowShading(&sprite, &texture,NULL,&cash);
-         YglCacheAdd(tmp,&cash);
+		 YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
 
          Vdp1ReadTexture(&cmd, &sprite, &texture);
 	  }
@@ -3722,14 +3719,14 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      
       if (sprite.w > 0 && sprite.h > 0)
       {
-         if (1 == YglIsCached(tmp,&cash) )
+		  if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
          {
             YglCacheQuadGrowShading(&sprite, col,&cash);
             return;
          }
 
          YglQuadGrowShading(&sprite, &texture,col,&cash);
-         YglCacheAdd(tmp,&cash);
+		 YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
          return;
 	  }
@@ -3742,14 +3739,14 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       if (sprite.w > 0 && sprite.h > 0)
       {
 
-         if (1 == YglIsCached(tmp,&cash) )
+		  if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
          {
             YglCacheQuadGrowShading(&sprite, NULL,&cash);
             return;
          }
 
          YglQuadGrowShading(&sprite, &texture,NULL,&cash);
-         YglCacheAdd(tmp,&cash);
+		 YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
          Vdp1ReadTexture(&cmd, &sprite, &texture);
 	  }
 
@@ -3946,26 +3943,26 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          col[(i << 2) + 3] = 1.0f;
       }
      
-      if (1 == YglIsCached(tmp,&cash) )
+	  if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
       {
 	      YglCacheQuadGrowShading(&sprite, col,&cash);
           return;
       }
 
 		YglQuadGrowShading(&sprite, &texture,col,&cash);
-		YglCacheAdd(tmp,&cash);
+		YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
 		Vdp1ReadTexture(&cmd, &sprite, &texture);
 		return;
    }
    else // No Gouraud shading, use same color for all 4 vertices
    {
-		if (1 == YglIsCached(tmp,&cash) )
+	   if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
         {
 			YglCacheQuadGrowShading(&sprite, NULL,&cash);
 			return;
 		}
 		YglQuadGrowShading(&sprite, &texture,NULL,&cash);
-		YglCacheAdd(tmp,&cash);
+		YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
 		Vdp1ReadTexture(&cmd, &sprite, &texture);
    }
    
@@ -4138,7 +4135,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    // Pallet mode
    if (IS_REPLACE(CMDPMOD) && color == 0 ) 
    {
-	  YglQuad(&sprite, &texture, NULL);
+	  YglQuadGrowShading(&sprite, &texture, NULL, NULL);
       alpha = 0;   
       priority = 0;
 	  *texture.textdata = 0x0;
@@ -4152,7 +4149,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   if (color != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(Vdp2Regs->SPCTL & 0x10)) ){
 	   }
 	   else{
-		   YglQuad(&sprite, &texture, NULL);
+		   YglQuadGrowShading(&sprite, &texture, NULL, NULL);
 		   alpha = 0;
 		   priority = 0;
 		   *texture.textdata = 0;
@@ -4749,8 +4746,7 @@ int VIDOGLVdp2Reset(void)
 
 void VIDOGLVdp2DrawStart(void)
 {
-   YglReset();
-   YglCacheReset();
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5920,17 +5916,19 @@ static void Vdp2DrawRBG0(void)
 
 void VIDOGLVdp2DrawScreens(void)
 {
-	if (YglTM->texture == NULL) {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-		YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
-		if (YglTM->texture == NULL){
-			abort();
-		}
-	}
-
    VIDOGLVdp2SetResolution(Vdp2Regs->TVMD);
+
+   if (_Ygl->rwidth > YglTM->width){
+	   int new_width = _Ygl->rwidth;
+	   int new_height = YglTM->height;
+	   YglTMDeInit(YglTM);
+	   YglTM = YglTMInit(new_width, new_height);
+   }
+   YglReset();
+   YglCacheReset(YglTM);
+   _Ygl->texture_manager = YglTM;
+   YglTmPull(YglTM);
+
    Vdp2GenerateWindowInfo();
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
@@ -5942,6 +5940,7 @@ void VIDOGLVdp2DrawScreens(void)
    Vdp2DrawNBG0();
    Vdp2DrawRBG0();
    
+   YglTmPush(YglTM);
 }
 
 //////////////////////////////////////////////////////////////////////////////

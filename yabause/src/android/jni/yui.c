@@ -120,7 +120,7 @@ enum RenderThreadMessage {
 
 };
 
-int g_msg = MSG_NONE;
+volatile int g_msg = MSG_NONE;
 pthread_t _threadId;
 
 M68K_struct * M68KCoreList[] = {
@@ -798,12 +798,14 @@ int initEgl( ANativeWindow* window )
 
      const EGLint attribs[] = {
         EGL_SURFACE_TYPE, EGL_WINDOW_BIT|EGL_PBUFFER_BIT,
+		EGL_RENDERABLE_TYPE,EGL_OPENGL_ES2_BIT,
         EGL_BLUE_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_RED_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
         EGL_DEPTH_SIZE,24,
         EGL_STENCIL_SIZE,8,
+
         EGL_NONE
     };
 
@@ -858,6 +860,29 @@ int initEgl( ANativeWindow* window )
     //YUI_LOG("ANativeWindow_setBuffersGeometry");
     //ANativeWindow_setBuffersGeometry(window, 0, 0, format);
 
+    YUI_LOG("eglCreateContext");
+    if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
+        YUI_LOG("eglCreateContext() for context returned error %d, Fall back to software vidcore mode", eglGetError());
+        s_vidcoretype = VIDCORE_SOFT;
+        attrib_list[1]=2;
+        if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
+            YUI_LOG("eglCreateContext() returned error %d", eglGetError());
+            destroy();
+            return -1;
+        }
+    }
+
+    if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
+        YUI_LOG("eglCreateContext() for g_Context_Sub returned error %d, Fall back to software vidcore mode", eglGetError());
+        s_vidcoretype = VIDCORE_SOFT;
+        attrib_list[1]=2;
+        if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
+            YUI_LOG("eglCreateContext() returned error %d", eglGetError());
+            destroy();
+            return -1;
+        }
+    }
+	
     YUI_LOG("eglCreateWindowSurface");
     if (!(surface = eglCreateWindowSurface(display, config, window, 0))) {
         YUI_LOG("eglCreateWindowSurface() returned error %X", eglGetError());
@@ -872,6 +897,7 @@ int initEgl( ANativeWindow* window )
     pbuffer_attribs[1] = ANativeWindow_getWidth(window);
     pbuffer_attribs[3] = ANativeWindow_getHeight(window);
 
+	YUI_LOG("eglCreatePbufferSurface");
     if (!(g_Pbuffer = eglCreatePbufferSurface(display, config, pbuffer_attribs ))) {
         YUI_LOG("eglCreatePbufferSurface() returned error %X", eglGetError());
         destroy();
@@ -879,29 +905,6 @@ int initEgl( ANativeWindow* window )
     }
 
 
-
-    YUI_LOG("eglCreateContext");
-    if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
-        YUI_LOG("eglCreateContext() returned error %d, Fall back to software vidcore mode", eglGetError());
-        s_vidcoretype = VIDCORE_SOFT;
-        attrib_list[1]=2;
-        if (!(context = eglCreateContext(display, config, 0, attrib_list))) {
-            YUI_LOG("eglCreateContext() returned error %d", eglGetError());
-            destroy();
-            return -1;
-        }
-    }
-
-    if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
-        YUI_LOG("eglCreateContext() returned error %d, Fall back to software vidcore mode", eglGetError());
-        s_vidcoretype = VIDCORE_SOFT;
-        attrib_list[1]=2;
-        if (!(g_Context_Sub = eglCreateContext(display, config, context, attrib_list))) {
-            YUI_LOG("eglCreateContext() returned error %d", eglGetError());
-            destroy();
-            return -1;
-        }
-    }
 
     YUI_LOG("eglMakeCurrent");
     if (!eglMakeCurrent(display, surface, surface, context)) {
