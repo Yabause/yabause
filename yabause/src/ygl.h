@@ -270,6 +270,7 @@ typedef struct {
    AAMODE aamode;
 
    YglTextureManager * texture_manager;
+   GLsync sync;
 
 }  Ygl;
 
