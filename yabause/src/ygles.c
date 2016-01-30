@@ -2051,7 +2051,7 @@ void YglTmPull(YglTextureManager * tm){
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tm->textureID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT );
 		if (tm->texture == NULL){
 			abort();
 		}
@@ -2065,11 +2065,9 @@ void YglRenderVDP1(void) {
    int j;
    int status;
 
-
-   YabThreadLock( _Ygl->mutex );
-
    if (_Ygl->pFrameBuffer != NULL) {
      _Ygl->pFrameBuffer = NULL;
+	 glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
      glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -2079,6 +2077,7 @@ void YglRenderVDP1(void) {
    level = &(_Ygl->levels[_Ygl->depth]);
    glDisable(GL_STENCIL_TEST);
    glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1->textureID);
 
    cprg = -1;
 
@@ -2215,8 +2214,6 @@ void YglRenderVDP1(void) {
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
-   YabThreadUnLock( _Ygl->mutex );
-   //YglTmPull(YglTM_vdp1);
 }
 
 void YglDmyRenderVDP1(void) {
@@ -2578,7 +2575,6 @@ void YglRender(void) {
    glDisable(GL_SCISSOR_TEST);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    YuiSwapBuffers();
-
    //YglTmPull(YglTM);
    return;
 }
