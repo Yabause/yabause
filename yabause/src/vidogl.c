@@ -36,6 +36,17 @@
 #include "ygl.h"
 #include "yui.h"
 
+#ifdef _WINDOWS
+int yprintf( const char * fmt, ... )
+{
+	va_list ap;
+	va_start(ap, fmt);
+	va_end(ap);
+	return 0;
+}
+#endif
+
+
 #if defined WORDS_BIGENDIAN
 #define SAT2YAB1(alpha,temp)      (alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
 #else

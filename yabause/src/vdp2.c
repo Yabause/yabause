@@ -291,12 +291,15 @@ void VdpProc( void *arg ){
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
+			yprintf("VDPEV_VBLANK_IN\n");
             vdp2VBlankIN();
             break;
         case VDPEV_VBLANK_OUT:
+			yprintf("****************  VDPEV_VBLANK_OUT ******************\n");
             vdp2VBlankOUT();
             break;
         case VDPEV_DIRECT_DRAW:
+			yprintf("VDPEV_DIRECT_DRAW\n");
             Vdp1Draw();
             break;
         case VDPEV_MAKECURRENT:
