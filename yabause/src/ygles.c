@@ -30,6 +30,7 @@
 #define YGLDEBUG printf
 //#define YGLDEBUG LOG
 //#define YGLDEBUG yprintf
+#define YGLLOG yprintf
 
 extern u8 * Vdp1FrameBuffer;
 
@@ -662,20 +663,18 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
 #if 0
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[((_Ygl->drawframe ^ 0x01) & 0x01)], 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, _Ygl->vdp1fbo);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _Ygl->smallfbo);
     glBlitFramebuffer(0, 0, GlWidth, GlHeight, 0, 0, _Ygl->rwidth, _Ygl->rheight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 #else
-	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->readframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
+	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    YGLLOG("glReadPixels %d\n",_Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     YGLLOG("VIDOGLVdp1ReadFrameBuffer %d\n", _Ygl->drawframe);
-    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
+	_Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     YabThreadUnLock( _Ygl->mutex );
 
@@ -2065,6 +2064,17 @@ void YglRenderVDP1(void) {
    int j;
    int status;
 
+   //if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
+	if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
+   {
+	   u32 current_drawframe = 0;
+	   current_drawframe = _Ygl->drawframe;
+	   _Ygl->drawframe = _Ygl->readframe;
+	   _Ygl->readframe = current_drawframe;
+	   Vdp1External.manualchange = 0;
+	   YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+   }
+
    if (_Ygl->pFrameBuffer != NULL) {
      _Ygl->pFrameBuffer = NULL;
 	 glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
@@ -2197,18 +2207,6 @@ void YglRenderVDP1(void) {
 
    }
    level->prgcurrent = 0;
-   
-   if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
-	   ((Vdp1Regs->FBCR & 2) == 0) ||
-	   Vdp1External.manualchange)
-   {
-	   u32 current_drawframe = 0;
-	   current_drawframe = _Ygl->drawframe;
-	   _Ygl->drawframe = _Ygl->readframe;
-	   _Ygl->readframe = current_drawframe;
-	   Vdp1External.manualchange = 0;
-	   YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
-   }
 
    // glFlush(); need??
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
