@@ -89,6 +89,13 @@ typedef struct {
 	unsigned int w;
 } YglTexture;
 
+#define HASHSIZE  (0xFFFF)
+typedef struct _YglCacheHash {
+	u64 addr;
+	float x;
+	float y;
+	struct _YglCacheHash * next;
+} YglCacheHash;
 
 typedef struct {
 	unsigned int currentX;
@@ -97,14 +104,29 @@ typedef struct {
 	unsigned int * texture;
 	unsigned int width;
 	unsigned int height;
+	YglCacheHash *HashTable[HASHSIZE];
+	YglCacheHash CashLink[HASHSIZE * 2];
+	u32 CashLink_index;
+	GLuint textureID;
+	GLuint pixelBufferID;
 } YglTextureManager;
 
 extern YglTextureManager * YglTM;
+extern YglTextureManager * YglTM_vdp1;
 
-void YglTMInit(unsigned int, unsigned int);
-void YglTMDeInit(void);
-void YglTMReset(void);
-void YglTMAllocate(YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
+YglTextureManager * YglTMInit(unsigned int, unsigned int);
+void YglTMDeInit(YglTextureManager * tm );
+void YglTMReset( YglTextureManager * tm );
+void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
+void YglTmPush(YglTextureManager * tm);
+void YglTmPull(YglTextureManager * tm);
+
+
+void YglCacheInit(YglTextureManager * tm);
+void YglCacheDeInit(YglTextureManager * tm);
+int YglIsCached(YglTextureManager * tm, u64, YglCache *);
+void YglCacheAdd(YglTextureManager * tm, u64, YglCache *);
+void YglCacheReset(YglTextureManager * tm);
 
 #define VDP1_COLOR_CL_REPLACE 0x00
 #define VDP1_COLOR_CL_SHADOW 0x10
@@ -182,8 +204,8 @@ typedef struct
 } YglMatrix;
 
 typedef struct {
-   GLuint texture;
-   GLuint pixelBufferID;
+   //GLuint texture;
+   //GLuint pixelBufferID;
    int st;
    char message[512];
    int msglength;
@@ -247,6 +269,8 @@ typedef struct {
 
    AAMODE aamode;
 
+   YglTextureManager * texture_manager;
+
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -269,11 +293,7 @@ void YglSetClearColor(float r, float g, float b);
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 
-void YglCacheInit(void);
-void YglCacheDeInit(void);
-int YglIsCached(u64,YglCache *);
-void YglCacheAdd(u64,YglCache *);
-void YglCacheReset(void);
+
 
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
