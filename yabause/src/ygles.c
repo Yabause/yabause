@@ -27,10 +27,11 @@
 #include "vidshared.h"
 #include "debug.h"
 
-#define YGLDEBUG printf
+#define YGLDEBUG
+//#define YGLDEBUG printf
 //#define YGLDEBUG LOG
 //#define YGLDEBUG yprintf
-#define YGLLOG yprintf
+//#define YGLLOG yprintf
 
 extern u8 * Vdp1FrameBuffer;
 
@@ -660,7 +661,11 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
   if (_Ygl->pFrameBuffer == NULL){
     YabThreadLock( _Ygl->mutex );
-
+	if (_Ygl->sync != 0){
+		glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
+		glDeleteSync( _Ygl->sync );
+		_Ygl->sync = 0;
+	}
 #if 0
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
@@ -2208,7 +2213,11 @@ void YglRenderVDP1(void) {
    }
    level->prgcurrent = 0;
 
-   // glFlush(); need??
+   if (_Ygl->sync != 0) {
+	   glDeleteSync(_Ygl->sync);
+	   _Ygl->sync = 0;
+   }
+   _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
