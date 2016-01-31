@@ -106,6 +106,7 @@ typedef struct
    u64 tickfreq;
    int emulatebios;
    int usequickload;
+   int wait_line_count;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

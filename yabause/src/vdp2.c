@@ -160,6 +160,7 @@ int Vdp2Init(void) {
 
 #if defined(YAB_ASYNC_RENDERING)
    if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(1);
+   yabsys.wait_line_count = -1;
 #endif
 
    return 0;
@@ -291,16 +292,17 @@ void VdpProc( void *arg ){
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
-			//LOG("VDPEV_VBLANK_IN\n");
+			LOG("VDPEV_VBLANK_IN\n");
             vdp2VBlankIN();
             break;
         case VDPEV_VBLANK_OUT:
-			//LOG("****************  VDPEV_VBLANK_OUT ******************\n");
+			LOG("****************  VDPEV_VBLANK_OUT ******************\n");
             vdp2VBlankOUT();
             break;
         case VDPEV_DIRECT_DRAW:
-			//LOG("VDPEV_DIRECT_DRAW\n");
+			LOG("VDPEV_DIRECT_DRAW\n");
             Vdp1Draw();
+			YabAddEventQueue(rcv_evqueue, 0);
             break;
         case VDPEV_MAKECURRENT:
             YuiUseOGLOnThisThread();
@@ -388,6 +390,13 @@ void Vdp2HBlankOUT(void) {
 
    if (yabsys.LineCount < 270)
       memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+
+#if defined(YAB_ASYNC_RENDERING)
+   if (yabsys.wait_line_count != -1 && yabsys.wait_line_count >= yabsys.LineCount){
+	   yabsys.wait_line_count = -1;
+	   YabWaitEventQueue(rcv_evqueue); // sync Direct VDP1 Draw
+   }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -527,7 +536,7 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-    //LOG("VDP2:VDPEV_VBLANK_OUT\n");
+    LOG("VDP2:VDPEV_VBLANK_OUT\n");
 #if defined(YAB_ASYNC_RENDERING)
 
    if( vdp_proc_running == 0 ){
@@ -567,7 +576,7 @@ void Vdp2VBlankOUT(void) {
    static u32 framecount = 0;
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
-
+   LOG("****************  VDPEV_VBLANK_OUT ******************\n");
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
    }else{ // p02_50.htm#TVSTAT_
