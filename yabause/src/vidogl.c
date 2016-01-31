@@ -39,9 +39,16 @@
 #ifdef _WINDOWS
 int yprintf( const char * fmt, ... )
 {
-	va_list ap;
-	va_start(ap, fmt);
-	va_end(ap);
+	static FILE * dbugfp = NULL;
+	if (dbugfp == NULL){
+		dbugfp = fopen("debug.txt", "w");
+	}
+	if (dbugfp){
+		va_list ap;
+		va_start(ap, fmt);
+		vfprintf(dbugfp, fmt, ap);
+		va_end(ap);
+	}
 	return 0;
 }
 #endif
