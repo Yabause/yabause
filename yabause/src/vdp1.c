@@ -25,6 +25,7 @@
 
 
 #include <stdlib.h>
+#include "yabause.h"
 #include "vdp1.h"
 #include "debug.h"
 #include "scu.h"
@@ -37,6 +38,7 @@ u8 * Vdp1FrameBuffer;
 
 VideoInterface_struct *VIDCore=NULL;
 extern VideoInterface_struct *VIDCoreList[];
+extern YabEventQueue * rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -307,8 +309,6 @@ void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
@@ -330,9 +330,15 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
          Vdp1Regs->COPR = 0;
          Vdp1Regs->PTMR = val;
 #if YAB_ASYNC_RENDERING
-         if (val == 1){ YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW);  }
+		 if (val == 1){ 
+			 yabsys.wait_line_count = yabsys.LineCount+30; 
+			 if (yabsys.wait_line_count >= 225){
+				 yabsys.wait_line_count = 224;
+			 }
+			 YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
+		}
 #else
-        if (val == 1){ Vdp1Draw();  }
+		 if (val == 1){ LOG("VDP1: VDPEV_DIRECT_DRAW\n");  Vdp1Draw(); }
 #endif
          break;
       case 0x6:
