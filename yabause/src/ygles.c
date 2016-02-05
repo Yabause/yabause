@@ -707,16 +707,16 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 	  switch (type)
 	  {
 	  case 0:
-		  return T1ReadByte(Vdp1FrameBuffer, addr);
+		  *(u8*)out=T1ReadByte(Vdp1FrameBuffer, addr);
 		  break;
 	  case 1:
-		  return T1ReadWord(Vdp1FrameBuffer, addr);
+		  *(u16*)out=T1ReadWord(Vdp1FrameBuffer, addr);
 		  break;
 	  case 2:
-		  return T1ReadLong(Vdp1FrameBuffer, addr);
+		  *(u32*)out=T1ReadLong(Vdp1FrameBuffer, addr);
 		  break;
 	  default:
-		  return 0;
+		  return;
 		  break;
 	  }
 
