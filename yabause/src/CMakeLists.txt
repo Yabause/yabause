@@ -87,11 +87,11 @@ if (UNIX)
 endif()
 
 # Bigendian
-include(TestBigEndian)
-test_big_endian(WORDS_BIGENDIAN)
-if (WORDS_BIGENDIAN)
-	add_definitions(-DWORDS_BIGENDIAN=1)
-endif (WORDS_BIGENDIAN)
+#include(TestBigEndian)
+#test_big_endian(WORDS_BIGENDIAN)
+#if (WORDS_BIGENDIAN)
+#	add_definitions(-DWORDS_BIGENDIAN=1)
+#endif (WORDS_BIGENDIAN)
 
 include(CheckCSourceCompiles)
 
