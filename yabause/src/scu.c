@@ -178,6 +178,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
+	LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
    if (ReadAdd == 0) {
       // DMA fill
 
