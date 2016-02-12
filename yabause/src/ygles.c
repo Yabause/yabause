@@ -612,11 +612,113 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
 	   tm->currentY = tm->yMax;
 	   YglTMAllocate(tm, output, w, h, x, y);
    }
+} 
+
+int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf ){
+
+	FILE * fp = fopen(filename, "wb");
+	int bsize = width*height * 3;
+	char * pBitmap = malloc(bsize);
+	int i, j;
+
+	for (i = 0; i < height; i++){
+		for (j = 0; j < width; j++){
+			pBitmap[j * 3 + i*width * 3 + 0] = buf[j * 4 + i*width * 4 + 0];
+			pBitmap[j * 3 + i*width * 3 + 1] = buf[j * 4 + i*width * 4 + 1];
+			pBitmap[j * 3 + i*width * 3 + 2] = buf[j * 4 + i*width * 4 + 2];
+		}
+	}
+
+	//-----------------------------------------
+	//  File Header
+	//------------------------------------------
+
+	long offset = 14 + 40;
+	char s[2];
+	s[0] = 'B';
+	s[1] = 'M';
+	fwrite(s, sizeof(char), 2, fp);
+	long filesize = bsize + offset;
+	fwrite(&filesize, sizeof(long), 1, fp);
+	short reserved = 0;
+	fwrite(&reserved, sizeof(short), 1, fp);
+	fwrite(&reserved, sizeof(short), 1, fp);
+	fwrite(&offset, sizeof(long), 1, fp);
+
+
+	//------------------------------------------
+	// Bitmap Header
+	//------------------------------------------
+	long var_long;
+	short var_short;
+
+	var_long = 40;
+	fwrite(&var_long, sizeof(long), 1, fp);
+	var_long = width;
+
+	fwrite(&var_long, sizeof(long), 1, fp);
+	var_long = -height;
+
+	fwrite(&var_long, sizeof(long), 1, fp);
+
+	var_short = 1;
+	fwrite(&var_short, sizeof(short), 1, fp);
+
+	var_short = 24;
+	fwrite(&var_short, sizeof(short), 1, fp);
+
+	var_long = 0;
+	fwrite(&var_long, sizeof(long), 1, fp);
+
+	var_long = bsize;
+	fwrite(&var_long, sizeof(long), 1, fp);
+
+
+	var_long = 3780;
+	fwrite(&var_long, sizeof(long), 1, fp);
+
+
+	var_long = 3780;
+	fwrite(&var_long, sizeof(long), 1, fp);
+	var_long = 0;
+
+	fwrite(&var_long, sizeof(long), 1, fp);
+	var_long = 0;
+	fwrite(&var_long, sizeof(long), 1, fp);
+
+	//
+	fwrite(pBitmap, sizeof(char), bsize, fp);
+
+	fclose(fp);
+	free(pBitmap);
 }
 
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
-    
+
+
+	const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
+	const int Pix = ((addr & 0x3FF) >> 1); // *((float)(GlWidth) / (float)_Ygl->rwidth);
+	const int index = (_Ygl->rheight - 1 - Line)*(_Ygl->rwidth * 4) + Pix * 4;
+	
+	if (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2){
+		switch (type)
+		{
+		case 0:
+			*(u8*)out = T1ReadByte(Vdp1FrameBuffer, addr);
+			break;
+		case 1:
+			*(u16*)out = T1ReadWord(Vdp1FrameBuffer, addr);
+			break;
+		case 2:
+			*(u32*)out = T1ReadLong(Vdp1FrameBuffer, addr);
+			break;
+		default:
+			break;
+		}
+		return;
+	}
+
   if (_Ygl->smallfbo == 0) {
 
 	  GLuint error;
@@ -678,8 +780,9 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    YGLLOG("VIDOGLVdp1ReadFrameBuffer %d\n", _Ygl->drawframe);
+	YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
 	_Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
+	//YglDumpScreenshot("lastfb.bmp", _Ygl->rwidth, _Ygl->rheight, _Ygl->pFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     YabThreadUnLock( _Ygl->mutex );
 
@@ -699,34 +802,11 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
   }
 
-  {
-  const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
-  const int Pix = ((addr & 0x3FF) >> 1); // *((float)(GlWidth) / (float)_Ygl->rwidth);
-  const int index = (_Ygl->rheight - 1 - Line)*(_Ygl->rwidth* 4) + Pix * 4;
-  if (index >= _Ygl->rwidth *  _Ygl->rheight * 4){
-	  switch (type)
-	  {
-	  case 0:
-		  return T1ReadByte(Vdp1FrameBuffer, addr);
-		  break;
-	  case 1:
-		  return T1ReadWord(Vdp1FrameBuffer, addr);
-		  break;
-	  case 2:
-		  return T1ReadLong(Vdp1FrameBuffer, addr);
-		  break;
-	  default:
-		  return 0;
-		  break;
-	  }
-
-  }
-
   switch (type)
   {
   case 1:
     {
-      u8 r = *((u8*)(_Ygl->pFrameBuffer) + index);
+	  u8 r = *((u8*)(_Ygl->pFrameBuffer) + index);
       u8 g = *((u8*)(_Ygl->pFrameBuffer) + index + 1);
       u8 b = *((u8*)(_Ygl->pFrameBuffer) + index + 2);
       //*(u16*)out = ((val & 0x1f) << 10) | ((val >> 1) & 0x3e0) | ((val >> 11) & 0x1F) | 0x8000;
@@ -755,7 +835,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
     }
     break;
-  }
   }
 
 }
