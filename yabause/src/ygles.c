@@ -619,9 +619,10 @@ int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf 
 	FILE * fp = fopen(filename, "wb");
 	int bsize = width*height * 3;
 	char * pBitmap = malloc(bsize);
+	int i, j;
 
-	for (int i = 0; i < height; i++){
-		for (int j = 0; j < width; j++){
+	for (i = 0; i < height; i++){
+		for (j = 0; j < width; j++){
 			pBitmap[j * 3 + i*width * 3 + 0] = buf[j * 4 + i*width * 4 + 0];
 			pBitmap[j * 3 + i*width * 3 + 1] = buf[j * 4 + i*width * 4 + 1];
 			pBitmap[j * 3 + i*width * 3 + 2] = buf[j * 4 + i*width * 4 + 2];
