@@ -356,6 +356,12 @@ import android.view.LayoutInflater;
     if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
 
+				InputDevice dev = InputDevice.getDevice(_selected_device_id);
+				if( dev.getName().contains("HuiJia")){
+					if( event.getScanCode() == 0 ) {
+						return false;
+					}
+				}
 
 				Log.d("Yabause", "key:" + event.getScanCode() + " value: " + event.getAction() );
 
@@ -413,6 +419,7 @@ import android.view.LayoutInflater;
 		if( event.getDeviceId() != _selected_device_id ) return false;
 		if( onkey ) return false;
 		
+
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
 			for( int i=0; i< motions.size(); i++ ){
 				float value = event.getAxisValue( motions.get(i).id );

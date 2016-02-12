@@ -34,10 +34,215 @@ import org.uoyabause.android.PadEvent;
 import org.uoyabause.android.PadManager;
 
 
-class InputInfo{
-	public float _oldRightTrigger = 0.0f;
-	public float _oldLeftTrigger = 0.0f;
-	public int _selected_device_id = -1;
+//class InputInfo{
+//	public float _oldRightTrigger = 0.0f;
+//	public float _oldLeftTrigger = 0.0f;
+//	public int _selected_device_id = -1;
+//}
+
+class BasicInputDevice {
+    public int _selected_device_id = -1;
+    public int _playerindex = 0;
+    boolean _testmode = false;
+    HashMap<Integer, Integer> Keymap;
+
+    PadManagerV16 _pdm;
+
+    BasicInputDevice(PadManagerV16 pdm) {
+        Keymap = new HashMap<Integer, Integer>();
+        _pdm = pdm;
+    }
+
+    void loadDefault( ){
+        Keymap.clear();
+        Keymap.put((MotionEvent.AXIS_HAT_Y | 0x8000), PadEvent.BUTTON_UP);
+        Keymap.put(MotionEvent.AXIS_HAT_Y, PadEvent.BUTTON_DOWN);
+        Keymap.put((MotionEvent.AXIS_HAT_X | 0x8000), PadEvent.BUTTON_LEFT);
+        Keymap.put(MotionEvent.AXIS_HAT_X, PadEvent.BUTTON_RIGHT);
+        Keymap.put(MotionEvent.AXIS_LTRIGGER, PadEvent.BUTTON_LEFT_TRIGGER);
+        Keymap.put(MotionEvent.AXIS_RTRIGGER, PadEvent.BUTTON_RIGHT_TRIGGER);
+        Keymap.put(KeyEvent.KEYCODE_BUTTON_START, PadEvent.BUTTON_START);
+        Keymap.put(KeyEvent.KEYCODE_BUTTON_A, PadEvent.BUTTON_A);
+        Keymap.put(KeyEvent.KEYCODE_BUTTON_B, PadEvent.BUTTON_B);
+        Keymap.put(KeyEvent.KEYCODE_BUTTON_R1, PadEvent.BUTTON_C);
+        Keymap.put(KeyEvent.KEYCODE_BUTTON_X, PadEvent.BUTTON_X);
+        Keymap.put(KeyEvent.KEYCODE_BUTTON_Y, PadEvent.BUTTON_Y);
+        Keymap.put(KeyEvent.KEYCODE_BUTTON_L1, PadEvent.BUTTON_Z);
+    }
+
+    public void loadSettings( String setting_filename ) {
+        try {
+
+            File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
+            if (!yabroot.exists()) yabroot.mkdir();
+
+            InputStream inputStream = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + "yabause/" + setting_filename);
+            int size = inputStream.available();
+            byte[] buffer = new byte[size];
+            inputStream.read(buffer);
+            inputStream.close();
+
+            String json = new String(buffer);
+            JSONObject jsonObject = new JSONObject(json);
+
+
+            Keymap.clear();
+            Keymap.put(jsonObject.getInt("BUTTON_UP"), PadEvent.BUTTON_UP);
+            Keymap.put(jsonObject.getInt("BUTTON_DOWN"), PadEvent.BUTTON_DOWN);
+            Keymap.put(jsonObject.getInt("BUTTON_LEFT"), PadEvent.BUTTON_LEFT);
+            Keymap.put(jsonObject.getInt("BUTTON_RIGHT"), PadEvent.BUTTON_RIGHT);
+            Keymap.put(jsonObject.getInt("BUTTON_LEFT_TRIGGER"), PadEvent.BUTTON_LEFT_TRIGGER);
+            Keymap.put(jsonObject.getInt("BUTTON_RIGHT_TRIGGER"), PadEvent.BUTTON_RIGHT_TRIGGER);
+            Keymap.put(jsonObject.getInt("BUTTON_START"), PadEvent.BUTTON_START);
+            Keymap.put(jsonObject.getInt("BUTTON_A"), PadEvent.BUTTON_A);
+            Keymap.put(jsonObject.getInt("BUTTON_B"), PadEvent.BUTTON_B);
+            Keymap.put(jsonObject.getInt("BUTTON_C"), PadEvent.BUTTON_C);
+            Keymap.put(jsonObject.getInt("BUTTON_X"), PadEvent.BUTTON_X);
+            Keymap.put(jsonObject.getInt("BUTTON_Y"), PadEvent.BUTTON_Y);
+            Keymap.put(jsonObject.getInt("BUTTON_Z"), PadEvent.BUTTON_Z);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            loadDefault();
+        } catch (JSONException e) {
+            e.printStackTrace();
+            loadDefault();
+        }
+    }
+
+
+    public int onGenericMotionEvent(MotionEvent event ) {
+        int rtn = 0;
+        if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
+
+            MotionEvent motionEvent = (MotionEvent) event;
+
+            for(HashMap.Entry<Integer, Integer> e : Keymap.entrySet()) {
+                //System.out.println(e.getKey() + " : " + e.getValue());
+                int btn = e.getKey();
+                if( (btn&0x80000000) != 0 ) {
+                    float motion_value = motionEvent.getAxisValue((btn&0x00007FFF));
+                    if( (btn&0x8000) != 0 ){
+
+                        if (Float.compare(motion_value, -0.8f) < 0) { // ON
+                            if( _testmode)
+                                _pdm.addDebugString("onGenericMotionEvent: On  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+                                YabauseRunnable.press(e.getValue(), _playerindex);
+
+                            rtn = 1;
+                        }
+                        else if( Float.compare(motion_value, -0.5f) > 0 ){ // OFF
+                            if( _testmode)
+                                _pdm.addDebugString("onGenericMotionEvent: Off  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+                                YabauseRunnable.release(e.getValue(), _playerindex);
+
+                            rtn = 1;
+                        }
+                    }else{
+                        if (Float.compare(motion_value, 0.8f) > 0) {  // ON
+                            if( _testmode)
+                                _pdm.addDebugString("onGenericMotionEvent: On  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+                                YabauseRunnable.press(e.getValue(), _playerindex);
+
+                            rtn = 1;
+                        }
+                        else if( Float.compare(motion_value, 0.5f) < 0 ){ // OFF
+                            if( _testmode)
+                                _pdm.addDebugString("onGenericMotionEvent: Off  " + btn + " Satpad: " + e.getValue().toString());
+                            else
+                                YabauseRunnable.release(e.getValue(), _playerindex);
+
+                            rtn = 1;
+                        }
+                    }
+                }
+
+            }
+        }
+        return rtn;
+    }
+
+    public int onKeyDown(int keyCode, KeyEvent event) {
+        if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
+                ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
+
+            if (keyCode == 0) {
+                keyCode = event.getScanCode();
+            }
+
+            Integer PadKey = Keymap.get(keyCode);
+
+            if (PadKey != null) {
+                event.startTracking();
+                if (_testmode)
+                    _pdm.addDebugString("onKeyDown: " + keyCode + " Satpad: " + PadKey.toString());
+                else
+                    YabauseRunnable.press(PadKey, _playerindex);
+
+
+                return 1;  // ignore this input
+            } else {
+                if (_testmode)
+                    _pdm.addDebugString("onKeyDown: " + keyCode + " Satpad: none");
+                return 0;
+            }
+        }
+        return 0;
+    }
+
+    public int onKeyUp(int keyCode, KeyEvent event) {
+        if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
+                ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
+
+            if( keyCode == 0 ){
+                keyCode = event.getScanCode();
+            }
+
+            if( !event.isCanceled() ){
+                Integer PadKey = Keymap.get(keyCode);
+                if( PadKey != null ) {
+                    if( _testmode)
+                        _pdm.addDebugString("onKeyUp: " + keyCode + " Satpad: " + PadKey.toString());
+                    else
+                        YabauseRunnable.release(PadKey, _playerindex);
+
+                    return 1; // ignore this input
+                }else{
+                    if( _testmode) _pdm.addDebugString("onKeyUp: " + keyCode + " Satpad: none");
+                    return 0;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+}
+
+class SSController extends BasicInputDevice {
+
+    SSController( PadManagerV16 pdm){
+       super(pdm);
+    }
+
+    public int onGenericMotionEvent(MotionEvent event ) {
+        return super.onGenericMotionEvent(event);
+    }
+    public int onKeyDown(int keyCode, KeyEvent event ) {
+        if( event.getScanCode() == 0 ){
+            return 1;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+    public int onKeyUp(int keyCode, KeyEvent event ) {
+        if( event.getScanCode() == 0 ){
+            return 1;
+        }
+        return super.onKeyUp(keyCode, event);
+    }
 }
 
 class PadManagerV16 extends PadManager {
@@ -53,8 +258,17 @@ class PadManagerV16 extends PadManager {
 
     final int player_count = 2; 
     List<HashMap<Integer,Integer>> Keymap;
-    
-    InputInfo input[];
+
+    BasicInputDevice pads[];
+
+    public void loadSettings(  ){
+        if( pads[0] != null ){
+            pads[0].loadSettings("keymap.json");
+        }
+        if( pads[1] != null ){
+            pads[1].loadSettings("keymap_player2.json");
+        }
+    }
 
     public void setTestMode( boolean mode ){ _testmode = mode; }
     void addDebugString( String msg){
@@ -81,15 +295,14 @@ class PadManagerV16 extends PadManager {
     PadManagerV16() {
 
         deviceIds = new HashMap<String,Integer>();
-        
-        input = new InputInfo[player_count];
+
+        pads = new BasicInputDevice[player_count];
         Keymap = new ArrayList<HashMap<Integer, Integer>>(); 
         for( int i=0; i<player_count; i++ ){
-        	input[i] = new InputInfo();
-        	input[i]._selected_device_id = invalid_device_id;
-        	HashMap<Integer,Integer> akymap = new HashMap<Integer,Integer>();
-        	Keymap.add(akymap);
-        }  
+            pads[i] = null;
+            //pads[i] = new BasicInputDevice(this);
+            //pads[i]._selected_device_id = invalid_device_id;
+         }
         
 
         int[] ids = InputDevice.getDeviceIds();
@@ -126,9 +339,6 @@ class PadManagerV16 extends PadManager {
             DebugMesageArray[i] = "";
         }
         _testmode = false;
-
-
-        loadSettings();
     }
 
     public boolean hasPad() {
@@ -180,277 +390,118 @@ class PadManagerV16 extends PadManager {
     }
     
     public void setPlayer1InputDevice( String deviceid ){
-    	 
+
+
     	if( deviceid == null ){
-    		input[0]._selected_device_id = -1;
+            pads[0] = new BasicInputDevice(this);
+            pads[0]._selected_device_id = -1;
     		return;
-    	} 
- 
+    	}
+
     	Integer id = deviceIds.get(deviceid);
     	if( id == null ){
-    		input[0]._selected_device_id = -1;
+            pads[0] = new BasicInputDevice(this);
+            pads[0]._selected_device_id = -1;
     	}else{
-    		input[0]._selected_device_id = id;
-    	}  
- 
+            InputDevice dev = InputDevice.getDevice(id);
+            if( dev.getName().contains("HuiJia")){
+                pads[0] = new SSController(this);
+            }else{
+                pads[0] = new BasicInputDevice(this);
+            }
+            pads[0]._selected_device_id = id;
+    	}
+
+        pads[0]._playerindex = 0;
+        pads[0].loadSettings("keymap.json");
     	return;
     }
     
-    public int getPlayer1InputDevice(){ 
-    	return input[0]._selected_device_id; 
+    public int getPlayer1InputDevice(){
+        if( pads[0] == null ) return -1;
+    	return pads[0]._selected_device_id;
     }
     
     public void setPlayer2InputDevice( String deviceid ){
-   	 
-    	if( deviceid == null ){
-    		input[1]._selected_device_id = -1;
-    		return;
-    	} 
- 
-    	Integer id = deviceIds.get(deviceid);
-    	if( id == null ){
-    		input[1]._selected_device_id = -1;
-    	}else{
-    		input[1]._selected_device_id = id;
-    	}  
- 
-    	return;
+
+
+        if( deviceid == null ){
+            pads[1] = new BasicInputDevice(this);
+            pads[1]._selected_device_id = -1;
+            return;
+        }
+
+        Integer id = deviceIds.get(deviceid);
+        if( id == null ){
+            pads[1] = new BasicInputDevice(this);
+            pads[1]._selected_device_id = -1;
+        }else{
+            InputDevice dev = InputDevice.getDevice(id);
+            if( dev.getName().contains("HuiJia")){
+                pads[1] = new SSController(this);
+            }else{
+                pads[1] = new BasicInputDevice(this);
+            }
+            pads[1]._selected_device_id = id;
+        }
+
+        pads[1]._playerindex = 1;
+        pads[1].loadSettings("keymap_player2.json");
+
+        return;
     }
     
-    public int getPlayer2InputDevice(){ 
-    	return input[1]._selected_device_id; 
+    public int getPlayer2InputDevice(){
+        if( pads[1] == null ) return -1;
+    	return pads[1]._selected_device_id;
     }
-    
-    int findPlayerIndex( int deviceid ){
-    	for( int i=0; i< player_count; i++ ){
-    		if( deviceid == input[i]._selected_device_id){
-    			return i;
-    		}
-    	}
-    	return -1;
+
+
+    BasicInputDevice findPlayerPad( int deviceid ){
+        for( int i=0; i< player_count; i++ ){
+            if( pads[i] != null && deviceid == pads[i]._selected_device_id){
+                return pads[i];
+            }
+        }
+        return null;
     }
     
     public int onGenericMotionEvent(MotionEvent event){
-    	int rtn = 0;
-    	int playerindex = findPlayerIndex(event.getDeviceId());
-    	if( playerindex == -1 ) return 0;
+        BasicInputDevice pad = findPlayerPad(event.getDeviceId());
+
+        if( pad != null )
+            return pad.onGenericMotionEvent(event);
     	
-        if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
-
-			MotionEvent motionEvent = (MotionEvent) event;
-
-			for(HashMap.Entry<Integer, Integer> e : Keymap.get(playerindex).entrySet()) {
-				//System.out.println(e.getKey() + " : " + e.getValue());
-				int btn = e.getKey();
-				if( (btn&0x80000000) != 0 ) {
-					float motion_value = motionEvent.getAxisValue((btn&0x00007FFF));
-					if( (btn&0x8000) != 0 ){
-
-						if (Float.compare(motion_value, -0.8f) < 0) { // ON
-                            if( _testmode)
-                                addDebugString("onGenericMotionEvent: On  " + btn + " Satpad: " + e.getValue().toString());
-                            else
-							    YabauseRunnable.press(e.getValue(), playerindex);
-
-                            rtn = 1;
-						}
-						else if( Float.compare(motion_value, -0.5f) > 0 ){ // OFF
-                            if( _testmode)
-                                addDebugString("onGenericMotionEvent: Off  " + btn + " Satpad: " + e.getValue().toString());
-                            else
-							    YabauseRunnable.release(e.getValue(), playerindex);
-
-                            rtn = 1;
-						}
-					}else{
-						if (Float.compare(motion_value, 0.8f) > 0) {  // ON
-                            if( _testmode)
-                                addDebugString("onGenericMotionEvent: On  " + btn + " Satpad: " + e.getValue().toString());
-                            else
-							    YabauseRunnable.press(e.getValue(), playerindex);
-
-                            rtn = 1;
-						}
-						else if( Float.compare(motion_value, 0.5f) < 0 ){ // OFF
-                            if( _testmode)
-                                addDebugString("onGenericMotionEvent: Off  " + btn + " Satpad: " + e.getValue().toString());
-                            else
-							    YabauseRunnable.release(e.getValue(), playerindex);
-
-                            rtn = 1;
-						}
-					}
-				}
-
-			}
-        }
-    	return rtn;
+    	return 0;
     }
 
     public int onKeyDown(int keyCode, KeyEvent event) {
-        PadEvent pe = null;
-        
+
         if( keyCode == KeyEvent.KEYCODE_BACK ){
         	return 0;
         }
-        
-    	int playerindex = findPlayerIndex(event.getDeviceId());
-    	if( playerindex == -1 ) return 0; 
 
-        if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
-            ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
+        BasicInputDevice pad = findPlayerPad(event.getDeviceId());
 
-                if( keyCode == 0 ){
-                    keyCode = event.getScanCode();
-                }
+        if( pad != null )
+            return pad.onKeyDown(keyCode, event);
 
-            	Integer PadKey = Keymap.get(playerindex).get(keyCode);
-
-               	if( PadKey != null ) {
-            		event.startTracking();
-                    if( _testmode)
-                        addDebugString("onKeyDown: " + keyCode + " Satpad: " + PadKey.toString());
-                    else
-            		    YabauseRunnable.press(PadKey, playerindex);
-
-
-             		return 1;  // ignore this input
-            	}else{
-                    if( _testmode)
-                        addDebugString("onKeyDown: " + keyCode+ " Satpad: none");
-            		return 0;
-            	}
-        }
         return 0;
     }
 
     public int onKeyUp(int keyCode, KeyEvent event) {
-        PadEvent pe = null;
-       
+
         if( keyCode == KeyEvent.KEYCODE_BACK ){
         	return 0;
         }
-        
-    	int playerindex = findPlayerIndex(event.getDeviceId());
-    	if( playerindex == -1 ) return 0;
 
-        if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
-            ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
+        BasicInputDevice pad = findPlayerPad(event.getDeviceId());
 
-            if( keyCode == 0 ){
-                keyCode = event.getScanCode();
-            }
-
-        	if( !event.isCanceled() ){
-            	Integer PadKey = Keymap.get(playerindex).get(keyCode);
-            	if( PadKey != null ) {
-                    if( _testmode)
-                        addDebugString("onKeyUp: " + keyCode + " Satpad: " + PadKey.toString());
-                    else
-            	   	    YabauseRunnable.release(PadKey, playerindex);
-
-                    return 1; // ignore this input
-            	}else{
-                    if( _testmode) addDebugString("onKeyUp: " + keyCode+ " Satpad: none");
-            		return 0;
-            	}            	
-        	}
-          }
+        if( pad != null )
+            return pad.onKeyUp(keyCode,event);
 
         return 0;
     }
-    
-    void loadDefault( int player ){
-	    Keymap.get(player).clear();
-	    Keymap.get(player).put((MotionEvent.AXIS_HAT_Y | 0x8000 ),PadEvent.BUTTON_UP);
-	    Keymap.get(player).put(MotionEvent.AXIS_HAT_Y, PadEvent.BUTTON_DOWN);
-	    Keymap.get(player).put((MotionEvent.AXIS_HAT_X | 0x8000 ), PadEvent.BUTTON_LEFT);
-	    Keymap.get(player).put(MotionEvent.AXIS_HAT_X , PadEvent.BUTTON_RIGHT);
-	    Keymap.get(player).put(MotionEvent.AXIS_LTRIGGER,PadEvent.BUTTON_LEFT_TRIGGER);
-	    Keymap.get(player).put(MotionEvent.AXIS_RTRIGGER, PadEvent.BUTTON_RIGHT_TRIGGER);
-	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_START, PadEvent.BUTTON_START);
-	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_A, PadEvent.BUTTON_A);
-	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_B, PadEvent.BUTTON_B);
-	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_R1, PadEvent.BUTTON_C);        
-	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_X, PadEvent.BUTTON_X);
-	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_Y, PadEvent.BUTTON_Y);
-	    Keymap.get(player).put(KeyEvent.KEYCODE_BUTTON_L1, PadEvent.BUTTON_Z);   
-    }
 
-
-    public void loadSettings(){
-        try {
-        	
-            File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
-            if (! yabroot.exists()) yabroot.mkdir();
-            
-            InputStream inputStream = new FileInputStream(Environment.getExternalStorageDirectory() + "/" +  "yabause/keymap.json");
-            int size = inputStream.available();
-            byte[] buffer = new byte[size];
-            inputStream.read(buffer);
-            inputStream.close();
-             
-            String json = new String(buffer);
-            JSONObject jsonObject = new JSONObject(json);
-            
-            Keymap.get(0).clear();
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_UP"),PadEvent.BUTTON_UP);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_DOWN"), PadEvent.BUTTON_DOWN);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_LEFT"), PadEvent.BUTTON_LEFT);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_RIGHT"), PadEvent.BUTTON_RIGHT);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_LEFT_TRIGGER"),PadEvent.BUTTON_LEFT_TRIGGER);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_RIGHT_TRIGGER"), PadEvent.BUTTON_RIGHT_TRIGGER);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_START"), PadEvent.BUTTON_START);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_A"), PadEvent.BUTTON_A);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_B"), PadEvent.BUTTON_B);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_C"), PadEvent.BUTTON_C);        
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_X"), PadEvent.BUTTON_X);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_Y"), PadEvent.BUTTON_Y);
-            Keymap.get(0).put(jsonObject.getInt("BUTTON_Z"), PadEvent.BUTTON_Z);             
-            
-            
-             
-        } catch (IOException e) {
-            e.printStackTrace();
-            loadDefault(0);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            loadDefault(0);
-        }  
-        
-        try{
-        	InputStream inputStream = new FileInputStream(Environment.getExternalStorageDirectory() + "/" +  "yabause/keymap_player2.json");
-            int size = inputStream.available();
-            byte[] buffer_p2 = new byte[size];
-            inputStream.read(buffer_p2);
-            inputStream.close();
-             
-            String json = new String(buffer_p2);
-            JSONObject jsonObject = new JSONObject(json);
-            
-            Keymap.get(1).clear();
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_UP"),PadEvent.BUTTON_UP);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_DOWN"), PadEvent.BUTTON_DOWN);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_LEFT"), PadEvent.BUTTON_LEFT);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_RIGHT"), PadEvent.BUTTON_RIGHT);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_LEFT_TRIGGER"),PadEvent.BUTTON_LEFT_TRIGGER);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_RIGHT_TRIGGER"), PadEvent.BUTTON_RIGHT_TRIGGER);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_START"), PadEvent.BUTTON_START);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_A"), PadEvent.BUTTON_A);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_B"), PadEvent.BUTTON_B);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_C"), PadEvent.BUTTON_C);        
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_X"), PadEvent.BUTTON_X);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_Y"), PadEvent.BUTTON_Y);
-            Keymap.get(1).put(jsonObject.getInt("BUTTON_Z"), PadEvent.BUTTON_Z);         	
-        }catch (IOException e) {
-            e.printStackTrace();
-            loadDefault(1);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            loadDefault(1);
-        }  
-    }
-
-    
 }
 
