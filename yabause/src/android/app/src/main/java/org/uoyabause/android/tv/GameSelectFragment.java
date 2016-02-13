@@ -257,6 +257,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
         gridRowAdapter.add(getResources().getString(R.string.setting));
         gridRowAdapter.add(getString(R.string.load_game));
+        gridRowAdapter.add(getResources().getString(R.string.donation));
         gridRowAdapter.add(getResources().getString(R.string.refresh_db));
         mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
         addindex++;
@@ -465,6 +466,9 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }else if( ((String) item).indexOf(getString(R.string.refresh_db)) >= 0 ){
                     refresh_level = 3;
                     updateGameList();
+                }else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
+                    Intent intent = new Intent(getActivity(), DonateActivity.class);
+                    startActivity(intent);
                 }
             }
 
@@ -576,17 +580,22 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }
                 break;
             case YABAUSE_ACTIVITY:
-                double rn = Math.random();
-                if( rn <= 0.3333 ) {
-                    UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
-                    if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
-                        if (mInterstitialAd.isLoaded()) {
-                            mInterstitialAd.show();
+
+                SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+                Boolean hasDonated = prefs.getBoolean("donated", false);
+                if( hasDonated == false ) {
+                    double rn = Math.random();
+                    if (rn <= 0.3333) {
+                        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+                        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+                            if (mInterstitialAd.isLoaded()) {
+                                mInterstitialAd.show();
+                            }
                         }
+                    } else if (rn > 0.3333 && rn <= 0.6666) {
+                        Intent intent = new Intent(getActivity(), DonateActivity.class);
+                        startActivity(intent);
                     }
-                }else if( rn > 0.3333 && rn <= 0.6666 ){
-                    Intent intent = new Intent(getActivity(), DonateActivity.class);
-                    startActivity(intent);
                 }
                 break;
             default:

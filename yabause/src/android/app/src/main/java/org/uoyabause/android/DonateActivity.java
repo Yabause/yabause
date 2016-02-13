@@ -17,6 +17,7 @@ package org.uoyabause.android;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -340,6 +341,12 @@ public class DonateActivity extends Activity {
             if (result.isSuccess()) {
                 Log.d(TAG, "Consumption successful. Provisioning.");
                 Toast.makeText(DonateActivity.this, getString(R.string.thank_you), Toast.LENGTH_LONG).show();
+
+                SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean("donated", true);
+                editor.apply();
+
             } else {
                 Toast.makeText(DonateActivity.this, getString(R.string.error_consume) + result, Toast.LENGTH_LONG).show();
 
