@@ -396,6 +396,15 @@ void Vdp2HBlankOUT(void) {
 	   yabsys.wait_line_count = -1;
 	   YabWaitEventQueue(rcv_evqueue); // sync Direct VDP1 Draw
    }
+   
+   if( yabsys.LineCount == 5 ){
+		if( vdp_proc_running == 0 ){
+			YuiRevokeOGLOnThisThread();
+			evqueue = YabThreadCreateQueue(32);
+			YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+		}	   
+	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
+   }
 #endif
 }
 
@@ -565,7 +574,7 @@ void Vdp2VBlankOUT(void) {
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
     }
 
-   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
+   //YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
 
 #else
    static int framestoskip = 0;
