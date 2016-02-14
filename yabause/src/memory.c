@@ -1222,6 +1222,7 @@ int YabLoadStateStream(FILE *fp)
    int movieposition;
    int temp;
    u32 temp32;
+	int test_endian;
 
    headersize = 0xC;
    check.done = 0;
@@ -1259,9 +1260,9 @@ int YabLoadStateStream(FILE *fp)
    }
 
 #ifdef WORDS_BIGENDIAN
-   int test_endian = endian == 1;
+   test_endian = endian == 1;
 #else
-   int test_endian = endian == 0;
+   test_endian = endian == 0;
 #endif
    if (test_endian)
    {
