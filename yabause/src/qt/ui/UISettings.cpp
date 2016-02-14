@@ -549,6 +549,8 @@ void UISettings::saveSettings()
 	// cartridge/memory
 	s->setValue( "Cartridge/Type", cbCartridge->itemData( cbCartridge->currentIndex() ).toInt() );
 	s->setValue( "Cartridge/Path", leCartridge->text() );
+	s->setValue( "Cartridge/ModemIP", leCartridgeModemIP->text() );
+	s->setValue( "Cartridge/ModemPort", leCartridgeModemPort->text() );
 	s->setValue( "Memory/Path", leMemory->text() );
 	s->setValue( "MpegROM/Path", leMpegROM->text() );
 	
