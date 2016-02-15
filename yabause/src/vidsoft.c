@@ -827,6 +827,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
    clipping_struct colorcalcwindow[2];
    int start_line = 0, line_increment = 0;
    int bad_cycle = bad_cycle_setting[info->titan_which_layer];
+   int charaddr, paladdr;
 
    SetupScreenVars(info, &sinfo, info->PlaneAddr, regs);
 
@@ -970,9 +971,6 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
             y=Y;
             Vdp2MapCalcXY(info, &x, &y, &sinfo, regs, ram, bad_cycle);
          }
-
-
-         int charaddr, paladdr;
 
          if (!bad_cycle)
          {
