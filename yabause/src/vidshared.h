@@ -184,6 +184,17 @@ typedef struct
    u32 LineColorBase;
    
    void (*LoadLineParams)(void *, int line, Vdp2* lines);
+
+   int bad_cycle_setting;
+
+   struct Pipeline
+   {
+      int paladdr;
+      int charaddr;
+      int flipfunction;
+   }pipe[2];
+
+
 } vdp2draw_struct;
 
 
