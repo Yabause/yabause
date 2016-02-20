@@ -764,7 +764,6 @@ int Ygl_uniformStartUserClip(void * p )
       glEnable(GL_STENCIL_TEST);
       glStencilFunc(GL_ALWAYS,0x1,0x01);
       glStencilOp(GL_REPLACE,GL_REPLACE,GL_REPLACE);
-      //glDisable(GL_TEXTURE_2D);
 
       // render
       vertices[0] = (int)((float)prg->ux1 * vdp1wratio);
