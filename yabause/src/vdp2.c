@@ -52,11 +52,14 @@ int vbalnk_wait = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 YabEventQueue * rcv_evqueue = NULL;
+YabEventQueue * vdp1_rcv_evqueue = NULL;
 static u64 syncticks = 0;       // CPU time sync for real time.
 void VdpProc( void *arg );      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
 static int vdp_proc_running = 0;
+
+//#define LOG yprintf
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -160,6 +163,7 @@ int Vdp2Init(void) {
 
 #if defined(YAB_ASYNC_RENDERING)
    if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(1);
+   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(1);
    yabsys.wait_line_count = -1;
 #endif
 
@@ -275,7 +279,6 @@ void Vdp2Reset(void) {
    Vdp2External.disptoggle = 0xFF;
 }
 
-//#define LOG yprintf
 
 ///////////////////////////////////////////////////////////////////////////////
 void VdpProc( void *arg ){
@@ -292,17 +295,20 @@ void VdpProc( void *arg ){
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
-			LOG("VDPEV_VBLANK_IN\n");
+			LOG("\tINS\t%d\n",clock ());
             vdp2VBlankIN();
+			LOG("\tINE\t%d\n",clock ());
             break;
         case VDPEV_VBLANK_OUT:
-			LOG("****************  VDPEV_VBLANK_OUT ******************\n");
+			LOG("\tOUTS\t%d\n",clock ());
             vdp2VBlankOUT();
+			LOG("\tOUTE\t%d\n",clock ());
             break;
         case VDPEV_DIRECT_DRAW:
-			LOG("VDPEV_DIRECT_DRAW\n");
+			LOG("\tDDS\t%d\n",clock ());
             Vdp1Draw();
-			YabAddEventQueue(rcv_evqueue, 0);
+			LOG("\tDDE\t%d\n",clock ());
+			YabAddEventQueue(vdp1_rcv_evqueue, 0);
             break;
         case VDPEV_MAKECURRENT:
             YuiUseOGLOnThisThread();
@@ -334,6 +340,7 @@ void vdp2VBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
+   LOG("\tIN_FLG\t%d\n",clock ());
    YabAddEventQueue(rcv_evqueue, 0);
    VIDCore->Sync();
 }
@@ -348,10 +355,12 @@ void Vdp2VBlankIN(void) {
         YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
 	vbalnk_wait = 0;
+	LOG("\tEV_IN\t%d\n",clock ());
    YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
    YabWaitEventQueue(rcv_evqueue);
+	LOG("\tIN_SYNC\t%d\n",clock ());
 
 #else
    /* this should be done after a frame change or a plot trigger */
@@ -394,7 +403,7 @@ void Vdp2HBlankOUT(void) {
 #if defined(YAB_ASYNC_RENDERING)
    if (yabsys.wait_line_count != -1 && yabsys.wait_line_count >= yabsys.LineCount){
 	   yabsys.wait_line_count = -1;
-	   YabWaitEventQueue(rcv_evqueue); // sync Direct VDP1 Draw
+	   YabWaitEventQueue(vdp1_rcv_evqueue); // sync Direct VDP1 Draw
    }
    
    if( yabsys.LineCount == 5 ){
@@ -402,7 +411,8 @@ void Vdp2HBlankOUT(void) {
 			YuiRevokeOGLOnThisThread();
 			evqueue = YabThreadCreateQueue(32);
 			YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-		}	   
+		}
+		LOG("\tEV_VOUT\t%d",clock());
 	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
    }
 #endif
@@ -545,7 +555,7 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-    LOG("VDP2:VDPEV_VBLANK_OUT\n");
+    //LOG("VDP2:VDPEV_VBLANK_OUT\n");
 #if defined(YAB_ASYNC_RENDERING)
 
    if( vdp_proc_running == 0 ){
