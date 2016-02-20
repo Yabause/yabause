@@ -2341,13 +2341,11 @@ void YglSetVdp2Window()
       //
      glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
      glDepthMask(GL_FALSE);
-     glDisable(GL_TEXTURE_2D);
      glDisable(GL_DEPTH_TEST);
 
      //glClearStencil(0);
      //glClear(GL_STENCIL_BUFFER_BIT);
      glEnable(GL_STENCIL_TEST);
-     glDisable(GL_TEXTURE_2D);
 
      glStencilOp(GL_REPLACE,GL_REPLACE,GL_REPLACE);
 
