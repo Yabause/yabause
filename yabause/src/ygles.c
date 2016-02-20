@@ -699,9 +699,9 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
 	const int Line = (addr >> 10); // *((float)(GlHeight) / (float)_Ygl->rheight);
 	const int Pix = ((addr & 0x3FF) >> 1); // *((float)(GlWidth) / (float)_Ygl->rwidth);
-	const int index = (_Ygl->rheight - 1 - Line)*(_Ygl->rwidth * 4) + Pix * 4;
 	
 	if (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2){
+	//if (1){
 		switch (type)
 		{
 		case 0:
@@ -717,7 +717,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 			break;
 		}
 		return;
-	}
+	} 
 
   if (_Ygl->smallfbo == 0) {
 
@@ -754,7 +754,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 		abort();
      }
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_DYNAMIC_READ);
+    glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_STATIC_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -779,9 +779,9 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 #endif
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glReadPixels(0, _Ygl->rheight-Vdp1Regs->systemclipY2, _Ygl->rwidth, Vdp1Regs->systemclipY2, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 	YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
-	_Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
+	_Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  Vdp1Regs->systemclipY2 * 4, GL_MAP_READ_BIT);
 	//YglDumpScreenshot("lastfb.bmp", _Ygl->rwidth, _Ygl->rheight, _Ygl->pFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
     YabThreadUnLock( _Ygl->mutex );
@@ -802,6 +802,8 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
   }
 
+  int index = (Vdp1Regs->systemclipY2-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;
+  
   switch (type)
   {
   case 1:
@@ -822,11 +824,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       u32 r2 = *((u8*)(_Ygl->pFrameBuffer) + index+4);
       u32 g2 = *((u8*)(_Ygl->pFrameBuffer) + index + 5);
       u32 b2 = *((u8*)(_Ygl->pFrameBuffer) + index + 6);
-
-      if (r != 0)
-      {
-        int a=0;
-      }
 
       /*  BBBBBGGGGGRRRRR */
       //*(u16*)out = ((val & 0x1f) << 10) | ((val >> 1) & 0x3e0) | ((val >> 11) & 0x1F) | 0x8000;
@@ -2647,7 +2644,6 @@ void YglRender(void) {
 		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
 	}
 
-   glDisable(GL_TEXTURE_2D);
    glUseProgram(0);
    glGetError();
    glBindBuffer(GL_ARRAY_BUFFER, 0);
