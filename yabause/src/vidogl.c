@@ -4845,7 +4845,6 @@ static void Vdp2DrawBackScreen(void)
       line[6] = 0;
       line[7] = vdp2height;    
 
-      glDisable(GL_TEXTURE_2D);
       glVertexPointer(2, GL_INT, 0, line);
       glEnableClientState(GL_VERTEX_ARRAY);
       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
