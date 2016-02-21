@@ -768,7 +768,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   }
 
   if (_Ygl->pFrameBuffer == NULL){
-	//yprintf("\tVdp1ReadFrameBuffer in\t%d", clock());
+    ProfileAdd("ReadFrameBuffer start");
     YabThreadLock( _Ygl->mutex );
 	if (_Ygl->sync != 0){
 		glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
@@ -785,7 +785,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
 #endif
 	YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
-	//yprintf("\tVdp1ReadFrameBuffer unlock\t%d", clock());
+	ProfileAdd("ReadFrameBuffer unlock");
 	YabThreadUnLock(_Ygl->mutex);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
@@ -808,7 +808,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       }
       return;
     }
-	//yprintf("\tVdp1ReadFrameBuffer out\t%d", clock());
+	ProfileAdd("ReadFrameBuffer end");
   }
 
   int index = (Vdp1Regs->systemclipY2-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;
@@ -2153,7 +2153,7 @@ void YglRenderVDP1(void) {
    GLuint cprg=0;
    int j;
    int status;
-   //yprintf("\tYglRenderVDP1 in\t%d", clock());
+   ProfileAdd("YglRenderVDP1 start");
    YabThreadLock(_Ygl->mutex);
    //if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
 	if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
@@ -2308,7 +2308,7 @@ void YglRenderVDP1(void) {
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
-   //yprintf("\tYglRenderVDP1 out\t%d", clock());
+   ProfileAdd("YglRenderVDP1 end");
 }
 
 void YglDmyRenderVDP1(void) {
@@ -2541,6 +2541,8 @@ void YglRender(void) {
 
    YGLLOG("YglRender\n");
 
+   ProfileAdd("YglRender start");
+
    if (_Ygl->aamode == AA_FXAA){
 	   if (_Ygl->fxaa_fbotex == 0){
 		   YglGenerateAABuffer();
@@ -2667,6 +2669,7 @@ void YglRender(void) {
    glDisable(GL_SCISSOR_TEST);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    YuiSwapBuffers();
+   ProfileAdd("YglRender end");
    return;
 }
 
