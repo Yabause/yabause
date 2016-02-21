@@ -3370,7 +3370,6 @@ void VIDOGLVdp1DrawStart(void)
    int maxpri;
    int minpri;
    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
-   YabThreadLock(_Ygl->mutex);
 
    YglTmPull(YglTM_vdp1);
    YglTMReset(YglTM_vdp1);
@@ -3425,7 +3424,6 @@ void VIDOGLVdp1DrawStart(void)
       vdp1cor = vdp1cog = vdp1cob = 0;
 
    Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
-   YabThreadUnLock(_Ygl->mutex);
    
 }
 
@@ -3433,10 +3431,8 @@ void VIDOGLVdp1DrawStart(void)
 
 void VIDOGLVdp1DrawEnd(void)
 {
-	YabThreadLock(_Ygl->mutex);
 	YglTmPush(YglTM_vdp1);
 	YglRenderVDP1();
-	YabThreadUnLock(_Ygl->mutex);
 }
 
 #define IS_MESH(a) (a&0x100)
