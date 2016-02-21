@@ -347,7 +347,6 @@ void vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankIN(void) {
-    LOG("VDP2:VDPEV_VBLANK_IN\n");
 #if defined(YAB_ASYNC_RENDERING)
     if( vdp_proc_running == 0 ){
         YuiRevokeOGLOnThisThread();
