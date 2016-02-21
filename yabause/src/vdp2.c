@@ -295,19 +295,19 @@ void VdpProc( void *arg ){
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
-			LOG("\tINS\t%d\n",clock ());
+			ProfileAdd("VIN start");
             vdp2VBlankIN();
-			LOG("\tINE\t%d\n",clock ());
+			ProfileAdd("VIN end");
             break;
         case VDPEV_VBLANK_OUT:
-			LOG("\tOUTS\t%d\n",clock ());
+			ProfileAdd("VOUT start");
             vdp2VBlankOUT();
-			LOG("\tOUTE\t%d\n",clock ());
+			ProfileAdd("VOUT end");
             break;
         case VDPEV_DIRECT_DRAW:
-			LOG("\tDDS\t%d\n",clock ());
+			ProfileAdd("DirectDraw start");
             Vdp1Draw();
-			LOG("\tDDE\t%d\n",clock ());
+			ProfileAdd("DirectDraw end");
 			YabAddEventQueue(vdp1_rcv_evqueue, 0);
             break;
         case VDPEV_MAKECURRENT:
@@ -340,7 +340,7 @@ void vdp2VBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
-   LOG("\tIN_FLG\t%d\n",clock ());
+   ProfileAdd("VIN flag");
    YabAddEventQueue(rcv_evqueue, 0);
    VIDCore->Sync();
 }
@@ -354,12 +354,12 @@ void Vdp2VBlankIN(void) {
         YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
 	vbalnk_wait = 0;
-	LOG("\tEV_IN\t%d\n",clock ());
+	ProfileAdd("VIN event");
    YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
    YabWaitEventQueue(rcv_evqueue);
-	LOG("\tIN_SYNC\t%d\n",clock ());
+   ProfileAdd("VIN sync");
 
 #else
    /* this should be done after a frame change or a plot trigger */
@@ -411,7 +411,7 @@ void Vdp2HBlankOUT(void) {
 			evqueue = YabThreadCreateQueue(32);
 			YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
 		}
-		LOG("\tEV_VOUT\t%d",clock());
+		ProfileAdd("VOUT event");
 	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
    }
 #endif
@@ -554,7 +554,11 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-    //LOG("VDP2:VDPEV_VBLANK_OUT\n");
+#ifdef _VDP_PROFILE_
+	ProfileShow();
+	ProfileInit();
+#endif
+	ProfileAdd("VOUT");
 #if defined(YAB_ASYNC_RENDERING)
 
    if( vdp_proc_running == 0 ){
@@ -594,7 +598,6 @@ void Vdp2VBlankOUT(void) {
    static u32 framecount = 0;
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
-   LOG("****************  VDPEV_VBLANK_OUT ******************\n");
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
    }else{ // p02_50.htm#TVSTAT_
@@ -1363,3 +1366,51 @@ void VdpRevoke( void ){
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+
+#ifdef _VDP_PROFILE_
+
+// rendering performance
+typedef struct {
+	char event[32];
+	u32 time;
+} ProfileInfo;
+
+#define MAX_PROFILE_COUNT (32)
+ProfileInfo g_pf[MAX_PROFILE_COUNT];
+u32 current_profile_index = 0;
+
+#ifdef ANDROID
+#define LOG yprintf
+#endif
+
+void ProfileInit(){
+	current_profile_index = 0;
+}
+
+void ProfileAdd(char * p){
+	u32 time;
+	if (current_profile_index >= MAX_PROFILE_COUNT) return;
+	time = clock();
+	strcpy(g_pf[current_profile_index].event, p);
+	g_pf[current_profile_index].time = time;
+	current_profile_index++;
+}
+
+void ProfileShow(){
+	u32 intime = 0;
+	u32 extime = 0;
+	int i = 0;
+
+	if (current_profile_index <= 0) return;
+	LOG("***** frame *****");
+	for ( i = 0; i < current_profile_index; i++){
+		if (i > 0){
+			intime = g_pf[i].time - g_pf[i - 1].time;
+			extime += intime;
+		}
+		LOG("%s\t%d\t%d\t%d", g_pf[i].event, g_pf[i].time, intime, extime);
+	}
+
+}
+#endif
