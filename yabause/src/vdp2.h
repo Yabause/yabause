@@ -417,4 +417,14 @@ void VdpProc( void *arg );
 
 extern YabEventQueue * evqueue;
 
+#ifdef _VDP_PROFILE_
+void ProfileInit();
+void ProfileAdd(char * p);
+void ProfileShow();
+#else
+#define ProfileInit
+#define ProfileAdd
+#define ProfileShow
+#endif
+
 #endif
