@@ -768,6 +768,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   }
 
   if (_Ygl->pFrameBuffer == NULL){
+	//yprintf("\tVdp1ReadFrameBuffer in\t%d", clock());
     YabThreadLock( _Ygl->mutex );
 	if (_Ygl->sync != 0){
 		glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
@@ -783,14 +784,16 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 #else
 	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
 #endif
+	YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
+	//yprintf("\tVdp1ReadFrameBuffer unlock\t%d", clock());
+	YabThreadUnLock(_Ygl->mutex);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glReadPixels(0, _Ygl->rheight-Vdp1Regs->systemclipY2, _Ygl->rwidth, Vdp1Regs->systemclipY2, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
 	_Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  Vdp1Regs->systemclipY2 * 4, GL_MAP_READ_BIT);
 	//YglDumpScreenshot("lastfb.bmp", _Ygl->rwidth, _Ygl->rheight, _Ygl->pFrameBuffer);
     glBindFramebuffer(GL_FRAMEBUFFER,0);
-    YabThreadUnLock( _Ygl->mutex );
+    
 
     if (_Ygl->pFrameBuffer==NULL)
     {
@@ -805,7 +808,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       }
       return;
     }
-
+	//yprintf("\tVdp1ReadFrameBuffer out\t%d", clock());
   }
 
   int index = (Vdp1Regs->systemclipY2-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;
@@ -2150,7 +2153,8 @@ void YglRenderVDP1(void) {
    GLuint cprg=0;
    int j;
    int status;
-
+   //yprintf("\tYglRenderVDP1 in\t%d", clock());
+   YabThreadLock(_Ygl->mutex);
    //if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
 	if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
    {
@@ -2169,6 +2173,7 @@ void YglRenderVDP1(void) {
      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
    }
+   YabThreadUnLock(_Ygl->mutex);
    YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
    level = &(_Ygl->levels[_Ygl->depth]);
@@ -2303,6 +2308,7 @@ void YglRenderVDP1(void) {
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
+   //yprintf("\tYglRenderVDP1 out\t%d", clock());
 }
 
 void YglDmyRenderVDP1(void) {
@@ -2661,7 +2667,6 @@ void YglRender(void) {
    glDisable(GL_SCISSOR_TEST);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    YuiSwapBuffers();
-   //YglTmPull(YglTM);
    return;
 }
 
