@@ -405,7 +405,7 @@ void Vdp2HBlankOUT(void) {
 	   YabWaitEventQueue(vdp1_rcv_evqueue); // sync Direct VDP1 Draw
    }
    
-   if( yabsys.LineCount == 5 ){
+   if( yabsys.LineCount == 10 ){
 		if( vdp_proc_running == 0 ){
 			YuiRevokeOGLOnThisThread();
 			evqueue = YabThreadCreateQueue(32);
