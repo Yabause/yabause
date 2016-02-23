@@ -49,6 +49,7 @@ static struct TitanContext {
    TitanBlendFunc blend;
    TitanTransFunc trans;
    struct PixelData * backscreen;
+   int layer_priority[6];
 } tt_context = {
    0,
    { NULL, NULL, NULL, NULL, NULL, NULL },
@@ -71,6 +72,7 @@ struct
    }lines[5];
 
    pixel_t * dispbuffer;
+   int use_simplified;
 }priority_thread_context;
 
 #endif
@@ -105,6 +107,96 @@ static INLINE u8 TitanGetBlue(u32 pixel) { return pixel & 0xFF; }
 static INLINE u32 TitanCreatePixel(u8 alpha, u8 red, u8 green, u8 blue) { return (alpha << 24) | (red << 16) | (green << 8) | blue; }
 #endif
 
+
+void TitanRenderLinesSimplified(pixel_t * dispbuffer, int start_line, int end_line)
+{
+   int x, y, i, layer, j;
+   int line_increment, interlace_line;
+   int sorted_layers[8] = { 0 };
+   int num_layers = 0;
+
+   if (!tt_context.inited || (!tt_context.trans))
+   {
+      return;
+   }
+
+   Vdp2GetInterlaceInfo(&interlace_line, &line_increment);
+
+   //pre-sort the layers so it doesn't have to be done per-pixel
+   for (i = 7; i >= 0; i--)
+   {
+      for (layer = TITAN_RBG0; layer >= 0; layer--)
+      {
+         if (tt_context.layer_priority[layer] > 0 && tt_context.layer_priority[layer] == i)
+            sorted_layers[num_layers++] = layer;
+      }
+   }
+
+   //last layer is always the back screen
+   sorted_layers[num_layers++] = TITAN_BACK;
+
+   for (y = start_line + interlace_line; y < end_line; y += line_increment)
+   {
+      for (x = 0; x < tt_context.vdp2width; x++)
+      {
+         i = (y * tt_context.vdp2width) + x;
+
+         dispbuffer[i] = 0;
+
+         for (j = 0; j < num_layers; j++)
+         {
+            struct PixelData sprite = tt_context.vdp2framebuffer[TITAN_SPRITE][i];
+
+            int bg_layer = sorted_layers[j];
+
+            //if the top layer is the back screen
+            if (bg_layer == TITAN_BACK)
+            {
+               //use a sprite pixel if it is not transparent
+               if (sprite.pixel)
+               {
+                  dispbuffer[i] = TitanFixAlpha(sprite.pixel);
+                  break;
+               }
+               else
+               {
+                  //otherwise use the back screen pixel
+                  dispbuffer[i] = TitanFixAlpha(tt_context.backscreen[y].pixel);
+                  break;
+               }
+            }
+            //if the top layer is a sprite pixel
+            else if (sprite.priority >= tt_context.layer_priority[bg_layer])
+            {
+               //use the sprite pixel if it is not transparent
+               if (sprite.pixel)
+               {
+                  dispbuffer[i] = TitanFixAlpha(sprite.pixel);
+                  break;
+               }
+            }
+            else
+            {
+               //use the bg layer if it is not covered with a sprite pixel and not transparent
+               if (tt_context.vdp2framebuffer[bg_layer][i].pixel)
+               {
+                  dispbuffer[i] = TitanFixAlpha(tt_context.vdp2framebuffer[bg_layer][i].pixel);
+                  break;
+               }
+            }
+         }
+      }
+   }
+}
+
+void TitanRenderSimplifiedCheck(pixel_t * buf, int start, int end, int can_use_simplified_rendering)
+{
+   if (can_use_simplified_rendering)
+      TitanRenderLinesSimplified(buf, start, end);
+   else
+      TitanRenderLines(buf, start, end);
+}
+
 #ifdef WANT_VIDSOFT_PRIORITY_THREADING
 
 #define DECLARE_PRIORITY_THREAD(FUNC_NAME, THREAD_NUMBER) \
@@ -115,7 +207,7 @@ void FUNC_NAME(void* data) \
       if (priority_thread_context.need_draw[THREAD_NUMBER]) \
       { \
          priority_thread_context.need_draw[THREAD_NUMBER] = 0; \
-         TitanRenderLines(priority_thread_context.dispbuffer, priority_thread_context.lines[THREAD_NUMBER].start, priority_thread_context.lines[THREAD_NUMBER].end); \
+         TitanRenderSimplifiedCheck(priority_thread_context.dispbuffer, priority_thread_context.lines[THREAD_NUMBER].start, priority_thread_context.lines[THREAD_NUMBER].end, priority_thread_context.use_simplified); \
          priority_thread_context.draw_finished[THREAD_NUMBER] = 1; \
       } \
       YabThreadSleep(); \
@@ -480,7 +572,7 @@ void TitanWaitForPriorityThread(int which)
    while (!priority_thread_context.draw_finished[which]){}
 }
 
-void TitanRenderThreads(pixel_t * dispbuffer)
+void TitanRenderThreads(pixel_t * dispbuffer, int can_use_simplified)
 {
    int i;
    int total_jobs = vidsoft_num_priority_threads + 1;//main thread runs a job
@@ -490,6 +582,7 @@ void TitanRenderThreads(pixel_t * dispbuffer)
    int ends[6] = { 0 };
 
    priority_thread_context.dispbuffer = dispbuffer;
+   priority_thread_context.use_simplified = can_use_simplified;
 
    for (i = 0; i < total_jobs; i++)
    {
@@ -511,7 +604,7 @@ void TitanRenderThreads(pixel_t * dispbuffer)
       TitanStartPriorityThread(i);
    }
 
-   TitanRenderLines(dispbuffer, starts[0], ends[0]);
+   TitanRenderSimplifiedCheck(dispbuffer, starts[0], ends[0], can_use_simplified);
 
    for (i = 0; i < vidsoft_num_priority_threads; i++)
    {
@@ -523,25 +616,48 @@ void TitanRenderThreads(pixel_t * dispbuffer)
 
 void TitanRender(pixel_t * dispbuffer)
 {
+   int can_use_simplified_rendering = 1;
+
    if (!tt_context.inited || (!tt_context.trans))
    {
       return;
    }
 
+   //using color calculation
+   if ((Vdp2Regs->CCCTL & 0x807f) != 0)
+      can_use_simplified_rendering = 0;
+
+   //using special priority
+   if ((Vdp2Regs->SFPRMD & 0x3ff) != 0)
+      can_use_simplified_rendering = 0;
+
+   //using line screen
+   if ((Vdp2Regs->LNCLEN & 0x1f) != 0)
+      can_use_simplified_rendering = 0;
+
+   //using shadow
+   if ((Vdp2Regs->SDCTL & 0x13F) != 0)
+      can_use_simplified_rendering = 0;
+
+   tt_context.layer_priority[TITAN_NBG0] = Vdp2Regs->PRINA & 0x7;
+   tt_context.layer_priority[TITAN_NBG1] = ((Vdp2Regs->PRINA >> 8) & 0x7);
+   tt_context.layer_priority[TITAN_NBG2] = (Vdp2Regs->PRINB & 0x7);
+   tt_context.layer_priority[TITAN_NBG3] = ((Vdp2Regs->PRINB >> 8) & 0x7);
+   tt_context.layer_priority[TITAN_RBG0] = (Vdp2Regs->PRIR & 0x7);
+
 #ifdef WANT_VIDSOFT_PRIORITY_THREADING
 
    if (vidsoft_num_priority_threads > 0)
    {
-
-      TitanRenderThreads(dispbuffer);
+      TitanRenderThreads(dispbuffer, can_use_simplified_rendering);
    }
    else
    {
-      TitanRenderLines(dispbuffer, 0, tt_context.vdp2height);
+      TitanRenderSimplifiedCheck(dispbuffer, 0, tt_context.vdp2height, can_use_simplified_rendering);
    }
 
 #else
-   TitanRenderLines(dispbuffer, 0, tt_context.vdp2height);
+   TitanRenderSimplifiedCheck(dispbuffer, 0, tt_context.vdp2height, can_use_simplified_rendering);
 #endif
 }
 
