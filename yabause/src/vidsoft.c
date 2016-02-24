@@ -828,6 +828,10 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
    int start_line = 0, line_increment = 0;
    int bad_cycle = bad_cycle_setting[info->titan_which_layer];
    int charaddr, paladdr;
+   int output_y = 0;
+   u32 linescrollx_table[512] = { 0 };
+   u32 linescrolly_table[512] = { 0 };
+   float lineszoom_table[512] = { 0 };
 
    SetupScreenVars(info, &sinfo, info->PlaneAddr, regs);
 
@@ -861,12 +865,9 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
 
    Vdp2GetInterlaceInfo(&start_line, &line_increment);
 
-   for (j = start_line; j < vdp2height; j+=1)
+   //pre-generate line scroll tables
+   for (j = start_line; j < vdp2height; j++)
    {
-      int Y;
-      int linescrollx = 0;
-      // precalculate the coordinate for the line(it's faster) and do line
-      // scroll
       if (info->islinescroll)
       {
          //line scroll interval bit
@@ -875,7 +876,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
          //horizontal line scroll
          if (info->islinescroll & 0x1)
          {
-            linescrollx = (T1ReadLong(ram, info->linescrolltbl) >> 16) & 0x7FF;
+            linescrollx_table[j] = (T1ReadLong(ram, info->linescrolltbl) >> 16) & 0x7FF;
             if (need_increment)
                info->linescrolltbl += 4;
          }
@@ -883,9 +884,40 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
          //vertical line scroll
          if (info->islinescroll & 0x2)
          {
-            info->y = ((T1ReadWord(ram, info->linescrolltbl) & 0x7FF)) + scrolly;
+            linescrolly_table[j] = ((T1ReadWord(ram, info->linescrolltbl) & 0x7FF)) + scrolly;
             if (need_increment)
                info->linescrolltbl += 4;
+            y = info->y;
+         }
+
+         //line zoom
+         if (info->islinescroll & 0x4)
+         {
+            lineszoom_table[j] = (T1ReadLong(ram, info->linescrolltbl) & 0x7FF00) / (float)65536.0;
+            if (need_increment)
+               info->linescrolltbl += 4;
+         }
+      }
+   }
+
+   for (j = start_line; j < vdp2height; j += line_increment)
+   {
+      int Y;
+      int linescrollx = 0;
+      // precalculate the coordinate for the line(it's faster) and do line
+      // scroll
+      if (info->islinescroll)
+      {
+         //horizontal line scroll
+         if (info->islinescroll & 0x1)
+         {
+            linescrollx = linescrollx_table[j];
+         }
+
+         //vertical line scroll
+         if (info->islinescroll & 0x2)
+         {
+            info->y = linescrolly_table[j];
             y = info->y;
          }
          else
@@ -895,24 +927,12 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
          //line zoom
          if (info->islinescroll & 0x4)
          {
-            info->coordincx = (T1ReadLong(ram, info->linescrolltbl) & 0x7FF00) / (float)65536.0;
-            if (need_increment)
-               info->linescrolltbl += 4;
+            info->coordincx = lineszoom_table[j];
          }
       }
       else
          //y = info->y+((int)(info->coordincy *(float)(info->mosaicymask > 1 ? (j / info->mosaicymask * info->mosaicymask) : j)));
 		 y = info->y + info->coordincy*mosaic_y[j];
-
-      //we have to increment line scroll every line,
-      //but skip drawing the line if the field doesn't match
-      if (vdp2_interlace)
-      {
-         if (start_line == 0 && (j % 1) == 1)
-         {
-            continue;
-         }
-      }
 
       if (vdp2_interlace)
       {
@@ -1017,9 +1037,10 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
             else
                alpha = GetAlpha(info, color, dot);
 
-            TitanPutPixel(priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen, info);
+            TitanPutPixel(priority, i, output_y, info->PostPixelFetchCalc(info, COLSAT2YAB32(alpha, color)), info->linescreen, info);
          }
       }
+      output_y++;
    }    
 }
 
@@ -1037,29 +1058,12 @@ void Rbg0PutHiresPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
 
 void Rbg0PutPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
 {
-   if (vdp2_interlace)
+   if (vdp2_x_hires)
    {
-      int y_val = j * 2;
-
-      if (vdp2_is_odd_frame)
-         y_val += 1;
-
-      if (vdp2_x_hires)
-      {
-         Rbg0PutHiresPixel(info, color, dot, i, y_val);
-      }
-      else
-         TitanPutPixel(info->priority, i, y_val, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
+      Rbg0PutHiresPixel(info, color, dot, i, j);
    }
    else
-   {
-      if (vdp2_x_hires)
-      {
-         Rbg0PutHiresPixel(info, color, dot, i, j);
-      }
-      else
-         TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
-   }
+      TitanPutPixel(info->priority, i, j, info->PostPixelFetchCalc(info, COLSAT2YAB32(GetAlpha(info, color, dot), color)), info->linescreen, info);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3475,6 +3479,7 @@ void VidsoftDrawSprite()
       u8 colorcalctable[8];
       vdp2rotationparameterfp_struct p;
       int x, y;
+      int output_y = 0;
 
       prioritytable[0] = Vdp2Regs->PRISA & 0x7;
       prioritytable[1] = (Vdp2Regs->PRISA >> 8) & 0x7;
@@ -3602,7 +3607,7 @@ void VidsoftDrawSprite()
                   // -always- drawn and sprite types 8-F are always
                   // transparent.
                   if (pixel != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(Vdp2Regs->SPCTL & 0x10)))
-                     TitanPutPixel(prioritytable[0], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB16(alpha, pixel)), 0, &info);
+                     TitanPutPixel(prioritytable[0], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB16(alpha, pixel)), 0, &info);
                }
                else
                {
@@ -3615,7 +3620,7 @@ void VidsoftDrawSprite()
                   if (spi.normalshadow)
                   {
                      info.titan_shadow_type = TITAN_NORMAL_SHADOW;
-                     TitanPutPixel(prioritytable[spi.priority], i, i2, COLSAT2YAB16(0x3f, 0), 0, &info);
+                     TitanPutPixel(prioritytable[spi.priority], i, output_y, COLSAT2YAB16(0x3f, 0), 0, &info);
                      continue;
                   }
 
@@ -3671,7 +3676,7 @@ void VidsoftDrawSprite()
 
                      if (pixel == 0)
                      {
-                        TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, 0)), 0, &info);
+                        TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, 0)), 0, &info);
                         continue;
                      }
                   }
@@ -3684,7 +3689,7 @@ void VidsoftDrawSprite()
                      }
                   }
 
-                  TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0, &info);
+                  TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0, &info);
                }
             }
             else
@@ -3703,7 +3708,7 @@ void VidsoftDrawSprite()
                   if (spi.normalshadow)
                   {
                      info.titan_shadow_type = TITAN_NORMAL_SHADOW;
-                     TitanPutPixel(prioritytable[spi.priority], i, i2, COLSAT2YAB16(0x3f, 0), 0, &info);
+                     TitanPutPixel(prioritytable[spi.priority], i, output_y, COLSAT2YAB16(0x3f, 0), 0, &info);
                      continue;
                   }
 
@@ -3747,10 +3752,12 @@ void VidsoftDrawSprite()
                      }
                   }
 
-                  TitanPutPixel(prioritytable[spi.priority], i, i2, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0, &info);
+                  TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0, &info);
                }
             }
          }
+
+         output_y++;
       }
    }
 }
