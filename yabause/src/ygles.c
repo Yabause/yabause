@@ -598,7 +598,7 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
     }
 	if ((tm->height - tm->currentY) < h) {
 	  YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
-	  YglTMRealloc( tm, tm->width, tm->height*2);
+	  YglTMRealloc( tm, tm->width, tm->height+256);
 	  YglTMAllocate(tm, output, w, h, x, y);
       return;
    }
@@ -1307,9 +1307,9 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 	   level->prg[level->prgcurrent].blendmode = input->blendmode;
   }
 // for polygon debug
-  else if (prg == PG_VFP1_GOURAUDSAHDING ){
-	   YglProgramChange(level, prg);
-   }
+//  else if (prg == PG_VFP1_GOURAUDSAHDING ){
+//	   YglProgramChange(level, prg);
+//   }
    program = &level->prg[level->prgcurrent];
 
    if (program->currentQuad == program->maxQuad) {
@@ -2140,12 +2140,12 @@ void YglTmPush(YglTextureManager * tm){
 	}
 }
 
-void YglTmPull(YglTextureManager * tm){
+void YglTmPull(YglTextureManager * tm, u32 flg ){
 	if (tm->texture == NULL) {
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tm->textureID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT /*| GL_MAP_INVALIDATE_BUFFER_BIT*/);
+		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | flg /*| GL_MAP_UNSYNCHRONIZED_BIT*/ /*| GL_MAP_INVALIDATE_BUFFER_BIT*/);
 		if (tm->texture == NULL){
 			abort();
 		}
@@ -2959,7 +2959,7 @@ void YglOnScreenDebugMessage(char *string, ...) {
 
 void VIDOGLSync(){
 	//YglTmPull(YglTM_vdp1);
-	YglTmPull(YglTM);
+	YglTmPull(YglTM, GL_MAP_INVALIDATE_BUFFER_BIT);
 	_Ygl->texture_manager = NULL;
 }
 
