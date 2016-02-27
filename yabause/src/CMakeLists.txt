@@ -51,15 +51,19 @@ if (ANDROID)
 	add_definitions(-DYAB_PORT_OSD)
 	add_definitions(-D_OGLES3_)
 	add_definitions(-DYAB_ASYNC_RENDERING)
+	add_definitions(-DYAB_PORT_OSD)
+	include_directories(./ ./nanovg)		
 	set(yabause_SOURCES
 		${yabause_SOURCES}
 		yglcache.c
 		ygles.c
-		yglshaderes.c )
+		yglshaderes.c 
+		nanovg/nanovg.c 
+		nanovg/nanovg_osdcore.h 
+		nanovg/nanovg_osdcore.c
+		)
 endif()
 
-include_directories(nanovg)
-set(yabause_SOURCES ${yabause_SOURCES} nanovg/nanovg.c)
 
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
@@ -189,6 +193,14 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		add_definitions(-DHAVE_LIBGL=1)
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
 
+		include_directories(./ ./nanovg)
+		set(yabause_SOURCES ${yabause_SOURCES} 
+			nanovg/nanovg.c 
+			nanovg/nanovg_osdcore.h 
+			nanovg/nanovg_osdcore.c
+		)
+		add_definitions(-DYAB_PORT_OSD)
+		
 		include(FindGLUT)
 		if (GLUT_FOUND)
 			message (WARNING "Deprecated Glut found. Support will be removed in the future. ")

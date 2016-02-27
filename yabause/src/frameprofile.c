@@ -20,7 +20,9 @@
 #include "yabause.h"
 #include "frameprofile.h"
 #include "osdcore.h"
-
+#ifdef WIN32
+#include <windows.h>
+#endif
 #ifdef _VDP_PROFILE_
 
 // rendering performance
@@ -41,7 +43,19 @@ void FrameProfileInit(){
 void FrameProfileAdd(char * p){
 	u32 time;
 	if (current_profile_index >= MAX_PROFILE_COUNT) return;
+
+#ifdef WIN32
+	static LARGE_INTEGER freq = { 0 };
+	u64 ticks;
+	if (freq.QuadPart == 0){
+		QueryPerformanceFrequency(&freq);
+	}
+	QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
+	ticks = ticks * 1000000L / freq.QuadPart;
+	time = ticks;
+#else
 	time = clock();
+#endif
 	strcpy(g_pf[current_profile_index].event, p);
 	g_pf[current_profile_index].time = time;
 	current_profile_index++;
