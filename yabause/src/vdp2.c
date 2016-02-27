@@ -33,7 +33,8 @@
 #include "vdp1.h"
 #include "yabause.h"
 #include "movie.h"
-#include "osdcore.h"
+
+#include "frameprofile.h"
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -49,10 +50,12 @@ u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
 int vbalnk_wait = 0;
+int voutflg = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 YabEventQueue * rcv_evqueue = NULL;
 YabEventQueue * vdp1_rcv_evqueue = NULL;
+YabEventQueue * vout_rcv_evqueue = NULL;
 static u64 syncticks = 0;       // CPU time sync for real time.
 void VdpProc( void *arg );      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
@@ -164,6 +167,7 @@ int Vdp2Init(void) {
 #if defined(YAB_ASYNC_RENDERING)
    if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(1);
    if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(1);
+   if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(1);
    yabsys.wait_line_count = -1;
 #endif
 
@@ -295,19 +299,20 @@ void VdpProc( void *arg ){
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
-			ProfileAdd("VIN start");
+			FrameProfileAdd("VIN start");
             vdp2VBlankIN();
-			ProfileAdd("VIN end");
+			FrameProfileAdd("VIN end");
             break;
         case VDPEV_VBLANK_OUT:
-			ProfileAdd("VOUT start");
+			FrameProfileAdd("VOUT start");
             vdp2VBlankOUT();
-			ProfileAdd("VOUT end");
+			FrameProfileAdd("VOUT end");
+			YabAddEventQueue(vout_rcv_evqueue, 0);
             break;
         case VDPEV_DIRECT_DRAW:
-			ProfileAdd("DirectDraw start");
+			FrameProfileAdd("DirectDraw start");
             Vdp1Draw();
-			ProfileAdd("DirectDraw end");
+			FrameProfileAdd("DirectDraw end");
 			YabAddEventQueue(vdp1_rcv_evqueue, 0);
             break;
         case VDPEV_MAKECURRENT:
@@ -340,7 +345,7 @@ void vdp2VBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
-   ProfileAdd("VIN flag");
+   FrameProfileAdd("VIN flag");
    YabAddEventQueue(rcv_evqueue, 0);
    VIDCore->Sync();
 }
@@ -354,12 +359,12 @@ void Vdp2VBlankIN(void) {
         YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
 	vbalnk_wait = 0;
-	ProfileAdd("VIN event");
+	FrameProfileAdd("VIN event");
    YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
    YabWaitEventQueue(rcv_evqueue);
-   ProfileAdd("VIN sync");
+   FrameProfileAdd("VIN sync");
 
 #else
    /* this should be done after a frame change or a plot trigger */
@@ -400,19 +405,15 @@ void Vdp2HBlankOUT(void) {
       memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
 
 #if defined(YAB_ASYNC_RENDERING)
-   if (yabsys.wait_line_count != -1 && yabsys.wait_line_count >= yabsys.LineCount){
+   if (yabsys.wait_line_count != -1 && yabsys.LineCount >= yabsys.wait_line_count ){
 	   yabsys.wait_line_count = -1;
 	   YabWaitEventQueue(vdp1_rcv_evqueue); // sync Direct VDP1 Draw
+	   FrameProfileAdd("DirectDraw sync");
    }
-   
-   if( yabsys.LineCount == 10 ){
-		if( vdp_proc_running == 0 ){
-			YuiRevokeOGLOnThisThread();
-			evqueue = YabThreadCreateQueue(32);
-			YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-		}
-		ProfileAdd("VOUT event");
-	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
+   if( voutflg == 1 && yabsys.LineCount >= 220 ){
+	   YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
+	   voutflg = 0;
+	   FrameProfileAdd("VOUT sync");
    }
 #endif
 }
@@ -475,12 +476,12 @@ void vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
-   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
-
    VIDCore->Vdp2DrawStart();
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
    }
+   
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
@@ -555,10 +556,9 @@ void vdp2VBlankOUT(void) {
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
 #ifdef _VDP_PROFILE_
-	ProfileShow();
-	ProfileInit();
+	FrameProfileShow();
+	FrameProfileInit();
 #endif
-	ProfileAdd("VOUT");
 #if defined(YAB_ASYNC_RENDERING)
 
    if( vdp_proc_running == 0 ){
@@ -587,8 +587,9 @@ void Vdp2VBlankOUT(void) {
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
     }
 
-   //YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
-
+   FrameProfileAdd("VOUT event");
+   voutflg = 1;
+   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
 #else
    static int framestoskip = 0;
    static int framesskipped = 0;
@@ -619,12 +620,12 @@ void Vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
-   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    VIDCore->Vdp2DrawStart();
-
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
    }
+   
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
@@ -1368,49 +1369,3 @@ void VdpRevoke( void ){
 //////////////////////////////////////////////////////////////////////////////
 
 
-#ifdef _VDP_PROFILE_
-
-// rendering performance
-typedef struct {
-	char event[32];
-	u32 time;
-} ProfileInfo;
-
-#define MAX_PROFILE_COUNT (32)
-ProfileInfo g_pf[MAX_PROFILE_COUNT];
-u32 current_profile_index = 0;
-
-#ifdef ANDROID
-#define LOG yprintf
-#endif
-
-void ProfileInit(){
-	current_profile_index = 0;
-}
-
-void ProfileAdd(char * p){
-	u32 time;
-	if (current_profile_index >= MAX_PROFILE_COUNT) return;
-	time = clock();
-	strcpy(g_pf[current_profile_index].event, p);
-	g_pf[current_profile_index].time = time;
-	current_profile_index++;
-}
-
-void ProfileShow(){
-	u32 intime = 0;
-	u32 extime = 0;
-	int i = 0;
-
-	if (current_profile_index <= 0) return;
-	LOG("***** frame *****");
-	for ( i = 0; i < current_profile_index; i++){
-		if (i > 0){
-			intime = g_pf[i].time - g_pf[i - 1].time;
-			extime += intime;
-		}
-		LOG("%s\t%d\t%d\t%d", g_pf[i].event, g_pf[i].time, intime, extime);
-	}
-
-}
-#endif
