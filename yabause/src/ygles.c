@@ -26,6 +26,7 @@
 #include "yui.h"
 #include "vidshared.h"
 #include "debug.h"
+#include "frameprofile.h"
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -229,7 +230,7 @@ void YglLoadIdentity(YglMatrix *result)
 
 
 YglTextureManager * YglTM;
-YglTextureManager * YglTM_vdp1;
+//YglTextureManager * YglTM_vdp1;
 Ygl * _Ygl;
 
 typedef struct
@@ -768,7 +769,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   }
 
   if (_Ygl->pFrameBuffer == NULL){
-    ProfileAdd("ReadFrameBuffer start");
+    FrameProfileAdd("ReadFrameBuffer start");
     YabThreadLock( _Ygl->mutex );
 	if (_Ygl->sync != 0){
 		glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
@@ -785,7 +786,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 	YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->rwidth / (float)GlWidth, (float)_Ygl->rheight / (float)GlHeight);
 #endif
 	YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
-	ProfileAdd("ReadFrameBuffer unlock");
+	FrameProfileAdd("ReadFrameBuffer unlock");
 	YabThreadUnLock(_Ygl->mutex);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
@@ -808,7 +809,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       }
       return;
     }
-	ProfileAdd("ReadFrameBuffer end");
+	FrameProfileAdd("ReadFrameBuffer end");
   }
 
   int index = (Vdp1Regs->systemclipY2-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;
@@ -1161,7 +1162,7 @@ int YglInit(int width, int height, unsigned int depth) {
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
    YglTM = YglTMInit(512, 512);
-   YglTM_vdp1 = YglTMInit(512, 512);
+//   YglTM_vdp1 = YglTMInit(512, 512);
    
    _Ygl->smallfbo = 0;
    _Ygl->smallfbotex = 0;
@@ -1191,7 +1192,7 @@ void YglDeInit(void) {
    unsigned int i,j;
 
    YglTMDeInit(YglTM);
-   YglTMDeInit(YglTM_vdp1);
+//   YglTMDeInit(YglTM_vdp1);
 
    if (_Ygl)
    {
@@ -2140,7 +2141,7 @@ void YglTmPull(YglTextureManager * tm){
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tm->textureID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT );
+		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT /*| GL_MAP_INVALIDATE_BUFFER_BIT*/);
 		if (tm->texture == NULL){
 			abort();
 		}
@@ -2153,7 +2154,7 @@ void YglRenderVDP1(void) {
    GLuint cprg=0;
    int j;
    int status;
-   ProfileAdd("YglRenderVDP1 start");
+   FrameProfileAdd("YglRenderVDP1 start");
    YabThreadLock(_Ygl->mutex);
    //if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
 	if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
@@ -2179,7 +2180,7 @@ void YglRenderVDP1(void) {
    level = &(_Ygl->levels[_Ygl->depth]);
    glDisable(GL_STENCIL_TEST);
    glActiveTexture(GL_TEXTURE0);
-   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1->textureID);
+   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
    cprg = -1;
 
@@ -2308,7 +2309,7 @@ void YglRenderVDP1(void) {
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
-   ProfileAdd("YglRenderVDP1 end");
+   FrameProfileAdd("YglRenderVDP1 end");
 }
 
 void YglDmyRenderVDP1(void) {
@@ -2541,7 +2542,7 @@ void YglRender(void) {
 
    YGLLOG("YglRender\n");
 
-   ProfileAdd("YglRender start");
+   FrameProfileAdd("YglRender start");
 
    if (_Ygl->aamode == AA_FXAA){
 	   if (_Ygl->fxaa_fbotex == 0){
@@ -2667,9 +2668,10 @@ void YglRender(void) {
    glDisableVertexAttribArray(2);
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_SCISSOR_TEST);
+   glDisable(GL_STENCIL_TEST);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
    YuiSwapBuffers();
-   ProfileAdd("YglRender end");
+   FrameProfileAdd("YglRender end");
    return;
 }
 
@@ -2840,8 +2842,6 @@ void YglReset(void) {
    YglLevel * level;
    unsigned int i,j;
 
-   YglTMReset(YglTM);
- 
 
    for(i = 0;i < (_Ygl->depth+1) ;i++) {
      level = _Ygl->levels + i;
@@ -2953,7 +2953,8 @@ void YglOnScreenDebugMessage(char *string, ...) {
 }
 
 void VIDOGLSync(){
-	YglTmPull(YglTM_vdp1);
+	//YglTmPull(YglTM_vdp1);
 	YglTmPull(YglTM);
+	_Ygl->texture_manager = NULL;
 }
 
