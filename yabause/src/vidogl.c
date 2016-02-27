@@ -3383,7 +3383,7 @@ void VIDOGLVdp1DrawStart(void)
 	   YglTMReset(YglTM);
 	   YglCacheReset(YglTM);
    }
-   YglTmPull(YglTM);
+   YglTmPull(YglTM,0);
 
    maxpri = 0x00;
    minpri = 0x07;   
@@ -4782,7 +4782,7 @@ void VIDOGLVdp2DrawStart(void)
 	}
 	YglReset();
 
-	YglTmPull(YglTM);
+	YglTmPull(YglTM,0);
 	YglTMReset(YglTM);
 	YglCacheReset(YglTM);
 	_Ygl->texture_manager = YglTM;
