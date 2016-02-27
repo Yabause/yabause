@@ -698,6 +698,8 @@ int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf 
 
 	fclose(fp);
 	free(pBitmap);
+
+	return 0;
 }
 
 
@@ -1058,6 +1060,8 @@ int YglGenerateAABuffer(){
 		YGLDEBUG("YglGLInit:Framebuffer status = %08X\n", status);
 		abort();
 	}
+
+	return 0;
 
 }
 
@@ -2670,6 +2674,7 @@ void YglRender(void) {
    glDisable(GL_SCISSOR_TEST);
    glDisable(GL_STENCIL_TEST);
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   OSDDisplayMessages(NULL,0,0);
    YuiSwapBuffers();
    FrameProfileAdd("YglRender end");
    return;

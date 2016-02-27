@@ -108,12 +108,16 @@ NULL
 };
 
 #ifdef YAB_PORT_OSD
+#include "nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
 &OSDDummy,
 #ifdef HAVE_LIBGLUT
 &OSDGlut,
 #endif
 &OSDSoft,
+#ifdef HAVE_LIBGL
+&OSDNnovg,
+#endif
 NULL
 };
 #endif
