@@ -79,7 +79,7 @@ static int profile_index = 0;
 
 int OSDNanovgInit(void)
 {
-    vg = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
+    vg = nvgCreateGLES3(NVG_ANTIALIAS | NVG_DEBUG);
     if (vg == NULL) {
         printf("Could not init nanovg.\n");
         return -1;
@@ -190,12 +190,13 @@ void ProfileDrawGraph(){
 	
 	historyindx = current_history_index % MAX_HISTORY;
 	
+	if( frameinfo_histroy[historyindx].cnt == 0 ){
+		return;
+	}
 
 	float startX = 0.0f;
 	float width = 32.0f;
 	
-	glClear(GL_STENCIL_BUFFER_BIT);
-
 	for( i=0; i< MAX_HISTORY; i++ ){
 		
 		float startY = 32;
@@ -230,13 +231,13 @@ void ProfileDrawGraph(){
 	nvgMoveTo(vg, 0, targetY);
 	nvgLineTo(vg, 32*32, targetY);
 	nvgStrokeColor(vg, nvgRGBA(255,0,0,255));
-	nvgStroke(vg);	
+	nvgStroke(vg);
+
 
 	// Reset indexs;
 	current_history_index++;
 	profile_index = 0;
 
-			
 }
 
 
@@ -278,34 +279,10 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message,pixel_t * buffer, int w
    nvgText(vg, LeftX,TxtY,message->message, NULL);
    TxtY+=fontsize;
    
-/*   
-   for( i=0; i< msgcnt; i++ ){
-	   nvgText(vg, LeftX, TxtY, g_message[i], NULL);
-	   TxtY+=fontsize;
-	   if( maxlen < strlen(g_message[i])) {
-		   maxlen = strlen(g_message[i]);
-	   }
-	   if( TxtY >= 1080 ){
-		   TxtY=22;
-		   LeftX += (fontsize/2)*maxlen;
-		   maxlen = 0;
-	   }
-   }
-   msgcnt=0;
-*/
 
    ProfileDrawGraph();
    nvgEndFrame(vg);
 
-/*
-
-   glColor3f(1.0f, 1.0f, 1.0f);
-   glRasterPos2i(10, TxtY + 11);
-   for (i = 0; i < msglength; i++) {
-      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, message->message[i]);
-   }
-   glColor3f(1, 1, 1);
-*/
 }
 
 
