@@ -170,6 +170,14 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
+#ifdef YAB_PORT_OSD
+#include "nanovg/nanovg_osdcore.h"
+OSD_struct *OSDCoreList[] = {
+&OSDNnovg,
+NULL
+};
+#endif
+
 void YuidrawSoftwareBuffer();
 static int saveScreenshot( const char * filename );
 
@@ -338,12 +346,11 @@ void YuiSwapBuffers(void)
    if( g_Display == EGL_NO_DISPLAY ){
       return;
    }
-   SetOSDToggle(g_EnagleFPS);
-   OSDDisplayMessages(NULL,0,0);
    if( s_vidcoretype == VIDCORE_SOFT ){
        YuidrawSoftwareBuffer();
    }
    eglSwapBuffers(g_Display,g_Surface);
+   SetOSDToggle(g_EnagleFPS);   
 }
 
 GLuint LoadShader ( GLenum type, const char *shaderSrc )

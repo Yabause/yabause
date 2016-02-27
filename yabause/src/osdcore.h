@@ -25,8 +25,11 @@
 #define OSDCORE_DUMMY    0
 #define OSDCORE_GLUT     1
 #define OSDCORE_SOFT     2
+#define OSDCORE_NANOVG   3
 
-#ifdef HAVE_LIBGLUT
+#if defined(HAVE_LIBGL)
+	#define OSDCORE_DEFAULT  OSDCORE_NANOVG
+#elif defined(HAVE_LIBGLUT)
   #define OSDCORE_DEFAULT  OSDCORE_GLUT
 #else
   #define OSDCORE_DEFAULT  OSDCORE_SOFT
