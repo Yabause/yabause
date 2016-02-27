@@ -23,6 +23,7 @@ set(yabause_HEADERS
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h
 	shaders/FXAA_DefaultES.h
+	frameprofile.h
 )
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
@@ -40,6 +41,7 @@ set(yabause_SOURCES
 	netlink.c
 	osdcore.c
 	peripheral.c profile.c
+	frameprofile.c
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c

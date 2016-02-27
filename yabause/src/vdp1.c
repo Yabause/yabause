@@ -477,7 +477,6 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
-            VIDCore->Vdp1DrawEnd();
             regs->LOPR = regs->addr >> 3;
             regs->COPR = regs->addr >> 3;
             return;

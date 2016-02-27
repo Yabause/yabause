@@ -51,6 +51,8 @@ typedef struct {
 	void (*Reset)(void);
 
     void (*DisplayMessage)(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
+	int (*UseBuffer)(void);
+	void (*AddFrameProfileData)( char * label, u32 data );
 } OSD_struct;
 
 int OSDInit(int coreid);
@@ -61,6 +63,7 @@ int  OSDDisplayMessages(pixel_t * buffer, int w, int h);
 void OSDToggle(int what);
 int  OSDIsVisible(int what);
 void OSDSetVisible(int what, int visible);
+void OSDAddFrameProfileData( char * label, u32 data );
 
 extern OSD_struct OSDDummy;
 #ifdef HAVE_LIBGLUT
