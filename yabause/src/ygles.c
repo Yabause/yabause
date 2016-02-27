@@ -1303,9 +1303,9 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 	   level->prg[level->prgcurrent].blendmode = input->blendmode;
   }
 // for polygon debug
-//  else if (prg == PG_VFP1_GOURAUDSAHDING ){
-//	   YglProgramChange(level, prg);
-//   }
+  else if (prg == PG_VFP1_GOURAUDSAHDING ){
+	   YglProgramChange(level, prg);
+   }
    program = &level->prg[level->prgcurrent];
 
    if (program->currentQuad == program->maxQuad) {
@@ -2410,12 +2410,12 @@ void YglRenderFrameBuffer( int from , int to ) {
    offsetcol[3] = 0.0f;
 
    if ( (Vdp2Regs->CCCTL & 0x540) == 0x140 ){
-		// Sprite Add Color
-	   Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
-   }else if (Vdp2Regs->LNCLEN & 0x20){
-		Ygl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
-   }
-   else{
+	   if (Vdp2Regs->LNCLEN & 0x20){
+		   Ygl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+	   }else{
+		   Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+	   }
+   }else{
      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
    }
    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
