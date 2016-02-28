@@ -112,14 +112,14 @@ typedef struct {
 } YglTextureManager;
 
 extern YglTextureManager * YglTM;
-extern YglTextureManager * YglTM_vdp1;
+//extern YglTextureManager * YglTM_vdp1;
 
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(YglTextureManager * tm );
 void YglTMReset( YglTextureManager * tm );
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 void YglTmPush(YglTextureManager * tm);
-void YglTmPull(YglTextureManager * tm);
+void YglTmPull(YglTextureManager * tm, u32 flg);
 
 
 void YglCacheInit(YglTextureManager * tm);

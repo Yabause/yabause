@@ -1,4 +1,5 @@
 /*  Copyright 2012 Guillaume Duhamel
+	Copyright 2016 devMiyax(smiyaxdev@gmail.com)
 
     This file is part of Yabause.
 
@@ -17,9 +18,12 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef OSDCORE_H
-#define OSDCORE_H
+#ifndef NANOVG_OSDCORE_H
+#define NANOVG_OSDCORE_H
 
+extern OSD_struct OSDNnovg;
+
+#if 0
 #include "core.h"
 
 #define OSDCORE_DUMMY    0
@@ -51,6 +55,8 @@ typedef struct {
 	void (*Reset)(void);
 
     void (*DisplayMessage)(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
+	int (*UseBuffer)(void);
+	void (*AddFrameProfileData)( char * label, u32 data );
 } OSD_struct;
 
 int OSDInit(int coreid);
@@ -61,6 +67,7 @@ int  OSDDisplayMessages(pixel_t * buffer, int w, int h);
 void OSDToggle(int what);
 int  OSDIsVisible(int what);
 void OSDSetVisible(int what, int visible);
+void OSDAddFrameProfileData( char * label, u32 data );
 
 extern OSD_struct OSDDummy;
 #ifdef HAVE_LIBGLUT
@@ -73,5 +80,6 @@ void ToggleFPS(void);
 int  GetOSDToggle(void);
 void SetOSDToggle(int toggle);
 void DisplayMessage(const char* str);
+#endif
 
 #endif
