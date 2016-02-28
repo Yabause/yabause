@@ -266,10 +266,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         String selInputdevice = sharedPref.getString("pref_player2_inputdevice", "65535");
 
         for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
-        	if( !selInputdevice.equals( padm.getId(inputType) ) ){
+        	//if( !selInputdevice.equals( padm.getId(inputType) ) ){
         		Inputlabels.add(padm.getName(inputType));
         		Inputvalues.add(padm.getId(inputType)); 
-        	}
+        	//}
         }
 
         CharSequence[] input_entries = new CharSequence[Inputlabels.size()];
@@ -323,10 +323,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
         for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
         	
-        	if( !selInputdevice.equals( padm.getId(inputType) ) ){
+        	//if( !selInputdevice.equals( padm.getId(inputType) ) ){
         		Inputlabels_p2.add(padm.getName(inputType));
         		Inputvalues_p2.add(padm.getId(inputType));
-        	}
+        	//}
         }
 
         CharSequence[] input_entries_p2 = new CharSequence[Inputlabels_p2.size()];
