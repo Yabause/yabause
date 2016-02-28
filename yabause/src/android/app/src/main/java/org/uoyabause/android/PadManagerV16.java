@@ -169,6 +169,10 @@ class BasicInputDevice {
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
 
+            if( keyCode == KeyEvent.KEYCODE_BACK ){
+                return 0;
+            }
+
             if (keyCode == 0) {
                 keyCode = event.getScanCode();
             }
@@ -196,6 +200,10 @@ class BasicInputDevice {
     public int onKeyUp(int keyCode, KeyEvent event) {
         if (((event.getSource() & InputDevice.SOURCE_GAMEPAD) == InputDevice.SOURCE_GAMEPAD) ||
                 ((event.getSource() & InputDevice.SOURCE_JOYSTICK) == InputDevice.SOURCE_JOYSTICK)) {
+
+            if( keyCode == KeyEvent.KEYCODE_BACK ){
+                return 0;
+            }
 
             if( keyCode == 0 ){
                 keyCode = event.getScanCode();
@@ -235,11 +243,29 @@ class SSController extends BasicInputDevice {
         if( event.getScanCode() == 0 ){
             return 1;
         }
+        if( keyCode == KeyEvent.KEYCODE_BACK ){
+            Integer PadKey = Keymap.get(keyCode);
+            if (PadKey != null) {
+                YabauseRunnable.press(PadKey, _playerindex);
+                return 1;
+            }else{
+                return 0;
+            }
+        }
         return super.onKeyDown(keyCode, event);
     }
     public int onKeyUp(int keyCode, KeyEvent event ) {
         if( event.getScanCode() == 0 ){
             return 1;
+        }
+        if( keyCode == KeyEvent.KEYCODE_BACK ){
+            Integer PadKey = Keymap.get(keyCode);
+            if (PadKey != null) {
+                YabauseRunnable.release(PadKey, _playerindex);
+                return 1;
+            }else{
+                return 0;
+            }
         }
         return super.onKeyUp(keyCode, event);
     }
@@ -467,40 +493,40 @@ class PadManagerV16 extends PadManager {
     }
     
     public int onGenericMotionEvent(MotionEvent event){
-        BasicInputDevice pad = findPlayerPad(event.getDeviceId());
 
-        if( pad != null )
-            return pad.onGenericMotionEvent(event);
-    	
+        if( pads[0] != null && pads[0]._selected_device_id == event.getDeviceId() ){
+            pads[0].onGenericMotionEvent(event);
+        }
+        if( pads[1] != null && pads[1]._selected_device_id == event.getDeviceId() ){
+            pads[1].onGenericMotionEvent(event);
+        }
+
     	return 0;
     }
 
     public int onKeyDown(int keyCode, KeyEvent event) {
 
-        if( keyCode == KeyEvent.KEYCODE_BACK ){
-        	return 0;
+        int rtn = 0;
+        if( pads[0] != null && pads[0]._selected_device_id == event.getDeviceId() ){
+           rtn |=  pads[0].onKeyDown(keyCode, event);
+        }
+        if( pads[1] != null && pads[1]._selected_device_id == event.getDeviceId() ){
+            rtn |= pads[1].onKeyDown(keyCode, event);
         }
 
-        BasicInputDevice pad = findPlayerPad(event.getDeviceId());
-
-        if( pad != null )
-            return pad.onKeyDown(keyCode, event);
-
-        return 0;
+        return rtn;
     }
 
     public int onKeyUp(int keyCode, KeyEvent event) {
-
-        if( keyCode == KeyEvent.KEYCODE_BACK ){
-        	return 0;
+        int rtn = 0;
+        if( pads[0] != null && pads[0]._selected_device_id == event.getDeviceId() ){
+            rtn |= pads[0].onKeyUp(keyCode, event);
+        }
+        if( pads[1] != null && pads[1]._selected_device_id == event.getDeviceId() ){
+            rtn |= pads[1].onKeyUp(keyCode, event);
         }
 
-        BasicInputDevice pad = findPlayerPad(event.getDeviceId());
-
-        if( pad != null )
-            return pad.onKeyUp(keyCode,event);
-
-        return 0;
+        return rtn;
     }
 
 }
