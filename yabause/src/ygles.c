@@ -1749,7 +1749,7 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,Yg
    tmp[5].t /= (float)_Ygl->texture_manager->height;
 
 
-   if( 0 ) //input->dst == 1 )
+   if( input->dst == 1 )
    {
       YglCalcTextureQ(input->vertices,q);
 
