@@ -331,10 +331,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
          Vdp1Regs->PTMR = val;
 #if YAB_ASYNC_RENDERING
 		 if (val == 1){ 
-			 yabsys.wait_line_count = yabsys.LineCount+30; 
-			 if (yabsys.wait_line_count >= 225){
-				 yabsys.wait_line_count = 224;
-			 }
+			 yabsys.wait_line_count = 220;
 			 YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
 		}
 #else
@@ -480,7 +477,6 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
-            VIDCore->Vdp1DrawEnd();
             regs->LOPR = regs->addr >> 3;
             regs->COPR = regs->addr >> 3;
             return;
@@ -535,12 +531,12 @@ void Vdp1Draw(void)
 
    VIDCore->Vdp1DrawStart();
 
+   VIDCore->Vdp1DrawEnd();
+
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
    ScuSendDrawEnd();
-   VIDCore->Vdp1DrawEnd();
-
 
 }
 

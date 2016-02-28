@@ -35,6 +35,8 @@
 #include "yabause.h"
 #include "ygl.h"
 #include "yui.h"
+#include "frameprofile.h"
+
 
 #ifdef _WINDOWS
 int yprintf( const char * fmt, ... )
@@ -50,6 +52,9 @@ int yprintf( const char * fmt, ... )
 		va_end(ap);
 	}
 	return 0;
+}
+
+void OSDPushMessageDirect(char * msg){
 }
 #endif
 
@@ -3370,12 +3375,15 @@ void VIDOGLVdp1DrawStart(void)
    int maxpri;
    int minpri;
    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
-   YabThreadLock(_Ygl->mutex);
 
-   YglTmPull(YglTM_vdp1);
-   YglTMReset(YglTM_vdp1);
-   YglCacheReset(YglTM_vdp1);
-   _Ygl->texture_manager = YglTM_vdp1;
+   FrameProfileAdd("Vdp1Command start");
+   
+   if (_Ygl->texture_manager == NULL){
+	   _Ygl->texture_manager = YglTM;
+	   YglTMReset(YglTM);
+	   YglCacheReset(YglTM);
+   }
+   YglTmPull(YglTM,0);
 
    maxpri = 0x00;
    minpri = 0x07;   
@@ -3425,7 +3433,7 @@ void VIDOGLVdp1DrawStart(void)
       vdp1cor = vdp1cog = vdp1cob = 0;
 
    Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
-   YabThreadUnLock(_Ygl->mutex);
+   FrameProfileAdd("Vdp1Command end ");
    
 }
 
@@ -3433,10 +3441,8 @@ void VIDOGLVdp1DrawStart(void)
 
 void VIDOGLVdp1DrawEnd(void)
 {
-	YabThreadLock(_Ygl->mutex);
-	YglTmPush(YglTM_vdp1);
+	YglTmPush(YglTM);
 	YglRenderVDP1();
-	YabThreadUnLock(_Ygl->mutex);
 }
 
 #define IS_MESH(a) (a&0x100)
@@ -4766,13 +4772,29 @@ int VIDOGLVdp2Reset(void)
 
 void VIDOGLVdp2DrawStart(void)
 {
+	VIDOGLVdp2SetResolution(Vdp2Regs->TVMD);
 
+	if (_Ygl->rwidth > YglTM->width){
+		int new_width = _Ygl->rwidth;
+		int new_height = YglTM->height;
+		YglTMDeInit(YglTM);
+		YglTM = YglTMInit(new_width, new_height);
+	}
+	YglReset();
+
+	YglTmPull(YglTM,0);
+	YglTMReset(YglTM);
+	YglCacheReset(YglTM);
+	_Ygl->texture_manager = YglTM;
+	
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDOGLVdp2DrawEnd(void)
 {
+	YglTmPush(YglTM);
+
    YglRender();
    /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
    function that would be called here and during a manual change */
@@ -4845,7 +4867,6 @@ static void Vdp2DrawBackScreen(void)
       line[6] = 0;
       line[7] = vdp2height;    
 
-      glDisable(GL_TEXTURE_2D);
       glVertexPointer(2, GL_INT, 0, line);
       glEnableClientState(GL_VERTEX_ARRAY);
       glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -5936,31 +5957,22 @@ static void Vdp2DrawRBG0(void)
 
 void VIDOGLVdp2DrawScreens(void)
 {
-   VIDOGLVdp2SetResolution(Vdp2Regs->TVMD);
-
-   if (_Ygl->rwidth > YglTM->width){
-	   int new_width = _Ygl->rwidth;
-	   int new_height = YglTM->height;
-	   YglTMDeInit(YglTM);
-	   YglTM = YglTMInit(new_width, new_height);
-   }
-   YglReset();
-   YglCacheReset(YglTM);
-   _Ygl->texture_manager = YglTM;
-   YglTmPull(YglTM);
-
    Vdp2GenerateWindowInfo();
    Vdp2DrawBackScreen();
    Vdp2DrawLineColorScreen();
 
 
    Vdp2DrawNBG3();
+   FrameProfileAdd("NBG3 end");
    Vdp2DrawNBG2();
+   FrameProfileAdd("NBG2 end");
    Vdp2DrawNBG1();
+   FrameProfileAdd("NBG1 end");
    Vdp2DrawNBG0();
+   FrameProfileAdd("NBG0 end");
    Vdp2DrawRBG0();
+   FrameProfileAdd("RBG0 end");
    
-   YglTmPush(YglTM);
 }
 
 //////////////////////////////////////////////////////////////////////////////
