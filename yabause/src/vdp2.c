@@ -419,15 +419,6 @@ void Vdp2HBlankOUT(void) {
 	   voutflg = 0;
 	   FrameProfileAdd("VOUT sync");
    }
-   
-   if( yabsys.LineCount == 5 ){
-		if( vdp_proc_running == 0 ){
-			YuiRevokeOGLOnThisThread();
-			evqueue = YabThreadCreateQueue(32);
-			YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-		}	   
-	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
-   }
 #endif
 }
 
