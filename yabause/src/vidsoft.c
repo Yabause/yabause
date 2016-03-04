@@ -2917,6 +2917,45 @@ storeLineCoords(int x, int y, int i, void *arrays, Vdp1* regs, vdp1cmd_struct * 
 	return 0;
 }
 
+//skip objects that are completely outside of system clipping
+int is_pre_clipped(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y, s16 br_x, s16 br_y, Vdp1* regs)
+{
+   int y_val = regs->systemclipY2;
+
+   if (vdp1interlace)
+      y_val *= 2;
+
+   //if all x values are to the left of the screen
+   if ((tl_x < 0) &&
+      (bl_x < 0) &&
+      (tr_x < 0) &&
+      (br_x < 0))
+      return 1;
+
+   //to the right
+   if ((tl_x > regs->systemclipX2) &&
+      (bl_x > regs->systemclipX2) &&
+      (tr_x > regs->systemclipX2) &&
+      (br_x > regs->systemclipX2))
+      return 1;
+
+   //above
+   if ((tl_y < 0) &&
+      (bl_y < 0) &&
+      (tr_y < 0) &&
+      (br_y < 0))
+      return 1;
+
+   //below
+   if ((tl_y > y_val) &&
+      (bl_y > y_val) &&
+      (tr_y > y_val) &&
+      (br_y > y_val))
+      return 1;
+
+   return 0;
+}
+
 //a real vdp1 draws with arbitrary lines
 //this is why endcodes are possible
 //this is also the reason why half-transparent shading causes moire patterns
@@ -2937,6 +2976,9 @@ static void drawQuad(s16 tl_x, s16 tl_y, s16 bl_x, s16 bl_y, s16 tr_x, s16 tr_y,
 
 	//a lookup table for the gouraud colors
 	COLOR colors[4];
+
+   if (is_pre_clipped(tl_x, tl_y, bl_x, bl_y, tr_x, tr_y, br_x, br_y, regs))
+      return;
 
 	characterWidth = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
    characterHeight = cmd->CMDSIZE & 0xFF;
