@@ -56,6 +56,26 @@ if (ANDROID)
 		yglshaderes.c )
 endif()
 
+if (IOS)
+add_definitions(-DIOS=1)
+add_definitions(-DHAVE_LIBGL)
+add_definitions(-DYAB_PORT_OSD)
+add_definitions(-D_OGLES3_)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
+IF (${SIMULATOR})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mios-simulator-version-min=6.0")
+ENDIF()
+set(yabause_SOURCES
+${yabause_SOURCES}
+yglcache.c
+ygles.c
+yglshaderes.c )
+endif (IOS)
+
 include_directories(nanovg)
 set(yabause_SOURCES ${yabause_SOURCES} nanovg/nanovg.c)
 
@@ -298,7 +318,7 @@ if (MINI18N_FOUND)
 endif()
 
 # APPLE // not necessary mac os x, but i don't care ;)
-if (APPLE)
+if (APPLE AND NOT IOS)
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY NAMES CoreFoundation )
 	FIND_LIBRARY(IOKIT_LIBRARY NAMES IOKit )
 	set(yabause_SOURCES ${yabause_SOURCES} macjoy.c permacjoy.c cd-macosx.c sndmac.c)
@@ -309,7 +329,8 @@ if (APPLE)
 	if (HAVE_FBO)
 		add_definitions(-DHAVE_FBO=1)
 	endif()
-endif (APPLE)
+endif (APPLE AND NOT IOS)
+
 
 # Visual Studio
 if (MSVC)
@@ -589,7 +610,7 @@ endif()
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.c /*thr-dummy.c*/ )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	add_definitions(-DARCH_IS_FREEBSD=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
@@ -684,7 +705,7 @@ endif()
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
-add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
+add_library(yabause OBJECT ${yabause_SOURCES} ${yabause_HEADERS})
 
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)

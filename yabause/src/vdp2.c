@@ -34,6 +34,8 @@
 #include "yabause.h"
 #include "movie.h"
 #include "osdcore.h"
+#include "threads.h"
+#include "yui.h"
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -340,7 +342,7 @@ void vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankIN(void) {
-    LOG("VDP2:VDPEV_VBLANK_IN\n");
+    //LOG("VDP2:VDPEV_VBLANK_IN\n");
 #if defined(YAB_ASYNC_RENDERING)
     if( vdp_proc_running == 0 ){
         YuiRevokeOGLOnThisThread();
@@ -536,7 +538,7 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-    LOG("VDP2:VDPEV_VBLANK_OUT\n");
+    //LOG("VDP2:VDPEV_VBLANK_OUT\n");
 #if defined(YAB_ASYNC_RENDERING)
 
    if( vdp_proc_running == 0 ){
@@ -576,7 +578,7 @@ void Vdp2VBlankOUT(void) {
    static u32 framecount = 0;
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
-   LOG("****************  VDPEV_VBLANK_OUT ******************\n");
+   //LOG("****************  VDPEV_VBLANK_OUT ******************\n");
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
    }else{ // p02_50.htm#TVSTAT_

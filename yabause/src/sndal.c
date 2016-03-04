@@ -19,7 +19,7 @@
 */
 
 #ifdef HAVE_LIBAL
-
+  
 #ifdef __APPLE__
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
