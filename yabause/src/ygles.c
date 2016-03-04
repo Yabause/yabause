@@ -654,7 +654,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_DYNAMIC_READ);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
     YabThreadUnLock( _Ygl->mutex );
   }
@@ -680,7 +680,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     YGLLOG("VIDOGLVdp1ReadFrameBuffer %d\n", _Ygl->drawframe);
 	_Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  _Ygl->rheight * 4, GL_MAP_READ_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+    glBindFramebuffer(GL_FRAMEBUFFER,_Ygl->default_fbo);
     YabThreadUnLock( _Ygl->mutex );
 
     if (_Ygl->pFrameBuffer==NULL)
@@ -772,7 +772,7 @@ int YglGenFrameBuffer() {
 		return 0;
 	}
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 	glFinish();
 	glGetError();
 
@@ -816,7 +816,7 @@ int YglGenFrameBuffer() {
 
 	_Ygl->pFrameBuffer = NULL;
 
-	if (strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
+	if ( 1 ) //strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
 	{
 		if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
 		glGenRenderbuffers(1, &_Ygl->rboid_depth);
@@ -881,7 +881,7 @@ int YglGenFrameBuffer() {
 	}
 
 	YGLDEBUG("YglGLInit OK");
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	rebuild_frame_buffer = 0;
 	return 0;
@@ -927,7 +927,7 @@ int YglGenerateAABuffer(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	if (strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
+	if ( 1) //strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
 	{
 		if (_Ygl->fxaa_depth != 0) glDeleteRenderbuffers(1, &_Ygl->fxaa_depth);
 		glGenRenderbuffers(1, &_Ygl->fxaa_depth);
@@ -1050,6 +1050,9 @@ int YglInit(int width, int height, unsigned int depth) {
 
    _Ygl->drawframe = 0;
    _Ygl->readframe = 1;
+   
+   glGetIntegerv(GL_FRAMEBUFFER_BINDING,&_Ygl->default_fbo);
+   printf("GL_FRAMEBUFFER_BINDING = %d",_Ygl->default_fbo );
 
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1088,7 +1091,7 @@ int YglInit(int width, int height, unsigned int depth) {
 	   YGLDEBUG("Fail to YglProgramInit\n");
 	   abort();
    }
-   glBindFramebuffer(GL_FRAMEBUFFER, 0 );
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo );
    glBindTexture(GL_TEXTURE_2D, 0);
    _Ygl->st = 0;
    _Ygl->msglength = 0;
@@ -2218,7 +2221,7 @@ void YglRenderVDP1(void) {
 	   _Ygl->sync = 0;
    }
    _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
 }
@@ -2410,8 +2413,7 @@ void YglRenderFrameBuffer( int from , int to ) {
    vertices[9] = _Ygl->rheight + 1 - 0.5;
    vertices[10] = 0 - 0.5;
    vertices[11] = _Ygl->rheight + 1 - 0.5;
-
-
+   
    texcord[0] = 0.0f;
    texcord[1] = 1.0f;
    texcord[2] = 1.0f;
@@ -2462,7 +2464,7 @@ void YglRender(void) {
 	   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
    }
    else{
-	   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    }
 
 
@@ -2566,7 +2568,7 @@ void YglRender(void) {
 	}
 
 	if (_Ygl->aamode == AA_FXAA){
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
 	}
 

@@ -2088,7 +2088,7 @@ void VIDSoftSetBilinear(int b)
 
 void VIDSoftSetupGL(void)
 {
-#if !defined(ANDROID)
+#if !defined(ANDROID) && !defined(IOS)
 #ifdef USE_OPENGL
    GLint status;
    GLint texAttrib;

@@ -50,12 +50,18 @@
     sh2_trace_writel(__a, __v);           \
     MappedMemoryWriteLong(__a, __v);      \
 } while (0)
-#endif
-
 void SetInsTracingToggle(int toggle)
 {
 	SetInsTracing(toggle ? 1 : 0);
 }
+#else
+void SetInsTracingToggle(int toggle)
+{
+
+}
+#endif
+
+
 
 
 opcodefunc opcodes[0x10000];

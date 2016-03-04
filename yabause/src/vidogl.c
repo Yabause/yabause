@@ -22,7 +22,7 @@
 /*! \file vidogl.c
     \brief OpenGL video renderer
 */
-#if defined(HAVE_LIBGL) || defined(__ANDROID__)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
 #include <math.h>
 #define EPSILON (1e-10 )
@@ -6327,10 +6327,11 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
    return NULL;
 }
 
+void VIDOGLSetFilterMode(int type){
+    _Ygl->aamode = type;
+    return;
+}
 
 #endif
 
-void VIDOGLSetFilterMode(int type){
-	_Ygl->aamode = type;
-	return;
-}
+

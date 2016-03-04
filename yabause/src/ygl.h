@@ -18,7 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#if defined(HAVE_LIBGL) || defined(__ANDROID__)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
 #if defined(__ANDROID__)
     #include <GLES3/gl3.h>
@@ -36,8 +36,11 @@
     #include <GL/gl.h>
     #include "glext.h"
     extern PFNGLACTIVETEXTUREPROC glActiveTexture;
-  #endif
+#endif
 
+#elif defined(IOS)
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
 #elif  defined(__APPLE__)
     #include <OpenGL/gl.h>
     #include <OpenGL/gl3.h>
@@ -271,7 +274,7 @@ typedef struct {
 
    YglTextureManager * texture_manager;
    GLsync sync;
-
+    GLuint default_fbo;
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -334,6 +337,8 @@ int Ygl_uniformWindow(void * p );
 int YglProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 
+int YglGenerateAABuffer();
+
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 
 extern GLuint (STDCALL *glCreateProgram)(void);
@@ -381,6 +386,8 @@ extern PFNGLFRAMEBUFFERTEXTURELAYERPROC glFramebufferTextureLayer;
 extern PFNGLUNIFORM4FPROC glUniform4f;
 extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+
+
 
 #endif // !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_)
 

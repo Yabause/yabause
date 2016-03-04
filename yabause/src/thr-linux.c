@@ -25,7 +25,8 @@
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
-#include <malloc.h>
+//#include <malloc.h>
+#include <stdlib.h>
 
 //////////////////////////////////////////////////////////////////////////////
 
