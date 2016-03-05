@@ -2032,6 +2032,7 @@ void VidsoftVdp1Thread(void* data)
       {
          vidsoft_vdp1_thread_context.need_draw = 0;
          Vdp1DrawCommands(vidsoft_vdp1_thread_context.ram, &vidsoft_vdp1_thread_context.regs, vidsoft_vdp1_thread_context.back_framebuffer);
+         memcpy(vdp1backframebuffer, vidsoft_vdp1_thread_context.back_framebuffer, 0x40000);
          vidsoft_vdp1_thread_context.draw_finished = 1;
       }
 
@@ -2309,8 +2310,11 @@ void VIDSoftVdp1DrawStartBody(Vdp1* regs, u8 * back_framebuffer)
 
    vdp1clipxstart = regs->userclipX1 = regs->systemclipX1 = 0;
    vdp1clipystart = regs->userclipY1 = regs->systemclipY1 = 0;
-   vdp1clipxend = regs->userclipX2 = regs->systemclipX2 = vdp1width;
-   vdp1clipyend = regs->userclipY2 = regs->systemclipY2 = vdp1height;
+   //night warriors doesn't set clipping most frames and uses
+   //the last part of the vdp1 framebuffer as scratch ram
+   //the previously set clipping values need to be reused
+   vdp1clipxend = regs->userclipX2 = regs->systemclipX2;
+   vdp1clipyend = regs->userclipY2 = regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2322,6 +2326,7 @@ void VIDSoftVdp1DrawStart()
       //take a snapshot of the vdp1 state, to be used by the thread
       memcpy(vidsoft_vdp1_thread_context.ram, Vdp1Ram, 0x80000);
       memcpy(&vidsoft_vdp1_thread_context.regs, Vdp1Regs, sizeof(Vdp1));
+      memcpy(vidsoft_vdp1_thread_context.back_framebuffer, vdp1backframebuffer, 0x40000);
 
       VIDSoftVdp1DrawStartBody(&vidsoft_vdp1_thread_context.regs, vidsoft_vdp1_thread_context.back_framebuffer);
 
@@ -3417,17 +3422,27 @@ void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out)
    switch (type)
    {
    case 0:
-      *(u8*)out = 0;
+      val = T1ReadByte(vdp1backframebuffer, addr);
+      *(u8*)out = val;
       break;
    case 1:
-      val = T1ReadWord(vdp1frontframebuffer, addr);
+      val = T1ReadWord(vdp1backframebuffer, addr);
 #ifndef WORDS_BIGENDIAN
       val = BSWAP16L(val);
 #endif
       *(u16*)out = val;
       break;
    case 2:
+#if 0 //enable when burning rangers is fixed
+      val = T1ReadLong(vdp1backframebuffer, addr);
+#ifndef WORDS_BIGENDIAN
+      val = BSWAP32(val);
+#endif
+      val = (val & 0xffff) << 16 | (val & 0xffff0000) >> 16;
+      *(u32*)out = val;
+#else
       *(u32*)out = 0;
+#endif
       break;
    default:
       break;
@@ -3443,14 +3458,20 @@ void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val)
    switch (type)
    {
    case 0:
+      T1WriteByte(vdp1backframebuffer, addr, val);
       break;
    case 1:
 #ifndef WORDS_BIGENDIAN
       val = BSWAP16L(val);
 #endif
-      T1WriteWord(vdp1frontframebuffer, addr, val);
+      T1WriteWord(vdp1backframebuffer, addr, val);
       break;
    case 2:
+#ifndef WORDS_BIGENDIAN
+      val = BSWAP32(val);
+#endif
+      val = (val & 0xffff) << 16 | (val & 0xffff0000) >> 16;
+      T1WriteLong(vdp1backframebuffer, addr, val);
       break;
    default:
       break;
@@ -4020,7 +4041,6 @@ void VIDSoftVdp1SwapFrameBuffer(void)
       if (vidsoft_vdp1_thread_enabled)
       {
          VidsoftWaitForVdp1Thread();
-         memcpy(vdp1backframebuffer, vidsoft_vdp1_thread_context.back_framebuffer, 0x40000);
       }
 
       temp = vdp1frontframebuffer;
