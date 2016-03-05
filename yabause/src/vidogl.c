@@ -4163,8 +4163,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    {
 	  YglQuadGrowShading(&sprite, &texture, NULL, NULL);
       alpha = 0;   
-      priority = 0;
-	  *texture.textdata = 0x0;
+	  alpha |= priority;
+	  *texture.textdata = SAT2YAB1(alpha, color);
 	  return;
    }
 
@@ -4177,8 +4177,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   else{
 		   YglQuadGrowShading(&sprite, &texture, NULL, NULL);
 		   alpha = 0;
-		   priority = 0;
-		   *texture.textdata = 0;
+		   alpha |= priority;
+		   *texture.textdata = SAT2YAB1(alpha, color);
 		   return;
 	   }
    }
