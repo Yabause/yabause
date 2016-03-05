@@ -2204,7 +2204,7 @@ void YglRenderVDP1(void) {
    }
 
    // Many regressions to Enable it
-   //if(  ((Vdp1Regs->TVMR & 0x08) && (Vdp1Regs->FBCR&0x03)==0x03) || ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase)
+   if(  ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase)
    {
      u16 color;
      int priority;
