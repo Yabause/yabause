@@ -4906,13 +4906,52 @@ static void Vdp2DrawLineColorScreen(void)
     inc = 0x00; // color per line
   }
 
-  addr = (Vdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
-  for (i = 0; i < line_cnt; i++){
+  u8 alpha = 0xFF;
+  // Color calculation ratio mode Destination Alpha
+  // Use blend value CRLB
+  if ((Vdp2Regs->CCCTL & 0x0300) == 0x0200){
+	  alpha = (float)(Vdp2Regs->CCRLB & 0x1F) / 32.0f * 255.0f;
+  }
 
-    u16 LineColorRamAdress = T1ReadWord(Vdp2Ram, addr);
-    *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, 0xFF);
-    line_pixel_data++;
-    addr += inc;
+  vdp2draw_struct info;
+  // Enable Colorcalc Window?
+  if (Vdp2Regs->WCTLD & 0x200){
+	  info.bEnWin0 = 1;
+	  info.WindowArea0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
+  }
+  else{
+	  info.bEnWin0 = 0;
+  }
+  if (Vdp2Regs->WCTLD & 0x800){
+	  info.bEnWin1 = 1;
+	  info.WindowArea1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
+  }
+  else{
+	  info.bEnWin1 = 0;
+  }
+
+
+  addr = (Vdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
+
+  if (info.bEnWin1 || info.bEnWin0){
+	  for (i = 0; i < line_cnt; i++){
+		  u16 LineColorRamAdress = T1ReadWord(Vdp2Ram, addr);
+		  if (Vdp2CheckWindowDot(&info, 1, i) == 1)
+			  *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, alpha);
+		  else
+			  *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, 0);
+
+		  line_pixel_data++;
+		  addr += inc;
+	  }
+  }
+  else{
+	  for (i = 0; i < line_cnt; i++){
+		  u16 LineColorRamAdress = T1ReadWord(Vdp2Ram, addr);
+		  *(line_pixel_data) = Vdp2ColorRamGetColor(LineColorRamAdress, alpha);
+		  line_pixel_data++;
+		  addr += inc;
+	  }
   }
 
   YglSetLineColor( line_pixel_data, line_cnt );
@@ -5583,7 +5622,7 @@ static void Vdp2DrawNBG3(void)
 
    info.specialcolormode = (Vdp2Regs->SFCCMD>>6) & 0x03;
    
-   if (Vdp2Regs->CCCTL & 0x8)
+    if (Vdp2Regs->CCCTL & 0x8)
    {
       info.alpha = ((~Vdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
       if(Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0 )
