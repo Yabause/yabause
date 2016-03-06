@@ -4976,6 +4976,7 @@ static void Vdp2DrawNBG0(void)
    info.cor = 0;
    info.cog = 0;
    info.cob = 0;
+   int i;
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -5002,6 +5003,14 @@ static void Vdp2DrawNBG0(void)
          info.mapwh = 4;
          ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 12);
          ReadPatternData(&info, Vdp2Regs->PNCN0, Vdp2Regs->CHCTLA & 0x1);
+
+		 paraB.ShiftPaneX = 8 + info.planew;
+		 paraB.ShiftPaneY = 8 + info.planeh;
+		 paraB.MskH = (8 * 64 * info.planew) - 1;
+		 paraB.MskV = (8 * 64 * info.planeh) - 1;
+		 paraB.MaxH = 8 * 64 * info.planew * 4;
+		 paraB.MaxV = 8 * 64 * info.planeh * 4;
+
       }
 
       info.rotatenum = 1;
@@ -5009,6 +5018,11 @@ static void Vdp2DrawNBG0(void)
 	  paraB.coefenab = Vdp2Regs->KTCTL & 0x100;
 	  paraB.charaddr = (Vdp2Regs->MPOFR & 0x70) * 0x2000;
 	  ReadPlaneSizeR(&paraB, Vdp2Regs->PLSZ >> 12);
+	  for (i = 0; i<16; i++)
+	  {
+		  paraB.PlaneAddr(&info, i, Vdp2Regs);
+		  paraB.PlaneAddrv[i] = info.addr;
+	  }
 
       info.LineColorBase = 0x00;
       if (paraB.coefenab)
