@@ -1053,6 +1053,86 @@ void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, fl
 
 }
 
+/*------------------------------------------------------------------------------------
+*  VDP2 Draw Frame buffer Operation( with Line color insert blend with line color alpha value )
+* ----------------------------------------------------------------------------------*/
+static int idvdp1FrameBuffer_linecolor_destination_alpha;
+static int idfrom_linecolor_destination_alpha;
+static int idto_linecolor_destination_alpha;
+static int idcoloroffset_linecolor_destination_alpha;
+static int id_fblinecol_s_line_destination_alpha;
+static int id_fblinecol_emu_height_destination_alpha;
+static int id_fblinecol_vheight_destination_alpha;
+
+const GLchar * pYglprg_vdp2_drawfb_linecolor_destination_alpha_v[] = { Yglprg_vdp1_drawfb_v, NULL };
+
+const GLchar Yglprg_vdp2_drawfb_linecolor_destination_alpha_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                             \n"
+"in vec2 v_texcoord;                             \n"
+"uniform sampler2D s_vdp1FrameBuffer;                 \n"
+"uniform float u_from;                                  \n"
+"uniform float u_to;                                    \n"
+"uniform vec4 u_coloroffset;                            \n"
+"uniform float u_emu_height;    \n"
+"uniform sampler2D s_line;                        \n"
+"uniform float u_vheight; \n"
+"out vec4 fragColor;            \n"
+"void main()                                          \n"
+"{                                                    \n"
+"  vec2 addr = v_texcoord;                         \n"
+"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);  \n"
+"  int additional = int(fbColor.a * 255.0);           \n"
+"  highp float alpha = float((additional/8)*8)/255.0;  \n"
+"  highp float depth = (float(additional&0x07)/10.0) + 0.05; \n"
+"  if( depth < u_from || depth > u_to ){ discard;return;} \n"
+"  ivec2 linepos; \n "
+"  linepos.y = 0; \n "
+"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
+"  if( alpha > 0.0){ \n"
+"     fragColor = fbColor;                            \n"
+"     fragColor += u_coloroffset;  \n"
+"     fragColor = (lncol*lncol.a) + fragColor*(1.0-lncol.a); \n"
+"     fragColor.a = alpha + 7.0/255.0; /*1.0;*/ \n"
+"     gl_FragDepth =  (depth+1.0)/2.0;\n"
+"  } else { \n"
+"     discard;\n"
+"  }\n"
+"}                                                    \n";
+
+const GLchar * pYglprg_vdp2_drawfb_linecolor_destination_alpha_f[] = { Yglprg_vdp2_drawfb_linecolor_destination_alpha_f, NULL };
+
+void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float from, float to, float * offsetcol)
+{
+	YglProgram * prg;
+	prg = p;
+
+	glUseProgram(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA]);
+	glUniform1i(idvdp1FrameBuffer_linecolor_destination_alpha, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1f(idfrom_linecolor_destination_alpha, from);
+	glUniform1f(idto_linecolor_destination_alpha, to);
+	glUniform4fv(idcoloroffset_linecolor_destination_alpha, 1, offsetcol);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+
+	glUniform1i(id_fblinecol_s_line_destination_alpha, 1);
+	glUniform1f(id_fblinecol_emu_height_destination_alpha, (float)_Ygl->rheight / (float)_Ygl->height);
+	glUniform1f(id_fblinecol_vheight_destination_alpha, (float)_Ygl->height);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+	glActiveTexture(GL_TEXTURE0);
+	glDisable(GL_BLEND);
+	_Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_mvpMatrix");
+
+}
+
+
 const GLchar Yglprg_vdp2_drawfb_addcolor_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
@@ -1408,6 +1488,19 @@ int YglProgramInit()
    idfrom_addcolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_from");
    idto_addcolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_to");
    idcoloroffset_addcolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_coloroffset");
+
+   //
+   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA, pYglprg_vdp2_drawfb_linecolor_destination_alpha_v, pYglprg_vdp2_drawfb_linecolor_destination_alpha_f) != 0)
+	   return -1;
+
+   idvdp1FrameBuffer_linecolor_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"s_vdp1FrameBuffer");;
+   idfrom_linecolor_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_from");
+   idto_linecolor_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_to");
+   idcoloroffset_linecolor_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_coloroffset");
+   id_fblinecol_s_line_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"s_line");
+   id_fblinecol_emu_height_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_emu_height");
+   id_fblinecol_vheight_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_vheight");
+
 
    return 0;
 }
