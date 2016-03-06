@@ -602,21 +602,6 @@ if (CMAKE_COMPILER_IS_GNUCC AND YAB_FORCE_SECURE_STRINGS)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security")
 endif()
 
-if (NOT ANDROID)
-    option(YAB_WANT_VIDSOFT_PRIORITY_THREADING "Use threads for vidsoft priority" OFF)
-    option(YAB_WANT_VIDSOFT_LAYER_THREADING "Use threads for vidsoft layers" OFF)
-
-    if (YAB_WANT_VIDSOFT_PRIORITY_THREADING)
-        add_definitions(-DWANT_VIDSOFT_PRIORITY_THREADING)
-        message(STATUS "Using vidsoft priority threading")
-    endif()
-
-    if (YAB_WANT_VIDSOFT_LAYER_THREADING)
-        add_definitions(-DWANT_VIDSOFT_LAYER_THREADING)
-        message(STATUS "Using vidsoft layer threading")
-    endif()
-endif()
-
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
