@@ -2413,14 +2413,20 @@ void YglRenderFrameBuffer( int from , int to ) {
    offsetcol[2] = vdp1cob / 255.0f;
    offsetcol[3] = 0.0f;
 
-   if ( (Vdp2Regs->CCCTL & 0x540) == 0x140 ){
+   if ( (Vdp2Regs->CCCTL & 0x340) == 0x140 ){ // Color calculation mode == ADD &&  Sprite Color calculation enable bit  == 1
 	   if (Vdp2Regs->LNCLEN & 0x20){
 		   Ygl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
 	   }else{
 		   Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
 	   }
-   }else{
-     Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+   }
+   else if ((Vdp2Regs->CCCTL & 0x340) == 0x240 && (Vdp2Regs->LNCLEN & 0x20)){ 
+	   // Color calculation ratio mode == Destination &&  Sprite Color calculation enable bit  == 1
+	   // Use blend value CRLB
+	   Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+   }
+   else{
+	   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
    }
    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
