@@ -433,6 +433,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 			}
 		}
 	}
+		break;
 	case 5:
 	{
 		// 16 bpp Bank mode
@@ -4430,9 +4431,6 @@ static void Vdp2DrawLineColorScreen(void)
   if( line_pixel_data == NULL ){
       return;
   }
-
-  if (!line_pixel_data)
-	  return;
 
   if ((Vdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
