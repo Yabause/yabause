@@ -459,7 +459,11 @@ static INLINE int TestWindow(int wctl, int enablemask, int inoutmask, clipping_s
 
 int TestSpriteWindow(int wctl, int x, int y)
 {
-   int mask = sprite_window_mask[(y*vdp1width) + x];
+   int mask;
+
+   if ((y > 256) || (x > 512)) return 0;
+
+   mask = sprite_window_mask[(y*vdp1width) + x];
 
    if (wctl & 0x20)//sprite window enabled on layer
    {
