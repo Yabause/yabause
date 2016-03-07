@@ -60,8 +60,6 @@ static struct TitanContext {
    NULL,NULL,NULL
 };
 
-#ifdef WANT_VIDSOFT_PRIORITY_THREADING
-
 struct
 {
    volatile int need_draw[5];
@@ -75,8 +73,6 @@ struct
    pixel_t * dispbuffer;
    int use_simplified;
 }priority_thread_context;
-
-#endif
 
 #if defined WORDS_BIGENDIAN
 #ifdef USE_RGB_555
@@ -210,8 +206,6 @@ void TitanRenderSimplifiedCheck(pixel_t * buf, int start, int end, int can_use_s
       TitanRenderLines(buf, start, end);
 }
 
-#ifdef WANT_VIDSOFT_PRIORITY_THREADING
-
 #define DECLARE_PRIORITY_THREAD(FUNC_NAME, THREAD_NUMBER) \
 void FUNC_NAME(void* data) \
 { \
@@ -232,7 +226,6 @@ DECLARE_PRIORITY_THREAD(VidsoftPriorityThread1, 1);
 DECLARE_PRIORITY_THREAD(VidsoftPriorityThread2, 2);
 DECLARE_PRIORITY_THREAD(VidsoftPriorityThread3, 3);
 DECLARE_PRIORITY_THREAD(VidsoftPriorityThread4, 4);
-#endif
 
 static u32 TitanBlendPixelsTop(u32 top, u32 bottom)
 {
@@ -403,8 +396,6 @@ int TitanInit()
       if ((tt_context.backscreen = (struct PixelData  *)calloc(sizeof(struct PixelData), 704 * 512)) == NULL)
          return -1;
 
-#ifdef WANT_VIDSOFT_PRIORITY_THREADING
-
       for (i = 0; i < 5; i++)
       {
          priority_thread_context.draw_finished[i] = 1;
@@ -416,7 +407,6 @@ int TitanInit()
       YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_2, VidsoftPriorityThread2, NULL);
       YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_3, VidsoftPriorityThread3, NULL);
       YabThreadStart(YAB_THREAD_VIDSOFT_PRIORITY_4, VidsoftPriorityThread4, NULL);
-#endif
 
       tt_context.inited = 1;
    }
@@ -581,8 +571,6 @@ void VIDSoftSetNumPriorityThreads(int num)
       vidsoft_num_priority_threads = 3;
 }
 
-#ifdef WANT_VIDSOFT_PRIORITY_THREADING
-
 void TitanStartPriorityThread(int which)
 {
    priority_thread_context.need_draw[which] = 1;
@@ -635,8 +623,6 @@ void TitanRenderThreads(pixel_t * dispbuffer, int can_use_simplified)
    }
 }
 
-#endif
-
 void TitanRender(pixel_t * dispbuffer)
 {
    int can_use_simplified_rendering = 1;
@@ -668,8 +654,6 @@ void TitanRender(pixel_t * dispbuffer)
    tt_context.layer_priority[TITAN_NBG3] = ((Vdp2Regs->PRINB >> 8) & 0x7);
    tt_context.layer_priority[TITAN_RBG0] = (Vdp2Regs->PRIR & 0x7);
 
-#ifdef WANT_VIDSOFT_PRIORITY_THREADING
-
    if (vidsoft_num_priority_threads > 0)
    {
       TitanRenderThreads(dispbuffer, can_use_simplified_rendering);
@@ -678,10 +662,6 @@ void TitanRender(pixel_t * dispbuffer)
    {
       TitanRenderSimplifiedCheck(dispbuffer, 0, tt_context.vdp2height, can_use_simplified_rendering);
    }
-
-#else
-   TitanRenderSimplifiedCheck(dispbuffer, 0, tt_context.vdp2height, can_use_simplified_rendering);
-#endif
 }
 
 #ifdef WORDS_BIGENDIAN
