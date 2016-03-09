@@ -1434,7 +1434,7 @@ static void Vdp2DrawLineScreen(void)
       scrAddr = (Vdp2Regs->LCTA.all & 0x3FFFF) << 1;
 
    alpha = (Vdp2Regs->CCRLB & 0x1f) << 1;
-   
+
    if (Vdp2Regs->LCTA.part.U & 0x8000)
    {
       /* per line */
@@ -2342,6 +2342,8 @@ void VIDSoftVdp1DrawStart()
 {
    if (vidsoft_vdp1_thread_enabled)
    {
+      VidsoftWaitForVdp1Thread();
+
       //take a snapshot of the vdp1 state, to be used by the thread
       memcpy(vidsoft_vdp1_thread_context.ram, Vdp1Ram, 0x80000);
       memcpy(&vidsoft_vdp1_thread_context.regs, Vdp1Regs, sizeof(Vdp1));
