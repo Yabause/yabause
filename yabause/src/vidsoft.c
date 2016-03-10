@@ -1383,6 +1383,9 @@ static void Vdp2DrawBackScreen(void)
       // Draw Back Screen
       u32 scrAddr;
       u16 dot;
+      vdp2draw_struct info = { 0 };
+
+      ReadVdp2ColorOffset(Vdp2Regs, &info, (1 << 5), 0);
 
       if (Vdp2Regs->VRSIZE & 0x8000)
          scrAddr = (((Vdp2Regs->BKTAU & 0x7) << 16) | Vdp2Regs->BKTAL) * 2;
@@ -1397,7 +1400,7 @@ static void Vdp2DrawBackScreen(void)
             dot = T1ReadWord(Vdp2Ram, scrAddr);
             scrAddr += 2;
 
-            TitanPutBackHLine(i, COLSAT2YAB16(0x3F, dot));
+            TitanPutBackHLine(i, info.PostPixelFetchCalc(&info, COLSAT2YAB16(0x3f, dot)));
          }
       }
       else
@@ -1406,7 +1409,7 @@ static void Vdp2DrawBackScreen(void)
          dot = T1ReadWord(Vdp2Ram, scrAddr);
 
          for (j = 0; j < vdp2height; j++)
-            TitanPutBackHLine(j, COLSAT2YAB16(0x3F, dot));
+            TitanPutBackHLine(j, info.PostPixelFetchCalc(&info, COLSAT2YAB16(0x3f, dot)));
       }
    }
 }
@@ -2339,6 +2342,8 @@ void VIDSoftVdp1DrawStart()
 {
    if (vidsoft_vdp1_thread_enabled)
    {
+      VidsoftWaitForVdp1Thread();
+
       //take a snapshot of the vdp1 state, to be used by the thread
       memcpy(vidsoft_vdp1_thread_context.ram, Vdp1Ram, 0x80000);
       memcpy(&vidsoft_vdp1_thread_context.regs, Vdp1Regs, sizeof(Vdp1));
@@ -3603,6 +3608,8 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
 
       info.titan_which_layer = TITAN_SPRITE;
 
+      info.linescreen = (vdp2_regs->LNCLEN >> 5) & 1;
+
       Vdp2GetInterlaceInfo(&start_line, &line_increment);
 
       for (i2 = start_line; i2 < vdp2height; i2 += line_increment)
@@ -3692,7 +3699,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
                   // -always- drawn and sprite types 8-F are always
                   // transparent.
                   if (pixel != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(vdp2_regs->SPCTL & 0x10)))
-                     TitanPutPixel(prioritytable[0], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB16(alpha, pixel)), 0, &info);
+                     TitanPutPixel(prioritytable[0], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB16(alpha, pixel)), info.linescreen, &info);
                }
                else
                {
@@ -3705,7 +3712,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
                   if (spi.normalshadow)
                   {
                      info.titan_shadow_type = TITAN_NORMAL_SHADOW;
-                     TitanPutPixel(prioritytable[spi.priority], i, output_y, COLSAT2YAB16(0x3f, 0), 0, &info);
+                     TitanPutPixel(prioritytable[spi.priority], i, output_y, COLSAT2YAB16(0x3f, 0), info.linescreen, &info);
                      continue;
                   }
 
@@ -3762,7 +3769,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
 
                      if (pixel == 0)
                      {
-                        TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, 0)), 0, &info);
+                        TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, 0)), info.linescreen, &info);
                         continue;
                      }
                   }
@@ -3775,7 +3782,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
                      }
                   }
 
-                  TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0, &info);
+                  TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), info.linescreen, &info);
                }
             }
             else
@@ -3794,7 +3801,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
                   if (spi.normalshadow)
                   {
                      info.titan_shadow_type = TITAN_NORMAL_SHADOW;
-                     TitanPutPixel(prioritytable[spi.priority], i, output_y, COLSAT2YAB16(0x3f, 0), 0, &info);
+                     TitanPutPixel(prioritytable[spi.priority], i, output_y, COLSAT2YAB16(0x3f, 0), info.linescreen, &info);
                      continue;
                   }
 
@@ -3839,7 +3846,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
                      }
                   }
 
-                  TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), 0, &info);
+                  TitanPutPixel(prioritytable[spi.priority], i, output_y, info.PostPixelFetchCalc(&info, COLSAT2YAB32(alpha, dot)), info.linescreen, &info);
                }
             }
          }
