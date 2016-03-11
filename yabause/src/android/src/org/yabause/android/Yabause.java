@@ -70,7 +70,8 @@ class YabauseRunnable implements Runnable
     public static native void exec();
     public static native void press(int key);
     public static native void release(int key);
-    public static native int initViewport( int width, int hieght);
+    public static native int initViewport();
+    public static native int cleanup();
     public static native int drawScreen();
     public static native int lockGL();
     public static native int unlockGL();

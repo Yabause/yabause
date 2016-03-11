@@ -257,6 +257,15 @@ void YuiSwapBuffers(void)
          pthread_mutex_unlock(&g_mtxGlLock);
          return;
    }   
+
+   {
+      int swidth, sheight;
+
+      eglQuerySurface(g_Display, g_Surface, EGL_WIDTH, &swidth);
+      eglQuerySurface(g_Display, g_Surface, EGL_HEIGHT, &sheight);
+
+      glViewport(0,0,swidth,sheight);
+   }
       
    glClearColor( 0.0f,0.0f,0.0f,1.0f);
    glClear(GL_COLOR_BUFFER_BIT);
@@ -322,10 +331,8 @@ void YuiSwapBuffers(void)
    pthread_mutex_unlock(&g_mtxGlLock);
 }
 
-int Java_org_yabause_android_YabauseRunnable_initViewport( int width, int height)
+int Java_org_yabause_android_YabauseRunnable_initViewport()
 {
-   int swidth;
-   int sheight;
    int error;
    char * buf;
 
@@ -333,11 +340,6 @@ int Java_org_yabause_android_YabauseRunnable_initViewport( int width, int height
    g_Surface = eglGetCurrentSurface(EGL_READ);
    g_Context = eglGetCurrentContext();
 
-   eglQuerySurface(g_Display,g_Surface,EGL_WIDTH,&swidth);
-   eglQuerySurface(g_Display,g_Surface,EGL_HEIGHT,&sheight);
-   
-   glViewport(0,0,swidth,sheight);
-   
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
    glOrthof(0, 320, 224, 0, 1, 0);
@@ -359,6 +361,14 @@ int Java_org_yabause_android_YabauseRunnable_initViewport( int width, int height
    eglSwapInterval(g_Display,0);
    eglMakeCurrent(g_Display,EGL_NO_SURFACE,EGL_NO_SURFACE,EGL_NO_CONTEXT);
    return 0;
+}
+
+int Java_org_yabause_android_YabauseRunnable_cleanup()
+{
+    g_FrameBuffer = 0;
+    g_VertexBuffer = 0;
+    g_buf_width = -1;
+    g_buf_height = -1;
 }
 
 #ifdef _ANDROID_2_2_

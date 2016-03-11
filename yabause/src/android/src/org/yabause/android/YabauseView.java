@@ -39,38 +39,24 @@ class YabauseView extends SurfaceView implements Callback {
     private static String TAG = "YabauseView";
     private static final boolean DEBUG = false; 
 
-    private int axisX = 0; 
-    private int axisY = 0;
-
-    public boolean[] pointers = new boolean[256];
-    public int[] pointerX = new int[256];
-    public int[] pointerY = new int[256];
-   
     private EGLContext mEglContext;
     private EGLDisplay mEglDisplay;
     private EGLSurface mEglSurface;
     private EGLConfig mEglConfig;
-   
-   
+
     public YabauseView(Context context, AttributeSet attrs) {
         super(context,attrs);
-        init(false, 0, 0);
+        init();
     }   
      
     public YabauseView(Context context) {
         super(context); 
-        init(false, 0, 0);     
+        init();
     } 
-    
-    public YabauseView(Context context, boolean translucent, int depth, int stencil) {
-        super(context);
-        init(translucent, depth, stencil);
-    }    
 
-    private void init(boolean translucent, int depth, int stencil) {
+    private void init() {
        getHolder().addCallback(this);
        getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
-       initGLES();
     }
     
     private boolean initGLES(){
@@ -100,7 +86,7 @@ class YabauseView extends SurfaceView implements Callback {
             return false;
         }
         mEglConfig = configs[0];
-                
+
         mEglContext = egl.eglCreateContext(mEglDisplay, mEglConfig, EGL10.EGL_NO_CONTEXT, null);
         if( mEglContext == EGL10.EGL_NO_CONTEXT ){
             Log.e(TAG, "Fail to Create OpenGL Context");
@@ -122,7 +108,6 @@ class YabauseView extends SurfaceView implements Callback {
     private void endGLES(){
         EGL10 egl = (EGL10)EGLContext.getEGL();
         if( mEglSurface != null){
-            //レンダリングコンテキストとの結びつけは解除
             egl.eglMakeCurrent(mEglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
             
             egl.eglDestroySurface(mEglDisplay, mEglSurface);
@@ -142,27 +127,31 @@ class YabauseView extends SurfaceView implements Callback {
    
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-          
         EGL10 egl = (EGL10)EGLContext.getEGL();
           
         YabauseRunnable.lockGL();
         egl.eglMakeCurrent(mEglDisplay, mEglSurface, mEglSurface, mEglContext);     
-        YabauseRunnable.initViewport(width, height); 
+        YabauseRunnable.initViewport();
         YabauseRunnable.unlockGL();
         
     }
  
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
+
+        initGLES();
         if( !createSurface() ){
-             Log.e(TAG, "Fail to Creat4e Surface");
+             Log.e(TAG, "Fail to Create Surface");
              return ;
         }
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        
+
+        endGLES();
+
+        YabauseRunnable.cleanup();
     }    
 
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
