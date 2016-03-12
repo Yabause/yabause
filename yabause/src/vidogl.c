@@ -85,6 +85,9 @@ void OSDPushMessageDirect(char * msg){
             (l & 0xFF000000)
 #endif
 
+#define WA_INSIDE (0)
+#define WA_OUTSIDE (1)
+
 int VIDOGLInit(void);
 void VIDOGLDeInit(void);
 void VIDOGLResize(unsigned int, unsigned int, int);
@@ -3154,9 +3157,31 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 
 		  if (info->isbitmap)
 		  {
-			  h &= cellw - 1;
-			  v &= cellh - 1;
 
+			  switch (parameter->screenover) {
+			  case OVERMODE_REPEAT:
+				  h &= cellw - 1;
+				  v &= cellh - 1;
+				  break;
+			  case OVERMODE_SELPATNAME:
+				  VDP2LOG("Screen-over mode 1 not implemented");
+				  h &= cellw - 1;
+				  v &= cellh - 1;
+				  break;
+			  case OVERMODE_TRANSE:
+				  if ((h < 0) || (h >= cellw) || (v < 0) || (v >= cellh)) {
+					  *(texture->textdata++) = 0x00;
+					  if (line_texture.textdata) *(line_texture.textdata++) = 0x00000000;
+					  continue;
+				  }
+				  break;
+			  case OVERMODE_512:
+				  if ((h < 0) || (h > 512) || (v < 0) || (v > 512)){
+					  *(texture->textdata++) = 0x00;
+					  if (line_texture.textdata) *(line_texture.textdata++) = 0x00000000;
+					  continue;
+				  }
+			  }
 			  // Fetch Pixel
 			  color = Vdp2RotationFetchPixel(info, h, v, cellw);
 		  }
@@ -3164,20 +3189,25 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
 		  {
 			  // Tile
 			  int planenum;
-			  if ((h < 0 || h >= parameter->MaxH) || (v < 0 || v >= parameter->MaxV))
-			  {
-				  switch (parameter->screenover)
-				  {
-				  case OVERMODE_REPEAT:
-					  h &= (parameter->MaxH - 1);
-					  v &= (parameter->MaxH - 1);
-					  break;
-				  case OVERMODE_SELPATNAME:
-					  *(texture->textdata++) = 0x00;  // ToDO
+			  switch (parameter->screenover) {
+			  case OVERMODE_REPEAT:
+				  h &= (parameter->MaxH - 1);
+				  v &= (parameter->MaxV - 1);
+				  break;
+			  case OVERMODE_SELPATNAME:
+				  VDP2LOG("Screen-over mode 1 not implemented");
+				  h &= (parameter->MaxH - 1);
+				  v &= (parameter->MaxV - 1);
+				  break;
+			  case OVERMODE_TRANSE:
+				  if ((h < 0) || (h >= parameter->MaxH) || (v < 0) || (v >= parameter->MaxV)) {
+					  *(texture->textdata++) = 0x00;
 					  if (line_texture.textdata) *(line_texture.textdata++) = 0x00000000;
 					  continue;
-					  break;
-				  default:
+				  }
+				  break;
+			  case OVERMODE_512:
+				  if ((h < 0) || (h > 512) || (v < 0) || (v > 512)){
 					  *(texture->textdata++) = 0x00;
 					  if (line_texture.textdata) *(line_texture.textdata++) = 0x00000000;
 					  continue;
@@ -5811,19 +5841,23 @@ static void Vdp2DrawRBG0(void)
 
    }else if( Vdp2Regs->RPMD == 0x03 )
    {
-      // Window0
-      if( ((Vdp2Regs->WCTLD >> 1) & 0x01) == 0x01 )
-      {
-         info.pWinInfo = m_vWindinfo0;
-         info.WindwAreaMode = (Vdp2Regs->WCTLD & 0x01) ;
-      }else if(  ((Vdp2Regs->WCTLD >> 3) & 0x01) == 0x01 )
-      {
-         info.pWinInfo = m_vWindinfo1;
-         info.WindwAreaMode = ((Vdp2Regs->WCTLD >>2)& 0x01) ;
-      }else{
-         info.pWinInfo = m_vWindinfo0;
-         info.WindwAreaMode = (Vdp2Regs->WCTLD & 0x01) ;
-      }
+		// Enable Window0(RPW0E)?
+		if( ((Vdp2Regs->WCTLD >> 1) & 0x01) == 0x01 )
+		{
+			info.pWinInfo = m_vWindinfo0;
+			// RPW0A( inside = 0, outside = 1 )
+			info.WindwAreaMode = (Vdp2Regs->WCTLD & 0x01) ;
+		// Enable Window1(RPW1E)?
+		}else if(  ((Vdp2Regs->WCTLD >> 3) & 0x01) == 0x01 )
+		{
+			info.pWinInfo = m_vWindinfo1;
+			// RPW1A( inside = 0, outside = 1 )
+			info.WindwAreaMode = ((Vdp2Regs->WCTLD >>2)& 0x01) ;
+		// Bad Setting Both Window is disabled
+		}else{
+			info.pWinInfo = m_vWindinfo0;
+			info.WindwAreaMode = (Vdp2Regs->WCTLD & 0x01) ;
+		}
 
       if( paraA.coefenab == 0 && paraB.coefenab == 0 )
       {
@@ -6234,7 +6268,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK( vdp2draw_struct 
    {
       if( info->pWinInfo[v].WinShowLine == 0  )
       {
-         return (&paraB);
+         return (&paraA);
       }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
@@ -6263,12 +6297,12 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK( vdp2draw_struct 
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA( vdp2draw_struct * info,int h, int v )
 {
-  
+	// Virtua Fighter2
     if( info->WindwAreaMode == 0 )
    {
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
-         return (&paraB);
+         return (&paraA);
       }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
@@ -6303,8 +6337,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB( vdp2draw_stru
    {
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
-         h = (paraB.KtablV+(paraB.deltaKAx * h));
-         return info->GetKValueB( &paraB, h );
+		 return &paraA;
       }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
@@ -6337,16 +6370,17 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB( vdp2draw_stru
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struct * info,int h, int v )
 {
    vdp2rotationparameter_struct * p;
-
-   if( info->WindwAreaMode == 0 )
+   // Final Fight Revenge
+   if (info->WindwAreaMode == WA_INSIDE )
    {
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
-		  h = (paraB.KtablV + (paraB.deltaKAx * h));
-		  p = info->GetKValueB(&paraB, h);
-		  if (p) return p;
 		  h = (paraA.KtablV + (paraA.deltaKAx * h));
-		  return info->GetKValueA(&paraA, h);
+		  p = info->GetKValueA(&paraA, h);
+		  if (p) return p;
+		  h = (paraB.KtablV + (paraB.deltaKAx * h));
+		  return info->GetKValueB(&paraB, h);
+
       }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
