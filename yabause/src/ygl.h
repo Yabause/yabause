@@ -295,6 +295,8 @@ void YglSetClearColor(float r, float g, float b);
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 
+int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c);
+void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache);
 
 
 // 0.. no belnd, 1.. Alpha, 2.. Add 

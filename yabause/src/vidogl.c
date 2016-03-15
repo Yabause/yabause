@@ -4001,11 +4001,13 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      
 	  if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
       {
-	      YglCacheQuadGrowShading(&sprite, col,&cash);
+	      //YglCacheQuadGrowShading(&sprite, col,&cash);
+		  YglCacheTriangleGrowShading(&sprite, NULL, &cash);
           return;
       }
 
-		YglQuadGrowShading(&sprite, &texture,col,&cash);
+		//YglQuadGrowShading(&sprite, &texture,col,&cash);
+	  YglTriangleGrowShading(&sprite, &texture, NULL, &cash);
 		YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
 		Vdp1ReadTexture(&cmd, &sprite, &texture);
 		return;
@@ -4014,10 +4016,12 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    {
 	   if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
         {
-			YglCacheQuadGrowShading(&sprite, NULL,&cash);
+			//YglCacheQuadGrowShading(&sprite, NULL,&cash);
+			YglCacheTriangleGrowShading(&sprite, NULL, &cash);
 			return;
 		}
-		YglQuadGrowShading(&sprite, &texture,NULL,&cash);
+		//YglQuadGrowShading(&sprite, &texture,NULL,&cash);
+	   YglTriangleGrowShading(&sprite, &texture, NULL, &cash);
 		YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
 		Vdp1ReadTexture(&cmd, &sprite, &texture);
    }

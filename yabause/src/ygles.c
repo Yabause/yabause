@@ -1307,13 +1307,13 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
 	   level->prg[level->prgcurrent].blendmode = input->blendmode;
   }
 // for polygon debug
-//  else if (prg == PG_VFP1_GOURAUDSAHDING ){
-//	   YglProgramChange(level, prg);
-//   }
+  //else if (prg == PG_VFP1_GOURAUDSAHDING ){
+  //	   YglProgramChange(level, prg);
+  // }
    program = &level->prg[level->prgcurrent];
 
-   if (program->currentQuad == program->maxQuad) {
-      program->maxQuad += 12*128;
+   if (program->currentQuad >= program->maxQuad) {
+      program->maxQuad += 12*25;
 	  program->quads = (float *)realloc(program->quads, program->maxQuad * sizeof(float));
       program->textcoords = (float *) realloc(program->textcoords, program->maxQuad * sizeof(float) * 2);
       program->vertexAttribute = (float *) realloc(program->vertexAttribute, program->maxQuad * sizeof(float)*2);
@@ -1568,6 +1568,224 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+static int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg);
+
+void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache) {
+	YglTriangleGrowShading_in(input, NULL, colors, cache, 0);
+}
+
+int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c) {
+	return YglTriangleGrowShading_in(input, output, colors, c, 1);
+}
+
+int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg ) {
+	unsigned int x, y;
+	YglProgram *program;
+	//texturecoordinate_struct *texv;
+	float * vtxa;
+	float q[4];
+	int prg = PG_VFP1_GOURAUDSAHDING;
+	float * pos;
+
+
+	if ((input->blendmode & 0x03) == 2)
+	{
+		prg = PG_VDP2_ADDBLEND;
+	}
+	else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
+	{
+		prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+	}
+	else if (input->blendmode == VDP1_COLOR_CL_MESH)
+	{
+		prg = PG_VFP1_MESH;
+	}
+	else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
+		prg = PG_VFP1_SHADOW;
+	}
+
+	if (input->linescreen){
+		prg = PG_LINECOLOR_INSERT;
+	}
+
+
+	program = YglGetProgram(input, prg);
+	if (program == NULL) return -1;
+	if (program->quads == NULL) {
+		int a = 0;
+	}
+
+	program->color_offset_val[0] = (float)(input->cor) / 255.0f;
+	program->color_offset_val[1] = (float)(input->cog) / 255.0f;
+	program->color_offset_val[2] = (float)(input->cob) / 255.0f;
+	program->color_offset_val[3] = 0;
+
+	//float vec_dc_x = input->vertices[5] - input->vertices[6];
+	//float vec_dc_y = input->vertices[6] - input->vertices[7];
+
+	pos = program->quads + program->currentQuad;
+	float * colv = (program->vertexAttribute + (program->currentQuad * 2));
+	texturecoordinate_struct texv[6];
+	texturecoordinate_struct * tpos = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+
+
+	if (output != NULL){
+		YglTMAllocate(_Ygl->texture_manager, output, input->w, input->h, &x, &y);
+	}
+	else{
+		x = c->x;
+		y = c->y;
+	}
+
+	texv[0].r = texv[1].r = texv[2].r = texv[3].r = texv[4].r = texv[5].r = 0; // these can stay at 0
+	texv[0].q = texv[1].q = texv[2].q = texv[3].q = texv[4].q = texv[5].q = 1.0f; // these can stay at 0
+
+	if (input->flip & 0x1) {
+		texv[0].s = texv[3].s = texv[5].s = (float)((x + input->w) - ATLAS_BIAS);
+		texv[1].s = texv[2].s = texv[4].s = (float)((x)+ATLAS_BIAS);
+	}
+	else {
+		texv[0].s = texv[3].s = texv[5].s = (float)((x)+ATLAS_BIAS);
+		texv[1].s = texv[2].s = texv[4].s = (float)((x + input->w) - ATLAS_BIAS);
+	}
+	if (input->flip & 0x2) {
+		texv[0].t = texv[1].t = texv[3].t = (float)((y + input->h) - ATLAS_BIAS);
+		texv[2].t = texv[4].t = texv[5].t = (float)((y)+ATLAS_BIAS);
+	}
+	else {
+		texv[0].t = texv[1].t = texv[3].t = (float)((y)+ATLAS_BIAS);
+		texv[2].t = texv[4].t = texv[5].t = (float)((y + input->h) - ATLAS_BIAS);
+	}
+	
+	if (c != NULL && cash_flg == 1)
+	{
+		switch (input->flip) {
+		case 0:
+			c->x = texv[0].s; //  *(program->textcoords + ((program->currentQuad + 12 - 12) * 2));
+			c->y = texv[0].t; // *(program->textcoords + ((program->currentQuad + 12 - 12) * 2) + 1);
+			break;
+		case 1:
+			c->x = texv[1].s; // *(program->textcoords + ((program->currentQuad + 12 - 10) * 2));
+			c->y = texv[0].t; // (program->textcoords + ((program->currentQuad + 12 - 10) * 2) + 1);
+			break;
+		case 2:
+			c->x = texv[0].s; //*(program->textcoords + ((program->currentQuad + 12 - 2) * 2));
+			c->y = texv[2].t; // *(program->textcoords + ((program->currentQuad + 12 - 2) * 2) + 1);
+			break;
+		case 3:
+			c->x = texv[1].s; //  *(program->textcoords + ((program->currentQuad + 12 - 4) * 2));
+			c->y = texv[2].t; //*(program->textcoords + ((program->currentQuad + 12 - 4) * 2) + 1);
+			break;
+		}
+	}
+
+	texv[0].s /= (float)_Ygl->texture_manager->width;
+	texv[1].s /= (float)_Ygl->texture_manager->width;
+	texv[2].s /= (float)_Ygl->texture_manager->width;
+	texv[3].s /= (float)_Ygl->texture_manager->width;
+	texv[4].s /= (float)_Ygl->texture_manager->width;
+	texv[5].s /= (float)_Ygl->texture_manager->width;
+
+	texv[0].t /= (float)_Ygl->texture_manager->height;
+	texv[1].t /= (float)_Ygl->texture_manager->height;
+	texv[2].t /= (float)_Ygl->texture_manager->height;
+	texv[3].t /= (float)_Ygl->texture_manager->height;
+	texv[4].t /= (float)_Ygl->texture_manager->height;
+	texv[5].t /= (float)_Ygl->texture_manager->height;
+
+
+	int tess_count = 8;
+	float s_step = (float)(texv[2].s-texv[0].s)/(float)tess_count;
+	float t_step = (float)(texv[2].t-texv[0].t)/(float)tess_count;
+
+	float vec_ad_x = input->vertices[6] - input->vertices[0];
+	float vec_ad_y = input->vertices[7] - input->vertices[1];
+	float vec_ad_xs = vec_ad_x / tess_count;
+	float vec_ad_ys = vec_ad_y / tess_count;
+
+	float vec_bc_x = input->vertices[4] - input->vertices[2];
+	float vec_bc_y = input->vertices[5] - input->vertices[3];
+	float vec_bc_xs = vec_bc_x / tess_count;
+	float vec_bc_ys = vec_bc_y / tess_count;
+
+	for (int v = 0; v < tess_count ; v++){
+
+		// Top Line for current row
+		float ax = input->vertices[0] + vec_ad_xs * v;
+		float ay = input->vertices[1] + vec_ad_ys * v;
+		float bx = input->vertices[2] + vec_bc_xs * v;
+		float by = input->vertices[3] + vec_bc_ys * v;
+		float ab_step_x = (bx - ax) / tess_count;
+		float ab_step_y = (by - ay) / tess_count;
+
+		// botton Line for current row
+		float cx = input->vertices[2] + vec_bc_xs * (v + 1);
+		float cy = input->vertices[3] + vec_bc_ys * (v + 1);
+		float dx = input->vertices[0] + vec_ad_xs * (v + 1);
+		float dy = input->vertices[1] + vec_ad_ys * (v + 1);
+
+		float dc_step_x = (cx - dx) / tess_count;
+		float dc_step_y = (cy - dy) / tess_count;
+
+		for (int u = 0; u < tess_count ; u++){
+
+			float * cpos = &pos[12*(u + tess_count*v) ];
+			texturecoordinate_struct * ctpos = &tpos[6 * (u + tess_count*v)];
+			float * ccpos = &colv[24*(u + tess_count*v)];
+
+			/*
+			  A+--+B
+			   |  |
+			  D+--+C
+			*/
+			float dax = ax + ab_step_x * u;
+			float day = ay + ab_step_y * u;
+			float dbx = dax + ab_step_x;
+			float dby = day + ab_step_y;
+			float ddx = dx + dc_step_x * u;
+			float ddy = dy + dc_step_y * u;
+			float dcx = ddx + dc_step_x;
+			float dcy = ddy + dc_step_y;
+
+			cpos[0] = dax;
+			cpos[1] = day;
+			cpos[2] = dbx;
+			cpos[3] = dby;
+			cpos[4] = dcx;
+			cpos[5] = dcy;
+
+			cpos[6] = dax;
+			cpos[7] = day;
+			cpos[8] = dcx;
+			cpos[9] = dcy;
+			cpos[10] = ddx;
+			cpos[11] = ddy;
+
+			ctpos[0].s = texv[0].s + s_step * u;
+			ctpos[0].t = texv[0].t + t_step * v;
+			ctpos[1].s = ctpos[0].s + s_step;
+			ctpos[1].t = ctpos[0].t;
+			ctpos[2].s = ctpos[0].s + s_step;
+			ctpos[2].t = ctpos[0].t + t_step;
+
+			ctpos[3].s = ctpos[0].s;
+			ctpos[3].t = ctpos[0].t;
+			ctpos[4].s = ctpos[2].s;
+			ctpos[4].t = ctpos[2].t;
+			ctpos[5].s = ctpos[0].s;
+			ctpos[5].t = ctpos[0].t + t_step;
+			ctpos[0].r = ctpos[1].r = ctpos[2].r = ctpos[3].r = ctpos[4].r = ctpos[5].r = 0; // these can stay at 0
+			ctpos[0].q = ctpos[1].q = ctpos[2].q = ctpos[3].q = ctpos[4].q = ctpos[5].q = 1.0f; // these can stay at 0
+
+			// ToDo: color interpolation
+			memset(ccpos, 0, sizeof(float) * 24);
+
+		}
+	}
+	program->currentQuad = program->currentQuad + (12*tess_count*tess_count);
+	return 0;
+}
 
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c) {
    unsigned int x, y;
