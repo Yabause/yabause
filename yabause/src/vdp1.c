@@ -571,6 +571,10 @@ int Vdp1SaveState(FILE *fp)
 {
    int offset;
    IOCheck_struct check = { 0, 0 };
+#ifdef IMPROVED_SAVESTATES
+   int i = 0;
+   u8 back_framebuffer[0x40000] = { 0 };
+#endif
 
    offset = StateWriteHeader(fp, "VDP1", 1);
 
@@ -580,6 +584,12 @@ int Vdp1SaveState(FILE *fp)
    // Write VDP1 ram
    ywrite(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
+#ifdef IMPROVED_SAVESTATES
+   for (i = 0; i < 0x40000; i++)
+      back_framebuffer[i] = Vdp1FrameBufferReadByte(i);
+
+   ywrite(&check, (void *)back_framebuffer, 0x40000, 1, fp);
+#endif
    return StateFinishHeader(fp, offset);
 }
 
@@ -588,6 +598,10 @@ int Vdp1SaveState(FILE *fp)
 int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check = { 0, 0 };
+#ifdef IMPROVED_SAVESTATES
+   int i = 0;
+   u8 back_framebuffer[0x40000] = { 0 };
+#endif
 
    // Read registers
    yread(&check, (void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
@@ -595,6 +609,12 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    // Read VDP1 ram
    yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
+#ifdef IMPROVED_SAVESTATES
+   yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
+
+   for (i = 0; i < 0x40000; i++)
+      Vdp1FrameBufferWriteByte(i, back_framebuffer[i]);
+#endif
    return size;
 }
 
