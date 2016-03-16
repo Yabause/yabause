@@ -3875,6 +3875,9 @@ SoundSaveState (FILE *fp)
   // Save 68k registers first
   ywrite (&check, (void *)&IsM68KRunning, 1, 1, fp);
 
+#ifdef IMPROVED_SAVESTATES
+  M68K->SaveState(fp);
+#else
   for (i = 0; i < 8; i++)
     {
       temp = M68K->GetDReg (i);
@@ -3891,6 +3894,7 @@ SoundSaveState (FILE *fp)
   ywrite (&check, (void *)&temp, 4, 1, fp);
   temp = M68K->GetPC ();
   ywrite (&check, (void *)&temp, 4, 1, fp);
+#endif
 
   // Now for the SCSP registers
   ywrite (&check, (void *)scsp_reg, 0x1000, 1, fp);
@@ -4053,6 +4057,9 @@ SoundLoadState (FILE *fp, int version, int size)
   // Read 68k registers first
   yread (&check, (void *)&IsM68KRunning, 1, 1, fp);
 
+#ifdef IMPROVED_SAVESTATES
+  M68K->LoadState(fp);
+#else
   for (i = 0; i < 8; i++)
     {
       yread (&check, (void *)&temp, 4, 1, fp);
@@ -4069,6 +4076,7 @@ SoundLoadState (FILE *fp, int version, int size)
   M68K->SetSR (temp);
   yread (&check, (void *)&temp, 4, 1, fp);
   M68K->SetPC (temp);
+#endif
 
   // Now for the SCSP registers
   yread (&check, (void *)scsp_reg, 0x1000, 1, fp);
