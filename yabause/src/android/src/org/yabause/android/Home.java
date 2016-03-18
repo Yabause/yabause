@@ -49,4 +49,8 @@ public class Home extends Activity
         Intent intent = new Intent(this, YabauseSettings.class);
         startActivity(intent);
     }
+
+    static {
+        System.loadLibrary("yabause");
+    }
 }

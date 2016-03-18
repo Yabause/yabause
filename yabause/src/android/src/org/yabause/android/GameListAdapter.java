@@ -27,16 +27,19 @@ import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 import org.yabause.android.YabauseStorage;
+import org.yabause.android.GameInfoManager;
 
 class GameListAdapter implements ListAdapter {
     private YabauseStorage storage;
     private String[] gamefiles;
     private Context context;
+    private GameInfoManager gim;
 
     GameListAdapter(Context ctx) {
         storage = YabauseStorage.getStorage();
         gamefiles = storage.getGameFiles();
         context = ctx;
+        gim = new GameInfoManager(ctx);
     }
 
     public int getCount() {
@@ -56,16 +59,26 @@ class GameListAdapter implements ListAdapter {
     }
 
     public View getView(int position, View convertView, ViewGroup parent) {
-        TextView tv;
+        View layout;
+        TextView name;
 
         if (convertView != null) {
-            tv = (TextView) convertView;
+            layout = convertView;
         } else {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
-            tv = (TextView) inflater.inflate(R.layout.game_item, parent, false);
+            layout = inflater.inflate(R.layout.game_item, parent, false);
         }
-        tv.setText(gamefiles[position]);
-        return tv;
+
+        name = (TextView) layout.findViewById(R.id.game_name);
+
+        GameInfo gi = gim.gameInfo(gamefiles[position]);
+        if (gi == null) {
+            name.setText(gamefiles[position]);
+        } else {
+            name.setText(gi.getName());
+        }
+
+        return layout;
     }
 
     public int getViewTypeCount() {

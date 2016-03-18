@@ -13,6 +13,7 @@ set(yabause_HEADERS
 	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
 	debug.h
 	error.h
+	gameinfo.h
 	japmodem.h 
 	m68kcore.h m68kd.h memory.h movie.h
 	netlink.h
@@ -28,6 +29,7 @@ set(yabause_SOURCES
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
 	error.c
+	gameinfo.c
 	japmodem.c
 	m68kcore.c m68kd.c memory.c movie.c
 	netlink.c

@@ -27,6 +27,8 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		jni/sndopensl.c
 		jni/sndopensl.h
 		src/org/yabause/android/Cartridge.java
+		src/org/yabause/android/GameInfo.java
+		src/org/yabause/android/GameInfoManager.java
 		src/org/yabause/android/GameList.java
 		src/org/yabause/android/GameListAdapter.java
 		src/org/yabause/android/Home.java
@@ -123,6 +125,8 @@ set(yabause_android_RES
 )
 set(yabause_android_SRC
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Cartridge.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameInfo.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameInfoManager.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameList.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameListAdapter.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Home.java"

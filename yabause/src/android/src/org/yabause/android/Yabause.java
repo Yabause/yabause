@@ -45,6 +45,7 @@ import android.graphics.Bitmap;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.net.Uri;
+import org.yabause.android.GameInfo;
 
 class InputHandler extends Handler {
     private YabauseRunnable yr;
@@ -79,6 +80,7 @@ class YabauseRunnable implements Runnable
     public static native void enableFrameskip(int enable);
     public static native void setVolume(int volume);
     public static native void screenshot(Bitmap bitmap);
+    public static native GameInfo gameInfo(String path);
     
     private boolean inited;
     private boolean paused;
@@ -342,9 +344,5 @@ public class Yabause extends Activity implements OnPadListener
 
     public String getCartridgePath() {
         return YabauseStorage.getStorage().getCartridgePath(Cartridge.getDefaultFilename(carttype));
-    }
-
-    static {
-        System.loadLibrary("yabause");
     }
 }

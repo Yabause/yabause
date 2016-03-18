@@ -33,6 +33,7 @@
 #include "cs2.h"
 #include "debug.h"
 #include "osdcore.h"
+#include "gameinfo.h"
 
 #include <stdio.h>
 #include <dlfcn.h>
@@ -565,6 +566,36 @@ Java_org_yabause_android_YabauseRunnable_screenshot( JNIEnv* env, jobject obj, j
     }
 
     AndroidBitmap_unlockPixels(env, bitmap);
+}
+
+jobject Java_org_yabause_android_YabauseRunnable_gameInfo( JNIEnv* env, jobject obj, jobject path )
+{
+    jmethodID cons;
+    jboolean dummy;
+    jclass c;
+    jstring system, company, itemnum, version, date, cdinfo, region, peripheral, gamename;
+    GameInfo info;
+    const char * filename = (*env)->GetStringUTFChars(env, path, &dummy);
+
+    if (! GameInfoFromPath(filename, &info))
+    {
+       return NULL;
+    }
+
+    c = (*env)->FindClass(env, "org/yabause/android/GameInfo");
+    cons = (*env)->GetMethodID(env, c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
+
+    system = (*env)->NewStringUTF(env, info.system);
+    company = (*env)->NewStringUTF(env, info.company);
+    itemnum = (*env)->NewStringUTF(env, info.itemnum);
+    version = (*env)->NewStringUTF(env, info.version);
+    date = (*env)->NewStringUTF(env, info.date);
+    cdinfo = (*env)->NewStringUTF(env, info.cdinfo);
+    region = (*env)->NewStringUTF(env, info.region);
+    peripheral = (*env)->NewStringUTF(env, info.peripheral);
+    gamename = (*env)->NewStringUTF(env, info.gamename);
+
+    return (*env)->NewObject(env, c, cons, system, company, itemnum, version, date, cdinfo, region, peripheral, gamename);
 }
 
 void log_callback(char * message)
