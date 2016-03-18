@@ -965,6 +965,9 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
       else
          info->LoadLineParams(info, j, lines);
 
+      if (!info->enable)
+         continue;
+
       for (i = 0; i < vdp2width; i++)
       {
          u32 color, dot;
@@ -1467,6 +1470,7 @@ static void LoadLineParamsNBG0(vdp2draw_struct * info, int line, Vdp2* lines)
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x1, 0x1);
    info->specialprimode = regs->SFPRMD & 0x3;
+   info->enable = regs->BGON & 0x1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1548,9 +1552,6 @@ static void Vdp2DrawNBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
       info.coordincy = (regs->ZMYN0.all & 0x7FF00) / (float) 65536;
       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
    }
-   else
-      // Not enabled
-      return;
 
    info.transparencyenable = !(regs->BGON & 0x100);
    info.specialprimode = regs->SFPRMD & 0x3;
@@ -1618,6 +1619,7 @@ static void LoadLineParamsNBG1(vdp2draw_struct * info, int line, Vdp2* lines)
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x2, 0x2);
    info->specialprimode = (regs->SFPRMD >> 2) & 0x3;
+   info->enable = regs->BGON & 0x2;//f1 challenge map when zoomed out
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1683,7 +1685,7 @@ static void Vdp2DrawNBG1(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
    info.priority = (regs->PRINA >> 8) & 0x7;
    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
 
-   if (!(info.enable & Vdp2External.disptoggle) ||
+   if (!(Vdp2External.disptoggle) ||
        (regs->BGON & 0x1 && (regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
       return;
 
@@ -1722,6 +1724,7 @@ static void LoadLineParamsNBG2(vdp2draw_struct * info, int line, Vdp2* lines)
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x4, 0x4);
    info->specialprimode = (regs->SFPRMD >> 4) & 0x3;
+   info->enable = regs->BGON & 0x4;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1767,7 +1770,7 @@ static void Vdp2DrawNBG2(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
    info.priority = regs->PRINB & 0x7;
    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
 
-   if (!(info.enable & Vdp2External.disptoggle) ||
+   if (!(Vdp2External.disptoggle) ||
       (regs->BGON & 0x1 && (regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
       return;
 
@@ -1792,6 +1795,7 @@ static void LoadLineParamsNBG3(vdp2draw_struct * info, int line, Vdp2* lines)
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x8, 0x8);
    info->specialprimode = (regs->SFPRMD >> 6) & 0x3;
+   info->enable = regs->BGON & 0x8;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1838,7 +1842,7 @@ static void Vdp2DrawNBG3(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
    info.priority = (regs->PRINB >> 8) & 0x7;
    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG3PlaneAddr;
 
-   if (!(info.enable & Vdp2External.disptoggle) ||
+   if (!(Vdp2External.disptoggle) ||
       (regs->BGON & 0x1 && (regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
       (regs->BGON & 0x2 && (regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
       return;
