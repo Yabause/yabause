@@ -2486,7 +2486,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 			if (!((currentPixel == 0) && !SPD)) 
-				currentPixel = colorbank | currentPixel;
+				currentPixel = (colorbank &0xfff0)| currentPixel;
 			currentPixelIsVisible = 0xf;
 			break;
 
@@ -2513,7 +2513,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 				currentPixel = 0;
 		//		return 1;
 			if (!((currentPixel == 0) && !SPD)) 
-				currentPixel = colorbank | currentPixel;
+				currentPixel = (colorbank&0xffc0) | currentPixel;
 			currentPixelIsVisible = 0x3f;
 			break;
 		case 0x3://128 color
@@ -2522,7 +2522,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
 				return 1;
 			if (!((currentPixel == 0) && !SPD)) 
-				currentPixel = colorbank | currentPixel;
+				currentPixel = (colorbank&0xff80) | currentPixel;//dead or alive needs colorbank to be masked
 			currentPixelIsVisible = 0x7f;
 			break;
 		case 0x4://256 color
@@ -2532,7 +2532,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 				return 1;
 			currentPixelIsVisible = 0xff;
 			if (!((currentPixel == 0) && !SPD)) 
-				currentPixel = colorbank | currentPixel;
+				currentPixel = (colorbank&0xff00) | currentPixel;
 			break;
 		case 0x5://16bpp bank
 			endcode = 0x7fff;
