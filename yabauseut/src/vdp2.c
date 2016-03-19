@@ -1453,6 +1453,367 @@ void vdp2_sprite_priority_shadow_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void draw_grid(int clipping_mode)
+{
+   sprite_struct quad = { 0 };
+
+   int j;
+
+   quad.bank = 3;
+   quad.attr = (1 << 10) | (clipping_mode << 9);
+   for (j = 0; j < 40; j++)
+   {
+      quad.x = j * 8;
+      quad.y = 0;
+      quad.x2 = j * 8;
+      quad.y2 = 224;
+
+      vdp_draw_line(&quad);
+   }
+
+   for (j = 0; j < 40; j++)
+   {
+      quad.x = 0;
+      quad.y = j * 8;
+      quad.x2 = 321;
+      quad.y2 = j * 8;
+
+      vdp_draw_line(&quad);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void scaled_sprite(int x, int y, int x3, int y3, u32 vdp1_tile_address, int flip)
+{
+   sprite_struct quad = { 0 };
+
+   quad.width = 8;
+   quad.height = 8;
+
+   int palette = 3;
+
+   quad.x = x;
+   quad.y = y;
+   quad.x2 = 0;
+   quad.y2 = 0;
+
+   quad.x3 = x3;
+   quad.y3 = y3;
+
+   quad.bank = (palette << 4);
+
+   quad.addr = vdp1_tile_address + ('a' * 32);
+
+   quad.attr = (flip << 4) << 12 | 0x80;
+
+   vdp_draw_scaled_sprite(&quad);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void draw_scaled_sprites(int x, int y, u32 vdp1_tile_address, int flip)
+{
+   //x1 < x2, y1 < y2
+   scaled_sprite(
+      x,
+      y,
+      x + 7,
+      y + 7, vdp1_tile_address, flip);
+
+   //x2 < x1, y1 < y2
+   scaled_sprite(
+      x + 16 + 7,
+      y + 0,
+      x + 16,
+      y + 0 + 7, vdp1_tile_address, flip);
+
+   //x1 < x2, y2 < y1
+   scaled_sprite(
+      x + 48,
+      y + 0 + 7,
+      x + 48 + 7,
+      y + 0, vdp1_tile_address, flip);
+
+   //x2 < x1, y2 < y1
+   scaled_sprite(
+      x + 32 + 7,
+      y + 0 + 7,
+      x + 32,
+      y + 0, vdp1_tile_address, flip);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp1_scaled_sprite_clipping_latch()
+{
+   const u32 vdp2_tile_address = 0x40000;
+   const u32 vdp1_tile_address = 0x10000;
+   vdp2_basic_tile_scroll_setup(vdp2_tile_address);
+
+   load_font_8x8_to_vram_1bpp_to_4bpp(vdp1_tile_address, VDP1_RAM);
+
+   VDP1_REG_PTMR = 0x02;//draw automatically with frame change
+
+   VDP2_REG_PRISA = 7 | (6 << 8);
+   VDP2_REG_PRISB = 5 | (4 << 8);
+   VDP2_REG_PRISC = 3 | (2 << 8);
+   VDP2_REG_PRISD = 1 | (0 << 8);
+
+   int tvm = 0;
+   int hreso = 0;
+   int lsmd = 0;
+   int die = 0;
+   int dil = 0;
+
+   vdp_start_draw_list();
+   sprite_struct quad = { 0 };
+
+   //system clipping
+   quad.x = 320 - 8;
+   quad.y = 224 - 8;
+
+   vdp_system_clipping(&quad);
+
+   //user clipping
+   quad.x = 0;
+   quad.y = 0;
+   quad.x2 = 320 - 16;
+   quad.y2 = 224 - 16;
+
+   vdp_user_clipping(&quad);
+
+   vdp_end_draw_list();
+
+   struct Pos
+   {
+      int x, y;
+   };
+
+   struct Pos system_clipping = { 0 };
+
+   system_clipping.x = 319 - 8;
+   system_clipping.y = 223 - 8;
+
+   struct UserClipping
+   {
+      struct Pos a, b;
+   };
+
+   struct UserClipping user_clipping = { { 0 } };
+
+   user_clipping.a.x = 8;
+   user_clipping.a.y = 8;
+
+   user_clipping.b.x = 319 - 16;
+   user_clipping.b.y = 223 - 16;
+
+   int clipping_mode = 0;
+
+   struct Preset
+   {
+      struct Pos system_clipping;
+      struct UserClipping user_clipping;
+      int clipping_mode;
+   };
+
+   int num_presets = 7;
+
+   struct Preset presets[7] =
+   {
+      //normal setting
+      {
+         { 0x28, 0x28 },
+         { { 0x08, 0x08 },{ 0x20, 0x20 } },
+         0
+      },
+      //user x1 < user x0
+      {
+         { 0x28, 0x28 },
+         { { 0x20, 0x08 },{ 0x08, 0x20 } },
+         0
+      },
+      //user y1 < user y0
+      {
+         { 0x28, 0x28 },
+         { { 0x08, 0x20 },{ 0x20, 0x08 } },
+         0
+      },
+      //user x1 < user x0, user y1 < user y0
+      {
+         { 0x28, 0x28 },
+         { { 0x20, 0x20 },{ 0x08, 0x08 } },
+         0
+      },
+      //user x1 > system x
+      {
+         { 0x28, 0x28 },
+         { { 0x08, 0x08 },{ 0x30, 0x20 } },
+         0
+      },
+      //user y1 > system y
+      {
+         { 0x28, 0x28 },
+         { { 0x08, 0x08 },{ 0x20, 0x30 } },
+         0
+      },
+      //user x1 > system x, user y1 > system y
+      {
+         { 0x28, 0x28 },
+         { { 0x08, 0x08 },{ 0x30, 0x30 } },
+         0
+      },
+   };
+
+   int current_preset = 0;
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      VDP1_REG_TVMR = tvm;
+
+      VDP1_REG_FBCR = ((die & 1) << 3) | ((dil & 1) << 2);
+
+      VDP2_REG_TVMD = (1 << 15) | (lsmd << 6) | hreso;
+
+      vdp_start_draw_list();
+
+      if (per[0].but_push & PAD_A)
+      {
+         if (per[0].but_push & PAD_LEFT)
+            system_clipping.x--;
+         if (per[0].but_push & PAD_RIGHT)
+            system_clipping.x++;
+         if (per[0].but_push & PAD_UP)
+            system_clipping.y--;
+         if (per[0].but_push & PAD_DOWN)
+            system_clipping.y++;
+      }
+
+      quad.x = system_clipping.x;
+      quad.y = system_clipping.y;
+
+      vdp_system_clipping(&quad);
+
+      if (per[0].but_push & PAD_B)
+      {
+         if (per[0].but_push & PAD_L)
+         {
+            if (per[0].but_push & PAD_LEFT)
+               user_clipping.a.x--;
+            if (per[0].but_push & PAD_RIGHT)
+               user_clipping.a.x++;
+            if (per[0].but_push & PAD_UP)
+               user_clipping.a.y--;
+            if (per[0].but_push & PAD_DOWN)
+               user_clipping.a.y++;
+         }
+         else
+         {
+            if (per[0].but_push & PAD_LEFT)
+               user_clipping.b.x--;
+            if (per[0].but_push & PAD_RIGHT)
+               user_clipping.b.x++;
+            if (per[0].but_push & PAD_UP)
+               user_clipping.b.y--;
+            if (per[0].but_push & PAD_DOWN)
+               user_clipping.b.y++;
+         }
+      }
+
+      quad.x = user_clipping.a.x;
+      quad.y = user_clipping.a.y;
+      quad.x2 = user_clipping.b.x;
+      quad.y2 = user_clipping.b.y;
+
+      vdp_user_clipping(&quad);
+
+      quad.x = 0;
+      quad.y = 0;
+      quad.x2 = 0;
+      quad.y2 = 0;
+
+      vdp_local_coordinate(&quad);
+
+      draw_grid(clipping_mode);
+
+      draw_scaled_sprites(0, 0, vdp1_tile_address, 0);
+      draw_scaled_sprites(0, 16, vdp1_tile_address, 1);
+      draw_scaled_sprites(0, 32, vdp1_tile_address, 2);
+      draw_scaled_sprites(0, 48, vdp1_tile_address, 3);
+
+      vdp_end_draw_list();
+
+      char status[64] = "";
+
+      sprintf(status, "clip mode = %02x", clipping_mode);
+      write_str_as_pattern_name_data(0, 24, status, 3, 0x000000, vdp2_tile_address);
+      sprintf(status, "sys x =%02x sys y =%02x  ", system_clipping.x, system_clipping.y);
+      write_str_as_pattern_name_data(0, 25, status, 3, 0x000000, vdp2_tile_address);
+      sprintf(status, "usr x0=%02x usr y0=%02x  ", user_clipping.a.x, user_clipping.a.y);
+      write_str_as_pattern_name_data(0, 26, status, 3, 0x000000, vdp2_tile_address);
+      sprintf(status, "usr x1=%02x usr y1=%02x  ", user_clipping.b.x, user_clipping.b.y);
+      write_str_as_pattern_name_data(0, 27, status, 3, 0x000000, vdp2_tile_address);
+
+      if (per[0].but_push_once & PAD_R)
+      {
+         clipping_mode++;
+
+         clipping_mode &= 3;
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         tvm = !tvm;
+      }
+
+      if (per[0].but_push_once & PAD_X)
+      {
+         if (hreso == 2)
+            hreso = 0;
+         else
+            hreso = 2;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_Z)
+      {
+         system_clipping.x = presets[current_preset].system_clipping.x;
+         system_clipping.y = presets[current_preset].system_clipping.y;
+         user_clipping.a.x = presets[current_preset].user_clipping.a.x;
+         user_clipping.a.y = presets[current_preset].user_clipping.a.y;
+         user_clipping.b.x = presets[current_preset].user_clipping.b.x;
+         user_clipping.b.y = presets[current_preset].user_clipping.b.y;
+         clipping_mode = presets[current_preset].clipping_mode;
+
+         current_preset++;
+
+         if (current_preset >= num_presets)
+            current_preset = 0;
+      }
+
+      if (per[0].but_push_once & PAD_L)
+      {
+         if (die == 0)
+            die = 1;
+         else
+            die = 0;
+      }
+
+      if (per[0].but_push_once & PAD_START)
+         break;
+   }
+
+   vdp2_basic_tile_scroll_deinit();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_change_4bbp_tile_color(u32 address, int amount)
 {
    int i;

@@ -71,8 +71,6 @@ static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); 
 				(l & 0xFF000000)
 #endif
 
-static void PushUserClipping(int mode, Vdp1* regs);
-static void PopUserClipping(Vdp1* regs);
 
 int VIDSoftInit(void);
 void VIDSoftSetupGL(void);
@@ -144,10 +142,6 @@ u8 sprite_window_mask[512 * 256];
 static int vdp1width;
 static int vdp1height;
 static int vdp1interlace;
-static int vdp1clipxstart;
-static int vdp1clipxend;
-static int vdp1clipystart;
-static int vdp1clipyend;
 static int vdp1pixelsize;
 int vdp2width;
 int rbg0width = 0;
@@ -2288,10 +2282,10 @@ int VIDSoftIsFullscreen(void) {
 
 int VIDSoftVdp1Reset(void)
 {
-   vdp1clipxstart = 0;
-   vdp1clipxend = 512;
-   vdp1clipystart = 0;
-   vdp1clipyend = 256;
+   Vdp1Regs->userclipX1 = Vdp1Regs->systemclipX1 = 0;
+   Vdp1Regs->userclipY1 = Vdp1Regs->systemclipY1 = 0;
+   Vdp1Regs->userclipX2 = Vdp1Regs->systemclipX2 = 512;
+   Vdp1Regs->userclipY2 = Vdp1Regs->systemclipY2 = 256;
    
    return 0;
 }
@@ -2331,15 +2325,10 @@ void VIDSoftVdp1DrawStartBody(Vdp1* regs, u8 * back_framebuffer)
 
    VIDSoftVdp1EraseFrameBuffer(regs, back_framebuffer);
 
-   vdp1clipxstart = regs->userclipX1 = regs->systemclipX1 = 0;
-   vdp1clipystart = regs->userclipY1 = regs->systemclipY1 = 0;
    //night warriors doesn't set clipping most frames and uses
    //the last part of the vdp1 framebuffer as scratch ram
    //the previously set clipping values need to be reused
-   vdp1clipxend = regs->userclipX2 = regs->systemclipX2;
-   vdp1clipyend = regs->userclipY2 = regs->systemclipY2;
 }
-
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDSoftVdp1DrawStart()
@@ -2591,6 +2580,39 @@ static int CheckDil(int y, Vdp1 * regs)
    return 0;
 }
 
+INLINE int IsUserClipped(int x, int y, Vdp1* regs)
+{
+   return !(x >= regs->userclipX1 &&
+      x <= regs->userclipX2 &&
+      y >= regs->userclipY1 &&
+      y <= regs->userclipY2);
+}
+
+INLINE int IsSystemClipped(int x, int y, Vdp1* regs)
+{
+   return !(x >= 0 &&
+      x <= regs->systemclipX2 &&
+      y >= 0 &&
+      y <= regs->systemclipY2);
+}
+
+int IsClipped(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd)
+{
+   if (cmd->CMDPMOD & 0x0400)//user clipping enabled
+   {
+      int is_user_clipped = IsUserClipped(x, y, regs);
+
+      if (((cmd->CMDPMOD >> 9) & 0x3) == 0x3)//outside clipping mode
+         is_user_clipped = !is_user_clipped;
+
+      return is_user_clipped || IsSystemClipped(x, y, regs);
+   }
+   else
+   {
+      return IsSystemClipped(x, y, regs);
+   }
+}
+
 static void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 * back_framebuffer) {
 
     int y2 = y / vdp1interlace;
@@ -2606,24 +2628,12 @@ static void putpixel8(int x, int y, Vdp1 * regs, vdp1cmd_struct *cmd, u8 * back_
 
     currentPixel &= 0xFF;
 
-    if(mesh && ((x ^ y2) & 1)) {
-        return;
+    if (mesh && ((x ^ y2) & 1)) {
+       return;
     }
 
-    {
-        int clipped;
-
-        if (cmd->CMDPMOD & 0x0400) PushUserClipping((cmd->CMDPMOD >> 9) & 0x1, regs);
-
-        clipped = ! (x >= vdp1clipxstart &&
-            x < vdp1clipxend &&
-            y2 >= vdp1clipystart &&
-            y2 < vdp1clipyend);
-
-        if (cmd->CMDPMOD & 0x0400) PopUserClipping(regs);
-
-        if (clipped) return;
-    }
+    if (IsClipped(x, y, regs, cmd))
+       return;
 
     if ( SPD || (currentPixel & currentPixelIsVisible))
     {
@@ -2643,6 +2653,7 @@ static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_f
 	u16* iPix;
 	int mesh = cmd->CMDPMOD & 0x0100;
 	int SPD = ((cmd->CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
+   int original_y = y;
 
    if (CheckDil(y, regs))
       return;
@@ -2656,33 +2667,8 @@ static void putpixel(int x, int y, Vdp1* regs, vdp1cmd_struct * cmd, u8 * back_f
 	if(mesh && (x^y)&1)
 		return;
 
-	{
-		int clipped;
-
-		if (cmd->CMDPMOD & 0x0400) PushUserClipping((cmd->CMDPMOD >> 9) & 0x1, regs);
-
-		clipped = ! (x >= vdp1clipxstart &&
-			x < vdp1clipxend &&
-			y >= vdp1clipystart &&
-			y < vdp1clipyend);
-
-      //vdp1_clip_test in yabauseut
-      if (((cmd->CMDPMOD >> 9) & 0x3) == 0x3)//outside clipping mode
-      {
-         //don't display inside the box
-         if (regs->userclipX1 <= x &&
-            x <= regs->userclipX2 &&
-            regs->userclipY1 <= y &&
-            y <= regs->userclipY2)
-         {
-            clipped = 1;
-         }
-      }
-
-		if (cmd->CMDPMOD & 0x0400) PopUserClipping(regs);
-
-		if (clipped) return;
-	}
+   if (IsClipped(x, original_y, regs, cmd))
+      return;
 
 	if (cmd->CMDPMOD & (1 << 15))
 	{
@@ -3336,81 +3322,6 @@ void VIDSoftVdp1UserClipping(u8* ram, Vdp1*regs)
    regs->userclipY1 = T1ReadWord(ram, regs->addr + 0xE);
    regs->userclipX2 = T1ReadWord(ram, regs->addr + 0x14);
    regs->userclipY2 = T1ReadWord(ram, regs->addr + 0x16);
-
-#if 0
-   vdp1clipxstart = regs->userclipX1;
-   vdp1clipxend = regs->userclipX2;
-   vdp1clipystart = regs->userclipY1;
-   vdp1clipyend = regs->userclipY2;
-
-   // This needs work
-   if (vdp1clipxstart > regs->systemclipX1)
-      vdp1clipxstart = regs->userclipX1;
-   else
-      vdp1clipxstart = regs->systemclipX1;
-
-   if (vdp1clipxend < regs->systemclipX2)
-      vdp1clipxend = regs->userclipX2;
-   else
-      vdp1clipxend = regs->systemclipX2;
-
-   if (vdp1clipystart > regs->systemclipY1)
-      vdp1clipystart = regs->userclipY1;
-   else
-      vdp1clipystart = regs->systemclipY1;
-
-   if (vdp1clipyend < regs->systemclipY2)
-      vdp1clipyend = regs->userclipY2;
-   else
-      vdp1clipyend = regs->systemclipY2;
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void PushUserClipping(int mode, Vdp1 * regs)
-{
-   if (mode == 1)
-   {
-      VDP1LOG("User clipping mode 1 not implemented\n");
-      return;
-   }
-
-   vdp1clipxstart = regs->userclipX1;
-   vdp1clipxend = regs->userclipX2;
-   vdp1clipystart = regs->userclipY1;
-   vdp1clipyend = regs->userclipY2;
-
-   // This needs work
-   if (vdp1clipxstart > regs->systemclipX1)
-      vdp1clipxstart = regs->userclipX1;
-   else
-      vdp1clipxstart = regs->systemclipX1;
-
-   if (vdp1clipxend < regs->systemclipX2)
-      vdp1clipxend = regs->userclipX2;
-   else
-      vdp1clipxend = regs->systemclipX2;
-
-   if (vdp1clipystart > regs->systemclipY1)
-      vdp1clipystart = regs->userclipY1;
-   else
-      vdp1clipystart = regs->systemclipY1;
-
-   if (vdp1clipyend < regs->systemclipY2)
-      vdp1clipyend = regs->userclipY2;
-   else
-      vdp1clipyend = regs->systemclipY2;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void PopUserClipping(Vdp1* regs)
-{
-   vdp1clipxstart = regs->systemclipX1;
-   vdp1clipxend = regs->systemclipX2;
-   vdp1clipystart = regs->systemclipY1;
-   vdp1clipyend = regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3421,11 +3332,6 @@ void VIDSoftVdp1SystemClipping(u8* ram, Vdp1*regs)
    regs->systemclipY1 = 0;
    regs->systemclipX2 = T1ReadWord(ram, regs->addr + 0x14);
    regs->systemclipY2 = T1ReadWord(ram, regs->addr + 0x16);
-
-   vdp1clipxstart = regs->systemclipX1;
-   vdp1clipxend = regs->systemclipX2;
-   vdp1clipystart = regs->systemclipY1;
-   vdp1clipyend = regs->systemclipY2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
