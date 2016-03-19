@@ -25,6 +25,9 @@
 #include "vdp2.h"
 #include "debug.h"
 
+#define YGL_TESS_COUNT (8)
+#define YGL_MAX_NEED_BUFFER (12*YGL_TESS_COUNT*YGL_TESS_COUNT)
+
 typedef struct 
 {
    short LineScrollValH;
