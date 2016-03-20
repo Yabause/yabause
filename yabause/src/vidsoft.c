@@ -2580,7 +2580,7 @@ static int CheckDil(int y, Vdp1 * regs)
    return 0;
 }
 
-INLINE int IsUserClipped(int x, int y, Vdp1* regs)
+static INLINE int IsUserClipped(int x, int y, Vdp1* regs)
 {
    return !(x >= regs->userclipX1 &&
       x <= regs->userclipX2 &&
@@ -2588,7 +2588,7 @@ INLINE int IsUserClipped(int x, int y, Vdp1* regs)
       y <= regs->userclipY2);
 }
 
-INLINE int IsSystemClipped(int x, int y, Vdp1* regs)
+static INLINE int IsSystemClipped(int x, int y, Vdp1* regs)
 {
    return !(x >= 0 &&
       x <= regs->systemclipX2 &&
