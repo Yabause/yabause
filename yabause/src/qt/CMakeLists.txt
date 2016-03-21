@@ -256,7 +256,7 @@ endif()
 yab_port_success(yabause-qt)
 configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)
 
-if (WIN32)
+if (WIN32 AND NOT MSYS2_BUILD)
 	install(TARGETS yabause-qt DESTINATION ".")
 	if (GLUT_FOUND)
 		install(FILES ${GLUT_INCLUDE_DIR}/../freeglut.dll DESTINATION ".")
