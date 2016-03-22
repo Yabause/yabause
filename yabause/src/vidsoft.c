@@ -137,7 +137,7 @@ pixel_t *dispbuffer=NULL;
 u8 *vdp1framebuffer[2]= { NULL, NULL };
 u8 *vdp1frontframebuffer;
 u8 *vdp1backframebuffer;
-u8 sprite_window_mask[512 * 256];
+u8 sprite_window_mask[704 * 512];
 
 static int vdp1width;
 static int vdp1height;
@@ -455,7 +455,7 @@ int TestSpriteWindow(int wctl, int x, int y)
 {
    int mask;
 
-   if ((y > 256) || (x > 512)) return 0;
+   if ((y >= 512) || (x >= 704)) return 0;
 
    mask = sprite_window_mask[(y*vdp1width) + x];
 
@@ -3467,7 +3467,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
 
    if (sprite_window_enabled)
    {
-      memset(spr_window_mask, 0, 512 * 256);
+      memset(spr_window_mask, 0, 704 * 512);
    }
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
