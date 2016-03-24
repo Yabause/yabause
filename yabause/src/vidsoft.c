@@ -812,7 +812,7 @@ void Vdp2GetInterlaceInfo(int * start_line, int * line_increment)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
+static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    int i, j;
    int x, y;
@@ -830,6 +830,7 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
    u32 linescrollx_table[512] = { 0 };
    u32 linescrolly_table[512] = { 0 };
    float lineszoom_table[512] = { 0 };
+   int num_vertical_cell_scroll_enabled = 0;
 
    SetupScreenVars(info, &sinfo, info->PlaneAddr, regs);
 
@@ -862,6 +863,11 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
    }
 
    Vdp2GetInterlaceInfo(&start_line, &line_increment);
+
+   if (regs->SCRCTL & 1)
+      num_vertical_cell_scroll_enabled++;
+   if (regs->SCRCTL & 0x100)
+      num_vertical_cell_scroll_enabled++;
 
    //pre-generate line scroll tables
    for (j = start_line; j < vdp2height; j++)
@@ -948,16 +954,36 @@ static void FASTCALL Vdp2DrawScroll(vdp2draw_struct *info, Vdp2* lines, Vdp2* re
          // info->verticalscrolltbl should be incremented by info->verticalscrollinc
          // each time there's a cell change and reseted at the end of the line...
          // or something like that :)
-         y += T1ReadLong(ram, info->verticalscrolltbl) >> 16;
+         u32 scroll_value = 0;
+         int y_value = 0;
+         
+         if (vdp2_interlace)
+            y_value = j / 2;
+         else
+            y_value = j;
+
+         if (num_vertical_cell_scroll_enabled == 1)
+         {
+            scroll_value = cell_data[y_value].data[0] >> 16;
+         }
+         else
+         {
+            if (info->titan_which_layer == TITAN_NBG0)
+               scroll_value = cell_data[y_value].data[0] >> 16;//reload cell data per line for sonic 2, 2 player mode
+            else if (info->titan_which_layer == TITAN_NBG1)
+               scroll_value = cell_data[y_value].data[1] >> 16;
+         }
+
+         y += scroll_value;
          y &= 0x1FF;
       }
 
       Y=y;
 
       if (vdp2_interlace)
-         info->LoadLineParams(info, j / 2, lines);
+         info->LoadLineParams(info, &sinfo, j / 2, lines);
       else
-         info->LoadLineParams(info, j, lines);
+         info->LoadLineParams(info, &sinfo, j, lines);
 
       if (!info->enable)
          continue;
@@ -1069,7 +1095,7 @@ void Rbg0PutPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter, Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
+static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter, Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    int i, j;
    int x, y;
@@ -1110,7 +1136,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
 
          for (j = 0; j < vdp2height; j++)
          {
-            info->LoadLineParams(info, j, lines);
+            info->LoadLineParams(info, &sinfo, j, lines);
             ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr, ram, regs);
 
             for (i = 0; i < rbg0width; i++)
@@ -1234,7 +1260,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
             TitanPutLineHLine(info->linescreen, j, COLSAT2YAB32(0x3F, lineColor));
          }
 
-         info->LoadLineParams(info, j, lines);
+         info->LoadLineParams(info, &sinfo, j, lines);
          ReadLineWindowClip(info->islinewindow, clip, &linewnd0addr, &linewnd1addr, ram, regs);
 
          if (userpwindow)
@@ -1359,7 +1385,7 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
       return;
    }
 
-   Vdp2DrawScroll(info, lines, regs, ram, color_ram);
+   Vdp2DrawScroll(info, lines, regs, ram, color_ram, cell_data);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1456,7 +1482,7 @@ static void Vdp2DrawLineScreen(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void LoadLineParamsNBG0(vdp2draw_struct * info, int line, Vdp2* lines)
+static void LoadLineParamsNBG0(vdp2draw_struct * info, screeninfo_struct * sinfo, int line, Vdp2* lines)
 {
    Vdp2 * regs;
 
@@ -1465,11 +1491,12 @@ static void LoadLineParamsNBG0(vdp2draw_struct * info, int line, Vdp2* lines)
    ReadVdp2ColorOffset(regs, info, 0x1, 0x1);
    info->specialprimode = regs->SFPRMD & 0x3;
    info->enable = regs->BGON & 0x1;
+   GeneratePlaneAddrTable(info, sinfo->planetbl, info->PlaneAddr, regs);//sonic 2, 2 player mode
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawNBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
+static void Vdp2DrawNBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    vdp2draw_struct info = { 0 };
    vdp2rotationparameterfp_struct parameter[2];
@@ -1589,23 +1616,23 @@ static void Vdp2DrawNBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
       info.isverticalscroll = 0;
    info.wctl = regs->WCTLA;
 
-   info.LoadLineParams = (void (*)(void *, int ,Vdp2*)) LoadLineParamsNBG0;
+   info.LoadLineParams = (void (*)(void *, void *,int ,Vdp2*)) LoadLineParamsNBG0;
 
    if (info.enable == 1)
    {
       // NBG0 draw
-      Vdp2DrawScroll(&info, lines, regs, ram, color_ram);
+      Vdp2DrawScroll(&info, lines, regs, ram, color_ram, cell_data);
    }
    else
    {
       // RBG1 draw
-      Vdp2DrawRotationFP(&info, parameter, lines, regs, ram, color_ram);
+      Vdp2DrawRotationFP(&info, parameter, lines, regs, ram, color_ram, cell_data);
    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void LoadLineParamsNBG1(vdp2draw_struct * info, int line, Vdp2* lines)
+static void LoadLineParamsNBG1(vdp2draw_struct * info, screeninfo_struct * sinfo, int line, Vdp2* lines)
 {
    Vdp2 * regs;
 
@@ -1614,11 +1641,12 @@ static void LoadLineParamsNBG1(vdp2draw_struct * info, int line, Vdp2* lines)
    ReadVdp2ColorOffset(regs, info, 0x2, 0x2);
    info->specialprimode = (regs->SFPRMD >> 2) & 0x3;
    info->enable = regs->BGON & 0x2;//f1 challenge map when zoomed out
+   GeneratePlaneAddrTable(info, sinfo->planetbl, info->PlaneAddr, regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawNBG1(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
+static void Vdp2DrawNBG1(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    vdp2draw_struct info = { 0 };
 
@@ -1703,14 +1731,14 @@ static void Vdp2DrawNBG1(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
       info.isverticalscroll = 0;
    info.wctl = regs->WCTLA >> 8;
 
-   info.LoadLineParams = (void(*)(void *, int, Vdp2*)) LoadLineParamsNBG1;
+   info.LoadLineParams = (void(*)(void *, void*, int, Vdp2*)) LoadLineParamsNBG1;
 
-   Vdp2DrawScroll(&info, lines, regs, ram, color_ram);
+   Vdp2DrawScroll(&info, lines, regs, ram, color_ram, cell_data);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void LoadLineParamsNBG2(vdp2draw_struct * info, int line, Vdp2* lines)
+static void LoadLineParamsNBG2(vdp2draw_struct * info, screeninfo_struct * sinfo, int line, Vdp2* lines)
 {
    Vdp2 * regs;
 
@@ -1719,11 +1747,12 @@ static void LoadLineParamsNBG2(vdp2draw_struct * info, int line, Vdp2* lines)
    ReadVdp2ColorOffset(regs, info, 0x4, 0x4);
    info->specialprimode = (regs->SFPRMD >> 4) & 0x3;
    info->enable = regs->BGON & 0x4;
+   GeneratePlaneAddrTable(info, sinfo->planetbl, info->PlaneAddr, regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawNBG2(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
+static void Vdp2DrawNBG2(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    vdp2draw_struct info = { 0 };
 
@@ -1774,14 +1803,14 @@ static void Vdp2DrawNBG2(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
    info.wctl = regs->WCTLB;
    info.isbitmap = 0;
 
-   info.LoadLineParams = (void(*)(void *, int, Vdp2*)) LoadLineParamsNBG2;
+   info.LoadLineParams = (void(*)(void *,void*, int, Vdp2*)) LoadLineParamsNBG2;
 
-   Vdp2DrawScroll(&info, lines, regs, ram, color_ram);
+   Vdp2DrawScroll(&info, lines, regs, ram, color_ram, cell_data);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void LoadLineParamsNBG3(vdp2draw_struct * info, int line, Vdp2* lines)
+static void LoadLineParamsNBG3(vdp2draw_struct * info, screeninfo_struct * sinfo, int line, Vdp2* lines)
 {
    Vdp2 * regs;
 
@@ -1790,11 +1819,12 @@ static void LoadLineParamsNBG3(vdp2draw_struct * info, int line, Vdp2* lines)
    ReadVdp2ColorOffset(regs, info, 0x8, 0x8);
    info->specialprimode = (regs->SFPRMD >> 6) & 0x3;
    info->enable = regs->BGON & 0x8;
+   GeneratePlaneAddrTable(info, sinfo->planetbl, info->PlaneAddr, regs);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawNBG3(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
+static void Vdp2DrawNBG3(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    vdp2draw_struct info = { 0 };
 
@@ -1847,14 +1877,14 @@ static void Vdp2DrawNBG3(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
    info.wctl = regs->WCTLB >> 8;
    info.isbitmap = 0;
 
-   info.LoadLineParams = (void(*)(void *, int, Vdp2*)) LoadLineParamsNBG3;
+   info.LoadLineParams = (void(*)(void *, void*, int, Vdp2*)) LoadLineParamsNBG3;
 
-   Vdp2DrawScroll(&info, lines, regs, ram, color_ram);
+   Vdp2DrawScroll(&info, lines, regs, ram, color_ram, cell_data);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void LoadLineParamsRBG0(vdp2draw_struct * info, int line, Vdp2* lines)
+static void LoadLineParamsRBG0(vdp2draw_struct * info, screeninfo_struct * sinfo, int line, Vdp2* lines)
 {
    Vdp2 * regs;
 
@@ -1866,7 +1896,7 @@ static void LoadLineParamsRBG0(vdp2draw_struct * info, int line, Vdp2* lines)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawRBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
+static void Vdp2DrawRBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    vdp2draw_struct info = { 0 };
    vdp2rotationparameterfp_struct parameter[2];
@@ -1971,9 +2001,9 @@ static void Vdp2DrawRBG0(Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram)
    info.isverticalscroll = 0;
    info.wctl = regs->WCTLC;
 
-   info.LoadLineParams = (void(*)(void *, int, Vdp2*)) LoadLineParamsRBG0;
+   info.LoadLineParams = (void(*)(void *, void*, int, Vdp2*)) LoadLineParamsRBG0;
 
-   Vdp2DrawRotationFP(&info, parameter, lines, regs, ram, color_ram);
+   Vdp2DrawRotationFP(&info, parameter, lines, regs, ram, color_ram, cell_data);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1996,6 +2026,7 @@ struct {
    Vdp2 regs;
    u8 ram[0x80000];
    u8 color_ram[0x1000];
+   struct CellScrollData cell_scroll_data[270];
 }vidsoft_thread_context;
 
 #define DECLARE_THREAD(NAME, LAYER, FUNC) \
@@ -2006,7 +2037,7 @@ void NAME(void * data) \
       if (vidsoft_thread_context.need_draw[LAYER]) \
       { \
          vidsoft_thread_context.need_draw[LAYER] = 0; \
-         FUNC(vidsoft_thread_context.lines, &vidsoft_thread_context.regs, vidsoft_thread_context.ram, vidsoft_thread_context.color_ram); \
+         FUNC(vidsoft_thread_context.lines, &vidsoft_thread_context.regs, vidsoft_thread_context.ram, vidsoft_thread_context.color_ram, vidsoft_thread_context.cell_scroll_data); \
          vidsoft_thread_context.draw_finished[LAYER] = 1; \
       } \
       YabThreadSleep(); \
@@ -3800,7 +3831,7 @@ void VIDSoftVdp2DrawEnd(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VidsoftStartLayerThread(int * layer_priority, int * draw_priority_0, int * num_threads_dispatched, int which_layer, void(*layer_func) (Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram))
+void VidsoftStartLayerThread(int * layer_priority, int * draw_priority_0, int * num_threads_dispatched, int which_layer, void(*layer_func) (Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data))
 {
    if (layer_priority[which_layer] > 0 || draw_priority_0[which_layer])
    {
@@ -3813,7 +3844,7 @@ void VidsoftStartLayerThread(int * layer_priority, int * draw_priority_0, int * 
       }
       else
       {
-        (*layer_func) (Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
+        (*layer_func) (Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
       }
    }
 }
@@ -3878,6 +3909,7 @@ void VIDSoftVdp2DrawScreens(void)
       memcpy(&vidsoft_thread_context.regs, Vdp2Regs, sizeof(Vdp2));
       memcpy(vidsoft_thread_context.ram, Vdp2Ram, 0x80000);
       memcpy(vidsoft_thread_context.color_ram, Vdp2ColorRam, 0x1000);
+      memcpy(vidsoft_thread_context.cell_scroll_data, cell_scroll_data, sizeof(struct CellScrollData) * 270);
    }
 
    //draw vdp2 sprite layer on a thread if sprite window is not enabled
@@ -3903,11 +3935,11 @@ void VIDSoftVdp2DrawScreens(void)
    }
    else
    {
-      Vdp2DrawNBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
-      Vdp2DrawNBG1(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
-      Vdp2DrawNBG2(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
-      Vdp2DrawNBG3(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
-      Vdp2DrawRBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
+      Vdp2DrawNBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
+      Vdp2DrawNBG1(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
+      Vdp2DrawNBG2(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
+      Vdp2DrawNBG3(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
+      Vdp2DrawRBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
    }
 }
 
@@ -3920,19 +3952,19 @@ void VIDSoftVdp2DrawScreen(int screen)
    switch(screen)
    {
       case 0:
-         Vdp2DrawNBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
+         Vdp2DrawNBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
          break;
       case 1:
-         Vdp2DrawNBG1(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
+         Vdp2DrawNBG1(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
          break;
       case 2:
-         Vdp2DrawNBG2(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
+         Vdp2DrawNBG2(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
          break;
       case 3:
-         Vdp2DrawNBG3(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
+         Vdp2DrawNBG3(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
          break;
       case 4:
-         Vdp2DrawRBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam);
+         Vdp2DrawRBG0(Vdp2Lines, Vdp2Regs, Vdp2Ram, Vdp2ColorRam, cell_scroll_data);
          break;
    }
 }
