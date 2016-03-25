@@ -1599,44 +1599,37 @@ static int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * out
 
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache){
 
-#if 1
-	//if (input->dst == 1){
+	if (_Ygl->polygonmode == GPU_TESSERATION) {
 		YglQuadGrowShading_tesselation_in(input, NULL, colors, cache, 0);
-	//}
-	//else{
-	//	YglQuadGrowShading_in(input, NULL, colors, cache, 0);
-	//}
-	return;
-#else
+	}
+	else if (_Ygl->polygonmode == CPU_TESSERATION) {
+		YglTriangleGrowShading_in(input, NULL, colors, cache, 0);
+	}
+	else if (_Ygl->polygonmode == PERSPECTIVE_CORRECTION) {
+		if (YglCheckTriangle(input->vertices)){
+			YglTriangleGrowShading_in(input, NULL, colors, cache, 0);
+		}
+		else{
+			YglQuadGrowShading_in(input, NULL, colors, cache, 0);
+		}
+	}
 
-	YglTriangleGrowShading_in(input, NULL, colors, cache, 0);
-
-	//if (YglCheckTriangle(input->vertices)){
-	//	YglTriangleGrowShading_in(input, NULL, colors, cache, 0);
-	//}
-	//else{
-	//	YglQuadGrowShading_in(input, NULL, colors, cache, 0);
-	//}
-#endif
 }
 
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c){
 
-#if 1
-	//if (input->dst == 1){
-		YglQuadGrowShading_tesselation_in(input, output, colors, c, 1);
-	//}
-	//else{
-	//	YglQuadGrowShading_in(input, output, colors, c, 1);
-	//}
-	return 0;
-#else
-	return YglTriangleGrowShading_in(input, output, colors, c, 1);
-	//if (YglCheckTriangle(input->vertices)){
-	//	return YglTriangleGrowShading_in(input, output, colors, c, 1);
-	//}
-	//return YglQuadGrowShading_in(input, output, colors, c, 1);
-#endif
+	if (_Ygl->polygonmode == GPU_TESSERATION) {
+		return YglQuadGrowShading_tesselation_in(input, output, colors, c, 1);
+	}
+	else if (_Ygl->polygonmode == CPU_TESSERATION) {
+		return YglTriangleGrowShading_in(input, output, colors, c, 1);
+	}
+	else if (_Ygl->polygonmode == PERSPECTIVE_CORRECTION) {
+		if (YglCheckTriangle(input->vertices)){
+			return YglTriangleGrowShading_in(input, output, colors, c, 1);
+		}
+		return YglQuadGrowShading_in(input, output, colors, c, 1);
+	}
 
 }
 
