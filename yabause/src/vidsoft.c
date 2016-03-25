@@ -1095,6 +1095,33 @@ void Rbg0PutPixel(vdp2draw_struct *info, u32 color, u32 dot, int i, int j)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int CheckBanks(Vdp2* regs, int compare_value)
+{
+   if (((regs->RAMCTL >> 0) & 3) == compare_value)//a0
+      return 0;
+   if (((regs->RAMCTL >> 2) & 3) == compare_value)//a1
+      return 0;
+   if (((regs->RAMCTL >> 4) & 3) == compare_value)//b0
+      return 0;
+   if (((regs->RAMCTL >> 6) & 3) == compare_value)//b1
+      return 0;
+
+   return 1;//no setting present
+}
+
+int Rbg0CheckRam(Vdp2* regs)
+{
+   if (((regs->RAMCTL >> 8) & 3) == 3)//both banks are divided
+   {
+      //ignore delta kax if the coefficient table
+      //bank is unspecified
+      if (CheckBanks(regs, 1))
+         return 1;
+   }
+
+   return 0;
+}
+
 static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparameterfp_struct *parameter, Vdp2* lines, Vdp2* regs, u8* ram, u8* color_ram, struct CellScrollData * cell_data)
 {
    int i, j;
@@ -1219,6 +1246,19 @@ static void FASTCALL Vdp2DrawRotationFP(vdp2draw_struct *info, vdp2rotationparam
          SetupScreenVars(info, &sinfo2, p2->PlaneAddr, regs);
          coefx2 = coefy2 = 0;
          rcoefx2 = rcoefy2 = 0;
+      }
+
+      if (Rbg0CheckRam(regs))//sonic r / all star baseball 97
+      {
+         if (p->coefenab && p->coefmode == 0)
+         {
+            p->deltaKAx = 0;
+         }
+
+         if (p2 && p2->coefenab && p2->coefmode == 0)
+         {
+            p2->deltaKAx = 0;
+         }
       }
 
       if (info->linescreen)
@@ -2456,7 +2496,7 @@ int characterWidth;
 int characterHeight;
 
 static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u8 * ram) {
-	
+
 	u32 characterAddress;
 	u32 colorlut;
 	u16 colorbank;
