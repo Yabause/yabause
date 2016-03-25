@@ -43,6 +43,7 @@
 #include "scu.h"
 #include "sh2core.h"
 #include "smpc.h"
+#include "ygl.h"
 #include "vidsoft.h"
 #include "vdp2.h"
 #include "yui.h"
@@ -188,11 +189,10 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (VideoSetFilterType(init->video_filter_type) != 0)
-   {
-	   YabSetError(YAB_ERR_CANNOTINIT, _("Video"));
-	   return -1;
-   }
+   // Settings
+   VideoSetSetting(VDP_SETTING_FILTERMODE,init->video_filter_type);
+   VideoSetSetting(VDP_SETTING_POLYGON_MODE, init->polygon_generation_mode);
+
 
    // Initialize input core
    if (PerInit(init->percoretype) != 0)

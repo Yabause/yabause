@@ -260,11 +260,12 @@ void Vdp1Reset(void) {
    VIDCore->Vdp1Reset();
 }
 
-int VideoSetFilterType( int video_filter_type )
+int VideoSetSetting( int type, int value )
 {
-	if (VIDCore) VIDCore->SetFilterType(video_filter_type);
+	if (VIDCore) VIDCore->SetSettingValue( type, value );
 	return 0;
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 

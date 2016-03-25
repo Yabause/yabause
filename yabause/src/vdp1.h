@@ -26,6 +26,7 @@
 #define VIDCORE_DEFAULT         -1
 #define VIDCORE_DUMMY           0
 
+
 typedef struct {
    u16 TVMR;
    u16 FBCR;
@@ -85,7 +86,7 @@ typedef struct
    void (*Vdp2DrawEnd)(void);
    void (*Vdp2DrawScreens)(void);
    void (*GetGlSize)(int *width, int *height);
-   void (*SetFilterType)(int type);
+   void (*SetSettingValue)(int type, int value);
    void(*Sync)();
 } VideoInterface_struct;
 
@@ -146,6 +147,7 @@ int VideoInit(int coreid);
 int VideoChangeCore(int coreid);
 void VideoDeInit(void);
 void Vdp1Reset(void);
+int VideoSetSetting(int type, int value);
 
 u8 FASTCALL	Vdp1ReadByte(u32);
 u16 FASTCALL	Vdp1ReadWord(u32);
@@ -165,5 +167,6 @@ char *Vdp1DebugGetCommandNumberName(u32 number);
 void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
 void ToggleVDP1(void);
+
 
 #endif

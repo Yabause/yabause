@@ -181,8 +181,10 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     @Override
     public void onResume(){
         super.onResume();
-        mTracker.setScreenName(TAG);
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        if( mTracker != null ) {
+            mTracker.setScreenName(TAG);
+            mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        }
         updateBackGraound();
         updateGameList();
     }
@@ -423,10 +425,12 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 game.lastplay_date = c.getTime();
                 game.save();
 
-                mTracker.send(new HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction(game.game_title)
-                        .build());
+                if( mTracker != null ) {
+                    mTracker.send(new HitBuilders.EventBuilder()
+                            .setCategory("Action")
+                            .setAction(game.game_title)
+                            .build());
+                }
 
                 Intent intent = new Intent(getActivity(), Yabause.class);
                 intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
