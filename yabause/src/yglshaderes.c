@@ -1466,19 +1466,6 @@ int YglProgramInit()
       return -1;
    id_g.sprite = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"u_sprite");
 
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VFP1_GOURAUDSAHDING_TESS");
-   if (YglInitShader(PG_VFP1_GOURAUDSAHDING_TESS, 
-	   pYglprg_vdp1_gouraudshading_tess_v, 
-	   pYglprg_vdp1_gouraudshading_f, 
-	   pYglprg_vdp1_gouraudshading_tess_c, 
-	   pYglprg_vdp1_gouraudshading_tess_e,
-	   pYglprg_vdp1_gouraudshading_tess_g) != 0)
-	   return -1;
-
-   id_gt.sprite = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"u_sprite");
-   id_gt.tessLevelInner = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"TessLevelInner");
-   id_gt.tessLevelOuter = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"TessLevelOuter");
 
 
    YGLLOG("PG_VDP2_DRAWFRAMEBUFF --START--\n");
@@ -1510,17 +1497,6 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_HALFTRANS], &hf);
 
-   //---------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VFP1_HALFTRANS_TESS");
-   if (YglInitShader(PG_VFP1_HALFTRANS_TESS,
-	   pYglprg_vdp1_gouraudshading_tess_v,
-	   pYglprg_vdp1_halftrans_f,
-	   pYglprg_vdp1_gouraudshading_tess_c,
-	   pYglprg_vdp1_gouraudshading_tess_e,
-	   pYglprg_vdp1_gouraudshading_tess_g) != 0)
-	   return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_HALFTRANS_TESS], &hf_tess);
 
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VFP1_SHADOW\n");
@@ -1534,23 +1510,6 @@ int YglProgramInit()
    shadow.fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbowidth");
    shadow.fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbohegiht");
 
-   //---------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VFP1_SHADOW_TESS");
-   if (YglInitShader(PG_VFP1_SHADOW_TESS,
-	   pYglprg_vdp1_gouraudshading_tess_v,
-	   pYglprg_vdp1_shadow_f,
-	   pYglprg_vdp1_gouraudshading_tess_c,
-	   pYglprg_vdp1_gouraudshading_tess_e,
-	   pYglprg_vdp1_gouraudshading_tess_g) != 0)
-	   return -1;
-
-   shadow_tess.sprite = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_sprite");
-   shadow_tess.tessLevelInner = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelInner");
-   shadow_tess.tessLevelOuter = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelOuter");
-   shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbo");
-   shadow_tess.fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbowidth");
-   shadow_tess.fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbohegiht");
-
 
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS\n");
@@ -1560,17 +1519,6 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS], &id_ght);
 
-   //---------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS");
-   if (YglInitShader(PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
-	   pYglprg_vdp1_gouraudshading_tess_v,
-	   pYglprg_vdp1_gouraudshading_hf_f,
-	   pYglprg_vdp1_gouraudshading_tess_c,
-	   pYglprg_vdp1_gouraudshading_tess_e,
-	   pYglprg_vdp1_gouraudshading_tess_g) != 0)
-	   return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS], &id_ght_tess);
 
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VFP1_MESH\n");
@@ -1580,17 +1528,6 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MESH], &mesh);
 
-   //---------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VFP1_MESH_TESS");
-   if (YglInitShader(PG_VFP1_MESH_TESS,
-	   pYglprg_vdp1_gouraudshading_tess_v,
-	   pYglprg_vdp1_mesh_f,
-	   pYglprg_vdp1_gouraudshading_tess_c,
-	   pYglprg_vdp1_gouraudshading_tess_e,
-	   pYglprg_vdp1_gouraudshading_tess_g) != 0)
-	   return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MESH_TESS], &mesh_tess);
 
 
    YGLLOG("PG_WINDOW\n");
@@ -1651,6 +1588,75 @@ int YglProgramInit()
    id_fblinecol_vheight_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_vheight");
 
 
+   if (_Ygl->polygonmode == GPU_TESSERATION) {
+
+	   //-----------------------------------------------------------------------------------------------------------
+	   YGLLOG("PG_VFP1_GOURAUDSAHDING_TESS");
+	   if (YglInitShader(PG_VFP1_GOURAUDSAHDING_TESS,
+		   pYglprg_vdp1_gouraudshading_tess_v,
+		   pYglprg_vdp1_gouraudshading_f,
+		   pYglprg_vdp1_gouraudshading_tess_c,
+		   pYglprg_vdp1_gouraudshading_tess_e,
+		   pYglprg_vdp1_gouraudshading_tess_g) != 0)
+		   return -1;
+
+	   id_gt.sprite = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"u_sprite");
+	   id_gt.tessLevelInner = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"TessLevelInner");
+	   id_gt.tessLevelOuter = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"TessLevelOuter");
+
+	   //---------------------------------------------------------------------------------------------------------
+	   YGLLOG("PG_VFP1_MESH_TESS");
+	   if (YglInitShader(PG_VFP1_MESH_TESS,
+		   pYglprg_vdp1_gouraudshading_tess_v,
+		   pYglprg_vdp1_mesh_f,
+		   pYglprg_vdp1_gouraudshading_tess_c,
+		   pYglprg_vdp1_gouraudshading_tess_e,
+		   pYglprg_vdp1_gouraudshading_tess_g) != 0)
+		   return -1;
+
+	   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MESH_TESS], &mesh_tess);
+
+	   //---------------------------------------------------------------------------------------------------------
+	   YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS");
+	   if (YglInitShader(PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
+		   pYglprg_vdp1_gouraudshading_tess_v,
+		   pYglprg_vdp1_gouraudshading_hf_f,
+		   pYglprg_vdp1_gouraudshading_tess_c,
+		   pYglprg_vdp1_gouraudshading_tess_e,
+		   pYglprg_vdp1_gouraudshading_tess_g) != 0)
+		   return -1;
+
+	   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS], &id_ght_tess);
+
+	   //---------------------------------------------------------------------------------------------------------
+	   YGLLOG("PG_VFP1_SHADOW_TESS");
+	   if (YglInitShader(PG_VFP1_SHADOW_TESS,
+		   pYglprg_vdp1_gouraudshading_tess_v,
+		   pYglprg_vdp1_shadow_f,
+		   pYglprg_vdp1_gouraudshading_tess_c,
+		   pYglprg_vdp1_gouraudshading_tess_e,
+		   pYglprg_vdp1_gouraudshading_tess_g) != 0)
+		   return -1;
+
+	   shadow_tess.sprite = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_sprite");
+	   shadow_tess.tessLevelInner = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelInner");
+	   shadow_tess.tessLevelOuter = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelOuter");
+	   shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbo");
+	   shadow_tess.fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbowidth");
+	   shadow_tess.fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbohegiht");
+
+	   //---------------------------------------------------------------------------------------------------------
+	   YGLLOG("PG_VFP1_HALFTRANS_TESS");
+	   if (YglInitShader(PG_VFP1_HALFTRANS_TESS,
+		   pYglprg_vdp1_gouraudshading_tess_v,
+		   pYglprg_vdp1_halftrans_f,
+		   pYglprg_vdp1_gouraudshading_tess_c,
+		   pYglprg_vdp1_gouraudshading_tess_e,
+		   pYglprg_vdp1_gouraudshading_tess_g) != 0)
+		   return -1;
+
+	   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_HALFTRANS_TESS], &hf_tess);
+   }
    return 0;
 }
 

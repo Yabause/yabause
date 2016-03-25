@@ -213,11 +213,7 @@ enum
    PG_MAX,
 };
 
-typedef enum 
-{
-	AA_NONE=0,
-	AA_FXAA
-} AAMODE;
+
 
 typedef struct {
 	GLuint sprite;
@@ -274,6 +270,26 @@ typedef struct
 {
     GLfloat   m[4][4];
 } YglMatrix;
+
+typedef enum
+{
+	AA_NONE = 0,
+	AA_FXAA
+} AAMODE;
+
+typedef enum
+{
+	PERSPECTIVE_CORRECTION = 0,
+	CPU_TESSERATION,
+	GPU_TESSERATION
+} POLYGONMODE;
+
+
+typedef enum {
+	VDP_SETTING_FILTERMODE = 0,
+	VDP_SETTING_POLYGON_MODE
+} enSettings;
+
 
 typedef struct {
    //GLuint texture;
@@ -340,7 +356,7 @@ typedef struct {
    u32 * lincolor_buf;
 
    AAMODE aamode;
-
+   POLYGONMODE polygonmode;
    YglTextureManager * texture_manager;
    GLsync sync;
 

@@ -82,6 +82,7 @@ int g_minorminor_version=0;
 int g_EnagleFPS = 0;
 int g_CpuType = 2;
 int g_VideoFilter = 0;
+int g_PolygonGenerationMode = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -974,7 +975,8 @@ int initEgl( ANativeWindow* window )
     yinit.usethreads = 0;
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
-    
+	yinit.polygon_generation_mode = g_PolygonGenerationMode;
+
     res = YabauseInit(&yinit);
     if (res != 0) {
       YUI_LOG("Fail to YabauseInit %d", res);
@@ -1151,6 +1153,12 @@ void
 Java_org_uoyabause_android_YabauseRunnable_setFilter( JNIEnv* env, jobject obj, jint filter )
 {
     g_VideoFilter = filter;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv* env, jobject obj, jint pgm )
+{
+	g_PolygonGenerationMode = pgm;
 }
 
 
