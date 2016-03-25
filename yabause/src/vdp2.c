@@ -40,6 +40,7 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
@@ -284,10 +285,19 @@ void Vdp2HBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2HBlankOUT(void) {
+   int i;
    Vdp2Regs->TVSTAT &= ~0x0004;
 
    if (yabsys.LineCount < 270)
+   {
+      u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
       memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+
+      for (i = 0; i < 88; i++)
+      {
+         cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(cell_scroll_table_start_addr + i * 4);
+      }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
