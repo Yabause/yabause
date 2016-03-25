@@ -22,6 +22,7 @@
 */
 
 #include "vdp2.h"
+#include "vdp1.h"
 #include "ygl.h"
 #include "vdp2debug.h"
 #include "vidshared.h"

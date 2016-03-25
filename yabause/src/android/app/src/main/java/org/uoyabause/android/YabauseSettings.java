@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -170,6 +171,9 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
         final boolean supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000;
 
+        boolean deviceSupportsAEP = getPackageManager().hasSystemFeature
+                (PackageManager.FEATURE_OPENGLES_EXTENSION_PACK);
+
         if( supportsEs3 ) {
           video_labels.add(res.getString(R.string.opengl_video_interface));
           video_values.add("1");
@@ -198,6 +202,20 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             filter_setting.setEnabled(true);
         }else{
             filter_setting.setEnabled(false);
+        }
+
+         /* Polygon Generation */
+        ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
+        polygon_setting.setSummary(polygon_setting.getEntry());
+        if( video_cart.getValue().equals("1") ){
+            polygon_setting.setEnabled(true);
+        }else{
+            polygon_setting.setEnabled(false);
+        }
+
+        if( deviceSupportsAEP == false ){
+            polygon_setting.setEntries(new String[]{"Triangles using perspective correction","CPU Tessellation"});
+            polygon_setting.setEntryValues(new String[]{"0", "1"});
         }
 
         /* Plyaer1 input device */
@@ -369,6 +387,14 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
                     filter_setting.setEnabled(true);
                 }else{
                     filter_setting.setEnabled(false);
+                }
+
+                ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
+                polygon_setting.setSummary(polygon_setting.getEntry());
+                if( pref.getValue().equals("1") ){
+                    polygon_setting.setEnabled(true);
+                }else{
+                    polygon_setting.setEnabled(false);
                 }
             }
         }
