@@ -118,7 +118,8 @@ class YabauseRunnable implements Runnable
     public static native void savestate( String path );
     public static native void loadstate( String path );
     public static native void pause();
-    public static native void resume();  
+    public static native void resume();
+    public static native void setPolygonGenerationMode( int pg );
 
     private boolean inited;
     private boolean paused;
@@ -339,8 +340,10 @@ public class Yabause extends Activity
     public void onResume()
     {
         super.onResume();
-        mTracker.setScreenName(TAG);
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        if( mTracker != null ) {
+            mTracker.setScreenName(TAG);
+            mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        }
         audio.unmute(audio.SYSTEM);
         YabauseRunnable.resume();
     }
@@ -624,6 +627,13 @@ public class Yabause extends Activity
         Integer ifilter = new Integer(sfilter);
         YabauseRunnable.setFilter(ifilter);
         Log.d(TAG, "setFilter " + ifilter.toString());
+
+        String sPg = sharedPref.getString("pref_polygon_generation", "0");
+        Integer iPg = new Integer(sPg);
+        YabauseRunnable.setPolygonGenerationMode(iPg);
+        Log.d(TAG, "setPolygonGenerationMode " + iPg.toString());
+
+
 
         boolean audioout = sharedPref.getBoolean("pref_audio", true);
         if (audioout) {

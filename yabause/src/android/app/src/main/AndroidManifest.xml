@@ -26,6 +26,7 @@
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
     <uses-feature android:name="android.hardware.gamepad" />
     <uses-feature android:glEsVersion="0x00030000" />
+    <uses-feature android:name="android.hardware.opengles.aep" android:required="true" />
 
     <application
         android:name=".YabauseApplication"
