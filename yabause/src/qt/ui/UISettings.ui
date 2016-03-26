@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="twPages">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="wGeneral">
       <attribute name="title">
@@ -213,8 +213,8 @@
        <string>Video</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout2">
-       <item row="0" column="0" colspan="3">
-        <widget class="QLabel" name="lVideoCore">
+       <item row="16" column="0" colspan="3">
+        <widget class="QLabel" name="lVideoFormat">
          <property name="font">
           <font>
            <weight>75</weight>
@@ -222,15 +222,12 @@
           </font>
          </property>
          <property name="text">
-          <string>Video Core</string>
+          <string>Video Format</string>
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
          </property>
         </widget>
-       </item>
-       <item row="1" column="0" colspan="3">
-        <widget class="QComboBox" name="cbVideoCore"/>
        </item>
        <item row="3" column="0" colspan="3">
         <widget class="QLabel" name="lOSDCore">
@@ -248,37 +245,8 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="0" colspan="3">
-        <widget class="QComboBox" name="cbOSDCore"/>
-       </item>
-       <item row="5" column="0" colspan="3">
-        <widget class="QLabel" name="lWinResolution">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Window Resolution</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
        <item row="6" column="0" colspan="3">
         <widget class="QComboBox" name="cbAspectRatio"/>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="lWinWidth">
-         <property name="text">
-          <string>Width</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <widget class="QLineEdit" name="leWinWidth"/>
        </item>
        <item row="8" column="0">
         <widget class="QLabel" name="lWinHeight">
@@ -287,40 +255,24 @@
          </property>
         </widget>
        </item>
-       <item row="8" column="1">
-        <widget class="QLineEdit" name="leWinHeight"/>
+       <item row="1" column="0" colspan="3">
+        <widget class="QComboBox" name="cbVideoCore"/>
        </item>
-       <item row="16" column="0" colspan="3">
-        <widget class="QLabel" name="lVideoFormat">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Video Format</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
+       <item row="7" column="1">
+        <widget class="QLineEdit" name="leWinWidth"/>
        </item>
        <item row="17" column="0" colspan="3">
         <widget class="QComboBox" name="cbVideoFormat"/>
        </item>
-       <item row="18" column="0" colspan="3">
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+       <item row="10" column="0" colspan="3">
+        <widget class="QComboBox" name="cbFullscreenResolution"/>
+       </item>
+       <item row="2" column="0">
+        <widget class="QCheckBox" name="cbBilinear">
+         <property name="text">
+          <string>Bilinear Filtering (Restart required)</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>2</height>
-          </size>
-         </property>
-        </spacer>
+        </widget>
        </item>
        <item row="9" column="0">
         <widget class="QLabel" name="lFullScreenResolution">
@@ -338,6 +290,61 @@
          </property>
         </widget>
        </item>
+       <item row="5" column="0" colspan="3">
+        <widget class="QLabel" name="lWinResolution">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Window Resolution</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="3">
+        <widget class="QComboBox" name="cbOSDCore"/>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="lWinWidth">
+         <property name="text">
+          <string>Width</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="3">
+        <widget class="QLabel" name="lVideoCore">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Video Core</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="21" column="0" colspan="3">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
        <item row="12" column="0">
         <widget class="QCheckBox" name="cbFullscreen">
          <property name="text">
@@ -345,13 +352,32 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0" colspan="3">
-        <widget class="QComboBox" name="cbFullscreenResolution"/>
+       <item row="8" column="1">
+        <widget class="QLineEdit" name="leWinHeight"/>
        </item>
-       <item row="2" column="0">
-        <widget class="QCheckBox" name="cbBilinear">
+       <item row="18" column="0">
+        <widget class="QCheckBox" name="cbEnableIntegerPixelScaling">
          <property name="text">
-          <string>Bilinear Filtering (Restart required)</string>
+          <string>Use integer pixel scaling</string>
+         </property>
+        </widget>
+       </item>
+       <item row="18" column="1">
+        <widget class="QSpinBox" name="sbIntegerPixelScalingMultiplier">
+         <property name="maximumSize">
+          <size>
+           <width>40</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="minimum">
+          <number>2</number>
+         </property>
+         <property name="maximum">
+          <number>4</number>
+         </property>
+         <property name="singleStep">
+          <number>2</number>
          </property>
         </widget>
        </item>
@@ -937,8 +963,8 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowToolbar"/>
-  <buttongroup name="bgShowMenubar"/>
  </buttongroups>
 </ui>
