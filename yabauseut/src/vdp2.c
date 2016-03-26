@@ -3234,6 +3234,240 @@ void linecount_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
+u32 coef[] = { 0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80008000,0x80001c20,0x0e100960,0x070805a0,0x04b00404,0x03840320,0x02d0028e,0x02580229,0x020201e0,0x01c201a7,0x0190017a,0x01680156,0x01470139,0x012c0120,0x0114010a,0x010100f8,0x00f000e8,0x00e100da,0x00d300cd,0x00c800c2,0x00bd00b8,0x00b400af,0x00ab00a7,0x00a300a0,0x00a0009c,0x00990096,0x00920090,0x008d008a,0x00870085,0x00820080,0x007e007c,0x007a0078,0x00760074,0x00720070,0x006e006d,0x006b0069,0x00680066,0x00650064,0x00620061,0x0060005e,0x005d005c,0x005b005a,0x00580057,0x00560055,0x00540053,0x00520051,0x00500050,0x004f004e,0x004d004c,0x004b004b,0x004a0049,0x00480048,0x00470046,0x00450045,0x00440043,0x00430042,0x00420041,0x00400040,0x003f003f,0x003e003e,0x003d003d,0x003c003c,0x003b003b,0x003a003a,0x00390039,0x00380038,0x00370037,0x00360036,0x00360035,0x00350034,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x000001b2,0x01ce01c3,0x01ba01b3,0x01b201b7,0x01bb01be,0x01c101c4,0x01c701c9,0x01cb01cd,0x01cf01ce,0x01cd01cb,0x01ca01c8,0x01c701c6,0x01c401c3,0x01c201c1,0x01c001bf,0x01be01bd,0x01bc01bb,0x01ba01ba,0x01b901b8,0x01b701b6,0x01b601b5,0x01b401b4,0x01b301b2,0x01b201b1,0x01b101b0,0x01b001b0,0x01b101b1,0x01b201b2,0x01b301b3 };
+
+u32 table[] =
+{
+   0x0000,0x0000,//xst
+   0x0000,0x0000,//yst
+   0x0000,0x0000,//zst
+   0x0000,0x0000,//dxst
+   0x0001,0x0000,//dyst
+   0x0001,0x0000,//dx
+   0x0000,0x0000,//dy
+   0x0002,0xe939,//a
+   0x0000,0x06da,//b
+   0x0000,0x4599,//c
+   0xffff,0xba0f,//d
+   0x0000,0x490c,//e
+   0x0002,0xe5a0,//f
+   0x00b0,//px
+   0x0070,//py
+   0x0100,//pz
+   0x0000,
+   0x00b0,//cx
+   0x0070,//cy
+   0x0100,//cz
+   0x0000,
+   0x065d,0xd9f8,//mx
+   0x0a6f,0x1988,//my
+   0x0002,0xec84,//kx
+   0x0002,0xec84,//ky
+   0xf000,0x0000,//kast (coef table addr)
+   0x0001,0x0000,//dkast
+   0xfef9,0x43c0,//dkax
+   0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000,0x8000
+};
+
+void init_rbg0(u32 map_offset, u32 param_offset, u32 ktaof, u32 coef_data_size, u32 deltakax)
+{
+   int i;
+
+   volatile u32 * vram_ptr = (volatile u32 *)(0x25E00000);
+   u32 param_addr = 0x25E00000 + (param_offset * 0x20000) + 0xE000;
+
+   for (i = 0; i < 0x20000; i++)
+      vram_ptr[i] = 0;
+
+   // Setup a screen for us draw on
+   test_disp_settings.is_bitmap = TRUE;
+   test_disp_settings.bitmap_size = BG_BITMAP512x256;
+   test_disp_settings.transparent_bit = 0;
+   test_disp_settings.color = BG_256COLOR;
+   test_disp_settings.special_priority = 0;
+   test_disp_settings.special_color_calc = 0;
+   test_disp_settings.extra_palette_num = 0;
+   test_disp_settings.map_offset = map_offset;
+   test_disp_settings.rotation_mode = 0;
+   test_disp_settings.parameter_addr = param_addr;
+   vdp_rbg0_init(&test_disp_settings);
+
+   // Use the default palette
+   vdp_set_default_palette();
+
+   // Setup an 8x8 1BPP font
+   test_disp_font.data = font_8x8;
+   test_disp_font.width = 8;
+   test_disp_font.height = 8;
+   test_disp_font.bpp = 1;
+   vdp_set_font(SCREEN_RBG0, &test_disp_font, 1);
+   test_disp_font.out = (u8 *)(0x25E00000 + (map_offset * 0x20000));//vdp_set_font bug workaround
+
+   vdp_rbg0_init(&test_disp_settings);
+   vdp_set_default_palette();
+
+   for (i = 0; i < 16; i++)
+      vdp_printf(&test_disp_font, 0 * 8, i * 16, 15, "RBG0 RBG0 RBG0 RBG0 RBG0 RBG0 RBG0 RBG0 RBG0 RBG0 RBG0 RBG0");
+
+   VDP2_REG_CYCB0L = 0xffff;
+   VDP2_REG_CYCB0U = 0xffff;
+   VDP2_REG_CYCB1L = 0xffff;
+   VDP2_REG_CYCB1U = 0xffff;
+
+   VDP2_REG_RAMCTL = 0x1300 | (3 << (map_offset * 2)) | (1 << (ktaof * 2));
+
+   VDP2_REG_KTAOF = ktaof;
+   VDP2_REG_KTCTL = 0x0003;
+
+   VDP2_REG_RPRCTL = 0x0000;
+   VDP2_REG_RPMD = 0x0000;
+   volatile u16 * rot_table_ptr = (volatile u16 *)param_addr;
+
+   for (i = 0; i < 64; i++)
+   {
+      rot_table_ptr[i] = table[i];
+   }
+
+   u32 addr = (ktaof * 0x10000 + deltakax) * coef_data_size;
+   volatile u32 * coef_ptr = (volatile u32 *)(0x25E00000 | addr);
+
+   //write coef
+   for (i = 0; i < 224; i++)
+   {
+      coef_ptr[i] = coef[i];
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp1_print_char(int x, int y, int palette, u32 vdp1_tile_address, char c)
+{
+   sprite_struct quad = { 0 };
+
+   quad.x = x;
+   quad.y = y;
+   quad.height = 8;
+   quad.width = 8;
+   quad.bank = (palette << 4);
+   quad.addr = vdp1_tile_address + (c * 32);
+
+   vdp_draw_normal_sprite(&quad);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void vdp1_print_str(int x, int y, int palette, u32 vdp1_tile_address, char* str)
+{
+   int i;
+   int len = strlen(str);
+
+   for (i = 0; i < len; i++)
+   {
+      vdp1_print_char(x + (i * 8), y, palette, vdp1_tile_address, str[i]);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void rbg0_delta_kax_test()
+{
+   //vdp1 setup
+   const u32 vdp1_tile_address = 0x10000;
+   load_font_8x8_to_vram_1bpp_to_4bpp(vdp1_tile_address, VDP1_RAM);
+   VDP1_REG_PTMR = 0x02;//draw automatically with frame change
+   VDP2_REG_PRISA = 7 | (6 << 8);
+   VDP2_REG_PRISB = 5 | (4 << 8);
+   VDP2_REG_PRISC = 3 | (2 << 8);
+   VDP2_REG_PRISD = 1 | (0 << 8);
+   VDP2_REG_SPCTL = (0 << 12) | (0 << 8) | (0 << 5) | 7;
+
+   u32 map_offset = 0;
+   u32 param_offset = 0;
+   u32 param_addr = 0x25E00000 + (param_offset * 0x20000) + 0xE000;
+   u32 ktaof = 0;
+   u32 coef_data_size = 2;
+   u32 deltakax = 0xf000;
+
+   init_rbg0(map_offset, param_offset, ktaof, coef_data_size, deltakax);
+
+   int q = 0;
+   volatile u32 * dkax = (volatile u32 *)(param_addr + 0x5c);
+   char str[128] = { 0 };
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      vdp_start_draw_list();
+      sprite_struct quad = { 0 };
+
+      //system clipping
+      quad.x = 320;
+      quad.y = 224;
+
+      vdp_system_clipping(&quad);
+
+      //user clipping
+      quad.x = 0;
+      quad.y = 0;
+      quad.x2 = 320;
+      quad.y2 = 224;
+
+      vdp_user_clipping(&quad);
+
+      quad.x = 0;
+      quad.y = 0;
+
+      vdp_local_coordinate(&quad);
+
+      sprintf(str, "map offset %01X, param offset %01X, ktaof %01X", map_offset, param_offset, ktaof);
+
+      vdp1_print_str(0, 0, 4, vdp1_tile_address, str);
+
+      vdp_end_draw_list();
+
+      dkax[0] = q;
+      q += 10000;
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         map_offset++;
+
+         if (map_offset > 3)
+            map_offset = 0;
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         ktaof++;
+
+         if (ktaof > 3)
+            ktaof = 0;
+      }
+
+      if (per[0].but_push_once & PAD_C)
+      {
+         param_offset++;
+
+         if (param_offset > 3)
+            param_offset = 0;
+      }
+
+      if (per[0].but_push_once & PAD_Z)
+      {
+         q = 0;
+         init_rbg0(map_offset, param_offset, ktaof, coef_data_size, deltakax);
+      }
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         reset_system();
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void vdp2_auto_tests()
 {
    auto_test_section_start("Vdp2 screenshot tests");
