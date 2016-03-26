@@ -340,8 +340,10 @@ public class Yabause extends Activity
     public void onResume()
     {
         super.onResume();
-        mTracker.setScreenName(TAG);
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        if( mTracker != null ) {
+            mTracker.setScreenName(TAG);
+            mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        }
         audio.unmute(audio.SYSTEM);
         YabauseRunnable.resume();
     }
