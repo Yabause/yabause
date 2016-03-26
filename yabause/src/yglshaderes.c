@@ -485,7 +485,7 @@ const GLchar Yglprg_tess_g[] =
 "} \n";
 const GLchar * pYglprg_vdp1_gouraudshading_tess_g[] = { Yglprg_tess_g, NULL };
 
-YglVdp1CommonParam id_gt = { 0 };
+static YglVdp1CommonParam id_gt = { 0 };
 
 
 /*------------------------------------------------------------------------------------
@@ -535,7 +535,7 @@ const GLchar Yglprg_vdp1_gouraudshading_f[] =
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
-YglVdp1CommonParam id_g = { 0 };
+static YglVdp1CommonParam id_g = { 0 };
 
 
 /*------------------------------------------------------------------------------------
@@ -595,8 +595,8 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
 const GLchar * pYglprg_vdp1_gouraudshading_hf_f[] = {Yglprg_vdp1_gouraudshading_hf_f, NULL};
 
 
-YglVdp1CommonParam id_ght = { 0 };
-YglVdp1CommonParam id_ght_tess = { 0 };
+static YglVdp1CommonParam id_ght = { 0 };
+static YglVdp1CommonParam id_ght_tess = { 0 };
 
 
 
@@ -654,8 +654,8 @@ const GLchar Yglprg_vdp1_halftrans_f[] =
       "}\n";
 const GLchar * pYglprg_vdp1_halftrans_f[] = {Yglprg_vdp1_halftrans_f, NULL};
 
-YglVdp1CommonParam hf;
-YglVdp1CommonParam hf_tess;
+static YglVdp1CommonParam hf = {0};
+static YglVdp1CommonParam hf_tess = {0};
 
 /*------------------------------------------------------------------------------------
 *  VDP1 Mesh Operaion
@@ -715,8 +715,8 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "}\n";
 const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
 
-YglVdp1CommonParam mesh = { 0 };
-YglVdp1CommonParam mesh_tess = { 0 };
+static YglVdp1CommonParam mesh = { 0 };
+static YglVdp1CommonParam mesh_tess = { 0 };
 
 
 /*------------------------------------------------------------------------------------
@@ -772,8 +772,8 @@ const GLchar Yglprg_vdp1_shadow_f[] =
 "}\n";
 const GLchar * pYglprg_vdp1_shadow_f[] = { Yglprg_vdp1_shadow_f, NULL };
 
-YglVdp1CommonParam shadow = { 0 };
-YglVdp1CommonParam shadow_tess = { 0 };
+static YglVdp1CommonParam shadow = { 0 };
+static YglVdp1CommonParam shadow_tess = { 0 };
 
 
 /*------------------------------------------------------------------------------------
