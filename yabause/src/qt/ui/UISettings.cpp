@@ -79,6 +79,15 @@ const Items mVideoFormats = Items()
 	<< Item( "0", "NTSC" )
 	<< Item( "1", "PAL" );
 
+const Items mVideoFilterMode = Items()
+	<< Item("0", "None")
+	<< Item("1", "FXAA");
+
+const Items mPolygonGenerationMode = Items()
+	<< Item("0", "Triangles usin perspectiove correction")
+	<< Item("1", "CPU Tesseration")
+	<< Item("2", "GPU Tesseration");
+
 UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
 {
@@ -305,7 +314,15 @@ void UISettings::loadCores()
 	// Video Formats
 	foreach ( const Item& it, mVideoFormats )
 		cbVideoFormat->addItem( QtYabause::translate( it.Name ), it.id );
-	
+
+	// Video FilterMode
+	foreach(const Item& it, mVideoFilterMode)
+		cbFilterMode->addItem(QtYabause::translate(it.Name), it.id);
+
+	// Polygon Generation
+	foreach(const Item& it, mPolygonGenerationMode)
+		cbPolygonGeneration->addItem(QtYabause::translate(it.Name), it.id);
+
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )
 		cbSoundCore->addItem( QtYabause::translate( SNDCoreList[i]->Name ), SNDCoreList[i]->id );
@@ -454,6 +471,8 @@ void UISettings::loadSettings()
 	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
+	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
+	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
@@ -536,6 +555,8 @@ void UISettings::saveSettings()
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/Bilinear", cbBilinear->isChecked() );
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
+	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
+	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
 
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );
 	s->setValue( "General/FixedBaseTime", dteBaseTime->dateTime().toString(Qt::ISODate));
