@@ -3862,7 +3862,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.vertices[5] = (s16)cmd.CMDYC;
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
-#if 1
+#if 0
    isSquare = 0;
 #else
    isSquare = 1;
