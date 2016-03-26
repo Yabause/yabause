@@ -377,7 +377,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
     
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("pref_bios") || key.equals("pref_cart") || key.equals("pref_video") || key.equals("pref_cpu") || key.equals("pref_filter")  ) {
+        if (key.equals("pref_bios") || key.equals("pref_cart") || key.equals("pref_video") || key.equals("pref_cpu") || key.equals("pref_filter") || key.equals("pref_polygon_generation") ) {
             ListPreference pref = (ListPreference) findPreference(key);
             pref.setSummary(pref.getEntry());
 
