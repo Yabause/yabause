@@ -6438,6 +6438,9 @@ void VIDOGLSetSettingValueMode(int type, int value){
 		_Ygl->aamode = type;
 		break;
 	case VDP_SETTING_POLYGON_MODE:
+		if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION){
+			YglTesserationProgramInit();
+		}
 		_Ygl->polygonmode = value;
 	}
 	

@@ -423,6 +423,7 @@ void YglSetLineColor(u32 * pbuf, int size);
 
 int Ygl_uniformWindow(void * p );
 int YglProgramInit();
+int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 
 
