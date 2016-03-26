@@ -1577,7 +1577,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-INLINE int YglCheckTriangle( const float * point ){
+int YglCheckTriangle( const float * point ){
 	if ((point[2 * 0 + 0] == point[2 * 1 + 0]) && (point[2 * 0 + 1] == point[2 * 1 + 1])) {
 		return 1;
 	}
