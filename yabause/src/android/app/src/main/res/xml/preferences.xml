@@ -63,6 +63,14 @@
             android:entryValues="@array/entryvalues_video_filte_list_preference"
             android:defaultValue="0" />
 
+        <ListPreference
+            android:key="pref_polygon_generation"
+            android:title="@string/polygon_generation_type"
+            android:dialogTitle="@string/choose_polygon_generation_type"
+            android:entries="@array/entries_polygon_generation_type"
+            android:entryValues="@array/entryvalues_polygon_generation_type"
+            android:defaultValue="0" />
+
      </PreferenceCategory>        
     
     <PreferenceCategory android:title="@string/input_device_title">

@@ -24,10 +24,6 @@
 
 #include "core.h"
 
-typedef enum {
-	FILTER_NONE=0,
-	FILTER_FXAA,
-} yabause_filter_type;
 
 typedef struct
 {
@@ -54,7 +50,9 @@ typedef struct
    int numthreads;
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
-   yabause_filter_type video_filter_type;
+   int video_filter_type;
+   int polygon_generation_mode;
+
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
