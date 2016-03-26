@@ -323,6 +323,9 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
 	
+	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
+	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
+
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
@@ -366,6 +369,8 @@ void YabauseThread::resetYabauseConf()
 	int numThreads = QThread::idealThreadCount();	
 	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;
 	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
+	mYabauseConf.video_filter_type = 0;
+	mYabauseConf.polygon_generation_mode = 0;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )
