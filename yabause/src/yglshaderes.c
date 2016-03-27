@@ -83,10 +83,10 @@ int Ygl_uniformVdp1CommonParam(void * p){
 
 	glUniform1i(param->sprite, 0);
 
-	if (param->tessLevelInner != 0) glUniform1f(param->tessLevelInner, TESS_COUNT);
-	if (param->tessLevelOuter != 0) glUniform1f(param->tessLevelOuter, TESS_COUNT);
+	if (param->tessLevelInner != -1) glUniform1f(param->tessLevelInner, TESS_COUNT);
+	if (param->tessLevelOuter != -1) glUniform1f(param->tessLevelOuter, TESS_COUNT);
 
-	if (param->fbo != 0){
+	if (param->fbo != -1){
 		glUniform1i(param->fbo, 1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
