@@ -305,8 +305,70 @@ void UIYabause::resizeEvent( QResizeEvent* event )
 	QMainWindow::resizeEvent( event );
 }
 
+void UIYabause::adjustHeight(int & height)
+{
+   // Compensate for menubar and toolbar
+   VolatileSettings* vs = QtYabause::volatileSettings();
+   if (vs->value("View/Menubar").toInt() != BD_ALWAYSHIDE)
+      height += menubar->height();
+   if (vs->value("View/Toolbar").toInt() != BD_ALWAYSHIDE)
+      height += toolBar->height();
+}
+
+void UIYabause::resizeIntegerScaling()
+{
+   if (!VIDCore || VIDCore->id != VIDCORE_SOFT)
+      return;
+
+   if (isFullScreen() || emulateMouse)
+      return;
+
+   VolatileSettings* vs = QtYabause::volatileSettings();
+
+   if (!vs->value("Video/EnableIntegerPixelScaling").toBool())
+      return;
+
+   int multiplier = vs->value("Video/IntegerPixelScalingMultiplier").toInt();
+
+   if (multiplier % 2 != 0)
+      return;
+
+   int vdp2width = 0;
+   int vdp2height = 0;
+   int vdp2interlace = 0;
+
+   if (!VIDCore->GetNativeResolution)
+      return;
+
+   VIDCore->GetNativeResolution(&vdp2width, &vdp2height, &vdp2interlace);
+
+   if (vdp2width == 0 || vdp2height == 0)
+      return;
+
+   int width = 0;
+   int height = 0;
+
+   if (vdp2width < 640)
+      width = vdp2width * multiplier;
+   else
+      width = vdp2width * (multiplier / 2);
+
+   if (!vdp2interlace)
+      height = vdp2height * multiplier;
+   else
+      height = vdp2height * (multiplier / 2);
+
+   mYabauseGL->resize(width, height);
+
+   adjustHeight(height);
+
+   setMinimumSize(width, height);
+   resize(width, height);
+}
+
 void UIYabause::swapBuffers()
 { 
+   resizeIntegerScaling();
 	mYabauseGL->swapBuffers(); 
 	mYabauseGL->makeCurrent();
 }
@@ -395,12 +457,7 @@ void UIYabause::fixAspectRatio( int width )
 
 			mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
 
-			// Compensate for menubar and toolbar
-			VolatileSettings* vs = QtYabause::volatileSettings();
-			if (vs->value( "View/Menubar" ).toInt() != BD_ALWAYSHIDE)
-				height += menubar->height();
-			if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
-				height += toolBar->height();
+         adjustHeight(height);
 
 			setFixedHeight( height );
 			break;

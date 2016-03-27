@@ -100,6 +100,7 @@ void VIDSoftGetGlSize(int *width, int *height);
 void VIDSoftVdp1SwapFrameBuffer(void);
 void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer);
 void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * sprite_window_mask, u8* vdp1_front_framebuffer, u8 * vdp2_ram, Vdp1* vdp1_regs, Vdp2* vdp2_lines, u8*color_ram);
+void VIDSoftGetNativeResolution(int *width, int *height, int*interlace);
 
 VideoInterface_struct VIDSoft = {
 VIDCORE_SOFT,
@@ -131,6 +132,7 @@ VIDSoftVdp2DrawStart,
 VIDSoftVdp2DrawEnd,
 VIDSoftVdp2DrawScreens,
 VIDSoftGetGlSize,
+VIDSoftGetNativeResolution
 };
 
 pixel_t *dispbuffer=NULL;
@@ -1530,7 +1532,7 @@ static void LoadLineParamsNBG0(vdp2draw_struct * info, screeninfo_struct * sinfo
    if (regs == NULL) return;
    ReadVdp2ColorOffset(regs, info, 0x1, 0x1);
    info->specialprimode = regs->SFPRMD & 0x3;
-   info->enable = regs->BGON & 0x1;
+   info->enable = regs->BGON & 0x1 || regs->BGON & 0x20;//nbg0 or rbg1
    GeneratePlaneAddrTable(info, sinfo->planetbl, info->PlaneAddr, regs);//sonic 2, 2 player mode
 }
 
@@ -4157,4 +4159,11 @@ void VIDSoftGetGlSize(int *width, int *height)
    *width = vdp2width;
    *height = vdp2height;
 #endif
+}
+
+void VIDSoftGetNativeResolution(int *width, int *height, int* interlace)
+{
+   *width = vdp2width;
+   *height = vdp2height;
+   *interlace = vdp2_interlace;
 }
