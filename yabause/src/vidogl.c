@@ -3870,10 +3870,20 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    for (i = 0; i < 3; i++){
 	   float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
 	   float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
-	   float d2x = sprite.vertices[(((i + 2)&0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+	   if ((dx <= 1.0f && dx >= -1.0f) && (dy <= 1.0f && dy >= -1.0f)){
+		   isSquare = 0;
+		   break;
+	   }
+
+	   float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
 	   float d2y = sprite.vertices[(((i + 2)&0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
+	   if ((d2x <= 1.0f && d2x >= -1.0f) && (d2y <= 1.0f && d2y >= -1.0f)){
+		   isSquare = 0;
+		   break;
+	   }
+
 	   float dot = dx*d2x + dy*d2y;
-	   if (dot >= EPSILON || dot <= -EPSILON){
+	   if (dot > EPSILON || dot < -EPSILON){
 		   isSquare = 0;
 		   break;
 	   }
@@ -3922,7 +3932,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		   }
 	   }
    }
-
+#if 0
    // Line Polygon
    if ((sprite.vertices[1] == sprite.vertices[3]) &&
 	   (sprite.vertices[3] == sprite.vertices[5]) &&
@@ -3939,6 +3949,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   sprite.vertices[6] += 1;
 	   isSquare = 1;
    }
+#endif
 #endif
 
    sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
