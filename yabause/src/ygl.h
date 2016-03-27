@@ -216,12 +216,12 @@ enum
 
 
 typedef struct {
-	GLuint sprite;
-	GLuint tessLevelInner;
-	GLuint tessLevelOuter;
-	GLuint fbo;
-	GLuint fbowidth;
-	GLuint fboheight;
+	GLint  sprite;
+	GLint  tessLevelInner;
+	GLint  tessLevelOuter;
+	GLint  fbo;
+	GLint  fbowidth;
+	GLint  fboheight;
 } YglVdp1CommonParam;
 
 #define TESS_COUNT (8)
