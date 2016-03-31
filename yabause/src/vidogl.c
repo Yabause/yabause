@@ -5164,35 +5164,47 @@ static void Vdp2DrawNBG0(void)
    info.colornumber = (Vdp2Regs->CHCTLA & 0x70) >> 4;
    int dest_alpha = ((Vdp2Regs->CCCTL >> 9) & 0x01);
 
-   // Enable Color Calculation
-   if(Vdp2Regs->CCCTL & 0x1)
-   {
-	   // Color calculation ratio
-      info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+   // 12.13 blur
+   if ((Vdp2Regs->CCCTL & 0xF000) == 0xA000){
+	   info.alpha = 0xFF;
+	   info.blendmode = VDP2_CC_BLUR;
+   }
+   else{
 
-	  // Color calculation mode bit
-	  if (Vdp2Regs->CCCTL & 0x100){ // Add Color
-			  info.blendmode = 2; 
-	  }else{ // Use Color calculation ratio
-		  if (info.specialcolormode != 0 && dest_alpha){ // Just currently not supported
-			  info.blendmode = 0;
-		  }else{
-			  info.blendmode = 1;
-		  }
-	  }
-   // Disable Color Calculation
-   }else{
-
-	   // Use Destination Alpha 12.14 CCRTMD
-	   if (dest_alpha){
-
-		   // Color calculation will not be operated.
-		   // But need to write alpha value
+	   // Enable Color Calculation
+	   if (Vdp2Regs->CCCTL & 0x1)
+	   {
+		   // Color calculation ratio
 		   info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
-	   }else{
-		   info.alpha = 0xFF;
+
+		   // Color calculation mode bit
+		   if (Vdp2Regs->CCCTL & 0x100){ // Add Color
+			   info.blendmode = VDP2_CC_ADD;
+		   }
+		   else{ // Use Color calculation ratio
+			   if (info.specialcolormode != 0 && dest_alpha){ // Just currently not supported
+				   info.blendmode = VDP2_CC_NONE;
+			   }
+			   else{
+				   info.blendmode = VDP2_CC_ADD;
+			   }
+		   }
+		   // Disable Color Calculation
 	   }
-      info.blendmode=0;
+	   else{
+
+		   // Use Destination Alpha 12.14 CCRTMD
+		   if (dest_alpha){
+
+			   // Color calculation will not be operated.
+			   // But need to write alpha value
+			   info.alpha = ((~Vdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+		   }
+		   else{
+			   info.alpha = 0xFF;
+		   }
+		   info.blendmode = VDP2_CC_NONE;
+	   }
    }
 
    info.linescreen = 0;
@@ -5279,39 +5291,39 @@ static void Vdp2DrawNBG0(void)
 			  while (yy + info.y < vdp2height)
 			  {
 				  xx = info.x;
-				  while (xx + info.x < vdp2width)
-				  {
-					  info.vertices[0] = xx;
-					  info.vertices[1] = yy;
-					  info.vertices[2] = (xx + info.cellw);
-					  info.vertices[3] = yy;
-					  info.vertices[4] = (xx + info.cellw);
-					  info.vertices[5] = (yy + info.cellh);
-					  info.vertices[6] = xx;
-					  info.vertices[7] = (yy + info.cellh);
+while (xx + info.x < vdp2width)
+{
+	info.vertices[0] = xx;
+	info.vertices[1] = yy;
+	info.vertices[2] = (xx + info.cellw);
+	info.vertices[3] = yy;
+	info.vertices[4] = (xx + info.cellw);
+	info.vertices[5] = (yy + info.cellh);
+	info.vertices[6] = xx;
+	info.vertices[7] = (yy + info.cellh);
 
-					  if (isCached == 0)
-					  {
-						  YglQuad((YglSprite *)&info, &texture, &tmpc);
-						  if (info.islinescroll){
-							  Vdp2DrawBitmapLineScroll(&info, &texture);
-						  }
-						  else{
-							  Vdp2DrawCell(&info, &texture);
-						  }
-						  isCached = 1;
-					  }
-					  else{
-						  YglCachedQuad((YglSprite *)&info, &tmpc);
-					  }
-					  xx += info.cellw;
-				  }
-				  yy += info.cellh;
+	if (isCached == 0)
+	{
+		YglQuad((YglSprite *)&info, &texture, &tmpc);
+		if (info.islinescroll){
+			Vdp2DrawBitmapLineScroll(&info, &texture);
+		}
+		else{
+			Vdp2DrawCell(&info, &texture);
+		}
+		isCached = 1;
+	}
+	else{
+		YglCachedQuad((YglSprite *)&info, &tmpc);
+	}
+	xx += info.cellw;
+}
+yy += info.cellh;
 			  }
 		  }
-      }
-      else
-      {
+	  }
+	  else
+	  {
 		  if (info.islinescroll){
 			  info.x = Vdp2Regs->SCXIN0 & 0x7FF;
 			  info.y = Vdp2Regs->SCYIN0 & 0x7FF;
@@ -5322,82 +5334,91 @@ static void Vdp2DrawNBG0(void)
 			  info.y = Vdp2Regs->SCYIN0 & 0x7FF;
 			  Vdp2DrawMapTest(&info, &texture);
 		  }
-      }
+	  }
    }
    else
    {
-      // RBG1 draw
-	   Vdp2DrawRotation(&info, &paraB, &texture, 1 );
+	   // RBG1 draw
+	   Vdp2DrawRotation(&info, &paraB, &texture, 1);
    }
-   
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglEndWindow(&info);
-   
+
+   if (info.bEnWin0 || info.bEnWin1)
+	   YglEndWindow(&info);
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void Vdp2DrawNBG1(void)
 {
-   vdp2draw_struct info;
-   YglTexture texture;
-   YglCache tmpc;
-   info.dst=0;
-   info.uclipmode=0;
-   info.cor = 0;
-   info.cog = 0;
-   info.cob = 0;
+	vdp2draw_struct info;
+	YglTexture texture;
+	YglCache tmpc;
+	info.dst = 0;
+	info.uclipmode = 0;
+	info.cor = 0;
+	info.cog = 0;
+	info.cob = 0;
 
-   info.enable = Vdp2Regs->BGON & 0x2;
-   info.transparencyenable = !(Vdp2Regs->BGON & 0x200);
-   info.specialprimode = (Vdp2Regs->SFPRMD >> 2) & 0x3;
+	info.enable = Vdp2Regs->BGON & 0x2;
+	info.transparencyenable = !(Vdp2Regs->BGON & 0x200);
+	info.specialprimode = (Vdp2Regs->SFPRMD >> 2) & 0x3;
 
-   info.colornumber = (Vdp2Regs->CHCTLA & 0x3000) >> 12;
+	info.colornumber = (Vdp2Regs->CHCTLA & 0x3000) >> 12;
 
-   if((info.isbitmap = Vdp2Regs->CHCTLA & 0x200) != 0)
-   {
-      ReadBitmapSize(&info, Vdp2Regs->CHCTLA >> 10, 0x3);
+	if ((info.isbitmap = Vdp2Regs->CHCTLA & 0x200) != 0)
+	{
+		ReadBitmapSize(&info, Vdp2Regs->CHCTLA >> 10, 0x3);
 
-      info.x = -((Vdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
-      info.y = -((Vdp2Regs->SCYIN1 & 0x7FF) % info.cellh);
-      info.charaddr = ((Vdp2Regs->MPOFN & 0x70) >> 4) * 0x20000;
-      info.paladdr = (Vdp2Regs->BMPNA & 0x700) >> 4;
-      info.flipfunction = 0;
-      info.specialfunction = 0;
-   }
-   else
-   {
-      info.mapwh = 2;
+		info.x = -((Vdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
+		info.y = -((Vdp2Regs->SCYIN1 & 0x7FF) % info.cellh);
+		info.charaddr = ((Vdp2Regs->MPOFN & 0x70) >> 4) * 0x20000;
+		info.paladdr = (Vdp2Regs->BMPNA & 0x700) >> 4;
+		info.flipfunction = 0;
+		info.specialfunction = 0;
+	}
+	else
+	{
+		info.mapwh = 2;
 
-      ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 2);
+		ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 2);
 
-      info.x = - ((Vdp2Regs->SCXIN1 & 0x7FF) % (512 * info.planew));
-      info.y = - ((Vdp2Regs->SCYIN1 & 0x7FF) % (512 * info.planeh));
+		info.x = -((Vdp2Regs->SCXIN1 & 0x7FF) % (512 * info.planew));
+		info.y = -((Vdp2Regs->SCYIN1 & 0x7FF) % (512 * info.planeh));
 
-      ReadPatternData(&info, Vdp2Regs->PNCN1, Vdp2Regs->CHCTLA & 0x100);
-   }
+		ReadPatternData(&info, Vdp2Regs->PNCN1, Vdp2Regs->CHCTLA & 0x100);
+	}
 
-   info.specialcolormode = (Vdp2Regs->SFCCMD>>2) & 0x3;
+	info.specialcolormode = (Vdp2Regs->SFCCMD >> 2) & 0x3;
 
-   if (Vdp2Regs->CCCTL & 0x2)
-   {
-      info.alpha = ((~Vdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
-      if(Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0 )
-      {
-         info.blendmode=2;
-      }else{
-         info.blendmode=1;
-      }
-   }else{
-	   // 12.14 CCRTMD
-	   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
-		   info.alpha = ((~Vdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
-	   }
-	   else{
-		   info.alpha = 0xFF;
-	   }
-      info.blendmode=0;
-   }
+	// 12.13 blur
+	if ((Vdp2Regs->CCCTL & 0xF000) == 0xC000 ){
+		info.alpha = 0xFF;
+		info.blendmode = VDP2_CC_BLUR;
+	}
+	else{
+		if (Vdp2Regs->CCCTL & 0x2)
+		{
+			info.alpha = ((~Vdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+			if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
+			{
+				info.blendmode = VDP2_CC_ADD;
+			}
+			else{
+				info.blendmode = VDP2_CC_RATE;
+			}
+		}
+		else{
+			// 12.14 CCRTMD
+			if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+				info.alpha = ((~Vdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+			}
+			else{
+				info.alpha = 0xFF;
+			}
+			info.blendmode = VDP2_CC_NONE;
+		}
+	}
 
    info.linescreen = 0;
    if (Vdp2Regs->LNCLEN & 0x2)
@@ -5592,24 +5613,34 @@ static void Vdp2DrawNBG2(void)
 
    info.specialcolormode = (Vdp2Regs->SFCCMD>>4) & 0x3;
 
-   if (Vdp2Regs->CCCTL & 0x4)
-   {
-      info.alpha = ((~Vdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
-      if(Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0 )
-      {
-         info.blendmode=2;
-      }else{
-         info.blendmode=1;
-      }
-   }else{
-	   // 12.14 CCRTMD
-	   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+   // 12.13 blur
+   if ((Vdp2Regs->CCCTL & 0xF000) == 0xD000){
+	   info.alpha = 0xFF;
+	   info.blendmode = VDP2_CC_BLUR;
+   }
+   else{
+
+	   if (Vdp2Regs->CCCTL & 0x4)
+	   {
 		   info.alpha = ((~Vdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+		   if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
+		   {
+			   info.blendmode = VDP2_CC_ADD;
+		   }
+		   else{
+			   info.blendmode = VDP2_CC_RATE;
+		   }
 	   }
 	   else{
-		   info.alpha = 0xFF;
+		   // 12.14 CCRTMD
+		   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+			   info.alpha = ((~Vdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+		   }
+		   else{
+			   info.alpha = 0xFF;
+		   }
+		   info.blendmode = VDP2_CC_NONE;
 	   }
-      info.blendmode=0;
    }
 
    info.linescreen = 0;
@@ -5679,25 +5710,34 @@ static void Vdp2DrawNBG3(void)
 
    info.specialcolormode = (Vdp2Regs->SFCCMD>>6) & 0x03;
    
-    if (Vdp2Regs->CCCTL & 0x8)
-   {
-      info.alpha = ((~Vdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
-      if(Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0 )
-      {
-         info.blendmode=2;
-      }else{
-         info.blendmode=1;
-      }
-   }else{
-	   // 12.14 CCRTMD
-	   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+   // 12.13 blur
+   if ((Vdp2Regs->CCCTL & 0xF000) == 0xE000){
+	   info.alpha = 0xFF;
+	   info.blendmode = VDP2_CC_BLUR;
+   }
+   else{
+	   if (Vdp2Regs->CCCTL & 0x8)
+	   {
 		   info.alpha = ((~Vdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+		   if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
+		   {
+			   info.blendmode = VDP2_CC_ADD;
+		   }
+		   else{
+			   info.blendmode = VDP2_CC_RATE;
+		   }
 	   }
 	   else{
-		   info.alpha = 0xFF;
-	   }
+		   // 12.14 CCRTMD
+		   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+			   info.alpha = ((~Vdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+		   }
+		   else{
+			   info.alpha = 0xFF;
+		   }
 
-      info.blendmode=0;
+		   info.blendmode = VDP2_CC_NONE;
+	   }
    }
    
    info.linescreen = 0;
@@ -5993,7 +6033,7 @@ static void Vdp2DrawRBG0(void)
 
    info.specialcolormode = (Vdp2Regs->SFCCMD>>8) & 0x03;
    
-   info.blendmode=0;         
+   info.blendmode = VDP2_CC_NONE;
    if( (Vdp2Regs->LNCLEN & 0x10) == 0x00 )
    {
       info.LineColorBase = 0x00;
@@ -6007,26 +6047,33 @@ static void Vdp2DrawRBG0(void)
       paraB.lineaddr = 0xFFFFFFFF;
    }
 
-   if ( (Vdp2Regs->CCCTL & 0x410) == 0x10 )
-   {
-	   info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
-	   if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
-	   {
-		   info.blendmode = 2;
-	   }
-	   else{
-		   info.blendmode = 1;
-	   }
+   // 12.13 blur
+   if ((Vdp2Regs->CCCTL & 0xF000) == 0x9000){
+	   info.alpha = 0xFF;
+	   info.blendmode = VDP2_CC_BLUR;
    }
    else{
-	   // 12.14 CCRTMD
-	   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+	   if ((Vdp2Regs->CCCTL & 0x410) == 0x10)
+	   {
 		   info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+		   if (Vdp2Regs->CCCTL & 0x100 && info.specialcolormode == 0)
+		   {
+			   info.blendmode = VDP2_CC_ADD;
+		   }
+		   else{
+			   info.blendmode = VDP2_CC_RATE;
+		   }
 	   }
 	   else{
-		   info.alpha = 0xFF;
+		   // 12.14 CCRTMD
+		   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01){
+			   info.alpha = ((~Vdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+		   }
+		   else{
+			   info.alpha = 0xFF;
+		   }
+		   info.blendmode = VDP2_CC_NONE;
 	   }
-	   info.blendmode = 0;
    }
 
    info.coloroffset = (Vdp2Regs->CRAOFB & 0x7) << 8;
