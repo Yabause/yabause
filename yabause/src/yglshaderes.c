@@ -28,6 +28,8 @@
 #include "vidshared.h"
 #include "shaders/FXAA_DefaultES.h"
 
+int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
+
 extern float vdp1wratio;
 extern float vdp1hratio;
 extern int GlHeight;
@@ -132,23 +134,23 @@ const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
 const GLchar Yglprg_normal_f[] =
 #if defined(_OGLES3_)
-      "#version 300 es \n"
+"#version 300 es \n"
 #else
-      "#version 330 \n"
+"#version 330 \n"
 #endif
-      "precision highp float;                            \n"
-      "in highp vec4 v_texcoord;                            \n"
-      "uniform vec4 u_color_offset;    \n"
-      "uniform sampler2D s_texture;                        \n"
-      "out vec4 fragColor;            \n"
-      "void main()                                         \n"
-      "{                                                   \n"
-      "  ivec2 addr; \n"
-      "  addr.x = int(v_texcoord.x);                        \n"
-      "  addr.y = int(v_texcoord.y);                        \n"
-      "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
-      "  if(txcol.a > 0.0)\n                                 "
-      "     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
+"precision highp float;                            \n"
+"in highp vec4 v_texcoord;                            \n"
+"uniform vec4 u_color_offset;    \n"
+"uniform sampler2D s_texture;                        \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr; \n"
+"  addr.x = int(v_texcoord.x);                        \n"
+"  addr.y = int(v_texcoord.y);                        \n"
+"  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
+"  if(txcol.a > 0.0)\n                                 "
+"     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
       "  else \n                                            "
       "     discard;\n                                      "
       "}                                                   \n";
@@ -173,6 +175,72 @@ int Ygl_cleanupNormal(void * p )
    prg = p;
    return 0;
 }
+
+
+int Ygl_uniformNormal_blur(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	// Create Screen size frame buffer
+	if (_Ygl->tmpfbo == 0) {
+
+		GLuint error;
+		glGenTextures(1, &_Ygl->tmpfbotex);
+		glBindTexture(GL_TEXTURE_2D, _Ygl->tmpfbotex);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+		glGetError();
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		if ((error = glGetError()) != GL_NO_ERROR)
+		{
+			//YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
+		}
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glGenFramebuffers(1, &_Ygl->tmpfbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->tmpfbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->tmpfbotex, 0);
+	}
+	// bind Screen size frame buffer
+	else{
+		glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->tmpfbo);
+	}
+
+	glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+	glClearColor(0.0f,0.0f,0.0f,0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glEnableVertexAttribArray(prg->vertexp);
+	glEnableVertexAttribArray(prg->texcoordp);
+	glUniform1i(id_normal_s_texture, 0);
+	glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+	return 0;
+}
+
+int Ygl_cleanupNormal_blur(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	// Bind Default frame buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Restore Default Matrix
+	glViewport(0, 0, _Ygl->width, _Ygl->height);
+
+	// call blit method
+	YglBlitBlur(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
+
+	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+
+	return 0;
+}
+
+
 
 const GLchar Yglprg_DestinationAlpha_f[] =
 #if defined(_OGLES3_)
@@ -1458,6 +1526,8 @@ int YglProgramInit()
 
    id_vdp1_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
 
+   // extentions
+   _prgid[PG_VDP2_BLUR] = _prgid[PG_NORMAL];
 
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VFP1_GOURAUDSAHDING\n");
@@ -1907,7 +1977,17 @@ int YglProgramChange( YglLevel * level, int prgid )
 	   current->mtxTexture = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_texMatrix");
 	   current->color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_color_offset");
 	   current->tex0 = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"s_texture");
-      
+   }
+   else if (prgid == PG_VDP2_BLUR)
+   {
+	   current->setupUniform = Ygl_uniformNormal_blur;
+	   current->cleanupUniform = Ygl_cleanupNormal_blur;
+	   current->vertexp = 0;
+	   current->texcoordp = 1;
+	   current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"u_mvpMatrix");
+	   current->mtxTexture = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"u_texMatrix");
+	   current->color_offset = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"u_color_offset");
+	   current->tex0 = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"s_texture");
    }else{
       level->prg[level->prgcurrent].setupUniform = NULL;
       level->prg[level->prgcurrent].cleanupUniform = NULL;
@@ -1953,6 +2033,8 @@ static const char fblit_img[] =
 "  vec4 src = texture2D( u_Src, v_Uv ); \n"
 "  fragColor = src; \n"
 "}\n";
+
+
 
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
@@ -2172,3 +2254,166 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
 	return 0;
 }
 
+
+/*
+hard/vdp2/hon/p12_13.htm
+*/
+
+const GLchar blur_blit_v[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"uniform mat4 u_mvpMatrix;    \n"
+"layout (location = 0) in vec4 a_position;   \n"
+"layout (location = 1) in vec2 a_texcoord;   \n"
+"out  highp vec2 v_texcoord;     \n"
+"void main()                  \n"
+"{                            \n"
+"   gl_Position = a_position*u_mvpMatrix; \n"
+"   v_texcoord  = a_texcoord; \n"
+"} ";
+
+const GLchar blur_blit_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                            \n"
+"in highp vec2 v_texcoord;                            \n"
+"uniform sampler2D u_Src;                        \n"
+"uniform float u_tw; \n"
+"uniform float u_th; \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr; \n"
+"  addr.x = int(u_tw * v_texcoord.x);          \n"
+"  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
+"  vec4 txcol = texelFetch( u_Src, addr,0 ) ;      \n"
+"  txcol.r = txcol.r / 4.0 * 2.0;"
+"  txcol.g = txcol.g / 4.0 * 2.0;"
+"  txcol.b = txcol.b / 4.0 * 2.0;"
+"  addr.x -= 1; \n"
+"  vec4 txcoll = texelFetch( u_Src, addr,0 );      \n"
+"  txcoll.r = txcoll.r / 4.0;"
+"  txcoll.g = txcoll.g / 4.0;"
+"  txcoll.b = txcoll.b / 4.0;"
+"  addr.x -= 1; \n"
+"  vec4 txcolll = texelFetch( u_Src, addr,0 );      \n"
+"  txcolll.r = txcolll.r / 4.0;"
+"  txcolll.g = txcolll.g / 4.0;"
+"  txcolll.b = txcolll.b / 4.0;"
+"  txcol.r = txcol.r + txcoll.r + txcolll.r; "
+"  txcol.g = txcol.g + txcoll.g + txcolll.g; "
+"  txcol.b = txcol.b + txcoll.b + txcolll.b;  "
+"  if(txcol.a > 0.0)\n                                 "
+"     fragColor = txcol; \n                        "
+"  else \n                                            "
+"     discard;\n                                      "
+"}                                                   \n";
+
+static int blur_prg = -1;
+static int u_blur_mtxModelView = -1;
+static int u_blur_tw = -1;
+static int u_blur_th = -1;
+
+int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix) {
+
+	float vb[] = { 0, 0,
+		2.0, 0.0,
+		2.0, 2.0,
+		0, 2.0, };
+
+	float tb[] = { 0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0 };
+
+	vb[2] = w;
+	vb[4] = w;
+	vb[5] = h;
+	vb[7] = h;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
+
+	if (blur_prg == -1){
+		GLuint vshader;
+		GLuint fshader;
+		GLint compiled, linked;
+
+		const GLchar * vblit_img_v[] = { blur_blit_v, NULL };
+		const GLchar * fblit_img_v[] = { blur_blit_f, NULL };
+
+		blur_prg = glCreateProgram();
+		if (blur_prg == 0) return -1;
+
+		glUseProgram(blur_prg);
+		vshader = glCreateShader(GL_VERTEX_SHADER);
+		fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+		glShaderSource(vshader, 1, vblit_img_v, NULL);
+		glCompileShader(vshader);
+		glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			YGLLOG("Compile error in vertex shader.\n");
+			Ygl_printShaderError(vshader);
+			blur_prg = -1;
+			return -1;
+		}
+
+		glShaderSource(fshader, 1, fblit_img_v, NULL);
+		glCompileShader(fshader);
+		glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			YGLLOG("Compile error in fragment shader.\n");
+			Ygl_printShaderError(fshader);
+			blur_prg = -1;
+			return -1;
+		}
+
+		glAttachShader(blur_prg, vshader);
+		glAttachShader(blur_prg, fshader);
+		glLinkProgram(blur_prg);
+		glGetProgramiv(blur_prg, GL_LINK_STATUS, &linked);
+		if (linked == GL_FALSE) {
+			YGLLOG("Link error..\n");
+			Ygl_printShaderError(blur_prg);
+			blur_prg = -1;
+			return -1;
+		}
+
+		glUniform1i(glGetUniformLocation(blur_prg, "u_Src"), 0);
+		u_blur_mtxModelView = glGetUniformLocation(blur_prg, (const GLchar *)"u_mvpMatrix");
+		u_blur_tw = glGetUniformLocation(blur_prg, "u_tw");
+		u_blur_th = glGetUniformLocation(blur_prg, "u_th");
+
+	}
+	else{
+		glUseProgram(blur_prg);
+	}
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+	glUniformMatrix4fv(u_blur_mtxModelView, 1, GL_FALSE, matrix);
+	glUniform1f(u_blur_tw, w);
+	glUniform1f(u_blur_th, h);
+
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, srcTexture);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	// Clean up
+	glActiveTexture(GL_TEXTURE0);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	return 0;
+}

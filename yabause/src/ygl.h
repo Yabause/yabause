@@ -185,6 +185,12 @@ void YglCacheReset(YglTextureManager * tm);
 #define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
 #define VDP1_COLOR_CL_MESH 0x80
 
+#define VDP2_CC_NONE 0x00
+#define VDP2_CC_RATE 0x01
+#define VDP2_CC_ADD  0x02
+
+#define VDP2_CC_BLUR  0x03
+
 enum
 {
    PG_NORMAL=1,
@@ -210,6 +216,7 @@ enum
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA,
+   PG_VDP2_BLUR,
    PG_MAX,
 };
 
@@ -255,6 +262,7 @@ typedef struct {
    int (*setupUniform)(void *);
    int (*cleanupUniform)(void *);
    YglVdp1CommonParam * ids;
+   float * matrix;
 } YglProgram;
 
 typedef struct {
@@ -327,6 +335,9 @@ typedef struct {
    GLuint fxaa_fbotex;
    GLuint fxaa_stencil;
    GLuint fxaa_depth;
+
+   GLuint tmpfbo;
+   GLuint tmpfbotex;
 
    // Message Layer
    int msgwidth;
