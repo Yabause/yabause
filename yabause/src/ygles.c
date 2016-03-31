@@ -1178,6 +1178,8 @@ int YglInit(int width, int height, unsigned int depth) {
    
    _Ygl->smallfbo = 0;
    _Ygl->smallfbotex = 0;
+   _Ygl->tmpfbo = 0;
+   _Ygl->tmpfbotex = 0;
 
    YglGLInit(width, height);
 
@@ -1341,9 +1343,13 @@ void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx,
 
 	int vHeight;
 
-	if ((input->blendmode & 0x03) == 2)
+	if ((input->blendmode & 0x03) == VDP2_CC_ADD)
 	{
 		prg = PG_VDP2_ADDBLEND;
+	}
+	else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+	{
+		prg = PG_VDP2_BLUR;
 	}
 
   if (input->linescreen){
@@ -1440,9 +1446,13 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    //float * vtxa;
 
 
-   if( (input->blendmode&0x03) == 2 )
+   if ((input->blendmode & 0x03) == VDP2_CC_ADD)
    {
       prg = PG_VDP2_ADDBLEND;
+   }
+   else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+   {
+	   prg = PG_VDP2_BLUR;
    }
    else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
@@ -1651,7 +1661,7 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
 	int u, v;
 
 	// Select Program
-	if ((input->blendmode & 0x03) == 2)
+	if ((input->blendmode & 0x03) == VDP2_CC_ADD)
 	{
 		prg = PG_VDP2_ADDBLEND;
 	}
@@ -1911,7 +1921,7 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    float * pos;
 
 
-   if( (input->blendmode&0x03) == 2 )
+   if ((input->blendmode & 0x03) == VDP2_CC_ADD)
    {
       prg = PG_VDP2_ADDBLEND;
    }
@@ -2254,9 +2264,13 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, fl
 
 	int prg = PG_NORMAL;
 
-	if ((input->blendmode & 0x03) == 2)
+	if ((input->blendmode & 0x03) == VDP2_CC_ADD)
 	{
 		prg = PG_VDP2_ADDBLEND;
+	}
+	else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+	{
+		prg = PG_VDP2_BLUR;
 	}
 
   if (input->linescreen){
@@ -2335,9 +2349,13 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
 
    int prg = PG_NORMAL;
 
-   if( (input->blendmode&0x03) == 2 )
+   if ((input->blendmode & 0x03) == VDP2_CC_ADD)
    {
       prg = PG_VDP2_ADDBLEND;
+   }
+   else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+   {
+	   prg = PG_VDP2_BLUR;
    }
    else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
@@ -2907,7 +2925,7 @@ void YglRender(void) {
 		for (i = 0; i < _Ygl->depth; i++)
 		{
 			level = _Ygl->levels + i;
-			if (level->blendmode != 0)
+			if (level->blendmode != 0x00)
 			{
 				to = i;
 
@@ -2928,6 +2946,8 @@ void YglRender(void) {
 			glDisable(GL_STENCIL_TEST);
 			for (j = 0; j < (level->prgcurrent + 1); j++)
 			{
+				YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
+
 				if (level->prg[j].prgid != cprg)
 				{
 					cprg = level->prg[j].prgid;
@@ -2938,21 +2958,19 @@ void YglRender(void) {
 					level->prg[j].setupUniform((void*)&level->prg[j]);
 				}
 
-				YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
-
 				if (level->prg[j].currentQuad != 0)
 				{
 					if (level->prg[j].prgid == PG_LINECOLOR_INSERT){
 						glDisable(GL_BLEND);
 					}else{
-						if (level->prg[j].blendmode == 0){
+						if (level->prg[j].blendmode == VDP2_CC_NONE){
 							glDisable(GL_BLEND);
 						}
-						else if (level->prg[j].blendmode == 1){
+						else if (level->prg[j].blendmode == VDP2_CC_RATE){
 							glEnable(GL_BLEND);
 							glBlendFunc(blendfunc_src, blendfunc_dst);
 						}
-						else if (level->prg[j].blendmode == 2){
+						else if (level->prg[j].blendmode == VDP2_CC_ADD){
 							glEnable(GL_BLEND);
 							glBlendFunc(GL_ONE, GL_ONE);
 						}
@@ -2968,6 +2986,7 @@ void YglRender(void) {
 
 				if (level->prg[j].cleanupUniform)
 				{
+					level->prg[j].matrix = (GLfloat*)dmtx.m;
 					level->prg[j].cleanupUniform((void*)&level->prg[j]);
 				}
 
@@ -3261,6 +3280,14 @@ void YglChangeResolution(int w, int h) {
          _Ygl->vdp1pixelBufferID = 0;
          _Ygl->pFrameBuffer = NULL;
        }
+
+	   if (_Ygl->tmpfbo != 0){
+		   glDeleteFramebuffers(1, &_Ygl->tmpfbo);
+		   _Ygl->tmpfbo = 0;
+		   glDeleteTextures(1, &_Ygl->tmpfbotex);
+		   _Ygl->tmpfbotex = 0;
+	   }
+
    }
 
    _Ygl->rwidth = w;
