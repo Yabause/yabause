@@ -2267,15 +2267,17 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 		((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
 	
 	YglCache c;
-	YglSprite tile;
+	vdp2draw_struct tile;
 	int winmode = 0;
 	tile.dst = 0;
 	tile.uclipmode = 0;
 	tile.blendmode = info->blendmode;
 	tile.linescreen = info->linescreen;
+	tile.mosaicxmask = info->mosaicxmask;
+	tile.mosaicymask = info->mosaicymask;
 
-	tile.w = tile.h = info->patternpixelwh;
-	tile.flip = info->flipfunction;
+	tile.cellw = tile.cellh = info->patternpixelwh;
+	tile.flipfunction = info->flipfunction;
 
 	if (info->specialprimode == 1)
 		tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
@@ -2284,9 +2286,9 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
 	tile.vertices[0] = x;
 	tile.vertices[1] = y;
-	tile.vertices[2] = (x + tile.w);
+	tile.vertices[2] = (x + tile.cellw);
 	tile.vertices[3] = y;
-	tile.vertices[4] = (x + tile.w);
+	tile.vertices[4] = (x + tile.cellh);
 	tile.vertices[5] = (y + (float)info->lineinc);
 	tile.vertices[6] = x;
 	tile.vertices[7] = (y + (float)info->lineinc);
@@ -2299,7 +2301,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
 	if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincx == 1.0f)
 	{                                                 // coordinate inc is not supported yet.
-		winmode = Vdp2CheckWindowRange(info, x-cx, y-cy, tile.w, info->lineinc);
+		winmode = Vdp2CheckWindowRange(info, x-cx, y-cy, tile.cellw, info->lineinc);
 		if (winmode == 0) // all outside, no need to draw 
 		{
 			return;
@@ -2338,7 +2340,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	}
 }
 
-
+#if 0
 static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
 {
 	u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
@@ -2428,6 +2430,7 @@ static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
    info->x += tile.w;
    info->y += tile.h;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3071,13 +3074,13 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    {
 	   memcpy(&line_info, info, sizeof(vdp2draw_struct));
 	   line_info.blendmode = 0;
-	   YglQuad((YglSprite *)&line_info, &line_texture, NULL);
+	   YglQuad(&line_info, &line_texture, NULL);
 	   LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
    }else{
       LineColorRamAdress = 0x00;
    }
 
-   YglQuad((YglSprite *)info, texture, NULL);
+   YglQuad(info, texture, NULL);
    info->cellw = cellw;
    info->cellh = cellh;
    x = 0;
@@ -5157,6 +5160,8 @@ static void Vdp2DrawNBG0(void)
       // Not enabled
       return;
    
+   ReadMosaicData(&info, 0x1, Vdp2Regs);
+
    info.transparencyenable = !(Vdp2Regs->BGON & 0x100);
    info.specialprimode   = Vdp2Regs->SFPRMD & 0x3;
    info.specialcolormode = Vdp2Regs->SFCCMD & 0x3;
@@ -5271,7 +5276,7 @@ static void Vdp2DrawNBG0(void)
 				  infotmp.cellh = (vdp2height >> 1);
 			  else
 				  infotmp.cellh = vdp2height;
-			  YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
+			  YglQuad(&infotmp, &texture, &tmpc);
 			  Vdp2DrawBitmapCoordinateInc(&info, &texture);
 		  }
 		  else{
@@ -5304,7 +5309,7 @@ while (xx + info.x < vdp2width)
 
 	if (isCached == 0)
 	{
-		YglQuad((YglSprite *)&info, &texture, &tmpc);
+		YglQuad(&info, &texture, &tmpc);
 		if (info.islinescroll){
 			Vdp2DrawBitmapLineScroll(&info, &texture);
 		}
@@ -5314,7 +5319,7 @@ while (xx + info.x < vdp2width)
 		isCached = 1;
 	}
 	else{
-		YglCachedQuad((YglSprite *)&info, &tmpc);
+		YglCachedQuad(&info, &tmpc);
 	}
 	xx += info.cellw;
 }
@@ -5390,6 +5395,8 @@ static void Vdp2DrawNBG1(void)
 	}
 
 	info.specialcolormode = (Vdp2Regs->SFCCMD >> 2) & 0x3;
+
+	ReadMosaicData(&info, 0x2, Vdp2Regs);
 
 	// 12.13 blur
 	if ((Vdp2Regs->CCCTL & 0xF000) == 0xC000 ){
@@ -5518,7 +5525,7 @@ static void Vdp2DrawNBG1(void)
 		   else	
 				infotmp.cellh = vdp2height;
 
-		   YglQuad((YglSprite *)&infotmp, &texture, &tmpc);
+		   YglQuad(&infotmp, &texture, &tmpc);
 		   Vdp2DrawBitmapCoordinateInc(&info, &texture);
 	   }
 	   else{
@@ -5551,7 +5558,7 @@ static void Vdp2DrawNBG1(void)
 
 				   if (isCached == 0)
 				   {
-					   YglQuad((YglSprite *)&info, &texture, &tmpc);
+					   YglQuad(&info, &texture, &tmpc);
 					   if (info.islinescroll){
 						   Vdp2DrawBitmapLineScroll(&info, &texture);
 					   }
@@ -5561,7 +5568,7 @@ static void Vdp2DrawNBG1(void)
 					   isCached = 1;
 				   }
 				   else{
-					   YglCachedQuad((YglSprite *)&info, &tmpc);
+					   YglCachedQuad(&info, &tmpc);
 				   }
 				   xx += info.cellw;
 			   }
@@ -5610,6 +5617,8 @@ static void Vdp2DrawNBG2(void)
    info.x = - ((Vdp2Regs->SCXN2 & 0x7FF) % (512 * info.planew));
    info.y = - ((Vdp2Regs->SCYN2 & 0x7FF) % (512 * info.planeh));
    ReadPatternData(&info, Vdp2Regs->PNCN2, Vdp2Regs->CHCTLB & 0x1);
+
+   ReadMosaicData(&info, 0x4, Vdp2Regs);
 
    info.specialcolormode = (Vdp2Regs->SFCCMD>>4) & 0x3;
 
@@ -5707,6 +5716,8 @@ static void Vdp2DrawNBG3(void)
    info.x = - ((Vdp2Regs->SCXN3 & 0x7FF) % (512 * info.planew));
    info.y = - ((Vdp2Regs->SCYN3 & 0x7FF) % (512 * info.planeh));
    ReadPatternData(&info, Vdp2Regs->PNCN3, Vdp2Regs->CHCTLB & 0x10);
+
+   ReadMosaicData(&info, 0x8, Vdp2Regs);
 
    info.specialcolormode = (Vdp2Regs->SFCCMD>>6) & 0x03;
    
@@ -6031,8 +6042,9 @@ static void Vdp2DrawRBG0(void)
        }
    }
 
+   ReadMosaicData(&info, 0x10, Vdp2Regs);
+
    info.specialcolormode = (Vdp2Regs->SFCCMD>>8) & 0x03;
-   
    info.blendmode = VDP2_CC_NONE;
    if( (Vdp2Regs->LNCLEN & 0x10) == 0x00 )
    {

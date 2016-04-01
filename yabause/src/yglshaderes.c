@@ -28,12 +28,16 @@
 #include "vidshared.h"
 #include "shaders/FXAA_DefaultES.h"
 
+int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
+int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, int * mosaic);
 
 extern float vdp1wratio;
 extern float vdp1hratio;
 extern int GlHeight;
 extern int GlWidth;
+static GLuint _prgid[PG_MAX] = { 0 };
+
 
 static void Ygl_printShaderError( GLuint shader )
 {
@@ -54,7 +58,57 @@ static void Ygl_printShaderError( GLuint shader )
   }
 }
 
-static GLuint _prgid[PG_MAX] ={0};
+int ShaderDrawTest()
+{
+
+	GLuint vertexp = glGetAttribLocation(_prgid[PG_NORMAL], (const GLchar *)"a_position");
+	GLuint texcoordp = glGetAttribLocation(_prgid[PG_NORMAL], (const GLchar *)"a_texcoord");
+	GLuint mtxModelView = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_mvpMatrix");
+	GLuint mtxTexture = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_texMatrix");
+
+	GLfloat vec[] = { 0.0f, 0.0f, -0.5f, 100.0f, 0.0f, -0.5f, 100.0f, 100.0f, -0.5f,
+		0.0f, 0.0f, -0.5f, 100.0f, 100.0f, -0.5f, 0.0f, 100.0f, -0.5f };
+
+	/*
+	GLfloat vec[]={ 0.0f,0.0f,-0.5f,
+	-1.0f,1.0f,-0.5f,
+	1.0f,1.0f,-0.5f,
+	0.0f,0.0f,-0.5f,
+	-1.0f,-1.0f,-0.5f,
+	1.0f,-1.0f,-0.5f,
+	};
+	*/
+	GLfloat tex[] = { 0.0f, 0.0f, 2048.0f, 0.0f, 2048.0f, 1024.0f, 0.0f, 0.0f, 2048.0f, 1024.0f, 0.0f, 1024.0f };
+
+	//   GLfloat tex[]={ 0.0f,0.0f,1.0f,0.0f,1.0f,1.0f,
+	//                   0.0f,0.0f,1.0f,1.0f,0.0f,1.0f };
+
+	YglMatrix mtx;
+	YglMatrix mtxt;
+	GLuint id = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
+
+	YglLoadIdentity(&mtx);
+	YglLoadIdentity(&mtxt);
+
+	YglOrtho(&mtx, 0.0f, 100.0f, 100.0f, 0.0f, 1.0f, 0.0f);
+
+	glUseProgram(_prgid[PG_NORMAL]);
+	glUniform1i(id, 0);
+
+	glEnableVertexAttribArray(vertexp);
+	glEnableVertexAttribArray(texcoordp);
+
+	glUniformMatrix4fv(mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView/*mtx*/.m[0][0]);
+
+	glVertexAttribPointer(vertexp, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)vec);
+	glVertexAttribPointer(texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)tex);
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	return 0;
+
+}
+
 
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
 
@@ -151,37 +205,32 @@ const GLchar Yglprg_normal_f[] =
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  if(txcol.a > 0.0)\n                                 "
 "     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
-      "  else \n                                            "
-      "     discard;\n                                      "
-      "}                                                   \n";
+"  else \n                                            "
+"     discard;\n                                      "
+"}                                                   \n";
 const GLchar * pYglprg_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 
-int Ygl_uniformNormal(void * p )
+int Ygl_uniformNormal(void * p)
 {
 
-   YglProgram * prg;
-   prg = p;
-   glEnableVertexAttribArray(prg->vertexp);
-   glEnableVertexAttribArray(prg->texcoordp);
-   glUniform1i(id_normal_s_texture, 0);
-   glUniform4fv(prg->color_offset,1,prg->color_offset_val);
-   return 0;
+	YglProgram * prg;
+	prg = p;
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glUniform1i(id_normal_s_texture, 0);
+	glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+	return 0;
 }
 
-int Ygl_cleanupNormal(void * p )
-{
-   YglProgram * prg;
-   prg = p;
-   return 0;
-}
-
-
-int Ygl_uniformNormal_blur(void * p)
+int Ygl_cleanupNormal(void * p)
 {
 	YglProgram * prg;
 	prg = p;
+	return 0;
+}
 
+int Ygl_useTmpBuffer(){
 	// Create Screen size frame buffer
 	if (_Ygl->tmpfbo == 0) {
 
@@ -208,7 +257,60 @@ int Ygl_uniformNormal_blur(void * p)
 	else{
 		glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->tmpfbo);
 	}
+	return 0;
+}
 
+/*------------------------------------------------------------------------------------
+*  Mosaic Draw
+* ----------------------------------------------------------------------------------*/
+int Ygl_uniformMosaic(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	Ygl_useTmpBuffer();
+	glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glEnableVertexAttribArray(prg->vertexp);
+	glEnableVertexAttribArray(prg->texcoordp);
+	glUniform1i(id_normal_s_texture, 0);
+	glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+
+	return 0;
+}
+
+int Ygl_cleanupMosaic(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	// Bind Default frame buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Restore Default Matrix
+	glViewport(0, 0, _Ygl->width, _Ygl->height);
+
+	// call blit method
+	YglBlitMosaic(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic );
+
+	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+
+	return 0;
+}
+
+
+/*------------------------------------------------------------------------------------
+*  Blur
+* ----------------------------------------------------------------------------------*/
+int Ygl_uniformNormal_blur(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	Ygl_useTmpBuffer();
 	glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -270,58 +372,6 @@ const GLchar Yglprg_DestinationAlpha_f[] =
 "  }else \n                                            "
 "     discard;\n                                      "
 "}                                                   \n";
-
-
-int ShaderDrawTest()
-{
-
-   GLuint vertexp         = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_position");
-   GLuint texcoordp       = glGetAttribLocation(_prgid[PG_NORMAL],(const GLchar *)"a_texcoord");
-   GLuint mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
-   GLuint mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
-
-   GLfloat vec[]={ 0.0f,0.0f,-0.5f, 100.0f,  0.0f,-0.5f,100.0f,100.0f,-0.5f,
-                   0.0f,0.0f,-0.5f, 100.0f,100.0f,-0.5f,  0.0f,100.0f,-0.5f };
-
-/*
-   GLfloat vec[]={ 0.0f,0.0f,-0.5f,
-                   -1.0f,1.0f,-0.5f,
-                   1.0f,1.0f,-0.5f,
-                   0.0f,0.0f,-0.5f,
-                   -1.0f,-1.0f,-0.5f,
-                   1.0f,-1.0f,-0.5f,
-   };
-*/
-   GLfloat tex[]={ 0.0f,0.0f, 2048.0f,0.0f,2048.0f,1024.0f,0.0f,0.0f,2048.0f,1024.0f,0.0f,1024.0f };
-
-//   GLfloat tex[]={ 0.0f,0.0f,1.0f,0.0f,1.0f,1.0f,
-//                   0.0f,0.0f,1.0f,1.0f,0.0f,1.0f };
-
-   YglMatrix mtx;
-   YglMatrix mtxt;
-   GLuint id = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
-
-   YglLoadIdentity(&mtx);
-   YglLoadIdentity(&mtxt);
-
-   YglOrtho(&mtx,0.0f,100.0f,100.0f,0.0f,1.0f,0.0f);
-
-   glUseProgram(_prgid[PG_NORMAL]);
-   glUniform1i(id, 0);
-
-   glEnableVertexAttribArray(vertexp);
-   glEnableVertexAttribArray(texcoordp);
-
-   glUniformMatrix4fv( mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView/*mtx*/.m[0][0] );
-
-   glVertexAttribPointer(vertexp,3, GL_FLOAT,GL_FALSE, 0, (const GLvoid*) vec );
-   glVertexAttribPointer(texcoordp,2, GL_FLOAT,GL_FALSE, 0, (const GLvoid*)tex );
-
-   glDrawArrays(GL_TRIANGLES, 0, 6);
-
-   return 0;
-
-}
 
 /*------------------------------------------------------------------------------------
  *  Window Operation
@@ -1514,10 +1564,19 @@ int YglProgramInit()
       return -1;
 
     id_normal_s_texture = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
-   //
+
+#if 0
+	YGLLOG("PG_VDP2_MOSAIC\n");
+	if (YglInitShader(PG_VDP2_MOSAIC, pYglprg_vdp1_normal_v, pYglprg_mosaic_f, NULL, NULL, NULL) != 0)
+		return -1;
+	id_mosaic_s_texture = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"s_texture");
+	id_mosaic = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_mosaic");
+	id_mosaic_color_offset = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_color_offset");
+#endif
 
    _prgid[PG_VFP1_ENDUSERCLIP] = _prgid[PG_NORMAL];
    _prgid[PG_VDP2_ADDBLEND] = _prgid[PG_NORMAL];
+   _prgid[PG_VDP2_MOSAIC] = _prgid[PG_NORMAL];
 
    YGLLOG("PG_VDP1_NORMAL\n");
    //
@@ -1525,6 +1584,7 @@ int YglProgramInit()
       return -1;
 
    id_vdp1_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
+
 
    // extentions
    _prgid[PG_VDP2_BLUR] = _prgid[PG_NORMAL];
@@ -1787,16 +1847,24 @@ int YglProgramChange( YglLevel * level, int prgid )
    level->prg[level->prgcurrent].prg=_prgid[prgid];
    level->prg[level->prgcurrent].vaid = 0;
 
-   if( prgid == PG_NORMAL )
+   if (prgid == PG_NORMAL)
    {
-      current->setupUniform    = Ygl_uniformNormal;
-      current->cleanupUniform  = Ygl_cleanupNormal;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
-      current->color_offset    = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
-      current->tex0 = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
+	   current->setupUniform = Ygl_uniformNormal;
+	   current->cleanupUniform = Ygl_cleanupNormal;
+	   current->vertexp = 0;
+	   current->texcoordp = 1;
+	   current->mtxModelView = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_mvpMatrix");
+	   //current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
+	   current->color_offset = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
+	   //current->tex0 = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
+   }
+   else if (prgid == PG_VDP2_MOSAIC)
+   {
+	   current->setupUniform = Ygl_uniformMosaic;
+	   current->cleanupUniform = Ygl_cleanupMosaic;
+	  current->vertexp = 0;
+	  current->texcoordp = 1;
+	  current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_mvpMatrix");
 
    }else if( prgid == PG_VDP1_NORMAL )
    {
@@ -2403,6 +2471,159 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
 	glUniform1f(u_blur_tw, w);
 	glUniform1f(u_blur_th, h);
 
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, srcTexture);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	// Clean up
+	glActiveTexture(GL_TEXTURE0);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	return 0;
+}
+
+
+/*
+hard/vdp2/hon/p12_13.htm
+*/
+
+const GLchar mosaic_blit_v[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"uniform mat4 u_mvpMatrix;    \n"
+"layout (location = 0) in vec4 a_position;   \n"
+"layout (location = 1) in vec2 a_texcoord;   \n"
+"out  highp vec2 v_texcoord;     \n"
+"void main()                  \n"
+"{                            \n"
+"   gl_Position = a_position*u_mvpMatrix; \n"
+"   v_texcoord  = a_texcoord; \n"
+"} ";
+
+const GLchar mosaic_blit_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                            \n"
+"in highp vec2 v_texcoord;                            \n"
+"uniform sampler2D u_Src;                        \n"
+"uniform float u_tw; \n"
+"uniform float u_th; \n"
+"uniform ivec2 u_mosaic;			 \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr; \n"
+"  addr.x = int(u_tw * v_texcoord.x);          \n"
+"  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
+"  addr.x = addr.x / u_mosaic.x * u_mosaic.x;               \n"
+"  addr.y = addr.y / u_mosaic.y * u_mosaic.y;               \n"
+"  vec4 txcol = texelFetch( u_Src, addr,0 ) ;      \n"
+"  if(txcol.a > 0.0)\n                                 "
+"     fragColor = txcol; \n                        "
+"  else \n                                            "
+"     discard;\n                                      "
+"}                                                   \n";
+
+static int mosaic_prg = -1;
+static int u_mosaic_mtxModelView = -1;
+static int u_mosaic_tw = -1;
+static int u_mosaic_th = -1;
+static int u_mosaic = -1;
+
+int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, int * mosaic) {
+
+	float vb[] = { 0, 0,
+		2.0, 0.0,
+		2.0, 2.0,
+		0, 2.0, };
+
+	float tb[] = { 0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0 };
+
+	vb[2] = w;
+	vb[4] = w;
+	vb[5] = h;
+	vb[7] = h;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
+
+	if (mosaic_prg == -1){
+		GLuint vshader;
+		GLuint fshader;
+		GLint compiled, linked;
+
+		const GLchar * vblit_img_v[] = { mosaic_blit_v, NULL };
+		const GLchar * fblit_img_v[] = { mosaic_blit_f, NULL };
+
+		mosaic_prg = glCreateProgram();
+		if (mosaic_prg == 0) return -1;
+
+		glUseProgram(mosaic_prg);
+		vshader = glCreateShader(GL_VERTEX_SHADER);
+		fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+		glShaderSource(vshader, 1, vblit_img_v, NULL);
+		glCompileShader(vshader);
+		glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			YGLLOG("Compile error in vertex shader.\n");
+			Ygl_printShaderError(vshader);
+			mosaic_prg = -1;
+			return -1;
+		}
+
+		glShaderSource(fshader, 1, fblit_img_v, NULL);
+		glCompileShader(fshader);
+		glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			YGLLOG("Compile error in fragment shader.\n");
+			Ygl_printShaderError(fshader);
+			mosaic_prg = -1;
+			return -1;
+		}
+
+		glAttachShader(mosaic_prg, vshader);
+		glAttachShader(mosaic_prg, fshader);
+		glLinkProgram(mosaic_prg);
+		glGetProgramiv(mosaic_prg, GL_LINK_STATUS, &linked);
+		if (linked == GL_FALSE) {
+			YGLLOG("Link error..\n");
+			Ygl_printShaderError(mosaic_prg);
+			mosaic_prg = -1;
+			return -1;
+		}
+
+		glUniform1i(glGetUniformLocation(mosaic_prg, "u_Src"), 0);
+		u_mosaic_mtxModelView = glGetUniformLocation(mosaic_prg, (const GLchar *)"u_mvpMatrix");
+		u_mosaic_tw = glGetUniformLocation(mosaic_prg, "u_tw");
+		u_mosaic_th = glGetUniformLocation(mosaic_prg, "u_th");
+		u_mosaic = glGetUniformLocation(mosaic_prg, "u_mosaic");
+
+	}
+	else{
+		glUseProgram(mosaic_prg);
+	}
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+	glUniformMatrix4fv(u_mosaic_mtxModelView, 1, GL_FALSE, matrix);
+	glUniform1f(u_mosaic_tw, w);
+	glUniform1f(u_mosaic_th, h);
+	glUniform2iv(u_mosaic, 1, mosaic);
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, srcTexture);
