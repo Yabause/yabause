@@ -90,6 +90,8 @@ protected:
 	int searchType;
 	QList <supportedRes_struct> supportedResolutions;
 	int oldMouseX, oldMouseY;
+	bool mouseCaptured;
+
 	float mouseXRatio, mouseYRatio;
 	int mouseSensitivity;
 	bool emulateMouse;
@@ -101,6 +103,7 @@ protected:
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );
 	virtual void keyReleaseEvent( QKeyEvent* event );
+	virtual void leaveEvent(QEvent * event);
 	virtual void mousePressEvent( QMouseEvent* event );
 	virtual void mouseReleaseEvent( QMouseEvent* event );
 	virtual void mouseMoveEvent( QMouseEvent* event );

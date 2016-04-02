@@ -111,6 +111,7 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setVisible( false );
 	mCanLog = true;
 	oldMouseX = oldMouseY = 0;
+	mouseCaptured = false;
 
 #ifndef SH2_TRACE
 	aTraceLogging->setVisible(false);
@@ -212,14 +213,38 @@ void UIYabause::closeEvent( QCloseEvent* e )
 }
 
 void UIYabause::keyPressEvent( QKeyEvent* e )
-{ PerKeyDown( e->key() ); }
+{ 
+	if (emulateMouse && mouseCaptured && e->key() == Qt::Key_Escape)
+		mouseCaptured = false;
+	else
+		PerKeyDown( e->key() ); 
+}
 
 void UIYabause::keyReleaseEvent( QKeyEvent* e )
 { PerKeyUp( e->key() ); }
 
+void UIYabause::leaveEvent( QEvent* e )
+{
+	if (emulateMouse && mouseCaptured)
+	{
+		// lock cursor to center
+		int midX = geometry().x()+(width()/2); // widget global x
+		int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+
+		QPoint newPos(midX, midY);
+		this->cursor().setPos(newPos);
+	}
+}
+
 void UIYabause::mousePressEvent( QMouseEvent* e )
 { 
-	PerKeyDown( (1 << 31) | e->button() );
+	if (emulateMouse && !mouseCaptured)
+	{
+		this->setCursor(Qt::BlankCursor);
+		mouseCaptured = true;
+	}
+	else
+		PerKeyDown( (1 << 31) | e->button() );
 }
 
 void UIYabause::mouseReleaseEvent( QMouseEvent* e )
@@ -241,30 +266,30 @@ void UIYabause::cursorRestore()
 
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
 { 
-	int x = (e->x()-oldMouseX)*mouseXRatio;
-	int y = (oldMouseY-e->y())*mouseYRatio;
+	int midX = geometry().x()+(width()/2); // widget global x
+	int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+
+	int x = (e->x()-(width()/2))*mouseXRatio;
+	int y = ((menubar->height()+toolBar->height()+(height()/2))-e->y())*mouseYRatio;
 	int minAdj = mouseSensitivity/100;
 
 	// If minimum movement is less than x, wait until next pass to apply	
 	if (abs(x) < minAdj) x = 0;
 	if (abs(y) < minAdj) y = 0;
 
-	PerAxisMove((1 << 30), x, y);
-
-	oldMouseX = oldMouseX+(x/mouseXRatio);
-	oldMouseY = oldMouseY-(y/mouseYRatio);	
+	if (mouseCaptured)
+		PerAxisMove((1 << 30), x, y);
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 
 	if (!isFullScreen())
 	{
-		if (emulateMouse)
+		if (emulateMouse && mouseCaptured)
 		{
-			int menuToolHeight = menubar->height() + toolBar->height();
-			if (oldMouseY > menuToolHeight)
-				this->setCursor(Qt::BlankCursor);
-			else
-				this->setCursor(Qt::ArrowCursor);
+			// lock cursor to center
+			QPoint newPos(midX, midY);
+			this->cursor().setPos(newPos);
+			this->setCursor(Qt::BlankCursor);
 			return;
 		}
 		else
@@ -272,24 +297,17 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 	}
 	else
 	{
-		if (vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER)
+		if (emulateMouse && mouseCaptured)
+		{
+			this->setCursor(Qt::BlankCursor);
+			return;
+		}
+		else if (vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER)
 		{
 			if (e->y() < showMenuBarHeight)
 				menubar->show();
 			else
-			{
 				menubar->hide();
-				if (emulateMouse)
-				{
-					this->setCursor(Qt::BlankCursor);
-					return;
-				}
-			}
-		}
-		else if (emulateMouse)
-		{
-			this->setCursor(Qt::BlankCursor);
-			return;
 		}
 
 		hideMouseTimer->start(3 * 1000);
