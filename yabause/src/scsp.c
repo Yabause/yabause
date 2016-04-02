@@ -117,6 +117,950 @@
 # define FLUSH_SCSP()  /*nothing*/
 #endif
 
+#ifdef USE_NEW_SCSP
+enum EnvelopeStates
+{
+   ATTACK,
+   DECAY1,
+   DECAY2,
+   RELEASE
+};
+
+//0x30 to 0x3f only
+const u8 attack_rate_table[][4] =
+{
+   { 4,4,4,4 },//0x30
+   { 3,4,4,4 },
+   { 3,4,3,4 },
+   { 3,3,3,4 },
+
+   { 3,3,3,3 },
+   { 2,3,3,3 },
+   { 2,3,2,3 },
+   { 2,2,2,3 },
+
+   { 2,2,2,2 },
+   { 1,2,2,2 },
+   { 1,2,1,2 },
+   { 1,1,1,2 },
+
+   { 1,1,1,1 },//0x3c
+   { 1,1,1,1 },//0x3d
+   { 1,1,1,1 },//0x3e
+   { 1,1,1,1 },//0x3f
+};
+
+const u8 decay_rate_table[][4] =
+{
+   { 1,1,1,1 },//0x30
+   { 2,1,1,1 },
+   { 2,1,2,1 },
+   { 2,2,2,1 },
+
+   { 2,2,2,2 },
+   { 4,2,2,2 },
+   { 4,2,4,2 },
+   { 4,4,4,2 },
+
+   { 4,4,4,4 },
+   { 8,4,4,4 },
+   { 8,4,8,4 },
+   { 8,8,8,4 },
+
+   { 8,8,8,8 },//0x3c
+   { 8,8,8,8 },//0x3d
+   { 8,8,8,8 },//0x3e
+   { 8,8,8,8 },//0x3f
+};
+
+//effective rate step table
+//settings 0x2 to 0x5, then repeats with bigger shifts
+//int_max represents going back to the beginning of a row since
+//the number of steps is not the same for each setting
+#define MAKE_TABLE(SHIFT) \
+   { 8192 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, INT_MAX,INT_MAX,INT_MAX,INT_MAX, INT_MAX }, \
+   { 8192 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, INT_MAX }, \
+   { 4096 >> SHIFT, INT_MAX,INT_MAX,INT_MAX,INT_MAX, INT_MAX,INT_MAX , INT_MAX }, \
+   { 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 2048 >> SHIFT, 2048 >> SHIFT, INT_MAX, INT_MAX, INT_MAX },
+
+const int envelope_table[][8] =
+{
+   MAKE_TABLE(0)
+   MAKE_TABLE(1)
+   MAKE_TABLE(2)
+   MAKE_TABLE(3)
+   MAKE_TABLE(4)
+   MAKE_TABLE(5)
+   MAKE_TABLE(6)
+   MAKE_TABLE(7)
+   MAKE_TABLE(8) 
+   MAKE_TABLE(9)
+   MAKE_TABLE(10)
+   MAKE_TABLE(11)
+   MAKE_TABLE(12)
+};
+
+//unknown stored bits are unknown1-5
+struct SlotRegs
+{
+   u8 kx;
+   u8 kb;
+   u8 sbctl;
+   u8 ssctl;
+   u8 lpctl;
+   u8 pcm8b;
+   u32 sa;
+   u16 lsa;
+   u16 lea;
+   u8 d2r;
+   u8 d1r;
+   u8 hold;
+   u8 ar;
+   u8 unknown1;
+   u8 ls;
+   u8 krs;
+   u8 dl;
+   u8 rr;
+   u8 unknown2;
+   u8 si;
+   u8 sd;
+   u16 tl;
+   u8 mdl;
+   u8 mdxsl;
+   u8 mdysl;
+   u8 unknown3;
+   u8 oct;
+   u8 unknown4;
+   u16 fns;
+   u8 re;
+   u8 lfof;
+   u8 plfows;
+   u8 plfos;
+   u8 alfows;
+   u8 alfos;
+   u8 unknown5;
+   u8 isel;
+   u8 imxl;
+   u8 disdl;
+   u8 dipan;
+   u8 efsdl;
+   u8 efpan;
+};
+
+struct SlotState
+{
+   u16 wave;
+   int backwards;
+   enum EnvelopeStates envelope;
+   s16 output;
+   u16 attenuation;
+   int step_count;
+   u32 sample_counter;
+   u32 envelope_steps_taken;
+   s32 waveform_phase_value;
+   s32 sample_offset;
+   u32 address_pointer;
+
+   int num;
+   int is_muted;
+};
+
+struct Slot
+{
+   //registers
+   struct SlotRegs regs;
+
+   //internal state
+   struct SlotState state;
+};
+
+struct Scsp
+{
+   u16 sound_stack[64];
+   struct Slot slots[32];
+}new_scsp;
+
+//pg, plfo
+void op1(struct Slot * slot)
+{
+   u32 oct = slot->regs.oct ^ 8;
+   u32 fns = slot->regs.fns ^ 0x400;
+   u32 phase_increment = fns << oct;
+
+   if (slot->state.attenuation > 0x3bf)
+      return;
+
+   slot->state.waveform_phase_value &= (1 << 18) - 1;//18 fractional bits
+   slot->state.waveform_phase_value += phase_increment;
+}
+
+int get_slot(struct Slot * slot, int mdsl)
+{
+   return (mdsl + slot->state.num) & 0x1f;
+}
+
+//address pointer calculation
+//modulation data read
+void op2(struct Slot * slot, struct Scsp * s)
+{
+   s32 md_out = 0;
+   s32 sample_delta = slot->state.waveform_phase_value >> 18;
+
+   if (slot->state.attenuation > 0x3bf)
+      return;
+
+   if (slot->regs.mdl)
+   {
+      //averaging operation
+      u32 x_sel = get_slot(slot, slot->regs.mdxsl);
+      u32 y_sel = get_slot(slot, slot->regs.mdysl);
+      s16 xd = s->sound_stack[x_sel];
+      s16 yd = s->sound_stack[y_sel];
+
+      s32 zd = (xd + yd) / 2;
+
+      //modulation operation
+      u16 shift = 0xf - (slot->regs.mdl);
+      zd >>= shift;
+
+      md_out = zd;
+   }
+
+   //address pointer
+
+   if (slot->regs.lpctl == 0)//no loop
+   {
+      slot->state.sample_offset += sample_delta;
+
+      if (slot->state.sample_offset >= slot->regs.lea)
+         slot->state.attenuation = 0x3ff;
+   }
+   else if (slot->regs.lpctl == 1)//normal loop
+   {
+      slot->state.sample_offset += sample_delta;
+
+      if (slot->state.sample_offset >= slot->regs.lea)
+         slot->state.sample_offset = slot->regs.lsa;
+   }
+   else if (slot->regs.lpctl == 2)//reverse
+   {
+      if (!slot->state.backwards)
+         slot->state.sample_offset += sample_delta;
+      else
+         slot->state.sample_offset -= sample_delta;
+
+      if (!slot->state.backwards)
+      {
+         if (slot->state.sample_offset >= slot->regs.lea)
+         {
+            slot->state.sample_offset = slot->regs.lea;
+            slot->state.backwards = 1;
+         }
+      }
+      else
+      {
+         //backwards
+         if (slot->state.sample_offset <= slot->regs.lsa)
+            slot->state.sample_offset = slot->regs.lea;
+      }
+   }
+   else if (slot->regs.lpctl == 3)//ping pong
+   {
+      if(!slot->state.backwards)
+         slot->state.sample_offset += sample_delta;
+      else
+         slot->state.sample_offset -= sample_delta;
+
+      if (!slot->state.backwards)
+      {
+         if (slot->state.sample_offset >= slot->regs.lea)
+         {
+            slot->state.sample_offset = slot->regs.lea;
+            slot->state.backwards = 1;
+         }
+      }
+      else
+      {
+         if (slot->state.sample_offset <= slot->regs.lsa)
+         {
+            slot->state.sample_offset = slot->regs.lsa;
+            slot->state.backwards = 0;
+         }
+      }
+   }
+
+   if (!slot->regs.pcm8b)
+      slot->state.address_pointer = (s32)slot->regs.sa + (slot->state.sample_offset + md_out) * 2;
+   else
+      slot->state.address_pointer = (s32)slot->regs.sa + (slot->state.sample_offset + md_out);
+}
+
+//waveform dram read
+void op3(struct Slot * slot)
+{
+   u32 addr = (slot->state.address_pointer) & 0x7FFFF;
+
+   if (slot->state.attenuation > 0x3bf)
+      return;
+
+   if (!slot->regs.pcm8b)
+      slot->state.wave = SoundRamReadWord(addr);
+   else
+      slot->state.wave = SoundRamReadByte(addr) << 8;
+
+   slot->state.output = slot->state.wave;
+}
+
+void change_envelope_state(struct Slot * slot, enum EnvelopeStates new_state)
+{
+   slot->state.envelope = new_state;
+   slot->state.step_count = 0;
+}
+
+int need_envelope_step(int effective_rate, u32 sample_counter, struct Slot* slot)
+{
+   if (sample_counter == 0)
+      return 0;
+
+   if (effective_rate == 0 || effective_rate == 1)
+   {
+      return 0;//never step
+   }
+   else if (effective_rate >= 0x30)
+   {
+      if ((sample_counter & 1) == 0)
+      {
+         slot->state.envelope_steps_taken++;
+         return 1;
+      }
+      else
+         return 0;
+   }
+   else
+   {
+      int pos = effective_rate - 2;
+
+      int result = 0;
+
+      int value = envelope_table[pos][slot->state.step_count];
+
+      if (sample_counter % value == 0)
+      {
+         result = 1;
+
+         slot->state.envelope_steps_taken++;
+         slot->state.step_count++;
+
+         if (envelope_table[pos][slot->state.step_count] == INT_MAX)
+            slot->state.step_count = 0;//reached the end of the array
+      }
+
+      return result;
+   }
+   return 0;
+}
+
+s32 get_rate(struct Slot * slot, int rate)
+{
+   s32 result = 0;
+
+   if (slot->regs.krs == 0xf)
+      result = rate * 2;
+   else
+   {
+      result = (slot->regs.krs * 2) + (rate * 2) + ((slot->regs.fns >> 9) & 1);
+      result = (8 ^ slot->regs.oct) + (result - 8);
+   }
+
+   if (result <= 0)
+      return 0;
+
+   if (result >= 0x3c)
+      return 0x3c;
+
+   return result;
+}
+
+void do_decay(struct Slot * slot, int rate_in)
+{
+   int rate = get_rate(slot, rate_in);
+   int sample_mod_4 = slot->state.envelope_steps_taken & 3;
+   int decay_rate;
+
+   if (rate <= 0x30)
+      decay_rate = decay_rate_table[0][sample_mod_4];
+   else
+      decay_rate = decay_rate_table[rate - 0x30][sample_mod_4];
+
+   if (need_envelope_step(rate, slot->state.sample_counter, slot))
+   {
+      if (slot->state.attenuation < 0x3bf)
+         slot->state.attenuation += decay_rate;
+   }
+}
+
+//interpolation
+//eg
+void op4(struct Slot * slot)
+{
+   int sample_mod_4 = slot->state.envelope_steps_taken & 3;
+
+   if (slot->state.attenuation >= 0x3bf)
+      return;
+
+   if (slot->state.envelope == ATTACK)
+   {
+      int rate = get_rate(slot, slot->regs.ar);
+      int need_step = need_envelope_step(rate, slot->state.sample_counter, slot);
+
+      if (need_step)
+      {
+         int attack_rate = 0;
+
+         if (rate <= 0x30)
+            attack_rate = attack_rate_table[0][sample_mod_4];
+         else
+            attack_rate = attack_rate_table[rate - 0x30][sample_mod_4];
+
+         slot->state.attenuation -= ((slot->state.attenuation >> attack_rate)) + 1;
+
+         if (slot->state.attenuation == 0)
+            change_envelope_state(slot, DECAY1);
+      }
+   }
+   else if (slot->state.envelope == DECAY1)
+   {
+      do_decay(slot,slot->regs.d1r);
+
+      if ((slot->state.attenuation >> 5) >= slot->regs.dl) 
+         change_envelope_state(slot, DECAY2);
+   }
+   else if (slot->state.envelope == DECAY2)
+      do_decay(slot, slot->regs.d2r);
+   else if (slot->state.envelope == RELEASE)
+      do_decay(slot, slot->regs.rr);
+}
+
+s16 apply_volume(u16 tl, u16 slot_att, const s16 s)
+{
+   u32 tl_att = tl * 4;
+   u32 att_clipped = 0;
+   s32 sample_att = 0;
+   u32 shift = 0;
+
+   tl_att += slot_att;
+
+   att_clipped = tl_att;
+   att_clipped &= 0x3f;
+   att_clipped ^= 0x7f;
+   att_clipped += 1;
+
+   sample_att = s * att_clipped;
+   shift = tl_att >> 6;
+
+   sample_att = sample_att >> (shift + 7);
+
+   return sample_att;
+}
+
+//level 1
+void op5(struct Slot * slot)
+{
+   if (slot->state.attenuation > 0x3bf)
+   {
+      slot->state.output = 0;
+      return;
+   }
+   else
+   {
+      s16 sample = apply_volume(slot->regs.tl, slot->state.attenuation, slot->state.output);
+      slot->state.output = sample;
+   }
+}
+
+//level 2
+void op6(struct Slot * slot)
+{
+   
+}
+
+//sound stack write
+void op7(struct Slot * slot, struct Scsp*s)
+{
+   u32 previous = s->sound_stack[slot->state.num + 32];
+   s->sound_stack[slot->state.num + 32] = slot->state.output;
+   s->sound_stack[slot->state.num] = previous;
+
+   slot->state.sample_counter++;
+}
+
+void keyon(struct Slot * slot) 
+{
+   if (slot->state.envelope == RELEASE || slot->state.attenuation > 0x3BF)
+   {
+      slot->state.envelope = ATTACK;
+      slot->state.attenuation = 0x280;
+      slot->state.sample_counter = 0;
+      slot->state.step_count = 0;
+      slot->state.sample_offset = 0;
+      slot->state.envelope_steps_taken = 0;
+   }
+   //otherwise ignore
+}
+
+void keyoff(struct Slot * slot)
+{
+   change_envelope_state(slot, RELEASE);
+}
+
+void keyonex(struct Scsp *s)
+{
+   int channel;
+   for (channel = 0; channel < 32; channel++)
+   {
+      if (s->slots[channel].regs.kb)
+         keyon(&s->slots[channel]);
+      else
+         keyoff(&s->slots[channel]);
+   }
+}
+
+void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
+{
+   int slot_num = (addr >> 5) & 0x1f;
+   struct Slot * slot = &s->slots[slot_num];
+   u32 offset = (addr - (0x20 * slot_num));
+
+   switch (offset)
+   {
+   case 0:
+      slot->regs.kb = (data >> 3) & 1;//has to be done first
+
+      if ((data >> 4) & 1)//keyonex
+         keyonex(s);
+ 
+      slot->regs.sbctl = (data >> 1) & 3;
+      slot->regs.ssctl = (slot->regs.ssctl & 1) | ((data & 1) << 1);
+      break;
+   case 1:
+      slot->regs.ssctl = (slot->regs.ssctl & 2) | ((data >> 7) & 1);
+      slot->regs.lpctl = (data >> 5) & 3;
+      slot->regs.pcm8b = (data >> 4) & 1;
+      slot->regs.sa = (slot->regs.sa & 0xffff) | ((data & 0xf) << 16);
+      break;
+   case 2:
+      slot->regs.sa = (slot->regs.sa & 0xf00ff) | (data << 8);
+      break;
+   case 3:
+      slot->regs.sa = (slot->regs.sa & 0xfff00) | data;
+      break;
+   case 4:
+      slot->regs.lsa = (slot->regs.lsa & 0x00ff) | (data << 8);
+      break;
+   case 5:
+      slot->regs.lsa = (slot->regs.lsa & 0xff00) | data;
+      break;
+   case 6:
+      slot->regs.lea = (slot->regs.lea & 0x00ff) | (data << 8);
+      break;
+   case 7:
+      slot->regs.lea = (slot->regs.lea & 0xff00) | data;
+      break;
+   case 8:
+      slot->regs.d2r = (data >> 3) & 0x1f;
+      slot->regs.d1r = (slot->regs.d1r & 3) | ((data & 0x7) << 2);
+      break;
+   case 9:
+      slot->regs.d1r = (slot->regs.d1r & 0x1c) | ((data >> 6) & 3);
+      slot->regs.hold = (data >> 5) & 1;
+      slot->regs.ar = data & 0x1f;
+      break;
+   case 10:
+      slot->regs.unknown1 = (data >> 7) & 1;
+      slot->regs.ls = (data >> 6) & 1;
+      slot->regs.krs = (data >> 2) & 0xf;
+      slot->regs.dl = (slot->regs.dl & 0x7) | ((data & 3) << 3);
+      break;
+   case 11:
+      slot->regs.dl = (slot->regs.dl & 0x18) | ((data >> 5) & 7);
+      slot->regs.rr = data & 0x1f;
+      break;
+   case 12:
+      slot->regs.unknown2 = (data >> 2) & 3;
+      slot->regs.si = (data >> 1) & 1;
+      slot->regs.sd = data & 1;
+      break;
+   case 13:
+      slot->regs.tl = data;
+      break;
+   case 14:
+      slot->regs.mdl = (data >> 4) & 0xf;
+      slot->regs.mdxsl = (slot->regs.mdxsl & 0x3) | ((data & 0xf) << 2);
+      break;
+   case 15:
+      slot->regs.mdxsl = (slot->regs.mdxsl & 0x3C) | (data >> 6) & 3;
+      slot->regs.mdysl = data & 0x3f;
+      break;
+   case 16:
+      slot->regs.unknown3 = (data >> 7) & 1;
+      slot->regs.oct = (data >> 3) & 0xf;
+      slot->regs.unknown4 = (data >> 2) & 1;
+      slot->regs.fns = (slot->regs.fns & 0xff) | ((data & 3) << 8);
+      break;
+   case 17:
+      slot->regs.fns = (slot->regs.fns & 0x300) | data;
+      break;
+   case 18:
+      slot->regs.re = (data >> 7) & 1;
+      slot->regs.lfof = (data >> 2) & 0x1f;
+      slot->regs.plfows = data & 3;
+      break;
+   case 19:
+      slot->regs.plfos = (data >> 5) & 7;
+      slot->regs.alfows = (data >> 3) & 3;
+      slot->regs.alfos = data & 7;
+      break;
+   case 20:
+      //nothing here
+      break;
+   case 21:
+      slot->regs.unknown5 = (data >> 7) & 1;
+      slot->regs.isel = (data >> 3) & 0xf;
+      slot->regs.imxl = data & 7;
+      break;
+   case 22:
+      slot->regs.disdl = (data >> 5) & 7;
+      slot->regs.dipan = data & 0x1f;
+      break;
+   case 23:
+      slot->regs.efsdl = (data >> 5) & 7;
+      slot->regs.efpan = data & 0x1f;
+      break;
+   default:
+      break;
+   }
+}
+
+u8 scsp_slot_read_byte(struct Scsp *s, u32 addr)
+{
+   int slot_num = (addr >> 5) & 0x1f;
+   struct Slot * slot = &s->slots[slot_num];
+   u32 offset = (addr - (0x20 * slot_num));
+   u8 data = 0;
+
+   switch (offset)
+   {
+   case 0:
+      data |= slot->regs.kb << 3;
+      data |= slot->regs.sbctl << 1;
+      data |= (slot->regs.ssctl >> 1) & 1;
+      break;
+   case 1:
+      data |= (slot->regs.ssctl & 1) << 7;
+      data |= slot->regs.lpctl << 5;
+      data |= slot->regs.pcm8b << 4;
+      data |= (slot->regs.sa & 0xf0000) >> 16;
+      break;
+   case 2:
+      data |= (slot->regs.sa & 0xff00) >> 8;
+      break;
+   case 3:
+      data |= slot->regs.sa & 0xff;
+      break;
+   case 4:
+      data |= (slot->regs.lsa & 0xff00) >> 8;
+      break;
+   case 5:
+      data |= slot->regs.lsa & 0xff;
+      break;
+   case 6:
+      data |= (slot->regs.lea & 0xff00) >> 8;
+      break;
+   case 7:
+      data |= slot->regs.lea & 0xff;
+      break;
+   case 8:
+      data |= slot->regs.d2r << 3;
+      data |= slot->regs.d1r >> 2;
+      break;
+   case 9:
+      data |= slot->regs.d1r << 6;
+      data |= slot->regs.hold << 5;
+      data |= slot->regs.ar;
+      break;
+   case 10:
+      data |= slot->regs.unknown1 << 7;
+      data |= slot->regs.ls << 6;
+      data |= slot->regs.krs << 2;
+      data |= slot->regs.dl >> 3;
+      break;
+   case 11:
+      data |= slot->regs.dl << 5;
+      data |= slot->regs.rr;
+      break;
+   case 12:
+      data |= slot->regs.unknown2 << 2;
+      data |= slot->regs.si << 1;
+      data |= slot->regs.sd;
+      break;
+   case 13:
+      data |= slot->regs.tl;
+      break;
+   case 14:
+      data |= slot->regs.mdl << 4;
+      data |= slot->regs.mdxsl >> 2;
+      break;
+   case 15:
+      data |= slot->regs.mdxsl << 6;
+      data |= slot->regs.mdysl;
+      break;
+   case 16:
+      data |= slot->regs.unknown3 << 7;
+      data |= slot->regs.oct << 3;
+      data |= slot->regs.unknown4 << 2;
+      data |= slot->regs.fns >> 8;
+      break;
+   case 17:
+      data |= slot->regs.fns;
+      break;
+   case 18:
+      data |= slot->regs.re << 7;
+      data |= slot->regs.lfof << 2;
+      data |= slot->regs.plfows;
+      break;
+   case 19:
+      data |= slot->regs.plfos << 5;
+      data |= slot->regs.alfows << 3;
+      data |= slot->regs.alfos;
+      break;
+   case 20:
+      //nothing
+      break;
+   case 21:
+      data |= slot->regs.unknown5 << 7;
+      data |= slot->regs.isel << 3;
+      data |= slot->regs.imxl;
+      break;
+   case 22:
+      data |= slot->regs.disdl << 5;
+      data |= slot->regs.dipan;
+      break;
+   case 23:
+      data |= slot->regs.efsdl << 5;
+      data |= slot->regs.efpan;
+      break;
+   }
+
+   return data;
+}
+
+void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
+{
+   int slot_num = (addr >> 5) & 0x1f;
+   struct Slot * slot = &s->slots[slot_num];
+   u32 offset = (addr - (0x20 * slot_num));
+
+   switch (offset >> 1)
+   {
+   case 0:
+      slot->regs.kb = (data >> 11) & 1;//has to be done before keyonex
+
+      if (data & (1 << 12))
+         keyonex(s);
+
+      slot->regs.sbctl = (data >> 9) & 3;
+      slot->regs.ssctl = (data >> 7) & 3;
+      slot->regs.lpctl = (data >> 5) & 3;
+      slot->regs.pcm8b = (data >> 4) & 1;
+      slot->regs.sa = (slot->regs.sa & 0xffff) | ((data & 0xf) << 16);
+      break;
+   case 1:
+      slot->regs.sa = (slot->regs.sa & 0xf0000) | data;
+      break;
+   case 2:
+      slot->regs.lsa = data;
+      break;
+   case 3:
+      slot->regs.lea = data;
+      break;
+   case 4:
+      slot->regs.d2r = data >> 11;
+      slot->regs.d1r = (data >> 6) & 0x1f;
+      slot->regs.hold = (data >> 5) & 1;
+      slot->regs.ar = data & 0x1f;
+      break;
+   case 5:
+      slot->regs.unknown1 = (data >> 15) & 1;
+      slot->regs.ls = (data >> 14) & 1;
+      slot->regs.krs = (data >> 10) & 0xf;
+      slot->regs.dl = (data >> 5) & 0x1f;
+      slot->regs.rr = data & 0x1f;
+      break;
+   case 6:
+      slot->regs.unknown2 = (data >> 10) & 3;
+      slot->regs.si = (data >> 9) & 1;
+      slot->regs.sd = (data >> 8) & 1;
+      slot->regs.tl = data & 0xff;
+      break;
+   case 7:
+      slot->regs.mdl = (data >> 12) & 0xf;
+      slot->regs.mdxsl = (data >> 6) & 0x3f;
+      slot->regs.mdysl = data & 0x3f;
+      break;
+   case 8:
+      slot->regs.unknown3 = (data >> 15) & 1;
+      slot->regs.unknown4 = (data >> 10) & 1;
+      slot->regs.oct = (data >> 11) & 0xf;
+      slot->regs.fns = data & 0x3ff;
+      break;
+   case 9:
+      slot->regs.re = (data >> 15) & 1;
+      slot->regs.lfof = (data >> 10) & 0x1f;
+      slot->regs.plfows = (data >> 8) & 3;
+      slot->regs.plfos = (data >> 5) & 7;
+      slot->regs.alfows = (data >> 3) & 3;
+      slot->regs.alfos = data & 7;
+      break;
+   case 10:
+      slot->regs.unknown5 = (data >> 7) & 1;
+      slot->regs.isel = (data >> 3) & 0xf;
+      slot->regs.imxl = data & 7;
+      break;
+   case 11:
+      slot->regs.disdl = (data >> 13) & 7;
+      slot->regs.dipan = (data >> 8) & 0x1f;
+      slot->regs.efsdl = (data >> 5) & 7;
+      slot->regs.efpan = data & 0x1f;
+      break;
+   default:
+      break;
+   }
+}
+
+u16 scsp_slot_read_word(struct Scsp *s, u32 addr)
+{
+   int slot_num = (addr >> 5) & 0x1f;
+   struct Slot * slot = &s->slots[slot_num];
+   u32 offset = (addr - (0x20 * slot_num));
+   u16 data = 0;
+
+   switch (offset >> 1)
+   {
+   case 0:
+      //keyonex not stored
+      data |= slot->regs.kb << 11;
+      data |= slot->regs.sbctl << 9;
+      data |= slot->regs.ssctl << 7;
+      data |= slot->regs.lpctl << 5;
+      data |= slot->regs.pcm8b << 4;
+      data |= (slot->regs.sa >> 16) & 0xf;
+      break;
+   case 1:
+      data = slot->regs.sa & 0xffff;
+      break;
+   case 2:
+      data = slot->regs.lsa;
+      break;
+   case 3:
+      data = slot->regs.lea;
+      break;
+   case 4:
+      data |= slot->regs.d2r << 11;
+      data |= slot->regs.d1r << 6;
+      data |= slot->regs.hold << 5;
+      data |= slot->regs.ar;
+      break;
+   case 5:
+      data |= slot->regs.unknown1 << 15;
+      data |= slot->regs.ls << 14;
+      data |= slot->regs.krs << 10;
+      data |= slot->regs.dl << 5;
+      data |= slot->regs.rr;
+      break;
+   case 6:
+      data |= slot->regs.unknown2 << 10;
+      data |= slot->regs.si << 9;
+      data |= slot->regs.sd << 8;
+      data |= slot->regs.tl;
+      break;
+   case 7:
+      data |= slot->regs.mdl << 12;
+      data |= slot->regs.mdxsl << 6;
+      data |= slot->regs.mdysl;
+      break;
+   case 8:
+      data |= slot->regs.unknown3 << 15;
+      data |= slot->regs.oct << 11;
+      data |= slot->regs.unknown4 << 10;
+      data |= slot->regs.fns;
+      break;
+   case 9:
+      data |= slot->regs.re << 15;
+      data |= slot->regs.lfof << 10;
+      data |= slot->regs.plfows << 8;
+      data |= slot->regs.plfos << 5;
+      data |= slot->regs.alfows << 3;
+      data |= slot->regs.alfos;
+      break;
+   case 10:
+      data |= slot->regs.unknown5 << 7;
+      data |= slot->regs.isel << 3;
+      data |= slot->regs.imxl;
+      break;
+   case 11:
+      data |= slot->regs.disdl << 13;
+      data |= slot->regs.dipan << 8;
+      data |= slot->regs.efsdl << 5;
+      data |= slot->regs.efpan;
+      break;
+   }
+   return data;
+}
+
+s16 generate_sample(struct Scsp * s)
+{
+   static int inited = 0;
+   s16 output = 0;
+   int step_num = 0;
+
+   if (!inited)
+   {
+      int slot_num;
+      memset(&new_scsp, 0, sizeof(struct Scsp));
+
+      for (slot_num = 0; slot_num < 32; slot_num++)
+      {
+         s->slots[slot_num].state.attenuation = 0x3FF;
+         s->slots[slot_num].state.envelope = RELEASE;
+         s->slots[slot_num].state.num = slot_num;
+      }
+      
+      inited = 1;
+   }
+
+   //run 32 steps to generate 1 full sample (512 clock cycles at 22579200hz)
+   //7 operations happen simultaneously on different channels due to pipelining
+   for (step_num = 0; step_num < 32; step_num++)
+   {
+      op1(&s->slots[step_num]);//phase, pitch lfo
+      op2(&s->slots[(step_num - 1) & 0x1f],s);//address pointer, modulation data read
+      op3(&s->slots[(step_num - 2) & 0x1f]);//waveform dram read
+      op4(&s->slots[(step_num - 3) & 0x1f]);//interpolation, eg, amplitude lfo
+      op5(&s->slots[(step_num - 4) & 0x1f]);//level calc 1
+      op6(&s->slots[(step_num - 5) & 0x1f]);//level calc 2
+      op7(&s->slots[(step_num - 6) & 0x1f],s);//sound stack write
+
+      if (!s->slots[(step_num - 6) & 0x1f].state.is_muted)
+      {
+         if(s->slots[(step_num - 6) & 0x1f].regs.disdl)
+            output += s->slots[(step_num - 6) & 0x1f].state.output >> 1;
+      }
+   }
+
+   return output;
+}
+#endif
+
 ////////////////////////////////////////////////////////////////
 
 #ifndef PI
@@ -597,6 +1541,10 @@ scsp_slot_refresh_einc (slot_t *slot, u32 adsr_bitmask)
 static void
 scsp_slot_set_b (u32 s, u32 a, u8 d)
 {
+#ifdef USE_NEW_SCSP
+  scsp_slot_write_byte(&new_scsp, a, d);
+#endif
+
   slot_t *slot = &(scsp.slot[s]);
 
   SCSPLOG("slot %d : reg %.2X = %.2X\n", s, a & 0x1F, d);
@@ -890,6 +1838,9 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
 static void
 scsp_slot_set_w (u32 s, s32 a, u16 d)
 {
+#ifdef USE_NEW_SCSP
+  scsp_slot_write_word(&new_scsp, a, d);
+#endif
   slot_t *slot = &(scsp.slot[s]);
 
   SCSPLOG ("slot %d : reg %.2X = %.4X\n", s, a & 0x1E, d);
@@ -1124,6 +2075,9 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
 static u8
 scsp_slot_get_b (u32 s, u32 a)
 {
+#ifdef USE_NEW_SCSP
+  return scsp_slot_read_byte(&new_scsp, a);
+#endif
   u8 val = scsp_isr[a ^ 3];
 
   // Mask out keyonx
@@ -1136,6 +2090,9 @@ scsp_slot_get_b (u32 s, u32 a)
 
 static u16 scsp_slot_get_w(u32 s, u32 a)
 {
+#ifdef USE_NEW_SCSP
+  return scsp_slot_read_word(&new_scsp, a);
+#endif
   u16 val = *(u16 *)&scsp_isr[a ^ 2];
 
   if ((a & 0x1E) == 0x00) return val &= 0xEFFF;
@@ -2280,6 +3237,20 @@ static void (*scsp_slot_update_p[2][2][2][2][2])(slot_t *slot) =
 void
 scsp_update (s32 *bufL, s32 *bufR, u32 len)
 {
+#ifdef USE_NEW_SCSP
+   scsp_bufL = bufL;
+   scsp_bufR = bufR;
+
+   scsp_buf_len = len;
+   scsp_buf_pos = 0;
+
+   for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+   {
+      s16 out = generate_sample(&new_scsp);
+      scsp_bufL[scsp_buf_pos] += out;
+      scsp_bufR[scsp_buf_pos] += out;
+   }
+#else
   slot_t *slot;
 
   scsp_bufL = bufL;
@@ -2375,15 +3346,22 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
   {
 	  SCSPLOG("WARNING: CDDA buffer underrun\n");
   }
+#endif
 }
 
 void
 scsp_update_monitor(void)
 {
+#ifdef USE_NEW_SCSP
+   scsp.ca = new_scsp.slots[scsp.mslc].state.sample_offset >> 5;
+   scsp.sgc = new_scsp.slots[scsp.mslc].state.envelope;
+   scsp.eg = new_scsp.slots[scsp.mslc].state.attenuation >> 5;
+#else
    slot_t *slot = &scsp.slot[scsp.mslc];
    scsp.ca = ((slot->fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
    scsp.sgc = slot->ecurp;
    scsp.eg = 0x1f - (slot->env >> (SCSP_ENV_HB - 5));
+#endif
 #ifdef PSP
    WRITE_THROUGH(scsp.ca);
    WRITE_THROUGH(scsp.sgc);
@@ -2776,7 +3754,10 @@ scsp_r_w (u32 a)
     }
   else if (a < 0x700)
     {
-
+#ifdef USE_NEW_SCSP
+       u32 addr = a - 0x600;
+       return new_scsp.sound_stack[(addr/2)&0x3f];
+#endif
     }
   else if (a >= 0x700 && a < 0x780)
   {
