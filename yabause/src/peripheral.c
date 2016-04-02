@@ -392,7 +392,7 @@ void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy)
    if (negy) diffy = ~(mouse->mousebits[2]) & 0xFF;
    else diffy = mouse->mousebits[2];
 
-   if (dispx > 0)
+   if (dispx >= 0)
    {
       if (negx)
       {
@@ -419,7 +419,7 @@ void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy)
       }
    }
 
-   if (dispy > 0)
+   if (dispy >= 0)
    {
       if (negy)
       {
