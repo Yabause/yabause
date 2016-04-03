@@ -137,6 +137,7 @@ int Ygl_uniformVdp1CommonParam(void * p){
 
 	if (param == NULL) return 0;
 
+
 	if (param->sprite != -1){
 		glUniform1i(param->sprite, 0);
 	}
@@ -494,7 +495,8 @@ int Ygl_cleanupVdp1Normal(void * p )
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_tess_v[] =
 #if defined(_OGLES3_)
-"#version 320 es \n"
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
 #else
 "#version 400 \n"
 #endif
@@ -513,7 +515,8 @@ const GLchar * pYglprg_vdp1_gouraudshading_tess_v[] = { Yglprg_vdp1_gouraudshadi
 
 const GLchar Yglprg_tess_c[] =
 #if defined(_OGLES3_)
-"#version 320 es \n"
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
 #else
 "#version 400 \n"
 #endif
@@ -548,7 +551,8 @@ const GLchar * pYglprg_vdp1_gouraudshading_tess_c[] = { Yglprg_tess_c, NULL };
 
 const GLchar Yglprg_tess_e[] =
 #if defined(_OGLES3_)
-"#version 320 es \n"
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
 #else
 "#version 400 \n"
 #endif
@@ -579,7 +583,8 @@ const GLchar * pYglprg_vdp1_gouraudshading_tess_e[] = { Yglprg_tess_e, NULL };
 
 const GLchar Yglprg_tess_g[] =
 #if defined(_OGLES3_)
-"#version 320 es \n"
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
 #else
 "#version 400 \n"
 #endif
@@ -841,6 +846,7 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
 
 static YglVdp1CommonParam mesh = { 0 };
+static YglVdp1CommonParam grow_tess = { 0 };
 static YglVdp1CommonParam mesh_tess = { 0 };
 
 
@@ -1746,9 +1752,7 @@ int YglTesserationProgramInit()
 			pYglprg_vdp1_gouraudshading_tess_g) != 0)
 			return -1;
 
-		id_gt.sprite = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"u_sprite");
-		id_gt.tessLevelInner = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"TessLevelInner");
-		id_gt.tessLevelOuter = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"TessLevelOuter");
+		Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], &grow_tess);
 
 		//---------------------------------------------------------------------------------------------------------
 		YGLLOG("PG_VFP1_MESH_TESS");
@@ -1904,7 +1908,7 @@ int YglProgramChange( YglLevel * level, int prgid )
    else if (prgid == PG_VFP1_GOURAUDSAHDING_TESS ){
 	   level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
 	   level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-	   level->prg[level->prgcurrent].ids = &id_gt;
+	   level->prg[level->prgcurrent].ids = &grow_tess;
 	   current->vertexp = 0;
 	   current->texcoordp = 1;
 	   level->prg[level->prgcurrent].vaid = 2;
