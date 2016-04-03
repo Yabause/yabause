@@ -137,10 +137,17 @@ int Ygl_uniformVdp1CommonParam(void * p){
 
 	if (param == NULL) return 0;
 
-	glUniform1i(param->sprite, 0);
+	if (param->sprite != -1){
+		glUniform1i(param->sprite, 0);
+	}
 
-	if (param->tessLevelInner != -1) glUniform1f(param->tessLevelInner, TESS_COUNT);
-	if (param->tessLevelOuter != -1) glUniform1f(param->tessLevelOuter, TESS_COUNT);
+	if (param->tessLevelInner != -1) {
+		glUniform1f(param->tessLevelInner, (float)TESS_COUNT);
+	}
+
+	if (param->tessLevelOuter != -1) {
+		glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
+	}
 
 	if (param->fbo != -1){
 		glUniform1i(param->fbo, 1);
@@ -1084,6 +1091,7 @@ const GLchar Yglprg_vdp2_drawfb_f[] =
 "#version 330 \n"
 #endif
 "precision highp float;\n"
+"precision highp sampler2D; \n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -1145,7 +1153,8 @@ const GLchar Yglprg_vdp2_drawfb_linecolor_f[] =
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                             \n"
+"precision highp float;\n"
+"precision highp sampler2D; \n"
 "in vec2 v_texcoord;                             \n"
 "uniform sampler2D s_vdp1FrameBuffer;                 \n"
 "uniform float u_from;                                  \n"
@@ -1224,7 +1233,8 @@ const GLchar Yglprg_vdp2_drawfb_linecolor_destination_alpha_f[] =
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                             \n"
+"precision highp float;\n"
+"precision highp sampler2D; \n"
 "in vec2 v_texcoord;                             \n"
 "uniform sampler2D s_vdp1FrameBuffer;                 \n"
 "uniform float u_from;                                  \n"
@@ -1292,6 +1302,7 @@ const GLchar Yglprg_vdp2_drawfb_addcolor_f[] =
 "#version 330 \n"
 #endif
 "precision highp float;\n"
+"precision highp sampler2D; \n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -1302,9 +1313,11 @@ const GLchar Yglprg_vdp2_drawfb_addcolor_f[] =
 "{\n"
 "  vec2 addr = v_texcoord;\n"
 "  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
-"  int additional = int(fbColor.a * 255.0);\n"
+"  highp int additional = int(fbColor.a * 255.0);\n"
 "  highp float alpha = float((additional/8)*8)/255.0;\n"
-"  highp float depth = (float(additional&0x07)/10.0) + 0.05;\n"
+"  highp float depth = ((float(additional&0x07))/10.0) + 0.05;\n"
+"  //highp float dv=float(additional-(additional/8*8)); \n"
+"  //highp float depth = (dv+1.0)/10.0 + 0.05; \n"
 "  if( depth < u_from || depth > u_to ){ discard;return;}\n"
 "  if( alpha <= 0.0){\n"
 "     discard;\n"
@@ -1594,8 +1607,8 @@ int YglProgramInit()
 
    if (YglInitShader(PG_VFP1_GOURAUDSAHDING, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_f, NULL, NULL, NULL) != 0)
       return -1;
-   id_g.sprite = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"u_sprite");
 
+   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING], &id_g);
 
 
    YGLLOG("PG_VDP2_DRAWFRAMEBUFF --START--\n");
