@@ -1178,6 +1178,8 @@ int YglInit(int width, int height, unsigned int depth) {
    
    _Ygl->smallfbo = 0;
    _Ygl->smallfbotex = 0;
+   _Ygl->tmpfbo = 0;
+   _Ygl->tmpfbotex = 0;
 
    YglGLInit(width, height);
 
@@ -1331,7 +1333,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    return program;
 }
 
-void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy ) {
+void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy) {
 	unsigned int x, y;
 	YglProgram *program;
 	texturecoordinate_struct *tmp;
@@ -1341,9 +1343,20 @@ void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx,
 
 	int vHeight;
 
-	if ((input->blendmode & 0x03) == 2)
+	if (input->mosaicxmask != 1 || input->mosaicymask != 1 )
 	{
-		prg = PG_VDP2_ADDBLEND;
+		prg = PG_VDP2_MOSAIC;
+	}
+	//  ToDo Color Calcuration version for mosaic
+	
+	//if ((input->blendmode & 0x03) == VDP2_CC_ADD)
+	//{
+	//	prg = PG_VDP2_ADDBLEND;
+	//}
+	
+	if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+	{
+		prg = PG_VDP2_BLUR;
 	}
 
   if (input->linescreen){
@@ -1354,6 +1367,8 @@ void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx,
 	program = YglGetProgram(input, prg);
 	if (program == NULL) return;
 
+	program->mosaic[0] = input->mosaicxmask;
+	program->mosaic[1] = input->mosaicymask;
 
 	program->color_offset_val[0] = (float)(input->cor) / 255.0f;
 	program->color_offset_val[1] = (float)(input->cog) / 255.0f;
@@ -1383,7 +1398,7 @@ void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx,
 	tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
 
 	program->currentQuad += 12;
-	YglTMAllocate(_Ygl->texture_manager, output, input->w, input->h, &x, &y);
+	YglTMAllocate(_Ygl->texture_manager, output, input->cellw, input->cellh, &x, &y);
 	if (output->textdata == NULL){
 		abort();
 	}
@@ -1400,17 +1415,17 @@ void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx,
 	5 +---+ 4
 	*/
 
-	if (input->flip & 0x1) {
-		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
+	if (input->flipfunction & 0x1) {
+		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->cellw) - ATLAS_BIAS;
 		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
 	}
 	else {
 		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w) - ATLAS_BIAS;
+		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
 	}
-	if (input->flip & 0x2) {
-		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h - cy) - ATLAS_BIAS;
-		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h - (cy+vHeight) ) + ATLAS_BIAS;
+	if (input->flipfunction & 0x2) {
+		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->cellh - cy) - ATLAS_BIAS;
+		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh - (cy + vHeight)) + ATLAS_BIAS;
 	}
 	else {
 		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + cy ) + ATLAS_BIAS;
@@ -1430,7 +1445,7 @@ void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx,
 
 
 
-float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
+float * YglQuad(vdp2draw_struct * input, YglTexture * output, YglCache * c) {
    unsigned int x, y;
    YglProgram *program;
    texturecoordinate_struct *tmp;
@@ -1439,10 +1454,19 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    float * pos;
    //float * vtxa;
 
-
-   if( (input->blendmode&0x03) == 2 )
+   if (input->mosaicxmask != 1 || input->mosaicymask != 1)
    {
-      prg = PG_VDP2_ADDBLEND;
+	   prg = PG_VDP2_MOSAIC;
+   }
+
+   //  ToDo Color Calcuration version for mosaic
+   if ((input->blendmode & 0x03) == VDP2_CC_ADD)
+   {
+ //     prg = PG_VDP2_ADDBLEND;
+   }
+   else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+   {
+	   prg = PG_VDP2_BLUR;
    }
    else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
@@ -1459,6 +1483,8 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    program = YglGetProgram(input,prg);
    if( program == NULL ) return NULL;
 
+   program->mosaic[0] = input->mosaicxmask;
+   program->mosaic[1] = input->mosaicymask;
 
    program->color_offset_val[0] = (float)(input->cor)/255.0f;
    program->color_offset_val[1] = (float)(input->cog)/255.0f;
@@ -1486,7 +1512,7 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
    tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
 
    program->currentQuad += 12;
-   YglTMAllocate(_Ygl->texture_manager, output, input->w, input->h, &x, &y);
+   YglTMAllocate(_Ygl->texture_manager, output, input->cellw, input->cellh, &x, &y);
    if (output->textdata == NULL){
 	   abort();
    }
@@ -1503,24 +1529,24 @@ float * YglQuad(YglSprite * input, YglTexture * output, YglCache * c) {
      5 +---+ 4
    */
 
-   if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
+   if (input->flipfunction & 0x1) {
+	   tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->cellw) - ATLAS_BIAS;
       tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ ATLAS_BIAS;
    } else {
       tmp[0].s = tmp[3].s = tmp[5].s = (float)(x) + ATLAS_BIAS;
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
+	  tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
    }
-   if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
+   if (input->flipfunction & 0x2) {
+	   tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->cellh) - ATLAS_BIAS;
       tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
 	   tmp[0].t = tmp[1].t = tmp[3].t = (float)(y) + ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
+	   tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
    }
 
    if( c != NULL )
    {
-      switch(input->flip) {
+	   switch (input->flipfunction) {
         case 0:
 			c->x = *(program->textcoords + ((program->currentQuad - 12) * 2));   // upper left coordinates(0)
 			c->y = *(program->textcoords + ((program->currentQuad - 12) * 2) + 1); // upper left coordinates(0)
@@ -1651,7 +1677,7 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
 	int u, v;
 
 	// Select Program
-	if ((input->blendmode & 0x03) == 2)
+	if ((input->blendmode & 0x03) == VDP2_CC_ADD)
 	{
 		prg = PG_VDP2_ADDBLEND;
 	}
@@ -1911,7 +1937,7 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    float * pos;
 
 
-   if( (input->blendmode&0x03) == 2 )
+   if ((input->blendmode & 0x03) == VDP2_CC_ADD)
    {
       prg = PG_VDP2_ADDBLEND;
    }
@@ -2244,7 +2270,7 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
 
 
 //////////////////////////////////////////////////////////////////////////////
-void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, float sx, float sy ) {
+void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy) {
 	YglProgram * program;
 	unsigned int x, y;
 	texturecoordinate_struct *tmp;
@@ -2254,17 +2280,30 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, fl
 
 	int prg = PG_NORMAL;
 
-	if ((input->blendmode & 0x03) == 2)
+	if (input->mosaicxmask != 1 || input->mosaicymask != 1)
 	{
-		prg = PG_VDP2_ADDBLEND;
+		prg = PG_VDP2_MOSAIC;
+	}
+	//  ToDo Color Calcuration version for mosaic
+
+	if ((input->blendmode & 0x03) == VDP2_CC_ADD)
+	{
+//		prg = PG_VDP2_ADDBLEND;
+	}
+	else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+	{
+		prg = PG_VDP2_BLUR;
 	}
 
   if (input->linescreen){
     prg = PG_LINECOLOR_INSERT;
   }
 
-	program = YglGetProgram(input, prg);
+  program = YglGetProgram((YglSprite *)input, prg);
 	if (program == NULL) return;
+
+	program->mosaic[0] = input->mosaicxmask;
+	program->mosaic[1] = input->mosaicymask;
 
 	program->color_offset_val[0] = (float)(input->cor) / 255.0f;
 	program->color_offset_val[1] = (float)(input->cog) / 255.0f;
@@ -2299,17 +2338,17 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, fl
 
 	tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
 
-	if (input->flip & 0x1) {
-		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w) - ATLAS_BIAS;
+	if (input->flipfunction & 0x1) {
+		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->cellw) - ATLAS_BIAS;
 		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
 	}
 	else {
 		tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w) - ATLAS_BIAS;
+		tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
 	}
-	if (input->flip & 0x2) {
-		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h - cy) - ATLAS_BIAS;
-		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h - (cy + vHeight)) + ATLAS_BIAS;
+	if (input->flipfunction & 0x2) {
+		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->cellh - cy) - ATLAS_BIAS;
+		tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh - (cy + vHeight)) + ATLAS_BIAS;
 	}
 	else {
 		tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + cy) + ATLAS_BIAS;
@@ -2325,7 +2364,7 @@ void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, fl
 
 }
 
-void YglCachedQuad(YglSprite * input, YglCache * cache) {
+void YglCachedQuad(vdp2draw_struct * input, YglCache * cache) {
    YglProgram * program;
    unsigned int x,y;
    texturecoordinate_struct *tmp;
@@ -2335,9 +2374,19 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
 
    int prg = PG_NORMAL;
 
-   if( (input->blendmode&0x03) == 2 )
+   if (input->mosaicxmask != 1 || input->mosaicymask != 1)
    {
-      prg = PG_VDP2_ADDBLEND;
+	   prg = PG_VDP2_MOSAIC;
+   }
+   //  ToDo Color Calcuration version for mosaic
+
+   if ((input->blendmode & 0x03) == VDP2_CC_ADD)
+   {
+ //     prg = PG_VDP2_ADDBLEND;
+   }
+   else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
+   {
+	   prg = PG_VDP2_BLUR;
    }
    else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
@@ -2353,6 +2402,9 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
 
    program = YglGetProgram(input,prg);
    if( program == NULL ) return;
+
+   program->mosaic[0] = input->mosaicxmask;
+   program->mosaic[1] = input->mosaicymask;
 
    program->color_offset_val[0] = (float)(input->cor)/255.0f;
    program->color_offset_val[1] = (float)(input->cog)/255.0f;
@@ -2386,19 +2438,19 @@ void YglCachedQuad(YglSprite * input, YglCache * cache) {
 
   tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
 
-   if (input->flip & 0x1) {
-      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->w)-ATLAS_BIAS;
+   if (input->flipfunction & 0x1) {
+      tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->cellw)-ATLAS_BIAS;
       tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
    } else {
       tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-      tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->w)-ATLAS_BIAS;
+	  tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
    }
-   if (input->flip & 0x2) {
-      tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->h)-ATLAS_BIAS;
+   if (input->flipfunction & 0x2) {
+	   tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->cellh) - ATLAS_BIAS;
       tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
    } else {
       tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
-      tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->h)-ATLAS_BIAS;
+	  tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
    }
 
 
@@ -2907,7 +2959,7 @@ void YglRender(void) {
 		for (i = 0; i < _Ygl->depth; i++)
 		{
 			level = _Ygl->levels + i;
-			if (level->blendmode != 0)
+			if (level->blendmode != 0x00)
 			{
 				to = i;
 
@@ -2928,6 +2980,8 @@ void YglRender(void) {
 			glDisable(GL_STENCIL_TEST);
 			for (j = 0; j < (level->prgcurrent + 1); j++)
 			{
+				YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
+
 				if (level->prg[j].prgid != cprg)
 				{
 					cprg = level->prg[j].prgid;
@@ -2938,21 +2992,19 @@ void YglRender(void) {
 					level->prg[j].setupUniform((void*)&level->prg[j]);
 				}
 
-				YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
-
 				if (level->prg[j].currentQuad != 0)
 				{
 					if (level->prg[j].prgid == PG_LINECOLOR_INSERT){
 						glDisable(GL_BLEND);
 					}else{
-						if (level->prg[j].blendmode == 0){
+						if (level->prg[j].blendmode == VDP2_CC_NONE){
 							glDisable(GL_BLEND);
 						}
-						else if (level->prg[j].blendmode == 1){
+						else if (level->prg[j].blendmode == VDP2_CC_RATE){
 							glEnable(GL_BLEND);
 							glBlendFunc(blendfunc_src, blendfunc_dst);
 						}
-						else if (level->prg[j].blendmode == 2){
+						else if (level->prg[j].blendmode == VDP2_CC_ADD){
 							glEnable(GL_BLEND);
 							glBlendFunc(GL_ONE, GL_ONE);
 						}
@@ -2968,6 +3020,7 @@ void YglRender(void) {
 
 				if (level->prg[j].cleanupUniform)
 				{
+					level->prg[j].matrix = (GLfloat*)dmtx.m;
 					level->prg[j].cleanupUniform((void*)&level->prg[j]);
 				}
 
@@ -3261,6 +3314,14 @@ void YglChangeResolution(int w, int h) {
          _Ygl->vdp1pixelBufferID = 0;
          _Ygl->pFrameBuffer = NULL;
        }
+
+	   if (_Ygl->tmpfbo != 0){
+		   glDeleteFramebuffers(1, &_Ygl->tmpfbo);
+		   _Ygl->tmpfbo = 0;
+		   glDeleteTextures(1, &_Ygl->tmpfbotex);
+		   _Ygl->tmpfbotex = 0;
+	   }
+
    }
 
    _Ygl->rwidth = w;
