@@ -96,7 +96,7 @@ yabsys_struct yabsys;
 const char *bupfilename = NULL;
 u64 tickfreq;
 //todo this ought to be in scspdsp.c
-ScspDsp scsp_dsp;
+ScspDsp scsp_dsp = { 0 };
 
 //////////////////////////////////////////////////////////////////////////////
 
