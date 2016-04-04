@@ -1017,11 +1017,12 @@ u16 scsp_slot_read_word(struct Scsp *s, u32 addr)
    return data;
 }
 
-s16 generate_sample(struct Scsp * s)
+s16 generate_sample(struct Scsp * s, int rbp, int rbl)
 {
    static int inited = 0;
    s16 output = 0;
    int step_num = 0;
+   int i = 0;
 
    if (!inited)
    {
@@ -1052,9 +1053,31 @@ s16 generate_sample(struct Scsp * s)
 
       if (!s->slots[(step_num - 6) & 0x1f].state.is_muted)
       {
+         int isel = s->slots[(step_num - 6) & 0x1f].regs.isel;
+         s16 slot_out = s->slots[(step_num - 6) & 0x1f].state.output;
+
          if(s->slots[(step_num - 6) & 0x1f].regs.disdl)
-            output += s->slots[(step_num - 6) & 0x1f].state.output >> 1;
+            output += slot_out >> 2;
+
+         scsp_dsp.mixs[isel] += slot_out << 4;
       }
+   }
+
+   scsp_dsp.rbp = rbp;
+   scsp_dsp.rbl = rbl;
+
+   for (i = 0; i < 128; i++)
+      ScspDspExec(&scsp_dsp, i, SoundRam);
+
+   scsp_dsp.mdec_ct--;
+
+   for (i = 0; i < 16; i++)
+      scsp_dsp.mixs[i] = 0;
+
+   for (i = 0; i<16; i++)
+   {
+      if (s->slots[i].regs.efsdl)
+         output += scsp_dsp.efreg[i] >> 4;
    }
 
    return output;
@@ -2142,7 +2165,11 @@ scsp_set_b (u32 a, u8 d)
 
     case 0x03: // RBL(low bit)/RBP
       scsp.rbl = (scsp.rbl & 2) + ((d >> 7) & 1);
+#ifdef USE_NEW_SCSP
+      scsp.rbp = (d & 0x7F);
+#else
       scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
+#endif
       return;
 
     case 0x07: // MOBUF
@@ -2306,7 +2333,11 @@ scsp_set_w (u32 a, u16 d)
 
     case 0x02: // RBL/RBP
       scsp.rbl = (d >> 7) & 3;
+#ifdef USE_NEW_SCSP
+      scsp.rbp = (d & 0x7F);
+#else
       scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
+#endif
       return;
 
     case 0x06: // MOBUF
@@ -3246,7 +3277,7 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
 
    for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
    {
-      s16 out = generate_sample(&new_scsp);
+      s16 out = generate_sample(&new_scsp, scsp.rbp,scsp.rbl);
       scsp_bufL[scsp_buf_pos] += out;
       scsp_bufR[scsp_buf_pos] += out;
    }

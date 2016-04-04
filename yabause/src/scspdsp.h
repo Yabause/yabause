@@ -24,9 +24,30 @@
 
 typedef struct
 {
-   u64 mpro[128];
    u16 coef[64];
    u16 madrs[32];
+   u64 mpro[128];
+   s32 temp[128];
+   s32 mems[32];
+   s32 mixs[16];
+   s16 efreg[16];
+   s16 exts[2];
+
+   u32 mdec_ct;
+   s32 inputs;
+   s32 b;
+   s32 x;
+   s16 y;
+   s32 acc;
+   s32 shifted;
+   s32 y_reg;
+   u16 frc_reg;
+   u16 adrs_reg;
+
+   u32 mrd_value;
+
+   int rbl;
+   int rbp;
 }ScspDsp;
 
 //dsp instruction format
@@ -121,6 +142,7 @@ union ScspDspInstruction {
 #endif
 
 void ScspDspDisasm(u8 addr, char *outstring);
+void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram);
 
 extern ScspDsp scsp_dsp;
 
