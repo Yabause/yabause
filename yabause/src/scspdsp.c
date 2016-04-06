@@ -23,6 +23,18 @@
 s32 float_to_int(u16 f_val);
 u16 int_to_float(u32 i_val);
 
+//saturate 24 bit signed integer
+static INLINE s32 saturate_24(s32 value)
+{
+   if (value > 8388607)
+      value = 8388607;
+
+   if (value < (-8388608))
+      value = (-8388608);
+
+   return value;
+}
+
 void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 {
    u16* sound_ram_16 = (u16*)sound_ram;
@@ -82,9 +94,9 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
       dsp->y_reg = dsp->inputs;
 
    if (instruction.part.shift == 0)
-      dsp->shifted = dsp->acc;
+      dsp->shifted = saturate_24(dsp->acc);
    else if (instruction.part.shift == 1)
-      dsp->shifted = dsp->acc * 2;
+      dsp->shifted = saturate_24(dsp->acc * 2);
    else if (instruction.part.shift == 2)
       dsp->shifted = (dsp->acc * 2) & 0xffffff;
    else if (instruction.part.shift == 2)

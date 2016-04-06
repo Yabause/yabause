@@ -242,7 +242,7 @@ struct SlotRegs
    u8 isel;
    u8 imxl;
    u8 disdl;
-   u8 dipan;
+   u8 dipan; 
    u8 efsdl;
    u8 efpan;
 };
@@ -596,7 +596,7 @@ void op7(struct Slot * slot, struct Scsp*s)
 
 void keyon(struct Slot * slot) 
 {
-   if (slot->state.envelope == RELEASE || slot->state.attenuation > 0x3BF)
+   if (slot->state.envelope == RELEASE)
    {
       slot->state.envelope = ATTACK;
       slot->state.attenuation = 0x280;
@@ -1017,10 +1017,31 @@ u16 scsp_slot_read_word(struct Scsp *s, u32 addr)
    return data;
 }
 
-s16 generate_sample(struct Scsp * s, int rbp, int rbl)
+void get_panning(int pan, int * pan_val_l, int * pan_val_r)
+{
+   if (pan & 0x10)
+   {
+      //negative values
+      *pan_val_l = 0;
+      *pan_val_r = pan & 0xf;
+   }
+   else
+   {
+      *pan_val_l = pan & 0xf;
+      *pan_val_r = 0;
+   }
+}
+
+int get_sdl_shift(int sdl)
+{
+   if (sdl == 0)
+      return 16;//-infinity
+   else return (7 - sdl) * 2;
+}
+
+void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r, int mvol, s16 cd_in_l, s16 cd_in_r)
 {
    static int inited = 0;
-   s16 output = 0;
    int step_num = 0;
    int i = 0;
 
@@ -1043,6 +1064,8 @@ s16 generate_sample(struct Scsp * s, int rbp, int rbl)
    //7 operations happen simultaneously on different channels due to pipelining
    for (step_num = 0; step_num < 32; step_num++)
    {
+      int last_step = (step_num - 6) & 0x1f;
+
       op1(&s->slots[step_num]);//phase, pitch lfo
       op2(&s->slots[(step_num - 1) & 0x1f],s);//address pointer, modulation data read
       op3(&s->slots[(step_num - 2) & 0x1f]);//waveform dram read
@@ -1051,20 +1074,32 @@ s16 generate_sample(struct Scsp * s, int rbp, int rbl)
       op6(&s->slots[(step_num - 5) & 0x1f]);//level calc 2
       op7(&s->slots[(step_num - 6) & 0x1f],s);//sound stack write
 
-      if (!s->slots[(step_num - 6) & 0x1f].state.is_muted)
+
+      if (!s->slots[last_step].state.is_muted)
       {
-         int isel = s->slots[(step_num - 6) & 0x1f].regs.isel;
-         s16 slot_out = s->slots[(step_num - 6) & 0x1f].state.output;
+         int disdl = get_sdl_shift(s->slots[last_step].regs.disdl);
 
-         if(s->slots[(step_num - 6) & 0x1f].regs.disdl)
-            output += slot_out >> 2;
+         s16 disdl_applied = (s->slots[last_step].state.output >> disdl);
 
-         scsp_dsp.mixs[isel] += slot_out << 4;
+         s16 mixs_input = s->slots[last_step].state.output >> 
+            get_sdl_shift(s->slots[last_step].regs.imxl);
+
+         int pan_val_l = 0, pan_val_r = 0;
+
+         get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
+
+         *out_l = *out_l + ((disdl_applied >> pan_val_l) >> 2);
+         *out_r = *out_r + ((disdl_applied >> pan_val_r) >> 2);
+
+         scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
    }
 
    scsp_dsp.rbp = rbp;
    scsp_dsp.rbl = rbl;
+
+   scsp_dsp.exts[0] = cd_in_l;
+   scsp_dsp.exts[1] = cd_in_r;
 
    for (i = 0; i < 128; i++)
       ScspDspExec(&scsp_dsp, i, SoundRam);
@@ -1074,13 +1109,32 @@ s16 generate_sample(struct Scsp * s, int rbp, int rbl)
    for (i = 0; i < 16; i++)
       scsp_dsp.mixs[i] = 0;
 
-   for (i = 0; i<16; i++)
+   for (i = 0; i < 18; i++)//16,17 are exts0/1
    {
-      if (s->slots[i].regs.efsdl)
-         output += scsp_dsp.efreg[i] >> 4;
+      int efsdl = get_sdl_shift(s->slots[i].regs.efsdl);
+
+      s16 efsdl_applied = (scsp_dsp.efreg[i] >> efsdl);
+
+      if (i == 16)
+         efsdl_applied = scsp_dsp.exts[0] >> efsdl;
+
+      if (i == 17)
+         efsdl_applied = scsp_dsp.exts[1] >> efsdl;
+
+      int pan_val_l = 0, pan_val_r = 0;
+      get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
+
+      s16 panned_l = (efsdl_applied >> pan_val_l) >> 2;
+      s16 panned_r = (efsdl_applied >> pan_val_r) >> 2;
+
+      *out_l = *out_l + panned_l;
+      *out_r = *out_r + panned_r;
    }
 
-   return output;
+   int mvol_shift = 0xf - mvol;
+
+   *out_l = *out_l >> mvol_shift;
+   *out_r = *out_r >> mvol_shift;
 }
 #endif
 
@@ -3275,11 +3329,30 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
    scsp_buf_len = len;
    scsp_buf_pos = 0;
 
+   s32 temp = cdda_next_in - cdda_out_left;
+   s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
+   u8 *buf = &cddabuf.data[outpos];
+
    for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
    {
-      s16 out = generate_sample(&new_scsp, scsp.rbp,scsp.rbl);
-      scsp_bufL[scsp_buf_pos] += out;
-      scsp_bufR[scsp_buf_pos] += out;
+      s16 out_l = 0;
+      s16 out_r = 0;
+
+      s16 cd_in_l = 0;
+      s16 cd_in_r = 0;
+
+      if ((s32)cdda_out_left > 0)
+      {
+         cd_in_l = (s16)((buf[1] << 8) | buf[0]);
+         cd_in_r = (s16)((buf[3] << 8) | buf[2]);
+
+         cdda_out_left -= 4;
+         buf += 4;
+      }
+
+      generate_sample(&new_scsp, scsp.rbp,scsp.rbl, &out_l, &out_r, scsp.mvol, cd_in_l, cd_in_r);
+      scsp_bufL[scsp_buf_pos] += out_l;
+      scsp_bufR[scsp_buf_pos] += out_r;
    }
 #else
   slot_t *slot;
