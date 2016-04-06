@@ -242,7 +242,7 @@ struct SlotRegs
    u8 isel;
    u8 imxl;
    u8 disdl;
-   u8 dipan;
+   u8 dipan; 
    u8 efsdl;
    u8 efpan;
 };
@@ -596,7 +596,7 @@ void op7(struct Slot * slot, struct Scsp*s)
 
 void keyon(struct Slot * slot) 
 {
-   if (slot->state.envelope == RELEASE || slot->state.attenuation > 0x3BF)
+   if (slot->state.envelope == RELEASE)
    {
       slot->state.envelope = ATTACK;
       slot->state.attenuation = 0x280;
@@ -1088,8 +1088,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         *out_l = *out_l + (disdl_applied >> pan_val_l);
-         *out_r = *out_r + (disdl_applied >> pan_val_r);
+         *out_l = *out_l + ((disdl_applied >> pan_val_l) >> 2);
+         *out_r = *out_r + ((disdl_applied >> pan_val_r) >> 2);
 
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
@@ -1124,8 +1124,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
       int pan_val_l = 0, pan_val_r = 0;
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      s16 panned_l = efsdl_applied >> pan_val_l;
-      s16 panned_r = efsdl_applied >> pan_val_r;
+      s16 panned_l = (efsdl_applied >> pan_val_l) >> 2;
+      s16 panned_r = (efsdl_applied >> pan_val_r) >> 2;
 
       *out_l = *out_l + panned_l;
       *out_r = *out_r + panned_r;
