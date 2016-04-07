@@ -31,6 +31,7 @@
 #include "UIDebugM68K.h"
 #include "UIDebugSCUDSP.h"
 #include "UIDebugSCSP.h"
+#include "UIDebugSCSPChan.h"
 #include "UIDebugSCSPDSP.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
@@ -1123,6 +1124,11 @@ void UIYabause::on_aViewDebugSCSP_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	UIDebugSCSP( this ).exec();
+}
+
+void UIYabause::on_aViewDebugSCSPChan_triggered()
+{
+   UIDebugSCSPChan(this).exec();
 }
 
 void UIYabause::on_aViewDebugSCSPDSP_triggered()

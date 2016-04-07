@@ -117,7 +117,6 @@
 # define FLUSH_SCSP()  /*nothing*/
 #endif
 
-#ifdef USE_NEW_SCSP
 enum EnvelopeStates
 {
    ATTACK,
@@ -173,17 +172,19 @@ const u8 decay_rate_table[][4] =
    { 8,8,8,8 },//0x3f
 };
 
+#define EFFECTIVE_RATE_END 0xffff
+
 //effective rate step table
 //settings 0x2 to 0x5, then repeats with bigger shifts
-//int_max represents going back to the beginning of a row since
+//EFFECTIVE_RATE_END represents going back to the beginning of a row since
 //the number of steps is not the same for each setting
 #define MAKE_TABLE(SHIFT) \
-   { 8192 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, INT_MAX,INT_MAX,INT_MAX,INT_MAX, INT_MAX }, \
-   { 8192 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, INT_MAX }, \
-   { 4096 >> SHIFT, INT_MAX,INT_MAX,INT_MAX,INT_MAX, INT_MAX,INT_MAX , INT_MAX }, \
-   { 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 2048 >> SHIFT, 2048 >> SHIFT, INT_MAX, INT_MAX, INT_MAX },
+   { 8192 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, EFFECTIVE_RATE_END,EFFECTIVE_RATE_END,EFFECTIVE_RATE_END,EFFECTIVE_RATE_END, EFFECTIVE_RATE_END }, \
+   { 8192 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, EFFECTIVE_RATE_END }, \
+   { 4096 >> SHIFT, EFFECTIVE_RATE_END,EFFECTIVE_RATE_END,EFFECTIVE_RATE_END,EFFECTIVE_RATE_END, EFFECTIVE_RATE_END,EFFECTIVE_RATE_END , EFFECTIVE_RATE_END }, \
+   { 4096 >> SHIFT, 4096 >> SHIFT, 4096 >> SHIFT, 2048 >> SHIFT, 2048 >> SHIFT, EFFECTIVE_RATE_END, EFFECTIVE_RATE_END, EFFECTIVE_RATE_END },
 
-const int envelope_table[][8] =
+const u16 envelope_table[][8] =
 {
    MAKE_TABLE(0)
    MAKE_TABLE(1)
@@ -278,6 +279,8 @@ struct Scsp
 {
    u16 sound_stack[64];
    struct Slot slots[32];
+
+   int debug_mode;
 }new_scsp;
 
 //pg, plfo
@@ -451,7 +454,7 @@ int need_envelope_step(int effective_rate, u32 sample_counter, struct Slot* slot
          slot->state.envelope_steps_taken++;
          slot->state.step_count++;
 
-         if (envelope_table[pos][slot->state.step_count] == INT_MAX)
+         if (envelope_table[pos][slot->state.step_count] == EFFECTIVE_RATE_END)
             slot->state.step_count = 0;//reached the end of the array
       }
 
@@ -594,6 +597,99 @@ void op7(struct Slot * slot, struct Scsp*s)
    slot->state.sample_counter++;
 }
 
+struct DebugInstrument
+{
+   u32 sa;
+   int is_muted;
+};
+
+#define NUM_DEBUG_INSTRUMENTS 24
+
+struct DebugInstrument debug_instruments[NUM_DEBUG_INSTRUMENTS] = { 0 };
+int debug_instrument_pos = 0;
+
+void scsp_debug_search_instruments(const u32 sa, int* found, int * offset)
+{
+   int i = 0;
+   *found = 0;
+   for (i = 0; i < NUM_DEBUG_INSTRUMENTS; i++)
+   {
+      if (debug_instruments[i].sa == sa)
+      {
+         *found = 1;
+         break;
+      }
+   }
+
+   *offset = i;
+}
+
+void scsp_debug_add_instrument(u32 sa)
+{
+   int i = 0, found = 0, offset = 0;
+
+   if (debug_instrument_pos >= NUM_DEBUG_INSTRUMENTS)
+      return;
+
+   scsp_debug_search_instruments(sa, &found, &offset);
+
+   //new instrument discovered
+   if (!found)
+      debug_instruments[debug_instrument_pos++].sa = sa;
+}
+
+void scsp_debug_instrument_set_mute(u32 sa, int mute)
+{
+   int found = 0, offset = 0;
+   scsp_debug_search_instruments(sa, &found, &offset);
+
+   if (offset >= NUM_DEBUG_INSTRUMENTS)
+      return;
+
+   if (found)
+      debug_instruments[offset].is_muted = mute;
+}
+
+int scsp_debug_instrument_check_is_muted(u32 sa)
+{
+   int found = 0, offset = 0;
+   scsp_debug_search_instruments(sa, &found, &offset);
+
+   if (offset >= NUM_DEBUG_INSTRUMENTS)
+      return 0;
+
+   if (found && debug_instruments[offset].is_muted)
+      return 1;
+
+   return 0;
+}
+
+void scsp_debug_instrument_get_data(int i, u32 * sa, int * is_muted)
+{
+   if(i >= NUM_DEBUG_INSTRUMENTS)
+      return;
+
+   *sa = debug_instruments[i].sa;
+   *is_muted = debug_instruments[i].is_muted;
+}
+
+void scsp_debug_set_mode(int mode)
+{
+   new_scsp.debug_mode = mode;
+}
+
+void scsp_debug_instrument_clear()
+{
+   debug_instrument_pos = 0;
+   memset(debug_instruments, 0, sizeof(struct DebugInstrument) * NUM_DEBUG_INSTRUMENTS);
+}
+
+void scsp_debug_get_envelope(int chan, int * env, int * state)
+{
+   *env = new_scsp.slots[chan].state.attenuation;
+   *state = new_scsp.slots[chan].state.envelope;
+}
+
 void keyon(struct Slot * slot) 
 {
    if (slot->state.envelope == RELEASE)
@@ -604,6 +700,9 @@ void keyon(struct Slot * slot)
       slot->state.step_count = 0;
       slot->state.sample_offset = 0;
       slot->state.envelope_steps_taken = 0;
+
+      if (new_scsp.debug_mode)
+         scsp_debug_add_instrument(slot->regs.sa);
    }
    //otherwise ignore
 }
@@ -698,7 +797,7 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
       slot->regs.mdxsl = (slot->regs.mdxsl & 0x3) | ((data & 0xf) << 2);
       break;
    case 15:
-      slot->regs.mdxsl = (slot->regs.mdxsl & 0x3C) | (data >> 6) & 3;
+      slot->regs.mdxsl = (slot->regs.mdxsl & 0x3C) | ((data >> 6) & 3);
       slot->regs.mdysl = data & 0x3f;
       break;
    case 16:
@@ -1036,35 +1135,21 @@ int get_sdl_shift(int sdl)
 {
    if (sdl == 0)
       return 16;//-infinity
-   else return (7 - sdl) * 2;
+   else return (7 - sdl);
 }
 
 void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r, int mvol, s16 cd_in_l, s16 cd_in_r)
 {
-   static int inited = 0;
    int step_num = 0;
    int i = 0;
-
-   if (!inited)
-   {
-      int slot_num;
-      memset(&new_scsp, 0, sizeof(struct Scsp));
-
-      for (slot_num = 0; slot_num < 32; slot_num++)
-      {
-         s->slots[slot_num].state.attenuation = 0x3FF;
-         s->slots[slot_num].state.envelope = RELEASE;
-         s->slots[slot_num].state.num = slot_num;
-      }
-      
-      inited = 1;
-   }
+   int mvol_shift = 0;
 
    //run 32 steps to generate 1 full sample (512 clock cycles at 22579200hz)
    //7 operations happen simultaneously on different channels due to pipelining
    for (step_num = 0; step_num < 32; step_num++)
    {
       int last_step = (step_num - 6) & 0x1f;
+      int debug_muted = 0;
 
       op1(&s->slots[step_num]);//phase, pitch lfo
       op2(&s->slots[(step_num - 1) & 0x1f],s);//address pointer, modulation data read
@@ -1074,8 +1159,13 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
       op6(&s->slots[(step_num - 5) & 0x1f]);//level calc 2
       op7(&s->slots[(step_num - 6) & 0x1f],s);//sound stack write
 
+      if (new_scsp.debug_mode)
+      {
+         if (scsp_debug_instrument_check_is_muted(s->slots[last_step].regs.sa))
+            debug_muted = 1;
+      }
 
-      if (!s->slots[last_step].state.is_muted)
+      if (!debug_muted)
       {
          int disdl = get_sdl_shift(s->slots[last_step].regs.disdl);
 
@@ -1115,29 +1205,48 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
       s16 efsdl_applied = (scsp_dsp.efreg[i] >> efsdl);
 
+      int pan_val_l = 0, pan_val_r = 0;
+      s16 panned_l = 0, panned_r = 0;
+
       if (i == 16)
          efsdl_applied = scsp_dsp.exts[0] >> efsdl;
 
       if (i == 17)
          efsdl_applied = scsp_dsp.exts[1] >> efsdl;
 
-      int pan_val_l = 0, pan_val_r = 0;
+      
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      s16 panned_l = (efsdl_applied >> pan_val_l) >> 2;
-      s16 panned_r = (efsdl_applied >> pan_val_r) >> 2;
+      panned_l = (efsdl_applied >> pan_val_l) >> 2;
+      panned_r = (efsdl_applied >> pan_val_r) >> 2;
 
       *out_l = *out_l + panned_l;
       *out_r = *out_r + panned_r;
    }
 
-   int mvol_shift = 0xf - mvol;
+   mvol_shift = 0xf - mvol;
 
    *out_l = *out_l >> mvol_shift;
    *out_r = *out_r >> mvol_shift;
 }
-#endif
 
+void new_scsp_reset(struct Scsp* s)
+{
+   int slot_num;
+   memset(s, 0, sizeof(struct Scsp));
+
+   for (slot_num = 0; slot_num < 32; slot_num++)
+   {
+      s->slots[slot_num].state.attenuation = 0x3FF;
+      s->slots[slot_num].state.envelope = RELEASE;
+      s->slots[slot_num].state.num = slot_num;
+   }
+
+   memset(&scsp_dsp, 0, sizeof(ScspDsp));
+
+   if(SoundRam)
+      memset(SoundRam, 0, 0x80000);
+}
 ////////////////////////////////////////////////////////////////
 
 #ifndef PI
@@ -4009,6 +4118,9 @@ scsp_reset (void)
 		slot->lfofmw = scsp_lfo_sawt_f;
 		slot->lfoemw = scsp_lfo_sawt_e;
     }
+#ifdef USE_NEW_SCSP
+  new_scsp_reset(&new_scsp);
+#endif
 }
 
 void

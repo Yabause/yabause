@@ -223,6 +223,7 @@
     <addaction name="aViewDebugM68K"/>
     <addaction name="aViewDebugSCUDSP"/>
     <addaction name="aViewDebugSCSP"/>
+    <addaction name="aViewDebugSCSPChan"/>
     <addaction name="aViewDebugSCSPDSP"/>
     <addaction name="separator"/>
     <addaction name="aViewDebugMemoryEditor"/>
@@ -943,6 +944,11 @@
    </property>
    <property name="text">
     <string>Trace Logging</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCSPChan">
+   <property name="text">
+    <string>SCSP Channels</string>
    </property>
   </action>
  </widget>

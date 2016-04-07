@@ -169,7 +169,8 @@ protected slots:
 	void on_aViewDebugVDP1_triggered();
 	void on_aViewDebugVDP2_triggered();
 	void on_aViewDebugM68K_triggered();
-	void on_aViewDebugSCSP_triggered();
+   void on_aViewDebugSCSP_triggered();
+   void on_aViewDebugSCSPChan_triggered();
 	void on_aViewDebugSCSPDSP_triggered();
 	void on_aViewDebugSCUDSP_triggered();
 	void on_aViewDebugMemoryEditor_triggered();

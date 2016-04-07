@@ -126,6 +126,7 @@ set( yabause_qt_MOC_HEADERS
     ui/UIDebugCPU.h
     ui/UIDebugM68K.h
     ui/UIDebugSCSP.h
+    ui/UIDebugSCSPChan.h
     ui/UIDebugSCSPDSP.h
     ui/UIDebugSCUDSP.h
     ui/UIDebugSH2.h
@@ -167,6 +168,7 @@ set( yabause_qt_SOURCES
     ui/UIDebugCPU.cpp
     ui/UIDebugM68K.cpp
     ui/UIDebugSCSP.cpp
+    ui/UIDebugSCSPChan.cpp
     ui/UIDebugSCSPDSP.cpp
     ui/UIDebugSCUDSP.cpp
     ui/UIDebugSH2.cpp
