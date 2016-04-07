@@ -1140,25 +1140,9 @@ int get_sdl_shift(int sdl)
 
 void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r, int mvol, s16 cd_in_l, s16 cd_in_r)
 {
-   static int inited = 0;
    int step_num = 0;
    int i = 0;
    int mvol_shift = 0;
-
-   if (!inited)
-   {
-      int slot_num;
-      memset(&new_scsp, 0, sizeof(struct Scsp));
-
-      for (slot_num = 0; slot_num < 32; slot_num++)
-      {
-         s->slots[slot_num].state.attenuation = 0x3FF;
-         s->slots[slot_num].state.envelope = RELEASE;
-         s->slots[slot_num].state.num = slot_num;
-      }
-      
-      inited = 1;
-   }
 
    //run 32 steps to generate 1 full sample (512 clock cycles at 22579200hz)
    //7 operations happen simultaneously on different channels due to pipelining
@@ -1246,6 +1230,23 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
    *out_r = *out_r >> mvol_shift;
 }
 
+void new_scsp_reset(struct Scsp* s)
+{
+   int slot_num;
+   memset(s, 0, sizeof(struct Scsp));
+
+   for (slot_num = 0; slot_num < 32; slot_num++)
+   {
+      s->slots[slot_num].state.attenuation = 0x3FF;
+      s->slots[slot_num].state.envelope = RELEASE;
+      s->slots[slot_num].state.num = slot_num;
+   }
+
+   memset(&scsp_dsp, 0, sizeof(ScspDsp));
+
+   if(SoundRam)
+      memset(SoundRam, 0, 0x80000);
+}
 ////////////////////////////////////////////////////////////////
 
 #ifndef PI
@@ -4117,6 +4118,9 @@ scsp_reset (void)
 		slot->lfofmw = scsp_lfo_sawt_f;
 		slot->lfoemw = scsp_lfo_sawt_e;
     }
+#ifdef USE_NEW_SCSP
+  new_scsp_reset(&new_scsp);
+#endif
 }
 
 void
