@@ -261,6 +261,8 @@ struct SlotState
    s32 waveform_phase_value;
    s32 sample_offset;
    u32 address_pointer;
+   u32 lfo_counter;
+   u32 lfo_pos;
 
    int num;
    int is_muted;
@@ -283,18 +285,172 @@ struct Scsp
    int debug_mode;
 }new_scsp;
 
+//samples per step through a 256 entry lfo table
+const int lfo_step_table[0x20] = {
+   0x3fc,//0
+   0x37c,//1
+   0x2fc,//2
+   0x27c,//3
+   0x1fc,//4
+   0x1bc,//5
+   0x17c,//6
+   0x13c,//7
+   0x0fc,//8
+   0x0bc,//9 
+   0x0dc,//0xa 
+   0x08c,//0xb
+   0x07c,//0xc
+   0x06c,//0xd
+   0x05c,//0xe
+   0x04c,//0xf
+
+   0x03c,//0x10
+   0x034,//0x11
+   0x02c,//0x12
+   0x024,//0x13
+   0x01c,//0x14
+   0x018,//0x15
+   0x014,//0x16
+   0x010,//0x17
+   0x00c,//0x18
+   0x00a,//0x19
+   0x008,//0x1a
+   0x006,//0x1b
+   0x004,//0x1c
+   0x003,//0x1d
+   0x002,//0x1e
+   0x001,//0x1f
+};
+
+struct PlfoTables
+{
+   s8 saw_table[256];
+   s8 square_table[256];
+   s8 tri_table[256];
+   s8 noise_table[256];
+};
+
+struct PlfoTables plfo;
+
+struct AlfoTables
+{
+   u8 saw_table[256];
+   u8 square_table[256];
+   u8 tri_table[256];
+   u8 noise_table[256];
+};
+
+struct AlfoTables alfo;
+
+void fill_plfo_tables()
+{
+   int i;
+
+   //saw
+   for (i = 0; i < 256; i++)
+   {
+      if (i < 128)
+         plfo.saw_table[i] = i;
+      else
+         plfo.saw_table[i] = -256 + i;
+   }
+
+   //square
+   for (i = 0; i < 256; i++)
+   {
+      if (i < 128)
+         plfo.square_table[i] = 127;
+      else
+         plfo.square_table[i] = -128;
+   }
+
+   //triangular
+   for (i = 0; i < 256; i++)
+   {
+      if (i < 64)
+         plfo.tri_table[i] = i * 2;
+      else if (i < 192)
+         plfo.tri_table[i] = 255 - (i * 2);
+      else
+         plfo.tri_table[i] = (i * 2) - 512;
+   }
+
+   //noise
+   for (i = 0; i < 256; i++)
+   {
+      plfo.noise_table[i] = rand() & 0xff;
+   }
+}
+
+void fill_alfo_tables()
+{
+   int i;
+
+   //saw
+   for (i = 0; i < 256; i++)
+   {
+      alfo.saw_table[i] = i;
+   }
+
+   //square
+   for (i = 0; i < 256; i++)
+   {
+      if (i < 128)
+         alfo.square_table[i] = 0;
+      else
+         alfo.square_table[i] = 0xff;
+   }
+
+   //triangular
+   for (i = 0; i < 256; i++)
+   {
+      if (i < 128)
+         alfo.tri_table[i] = i * 2;
+      else
+         alfo.tri_table[i] = 255 - (i * 2);
+   }
+
+   //noise
+   for (i = 0; i < 256; i++)
+   {
+      alfo.noise_table[i] = rand() & 0xff;
+   }
+}
+
 //pg, plfo
 void op1(struct Slot * slot)
 {
    u32 oct = slot->regs.oct ^ 8;
    u32 fns = slot->regs.fns ^ 0x400;
    u32 phase_increment = fns << oct;
+   int plfo_val = 0;
+   int plfo_shifted = 0;
 
    if (slot->state.attenuation > 0x3bf)
       return;
 
+   if (slot->state.lfo_counter % lfo_step_table[slot->regs.lfof] == 0)
+   {
+      slot->state.lfo_counter = 0;
+      slot->state.lfo_pos++;
+
+      if (slot->state.lfo_pos > 0xff)
+         slot->state.lfo_pos = 0;
+   }
+
+   if (slot->regs.plfows == 0)
+      plfo_val = plfo.saw_table[slot->state.lfo_pos];
+   else if (slot->regs.plfows == 1)
+      plfo_val = plfo.square_table[slot->state.lfo_pos];
+   else if (slot->regs.plfows == 2)
+      plfo_val = plfo.tri_table[slot->state.lfo_pos];
+   else if (slot->regs.plfows == 3)
+      plfo_val = plfo.noise_table[slot->state.lfo_pos];
+
+   plfo_shifted = (plfo_val << slot->regs.plfos) >> 2;
+
    slot->state.waveform_phase_value &= (1 << 18) - 1;//18 fractional bits
-   slot->state.waveform_phase_value += phase_increment;
+   slot->state.waveform_phase_value += (phase_increment + plfo_shifted);
 }
 
 int get_slot(struct Slot * slot, int mdsl)
@@ -576,7 +732,22 @@ void op5(struct Slot * slot)
    }
    else
    {
-      s16 sample = apply_volume(slot->regs.tl, slot->state.attenuation, slot->state.output);
+      int alfo_val = 0;
+      int lfo_add = 0;
+      s16 sample = 0;
+
+      if (slot->regs.alfows == 0)
+         alfo_val = alfo.saw_table[slot->state.lfo_pos];
+      else if (slot->regs.alfows == 1)
+         alfo_val = alfo.square_table[slot->state.lfo_pos];
+      else if (slot->regs.alfows == 2)
+         alfo_val = alfo.tri_table[slot->state.lfo_pos];
+      else if (slot->regs.alfows == 3)
+         alfo_val = alfo.noise_table[slot->state.lfo_pos];
+
+      lfo_add = (((alfo_val + 1)) >> (7 - slot->regs.alfos)) << 1;
+
+      sample = apply_volume(slot->regs.tl, slot->state.attenuation + lfo_add, slot->state.output);
       slot->state.output = sample;
    }
 }
@@ -595,6 +766,7 @@ void op7(struct Slot * slot, struct Scsp*s)
    s->sound_stack[slot->state.num] = previous;
 
    slot->state.sample_counter++;
+   slot->state.lfo_counter++;
 }
 
 struct DebugInstrument
@@ -1241,6 +1413,9 @@ void new_scsp_reset(struct Scsp* s)
       s->slots[slot_num].state.envelope = RELEASE;
       s->slots[slot_num].state.num = slot_num;
    }
+
+   fill_plfo_tables();
+   fill_alfo_tables();
 
    memset(&scsp_dsp, 0, sizeof(ScspDsp));
 
@@ -4496,7 +4671,7 @@ ScspInit (int coreid)
 
   // Allocate enough memory for each channel buffer(may have to change)
   scspsoundlen = 44100 / 60; // assume it's NTSC timing
-  scsplines = 213;
+  scsplines = 263;
   scspsoundbufs = 10; // should be enough to prevent skipping
   scspsoundbufsize = scspsoundlen * scspsoundbufs;
   if (scsp_alloc_bufs () < 0)

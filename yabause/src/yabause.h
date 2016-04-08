@@ -36,6 +36,7 @@ typedef struct
    u8 regionid;
    const char *biospath;
    const char *cdpath;
+   const char *ssfpath;
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
@@ -49,6 +50,7 @@ typedef struct
    int numthreads;
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
+   int play_ssf;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -100,6 +102,7 @@ typedef struct
    u64 tickfreq;
    int emulatebios;
    int usequickload;
+   int playing_ssf;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;
