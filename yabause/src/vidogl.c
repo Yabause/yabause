@@ -6505,7 +6505,7 @@ void VIDOGLSetSettingValueMode(int type, int value){
 	
 	switch (type) {
 	case VDP_SETTING_FILTERMODE:
-		_Ygl->aamode = type;
+		_Ygl->aamode = value;
 		break;
 	case VDP_SETTING_POLYGON_MODE:
 		if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION){
