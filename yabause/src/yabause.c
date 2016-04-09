@@ -90,6 +90,10 @@
     #include "gdb/stub.h"
 #endif
 
+#ifdef YAB_WANT_SSF
+#include "aosdk/ssf.h"
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -97,6 +101,8 @@ const char *bupfilename = NULL;
 u64 tickfreq;
 //todo this ought to be in scspdsp.c
 ScspDsp scsp_dsp = { 0 };
+char ssf_track_name[256] = { 0 };
+char ssf_artist[256] = { 0 };
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -278,6 +284,31 @@ int YabauseInit(yabauseinit_struct *init)
 
    YabauseResetNoLoad();
 
+#ifdef YAB_WANT_SSF
+
+   if (init->play_ssf && init->ssfpath != NULL && strlen(init->ssfpath))
+   {
+      if (!load_ssf((char*)init->ssfpath, init->m68kcoretype, init->sndcoretype))
+      {
+         YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->ssfpath);
+
+         yabsys.playing_ssf = 0;
+
+         return -2;
+      }
+
+      yabsys.playing_ssf = 1;
+
+      get_ssf_info(1, ssf_track_name);
+      get_ssf_info(3, ssf_artist);
+
+      return 0;
+   }
+   else
+      yabsys.playing_ssf = 0;
+
+#endif
+
    if (init->skip_load)
    {
 	   return 0;
@@ -398,6 +429,10 @@ void YabauseResetNoLoad(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseReset(void) {
+
+   if (yabsys.playing_ssf)
+      yabsys.playing_ssf = 0;
+
    YabauseResetNoLoad();
 
    if (yabsys.usequickload || yabsys.emulatebios)
@@ -467,7 +502,7 @@ int YabauseEmulate(void) {
 #ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
-   
+
    if (yabsys.IsPal)
    {
       /* 11.2896MHz / 50Hz / 313 lines / 10 calls/line = 72.20 cycles/call */
@@ -508,14 +543,17 @@ int YabauseEmulate(void) {
          sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
          yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
-         PROFILE_START("MSH2");
-         SH2Exec(MSH2, sh2cycles);
-         PROFILE_STOP("MSH2");
+         if (!yabsys.playing_ssf)
+         {
+            PROFILE_START("MSH2");
+            SH2Exec(MSH2, sh2cycles);
+            PROFILE_STOP("MSH2");
 
-         PROFILE_START("SSH2");
-         if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, sh2cycles);
-         PROFILE_STOP("SSH2");
+            PROFILE_START("SSH2");
+            if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, sh2cycles);
+            PROFILE_STOP("SSH2");
+         }
 
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
@@ -543,26 +581,31 @@ int YabauseEmulate(void) {
          yabsys.SH2CycleFrac += cyclesinc;
          sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
          yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
-
-         PROFILE_START("MSH2");
-         SH2Exec(MSH2, sh2cycles - decilinecycles);
-         PROFILE_STOP("MSH2");
-         PROFILE_START("SSH2");
-         if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, sh2cycles - decilinecycles);
-         PROFILE_STOP("SSH2");
+         if (!yabsys.playing_ssf)
+         {
+            PROFILE_START("MSH2");
+            SH2Exec(MSH2, sh2cycles - decilinecycles);
+            PROFILE_STOP("MSH2");
+            PROFILE_START("SSH2");
+            if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, sh2cycles - decilinecycles);
+            PROFILE_STOP("SSH2");
+         }
 
          PROFILE_START("hblankin");
          Vdp2HBlankIN();
          PROFILE_STOP("hblankin");
 
-         PROFILE_START("MSH2");
-         SH2Exec(MSH2, decilinecycles);
-         PROFILE_STOP("MSH2");
-         PROFILE_START("SSH2");
-         if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, decilinecycles);
-         PROFILE_STOP("SSH2");
+         if (!yabsys.playing_ssf)
+         {
+            PROFILE_START("MSH2");
+            SH2Exec(MSH2, decilinecycles);
+            PROFILE_STOP("MSH2");
+            PROFILE_START("SSH2");
+            if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, decilinecycles);
+            PROFILE_STOP("SSH2");
+         }
 
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
@@ -645,6 +688,16 @@ int YabauseEmulate(void) {
 
 #ifndef USE_SCSP2
    M68KSync();
+#endif
+
+#ifdef YAB_WANT_SSF
+
+   if (yabsys.playing_ssf)
+   {
+      OSDPushMessage(OSDMSG_FPS, 1, "NAME %s", ssf_track_name);
+      OSDPushMessage(OSDMSG_STATUS, 1, "ARTIST %s", ssf_artist);
+   }
+
 #endif
 
    return 0;

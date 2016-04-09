@@ -177,6 +177,7 @@
     <addaction name="separator"/>
     <addaction name="aFileOpenISO"/>
     <addaction name="aFileOpenCDRom"/>
+    <addaction name="aFileOpenSSF"/>
     <addaction name="separator"/>
     <addaction name="mFileSaveState"/>
     <addaction name="mFileLoadState"/>
@@ -949,6 +950,11 @@
   <action name="aViewDebugSCSPChan">
    <property name="text">
     <string>SCSP Channels</string>
+   </property>
+  </action>
+  <action name="aFileOpenSSF">
+   <property name="text">
+    <string>Open SSF</string>
    </property>
   </action>
  </widget>

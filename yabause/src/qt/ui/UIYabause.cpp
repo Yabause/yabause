@@ -835,11 +835,37 @@ void UIYabause::on_aFileOpenISO_triggered()
 		vs->setValue( "autostart", false );
 		vs->setValue( "General/CdRom", ISOCD.id );
 		vs->setValue( "General/CdRomISO", fn );
+      vs->setValue("General/PlaySSF", false);
 		
 		mYabauseThread->pauseEmulation( false, true );
 		
 		refreshStatesActions();
 	}
+}
+
+void UIYabause::on_aFileOpenSSF_triggered()
+{
+   YabauseLocker locker(mYabauseThread);
+
+   const QString fn = CommonDialogs::getOpenFileName(
+      QtYabause::volatileSettings()->value("Recents/SSFs").toString(), 
+      QtYabause::translate("Select your ssf file"), 
+      QtYabause::translate("Sega Saturn Sound Format files (*.ssf)"));
+
+   if (!fn.isEmpty())
+   {
+      VolatileSettings* vs = QtYabause::volatileSettings();
+
+      QtYabause::settings()->setValue("Recents/SSFs", fn);
+
+      vs->setValue("autostart", false);
+      vs->setValue("General/SSFPath", fn);
+      vs->setValue("General/PlaySSF", true);
+
+      mYabauseThread->pauseEmulation(false, true);
+
+      refreshStatesActions();
+   }
 }
 
 void UIYabause::on_aFileOpenCDRom_triggered()
@@ -861,6 +887,7 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 		vs->setValue( "autostart", false );
 		vs->setValue( "General/CdRom", QtYabause::defaultCDCore().id );
 		vs->setValue( "General/CdRomISO", fn );
+      vs->setValue("General/PlaySSF", false);
 
 		mYabauseThread->pauseEmulation( false, true );
 
