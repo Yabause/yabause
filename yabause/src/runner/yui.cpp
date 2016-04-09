@@ -43,6 +43,7 @@ extern u8 *vdp1backframebuffer;
 #include <iostream>
 #include <vector>
 #include <sstream>
+#include <fstream>
 
 #define AUTO_TEST_SELECT_ADDRESS 0x7F000
 #define AUTO_TEST_STATUS_ADDRESS 0x7F004
