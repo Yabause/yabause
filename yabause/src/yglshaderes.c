@@ -1093,11 +1093,11 @@ const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 const GLchar Yglprg_vdp2_drawfb_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -1156,11 +1156,11 @@ const GLchar * pYglprg_vdp2_drawfb_linecolor_v[] = { Yglprg_vdp1_drawfb_v, NULL 
 const GLchar Yglprg_vdp2_drawfb_linecolor_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;                             \n"
 "uniform sampler2D s_vdp1FrameBuffer;                 \n"
 "uniform float u_from;                                  \n"
@@ -1236,11 +1236,11 @@ const GLchar * pYglprg_vdp2_drawfb_linecolor_destination_alpha_v[] = { Yglprg_vd
 const GLchar Yglprg_vdp2_drawfb_linecolor_destination_alpha_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;                             \n"
 "uniform sampler2D s_vdp1FrameBuffer;                 \n"
 "uniform float u_from;                                  \n"
@@ -1304,11 +1304,11 @@ void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float 
 const GLchar Yglprg_vdp2_drawfb_addcolor_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
