@@ -5196,7 +5196,7 @@ static void Vdp2DrawNBG0(void)
 				   info.blendmode = VDP2_CC_NONE;
 			   }
 			   else{
-				   info.blendmode = VDP2_CC_ADD;
+				   info.blendmode = VDP2_CC_RATE;
 			   }
 		   }
 		   // Disable Color Calculation
