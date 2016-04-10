@@ -286,7 +286,7 @@ void YabauseThread::reloadSettings()
 	resetYabauseConf();
 
 	// read & apply settings
-	mYabauseConf.m68kcoretype = vs->value( "Advanced/M68KCore", mYabauseConf.m68kcoretype ).toInt();
+   mYabauseConf.m68kcoretype = vs->value("Advanced/68kCore", mYabauseConf.m68kcoretype).toInt();
 	mYabauseConf.percoretype = vs->value( "Input/PerCore", mYabauseConf.percoretype ).toInt();
 	mYabauseConf.sh2coretype = vs->value( "Advanced/SH2Interpreter", mYabauseConf.sh2coretype ).toInt();
 	mYabauseConf.vidcoretype = vs->value( "Video/VideoCore", mYabauseConf.vidcoretype ).toInt();

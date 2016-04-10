@@ -326,6 +326,10 @@ void UISettings::loadCores()
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
 
+   //68k cores
+   for (int i = 0; M68KCoreList[i] != NULL; i++)
+      cb68kCore->addItem(QtYabause::translate(M68KCoreList[i]->Name), M68KCoreList[i]->id);
+
 	cbAspectRatio->addItem( QtYabause::translate( "Fit to window" ), 0 );
 	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 4:3" ), 1 );
 	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 16:9" ), 2 );
@@ -476,6 +480,7 @@ void UISettings::loadSettings()
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
+   cb68kCore->setCurrentIndex(cb68kCore->findData(s->value("Advanced/68kCore", QtYabause::default68kCore().id).toInt()));
 
 	// view
 	bgShowMenubar->setId( rbMenubarNever, BD_NEVERHIDE );
@@ -567,6 +572,7 @@ void UISettings::saveSettings()
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
+   s->setValue("Advanced/68kCore", cb68kCore->itemData(cb68kCore->currentIndex()).toInt());
 
 	// view
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );
