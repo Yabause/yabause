@@ -1418,9 +1418,6 @@ void new_scsp_reset(struct Scsp* s)
    fill_alfo_tables();
 
    memset(&scsp_dsp, 0, sizeof(ScspDsp));
-
-   if(SoundRam)
-      memset(SoundRam, 0, 0x80000);
 }
 ////////////////////////////////////////////////////////////////
 
