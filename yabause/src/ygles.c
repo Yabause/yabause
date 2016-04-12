@@ -974,6 +974,7 @@ int YglGenFrameBuffer() {
 
 	YGLDEBUG("YglGLInit OK");
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	_Ygl->current_fbo = 0;
 	glBindTexture(GL_TEXTURE_2D, 0);
 	rebuild_frame_buffer = 0;
 	return 0;
@@ -2862,9 +2863,11 @@ void YglRender(void) {
 		   YglGenerateAABuffer();
 	   }
 	   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
+	   _Ygl->current_fbo = _Ygl->fxaa_fbo;
    }
    else{
 	   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	   _Ygl->current_fbo = 0;
    }
 
 
@@ -2983,6 +2986,7 @@ void YglRender(void) {
 
 	if (_Ygl->aamode == AA_FXAA){
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		_Ygl->current_fbo = 0;
 		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
 	}
 

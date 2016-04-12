@@ -303,7 +303,7 @@ int Ygl_cleanupMosaic(void * p)
 	glViewport(0, 0, _Ygl->width, _Ygl->height);
 
 	// call blit method
-	YglBlitMosaic(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic );
+	YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->current_fbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
 
 	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -344,7 +344,7 @@ int Ygl_cleanupNormal_blur(void * p)
 	glViewport(0, 0, _Ygl->width, _Ygl->height);
 
 	// call blit method
-	YglBlitBlur(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
+	YglBlitBlur(_Ygl->tmpfbotex, _Ygl->current_fbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
 	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
