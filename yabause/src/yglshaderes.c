@@ -2409,8 +2409,6 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
 	glActiveTexture(GL_TEXTURE0);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
 	return 0;
 }
@@ -2562,7 +2560,6 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
 	glActiveTexture(GL_TEXTURE0);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
 	return 0;
