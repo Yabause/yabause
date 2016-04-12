@@ -2275,6 +2275,11 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	tile.linescreen = info->linescreen;
 	tile.mosaicxmask = info->mosaicxmask;
 	tile.mosaicymask = info->mosaicymask;
+	tile.bEnWin0 = info->bEnWin0;
+	tile.WindowArea0 = info->WindowArea0;
+	tile.bEnWin1 = info->bEnWin1;
+	tile.WindowArea1 = info->WindowArea1;
+	tile.LogicWin = info->LogicWin;
 
 	tile.cellw = tile.cellh = info->patternpixelwh;
 	tile.flipfunction = info->flipfunction;
@@ -5191,7 +5196,7 @@ static void Vdp2DrawNBG0(void)
 				   info.blendmode = VDP2_CC_NONE;
 			   }
 			   else{
-				   info.blendmode = VDP2_CC_ADD;
+				   info.blendmode = VDP2_CC_RATE;
 			   }
 		   }
 		   // Disable Color Calculation
@@ -5231,10 +5236,7 @@ static void Vdp2DrawNBG0(void)
    info.WindowArea1 = (Vdp2Regs->WCTLA >> 2) & 0x01; 
    info.LogicWin    = (Vdp2Regs->WCTLA >> 7 ) & 0x01;
    
-   
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
-   
+
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL & 0xFF, Vdp2Regs->LSTA0.all);
    info.lineinfo = lineNBG0;
    Vdp2GenLineinfo( &info );
@@ -5296,34 +5298,34 @@ static void Vdp2DrawNBG0(void)
 			  while (yy + info.y < vdp2height)
 			  {
 				  xx = info.x;
-while (xx + info.x < vdp2width)
-{
-	info.vertices[0] = xx;
-	info.vertices[1] = yy;
-	info.vertices[2] = (xx + info.cellw);
-	info.vertices[3] = yy;
-	info.vertices[4] = (xx + info.cellw);
-	info.vertices[5] = (yy + info.cellh);
-	info.vertices[6] = xx;
-	info.vertices[7] = (yy + info.cellh);
+					while (xx + info.x < vdp2width)
+					{
+						info.vertices[0] = xx;
+						info.vertices[1] = yy;
+						info.vertices[2] = (xx + info.cellw);
+						info.vertices[3] = yy;
+						info.vertices[4] = (xx + info.cellw);
+						info.vertices[5] = (yy + info.cellh);
+						info.vertices[6] = xx;
+						info.vertices[7] = (yy + info.cellh);
 
-	if (isCached == 0)
-	{
-		YglQuad(&info, &texture, &tmpc);
-		if (info.islinescroll){
-			Vdp2DrawBitmapLineScroll(&info, &texture);
-		}
-		else{
-			Vdp2DrawCell(&info, &texture);
-		}
-		isCached = 1;
-	}
-	else{
-		YglCachedQuad(&info, &tmpc);
-	}
-	xx += info.cellw;
-}
-yy += info.cellh;
+						if (isCached == 0)
+						{
+							YglQuad(&info, &texture, &tmpc);
+							if (info.islinescroll){
+								Vdp2DrawBitmapLineScroll(&info, &texture);
+							}
+							else{
+								Vdp2DrawCell(&info, &texture);
+							}
+							isCached = 1;
+						}
+						else{
+							YglCachedQuad(&info, &tmpc);
+						}
+						xx += info.cellw;
+					}
+					yy += info.cellh;
 			  }
 		  }
 	  }
@@ -5346,10 +5348,6 @@ yy += info.cellh;
 	   // RBG1 draw
 	   Vdp2DrawRotation(&info, &paraB, &texture, 1);
    }
-
-   if (info.bEnWin0 || info.bEnWin1)
-	   YglEndWindow(&info);
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5476,9 +5474,7 @@ static void Vdp2DrawNBG1(void)
    info.WindowArea1 = (Vdp2Regs->WCTLA >> 10) & 0x01; 
    info.LogicWin    = (Vdp2Regs->WCTLA >> 15 ) & 0x01;
    
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
-   
+  
    ReadLineScrollData(&info, Vdp2Regs->SCRCTL >> 8, Vdp2Regs->LSTA1.all);
    info.lineinfo = lineNBG1;
    Vdp2GenLineinfo( &info );
@@ -5589,9 +5585,7 @@ static void Vdp2DrawNBG1(void)
 		   Vdp2DrawMapTest(&info, &texture);
 	   }
    }
-   
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglEndWindow(&info);   
+  
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5677,9 +5671,6 @@ static void Vdp2DrawNBG2(void)
 
    Vdp2SetGetColor( &info );   
    
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
-   
    info.islinescroll = 0;
    info.linescrolltbl = 0;
    info.lineinc = 0;   
@@ -5688,8 +5679,6 @@ static void Vdp2DrawNBG2(void)
    info.y = Vdp2Regs->SCYN2 & 0x7FF;
    Vdp2DrawMapTest(&info, &texture);
    
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglEndWindow(&info);   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5776,10 +5765,7 @@ static void Vdp2DrawNBG3(void)
    info.LogicWin    = (Vdp2Regs->WCTLB >> 15 ) & 0x01;
    
    Vdp2SetGetColor( &info );   
-
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
-   
+  
    info.islinescroll = 0;
    info.linescrolltbl = 0;
    info.lineinc = 0;   
@@ -5788,8 +5774,6 @@ static void Vdp2DrawNBG3(void)
    info.y = Vdp2Regs->SCYN3 & 0x7FF;
    Vdp2DrawMapTest(&info, &texture);
    
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglEndWindow(&info);   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6102,14 +6086,9 @@ static void Vdp2DrawRBG0(void)
    info.LogicWin    = (Vdp2Regs->WCTLC >> 7 ) & 0x01;
    
    Vdp2SetGetColor( &info );   
-
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglStartWindow(&info,info.bEnWin0, info.WindowArea0,info.bEnWin1, info.WindowArea1,info.LogicWin);
    
    Vdp2DrawRotation(&info, &parameter, &texture, 0 );
    
-   if( info.bEnWin0 || info.bEnWin1 )
-      YglEndWindow(&info);   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6505,7 +6484,7 @@ void VIDOGLSetSettingValueMode(int type, int value){
 	
 	switch (type) {
 	case VDP_SETTING_FILTERMODE:
-		_Ygl->aamode = type;
+		_Ygl->aamode = value;
 		break;
 	case VDP_SETTING_POLYGON_MODE:
 		if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION){
