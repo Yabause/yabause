@@ -371,6 +371,8 @@ typedef struct {
    YglTextureManager * texture_manager;
    GLsync sync;
 
+   GLuint current_fbo;
+
 }  Ygl;
 
 extern Ygl * _Ygl;
