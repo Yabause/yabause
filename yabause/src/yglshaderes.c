@@ -162,6 +162,7 @@ int Ygl_uniformVdp1CommonParam(void * p){
 		glActiveTexture(GL_TEXTURE0);
 	}
 
+
 	return 0;
 }
 
@@ -830,13 +831,14 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "  addr.s = addr.s / (v_texcoord.q);                                                          \n"
 "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
 "  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
-"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+"  if( spriteColor.a == 0.0 ) discard;      \n"
+"	//memoryBarrier(); \n"
 "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
 "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
-"  if( fboColor.a > 0.0  )                                                               \n"
+"  if( fboColor.a > 0.028  )                                                               \n"
 "  {                                                                                          \n"
 "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
-"    fragColor.a = fboColor.a;                                                             \n"
+"    fragColor.a = fboColor.a ;                              \n"             
 "  }else{                                                                                     \n"
 "    fragColor = spriteColor;                                                              \n"
 "    int additional = int(spriteColor.a * 255.0);                                            \n"
@@ -992,79 +994,6 @@ int Ygl_uniformEndUserClip(void * p )
 int Ygl_cleanupEndUserClip(void * p ){return 0;}
 
 
-int Ygl_uniformStartVDP2Window(void * p )
-{
-   YglProgram * prg;
-   prg = p;
-
-   glEnable(GL_STENCIL_TEST);
-   glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-
-   //glEnableVertexAttribArray(0);
-   //glDisableVertexAttribArray(1);
-
-
-   if( prg->bwin0 && !prg->bwin1 )
-   {
-      if( prg->logwin0 )
-      {
-         glStencilFunc(GL_EQUAL,0x01,0x01);
-      }else{
-         glStencilFunc(GL_NOTEQUAL,0x01,0x01);
-      }
-   }else if( !prg->bwin0 && prg->bwin1 ) {
-
-      if( prg->logwin1 )
-      {
-         glStencilFunc(GL_EQUAL,0x02,0x02);
-      }else{
-         glStencilFunc(GL_NOTEQUAL,0x02,0x02);
-      }
-   }else if( prg->bwin0 && prg->bwin1 ) {
-       // and
-      if( prg->winmode == 0x0 )
-      {
-		  if (prg->logwin0 == 1 && prg->logwin0 == 1){
-			  glStencilFunc(GL_EQUAL, 0x03, 0x03);
-		  }
-		  else if (prg->logwin0 == 0 && prg->logwin0 == 0){ 
-			  glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-		  }else{
-			  glStencilFunc(GL_ALWAYS, 0, 0xFF);
-		  }
-      // OR
-      }else if( prg->winmode == 0x01 )
-      {
-		  if (prg->logwin0 == 1 && prg->logwin0 == 1){
-			  glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-		  }
-		  else if (prg->logwin0 == 0 && prg->logwin0 == 0){
-			  glStencilFunc(GL_GREATER, 0x01, 0x03);
-		  }
-		  else{
-			  glStencilFunc(GL_ALWAYS, 0, 0xFF);
-		  }
-      }
-   }
-
-   return 0;
-}
-
-int Ygl_cleanupStartVDP2Window(void * p ){return 0;}
-
-int Ygl_uniformEndVDP2Window(void * p )
-{
-
-   YglProgram * prg;
-   prg = p;
-   glDisable(GL_STENCIL_TEST);
-   glStencilFunc(GL_ALWAYS,0,0xFF);
-
-   return 0;
-}
-
-int Ygl_cleanupEndVDP2Window(void * p ){return 0;}
-
 
 /*------------------------------------------------------------------------------------
  *  VDP2 Draw Frame buffer Operation
@@ -1093,11 +1022,11 @@ const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 const GLchar Yglprg_vdp2_drawfb_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -1156,11 +1085,11 @@ const GLchar * pYglprg_vdp2_drawfb_linecolor_v[] = { Yglprg_vdp1_drawfb_v, NULL 
 const GLchar Yglprg_vdp2_drawfb_linecolor_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;                             \n"
 "uniform sampler2D s_vdp1FrameBuffer;                 \n"
 "uniform float u_from;                                  \n"
@@ -1236,11 +1165,11 @@ const GLchar * pYglprg_vdp2_drawfb_linecolor_destination_alpha_v[] = { Yglprg_vd
 const GLchar Yglprg_vdp2_drawfb_linecolor_destination_alpha_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;                             \n"
 "uniform sampler2D s_vdp1FrameBuffer;                 \n"
 "uniform float u_from;                                  \n"
@@ -1304,11 +1233,11 @@ void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float 
 const GLchar Yglprg_vdp2_drawfb_addcolor_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp sampler2D; \n"
 #else
 "#version 330 \n"
 #endif
 "precision highp float;\n"
-"precision highp sampler2D; \n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -2034,23 +1963,6 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
-   }else if( prgid == PG_VDP2_STARTWINDOW )
-   {
-      level->prg[level->prgcurrent].setupUniform = Ygl_uniformStartVDP2Window;
-      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupStartVDP2Window;
-      current->vertexp         = 0;
-      current->texcoordp       = -1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
-   }
-   else if (prgid == PG_VDP2_ENDWINDOW)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformEndVDP2Window;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupEndVDP2Window;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_texMatrix");
    }
    else if (prgid == PG_LINECOLOR_INSERT)
    {
