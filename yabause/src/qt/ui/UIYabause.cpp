@@ -748,6 +748,7 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["Memory/Path"]!=hash["Memory/Path"] ||
 			newhash["MpegROM/Path" ]!=hash["MpegROM/Path" ] ||
 			newhash["Advanced/SH2Interpreter" ]!=hash["Advanced/SH2Interpreter" ] ||
+         newhash["Advanced/68kCore"] != hash["Advanced/68kCore"] ||
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
 			newhash["General/CdRomISO"]!=hash["General/CdRomISO"] ||
 			newhash["General/ClockSync"]!=hash["General/ClockSync"] ||
@@ -850,7 +851,7 @@ void UIYabause::on_aFileOpenSSF_triggered()
    const QString fn = CommonDialogs::getOpenFileName(
       QtYabause::volatileSettings()->value("Recents/SSFs").toString(), 
       QtYabause::translate("Select your ssf file"), 
-      QtYabause::translate("Sega Saturn Sound Format files (*.ssf)"));
+      QtYabause::translate("Sega Saturn Sound Format files (*.ssf *.minissf)"));
 
    if (!fn.isEmpty())
    {

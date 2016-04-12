@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="twPages">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="wGeneral">
       <attribute name="title">
@@ -695,6 +695,22 @@
         <widget class="QComboBox" name="cbSH2Interpreter"/>
        </item>
        <item>
+        <widget class="QLabel" name="l68kCore">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>68000 Core</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cb68kCore"/>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -963,8 +979,8 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="bgShowToolbar"/>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowLogWindow"/>
-  <buttongroup name="bgShowToolbar"/>
  </buttongroups>
 </ui>

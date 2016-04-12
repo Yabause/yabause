@@ -485,6 +485,52 @@ if (YAB_WANT_C68K)
 	endif()
 endif(YAB_WANT_C68K)
 
+option(YAB_WANT_MUSASHI "Enable musashi 68k" ON)
+#TODO cross compile builds m68kmake for the target platform instead
+#of the native one, making it impossible to generate the core
+if (YAB_WANT_MUSASHI AND NOT CMAKE_CROSSCOMPILING)
+    set (MUSASHI_GENERATED_SOURCES 
+        ${CMAKE_CURRENT_BINARY_DIR}/m68kopac.c 
+        ${CMAKE_CURRENT_BINARY_DIR}/m68kopdm.c 
+        ${CMAKE_CURRENT_BINARY_DIR}/m68kopnz.c 
+        ${CMAKE_CURRENT_BINARY_DIR}/m68kops.c)
+
+    set (MUSASHI_GENERATED_HEADERS
+        ${CMAKE_CURRENT_BINARY_DIR}/m68kops.h)
+
+    add_executable(m68kmake musashi/m68kmake.c)
+    add_custom_command(OUTPUT ${MUSASHI_GENERATED_SOURCES} ${MUSASHI_GENERATED_HEADERS}
+                       COMMAND m68kmake ${CMAKE_CURRENT_BINARY_DIR}/ ${CMAKE_CURRENT_SOURCE_DIR}/musashi/m68k_in.c
+                       DEPENDS m68kmake
+                       COMMENT "Generating musashi 68k core"
+                       VERBATIM)
+
+    add_definitions(-DHAVE_MUSASHI=1)
+
+	include_directories(
+      ${CMAKE_CURRENT_BINARY_DIR}/
+      ${CMAKE_CURRENT_SOURCE_DIR}/musashi
+    )
+
+	set(yabause_SOURCES ${yabause_SOURCES} 
+      ${MUSASHI_GENERATED_SOURCES}
+      musashi/m68kdasm.c
+      musashi/m68kcpu.c
+      m68kmusashi.c
+      )
+
+	set(yabause_HEADERS 
+      ${yabause_HEADERS} 
+      musashi/m68k.h
+      musashi/m68kcpu.h
+      ${MUSASHI_GENERATED_HEADERS}
+      m68kmusashi.h
+      )
+
+    add_custom_target(musashi ALL
+      DEPENDS ${MUSASHI_GENERATED_FILES})
+endif(YAB_WANT_MUSASHI AND NOT CMAKE_CROSSCOMPILING)
+
 # q68
 option(YAB_WANT_Q68 "enable q68 compilation" OFF)
 if (YAB_WANT_Q68)
@@ -634,6 +680,10 @@ if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)
 endif(YAB_WANT_C68K)
 
+if (YAB_WANT_MUSASHI)
+	add_dependencies(yabause musashi)
+endif(YAB_WANT_MUSASHI)
+
 macro(yab_port_start)
 	if (YAB_PORT_BUILT AND NOT YAB_MULTIBUILD)
 		return()
@@ -669,6 +719,9 @@ endforeach(PORT)
 # this is stupid, but CMake automatic definitions are based on variables...
 if (YAB_WANT_C68K)
 	set(HAVE_C68K ON)
+endif()
+if (YAB_WANT_MUSASHI)
+	set(HAVE_MUSASHI ON)
 endif()
 if (YAB_WANT_Q68)
 	set(HAVE_Q68 ON)
