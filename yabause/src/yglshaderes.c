@@ -134,6 +134,9 @@ int Ygl_uniformVdp1CommonParam(void * p){
 	{
 		glEnableVertexAttribArray(prg->vaid);
 	}
+	else{
+		glDisableVertexAttribArray(prg->vaid);
+	}
 
 	if (param == NULL) return 0;
 
@@ -1040,13 +1043,14 @@ const GLchar Yglprg_vdp2_drawfb_f[] =
 "  int additional = int(fbColor.a * 255.0);\n"
 "  highp float alpha = float((additional/8)*8)/255.0;\n"
 "  highp float depth = (float(additional&0x07)/10.0) + 0.05;\n"
-"  if( depth < u_from || depth > u_to ){ discard;return;}\n"
-"  if( alpha > 0.0){\n"
+"  if( depth < u_from || depth > u_to ){\n"
+"    discard;\n"
+"  }else if( alpha > 0.0){\n"
 "     fragColor = fbColor;\n"
 "     fragColor += u_coloroffset;  \n"
 "     fragColor.a = alpha + 7.0/255.0;\n"
-"     gl_FragDepth =  (depth+1.0)/2.0;\n"
-"  } else { \n"
+"     gl_FragDepth = (depth+1.0)/2.0;\n"
+"  }else{ \n"
 "     discard;\n"
 "  }\n"
 "}\n";
@@ -1064,8 +1068,16 @@ void Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to , float * of
    glUniform1f(idfrom,from);
    glUniform1f(idto,to);
    glUniform4fv(idcoloroffset,1,offsetcol);
+   
+   glDisableVertexAttribArray(0);
+   glDisableVertexAttribArray(1);
+   glDisableVertexAttribArray(2);
+   glDisableVertexAttribArray(3);
+   
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
+   
+   
    _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_mvpMatrix");
 }
 
