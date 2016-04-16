@@ -535,6 +535,19 @@ void YglTMReset(YglTextureManager * tm  ) {
 	tm->yMax = 0;
 }
 
+void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
+
+	if (tm->width < w){
+		YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
+		YglTMRealloc(tm, w, tm->height);
+	}
+	if ((tm->height - tm->currentY) < h) {
+		YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
+		YglTMRealloc(tm, tm->width, tm->height + (h * 2));
+		return;
+	}
+}
+
 void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
 
 	GLuint new_textureID;
@@ -2438,7 +2451,7 @@ void YglRenderVDP1(void) {
           }
 
 		  if (PG_VFP1_GOURAUDSAHDING_TESS == level->prg[j].prgid || PG_VFP1_MESH_TESS == level->prg[j].prgid ){
-			  glPatchParameteri(GL_PATCH_VERTICES, 4);
+			  if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
 			  glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
 		  }
 		  else{
