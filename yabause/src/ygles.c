@@ -615,7 +615,7 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
     }
 	if ((tm->height - tm->currentY) < h) {
 	  YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
-	  YglTMRealloc( tm, tm->width, tm->height+256);
+	  YglTMRealloc( tm, tm->width, tm->height+(h*2));
 	  YglTMAllocate(tm, output, w, h, x, y);
       return;
    }
