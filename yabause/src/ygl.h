@@ -167,6 +167,8 @@ extern YglTextureManager * YglTM;
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(YglTextureManager * tm );
 void YglTMReset( YglTextureManager * tm );
+void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height);
+void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h);
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 void YglTmPush(YglTextureManager * tm);
 void YglTmPull(YglTextureManager * tm, u32 flg);
