@@ -3077,6 +3077,7 @@ static void FASTCALL Vdp2DrawRotation(vdp2draw_struct *info, vdp2rotationparamet
    line_texture.textdata = NULL;
    if( info->LineColorBase !=0 )
    {
+	   YglTMReserve(YglTM, info->cellw, info->cellh*2 );
 	   memcpy(&line_info, info, sizeof(vdp2draw_struct));
 	   line_info.blendmode = 0;
 	   YglQuad(&line_info, &line_texture, NULL);
