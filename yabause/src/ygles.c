@@ -18,7 +18,7 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-
+ 
 
 #include <stdlib.h>
 #include <math.h>
@@ -1419,8 +1419,11 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
 		prg = PG_VFP1_SHADOW;
 	}
 
-	if (input->linescreen){
+	if (input->linescreen == 1){
 		prg = PG_LINECOLOR_INSERT;
+	}
+	else if (input->linescreen == 2){ // per line operation by HBLANK
+		prg = PG_VDP2_PER_LINE_ALPHA;
 	}
 
 	program = YglGetProgram(input, prg);
@@ -1679,9 +1682,13 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
 	   prg = PG_VFP1_SHADOW;
    }
 
-   if (input->linescreen){
-     prg = PG_LINECOLOR_INSERT;
+   if (input->linescreen == 1){
+	   prg = PG_LINECOLOR_INSERT;
    }
+   else if (input->linescreen == 2){ // per line operation by HBLANK
+	   prg = PG_VDP2_PER_LINE_ALPHA;
+   }
+
 
 
    program = YglGetProgram(input,prg);
@@ -2029,9 +2036,13 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 		prg = PG_VDP2_BLUR;
 	}
 
-	if (input->linescreen){
+	if (input->linescreen == 1){
 		prg = PG_LINECOLOR_INSERT;
 	}
+	else if (input->linescreen == 2){ // per line operation by HBLANK
+		prg = PG_VDP2_PER_LINE_ALPHA;
+	}
+
 
 
 	program = YglGetProgram(input, prg);
@@ -2043,6 +2054,7 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 	program->bwin1 = input->bEnWin1;
 	program->logwin1 = input->WindowArea1;
 	program->winmode = input->LogicWin;
+	program->lineTexture = input->lineTexture;
 
 	program->mosaic[0] = input->mosaicxmask;
 	program->mosaic[1] = input->mosaicymask;
@@ -2169,9 +2181,13 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 		prg = PG_VDP1_NORMAL;
 	}
 
-	if (input->linescreen){
+	if (input->linescreen == 1){
 		prg = PG_LINECOLOR_INSERT;
 	}
+	else if (input->linescreen == 2){ // per line operation by HBLANK
+		prg = PG_VDP2_PER_LINE_ALPHA;
+	}
+
 
 	program = YglGetProgram(input, prg);
 	if (program == NULL) return NULL;
@@ -2181,6 +2197,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 	program->bwin1 = input->bEnWin1;
 	program->logwin1 = input->WindowArea1;
 	program->winmode = input->LogicWin;
+	program->lineTexture = input->lineTexture;
 
 	program->mosaic[0] = input->mosaicxmask;
 	program->mosaic[1] = input->mosaicymask;
@@ -3348,6 +3365,7 @@ void YglRenderDestinationAlpha(void) {
 
 			if (level->prg[j].cleanupUniform)
 			{
+				level->prg[j].matrix = (GLfloat*)dmtx.m;
 				level->prg[j].cleanupUniform((void*)&level->prg[j]);
 			}
 
@@ -3532,3 +3550,57 @@ void VIDOGLSync(){
 	_Ygl->texture_manager = NULL;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Per line operation
+u32 * YglGetPerlineBuf(YglPerLineInfo * perline){
+	int error;
+	glGetError();
+	if (perline->lincolor_tex == 0){
+		glGetError();
+		glGenTextures(1, &perline->lincolor_tex);
+
+		glGenBuffers(1, &perline->linecolor_pbo);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_STREAM_DRAW);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+		glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		if ((error = glGetError()) != GL_NO_ERROR)
+		{
+			YGLLOG("Fail to init lincolor_tex %04X", error);
+			return NULL;
+		}
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	}
+
+	glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
+	perline->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+	if ((error = glGetError()) != GL_NO_ERROR)
+	{
+		YGLLOG("Fail to init YglTM->lincolor_buf %04X", error);
+		return NULL;
+	}
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+	return perline->lincolor_buf;
+}
+
+void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int size){
+
+	glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
+	//if (_Ygl->lincolor_buf == pbuf) {
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
+	glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	perline->lincolor_buf = NULL;
+	//}
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return;
+}
