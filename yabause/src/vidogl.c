@@ -2280,6 +2280,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	tile.bEnWin1 = info->bEnWin1;
 	tile.WindowArea1 = info->WindowArea1;
 	tile.LogicWin = info->LogicWin;
+	tile.lineTexture = info->lineTexture;
 
 	tile.cellw = tile.cellh = info->patternpixelwh;
 	tile.flipfunction = info->flipfunction;
@@ -5013,6 +5014,7 @@ static void Vdp2DrawLineColorScreen(void)
  
 //////////////////////////////////////////////////////////////////////////////
 
+
 static void Vdp2DrawNBG0(void)
 {
    vdp2draw_struct info;
@@ -5029,6 +5031,29 @@ static void Vdp2DrawNBG0(void)
    info.cog = 0;
    info.cob = 0;
    int i;
+   info.enable = 0;
+#if 0
+   info.lineTexture = 0;
+#else
+   if (Vdp2External.perline_alpha & 0x01){
+	   u32 * linebuf;
+	   linebuf = YglGetPerlineBuf(&_Ygl->bg[NBG0]);
+	   for (int line = 0; line < _Ygl->rheight; line++){
+		   if ((Vdp2Lines[line].BGON & 0x21)  == 0x00){
+			   linebuf[line] = 0x00;
+		   }
+		   else{
+			   linebuf[line] = (((~Vdp2Lines[line].CCRNA & 0x1F) << 3) + 0x7) << 24;
+			   info.enable = 1;
+		   }
+	   }
+	   YglSetPerlineBuf(&_Ygl->bg[NBG0], linebuf, _Ygl->rheight);
+	   info.lineTexture = _Ygl->bg[NBG0].lincolor_tex;
+   }
+   else{
+	   info.lineTexture = 0;
+   }
+#endif
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -5103,7 +5128,7 @@ static void Vdp2DrawNBG0(void)
 		  }
 	  }
    }
-   else if (Vdp2Regs->BGON & 0x1)
+   else if ( (Vdp2Regs->BGON & 0x1) || info.enable )
    {
       // NBG0 mode
       info.enable = Vdp2Regs->BGON & 0x1;
@@ -5162,10 +5187,12 @@ static void Vdp2DrawNBG0(void)
       
       info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
    }
-   else
-      // Not enabled
-      return;
-   
+   else{
+	   return;
+   }
+ 
+
+
    ReadMosaicData(&info, 0x1, Vdp2Regs);
 
    info.transparencyenable = !(Vdp2Regs->BGON & 0x100);
@@ -5221,6 +5248,10 @@ static void Vdp2DrawNBG0(void)
    info.linescreen = 0;
    if (Vdp2Regs->LNCLEN & 0x1)
      info.linescreen = 1;
+
+   if (info.lineTexture != 0){
+	 info.linescreen = 2;
+   }
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7) << 8;
    ReadVdp2ColorOffset(Vdp2Regs,&info, 0x1);
@@ -5393,6 +5424,34 @@ static void Vdp2DrawNBG1(void)
 		ReadPatternData(&info, Vdp2Regs->PNCN1, Vdp2Regs->CHCTLA & 0x100);
 	}
 
+
+   if (Vdp2External.perline_alpha & 0x02){
+		   u32 * linebuf;
+		   linebuf = YglGetPerlineBuf(&_Ygl->bg[NBG1]);
+		   for (int line = 0; line < _Ygl->rheight; line++){
+			   if ( (Vdp2Lines[line].BGON & 0x02)  == 0x00){
+				   linebuf[line] = 0x00;
+			   }
+			   else{
+
+				   info.enable = 1;
+
+				   // 12.14 CCRTMD
+				   if (((Vdp2Lines[line].CCCTL >> 9) & 0x01) == 0x01){
+					   linebuf[line] = ((~Vdp2Lines[line].CCRNA & 0x1F00) >> 5) << 24;
+				   }
+				   else{
+					   linebuf[line] = 0xFF000000;
+				   }
+			   }
+		   }
+		   YglSetPerlineBuf(&_Ygl->bg[NBG1], linebuf, _Ygl->rheight);
+		   info.lineTexture = _Ygl->bg[NBG1].lincolor_tex;
+   }
+   else{
+	   info.lineTexture = 0;
+   }
+
 	info.specialcolormode = (Vdp2Regs->SFCCMD >> 2) & 0x3;
 
 	ReadMosaicData(&info, 0x2, Vdp2Regs);
@@ -5429,6 +5488,9 @@ static void Vdp2DrawNBG1(void)
    info.linescreen = 0;
    if (Vdp2Regs->LNCLEN & 0x2)
      info.linescreen = 1;
+
+   if (info.lineTexture != 0)
+	   info.linescreen = 2;
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x70) << 4;
    ReadVdp2ColorOffset(Vdp2Regs,&info, 0x2);
@@ -5608,6 +5670,37 @@ static void Vdp2DrawNBG2(void)
    info.colornumber = (Vdp2Regs->CHCTLB & 0x2) >> 1;
    info.mapwh = 2;
 
+#if 0
+   info.lineTexture = 0;
+#else
+   if (Vdp2External.perline_alpha & 0x04){
+	   u32 * linebuf;
+	   linebuf = YglGetPerlineBuf(&_Ygl->bg[NBG2]);
+	   for (int line = 0; line < _Ygl->rheight; line++){
+		   if ((Vdp2Lines[line].BGON & 0x04) == 0x00){
+			   linebuf[line] = 0x00;
+		   }
+		   else{
+
+			   //Vdp2Regs->BGON |= 0x04;
+			   info.enable = 1;
+			   if (Vdp2Lines[line].CCCTL & 0x4)
+			   {
+				   linebuf[line] = (((~Vdp2Lines[line].CCRNB & 0x1F) << 3) + 0x7) << 24;
+			   }
+			   else{
+				   linebuf[line] = 0xFF000000;
+			   }
+		   }
+	   }
+	   YglSetPerlineBuf(&_Ygl->bg[NBG2], linebuf, _Ygl->rheight);
+	   info.lineTexture = _Ygl->bg[NBG2].lincolor_tex;
+   }
+   else{
+	   info.lineTexture = 0;
+   }
+#endif
+
    ReadPlaneSize(&info, Vdp2Regs->PLSZ >> 4);
    info.x = - ((Vdp2Regs->SCXN2 & 0x7FF) % (512 * info.planew));
    info.y = - ((Vdp2Regs->SCYN2 & 0x7FF) % (512 * info.planeh));
@@ -5651,11 +5744,16 @@ static void Vdp2DrawNBG2(void)
    if (Vdp2Regs->LNCLEN & 0x4)
      info.linescreen = 1;
 
+   if (info.lineTexture != 0)
+	   info.linescreen = 2;
+
    info.coloroffset = Vdp2Regs->CRAOFA & 0x700;
    ReadVdp2ColorOffset(Vdp2Regs,&info, 0x4);
    info.linecheck_mask = 0x04;
    info.coordincx = info.coordincy = 1;
-
+   info.cor = 0;
+   info.cog = 0;
+   info.cob = 0;
    info.priority = Vdp2Regs->PRINB & 0x7;;
    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
 
@@ -5699,6 +5797,34 @@ static void Vdp2DrawNBG3(void)
    info.specialprimode = (Vdp2Regs->SFPRMD >> 6) & 0x3;
 
    info.colornumber = (Vdp2Regs->CHCTLB & 0x20) >> 5;
+
+   if (Vdp2External.perline_alpha & 0x08){
+	   u32 * linebuf;
+	   linebuf = YglGetPerlineBuf(&_Ygl->bg[NBG3]);
+	   for (int line = 0; line < _Ygl->rheight; line++){
+		   if ((Vdp2Lines[line].BGON & 0x08) == 0x00){
+			   linebuf[line] = 0x00;
+		   }
+		   else{
+
+			   Vdp2Regs->BGON |= 0x08;
+			   info.enable = 1;
+			   if (Vdp2Lines[line].CCCTL & 0x4)
+			   {
+				   linebuf[line] = (((~Vdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7) << 24;
+			   }
+			   else{
+				   linebuf[line] = 0xFF000000;
+			   }
+		   }
+	   }
+	   YglSetPerlineBuf(&_Ygl->bg[NBG3], linebuf, _Ygl->rheight);
+	   info.lineTexture = _Ygl->bg[NBG3].lincolor_tex;
+   }
+   else{
+	   info.lineTexture = 0;
+   }
+
 
    info.mapwh = 2;
 
@@ -5744,6 +5870,10 @@ static void Vdp2DrawNBG3(void)
    info.linescreen = 0;
    if (Vdp2Regs->LNCLEN & 0x8)
      info.linescreen = 1;
+
+   if (info.lineTexture != 0)
+	   info.linescreen = 2;
+
 
    info.coloroffset = (Vdp2Regs->CRAOFA & 0x7000) >> 4;
    ReadVdp2ColorOffset(Vdp2Regs,&info, 0x8);

@@ -31,6 +31,7 @@
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
 int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, int * mosaic);
+int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 perline);
 
 extern float vdp1wratio;
 extern float vdp1hratio;
@@ -307,6 +308,47 @@ int Ygl_cleanupMosaic(void * p)
 
 	// call blit method
 	YglBlitMosaic(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic );
+
+	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+
+	return 0;
+}
+
+/*------------------------------------------------------------------------------------
+*  Per Line Alpha
+* ----------------------------------------------------------------------------------*/
+int Ygl_uniformPerLineAlpha(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	Ygl_useTmpBuffer();
+	glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glEnableVertexAttribArray(prg->vertexp);
+	glEnableVertexAttribArray(prg->texcoordp);
+	glUniform1i(id_normal_s_texture, 0);
+	glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+
+	return 0;
+}
+
+int Ygl_cleanupPerLineAlpha(void * p)
+{
+	YglProgram * prg;
+	prg = p;
+
+	// Bind Default frame buffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Restore Default Matrix
+	glViewport(0, 0, _Ygl->width, _Ygl->height);
+
+	// call blit method
+	YglBlitPerLineAlpha(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture );
 
 	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -1537,6 +1579,7 @@ int YglProgramInit()
    _prgid[PG_VFP1_ENDUSERCLIP] = _prgid[PG_NORMAL];
    _prgid[PG_VDP2_ADDBLEND] = _prgid[PG_NORMAL];
    _prgid[PG_VDP2_MOSAIC] = _prgid[PG_NORMAL];
+   _prgid[PG_VDP2_PER_LINE_ALPHA] = _prgid[PG_NORMAL];
 
    YGLLOG("PG_VDP1_NORMAL\n");
    //
@@ -1820,9 +1863,20 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
 	   current->setupUniform = Ygl_uniformMosaic;
 	   current->cleanupUniform = Ygl_cleanupMosaic;
-	  current->vertexp = 0;
-	  current->texcoordp = 1;
-	  current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_mvpMatrix");
+	   current->vertexp = 0;
+	   current->texcoordp = 1;
+	   current->color_offset = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
+	   current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_mvpMatrix");
+
+   }
+   else if (prgid == PG_VDP2_PER_LINE_ALPHA)
+   {
+	   current->setupUniform = Ygl_uniformPerLineAlpha;
+	   current->cleanupUniform = Ygl_cleanupPerLineAlpha;
+	   current->vertexp = 0;
+	   current->texcoordp = 1;
+	   current->color_offset = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
+	   current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_PER_LINE_ALPHA], (const GLchar *)"u_mvpMatrix");
 
    }else if( prgid == PG_VDP1_NORMAL )
    {
@@ -2568,6 +2622,174 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, srcTexture);
+	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+	// Clean up
+	glActiveTexture(GL_TEXTURE0);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	return 0;
+}
+
+
+
+/*
+	Per line transparent
+	[Resident Evil] menu not displayed #35
+*/
+
+const GLchar perlinealpha_blit_v[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"uniform mat4 u_mvpMatrix;    \n"
+"layout (location = 0) in vec4 a_position;   \n"
+"layout (location = 1) in vec2 a_texcoord;   \n"
+"out  highp vec2 v_texcoord;     \n"
+"void main()                  \n"
+"{                            \n"
+"   gl_Position = a_position*u_mvpMatrix; \n"
+"   v_texcoord  = a_texcoord; \n"
+"} ";
+
+const GLchar perlinealpha_blit_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                            \n"
+"in highp vec2 v_texcoord;                            \n"
+"uniform sampler2D u_Src;                        \n"
+"uniform sampler2D u_Line;                        \n"
+"uniform float u_tw; \n"
+"uniform float u_th; \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr; \n"
+"  addr.x = int(u_tw * v_texcoord.x);          \n"
+"  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
+"  vec4 txcol = texelFetch( u_Src, addr,0 ) ;      \n"
+"  if(txcol.a > 0.0){\n                                 "
+"    addr.x = int(u_th * v_texcoord.y);\n"
+"    addr.y = 0; \n"
+"    txcol.a = 0.0; //texelFetch( u_Line, addr,0 ).a;      \n"
+"    if( txcol.a > 0.0 ) \n"
+"       fragColor = txcol; \n                        "
+"	 else \n"
+"       discard; \n                        "
+"  }else \n                                            "
+"     discard;\n                                      "
+"}                                                   \n";
+
+static int perlinealpha_prg = -1;
+static int u_perlinealpha_mtxModelView = -1;
+static int u_perlinealpha_tw = -1;
+static int u_perlinealpha_th = -1;
+
+
+int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 lineTexture) {
+
+	float vb[] = { 0, 0,
+		2.0, 0.0,
+		2.0, 2.0,
+		0, 2.0, };
+
+	float tb[] = { 0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0 };
+
+	vb[2] = w;
+	vb[4] = w;
+	vb[5] = h;
+	vb[7] = h;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
+
+	if (perlinealpha_prg == -1){
+		GLuint vshader;
+		GLuint fshader;
+		GLint compiled, linked;
+
+		const GLchar * vblit_img_v[] = { perlinealpha_blit_v, NULL };
+		const GLchar * fblit_img_v[] = { perlinealpha_blit_f, NULL };
+
+		perlinealpha_prg = glCreateProgram();
+		if (perlinealpha_prg == 0) return -1;
+
+		glUseProgram(perlinealpha_prg);
+		vshader = glCreateShader(GL_VERTEX_SHADER);
+		fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+		glShaderSource(vshader, 1, vblit_img_v, NULL);
+		glCompileShader(vshader);
+		glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			YGLLOG("Compile error in vertex shader.\n");
+			Ygl_printShaderError(vshader);
+			perlinealpha_prg = -1;
+			return -1;
+		}
+
+		glShaderSource(fshader, 1, fblit_img_v, NULL);
+		glCompileShader(fshader);
+		glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			YGLLOG("Compile error in fragment shader.\n");
+			Ygl_printShaderError(fshader);
+			perlinealpha_prg = -1;
+			return -1;
+		}
+
+		glAttachShader(perlinealpha_prg, vshader);
+		glAttachShader(perlinealpha_prg, fshader);
+		glLinkProgram(perlinealpha_prg);
+		glGetProgramiv(perlinealpha_prg, GL_LINK_STATUS, &linked);
+		if (linked == GL_FALSE) {
+			YGLLOG("Link error..\n");
+			Ygl_printShaderError(perlinealpha_prg);
+			perlinealpha_prg = -1;
+			return -1;
+		}
+
+		int id_src = glGetUniformLocation(perlinealpha_prg, "u_Src");
+		glUniform1i(id_src, 0);
+		int id_line = glGetUniformLocation(perlinealpha_prg, "u_Line");
+		glUniform1i(id_line, 1);
+
+		u_perlinealpha_mtxModelView = glGetUniformLocation(perlinealpha_prg, (const GLchar *)"u_mvpMatrix");
+		u_perlinealpha_tw = glGetUniformLocation(perlinealpha_prg, "u_tw");
+		u_perlinealpha_th = glGetUniformLocation(perlinealpha_prg, "u_th");
+
+	}
+	else{
+		glUseProgram(perlinealpha_prg);
+	}
+
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+	glUniformMatrix4fv(u_perlinealpha_mtxModelView, 1, GL_FALSE, matrix);
+	glUniform1f(u_perlinealpha_tw, w);
+	glUniform1f(u_perlinealpha_th, h);
+
+	int id_src = glGetUniformLocation(perlinealpha_prg, "u_Src");
+	glUniform1i(id_src, 0);
+	int id_line = glGetUniformLocation(perlinealpha_prg, "u_Line");
+	glUniform1i(id_line, 1);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, srcTexture);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, lineTexture);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
 	// Clean up
