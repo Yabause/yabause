@@ -218,6 +218,7 @@ enum
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA,
    PG_VDP2_BLUR,
    PG_VDP2_MOSAIC,
+   PG_VDP2_PER_LINE_ALPHA,
    PG_MAX,
 };
 
@@ -265,6 +266,7 @@ typedef struct {
    YglVdp1CommonParam * ids;
    float * matrix;
    int mosaic[2];
+   u32 lineTexture;
 } YglProgram;
 
 typedef struct {
@@ -300,6 +302,22 @@ typedef enum {
 	VDP_SETTING_POLYGON_MODE
 } enSettings;
 
+
+typedef enum {
+	NBG0 = 0,
+	NBG1,
+	NBG2,
+	NBG3,
+	RBG0,
+	SPRITE,
+	enBGMAX
+} enBG;
+
+typedef struct {
+	u32 lincolor_tex;
+	u32 linecolor_pbo;
+	u32 * lincolor_buf;
+} YglPerLineInfo;
 
 typedef struct {
    //GLuint texture;
@@ -373,6 +391,8 @@ typedef struct {
    YglTextureManager * texture_manager;
    GLsync sync;
 
+   YglPerLineInfo bg[enBGMAX];
+
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -398,6 +418,7 @@ void YglEndWindow( vdp2draw_struct * info );
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache);
 
+u32 * YglGetPerlineBuf(YglPerLineInfo * perline);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
