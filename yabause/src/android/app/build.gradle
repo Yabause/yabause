@@ -1,25 +1,32 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.model.application'
 apply plugin: 'com.google.gms.google-services'
 
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+model {
+    android {
+        compileSdkVersion = 23
+        buildToolsVersion = "23.0.2"
 
-    defaultConfig {
-        applicationId "org.uoyabause.android"
-        minSdkVersion 19
-        targetSdkVersion 22
+        defaultConfig.with {
+            applicationId = "org.uoyabause.android"
+            minSdkVersion.apiLevel = 19
+            targetSdkVersion.apiLevel = 22
+        }
+        //lintOptions {
+        //    disable 'MissingTranslation'
+       // }
+
+        //useLibrary 'org.apache.http.legacy'
     }
-    lintOptions {
-        disable 'MissingTranslation'
-    }
-    buildTypes {
+    android.buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            minifyEnabled = false
+            proguardFiles.add(file('proguard-rules.txt'))
+            ndk {
+                debuggable = true
+            }
         }
     }
-    useLibrary 'org.apache.http.legacy'
+
 
 }
 
@@ -40,4 +47,5 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:3.4.+'
     compile 'commons-io:commons-io:2.4'
     compile 'com.google.android.gms:play-services-analytics:8.1.0'
+    compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
 }
