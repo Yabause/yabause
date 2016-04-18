@@ -406,7 +406,7 @@ void Vdp2HBlankIN(void) {
 void Vdp2HBlankOUT(void) {
    Vdp2Regs->TVSTAT &= ~0x0004;
 
-   if (yabsys.LineCount < 270){
+   if (yabsys.LineCount < yabsys.VBlankLineCount){
 	   memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
 
 	   if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
@@ -443,6 +443,16 @@ void Vdp2HBlankOUT(void) {
 	   else if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
 		   Vdp2External.perline_alpha |= 0x10;
 	   }
+
+	   if ( Vdp2Lines[0].COBR != Vdp2Lines[yabsys.LineCount].COBR ){
+
+		   Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+	   }
+	   if ( Vdp2Lines[0].COAR != Vdp2Lines[yabsys.LineCount].COAR ){
+
+		   Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+	   }
+
    }
 
 #if defined(YAB_ASYNC_RENDERING)

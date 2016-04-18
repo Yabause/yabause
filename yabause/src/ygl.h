@@ -216,6 +216,7 @@ enum
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA,
+   PG_VDP2_DRAWFRAMEBUFF_PERLINE,
    PG_VDP2_BLUR,
    PG_VDP2_MOSAIC,
    PG_VDP2_PER_LINE_ALPHA,
@@ -336,6 +337,7 @@ typedef struct {
    // VDP1 Info
    int vdp1_maxpri;
    int vdp1_minpri;
+   u32 vdp1_lineTexture;
    
    // VDP1 Framebuffer
    int rwidth;
