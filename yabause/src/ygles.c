@@ -2573,6 +2573,7 @@ void YglSetVdp2Window()
    return;
 }
 
+void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture);
 
 void YglRenderFrameBuffer( int from , int to ) {
 
@@ -2607,7 +2608,13 @@ void YglRenderFrameBuffer( int from , int to ) {
 	   Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
    }
    else{
-	   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+
+	   if (_Ygl->vdp1_lineTexture != 0){
+		   Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture);
+	   }
+	   else{
+		   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+	   }
    }
    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -2850,7 +2857,6 @@ void YglRenderFrameBuffer( int from , int to ) {
      }
    }
 
-
    glUniformMatrix4fv( _Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0] );
    glVertexAttribPointer(_Ygl->renderfb.vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)vertices );
    glVertexAttribPointer(_Ygl->renderfb.texcoordp,2,GL_FLOAT,GL_FALSE,0,(GLvoid *)texcord );
@@ -2861,10 +2867,6 @@ void YglRenderFrameBuffer( int from , int to ) {
       glDisable(GL_STENCIL_TEST);
       glStencilFunc(GL_ALWAYS,0,0xFF);
    }
-
-
-
-
 }
 
 void YglSetClearColor(float r, float g, float b){
@@ -3325,7 +3327,7 @@ void YglRenderDestinationAlpha(void) {
 
 			if (level->prg[j].currentQuad != 0)
 			{
-				if (level->prg[j].prgid == PG_LINECOLOR_INSERT){
+				if (level->prg[j].prgid == PG_LINECOLOR_INSERT || level->prg[j].prgid == PG_VDP2_PER_LINE_ALPHA ){
 					glDisable(GL_BLEND);
 				}
 				else{

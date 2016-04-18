@@ -1123,6 +1123,94 @@ void Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to , float * of
    _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_mvpMatrix");
 }
 
+
+/*------------------------------------------------------------------------------------
+*  VDP2 Draw Frame buffer Operation( Perline color offset using hblankin )
+*  Chaos Seed 
+* ----------------------------------------------------------------------------------*/
+
+const GLchar Yglprg_vdp2_drawfb_perline_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+"precision highp sampler2D; \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;\n"
+"in vec2 v_texcoord;\n"
+"uniform sampler2D s_vdp1FrameBuffer;\n"
+"uniform float u_from;        \n"
+"uniform float u_to;          \n"
+"uniform float u_emu_height;  \n"
+"uniform sampler2D s_line;    \n"
+"uniform float u_vheight;     \n"
+"out vec4 fragColor;          \n"
+"void main()\n"
+"{\n"
+"  vec2 addr = v_texcoord;\n"
+"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  int additional = int(fbColor.a * 255.0);\n"
+"  highp float alpha = float((additional/8)*8)/255.0;\n"
+"  highp float depth = (float(additional&0x07)/10.0) + 0.05;\n"
+"  if( depth < u_from || depth > u_to ){\n"
+"    discard;\n"
+"  }else if( alpha > 0.0){\n"
+"    ivec2 linepos; \n "
+"    linepos.y = 0; \n "
+"    linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"    vec4 linetex = texelFetch( s_line, linepos,0 ); "
+"    fbColor.r += (linetex.r-0.5)*2.0;      \n"
+"    fbColor.g += (linetex.g-0.5)*2.0;      \n"
+"    fbColor.b += (linetex.b-0.5)*2.0;      \n"
+"    fragColor = fbColor;\n"
+"    fragColor.a = alpha + 7.0/255.0;\n"
+"    gl_FragDepth = (depth+1.0)/2.0;\n"
+"  }else{ \n"
+"     discard;\n"
+"  }\n"
+"}\n";
+
+const GLchar * pYglprg_vdp2_drawfb_perline_v[] = { Yglprg_vdp1_drawfb_v, NULL };
+const GLchar * pYglprg_vdp2_drawfb_perline_f[] = { Yglprg_vdp2_drawfb_perline_f, NULL };
+
+static int idvdp1FrameBuffer_perline = -1;
+static int idfrom_perline = -1;
+static int idto_perline = -1;
+static int id_fblinecol_s_perline = -1;
+static int id_fblinecol_emu_height_perline = -1;
+static int id_fblinecol_vheight_perline = -1;
+
+void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture )
+{
+	YglProgram * prg;
+	prg = p;
+
+	glUseProgram(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE]);
+
+	glUniform1i(id_fblinecol_s_perline, 1);
+	glUniform1f(id_fblinecol_emu_height_perline, (float)_Ygl->rheight / (float)_Ygl->height);
+	glUniform1f(id_fblinecol_vheight_perline, (float)_Ygl->height);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, linetexture);
+
+	glUniform1i(idvdp1FrameBuffer_perline, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1f(idfrom_perline, from);
+	glUniform1f(idto_perline, to);
+	
+
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(3);
+
+	glEnableVertexAttribArray(prg->vertexp);
+	glEnableVertexAttribArray(prg->texcoordp);
+
+
+	_Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE], (const GLchar *)"u_mvpMatrix");
+}
+
 /*------------------------------------------------------------------------------------
 *  VDP2 Draw Frame buffer Operation( with Line color insert )
 * ----------------------------------------------------------------------------------*/
@@ -1689,7 +1777,7 @@ int YglProgramInit()
 
    //
    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LINECOLOR, pYglprg_vdp2_drawfb_linecolor_v, pYglprg_vdp2_drawfb_linecolor_f, NULL, NULL, NULL) != 0)
-     return -1;
+	   return -1;
 
    idvdp1FrameBuffer_linecolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"s_vdp1FrameBuffer");;
    idfrom_linecolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR], (const GLchar *)"u_from");
@@ -1719,6 +1807,17 @@ int YglProgramInit()
    id_fblinecol_s_line_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"s_line");
    id_fblinecol_emu_height_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_emu_height");
    id_fblinecol_vheight_destination_alpha = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA], (const GLchar *)"u_vheight");
+
+   //
+   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_PERLINE, pYglprg_vdp2_drawfb_perline_v, pYglprg_vdp2_drawfb_perline_f, NULL, NULL, NULL) != 0)
+	   return -1;
+
+   idvdp1FrameBuffer_perline = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE], (const GLchar *)"s_vdp1FrameBuffer");;
+   idfrom_perline = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE], (const GLchar *)"u_from");
+   idto_perline = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE], (const GLchar *)"u_to");
+   id_fblinecol_s_perline = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE], (const GLchar *)"s_line");
+   id_fblinecol_emu_height_perline = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE], (const GLchar *)"u_emu_height");
+   id_fblinecol_vheight_perline = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_PERLINE], (const GLchar *)"u_vheight");
 
 
    return 0;
@@ -2395,10 +2494,15 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
 		1.0, 1.0,
 		0.0, 1.0 };
 
+	vb[0] = 0;
+	vb[1] = 0 - 1.0;
 	vb[2] = w;
+	vb[3] = 0 - 1.0;
 	vb[4] = w;
-	vb[5] = h;
-	vb[7] = h;
+	vb[5] = h - 1.0;
+	vb[6] = 0;
+	vb[7] = h - 1.0;
+
 
 	glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
@@ -2547,10 +2651,15 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
 		1.0, 1.0,
 		0.0, 1.0 };
 
+	vb[0] = 0;
+	vb[1] = 0 - 1.0;
 	vb[2] = w;
+	vb[3] = 0 - 1.0;
 	vb[4] = w;
-	vb[5] = h;
-	vb[7] = h;
+	vb[5] = h - 1.0;
+	vb[6] = 0;
+	vb[7] = h - 1.0;
+
 
 	glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
@@ -2679,7 +2788,10 @@ const GLchar perlinealpha_blit_f[] =
 "  if(txcol.a > 0.0){\n                                 "
 "    addr.x = int(u_th * v_texcoord.y);\n"
 "    addr.y = 0; \n"
-"    txcol.a = 0.0; //texelFetch( u_Line, addr,0 ).a;      \n"
+"    txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
+"    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;      \n"
+"    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;      \n"
+"    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;      \n"
 "    if( txcol.a > 0.0 ) \n"
 "       fragColor = txcol; \n                        "
 "	 else \n"
@@ -2706,10 +2818,15 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 		1.0, 1.0,
 		0.0, 1.0 };
 
+
+	vb[0] = 0;
+	vb[1] = 0 - 1.0;
 	vb[2] = w;
+	vb[3] = 0 - 1.0;
 	vb[4] = w;
-	vb[5] = h;
-	vb[7] = h;
+	vb[5] = h - 1.0;
+	vb[6] = 0;
+	vb[7] = h - 1.0;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
