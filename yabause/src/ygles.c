@@ -41,6 +41,8 @@ static void YglRenderDestinationAlpha(void);;
 
 #define PI 3.1415926535897932384626433832795f
 
+extern vdp2rotationparameter_struct  paraA;
+
 #define ATLAS_BIAS (0.025f)
 
 #if defined(__ANDROID__)
@@ -188,8 +190,8 @@ void YglOrtho(YglMatrix *result, float left, float right, float bottom, float to
 void YglTransform(YglMatrix *mtx, float * inXyz, float * outXyz )
 {
     outXyz[0] = inXyz[0] * mtx->m[0][0] + inXyz[0] * mtx->m[0][1]  + inXyz[0] * mtx->m[0][2] + mtx->m[0][3];
-    outXyz[1] = inXyz[0] * mtx->m[1][0] + inXyz[0] * mtx->m[1][1]  + inXyz[0] * mtx->m[1][2] + mtx->m[1][3];
-    outXyz[2] = inXyz[0] * mtx->m[2][0] + inXyz[0] * mtx->m[2][1]  + inXyz[0] * mtx->m[2][2] + mtx->m[2][3];
+    outXyz[1] = inXyz[1] * mtx->m[1][0] + inXyz[1] * mtx->m[1][1]  + inXyz[1] * mtx->m[1][2] + mtx->m[1][3];
+    outXyz[2] = inXyz[2] * mtx->m[2][0] + inXyz[2] * mtx->m[2][1]  + inXyz[2] * mtx->m[2][2] + mtx->m[2][3];
 }
 
 void YglMatrixMultiply(YglMatrix *result, YglMatrix *srcA, YglMatrix *srcB)
@@ -2575,53 +2577,76 @@ void YglSetVdp2Window()
 
 void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture);
 
-void YglRenderFrameBuffer( int from , int to ) {
+void YglRenderFrameBuffer(int from, int to) {
 
-   GLint   vertices[12];
-   GLfloat texcord[12];
-   float offsetcol[4];
-   int bwin0,bwin1,logwin0,logwin1,winmode;
+	GLint   vertices[12];
+	GLfloat texcord[12];
+	float offsetcol[4];
+	int bwin0, bwin1, logwin0, logwin1, winmode;
 
-   YglGenFrameBuffer();
+	YglGenFrameBuffer();
 
-   // Out of range, do nothing
-   if( _Ygl->vdp1_maxpri < from ) return;
-   if( _Ygl->vdp1_minpri > to ) return;
+	// Out of range, do nothing
+	if (_Ygl->vdp1_maxpri < from) return;
+	if (_Ygl->vdp1_minpri > to) return;
 
-   //YGLLOG("YglRenderFrameBuffer: %d to %d\n", from , to );
+	//YGLLOG("YglRenderFrameBuffer: %d to %d\n", from , to );
 
-   offsetcol[0] = vdp1cor / 255.0f;
-   offsetcol[1] = vdp1cog / 255.0f;
-   offsetcol[2] = vdp1cob / 255.0f;
-   offsetcol[3] = 0.0f;
+	offsetcol[0] = vdp1cor / 255.0f;
+	offsetcol[1] = vdp1cog / 255.0f;
+	offsetcol[2] = vdp1cob / 255.0f;
+	offsetcol[3] = 0.0f;
 
-   if ( (Vdp2Regs->CCCTL & 0x340) == 0x140 ){ // Color calculation mode == ADD &&  Sprite Color calculation enable bit  == 1
-	   if (Vdp2Regs->LNCLEN & 0x20){
-		   Ygl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
-	   }else{
-		   Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
-	   }
-   }
-   else if ((Vdp2Regs->CCCTL & 0x340) == 0x240 && (Vdp2Regs->LNCLEN & 0x20)){ 
-	   // Color calculation ratio mode == Destination &&  Sprite Color calculation enable bit  == 1
-	   // Use blend value CRLB
-	   Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
-   }
-   else{
+	if ((Vdp2Regs->CCCTL & 0x340) == 0x140){ // Color calculation mode == ADD &&  Sprite Color calculation enable bit  == 1
+		if (Vdp2Regs->LNCLEN & 0x20){
+			Ygl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+		}
+		else{
+			Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+		}
+	}
+	else if ((Vdp2Regs->CCCTL & 0x340) == 0x240 && (Vdp2Regs->LNCLEN & 0x20)){
+		// Color calculation ratio mode == Destination &&  Sprite Color calculation enable bit  == 1
+		// Use blend value CRLB
+		Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+	}
+	else{
 
-	   if (_Ygl->vdp1_lineTexture != 0){
-		   Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture);
-	   }
-	   else{
-		   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
-	   }
-   }
-   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
-   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-   //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
+		if (_Ygl->vdp1_lineTexture != 0){
+			Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture);
+		}
+		else{
+			Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+		}
+	}
+	glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	//glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
 
-   YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, _Ygl->readframe);
-   
+	YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, _Ygl->readframe);
+
+	
+	
+
+	//
+
+	YglMatrix result;
+	if (Vdp1Regs->TVMR & 0x02){
+		YglMatrix rotate;
+		YglLoadIdentity(&rotate);
+		rotate.m[0][0] = paraA.deltaX;
+		rotate.m[0][1] = paraA.deltaY;
+		rotate.m[1][0] = paraA.deltaXst;
+		rotate.m[1][1] = paraA.deltaYst;
+		YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
+		YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
+	}
+	else{
+		memcpy(&result, &_Ygl->mtxModelView, sizeof(result));
+	}
+
+
+
    // render
    vertices[0] = 0 - 0.5;
    vertices[1] = 0 - 0.5;
@@ -2636,7 +2661,6 @@ void YglRenderFrameBuffer( int from , int to ) {
    vertices[9] = _Ygl->rheight + 1 - 0.5;
    vertices[10] = 0 - 0.5;
    vertices[11] = _Ygl->rheight + 1 - 0.5;
-
 
    texcord[0] = 0.0f;
    texcord[1] = 1.0f;
@@ -2721,7 +2745,7 @@ void YglRenderFrameBuffer( int from , int to ) {
 		   }
 	   }
 
-	   glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
+	   glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
 	   glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);
 	   glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
 	   glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -2857,7 +2881,7 @@ void YglRenderFrameBuffer( int from , int to ) {
      }
    }
 
-   glUniformMatrix4fv( _Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0] );
+   glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
    glVertexAttribPointer(_Ygl->renderfb.vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)vertices );
    glVertexAttribPointer(_Ygl->renderfb.texcoordp,2,GL_FLOAT,GL_FALSE,0,(GLvoid *)texcord );
    glDrawArrays(GL_TRIANGLES, 0, 6);
