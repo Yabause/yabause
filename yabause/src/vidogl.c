@@ -182,8 +182,8 @@ static vdp2Lineinfo lineNBG1[512];
 
 
 // Rotate Screen
-static vdp2rotationparameter_struct  paraA;
-static vdp2rotationparameter_struct  paraB;
+vdp2rotationparameter_struct  paraA;
+vdp2rotationparameter_struct  paraB;
 
 
 
@@ -5950,19 +5950,24 @@ static void Vdp2DrawNBG3(void)
 
 static void Vdp2DrawRBG0(void)
 {
-   vdp2draw_struct info;
-   YglTexture texture;
-   vdp2rotationparameter_struct parameter;
-   info.dst=0;
-   info.uclipmode=0;
-   info.cor = 0;
-   info.cog = 0;
-   info.cob = 0;
+	vdp2draw_struct info;
+	YglTexture texture;
+	vdp2rotationparameter_struct parameter;
+	info.dst = 0;
+	info.uclipmode = 0;
+	info.cor = 0;
+	info.cog = 0;
+	info.cob = 0;
 
-   info.enable = Vdp2Regs->BGON & 0x10;
-   info.priority = Vdp2Regs->PRIR & 0x7;
-   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
-      return;
+	info.enable = Vdp2Regs->BGON & 0x10;
+	info.priority = Vdp2Regs->PRIR & 0x7;
+	if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0)){
+
+		if (Vdp1Regs->TVMR & 0x02){
+			Vdp2ReadRotationTable(0, &paraA, Vdp2Regs, Vdp2Ram);
+		}
+		return;
+	}
    info.transparencyenable = !(Vdp2Regs->BGON & 0x1000);
    info.specialprimode = (Vdp2Regs->SFPRMD >> 8) & 0x3;
 
