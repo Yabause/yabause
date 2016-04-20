@@ -408,6 +408,13 @@
         <widget class="QComboBox" name="cbSoundCore"/>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbNewScsp">
+         <property name="text">
+          <string>Use new scsp</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -979,8 +986,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowToolbar"/>
-  <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowLogWindow"/>
+  <buttongroup name="bgShowMenubar"/>
+  <buttongroup name="bgShowToolbar"/>
  </buttongroups>
 </ui>

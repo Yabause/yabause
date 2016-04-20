@@ -51,6 +51,7 @@ typedef struct
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
    int play_ssf;
+   int use_new_scsp;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0

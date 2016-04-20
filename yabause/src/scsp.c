@@ -117,6 +117,8 @@
 # define FLUSH_SCSP()  /*nothing*/
 #endif
 
+int use_new_scsp = 0;
+
 enum EnvelopeStates
 {
    ATTACK,
@@ -1331,7 +1333,7 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
       op6(&s->slots[(step_num - 5) & 0x1f]);//level calc 2
       op7(&s->slots[(step_num - 6) & 0x1f],s);//sound stack write
 
-      if (new_scsp.debug_mode)
+      if (s->debug_mode)
       {
          if (scsp_debug_instrument_check_is_muted(s->slots[last_step].regs.sa))
             debug_muted = 1;
@@ -1374,19 +1376,18 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
    for (i = 0; i < 18; i++)//16,17 are exts0/1
    {
       int efsdl = get_sdl_shift(s->slots[i].regs.efsdl);
-
-      s16 efsdl_applied = (scsp_dsp.efreg[i] >> efsdl);
+      s16 efsdl_applied = 0; 
 
       int pan_val_l = 0, pan_val_r = 0;
       s16 panned_l = 0, panned_r = 0;
 
-      if (i == 16)
+      if (i < 16)
+         efsdl_applied = (scsp_dsp.efreg[i] >> efsdl);
+      else if (i == 16)
          efsdl_applied = scsp_dsp.exts[0] >> efsdl;
-
-      if (i == 17)
+      else if (i == 17)
          efsdl_applied = scsp_dsp.exts[1] >> efsdl;
 
-      
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
       panned_l = (efsdl_applied >> pan_val_l) >> 2;
@@ -1419,6 +1420,15 @@ void new_scsp_reset(struct Scsp* s)
 
    memset(&scsp_dsp, 0, sizeof(ScspDsp));
 }
+
+void scsp_set_use_new(int which)
+{
+   if (which && !use_new_scsp)
+      new_scsp_reset(&new_scsp);
+
+   use_new_scsp = which;
+}
+
 ////////////////////////////////////////////////////////////////
 
 #ifndef PI
@@ -1899,9 +1909,6 @@ scsp_slot_refresh_einc (slot_t *slot, u32 adsr_bitmask)
 static void
 scsp_slot_set_b (u32 s, u32 a, u8 d)
 {
-#ifdef USE_NEW_SCSP
-  scsp_slot_write_byte(&new_scsp, a, d);
-#endif
 
   slot_t *slot = &(scsp.slot[s]);
 
@@ -2196,9 +2203,6 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
 static void
 scsp_slot_set_w (u32 s, s32 a, u16 d)
 {
-#ifdef USE_NEW_SCSP
-  scsp_slot_write_word(&new_scsp, a, d);
-#endif
   slot_t *slot = &(scsp.slot[s]);
 
   SCSPLOG ("slot %d : reg %.2X = %.4X\n", s, a & 0x1E, d);
@@ -2433,9 +2437,6 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
 static u8
 scsp_slot_get_b (u32 s, u32 a)
 {
-#ifdef USE_NEW_SCSP
-  return scsp_slot_read_byte(&new_scsp, a);
-#endif
   u8 val = scsp_isr[a ^ 3];
 
   // Mask out keyonx
@@ -2448,9 +2449,6 @@ scsp_slot_get_b (u32 s, u32 a)
 
 static u16 scsp_slot_get_w(u32 s, u32 a)
 {
-#ifdef USE_NEW_SCSP
-  return scsp_slot_read_word(&new_scsp, a);
-#endif
   u16 val = *(u16 *)&scsp_isr[a ^ 2];
 
   if ((a & 0x1E) == 0x00) return val &= 0xEFFF;
@@ -2500,11 +2498,10 @@ scsp_set_b (u32 a, u8 d)
 
     case 0x03: // RBL(low bit)/RBP
       scsp.rbl = (scsp.rbl & 2) + ((d >> 7) & 1);
-#ifdef USE_NEW_SCSP
-      scsp.rbp = (d & 0x7F);
-#else
-      scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
-#endif
+      if (use_new_scsp)
+         scsp.rbp = (d & 0x7F);
+      else
+         scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
       return;
 
     case 0x07: // MOBUF
@@ -2668,11 +2665,12 @@ scsp_set_w (u32 a, u16 d)
 
     case 0x02: // RBL/RBP
       scsp.rbl = (d >> 7) & 3;
-#ifdef USE_NEW_SCSP
-      scsp.rbp = (d & 0x7F);
-#else
-      scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
-#endif
+
+      if (use_new_scsp)
+         scsp.rbp = (d & 0x7F);
+      else
+         scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
+
       return;
 
     case 0x06: // MOBUF
@@ -3603,150 +3601,153 @@ static void (*scsp_slot_update_p[2][2][2][2][2])(slot_t *slot) =
 void
 scsp_update (s32 *bufL, s32 *bufR, u32 len)
 {
-#ifdef USE_NEW_SCSP
-   scsp_bufL = bufL;
-   scsp_bufR = bufR;
-
-   scsp_buf_len = len;
-   scsp_buf_pos = 0;
-
-   s32 temp = cdda_next_in - cdda_out_left;
-   s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
-   u8 *buf = &cddabuf.data[outpos];
-
-   for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+   if (use_new_scsp)
    {
-      s16 out_l = 0;
-      s16 out_r = 0;
-
-      s16 cd_in_l = 0;
-      s16 cd_in_r = 0;
-
-      if ((s32)cdda_out_left > 0)
-      {
-         cd_in_l = (s16)((buf[1] << 8) | buf[0]);
-         cd_in_r = (s16)((buf[3] << 8) | buf[2]);
-
-         cdda_out_left -= 4;
-         buf += 4;
-      }
-
-      generate_sample(&new_scsp, scsp.rbp,scsp.rbl, &out_l, &out_r, scsp.mvol, cd_in_l, cd_in_r);
-      scsp_bufL[scsp_buf_pos] += out_l;
-      scsp_bufR[scsp_buf_pos] += out_r;
-   }
-#else
-  slot_t *slot;
-
-  scsp_bufL = bufL;
-  scsp_bufR = bufR;
-
-  for (slot = &(scsp.slot[0]); slot < &(scsp.slot[32]); slot++)
-    {
-      if (slot->ecnt >= SCSP_ENV_DE) continue; // enveloppe null...
-
-      if (slot->ssctl)
-        {
-          // Still not correct, but at least this fixes games
-          // that rely on Call Address information
-          scsp_buf_len = len;
-          scsp_buf_pos = 0;
-
-          for(; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
-            {
-              if ((slot->fcnt += slot->finc) > slot->lea)
-                {
-                  if (slot->lpctl) slot->fcnt = slot->lsa;
-                  else
-                    {
-                      slot->ecnt = SCSP_ENV_DE;
-                      break;
-                    }
-                }
-            }
-
-          continue; // not yet supported!
-        }
+      s32 temp = cdda_next_in - cdda_out_left;
+      s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
+      u8 *buf = &cddabuf.data[outpos];
 
       scsp_buf_len = len;
       scsp_buf_pos = 0;
 
-      // take effect sound volume if no direct sound volume...
-      if ((slot->disll == 31) && (slot->dislr == 31))
-        {
-          slot->disll = slot->efsll;
-          slot->dislr = slot->efslr;
-        }
+      for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+      {
+         s16 out_l = 0;
+         s16 out_r = 0;
 
-      // SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
+         s16 cd_in_l = 0;
+         s16 cd_in_r = 0;
 
-      scsp_slot_update_p[(slot->lfofms == 31) ? 0 : 1]
-                        [(slot->lfoems == 31) ? 0 : 1]
-                        [(slot->pcm8b == 0)   ? 1 : 0]
-                        [(slot->disll == 31)  ? 0 : 1]
-                        [(slot->dislr == 31)  ? 0 : 1](slot);
-    }
+         if ((s32)cdda_out_left > 0)
+         {
+            cd_in_l = (s16)((buf[1] << 8) | buf[0]);
+            cd_in_r = (s16)((buf[3] << 8) | buf[2]);
 
-  if (cdda_out_left > 0)
-    {
-      if (len > cdda_out_left / 4)
-        scsp_buf_len = cdda_out_left / 4;
-      else
-        scsp_buf_len = len;
+            cdda_out_left -= 4;
+            buf += 4;
+         }
 
-      scsp_buf_pos = 0;
+         generate_sample(&new_scsp, scsp.rbp, scsp.rbl, &out_l, &out_r, scsp.mvol, cd_in_l, cd_in_r);
+         bufL[scsp_buf_pos] += out_l;
+         bufR[scsp_buf_pos] += out_r;
+      }
+   }
+   else
+   {
+      slot_t *slot;
 
-      /* May need to wrap around the buffer, so use nested loops */
-      while (scsp_buf_pos < scsp_buf_len)
-        {
-          s32 temp = cdda_next_in - cdda_out_left;
-          s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
-          u8 *buf = &cddabuf.data[outpos];
+      scsp_bufL = bufL;
+      scsp_bufR = bufR;
 
-          u32 scsp_buf_target;
-          u32 this_len = scsp_buf_len - scsp_buf_pos;
-          if (this_len > (sizeof(cddabuf.data) - outpos) / 4)
-            this_len = (sizeof(cddabuf.data) - outpos) / 4;
-          scsp_buf_target = scsp_buf_pos + this_len;
+      for (slot = &(scsp.slot[0]); slot < &(scsp.slot[32]); slot++)
+      {
+         if (slot->ecnt >= SCSP_ENV_DE) continue; // enveloppe null...
 
-          for (; scsp_buf_pos < scsp_buf_target; scsp_buf_pos++, buf += 4)
+         if (slot->ssctl)
+         {
+            // Still not correct, but at least this fixes games
+            // that rely on Call Address information
+            scsp_buf_len = len;
+            scsp_buf_pos = 0;
+
+            for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
             {
-              s32 out;
-
-              out = (s32)(s16)((buf[1] << 8) | buf[0]);
-
-              if (out)
-                scsp_bufL[scsp_buf_pos] += out;
-
-              out = (s32)(s16)((buf[3] << 8) | buf[2]);
-
-              if (out)
-                scsp_bufR[scsp_buf_pos] += out;
+               if ((slot->fcnt += slot->finc) > slot->lea)
+               {
+                  if (slot->lpctl) slot->fcnt = slot->lsa;
+                  else
+                  {
+                     slot->ecnt = SCSP_ENV_DE;
+                     break;
+                  }
+               }
             }
 
-          cdda_out_left -= this_len * 4;
-        }
-    }
-  else if (Cs2Area->isaudio)
-  {
-	  SCSPLOG("WARNING: CDDA buffer underrun\n");
-  }
-#endif
+            continue; // not yet supported!
+         }
+
+         scsp_buf_len = len;
+         scsp_buf_pos = 0;
+
+         // take effect sound volume if no direct sound volume...
+         if ((slot->disll == 31) && (slot->dislr == 31))
+         {
+            slot->disll = slot->efsll;
+            slot->dislr = slot->efslr;
+         }
+
+         // SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
+
+         scsp_slot_update_p[(slot->lfofms == 31) ? 0 : 1]
+            [(slot->lfoems == 31) ? 0 : 1]
+         [(slot->pcm8b == 0) ? 1 : 0]
+         [(slot->disll == 31) ? 0 : 1]
+         [(slot->dislr == 31) ? 0 : 1](slot);
+      }
+
+      if (cdda_out_left > 0)
+      {
+         if (len > cdda_out_left / 4)
+            scsp_buf_len = cdda_out_left / 4;
+         else
+            scsp_buf_len = len;
+
+         scsp_buf_pos = 0;
+
+         /* May need to wrap around the buffer, so use nested loops */
+         while (scsp_buf_pos < scsp_buf_len)
+         {
+            s32 temp = cdda_next_in - cdda_out_left;
+            s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
+            u8 *buf = &cddabuf.data[outpos];
+
+            u32 scsp_buf_target;
+            u32 this_len = scsp_buf_len - scsp_buf_pos;
+            if (this_len > (sizeof(cddabuf.data) - outpos) / 4)
+               this_len = (sizeof(cddabuf.data) - outpos) / 4;
+            scsp_buf_target = scsp_buf_pos + this_len;
+
+            for (; scsp_buf_pos < scsp_buf_target; scsp_buf_pos++, buf += 4)
+            {
+               s32 out;
+
+               out = (s32)(s16)((buf[1] << 8) | buf[0]);
+
+               if (out)
+                  scsp_bufL[scsp_buf_pos] += out;
+
+               out = (s32)(s16)((buf[3] << 8) | buf[2]);
+
+               if (out)
+                  scsp_bufR[scsp_buf_pos] += out;
+            }
+
+            cdda_out_left -= this_len * 4;
+         }
+      }
+      else if (Cs2Area->isaudio)
+      {
+         SCSPLOG("WARNING: CDDA buffer underrun\n");
+      }
+   }
 }
 
 void
 scsp_update_monitor(void)
 {
-#ifdef USE_NEW_SCSP
-   scsp.ca = new_scsp.slots[scsp.mslc].state.sample_offset >> 5;
-   scsp.sgc = new_scsp.slots[scsp.mslc].state.envelope;
-   scsp.eg = new_scsp.slots[scsp.mslc].state.attenuation >> 5;
-#else
-   slot_t *slot = &scsp.slot[scsp.mslc];
-   scsp.ca = ((slot->fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
-   scsp.sgc = slot->ecurp;
-   scsp.eg = 0x1f - (slot->env >> (SCSP_ENV_HB - 5));
-#endif
+   if (use_new_scsp)
+   {
+      scsp.ca = new_scsp.slots[scsp.mslc].state.sample_offset >> 5;
+      scsp.sgc = new_scsp.slots[scsp.mslc].state.envelope;
+      scsp.eg = new_scsp.slots[scsp.mslc].state.attenuation >> 5;
+   }
+   else
+   {
+      slot_t *slot = &scsp.slot[scsp.mslc];
+      scsp.ca = ((slot->fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
+      scsp.sgc = slot->ecurp;
+      scsp.eg = 0x1f - (slot->env >> (SCSP_ENV_HB - 5));
+   }
 #ifdef PSP
    WRITE_THROUGH(scsp.ca);
    WRITE_THROUGH(scsp.sgc);
@@ -3934,7 +3935,10 @@ scsp_w_b (u32 a, u8 d)
 
   if (a < 0x400)
     {
-      scsp_slot_set_b (a >> 5, a, d);
+       if (use_new_scsp)
+          scsp_slot_write_byte(&new_scsp, a, d);
+       else
+          scsp_slot_set_b(a >> 5, a, d);
       FLUSH_SCSP ();
       return;
     }
@@ -3975,7 +3979,10 @@ scsp_w_w (u32 a, u16 d)
 
   if (a < 0x400)
     {
-      scsp_slot_set_w (a >> 5, a, d);
+       if (use_new_scsp)
+          scsp_slot_write_word(&new_scsp, a, d);
+       else
+          scsp_slot_set_w(a >> 5, a, d);
       FLUSH_SCSP ();
       return;
     }
@@ -4059,8 +4066,16 @@ scsp_w_d (u32 a, u32 d)
 
   if (a < 0x400)
     {
-      scsp_slot_set_w (a >> 5, a + 0, d >> 16);
-      scsp_slot_set_w (a >> 5, a + 2, d & 0xFFFF);
+       if (use_new_scsp)
+       {
+          scsp_slot_write_word(&new_scsp, a + 0, d >> 16);
+          scsp_slot_write_word(&new_scsp, a + 2, d & 0xffff);
+       }
+       else
+       {
+          scsp_slot_set_w(a >> 5, a + 0, d >> 16);
+          scsp_slot_set_w(a >> 5, a + 2, d & 0xFFFF);
+       }
       FLUSH_SCSP ();
       return;
     }
@@ -4097,7 +4112,10 @@ scsp_r_b (u32 a)
 
   if (a < 0x400)
     {
-      return scsp_slot_get_b(a >> 5, a);
+       if (use_new_scsp)
+          return scsp_slot_read_byte(&new_scsp, a);
+       else
+         return scsp_slot_get_b(a >> 5, a);
     }
   else if (a < 0x600)
     {
@@ -4131,7 +4149,10 @@ scsp_r_w (u32 a)
 
   if (a < 0x400)
     {
-      return scsp_slot_get_w (a >> 5, a);
+       if (use_new_scsp)
+          return scsp_slot_read_word(&new_scsp, a);
+       else
+          return scsp_slot_get_w(a >> 5, a);
     }
   else if (a < 0x600)
     {
@@ -4139,10 +4160,11 @@ scsp_r_w (u32 a)
     }
   else if (a < 0x700)
     {
-#ifdef USE_NEW_SCSP
-       u32 addr = a - 0x600;
-       return new_scsp.sound_stack[(addr/2)&0x3f];
-#endif
+       if (use_new_scsp)
+       {
+          u32 addr = a - 0x600;
+          return new_scsp.sound_stack[(addr / 2) & 0x3f];
+       }
     }
   else if (a >= 0x700 && a < 0x780)
   {
@@ -4210,7 +4232,10 @@ scsp_r_d (u32 a)
 
   if (a < 0x400)
     {
-      return (scsp_slot_get_w (a >> 5, a + 0) << 16) | scsp_slot_get_w (a >> 5, a + 2);
+       if (use_new_scsp)
+          return (scsp_slot_read_word(&new_scsp, a + 0) << 16) | scsp_slot_read_word(&new_scsp, a + 2);
+       else
+          return (scsp_slot_get_w(a >> 5, a + 0) << 16) | scsp_slot_get_w(a >> 5, a + 2);
     }
   else if (a < 0x600)
     {
@@ -4290,9 +4315,9 @@ scsp_reset (void)
 		slot->lfofmw = scsp_lfo_sawt_f;
 		slot->lfoemw = scsp_lfo_sawt_e;
     }
-#ifdef USE_NEW_SCSP
-  new_scsp_reset(&new_scsp);
-#endif
+
+  if (use_new_scsp)
+     new_scsp_reset(&new_scsp);
 }
 
 void
