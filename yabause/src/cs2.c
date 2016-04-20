@@ -22,7 +22,6 @@
     \brief A-bus CS2 emulation functions. Mainly CD-Block code.
 */
 
-#if 1
 #include <stdlib.h>
 #include <ctype.h>
 #include "cs2.h"
@@ -68,6 +67,14 @@
 
 #define CDB_PLAYTYPE_SECTOR     0x01
 #define CDB_PLAYTYPE_FILE       0x02
+
+enum CDB_DATATRANSTYPE
+{
+   CDB_DATATRANSTYPE_INVALID=-1,
+   CDB_DATATRANSTYPE_GETSECTOR=0,
+   CDB_DATATRANSTYPE_GETDELSECTOR=2,
+   CDB_DATATRANSTYPE_PUTSECTOR=3
+};
 
 #define ToBCD(val) ((val % 10 ) + ((val / 10 ) << 4))
 
@@ -325,7 +332,7 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
     case 0x90028: return ((Cs2Area->reg.MPEGRGB << 16) | Cs2Area->reg.MPEGRGB);
     case 0x18000:
                   // transfer data
-                  if (Cs2Area->datatranstype != -1)
+                  if (Cs2Area->datatranstype != CDB_DATATRANSTYPE_INVALID)
                   {
                      // get sector
 
@@ -350,7 +357,7 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                         Cs2Area->cdwnum += 4;
                         Cs2Area->datatransoffset += 4;
 
-                        // Make sure we're not beyond the sector size boundry
+                        // Make sure we're not beyond the sector size boundary
                         if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
                         {
                            Cs2Area->datatransoffset = 0;
@@ -359,12 +366,12 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                      }
                      else
                      {
-                        if (Cs2Area->datatranstype == 2)
+                        if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_GETDELSECTOR)
                         {
                            // Ok, so we don't have any more sectors to
                            // transfer, might as well delete them all.
 
-                           Cs2Area->datatranstype = -1;
+                           Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
 
                            // free blocks
                            for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
@@ -397,8 +404,53 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Cs2WriteLong(UNUSED u32 addr, UNUSED u32 val) {
-   LOG("cs2\t: Long writing isn't implemented\n");
-//   T3WriteLong(Cs2Area->mem, addr, val);
+   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+
+   switch (addr)
+   {
+      case 0x18000:
+         // transfer data
+         if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_PUTSECTOR)
+         {
+            // put sector
+
+            // Make sure we still have sectors to transfer
+            if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
+            {
+               // Transfer Data
+               const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+
+               if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
+               {
+                  CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
+                  return;
+               }
+#ifdef WORDS_BIGENDIAN
+               *((u32 *) ptr) = val;
+#else
+               *((u32 *) ptr) = BSWAP32(val);
+#endif
+
+               // increment datatransoffset/cdwnum
+               Cs2Area->cdwnum += 4;
+               Cs2Area->datatransoffset += 4;
+
+               // Make sure we're not beyond the sector size boundary
+               if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
+               {
+                  Cs2Area->datatransoffset = 0;
+                  Cs2Area->datanumsecttrans++;
+						if (Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
+							Cs2Area->reg.HIRQ |= CDB_HIRQ_EHST;
+               }
+            }
+         }
+         break;
+      default:
+		   LOG("cs2\t: Undocumented register write %08X\n", addr);
+//         T3WriteLong(Cs2Area->mem, addr, val);
+         break;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -410,7 +462,7 @@ void FASTCALL Cs2RapidCopyT1(void *dest, u32 count)
 {
    u8 *dest8 = (u8 *) dest;
 
-   if (Cs2Area->datatranstype != -1)
+   if (Cs2Area->datatranstype != CDB_DATATRANSTYPE_INVALID)
    {
       // Copy as many sectors as we have left, one sector at a time
 
@@ -436,12 +488,12 @@ void FASTCALL Cs2RapidCopyT1(void *dest, u32 count)
 
       // If we're in delete mode and we read through everything in memory,
       // delete the sectors
-      if (Cs2Area->datatranstype == 2
+      if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_GETDELSECTOR
        && Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
       {
          u32 i;
 
-         Cs2Area->datatranstype = -1;
+         Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
 
          for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
          {
@@ -476,7 +528,7 @@ void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
 {
    u32 *dest32 = (u32 *) dest;
 
-   if (Cs2Area->datatranstype != -1)
+   if (Cs2Area->datatranstype != CDB_DATATRANSTYPE_INVALID)
    {
       // Copy as many sectors as we have left, one sector at a time; copy
       // four words at a time where possible to improve data parallelism
@@ -528,12 +580,12 @@ void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
          }
       }
 
-      if (Cs2Area->datatranstype == 2
+      if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_GETDELSECTOR
        && Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
       {
          u32 i;
 
-         Cs2Area->datatranstype = -1;
+         Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
 
          for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
          {
@@ -704,7 +756,7 @@ void Cs2Reset(void) {
   }
 
   Cs2Area->infotranstype = -1;
-  Cs2Area->datatranstype = -1;
+  Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
   Cs2Area->transfercount = 0;
   Cs2Area->cdwnum = 0;
   Cs2Area->getsectsize = Cs2Area->putsectsize = 2048;
@@ -1220,7 +1272,7 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: Command: mpegSetDecodingMethod %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR4);
       Cs2MpegSetDecodingMethod();
       break;
-    case 0x9A:      
+    case 0x9A:
       CDLOG("cs2\t: Command: mpegSetConnection %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2MpegSetConnection();
       break;
@@ -1435,7 +1487,7 @@ void Cs2EndDataTransfer(void) {
         // Make sure we actually have to free something
         if (Cs2Area->datatranspartition->size <= 0) break;
 
-        Cs2Area->datatranstype = -1;
+        Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
 
         // free blocks
         for (i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos + Cs2Area->datasectstotrans); i++)
@@ -1845,10 +1897,10 @@ void Cs2ResetSelector(void) {
      if (Cs2Area->blockfreespace == 200) 
      {
         Cs2Area->isonesectorstored = 0;
-        Cs2Area->datatranstype = -1;
+        Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
      }
      else if (Cs2Area->datatranspartitionnum == rsbufno)
-        Cs2Area->datatranstype = -1;
+        Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
 
      doCDReport(Cs2Area->status);
      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
@@ -1918,7 +1970,7 @@ void Cs2ResetSelector(void) {
      }
 
      Cs2Area->isonesectorstored = 0;
-     Cs2Area->datatranstype = -1;
+     Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
   }
 
   doCDReport(Cs2Area->status);
@@ -2106,7 +2158,7 @@ void Cs2GetSectorData(void)
 
    // Setup Data Transfer
    Cs2Area->cdwnum = 0;
-   Cs2Area->datatranstype = 0;
+   Cs2Area->datatranstype = CDB_DATATRANSTYPE_GETSECTOR;
    Cs2Area->datatranspartition = Cs2Area->partition + gsdbufno;
    Cs2Area->datatranspartitionnum = (u8)gsdbufno;
    Cs2Area->datatransoffset = 0;
@@ -2201,7 +2253,7 @@ void Cs2GetThenDeleteSectorData(void)
 
    // Setup Data Transfer
    Cs2Area->cdwnum = 0;
-   Cs2Area->datatranstype = 2;
+   Cs2Area->datatranstype = CDB_DATATRANSTYPE_GETDELSECTOR;
    Cs2Area->datatranspartition = Cs2Area->partition + gtdsdbufno;
    Cs2Area->datatransoffset = 0;
    Cs2Area->datanumsecttrans = 0;
@@ -2217,20 +2269,51 @@ void Cs2GetThenDeleteSectorData(void)
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2PutSectorData(void) {
-  u32 psdfiltno;
+   u32 psdbufno;
+   u32 psdsectnum;
 
-  psdfiltno = Cs2Area->reg.CR3 >> 8;
+   psdbufno = Cs2Area->reg.CR3 >> 8;
+   psdsectnum = Cs2Area->reg.CR4;
 
-  if (psdfiltno < MAX_SELECTORS)
-  {
-     // I'm not really sure what I'm supposed to really be doing or returning
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
-  }
-  else
-  {
-     doCDReport(CDB_STAT_REJECT);
-     Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
-  }
+   if (psdbufno < MAX_SELECTORS)
+   {
+     // Make sure there's enough free space
+     if (psdsectnum > Cs2Area->blockfreespace)
+        Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+     else
+     {
+         // Allocate buffer
+         IOCheck_struct check = { 0, 0 };
+         partition_struct *putpartition = &Cs2Area->partition[psdbufno];
+         u32 i;
+
+         putpartition->size = 0;
+
+         for (i = 0; i < psdsectnum; i++)
+         {
+            putpartition->block[putpartition->numblocks] = Cs2AllocateBlock(&putpartition->blocknum[putpartition->numblocks], Cs2Area->putsectsize);
+            putpartition->block[putpartition->numblocks]->FAD = i;
+            putpartition->numblocks++;
+            putpartition->size += Cs2Area->putsectsize;
+         }
+
+         // Setup Data Transfer
+         Cs2Area->cdwnum = 0;
+         Cs2Area->datatranstype = CDB_DATATRANSTYPE_PUTSECTOR;
+         Cs2Area->datatranspartition = Cs2Area->partition + psdbufno;
+         Cs2Area->datatranspartitionnum = (u8)psdbufno;
+         Cs2Area->datatransoffset = 0;
+         Cs2Area->datanumsecttrans = 0;
+         Cs2Area->datatranssectpos = 0;
+         Cs2Area->datasectstotrans = (u16)psdsectnum;
+         Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY;
+      }
+   }
+   else
+   {
+      doCDReport(CDB_STAT_REJECT);
+      Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2382,7 +2465,7 @@ void Cs2AbortFile(void) {
       (Cs2Area->status & 0xF) != CDB_STAT_NODISC)
      Cs2Area->status = CDB_STAT_PAUSE;
   Cs2Area->isonesectorstored = 0;
-  Cs2Area->datatranstype = -1;
+  Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
   Cs2Area->cdwnum = 0;
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EFLS;
@@ -2739,7 +2822,7 @@ void Cs2GetMPEGRom(void) {
 
         for (i = 0; i < readsize; i++)
         {
-           mpgpartition->block[mpgpartition->numblocks] = Cs2AllocateBlock(&mpgpartition->blocknum[mpgpartition->numblocks]);
+           mpgpartition->block[mpgpartition->numblocks] = Cs2AllocateBlock(&mpgpartition->blocknum[mpgpartition->numblocks], Cs2Area->getsectsize);
 
            if (mpgpartition->block[mpgpartition->numblocks] != NULL) {
               // read data
@@ -2826,7 +2909,7 @@ void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-block_struct * Cs2AllocateBlock(u8 * blocknum) {
+block_struct * Cs2AllocateBlock(u8 * blocknum, s32 sectsize) {
   u32 i;
   // find a free block
   for(i = 0; i < 200; i++)
@@ -2837,7 +2920,7 @@ block_struct * Cs2AllocateBlock(u8 * blocknum) {
 
         if (Cs2Area->blockfreespace <= 0) Cs2Area->isbufferfull = 1;
 
-        Cs2Area->block[i].size = Cs2Area->getsectsize;
+        Cs2Area->block[i].size = sectsize;
 
         *blocknum = (u8)i;
         return (Cs2Area->block + i);
@@ -2971,7 +3054,7 @@ partition_struct * Cs2FilterData(filter_struct * curfilter, int isaudio)
   }
 
   // Allocate block
-  fltpartition->block[fltpartition->numblocks] = Cs2AllocateBlock(&fltpartition->blocknum[fltpartition->numblocks]);
+  fltpartition->block[fltpartition->numblocks] = Cs2AllocateBlock(&fltpartition->blocknum[fltpartition->numblocks], Cs2Area->getsectsize);
 
   if (fltpartition->block[fltpartition->numblocks] == NULL)
     return NULL;
@@ -3347,7 +3430,7 @@ partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD) {
   if ((rufspartition = Cs2GetPartition(Cs2Area->outconcddev)) != NULL && !Cs2Area->isbufferfull)
   {
      // Allocate Block
-     rufspartition->block[rufspartition->numblocks] = Cs2AllocateBlock(&rufspartition->blocknum[rufspartition->numblocks]);
+     rufspartition->block[rufspartition->numblocks] = Cs2AllocateBlock(&rufspartition->blocknum[rufspartition->numblocks], Cs2Area->getsectsize);
 
      if (rufspartition->block[rufspartition->numblocks] == NULL)
         return NULL;
@@ -3837,5 +3920,3 @@ u32 Cs2GetMasterStackAdress(){ if (cdip) return cdip->msh2stack; else return 0x6
 u32 Cs2GetSlaveStackAdress(){ if (cdip) return cdip->ssh2stack; else return 0x6001000; }
 
 //////////////////////////////////////////////////////////////////////////////
-
-#endif

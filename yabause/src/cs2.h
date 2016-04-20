@@ -363,7 +363,7 @@ u8 Cs2FADToTrack(u32 val);
 u32 Cs2TrackToFAD(u16 trackandindex);
 void Cs2FADToMSF(u32 val, u8 *m, u8 *s, u8 *f);
 void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD);
-block_struct * Cs2AllocateBlock(u8 * blocknum);
+block_struct * Cs2AllocateBlock(u8 * blocknum, s32 sectsize);
 void Cs2FreeBlock(block_struct * blk);
 void Cs2SortBlocks(partition_struct * part);
 partition_struct * Cs2GetPartition(filter_struct * curfilter);
