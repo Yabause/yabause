@@ -2918,9 +2918,12 @@ void YglRender(void) {
 		   YglGenerateAABuffer();
 	   }
 	   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
+	   _Ygl->targetfbo = _Ygl->fxaa_fbo;
+	   
    }
    else{
 	   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	   _Ygl->targetfbo = 0;
    }
 
 

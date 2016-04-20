@@ -395,6 +395,8 @@ typedef struct {
 
    YglPerLineInfo bg[enBGMAX];
 
+   u32 targetfbo;
+
 }  Ygl;
 
 extern Ygl * _Ygl;
