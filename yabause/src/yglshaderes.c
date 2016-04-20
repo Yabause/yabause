@@ -301,13 +301,13 @@ int Ygl_cleanupMosaic(void * p)
 	prg = p;
 
 	// Bind Default frame buffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
 	// Restore Default Matrix
 	glViewport(0, 0, _Ygl->width, _Ygl->height);
 
 	// call blit method
-	YglBlitMosaic(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic );
+	YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
 
 	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -342,13 +342,13 @@ int Ygl_cleanupPerLineAlpha(void * p)
 	prg = p;
 
 	// Bind Default frame buffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
 	// Restore Default Matrix
 	glViewport(0, 0, _Ygl->width, _Ygl->height);
 
 	// call blit method
-	YglBlitPerLineAlpha(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture );
+	YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
 	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -383,13 +383,13 @@ int Ygl_cleanupNormal_blur(void * p)
 	prg = p;
 
 	// Bind Default frame buffer
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
 	// Restore Default Matrix
 	glViewport(0, 0, _Ygl->width, _Ygl->height);
 
 	// call blit method
-	YglBlitBlur(_Ygl->tmpfbotex, 0, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
+	YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
 	glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -2579,8 +2579,6 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
 	glActiveTexture(GL_TEXTURE0);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
 	return 0;
 }
@@ -2737,8 +2735,6 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
 	glActiveTexture(GL_TEXTURE0);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
 	return 0;
 }
@@ -2913,8 +2909,6 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 	glActiveTexture(GL_TEXTURE0);
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 
 	return 0;
 }
