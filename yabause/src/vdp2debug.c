@@ -255,10 +255,10 @@ static INLINE char *AddMapInfo(char *outstring, int patternwh, u16 PNC, u8 PLSZ,
          planew = 2;
          planeh = 1;
          break;
-      case 2:
+      case 3:
          planew = planeh = 2;
          break;
-      default: // Not sure what 0x3 does
+      default: // Not sure what 0x2 does
          planew = planeh = 1;
          break;
    }
