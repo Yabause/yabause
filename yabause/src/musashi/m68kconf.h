@@ -105,7 +105,7 @@
 /* If ON, CPU will call the output reset callback when it encounters a reset
  * instruction.
  */
-#define M68K_EMULATE_RESET          OPT_OFF
+#define M68K_EMULATE_RESET          OPT_ON
 #define M68K_RESET_CALLBACK()       your_reset_handler_function()
 
 
