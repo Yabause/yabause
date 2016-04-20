@@ -81,7 +81,29 @@ static corlett_t	*c = NULL;
 static char 		psfby[256];
 static u32		decaybegin, decayend, total_samples;
 
-s32 ssf_start(u8 *buffer, u32 length, int m68k_core, int sndcore)
+//get current directory then append the libfile name
+int get_lib_file(char* path, char* libfile, char * output)
+{
+   char * end = NULL;
+   size_t len = 0;
+   if (!path || !libfile || !output)
+      return 0;
+
+   len = strlen(path);
+
+   end = path + len - 1;
+
+   while (end > path && *end != '/')
+      end--;
+
+   strncpy(output, path, (end - path)+1);
+
+   strcat(output, libfile);
+
+   return 1;//success
+}
+
+s32 ssf_start(u8 *buffer, u32 length, int m68k_core, int sndcore, char* filename)
 {
 	u8 *file, *lib_decoded, *lib_raw_file;
 	u32 offset, lengthMS, fadeMS;
@@ -113,11 +135,15 @@ s32 ssf_start(u8 *buffer, u32 length, int m68k_core, int sndcore)
 		if (libfile[0] != 0)
 		{
 			u64 tmp_length;
-	
+         char libfile_path[2048] = { 0 };
+
+         if (!get_lib_file(filename, libfile, libfile_path))
+            return AO_FAIL;
+         
 			#if DEBUG_LOADER	
 			printf("Loading library: %s\n", c->lib);
 			#endif
-			if (ao_get_lib(libfile, &lib_raw_file, &tmp_length) != AO_SUCCESS)
+			if (ao_get_lib(libfile_path, &lib_raw_file, &tmp_length) != AO_SUCCESS)
 			{
 				return AO_FAIL;
 			}

@@ -121,7 +121,7 @@ int load_ssf(char *filename, int m68k_core, int sndcore)
 		return 0;//false
 	}
 
-	if ((ret = ssf_start(buffer, size, m68k_core, sndcore)) != AO_SUCCESS)
+	if ((ret = ssf_start(buffer, size, m68k_core, sndcore, filename)) != AO_SUCCESS)
 	{
 		free(buffer);
 		return ret;
