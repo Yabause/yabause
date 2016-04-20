@@ -149,5 +149,6 @@ void scsp_debug_instrument_set_mute(u32 sa, int mute);
 void scsp_debug_instrument_clear();
 void scsp_debug_get_envelope(int chan, int * env, int * state);
 void scsp_debug_set_mode(int mode);
+void scsp_set_use_new(int which);
 
 #endif

@@ -36,7 +36,7 @@ typedef struct
 extern ao_display_info ssf_info;
 
 int ao_get_lib(char *filename, u8 **buffer, u64 *length);
-s32 ssf_start(u8 *buffer, u32 length, int m68k_core, int sndcore);
+s32 ssf_start(u8 *buffer, u32 length, int m68k_core, int sndcore, char* filename);
 s32 ssf_fill_info(ao_display_info *);
 
 #ifdef _MSC_VER

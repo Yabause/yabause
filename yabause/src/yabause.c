@@ -346,6 +346,8 @@ int YabauseInit(yabauseinit_struct *init)
       VIDSoftSetNumPriorityThreads(0);
    }
 
+   scsp_set_use_new(init->use_new_scsp);
+
    return 0;
 }
 
