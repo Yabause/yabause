@@ -69,6 +69,10 @@ if (YAB_WANT_OPENSL)
     set(YABAUSE_JNI_LIB "-lOpenSLES")
 endif()
 
+if (YAB_USE_SSF)
+    set(YABAUSE_JNI_LIB "${YABAUSE_JNI_LIB} -lz")
+endif()
+
 set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/jni/Android.mk.in
