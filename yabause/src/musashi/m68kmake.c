@@ -588,7 +588,7 @@ int fgetline(char* buff, int nchars, FILE* file)
 	if(buff[0] == '\r')
 		memcpy(buff, buff + 1, nchars - 1);
 
-	length = strlen(buff);
+	length = (int)strlen(buff);
 	while(length && (buff[length-1] == '\r' || buff[length-1] == '\n'))
 		length--;
 	buff[length] = 0;

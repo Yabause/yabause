@@ -41,7 +41,7 @@ static INLINE void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
          *planew = 2;
          *planeh = 1;
          break;
-      case 2:
+      case 3:
          *planew = *planeh = 2;
          break;
       default:
@@ -246,23 +246,7 @@ static INLINE char *AddMapInfo(char *outstring, int patternwh, u16 PNC, u8 PLSZ,
    else
       patterndatasize = 2;
 
-   switch(PLSZ)
-   {
-      case 0:
-         planew = planeh = 1;
-         break;
-      case 1:
-         planew = 2;
-         planeh = 1;
-         break;
-      case 3:
-         planew = planeh = 2;
-         break;
-      default: // Not sure what 0x2 does
-         planew = planeh = 1;
-         break;
-   }
-
+   Vdp2GetPlaneSize(PLSZ, &planew, &planeh);
    deca = planeh + planew - 2;
    multi = planeh * planew;
 

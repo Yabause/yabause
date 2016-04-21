@@ -37,6 +37,7 @@ struct ReadWriteFuncs
 static int M68KMusashiInit(void) {
 
    m68k_init();
+   m68k_set_reset_instr_callback(m68k_pulse_reset);
    m68k_set_cpu_type(M68K_CPU_TYPE_68000);
 
    return 0;
