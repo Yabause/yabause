@@ -3411,6 +3411,7 @@ void VIDOGLVdp1DrawStart(void)
    int i;
    int maxpri;
    int minpri;
+   int line = 0;
    u8 *sprprilist = (u8 *)&Vdp2Regs->PRISA;
 
    FrameProfileAdd("Vdp1Command start");
@@ -3432,7 +3433,7 @@ void VIDOGLVdp1DrawStart(void)
    _Ygl->vdp1_maxpri = maxpri;
    _Ygl->vdp1_minpri = minpri;
 
-   if (Vdp2External.perline_alpha & 0x40){
+   if (*Vdp2External.perline_alpha_draw & 0x40){
 		u32 * linebuf;
 		int line_shift = 0;
 		if (_Ygl->rheight > 256){
@@ -3443,7 +3444,7 @@ void VIDOGLVdp1DrawStart(void)
 		}
 
 		linebuf = YglGetPerlineBuf(&_Ygl->bg[SPRITE]);
-		for (int line = 0; line < _Ygl->rheight; line++){
+		for (line = 0; line < _Ygl->rheight; line++){
 			linebuf[line] = 0xFF000000;
 			Vdp2 * lVdp2Regs = &Vdp2Lines[line >> line_shift];
 			if (lVdp2Regs->CLOFEN & 0x40){
@@ -5074,7 +5075,8 @@ static void Vdp2DrawLineColorScreen(void)
 
 void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id){
 	int bit = 1 << id;
-	if (Vdp2External.perline_alpha & bit){
+	int line = 0;
+	if (*Vdp2External.perline_alpha_draw & bit){
 		u32 * linebuf;
 		int line_shift = 0;
 		if (_Ygl->rheight > 256 ){
@@ -5085,7 +5087,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id){
 		}
 
 		linebuf = YglGetPerlineBuf(&_Ygl->bg[id]);
-		for (int line = 0; line < _Ygl->rheight; line++){
+		for (line = 0; line < _Ygl->rheight; line++){
 			if ((Vdp2Lines[line >> line_shift].BGON & bit) == 0x00){
 				linebuf[line] = 0x00;
 			}
