@@ -458,6 +458,24 @@ void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy)
 void PerAxis1Value(PerAnalog_struct * analog, u32 val)
 {
    analog->analogbits[2] = (u8)val;
+
+   //handle wheel left/right standard pad presses depending on wheel position
+   if (analog->perid == PERWHEEL)
+   {
+      int left_is_pressed = (analog->analogbits[0] & (1 << 6)) == 0;
+      int right_is_pressed = (analog->analogbits[0] & (1 << 7)) == 0;
+
+      if (val <= 0x67)
+         analog->analogbits[0] &= 0xBF;//press left
+      else if (left_is_pressed && val >= 0x6f)
+         analog->analogbits[0] |= ~0xBF;//release left
+
+      
+      if (val >= 0x97)
+         analog->analogbits[0] &= 0x7F;//press right
+      else if(right_is_pressed && val <= 0x8f)
+         analog->analogbits[0] |= ~0x7F;//release right
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
