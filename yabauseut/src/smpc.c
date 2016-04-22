@@ -527,6 +527,29 @@ u8 disp_pad_data(u8 oreg_counter, int x, int y, u8 id)
    return oreg_counter;
 }
 
+
+//at 0x67 standard left pad button is enabled
+//when releasing the wheel back to neutral, at 0x6f left goes back to unpressed
+
+//when pulling the wheel right, at 0x97 right pad is enabled
+//when releasing the wheel from right back to neutral, at 0x8f right pad is released
+
+//the left button on the back of the wheel is up
+//the right button on the back of the wheel is down
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 disp_wheel(u8 oreg_counter, int x, int y, u8 id)
+{
+   oreg_counter = disp_pad_data(oreg_counter, x, y, id);
+
+   u8 analog = get_oreg(&oreg_counter);
+
+   vdp_printf(&test_disp_font, 0*8, 26*8, 0xF, "Analog: %02X", analog);
+
+   return oreg_counter;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 disp_nothing(u8 oreg_counter, int x, int y, u8 id)
@@ -553,7 +576,7 @@ typedef struct
 per_info_struct per_info[] =
 {
    { 0x02, "Standard Pad", disp_pad_data },
-   { 0x13, "Racing Wheel", disp_nothing },
+   { 0x13, "Racing Wheel", disp_wheel },
    { 0x15, "Analog Pad", disp_nothing },
    { 0x23, "Saturn Mouse", disp_nothing },
    { 0x25, "Gun", disp_nothing },
