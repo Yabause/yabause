@@ -281,7 +281,10 @@ void Vdp2Reset(void) {
    Vdp2Internal.ColorMode = 0;
 
    Vdp2External.disptoggle = 0xFF;
-   Vdp2External.perline_alpha = 0;
+   Vdp2External.perline_alpha_a = 0;
+   Vdp2External.perline_alpha_b = 0;
+   Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
+   Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
 }
 
 
@@ -410,47 +413,47 @@ void Vdp2HBlankOUT(void) {
 	   memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
 
 	   if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
-		   Vdp2External.perline_alpha |= 0x1;
+		   *Vdp2External.perline_alpha |= 0x1;
 	   }
 	   else if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
-		   Vdp2External.perline_alpha |= 0x1;
+		   *Vdp2External.perline_alpha |= 0x1;
 	   }
 
 	   if ((Vdp2Lines[0].BGON & 0x02) != (Vdp2Lines[yabsys.LineCount].BGON & 0x02)){
-		   Vdp2External.perline_alpha |= 0x2;
+		   *Vdp2External.perline_alpha |= 0x2;
 	   }
 	   else if ((Vdp2Lines[0].CCRNA & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0xFF00)){
-		   Vdp2External.perline_alpha |= 0x2;
+		   *Vdp2External.perline_alpha |= 0x2;
 	   }
 
 	   if ((Vdp2Lines[0].BGON & 0x04) != (Vdp2Lines[yabsys.LineCount].BGON & 0x04)){
-		   Vdp2External.perline_alpha |= 0x4;
+		   *Vdp2External.perline_alpha |= 0x4;
 	   }
 	   else if ((Vdp2Lines[0].CCRNB & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0xFF00)){
-		   Vdp2External.perline_alpha |= 0x4;
+		   *Vdp2External.perline_alpha |= 0x4;
 	   }
 
 	   if ((Vdp2Lines[0].BGON & 0x08) != (Vdp2Lines[yabsys.LineCount].BGON & 0x08)){
-		   Vdp2External.perline_alpha |= 0x8;
+		   *Vdp2External.perline_alpha |= 0x8;
 	   }
 	   else if ((Vdp2Lines[0].CCRNB & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0x00FF)){
-		   Vdp2External.perline_alpha |= 0x8;
+		   *Vdp2External.perline_alpha |= 0x8;
 	   }
 
 	   if ((Vdp2Lines[0].BGON & 0x10) != (Vdp2Lines[yabsys.LineCount].BGON & 0x10)){
-		   Vdp2External.perline_alpha |= 0x10;
+		   *Vdp2External.perline_alpha |= 0x10;
 	   }
 	   else if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
-		   Vdp2External.perline_alpha |= 0x10;
+		   *Vdp2External.perline_alpha |= 0x10;
 	   }
 
 	   if ( Vdp2Lines[0].COBR != Vdp2Lines[yabsys.LineCount].COBR ){
 
-		   Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
 	   }
 	   if ( Vdp2Lines[0].COAR != Vdp2Lines[yabsys.LineCount].COAR ){
 
-		   Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
 	   }
 
    }
@@ -601,11 +604,22 @@ void vdp2VBlankOUT(void) {
       onesecondticks += diffticks;
       lastticks = curticks;
    }
-   Vdp2External.perline_alpha = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
+
+	if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
+		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
+		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
+		*Vdp2External.perline_alpha = 0;
+	}
+	else{
+		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
+		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+		*Vdp2External.perline_alpha = 0;
+	}
+
 #ifdef _VDP_PROFILE_
 	FrameProfileShow();
 	FrameProfileInit();
@@ -758,7 +772,6 @@ void Vdp2VBlankOUT(void) {
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
 	}
    FrameProfileAdd("VOUT end");
-   Vdp2External.perline_alpha = 0;
 #endif
 }
 
