@@ -79,6 +79,7 @@ typedef struct
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
+extern int use_new_scsp;
 
 u8 FASTCALL SoundRamReadByte(u32 addr);
 u16 FASTCALL SoundRamReadWord(u32 addr);
