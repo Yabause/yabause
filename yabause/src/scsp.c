@@ -3622,6 +3622,7 @@ void ScspAsynMain( void * p ){
 	int difftime;
 
 	nice(10);
+	YabThreadSetCurrentThreadAffinityMask( 0x03 );
 
 	clock_gettime(CLOCK_MONOTONIC, &before);
 	while (thread_running){
