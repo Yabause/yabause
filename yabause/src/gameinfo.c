@@ -46,6 +46,7 @@ int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot
    int version, chunksize;
    FILE * fp;
    int totalsize;
+   size_t fread_result = 0;
 
    sprintf(filename, "%s/%s_%03d.yss", dirpath, itemnum, slot);
 
@@ -98,14 +99,14 @@ int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot
 
    fseek(fp, sizeof(int) * 9, SEEK_CUR);
 
-   fread((void *) outputwidth, sizeof(int), 1, fp);
-   fread((void *) outputheight, sizeof(int), 1, fp);
+   fread_result = fread((void *) outputwidth, sizeof(int), 1, fp);
+   fread_result = fread((void *) outputheight, sizeof(int), 1, fp);
 
    totalsize = *outputwidth * *outputheight * sizeof(u32);
 
    *buffer = malloc(totalsize);
 
-   fread(*buffer, totalsize, 1, fp);
+   fread_result = fread(*buffer, totalsize, 1, fp);
 
    fclose(fp);
 
