@@ -27,6 +27,9 @@
         <activity android:name="GameList"
                   android:screenOrientation="landscape" />
 
+        <activity android:name="SaveList"
+                  android:screenOrientation="landscape" />
+
         <activity android:name="Yabause"
                   android:configChanges="orientation|keyboardHidden"
                   android:screenOrientation="landscape"

@@ -1140,6 +1140,8 @@ int YabSaveStateStream(FILE *fp)
    glPixelZoom(1,1);
    glReadBuffer(GL_BACK);
    glReadPixels(0, 0, outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   #else
+   memcpy(buf, dispbuffer, totalsize);
    #endif
    YuiSwapBuffers();
 

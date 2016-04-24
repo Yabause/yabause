@@ -64,10 +64,10 @@ class GameInfoManager
 
     public GameInfoManager(Context ctx)
     {
-        this.opener = new GameInfoOpenHelper(ctx);
-        this.games = new HashMap<String, GameInfo>();
+        opener = new GameInfoOpenHelper(ctx);
+        games = new HashMap<String, GameInfo>();
 
-        SQLiteDatabase db = this.opener.getReadableDatabase();
+        SQLiteDatabase db = opener.getReadableDatabase();
         Cursor cur = db.rawQuery("SELECT path, system, company, itemnum, version, date, cdinfo, region, peripheral, gamename FROM gameinfo", null);
         while(cur.moveToNext())
         {
@@ -78,6 +78,7 @@ class GameInfoManager
             games.put(path, gi);
         }
         cur.close();
+        opener.close();
     }
 
     public GameInfo gameInfo(String name) {
@@ -88,7 +89,7 @@ class GameInfoManager
         if (gi == null) {
             gi = YabauseRunnable.gameInfo(path);
             if (gi != null) {
-                SQLiteDatabase db = this.opener.getWritableDatabase();
+                SQLiteDatabase db = opener.getWritableDatabase();
                 ContentValues cv = new ContentValues();
                 cv.put("path", path);
                 cv.put("system", gi.getSystem());
@@ -101,6 +102,7 @@ class GameInfoManager
                 cv.put("peripheral", gi.getPeripheral());
                 cv.put("gamename", gi.getGamename());
                 db.insert("gameinfo", null, cv);
+                opener.close();
 
                 games.put(path, gi);
             }

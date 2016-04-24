@@ -74,6 +74,7 @@ float vertices [] = {
    320, 224, 0, 0, 
    0, 224, 0, 0
 };
+int g_swapped;
 
 
 M68K_struct * M68KCoreList[] = {
@@ -224,6 +225,38 @@ const char * GetCartridgePath()
         return (*env)->GetStringUTFChars(env, message, &dummy);
 }
 
+const char * GetSavesPath()
+{
+    jclass yclass;
+    jmethodID getSavesPath;
+    jstring message;
+    jboolean dummy;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+        return NULL;
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getSavesPath = (*env)->GetMethodID(env, yclass, "getSavesPath", "()Ljava/lang/String;");
+    message = (*env)->CallObjectMethod(env, yabause, getSavesPath);
+    if ((*env)->GetStringLength(env, message) == 0)
+        return NULL;
+    else
+        return (*env)->GetStringUTFChars(env, message, &dummy);
+}
+
+int GetSaveSlot()
+{
+    jclass yclass;
+    jmethodID getSaveSlot;
+    JNIEnv * env;
+    if ((*yvm)->GetEnv(yvm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
+        return -1;
+
+    yclass = (*env)->GetObjectClass(env, yabause);
+    getSaveSlot = (*env)->GetMethodID(env, yclass, "getSaveSlot", "()I");
+    return (*env)->CallIntMethod(env, yabause, getSaveSlot);
+}
+
 void YuiErrorMsg(const char *string)
 {
     jclass yclass;
@@ -243,7 +276,8 @@ void YuiSwapBuffers(void)
 {
    int buf_width, buf_height;
    int error;
-   
+
+   g_swapped = 1;
    
    pthread_mutex_lock(&g_mtxGlLock);
    if( g_Display == EGL_NO_DISPLAY ) 
@@ -472,6 +506,15 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 
     res = YabauseInit(&yinit);
 
+    {
+        int slot = GetSaveSlot();
+        if (slot != -1)
+        {
+            const char * dirpath = GetSavesPath();
+            YabLoadStateSlot(dirpath, slot);
+        }
+    }
+
     OSDChangeCore(OSDCORE_SOFT);
 
     PerPortReset();
@@ -496,6 +539,18 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 void
 Java_org_yabause_android_YabauseRunnable_deinit( JNIEnv* env )
 {
+    int slot = GetSaveSlot();
+    if (slot != -1)
+    {
+        const char * dirpath = GetSavesPath();
+        SetOSDToggle(0);
+        DisableAutoFrameSkip();
+        g_swapped = 0;
+        while(! g_swapped)
+            YabauseExec();
+        YabSaveStateSlot(dirpath, slot);
+    }
+
     YabauseDeInit();
 }
 
@@ -596,6 +651,38 @@ jobject Java_org_yabause_android_YabauseRunnable_gameInfo( JNIEnv* env, jobject 
     gamename = (*env)->NewStringUTF(env, info.gamename);
 
     return (*env)->NewObject(env, c, cons, system, company, itemnum, version, date, cdinfo, region, peripheral, gamename);
+}
+
+void
+Java_org_yabause_android_YabauseRunnable_stateSlotScreenshot( JNIEnv* env, jobject obj, jobject dirpath, jobject itemnum, int slot, jobject bitmap )
+{
+    int outputwidth, outputheight;
+    u32 * buffer, * cur;
+    AndroidBitmapInfo info;
+    void * pixels;
+    int x, y;
+    jboolean dummy;
+    const char * dp = (*env)->GetStringUTFChars(env, dirpath, &dummy);
+    const char * in = (*env)->GetStringUTFChars(env, itemnum, &dummy);
+
+    if (0 != LoadStateSlotScreenshot(dp, in, slot, &outputwidth, &outputheight, &buffer)) return;
+
+    AndroidBitmap_getInfo(env, bitmap, &info);
+
+    AndroidBitmap_lockPixels(env, bitmap, &pixels);
+
+    cur = buffer;
+    for(y = 0;y < info.height;y++) {
+        for(x = 0;x < info.width;x++) {
+            *((uint32_t *) pixels + x) = *(cur + x);
+        }
+        pixels += info.stride;
+        cur += outputwidth;
+    }
+
+    free(buffer);
+
+    AndroidBitmap_unlockPixels(env, bitmap);
 }
 
 void log_callback(char * message)

@@ -36,6 +36,9 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		src/org/yabause/android/PadManager.java
 		src/org/yabause/android/PadManagerV8.java
 		src/org/yabause/android/PadManagerV16.java
+		src/org/yabause/android/SaveList.java
+		src/org/yabause/android/SaveListAdapter.java
+		src/org/yabause/android/SaveListModeListener.java
 		src/org/yabause/android/Yabause.java
 		src/org/yabause/android/YabauseAudio.java
 		src/org/yabause/android/YabauseView.java
@@ -49,6 +52,10 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		res/layout/game_item.xml
 		res/layout/home.xml
 		res/layout/main.xml
+		res/layout/save_item.xml
+		res/layout-v11/save_item.xml
+		res/layout/save_list.xml
+		res/menu/save_list.xml
 		res/values/strings.xml
 		res/xml/preferences.xml
 	)
@@ -124,6 +131,10 @@ set(yabause_android_RES
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/game_item.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/home.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/main.xml"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/save_item.xml"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/layout-v11/save_item.xml"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/save_list.xml"
+	"${CMAKE_CURRENT_BINARY_DIR}/res/menu/save_list.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/values/strings.xml"
 	"${CMAKE_CURRENT_BINARY_DIR}/res/xml/preferences.xml"
 )
@@ -138,6 +149,9 @@ set(yabause_android_SRC
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManager.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV8.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV16.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/SaveList.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/SaveListAdapter.java"
+    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/SaveListModeListener.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Yabause.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseAudio.java"
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseView.java"

@@ -81,7 +81,8 @@ class YabauseRunnable implements Runnable
     public static native void setVolume(int volume);
     public static native void screenshot(Bitmap bitmap);
     public static native GameInfo gameInfo(String path);
-    
+    public static native void stateSlotScreenshot(String dirpath, String itemnum, int slot, Bitmap bitmap);
+
     private boolean inited;
     private boolean paused;
     public InputHandler handler;
@@ -150,6 +151,7 @@ public class Yabause extends Activity implements OnPadListener
     private YabauseAudio audio;
     private String biospath;
     private String gamepath;
+    private int saveslot;
     private int carttype;
     private PadManager padm;
 
@@ -175,6 +177,8 @@ public class Yabause extends Activity implements OnPadListener
             gamepath = storage.getGamePath(game);
         } else
             gamepath = "";
+
+        saveslot = intent.getIntExtra("org.yabause.android.Slot", -1);
 
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
@@ -344,5 +348,13 @@ public class Yabause extends Activity implements OnPadListener
 
     public String getCartridgePath() {
         return YabauseStorage.getStorage().getCartridgePath(Cartridge.getDefaultFilename(carttype));
+    }
+
+    public String getSavesPath() {
+        return YabauseStorage.getStorage().getSavesPath();
+    }
+
+    public int getSaveSlot() {
+        return saveslot;
     }
 }
