@@ -29,6 +29,7 @@
 typedef struct {
 	char event[32];
 	u32 time;
+	u32 tid;
 } ProfileInfo;
 
 #define MAX_PROFILE_COUNT (256)
@@ -56,8 +57,9 @@ void FrameProfileAdd(char * p){
 #else
 	time = clock();
 #endif
-	strcpy(g_pf[current_profile_index].event, p);
+	sprintf(g_pf[current_profile_index].event, "%s(%d)",p,YabThreadGetCurrentThreadAffinityMask());
 	g_pf[current_profile_index].time = time;
+	g_pf[current_profile_index].tid = YabThreadGetCurrentThreadAffinityMask();
 	current_profile_index++;
 }
 

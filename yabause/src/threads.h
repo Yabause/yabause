@@ -99,7 +99,8 @@ void YabThreadUnLock( YabMutex * mtx );
 YabMutex * YabThreadCreateMutex();
 void YabThreadFreeMutex( YabMutex * mtx );
 
-
+void YabThreadSetCurrentThreadAffinityMask(int mask);
+int YabThreadGetCurrentThreadAffinityMask();
 
 ///////////////////////////////////////////////////////////////////////////
 
