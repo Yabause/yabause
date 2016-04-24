@@ -293,6 +293,8 @@ void VdpProc( void *arg ){
 
     int evcode;
 
+
+
     if( YuiUseOGLOnThisThread() < 0 ){
         LOG("VDP2 Fail to USE GL");
         return;
@@ -300,6 +302,7 @@ void VdpProc( void *arg ){
 
     vdp_proc_running = 1;
     while( vdp_proc_running ){
+		YabThreadSetCurrentThreadAffinityMask(0x01);
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
@@ -485,7 +488,45 @@ static void FPSDisplay(void)
    static int fpsframecount = 0;
    static u64 fpsticks;
 
-   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+   FILE * fp = NULL;
+   FILE * gup_fp = NULL;
+   char fname[128];
+   char buf[64];
+   int i;
+   int cpu_f[8];
+   int gpu_f;
+
+   if (gup_fp == NULL){
+	   gup_fp = fopen("/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq", "r");
+   }
+
+   if (gup_fp != NULL){
+	   fread(buf, 1, 64, gup_fp);
+	   gpu_f = atoi(buf);
+	   fclose(gup_fp);
+   }
+   else{
+	   gpu_f = 0;
+   }
+   
+   for( i=0; i<8; i++ ){
+	   sprintf(fname,"/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq",i);
+	   fp = fopen(fname, "r");
+	   if( fp ){
+		   fread(buf, 1, 64, fp);
+		   cpu_f[i] = atoi(buf);
+		   fclose(fp);
+	   }else{
+		   cpu_f[i] = 0;
+	   }
+   }
+
+
+   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS , gpu = %d, cpu0 = %d, cpu1 = %d, cpu2 = %d, cpu3 = %d, cpu4 = %d, cpu5 = %d, cpu6 = %d, cpu7 = %d"
+					, fps, yabsys.IsPal ? 50 : 60, gpu_f / 1000000,
+					cpu_f[0] / 1000, cpu_f[1] / 1000, cpu_f[2] / 1000, cpu_f[3] / 1000,
+					cpu_f[4] / 1000, cpu_f[5] / 1000, cpu_f[6] / 1000, cpu_f[7] / 1000);
+   
    OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
    fpsframecount++;
    if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
