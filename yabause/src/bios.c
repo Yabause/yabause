@@ -28,6 +28,7 @@
 #include "bios.h"
 #include "smpc.h"
 #include "yabause.h"
+#include "error.h"
 
 static u8 sh2masklist[0x20] = {
 0xF0, 0xE0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80,
@@ -668,7 +669,7 @@ static u16 *GetFreeBlocks(u32 addr, u32 blocksize, u32 numblocks, u32 size)
 
 static u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, int *numblocks, int *blocksread)
 {
-   u16 *blocktbl;
+   u16 *blocktbl = NULL;
    int i=0;
 
    tableaddr[0] = addr + (block * blocksize * 2) + 0x45;
@@ -1904,7 +1905,7 @@ int BupCopySave(UNUSED u32 srcdevice, UNUSED u32 dstdevice, UNUSED const char *s
 int BupImportSave(UNUSED u32 device, const char *filename)
 {
    FILE *fp;
-   u32 filesize;
+   long filesize;
    u8 *buffer;
    size_t num_read = 0;
 
@@ -1917,6 +1918,14 @@ int BupImportSave(UNUSED u32 device, const char *filename)
    // Calculate file size
    fseek(fp, 0, SEEK_END);
    filesize = ftell(fp);
+
+   if (filesize <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      fclose(fp);
+      return -1;
+   }
+
    fseek(fp, 0, SEEK_SET);
 
    if ((buffer = (u8 *)malloc(filesize)) == NULL)
