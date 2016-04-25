@@ -40,6 +40,8 @@ struct _GameInfo
    only works if the emulator is not running, ie: not between
    YabauseInit and YabauseDeInit. */
 int GameInfoFromPath(const char * filename, GameInfo * info);
+
+int LoadStateSlotScreenshotStream(FILE * fp, int * outputwidth, int * outputheight, u32 ** buffer);
 int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot, int * outputwidth, int * outputheight, u32 ** buffer);
 
 #endif

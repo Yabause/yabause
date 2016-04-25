@@ -40,19 +40,11 @@ int GameInfoFromPath(const char * filename, GameInfo * info)
    return 1;
 }
 
-int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot, int * outputwidth, int * outputheight, u32 ** buffer)
+int LoadStateSlotScreenshotStream(FILE * fp, int * outputwidth, int * outputheight, u32 ** buffer)
 {
-   char filename[512];
    int version, chunksize;
-   FILE * fp;
    int totalsize;
    size_t fread_result = 0;
-
-   sprintf(filename, "%s/%s_%03d.yss", dirpath, itemnum, slot);
-
-   fp = fopen(filename, "r");
-   if (fp == NULL)
-      return -1;
 
    fseek(fp, 0x14, SEEK_SET);
 
@@ -108,7 +100,24 @@ int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot
 
    fread_result = fread(*buffer, totalsize, 1, fp);
 
+   return 0;
+}
+
+int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot, int * outputwidth, int * outputheight, u32 ** buffer)
+{
+   char filename[512];
+   FILE * fp;
+   int status;
+
+   sprintf(filename, "%s/%s_%03d.yss", dirpath, itemnum, slot);
+
+   fp = fopen(filename, "r");
+   if (fp == NULL)
+      return -1;
+
+   status = LoadStateSlotScreenshotStream(fp, outputwidth, outputheight, buffer);
+
    fclose(fp);
 
-   return 0;
+   return status;
 }
