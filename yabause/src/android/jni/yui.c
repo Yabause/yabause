@@ -531,8 +531,6 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
     PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
     PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
 
-    ScspSetFrameAccurate(1);
-
     return res;
 }
 
