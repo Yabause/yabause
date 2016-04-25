@@ -367,7 +367,7 @@ static disc_info_struct disc;
 
 static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
-   u32 size;
+   long size;
    char *temp_buffer, *temp_buffer2;
    unsigned int track_num;
    unsigned int indexnum, min, sec, frame;
@@ -390,6 +390,13 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
    fseek(iso_file, 0, SEEK_END);
    size = ftell(iso_file);
+
+   if(size <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, cuefilename);
+      return -1;
+   }
+
    fseek(iso_file, 0, SEEK_SET);
 
    // Allocate buffer with enough space for reading cue
@@ -571,7 +578,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
 {
    int i;
    int track_num=0;
-   u32 fad_end;
+   u32 fad_end = 0;
 
    session->track = malloc(sizeof(track_info_struct) * mds_session->last_track);
    if (session->track == NULL)
@@ -673,6 +680,13 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
                if (strncmp(img_filename, "*.", 2) == 0)
                {
                   char *ext;
+                  size_t mds_filename_len = strlen(mds_filename);
+                  if (mds_filename_len >= 512)
+                  {
+                     YabSetError(YAB_ERR_FILEREAD, mds_filename);
+                     free(session->track);
+                     return -1;
+                  }
                   strcpy(filename, mds_filename);
                   ext = strrchr(filename, '.');
                   strcpy(ext, img_filename+1);
@@ -965,6 +979,13 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 	char img_filename[512];
 	char *ext;
 	FILE *fp;
+   size_t ccd_filename_len = strlen(ccd_filename);
+
+   if (ccd_filename_len >= 512)
+   {
+      YabSetError(YAB_ERR_FILEREAD, ccd_filename);
+      return -1;
+   }
 
 	strcpy(img_filename, ccd_filename);
 	ext = strrchr(img_filename, '.');

@@ -4458,7 +4458,7 @@ static void Vdp2DrawLineColorScreen(void)
 
 static void Vdp2DrawNBG0(void)
 {
-   vdp2draw_struct info;
+   vdp2draw_struct info = { 0 };
    YglTexture texture;
    YglCache tmpc;
    vdp2rotationparameter_struct parameter;

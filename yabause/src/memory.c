@@ -843,7 +843,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
 int MappedMemoryLoad(const char *filename, u32 addr)
 {
    FILE *fp;
-   u32 filesize;
+   long filesize;
    u8 *buffer;
    u32 i;
    size_t num_read = 0;
@@ -857,6 +857,14 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    // Calculate file size
    fseek(fp, 0, SEEK_END);
    filesize = ftell(fp);
+
+   if (filesize <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      fclose(fp);
+      return -1;//error
+   }
+
    fseek(fp, 0, SEEK_SET);
 
    if ((buffer = (u8 *)malloc(filesize)) == NULL)
@@ -1644,7 +1652,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
    u32 i=0;
    result_struct *results;
    u32 numresults=0;
-   unsigned long searchval;
+   unsigned long searchval = 0;
    int issigned=0;
    u32 addr;
 
