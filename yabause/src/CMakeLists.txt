@@ -671,6 +671,11 @@ if (CMAKE_COMPILER_IS_GNUCC AND YAB_FORCE_SECURE_STRINGS)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security")
 endif()
 
+option(YAB_WERROR "Treat all warnings as errors." OFF)
+if (YAB_WERROR)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+endif()
+
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
