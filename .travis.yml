@@ -24,6 +24,9 @@ matrix:
         - rm CMakeLists.txt
         - mv temp2.txt CMakeLists.txt
         - cd ../build
+      script:
+        - cmake ..
+        - make
 
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
@@ -103,5 +106,5 @@ before_install:
   - cd build
 
 script:
-  - cmake -DYAB_FORCE_SECURE_STRINGS=ON ..
+  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON ..
   - make
