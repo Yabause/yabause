@@ -26,6 +26,7 @@
 #include "cs2.h"
 #include "vdp2.h"  // for DisplayMessage() prototype
 #include "yabause.h"
+#include "error.h"
 
 int RecordingFileOpened;
 int PlaybackFileOpened;
@@ -103,20 +104,36 @@ static void SetInputDisplayCharacters(void) {
 	for (x = 0; x < 8; x++) {
 
 		if(PORTDATA1.data[2] & (1 << x)) {
+         size_t spaces_len = strlen(Spaces[x]);
+         if (spaces_len >= 40)
+            return;
 			strcat(str, Spaces[x]);	
 		}
-		else
-			strcat(str, Buttons[x]);
+      else
+      {
+         size_t buttons_len = strlen(Buttons[x]);
+         if (buttons_len >= 40)
+            return;
+         strcat(str, Buttons[x]);
+      }
 
 	}
 
 	for (x = 0; x < 8; x++) {
 
 		if(PORTDATA1.data[3] & (1 << x)) {
+         size_t spaces2_len = strlen(Spaces2[x]);
+         if (spaces2_len >= 40)
+            return;
 			strcat(str, Spaces2[x]);	
 		}
-		else
-			strcat(str, Buttons2[x]);
+      else
+      {
+         size_t buttons2_len = strlen(Buttons2[x]);
+         if (buttons2_len >= 40)
+            return;
+         strcat(str, Buttons2[x]);
+      }
 
 	}
 
@@ -247,6 +264,12 @@ static int MovieGetSize(FILE* fp) {
 	int fpos;
 
 	fpos = ftell(fp);//save current pos
+
+   if (fpos < 0)
+   {
+      YabSetError(YAB_ERR_OTHER, "MovieGetSize fpos is negative");
+      return 0;
+   }
 
 	fseek (fp,0,SEEK_END);
 	size=ftell(fp);
@@ -389,6 +412,13 @@ void ReadMovieInState(FILE* fp) {
 	if(Movie.Status == Recording || (Movie.Status == Playback && Movie.ReadOnly == 0)) {
 
 		fpos=ftell(fp);//where we are in the savestate
+
+      if (fpos < 0)
+      {
+         YabSetError(YAB_ERR_OTHER, "ReadMovieInState fpos is negative");
+         return;
+      }
+
       num_read = fread(&tempbuffer.size, 4, 1, fp);//size
 		if ((tempbuffer.data = (char *)malloc(tempbuffer.size)) == NULL)
 		{
@@ -408,10 +438,16 @@ void ReadMovieInState(FILE* fp) {
 struct MovieBufferStruct ReadMovieIntoABuffer(FILE* fp) {
 
 	int fpos;
-	struct MovieBufferStruct tempbuffer;
+   struct MovieBufferStruct tempbuffer = { 0 };
    size_t num_read = 0;
 
 	fpos = ftell(fp);//save current pos
+
+   if (fpos < 0)
+   {
+      YabSetError(YAB_ERR_OTHER, "ReadMovieIntoABuffer fpos is negative");
+      return tempbuffer;
+   }
 
 	fseek (fp,0,SEEK_END);
 	tempbuffer.size=ftell(fp);  //get size

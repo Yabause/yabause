@@ -3096,7 +3096,7 @@ void VIDOGLVdp1DrawStart(void)
      glActiveTexture(GL_TEXTURE0);
      glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-     YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
+     YglTM->texture = (unsigned int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
 	 if (YglTM->texture == NULL){
 		 abort();
 	 }
@@ -4458,7 +4458,7 @@ static void Vdp2DrawLineColorScreen(void)
 
 static void Vdp2DrawNBG0(void)
 {
-   vdp2draw_struct info;
+   vdp2draw_struct info = { 0 };
    YglTexture texture;
    YglCache tmpc;
    vdp2rotationparameter_struct parameter;
@@ -5362,7 +5362,7 @@ void VIDOGLVdp2DrawScreens(void)
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, _Ygl->texture);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->pixelBufferID);
-		YglTM->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
+		YglTM->texture = (unsigned int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 1024 * 4, GL_MAP_WRITE_BIT);
 		if (YglTM->texture == NULL){
 			abort();
 		}

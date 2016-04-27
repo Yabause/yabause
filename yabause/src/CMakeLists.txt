@@ -488,7 +488,7 @@ endif(YAB_WANT_C68K)
 option(YAB_WANT_MUSASHI "Enable musashi 68k" ON)
 #TODO cross compile builds m68kmake for the target platform instead
 #of the native one, making it impossible to generate the core
-if (YAB_WANT_MUSASHI AND NOT CMAKE_CROSSCOMPILING)
+if (YAB_WANT_MUSASHI)
     set (MUSASHI_GENERATED_SOURCES 
         ${CMAKE_CURRENT_BINARY_DIR}/m68kopac.c 
         ${CMAKE_CURRENT_BINARY_DIR}/m68kopdm.c 
@@ -498,9 +498,17 @@ if (YAB_WANT_MUSASHI AND NOT CMAKE_CROSSCOMPILING)
     set (MUSASHI_GENERATED_HEADERS
         ${CMAKE_CURRENT_BINARY_DIR}/m68kops.h)
 
-    add_executable(m68kmake musashi/m68kmake.c)
+    include(ExternalProject)
+    ExternalProject_Add(m68kmake
+        DOWNLOAD_COMMAND ""
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/musashi
+        CMAKE_GENERATOR "${CMAKE_GENERATOR}"
+        INSTALL_COMMAND ""
+        BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/musashi
+    )
+
     add_custom_command(OUTPUT ${MUSASHI_GENERATED_SOURCES} ${MUSASHI_GENERATED_HEADERS}
-                       COMMAND m68kmake ${CMAKE_CURRENT_BINARY_DIR}/ ${CMAKE_CURRENT_SOURCE_DIR}/musashi/m68k_in.c
+                       COMMAND musashi/m68kmake ${CMAKE_CURRENT_BINARY_DIR}/ ${CMAKE_CURRENT_SOURCE_DIR}/musashi/m68k_in.c
                        DEPENDS m68kmake
                        COMMENT "Generating musashi 68k core"
                        VERBATIM)
@@ -529,7 +537,7 @@ if (YAB_WANT_MUSASHI AND NOT CMAKE_CROSSCOMPILING)
 
     add_custom_target(musashi ALL
       DEPENDS ${MUSASHI_GENERATED_FILES})
-endif(YAB_WANT_MUSASHI AND NOT CMAKE_CROSSCOMPILING)
+endif(YAB_WANT_MUSASHI)
 
 # q68
 option(YAB_WANT_Q68 "enable q68 compilation" OFF)
@@ -669,6 +677,11 @@ endif ()
 option(YAB_FORCE_SECURE_STRINGS "Turns all string format warnings into errors." OFF)
 if (CMAKE_COMPILER_IS_GNUCC AND YAB_FORCE_SECURE_STRINGS)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security")
+endif()
+
+option(YAB_WERROR "Treat all warnings as errors." OFF)
+if (YAB_WERROR)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
 endif()
 
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")

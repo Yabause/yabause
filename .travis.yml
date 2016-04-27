@@ -24,6 +24,9 @@ matrix:
         - rm CMakeLists.txt
         - mv temp2.txt CMakeLists.txt
         - cd ../build
+      script:
+        - cmake ..
+        - make
 
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
@@ -43,6 +46,36 @@ matrix:
         - echo 'SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' >> toolchain.cmake
         - echo 'SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' >> toolchain.cmake
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
+        - make
+
+    # android port
+    - compiler: gcc
+      env: testenv="android port"
+      language: android
+      android:
+        components:
+          - platform-tools
+          - tools
+      script:
+        - wget http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip
+        - unzip -q android-ndk-r11c-linux-x86_64.zip
+
+        - export PATH=${PATH}:$(pwd)/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/
+        - export NDK=$(pwd)/android-ndk-r11c/
+        - export SYSROOT=$NDK/platforms/android-24/arch-arm
+
+        - echo 'SET(CMAKE_SYSTEM_NAME Linux)' > toolchain.cmake
+        - echo 'SET(CMAKE_SYSTEM_VERSION 1)' >> toolchain.cmake
+        - echo 'SET(CMAKE_C_COMPILER   arm-linux-androideabi-gcc)' >> toolchain.cmake
+        - echo 'SET(CMAKE_CXX_COMPILER arm-linux-androideabi-g++)' >> toolchain.cmake
+        - echo 'SET(CMAKE_ASM-ATT_COMPILER arm-linux-androideabi-as)' >> toolchain.cmake
+        - echo 'set(CMAKE_C_FLAGS "--sysroot=$ENV{SYSROOT}/usr/" CACHE STRING "GCC flags" FORCE)' >> toolchain.cmake
+        - echo 'set(CMAKE_CXX_FLAGS "--sysroot=$ENV{SYSROOT}/usr/" CACHE STRING "G++ flags" FORCE)' >> toolchain.cmake
+        - echo 'SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)' >> toolchain.cmake
+        - echo 'SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)' >> toolchain.cmake
+        - echo 'SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)' >> toolchain.cmake
+        - echo 'SET(ANDROID ON)' >> toolchain.cmake
+        - cmake -DCMAKE_FIND_ROOT_PATH=$SYSROOT/usr/ -DNDK_BUILD=$NDK/build/ndk-build -DSDK_ANDROID=$ANDROID_HOME/tools/android -DYAB_WANT_MUSASHI=OFF -DSH2_DYNAREC=OFF -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS=android ..
         - make
 
 addons:
@@ -73,5 +106,5 @@ before_install:
   - cd build
 
 script:
-  - cmake -DYAB_FORCE_SECURE_STRINGS=ON ..
+  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON ..
   - make

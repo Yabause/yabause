@@ -27,7 +27,7 @@ import android.view.View;
 import android.widget.ListView;
 
 import org.yabause.android.GameListAdapter;
-import org.yabause.android.Yabause;
+import org.yabause.android.SaveList;
 
 public class GameList extends ListActivity
 {
@@ -47,7 +47,7 @@ public class GameList extends ListActivity
 
         String string = (String) l.getItemAtPosition(position);
 
-        Intent intent = new Intent(this, Yabause.class);
+        Intent intent = new Intent(this, SaveList.class);
         intent.putExtra("org.yabause.android.FileName", string);
         startActivity(intent);
     }

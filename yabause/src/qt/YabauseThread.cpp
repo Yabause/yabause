@@ -168,8 +168,22 @@ void YabauseThread::reloadControllers()
 					break;
 				}
 				case PERWHEEL:
-					QtYabause::mainWindow()->appendLog( "Wheel controller type is not yet supported" );
-					break;
+            {
+               PerAnalog_struct* analogbits = PerWheelAdd(port == 1 ? &PORTDATA1 : &PORTDATA2);
+
+               settings->beginGroup(QString("Input/Port/%1/Id/%2/Controller/%3/Key").arg(port).arg(id).arg(type));
+               QStringList analogKeys = settings->childKeys();
+               settings->endGroup();
+
+               analogKeys.sort();
+               foreach(const QString& analogKey, analogKeys)
+               {
+                  const QString key = settings->value(QString(UIPortManager::mSettingsKey).arg(port).arg(id).arg(type).arg(analogKey)).toString();
+
+                  PerSetKey(key.toUInt(), analogKey.toUInt(), analogbits);
+               }
+               break;
+            }
 				case PER3DPAD:
 				{
 					PerAnalog_struct* analogbits = Per3DPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );

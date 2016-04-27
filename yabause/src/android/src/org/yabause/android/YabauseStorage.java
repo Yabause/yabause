@@ -31,6 +31,27 @@ class MemoryFilter implements FilenameFilter {
     }
 }
 
+class SaveFilter implements FilenameFilter {
+    public boolean accept(File dir, String filename) {
+        if (filename.endsWith(".yss")) return true;
+        return false;
+    }
+}
+
+class GameSavesFilter implements FilenameFilter {
+    private String itemnum;
+
+    GameSavesFilter(String itemnum) {
+        super();
+        this.itemnum = itemnum;
+    }
+
+    public boolean accept(File dir, String filename) {
+        if (filename.startsWith(this.itemnum) && filename.endsWith(".yss")) return true;
+        return false;
+    }
+}
+
 public class YabauseStorage {
     static private YabauseStorage instance = null;
 
@@ -38,6 +59,7 @@ public class YabauseStorage {
     private File games;
     private File memory;
     private File cartridge;
+    private File saves;
 
     private YabauseStorage() {
         File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
@@ -54,6 +76,9 @@ public class YabauseStorage {
 
         cartridge = new File(yabroot, "cartridge");
         if (! cartridge.exists()) cartridge.mkdir();
+
+        saves = new File(yabroot, "saves");
+        if (! saves.exists()) saves.mkdir();
     }
 
     static public YabauseStorage getStorage() {
@@ -93,5 +118,20 @@ public class YabauseStorage {
 
     public String getCartridgePath(String cartridgefile) {
         return cartridge + File.separator + cartridgefile;
+    }
+
+    public String getSavesPath() {
+        return saves.getPath();
+    }
+
+    public String[] getGameSaves(String itemnum) {
+        return saves.list(new GameSavesFilter(itemnum));
+    }
+
+    public void deleteGameSaves(String[] gamesaves) {
+        for(String save : gamesaves) {
+            File f = new File(saves.getPath() + File.separator + save);
+            f.delete();
+        }
     }
 }

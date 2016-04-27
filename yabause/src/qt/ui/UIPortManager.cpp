@@ -20,6 +20,7 @@
 #include "UIPortManager.h"
 #include "UIPadSetting.h"
 #include "UI3DControlPadSetting.h"
+#include "UIWheelSetting.h"
 #include "UIGunSetting.h"
 #include "UIMouseSetting.h"
 #include "../CommonDialogs.h"
@@ -47,7 +48,7 @@ UIPortManager::UIPortManager( QWidget* parent )
 	{
 		cb->addItem( QtYabause::translate( "None" ), 0 );
 		cb->addItem( QtYabause::translate( "Pad" ), PERPAD );
-      //cb->addItem( QtYabause::translate( "Wheel" ), PERWHEEL );
+      cb->addItem( QtYabause::translate( "Wheel" ), PERWHEEL );
       cb->addItem( QtYabause::translate( "3D Control Pad" ), PER3DPAD );
       cb->addItem( QtYabause::translate( "Gun" ), PERGUN );
       //cb->addItem( QtYabause::translate( "Keyboard" ), PERKEYBOARD );
@@ -202,6 +203,29 @@ void UIPortManager::tbSetJoystick_clicked()
 			ups.exec();
 			break;
 		}
+      case PERWHEEL:
+      {
+         QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits(mPort);
+
+         PerAnalog_struct* analogBits = analogbits[controllerId];
+
+         if (!analogBits)
+         {
+            analogBits = PerWheelAdd(mPort == 1 ? &PORTDATA1 : &PORTDATA2);
+
+            if (!analogBits)
+            {
+               CommonDialogs::warning(QtYabause::translate("Can't plug in the new controller, cancelling."));
+               return;
+            }
+
+            analogbits[controllerId] = analogBits;
+         }
+
+         UIWheelSetting uas(mCore, mPort, controllerId, type, this);
+         uas.exec();
+         break;
+      }
 		case PER3DPAD:
 		{
 			QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits( mPort );

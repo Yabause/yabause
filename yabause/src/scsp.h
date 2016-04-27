@@ -90,7 +90,6 @@ void FASTCALL SoundRamWriteLong(u32 addr, u32 val);
 
 int ScspInit(int coreid);
 int ScspChangeSoundCore(int coreid);
-void ScspSetFrameAccurate(int on);
 void ScspDeInit(void);
 void M68KStart(void);
 void M68KStop(void);
@@ -151,5 +150,7 @@ void scsp_debug_instrument_clear();
 void scsp_debug_get_envelope(int chan, int * env, int * state);
 void scsp_debug_set_mode(int mode);
 void scsp_set_use_new(int which);
+void new_scsp_exec(s32 cycles);
 
+extern int use_new_scsp;
 #endif

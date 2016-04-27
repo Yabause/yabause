@@ -118,6 +118,10 @@
 #endif
 
 int use_new_scsp = 0;
+int new_scsp_outbuf_pos = 0;
+s32 new_scsp_outbuf_l[900] = { 0 };
+s32 new_scsp_outbuf_r[900] = { 0 };
+int new_scsp_cycles = 0;
 
 enum EnvelopeStates
 {
@@ -1419,6 +1423,9 @@ void new_scsp_reset(struct Scsp* s)
    fill_alfo_tables();
 
    memset(&scsp_dsp, 0, sizeof(ScspDsp));
+
+   new_scsp_outbuf_pos = 0;
+   new_scsp_cycles = 0;
 }
 
 void scsp_set_use_new(int which)
@@ -3601,134 +3608,100 @@ static void (*scsp_slot_update_p[2][2][2][2][2])(slot_t *slot) =
 void
 scsp_update (s32 *bufL, s32 *bufR, u32 len)
 {
-   if (use_new_scsp)
+   slot_t *slot;
+
+   scsp_bufL = bufL;
+   scsp_bufR = bufR;
+
+   for (slot = &(scsp.slot[0]); slot < &(scsp.slot[32]); slot++)
    {
-      s32 temp = cdda_next_in - cdda_out_left;
-      s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
-      u8 *buf = &cddabuf.data[outpos];
+      if (slot->ecnt >= SCSP_ENV_DE) continue; // enveloppe null...
+
+      if (slot->ssctl)
+      {
+         // Still not correct, but at least this fixes games
+         // that rely on Call Address information
+         scsp_buf_len = len;
+         scsp_buf_pos = 0;
+
+         for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+         {
+            if ((slot->fcnt += slot->finc) > slot->lea)
+            {
+               if (slot->lpctl) slot->fcnt = slot->lsa;
+               else
+               {
+                  slot->ecnt = SCSP_ENV_DE;
+                  break;
+               }
+            }
+         }
+
+         continue; // not yet supported!
+      }
 
       scsp_buf_len = len;
       scsp_buf_pos = 0;
 
-      for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
+      // take effect sound volume if no direct sound volume...
+      if ((slot->disll == 31) && (slot->dislr == 31))
       {
-         s16 out_l = 0;
-         s16 out_r = 0;
+         slot->disll = slot->efsll;
+         slot->dislr = slot->efslr;
+      }
 
-         s16 cd_in_l = 0;
-         s16 cd_in_r = 0;
+      // SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
 
-         if ((s32)cdda_out_left > 0)
+      scsp_slot_update_p[(slot->lfofms == 31) ? 0 : 1]
+         [(slot->lfoems == 31) ? 0 : 1]
+      [(slot->pcm8b == 0) ? 1 : 0]
+      [(slot->disll == 31) ? 0 : 1]
+      [(slot->dislr == 31) ? 0 : 1](slot);
+   }
+
+   if (cdda_out_left > 0)
+   {
+      if (len > cdda_out_left / 4)
+         scsp_buf_len = cdda_out_left / 4;
+      else
+         scsp_buf_len = len;
+
+      scsp_buf_pos = 0;
+
+      /* May need to wrap around the buffer, so use nested loops */
+      while (scsp_buf_pos < scsp_buf_len)
+      {
+         s32 temp = cdda_next_in - cdda_out_left;
+         s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
+         u8 *buf = &cddabuf.data[outpos];
+
+         u32 scsp_buf_target;
+         u32 this_len = scsp_buf_len - scsp_buf_pos;
+         if (this_len > (sizeof(cddabuf.data) - outpos) / 4)
+            this_len = (sizeof(cddabuf.data) - outpos) / 4;
+         scsp_buf_target = scsp_buf_pos + this_len;
+
+         for (; scsp_buf_pos < scsp_buf_target; scsp_buf_pos++, buf += 4)
          {
-            cd_in_l = (s16)((buf[1] << 8) | buf[0]);
-            cd_in_r = (s16)((buf[3] << 8) | buf[2]);
+            s32 out;
 
-            cdda_out_left -= 4;
-            buf += 4;
+            out = (s32)(s16)((buf[1] << 8) | buf[0]);
+
+            if (out)
+               scsp_bufL[scsp_buf_pos] += out;
+
+            out = (s32)(s16)((buf[3] << 8) | buf[2]);
+
+            if (out)
+               scsp_bufR[scsp_buf_pos] += out;
          }
 
-         generate_sample(&new_scsp, scsp.rbp, scsp.rbl, &out_l, &out_r, scsp.mvol, cd_in_l, cd_in_r);
-         bufL[scsp_buf_pos] += out_l;
-         bufR[scsp_buf_pos] += out_r;
+         cdda_out_left -= this_len * 4;
       }
    }
-   else
+   else if (Cs2Area->isaudio)
    {
-      slot_t *slot;
-
-      scsp_bufL = bufL;
-      scsp_bufR = bufR;
-
-      for (slot = &(scsp.slot[0]); slot < &(scsp.slot[32]); slot++)
-      {
-         if (slot->ecnt >= SCSP_ENV_DE) continue; // enveloppe null...
-
-         if (slot->ssctl)
-         {
-            // Still not correct, but at least this fixes games
-            // that rely on Call Address information
-            scsp_buf_len = len;
-            scsp_buf_pos = 0;
-
-            for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
-            {
-               if ((slot->fcnt += slot->finc) > slot->lea)
-               {
-                  if (slot->lpctl) slot->fcnt = slot->lsa;
-                  else
-                  {
-                     slot->ecnt = SCSP_ENV_DE;
-                     break;
-                  }
-               }
-            }
-
-            continue; // not yet supported!
-         }
-
-         scsp_buf_len = len;
-         scsp_buf_pos = 0;
-
-         // take effect sound volume if no direct sound volume...
-         if ((slot->disll == 31) && (slot->dislr == 31))
-         {
-            slot->disll = slot->efsll;
-            slot->dislr = slot->efslr;
-         }
-
-         // SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
-
-         scsp_slot_update_p[(slot->lfofms == 31) ? 0 : 1]
-            [(slot->lfoems == 31) ? 0 : 1]
-         [(slot->pcm8b == 0) ? 1 : 0]
-         [(slot->disll == 31) ? 0 : 1]
-         [(slot->dislr == 31) ? 0 : 1](slot);
-      }
-
-      if (cdda_out_left > 0)
-      {
-         if (len > cdda_out_left / 4)
-            scsp_buf_len = cdda_out_left / 4;
-         else
-            scsp_buf_len = len;
-
-         scsp_buf_pos = 0;
-
-         /* May need to wrap around the buffer, so use nested loops */
-         while (scsp_buf_pos < scsp_buf_len)
-         {
-            s32 temp = cdda_next_in - cdda_out_left;
-            s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
-            u8 *buf = &cddabuf.data[outpos];
-
-            u32 scsp_buf_target;
-            u32 this_len = scsp_buf_len - scsp_buf_pos;
-            if (this_len > (sizeof(cddabuf.data) - outpos) / 4)
-               this_len = (sizeof(cddabuf.data) - outpos) / 4;
-            scsp_buf_target = scsp_buf_pos + this_len;
-
-            for (; scsp_buf_pos < scsp_buf_target; scsp_buf_pos++, buf += 4)
-            {
-               s32 out;
-
-               out = (s32)(s16)((buf[1] << 8) | buf[0]);
-
-               if (out)
-                  scsp_bufL[scsp_buf_pos] += out;
-
-               out = (s32)(s16)((buf[3] << 8) | buf[2]);
-
-               if (out)
-                  scsp_bufR[scsp_buf_pos] += out;
-            }
-
-            cdda_out_left -= this_len * 4;
-         }
-      }
-      else if (Cs2Area->isaudio)
-      {
-         SCSPLOG("WARNING: CDDA buffer underrun\n");
-      }
+      SCSPLOG("WARNING: CDDA buffer underrun\n");
    }
 }
 
@@ -4462,7 +4435,6 @@ static u32 scspsoundlen;        // Samples to output per frame
 static u32 scsplines;           // Lines per frame
 static u32 scspsoundbufs;       // Number of "scspsoundlen"-sample buffers
 static u32 scspsoundbufsize;    // scspsoundlen * scspsoundbufs
-static int scspframeaccurate;   // True to generate frame-accurate audio
 static u32 scspsoundgenpos;     // Offset of next byte to generate
 static u32 scspsoundoutleft;    // Samples not yet sent to host driver
 
@@ -4702,7 +4674,6 @@ ScspInit (int coreid)
   // Reset output pointers
   scspsoundgenpos = 0;
   scspsoundoutleft = 0;
-  scspframeaccurate = 0;
 
   return ScspChangeSoundCore (coreid);
 }
@@ -4758,14 +4729,6 @@ ScspChangeSoundCore (int coreid)
     }
 
   return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void
-ScspSetFrameAccurate (int on)
-{
-   scspframeaccurate = (on != 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4857,6 +4820,54 @@ M68KExec (s32 cycles)
         }
       savedcycles = newcycles;
     }
+}
+
+void new_scsp_run_sample()
+{
+   s32 temp = cdda_next_in - cdda_out_left;
+   s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
+   u8 *buf = &cddabuf.data[outpos];
+
+   s16 out_l = 0;
+   s16 out_r = 0;
+
+   s16 cd_in_l = 0;
+   s16 cd_in_r = 0;
+
+   if ((s32)cdda_out_left > 0)
+   {
+      cd_in_l = (s16)((buf[1] << 8) | buf[0]);
+      cd_in_r = (s16)((buf[3] << 8) | buf[2]);
+
+      cdda_out_left -= 4;
+   }
+
+   scsp_update_timer(1);
+   generate_sample(&new_scsp, scsp.rbp, scsp.rbl, &out_l, &out_r, scsp.mvol, cd_in_l, cd_in_r);
+
+   if (new_scsp_outbuf_pos < 900)
+   {
+      new_scsp_outbuf_l[new_scsp_outbuf_pos] = out_l;
+      new_scsp_outbuf_r[new_scsp_outbuf_pos] = out_r;
+   }
+   else
+   {
+      //buffer overrun
+   }
+
+   scsp_update_monitor();
+   new_scsp_outbuf_pos++;
+}
+
+void new_scsp_exec(s32 cycles)
+{
+   s32 cycles_temp = new_scsp_cycles - cycles;
+   if (cycles_temp < 0)
+   {
+      new_scsp_run_sample();
+      cycles_temp += 512;
+   }
+   new_scsp_cycles = cycles_temp;
 }
 
 //----------------------------------------------------------------------------
@@ -4977,6 +4988,21 @@ ScspReceiveCDDA (const u8 *sector)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void new_scsp_update_samples(s32 *bufL, s32 *bufR, int scspsoundlen)
+{
+   int i;
+   for (i = 0; i < new_scsp_outbuf_pos; i++)
+   {
+      if (i >= scspsoundlen)
+         break;
+
+      bufL[i] = new_scsp_outbuf_l[i];
+      bufR[i] = new_scsp_outbuf_r[i];
+   }
+
+   new_scsp_outbuf_pos = 0;
+}
+
 void
 ScspExec ()
 {
@@ -4984,92 +5010,69 @@ ScspExec ()
 
   ScspInternalVars->scsptiming2 +=
     ((scspsoundlen << 16) + scsplines / 2) / scsplines;
-  scsp_update_timer (ScspInternalVars->scsptiming2 >> 16); // Pass integer part
+  if (!use_new_scsp)
+     scsp_update_timer (ScspInternalVars->scsptiming2 >> 16); // Pass integer part
   ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
   ScspInternalVars->scsptiming1++;
 
   if (ScspInternalVars->scsptiming1 >= scsplines)
-    {
-      s32 *bufL, *bufR;
+  {
+     s32 *bufL, *bufR;
 
-      ScspInternalVars->scsptiming1 -= scsplines;
-      ScspInternalVars->scsptiming2 = 0;
+     ScspInternalVars->scsptiming1 -= scsplines;
+     ScspInternalVars->scsptiming2 = 0;
 
-      if (scspframeaccurate)
-        {
-          // Update sound buffers
-          if (scspsoundgenpos + scspsoundlen > scspsoundbufsize)
-            scspsoundgenpos = 0;
+     // Update sound buffers
+     if (scspsoundgenpos + scspsoundlen > scspsoundbufsize)
+        scspsoundgenpos = 0;
 
-          if (scspsoundoutleft + scspsoundlen > scspsoundbufsize)
-            {
-              u32 overrun = (scspsoundoutleft + scspsoundlen) -
-                            scspsoundbufsize;
-              SCSPLOG ("WARNING: Sound buffer overrun, %lu samples\n",
-                       (long)overrun);
-              scspsoundoutleft -= overrun;
-            }
+     if (scspsoundoutleft + scspsoundlen > scspsoundbufsize)
+     {
+        u32 overrun = (scspsoundoutleft + scspsoundlen) -
+           scspsoundbufsize;
+        SCSPLOG("WARNING: Sound buffer overrun, %lu samples\n",
+           (long)overrun);
+        scspsoundoutleft -= overrun;
+     }
 
-          bufL = (s32 *)&scspchannel[0].data32[scspsoundgenpos];
-          bufR = (s32 *)&scspchannel[1].data32[scspsoundgenpos];
-          memset (bufL, 0, sizeof(u32) * scspsoundlen);
-          memset (bufR, 0, sizeof(u32) * scspsoundlen);
-          scsp_update (bufL, bufR, scspsoundlen);
-          scspsoundgenpos += scspsoundlen;
-          scspsoundoutleft += scspsoundlen;
-        }
-    }
+     bufL = (s32 *)&scspchannel[0].data32[scspsoundgenpos];
+     bufR = (s32 *)&scspchannel[1].data32[scspsoundgenpos];
+     memset(bufL, 0, sizeof(u32) * scspsoundlen);
+     memset(bufR, 0, sizeof(u32) * scspsoundlen);
+     if (use_new_scsp)
+        new_scsp_update_samples(bufL, bufR, scspsoundlen);
+     else
+        scsp_update(bufL, bufR, scspsoundlen);
+     scspsoundgenpos += scspsoundlen;
+     scspsoundoutleft += scspsoundlen;
+  }
 
-  if (scspframeaccurate)
-    {
-      while (scspsoundoutleft > 0 &&
-             (audiosize = SNDCore->GetAudioSpace ()) > 0)
-        {
-          s32 outstart = (s32)scspsoundgenpos - (s32)scspsoundoutleft;
+  while (scspsoundoutleft > 0 &&
+     (audiosize = SNDCore->GetAudioSpace()) > 0)
+  {
+     s32 outstart = (s32)scspsoundgenpos - (s32)scspsoundoutleft;
 
-          if (outstart < 0)
-            outstart += scspsoundbufsize;
-          if (audiosize > scspsoundoutleft)
-            audiosize = scspsoundoutleft;
-          if (audiosize > scspsoundbufsize - outstart)
-            audiosize = scspsoundbufsize - outstart;
+     if (outstart < 0)
+        outstart += scspsoundbufsize;
+     if (audiosize > scspsoundoutleft)
+        audiosize = scspsoundoutleft;
+     if (audiosize > scspsoundbufsize - outstart)
+        audiosize = scspsoundbufsize - outstart;
 
-          SNDCore->UpdateAudio (&scspchannel[0].data32[outstart],
-                                &scspchannel[1].data32[outstart], audiosize);
-          scspsoundoutleft -= audiosize;
+     SNDCore->UpdateAudio(&scspchannel[0].data32[outstart],
+        &scspchannel[1].data32[outstart], audiosize);
+     scspsoundoutleft -= audiosize;
 
 #if 0
-          ScspConvert32uto16s (&scspchannel[0].data32[outstart],
-                               &scspchannel[1].data32[outstart],
-                               (s16 *)stereodata16, audiosize);
-          DRV_AviSoundUpdate(stereodata16, audiosize);
+     ScspConvert32uto16s(&scspchannel[0].data32[outstart],
+        &scspchannel[1].data32[outstart],
+        (s16 *)stereodata16, audiosize);
+     DRV_AviSoundUpdate(stereodata16, audiosize);
 #endif
-        }
-    }
-  else
-    {
-      if ((audiosize = SNDCore->GetAudioSpace ()))
-        {
-          if (audiosize > scspsoundlen)
-            audiosize = scspsoundlen;
-          memset(scspchannel[0].data32, 0, sizeof(u32) * audiosize);
-          memset(scspchannel[1].data32, 0, sizeof(u32) * audiosize);
+  }
 
-          scsp_update ((s32 *)scspchannel[0].data32,
-                       (s32 *)scspchannel[1].data32, audiosize);
-          SNDCore->UpdateAudio (scspchannel[0].data32,
-                                (u32 *)scspchannel[1].data32, audiosize);
-
-#if 0
-          ScspConvert32uto16s ((s32 *)scspchannel[0].data32,
-                               (s32 *)scspchannel[1].data32,
-                               (s16 *)stereodata16, audiosize);
-          DRV_AviSoundUpdate (stereodata16, audiosize);
-#endif
-        }
-    }  // if (scspframeaccurate)
-
-  scsp_update_monitor ();
+  if (!use_new_scsp)
+     scsp_update_monitor();
 }
 
 //////////////////////////////////////////////////////////////////////////////

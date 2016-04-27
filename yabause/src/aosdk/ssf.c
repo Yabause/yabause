@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ctype.h"
+#include "../error.h"
 
 #include "ao.h"
 
@@ -39,7 +40,7 @@ ao_display_info ssf_info;
 int ao_get_lib(char *filename, u8 **buffer, u64 *length)
 {
 	u8 *filebuf;
-	u32 size;
+	long size;
 	FILE *auxfile;
    size_t fread_val = 0;
 
@@ -52,6 +53,14 @@ int ao_get_lib(char *filename, u8 **buffer, u64 *length)
 
 	fseek(auxfile, 0, SEEK_END);
 	size = ftell(auxfile);
+
+   if (size <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      fclose(auxfile);
+      return AO_FAIL;
+   }
+
 	fseek(auxfile, 0, SEEK_SET);
 
 	filebuf = malloc(size);
@@ -59,7 +68,7 @@ int ao_get_lib(char *filename, u8 **buffer, u64 *length)
 	if (!filebuf)
 	{
 		fclose(auxfile);
-		printf("ERROR: could not allocate %d bytes of memory\n", size);
+		printf("ERROR: could not allocate %d bytes of memory\n", (int)size);
 		return AO_FAIL;
 	}
 
@@ -100,6 +109,14 @@ int load_ssf(char *filename, int m68k_core, int sndcore)
 	// Get file size
 	fseek(fp, 0, SEEK_END);
 	size = ftell(fp);
+
+   if (size <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      fclose(fp);
+      return AO_FAIL;
+   }
+
 	fseek(fp, 0, SEEK_SET);
 
 	buffer = (unsigned char *)malloc(size);
@@ -118,6 +135,7 @@ int load_ssf(char *filename, int m68k_core, int sndcore)
 		buffer[2] != 0x46 || buffer[3] != 0x11)
 	{
 		// Can't identify file
+      free(buffer);
 		return 0;//false
 	}
 

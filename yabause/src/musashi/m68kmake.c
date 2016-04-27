@@ -711,6 +711,15 @@ int extract_opcode_info(char* src, char* name, int* size, char* spec_proc, char*
 /* Add a search/replace pair to a replace structure */
 void add_replace_string(replace_struct* replace, char* search_str, char* replace_str)
 {
+	size_t search_str_len = strlen(search_str);
+	size_t replace_str_len = strlen(replace_str);
+
+	if(search_str_len >= 201)
+		error_exit("search_str was too long");
+
+	if (replace_str_len >= 201)
+		error_exit("replace_str was too long");
+
 	if(replace->length >= MAX_REPLACE_LENGTH)
 		error_exit("overflow in replace structure");
 
@@ -741,6 +750,9 @@ void write_body(FILE* filep, body_struct* body, replace_struct* replace)
 				ptr = strstr(output, replace->replace[j][0]);
 				if(ptr)
 				{
+					size_t replace_len = strlen(ptr + strlen(replace->replace[j][0]));
+					if(replace_len >= 201)
+						error_exit("write_body: replace_len was too long");
 					/* We found something to replace */
 					found = 1;
 					strcpy(temp_buff, ptr+strlen(replace->replace[j][0]));
@@ -784,6 +796,11 @@ void write_function_name(FILE* filep, char* base_name)
 void add_opcode_output_table_entry(opcode_struct* op, char* name)
 {
 	opcode_struct* ptr;
+	size_t name_len = strlen(name);
+
+	if(name_len >= 30)
+		error_exit("Opcode output name too long");
+
 	if(g_opcode_output_table_length > MAX_OPCODE_OUTPUT_TABLE_LENGTH)
 		error_exit("Opcode output table overflow");
 
@@ -1246,6 +1263,11 @@ int main(int argc, char **argv)
     if(argc > 1)
 	{
 		char *ptr;
+		size_t argv_len = strlen(argv[1]);
+
+		if(argv_len >= 1024)
+			perror_exit("Argument was too long (%s)\n", argv[1]);
+
 		strcpy(output_path, argv[1]);
 
 		for(ptr = strchr(output_path, '\\'); ptr; ptr = strchr(ptr, '\\'))
