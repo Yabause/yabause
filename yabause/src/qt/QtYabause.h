@@ -70,6 +70,10 @@ extern "C"
 #ifdef ARCH_IS_MACOSX
     #include "../sndmac.h"
 #endif
+
+#ifdef SH2_TRACE
+	#include "../sh2trace.h"
+#endif
 }
 
 #include <QString>
