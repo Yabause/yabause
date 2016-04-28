@@ -28,8 +28,8 @@ matrix:
         - cmake ..
         - make
       after_success:
-        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-mac
-        - curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-mac.zip
+        #- cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-mac
+        #- curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-mac.zip
 
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
@@ -51,8 +51,8 @@ matrix:
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
         - make
       after_success:
-        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-win64
-        - curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-win64.zip
+        #- cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-win64
+        #- curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-win64.zip
 
     # android port
     - compiler: gcc
@@ -85,8 +85,8 @@ matrix:
         - make
 
       after_success:
-        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-android
-        - curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-android.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-android.zip
+        - curl --ftp-create-dirs -T ./bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-android.apk
+        - curl --ftp-create-dirs -T ./bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
 
 addons:
   coverity_scan:
