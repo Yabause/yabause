@@ -490,13 +490,13 @@ option(YAB_WANT_MUSASHI "Enable musashi 68k" ON)
 #of the native one, making it impossible to generate the core
 if (YAB_WANT_MUSASHI)
     set (MUSASHI_GENERATED_SOURCES 
-        ${CMAKE_CURRENT_BINARY_DIR}/m68kopac.c 
-        ${CMAKE_CURRENT_BINARY_DIR}/m68kopdm.c 
-        ${CMAKE_CURRENT_BINARY_DIR}/m68kopnz.c 
-        ${CMAKE_CURRENT_BINARY_DIR}/m68kops.c)
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopac.c
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopdm.c
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopnz.c
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kops.c)
 
     set (MUSASHI_GENERATED_HEADERS
-        ${CMAKE_CURRENT_BINARY_DIR}/m68kops.h)
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kops.h)
 
     include(ExternalProject)
     ExternalProject_Add(m68kmake
@@ -507,16 +507,10 @@ if (YAB_WANT_MUSASHI)
         BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/musashi
     )
 
-    add_custom_command(OUTPUT ${MUSASHI_GENERATED_SOURCES} ${MUSASHI_GENERATED_HEADERS}
-                       COMMAND musashi/m68kmake ${CMAKE_CURRENT_BINARY_DIR}/ ${CMAKE_CURRENT_SOURCE_DIR}/musashi/m68k_in.c
-                       DEPENDS m68kmake
-                       COMMENT "Generating musashi 68k core"
-                       VERBATIM)
-
     add_definitions(-DHAVE_MUSASHI=1)
 
 	include_directories(
-      ${CMAKE_CURRENT_BINARY_DIR}/
+      ${CMAKE_CURRENT_BINARY_DIR}/musashi
       ${CMAKE_CURRENT_SOURCE_DIR}/musashi
     )
 
@@ -535,8 +529,7 @@ if (YAB_WANT_MUSASHI)
       m68kmusashi.h
       )
 
-    add_custom_target(musashi ALL
-      DEPENDS ${MUSASHI_GENERATED_FILES})
+    set_property(SOURCE ${MUSASHI_GENERATED_SOURCES} ${MUSASHI_GENERATED_HEADERS} PROPERTY GENERATED ON)
 endif(YAB_WANT_MUSASHI)
 
 # q68
@@ -694,7 +687,7 @@ if (YAB_WANT_C68K)
 endif(YAB_WANT_C68K)
 
 if (YAB_WANT_MUSASHI)
-	add_dependencies(yabause musashi)
+	add_dependencies(yabause m68kmake)
 endif(YAB_WANT_MUSASHI)
 
 macro(yab_port_start)
