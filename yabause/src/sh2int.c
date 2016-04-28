@@ -52,12 +52,6 @@
 } while (0)
 #endif
 
-void SetInsTracingToggle(int toggle)
-{
-	SetInsTracing(toggle ? 1 : 0);
-}
-
-
 opcodefunc opcodes[0x10000];
 
 SH2Interface_struct SH2Interpreter = {

@@ -1075,7 +1075,6 @@ void UIYabause::on_aViewLayerRBG0_triggered()
 void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
-	//ToggleFullScreen();
 }
 
 void UIYabause::breakpointHandlerMSH2(bool displayMessage)
@@ -1159,7 +1158,10 @@ void UIYabause::on_aViewDebugSCSP_triggered()
 
 void UIYabause::on_aViewDebugSCSPChan_triggered()
 {
-   UIDebugSCSPChan(this).exec();
+   if (use_new_scsp)
+      UIDebugSCSPChan(this).exec();
+   else
+      CommonDialogs::information( QtYabause::translate( "Only available with new scsp code(USE_NEW_SCSP=1)" ) );
 }
 
 void UIYabause::on_aViewDebugSCSPDSP_triggered()
@@ -1176,7 +1178,9 @@ void UIYabause::on_aViewDebugMemoryEditor_triggered()
 
 void UIYabause::on_aTraceLogging_triggered( bool toggled )
 {
-	SetInsTracingToggle(toggled? 1 : 0);
+#ifdef SH2_TRACE
+	SH2SetInsTracing(toggled? 1 : 0);
+#endif
 	return;
 }
 
