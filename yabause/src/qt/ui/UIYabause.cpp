@@ -1178,7 +1178,9 @@ void UIYabause::on_aViewDebugMemoryEditor_triggered()
 
 void UIYabause::on_aTraceLogging_triggered( bool toggled )
 {
+#ifdef SH2_TRACE
 	SH2SetInsTracing(toggled? 1 : 0);
+#endif
 	return;
 }
 
