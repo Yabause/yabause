@@ -101,6 +101,7 @@ void VIDSoftVdp1SwapFrameBuffer(void);
 void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer);
 void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * sprite_window_mask, u8* vdp1_front_framebuffer, u8 * vdp2_ram, Vdp1* vdp1_regs, Vdp2* vdp2_lines, u8*color_ram);
 void VIDSoftGetNativeResolution(int *width, int *height, int*interlace);
+void VIDSoftVdp2DispOff(void);
 
 VideoInterface_struct VIDSoft = {
 VIDCORE_SOFT,
@@ -132,7 +133,8 @@ VIDSoftVdp2DrawStart,
 VIDSoftVdp2DrawEnd,
 VIDSoftVdp2DrawScreens,
 VIDSoftGetGlSize,
-VIDSoftGetNativeResolution
+VIDSoftGetNativeResolution,
+VIDSoftVdp2DispOff
 };
 
 pixel_t *dispbuffer=NULL;
@@ -4168,4 +4170,9 @@ void VIDSoftGetNativeResolution(int *width, int *height, int* interlace)
    *width = vdp2width;
    *height = vdp2height;
    *interlace = vdp2_interlace;
+}
+
+void VIDSoftVdp2DispOff()
+{
+   TitanErase();
 }
