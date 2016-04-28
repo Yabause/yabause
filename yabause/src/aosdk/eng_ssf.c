@@ -152,6 +152,7 @@ s32 ssf_start(u8 *buffer, u32 length, int m68k_core, int sndcore, char* filename
 			if (corlett_decode(lib_raw_file, lib_raw_length, &lib_decoded, &lib_len, &lib) != AO_SUCCESS)
 			{
 				free(lib_raw_file);
+				free(file);
 				return AO_FAIL;
 			}
 				
