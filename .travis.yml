@@ -27,6 +27,9 @@ matrix:
       script:
         - cmake ..
         - make
+      after_success:
+        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-mac
+        - curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-mac.zip
 
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
@@ -47,6 +50,9 @@ matrix:
         - echo 'SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' >> toolchain.cmake
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
         - make
+      after_success:
+        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-win64
+        - curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-win64.zip
 
     # android port
     - compiler: gcc
@@ -77,6 +83,10 @@ matrix:
         - echo 'SET(ANDROID ON)' >> toolchain.cmake
         - cmake -DCMAKE_FIND_ROOT_PATH=$SYSROOT/usr/ -DNDK_BUILD=$NDK/build/ndk-build -DSDK_ANDROID=$ANDROID_HOME/tools/android -DYAB_WANT_MUSASHI=OFF -DSH2_DYNAREC=OFF -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS=android ..
         - make
+
+      after_success:
+        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$TRAVIS_COMMIT-android
+        - curl --ftp-create-dirs -T yabause-$TRAVIS_COMMIT-android.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$TRAVIS_COMMIT-android.zip
 
 addons:
   coverity_scan:
