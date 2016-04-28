@@ -1384,6 +1384,7 @@ void VIDDummyGetGlSize(int *width, int *height);
 void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
+void VIDDummyVdp2DispOff(void);
 
 VideoInterface_struct VIDDummy = {
 VIDCORE_DUMMY,
@@ -1411,7 +1412,8 @@ VIDDummyVdp2DrawStart,
 VIDDummyVdp2DrawEnd,
 VIDDummyVdp2DrawScreens,
 VIDDummyGetGlSize,
-VIDDummyGetNativeResolution
+VIDDummyGetNativeResolution,
+VIDDummyVdp2DispOff,
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1565,4 +1567,10 @@ void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
    *width = 0;
    *height = 0;
    *interlace = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDDummyVdp2DispOff(void)
+{
 }
