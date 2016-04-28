@@ -87,6 +87,7 @@ void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
 void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+void VIDOGLVdp2DispOff(void);
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -115,6 +116,7 @@ VIDOGLVdp2DrawEnd,
 VIDOGLVdp2DrawScreens,
 YglGetGlSize,
 VIDOGLGetNativeResolution,
+VIDOGLVdp2DispOff
 };
 
 float vdp1wratio=1;
@@ -4472,6 +4474,8 @@ static void Vdp2DrawNBG0(void)
    info.cog = 0;
    info.cob = 0;
 
+   info.cellw = 512;
+   info.cellh = 256;
 
    if (Vdp2Regs->BGON & 0x20)
    {
@@ -5468,6 +5472,10 @@ void VIDOGLGetNativeResolution(int *width, int *height, int*interlace)
    *width = 0;
    *height = 0;
    *interlace = 0;
+}
+
+void VIDOGLVdp2DispOff()
+{
 }
 
 vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W( vdp2rotationparameter_struct * param, int index )

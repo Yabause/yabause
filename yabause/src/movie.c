@@ -488,6 +488,10 @@ void TestWrite(struct MovieBufferStruct tempbuffer) {
 	FILE* tempbuffertest;
 
 	tempbuffertest=fopen("rmiab.txt", "wb");
+
+   if (!tempbuffertest)
+      return;
+
 	fwrite (tempbuffer.data, 1, tempbuffer.size, tempbuffertest);
 	fclose(tempbuffertest);
 }
