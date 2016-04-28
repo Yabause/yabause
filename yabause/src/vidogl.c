@@ -4474,6 +4474,8 @@ static void Vdp2DrawNBG0(void)
    info.cog = 0;
    info.cob = 0;
 
+   info.cellw = 512;
+   info.cellh = 256;
 
    if (Vdp2Regs->BGON & 0x20)
    {

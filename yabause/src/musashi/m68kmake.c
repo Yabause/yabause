@@ -649,7 +649,7 @@ opcode_struct* find_opcode(char* name, int size, char* spec_proc, char* spec_ea)
 	opcode_struct* op;
 
 
-	for(op = g_opcode_input_table;op->name != NULL;op++)
+	for(op = g_opcode_input_table; strlen(op->name) != 0;op++)
 	{
 		if(	strcmp(name, op->name) == 0 &&
 			(size == op->size) &&
@@ -665,7 +665,7 @@ opcode_struct* find_illegal_opcode(void)
 {
 	opcode_struct* op;
 
-	for(op = g_opcode_input_table;op->name != NULL;op++)
+	for(op = g_opcode_input_table;strlen(op->name) != 0;op++)
 	{
 		if(strcmp(op->name, "illegal") == 0)
 			return op;
@@ -801,7 +801,7 @@ void add_opcode_output_table_entry(opcode_struct* op, char* name)
 	if(name_len >= 30)
 		error_exit("Opcode output name too long");
 
-	if(g_opcode_output_table_length > MAX_OPCODE_OUTPUT_TABLE_LENGTH)
+	if(g_opcode_output_table_length >= MAX_OPCODE_OUTPUT_TABLE_LENGTH)
 		error_exit("Opcode output table overflow");
 
 	ptr = g_opcode_output_table + g_opcode_output_table_length++;
@@ -1274,8 +1274,13 @@ int main(int argc, char **argv)
 			*ptr = '/';
         if(output_path[strlen(output_path)-1] != '/')
 			strcat(output_path, "/");
-		if(argc > 2)
-			strcpy(g_input_filename, argv[2]);
+        if (argc > 2)
+        {
+           if (strlen(argv[2]) >= 1024)
+              perror_exit("Argument 2 was too long (%s)\n", argv[2]);
+
+           strcpy(g_input_filename, argv[2]);
+        }
 	}
 
 

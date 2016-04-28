@@ -43,7 +43,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
    union ScspDspInstruction instruction;
    instruction.all = scsp_dsp.mpro[addr];
 
-   if (instruction.part.ira >= 0 && instruction.part.ira <= 0x1f)
+   if (instruction.part.ira <= 0x1f)
       dsp->inputs = dsp->mems[instruction.part.ira & 0x1f];
    else if (instruction.part.ira >= 0x20 && instruction.part.ira <= 0x2f)
       dsp->inputs = dsp->mixs[instruction.part.ira - 0x20] << 4;
