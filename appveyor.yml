@@ -82,5 +82,8 @@ after_build:
   - ps: $git_hash_date += "-"
   - ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
   - ps: ${env:yab_name} = "yabause-${git_hash_date}-${env:compiler_type}"
+  - ps: ${env:yab_name_alt} = "yabause-latest-${env:compiler_type}"
   - cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
+  - curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name%.zip
+  - curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt%.zip
   - appveyor PushArtifact %yab_name%.zip
