@@ -28,9 +28,9 @@ matrix:
         - cmake ..
         - make
       after_success:
-        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$ENV{GIT_HASH}-mac
-        - curl --ftp-create-dirs -T yabause-$ENV{GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$ENV{GIT_HASH}-mac.zip
-        - curl --ftp-create-dirs -T yabause-$ENV{GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-mac.zip
+        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-mac
+        - curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$ENV{GIT_HASH}-mac.zip
+        - curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-mac.zip
 
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
@@ -52,8 +52,8 @@ matrix:
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
         - make
       after_success:
-        #- cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-$ENV{GIT_HASH}-win64
-        #- curl --ftp-create-dirs -T yabause-$ENV{GIT_HASH}-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$ENV{GIT_HASH}-win64.zip
+        #- cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-win64
+        #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$ENV{GIT_HASH}-win64.zip
 
     # android port
     - compiler: gcc
@@ -86,7 +86,8 @@ matrix:
         - make
 
       after_success:
-        - curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-$ENV{GIT_HASH}-android.apk
+        - echo ${GIT_HASH}
+        - curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-android.apk
         - curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
 
 addons:
