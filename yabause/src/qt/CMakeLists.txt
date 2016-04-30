@@ -26,7 +26,12 @@ if(Qt5_FOUND)
 
     # Since Qt5's cmake script doesn't set it, we will have to
     SET(QT_BINARY_DIR "${_qt5Core_install_prefix}/bin")
-    SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
+    if (MSYS2_BUILD)
+        SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/share/qt5/plugins")
+    else()
+        SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
+    endif()
+
 else() 
 	set( QT_USE_QTCORE TRUE )
 	set( QT_USE_QTGUI TRUE )
@@ -261,7 +266,7 @@ endif()
 yab_port_success(yabause-qt)
 configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)
 
-if (WIN32 AND NOT MSYS2_BUILD)
+if (WIN32)
 	install(TARGETS yabause-qt DESTINATION ".")
 	if (GLUT_FOUND)
 		install(FILES ${GLUT_INCLUDE_DIR}/../freeglut.dll DESTINATION ".")
@@ -273,10 +278,14 @@ if (WIN32 AND NOT MSYS2_BUILD)
 			FILES_MATCHING PATTERN "SDL.dll")
 	endif ()
 	if (SDL2_FOUND)
-		get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
-		install(DIRECTORY ${SDL2_BINARY_DIR}/
-			DESTINATION "."
-			FILES_MATCHING PATTERN "SDL2.dll")
+		if (NOT MSYS2_BUILD)
+			get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
+			install(DIRECTORY ${SDL2_BINARY_DIR}/
+				DESTINATION "."
+				FILES_MATCHING PATTERN "SDL2.dll")
+		else ()
+			install(FILES ${QT_BINARY_DIR}/SDL2.dll DESTINATION ".")
+		endif ()
 	endif ()
 	if(Qt5_FOUND) 
 		install(FILES ${QT_BINARY_DIR}/Qt5Core.dll DESTINATION ".")
