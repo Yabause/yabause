@@ -87,6 +87,7 @@ set( yabause_qt_FORMS
 	ui/UIPadSetting.ui 
 	ui/UI3DControlPadSetting.ui 
     ui/UIWheelSetting.ui 
+    ui/UIMissionStickSetting.ui 
 	ui/UIGunSetting.ui
 	ui/UIMouseSetting.ui 
     ui/UIDebugCPU.ui
@@ -122,6 +123,7 @@ set( yabause_qt_MOC_HEADERS
 	ui/UIPadSetting.h
 	ui/UI3DControlPadSetting.h
     ui/UIWheelSetting.h
+    ui/UIMissionStickSetting.h
 	ui/UIGunSetting.h
 	ui/UIMouseSetting.h
 	ui/UIShortcutManager.h
@@ -165,6 +167,7 @@ set( yabause_qt_SOURCES
 	ui/UIPadSetting.cpp
 	ui/UI3DControlPadSetting.cpp
     ui/UIWheelSetting.cpp
+    ui/UIMissionStickSetting.cpp
 	ui/UIGunSetting.cpp
 	ui/UIMouseSetting.cpp
 	ui/UIShortcutManager.cpp
