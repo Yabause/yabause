@@ -1404,6 +1404,15 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          return;
       case 0x092:
          CurrentSH2->onchip.CCR = val & 0xCF;
+		 if (val & 0x10){
+			 cache_clear(&CurrentSH2->onchip.cache);
+		 }
+		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
+			 cache_enable(&CurrentSH2->onchip.cache);
+		 }
+		 else{
+			 cache_disable(&CurrentSH2->onchip.cache);
+		 }
          return;
       case 0x0E0:
          CurrentSH2->onchip.ICR = ((val & 0x1) << 8) | (CurrentSH2->onchip.ICR & 0xFEFF);
@@ -1504,6 +1513,15 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
          return;
       case 0x092:
          CurrentSH2->onchip.CCR = val & 0xCF;
+		 if (val&0x10){
+			 cache_clear( &CurrentSH2->onchip.cache );
+		 }
+		 if ((CurrentSH2->onchip.CCR & 0x01)){
+			 cache_enable(&CurrentSH2->onchip.cache);
+		 }
+		 else{
+			 cache_disable(&CurrentSH2->onchip.cache);
+		 }
          return;
       case 0x0E0:
          CurrentSH2->onchip.ICR = val & 0x0101;
