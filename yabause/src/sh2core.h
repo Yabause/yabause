@@ -23,6 +23,7 @@
 
 #include "core.h"
 #include "memory.h"
+#include "sh2cache.h"
 
 #define SH2CORE_DEFAULT     -1
 #define MAX_INTERRUPTS 50
@@ -278,6 +279,7 @@ typedef struct
    u16 RTCSR;  // 0xFFFFFFF0
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
+   cache_enty cache;
 } Onchip_struct;
 
 typedef struct
