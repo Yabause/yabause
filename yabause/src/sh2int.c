@@ -152,14 +152,14 @@ static u32 FASTCALL FetchCs0(u32 addr)
 
 static u32 FASTCALL FetchLWram(u32 addr)
 {
-   return T2ReadWord(LowWram, addr & 0xFFFFF);
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr); //T2ReadWord(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchHWram(u32 addr)
 {
-   return T2ReadWord(HighWram, addr & 0xFFFFF);
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr); // T2ReadWord(HighWram, addr & 0xFFFFF);
 }
 
 extern u8 * Vdp1Ram;

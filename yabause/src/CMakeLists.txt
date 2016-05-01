@@ -24,6 +24,7 @@ set(yabause_HEADERS
 	yabause.h ygl.h yui.h
 	shaders/FXAA_DefaultES.h
 	frameprofile.h
+	sh2cache.h
 )
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
@@ -45,7 +46,8 @@ set(yabause_SOURCES
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c )
+	yabause.c
+	sh2cache.c )
 if (ANDROID)
     add_definitions(-DANDROID=1)
 	add_definitions(-DYAB_PORT_OSD)
