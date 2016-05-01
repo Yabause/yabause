@@ -33,6 +33,7 @@
         <file>icons/actions/video.png</file>
         <file alias="3dcontroller.png">icons/3dcontroller.png</file>
         <file alias="wheel.png">icons/wheel.png</file>
+      <file alias="missionstick.png">icons/missionstick.png</file>
     </qresource>
     <qresource prefix="/icons">
         <file>icons/made.png</file>

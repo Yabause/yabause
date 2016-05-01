@@ -476,6 +476,22 @@ void PerAxis1Value(PerAnalog_struct * analog, u32 val)
       else if(right_is_pressed && val <= 0x8f)
          analog->analogbits[0] |= ~0x7F;//release right
    }
+   else if (analog->perid == PERMISSIONSTICK)
+   {
+      int left_is_pressed = (analog->analogbits[0] & (1 << 6)) == 0;
+      int right_is_pressed = (analog->analogbits[0] & (1 << 7)) == 0;
+
+      if (val <= 0x56)
+         analog->analogbits[0] &= 0xBF;//press left
+      else if (left_is_pressed && val >= 0x6a)
+         analog->analogbits[0] |= ~0xBF;//release left
+
+
+      if (val >= 0xab)
+         analog->analogbits[0] &= 0x7F;//press right
+      else if (right_is_pressed && val <= 0x95)
+         analog->analogbits[0] |= ~0x7F;//release right
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -483,13 +499,33 @@ void PerAxis1Value(PerAnalog_struct * analog, u32 val)
 void PerAxis2Value(PerAnalog_struct * analog, u32 val)
 {
    analog->analogbits[3] = (u8)val;
+
+   if (analog->perid == PERMISSIONSTICK)
+   {
+      int up_is_pressed = (analog->analogbits[0] & (1 << 4)) == 0;
+      int down_is_pressed = (analog->analogbits[0] & (1 << 5)) == 0;
+
+      if (val <= 0x65)
+         analog->analogbits[0] &= 0xEF;//press up
+      else if (up_is_pressed && val >= 0x6a)
+         analog->analogbits[0] |= ~0xEF;//release up
+
+
+      if (val >= 0xa9)
+         analog->analogbits[0] &= 0xDF;//press down
+      else if (down_is_pressed && val <= 0x94)
+         analog->analogbits[0] |= ~0xDF;//release down
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerAxis3Value(PerAnalog_struct * analog, u32 val)
 {
-   analog->analogbits[4] = (u8)val;
+   if (analog->perid != PERMISSIONSTICK)
+      analog->analogbits[4] = (u8)val;
+   else
+      analog->analogbits[4] = (u8)(-(s8)val);//axis inverted on mission stick
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -646,6 +682,14 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
          port->data[peroffset+1] = 0xFF;
          port->data[peroffset+2] = 0x7F;
          port->size = peroffset+(perid&0xF);
+         break;
+      case PERMISSIONSTICK:
+         port->data[peroffset] = 0xFF;
+         port->data[peroffset + 1] = 0xFF;
+         port->data[peroffset + 2] = 0x7F;
+         port->data[peroffset + 3] = 0x7F;
+         port->data[peroffset + 4] = 0x7F;
+         port->size = peroffset + (perid & 0xF);
          break;
       case PER3DPAD:
          port->data[peroffset] = 0xFF;
