@@ -1383,7 +1383,7 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, Y
 		}
 		return YglQuadGrowShading_in(input, output, colors, c, 1);
 	}
-
+	return 0;
 }
 
 
