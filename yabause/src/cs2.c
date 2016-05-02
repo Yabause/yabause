@@ -332,10 +332,8 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                      // Make sure we still have sectors to transfer
                      if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
                      {
-                        // Transfer Data
-                        const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
-
-                        if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
+						 const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+						 if (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans] == NULL)
                         {
                            CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                            return 0;
@@ -351,7 +349,7 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                         Cs2Area->datatransoffset += 4;
 
                         // Make sure we're not beyond the sector size boundry
-                        if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
+						if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->size)
                         {
                            Cs2Area->datatransoffset = 0;
                            Cs2Area->datanumsecttrans++;
