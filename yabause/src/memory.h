@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include "core.h"
 
+#define CACHE_ENABLE 0 
+
 /* Type 1 Memory, faster for byte (8 bits) accesses */
 
 u8 * T1MemoryInit(u32);
