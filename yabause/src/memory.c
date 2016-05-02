@@ -58,7 +58,6 @@
 #include "vidsoft.h"
 #include "vidogl.h"
 
-#define CACHE_ENABLE 1
 #if CACHE_ENABLE
 #else
 u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr); }
