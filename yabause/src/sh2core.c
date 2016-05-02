@@ -167,7 +167,10 @@ void SH2Reset(SH2_struct *context)
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2PowerOn(SH2_struct *context) {
-   u32 VBR = SH2Core->GetVBR(context);
+	u32 VBR;
+	CurrentSH2 = context;
+	cache_clear(&context->onchip.cache);
+   VBR = SH2Core->GetVBR(context);
    SH2Core->SetPC(context, MappedMemoryReadLong(VBR));
    SH2Core->SetGPR(context, 15, MappedMemoryReadLong(VBR+4));
 }
@@ -447,6 +450,7 @@ static u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
+			SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -482,6 +486,7 @@ static u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
+			SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -517,6 +522,7 @@ static u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
+			SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -552,6 +558,7 @@ static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
+			SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -592,6 +599,7 @@ static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
+			SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
@@ -632,6 +640,7 @@ static void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
          if (CurrentSH2->bp.BreakpointCallBack && CurrentSH2->bp.inbreakpoint == 0)
          {
             CurrentSH2->bp.inbreakpoint = 1;
+			SH2DumpHistory(CurrentSH2);
             CurrentSH2->bp.BreakpointCallBack(CurrentSH2, 0, CurrentSH2->bp.BreakpointUserData);
             CurrentSH2->bp.inbreakpoint = 0;
          }
