@@ -2912,6 +2912,12 @@ void YglRender(void) {
    YGLLOG("YglRender\n");
 
    FrameProfileAdd("YglRender start");
+   if ((Vdp2Regs->TVMD & 0x8000) == 0){
+	   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	   goto render_finish;
+   }
+
 
    if (_Ygl->aamode == AA_FXAA){
 	   if (_Ygl->fxaa_fbotex == 0){
@@ -2925,7 +2931,6 @@ void YglRender(void) {
 	   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	   _Ygl->targetfbo = 0;
    }
-
 
    glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
    glClearDepthf(0.0f);
@@ -3040,11 +3045,13 @@ void YglRender(void) {
 		if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
 	}
 
+
 	if (_Ygl->aamode == AA_FXAA){
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
 	}
 
+render_finish:
    glUseProgram(0);
    glGetError();
    glBindBuffer(GL_ARRAY_BUFFER, 0);
