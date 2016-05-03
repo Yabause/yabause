@@ -195,7 +195,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	int priority = 0;
 	int colorcl = 0;
 
-	int ednmode;
 	int endcnt = 0;
 	int nromal_shadow = 0;
 
@@ -242,7 +241,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 		// 4 bpp Bank mode
 		u32 colorBank = cmd->CMDCOLR;
 		u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
-		u16 i;
 
 		// Pixel 1
 		if (!SPD) color = 0x00;
@@ -281,7 +279,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 		// 4 bpp LUT mode
 		u16 temp;
 		u32 colorLut = cmd->CMDCOLR * 8;
-		u16 i;
 		u32 colorOffset = (Vdp2Regs->CRAOFB & 0x70) << 4;
 
 		if (!SPD) color = 0;
@@ -3643,8 +3640,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   s16 X[4];
-   s16 Y[4];
    u16 color;
    u16 CMDPMOD;
    u8 alpha;

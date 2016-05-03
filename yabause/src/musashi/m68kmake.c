@@ -218,9 +218,9 @@ typedef struct
 /* Function Prototypes */
 void error_exit(char* fmt, ...);
 void perror_exit(char* fmt, ...);
-int check_strsncpy(char* dst, char* src, int maxlength);
-int check_atoi(char* str, int *result);
-int skip_spaces(char* str);
+size_t check_strsncpy(char* dst, char* src, int maxlength);
+size_t check_atoi(char* str, int *result);
+size_t skip_spaces(char* str);
 int num_bits(int value);
 int atoh(char* buff);
 int fgetline(char* buff, int nchars, FILE* file);
@@ -492,7 +492,7 @@ void perror_exit(char* fmt, ...)
 
 
 /* copy until 0 or space and exit with error if we read too far */
-int check_strsncpy(char* dst, char* src, int maxlength)
+size_t check_strsncpy(char* dst, char* src, int maxlength)
 {
 	char* p = dst;
 	while(*src && *src != ' ')
@@ -506,7 +506,7 @@ int check_strsncpy(char* dst, char* src, int maxlength)
 }
 
 /* copy until 0 or specified character and exit with error if we read too far */
-int check_strcncpy(char* dst, char* src, char delim, int maxlength)
+size_t check_strcncpy(char* dst, char* src, char delim, int maxlength)
 {
 	char* p = dst;
 	while(*src && *src != delim)
@@ -520,7 +520,7 @@ int check_strcncpy(char* dst, char* src, char delim, int maxlength)
 }
 
 /* convert ascii to integer and exit with error if we find invalid data */
-int check_atoi(char* str, int *result)
+size_t check_atoi(char* str, int *result)
 {
 	int accum = 0;
 	char* p = str;
@@ -536,7 +536,7 @@ int check_atoi(char* str, int *result)
 }
 
 /* Skip past spaces in a string */
-int skip_spaces(char* str)
+size_t skip_spaces(char* str)
 {
 	char* p = str;
 

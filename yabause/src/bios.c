@@ -1162,7 +1162,7 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
 
    if (sh->regs.R[6] < i)
    {
-      sh->regs.R[0] = -i; // returns the number of successfully read dir entries
+      sh->regs.R[0] = -(s32)i; // returns the number of successfully read dir entries
       sh->regs.PC = sh->regs.PR;
       SH2SetRegisters(sh, &sh->regs);
       return;

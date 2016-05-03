@@ -45,7 +45,7 @@ static int drivestatus=0;
 static DWORD thread_id;
 static struct 
 {
-	int enable_read_ahead;
+	volatile int enable_read_ahead;
 	u32 FAD;
 	unsigned char data[2352];
 	int num_sectors_read;
@@ -316,7 +316,7 @@ int SPTICDReadSectorFAD(u32 FAD, void *buffer) {
 	for (;;)
 	{
 		EnterCriticalSection(&cd_cs);
-		if ((volatile)cd_buf.enable_read_ahead == 0)
+		if (cd_buf.enable_read_ahead == 0)
 		{
 			if (cd_buf.FAD == FAD)
 			{

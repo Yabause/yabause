@@ -2783,7 +2783,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
    /* Avoid accumulating leftover cycles multiple times, since the trace
     * code automatically adds state->cycles to the cycle accumulator when
     * printing a trace line */
-   sh2_trace_add_cycles(-(context->cycles));
+   sh2_trace_add_cycles(-((s32)context->cycles));
 #endif
 
    SH2HandleInterrupts(context);
