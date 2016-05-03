@@ -33,6 +33,8 @@
 #include "bios.h"
 #include "yabause.h"
 
+
+
 #ifdef SH2_TRACE
 #include "sh2trace.h"
 # define MappedMemoryWriteByte(a,v)  do { \
@@ -201,7 +203,11 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 #endif
    sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
 
-   sh->pchistory[(++sh->pchistory_index) & 0xFF] = addr;
+#ifdef DMPHISTORY
+   sh->pchistory_index++;
+   sh->pchistory[sh->pchistory_index & 0xFF] = addr;
+   sh->regshistory[sh->pchistory_index & 0xFF] = sh->regs;
+#endif
 
    // Execute it
    opcodes[sh->instruction](sh);
@@ -2878,9 +2884,14 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       SH2HandleStepOverOut(context);
       SH2HandleTrackInfLoop(context);
 
+#ifdef DMPHISTORY
+	  context->pchistory_index++;
+	  context->pchistory[context->pchistory_index & 0xFF] = context->regs.PC;
+	  context->regshistory[context->pchistory_index & 0xFF] = context->regs;
+#endif
+
       // Execute it
       opcodes[context->instruction](context);
-      context->pchistory[(++context->pchistory_index) & 0xFF] = context->regs.PC;
 
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
