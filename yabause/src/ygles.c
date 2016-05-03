@@ -557,6 +557,8 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
 	unsigned int * new_texture;
 	GLuint error;
 
+	Vdp2RgbTextureSync();
+
 	// copy to dram
 	if (tm->texture == NULL){
 		glBindTexture(GL_TEXTURE_2D, tm->textureID);
