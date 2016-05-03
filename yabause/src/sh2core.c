@@ -159,9 +159,11 @@ void SH2Reset(SH2_struct *context)
    OnchipReset(context);
 
    // Reset backtrace
+#ifdef DMPHISTORY
    context->bt.numbacktrace = 0;
    memset(context->pchistory, 0, sizeof(context->pchistory));
    context->pchistory_index = 0;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2188,6 +2190,7 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 
 void SH2DumpHistory(SH2_struct *context){
 
+#ifdef DMPHISTORY
 	FILE * history = NULL;
 	history = fopen("history.txt", "w");
 	if (history){
@@ -2195,13 +2198,14 @@ void SH2DumpHistory(SH2_struct *context){
 		int index = context->pchistory_index;
 		for (i = 0; i < 0xFF; i++){
 		  char lineBuf[128];
-		  SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, &context->regs, lineBuf);
+		  SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, &context->regshistory[index & 0xFF], lineBuf);
 		  fprintf(history,lineBuf);
 		  fprintf(history, "\n");
 		  index--;
 	    }
 		fclose(history);
 	}
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

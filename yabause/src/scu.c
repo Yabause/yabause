@@ -2288,6 +2288,7 @@ void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
 
 void FASTCALL ScuWriteLong(u32 addr, u32 val) {
    addr &= 0xFF;
+   LOG("Scu write %08X:%08X\n", addr, val);
    switch(addr) {
       case 0:
          ScuRegs->D0R = val;
@@ -2404,7 +2405,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
             LOG("scu\t: DSP set pc = %02X\n", ScuDsp->PC);
          }
 
-#if DEBUG
+#ifdef DEBUG
          if (ScuDsp->ProgControlPort.part.EX)
             LOG("scu\t: DSP executing: PC = %02X\n", ScuDsp->PC);
 #endif
