@@ -32,6 +32,9 @@
 #undef MACH
 #endif
 
+//#define DMPHISTORY
+
+
 // UBC Flags
 #define BBR_CPA_NONE			(0 << 6)
 #define BBR_CPA_CPU				(1 << 6)
@@ -397,8 +400,11 @@ typedef struct
       int maxNum;
    } trackInfLoop;
 
+#ifdef DMPHISTORY
    u32 pchistory[0x100];
+   sh2regs_struct regshistory[0x100];
    u32 pchistory_index;
+#endif
 
 } SH2_struct;
 
