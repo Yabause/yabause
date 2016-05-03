@@ -71,6 +71,8 @@
 
 #define ToBCD(val) ((val % 10 ) + ((val / 10 ) << 4))
 
+#define SEEK_TIME (50000*5)
+
 Cs2 * Cs2Area = NULL;
 ip_struct *cdip = NULL;
 
@@ -257,6 +259,7 @@ void FASTCALL Cs2WriteWord(u32 addr, u16 val) {
     case 0x90008:
     case 0x9000A:
                   Cs2Area->reg.HIRQ &= val;
+				  CDLOG("write HIRQ %04X, %04X\n", Cs2Area->reg.HIRQ, val);
                   return;
     case 0x9000C: 
     case 0x9000E: Cs2Area->reg.HIRQMASK = val;
@@ -811,15 +814,8 @@ void Cs2Exec(u32 timing) {
    {
       if (Cs2Area->_commandtiming < timing)
       {
-		  // Do not add data while delete data
-		  if ((Cs2Area->reg.CR1 >> 8) == 0x62){
-			  Cs2Area->_periodiccycles -= 1000;
-			  if ( Cs2Area->_periodiccycles & 0x80000000 ) Cs2Area->_periodiccycles = 0;
-		  }
-
          Cs2Execute();
          Cs2Area->_commandtiming = 0;
-
       }
       else
          Cs2Area->_commandtiming -= timing;
@@ -856,6 +852,9 @@ void Cs2Exec(u32 timing) {
    if (Cs2Area->_periodiccycles >= Cs2Area->_periodictiming)
    {
       Cs2Area->_periodiccycles -= Cs2Area->_periodictiming; 
+	  if (Cs2Area->_periodictiming == SEEK_TIME){
+		  Cs2SetTiming(1);
+	  }
 
       // Get Drive's current status and compare with old status
       switch (Cs2Area->status & 0xF) {
@@ -1550,13 +1549,15 @@ void Cs2PlayDisc(void) {
   }
 
   // setup play mode here
-#if CDDEBUG
+#ifdef CDDEBUG
   if (pdpmode != 0)
      CDLOG("cs2\t: playDisc: Unsupported play mode = %02X\n", pdpmode);
 #endif
 
   Cs2SetTiming(1);
 
+  Cs2Area->_periodiccycles = 0;
+  Cs2Area->_periodictiming = SEEK_TIME; // seektime
   Cs2Area->status = CDB_STAT_PLAY;
   Cs2Area->playtype = CDB_PLAYTYPE_SECTOR;
   Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
