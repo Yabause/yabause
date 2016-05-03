@@ -1050,7 +1050,10 @@ static INLINE int DoEndcode(int count, u32 *charAddr, u32 **textdata, int width,
 {
    if (count > 1)
    {
-      charAddr[0] += (int)((float)(width - xoff + oddpixel) / (float)(8 / pixelsize));
+      float divisor = (float)(8 / pixelsize);
+
+      if(divisor != 0)
+         charAddr[0] += (int)((float)(width - xoff + oddpixel) / divisor);
       memset(textdata[0], 0, sizeof(u32) * (width - xoff));
       textdata[0] += (width - xoff);
       return 1;

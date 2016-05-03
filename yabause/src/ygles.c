@@ -293,7 +293,6 @@ int YglCalcTextureQ(
    float   q1, q3, q4, qw;
    float   dx, w;
    float   ww;
-   float   divisor;
 
    // fast calculation for triangle
    if (( pnts[2*0+0] == pnts[2*1+0] ) && ( pnts[2*0+1] == pnts[2*1+1] )) {
