@@ -217,6 +217,7 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
    {
       MappedMemoryWriteLongNocache(0x06000348, sh->regs.R[4]);
       MappedMemoryWriteLongNocache(0x25FE00A0, sh->regs.R[4]); // Interrupt Mask Register
+	  MappedMemoryWriteLongNocache(0x25FE00A4, sh->regs.R[4]); // Interrupt Mask Register
    }
 
    if (!(sh->regs.R[4] & 0x8000)) // double check this
