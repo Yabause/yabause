@@ -121,20 +121,20 @@ u16 FASTCALL Cs2ReadWord(u32 addr) {
     case 0x9000A:
                   val = Cs2Area->reg.HIRQ;
 
-                  if (Cs2Area->isbufferfull)
-                    val |= CDB_HIRQ_BFUL;
-                  else
-                    val &= ~CDB_HIRQ_BFUL;
+                  //if (Cs2Area->isbufferfull)
+                  //  val |= CDB_HIRQ_BFUL;
+                  //else
+                  //  val &= ~CDB_HIRQ_BFUL;
 
-                  if (Cs2Area->isdiskchanged)
-                    val |= CDB_HIRQ_DCHG;
-                  else
-                    val &= ~CDB_HIRQ_DCHG;
+                  //if (Cs2Area->isdiskchanged)
+                  //  val |= CDB_HIRQ_DCHG;
+                  //else
+                  //  val &= ~CDB_HIRQ_DCHG;
 
-                  if (Cs2Area->isonesectorstored)
-                    val |= CDB_HIRQ_CSCT;
-                  else
-                    val &= ~CDB_HIRQ_CSCT;
+                  //if (Cs2Area->isonesectorstored)
+                  //  val |= CDB_HIRQ_CSCT;
+                  //else
+                  //  val &= ~CDB_HIRQ_CSCT;
 
                   Cs2Area->reg.HIRQ = val;
 
@@ -297,20 +297,20 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
     case 0x90008:
                   val = Cs2Area->reg.HIRQ;
 
-                  if (Cs2Area->isbufferfull)
-                    val |= CDB_HIRQ_BFUL;
-                  else
-                    val &= ~CDB_HIRQ_BFUL;
+                  //if (Cs2Area->isbufferfull)
+                  //  val |= CDB_HIRQ_BFUL;
+                  //else
+                  //  val &= ~CDB_HIRQ_BFUL;
 
-                  if (Cs2Area->isdiskchanged)
-                    val |= CDB_HIRQ_DCHG;
-                  else
-                    val &= ~CDB_HIRQ_DCHG;
+                  //if (Cs2Area->isdiskchanged)
+                  //  val |= CDB_HIRQ_DCHG;
+                  //else
+                  //  val &= ~CDB_HIRQ_DCHG;
 
-                  if (Cs2Area->isonesectorstored)
-                    val |= CDB_HIRQ_CSCT;
-                  else
-                    val &= ~CDB_HIRQ_CSCT;
+                  //if (Cs2Area->isonesectorstored)
+                  //  val |= CDB_HIRQ_CSCT;
+                  //else
+                   // val &= ~CDB_HIRQ_CSCT;
 
                   Cs2Area->reg.HIRQ = (u16)val;
 
@@ -811,8 +811,15 @@ void Cs2Exec(u32 timing) {
    {
       if (Cs2Area->_commandtiming < timing)
       {
+		  // Do not add data while delete data
+		  if ((Cs2Area->reg.CR1 >> 8) == 0x62){
+			  Cs2Area->_periodiccycles -= 1000;
+			  if ( Cs2Area->_periodiccycles & 0x80000000 ) Cs2Area->_periodiccycles = 0;
+		  }
+
          Cs2Execute();
          Cs2Area->_commandtiming = 0;
+
       }
       else
          Cs2Area->_commandtiming -= timing;
@@ -1019,13 +1026,13 @@ void Cs2SetCommandTiming(u8 cmd) {
 void Cs2Execute(void) {
   u16 instruction = Cs2Area->reg.CR1 >> 8;
 
-  Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
+  //Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
 
   switch (instruction) {
     case 0x00:
-      CDLOG("cs2\t: Command: getStatus\n");
+      //CDLOG("cs2\t: Command: getStatus\n");
       Cs2GetStatus();
-      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      //CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x01:
       CDLOG("cs2\t: Command: getHardwareInfo\n");
@@ -2833,7 +2840,10 @@ block_struct * Cs2AllocateBlock(u8 * blocknum) {
      {
         Cs2Area->blockfreespace--;
 
-        if (Cs2Area->blockfreespace <= 0) Cs2Area->isbufferfull = 1;
+		if (Cs2Area->blockfreespace <= 0) {
+			Cs2Area->isbufferfull = 1;
+			Cs2Area->reg.HIRQ |= CDB_HIRQ_BFUL;
+		}
 
         Cs2Area->block[i].size = Cs2Area->getsectsize;
 
@@ -2843,6 +2853,7 @@ block_struct * Cs2AllocateBlock(u8 * blocknum) {
   }
 
   Cs2Area->isbufferfull = 1;
+  Cs2Area->reg.HIRQ |= CDB_HIRQ_BFUL;
 
   return NULL;
 }
