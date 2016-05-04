@@ -39,9 +39,15 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 {
    u16* sound_ram_16 = (u16*)sound_ram;
    u64 mul_temp = 0;
-
+   int nofl = 0;
+   u32 x_temp = 0;
+   s32 y_extended = 0;
    union ScspDspInstruction instruction;
+   u32 address = 0;
+   s32 shift_temp = 0;
    instruction.all = scsp_dsp.mpro[addr];
+
+   nofl = (instruction.all >> 8) & 1;
 
    if (instruction.part.ira <= 0x1f)
       dsp->inputs = dsp->mems[instruction.part.ira & 0x1f];
@@ -80,7 +86,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
       dsp->y = dsp->frc_reg;
    else if (instruction.part.ysel == 1)
    {
-      dsp->y = dsp->coef[instruction.part.coef] >> 3;
+      dsp->y = dsp->coef[instruction.part.coef];
 
       if (dsp->coef[instruction.part.coef] & 0x8000)
          dsp->y |= 0xE000;
@@ -90,20 +96,36 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
    else if (instruction.part.ysel == 3)
       dsp->y = (dsp->y_reg >> 4) & 0xFFF;
 
+   y_extended = dsp->y;
+
+   if (dsp->y & (1 << 12))
+      y_extended |= 0xffffe000;
+
    if (instruction.part.yrl)
       dsp->y_reg = dsp->inputs;
 
-   if (instruction.part.shift == 0)
-      dsp->shifted = saturate_24(dsp->acc);
-   else if (instruction.part.shift == 1)
-      dsp->shifted = saturate_24(dsp->acc * 2);
-   else if (instruction.part.shift == 2)
-      dsp->shifted = (dsp->acc * 2) & 0xffffff;
-   else if (instruction.part.shift == 2)
-      dsp->shifted = dsp->acc & 0xffffff;
+   shift_temp = 0;
 
-   mul_temp = (u64)dsp->x * (u64)dsp->y;//prevent clipping
+   if (instruction.part.shift == 0)
+      shift_temp = saturate_24(dsp->acc);
+   else if (instruction.part.shift == 1)
+      shift_temp = saturate_24(dsp->acc * 2);
+   else if (instruction.part.shift == 2)
+      shift_temp = (dsp->acc * 2) & 0xffffff;
+   else if (instruction.part.shift == 2)
+      shift_temp = dsp->acc & 0xffffff;
+
+   if (instruction.part.ewt)
+      dsp->efreg[instruction.part.ewa] = (shift_temp >> 8) & 0xffff;
+
+   x_temp = dsp->x;
+
+   if (dsp->x & 0x800000)
+      x_temp |= 0xff000000;
+
+   mul_temp = (u64)(s32)x_temp * (u64)y_extended;//prevent clipping
    dsp->acc = (mul_temp >> 12) + dsp->b;
+   dsp->mul_out = (mul_temp >> 12);
 
    dsp->acc &= 0xffffff;
 
@@ -111,69 +133,86 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
       dsp->acc |= 0xff000000;
 
    if (instruction.part.twt)
-      dsp->temp[(instruction.part.twa + dsp->mdec_ct) & 0x7f] = dsp->shifted;
+      dsp->temp[(instruction.part.twa + dsp->mdec_ct) & 0x7f] = shift_temp & 0xffffff;
+
+   dsp->shifted = dsp->acc & 0x3ffffff;
 
    if (instruction.part.frcl)
    {
       if (instruction.part.shift == 3)
-         dsp->frc_reg = dsp->shifted & 0xFFF;
+         dsp->frc_reg = shift_temp & 0xFFF;
       else
-         dsp->frc_reg = (dsp->shifted >> 11) & 0x1FFF;
+         dsp->frc_reg = (shift_temp >> 11) & 0x1FFF;
    }
 
-   if (instruction.part.mrd || instruction.part.mwt)
+   address = dsp->madrs[instruction.part.masa];
+
+   if (instruction.part.table == 0)
+      address += dsp->mdec_ct;
+
+   if (instruction.part.adreb)
+      address += dsp->adrs_reg & 0xfff;
+
+   if (instruction.part.nxadr)
+      address += 1;
+
+   if (instruction.part.table == 0)
    {
-      u32 address = dsp->madrs[instruction.part.masa];
-
-      if (instruction.part.table == 0)
-         address += dsp->mdec_ct;
-         
-      if (instruction.part.adreb)
-         address += dsp->adrs_reg & 0xfff;
-
-      if (instruction.part.nxadr)
-         address += 1;
-
-      if (instruction.part.table == 0)
-      {
-         if (dsp->rbl == 0)
-            address &= 0x1fff;
-         else if (dsp->rbl == 1)
-            address &= 0x3fff;
-         else if (dsp->rbl == 2)
-            address &= 0x7fff;
-         else if (dsp->rbl == 3)
-            address &= 0xffff;
-      }
-      else if (instruction.part.table == 1)
+      if (dsp->rbl == 0)
+         address &= 0x1fff;
+      else if (dsp->rbl == 1)
+         address &= 0x3fff;
+      else if (dsp->rbl == 2)
+         address &= 0x7fff;
+      else if (dsp->rbl == 3)
          address &= 0xffff;
+   }
+   else if (instruction.part.table == 1)
+      address &= 0xffff;
 
-      address += (dsp->rbp << 11) * 2;
+   address += (dsp->rbp << 11) * 2;
 
-      if (instruction.part.mrd)
-      {
-         u16 temp = sound_ram_16[address & 0x7ffff];
-         dsp->mrd_value = float_to_int(temp);
-      }
+   if (dsp->need_read)
+   {
+      u16 temp = sound_ram_16[dsp->io_addr & 0x7ffff];
+      if (dsp->need_nofl)
+         dsp->mrd_value = temp << 8;
+      else
+         dsp->mrd_value = float_to_int(temp) & 0xffffff;
+      dsp->need_read = 0;
+      dsp->need_nofl = 0;
+   }
 
-      if (instruction.part.mwt)
-      {
-         s32 shifted_val = dsp->shifted;
-         shifted_val = int_to_float(shifted_val);
-         sound_ram_16[address & 0x7ffff] = shifted_val;
-      }
+   if (dsp->need_write)
+   {
+      sound_ram_16[dsp->io_addr] = dsp->write_data;
+      dsp->need_write = 0;
+   }
+
+   dsp->io_addr = address;
+
+   if (instruction.part.mrd)
+   {
+      dsp->need_read = 1;
+      dsp->need_nofl = nofl;
+   }
+
+   if (instruction.part.mwt)
+   {
+      dsp->need_write = 1;
+      if (nofl)
+         dsp->write_data = shift_temp >> 8;
+      else
+         dsp->write_data = int_to_float(shift_temp);
    }
 
    if (instruction.part.adrl)
    {
       if (instruction.part.shift == 3)
-         dsp->adrs_reg = dsp->inputs >> 16;
+         dsp->adrs_reg = (shift_temp >> 12) & 0xFFF;
       else
-         dsp->adrs_reg = (dsp->shifted >> 12) & 0xFFF;
+         dsp->adrs_reg = dsp->inputs >> 16;
    }
-
-   if (instruction.part.ewt)
-      dsp->efreg[instruction.part.ewa] = dsp->shifted >> 8;
 }
 
 //sign extended to 32 bits instead of 24
@@ -334,7 +373,7 @@ u64 ScspDspAssembleLine(char* line)
    {
       instruction.part.frcl = 1;
    }
-   
+
    if ((temp = strstr(line, "shift")))
    {
       instruction.part.shift = ScspDspAssembleGetValue(temp);
@@ -601,7 +640,7 @@ void ScspDspDisasm(u8 addr, char *outstring)
 void ScspDspDisassembleToFile(char * filename)
 {
    int i;
-   FILE * fp = fopen(filename,"w");
+   FILE * fp = fopen(filename, "w");
 
    if (!fp)
    {
