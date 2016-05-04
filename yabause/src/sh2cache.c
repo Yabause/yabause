@@ -51,7 +51,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 void cache_clear(cache_enty * ca){
 	ca->enable = 0;
 	ca->lru = 0x00;
-	for (int entry = 0; entry < 64; entry++){
+	int entry = 0;
+	for ( entry = 0; entry < 64; entry++){
 		ca->way[0][entry].tag = 0xFFFFFFFF;
 		ca->way[1][entry].tag = 0xFFFFFFFF;
 		ca->way[2][entry].tag = 0xFFFFFFFF;
