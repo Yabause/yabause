@@ -44,10 +44,18 @@ typedef struct
    u16 frc_reg;
    u16 adrs_reg;
 
+   s32 mul_out;
+
    u32 mrd_value;
 
    int rbl;
    int rbp;
+
+   int need_read;
+   int need_nofl;
+   u32 io_addr;
+   int need_write;
+   u16 write_data;
 }ScspDsp;
 
 //dsp instruction format
