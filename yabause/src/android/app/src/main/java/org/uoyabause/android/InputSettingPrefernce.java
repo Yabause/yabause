@@ -129,7 +129,7 @@ import android.view.LayoutInflater;
 		motions.add( new MotionMap(MotionEvent.AXIS_BRAKE ));
 		motions.add( new MotionMap(MotionEvent.AXIS_DISTANCE ));
 		motions.add( new MotionMap(MotionEvent.AXIS_TILT ));
-		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_1 ));
+		//motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_1 ));
 		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_2 ));
 		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_3 ));
 		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_4 ));
@@ -427,6 +427,12 @@ import android.view.LayoutInflater;
 				if( value != 0.0 ) {
 					Log.d("Yabause", "key:" + motions.get(i).id + " value:" + value);
 				}
+
+				InputDevice dev = InputDevice.getDevice(_selected_device_id);
+				if( dev.getName().contains("Moga") && motions.get(i).id == 32 ){
+					continue;
+				}
+
 
 				if( Float.compare(value,-1.0f) <= 0) {
 					motions.get(i).oldval = value;
