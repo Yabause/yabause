@@ -296,7 +296,12 @@ class PadManagerV16 extends PadManager {
         }
     }
 
-    public void setTestMode( boolean mode ){ _testmode = mode; }
+    public void setTestMode( boolean mode ){
+        _testmode = mode;
+        if( pads[0] != null ) pads[0]._testmode = _testmode;
+        if( pads[1] != null ) pads[1]._testmode = _testmode;
+     }
+
     void addDebugString( String msg){
         DebugMesageArray[current_msg_index]= msg;
         current_msg_index++;
@@ -440,6 +445,7 @@ class PadManagerV16 extends PadManager {
 
         pads[0]._playerindex = 0;
         pads[0].loadSettings("keymap.json");
+        pads[0]._testmode = _testmode;
     	return;
     }
     
@@ -473,7 +479,7 @@ class PadManagerV16 extends PadManager {
 
         pads[1]._playerindex = 1;
         pads[1].loadSettings("keymap_player2.json");
-
+        pads[1]._testmode = _testmode;
         return;
     }
     
