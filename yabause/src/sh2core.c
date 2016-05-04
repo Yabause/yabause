@@ -157,10 +157,13 @@ void SH2Reset(SH2_struct *context)
 
    // Reset Onchip modules
    OnchipReset(context);
+   CurrentSH2 = context;
+   cache_clear(&context->onchip.cache);
 
    // Reset backtrace
-#ifdef DMPHISTORY
    context->bt.numbacktrace = 0;
+
+#ifdef DMPHISTORY
    memset(context->pchistory, 0, sizeof(context->pchistory));
    context->pchistory_index = 0;
 #endif
@@ -169,10 +172,7 @@ void SH2Reset(SH2_struct *context)
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2PowerOn(SH2_struct *context) {
-	u32 VBR;
-	CurrentSH2 = context;
-	cache_clear(&context->onchip.cache);
-   VBR = SH2Core->GetVBR(context);
+	u32 VBR = SH2Core->GetVBR(context);
    SH2Core->SetPC(context, MappedMemoryReadLong(VBR));
    SH2Core->SetGPR(context, 15, MappedMemoryReadLong(VBR+4));
 }
