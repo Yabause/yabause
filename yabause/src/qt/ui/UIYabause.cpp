@@ -743,6 +743,7 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash[key] = ss->value(key);
 		}
 		if(newhash["General/Bios"]!=hash["General/Bios"] ||
+			newhash["General/EnableEmulatedBios"]!=hash["General/EnableEmulatedBios"] ||
 			newhash["Advanced/Region"]!=hash["Advanced/Region"] ||
 			newhash["Cartridge/Type"]!=hash["Cartridge/Type"] ||
 			newhash["Memory/Path"]!=hash["Memory/Path"] ||

@@ -196,6 +196,14 @@ void UISettings::setupCdDrives()
 		cbCdDrive->addItem(string);
 }
 
+void UISettings::on_leBios_textChanged(const QString & text)
+{
+	if (QFileInfo(text).exists())
+		cbEnableBiosEmulation->setEnabled(true);
+	else
+		cbEnableBiosEmulation->setEnabled(false);
+}
+
 void UISettings::tbBrowse_clicked()
 {
 	// get toolbutton sender
@@ -412,6 +420,7 @@ void UISettings::loadSettings()
 
 	// general
 	leBios->setText( s->value( "General/Bios" ).toString() );
+	cbEnableBiosEmulation->setChecked( s->value( "General/EnableEmulatedBios" ).toBool() );
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	if (s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() == CDCORE_ARCH)
@@ -507,6 +516,7 @@ void UISettings::saveSettings()
 
 	// general
 	s->setValue( "General/Bios", leBios->text() );
+	s->setValue( "General/EnableEmulatedBios", cbEnableBiosEmulation->isChecked() );
 	s->setValue( "General/CdRom", cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	CDInterface* core = QtYabause::getCDCore( cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	if ( core->id == CDCORE_ARCH )
