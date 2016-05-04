@@ -3975,7 +3975,7 @@ scsp_w_w (u32 a, u16 d)
   else if (a >= 0x700 && a < 0x780)
   {
      u32 address = (a - 0x700) / 2;
-     scsp_dsp.coef[address] = d & 0xfff8;//lower 3 bits seem to be discarded
+     scsp_dsp.coef[address] = d >> 3;//lower 3 bits seem to be discarded
   }
   else if (a >= 0x780 && a < 0x7A0)
   {
@@ -3985,8 +3985,7 @@ scsp_w_w (u32 a, u16 d)
   else if (a >= 0x7A0 && a < 0x7C0)
   {
      //madrs mirror
-     u32 address = (a - 0x7A0) / 2;
-     scsp_dsp.madrs[address] = d;
+     //seems to read only (todo test)
   }
   else if (a >= 0x800 && a < 0xC00)
   {
@@ -4142,7 +4141,7 @@ scsp_r_w (u32 a)
   else if (a >= 0x700 && a < 0x780)
   {
      u32 address = (a - 0x700) / 2;
-     return scsp_dsp.coef[address];
+     return scsp_dsp.coef[address] << 3;
   }
   else if (a >= 0x780 && a < 0x7A0)
   {

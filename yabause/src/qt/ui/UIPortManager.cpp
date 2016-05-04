@@ -22,6 +22,7 @@
 #include "UI3DControlPadSetting.h"
 #include "UIWheelSetting.h"
 #include "UIMissionStickSetting.h"
+#include "UIDoubleMissionStickSetting.h"
 #include "UIGunSetting.h"
 #include "UIMouseSetting.h"
 #include "../CommonDialogs.h"
@@ -51,6 +52,7 @@ UIPortManager::UIPortManager( QWidget* parent )
 		cb->addItem( QtYabause::translate( "Pad" ), PERPAD );
       cb->addItem( QtYabause::translate( "Wheel" ), PERWHEEL );
       cb->addItem(QtYabause::translate("Mission Stick"), PERMISSIONSTICK);
+      cb->addItem(QtYabause::translate("Double Mission Stick"), PERTWINSTICKS);
       cb->addItem( QtYabause::translate( "3D Control Pad" ), PER3DPAD );
       cb->addItem( QtYabause::translate( "Gun" ), PERGUN );
       //cb->addItem( QtYabause::translate( "Keyboard" ), PERKEYBOARD );
@@ -148,6 +150,7 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 	{
 		case PERPAD:
       case PERMISSIONSTICK:
+      case PERTWINSTICKS:
 		case PERWHEEL:
 		case PER3DPAD:
 		case PERMOUSE:
@@ -249,6 +252,29 @@ void UIPortManager::tbSetJoystick_clicked()
          }
 
          UIMissionStickSetting uas(mCore, mPort, controllerId, type, this);
+         uas.exec();
+         break;
+      }
+      case PERTWINSTICKS:
+      {
+         QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits(mPort);
+
+         PerAnalog_struct* analogBits = analogbits[controllerId];
+
+         if (!analogBits)
+         {
+            analogBits = PerTwinSticksAdd(mPort == 1 ? &PORTDATA1 : &PORTDATA2);
+
+            if (!analogBits)
+            {
+               CommonDialogs::warning(QtYabause::translate("Can't plug in the new controller, cancelling."));
+               return;
+            }
+
+            analogbits[controllerId] = analogBits;
+         }
+
+         UIDoubleMissionStickSetting uas(mCore, mPort, controllerId, type, this);
          uas.exec();
          break;
       }

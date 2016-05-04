@@ -682,7 +682,11 @@ endif()
 
 option(YAB_WERROR "Treat all warnings as errors." OFF)
 if (YAB_WERROR)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+    if(MSVC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /WX")
+    else()
+	    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+    endif()
 endif()
 
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
