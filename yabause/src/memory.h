@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include "core.h"
 
+#define CACHE_ENABLE 0 
+
 /* Type 1 Memory, faster for byte (8 bits) accesses */
 
 u8 * T1MemoryInit(u32);
@@ -335,6 +337,9 @@ static INLINE void DummyWriteByte(Dummy UNUSED * d, u32 UNUSED a, u8 UNUSED v) {
 static INLINE void DummyWriteWord(Dummy UNUSED * d, u32 UNUSED a, u16 UNUSED v) {}
 static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) {}
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void MappedMemoryInit(void);
 u8 FASTCALL MappedMemoryReadByte(u32 addr);
 u16 FASTCALL MappedMemoryReadWord(u32 addr);
@@ -342,6 +347,16 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr);
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val);
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val);
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

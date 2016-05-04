@@ -71,6 +71,8 @@
 
 #define ToBCD(val) ((val % 10 ) + ((val / 10 ) << 4))
 
+#define SEEK_TIME (50000*5)
+
 Cs2 * Cs2Area = NULL;
 ip_struct *cdip = NULL;
 
@@ -121,20 +123,20 @@ u16 FASTCALL Cs2ReadWord(u32 addr) {
     case 0x9000A:
                   val = Cs2Area->reg.HIRQ;
 
-                  if (Cs2Area->isbufferfull)
-                    val |= CDB_HIRQ_BFUL;
-                  else
-                    val &= ~CDB_HIRQ_BFUL;
+                  //if (Cs2Area->isbufferfull)
+                  //  val |= CDB_HIRQ_BFUL;
+                  //else
+                  //  val &= ~CDB_HIRQ_BFUL;
 
-                  if (Cs2Area->isdiskchanged)
-                    val |= CDB_HIRQ_DCHG;
-                  else
-                    val &= ~CDB_HIRQ_DCHG;
+                  //if (Cs2Area->isdiskchanged)
+                  //  val |= CDB_HIRQ_DCHG;
+                  //else
+                  //  val &= ~CDB_HIRQ_DCHG;
 
-                  if (Cs2Area->isonesectorstored)
-                    val |= CDB_HIRQ_CSCT;
-                  else
-                    val &= ~CDB_HIRQ_CSCT;
+                  //if (Cs2Area->isonesectorstored)
+                  //  val |= CDB_HIRQ_CSCT;
+                  //else
+                  //  val &= ~CDB_HIRQ_CSCT;
 
                   Cs2Area->reg.HIRQ = val;
 
@@ -257,6 +259,7 @@ void FASTCALL Cs2WriteWord(u32 addr, u16 val) {
     case 0x90008:
     case 0x9000A:
                   Cs2Area->reg.HIRQ &= val;
+				  CDLOG("write HIRQ %04X, %04X\n", Cs2Area->reg.HIRQ, val);
                   return;
     case 0x9000C: 
     case 0x9000E: Cs2Area->reg.HIRQMASK = val;
@@ -297,20 +300,20 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
     case 0x90008:
                   val = Cs2Area->reg.HIRQ;
 
-                  if (Cs2Area->isbufferfull)
-                    val |= CDB_HIRQ_BFUL;
-                  else
-                    val &= ~CDB_HIRQ_BFUL;
+                  //if (Cs2Area->isbufferfull)
+                  //  val |= CDB_HIRQ_BFUL;
+                  //else
+                  //  val &= ~CDB_HIRQ_BFUL;
 
-                  if (Cs2Area->isdiskchanged)
-                    val |= CDB_HIRQ_DCHG;
-                  else
-                    val &= ~CDB_HIRQ_DCHG;
+                  //if (Cs2Area->isdiskchanged)
+                  //  val |= CDB_HIRQ_DCHG;
+                  //else
+                  //  val &= ~CDB_HIRQ_DCHG;
 
-                  if (Cs2Area->isonesectorstored)
-                    val |= CDB_HIRQ_CSCT;
-                  else
-                    val &= ~CDB_HIRQ_CSCT;
+                  //if (Cs2Area->isonesectorstored)
+                  //  val |= CDB_HIRQ_CSCT;
+                  //else
+                   // val &= ~CDB_HIRQ_CSCT;
 
                   Cs2Area->reg.HIRQ = (u16)val;
 
@@ -332,10 +335,8 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                      // Make sure we still have sectors to transfer
                      if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
                      {
-                        // Transfer Data
-                        const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
-
-                        if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
+						 const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+						 if (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans] == NULL)
                         {
                            CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                            return 0;
@@ -351,7 +352,7 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                         Cs2Area->datatransoffset += 4;
 
                         // Make sure we're not beyond the sector size boundry
-                        if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->size)
+						if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->size)
                         {
                            Cs2Area->datatransoffset = 0;
                            Cs2Area->datanumsecttrans++;
@@ -851,6 +852,9 @@ void Cs2Exec(u32 timing) {
    if (Cs2Area->_periodiccycles >= Cs2Area->_periodictiming)
    {
       Cs2Area->_periodiccycles -= Cs2Area->_periodictiming; 
+	  if (Cs2Area->_periodictiming == SEEK_TIME){
+		  Cs2SetTiming(1);
+	  }
 
       // Get Drive's current status and compare with old status
       switch (Cs2Area->status & 0xF) {
@@ -1021,13 +1025,13 @@ void Cs2SetCommandTiming(u8 cmd) {
 void Cs2Execute(void) {
   u16 instruction = Cs2Area->reg.CR1 >> 8;
 
-  Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
+  //Cs2Area->reg.HIRQ &= ~CDB_HIRQ_CMOK;
 
   switch (instruction) {
     case 0x00:
-      CDLOG("cs2\t: Command: getStatus\n");
+      //CDLOG("cs2\t: Command: getStatus\n");
       Cs2GetStatus();
-      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      //CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x01:
       CDLOG("cs2\t: Command: getHardwareInfo\n");
@@ -1545,13 +1549,15 @@ void Cs2PlayDisc(void) {
   }
 
   // setup play mode here
-#if CDDEBUG
+#ifdef CDDEBUG
   if (pdpmode != 0)
      CDLOG("cs2\t: playDisc: Unsupported play mode = %02X\n", pdpmode);
 #endif
 
   Cs2SetTiming(1);
 
+  Cs2Area->_periodiccycles = 0;
+  Cs2Area->_periodictiming = SEEK_TIME; // seektime
   Cs2Area->status = CDB_STAT_PLAY;
   Cs2Area->playtype = CDB_PLAYTYPE_SECTOR;
   Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
@@ -2835,7 +2841,10 @@ block_struct * Cs2AllocateBlock(u8 * blocknum) {
      {
         Cs2Area->blockfreespace--;
 
-        if (Cs2Area->blockfreespace <= 0) Cs2Area->isbufferfull = 1;
+		if (Cs2Area->blockfreespace <= 0) {
+			Cs2Area->isbufferfull = 1;
+			Cs2Area->reg.HIRQ |= CDB_HIRQ_BFUL;
+		}
 
         Cs2Area->block[i].size = Cs2Area->getsectsize;
 
@@ -2845,6 +2854,7 @@ block_struct * Cs2AllocateBlock(u8 * blocknum) {
   }
 
   Cs2Area->isbufferfull = 1;
+  Cs2Area->reg.HIRQ |= CDB_HIRQ_BFUL;
 
   return NULL;
 }

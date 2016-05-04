@@ -72,7 +72,7 @@ OSD_struct OSDNnovg = {
 static NVGcontext* vg = NULL;
 static int fontNormal, fontBold;
 
-#define MAX_HISTORY 32
+#define MAX_HISTORY 4
 #define MAX_PROFILE_CNT 32
 
 typedef struct FrameProfileInfo{
