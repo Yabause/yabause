@@ -169,7 +169,7 @@ static u32 FASTCALL FetchHWram(u32 addr)
 #if CACHE_ENABLE
 	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
 #else
-	T2ReadWord(HighWram, addr & 0xFFFFF);
+	return T2ReadWord(HighWram, addr & 0xFFFFF);
 #endif
 }
 
