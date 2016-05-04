@@ -3197,6 +3197,7 @@ static void Vdp2DrawRotationSync(){
 			if (curret_rbg->LineColorRamAdress){
 				curret_rbg->info.blendmode = VDP2_CC_NONE;
 			}
+			curret_rbg->info.flipfunction = 0;
 			YglCachedQuad(&curret_rbg->info, &curret_rbg->c);
 			curret_rbg->vdp2_sync_flg = -1;
 			YGL_THREAD_DEBUG("Vdp2DrawRotationSync out %d\n", curret_rbg->vdp2_sync_flg);
@@ -3262,7 +3263,10 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg){
 
 	for (j = 0; j < vres; j++)
 	{
+#if 0 // PERLINE
 		Vdp2 * regs = Vdp2RestoreRegs(j, Vdp2Lines);
+#endif
+
 		if (rgb_type == 0){
 #if 0 // PERLINE
 			paraA.charaddr = (regs->MPOFR & 0x7) * 0x20000;
