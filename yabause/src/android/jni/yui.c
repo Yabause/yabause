@@ -1247,6 +1247,8 @@ void renderLoop()
 {
     int renderingEnabled = 1;
     int pause = 0;
+	
+	YabThreadSetCurrentThreadAffinityMask(0x00);
 
 
     while (renderingEnabled != 0) {

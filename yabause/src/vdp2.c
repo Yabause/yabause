@@ -281,6 +281,10 @@ void Vdp2Reset(void) {
    Vdp2Internal.ColorMode = 0;
 
    Vdp2External.disptoggle = 0xFF;
+   Vdp2External.perline_alpha_a = 0;
+   Vdp2External.perline_alpha_b = 0;
+   Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
+   Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
 }
 
 
@@ -289,6 +293,8 @@ void VdpProc( void *arg ){
 
     int evcode;
 
+
+
     if( YuiUseOGLOnThisThread() < 0 ){
         LOG("VDP2 Fail to USE GL");
         return;
@@ -296,6 +302,7 @@ void VdpProc( void *arg ){
 
     vdp_proc_running = 1;
     while( vdp_proc_running ){
+		YabThreadSetCurrentThreadAffinityMask(0x01);
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
@@ -405,8 +412,54 @@ void Vdp2HBlankIN(void) {
 void Vdp2HBlankOUT(void) {
    Vdp2Regs->TVSTAT &= ~0x0004;
 
-   if (yabsys.LineCount < 270)
-      memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+   if (yabsys.LineCount < yabsys.VBlankLineCount){
+	   memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+
+	   if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
+		   *Vdp2External.perline_alpha |= 0x1;
+	   }
+	   else if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
+		   *Vdp2External.perline_alpha |= 0x1;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x02) != (Vdp2Lines[yabsys.LineCount].BGON & 0x02)){
+		   *Vdp2External.perline_alpha |= 0x2;
+	   }
+	   else if ((Vdp2Lines[0].CCRNA & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0xFF00)){
+		   *Vdp2External.perline_alpha |= 0x2;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x04) != (Vdp2Lines[yabsys.LineCount].BGON & 0x04)){
+		   *Vdp2External.perline_alpha |= 0x4;
+	   }
+	   else if ((Vdp2Lines[0].CCRNB & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0xFF00)){
+		   *Vdp2External.perline_alpha |= 0x4;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x08) != (Vdp2Lines[yabsys.LineCount].BGON & 0x08)){
+		   *Vdp2External.perline_alpha |= 0x8;
+	   }
+	   else if ((Vdp2Lines[0].CCRNB & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0x00FF)){
+		   *Vdp2External.perline_alpha |= 0x8;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x10) != (Vdp2Lines[yabsys.LineCount].BGON & 0x10)){
+		   *Vdp2External.perline_alpha |= 0x10;
+	   }
+	   else if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
+		   *Vdp2External.perline_alpha |= 0x10;
+	   }
+
+	   if ( Vdp2Lines[0].COBR != Vdp2Lines[yabsys.LineCount].COBR ){
+
+		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+	   }
+	   if ( Vdp2Lines[0].COAR != Vdp2Lines[yabsys.LineCount].COAR ){
+
+		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+	   }
+
+   }
 
 #if defined(YAB_ASYNC_RENDERING)
    if (yabsys.wait_line_count != -1 && yabsys.LineCount >= yabsys.wait_line_count ){
@@ -435,7 +488,45 @@ static void FPSDisplay(void)
    static int fpsframecount = 0;
    static u64 fpsticks;
 
-   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+   FILE * fp = NULL;
+   FILE * gup_fp = NULL;
+   char fname[128];
+   char buf[64];
+   int i;
+   int cpu_f[8];
+   int gpu_f;
+
+   if (gup_fp == NULL){
+	   gup_fp = fopen("/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq", "r");
+   }
+
+   if (gup_fp != NULL){
+	   fread(buf, 1, 64, gup_fp);
+	   gpu_f = atoi(buf);
+	   fclose(gup_fp);
+   }
+   else{
+	   gpu_f = 0;
+   }
+   
+   for( i=0; i<8; i++ ){
+	   sprintf(fname,"/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq",i);
+	   fp = fopen(fname, "r");
+	   if( fp ){
+		   fread(buf, 1, 64, fp);
+		   cpu_f[i] = atoi(buf);
+		   fclose(fp);
+	   }else{
+		   cpu_f[i] = 0;
+	   }
+   }
+
+
+   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS , gpu = %d, cpu0 = %d, cpu1 = %d, cpu2 = %d, cpu3 = %d, cpu4 = %d, cpu5 = %d, cpu6 = %d, cpu7 = %d"
+					, fps, yabsys.IsPal ? 50 : 60, gpu_f / 1000000,
+					cpu_f[0] / 1000, cpu_f[1] / 1000, cpu_f[2] / 1000, cpu_f[3] / 1000,
+					cpu_f[4] / 1000, cpu_f[5] / 1000, cpu_f[6] / 1000, cpu_f[7] / 1000);
+   
    OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
    fpsframecount++;
    if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
@@ -554,11 +645,22 @@ void vdp2VBlankOUT(void) {
       onesecondticks += diffticks;
       lastticks = curticks;
    }
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
+
+	if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
+		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
+		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
+		*Vdp2External.perline_alpha = 0;
+	}
+	else{
+		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
+		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+		*Vdp2External.perline_alpha = 0;
+	}
+
 #ifdef _VDP_PROFILE_
 	FrameProfileShow();
 	FrameProfileInit();

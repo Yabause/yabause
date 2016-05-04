@@ -367,6 +367,10 @@ extern Vdp2 Vdp2Lines[270];
 // struct for Vdp2 part that shouldn't be saved
 typedef struct {
    int disptoggle;
+   int * perline_alpha;
+   int * perline_alpha_draw;
+   int perline_alpha_a;
+   int perline_alpha_b;
 } Vdp2External_struct;
 
 extern Vdp2External_struct Vdp2External;
