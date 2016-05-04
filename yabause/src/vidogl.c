@@ -37,6 +37,7 @@
 #include "yui.h"
 #include "frameprofile.h"
 
+static Vdp2 baseVdp2Regs;
 static Vdp2 * fixVdp2Regs=NULL;
 
 #ifdef _WINDOWS
@@ -3619,6 +3620,8 @@ void VIDOGLVdp1DrawStart(void)
    int line = 0;
    fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
    if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
+   memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
+   fixVdp2Regs = &baseVdp2Regs;
 
    u8 *sprprilist = (u8 *)&fixVdp2Regs->PRISA;
 
@@ -6490,6 +6493,8 @@ void VIDOGLVdp2DrawScreens(void)
 {
 	fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
 	if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
+	memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
+	fixVdp2Regs = &baseVdp2Regs;
 
 	Vdp2GenerateWindowInfo();
 
