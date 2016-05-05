@@ -58,6 +58,16 @@
 #include "vidsoft.h"
 #include "vidogl.h"
 
+#if CACHE_ENABLE
+#else
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr); }
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr); }
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr); }
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val);  }
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val); }
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val); }
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 writebytefunc WriteByteList[0x1000];
@@ -519,8 +529,14 @@ void MappedMemoryInit()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u8 FASTCALL MappedMemoryReadByte(u32 addr){
+	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr);
+}
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr)
+#else
 u8 FASTCALL MappedMemoryReadByte(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
@@ -570,8 +586,14 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u16 FASTCALL MappedMemoryReadWord(u32 addr){
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+}
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr)
+#else
 u16 FASTCALL MappedMemoryReadWord(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
@@ -621,8 +643,14 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u32 FASTCALL MappedMemoryReadLong(u32 addr){
+	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr);
+}
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr)
+#else
 u32 FASTCALL MappedMemoryReadLong(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
@@ -676,9 +704,16 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val){
+	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val);
+}
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val)
+#else
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
+#endif
 {
+
    switch (addr >> 29)
    {
       case 0x0:
@@ -729,8 +764,14 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val){
+	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val);
+}
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val)
+#else
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
+#endif
 {
    switch (addr >> 29)
    {
@@ -782,8 +823,14 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val){
+	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val);
+}
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val)
+#else
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
+#endif
 {
    switch (addr >> 29)
    {

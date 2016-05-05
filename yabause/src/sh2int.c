@@ -146,15 +146,32 @@ static u32 FASTCALL FetchCs0(u32 addr)
 
 static u32 FASTCALL FetchLWram(u32 addr)
 {
-   return T2ReadWord(LowWram, addr & 0xFFFFF);
+#if CACHE_ENABLE
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
+	return T2ReadWord(LowWram, addr & 0xFFFFF);
+#endif
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchHWram(u32 addr)
 {
-   return T2ReadWord(HighWram, addr & 0xFFFFF);
+#if CACHE_ENABLE
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
+	return T2ReadWord(HighWram, addr & 0xFFFFF);
+#endif
 }
+
+extern u8 * Vdp1Ram;
+static u32 FASTCALL FetchVram(u32 addr)
+{
+  addr &= 0x07FFFF;
+  return T1ReadWord(Vdp1Ram, addr);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2673,6 +2690,9 @@ int SH2InterpreterInit()
          case 0x020: // CS0
             fetchlist[i] = FetchCs0;
             break;
+         case 0x05c: // Fighting Viper
+            fetchlist[i] = FetchVram;
+            break;
          case 0x060: // High Work Ram
          case 0x061: 
          case 0x062: 
@@ -2852,13 +2872,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       opcodes[context->instruction](context);
-
-		//if (MappedMemoryReadLong(0x06000930) == 0x00000009)
-		if (context->regs.PC == 0x060273AA)
-		{
-			int test=0;
-			test = 1;
-		}
 
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
