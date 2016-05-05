@@ -51,12 +51,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 void cache_clear(cache_enty * ca){
    int entry = 0;
 	ca->enable = 0;
-	ca->lru = 0x00;
+
 	for (entry = 0; entry < 64; entry++){
-		ca->way[0][entry].tag = 0xFFFFFFFF;
-		ca->way[1][entry].tag = 0xFFFFFFFF;
-		ca->way[2][entry].tag = 0xFFFFFFFF;
-		ca->way[3][entry].tag = 0xFFFFFFFF;
+      int way = 0;
+      ca->lru[entry] = 0;
+
+      for (way = 0; way < 4; way++)
+      {
+         int i = 0;
+         ca->way[way][entry].tag = 0;
+         
+         for (i = 0; i < 16; i++)
+            ca->way[way][entry].data[i] = 0;
+         ca->way[way][entry].v = 0;
+      }
 	}
 	return;
 }
@@ -71,6 +79,55 @@ void cache_enable(cache_enty * ca){
 void cache_disable(cache_enty * ca){
 	ca->enable = 0;
 }
+
+//lru is updated
+//when cache hit occurs during a read
+//when cache hit occurs during a write
+//when replacement occurs after a cache miss
+
+static INLINE void update_lru(int way, u32*lru)
+{
+   if (way == 3)
+   {
+      *lru = *lru | 0xb;//set bits 3, 1, 0
+      return;
+   }
+   else if (way == 2)
+   {
+      *lru = *lru & 0x3E;//set bit 0 to 0
+      *lru = *lru | 0x14;//set bits 1 and 2
+      return;
+   }
+   else if (way == 1)
+   {
+      *lru = *lru | (1 << 5);//set bit 5
+      *lru = *lru & 0x39;//unset bits 2 and 1
+      return;
+   }
+   else
+   {
+      *lru = *lru & 0x7;//unset bits 5,4,3
+      return;
+   }
+
+   //should not happen
+}
+
+static INLINE int select_way_to_replace(u32 lru)
+{
+   if (lru & 0x38)
+      return 0;
+   else if ((lru & 0x26) == 0x6)
+      return 1;
+   else if ((lru & 0x15) == 1)
+      return 2;
+   else if ((lru & 0xB) == 0)
+      return 3;
+
+   //should not happen
+   return 0;
+}
+
 void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
 
 	switch (addr & AREA_MASK){
@@ -84,25 +141,21 @@ void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
 		}
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
-		if (ca->way[0][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x000000;
+		if (ca->way[0][entry].v && ca->way[0][entry].tag == tagaddr){
 			ca->way[0][entry].data[addr&LINE_MASK] = val;
+         update_lru(0, &ca->lru[entry]);
 		}
-		else if (ca->way[1][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x100000;
+		else if (ca->way[1][entry].v && ca->way[1][entry].tag == tagaddr){
 			ca->way[1][entry].data[addr&LINE_MASK] = val;
+         update_lru(1, &ca->lru[entry]);
 		}
-		else if (ca->way[2][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x200000;
+		else if (ca->way[2][entry].v && ca->way[2][entry].tag == tagaddr){
 			ca->way[2][entry].data[addr&LINE_MASK] = val;
+         update_lru(2, &ca->lru[entry]);
 		}
-		else if (ca->way[3][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x300000;
+		else if (ca->way[3][entry].v && ca->way[3][entry].tag == tagaddr){
 			ca->way[3][entry].data[addr&LINE_MASK] = val;
+         update_lru(3, &ca->lru[entry]);
 		}
 		MappedMemoryWriteByteNocache(addr, val);
 	}
@@ -130,29 +183,25 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
 
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
-		if (ca->way[0][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x000000;
+		if (ca->way[0][entry].v && ca->way[0][entry].tag == tagaddr){
 			ca->way[0][entry].data[addr&LINE_MASK] = val >> 8;
 			ca->way[0][entry].data[(addr&LINE_MASK) + 1] = val;
+         update_lru(0, &ca->lru[entry]);
 		}
-		else if (ca->way[1][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x100000;
+		else if (ca->way[1][entry].v && ca->way[1][entry].tag == tagaddr){
 			ca->way[1][entry].data[addr&LINE_MASK] = val >> 8;
 			ca->way[1][entry].data[(addr&LINE_MASK) + 1] = val;
+         update_lru(1, &ca->lru[entry]);
 		}
-		else if (ca->way[2][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x200000;
+		else if (ca->way[2][entry].v && ca->way[2][entry].tag == tagaddr){
 			ca->way[2][entry].data[addr&LINE_MASK] = val >> 8;
 			ca->way[2][entry].data[(addr&LINE_MASK) + 1] = val;
+         update_lru(2, &ca->lru[entry]);
 		}
-		else if (ca->way[3][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x300000;
+		else if (ca->way[3][entry].v && ca->way[3][entry].tag == tagaddr){
 			ca->way[3][entry].data[addr&LINE_MASK] = val >> 8;
 			ca->way[3][entry].data[(addr&LINE_MASK) + 1] = val;
+         update_lru(3, &ca->lru[entry]);
 		}
 
 		// write through
@@ -182,38 +231,34 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
 
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
-		if (ca->way[0][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x000000;
+		if (ca->way[0][entry].v && ca->way[0][entry].tag == tagaddr){
 			ca->way[0][entry].data[(addr&LINE_MASK)] = ((val >> 24) & 0xFF);
 			ca->way[0][entry].data[(addr&LINE_MASK) + 1] = ((val >> 16) & 0xFF);
 			ca->way[0][entry].data[(addr&LINE_MASK) + 2] = ((val >> 8) & 0xFF);
 			ca->way[0][entry].data[(addr&LINE_MASK) + 3] = ((val >> 0) & 0xFF);
+         update_lru(0, &ca->lru[entry]);
 		}
-		else if (ca->way[1][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x100000;
+		else if (ca->way[1][entry].v && ca->way[1][entry].tag == tagaddr){
 			ca->way[1][entry].data[(addr&LINE_MASK)] = ((val >> 24) & 0xFF);
 			ca->way[1][entry].data[(addr&LINE_MASK) + 1] = ((val >> 16) & 0xFF);
 			ca->way[1][entry].data[(addr&LINE_MASK) + 2] = ((val >> 8) & 0xFF);
 			ca->way[1][entry].data[(addr&LINE_MASK) + 3] = ((val >> 0) & 0xFF);
+         update_lru(1, &ca->lru[entry]);
 		}
-		else if (ca->way[2][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x200000;
+		else if (ca->way[2][entry].v && ca->way[2][entry].tag == tagaddr){
 			ca->way[2][entry].data[(addr&LINE_MASK)] = ((val >> 24) & 0xFF);
 			ca->way[2][entry].data[(addr&LINE_MASK) + 1] = ((val >> 16) & 0xFF);
 			ca->way[2][entry].data[(addr&LINE_MASK) + 2] = ((val >> 8) & 0xFF);
 			ca->way[2][entry].data[(addr&LINE_MASK) + 3] = ((val >> 0) & 0xFF);
+         update_lru(2, &ca->lru[entry]);
 
 		}
-		else if (ca->way[3][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x300000;
+		else if (ca->way[3][entry].v && ca->way[3][entry].tag == tagaddr){
 			ca->way[3][entry].data[(addr&LINE_MASK)] = ((val >> 24) & 0xFF);
 			ca->way[3][entry].data[(addr&LINE_MASK) + 1] = ((val >> 16) & 0xFF);
 			ca->way[3][entry].data[(addr&LINE_MASK) + 2] = ((val >> 8) & 0xFF);
 			ca->way[3][entry].data[(addr&LINE_MASK) + 3] = ((val >> 0) & 0xFF);
+         update_lru(3, &ca->lru[entry]);
 		}
 
 		// write through
@@ -243,32 +288,31 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr){
 		}
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
-		if (ca->way[0][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x000000;
+		if (ca->way[0][entry].v && ca->way[0][entry].tag == tagaddr){
+         update_lru(0, &ca->lru[entry]);
 			return ca->way[0][entry].data[addr&LINE_MASK];
 		}
-		else if (ca->way[1][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x100000;
+		else if (ca->way[1][entry].v && ca->way[1][entry].tag == tagaddr){
+         update_lru(1, &ca->lru[entry]);
 			return ca->way[1][entry].data[addr&LINE_MASK];
 		}
-		else if (ca->way[2][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x200000;
+		else if (ca->way[2][entry].v && ca->way[2][entry].tag == tagaddr){
+         update_lru(2, &ca->lru[entry]);
 			return ca->way[2][entry].data[addr&LINE_MASK];
 		}
-		else if (ca->way[3][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x300000;
+		else if (ca->way[3][entry].v && ca->way[3][entry].tag == tagaddr){
+         update_lru(3, &ca->lru[entry]);
 			return ca->way[3][entry].data[addr&LINE_MASK];
 		}
 		// cache miss
-		lruway = (ca->lru & 0x3);
+      lruway = select_way_to_replace(ca->lru[entry]);
+      update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
 		for (i = 0; i < 16; i++){
 			ca->way[lruway][entry].data[i] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + i);
 		}
+     
+      ca->way[lruway][entry].v = 1; //becomes valid
 		return ca->way[lruway][entry].data[addr&LINE_MASK];
 	}
 	break;
@@ -296,34 +340,31 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr){
 		}
 	   tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
-		if (ca->way[0][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x000000;
+		if (ca->way[0][entry].v && ca->way[0][entry].tag == tagaddr){
+         update_lru(0, &ca->lru[entry]);
 			return ((u16)(ca->way[0][entry].data[addr&LINE_MASK]) << 8) | ca->way[0][entry].data[(addr&LINE_MASK) + 1];
 		}
-		else if (ca->way[1][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x100000;
+		else if (ca->way[1][entry].v && ca->way[1][entry].tag == tagaddr){
+         update_lru(1, &ca->lru[entry]);
 			return ((u16)(ca->way[1][entry].data[addr&LINE_MASK]) << 8) | ca->way[1][entry].data[(addr&LINE_MASK) + 1];
 		}
-		else if (ca->way[2][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x200000;
+		else if (ca->way[2][entry].v && ca->way[2][entry].tag == tagaddr){
+         update_lru(2, &ca->lru[entry]);
 			return ((u16)(ca->way[2][entry].data[addr&LINE_MASK]) << 8) | ca->way[2][entry].data[(addr&LINE_MASK) + 1];
 		}
-		else if (ca->way[3][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x300000;
+		else if (ca->way[3][entry].v && ca->way[3][entry].tag == tagaddr){
+         update_lru(3, &ca->lru[entry]);
 			return ((u16)(ca->way[3][entry].data[addr&LINE_MASK]) << 8) | ca->way[3][entry].data[(addr&LINE_MASK) + 1];
 		}
 
 		// cache miss
-		lruway = (ca->lru & 0x3);
-		
+		lruway = select_way_to_replace(ca->lru[entry]);
+      update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
 		for (i = 0; i < 16; i++){
 			ca->way[lruway][entry].data[i] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + i);
 		}
+      ca->way[lruway][entry].v = 1; //becomes valid
 		return ((u16)(ca->way[lruway][entry].data[addr&LINE_MASK]) << 8) | ca->way[lruway][entry].data[(addr&LINE_MASK) + 1];
 	}
 	break;
@@ -350,45 +391,43 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr){
 		}
 		tagaddr = (addr & TAG_MASK);
 	   entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
-		if (ca->way[0][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x000000;
+
+		if (ca->way[0][entry].v && ca->way[0][entry].tag == tagaddr){
+         update_lru(0, &ca->lru[entry]);
 			return ((u32)(ca->way[0][entry].data[addr&LINE_MASK]) << 24) |
 				((u32)(ca->way[0][entry].data[(addr&LINE_MASK) + 1]) << 16) |
 				((u32)(ca->way[0][entry].data[(addr&LINE_MASK) + 2]) << 8) |
 				((u32)(ca->way[0][entry].data[(addr&LINE_MASK) + 3]) << 0);
 		}
-		else if (ca->way[1][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x100000;
+		else if (ca->way[1][entry].v && ca->way[1][entry].tag == tagaddr){
+         update_lru(1, &ca->lru[entry]);
 			return ((u32)(ca->way[1][entry].data[addr&LINE_MASK]) << 24) |
 				((u32)(ca->way[1][entry].data[(addr&LINE_MASK) + 1]) << 16) |
 				((u32)(ca->way[1][entry].data[(addr&LINE_MASK) + 2]) << 8) |
 				((u32)(ca->way[1][entry].data[(addr&LINE_MASK) + 3]) << 0);
 		}
-		else if (ca->way[2][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x200000;
+		else if (ca->way[2][entry].v && ca->way[2][entry].tag == tagaddr){
+         update_lru(2, &ca->lru[entry]);
 			return ((u32)(ca->way[2][entry].data[addr&LINE_MASK]) << 24) |
 				((u32)(ca->way[2][entry].data[(addr&LINE_MASK) + 1]) << 16) |
 				((u32)(ca->way[2][entry].data[(addr&LINE_MASK) + 2]) << 8) |
 				((u32)(ca->way[2][entry].data[(addr&LINE_MASK) + 3]) << 0);
 		}
-		else if (ca->way[3][entry].tag == tagaddr){
-			ca->lru >>= 4;
-			ca->lru |= 0x300000;
+		else if (ca->way[3][entry].v && ca->way[3][entry].tag == tagaddr){
+         update_lru(3, &ca->lru[entry]);
 			return ((u32)(ca->way[3][entry].data[addr&LINE_MASK]) << 24) |
 				((u32)(ca->way[3][entry].data[(addr&LINE_MASK) + 1]) << 16) |
 				((u32)(ca->way[3][entry].data[(addr&LINE_MASK) + 2]) << 8) |
 				((u32)(ca->way[3][entry].data[(addr&LINE_MASK) + 3]) << 0);
 			}
 		// cache miss
-		lruway = (ca->lru & 0x3);
-
+		lruway = select_way_to_replace(ca->lru[entry]);
+      update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
 		for (i = 0; i < 16; i++){
 			ca->way[lruway][entry].data[i] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + i);
 		}
+      ca->way[lruway][entry].v = 1; //becomes valid
 		return ((u32)(ca->way[lruway][entry].data[addr&LINE_MASK]) << 24) |
 			((u32)(ca->way[lruway][entry].data[(addr&LINE_MASK) + 1]) << 16) |
 			((u32)(ca->way[lruway][entry].data[(addr&LINE_MASK) + 2]) << 8) |
