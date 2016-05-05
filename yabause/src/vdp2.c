@@ -462,15 +462,25 @@ void Vdp2HBlankOUT(void) {
    }
 
 #if defined(YAB_ASYNC_RENDERING)
+   if ( yabsys.LineCount == 0 ){
+	   if( vdp_proc_running == 0 ){
+		   YuiRevokeOGLOnThisThread();
+		   evqueue = YabThreadCreateQueue(32);
+		   YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+	   }
+	   FrameProfileAdd("VOUT event");
+	   voutflg = 1;
+	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
+   }else if( voutflg == 1 && yabsys.LineCount >= 220 ){
+	   YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
+	   voutflg = 0;
+	   FrameProfileAdd("VOUT sync");
+   }
+
    if (yabsys.wait_line_count != -1 && yabsys.LineCount >= yabsys.wait_line_count ){
 	   yabsys.wait_line_count = -1;
 	   YabWaitEventQueue(vdp1_rcv_evqueue); // sync Direct VDP1 Draw
 	   FrameProfileAdd("DirectDraw sync");
-   }
-   if( voutflg == 1 && yabsys.LineCount >= 220 ){
-	   YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
-	   voutflg = 0;
-	   FrameProfileAdd("VOUT sync");
    }
 #endif
 }
@@ -669,12 +679,6 @@ void Vdp2VBlankOUT(void) {
 #endif
 #if defined(YAB_ASYNC_RENDERING)
 
-   if( vdp_proc_running == 0 ){
-       YuiRevokeOGLOnThisThread();
-       evqueue = YabThreadCreateQueue(32);
-       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-   }
-
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
    }else{ // p02_50.htm#TVSTAT_
@@ -694,10 +698,6 @@ void Vdp2VBlankOUT(void) {
       if (SmpcRegs->EXLE & 0x1)
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
     }
-
-   FrameProfileAdd("VOUT event");
-   voutflg = 1;
-   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
 #else
    static int framestoskip = 0;
    static int framesskipped = 0;
