@@ -22,7 +22,7 @@ set(yabause_HEADERS
 	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
-	yabause.h ygl.h yui.h)
+	yabause.h ygl.h yui.h sh2cache.h)
 
 set(yabause_SOURCES
 	bios.c
@@ -38,13 +38,18 @@ set(yabause_SOURCES
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c ygles.c yglshaderes.c)
+	yabause.c ygles.c yglshaderes.c sh2cache.c)
 
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
 else()
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
+endif()
+
+option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
+if (YAB_WANT_SH2_CACHE)
+    add_definitions(-DCACHE_ENABLE=1)
 endif()
 
 option(YAB_USE_SSF "Include SSF player." ON)
