@@ -420,6 +420,13 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          }
       }
 
+	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
+	  if (regs->EDSR & 0x02){
+		  regs->LOPR = regs->addr >> 3;
+		  regs->COPR = regs->addr >> 3;
+		  return;
+	  }
+
       // Next, determine where to go next
       switch ((command & 0x3000) >> 12) {
       case 0: // NEXT, jump to following table
