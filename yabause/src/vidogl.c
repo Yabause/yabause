@@ -3784,6 +3784,10 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+   if (cmd.CMDSIZE == 0){
+	   regs->EDSR |= 2;
+	   return; // BAD Command
+   }
    sprite.dst=0;
    sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
@@ -3844,7 +3848,6 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	   tmp |= 0x00010000;
 	   sprite.blendmode = VDP1_COLOR_CL_MESH;
    }
-
 
    if( (CMDPMOD & 4)  )
    {
@@ -3907,6 +3910,11 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int i;
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+   if (cmd.CMDSIZE == 0){
+	   regs->EDSR |= 2;
+	   return; // BAD Command
+   }
+
    sprite.dst=0;
    sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
@@ -4110,6 +4118,11 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+   if (cmd.CMDSIZE == 0){
+	   regs->EDSR |= 2;
+	   return; // BAD Command
+   }
+
    sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0; 
    sprite.dst = 1;
