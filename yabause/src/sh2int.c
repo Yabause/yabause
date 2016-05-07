@@ -132,14 +132,22 @@ fetchfunc fetchlist[0x100];
 
 static u32 FASTCALL FetchBios(u32 addr)
 {
+#if CACHE_ENABLE
+   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
    return T2ReadWord(BiosRom, addr & 0x7FFFF);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchCs0(u32 addr)
 {
+#if CACHE_ENABLE
+   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
    return CartridgeArea->Cs0ReadWord(addr);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
