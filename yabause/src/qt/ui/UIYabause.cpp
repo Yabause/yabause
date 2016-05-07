@@ -544,6 +544,10 @@ void UIYabause::fullscreenRequested( bool f )
 
 		setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
 		setMinimumSize( 0,0 );
+		QPoint ps;
+		ps.setX(0);
+		ps.setY(0);
+		this->move(ps);
 
 		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
 						f, vs->value("Video/VideoFormat").toInt());
@@ -1066,6 +1070,11 @@ void UIYabause::on_aTraceLogging_triggered( bool toggled )
 {
 	SetInsTracingToggle(toggled? 1 : 0);
 	return;
+}
+
+void UIYabause::on_aHelpReport_triggered()
+{
+	QDesktopServices::openUrl(QUrl(aHelpReport->statusTip()));
 }
 
 void UIYabause::on_aHelpCompatibilityList_triggered()

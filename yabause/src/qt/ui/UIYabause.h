@@ -170,6 +170,7 @@ protected slots:
 	void on_aViewDebugMemoryEditor_triggered();
 	void on_aTraceLogging_triggered( bool toggled );
 	// help menu
+	void on_aHelpReport_triggered();
 	void on_aHelpCompatibilityList_triggered();
 	void on_aHelpAbout_triggered();
 	// toolbar
