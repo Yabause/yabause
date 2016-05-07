@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #define CACHE_USE ((0x00)<<29)
 #define CACHE_THROUGH ((0x01)<<29)
-#define CACHE_PAGE ((0x02)<<29)
+#define CACHE_PURGE ((0x02)<<29)
 #define CACHE_ADDRES_ARRAY ((0x03)<<29)
 #define CACHE_DATA_ARRAY ((0x06)<<29)
 #define CACHE_IO ((0x07)<<29)
@@ -220,6 +220,22 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
 void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
 
 	switch (addr & AREA_MASK){
+   case CACHE_PURGE://associative purge
+   {
+      int i;
+      u32 tagaddr = (addr & TAG_MASK);
+      u32 entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
+      for (i = 0; i < 3; i++)
+      {
+         if (ca->way[i][entry].tag == tagaddr)
+         {
+            //only v bit is changed, the rest of the data remains
+            ca->way[i][entry].v = 0;
+            break;
+         }
+      }
+   }
+   break;
 	case CACHE_USE:
 	{
       u32 tagaddr = 0;
