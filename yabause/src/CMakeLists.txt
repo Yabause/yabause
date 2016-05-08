@@ -50,6 +50,7 @@ endif()
 option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
 if (YAB_WANT_SH2_CACHE)
     add_definitions(-DCACHE_ENABLE=1)
+    add_definitions(-DEXEC_FROM_CACHE=1)
 endif()
 
 option(YAB_USE_SSF "Include SSF player." ON)

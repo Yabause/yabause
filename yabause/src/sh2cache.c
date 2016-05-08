@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "memory.h"
 #include "yabause.h"
 #include "sh2cache.h"
+#include "sh2core.h"
 
 
 #define AREA_MASK   (0xE0000000)
@@ -93,7 +94,7 @@ static INLINE void update_lru(int way, u32*lru)
    else if (way == 2)
    {
       *lru = *lru & 0x3E;//set bit 0 to 0
-      *lru = *lru | 0x14;//set bits 1 and 2
+      *lru = *lru | 0x14;//set bits 4 and 2
       return;
    }
    else if (way == 1)
@@ -113,14 +114,24 @@ static INLINE void update_lru(int way, u32*lru)
 
 static INLINE int select_way_to_replace(u32 lru)
 {
-   if ((lru & 0x38) == 0x38)//bits 5, 4, 3 must be 1
-      return 0;
-   else if ((lru & 0x26) == 0x6)//bit 5 must be zero. bits 2 and 1 must be 1
-      return 1;
-   else if ((lru & 0x15) == 1)//bits 4, 2 must be zero. bit 0 must be 1
-      return 2;
-   else if ((lru & 0xB) == 0)//bits 3, 1, 0 must be zero
-      return 3;
+   if (CurrentSH2->onchip.CCR & (1 << 3))//2-way mode
+   {
+      if ((lru & 1) == 1)
+         return 2;
+      else
+         return 3;
+   }
+   else
+   {
+      if ((lru & 0x38) == 0x38)//bits 5, 4, 3 must be 1
+         return 0;
+      else if ((lru & 0x26) == 0x6)//bit 5 must be zero. bits 2 and 1 must be 1
+         return 1;
+      else if ((lru & 0x15) == 1)//bits 4, 2 must be zero. bit 0 must be 1
+         return 2;
+      else if ((lru & 0xB) == 0)//bits 3, 1, 0 must be zero
+         return 3;
+   }
 
    //should not happen
    return 0;
