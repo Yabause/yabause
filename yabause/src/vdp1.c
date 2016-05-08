@@ -257,6 +257,11 @@ void VideoDeInit(void) {
 void Vdp1Reset(void) {
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
+   Vdp1Regs->TVMR = 0;
+   Vdp1Regs->EWDR = 0;
+   Vdp1Regs->EWLR = 0;
+   Vdp1Regs->EWRR = 0;
+   Vdp1Regs->ENDR = 0;
    VIDCore->Vdp1Reset();
 }
 
