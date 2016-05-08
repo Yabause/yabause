@@ -2898,14 +2898,20 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
    SH2HandleInterrupts(context);
 
+#ifndef EXEC_FROM_CACHE
    if (context->isIdle)
       SH2idleParse(context, cycles);
    else
       SH2idleCheck(context, cycles);
+#endif
 
    while(context->cycles < cycles)
    {
       // Fetch Instruction
+#ifdef EXEC_FROM_CACHE
+      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
+      else
+#endif
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it
