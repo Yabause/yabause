@@ -83,6 +83,12 @@ else()
 	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
 endif()
 
+# Enable SCSP MIDI hooks in sound interface
+option(YAB_USE_SCSPMIDI "Enable SCSP Midi support")
+if (YAB_USE_SCSPMIDI)
+	add_definitions(-DUSE_SCSPMIDI=1)
+endif()
+
 # disable strdup warning in MSVC
 if (MSVC)
 	add_definitions(/wd4996)
@@ -411,6 +417,9 @@ if (WIN32)
     	# Add Winsock if necessary
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "wsock32")
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "ws2_32")        
+	endif()
+	if (YAB_USE_SCSPMIDI)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} winmm)
 	endif()
 
 endif (WIN32)

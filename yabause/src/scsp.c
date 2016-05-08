@@ -2842,7 +2842,11 @@ scsp_get_w (u32 a)
       break;
 
     case 0x04: // Midi flags/MIBUF
-      return (scsp.midflag << 8) | scsp_midi_in_read();
+    {
+      u16 d = (scsp.midflag << 8); // this needs to be done to keep midfi status before midi in read
+      d |= scsp_midi_in_read(); 
+      return d;
+    }
 
     case 0x06: // MOBUF
       return scsp_midi_out_read();
@@ -5072,6 +5076,27 @@ ScspExec ()
 
   if (!use_new_scsp)
      scsp_update_monitor();
+
+#ifdef USE_SCSPMIDI
+  // Process Midi ports
+  while (scsp.midincnt < 4)
+  {
+     u8 data;
+     int isdata;
+
+     data = SNDCore->MidiIn(&isdata);
+     if (!isdata)
+        break;
+     scsp_midi_in_send(data);
+  }
+
+
+  while (scsp.midoutcnt)
+  {
+     SNDCore->MidiOut(scsp_midi_out_read());
+  }
+
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

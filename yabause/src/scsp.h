@@ -48,6 +48,11 @@ typedef struct
    void (*MuteAudio)(void);
    void (*UnMuteAudio)(void);
    void (*SetVolume)(int volume);
+#ifdef USE_SCSPMIDI
+	int (*MidiChangePorts)(int inport, int outport);
+	u8 (*MidiIn)(int *isdata);
+	int (*MidiOut)(u8 data);
+#endif
 } SoundInterface_struct;
 
 typedef struct
