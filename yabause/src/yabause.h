@@ -104,6 +104,7 @@ typedef struct
    int emulatebios;
    int usequickload;
    int playing_ssf;
+   int use_cd_block_lle;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

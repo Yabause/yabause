@@ -94,6 +94,8 @@
 #include "aosdk/ssf.h"
 #endif
 
+#include "sh7034.h"
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -107,6 +109,7 @@ char ssf_artist[256] = { 0 };
 #define SCSP_FRACTIONAL_BITS 20
 u32 saved_scsp_cycles = 0;//fixed point
 u32 saved_m68k_cycles = 0;//fixed point
+u32 saved_sh1_cycles = 0;//fixed point
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -514,25 +517,31 @@ int YabauseEmulate(void) {
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
 
+   yabsys.use_cd_block_lle = 1;
+
    u32 m68k_cycles_per_deciline = 0;
    u32 scsp_cycles_per_deciline = 0;
+   u32 sh1_cycles_per_deciline = 0;
 
+   int lines = 0;
+   int frames = 0;
+
+   if (yabsys.IsPal)
+   {
+      lines = 313;
+      frames = 50;
+   }
+   else
+   {
+      lines = 263;
+      frames = 60;
+   }
+
+   if (yabsys.use_cd_block_lle)
+      sh1_cycles_per_deciline = get_cycles_per_line_division(20 * 1000000, frames, lines, 10);//20mhz
+   
    if(use_new_scsp)
    {
-      int lines = 0;
-      int frames = 0;
-
-      if (yabsys.IsPal)
-      {
-         lines = 313;
-         frames = 50;
-      }
-      else
-      {
-         lines = 263; 
-         frames = 60;
-      }
-
       scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, 10);
       m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, 10);
    }
@@ -732,6 +741,14 @@ int YabauseEmulate(void) {
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
       }
 #endif
+      if(yabsys.use_cd_block_lle)
+      {
+         u32 sh1_integer_part = 0;
+         saved_sh1_cycles += sh1_cycles_per_deciline;
+         sh1_integer_part = saved_sh1_cycles >> SCSP_FRACTIONAL_BITS;
+         sh1_exec(&sh1_cxt, sh1_integer_part);
+         saved_sh1_cycles -= sh1_integer_part << SCSP_FRACTIONAL_BITS;
+      }
 
       PROFILE_STOP("Total Emulation");
    }
