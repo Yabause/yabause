@@ -28,13 +28,19 @@
 #include "memory.h"
 #include "yabause.h"
 
+// SH1/SH2 differences
+// SH1's mac.w operates at a smaller precision. 16x16+42 instead of 16x16+64
+// SH1 is missing the following instructions: bf/s, braf, bsrf, bt/s, dmuls.l, dmulu.l, dt, mac.l, mul.l
+
 #if defined(SH2_DYNAREC)
 #include "sh2_dynarec/sh2_dynarec.h"
 #endif
 
+SH2_struct *SH1=NULL;
 SH2_struct *MSH2=NULL;
 SH2_struct *SSH2=NULL;
 SH2_struct *CurrentSH2;
+SH2Interface_struct *SH1Core=NULL;
 SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
 
@@ -43,6 +49,48 @@ void FRTExec(u32 cycles);
 void WDTExec(u32 cycles);
 u8 SCIReceiveByte(void);
 void SCITransmitByte(u8);
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SH1Init(int coreid)
+{
+   int i;
+
+   if ((SH1 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
+      return -1;
+
+   if (SH2TrackInfLoopInit(SH1) != 0)
+      return -1;
+
+   SH1->onchip.BCR1 = 0x0000;
+   SH1->isslave = 0;
+   SH1->model = SHMT_SH1;
+
+   // So which core do we want?
+   if (coreid == SH2CORE_DEFAULT)
+      coreid = 0; // Assume we want the first one
+
+   // Go through core list and find the id
+   for (i = 0; SH2CoreList[i] != NULL; i++)
+   {
+      if (SH2CoreList[i]->id == coreid)
+      {
+         // Set to current core
+         SH1Core = SH2CoreList[i];
+         break;
+      }
+   }
+
+   if ((SH1Core == NULL) || (SH1Core->Init(SHMT_SH1) != 0)) {
+      free(SH1);
+      SH1 = NULL;
+      return -1;
+   }
+
+   SH1->core = SH1Core;
+
+   return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -59,6 +107,7 @@ int SH2Init(int coreid)
 
    MSH2->onchip.BCR1 = 0x0000;
    MSH2->isslave = 0;
+   MSH2->model = SHMT_SH2;
 
    // SSH2
    if ((SSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
@@ -69,6 +118,7 @@ int SH2Init(int coreid)
 
    SSH2->onchip.BCR1 = 0x8000;
    SSH2->isslave = 1;
+   SSH2->model = SHMT_SH2;
 
    // So which core do we want?
    if (coreid == SH2CORE_DEFAULT)
@@ -85,14 +135,31 @@ int SH2Init(int coreid)
       }
    }
 
-   if ((SH2Core == NULL) || (SH2Core->Init() != 0)) {
+   if ((SH2Core == NULL) || (SH2Core->Init(SHMT_SH2) != 0)) {
       free(MSH2);
       free(SSH2);
       MSH2 = SSH2 = NULL;
       return -1;
    }
 
+   MSH2->core = SSH2->core = SH2Core;
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void SH1DeInit()
+{
+   if (SH1Core)
+      SH1Core->DeInit();
+   SH1Core = NULL;
+
+   if (SH1)
+   {
+      SH2TrackInfLoopDeInit(SH1);
+      free(SH1);
+   }
+   SH1 = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -123,17 +190,18 @@ void SH2DeInit()
 void SH2Reset(SH2_struct *context)
 {
    int i;
+   SH2Interface_struct *core=context->core;
    
    // Reset general registers
    for (i = 0; i < 15; i++)
-      SH2Core->SetGPR(context, i, 0x00000000);
+      core->SetGPR(context, i, 0x00000000);
 
-   SH2Core->SetSR(context, 0x000000F0);
-   SH2Core->SetGBR(context, 0x00000000);
-   SH2Core->SetVBR(context, 0x00000000);
-   SH2Core->SetMACH(context, 0x00000000);
-   SH2Core->SetMACL(context, 0x00000000);
-   SH2Core->SetPR(context, 0x00000000);
+   core->SetSR(context, 0x000000F0);
+   core->SetGBR(context, 0x00000000);
+   core->SetVBR(context, 0x00000000);
+   core->SetMACH(context, 0x00000000);
+   core->SetMACL(context, 0x00000000);
+   core->SetPR(context, 0x00000000);
 
    // Internal variables
    context->delay = 0x00000000;
@@ -150,10 +218,10 @@ void SH2Reset(SH2_struct *context)
 
    // Reset Interrupts
    memset((void *)context->interrupts, 0, sizeof(interrupt_struct) * MAX_INTERRUPTS);
-   SH2Core->SetInterrupts(context, 0, context->interrupts);
+   core->SetInterrupts(context, 0, context->interrupts);
 
    // Core specific reset
-   SH2Core->Reset(context);
+   core->Reset(context);
 
    // Reset Onchip modules
    OnchipReset(context);
@@ -167,9 +235,10 @@ void SH2Reset(SH2_struct *context)
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2PowerOn(SH2_struct *context) {
-	u32 VBR = SH2Core->GetVBR(context);
-   SH2Core->SetPC(context, MappedMemoryReadLong(VBR));
-   SH2Core->SetGPR(context, 15, MappedMemoryReadLong(VBR+4));
+   SH2Interface_struct *core=context->core;
+   u32 VBR = core->GetVBR(context);
+   core->SetPC(context, MappedMemoryReadLong(VBR));
+   core->SetGPR(context, 15, MappedMemoryReadLong(VBR+4));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -178,7 +247,7 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
    CurrentSH2 = context;
 
-   SH2Core->Exec(context, cycles);
+   context->core->Exec(context, cycles);
 
    FRTExec(cycles);
    WDTExec(cycles);
@@ -193,7 +262,7 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 
 void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level)
 {
-   SH2Core->SendInterrupt(context, vector, level);
+   context->core->SendInterrupt(context, vector, level);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -208,16 +277,17 @@ void SH2NMI(SH2_struct *context)
 
 void SH2Step(SH2_struct *context)
 {
-   if (SH2Core)
+   SH2Interface_struct *core=context->core;
+   if (core)
    {
-      u32 tmp = SH2Core->GetPC(context);
+      u32 tmp = core->GetPC(context);
 
       // Execute 1 instruction
       SH2Exec(context, context->cycles+1);
 
       // Sometimes it doesn't always execute one instruction,
       // let's make sure it did
-      if (tmp == SH2Core->GetPC(context))
+      if (tmp == core->GetPC(context))
          SH2Exec(context, context->cycles+1);
    }
 }
@@ -226,9 +296,10 @@ void SH2Step(SH2_struct *context)
 
 int SH2StepOver(SH2_struct *context, void (*func)(void *, u32, void *))
 {
-   if (SH2Core)
+   SH2Interface_struct *core=context->core;
+   if (core)
    {
-      u32 tmp = SH2Core->GetPC(context);
+      u32 tmp = core->GetPC(context);
       u16 inst=MappedMemoryReadWord(context->regs.PC);
 
       // If instruction is jsr, bsr, or bsrf, step over it
@@ -2143,14 +2214,21 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
    IOCheck_struct check = { 0, 0 };
    sh2regs_struct regs;
 
-   // Write header
-   if (context->isslave == 0)
-      offset = StateWriteHeader(fp, "MSH2", 1);
-   else
-   {
-      offset = StateWriteHeader(fp, "SSH2", 1);
-      ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
-   }
+	if (context->model == SHMT_SH1)
+	{
+		offset = StateWriteHeader(fp, "SH1 ", 1);
+	}
+	else if (context->model == SHMT_SH2)
+	{
+		// Write header
+		if (context->isslave == 0)
+			offset = StateWriteHeader(fp, "MSH2", 1);
+		else
+		{
+			offset = StateWriteHeader(fp, "SSH2", 1);
+			ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
+		}
+	}
 
    // Write registers
    SH2GetRegisters(context, &regs);

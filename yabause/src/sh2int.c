@@ -130,6 +130,39 @@ fetchfunc fetchlist[0x100];
 
 //////////////////////////////////////////////////////////////////////////////
 
+static u32 FASTCALL FetchSH1Rom(u32 addr)
+{
+#if CACHE_ENABLE
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
+	return T2ReadWord(SH1Rom, addr & 0xFFFF);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL FetchSH1Dram(u32 addr)
+{
+#if CACHE_ENABLE
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
+	return T2ReadWord(SH1Dram, addr & 0x7FFFF);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL FetchSH1MpegRom(u32 addr)
+{
+#if CACHE_ENABLE
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
+	return T2ReadWord(SH1MpegRom, addr & 0x7FFF);
+#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static u32 FASTCALL FetchBios(u32 addr)
 {
 #if CACHE_ENABLE
@@ -2390,7 +2423,7 @@ static void FASTCALL SH2sleep(SH2_struct * sh)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static opcodefunc decode(u16 instruction)
+static opcodefunc decode(enum SHMODELTYPE model, u16 instruction)
 {
    switch (INSTRUCTION_A(instruction))
    {
@@ -2407,17 +2440,21 @@ static opcodefunc decode(u16 instruction)
                }
      
             case 3:
-               switch (INSTRUCTION_C(instruction))
+               if (model == SHMT_SH1)
+                  return &SH2undecoded;
+               else
                {
-                  case 0: return &SH2bsrf;
-                  case 2: return &SH2braf;
-                  default: return &SH2undecoded;
+                  switch (INSTRUCTION_C(instruction))
+                  {
+                     case 0: return &SH2bsrf;
+                     case 2: return &SH2braf;
+                     default: return &SH2undecoded;
+                  }
                }
-     
             case 4: return &SH2movbs0;
             case 5: return &SH2movws0;
             case 6: return &SH2movls0;
-            case 7: return &SH2mull;
+            case 7: return model == SHMT_SH1 ? &SH2undecoded : &SH2mull;
             case 8:
                switch (INSTRUCTION_C(instruction))
                {
@@ -2453,7 +2490,7 @@ static opcodefunc decode(u16 instruction)
             case 12: return &SH2movbl0;
             case 13: return &SH2movwl0;
             case 14: return &SH2movll0;
-            case 15: return &SH2macl;
+            case 15: return model == SHMT_SH1 ? &SH2undecoded : &SH2macl;
             default: return &SH2undecoded;
          }
    
@@ -2486,14 +2523,14 @@ static opcodefunc decode(u16 instruction)
             case 2:  return &SH2cmphs;
             case 3:  return &SH2cmpge;
             case 4:  return &SH2div1;
-            case 5:  return &SH2dmulu;
+            case 5:  return model == SHMT_SH1 ? &SH2undecoded : &SH2dmulu;
             case 6:  return &SH2cmphi;
             case 7:  return &SH2cmpgt;
             case 8:  return &SH2sub;
             case 10: return &SH2subc;
             case 11: return &SH2subv;
             case 12: return &SH2add;
-            case 13: return &SH2dmuls;
+            case 13: return model == SHMT_SH1 ? &SH2undecoded : &SH2dmuls;
             case 14: return &SH2addc;
             case 15: return &SH2addv;
             default: return &SH2undecoded;
@@ -2506,7 +2543,7 @@ static opcodefunc decode(u16 instruction)
                switch(INSTRUCTION_C(instruction))
                {
                   case 0: return &SH2shll;
-                  case 1: return &SH2dt;
+                  case 1: return model == SHMT_SH1 ? &SH2undecoded : &SH2dt;
                   case 2: return &SH2shal;
                   default: return &SH2undecoded;
                }
@@ -2641,8 +2678,8 @@ static opcodefunc decode(u16 instruction)
             case 8:  return &SH2cmpim;
             case 9:  return &SH2bt;
             case 11: return &SH2bf;
-            case 13: return &SH2bts;
-            case 15: return &SH2bfs;
+            case 13: return model == SHMT_SH1 ? &SH2undecoded : &SH2bts;
+            case 15: return model == SHMT_SH1 ? &SH2undecoded : &SH2bfs;
             default: return &SH2undecoded;
          }   
       case 9: return &SH2movwi;
@@ -2677,75 +2714,113 @@ static opcodefunc decode(u16 instruction)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2InterpreterInit()
+int SH2InterpreterInit(enum SHMODELTYPE model)
 {
    int i;
 
    // Initialize any internal variables
    for(i = 0;i < 0x10000;i++)
-      opcodes[i] = decode(i);
+      opcodes[i] = decode(model, i);
 
-   for (i = 0; i < 0x100; i++)
+   if (model == SHMT_SH1)
    {
-      switch (i)
+      for (i = 0; i < 0x100; i++)
       {
-         case 0x000: // Bios              
-            fetchlist[i] = FetchBios;
-            break;
-         case 0x002: // Low Work Ram
-            fetchlist[i] = FetchLWram;
-            break;
-         case 0x020: // CS0
-            fetchlist[i] = FetchCs0;
-            break;
-         case 0x05c: // Fighting Viper
-            fetchlist[i] = FetchVram;
-            break;
-         case 0x060: // High Work Ram
-         case 0x061: 
-         case 0x062: 
-         case 0x063: 
-         case 0x064: 
-         case 0x065: 
-         case 0x066: 
-         case 0x067: 
-         case 0x068: 
-         case 0x069: 
-         case 0x06A: 
-         case 0x06B: 
-         case 0x06C: 
-         case 0x06D: 
-         case 0x06E: 
-         case 0x06F:
-            fetchlist[i] = FetchHWram;
-            break;
-         default:
-            fetchlist[i] = FetchInvalid;
-            break;
+         switch (i)
+         {
+            case 0x000: // Rom              
+               fetchlist[i] = FetchSH1Rom;
+               break;
+            case 0x090: // Dram
+               fetchlist[i] = FetchSH1Dram;
+               break;
+            case 0x0F0: // MPEG Rom
+               fetchlist[i] = FetchSH1MpegRom;
+               break;
+            default:
+               fetchlist[i] = FetchInvalid;
+               break;
+         }
       }
+
+      SH2ClearCodeBreakpoints(SH1);
+      SH2ClearMemoryBreakpoints(SH1);
+      SH1->breakpointEnabled = 0;
+      SH1->backtraceEnabled = 0;
+      SH1->stepOverOut.enabled = 0;
    }
-   
-   SH2ClearCodeBreakpoints(MSH2);
-   SH2ClearCodeBreakpoints(SSH2);
-   SH2ClearMemoryBreakpoints(MSH2);
-   SH2ClearMemoryBreakpoints(SSH2);
-   MSH2->breakpointEnabled = 0;
-   SSH2->breakpointEnabled = 0;  
-   MSH2->backtraceEnabled = 0;
-   SSH2->backtraceEnabled = 0;
-   MSH2->stepOverOut.enabled = 0;
-   SSH2->stepOverOut.enabled = 0;
+   else if (model == SHMT_SH2)
+   {
+      for (i = 0; i < 0x100; i++)
+      {
+         switch (i)
+         {
+            case 0x000: // Bios              
+               fetchlist[i] = FetchBios;
+               break;
+            case 0x002: // Low Work Ram
+               fetchlist[i] = FetchLWram;
+               break;
+            case 0x020: // CS0
+               fetchlist[i] = FetchCs0;
+               break;
+            case 0x05c: // Fighting Viper
+               fetchlist[i] = FetchVram;
+               break;
+            case 0x060: // High Work Ram
+            case 0x061: 
+            case 0x062: 
+            case 0x063: 
+            case 0x064: 
+            case 0x065: 
+            case 0x066: 
+            case 0x067: 
+            case 0x068: 
+            case 0x069: 
+            case 0x06A: 
+            case 0x06B: 
+            case 0x06C: 
+            case 0x06D: 
+            case 0x06E: 
+            case 0x06F:
+               fetchlist[i] = FetchHWram;
+               break;
+            default:
+               fetchlist[i] = FetchInvalid;
+               break;
+         }
+      }
+
+      SH2ClearCodeBreakpoints(MSH2);
+      SH2ClearCodeBreakpoints(SSH2);
+      SHClearMemoryBreakpoints(MSH2);
+      SHClearMemoryBreakpoints(SSH2);
+      MSH2->breakpointEnabled = 0;
+      SSH2->breakpointEnabled = 0;  
+      MSH2->backtraceEnabled = 0;
+      SSH2->backtraceEnabled = 0;
+      MSH2->stepOverOut.enabled = 0;
+      SSH2->stepOverOut.enabled = 0;
+   }
    
    return 0;
 }
 
-int SH2DebugInterpreterInit() {
+int SH2DebugInterpreterInit(enum SHMODELTYPE model) {
 
-  SH2InterpreterInit();
-  MSH2->breakpointEnabled = 1;
-  SSH2->breakpointEnabled = 1;  
-  MSH2->backtraceEnabled = 1;
-  SSH2->backtraceEnabled = 1;
+  SH2InterpreterInit(model);
+  if (model == SHMT_SH1)
+  {
+    SH1->breakpointEnabled = 1;
+    SH1->backtraceEnabled = 1;
+  }
+  else if (model == SHMT_SH2)
+  {
+    MSH2->breakpointEnabled = 1;
+    SSH2->breakpointEnabled = 1;  
+    MSH2->backtraceEnabled = 1;
+    SSH2->backtraceEnabled = 1;
+  }
   return 0;
 }
 

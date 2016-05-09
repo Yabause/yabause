@@ -31,8 +31,8 @@
 #define INSTRUCTION_CD(x) (x & 0x00FF)
 #define INSTRUCTION_BCD(x) (x & 0x0FFF)
 
-int SH2InterpreterInit(void);
-int SH2DebugInterpreterInit(void);
+int SH2InterpreterInit(enum SHMODELTYPE model);
+int SH2DebugInterpreterInit(enum SHMODELTYPE model);
 void SH2InterpreterDeInit(void);
 void SH2InterpreterReset(SH2_struct *context);
 void FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);

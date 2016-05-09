@@ -94,8 +94,6 @@
 #include "aosdk/ssf.h"
 #endif
 
-#include "sh7034.h"
-
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -109,7 +107,6 @@ char ssf_artist[256] = { 0 };
 #define SCSP_FRACTIONAL_BITS 20
 u32 saved_scsp_cycles = 0;//fixed point
 u32 saved_m68k_cycles = 0;//fixed point
-u32 saved_sh1_cycles = 0;//fixed point
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -207,6 +204,35 @@ int YabauseInit(yabauseinit_struct *init)
       YabSetError(YAB_ERR_CANNOTINIT, _("Peripheral"));
       return -1;
    }
+
+   if ((SH1Rom = T2MemoryInit(0x10000)) == NULL)
+      return -1;
+
+   if ((SH1Dram = T2MemoryInit(0x80000)) == NULL)
+      return -1;
+
+   if ((SH1MpegRom = T2MemoryInit(0x8000)) == NULL)
+      return -1;
+
+#if 0
+   // Initialize CD Block 
+   if (SH1Init(init->sh1coretype) != 0)
+   {
+   YabSetError(YAB_ERR_CANNOTINIT, _("SH1"));
+   return -1;
+   }
+   else
+   {
+      if (init->sh1rompath != NULL && strlen(init->sh1rompath))
+      {
+         if (LoadSH1Rom(init->sh1rompath) != 0)
+         {
+            YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->sh1rompath);
+            return -2;
+         }
+      }
+   }
+#endif
 
    if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->modemip, init->modemport) != 0)
    {
@@ -516,15 +542,17 @@ int YabauseEmulate(void) {
 #ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
+	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline, sh1_cycles_per_deciline;
+	int lines, frames = 0;
 
    yabsys.use_cd_block_lle = 1;
 
-   u32 m68k_cycles_per_deciline = 0;
-   u32 scsp_cycles_per_deciline = 0;
-   u32 sh1_cycles_per_deciline = 0;
+   m68k_cycles_per_deciline = 0;
+   scsp_cycles_per_deciline = 0;
+   sh1_cycles_per_deciline = 0;
 
-   int lines = 0;
-   int frames = 0;
+   lines = 0;
+   frames = 0;
 
    if (yabsys.IsPal)
    {

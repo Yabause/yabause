@@ -234,6 +234,8 @@ void UISettings::tbBrowse_clicked()
 	}
 	else if ( tb == tbMemory )
 		requestNewFile( QtYabause::translate( "Choose a memory file" ), leMemory );
+	else if ( tb == tbSH1ROM )
+		requestFile( QtYabause::translate( "Choose a sh1 rom" ), leSH1ROM );
 	else if ( tb == tbMpegROM )
 		requestFile( QtYabause::translate( "Choose a mpeg rom" ), leMpegROM );
 }
@@ -481,6 +483,7 @@ void UISettings::loadSettings()
 	leCartridgeModemIP->setText( s->value( "Cartridge/ModemIP", QString("127.0.0.1") ).toString() );
 	leCartridgeModemPort->setText( s->value( "Cartridge/ModemPort", QString("1337") ).toString() );
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
+	leSH1ROM->setText( s->value( "SH1ROM/Path" ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
 	
 	// input
@@ -575,6 +578,7 @@ void UISettings::saveSettings()
 	s->setValue( "Cartridge/ModemIP", leCartridgeModemIP->text() );
 	s->setValue( "Cartridge/ModemPort", leCartridgeModemPort->text() );
 	s->setValue( "Memory/Path", leMemory->text() );
+	s->setValue( "SH1ROM/Path", leSH1ROM->text() );
 	s->setValue( "MpegROM/Path", leMpegROM->text() );
 	
 	// input

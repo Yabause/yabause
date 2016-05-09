@@ -355,6 +355,9 @@ void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
 }
 #endif
 
+extern u8 *SH1Rom;
+extern u8 *SH1Dram;
+extern u8 *SH1MpegRom;
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -411,6 +414,7 @@ int MappedMemoryLoad(const char *filename, u32 addr);
 int MappedMemorySave(const char *filename, u32 addr, u32 size);
 void MappedMemoryLoadExec(const char *filename, u32 pc);
 
+int LoadSH1Rom(const char *filename);
 int LoadBios(const char *filename);
 int LoadBackupRam(const char *filename);
 void FormatBackupRam(void *mem, u32 size);

@@ -339,14 +339,25 @@ enum SH2STEPTYPE
    SH2ST_STEPOUT
 };
 
+enum SHMODELTYPE
+{
+   SHMT_SH1,
+   SHMT_SH2
+};
+
 typedef struct
 {
    u32 addr;
    u64 count;
 } tilInfo_struct;
 
+typedef struct SH2Interface_struct SH2Interface_struct;
+
 typedef struct
 {
+   struct SH2Interface_struct *core;
+   enum SHMODELTYPE model;
+
    sh2regs_struct regs;
    Onchip_struct onchip;
 
@@ -399,13 +410,13 @@ typedef struct
 
 } SH2_struct;
 
-typedef struct
+struct SH2Interface_struct
 {
    int id;
    const char *Name;
 
-   int (*Init)(void);
-   void (*DeInit)(void);
+   int (*Init)(enum SHMODELTYPE model);
+   void (*DeInit)();
    void (*Reset)(SH2_struct *context);
    void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
 
@@ -436,14 +447,17 @@ typedef struct
                          const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
    void (*WriteNotify)(u32 start, u32 length);
-} SH2Interface_struct;
+};
 
+extern SH2_struct *SH1;
 extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
 extern SH2_struct *CurrentSH2;
 extern SH2Interface_struct *SH2Core;
 
+int SH1Init(int coreid);
 int SH2Init(int coreid);
+void SH1DeInit(void);
 void SH2DeInit(void);
 void SH2Reset(SH2_struct *context);
 void SH2PowerOn(SH2_struct *context);

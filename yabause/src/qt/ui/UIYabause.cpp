@@ -747,6 +747,7 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["Advanced/Region"]!=hash["Advanced/Region"] ||
 			newhash["Cartridge/Type"]!=hash["Cartridge/Type"] ||
 			newhash["Memory/Path"]!=hash["Memory/Path"] ||
+			newhash["SH1ROM/Path"]!=hash["SH1ROM/Path"] ||
 			newhash["MpegROM/Path" ]!=hash["MpegROM/Path" ] ||
 			newhash["Advanced/SH2Interpreter" ]!=hash["Advanced/SH2Interpreter" ] ||
          newhash["Advanced/68kCore"] != hash["Advanced/68kCore"] ||

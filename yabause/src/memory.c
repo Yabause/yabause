@@ -78,6 +78,10 @@ readbytefunc ReadByteList[0x1000];
 readwordfunc ReadWordList[0x1000];
 readlongfunc ReadLongList[0x1000];
 
+u8 *SH1Rom;
+u8 *SH1Dram;
+u8 *SH1MpegRom;
+
 u8 *HighWram;
 u8 *LowWram;
 u8 *BiosRom;
@@ -998,6 +1002,13 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    SH2GetRegisters(MSH2, &MSH2->regs);
    MSH2->regs.PC = pc;
    SH2SetRegisters(MSH2, &MSH2->regs);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int LoadSH1Rom(const char *filename)
+{
+   return T123Load(SH1Rom, 0x10000, 2, filename);
 }
 
 //////////////////////////////////////////////////////////////////////////////
