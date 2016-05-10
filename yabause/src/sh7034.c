@@ -25,6 +25,8 @@
 #include "core.h"
 #include "sh7034.h"
 #include "assert.h"
+#include "memory.h"
+#include "ygr.h"
 
 struct Sh1 sh1_cxt;
 
@@ -2970,11 +2972,23 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       {
 
       }
+
+      if (a27)
+      {
+         T2WriteByte(SH1Dram, addr & 0x7FFFF, data);
+         return;
+      }
       break;
    case 2:
    case 3:
    case 4:
       //external memory space
+
+      if (a27)
+      {
+         ygr_write_byte(addr, data);
+         return;
+      }
       break;
    case 5:
       //onchip area
@@ -2992,6 +3006,8 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       if (a27)
       {
          //external memory space
+         //mpeg rom read only
+         return;
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -3010,6 +3026,8 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       }
       break;
    }
+
+   assert(0);
 }
 
 u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
@@ -3043,11 +3061,22 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       {
 
       }
+
+      if (a27)
+      {
+         return T2ReadByte(SH1Dram, addr & 0x7FFFF);
+      }
+
       break;
    case 2:
    case 3:
    case 4:
       //external memory space
+
+      if (a27)
+      {
+         return ygr_read_byte(addr);
+      }
       break;
    case 5:
       //onchip area
@@ -3062,6 +3091,8 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       if (a27)
       {
          //external memory space
+         //mpeg rom
+         return T2ReadByte(SH1MpegRom, addr & 0x7FFFF);
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -3079,6 +3110,7 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       break;
    }
 
+   assert(0);
    return 0;
 }
 
@@ -3114,11 +3146,22 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
       {
 
       }
+
+      if (a27)
+      {
+         return T2ReadWord(SH1Dram, addr & 0x7FFFF);
+      }
+
       break;
    case 2:
    case 3:
    case 4:
       //external memory space
+
+      if (a27)
+      {
+         return ygr_read_word(addr);
+      }
       break;
    case 5:
       //onchip area
@@ -3133,6 +3176,8 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
       if (a27)
       {
          //external memory space
+         //mpeg rom
+         return T2ReadWord(SH1MpegRom, addr & 0x7FFFF);
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -3150,6 +3195,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
       break;
    }
 
+   assert(0);
    return 0;
 }
 
@@ -3186,11 +3232,24 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
       {
 
       }
+
+      if (a27)
+      {
+         T2WriteWord(SH1Dram, addr & 0x7FFFF, data);
+         return;
+      }
+
       break;
    case 2:
    case 3:
    case 4:
       //external memory space
+
+      if (a27)
+      {
+         ygr_write_word(addr, data);
+         return;
+      }
       break;
    case 5:
       //onchip area
@@ -3208,6 +3267,10 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
       if (a27)
       {
          //external memory space
+
+         //mpeg rom read only
+
+         return;
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -3227,10 +3290,12 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
       break;
    }
 
+   assert(0);
+
    return;
 }
 
-u16 memory_map_read_long(struct Sh1* sh1, u32 addr)
+u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
@@ -3261,11 +3326,22 @@ u16 memory_map_read_long(struct Sh1* sh1, u32 addr)
       {
 
       }
+
+      if (a27)
+      {
+         return T2ReadLong(SH1Dram, addr & 0x7FFFF);
+      }
+
       break;
    case 2:
    case 3:
    case 4:
       //external memory space
+
+      if (a27)
+      {
+         return ygr_read_long(addr);
+      }
       break;
    case 5:
       //onchip area
@@ -3280,6 +3356,9 @@ u16 memory_map_read_long(struct Sh1* sh1, u32 addr)
       if (a27)
       {
          //external memory space
+         //mpeg rom area
+
+         return T2ReadLong(SH1MpegRom, addr & 0x7FFFF);
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -3300,7 +3379,7 @@ u16 memory_map_read_long(struct Sh1* sh1, u32 addr)
    return 0;
 }
 
-void memory_map_write_long(struct Sh1* sh1, u32 addr, u16 data)
+void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
@@ -3333,11 +3412,25 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u16 data)
       {
 
       }
+
+      if (a27)
+      {
+         T2WriteLong(SH1Dram, addr & 0x7FFFF, data);
+         return;
+      }
+
       break;
    case 2:
    case 3:
    case 4:
       //external memory space
+      
+      //ygr area
+      if (a27)
+      {
+         ygr_write_long(addr, data);
+         return;
+      }
       break;
    case 5:
       //onchip area
@@ -3355,6 +3448,9 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u16 data)
       if (a27)
       {
          //external memory space
+         //mpeg rom area read only
+
+         return;
       }
       else if (!sh1->onchip.bsc.bcr)
       {
@@ -3373,6 +3469,8 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u16 data)
       }
       break;
    }
+
+   assert(0);
 
    return;
 }
@@ -3563,6 +3661,51 @@ void test_long_access(struct Sh1* sh1, u32 addr)
    u32 result = memory_map_read_long(sh1, addr);
 }
 
+void test_mem_map(struct Sh1* sh1)
+{
+   //ygr
+   memory_map_write_long(sh1, 0xa000000, 0xdeadbeef);
+
+   //sh1 dram
+   int i;
+   for (i = 0; i < 0x7FFFF; i += 4)
+   {
+      memory_map_write_long(sh1, 0x9000000 + i, 0xdeadbeef);
+      memory_map_read_long(sh1, 0x9000000 + i);
+   }
+
+   for (i = 0; i < 0x7FFFF; i += 2)
+   {
+      memory_map_write_word(sh1, 0x9000000 + i, 0xdead);
+      memory_map_read_word(sh1, 0x9000000 + i);
+   }
+
+   for (i = 0; i < 0x7FFFF; i++)
+   {
+      memory_map_write_byte(sh1, 0x9000000 + i, 0xde);
+      memory_map_read_byte(sh1, 0x9000000 + i);
+   }
+
+   //mpeg rom
+   for (i = 0; i < 0x7FFFF; i += 4)
+   {
+      memory_map_write_long(sh1, 0xe000000 + i, 0xdeadbeef);
+      memory_map_read_long(sh1, 0xe000000 + i);
+   }
+
+   for (i = 0; i < 0x7FFFF; i += 2)
+   {
+      memory_map_write_word(sh1, 0xe000000 + i, 0xdead);
+      memory_map_read_word(sh1, 0xe000000 + i);
+   }
+
+   for (i = 0; i < 0x7FFFF; i++)
+   {
+      memory_map_write_byte(sh1, 0xe000000 + i, 0xde);
+      memory_map_read_byte(sh1, 0xe000000 + i);
+   }
+}
+
 void sh1_exec(struct Sh1 * sh1, s32 cycles)
 {
 #if 0
@@ -3582,6 +3725,8 @@ void sh1_exec(struct Sh1 * sh1, s32 cycles)
    {
       test_long_access(sh1, i);
    }
+
+   test_mem_map(sh1);
 
    s32 cycles_temp = sh1->cycles_remainder - cycles;
    while (cycles_temp < 0)
