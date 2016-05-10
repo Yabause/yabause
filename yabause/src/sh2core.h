@@ -358,6 +358,9 @@ typedef struct
    struct SH2Interface_struct *core;
    enum SHMODELTYPE model;
 
+	void *opcodes[0x10000];
+	void *fetchlist[0x100];
+
    sh2regs_struct regs;
    Onchip_struct onchip;
 
@@ -415,7 +418,7 @@ struct SH2Interface_struct
    int id;
    const char *Name;
 
-   int (*Init)(enum SHMODELTYPE model);
+   int (*Init)(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh);
    void (*DeInit)();
    void (*Reset)(SH2_struct *context);
    void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);

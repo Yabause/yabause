@@ -81,7 +81,7 @@ int SH1Init(int coreid)
       }
    }
 
-   if ((SH1Core == NULL) || (SH1Core->Init(SHMT_SH1) != 0)) {
+   if ((SH1Core == NULL) || (SH1Core->Init(SHMT_SH1, SH1, NULL) != 0)) {
       free(SH1);
       SH1 = NULL;
       return -1;
@@ -135,7 +135,7 @@ int SH2Init(int coreid)
       }
    }
 
-   if ((SH2Core == NULL) || (SH2Core->Init(SHMT_SH2) != 0)) {
+   if ((SH2Core == NULL) || (SH2Core->Init(SHMT_SH2, MSH2, SSH2) != 0)) {
       free(MSH2);
       free(SSH2);
       MSH2 = SSH2 = NULL;

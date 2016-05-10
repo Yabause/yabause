@@ -31,8 +31,8 @@
 #define INSTRUCTION_CD(x) (x & 0x00FF)
 #define INSTRUCTION_BCD(x) (x & 0x0FFF)
 
-int SH2InterpreterInit(enum SHMODELTYPE model);
-int SH2DebugInterpreterInit(enum SHMODELTYPE model);
+int SH2InterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh);
+int SH2DebugInterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh);
 void SH2InterpreterDeInit(void);
 void SH2InterpreterReset(SH2_struct *context);
 void FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);
@@ -65,9 +65,6 @@ extern SH2Interface_struct SH2Interpreter;
 extern SH2Interface_struct SH2DebugInterpreter;
 
 typedef u32 (FASTCALL *fetchfunc)(u32);
-extern fetchfunc fetchlist[0x100];
-
 typedef void (FASTCALL *opcodefunc)(SH2_struct *);
-extern opcodefunc opcodes[0x10000];
 
 #endif

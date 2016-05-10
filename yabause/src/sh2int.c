@@ -52,8 +52,6 @@
 } while (0)
 #endif
 
-opcodefunc opcodes[0x10000];
-
 SH2Interface_struct SH2Interpreter = {
    SH2CORE_INTERPRETER,
    "SH2 Interpreter",
@@ -125,8 +123,6 @@ SH2Interface_struct SH2DebugInterpreter = {
 
    NULL  // SH2WriteNotify not used
 };
-
-fetchfunc fetchlist[0x100];
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -234,10 +230,10 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
    if ((addr & 0xC0000000) == 0xC0000000) sh->instruction = DataArrayReadWord(addr);
    else
 #endif
-   sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
+   sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](addr);
 
    // Execute it
-   opcodes[sh->instruction](sh);
+   ((opcodefunc *)sh->opcodes)[sh->instruction](sh);
    sh->regs.PC -= 2;
 }
 
@@ -2714,13 +2710,19 @@ static opcodefunc decode(enum SHMODELTYPE model, u16 instruction)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2InterpreterInit(enum SHMODELTYPE model)
+int SH2InterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh)
 {
    int i;
 
    // Initialize any internal variables
    for(i = 0;i < 0x10000;i++)
-      opcodes[i] = decode(model, i);
+      msh->opcodes[i] = decode(model, i);
+
+	if (ssh)
+	{
+		for(i = 0;i < 0x10000;i++)
+			ssh->opcodes[i] = msh->opcodes[i];
+	}
 
    if (model == SHMT_SH1)
    {
@@ -2729,16 +2731,16 @@ int SH2InterpreterInit(enum SHMODELTYPE model)
          switch (i)
          {
             case 0x000: // Rom              
-               fetchlist[i] = FetchSH1Rom;
+               msh->fetchlist[i] = FetchSH1Rom;
                break;
             case 0x090: // Dram
-               fetchlist[i] = FetchSH1Dram;
+               msh->fetchlist[i] = FetchSH1Dram;
                break;
             case 0x0F0: // MPEG Rom
-               fetchlist[i] = FetchSH1MpegRom;
+               msh->fetchlist[i] = FetchSH1MpegRom;
                break;
             default:
-               fetchlist[i] = FetchInvalid;
+               msh->fetchlist[i] = FetchInvalid;
                break;
          }
       }
@@ -2756,16 +2758,16 @@ int SH2InterpreterInit(enum SHMODELTYPE model)
          switch (i)
          {
             case 0x000: // Bios              
-               fetchlist[i] = FetchBios;
+               msh->fetchlist[i] = ssh->fetchlist[i] = FetchBios;
                break;
             case 0x002: // Low Work Ram
-               fetchlist[i] = FetchLWram;
+               msh->fetchlist[i] = ssh->fetchlist[i] = FetchLWram;
                break;
             case 0x020: // CS0
-               fetchlist[i] = FetchCs0;
+               msh->fetchlist[i] = ssh->fetchlist[i] = FetchCs0;
                break;
             case 0x05c: // Fighting Viper
-               fetchlist[i] = FetchVram;
+               msh->fetchlist[i] = ssh->fetchlist[i] = FetchVram;
                break;
             case 0x060: // High Work Ram
             case 0x061: 
@@ -2783,18 +2785,18 @@ int SH2InterpreterInit(enum SHMODELTYPE model)
             case 0x06D: 
             case 0x06E: 
             case 0x06F:
-               fetchlist[i] = FetchHWram;
+               msh->fetchlist[i] = ssh->fetchlist[i] = FetchHWram;
                break;
             default:
-               fetchlist[i] = FetchInvalid;
+               msh->fetchlist[i] = ssh->fetchlist[i] = FetchInvalid;
                break;
          }
       }
 
       SH2ClearCodeBreakpoints(MSH2);
       SH2ClearCodeBreakpoints(SSH2);
-      SHClearMemoryBreakpoints(MSH2);
-      SHClearMemoryBreakpoints(SSH2);
+      SH2ClearMemoryBreakpoints(MSH2);
+      SH2ClearMemoryBreakpoints(SSH2);
       MSH2->breakpointEnabled = 0;
       SSH2->breakpointEnabled = 0;  
       MSH2->backtraceEnabled = 0;
@@ -2806,9 +2808,9 @@ int SH2InterpreterInit(enum SHMODELTYPE model)
    return 0;
 }
 
-int SH2DebugInterpreterInit(enum SHMODELTYPE model) {
+int SH2DebugInterpreterInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh) {
 
-  SH2InterpreterInit(model);
+  SH2InterpreterInit(model,msh,ssh);
   if (model == SHMT_SH1)
   {
     SH1->breakpointEnabled = 1;
@@ -2947,14 +2949,14 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
       else
 #endif
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+      context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       SH2HandleBackTrace(context);
       SH2HandleStepOverOut(context);
       SH2HandleTrackInfLoop(context);
 
       // Execute it
-      opcodes[context->instruction](context);
+      ((opcodefunc *)context->opcodes)[context->instruction](context);
 
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
@@ -2987,10 +2989,10 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
       else
 #endif
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+      context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it
-      opcodes[context->instruction](context);
+      ((opcodefunc *)context->opcodes)[context->instruction](context);
    }
 }
 
