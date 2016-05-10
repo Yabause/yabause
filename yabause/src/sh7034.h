@@ -95,7 +95,7 @@ struct Onchip
          u16 gra;
          u16 grb;
          //buffer regs unused for channels 0-2
-         u8 bra;
+         u16 bra;
          u16 brb;
       }channel[5];
    }itu;
