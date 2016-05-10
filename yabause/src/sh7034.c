@@ -1222,77 +1222,472 @@ u8 onchip_read_byte(struct Onchip * regs, u32 addr)
    return 0;
 }
 
-void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
+void onchip_sci_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
 {
-   //timer word writes
-   if (addr >= 0x5FFFF04 && addr <= 0x5FFFF3F)
-   {
-      if (addr <= 0x5FFFF0D)
-         onchip_write_timer_word(regs, addr - 0x5FFFF04, 0, data);
-      else if (addr <= 0x5FFFF17)
-         onchip_write_timer_word(regs, addr - 0x5FFFF0E, 1, data);
-      else if (addr <= 0x5FFFF21)
-         onchip_write_timer_word(regs, addr - 0x5FFFF18, 2, data);
-      else if (addr <= 0x5FFFF2F)
-         onchip_write_timer_word(regs, addr - 0x5FFFF22, 3, data);
-      else
-         onchip_write_timer_word(regs, addr - 0x5FFFF32, 4, data);
-      return;
-   }
-
-   addr -= 0x5FFFEC0;
-
-   addr /= 2;
    switch (addr)
    {
    case 0:
-      regs->sci[0].smr = (data >> 8) & 0xff;
-      regs->sci[0].brr = data & 0xff;
+      regs->sci[which].smr = data >> 8;
+      regs->sci[which].brr = data & 0xff;
       return;
-      break;
-   case 1:
-      regs->sci[0].scr = (data >> 8) & 0xff;
-      regs->sci[0].tdr = data & 0xff;
-      return;
-      break;
    case 2:
-   {
-      u8 temp = (data >> 8) & 0xff;
-      if(!temp)
-         regs->sci[0].ssr = temp;
-      //read only
-   }
+      regs->sci[which].scr = data >> 8;
+      regs->sci[which].tdr = data & 0xff;
       return;
-      break;
-   case 3:
-      return;
-      break;
    case 4:
-      regs->sci[1].smr = (data >> 8) & 0xff;
-      regs->sci[1].brr = data & 0xff;
+      regs->sci[which].ssr = data >> 8;
+      //rdr is read only
       return;
-      break;
-   case 5:
-      regs->sci[1].scr = (data >> 8) & 0xff;
-      regs->sci[1].tdr = data & 0xff;
-      return;
-      break;
-   case 6:
-   {
-      u8 temp = (data >> 8) & 0xff;
-      if (!temp)
-         regs->sci[1].ssr = temp;
-      //read only
-
-      return;
-   }
-   break;
-   case 7:
-      return;
-      break;
    }
 
    assert(0);
+}
+
+void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
+{
+   switch (addr)
+   {
+   case 0:
+      regs->dmac.channel[which].sar = regs->dmac.channel[which].sar & 0x0000ffff | data << 16;
+      return;
+   case 2:
+      regs->dmac.channel[which].sar = regs->dmac.channel[which].sar & 0xffff0000 | data;
+      return;
+   case 4:
+      regs->dmac.channel[which].dar = regs->dmac.channel[which].dar & 0x0000ffff | data << 16;
+      return;
+   case 6:
+      regs->dmac.channel[which].dar = regs->dmac.channel[which].dar & 0xffff0000 | data;
+      return;
+   case 8:
+      //unmapped
+      return;
+   case 0xa:
+      regs->dmac.channel[which].tcr = regs->dmac.channel[which].tcr & 0x0000ffff | data << 16;
+      return;
+   case 0xc:
+      regs->dmac.channel[which].tcr = regs->dmac.channel[which].tcr & 0xffff0000 | data;
+      return;
+   case 0xe:
+      if (!(data & 0xfffd))
+         regs->dmac.channel[which].chcr &= 0xfffd;
+      return;
+   }
+
+   assert(0);
+}
+
+void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
+{
+   if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
+   {
+      //unmapped
+      return;
+   }
+   //sci
+   else if (addr >= 0x5FFFEC0 && addr <= 0x5FFFECD)
+   {
+      if (addr >= 0x5FFFEC0 && addr <= 0x5FFFEC5)
+      {
+         //channel 0
+         onchip_sci_write_word(regs, addr - 0x5FFFEC0, 0, data);
+         return;
+      }
+      else if (addr >= 0x5FFFEC6 && addr <= 0x5FFFEC7)
+      {
+         return;//unmapped
+      }
+      else if (addr >= 0x5FFFEC8 && addr <= 0x5FFFECD)
+      {
+         //channel 1
+         onchip_sci_write_word(regs, addr - 0x5FFFEC8, 1, data);
+         return;
+      }
+      else if (addr >= 0x5FFFECE && addr <= 0x5FFFECF)
+      {
+         return;//unmapped
+      }
+   }
+   else if (addr >= 0x5FFFECE && addr <= 0x5FFFEDF)
+   {
+      //unmapped
+      return;
+   }
+   else if (addr >= 0x5FFFEE0 && addr <= 0x5FFFEE9)
+   {
+      //a/d
+      return;//read only
+   }
+   else if (addr >= 0x5FFFEEa && addr <= 0x5FFFEEf)
+   {
+      return;//unmapped
+   }
+   else if (addr >= 0x5FFFEF0 && addr <= 0x5FFFEFF)
+   {
+      //unmapped
+      return;
+   }
+   else if (addr >= 0x5FFFF00 && addr <= 0x5FFFF3F)
+   {
+      //channel 0
+      if (addr == 0x5FFFF08)
+      {
+         regs->itu.channel[0].tcnt = data;
+         return;
+      }
+      else if (addr == 0x5FFFF0a)
+      {
+         regs->itu.channel[0].gra = data;
+         return;
+      }
+      else if (addr == 0x5FFFF0b)
+      {
+         regs->itu.channel[0].grb = data;
+         return;
+      }
+      //channel 1
+      else if (addr == 0x5FFFF12)
+      {
+         regs->itu.channel[1].tcnt = data;
+         return;
+      }
+      else if (addr == 0x5FFFF14)
+      {
+         regs->itu.channel[1].gra = data;
+         return;
+      }
+      else if (addr == 0x5FFFF16)
+      {
+         regs->itu.channel[1].grb = data;
+         return;
+      }
+      //channel 2
+      else if (addr == 0x5FFFF1c)
+      {
+         regs->itu.channel[2].tcnt = data;
+         return;
+      }
+      else if (addr == 0x5FFFF1e)
+      {
+         regs->itu.channel[2].gra = data;
+         return;
+      }
+      else if (addr == 0x5FFFF20)
+      {
+         regs->itu.channel[2].grb = data;
+         return;
+      }
+      //channel 3
+      else if (addr == 0x5FFFF26)
+      {
+         regs->itu.channel[3].tcnt = data;
+         return;
+      }
+      else if (addr == 0x5FFFF28)
+      {
+         regs->itu.channel[3].gra = data;
+         return;
+      }
+      else if (addr == 0x5FFFF2a)
+      {
+         regs->itu.channel[3].grb = data;
+         return;
+      }
+      else if (addr == 0x5FFFF2c)
+      {
+         regs->itu.channel[3].bra = data;
+         return;
+      }
+      else if (addr == 0x5FFFF2e)
+      {
+         regs->itu.channel[3].brb = data;
+         return;
+      }
+      //channel 4
+      else if (addr == 0x5FFFF36)
+      {
+         regs->itu.channel[4].tcnt = data;
+         return;
+      }
+      else if (addr == 0x5FFFF38)
+      {
+         regs->itu.channel[4].gra = data;
+         return;
+      }
+      else if (addr == 0x5FFFF3a)
+      {
+         regs->itu.channel[4].grb = data;
+         return;
+      }
+      else if (addr == 0x5FFFF3c)
+      {
+         regs->itu.channel[4].bra = data;
+         return;
+      }
+      else if (addr == 0x5FFFF3e)
+      {
+         regs->itu.channel[4].brb = data;
+         return;
+      }
+
+      //everywhere else is inacessible
+
+      return;
+   }
+   else if (addr >= 0x5FFFF40 && addr <= 0x5FFFF7F)
+   {
+      //dmac
+      if (addr == 0x5FFFF48)
+      {
+         //can only clear bits 1 and 2
+         if (!(data & 2))
+            regs->dmac.dmaor = regs->dmac.dmaor & 0xfffd;
+
+         if (!(data & 1))
+            regs->dmac.dmaor = regs->dmac.dmaor & 0xfffe;
+         return;
+      }
+      if (addr >= 0x5FFFF40 && addr <= 0x5FFFF4E)
+      {
+         onchip_dmac_write_word(regs, addr - 0x5FFFF40, 0, data);
+         return;
+      }
+      else if (addr >= 0x5FFFF50 && addr <= 0x5FFFF5E)
+      {
+         onchip_dmac_write_word(regs, addr - 0x5FFFF50, 1, data);
+         return;
+      }
+      else if (addr >= 0x5FFFF60 && addr <= 0x5FFFF6E)
+      {
+         onchip_dmac_write_word(regs, addr - 0x5FFFF60, 2, data);
+         return;
+      }
+      else if (addr >= 0x5FFFF70 && addr <= 0x5FFFF7E)
+      {
+         onchip_dmac_write_word(regs, addr - 0x5FFFF70, 3, data);
+         return;
+      }
+
+      assert(0);
+   }
+   else if (addr >= 0x5FFFF80 && addr <= 0x5FFFF83)
+   {
+      //unmapped?
+      return;
+   }
+   else if (addr >= 0x5FFFF84 && addr <= 0x5FFFF8F)
+   {
+      //intc
+      switch (addr - 0x5FFFF80)
+      {
+      case 0:
+      case 2:
+         return;//unmapped
+      case 4:
+         regs->intc.ipra = data;
+         return;
+      case 6:
+         regs->intc.iprb = data;
+         return;
+      case 8:
+         regs->intc.iprc = data;
+         return;
+      case 0xa:
+         regs->intc.iprd = data;
+         return;
+      case 0xc:
+         regs->intc.ipre = data;
+         return;
+      case 0xe:
+         regs->intc.icr = data;
+         return;
+      }
+
+      assert(0);
+   }
+   else if (addr >= 0x5FFFF90 && addr <= 0x5FFFF99)
+   {
+      //ubc
+      switch (addr - 0x5FFFF90)
+      {
+      case 0:
+         regs->ubc.bar = regs->ubc.bar & 0xffff | data << 16;
+         return;
+      case 2:
+         regs->ubc.bar = regs->ubc.bar & 0xffff0000 | data;
+         return;
+      case 4:
+         regs->ubc.bamr = regs->ubc.bamr & 0xffff | data << 16;
+         return;
+      case 6:
+         regs->ubc.bamr = regs->ubc.bamr & 0xffff0000 | data;
+         return;
+      case 8:
+         regs->ubc.bbr = data;
+         return;
+      }
+
+      assert(0);
+   }
+   else if (addr >= 0x5FFFF9A && addr <= 0x5FFFF9F)
+   {
+      //unmapped
+      return;
+   }
+   else if (addr >= 0x5FFFFA0 && addr <= 0x5FFFFB3)
+   {
+      //bsc
+      switch (addr - 0x5FFFFA0)
+      {
+      case 0:
+         regs->bsc.bcr = data;
+         return;
+      case 2:
+         regs->bsc.wcr1 = data;
+         return;
+      case 4:
+         regs->bsc.wcr2 = data;
+         return;
+      case 6:
+         regs->bsc.wcr3 = data;
+         return;
+      case 8:
+         regs->bsc.dcr = data;
+         return;
+      case 0xa:
+         regs->bsc.pcr = data;
+         return;
+      case 0xc:
+         regs->bsc.rcr = data;
+         return;
+      case 0xe:
+         regs->bsc.rtcsr = data;
+         return;
+      case 0x10:
+         regs->bsc.rtcnt = data;
+         return;
+      case 0x12:
+         regs->bsc.rtcor = data;
+         return;
+      }
+
+      assert(0);
+   }
+   else if (addr >= 0x5FFFFb4 && addr <= 0x5FFFFb7)
+   {
+      //unmapped
+      return;
+   }
+   else if (addr >= 0x5FFFFB8 && addr <= 0x5FFFFBB)
+   {
+      //wdt
+      //TODO
+      return;
+   }
+   else if (addr == 0x5FFFFbc)
+   {
+      //sbycr
+      //what happens to the lower 8 bits?
+      regs->sbycr = data >> 8;
+      return;
+   }
+   else if (addr >= 0x5FFFFBD && addr <= 0x5FFFFBF)
+   {
+      //unmapped
+      return;
+   }
+   else if (addr >= 0x5FFFFC0 && addr <= 0x5FFFFC3)
+   {
+      //port a/b data reg
+      switch (addr - 0x5FFFFC0)
+      {
+      case 0:
+         regs->padr = data;
+         return;
+      case 2:
+         regs->pbdr = data;
+         return;
+      }
+
+      assert(0);
+   }
+   else if (addr >= 0x5FFFFC4 && addr <= 0x5FFFFCF)
+   {
+      //pfc
+      switch (addr - 0x5FFFFC0)
+      {
+         //paior
+      case 4:
+         regs->pfc.paior = data;
+         return;
+      case 6:
+         regs->pfc.pbior = data;
+         return;
+      case 8:
+         regs->pfc.pacr1 = data;
+         return;
+      case 0xa:
+         regs->pfc.pacr2 = data;
+         return;
+      case 0xc:
+         regs->pfc.pbcr1 = data;
+         return;
+      case 0xe:
+         regs->pfc.pbcr2 = data;
+         return;
+      }
+
+      assert(0);
+   }
+   else if (addr == 0x5FFFFD0)
+   {
+      regs->pcdr = data;
+      return;
+   }
+   else if (addr >= 0x5FFFFD2 && addr <= 0x5FFFFED)
+   {
+      //unmapped
+      return;
+   }
+   else if (addr == 0x5FFFFEE)
+   {
+      //cascr
+      regs->cascr = data;
+      return;
+   }
+   else if (addr >= 0x5FFFFF0 && addr <= 0x5FFFFF7)
+   {
+      //tpc
+      switch (addr - 0x5FFFFF0)
+      {
+      case 0:
+         regs->tpc.tpmr = data >> 8;
+         regs->tpc.tpcr = data & 0xff;
+         return;
+      case 2:
+         regs->tpc.nderb = data >> 8;
+         regs->tpc.ndera = data & 0xff;
+         return;
+      case 4:
+         regs->tpc.ndrb = data >> 8;
+         regs->tpc.ndra = data & 0xff;
+         return;
+      case 6:
+         regs->tpc.ndrb = data >> 8;
+         regs->tpc.ndra = data & 0xff;
+         return;
+      }
+
+      assert(0);
+   }
+   else if (addr >= 0x5FFFFF8 && addr <= 0x5FFFFFF)
+   {
+      //unmapped
+      return;
+   }
+   assert(0);
+
+   return;
 }
 
 u16 onchip_read_word(struct Onchip * regs, u32 addr)
@@ -1577,6 +1972,84 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
    return 0;
 }
 
+void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
+{
+   u8 area = (addr >> 24) & 7;
+   u8 a27 = (addr >> 27) & 1;
+   int mode_pins = 0;
+
+   switch (area)
+   {
+   case 0:
+      //ignore a27 in area 0
+
+      if (mode_pins == 2)//010
+      {
+         //sh1->rom[addr & 0xffff];
+      }
+      else
+      {
+         //mode 000 or 001
+
+         //external memory space
+
+         addr &= 0x3FFFFF;
+      }
+      break;
+   case 1:
+      if (!sh1->onchip.bsc.bcr)
+      {
+         //extern memory space
+      }
+      else
+      {
+
+      }
+      break;
+   case 2:
+   case 3:
+   case 4:
+      //external memory space
+      break;
+   case 5:
+      //onchip area
+      if (!a27)
+      {
+         onchip_write_word(&sh1->onchip, addr, data);
+         return;
+      }
+      else
+      {
+         //external memory space
+      }
+      break;
+   case 6:
+      if (a27)
+      {
+         //external memory space
+      }
+      else if (!sh1->onchip.bsc.bcr)
+      {
+         //external memory space
+      }
+      break;
+   case 7:
+      //onchip ram
+      if (a27)
+      {
+       //  return sh1->ram[addr & 0xFFF];
+      }
+      else
+      {
+         //onchip peripherals
+      }
+      break;
+   }
+
+   return;
+}
+
+
 void onchip_sci_init(struct Onchip * regs)
 {
    int i;
@@ -1748,6 +2221,14 @@ void test_byte_access(struct Sh1* sh1, u32 addr)
    u8 result = memory_map_read_byte(sh1, addr);
 }
 
+void test_word_access(struct Sh1* sh1, u32 addr)
+{
+   u16 test_val = 0xffff;
+   memory_map_write_word(sh1, addr, test_val);
+//   u8 result = memory_map_read_byte(sh1, addr);
+}
+
+
 void sh1_exec(struct Sh1 * sh1, s32 cycles)
 {
 #if 0
@@ -1756,6 +2237,11 @@ void sh1_exec(struct Sh1 * sh1, s32 cycles)
    for (i = 0x5FFFEC0; i < 0x5FFFFFF; i++)
    {
       test_byte_access(sh1, i);
+   }
+
+   for (i = 0x5FFFEC0; i < 0x5FFFFFF; i+=2)
+   {
+      test_word_access(sh1, i);
    }
 
    s32 cycles_temp = sh1->cycles_remainder - cycles;
