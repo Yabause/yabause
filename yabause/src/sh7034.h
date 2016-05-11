@@ -199,8 +199,8 @@ struct Onchip
 
 struct Sh1
 {
-   u16 rom[0x8000];//64kb
-   u8 ram[4096];//4kb
+   //u16 rom[0x8000];//64kb
+   u8 ram[0x2000];
    struct Onchip onchip;
    s32 cycles_remainder;
 };

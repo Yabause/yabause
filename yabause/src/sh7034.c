@@ -27,6 +27,14 @@
 #include "assert.h"
 #include "memory.h"
 #include "ygr.h"
+#include "debug.h"
+
+#define SH1_MEM_DEBUG
+#ifdef SH1_MEM_DEBUG
+#define SH1MEMLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
+#else
+#define SH1MEMLOG(...)
+#endif
 
 struct Sh1 sh1_cxt;
 
@@ -2945,6 +2953,8 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
 
+   SH1MEMLOG("memory_map_write_byte 0x%08x 0x%04x", addr, data);
+
    switch (area)
    {
    case 0:
@@ -2986,7 +2996,7 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
 
       if (a27)
       {
-         ygr_write_byte(addr, data);
+         ygr_sh1_write_byte(addr, data);
          return;
       }
       break;
@@ -3016,6 +3026,10 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       break;
    case 7:
       //onchip ram
+
+      T2WriteByte(sh1->ram, addr & 0x1fff, data);
+      return;
+
       if (a27)
       {
          sh1->ram[addr & 0xFFF] = data;
@@ -3036,14 +3050,18 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
 
+   SH1MEMLOG("memory_map_read_byte 0x%08x", addr);
+
    switch (area)
    {
    case 0:
       //ignore a27 in area 0
 
-      if (mode_pins == 2)//010
-         return sh1->rom[addr & 0xffff];
-      else
+      return T2ReadByte(SH1Rom, addr & 0xffff);
+
+  //    if (mode_pins == 2)//010
+  //       return sh1->rom[addr & 0xffff];
+  //    else
       {
          //mode 000 or 001
 
@@ -3075,7 +3093,7 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
 
       if (a27)
       {
-         return ygr_read_byte(addr);
+         return ygr_sh1_read_byte(addr);
       }
       break;
    case 5:
@@ -3100,6 +3118,9 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       }
       break;
    case 7:
+
+      return T2ReadByte(sh1->ram, addr & 0x1fff);
+
       //onchip ram
       if (a27)
          return sh1->ram[addr & 0xFFF];
@@ -3121,21 +3142,25 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
 
+   SH1MEMLOG("memory_map_read_word 0x%08x", addr);
+
    switch (area)
    {
    case 0:
       //ignore a27 in area 0
 
-      if (mode_pins == 2)//010
-         return sh1->rom[addr & 0xffff];
-      else
-      {
+      return T2ReadWord(SH1Rom, addr & 0xffff);
+
+    //  if (mode_pins == 2)//010
+    //     return sh1->rom[addr & 0xffff];
+    //  else
+   //   {
          //mode 000 or 001
 
          //external memory space
 
          addr &= 0x3FFFFF;
-      }
+ //     }
       break;
    case 1:
       if (!sh1->onchip.bsc.bcr)
@@ -3160,7 +3185,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
 
       if (a27)
       {
-         return ygr_read_word(addr);
+         return ygr_sh1_read_word(addr);
       }
       break;
    case 5:
@@ -3186,6 +3211,9 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
       break;
    case 7:
       //onchip ram
+
+      return T2ReadWord(sh1->ram, addr & 0x1fff);
+
       if(a27)
          return sh1->ram[addr & 0xFFF];
       else
@@ -3204,6 +3232,8 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
+
+   SH1MEMLOG("memory_map_write_word 0x%08x 0x%04x", addr, data);
 
    switch (area)
    {
@@ -3247,7 +3277,7 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
 
       if (a27)
       {
-         ygr_write_word(addr, data);
+         ygr_sh1_write_word(addr, data);
          return;
       }
       break;
@@ -3279,6 +3309,11 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
       break;
    case 7:
       //onchip ram
+
+      T2WriteWord(sh1->ram, addr & 0x1fff,data);
+
+      return;
+
       if (a27)
       {
        //  return sh1->ram[addr & 0xFFF];
@@ -3301,21 +3336,25 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
 
+   SH1MEMLOG("memory_map_read_long 0x%08x", addr);
+
    switch (area)
    {
    case 0:
       //ignore a27 in area 0
 
-      if (mode_pins == 2)//010
-         return sh1->rom[addr & 0xffff];
-      else
-      {
+      return T2ReadLong(SH1Rom, addr & 0xffff);
+
+      //if (mode_pins == 2)//010
+     //    return sh1->rom[addr & 0xffff];
+     // else
+     // {
          //mode 000 or 001
 
          //external memory space
 
          addr &= 0x3FFFFF;
-      }
+    //  }
       break;
    case 1:
       if (!sh1->onchip.bsc.bcr)
@@ -3340,7 +3379,7 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
 
       if (a27)
       {
-         return ygr_read_long(addr);
+         return ygr_sh1_read_long(addr);
       }
       break;
    case 5:
@@ -3367,12 +3406,13 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
       break;
    case 7:
       //onchip ram
-      if (a27)
-         return sh1->ram[addr & 0xFFF];
-      else
-      {
+    //  if (a27)
+      //apparently both are ram?
+      return T2ReadLong(sh1->ram, addr & 0x1fff);//sh1->ram[addr & 0x1FFF];
+   //   else
+    //  {
          //onchip peripherals
-      }
+    //  }
       break;
    }
 
@@ -3384,6 +3424,8 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
+
+   SH1MEMLOG("memory_map_write_long 0x%08x 0x%04x", addr, data);
 
    switch (area)
    {
@@ -3428,7 +3470,7 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       //ygr area
       if (a27)
       {
-         ygr_write_long(addr, data);
+         ygr_sh1_write_long(addr, data);
          return;
       }
       break;
@@ -3459,6 +3501,9 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       break;
    case 7:
       //onchip ram
+
+      T2WriteLong(sh1->ram, addr & 0x1fff, data);
+      return;
       if (a27)
       {
          //  return sh1->ram[addr & 0xFFF];
@@ -3626,18 +3671,18 @@ void sh1_init(struct Sh1* sh1)
    onchip_init(sh1);
 }
 
-u16 sh1_fetch(struct Sh1* sh1)
-{
-   u32 PC = 0;
-   return sh1->rom[PC & 0xffff];
-}
+//u16 sh1_fetch(struct Sh1* sh1)
+//{
+//   u32 PC = 0;
+//   return sh1->rom[PC & 0xffff];
+//}
 
-int sh1_execute_instruction(struct Sh1 * sh1)
-{
-   u16 instruction = sh1_fetch(sh1);
-   int cycles_executed = 1;
-   return cycles_executed;
-}
+//int sh1_execute_instruction(struct Sh1 * sh1)
+//{
+//   u16 instruction = sh1_fetch(sh1);
+//   int cycles_executed = 1;
+//   return cycles_executed;
+//}
 
 
 void test_byte_access(struct Sh1* sh1, u32 addr)
@@ -3737,7 +3782,7 @@ void sh1_exec(struct Sh1 * sh1, s32 cycles)
    sh1->cycles_remainder = cycles_temp;
 #endif
 }
-
+#if 0
 int sh1_load_rom(struct Sh1* sh1, const char* filename)
 {
    size_t size = 0;
@@ -3772,3 +3817,4 @@ int sh1_load_rom(struct Sh1* sh1, const char* filename)
 
    return 1;
 }
+#endif

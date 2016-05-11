@@ -1,4 +1,5 @@
 /*  Copyright 2014-2016 James Laird-Wah
+    Copyright 2004-2006, 2013 Theo Berkau
 
     This file is part of Yabause.
 
@@ -22,12 +23,17 @@
 
 #include "core.h"
 
-u8 ygr_read_byte(u32 addr);
-u16 ygr_read_word(u32 addr);
-u32 ygr_read_long(u32 addr);
+u8 ygr_sh1_read_byte(u32 addr);
+u16 ygr_sh1_read_word(u32 addr);
+u32 ygr_sh1_read_long(u32 addr);
 
-void ygr_write_byte(u32 addr, u8 data);
-void ygr_write_word(u32 addr, u16 data);
-void ygr_write_long(u32 addr, u32 data);
+void ygr_sh1_write_byte(u32 addr, u8 data);
+void ygr_sh1_write_word(u32 addr, u16 data);
+void ygr_sh1_write_long(u32 addr, u32 data);
 
+u16 FASTCALL ygr_a_bus_read_word(u32 addr);
+u32 FASTCALL  ygr_a_bus_read_long(u32 addr);
+
+void FASTCALL ygr_a_bus_write_word(u32 addr, u16 data);
+void FASTCALL ygr_a_bus_write_long(u32 addr, u32 data);
 #endif
