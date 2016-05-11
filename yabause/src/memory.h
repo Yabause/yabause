@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include "core.h"
 
+typedef struct SH2_struct SH2_struct;
+
 /* Type 1 Memory, faster for byte (8 bits) accesses */
 
 u8 * T1MemoryInit(u32);
@@ -338,19 +340,19 @@ static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void MappedMemoryInit(void);
-u8 FASTCALL MappedMemoryReadByte(u32 addr);
-u16 FASTCALL MappedMemoryReadWord(u32 addr);
-u32 FASTCALL MappedMemoryReadLong(u32 addr);
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val);
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val);
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
+void MappedMemoryInit(SH2_struct *msh1, SH2_struct *ssh2, SH2_struct *sh1);
+u8 FASTCALL MappedMemoryReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL MappedMemoryReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL MappedMemoryReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL MappedMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL MappedMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL MappedMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
+u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr);
+u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr);
+u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr);
+void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL MappedMemoryWriteLongNocache(SH2_struct *sh, u32 addr, u32 val);
 #ifdef __cplusplus
 }
 #endif
@@ -370,21 +372,13 @@ extern u8 *BiosRom;
 extern u8 *BupRam;
 extern u8 BupRamWritten;
 
-typedef void (FASTCALL *writebytefunc)(u32, u8);
-typedef void (FASTCALL *writewordfunc)(u32, u16);
-typedef void (FASTCALL *writelongfunc)(u32, u32);
+typedef void (FASTCALL *writebytefunc)(SH2_struct *, u32, u8);
+typedef void (FASTCALL *writewordfunc)(SH2_struct *, u32, u16);
+typedef void (FASTCALL *writelongfunc)(SH2_struct *, u32, u32);
 
-typedef u8 (FASTCALL *readbytefunc)(u32);
-typedef u16 (FASTCALL *readwordfunc)(u32);
-typedef u32 (FASTCALL *readlongfunc)(u32);
-
-extern writebytefunc WriteByteList[0x1000];
-extern writewordfunc WriteWordList[0x1000];
-extern writelongfunc WriteLongList[0x1000];
-
-extern readbytefunc ReadByteList[0x1000];
-extern readwordfunc ReadWordList[0x1000];
-extern readlongfunc ReadLongList[0x1000];
+typedef u8 (FASTCALL *readbytefunc)(SH2_struct *, u32);
+typedef u16 (FASTCALL *readwordfunc)(SH2_struct *, u32);
+typedef u32 (FASTCALL *readlongfunc)(SH2_struct *, u32);
 
 typedef struct {
 u32 addr;
@@ -410,8 +404,8 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                                   const char *searchstr,
                                   result_struct *prevresults, u32 *maxresults);
 
-int MappedMemoryLoad(const char *filename, u32 addr);
-int MappedMemorySave(const char *filename, u32 addr, u32 size);
+int MappedMemoryLoad(SH2_struct *sh, const char *filename, u32 addr);
+int MappedMemorySave(SH2_struct *sh, const char *filename, u32 addr, u32 size);
 void MappedMemoryLoadExec(const char *filename, u32 pc);
 
 int LoadSH1Rom(const char *filename);

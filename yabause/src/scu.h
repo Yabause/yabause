@@ -22,6 +22,7 @@
 #define SCU_H
 
 #include "core.h"
+#include "memory.h"
 
 typedef struct
 {
@@ -257,12 +258,12 @@ void ScuDeInit(void);
 void ScuReset(void);
 void ScuExec(u32 timing);
 
-u8 FASTCALL	ScuReadByte(u32);
-u16 FASTCALL	ScuReadWord(u32);
-u32 FASTCALL	ScuReadLong(u32);
-void FASTCALL	ScuWriteByte(u32, u8);
-void FASTCALL	ScuWriteWord(u32, u16);
-void FASTCALL	ScuWriteLong(u32, u32);
+u8 FASTCALL	ScuReadByte(SH2_struct *, u32);
+u16 FASTCALL	ScuReadWord(SH2_struct *, u32);
+u32 FASTCALL	ScuReadLong(SH2_struct *, u32);
+void FASTCALL	ScuWriteByte(SH2_struct *, u32, u8);
+void FASTCALL	ScuWriteWord(SH2_struct *, u32, u16);
+void FASTCALL	ScuWriteLong(SH2_struct *, u32, u32);
 
 void ScuSendVBlankIN(void);
 void ScuSendVBlankOUT(void);

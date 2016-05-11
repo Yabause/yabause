@@ -51,9 +51,9 @@ void BiosInit(void);
 int FASTCALL BiosHandleFunc(SH2_struct * sh);
 
 deviceinfo_struct *BupGetDeviceList(int *numdevices);
-int BupGetStats(u32 device, u32 *freespace, u32 *maxspace);
-saveinfo_struct *BupGetSaveList(u32 device, int *numsaves);
-int BupDeleteSave(u32 device, const char *savename);
+int BupGetStats(SH2_struct *sh, u32 device, u32 *freespace, u32 *maxspace);
+saveinfo_struct *BupGetSaveList(SH2_struct *sh, u32 device, int *numsaves);
+int BupDeleteSave(SH2_struct *sh, u32 device, const char *savename);
 void BupFormat(u32 device);
 int BupCopySave(u32 srcdevice, u32 dstdevice, const char *savename);
 int BupImportSave(u32 device, const char *filename);

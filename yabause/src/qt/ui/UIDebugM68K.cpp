@@ -21,7 +21,7 @@
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 
-int M68KDis(u32 addr, char *string)
+int M68KDis(void *context, u32 addr, char *string)
 {
    return (int)(M68KDisasm(addr, string) - addr);
 }

@@ -1381,8 +1381,8 @@ static void Vdp2GenerateWindowInfo(void)
                     m_vWindinfo0[v].WinShowLine = 0;
 
                 }else{
-                    short HStart = Vdp2RamReadWord(LineWinAddr + (v << 2) );
-                    short HEnd   = Vdp2RamReadWord(LineWinAddr + (v << 2) + 2);
+                    short HStart = T1ReadWord(Vdp2Ram, LineWinAddr + (v << 2));
+                    short HEnd   = T1ReadWord(Vdp2Ram, LineWinAddr + (v << 2) + 2);
 
                     if( HStart < HEnd )
                     {
@@ -1540,8 +1540,8 @@ static void Vdp2GenerateWindowInfo(void)
                     if( m_vWindinfo1[v].WinShowLine ) m_b1WindowChg = 1;
                     m_vWindinfo1[v].WinShowLine = 0;
                 }else{
-                    short HStart = Vdp2RamReadWord(LineWinAddr + (v << 2) );
-                    short HEnd   = Vdp2RamReadWord(LineWinAddr + (v << 2) + 2);
+                    short HStart = T1ReadWord(Vdp2Ram, LineWinAddr + (v << 2));
+                    short HEnd   = T1ReadWord(Vdp2Ram, LineWinAddr + (v << 2) + 2);
                     if( HStart < HEnd )
                     {
                         HStart >>= HShift;

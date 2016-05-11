@@ -45,7 +45,7 @@ u32 bDet, bChg;
    only depends on <src> register(s) (and potentially constant values,
    including memory content which is constant in an idle loop) */
 
-#define delayCheck(PC) SH2idleCheckIterate(context, ((fetchfunc *)context->fetchlist)[((PC) >> 20) & 0x0FF](PC), PC )
+#define delayCheck(PC) SH2idleCheckIterate(context, ((fetchfunc *)context->fetchlist)[((PC) >> 20) & 0x0FF](context, PC), PC )
 
 #define implies(dest,src) if ( src ) bDet |= dest; else bChg |= dest;
 #define implies2(dest,dest2,src) if ( src ) bDet |= dest|dest2; else bChg |= dest|dest2;
@@ -475,7 +475,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
 
   for (;;) {
       // Fetch Instruction
-       context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+       context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
 
       if ( INSTRUCTION_A(context->instruction)==8 ) {
 
@@ -521,7 +521,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   cyclesCheckEnd = context->cycles + MAX_CYCLE_CHECK;
 
   if ( isDelayed ) {
-    context->instruction = ((fetchfunc *)context->fetchlist)[((loopEnd+2) >> 20) & 0x0FF](loopEnd+2);
+    context->instruction = ((fetchfunc *)context->fetchlist)[((loopEnd+2) >> 20) & 0x0FF](context, loopEnd+2);
     ((opcodefunc *)context->opcodes)[context->instruction](context);
     context->regs.PC -= 2;
     if ( !SH2idleCheckIterate(context,context->instruction,0) ) return;
@@ -532,7 +532,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   while ( context->regs.PC != loopEnd ) {
 
     PC1 = context->regs.PC;
-    context->instruction = ((fetchfunc *)context->fetchlist)[(PC1 >> 20) & 0x0FF](PC1);
+    context->instruction = ((fetchfunc *)context->fetchlist)[(PC1 >> 20) & 0x0FF](context, PC1);
     if ( !SH2idleCheckIterate(context,context->instruction,PC1) ) return;    
     ((opcodefunc *)context->opcodes)[context->instruction](context);
     if ( context->cycles >= cyclesCheckEnd ) return;
@@ -541,7 +541,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   // conditional jump 
 
   PC2 = context->regs.PC;
-  context->instruction = ((fetchfunc *)context->fetchlist)[(PC2 >> 20) & 0x0FF](PC2);
+  context->instruction = ((fetchfunc *)context->fetchlist)[(PC2 >> 20) & 0x0FF](context, PC2);
   ((opcodefunc *)context->opcodes)[context->instruction](context);
   if ( context->regs.PC != loopBegin ) return; // We are not in a single loop... forget it
 
@@ -553,16 +553,16 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   // Second pass
 
   if ( isDelayed )
-    if ( !SH2idleCheckIterate(context,((fetchfunc *)context->fetchlist)[((loopEnd+2) >> 20) & 0x0FF](loopEnd+2),0) ) return;
+    if ( !SH2idleCheckIterate(context,((fetchfunc *)context->fetchlist)[((loopEnd+2) >> 20) & 0x0FF](context, loopEnd+2),0) ) return;
 
   while ( context->regs.PC != loopEnd ) {
     
     PC3 = context->regs.PC;
-    context->instruction = ((fetchfunc *)context->fetchlist)[(PC3 >> 20) & 0x0FF](PC3);
+    context->instruction = ((fetchfunc *)context->fetchlist)[(PC3 >> 20) & 0x0FF](context, PC3);
     if ( !SH2idleCheckIterate(context,context->instruction,PC3) ) return;    
     ((opcodefunc *)context->opcodes)[context->instruction](context);
   }
-  context->instruction = ((fetchfunc *)context->fetchlist)[(PC2 >> 20) & 0x0FF](PC2);
+  context->instruction = ((fetchfunc *)context->fetchlist)[(PC2 >> 20) & 0x0FF](context, PC2);
   ((opcodefunc *)context->opcodes)[context->instruction](context);  
   
   if ( context->regs.PC != loopBegin ) return;
@@ -599,7 +599,7 @@ void FASTCALL SH2idleParse( SH2_struct *context, u32 cycles ) {
   for(;;) {
     
     u32 PC = context->regs.PC;
-    context->instruction = ((fetchfunc *)context->fetchlist)[(PC >> 20) & 0x0FF](PC);
+    context->instruction = ((fetchfunc *)context->fetchlist)[(PC >> 20) & 0x0FF](context, PC);
     if ( INSTRUCTION_A(context->instruction)==8 ) {
       switch( INSTRUCTION_B(context->instruction) ) {
       case 13: //SH2bts

@@ -42,26 +42,26 @@ typedef struct
    int cartid;
    const char *filename;
 
-   u8 FASTCALL (*Cs0ReadByte)(u32 addr);
-   u16 FASTCALL (*Cs0ReadWord)(u32 addr);
-   u32 FASTCALL (*Cs0ReadLong)(u32 addr);
-   void FASTCALL (*Cs0WriteByte)(u32 addr, u8 val);
-   void FASTCALL (*Cs0WriteWord)(u32 addr, u16 val);
-   void FASTCALL (*Cs0WriteLong)(u32 addr, u32 val);
+   u8 FASTCALL (*Cs0ReadByte)(SH2_struct *sh, u32 addr);
+   u16 FASTCALL (*Cs0ReadWord)(SH2_struct *sh, u32 addr);
+   u32 FASTCALL (*Cs0ReadLong)(SH2_struct *sh, u32 addr);
+   void FASTCALL (*Cs0WriteByte)(SH2_struct *sh, u32 addr, u8 val);
+   void FASTCALL (*Cs0WriteWord)(SH2_struct *sh, u32 addr, u16 val);
+   void FASTCALL (*Cs0WriteLong)(SH2_struct *sh, u32 addr, u32 val);
 
-   u8 FASTCALL (*Cs1ReadByte)(u32 addr);
-   u16 FASTCALL (*Cs1ReadWord)(u32 addr);
-   u32 FASTCALL (*Cs1ReadLong)(u32 addr);
-   void FASTCALL (*Cs1WriteByte)(u32 addr, u8 val);
-   void FASTCALL (*Cs1WriteWord)(u32 addr, u16 val);
-   void FASTCALL (*Cs1WriteLong)(u32 addr, u32 val);
+   u8 FASTCALL (*Cs1ReadByte)(SH2_struct *sh, u32 addr);
+   u16 FASTCALL (*Cs1ReadWord)(SH2_struct *sh, u32 addr);
+   u32 FASTCALL (*Cs1ReadLong)(SH2_struct *sh, u32 addr);
+   void FASTCALL (*Cs1WriteByte)(SH2_struct *sh, u32 addr, u8 val);
+   void FASTCALL (*Cs1WriteWord)(SH2_struct *sh, u32 addr, u16 val);
+   void FASTCALL (*Cs1WriteLong)(SH2_struct *sh, u32 addr, u32 val);
 
-   u8 FASTCALL (*Cs2ReadByte)(u32 addr);
-   u16 FASTCALL (*Cs2ReadWord)(u32 addr);
-   u32 FASTCALL (*Cs2ReadLong)(u32 addr);
-   void FASTCALL (*Cs2WriteByte)(u32 addr, u8 val);
-   void FASTCALL (*Cs2WriteWord)(u32 addr, u16 val);
-   void FASTCALL (*Cs2WriteLong)(u32 addr, u32 val);
+   u8 FASTCALL (*Cs2ReadByte)(SH2_struct *sh, u32 addr);
+   u16 FASTCALL (*Cs2ReadWord)(SH2_struct *sh, u32 addr);
+   u32 FASTCALL (*Cs2ReadLong)(SH2_struct *sh, u32 addr);
+   void FASTCALL (*Cs2WriteByte)(SH2_struct *sh, u32 addr, u8 val);
+   void FASTCALL (*Cs2WriteWord)(SH2_struct *sh, u32 addr, u16 val);
+   void FASTCALL (*Cs2WriteLong)(SH2_struct *sh, u32 addr, u32 val);
 
    void *rom;
    void *bupram;

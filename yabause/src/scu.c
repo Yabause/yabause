@@ -213,25 +213,25 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             u32 counter = 0;
             u32 val;
             if (ReadAddress & 2) {  // Avoid misaligned access
-               val = MappedMemoryReadWord(ReadAddress) << 16
-                   | MappedMemoryReadWord(ReadAddress+2);
+               val = MappedMemoryReadWordNocache(MSH2, ReadAddress) << 16
+                   | MappedMemoryReadWordNocache(MSH2, ReadAddress+2);
             } else {
-               val = MappedMemoryReadLong(ReadAddress);
+               val = MappedMemoryReadLongNocache(MSH2, ReadAddress);
             }
             while (counter < TransferSize) {
-               MappedMemoryWriteWord(WriteAddress, (u16)(val >> 16));
+               MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)(val >> 16));
                WriteAddress += WriteAdd;
-               MappedMemoryWriteWord(WriteAddress, (u16)val);
+               MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)val);
                WriteAddress += WriteAdd;
                counter += 4;
             }
          } else {
             u32 counter = 0;
             while (counter < TransferSize) {
-               u32 tmp = MappedMemoryReadLong(ReadAddress);
-               MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+               u32 tmp = MappedMemoryReadLong(MSH2, ReadAddress);
+               MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)(tmp >> 16));
                WriteAddress += WriteAdd;
-               MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+               MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)tmp);
                WriteAddress += WriteAdd;
                ReadAddress += ReadAdd;
                counter += 4;
@@ -242,10 +242,10 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          // Fill in 32-bit units (always aligned).
          u32 start = WriteAddress;
          if (constant_source) {
-            u32 val = MappedMemoryReadLong(ReadAddress);
+            u32 val = MappedMemoryReadLongNocache(MSH2, ReadAddress);
             u32 counter = 0;
             while (counter < TransferSize) {
-               MappedMemoryWriteLong(WriteAddress, val);
+               MappedMemoryWriteLongNocache(MSH2, WriteAddress, val);
                ReadAddress += ReadAdd;
                WriteAddress += WriteAdd;
                counter += 4;
@@ -253,8 +253,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          } else {
             u32 counter = 0;
             while (counter < TransferSize) {
-               MappedMemoryWriteLong(WriteAddress,
-                                     MappedMemoryReadLong(ReadAddress));
+               MappedMemoryWriteLongNocache(MSH2, WriteAddress,
+                                     MappedMemoryReadLongNocache(MSH2, ReadAddress));
                ReadAddress += ReadAdd;
                WriteAddress += WriteAdd;
                counter += 4;
@@ -360,8 +360,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          // Copy in 16-bit units, avoiding misaligned accesses.
          u32 counter = 0;
          if (ReadAddress & 2) {  // Avoid misaligned access
-            u16 tmp = MappedMemoryReadWord(ReadAddress);
-            MappedMemoryWriteWord(WriteAddress, tmp);
+            u16 tmp = MappedMemoryReadWordNocache(MSH2, ReadAddress);
+            MappedMemoryWriteWordNocache(MSH2, WriteAddress, tmp);
             WriteAddress += WriteAdd;
             ReadAddress += 2;
             counter += 2;
@@ -369,18 +369,18 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          if (TransferSize >= 3)
          {
             while (counter < TransferSize-2) {
-               u32 tmp = MappedMemoryReadLong(ReadAddress);
-               MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+               u32 tmp = MappedMemoryReadLongNocache(MSH2, ReadAddress);
+               MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)(tmp >> 16));
                WriteAddress += WriteAdd;
-               MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+               MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)tmp);
                WriteAddress += WriteAdd;
                ReadAddress += 4;
                counter += 4;
             }
          }
          if (counter < TransferSize) {
-            u16 tmp = MappedMemoryReadWord(ReadAddress);
-            MappedMemoryWriteWord(WriteAddress, tmp);
+            u16 tmp = MappedMemoryReadWordNocache(MSH2, ReadAddress);
+            MappedMemoryWriteWordNocache(MSH2, WriteAddress, tmp);
             WriteAddress += WriteAdd;
             ReadAddress += 2;
             counter += 2;
@@ -390,7 +390,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          u32 counter = 0;
          u32 start = WriteAddress;
          while (counter < TransferSize) {
-            MappedMemoryWriteLong(WriteAddress, MappedMemoryReadLong(ReadAddress));
+            MappedMemoryWriteLongNocache(MSH2, WriteAddress, MappedMemoryReadLongNocache(MSH2, ReadAddress));
             ReadAddress += 4;
             WriteAddress += WriteAdd;
             counter += 4;
@@ -404,7 +404,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
 
 //////////////////////////////////////
 
-static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
+static void FASTCALL ScuDMA(SH2_struct *sh, scudmainfo_struct *dmainfo) {
    u8 ReadAdd, WriteAdd;
 
    if (dmainfo->AddValue & 0x100)
@@ -446,9 +446,9 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
       // Indirect DMA
 
       for (;;) {
-         u32 ThisTransferSize = MappedMemoryReadLong(dmainfo->WriteAddress);
-         u32 ThisWriteAddress = MappedMemoryReadLong(dmainfo->WriteAddress+4);
-         u32 ThisReadAddress  = MappedMemoryReadLong(dmainfo->WriteAddress+8);
+         u32 ThisTransferSize = MappedMemoryReadLongNocache(sh, dmainfo->WriteAddress);
+         u32 ThisWriteAddress = MappedMemoryReadLongNocache(sh, dmainfo->WriteAddress+4);
+         u32 ThisReadAddress  = MappedMemoryReadLongNocache(sh, dmainfo->WriteAddress+8);
 
          //LOG("SCU Indirect DMA: src %08x, dst %08x, size = %08x\n", ThisReadAddress, ThisWriteAddress, ThisTransferSize);
          DoDMA(ThisReadAddress & 0x7FFFFFFF, ReadAdd, ThisWriteAddress,
@@ -708,7 +708,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     {
         for (i = 0; i < imm; i++)
         {
-            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLongNocache(MSH2, (sc->RA0 << 2));
             sc->CT[sel]++;
             sc->CT[sel] &= 0x3F;
             sc->RA0 += 1; // add?
@@ -717,7 +717,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     else{
         for (i = 0; i < imm; i++)
         {
-            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLongNocache(MSH2, (sc->RA0 << 2));
             sc->CT[sel]++;
             sc->CT[sel] &= 0x3F;
             sc->RA0 += 1;
@@ -754,7 +754,7 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
             u32 Val = sc->MD[sel][sc->CT[sel]];
             u32 Adr = (sc->WA0 << 2);
             //LOG("SCU DSP DMA02 D:%08x V:%08x", Adr, Val);
-            MappedMemoryWriteLong(Adr, Val);
+            MappedMemoryWriteLongNocache(MSH2, Adr, Val);
             sc->CT[sel]++;
             sc->WA0 += add >> 1;
             sc->CT[sel] &= 0x3F;
@@ -767,7 +767,7 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
             u32 Val = sc->MD[sel][sc->CT[sel]];
             u32 Adr = (sc->WA0 << 2);
 
-            MappedMemoryWriteLong(Adr, Val);
+            MappedMemoryWriteLongNocache(MSH2, Adr, Val);
             sc->CT[sel]++;
             sc->CT[sel] &= 0x3F;
             sc->WA0 += 1;
@@ -803,7 +803,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         for (i = 0; i < Counter; i++)
         {
             u32 Adr = (sc->RA0 << 2);
-            sc->ProgramRam[i] = MappedMemoryReadLong(Adr);
+            sc->ProgramRam[i] = MappedMemoryReadLongNocache(MSH2, Adr);
             sc->RA0 += incl;
         }
     }
@@ -814,7 +814,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         {
             u32 Adr = (sc->RA0 << 2);
 
-            sc->MD[DestinationId][sc->CT[DestinationId]] = MappedMemoryReadLong(Adr);
+            sc->MD[DestinationId][sc->CT[DestinationId]] = MappedMemoryReadLongNocache(MSH2, Adr);
             sc->CT[DestinationId]++;
             sc->CT[DestinationId] &= 0x3F;
             sc->RA0 += incl;
@@ -858,7 +858,7 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     {
         u32 Val = sc->MD[sel][sc->CT[sel]];
         u32 Adr = (sc->WA0 << 2);
-        MappedMemoryWriteLong(Adr, Val);
+        MappedMemoryWriteLongNocache(MSH2, Adr, Val);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
         sc->WA0 += 1;
@@ -2193,7 +2193,7 @@ void ScuDspClearCodeBreakpoints(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL ScuReadByte(u32 addr) {
+u8 FASTCALL ScuReadByte(SH2_struct *sh, u32 addr) {
    addr &= 0xFF;
 
    switch(addr) {
@@ -2209,7 +2209,7 @@ u8 FASTCALL ScuReadByte(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL ScuReadWord(u32 addr) {
+u16 FASTCALL ScuReadWord(SH2_struct *sh, u32 addr) {
    addr &= 0xFF;
    LOG("Unhandled SCU Register word read %08X\n", addr);
 
@@ -2218,7 +2218,7 @@ u16 FASTCALL ScuReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL ScuReadLong(u32 addr) {
+u32 FASTCALL ScuReadLong(SH2_struct *sh, u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0:
@@ -2264,7 +2264,7 @@ u32 FASTCALL ScuReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteByte(u32 addr, u8 val) {
+void FASTCALL ScuWriteByte(SH2_struct *sh, u32 addr, u8 val) {
    addr &= 0xFF;
    switch(addr) {
       case 0xA7:
@@ -2278,14 +2278,14 @@ void FASTCALL ScuWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
+void FASTCALL ScuWriteWord(SH2_struct *sh, u32 addr, UNUSED u16 val) {
    addr &= 0xFF;
    LOG("Unhandled SCU Register word write %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteLong(u32 addr, u32 val) {
+void FASTCALL ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
    addr &= 0xFF;
    switch(addr) {
       case 0:
@@ -2312,7 +2312,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
             dmainfo.AddValue = ScuRegs->D0AD;
             dmainfo.ModeAddressUpdate = ScuRegs->D0MD;
 
-            ScuDMA(&dmainfo);
+            ScuDMA(sh, &dmainfo);
          }
          ScuRegs->D0EN = val;
          break;
@@ -2346,7 +2346,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
             dmainfo.AddValue = ScuRegs->D1AD;
             dmainfo.ModeAddressUpdate = ScuRegs->D1MD;
 
-            ScuDMA(&dmainfo);
+            ScuDMA(sh, &dmainfo);
          }
          ScuRegs->D1EN = val;
          break;
@@ -2380,7 +2380,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
             dmainfo.AddValue = ScuRegs->D2AD;
             dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
 
-            ScuDMA(&dmainfo);
+            ScuDMA(sh, &dmainfo);
          }
          ScuRegs->D2EN = val;
          break;

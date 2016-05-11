@@ -112,9 +112,9 @@ static INLINE void update_lru(int way, u32*lru)
    //should not happen
 }
 
-static INLINE int select_way_to_replace(u32 lru)
+static INLINE int select_way_to_replace(SH2_struct *sh, u32 lru)
 {
-   if (CurrentSH2->onchip.CCR & (1 << 3))//2-way mode
+   if (sh->onchip.CCR & (1 << 3))//2-way mode
    {
       if ((lru & 1) == 1)
          return 2;
@@ -137,7 +137,7 @@ static INLINE int select_way_to_replace(u32 lru)
    return 0;
 }
 
-void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
+void cache_memory_write_b(SH2_struct *sh, cache_enty * ca, u32 addr, u8 val){
 
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -145,7 +145,7 @@ void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
       u32 tagaddr = 0;
       u32 entry = 0;
 		if (ca->enable == 0){
-			MappedMemoryWriteByteNocache(addr, val);
+			MappedMemoryWriteByteNocache(sh, addr, val);
 			return;
 		}
 		tagaddr = (addr & TAG_MASK);
@@ -166,19 +166,19 @@ void cache_memory_write_b(cache_enty * ca, u32 addr, u8 val){
 			ca->way[3][entry].data[addr&LINE_MASK] = val;
          update_lru(3, &ca->lru[entry]);
 		}
-		MappedMemoryWriteByteNocache(addr, val);
+		MappedMemoryWriteByteNocache(sh, addr, val);
 	}
 	break;
 	case CACHE_THROUGH:
-		MappedMemoryWriteByteNocache(addr, val);
+		MappedMemoryWriteByteNocache(sh, addr, val);
 		break;
 	default:
-		MappedMemoryWriteByteNocache(addr, val);
+		MappedMemoryWriteByteNocache(sh, addr, val);
 		break;
 	}
 }
 
-void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
+void cache_memory_write_w(SH2_struct *sh, cache_enty * ca, u32 addr, u16 val){
 
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -186,7 +186,7 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
       u32 tagaddr = 0;
       u32 entry = 0;
 		if (ca->enable == 0){
-			MappedMemoryWriteWordNocache(addr, val);
+			MappedMemoryWriteWordNocache(sh, addr, val);
 			return;
 		}
 
@@ -214,19 +214,19 @@ void cache_memory_write_w(cache_enty * ca, u32 addr, u16 val){
 		}
 
 		// write through
-		MappedMemoryWriteWordNocache(addr, val);
+		MappedMemoryWriteWordNocache(sh, addr, val);
 	}
 	break;
 	case CACHE_THROUGH:
-		MappedMemoryWriteWordNocache(addr, val);
+		MappedMemoryWriteWordNocache(sh, addr, val);
 		break;
 	default:
-		MappedMemoryWriteWordNocache(addr, val);
+		MappedMemoryWriteWordNocache(sh, addr, val);
 		break;
 	}
 }
 
-void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
+void cache_memory_write_l(SH2_struct *sh, cache_enty * ca, u32 addr, u32 val){
 
 	switch (addr & AREA_MASK){
    case CACHE_PURGE://associative purge
@@ -250,7 +250,7 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
       u32 tagaddr = 0;
       u32 entry = 0;
 		if (ca->enable == 0){
-			MappedMemoryWriteLongNocache(addr, val);
+			MappedMemoryWriteLongNocache(sh, addr, val);
 			return;
 		}
 
@@ -287,20 +287,19 @@ void cache_memory_write_l(cache_enty * ca, u32 addr, u32 val){
 		}
 
 		// write through
-		MappedMemoryWriteLongNocache(addr, val);
+		MappedMemoryWriteLongNocache(sh, addr, val);
 	}
 	break;
 	case CACHE_THROUGH:
-		MappedMemoryWriteLongNocache(addr, val);
+		MappedMemoryWriteLongNocache(sh, addr, val);
 		break;
 	default:
-		MappedMemoryWriteLongNocache(addr, val);
+		MappedMemoryWriteLongNocache(sh, addr, val);
 		break;
 	}
 }
 
-
-u8 cache_memory_read_b(cache_enty * ca, u32 addr){
+u8 cache_memory_read_b(SH2_struct *sh, cache_enty * ca, u32 addr){
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
 	{
@@ -309,7 +308,7 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr){
       int i = 0;
       int lruway = 0;
 		if (ca->enable == 0){
-			return MappedMemoryReadByteNocache(addr);
+			return MappedMemoryReadByteNocache(sh, addr);
 		}
 		tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
@@ -330,11 +329,11 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr){
 			return ca->way[3][entry].data[addr&LINE_MASK];
 		}
 		// cache miss
-      lruway = select_way_to_replace(ca->lru[entry]);
+      lruway = select_way_to_replace(sh, ca->lru[entry]);
       update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
 		for (i = 0; i < 16; i++){
-			ca->way[lruway][entry].data[i] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + i);
+			ca->way[lruway][entry].data[i] = sh->ReadByteList[(addr >> 16) & 0xFFF](sh, (addr & 0xFFFFFFF0) + i);
 		}
      
       ca->way[lruway][entry].v = 1; //becomes valid
@@ -342,16 +341,16 @@ u8 cache_memory_read_b(cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
-		return MappedMemoryReadByteNocache(addr);
+		return MappedMemoryReadByteNocache(sh, addr);
 		break;
 	default:
-		return MappedMemoryReadByteNocache(addr);
+		return MappedMemoryReadByteNocache(sh, addr);
 		break;
 	}
 	return 0;
 }
 
-u16 cache_memory_read_w(cache_enty * ca, u32 addr){
+u16 cache_memory_read_w(SH2_struct *sh, cache_enty * ca, u32 addr){
 
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -361,7 +360,7 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr){
       int i = 0;
       int lruway = 0;
 		if (ca->enable == 0){
-			return MappedMemoryReadWordNocache(addr);
+			return MappedMemoryReadWordNocache(sh, addr);
 		}
 	   tagaddr = (addr & TAG_MASK);
 		entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
@@ -383,27 +382,27 @@ u16 cache_memory_read_w(cache_enty * ca, u32 addr){
 		}
 
 		// cache miss
-		lruway = select_way_to_replace(ca->lru[entry]);
+		lruway = select_way_to_replace(sh, ca->lru[entry]);
       update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
 		for (i = 0; i < 16; i++){
-			ca->way[lruway][entry].data[i] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + i);
+			ca->way[lruway][entry].data[i] = sh->ReadByteList[(addr >> 16) & 0xFFF](sh, (addr & 0xFFFFFFF0) + i);
 		}
       ca->way[lruway][entry].v = 1; //becomes valid
 		return ((u16)(ca->way[lruway][entry].data[addr&LINE_MASK]) << 8) | ca->way[lruway][entry].data[(addr&LINE_MASK) + 1];
 	}
 	break;
 	case CACHE_THROUGH:
-		return MappedMemoryReadWordNocache(addr);
+		return MappedMemoryReadWordNocache(sh, addr);
 		break;
 	default:
-		return MappedMemoryReadWordNocache(addr);
+		return MappedMemoryReadWordNocache(sh, addr);
 		break;
 	}
 	return 0;
 }
 
-u32 cache_memory_read_l(cache_enty * ca, u32 addr){
+u32 cache_memory_read_l(SH2_struct *sh, cache_enty * ca, u32 addr){
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
 	{
@@ -412,7 +411,7 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr){
       int i = 0;
       int lruway = 0;
 		if (ca->enable == 0){
-			return MappedMemoryReadLongNocache(addr);
+			return MappedMemoryReadLongNocache(sh, addr);
 		}
 		tagaddr = (addr & TAG_MASK);
 	   entry = (addr & ENTRY_MASK) >> ENTRY_SHIFT;
@@ -446,11 +445,11 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr){
 				((u32)(ca->way[3][entry].data[(addr&LINE_MASK) + 3]) << 0);
 			}
 		// cache miss
-		lruway = select_way_to_replace(ca->lru[entry]);
+		lruway = select_way_to_replace(sh, ca->lru[entry]);
       update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
 		for (i = 0; i < 16; i++){
-			ca->way[lruway][entry].data[i] = ReadByteList[(addr >> 16) & 0xFFF]((addr & 0xFFFFFFF0) + i);
+			ca->way[lruway][entry].data[i] = sh->ReadByteList[(addr >> 16) & 0xFFF](sh, (addr & 0xFFFFFFF0) + i);
 		}
       ca->way[lruway][entry].v = 1; //becomes valid
 		return ((u32)(ca->way[lruway][entry].data[addr&LINE_MASK]) << 24) |
@@ -460,10 +459,10 @@ u32 cache_memory_read_l(cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
-		return MappedMemoryReadLongNocache(addr);
+		return MappedMemoryReadLongNocache(sh, addr);
 		break;
 	default:
-		return MappedMemoryReadLongNocache(addr);
+		return MappedMemoryReadLongNocache(sh, addr);
 		break;
 	}
 	return 0;

@@ -64,7 +64,7 @@ void SH2InterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
 extern SH2Interface_struct SH2Interpreter;
 extern SH2Interface_struct SH2DebugInterpreter;
 
-typedef u32 (FASTCALL *fetchfunc)(u32);
+typedef u32 (FASTCALL *fetchfunc)(SH2_struct *, u32);
 typedef void (FASTCALL *opcodefunc)(SH2_struct *);
 
 #endif

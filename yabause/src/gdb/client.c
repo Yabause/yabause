@@ -77,7 +77,7 @@ void gdb_client_received(gdb_client * client, gdb_packet * packet)
 
       i = 0;
       while(i < len / 4) {
-         u32 val = MappedMemoryReadLong(addr + 4 * i);
+         u32 val = MappedMemoryReadLong(client->context, addr + 4 * i);
          sprintf(pos, "%08x", val);
          i += 1;
          pos += 8;
@@ -85,12 +85,12 @@ void gdb_client_received(gdb_client * client, gdb_packet * packet)
 
       switch(len % 4) {
          case 2: {
-            u16 val = MappedMemoryReadWord(addr + 4 * i);
+            u16 val = MappedMemoryReadWord(client->context, addr + 4 * i);
             sprintf(pos, "%04x", val);
             break;
          }
          case 1: {
-            u8 val = MappedMemoryReadByte(addr + 4 * i);
+            u8 val = MappedMemoryReadByte(client->context, addr + 4 * i);
             sprintf(pos, "%02x", val);
             break;
          }

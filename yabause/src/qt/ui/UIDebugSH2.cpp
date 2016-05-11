@@ -21,9 +21,9 @@
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 
-int SH2Dis(u32 addr, char *string)
+int SH2Dis(SH2_struct *context, u32 addr, char *string)
 {
-   SH2Disasm(addr, MappedMemoryReadWord(addr), 0, NULL, string);
+   SH2Disasm(addr, MappedMemoryReadWord(context, addr), 0, NULL, string);
    return 2;
 }
 
@@ -77,7 +77,7 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
          }
       }
 
-      lwDisassembledCode->setDisassembleFunction(SH2Dis);
+      lwDisassembledCode->setDisassembleFunction((int (*)(void *, u32, char *))SH2Dis);
       lwDisassembledCode->setEndAddress(0x06100000);
       lwDisassembledCode->setMinimumInstructionSize(2);
       gbBackTrace->setVisible( true );
@@ -391,7 +391,7 @@ void UIDebugSH2::reserved3()
 				int op = sh2iasm(text.toLatin1().data(), errorMsg);
 				if (op != 0)
 				{
-					MappedMemoryWriteWord(debugSH2->regs.PC, op);
+					MappedMemoryWriteWord(debugSH2, debugSH2->regs.PC, op);
 					break;
 				}
 				else

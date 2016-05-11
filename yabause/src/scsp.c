@@ -569,9 +569,9 @@ void op3(struct Slot * slot)
       return;
 
    if (!slot->regs.pcm8b)
-      slot->state.wave = SoundRamReadWord(addr);
+      slot->state.wave = c68k_word_read(addr);
    else
-      slot->state.wave = SoundRamReadByte(addr) << 8;
+      slot->state.wave = c68k_byte_read(addr) << 8;
 
    slot->state.output = slot->state.wave;
 }
@@ -4531,7 +4531,55 @@ scu_interrupt_handler (void)
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL
-SoundRamReadByte (u32 addr)
+ScspReadByte (SH2_struct *sh, u32 addr)
+{
+   return scsp_r_b(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+ScspWriteByte (SH2_struct *sh, u32 addr, u8 val)
+{
+   scsp_w_b(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL
+ScspReadWord (SH2_struct *sh, u32 addr)
+{
+   return scsp_r_w(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+ScspWriteWord (SH2_struct *sh, u32 addr, u16 val)
+{
+   scsp_w_w(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL
+ScspReadLong (SH2_struct *sh, u32 addr)
+{
+   return scsp_r_d(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+ScspWriteLong (SH2_struct *sh, u32 addr, u32 val)
+{
+   scsp_w_d(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL
+SoundRamReadByte (SH2_struct *sh, u32 addr)
 {
   addr &= 0xFFFFF;
 
@@ -4547,7 +4595,7 @@ SoundRamReadByte (u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL
-SoundRamWriteByte (u32 addr, u8 val)
+SoundRamWriteByte (SH2_struct *sh, u32 addr, u8 val)
 {
   addr &= 0xFFFFF;
 
@@ -4564,7 +4612,7 @@ SoundRamWriteByte (u32 addr, u8 val)
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL
-SoundRamReadWord (u32 addr)
+SoundRamReadWord (SH2_struct *sh, u32 addr)
 {
   addr &= 0xFFFFF;
 
@@ -4579,7 +4627,7 @@ SoundRamReadWord (u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL
-SoundRamWriteWord (u32 addr, u16 val)
+SoundRamWriteWord (SH2_struct *sh, u32 addr, u16 val)
 {
   addr &= 0xFFFFF;
 
@@ -4596,7 +4644,7 @@ SoundRamWriteWord (u32 addr, u16 val)
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL
-SoundRamReadLong (u32 addr)
+SoundRamReadLong (SH2_struct *sh, u32 addr)
 {
   addr &= 0xFFFFF;
 
@@ -4612,7 +4660,7 @@ SoundRamReadLong (u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL
-SoundRamWriteLong (u32 addr, u32 val)
+SoundRamWriteLong (SH2_struct *sh, u32 addr, u32 val)
 {
   addr &= 0xFFFFF;
 

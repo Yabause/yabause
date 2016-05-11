@@ -27,6 +27,7 @@
 #define SCSP_H
 
 #include "core.h"
+#include "memory.h"
 
 #define SNDCORE_DEFAULT -1
 #define SNDCORE_DUMMY   0
@@ -86,12 +87,12 @@ extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
 extern int use_new_scsp;
 
-u8 FASTCALL SoundRamReadByte(u32 addr);
-u16 FASTCALL SoundRamReadWord(u32 addr);
-u32 FASTCALL SoundRamReadLong(u32 addr);
-void FASTCALL SoundRamWriteByte(u32 addr, u8 val);
-void FASTCALL SoundRamWriteWord(u32 addr, u16 val);
-void FASTCALL SoundRamWriteLong(u32 addr, u32 val);
+u8 FASTCALL SoundRamReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL SoundRamReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL SoundRamReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL SoundRamWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL SoundRamWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL SoundRamWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
 int ScspInit(int coreid);
 int ScspChangeSoundCore(int coreid);
@@ -116,12 +117,12 @@ void ScspMuteAudio(int flags);
 void ScspUnMuteAudio(int flags);
 void ScspSetVolume(int volume);
 
-void FASTCALL scsp_w_b(u32, u8);
-void FASTCALL scsp_w_w(u32, u16);
-void FASTCALL scsp_w_d(u32, u32);
-u8 FASTCALL scsp_r_b(u32);
-u16 FASTCALL scsp_r_w(u32);
-u32 FASTCALL scsp_r_d(u32);
+u8 FASTCALL ScspReadByte(SH2_struct *sh, u32 addr);
+void FASTCALL ScspWriteByte(SH2_struct *sh, u32 addr, u8 val);
+u16 FASTCALL ScspReadWord(SH2_struct *sh, u32 addr);
+void FASTCALL ScspWriteWord(SH2_struct *sh, u32 addr, u16 val);
+u32 FASTCALL ScspReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL ScspWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
 void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void));
 void scsp_shutdown(void);
@@ -135,6 +136,7 @@ void scsp_update(s32 *bufL, s32 *bufR, u32 len);
 void scsp_update_monitor(void);
 void scsp_update_timer(u32 len);
 
+u32 FASTCALL c68k_byte_read(const u32 adr);
 u32 FASTCALL c68k_word_read(const u32 adr);
 
 void M68KStep(void);

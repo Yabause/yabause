@@ -35,118 +35,118 @@ cartridge_struct *CartridgeArea;
 // Dummy/No Cart Functions
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DummyCs0ReadByte(UNUSED u32 addr)
+static u8 FASTCALL DummyCs0ReadByte(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DummyCs0ReadWord(UNUSED u32 addr)
+static u16 FASTCALL DummyCs0ReadWord(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DummyCs0ReadLong(UNUSED u32 addr)
+static u32 FASTCALL DummyCs0ReadLong(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs0WriteByte(UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL DummyCs0WriteByte(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs0WriteWord(UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL DummyCs0WriteWord(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs0WriteLong(UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL DummyCs0WriteLong(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DummyCs1ReadByte(UNUSED u32 addr)
+static u8 FASTCALL DummyCs1ReadByte(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DummyCs1ReadWord(UNUSED u32 addr)
+static u16 FASTCALL DummyCs1ReadWord(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DummyCs1ReadLong(UNUSED u32 addr)
+static u32 FASTCALL DummyCs1ReadLong(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs1WriteByte(UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL DummyCs1WriteByte(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs1WriteWord(UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL DummyCs1WriteWord(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs1WriteLong(UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL DummyCs1WriteLong(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DummyCs2ReadByte(UNUSED u32 addr)
+static u8 FASTCALL DummyCs2ReadByte(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DummyCs2ReadWord(UNUSED u32 addr)
+static u16 FASTCALL DummyCs2ReadWord(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DummyCs2ReadLong(UNUSED u32 addr)
+static u32 FASTCALL DummyCs2ReadLong(UNUSED SH2_struct *sh, UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs2WriteByte(UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL DummyCs2WriteByte(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs2WriteWord(UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL DummyCs2WriteWord(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs2WriteLong(UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL DummyCs2WriteLong(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
@@ -329,7 +329,7 @@ static void FASTCALL FlashCs0WriteLong(u32 addr, u32 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL AR4MCs0ReadByte(u32 addr)
+static u8 FASTCALL AR4MCs0ReadByte(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -366,7 +366,7 @@ static u8 FASTCALL AR4MCs0ReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL AR4MCs0ReadWord(u32 addr)
+static u16 FASTCALL AR4MCs0ReadWord(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -414,7 +414,7 @@ static u16 FASTCALL AR4MCs0ReadWord(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL AR4MCs0ReadLong(u32 addr)
+static u32 FASTCALL AR4MCs0ReadLong(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -462,7 +462,7 @@ static u32 FASTCALL AR4MCs0ReadLong(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL AR4MCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL AR4MCs0WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -497,7 +497,7 @@ static void FASTCALL AR4MCs0WriteByte(u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL AR4MCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL AR4MCs0WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -532,7 +532,7 @@ static void FASTCALL AR4MCs0WriteWord(u32 addr, u16 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL AR4MCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL AR4MCs0WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -569,7 +569,7 @@ static void FASTCALL AR4MCs0WriteLong(u32 addr, u32 val)
 // 8 Mbit Dram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DRAM8MBITCs0ReadByte(u32 addr)
+static u8 FASTCALL DRAM8MBITCs0ReadByte(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -588,7 +588,7 @@ static u8 FASTCALL DRAM8MBITCs0ReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DRAM8MBITCs0ReadWord(u32 addr)
+static u16 FASTCALL DRAM8MBITCs0ReadWord(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -607,7 +607,7 @@ static u16 FASTCALL DRAM8MBITCs0ReadWord(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DRAM8MBITCs0ReadLong(u32 addr)
+static u32 FASTCALL DRAM8MBITCs0ReadLong(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -626,7 +626,7 @@ static u32 FASTCALL DRAM8MBITCs0ReadLong(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM8MBITCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL DRAM8MBITCs0WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -645,7 +645,7 @@ static void FASTCALL DRAM8MBITCs0WriteByte(u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM8MBITCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL DRAM8MBITCs0WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -664,7 +664,7 @@ static void FASTCALL DRAM8MBITCs0WriteWord(u32 addr, u16 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM8MBITCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL DRAM8MBITCs0WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -685,7 +685,7 @@ static void FASTCALL DRAM8MBITCs0WriteLong(u32 addr, u32 val)
 // 32 Mbit Dram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DRAM32MBITCs0ReadByte(u32 addr)
+static u8 FASTCALL DRAM32MBITCs0ReadByte(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -705,7 +705,7 @@ static u8 FASTCALL DRAM32MBITCs0ReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DRAM32MBITCs0ReadWord(u32 addr)
+static u16 FASTCALL DRAM32MBITCs0ReadWord(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -725,7 +725,7 @@ static u16 FASTCALL DRAM32MBITCs0ReadWord(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DRAM32MBITCs0ReadLong(u32 addr)
+static u32 FASTCALL DRAM32MBITCs0ReadLong(SH2_struct *sh, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -745,7 +745,7 @@ static u32 FASTCALL DRAM32MBITCs0ReadLong(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM32MBITCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL DRAM32MBITCs0WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -764,7 +764,7 @@ static void FASTCALL DRAM32MBITCs0WriteByte(u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM32MBITCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL DRAM32MBITCs0WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -783,7 +783,7 @@ static void FASTCALL DRAM32MBITCs0WriteWord(u32 addr, u16 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM32MBITCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL DRAM32MBITCs0WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -804,42 +804,42 @@ static void FASTCALL DRAM32MBITCs0WriteLong(u32 addr, u32 val)
 // 4 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP4MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP4MBITCs1ReadByte(SH2_struct *sh, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP4MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP4MBITCs1ReadWord(SH2_struct *sh, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP4MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP4MBITCs1ReadLong(SH2_struct *sh, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP4MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP4MBITCs1WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP4MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP4MBITCs1WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP4MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP4MBITCs1WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0xFFFFF, val);
 }
@@ -848,42 +848,42 @@ static void FASTCALL BUP4MBITCs1WriteLong(u32 addr, u32 val)
 // 8 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP8MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP8MBITCs1ReadByte(SH2_struct *sh, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP8MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP8MBITCs1ReadWord(SH2_struct *sh, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP8MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP8MBITCs1ReadLong(SH2_struct *sh, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP8MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP8MBITCs1WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP8MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP8MBITCs1WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP8MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP8MBITCs1WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0x1FFFFF, val);
 }
@@ -892,42 +892,42 @@ static void FASTCALL BUP8MBITCs1WriteLong(u32 addr, u32 val)
 // 16 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP16MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP16MBITCs1ReadByte(SH2_struct *sh, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0x3FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP16MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP16MBITCs1ReadWord(SH2_struct *sh, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0x3FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP16MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP16MBITCs1ReadLong(SH2_struct *sh, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0x3FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP16MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP16MBITCs1WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0x3FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP16MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP16MBITCs1WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0x3FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP16MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP16MBITCs1WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0x3FFFFF, val);
 }
@@ -936,42 +936,42 @@ static void FASTCALL BUP16MBITCs1WriteLong(u32 addr, u32 val)
 // 32 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP32MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP32MBITCs1ReadByte(SH2_struct *sh, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0x7FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP32MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP32MBITCs1ReadWord(SH2_struct *sh, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0x7FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP32MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP32MBITCs1ReadLong(SH2_struct *sh, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0x7FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP32MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP32MBITCs1WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0x7FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP32MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP32MBITCs1WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0x7FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP32MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP32MBITCs1WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0x7FFFFF, val);
 }
@@ -980,42 +980,42 @@ static void FASTCALL BUP32MBITCs1WriteLong(u32 addr, u32 val)
 // 16 Mbit Rom
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL ROM16MBITCs0ReadByte(u32 addr)
+static u8 FASTCALL ROM16MBITCs0ReadByte(SH2_struct *sh, u32 addr)
 {
    return T1ReadByte(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL ROM16MBITCs0ReadWord(u32 addr)
+static u16 FASTCALL ROM16MBITCs0ReadWord(SH2_struct *sh, u32 addr)
 {
    return T1ReadWord(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL ROM16MBITCs0ReadLong(u32 addr)
+static u32 FASTCALL ROM16MBITCs0ReadLong(SH2_struct *sh, u32 addr)
 {
    return T1ReadLong(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL ROM16MBITCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL ROM16MBITCs0WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->rom, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL ROM16MBITCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL ROM16MBITCs0WriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->rom, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL ROM16MBITCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL ROM16MBITCs0WriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->rom, addr & 0x1FFFFF, val);
 }
