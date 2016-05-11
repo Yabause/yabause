@@ -520,13 +520,16 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
                                            &HighWramMemoryWriteLong);
    }
 
-   // SH1
-   FillMemoryArea(sh1, 0x000, 0xFFF, &UnhandledMemoryReadByte,
-                                     &UnhandledMemoryReadWord,
-                                     &UnhandledMemoryReadLong,
-                                     &UnhandledMemoryWriteByte,
-                                     &UnhandledMemoryWriteWord,
-                                     &UnhandledMemoryWriteLong);
+   if (yabsys.use_cd_block_lle)
+   {
+      // SH1
+      FillMemoryArea(sh1, 0x000, 0xFFF, &UnhandledMemoryReadByte,
+                                        &UnhandledMemoryReadWord,
+                                        &UnhandledMemoryReadLong,
+                                        &UnhandledMemoryWriteByte,
+                                        &UnhandledMemoryWriteWord,
+                                        &UnhandledMemoryWriteLong);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

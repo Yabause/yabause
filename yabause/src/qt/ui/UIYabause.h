@@ -117,6 +117,7 @@ public slots:
 	void cursorRestore();
 	void toggleEmulateMouse( bool enable );
 
+	void breakpointHandlerSH1(bool displayMessage);
 	void breakpointHandlerMSH2(bool displayMessage);
 	void breakpointHandlerSSH2(bool displayMessage);
 	void breakpointHandlerM68K();

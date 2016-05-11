@@ -23,7 +23,7 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <widget class="QWidget" name="wGeneral">
       <attribute name="title">
@@ -748,6 +748,23 @@
         <widget class="QComboBox" name="cb68kCore"/>
        </item>
        <item>
+        <widget class="QLabel" name="lSH1Interpreter">
+         <property name="text">
+          <string>SH1 Interpreter</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cbSH1Interpreter"/>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="cbEnableCDBlockLLE">
+         <property name="text">
+          <string>Enable CD Block Low-level Emulation</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1016,8 +1033,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowToolbar"/>
+  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>

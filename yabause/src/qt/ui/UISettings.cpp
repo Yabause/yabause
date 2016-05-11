@@ -334,7 +334,10 @@ void UISettings::loadCores()
 	
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
+	{
+		cbSH1Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
+	}
 
    //68k cores
    for (int i = 0; M68KCoreList[i] != NULL; i++)
@@ -492,6 +495,8 @@ void UISettings::loadSettings()
 	
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
+	cbSH1Interpreter->setCurrentIndex( cbSH1Interpreter->findData( s->value( "Advanced/SH1Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
+	cbEnableCDBlockLLE->setChecked( s->value( "Advanced/EnableCDBlockLLE" ).toBool() );
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
    cb68kCore->setCurrentIndex(cb68kCore->findData(s->value("Advanced/68kCore", QtYabause::default68kCore().id).toInt()));
 
@@ -587,6 +592,8 @@ void UISettings::saveSettings()
 	
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
+	s->setValue( "Advanced/SH1Interpreter", cbSH1Interpreter->itemData( cbSH1Interpreter->currentIndex() ).toInt() );
+	s->setValue( "Advanced/EnableCDBlockLLE", cbEnableCDBlockLLE->isChecked() );
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
    s->setValue("Advanced/68kCore", cb68kCore->itemData(cb68kCore->currentIndex()).toInt());
 

@@ -31,7 +31,9 @@ void SH2BreakpointHandler (SH2_struct *context, u32 addr, void *userdata)
 {
    UIYabause* ui = QtYabause::mainWindow( false );
 
-   if (context == MSH2)
+   if (context == SH1)
+      emit ui->breakpointHandlerSH1(userdata == NULL ? true : false);
+   else if (context == MSH2)
       emit ui->breakpointHandlerMSH2(userdata == NULL ? true : false);
    else
       emit ui->breakpointHandlerSSH2(userdata == NULL ? true : false);

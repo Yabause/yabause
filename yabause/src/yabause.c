@@ -160,6 +160,7 @@ int YabauseInit(yabauseinit_struct *init)
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
+   yabsys.use_cd_block_lle = init->use_cd_block_lle;
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -216,19 +217,22 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
 
    // Initialize CD Block 
-   if (SH1Init(init->sh1coretype) != 0)
+   if (init->use_cd_block_lle)
    {
-      YabSetError(YAB_ERR_CANNOTINIT, _("SH1"));
-      return -1;
-   }
-   else
-   {
-      if (init->sh1rompath != NULL && strlen(init->sh1rompath))
+      if (SH1Init(init->sh1coretype) != 0)
       {
-         if (LoadSH1Rom(init->sh1rompath) != 0)
+         YabSetError(YAB_ERR_CANNOTINIT, _("SH1"));
+         return -1;
+      }
+      else
+      {
+         if (init->sh1rompath != NULL && strlen(init->sh1rompath))
          {
-            YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->sh1rompath);
-            return -2;
+            if (LoadSH1Rom(init->sh1rompath) != 0)
+            {
+               YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->sh1rompath);
+               return -2;
+            }
          }
       }
    }
@@ -451,6 +455,8 @@ void YabauseResetNoLoad(void) {
 
    // Reset CS0 area here
    // Reset CS1 area here
+   if (yabsys.use_cd_block_lle)
+      SH2Reset(SH1);
    Cs2Reset();
    ScuReset();
    ScspReset();
@@ -459,6 +465,8 @@ void YabauseResetNoLoad(void) {
    SmpcReset();
 
    SH2PowerOn(MSH2);
+   if (yabsys.use_cd_block_lle)
+      SH2PowerOn(SH1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -544,8 +552,6 @@ int YabauseEmulate(void) {
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
 	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline, sh1_cycles_per_deciline;
 	int lines, frames = 0;
-
-   yabsys.use_cd_block_lle = 1;
 
    m68k_cycles_per_deciline = 0;
    scsp_cycles_per_deciline = 0;
@@ -769,7 +775,6 @@ int YabauseEmulate(void) {
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
       }
 #endif
-#if 1
       if(yabsys.use_cd_block_lle)
       {
          u32 sh1_integer_part = 0;
@@ -779,7 +784,6 @@ int YabauseEmulate(void) {
          SH2Exec(SH1, sh1_integer_part);
          saved_sh1_cycles -= sh1_integer_part << SCSP_FRACTIONAL_BITS;
       }
-#endif
 
       PROFILE_STOP("Total Emulation");
    }

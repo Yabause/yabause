@@ -337,6 +337,7 @@ void YabauseThread::reloadSettings()
    mYabauseConf.m68kcoretype = vs->value("Advanced/68kCore", mYabauseConf.m68kcoretype).toInt();
 	mYabauseConf.percoretype = vs->value( "Input/PerCore", mYabauseConf.percoretype ).toInt();
 	mYabauseConf.sh1coretype = vs->value( "Advanced/SH1Interpreter", mYabauseConf.sh1coretype ).toInt();
+	mYabauseConf.use_cd_block_lle = vs->value( "Advanced/EnableCDBlockLLE", mYabauseConf.use_cd_block_lle ).toInt();
 	mYabauseConf.sh2coretype = vs->value( "Advanced/SH2Interpreter", mYabauseConf.sh2coretype ).toInt();
 	mYabauseConf.vidcoretype = vs->value( "Video/VideoCore", mYabauseConf.vidcoretype ).toInt();
 	mYabauseConf.osdcoretype = vs->value( "Video/OSDCore", mYabauseConf.osdcoretype ).toInt();
@@ -406,6 +407,8 @@ void YabauseThread::resetYabauseConf()
 	// fill default structure
 	mYabauseConf.m68kcoretype = M68KCORE_C68K;
 	mYabauseConf.percoretype = QtYabause::defaultPERCore().id;
+	mYabauseConf.sh1coretype = SH2CORE_DEFAULT;
+	mYabauseConf.use_cd_block_lle = 0;
 	mYabauseConf.sh2coretype = SH2CORE_DEFAULT;
 	mYabauseConf.vidcoretype = QtYabause::defaultVIDCore().id;
 	mYabauseConf.sndcoretype = QtYabause::defaultSNDCore().id;
