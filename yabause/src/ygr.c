@@ -28,6 +28,20 @@
 #include "memory.h"
 #include "debug.h"
 
+//#define YGR_SH1_RW_DEBUG
+#ifdef YGR_SH1_RW_DEBUG
+#define YGR_SH1_RW_LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
+#else
+#define YGR_SH1_RW_LOG(...)
+#endif
+
+// ygr connections
+// ygr <=> cd signal processor (on cd drive board)
+// ygr <=> sh1 (aka sh7034)
+// ygr <=> a-bus (sh2 interface)
+// ygr <=> vdp2 (mpeg video)
+// ygr <=> scsp (cd audio)
+
 struct Ygr
 {
    struct Regs
@@ -46,32 +60,35 @@ struct Ygr
 
 u8 ygr_sh1_read_byte(u32 addr)
 {
+   YGR_SH1_RW_LOG("ygr_sh1_read_byte 0x%08x", addr );
    return 0;
 }
 
 u16 ygr_sh1_read_word(u32 addr)
 {
+   YGR_SH1_RW_LOG("ygr_sh1_read_word 0x%08x", addr);
    return 0;
 }
 
 u32 ygr_sh1_read_long(u32 addr)
 {
+   YGR_SH1_RW_LOG("ygr_sh1_read_long 0x%08x", addr);
    return 0;
 }
 
 void ygr_sh1_write_byte(u32 addr,u8 data)
 {
-
+   YGR_SH1_RW_LOG("ygr_sh1_write_byte 0x%08x 0x%02x", addr, data);
 }
 
 void ygr_sh1_write_word(u32 addr, u16 data)
 {
-
+   YGR_SH1_RW_LOG("ygr_sh1_write_word 0x%08x 0x%04x", addr, data);
 }
 
 void ygr_sh1_write_long(u32 addr, u32 data)
 {
-
+   YGR_SH1_RW_LOG("ygr_sh1_write_long 0x%08x 0x%08x", addr, data);
 }
 
 //////////////////////////////////////////////////////////////////////////////

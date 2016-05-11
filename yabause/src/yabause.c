@@ -94,6 +94,8 @@
 #include "aosdk/ssf.h"
 #endif
 
+#include "sh7034.h"
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -107,6 +109,7 @@ char ssf_artist[256] = { 0 };
 #define SCSP_FRACTIONAL_BITS 20
 u32 saved_scsp_cycles = 0;//fixed point
 u32 saved_m68k_cycles = 0;//fixed point
+u32 saved_sh1_cycles = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -766,13 +769,14 @@ int YabauseEmulate(void) {
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
       }
 #endif
-#if 0
+#if 1
       if(yabsys.use_cd_block_lle)
       {
          u32 sh1_integer_part = 0;
          saved_sh1_cycles += sh1_cycles_per_deciline;
          sh1_integer_part = saved_sh1_cycles >> SCSP_FRACTIONAL_BITS;
-         sh1_exec(&sh1_cxt, sh1_integer_part);
+         //sh1_exec(&sh1_cxt, sh1_integer_part);
+         SH2Exec(SH1, sh1_integer_part);
          saved_sh1_cycles -= sh1_integer_part << SCSP_FRACTIONAL_BITS;
       }
 #endif

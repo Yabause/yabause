@@ -128,33 +128,21 @@ SH2Interface_struct SH2DebugInterpreter = {
 
 static u32 FASTCALL FetchSH1Rom(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
 	return T2ReadWord(SH1Rom, addr & 0xFFFF);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchSH1Dram(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
 	return T2ReadWord(SH1Dram, addr & 0x7FFFF);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchSH1MpegRom(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
 	return T2ReadWord(SH1MpegRom, addr & 0x7FFF);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

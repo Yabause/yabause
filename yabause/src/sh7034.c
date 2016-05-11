@@ -29,7 +29,7 @@
 #include "ygr.h"
 #include "debug.h"
 
-#define SH1_MEM_DEBUG
+//#define SH1_MEM_DEBUG
 #ifdef SH1_MEM_DEBUG
 #define SH1MEMLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -3518,6 +3518,31 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
    assert(0);
 
    return;
+}
+
+u8 FASTCALL Sh1MemoryReadByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   return memory_map_read_byte(&sh1_cxt, addr);
+}
+u16 FASTCALL Sh1MemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   return memory_map_read_word(&sh1_cxt, addr);
+}
+u32 FASTCALL Sh1MemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   return memory_map_read_long(&sh1_cxt, addr);
+}
+void FASTCALL Sh1MemoryWriteByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u8 val)
+{
+   memory_map_write_byte(&sh1_cxt, addr, val);
+}
+void FASTCALL Sh1MemoryWriteWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u16 val)
+{
+   memory_map_write_word(&sh1_cxt, addr, val);
+}
+void FASTCALL Sh1MemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u32 val)
+{
+   memory_map_write_long(&sh1_cxt, addr, val);
 }
 
 

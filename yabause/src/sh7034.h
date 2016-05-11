@@ -22,6 +22,14 @@
 #define SH7034_H
 
 #include "core.h"
+#include "sh2core.h"
+
+u8 FASTCALL Sh1MemoryReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL Sh1MemoryReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL Sh1MemoryReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL Sh1MemoryWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL Sh1MemoryWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL Sh1MemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
 struct Onchip
 {
@@ -208,5 +216,7 @@ struct Sh1
 extern struct Sh1 sh1_cxt;
 
 void sh1_exec(struct Sh1 * sh1, s32 cycles);
+
+
 
 #endif

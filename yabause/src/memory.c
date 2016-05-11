@@ -46,6 +46,7 @@
 #include "yabause.h"
 #include "yui.h"
 #include "movie.h"
+#include "sh7034.h"
 
 #ifdef HAVE_LIBGL
 #define USE_OPENGL
@@ -529,12 +530,20 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-u8 FASTCALL MappedMemoryReadByte(SH2_struct *sh, u32 addr){
+
+u8 FASTCALL MappedMemoryReadByte(SH2_struct *sh, u32 addr) {
+   if (sh->model == SHMT_SH1)
+   {
+      return Sh1MemoryReadByte(sh, addr);
+   }
+   else
+   {
 #if CACHE_ENABLE
-   return cache_memory_read_b(sh, &sh->onchip.cache, addr);
+      return cache_memory_read_b(sh, &sh->onchip.cache, addr);
 #else
-   return MappedMemoryReadByteNocache(sh, addr);
+      return MappedMemoryReadByteNocache(sh, addr);
 #endif
+   }
 }
 
 u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr)
@@ -588,11 +597,18 @@ u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 u16 FASTCALL MappedMemoryReadWord(SH2_struct *sh, u32 addr){
+   if (sh->model == SHMT_SH1)
+   {
+      return Sh1MemoryReadWord(sh, addr);
+   }
+   else
+   {
 #if CACHE_ENABLE
-   return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
 #else
-   return MappedMemoryReadWordNocache(sh, addr);
+      return MappedMemoryReadWordNocache(sh, addr);
 #endif
+   }
 }
 
 u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr)
@@ -646,11 +662,18 @@ u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 u32 FASTCALL MappedMemoryReadLong(SH2_struct *sh, u32 addr){
+   if (sh->model == SHMT_SH1)
+   {
+      return Sh1MemoryReadLong(sh, addr);
+   }
+   else
+   {
 #if CACHE_ENABLE
-   return cache_memory_read_l(sh, &sh->onchip.cache, addr);
+      return cache_memory_read_l(sh, &sh->onchip.cache, addr);
 #else
-   return MappedMemoryReadLongNocache(sh, addr);
+      return MappedMemoryReadLongNocache(sh, addr);
 #endif
+   }
 }
 
 u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
@@ -708,11 +731,18 @@ u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL MappedMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val){
+   if (sh->model == SHMT_SH1)
+   {
+      Sh1MemoryWriteByte(sh, addr, val);
+   }
+   else
+   {
 #if CACHE_ENABLE
-   cache_memory_write_b(sh,&sh->onchip.cache,addr,val);
+      cache_memory_write_b(sh, &sh->onchip.cache, addr, val);
 #else
-   MappedMemoryWriteByteNocache(sh,addr,val);
+      MappedMemoryWriteByteNocache(sh, addr, val);
 #endif
+   }
 }
 
 void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
@@ -769,11 +799,18 @@ void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL MappedMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val){
+   if (sh->model == SHMT_SH1)
+   {
+      Sh1MemoryWriteWord(sh, addr, val);
+   }
+   else
+   {
 #if CACHE_ENABLE
-   cache_memory_write_w(sh, &sh->onchip.cache, addr, val);
+      cache_memory_write_w(sh, &sh->onchip.cache, addr, val);
 #else
-   MappedMemoryWriteWordNocache(sh, addr, val);
+      MappedMemoryWriteWordNocache(sh, addr, val);
 #endif
+   }
 }
 void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val)
 {
@@ -828,11 +865,19 @@ void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val)
 
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL MappedMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val){
+
+   if (sh->model == SHMT_SH1)
+   {
+      Sh1MemoryWriteLong(sh, addr, val);
+   }
+   else
+   {
 #if CACHE_ENABLE
-   cache_memory_write_l(sh, &sh->onchip.cache, addr, val);
+      cache_memory_write_l(sh, &sh->onchip.cache, addr, val);
 #else
-   MappedMemoryWriteLongNocache(sh, addr, val);
+      MappedMemoryWriteLongNocache(sh, addr, val);
 #endif
+   }
 }
 
 void FASTCALL MappedMemoryWriteLongNocache(SH2_struct *sh, u32 addr, u32 val)
