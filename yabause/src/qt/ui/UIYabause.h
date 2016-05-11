@@ -174,6 +174,7 @@ protected slots:
    void on_aViewDebugSCSPChan_triggered();
 	void on_aViewDebugSCSPDSP_triggered();
 	void on_aViewDebugSCUDSP_triggered();
+	void on_aViewDebugSH1_triggered();
 	void on_aViewDebugMemoryEditor_triggered();
 	void on_aTraceLogging_triggered( bool toggled );
 	// help menu

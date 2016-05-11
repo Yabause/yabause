@@ -37,20 +37,32 @@ void SH2BreakpointHandler (SH2_struct *context, u32 addr, void *userdata)
       emit ui->breakpointHandlerSSH2(userdata == NULL ? true : false);
 }
 
-UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
+UIDebugSH2::UIDebugSH2(SH2_struct *sh, YabauseThread *mYabauseThread, QWidget* p )
 	: UIDebugCPU( mYabauseThread, p )
 {
-   if (master)
+	if (!sh)
+	{
+		this->setWindowTitle(QtYabause::translate("Debug SH"));
+		gbRegisters->setTitle(QtYabause::translate("SH Registers"));
+	}
+	else
    {
-      this->setWindowTitle(QtYabause::translate("Debug Master SH2"));
-      debugSH2 = MSH2;
+		if (sh->model == SHMT_SH1)
+		{
+			this->setWindowTitle(QtYabause::translate("Debug Master SH1"));
+			gbRegisters->setTitle(QtYabause::translate("SH1 Registers"));
+		}
+		else
+		{
+			if (!sh->isslave)
+				this->setWindowTitle(QtYabause::translate("Debug Master SH2"));
+			else
+				this->setWindowTitle(QtYabause::translate("Debug Slave SH2"));
+			gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
+		}
+		lwDisassembledCode->setContext(sh);
    }
-   else
-   {
-      this->setWindowTitle(QtYabause::translate("Debug Slave SH2"));
-      debugSH2 = SSH2;
-   }
-   gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
+	debugSH2 = sh;
 
    if (debugSH2)
    {
@@ -78,7 +90,10 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
       }
 
       lwDisassembledCode->setDisassembleFunction((int (*)(void *, u32, char *))SH2Dis);
-      lwDisassembledCode->setEndAddress(0x06100000);
+		if (debugSH2->model == SHMT_SH1)
+			lwDisassembledCode->setEndAddress(0x10000);
+		else
+			lwDisassembledCode->setEndAddress(0x06100000);
       lwDisassembledCode->setMinimumInstructionSize(2);
       gbBackTrace->setVisible( true );
 
