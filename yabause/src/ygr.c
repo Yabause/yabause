@@ -56,45 +56,100 @@ struct Ygr
       u16 CR4;
       u16 MPEGRGB;
    }regs;
+
+   int fifo_ptr;
+   u16 fifo[4];
+   u16 transfer_ctrl;
 }ygr_cxt;
 
 u8 ygr_sh1_read_byte(u32 addr)
 {
+   CDTRACE("rblsi: %08X\n", addr);
    YGR_SH1_RW_LOG("ygr_sh1_read_byte 0x%08x", addr );
    return 0;
 }
 
 u16 ygr_sh1_read_word(u32 addr)
 {
+   CDTRACE("rwlsi: %08X\n", addr);
+   switch (addr & 0xffff) {
+   case 0:
+      ygr_cxt.fifo_ptr++;
+      ygr_cxt.fifo_ptr &= 3;
+      return ygr_cxt.fifo[ygr_cxt.fifo_ptr];
+   case 2:
+      return ygr_cxt.transfer_ctrl;
+   case 0x6:
+      return ygr_cxt.regs.HIRQ;
+   case 8:
+      return ygr_cxt.regs.UNKNOWN;
+   case 0xa:
+      return ygr_cxt.regs.HIRQMASK;
+   case 0x10: // CR1
+      return ygr_cxt.regs.CR1;
+   case 0x12: // CR2
+      return ygr_cxt.regs.CR2;
+   case 0x14: // CR3
+      return ygr_cxt.regs.CR3;
+   case 0x16: // CR4
+      return ygr_cxt.regs.CR4;
+   }
    YGR_SH1_RW_LOG("ygr_sh1_read_word 0x%08x", addr);
    return 0;
 }
 
 u32 ygr_sh1_read_long(u32 addr)
 {
+   CDTRACE("rllsi: %08X\n", addr);
    YGR_SH1_RW_LOG("ygr_sh1_read_long 0x%08x", addr);
    return 0;
 }
 
 void ygr_sh1_write_byte(u32 addr,u8 data)
 {
+   CDTRACE("wblsi: %08X %02X\n", addr, data);
    YGR_SH1_RW_LOG("ygr_sh1_write_byte 0x%08x 0x%02x", addr, data);
 }
 
 void ygr_sh1_write_word(u32 addr, u16 data)
 {
+   CDTRACE("wwlsi: %08X %04X\n", addr, data);
+   switch (addr & 0xffff) {
+   case 0x6:
+      ygr_cxt.regs.HIRQ = data;
+      return;
+   case 8:
+      ygr_cxt.regs.UNKNOWN = data & 3;
+      return;
+   case 0xa:
+      ygr_cxt.regs.HIRQMASK = data & 0x70;
+      return;
+   case 0x10: // CR1
+      ygr_cxt.regs.CR1 = data;
+      return;
+   case 0x12: // CR2
+      ygr_cxt.regs.CR2 = data;
+      return;
+   case 0x14: // CR3
+      ygr_cxt.regs.CR3 = data;
+      return;
+   case 0x16: // CR4
+      ygr_cxt.regs.CR4 = data;
+      return;
+   }
    YGR_SH1_RW_LOG("ygr_sh1_write_word 0x%08x 0x%04x", addr, data);
 }
 
 void ygr_sh1_write_long(u32 addr, u32 data)
 {
+   CDTRACE("wblsi: %08X %08X\n", addr, data);
    YGR_SH1_RW_LOG("ygr_sh1_write_long 0x%08x 0x%08x", addr, data);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 //replacements for Cs2ReadWord etc
-u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
+u16 FASTCALL ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
    u16 val = 0;
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -133,7 +188,7 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ygr_a_bus_write_word(u32 addr, u16 val) {
+void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
    switch (addr) {
@@ -173,7 +228,7 @@ void FASTCALL ygr_a_bus_write_word(u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
+u32 FASTCALL ygr_a_bus_read_long(SH2_struct * sh, u32 addr) {
    u32 val = 0;
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -206,7 +261,7 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ygr_a_bus_write_long(UNUSED u32 addr, UNUSED u32 val) {
+void FASTCALL ygr_a_bus_write_long(SH2_struct * sh, UNUSED u32 addr, UNUSED u32 val) {
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
    switch (addr)

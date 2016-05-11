@@ -24,12 +24,23 @@
 #include "core.h"
 #include "sh2core.h"
 
+void cd_trace_log(const char * format, ...);
+
+//#define WANT_CDTRACE
+#ifdef WANT_CDTRACE
+#define CDTRACE(...) cd_trace_log(__VA_ARGS__)
+#else
+#define CDTRACE(...)
+#endif
+
 u8 FASTCALL Sh1MemoryReadByte(SH2_struct *sh, u32 addr);
 u16 FASTCALL Sh1MemoryReadWord(SH2_struct *sh, u32 addr);
 u32 FASTCALL Sh1MemoryReadLong(SH2_struct *sh, u32 addr);
 void FASTCALL Sh1MemoryWriteByte(SH2_struct *sh, u32 addr, u8 val);
 void FASTCALL Sh1MemoryWriteWord(SH2_struct *sh, u32 addr, u16 val);
 void FASTCALL Sh1MemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
+
+void sh1_init_func();
 
 struct Onchip
 {

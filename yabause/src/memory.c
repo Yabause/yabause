@@ -47,6 +47,7 @@
 #include "yui.h"
 #include "movie.h"
 #include "sh7034.h"
+#include "ygr.h"
 
 #ifdef HAVE_LIBGL
 #define USE_OPENGL
@@ -452,12 +453,26 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
                                            &Cs1WriteByte,
                                            &Cs1WriteWord,
                                            &Cs1WriteLong);
-      FillMemoryArea(sh2[i], 0x580, 0x58F, &Cs2ReadByte,
-                                           &Cs2ReadWord,
-                                           &Cs2ReadLong,
-                                           &Cs2WriteByte,
-                                           &Cs2WriteWord,
-                                           &Cs2WriteLong);
+      if (yabsys.use_cd_block_lle)
+      {
+         FillMemoryArea(sh2[i], 0x580, 0x58F,
+            &Cs2ReadByte,
+            &ygr_a_bus_read_word,
+            &ygr_a_bus_read_long,
+            &Cs2WriteByte,
+            &ygr_a_bus_write_word,
+            &ygr_a_bus_write_long);
+      }
+      else
+      {
+         FillMemoryArea(sh2[i], 0x580, 0x58F, 
+            &Cs2ReadByte,
+            &Cs2ReadWord,
+            &Cs2ReadLong,
+            &Cs2WriteByte,
+            &Cs2WriteWord,
+            &Cs2WriteLong);
+      }
       FillMemoryArea(sh2[i], 0x5A0, 0x5AF, &SoundRamReadByte,
                                            &SoundRamReadWord,
                                            &SoundRamReadLong,

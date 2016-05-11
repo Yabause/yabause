@@ -28,6 +28,7 @@
 #include "memory.h"
 #include "ygr.h"
 #include "debug.h"
+#include <stdarg.h>
 
 //#define SH1_MEM_DEBUG
 #ifdef SH1_MEM_DEBUG
@@ -35,6 +36,30 @@
 #else
 #define SH1MEMLOG(...)
 #endif
+
+void cd_trace_log(const char * format, ...)
+{
+   static int started = 0;
+   static FILE* fp = NULL;
+   va_list l;
+
+   if (!started)
+   {
+      fp = fopen("C:/yabause/log.txt", "w");
+
+      if (!fp)
+      {
+         return;
+      }
+      started = 1;
+   }
+
+   va_start(l, format);
+   vfprintf(fp, format, l);
+   va_end(l);
+}
+
+
 
 struct Sh1 sh1_cxt;
 
@@ -193,6 +218,8 @@ void onchip_write_timer_word(struct Onchip * regs, u32 addr, int which_timer, u1
 
 void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
 {
+   CDTRACE("wbreg: %08X %02X\n", addr, data);
+
    if (addr == 0x05ffff9a)
    {
       int q = 1;
@@ -792,6 +819,7 @@ u8 onchip_sci_read_byte(struct Onchip * regs, u32 addr, int which)
 
 u8 onchip_read_byte(struct Onchip * regs, u32 addr)
 {
+   CDTRACE("rbreg: %08X \n", addr);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
       //unmapped
@@ -1258,6 +1286,7 @@ void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
 
 void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
 {
+   CDTRACE("wwreg: %08X %04X\n", addr, data);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
       //unmapped
@@ -1779,6 +1808,7 @@ u16 onchip_dmac_read_word(struct Onchip * regs, u32 addr, int which)
 
 u16 onchip_read_word(struct Onchip * regs, u32 addr)
 {
+   CDTRACE("rwreg: %08X %04X\n", addr);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
       //unmapped
@@ -2124,6 +2154,7 @@ void onchip_dmac_write_long(struct Onchip * regs, u32 addr, int which, u32 data)
 }
 void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
 {
+   CDTRACE("wlreg: %08X %08X\n", addr, data);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
       //unmapped
@@ -2588,6 +2619,7 @@ u32 onchip_dmac_read_long(struct Onchip * regs, u32 addr, int which)
 
 u32 onchip_read_long(struct Onchip * regs, u32 addr)
 {
+   CDTRACE("rlreg: %08X\n", addr);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
       //unmapped
@@ -2985,6 +3017,7 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
 
       if (a27)
       {
+         CDTRACE("wbdram: %08X %02X\n", addr, data);
          T2WriteByte(SH1Dram, addr & 0x7FFFF, data);
          return;
       }
@@ -3026,7 +3059,7 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       break;
    case 7:
       //onchip ram
-
+      CDTRACE("wbram: %08X %02X\n", addr, data);
       T2WriteByte(sh1->ram, addr & 0x1fff, data);
       return;
 
@@ -3056,7 +3089,7 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
    {
    case 0:
       //ignore a27 in area 0
-
+      CDTRACE("rbrom: %08X %02X\n", addr);
       return T2ReadByte(SH1Rom, addr & 0xffff);
 
   //    if (mode_pins == 2)//010
@@ -3082,6 +3115,7 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
 
       if (a27)
       {
+         CDTRACE("rbdram: %08X %02X\n", addr);
          return T2ReadByte(SH1Dram, addr & 0x7FFFF);
       }
 
@@ -3118,7 +3152,7 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       }
       break;
    case 7:
-
+      CDTRACE("rbram: %08X %02X\n", addr);
       return T2ReadByte(sh1->ram, addr & 0x1fff);
 
       //onchip ram
@@ -3149,6 +3183,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
    case 0:
       //ignore a27 in area 0
 
+      CDTRACE("rwrom: %08X %04X\n", addr);
       return T2ReadWord(SH1Rom, addr & 0xffff);
 
     //  if (mode_pins == 2)//010
@@ -3174,6 +3209,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
 
       if (a27)
       {
+         CDTRACE("rwdram: %08X %08X\n", addr);
          return T2ReadWord(SH1Dram, addr & 0x7FFFF);
       }
 
@@ -3212,6 +3248,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
    case 7:
       //onchip ram
 
+      CDTRACE("rwram: %08X %04X\n", addr);
       return T2ReadWord(sh1->ram, addr & 0x1fff);
 
       if(a27)
@@ -3265,6 +3302,7 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
 
       if (a27)
       {
+         CDTRACE("wwdram: %08X %04X\n", addr, data);
          T2WriteWord(SH1Dram, addr & 0x7FFFF, data);
          return;
       }
@@ -3310,6 +3348,7 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
    case 7:
       //onchip ram
 
+      CDTRACE("wwram: %08X %04X\n", addr, data);
       T2WriteWord(sh1->ram, addr & 0x1fff,data);
 
       return;
@@ -3368,6 +3407,7 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
 
       if (a27)
       {
+         CDTRACE("rlram: %08X\n", addr);
          return T2ReadLong(SH1Dram, addr & 0x7FFFF);
       }
 
@@ -3408,6 +3448,7 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
       //onchip ram
     //  if (a27)
       //apparently both are ram?
+      CDTRACE("rlram: %08X\n", addr);
       return T2ReadLong(sh1->ram, addr & 0x1fff);//sh1->ram[addr & 0x1FFF];
    //   else
     //  {
@@ -3457,6 +3498,7 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
 
       if (a27)
       {
+         CDTRACE("wldram: %08X %08X\n", addr, data);
          T2WriteLong(SH1Dram, addr & 0x7FFFF, data);
          return;
       }
@@ -3501,7 +3543,7 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       break;
    case 7:
       //onchip ram
-
+      CDTRACE("wlram: %08X %08X\n", addr, data);
       T2WriteLong(sh1->ram, addr & 0x1fff, data);
       return;
       if (a27)
@@ -3694,6 +3736,13 @@ void sh1_init(struct Sh1* sh1)
 {
    memset(sh1, 0, sizeof(struct Sh1));
    onchip_init(sh1);
+}
+
+void sh1_init_func()
+{
+   sh1_init(&sh1_cxt);
+
+   sh1_cxt.onchip.pbdr = 0x40c;
 }
 
 //u16 sh1_fetch(struct Sh1* sh1)
