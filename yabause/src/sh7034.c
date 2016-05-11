@@ -3712,32 +3712,33 @@ void sh1_init(struct Sh1* sh1)
 
 void test_byte_access(struct Sh1* sh1, u32 addr)
 {
-   u8 test_val = 0xff;
+   u8 test_val = 0xff, result;
    memory_map_write_byte(sh1, addr, test_val);
-   u8 result = memory_map_read_byte(sh1, addr);
+   result = memory_map_read_byte(sh1, addr);
 }
 
 void test_word_access(struct Sh1* sh1, u32 addr)
 {
-   u16 test_val = 0xffff;
+   u16 test_val = 0xffff, result;
    memory_map_write_word(sh1, addr, test_val);
-   u8 result = memory_map_read_word(sh1, addr);
+   result = memory_map_read_word(sh1, addr);
 }
 
 void test_long_access(struct Sh1* sh1, u32 addr)
 {
-   u16 test_val = 0xffff;
+   u32 test_val = 0xffffffff, result;
    memory_map_write_long(sh1, addr, test_val);
-   u32 result = memory_map_read_long(sh1, addr);
+   result = memory_map_read_long(sh1, addr);
 }
 
 void test_mem_map(struct Sh1* sh1)
 {
+	int i;
+
    //ygr
    memory_map_write_long(sh1, 0xa000000, 0xdeadbeef);
 
    //sh1 dram
-   int i;
    for (i = 0; i < 0x7FFFF; i += 4)
    {
       memory_map_write_long(sh1, 0x9000000 + i, 0xdeadbeef);
