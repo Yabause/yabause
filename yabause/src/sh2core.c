@@ -27,6 +27,7 @@
 #include "debug.h"
 #include "memory.h"
 #include "yabause.h"
+#include "sh7034.h"
 
 // SH1/SH2 differences
 // SH1's mac.w operates at a smaller precision. 16x16+42 instead of 16x16+64
@@ -87,6 +88,8 @@ int SH1Init(int coreid)
    }
 
    SH1->core = SH1Core;
+
+   sh1_init_func();
 
    return 0;
 }

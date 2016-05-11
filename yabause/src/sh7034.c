@@ -2510,8 +2510,18 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
       switch (addr - 0x5FFFFC0)
       {
       case 0:
-         regs->padr = data >> 16;
-         regs->pbdr = data & 0xffff;
+         //init routine requires pbdr to be set
+      {
+         u16 val = 0;
+
+         val = ((data >> 16) & 0xffff);
+         regs->padr &= ~regs->pfc.paior;
+         regs->padr |= val & regs->pfc.paior;
+
+         val = data & 0xffff;
+         regs->pbdr &= ~regs->pfc.pbior;
+         regs->pbdr |= val & regs->pfc.pbior;
+      }
          return;
       case 2:
          regs->pbdr = data >> 16;
