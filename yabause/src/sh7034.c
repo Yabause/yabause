@@ -5068,3 +5068,24 @@ void set_output_enable()
    //trigger an interrupt
    SH2SendInterrupt(SH1, 93, (sh1_cxt.onchip.intc.iprd >> 8) & 0xf);
 }
+
+void sh1_serial_recieve_bit(int bit, int channel)
+{
+   sh1_cxt.onchip.sci[channel].rsr <<= 1;
+   sh1_cxt.onchip.sci[channel].rsr |= bit;
+   sh1_cxt.onchip.sci[channel].rsr_counter++;
+
+   //a full byte has been received, transfer data to rdr
+   if (sh1_cxt.onchip.sci[channel].rsr_counter == 8)
+   {
+      sh1_cxt.onchip.sci[channel].rsr_counter = 0;
+      sh1_cxt.onchip.sci[channel].rdr = sh1_cxt.onchip.sci[channel].rsr;
+      sh1_cxt.onchip.sci[channel].rsr = 0;
+
+      //trigger interrupt
+      if (sh1_cxt.onchip.sci[0].scr & (1 << 6))//receive data full interrupt is enabled
+      {
+         SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
+      }
+   }
+}

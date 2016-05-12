@@ -41,6 +41,7 @@ void FASTCALL Sh1MemoryWriteWord(SH2_struct *sh, u32 addr, u16 val);
 void FASTCALL Sh1MemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
 void sh1_init_func();
+void sh1_serial_recieve_bit(int bit, int channel);
 
 struct Onchip
 {
@@ -53,6 +54,10 @@ struct Onchip
       u8 tdr;
       u8 ssr;
       u8 rdr;
+
+      //not visible to cpu
+      u8 rsr;
+      u8 rsr_counter;
    }sci[2];
 
    //a/d

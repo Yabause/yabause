@@ -59,14 +59,49 @@ struct CdState
    u8 absolute_frame;
 };
 
+void make_status_data(struct CdState *state, u8* data);
+
 int num_execs = 0;
+
+int output_enabled = 0;
+
+int get_bit_from_status(u8 * data, int bit_num)
+{
+   u8 byte_num = bit_num / 8;
+   u8 bit_within_byte = bit_num % 8;
+   u8 bit = (data[byte_num] & (1 << (7 - bit_within_byte))) != 0;
+   return bit;
+}
+
+int serial_counter = 0;
 
 s32 cd_command_exec(struct CdDriveContext * drive)
 {
    //assert output enable
 
-   if(num_execs == 15000)
+   //0x46 is
+   //0b01000110
+   if (output_enabled)
+   {
+      struct CdState state = { 0 };
+      u8 data[13] = { 0 };
+      int bit = 0;
+      state.current_operation = Idle;
+      make_status_data(&state, data);
+
+      bit = get_bit_from_status(data, serial_counter++);
+      sh1_serial_recieve_bit(bit, 0);
+
+      if (serial_counter == (13 * 8))
+         output_enabled = 0;
+   }
+
+   if ((num_execs > 0) && (num_execs % 15000) == 0)
+   {
       set_output_enable();
+      output_enabled = 1;
+      serial_counter = 0;
+   }
 
    num_execs++;
 
