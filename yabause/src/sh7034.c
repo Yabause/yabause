@@ -5094,7 +5094,65 @@ void sh1_serial_recieve_bit(int bit, int channel)
 void sh1_set_start(int state)
 {
    if (state)
-      sh1_cxt.onchip.pbdr |= 0x04;
-   else
       sh1_cxt.onchip.pbdr &= ~0x04;
+   else
+      sh1_cxt.onchip.pbdr |= 0x04;
+}
+
+void dma_transfer(u32 source, u32 dest, u8 source_mode, u8 dest_mode, u8 is_word_size, u16 transfer_count)
+{
+   s8 source_increment = 0;
+   s8 dest_increment = 0;
+   int i = 0;
+   u32 current_source_addr = source;
+   u32 current_dest_addr = dest;
+
+   //update addresses
+   //mode 0 means fixed
+   if (source_mode == 1)
+      source_increment = 2;
+   else if (source_mode == 2)
+      source_increment = -2;
+
+   if (dest_mode == 1)
+      dest_increment = 2;
+   else if (dest_mode == 2)
+      dest_increment = -2;
+
+   for (i = 0; i < transfer_count; i++)
+   {
+      if (is_word_size)
+      {
+         u16 src_val = memory_map_read_word(&sh1_cxt, current_source_addr);
+         memory_map_write_word(&sh1_cxt, current_dest_addr, src_val);
+      }
+      else
+      {
+         u8 src_val = memory_map_read_byte(&sh1_cxt, current_source_addr);
+         memory_map_write_byte(&sh1_cxt, current_dest_addr, src_val);
+      }
+
+      current_source_addr += source_increment;
+      current_dest_addr += dest_increment;
+   }
+}
+
+void do_dma(int which)
+{
+   //de, dme, mnif, ae, te must all be zero to start a dma
+   //but just check de and dme for now
+   if (sh1_cxt.onchip.dmac.dmaor & 1 && //dma enabled on all channels
+      sh1_cxt.onchip.dmac.channel[which].chcr & 1)//dma enabled on this channel
+   {
+      u32 source = sh1_cxt.onchip.dmac.channel[which].sar;
+      u32 dest = sh1_cxt.onchip.dmac.channel[which].dar;
+      u16 transfer_count = sh1_cxt.onchip.dmac.channel[which].tcr;
+
+      u8 destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;
+      u8 source_mode = (sh1_cxt.onchip.dmac.channel[which].chcr >> 12) & 3;
+      u8 is_word_size = (sh1_cxt.onchip.dmac.channel[which].chcr >> 3) & 1;//otherwise byte size
+
+      dma_transfer(source, dest, source_mode, 
+         destination_mode, is_word_size, transfer_count);
+   }
 }

@@ -137,7 +137,7 @@ s32 cd_command_exec(struct CdDriveContext * drive)
          comm_state = ByteFinished;
    }
 
-   if ((num_execs > 0) && (num_execs % 15000) == 0)
+   if (comm_state == NoTransfer && (sh1_cxt.onchip.sci[0].scr & 0x30) == 0x30)
    {
       comm_state = Started;
       sh1_set_start(1);
