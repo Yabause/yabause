@@ -27,6 +27,7 @@
 #include "assert.h"
 #include "memory.h"
 #include "debug.h"
+#include <stdarg.h>
 
 //#define YGR_SH1_RW_DEBUG
 #ifdef YGR_SH1_RW_DEBUG
@@ -60,7 +61,9 @@ struct Ygr
    int fifo_ptr;
    u16 fifo[4];
    u16 transfer_ctrl;
-}ygr_cxt;
+
+   int mbx_status;
+}ygr_cxt = { 0 };
 
 u8 ygr_sh1_read_byte(u32 addr)
 {
@@ -79,6 +82,8 @@ u16 ygr_sh1_read_word(u32 addr)
       return ygr_cxt.fifo[ygr_cxt.fifo_ptr];
    case 2:
       return ygr_cxt.transfer_ctrl;
+   case 4:
+      return ygr_cxt.mbx_status;
    case 0x6:
       return ygr_cxt.regs.HIRQ;
    case 8:
@@ -115,6 +120,9 @@ void ygr_sh1_write_word(u32 addr, u16 data)
 {
    CDTRACE("wwlsi: %08X %04X\n", addr, data);
    switch (addr & 0xffff) {
+   case 4:
+      ygr_cxt.mbx_status = data;
+      return;
    case 0x6:
       ygr_cxt.regs.HIRQ = data;
       return;
@@ -148,6 +156,37 @@ void ygr_sh1_write_long(u32 addr, u32 data)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void lle_trace_log(const char * format, ...)
+{
+   static int started = 0;
+   static FILE* fp = NULL;
+   va_list l;
+
+   if (!started)
+   {
+      fp = fopen("C:/yabause/lle_log.txt", "w");
+
+      if (!fp)
+      {
+         return;
+      }
+      started = 1;
+   }
+
+   va_start(l, format);
+   vfprintf(fp, format, l);
+   va_end(l);
+}
+
+//#define WANT_LLE_TRACE
+
+#ifdef WANT_LLE_TRACE
+#define LLECDLOG(...) lle_trace_log(__VA_ARGS__)
+#else
+#define LLECDLOG(...)
+#endif
+
+
 //replacements for Cs2ReadWord etc
 u16 FASTCALL ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
    u16 val = 0;
@@ -156,21 +195,28 @@ u16 FASTCALL ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
    switch (addr) {
    case 0x90008:
    case 0x9000A:
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.HIRQ);
       return ygr_cxt.regs.HIRQ;
    case 0x9000C:
-   case 0x9000E: 
+   case 0x9000E:
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.HIRQMASK);
       return ygr_cxt.regs.HIRQMASK;
    case 0x90018:
    case 0x9001A: 
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR1);
       return ygr_cxt.regs.CR1;
    case 0x9001C:
    case 0x9001E: 
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR2);
       return ygr_cxt.regs.CR2;
    case 0x90020:
    case 0x90022: 
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR3);
       return ygr_cxt.regs.CR3;
    case 0x90024:
    case 0x90026: 
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR4);
+      ygr_cxt.mbx_status |= 2;//todo test this
       return ygr_cxt.regs.CR4;
    case 0x90028:
    case 0x9002A: 
