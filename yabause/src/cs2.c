@@ -71,7 +71,7 @@
 
 #define ToBCD(val) ((val % 10 ) + ((val / 10 ) << 4))
 
-#define SEEK_TIME (50000*5)
+#define SEEK_TIME (60000*5)
 
 Cs2 * Cs2Area = NULL;
 ip_struct *cdip = NULL;
@@ -259,7 +259,9 @@ void FASTCALL Cs2WriteWord(u32 addr, u16 val) {
     case 0x90008:
     case 0x9000A:
                   Cs2Area->reg.HIRQ &= val;
-				  CDLOG("write HIRQ %04X, %04X\n", Cs2Area->reg.HIRQ, val);
+				  if (val != 0xFFFE){
+					  CDLOG("write HIRQ %04X, %04X\n", Cs2Area->reg.HIRQ, val);
+				  }
                   return;
     case 0x9000C: 
     case 0x9000E: Cs2Area->reg.HIRQMASK = val;
@@ -766,7 +768,7 @@ void Cs2Reset(void) {
      memset(Cs2Area->block[i].data, 0, 2352);
   }
 
-  Cs2Area->blockfreespace = 200;
+  Cs2Area->blockfreespace = MAX_BLOCKS;
 
   // initialize TOC
   memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
@@ -860,10 +862,7 @@ void Cs2Exec(u32 timing) {
       switch (Cs2Area->status & 0xF) {
          case CDB_STAT_PAUSE:
          {
-//            if (FAD >= playFAD && FAD < playendFAD)
-//               status = CDB_STAT_PLAY;
-//            else
-               break;
+             break;
          }
          case CDB_STAT_PLAY:
          {
@@ -885,11 +884,18 @@ void Cs2Exec(u32 timing) {
                      Cs2Area->reg.HIRQ |= CDB_HIRQ_CSCT;
                      Cs2Area->isonesectorstored = 1;
 
+					 if (Cs2Area->isbufferfull) {
+						 CDLOG("BUFFER IS FULL\n");
+						 Cs2Area->status = CDB_STAT_SEEK;
+						 Cs2Area->options = 0x00;
+					 }
+
                      if (Cs2Area->FAD >= Cs2Area->playendFAD) {
                         // Make sure we don't have to do a repeat
                         if (Cs2Area->repcnt >= Cs2Area->maxrepeat) {
                            // we're done
                            Cs2Area->status = CDB_STAT_PAUSE;
+						   Cs2Area->options = 0x8;
                            Cs2SetTiming(0);
                            Cs2Area->reg.HIRQ |= CDB_HIRQ_PEND;
 
@@ -908,10 +914,7 @@ void Cs2Exec(u32 timing) {
                            CDLOG("PLAY HAS REPEATED\n");
                         }
                      }
-                     if (Cs2Area->isbufferfull) {
-                        CDLOG("BUFFER IS FULL\n");
-//                        status = CDB_STAT_PAUSE;
-                     }
+
                   }
                   else
                   {
@@ -951,7 +954,13 @@ void Cs2Exec(u32 timing) {
             break;
          }
          case CDB_STAT_SEEK:
-            break;
+		 {
+			 if (Cs2Area->FAD >= Cs2Area->playFAD && Cs2Area->FAD < Cs2Area->playendFAD && Cs2Area->isbufferfull == 0){
+				 Cs2Area->status = CDB_STAT_PLAY;
+				 Cs2Area->options = 0x8;
+			 }
+			 break;
+		 }
          case CDB_STAT_SCAN:
             break;
          case CDB_STAT_RETRY:
@@ -1558,9 +1567,11 @@ void Cs2PlayDisc(void) {
 
   Cs2Area->_periodiccycles = 0;
   Cs2Area->_periodictiming = SEEK_TIME; // seektime
-  Cs2Area->status = CDB_STAT_PLAY;
+  Cs2Area->status = CDB_STAT_SEEK;      // need to be seek
+  Cs2Area->options = 0;
   Cs2Area->playtype = CDB_PLAYTYPE_SECTOR;
   Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
+
 
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
@@ -1569,7 +1580,25 @@ void Cs2PlayDisc(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2SeekDisc(void) {
-  if (Cs2Area->reg.CR1 & 0x80)
+
+	// Stop
+	if ((Cs2Area->reg.CR1 & 0xFF) == 0x00 && Cs2Area->reg.CR2 == 0x0000){
+
+		Cs2Area->status = CDB_STAT_STANDBY;
+		Cs2Area->options = 0xFF;
+		Cs2Area->repcnt = 0xFF;
+		Cs2Area->ctrladdr = 0xFF;
+		Cs2Area->track = 0xFF;
+		Cs2Area->index = 0xFF;
+		Cs2Area->FAD = 0xFFFFFFFF;
+
+	}
+	// Pause
+	else if ((Cs2Area->reg.CR1 & 0xFF) == 0xFF && Cs2Area->reg.CR2 == 0xFFFF){
+
+		Cs2Area->status = CDB_STAT_PAUSE;
+	}
+  else if (Cs2Area->reg.CR1 & 0x80)
   {
      // Seek by FAD
      u32 sdFAD;
@@ -1596,7 +1625,7 @@ void Cs2SeekDisc(void) {
         Cs2Area->status = CDB_STAT_PAUSE;
         Cs2SetupDefaultPlayStats((Cs2Area->reg.CR2 >> 8), 1);
         Cs2Area->index = Cs2Area->reg.CR2 & 0xFF;
-     }
+	 }
      else
      {
         // Error
@@ -1956,16 +1985,26 @@ void Cs2GetSectorNumber(void) {
   Cs2Area->reg.CR1 = Cs2Area->status << 8;
   Cs2Area->reg.CR2 = 0;
   Cs2Area->reg.CR3 = 0;
-  Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_DRDY;
+  Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#define CDC_ACTSIZ_ERR  0xffffff
 
 void Cs2CalculateActualSize(void) {
   u16 i;
   u32 casbufno;
   u16 cassectoffset;
   u16 casnumsect;
+
+#if 0
+  if (Cs2Area->status == CDB_STAT_SEEK){
+	  Cs2Area->calcsize = CDC_ACTSIZ_ERR;
+	  doCDReport(Cs2Area->status);
+	  Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
+	  return;
+  }
+#endif
 
   cassectoffset = Cs2Area->reg.CR2;
   casbufno = Cs2Area->reg.CR3 >> 8;
@@ -2820,7 +2859,7 @@ void Cs2FADToMSF(u32 val, u8 *m, u8 *s, u8 *f)
 void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD) {
   if (track_number != 0xFF)
   {
-     Cs2Area->options = 0;
+     Cs2Area->options = 8;
      Cs2Area->repcnt = 0;
      Cs2Area->ctrladdr = (u8)(Cs2Area->TOC[track_number - 1] >> 24);
      Cs2Area->index = 1;
@@ -2866,7 +2905,6 @@ void Cs2FreeBlock(block_struct * blk) {
   blk->size = -1;
   Cs2Area->blockfreespace++;
   Cs2Area->isbufferfull = 0;
-  Cs2Area->reg.HIRQ &= ~CDB_HIRQ_BFUL;
 }
 
 //////////////////////////////////////////////////////////////////////////////
