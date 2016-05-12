@@ -337,7 +337,7 @@ void YabauseThread::reloadSettings()
    mYabauseConf.m68kcoretype = vs->value("Advanced/68kCore", mYabauseConf.m68kcoretype).toInt();
 	mYabauseConf.percoretype = vs->value( "Input/PerCore", mYabauseConf.percoretype ).toInt();
 	mYabauseConf.sh1coretype = vs->value( "Advanced/SH1Interpreter", mYabauseConf.sh1coretype ).toInt();
-	mYabauseConf.use_cd_block_lle = vs->value( "Advanced/EnableCDBlockLLE", mYabauseConf.use_cd_block_lle ).toInt();
+	mYabauseConf.use_cd_block_lle = vs->value( "Advanced/EnableCDBlockLLE", mYabauseConf.use_cd_block_lle ).toBool();
 	mYabauseConf.sh2coretype = vs->value( "Advanced/SH2Interpreter", mYabauseConf.sh2coretype ).toInt();
 	mYabauseConf.vidcoretype = vs->value( "Video/VideoCore", mYabauseConf.vidcoretype ).toInt();
 	mYabauseConf.osdcoretype = vs->value( "Video/OSDCore", mYabauseConf.osdcoretype ).toInt();
