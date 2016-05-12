@@ -44,6 +44,13 @@
 #define TIMERTRACE(...)
 #endif
 
+//#define WANT_PORT_TRACE
+#ifdef WANT_PORT_TRACE
+#define PORTTRACE(...) cd_trace_log(__VA_ARGS__)
+#else
+#define PORTTRACE(...)
+#endif
+
 void cd_trace_log(const char * format, ...)
 {
    static int started = 0;
@@ -453,10 +460,591 @@ void print_timers()
 #endif
 }
 
+void print_pacr1()
+{
+   PORTTRACE("PACR1\n");
+
+   PORTTRACE(" Pin 15\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1 >> 14) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA15)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ3)\n");
+      break;
+   case 2:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 3:
+      PORTTRACE("\tDMA transfer request input (DREQ1)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 14\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1 >> 12) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA14)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ2)\n");
+      break;
+   case 2:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 3:
+      PORTTRACE("\tDMA transfer acknowledge output (DACK1)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 13\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1 >> 10) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA13)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ1)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU timer clock input (TCLKB)\n");
+      break;
+   case 3:
+      PORTTRACE("\tDMA transfer request input (DREQ0)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 12\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1 >> 8) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA12)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ0)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU timer clock input (TCLKA)\n");
+      break;
+   case 3:
+      PORTTRACE("\tDMA transfer acknowledge output (DACK0)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 11\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1 >> 6) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA11)\n");
+      break;
+   case 1:
+      PORTTRACE("\tUpper data bus parity input/output (DPH)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCB1)\n");
+      break;
+   case 3:
+      PORTTRACE("\tReserved\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 10\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1 >> 4) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA10)\n");
+      break;
+   case 1:
+      PORTTRACE("\tLower data bus parity input/output (DPL)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCA1)\n");
+      break;
+   case 3:
+      PORTTRACE("\tReserved\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 9\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1 >> 2) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA9)\n");
+      break;
+   case 1:
+      PORTTRACE("\tAddress hold output (AH)\n");
+      break;
+   case 2:
+      PORTTRACE("\tA/D conversion trigger input (ADTRG)\n");
+      break;
+   case 3:
+      PORTTRACE("\tInterrupt request output (IRQOUT)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 8\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr1) & 1)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA8)\n");
+      break;
+   case 1:
+      PORTTRACE("\tBus request input (BREQ)\n");
+      break;
+   }
+}
+
+void print_pacr2()
+{
+   PORTTRACE("PACR2\n");
+
+   PORTTRACE(" Pin 7\n");
+
+   if(!((sh1_cxt.onchip.pfc.pacr2) & (1 << 14)))
+      PORTTRACE("\tInput / output(PA7)\n");
+   else
+      PORTTRACE("\tBus request acknowledge output (BACK)\n");
+
+   PORTTRACE(" Pin 6\n");
+
+   if (!((sh1_cxt.onchip.pfc.pacr2) & (1 << 12)))
+      PORTTRACE("\tInput / output(PA6)\n");
+   else
+      PORTTRACE("\tRead output (RD) \n");
+
+   PORTTRACE(" Pin 5\n");
+
+   if (!((sh1_cxt.onchip.pfc.pacr2) & (1 << 10)))
+      PORTTRACE("\tInput / output(PA5)\n");
+   else
+      PORTTRACE("\tUpper write output (WRH) or lower byte strobe output (LBS) \n");
+
+   PORTTRACE(" Pin 4\n");
+
+   if (!((sh1_cxt.onchip.pfc.pacr2) & (1 << 8)))
+      PORTTRACE("\tInput / output(PA4)\n");
+   else
+      PORTTRACE("\tLower write output (WRL) or write output (WR) \n");
+
+   PORTTRACE(" Pin 3\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr2 >> 6) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA3)\n");
+      break;
+   case 1:
+      PORTTRACE("\tChip select output (CS7)\n");
+      break;
+   case 2:
+      PORTTRACE("\tWait state input (WAIT) \n");
+      break;
+   case 3:
+      PORTTRACE("\tReserved\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 2\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr2 >> 4) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA2)\n");
+      break;
+   case 1:
+      PORTTRACE("\tChip select output (CS6)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCB0)\n");
+      break;
+   case 3:
+      PORTTRACE("\tReserved\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 1\n");
+
+   switch ((sh1_cxt.onchip.pfc.pacr2 >> 2) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA1)\n");
+      break;
+   case 1:
+      PORTTRACE("\tChip select output (CS5)\n");
+      break;
+   case 2:
+      PORTTRACE("\tRow address strobe output (RAS)\n");
+      break;
+   case 3:
+      PORTTRACE("\tReserved\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 0\n");
+
+   switch (sh1_cxt.onchip.pfc.pacr2  & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PA0)\n");
+      break;
+   case 1:
+      PORTTRACE("\tChip select output (CS4)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCA0)\n");
+      break;
+   case 3:
+      PORTTRACE("\tReserved\n");
+      break;
+   }
+}
+
+void print_pbcr1()
+{
+   PORTTRACE("PBCR1\n");
+
+   PORTTRACE(" Pin 15\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 14) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB15)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ7)\n");
+      break;
+   case 2:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP15)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 14\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 12) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB14)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ6)\n");
+      break;
+   case 2:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP14)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 13\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 10) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB13)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ5)\n");
+      break;
+   case 2:
+      PORTTRACE("\tSerial clock input/output (SCK1)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP13)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 12\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 8) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB12)\n");
+      break;
+   case 1:
+      PORTTRACE("\tInterrupt request input (IRQ4)\n");
+      break;
+   case 2:
+      PORTTRACE("\tSerial clock input/output (SCK0)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP12)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 11\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 6) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB11)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tTransmit data output (TxD1)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP11)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 10\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 4) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB10)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tReceive data input (RxD1)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP10)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 9\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 2) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB9)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tTransmit data output (TxD0)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP9)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 8\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr1 >> 0) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB8)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tReceive data input (RxD0)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP8)\n");
+      break;
+   }
+}
+
+void print_pbcr2()
+{
+   PORTTRACE("PBCR2\n");
+
+   PORTTRACE(" Pin 7\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 14) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB7)\n");
+      break;
+   case 1:
+      PORTTRACE("\tITU timer clock input (TCLKD)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU output compare (TOCXB4)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP7)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 6\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 12) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB6)\n");
+      break;
+   case 1:
+      PORTTRACE("\tITU timer clock input (TCLKC)\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU output compare (TOCXA4)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP6)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 5\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 10) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB5)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCB4)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP5)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 4\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 8) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB4)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCA4)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP4)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 3\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 6) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB3)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCB3)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP3)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 2\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 4) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB2)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCA3)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP2)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 1\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 2) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB1)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCB2)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP1)\n");
+      break;
+   }
+
+   PORTTRACE(" Pin 0\n");
+
+   switch ((sh1_cxt.onchip.pfc.pbcr2 >> 0) & 3)
+   {
+   case 0:
+      PORTTRACE("\tInput / output(PB0)\n");
+      break;
+   case 1:
+      PORTTRACE("\tReserved\n");
+      break;
+   case 2:
+      PORTTRACE("\tITU input capture/output compare (TIOCA2)\n");
+      break;
+   case 3:
+      PORTTRACE("\tTiming pattern output (TP0)\n");
+      break;
+   }
+}
+
+
+void port_debug()
+{
+   int i;
+   PORTTRACE("PAIOR\n");
+
+   for (i = 0; i < 16; i++)
+   {
+      if (sh1_cxt.onchip.pfc.paior & (1 << i))
+         PORTTRACE("\tPin %d is an output\n", i);
+      else
+         PORTTRACE("\tPin %d is an input\n", i);
+   }
+
+   PORTTRACE("PBIOR\n");
+
+   for (i = 0; i < 16; i++)
+   {
+      if (sh1_cxt.onchip.pfc.pbior & (1 << i))
+         PORTTRACE("\tPin %d is an output\n", i);
+      else
+         PORTTRACE("\tPin %d is an input\n", i);
+   }
+
+   print_pacr1();
+
+   print_pacr2();
+
+   print_pbcr1();
+
+   print_pbcr2();
+}
+
 struct Sh1 sh1_cxt;
 
 void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8 data)
 {
+
+   port_debug();
 
    print_timers();
 
@@ -2951,14 +3539,14 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
          regs->pfc.pacr2 = data >> 16;
          regs->pfc.pbcr1 = data & 0xffff;
          return;
-      //not allowed according to tpc section
       case 0xc:
-         //regs->pfc.pbcr1 = data >> 16;
-         //regs->pfc.pbcr2 = data & 0xffff;
+         //not allowed according to tpc section but the rom writes this...
+         regs->pfc.pbcr1 = data >> 16;
+         regs->pfc.pbcr2 = data & 0xffff;
          return;
       case 0xe:
-         //regs->pfc.pbcr2 = data >> 16;
-         //regs->pcdr = data & 0xffff;//check this
+         regs->pfc.pbcr2 = data >> 16;
+         regs->pcdr = data & 0xffff;//check this
          return;
       }
 
