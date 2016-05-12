@@ -95,6 +95,7 @@
 #endif
 
 #include "sh7034.h"
+#include "cd_drive.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -110,7 +111,7 @@ char ssf_artist[256] = { 0 };
 u32 saved_scsp_cycles = 0;//fixed point
 u32 saved_m68k_cycles = 0;//fixed point
 u32 saved_sh1_cycles = 0;
-
+u32 saved_cdd_cycles = 0;
 //////////////////////////////////////////////////////////////////////////////
 
 #ifndef NO_CLI
@@ -550,7 +551,7 @@ int YabauseEmulate(void) {
 #ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
-	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline, sh1_cycles_per_deciline;
+	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline, sh1_cycles_per_deciline, cdd_cycles_per_deciline;
 	int lines, frames = 0;
 
    m68k_cycles_per_deciline = 0;
@@ -572,7 +573,10 @@ int YabauseEmulate(void) {
    }
 
    if (yabsys.use_cd_block_lle)
+   {
       sh1_cycles_per_deciline = get_cycles_per_line_division(20 * 1000000, frames, lines, 10);//20mhz
+      cdd_cycles_per_deciline = get_cycles_per_line_division(50000, frames, lines, 10);//serial baud rate 50000 bits per second
+   }
    
    if(use_new_scsp)
    {
@@ -778,11 +782,17 @@ int YabauseEmulate(void) {
       if(yabsys.use_cd_block_lle)
       {
          u32 sh1_integer_part = 0;
+         u32 cdd_integer_part = 0;
          saved_sh1_cycles += sh1_cycles_per_deciline;
          sh1_integer_part = saved_sh1_cycles >> SCSP_FRACTIONAL_BITS;
          //sh1_exec(&sh1_cxt, sh1_integer_part);
          SH2Exec(SH1, sh1_integer_part);
          saved_sh1_cycles -= sh1_integer_part << SCSP_FRACTIONAL_BITS;
+         
+         saved_cdd_cycles += cdd_cycles_per_deciline;
+         cdd_integer_part = saved_cdd_cycles >> SCSP_FRACTIONAL_BITS;
+         cd_drive_exec(&cdd_cxt, cdd_integer_part);
+         saved_cdd_cycles -= cdd_integer_part << SCSP_FRACTIONAL_BITS;
       }
 
       PROFILE_STOP("Total Emulation");

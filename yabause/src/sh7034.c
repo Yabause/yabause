@@ -4856,18 +4856,7 @@ void tick_timer(int which)
    }
 
    //timer compare b
-
-
-   //case 4:
-   //   break;
-   //case 5:
-   //   break;
-   //case 6:
-   //   break;
-   //case 7:
-   //   break;
-   //}
-
+#if 0
    if (sh1_cxt.onchip.itu.channel[which].grb == sh1_cxt.onchip.itu.channel[which].tcnt)
    {
       switch (sh1_cxt.onchip.itu.channel[which].tior >> 4)
@@ -4895,6 +4884,9 @@ void tick_timer(int which)
    {
 
    }
+#endif
+   //input capture
+
 }
 
 void sh1_onchip_run_cycle()
@@ -5060,3 +5052,19 @@ int sh1_load_rom(struct Sh1* sh1, const char* filename)
    return 1;
 }
 #endif
+
+//signal from the cd drive board microcontroller
+//falling edge
+void set_output_enable()
+{
+   //input capture
+   
+   //store old grb value in brb
+   sh1_cxt.onchip.itu.channel[3].brb = sh1_cxt.onchip.itu.channel[3].grb;
+
+   //put tcnt value in grb
+   sh1_cxt.onchip.itu.channel[3].grb = sh1_cxt.onchip.itu.channel[3].tcnt;
+
+   //trigger an interrupt
+   SH2SendInterrupt(SH1, 93, (sh1_cxt.onchip.intc.iprd >> 8) & 0xf);
+}
