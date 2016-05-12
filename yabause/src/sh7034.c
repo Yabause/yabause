@@ -67,17 +67,330 @@ void cd_trace_log(const char * format, ...)
 }
 
 
+void print_tocr()
+{
+   TIMERTRACE("Timer Output Control Register(TOCR)\n");
+
+   //tocr
+   if (sh1_cxt.onchip.itu.tocr & (1 << 1))
+      TIMERTRACE("\tTIOCA3, TIOCA4, and TIOCB4 are output directly \n");
+   else
+      TIMERTRACE("\tTIOCA3, TIOCA4, and TIOCB4 are inverted and output\n");
+
+   if (sh1_cxt.onchip.itu.tocr & (1 << 0))
+      TIMERTRACE("\tTIOCB3, TOCXA4, and TOCXB4 are output directly\n");
+   else
+      TIMERTRACE("\tTIOCB3, TOCXA4, and TOCXB4 are inverted and output\n");
+}
+
+void print_tcr(int which)
+{
+   TIMERTRACE("Timer Control Register(TCR)\n");
+
+   switch ((sh1_cxt.onchip.itu.channel[which].tcr >> 5) & 3)
+   {
+   case 0:
+      TIMERTRACE("\tTCNT is not cleared\n");
+      break;
+   case 1:
+      TIMERTRACE("\tTCNT is cleared by general register A (GRA) compare match or input capture\n");
+      break;
+   case 2:
+      TIMERTRACE("\tTCNT is cleared by general register B (GRB) compare match or input capture\n");
+      break;
+   case 3:
+      TIMERTRACE("\tSynchronizing clear: TCNT is cleared in synchronization with clear of other timer counters operating in sync\n");
+      break;
+   }
+
+   if (sh1_cxt.onchip.itu.channel[which].tcr & (1 << 4))
+      TIMERTRACE("\tCount both rising and falling edges\n");
+   else
+   {
+      if (sh1_cxt.onchip.itu.channel[which].tcr & (1 << 3))
+         TIMERTRACE("\tCount falling edges.\n", which);
+      else
+         TIMERTRACE("\tCount rising edges.\n", which);
+   }
+
+   switch (sh1_cxt.onchip.itu.channel[which].tcr & 7)
+   {
+   case 0:
+      TIMERTRACE("\tInternal clock phi\n");
+      break;
+   case 1:
+      TIMERTRACE("\tInternal clock phi/2\n");
+      break;
+   case 2:
+      TIMERTRACE("\tInternal clock phi/4\n");
+      break;
+   case 3:
+      TIMERTRACE("\tInternal clock phi/8\n");
+      break;
+   case 4:
+      TIMERTRACE("\tExternal clock A\n");
+      break;
+   case 5:
+      TIMERTRACE("\tExternal clock B\n");
+      break;
+   case 6:
+      TIMERTRACE("\tExternal clock C\n");
+      break;
+   case 7:
+      TIMERTRACE("\tExternal clock D\n");
+      break;
+   }
+}
+
+void print_tior(int which)
+{
+   TIMERTRACE("Timer I/O Control Register (TIOR)\n");
+
+   //tior3
+   switch ((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7)
+   {
+      //output compare
+   case 0:
+      TIMERTRACE("\tGRB Compare match with pin output disabled\n");
+      break;
+   case 1:
+      TIMERTRACE("\tGRB 0 output at GRB compare match\n");
+      break;
+   case 2:
+      TIMERTRACE("\tGRB 1 output at GRB compare match\n");
+      break;
+   case 3:
+      TIMERTRACE("\tGRB Output toggles at GRB compare match \n");
+      break;
+      //input capture
+   case 4:
+      TIMERTRACE("\tGRB captures rising edge of input\n");
+      break;
+   case 5:
+      TIMERTRACE("\tGRB captures falling edge of input\n");
+      break;
+   case 6:
+   case 7:
+      TIMERTRACE("\tGRB captures both edges of input\n");
+      break;
+   }
+
+   switch ((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7)
+   {
+      //output compare
+   case 0:
+      TIMERTRACE("\tGRA Compare match with pin output disabled\n");
+      break;
+   case 1:
+      TIMERTRACE("\tGRA 0 output at GRA compare match\n");
+      break;
+   case 2:
+      TIMERTRACE("\tGRA 1 output at GRA compare match\n");
+      break;
+   case 3:
+      TIMERTRACE("\tGRA Output toggles at GRA compare match \n");
+      break;
+      //input capture
+   case 4:
+      TIMERTRACE("\tGRA captures rising edge of input\n");
+      break;
+   case 5:
+      TIMERTRACE("\tGRA captures falling edge of input\n");
+      break;
+   case 6:
+   case 7:
+      TIMERTRACE("\tGRA captures both edges of input\n");
+      break;
+   }
+}
+
+void print_tier(int which)
+{
+   TIMERTRACE("Timer Interrupt Enable Register (TIER)\n");
+
+   //tier3
+   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 2))
+      TIMERTRACE("\tEnables interrupt requests from OVF\n");
+   else
+      TIMERTRACE("\tDisables interrupt requests by OVF\n");
+
+   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 1))
+      TIMERTRACE("\tEnables interrupt requests by IMFB (IMIB)\n");
+   else
+      TIMERTRACE("\tDisables interrupt requests by IMFB (IMIB)\n");
+
+   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 0))
+      TIMERTRACE("\tEnables interrupt requests by IMFA (IMIA)\n");
+   else
+      TIMERTRACE("\tDisables interrupt requests by IMFA (IMIA)\n");
+}
+
+void print_tsr(int which)
+{
+   TIMERTRACE("Timer Status Register(TSR)\n");
+
+   //tsr3
+   if (sh1_cxt.onchip.itu.channel[which].tsr & (1 << 2))
+      TIMERTRACE("\tSetting condition: TCNT overflow from H'FFFF to H'0000 or underflow from H'0000 to H'FFFF\n");
+   else
+      TIMERTRACE("\tClearing condition: Read OVF when OVF = 1, then write 0 in OVF\n");
+
+   if (sh1_cxt.onchip.itu.channel[which].tsr & (1 << 1))
+      TIMERTRACE("\tSetting conditions: !!!!!!!!\n");
+   else
+      TIMERTRACE("\tClearing condition: Read IMFB when IMFB = 1, then write 0 in IMFB\n");
+
+   if (sh1_cxt.onchip.itu.channel[which].tsr & (1 << 0))
+      TIMERTRACE("\tSetting conditions: !!!!!!!!\n");
+   else
+      TIMERTRACE("\tClearing condition: Read IMFA when IMFA = 1, then write 0 in IMFA. DMAC is activated by an IMIA interrupt (only channels 0–3)\n");
+}
+
+void print_tmdr(int which)
+{
+   TIMERTRACE("TMDR\n");
+
+   if (which == 2)
+   {
+      if (sh1_cxt.onchip.itu.tmdr & (1 << 6))
+         TIMERTRACE("\tChannel 2 operates in phase counting mode\n");
+      else
+         TIMERTRACE("\tChannel 2 operates normally .\n");
+      
+      if (sh1_cxt.onchip.itu.tmdr & (1 << 5))
+         TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows\n");
+      else
+         TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows or underflows.\n");
+
+   }
+
+   if (sh1_cxt.onchip.itu.tmdr & (1 << which))
+      TIMERTRACE("\toperates in PWM mode\n");
+   else
+      TIMERTRACE("\toperates normally.\n");
+}
+
+void print_tsnc(int which)
+{
+   //tsnc
+   TIMERTRACE("Timer Synchro Register (TSNC)\n");
+
+   if (sh1_cxt.onchip.itu.tstr & (1 << which))
+      TIMERTRACE("\toperates synchronously\n");
+   else
+      TIMERTRACE("\toperates independently\n");
+
+}
+
+void print_tstr(int which)
+{
+   //tstr
+   TIMERTRACE("Timer Start Register(TSTR)\n");
+
+   if (sh1_cxt.onchip.itu.tstr & (1 << which))
+      TIMERTRACE("\tTimer is counting\n");
+   else
+      TIMERTRACE("\tTimer is halted\n");
+}
+
+void print_tfcr(int which)
+{
+   TIMERTRACE("Timer Function Control Register (TFCR) \n");
+
+   if (which == 3 || which == 4)
+   {
+      //tfcr
+      switch ((sh1_cxt.onchip.itu.tfcr >> 4) & 3)
+      {
+      case 0:
+      case 1:
+         TIMERTRACE("\tChannels 3 and 4 operate normally\n");
+         break;
+      case 2:
+         TIMERTRACE("\tChannels 3 and 4 operate together in complementary PWM mode\n");
+         break;
+      case 3:
+         TIMERTRACE("\tChannels 3 and 4 operate together in reset-synchronized PWM mode\n");
+         break;
+      }
+   }
+
+   if (which == 4)
+   {
+      if (sh1_cxt.onchip.itu.tfcr & (1 << 3))
+         TIMERTRACE("\tBuffer operation of GRB4 and BRB4\n");
+      else
+         TIMERTRACE("\tGRB4 operates normally\n");
+
+      if (sh1_cxt.onchip.itu.tfcr & (1 << 2))
+         TIMERTRACE("\tBuffer operation of GRA4 and BRA4\n");
+      else
+         TIMERTRACE("\tGRA4 operates normally\n");
+   }
+
+   if (which == 3)
+   {
+      if (sh1_cxt.onchip.itu.tfcr & (1 << 1))
+         TIMERTRACE("\tBuffer operation of GRB3 and BRB3\n");
+      else
+         TIMERTRACE("\tGRB4 operates normally\n");
+
+      if (sh1_cxt.onchip.itu.tfcr & (1 << 0))
+         TIMERTRACE("\tBuffer operation of GRA3 and BRA3\n");
+      else
+         TIMERTRACE("\tGRA4 operates normally\n");
+   }
+}
+
 void print_timers()
 {
+
+   //do timer 3
+
+
+   //tcr3
+
+   int which = 3;
+
+   TIMERTRACE("***TIMER %d***\n", which);
+
+   print_tstr(which);
+
+   print_tsnc(which);
+
+   print_tmdr(which);
+
+   print_tfcr(which);
+
+   print_tcr(which);
+
+   print_tior(which);
+
+   print_tier(which);
+
+   print_tsr(which);
+   
+   //tcnt3
+   TIMERTRACE("\tTCNT: %04X\n", sh1_cxt.onchip.itu.channel[which].tcnt);
+   //gra3
+   TIMERTRACE("\tGRA: %04X\n", sh1_cxt.onchip.itu.channel[which].gra);
+   //grb3
+   TIMERTRACE("\tGRB: %04X\n", sh1_cxt.onchip.itu.channel[which].grb);
+   //bra3
+   TIMERTRACE("\tBRA: %04X\n", sh1_cxt.onchip.itu.channel[which].bra);
+   //brb3
+   TIMERTRACE("\tBRB: %04X\n", sh1_cxt.onchip.itu.channel[which].brb);
+
+   print_tocr();
+
+
+#if 0
    TIMERTRACE("TSTR\n");
 
    int i;
    for (i = 4; i >= 0; i--)
    {
-      if (sh1_cxt.onchip.itu.tstr & (1 << i))
-         TIMERTRACE("\tTCNT%d is counting\n", i);
-      else
-         TIMERTRACE("\tTCNT%d is halted\n", i);
+
    }
 
    TIMERTRACE("TSTR\n");
@@ -90,46 +403,54 @@ void print_timers()
          TIMERTRACE("\tTCNT%d operates synchronously.\n", i);
    }
 
-   TIMERTRACE("TMDR\n");
-
-   if (sh1_cxt.onchip.itu.tmdr & (1 << 6))
-      TIMERTRACE("\tChannel 2 operates in phase counting mode\n", i);
-   else
-      TIMERTRACE("\tChannel 2 operates normally .\n", i);
-
-   if (sh1_cxt.onchip.itu.tmdr & (1 << 5))
-      TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows\n", i);
-   else
-      TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows or underflows.\n", i);
-
-   for (i = 4; i >= 0; i--)
-   {
-      if (sh1_cxt.onchip.itu.tmdr & (1 << i))
-         cd_trace_log("\tTCNT%d operates in PWM mode\n", i);
-      else
-         cd_trace_log("\tTCNT%d operates normally.\n", i);
-   }
    for (i = 4; i >= 0; i--)
    {
       TIMERTRACE("TIER%d\n", i);
 
-      if (sh1_cxt.onchip.itu.channel[i].tier & (1 << 2))
-         TIMERTRACE("\tTCNT%d Enables interrupt requests from OVF\n", i);
-      else
-         TIMERTRACE("\tTCNT%d Disables interrupt requests by OVF\n", i);
 
-      if (sh1_cxt.onchip.itu.channel[i].tier & (1 << 1))
-         TIMERTRACE("\tTCNT%d Enables interrupt requests by IMFB (IMIB)\n", i);
-      else
-         TIMERTRACE("\tTCNT%d Disables interrupt requests by IMFB (IMIB)\n", i);
-
-      if (sh1_cxt.onchip.itu.channel[i].tier & (1 << 0))
-         TIMERTRACE("\tTCNT%d Enables interrupt requests by IMFA (IMIA)\n", i);
-      else
-         TIMERTRACE("\tTCNT%d Disables interrupt requests by IMFA (IMIA)\n", i);
    }
+#endif
+
+#if 0
+   TIMERTRACE("SCR\n");
+
+   for (i = 0; i < 2; i++)
+   {
+      if (sh1_cxt.onchip.sci[i].scr & (1 << 7))
+         TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is enabled\n", i);
+      else
+         TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is disabled\n", i);
+
+      if (sh1_cxt.onchip.sci[i].scr & (1 << 6))
+         TIMERTRACE("\tSCI Channel %d Receive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are enabled\n", i);
+      else
+         TIMERTRACE("\tSCI Channel %d Receive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are disabled \n", i);
+
+      if (sh1_cxt.onchip.sci[i].scr & (1 << 3))
+         TIMERTRACE("\tSCI Channel %d Multiprocessor interrupts are enabled\n", i);
+      else
+         TIMERTRACE("\tSCI Channel %d Multiprocessor interrupts are disabled\n", i);
+
+      if (sh1_cxt.onchip.sci[i].scr & (1 << 2))
+         TIMERTRACE("\tSCI Channel %d Transmit-end interrupt (TEI) requests are enabled\n", i);
+      else
+         TIMERTRACE("\tSCI Channel %d Transmit-end interrupt (TEI) requests are disabled\n", i);
+   }
+#endif
+   //TIMERTRACE("TCSR\n");
+
+   //if (sh1_cxt.onchip.wdt.tcsr & (1 << 6))
+   //   TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is enabled\n", i);
+   //else
+   //   TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is disabled\n", i);
+#if 0
+   for (i = 4; i >= 0; i--)
+   {
+      TIMERTRACE("TIOR%d\n", i);
 
 
+   }
+#endif
 }
 
 struct Sh1 sh1_cxt;
@@ -297,7 +618,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
 {
    CDTRACE("wbreg: %08X %02X\n", addr, data);
 
-   if (addr == 0x05ffff9a)
+   if (addr == 0x5FFFF25)
    {
       int q = 1;
    }
@@ -3835,61 +4156,109 @@ void sh1_init_func()
 
 static int cycles_since = 0;
 
-void sh1_onchip_run_cycle()
+void tick_timer(int which)
 {
-   if (sh1_cxt.onchip.itu.tstr & (1 << 4))//timer 4 is counting
+   if (sh1_cxt.onchip.itu.tstr & (1 << which))//timer is counting
    {
-      u16 old_tcnt = sh1_cxt.onchip.itu.channel[4].tcnt;
+      u16 old_tcnt = sh1_cxt.onchip.itu.channel[which].tcnt;
 
-      switch (sh1_cxt.onchip.itu.channel[4].tcr & 7)
+      switch (sh1_cxt.onchip.itu.channel[which].tcr & 7)
       {
       case 0:
-         sh1_cxt.onchip.itu.channel[4].tcnt++; //internal clock speed
+         sh1_cxt.onchip.itu.channel[which].tcnt++; //internal clock speed
          break;
       case 1:
-         if (sh1_cxt.onchip.itu.channel[4].tcnt_fraction == 2)
+         if (sh1_cxt.onchip.itu.channel[which].tcnt_fraction == 2)
          {
-            sh1_cxt.onchip.itu.channel[4].tcnt++; // phi/2
-            sh1_cxt.onchip.itu.channel[4].tcnt_fraction = 0;
+            sh1_cxt.onchip.itu.channel[which].tcnt++; // phi/2
+            sh1_cxt.onchip.itu.channel[which].tcnt_fraction = 0;
          }
 
-         sh1_cxt.onchip.itu.channel[4].tcnt_fraction++;
+         sh1_cxt.onchip.itu.channel[which].tcnt_fraction++;
          break;
       case 2:
-         if (sh1_cxt.onchip.itu.channel[4].tcnt_fraction == 4)
+         if (sh1_cxt.onchip.itu.channel[which].tcnt_fraction == 4)
          {
-            sh1_cxt.onchip.itu.channel[4].tcnt++; // phi/4
-            sh1_cxt.onchip.itu.channel[4].tcnt_fraction = 0;
+            sh1_cxt.onchip.itu.channel[which].tcnt++; // phi/4
+            sh1_cxt.onchip.itu.channel[which].tcnt_fraction = 0;
          }
 
-         sh1_cxt.onchip.itu.channel[4].tcnt_fraction++;
+         sh1_cxt.onchip.itu.channel[which].tcnt_fraction++;
          break;
       case 3:
-         if (sh1_cxt.onchip.itu.channel[4].tcnt_fraction == 8)
+         if (sh1_cxt.onchip.itu.channel[which].tcnt_fraction == 8)
          {
-            sh1_cxt.onchip.itu.channel[4].tcnt++; // phi/8
-            sh1_cxt.onchip.itu.channel[4].tcnt_fraction = 0;
+            sh1_cxt.onchip.itu.channel[which].tcnt++; // phi/8
+            sh1_cxt.onchip.itu.channel[which].tcnt_fraction = 0;
          }
 
-         sh1_cxt.onchip.itu.channel[4].tcnt_fraction++;
+         sh1_cxt.onchip.itu.channel[which].tcnt_fraction++;
          break;
       default:
          assert(0);
       }
 
-      if (sh1_cxt.onchip.itu.channel[4].tier & (1 << 2))
+      if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 2))
       {
-         if (sh1_cxt.onchip.itu.channel[4].tcnt < old_tcnt)
+         if (sh1_cxt.onchip.itu.channel[which].tcnt < old_tcnt)
          {
             //overflow interrupt
             TIMERTRACE("*****TCNT4 OVF interrupt*******\n");
 
-            SH2SendInterrupt(SH1, 98, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+            if(which == 4)
+               SH2SendInterrupt(SH1, 98, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
 
             cycles_since = 0;
          }
       }
    }
+
+   //timer compare b
+
+
+   //case 4:
+   //   break;
+   //case 5:
+   //   break;
+   //case 6:
+   //   break;
+   //case 7:
+   //   break;
+   //}
+
+   if (sh1_cxt.onchip.itu.channel[which].grb == sh1_cxt.onchip.itu.channel[which].tcnt)
+   {
+      switch (sh1_cxt.onchip.itu.channel[which].tior >> 4)
+      {
+      case 0:
+         //disabled
+         break;
+      case 1:
+         //output 0
+         sh1_cxt.onchip.itu.channel[which].tsr &= ~(1 << 1);
+         break;
+      case 2:
+         //output 1
+         sh1_cxt.onchip.itu.channel[which].tsr |= (1 << 1);
+         break;
+      case 3:
+         //toggles
+         break;
+      }
+   }
+     // sh1_cxt.onchip.itu.channel[which].tsr |= (1 << 1)
+
+   //input capture/match b
+   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 1))
+   {
+
+   }
+}
+
+void sh1_onchip_run_cycle()
+{
+   tick_timer(3);
+   tick_timer(4);
 
    cycles_since++;
 }
