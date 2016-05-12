@@ -90,6 +90,9 @@ s32 cd_command_exec(struct CdDriveContext * drive)
       make_status_data(&state, data);
 
       bit = get_bit_from_status(data, serial_counter++);
+
+      sh1_set_start(1);
+
       sh1_serial_recieve_bit(bit, 0);
 
       if (serial_counter == (13 * 8))

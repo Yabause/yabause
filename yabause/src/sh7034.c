@@ -5089,3 +5089,12 @@ void sh1_serial_recieve_bit(int bit, int channel)
       }
    }
 }
+
+//pb2
+void sh1_set_start(int state)
+{
+   if (state)
+      sh1_cxt.onchip.pbdr |= 0x04;
+   else
+      sh1_cxt.onchip.pbdr &= ~0x04;
+}

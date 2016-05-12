@@ -42,6 +42,7 @@ void FASTCALL Sh1MemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
 void sh1_init_func();
 void sh1_serial_recieve_bit(int bit, int channel);
+void sh1_set_start(int state);
 
 struct Onchip
 {
