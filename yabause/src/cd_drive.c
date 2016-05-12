@@ -75,35 +75,72 @@ int get_bit_from_status(u8 * data, int bit_num)
 
 int serial_counter = 0;
 
+enum CommunicationState
+{
+   NoTransfer,
+   Started,
+   SendingFirstByte,
+   ByteFinished,
+   SendingByte,
+   Running
+}comm_state = NoTransfer;
+
+struct CdState state = { 0 };
+u8 state_data[13] = { 0 };
+
 s32 cd_command_exec(struct CdDriveContext * drive)
 {
    //assert output enable
 
    //0x46 is
    //0b01000110
-   if (output_enabled)
+
+   if (comm_state == Started)
    {
-      struct CdState state = { 0 };
-      u8 data[13] = { 0 };
-      int bit = 0;
       state.current_operation = Idle;
-      make_status_data(&state, data);
-
-      bit = get_bit_from_status(data, serial_counter++);
-
-      sh1_set_start(1);
+      make_status_data(&state, state_data);
+      comm_state = SendingFirstByte;
+      sh1_set_output_enable();
+      serial_counter = 0;
+   }
+   else if (comm_state == SendingFirstByte)
+   {
+      int bit = 0;
+      bit = get_bit_from_status(state_data, serial_counter++);
 
       sh1_serial_recieve_bit(bit, 0);
 
-      if (serial_counter == (13 * 8))
-         output_enabled = 0;
+      if (serial_counter == 8)
+      {
+         sh1_set_start(0);
+         comm_state = ByteFinished;
+      }
+   }
+   else if (comm_state == ByteFinished)//after a byte has been sent
+   {
+      //trigger next byte
+      sh1_set_output_enable();
+      comm_state = SendingByte;
+   }
+   else if (comm_state == SendingByte)
+   {
+      int bit = 0;
+      bit = get_bit_from_status(state_data, serial_counter++);
+
+      sh1_serial_recieve_bit(bit, 0);
+
+      if (serial_counter % 8 == 0 && (serial_counter == 8 * 13))
+      {
+         comm_state = NoTransfer;
+      }
+      else if (serial_counter % 8 == 0)
+         comm_state = ByteFinished;
    }
 
    if ((num_execs > 0) && (num_execs % 15000) == 0)
    {
-      set_output_enable();
-      output_enabled = 1;
-      serial_counter = 0;
+      comm_state = Started;
+      sh1_set_start(1);
    }
 
    num_execs++;

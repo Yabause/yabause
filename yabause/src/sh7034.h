@@ -238,7 +238,7 @@ extern struct Sh1 sh1_cxt;
 
 void sh1_exec(struct Sh1 * sh1, s32 cycles);
 void sh1_onchip_run_cycles(s32 cycles);
-void set_output_enable();
+void sh1_set_output_enable();
 
 
 #endif

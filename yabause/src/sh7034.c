@@ -5055,7 +5055,7 @@ int sh1_load_rom(struct Sh1* sh1, const char* filename)
 
 //signal from the cd drive board microcontroller
 //falling edge
-void set_output_enable()
+void sh1_set_output_enable()
 {
    //input capture
    
