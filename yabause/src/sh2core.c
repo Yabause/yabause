@@ -251,6 +251,9 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    FRTExec(context, cycles);
    WDTExec(context, cycles);
 
+   if(context->model == SHMT_SH1)
+      sh1_onchip_run_cycles(cycles);
+
    if (UNLIKELY(context->cycles < cycles))
       context->cycles = 0;
    else

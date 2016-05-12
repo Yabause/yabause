@@ -37,6 +37,13 @@
 #define SH1MEMLOG(...)
 #endif
 
+//#define WANT_TIMER_TRACE
+#ifdef WANT_TIMER_TRACE
+#define TIMERTRACE(...) cd_trace_log(__VA_ARGS__)
+#else
+#define TIMERTRACE(...)
+#endif
+
 void cd_trace_log(const char * format, ...)
 {
    static int started = 0;
@@ -60,11 +67,78 @@ void cd_trace_log(const char * format, ...)
 }
 
 
+void print_timers()
+{
+   TIMERTRACE("TSTR\n");
+
+   int i;
+   for (i = 4; i >= 0; i--)
+   {
+      if (sh1_cxt.onchip.itu.tstr & (1 << i))
+         TIMERTRACE("\tTCNT%d is counting\n", i);
+      else
+         TIMERTRACE("\tTCNT%d is halted\n", i);
+   }
+
+   TIMERTRACE("TSTR\n");
+
+   for (i = 4; i >= 0; i--)
+   {
+      if (sh1_cxt.onchip.itu.tsnc & (1 << i))
+         TIMERTRACE("\tThe timer counter for TCNT%d operates independently\n", i);
+      else
+         TIMERTRACE("\tTCNT%d operates synchronously.\n", i);
+   }
+
+   TIMERTRACE("TMDR\n");
+
+   if (sh1_cxt.onchip.itu.tmdr & (1 << 6))
+      TIMERTRACE("\tChannel 2 operates in phase counting mode\n", i);
+   else
+      TIMERTRACE("\tChannel 2 operates normally .\n", i);
+
+   if (sh1_cxt.onchip.itu.tmdr & (1 << 5))
+      TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows\n", i);
+   else
+      TIMERTRACE("\tOVF of TSR2 is set to 1 when TCNT2 overflows or underflows.\n", i);
+
+   for (i = 4; i >= 0; i--)
+   {
+      if (sh1_cxt.onchip.itu.tmdr & (1 << i))
+         cd_trace_log("\tTCNT%d operates in PWM mode\n", i);
+      else
+         cd_trace_log("\tTCNT%d operates normally.\n", i);
+   }
+   for (i = 4; i >= 0; i--)
+   {
+      TIMERTRACE("TIER%d\n", i);
+
+      if (sh1_cxt.onchip.itu.channel[i].tier & (1 << 2))
+         TIMERTRACE("\tTCNT%d Enables interrupt requests from OVF\n", i);
+      else
+         TIMERTRACE("\tTCNT%d Disables interrupt requests by OVF\n", i);
+
+      if (sh1_cxt.onchip.itu.channel[i].tier & (1 << 1))
+         TIMERTRACE("\tTCNT%d Enables interrupt requests by IMFB (IMIB)\n", i);
+      else
+         TIMERTRACE("\tTCNT%d Disables interrupt requests by IMFB (IMIB)\n", i);
+
+      if (sh1_cxt.onchip.itu.channel[i].tier & (1 << 0))
+         TIMERTRACE("\tTCNT%d Enables interrupt requests by IMFA (IMIA)\n", i);
+      else
+         TIMERTRACE("\tTCNT%d Disables interrupt requests by IMFA (IMIA)\n", i);
+   }
+
+
+}
 
 struct Sh1 sh1_cxt;
 
 void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8 data)
 {
+
+   print_timers();
+
    switch (addr)
    {
    case 0:
@@ -130,6 +204,9 @@ void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8
 
 u8 onchip_read_timer_byte(struct Onchip * regs, u32 addr, int which_timer)
 {
+
+   print_timers();
+
    switch (addr)
    {
    case 0:
@@ -3753,6 +3830,73 @@ void sh1_init_func()
    sh1_init(&sh1_cxt);
 
    sh1_cxt.onchip.pbdr = 0x40c;
+}
+
+
+static int cycles_since = 0;
+
+void sh1_onchip_run_cycle()
+{
+   if (sh1_cxt.onchip.itu.tstr & (1 << 4))//timer 4 is counting
+   {
+      u16 old_tcnt = sh1_cxt.onchip.itu.channel[4].tcnt;
+
+      switch (sh1_cxt.onchip.itu.channel[4].tcr & 7)
+      {
+      case 0:
+         sh1_cxt.onchip.itu.channel[4].tcnt++; //internal clock speed
+         break;
+      case 1:
+         if (sh1_cxt.onchip.itu.channel[4].tcnt_fraction == 2)
+         {
+            sh1_cxt.onchip.itu.channel[4].tcnt++; // phi/2
+            sh1_cxt.onchip.itu.channel[4].tcnt_fraction = 0;
+         }
+
+         sh1_cxt.onchip.itu.channel[4].tcnt_fraction++;
+         break;
+      case 2:
+         if (sh1_cxt.onchip.itu.channel[4].tcnt_fraction == 4)
+         {
+            sh1_cxt.onchip.itu.channel[4].tcnt++; // phi/4
+            sh1_cxt.onchip.itu.channel[4].tcnt_fraction = 0;
+         }
+
+         sh1_cxt.onchip.itu.channel[4].tcnt_fraction++;
+         break;
+      case 3:
+         if (sh1_cxt.onchip.itu.channel[4].tcnt_fraction == 8)
+         {
+            sh1_cxt.onchip.itu.channel[4].tcnt++; // phi/8
+            sh1_cxt.onchip.itu.channel[4].tcnt_fraction = 0;
+         }
+
+         sh1_cxt.onchip.itu.channel[4].tcnt_fraction++;
+         break;
+      default:
+         assert(0);
+      }
+
+      if (sh1_cxt.onchip.itu.channel[4].tier & (1 << 2))
+      {
+         if (sh1_cxt.onchip.itu.channel[4].tcnt < old_tcnt)
+         {
+            //overflow interrupt
+            TIMERTRACE("*****TCNT4 OVF interrupt*******\n");
+
+            cycles_since = 0;
+         }
+      }
+   }
+
+   cycles_since++;
+}
+
+void sh1_onchip_run_cycles(s32 cycles)
+{
+   int i;
+   for (i = 0; i < cycles; i++)
+      sh1_onchip_run_cycle();
 }
 
 //u16 sh1_fetch(struct Sh1* sh1)

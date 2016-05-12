@@ -116,6 +116,10 @@ struct Onchip
          //buffer regs unused for channels 0-2
          u16 bra;
          u16 brb;
+
+         //not registers, implementation specific
+         u8 tcnt_fraction;
+
       }channel[5];
    }itu;
 
@@ -227,6 +231,7 @@ struct Sh1
 extern struct Sh1 sh1_cxt;
 
 void sh1_exec(struct Sh1 * sh1, s32 cycles);
+void sh1_onchip_run_cycles(s32 cycles);
 
 
 
