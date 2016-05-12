@@ -1039,10 +1039,64 @@ void port_debug()
    print_pbcr2();
 }
 
+void print_serial(int which)
+{
+   PORTTRACE("SCI channel %d\n", which);
+
+   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 7)))
+      PORTTRACE("\tAsynchronous mode\n");
+   else
+      PORTTRACE("\tSynchronous mode\n");
+
+   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 6)))
+      PORTTRACE("\tEight-bit data\n");
+   else
+      PORTTRACE("\tSeven-bit data.\n");
+
+   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 5)))
+      PORTTRACE("\tParity bit not added or checked \n");
+   else
+      PORTTRACE("\tParity bit added and checked.\n");
+
+   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 4)))
+      PORTTRACE("\tEven parity \n");
+   else
+      PORTTRACE("\tOdd parity\n");
+
+   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 3)))
+      PORTTRACE("\tOne stop bit\n");
+   else
+      PORTTRACE("\tTwo stop bits\n");
+
+   if (!(sh1_cxt.onchip.sci[which].smr & (1 << 2)))
+      PORTTRACE("\tMultiprocessor function disabled \n");
+   else
+      PORTTRACE("\tMultiprocessor format selected\n");
+
+   switch (sh1_cxt.onchip.sci[which].smr & 3)
+   {
+   case 0:
+      PORTTRACE("\tSystem clock\n");
+      break;
+   case 1:
+      PORTTRACE("\tphi/4\n");
+      break;
+   case 2:
+      PORTTRACE("\tphi/16\n");
+      break;
+   case 3:
+      PORTTRACE("\tphi/64\n");
+      break;
+   }
+}
+
 struct Sh1 sh1_cxt;
 
 void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8 data)
 {
+
+   print_serial(0);
+   print_serial(1);
 
    port_debug();
 
