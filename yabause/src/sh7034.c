@@ -3884,6 +3884,8 @@ void sh1_onchip_run_cycle()
             //overflow interrupt
             TIMERTRACE("*****TCNT4 OVF interrupt*******\n");
 
+            SH2SendInterrupt(SH1, 98, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+
             cycles_since = 0;
          }
       }
