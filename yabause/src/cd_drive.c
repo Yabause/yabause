@@ -82,7 +82,8 @@ enum CommunicationState
    SendingFirstByte,
    ByteFinished,
    SendingByte,
-   Running
+   Running,
+   NewTransfer
 }comm_state = NoTransfer;
 
 struct CdState state = { 0 };
@@ -90,57 +91,45 @@ u8 state_data[13] = { 0 };
 
 s32 cd_command_exec(struct CdDriveContext * drive)
 {
-   //assert output enable
-
-   //0x46 is
-   //0b01000110
-
-   if (comm_state == Started)
+   if (comm_state == NewTransfer)
    {
+      //make packet
       state.current_operation = Idle;
       make_status_data(&state, state_data);
-      comm_state = SendingFirstByte;
-      sh1_set_output_enable();
-      serial_counter = 0;
-   }
-   else if (comm_state == SendingFirstByte)
-   {
-      int bit = 0;
-      bit = get_bit_from_status(state_data, serial_counter++);
 
-      sh1_serial_recieve_bit(bit, 0);
-
-      if (serial_counter == 8)
-      {
-         sh1_set_start(0);
-         comm_state = ByteFinished;
-      }
-   }
-   else if (comm_state == ByteFinished)//after a byte has been sent
-   {
-      //trigger next byte
+      //reset sh1 serial byte counter
+      sh1_set_start(1);
       sh1_set_output_enable();
       comm_state = SendingByte;
+      serial_counter = 0;
    }
    else if (comm_state == SendingByte)
    {
+      //we only need to do this the first byte but it shouldn't hurt anyway
+      sh1_set_start(0);
+
       int bit = 0;
       bit = get_bit_from_status(state_data, serial_counter++);
 
       sh1_serial_recieve_bit(bit, 0);
 
-      if (serial_counter % 8 == 0 && (serial_counter == 8 * 13))
-      {
-         comm_state = NoTransfer;
-      }
-      else if (serial_counter % 8 == 0)
+      if (serial_counter % 8 == 0)
          comm_state = ByteFinished;
+   }
+   else if (comm_state == ByteFinished)
+   {
+      //byte is completed, tell the sh1 to read it
+      sh1_set_output_enable();
+
+      if (serial_counter == (8 * 13))
+         comm_state = NoTransfer;
+      else
+         comm_state = SendingByte;
    }
 
    if (comm_state == NoTransfer && (sh1_cxt.onchip.sci[0].scr & 0x30) == 0x30)
    {
-      comm_state = Started;
-      sh1_set_start(1);
+      comm_state = NewTransfer;
    }
 
    num_execs++;
