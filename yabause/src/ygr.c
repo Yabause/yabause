@@ -239,6 +239,252 @@ u16 FASTCALL ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef CDDEBUG
+void ygr_a_bus_cd_cmd_log(void) 
+{
+	u16 instruction=ygr_cxt.regs.CR1 >> 8;
+
+   switch (instruction) 
+   {
+      case 0x00:
+         CDLOG("abus cdb command: Get Status %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x01:
+         CDLOG("abus cdb command: Get Hardware Info %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x02:
+         CDLOG("abus cdb command: Get TOC %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x03:
+         CDLOG("abus cdb command: Get Session Info %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x04:
+         CDLOG("abus cdb command: Initialize CD System %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x05:
+         CDLOG("abus cdb command: Open Tray %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x06:
+         CDLOG("abus cdb command: End Data Transfer %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x10:
+         CDLOG("abus cdb command: Play Disc %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x11:
+         CDLOG("abus cdb command: Seek Disc %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x12:
+         CDLOG("abus cdb command: Scan Disc %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x20:
+         CDLOG("abus cdb command: Get Subcode QRW %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x30:
+         CDLOG("abus cdb command: Set CD Device Connection %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x31:
+         CDLOG("abus cdb command: Get CD Device Connection %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x32:
+         CDLOG("abus cdb command: Get Last Buffer Destination %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x40:
+         CDLOG("abus cdb command: Set Filter Range %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x41:
+         CDLOG("abus cdb command: Get Filter Range %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x42:
+         CDLOG("abus cdb command: Set Filter Subheader Conditions %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x43:
+         CDLOG("abus cdb command: Get Filter Subheader Conditions %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x44:
+         CDLOG("abus cdb command: Set Filter Mode %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x45:
+         CDLOG("abus cdb command: Get Filter Mode %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x46:
+         CDLOG("abus cdb command: Set Filter Connection %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x47:
+         CDLOG("abus cdb command: Get Filter Connection %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x48:
+         CDLOG("abus cdb command: Reset Selector %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x50:
+         CDLOG("abus cdb command: Get Buffer Size %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x51:
+         CDLOG("abus cdb command: Get Sector Number %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x52:
+         CDLOG("abus cdb command: Calculate Actual Size %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x53:
+         CDLOG("abus cdb command: Get Actual Size %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x54:
+         CDLOG("abus cdb command: Get Sector Info %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x55:
+         CDLOG("abus cdb command: Execute FAD Search %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x56:
+         CDLOG("abus cdb command: Get FAD Search Results %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x60:
+         CDLOG("abus cdb command: Set Sector Length %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x61:
+         CDLOG("abus cdb command: Get Sector Data %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x62:
+         CDLOG("abus cdb command: Delete Sector Data %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x63:
+         CDLOG("abus cdb command: Get Then Delete Sector Data %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x64:
+         CDLOG("abus cdb command: Put Sector Data %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x65:
+         CDLOG("abus cdb command: Copy Sector Data %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x66:
+         CDLOG("abus cdb command: Move Sector Data %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x67:
+         CDLOG("abus cdb command: Get Copy Error %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x70:
+         CDLOG("abus cdb command: Change Directory %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x71:
+         CDLOG("abus cdb command: Read Directory %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x72:
+         CDLOG("abus cdb command: Get File System Scope %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x73:
+         CDLOG("abus cdb command: Get File Info %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x74:
+         CDLOG("abus cdb command: Read File %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x75:
+         CDLOG("abus cdb command: Abort File %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x90:
+         CDLOG("abus cdb command: MPEG Get Status %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x91:
+         CDLOG("abus cdb command: MPEG Get Interrupt %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x92:
+         CDLOG("abus cdb command: MPEG Set Interrupt Mask %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2);
+         break;
+      case 0x93: 
+         CDLOG("abus cdb command: MPEG Init %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2);
+         break;
+      case 0x94:
+         CDLOG("abus cdb command: MPEG Set Mode %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3);
+         break;
+      case 0x95:
+         CDLOG("abus cdb command: MPEG Play %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR4);
+         break;
+      case 0x96:
+         CDLOG("abus cdb command: MPEG Set Decoding Method %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR4);
+         break;
+		case 0x97:
+			CDLOG("abus cdb command: MPEG Out Decoding Sync %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR4);
+			break;
+		case 0x98:
+			CDLOG("abus cdb command: MPEG Get Timecode %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR4);
+			break;
+		case 0x99:
+			CDLOG("abus cdb command: MPEG Get PTS %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR4);
+			break;
+      case 0x9A:
+         CDLOG("abus cdb command: MPEG Set Connection %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x9B:
+         CDLOG("abus cdb command: MPEG Get Connection %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+		case 0x9C:
+			CDLOG("abus cdb command: MPEG Change Connection %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+			break;
+      case 0x9D:
+         CDLOG("abus cdb command: MPEG Set Stream %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0x9E:
+         CDLOG("abus cdb command: MPEG Get Stream %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+		case 0x9F:
+			CDLOG("abus cdb command: MPEG Get Picture Size %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+			break;
+      case 0xA0:
+         CDLOG("abus cdb command: MPEG Display %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA1:
+         CDLOG("abus cdb command: MPEG Set Window %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA2:
+         CDLOG("abus cdb command: MPEG Set Border Color %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA3:
+         CDLOG("abus cdb command: MPEG Set Fade %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA4:
+         CDLOG("abus cdb command: MPEG Set Video Effects %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA5:
+         CDLOG("abus cdb command: MPEG Get Image %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA6:
+         CDLOG("abus cdb command: MPEG Set Image %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA7:
+         CDLOG("abus cdb command: MPEG Read Image %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA8:
+         CDLOG("abus cdb command: MPEG Write Image %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xA9:
+         CDLOG("abus cdb command: MPEG Read Sector %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xAA:
+         CDLOG("abus cdb command: MPEG Write Sector %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xAE:
+         CDLOG("abus cdb command: MPEG Get LSI %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xAF:
+         CDLOG("abus cdb command: MPEG Set LSI %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xE0:
+         CDLOG("abus cdb command: Authenticate Device %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xE1:
+         CDLOG("abus cdb command: Is Device Authenticated %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      case 0xE2:
+         CDLOG("abus cdb command: Get MPEG ROM %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+      default:
+         CDLOG("abus cdb command: Unknown Command(0x%02X) %04x %04x %04x %04x %04x\n", instruction, ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+         break;
+	}
+}
+#else
+#define ygr_a_bus_cd_cmd_log() 
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
 void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -267,6 +513,7 @@ void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
    case 0x90026: 
       ygr_cxt.regs.CR4 = val;
       SH2SendInterrupt(SH1, 70, (sh1_cxt.onchip.intc.iprb >> 4) & 0xf);
+      ygr_a_bus_cd_cmd_log();
       return;
    case 0x90028:
    case 0x9002A: 
