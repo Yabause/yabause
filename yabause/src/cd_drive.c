@@ -90,6 +90,15 @@ enum CommunicationState
 
 struct CdState state = { 0 };
 u8 state_data[13] = { 0 };
+u8 received_data[13] = { 0 };
+int received_data_counter = 0;
+
+void set_received_bit(u8*rx_data, int bit_count, int bit)
+{
+   u8 byte_num = bit_count / 8;
+   u8 bit_within_byte = bit_count % 8;
+   rx_data[byte_num] |= bit << bit_within_byte;
+}
 
 s32 cd_command_exec(struct CdDriveContext * drive)
 {
@@ -110,13 +119,17 @@ s32 cd_command_exec(struct CdDriveContext * drive)
       sh1_set_output_enable();
       comm_state = SendingByte;
       serial_counter = 0;
+      received_data_counter = 0;
    }
    else if (comm_state == SendingByte)
    {
       int bit = 0;
+      int received_bit = 0;
       bit = get_bit_from_status(state_data, serial_counter++);
 
       sh1_serial_recieve_bit(bit, 0);
+      sh1_serial_transmit_bit(0, &received_bit);
+      set_received_bit(received_data, received_data_counter++, received_bit);
 
       if (serial_counter % 8 == 0)
          comm_state = ByteFinished;

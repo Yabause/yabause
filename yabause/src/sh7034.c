@@ -5231,6 +5231,26 @@ void sh1_serial_recieve_bit(int bit, int channel)
    }
 }
 
+void sh1_serial_transmit_bit(int channel, int* output_bit)
+{
+   *output_bit = sh1_cxt.onchip.sci[channel].tsr & 1;
+   sh1_cxt.onchip.sci[channel].tsr >>= 1;
+   sh1_cxt.onchip.sci[channel].tsr_counter++;
+
+   //a full byte has been transferred, fill tsr again
+   if (sh1_cxt.onchip.sci[channel].tsr_counter == 8)
+   {
+      sh1_cxt.onchip.sci[channel].tsr_counter = 0;
+      sh1_cxt.onchip.sci[channel].tsr = sh1_cxt.onchip.sci[channel].tdr;
+
+      if (sh1_cxt.onchip.sci[0].scr & (1 << 7))//tie interrupt
+      {
+         assert(0);
+       //  SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
+      }
+   }
+}
+
 //pb2
 void sh1_set_start(int state)
 {
