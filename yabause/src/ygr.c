@@ -266,6 +266,7 @@ void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
    case 0x90024:
    case 0x90026: 
       ygr_cxt.regs.CR4 = val;
+      SH2SendInterrupt(SH1, 70, (sh1_cxt.onchip.intc.iprb >> 4) & 0xf);
       return;
    case 0x90028:
    case 0x9002A: 
