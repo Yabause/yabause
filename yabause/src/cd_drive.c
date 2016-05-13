@@ -38,11 +38,13 @@ enum CdStatusOperations
    Stopped = 0x12,
    Seeking = 0x22,
    LidOpen = 0x80,
+   NoDisc = 0x83,
    ReadingDataSectors = 0x36,
    ReadingAudioData = 0x34,
    Unknown = 0x30,
    SeekSecurityRing1 = 0xB2,
    SeekSecurityRing2 = 0xB6
+
 };
 
 struct CdState
@@ -94,7 +96,13 @@ s32 cd_command_exec(struct CdDriveContext * drive)
    if (comm_state == NewTransfer)
    {
       //make packet
+#if 0
+      state.current_operation = LidOpen;
+#elif 0
       state.current_operation = Idle;
+#else
+      state.current_operation = NoDisc;
+#endif
       make_status_data(&state, state_data);
 
       //reset sh1 serial byte counter
