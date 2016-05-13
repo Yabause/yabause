@@ -51,6 +51,38 @@
 #define PORTTRACE(...)
 #endif
 
+u8 transfer_buffer[13] = { 0 };
+
+void update_transfer_buffer()
+{
+   int i;
+   for (i = 0; i < 13; i++)
+   {
+      transfer_buffer[i] = T2ReadByte(sh1_cxt.ram, 0x0002D0 + i);//0xF0002D0
+   }
+}
+
+u16 cr_response[4] = { 0 };
+
+void update_cr_response_values(u32 addr)
+{
+   int updated = 0;
+   if (addr >= 0x0F00026C && addr <= 0x0F000273)
+   {
+      updated = 1;
+      //0x0F00026C
+      cr_response[0] = T2ReadWord(sh1_cxt.ram, 0x00026C + 0);
+      cr_response[1] = T2ReadWord(sh1_cxt.ram, 0x00026C + 2);
+      cr_response[2] = T2ReadWord(sh1_cxt.ram, 0x00026C + 4);
+      cr_response[3] = T2ReadWord(sh1_cxt.ram, 0x00026C + 6);
+   }
+
+   if (updated)
+   {
+      int q = 1;
+   }
+}
+
 void cd_trace_log(const char * format, ...)
 {
    static int started = 0;
@@ -1088,6 +1120,78 @@ void print_serial(int which)
       PORTTRACE("\tphi/64\n");
       break;
    }
+
+   PORTTRACE("SCR");
+
+   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 7)))
+      PORTTRACE("\tTransmit-data-empty interrupt request (TXI) is disabled \n");
+   else
+      PORTTRACE("\tTransmit-data-empty interrupt request (TXI) is enabled\n");
+
+   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 6)))
+      PORTTRACE("\tReceive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are disabled  \n");
+   else
+      PORTTRACE("\tReceive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are enabled\n");
+
+   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 5)))
+      PORTTRACE("\tTransmitter disabled \n");
+   else
+      PORTTRACE("\tTransmitter enabled.\n");
+
+   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 4)))
+      PORTTRACE("\tReceiver disabled  \n");
+   else
+      PORTTRACE("\tReceiver enabled.\n");
+
+   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 3)))
+      PORTTRACE("\tMultiprocessor interrupts are disabled  \n");
+   else
+      PORTTRACE("\tMultiprocessor interrupts are enabled\n");
+
+   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 2)))
+      PORTTRACE("\tTransmit-end interrupt (TEI) requests are disabled \n");
+   else
+      PORTTRACE("\tTransmit-end interrupt (TEI) requests are enabled.\n");
+
+   if (sh1_cxt.onchip.sci[which].smr & (1 << 7))
+   {
+      //synchronous mode
+      switch (sh1_cxt.onchip.sci[which].scr & 3)
+      {
+      case 0:
+      case 1:
+         PORTTRACE("\tInternal clock, SCK pin used for serial clock output\n");
+         break;
+      case 2:
+      case 3:
+         PORTTRACE("\tExternal clock, SCK pin used for serial clock input\n");
+         break;
+      }
+   }
+   else
+   {
+      //async
+      switch (sh1_cxt.onchip.sci[which].scr & 3)
+      {
+      case 0:
+         PORTTRACE("\tInternal clock, SCK pin used for input pin\n");
+         break;
+      case 1:
+         PORTTRACE("\tInternal clock, SCK pin used for clock output\n");
+         break;
+      case 2:
+      case 3:
+         PORTTRACE("\tExternal clock, SCK pin used for clock input\n");
+         break;
+      }
+   }
+
+   PORTTRACE("\tBitrate %02X\n", sh1_cxt.onchip.sci[which].brr);
+
+   //serial pin
+
+   PORTTRACE("\tSCK0 %d\n", ((sh1_cxt.onchip.pfc.pbcr1 >> 8) & 3));
+   PORTTRACE("\tIn/out %d (1 means output)\n", ((sh1_cxt.onchip.pfc.pbior >> 12) & 1));
 }
 
 struct Sh1 sh1_cxt;
@@ -1095,12 +1199,12 @@ struct Sh1 sh1_cxt;
 void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8 data)
 {
 
-   print_serial(0);
-   print_serial(1);
+   
+   //print_serial(1);
 
-   port_debug();
+   //port_debug();
 
-   print_timers();
+   //print_timers();
 
    switch (addr)
    {
@@ -1168,7 +1272,7 @@ void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8
 u8 onchip_read_timer_byte(struct Onchip * regs, u32 addr, int which_timer)
 {
 
-   print_timers();
+   //print_timers();
 
    switch (addr)
    {
@@ -1259,6 +1363,8 @@ void onchip_write_timer_word(struct Onchip * regs, u32 addr, int which_timer, u1
 void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
 {
    CDTRACE("wbreg: %08X %02X\n", addr, data);
+
+   print_serial(0);
 
    if (addr == 0x5FFFF25)
    {
@@ -2326,6 +2432,7 @@ void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
 
 void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
 {
+   print_serial(0);
    CDTRACE("wwreg: %08X %04X\n", addr, data);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
@@ -3194,6 +3301,8 @@ void onchip_dmac_write_long(struct Onchip * regs, u32 addr, int which, u32 data)
 }
 void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
 {
+   print_serial(0);
+
    CDTRACE("wlreg: %08X %08X\n", addr, data);
    if (addr >= 0x5FFFE00 && addr <= 0x5FFFEBF)
    {
@@ -4111,6 +4220,8 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       //onchip ram
       CDTRACE("wbram: %08X %02X\n", addr, data);
       T2WriteByte(sh1->ram, addr & 0x1fff, data);
+      update_cr_response_values(addr);
+      update_transfer_buffer();
       return;
 
       if (a27)
@@ -4134,6 +4245,11 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
    int mode_pins = 0;
 
    SH1MEMLOG("memory_map_read_byte 0x%08x", addr);
+
+   if (addr == 0xF0002D0)
+   {
+      int i = 1;
+   }
 
    switch (area)
    {
@@ -4226,6 +4342,10 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
 
+   if (addr == 0xF00026C)
+   {
+      int q = 1;
+   }
    SH1MEMLOG("memory_map_read_word 0x%08x", addr);
 
    switch (area)
@@ -4313,12 +4433,26 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
    assert(0);
    return 0;
 }
-
+extern int do_trace;
 void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
 {
    u8 area = (addr >> 24) & 7;
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
+
+   
+
+   if (addr == 0x0F00026C)
+   {
+      int q = 1;
+   }
+
+   if (data == 0x20ff)
+   {
+      int q = 1;
+
+      do_trace = 0;
+   }
 
    SH1MEMLOG("memory_map_write_word 0x%08x 0x%04x", addr, data);
 
@@ -4400,6 +4534,7 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
 
       CDTRACE("wwram: %08X %04X\n", addr, data);
       T2WriteWord(sh1->ram, addr & 0x1fff,data);
+      update_cr_response_values(addr);
 
       return;
 
@@ -4516,6 +4651,11 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
    u8 a27 = (addr >> 27) & 1;
    int mode_pins = 0;
 
+   if (addr == 0x0F00026C && data != 0)
+   {
+      int q = 1;
+   }
+
    SH1MEMLOG("memory_map_write_long 0x%08x 0x%04x", addr, data);
 
    switch (area)
@@ -4595,6 +4735,7 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       //onchip ram
       CDTRACE("wlram: %08X %08X\n", addr, data);
       T2WriteLong(sh1->ram, addr & 0x1fff, data);
+      update_cr_response_values(addr);
       return;
       if (a27)
       {
