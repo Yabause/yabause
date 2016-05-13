@@ -62,6 +62,8 @@ struct Ygr
    u16 fifo[4];
    u16 transfer_ctrl;
 
+   u16 cdirq_flags;
+
    int mbx_status;
 }ygr_cxt = { 0 };
 
@@ -85,7 +87,7 @@ u16 ygr_sh1_read_word(u32 addr)
    case 4:
       return ygr_cxt.mbx_status;
    case 0x6:
-      return ygr_cxt.regs.HIRQ;
+      return ygr_cxt.cdirq_flags;
    case 8:
       return ygr_cxt.regs.UNKNOWN;
    case 0xa:
@@ -124,7 +126,7 @@ void ygr_sh1_write_word(u32 addr, u16 data)
       ygr_cxt.mbx_status = data;
       return;
    case 0x6:
-      ygr_cxt.regs.HIRQ = data;
+      ygr_cxt.cdirq_flags = data;
       return;
    case 8:
       ygr_cxt.regs.UNKNOWN = data & 3;
@@ -143,6 +145,9 @@ void ygr_sh1_write_word(u32 addr, u16 data)
       return;
    case 0x16: // CR4
       ygr_cxt.regs.CR4 = data;
+      return;
+   case 0x1e:
+      ygr_cxt.regs.HIRQ |= data;
       return;
    }
    YGR_SH1_RW_LOG("ygr_sh1_write_word 0x%08x 0x%04x", addr, data);
