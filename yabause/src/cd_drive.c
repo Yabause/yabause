@@ -105,9 +105,6 @@ s32 cd_command_exec(struct CdDriveContext * drive)
    }
    else if (comm_state == SendingByte)
    {
-      //we only need to do this the first byte but it shouldn't hurt anyway
-      sh1_set_start(0);
-
       int bit = 0;
       bit = get_bit_from_status(state_data, serial_counter++);
 
@@ -118,6 +115,10 @@ s32 cd_command_exec(struct CdDriveContext * drive)
    }
    else if (comm_state == ByteFinished)
    {
+      //first byte has finished transferring
+      if (serial_counter == 8)
+         sh1_set_start(0);
+
       //byte is completed, tell the sh1 to read it
       sh1_set_output_enable();
 
