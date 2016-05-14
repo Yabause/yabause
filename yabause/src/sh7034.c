@@ -283,7 +283,7 @@ void print_tsr(int which)
    if (sh1_cxt.onchip.itu.channel[which].tsr & (1 << 0))
       TIMERTRACE("\tSetting conditions: !!!!!!!!\n");
    else
-      TIMERTRACE("\tClearing condition: Read IMFA when IMFA = 1, then write 0 in IMFA. DMAC is activated by an IMIA interrupt (only channels 0–3)\n");
+      TIMERTRACE("\tClearing condition: Read IMFA when IMFA = 1, then write 0 in IMFA. DMAC is activated by an IMIA interrupt (only channels 0E)\n");
 }
 
 void print_tmdr(int which)
@@ -5083,6 +5083,7 @@ void tick_serial(int channel)
    //(brr+1)*4 for settings with an error rate of 0
    //sh1 uses 0x63 == 50,000 bits per second
    int cycles_per_bit = (bit_rate + 1) * 4;
+   u8 clock_mode;
 
    //if (sh1_cxt.onchip.sci[channel].scr & (1 << 6))
    //{
@@ -5107,7 +5108,7 @@ void tick_serial(int channel)
    //if (!sh1_cxt.onchip.sci[channel].tdr_written)
    //   return;
 
-   u8 clock_mode = sh1_cxt.onchip.sci[channel].smr & 3;
+   clock_mode = sh1_cxt.onchip.sci[channel].smr & 3;
    if (clock_mode == 3 || clock_mode == 2)//clock pin set as input
       assert(0);
 

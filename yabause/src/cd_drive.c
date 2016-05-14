@@ -69,7 +69,7 @@ enum CommunicationState
 
 void the_log(const char * format, ...)
 {
-   return;
+#if 0
    static int started = 0;
    static FILE* fp = NULL;
    va_list l;
@@ -88,6 +88,7 @@ void the_log(const char * format, ...)
    va_start(l, format);
    vfprintf(fp, format, l);
    va_end(l);
+#endif
 }
 
 u8 cd_drive_get_serial_bit()
