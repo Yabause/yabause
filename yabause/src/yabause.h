@@ -37,6 +37,7 @@ typedef struct
    u8 regionid;
    const char *biospath;
    const char *cdpath;
+   const char *ssfpath;
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
@@ -52,7 +53,8 @@ typedef struct
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
    int video_filter_type;
    int polygon_generation_mode;
-
+   int play_ssf;
+   int use_new_scsp;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -105,6 +107,7 @@ typedef struct
    int emulatebios;
    int usequickload;
    int wait_line_count;
+   int playing_ssf;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

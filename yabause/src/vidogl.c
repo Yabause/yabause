@@ -116,9 +116,12 @@ void VIDOGLVdp2DrawEnd(void);
 void VIDOGLVdp2DrawScreens(void);
 void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
+void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDOGLSetSettingValueMode(int type, int value);
 void VIDOGLSync();
+void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
+void VIDOGLVdp2DispOff(void);
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -147,7 +150,9 @@ VIDOGLVdp2DrawEnd,
 VIDOGLVdp2DrawScreens,
 YglGetGlSize,
 VIDOGLSetSettingValueMode,
-VIDOGLSync
+VIDOGLSync,
+VIDOGLGetNativeResolution,
+VIDOGLVdp2DispOff
 };
 
 float vdp1wratio=1;
@@ -258,7 +263,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 	int priority = 0;
 	int colorcl = 0;
 
-	int ednmode;
 	int endcnt = 0;
 	int nromal_shadow = 0;
 	u32 talpha = 0x00; // MSB Color calcuration mode
@@ -333,7 +337,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 		// 4 bpp Bank mode
 		u32 colorBank = cmd->CMDCOLR;
 		u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
-		u16 i;
 
 		if (MSB) color = (alpha << 24);
 		else if (colorBank == 0x0000){
@@ -369,7 +372,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 		// 4 bpp LUT mode
 		u16 temp;
 		u32 colorLut = cmd->CMDCOLR * 8;
-		u16 i;
 		u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
 
 			temp = T1ReadWord(Vdp1Ram, colorLut & 0x7FFFF);
@@ -528,6 +530,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 				}
 			}
 		}
+		break;
 	}
 	case 5:
 	{
@@ -4372,8 +4375,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   s16 X[4];
-   s16 Y[4];
    u16 color;
    u16 CMDPMOD;
    u8 alpha;
@@ -5273,9 +5274,6 @@ static void Vdp2DrawLineColorScreen(void)
       return;
   }
 
-  if (!line_pixel_data)
-	  return;
-
   if ((fixVdp2Regs->LCTA.part.U & 0x8000)){
     inc = 0x02; // single color
   } else{
@@ -5406,7 +5404,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id){
 
 static void Vdp2DrawNBG0(void)
 {
-   vdp2draw_struct info;
+   vdp2draw_struct info = { 0 };
    YglTexture texture;
    YglCache tmpc;
    vdp2rotationparameter_struct parameter;
@@ -5422,7 +5420,7 @@ static void Vdp2DrawNBG0(void)
    int i;
    info.enable = 0;
 
-   //Vdp2 * fixVdp2Regs = Vdp2RestoreRegs(240, Vdp2Lines);
+   info.cellh = 256;
 
    Vdp2GeneratePerLineColorCalcuration(&info, NBG0);
 
@@ -6646,6 +6644,17 @@ void YglGetGlSize(int *width, int *height)
 {
    *width = GlWidth;
    *height = GlHeight;
+}
+
+void VIDOGLGetNativeResolution(int *width, int *height, int*interlace)
+{
+   *width = 0;
+   *height = 0;
+   *interlace = 0;
+}
+
+void VIDOGLVdp2DispOff()
+{
 }
 
 vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W( vdp2rotationparameter_struct * param, int index )

@@ -890,7 +890,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
 int MappedMemoryLoad(const char *filename, u32 addr)
 {
    FILE *fp;
-   u32 filesize;
+   long filesize;
    u8 *buffer;
    u32 i;
    size_t num_read = 0;
@@ -904,6 +904,14 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    // Calculate file size
    fseek(fp, 0, SEEK_END);
    filesize = ftell(fp);
+
+   if (filesize <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      fclose(fp);
+      return -1;//error
+   }
+
    fseek(fp, 0, SEEK_SET);
 
    if ((buffer = (u8 *)malloc(filesize)) == NULL)
@@ -1187,6 +1195,8 @@ int YabSaveStateStream(FILE *fp)
    glPixelZoom(1,1);
    glReadBuffer(GL_BACK);
    glReadPixels(0, 0, outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   #else
+   memcpy(buf, dispbuffer, totalsize);
    #endif
    YuiSwapBuffers();
 
@@ -1269,6 +1279,7 @@ int YabLoadStateStream(FILE *fp)
    int movieposition;
    int temp;
    u32 temp32;
+	int test_endian;
 
    headersize = 0xC;
    check.done = 0;
@@ -1306,10 +1317,11 @@ int YabLoadStateStream(FILE *fp)
    }
 
 #ifdef WORDS_BIGENDIAN
-   if (endian == 1)
+   test_endian = endian == 1;
 #else
-   if (endian == 0)
+   test_endian = endian == 0;
 #endif
+   if (test_endian)
    {
       // should setup reading so it's byte-swapped
       YabSetError(YAB_ERR_OTHER, (void *)"Load State byteswapping not supported");
@@ -1687,7 +1699,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
    u32 i=0;
    result_struct *results;
    u32 numresults=0;
-   unsigned long searchval;
+   unsigned long searchval = 0;
    int issigned=0;
    u32 addr;
 
