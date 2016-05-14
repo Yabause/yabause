@@ -4958,6 +4958,10 @@ void sh1_init_func()
 {
    sh1_init(&sh1_cxt);
 
+   memset(SH1Dram, 0, 0x80000);
+
+   cdd_reset();
+
    sh1_cxt.onchip.pbdr = 0x40c;
 }
 

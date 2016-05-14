@@ -467,7 +467,10 @@ void YabauseResetNoLoad(void) {
 
    SH2PowerOn(MSH2);
    if (yabsys.use_cd_block_lle)
+   {
+      sh1_init_func();
       SH2PowerOn(SH1);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

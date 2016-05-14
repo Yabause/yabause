@@ -23,9 +23,34 @@
 
 #include "core.h"
 
+struct CdState
+{
+   u8 current_operation;
+   u8 q_subcode;
+   u8 track_number;
+   u8 index_field;
+   u8 minutes;
+   u8 seconds;
+   u8 frame;
+   u8 absolute_minutes;
+   u8 absolute_seconds;
+   u8 absolute_frame;
+};
+
 struct CdDriveContext
 {
    s32 cycles_remainder;
+
+   int num_execs;
+   int output_enabled;
+   int bit_counter;
+   int byte_counter;
+
+   struct CdState state;
+   u8 state_data[13];
+   u8 received_data[13];
+   int received_data_counter;
+
 };
 
 extern struct CdDriveContext cdd_cxt;
@@ -35,4 +60,5 @@ void cd_drive_exec(struct CdDriveContext * drive, s32 cycles);
 u8 cd_drive_get_serial_bit();
 void cd_drive_set_serial_bit(u8 bit);
 void cd_drive_start_transfer();
+void cdd_reset();
 #endif
