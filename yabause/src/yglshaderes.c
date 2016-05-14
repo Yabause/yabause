@@ -1438,11 +1438,13 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, floa
 
 	glBlendFunc(GL_ONE, GL_SRC_ALPHA);
 	return 0;
+   return 0;
 }
 
 int Ygl_cleanupVDP2DrawFramebuffer_addcolor(void * p){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	return 0;
+   return 0;
 }
 
 /*------------------------------------------------------------------------------------

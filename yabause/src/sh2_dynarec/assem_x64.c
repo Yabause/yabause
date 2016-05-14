@@ -78,13 +78,16 @@ u32 const_one=1;
 
 /* Linker */
 
+void add_to_linker(int addr, int target, int ext);
+
 void set_jump_target(pointer addr,pointer target)
 {
   u8 *ptr=(u8 *)addr;
   if(*ptr==0x0f)
   {
+    u32 *ptr2 = NULL;
     assert(ptr[1]>=0x80&&ptr[1]<=0x8f);
-    u32 *ptr2=(u32 *)(ptr+2);
+    ptr2=(u32 *)(ptr+2);
     *ptr2=target-(u32)ptr2-4;
   }
   else if(*ptr==0xe8||*ptr==0xe9) {
@@ -93,8 +96,9 @@ void set_jump_target(pointer addr,pointer target)
   }
   else
   {
+    u32 *ptr2 = NULL;
     assert(*ptr==0xc7); /* mov immediate (store address) */
-    u32 *ptr2=(u32 *)(ptr+6);
+    ptr2=(u32 *)(ptr+6);
     *ptr2=target;
   }
 }
@@ -141,13 +145,15 @@ int verify_dirty(pointer addr)
   }
   assert(ptr[0]==0x48&&ptr[1]==0xB8);
   /* 64-bit source pointer */
-  u64 source=*(u64 *)(ptr+2);
-  u32 copy=*(u32 *)(ptr+11);
-  u32 len=*(u32 *)(ptr+16);
-  //printf("source=%x source-rdram=%x\n",source,source-(int)rdram);
-  assert(ptr[26]==0xE8); // call instruction
-  //printf("verify_dirty: %x %x %x\n",source,copy,len);
-  return !memcmp((void *)source,(void *)copy,len);
+  {
+     u64 source = *(u64 *)(ptr + 2);
+     u32 copy = *(u32 *)(ptr + 11);
+     u32 len = *(u32 *)(ptr + 16);
+     //printf("source=%x source-rdram=%x\n",source,source-(int)rdram);
+     assert(ptr[26] == 0xE8); // call instruction
+     //printf("verify_dirty: %x %x %x\n",source,copy,len);
+     return !memcmp((void *)source, (void *)copy, len);
+  }
 }
 
 // This doesn't necessarily find all clean entry points, just
@@ -185,10 +191,12 @@ void get_bounds(pointer addr,u32 *start,u32 *end)
     *start=source;
     *end=source+len;
   }else{
+    u64 source = 0;
+    u32 len = 0;
     assert(ptr[0]==0x48&&ptr[1]==0xB8);
-    u64 source=*(u64 *)(ptr+2);
+    source=*(u64 *)(ptr+2);
     //32 copy=*(u32 *)(ptr+11);
-    u32 len=*(u32 *)(ptr+16);
+    len=*(u32 *)(ptr+16);
     assert(ptr[26]==0xE8); // call instruction
     *start=source;
     *end=source+len;
@@ -203,6 +211,8 @@ void alloc_reg(struct regstat *cur,int i,signed char reg)
 {
   int r,hr;
   int preferred_reg = (reg&3)+(reg>21)*4+(reg==24)+(reg==28)+(reg==32);
+  unsigned char hsn[MAXREG + 1] = {0};
+  int j = 0;
   if(reg==CCREG) preferred_reg=HOST_CCREG;
   
   // Don't allocate unused registers
@@ -283,9 +293,7 @@ void alloc_reg(struct regstat *cur,int i,signed char reg)
   
   // Ok, now we have to evict someone
   // Pick a register we hopefully won't need soon
-  unsigned char hsn[MAXREG+1];
-  memset(hsn,10,sizeof(hsn));
-  int j;
+  memset(hsn, 10, sizeof(hsn));
   lsn(hsn,i,&preferred_reg);
   //printf("hsn(%x): %d %d %d %d %d %d %d\n",start+i*4,hsn[cur->regmap[0]&63],hsn[cur->regmap[1]&63],hsn[cur->regmap[2]&63],hsn[cur->regmap[3]&63],hsn[cur->regmap[5]&63],hsn[cur->regmap[6]&63],hsn[cur->regmap[7]&63]);
   if(i>0) {
@@ -369,7 +377,8 @@ void alloc_reg_temp(struct regstat *cur,int i,signed char reg)
 {
   int r,hr;
   int preferred_reg = -1;
-  
+  unsigned char hsn[MAXREG + 1] = { 0 };
+  int j = 0;
   // see if it's already allocated
   for(hr=0;hr<HOST_REGS;hr++)
   {
@@ -407,9 +416,8 @@ void alloc_reg_temp(struct regstat *cur,int i,signed char reg)
   // Pick a register we hopefully won't need soon
   // TODO: we might want to follow unconditional jumps here
   // TODO: get rid of dupe code and make this into a function
-  unsigned char hsn[MAXREG+1];
+  
   memset(hsn,10,sizeof(hsn));
-  int j;
   lsn(hsn,i,&preferred_reg);
   //printf("hsn: %d %d %d %d %d %d %d\n",hsn[cur->regmap[0]&63],hsn[cur->regmap[1]&63],hsn[cur->regmap[2]&63],hsn[cur->regmap[3]&63],hsn[cur->regmap[5]&63],hsn[cur->regmap[6]&63],hsn[cur->regmap[7]&63]);
   if(i>0) {
@@ -494,7 +502,7 @@ void alloc_x86_reg(struct regstat *cur,int i,signed char reg,char hr)
 }
 
 // Alloc cycle count into dedicated register
-alloc_cc(struct regstat *cur,int i)
+void alloc_cc(struct regstat *cur,int i)
 {
   alloc_x86_reg(cur,i,CCREG,ESI);
 }
@@ -525,27 +533,30 @@ void output_byte(u8 byte)
 }
 void output_modrm(u8 mod,u8 rm,u8 ext)
 {
+  u8 byte = 0;
   assert(mod<4);
   assert(rm<8);
   assert(ext<8);
-  u8 byte=(mod<<6)|(ext<<3)|rm;
+  byte=(mod<<6)|(ext<<3)|rm;
   *(out++)=byte;
 }
 void output_sib(u8 scale,u8 index,u8 base)
 {
+  u8 byte = 0;
   assert(scale<4);
   assert(index<8);
   assert(base<8);
-  u8 byte=(scale<<6)|(index<<3)|base;
+  byte=(scale<<6)|(index<<3)|base;
   *(out++)=byte;
 }
 void output_rex(u8 w,u8 r,u8 x,u8 b)
 {
+  u8 byte = 0;
   assert(w<2);
   assert(r<2);
   assert(x<2);
   assert(b<2);
-  u8 byte=0x40|(w<<3)|(r<<2)|(x<<1)|b;
+  byte=0x40|(w<<3)|(r<<2)|(x<<1)|b;
   *(out++)=byte;
 }
 void output_w32(u32 word)
@@ -2964,9 +2975,11 @@ unsigned int count_bits(u32 reglist)
 // usual locations
 void save_regs(u32 reglist)
 {
+  int hr = 0; 
+  int count = 0;
   reglist&=0xC7; // only save the caller-save registers, %eax, %ecx, %edx, %esi, %edi
-  int hr;
-  int count=count_bits(reglist);
+  
+  count=count_bits(reglist);
   if(count) {
     for(hr=0;hr<HOST_REGS;hr++) {
       if(hr!=EXCLUDE_REG) {
@@ -2982,9 +2995,11 @@ void save_regs(u32 reglist)
 // Restore registers after function call
 void restore_regs(u32 reglist)
 {
+  int hr = 0;
+  int count = 0;
   reglist&=0xC7; // only save the caller-save registers, %eax, %ecx, %edx, %esi, %edi
-  int hr;
-  int count=count_bits(reglist);
+  
+  count=count_bits(reglist);
   if(slave) emit_addimm64(ESP,(6-count)*8,ESP);
   else emit_addimm64(ESP,(7-count)*8,ESP);
   if(count) {
@@ -3000,7 +3015,7 @@ void restore_regs(u32 reglist)
 
 /* Stubs/epilogue */
 
-emit_extjump(pointer addr, int target)
+void emit_extjump(pointer addr, int target)
 {
   u8 *ptr=(u8 *)addr;
   if(*ptr==0x0f)
@@ -3029,18 +3044,21 @@ emit_extjump(pointer addr, int target)
   emit_jmp((pointer)dyna_linker);
 }
 
-do_readstub(int n)
+void do_readstub(int n)
 {
+  int type = 0, i = 0, rs = 0, addr = 0, rt = 0;
+  signed char *i_regmap = NULL;
+  struct regstat *i_regs = NULL;
+  u32 reglist = 0;
   assem_debug("do_readstub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
-  int type=stubs[n][0];
-  int i=stubs[n][3];
-  int rs=stubs[n][4];
-  struct regstat *i_regs=(struct regstat *)stubs[n][5];
-  u32 reglist=stubs[n][7];
-  signed char *i_regmap=i_regs->regmap;
-  int addr=get_reg(i_regmap,AGEN1+(i&1));
-  int rt;
+  type=stubs[n][0];
+  i=stubs[n][3];
+  rs=stubs[n][4];
+  i_regs=(struct regstat *)stubs[n][5];
+  reglist=stubs[n][7];
+  i_regmap=i_regs->regmap;
+  addr=get_reg(i_regmap,AGEN1+(i&1));
   
   rt=get_reg(i_regmap,rt1[i]==TBIT?-1:rt1[i]);
   assert(rs>=0);
@@ -3133,11 +3151,12 @@ do_readstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
+  int rt = 0;
   assem_debug("inline_readstub\n");
   //int rs=get_reg(regmap,target);
-  int rt=get_reg(regmap,target);
+  rt=get_reg(regmap,target);
   //if(rs<0) rs=get_reg(regmap,-1);
   if(rt<0) rt=get_reg(regmap,-1);
   assert(rt>=0);
@@ -3165,18 +3184,22 @@ inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int
   restore_regs(reglist);
 }
 
-do_writestub(int n)
+void do_writestub(int n)
 {
+  int type = 0, i = 0, rs = 0, addr = 0, rt = 0;
+  struct regstat *i_regs = NULL;
+  signed char *i_regmap = NULL;
+  u32 reglist = 0;
   assem_debug("do_writestub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
-  int type=stubs[n][0];
-  int i=stubs[n][3];
-  int rs=stubs[n][4];
-  struct regstat *i_regs=(struct regstat *)stubs[n][5];
-  u32 reglist=stubs[n][7];
-  signed char *i_regmap=i_regs->regmap;
-  int addr=get_reg(i_regmap,AGEN1+(i&1));
-  int rt=get_reg(i_regmap,rs1[i]);
+  type=stubs[n][0];
+  i=stubs[n][3];
+  rs=stubs[n][4];
+  i_regs=(struct regstat *)stubs[n][5];
+  reglist=stubs[n][7];
+  i_regmap=i_regs->regmap;
+  addr=get_reg(i_regmap,AGEN1+(i&1));
+  rt=get_reg(i_regmap,rs1[i]);
   assert(rs>=0);
   assert(rt>=0);
   if(addr<0) addr=get_reg(i_regmap,-1);
@@ -3231,11 +3254,12 @@ do_writestub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+void inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
+  int rt = 0;
   assem_debug("inline_writestub\n");
   //int rs=get_reg(regmap,-1);
-  int rt=get_reg(regmap,target);
+  rt=get_reg(regmap,target);
   //assert(rs>=0);
   assert(rt>=0);
   save_regs(reglist);
@@ -3251,17 +3275,21 @@ inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, in
   restore_regs(reglist);
 }
 
-do_rmwstub(int n)
+void do_rmwstub(int n)
 {
+  int type = 0, i = 0, rs = 0, addr = 0;
+  struct regstat *i_regs = NULL;
+  u32 reglist = 0;
+  signed char *i_regmap = NULL;
   assem_debug("do_rmwstub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
-  int type=stubs[n][0];
-  int i=stubs[n][3];
-  int rs=stubs[n][4];
-  struct regstat *i_regs=(struct regstat *)stubs[n][5];
-  u32 reglist=stubs[n][7];
-  signed char *i_regmap=i_regs->regmap;
-  int addr=get_reg(i_regmap,AGEN1+(i&1));
+  type=stubs[n][0];
+  i=stubs[n][3];
+  rs=stubs[n][4];
+  i_regs=(struct regstat *)stubs[n][5];
+  reglist=stubs[n][7];
+  i_regmap=i_regs->regmap;
+  addr=get_reg(i_regmap,AGEN1+(i&1));
   //int rt=get_reg(i_regmap,rs1[i]);
   assert(rs>=0);
   //assert(rt>=0);
@@ -3338,7 +3366,7 @@ do_rmwstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-do_unalignedwritestub(int n)
+void do_unalignedwritestub(int n)
 {
   set_jump_target(stubs[n][1],(int)out);
   output_byte(0xCC);
@@ -3352,8 +3380,10 @@ void printregs(int edi,int esi,int ebp,int esp,int b,int d,int c,int a)
 
 int do_dirty_stub(int i)
 {
+  u32 alignedlen = 0;
+  int entry = 0;
   assem_debug("do_dirty_stub %x\n",start+i*2);
-  u32 alignedlen=((((u32)source)+slen*2+2)&~2)-(u32)alignedsource;
+  alignedlen=((((u32)source)+slen*2+2)&~2)-(u32)alignedsource;
   if((u64)source<=0xFFFFFFFF)
     emit_movimm(((u32)source)&~3,EAX); //alignedsource
   else
@@ -3362,7 +3392,7 @@ int do_dirty_stub(int i)
   emit_movimm((((u32)source+slen*2+2)&~3)-((u32)source&~3),ECX);
   emit_movimm(start+i*2+slave,12);
   emit_call((int)&verify_code);
-  int entry=(int)out;
+  entry=(int)out;
   load_regs_entry(i);
   if(entry==(int)out) entry=instr_addr[i];
   emit_jmp(instr_addr[i]);
@@ -3401,7 +3431,7 @@ int do_map_r_branch(int map, int c, u32 addr, int *jaddr)
   return map;
 }
 
-int gen_tlb_addr_r(int ar, int map) {
+void gen_tlb_addr_r(int ar, int map) {
   if(map>=0) {
     emit_leairrx4(0,ar,map,ar);
   }
@@ -3427,7 +3457,7 @@ int do_map_w(int s,int ar,int map,int cache,int x,int c,u32 addr)
   emit_shlimm64(map,2,map);
   return map;
 }
-int do_map_w_branch(int map, int c, u32 addr, int *jaddr)
+void do_map_w_branch(int map, int c, u32 addr, int *jaddr)
 {
   if(!c||can_direct_write(addr)) {
     *jaddr=(int)out;
@@ -3435,14 +3465,14 @@ int do_map_w_branch(int map, int c, u32 addr, int *jaddr)
   }
 }
 
-int gen_tlb_addr_w(int ar, int map) {
+void gen_tlb_addr_w(int ar, int map) {
   if(map>=0) {
     emit_leairrx1(0,ar,map,ar);
   }
 }
 
 // We don't need this for x86
-generate_map_const(u32 addr,int reg) {
+void generate_map_const(u32 addr,int reg) {
   // void *mapaddr=memory_map+(addr>>12);
 }
 
