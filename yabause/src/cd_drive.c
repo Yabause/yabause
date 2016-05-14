@@ -64,95 +64,118 @@ struct CdState
 void make_status_data(struct CdState *state, u8* data);
 
 int num_execs = 0;
-
 int output_enabled = 0;
-
-int get_bit_from_status(u8 * data, int bit_num)
-{
-   u8 byte_num = bit_num / 8;
-   u8 bit_within_byte = bit_num % 8;
-   u8 bit = (data[byte_num] & (1 << (7 - bit_within_byte))) != 0;
-   return bit;
-}
-
-int serial_counter = 0;
+int bit_counter = 0;
+int byte_counter = 0;
 
 enum CommunicationState
 {
    NoTransfer,
+   Reset,
    Started,
    SendingFirstByte,
    ByteFinished,
+   FirstByteFinished,
    SendingByte,
+   SendingByteFinished,
    Running,
-   NewTransfer
+   NewTransfer,
+   WaitToOe,
+   WaitToOeFirstByte,
 }comm_state = NoTransfer;
+
+void the_log(const char * format, ...)
+{
+   return;
+   static int started = 0;
+   static FILE* fp = NULL;
+   va_list l;
+
+   if (!started)
+   {
+      fp = fopen("C:/yabause/THE_LOG.txt", "w");
+
+      if (!fp)
+      {
+         return;
+      }
+      started = 1;
+   }
+
+   va_start(l, format);
+   vfprintf(fp, format, l);
+   va_end(l);
+}
 
 struct CdState state = { 0 };
 u8 state_data[13] = { 0 };
 u8 received_data[13] = { 0 };
 int received_data_counter = 0;
 
-void set_received_bit(u8*rx_data, int bit_count, int bit)
+u8 cd_drive_get_serial_bit()
 {
-   u8 byte_num = bit_count / 8;
-   u8 bit_within_byte = bit_count % 8;
-   rx_data[byte_num] |= bit << bit_within_byte;
+   u8 bit = 1 << (7 - bit_counter);
+   return (state_data[byte_counter] & bit) != 0;
 }
 
-s32 cd_command_exec(struct CdDriveContext * drive)
+void cd_drive_set_serial_bit(u8 bit)
 {
-   if (comm_state == NewTransfer)
+   received_data[byte_counter] |= bit << bit_counter;
+
+   bit_counter++;
+   if (bit_counter == 8)
    {
-      //make packet
-#if 0
-      state.current_operation = LidOpen;
-#elif 0
-      state.current_operation = Idle;
-#else
-      state.current_operation = NoDisc;
-#endif
-      make_status_data(&state, state_data);
+      byte_counter++;
+      bit_counter = 0;
 
-      //reset sh1 serial byte counter
-      sh1_set_start(1);
-      sh1_set_output_enable();
-      comm_state = SendingByte;
-      serial_counter = 0;
-      received_data_counter = 0;
+      if (comm_state == SendingFirstByte)
+         comm_state = WaitToOeFirstByte;
+      else if (comm_state == SendingByte)
+         comm_state = WaitToOe;   
    }
-   else if (comm_state == SendingByte)
-   {
-      int bit = 0;
-      int received_bit = 0;
-      bit = get_bit_from_status(state_data, serial_counter++);
+}
 
-      sh1_serial_recieve_bit(bit, 0);
-      sh1_serial_transmit_bit(0, &received_bit);
-      set_received_bit(received_data, received_data_counter++, received_bit);
 
-      if (serial_counter % 8 == 0)
-         comm_state = ByteFinished;
-   }
-   else if (comm_state == ByteFinished)
-   {
-      //first byte has finished transferring
-      if (serial_counter == 8)
-         sh1_set_start(0);
-
-      //byte is completed, tell the sh1 to read it
-      sh1_set_output_enable();
-
-      if (serial_counter == (8 * 13))
-         comm_state = NoTransfer;
-      else
-         comm_state = SendingByte;
-   }
-
+extern u8 transfer_buffer[13];
+int cd_command_exec()
+{
    if (comm_state == NoTransfer && (sh1_cxt.onchip.sci[0].scr & 0x30) == 0x30)
    {
-      comm_state = NewTransfer;
+      state.current_operation = NoDisc;
+      make_status_data(&state, state_data);
+
+      bit_counter = 0;
+      byte_counter = 0;
+      comm_state = SendingFirstByte;
+
+      sh1_set_start(1);
+      sh1_set_output_enable();
+      the_log("start = 1 oe set \n");
    }
+
+   //it is required to wait to assert output enable
+   //otherwise some sort of race condition occurs
+   //and breaks the transfer
+   if (comm_state == WaitToOeFirstByte)
+   {
+      sh1_set_output_enable();
+      sh1_set_start(0);
+      comm_state = SendingByte;
+      the_log("start = 0 oe set \n");
+      return 30;//approximate
+   }
+   else if (comm_state == WaitToOe)
+   {
+      sh1_set_output_enable();
+      the_log("oe set \n");
+      comm_state = SendingByte;
+      if (byte_counter == 13)
+         comm_state = NoTransfer;
+
+      return 30;
+   }
+
+   return 1;
 
    num_execs++;
 
@@ -190,18 +213,15 @@ s32 cd_command_exec(struct CdDriveContext * drive)
       break;
    }
 #endif
-
-   return 1;
 }
 
-//cycles are the serial baud rate, 50000 bits per second
 void cd_drive_exec(struct CdDriveContext * drive, s32 cycles)
 {
    s32 cycles_temp = drive->cycles_remainder - cycles;
    while (cycles_temp < 0)
    {
-      int cycles = cd_command_exec(drive);
-      cycles_temp += cycles;
+      int cycles_exec = cd_command_exec(drive);
+      cycles_temp += cycles_exec;
    }
    drive->cycles_remainder = cycles_temp;
 }

@@ -32,4 +32,7 @@ extern struct CdDriveContext cdd_cxt;
 
 
 void cd_drive_exec(struct CdDriveContext * drive, s32 cycles);
+u8 cd_drive_get_serial_bit();
+void cd_drive_set_serial_bit(u8 bit);
+void cd_drive_start_transfer();
 #endif

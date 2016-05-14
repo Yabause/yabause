@@ -29,6 +29,7 @@
 #include "ygr.h"
 #include "debug.h"
 #include <stdarg.h>
+#include "cd_drive.h"
 
 //#define SH1_MEM_DEBUG
 #ifdef SH1_MEM_DEBUG
@@ -1359,7 +1360,7 @@ void onchip_write_timer_word(struct Onchip * regs, u32 addr, int which_timer, u1
 
    assert(0);
 }
-
+void the_log(const char * format, ...);
 void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
 {
    CDTRACE("wbreg: %08X %02X\n", addr, data);
@@ -1390,15 +1391,39 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
          break;
       case 2:
          regs->sci[0].scr = data;
+
+         if((data & (1 << 5) ) == 0)
+            regs->sci[0].ssr |= (1 << 2);//tend is set
          return;
          break;
       case 3:
          regs->sci[0].tdr = data;
+         regs->sci[0].tdr_written = 1;//data is present to transmit
+
+         the_log("tdr written\n");
          return;
          break;
       case 4:
-         if (data == 0)//only 0 can be written
-            regs->sci[0].ssr = data;
+      {
+         if (data == 0)
+         {
+            int clear_te = 0;
+            if (regs->sci[0].ssr & (1 << 7))
+               clear_te = 1;
+            regs->sci[0].ssr &= 0x6;//save tend/mpb bits (read only)
+            the_log("ssr cleared\n");
+
+            //tend is cleared when software
+            //reads tdre after it has been set to 1
+            //then writes 0 in tdre
+            if(clear_te)
+               regs->sci[0].ssr &= ~(1 << 2);
+            return;
+         }
+         else
+            assert(0);
+
+      }
          return;
          break;
       case 5:
@@ -1427,6 +1452,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
          break;
       case 0xb:
          regs->sci[1].tdr = data;
+         regs->sci[1].tdr_written = 1;//data is present to transmit
          return;
          break;
       case 0xc:
@@ -4433,7 +4459,7 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
    assert(0);
    return 0;
 }
-extern int do_trace;
+
 void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
 {
    u8 area = (addr >> 24) & 7;
@@ -4451,7 +4477,6 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
    {
       int q = 1;
 
-      do_trace = 0;
    }
 
    SH1MEMLOG("memory_map_write_word 0x%08x 0x%04x", addr, data);
@@ -5030,10 +5055,82 @@ void tick_timer(int which)
 
 }
 
+void the_log(const char * format, ...);
+void sh1_serial_recieve_bit(int bit, int channel);
+void sh1_serial_transmit_bit(int channel, int* output_bit);
+
+void receive_bit_from_cdd()
+{
+   u8 receive_from_cdd = cd_drive_get_serial_bit();
+   sh1_serial_recieve_bit(receive_from_cdd, 0);
+}
+
+void transmit_bit_to_cdd()
+{
+   int send_to_cdd = 0;
+   sh1_serial_transmit_bit(0, &send_to_cdd);
+   cd_drive_set_serial_bit(send_to_cdd);
+}
+void cd_serial_exec();
+void tick_serial(int channel)
+{
+   u8 bit_rate = sh1_cxt.onchip.sci[channel].brr;
+   //number of cycles per bit is determined by
+   //(brr+1)*4 for settings with an error rate of 0
+   //sh1 uses 0x63 == 50,000 bits per second
+   int cycles_per_bit = (bit_rate + 1) * 4;
+
+   //if (sh1_cxt.onchip.sci[channel].scr & (1 << 6))
+   //{
+   //   the_log("tend set, skipping...\n");
+   //   sh1_cxt.onchip.sci[channel].serial_clock_counter = 0;
+   //   return;
+   //}
+   static int was_printed = 0;
+   if (sh1_cxt.onchip.sci[0].ssr & (1 << 2))
+   {
+      if (!was_printed)
+      {
+         the_log("tend set, skipping...\n");
+         was_printed = 1;
+      }
+      sh1_cxt.onchip.sci[channel].serial_clock_counter = 0;
+      //tend is set, no transmission
+      return;
+   }
+   was_printed = 0;
+
+   //if (!sh1_cxt.onchip.sci[channel].tdr_written)
+   //   return;
+
+   u8 clock_mode = sh1_cxt.onchip.sci[channel].smr & 3;
+   if (clock_mode == 3 || clock_mode == 2)//clock pin set as input
+      assert(0);
+
+   sh1_cxt.onchip.sci[channel].serial_clock_counter++;
+
+   if (sh1_cxt.onchip.sci[channel].serial_clock_counter > cycles_per_bit)
+   {
+      if (sh1_cxt.onchip.sci[channel].scr & (1 << 5) &&
+         sh1_cxt.onchip.sci[channel].scr & (1 << 4))
+      {
+         the_log("executing...\n");
+        // cd_serial_exec();
+
+         receive_bit_from_cdd();
+         transmit_bit_to_cdd();
+      }
+
+      sh1_cxt.onchip.sci[channel].serial_clock_counter = 0;
+   }
+}
+
 void sh1_onchip_run_cycle()
 {
    tick_timer(3);
    tick_timer(4);
+
+   tick_serial(0);
 
    cycles_since++;
 }
@@ -5193,12 +5290,14 @@ int sh1_load_rom(struct Sh1* sh1, const char* filename)
    return 1;
 }
 #endif
-
+int num_output_enables = 0;
 //signal from the cd drive board microcontroller
 //falling edge
 void sh1_set_output_enable()
 {
    //input capture
+
+   num_output_enables++;
    
    //store old grb value in brb
    sh1_cxt.onchip.itu.channel[3].brb = sh1_cxt.onchip.itu.channel[3].grb;
@@ -5206,15 +5305,21 @@ void sh1_set_output_enable()
    //put tcnt value in grb
    sh1_cxt.onchip.itu.channel[3].grb = sh1_cxt.onchip.itu.channel[3].tcnt;
 
+   the_log("oe falling edge %d\n", num_output_enables);
+
    //trigger an interrupt
    SH2SendInterrupt(SH1, 93, (sh1_cxt.onchip.intc.iprd >> 8) & 0xf);
 }
-
+//extern int serial_counter;
 void sh1_serial_recieve_bit(int bit, int channel)
 {
    sh1_cxt.onchip.sci[channel].rsr <<= 1;
    sh1_cxt.onchip.sci[channel].rsr |= bit;
    sh1_cxt.onchip.sci[channel].rsr_counter++;
+
+   the_log("BIT RX\n");
+
+   //assert(serial_counter % 8 == sh1_cxt.onchip.sci[channel].rsr_counter % 8);
 
    //a full byte has been received, transfer data to rdr
    if (sh1_cxt.onchip.sci[channel].rsr_counter == 8)
@@ -5222,26 +5327,47 @@ void sh1_serial_recieve_bit(int bit, int channel)
       sh1_cxt.onchip.sci[channel].rsr_counter = 0;
       sh1_cxt.onchip.sci[channel].rdr = sh1_cxt.onchip.sci[channel].rsr;
       sh1_cxt.onchip.sci[channel].rsr = 0;
+      sh1_cxt.onchip.sci[channel].ssr |= (1 << 6);//set rdrf. rdr contains valid received data
+
+      the_log("BYTE TAKEN %02X\n", sh1_cxt.onchip.sci[channel].rdr);
+
+      //assert(serial_counter % 8 == 0);
 
       //trigger interrupt
       if (sh1_cxt.onchip.sci[0].scr & (1 << 6))//receive data full interrupt is enabled
       {
          SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
+         the_log("INTERRUPT \n");
       }
    }
 }
+
+
 
 void sh1_serial_transmit_bit(int channel, int* output_bit)
 {
    *output_bit = sh1_cxt.onchip.sci[channel].tsr & 1;
    sh1_cxt.onchip.sci[channel].tsr >>= 1;
    sh1_cxt.onchip.sci[channel].tsr_counter++;
-
+   
    //a full byte has been transferred, fill tsr again
    if (sh1_cxt.onchip.sci[channel].tsr_counter == 8)
    {
       sh1_cxt.onchip.sci[channel].tsr_counter = 0;
-      sh1_cxt.onchip.sci[channel].tsr = sh1_cxt.onchip.sci[channel].tdr;
+
+      if (sh1_cxt.onchip.sci[channel].tdr_written)
+      {
+         sh1_cxt.onchip.sci[channel].tsr = sh1_cxt.onchip.sci[channel].tdr;
+         sh1_cxt.onchip.sci[channel].ssr |= (1 << 7);//set transmit data reg empty
+         sh1_cxt.onchip.sci[channel].tdr_written = 0;
+
+         the_log("TDR %02X\n", sh1_cxt.onchip.sci[channel].tdr);
+      }
+      else
+      {
+         //end of transmission
+         sh1_cxt.onchip.sci[channel].ssr |= (1 << 2);
+      }
 
       if (sh1_cxt.onchip.sci[0].scr & (1 << 7))//tie interrupt
       {

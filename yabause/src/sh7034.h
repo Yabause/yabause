@@ -60,10 +60,15 @@ struct Onchip
       //not visible to cpu
       u8 rsr;
       u8 rsr_counter;
+      u8 rsr_written;
 
       //not visible to cpu
       u8 tsr;
       u8 tsr_counter;
+      u8 tdr_written;
+
+      //implementation specific
+      int serial_clock_counter;
    }sci[2];
 
    //a/d

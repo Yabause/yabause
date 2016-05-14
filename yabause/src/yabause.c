@@ -575,9 +575,8 @@ int YabauseEmulate(void) {
    if (yabsys.use_cd_block_lle)
    {
       sh1_cycles_per_deciline = get_cycles_per_line_division(20 * 1000000, frames, lines, 10);//20mhz
-      cdd_cycles_per_deciline = get_cycles_per_line_division(50000, frames, lines, 10);//serial baud rate 50000 bits per second
+      cdd_cycles_per_deciline = get_cycles_per_line_division(2.3 * 1000000, frames, lines, 10);//audio+data 2.3 mhz serial transfer rate
    }
-   
    if(use_new_scsp)
    {
       scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, 10);
