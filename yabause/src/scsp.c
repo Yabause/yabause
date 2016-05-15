@@ -5070,7 +5070,7 @@ void ScspAsynMain( void * p ){
 			}else{
 				difftime = now.tv_nsec - before.tv_nsec;
 			}
-			int sleeptime = (16666666 - difftime);
+			int sleeptime = (16000000 - difftime);
 			if (sleeptime > 0){
 				struct timespec sleeptime_ts;
 				sleeptime_ts.tv_sec = 0;
