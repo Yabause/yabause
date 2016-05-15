@@ -1,5 +1,6 @@
 /*  Copyright 2003-2005 Guillaume Duhamel
     Copyright 2004-2005, 2013 Theo Berkau
+    Copyright 2016 James Laird-Wah
 
     This file is part of Yabause.
 
