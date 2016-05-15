@@ -1398,7 +1398,14 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
          break;
       case 3:
          regs->sci[0].tdr = data;
-         regs->sci[0].tdr_written = 1;//data is present to transmit
+         if (regs->sci[0].tsr_counter == 0) {  // If TSR empty, load it immediately
+             regs->sci[0].tsr = data;
+             regs->sci[0].tsr_counter = 8;
+             regs->sci[0].ssr |= SCI_TDRE;
+         } else {
+             regs->sci[0].tdr_written = 1; // flag TDR as pending for next time TSR empties
+             regs->sci[0].ssr &= ~SCI_TDRE;
+         }
 
          the_log("tdr written\n");
          return;
@@ -5346,19 +5353,20 @@ void sh1_serial_recieve_bit(int bit, int channel)
 void sh1_serial_transmit_bit(int channel, int* output_bit)
 {
    *output_bit = sh1_cxt.onchip.sci[channel].tsr & 1;
-   sh1_cxt.onchip.sci[channel].tsr >>= 1;
-   sh1_cxt.onchip.sci[channel].tsr_counter++;
-   
-   //a full byte has been transferred, fill tsr again
-   if (sh1_cxt.onchip.sci[channel].tsr_counter == 8)
-   {
-      sh1_cxt.onchip.sci[channel].tsr_counter = 0;
+   if (sh1_cxt.onchip.sci[channel].tsr_counter) {
+       sh1_cxt.onchip.sci[channel].tsr >>= 1;
+       sh1_cxt.onchip.sci[channel].tsr_counter--;
+   }
 
+   //a full byte has been transferred, fill tsr again
+   if (sh1_cxt.onchip.sci[channel].tsr_counter == 0)
+   {
       if (sh1_cxt.onchip.sci[channel].tdr_written)
       {
          sh1_cxt.onchip.sci[channel].tsr = sh1_cxt.onchip.sci[channel].tdr;
-         sh1_cxt.onchip.sci[channel].ssr |= SCI_TDRE;
+         sh1_cxt.onchip.sci[channel].tsr_counter = 8;
          sh1_cxt.onchip.sci[channel].tdr_written = 0;
+         sh1_cxt.onchip.sci[channel].ssr |= SCI_TDRE;
 
          the_log("TDR %02X\n", sh1_cxt.onchip.sci[channel].tdr);
       }
