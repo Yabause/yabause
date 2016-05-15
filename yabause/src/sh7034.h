@@ -250,5 +250,24 @@ void sh1_exec(struct Sh1 * sh1, s32 cycles);
 void sh1_onchip_run_cycles(s32 cycles);
 void sh1_set_output_enable();
 
+// SCI SCR bits
+#define SCI_TIE               0x80        /* Transmit interrupt enable */
+#define SCI_RIE               0x40        /* Receive interrupt enable */
+#define SCI_TE                0x20        /* Transmit enable */
+#define SCI_RE                0x10        /* Receive enable */
+#define SCI_MPIE              0x08        /* Multiprocessor interrupt enable */
+#define SCI_TEIE              0x04        /* Transmit end interrupt enable */
+#define SCI_CKE1              0x02        /* Clock enable 1 */
+#define SCI_CKE0              0x01        /* Clock enable 0 */
+
+// SCI SSR bits
+#define SCI_TDRE              0x80        /* Transmit data register empty */
+#define SCI_RDRF              0x40        /* Receive data register full */
+#define SCI_ORER              0x20        /* Overrun error */
+#define SCI_FER               0x10        /* Framing error */
+#define SCI_PER               0x08        /* Parity error */
+#define SCI_TEND              0x04        /* Transmit end */
+#define SCI_MPB               0x02        /* Multiprocessor bit */
+#define SCI_MPBT              0x01        /* Multiprocessor bit transfer */
 
 #endif

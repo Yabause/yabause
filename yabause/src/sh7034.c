@@ -456,22 +456,22 @@ void print_timers()
 
    for (i = 0; i < 2; i++)
    {
-      if (sh1_cxt.onchip.sci[i].scr & (1 << 7))
+      if (sh1_cxt.onchip.sci[i].scr & SCI_TIE)
          TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is enabled\n", i);
       else
          TIMERTRACE("\tSCI Channel %d Transmit-data-empty interrupt request (TXI) is disabled\n", i);
 
-      if (sh1_cxt.onchip.sci[i].scr & (1 << 6))
+      if (sh1_cxt.onchip.sci[i].scr & SCI_RIE)
          TIMERTRACE("\tSCI Channel %d Receive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are enabled\n", i);
       else
          TIMERTRACE("\tSCI Channel %d Receive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are disabled \n", i);
 
-      if (sh1_cxt.onchip.sci[i].scr & (1 << 3))
+      if (sh1_cxt.onchip.sci[i].scr & SCI_MPIE)
          TIMERTRACE("\tSCI Channel %d Multiprocessor interrupts are enabled\n", i);
       else
          TIMERTRACE("\tSCI Channel %d Multiprocessor interrupts are disabled\n", i);
 
-      if (sh1_cxt.onchip.sci[i].scr & (1 << 2))
+      if (sh1_cxt.onchip.sci[i].scr & SCI_TEIE)
          TIMERTRACE("\tSCI Channel %d Transmit-end interrupt (TEI) requests are enabled\n", i);
       else
          TIMERTRACE("\tSCI Channel %d Transmit-end interrupt (TEI) requests are disabled\n", i);
@@ -1124,32 +1124,32 @@ void print_serial(int which)
 
    PORTTRACE("SCR");
 
-   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 7)))
+   if (!(sh1_cxt.onchip.sci[which].scr & SCI_TIE))
       PORTTRACE("\tTransmit-data-empty interrupt request (TXI) is disabled \n");
    else
       PORTTRACE("\tTransmit-data-empty interrupt request (TXI) is enabled\n");
 
-   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 6)))
+   if (!(sh1_cxt.onchip.sci[which].scr & SCI_RIE))
       PORTTRACE("\tReceive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are disabled  \n");
    else
       PORTTRACE("\tReceive-data-full interrupt (RXI) and receive-error interrupt (ERI) requests are enabled\n");
 
-   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 5)))
+   if (!(sh1_cxt.onchip.sci[which].scr & SCI_TE))
       PORTTRACE("\tTransmitter disabled \n");
    else
       PORTTRACE("\tTransmitter enabled.\n");
 
-   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 4)))
+   if (!(sh1_cxt.onchip.sci[which].scr & SCI_RE))
       PORTTRACE("\tReceiver disabled  \n");
    else
       PORTTRACE("\tReceiver enabled.\n");
 
-   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 3)))
+   if (!(sh1_cxt.onchip.sci[which].scr & SCI_MPIE))
       PORTTRACE("\tMultiprocessor interrupts are disabled  \n");
    else
       PORTTRACE("\tMultiprocessor interrupts are enabled\n");
 
-   if (!(sh1_cxt.onchip.sci[which].scr & (1 << 2)))
+   if (!(sh1_cxt.onchip.sci[which].scr & SCI_TEIE))
       PORTTRACE("\tTransmit-end interrupt (TEI) requests are disabled \n");
    else
       PORTTRACE("\tTransmit-end interrupt (TEI) requests are enabled.\n");
@@ -1392,8 +1392,8 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       case 2:
          regs->sci[0].scr = data;
 
-         if((data & (1 << 5) ) == 0)
-            regs->sci[0].ssr |= (1 << 2);//tend is set
+         if((data & SCI_TE ) == 0)
+            regs->sci[0].ssr |= SCI_TEND;//tend is set
          return;
          break;
       case 3:
@@ -1408,7 +1408,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
          if (data == 0)
          {
             int clear_te = 0;
-            if (regs->sci[0].ssr & (1 << 7))
+            if (regs->sci[0].ssr & SCI_TDRE)
                clear_te = 1;
             regs->sci[0].ssr &= 0x6;//save tend/mpb bits (read only)
             the_log("ssr cleared\n");
@@ -1417,7 +1417,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
             //reads tdre after it has been set to 1
             //then writes 0 in tdre
             if(clear_te)
-               regs->sci[0].ssr &= ~(1 << 2);
+               regs->sci[0].ssr &= ~SCI_TEND;
             return;
          }
          else
@@ -5085,14 +5085,8 @@ void tick_serial(int channel)
    int cycles_per_bit = (bit_rate + 1) * 4;
    u8 clock_mode;
 
-   //if (sh1_cxt.onchip.sci[channel].scr & (1 << 6))
-   //{
-   //   the_log("tend set, skipping...\n");
-   //   sh1_cxt.onchip.sci[channel].serial_clock_counter = 0;
-   //   return;
-   //}
    static int was_printed = 0;
-   if (sh1_cxt.onchip.sci[0].ssr & (1 << 2))
+   if (sh1_cxt.onchip.sci[0].ssr & SCI_TEND)
    {
       if (!was_printed)
       {
@@ -5116,8 +5110,8 @@ void tick_serial(int channel)
 
    if (sh1_cxt.onchip.sci[channel].serial_clock_counter > cycles_per_bit)
    {
-      if (sh1_cxt.onchip.sci[channel].scr & (1 << 5) &&
-         sh1_cxt.onchip.sci[channel].scr & (1 << 4))
+      if (sh1_cxt.onchip.sci[channel].scr & SCI_TE &&
+         sh1_cxt.onchip.sci[channel].scr & SCI_RE)
       {
          the_log("executing...\n");
         // cd_serial_exec();
@@ -5332,14 +5326,14 @@ void sh1_serial_recieve_bit(int bit, int channel)
       sh1_cxt.onchip.sci[channel].rsr_counter = 0;
       sh1_cxt.onchip.sci[channel].rdr = sh1_cxt.onchip.sci[channel].rsr;
       sh1_cxt.onchip.sci[channel].rsr = 0;
-      sh1_cxt.onchip.sci[channel].ssr |= (1 << 6);//set rdrf. rdr contains valid received data
+      sh1_cxt.onchip.sci[channel].ssr |= SCI_RDRF;
 
       the_log("BYTE TAKEN %02X\n", sh1_cxt.onchip.sci[channel].rdr);
 
       //assert(serial_counter % 8 == 0);
 
       //trigger interrupt
-      if (sh1_cxt.onchip.sci[0].scr & (1 << 6))//receive data full interrupt is enabled
+      if (sh1_cxt.onchip.sci[0].scr & SCI_RIE)//receive data full interrupt is enabled
       {
          SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
          the_log("INTERRUPT \n");
@@ -5363,7 +5357,7 @@ void sh1_serial_transmit_bit(int channel, int* output_bit)
       if (sh1_cxt.onchip.sci[channel].tdr_written)
       {
          sh1_cxt.onchip.sci[channel].tsr = sh1_cxt.onchip.sci[channel].tdr;
-         sh1_cxt.onchip.sci[channel].ssr |= (1 << 7);//set transmit data reg empty
+         sh1_cxt.onchip.sci[channel].ssr |= SCI_TDRE;
          sh1_cxt.onchip.sci[channel].tdr_written = 0;
 
          the_log("TDR %02X\n", sh1_cxt.onchip.sci[channel].tdr);
@@ -5371,10 +5365,10 @@ void sh1_serial_transmit_bit(int channel, int* output_bit)
       else
       {
          //end of transmission
-         sh1_cxt.onchip.sci[channel].ssr |= (1 << 2);
+         sh1_cxt.onchip.sci[channel].ssr |= SCI_TEND;
       }
 
-      if (sh1_cxt.onchip.sci[0].scr & (1 << 7))//tie interrupt
+      if (sh1_cxt.onchip.sci[0].scr & SCI_TIE)
       {
          assert(0);
        //  SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
