@@ -110,7 +110,7 @@ UIMemoryEditor::UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* p )
 	// set up dialog
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
-		setWindowFlags( Qt::WindowMaximizeButtonHint | Qt::Sheet );
+		setWindowFlags( Qt::WindowMaximizeButtonHint | Qt::Sheet | Qt::WindowCloseButtonHint );
 
 
    gotoAddress = 0;

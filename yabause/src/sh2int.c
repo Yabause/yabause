@@ -54,12 +54,6 @@
 } while (0)
 #endif
 
-void SetInsTracingToggle(int toggle)
-{
-	SetInsTracing(toggle ? 1 : 0);
-}
-
-
 opcodefunc opcodes[0x10000];
 
 SH2Interface_struct SH2Interpreter = {
@@ -140,14 +134,22 @@ fetchfunc fetchlist[0x100];
 
 static u32 FASTCALL FetchBios(u32 addr)
 {
+#if CACHE_ENABLE
+   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
    return T2ReadWord(BiosRom, addr & 0x7FFFF);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchCs0(u32 addr)
 {
+#if CACHE_ENABLE
+   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
    return CartridgeArea->Cs0ReadWord(addr);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -585,7 +587,7 @@ static void FASTCALL SH2cmpim(SH2_struct * sh)
 
    imm = (s32)(s8)i;
 
-   if (sh->regs.R[0] == (u32) imm) // FIXME: ouais ï¿½ doit ï¿½re bon...
+   if (sh->regs.R[0] == (u32) imm) // FIXME: ouais ½ doit ½re bon...
       sh->regs.SR.part.T = 1;
    else
       sh->regs.SR.part.T = 0;
@@ -2817,7 +2819,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
    /* Avoid accumulating leftover cycles multiple times, since the trace
     * code automatically adds state->cycles to the cycle accumulator when
     * printing a trace line */
-   sh2_trace_add_cycles(-(context->cycles));
+   sh2_trace_add_cycles(-((s32)context->cycles));
 #endif
 
    SH2HandleInterrupts(context);
@@ -2910,14 +2912,20 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
    SH2HandleInterrupts(context);
 
+#ifndef EXEC_FROM_CACHE
    if (context->isIdle)
       SH2idleParse(context, cycles);
    else
       SH2idleCheck(context, cycles);
+#endif
 
    while(context->cycles < cycles)
    {
       // Fetch Instruction
+#ifdef EXEC_FROM_CACHE
+      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
+      else
+#endif
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it

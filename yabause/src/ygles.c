@@ -309,7 +309,6 @@ int YglCalcTextureQ(
    float   q1, q3, q4, qw;
    float   dx, w;
    float   ww;
-   float   divisor;
 #if 0
    // fast calculation for triangle
    if (( pnts[2*0+0] == pnts[2*1+0] ) && ( pnts[2*0+1] == pnts[2*1+1] )) {
@@ -925,7 +924,7 @@ int YglGenFrameBuffer() {
 
 	_Ygl->pFrameBuffer = NULL;
 
-	if (strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
+   if( strstr((const char*)glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
 	{
 		if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
 		glGenRenderbuffers(1, &_Ygl->rboid_depth);

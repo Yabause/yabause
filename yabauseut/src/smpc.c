@@ -527,6 +527,66 @@ u8 disp_pad_data(u8 oreg_counter, int x, int y, u8 id)
    return oreg_counter;
 }
 
+
+//at 0x67 standard left pad button is enabled
+//when releasing the wheel back to neutral, at 0x6f left goes back to unpressed
+
+//when pulling the wheel right, at 0x97 right pad is enabled
+//when releasing the wheel from right back to neutral, at 0x8f right pad is released
+
+//the left button on the back of the wheel is up
+//the right button on the back of the wheel is down
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 disp_wheel(u8 oreg_counter, int x, int y, u8 id)
+{
+   oreg_counter = disp_pad_data(oreg_counter, x, y, id);
+
+   u8 analog = get_oreg(&oreg_counter);
+
+   vdp_printf(&test_disp_font, 0*8, 26*8, 0xF, "Analog: %02X", analog);
+
+   return oreg_counter;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+//values seem to be less precise than wheel, may depend on individual stick
+
+//press left at axis 1 56
+//release left at axis 1 6A
+
+//press right at axis 1 ab
+//release right at axis 1 95
+
+//press up at axis 2 65
+//release up at axis 2 6A
+
+//press down at axis 2 a9
+//release down at axis 2 94
+
+//double stick mode:
+//sub stick trigger = x
+//sub stick left button (B) = Y
+//sub stick right button (C) = Z
+//analog inputs in same order, right after first 3
+//peripheral id 0x19
+u8 disp_mission(u8 oreg_counter, int x, int y, u8 id)
+{
+   oreg_counter = disp_pad_data(oreg_counter, x, y, id);
+
+   int pos = 17;
+   int i = 0;
+   for (i = 0; i < 7; i++)
+   {
+      u8 analog = get_oreg(&oreg_counter);
+      vdp_printf(&test_disp_font, 0 * 8, (pos + i) * 8, 0xF, "Analog %d: %02X", i, analog);
+   }
+
+   return oreg_counter;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 disp_nothing(u8 oreg_counter, int x, int y, u8 id)
@@ -553,8 +613,10 @@ typedef struct
 per_info_struct per_info[] =
 {
    { 0x02, "Standard Pad", disp_pad_data },
-   { 0x13, "Racing Wheel", disp_nothing },
-   { 0x15, "Analog Pad", disp_nothing },
+   { 0x13, "Racing Wheel", disp_wheel },
+   { 0x15, "Mission Stick", disp_mission },
+   { 0x16, "Analog Pad", disp_nothing },
+   { 0x19, "Double Mission Stick", disp_mission },
    { 0x23, "Saturn Mouse", disp_nothing },
    { 0x25, "Gun", disp_nothing },
    { 0x34, "Keyboard", disp_nothing },

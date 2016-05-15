@@ -88,6 +88,8 @@ typedef struct
    void (*GetGlSize)(int *width, int *height);
    void (*SetSettingValue)(int type, int value);
    void(*Sync)();
+   void (*GetNativeResolution)(int *width, int *height, int * interlace);
+   void(*Vdp2DispOff)(void);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;

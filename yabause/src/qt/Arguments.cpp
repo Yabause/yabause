@@ -190,7 +190,7 @@ namespace Arguments
 	void nobios(const QString& param)
 	{
 		VolatileSettings * vs = QtYabause::volatileSettings();
-		vs->setValue("General/Bios", "");
+		vs->setValue("General/EnableEmulatedBios", true);
 	}
 
 	void nosound(const QString& param)

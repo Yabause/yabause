@@ -665,8 +665,16 @@ int NetlinkInit(const char *ip, const char *port)
 	if (port == NULL || strcmp(port, "") == 0)
 		// Default port
       sprintf(NetlinkArea->portstring, "1337");
-	else
-		strcpy(NetlinkArea->portstring, port);
+   else
+   {
+      size_t port_len = strlen(port);
+      if (port_len >= 6)
+      {
+         YabSetError(YAB_ERR_OTHER, "Netlink port is too long");
+         return 0;
+      }
+      strcpy(NetlinkArea->portstring, port);
+   }
 
 #ifdef USESOCKET
    return NetworkInit(NetlinkArea->portstring);
