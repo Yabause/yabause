@@ -8218,7 +8218,7 @@ int SH2InterpreterGetInterrupts(SH2_struct *context,
 void SH2InterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
                                  const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
-int SH2DynarecInit(void) {return 0;}
+int SH2DynarecInit(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh) {return 0;}
 
 void SH2DynarecDeInit() {
   sh2_dynarec_cleanup();
