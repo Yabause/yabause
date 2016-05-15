@@ -4467,7 +4467,7 @@ static s32 savedcycles;  // Cycles left over from the last M68KExec() call
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL
+u32 FASTCALL
 c68k_byte_read (const u32 adr)
 {
   if (adr < 0x100000)
