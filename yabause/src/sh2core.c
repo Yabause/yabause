@@ -1770,49 +1770,110 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL AddressArrayReadLong(u32 addr) {
+#ifdef CACHE_ENABLE
+   int way = (CurrentSH2->onchip.CCR >> 6) & 3;
+   int entry = (addr & 0x3FC) >> 4;
+   u32 data = CurrentSH2->onchip.cache.way[way][entry].tag;
+   data |= CurrentSH2->onchip.cache.lru[entry] << 4;
+   data |= CurrentSH2->onchip.cache.way[way][entry].v << 2;
+   return data;
+#else
    return CurrentSH2->AddressArray[(addr & 0x3FC) >> 2];
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
+#ifdef CACHE_ENABLE
+   int way = (CurrentSH2->onchip.CCR >> 6) & 3;
+   int entry = (addr & 0x3FC) >> 4;
+   CurrentSH2->onchip.cache.way[way][entry].tag = addr & 0x1FFFFC00;
+   CurrentSH2->onchip.cache.way[way][entry].v = (addr >> 2) & 1;
+   CurrentSH2->onchip.cache.lru[entry] = (val >> 4) & 0x3f;
+#else
    CurrentSH2->AddressArray[(addr & 0x3FC) >> 2] = val;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL DataArrayReadByte(u32 addr) {
+#ifdef CACHE_ENABLE
+   int way = (addr >> 10) & 3;
+   int entry = (addr >> 4) & 0x3f;
+   return CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf];
+#else
    return T2ReadByte(CurrentSH2->DataArray, addr & 0xFFF);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL DataArrayReadWord(u32 addr) {
+#ifdef CACHE_ENABLE
+   int way = (addr >> 10) & 3;
+   int entry = (addr >> 4) & 0x3f;
+   return ((u16)(CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf]) << 8) | CurrentSH2->onchip.cache.way[way][entry].data[(addr&0xf) + 1];
+#else
    return T2ReadWord(CurrentSH2->DataArray, addr & 0xFFF);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL DataArrayReadLong(u32 addr) {
+#ifdef CACHE_ENABLE
+   int way = (addr >> 10) & 3;
+   int entry = (addr >> 4) & 0x3f;
+   u32 data = ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf]) << 24) |
+      ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 1]) << 16) |
+      ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 2]) << 8) |
+      ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 3]) << 0);
+   return data;
+#else
    return T2ReadLong(CurrentSH2->DataArray, addr & 0xFFF);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteByte(u32 addr, u8 val)  {
+#ifdef CACHE_ENABLE
+   int way = (addr >> 10) & 3;
+   int entry = (addr >> 4) & 0x3f;
+   CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf] = val;
+#else
    T2WriteByte(CurrentSH2->DataArray, addr & 0xFFF, val);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteWord(u32 addr, u16 val)  {
+#ifdef CACHE_ENABLE
+   int way = (addr >> 10) & 3;
+   int entry = (addr >> 4) & 0x3f;
+   CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf] = val >> 8;
+   CurrentSH2->onchip.cache.way[way][entry].data[(addr&0xf) + 1] = val;
+#else
    T2WriteWord(CurrentSH2->DataArray, addr & 0xFFF, val);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteLong(u32 addr, u32 val)  {
+#ifdef CACHE_ENABLE
+   int way = (addr >> 10) & 3;
+   int entry = (addr >> 4) & 0x3f;
+   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf)] = ((val >> 24) & 0xFF);
+   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 1] = ((val >> 16) & 0xFF);
+   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 2] = ((val >> 8) & 0xFF);
+   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 3] = ((val >> 0) & 0xFF);
+#else
    T2WriteLong(CurrentSH2->DataArray, addr & 0xFFF, val);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

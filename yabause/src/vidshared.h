@@ -188,7 +188,18 @@ typedef struct
    vdp2rotationparameter_struct * FASTCALL (*GetRParam)(void *, int h,int v);
    u32 LineColorBase;
    
-   void (*LoadLineParams)(void *, int line, Vdp2* lines);
+   void (*LoadLineParams)(void *, void *, int line, Vdp2* lines);
+
+   int bad_cycle_setting;
+
+   struct Pipeline
+   {
+      int paladdr;
+      int charaddr;
+      int flipfunction;
+   }pipe[2];
+
+
 } vdp2draw_struct;
 
 

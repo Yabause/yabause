@@ -70,6 +70,4 @@ extern fetchfunc fetchlist[0x100];
 typedef void (FASTCALL *opcodefunc)(SH2_struct *);
 extern opcodefunc opcodes[0x10000];
 
-void SetInsTracingToggle(int toggled);
-
 #endif

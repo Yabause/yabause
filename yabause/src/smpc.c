@@ -684,6 +684,26 @@ static void SmpcSetTiming(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+//acquiring megadrive id
+//world heroes perfect wants to find a saturn pad
+//id = 0xb
+u8 do_th_mode(u8 val)
+{
+   switch (val & 0x40) {
+   case 0x40:
+      return 0x70 | ((PORTDATA1.data[3] & 0xF) & 0xc);
+      break;
+   case 0x00:
+      return 0x30 | ((PORTDATA1.data[2] >> 4) & 0xf);
+      break;
+   }
+
+   //should not happen
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
    addr &= 0x7F;
    SmpcRegsT[addr >> 1] = val;
@@ -719,6 +739,11 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                if (PORTDATA1.data[1] == PERGUN && (val & 0x7F) == 0x7F)
                   SmpcRegs->PDR[0] = PORTDATA1.data[2];
                break;
+            //th control mode (acquire id)
+            case 0x40:
+               SmpcRegs->PDR[0] = do_th_mode(val);
+               break;
+            //th tr control mode
             case 0x60:
                switch (val & 0x60) {
                   case 0x60: // 1st Data

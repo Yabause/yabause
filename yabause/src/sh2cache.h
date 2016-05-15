@@ -2,14 +2,14 @@
 #define _SH2_CACHE_H_
 
 typedef struct _cache_line{
-	u16 lru;
 	u32 tag;
+   int v;
 	u8 data[16];
 } cache_line;
 
 typedef struct _cache_enty{
 	u32 enable;
-	u32 lru;
+	u32 lru[64];
 	cache_line way[4][64];
 } cache_enty;
 

@@ -419,7 +419,7 @@ void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *regs, char *string)
 			   {
 				   if ((op & 0xf000) == 0x9000)    /* .W */
 				   {
-					   sprintf(string, trace[i].mnem, (op & 0xff) * trace[i].dat + 4, rtype_2), regs->R[rtype_2];
+					   sprintf(string, trace[i].mnem, (op & 0xff) * trace[i].dat + 4, rtype_2, regs->R[rtype_2]);
 					   string += strlen(string);
 					   sprintf(string, " ; 0x%08X", ((op & 0xff) * trace[i].dat + 4 + (unsigned int)v_addr));
 				   }
