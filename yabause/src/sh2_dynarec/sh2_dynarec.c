@@ -8174,12 +8174,12 @@ void DynarecMasterHandleInterrupts()
   if (MSH2->interrupts[MSH2->NumberOfInterrupts-1].level > ((master_reg[SR]>>4)&0xF))
   {
     master_reg[15] -= 4;
-    MappedMemoryWriteLong(master_reg[15], master_reg[SR]);
+    MappedMemoryWriteLong(MSH2, master_reg[15], master_reg[SR]);
     master_reg[15] -= 4;
-    MappedMemoryWriteLong(master_reg[15], master_pc);
+    MappedMemoryWriteLong(MSH2, master_reg[15], master_pc);
     master_reg[SR] &= 0xFFFFFF0F;
     master_reg[SR] |= (MSH2->interrupts[MSH2->NumberOfInterrupts-1].level)<<4;
-    master_pc = MappedMemoryReadLong(master_reg[VBR] + (MSH2->interrupts[MSH2->NumberOfInterrupts-1].vector << 2));
+    master_pc = MappedMemoryReadLong(MSH2, master_reg[VBR] + (MSH2->interrupts[MSH2->NumberOfInterrupts-1].vector << 2));
     master_ip = get_addr_ht(master_pc);
     MSH2->NumberOfInterrupts--;
     MSH2->isIdle = 0;
@@ -8195,12 +8195,12 @@ void DynarecSlaveHandleInterrupts()
   if (SSH2->interrupts[SSH2->NumberOfInterrupts-1].level > ((slave_reg[SR]>>4)&0xF))
   {
     slave_reg[15] -= 4;
-    MappedMemoryWriteLong(slave_reg[15], slave_reg[SR]);
+    MappedMemoryWriteLong(SSH2, slave_reg[15], slave_reg[SR]);
     slave_reg[15] -= 4;
-    MappedMemoryWriteLong(slave_reg[15], slave_pc);
+    MappedMemoryWriteLong(SSH2, slave_reg[15], slave_pc);
     slave_reg[SR] &= 0xFFFFFF0F;
     slave_reg[SR] |= (SSH2->interrupts[SSH2->NumberOfInterrupts-1].level)<<4;
-    slave_pc = MappedMemoryReadLong(slave_reg[VBR] + (SSH2->interrupts[SSH2->NumberOfInterrupts-1].vector << 2));
+    slave_pc = MappedMemoryReadLong(SSH2, slave_reg[VBR] + (SSH2->interrupts[SSH2->NumberOfInterrupts-1].vector << 2));
     slave_ip = get_addr_ht(slave_pc|1);
     SSH2->NumberOfInterrupts--;
     SSH2->isIdle = 0;
