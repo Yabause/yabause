@@ -1,0 +1,57 @@
+void vectITU3IMIB3()
+{
+   // interrupt when OE from the drive mech falls
+   // PB3 is output enable, PB2 is start strobe
+   TSR3 &= 0xFD;
+   cd_mech_return_method = 0;
+   r1 = cd_mech_bytes & 0x7F;
+
+   if (!(cd_mech_bytes & 0x7F))
+   {
+      // start of new transfer(loc_97CE)
+
+      // backup register R4-R13, PR, GBR, MACH/MACL
+      // save stack to running_task[tcb.saved_sp]
+      // set stack to 0xF0008F8
+      cd_mech_return_method = 1;
+
+      if (PBDR & 0x4)
+         goto loc_9828;
+      else
+      {
+         // 9802
+         if (cd_mech_bytes == 0)
+         {
+            // 980A
+            if (byte_F0002CF == 0)
+            {
+               // 9832
+               memset(cd_mech_buff, 0, 11);
+               cd_mech_buff[11] = 0xFF;
+            }
+            else
+            {
+               // 9832
+               memcpy(cd_mech_buff, unk_F0002C4, 12);
+               chksum = cd_mech_buff[0];
+               for (i = 1; i < 11; i++)
+                  chksum = cd_mech_buff[i];
+               cd_mech_buff[11] = chksum;
+               unk_F0002C4[11] = 0;
+            }
+         }
+
+         // 981E
+         unk_F0002DB = 0; // clears rx packet ok flag
+         cd_mech_csum2 = 0; // clears csum
+      }
+   }
+   else
+   {
+      // old transfer
+      if (PBDR & 0x4)
+         goto loc_9768;
+   }
+
+   // loc_97CA
+}
