@@ -5303,6 +5303,26 @@ void sh1_set_output_enable()
 {
    //input capture
 
+   if (sh1_cxt.onchip.itu.channel[3].tsr & (1 << 1))
+   {
+      //imfb is set, don't overflow again?
+      return;
+   }
+
+   if (((sh1_cxt.onchip.itu.channel[3].tior >> 4) & 7) != 5)
+   {
+      //grb is not an input capture reg
+      //capturing the falling edge
+      return;
+   }
+
+
+   if (!(sh1_cxt.onchip.itu.channel[3].tier & (1 << 1)))
+   {
+      //imieb intterupt is disbaled
+      return;
+   }
+
    num_output_enables++;
    
    //store old grb value in brb
@@ -5310,6 +5330,11 @@ void sh1_set_output_enable()
 
    //put tcnt value in grb
    sh1_cxt.onchip.itu.channel[3].grb = sh1_cxt.onchip.itu.channel[3].tcnt;
+
+   //clear tcnt
+   sh1_cxt.onchip.itu.channel[3].tcnt = 0;
+
+   sh1_cxt.onchip.itu.channel[3].tsr |= (1 << 1);
 
    the_log("oe falling edge %d\n", num_output_enables);
 

@@ -44,7 +44,6 @@ enum CdStatusOperations
    Unknown = 0x30,
    SeekSecurityRing1 = 0xB2,
    SeekSecurityRing2 = 0xB6
-
 };
 
 
@@ -101,6 +100,9 @@ void cd_drive_set_serial_bit(u8 bit)
 {
    cdd_cxt.received_data[cdd_cxt.byte_counter] |= bit << cdd_cxt.bit_counter;
 
+   //the sh1 is transmitting, no timeout problem
+   cdd_cxt.timeout_check = 0;
+
    cdd_cxt.bit_counter++;
    if (cdd_cxt.bit_counter == 8)
    {
@@ -121,11 +123,10 @@ int cd_command_exec()
    if (comm_state == Reset)
    {
       comm_state = NoTransfer;
-      return 1710000;
+      return 1000000;
    }
-   if (comm_state == NoTransfer && (sh1_cxt.onchip.sci[0].scr & 0x30) == 0x30)
+   if (comm_state == NoTransfer )
    {
-
       cdd_cxt.state.current_operation = Idle;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
 
@@ -133,9 +134,26 @@ int cd_command_exec()
       cdd_cxt.byte_counter = 0;
       comm_state = SendingFirstByte;
 
+      memset(&cdd_cxt.received_data, 0, sizeof(u8) * 13);
+
       sh1_set_start(1);
       sh1_set_output_enable();
       the_log("start = 1 oe set \n");
+
+      cdd_cxt.periodic_timer = 100;//todo figure out the actual value
+      cdd_cxt.timeout_check = 1;
+   }
+
+   //the sh1 is potentially not listening, check for a timeout
+   if (comm_state == SendingFirstByte)
+   {
+      cdd_cxt.periodic_timer--;
+
+      if (cdd_cxt.periodic_timer < 0 && cdd_cxt.timeout_check)
+      {
+         //a timeout has occured, try again
+         comm_state = NoTransfer;
+      }
    }
 
    //it is required to wait to assert output enable

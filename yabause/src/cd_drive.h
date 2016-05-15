@@ -51,6 +51,8 @@ struct CdDriveContext
    u8 received_data[13];
    int received_data_counter;
 
+   int periodic_timer;
+   int timeout_check;
 };
 
 extern struct CdDriveContext cdd_cxt;
