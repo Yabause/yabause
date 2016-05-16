@@ -119,7 +119,7 @@ void vectITU3IMIB3()
    //97be, 9784, 9776 and 9828 all come here
    SSR0 = 0;//9794
  
-   if (UNKNOWN == 0)//cmp/eq #0, r0
+   if (cd_mech_return_method != 0)//cmp/eq #0, r0
    {
       //9876
       next_task(); //mov.l #schedule_running_task, r1, jmp @r1
