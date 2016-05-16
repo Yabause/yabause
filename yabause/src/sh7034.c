@@ -1362,7 +1362,7 @@ void onchip_write_timer_word(struct Onchip * regs, u32 addr, int which_timer, u1
 
    assert(0);
 }
-void the_log(const char * format, ...);
+
 void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
 {
    CDTRACE("wbreg: %08X %02X\n", addr, data);
@@ -1409,7 +1409,6 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
              regs->sci[0].ssr &= ~SCI_TDRE;
          }
 
-         the_log("tdr written\n");
          return;
          break;
       case 4:
@@ -1420,7 +1419,6 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
             if (regs->sci[0].ssr & SCI_TDRE)
                clear_te = 1;
             regs->sci[0].ssr &= 0x6;//save tend/mpb bits (read only)
-            the_log("ssr cleared\n");
 
             //tend is cleared when software
             //reads tdre after it has been set to 1
@@ -5068,7 +5066,6 @@ void tick_timer(int which)
 
 }
 
-void the_log(const char * format, ...);
 void sh1_serial_recieve_bit(int bit, int channel);
 void sh1_serial_transmit_bit(int channel, int* output_bit);
 
@@ -5099,7 +5096,6 @@ void tick_serial(int channel)
    {
       if (!was_printed)
       {
-         the_log("tend set, skipping...\n");
          was_printed = 1;
       }
       sh1_cxt.onchip.sci[channel].serial_clock_counter = 0;
@@ -5122,9 +5118,6 @@ void tick_serial(int channel)
       if (sh1_cxt.onchip.sci[channel].scr & SCI_TE &&
          sh1_cxt.onchip.sci[channel].scr & SCI_RE)
       {
-         the_log("executing...\n");
-        // cd_serial_exec();
-
          receive_bit_from_cdd();
          transmit_bit_to_cdd();
       }
@@ -5344,8 +5337,6 @@ void sh1_set_output_enable_falling_edge()
 
    sh1_cxt.onchip.itu.channel[3].tsr |= (1 << 1);
 
-   the_log("oe falling edge %d\n", num_output_enables);
-
    //trigger an interrupt
    SH2SendInterrupt(SH1, 93, (sh1_cxt.onchip.intc.iprd >> 8) & 0xf);
 }
@@ -5356,11 +5347,7 @@ void sh1_serial_recieve_bit(int bit, int channel)
    sh1_cxt.onchip.sci[channel].rsr |= bit;
    sh1_cxt.onchip.sci[channel].rsr_counter++;
 
-   the_log("BIT RX\n");
-
    tsunami_log_value("SCK", sh1_cxt.onchip.sci[channel].rsr_counter, 4);
-
-   //assert(serial_counter % 8 == sh1_cxt.onchip.sci[channel].rsr_counter % 8);
 
    //a full byte has been received, transfer data to rdr
    if (sh1_cxt.onchip.sci[channel].rsr_counter == 8)
@@ -5372,16 +5359,11 @@ void sh1_serial_recieve_bit(int bit, int channel)
 
       tsunami_log_value("STA", sh1_cxt.onchip.sci[channel].rdr, 8);
 
-      the_log("BYTE TAKEN %02X\n", sh1_cxt.onchip.sci[channel].rdr);
-
-      //assert(serial_counter % 8 == 0);
-
       //trigger interrupt
       if (sh1_cxt.onchip.sci[0].scr & SCI_RIE)//receive data full interrupt is enabled
       {
          SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
          tsunami_log_pulse("RXIO", 1);
-         the_log("INTERRUPT \n");
       }
    }
 }
@@ -5405,8 +5387,6 @@ void sh1_serial_transmit_bit(int channel, int* output_bit)
          sh1_cxt.onchip.sci[channel].tsr_counter = 8;
          sh1_cxt.onchip.sci[channel].tdr_written = 0;
          sh1_cxt.onchip.sci[channel].ssr |= SCI_TDRE;
-
-         the_log("TDR %02X\n", sh1_cxt.onchip.sci[channel].tdr);
       }
       else
       {

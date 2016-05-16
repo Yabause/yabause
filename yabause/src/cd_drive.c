@@ -56,10 +56,14 @@
 //from falling edge to rising edge of serial clock signal for 1 byte
 #define TIME_BYTE 150
 
+//"when disc is reading transactions are ~6600us apart"
+#define TIME_READING 6600
+
 struct CdDriveContext cdd_cxt;
 
 enum CdStatusOperations
 {
+   ReadToc = 0x04,
    Idle = 0x46,
    Stopped = 0x12,
    Seeking = 0x22,
@@ -74,7 +78,7 @@ enum CdStatusOperations
 
 
 void make_status_data(struct CdState *state, u8* data);
-
+void set_checksum(u8 * data);
 
 enum CommunicationState
 {
@@ -90,31 +94,8 @@ enum CommunicationState
    NewTransfer,
    WaitToOe,
    WaitToOeFirstByte,
+   WaitToRxio
 }comm_state = NoTransfer;
-
-void the_log(const char * format, ...)
-{
-#if 0
-   static int started = 0;
-   static FILE* fp = NULL;
-   va_list l;
-
-   if (!started)
-   {
-      fp = fopen("C:/yabause/THE_LOG.txt", "w");
-
-      if (!fp)
-      {
-         return;
-      }
-      started = 1;
-   }
-
-   va_start(l, format);
-   vfprintf(fp, format, l);
-   va_end(l);
-#endif
-}
 
 u8 cd_drive_get_serial_bit()
 {
@@ -140,101 +121,64 @@ void cd_drive_set_serial_bit(u8 bit)
          comm_state = WaitToOeFirstByte;
       else if (comm_state == SendingByte)
          comm_state = WaitToOe;
+
+      if (cdd_cxt.byte_counter == 13)
+         comm_state = WaitToRxio;
    }
 }
 
-
-extern u8 transfer_buffer[13];
-int cd_command_exec()
+int do_command()
 {
-   if (comm_state == Reset)
-   {
-      comm_state = NoTransfer;
-      return TIME_POWER_ON + TIME_WAITING;
-   
-   }
-
-   if (comm_state == SendingFirstByte || 
-      comm_state == SendingByte)
-   {
-      return TIME_BYTE;
-   }
-
-   if (comm_state == NoTransfer)
-   {
-      cdd_cxt.state.current_operation = Idle;
-      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
-
-      cdd_cxt.bit_counter = 0;
-      cdd_cxt.byte_counter = 0;
-      comm_state = SendingFirstByte;
-
-      memset(&cdd_cxt.received_data, 0, sizeof(u8) * 13);
-
-      sh1_set_start(1);
-      sh1_set_output_enable_falling_edge();
-      the_log("start = 1 oe set \n");
-
-      return TIME_START;
-   }
-
-   //it is required to wait to assert output enable
-   //otherwise some sort of race condition occurs
-   //and breaks the transfer
-   if (comm_state == WaitToOeFirstByte)
-   {
-      sh1_set_output_enable_falling_edge();
-      sh1_set_start(0);
-      comm_state = SendingByte;
-      the_log("start = 0 oe set \n");
-      return TIME_OE;
-   }
-   else if (comm_state == WaitToOe)
-   {
-      if (cdd_cxt.byte_counter == 13)
-      {
-         comm_state = NoTransfer;
-         return TIME_PERIODIC;
-      }
-
-      sh1_set_output_enable_falling_edge();
-      the_log("oe set \n");
-      comm_state = SendingByte;
-
-      return TIME_OE;
-   }
-
-   assert(0);
-
-   return 1;
-
-   cdd_cxt.num_execs++;
-
-
-#if 0
-   int command = 0;
+   int command = cdd_cxt.received_data[0];
    switch (command)
    {
    case 0x0:
       //nop
+      comm_state = NoTransfer;
+      return TIME_PERIODIC;
       break;
    case 0x2:
-      //seek
+      //seeking ring
+      cdd_cxt.state.current_operation = SeekSecurityRing2;
       break;
    case 0x3:
+   {
+      int i = 0;
       //read toc
+      cdd_cxt.state_data[0] = cdd_cxt.state.current_operation = ReadToc;
+      comm_state = NoTransfer;
+      //fill cdd_cxt.state_data with toc info
+
+      cdd_cxt.state_data[1] = 0x41;
+      cdd_cxt.state_data[2] = 0x00;
+      cdd_cxt.state_data[3] = 0xA0;
+      cdd_cxt.state_data[4] = 0x00;
+      cdd_cxt.state_data[5] = 0x02;
+      cdd_cxt.state_data[6] = 0x00;
+      cdd_cxt.state_data[7] = 0x00;
+      cdd_cxt.state_data[8] = 0x01;
+      cdd_cxt.state_data[9] = 0x00;
+      cdd_cxt.state_data[10] = 0x00;
+
+      set_checksum(cdd_cxt.state_data);
+      return TIME_READING;
       break;
+   }
    case 0x4:
       //stop disc
+      cdd_cxt.state.current_operation = Stopped;
       break;
    case 0x6:
       //read data at lba
+      cdd_cxt.state.current_operation = ReadingDataSectors;//what about audio data?
       break;
    case 0x8:
       //pause
+      cdd_cxt.state.current_operation = Idle;
       break;
    case 0x9:
       //seek
+      cdd_cxt.state.current_operation = Seeking;
       break;
    case 0xa:
       //scan forward
@@ -243,7 +187,69 @@ int cd_command_exec()
       //scan backwards
       break;
    }
-#endif
+
+   return TIME_PERIODIC;
+}
+
+
+extern u8 transfer_buffer[13];
+int cd_command_exec()
+{
+   if (comm_state == Reset)
+   {
+      cdd_cxt.state.current_operation = Idle;
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      comm_state = NoTransfer;
+      return TIME_POWER_ON + TIME_WAITING;
+   }
+   else if (
+      comm_state == SendingFirstByte || 
+      comm_state == SendingByte)
+   {
+      return TIME_BYTE;
+   }
+   else if (
+      comm_state == NoTransfer)
+   {
+      cdd_cxt.bit_counter = 0;
+      cdd_cxt.byte_counter = 0;
+      comm_state = SendingFirstByte;
+
+      memset(&cdd_cxt.received_data, 0, sizeof(u8) * 13);
+
+      sh1_set_start(1);
+      sh1_set_output_enable_falling_edge();
+
+      return TIME_START;
+   }
+   //it is required to wait to assert output enable
+   //otherwise some sort of race condition occurs
+   //and breaks the transfer
+   else if (comm_state == WaitToOeFirstByte)
+   {
+      sh1_set_output_enable_falling_edge();
+      sh1_set_start(0);
+      comm_state = SendingByte;
+      return TIME_OE;
+   }
+   else if (comm_state == WaitToOe)
+   {
+      sh1_set_output_enable_falling_edge();
+      comm_state = SendingByte;
+
+      return TIME_OE;
+   }
+   else if (comm_state == WaitToRxio)
+   {
+      //handle the command
+      return do_command();
+   }
+
+   assert(0);
+
+   return 1;
+
+   cdd_cxt.num_execs++;
 }
 
 void cd_drive_exec(struct CdDriveContext * drive, s32 cycles)
@@ -257,9 +263,20 @@ void cd_drive_exec(struct CdDriveContext * drive, s32 cycles)
    drive->cycles_remainder = cycles_temp;
 }
 
-void make_status_data(struct CdState *state, u8* data)
+void set_checksum(u8 * data)
 {
    u8 parity = 0;
+   int i = 0;
+   for (i = 0; i < 11; i++)
+      parity += data[i];
+   data[11] = ~parity;
+
+   data[12] = 0;
+}
+
+void make_status_data(struct CdState *state, u8* data)
+{
+   
    int i = 0;
    data[0] = state->current_operation;
    data[1] = state->q_subcode;
@@ -273,11 +290,7 @@ void make_status_data(struct CdState *state, u8* data)
    data[9] = state->absolute_seconds;
    data[10] = state->absolute_frame;
 
-
-   for (i = 0; i < 11; i++)
-      parity += data[i];
-   data[11] = ~parity;
-   data[12] = 0;
+   set_checksum(data); 
 }
 
 void cdd_reset()
