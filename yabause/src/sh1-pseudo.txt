@@ -140,10 +140,19 @@ void vectITU3IMIB3()
 
 //task6
 
+#define YGR_CR1_REG (*(u16*)(0xA000010))
+#define YGR_CR2_REG (*(u16*)(0xA000012))
+#define YGR_CR3_REG (*(u16*)(0xA000014))
+#define YGR_CR4_REG (*(u16*)(0xA000016))
+
+#define YGR_HIRQ_REG (*(u16*)(0xA00001E))
 #define YGR_1A_REG (*(u16*)(0xA00001A))
 #define UNKN (*(u8*)(0xf000894))
 #define UNKN2 (*(u8*)(0xf0002A6))
 #define PBDR_L (*(u8*)(0x5FFFFC3))//lower byte of pbdr
+#define AUTH_BUSY (*(u8*)(0xf0007b0))
+
+#define CR_BUFFER ((u8*)(0x0F00026C))
 
 void loc_2914()
 {
@@ -224,8 +233,54 @@ loc_28f8:
          goto loc_291c;
       }
    } 
+
+   u16 cr1, cr2, cr3, cr4;
 loc_291c:
-
-
+   //reload gbr with cd stat
 loc_2920:
+   if (AUTH_BUSY & 1)
+   {
+      //2932
+
+      if (cd_stat != 0)//2938
+      {
+         //use the second cr response
+         cr1 = CR_BUFFER[4];
+         cr2 = CR_BUFFER[5];
+         cr3 = CR_BUFFER[6];
+         cr4 = CR_BUFFER[7];
+      }
+      else
+      {
+         cr1 = CR_BUFFER[0];
+         cr2 = CR_BUFFER[1];
+         cr3 = CR_BUFFER[2];
+         cr4 = CR_BUFFER[3];
+      }
+
+      cr1 |= 0x2000;//periodic
+   }
+   else
+   {
+      //2928
+      cr1 = 0x20ff;
+      cr2 = 0xffff;
+      cr3 = 0xffff;
+      cr4 = 0xffff;
+   }
+
+loc_296a:
+   if (mbx_stat & 2)
+   {
+      //2982
+      YGR_CR1_REG = cr1;
+      YGR_CR2_REG = cr2;
+      YGR_CR3_REG = cr3;
+      YGR_CR4_REG = cr4;
+   }
+
+   //298a
+   YGR_HIRQ_REG |= 0x400;
+
+   wait();//2994
 }
