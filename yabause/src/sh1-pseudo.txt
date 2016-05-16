@@ -103,20 +103,15 @@ void vectITU3IMIB3()
    else
    {
       //9776
-      u8 * ptr = (u8*)(0xf000304 - 1);//mov r3, r2. add #-1, r2
-      u8 to_transmit = ptr[byte_count_temp];//mov.b @(r0, r2), r0
+      u8 to_transmit = cd_mech_buff[cd_mech_bytes-1];//mov r3, r2. add #-1, r2. mov.b @(r0, r2), r0
       TDR0 = to_transmit;//mov.b r0, @((TDR0 - SMR0), gbr)
  
-      if (byte_count_temp == 1)//cmp/eq #1, r0
-      {
-         //fall through to 9794
-      }
-      else
+      if (cd_mech_bytes != 1)//cmp/eq #1, r0
       {   //9784
          u8 received_data = RDR0;
-         u32 addr = 0xF0002CE;
-         addr += byte_count_temp;
-         *(u8*)addr = received_data;
+         cd_rx_status[cd_mech_bytes-2] = received_data; // even though this is referenced as F0002CE, 
+                                                        // it really end up being cd_rx_status since 
+                                                        // cd_mech_bytes >= 2
          TRANSFER_CHECKSUM += received_data;
       }
    }
