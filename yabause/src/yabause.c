@@ -96,6 +96,7 @@
 
 #include "sh7034.h"
 #include "cd_drive.h"
+#include "tsunami/yab_tsunami.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -158,6 +159,8 @@ void YabauseChangeTiming(int freqtype) {
 
 int YabauseInit(yabauseinit_struct *init)
 {
+   tsunami_init();
+
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
@@ -813,6 +816,9 @@ int YabauseEmulate(void) {
    }
 
 #endif
+
+   //flush tsunami output once per frame
+   tsunami_flush();
 
    return 0;
 }

@@ -29,6 +29,7 @@
 #include "memory.h"
 #include "debug.h"
 #include <stdarg.h>
+#include "tsunami/yab_tsunami.h"
 
 struct CdDriveContext cdd_cxt;
 
@@ -106,6 +107,8 @@ void cd_drive_set_serial_bit(u8 bit)
    cdd_cxt.bit_counter++;
    if (cdd_cxt.bit_counter == 8)
    {
+      tsunami_log_value("CMD", cdd_cxt.received_data[cdd_cxt.byte_counter]);
+
       cdd_cxt.byte_counter++;
       cdd_cxt.bit_counter = 0;
 

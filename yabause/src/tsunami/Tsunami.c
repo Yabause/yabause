@@ -28,7 +28,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#if _WIN32
+#include <Windows.h>
+#else
 #include <sys/time.h>
+#endif
 
 #if _WIN32
 
@@ -216,11 +220,24 @@ void TsunamiUnlock_Internal(TsunamiContext *ctx)
 
 uint64_t TsunamiGetMicroseconds(void)
 {
+#if _WIN32
+   LARGE_INTEGER current;
+   LARGE_INTEGER freq;
+   QueryPerformanceFrequency(&freq);
+   QueryPerformanceCounter(&current);
+
+   current.QuadPart *= 1000000;
+   current.QuadPart /= freq.QuadPart;
+
+   return (uint64_t)current.QuadPart;
+#else
 	struct timeval t;
 
 	gettimeofday(&t, NULL);
 
 	return ((t.tv_sec * 1000000) + t.tv_usec);
+#endif
+
 }
 
 void TsunamiTerminateSignalHandler(int signal)

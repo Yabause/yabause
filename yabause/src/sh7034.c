@@ -31,6 +31,7 @@
 #include "debug.h"
 #include <stdarg.h>
 #include "cd_drive.h"
+#include "tsunami/yab_tsunami.h"
 
 //#define SH1_MEM_DEBUG
 #ifdef SH1_MEM_DEBUG
@@ -5303,6 +5304,7 @@ int num_output_enables = 0;
 void sh1_set_output_enable()
 {
    //input capture
+   tsunami_log_pulse("OE", 1);
 
    if (sh1_cxt.onchip.itu.channel[3].tsr & (1 << 1))
    {
@@ -5413,6 +5415,8 @@ void sh1_serial_transmit_bit(int channel, int* output_bit)
 //pb2
 void sh1_set_start(int state)
 {
+   tsunami_log_pulse("START", state);
+
    if (state)
       sh1_cxt.onchip.pbdr &= ~0x04;
    else
