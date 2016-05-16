@@ -28,6 +28,7 @@
 #include "assert.h"
 #include "memory.h"
 #include "debug.h"
+#include "cs2.h"
 #include <stdarg.h>
 #include "tsunami/yab_tsunami.h"
 
@@ -129,26 +130,17 @@ void cd_drive_set_serial_bit(u8 bit)
 
 void do_toc()
 {
+   int toc_entry;
    cdd_cxt.state_data[0] = cdd_cxt.state.current_operation = ReadToc;
    comm_state = NoTransfer;
    //fill cdd_cxt.state_data with toc info
 
-   int toc_entry = cdd_cxt.toc_entry++;
-   int num_toc_entries = 1;
-   cdd_cxt.state_data[1] = 0x41;
-   cdd_cxt.state_data[2] = 0x00;
-   cdd_cxt.state_data[3] = 0xA0;
-   cdd_cxt.state_data[4] = 0x00;
-   cdd_cxt.state_data[5] = 0x02;
-   cdd_cxt.state_data[6] = 0x00;
-   cdd_cxt.state_data[7] = 0x00;
-   cdd_cxt.state_data[8] = 0x01;
-   cdd_cxt.state_data[9] = 0x00;
-   cdd_cxt.state_data[10] = 0x00;
+   toc_entry = cdd_cxt.toc_entry++;
+   memcpy(cdd_cxt.state_data+1, &cdd_cxt.toc[toc_entry], 10);
 
    set_checksum(cdd_cxt.state_data);
 
-   if (cdd_cxt.toc_entry > num_toc_entries)
+   if (cdd_cxt.toc_entry > cdd_cxt.num_toc_entries)
    {
       cdd_cxt.state.current_operation = Idle;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
@@ -185,6 +177,7 @@ int do_command()
    case 0x3:
    {
       cdd_cxt.toc_entry = 0;
+      cdd_cxt.num_toc_entries = Cs2Area->cdi->ReadTOC10(cdd_cxt.toc);
       do_toc();
 
       return TIME_READING;

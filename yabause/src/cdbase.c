@@ -89,6 +89,7 @@ static int DummyCDInit(const char *);
 static void DummyCDDeInit(void);
 static int DummyCDGetStatus(void);
 static s32 DummyCDReadTOC(u32 *);
+static s32 DummyCDReadTOC10(CDInterfaceToc10 *);
 static int DummyCDReadSectorFAD(u32, void *);
 static void DummyCDReadAheadFAD(u32);
 
@@ -99,6 +100,7 @@ DummyCDInit,
 DummyCDDeInit,
 DummyCDGetStatus,
 DummyCDReadTOC,
+DummyCDReadTOC10,
 DummyCDReadSectorFAD,
 DummyCDReadAheadFAD,
 };
@@ -107,6 +109,7 @@ static int ISOCDInit(const char *);
 static void ISOCDDeInit(void);
 static int ISOCDGetStatus(void);
 static s32 ISOCDReadTOC(u32 *);
+static s32 ISOCDReadTOC10(CDInterfaceToc10 *);
 static int ISOCDReadSectorFAD(u32, void *);
 static void ISOCDReadAheadFAD(u32);
 
@@ -117,6 +120,7 @@ ISOCDInit,
 ISOCDDeInit,
 ISOCDGetStatus,
 ISOCDReadTOC,
+ISOCDReadTOC10,
 ISOCDReadSectorFAD,
 ISOCDReadAheadFAD,
 };
@@ -199,6 +203,13 @@ static s32 DummyCDReadTOC(UNUSED u32 *TOC)
 	//
 	// Special Note: To convert from LBA/LSN to FAD, add 150.
 
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static s32 DummyCDReadTOC10(UNUSED CDInterfaceToc10 *TOC)
+{
 	return 0;
 }
 
@@ -359,6 +370,8 @@ static const s8 syncHdr[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 enum IMG_TYPE { IMG_NONE, IMG_ISO, IMG_BINCUE, IMG_MDS, IMG_CCD, IMG_NRG };
 enum IMG_TYPE imgtype = IMG_ISO;
 static u32 isoTOC[102];
+static CDInterfaceToc10 isoTOC10[102*3];
+int isoTOCnum=0;
 static disc_info_struct disc;
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
@@ -1035,6 +1048,8 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 		return -1;
 	}
 
+	isoTOCnum = num_toc;
+
 	// Find track number and allocate
 	for (i = 0; i < num_toc; i++)
 	{
@@ -1042,6 +1057,22 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 		int point;
 
 		sprintf(sect_name, "Entry %d", i);
+
+		isoTOC10[i*3].ctrladr = (GetIntCCD(&ccd, sect_name, "Control") << 4) | GetIntCCD(&ccd, sect_name, "ADR");
+		isoTOC10[i*3].tno = GetIntCCD(&ccd, sect_name, "TrackNo");
+		isoTOC10[i*3].point = GetIntCCD(&ccd, sect_name, "Point");
+		isoTOC10[i*3].min = GetIntCCD(&ccd, sect_name, "AMin");
+		isoTOC10[i*3].sec = 2 /*GetIntCCD(&ccd, sect_name, "ASec")*/;
+		isoTOC10[i*3].frame = i * 3 /* GetIntCCD(&ccd, sect_name, "AFrame") */;
+		isoTOC10[i*3].zero = GetIntCCD(&ccd, sect_name, "Zero");
+		isoTOC10[i*3].pmin = GetIntCCD(&ccd, sect_name, "PMin");
+		isoTOC10[i*3].psec = GetIntCCD(&ccd, sect_name, "PSec");
+		isoTOC10[i*3].pframe = GetIntCCD(&ccd, sect_name, "PFrame");
+		memcpy(isoTOC10+i*3+1, isoTOC10+i*3, sizeof(CDInterfaceToc10));
+		isoTOC10[i*3+1].frame = i * 3 + 1;
+		memcpy(isoTOC10+i*3+2, isoTOC10+i*3, sizeof(CDInterfaceToc10));
+		isoTOC10[i*3+2].frame = i * 3 + 2;
+
 		point = GetIntCCD(&ccd, sect_name, "Point");
 
 		if (point == 0xA1)
@@ -1238,6 +1269,13 @@ static s32 ISOCDReadTOC(u32 * TOC) {
    memcpy(TOC, isoTOC, 0xCC * 2);
 
    return (0xCC * 2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static s32 ISOCDReadTOC10(CDInterfaceToc10 *TOC) {
+   memcpy(TOC, isoTOC10, 102 * 3 * sizeof(CDInterfaceToc10));
+   return isoTOCnum;
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -22,6 +22,7 @@
 #define CD_DRIVE_H
 
 #include "core.h"
+#include "cdbase.h"
 
 struct CdState
 {
@@ -51,7 +52,9 @@ struct CdDriveContext
    u8 received_data[13];
    int received_data_counter;
 
+   CDInterfaceToc10 toc[102*3];
    int toc_entry;
+   int num_toc_entries;
 };
 
 extern struct CdDriveContext cdd_cxt;
