@@ -145,7 +145,7 @@ void TsunamiDumpSignals_Traverse(FILE            *output_vcd_file,
 		if (var->head) {
 			fprintf(output_vcd_file, "$scope module %s $end\n", var->node_name);			
 		} else {
-			fprintf(output_vcd_file, "$var wire %i %s %s [31:0] $end\n", 32, var->uid, var->node_name);
+			fprintf(output_vcd_file, "$var wire %i %s %s [%d:0] $end\n", var->size, var->uid, var->node_name, var->size);
 		}
 		
 		if (var->head) {
@@ -383,8 +383,8 @@ void TsunamiFlushTimeline(const char *timeline_name)
 							break;
 						case TsunamiLogEntryType_ChangeValue:
 							fprintf(output_vcd_file, "b");
-							for (k = 0; k < 64; k ++) 
-								fprintf(output_vcd_file, "%c", (int) ('0' + ((entry->change_value.value >> (63 - k)) & 0x1)));
+							for (k = 0; k < entry->change_value.var->size; k ++)
+								fprintf(output_vcd_file, "%c", (int) ('0' + ((entry->change_value.value >> ((entry->change_value.var->size -1) - k)) & 0x1)));
 							fprintf(output_vcd_file, " %s\n", entry->change_value.var->uid);
 							break;
 						}

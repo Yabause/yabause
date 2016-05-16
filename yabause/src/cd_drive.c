@@ -31,6 +31,31 @@
 #include <stdarg.h>
 #include "tsunami/yab_tsunami.h"
 
+//oe rising edge to falling edge
+//26 usec
+#define TIME_OE 26
+
+//serial clock rising edge of the final bit in a transmission to falling edge of start signal
+//13992 usec
+#define TIME_PERIODIC 13992
+
+//start  falling edge to rising edge
+//187 usec
+#define TIME_START 187
+
+//start falling edge to rising edge (slow just after power on)
+//3203 usec
+
+//poweron stable signal to first start falling edge (reset time)
+//451448 usec
+#define TIME_POWER_ON 451448
+
+//time from first start falling edge to first transmission
+#define TIME_WAITING 416509
+
+//from falling edge to rising edge of serial clock signal for 1 byte
+#define TIME_BYTE 150
+
 struct CdDriveContext cdd_cxt;
 
 enum CdStatusOperations
@@ -100,22 +125,21 @@ u8 cd_drive_get_serial_bit()
 void cd_drive_set_serial_bit(u8 bit)
 {
    cdd_cxt.received_data[cdd_cxt.byte_counter] |= bit << cdd_cxt.bit_counter;
-
-   //the sh1 is transmitting, no timeout problem
-   cdd_cxt.timeout_check = 0;
-
    cdd_cxt.bit_counter++;
+
    if (cdd_cxt.bit_counter == 8)
    {
-      tsunami_log_value("CMD", cdd_cxt.received_data[cdd_cxt.byte_counter]);
+      tsunami_log_value("CMD", cdd_cxt.received_data[cdd_cxt.byte_counter], 8);
 
       cdd_cxt.byte_counter++;
       cdd_cxt.bit_counter = 0;
 
+      sh1_set_output_enable_rising_edge();
+
       if (comm_state == SendingFirstByte)
          comm_state = WaitToOeFirstByte;
       else if (comm_state == SendingByte)
-         comm_state = WaitToOe;   
+         comm_state = WaitToOe;
    }
 }
 
@@ -126,11 +150,19 @@ int cd_command_exec()
    if (comm_state == Reset)
    {
       comm_state = NoTransfer;
-      return 1000000;
+      return TIME_POWER_ON + TIME_WAITING;
+   
    }
-   if (comm_state == NoTransfer )
+
+   if (comm_state == SendingFirstByte || 
+      comm_state == SendingByte)
    {
-      cdd_cxt.state.current_operation = Idle;
+      return TIME_BYTE;
+   }
+
+   if (comm_state == NoTransfer)
+   {
+      cdd_cxt.state.current_operation = NoDisc;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
 
       cdd_cxt.bit_counter = 0;
@@ -140,23 +172,10 @@ int cd_command_exec()
       memset(&cdd_cxt.received_data, 0, sizeof(u8) * 13);
 
       sh1_set_start(1);
-      sh1_set_output_enable();
+      sh1_set_output_enable_falling_edge();
       the_log("start = 1 oe set \n");
 
-      cdd_cxt.periodic_timer = 100;//todo figure out the actual value
-      cdd_cxt.timeout_check = 1;
-   }
-
-   //the sh1 is potentially not listening, check for a timeout
-   if (comm_state == SendingFirstByte)
-   {
-      cdd_cxt.periodic_timer--;
-
-      if (cdd_cxt.periodic_timer < 0 && cdd_cxt.timeout_check)
-      {
-         //a timeout has occured, try again
-         comm_state = NoTransfer;
-      }
+      return TIME_START;
    }
 
    //it is required to wait to assert output enable
@@ -164,24 +183,26 @@ int cd_command_exec()
    //and breaks the transfer
    if (comm_state == WaitToOeFirstByte)
    {
-      sh1_set_output_enable();
+      sh1_set_output_enable_falling_edge();
       sh1_set_start(0);
       comm_state = SendingByte;
       the_log("start = 0 oe set \n");
-      return 40;//approximate
+      return TIME_OE;
    }
    else if (comm_state == WaitToOe)
    {
-      sh1_set_output_enable();
+      sh1_set_output_enable_falling_edge();
       the_log("oe set \n");
       comm_state = SendingByte;
       if (cdd_cxt.byte_counter == 13)
       {
          comm_state = NoTransfer;
+         return TIME_PERIODIC;
       }
-
-      return 40;
+      return TIME_OE;
    }
+
+   assert(0);
 
    return 1;
 

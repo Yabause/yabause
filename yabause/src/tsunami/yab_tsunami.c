@@ -30,14 +30,14 @@ void tsunami_init(void) {
    TsunamiStartTimeline("CDB", TSUNAMI_FILENAME, 1048576 * 512);
 }
 
-void tsunami_log_value(char * name, int value) {
+void tsunami_log_value(char * name, int value, int size) {
    TsunamiUpdateTimelineToRealtime("CDB");
-   TsunamiSetValue(value, "CDB", "root.%s", name);
+   TsunamiSetValue(value, size, "CDB", "root.%s", name);
 }
 
 void tsunami_log_pulse(char * name, int value) {
    TsunamiUpdateTimelineToRealtime("CDB");
-   TsunamiPulseValue(value, "CDB", "root.%s", name);
+   TsunamiPulseValue(value, 1, "CDB", "root.%s", name);
 }
 
 void tsunami_flush()
@@ -48,7 +48,7 @@ void tsunami_flush()
 void tsunami_init_dummy(void) {
 }
 
-void tsunami_log_value_dummy(char * name, int value) {
+void tsunami_log_value_dummy(char * name, int value, int size) {
 }
 
 void tsunami_log_pulse_dummy(char * name, int value) {

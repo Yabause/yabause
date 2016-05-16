@@ -155,12 +155,12 @@ void TsunamiUpdateTimelineToRealtime(const char *timeline_name);
 	
 #if _WIN32
 
-#define TsunamiSetValue(_value_, _timeline_name_, _value_name_format_, ...) \
-	TsunamiSetValue_Base_Internal(0, 0, 0, _value_, _timeline_name_, _value_name_format_, __VA_ARGS__)
+#define TsunamiSetValue(_value_, _size_, _timeline_name_, _value_name_format_, ...) \
+	TsunamiSetValue_Base_Internal(0, 0, 0, _value_, _size_, _timeline_name_, _value_name_format_, __VA_ARGS__)
 #define TsunamiIncrementValue(_increment_, _timeline_name_, _value_name_format_, ...) \
 	TsunamiSetValue_Base_Internal(1, 0, 0, _increment_, _timeline_name_, _value_name_format_, __VA_ARGS__)
-#define TsunamiPulseValue(_value_, _timeline_name_, _value_name_format_, ...) \
-	TsunamiSetValue_Base_Internal(0, 1, 0, _value_, _timeline_name_, _value_name_format_, __VA_ARGS__)
+#define TsunamiPulseValue(_value_, _size_, _timeline_name_, _value_name_format_, ...) \
+	TsunamiSetValue_Base_Internal(0, 1, 0, _value_, _size_, _timeline_name_, _value_name_format_, __VA_ARGS__)
 #define TsunamiSetRange(_range_, _timeline_name_, _value_name_format_, ...) \
 	TsunamiSetValue_Base_Internal(0, 0, 1, _range_, _timeline_name_, _value_name_format_, __VA_ARGS__)	
 #else

@@ -249,7 +249,8 @@ extern struct Sh1 sh1_cxt;
 
 void sh1_exec(struct Sh1 * sh1, s32 cycles);
 void sh1_onchip_run_cycles(s32 cycles);
-void sh1_set_output_enable();
+void sh1_set_output_enable_rising_edge();
+void sh1_set_output_enable_falling_edge();
 
 // SCI SCR bits
 #define SCI_TIE               0x80        /* Transmit interrupt enable */

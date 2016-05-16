@@ -41,6 +41,7 @@ typedef struct _TsunamiVariable {
 	uint32_t        full_name_len;
 	uint32_t        node_name_len;
 	char            uid  [16];
+   int size;
 
 	uint32_t        is_defined;
 	uint32_t        is_pulse;
@@ -68,8 +69,8 @@ TsunamiTimeline *TsunamiFindTimeline_Internal(const char *timeline_name);
 TsunamiVariable *TsunamiFindVariable_Internal(TsunamiTimeline *timeline, const char *name);
 void             TsunamiSetValue_Internal(TsunamiTimeline *timeline, TsunamiVariable *var, uint64_t value);
 void             TsunamiSetRange_Internal(TsunamiTimeline *timeline, TsunamiVariable *var, uint64_t range);
-	
-#define TsunamiSetValue_Base_Internal2(_inc_, _pulse_, _setrange_, _value_, _timeline_name_, _variable_name_) \
+
+#define TsunamiSetValue_Base_Internal2(_inc_, _pulse_, _setrange_, _value_, _size_, _timeline_name_, _variable_name_) \
 	{																	\
 		static TsunamiTimeline *timeline = NULL;						\
 		static TsunamiVariable *var      = NULL;						\
@@ -89,17 +90,18 @@ void             TsunamiSetRange_Internal(TsunamiTimeline *timeline, TsunamiVari
 			else {														\
 				TsunamiSetValue_Internal(timeline, var, (uint64_t) (_value_)); \
 				var->is_pulse = (_pulse_);								\
+            var->size = (_size_);  \
 			}															\
 		}																\
 	}
 
 #if _WIN32
 
-#define TsunamiSetValue_Base_Internal(_inc_, _pulse_, _setrange_, _value_, _timeline_name_, _value_format_, ...) \
+#define TsunamiSetValue_Base_Internal(_inc_, _pulse_, _setrange_, _value_, _size_, _timeline_name_, _value_format_, ...) \
 	{																	\
 		static char             variable_name [1024];					\
 		sprintf(variable_name, (_value_format_), __VA_ARGS__);			\
-		TsunamiSetValue_Base_Internal2(_inc_, _pulse_, _setrange_, _value_, _timeline_name_, variable_name); \
+		TsunamiSetValue_Base_Internal2(_inc_, _pulse_, _setrange_, _value_, _size_, _timeline_name_, variable_name); \
 	}
 
 #else

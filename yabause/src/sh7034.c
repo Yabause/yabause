@@ -5299,12 +5299,17 @@ int sh1_load_rom(struct Sh1* sh1, const char* filename)
 }
 #endif
 int num_output_enables = 0;
+
+void sh1_set_output_enable_rising_edge()
+{
+   tsunami_log_value("OE", 1, 1);
+}
 //signal from the cd drive board microcontroller
 //falling edge
-void sh1_set_output_enable()
+void sh1_set_output_enable_falling_edge()
 {
    //input capture
-   tsunami_log_pulse("OE", 1);
+   tsunami_log_value("OE", 0, 1);
 
    if (sh1_cxt.onchip.itu.channel[3].tsr & (1 << 1))
    {
@@ -5353,6 +5358,8 @@ void sh1_serial_recieve_bit(int bit, int channel)
 
    the_log("BIT RX\n");
 
+   tsunami_log_value("SCK", sh1_cxt.onchip.sci[channel].rsr_counter, 4);
+
    //assert(serial_counter % 8 == sh1_cxt.onchip.sci[channel].rsr_counter % 8);
 
    //a full byte has been received, transfer data to rdr
@@ -5363,6 +5370,8 @@ void sh1_serial_recieve_bit(int bit, int channel)
       sh1_cxt.onchip.sci[channel].rsr = 0;
       sh1_cxt.onchip.sci[channel].ssr |= SCI_RDRF;
 
+      tsunami_log_value("STA", sh1_cxt.onchip.sci[channel].rdr, 8);
+
       the_log("BYTE TAKEN %02X\n", sh1_cxt.onchip.sci[channel].rdr);
 
       //assert(serial_counter % 8 == 0);
@@ -5371,6 +5380,7 @@ void sh1_serial_recieve_bit(int bit, int channel)
       if (sh1_cxt.onchip.sci[0].scr & SCI_RIE)//receive data full interrupt is enabled
       {
          SH2SendInterrupt(SH1, 101, sh1_cxt.onchip.intc.iprd & 0xf);
+         tsunami_log_pulse("RXIO", 1);
          the_log("INTERRUPT \n");
       }
    }
@@ -5415,7 +5425,7 @@ void sh1_serial_transmit_bit(int channel, int* output_bit)
 //pb2
 void sh1_set_start(int state)
 {
-   tsunami_log_pulse("START", state);
+   tsunami_log_value("START", state,1);
 
    if (state)
       sh1_cxt.onchip.pbdr &= ~0x04;
