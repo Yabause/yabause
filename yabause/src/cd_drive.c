@@ -162,7 +162,7 @@ int cd_command_exec()
 
    if (comm_state == NoTransfer)
    {
-      cdd_cxt.state.current_operation = NoDisc;
+      cdd_cxt.state.current_operation = Idle;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
 
       cdd_cxt.bit_counter = 0;
@@ -191,14 +191,16 @@ int cd_command_exec()
    }
    else if (comm_state == WaitToOe)
    {
-      sh1_set_output_enable_falling_edge();
-      the_log("oe set \n");
-      comm_state = SendingByte;
       if (cdd_cxt.byte_counter == 13)
       {
          comm_state = NoTransfer;
          return TIME_PERIODIC;
       }
+
+      sh1_set_output_enable_falling_edge();
+      the_log("oe set \n");
+      comm_state = SendingByte;
+
       return TIME_OE;
    }
 
