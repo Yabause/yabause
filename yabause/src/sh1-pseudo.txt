@@ -137,3 +137,95 @@ void vectITU3IMIB3()
    else
       return;//979e
 }
+
+//task6
+
+#define YGR_1A_REG (*(u16*)(0xA00001A))
+#define UNKN (*(u8*)(0xf000894))
+#define UNKN2 (*(u8*)(0xf0002A6))
+#define PBDR_L (*(u8*)(0x5FFFFC3))//lower byte of pbdr
+
+void loc_2914()
+{
+   //PB6, pin 104, deemphasis output
+   //low == demp off
+   //high == demp on
+   PBDR_L &= 0xBF;
+}
+
+void loc_28b0()
+{
+   if (UNKN & 0x10)
+   {
+      //28dc
+      YGR_1A_REG &= 0xffef;
+
+      if (UNKN2 & 0x28)//gbr == 0xf00025c
+      {
+         goto loc_2920;
+      }
+      else
+      {
+         //28ee
+         if (cd_stat == 6)
+         {
+loc_28f8:
+            //28f8
+            //0x4 means reading?
+            //readtoc == 0x4
+            //readdata == 0x36 (0x4 is set)
+            //readaudio == 0x34
+            if(cd_rx.status & 0x4)//F0002D0
+               goto loc_2920;
+            else
+            {
+               if (cd_stat == 0)
+               {
+                  goto loc_2920;
+               }
+               else
+               {
+                  //subcode q data has preemphasis set?
+                  //turn deemphasis pin on or off
+                  if (cd_rx.q & 0x10)//F0002D1
+                     goto loc_2914;
+                  else
+                     goto loc_290a;
+               }
+            }
+
+
+         }
+         else
+         {
+            //28f4
+            if (cd_stat == 0xc)
+               goto loc_2914;
+            else
+               goto loc_28f8;
+         }
+      }
+   }
+   else
+   {
+      //28c0
+      YGR_1A_REG |= 0x10;
+
+      if (UNKN & 0x80)
+      {
+         //290a
+         PBDR_L |= 0x40;//PB6
+         goto loc_291c;
+      }
+      else
+      {
+         //28d2
+         loc_2914();
+         goto loc_291c;
+      }
+   } 
+loc_291c:
+
+
+loc_2920:
+}
