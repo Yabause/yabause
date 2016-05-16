@@ -127,6 +127,48 @@ void cd_drive_set_serial_bit(u8 bit)
    }
 }
 
+void do_toc()
+{
+   cdd_cxt.state_data[0] = cdd_cxt.state.current_operation = ReadToc;
+   comm_state = NoTransfer;
+   //fill cdd_cxt.state_data with toc info
+
+   int toc_entry = cdd_cxt.toc_entry++;
+   int num_toc_entries = 1;
+   cdd_cxt.state_data[1] = 0x41;
+   cdd_cxt.state_data[2] = 0x00;
+   cdd_cxt.state_data[3] = 0xA0;
+   cdd_cxt.state_data[4] = 0x00;
+   cdd_cxt.state_data[5] = 0x02;
+   cdd_cxt.state_data[6] = 0x00;
+   cdd_cxt.state_data[7] = 0x00;
+   cdd_cxt.state_data[8] = 0x01;
+   cdd_cxt.state_data[9] = 0x00;
+   cdd_cxt.state_data[10] = 0x00;
+
+   set_checksum(cdd_cxt.state_data);
+
+   if (cdd_cxt.toc_entry > num_toc_entries)
+   {
+      cdd_cxt.state.current_operation = Idle;
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+   }
+}
+
+int continue_command()
+{
+   if (cdd_cxt.state.current_operation == ReadToc)
+   {
+      do_toc();
+      return TIME_READING;
+   }
+   else
+   {
+      comm_state = NoTransfer;
+      return TIME_PERIODIC;
+   }
+}
+
 int do_command()
 {
    int command = cdd_cxt.received_data[0];
@@ -134,8 +176,7 @@ int do_command()
    {
    case 0x0:
       //nop
-      comm_state = NoTransfer;
-      return TIME_PERIODIC;
+      return continue_command();
       break;
    case 0x2:
       //seeking ring
@@ -143,24 +184,9 @@ int do_command()
       break;
    case 0x3:
    {
-      int i = 0;
-      //read toc
-      cdd_cxt.state_data[0] = cdd_cxt.state.current_operation = ReadToc;
-      comm_state = NoTransfer;
-      //fill cdd_cxt.state_data with toc info
+      cdd_cxt.toc_entry = 0;
+      do_toc();
 
-      cdd_cxt.state_data[1] = 0x41;
-      cdd_cxt.state_data[2] = 0x00;
-      cdd_cxt.state_data[3] = 0xA0;
-      cdd_cxt.state_data[4] = 0x00;
-      cdd_cxt.state_data[5] = 0x02;
-      cdd_cxt.state_data[6] = 0x00;
-      cdd_cxt.state_data[7] = 0x00;
-      cdd_cxt.state_data[8] = 0x01;
-      cdd_cxt.state_data[9] = 0x00;
-      cdd_cxt.state_data[10] = 0x00;
-
-      set_checksum(cdd_cxt.state_data);
       return TIME_READING;
       break;
    }

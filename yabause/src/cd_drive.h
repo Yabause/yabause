@@ -50,6 +50,8 @@ struct CdDriveContext
    u8 state_data[13];
    u8 received_data[13];
    int received_data_counter;
+
+   int toc_entry;
 };
 
 extern struct CdDriveContext cdd_cxt;
