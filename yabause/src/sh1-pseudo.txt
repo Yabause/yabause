@@ -1,17 +1,25 @@
-define TRANSFER_STATUS (*(u8*)(0xf0002db))
-#define TRANSFER_CHECKSUM (*(u8*)(0xf000310))
-#define TRANSFER_BYTE_COUNT (*(u8*)(0xf000311))
-#define UNKNOWN (*(u8*)(0xf000312))
 #define RDR0 (*(u8*)(0x5FFFEC5))
 #define TDR0 (*(u8*)(0x5FFFEC3))
 #define SSR0 (*(u8*)(0x5FFFEC4))
 
-//from 9800
-void loc_9828()
+u8 unk_F0002C4[12]; // just a pointer in ram, but is used like an array of 12 bytes
+struct // data is at 0x0F0002D0(11 byte structure)
 {
-   TRANSFER_BYTE_COUNT = 0x80;
-   //goto 9794
-}
+   u8 status; // F0002D0
+   u8 q; // F0002D1
+   u8 track; // F0002D2
+   u8 index; // F0002D3
+   u16 mmss; // F0002D4
+   u8 ff; // F0002D6
+   u8 zero_not; // F0002D7
+   u8 abs_mm; // F0002D8
+   u8 abs_ss; // F0002D9
+   u8 abs_ff; // F0002DA
+} cd_rx;
+#define TRANSFER_STATUS (*(u8*)(0xf0002db))
+u8 cd_mech_buff[12]; // data is at 0x0F000304
+#define cd_mech_csum (*(u8*)(0xf000310))
+#define cd_mech_bytes (*(u8*)(0xf000311))
 
 void vectITU3IMIB3()
 {
@@ -31,14 +39,18 @@ void vectITU3IMIB3()
       cd_mech_return_method = 1;
 
       if (PBDR & 0x4)
-         goto loc_9828;
+      {
+         // 9828
+         cd_mech_bytes = 0x80;
+         //goto 9794
+      }
       else
       {
          // 9802
          if (cd_mech_bytes == 0)
          {
             // 980A
-            if (byte_F0002CF == 0)
+            if (unk_F0002C4[11] == 0)
             {
                // 9832
                memset(cd_mech_buff, 0, 11);
@@ -66,15 +78,13 @@ void vectITU3IMIB3()
        goto 9768;
 
    //97ca reset the byte count
-   u8 byte_count_temp = 0; //mov #0, r1
+   cd_mech_bytes = 0; //mov #0, r1
  
    //9768
-   byte_count_temp++; //add #1, r1
- 
-   TRANSFER_BYTE_COUNT = byte_count_temp; //mov r1, r0 , mov.b r0, @(0xd, r3)
+   cd_mech_bytes++; //add #1, r1 , mov r1, r0 , mov.b r0, @(0xd, r3)
    
    // Is upcoming data parity byte(number 13 is somewhat deceiving)
-   if (byte_count_temp == 13) //cmp/eq #13, r0
+   if (cd_mech_bytes == 13) //cmp/eq #13, r0
    {
       //97ac
       u8 received_data = RDR0;//mov.b @((RDR0 - SMR0), gbr), r0
@@ -82,7 +92,7 @@ void vectITU3IMIB3()
  
       u8 data_to_transmit;
       //97B2 make sure checksum matches calculated checksum
-      if (temp != TRANSFER_CHECKSUM)
+      if (received_data != cd_mech_csum)
       {
          //97c6
          // checksum failure
@@ -109,10 +119,10 @@ void vectITU3IMIB3()
       if (cd_mech_bytes != 1)//cmp/eq #1, r0
       {   //9784
          u8 received_data = RDR0;
-         cd_rx_status[cd_mech_bytes-2] = received_data; // even though this is referenced as F0002CE, 
-                                                        // it really end up being cd_rx_status since 
-                                                        // cd_mech_bytes >= 2
-         TRANSFER_CHECKSUM += received_data;
+         *((u8 *)cd_rx)[cd_mech_bytes-2] = received_data; // even though this is referenced as F0002CE, 
+                                                          // it really end up being cd_rx_status since 
+                                                          // cd_mech_bytes >= 2
+         cd_mech_csum += received_data;
       }
    }
  
