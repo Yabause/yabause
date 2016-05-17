@@ -174,6 +174,35 @@ u32 get_fad_from_command(u8 * buf)
 
 s32 toc_10_get_track(s32 fad);
 void state_set_msf_info(struct CdState *state, s32 track_fad, s32 disc_fad);
+static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame);
+
+s32 get_track_fad(int track_num, s32 fad, int * index)
+{
+   s32 track_start_fad = msf_bcd2fad(cdd_cxt.toc[track_num].min, cdd_cxt.toc[track_num].sec, cdd_cxt.toc[track_num].frame);
+   s32 track_fad = fad - track_start_fad;
+
+   if (track_fad < 0)
+      *index = 1;
+
+   return track_fad;
+}
+
+void do_seek()
+{
+   s32 fad = get_fad_from_command(cdd_cxt.received_data);
+   s32 track_num = 0;
+   s32 track_fad = 0;
+   int index = 0;
+   cdd_cxt.disc_fad = fad;//minus 4?
+   track_num = toc_10_get_track(cdd_cxt.disc_fad);
+   track_fad = get_track_fad(track_num, cdd_cxt.disc_fad, &index);
+   cdd_cxt.state.current_operation = Seeking;
+   state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
+   cdd_cxt.state.index_field = index;
+   cdd_cxt.state.track_number = track_num;
+   cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num].point;
+   cdd_cxt.state.current_operation = Idle;
+}
 
 int do_command()
 {
@@ -212,15 +241,8 @@ int do_command()
    case 0x9:
       //seek
    {
-      s32 fad = get_fad_from_command(cdd_cxt.received_data);
-      s32 track_start_fad = 0;
-      s32 track_fad = 0;
-      cdd_cxt.disc_fad = fad;//minus 4?
-      track_start_fad = toc_10_get_track(cdd_cxt.disc_fad);
-      track_fad = cdd_cxt.disc_fad - track_fad;
-      cdd_cxt.state.current_operation = Seeking;
-      state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
-      
+      do_seek();
+      return TIME_READING;//todo real timing
       break;
    }
    case 0xa:
@@ -360,6 +382,9 @@ s32 toc_10_get_track(s32 fad)
 
       if (fad >= track_start && fad < track_end)
          return (i + 1);
+
+      if (i > cdd_cxt.num_toc_entries)
+         assert(0);
    }
 
    assert(0);
