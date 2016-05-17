@@ -1275,7 +1275,7 @@ static s32 ISOCDReadTOC(u32 * TOC) {
 
 static s32 ISOCDReadTOC10(CDInterfaceToc10 *TOC) {
    memcpy(TOC, isoTOC10, 102 * 3 * sizeof(CDInterfaceToc10));
-   return isoTOCnum;
+   return isoTOCnum*3;
 }
 
 //////////////////////////////////////////////////////////////////////////////
