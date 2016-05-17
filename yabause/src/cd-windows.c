@@ -58,7 +58,7 @@ static s32 SPTICDReadTOC(u32 *);
 static int SPTICDGetStatus(void);
 static int SPTICDReadSectorFAD(u32, void *);
 static void SPTICDReadAheadFAD(u32);
-
+static s32 SPTICDReadTOC10 (CDInterfaceToc10 *TOC);
 CDInterface ArchCD = {
 CDCORE_ARCH,
 "Windows SPTI Driver",
@@ -66,6 +66,7 @@ SPTICDInit,
 SPTICDDeInit,
 SPTICDGetStatus,
 SPTICDReadTOC,
+SPTICDReadTOC10,
 SPTICDReadSectorFAD,
 SPTICDReadAheadFAD,
 };
@@ -297,6 +298,12 @@ s32 SPTICDReadTOC(u32 *TOC) {
 	}
 
 	return 0;
+}
+
+
+static s32 SPTICDReadTOC10(CDInterfaceToc10 *TOC)
+{
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
