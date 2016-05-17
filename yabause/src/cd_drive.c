@@ -32,6 +32,13 @@
 #include <stdarg.h>
 #include "tsunami/yab_tsunami.h"
 
+#define WANT_RX_TRACE
+#ifdef WANT_RX_TRACE
+#define RXTRACE(...) cd_trace_log(__VA_ARGS__)
+#else
+#define RXTRACE(...)
+#endif
+
 //oe rising edge to falling edge
 //26 usec
 #define TIME_OE 26
@@ -88,18 +95,18 @@ s32 get_track_start_fad(int track_num);
 enum CommunicationState
 {
    NoTransfer,
-   Reset,
-   Started,
-   SendingFirstByte,
-   ByteFinished,
-   FirstByteFinished,
-   SendingByte,
-   SendingByteFinished,
-   Running,
-   NewTransfer,
-   WaitToOe,
-   WaitToOeFirstByte,
-   WaitToRxio
+      Reset,
+      Started,
+      SendingFirstByte,
+      ByteFinished,
+      FirstByteFinished,
+      SendingByte,
+      SendingByteFinished,
+      Running,
+      NewTransfer,
+      WaitToOe,
+      WaitToOeFirstByte,
+      WaitToRxio
 }comm_state = NoTransfer;
 
 u8 cd_drive_get_serial_bit()
@@ -140,7 +147,7 @@ void do_toc()
    //fill cdd_cxt.state_data with toc info
 
    toc_entry = cdd_cxt.toc_entry++;
-   memcpy(cdd_cxt.state_data+1, &cdd_cxt.toc[toc_entry], 10);
+   memcpy(cdd_cxt.state_data + 1, &cdd_cxt.toc[toc_entry], 10);
 
    set_checksum(cdd_cxt.state_data);
 
@@ -179,11 +186,15 @@ int continue_command()
 {
    if (cdd_cxt.state.current_operation == Idle)
    {
-
       comm_state = NoTransfer;
       cdd_cxt.disc_fad++;
       update_status_info();
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      return TIME_PERIODIC;
+   }
+   else if (cdd_cxt.state.current_operation == Stopped)
+   {
+      comm_state = NoTransfer;
       return TIME_PERIODIC;
    }
    else if (cdd_cxt.state.current_operation == ReadToc)
@@ -282,6 +293,9 @@ int do_command()
    case 0x4:
       //stop disc
       cdd_cxt.state.current_operation = Stopped;
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      comm_state = NoTransfer;
+      return TIME_PERIODIC;
       break;
    case 0x6:
       //read data at lba
@@ -290,6 +304,9 @@ int do_command()
    case 0x8:
       //pause
       cdd_cxt.state.current_operation = Idle;
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      comm_state = NoTransfer;
+      return TIME_PERIODIC;
       break;
    case 0x9:
       //seek
@@ -305,6 +322,8 @@ int do_command()
       //scan backwards
       break;
    }
+
+   assert(0);
 
    return TIME_PERIODIC;
 }
@@ -359,6 +378,13 @@ int cd_command_exec()
    }
    else if (comm_state == WaitToRxio)
    {
+      RXTRACE("CMD: ", cdd_cxt.disc_fad);
+
+      int i;
+      for (i = 0; i<13; i++)
+         RXTRACE(" %02X", cdd_cxt.received_data[i]);
+      RXTRACE("\n");
+
       //handle the command
       return do_command();
    }
