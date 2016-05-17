@@ -146,12 +146,26 @@ void do_toc()
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
    }
 }
-
+void update_seek_status();
 int continue_command()
 {
-   if (cdd_cxt.state.current_operation == ReadToc)
+   if (cdd_cxt.state.current_operation == Idle)
+   {
+      comm_state = NoTransfer;
+      cdd_cxt.disc_fad++;
+      return TIME_PERIODIC;
+   }
+   else if (cdd_cxt.state.current_operation == ReadToc)
    {
       do_toc();
+      return TIME_READING;
+   }
+   else if (cdd_cxt.state.current_operation == Seeking)
+   {
+      //seek completed
+      cdd_cxt.state.current_operation = Idle;
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      comm_state = NoTransfer;
       return TIME_READING;
    }
    else
@@ -192,17 +206,18 @@ s32 get_track_fad(int track_num, s32 fad, int * index)
    return track_fad;
 }
 
-void do_seek()
+void update_seek_status()
 {
-   s32 fad = get_fad_from_command(cdd_cxt.received_data);
    s32 track_num = 0;
    s32 track_fad = 0;
    int index = 0;
    s32 track_start_fad = 0;
    track_num = toc_10_get_track(cdd_cxt.disc_fad);
-   track_fad = get_track_fad(track_num, fad, &index);
+   track_fad = get_track_fad(track_num, cdd_cxt.disc_fad + 4, &index);
    track_start_fad = get_track_start_fad(track_num);
    track_fad = cdd_cxt.disc_fad - track_start_fad;
+
+   index = 0;
 
    if (track_fad < 0)
       track_fad = -track_fad;
@@ -215,7 +230,15 @@ void do_seek()
    cdd_cxt.state.index_field = index;
    cdd_cxt.state.track_number = track_num;
    make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
-   cdd_cxt.state.current_operation = Idle;
+   comm_state = NoTransfer;
+}
+
+void do_seek()
+{
+   s32 fad = get_fad_from_command(cdd_cxt.received_data);
+   cdd_cxt.disc_fad = fad - 4;
+
+   update_seek_status();
 }
 
 int do_command()
