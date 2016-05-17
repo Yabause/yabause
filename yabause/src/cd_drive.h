@@ -55,6 +55,8 @@ struct CdDriveContext
    CDInterfaceToc10 toc[102*3];
    int toc_entry;
    int num_toc_entries;
+
+   u32 disc_fad;
 };
 
 extern struct CdDriveContext cdd_cxt;
