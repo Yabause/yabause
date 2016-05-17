@@ -176,9 +176,14 @@ s32 toc_10_get_track(s32 fad);
 void state_set_msf_info(struct CdState *state, s32 track_fad, s32 disc_fad);
 static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame);
 
+s32 get_track_start_fad(int track_num)
+{
+   track_num--;
+   return msf_bcd2fad(cdd_cxt.toc[track_num].min, cdd_cxt.toc[track_num].sec, cdd_cxt.toc[track_num].frame);
+}
 s32 get_track_fad(int track_num, s32 fad, int * index)
 {
-   s32 track_start_fad = msf_bcd2fad(cdd_cxt.toc[track_num].min, cdd_cxt.toc[track_num].sec, cdd_cxt.toc[track_num].frame);
+   s32 track_start_fad = get_track_start_fad(track_num);
    s32 track_fad = fad - track_start_fad;
 
    if (track_fad < 0)
@@ -193,14 +198,23 @@ void do_seek()
    s32 track_num = 0;
    s32 track_fad = 0;
    int index = 0;
-   cdd_cxt.disc_fad = fad;//minus 4?
+   s32 track_start_fad = 0;
    track_num = toc_10_get_track(cdd_cxt.disc_fad);
-   track_fad = get_track_fad(track_num, cdd_cxt.disc_fad, &index);
+   track_fad = get_track_fad(track_num, fad, &index);
+   track_start_fad = get_track_start_fad(track_num);
+   track_fad = cdd_cxt.disc_fad - track_start_fad;
+
+   if (track_fad < 0)
+      track_fad = -track_fad;
+   else
+      index = 1;
+
    cdd_cxt.state.current_operation = Seeking;
    state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
+   cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
    cdd_cxt.state.index_field = index;
    cdd_cxt.state.track_number = track_num;
-   cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num].point;
+   make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
    cdd_cxt.state.current_operation = Idle;
 }
 
@@ -383,6 +397,9 @@ s32 toc_10_get_track(s32 fad)
       if (fad >= track_start && fad < track_end)
          return (i + 1);
 
+      if (i == 0 && fad < track_start)
+         return 1;//lead in
+
       if (i > cdd_cxt.num_toc_entries)
          assert(0);
    }
@@ -391,14 +408,14 @@ s32 toc_10_get_track(s32 fad)
    return 0;
 }
 
-void state_set_msf_info(struct CdState *state, s32 track_fad, s32 disc_fad)
+void state_set_msf_info(struct CdState *state, s32 track_fad, s32 abs_fad)
 {
    u8 msf_buf[3] = { 0 };
    fad2msf_bcd(track_fad, msf_buf);
    state->minutes = msf_buf[0];
    state->seconds = msf_buf[1];
    state->frame = msf_buf[2];
-   fad2msf_bcd(disc_fad, msf_buf);
+   fad2msf_bcd(abs_fad, msf_buf);
    state->absolute_minutes = msf_buf[0];
    state->absolute_seconds = msf_buf[1];
    state->absolute_frame = msf_buf[2];
