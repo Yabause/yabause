@@ -151,31 +151,38 @@ void do_toc()
    }
 }
 void update_seek_status();
+
+void update_status_info()
+{
+   int index = 0;
+   s32 track_num = 0;
+   s32 track_fad = 0;
+   s32 track_start_fad = 0;
+   track_num = toc_10_get_track(cdd_cxt.disc_fad);
+   track_fad = get_track_fad(track_num, cdd_cxt.disc_fad + 4, &index);
+   track_start_fad = get_track_start_fad(track_num);
+   track_fad = cdd_cxt.disc_fad - track_start_fad;
+
+   if (track_fad < 0)
+      track_fad = -track_fad;
+   else
+      index = 1;
+
+   state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
+
+   cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
+   cdd_cxt.state.index_field = index;
+   cdd_cxt.state.track_number = track_num;
+}
+
 int continue_command()
 {
    if (cdd_cxt.state.current_operation == Idle)
    {
-      int index = 0;
-      s32 track_num = 0;
-      s32 track_fad = 0;
-      s32 track_start_fad = 0;
+
       comm_state = NoTransfer;
       cdd_cxt.disc_fad++;
-      track_num = toc_10_get_track(cdd_cxt.disc_fad);
-      track_fad = get_track_fad(track_num, cdd_cxt.disc_fad + 4, &index);
-      track_start_fad = get_track_start_fad(track_num);
-      track_fad = cdd_cxt.disc_fad - track_start_fad;
-
-      index = 0;
-
-      if (track_fad < 0)
-         track_fad = -track_fad;
-      else
-         index = 1;
-
-      cdd_cxt.state.index_field = index;
-
-      state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
+      update_status_info();
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       return TIME_PERIODIC;
    }
@@ -235,27 +242,9 @@ s32 get_track_fad(int track_num, s32 fad, int * index)
 
 void update_seek_status()
 {
-   s32 track_num = 0;
-   s32 track_fad = 0;
-   int index = 0;
-   s32 track_start_fad = 0;
-   track_num = toc_10_get_track(cdd_cxt.disc_fad);
-   track_fad = get_track_fad(track_num, cdd_cxt.disc_fad + 4, &index);
-   track_start_fad = get_track_start_fad(track_num);
-   track_fad = cdd_cxt.disc_fad - track_start_fad;
-
-   index = 0;
-
-   if (track_fad < 0)
-      track_fad = -track_fad;
-   else
-      index = 1;
-
+   update_status_info();
    cdd_cxt.state.current_operation = Seeking;
-   state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
-   cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
-   cdd_cxt.state.index_field = index;
-   cdd_cxt.state.track_number = track_num;
+
    make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
    comm_state = NoTransfer;
 }
