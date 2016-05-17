@@ -80,7 +80,11 @@ enum CdStatusOperations
 
 void make_status_data(struct CdState *state, u8* data);
 void set_checksum(u8 * data);
-
+s32 toc_10_get_track(s32 fad);
+void state_set_msf_info(struct CdState *state, s32 track_fad, s32 disc_fad);
+static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame);
+s32 get_track_fad(int track_num, s32 fad, int * index);
+s32 get_track_start_fad(int track_num);
 enum CommunicationState
 {
    NoTransfer,
@@ -151,8 +155,28 @@ int continue_command()
 {
    if (cdd_cxt.state.current_operation == Idle)
    {
+      int index = 0;
+      s32 track_num = 0;
+      s32 track_fad = 0;
+      s32 track_start_fad = 0;
       comm_state = NoTransfer;
       cdd_cxt.disc_fad++;
+      track_num = toc_10_get_track(cdd_cxt.disc_fad);
+      track_fad = get_track_fad(track_num, cdd_cxt.disc_fad + 4, &index);
+      track_start_fad = get_track_start_fad(track_num);
+      track_fad = cdd_cxt.disc_fad - track_start_fad;
+
+      index = 0;
+
+      if (track_fad < 0)
+         track_fad = -track_fad;
+      else
+         index = 1;
+
+      cdd_cxt.state.index_field = index;
+
+      state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       return TIME_PERIODIC;
    }
    else if (cdd_cxt.state.current_operation == ReadToc)
@@ -162,9 +186,15 @@ int continue_command()
    }
    else if (cdd_cxt.state.current_operation == Seeking)
    {
-      //seek completed
-      cdd_cxt.state.current_operation = Idle;
-      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      
+      cdd_cxt.seek_time++;
+
+      if (cdd_cxt.seek_time > 9)
+      {
+         //seek completed
+         cdd_cxt.state.current_operation = Idle;
+         make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      }
       comm_state = NoTransfer;
       return TIME_READING;
    }
@@ -186,9 +216,6 @@ u32 get_fad_from_command(u8 * buf)
    return fad;
 }
 
-s32 toc_10_get_track(s32 fad);
-void state_set_msf_info(struct CdState *state, s32 track_fad, s32 disc_fad);
-static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame);
 
 s32 get_track_start_fad(int track_num)
 {
@@ -237,7 +264,7 @@ void do_seek()
 {
    s32 fad = get_fad_from_command(cdd_cxt.received_data);
    cdd_cxt.disc_fad = fad - 4;
-
+   cdd_cxt.seek_time = 0;
    update_seek_status();
 }
 
@@ -279,7 +306,7 @@ int do_command()
       //seek
    {
       do_seek();
-      return TIME_READING;//todo real timing
+      return TIME_READING;
       break;
    }
    case 0xa:
@@ -411,6 +438,8 @@ static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame) {
 
 s32 toc_10_get_track(s32 fad)
 {
+   if (!cdd_cxt.num_toc_entries)
+      return 1;
    int i = 0;
    for (i = 0; i < 99; i++)
    {

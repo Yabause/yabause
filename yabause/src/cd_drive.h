@@ -57,6 +57,8 @@ struct CdDriveContext
    int num_toc_entries;
 
    u32 disc_fad;
+
+   int seek_time;
 };
 
 extern struct CdDriveContext cdd_cxt;
