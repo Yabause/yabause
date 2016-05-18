@@ -70,6 +70,9 @@ static INLINE u8 num2bcd(u8 num);
 //"when disc is reading transactions are ~6600us apart"
 #define TIME_READING 6600
 
+//When reading sectors SH1 expects irq7 delta timing to be within a margin of -/+ 28 ticks. Adjust as required
+#define TIME_READSECTOR 8730
+
 struct CdDriveContext cdd_cxt;
 
 enum CdStatusOperations
@@ -253,7 +256,7 @@ int continue_command()
 
       update_status_info();
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
-      return TIME_PERIODIC / cdd_cxt.speed;
+      return TIME_READSECTOR / cdd_cxt.speed;
    }
    else if (cdd_cxt.state.current_operation == Stopped)
    {
@@ -401,7 +404,7 @@ int do_command()
 
 
       comm_state = NoTransfer;
-      return TIME_PERIODIC / cdd_cxt.speed;
+      return TIME_READSECTOR / cdd_cxt.speed;
    }
    case 0x8:
       //pause
