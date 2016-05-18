@@ -873,7 +873,6 @@ static int rebuild_frame_buffer = 0;
 int YglGenFrameBuffer() {
 
 	int status;
-	YglMatrix pers;
 	GLuint error;
 
 	if (rebuild_frame_buffer == 0){
@@ -1008,7 +1007,6 @@ int YglGLInit(int width, int height) {
 int YglGenerateAABuffer(){
 
 	int status;
-	YglMatrix pers;
 	GLuint error;
 
 	//--------------------------------------------------------------------------------
@@ -1106,9 +1104,7 @@ void YuiSetVideoAttribute(int type, int val){return;}
 
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i,j;
-   GLuint status;
    void * dataPointer=NULL;
-	GLuint error;
    YGLLOG("YglInit(%d,%d,%d);",width,height,depth );
 
 
@@ -1399,8 +1395,6 @@ void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * c
 int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg ) {
 	unsigned int x, y;
 	YglProgram *program;
-	float * vtxa;
-	float q[4];
 	int prg = PG_VFP1_GOURAUDSAHDING;
 	float * pos;
 	int u, v;
@@ -1865,7 +1859,6 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
 	YglProgram *program;
 	texturecoordinate_struct *tmp;
 	float * vtxa;
-	float q[4];
 	int prg = PG_VFP1_GOURAUDSAHDING_TESS;
 	float * pos;
 
@@ -2048,7 +2041,7 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 
 
 
-	program = YglGetProgram(input, prg);
+	program = YglGetProgram((YglSprite*)input, prg);
 	if (program == NULL) return;
 
 
@@ -2156,7 +2149,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 	unsigned int x, y;
 	YglProgram *program;
 	texturecoordinate_struct *tmp;
-	float q[4];
 	int prg = PG_NORMAL;
 	float * pos;
 	//float * vtxa;
@@ -2192,8 +2184,8 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 	}
 
 
-	program = YglGetProgram(input, prg);
-	if (program == NULL) return NULL;
+	program = YglGetProgram((YglSprite*)input, prg);
+	if (program == NULL) return -1;
 
 	program->bwin0 = input->bEnWin0;
 	program->logwin0 = input->WindowArea0;

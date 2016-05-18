@@ -465,6 +465,11 @@ int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 
 
+void Vdp2RgbTextureSync();
+int YglGenerateAABuffer();
+int YglSetupWindow(YglProgram * prg);
+int YglCleanUpWindow(YglProgram * prg);
+void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int size);
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 

@@ -2088,7 +2088,6 @@ static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr){
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 {
-	u32 color;
 	int i, j;
 
 	switch (info->colornumber)
@@ -2153,7 +2152,6 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 
 static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture *texture)
 {
-	u32 color;
 	int i, j;
 
 	for (i = 0; i < info->cellh; i++)
@@ -2416,97 +2414,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	}
 }
 
-#if 0
-static void Vdp2DrawPattern(vdp2draw_struct *info, YglTexture *texture)
-{
-	u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
-		(info->paladdr << 20) | info->charaddr | info->transparencyenable |
-		((info->patternpixelwh >> 4) << 1) | (u64)(((info->coloroffset >> 8) & 0x07) << 32);
-   YglCache c;
-   YglSprite tile;
-   int winmode=0;
-   tile.dst = 0;
-   tile.uclipmode = 0;
-   tile.blendmode = info->blendmode;
-    tile.linescreen = info->linescreen;
-  tile.w = tile.h = info->patternpixelwh;
-  tile.flip = info->flipfunction;
-
-   if (info->islinescroll){
-	   tile.h = info->lineinc;
-   }
-
-
-   if (info->specialprimode == 1)
-      tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
-   else
-      tile.priority = info->priority;
-   
- 
-   tile.vertices[0] = info->x * info->coordincx;
-   tile.vertices[1] = info->y * info->coordincy;
-   tile.vertices[2] = (info->x + tile.w) * info->coordincx;
-   tile.vertices[3] = info->y * info->coordincy;
-   tile.vertices[4] = (info->x + tile.w) * info->coordincx;
-   tile.vertices[5] = (info->y + tile.h) * info->coordincy;
-   tile.vertices[6] = info->x * info->coordincx;
-   tile.vertices[7] = (info->y + tile.h) * info->coordincy;
-   
-   
-   // Screen culling
-   if( tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] < 0 || tile.vertices[5] < 0 )
-   {   
-      info->x += tile.w;
-      info->y += tile.h;      
-      return;
-   }
-
-   if( (info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincy == 1.0f )
-   {                                                 // coordinate inc is not supported yet.
-      winmode=Vdp2CheckWindowRange( info,info->x,info->y,tile.w,tile.h);
-      if( winmode == 0 ) // all outside, no need to draw 
-      {
-         info->x += tile.w;
-         info->y += tile.h;
-         return;
-      }
-   }
-
-   tile.cor = info->cor;
-   tile.cog = info->cog;
-   tile.cob = info->cob;
-
-   if (1 == YglIsCached(_Ygl->texture_manager, cacheaddr, &c))
-   {
-      YglCachedQuad(&tile, &c);
-      info->x += tile.w;
-      info->y += tile.h;
-      return;
-   }
-
-   YglQuad(&tile, texture, &c);
-   YglCacheAdd(_Ygl->texture_manager, cacheaddr, &c);
-
-   switch(info->patternwh)
-   {
-      case 1:
-         Vdp2DrawCell(info, texture);
-         break;
-      case 2:
-         texture->w += 8;
-         Vdp2DrawCell(info, texture);
-         texture->textdata -= (texture->w + 8) * 8 - 8;
-         Vdp2DrawCell(info, texture);
-         texture->textdata -= 8;
-         Vdp2DrawCell(info, texture);
-         texture->textdata -= (texture->w + 8) * 8 - 8;
-         Vdp2DrawCell(info, texture);
-         break;
-   }
-   info->x += tile.w;
-   info->y += tile.h;
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2676,57 +2583,6 @@ static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int pla
 }
 
 
-static void Vdp2DrawPage(vdp2draw_struct *info, YglTexture *texture)
-{
-   int X, Y;
-   int i, j;
-
-   X = info->x;
-   for(i = 0;i < info->pagewh;i++)
-   {
-      Y = info->y;
-      info->x = X;
-      for(j = 0;j < info->pagewh;j++)
-      {
-         info->y = Y;
-         if ((info->x >= -info->patternpixelwh) &&
-             (info->y >= -info->patternpixelwh) &&
-             (info->x <= info->draww) &&
-             (info->y <= info->drawh))
-         {
-            Vdp2PatternAddr(info);
-            Vdp2DrawPattern(info, texture);
-         }
-         else
-         {
-            info->addr += info->patterndatasize * 2;
-            info->x += info->patternpixelwh;
-            info->y += info->patternpixelwh;
-         }
-      }
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-
-static void Vdp2DrawPlane(vdp2draw_struct *info, YglTexture *texture)
-{
-   int X, Y;
-   int i, j;
-
-   X = info->x;
-   for(i = 0;i < info->planeh;i++)
-   {
-      Y = info->y;
-      info->x = X;
-      for(j = 0;j < info->planew;j++)
-      {
-		 info->y = Y;
-         Vdp2DrawPage(info, texture);
-      }
-   }
-}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2761,7 +2617,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
-		Vdp2 * regs;
 		sx = info->x + info->lineinfo[lineindex].LineScrollValH;
 		if (VDPLINE_SY(info->islinescroll)) {
 			targetv = info->y + info->lineinfo[lineindex].LineScrollValV;
@@ -2915,43 +2770,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
 
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void Vdp2DrawMap(vdp2draw_struct *info, YglTexture *texture)
-{
-   int i, j;
-   int X, Y;
-   int xx,yy;
-
-   info->patternpixelwh = 8 * info->patternwh;
-   info->draww = (int)((float)vdp2width / info->coordincx);
-   info->drawh = (int)((float)vdp2height / info->coordincy);
-
-   i=0;
-   X = info->x;
-   yy = info->y*info->coordincy;
-   while( yy < vdp2height )
-   {
-      Y = info->y;
-      j=0;
-      info->x = X;      
-      xx = info->x*info->coordincx;
-      while( xx < vdp2width )
-      {
-         info->y = Y;
-         info->PlaneAddr(info, info->mapwh * i + j, fixVdp2Regs);
-         Vdp2DrawPlane(info, texture);
-         j++;
-         j &= (info->mapwh-1);
-         xx += (info->patternpixelwh*info->pagewh*info->planew) * info->coordincx;
-      }
-      i++;
-      i&=(info->mapwh-1);      
-      yy += (info->patternpixelwh*info->pagewh*info->planeh) * info->coordincy;
-   }
-}
-
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
@@ -3064,8 +2882,6 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
 /*------------------------------------------------------------------------------
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
-void Vdp2RgbTextureSync();
-
 void Vdp2DrawRotationThread( void * p ){
 
 	while (Vdp2DrawRotationThread_running){
@@ -3094,16 +2910,11 @@ static void FASTCALL Vdp2DrawRotation( RBGDrawInfo * rbg )
 	YglTexture *texture = &rbg->texture;
 	YglTexture *line_texture = &rbg->line_texture;
 
-   int i, j;
    int x, y;
    int cellw, cellh;
    int oldcellx=-1, oldcelly=-1;
-   u32 color;
-   int h;
-   int v;
    int lineInc = fixVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
    int linecl = 0xFF;
-   vdp2rotationparameter_struct *parameter;
    Vdp2 * regs;
    if ((fixVdp2Regs->CCCTL >> 5) & 0x01){
 	   linecl = ((~fixVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
@@ -3229,7 +3040,6 @@ static void Vdp2DrawRotationSync(){
 
 		if (curret_rbg->vdp2_sync_flg == 2){
 			YGL_THREAD_DEBUG("Vdp2DrawRotationSync in %d\n", curret_rbg->vdp2_sync_flg);
-			int hres, vres;
 			curret_rbg->info.cellw = curret_rbg->hres;
 			curret_rbg->info.cellh = curret_rbg->vres;
 			if (curret_rbg->LineColorRamAdress){
@@ -5407,7 +5217,6 @@ static void Vdp2DrawNBG0(void)
    vdp2draw_struct info = { 0 };
    YglTexture texture;
    YglCache tmpc;
-   vdp2rotationparameter_struct parameter;
    info.dst=0;
    info.uclipmode=0;
    
