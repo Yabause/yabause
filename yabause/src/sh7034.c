@@ -5013,7 +5013,7 @@ void tick_timer(int which)
             //overflow interrupt
             TIMERTRACE("*****TCNT4 OVF interrupt*******\n");
 
-            if(which == 4)
+            if (which == 4)
                SH2SendInterrupt(SH1, 98, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
 
             cycles_since = 0;
@@ -5021,14 +5021,14 @@ void tick_timer(int which)
       }
    }
 
-   //timer compare b
-#if 0
-   if (sh1_cxt.onchip.itu.channel[which].grb == sh1_cxt.onchip.itu.channel[which].tcnt)
+   //timer compare a
+   if (sh1_cxt.onchip.itu.channel[which].gra == sh1_cxt.onchip.itu.channel[which].tcnt)
    {
-      switch (sh1_cxt.onchip.itu.channel[which].tior >> 4)
+      switch (sh1_cxt.onchip.itu.channel[which].tior & 7)
       {
       case 0:
-         //disabled
+         if (sh1_cxt.onchip.itu.channel[which].tier & 1)
+            SH2SendInterrupt(SH1, 96, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
          break;
       case 1:
          //output 0
@@ -5041,18 +5041,47 @@ void tick_timer(int which)
       case 3:
          //toggles
          break;
+      case 4:
+         break;
+      case 5:
+         break;
+      case 6:
+         break;
+      case 7:
+         break;
       }
    }
-     // sh1_cxt.onchip.itu.channel[which].tsr |= (1 << 1)
 
-   //input capture/match b
-   if (sh1_cxt.onchip.itu.channel[which].tier & (1 << 1))
+   //timer compare b
+   if (sh1_cxt.onchip.itu.channel[which].grb == sh1_cxt.onchip.itu.channel[which].tcnt)
    {
-
+      switch ((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7)
+      {
+      case 0:
+         if (sh1_cxt.onchip.itu.channel[which].tier & 2)
+            SH2SendInterrupt(SH1, 97, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+         break;
+      case 1:
+         //output 0
+         sh1_cxt.onchip.itu.channel[which].tsr &= ~(1 << 1);
+         break;
+      case 2:
+         //output 1
+         sh1_cxt.onchip.itu.channel[which].tsr |= (1 << 1);
+         break;
+      case 3:
+         //toggles
+         break;
+      case 4:
+         break;
+      case 5:
+         break;
+      case 6:
+         break;
+      case 7:
+         break;
+      }
    }
-#endif
-   //input capture
-
 }
 
 void sh1_serial_recieve_bit(int bit, int channel);
