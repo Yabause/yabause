@@ -32,6 +32,8 @@
 #include <stdarg.h>
 #include "tsunami/yab_tsunami.h"
 
+static INLINE u8 num2bcd(u8 num);
+
 #define WANT_RX_TRACE
 #ifdef WANT_RX_TRACE
 #define RXTRACE(...) cd_trace_log(__VA_ARGS__)
@@ -188,14 +190,19 @@ int continue_command()
    {
       comm_state = NoTransfer;
       cdd_cxt.disc_fad++;
+      
+      //drive head moves back when fad is too high
+      if (cdd_cxt.disc_fad > cdd_cxt.target_fad + 1)
+         cdd_cxt.disc_fad = cdd_cxt.target_fad;
+
       update_status_info();
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
-      return TIME_PERIODIC;
+      return TIME_PERIODIC/cdd_cxt.speed;
    }
    else if (cdd_cxt.state.current_operation == Stopped)
    {
       comm_state = NoTransfer;
-      return TIME_PERIODIC;
+      return TIME_PERIODIC / cdd_cxt.speed;
    }
    else if (cdd_cxt.state.current_operation == ReadToc)
    {
@@ -219,7 +226,7 @@ int continue_command()
    else
    {
       comm_state = NoTransfer;
-      return TIME_PERIODIC;
+      return TIME_PERIODIC / cdd_cxt.speed;
    }
 }
 
@@ -264,6 +271,7 @@ void do_seek()
 {
    s32 fad = get_fad_from_command(cdd_cxt.received_data);
    cdd_cxt.disc_fad = fad - 4;
+   cdd_cxt.target_fad = cdd_cxt.disc_fad;
    cdd_cxt.seek_time = 0;
    update_seek_status();
 }
@@ -271,6 +279,12 @@ void do_seek()
 int do_command()
 {
    int command = cdd_cxt.received_data[0];
+
+   if (cdd_cxt.received_data[10] == 1)
+      cdd_cxt.speed = 1;
+   else
+      cdd_cxt.speed = 2;
+
    switch (command)
    {
    case 0x0:
@@ -283,8 +297,20 @@ int do_command()
       break;
    case 0x3:
    {
+      int i;
       cdd_cxt.toc_entry = 0;
       cdd_cxt.num_toc_entries = Cs2Area->cdi->ReadTOC10(cdd_cxt.toc);
+
+      for (i = 0; i < cdd_cxt.num_toc_entries; i++)
+      {
+         cdd_cxt.toc[i].min = num2bcd(cdd_cxt.toc[i].min);
+         cdd_cxt.toc[i].sec = num2bcd(cdd_cxt.toc[i].sec);
+         cdd_cxt.toc[i].frame = num2bcd(cdd_cxt.toc[i].frame);
+
+         cdd_cxt.toc[i].pmin = num2bcd(cdd_cxt.toc[i].pmin);
+         cdd_cxt.toc[i].psec = num2bcd(cdd_cxt.toc[i].psec);
+         cdd_cxt.toc[i].pframe = num2bcd(cdd_cxt.toc[i].pframe);
+      }
       do_toc();
 
       return TIME_READING;
@@ -295,7 +321,7 @@ int do_command()
       cdd_cxt.state.current_operation = Stopped;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       comm_state = NoTransfer;
-      return TIME_PERIODIC;
+      return TIME_PERIODIC / cdd_cxt.speed;
       break;
    case 0x6:
       //read data at lba
@@ -306,7 +332,7 @@ int do_command()
       cdd_cxt.state.current_operation = Idle;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       comm_state = NoTransfer;
-      return TIME_PERIODIC;
+      return TIME_PERIODIC / cdd_cxt.speed;
       break;
    case 0x9:
       //seek
@@ -378,13 +404,17 @@ int cd_command_exec()
    }
    else if (comm_state == WaitToRxio)
    {
-      RXTRACE("CMD: ", cdd_cxt.disc_fad);
+#if 0
+      if (cdd_cxt.received_data[11] != 0xff)
+      {
+         RXTRACE("CMD: ", cdd_cxt.disc_fad);
 
-      int i;
-      for (i = 0; i<13; i++)
-         RXTRACE(" %02X", cdd_cxt.received_data[i]);
-      RXTRACE("\n");
-
+         int i;
+         for (i = 0; i < 13; i++)
+            RXTRACE(" %02X", cdd_cxt.received_data[i]);
+         RXTRACE("\n");
+      }
+#endif
       //handle the command
       return do_command();
    }
