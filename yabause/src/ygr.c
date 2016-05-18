@@ -126,6 +126,9 @@ void ygr_sh1_write_word(u32 addr, u16 data)
    case 0:
       ygr_cxt.fake_fifo = data;
       return;
+   case 2:
+      ygr_cxt.transfer_ctrl = data;
+      return;
    case 4:
       ygr_cxt.mbx_status = data;
       return;
