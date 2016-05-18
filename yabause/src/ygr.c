@@ -574,3 +574,10 @@ void FASTCALL ygr_a_bus_write_long(SH2_struct * sh, UNUSED u32 addr, UNUSED u32 
       break;
    }
 }
+
+void ygr_cd_irq(u8 flags)
+{
+   ygr_cxt.cdirq_flags |= flags;
+   if (ygr_cxt.cdirq_flags & ygr_cxt.regs.HIRQMASK)
+      SH2SendInterrupt(SH1, 71, sh1_cxt.onchip.intc.iprb & 0xf);
+}

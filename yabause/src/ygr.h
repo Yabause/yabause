@@ -36,4 +36,6 @@ u32 FASTCALL  ygr_a_bus_read_long(SH2_struct * sh, u32 addr);
 
 void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 data);
 void FASTCALL ygr_a_bus_write_long(SH2_struct * sh, u32 addr, u32 data);
+
+void ygr_cd_irq(u8 flags);
 #endif

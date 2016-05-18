@@ -1,5 +1,5 @@
 /*  Copyright 2014-2016 James Laird-Wah
-    Copyright 2004-2006, 2013 Theo Berkau
+    Copyright 2004-2006, 2013, 2016 Theo Berkau
 
     This file is part of Yabause.
 
@@ -29,6 +29,7 @@
 #include "memory.h"
 #include "debug.h"
 #include "cs2.h"
+#include "ygr.h"
 #include <stdarg.h>
 #include "tsunami/yab_tsunami.h"
 
@@ -184,6 +185,50 @@ void update_status_info()
    cdd_cxt.state.track_number = track_num;
 }
 
+void do_dataread()
+{
+   struct Dmac *dmac=&sh1_cxt.onchip.dmac;
+#if 0
+
+   if ((dmac->channel[0].chcr & 1) && 
+      !(dmac->channel[0].chcr & 2)) 
+   {
+      u8 buf[2448];		
+      u32 dest;
+
+      CDLOG("running DMA to %X\n", dmac->channel[0].dar);
+      Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
+      Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad+1);
+      cdd_cxt.disc_fad++;
+
+      if (dmac->channel[0].dar >> 24 != 9) 
+      {
+         CDLOG("DMA0 error: dest is not DRAM\n");
+      }
+      if (dmac->channel[0].tcr*2 > 2340) 
+      {
+         CDLOG("DMA0 error: count too big\n");
+      }
+      dest = dmac->channel[0].dar & 0x7FFFF;
+
+      memcpy(SH1Dram + dest, buf, dmac->channel[0].tcr*2);
+
+      dmac->channel[0].chcr |= 2;		
+      if (dmac->channel[0].chcr & 4)
+         SH2SendInterrupt(SH1, 72, (sh1_cxt.onchip.intc.iprc >> 12) & 0xf);
+   }
+#else
+   if (!(dmac->channel[0].chcr & 2))
+   {
+      do_dma(0);
+      if (dmac->channel[0].chcr & 4)
+         SH2SendInterrupt(SH1, 72, (sh1_cxt.onchip.intc.iprc >> 12) & 0xf);
+   }
+#endif
+
+   ygr_cd_irq(0x10);
+}
+
 int continue_command()
 {
    if (cdd_cxt.state.current_operation == Idle)
@@ -324,9 +369,21 @@ int do_command()
       return TIME_PERIODIC / cdd_cxt.speed;
       break;
    case 0x6:
-      //read data at lba
-      cdd_cxt.state.current_operation = ReadingDataSectors;//what about audio data?
+   {
+      //read data at fad
+      s32 fad;
+      CDLOG("read data\n");
+
+      // Queue up next sector
+      fad = get_fad_from_command(cdd_cxt.received_data);
+      Cs2Area->cdi->ReadAheadFAD(fad-4);
+
+      if (1) // Add detection of data/audio data
+         cdd_cxt.state.current_operation = ReadingDataSectors;
+      else
+         cdd_cxt.state.current_operation = ReadingAudioData;
       break;
+   }
    case 0x8:
       //pause
       cdd_cxt.state.current_operation = Idle;
@@ -483,9 +540,9 @@ static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame) {
 
 s32 toc_10_get_track(s32 fad)
 {
+   int i = 0;
    if (!cdd_cxt.num_toc_entries)
       return 1;
-   int i = 0;
    for (i = 0; i < 99; i++)
    {
       s32 track_start = msf_bcd2fad(cdd_cxt.toc[i].min, cdd_cxt.toc[i].sec, cdd_cxt.toc[i].frame);
