@@ -188,7 +188,7 @@ void update_status_info()
 void do_dataread()
 {
    struct Dmac *dmac=&sh1_cxt.onchip.dmac;
-#if 0
+#if 1
 
    if ((dmac->channel[0].chcr & 1) && 
       !(dmac->channel[0].chcr & 2)) 
@@ -243,6 +243,17 @@ int continue_command()
       update_status_info();
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       return TIME_PERIODIC/cdd_cxt.speed;
+   }
+   else if (cdd_cxt.state.current_operation == ReadingDataSectors)
+   {
+      comm_state = NoTransfer;
+      cdd_cxt.disc_fad++;
+
+      do_dataread();
+
+      update_status_info();
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      return TIME_PERIODIC / cdd_cxt.speed;
    }
    else if (cdd_cxt.state.current_operation == Stopped)
    {
@@ -382,7 +393,15 @@ int do_command()
          cdd_cxt.state.current_operation = ReadingDataSectors;
       else
          cdd_cxt.state.current_operation = ReadingAudioData;
-      break;
+
+      do_dataread();
+
+      update_status_info();
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+
+
+      comm_state = NoTransfer;
+      return TIME_PERIODIC / cdd_cxt.speed;
    }
    case 0x8:
       //pause
