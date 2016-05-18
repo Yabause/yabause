@@ -220,7 +220,7 @@ void do_dataread()
 #else
    if (!(dmac->channel[0].chcr & 2))
    {
-      do_dma(0);
+     // do_dma(0);
       if (dmac->channel[0].chcr & 4)
          SH2SendInterrupt(SH1, 72, (sh1_cxt.onchip.intc.iprc >> 12) & 0xf);
    }

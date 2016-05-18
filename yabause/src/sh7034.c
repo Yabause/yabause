@@ -1538,43 +1538,44 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
    }
    else if (addr >= 0x5FFFF40 && addr <= 0x5FFFF7F)
    {
+      if (addr == 0x5FFFF4e)
+      {
+         regs->dmac.channel[0].chcr = (regs->dmac.channel[0].chcr & 0xff) | data << 8;
+         return;
+      }
       if (addr == 0x5FFFF4F)
       {
-         //clear bit 0
-         if (!(data & 1))
-            regs->dmac.channel[0].chcr &= 0xfffe;
+         regs->dmac.channel[0].chcr = (regs->dmac.channel[0].chcr & 0xff00) | data & 0xfd;
          return;
       }
-      else if (addr == 0x5FFFF48)
+      if (addr == 0x5FFFF5e)
       {
-         //can only clear bits 1 and 2
-         //todo check this
-         if (!(data & 1))
-            regs->dmac.channel[0].chcr &= 0xfffe;
-         if (!(data & 2))
-            regs->dmac.channel[0].chcr &= 0xFFFD;
-
+         regs->dmac.channel[1].chcr = (regs->dmac.channel[1].chcr & 0xff) | data << 8;
          return;
       }
-      else if (addr == 0x5FFFF5F)
+      if (addr == 0x5FFFF5F)
       {
-         //clear bit 0
-         if (!(data & 1))
-            regs->dmac.channel[1].chcr &= 0xfffe;
+         regs->dmac.channel[1].chcr = (regs->dmac.channel[1].chcr & 0xff00) | data & 0xfd;
          return;
       }
-      else if (addr == 0x5FFFF6F)
+      if (addr == 0x5FFFF6e)
       {
-         //clear bit 0
-         if (!(data & 1))
-            regs->dmac.channel[2].chcr &= 0xfffe;
+         regs->dmac.channel[2].chcr = (regs->dmac.channel[2].chcr & 0xff) | data << 8;
          return;
       }
-      else if (addr == 0x5FFFF7F)
+      if (addr == 0x5FFFF6F)
       {
-         //clear bit 0
-         if (!(data & 1))
-            regs->dmac.channel[3].chcr &= 0xfffe;
+         regs->dmac.channel[2].chcr = (regs->dmac.channel[2].chcr & 0xff00) | data & 0xfd;
+         return;
+      }
+      if (addr == 0x5FFFF7e)
+      {
+         regs->dmac.channel[3].chcr = (regs->dmac.channel[3].chcr & 0xff) | data << 8;
+         return;
+      }
+      if (addr == 0x5FFFF7F)
+      {
+         regs->dmac.channel[3].chcr = (regs->dmac.channel[3].chcr & 0xff00) | data & 0xfd;
          return;
       }
       //dmac
@@ -2449,14 +2450,13 @@ void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
       //unmapped
       return;
    case 0xa:
-      regs->dmac.channel[which].tcr = regs->dmac.channel[which].tcr & 0x0000ffff | data << 16;
+      regs->dmac.channel[which].tcr = data;
       return;
    case 0xc:
-      regs->dmac.channel[which].tcr = regs->dmac.channel[which].tcr & 0xffff0000 | data;
+      //unmapped
       return;
    case 0xe:
-      if (!(data & 0xfffd))
-         regs->dmac.channel[which].chcr &= 0xfffd;
+      regs->dmac.channel[which].chcr = data & 0xfffd;
       return;
    }
 
@@ -2658,12 +2658,7 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
       //dmac
       if (addr == 0x5FFFF48)
       {
-         //can only clear bits 1 and 2
-         if (!(data & 2))
-            regs->dmac.dmaor = regs->dmac.dmaor & 0xfffd;
-
-         if (!(data & 1))
-            regs->dmac.dmaor = regs->dmac.dmaor & 0xfffe;
+         regs->dmac.dmaor = data & 0xfff9;
          return;
       }
       if (addr >= 0x5FFFF40 && addr <= 0x5FFFF4E)
@@ -3325,8 +3320,7 @@ void onchip_dmac_write_long(struct Onchip * regs, u32 addr, int which, u32 data)
       //unmapped?
       return;
    case 0xe:
-      if (!((data >> 16) & 0xfffd))
-         regs->dmac.channel[which].chcr &= 0xfffd;
+      regs->dmac.channel[which].chcr = (data >> 16) & 0xfffd;
       return;
    }
 
@@ -3521,12 +3515,7 @@ void onchip_write_long(struct Onchip * regs, u32 addr, u32 data)
       //dmac
       if (addr == 0x5FFFF48)//dmaor
       {
-         //can only clear bits 1 and 2
-         if (!((data >> 16) & 2))
-            regs->dmac.dmaor = regs->dmac.dmaor & 0xfffd;
-
-         if (!((data >> 16) & 1))
-            regs->dmac.dmaor = regs->dmac.dmaor & 0xfffe;
+         regs->dmac.dmaor = data & 0xfff9;
          return;
       }
       if (addr >= 0x5FFFF40 && addr <= 0x5FFFF4E)
@@ -5413,13 +5402,17 @@ void sh1_set_start(int state)
       sh1_cxt.onchip.pbdr |= 0x04;
 }
 
-void dma_transfer(u32 source, u32 dest, u8 source_mode, u8 dest_mode, u8 is_word_size, u16 transfer_count)
+void tick_dma(int which)
 {
+   if (!sh1_cxt.onchip.dmac.channel[which].is_active)
+      return;
+
+   u8 destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;
+   u8 source_mode = (sh1_cxt.onchip.dmac.channel[which].chcr >> 12) & 3;
+   u8 is_word_size = (sh1_cxt.onchip.dmac.channel[which].chcr >> 3) & 1;//otherwise byte size
+
    s8 source_increment = 0;
    s8 dest_increment = 0;
-   int i = 0;
-   u32 current_source_addr = source;
-   u32 current_dest_addr = dest;
 
    //update addresses
    //mode 0 means fixed
@@ -5428,45 +5421,56 @@ void dma_transfer(u32 source, u32 dest, u8 source_mode, u8 dest_mode, u8 is_word
    else if (source_mode == 2)
       source_increment = -2;
 
-   if (dest_mode == 1)
+   if (destination_mode == 1)
       dest_increment = 2;
-   else if (dest_mode == 2)
+   else if (destination_mode == 2)
       dest_increment = -2;
 
-   for (i = 0; i < transfer_count; i++)
+   if (is_word_size)
    {
-      if (is_word_size)
-      {
-         u16 src_val = memory_map_read_word(&sh1_cxt, current_source_addr);
-         memory_map_write_word(&sh1_cxt, current_dest_addr, src_val);
-      }
-      else
-      {
-         u8 src_val = memory_map_read_byte(&sh1_cxt, current_source_addr);
-         memory_map_write_byte(&sh1_cxt, current_dest_addr, src_val);
-      }
+      u16 src_val = memory_map_read_word(&sh1_cxt, sh1_cxt.onchip.dmac.channel[which].sar);
+      memory_map_write_word(&sh1_cxt, sh1_cxt.onchip.dmac.channel[which].dar, src_val);
+   }
+   else
+   {
+      u8 src_val = memory_map_read_byte(&sh1_cxt, sh1_cxt.onchip.dmac.channel[which].sar);
+      memory_map_write_byte(&sh1_cxt, sh1_cxt.onchip.dmac.channel[which].dar, src_val);
+   }
 
-      current_source_addr += source_increment;
-      current_dest_addr += dest_increment;
+   sh1_cxt.onchip.dmac.channel[which].sar += source_increment;
+   sh1_cxt.onchip.dmac.channel[which].dar += dest_increment;
+   sh1_cxt.onchip.dmac.channel[which].tcr--;
+
+   if (sh1_cxt.onchip.dmac.channel[which].tcr == 0)
+   {
+      sh1_cxt.onchip.dmac.channel[which].is_active = 0;
+      sh1_cxt.onchip.dmac.channel[which].chcr |= 2;//te dma has ended normally
+
+      if (sh1_cxt.onchip.dmac.channel[which].chcr & 4)
+      {
+         //just do dma1 for now
+         SH2SendInterrupt(SH1, 74, (sh1_cxt.onchip.intc.iprc >> 12) & 0xf);
+      }
    }
 }
 
-void do_dma(int which)
+void sh1_dma_init(int which)
 {
    //de, dme, mnif, ae, te must all be zero to start a dma
    //but just check de and dme for now
    if (sh1_cxt.onchip.dmac.dmaor & 1 && //dma enabled on all channels
       sh1_cxt.onchip.dmac.channel[which].chcr & 1)//dma enabled on this channel
    {
-      u32 source = sh1_cxt.onchip.dmac.channel[which].sar;
-      u32 dest = sh1_cxt.onchip.dmac.channel[which].dar;
-      u16 transfer_count = sh1_cxt.onchip.dmac.channel[which].tcr;
-
-      u8 destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;
-      u8 source_mode = (sh1_cxt.onchip.dmac.channel[which].chcr >> 12) & 3;
-      u8 is_word_size = (sh1_cxt.onchip.dmac.channel[which].chcr >> 3) & 1;//otherwise byte size
-
-      dma_transfer(source, dest, source_mode, 
-         destination_mode, is_word_size, transfer_count);
+      sh1_cxt.onchip.dmac.channel[which].is_active = 1;
+      sh1_cxt.onchip.dmac.channel[which].chcr &= 0xfffd;//clear te bit to indicate dma is active
    }
+}
+
+
+void sh1_dreq_asserted(int which)
+{
+   if (!sh1_cxt.onchip.dmac.channel[which].is_active)
+      sh1_dma_init(which);
+
+   tick_dma(which);
 }

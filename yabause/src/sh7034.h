@@ -26,8 +26,9 @@
 #include "sh2core.h"
 
 void cd_trace_log(const char * format, ...);
+void sh1_dreq_asserted(int which);
 
-//#define WANT_CDTRACE
+#define WANT_CDTRACE
 #ifdef WANT_CDTRACE
 #define CDTRACE(...) cd_trace_log(__VA_ARGS__)
 #else
@@ -151,6 +152,9 @@ struct Onchip
          u32 dar;
          u16 tcr;
          u16 chcr;
+
+         //implementation
+         int is_active;
       }channel[4];
 
       u16 dmaor;
