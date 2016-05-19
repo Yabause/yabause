@@ -29,7 +29,7 @@
 #include <string.h>
 #include <signal.h>
 #if _WIN32
-#include <Windows.h>
+#include <windows.h>
 #else
 #include <sys/time.h>
 #endif

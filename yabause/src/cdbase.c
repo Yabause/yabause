@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <wchar.h>
 #include "cdbase.h"
+#include "cs2.h"
 #include "error.h"
 #include "debug.h"
 
