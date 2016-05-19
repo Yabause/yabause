@@ -229,7 +229,7 @@ void update_status_info()
        cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
        cdd_cxt.state.index_field = index;
        cdd_cxt.state.track_number = track_num;
-}
+   }
 }
 
 static u8 ror(u8 in) 
@@ -507,29 +507,39 @@ int do_command()
    case 0x3:
    {
       int i, track_num, max_track = 0;
+      CDInterfaceToc10 toc[102];
       CDLOG("read toc\n");
       cdd_cxt.toc_entry = 0;
-      cdd_cxt.num_toc_entries = Cs2Area->cdi->ReadTOC10(cdd_cxt.toc);
+      cdd_cxt.num_toc_entries = Cs2Area->cdi->ReadTOC10(toc);
 
       // Read and sort the track entries, so you get one entry for each track + leadout, in starting FAD order.
       for (i = 0; i < cdd_cxt.num_toc_entries; i++)
       {
-         CDInterfaceToc10 *entry = &cdd_cxt.toc[i];
-         entry->min = num2bcd(entry->min);
-         entry->sec = num2bcd(entry->sec);
-         entry->frame = num2bcd(entry->frame);
+         CDInterfaceToc10 *entry = &cdd_cxt.toc[i*3];
+         entry->ctrladr = toc[i].ctrladr;
+         entry->tno = toc[i].tno;
+         entry->point = toc[i].point;
+         entry->min = num2bcd(toc[i].min);
+         entry->sec = num2bcd(toc[i].sec);
+         entry->frame = num2bcd(i*3);
+         entry->zero = 0;
+         entry->pmin = num2bcd(toc[i].pmin);
+         entry->psec = num2bcd(toc[i].psec);
+         entry->pframe = num2bcd(toc[i].pframe);
+         memcpy(&cdd_cxt.toc[i*3+1], entry, sizeof(*entry));
+         cdd_cxt.toc[i*3+1].frame = num2bcd(i*3+1);
+         memcpy(&cdd_cxt.toc[i*3+2], entry, sizeof(*entry));
+         cdd_cxt.toc[i*3+2].frame = num2bcd(i*3+2);
 
-         entry->pmin = num2bcd(entry->pmin);
-         entry->psec = num2bcd(entry->psec);
-         entry->pframe = num2bcd(entry->pframe);
-
-         if (entry->point <= 0x99) {
+         if (entry->point <= 0x99) 
+         {
             track_num = bcd2num(entry->point);
             if (track_num > max_track)
                max_track = track_num;
             memcpy(&cdd_cxt.tracks[track_num-1], entry, sizeof(*entry));
          }
       }
+      cdd_cxt.num_toc_entries *= 3;
       for (i = 0; i < cdd_cxt.num_toc_entries; i++)
       {
          if (cdd_cxt.toc[i].point == 0xa2) {  // leadout

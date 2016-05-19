@@ -20,7 +20,7 @@
 */
 
 /*! \file cdbase.c
-    \brief Dummy and ISO, BIN/CUE, MDS CD Interfaces
+    \brief Dummy and ISO, BIN/CUE, MDS, CCD CD Interfaces
 */
 
 #include <string.h>
@@ -370,7 +370,7 @@ static const s8 syncHdr[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
 enum IMG_TYPE { IMG_NONE, IMG_ISO, IMG_BINCUE, IMG_MDS, IMG_CCD, IMG_NRG };
 enum IMG_TYPE imgtype = IMG_ISO;
 static u32 isoTOC[102];
-static CDInterfaceToc10 isoTOC10[102*3];
+static CDInterfaceToc10 isoTOC10[102];
 int isoTOCnum=0;
 static disc_info_struct disc;
 
@@ -567,6 +567,50 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    disc.session[0].fad_start = 150;
    disc.session[0].fad_end = trk[track_num-1].fad_end;
    disc.session[0].track_num = track_num;
+
+	for (i = 0; i < track_num; i++)
+	{
+		isoTOC10[3+i].ctrladr = trk[i].ctl_addr;
+		isoTOC10[3+i].tno = 0;
+		isoTOC10[3+i].point = i+1;
+		isoTOC10[3+i].min = 0;
+		isoTOC10[3+i].sec = 2;
+		isoTOC10[3+i].frame = 0;
+		isoTOC10[3+i].zero = 0;
+		Cs2FADToMSF(trk[i].fad_start, &isoTOC10[3+i].pmin, &isoTOC10[3+i].psec, &isoTOC10[3+i].pframe);
+	}
+
+	isoTOC10[0].ctrladr = isoTOC10[3].ctrladr;
+	isoTOC10[0].tno = 0;
+	isoTOC10[0].point = 0xA0;
+	isoTOC10[0].min = 0;
+	isoTOC10[0].sec = 2;
+	isoTOC10[0].frame = 0;
+	isoTOC10[0].zero = 0;
+	isoTOC10[0].pmin = 1;
+	isoTOC10[0].psec = 0;
+	isoTOC10[0].pframe = 0;
+
+	isoTOC10[1].ctrladr = isoTOC10[3+track_num-1].ctrladr;
+	isoTOC10[1].tno = 0;
+	isoTOC10[1].point = 0xA1;
+	isoTOC10[1].min = 0;
+	isoTOC10[1].sec = 2;
+	isoTOC10[1].frame = 0;
+	isoTOC10[1].zero = 0;
+	isoTOC10[1].pmin = track_num;
+	isoTOC10[1].psec = 0;
+	isoTOC10[1].pframe = 0;
+
+	isoTOC10[2].ctrladr = isoTOC10[1].ctrladr;
+	isoTOC10[2].tno = 0;
+	isoTOC10[2].point = 0xA2;
+	isoTOC10[2].min = 0;
+	isoTOC10[2].sec = 2;
+	isoTOC10[2].frame = 0;
+	isoTOC10[2].zero = 0;
+	Cs2FADToMSF(disc.session[0].fad_end, &isoTOC10[2].pmin, &isoTOC10[2].psec, &isoTOC10[2].pframe);
+
    disc.session[0].track = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
    if (disc.session[0].track == NULL)
    {
@@ -1058,20 +1102,16 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 
 		sprintf(sect_name, "Entry %d", i);
 
-		isoTOC10[i*3].ctrladr = (GetIntCCD(&ccd, sect_name, "Control") << 4) | GetIntCCD(&ccd, sect_name, "ADR");
-		isoTOC10[i*3].tno = GetIntCCD(&ccd, sect_name, "TrackNo");
-		isoTOC10[i*3].point = GetIntCCD(&ccd, sect_name, "Point");
-		isoTOC10[i*3].min = GetIntCCD(&ccd, sect_name, "AMin");
-		isoTOC10[i*3].sec = 2 /*GetIntCCD(&ccd, sect_name, "ASec")*/;
-		isoTOC10[i*3].frame = i * 3 /* GetIntCCD(&ccd, sect_name, "AFrame") */;
-		isoTOC10[i*3].zero = GetIntCCD(&ccd, sect_name, "Zero");
-		isoTOC10[i*3].pmin = GetIntCCD(&ccd, sect_name, "PMin");
-		isoTOC10[i*3].psec = GetIntCCD(&ccd, sect_name, "PSec");
-		isoTOC10[i*3].pframe = GetIntCCD(&ccd, sect_name, "PFrame");
-		memcpy(isoTOC10+i*3+1, isoTOC10+i*3, sizeof(CDInterfaceToc10));
-		isoTOC10[i*3+1].frame = i * 3 + 1;
-		memcpy(isoTOC10+i*3+2, isoTOC10+i*3, sizeof(CDInterfaceToc10));
-		isoTOC10[i*3+2].frame = i * 3 + 2;
+		isoTOC10[i].ctrladr = (GetIntCCD(&ccd, sect_name, "Control") << 4) | GetIntCCD(&ccd, sect_name, "ADR");
+		isoTOC10[i].tno = GetIntCCD(&ccd, sect_name, "TrackNo");
+		isoTOC10[i].point = GetIntCCD(&ccd, sect_name, "Point");
+		isoTOC10[i].min = GetIntCCD(&ccd, sect_name, "AMin");
+		isoTOC10[i].sec = 2;
+		isoTOC10[i].frame = 0;
+		isoTOC10[i].zero = GetIntCCD(&ccd, sect_name, "Zero");
+		isoTOC10[i].pmin = GetIntCCD(&ccd, sect_name, "PMin");
+		isoTOC10[i].psec = GetIntCCD(&ccd, sect_name, "PSec");
+		isoTOC10[i].pframe = GetIntCCD(&ccd, sect_name, "PFrame");
 
 		point = GetIntCCD(&ccd, sect_name, "Point");
 
@@ -1274,8 +1314,8 @@ static s32 ISOCDReadTOC(u32 * TOC) {
 //////////////////////////////////////////////////////////////////////////////
 
 static s32 ISOCDReadTOC10(CDInterfaceToc10 *TOC) {
-   memcpy(TOC, isoTOC10, 102 * 3 * sizeof(CDInterfaceToc10));
-   return isoTOCnum*3;
+   memcpy(TOC, isoTOC10, 102 * sizeof(CDInterfaceToc10));
+   return isoTOCnum;
 }
 
 //////////////////////////////////////////////////////////////////////////////
