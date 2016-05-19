@@ -681,7 +681,7 @@ void cd_drive_exec(struct CdDriveContext * drive, s32 cycles)
    s32 cycles_temp = drive->cycles_remainder - cycles;
    while (cycles_temp < 0)
    {
-      int cycles_exec = cd_command_exec(drive);
+      int cycles_exec = cd_command_exec();
       cycles_temp += cycles_exec;
    }
    drive->cycles_remainder = cycles_temp;
