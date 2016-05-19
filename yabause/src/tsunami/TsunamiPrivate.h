@@ -110,7 +110,7 @@ void             TsunamiSetRange_Internal(TsunamiTimeline *timeline, TsunamiVari
 	{																	\
 		static char             variable_name [1024];					\
 		sprintf(variable_name, (_value_format_), ##args);				\
-		TsunamiSetValue_Base_Internal2(_inc_, _pulse_, _setrange_, _value_, _timeline_name_, variable_name); \
+		TsunamiSetValue_Base_Internal2(_inc_, _pulse_, _setrange_, _value_, _size_, _timeline_name_, variable_name); \
 	}
 
 #endif
