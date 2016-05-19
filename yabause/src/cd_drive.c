@@ -375,12 +375,14 @@ int continue_command()
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       return TIME_PERIODIC/cdd_cxt.speed;
    }
-   else if (cdd_cxt.state.current_operation == ReadingDataSectors)
+   else if (cdd_cxt.state.current_operation == ReadingDataSectors ||
+            cdd_cxt.state.current_operation == ReadingAudioData)
    {
       comm_state = NoTransfer;
       do_dataread();
 
       update_status_info();
+      cdd_cxt.state.current_operation = (cdd_cxt.state.q_subcode & 0x40) ? ReadingDataSectors : ReadingAudioData;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       return TIME_READSECTOR / cdd_cxt.speed;
    }
