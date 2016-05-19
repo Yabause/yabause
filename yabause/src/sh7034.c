@@ -3315,6 +3315,7 @@ void onchip_dmac_write_long(struct Onchip * regs, u32 addr, int which, u32 data)
    {
    case 0:
       regs->dmac.channel[which].sar = data;
+      return;
    case 4:
       regs->dmac.channel[which].dar = data;
       return;
