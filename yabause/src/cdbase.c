@@ -568,50 +568,6 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    disc.session[0].fad_end = trk[track_num-1].fad_end;
    disc.session[0].track_num = track_num;
 
-   for (i = 0; i < track_num; i++)
-   {
-      isoTOC10[3+i].ctrladr = trk[i].ctl_addr;
-      isoTOC10[3+i].tno = 0;
-      isoTOC10[3+i].point = i+1;
-      isoTOC10[3+i].min = 0;
-      isoTOC10[3+i].sec = 2;
-      isoTOC10[3+i].frame = 0;
-      isoTOC10[3+i].zero = 0;
-      Cs2FADToMSF(trk[i].fad_start, &isoTOC10[3+i].pmin, &isoTOC10[3+i].psec, &isoTOC10[3+i].pframe);
-   }
-
-   isoTOC10[0].ctrladr = isoTOC10[3].ctrladr;
-   isoTOC10[0].tno = 0;
-   isoTOC10[0].point = 0xA0;
-   isoTOC10[0].min = 0;
-   isoTOC10[0].sec = 2;
-   isoTOC10[0].frame = 0;
-   isoTOC10[0].zero = 0;
-   isoTOC10[0].pmin = 1;
-   isoTOC10[0].psec = 0;
-   isoTOC10[0].pframe = 0;
-
-   isoTOC10[1].ctrladr = isoTOC10[3+track_num-1].ctrladr;
-   isoTOC10[1].tno = 0;
-   isoTOC10[1].point = 0xA1;
-   isoTOC10[1].min = 0;
-   isoTOC10[1].sec = 2;
-   isoTOC10[1].frame = 0;
-   isoTOC10[1].zero = 0;
-   isoTOC10[1].pmin = track_num;
-   isoTOC10[1].psec = 0;
-   isoTOC10[1].pframe = 0;
-
-   isoTOC10[2].ctrladr = isoTOC10[1].ctrladr;
-   isoTOC10[2].tno = 0;
-   isoTOC10[2].point = 0xA2;
-   isoTOC10[2].min = 0;
-   isoTOC10[2].sec = 2;
-   isoTOC10[2].frame = 0;
-   isoTOC10[2].zero = 0;
-   Cs2FADToMSF(disc.session[0].fad_end, &isoTOC10[2].pmin, &isoTOC10[2].psec, &isoTOC10[2].pframe);
-   isoTOCnum = 3+track_num;
-
    disc.session[0].track = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
    if (disc.session[0].track == NULL)
    {
@@ -1205,6 +1161,58 @@ void BuildTOC()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void BuildTOC10()
+{
+   int i;
+   session_info_struct *session=&disc.session[0];
+
+   for (i = 0; i < session->track_num; i++)
+   {
+      isoTOC10[3+i].ctrladr = session->track[i].ctl_addr;
+      isoTOC10[3+i].tno = 0;
+      isoTOC10[3+i].point = i+1;
+      isoTOC10[3+i].min = 0;
+      isoTOC10[3+i].sec = 2;
+      isoTOC10[3+i].frame = 0;
+      isoTOC10[3+i].zero = 0;
+      Cs2FADToMSF(session->track[i].fad_start, &isoTOC10[3+i].pmin, &isoTOC10[3+i].psec, &isoTOC10[3+i].pframe);
+   }
+
+   isoTOC10[0].ctrladr = isoTOC10[3].ctrladr;
+   isoTOC10[0].tno = 0;
+   isoTOC10[0].point = 0xA0;
+   isoTOC10[0].min = 0;
+   isoTOC10[0].sec = 2;
+   isoTOC10[0].frame = 0;
+   isoTOC10[0].zero = 0;
+   isoTOC10[0].pmin = 1;
+   isoTOC10[0].psec = 0;
+   isoTOC10[0].pframe = 0;
+
+   isoTOC10[1].ctrladr = isoTOC10[3+session->track_num-1].ctrladr;
+   isoTOC10[1].tno = 0;
+   isoTOC10[1].point = 0xA1;
+   isoTOC10[1].min = 0;
+   isoTOC10[1].sec = 2;
+   isoTOC10[1].frame = 0;
+   isoTOC10[1].zero = 0;
+   isoTOC10[1].pmin = session->track_num;
+   isoTOC10[1].psec = 0;
+   isoTOC10[1].pframe = 0;
+
+   isoTOC10[2].ctrladr = isoTOC10[1].ctrladr;
+   isoTOC10[2].tno = 0;
+   isoTOC10[2].point = 0xA2;
+   isoTOC10[2].min = 0;
+   isoTOC10[2].sec = 2;
+   isoTOC10[2].frame = 0;
+   isoTOC10[2].zero = 0;
+   Cs2FADToMSF(session->fad_end, &isoTOC10[2].pmin, &isoTOC10[2].psec, &isoTOC10[2].pframe);
+   isoTOCnum = 3+session->track_num;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static int ISOCDInit(const char * iso) {
    char header[6];
    char *ext;
@@ -1264,6 +1272,8 @@ static int ISOCDInit(const char * iso) {
    }   
 
    BuildTOC();
+   if (imgtype != IMG_CCD)
+      BuildTOC10();
    return 0;
 }
 
