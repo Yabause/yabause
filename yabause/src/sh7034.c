@@ -1553,7 +1553,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       }
       if (addr == 0x5FFFF4F)
       {
-         regs->dmac.channel[0].chcr = (regs->dmac.channel[0].chcr & 0xff00) | data & 0xfd;
+         regs->dmac.channel[0].chcr = (regs->dmac.channel[0].chcr & 0xff00) | (data & 0xfd);
          return;
       }
       if (addr == 0x5FFFF5e)
@@ -1563,7 +1563,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       }
       if (addr == 0x5FFFF5F)
       {
-         regs->dmac.channel[1].chcr = (regs->dmac.channel[1].chcr & 0xff00) | data & 0xfd;
+         regs->dmac.channel[1].chcr = (regs->dmac.channel[1].chcr & 0xff00) | (data & 0xfd);
          return;
       }
       if (addr == 0x5FFFF6e)
@@ -1573,7 +1573,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       }
       if (addr == 0x5FFFF6F)
       {
-         regs->dmac.channel[2].chcr = (regs->dmac.channel[2].chcr & 0xff00) | data & 0xfd;
+         regs->dmac.channel[2].chcr = (regs->dmac.channel[2].chcr & 0xff00) | (data & 0xfd);
          return;
       }
       if (addr == 0x5FFFF7e)
@@ -1583,7 +1583,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       }
       if (addr == 0x5FFFF7F)
       {
-         regs->dmac.channel[3].chcr = (regs->dmac.channel[3].chcr & 0xff00) | data & 0xfd;
+         regs->dmac.channel[3].chcr = (regs->dmac.channel[3].chcr & 0xff00) | (data & 0xfd);
          return;
       }
       //dmac
@@ -1605,56 +1605,56 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
          break;
       //ipra
       case 4:
-         regs->intc.ipra = regs->intc.ipra & 0xff | data << 8;
+         regs->intc.ipra = (regs->intc.ipra & 0xff) | data << 8;
          return;
          break;
       case 5:
-         regs->intc.ipra = regs->intc.ipra & 0xff00 | data;
+         regs->intc.ipra = (regs->intc.ipra & 0xff00) | data;
          return;
          break;
       //iprb
       case 6:
-         regs->intc.iprb = regs->intc.iprb & 0xff | data << 8;
+         regs->intc.iprb = (regs->intc.iprb & 0xff) | data << 8;
          return;
          break;
       case 7:
-         regs->intc.iprb = regs->intc.iprb & 0xff00 | data;
+         regs->intc.iprb = (regs->intc.iprb & 0xff00) | data;
          return;
          break;
       //iprc
       case 8:
-         regs->intc.iprc = regs->intc.iprc & 0xff | data << 8;
+         regs->intc.iprc = (regs->intc.iprc & 0xff) | data << 8;
          return;
          break;
       case 9:
-         regs->intc.iprc = regs->intc.iprc & 0xff00 | data;
+         regs->intc.iprc = (regs->intc.iprc & 0xff00) | data;
          return;
          break;
       //iprd
       case 0xa:
-         regs->intc.iprd = regs->intc.iprd & 0xff | data << 8;
+         regs->intc.iprd = (regs->intc.iprd & 0xff) | data << 8;
          return;
          break;
       case 0xb:
-         regs->intc.iprd = regs->intc.iprd & 0xff00 | data;
+         regs->intc.iprd = (regs->intc.iprd & 0xff00) | data;
          return;
          break;
       //ipre
       case 0xc:
-         regs->intc.ipre = regs->intc.ipre & 0xff | data << 8;
+         regs->intc.ipre = (regs->intc.ipre & 0xff) | data << 8;
          return;
          break;
       case 0xd:
-         regs->intc.ipre = regs->intc.ipre & 0xff00 | data;
+         regs->intc.ipre = (regs->intc.ipre & 0xff00) | data;
          return;
          break;
       //icr
       case 0xe:
-         regs->intc.icr = regs->intc.icr & 0xff | data << 8;
+         regs->intc.icr = (regs->intc.icr & 0xff) | data << 8;
          return;
          break;
       case 0xf:
-         regs->intc.icr = regs->intc.icr & 0xff00 | data;
+         regs->intc.icr = (regs->intc.icr & 0xff00) | data;
          return;
          break;
       }
@@ -1666,45 +1666,45 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       {
       //bar
       case 0:
-         regs->ubc.bar = regs->ubc.bar & 0x00ffffff | data << 24;
+         regs->ubc.bar = (regs->ubc.bar & 0x00ffffff) | data << 24;
          return;
          break;
       case 1:
-         regs->ubc.bar = regs->ubc.bar & 0xff00ffff | data << 16;
+         regs->ubc.bar = (regs->ubc.bar & 0xff00ffff) | data << 16;
          return;
          break;
       case 2:
-         regs->ubc.bar = regs->ubc.bar & 0xffff00ff | data << 8;
+         regs->ubc.bar = (regs->ubc.bar & 0xffff00ff) | data << 8;
          return;
          break;
       case 3:
-         regs->ubc.bar = regs->ubc.bar & 0xffffff00 | data;
+         regs->ubc.bar = (regs->ubc.bar & 0xffffff00) | data;
          return;
          break;
       //bamr
       case 4:
-         regs->ubc.bamr = regs->ubc.bamr & 0x00ffffff | data << 24;
+         regs->ubc.bamr = (regs->ubc.bamr & 0x00ffffff) | data << 24;
          return;
          break;
       case 5:
-         regs->ubc.bamr = regs->ubc.bamr & 0xff00ffff | data << 16;
+         regs->ubc.bamr = (regs->ubc.bamr & 0xff00ffff) | data << 16;
          return;
          break;
       case 6:
-         regs->ubc.bamr = regs->ubc.bamr & 0xffff00ff | data << 8;
+         regs->ubc.bamr = (regs->ubc.bamr & 0xffff00ff) | data << 8;
          return;
          break;
       case 7:
-         regs->ubc.bamr = regs->ubc.bamr & 0xffffff00 | data;
+         regs->ubc.bamr = (regs->ubc.bamr & 0xffffff00) | data;
          return;
          break;
       //bbr
       case 8:
-         regs->ubc.bbr = regs->ubc.bar & 0x00ff | data << 8;
+         regs->ubc.bbr = (regs->ubc.bar & 0x00ff) | data << 8;
          return;
          break;
       case 9:
-         regs->ubc.bbr = regs->ubc.bar & 0xff00 | data;
+         regs->ubc.bbr = (regs->ubc.bar & 0xff00) | data;
          return;
          break;
       }
@@ -1720,85 +1720,85 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       switch (addr - 0x5FFFFA0)
       {
       case 0:
-         regs->bsc.bcr = regs->bsc.bcr & 0x00ff | data << 8;
+         regs->bsc.bcr = (regs->bsc.bcr & 0x00ff) | data << 8;
          return;
          break;
       case 1:
-         regs->bsc.bcr = regs->bsc.bcr & 0xff00 | data;
+         regs->bsc.bcr = (regs->bsc.bcr & 0xff00) | data;
          return;
          break;
       case 2:
-         regs->bsc.wcr1 = regs->bsc.wcr1 & 0x00ff | data << 8;
+         regs->bsc.wcr1 = (regs->bsc.wcr1 & 0x00ff) | data << 8;
          return;
          break;
       case 3:
-         regs->bsc.wcr1 = regs->bsc.wcr1 & 0xff00 | data;
+         regs->bsc.wcr1 = (regs->bsc.wcr1 & 0xff00) | data;
          return;
          break;
       case 4:
-         regs->bsc.wcr2 = regs->bsc.wcr2 & 0x00ff | data << 8;
+         regs->bsc.wcr2 = (regs->bsc.wcr2 & 0x00ff) | data << 8;
          return;
          break;
       case 5:
-         regs->bsc.wcr2 = regs->bsc.wcr2 & 0xff00 | data;
+         regs->bsc.wcr2 = (regs->bsc.wcr2 & 0xff00) | data;
          return;
          break;
       case 6:
-         regs->bsc.wcr3 = regs->bsc.wcr3 & 0x00ff | data << 8;
+         regs->bsc.wcr3 = (regs->bsc.wcr3 & 0x00ff) | data << 8;
          return;
          break;
       case 7:
-         regs->bsc.wcr3 = regs->bsc.wcr3 & 0xff00 | data;
+         regs->bsc.wcr3 = (regs->bsc.wcr3 & 0xff00) | data;
          return;
          break;
       case 8:
-         regs->bsc.dcr = regs->bsc.dcr & 0x00ff | data << 8;
+         regs->bsc.dcr = (regs->bsc.dcr & 0x00ff) | data << 8;
          return;
          break;
       case 9:
-         regs->bsc.dcr = regs->bsc.dcr & 0xff00 | data;
+         regs->bsc.dcr = (regs->bsc.dcr & 0xff00) | data;
          return;
          break;
       case 0xa:
-         regs->bsc.pcr = regs->bsc.pcr & 0x00ff | data << 8;
+         regs->bsc.pcr = (regs->bsc.pcr & 0x00ff) | data << 8;
          return;
          break;
       case 0xb:
-         regs->bsc.pcr = regs->bsc.pcr & 0xff00 | data;
+         regs->bsc.pcr = (regs->bsc.pcr & 0xff00) | data;
          return;
          break;
       case 0xc:
-         regs->bsc.rcr = regs->bsc.rcr & 0x00ff | data << 8;
+         regs->bsc.rcr = (regs->bsc.rcr & 0x00ff) | data << 8;
          return;
          break;
       case 0xd:
-         regs->bsc.rcr = regs->bsc.rcr & 0xff00 | data;
+         regs->bsc.rcr = (regs->bsc.rcr & 0xff00) | data;
          return;
          break;
       case 0xe:
-         regs->bsc.rtcsr = regs->bsc.rtcsr & 0x00ff | data << 8;
+         regs->bsc.rtcsr = (regs->bsc.rtcsr & 0x00ff) | data << 8;
          return;
          break;
       case 0xf:
-         regs->bsc.rtcsr = regs->bsc.rtcsr & 0xff00 | data;
+         regs->bsc.rtcsr = (regs->bsc.rtcsr & 0xff00) | data;
          return;
          break;
       //rtcnt
       case 0x10:
-         regs->bsc.rtcnt = regs->bsc.rtcnt & 0x00ff | data << 8;
+         regs->bsc.rtcnt = (regs->bsc.rtcnt & 0x00ff) | data << 8;
          return;
          break;
       case 0x11:
-         regs->bsc.rtcnt = regs->bsc.rtcnt & 0xff00 | data;
+         regs->bsc.rtcnt = (regs->bsc.rtcnt & 0xff00) | data;
          return;
          break;
       //rtcor
       case 0x12:
-         regs->bsc.rtcor = regs->bsc.rtcor & 0x00ff | data << 8;
+         regs->bsc.rtcor = (regs->bsc.rtcor & 0x00ff) | data << 8;
          return;
          break;
       case 0x13:
-         regs->bsc.rtcor = regs->bsc.rtcor & 0xff00 | data;
+         regs->bsc.rtcor = (regs->bsc.rtcor & 0xff00) | data;
          return;
          break;
       }
@@ -1831,19 +1831,19 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       switch (addr - 0x5FFFFC0)
       {
       case 0:
-         regs->padr = regs->padr & 0x00ff | data << 8;
+         regs->padr = (regs->padr & 0x00ff) | data << 8;
          return;
          break;
       case 1:
-         regs->padr = regs->padr & 0xff00 | data;
+         regs->padr = (regs->padr & 0xff00) | data;
          return;
          break;
       case 2:
-         regs->pbdr = regs->pbdr & 0x00ff | data << 8;
+         regs->pbdr = (regs->pbdr & 0x00ff) | data << 8;
          return;
          break;
       case 3:
-         regs->pbdr = regs->pbdr & 0xff00 | data;
+         regs->pbdr = (regs->pbdr & 0xff00) | data;
          return;
          break;
       }
@@ -1856,56 +1856,56 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       {
       //paior
       case 4:
-         regs->pfc.paior = regs->pfc.paior & 0x00ff | data << 8;
+         regs->pfc.paior = (regs->pfc.paior & 0x00ff) | data << 8;
          return;
          break;
       case 5:
-         regs->pfc.paior = regs->pfc.paior & 0xff00 | data;
+         regs->pfc.paior = (regs->pfc.paior & 0xff00) | data;
          return;
          break;
       //pbior
       case 6:
-         regs->pfc.pbior = regs->pfc.pbior & 0x00ff | data << 8;
+         regs->pfc.pbior = (regs->pfc.pbior & 0x00ff) | data << 8;
          return;
          break;
       case 7:
-         regs->pfc.pbior = regs->pfc.pbior & 0xff00 | data;
+         regs->pfc.pbior = (regs->pfc.pbior & 0xff00) | data;
          return;
          break;
       //pacr1
       case 8:
-         regs->pfc.pacr1 = regs->pfc.pacr1 & 0x00ff | data << 8;
+         regs->pfc.pacr1 = (regs->pfc.pacr1 & 0x00ff) | data << 8;
          return;
          break;
       case 9:
-         regs->pfc.pacr1 = regs->pfc.pacr1 & 0xff00 | data;
+         regs->pfc.pacr1 = (regs->pfc.pacr1 & 0xff00) | data;
          return;
          break;
       //pacr2
       case 0xa:
-         regs->pfc.pacr2 = regs->pfc.pacr2 & 0x00ff | data << 8;
+         regs->pfc.pacr2 = (regs->pfc.pacr2 & 0x00ff) | data << 8;
          return;
          break;
       case 0xb:
-         regs->pfc.pacr2 = regs->pfc.pacr2 & 0xff00 | data;
+         regs->pfc.pacr2 = (regs->pfc.pacr2 & 0xff00) | data;
          return;
          break;
       //pbcr1
       case 0xc:
-         regs->pfc.pbcr1 = regs->pfc.pbcr1 & 0x00ff | data << 8;
+         regs->pfc.pbcr1 = (regs->pfc.pbcr1 & 0x00ff) | data << 8;
          return;
          break;
       case 0xd:
-         regs->pfc.pbcr1 = regs->pfc.pbcr1 & 0xff00 | data;
+         regs->pfc.pbcr1 = (regs->pfc.pbcr1 & 0xff00) | data;
          return;
          break;
       //pbcr2
       case 0xe:
-         regs->pfc.pbcr2 = regs->pfc.pbcr2 & 0x00ff | data << 8;
+         regs->pfc.pbcr2 = (regs->pfc.pbcr2 & 0x00ff) | data << 8;
          return;
          break;
       case 0xf:
-         regs->pfc.pbcr2 = regs->pfc.pbcr2 & 0xff00 | data;
+         regs->pfc.pbcr2 = (regs->pfc.pbcr2 & 0xff00) | data;
          return;
          break;
       }
@@ -1917,11 +1917,11 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       switch (addr - 0x5FFFFD0)
       {
       case 0:
-         regs->pcdr = regs->pcdr & 0x00ff | data << 8;
+         regs->pcdr = (regs->pcdr & 0x00ff) | data << 8;
          return;
          break;
       case 1:
-         regs->pcdr = regs->pcdr & 0xff00 | data;
+         regs->pcdr = (regs->pcdr & 0xff00) | data;
          return;
          break;
       }
