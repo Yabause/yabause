@@ -74,8 +74,6 @@ static INLINE void fad2msf_bcd(s32 fad, u8 *msf);
 //When reading sectors SH1 expects irq7 delta timing to be within a margin of -/+ 28 ticks. Adjust as required
 #define TIME_READSECTOR 8730
 
-#define RING_FAD 0x3f435
-
 struct CdDriveContext cdd_cxt;
 
 enum CdStatusOperations
@@ -117,6 +115,39 @@ enum CommunicationState
       WaitToOeFirstByte,
       WaitToRxio
 }comm_state = NoTransfer;
+
+static INLINE void fad2msf(s32 fad, u8 *msf) {
+   msf[0] = fad / (75 * 60);
+   fad -= msf[0] * (75 * 60);
+   msf[1] = fad / 75;
+   fad -= msf[1] * 75;
+   msf[2] = fad;
+}
+
+static INLINE u8 num2bcd(u8 num) {
+   return ((num / 10) << 4) | (num % 10);
+}
+
+static INLINE void fad2msf_bcd(s32 fad, u8 *msf) {
+   fad2msf(fad, msf);
+   msf[0] = num2bcd(msf[0]);
+   msf[1] = num2bcd(msf[1]);
+   msf[2] = num2bcd(msf[2]);
+}
+
+static INLINE u8 bcd2num(u8 bcd) {
+   return (bcd >> 4) * 10 + (bcd & 0xf);
+}
+
+static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame) {
+   u32 fad = 0;
+   fad += bcd2num(min);
+   fad *= 60;
+   fad += bcd2num(sec);
+   fad *= 75;
+   fad += bcd2num(frame);
+   return fad;
+}
 
 u8 cd_drive_get_serial_bit()
 {
@@ -160,7 +191,7 @@ void do_toc()
 
    set_checksum(cdd_cxt.state_data);
 
-   if (cdd_cxt.toc_entry > cdd_cxt.num_toc_entries)
+   if (cdd_cxt.toc_entry >= cdd_cxt.num_toc_entries)
    {
       cdd_cxt.state.current_operation = Idle;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
@@ -174,10 +205,14 @@ void update_status_info()
    s32 track_num = 0;
    s32 track_fad = 0;
    s32 track_start_fad = 0;
-   track_num = toc_10_get_track(cdd_cxt.disc_fad);
-   track_fad = get_track_fad(track_num, cdd_cxt.disc_fad + 4, &index);
-   track_start_fad = get_track_start_fad(track_num);
-   track_fad = cdd_cxt.disc_fad - track_start_fad;
+   if (cdd_cxt.disc_fad >= get_track_start_fad(cdd_cxt.num_tracks)) {
+       track_fad = cdd_cxt.disc_fad;
+   } else {
+       track_num = toc_10_get_track(cdd_cxt.disc_fad);
+       track_fad = get_track_fad(track_num, cdd_cxt.disc_fad + 4, &index);
+       track_start_fad = get_track_start_fad(track_num);
+       track_fad = cdd_cxt.disc_fad - track_start_fad;
+   }
 
    if (track_fad < 0)
       track_fad = -track_fad;
@@ -186,9 +221,15 @@ void update_status_info()
 
    state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
 
-   cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
-   cdd_cxt.state.index_field = index;
-   cdd_cxt.state.track_number = track_num;
+   if (cdd_cxt.disc_fad >= get_track_start_fad(cdd_cxt.num_tracks)) {   // leadout
+        cdd_cxt.state.q_subcode = 1;
+        cdd_cxt.state.index_field = 1;
+        cdd_cxt.state.track_number = 0xaa;
+   } else {
+       cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
+       cdd_cxt.state.index_field = index;
+       cdd_cxt.state.track_number = track_num;
+}
 }
 
 static u8 ror(u8 in) 
@@ -242,7 +283,7 @@ void do_dataread()
          fad2msf_bcd(cdd_cxt.disc_fad, buf+12);
          buf[15] = 1;
       }
-      else if (cdd_cxt.disc_fad >= RING_FAD)
+      else if (cdd_cxt.disc_fad >= get_track_start_fad(cdd_cxt.num_tracks))
       {
          u8 *subbuf=buf+12;
          // fills all 2352 bytes
@@ -263,10 +304,6 @@ void do_dataread()
       else
          Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
 
-      cdd_cxt.disc_fad++;
-
-      if (cdd_cxt.disc_fad >= 150 && cdd_cxt.disc_fad < RING_FAD)
-         Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
 
       if (dmac->channel[0].dar >> 24 != 9) 
       {
@@ -285,6 +322,11 @@ void do_dataread()
       if (dmac->channel[0].chcr & 4)
          SH2SendInterrupt(SH1, 72, (sh1_cxt.onchip.intc.iprc >> 12) & 0xf);
    }
+  cdd_cxt.disc_fad++;
+
+  if (cdd_cxt.disc_fad >= 150 && cdd_cxt.disc_fad < get_track_start_fad(cdd_cxt.num_tracks))
+     Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
+
 #else
    if (!(dmac->channel[0].chcr & 2))
    {
@@ -389,7 +431,7 @@ u32 get_fad_from_command(u8 * buf)
 s32 get_track_start_fad(int track_num)
 {
    track_num--;
-   return msf_bcd2fad(cdd_cxt.toc[track_num].min, cdd_cxt.toc[track_num].sec, cdd_cxt.toc[track_num].frame);
+   return msf_bcd2fad(cdd_cxt.tracks[track_num].pmin, cdd_cxt.tracks[track_num].psec, cdd_cxt.tracks[track_num].pframe);
 }
 
 s32 get_track_fad(int track_num, s32 fad, int * index)
@@ -454,21 +496,38 @@ int do_command()
       break;
    case 0x3:
    {
-      int i;
+      int i, track_num, max_track = 0;
       CDLOG("read toc\n");
       cdd_cxt.toc_entry = 0;
       cdd_cxt.num_toc_entries = Cs2Area->cdi->ReadTOC10(cdd_cxt.toc);
 
+      // Read and sort the track entries, so you get one entry for each track + leadout, in starting FAD order.
       for (i = 0; i < cdd_cxt.num_toc_entries; i++)
       {
-         cdd_cxt.toc[i].min = num2bcd(cdd_cxt.toc[i].min);
-         cdd_cxt.toc[i].sec = num2bcd(cdd_cxt.toc[i].sec);
-         cdd_cxt.toc[i].frame = num2bcd(cdd_cxt.toc[i].frame);
+         CDInterfaceToc10 *entry = &cdd_cxt.toc[i];
+         entry->min = num2bcd(entry->min);
+         entry->sec = num2bcd(entry->sec);
+         entry->frame = num2bcd(entry->frame);
 
-         cdd_cxt.toc[i].pmin = num2bcd(cdd_cxt.toc[i].pmin);
-         cdd_cxt.toc[i].psec = num2bcd(cdd_cxt.toc[i].psec);
-         cdd_cxt.toc[i].pframe = num2bcd(cdd_cxt.toc[i].pframe);
+         entry->pmin = num2bcd(entry->pmin);
+         entry->psec = num2bcd(entry->psec);
+         entry->pframe = num2bcd(entry->pframe);
+
+         if (entry->point <= 0x99) {
+            track_num = bcd2num(entry->point);
+            if (track_num > max_track)
+               max_track = track_num;
+            memcpy(&cdd_cxt.tracks[track_num-1], entry, sizeof(*entry));
+         }
       }
+      for (i = 0; i < cdd_cxt.num_toc_entries; i++)
+      {
+         if (cdd_cxt.toc[i].point = 0xa2) {  // leadout
+            memcpy(&cdd_cxt.tracks[max_track], &cdd_cxt.toc[i], sizeof(cdd_cxt.toc[i]));
+            break;
+         }
+      }
+      cdd_cxt.num_tracks = max_track + 1;
       do_toc();
 
       return TIME_READING;
@@ -632,60 +691,24 @@ void set_checksum(u8 * data)
    data[12] = 0;
 }
 
-static INLINE void fad2msf(s32 fad, u8 *msf) {
-   msf[0] = fad / (75 * 60);
-   fad -= msf[0] * (75 * 60);
-   msf[1] = fad / 75;
-   fad -= msf[1] * 75;
-   msf[2] = fad;
-}
-
-static INLINE u8 num2bcd(u8 num) {
-   return ((num / 10) << 4) | (num % 10);
-}
-
-static INLINE void fad2msf_bcd(s32 fad, u8 *msf) {
-   fad2msf(fad, msf);
-   msf[0] = num2bcd(msf[0]);
-   msf[1] = num2bcd(msf[1]);
-   msf[2] = num2bcd(msf[2]);
-}
-
-static INLINE u8 bcd2num(u8 bcd) {
-   return (bcd >> 4) * 10 + (bcd & 0xf);
-}
-
-static INLINE u32 msf_bcd2fad(u8 min, u8 sec, u8 frame) {
-   u32 fad = 0;
-   fad += bcd2num(min);
-   fad *= 60;
-   fad += bcd2num(sec);
-   fad *= 75;
-   fad += bcd2num(frame);
-   return fad;
-}
-
 s32 toc_10_get_track(s32 fad)
 {
    int i = 0;
    if (!cdd_cxt.num_toc_entries)
       return 1;
-   for (i = 0; i < 99; i++)
+
+   for (i = 0; i < cdd_cxt.num_toc_entries; i++)
    {
-      s32 track_start = msf_bcd2fad(cdd_cxt.toc[i].min, cdd_cxt.toc[i].sec, cdd_cxt.toc[i].frame);
-      s32 track_end  = msf_bcd2fad(cdd_cxt.toc[i].pmin, cdd_cxt.toc[i].psec, cdd_cxt.toc[i].pframe);
+      s32 track_start = get_track_start_fad(i+1);
+      s32 track_end  = get_track_start_fad(i+2);
 
       if (fad >= track_start && fad < track_end)
          return (i + 1);
 
       if (i == 0 && fad < track_start)
          return 1;//lead in
-
-      if (i > cdd_cxt.num_toc_entries)
-         assert(0);
    }
 
-   assert(0);
    return 0;
 }
 

@@ -54,10 +54,11 @@ struct CdDriveContext
    u8 state_data[13];
    u8 received_data[13];
    int received_data_counter;
+   u8 post_seek_state;
 
-   CDInterfaceToc10 toc[102*3];
+   CDInterfaceToc10 toc[103*3], tracks[100];
    int toc_entry;
-   int num_toc_entries;
+   int num_toc_entries, num_tracks;
 
    u32 disc_fad;
    u32 target_fad;
