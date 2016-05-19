@@ -34,6 +34,7 @@
 #include "tsunami/yab_tsunami.h"
 
 static INLINE u8 num2bcd(u8 num);
+static INLINE void fad2msf_bcd(s32 fad, u8 *msf);
 
 #define WANT_RX_TRACE
 #ifdef WANT_RX_TRACE
@@ -72,6 +73,8 @@ static INLINE u8 num2bcd(u8 num);
 
 //When reading sectors SH1 expects irq7 delta timing to be within a margin of -/+ 28 ticks. Adjust as required
 #define TIME_READSECTOR 8730
+
+#define RING_FAD 0x3f435
 
 struct CdDriveContext cdd_cxt;
 
@@ -201,8 +204,24 @@ void do_dataread()
       int i;
 
       CDLOG("running DMA to %X(FAD: %d)\n", dmac->channel[0].dar, cdd_cxt.disc_fad);
-      Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
-      Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad+1);
+
+      if (cdd_cxt.disc_fad < 150)
+      {
+         memset(buf, 0, sizeof(buf));
+         fad2msf_bcd(cdd_cxt.disc_fad, buf+12);
+         buf[15] = 1;
+      }
+      else if (cdd_cxt.disc_fad >= RING_FAD)
+      {
+         // need to fill sector data
+      }
+      else
+         Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
+
+      cdd_cxt.disc_fad++;
+
+      if (cdd_cxt.disc_fad >= 150 && cdd_cxt.disc_fad < RING_FAD)
+         Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
 
       if (dmac->channel[0].dar >> 24 != 9) 
       {
@@ -251,8 +270,6 @@ int continue_command()
    else if (cdd_cxt.state.current_operation == ReadingDataSectors)
    {
       comm_state = NoTransfer;
-      cdd_cxt.disc_fad++;
-
       do_dataread();
 
       update_status_info();
@@ -307,6 +324,7 @@ s32 get_track_start_fad(int track_num)
    track_num--;
    return msf_bcd2fad(cdd_cxt.toc[track_num].min, cdd_cxt.toc[track_num].sec, cdd_cxt.toc[track_num].frame);
 }
+
 s32 get_track_fad(int track_num, s32 fad, int * index)
 {
    s32 track_start_fad = get_track_start_fad(track_num);
