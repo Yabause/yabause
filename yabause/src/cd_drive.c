@@ -205,7 +205,7 @@ void update_status_info()
    s32 track_num = 0;
    s32 track_fad = 0;
    s32 track_start_fad = 0;
-   if (cdd_cxt.disc_fad >= get_track_start_fad(cdd_cxt.num_tracks)) {
+   if (cdd_cxt.disc_fad >= get_track_start_fad(-1)) {
        track_fad = cdd_cxt.disc_fad;
    } else {
        track_num = toc_10_get_track(cdd_cxt.disc_fad);
@@ -221,7 +221,7 @@ void update_status_info()
 
    state_set_msf_info(&cdd_cxt.state, track_fad, cdd_cxt.disc_fad);
 
-   if (cdd_cxt.disc_fad >= get_track_start_fad(cdd_cxt.num_tracks)) {   // leadout
+   if (cdd_cxt.disc_fad >= get_track_start_fad(-1)) {   // leadout
         cdd_cxt.state.q_subcode = 1;
         cdd_cxt.state.index_field = 1;
         cdd_cxt.state.track_number = 0xaa;
@@ -283,7 +283,7 @@ void do_dataread()
          fad2msf_bcd(cdd_cxt.disc_fad, buf+12);
          buf[15] = 1;
       }
-      else if (cdd_cxt.disc_fad >= get_track_start_fad(cdd_cxt.num_tracks))
+      else if (cdd_cxt.disc_fad >= get_track_start_fad(-1))
       {
          u8 *subbuf=buf+12;
          // fills all 2352 bytes
@@ -304,6 +304,10 @@ void do_dataread()
       else
          Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
 
+      printf("sector head:");
+      for (i=12; i<16; i++)
+          printf(" %02X", buf[i]);
+      printf("\n");
 
       if (dmac->channel[0].dar >> 24 != 9) 
       {
@@ -324,7 +328,7 @@ void do_dataread()
    }
   cdd_cxt.disc_fad++;
 
-  if (cdd_cxt.disc_fad >= 150 && cdd_cxt.disc_fad < get_track_start_fad(cdd_cxt.num_tracks))
+  if (cdd_cxt.disc_fad >= 150 && cdd_cxt.disc_fad < get_track_start_fad(-1))
      Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
 
 #else
@@ -368,7 +372,7 @@ int continue_command()
       cdd_cxt.disc_fad++;
       
       //drive head moves back when fad is too high
-      if (cdd_cxt.disc_fad > cdd_cxt.target_fad + 1)
+      if (cdd_cxt.disc_fad > cdd_cxt.target_fad + 5)
          cdd_cxt.disc_fad = cdd_cxt.target_fad;
 
       update_status_info();
@@ -432,8 +436,12 @@ u32 get_fad_from_command(u8 * buf)
 
 s32 get_track_start_fad(int track_num)
 {
-   track_num--;
-   return msf_bcd2fad(cdd_cxt.tracks[track_num].pmin, cdd_cxt.tracks[track_num].psec, cdd_cxt.tracks[track_num].pframe);
+   if (track_num == -1) // leadout
+      track_num = cdd_cxt.num_tracks;
+   else                 // normal track (1-based)
+      track_num--;
+   s32 fad = msf_bcd2fad(cdd_cxt.tracks[track_num].pmin, cdd_cxt.tracks[track_num].psec, cdd_cxt.tracks[track_num].pframe);
+   return fad;
 }
 
 s32 get_track_fad(int track_num, s32 fad, int * index)
@@ -523,12 +531,12 @@ int do_command()
       }
       for (i = 0; i < cdd_cxt.num_toc_entries; i++)
       {
-         if (cdd_cxt.toc[i].point = 0xa2) {  // leadout
+         if (cdd_cxt.toc[i].point == 0xa2) {  // leadout
             memcpy(&cdd_cxt.tracks[max_track], &cdd_cxt.toc[i], sizeof(cdd_cxt.toc[i]));
             break;
          }
       }
-      cdd_cxt.num_tracks = max_track + 1;
+      cdd_cxt.num_tracks = max_track;
       do_toc();
 
       return TIME_READING;
@@ -635,10 +643,10 @@ int cd_command_exec()
    }
    else if (comm_state == WaitToRxio)
    {
-#if 0
-      if (cdd_cxt.received_data[11] != 0xff)
+#if 1
+      if (cdd_cxt.received_data[11] != 0xff && cdd_cxt.received_data[0])
       {
-         RXTRACE("CMD: ", cdd_cxt.disc_fad);
+         RXTRACE("CMD: ");
 
          int i;
          for (i = 0; i < 13; i++)
@@ -729,6 +737,14 @@ void make_status_data(struct CdState *state, u8* data)
    data[10] = state->absolute_frame;
 
    set_checksum(data); 
+
+   if (data[0] && data[0] != 0x46) {
+         RXTRACE("STA: ");
+
+         for (i = 0; i < 13; i++)
+            RXTRACE(" %02X", data[i]);
+         RXTRACE("\n");
+   }
 }
 
 void cdd_reset()
