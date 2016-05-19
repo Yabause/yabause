@@ -198,11 +198,11 @@ void do_dataread()
    {
       u8 buf[2448];		
       u32 dest;
+      int i;
 
-      CDLOG("running DMA to %X\n", dmac->channel[0].dar);
+      CDLOG("running DMA to %X(FAD: %d)\n", dmac->channel[0].dar, cdd_cxt.disc_fad);
       Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
       Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad+1);
-      cdd_cxt.disc_fad++;
 
       if (dmac->channel[0].dar >> 24 != 9) 
       {
@@ -214,7 +214,8 @@ void do_dataread()
       }
       dest = dmac->channel[0].dar & 0x7FFFF;
 
-      memcpy(SH1Dram + dest, buf, dmac->channel[0].tcr*2);
+      for (i = 0; i < dmac->channel[0].tcr*2; i+=2)
+         T2WriteWord(SH1Dram, dest+i, (buf[12+i] << 8) | buf[13+i]);
 
       dmac->channel[0].chcr |= 2;		
       if (dmac->channel[0].chcr & 4)
@@ -352,11 +353,13 @@ int do_command()
       break;
    case 0x2:
       //seeking ring
+      CDLOG("seek ring\n");
       cdd_cxt.state.current_operation = SeekSecurityRing2;
       break;
    case 0x3:
    {
       int i;
+      CDLOG("read toc\n");
       cdd_cxt.toc_entry = 0;
       cdd_cxt.num_toc_entries = Cs2Area->cdi->ReadTOC10(cdd_cxt.toc);
 
@@ -377,6 +380,7 @@ int do_command()
    }
    case 0x4:
       //stop disc
+      CDLOG("stop disc\n");
       cdd_cxt.state.current_operation = Stopped;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       comm_state = NoTransfer;
@@ -386,10 +390,10 @@ int do_command()
    {
       //read data at fad
       s32 fad;
-      CDLOG("read data\n");
 
       // Queue up next sector
       fad = get_fad_from_command(cdd_cxt.received_data);
+      CDLOG("read data: fad = %d\n", fad);
       Cs2Area->cdi->ReadAheadFAD(fad-4);
 
       if (1) // Add detection of data/audio data
@@ -397,6 +401,7 @@ int do_command()
       else
          cdd_cxt.state.current_operation = ReadingAudioData;
 
+      cdd_cxt.disc_fad = fad-4;
       do_dataread();
 
       update_status_info();
@@ -408,6 +413,7 @@ int do_command()
    }
    case 0x8:
       //pause
+      CDLOG("pause\n");
       cdd_cxt.state.current_operation = Idle;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
       comm_state = NoTransfer;
@@ -416,15 +422,18 @@ int do_command()
    case 0x9:
       //seek
    {
+      CDLOG("seek\n");
       do_seek();
       return TIME_READING;
       break;
    }
    case 0xa:
       //scan forward
+      CDLOG("scan forward\n");
       break;
    case 0xb:
       //scan backwards
+      CDLOG("scan backwards\n");
       break;
    }
 
