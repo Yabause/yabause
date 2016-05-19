@@ -399,12 +399,12 @@ int continue_command()
    {
       
       cdd_cxt.seek_time++;
+      update_seek_status();
 
       if (cdd_cxt.seek_time > 9)
       {
-         //seek completed
-         cdd_cxt.state.current_operation = Idle;
-         make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+         //seek completed, change for next status
+         cdd_cxt.state.current_operation = cdd_cxt.post_seek_state;
       }
       comm_state = NoTransfer;
       return TIME_READING;
@@ -454,18 +454,18 @@ void update_seek_status()
    comm_state = NoTransfer;
 }
 
-void do_seek_common()
+void do_seek_common(u8 post_seek_state)
 {
    s32 fad = get_fad_from_command(cdd_cxt.received_data);
    cdd_cxt.disc_fad = fad - 4;
    cdd_cxt.target_fad = cdd_cxt.disc_fad;
    cdd_cxt.seek_time = 0;
+   cdd_cxt.post_seek_state = post_seek_state;
 }
 
 void do_seek()
 {
-  
-   do_seek_common();
+   do_seek_common(Idle);
    update_seek_status();
 }
 
@@ -488,9 +488,8 @@ int do_command()
       //seeking ring
       CDLOG("seek ring\n");
       cdd_cxt.state.current_operation = SeekSecurityRing2;
-      do_seek_common();
+      do_seek_common(Idle);
       make_ring_status();
-      cdd_cxt.seek_time = 0;
       comm_state = NoTransfer;
       return TIME_READING / cdd_cxt.speed;
       break;
@@ -543,25 +542,12 @@ int do_command()
       break;
    case 0x6:
    {
-      //read data at fad
-      s32 fad;
+      do_seek_common(ReadingDataSectors);
+      update_seek_status();
+      Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
 
-      // Queue up next sector
-      fad = get_fad_from_command(cdd_cxt.received_data);
-      CDLOG("read data: fad = %d\n", fad);
-      Cs2Area->cdi->ReadAheadFAD(fad-4);
 
-      if (1) // Add detection of data/audio data
-         cdd_cxt.state.current_operation = ReadingDataSectors;
-      else
-         cdd_cxt.state.current_operation = ReadingAudioData;
-
-      cdd_cxt.disc_fad = fad-4;
       do_dataread();
-
-      update_status_info();
-      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
-
 
       comm_state = NoTransfer;
       return TIME_READSECTOR / cdd_cxt.speed;
