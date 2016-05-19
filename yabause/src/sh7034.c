@@ -2443,16 +2443,16 @@ void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
    switch (addr)
    {
    case 0:
-      regs->dmac.channel[which].sar = regs->dmac.channel[which].sar & 0x0000ffff | data << 16;
+      regs->dmac.channel[which].sar = (regs->dmac.channel[which].sar & 0x0000ffff) | data << 16;
       return;
    case 2:
-      regs->dmac.channel[which].sar = regs->dmac.channel[which].sar & 0xffff0000 | data;
+      regs->dmac.channel[which].sar = (regs->dmac.channel[which].sar & 0xffff0000) | data;
       return;
    case 4:
-      regs->dmac.channel[which].dar = regs->dmac.channel[which].dar & 0x0000ffff | data << 16;
+      regs->dmac.channel[which].dar = (regs->dmac.channel[which].dar & 0x0000ffff) | data << 16;
       return;
    case 6:
-      regs->dmac.channel[which].dar = regs->dmac.channel[which].dar & 0xffff0000 | data;
+      regs->dmac.channel[which].dar = (regs->dmac.channel[which].dar & 0xffff0000) | data;
       return;
    case 8:
       //unmapped
@@ -2733,16 +2733,16 @@ void onchip_write_word(struct Onchip * regs, u32 addr, u16 data)
       switch (addr - 0x5FFFF90)
       {
       case 0:
-         regs->ubc.bar = regs->ubc.bar & 0xffff | data << 16;
+         regs->ubc.bar = (regs->ubc.bar & 0xffff) | data << 16;
          return;
       case 2:
-         regs->ubc.bar = regs->ubc.bar & 0xffff0000 | data;
+         regs->ubc.bar = (regs->ubc.bar & 0xffff0000) | data;
          return;
       case 4:
-         regs->ubc.bamr = regs->ubc.bamr & 0xffff | data << 16;
+         regs->ubc.bamr = (regs->ubc.bamr & 0xffff) | data << 16;
          return;
       case 6:
-         regs->ubc.bamr = regs->ubc.bamr & 0xffff0000 | data;
+         regs->ubc.bamr = (regs->ubc.bamr & 0xffff0000) | data;
          return;
       case 8:
          regs->ubc.bbr = data;
