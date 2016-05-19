@@ -1224,15 +1224,23 @@ void onchip_write_timer_byte(struct Onchip * regs, u32 addr, int which_timer, u8
       return;
       break;
    case 3:
-      regs->itu.channel[which_timer].tsr = data;
+      //can only clear flags
+      if (!(data & 1))
+         regs->itu.channel[which_timer].tsr &= ~1;
+
+      if (!(data & 2))
+         regs->itu.channel[which_timer].tsr &= ~2;
+
+      if (!(data & 4))
+         regs->itu.channel[which_timer].tsr &= ~4;
       return;
       break;
    case 4:
-      regs->itu.channel[which_timer].tcnt = (regs->itu.channel[which_timer].tsr & 0xff) | (data << 8);
+      regs->itu.channel[which_timer].tcnt = (regs->itu.channel[which_timer].tcnt & 0xff) | (data << 8);
       return;
       break;
    case 5:
-      regs->itu.channel[which_timer].tcnt = (regs->itu.channel[which_timer].tsr & 0xff00) | data;
+      regs->itu.channel[which_timer].tcnt = (regs->itu.channel[which_timer].tcnt & 0xff00) | data;
       return;
       break;
    case 6:
@@ -5027,6 +5035,12 @@ void tick_timer(int which)
       switch (sh1_cxt.onchip.itu.channel[which].tior & 7)
       {
       case 0:
+         sh1_cxt.onchip.itu.channel[which].tsr |= 1;
+
+         //cleared by gra compare match
+         if(((sh1_cxt.onchip.itu.channel[which].tcr >> 5) & 3) == 1)
+            sh1_cxt.onchip.itu.channel[which].tcnt = 0;
+
          if (sh1_cxt.onchip.itu.channel[which].tier & 1)
             SH2SendInterrupt(SH1, 96, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
          break;
@@ -5058,6 +5072,11 @@ void tick_timer(int which)
       switch ((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7)
       {
       case 0:
+         sh1_cxt.onchip.itu.channel[which].tsr |= 2;
+
+         if (((sh1_cxt.onchip.itu.channel[which].tcr >> 5) & 3) == 2)
+            sh1_cxt.onchip.itu.channel[which].tcnt = 0;
+
          if (sh1_cxt.onchip.itu.channel[which].tier & 2)
             SH2SendInterrupt(SH1, 97, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
          break;
@@ -5351,7 +5370,8 @@ void sh1_set_output_enable_falling_edge()
    sh1_cxt.onchip.itu.channel[3].grb = sh1_cxt.onchip.itu.channel[3].tcnt;
 
    //clear tcnt
-   sh1_cxt.onchip.itu.channel[3].tcnt = 0;
+   if(((sh1_cxt.onchip.itu.channel[3].tcr >> 5) & 3) == 2)
+      sh1_cxt.onchip.itu.channel[3].tcnt = 0;
 
    sh1_cxt.onchip.itu.channel[3].tsr |= (1 << 1);
 
