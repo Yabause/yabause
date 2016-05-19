@@ -561,6 +561,8 @@ u32 FASTCALL ygr_a_bus_read_long(SH2_struct * sh, u32 addr) {
    case 0x90028:
       return ((ygr_cxt.regs.MPEGRGB << 16) | ygr_cxt.regs.MPEGRGB);
    case 0x18000:
+   {
+      u32 top;
       while ((sh1_cxt.onchip.dmac.channel[1].chcr & 2) ||
              !(sh1_cxt.onchip.dmac.channel[1].chcr & 1)) {
          Cs2Exec(200);
@@ -568,11 +570,12 @@ u32 FASTCALL ygr_a_bus_read_long(SH2_struct * sh, u32 addr) {
       }
 
       sh1_dreq_asserted(1);
-      uint32_t top = ygr_cxt.fake_fifo;
+      top = ygr_cxt.fake_fifo;
       sh1_dreq_asserted(1);
       top <<= 16;
       top |= ygr_cxt.fake_fifo;
       return top;
+   }
    default:
       LOG("ygr\t: Undocumented register read %08X\n", addr);
       break;

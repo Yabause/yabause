@@ -5454,15 +5454,18 @@ void sh1_set_start(int state)
 
 void tick_dma(int which)
 {
+   u8 destination_mode, source_mode, is_word_size;
+   s8 source_increment, dest_increment;
+
    if (!sh1_cxt.onchip.dmac.channel[which].is_active)
       return;
 
-   u8 destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;
-   u8 source_mode = (sh1_cxt.onchip.dmac.channel[which].chcr >> 12) & 3;
-   u8 is_word_size = (sh1_cxt.onchip.dmac.channel[which].chcr >> 3) & 1;//otherwise byte size
+   destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;
+   source_mode = (sh1_cxt.onchip.dmac.channel[which].chcr >> 12) & 3;
+   is_word_size = (sh1_cxt.onchip.dmac.channel[which].chcr >> 3) & 1;//otherwise byte size
 
-   s8 source_increment = 0;
-   s8 dest_increment = 0;
+   source_increment = 0;
+   dest_increment = 0;
 
    //update addresses
    //mode 0 means fixed

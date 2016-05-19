@@ -436,11 +436,12 @@ u32 get_fad_from_command(u8 * buf)
 
 s32 get_track_start_fad(int track_num)
 {
+   s32 fad;
    if (track_num == -1) // leadout
       track_num = cdd_cxt.num_tracks;
    else                 // normal track (1-based)
       track_num--;
-   s32 fad = msf_bcd2fad(cdd_cxt.tracks[track_num].pmin, cdd_cxt.tracks[track_num].psec, cdd_cxt.tracks[track_num].pframe);
+   fad = msf_bcd2fad(cdd_cxt.tracks[track_num].pmin, cdd_cxt.tracks[track_num].psec, cdd_cxt.tracks[track_num].pframe);
    return fad;
 }
 
@@ -646,9 +647,9 @@ int cd_command_exec()
 #if 1
       if (cdd_cxt.received_data[11] != 0xff && cdd_cxt.received_data[0])
       {
+         int i;
          RXTRACE("CMD: ");
 
-         int i;
          for (i = 0; i < 13; i++)
             RXTRACE(" %02X", cdd_cxt.received_data[i]);
          RXTRACE("\n");
