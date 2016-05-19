@@ -191,6 +191,37 @@ void update_status_info()
    cdd_cxt.state.track_number = track_num;
 }
 
+static u8 ror(u8 in) 
+{
+   return (in>>1) | (in<<(7));
+}
+
+static void make_ring_data(u8 *buf) 
+{
+   u32 i,j;
+   u16 lfsr = 1;
+   u8 a;
+   for (i=12; i<2352; i++) 
+   {
+      a = (i & 1) ? 0x59 : 0xa8;
+      for (j=0; j<8; j++) 
+      {
+         u32 eax = a;
+         u32 ebx = lfsr & 1;
+         a ^= ebx;
+         a = ror(a);
+
+         eax = lfsr;
+         eax >>= 1;
+         ebx = lfsr;
+         eax ^= ebx;
+         lfsr |= eax << 15;
+         lfsr >>= 1;
+      }
+      buf[i-12] = a;
+   }
+}
+
 void do_dataread()
 {
    struct Dmac *dmac=&sh1_cxt.onchip.dmac;
@@ -213,7 +244,20 @@ void do_dataread()
       }
       else if (cdd_cxt.disc_fad >= RING_FAD)
       {
-         // need to fill sector data
+         // fills all 2352 bytes
+         make_ring_data(buf);
+
+         fad2msf_bcd(cdd_cxt.disc_fad, buf+12);
+         buf[3] = 2;	// Mode 2, Form 2
+         / 8 byte subheader (unknown purpose)
+         buf[4] = 0; buf[5] = 0; buf[6] = 28; buf[7] = 0;
+         buf[8] = 0; buf[9] = 0; buf[10] = 28; buf[11] = 0;
+
+         // 4 byte error code at end
+         buf[2352-4] = 0;
+         buf[2352-3] = 0;
+         buf[2352-2] = 0;
+         buf[2352-1] = 0;
       }
       else
          Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
