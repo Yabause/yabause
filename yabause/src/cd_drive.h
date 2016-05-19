@@ -26,16 +26,19 @@
 
 struct CdState
 {
-   u8 current_operation;
-   u8 q_subcode;
-   u8 track_number;
-   u8 index_field;
-   u8 minutes;
-   u8 seconds;
-   u8 frame;
-   u8 absolute_minutes;
-   u8 absolute_seconds;
-   u8 absolute_frame;
+   u8 current_operation;//0
+   u8 q_subcode;//1
+   u8 track_number;//2
+   u8 index_field;//3
+   u8 minutes;//4
+   u8 seconds;//5
+   u8 frame;//6
+   //7 zero
+   u8 absolute_minutes;//8
+   u8 absolute_seconds;//9
+   u8 absolute_frame;//10
+   //11 parity
+   //12 zero
 };
 
 struct CdDriveContext

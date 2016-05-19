@@ -252,6 +252,27 @@ void do_dataread()
    ygr_cd_irq(0x10);
 }
 
+void make_ring_status()
+{
+   u32 fad = cdd_cxt.disc_fad;
+   u8 msf_buf[3] = { 0 };
+   fad2msf_bcd(cdd_cxt.disc_fad, msf_buf);
+
+   cdd_cxt.state_data[0] = SeekSecurityRing2;
+   cdd_cxt.state_data[1] = 0x44;
+   cdd_cxt.state_data[2] = 0xf1;
+   cdd_cxt.state_data[3] = fad >> 16;
+   cdd_cxt.state_data[4] = fad >> 8;
+   cdd_cxt.state_data[5] = fad;
+   cdd_cxt.state_data[6] = 0x09;
+   cdd_cxt.state_data[7] = 0x09;
+   cdd_cxt.state_data[8] = 0x09;
+   cdd_cxt.state_data[9] = 0x09;
+   cdd_cxt.state_data[10] = msf_buf[2];
+
+   set_checksum(cdd_cxt.state_data);
+}
+
 int continue_command()
 {
    if (cdd_cxt.state.current_operation == Idle)
@@ -286,7 +307,8 @@ int continue_command()
       do_toc();
       return TIME_READING;
    }
-   else if (cdd_cxt.state.current_operation == Seeking)
+   else if (cdd_cxt.state.current_operation == Seeking || 
+      cdd_cxt.state.current_operation == SeekSecurityRing2)
    {
       
       cdd_cxt.seek_time++;
@@ -373,6 +395,10 @@ int do_command()
       //seeking ring
       CDLOG("seek ring\n");
       cdd_cxt.state.current_operation = SeekSecurityRing2;
+      make_ring_status();
+      cdd_cxt.seek_time = 0;
+      comm_state = NoTransfer;
+      return TIME_READING / cdd_cxt.speed;
       break;
    case 0x3:
    {
