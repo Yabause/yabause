@@ -249,7 +249,7 @@ void do_dataread()
 
          fad2msf_bcd(cdd_cxt.disc_fad, buf+12);
          buf[3] = 2;	// Mode 2, Form 2
-         / 8 byte subheader (unknown purpose)
+         // 8 byte subheader (unknown purpose)
          buf[4] = 0; buf[5] = 0; buf[6] = 28; buf[7] = 0;
          buf[8] = 0; buf[9] = 0; buf[10] = 28; buf[11] = 0;
 
