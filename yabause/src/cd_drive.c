@@ -206,16 +206,16 @@ static void make_ring_data(u8 *buf)
       a = (i & 1) ? 0x59 : 0xa8;
       for (j=0; j<8; j++) 
       {
-         u32 eax = a;
-         u32 ebx = lfsr & 1;
-         a ^= ebx;
+         u32 x = a;
+         u32 var2 = lfsr & 1;
+         a ^= var2;
          a = ror(a);
 
-         eax = lfsr;
-         eax >>= 1;
-         ebx = lfsr;
-         eax ^= ebx;
-         lfsr |= eax << 15;
+         x = lfsr;
+         x >>= 1;
+         var2 = lfsr;
+         x ^= var2;
+         lfsr |= x << 15;
          lfsr >>= 1;
       }
       buf[i-12] = a;
@@ -244,20 +244,21 @@ void do_dataread()
       }
       else if (cdd_cxt.disc_fad >= RING_FAD)
       {
+         u8 *subbuf=buf+12;
          // fills all 2352 bytes
-         make_ring_data(buf);
+         make_ring_data(subbuf);
 
-         fad2msf_bcd(cdd_cxt.disc_fad, buf+12);
-         buf[3] = 2;	// Mode 2, Form 2
+         fad2msf_bcd(cdd_cxt.disc_fad, subbuf);
+         subbuf[3] = 2;	// Mode 2, Form 2
          // 8 byte subheader (unknown purpose)
-         buf[4] = 0; buf[5] = 0; buf[6] = 28; buf[7] = 0;
-         buf[8] = 0; buf[9] = 0; buf[10] = 28; buf[11] = 0;
+         subbuf[4] = 0; subbuf[5] = 0; subbuf[6] = 28; subbuf[7] = 0;
+         subbuf[8] = 0; subbuf[9] = 0; subbuf[10] = 28; subbuf[11] = 0;
 
          // 4 byte error code at end
-         buf[2352-4] = 0;
-         buf[2352-3] = 0;
-         buf[2352-2] = 0;
-         buf[2352-1] = 0;
+         subbuf[2352-4] = 0;
+         subbuf[2352-3] = 0;
+         subbuf[2352-2] = 0;
+         subbuf[2352-1] = 0;
       }
       else
          Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
