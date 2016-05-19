@@ -298,7 +298,7 @@ void do_dataread()
 
 void make_ring_status()
 {
-   u32 fad = cdd_cxt.disc_fad;
+   u32 fad = cdd_cxt.disc_fad + 4;
    u8 msf_buf[3] = { 0 };
    fad2msf_bcd(cdd_cxt.disc_fad, msf_buf);
 
@@ -411,12 +411,18 @@ void update_seek_status()
    comm_state = NoTransfer;
 }
 
-void do_seek()
+void do_seek_common()
 {
    s32 fad = get_fad_from_command(cdd_cxt.received_data);
    cdd_cxt.disc_fad = fad - 4;
    cdd_cxt.target_fad = cdd_cxt.disc_fad;
    cdd_cxt.seek_time = 0;
+}
+
+void do_seek()
+{
+  
+   do_seek_common();
    update_seek_status();
 }
 
@@ -439,6 +445,7 @@ int do_command()
       //seeking ring
       CDLOG("seek ring\n");
       cdd_cxt.state.current_operation = SeekSecurityRing2;
+      do_seek_common();
       make_ring_status();
       cdd_cxt.seek_time = 0;
       comm_state = NoTransfer;
