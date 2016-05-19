@@ -21,7 +21,7 @@
 #ifndef YAB_TSUNAMI_H
 #define YAB_TSUNAMI_H
 
-#define ENABLE_TSUNAMI
+//#define ENABLE_TSUNAMI
 
 void tsunami_init_dummy(void);
 void tsunami_log_value_dummy(char * name, int value, int size);

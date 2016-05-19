@@ -29,6 +29,8 @@
 #include "debug.h"
 #include <stdarg.h>
 
+void Cs2Exec(u32 timing);
+
 //#define YGR_SH1_RW_DEBUG
 #ifdef YGR_SH1_RW_DEBUG
 #define YGR_SH1_RW_LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)

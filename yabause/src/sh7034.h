@@ -28,7 +28,7 @@
 void cd_trace_log(const char * format, ...);
 void sh1_dreq_asserted(int which);
 
-#define WANT_CDTRACE
+//#define WANT_CDTRACE
 #ifdef WANT_CDTRACE
 #define CDTRACE(...) cd_trace_log(__VA_ARGS__)
 #else
