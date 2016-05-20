@@ -280,6 +280,9 @@ typedef struct
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
    cache_enty cache;
+   int dma0_active;
+   int dma1_active;
+   int dma_robin;
 } Onchip_struct;
 
 typedef struct
@@ -530,6 +533,7 @@ void SH2HandleTrackInfLoop(SH2_struct *context);
 
 void DMAExec(SH2_struct *sh);
 void DMATransfer(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);
+void sh2_dma_exec(SH2_struct *sh, u32 cycles);
 
 u8 FASTCALL OnchipReadByte(SH2_struct *sh, u32 addr);
 u16 FASTCALL OnchipReadWord(SH2_struct *sh, u32 addr);

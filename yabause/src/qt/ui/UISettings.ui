@@ -765,6 +765,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbEnableSh2DmaTiming">
+         <property name="text">
+          <string>Enable Sh2 Dma Timing</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1033,8 +1040,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowToolbar"/>
   <buttongroup name="bgShowLogWindow"/>
+  <buttongroup name="bgShowMenubar"/>
  </buttongroups>
 </ui>

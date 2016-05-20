@@ -251,6 +251,9 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    FRTExec(context, cycles);
    WDTExec(context, cycles);
 
+   if(yabsys.use_sh2_dma_timing && context->model == SHMT_SH2)
+       sh2_dma_exec(context, cycles);
+
    if(context->model == SHMT_SH1)
       sh1_onchip_run_cycles(cycles);
 
@@ -1728,7 +1731,12 @@ void FASTCALL OnchipWriteLong(SH2_struct *sh, u32 addr, u32 val)  {
          // and CHCR's DE bit is set and TE bit is cleared,
          // do a dma transfer
          if ((sh->onchip.DMAOR & 7) == 1 && (val & 0x3) == 1)
-            DMAExec(sh);
+         {
+            if(yabsys.use_sh2_dma_timing)
+                sh->onchip.dma0_active = 1;
+            else
+                DMAExec(sh);
+         }
          return;
       case 0x190:
          sh->onchip.SAR1 = val;
@@ -1746,7 +1754,12 @@ void FASTCALL OnchipWriteLong(SH2_struct *sh, u32 addr, u32 val)  {
          // and CHCR's DE bit is set and TE bit is cleared,
          // do a dma transfer
          if ((sh->onchip.DMAOR & 7) == 1 && (val & 0x3) == 1)
-            DMAExec(sh);
+         {
+            if(yabsys.use_sh2_dma_timing)
+                sh->onchip.dma1_active = 1;
+            else
+                DMAExec(sh);
+         }
          return;
       case 0x1A0:
          sh->onchip.VCRDMA0 = val & 0xFFFF;
@@ -1761,7 +1774,19 @@ void FASTCALL OnchipWriteLong(SH2_struct *sh, u32 addr, u32 val)  {
          // and CHCR's DE bit is set and TE bit is cleared,
          // do a dma transfer
          if ((val & 7) == 1)
-            DMAExec(sh);
+         {
+            if(yabsys.use_sh2_dma_timing)
+            {
+                if((sh->onchip.CHCR0 & 0x3) == 1)
+                   sh->onchip.dma0_active = 1;
+                if ((sh->onchip.CHCR1 & 0x3) == 1)
+                   sh->onchip.dma1_active = 1;
+            }
+            else
+            {
+                DMAExec(sh);
+            }
+         }
          return;
       case 0x1E0:
          sh->onchip.BCR1 &= 0x8000;
@@ -1997,6 +2022,133 @@ void WDTExec(SH2_struct *sh, u32 cycles) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+void dma_tick(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA, int * active)
+{
+   int src_increment = 0;
+   int dst_increment = 0;
+   u8 dest_inc_mode = (*CHCR >> 14) & 3;
+   u8 src_inc_mode = (*CHCR >> 12) & 3;
+   u8 size = (*CHCR >> 10) & 3;
+
+   if (dest_inc_mode == 1)
+      dst_increment = 1;
+   else if (dest_inc_mode == 2)
+      dst_increment = -1;
+
+   if (src_inc_mode == 1)
+      src_increment = 1;
+   else if (src_inc_mode == 2)
+      src_increment = -1;
+
+   if (size == 0)
+   {
+      u8 source_val = MappedMemoryReadByteNocache(sh, *SAR);
+      MappedMemoryWriteByteNocache(sh, *DAR, source_val);
+   }
+   else if (size == 1)
+   {
+      u16 source_val = MappedMemoryReadWordNocache(sh, *SAR);
+      MappedMemoryWriteWordNocache(sh,*DAR, source_val);
+      src_increment *= 2;
+      dst_increment *= 2;
+   }
+   else if (size == 2)
+   {
+      u32 source_val = MappedMemoryReadLongNocache(sh, *SAR);
+      MappedMemoryWriteLongNocache(sh, *DAR, source_val);
+      src_increment *= 4;
+      dst_increment *= 4;
+   }
+
+   if(dst_increment > 0)
+      SH2WriteNotify(*DAR, *DAR + dst_increment);
+   else
+      SH2WriteNotify(*DAR + dst_increment, *DAR);
+
+   *TCR = *TCR - 1;
+   *SAR = *SAR + src_increment;
+   *DAR = *DAR + dst_increment;
+
+   if (*TCR == 0)
+   {
+      *active = 0;
+
+      if ((*CHCR >> 2) & 1)
+         SH2SendInterrupt(sh, *VCRDMA, (sh->onchip.IPRA & 0xF00) >> 8);
+
+      *CHCR |= 0x2;
+   }
+}
+
+void tick_dma0(SH2_struct *sh)
+{
+   dma_tick(
+      sh,
+      &sh->onchip.CHCR0,
+      &sh->onchip.SAR0,
+      &sh->onchip.DAR0,
+      &sh->onchip.TCR0,
+      &sh->onchip.VCRDMA0,
+      &sh->onchip.dma0_active);
+}
+
+void tick_dma1(SH2_struct *sh)
+{
+   dma_tick(
+      sh,
+      &sh->onchip.CHCR1,
+      &sh->onchip.SAR1,
+      &sh->onchip.DAR1,
+      &sh->onchip.TCR1,
+      &sh->onchip.VCRDMA1,
+      &sh->onchip.dma1_active);//channel 0
+}
+
+void sh2_dma_exec(SH2_struct *sh, u32 cycles) {
+   int i;
+
+   if (!sh->onchip.dma0_active && !sh->onchip.dma1_active)
+      return;
+
+   for (i = 0; i < cycles; i++)
+   {
+      if ((sh->onchip.DMAOR >> 3) & 1)//round robin priority
+      {
+         //both channels are active, round robin
+         if (sh->onchip.dma0_active && sh->onchip.dma1_active)
+         {
+            if (sh->onchip.dma_robin)
+            {
+               sh->onchip.dma_robin = 0;
+               tick_dma0(sh);
+            }
+            else
+            {
+               tick_dma1(sh);//channel 1
+            }
+         }
+         else
+         {
+            //only one channel is active
+            if (sh->onchip.dma0_active)
+               tick_dma0(sh);
+            if (sh->onchip.dma1_active)
+               tick_dma1(sh);
+         }
+      }
+      else
+      {
+         //channel 0 > channel 1
+
+         if(sh->onchip.dma0_active)
+            tick_dma0(sh);//channel 0
+         else if (sh->onchip.dma1_active)
+            tick_dma1(sh);//channel 1
+      }
+   }
+}
+
 
 void DMAExec(SH2_struct *sh) {
    // If AE and NMIF bits are set, we can't continue

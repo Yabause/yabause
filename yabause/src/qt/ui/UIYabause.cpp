@@ -751,6 +751,7 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["MpegROM/Path"]!=hash["MpegROM/Path" ] ||
 			newhash["Advanced/SH1Interpreter"]!=hash["Advanced/SH1Interpreter"] ||
 			newhash["Advanced/EnableCDBlockLLE"]!=hash["Advanced/EnableCDBlockLLE"] ||
+         newhash["Advanced/EnableSh2DmaTiming"] != hash["Advanced/EnableSh2DmaTiming"] ||
 			newhash["Advanced/SH2Interpreter"]!=hash["Advanced/SH2Interpreter"] ||
          newhash["Advanced/68kCore"] != hash["Advanced/68kCore"] ||
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||

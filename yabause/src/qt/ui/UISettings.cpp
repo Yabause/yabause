@@ -497,6 +497,7 @@ void UISettings::loadSettings()
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
 	cbSH1Interpreter->setCurrentIndex( cbSH1Interpreter->findData( s->value( "Advanced/SH1Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
 	cbEnableCDBlockLLE->setChecked( s->value( "Advanced/EnableCDBlockLLE" ).toBool() );
+   cbEnableSh2DmaTiming->setChecked(s->value("Advanced/EnableSh2DmaTiming").toBool());
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
    cb68kCore->setCurrentIndex(cb68kCore->findData(s->value("Advanced/68kCore", QtYabause::default68kCore().id).toInt()));
 
@@ -594,6 +595,7 @@ void UISettings::saveSettings()
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
 	s->setValue( "Advanced/SH1Interpreter", cbSH1Interpreter->itemData( cbSH1Interpreter->currentIndex() ).toInt() );
 	s->setValue( "Advanced/EnableCDBlockLLE", cbEnableCDBlockLLE->isChecked() );
+   s->setValue("Advanced/EnableSh2DmaTiming", cbEnableSh2DmaTiming->isChecked());
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
    s->setValue("Advanced/68kCore", cb68kCore->itemData(cb68kCore->currentIndex()).toInt());
 

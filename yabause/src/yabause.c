@@ -165,6 +165,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.use_cd_block_lle = init->use_cd_block_lle;
+   yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
