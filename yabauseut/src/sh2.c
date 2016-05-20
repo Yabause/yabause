@@ -39,6 +39,22 @@
 #define SH2REG_DVDNTUH2 (*(volatile u32 *)0xFFFFFF38)
 #define SH2REG_DVDNTUL2 (*(volatile u32 *)0xFFFFFF3C)
 
+#define SH2REG_SAR0     (*(volatile u32 *)0xFFFFFF80)
+#define SH2REG_DAR0     (*(volatile u32 *)0xFFFFFF84)
+#define SH2REG_TCR0     (*(volatile u32 *)0xFFFFFF88)
+#define SH2REG_CHCR0    (*(volatile u32 *)0xFFFFFF8C)
+#define SH2REG_VCRMDA0  (*(volatile u32 *)0xFFFFFFA0)
+#define SH2REG_DRCR0    (*(volatile u8  *)0xFFFFFE71)
+
+#define SH2REG_SAR1     (*(volatile u32 *)0xFFFFFF90)
+#define SH2REG_DAR1     (*(volatile u32 *)0xFFFFFF94)
+#define SH2REG_TCR1     (*(volatile u32 *)0xFFFFFF98)
+#define SH2REG_CHCR1    (*(volatile u32 *)0xFFFFFF9C)
+#define SH2REG_VCRMDA1  (*(volatile u32 *)0xFFFFFFA8)
+#define SH2REG_DRCR1    (*(volatile u8  *)0xFFFFFE72)
+
+#define SH2REG_DMAOR    (*(volatile u32 *)0xFFFFFFB0)
+
 void div_mirror_test(void);
 void div_operation_test(void);
 void div_interrupt_test(void);
@@ -471,4 +487,107 @@ void cache_test()
 
       cache_print_and_wait();
    }
+}
+
+void test_sh2_dma_impl(
+   u32 src_addr, 
+   u32 dst_addr,
+   u32 count, 
+   u8 transfer_size
+   )
+{
+   volatile u32 *source = (volatile u32 *)(src_addr);
+   volatile u32 *dest = (volatile u32 *)(dst_addr);
+   int i;
+
+   clear_framebuffer();
+
+   //read te
+   volatile u32 dummy = SH2REG_CHCR0;
+
+   //and clear it
+   SH2REG_CHCR0 = 0;
+
+   //read nmif
+   dummy = SH2REG_DMAOR;
+
+   //and clear it
+   SH2REG_DMAOR = 0;
+
+   for (i = 0; i < count; i+=2)
+   {
+      source[i] =   0xdeadbeef;
+      source[i+2] = 0xcafef00d;
+   }
+
+   for (i = 0; i < count; i++)
+   {
+      dest[i] = 0;
+   }
+
+   u8 round_robin = 0;
+   u8 all_dma_enabled = 1;
+
+   SH2REG_DMAOR =
+      (round_robin << 3) |
+      all_dma_enabled;
+
+   SH2REG_SAR0 = src_addr;
+   SH2REG_DAR0 = dst_addr;
+   SH2REG_TCR0 = count;
+
+   u8 destination_address_mode = 1;
+   u8 source_address_mode = 1;
+   u8 transfer_enabled = 1;
+   u8 auto_request_mode = 1;//must be set
+
+   SH2REG_CHCR0 =
+      (destination_address_mode << 14) |
+      (source_address_mode << 12) |
+      (transfer_size << 10) |
+      (auto_request_mode << 9) |
+      transfer_enabled;
+
+   while (!(SH2REG_CHCR0 & 2)) {}//wait for TE to be set
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      vdp_printf(&test_disp_font, 0 * 8, 4 * 8, 0xC, "SAR0 0x%08x DAR0 0x%08x", 
+         SH2REG_SAR0,
+         SH2REG_DAR0);
+
+      vdp_printf(&test_disp_font, 0 * 8, 5 * 8, 0xC, "TCR0 0x%08x CHR0 0x%08x",
+         SH2REG_TCR0,
+         SH2REG_CHCR0);
+
+      vdp_printf(&test_disp_font, 0 * 8, 6 * 8, 0xC, "DMAOR 0x%08x",
+         SH2REG_DMAOR);
+
+      volatile u8 de = SH2REG_CHCR0 & 1;
+      volatile u8 dme = SH2REG_DMAOR & 1;
+      volatile u8 te = (SH2REG_CHCR0 >> 1) & 1;
+      volatile u8 nmif = (SH2REG_DMAOR >> 1) & 1;
+      volatile u8 ae = (SH2REG_DMAOR >> 2) & 1;
+
+      vdp_printf(&test_disp_font, 0 * 8, 7 * 8, 0xC, "DE %01x DME %01x TE %01x NMIF %01x AE %01x",
+         de,dme,te,nmif,ae);
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         break;
+      }
+   }
+}
+
+void test_sh2_dma()
+{
+   test_sh2_dma_impl(0x260ED000, 0x25E00000, 0x1000, 2);
+   test_sh2_dma_impl(0x260ED000, 0x25E00000, 0x800, 3);
 }

@@ -2053,7 +2053,7 @@ void dma_tick(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRD
       src_increment *= 2;
       dst_increment *= 2;
    }
-   else if (size == 2)
+   else if (size == 2 || size == 3)
    {
       u32 source_val = MappedMemoryReadLongNocache(sh, *SAR);
       MappedMemoryWriteLongNocache(sh, *DAR, source_val);
