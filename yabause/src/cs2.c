@@ -1007,7 +1007,7 @@ void Cs2Exec(u32 timing) {
          }
          case CDB_STAT_SEEK:
 		 {
-			 if (Cs2Area->FAD >= Cs2Area->playFAD && Cs2Area->FAD < Cs2Area->playendFAD && Cs2Area->isbufferfull == 0){
+			 if (!Cs2Area->isbufferfull){
 				 Cs2Area->status = CDB_STAT_PLAY;
 				 Cs2Area->options = 0x8;
 			 }
@@ -1619,6 +1619,7 @@ void Cs2PlayDisc(void) {
 
   Cs2Area->_periodiccycles = 0;
   Cs2Area->_periodictiming = SEEK_TIME; // seektime
+
   Cs2Area->status = CDB_STAT_SEEK;      // need to be seek
   Cs2Area->options = 0;
   Cs2Area->playtype = CDB_PLAYTYPE_SECTOR;
