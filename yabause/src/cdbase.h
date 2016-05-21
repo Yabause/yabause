@@ -36,12 +36,27 @@
 
 typedef struct
 {
+   u8 ctrladr;
+   u8 tno;
+   u8 point;
+   u8 min;
+   u8 sec;
+   u8 frame;
+   u8 zero;
+   u8 pmin;
+   u8 psec;
+   u8 pframe;
+} CDInterfaceToc10;
+
+typedef struct
+{
         int id;
         const char *Name;
         int (*Init)(const char *);
         void (*DeInit)(void);
         int (*GetStatus)(void);
         s32 (*ReadTOC)(u32 *TOC);
+        s32 (*ReadTOC10)(CDInterfaceToc10 *TOC);
         int (*ReadSectorFAD)(u32 FAD, void *buffer);
         void (*ReadAheadFAD)(u32 FAD);
 } CDInterface;

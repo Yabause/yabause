@@ -23,10 +23,12 @@
 #define YABAUSE_H
 
 #include "core.h"
+#include "sh2core.h"
 
 typedef struct
 {
    int percoretype;
+   int sh1coretype;
    int sh2coretype;
    int vidcoretype;
    int sndcoretype;
@@ -41,7 +43,8 @@ typedef struct
    const char *mpegpath;
    const char *cartpath;
    const char *modemip;
-	const char *modemport;
+   const char *modemport;
+   const char *sh1rompath;
    int videoformattype;
    int frameskip;
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
@@ -52,6 +55,9 @@ typedef struct
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
    int play_ssf;
    int use_new_scsp;
+   int use_cd_block_lle;
+   int use_sh2_dma_timing;
+   int use_scu_dma_timing;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -104,6 +110,9 @@ typedef struct
    int emulatebios;
    int usequickload;
    int playing_ssf;
+   int use_cd_block_lle;
+   int use_sh2_dma_timing;
+   int use_scu_dma_timing;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

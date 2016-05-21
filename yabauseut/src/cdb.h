@@ -26,6 +26,7 @@ void cd_cmd_test();
 void cd_rw_test();
 void misc_cd_test();
 
+void test_cdb_mbx();
 void test_cmd_cd_status();
 void test_cmd_get_hw_info();
 void test_cmd_get_toc();

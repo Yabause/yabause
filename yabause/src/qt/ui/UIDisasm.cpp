@@ -22,7 +22,7 @@
 #include <QPaintEvent>
 #include <QScrollBar>
 
-int DisasmInstructionNull(u32 address, char *string)
+int DisasmInstructionNull(void *context, u32 address, char *string)
 {
    strcpy(string, " ");
    return 0;
@@ -47,7 +47,7 @@ void UIDisasm::setSelectionColor(const QColor &color)
    viewport()->update();
 }
 
-void UIDisasm::setDisassembleFunction(int (*func)(u32, char *))
+void UIDisasm::setDisassembleFunction(int (*func)(void *, u32, char *))
 {
    disassembleFunction = func;
 }
@@ -56,6 +56,11 @@ void UIDisasm::setEndAddress(u32 address)
 {
    endAddress = address;
    adjustSettings();
+}
+
+void UIDisasm::setContext(void *context)
+{
+   this->context = context;
 }
 
 void UIDisasm::goToAddress(u32 address, bool vCenter)
@@ -107,7 +112,7 @@ void UIDisasm::mouseDoubleClickEvent( QMouseEvent * event )
       for (int i = 0; i != line; i++)
       {
          char text[256];
-         offset += disassembleFunction(currentAddress, text);
+         offset += disassembleFunction(context, currentAddress, text);
       }
 
 
@@ -137,7 +142,7 @@ void UIDisasm::paintEvent(QPaintEvent *event)
    for (int yPos = yPosStart; yPos < bottom; )
    {
       char text[256];
-      int offset = disassembleFunction(currentAddress, text);
+      int offset = disassembleFunction(context, currentAddress, text);
       QString disText(text);
 
       if (currentAddress == pc && pc != 0xFFFFFFFF)

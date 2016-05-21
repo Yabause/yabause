@@ -265,12 +265,12 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
 int Cs2ChangeCDCore(int coreid, const char *cdpath);
 void Cs2DeInit(void);
 
-u8 FASTCALL 	Cs2ReadByte(u32);
-u16 FASTCALL 	Cs2ReadWord(u32);
-u32 FASTCALL 	Cs2ReadLong(u32);
-void FASTCALL 	Cs2WriteByte(u32, u8);
-void FASTCALL 	Cs2WriteWord(u32, u16);
-void FASTCALL 	Cs2WriteLong(u32, u32);
+u8 FASTCALL 	Cs2ReadByte(SH2_struct *, u32);
+u16 FASTCALL 	Cs2ReadWord(SH2_struct *, u32);
+u32 FASTCALL 	Cs2ReadLong(SH2_struct *, u32);
+void FASTCALL 	Cs2WriteByte(SH2_struct *, u32, u8);
+void FASTCALL 	Cs2WriteWord(SH2_struct *, u32, u16);
+void FASTCALL 	Cs2WriteLong(SH2_struct *, u32, u32);
 
 void FASTCALL   Cs2RapidCopyT1(void *dest, u32 count);
 void FASTCALL   Cs2RapidCopyT2(void *dest, u32 count);

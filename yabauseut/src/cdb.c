@@ -21,6 +21,8 @@
 #include "tests.h"
 #include "cdb.h"
 
+void cd_write_command(cd_cmd_struct *cd_cmd);
+
 //////////////////////////////////////////////////////////////////////////////
 
 enum IAPETUS_ERR init_cdb_tests()
@@ -76,6 +78,7 @@ void cd_cmd_test()
    init_cdb_tests();
 
    unregister_all_tests();
+   register_test(&test_cdb_mbx, "CDB mbx");
 //   register_test(&TestCMDCDStatus, "CD Status");
    register_test(&test_cmd_get_hw_info, "Get Hardware Info");
 //   register_test(&TestCMDGetTOC, "Get TOC");
@@ -119,6 +122,128 @@ void cd_cmd_test()
 //   register_test(&TestCMDReadFile, "Read File");
 //   register_test(&TestCMDAbortFile, "Abort File");
    do_tests("CD Commands tests", 0, 0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int cdb_mbx_init()
+{
+   cd_cmd_struct cd_cmd;
+   u32 old_level_mask;
+   u16 hirq_temp;
+
+   cd_cmd.CR1 = 0x0100; // Just use Get Hardware Info
+   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   // Mask any interrupts, we don't need to be interrupted
+   old_level_mask = interrupt_get_level_mask();
+   interrupt_set_level_mask(0xF);
+
+   hirq_temp = CDB_REG_HIRQ;
+
+   // Make sure CMOK flag is set, or we can't continue
+   if (!(hirq_temp & HIRQ_CMOK))
+      return IAPETUS_ERR_CMOK;
+
+   // Clear CMOK and any other user-defined flags
+   CDB_REG_HIRQ = ~(HIRQ_CMOK);
+
+   // Alright, time to execute the command
+   cd_write_command(&cd_cmd);
+
+   // Let's wait till the command operation is finished
+   if (!cd_wait_hirq(HIRQ_CMOK))
+      return IAPETUS_ERR_TIMEOUT;
+
+   // return interrupts back to normal
+   interrupt_set_level_mask(old_level_mask);
+   return IAPETUS_ERR_OK;
+}
+
+#define MAX_MBX_TIMEOUT 0xFFFF
+void test_cdb_mbx()
+{
+   int ret;
+   u32 i, j;
+   u32 cr_temp;
+   int expect_timeout=0, timeout=0;
+
+   for (i = 0; i < 9; i++)
+   {
+      if ((ret = cdb_mbx_init()) != IAPETUS_ERR_OK)
+      {
+         tests_disp_iapetus_error(ret, __FILE__, __LINE__);
+         return;
+      }
+
+      switch (i)
+      {
+         case 0:
+            cr_temp = CDB_REG_CR1;
+            expect_timeout = 1;
+            break;
+         case 1:
+            cr_temp = CDB_REG_CR2;
+            expect_timeout = 1;
+            break;
+         case 2:
+            cr_temp = CDB_REG_CR3;
+            expect_timeout = 1;
+            break;
+         case 3:
+            cr_temp = CDB_REG_CR4;
+            expect_timeout = 0;
+            break;
+         case 4:
+            cr_temp = CDB_REG_CR1;
+            cr_temp = CDB_REG_CR2;
+            cr_temp = CDB_REG_CR3;
+            expect_timeout = 1;
+            break;
+         case 5:
+            cr_temp = *((volatile u32 *)0x25890018);
+            expect_timeout = 1;
+            break;
+         case 6:
+            cr_temp = *((volatile u32 *)0x2589001C);
+            expect_timeout = 1;
+            break;
+         case 7:
+            cr_temp = *((volatile u32 *)0x25890020);
+            expect_timeout = 1;
+            break;
+         case 8:
+            cr_temp = *((volatile u32 *)0x25890024);
+            expect_timeout = 0;
+            break;
+         default: break;
+      }
+
+      for (j = 0; j < MAX_MBX_TIMEOUT; j++) 
+      {
+         if ((CDB_REG_CR1 & 0xF000) == 0x2000)
+         {
+            timeout = 0;
+            break;
+         }
+         else if (j == MAX_MBX_TIMEOUT-1)
+         {
+            timeout = 1;
+            break;
+         }
+      }
+
+      cr_temp = CDB_REG_CR4;
+
+      if (timeout != expect_timeout)
+      {
+         vdp_printf(&test_disp_font, 2 * 8, 22 * 8, 0xF, "mbx %d test failed", i);
+         stage_status = STAGESTAT_BADTIMING;
+         return;
+      }
+   }
+
+   stage_status = STAGESTAT_DONE;
 }
 
 //////////////////////////////////////////////////////////////////////////////

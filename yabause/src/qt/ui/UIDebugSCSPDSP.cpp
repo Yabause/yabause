@@ -20,7 +20,7 @@
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 
-int SCSPDSPDis(u32 addr, char *string)
+int SCSPDSPDis(void *context, u32 addr, char *string)
 {
    ScspDspDisasm((u8)addr, string);
    return 1;

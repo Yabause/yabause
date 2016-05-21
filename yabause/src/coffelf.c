@@ -201,7 +201,7 @@ int MappedMemoryLoadCoff(const char *filename)
       num_read = fread((void *)buffer, 1, section_headers[i].sectionsize, fp);
 
       for (j = 0; j < section_headers[i].sectionsize; j++)
-         MappedMemoryWriteByte(section_headers[i].physaddr+j, buffer[j]);
+         MappedMemoryWriteByteNocache(MSH2, section_headers[i].physaddr+j, buffer[j]);
       SH2WriteNotify(section_headers[i].physaddr,
                      section_headers[i].sectionsize);
 
@@ -352,7 +352,7 @@ int MappedMemoryLoadElf(const char *filename)
          {
             for(j = 0; j < sections[i].size; ++j)
             {
-               MappedMemoryWriteByte(sections[i].addr + j, 0);
+               MappedMemoryWriteByteNocache(MSH2, sections[i].addr + j, 0);
             }
          }
          else
@@ -371,7 +371,7 @@ int MappedMemoryLoadElf(const char *filename)
 
             for(j = 0; j < sections[i].size; ++j)
             {
-               MappedMemoryWriteByte(sections[i].addr + j, buffer[j]);
+               MappedMemoryWriteByteNocache(MSH2, sections[i].addr + j, buffer[j]);
             }
 
             free(buffer);

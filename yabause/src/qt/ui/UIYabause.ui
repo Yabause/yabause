@@ -226,6 +226,7 @@
     <addaction name="aViewDebugSCSP"/>
     <addaction name="aViewDebugSCSPChan"/>
     <addaction name="aViewDebugSCSPDSP"/>
+    <addaction name="aViewDebugSH1"/>
     <addaction name="separator"/>
     <addaction name="aViewDebugMemoryEditor"/>
     <addaction name="separator"/>
@@ -955,6 +956,15 @@
   <action name="aFileOpenSSF">
    <property name="text">
     <string>Open SSF</string>
+   </property>
+  </action>
+  <action name="aViewDebugSH1">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SH1</string>
    </property>
   </action>
  </widget>

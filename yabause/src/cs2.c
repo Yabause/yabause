@@ -105,21 +105,21 @@ static INLINE void doMPEGReport(u8 status)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Cs2ReadByte(u32 addr)
+u8 FASTCALL Cs2ReadByte(SH2_struct *sh, u32 addr)
 {
-   return CartridgeArea->Cs2ReadByte(addr);
+   return CartridgeArea->Cs2ReadByte(sh, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteByte(u32 addr, u8 val)
+void FASTCALL Cs2WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
-   CartridgeArea->Cs2WriteByte(addr, val);
+   CartridgeArea->Cs2WriteByte(sh, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Cs2ReadWord(u32 addr) {
+u16 FASTCALL Cs2ReadWord(SH2_struct *sh, u32 addr) {
   u16 val = 0;
   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -257,7 +257,7 @@ u16 FASTCALL Cs2ReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteWord(u32 addr, u16 val) {
+void FASTCALL Cs2WriteWord(SH2_struct *sh, u32 addr, u16 val) {
   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
   switch(addr) {
@@ -295,7 +295,7 @@ void FASTCALL Cs2WriteWord(u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Cs2ReadLong(u32 addr) {
+u32 FASTCALL Cs2ReadLong(SH2_struct *sh, u32 addr) {
   s32 i;
   u32 val = 0;
   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
@@ -403,7 +403,7 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteLong(UNUSED u32 addr, UNUSED u32 val) {
+void FASTCALL Cs2WriteLong(SH2_struct *sh, u32 addr, u32 val) {
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
    switch (addr)

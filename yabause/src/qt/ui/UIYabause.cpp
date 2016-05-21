@@ -747,8 +747,13 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["Advanced/Region"]!=hash["Advanced/Region"] ||
 			newhash["Cartridge/Type"]!=hash["Cartridge/Type"] ||
 			newhash["Memory/Path"]!=hash["Memory/Path"] ||
-			newhash["MpegROM/Path" ]!=hash["MpegROM/Path" ] ||
-			newhash["Advanced/SH2Interpreter" ]!=hash["Advanced/SH2Interpreter" ] ||
+			newhash["SH1ROM/Path"]!=hash["SH1ROM/Path"] ||
+			newhash["MpegROM/Path"]!=hash["MpegROM/Path" ] ||
+			newhash["Advanced/SH1Interpreter"]!=hash["Advanced/SH1Interpreter"] ||
+			newhash["Advanced/EnableCDBlockLLE"]!=hash["Advanced/EnableCDBlockLLE"] ||
+         newhash["Advanced/EnableSh2DmaTiming"] != hash["Advanced/EnableSh2DmaTiming"] ||
+         newhash["Advanced/EnableScuDmaTiming"] != hash["Advanced/EnableScuDmaTiming"] ||
+			newhash["Advanced/SH2Interpreter"]!=hash["Advanced/SH2Interpreter"] ||
          newhash["Advanced/68kCore"] != hash["Advanced/68kCore"] ||
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
 			newhash["General/CdRomISO"]!=hash["General/CdRomISO"] ||
@@ -828,7 +833,7 @@ void UIYabause::on_aFileSettings_triggered()
 void UIYabause::on_aFileOpenISO_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
 	if ( !fn.isEmpty() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
@@ -1078,12 +1083,20 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 	fullscreenRequested( b );
 }
 
+void UIYabause::breakpointHandlerSH1(bool displayMessage)
+{
+	YabauseLocker locker( mYabauseThread );
+	if (displayMessage)
+		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSH2(SH1, mYabauseThread, this ).exec();
+}
+
 void UIYabause::breakpointHandlerMSH2(bool displayMessage)
 {
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2( true, mYabauseThread, this ).exec();
+	UIDebugSH2(MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerSSH2(bool displayMessage)
@@ -1091,7 +1104,7 @@ void UIYabause::breakpointHandlerSSH2(bool displayMessage)
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2( false, mYabauseThread, this ).exec();
+	UIDebugSH2(SSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerM68K()
@@ -1118,13 +1131,13 @@ void UIYabause::breakpointHandlerSCSPDSP()
 void UIYabause::on_aViewDebugMSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( true, mYabauseThread, this ).exec();
+	UIDebugSH2( MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugSSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( false, mYabauseThread, this ).exec();
+	UIDebugSH2( SSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugVDP1_triggered()
@@ -1169,6 +1182,12 @@ void UIYabause::on_aViewDebugSCSPDSP_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	UIDebugSCSPDSP( mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSH1_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSH2( SH1, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugMemoryEditor_triggered()
