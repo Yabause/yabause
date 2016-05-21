@@ -23,7 +23,7 @@
       </font>
      </property>
      <property name="currentIndex">
-      <number>5</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="wGeneral">
       <attribute name="title">
@@ -768,6 +768,13 @@
         <widget class="QCheckBox" name="cbEnableSh2DmaTiming">
          <property name="text">
           <string>Enable Sh2 Dma Timing</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="cbEnableScuDmaTiming">
+         <property name="text">
+          <string>Enable Scu Dma Timing</string>
          </property>
         </widget>
        </item>

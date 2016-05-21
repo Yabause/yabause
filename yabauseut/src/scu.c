@@ -1243,3 +1243,159 @@ void dma_update_test(u32 write_address_update, u32 read_address_update, u32 writ
 
    finish_loop();
 }
+
+//submit upper level dma while lower is running
+void dma_level_priority_impl(u32 src_addr, u32 dest_addr, u32 write_add)
+{
+   u32 read_add = 0;
+   u32 write_address_update = 0;
+   u32 read_address_update = 0;
+   int i;
+   u32 inc = 0x6000;
+   for (i = 0; i < 0x10000; i++)
+      ((volatile u32 *)(dest_addr))[i] = 0;
+
+   vdp_printf(&test_disp_font, 18 * 8, 16 * 8, 0xF, "%08X %08X", ((volatile u32 *)(src_addr))[0], ((volatile u32 *)(src_addr))[1]);
+   vdp_printf(&test_disp_font, 18 * 8, 17 * 8, 0xF, "%04X %04X", ((volatile u16 *)(src_addr))[0], ((volatile u16 *)(src_addr))[1]);
+
+   if (src_addr != 0x22000000)
+   {
+      volatile u32 *src = (volatile u32 *)(src_addr);
+
+      src[0] = 0xdeadbeef;
+      src[1] = 0xaaaaaaaa;
+   }
+
+   SCUREG_D0R = src_addr;
+   SCUREG_D0W = dest_addr;
+   SCUREG_D0C = 0x800;
+   SCUREG_D0AD = (read_add << 8) | write_add;
+   SCUREG_D0MD = 0x00000007 | (write_address_update << 8) | (read_address_update << 16);
+   SCUREG_D0EN = 0x101;
+
+   SCUREG_D1R = src_addr + 4;
+   SCUREG_D1W = dest_addr + inc;
+   SCUREG_D1C = 0x800;
+   SCUREG_D1AD = (read_add << 8) | write_add;
+   SCUREG_D1MD = 0x00000007 | (write_address_update << 8) | (read_address_update << 16);
+   SCUREG_D1EN = 0x101;
+
+   vdp_vsync();
+   vdp_vsync();
+   vdp_vsync();
+
+   for (i = 0; i < 16; i++)
+   {
+      vdp_printf(&test_disp_font, 0 * 8, (i + 16) * 8, 0xF, "%08X", ((volatile u32 *)(dest_addr))[i]);
+      vdp_printf(&test_disp_font, 9 * 8, (i + 16) * 8, 0xF, "%08X", ((volatile u32 *)(dest_addr + inc))[i]);
+   }
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         break;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
+      }
+   }
+}
+
+void dma_level_priority_indirect(u32 src_addr, u32 dest_addr, u32 write_add)
+{
+   u32 read_add = 0;
+   u32 write_address_update = 0;
+   u32 read_address_update = 0;
+   int i;
+   u32 inc = 0x6000;
+   for (i = 0; i < 0x10000; i++)
+      ((volatile u32 *)(dest_addr))[i] = 0;
+
+   if (src_addr != 0x22000000)
+   {
+      volatile u32 *src = (volatile u32 *)(src_addr);
+
+      src[0] = 0xdeadbeef;
+      src[1] = 0xaaaaaaaa;
+   }
+
+   u32 indirect_table_addr_0 = 0x260FE000;
+
+   volatile u32 *indirect_table_0 = (volatile u32 *)(indirect_table_addr_0);
+
+   u32 length = 0x400;
+
+   indirect_table_0[0] = length;//size
+   indirect_table_0[1] = dest_addr;//write addr
+   indirect_table_0[2] = src_addr;//read addr
+
+   indirect_table_0[3] = length;
+   indirect_table_0[4] = dest_addr + 0x3000;
+   indirect_table_0[5] = src_addr + 4 | 0x80000000;
+
+   u32 indirect_table_addr_1 = 0x260FF010;
+
+   volatile u32 *indirect_table_1 = (volatile u32 *)(indirect_table_addr_1);
+
+   indirect_table_1[0] = length;//size
+   indirect_table_1[1] = dest_addr + 0x6000;//write addr
+   indirect_table_1[2] = src_addr;//read addr
+
+   indirect_table_1[3] = length;
+   indirect_table_1[4] = dest_addr + 0x9000;
+   indirect_table_1[5] = src_addr + 4 | 0x80000000;
+
+   SCUREG_D0W = indirect_table_addr_0;
+   SCUREG_D0AD = 0x101;
+   SCUREG_D0MD = (1 << 24) | 0x00000007;
+   SCUREG_D0EN = 0x101;
+
+   SCUREG_D1W = indirect_table_addr_1;
+   SCUREG_D1AD = 0x101;
+   SCUREG_D1MD = (1 << 24) | 0x00000007;
+   SCUREG_D1EN = 0x101;
+
+   vdp_vsync();
+   vdp_vsync();
+   vdp_vsync();
+
+   for (i = 0; i < 16; i++)
+   {
+      vdp_printf(&test_disp_font, 0 * 8, (i + 16) * 8, 0xF, "%08X", ((volatile u32 *)(dest_addr))[i]);
+      vdp_printf(&test_disp_font, 9 * 8, (i + 16) * 8, 0xF, "%08X", ((volatile u32 *)(dest_addr + inc))[i]);
+   }
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         break;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
+      }
+   }
+}
+
+void dma_level_priority()
+{
+   int i;
+
+   dma_level_priority_indirect(0x260F0000, 0x25E00000, 1);
+
+   for (i = 0; i < 7; i++)
+      dma_level_priority_impl(0x260F0000, 0x25E00000, i);
+
+   //dma from cartridge area
+   for (i = 0; i < 7; i++)
+      dma_level_priority_impl(0x22000000, 0x25E00000, i);
+}

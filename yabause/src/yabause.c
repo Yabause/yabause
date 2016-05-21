@@ -166,6 +166,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.NumThreads = init->numthreads;
    yabsys.use_cd_block_lle = init->use_cd_block_lle;
    yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
+   yabsys.use_scu_dma_timing = init->use_scu_dma_timing;
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -605,7 +606,7 @@ int YabauseEmulate(void) {
       }
    }
 #endif
-
+   
    DoMovie();
 
    #if defined(SH2_DYNAREC)
@@ -660,7 +661,7 @@ int YabauseEmulate(void) {
          }
 
          PROFILE_START("SCU");
-         ScuExec(sh2cycles / 2);
+         ScuExec(sh2cycles);
          PROFILE_STOP("SCU");
 
       } else {  // !DecilineMode
@@ -703,7 +704,7 @@ int YabauseEmulate(void) {
 #endif
 
          PROFILE_START("SCU");
-         ScuExec(sh2cycles / 2);
+         ScuExec(sh2cycles);
          PROFILE_STOP("SCU");
 
       }  // if (yabsys.DecilineMode)
