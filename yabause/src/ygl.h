@@ -287,7 +287,8 @@ typedef struct
 typedef enum
 {
 	AA_NONE = 0,
-	AA_FXAA
+	AA_FXAA,
+	AA_SCANLINE_FILTER,
 } AAMODE;
 
 typedef enum

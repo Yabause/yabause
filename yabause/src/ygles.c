@@ -983,7 +983,7 @@ int YglGenFrameBuffer() {
 		abort();
 	}
 
-	if (_Ygl->aamode == AA_FXAA){
+	if (_Ygl->aamode != AA_NONE){
 		YglGenerateAABuffer();
 	}
 
@@ -1207,6 +1207,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
    _Ygl->aamode = AA_NONE;
    //_Ygl->aamode = AA_FXAA;
+   //_Ygl->aamode = AA_SCANLINE_FILTER;
 
    return 0;
 }
@@ -2920,6 +2921,13 @@ void YglRender(void) {
 	   _Ygl->targetfbo = _Ygl->fxaa_fbo;
 	   
    }
+   else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
+	   if (_Ygl->fxaa_fbotex == 0){
+		   YglGenerateAABuffer();
+	   }
+	   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
+	   _Ygl->targetfbo = _Ygl->fxaa_fbo;
+   }
    else{
 	   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	   _Ygl->targetfbo = 0;
@@ -3042,6 +3050,10 @@ void YglRender(void) {
 	if (_Ygl->aamode == AA_FXAA){
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
+	}
+	else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		YglBlitScanlineFilter(_Ygl->fxaa_fbotex, GlHeight, _Ygl->rheight );
 	}
 
 render_finish:
