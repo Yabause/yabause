@@ -2037,7 +2037,7 @@ u32 sh2_dma_access(u32 addr, u16 data, int is_read, int size)
 {
    addr &= 0xfffffff;
 
-   if (addr >= 0x0000000 && addr <= 0x00fffff)
+   if (addr <= 0x00fffff)
    {
       //bios
       if (is_read)
