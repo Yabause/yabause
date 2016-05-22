@@ -34,6 +34,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "yabause.h"
 #include "sh2cache.h"
 #include "sh2core.h"
+#include "vdp2.h"
+#include "vdp1.h"
+#include "assert.h"
+#include "scsp.h"
+#include "scu.h"
+#include "ygr.h"
+#include "cs1.h"
+#include "cs0.h"
+#include "smpc.h"
+#include "cs2.h"
 
 
 #define AREA_MASK   (0xE0000000)
@@ -299,6 +309,131 @@ void cache_memory_write_l(SH2_struct *sh, cache_enty * ca, u32 addr, u32 val){
 	}
 }
 
+u32 sh2_cache_refill_read(SH2_struct *sh, u32 addr)
+{
+   addr &= 0xfffffff;
+
+   if (addr <= 0x00fffff)
+   {
+      //bios
+      return BiosRomMemoryReadLong(addr);
+   }
+   else if (addr >= 0x0100000 && addr <= 0x017ffff)
+   {
+      //smpc
+      return SmpcReadLong(MSH2, addr);
+   }
+   else if (addr >= 0x0180000 && addr <= 0x01fffff)
+   {
+      //backup ram
+      return BupRamMemoryReadLong(addr);
+   }
+   else if (addr >= 0x0200000 && addr <= 0x02fffff)
+   {
+      //low wram
+      return LowWramMemoryReadLong(addr);
+   }
+   else if (addr >= 0x1000000 && addr <= 0x17fffff)
+   {
+      //ssh2 input capture
+      return UnhandledMemoryReadLong(addr);
+   }
+   else if (addr >= 0x1800000 && addr <= 0x1ffffff)
+   {
+      //msh2 input capture
+      return UnhandledMemoryReadLong(addr);
+   }
+   else if (addr >= 0x2000000 && addr <= 0x3ffffff)
+   {
+      //cs0
+      return CartridgeArea->Cs0ReadLong(MSH2, addr);
+   }
+   else if (addr >= 0x4000000 && addr <= 0x4ffffff)
+   {
+      return Cs1ReadLong(MSH2, addr);
+   }
+   else if (addr >= 0x5000000 && addr <= 0x57fffff)
+   {
+      //dummy
+   }
+   else if (addr >= 0x5800000 && addr <= 0x58fffff)
+   {
+      //cs2
+      if (yabsys.use_cd_block_lle)
+      {
+         return ygr_a_bus_read_long(addr);
+      }
+      else
+      {
+         return Cs2ReadLong(MSH2, addr);
+      }
+   }
+   else if (addr >= 0x5a00000 && addr <= 0x5afffff)
+   {
+      //sound ram
+      return SoundRamReadLong(addr);
+   }
+   else if (addr >= 0x5b00000 && addr <= 0x5bfffff)
+   {
+      //scsp regs
+      return ScspReadLong(addr);
+   }
+   else if (addr >= 0x5c00000 && addr <= 0x5c7ffff)
+   {
+      //vdp1 ram
+      return Vdp1RamReadLong(addr);
+   }
+   else if (addr >= 0x5c80000 && addr <= 0x5cfffff)
+   {
+      //vdp1 framebuffer
+      return Vdp1FrameBufferReadLong(addr);
+   }
+   else if (addr >= 0x5d00000 && addr <= 0x5d7ffff)
+   {
+      //vdp1 registers
+      return Vdp1ReadLong(addr);
+   }
+   else if (addr >= 0x5e00000 && addr <= 0x5efffff)
+   {
+      //vdp2 ram
+      return Vdp2RamReadLong(addr);
+   }
+   else if (addr >= 0x5f00000 && addr <= 0x5f7ffff)
+   {
+      //vdp2 color ram
+      return Vdp2ColorRamReadLong(addr);
+   }
+   else if (addr >= 0x5f80000 && addr <= 0x5fbffff)
+   {
+      //vdp2 registers
+      return Vdp2ReadLong(addr);
+   }
+   else if (addr >= 0x5fe0000 && addr <= 0x5feffff)
+   {
+      //scu registers
+      return ScuReadLong(addr);
+   }
+   else if (addr >= 0x6000000 && addr <= 0x7ffffff)
+   {
+      //high wram
+      return HighWramMemoryReadLong(addr);
+   }
+   assert(0);
+   return 0;
+}
+
+void sh2_refill_cache(SH2_struct *sh, cache_enty * ca, int lruway, u32 entry, u32 addr)
+{
+   int i;
+   for (i = 0; i < 16; i += 4) {
+      u32 val = sh2_cache_refill_read(sh, (addr & 0xFFFFFFF0) + i);
+      ca->way[lruway][entry].data[i + 0] = (val >> 24) & 0xff;
+      ca->way[lruway][entry].data[i + 1] = (val >> 16) & 0xff;
+      ca->way[lruway][entry].data[i + 2] = (val >> 8) & 0xff;
+      ca->way[lruway][entry].data[i + 3] = (val >> 0) & 0xff;
+   }
+}
+
 u8 cache_memory_read_b(SH2_struct *sh, cache_enty * ca, u32 addr){
 	switch (addr & AREA_MASK){
 	case CACHE_USE:
@@ -332,10 +467,9 @@ u8 cache_memory_read_b(SH2_struct *sh, cache_enty * ca, u32 addr){
       lruway = select_way_to_replace(sh, ca->lru[entry]);
       update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
-		for (i = 0; i < 16; i++){
-			ca->way[lruway][entry].data[i] = sh->ReadByteList[(addr >> 16) & 0xFFF](sh, (addr & 0xFFFFFFF0) + i);
-		}
-     
+
+      sh2_refill_cache(sh, ca, lruway, entry, addr);
+
       ca->way[lruway][entry].v = 1; //becomes valid
 		return ca->way[lruway][entry].data[addr&LINE_MASK];
 	}
@@ -385,9 +519,9 @@ u16 cache_memory_read_w(SH2_struct *sh, cache_enty * ca, u32 addr){
 		lruway = select_way_to_replace(sh, ca->lru[entry]);
       update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
-		for (i = 0; i < 16; i++){
-			ca->way[lruway][entry].data[i] = sh->ReadByteList[(addr >> 16) & 0xFFF](sh, (addr & 0xFFFFFFF0) + i);
-		}
+
+      sh2_refill_cache(sh, ca, lruway, entry, addr);
+
       ca->way[lruway][entry].v = 1; //becomes valid
 		return ((u16)(ca->way[lruway][entry].data[addr&LINE_MASK]) << 8) | ca->way[lruway][entry].data[(addr&LINE_MASK) + 1];
 	}
@@ -448,9 +582,9 @@ u32 cache_memory_read_l(SH2_struct *sh, cache_enty * ca, u32 addr){
 		lruway = select_way_to_replace(sh, ca->lru[entry]);
       update_lru(lruway, &ca->lru[entry]);
 		ca->way[lruway][entry].tag = tagaddr;
-		for (i = 0; i < 16; i++){
-			ca->way[lruway][entry].data[i] = sh->ReadByteList[(addr >> 16) & 0xFFF](sh, (addr & 0xFFFFFFF0) + i);
-		}
+
+      sh2_refill_cache(sh, ca, lruway, entry, addr);
+
       ca->way[lruway][entry].v = 1; //becomes valid
 		return ((u32)(ca->way[lruway][entry].data[addr&LINE_MASK]) << 24) |
 			((u32)(ca->way[lruway][entry].data[(addr&LINE_MASK) + 1]) << 16) |
