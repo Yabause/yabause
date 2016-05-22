@@ -94,18 +94,31 @@ extern VideoInterface_struct VIDDummy;
 
 extern u8 * Vdp1Ram;
 
-u8 FASTCALL	Vdp1RamReadByte(SH2_struct *sh, u32);
-u16 FASTCALL	Vdp1RamReadWord(SH2_struct *sh, u32);
-u32 FASTCALL	Vdp1RamReadLong(SH2_struct *sh, u32);
-void FASTCALL	Vdp1RamWriteByte(SH2_struct *sh, u32, u8);
-void FASTCALL	Vdp1RamWriteWord(SH2_struct *sh, u32, u16);
-void FASTCALL	Vdp1RamWriteLong(SH2_struct *sh, u32, u32);
-u8 FASTCALL Vdp1FrameBufferReadByte(SH2_struct *sh, u32);
-u16 FASTCALL Vdp1FrameBufferReadWord(SH2_struct *sh, u32);
-u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *sh, u32);
-void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *sh, u32, u8);
-void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *sh, u32, u16);
-void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *sh, u32, u32);
+u8 FASTCALL	Vdp1RamReadByte(u32);
+u16 FASTCALL	Vdp1RamReadWord(u32);
+u32 FASTCALL	Vdp1RamReadLong(u32);
+void FASTCALL	Vdp1RamWriteByte(u32, u8);
+void FASTCALL	Vdp1RamWriteWord(u32, u16);
+void FASTCALL	Vdp1RamWriteLong(u32, u32);
+u8 FASTCALL Vdp1FrameBufferReadByte(u32);
+u16 FASTCALL Vdp1FrameBufferReadWord(u32);
+u32 FASTCALL Vdp1FrameBufferReadLong(u32);
+void FASTCALL Vdp1FrameBufferWriteByte(u32, u8);
+void FASTCALL Vdp1FrameBufferWriteWord(u32, u16);
+void FASTCALL Vdp1FrameBufferWriteLong(u32, u32);
+
+u8 FASTCALL	Sh2Vdp1RamReadByte(SH2_struct *sh, u32);
+u16 FASTCALL	Sh2Vdp1RamReadWord(SH2_struct *sh, u32);
+u32 FASTCALL	Sh2Vdp1RamReadLong(SH2_struct *sh, u32);
+void FASTCALL	Sh2Vdp1RamWriteByte(SH2_struct *sh, u32, u8);
+void FASTCALL	Sh2Vdp1RamWriteWord(SH2_struct *sh, u32, u16);
+void FASTCALL	Sh2Vdp1RamWriteLong(SH2_struct *sh, u32, u32);
+u8 FASTCALL Sh2Vdp1FrameBufferReadByte(SH2_struct *sh, u32);
+u16 FASTCALL Sh2Vdp1FrameBufferReadWord(SH2_struct *sh, u32);
+u32 FASTCALL Sh2Vdp1FrameBufferReadLong(SH2_struct *sh, u32);
+void FASTCALL Sh2Vdp1FrameBufferWriteByte(SH2_struct *sh, u32, u8);
+void FASTCALL Sh2Vdp1FrameBufferWriteWord(SH2_struct *sh, u32, u16);
+void FASTCALL Sh2Vdp1FrameBufferWriteLong(SH2_struct *sh, u32, u32);
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
@@ -147,12 +160,19 @@ int VideoChangeCore(int coreid);
 void VideoDeInit(void);
 void Vdp1Reset(void);
 
-u8 FASTCALL	Vdp1ReadByte(SH2_struct *, u32);
-u16 FASTCALL	Vdp1ReadWord(SH2_struct *, u32);
-u32 FASTCALL	Vdp1ReadLong(SH2_struct *, u32);
-void FASTCALL	Vdp1WriteByte(SH2_struct *, u32, u8);
-void FASTCALL	Vdp1WriteWord(SH2_struct *, u32, u16);
-void FASTCALL	Vdp1WriteLong(SH2_struct *, u32, u32);
+u8 FASTCALL	Vdp1ReadByte(u32);
+u16 FASTCALL	Vdp1ReadWord(u32);
+u32 FASTCALL	Vdp1ReadLong(u32);
+void FASTCALL	Vdp1WriteByte(u32, u8);
+void FASTCALL	Vdp1WriteWord(u32, u16);
+void FASTCALL	Vdp1WriteLong(u32, u32);
+
+u8 FASTCALL	Sh2Vdp1ReadByte(SH2_struct *, u32);
+u16 FASTCALL	Sh2Vdp1ReadWord(SH2_struct *, u32);
+u32 FASTCALL	Sh2Vdp1ReadLong(SH2_struct *, u32);
+void FASTCALL	Sh2Vdp1WriteByte(SH2_struct *, u32, u8);
+void FASTCALL	Sh2Vdp1WriteWord(SH2_struct *, u32, u16);
+void FASTCALL	Sh2Vdp1WriteLong(SH2_struct *, u32, u32);
 
 void Vdp1Draw(void);
 void Vdp1NoDraw(void);
