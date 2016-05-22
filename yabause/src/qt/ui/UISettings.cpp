@@ -81,7 +81,8 @@ const Items mVideoFormats = Items()
 
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
-	<< Item("1", "FXAA");
+	<< Item("1", "FXAA")
+	<< Item("2", "Scanline filter");
 
 const Items mPolygonGenerationMode = Items()
 	<< Item("0", "Triangles usin perspectiove correction")

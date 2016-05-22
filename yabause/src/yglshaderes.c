@@ -2914,3 +2914,175 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 
 	return 0;
 }
+
+
+
+/*
+ Basic scanline filter
+*/
+
+const GLchar scanline_filter_v[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+" attribute vec2 aPosition; \n"
+" attribute vec2 aTexCoord; \n"
+"  \n"
+" varying vec2 vTexCoord; \n"
+"  \n"
+" void main(void) \n"
+" { \n"
+" vTexCoord = aTexCoord;     \n"
+" gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); \n"
+" } \n";
+
+const GLchar scanline_filter_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;       \n"
+"in highp vec2 vTexCoord;     \n"
+"uniform sampler2D u_Src;     \n"
+"uniform float u_th;  // 1080 \n"
+"uniform float u_oth; // 224  \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  float y; \n"
+"  y = u_oth*vTexCoord.y;          \n"
+"  if ( (int(y)&0x01) == 0x00  ) { \n"
+"      fragColor = texture( u_Src, vTexCoord ) ; \n"
+"      return; \n "
+"  }\n"
+"  fragColor = vec4(0.0,0.0,0.0,1.0); \n"
+" } \n";
+
+
+static int scanline_prg = -1;
+static int a_scanline_PosCoord = -1;
+static int a_scanline_TexCoord = -1;
+static int u_scanline_th = -1;
+static int u_scanline_oth = -1;
+
+int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v) {
+
+	float aspectRatio = 1.0;
+	float vb[] = { 0, 0,
+		2.0, 0.0,
+		2.0, 2.0,
+		0, 2.0, };
+
+	float tb[] = { 0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0 };
+
+	if (scanline_prg == -1){
+		GLuint vshader;
+		GLuint fshader;
+		GLint compiled, linked;
+
+		const GLchar * filter_v[] = { scanline_filter_v, NULL };
+		const GLchar * filter_f[] = { scanline_filter_f, NULL };
+
+		scanline_prg = glCreateProgram();
+		if (scanline_prg == 0) return -1;
+
+		glUseProgram(scanline_prg);
+		vshader = glCreateShader(GL_VERTEX_SHADER);
+		fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+		glShaderSource(vshader, 1, filter_v, NULL);
+		glCompileShader(vshader);
+		glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			printf("Compile error in vertex shader.\n");
+			Ygl_printShaderError(vshader);
+			scanline_prg = -1;
+			return -1;
+		}
+
+		glShaderSource(fshader, 1, filter_f, NULL);
+		glCompileShader(fshader);
+		glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+		if (compiled == GL_FALSE) {
+			printf("Compile error in fragment shader.\n");
+			Ygl_printShaderError(fshader);
+			scanline_prg = -1;
+			return -1;
+		}
+
+		glAttachShader(scanline_prg, vshader);
+		glAttachShader(scanline_prg, fshader);
+		glLinkProgram(scanline_prg);
+		glGetProgramiv(scanline_prg, GL_LINK_STATUS, &linked);
+		if (linked == GL_FALSE) {
+			printf("Link error..\n");
+			Ygl_printShaderError(scanline_prg);
+			scanline_prg = -1;
+			return -1;
+		}
+
+		glUniform1i(glGetUniformLocation(scanline_prg, "u_Src"), 0);
+		a_scanline_PosCoord = glGetAttribLocation(scanline_prg, "aPosition");
+		a_scanline_TexCoord = glGetAttribLocation(scanline_prg, "aTexCoord");
+		u_scanline_th = glGetUniformLocation(scanline_prg, "u_th");
+		u_scanline_oth = glGetUniformLocation(scanline_prg, "u_oth");
+
+	}
+	else{
+		glUseProgram(scanline_prg);
+	}
+
+
+	float const vertexPosition[] = {
+		aspectRatio, -1.0f,
+		-aspectRatio, -1.0f,
+		aspectRatio, 1.0f,
+		-aspectRatio, 1.0f };
+
+	float const textureCoord[] = {
+		1.0f, 0.0f,
+		0.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f };
+
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, sourceTexture);
+
+	glUniform1i(glGetUniformLocation(scanline_prg, "u_Src"), 0);
+	glUniform1f(u_scanline_th, (float)draw_res_v);
+
+	float by = (float)(draw_res_v) / (int)(draw_res_v / (staturn_res_v*2));
+	glUniform1f(u_scanline_oth, by);
+
+
+	glVertexAttribPointer(a_scanline_PosCoord, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+	glVertexAttribPointer(a_scanline_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+	glEnableVertexAttribArray(a_scanline_PosCoord);
+	glEnableVertexAttribArray(a_scanline_TexCoord);
+	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(3);
+
+
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	glDisableVertexAttribArray(a_scanline_PosCoord);
+	glDisableVertexAttribArray(a_scanline_TexCoord);
+
+
+	// Clean up
+	glActiveTexture(GL_TEXTURE0);
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+
+	return 0;
+}
