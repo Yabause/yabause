@@ -949,7 +949,12 @@ void scu_dma_tick_all(u32 cycles)
    }
 }
 
-static void FASTCALL ScuDMA(SH2_struct *sh, scudmainfo_struct *dmainfo) {
+u32 scu_dma_access(u32 addr, u32 data, int is_read, int size)
+{
+   return sh2_dma_access(addr, data, is_read, size);
+}
+
+static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
    u8 ReadAdd, WriteAdd;
 
    if (dmainfo->AddValue & 0x100)
@@ -991,9 +996,9 @@ static void FASTCALL ScuDMA(SH2_struct *sh, scudmainfo_struct *dmainfo) {
       // Indirect DMA
 
       for (;;) {
-         u32 ThisTransferSize = MappedMemoryReadLongNocache(sh, dmainfo->WriteAddress);
-         u32 ThisWriteAddress = MappedMemoryReadLongNocache(sh, dmainfo->WriteAddress+4);
-         u32 ThisReadAddress  = MappedMemoryReadLongNocache(sh, dmainfo->WriteAddress+8);
+         u32 ThisTransferSize = scu_dma_access(dmainfo->WriteAddress, 0, 1, 2);
+         u32 ThisWriteAddress = scu_dma_access(dmainfo->WriteAddress + 4, 0, 1, 2);
+         u32 ThisReadAddress  = scu_dma_access(dmainfo->WriteAddress + 8, 0, 1, 2);
 
          //LOG("SCU Indirect DMA: src %08x, dst %08x, size = %08x\n", ThisReadAddress, ThisWriteAddress, ThisTransferSize);
          DoDMA(ThisReadAddress & 0x7FFFFFFF, ReadAdd, ThisWriteAddress,
@@ -2742,7 +2747,7 @@ void ScuDspClearCodeBreakpoints(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL ScuReadByte(SH2_struct *sh, u32 addr) {
+u8 FASTCALL ScuReadByte(u32 addr) {
    addr &= 0xFF;
 
    switch(addr) {
@@ -2758,7 +2763,7 @@ u8 FASTCALL ScuReadByte(SH2_struct *sh, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL ScuReadWord(SH2_struct *sh, u32 addr) {
+u16 FASTCALL ScuReadWord(u32 addr) {
    addr &= 0xFF;
    LOG("Unhandled SCU Register word read %08X\n", addr);
 
@@ -2767,7 +2772,7 @@ u16 FASTCALL ScuReadWord(SH2_struct *sh, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL ScuReadLong(SH2_struct *sh, u32 addr) {
+u32 FASTCALL ScuReadLong(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0:
@@ -2813,7 +2818,7 @@ u32 FASTCALL ScuReadLong(SH2_struct *sh, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+void FASTCALL ScuWriteByte(u32 addr, u8 val) {
    addr &= 0xFF;
    switch(addr) {
       case 0xA7:
@@ -2827,14 +2832,14 @@ void FASTCALL ScuWriteByte(SH2_struct *sh, u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteWord(SH2_struct *sh, u32 addr, UNUSED u16 val) {
+void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
    addr &= 0xFF;
    LOG("Unhandled SCU Register word write %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+void FASTCALL ScuWriteLong(u32 addr, u32 val) {
    addr &= 0xFF;
    switch(addr) {
       case 0:
@@ -2865,7 +2870,7 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
                dmainfo.AddValue = ScuRegs->D0AD;
                dmainfo.ModeAddressUpdate = ScuRegs->D0MD;
 
-               ScuDMA(sh, &dmainfo);
+               ScuDMA(&dmainfo);
             }
          }
          ScuRegs->D0EN = val;
@@ -2904,7 +2909,7 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
                dmainfo.AddValue = ScuRegs->D1AD;
                dmainfo.ModeAddressUpdate = ScuRegs->D1MD;
 
-               ScuDMA(sh, &dmainfo);
+               ScuDMA(&dmainfo);
             }
          }
          ScuRegs->D1EN = val;
@@ -2943,7 +2948,7 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
                dmainfo.AddValue = ScuRegs->D2AD;
                dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
 
-               ScuDMA(sh, &dmainfo);
+               ScuDMA(&dmainfo);
             }
          }
          ScuRegs->D2EN = val;
@@ -3024,6 +3029,42 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
          LOG("Unhandled SCU Register long write %08X\n", addr);
          break;
    }
+}
+
+
+u8 FASTCALL Sh2ScuReadByte(SH2_struct *sh, u32 addr) {
+
+   return ScuReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL Sh2ScuReadWord(SH2_struct *sh, u32 addr) {
+   return ScuReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL Sh2ScuReadLong(SH2_struct *sh, u32 addr) {
+   return ScuReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2ScuWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+   ScuWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2ScuWriteWord(SH2_struct *sh, u32 addr, UNUSED u16 val) {
+   ScuWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+   ScuWriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -153,7 +153,7 @@ void DummyDeInit(UNUSED Dummy * d)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL UnhandledMemoryReadByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+u8 FASTCALL UnhandledMemoryReadByte(USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled byte read %08X\n", (unsigned int)addr);
    return 0;
@@ -161,7 +161,7 @@ static u8 FASTCALL UnhandledMemoryReadByte(UNUSED SH2_struct *sh, USED_IF_DEBUG 
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL UnhandledMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+u16 FASTCALL UnhandledMemoryReadWord(USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled word read %08X\n", (unsigned int)addr);
    return 0;
@@ -169,7 +169,7 @@ static u16 FASTCALL UnhandledMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL UnhandledMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+u32 FASTCALL UnhandledMemoryReadLong(USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled long read %08X\n", (unsigned int)addr);
    return 0;
@@ -177,161 +177,161 @@ static u32 FASTCALL UnhandledMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL UnhandledMemoryWriteByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u8 val)
+void FASTCALL UnhandledMemoryWriteByte(USED_IF_DEBUG u32 addr, UNUSED u8 val)
 {
    LOG("Unhandled byte write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL UnhandledMemoryWriteWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u16 val)
+void FASTCALL UnhandledMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
    LOG("Unhandled word write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL UnhandledMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u32 val)
+void FASTCALL UnhandledMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
    LOG("Unhandled long write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL HighWramMemoryReadByte(SH2_struct *sh, u32 addr)
+u8 FASTCALL HighWramMemoryReadByte(u32 addr)
 {
    return T2ReadByte(HighWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL HighWramMemoryReadWord(SH2_struct *sh, u32 addr)
+u16 FASTCALL HighWramMemoryReadWord(u32 addr)
 {
    return T2ReadWord(HighWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL HighWramMemoryReadLong(SH2_struct *sh, u32 addr)
+u32 FASTCALL HighWramMemoryReadLong(u32 addr)
 {
    return T2ReadLong(HighWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL HighWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
+void FASTCALL HighWramMemoryWriteByte(u32 addr, u8 val)
 {
    T2WriteByte(HighWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL HighWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
+void FASTCALL HighWramMemoryWriteWord(u32 addr, u16 val)
 {
    T2WriteWord(HighWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL HighWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
+void FASTCALL HighWramMemoryWriteLong(u32 addr, u32 val)
 {
    T2WriteLong(HighWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL LowWramMemoryReadByte(SH2_struct *sh, u32 addr)
+u8 FASTCALL LowWramMemoryReadByte(u32 addr)
 {
    return T2ReadByte(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL LowWramMemoryReadWord(SH2_struct *sh, u32 addr)
+u16 FASTCALL LowWramMemoryReadWord(u32 addr)
 {
    return T2ReadWord(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL LowWramMemoryReadLong(SH2_struct *sh, u32 addr)
+u32 FASTCALL LowWramMemoryReadLong(u32 addr)
 {
    return T2ReadLong(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL LowWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
+void FASTCALL LowWramMemoryWriteByte(u32 addr, u8 val)
 {
    T2WriteByte(LowWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL LowWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
+void FASTCALL LowWramMemoryWriteWord(u32 addr, u16 val)
 {
    T2WriteWord(LowWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL LowWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
+void FASTCALL LowWramMemoryWriteLong(u32 addr, u32 val)
 {
    T2WriteLong(LowWram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BiosRomMemoryReadByte(SH2_struct *sh, u32 addr)
+u8 FASTCALL BiosRomMemoryReadByte(u32 addr)
 {
    return T2ReadByte(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BiosRomMemoryReadWord(SH2_struct *sh, u32 addr)
+u16 FASTCALL BiosRomMemoryReadWord(u32 addr)
 {
    return T2ReadWord(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BiosRomMemoryReadLong(SH2_struct *sh, u32 addr)
+u32 FASTCALL BiosRomMemoryReadLong(u32 addr)
 {
    return T2ReadLong(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BiosRomMemoryWriteByte(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u8 val)
+void FASTCALL BiosRomMemoryWriteByte(UNUSED u32 addr, UNUSED u8 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BiosRomMemoryWriteWord(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u16 val)
+void FASTCALL BiosRomMemoryWriteWord(UNUSED u32 addr, UNUSED u16 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BiosRomMemoryWriteLong(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u32 val)
+void FASTCALL BiosRomMemoryWriteLong(UNUSED u32 addr, UNUSED u32 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *sh, u32 addr)
+u8 FASTCALL BupRamMemoryReadByte(u32 addr)
 {
    return T1ReadByte(BupRam, addr & 0xFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BupRamMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+u16 FASTCALL BupRamMemoryReadWord(USED_IF_DEBUG u32 addr)
 {
    LOG("bup\t: BackupRam read word - %08X\n", addr);
    return 0;
@@ -339,7 +339,7 @@ static u16 FASTCALL BupRamMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u3
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BupRamMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+u32 FASTCALL BupRamMemoryReadLong(USED_IF_DEBUG u32 addr)
 {
    LOG("bup\t: BackupRam read long - %08X\n", addr);
    return 0;
@@ -347,7 +347,7 @@ static u32 FASTCALL BupRamMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u3
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BupRamMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
+void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
 {
    T1WriteByte(BupRam, (addr & 0xFFFF) | 0x1, val);
    BupRamWritten = 1;
@@ -355,16 +355,230 @@ static void FASTCALL BupRamMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BupRamMemoryWriteWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u16 val)
+void FASTCALL BupRamMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
    LOG("bup\t: BackupRam write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BupRamMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u32 val)
+void FASTCALL BupRamMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
    LOG("bup\t: BackupRam write long - %08X\n", addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+//sh2 specific functions
+
+static u8 FASTCALL Sh2UnhandledMemoryReadByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   LOG("Unhandled byte read %08X\n", (unsigned int)addr);
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL Sh2UnhandledMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   LOG("Unhandled word read %08X\n", (unsigned int)addr);
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL Sh2UnhandledMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   LOG("Unhandled long read %08X\n", (unsigned int)addr);
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2UnhandledMemoryWriteByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u8 val)
+{
+   LOG("Unhandled byte write %08X\n", (unsigned int)addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2UnhandledMemoryWriteWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u16 val)
+{
+   LOG("Unhandled word write %08X\n", (unsigned int)addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2UnhandledMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u32 val)
+{
+   LOG("Unhandled long write %08X\n", (unsigned int)addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u8 FASTCALL Sh2HighWramMemoryReadByte(SH2_struct *sh, u32 addr)
+{
+   return HighWramMemoryReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL Sh2HighWramMemoryReadWord(SH2_struct *sh, u32 addr)
+{
+   return HighWramMemoryReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL Sh2HighWramMemoryReadLong(SH2_struct *sh, u32 addr)
+{
+   return HighWramMemoryReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2HighWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
+{
+   HighWramMemoryWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2HighWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
+{
+   HighWramMemoryWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2HighWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
+{
+   HighWramMemoryWriteLong(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u8 FASTCALL Sh2LowWramMemoryReadByte(SH2_struct *sh, u32 addr)
+{
+   return LowWramMemoryReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL Sh2LowWramMemoryReadWord(SH2_struct *sh, u32 addr)
+{
+   return LowWramMemoryReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL Sh2LowWramMemoryReadLong(SH2_struct *sh, u32 addr)
+{
+   return LowWramMemoryReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2LowWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
+{
+   LowWramMemoryWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2LowWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
+{
+   LowWramMemoryWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2LowWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
+{
+   LowWramMemoryWriteLong(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u8 FASTCALL Sh2BiosRomMemoryReadByte(SH2_struct *sh, u32 addr)
+{
+   return BiosRomMemoryReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL Sh2BiosRomMemoryReadWord(SH2_struct *sh, u32 addr)
+{
+   return BiosRomMemoryReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL Sh2BiosRomMemoryReadLong(SH2_struct *sh, u32 addr)
+{
+   return BiosRomMemoryReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2BiosRomMemoryWriteByte(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u8 val)
+{
+   // read-only
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2BiosRomMemoryWriteWord(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u16 val)
+{
+   // read-only
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2BiosRomMemoryWriteLong(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u32 val)
+{
+   // read-only
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u8 FASTCALL Sh2BupRamMemoryReadByte(SH2_struct *sh, u32 addr)
+{
+   return BupRamMemoryReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL Sh2BupRamMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   return BupRamMemoryReadWord(addr);;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL Sh2BupRamMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr)
+{
+   return BupRamMemoryReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2BupRamMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
+{
+   BupRamMemoryWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2BupRamMemoryWriteWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u16 val)
+{
+   BupRamMemoryWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL Sh2BupRamMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u32 val)
+{
+   BupRamMemoryWriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -398,49 +612,49 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
    for (i = 0; i < 2; i++)
    {
       // Initialize everything to unhandled to begin with
-      FillMemoryArea(sh2[i], 0x000, 0xFFF, &UnhandledMemoryReadByte,
-                                           &UnhandledMemoryReadWord,
-                                           &UnhandledMemoryReadLong,
-                                           &UnhandledMemoryWriteByte,
-                                           &UnhandledMemoryWriteWord,
-                                           &UnhandledMemoryWriteLong);
+      FillMemoryArea(sh2[i], 0x000, 0xFFF, &Sh2UnhandledMemoryReadByte,
+                                           &Sh2UnhandledMemoryReadWord,
+                                           &Sh2UnhandledMemoryReadLong,
+                                           &Sh2UnhandledMemoryWriteByte,
+                                           &Sh2UnhandledMemoryWriteWord,
+                                           &Sh2UnhandledMemoryWriteLong);
       // Fill the rest
-      FillMemoryArea(sh2[i], 0x000, 0x00F, &BiosRomMemoryReadByte,
-                                           &BiosRomMemoryReadWord,
-                                           &BiosRomMemoryReadLong,
-                                           &BiosRomMemoryWriteByte,
-                                           &BiosRomMemoryWriteWord,
-                                           &BiosRomMemoryWriteLong);
+      FillMemoryArea(sh2[i], 0x000, 0x00F, &Sh2BiosRomMemoryReadByte,
+                                           &Sh2BiosRomMemoryReadWord,
+                                           &Sh2BiosRomMemoryReadLong,
+                                           &Sh2BiosRomMemoryWriteByte,
+                                           &Sh2BiosRomMemoryWriteWord,
+                                           &Sh2BiosRomMemoryWriteLong);
       FillMemoryArea(sh2[i], 0x010, 0x017, &SmpcReadByte,
                                            &SmpcReadWord,
                                            &SmpcReadLong,
                                            &SmpcWriteByte,
                                            &SmpcWriteWord,
                                            &SmpcWriteLong);
-      FillMemoryArea(sh2[i], 0x018, 0x01F, &BupRamMemoryReadByte,
-                                           &BupRamMemoryReadWord,
-                                           &BupRamMemoryReadLong,
-                                           &BupRamMemoryWriteByte,
-                                           &BupRamMemoryWriteWord,
-                                           &BupRamMemoryWriteLong);
-      FillMemoryArea(sh2[i], 0x020, 0x02F, &LowWramMemoryReadByte,
-                                           &LowWramMemoryReadWord,
-                                           &LowWramMemoryReadLong,
-                                           &LowWramMemoryWriteByte,
-                                           &LowWramMemoryWriteWord,
-                                           &LowWramMemoryWriteLong);
-      FillMemoryArea(sh2[i], 0x100, 0x17F, &UnhandledMemoryReadByte,
-                                           &UnhandledMemoryReadWord,
-                                           &UnhandledMemoryReadLong,
-                                           &UnhandledMemoryWriteByte,
+      FillMemoryArea(sh2[i], 0x018, 0x01F, &Sh2BupRamMemoryReadByte,
+                                           &Sh2BupRamMemoryReadWord,
+                                           &Sh2BupRamMemoryReadLong,
+                                           &Sh2BupRamMemoryWriteByte,
+                                           &Sh2BupRamMemoryWriteWord,
+                                           &Sh2BupRamMemoryWriteLong);
+      FillMemoryArea(sh2[i], 0x020, 0x02F, &Sh2LowWramMemoryReadByte,
+                                           &Sh2LowWramMemoryReadWord,
+                                           &Sh2LowWramMemoryReadLong,
+                                           &Sh2LowWramMemoryWriteByte,
+                                           &Sh2LowWramMemoryWriteWord,
+                                           &Sh2LowWramMemoryWriteLong);
+      FillMemoryArea(sh2[i], 0x100, 0x17F, &Sh2UnhandledMemoryReadByte,
+                                           &Sh2UnhandledMemoryReadWord,
+                                           &Sh2UnhandledMemoryReadLong,
+                                           &Sh2UnhandledMemoryWriteByte,
                                            &SSH2InputCaptureWriteWord,
-                                           &UnhandledMemoryWriteLong);
-      FillMemoryArea(sh2[i], 0x180, 0x1FF, &UnhandledMemoryReadByte,
-                                           &UnhandledMemoryReadWord,
-                                           &UnhandledMemoryReadLong,
-                                           &UnhandledMemoryWriteByte,
+                                           &Sh2UnhandledMemoryWriteLong);
+      FillMemoryArea(sh2[i], 0x180, 0x1FF, &Sh2UnhandledMemoryReadByte,
+                                           &Sh2UnhandledMemoryReadWord,
+                                           &Sh2UnhandledMemoryReadLong,
+                                           &Sh2UnhandledMemoryWriteByte,
                                            &MSH2InputCaptureWriteWord,
-                                           &UnhandledMemoryWriteLong);
+                                           &Sh2UnhandledMemoryWriteLong);
       FillMemoryArea(sh2[i], 0x200, 0x3FF, CartridgeArea->Cs0ReadByte,
                                            CartridgeArea->Cs0ReadWord,
                                            CartridgeArea->Cs0ReadLong,
@@ -521,29 +735,29 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
                                            &Sh2Vdp2WriteByte,
                                            &Sh2Vdp2WriteWord,
                                            &Sh2Vdp2WriteLong);
-      FillMemoryArea(sh2[i], 0x5FE, 0x5FE, &ScuReadByte,
-                                           &ScuReadWord,
-                                           &ScuReadLong,
-                                           &ScuWriteByte,
-                                           &ScuWriteWord,
-                                           &ScuWriteLong);
-      FillMemoryArea(sh2[i], 0x600, 0x7FF, &HighWramMemoryReadByte,
-                                           &HighWramMemoryReadWord,
-                                           &HighWramMemoryReadLong,
-                                           &HighWramMemoryWriteByte,
-                                           &HighWramMemoryWriteWord,
-                                           &HighWramMemoryWriteLong);
+      FillMemoryArea(sh2[i], 0x5FE, 0x5FE, &Sh2ScuReadByte,
+                                           &Sh2ScuReadWord,
+                                           &Sh2ScuReadLong,
+                                           &Sh2ScuWriteByte,
+                                           &Sh2ScuWriteWord,
+                                           &Sh2ScuWriteLong);
+      FillMemoryArea(sh2[i], 0x600, 0x7FF, &Sh2HighWramMemoryReadByte,
+                                           &Sh2HighWramMemoryReadWord,
+                                           &Sh2HighWramMemoryReadLong,
+                                           &Sh2HighWramMemoryWriteByte,
+                                           &Sh2HighWramMemoryWriteWord,
+                                           &Sh2HighWramMemoryWriteLong);
    }
 
    if (yabsys.use_cd_block_lle)
    {
       // SH1
-      FillMemoryArea(sh1, 0x000, 0xFFF, &UnhandledMemoryReadByte,
-                                        &UnhandledMemoryReadWord,
-                                        &UnhandledMemoryReadLong,
-                                        &UnhandledMemoryWriteByte,
-                                        &UnhandledMemoryWriteWord,
-                                        &UnhandledMemoryWriteLong);
+      FillMemoryArea(sh1, 0x000, 0xFFF, &Sh2UnhandledMemoryReadByte,
+                                        &Sh2UnhandledMemoryReadWord,
+                                        &Sh2UnhandledMemoryReadLong,
+                                        &Sh2UnhandledMemoryWriteByte,
+                                        &Sh2UnhandledMemoryWriteWord,
+                                        &Sh2UnhandledMemoryWriteLong);
    }
 }
 
@@ -606,7 +820,7 @@ u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr)
       }
       default:
       {
-         return UnhandledMemoryReadByte(sh, addr);
+         return Sh2UnhandledMemoryReadByte(sh, addr);
       }
    }
 
@@ -671,7 +885,7 @@ u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr)
       }
       default:
       {
-         return UnhandledMemoryReadWord(sh, addr);
+         return Sh2UnhandledMemoryReadWord(sh, addr);
       }
    }
 
@@ -741,7 +955,7 @@ u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
       }
       default:
       {
-         return UnhandledMemoryReadLong(sh, addr);
+         return Sh2UnhandledMemoryReadLong(sh, addr);
       }
    }
    return 0;
@@ -809,7 +1023,7 @@ void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
       }
       default:
       {
-         UnhandledMemoryWriteByte(sh, addr, val);
+         Sh2UnhandledMemoryWriteByte(sh, addr, val);
          return;
       }
    }
@@ -875,7 +1089,7 @@ void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val)
       }
       default:
       {
-         UnhandledMemoryWriteWord(sh, addr, val);
+         Sh2UnhandledMemoryWriteWord(sh, addr, val);
          return;
       }
    }
@@ -947,7 +1161,7 @@ void FASTCALL MappedMemoryWriteLongNocache(SH2_struct *sh, u32 addr, u32 val)
       }
       default:
       {
-         UnhandledMemoryWriteLong(sh, addr, val);
+         Sh2UnhandledMemoryWriteLong(sh, addr, val);
          return;
       }
    }
