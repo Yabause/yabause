@@ -457,11 +457,11 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
       {
          FillMemoryArea(sh2[i], 0x580, 0x58F,
             &Cs2ReadByte,
-            &ygr_a_bus_read_word,
-            &ygr_a_bus_read_long,
+            &sh2_ygr_a_bus_read_word,
+            &sh2_ygr_a_bus_read_long,
             &Cs2WriteByte,
-            &ygr_a_bus_write_word,
-            &ygr_a_bus_write_long);
+            &sh2_ygr_a_bus_write_word,
+            &sh2_ygr_a_bus_write_long);
       }
       else
       {

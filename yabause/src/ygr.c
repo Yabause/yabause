@@ -204,7 +204,7 @@ void ygr_a_bus_cd_cmd_log(void);
 
 
 //replacements for Cs2ReadWord etc
-u16 FASTCALL ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
+u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
    u16 val = 0;
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -498,7 +498,7 @@ void ygr_a_bus_cd_cmd_log(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
+void FASTCALL ygr_a_bus_write_word(u32 addr, u16 val) {
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
    switch (addr) {
@@ -540,7 +540,7 @@ void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL ygr_a_bus_read_long(SH2_struct * sh, u32 addr) {
+u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
    u32 val = 0;
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -586,7 +586,7 @@ u32 FASTCALL ygr_a_bus_read_long(SH2_struct * sh, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ygr_a_bus_write_long(SH2_struct * sh, UNUSED u32 addr, UNUSED u32 val) {
+void FASTCALL ygr_a_bus_write_long(UNUSED u32 addr, UNUSED u32 val) {
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
    switch (addr)
@@ -599,6 +599,22 @@ void FASTCALL ygr_a_bus_write_long(SH2_struct * sh, UNUSED u32 addr, UNUSED u32 
       //         T3WriteLong(Cs2Area->mem, addr, val);
       break;
    }
+}
+
+u16 FASTCALL sh2_ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
+   return ygr_a_bus_read_word(addr);
+}
+
+void FASTCALL sh2_ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
+   ygr_a_bus_write_word(addr, val);
+}
+
+u32 FASTCALL sh2_ygr_a_bus_read_long(SH2_struct * sh, u32 addr) {
+   return ygr_a_bus_read_long(addr);
+}
+
+void FASTCALL sh2_ygr_a_bus_write_long(SH2_struct * sh, UNUSED u32 addr, UNUSED u32 val) {
+   ygr_a_bus_write_long(addr, val);
 }
 
 void ygr_cd_irq(u8 flags)
