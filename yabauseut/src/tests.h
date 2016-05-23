@@ -88,7 +88,7 @@ extern font_struct test_disp_font;
    stage_status = STAGESTAT_BADDATA;
 
 #define do_tests_error_noarg(ret) \
-	do_tests_error(ret, "");
+   do_tests_error(ret, "");
 
 #define do_tests_unexp_data_error(...) \
    do_tests_error(IAPETUS_ERR_UNEXPECTDATA, __VA_ARGS__);

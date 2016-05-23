@@ -90,40 +90,40 @@ BOOL test_mpeg_status(test_mpeg_status_struct *settings)
    u32 freq;
    mpeg_status_struct mpeg_status;
    u16 old_v_counter;
-	int ret;
+   int ret;
 
    timer_setup(TIMER_HBLANK, &freq);
    timer_delay(freq, settings->delay);
 
    if ((ret = mpeg_get_status(&mpeg_status)) != IAPETUS_ERR_OK)
-	{
-		do_tests_error_noarg(ret);
-		return FALSE;
-	}
+   {
+      do_tests_error_noarg(ret);
+      return FALSE;
+   }
 
    if (mpeg_status.play_status != (MS_PS_VIDEO_PLAYING | MS_PS_AUDIO_PLAYING) &&
       mpeg_status.mpeg_audio_status != (MS_AS_DECODE_OP | MS_AS_LEFT_OUTPUT | MS_AS_RIGHT_OUTPUT) &&
       (mpeg_status.mpeg_video_status & 0xF) != (MS_VS_DECODE_OP | MS_VS_DISPLAYING))
-	{
+   {
       do_tests_unexp_data_error("%X %X %X", mpeg_status.play_status, mpeg_status.mpeg_audio_status, mpeg_status.mpeg_video_status);
       return FALSE;
-	}
+   }
 
    // Verify that the v_counter is incrementing
    old_v_counter = mpeg_status.v_counter;
    vdp_vsync();
 
    if ((ret = mpeg_get_status(&mpeg_status)) != IAPETUS_ERR_OK)
-	{
-		do_tests_error_noarg(ret);
+   {
+      do_tests_error_noarg(ret);
       return FALSE;
-	}
+   }
 
    if (old_v_counter+1 != mpeg_status.v_counter)
-	{
-		do_tests_unexp_data_error("%X %X", old_v_counter+1, mpeg_status.v_counter);
+   {
+      do_tests_unexp_data_error("%X %X", old_v_counter+1, mpeg_status.v_counter);
       return FALSE;
-	}
+   }
 
    return TRUE;
 }
@@ -135,19 +135,19 @@ void test_mpegplay_play()
 
    if ((ret = cdfs_init(CDWORKBUF, 4096)) != IAPETUS_ERR_OK)
    {
-		do_tests_error_noarg(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if ((ret = cdfs_open("M2TEST\\MOVIE.MPG", &mpeg_file)) != IAPETUS_ERR_OK)
    {
-		do_tests_error_noarg(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if ((ret = mpeg_play(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-		do_tests_error_noarg(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -178,7 +178,7 @@ void test_mpegplay_pause()
 
    if ((ret = mpeg_pause(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-		do_tests_error_noarg(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -209,7 +209,7 @@ void test_mpegplay_unpause()
 
    if ((ret = mpeg_unpause(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-		do_tests_error_noarg(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -240,7 +240,7 @@ void test_mpegplay_stop()
 
    if ((ret = mpeg_stop(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-		do_tests_error_noarg(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 

@@ -343,7 +343,7 @@ void test_cmd_get_hw_info()
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8) ||
        (cd_cmd_rs.CR2 & 0xFD00) != 0x0000)
    {
-		do_cdb_tests_unexp_cr_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -473,7 +473,7 @@ void test_cmd_init_cd()
    // Verify that the data returned is correct
    if (cd_cmd_rs.CR1 != (STATUS_BUSY << 8))
    {
-		do_cdb_tests_unexp_cr_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -783,7 +783,7 @@ void test_cmd_get_subcode_qrw()
        subcode[4] != 0x0096)
    {
       do_tests_unexp_data_error("%04X %04X %04X %04X %04X %04X %04X %04X %04X %04X", 
-			CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4, subcode[0], subcode[1], subcode[2], subcode[3], subcode[4]);
+      CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4, subcode[0], subcode[1], subcode[2], subcode[3], subcode[4]);
       return;
    }
 
@@ -1143,7 +1143,7 @@ void test_cmd_reset_selector()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-		do_cdb_tests_unexp_cr_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1563,13 +1563,13 @@ void test_cmd_put_sector_data()
 
    if ((ret = cd_end_transfer()) != IAPETUS_ERR_OK)
    {
-		do_tests_error_noarg(ret);
+      do_tests_error_noarg(ret);
       return;
    }
  
    if (!cd_wait_hirq(HIRQ_EHST))
    {
-		do_cdb_tests_unexp_cr_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
