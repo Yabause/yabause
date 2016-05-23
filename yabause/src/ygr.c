@@ -233,7 +233,7 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
    case 0x90026: 
       LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR4);
       ygr_cxt.mbx_status |= 2;//todo test this
-      //CDLOG("abus cdb response: %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+      CDLOG("abus cdb response: %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
       return ygr_cxt.regs.CR4;
    case 0x90028:
    case 0x9002A: 
@@ -252,8 +252,7 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-//#ifdef CDDEBUG
-#if 0
+#ifdef CDDEBUG
 void ygr_a_bus_cd_cmd_log(void) 
 {
 	u16 instruction=ygr_cxt.regs.CR1 >> 8;
