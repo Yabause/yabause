@@ -18,6 +18,7 @@
 */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <iapetus.h>
 #include "tests.h"
@@ -238,6 +239,10 @@ void do_tests(const char *testname, int x, int y)
    u8 stage=0;
    u8 line=0;
 
+	// Clear out test log area
+	memset((void *)TEST_LOG_ADDRESS, 0, TEST_LOG_SIZE);
+	*((u32 *)TEST_LOG_ADDRESS) = TEST_LOG_ADDRESS+4;
+
    // Print messages and cursor
    vdp_printf(&test_disp_font, x * 8, y * 8, 0xF, (char *)testname);
 
@@ -355,7 +360,11 @@ void do_tests(const char *testname, int x, int y)
 
    auto_test_section_end();
 
+	// Enable commlink connection
+	cl_set_service_func(ud_check);
+   commlink_start_service();
    tests_wait_press();
+	commlink_stop_service();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -385,9 +394,11 @@ void unregister_all_tests()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line)
+void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line, char *extra_format, ...)
 {
    char err_msg[512];
+	char extra[256];
+	va_list arg;
    char *filename = strrchr(file, '/');
 
    if (filename == NULL)
@@ -451,7 +462,14 @@ void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line)
          strcat(err_msg, "Unknown error");
          break;
    }
-   int old_transparent = test_disp_font.transparent;
-   vdp_print_text(&test_disp_font, 0 * 8, 27 * 8, 0xF, err_msg);
-   test_disp_font.transparent = old_transparent;
+
+	va_start(arg, extra_format);
+	vsprintf(extra, extra_format, arg);
+	va_end(arg);
+	strcat(err_msg, " : ");
+	strcat(err_msg, extra);
+	strcat(err_msg, "\n");
+
+	memcpy((void *)(*((u32 *)TEST_LOG_ADDRESS)), err_msg, strlen(err_msg)+1);
+	*((u32 *)TEST_LOG_ADDRESS) = *((u32 *)TEST_LOG_ADDRESS) + strlen(err_msg);
 }

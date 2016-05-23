@@ -24,6 +24,9 @@
 void cd_write_command(cd_cmd_struct *cd_cmd);
 static int audio_track=3;
 
+#define do_cdb_tests_unexp_cr_data_error() \
+   do_tests_unexp_data_error("%04X %04X %04X %04X %04X", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
+
 //////////////////////////////////////////////////////////////////////////////
 
 enum IAPETUS_ERR init_cdb_tests()
@@ -103,9 +106,9 @@ void cd_cmd_test()
    register_test(&test_cmd_set_filter_con, "Set Filter Connection");
    register_test(&test_cmd_get_filter_con, "Get Filter Connection");
    register_test(&test_cmd_reset_selector, "Reset Selector");
+#if 0
    register_test(&test_cmd_get_buffer_size, "Get Buffer Size");
    register_test(&test_cmd_get_sector_number, "Get Sector Number");
-#if 0
    register_test(&test_cmd_calculate_actual_size, "Calculate Actual Size");
    register_test(&test_cmd_get_actual_size, "Get Actual Size");
    register_test(&test_cmd_get_sector_info, "Get Sector Info");
@@ -177,7 +180,7 @@ void test_cdb_mbx()
    {
       if ((ret = cdb_mbx_init()) != IAPETUS_ERR_OK)
       {
-         do_tests_error(ret);
+         do_tests_error(ret, "%d", i);
          return;
       }
 
@@ -262,7 +265,7 @@ int cd_status_rs(cd_cmd_struct *cd_cmd_rs)
 
    if ((ret = cd_exec_command(0, &cd_cmd, cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return FALSE;
    }
    return TRUE;
@@ -289,11 +292,9 @@ int cd_end_transfer_rs(cd_cmd_struct *cd_cmd_rs)
    cd_cmd.CR1 = 0x0600;
    cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
 
-   ret = cd_exec_command(HIRQ_DRDY, &cd_cmd, cd_cmd_rs);
-
-   if (ret != IAPETUS_ERR_OK)
+   if ((ret = cd_exec_command(HIRQ_DRDY, &cd_cmd, cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return FALSE;
    }
 
@@ -314,7 +315,7 @@ void test_cmd_cd_status()
        cd_cmd_rs.CR2 != 0x4101 ||
        (cd_cmd_rs.CR3 & 0xFF00) != 0x0100)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -334,7 +335,7 @@ void test_cmd_get_hw_info()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -342,7 +343,7 @@ void test_cmd_get_hw_info()
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8) ||
        (cd_cmd_rs.CR2 & 0xFD00) != 0x0000)
    {
-      do_tests_unexp_data_error();
+		do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -365,20 +366,20 @@ void test_cmd_get_toc()
 
    if ((ret = cd_exec_command(HIRQ_DRDY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    // Verify that the data returned is correct
    if (cd_cmd_rs.CR2 != 0xCC)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_DRDY))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -394,7 +395,7 @@ void test_cmd_get_toc()
        toc[100] != 0x01030000 ||
        (toc[101] & 0xFF000000) != 0x01000000 )
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -414,7 +415,7 @@ void test_cmd_get_session_info()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -423,7 +424,7 @@ void test_cmd_get_session_info()
       cd_cmd_rs.CR2 != 0x0000 ||
       (cd_cmd_rs.CR3 & 0xFF00) != 0x0100)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -433,7 +434,7 @@ void test_cmd_get_session_info()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -443,7 +444,7 @@ void test_cmd_get_session_info()
       cd_cmd_rs.CR3 != 0x0100 ||
       cd_cmd_rs.CR4 != 0x0000)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -465,20 +466,20 @@ void test_cmd_init_cd()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    // Verify that the data returned is correct
    if (cd_cmd_rs.CR1 != (STATUS_BUSY << 8))
    {
-      do_tests_unexp_data_error();
+		do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -490,14 +491,14 @@ void test_cmd_init_cd()
    if ((cd_cmd_rs.CR1 & 0xFF00) != (STATUS_STANDBY << 8))
    {
       cd_start_drive();
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
    // back to default settings
    if ((ret = cd_cdb_init(0)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -506,7 +507,7 @@ void test_cmd_init_cd()
 
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -526,13 +527,13 @@ void test_cmd_open_tray()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_EFLS | HIRQ_DCHG))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -543,7 +544,7 @@ void test_cmd_open_tray()
    if ((cd_cmd_rs.CR1 & 0xFF00) != (STATUS_BUSY << 8))
    {
       cd_cdb_init(0);
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -551,7 +552,7 @@ void test_cmd_open_tray()
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -560,7 +561,7 @@ void test_cmd_open_tray()
 
    if ((cd_cmd_rs.CR1 & 0xFF00) != (STATUS_PAUSE << 8))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -577,7 +578,7 @@ void test_cmd_end_data_transfer()
 
    if (cd_cmd_rs.CR2 != 0xCC)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -602,7 +603,7 @@ void test_cmd_play_disc()
 
    if ((ret = cd_exec_command(HIRQ_PEND|HIRQ_CSCT, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -614,7 +615,7 @@ void test_cmd_play_disc()
        cd_cmd_rs.CR2 != (0x0100 | audio_track) ||
        (cd_cmd_rs.CR3 & 0xFF00) != 0x0100)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -635,7 +636,7 @@ void test_cmd_seek_disc()
 
    if ((ret = cd_exec_command(HIRQ_PEND|HIRQ_CSCT, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -647,7 +648,7 @@ void test_cmd_seek_disc()
       cd_cmd_rs.CR2 != 0x4101 ||
       (cd_cmd_rs.CR3 & 0xFF00) != 0x0100)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -672,7 +673,7 @@ void test_cmd_scan_disc()
 
    if ((ret = cd_exec_command(HIRQ_PEND|HIRQ_CSCT, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -686,7 +687,7 @@ void test_cmd_scan_disc()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -698,7 +699,7 @@ void test_cmd_scan_disc()
       cd_cmd_rs.CR2 != (0x0100 | audio_track) ||
       (cd_cmd_rs.CR3 & 0xFF00) != 0x0100)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -708,7 +709,7 @@ void test_cmd_scan_disc()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -720,14 +721,14 @@ void test_cmd_scan_disc()
       cd_cmd_rs.CR2 != (0x0100 | audio_track) ||
       (cd_cmd_rs.CR3 & 0xFF00) != 0x0100)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
    // Stop scanning
    if ((ret = cd_seek_fad(150)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -736,7 +737,7 @@ void test_cmd_scan_disc()
 
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -757,13 +758,13 @@ void test_cmd_get_subcode_qrw()
 
    if ((ret = cd_exec_command(HIRQ_DRDY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_DRDY))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -781,7 +782,8 @@ void test_cmd_get_subcode_qrw()
        subcode[3] != 0x0000 ||
        subcode[4] != 0x0096)
    {
-      do_tests_unexp_data_error();
+      do_tests_unexp_data_error("%04X %04X %04X %04X %04X %04X %04X %04X %04X %04X", 
+			CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4, subcode[0], subcode[1], subcode[2], subcode[3], subcode[4]);
       return;
    }
 
@@ -791,13 +793,13 @@ void test_cmd_get_subcode_qrw()
 
    if ((ret = cd_exec_command(HIRQ_DRDY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
-      do_tests_error(ret);
+      do_cdb_tests_error(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_DRDY))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -810,7 +812,7 @@ void test_cmd_get_subcode_qrw()
 
    if (cd_cmd_rs.CR2 != 12)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 #endif
@@ -826,7 +828,7 @@ void test_cmd_set_cddev_con()
 
    if ((ret = cd_connect_cd_to_filter(3)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -846,13 +848,13 @@ void test_cmd_get_cd_dev_con()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if ((cd_cmd_rs.CR3 >> 8) != 0x03)
    {   
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -872,7 +874,7 @@ void test_cmd_get_last_buffer()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -880,7 +882,7 @@ void test_cmd_get_last_buffer()
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8) ||
        cd_cmd_rs.CR3 != 0xFF00)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -902,13 +904,13 @@ void test_cmd_set_filter_range()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -929,7 +931,7 @@ void test_cmd_get_filter_range()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -939,7 +941,7 @@ void test_cmd_get_filter_range()
        cd_cmd_rs.CR3 != 0x0100 ||
        cd_cmd_rs.CR4 != 0x0097)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -961,13 +963,13 @@ void test_cmd_set_filter_sh_cond()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -988,7 +990,7 @@ void test_cmd_get_filter_sh_cond()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -998,7 +1000,7 @@ void test_cmd_get_filter_sh_cond()
       cd_cmd_rs.CR3 != 0x0105 ||
       cd_cmd_rs.CR4 != 0x0607)
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1019,13 +1021,13 @@ void test_cmd_set_filter_mode()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1046,7 +1048,7 @@ void test_cmd_get_filter_mode()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1055,7 +1057,7 @@ void test_cmd_get_filter_mode()
        cd_cmd_rs.CR3 != 0x0300 ||
        cd_cmd_rs.CR4 != 0x0000)
    {   
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1077,13 +1079,13 @@ void test_cmd_set_filter_con()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1104,7 +1106,7 @@ void test_cmd_get_filter_con()
    
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1113,7 +1115,7 @@ void test_cmd_get_filter_con()
       cd_cmd_rs.CR3 != 0x0100 ||
       cd_cmd_rs.CR4 != 0x0000)
    {   
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1133,7 +1135,7 @@ void test_cmd_reset_selector()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1141,7 +1143,7 @@ void test_cmd_reset_selector()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+		do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1160,27 +1162,27 @@ void test_cmd_get_buffer_size()
    // Read a sector in preparation for later tests
    if ((ret = cd_set_sector_size(SECT_2352)) != 0)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    // Clear partition 0
    if ((ret = cd_reset_selector_one(0)) != 0)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    // Connect CD device to filter 0
    if ((ret = cd_connect_cd_to_filter(0)) != 0)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1191,27 +1193,27 @@ void test_cmd_get_buffer_size()
 
    if ((ret = cd_set_filter_connection(0, &cd_con)) != 0)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
    // Start reading sectors
    if ((ret = cd_play_fad(0, 150, 16)) != 0)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    // Wait until play finished
    if (!cd_wait_hirq(HIRQ_PEND))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1220,7 +1222,7 @@ void test_cmd_get_buffer_size()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1231,7 +1233,7 @@ void test_cmd_get_buffer_size()
       cd_cmd_rs.CR3 != 0x1800 ||
       cd_cmd_rs.CR4 != 0x00C8)
    {   
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1252,7 +1254,7 @@ void test_cmd_get_sector_number()
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1263,7 +1265,7 @@ void test_cmd_get_sector_number()
        cd_cmd_rs.CR3 != 0x0000 ||
        cd_cmd_rs.CR4 != 0x0010)
    {
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1285,7 +1287,7 @@ void test_cmd_calculate_actual_size()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1293,7 +1295,7 @@ void test_cmd_calculate_actual_size()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1313,7 +1315,7 @@ void test_cmd_get_actual_size()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1321,7 +1323,7 @@ void test_cmd_get_actual_size()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1343,7 +1345,7 @@ void test_cmd_get_sector_info()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1351,7 +1353,7 @@ void test_cmd_get_sector_info()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1373,7 +1375,7 @@ void test_cmd_exec_fad_search()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1381,7 +1383,7 @@ void test_cmd_exec_fad_search()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1403,7 +1405,7 @@ void test_cmd_get_fad_search_results()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1411,7 +1413,7 @@ void test_cmd_get_fad_search_results()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1431,7 +1433,7 @@ void test_cmd_set_sector_length()
 
    if ((ret = cd_exec_command(HIRQ_ESEL, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1439,7 +1441,7 @@ void test_cmd_set_sector_length()
 
    if (!cd_wait_hirq(HIRQ_ESEL))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1461,7 +1463,7 @@ void test_cmd_get_sector_data()
 
    if ((ret = cd_exec_command(HIRQ_EHST, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1469,7 +1471,7 @@ void test_cmd_get_sector_data()
 
    if (!cd_wait_hirq(HIRQ_EHST))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1491,7 +1493,7 @@ void test_cmd_del_sector_data()
 
    if ((ret = cd_exec_command(HIRQ_EHST, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1499,7 +1501,7 @@ void test_cmd_del_sector_data()
 
    if (!cd_wait_hirq(HIRQ_EHST))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1521,7 +1523,7 @@ void test_cmd_get_then_del_sector_data()
 
    if ((ret = cd_exec_command(HIRQ_EHST, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1529,7 +1531,7 @@ void test_cmd_get_then_del_sector_data()
 
    if (!cd_wait_hirq(HIRQ_EHST))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1552,8 +1554,7 @@ void test_cmd_put_sector_data()
 
    if ((ret = cd_exec_command(HIRQ_EHST, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1562,15 +1563,13 @@ void test_cmd_put_sector_data()
 
    if ((ret = cd_end_transfer()) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_tests_error_noarg(ret);
       return;
    }
  
    if (!cd_wait_hirq(HIRQ_EHST))
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1592,7 +1591,7 @@ void test_cmd_copy_sector_data()
 
    if ((ret = cd_exec_command(HIRQ_EHST, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1622,13 +1621,13 @@ void test_cmd_move_sector_data()
 
    if ((ret = cd_exec_command(HIRQ_ECPY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
    if (!cd_wait_hirq(HIRQ_ECPY))
    {   
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1657,7 +1656,7 @@ void test_cmd_change_directory()
 
    if ((ret = cd_exec_command(HIRQ_EFLS, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1665,7 +1664,7 @@ void test_cmd_change_directory()
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1687,7 +1686,7 @@ void test_cmd_read_directory()
 
    if ((ret = cd_exec_command(HIRQ_EFLS, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1695,7 +1694,7 @@ void test_cmd_read_directory()
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1717,7 +1716,7 @@ void test_cmd_get_file_system_scope()
 
    if ((ret = cd_exec_command(HIRQ_EFLS, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1725,7 +1724,7 @@ void test_cmd_get_file_system_scope()
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1747,7 +1746,7 @@ void test_cmd_get_file_info()
 
    if ((ret = cd_exec_command(HIRQ_DRDY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1755,7 +1754,7 @@ void test_cmd_get_file_info()
 
    if (!cd_wait_hirq(HIRQ_DRDY))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1779,7 +1778,7 @@ void test_cmd_read_file()
 
    if ((ret = cd_exec_command(HIRQ_EFLS, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1787,7 +1786,7 @@ void test_cmd_read_file()
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 
@@ -1809,7 +1808,7 @@ void test_cmd_abort_file()
 
    if ((ret = cd_exec_command(HIRQ_EFLS, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
-      do_tests_error(ret);
+      do_tests_error_noarg(ret);
       return;
    }
 
@@ -1817,7 +1816,7 @@ void test_cmd_abort_file()
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
-      do_tests_unexp_data_error();
+      do_cdb_tests_unexp_cr_data_error();
       return;
    }
 

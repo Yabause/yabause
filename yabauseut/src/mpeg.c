@@ -75,17 +75,12 @@ void test_mpegplay_init()
 {
    int ret;
 
-   test_disp_font.transparent = 0;
-
    if ((ret = mpeg_init()) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+      do_tests_error_noarg(ret);
    }
    else
       stage_status = STAGESTAT_DONE;
-
-   test_disp_font.transparent = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -95,27 +90,40 @@ BOOL test_mpeg_status(test_mpeg_status_struct *settings)
    u32 freq;
    mpeg_status_struct mpeg_status;
    u16 old_v_counter;
+	int ret;
 
    timer_setup(TIMER_HBLANK, &freq);
    timer_delay(freq, settings->delay);
 
-   if (mpeg_get_status(&mpeg_status) != IAPETUS_ERR_OK)
-      return FALSE;
+   if ((ret = mpeg_get_status(&mpeg_status)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
+		return FALSE;
+	}
 
    if (mpeg_status.play_status != (MS_PS_VIDEO_PLAYING | MS_PS_AUDIO_PLAYING) &&
       mpeg_status.mpeg_audio_status != (MS_AS_DECODE_OP | MS_AS_LEFT_OUTPUT | MS_AS_RIGHT_OUTPUT) &&
       (mpeg_status.mpeg_video_status & 0xF) != (MS_VS_DECODE_OP | MS_VS_DISPLAYING))
+	{
+      do_tests_unexp_data_error("%X %X %X", mpeg_status.play_status, mpeg_status.mpeg_audio_status, mpeg_status.mpeg_video_status);
       return FALSE;
+	}
 
    // Verify that the v_counter is incrementing
    old_v_counter = mpeg_status.v_counter;
    vdp_vsync();
 
-   if (mpeg_get_status(&mpeg_status) != IAPETUS_ERR_OK)
+   if ((ret = mpeg_get_status(&mpeg_status)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
       return FALSE;
+	}
 
    if (old_v_counter+1 != mpeg_status.v_counter)
+	{
+		do_tests_unexp_data_error("%X %X", old_v_counter+1, mpeg_status.v_counter);
       return FALSE;
+	}
 
    return TRUE;
 }
@@ -125,26 +133,21 @@ void test_mpegplay_play()
    int ret;
    test_mpeg_status_struct tms_settings;
 
-   test_disp_font.transparent = 0;
-
    if ((ret = cdfs_init(CDWORKBUF, 4096)) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_tests_error_noarg(ret);
       return;
    }
 
    if ((ret = cdfs_open("M2TEST\\MOVIE.MPG", &mpeg_file)) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_tests_error_noarg(ret);
       return;
    }
 
    if ((ret = mpeg_play(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_tests_error_noarg(ret);
       return;
    }
 
@@ -159,13 +162,10 @@ void test_mpegplay_play()
 
    if (!test_mpeg_status(&tms_settings))
    {
-      tests_disp_iapetus_error(IAPETUS_ERR_UNEXPECTDATA, __FILE__, __LINE__);
       mpeg_stop(&mpeg_file);
-      stage_status = STAGESTAT_BADDATA;
       return;
    }
 
-   test_disp_font.transparent = 1;
    stage_status = STAGESTAT_DONE;
 }
 
@@ -178,8 +178,7 @@ void test_mpegplay_pause()
 
    if ((ret = mpeg_pause(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_tests_error_noarg(ret);
       return;
    }
 
@@ -194,9 +193,7 @@ void test_mpegplay_pause()
 
    if (!test_mpeg_status(&tms_settings))
    {
-      tests_disp_iapetus_error(IAPETUS_ERR_UNEXPECTDATA, __FILE__, __LINE__);
       mpeg_stop(&mpeg_file);
-      stage_status = STAGESTAT_BADDATA;
       return;
    }
 
@@ -212,8 +209,7 @@ void test_mpegplay_unpause()
 
    if ((ret = mpeg_unpause(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_tests_error_noarg(ret);
       return;
    }
 
@@ -228,9 +224,7 @@ void test_mpegplay_unpause()
 
    if (!test_mpeg_status(&tms_settings))
    {
-      tests_disp_iapetus_error(IAPETUS_ERR_UNEXPECTDATA, __FILE__, __LINE__);
       mpeg_stop(&mpeg_file);
-      stage_status = STAGESTAT_BADDATA;
       return;
    }
 
@@ -246,8 +240,7 @@ void test_mpegplay_stop()
 
    if ((ret = mpeg_stop(&mpeg_file)) != IAPETUS_ERR_OK)
    {
-      tests_disp_iapetus_error(ret, __FILE__, __LINE__);
-      stage_status = STAGESTAT_BADDATA;
+		do_tests_error_noarg(ret);
       return;
    }
 
@@ -261,9 +254,7 @@ void test_mpegplay_stop()
 
    if (!test_mpeg_status(&tms_settings))
    {
-      tests_disp_iapetus_error(IAPETUS_ERR_UNEXPECTDATA, __FILE__, __LINE__);
       mpeg_stop(&mpeg_file);
-      stage_status = STAGESTAT_BADDATA;
       return;
    }
 
