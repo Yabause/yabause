@@ -1,0 +1,104 @@
+Disc "YABAUSEUT.DSK"
+    Session SEMIXA
+        LeadIn MODE1
+        EndLeadIn
+        SystemArea "IP.BIN"
+        Track MODE1
+            Volume ISO9660 "YABAUSEUT.PVD"
+                PrimaryVolume 0:2:16
+                    SystemIdentifier            "SEGA SEGASATURN"
+                    VolumeIdentifier            "YABAUSEUT"
+                    VolumeSetIdentifier         "YABAUSEUT"
+                    PublisherIdentifier         "YABAUSE TEAM"
+                    DataPreparerIdentifier      "YABAUSE TEAM"
+                EndPrimaryVolume
+            EndVolume
+
+            File 0.BIN;1
+                FileSource "YABAUSEUT.BIN"
+                EndFileSource
+            EndFile
+
+            Directory M1TEST
+                File BIGFILE.BIN;1
+                    FileSource "M1TEST\BIGFILE.BIN"
+                    EndFileSource
+                EndFile
+            EndDirectory
+
+            PostGap 75
+        EndTrack
+        Track MODE2
+            PreGap 150
+            Directory M2TEST
+                    ;Extent
+                    ;    FileInterleave  1    2
+                    ;        File    INTRLV1.BIN;1
+                    ;            FileSource    "M2TEST\intrlv1.bin"
+                    ;            EndFileSource
+                    ;        EndFile
+                    ;    EndFileInterleave
+                    ;    FileInterleave  1    2
+                    ;        File    INTRLV2.BIN;1
+                    ;            FileSource    "M2TEST\intrlv2.bin"
+                    ;            EndFileSource
+                    ;        EndFile
+                    ;    EndFileInterleave
+                    ;    FileInterleave  1    2
+                    ;        File    INTRLV3.BIN;1
+                    ;            FileSource    "M2TEST\intrlv3.bin"
+                    ;            EndFileSource
+                    ;        EndFile
+                    ;    EndFileInterleave
+                    ;EndExtent
+                    File XAMC.XA;1
+                        FileSource "M2TEST\XAMC.XA"
+                           RealTime
+                           ; Other SourceType options: MONO_A, MONO_B, STEREO_A, STEREO_B, STEREO_C, VIDEO, ISO11172
+                           SourceType MONO_C
+                           DataType FORM2
+                           CodingInformation 04
+                        EndFileSource
+                    EndFile
+                    ;File MOVIE.MPG;1
+                    ;    SectorRate 75
+                    ;    Pack
+                    ;    MpegMultiplex
+                    ;        MpegStream "M2TEST\MOVIE.M1V" VIDEO
+                    ;            BitRate 1150000.0
+                    ;        EndMpegStream                    
+                    ;        MpegStream "M2TEST\MOVIE.MP2" AUDIO
+                    ;            BitRate 192000.0
+                    ;        EndMpegStream
+                    ;    EndMpegMultiplex
+                    ;EndFile
+                    ;File MOVIE.M1V;1
+                    ;    SectorRate 75
+                    ;    Pack
+                    ;    MpegMultiplex
+                    ;        MpegStream "M2TEST\MOVIE.M1V" VIDEO
+                    ;            BitRate 1150000.0
+                    ;        EndMpegStream                    
+                    ;    EndMpegMultiplex
+                    ;EndFile
+                    ;File MOVIE.MP2;1
+                    ;    SectorRate 75
+                    ;    Pack
+                    ;    MpegMultiplex
+                    ;        MpegStream "M2TEST\MOVIE.MP2" AUDIO
+                    ;            BitRate 192000.0
+                    ;        EndMpegStream
+                    ;    EndMpegMultiplex
+                    ;EndFile
+            EndDirectory
+            PostGap 150
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        LeadOut CDDA
+            Empty 600
+        EndLeadOut
+    EndSession
+EndDisc

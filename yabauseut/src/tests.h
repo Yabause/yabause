@@ -80,5 +80,11 @@ extern font_struct test_disp_font;
       } \
    } 
 
+#define do_tests_error(r) \
+   tests_disp_iapetus_error(r, __FILE__, __LINE__); \
+   stage_status = STAGESTAT_BADDATA;
+
+#define do_tests_unexp_data_error() \
+   do_tests_error(IAPETUS_ERR_UNEXPECTDATA);
 
 #endif

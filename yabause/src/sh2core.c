@@ -258,14 +258,12 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
    context->core->Exec(context, cycles);
 
-   FRTExec(context, cycles);
-   WDTExec(context, cycles);
-
-   if(yabsys.use_sh2_dma_timing && context->model == SHMT_SH2)
-       sh2_dma_exec(context, cycles);
-
    if(context->model == SHMT_SH1)
       sh1_onchip_run_cycles(cycles);
+   else
+      FRTExec(context, cycles);
+
+   WDTExec(context, cycles);
 
    if (UNLIKELY(context->cycles < cycles))
       context->cycles = 0;

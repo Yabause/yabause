@@ -236,6 +236,7 @@ void do_tests(const char *testname, int x, int y)
 {
    int i;
    u8 stage=0;
+   u8 line=0;
 
    // Print messages and cursor
    vdp_printf(&test_disp_font, x * 8, y * 8, 0xF, (char *)testname);
@@ -248,9 +249,13 @@ void do_tests(const char *testname, int x, int y)
 
       if (stage_status != STAGESTAT_BUSY && stage_status != STAGESTAT_WAITINGFORINT)
       {
+         int textx = x * 8;
+         int texty = (y + line + 2) * 8;
+         int textstatx = (x + 38) * 8;
+
          if (stage_status == STAGESTAT_DONE)
          {
-            vdp_printf(&test_disp_font, (x + 38) * 8, (y + stage + 2) * 8, 0xA, "OK");
+            vdp_printf(&test_disp_font, textstatx, texty, 0xA, "OK");
             auto_test_send_result("PASS");
          }
 
@@ -260,27 +265,27 @@ void do_tests(const char *testname, int x, int y)
             switch (stage_status)
             {
                case STAGESTAT_BADTIMING:
-                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xE, "BT");
+                  vdp_printf(&test_disp_font, textstatx, texty, 0xE, "BT");
                   auto_test_send_result("FAIL (Bad Timing)");
                   break;
                case STAGESTAT_BADDATA:
-                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BD");
+                  vdp_printf(&test_disp_font, textstatx, texty, 0xC, "BD");
                   auto_test_send_result("FAIL (Bad Data)");
                   break;
                case STAGESTAT_BADSIZE:
-                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BS");
+                  vdp_printf(&test_disp_font, textstatx, texty, 0xC, "BS");
                   auto_test_send_result("FAIL (Bad Size)");
                   break;
                case STAGESTAT_BADINTERRUPT:
-                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "BI");
+                  vdp_printf(&test_disp_font, textstatx, texty, 0xC, "BI");
                   auto_test_send_result("FAIL (Bad Interrupt)");
                   break;
                case STAGESTAT_NOTEST:
-                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xF, "NT");
+                  vdp_printf(&test_disp_font, textstatx, texty, 0xF, "NT");
                   auto_test_send_result("FAIL (No Test)");
                   break;
                default:
-                  vdp_printf(&test_disp_font, (x+38) * 8, (y + stage + 2) * 8, 0xC, "failed");
+                  vdp_printf(&test_disp_font, textstatx, texty, 0xC, "failed");
                   auto_test_send_result("FAIL");
                   break;
             }
@@ -288,15 +293,27 @@ void do_tests(const char *testname, int x, int y)
 
          if (stage >= numtests)
          {
-            vdp_printf(&test_disp_font, x * 8, (y + stage + 3) * 8, 0xF, "All tests done.");
+            vdp_printf(&test_disp_font, textx, texty+8, 0xF, "All tests done.");
             break;
          }
+#ifndef BUILD_AUTOMATED_TESTING
+         else if (line >= 23)
+         {
+            vdp_printf(&test_disp_font,textx, texty+8, 0xF, "Press any button to continue");
+            tests_wait_press();
+            // Clear window
+            vdp_clear_screen(&test_disp_font);
+            vdp_printf(&test_disp_font, x * 8, y * 8, 0xF, (char *)testname);
+            line = 0;
+            texty = (y + line + 2) * 8;
+         }
+#endif
 
          stage_status = STAGESTAT_BUSY;
 
          if (tests[stage].name)
          {
-            vdp_printf(&test_disp_font, x * 8, (y + stage + 3) * 8, 0xF, (char *)tests[stage].name);
+            vdp_printf(&test_disp_font, textx, texty+8, 0xF, (char *)tests[stage].name);
             auto_test_sub_test_start((char *)tests[stage].name);
          }
 
@@ -306,6 +323,7 @@ void do_tests(const char *testname, int x, int y)
          waitcounter = 60 * 5;
 
          stage++;
+         line++;
       }
       else
       {
@@ -373,6 +391,9 @@ void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line)
    char *filename = strrchr(file, '/');
 
    if (filename == NULL)
+      filename = strrchr(file, '\\');
+
+   if (filename == NULL)
       filename = file;
    else
       filename++;
@@ -413,6 +434,9 @@ void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line)
       case IAPETUS_ERR_TIMEOUT:
          strcat(err_msg, "Operation timeout");
          break;
+      case IAPETUS_ERR_UNEXPECTDATA:
+         strcat(err_msg, "Unexpected data");
+         break;
       case IAPETUS_ERR_MPEGCMD:
          strcat(err_msg, "MPEGCMD hirq bit not set");
          break;
@@ -428,6 +452,6 @@ void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line)
          break;
    }
    int old_transparent = test_disp_font.transparent;
-   vdp_print_text(&test_disp_font, 0 * 8, 0 * 8, 0xF, err_msg);
+   vdp_print_text(&test_disp_font, 0 * 8, 27 * 8, 0xF, err_msg);
    test_disp_font.transparent = old_transparent;
 }

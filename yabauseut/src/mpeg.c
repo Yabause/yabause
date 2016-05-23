@@ -134,7 +134,7 @@ void test_mpegplay_play()
       return;
    }
 
-   if ((ret = cdfs_open("AN000.MPG", &mpeg_file)) != IAPETUS_ERR_OK)
+   if ((ret = cdfs_open("M2TEST\\MOVIE.MPG", &mpeg_file)) != IAPETUS_ERR_OK)
    {
       tests_disp_iapetus_error(ret, __FILE__, __LINE__);
       stage_status = STAGESTAT_BADDATA;
