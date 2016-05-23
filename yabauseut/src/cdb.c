@@ -22,7 +22,7 @@
 #include "cdb.h"
 
 void cd_write_command(cd_cmd_struct *cd_cmd);
-static int audio_track=2;
+static int audio_track=3;
 
 //////////////////////////////////////////////////////////////////////////////
 
