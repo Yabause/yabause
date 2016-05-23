@@ -561,6 +561,14 @@ int do_command()
       comm_state = NoTransfer;
       return TIME_PERIODIC / cdd_cxt.speed;
       break;
+   case 0x5:
+      CDLOG("unknown command 5\n");
+      //just idle for now
+      cdd_cxt.state.current_operation = Idle;
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      comm_state = NoTransfer;
+      return TIME_PERIODIC / cdd_cxt.speed;
+      break;
    case 0x6:
    {
       do_seek_common(ReadingDataSectors);
