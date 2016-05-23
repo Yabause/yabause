@@ -203,6 +203,37 @@ void lle_trace_log(const char * format, ...)
 void ygr_a_bus_cd_cmd_log(void);
 
 
+char* get_status(u16 cr1)
+{
+   switch ((cr1 >> 8) & 0xf)
+   {
+   case 0:
+      return "busy";
+   case 1:
+      return "paused";
+   case 2:
+      return "standby";
+   case 3:
+      return "playing";
+   case 4:
+      return "seeking";
+   case 5:
+      return "scanning";
+   case 7:
+      return "tray open";
+   case 8:
+      return "retrying";
+   case 9:
+      return "read data error";
+   case 0xa:
+      return "fatal error";
+   default:
+      return "unknown";
+   }
+
+   return "get status error";
+}
+
 //replacements for Cs2ReadWord etc
 u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
    u16 val = 0;
@@ -233,7 +264,7 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
    case 0x90026: 
       LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR4);
       ygr_cxt.mbx_status |= 2;//todo test this
-      CDLOG("abus cdb response: %04x %04x %04x %04x %04x\n", ygr_cxt.regs.HIRQ, ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4);
+      CDLOG("abus cdb response: CR1: %04x CR2: %04x CR3: %04x CR4: %04x HIRQ: %04x Status: %s\n", ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4, ygr_cxt.regs.HIRQ, get_status(ygr_cxt.regs.CR1));
       return ygr_cxt.regs.CR4;
    case 0x90028:
    case 0x9002A: 
