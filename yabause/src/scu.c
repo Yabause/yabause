@@ -3033,37 +3033,54 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 
 
 u8 FASTCALL Sh2ScuReadByte(SH2_struct *sh, u32 addr) {
-
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return ScuReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2ScuReadWord(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return ScuReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2ScuReadLong(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return ScuReadLong(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2ScuWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+#if CACHE_ENABLE
+   sh->cycles += 4;
+#endif
    ScuWriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2ScuWriteWord(SH2_struct *sh, u32 addr, UNUSED u16 val) {
+#if CACHE_ENABLE
+   sh->cycles += 4;
+#endif
    ScuWriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+#if CACHE_ENABLE
+   sh->cycles += 4;
+#endif
    ScuWriteLong(addr, val);
 }
 

@@ -31,6 +31,7 @@
 #include "vdp2.h"
 #include "vidsoft.h"
 #include "threads.h"
+#include "sh2core.h"
 
 u8 * Vdp1Ram;
 u8 * Vdp1FrameBuffer;
@@ -161,72 +162,108 @@ void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Sh2Vdp1RamReadByte(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 46;
+#endif
    return Vdp1RamReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2Vdp1RamReadWord(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 46;
+#endif
    return Vdp1RamReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2Vdp1RamReadLong(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 46;
+#endif
    return Vdp1RamReadLong(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp1RamWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+#if CACHE_ENABLE
+   sh->cycles += 10;
+#endif
    Vdp1RamWriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp1RamWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+#if CACHE_ENABLE
+   sh->cycles += 10;
+#endif
    Vdp1RamWriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp1RamWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+#if CACHE_ENABLE
+   sh->cycles += 11;
+#endif
    Vdp1RamWriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Sh2Vdp1FrameBufferReadByte(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 46;
+#endif
    return Vdp1FrameBufferReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2Vdp1FrameBufferReadWord(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 46;
+#endif
    return Vdp1FrameBufferReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2Vdp1FrameBufferReadLong(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 46;
+#endif
    return Vdp1FrameBufferReadLong(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp1FrameBufferWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+#if CACHE_ENABLE
+   sh->cycles += 10;
+#endif
    Vdp1FrameBufferWriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp1FrameBufferWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+#if CACHE_ENABLE
+   sh->cycles += 10;
+#endif
    Vdp1FrameBufferWriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp1FrameBufferWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+#if CACHE_ENABLE
+   sh->cycles += 11;
+#endif
    Vdp1FrameBufferWriteLong(addr, val);
 }
 

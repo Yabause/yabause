@@ -138,72 +138,108 @@ void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Sh2Vdp2RamReadByte(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 41;
+#endif
    return Vdp2RamReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2Vdp2RamReadWord(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 41;
+#endif
    return Vdp2RamReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2Vdp2RamReadLong(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 41;
+#endif
    return Vdp2RamReadLong(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2RamWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+#if CACHE_ENABLE
+   sh->cycles += 5;
+#endif
    Vdp2RamWriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2RamWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+#if CACHE_ENABLE
+   sh->cycles += 5;
+#endif
    Vdp2RamWriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2RamWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+#if CACHE_ENABLE
+   sh->cycles += 6;
+#endif
    Vdp2RamWriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Sh2Vdp2ColorRamReadByte(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 40;
+#endif
    return Vdp2ColorRamReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2Vdp2ColorRamReadWord(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 40;
+#endif
    return Vdp2ColorRamReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2Vdp2ColorRamReadLong(SH2_struct *sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 40;
+#endif
    return Vdp2ColorRamReadLong(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2ColorRamWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+#if CACHE_ENABLE
+   sh->cycles += 5;
+#endif
    Vdp2ColorRamWriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2ColorRamWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+#if CACHE_ENABLE
+   sh->cycles += 5;
+#endif
    Vdp2ColorRamWriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2ColorRamWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+#if CACHE_ENABLE
+   sh->cycles += 7;
+#endif
    Vdp2ColorRamWriteLong(addr, val);
 }
 
@@ -1070,36 +1106,42 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Sh2Vdp2ReadByte(SH2_struct *sh, u32 addr) {
+   sh->cycles += 40;
    return Vdp2ReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2Vdp2ReadWord(SH2_struct *sh, u32 addr) {
+   sh->cycles += 40;
    return Vdp2ReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2Vdp2ReadLong(SH2_struct *sh, u32 addr) {
+   sh->cycles += 40;
    return Vdp2ReadLong(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2WriteByte(SH2_struct *sh, u32 addr, UNUSED u8 val) {
+   sh->cycles += 7;
    Vdp2WriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2WriteWord(SH2_struct *sh, u32 addr, u16 val) {
+   sh->cycles += 7;
    Vdp2WriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2WriteLong(SH2_struct *sh, u32 addr, u32 val) {
+   sh->cycles += 8;
    Vdp2WriteLong(addr, val);
 }
 

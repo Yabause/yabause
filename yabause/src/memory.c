@@ -417,6 +417,9 @@ static void FASTCALL Sh2UnhandledMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_
 
 static u8 FASTCALL Sh2HighWramMemoryReadByte(SH2_struct *sh, u32 addr)
 {
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return HighWramMemoryReadByte(addr);
 }
 
@@ -424,6 +427,9 @@ static u8 FASTCALL Sh2HighWramMemoryReadByte(SH2_struct *sh, u32 addr)
 
 static u16 FASTCALL Sh2HighWramMemoryReadWord(SH2_struct *sh, u32 addr)
 {
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return HighWramMemoryReadWord(addr);
 }
 
@@ -431,6 +437,9 @@ static u16 FASTCALL Sh2HighWramMemoryReadWord(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL Sh2HighWramMemoryReadLong(SH2_struct *sh, u32 addr)
 {
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return HighWramMemoryReadLong(addr);
 }
 
@@ -438,6 +447,9 @@ static u32 FASTCALL Sh2HighWramMemoryReadLong(SH2_struct *sh, u32 addr)
 
 static void FASTCALL Sh2HighWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
+#if CACHE_ENABLE
+   sh->cycles += 4;
+#endif
    HighWramMemoryWriteByte(addr, val);
 }
 
@@ -445,6 +457,9 @@ static void FASTCALL Sh2HighWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val
 
 static void FASTCALL Sh2HighWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
+#if CACHE_ENABLE
+   sh->cycles += 4;
+#endif
    HighWramMemoryWriteWord(addr, val);
 }
 
@@ -452,6 +467,9 @@ static void FASTCALL Sh2HighWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 va
 
 static void FASTCALL Sh2HighWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
+#if CACHE_ENABLE
+   sh->cycles += 4;
+#endif
    HighWramMemoryWriteLong(addr, val);
 }
 
@@ -459,6 +477,9 @@ static void FASTCALL Sh2HighWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 va
 
 static u8 FASTCALL Sh2LowWramMemoryReadByte(SH2_struct *sh, u32 addr)
 {
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return LowWramMemoryReadByte(addr);
 }
 
@@ -466,6 +487,9 @@ static u8 FASTCALL Sh2LowWramMemoryReadByte(SH2_struct *sh, u32 addr)
 
 static u16 FASTCALL Sh2LowWramMemoryReadWord(SH2_struct *sh, u32 addr)
 {
+#if CACHE_ENABLE
+   sh->cycles += 8;
+#endif
    return LowWramMemoryReadWord(addr);
 }
 
@@ -473,6 +497,9 @@ static u16 FASTCALL Sh2LowWramMemoryReadWord(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL Sh2LowWramMemoryReadLong(SH2_struct *sh, u32 addr)
 {
+#if CACHE_ENABLE
+   sh->cycles += 15;
+#endif
    return LowWramMemoryReadLong(addr);
 }
 
@@ -480,6 +507,9 @@ static u32 FASTCALL Sh2LowWramMemoryReadLong(SH2_struct *sh, u32 addr)
 
 static void FASTCALL Sh2LowWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
+#if CACHE_ENABLE
+   sh->cycles += 7;
+#endif
    LowWramMemoryWriteByte(addr, val);
 }
 
@@ -487,6 +517,9 @@ static void FASTCALL Sh2LowWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
 
 static void FASTCALL Sh2LowWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
+#if CACHE_ENABLE
+   sh->cycles += 7;
+#endif
    LowWramMemoryWriteWord(addr, val);
 }
 
@@ -494,6 +527,9 @@ static void FASTCALL Sh2LowWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val
 
 static void FASTCALL Sh2LowWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
+#if CACHE_ENABLE
+   sh->cycles += 15;
+#endif
    LowWramMemoryWriteLong(addr, val);
 }
 

@@ -602,18 +602,30 @@ void FASTCALL ygr_a_bus_write_long(UNUSED u32 addr, UNUSED u32 val) {
 }
 
 u16 FASTCALL sh2_ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 17;
+#endif
    return ygr_a_bus_read_word(addr);
 }
 
 void FASTCALL sh2_ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 val) {
+#if CACHE_ENABLE
+   sh->cycles += 6;
+#endif
    ygr_a_bus_write_word(addr, val);
 }
 
 u32 FASTCALL sh2_ygr_a_bus_read_long(SH2_struct * sh, u32 addr) {
+#if CACHE_ENABLE
+   sh->cycles += 17;
+#endif
    return ygr_a_bus_read_long(addr);
 }
 
 void FASTCALL sh2_ygr_a_bus_write_long(SH2_struct * sh, UNUSED u32 addr, UNUSED u32 val) {
+#if CACHE_ENABLE
+   sh->cycles += 14;
+#endif
    ygr_a_bus_write_long(addr, val);
 }
 
