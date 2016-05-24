@@ -45,6 +45,20 @@ void Cs2Exec(u32 timing);
 // ygr <=> vdp2 (mpeg video)
 // ygr <=> scsp (cd audio)
 
+//the ygr has a ~4 word fifo. the sh1 init routine
+//does a test dma to the fifo and reads it back after
+//4 nops. if this fails the get hardware info command
+//will return 0x8. 
+
+//the toc and sectors are transferred using the dreq
+//method. the sh1 sets up the dma regs and activates
+//a dma which is paused until the ygr asserts dreq 
+//to fill up the fifo.
+
+//supporting both these methods seems to require 
+//cycle-level emulation so we use a large fifo 
+//and instant dmas instead
+
 struct Ygr
 {
    struct Regs
@@ -62,13 +76,14 @@ struct Ygr
 
    int fifo_read_ptr;
    int fifo_write_ptr;
-   u16 fifo[4];
+
+   //not the true size
+   u16 fifo[4096];
    u16 transfer_ctrl;
 
    u16 cdirq_flags;
 
    int mbx_status;
-   u16 fake_fifo;
 }ygr_cxt = { 0 };
 
 u8 ygr_sh1_read_byte(u32 addr)
@@ -78,16 +93,28 @@ u8 ygr_sh1_read_byte(u32 addr)
    return 0;
 }
 
+u16 read_fifo()
+{
+   int ptr = ygr_cxt.fifo_read_ptr;
+   ygr_cxt.fifo_read_ptr++;
+   ygr_cxt.fifo_read_ptr &= 0xFFF;
+
+   return ygr_cxt.fifo[ptr];
+}
+
+void write_fifo(u16 data)
+{
+   ygr_cxt.fifo[ygr_cxt.fifo_write_ptr++] = data;
+   ygr_cxt.fifo_write_ptr &= 0xFFF;
+}
+
 u16 ygr_sh1_read_word(u32 addr)
 {
    CDTRACE("rwlsi: %08X\n", addr);
    switch (addr & 0xffff) {
    case 0:
    {
-      u8 ptr = ygr_cxt.fifo_read_ptr;
-      ygr_cxt.fifo_read_ptr++;
-      ygr_cxt.fifo_read_ptr &= 3;
-      return ygr_cxt.fifo[ptr];
+      return read_fifo();
    }
    case 2:
       return ygr_cxt.transfer_ctrl;
@@ -130,11 +157,12 @@ void ygr_sh1_write_word(u32 addr, u16 data)
    CDTRACE("wwlsi: %08X %04X\n", addr, data);
    switch (addr & 0xffff) {
    case 0:
-      //needed to pass lsi dma test
-      ygr_cxt.fifo[ygr_cxt.fifo_write_ptr++] = data;
-      ygr_cxt.fifo_write_ptr &= 3;
+      write_fifo(data);
       return;
    case 2:
+      if (data & 2)   //probably means "reset fifo pointers"
+         ygr_cxt.fifo_read_ptr = ygr_cxt.fifo_write_ptr = 0;
+
       ygr_cxt.transfer_ctrl = data;
       return;
    case 4:
@@ -276,9 +304,7 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
    case 0x9002A: 
       return ygr_cxt.regs.MPEGRGB;
    case 0x98000:
-      // transfer info
-      sh1_dreq_asserted(1);
-      return ygr_cxt.fake_fifo;
+      return read_fifo();
       break;
    default:
       LOG("ygr\t: Undocumented register read %08X\n", addr);
@@ -600,17 +626,15 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
    case 0x18000:
    {
       u32 top;
-      while ((sh1_cxt.onchip.dmac.channel[1].chcr & 2) ||
-             !(sh1_cxt.onchip.dmac.channel[1].chcr & 1)) {
-         Cs2Exec(200);
-         SH2Exec(SH1, 200);
-      }
+      //while ((sh1_cxt.onchip.dmac.channel[1].chcr & 2) ||
+      //       !(sh1_cxt.onchip.dmac.channel[1].chcr & 1)) {
+      //   Cs2Exec(200);
+      //   SH2Exec(SH1, 200);
+      //}
 
-      sh1_dreq_asserted(1);
-      top = ygr_cxt.fake_fifo;
-      sh1_dreq_asserted(1);
+      top = read_fifo();
       top <<= 16;
-      top |= ygr_cxt.fake_fifo;
+      top |= read_fifo();
       return top;
    }
    default:

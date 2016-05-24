@@ -1370,7 +1370,7 @@ void onchip_write_timer_word(struct Onchip * regs, u32 addr, int which_timer, u1
 
    assert(0);
 }
-
+void sh1_dma_init(int which);
 void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
 {
    CDTRACE("wbreg: %08X %02X\n", addr, data);
@@ -1554,6 +1554,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       if (addr == 0x5FFFF4F)
       {
          regs->dmac.channel[0].chcr = (regs->dmac.channel[0].chcr & 0xff00) | (data & 0xfd);
+         sh1_dma_init(0);
          return;
       }
       if (addr == 0x5FFFF5e)
@@ -1564,6 +1565,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       if (addr == 0x5FFFF5F)
       {
          regs->dmac.channel[1].chcr = (regs->dmac.channel[1].chcr & 0xff00) | (data & 0xfd);
+         sh1_dma_init(1);
          return;
       }
       if (addr == 0x5FFFF6e)
@@ -1574,6 +1576,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       if (addr == 0x5FFFF6F)
       {
          regs->dmac.channel[2].chcr = (regs->dmac.channel[2].chcr & 0xff00) | (data & 0xfd);
+         sh1_dma_init(2);
          return;
       }
       if (addr == 0x5FFFF7e)
@@ -1584,6 +1587,7 @@ void onchip_write_byte(struct Onchip * regs, u32 addr, u8 data)
       if (addr == 0x5FFFF7F)
       {
          regs->dmac.channel[3].chcr = (regs->dmac.channel[3].chcr & 0xff00) | (data & 0xfd);
+         sh1_dma_init(3);
          return;
       }
       //dmac
@@ -5523,10 +5527,13 @@ void tick_dma(int which)
 
 void sh1_dma_init(int which)
 {
+   if ((sh1_cxt.onchip.dmac.channel[which].is_active))
+      return;
+
    //de, dme, mnif, ae, te must all be zero to start a dma
    //but just check de and dme for now
-   if (sh1_cxt.onchip.dmac.dmaor & 1 && //dma enabled on all channels
-      sh1_cxt.onchip.dmac.channel[which].chcr & 1)//dma enabled on this channel
+   if (((sh1_cxt.onchip.dmac.dmaor & 7) == 1) && //dma enabled on all channels
+      ((sh1_cxt.onchip.dmac.channel[which].chcr & 3) == 1))//dma enabled on this channel
    {
       sh1_cxt.onchip.dmac.channel[which].is_active = 1;
       sh1_cxt.onchip.dmac.channel[which].chcr &= 0xfffd;//clear te bit to indicate dma is active
@@ -5537,7 +5544,7 @@ void sh1_dma_init(int which)
 void sh1_dreq_asserted(int which)
 {
    if (!sh1_cxt.onchip.dmac.channel[which].is_active)
-      sh1_dma_init(which);
+     sh1_dma_init(which);
 
    tick_dma(which);
 }
