@@ -394,10 +394,22 @@ void unregister_all_tests()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void test_log_text(char *text)
+void tests_log_text(char *text)
 {
    memcpy((void *)(*((u32 *)TEST_LOG_ADDRESS)), text, strlen(text)+1);
    *((u32 *)TEST_LOG_ADDRESS) = *((u32 *)TEST_LOG_ADDRESS) + strlen(text);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void tests_log_textf(char *format, ...)
+{
+   char text[512];
+   va_list arg;
+   va_start(arg, format);
+   vsprintf(text, format, arg);
+   tests_log_text(text);
+   va_end(arg);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -478,5 +490,5 @@ void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line, char *
    strcat(err_msg, extra);
    strcat(err_msg, "\n");
 
-   test_log_text(err_msg);
+   tests_log_text(err_msg);
 }
