@@ -2438,6 +2438,9 @@ void onchip_sci_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
    assert(0);
 }
 
+void sh1_dma_init(int which);
+void tick_dma(int which);
+
 void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
 {
    switch (addr)
@@ -2465,6 +2468,17 @@ void onchip_dmac_write_word(struct Onchip * regs, u32 addr, int which, u16 data)
       return;
    case 0xe:
       regs->dmac.channel[which].chcr = data & 0xfffd;
+
+      if (data & 1)
+      {
+         //start a dma
+         //required for lsi test, expects it to complete within
+         //4 nops so we do it instantly
+         sh1_dma_init(which);
+
+         while (sh1_cxt.onchip.dmac.channel[which].is_active)
+            tick_dma(which);
+      }
       return;
    }
 

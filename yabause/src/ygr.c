@@ -60,7 +60,8 @@ struct Ygr
       u16 MPEGRGB;
    }regs;
 
-   int fifo_ptr;
+   int fifo_read_ptr;
+   int fifo_write_ptr;
    u16 fifo[4];
    u16 transfer_ctrl;
 
@@ -82,9 +83,12 @@ u16 ygr_sh1_read_word(u32 addr)
    CDTRACE("rwlsi: %08X\n", addr);
    switch (addr & 0xffff) {
    case 0:
-      ygr_cxt.fifo_ptr++;
-      ygr_cxt.fifo_ptr &= 3;
-      return ygr_cxt.fifo[ygr_cxt.fifo_ptr];
+   {
+      u8 ptr = ygr_cxt.fifo_read_ptr;
+      ygr_cxt.fifo_read_ptr++;
+      ygr_cxt.fifo_read_ptr &= 3;
+      return ygr_cxt.fifo[ptr];
+   }
    case 2:
       return ygr_cxt.transfer_ctrl;
    case 4:
@@ -126,7 +130,9 @@ void ygr_sh1_write_word(u32 addr, u16 data)
    CDTRACE("wwlsi: %08X %04X\n", addr, data);
    switch (addr & 0xffff) {
    case 0:
-      ygr_cxt.fake_fifo = data;
+      //needed to pass lsi dma test
+      ygr_cxt.fifo[ygr_cxt.fifo_write_ptr++] = data;
+      ygr_cxt.fifo_write_ptr &= 3;
       return;
    case 2:
       ygr_cxt.transfer_ctrl = data;
