@@ -363,6 +363,7 @@ void make_ring_status()
 
    set_checksum(cdd_cxt.state_data);
 }
+void ScspReceiveCDDA(const u8 *sector);
 
 int continue_command()
 {
@@ -382,13 +383,38 @@ int continue_command()
    else if (cdd_cxt.state.current_operation == ReadingDataSectors ||
             cdd_cxt.state.current_operation == ReadingAudioData)
    {
+      int is_audio = 1;
+
+      if (cdd_cxt.disc_fad < 150)
+         is_audio = 0;
+
+      if (cdd_cxt.disc_fad >= get_track_start_fad(-1))
+         is_audio = 0;
+
+      if (cdd_cxt.state.current_operation != ReadingAudioData)
+         is_audio = 0;
+
       comm_state = NoTransfer;
-      do_dataread();
+
+      if (is_audio)
+      {
+         u8 buf[2448];		
+         Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
+         ScspReceiveCDDA(buf);
+         cdd_cxt.disc_fad++;
+         Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
+      }
+      else
+         do_dataread();
 
       update_status_info();
       cdd_cxt.state.current_operation = (cdd_cxt.state.q_subcode & 0x40) ? ReadingDataSectors : ReadingAudioData;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
-      return TIME_READSECTOR / cdd_cxt.speed;
+
+      if (is_audio)
+         return TIME_READSECTOR;
+      else
+         return TIME_READSECTOR / cdd_cxt.speed;
    }
    else if (cdd_cxt.state.current_operation == Stopped)
    {
