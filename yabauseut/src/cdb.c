@@ -245,7 +245,7 @@ void test_cdb_mbx()
 
       if (timeout != expect_timeout)
       {
-         vdp_printf(&test_disp_font, 2 * 8, 22 * 8, 0xF, "mbx %d test failed", i);
+         tests_disp_iapetus_error(IAPETUS_ERR_TIMEOUT, __FILE__, __LINE__, "test %d failed", i);
          stage_status = STAGESTAT_BADTIMING;
          return;
       }
@@ -273,11 +273,25 @@ int cd_status_rs(cd_cmd_struct *cd_cmd_rs)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int cd_wait_status_rs(int time, cd_cmd_struct *cd_cmd_rs)
+int cd_wait_status_rs(u8 status, int timeout, int wait, cd_cmd_struct *cd_cmd_rs)
 {
-   int i;
-   for (i = 0; i < time; i++)
+   int i,j;
+   int ret;
+   char text[256];
+
+   for (i = 0; i < timeout; i++)
+   {
       vdp_vsync();
+      if ((ret=cd_status_rs(cd_cmd_rs)) == TRUE)
+      {
+         if ((cd_cmd_rs->CR1 >> 8) == status)
+         {
+            for (j = 0; j < wait; j++)
+               vdp_vsync();
+            return ret;
+         }
+      }
+   }
 
    return cd_status_rs(cd_cmd_rs);
 }
@@ -395,7 +409,7 @@ void test_cmd_get_toc()
        toc[100] != 0x01030000 ||
        (toc[101] & 0xFF000000) != 0x01000000 )
    {
-      do_cdb_tests_unexp_cr_data_error();
+      do_tests_unexp_data_error("%08X %08X %08X %08X %08X %08X %08X", toc[0], toc[1], toc[2], toc[3], toc[99], toc[100], toc[101]);
       return;
    }
 
@@ -484,7 +498,7 @@ void test_cmd_init_cd()
    }
 
    // Wait a couple of seconds, then check status
-   if (!cd_wait_status_rs(60 * 3, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_STANDBY, 60 * 5, 60 * 2, &cd_cmd_rs))
       return;
 
    // Verify that the data returned is correct
@@ -502,7 +516,7 @@ void test_cmd_init_cd()
       return;
    }
 
-   if (!cd_wait_status_rs(60 * 2, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_PAUSE, 60 * 5, 60 * 1, &cd_cmd_rs))
       return;
 
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8))
@@ -556,7 +570,7 @@ void test_cmd_open_tray()
       return;
    }
 
-   if (!cd_wait_status_rs(60 * 2, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_PAUSE, 60 * 5, 0, &cd_cmd_rs))
       return;
 
    if ((cd_cmd_rs.CR1 & 0xFF00) != (STATUS_PAUSE << 8))
@@ -608,7 +622,7 @@ void test_cmd_play_disc()
    }
 
    // Wait a few seconds, then check status
-   if (!cd_wait_status_rs(60 * 4, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_PLAY, 60 * 5, 60 * 4, &cd_cmd_rs))
       return;
 
    if (cd_cmd_rs.CR1 != (STATUS_PLAY << 8) ||
@@ -641,7 +655,7 @@ void test_cmd_seek_disc()
    }
 
    // Wait a few seconds, then check status
-   if (!cd_wait_status_rs(60 * 4, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_PAUSE, 60 * 5, 0, &cd_cmd_rs))
       return;
 
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8) ||
@@ -678,7 +692,7 @@ void test_cmd_scan_disc()
    }
 
    // Wait until it starts playing
-   if (!cd_wait_status_rs(6 * 3, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_PLAY, 60 * 5, 0, &cd_cmd_rs))
       return;
 
    // Forward
@@ -692,7 +706,7 @@ void test_cmd_scan_disc()
    }
 
    // Wait a few seconds, then check status
-   if (!cd_wait_status_rs(60 * 1, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_SCAN, 60 * 5, 60 * 0, &cd_cmd_rs))
       return;
 
    if (cd_cmd_rs.CR1 != (STATUS_SCAN << 8) ||
@@ -714,7 +728,7 @@ void test_cmd_scan_disc()
    }
 
    // Wait a few seconds, then check status
-   if (!cd_wait_status_rs(30, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_SCAN, 60 * 5, 15, &cd_cmd_rs))
       return;
 
    if (cd_cmd_rs.CR1 != (STATUS_SCAN << 8) ||
@@ -732,7 +746,7 @@ void test_cmd_scan_disc()
       return;
    }
 
-   if (!cd_wait_status_rs(60 * 2, &cd_cmd_rs))
+   if (!cd_wait_status_rs(STATUS_PAUSE, 60 * 5, 0, &cd_cmd_rs))
       return;
 
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8))

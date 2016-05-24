@@ -55,6 +55,7 @@ void tests_wait_press();
 void do_tests(const char *testname, int x, int y);
 void register_test(void (*func)(void), const char *name);
 void unregister_all_tests();
+void test_log_text(char *text);
 void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line, char *format, ...);
 
 void auto_test_all_finished();
