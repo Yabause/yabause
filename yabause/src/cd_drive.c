@@ -226,7 +226,7 @@ void update_status_info()
         cdd_cxt.state.index_field = 1;
         cdd_cxt.state.track_number = 0xaa;
    } else {
-       cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
+       cdd_cxt.state.q_subcode = cdd_cxt.tracks[track_num - 1].ctrladr;
        cdd_cxt.state.index_field = index;
        cdd_cxt.state.track_number = track_num;
    }
@@ -562,6 +562,9 @@ int do_command()
       return TIME_PERIODIC / cdd_cxt.speed;
       break;
    case 0x5:
+   //prevent scan from crashing the drive for now
+   case 0xa:
+   case 0xb:
       CDLOG("unknown command 5\n");
       //just idle for now
       cdd_cxt.state.current_operation = Idle;
@@ -597,6 +600,7 @@ int do_command()
       return TIME_READING;
       break;
    }
+#if 0
    case 0xa:
       //scan forward
       CDLOG("scan forward\n");
@@ -605,6 +609,7 @@ int do_command()
       //scan backwards
       CDLOG("scan backwards\n");
       break;
+#endif
    }
 
    assert(0);
@@ -662,17 +667,35 @@ int cd_command_exec()
    }
    else if (comm_state == WaitToRxio)
    {
-#if 1
+#ifdef CDDEBUG
+      //debug logging
+      static u8 previous_state = 0;
+
       if (cdd_cxt.received_data[11] != 0xff && cdd_cxt.received_data[0])
       {
+         char str[1024] = { 0 }; 
          int i;
-         RXTRACE("CMD: ");
 
          for (i = 0; i < 13; i++)
-            RXTRACE(" %02X", cdd_cxt.received_data[i]);
-         RXTRACE("\n");
+            sprintf(str + strlen(str), "%02X ", cdd_cxt.received_data[i]);
+
+         CDLOG("CMD: %s\n", str);
+      }
+
+      if (cdd_cxt.state_data[0] != previous_state)
+      {
+         char str[1024] = { 0 };
+         int i;
+
+         previous_state = cdd_cxt.state_data[0];
+
+         for (i = 0; i < 13; i++)
+            sprintf(str + strlen(str), "%02X ", cdd_cxt.state_data[i]);
+
+         CDLOG("STA: %s\n", str);
       }
 #endif
+
       //handle the command
       return do_command();
    }
