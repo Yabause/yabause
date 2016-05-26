@@ -117,7 +117,6 @@ void cd_cmd_test()
    register_test(&test_cmd_get_sector_data, "Get Sector Data");
    register_test(&test_cmd_del_sector_data, "Delete Sector Data");
    register_test(&test_cmd_get_then_del_sector_data, "Get Then Delete Sector Data");
-#if 0
    register_test(&test_cmd_put_sector_data, "Put Sector Data");
    register_test(&test_cmd_copy_sector_data, "Copy Sector Data");
    register_test(&test_cmd_move_sector_data, "Move Sector Data");
@@ -128,7 +127,6 @@ void cd_cmd_test()
    register_test(&test_cmd_get_file_info, "Get File Info");
    register_test(&test_cmd_read_file, "Read File");
    register_test(&test_cmd_abort_file, "Abort File");
-#endif
    do_tests("CD Command tests", 0, 0);
 }
 
@@ -298,7 +296,7 @@ int cd_wait_status_rs(u8 status, int timeout, int wait, cd_cmd_struct *cd_cmd_rs
 
 //////////////////////////////////////////////////////////////////////////////
 
-int cd_end_transfer_rs(cd_cmd_struct *cd_cmd_rs)
+int cd_end_transfer_rs(cd_cmd_struct *cd_cmd_rs, u16 hirq_mask)
 {
    int ret;
    cd_cmd_struct cd_cmd;
@@ -306,7 +304,7 @@ int cd_end_transfer_rs(cd_cmd_struct *cd_cmd_rs)
    cd_cmd.CR1 = 0x0600;
    cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
 
-   if ((ret = cd_exec_command(HIRQ_DRDY, &cd_cmd, cd_cmd_rs)) != IAPETUS_ERR_OK)
+   if ((ret = cd_exec_command(HIRQ_DRDY | hirq_mask, &cd_cmd, cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
       do_tests_error_noarg(ret);
       return FALSE;
@@ -594,7 +592,7 @@ void test_cmd_open_tray()
 void test_cmd_end_data_transfer()
 {
    cd_cmd_struct cd_cmd_rs;
-   if (!cd_end_transfer_rs(&cd_cmd_rs))
+   if (!cd_end_transfer_rs(&cd_cmd_rs, 0))
       return;
 
    if (cd_cmd_rs.CR2 != 0xCC)
@@ -793,7 +791,7 @@ void test_cmd_get_subcode_qrw()
    for (i = 0; i < cd_cmd_rs.CR2; i++)
       subcode[i] = CDB_REG_DATATRNSW;
 
-   if (!cd_end_transfer_rs(&cd_cmd_rs))
+   if (!cd_end_transfer_rs(&cd_cmd_rs, 0))
       return;
 
    if (cd_cmd_rs.CR2 != 5 ||
@@ -901,9 +899,9 @@ void test_cmd_get_last_buffer()
 
    // Check returned status to see if it's right
    if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8) ||
-		 cd_cmd_rs.CR2 != 0x00 ||
+       cd_cmd_rs.CR2 != 0x00 ||
        (cd_cmd_rs.CR3 >= 0x1800 && cd_cmd_rs.CR3 != 0xFF00) ||
-		 cd_cmd_rs.CR4 != 0x00)
+       cd_cmd_rs.CR4 != 0x00)
    {
       do_cdb_tests_unexp_cr_data_error();
       return;
@@ -1519,12 +1517,17 @@ void test_cmd_get_sector_data()
    for (i = 0; i < 0x400; i++)
       buf[i] = CDB_REG_DATATRNS;
 
-   if (!cd_end_transfer_rs(&cd_cmd_rs))
+   if (!cd_end_transfer_rs(&cd_cmd_rs, HIRQ_EHST))
       return;
+
+   if (!cd_wait_hirq(HIRQ_EHST))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
 
    //for (i = 0; i < 2048; i++)
    //   tests_log_textf("%02X\n", buf[i]);
-
    stage_status = STAGESTAT_DONE;
 }
 
@@ -1589,8 +1592,14 @@ void test_cmd_get_then_del_sector_data()
    for (i = 0; i < 0x400; i++)
       buf[i] = CDB_REG_DATATRNS;
 
-   if (!cd_end_transfer_rs(&cd_cmd_rs))
+   if (!cd_end_transfer_rs(&cd_cmd_rs, HIRQ_EHST))
       return;
+
+   if (!cd_wait_hirq(HIRQ_EHST))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
 
    stage_status = STAGESTAT_DONE;
 }
@@ -1604,18 +1613,25 @@ void test_cmd_put_sector_data()
    int ret;
    int i;
 
-   cd_cmd.CR1 = 0x6501;
-   cd_cmd.CR2 = 0x0096;
-   cd_cmd.CR3 = 0x0000;
+   cd_cmd.CR1 = 0x6400;
+   cd_cmd.CR2 = 0x0000;
+   cd_cmd.CR3 = 0x0200;
    cd_cmd.CR4 = 0x0001;
 
-   if ((ret = cd_exec_command(HIRQ_EHST, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   if ((ret = cd_exec_command(HIRQ_EHST | HIRQ_DRDY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
       do_tests_error_noarg(ret);
       return;
    }
 
-   for (i = 0; i < (2352/4); i++)
+   if (!cd_wait_hirq(HIRQ_DRDY))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   //for (i = 0; i < (2352/4); i++)
+   for (i = 0; i < (2048/4); i++)
       CDB_REG_DATATRNS = i;
 
    if ((ret = cd_end_transfer()) != IAPETUS_ERR_OK)
@@ -1646,7 +1662,7 @@ void test_cmd_copy_sector_data()
    cd_cmd.CR3 = 0x0100;
    cd_cmd.CR4 = 0x0001;
 
-   if ((ret = cd_exec_command(HIRQ_EHST, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   if ((ret = cd_exec_command(HIRQ_ECPY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {   
       do_tests_error_noarg(ret);
       return;
@@ -1654,7 +1670,7 @@ void test_cmd_copy_sector_data()
 
    tests_log_textf("%04X %04X %04X %04X %04X\n", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
 
-   if (!cd_wait_hirq(HIRQ_EHST))
+   if (!cd_wait_hirq(HIRQ_ECPY))
    {
       stage_status = STAGESTAT_BADDATA;
       return;
@@ -1671,9 +1687,9 @@ void test_cmd_move_sector_data()
    cd_cmd_struct cd_cmd_rs;
    int ret;
 
-   cd_cmd.CR1 = 0x6601;
-   cd_cmd.CR2 = 0x0096;
-   cd_cmd.CR3 = 0x0000;
+   cd_cmd.CR1 = 0x6600;
+   cd_cmd.CR2 = 0x0000;
+   cd_cmd.CR3 = 0x0100;
    cd_cmd.CR4 = 0x0001;
 
    if ((ret = cd_exec_command(HIRQ_ECPY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
@@ -1695,12 +1711,31 @@ void test_cmd_move_sector_data()
 
 void test_cmd_get_copy_error()
 {
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+
+   cd_cmd.CR1 = 0x6700;
+   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
+      return;
+   }
+
+   if ((cd_cmd_rs.CR1 & 0xFF) != 0)
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
    stage_status = STAGESTAT_DONE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void test_cmd_change_directory()
+int cd_change_dir_rs(int filter, u32 fid)
 {
    cd_cmd_struct cd_cmd;
    cd_cmd_struct cd_cmd_rs;
@@ -1708,22 +1743,40 @@ void test_cmd_change_directory()
 
    cd_cmd.CR1 = 0x7000;
    cd_cmd.CR2 = 0x0000;
-   cd_cmd.CR3 = 0x0100;
-   cd_cmd.CR4 = 0x0000;
+   cd_cmd.CR3 = (filter << 8) | ((fid & 0xFFFFFF) >> 16);
+   cd_cmd.CR4 = fid & 0xFFFF;
 
    if ((ret = cd_exec_command(HIRQ_EFLS, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
-   {   
+   {
       do_tests_error_noarg(ret);
-      return;
+      return FALSE;
    }
-
-   tests_log_textf("%04X %04X %04X %04X %04X\n", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
 
    if (!cd_wait_hirq(HIRQ_EFLS))
    {
       do_cdb_tests_unexp_cr_data_error();
+      return FALSE;
+   }
+
+   stage_status = STAGESTAT_DONE;
+   return TRUE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_change_directory()
+{
+   int ret;
+
+   // Clear out buffer before doing anything else
+   if ((ret = cd_reset_selector_all()) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
       return;
    }
+
+   if (!cd_change_dir_rs(1, 0xFFFFFF))
+      return;
 
    stage_status = STAGESTAT_DONE;
 }
@@ -1766,6 +1819,9 @@ void test_cmd_get_file_system_scope()
    cd_cmd_struct cd_cmd_rs;
    int ret;
 
+   if (!cd_change_dir_rs(1, 0xFFFFFF))
+      return;
+
    cd_cmd.CR1 = 0x7200;
    cd_cmd.CR2 = 0x0000;
    cd_cmd.CR3 = 0x0000;
@@ -1779,7 +1835,17 @@ void test_cmd_get_file_system_scope()
 
    tests_log_textf("%04X %04X %04X %04X %04X\n", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
 
+#if 0
    if (!cd_wait_hirq(HIRQ_EFLS))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+#endif
+
+   if (cd_cmd_rs.CR2 != 0x0003 ||
+      cd_cmd_rs.CR3 != 0x0100 ||
+      cd_cmd_rs.CR4 != 0x0002)
    {
       do_cdb_tests_unexp_cr_data_error();
       return;
