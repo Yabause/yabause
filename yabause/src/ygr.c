@@ -70,6 +70,53 @@ struct Ygr
    u16 fake_fifo;
 }ygr_cxt = { 0 };
 
+//#define WRITE_FIFO_LOG
+//#define VERIFY_FIFO_LOG
+
+void make_fifo_log(u32 data)
+{
+#if defined WRITE_FIFO_LOG && !defined(VERIFY_FIFO_LOG)
+   static FILE * fp;
+   static int started = 0;
+   static int count = 0;
+
+   if (!started)
+   {
+      fp = fopen("C:/yabause/fifo_log.txt", "w");
+      started = 1;
+   }
+
+   fprintf(fp, "%08X, %d\n", data, count);
+   count++;
+#endif
+}
+
+void verify_fifo_log(u32 data_in)
+{
+#if defined VERIFY_FIFO_LOG && !defined(WRITE_FIFO_LOG)
+   static FILE * fp;
+   static int started = 0;
+   u32 correct_data = 0;
+   int count = 0;
+   int correct_count = 0;
+   int retval = 0;
+   if (!started)
+   {
+      fp = fopen("C:/yabause/fifo_log.txt", "w");
+      started = 1;
+   }
+
+   retval = fscanf(fp, "%08X %d\n", &correct_data, &correct_count);
+
+   if (retval == 2)
+   {
+      assert(data_in == correct_data);
+      assert(count == correct_count);
+   }
+   count++;
+#endif
+}
+
 int sh2_a_bus_check_wait(u32 addr)
 {
    if (((sh1_cxt.onchip.dmac.channel[1].chcr & 2) ||
@@ -610,6 +657,8 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
       sh1_dreq_asserted(1);
       top <<= 16;
       top |= ygr_cxt.fake_fifo;
+      make_fifo_log(top);
+      verify_fifo_log(top);
       return top;
    }
    default:
