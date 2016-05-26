@@ -1570,6 +1570,7 @@ void test_cmd_get_then_del_sector_data()
    cd_cmd_struct cd_cmd_rs;
    int ret, i;
    u8 buf[2352];
+   u32 *ptr=(u32 *)buf;
 
    cd_cmd.CR1 = 0x6300;
    cd_cmd.CR2 = 0x0000;
@@ -1590,8 +1591,8 @@ void test_cmd_get_then_del_sector_data()
       return;
    }
 
-   for (i = 0; i < 0x400; i++)
-      buf[i] = CDB_REG_DATATRNS;
+   for (i = 0; i < (2048 / 4); i++)
+      ptr[i] = CDB_REG_DATATRNS;
 
    if (!cd_end_transfer_rs(&cd_cmd_rs, HIRQ_EHST))
       return;
