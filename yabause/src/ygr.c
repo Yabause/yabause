@@ -597,7 +597,8 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
       return ((ygr_cxt.regs.CR2 << 16) | ygr_cxt.regs.CR2);
    case 0x90020: 
       return ((ygr_cxt.regs.CR3 << 16) | ygr_cxt.regs.CR3);
-   case 0x90024: 
+   case 0x90024:
+      ygr_cxt.mbx_status |= 2;
       return ((ygr_cxt.regs.CR4 << 16) | ygr_cxt.regs.CR4);
    case 0x90028:
       return ((ygr_cxt.regs.MPEGRGB << 16) | ygr_cxt.regs.MPEGRGB);
