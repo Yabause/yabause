@@ -97,16 +97,16 @@ void verify_fifo_log(u32 data_in)
    static FILE * fp;
    static int started = 0;
    u32 correct_data = 0;
-   int count = 0;
+   static int count = 0;
    int correct_count = 0;
    int retval = 0;
    if (!started)
    {
-      fp = fopen("C:/yabause/fifo_log.txt", "w");
+      fp = fopen("C:/yabause/fifo_log.txt", "r");
       started = 1;
    }
 
-   retval = fscanf(fp, "%08X %d\n", &correct_data, &correct_count);
+   retval = fscanf(fp, "%08X, %d\n", &correct_data, &correct_count);
 
    if (retval == 2)
    {
