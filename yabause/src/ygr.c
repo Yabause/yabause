@@ -28,6 +28,7 @@
 #include "memory.h"
 #include "debug.h"
 #include <stdarg.h>
+#include "tsunami/yab_tsunami.h"
 
 void Cs2Exec(u32 timing);
 
@@ -45,6 +46,10 @@ void Cs2Exec(u32 timing);
 // ygr <=> vdp2 (mpeg video)
 // ygr <=> scsp (cd audio)
 
+
+#define FIFO_SIZE 4096
+#define FIFO_MASK (FIFO_SIZE-1)
+
 struct Ygr
 {
    struct Regs
@@ -61,14 +66,58 @@ struct Ygr
    }regs;
 
    int fifo_ptr;
-   u16 fifo[4];
+   u16 fifo[FIFO_SIZE];
    u16 transfer_ctrl;
+
+   int fifo_read_ptr;
+   int fifo_write_ptr;
+   int fifo_num_stored;
 
    u16 cdirq_flags;
 
    int mbx_status;
    u16 fake_fifo;
 }ygr_cxt = { 0 };
+
+
+u16 read_fifo()
+{
+   int ptr = ygr_cxt.fifo_read_ptr;
+
+   if(ygr_cxt.transfer_ctrl & 4)
+     assert(ygr_cxt.fifo_num_stored > 0);
+
+   ygr_cxt.fifo_read_ptr++;
+   ygr_cxt.fifo_read_ptr &= FIFO_MASK;
+
+   ygr_cxt.fifo_num_stored--;
+
+   if (ygr_cxt.fifo_num_stored < 0)
+      ygr_cxt.fifo_num_stored = 0;
+
+   return ygr_cxt.fifo[ptr];
+}
+
+void write_fifo(u16 data)
+{
+
+   if (ygr_cxt.fifo_num_stored == FIFO_SIZE)
+      assert(0);
+
+   ygr_cxt.fifo[ygr_cxt.fifo_write_ptr++] = data;
+   ygr_cxt.fifo_write_ptr &= FIFO_MASK;
+   ygr_cxt.fifo_num_stored++;
+}
+
+int fifo_full()
+{
+   if (ygr_cxt.fifo_num_stored == FIFO_SIZE)
+      tsunami_log_value("FIFO_FULL", 1, 1);
+   else
+      tsunami_log_value("FIFO_FULL", 0, 1);
+
+   return ygr_cxt.fifo_num_stored == FIFO_SIZE;
+}
 
 //#define WRITE_FIFO_LOG
 //#define VERIFY_FIFO_LOG
@@ -90,14 +139,13 @@ void make_fifo_log(u32 data)
    count++;
 #endif
 }
-
+static int ygr_count = 0;
 void verify_fifo_log(u32 data_in)
 {
 #if defined VERIFY_FIFO_LOG && !defined(WRITE_FIFO_LOG)
    static FILE * fp;
    static int started = 0;
    u32 correct_data = 0;
-   static int count = 0;
    int correct_count = 0;
    int retval = 0;
    if (!started)
@@ -111,21 +159,45 @@ void verify_fifo_log(u32 data_in)
    if (retval == 2)
    {
       assert(data_in == correct_data);
-      assert(count == correct_count);
+      assert(ygr_count == correct_count);
    }
-   count++;
+   ygr_count++;
 #endif
+
 }
+
+int ygr_dreq_asserted()
+{
+   if (fifo_full())
+   {
+      tsunami_log_value("DREQ", 0, 1);
+      return 0;
+   }
+   else
+   {
+      int dreq = (ygr_cxt.transfer_ctrl >> 2) & 1;
+      tsunami_log_value("DREQ", dreq, 1);
+      return dreq;
+   }
+}
+
 
 int sh2_a_bus_check_wait(u32 addr)
 {
-   if (((sh1_cxt.onchip.dmac.channel[1].chcr & 2) ||
-      !(sh1_cxt.onchip.dmac.channel[1].chcr & 1))) {
-      return 1;
+   //if something is in the fifo, no wait
+   if (ygr_cxt.fifo_num_stored)
+      return 0;
+   else
+   {
+      if ((ygr_cxt.transfer_ctrl >> 2) & 1)
+         return 1;//more data expected
+      else
+         return 0;
    }
 
    return 0;
 }
+
 
 u8 ygr_sh1_read_byte(u32 addr)
 {
@@ -139,9 +211,11 @@ u16 ygr_sh1_read_word(u32 addr)
    CDTRACE("rwlsi: %08X\n", addr);
    switch (addr & 0xffff) {
    case 0:
-      ygr_cxt.fifo_ptr++;
-      ygr_cxt.fifo_ptr &= 3;
-      return ygr_cxt.fifo[ygr_cxt.fifo_ptr];
+   {
+      u16 val = read_fifo();
+      tsunami_log_value("SH1_R_FIFO", val, 16);
+      return val;
+   }
    case 2:
       return ygr_cxt.transfer_ctrl;
    case 4:
@@ -183,9 +257,16 @@ void ygr_sh1_write_word(u32 addr, u16 data)
    CDTRACE("wwlsi: %08X %04X\n", addr, data);
    switch (addr & 0xffff) {
    case 0:
-      ygr_cxt.fake_fifo = data;
+      tsunami_log_value("SH1_W_FIFO", data, 16);
+      write_fifo(data);
       return;
    case 2:
+      if (ygr_cxt.transfer_ctrl & 2)
+      {
+         ygr_cxt.fifo_read_ptr = 0;
+         ygr_cxt.fifo_write_ptr = 0;
+         ygr_cxt.fifo_num_stored = 0;
+      }
       ygr_cxt.transfer_ctrl = data;
       return;
    case 4:
@@ -306,30 +387,33 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
       LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.HIRQMASK);
       return ygr_cxt.regs.HIRQMASK;
    case 0x90018:
-   case 0x9001A: 
+   case 0x9001A:
       LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR1);
       return ygr_cxt.regs.CR1;
    case 0x9001C:
-   case 0x9001E: 
+   case 0x9001E:
       LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR2);
       return ygr_cxt.regs.CR2;
    case 0x90020:
-   case 0x90022: 
+   case 0x90022:
       LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR3);
       return ygr_cxt.regs.CR3;
    case 0x90024:
-   case 0x90026: 
+   case 0x90026:
       LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR4);
-      ygr_cxt.mbx_status |= 2;//todo test this
+      ygr_cxt.mbx_status |= 2;
       CDLOG("abus cdb response: CR1: %04x CR2: %04x CR3: %04x CR4: %04x HIRQ: %04x Status: %s\n", ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4, ygr_cxt.regs.HIRQ, get_status(ygr_cxt.regs.CR1));
       return ygr_cxt.regs.CR4;
    case 0x90028:
-   case 0x9002A: 
+   case 0x9002A:
       return ygr_cxt.regs.MPEGRGB;
    case 0x98000:
       // transfer info
-      sh1_dreq_asserted(1);
-      return ygr_cxt.fake_fifo;
+   {
+      u16 val = read_fifo();
+      tsunami_log_value("SH2_R_FIFO", val, 16);
+      return val;
+   }
       break;
    default:
       LOG("ygr\t: Undocumented register read %08X\n", addr);
@@ -652,11 +736,11 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
    case 0x18000:
    {
       u32 top;
-      sh1_dreq_asserted(1);
-      top = ygr_cxt.fake_fifo;
-      sh1_dreq_asserted(1);
+      top = read_fifo();
+      tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
       top <<= 16;
-      top |= ygr_cxt.fake_fifo;
+      top |= read_fifo();
+      tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
       make_fifo_log(top);
       verify_fifo_log(top);
       return top;

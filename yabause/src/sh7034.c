@@ -4777,8 +4777,8 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       }
       break;
    }
-
-   assert(0);
+//triggered by yabauseut
+ //  assert(0);
 
    return;
 }
@@ -5456,8 +5456,17 @@ void tick_dma(int which)
 {
    u8 destination_mode, source_mode, is_word_size;
    s8 source_increment, dest_increment;
+   u8 mode = (sh1_cxt.onchip.dmac.channel[which].chcr >> 8) & 0xf;
+  
+   if ((sh1_cxt.onchip.dmac.dmaor & 7) != 1 || //ae, nmif == 0, dme == 1
+      (sh1_cxt.onchip.dmac.channel[which].chcr & 3) != 1) //te == 0, de == 1
+      return;
 
-   if (!sh1_cxt.onchip.dmac.channel[which].is_active)
+   //not dreq based dma
+   if (mode != 2)
+      return;
+
+   if (!ygr_dreq_asserted())
       return;
 
    destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;
@@ -5505,6 +5514,14 @@ void tick_dma(int which)
          SH2SendInterrupt(SH1, 74, (sh1_cxt.onchip.intc.iprc >> 12) & 0xf);
       }
    }
+}
+
+
+void sh1_dma_exec(s32 cycles)
+{
+   int i;
+   for(i = 0; i < cycles; i++)
+      tick_dma(1);
 }
 
 void sh1_dma_init(int which)

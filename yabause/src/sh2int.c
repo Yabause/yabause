@@ -33,6 +33,7 @@
 #include "bios.h"
 #include "yabause.h"
 #include "ygr.h"
+#include "sh7034.h"
 
 #ifdef SH2_TRACE
 #include "sh2trace.h"
@@ -3001,6 +3002,8 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 
    while(context->cycles < cycles)
    {
+      int cycles_before = context->cycles;
+      int cycles_diff = 0;
       // Fetch Instruction
 #ifdef EXEC_FROM_CACHE
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context, context->regs.PC);
@@ -3010,6 +3013,11 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       ((opcodefunc *)context->opcodes)[context->instruction](context);
+
+      cycles_diff = context->cycles - cycles_before;
+
+      if (context->model == SHMT_SH1)
+         sh1_dma_exec(cycles_diff);
    }
 }
 

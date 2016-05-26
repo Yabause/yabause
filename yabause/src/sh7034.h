@@ -255,6 +255,7 @@ void sh1_exec(struct Sh1 * sh1, s32 cycles);
 void sh1_onchip_run_cycles(s32 cycles);
 void sh1_set_output_enable_rising_edge();
 void sh1_set_output_enable_falling_edge();
+void sh1_dma_exec(s32 cycles);
 
 // SCI SCR bits
 #define SCI_TIE               0x80        /* Transmit interrupt enable */
