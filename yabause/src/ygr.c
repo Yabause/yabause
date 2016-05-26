@@ -70,6 +70,16 @@ struct Ygr
    u16 fake_fifo;
 }ygr_cxt = { 0 };
 
+int sh2_a_bus_check_wait(u32 addr)
+{
+   if (((sh1_cxt.onchip.dmac.channel[1].chcr & 2) ||
+      !(sh1_cxt.onchip.dmac.channel[1].chcr & 1))) {
+      return 1;
+   }
+
+   return 0;
+}
+
 u8 ygr_sh1_read_byte(u32 addr)
 {
    CDTRACE("rblsi: %08X\n", addr);
@@ -594,12 +604,6 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
    case 0x18000:
    {
       u32 top;
-      while ((sh1_cxt.onchip.dmac.channel[1].chcr & 2) ||
-             !(sh1_cxt.onchip.dmac.channel[1].chcr & 1)) {
-         Cs2Exec(200);
-         SH2Exec(SH1, 200);
-      }
-
       sh1_dreq_asserted(1);
       top = ygr_cxt.fake_fifo;
       sh1_dreq_asserted(1);

@@ -32,6 +32,7 @@
 #include "memory.h"
 #include "bios.h"
 #include "yabause.h"
+#include "ygr.h"
 
 #ifdef SH2_TRACE
 #include "sh2trace.h"
@@ -123,6 +124,19 @@ SH2Interface_struct SH2DebugInterpreter = {
 
    NULL  // SH2WriteNotify not used
 };
+
+//////////////////////////////////////////////////////////////////////////////
+
+int sh2_check_wait(SH2_struct * sh, u32 addr)
+{
+   if ((addr & 0x0fffffff) == 0x05818000)
+   {
+      if (sh2_a_bus_check_wait(addr))
+         return 1;
+   }
+
+   return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1396,7 +1410,15 @@ static void FASTCALL SH2movli(SH2_struct * sh)
 
 static void FASTCALL SH2movll(SH2_struct * sh)
 {
-   sh->regs.R[INSTRUCTION_B(sh->instruction)] = MappedMemoryReadLong(sh, sh->regs.R[INSTRUCTION_C(sh->instruction)]);
+   u32 addr = sh->regs.R[INSTRUCTION_C(sh->instruction)];
+
+   if (sh2_check_wait(sh, addr))
+   {
+      sh->cycles++;
+      return;
+   }
+
+   sh->regs.R[INSTRUCTION_B(sh->instruction)] = MappedMemoryReadLong(sh, addr);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1533,8 +1555,15 @@ static void FASTCALL SH2movwl(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
+   u32 addr = sh->regs.R[m];
 
-   sh->regs.R[n] = (s32)(s16)MappedMemoryReadWord(sh, sh->regs.R[m]);
+   if (sh2_check_wait(sh, addr))
+   {
+      sh->cycles++;
+      return;
+   }
+
+   sh->regs.R[n] = (s32)(s16)MappedMemoryReadWord(sh, addr);
    sh->regs.PC += 2;
    sh->cycles++;
 }
