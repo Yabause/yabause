@@ -2913,6 +2913,8 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
    while(context->cycles < cycles)
    {
+      int cycles_before = context->cycles;
+      int cycles_diff = 0;
 #ifdef SH2_UBC   	   
       int ubcinterrupt=0, ubcflag=0;
 #endif
@@ -2975,6 +2977,11 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       ((opcodefunc *)context->opcodes)[context->instruction](context);
+
+      cycles_diff = context->cycles - cycles_before;
+
+      if (context->model == SHMT_SH1)
+         sh1_dma_exec(cycles_diff);
 
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
