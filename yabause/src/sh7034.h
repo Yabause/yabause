@@ -46,6 +46,8 @@ void sh1_init_func();
 void sh1_serial_recieve_bit(int bit, int channel);
 void sh1_set_start(int state);
 void sh1_serial_transmit_bit(int channel, int* output_bit);
+void sh1_assert_tioca(int which);
+void sh1_assert_tiocb(int which);
 
 struct Onchip
 {

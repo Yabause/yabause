@@ -32,6 +32,7 @@
 #include <stdarg.h>
 #include "cd_drive.h"
 #include "tsunami/yab_tsunami.h"
+#include "mpeg_card.h"
 
 //#define SH1_MEM_DEBUG
 #ifdef SH1_MEM_DEBUG
@@ -5519,6 +5520,12 @@ void tick_dma(int which)
 
 void sh1_dma_exec(s32 cycles)
 {
+   //pass mpeg card presence test
+   if (SH1->regs.PC == 0x4c6)
+   {
+      mpeg_card_set_all_irqs();
+   }
+
    int i;
    for(i = 0; i < cycles; i++)
       tick_dma(1);
@@ -5543,4 +5550,28 @@ void sh1_dreq_asserted(int which)
       sh1_dma_init(which);
 
    tick_dma(which);
+}
+
+void sh1_assert_tioca(int which)
+{
+   //capture falling edge of input
+   if ((sh1_cxt.onchip.itu.channel[which].tior & 7) == 5)
+   {
+      //store tcnt in gra
+      sh1_cxt.onchip.itu.channel[which].gra = sh1_cxt.onchip.itu.channel[which].tcnt;
+      //set imfa
+      sh1_cxt.onchip.itu.channel[which].tsr |= 1;
+   }
+}
+
+void sh1_assert_tiocb(int which)
+{
+   //capture falling edge of input
+   if (((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7) == 5)
+   {
+      //store tcnt in gra
+      sh1_cxt.onchip.itu.channel[which].grb = sh1_cxt.onchip.itu.channel[which].tcnt;
+      //set imfa
+      sh1_cxt.onchip.itu.channel[which].tsr |= 2;
+   }
 }

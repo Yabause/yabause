@@ -23,6 +23,7 @@
 */
 
 #include "core.h"
+#include "sh7034.h"
 
 struct MpegCard
 {
@@ -64,4 +65,32 @@ u16 mpeg_card_read_word(u32 addr)
    }
 
    return 0;
+}
+
+void set_mpeg_audio_data_transfer_irq()
+{
+   sh1_assert_tioca(0);
+}
+
+void set_mpeg_video_data_transfer_irq()
+{
+   sh1_assert_tioca(1);
+}
+
+void set_mpeg_audio_irq()
+{
+   sh1_assert_tioca(2);
+}
+
+void set_mpeg_video_irq()
+{
+   sh1_assert_tiocb(2);
+}
+
+void mpeg_card_set_all_irqs()
+{
+   set_mpeg_audio_data_transfer_irq();
+   set_mpeg_video_data_transfer_irq();
+   set_mpeg_audio_irq();
+   set_mpeg_video_irq();
 }
