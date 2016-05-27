@@ -29,6 +29,7 @@
 #include "debug.h"
 #include <stdarg.h>
 #include "tsunami/yab_tsunami.h"
+#include "mpeg_card.h"
 
 void Cs2Exec(u32 timing);
 
@@ -208,6 +209,10 @@ u8 ygr_sh1_read_byte(u32 addr)
 
 u16 ygr_sh1_read_word(u32 addr)
 {
+   if ((addr & 0xf00000) == 0x100000)
+   {
+      return mpeg_card_read_word(addr);
+   }
    CDTRACE("rwlsi: %08X\n", addr);
    switch (addr & 0xffff) {
    case 0:
@@ -254,6 +259,11 @@ void ygr_sh1_write_byte(u32 addr,u8 data)
 
 void ygr_sh1_write_word(u32 addr, u16 data)
 {
+   if ((addr & 0xf00000) == 0x100000)
+   {
+      mpeg_card_write_word(addr, data);
+      return;
+   }
    CDTRACE("wwlsi: %08X %04X\n", addr, data);
    switch (addr & 0xffff) {
    case 0:
@@ -411,6 +421,7 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
       // transfer info
    {
       u16 val = read_fifo();
+      verify_fifo_log(val);
       tsunami_log_value("SH2_R_FIFO", val, 16);
       return val;
    }
