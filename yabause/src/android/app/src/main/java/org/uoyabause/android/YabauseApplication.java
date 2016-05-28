@@ -1,11 +1,16 @@
 package org.uoyabause.android;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.activeandroid.ActiveAndroid;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 /**
  * Created by shinya on 2015/12/30.
@@ -14,6 +19,7 @@ public class YabauseApplication extends com.activeandroid.app.Application {
 
     private static Context context;
     private Tracker mTracker;
+    final String TAG ="YabauseApplication";
 
     @Override
     public void onCreate() {
