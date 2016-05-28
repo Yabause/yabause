@@ -33,6 +33,7 @@
 #define TITAN_NBG1 2
 #define TITAN_NBG2 1
 #define TITAN_NBG3 0
+#define TITAN_BACK -1
 
 #define TITAN_NORMAL_SHADOW 1
 #define TITAN_MSB_SHADOW 2

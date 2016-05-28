@@ -57,9 +57,9 @@ static u64 current_cycles = 0;  // Cycle count on last call to sh2_trace()
 
 /*************************************************************************/
 
-FASTCALL void SetInsTracing(int toggle)
+void SH2SetInsTracing(int enable)
 {
-	is_ins_enabled = toggle;
+   is_ins_enabled = enable;
 }
 
 FASTCALL u64 sh2_cycle_count(void)

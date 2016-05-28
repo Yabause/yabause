@@ -42,6 +42,7 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
@@ -410,10 +411,18 @@ void Vdp2HBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2HBlankOUT(void) {
+   int i;
    Vdp2Regs->TVSTAT &= ~0x0004;
 
-   if (yabsys.LineCount < yabsys.VBlankLineCount){
+   if (yabsys.LineCount < yabsys.VBlankLineCount)
+   {
+      u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
 	   memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+         for (i = 0; i < 88; i++)
+      {
+         cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(cell_scroll_table_start_addr + i * 4);
+      }
+	   
 
 	   if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
 		   *Vdp2External.perline_alpha |= 0x1;
@@ -735,7 +744,10 @@ void Vdp2VBlankOUT(void) {
       VIDCore->Vdp2DrawScreens();
    }
    
+   {
+      VIDCore->Vdp2DispOff();
    if (Vdp1Regs->PTMR == 2) Vdp1Draw();
+   }
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))

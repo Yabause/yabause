@@ -1016,7 +1016,7 @@ int initEgl( ANativeWindow* window )
 		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
 	}
 
-    ScspSetFrameAccurate(1);
+    //ScspSetFrameAccurate(1);
 
     if( s_vidcoretype == VIDCORE_OGL ){
         OSDChangeCore(OSDCORE_NANOVG);

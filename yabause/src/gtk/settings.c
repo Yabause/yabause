@@ -271,10 +271,6 @@ static void frameskip_toggled(GtkWidget * widget, gpointer data) {
 	g_key_file_set_integer(keyfile, "General", "Frameskip", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
-static void disable_enable_audio_sync(YuiCheckButton *audiosync) {
-	ScspSetFrameAccurate(yui_check_button_get_active(audiosync));
-}
-
 static void disable_enable_fixed_base_time(YuiCheckButton *clocksync, YuiCheckButton *fixedbasetime) {
 	gtk_widget_set_sensitive(GTK_WIDGET(fixedbasetime),
 	                         yui_check_button_get_active(clocksync));
@@ -506,17 +502,6 @@ GtkWidget* create_dialog1(void) {
 
   box = yui_page_add(YUI_PAGE(advanced), _("M68k Interpreter"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "M68kInt", m68kinterpreters));
-
-  box = yui_page_add(YUI_PAGE(advanced), _("Audio Sync"));
-  {
-    GtkWidget *button = yui_check_button_new(
-        _("Synchronize audio output with emulation"),
-        keyfile, "General", "AudioSync"
-    );
-    gtk_container_add(GTK_CONTAINER(box), button);
-    g_signal_connect(button, "changed",
-                     G_CALLBACK(disable_enable_audio_sync), NULL);
-  }
 
   box = yui_page_add(YUI_PAGE(advanced), _("Clock Sync"));
   {

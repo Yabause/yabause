@@ -11,10 +11,12 @@
     <string-array name="entries_video_filte_list_preference" translatable="false">
         <item>@string/video_filter_none</item>
         <item>@string/video_filter_fxaa</item>
+        <item>@string/video_filter_scanline</item>
     </string-array>
     <string-array name="entryvalues_video_filte_list_preference" translatable="false">
         <item>0</item>
         <item>1</item>
+        <item>2</item>
     </string-array>
     <string-array name="entries_polygon_generation_type" translatable="false" >
         <item>Triangle using perspective correction</item>
