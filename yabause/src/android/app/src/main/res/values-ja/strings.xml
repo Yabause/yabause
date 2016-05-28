@@ -15,7 +15,7 @@
     <string name="frameskip">フレームスキップ</string>
     <string name="keepaspectrate">オリジナルの画面サイズ</string>
     <string name="choose_input_device">入力デバイスの選択</string>
-    <string name="input_device_title">入力デバイス</string>
+    <string name="input_device_title">入力デバイス1</string>
     <string name="input_device">選択</string>
     <string name="input_device_setting">キーマップの編集</string>
     <string name="onscrenn_pad_setting">オンスクリーンパッドのテスト</string>    
@@ -75,5 +75,11 @@
     <string name="video_filter_none">なし</string>
     <string name="choose_video_filter">ビデオフィルタの選択</string>
     <string name="cpu_core">CPUコアの選択</string>
+    <string name="input_device_title_player2">入力デバイス2</string>
+    <string name="invitation_cta">インストール</string>
+    <string name="invitation_message">セガサターンのゲームができるアプリです</string>
+    <string name="invitation_title">このアプリを紹介する</string>
+    <string name="invite">紹介</string>
+    <string name="invite_message">このアプリを紹介しませんか？</string>
 
 </resources>
