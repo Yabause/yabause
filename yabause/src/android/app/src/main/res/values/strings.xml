@@ -120,5 +120,12 @@
     <string name="polygon_generation_type">Polygon Generation Type</string>
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
 
+    <string name="invitation_title">Send App Invite uoYabause</string>
+    <string name="invitation_message">Play SEGA Saturn games using this app!</string>
+    <string name="invitation_deep_link"  translatable="false" >https://b472u.app.goo.gl/YJ5F</string>
+    <string name="invitation_custom_image"  translatable="false" >https://lh3.googleusercontent.com/orp-j3lNGj24xvfVBEQvwWyaVhOQ_aTGc0nwIInDXBlNGUnSOdB_hb8sPGSmgmd0Jvkx=h310-rw</string>
+    <string name="invitation_cta">Install!</string>
+    <string name="invite">Introduce</string>
+    <string name="invite_message">Would you like to introduce this app?</string>
 </resources>
 	

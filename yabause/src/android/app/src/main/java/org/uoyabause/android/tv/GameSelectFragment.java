@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
@@ -27,6 +28,7 @@ import java.util.TimerTask;
 import android.app.ProgressDialog;
 import android.app.UiModeManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -52,6 +54,7 @@ import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.app.AlertDialog;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -83,6 +86,12 @@ import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.appinvite.AppInvite;
+import com.google.android.gms.appinvite.AppInviteInvitation;
+import com.google.android.gms.appinvite.AppInviteInvitationResult;
+import com.google.android.gms.appinvite.AppInviteReferral;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crash.FirebaseCrash;
 
 public class GameSelectFragment extends BrowseFragment implements FileDialog.FileSelectedListener {
     private static final String TAG = "GameSelectFragment";
@@ -93,6 +102,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private static final int NUM_ROWS = 6;
     private static final int NUM_COLS = 15;
 
+    private static final int REQUEST_INVITE = 0x1121;
+
     private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mRowsAdapter;
     private Drawable mDefaultBackground;
@@ -102,6 +113,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private BackgroundManager mBackgroundManager;
     private Tracker mTracker;
     private InterstitialAd mInterstitialAd;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     static public int refresh_level = 2;
 
@@ -153,6 +165,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
 
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
+
         YabauseApplication application = (YabauseApplication) getActivity().getApplication();
         mTracker = application.getDefaultTracker();
 
@@ -171,6 +185,43 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             }
         });
 
+/*
+        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+
+            SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+            long introduce = prefs.getLong("introduce", 0);
+            Date date = new Date(System.currentTimeMillis());
+            if (introduce == 0) {
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putLong("introduce", date.getTime());
+                editor.commit();
+            } else {
+
+                long introduce_count = prefs.getLong("introduce_count", 0);
+
+                if (date.getTime() - introduce > (3L * 24L * 60L * 60L * 1000L) && introduce_count == 0) {
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putLong("introduce", date.getTime());
+                    editor.putLong("introduce_count", 1);
+                    editor.commit();
+
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle(R.string.invite)
+                            .setMessage(R.string.invite_message)
+                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    GameSelectFragment.this.onInviteClicked();
+                                }
+                            })
+                            .setNegativeButton(R.string.no, null)
+                            .show();
+                }
+            }
+        }
+*/
+
         myHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -185,6 +236,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }
             }
         };
+
     }
 
     void updateGameList(){
@@ -258,9 +310,15 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         GridItemPresenter mGridPresenter = new GridItemPresenter();
         ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
         gridRowAdapter.add(getResources().getString(R.string.setting));
-        gridRowAdapter.add(getString(R.string.load_game));
+
+        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+        //    gridRowAdapter.add(getResources().getString(R.string.invite));
+        }
         gridRowAdapter.add(getResources().getString(R.string.donation));
+        gridRowAdapter.add(getString(R.string.load_game));
         gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+
         mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
         addindex++;
 
@@ -451,6 +509,13 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                             .build());
                 }
 
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title);
+                mFirebaseAnalytics.logEvent(
+                        FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                );
+
                 Intent intent = new Intent(getActivity(), Yabause.class);
                 intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
                 startActivityForResult(intent, YABAUSE_ACTIVITY);
@@ -473,10 +538,28 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
                     Intent intent = new Intent(getActivity(), DonateActivity.class);
                     startActivity(intent);
+                }else if(  ((String) item).indexOf(getString(R.string.invite)) >= 0){
+                    onInviteClicked();
                 }
             }
 
         }
+    }
+
+    private void onInviteClicked() {
+        Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
+                .setMessage(getString(R.string.invitation_message))
+                .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
+                .setCustomImage(Uri.parse(getString(R.string.invitation_custom_image)))
+                .setCallToActionText(getString(R.string.invitation_cta))
+                .build();
+        startActivityForResult(intent, REQUEST_INVITE);
+
+        SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+        Date date = new Date(System.currentTimeMillis());
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong("introduce", date.getTime());
+        editor.commit();
     }
 
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
