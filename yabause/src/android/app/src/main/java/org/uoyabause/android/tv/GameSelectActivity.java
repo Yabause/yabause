@@ -16,8 +16,13 @@ package org.uoyabause.android.tv;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import org.uoyabause.android.R;
 
@@ -28,10 +33,21 @@ public class GameSelectActivity extends Activity {
     /**
      * Called when the activity is first created.
      */
+    final String TAG ="GameSelectActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
+        int resultCode = googleAPI.isGooglePlayServicesAvailable(this);
+
+        if (resultCode != ConnectionResult.SUCCESS) {
+            Log.e(TAG, "This device is not supported.");
+        }
+
+        Log.d(TAG, "InstanceID token: " + FirebaseInstanceId.getInstance().getToken());
+
         setContentView(R.layout.activity_game_select);
     }
 
