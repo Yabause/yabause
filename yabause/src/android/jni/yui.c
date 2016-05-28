@@ -946,6 +946,7 @@ int initEgl( ANativeWindow* window )
     glClearColor( 0.0f, 0.0f,0.0f,1.0f);
     glClear( GL_COLOR_BUFFER_BIT );
 
+	memset(&yinit,0,sizeof(yinit));
     yinit.m68kcoretype = M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
 #ifdef SH2_DYNAREC
@@ -976,6 +977,7 @@ int initEgl( ANativeWindow* window )
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
 	yinit.polygon_generation_mode = g_PolygonGenerationMode;
+	yinit.use_new_scsp = 0;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
