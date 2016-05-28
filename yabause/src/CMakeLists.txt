@@ -50,6 +50,7 @@ set(yabause_SOURCES
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
 	sh2cache.c )
+	add_definitions(-DIMPROVED_SAVESTATES)
 if (ANDROID)
     add_definitions(-DANDROID=1)
 	add_definitions(-DYAB_PORT_OSD)
