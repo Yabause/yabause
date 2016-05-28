@@ -86,6 +86,7 @@
 
     <string name="video_filter_none">None</string>
     <string name="video_filter_fxaa">FXAA(works only NVIDIA devices)</string>
+    <string name="video_filter_scanline">Scanline filter</string>
     <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>

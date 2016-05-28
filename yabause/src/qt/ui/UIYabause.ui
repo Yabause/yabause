@@ -177,6 +177,7 @@
     <addaction name="separator"/>
     <addaction name="aFileOpenISO"/>
     <addaction name="aFileOpenCDRom"/>
+    <addaction name="aFileOpenSSF"/>
     <addaction name="separator"/>
     <addaction name="mFileSaveState"/>
     <addaction name="mFileLoadState"/>
@@ -223,6 +224,7 @@
     <addaction name="aViewDebugM68K"/>
     <addaction name="aViewDebugSCUDSP"/>
     <addaction name="aViewDebugSCSP"/>
+    <addaction name="aViewDebugSCSPChan"/>
     <addaction name="aViewDebugSCSPDSP"/>
     <addaction name="separator"/>
     <addaction name="aViewDebugMemoryEditor"/>
@@ -957,6 +959,16 @@
    </property>
    <property name="text">
     <string>Trace Logging</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCSPChan">
+   <property name="text">
+    <string>SCSP Channels</string>
+   </property>
+  </action>
+  <action name="aFileOpenSSF">
+   <property name="text">
+    <string>Open SSF</string>
    </property>
   </action>
  </widget>

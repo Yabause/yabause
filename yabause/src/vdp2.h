@@ -364,6 +364,13 @@ extern u64 lastticks;
 extern int vdp2_is_odd_frame;
 extern Vdp2 Vdp2Lines[270];
 
+struct CellScrollData
+{
+   u32 data[88];//(352/8) * 2 screens
+};
+
+extern struct CellScrollData cell_scroll_data[270];
+
 // struct for Vdp2 part that shouldn't be saved
 typedef struct {
    int disptoggle;

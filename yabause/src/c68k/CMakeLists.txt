@@ -24,6 +24,7 @@ set(gen68k_SOURCES c68kexec.c c68k.c gen68k.c)
 add_definitions(-DC68K_GEN)
 if (MSVC)
 	add_definitions(-DC68K_NO_JUMP_TABLE)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif (MSVC)
 
 

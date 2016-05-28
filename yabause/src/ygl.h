@@ -287,7 +287,8 @@ typedef struct
 typedef enum
 {
 	AA_NONE = 0,
-	AA_FXAA
+	AA_FXAA,
+	AA_SCANLINE_FILTER,
 } AAMODE;
 
 typedef enum
@@ -465,6 +466,11 @@ int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 
 
+void Vdp2RgbTextureSync();
+int YglGenerateAABuffer();
+int YglSetupWindow(YglProgram * prg);
+int YglCleanUpWindow(YglProgram * prg);
+void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int size);
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 

@@ -309,7 +309,6 @@ int YglCalcTextureQ(
    float   q1, q3, q4, qw;
    float   dx, w;
    float   ww;
-   float   divisor;
 #if 0
    // fast calculation for triangle
    if (( pnts[2*0+0] == pnts[2*1+0] ) && ( pnts[2*0+1] == pnts[2*1+1] )) {
@@ -874,7 +873,6 @@ static int rebuild_frame_buffer = 0;
 int YglGenFrameBuffer() {
 
 	int status;
-	YglMatrix pers;
 	GLuint error;
 
 	if (rebuild_frame_buffer == 0){
@@ -925,7 +923,7 @@ int YglGenFrameBuffer() {
 
 	_Ygl->pFrameBuffer = NULL;
 
-	if (strstr(glGetString(GL_EXTENSIONS), "packed_depth_stencil") != NULL)
+   if( strstr((const char*)glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
 	{
 		if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
 		glGenRenderbuffers(1, &_Ygl->rboid_depth);
@@ -985,7 +983,7 @@ int YglGenFrameBuffer() {
 		abort();
 	}
 
-	if (_Ygl->aamode == AA_FXAA){
+	if (_Ygl->aamode != AA_NONE){
 		YglGenerateAABuffer();
 	}
 
@@ -1010,7 +1008,6 @@ int YglGLInit(int width, int height) {
 int YglGenerateAABuffer(){
 
 	int status;
-	YglMatrix pers;
 	GLuint error;
 
 	//--------------------------------------------------------------------------------
@@ -1108,9 +1105,7 @@ void YuiSetVideoAttribute(int type, int val){return;}
 
 int YglInit(int width, int height, unsigned int depth) {
    unsigned int i,j;
-   GLuint status;
    void * dataPointer=NULL;
-	GLuint error;
    YGLLOG("YglInit(%d,%d,%d);",width,height,depth );
 
 
@@ -1213,6 +1208,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
    _Ygl->aamode = AA_NONE;
    //_Ygl->aamode = AA_FXAA;
+   //_Ygl->aamode = AA_SCANLINE_FILTER;
 
    return 0;
 }
@@ -1401,8 +1397,6 @@ void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * c
 int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg ) {
 	unsigned int x, y;
 	YglProgram *program;
-	float * vtxa;
-	float q[4];
 	int prg = PG_VFP1_GOURAUDSAHDING;
 	float * pos;
 	int u, v;
@@ -1867,7 +1861,6 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
 	YglProgram *program;
 	texturecoordinate_struct *tmp;
 	float * vtxa;
-	float q[4];
 	int prg = PG_VFP1_GOURAUDSAHDING_TESS;
 	float * pos;
 
@@ -2050,7 +2043,7 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 
 
 
-	program = YglGetProgram(input, prg);
+	program = YglGetProgram((YglSprite*)input, prg);
 	if (program == NULL) return;
 
 
@@ -2158,7 +2151,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 	unsigned int x, y;
 	YglProgram *program;
 	texturecoordinate_struct *tmp;
-	float q[4];
 	int prg = PG_NORMAL;
 	float * pos;
 	//float * vtxa;
@@ -2194,8 +2186,8 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 	}
 
 
-	program = YglGetProgram(input, prg);
-	if (program == NULL) return NULL;
+	program = YglGetProgram((YglSprite*)input, prg);
+	if (program == NULL) return -1;
 
 	program->bwin0 = input->bEnWin0;
 	program->logwin0 = input->WindowArea0;
@@ -2930,6 +2922,13 @@ void YglRender(void) {
 	   _Ygl->targetfbo = _Ygl->fxaa_fbo;
 	   
    }
+   else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
+	   if (_Ygl->fxaa_fbotex == 0){
+		   YglGenerateAABuffer();
+	   }
+	   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
+	   _Ygl->targetfbo = _Ygl->fxaa_fbo;
+   }
    else{
 	   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	   _Ygl->targetfbo = 0;
@@ -3053,6 +3052,10 @@ void YglRender(void) {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		_Ygl->targetfbo = 0;
 		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
+	}
+	else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		YglBlitScanlineFilter(_Ygl->fxaa_fbotex, GlHeight, _Ygl->rheight );
 	}
 
 render_finish:

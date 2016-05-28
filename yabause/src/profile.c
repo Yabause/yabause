@@ -55,6 +55,11 @@ static int Nested (char* str_tag) {
 
 /* Adds the given tag and return the entry it is stored into */
 static entry_t* AddTag (char* str_tag) {
+  size_t str_tag_len = strlen(str_tag);
+
+  if (str_tag_len >= 100)
+     return 0;//error
+
   if (g_i_hwm + 1 == NUM_TAGS) {
     /* Full */
     return 0 ;
