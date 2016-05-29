@@ -2146,12 +2146,12 @@ u8 onchip_read_byte(struct Onchip * regs, u32 addr)
 
       if (addr == 0x5FFFF6E)
          return regs->dmac.channel[2].chcr >> 8;
-      else if (addr == 0x5FFFF5F)
+      else if (addr == 0x5FFFF6F)
          return regs->dmac.channel[2].chcr & 0xff;
 
       if (addr == 0x5FFFF7E)
          return regs->dmac.channel[3].chcr >> 8;
-      else if (addr == 0x5FFFF5F)
+      else if (addr == 0x5FFFF7F)
          return regs->dmac.channel[3].chcr & 0xff;
 
       //the rest is inacessible
@@ -4968,6 +4968,8 @@ void sh1_init_func()
 
    cdd_reset();
 
+   mpeg_card_init();
+
    sh1_cxt.onchip.pbdr = 0x40c;
 }
 
@@ -5520,14 +5522,23 @@ void tick_dma(int which)
 
 void sh1_dma_exec(s32 cycles)
 {
+   int i;
    //pass mpeg card presence test
    if (SH1->regs.PC == 0x4c6)
    {
       mpeg_card_set_all_irqs();
    }
 
-   int i;
-   for(i = 0; i < cycles; i++)
+   //sh1_cxt.onchip.dmac.channel[2].chcr & 2 must not be set at 0xbd1c to pass test
+
+   //must trigger imia1 to pass test?
+   if (SH1->regs.PC == 0xbd38)
+      sh1_cxt.onchip.dmac.channel[2].chcr |= 2;
+
+   if (SH1->regs.PC == 0xbece)
+      sh1_cxt.onchip.dmac.channel[3].chcr |= 2;
+
+   for (i = 0; i < cycles; i++)
       tick_dma(1);
 }
 
@@ -5561,6 +5572,22 @@ void sh1_assert_tioca(int which)
       sh1_cxt.onchip.itu.channel[which].gra = sh1_cxt.onchip.itu.channel[which].tcnt;
       //set imfa
       sh1_cxt.onchip.itu.channel[which].tsr |= 1;
+
+      if (sh1_cxt.onchip.itu.channel[which].tier & 1)
+      {
+         //imia
+         if(which == 0)
+            SH2SendInterrupt(SH1, 80, (sh1_cxt.onchip.intc.iprc >> 4) & 0xf);
+         else if (which == 1)
+            SH2SendInterrupt(SH1, 84, (sh1_cxt.onchip.intc.iprc >> 0) & 0xf);
+         else if (which == 2)
+            SH2SendInterrupt(SH1, 88, (sh1_cxt.onchip.intc.iprd >> 12) & 0xf);
+         else if (which == 3)
+            SH2SendInterrupt(SH1, 92, (sh1_cxt.onchip.intc.iprd >> 8) & 0xf);
+         else if (which == 4)
+            SH2SendInterrupt(SH1, 96, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+      }
+
    }
 }
 
@@ -5573,5 +5600,20 @@ void sh1_assert_tiocb(int which)
       sh1_cxt.onchip.itu.channel[which].grb = sh1_cxt.onchip.itu.channel[which].tcnt;
       //set imfa
       sh1_cxt.onchip.itu.channel[which].tsr |= 2;
+
+      if (sh1_cxt.onchip.itu.channel[which].tier & 2)
+      {
+         //imib
+         if (which == 0)
+            SH2SendInterrupt(SH1, 81, (sh1_cxt.onchip.intc.iprc >> 4) & 0xf);
+         else if (which == 1)
+            SH2SendInterrupt(SH1, 85, (sh1_cxt.onchip.intc.iprc >> 0) & 0xf);
+         else if (which == 2)
+            SH2SendInterrupt(SH1, 89, (sh1_cxt.onchip.intc.iprd >> 12) & 0xf);
+         else if (which == 3)
+            SH2SendInterrupt(SH1, 93, (sh1_cxt.onchip.intc.iprd >> 8) & 0xf);
+         else if (which == 4)
+            SH2SendInterrupt(SH1, 97, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+      }
    }
 }

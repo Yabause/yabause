@@ -26,5 +26,6 @@
 void mpeg_card_write_word(u32 addr, u16 data);
 u16 mpeg_card_read_word(u32 addr);
 void mpeg_card_set_all_irqs();
+void mpeg_card_init();
 
 #endif
