@@ -5522,6 +5522,7 @@ void tick_dma(int which)
 
 void sh1_dma_exec(s32 cycles)
 {
+   int i;
    //pass mpeg card presence test
    if (SH1->regs.PC == 0x4c6)
    {
@@ -5534,8 +5535,12 @@ void sh1_dma_exec(s32 cycles)
    if (SH1->regs.PC == 0xbd38)
       sh1_cxt.onchip.dmac.channel[2].chcr |= 2;
 
+   if (SH1->regs.PC == 0xbece)
+      sh1_cxt.onchip.dmac.channel[3].chcr |= 2;
+
    for (i = 0; i < cycles; i++)
       tick_dma(1);
+}
 
 void sh1_dma_init(int which)
 {
