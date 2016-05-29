@@ -71,7 +71,7 @@
 	<string name="onscreen_pad">オンスクリーンパッド</string>
 	<string name="select_from_other_directory">他のディレクトリから選択</string>
     <string name="video_filter">フィルタ</string>
-    <string name="video_filter_fxaa"></string>
+    <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_none">なし</string>
     <string name="choose_video_filter">ビデオフィルタの選択</string>
     <string name="cpu_core">CPUコアの選択</string>
