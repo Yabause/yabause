@@ -232,6 +232,7 @@ typedef struct {
 	GLint  fbo;
 	GLint  fbowidth;
 	GLint  fboheight;
+	GLint  texsize;
 } YglVdp1CommonParam;
 
 #define TESS_COUNT (8)
