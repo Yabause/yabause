@@ -284,3 +284,89 @@ loc_296a:
 
    wait();//2994
 }
+
+#define MPEG_30   (*(volatile u16 *)0xA100030)
+#define MPEG_32   (*(volatile u16 *)0xA100032)
+#define MPEG_34   (*(volatile u16 *)0xA100034)
+#define MPEG_36   (*(volatile u16 *)0xA100036)
+
+//mpeg_asic_kick_check2
+//it seems that to succeed, r11 must be less than 0x400,
+//r12 must be less than 0x200 and count_r13 must not 
+//become negative
+int mpeg_c01c(u32 input)
+{
+   u32 count_r13 = 0;//loop counter
+   u32 r8 = input & 0xFF;//value set before function call
+loc_c01c:
+   count_r13 = 0x20;
+   u16 r0 = MPEG_34;
+   u32 r12 = 0;
+   u32 r11 = 0;
+
+loc_c01e:
+   if (r0 & 1)
+   {
+      //c038
+      r0 = r12;
+      r0 <<= 8;
+      r0 >>= 1;
+      MPEG_30 = r0;
+      MPEG_32 = 0xFE00;
+      MPEG_34 = 0xFFFC;
+      r11 = 0;
+
+loc_c04a:
+      //c04a
+      count_r13 = 0x50;
+
+loc_c04c:
+      //c04c
+      r0 = MPEG_34;
+
+      if (r0 & 4)
+      {
+         //c05c
+         MPEG_36 = r12 + r11 + r8;//r0 gets overwritten
+         r11 += 2;
+
+         if (r11 >= 0x400)
+            goto loc_c04a;//loop
+         else
+         {
+            r12 += 1;
+
+            if (r12 >= 0x200)
+               goto loc_c01c;
+            else
+               return 0;//success
+         }
+
+      }
+      else
+      {
+         //c052
+         count_r13--;
+         if (count_r13 >= 0)
+            goto loc_c04c;//loop
+         else
+            return -1;//fail
+      }
+   }
+   else
+   {
+      //c024
+      MPEG_34 = 0xffff;
+      r0 = MPEG_36;
+      MPEG_36 = 0;
+
+      count_r13--;
+
+      if (count_r13 >= 0)
+         goto loc_c01e;//loop
+      else
+         return -1;//fail
+   }
+
+   return -1;
+}
