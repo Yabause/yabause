@@ -370,3 +370,136 @@ loc_c04c:
 
    return -1;
 }
+
+#define UNK_F0007B1   (*(volatile u8 *)0xF0007B1)
+#define mpeg_req_e0e2   (*(volatile u8 *)0x907538a)
+
+int return_zero() { return 0; }
+int mpeg_initcall1() { return 0; }
+int mpeg_initcall2() { return 0; }
+int mpeg_initcall3() { return 0; }
+int mpeg_initcall4() { return 0; }
+int do_dram_call56() { return 0; }
+
+int(*init_ptrs[5]) (void) =
+{
+   return_zero,
+   mpeg_initcall1,
+   return_zero,
+   mpeg_initcall3,
+   mpeg_initcall4
+};
+
+void loc_bafe()
+{
+   //function pointer call loop
+   int which = 0;//r1
+   u32 r2 = 1;
+
+   for (;;)
+   {
+      int return_value = 1;//r0
+      return_value = init_ptrs[which]();
+      
+      if (!return_value)
+         UNK_F0007B1 |= r2;
+
+      which++;//r1+=4
+
+      r2 <<= 1;
+
+      if (which > 4)// r1 < r5, r5 == 0x10
+         break;
+   }
+}
+
+void loc_baf4()
+{
+   UNK_F0007B1 = 0;
+
+   loc_bafe();
+
+   //bb1e
+   if (UNK_F0007B1)
+   {
+      //loc_bb28
+      r0 = mpeg_req_e0e2;
+      int lsb = r0 & 1;
+      r0 >>= 1;
+
+      if (lsb)
+      {
+         //bb38
+         load_mpeg_rom();
+
+         //bb40
+      }
+      else
+      {
+         int lsb2 = r0 & 1;
+         r0 >>= 1;
+
+         if (lsb2)
+         {
+            //bb54
+            do_dram_call56();
+
+            //bb5c
+         }
+         else
+            task9();
+      }
+   }
+   else
+   {
+   }
+}
+
+//mpeg_initcall3
+#define mpeg_sound_control_reg   (*(volatile u16 *)0xA180008)
+//test dma of undecoded mpeg sound data to sound chip?
+void loc_be7c()
+{
+   //dma is 16 bit
+   //incoming data is valid
+   //clock divide factor = 80
+   mpeg_sound_control_reg = 0x8209;
+   CHCR3 = 0x1808;
+   TIOR0 = 0xd;
+   TIER0 = 1;
+
+   u32 source_data_addr = 0x907539c;
+
+   //zero the buffer
+   while (r0 < 0x24)
+   {
+      (*(volatile u16 *)source_data_addr + r0) = 0;
+      r0 += 2;
+   }
+
+   //no dma should have occured thus far
+   if (CHCR3 & 2)
+      goto fail;
+
+   SAR3 = source_data_addr;
+   DAR3 = 0xA180000;//sound chip data rx reg
+   DTR3 = 4;//length
+   CHCR3 |= 1;//start dma
+
+   r12 = 5 << 8;
+
+   //wait for dma to complete
+   while (r12 > 0)
+   {
+      r12--;
+   }
+   
+   //dma didn't happen, fail
+   if (!(CHCR3 & 2))
+      goto fail;
+
+   return 0;//success
+
+fail:
+   return -1;
+}
