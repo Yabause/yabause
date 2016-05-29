@@ -1327,6 +1327,13 @@ int LoadSH1Rom(const char *filename)
 
 //////////////////////////////////////////////////////////////////////////////
 
+int LoadMpegRom(const char *filename)
+{
+   return T123Load(SH1MpegRom, 0x80000, 2, filename);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int LoadBios(const char *filename)
 {
    return T123Load(BiosRom, 0x80000, 2, filename);

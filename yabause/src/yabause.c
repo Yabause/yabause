@@ -219,7 +219,7 @@ int YabauseInit(yabauseinit_struct *init)
    if ((SH1Dram = T2MemoryInit(0x80000)) == NULL)
       return -1;
 
-   if ((SH1MpegRom = T2MemoryInit(0x8000)) == NULL)
+   if ((SH1MpegRom = T2MemoryInit(0x80000)) == NULL)
       return -1;
 
    // Initialize CD Block 
@@ -237,6 +237,14 @@ int YabauseInit(yabauseinit_struct *init)
             if (LoadSH1Rom(init->sh1rompath) != 0)
             {
                YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->sh1rompath);
+               return -2;
+            }
+         }
+         if (init->mpegpath != NULL && strlen(init->mpegpath))
+         {
+            if (LoadMpegRom(init->mpegpath) != 0)
+            {
+               YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->mpegpath);
                return -2;
             }
          }

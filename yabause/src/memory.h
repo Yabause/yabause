@@ -409,6 +409,7 @@ int MappedMemorySave(SH2_struct *sh, const char *filename, u32 addr, u32 size);
 void MappedMemoryLoadExec(const char *filename, u32 pc);
 
 int LoadSH1Rom(const char *filename);
+int LoadMpegRom(const char *filename);
 int LoadBios(const char *filename);
 int LoadBackupRam(const char *filename);
 void FormatBackupRam(void *mem, u32 size);
