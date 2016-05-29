@@ -272,6 +272,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
     private void loadRows() {
 
+        if( !isAdded() ) return;
+
        int addindex = 0;
         mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
 
