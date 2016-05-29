@@ -97,6 +97,194 @@ Disc "YABAUSEUT.DSK"
             FileSource "cdda.bin"
             EndFileSource
         EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
+        Track CDDA
+            FileSource "cdda.bin"
+            EndFileSource
+        EndTrack
         LeadOut CDDA
             Empty 600
         EndLeadOut

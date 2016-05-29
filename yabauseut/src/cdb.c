@@ -21,6 +21,7 @@
 #include "tests.h"
 #include "cdb.h"
 
+int cd_cdb_init(int);
 void cd_write_command(cd_cmd_struct *cd_cmd);
 static int audio_track=3;
 
@@ -275,7 +276,6 @@ int cd_wait_status_rs(u8 status, int timeout, int wait, cd_cmd_struct *cd_cmd_rs
 {
    int i,j;
    int ret;
-   char text[256];
 
    for (i = 0; i < timeout; i++)
    {
@@ -370,6 +370,62 @@ void test_cmd_get_toc()
    cd_cmd_struct cd_cmd_rs;
    int ret;
    u32 toc[102];
+   static u32 toc_mask[102] = {
+      0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000,
+      0xFF000000, 0xFF000000, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFF000000
+   };
+   static u32 toc_correct[102] = {
+      0x41000096, 0x410003DC, 0x01000634, 0x01001988,
+      0x01002CDC, 0x01004030, 0x01005384, 0x010066D8,
+      0x01007A2C, 0x01008D80, 0x0100A0D4, 0x0100B428,
+      0x0100C77C, 0x0100DAD0, 0x0100EE24, 0x01010178,
+      0x010114CC, 0x01012820, 0x01013B74, 0x01014EC8,
+      0x0101621C, 0x01017570, 0x010188C4, 0x01019C18,
+      0x0101AF6C, 0x0101C2C0, 0x0101D614, 0x0101E968,
+      0x0101FCBC, 0x01021010, 0x01022364, 0x010236B8,
+      0x01024A0C, 0x01025D60, 0x010270B4, 0x01028408,
+      0x0102975C, 0x0102AAB0, 0x0102BE04, 0x0102D158,
+      0x0102E4AC, 0x0102F800, 0x01030B54, 0x01031EA8,
+      0x010331FC, 0x01034550, 0x010358A4, 0x01036BF8,
+      0x01037F4C, 0x010392A0, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+      0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0x41010000,
+      0x01320000, 0x0103A5F4
+   };
    u16 *ptr=(u16 *)toc;
    int i;
 
@@ -399,15 +455,22 @@ void test_cmd_get_toc()
    for (i = 0; i < cd_cmd_rs.CR2; i++)
       ptr[i] = CDB_REG_DATATRNSW;      
 
-   if (toc[0] != 0x41000096 || 
-       (toc[1] & 0xFF000000) != 0x41000000 || 
-       (toc[2] & 0xFF000000) != 0x01000000 ||
-       toc[3] != 0xFFFFFFFF ||
-       toc[99] != 0x41010000 ||
-       toc[100] != 0x01030000 ||
-       (toc[101] & 0xFF000000) != 0x01000000 )
+   ret = 1;
+   for (i = 0; i < 102; i++)
    {
-      do_tests_unexp_data_error("%08X %08X %08X %08X %08X %08X %08X", toc[0], toc[1], toc[2], toc[3], toc[99], toc[100], toc[101]);
+      if ((toc[i] & toc_mask[i]) != (toc_correct[i] & toc_mask[i]))
+      {
+         ret = 0;
+         do_tests_unexp_data_error("toc[%d]: %08X (expected: %08X & %08X)", i, toc[i], toc_correct[i], toc_mask[i]);
+         //tests_log_textf("%s:%d:toc[%d]: %08X (expected: %08X & %08X)\n", __BASE_FILE__, __LINE__, i, toc[i], toc_correct[i], toc_mask[i]);
+      }
+   }
+
+   if (!ret)
+   {
+      for (i = 0; i < 100; i+=4)
+         tests_log_textf("0x%08X, 0x%08X, 0x%08X, 0x%08X,\n", toc[i], toc[i+1], toc[i+2], toc[i+3]);
+      tests_log_textf("0x%08X, 0x%08X\n", toc[i], toc[i+1]);
       return;
    }
 
