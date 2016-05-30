@@ -285,10 +285,18 @@ loc_296a:
    wait();//2994
 }
 
+#define YGR_0C   (*(volatile u16 *)0xA00000C)
+#define MPEG_00   (*(volatile u16 *)0xA100000)
+#define MPEG_16   (*(volatile u16 *)0xA100016)
+#define MPEG_1A   (*(volatile u16 *)0xA10001A)
+#define MPEG_22   (*(volatile u16 *)0xA100022)
 #define MPEG_30   (*(volatile u16 *)0xA100030)
 #define MPEG_32   (*(volatile u16 *)0xA100032)
 #define MPEG_34   (*(volatile u16 *)0xA100034)
 #define MPEG_36   (*(volatile u16 *)0xA100036)
+#define mpeg_sound_control_reg   (*(volatile u16 *)0xA180008)
+#define UNK_F0007B1   (*(volatile u8 *)0xF0007B1)
+#define mpeg_req_e0e2   (*(volatile u8 *)0x907538a)
 
 //mpeg_asic_kick_check2
 //it seems that to succeed, r11 must be less than 0x400,
@@ -371,92 +379,7 @@ loc_c04c:
    return -1;
 }
 
-#define UNK_F0007B1   (*(volatile u8 *)0xF0007B1)
-#define mpeg_req_e0e2   (*(volatile u8 *)0x907538a)
-
-int return_zero() { return 0; }
-int mpeg_initcall1() { return 0; }
-int mpeg_initcall2() { return 0; }
-int mpeg_initcall3() { return 0; }
-int mpeg_initcall4() { return 0; }
-int do_dram_call56() { return 0; }
-
-int(*init_ptrs[5]) (void) =
-{
-   return_zero,
-   mpeg_initcall1,
-   return_zero,
-   mpeg_initcall3,
-   mpeg_initcall4
-};
-
-void loc_bafe()
-{
-   //function pointer call loop
-   int which = 0;//r1
-   u32 r2 = 1;
-
-   for (;;)
-   {
-      int return_value = 1;//r0
-      return_value = init_ptrs[which]();
-      
-      if (!return_value)
-         UNK_F0007B1 |= r2;
-
-      which++;//r1+=4
-
-      r2 <<= 1;
-
-      if (which > 4)// r1 < r5, r5 == 0x10
-         break;
-   }
-}
-
-void loc_baf4()
-{
-   UNK_F0007B1 = 0;
-
-   loc_bafe();
-
-   //bb1e
-   if (UNK_F0007B1)
-   {
-      //loc_bb28
-      r0 = mpeg_req_e0e2;
-      int lsb = r0 & 1;
-      r0 >>= 1;
-
-      if (lsb)
-      {
-         //bb38
-         load_mpeg_rom();
-
-         //bb40
-      }
-      else
-      {
-         int lsb2 = r0 & 1;
-         r0 >>= 1;
-
-         if (lsb2)
-         {
-            //bb54
-            do_dram_call56();
-
-            //bb5c
-         }
-         else
-            task9();
-      }
-   }
-   else
-   {
-   }
-}
-
 //mpeg_initcall3
-#define mpeg_sound_control_reg   (*(volatile u16 *)0xA180008)
 //test dma of undecoded mpeg sound data to sound chip?
 void loc_be7c()
 {
@@ -502,4 +425,722 @@ void loc_be7c()
 
 fail:
    return -1;
+}
+
+//mpeg_initcall1
+void loc_bcc4()
+{
+   MPEG_1A = 0xfff;
+
+   //same as the audio one, mpeg dma buffer it seems
+   u32 dma_data[] = 0x907539c;
+
+   dma_data[0] = 0x1b3;//sequence header
+   dma_data[3] = 0x1b5;//visual object start code
+   dma_data[4] = 0x1b2;//user data start code
+   dma_data[5] = 0x1b8;//group of pictures start code
+   dma_data[7] = 0x1b5;//group extension data
+   /*
+   [0x00000000]	0x000001b3
+   [0x00000001]	0x64eafa3e
+   [0x00000002]	0x20b9f728
+   [0x00000003]	0x000001b5
+   [0x00000004]	0x000001b2
+   [0x00000005]	0x000001b8
+   [0x00000006]	0x97abd9e8
+   [0x00000007]	0x000001b5
+   [0x00000008]	0x00000000
+   */
+   
+   //no dma must have occured
+   if (CHCR2 & 2)
+      goto fail;
+
+   SAR2 = 0x907539c;
+   DAR2 = 0xA10001E;
+   DTCR2 = 0x12;
+   CHCR2 |= 1;//start dma
+
+   if (!(CHCR3 & 2))
+      goto fail;
+
+   return 0;
+
+fail:
+   return -1;
+}
+
+void loc_907c974()
+{
+   u16 sound_status = *(volatile u16 *)0xA180008);
+
+   //check header decode results
+
+   if (sound_status & 0x8000)//layer 1 or 2
+      goto loc_907c99e;
+   else if ((sound_status & 0x3000) == 0x3000)//frequency is "reserved"
+      goto loc_907c99e;
+   else if ((sound_status & 0x0F00) == 0)//bitrate is "free format"
+      goto loc_907c99e;
+   else if ((sound_status & 0x0F00) == 0x0F00)//bitrate is "invalid"
+      goto loc_907c99e;
+   else
+      goto 907c9c4;
+
+loc_907c99e:
+
+   //loc_907ca12
+
+   //setting clkdiv
+   r0 = *unk_f000884;
+   r0 &= 0xfff0;
+
+   r4 &= 0xf;
+   r0 |= r4;
+
+   *unk_f000884 = r0;
+   *sound_status = r0;
+
+
+}
+
+void loc_907f46e()
+{
+   MPEG_22 = 6;//0b110
+
+   r12 = MPEG_22;
+
+   MPEG_22 = 4;//0b100
+
+   r13 = (MPEG_22 & 0xff) << 16;
+
+   MPEG_22 = 5;//0b101
+
+   r13 |= MPEG_22 & 0xffff;
+}
+
+void loc_9e92()
+{
+   MPEG_22 = 0;
+   r11 = (MPEG_22 & 0xfff) << 16;
+   MPEG_22 = 1;
+   r13 = MPEG_22 & 0xfff;
+
+   r13 |= r11;
+}
+
+void loc_9df2()
+{
+   r0 = (r12 >> 13) & 3;
+   r12 &= 0x3f;
+
+   r0 <<= 8;
+   r12 |= r0;
+   r2 <<= 16;
+   r12 |= r2;
+
+   r1 = r13;
+
+
+
+   ///////
+   r13 |= r0;
+   r1 <<= 16;
+   r1 <<= 8;
+   r13 |= r1;
+   r12 |= r11 & 0xff000000;
+}
+
+void loc_9fbe()
+{
+   //f000854 == partial video reg mirror?
+   MPEG_02 = *(f000854 + 2);
+   MPEG_04 = *(f000854 + 4);
+   MPEG_06 = *(f000854 + 6);
+   MPEG_08 = *(f000854 + 8);
+   MPEG_0a = *(f000854 + 0xa);
+   MPEG_0c = *(f000854 + 0xc);
+   MPEG_0e = *(f000854 + 0xe);
+   MPEG_10 = *(f000854 + 0x10);
+}
+
+void rom_a018()
+{
+   MPEG_1A = 0x7fff;
+}
+
+void irqITU2IMIB2()
+{
+   r0 = MPEG_00;
+   r1 = MPEG_00;
+   r0 &= r1;
+   r1 = MPEG_00;
+   r1 &= r0;
+
+   if ((*(unk_f000890 + 2)) & 0x80)
+   {
+      r5 = *(unk_f000850 + 2);
+      r4 = 0x30f;
+      *(unk_f000850 + 2) = 0xffff;
+      r5 |= r4;
+      r1 &= r5;
+      *unk_f000890 = r1;
+   }
+   else
+   {
+
+   }
+}
+
+//test dmas for mpeg
+void setup_dma_to_cs2()
+{
+   r10 = 0xa100000;
+   r9 = 0xa180000;
+   MPEG_1A = 0x7fff;
+
+   //dma is all 0s
+   *unk_f000840 = 0;//long write
+
+   clear_chcr23_timer012();
+
+   MPEG_02 = 0x6c;
+
+   SAR2 = unk_f000840;
+   SAR3 = unk_f000840;
+
+   DAR2 = 0xa10001e;
+   DAR3 = 0xa180000;
+
+   MPEG_20 = 0xffef;
+}
+
+void timer_check_and_init_mpeg()
+{
+   r8 = 0;
+
+   if (MPEG_02 == 0x006c)
+   {
+
+   }
+   else
+      r8 |= 1;
+}
+
+void rom_call21()
+{
+   MPEG_20 = 0x47af;
+   MPEG_1A = 0xff7e;
+   MPEG_14 = 0xfff3;
+   MPEG_02 = 0x0096;
+   MPEG_00 = 0x88fe;
+
+}
+
+//bad6
+void rom_call4C()
+{
+   r0 = *unk_9075388;
+   r6 = *unk_9075389;
+   r0 |= r6;
+
+   if (r0 & 0xf)
+   {
+   loc_ba5e:
+
+      //ba5e
+      r0 = *unk_9075388;
+
+      //ba62
+      if (r0 & 1)
+      {
+         do_dram_call36();
+         r0 = *unk_9075388;
+      }
+
+      //ba74
+      if (r0 & 2)
+      {
+         do_dram_call35();
+         r0 = *unk_9075388;
+      }
+
+      //ba86
+      if (r0 & 4)
+      {
+         do_dram_call45();
+         r0 = *unk_9075388;
+      }
+
+      //ba98
+      if (r0 & 8)
+      {
+         do_dram_call46();
+         r0 = *unk_9075388;
+      }
+
+      //baa6
+      r0 = *unk_9075389;
+
+      if (r0 == 0)
+         goto rom_call4C;
+
+      //baae
+      if (r0 & 1)
+         do_dram_call4E();
+
+      //bab8
+      if (r0 & 2)
+         do_dram_call4D();
+
+      //bac2
+      if (r0 & 4)
+         do_dram_call50();
+
+      //bacc
+      if (r0 & 8)
+         do_dram_call4F();
+
+      //bace
+      goto rom_call4C;
+   }
+   else
+   {
+      task9();
+   }
+}
+
+int return_zero() { return 0; }
+int mpeg_initcall1() { return 0; }
+int mpeg_initcall3() { return 0; }
+int mpeg_initcall4() { return 0; }
+int do_dram_call56() { return 0; }
+
+int(*init_ptrs[5]) (void) =
+{
+   return_zero,
+   mpeg_initcall1,
+   return_zero,
+   mpeg_initcall3,
+   mpeg_initcall4
+};
+
+void task9()
+{
+   trap(0x23);
+   r0 = r11 & 0xff;
+
+   if (r0 == 0)
+   {
+      if (mpeg_inited & 0x80)
+         goto loc_ba5e;//check if dram calls need to be made
+      else
+      {
+         //bae8
+         r0 = r11 & 0xff;
+
+         if (r0 >= 2)
+         {
+            //baf4
+            *f0007b1 = 0;
+
+            //bafe
+            //function pointer call loop
+            int which = 0;//r1
+            u32 r2 = 1;
+
+            for (;;)
+            {
+               int return_value = 1;//r0
+               return_value = init_ptrs[which]();
+
+               if (return_value != 0)
+                  UNK_F0007B1 |= r2;//test failed
+
+               which++;//r1+=4
+
+               r2 <<= 1;
+
+               if (which > 4)// r1 < r5, r5 == 0x10
+                  break;
+            }
+
+            //bb1e
+
+            if (UNK_F0007B1 == 0)
+            {
+               //bb28
+
+               //all tests passed
+
+               if (mpeg_req_e0e2 & 1)//cmd e0 was sucessful (authenticate device)
+               {
+                  r0 = load_mpeg_rom();
+                  //r1 will be 2 either way so the
+                  //return value of load_mpeg_rom seems to have
+                  //no effect
+
+                  r2 = mpeg_authL << 8;
+
+                  goto bba4;
+               }
+
+               if (mpeg_req_e0e2 & 2)//cmd e2 was sucessful (get mpeg rom)
+               {
+                  //bb54
+                  do_dram_call56();
+
+                  r2 = 2;
+
+                  if (!r13)
+                     r2 = 3;
+
+                  //bb66
+
+                  r1 = mpeg_authL;
+
+                  goto bba4;
+               }
+
+               goto task9;
+            }
+            else
+            {
+               //bb6e
+
+               //one or more tests failed
+
+               if (mpeg_req_e0e2 & 1)//mpeg_req_e0e2 is set to 1 in cmd_E0 (authenticate device) if success
+               {
+bb7e:
+                  clear_dram_907b000_to9080000();
+
+                  //bb86
+               }
+
+               if (mpeg_req_e0e2 & 2)//and set to 2 in cmd_E2 (get mpeg rom) if success
+               {
+                  //bb90
+               }
+               else
+                  goto bb7e;//clear dram
+            }
+
+         }
+         else
+            goto task9;
+      }
+   }
+   else
+   {
+      //bbc6
+      YGR_0C = 3;
+      MPEG_1A = 0;
+
+      if (mpeg_inited & 0x80)
+      {
+         //bbe2
+         _a4d0_mpeg_erase();
+         asic_hirq_set = 0x800;
+         goto task9;
+      }
+      else
+      {
+         r11 = 0x8090004;
+         trap(0x21);
+         goto task9;
+      }
+   }
+}
+
+//erase 0xf000840-0xf0008a0
+//and   0x90752a0-0x90753EC
+//this apparently erases mpeg_inited (0xf000892)
+void _a4d0_mpeg_erase()
+{
+   r11 = 0xf00089c + 4;//f0008a0
+   r12 = 0xf000840;
+
+   r0 = 0;
+
+   while (r11 != r12)
+   {
+      *r11 = 0;
+      r11--;
+   }
+
+   r11 = 0x90753e8 + 4;
+   r12 = 0x90752a0;
+
+   while (r11 != r12)
+   {
+      *r11 = 0;
+      r11--;
+   }
+}
+
+void bba4()
+{
+   r1 <<= 24; // 0xff000000
+
+   temp = (r2 << 16) & 0xFFFF0000;//r2 can be 0, 1, 3, others?
+   r1 = (r1 >> 16) & 0x0000FFFF;
+   r1 |= temp;
+
+   r1 >>= 8;
+
+   mpeg_authL = r1;
+   mpeg_req_e0e2 = 0;
+   auth_busy = 0;
+   asic_hirq_set = 0x80;
+
+   task9();
+}
+
+
+void loc_907e78a()
+{
+   MPEG_30 = 0;
+   MPEG_32 = 0xfa04;
+   MPEG_34 = 0xfffc;
+
+   r13 = 0x50;
+
+   while (r13 > 0)
+   {
+      r0 = MPEG_36;
+      r13--;
+   }
+
+   _907e6f4();
+
+   r0 = MPEG_34;
+   r0 = MPEG_34;
+}
+
+void loc_907e76e()
+{
+   count = 0x20;
+
+   while (count > 0)
+   {
+      if (MPEG_34 & 1)
+         return 0;
+      else
+      {
+         MPEG_34 = 0xffff;
+         temp = MPEG_36;
+         MPEG_36 = temp;
+         count--;
+      }
+   }
+
+   return -1;
+}
+
+void ___()
+{
+   //907e382
+   MPEG_30 = r8;
+   MPEG_32 = 0xfa04;
+   MPEG_34 = 0xfffc;
+
+   //907e43a
+   MPEG_30 = r8;
+   MPEG_32 = 0xfe04;
+   MPEG_34 = 0xfffc;
+}
+
+void sub_907e6f4(int * count)
+{
+   *count = 0x20;
+
+   while (*count > 0)
+   {
+      *count--;
+
+      if (MPEG_34 & 1)
+      {
+         //dummy reads
+         temp = MPEG_34;
+         temp = MPEG_34;
+         return 0;
+      }
+      else
+      {
+         MPEG_34 = 0xffff;
+         temp = MPEG_34;
+         MPEG_34 = temp;
+      }
+   }
+
+   return -1;
+}
+
+void _907dc5a()
+{
+   MPEG_30 = r2 >> 3;
+   MPEG_32 = 0xffb0;
+   MPEG_34 = 0xfffc;
+
+   sub_907e7ec();
+
+   r0 = 0x50;
+}
+
+void _907da9e()
+{
+   r0 = MPEG_00;
+   r0 &= unk_f00852;
+   unk_f00852 = r0;
+   r0 >>= 8;
+
+   if (r0 & 1)
+   {
+      MPEG_16 = 0x00fe;
+      do_rom_call59();
+   }
+   else
+   {
+      //907daf6
+      do_dram_call43();
+   }
+}
+
+void sub_907d9f6()
+{
+   unk_f000897 |= 2;
+   r7 = unk_f000854 | 1;
+   unk_f000854 = r7;
+   MPEG_00 = r7;
+   unk_f000897 &= 0xfd;
+}
+
+void sub_907d9b0()
+{
+   unk_f000897 |= 4;
+   r7 = (*(unk_f000854 + 0x16)) & 0xcfff;
+   MPEG_1A = r7;
+   MPEG_1A = r7;
+   unk_f000897 &= 0xfb;
+}
+
+void sub_907d994()
+{
+   unk_f000897 |= 2;
+   r7 = unk_f000854 & 0xfffe;
+   unk_f000854 = r7;
+   MPEG_00 = r7;
+   unk_f000897 &= 0xfd;
+}
+
+void sub_907d988()
+{
+   MPEG_18 = 0xffdf;
+}
+
+void _907d7be()
+{
+   if ((MPEG_06 & 0x3f) == unk_907537a)
+   {
+      //907d7d2
+   }
+   else
+      return;
+}
+
+void loc_907d5ce()
+{
+   MPEG_22 = 6;
+   r0 = (MPEG_22 >> 8) & 0xe0;
+
+   if (r0 == 0x20)
+   {
+      if (r0 == 0x40)
+      {
+         do_dram_call3d();
+         return;
+      }
+      else
+      {
+         //loc_907d614
+      }
+   }
+   else
+   {
+      //loc_907d614
+   }
+
+}
+
+void loc_907d6a0()
+{
+   unk_f000897 |= 8;
+   MPEG_22 = 6;
+   r0 = (MPEG_22 >> 8) & 0xe0;
+
+   if (r0 == 0x20)
+   {
+      *unk_907537a = MPEG_22 & 0x3f; // byte ptr
+      *unk_9075378 = 8;
+   }
+   else
+   {
+
+   }
+}
+
+void loc_907d4ae()
+{
+   unk_f000897 |= 4;
+   r7 = (*(unk_f000854 + 0x16)) & 0x8fff;
+   MPEG_1A = r7;
+   MPEG_1A = r7;
+   unk_f000897 &= 0xfb;
+}
+
+void loc_907d24a()
+{
+   if (r0 & 0x20)
+   {
+      r6 = (*(unk_f000854 + 0x16)) & 0x8fff;
+      MPEG_1A = r6;
+      MPEG_1A = r6;
+   }
+   else if (r0 & 0x10)
+   {
+      //907d2c0
+   }
+   else
+   {
+      r6 = (*(unk_f000854 + 0x16)) & 0xcfff;
+      MPEG_1A = r6;
+      MPEG_1A = r6;
+   }
+
+}
+
+void loc_907d344()
+{
+   SAR2 = unk_90752c0;
+   DAR2 = 0xa10001e;
+   TCR2 = *(unk_90752c0 + 0x18);
+   CHCR2 = 0x190d;
+}
+
+void sub_907d078()
+{
+   MPEG_22 = 6;
+
+   if (unk_f000895 & 1)
+   {
+      goto loc_907d0b6;
+   }
+   else
+   {
+
+   }
+
+   r1 = MPEG_22 >> 13;
+   *dword_f000844 = r1;
 }
