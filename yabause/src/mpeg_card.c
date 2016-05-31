@@ -37,6 +37,13 @@ void mpeg_reg_debug_print();
 //reg_00 & 0x00f0 is interpolation, inverted, command setting of 0
 //results in 0xf written to the register
 
+//0a10001c & 0x0f00 is mosaic width. 0xf seems to mean off
+//valid settings are 0-9
+
+//0a10001c & 0xf000 is mosaic height. same as above for settings
+
+//0a10001c & (1 << 5) is blur, seems to be just on or off
+
 struct MpegCard
 {
    u16 reg_00;
@@ -46,6 +53,7 @@ struct MpegCard
    u16 border_color;//0x12
    u16 reg_14;
    u16 reg_1a;
+   u16 mosaic_blur;
    u16 reg_1e;
    u16 reg_20;
    u16 reg_32;
@@ -88,6 +96,9 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    case 0x1a:
       mpeg_card.reg_1a = data;
+      return;
+   case 0x1c:
+      mpeg_card.mosaic_blur = data;
       return;
    case 0x1e:
       mpeg_card.reg_1e = data;
@@ -193,4 +204,13 @@ void mpeg_reg_debug_print()
    CDLOG("Window x %d\n", mpeg_card.window_x >> 1);
 
    CDLOG("Window y %d\n", mpeg_card.window_y >> 1);
+
+   CDLOG("Mosaic x %d\n", (mpeg_card.mosaic_blur >> 8) & 0xf);
+
+   CDLOG("Mosaic y %d\n", (mpeg_card.mosaic_blur >> 12) & 0xf);
+   
+   if ((mpeg_card.mosaic_blur >> 5) & 1)
+      CDLOG("Blur disabled\n");
+   else
+      CDLOG("Blur enabled\n");
 }
