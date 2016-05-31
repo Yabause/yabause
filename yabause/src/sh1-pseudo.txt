@@ -768,22 +768,80 @@ void rom_a018()
    MPEG_1A = 0x7fff;
 }
 
+#define MPEG_INT_FLAGS_ADDR 0xf000848
+#define MPEG_INT_FLAGS_ARR (volatile u8 *)(MPEG_INT_FLAGS_ADDR)
+#define MPEG_INT_FLAGS_32 (*(volatile u32 *)(MPEG_INT_FLAGS_ADDR))
+
+//software-specific
+#define SEQUENCE_END 0x00000400
+#define VIDEO_DECODING_ERROR 0x00000010 
+
 void irqITU2IMIB2()
 {
    r0 = MPEG_00;
-   r1 = MPEG_00;
-   r0 &= r1;
-   r1 = MPEG_00;
-   r1 &= r0;
+   r1_status = MPEG_00;
+   r0 &= r1_status;
+   r1_status = MPEG_00;
+   r1_status &= r0;
 
    if ((*(unk_f000890 + 2)) & 0x80)
    {
+      //a1f0
+
       r5 = *(unk_f000850 + 2);
-      r4 = 0x30f;
       *(unk_f000850 + 2) = 0xffff;
-      r5 |= r4;
-      r1 &= r5;
-      *unk_f000890 = r1;
+      r5 |= 0x30f;
+      r1_status &= r5;
+      *unk_f000850 = r1_status;
+      r0 = ~r1_status;
+      r0 &= 0x16f;
+
+      //a20e
+      if (r1_status & 0x10)
+      {
+         r2 = ~r2;
+         r7 &= r2;
+      }
+
+      //a216
+      r7 |= r0;
+      r4 = 0;
+
+      //a220
+      if (r1_status & 0x40)
+      {
+
+      }
+
+      if (r1_status & 0x2000)
+      {
+         //a244
+         MPEG_INT_FLAGS_32 |= SEQUENCE_END;//accessed in bytes
+      }
+
+      //a260
+      if (r1_status & 0x1000)//r5 shifted right by 1
+      {
+
+      }
+
+      //a26e
+      if (r1_status & 0x0800)//r6 shifted right by 1
+      {
+
+      }
+
+      //a27c
+      if (r1_status & 0x0080)//r6 shifted right by 4
+      {
+         MPEG_INT_FLAGS_32 |= VIDEO_DECODING_ERROR;
+      }
+
+      //a278
+      if (r1_status & 0x10)
+      {
+         
+      }
    }
    else
    {
