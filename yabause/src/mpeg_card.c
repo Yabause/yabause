@@ -31,6 +31,7 @@ struct MpegCard
 {
    u16 reg_00;
    u16 reg_02;
+   u16 border_color;//0x12
    u16 reg_14;
    u16 reg_1a;
    u16 reg_1e;
@@ -48,11 +49,18 @@ struct MpegCard
 
 void mpeg_card_write_word(u32 addr, u16 data)
 {
-   //CDLOG("mpeg lsi ww %08x, %04x\n", addr, data);
+   if ((addr & 0xfffff) != 0x34 && (addr & 0xfffff) != 0x36)
+      CDLOG("mpeg lsi ww %08x, %04x\n", addr, data);
    switch (addr & 0xfffff)
    {
+   case 0:
+      mpeg_card.reg_00 = data;
+      return;
    case 2:
       mpeg_card.reg_02 = data;
+      return;
+   case 0x12:
+      mpeg_card.border_color = data;
       return;
    case 0x14:
       mpeg_card.reg_14 = data;
@@ -92,7 +100,8 @@ void mpeg_card_write_word(u32 addr, u16 data)
 
 u16 mpeg_card_read_word(u32 addr)
 {
-   CDLOG("mpeg lsi rw %08x\n", addr);
+   if ((addr & 0xfffff) != 0x34 && (addr & 0xfffff) != 0x36)
+      CDLOG("mpeg lsi rw %08x %08x\n", addr, SH1->regs.PC);
    switch (addr & 0xfffff)
    {
    case 0:
