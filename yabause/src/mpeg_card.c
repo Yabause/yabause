@@ -27,7 +27,15 @@
 #include "debug.h"
 #include "assert.h"
 
+void mpeg_reg_debug_print();
+
 //(window_x >> 1), (window_y >> 1) == setting in pixels
+
+//write reg_00 with (1 << 1) == display off
+//write reg_00 with (0 << 1) == display on
+
+//reg_00 & 0x00f0 is interpolation, inverted, command setting of 0
+//results in 0xf written to the register
 
 struct MpegCard
 {
@@ -54,7 +62,10 @@ struct MpegCard
 void mpeg_card_write_word(u32 addr, u16 data)
 {
    if ((addr & 0xfffff) != 0x34 && (addr & 0xfffff) != 0x36)
+   {
       CDLOG("mpeg lsi ww %08x, %04x\n", addr, data);
+      //mpeg_reg_debug_print();
+   }
    switch (addr & 0xfffff)
    {
    case 0:
@@ -168,4 +179,18 @@ void mpeg_card_init()
 {
    memset(&mpeg_card, 0, sizeof(struct MpegCard));
    mpeg_card.reg_34 = 1;
+}
+
+void mpeg_reg_debug_print()
+{
+   if((mpeg_card.reg_00 >> 1) & 1)
+      CDLOG("Display disabled\n");
+   else
+      CDLOG("Display enabled\n");
+
+   CDLOG("Interpolation %01X\n", 0xf - ((mpeg_card.reg_00 >> 4) & 0xf));
+
+   CDLOG("Window x %d\n", mpeg_card.window_x >> 1);
+
+   CDLOG("Window y %d\n", mpeg_card.window_y >> 1);
 }
