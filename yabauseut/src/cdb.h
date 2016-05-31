@@ -20,6 +20,9 @@
 #ifndef CDBH
 #define CDBH
 
+#define do_cdb_tests_unexp_cr_data_error() \
+   do_tests_unexp_data_error("%04X %04X %04X %04X %04X", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
+
 enum IAPETUS_ERR init_cdb_tests();
 void cdb_test();
 void cd_cmd_test();

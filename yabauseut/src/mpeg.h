@@ -37,6 +37,12 @@ void mpeg_test();
 void mpeg_cmd_test();
 void mpeg_play_test();
 
+void test_cmd_mpeg_get_status();
+void test_cmd_mpeg_get_int();
+void test_cmd_mpeg_set_int_mask();
+void test_cmd_mpeg_init();
+void test_cmd_mpeg_set_mode();
+
 void test_mpegplay_init();
 void test_mpegplay_play();
 void test_mpegplay_pause();

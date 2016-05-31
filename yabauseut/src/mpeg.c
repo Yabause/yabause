@@ -49,6 +49,207 @@ void mpeg_test()
 
 void mpeg_cmd_test()
 {
+   init_cdb_tests();
+
+   if (!is_mpeg_card_present())
+   {
+      tests_log_textf("mpeg card not detected\n");
+      return;
+   }
+
+   unregister_all_tests();
+
+   register_test(&test_cmd_mpeg_init, "MPEG Init");
+   register_test(&test_cmd_mpeg_get_status, "MPEG Get Status");
+   register_test(&test_cmd_mpeg_get_int, "MPEG Get Interrupt");
+   register_test(&test_cmd_mpeg_set_int_mask, "MPEG Set Interrupt Mask");
+   register_test(&test_cmd_mpeg_set_mode, "MPEG Set Mode");
+   //register_test(&test_cmd_mpeg_play, "MPEG Play");
+   //register_test(&test_cmd_mpeg_set_decode_method, "MPEG Set Decoding Method");
+   //register_test(&test_cmd_mpeg_out_decode_sync, "MPEG Out Decoding Sync");
+   //register_test(&test_cmd_mpeg_get_timecode, "MPEG Get Timecode");
+   //register_test(&test_cmd_mpeg_get_pts, "MPEG Get PTS");
+   //register_test(&test_cmd_mpeg_set_con, "MPEG Set Connection");
+   //register_test(&test_cmd_mpeg_get_con, "MPEG Get Connection");
+   //register_test(&test_cmd_mpeg_chg_con, "MPEG Change Connection");
+   //register_test(&test_cmd_mpeg_set_stream, "MPEG Set Stream");
+   //register_test(&test_cmd_mpeg_get_stream, "MPEG Get Stream");
+   //register_test(&test_cmd_mpeg_get_picture_size, "MPEG Get Picture Size");
+   //register_test(&test_cmd_mpeg_display, "MPEG Display");
+   //register_test(&test_cmd_mpeg_set_window, "MPEG Set Window");
+   //register_test(&test_cmd_mpeg_set_border_color, "MPEG Set Border Color");
+   //register_test(&test_cmd_mpeg_set_fade, "MPEG Set Fade");
+   //register_test(&test_cmd_mpeg_set_video_effects, "MPEG Set Video Effects");
+   //register_test(&test_cmd_mpeg_get_image, "MPEG Get Image");
+   //register_test(&test_cmd_mpeg_read_image, "MPEG Read Image");
+   //register_test(&test_cmd_mpeg_write_image, "MPEG Write Image");
+   //register_test(&test_cmd_mpeg_read_sector, "MPEG Read Sector");
+   //register_test(&test_cmd_mpeg_write_sector, "MPEG Write Sector");
+   //register_test(&test_cmd_mpeg_get_lsi, "MPEG Get LSI");
+   //register_test(&test_cmd_mpeg_set_lsi, "MPEG Set LSI");
+   do_tests("MPEG Command tests", 0, 0);
+
+   vdp_exbg_deinit();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_status()
+{
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+
+   cd_cmd.CR1 = 0x9000;
+   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
+      return;
+   }
+
+   // Verify that the data returned is correct
+   if ((cd_cmd_rs.CR1 & 0xFF) != 0x19 ||
+      cd_cmd_rs.CR3 != 0x00C0 ||
+      cd_cmd_rs.CR4 != 0x0001)
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_int()
+{
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+
+   cd_cmd.CR1 = 0x9100;
+   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
+      return;
+   }
+
+   // Verify that the data returned is correct
+   if ((cd_cmd_rs.CR1 & 0xFF) != 0x00 ||
+      cd_cmd_rs.CR2 != 0x0000 ||
+      cd_cmd_rs.CR3 != 0x0000 ||
+      cd_cmd_rs.CR4 != 0x0000)
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_int_mask()
+{
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+
+   cd_cmd.CR1 = 0x92FF;
+   cd_cmd.CR2 = 0xFFFF;
+   cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
+      return;
+   }
+
+   stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_mode()
+{
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+
+   cd_cmd.CR1 = 0x9400;
+   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
+      return;
+   }
+
+   stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_init()
+{
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+
+   // Software timer off
+   cd_cmd.CR1 = 0x9300;
+   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   if ((ret = cd_exec_command(HIRQ_MPED | HIRQ_MPCM, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
+      return;
+   }
+
+   if (!cd_wait_hirq(HIRQ_MPED))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   tests_log_textf("%04X %04X %04X %04X %04X\n", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
+
+   // Verify that the data returned is correct
+   if (cd_cmd_rs.CR1 != (STATUS_PAUSE << 8) ||
+      cd_cmd_rs.CR2 != 0 ||
+      cd_cmd_rs.CR3 != 0x0 ||
+      cd_cmd_rs.CR4 != 0x0)
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   // Software timer on
+   cd_cmd.CR2 = 0x0001;
+
+   if ((ret = cd_exec_command(HIRQ_MPED | HIRQ_MPCM, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {
+      do_tests_error_noarg(ret);
+      return;
+   }
+
+   if (!cd_wait_hirq(HIRQ_MPED | HIRQ_MPCM))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   if (!cd_wait_hirq(HIRQ_MPCM))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   stage_status = STAGESTAT_DONE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
