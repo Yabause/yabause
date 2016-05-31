@@ -5523,6 +5523,7 @@ int print_mpeg_jump = 0;
 
 void sh1_dma_exec(s32 cycles)
 {
+	int i;
 
    if (SH1->regs.PC == 0xf914)
       print_mpeg_jump = 1;
@@ -5533,7 +5534,6 @@ void sh1_dma_exec(s32 cycles)
    if (print_mpeg_jump && (SH1->regs.PC == 0xf926))
       CDLOG("MPEG Jump to %08x\n", SH1->regs.R[0]);
 
-   int i;
    //pass mpeg card presence test
    if (SH1->regs.PC == 0x4c6)
    {
