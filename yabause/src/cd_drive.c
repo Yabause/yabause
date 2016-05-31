@@ -544,7 +544,10 @@ int do_command()
          CDInterfaceToc10 *entry = &cdd_cxt.toc[i*3];
          entry->ctrladr = toc[i].ctrladr;
          entry->tno = toc[i].tno;
-         entry->point = toc[i].point;
+         if(toc[i].point > 0x99)
+            entry->point = toc[i].point;
+         else
+            entry->point = toc[i].point = num2bcd(toc[i].point);
          entry->min = num2bcd(toc[i].min);
          entry->sec = num2bcd(toc[i].sec);
          entry->frame = num2bcd(i*3);
