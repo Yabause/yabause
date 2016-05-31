@@ -27,10 +27,14 @@
 #include "debug.h"
 #include "assert.h"
 
+//(window_x >> 1), (window_y >> 1) == setting in pixels
+
 struct MpegCard
 {
    u16 reg_00;
    u16 reg_02;
+   u16 window_x;//0x06
+   u16 window_y;//0x08
    u16 border_color;//0x12
    u16 reg_14;
    u16 reg_1a;
@@ -58,6 +62,12 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    case 2:
       mpeg_card.reg_02 = data;
+      return;
+   case 6:
+      mpeg_card.window_x = data;
+      return;
+   case 8:
+      mpeg_card.window_y = data;
       return;
    case 0x12:
       mpeg_card.border_color = data;
