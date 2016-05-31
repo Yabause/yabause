@@ -64,8 +64,7 @@ void mpeg_cmd_test()
    register_test(&test_cmd_mpeg_get_int, "MPEG Get Interrupt");
    register_test(&test_cmd_mpeg_set_int_mask, "MPEG Set Interrupt Mask");
    register_test(&test_cmd_mpeg_set_mode, "MPEG Set Mode");
-   //register_test(&test_cmd_mpeg_play, "MPEG Play");
-   //register_test(&test_cmd_mpeg_set_decode_method, "MPEG Set Decoding Method");
+   register_test(&test_cmd_mpeg_set_decode_method, "MPEG Set Decoding Method");
    //register_test(&test_cmd_mpeg_out_decode_sync, "MPEG Out Decoding Sync");
    //register_test(&test_cmd_mpeg_get_timecode, "MPEG Get Timecode");
    //register_test(&test_cmd_mpeg_get_pts, "MPEG Get PTS");
@@ -75,12 +74,14 @@ void mpeg_cmd_test()
    //register_test(&test_cmd_mpeg_set_stream, "MPEG Set Stream");
    //register_test(&test_cmd_mpeg_get_stream, "MPEG Get Stream");
    //register_test(&test_cmd_mpeg_get_picture_size, "MPEG Get Picture Size");
-   //register_test(&test_cmd_mpeg_display, "MPEG Display");
-   //register_test(&test_cmd_mpeg_set_window, "MPEG Set Window");
-   //register_test(&test_cmd_mpeg_set_border_color, "MPEG Set Border Color");
-   //register_test(&test_cmd_mpeg_set_fade, "MPEG Set Fade");
-   //register_test(&test_cmd_mpeg_set_video_effects, "MPEG Set Video Effects");
+   register_test(&test_cmd_mpeg_display, "MPEG Display");
+   register_test(&test_cmd_mpeg_set_window, "MPEG Set Window");
+   register_test(&test_cmd_mpeg_set_border_color, "MPEG Set Border Color");
+   register_test(&test_cmd_mpeg_set_fade, "MPEG Set Fade");
+   register_test(&test_cmd_mpeg_set_video_effects, "MPEG Set Video Effects");
+	//register_test(&test_cmd_mpeg_play, "MPEG Play");
    //register_test(&test_cmd_mpeg_get_image, "MPEG Get Image");
+	//register_test(&test_cmd_mpeg_set_image, "MPEG Set Image");
    //register_test(&test_cmd_mpeg_read_image, "MPEG Read Image");
    //register_test(&test_cmd_mpeg_write_image, "MPEG Write Image");
    //register_test(&test_cmd_mpeg_read_sector, "MPEG Read Sector");
@@ -180,8 +181,10 @@ void test_cmd_mpeg_set_mode()
    cd_cmd_struct cd_cmd_rs;
    int ret;
 
-   cd_cmd.CR1 = 0x9400;
-   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+   cd_cmd.CR1 = 0x94FF;
+   cd_cmd.CR2 = 0xFFFF;
+	cd_cmd.CR3 = 0x0100;
+	cd_cmd.CR4 = 0x0000;
 
    if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
    {
@@ -190,6 +193,261 @@ void test_cmd_mpeg_set_mode()
    }
 
    stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_play()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_decode_method()
+{
+	cd_cmd_struct cd_cmd;
+	cd_cmd_struct cd_cmd_rs;
+	int ret;
+
+	cd_cmd.CR1 = 0x9604; // Unmute both channels
+	cd_cmd.CR2 = 0x0001; // no pause
+	cd_cmd.CR3 = 0x0000;
+	cd_cmd.CR4 = 0x0001; // no freeze
+
+	if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
+		return;
+	}
+
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_out_decode_sync()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_timecode()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_pts()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_con()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_con()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_chg_con()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_stream()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_stream()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_picture_size()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_display()
+{
+	cd_cmd_struct cd_cmd;
+	cd_cmd_struct cd_cmd_rs;
+	int ret;
+
+	cd_cmd.CR1 = 0xA000;
+	cd_cmd.CR2 = 0x0100; // Enable, frame buffer number
+	cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+	if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
+		return;
+	}
+
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_window()
+{
+	cd_cmd_struct cd_cmd;
+	cd_cmd_struct cd_cmd_rs;
+	int ret;
+
+	cd_cmd.CR1 = 0xA103; // Display Window Size
+	cd_cmd.CR2 = 0x0001; // Change
+	cd_cmd.CR3 = 320; // X
+	cd_cmd.CR4 = 224; // Y
+
+	if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
+		return;
+	}
+
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_border_color()
+{
+	cd_cmd_struct cd_cmd;
+	cd_cmd_struct cd_cmd_rs;
+	int ret;
+
+	cd_cmd.CR1 = 0xA200;
+	cd_cmd.CR2 = 0x0000; // Black
+	cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+	if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
+		return;
+	}
+
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_fade()
+{
+	cd_cmd_struct cd_cmd;
+	cd_cmd_struct cd_cmd_rs;
+	int ret;
+
+	cd_cmd.CR1 = 0xA300;
+	cd_cmd.CR2 = 0x0000; // Y/C Gain
+	cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+	if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
+		return;
+	}
+
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_video_effects()
+{
+	cd_cmd_struct cd_cmd;
+	cd_cmd_struct cd_cmd_rs;
+	int ret;
+
+	cd_cmd.CR1 = 0xA400;
+	cd_cmd.CR2 = 0x0F00; // Interpolation, Lumi-Key
+	cd_cmd.CR3 = 0x0000; // Mosaic w/h
+	cd_cmd.CR4 = 0x0000; // Blur w/h
+
+	if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+	{
+		do_tests_error_noarg(ret);
+		return;
+	}
+
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_image()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_image()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_read_image()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_write_image()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_read_sector()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_write_sector()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_get_lsi()
+{
+	stage_status = STAGESTAT_DONE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_mpeg_set_lsi()
+{
+	stage_status = STAGESTAT_DONE;
 }
 
 //////////////////////////////////////////////////////////////////////////////
