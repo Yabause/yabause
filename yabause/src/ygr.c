@@ -78,6 +78,9 @@ struct Ygr
 
    int mbx_status;
    u16 fake_fifo;
+   u16 reg_0c;
+   u16 reg_1a;
+   u16 reg_1c;
 }ygr_cxt = { 0 };
 
 
@@ -202,6 +205,7 @@ int sh2_a_bus_check_wait(u32 addr)
 
 u8 ygr_sh1_read_byte(u32 addr)
 {
+   assert(0);
    CDTRACE("rblsi: %08X\n", addr);
    YGR_SH1_RW_LOG("ygr_sh1_read_byte 0x%08x", addr );
    return 0;
@@ -239,8 +243,13 @@ u16 ygr_sh1_read_word(u32 addr)
       return ygr_cxt.regs.CR3;
    case 0x16: // CR4
       return ygr_cxt.regs.CR4;
+   case 0x1a:
+      return ygr_cxt.reg_1a;
+   case 0x1c:
+      return ygr_cxt.reg_1c;
    }
    YGR_SH1_RW_LOG("ygr_sh1_read_word 0x%08x", addr);
+   assert(0);
    return 0;
 }
 
@@ -253,6 +262,7 @@ u32 ygr_sh1_read_long(u32 addr)
 
 void ygr_sh1_write_byte(u32 addr,u8 data)
 {
+   assert(0);
    CDTRACE("wblsi: %08X %02X\n", addr, data);
    YGR_SH1_RW_LOG("ygr_sh1_write_byte 0x%08x 0x%02x", addr, data);
 }
@@ -291,6 +301,9 @@ void ygr_sh1_write_word(u32 addr, u16 data)
    case 0xa:
       ygr_cxt.regs.HIRQMASK = data & 0x70;
       return;
+   case 0xc:
+      ygr_cxt.reg_0c = data;
+      return;
    case 0x10: // CR1
       ygr_cxt.regs.CR1 = data;
       return;
@@ -306,7 +319,11 @@ void ygr_sh1_write_word(u32 addr, u16 data)
    case 0x1e:
       ygr_cxt.regs.HIRQ |= data;
       return;
+   case 0x1a:
+      ygr_cxt.reg_1a = data;
+      return;
    }
+   assert(0);
    YGR_SH1_RW_LOG("ygr_sh1_write_word 0x%08x 0x%04x", addr, data);
 }
 
