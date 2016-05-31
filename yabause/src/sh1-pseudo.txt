@@ -285,6 +285,205 @@ loc_296a:
    wait();//2994
 }
 
+{
+   //3858
+   if (cd_rx_status & 0x4 && cd_rx_track == 0)
+   {
+      // 4 must be set to read TOC and track must be zero
+      //386A
+      auth_counter1 = cd_rx_track+1;
+
+      if (cd_rx_status & 0x8) 
+      {
+         //3876
+         count_Q_and_8++;
+      }
+      else
+      {
+         //387E
+         count_Q_and_not_8++;
+      }
+
+      //3884
+      if (cd_rx_Q & 0xF == 1)
+      {
+         //388C
+         drive_version = cd_rx_zero_not;
+         u32 track = bcd2num(&cd_rx_status+cd_rx_index);
+         if (track < 1)
+            goto loc_38D0;
+         if (track > 99)
+            goto loc_38D8;
+
+         for (;;)
+         {
+            //38AC
+            u32 toc_data = msf2frames(&cd_rx_status+8 /* F0002D8 */) | (cd_rx_Q << 24);
+
+            // is track leadout?
+            if (track_index != 102) 
+            {
+               //38DC
+               put_toc_entry(track_index, toc_data); // put toc_data into toc[track_index]
+
+               for(;;)
+               {
+                  //38E6
+                  if (cd_leadout != 0xFFFFFFFF &&
+                      cd_first_info_track != 0xFFFFFFFF)
+                  {
+                     //38F6
+                     u8 ctladr = r2 = (cd_first_info_track >> 16) & 0xFF
+                     if (cd_last_info_track != 0xFFFFFFFF)
+                     {
+                        //a0,a1,a2 entries in toc
+                        //3904
+                        r3 = (cd_last_info_track >> 16) & 0xFF
+                        if (r3 >= r2)
+                        {
+                           //390C 
+                           r0 = (cd_first_info_track >> 8) & 0xFF;
+                           if (r0 == 0x10)
+                           {
+                              //3914
+                              ctladr = (cd_store_last_infotrack >> 16) & 0xFF;
+                              ctladr += !((cd_store_last_infotrack >> 24) & 0x40)
+                              r2 = (cd_first_info_track >> 16) & 0xFF;
+                              r1 = (cd_last_info_track >> 16) & 0xFF;
+
+                              if (r2 == r3)
+                              {
+                                 //392E
+                                 r0 = cd_last_info_track >> 3;
+                                 if (!(r0 & 0x40))
+                                    goto loc_394A;
+                              }
+                           }
+                           //3936
+                           r2 = toc_data+r2;
+                           r3 = toc_data+r3;
+                           while (r2 <= r3)
+                           {
+                              //3940
+                              //check all info tracks present
+                              if (r2[0] == 0xFFFFFFFF)
+                                 goto loc_39AC;
+                           }
+                           //394A
+
+                           // TOC read complete.
+                           ((unsigned char *)&dram_nsession)[byte_F000289] = ctladr; 
+                           byte_F000289++;
+                           if (unk_F00025F & 0x80)
+                              goto loc_382C;
+
+                           //395E
+                           cd_leadout = task6_dtype2a;
+                           cd_last_info_track = task6_dtype1a;
+                           cd_first_info_track = task6_dtype0a;
+                           *((unsigned char *)&dram_nsession) = ctladr;
+
+                           if (toc_data[0] == 0xFFFFFFFF)
+                           {
+                               //3982
+                               toc_data[0] = cd_leadout;
+                           }
+
+                           //398A
+                           *((unsigned char *)toc_data)[0] = ctladr;
+                           byte_F0002A4 = 0;
+                           cd_seek_now = dword_9000214+0x96
+
+                           sub_2E2C(cd_seek_now, 0, 0); // assuming that args are r5, r6, r7(doesn't look like r4 is used)
+                           task6_state = 0x16;
+                        }
+                     }
+                  }
+
+                  //39AC
+                  goto loc_28B0;
+
+                  //39B0
+                  if (r0 != 5 || r5[3] != 0xB0)
+                     goto loc_39AC;
+
+                  toc_data[0] = msf2frames(r5+8);
+                  r0 = msf2frames(r5+4);
+
+                  if (r0 > unk_9000210)
+                  {
+                     //39E2
+                     dword_9000214 = unk_9000210;
+                     unk_9000210 = r0;
+                  }
+
+                  //39E6
+                  unk_F00025F |= 3;
+                  goto loc_39AC;
+
+                  //39EC
+                  r4 = byte_F000289-1;
+                  goto loc_395E;
+
+                  //39F4
+                  //task6_handle_toc_Q
+                  u32 *toc_ptr;
+                  if (cd_rx_index == 0xA0)
+                  {
+                     //39FA
+                     toc_ptr = &cd_first_info_track;
+                  }
+                  //3A04
+                  else if (cd_rx_index == 0xA1)
+                  {
+                     toc_ptr = &cd_last_info_track;
+                  }
+                  //3A3E
+                  else if (cd_rx_index == 0xA2)
+                  {
+                     // leadout
+                     r1 = 102;
+                     break; // goto loc_38AC
+                  }
+                  else
+                     goto loc_39AC;
+
+                  // Write 0xA0/0xA1 info tracks
+
+                  //3A0A
+                  u32 toc = bcd2num(r5+byte_F0002D8) | (cd_rx_Q << 8);
+                  toc <<= 16;
+                  toc |= (byte_F0002D8 << 8) >> 16;
+
+                  *toc_ptr = toc; 
+                  toc_ptr+=0xC;
+                  // was first info track?
+                  if (toc_ptr == &task6_dtype0a)
+                  {
+                     //3A34
+                     // don't set info track twice
+                     if (*toc_ptr != 0xFFFFFFFF)
+                        continue; // goto loc_38E6
+                  }
+
+                  *toc_ptr = toc;
+                  // goto loc_38E6
+               }
+            }
+            else
+               goto loc_3A46;
+         }
+      }
+      else
+         goto loc_39B0
+
+   }
+   else
+      goto loc_3262
+
+}
+
+
 #define YGR_0C   (*(volatile u16 *)0xA00000C)
 #define MPEG_00   (*(volatile u16 *)0xA100000)
 #define MPEG_16   (*(volatile u16 *)0xA100016)
