@@ -770,14 +770,18 @@ void rom_a018()
 
 #define MPEG_INT_FLAGS_ADDR 0xf000848
 #define MPEG_INT_FLAGS_ARR (volatile u8 *)(MPEG_INT_FLAGS_ADDR)
-#define MPEG_INT_FLAGS_32 (*(volatile u32 *)(MPEG_INT_FLAGS_ADDR))
+#define MPEG_INT_FLAGS (*(volatile u32 *)(MPEG_INT_FLAGS_ADDR))
 
+#define MPEG_INT_MASK_ADDR 0xf00084c
+#define MPEG_INT_MASK (*(volatile u32 *)(MPEG_INT_MASK_ADDR))
 //software-specific
 #define SEQUENCE_END 0x00000400
 #define VIDEO_DECODING_ERROR 0x00000010 
 
 void irqITU2IMIB2()
 {
+   TSR2 &= 0xfd;
+
    r0 = MPEG_00;
    r1_status = MPEG_00;
    r0 &= r1_status;
@@ -810,43 +814,96 @@ void irqITU2IMIB2()
       //a220
       if (r1_status & 0x40)
       {
+         r4 |= r5;
+         r0 = *(unk_f000890 + 3);
 
+         if (r0 & 0x44)
+            do_dram_call28();
       }
 
+      //a23c
       if (r1_status & 0x2000)
       {
          //a244
-         MPEG_INT_FLAGS_32 |= SEQUENCE_END;//accessed in bytes
+         *(unk_f000890 + 1) = *(unk_f000890 + 1) | 1;
+
+         MPEG_INT_FLAGS |= SEQUENCE_END;
+
+         if (MPEG_INT_MASK & SEQUENCE_END)
+            asic_hirq_set = 0x2000;
       }
 
       //a260
       if (r1_status & 0x1000)//r5 shifted right by 1
       {
-
+         *(unk_f000890 + 1) = *(unk_f000890 + 1) | 4;
       }
 
       //a26e
       if (r1_status & 0x0800)//r6 shifted right by 1
       {
-
+         r4 |= r5;
       }
 
       //a27c
       if (r1_status & 0x0080)//r6 shifted right by 4
       {
-         MPEG_INT_FLAGS_32 |= VIDEO_DECODING_ERROR;
+         MPEG_INT_FLAGS |= VIDEO_DECODING_ERROR;
+
+         if (MPEG_INT_MASK & VIDEO_DECODING_ERROR)
+            asic_hirq_set = 0x2000;
       }
+
+      r5 >>= 2;
 
       //a278
       if (r1_status & 0x10)
       {
-         
+         //a29c
+         r4 |= r5;
+
+         if (*(unk_f000890 + 3) & 0x11)
+            goto set_mpcm;
+
+         //a2a6
+         if ((mpeg_reg_mirror_14 & 0x41) == 0x41)//mode == playing video and vsync
+            goto set_mpcm;
+
+         //a2b2
+         if (*unk_f00089C == 4)
+         {
+
+         }
+         //a2ba
+         else if (*unk_f00089C == 5)
+            goto set_mpcm;
+
+
+
       }
+
+
+set_mpcm:
+      asic_hirq_set = 0x1000;
+
    }
    else
    {
+      //a340
 
+      //incrementing a timer?
+
+      if (r0 & 0x10)
+         r3 = 0x0100;//a34c
+
+
+      if (r0 & 0x20)
+         r3 += 1;//a352
+
+      *unk_f00089e += r3;
    }
+
+   schedule_running_task();
 }
 
 //test dmas for mpeg
@@ -1400,4 +1457,41 @@ void sub_907d078()
 
    r1 = MPEG_22 >> 13;
    *dword_f000844 = r1;
+}
+
+void loc_907b9ce()
+{
+   u8 val1 = *(0x90752e4 + 0x2c);
+   u32 *ptr = *(0x90752e4 + 0x30);
+   ptr[0] = (val1 << 16) | (r2 & 0xffff);
+
+   unk_f000897 |= 8; //set flag?
+
+   //get upper byte?
+   MPEG_22 = 4;
+   r0 = MPEG_22 & 0xff;
+   r2 = r0 << 16;
+
+   //get lower word?
+   MPEG_22 = 5;
+   r0 = MPEG_22 & 0xffff;
+   r2 |= r0;
+
+   r0 = r2;
+
+   MPEG_34 = r0;
+
+   *unk_f000897 = r0 & 0xf7; //clear flag?
+
+
+
+   //907ba2c
+
+   if (*F000850 & 0x40)//sequence start detected
+   {
+      MPEG_INT_FLAGS |= SEQUENCE_START_DETECTED;
+
+      if (MPEG_INT_MASK & SEQUENCE_START_DETECTED)
+         asic_hirq_set = 0x2000;
+   }
 }
