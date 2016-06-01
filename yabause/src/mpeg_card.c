@@ -29,20 +29,48 @@
 
 void mpeg_reg_debug_print();
 
-//(window_x >> 1), (window_y >> 1) == setting in pixels
+//a100000
+//FEDC BA98 7654 3210
+//.ccc .yyy iiii h.d.
+//d : 0 == display on, 1 == display off
+//h : 0 == HD, 1 == standard def (mpeg set mode)
+//i : interpolation (set to opposite of command, 0xf - command_value)
+//y : y gain
+//c : c gain
 
-//write reg_00 with (1 << 1) == display off
-//write reg_00 with (0 << 1) == display on
+//a100006
+//FEDC BA98 7654 3210
+//.... ..xx xxxx xxx.
+//x : window x (not sure how many bits total)
 
-//reg_00 & 0x00f0 is interpolation, inverted, command setting of 0
-//results in 0xf written to the register
+//a100008
+//FEDC BA98 7654 3210
+//.... ..yy yyyy yyy.
+//y : window y
 
-//0a10001c & 0x0f00 is mosaic width. 0xf seems to mean off
-//valid settings are 0-9
+//a100012
+//FEDC BA98 7654 3210
+//cccc cccc cccc cccc
+//c : border color (rgb555?)
 
-//0a10001c & 0xf000 is mosaic height. same as above for settings
+//a100014
+//FEDC BA98 7654 3210
+//.... .... .s.. ..ot
+//t : 0 == decode timing mode is host, 1 == decode timing mode is vsync
+//o : 0 == output to host, 1 == output to vdp2
+//s : 0 == still picture, 1 == video (mpeg set mode)
 
-//0a10001c & (1 << 5) is blur, seems to be just on or off
+//a10001c
+//FEDC BA98 7654 3210
+//hhhh wwww ..b. ....
+//b : blur on/off (todo recheck)
+//w : mosaic width 0xf == off, 0-9 settings
+//h : mosaic height 0xf == off, 0-9 settings
+
+//a10003e
+//FEDC BA98 7654 3210
+//..i. .... .... ....
+// i : 0 == not interlaced 1 == interlaced
 
 struct MpegCard
 {
@@ -53,7 +81,7 @@ struct MpegCard
    u16 border_color;//0x12
    u16 reg_14;
    u16 reg_1a;
-   u16 mosaic_blur;
+   u16 mosaic_blur;//0x1c
    u16 reg_1e;
    u16 reg_20;
    u16 reg_32;
