@@ -38,15 +38,39 @@ void mpeg_reg_debug_print();
 //y : y gain
 //c : c gain
 
+//a100002
+//FEDC BA98 7654 3210
+//.... .... .... .ooo
+//.... .... .ppp ppp.
+//o : display window offset x (not sure how many bits)
+//p: display window pos x (seems to occupy the same bits, modal?) (not sure how many bits)
+
+//a100004
+//FEDC BA98 7654 3210
+//.... .... .... .ooo
+//.... .... .ppp ppp.
+//o : display window offset y
+//p: display window pos y
+
 //a100006
 //FEDC BA98 7654 3210
 //.... ..xx xxxx xxx.
-//x : window x (not sure how many bits total)
+//x : frame buffer window pos x (not sure how many bits total)
 
 //a100008
 //FEDC BA98 7654 3210
 //.... ..yy yyyy yyy.
-//y : window y
+//y : frame buffer window pos y
+
+//a10000e
+//FEDC BA98 7654 3210
+//.... .... .... xxxx
+//x : zoom rate x (not sure how many bits total)
+
+//a100010
+//FEDC BA98 7654 3210
+//.... .... .... yyyy
+//y : zoom rate y (not sure how many bits total)
 
 //a100012
 //FEDC BA98 7654 3210
@@ -55,9 +79,11 @@ void mpeg_reg_debug_print();
 
 //a100014
 //FEDC BA98 7654 3210
-//.... .... .s.. ..ot
+//.... .... .s.. fpot
 //t : 0 == decode timing mode is host, 1 == decode timing mode is vsync
 //o : 0 == output to host, 1 == output to vdp2
+//p : seems pause related. writing 0 in cr2 of set decoding method sets it to 0
+//f : seems freeze related. write 0 in cr4 of set decoding method to set it to 0
 //s : 0 == still picture, 1 == video (mpeg set mode)
 
 //a10001c
