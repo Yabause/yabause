@@ -1088,7 +1088,7 @@ void UIYabause::breakpointHandlerSH1(bool displayMessage)
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2(SH1, mYabauseThread, this ).exec();
+	UIDebugSH2(UIDebugCPU::PROC_SH1, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerMSH2(bool displayMessage)
@@ -1096,7 +1096,7 @@ void UIYabause::breakpointHandlerMSH2(bool displayMessage)
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2(MSH2, mYabauseThread, this ).exec();
+	UIDebugSH2(UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerSSH2(bool displayMessage)
@@ -1104,7 +1104,7 @@ void UIYabause::breakpointHandlerSSH2(bool displayMessage)
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2(SSH2, mYabauseThread, this ).exec();
+	UIDebugSH2(UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerM68K()
@@ -1131,13 +1131,13 @@ void UIYabause::breakpointHandlerSCSPDSP()
 void UIYabause::on_aViewDebugMSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( MSH2, mYabauseThread, this ).exec();
+	UIDebugSH2( UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugSSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( SSH2, mYabauseThread, this ).exec();
+	UIDebugSH2( UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugVDP1_triggered()
@@ -1187,13 +1187,13 @@ void UIYabause::on_aViewDebugSCSPDSP_triggered()
 void UIYabause::on_aViewDebugSH1_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( SH1, mYabauseThread, this ).exec();
+	UIDebugSH2( UIDebugCPU::PROC_SH1, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugMemoryEditor_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIMemoryEditor( mYabauseThread, this ).exec();
+	UIMemoryEditor( UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aTraceLogging_triggered( bool toggled )

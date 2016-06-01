@@ -28,7 +28,7 @@ class UIDebugSH2 : public UIDebugCPU
 private:
    SH2_struct *debugSH2;
 public:
-	UIDebugSH2(SH2_struct *sh, YabauseThread *mYabauseThread, QWidget* parent = 0 );
+   UIDebugSH2( UIDebugCPU::PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* parent = 0 );
    void updateRegList();
    void updateCodeList(u32 addr);
    void updateBackTrace();

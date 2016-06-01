@@ -25,10 +25,20 @@
 
 class UIDebugCPU : public QDialog, public Ui::UIDebugCPU
 {
-	Q_OBJECT
+   Q_OBJECT
 
 public:
-	UIDebugCPU( YabauseThread *mYabauseThread, QWidget* parent = 0 );
+   enum PROCTYPE
+   {
+      PROC_MSH2,
+      PROC_SSH2,
+      PROC_SH1,
+      PROC_M68K,
+      PROC_SCSPDSP,
+      PROC_SCUDSP,
+   };
+
+   UIDebugCPU( PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* parent = 0 );
    virtual void updateRegList();
    virtual void updateCodeList(u32 addr);
    virtual u32 getRegister(int index, int *size);
@@ -48,6 +58,7 @@ public:
 
 protected:
    YabauseThread *mYabauseThread;
+   enum PROCTYPE context;
    bool isReadWriteButtonAndTextOK();
 
 protected slots:

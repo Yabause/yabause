@@ -104,7 +104,7 @@ void MemorySearch::cancel()
    emit searchResult(false, true, 0);
 }
 
-UIMemoryEditor::UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* p )
+UIMemoryEditor::UIMemoryEditor( enum UIDebugCPU::PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* p )
 	: QDialog( p )
 {
 	// set up dialog
@@ -128,6 +128,9 @@ UIMemoryEditor::UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* p )
    }
    else
       saMemoryEditor->setFocus();
+
+	saMemoryEditor->setProc(proc);
+	this->proc = proc;
    
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );

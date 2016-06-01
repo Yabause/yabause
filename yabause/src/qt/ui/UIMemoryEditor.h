@@ -23,6 +23,7 @@
 #include <QProgressDialog>
 #include "../YabauseThread.h"
 #include "../QtYabause.h"
+#include "UIDebugCPU.h"
 
 class MemorySearch : public QObject
 {
@@ -56,13 +57,14 @@ class UIMemoryEditor : public QDialog, public Ui::UIMemoryEditor
 {
 	Q_OBJECT
 public:
-   UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* p );
+   UIMemoryEditor( enum UIDebugCPU::PROCTYPE context, YabauseThread *mYabauseThread, QWidget* p );
 private:
    u32 gotoAddress;
    int searchType;
    QString searchString;
    u32 searchStartAddress;
    u32 searchEndAddress;
+   enum UIDebugCPU::PROCTYPE proc;
 
 signals:
    void killProgressDialog();

@@ -32,7 +32,7 @@ void SCSPDSPBreakpointHandler (u32 addr)
 }
 
 UIDebugSCSPDSP::UIDebugSCSPDSP( YabauseThread *mYabauseThread, QWidget* p )
-	: UIDebugCPU( mYabauseThread, p )
+   : UIDebugCPU( PROC_SCSPDSP, mYabauseThread, p )
 {
    this->setWindowTitle(QtYabause::translate("Debug SCSP DSP"));
    gbRegisters->setTitle(QtYabause::translate("DSP Registers"));
