@@ -27,13 +27,33 @@
 #include "debug.h"
 #include "assert.h"
 
+void mpeg_reg_debug_print();
+
+//(window_x >> 1), (window_y >> 1) == setting in pixels
+
+//write reg_00 with (1 << 1) == display off
+//write reg_00 with (0 << 1) == display on
+
+//reg_00 & 0x00f0 is interpolation, inverted, command setting of 0
+//results in 0xf written to the register
+
+//0a10001c & 0x0f00 is mosaic width. 0xf seems to mean off
+//valid settings are 0-9
+
+//0a10001c & 0xf000 is mosaic height. same as above for settings
+
+//0a10001c & (1 << 5) is blur, seems to be just on or off
+
 struct MpegCard
 {
    u16 reg_00;
    u16 reg_02;
+   u16 window_x;//0x06
+   u16 window_y;//0x08
    u16 border_color;//0x12
    u16 reg_14;
    u16 reg_1a;
+   u16 mosaic_blur;
    u16 reg_1e;
    u16 reg_20;
    u16 reg_32;
@@ -50,7 +70,10 @@ struct MpegCard
 void mpeg_card_write_word(u32 addr, u16 data)
 {
    if ((addr & 0xfffff) != 0x34 && (addr & 0xfffff) != 0x36)
+   {
       CDLOG("mpeg lsi ww %08x, %04x\n", addr, data);
+      //mpeg_reg_debug_print();
+   }
    switch (addr & 0xfffff)
    {
    case 0:
@@ -58,6 +81,12 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    case 2:
       mpeg_card.reg_02 = data;
+      return;
+   case 6:
+      mpeg_card.window_x = data;
+      return;
+   case 8:
+      mpeg_card.window_y = data;
       return;
    case 0x12:
       mpeg_card.border_color = data;
@@ -67,6 +96,9 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    case 0x1a:
       mpeg_card.reg_1a = data;
+      return;
+   case 0x1c:
+      mpeg_card.mosaic_blur = data;
       return;
    case 0x1e:
       mpeg_card.reg_1e = data;
@@ -158,4 +190,27 @@ void mpeg_card_init()
 {
    memset(&mpeg_card, 0, sizeof(struct MpegCard));
    mpeg_card.reg_34 = 1;
+}
+
+void mpeg_reg_debug_print()
+{
+   if((mpeg_card.reg_00 >> 1) & 1)
+      CDLOG("Display disabled\n");
+   else
+      CDLOG("Display enabled\n");
+
+   CDLOG("Interpolation %01X\n", 0xf - ((mpeg_card.reg_00 >> 4) & 0xf));
+
+   CDLOG("Window x %d\n", mpeg_card.window_x >> 1);
+
+   CDLOG("Window y %d\n", mpeg_card.window_y >> 1);
+
+   CDLOG("Mosaic x %d\n", (mpeg_card.mosaic_blur >> 8) & 0xf);
+
+   CDLOG("Mosaic y %d\n", (mpeg_card.mosaic_blur >> 12) & 0xf);
+   
+   if ((mpeg_card.mosaic_blur >> 5) & 1)
+      CDLOG("Blur disabled\n");
+   else
+      CDLOG("Blur enabled\n");
 }
