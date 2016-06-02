@@ -30,6 +30,7 @@
 void mpeg_reg_debug_print();
 
 //a100000
+//write
 //FEDC BA98 7654 3210
 //.ccc .yyy iiii h.d.
 //d : 0 == display on, 1 == display off
@@ -37,6 +38,15 @@ void mpeg_reg_debug_print();
 //i : interpolation (set to opposite of command, 0xf - command_value)
 //y : y gain
 //c : c gain
+
+//read
+//FEDC BA98 7654 3210
+//.... ...o .... fpdc
+// c == video decoding
+// d == display
+// p == pause
+// f == freeze
+// o == output prep complete
 
 //a100002
 //FEDC BA98 7654 3210
@@ -53,6 +63,8 @@ void mpeg_reg_debug_print();
 //p: display window pos y
 
 //a100006
+
+//when writing
 //FEDC BA98 7654 3210
 //.... ..xx xxxx xxx.
 //x : frame buffer window pos x (not sure how many bits total)
@@ -92,6 +104,15 @@ void mpeg_reg_debug_print();
 //b : blur on/off (todo recheck)
 //w : mosaic width 0xf == off, 0-9 settings
 //h : mosaic height 0xf == off, 0-9 settings
+
+//a100022
+//FEDC BA98 7654 3210
+//fff. .... .... ....
+//f : frame type (sent in status info)
+//    1 : i frame
+//    2 : p frame
+//    3 : b frame
+//    4 : d frame
 
 //a10003e
 //FEDC BA98 7654 3210
