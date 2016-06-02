@@ -146,7 +146,7 @@ void mpeg_card_write_word(u32 addr, u16 data)
 {
    if ((addr & 0xfffff) != 0x34 && (addr & 0xfffff) != 0x36)
    {
-      CDLOG("mpeg lsi ww %08x, %04x\n", addr, data);
+  //    CDLOG("mpeg lsi ww %08x, %04x\n", addr, data);
       //mpeg_reg_debug_print();
    }
    switch (addr & 0xfffff)
@@ -202,17 +202,19 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    }
 
-   assert(0);
+ //  assert(0);
 }
 
 u16 mpeg_card_read_word(u32 addr)
 {
-   if ((addr & 0xfffff) != 0x34 && (addr & 0xfffff) != 0x36)
-      CDLOG("mpeg lsi rw %08x %08x\n", addr, SH1->regs.PC);
+ //  if ((addr & 0xfffff) != 0x34 && (addr & 0xfffff) != 0x36)
+ //     CDLOG("mpeg lsi rw %08x %08x\n", addr, SH1->regs.PC);
    switch (addr & 0xfffff)
    {
    case 0:
-      return mpeg_card.reg_00;
+      //0x10 needs to be clear for the video interrupt to set mpcm
+      //get status wants 1 << 8 set, to clear "output prep" bit in mpeg video status
+      return (mpeg_card.reg_00 & ~0x10) | (1 << 8);
    case 2:
       return mpeg_card.reg_02;
    case 0x34:
@@ -225,7 +227,7 @@ u16 mpeg_card_read_word(u32 addr)
    case 0x80008:
       return mpeg_card.reg_80008;
    }
-   assert(0);
+//   assert(0);
 
    return 0;
 }

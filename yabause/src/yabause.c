@@ -97,6 +97,7 @@
 #include "sh7034.h"
 #include "cd_drive.h"
 #include "tsunami/yab_tsunami.h"
+#include "mpeg_card.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -750,6 +751,7 @@ int YabauseEmulate(void) {
             // VBlankOUT
             PROFILE_START("VDP1/VDP2");
             Vdp2VBlankOUT();
+            set_mpeg_video_irq();//guessing: set video irq once per frame
             yabsys.LineCount = 0;
             oneframeexec = 1;
             PROFILE_STOP("VDP1/VDP2");
