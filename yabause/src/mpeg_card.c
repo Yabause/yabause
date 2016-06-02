@@ -214,7 +214,8 @@ u16 mpeg_card_read_word(u32 addr)
    case 0:
       //0x10 needs to be clear for the video interrupt to set mpcm
       //get status wants 1 << 8 set, to clear "output prep" bit in mpeg video status
-      return (mpeg_card.reg_00 & ~0x10) | (1 << 8);
+      //get interrupt wants 1 << 13 set, to clear "sequence end detected" interrupt bit
+      return (mpeg_card.reg_00 & ~0x10) | (1 << 8) | (1 << 13);
    case 2:
       return mpeg_card.reg_02;
    case 0x34:
