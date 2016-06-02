@@ -97,6 +97,47 @@ int mpeg_load()
 
 //////////////////////////////////////////////////////////////////////////////
 
+int mpeg_get_lsi(u8 cpu, u8 reg, u16 *val)
+{
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+
+   cd_cmd.CR1 = 0xAE00 | cpu;
+   cd_cmd.CR2 = reg;
+   cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   if ((ret=cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+      return ret;
+
+   *val = cd_cmd_rs.CR4;
+   return IAPETUS_ERR_OK;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void lsi_dump()
+{
+   int i;
+   int ret;
+   u16 val;
+
+   for (i = 0; i < 0x100; i+=2)
+   {
+      if ((ret = mpeg_get_lsi(0, i, &val)) != IAPETUS_ERR_OK)
+         tests_disp_iapetus_error(ret, __FILE__, __LINE__, "");
+      else
+         tests_log_textf("%08X: %04X\n", 0xA100000+i, val);
+   }
+
+   if ((ret = mpeg_get_lsi(2, i, &val)) != IAPETUS_ERR_OK)
+      tests_disp_iapetus_error(ret, __FILE__, __LINE__, "");
+   else
+      tests_log_textf("%08X: %04X\n", 0xA180000, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void mpeg_cmd_test()
 {
    //int ret;
@@ -659,6 +700,8 @@ void test_cmd_mpeg_init()
       do_cdb_tests_unexp_cr_data_error();
       return;
    }
+
+   lsi_dump();
 
    if (!cd_wait_hirq(HIRQ_MPCM))
    {
