@@ -778,6 +778,28 @@ void rom_a018()
 #define SEQUENCE_END 0x00000400
 #define VIDEO_DECODING_ERROR 0x00000010 
 
+#define VIDEO_PLAY_STATUS (*(volatile u8 *)(0xf00089c))
+#define AUDIO_PLAY_STATUS (*(volatile u8 *)(0xf00089d))
+
+#define VPS_TRANSFERRING 0x4
+#define VPS_CHANGING 0x5
+
+//CR4 in mpeg status
+#define MPEG_VIDEO_STATUS (*(volatile u16 *)(0xf000846))
+
+#define MVS_DECODING_OPERATION 1
+#define MVS_DISPLAY 2
+#define MVS_PAUSE 4
+#define MVS_FREEZE 8
+
+#define MVS_LAST_PICTURE_DISPLAY 0x10
+#define MVS_ODD_NUMBER_FIELD 0x20
+#define MVS_UPDATE_PICTURE 0x40
+#define MVS_OUTPUT_PREP_COMPLETE 0x80
+
+#define MVS_FIRST_PICTURE_DISPLAY 0x100
+#define MVS_VIDEO_BUFFER_EMPTY 0x1000
+
 void irqITU2IMIB2()
 {
    TSR2 &= 0xfd;
@@ -788,27 +810,35 @@ void irqITU2IMIB2()
    r1_status = MPEG_00;
    r1_status &= r0;
 
-   if ((*(unk_f000890 + 2)) & 0x80)
+   if (mpeg_inited & 0x80)//unk_f000890 + 2
    {
       //a1f0
-
       r5 = *(unk_f000850 + 2);
       *(unk_f000850 + 2) = 0xffff;
       r5 |= 0x30f;
       r1_status &= r5;
       *unk_f000850 = r1_status;
-      r0 = ~r1_status;
-      r0 &= 0x16f;
+     
+      //update video status cr4
+
+      u16 r2_flags_to_clear = 
+         MVS_DECODING_OPERATION |
+         MVS_DISPLAY |
+         MVS_PAUSE |
+         MVS_FREEZE |
+         MVS_ODD_NUMBER_FIELD |
+         MVS_UPDATE_PICTURE |
+         MVS_FIRST_PICTURE_DISPLAY;
+
+      r0 = (~r1_status) & flags_to_clear;//0x16f;
+      r7_mpeg_stat = MPEG_VIDEO_STATUS;
 
       //a20e
       if (r1_status & 0x10)
-      {
-         r2 = ~r2;
-         r7 &= r2;
-      }
+         r7_mpeg_stat &= ~flags_to_clear;//~0x016f
 
       //a216
-      r7 |= r0;
+      MPEG_VIDEO_STATUS = r7_mpeg_stat | r0;
       r4 = 0;
 
       //a220
@@ -870,15 +900,15 @@ void irqITU2IMIB2()
             goto set_mpcm;
 
          //a2b2
-         if (*unk_f00089C == 4)
+         if (VIDEO_PLAY_STATUS != VPS_TRANSFERRING)
          {
-
+            if (VIDEO_PLAY_STATUS == VPS_CHANGING)
+               goto set_mpcm;
          }
-         //a2ba
-         else if (*unk_f00089C == 5)
-            goto set_mpcm;
-
-
+         
+         //a2be
+         
+         if
 
       }
 
@@ -904,6 +934,21 @@ set_mpcm:
    }
 
    schedule_running_task();
+}
+
+void status()
+{
+   r0 = *f00089c;
+   r2 = ((r0 & 0xff) << 8) |( (r0 & 0xff00 )>> 8);
+   r0 >>= 8;
+   r2 >>= 4;
+   r0 |= r2;
+
+   r3 = (*f000891) >> 1;//byte
+
+   r0 = r0 & 0xffff0000 >> 16 | ;
+   r0 |= r12;
+   
 }
 
 //test dmas for mpeg
@@ -1442,6 +1487,12 @@ void loc_907d344()
    CHCR2 = 0x190d;
 }
 
+#define STATUS_PIC_INFO (*(u8*)(0xf000844));
+#define I_FRAME 1
+#define P_FRAME 2
+#define B_FRAME 3
+#define D_FRAME 4
+
 void sub_907d078()
 {
    MPEG_22 = 6;
@@ -1455,8 +1506,8 @@ void sub_907d078()
 
    }
 
-   r1 = MPEG_22 >> 13;
-   *dword_f000844 = r1;
+   //907d0c6
+   STATUS_PIC_INFO = MPEG_22 >> 13;
 }
 
 void loc_907b9ce()
