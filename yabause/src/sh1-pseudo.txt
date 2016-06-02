@@ -795,15 +795,15 @@ void rom_a018()
 #define MVS_LAST_PICTURE_DISPLAY 0x10
 #define MVS_ODD_NUMBER_FIELD 0x20
 #define MVS_UPDATE_PICTURE 0x40
-#define MVS_OUTPUT_PREP_COMPLETE 0x80
+#define MVS_VIDEO_ERROR 0x80
 
-#define MVS_FIRST_PICTURE_DISPLAY 0x100
+#define MVS_OUTPUT_PREP_COMPLETE 0x100
+#define MVS_FIRST_PICTURE_DISPLAY 0x800
 #define MVS_VIDEO_BUFFER_EMPTY 0x1000
 
 void irqITU2IMIB2()
 {
    TSR2 &= 0xfd;
-
    r0 = MPEG_00;
    r1_status = MPEG_00;
    r0 &= r1_status;
@@ -815,8 +815,7 @@ void irqITU2IMIB2()
       //a1f0
       r5 = *(unk_f000850 + 2);
       *(unk_f000850 + 2) = 0xffff;
-      r5 |= 0x30f;
-      r1_status &= r5;
+      r1_status &= r5 | 0x30f;
       *unk_f000850 = r1_status;
      
       //update video status cr4
@@ -826,9 +825,11 @@ void irqITU2IMIB2()
          MVS_DISPLAY |
          MVS_PAUSE |
          MVS_FREEZE |
+
          MVS_ODD_NUMBER_FIELD |
          MVS_UPDATE_PICTURE |
-         MVS_FIRST_PICTURE_DISPLAY;
+
+         MVS_OUTPUT_PREP_COMPLETE;
 
       r0 = (~r1_status) & flags_to_clear;//0x16f;
       r7_mpeg_stat = MPEG_VIDEO_STATUS;
