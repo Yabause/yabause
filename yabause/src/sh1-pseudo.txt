@@ -702,20 +702,29 @@ loc_907c99e:
 
 
 }
-
+//get time code
 void loc_907f46e()
 {
-   MPEG_22 = 6;//0b110
+   //GOP timecode format
+   //hours minutes seconds picture
+   //byte 4 .hhhhhmm
+   //byte 5 mmmm.sss
+   //byte 6 sssppppp
+   //byte 7 p.......
 
+   MPEG_22 = 6;//offset into GOP
    r12 = MPEG_22;
 
-   MPEG_22 = 4;//0b100
-
+   MPEG_22 = 4;
    r13 = (MPEG_22 & 0xff) << 16;
 
-   MPEG_22 = 5;//0b101
-
+   MPEG_22 = 5;
    r13 |= MPEG_22 & 0xffff;
+
+   //loc_907f560
+   //convert into 
+   //hour min sec pic format
+   //1 byte each
 }
 
 void loc_9e92()
@@ -728,27 +737,6 @@ void loc_9e92()
    r13 |= r11;
 }
 
-void loc_9df2()
-{
-   r0 = (r12 >> 13) & 3;
-   r12 &= 0x3f;
-
-   r0 <<= 8;
-   r12 |= r0;
-   r2 <<= 16;
-   r12 |= r2;
-
-   r1 = r13;
-
-
-
-   ///////
-   r13 |= r0;
-   r1 <<= 16;
-   r1 <<= 8;
-   r13 |= r1;
-   r12 |= r11 & 0xff000000;
-}
 
 void loc_9fbe()
 {
@@ -781,6 +769,9 @@ void rom_a018()
 #define VIDEO_PLAY_STATUS (*(volatile u8 *)(0xf00089c))
 #define AUDIO_PLAY_STATUS (*(volatile u8 *)(0xf00089d))
 
+//lower byte of cr3
+#define MPEG_AUDIO_STATUS (*(volatile u8 *)(0xf000845))
+
 #define VPS_TRANSFERRING 0x4
 #define VPS_CHANGING 0x5
 
@@ -800,6 +791,14 @@ void rom_a018()
 #define MVS_OUTPUT_PREP_COMPLETE 0x100
 #define MVS_FIRST_PICTURE_DISPLAY 0x800
 #define MVS_VIDEO_BUFFER_EMPTY 0x1000
+
+#define VIDEO_DMA_SRC_ADDR (*(u32*)(0x90752C0));
+#define DMA_UNK_SRC_04 (*(u32*)(0x90752C0 + 0x4));
+#define AUDIO_DMA_SRC_ADDR (*(u32*)(0x90752C0 + 0xC));
+#define AUDIO_DMA_DEST (*(u32*)(0x90752C0 + 0x14));
+#define VIDEO_DMA_COUNT (*(u16*)(0x90752C0 + 0x18));
+#define DMA_UNK_COUNT_1A (*(u16*)(0x90752C0 + 0x1a));
+#define AUDIO_DMA_COUNT (*(u16*)(0x90752C0 + 0x1E));
 
 void irqITU2IMIB2()
 {
@@ -907,15 +906,26 @@ void irqITU2IMIB2()
                goto set_mpcm;
          }
          
-         //a2be
-         
-         if
+         //a2be 
+         if ((r0 & 1) == 0)
+            do_dram_call26();
 
+         //a2cc
+         if ((r0 & 0x10) == 0)
+            do_dram_call27();
       }
 
 
 set_mpcm:
       asic_hirq_set = 0x1000;
+
+      if (!r4)
+      {
+         r0 = *(unk_f000890 + 6);
+         *(unk_f000890 + 6) = r0 | r4;
+         r11 = 0x88c0010;
+         trap(0x21);
+      }
 
    }
    else
@@ -1257,6 +1267,31 @@ void bba4()
    task9();
 }
 
+void loc_907bd02()
+{
+   *(unk_f000890 + 4) &= 0xfc;
+   *(unk_f000890 + 4) |= 1;
+
+   *(unk_9075324 + 0x4) = *(unk_9075324 + 0xc);//long
+   *(unk_9075324 + 0x14) = *(unk_9075324 + 0x1c);//long
+   *(unk_9075324 + 0) = *(unk_9075324 + 0x24);//word
+   *(unk_9075324 + 0x1c) = 0;
+
+   //...
+
+   TCR2 = DMA_UNK_COUNT_1A;
+   SAR2 = DMA_UNK_SRC_04;
+   DAR2 = 0xa10001e;
+   MPEG_0C = 8;
+   CHCR2 &= 0xfd;//lower byte only
+   CHCR2 |= 4;//enable interrupt
+
+   MPEG_INT_FLAGS |= VIDEO_STREAM_CHANGED;//0x02
+
+   if (MPEG_INT_MASK & VIDEO_STREAM_CHANGED)
+      asic_hirq_set = 0x2000;
+
+}
 
 void loc_907e78a()
 {
@@ -1480,12 +1515,30 @@ void loc_907d24a()
 
 }
 
-void loc_907d344()
+void loc_907d320()
 {
-   SAR2 = unk_90752c0;
+   MPEG_0C = 8;
+   *unk_f000894 |= 1;
+   VIDEO_PLAY_STATUS |= VPS_TRANSFERRING;
+   MPEG_1E = 0;
+   SAR2 = VIDEO_DMA_SRC_ADDR;
    DAR2 = 0xa10001e;
-   TCR2 = *(unk_90752c0 + 0x18);
+   TCR2 = VIDEO_DMA_COUNT;
    CHCR2 = 0x190d;
+}
+
+void loc_907d948()
+{
+   SAR3 = AUDIO_DMA_SRC_ADDR;
+   DAR3 = AUDIO_DMA_DEST;
+   TCR3 = AUDIO_DMA_COUNT;
+
+   u32 flags = AUDIO_STREAM_DATA_ERROR | NEXT_AUDIO_STREAM_DATA_ERROR;
+   MPEG_INT_FLAGS |= flags;//0x000A0000
+
+   if(MPEG_INT_MASK & flags)
+      asic_hirq_set = 0x2000;
+
 }
 
 #define STATUS_PIC_INFO (*(u8*)(0xf000844));
@@ -1509,6 +1562,9 @@ void sub_907d078()
 
    //907d0c6
    STATUS_PIC_INFO = MPEG_22 >> 13;
+
+   r0 = 0x3e;
+   r2 = MPEG_AUDIO_STATUS;
 }
 
 void loc_907b9ce()
