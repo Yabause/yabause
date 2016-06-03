@@ -140,7 +140,8 @@ void lsi_dump()
 
 void mpeg_cmd_test()
 {
-   //int ret;
+   int ret;
+   screen_settings_struct settings;
 
    init_cdb_tests();
 
@@ -154,6 +155,24 @@ void mpeg_cmd_test()
    if ((ret=mpeg_load()) != IAPETUS_ERR_OK)
    {
       tests_disp_iapetus_error(ret, __FILE__, __LINE__, "mpeg load failed");
+      return;
+   }
+
+   // Enable the external audio through SCSP
+   sound_external_audio_enable(7, 7);
+
+   // Setup NBG1 as EXBG
+   settings.is_bitmap = TRUE;
+   settings.bitmap_size = BG_BITMAP512x256;
+   settings.transparent_bit = 0;
+   settings.color = BG_32786COLOR;
+   settings.special_priority = 0;
+   settings.special_color_calc = 0;
+   settings.extra_palette_num = 0;
+   settings.map_offset = 0;
+   if (vdp_exbg_init(&settings) != IAPETUS_ERR_OK)
+   {
+      tests_disp_iapetus_error(ret, __FILE__, __LINE__, "exbg init failed");
       return;
    }
 #endif

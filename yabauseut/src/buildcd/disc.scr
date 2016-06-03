@@ -31,26 +31,26 @@ Disc "YABAUSEUT.DSK"
         Track MODE2
             PreGap 150
             Directory M2TEST
-                    ;Extent
-                    ;    FileInterleave  1    2
-                    ;        File    INTRLV1.BIN;1
-                    ;            FileSource    "M2TEST\intrlv1.bin"
-                    ;            EndFileSource
-                    ;        EndFile
-                    ;    EndFileInterleave
-                    ;    FileInterleave  1    2
-                    ;        File    INTRLV2.BIN;1
-                    ;            FileSource    "M2TEST\intrlv2.bin"
-                    ;            EndFileSource
-                    ;        EndFile
-                    ;    EndFileInterleave
-                    ;    FileInterleave  1    2
-                    ;        File    INTRLV3.BIN;1
-                    ;            FileSource    "M2TEST\intrlv3.bin"
-                    ;            EndFileSource
-                    ;        EndFile
-                    ;    EndFileInterleave
-                    ;EndExtent
+                    Extent
+                        FileInterleave  1    2
+                            File    INTRLV1.BIN;1
+                                FileSource    "M2TEST\intrlv1.bin"
+                                EndFileSource
+                            EndFile
+                        EndFileInterleave
+                        FileInterleave  1    2
+                            File    INTRLV2.BIN;1
+                                FileSource    "M2TEST\intrlv2.bin"
+                                EndFileSource
+                            EndFile
+                        EndFileInterleave
+                        FileInterleave  1    2
+                            File    INTRLV3.BIN;1
+                                FileSource    "M2TEST\intrlv3.bin"
+                                EndFileSource
+                            EndFile
+                        EndFileInterleave
+                    EndExtent
                     File XAMC.XA;1
                         FileSource "M2TEST\XAMC.XA"
                            RealTime
@@ -60,36 +60,36 @@ Disc "YABAUSEUT.DSK"
                            CodingInformation 04
                         EndFileSource
                     EndFile
-                    ;File MOVIE.MPG;1
-                    ;    SectorRate 75
-                    ;    Pack
-                    ;    MpegMultiplex
-                    ;        MpegStream "M2TEST\MOVIE.M1V" VIDEO
-                    ;            BitRate 1150000.0
-                    ;        EndMpegStream                    
-                    ;        MpegStream "M2TEST\MOVIE.MP2" AUDIO
-                    ;            BitRate 192000.0
-                    ;        EndMpegStream
-                    ;    EndMpegMultiplex
-                    ;EndFile
-                    ;File MOVIE.M1V;1
-                    ;    SectorRate 75
-                    ;    Pack
-                    ;    MpegMultiplex
-                    ;        MpegStream "M2TEST\MOVIE.M1V" VIDEO
-                    ;            BitRate 1150000.0
-                    ;        EndMpegStream                    
-                    ;    EndMpegMultiplex
-                    ;EndFile
-                    ;File MOVIE.MP2;1
-                    ;    SectorRate 75
-                    ;    Pack
-                    ;    MpegMultiplex
-                    ;        MpegStream "M2TEST\MOVIE.MP2" AUDIO
-                    ;            BitRate 192000.0
-                    ;        EndMpegStream
-                    ;    EndMpegMultiplex
-                    ;EndFile
+                    File MOVIE.MPG;1
+                        SectorRate 75
+                        Pack
+                        MpegMultiplex
+                            MpegStream "M2TEST\MOVIE.M1V" VIDEO
+                                BitRate 1150000.0
+                            EndMpegStream                    
+                            MpegStream "M2TEST\MOVIE.MP2" AUDIO
+                                BitRate 192000.0
+                            EndMpegStream
+                        EndMpegMultiplex
+                    EndFile
+                    File MOVIE.M1V;1
+                        SectorRate 75
+                        Pack
+                        MpegMultiplex
+                            MpegStream "M2TEST\MOVIE.M1V" VIDEO
+                                BitRate 1150000.0
+                            EndMpegStream                    
+                        EndMpegMultiplex
+                    EndFile
+                    File MOVIE.MP2;1
+                        SectorRate 75
+                        Pack
+                        MpegMultiplex
+                            MpegStream "M2TEST\MOVIE.MP2" AUDIO
+                                BitRate 192000.0
+                            EndMpegStream
+                        EndMpegMultiplex
+                    EndFile
             EndDirectory
             PostGap 150
         EndTrack
