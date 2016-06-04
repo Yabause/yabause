@@ -59,10 +59,21 @@ struct Ygr
       u16 UNKNOWN;
       u16 HIRQ;
       u16 HIRQMASK; // Masks bits from HIRQ -only- when generating A-bus interrupts
+
+      //command regs
+      //a-bus reads RR, writes to CR
       u16 CR1;
       u16 CR2;
       u16 CR3;
       u16 CR4;
+
+      //response regs
+      //sh1-bus writes to RR, reads CR
+      u16 RR1;
+      u16 RR2;
+      u16 RR3;
+      u16 RR4;
+
       u16 MPEGRGB;
    }regs;
 
@@ -305,16 +316,16 @@ void ygr_sh1_write_word(u32 addr, u16 data)
       ygr_cxt.reg_0c = data;
       return;
    case 0x10: // CR1
-      ygr_cxt.regs.CR1 = data;
+      ygr_cxt.regs.RR1 = data;
       return;
    case 0x12: // CR2
-      ygr_cxt.regs.CR2 = data;
+      ygr_cxt.regs.RR2 = data;
       return;
    case 0x14: // CR3
-      ygr_cxt.regs.CR3 = data;
+      ygr_cxt.regs.RR3 = data;
       return;
    case 0x16: // CR4
-      ygr_cxt.regs.CR4 = data;
+      ygr_cxt.regs.RR4 = data;
       return;
    case 0x1e:
       ygr_cxt.regs.HIRQ |= data;
@@ -415,22 +426,22 @@ u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
       return ygr_cxt.regs.HIRQMASK;
    case 0x90018:
    case 0x9001A:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR1);
-      return ygr_cxt.regs.CR1;
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR1);
+      return ygr_cxt.regs.RR1;
    case 0x9001C:
    case 0x9001E:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR2);
-      return ygr_cxt.regs.CR2;
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR2);
+      return ygr_cxt.regs.RR2;
    case 0x90020:
    case 0x90022:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR3);
-      return ygr_cxt.regs.CR3;
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR3);
+      return ygr_cxt.regs.RR3;
    case 0x90024:
    case 0x90026:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.CR4);
+      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR4);
       ygr_cxt.mbx_status |= 2;
-      CDLOG("abus cdb response: CR1: %04x CR2: %04x CR3: %04x CR4: %04x HIRQ: %04x Status: %s\n", ygr_cxt.regs.CR1, ygr_cxt.regs.CR2, ygr_cxt.regs.CR3, ygr_cxt.regs.CR4, ygr_cxt.regs.HIRQ, get_status(ygr_cxt.regs.CR1));
-      return ygr_cxt.regs.CR4;
+      CDLOG("abus cdb response: CR1: %04x CR2: %04x CR3: %04x CR4: %04x HIRQ: %04x Status: %s\n", ygr_cxt.regs.RR1, ygr_cxt.regs.RR2, ygr_cxt.regs.RR3, ygr_cxt.regs.RR4, ygr_cxt.regs.HIRQ, get_status(ygr_cxt.regs.RR1));
+      return ygr_cxt.regs.RR4;
    case 0x90028:
    case 0x9002A:
       return ygr_cxt.regs.MPEGRGB;
@@ -751,14 +762,14 @@ u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
    case 0x9000C: 
       return ((ygr_cxt.regs.HIRQMASK << 16) | ygr_cxt.regs.HIRQMASK);
    case 0x90018: 
-      return ((ygr_cxt.regs.CR1 << 16) | ygr_cxt.regs.CR1);
+      return ((ygr_cxt.regs.RR1 << 16) | ygr_cxt.regs.RR1);
    case 0x9001C: 
-      return ((ygr_cxt.regs.CR2 << 16) | ygr_cxt.regs.CR2);
+      return ((ygr_cxt.regs.RR2 << 16) | ygr_cxt.regs.RR2);
    case 0x90020: 
-      return ((ygr_cxt.regs.CR3 << 16) | ygr_cxt.regs.CR3);
+      return ((ygr_cxt.regs.RR3 << 16) | ygr_cxt.regs.RR3);
    case 0x90024:
       ygr_cxt.mbx_status |= 2;
-      return ((ygr_cxt.regs.CR4 << 16) | ygr_cxt.regs.CR4);
+      return ((ygr_cxt.regs.RR4 << 16) | ygr_cxt.regs.RR4);
    case 0x90028:
       return ((ygr_cxt.regs.MPEGRGB << 16) | ygr_cxt.regs.MPEGRGB);
    case 0x18000:
