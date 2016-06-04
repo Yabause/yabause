@@ -151,7 +151,6 @@ void mpeg_cmd_test()
       return;
    }
 
-#if 0
    if ((ret=mpeg_load()) != IAPETUS_ERR_OK)
    {
       tests_disp_iapetus_error(ret, __FILE__, __LINE__, "mpeg load failed");
@@ -175,7 +174,6 @@ void mpeg_cmd_test()
       tests_disp_iapetus_error(ret, __FILE__, __LINE__, "exbg init failed");
       return;
    }
-#endif
 
    unregister_all_tests();
 
@@ -186,7 +184,6 @@ void mpeg_cmd_test()
    register_test(&test_cmd_mpeg_set_mode, "MPEG Set Mode");
    register_test(&test_cmd_mpeg_set_decode_method, "MPEG Set Decoding Method");
    //register_test(&test_cmd_mpeg_out_decode_sync, "MPEG Out Decoding Sync");
-   //register_test(&test_cmd_mpeg_get_timecode, "MPEG Get Timecode");
    //register_test(&test_cmd_mpeg_get_pts, "MPEG Get PTS");
    register_test(&test_cmd_mpeg_set_stream, "MPEG Set Stream");
    register_test(&test_cmd_mpeg_get_stream, "MPEG Get Stream");
@@ -199,7 +196,8 @@ void mpeg_cmd_test()
    register_test(&test_cmd_mpeg_set_border_color, "MPEG Set Border Color");
    register_test(&test_cmd_mpeg_set_fade, "MPEG Set Fade");
    register_test(&test_cmd_mpeg_set_video_effects, "MPEG Set Video Effects");
-   //register_test(&test_cmd_mpeg_play, "MPEG Play");
+   register_test(&test_cmd_mpeg_play, "MPEG Play");
+   register_test(&test_cmd_mpeg_get_timecode, "MPEG Get Timecode");
    //register_test(&test_cmd_mpeg_get_image, "MPEG Get Image");
    //register_test(&test_cmd_mpeg_set_image, "MPEG Set Image");
    //register_test(&test_cmd_mpeg_read_image, "MPEG Read Image");
@@ -381,6 +379,46 @@ void test_cmd_mpeg_out_decode_sync()
 
 void test_cmd_mpeg_get_timecode()
 {
+   cd_cmd_struct cd_cmd;
+   cd_cmd_struct cd_cmd_rs;
+   int ret;
+   int old_transparent;
+
+   cd_cmd.CR1 = 0x9800;
+   cd_cmd.CR2 = cd_cmd.CR3 = cd_cmd.CR4 = 0x0000;
+
+   while (!(CDB_REG_HIRQ & HIRQ_MPED))
+   {
+      mpeg_status_struct mpeg_status;
+      if ((ret = mpeg_get_status(&mpeg_status)) != IAPETUS_ERR_OK )
+      {
+         do_tests_error_noarg(ret);
+         return;
+      }
+
+      if (mpeg_status.play_status == 0x19)
+         break;
+
+      if ((ret = cd_exec_command(0, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
+      {
+         do_tests_error_noarg(ret);
+         return;
+      }
+
+      old_transparent = test_disp_font.transparent;
+      test_disp_font.transparent = 0;
+      vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "%02d:%02d:%02d:%02d", cd_cmd_rs.CR3 >> 8, cd_cmd_rs.CR3 & 0xFF, cd_cmd_rs.CR4 >> 8, cd_cmd_rs.CR4 & 0xFF);
+      test_disp_font.transparent = old_transparent;
+      vdp_vsync();
+   }
+
+   if (cd_cmd_rs.CR3 != 0 ||
+       cd_cmd_rs.CR4 != 0x0E03)
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
    stage_status = STAGESTAT_DONE;
 }
 
@@ -532,7 +570,7 @@ void test_cmd_mpeg_set_window()
       { 0xA101, 1, 15, 1 },    // Frame Buffer Window zoom rate
       { 0xA102, 1, 0, 8 },     // Display Window position
       { 0xA103, 1, 320, 224 }, // Display Window size
-      { 0xA104, 1, 0, 0 },     // Display Window offset
+      //{ 0xA104, 1, 0, 0 },     // Display Window offset
    };
    cd_cmd_struct cd_cmd_rs;
    int i, ret;
