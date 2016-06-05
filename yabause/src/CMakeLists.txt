@@ -47,7 +47,7 @@ else()
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
 endif()
 
-option(YAB_WANT_MPEG "Enable MPEG decoding" ON)
+option(YAB_WANT_MPEG "Enable MPEG decoding" OFF)
 if(YAB_WANT_MPEG)
   find_package(FFmpeg)
   if(FFMPEG_FOUND)

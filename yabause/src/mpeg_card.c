@@ -40,26 +40,31 @@
 
 #define BUFFER_SIZE 4096
 
+#ifdef HAVE_MPEG
+
 struct YabCodec
 {
-#ifdef HAVE_MPEG
+
   AVCodec *codec;
   AVCodecContext *context;
   AVFrame *frame;
   AVPacket packet;
+
   u8 buffer[BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
-#endif
+
 };
 
 struct YabMpegState
 {
-#ifdef HAVE_MPEG
+
    struct YabCodec video;
    struct YabCodec audio;
+
    FILE * file;
    int inited;
-#endif
+
 }yab_mpeg = {0};
+#endif
 
 /////////////////////////////////////////////////////////////////////
 
@@ -291,7 +296,9 @@ void set_mpeg_audio_irq()
 void set_mpeg_video_irq()
 {
    sh1_assert_tiocb(2);
+#ifdef HAVE_MPEG
    yab_mpeg_do_frame(&yab_mpeg.video);
+#endif
 }
 
 void mpeg_card_set_all_irqs()
