@@ -26,8 +26,45 @@
 #include "sh7034.h"
 #include "debug.h"
 #include "assert.h"
+#include "error.h"
+#include "assert.h"
+
+/////////////////////////////////////////////////////////////////////
+
+#ifdef HAVE_MPEG
+#include <libavcodec/avcodec.h>
+#include <libavutil/avutil.h>
+#include <libavformat/avformat.h>
+#include <libswscale/swscale.h>
+#endif
+
+#define BUFFER_SIZE 4096
+
+struct YabCodec
+{
+#ifdef HAVE_MPEG
+  AVCodec *codec;
+  AVCodecContext *context;
+  AVFrame *frame;
+  AVPacket packet;
+  u8 buffer[BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
+#endif
+};
+
+struct YabMpegState
+{
+#ifdef HAVE_MPEG
+   struct YabCodec video;
+   struct YabCodec audio;
+   FILE * file;
+   int inited;
+#endif
+}yab_mpeg = {0};
+
+/////////////////////////////////////////////////////////////////////
 
 void mpeg_reg_debug_print();
+void yab_mpeg_init();
 
 //a100000
 //write
@@ -234,6 +271,8 @@ u16 mpeg_card_read_word(u32 addr)
 }
 
 
+void yab_mpeg_do_frame(struct YabCodec * c);
+
 void set_mpeg_audio_data_transfer_irq()
 {
    sh1_assert_tioca(0);
@@ -252,6 +291,7 @@ void set_mpeg_audio_irq()
 void set_mpeg_video_irq()
 {
    sh1_assert_tiocb(2);
+   yab_mpeg_do_frame(&yab_mpeg.video);
 }
 
 void mpeg_card_set_all_irqs()
@@ -268,6 +308,8 @@ void mpeg_card_init()
 {
    memset(&mpeg_card, 0, sizeof(struct MpegCard));
    mpeg_card.reg_34 = 1;
+
+   yab_mpeg_init();
 }
 
 void mpeg_reg_debug_print()
@@ -292,3 +334,152 @@ void mpeg_reg_debug_print()
    else
       CDLOG("Blur enabled\n");
 }
+
+/////////////////////////////////////////////////////////////////////
+
+void yab_mpeg_init_codec(struct YabCodec * c, int type)
+{
+#ifdef HAVE_MPEG
+  c->codec = avcodec_find_decoder(type);
+
+  if(!c->codec)
+  {
+     YabErrorMsg("couldn't find decoder");
+     return;
+  }
+
+  c->context = avcodec_alloc_context3(c->codec);
+
+  if(!c->context)
+  {
+     YabErrorMsg("couldn't allocate context");
+     return;
+  }
+
+  if (avcodec_open2(c->context, c->codec, NULL) < 0)
+  {
+     YabErrorMsg("couldn't open codec");
+     return;
+  }
+
+  av_init_packet(&c->packet);
+
+  c->packet.data = c->buffer;
+#endif
+}
+
+void yab_mpeg_deinit_codec(struct YabCodec * c)
+{
+#ifdef HAVE_MPEG
+  avcodec_close(c->context);
+#endif
+}
+
+void yab_mpeg_play_file(char * filename);
+extern pixel_t *dispbuffer;
+void yab_mpeg_init()
+{
+#ifdef HAVE_MPEG
+  av_register_all();
+  memset(&yab_mpeg,0,sizeof(struct YabMpegState));
+  yab_mpeg_init_codec(&yab_mpeg.video,AV_CODEC_ID_MPEG1VIDEO);
+  yab_mpeg_init_codec(&yab_mpeg.audio,AV_CODEC_ID_MP2);
+  
+  yab_mpeg_play_file("/home/d/yab-f/yabause/yabauseut/src/buildcd/M2TEST/MOVIE.m1v");
+
+  yab_mpeg.inited = 1;
+#endif
+}
+
+void write_frame_to_video_buffer(struct YabCodec * c)
+{
+#ifdef HAVE_MPEG
+  int x = 0, y = 0;
+  int out_width = 320;
+  int out_height = 240;
+
+  int mpeg_width = c->frame->linesize[0];
+  u8 * mpeg_buf = c->frame->data[0];
+  for(y = 0; y < out_height; y++)
+  {
+    for(x = 0; x < out_width; x++)
+    {
+       dispbuffer[(y*out_width) + x] = mpeg_buf[(y * mpeg_width) + x];
+    }
+  }
+#endif
+}
+
+void yab_mpeg_do_frame(struct YabCodec * c)
+{
+#ifdef HAVE_MPEG
+  int got_frame = 0;
+  int num_tries = 0;
+
+  if(!yab_mpeg.inited)
+  {
+     yab_mpeg_init();
+  }
+
+  c->packet.size = fread(c->buffer, 1, BUFFER_SIZE, yab_mpeg.file);
+
+  while(c->packet.size > 0) 
+  {
+    int length = 0;
+
+    if(!c->frame)
+    {
+      c->frame = avcodec_alloc_frame();//non-deprecated is av_frame_alloc();
+      if(!c->frame)
+      {
+        YabErrorMsg("couldn't allocate frame");
+        return;
+      }
+    }
+
+    length = avcodec_decode_video2(c->context, c->frame, &got_frame, &c->packet);
+
+    //audio
+    //length = avcodec_decode_audio4(c->context, c->frame, &got_frame, &c->packet);
+    
+    if(length < 0)
+    {
+      return;
+    }
+
+    if(num_tries > 8)
+    {
+       return;
+    }
+    if(got_frame)
+    {
+      write_frame_to_video_buffer(c);
+      break;
+    }
+    num_tries++;
+  }
+#endif
+}
+
+void yab_mpeg_do_video_frame()
+{
+#ifdef HAVE_MPEG
+  yab_mpeg_do_frame(&yab_mpeg.video);
+#endif
+}
+
+void yab_mpeg_play_file(char * filename)
+{
+#ifdef HAVE_MPEG
+  yab_mpeg.file = fopen(filename, "rb");
+
+  if(!yab_mpeg.file)
+  {
+    YabErrorMsg("couldn't open file");
+    assert(0);
+    return;
+  }
+#endif
+}
+
+
