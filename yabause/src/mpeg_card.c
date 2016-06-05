@@ -315,8 +315,9 @@ void mpeg_card_init()
 {
    memset(&mpeg_card, 0, sizeof(struct MpegCard));
    mpeg_card.reg_34 = 1;
-
+#ifdef HAVE_MPEG
    yab_mpeg_init();
+#endif
 }
 
 void mpeg_reg_debug_print()
@@ -343,10 +344,9 @@ void mpeg_reg_debug_print()
 }
 
 /////////////////////////////////////////////////////////////////////
-
+#ifdef HAVE_MPEG
 void yab_mpeg_init_codec(struct YabCodec * c, int type)
 {
-#ifdef HAVE_MPEG
   c->codec = avcodec_find_decoder(type);
 
   if(!c->codec)
@@ -372,21 +372,17 @@ void yab_mpeg_init_codec(struct YabCodec * c, int type)
   av_init_packet(&c->packet);
 
   c->packet.data = c->buffer;
-#endif
 }
 
 void yab_mpeg_deinit_codec(struct YabCodec * c)
 {
-#ifdef HAVE_MPEG
   avcodec_close(c->context);
-#endif
 }
 
 void yab_mpeg_play_file(char * filename);
 extern pixel_t *dispbuffer;
 void yab_mpeg_init()
 {
-#ifdef HAVE_MPEG
   av_register_all();
   memset(&yab_mpeg,0,sizeof(struct YabMpegState));
   yab_mpeg_init_codec(&yab_mpeg.video,AV_CODEC_ID_MPEG1VIDEO);
@@ -395,12 +391,10 @@ void yab_mpeg_init()
   yab_mpeg_play_file("/home/d/yab-f/yabause/yabauseut/src/buildcd/M2TEST/MOVIE.m1v");
 
   yab_mpeg.inited = 1;
-#endif
 }
 
 void write_frame_to_video_buffer(struct YabCodec * c)
 {
-#ifdef HAVE_MPEG
   int x = 0, y = 0;
   int out_width = 320;
   int out_height = 240;
@@ -414,12 +408,10 @@ void write_frame_to_video_buffer(struct YabCodec * c)
        dispbuffer[(y*out_width) + x] = mpeg_buf[(y * mpeg_width) + x];
     }
   }
-#endif
 }
 
 void yab_mpeg_do_frame(struct YabCodec * c)
 {
-#ifdef HAVE_MPEG
   int got_frame = 0;
   int num_tries = 0;
 
@@ -465,19 +457,15 @@ void yab_mpeg_do_frame(struct YabCodec * c)
     }
     num_tries++;
   }
-#endif
 }
 
 void yab_mpeg_do_video_frame()
 {
-#ifdef HAVE_MPEG
   yab_mpeg_do_frame(&yab_mpeg.video);
-#endif
 }
 
 void yab_mpeg_play_file(char * filename)
 {
-#ifdef HAVE_MPEG
   yab_mpeg.file = fopen(filename, "rb");
 
   if(!yab_mpeg.file)
@@ -486,7 +474,5 @@ void yab_mpeg_play_file(char * filename)
     assert(0);
     return;
   }
-#endif
 }
-
-
+#endif
