@@ -64,12 +64,14 @@ struct YabMpegState
    int inited;
 
 }yab_mpeg = {0};
+
+void yab_mpeg_do_frame(struct YabCodec * c);
+void yab_mpeg_init();
 #endif
 
 /////////////////////////////////////////////////////////////////////
 
 void mpeg_reg_debug_print();
-void yab_mpeg_init();
 
 //a100000
 //write
@@ -274,9 +276,6 @@ u16 mpeg_card_read_word(u32 addr)
 
    return 0;
 }
-
-
-void yab_mpeg_do_frame(struct YabCodec * c);
 
 void set_mpeg_audio_data_transfer_irq()
 {
