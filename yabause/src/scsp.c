@@ -5171,6 +5171,26 @@ ScspReceiveCDDA (const u8 *sector)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ScspReceiveMpeg (const u8 *samples, int len)
+{
+  memcpy(cddabuf.data+cdda_next_in, samples, len);
+
+  if (sizeof(cddabuf.data)-cdda_next_in <= len)
+     cdda_next_in = 0;
+  else
+     cdda_next_in += len;
+
+  cdda_out_left += len;
+
+  if (cdda_out_left > sizeof(cddabuf.data))
+    {
+      SCSPLOG ("WARNING: CDDA buffer overrun\n");
+      cdda_out_left = sizeof(cddabuf.data);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void new_scsp_update_samples(s32 *bufL, s32 *bufR, int scspsoundlen)
 {
    int i;

@@ -67,7 +67,7 @@ u32 pixels[704*480] = {0};
 u8* out_buf[4];
 int out_linesize[4];
 extern pixel_t *dispbuffer;
-void ScspReceiveCDDA(const u8*sector);
+void ScspReceiveMpeg (const u8 *samples, int len);
 #endif
 
 /////////////////////////////////////////////////////////////////////
@@ -456,7 +456,8 @@ void write_frame_to_video_buffer(struct YabCodec * c)
 
 void write_sound(struct YabCodec * c)
 {
-   ScspReceiveCDDA(c->frame->data[0]);
+   int size = av_get_bytes_per_sample(c->context->sample_fmt);
+   ScspReceiveMpeg(c->frame->data[0],size);
 }
 
 void yab_mpeg_do_frame(struct YabCodec * c)
