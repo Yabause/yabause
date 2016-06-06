@@ -36,37 +36,38 @@
 #include <libavutil/avutil.h>
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
-#endif
 
 #define BUFFER_SIZE 4096
 
-#ifdef HAVE_MPEG
-
 struct YabCodec
 {
-
   AVCodec *codec;
   AVCodecContext *context;
   AVFrame *frame;
   AVPacket packet;
+  struct SwsContext *sws_context;
+  int is_audio;
 
   u8 buffer[BUFFER_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
-
+  
+  FILE * file;
 };
 
 struct YabMpegState
 {
-
    struct YabCodec video;
    struct YabCodec audio;
-
-   FILE * file;
    int inited;
-
 }yab_mpeg = {0};
 
 void yab_mpeg_do_frame(struct YabCodec * c);
 void yab_mpeg_init();
+void yab_mpeg_play_file(struct YabCodec * c, char * filename);
+u32 pixels[704*480] = {0};
+u8* out_buf[4];
+int out_linesize[4];
+extern pixel_t *dispbuffer;
+void ScspReceiveCDDA(const u8*sector);
 #endif
 
 /////////////////////////////////////////////////////////////////////
@@ -297,6 +298,7 @@ void set_mpeg_video_irq()
    sh1_assert_tiocb(2);
 #ifdef HAVE_MPEG
    yab_mpeg_do_frame(&yab_mpeg.video);
+   yab_mpeg_do_frame(&yab_mpeg.audio);
 #endif
 }
 
@@ -378,18 +380,27 @@ void yab_mpeg_deinit_codec(struct YabCodec * c)
   avcodec_close(c->context);
 }
 
-void yab_mpeg_play_file(char * filename);
-extern pixel_t *dispbuffer;
 void yab_mpeg_init()
 {
+  int ret = 0;
   av_register_all();
   memset(&yab_mpeg,0,sizeof(struct YabMpegState));
   yab_mpeg_init_codec(&yab_mpeg.video,AV_CODEC_ID_MPEG1VIDEO);
   yab_mpeg_init_codec(&yab_mpeg.audio,AV_CODEC_ID_MP2);
   
-  yab_mpeg_play_file("/home/d/yab-f/yabause/yabauseut/src/buildcd/M2TEST/MOVIE.m1v");
+  yab_mpeg_play_file(&yab_mpeg.video, "/home/d/yab-f/yabause/yabauseut/src/buildcd/M2TEST/MOVIE.m1v");
+  yab_mpeg_play_file(&yab_mpeg.audio, "/home/d/yab-f/yabause/yabauseut/src/buildcd/M2TEST/MOVIE.MP2");
 
+  yab_mpeg.audio.is_audio = 1;
   yab_mpeg.inited = 1;
+
+  yab_mpeg.audio.context->channels = 2;
+  yab_mpeg.audio.context->sample_rate = 44100;
+
+  ret = av_image_alloc(out_buf,out_linesize, 320, 240,PIX_FMT_RGB32, 1);
+
+  if(!ret)
+    assert(0);
 }
 
 void write_frame_to_video_buffer(struct YabCodec * c)
@@ -400,13 +411,52 @@ void write_frame_to_video_buffer(struct YabCodec * c)
 
   int mpeg_width = c->frame->linesize[0];
   u8 * mpeg_buf = c->frame->data[0];
+
+  //convert yuv to rgb with sws
+  if(!c->sws_context)
+  {
+    c->sws_context = sws_getContext(
+      //source width, height, format
+      c->context->width,
+      c->context->height,
+      c->context->pix_fmt,
+      //dest width, height, format
+      out_width,
+      out_height,
+      PIX_FMT_RGB32,
+      //flags
+      SWS_BILINEAR,
+      //source/dest filters
+      NULL,
+      NULL,
+      //param
+      NULL
+    );
+  }
+
+  sws_scale(
+    c->sws_context,
+    (u8 const * const *)c->frame->data,
+    c->frame->linesize,
+    0,
+    c->context->height,
+    out_buf,
+    out_linesize);
+
+  memcpy(pixels, out_buf[0], 320*240*4);
+
   for(y = 0; y < out_height; y++)
   {
     for(x = 0; x < out_width; x++)
     {
-       dispbuffer[(y*out_width) + x] = mpeg_buf[(y * mpeg_width) + x];
+       dispbuffer[(y*out_width) + x] = pixels[(y * mpeg_width) + x];
     }
   }
+}
+
+void write_sound(struct YabCodec * c)
+{
+   ScspReceiveCDDA(c->frame->data[0]);
 }
 
 void yab_mpeg_do_frame(struct YabCodec * c)
@@ -419,7 +469,7 @@ void yab_mpeg_do_frame(struct YabCodec * c)
      yab_mpeg_init();
   }
 
-  c->packet.size = fread(c->buffer, 1, BUFFER_SIZE, yab_mpeg.file);
+  c->packet.size = fread(c->buffer, 1, BUFFER_SIZE, c->file);
 
   while(c->packet.size > 0) 
   {
@@ -427,7 +477,7 @@ void yab_mpeg_do_frame(struct YabCodec * c)
 
     if(!c->frame)
     {
-      c->frame = avcodec_alloc_frame();//non-deprecated is av_frame_alloc();
+      c->frame = av_frame_alloc();
       if(!c->frame)
       {
         YabErrorMsg("couldn't allocate frame");
@@ -435,10 +485,10 @@ void yab_mpeg_do_frame(struct YabCodec * c)
       }
     }
 
-    length = avcodec_decode_video2(c->context, c->frame, &got_frame, &c->packet);
-
-    //audio
-    //length = avcodec_decode_audio4(c->context, c->frame, &got_frame, &c->packet);
+    if(!c->is_audio)
+      length = avcodec_decode_video2(c->context, c->frame, &got_frame, &c->packet);
+    else
+      length = avcodec_decode_audio4(c->context, c->frame, &got_frame, &c->packet);
     
     if(length < 0)
     {
@@ -451,7 +501,10 @@ void yab_mpeg_do_frame(struct YabCodec * c)
     }
     if(got_frame)
     {
-      write_frame_to_video_buffer(c);
+      if(!c->is_audio)
+        write_frame_to_video_buffer(c);
+      else
+        write_sound(c);
       break;
     }
     num_tries++;
@@ -461,13 +514,14 @@ void yab_mpeg_do_frame(struct YabCodec * c)
 void yab_mpeg_do_video_frame()
 {
   yab_mpeg_do_frame(&yab_mpeg.video);
+  yab_mpeg_do_frame(&yab_mpeg.audio);
 }
 
-void yab_mpeg_play_file(char * filename)
+void yab_mpeg_play_file(struct YabCodec * c, char * filename)
 {
-  yab_mpeg.file = fopen(filename, "rb");
+  c->file = fopen(filename, "rb");
 
-  if(!yab_mpeg.file)
+  if(!c->file)
   {
     YabErrorMsg("couldn't open file");
     assert(0);

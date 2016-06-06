@@ -62,7 +62,7 @@ else (FFMPEG_LIBRARIES AND FFMPEG_INCLUDE_DIRS)
   )
 
   find_library(FFMPEG_AVUTIL_LIBRARY
-    NAMES avcodec
+    NAMES avutil
     PATHS ${_FFMPEG_AVUTIL_LIBRARY_DIRS} /usr/lib /usr/lib/ffmpeg-compat /usr/local/lib /opt/local/lib /sw/lib
   )
 
