@@ -28,6 +28,7 @@
 #include "assert.h"
 #include "error.h"
 #include "assert.h"
+#include "vidshared.h"
 
 /////////////////////////////////////////////////////////////////////
 
@@ -69,6 +70,8 @@ int out_linesize[4];
 extern pixel_t *dispbuffer;
 void ScspReceiveMpeg (const u8 *samples, int len);
 #endif
+
+void TitanPutPixel(int priority, s32 x, s32 y, u32 color, int linescreen, vdp2draw_struct* info);
 
 /////////////////////////////////////////////////////////////////////
 
@@ -170,6 +173,8 @@ struct MpegCard
    u16 reg_02;
    u16 window_x;//0x06
    u16 window_y;//0x08
+   u16 framebuffer_x;
+   u16 framebuffer_y;
    u16 border_color;//0x12
    u16 reg_14;
    u16 reg_1a;
@@ -186,6 +191,8 @@ struct MpegCard
 }mpeg_card;
 
 #define RAM_MASK 0x3ffff
+
+u32 mpeg_framebuffer[704 * 480] = { 0 };
 
 void mpeg_card_write_word(u32 addr, u16 data)
 {
@@ -207,6 +214,12 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    case 8:
       mpeg_card.window_y = data;
+      return;
+   case 0xa:
+      mpeg_card.framebuffer_x = data;
+      return;
+   case 0xc:
+      mpeg_card.framebuffer_y = data;
       return;
    case 0x12:
       mpeg_card.border_color = data;
@@ -293,12 +306,43 @@ void set_mpeg_audio_irq()
    sh1_assert_tioca(2);
 }
 
+void mpeg_render()
+{
+   int x = 0; int  y = 0;
+   vdp2draw_struct info = { 0 };
+   int priority = (Vdp2Regs->PRINA >> 8) & 7;
+   int framebuffer_x_offset = mpeg_card.framebuffer_x >> 1;
+   int framebuffer_y_offset = mpeg_card.framebuffer_y >> 1;
+   int last_x = 320 + framebuffer_x_offset;
+   int last_y = 240 + framebuffer_y_offset;
+
+   for (y = framebuffer_y_offset; y < last_y; y++)
+   {
+      for (x = framebuffer_x_offset; x < last_x; x++)
+      {
+         u32 pixel = 0;
+         u32 offset = (y * 704) + x;
+         int output_x = x - framebuffer_x_offset;
+         int output_y = y - framebuffer_y_offset;
+
+         if (offset < 704 * 480)
+         {
+            pixel = mpeg_framebuffer[offset];
+            TitanPutPixel(priority, output_x, output_y, pixel, 0, &info);
+         }
+      }
+   }
+}
+
 void set_mpeg_video_irq()
 {
    sh1_assert_tiocb(2);
 #ifdef HAVE_MPEG
    yab_mpeg_do_frame(&yab_mpeg.video);
    yab_mpeg_do_frame(&yab_mpeg.audio);
+#else
+   if(Vdp2Regs->EXTEN & 1)//exbg enabled
+      mpeg_render();
 #endif
 }
 
@@ -314,7 +358,26 @@ void mpeg_card_set_all_irqs()
 
 void mpeg_card_init()
 {
+   int x = 0; int  y = 0;
    memset(&mpeg_card, 0, sizeof(struct MpegCard));
+   memset(&mpeg_framebuffer, 0, sizeof(u32) * 704*480);
+
+   for (x = 0; x < 704; x++)
+   {
+      for (y = 0; y < 480; y++)
+      {
+         mpeg_framebuffer[(y * 704) + x] = 0xff00ff00;//green
+      }
+   }
+
+   for (x = 0; x < 320; x++)
+   {
+      for (y = 0; y < 240; y++)
+      {
+         mpeg_framebuffer[(y * 704) + x] = 0xff0000ff;//red
+      }
+   }
+   
    mpeg_card.reg_34 = 1;
 #ifdef HAVE_MPEG
    yab_mpeg_init();
