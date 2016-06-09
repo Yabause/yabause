@@ -29,6 +29,7 @@
 #include "error.h"
 #include "assert.h"
 #include "vidshared.h"
+#include "titan/titan.h"
 
 /////////////////////////////////////////////////////////////////////
 
@@ -170,19 +171,24 @@ void mpeg_reg_debug_print();
 struct MpegCard
 {
    u16 reg_00;
-   u16 reg_02;
-   u16 window_x;//0x06
-   u16 window_y;//0x08
+   u16 window_offset_x;//0x02
+   u16 window_offset_y;//0x04
+   u16 window_size_x;//0x06
+   u16 window_size_y;//0x08
    u16 framebuffer_x;
    u16 framebuffer_y;
+   u16 zoom_x;
+   u16 zoom_y;//0x10
    u16 border_color;//0x12
    u16 reg_14;
    u16 reg_1a;
    u16 mosaic_blur;//0x1c
    u16 reg_1e;
    u16 reg_20;
+   u16 reg_22;
    u16 reg_32;
    u16 reg_34;
+   u16 reg_3e;
    u16 reg_80000;
    u16 reg_80008;
    
@@ -207,19 +213,28 @@ void mpeg_card_write_word(u32 addr, u16 data)
       mpeg_card.reg_00 = data;
       return;
    case 2:
-      mpeg_card.reg_02 = data;
+      mpeg_card.window_offset_x = data;
+      return;
+   case 4:
+      mpeg_card.window_offset_y = data;
       return;
    case 6:
-      mpeg_card.window_x = data;
+      mpeg_card.window_size_x = data;
       return;
    case 8:
-      mpeg_card.window_y = data;
+      mpeg_card.window_size_y = data;
       return;
    case 0xa:
       mpeg_card.framebuffer_x = data;
       return;
    case 0xc:
       mpeg_card.framebuffer_y = data;
+      return;
+   case 0xe:
+      mpeg_card.zoom_x = data;
+      return;
+   case 0x10:
+      mpeg_card.zoom_y = data;
       return;
    case 0x12:
       mpeg_card.border_color = data;
@@ -239,6 +254,9 @@ void mpeg_card_write_word(u32 addr, u16 data)
    case 0x20:
       mpeg_card.reg_20 = data;
       return;
+   case 0x22:
+      mpeg_card.reg_22 = data;
+      return;
    case 0x30:
       mpeg_card.ram_ptr = data << 2;
       return;
@@ -252,6 +270,9 @@ void mpeg_card_write_word(u32 addr, u16 data)
       mpeg_card.ram_ptr &= RAM_MASK;
       mpeg_card.ram[mpeg_card.ram_ptr++] = data;
       return;
+   case 0x3e:
+      mpeg_card.reg_3e = data;
+      return;
    case 0x80000:
       mpeg_card.reg_80000 = data;
       return;
@@ -260,7 +281,7 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    }
 
- //  assert(0);
+   assert(0);
 }
 
 u16 mpeg_card_read_word(u32 addr)
@@ -275,7 +296,7 @@ u16 mpeg_card_read_word(u32 addr)
       //get interrupt wants 1 << 13 set, to clear "sequence end detected" interrupt bit
       return (mpeg_card.reg_00 & ~0x10) | (1 << 8) | (1 << 13);
    case 2:
-      return mpeg_card.reg_02;
+      return mpeg_card.window_offset_x;//probably not right
    case 0x34:
       return 1;//return mpeg_card.reg_34 | 5;//first bit is always set?
    case 0x36:
@@ -311,26 +332,52 @@ void mpeg_render()
    int x = 0; int  y = 0;
    vdp2draw_struct info = { 0 };
    int priority = (Vdp2Regs->PRINA >> 8) & 7;
+
+   //offset from a center value or fixed point?
+   int window_x_offset = (mpeg_card.window_offset_x - 0x96) >> 1;
+   int window_y_offset = (mpeg_card.window_offset_y - 0x26) >> 1;
+
    int framebuffer_x_offset = mpeg_card.framebuffer_x >> 1;
    int framebuffer_y_offset = mpeg_card.framebuffer_y >> 1;
-   int last_x = 320 + framebuffer_x_offset;
-   int last_y = 240 + framebuffer_y_offset;
 
-   for (y = framebuffer_y_offset; y < last_y; y++)
+   //start framebuffer pos from offset
+   float fb_x = framebuffer_x_offset;
+   float fb_y = framebuffer_y_offset;
+
+   int window_last_x = window_x_offset + (mpeg_card.window_size_x >> 1);
+   int window_last_y = window_y_offset + (mpeg_card.window_size_y >> 1);
+
+   //zoom
+   float fb_x_inc = 1;
+   float fb_y_inc = 1;
+
+   info.titan_which_layer = TITAN_NBG1;
+
+   if (window_x_offset < 0)
+      window_x_offset = 0;
+
+   if (window_y_offset < 0)
+      window_y_offset = 0;
+
+   for (y = window_y_offset; y < window_last_y; y++)//in output coordinates
    {
-      for (x = framebuffer_x_offset; x < last_x; x++)
+      fb_x = framebuffer_x_offset;
+
+      for (x = window_x_offset; x < window_last_x; x++)
       {
          u32 pixel = 0;
-         u32 offset = (y * 704) + x;
-         int output_x = x - framebuffer_x_offset;
-         int output_y = y - framebuffer_y_offset;
+         u32 offset = ((int)fb_y * 704) + (int)fb_x;
 
-         if (offset < 704 * 480)
+         if (offset < (704 * 480))
          {
             pixel = mpeg_framebuffer[offset];
-            TitanPutPixel(priority, output_x, output_y, pixel, 0, &info);
+
+            if(x < 704 && y < 480)
+               TitanPutPixel(priority, x, y, pixel, 0, &info);
          }
+         fb_x+= fb_x_inc;
       }
+      fb_y+= fb_y_inc;
    }
 }
 
@@ -361,23 +408,22 @@ void mpeg_card_init()
    int x = 0; int  y = 0;
    memset(&mpeg_card, 0, sizeof(struct MpegCard));
    memset(&mpeg_framebuffer, 0, sizeof(u32) * 704*480);
-
-   for (x = 0; x < 704; x++)
+   for (y = 0; y < 480; y++)
    {
-      for (y = 0; y < 480; y++)
+      for (x = 0; x < 704; x++)
       {
          mpeg_framebuffer[(y * 704) + x] = 0xff00ff00;//green
       }
    }
 
-   for (x = 0; x < 320; x++)
+   for (y = 0; y < 240; y++)
    {
-      for (y = 0; y < 240; y++)
+      for (x = 8; x < 320; x++)
       {
          mpeg_framebuffer[(y * 704) + x] = 0xff0000ff;//red
       }
    }
-   
+
    mpeg_card.reg_34 = 1;
 #ifdef HAVE_MPEG
    yab_mpeg_init();
@@ -393,9 +439,9 @@ void mpeg_reg_debug_print()
 
    CDLOG("Interpolation %01X\n", 0xf - ((mpeg_card.reg_00 >> 4) & 0xf));
 
-   CDLOG("Window x %d\n", mpeg_card.window_x >> 1);
+   CDLOG("Window x %d\n", mpeg_card.window_size_x >> 1);
 
-   CDLOG("Window y %d\n", mpeg_card.window_y >> 1);
+   CDLOG("Window y %d\n", mpeg_card.window_size_y >> 1);
 
    CDLOG("Mosaic x %d\n", (mpeg_card.mosaic_blur >> 8) & 0xf);
 
