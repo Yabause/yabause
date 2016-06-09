@@ -175,12 +175,13 @@ struct MpegCard
    u16 window_offset_y;//0x04
    u16 window_size_x;//0x06
    u16 window_size_y;//0x08
-   u16 framebuffer_x;
-   u16 framebuffer_y;
-   u16 zoom_x;
+   u16 framebuffer_x;//0x0a
+   u16 framebuffer_y;//0x0c
+   u16 zoom_x;//0x0e
    u16 zoom_y;//0x10
    u16 border_color;//0x12
    u16 reg_14;
+   u16 reg_18;
    u16 reg_1a;
    u16 mosaic_blur;//0x1c
    u16 reg_1e;
@@ -241,6 +242,9 @@ void mpeg_card_write_word(u32 addr, u16 data)
       return;
    case 0x14:
       mpeg_card.reg_14 = data;
+      return;
+   case 0x18:
+      mpeg_card.reg_18 = data;
       return;
    case 0x1a:
       mpeg_card.reg_1a = data;
@@ -327,6 +331,25 @@ void set_mpeg_audio_irq()
    sh1_assert_tioca(2);
 }
 
+const u16 mosaic_masks[] = {
+   0xfffe,//0
+   0xfffc,//1
+   0xfff8,//2
+   0xfff0,//3
+   0xffe0,//4
+   0xffc0,//5
+   0xff80,//6
+   0xff00,//7
+   0xfe00,//8
+   0xfc00,//9
+   0xf800,//a
+   0xf000,//b
+   0xe000,//c
+   0xc000,//d
+   0x8000,//e
+   0xffff,//f (off)
+};
+
 void mpeg_render()
 {
    int x = 0; int  y = 0;
@@ -351,6 +374,9 @@ void mpeg_render()
    float fb_x_inc = 1;
    float fb_y_inc = 1;
 
+   int mosaic_x = (mpeg_card.mosaic_blur >> 8) & 0xf;
+   int mosaic_y = (mpeg_card.mosaic_blur >> 12) & 0xf;
+
    info.titan_which_layer = TITAN_NBG1;
 
    if (window_x_offset < 0)
@@ -366,7 +392,10 @@ void mpeg_render()
       for (x = window_x_offset; x < window_last_x; x++)
       {
          u32 pixel = 0;
-         u32 offset = ((int)fb_y * 704) + (int)fb_x;
+         int x_val = ((int)fb_x) & mosaic_masks[mosaic_x];
+         int y_val = ((int)fb_y) & mosaic_masks[mosaic_y];
+
+         u32 offset = (y_val * 704) + x_val;
 
          if (offset < (704 * 480))
          {
