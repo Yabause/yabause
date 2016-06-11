@@ -265,6 +265,9 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 
    WDTExec(context, cycles);
 
+   if (context->model == SHMT_SH2 && yabsys.use_sh2_dma_timing)
+      sh2_dma_exec(context, cycles);
+
    if (UNLIKELY(context->cycles < cycles))
       context->cycles = 0;
    else
