@@ -1976,6 +1976,7 @@ int YglProgramChange( YglLevel * level, int prgid )
    level->prg[level->prgcurrent].prgid=prgid;
    level->prg[level->prgcurrent].prg=_prgid[prgid];
    level->prg[level->prgcurrent].vaid = 0;
+   level->prg[level->prgcurrent].id = 0;
 
    if (prgid == PG_NORMAL)
    {
