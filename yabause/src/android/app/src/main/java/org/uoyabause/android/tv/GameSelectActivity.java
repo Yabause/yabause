@@ -35,6 +35,7 @@ public class GameSelectActivity extends Activity {
      */
     final String TAG ="GameSelectActivity";
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +56,7 @@ public class GameSelectActivity extends Activity {
     public boolean dispatchKeyEvent (KeyEvent event){
 
         InputDevice dev = InputDevice.getDevice(event.getDeviceId());
-        if( dev.getName().contains("HuiJia")){
+        if( dev != null && dev.getName().contains("HuiJia")){
             if( event.getKeyCode() > 200 ){
                 return true;
             }
