@@ -977,7 +977,7 @@ int initEgl( ANativeWindow* window )
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
 	yinit.polygon_generation_mode = g_PolygonGenerationMode;
-	yinit.use_new_scsp = 0;
+	yinit.use_new_scsp = 1;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
