@@ -98,6 +98,7 @@
 #include "yabause.h"
 #include "scsp.h"
 #include "scspdsp.h"
+#include "threads.h"
 
 #if 0
 #include "windows/aviout.h"
@@ -1369,7 +1370,18 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
    scsp_dsp.exts[0] = cd_in_l;
    scsp_dsp.exts[1] = cd_in_r;
 
-   for (i = 0; i < 128; i++)
+   if (scsp_dsp.updated){
+
+	   for (i = 127; i >= 0; --i)
+	   {
+		   if( scsp_dsp.mpro[i] != 0 )
+			   break;
+	   }
+	   scsp_dsp.last_step = i + 1;
+	   scsp_dsp.updated = 0;
+   }
+     
+   for (i = 0; i < scsp_dsp.last_step; i++)
       ScspDspExec(&scsp_dsp, i, SoundRam);
 
    scsp_dsp.mdec_ct--;
@@ -4020,6 +4032,7 @@ scsp_w_w (u32 a, u16 d)
      default:
         break;
      }
+	 scsp_dsp.updated = 1;
   }
   else if (a < 0xee4)
     {
@@ -4745,6 +4758,9 @@ ScspDeInit (void)
 {
   scsp_mute_flags = 0;
   thread_running = 0; 
+#if defined(ASYNC_SCSP)
+  YabThreadWait(YAB_THREAD_SCSP);
+#endif
 
   if (scspchannel[0].data32)
     free(scspchannel[0].data32);
@@ -5022,6 +5038,7 @@ void new_scsp_update_samples(s32 *bufL, s32 *bufR, int scspsoundlen)
    new_scsp_outbuf_pos = 0;
 }
 
+
 //////////////////////////////////////////////////////////////////////////////
 #if !defined(ASYNC_SCSP)
 void ScspExec(){
@@ -5035,53 +5052,96 @@ void ScspExec(){
   ScspInternalVars->scsptiming1++;
 #else
 
-#include <time.h>  
-#include "threads.h"
-
 void ScspAsynMain( void * p ){
 
-	struct timespec before;
-	struct timespec now;
-	int difftime;
+	u64 before;
+	u64 now;
+	u32 difftime;
 
-	nice(10);
 	YabThreadSetCurrentThreadAffinityMask( 0x03 );
 
-	clock_gettime(CLOCK_MONOTONIC, &before);
-	while (thread_running){
-		int m68kclock = 11000000 / 60 / scsplines;
-		int need_to_sync = 0;
-		MM68KExec(m68kclock);
-		ScspInternalVars->scsptiming2 +=
-			((scspsoundlen << 16) + scsplines / 2) / scsplines;
-		if (!use_new_scsp)
-			scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
-		ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
-		ScspInternalVars->scsptiming1++;
+	u32 m68k_cycles_per_deciline = 0;
+	u32 scsp_cycles_per_deciline = 0;
 
-		if (ScspInternalVars->scsptiming1 >= scsplines){
-			need_to_sync = 1;
+	int lines = 0;
+	int frames = 0;
+
+	if (yabsys.IsPal)
+	{
+		lines = 313;
+		frames = 50;
+	}
+	else
+	{
+		lines = 263; 
+		frames = 60;
+	}
+
+	scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, 10);
+	m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, 10);
+
+	//clock_gettime(CLOCK_MONOTONIC, &before);
+	before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+	int DecilineCount = 0;
+	while (thread_running){
+		
+		int need_to_sync = 0;
+
+		DecilineCount++;
+
+		if (DecilineCount == 10){
+			ScspInternalVars->scsptiming2 +=
+				((scspsoundlen << 16) + scsplines / 2) / scsplines;
+			if (!use_new_scsp)
+				scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
+			ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
+			ScspInternalVars->scsptiming1++;
+
+			if (ScspInternalVars->scsptiming1 >= scsplines){
+				need_to_sync = 1;
+			}
+			ScspExecAsync();
+			DecilineCount = 0;
 		}
-		ScspExecAsync();
+
+		u32 m68k_integer_part = 0, scsp_integer_part = 0;
+		saved_m68k_cycles += m68k_cycles_per_deciline;
+		m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
+		MM68KExec(m68k_integer_part);
+		saved_m68k_cycles -= m68k_integer_part << SCSP_FRACTIONAL_BITS;
+
+		if (use_new_scsp) {
+			saved_scsp_cycles += scsp_cycles_per_deciline;
+			scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
+			new_scsp_exec(scsp_integer_part);
+			saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
+		}
+
 		if( need_to_sync){
-			clock_gettime(CLOCK_MONOTONIC, &now);
-			if ((now.tv_nsec - before.tv_nsec) < 0){
-				difftime = now.tv_nsec - before.tv_nsec + 1000000000;
-			}else{
-				difftime = now.tv_nsec - before.tv_nsec;
-			}
-			//int sleeptime = (16000000 - difftime);
-			  int sleeptime = (16666666 - difftime);
-			if (sleeptime > 0){
-				struct timespec sleeptime_ts;
-				sleeptime_ts.tv_sec = 0;
-				sleeptime_ts.tv_nsec = sleeptime;
-				nanosleep(&sleeptime_ts,NULL);
-			}
-			//yprintf("vsynctime = %d %d/%d", sleeptime, scsp_sample_count, scspsoundlen);
-			clock_gettime(CLOCK_MONOTONIC, &before);
+			int sleeptime = 0;
+			u64 checktime = 0;
+			//u64 operation_time = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+
+			do {
+				now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+				if (now > before){
+					difftime = now - before;
+				}
+				else{
+					difftime = now + (ULLONG_MAX - before);
+				}
+				sleeptime = (16666 - difftime);
+				if (sleeptime > 10000 ) YabThreadUSleep(0);
+			}while( sleeptime > 0);
+
+			checktime = YabauseGetTicks()* 1000000 / yabsys.tickfreq;
+			//yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
+			before = checktime;
+
 		}
 	}
+
+	YabThreadWake(YAB_THREAD_SCSP);
 }
 
 void ScspExec(){
@@ -5177,7 +5237,7 @@ void ScspExecAsync() {
 #endif
 
 #if defined(ASYNC_SCSP)
-  while (scsp_mute_flags){ usleep(16666); }
+  while (scsp_mute_flags){ YabThreadUSleep(16666); }
 #endif
 }
 

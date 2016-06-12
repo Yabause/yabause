@@ -76,6 +76,7 @@
 #include "psp/common.h"
 #endif
 
+
 #ifdef SYS_PROFILE_H
  #include SYS_PROFILE_H
 #else
@@ -105,7 +106,6 @@ ScspDsp scsp_dsp = { 0 };
 char ssf_track_name[256] = { 0 };
 char ssf_artist[256] = { 0 };
 
-#define SCSP_FRACTIONAL_BITS 20
 u32 saved_scsp_cycles = 0;//fixed point
 u32 saved_m68k_cycles = 0;//fixed point
 
@@ -506,7 +506,7 @@ int YabauseExec(void) {
 int saved_centicycles;
 #endif
 
-static INLINE u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line)
+u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line)
 {
    return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (lines * divisions_per_line);
 }
@@ -718,7 +718,7 @@ int YabauseEmulate(void) {
 
          PROFILE_START("68K");
          cycles = m68kcycles;
-	 saved_centicycles += m68kcenticycles;
+		 saved_centicycles += m68kcenticycles;
          if (saved_centicycles >= 100) {
             cycles++;
             saved_centicycles -= 100;
@@ -728,6 +728,7 @@ int YabauseEmulate(void) {
       }
       else
       {
+#if !defined(ASYNC_SCSP)
          u32 m68k_integer_part = 0, scsp_integer_part = 0;
          saved_m68k_cycles += m68k_cycles_per_deciline;
          m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
@@ -738,6 +739,7 @@ int YabauseEmulate(void) {
          scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
          new_scsp_exec(scsp_integer_part);
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
+#endif
       }
 #endif
 
@@ -820,6 +822,10 @@ u64 YabauseGetTicks(void) {
    return gettime();
 #elif defined(PSP)
    return sceKernelGetSystemTimeWide();
+#elif defined(ANDROID)
+	struct timespec clock_time;
+	clock_gettime(CLOCK_REALTIME , &clock_time);
+	return (u64)clock_time.tv_sec * 1000000 + clock_time.tv_nsec/1000;
 #elif defined(HAVE_GETTIMEOFDAY)
    struct timeval tv;
    gettimeofday(&tv, NULL);
@@ -841,6 +847,8 @@ void YabauseSetVideoFormat(int type) {
 #elif defined(GEKKO)
    yabsys.tickfreq = secs_to_ticks(1);
 #elif defined(PSP)
+   yabsys.tickfreq = 1000000;
+#elif defined(ANDROID)
    yabsys.tickfreq = 1000000;
 #elif defined(HAVE_GETTIMEOFDAY)
    yabsys.tickfreq = 1000000;

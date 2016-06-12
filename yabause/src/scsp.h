@@ -70,9 +70,9 @@ typedef struct
 
 #define MAX_BREAKPOINTS 10
 
-#if defined(ARCH_IS_LINUX)
+//#if defined(ARCH_IS_LINUX)
 #define ASYNC_SCSP
-#endif
+//#endif
 
 typedef struct
 {
