@@ -113,6 +113,7 @@ int ShaderDrawTest()
 
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
 
+	param->texsize = glGetUniformLocation(pgid, (const GLchar *)"u_texsize");
 	param->sprite = glGetUniformLocation(pgid, (const GLchar *)"u_sprite");
 	param->tessLevelInner = glGetUniformLocation(pgid, (const GLchar *)"TessLevelInner");
 	param->tessLevelOuter = glGetUniformLocation(pgid, (const GLchar *)"TessLevelOuter");
@@ -141,6 +142,7 @@ int Ygl_uniformVdp1CommonParam(void * p){
 
 	if (param == NULL) return 0;
 
+	glUniform2f(param->texsize, _Ygl->texture_manager->width, _Ygl->texture_manager->height);
 
 	if (param->sprite != -1){
 		glUniform1i(param->sprite, 0);
@@ -188,14 +190,16 @@ const GLchar Yglprg_normal_v[] =
       "#version 330 \n"
 #endif
       "uniform mat4 u_mvpMatrix;    \n"
-      "uniform mat4 u_texMatrix;    \n"
+	  "uniform vec2 u_texsize;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
       "out  highp vec4 v_texcoord;     \n"
       "void main()                  \n"
       "{                            \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
-      "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+      "   v_texcoord  = a_texcoord; \n"
+	  "   //v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
+	  "   //v_texcoord.y  = v_texcoord.y / u_texsize.y;\n"
       "} ";
 const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
@@ -223,6 +227,7 @@ const GLchar Yglprg_normal_f[] =
 "}                                                   \n";
 const GLchar * pYglprg_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
+static int id_normal_s_texture_size = -1;
 
 int Ygl_uniformNormal(void * p)
 {
@@ -233,6 +238,7 @@ int Ygl_uniformNormal(void * p)
 	glEnableVertexAttribArray(1);
 	glUniform1i(id_normal_s_texture, 0);
 	glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+	glUniform2f(id_normal_s_texture_size, _Ygl->texture_manager->width, _Ygl->texture_manager->height);
 	return 0;
 }
 
@@ -486,6 +492,7 @@ const GLchar Yglprg_vdp1_normal_v[] =
       "#version 330 \n"
 #endif
       "uniform mat4 u_mvpMatrix;    \n"
+	  "uniform vec2 u_texsize;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
       "out   vec4 v_texcoord;     \n"
@@ -493,6 +500,8 @@ const GLchar Yglprg_vdp1_normal_v[] =
       "{                            \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord; \n"
+	  "   v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
+	  "   v_texcoord.y  = v_texcoord.y / u_texsize.y;\n"
       "} ";
 const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 
@@ -516,6 +525,7 @@ const GLchar Yglprg_vpd1_normal_f[] =
       "  fragColor = FragColor;\n "
       "}                                                   \n";
 const GLchar * pYglprg_vdp1_normal_f[] = {Yglprg_vpd1_normal_f, NULL};
+static int id_vdp1_normal_s_texture_size = -1;
 static int id_vdp1_normal_s_texture = -1;
 
 int Ygl_uniformVdp1Normal(void * p )
@@ -525,6 +535,7 @@ int Ygl_uniformVdp1Normal(void * p )
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
    glUniform1i(id_vdp1_normal_s_texture, 0);
+   glUniform2f(id_vdp1_normal_s_texture_size, _Ygl->texture_manager->width, _Ygl->texture_manager->height);
    return 0;
 }
 
@@ -549,6 +560,7 @@ const GLchar Yglprg_vdp1_gouraudshading_tess_v[] =
 "layout (location = 0) in vec3 a_position; \n"
 "layout (location = 1) in vec4 a_texcoord; \n"
 "layout (location = 2) in vec4 a_grcolor;  \n"
+"uniform vec2 u_texsize;    \n"
 "out vec3 v_position;  \n"
 "out vec4 v_texcoord; \n"
 "out vec4 v_vtxcolor; \n"
@@ -556,6 +568,8 @@ const GLchar Yglprg_vdp1_gouraudshading_tess_v[] =
 "   v_position  = a_position; \n"
 "   v_vtxcolor  = a_grcolor;  \n"
 "   v_texcoord  = a_texcoord; \n"
+"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_tess_v[] = { Yglprg_vdp1_gouraudshading_tess_v, NULL };
 
@@ -674,7 +688,7 @@ const GLchar Yglprg_vdp1_gouraudshading_v[] =
 "#version 330 \n"
 #endif
 "uniform mat4 u_mvpMatrix;                \n"
-"uniform mat4 u_texMatrix;                \n"
+"uniform vec2 u_texsize;    \n"
 "layout (location = 0) in vec4 a_position;               \n"
 "layout (location = 1) in vec4 a_texcoord;               \n"
 "layout (location = 2) in vec4 a_grcolor;                \n"
@@ -683,6 +697,8 @@ const GLchar Yglprg_vdp1_gouraudshading_v[] =
 "void main() {                            \n"
 "   v_vtxcolor  = a_grcolor;              \n"
 "   v_texcoord  = a_texcoord; \n"
+"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, NULL};
@@ -724,7 +740,7 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
       "#version 330 \n"
 #endif
       "uniform mat4 u_mvpMatrix;                \n"
-      "uniform mat4 u_texMatrix;                \n"
+	  "uniform vec2 u_texsize;    \n"
       "layout (location = 0) in vec4 a_position;               \n"
       "layout (location = 1) in vec4 a_texcoord;               \n"
       "layout (location = 2) in vec4 a_grcolor;                \n"
@@ -732,7 +748,9 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
       "out  vec4 v_vtxcolor;               \n"
       "void main() {                            \n"
       "   v_vtxcolor  = a_grcolor;              \n"
-      "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+      "   v_texcoord  = a_texcoord; \n"
+	  "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+	  "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
@@ -786,6 +804,7 @@ const GLchar Yglprg_vdp1_halftrans_v[] =
       "#version 330 \n"
 #endif
         "uniform mat4 u_mvpMatrix;                \n"
+		"uniform vec2 u_texsize;    \n"
         "layout (location = 0) in vec4 a_position;               \n"
         "layout (location = 1) in vec4 a_texcoord;               \n"
         "layout (location = 2) in vec4 a_grcolor;                \n"
@@ -793,7 +812,9 @@ const GLchar Yglprg_vdp1_halftrans_v[] =
         "out  vec4 v_vtxcolor;               \n"
         "void main() {                            \n"
         "   v_vtxcolor  = a_grcolor;              \n"
-        "   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+        "   v_texcoord  = a_texcoord; \n"
+		"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+		"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
         "   gl_Position = a_position*u_mvpMatrix; \n"
         "}\n";
 
@@ -843,7 +864,7 @@ const GLchar Yglprg_vdp1_mesh_v[] =
 "#version 330 \n"
 #endif
 "uniform mat4 u_mvpMatrix;                \n"
-"uniform mat4 u_texMatrix;                \n"
+"uniform vec2 u_texsize;    \n"
 "layout (location = 0) in vec4 a_position;               \n"
 "layout (location = 1) in vec4 a_texcoord;               \n"
 "layout (location = 2) in vec4 a_grcolor;                \n"
@@ -851,7 +872,9 @@ const GLchar Yglprg_vdp1_mesh_v[] =
 "out  vec4 v_vtxcolor;               \n"
 "void main() {                            \n"
 "   v_vtxcolor  = a_grcolor;              \n"
-"   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+"   v_texcoord  = a_texcoord; \n"
+"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "}\n";
 const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
@@ -908,6 +931,7 @@ const GLchar Yglprg_vdp1_shadow_v[] =
 "#version 330 \n"
 #endif
 "uniform mat4 u_mvpMatrix;                \n"
+"uniform vec2 u_texsize;    \n"
 "layout (location = 0) in vec4 a_position;               \n"
 "layout (location = 1) in vec4 a_texcoord;               \n"
 "layout (location = 2) in vec4 a_grcolor;                \n"
@@ -915,7 +939,9 @@ const GLchar Yglprg_vdp1_shadow_v[] =
 "out  vec4 v_vtxcolor;               \n"
 "void main() {                            \n"
 "   v_vtxcolor  = a_grcolor;              \n"
-"   v_texcoord  = a_texcoord/*u_texMatrix*/; \n"
+"   v_texcoord  = a_texcoord; \n"
+"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "}\n";
 
@@ -1656,6 +1682,7 @@ int YglProgramInit()
       return -1;
 
     id_normal_s_texture = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
+	id_normal_s_texture_size = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_texsize");
 
 #if 0
 	YGLLOG("PG_VDP2_MOSAIC\n");
@@ -1677,6 +1704,7 @@ int YglProgramInit()
       return -1;
 
    id_vdp1_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
+   id_vdp1_normal_s_texture_size = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"u_texsize");
 
 
    // extentions
@@ -2927,10 +2955,9 @@ const GLchar scanline_filter_v[] =
 #else
 "#version 330 \n"
 #endif
-" attribute vec2 aPosition; \n"
-" attribute vec2 aTexCoord; \n"
-"  \n"
-" varying vec2 vTexCoord; \n"
+"layout (location = 0) in vec2 aPosition;   \n"
+"layout (location = 1) in vec2 aTexCoord;   \n"
+"out  highp vec2 vTexCoord;     \n"
 "  \n"
 " void main(void) \n"
 " { \n"

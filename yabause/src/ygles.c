@@ -536,6 +536,7 @@ void YglTMReset(YglTextureManager * tm  ) {
 	tm->yMax = 0;
 }
 
+#if 0
 void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
 
 	if (tm->width < w){
@@ -548,6 +549,32 @@ void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
 		return;
 	}
 }
+#endif
+
+void YglTmPush(YglTextureManager * tm){
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tm->textureID);
+	if (tm->texture != NULL) {
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tm->width, tm->yMax, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		tm->texture = NULL;
+	}
+}
+
+void YglTmPull(YglTextureManager * tm, u32 flg){
+	if (tm->texture == NULL) {
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tm->textureID);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_WRITE_BIT | flg );
+		if (tm->texture == NULL){
+			abort();
+		}
+	}
+}
+
 
 void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
 
@@ -558,13 +585,14 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
 
 	Vdp2RgbTextureSync();
 
-	// copy to dram
-	if (tm->texture == NULL){
+	if (tm->texture != NULL) {
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, tm->textureID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_READ_BIT);
-        YGLDEBUG("?????\n");
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		tm->texture = NULL;
 	}
+
 	glGetError();
 
 
@@ -585,25 +613,40 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
 	glGenBuffers(1, &new_pixelBufferID);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_STREAM_DRAW);
-	new_texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+	int dh = tm->height;
+	if (dh > height) dh = height;
+
+	glBindBuffer(GL_COPY_READ_BUFFER, tm->pixelBufferID);
+	glBindBuffer(GL_COPY_WRITE_BUFFER, new_pixelBufferID);
+	glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, tm->width * dh * 4);
 	if ((error = glGetError()) != GL_NO_ERROR){
 		YGLDEBUG("Fail to init new_texture %04X", error);
 		abort();
 	}
-	
-	memcpy(new_texture, tm->texture, tm->width * tm->height * 4);
-    tm->width = width;
-	tm->height = height;
+
+	glBindBuffer(GL_COPY_READ_BUFFER, 0);
+	glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
+
+
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
+	new_texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT );
+	if ((error = glGetError()) != GL_NO_ERROR){
+		YGLDEBUG("Fail to init new_texture %04X", error);
+		abort();
+	}
 
 	// Free textures
 	glDeleteTextures(1, &tm->textureID);
 	glDeleteBuffers(1, &tm->pixelBufferID);
 
+	// user new texture
+    tm->width = width;
+	tm->height = height;
 	tm->texture = new_texture;
 	tm->textureID = new_textureID;
 	tm->pixelBufferID = new_pixelBufferID;
 
-	printf("reallocated texture:%08x(%08x),%08x,%08x\n", tm->texture, width * height * 4, tm->textureID, tm->pixelBufferID);
 	return;
 
 }
@@ -1488,21 +1531,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
 		}
 	}
 
-	texv[0].s /= (float)_Ygl->texture_manager->width;
-	texv[1].s /= (float)_Ygl->texture_manager->width;
-	texv[2].s /= (float)_Ygl->texture_manager->width;
-	texv[3].s /= (float)_Ygl->texture_manager->width;
-	texv[4].s /= (float)_Ygl->texture_manager->width;
-	texv[5].s /= (float)_Ygl->texture_manager->width;
-
-	texv[0].t /= (float)_Ygl->texture_manager->height;
-	texv[1].t /= (float)_Ygl->texture_manager->height;
-	texv[2].t /= (float)_Ygl->texture_manager->height;
-	texv[3].t /= (float)_Ygl->texture_manager->height;
-	texv[4].t /= (float)_Ygl->texture_manager->height;
-	texv[5].t /= (float)_Ygl->texture_manager->height;
-
-
 	int tess_count = YGL_TESS_COUNT;
 	float s_step = (float)(texv[2].s-texv[0].s)/(float)tess_count;
 	float t_step = (float)(texv[2].t-texv[0].t)/(float)tess_count;
@@ -1805,20 +1833,6 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
       }
    }
 
-
-   tmp[0].s /= (float)_Ygl->texture_manager->width;
-   tmp[1].s /= (float)_Ygl->texture_manager->width;
-   tmp[2].s /= (float)_Ygl->texture_manager->width;
-   tmp[3].s /= (float)_Ygl->texture_manager->width;
-   tmp[4].s /= (float)_Ygl->texture_manager->width;
-   tmp[5].s /= (float)_Ygl->texture_manager->width;
-   tmp[0].t /= (float)_Ygl->texture_manager->height;
-   tmp[1].t /= (float)_Ygl->texture_manager->height;
-   tmp[2].t /= (float)_Ygl->texture_manager->height;
-   tmp[3].t /= (float)_Ygl->texture_manager->height;
-   tmp[4].t /= (float)_Ygl->texture_manager->height;
-   tmp[5].t /= (float)_Ygl->texture_manager->height;
-
    if( input->dst == 1 )
    {
       YglCalcTextureQ(input->vertices,q);
@@ -1982,16 +1996,6 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
 			break;
 		}
 	}
-
-
-	tmp[0].s /= (float)_Ygl->texture_manager->width;
-	tmp[1].s /= (float)_Ygl->texture_manager->width;
-	tmp[2].s /= (float)_Ygl->texture_manager->width;
-	tmp[3].s /= (float)_Ygl->texture_manager->width;
-	tmp[0].t /= (float)_Ygl->texture_manager->height;
-	tmp[1].t /= (float)_Ygl->texture_manager->height;
-	tmp[2].t /= (float)_Ygl->texture_manager->height;
-	tmp[3].t /= (float)_Ygl->texture_manager->height;
 
 
 	return 0;
@@ -2297,29 +2301,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 
 
 
-void YglTmPush(YglTextureManager * tm){
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tm->textureID);
-	if (tm->texture != NULL) {
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tm->width, tm->yMax, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-		tm->texture = NULL;
-	}
-}
-
-void YglTmPull(YglTextureManager * tm, u32 flg ){
-	if (tm->texture == NULL) {
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, tm->textureID);
-		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-		tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | flg /*| GL_MAP_UNSYNCHRONIZED_BIT*/ /*| GL_MAP_INVALIDATE_BUFFER_BIT*/);
-		if (tm->texture == NULL){
-			abort();
-		}
-	}
-}
 //////////////////////////////////////////////////////////////////////////////
 void YglRenderVDP1(void) {
 

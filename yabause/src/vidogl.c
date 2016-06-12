@@ -2878,12 +2878,16 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
    }
 }
 
-
+#define RBG_IDLE -1
+#define RBG_REQ_RENDER 0
+#define RBG_FINIESED 1
+#define RBG_TEXTURE_SYNCED 2
+ 
 /*------------------------------------------------------------------------------
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
 void Vdp2DrawRotationThread( void * p ){
-
+	
 	while (Vdp2DrawRotationThread_running){
 		YabThreadSetCurrentThreadAffinityMask(0x02);
 		YabThreadLock(g_rotate_mtx);
@@ -2891,13 +2895,13 @@ void Vdp2DrawRotationThread( void * p ){
 			break;
 		}
 		FrameProfileAdd("Vdp2DrawRotationThread start");
-		YGL_THREAD_DEBUG("Vdp2DrawRotationThread in %d\n", curret_rbg->vdp2_sync_flg);
+		YGL_THREAD_DEBUG("Vdp2DrawRotationThread in %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata );
 		Vdp2DrawRotation_in(curret_rbg);
-		FrameProfileAdd("Vdp2DrawRotation_in end");
-		curret_rbg->vdp2_sync_flg = 1;
-		YGL_THREAD_DEBUG("Vdp2DrawRotationThread end%d\n", curret_rbg->vdp2_sync_flg);
+		FrameProfileAdd("Vdp2DrawRotation_in end"  );
+		curret_rbg->vdp2_sync_flg = RBG_FINIESED;
+		YGL_THREAD_DEBUG("Vdp2DrawRotationThread end %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata );
 		YabThreadUnLock(g_rotate_mtx);
-		while (curret_rbg->vdp2_sync_flg == 1 && Vdp2DrawRotationThread_running) YabThreadYield();
+		while (curret_rbg->vdp2_sync_flg == RBG_FINIESED && Vdp2DrawRotationThread_running) YabThreadYield();
 		YGL_THREAD_DEBUG("Vdp2DrawRotationThread out %d\n", curret_rbg->vdp2_sync_flg);
 		
 	}
@@ -2995,7 +2999,7 @@ static void FASTCALL Vdp2DrawRotation( RBGDrawInfo * rbg )
 	   }
 	   Vdp2RgbTextureSync();
 	   YGL_THREAD_DEBUG("Vdp2DrawRotation in %d\n", curret_rbg->vdp2_sync_flg);
-	   curret_rbg->vdp2_sync_flg = 0;
+	   curret_rbg->vdp2_sync_flg = RBG_REQ_RENDER;
 	   YabThreadUnLock(g_rotate_mtx);
 	   YGL_THREAD_DEBUG("Vdp2DrawRotation out %d\n", curret_rbg->vdp2_sync_flg);
    }
@@ -3015,17 +3019,19 @@ void Vdp2RgbTextureSync(){
 	
 	if (g_rotate_mtx && curret_rbg){
 
-		if (curret_rbg->vdp2_sync_flg == 0){
+		if (curret_rbg->vdp2_sync_flg == RBG_REQ_RENDER){
+			
+			// Render Reqested But not finied
 			YGL_THREAD_DEBUG("Vdp2RgbTextureSync in %d\n", curret_rbg->vdp2_sync_flg);
-			while (curret_rbg->vdp2_sync_flg == 0) YabThreadYield();
+			while (curret_rbg->vdp2_sync_flg == RBG_REQ_RENDER) YabThreadYield();
 			YabThreadLock(g_rotate_mtx);
-			curret_rbg->vdp2_sync_flg = 2;
+			curret_rbg->vdp2_sync_flg = RBG_TEXTURE_SYNCED;
 			YGL_THREAD_DEBUG("Vdp2RgbTextureSync out %d\n", curret_rbg->vdp2_sync_flg);
 		}
-		else if (curret_rbg->vdp2_sync_flg == 1){
+		else if (curret_rbg->vdp2_sync_flg == RBG_FINIESED){
 			YGL_THREAD_DEBUG("Vdp2RgbTextureSync in %d\n", curret_rbg->vdp2_sync_flg);
 			YabThreadLock(g_rotate_mtx);
-			curret_rbg->vdp2_sync_flg = 2;
+			curret_rbg->vdp2_sync_flg = RBG_TEXTURE_SYNCED;
 			YGL_THREAD_DEBUG("Vdp2RgbTextureSync out %d\n", curret_rbg->vdp2_sync_flg);
 		}
 	}
@@ -3038,7 +3044,7 @@ static void Vdp2DrawRotationSync(){
 		
 		Vdp2RgbTextureSync();
 
-		if (curret_rbg->vdp2_sync_flg == 2){
+		if (curret_rbg->vdp2_sync_flg == RBG_TEXTURE_SYNCED){
 			YGL_THREAD_DEBUG("Vdp2DrawRotationSync in %d\n", curret_rbg->vdp2_sync_flg);
 			curret_rbg->info.cellw = curret_rbg->hres;
 			curret_rbg->info.cellh = curret_rbg->vres;
@@ -3047,7 +3053,7 @@ static void Vdp2DrawRotationSync(){
 			}
 			curret_rbg->info.flipfunction = 0;
 			YglCachedQuad(&curret_rbg->info, &curret_rbg->c);
-			curret_rbg->vdp2_sync_flg = -1;
+			curret_rbg->vdp2_sync_flg = RBG_IDLE;
 			YGL_THREAD_DEBUG("Vdp2DrawRotationSync out %d\n", curret_rbg->vdp2_sync_flg);
 		}
 	}
@@ -3598,6 +3604,7 @@ void VIDOGLVdp1DrawStart(void)
 
 void VIDOGLVdp1DrawEnd(void)
 {
+	Vdp2DrawRotationSync();
 	YglTmPush(YglTM);
 	YglRenderVDP1();
 }
@@ -4977,11 +4984,12 @@ void VIDOGLVdp2DrawStart(void)
 
 void VIDOGLVdp2DrawEnd(void)
 {
-	YglTmPush(YglTM);
-
+	
 	Vdp2DrawRotationSync();
 	FrameProfileAdd("Vdp2DrawRotationSync end");
 
+	YglTmPush(YglTM);
+	
    YglRender();
    /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
    function that would be called here and during a manual change */
