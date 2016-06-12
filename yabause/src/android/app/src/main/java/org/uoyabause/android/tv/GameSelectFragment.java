@@ -260,6 +260,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
     @Override
     public void onDestroy() {
+        dismissDialog();
         System.gc();
         super.onDestroy();
 /*
