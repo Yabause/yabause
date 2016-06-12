@@ -2919,6 +2919,7 @@ void YglRender(void) {
    glDepthMask(GL_TRUE);
    glEnable(GL_DEPTH_TEST);
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+   if (_Ygl->texture_manager == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
