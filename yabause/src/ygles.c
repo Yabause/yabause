@@ -1341,16 +1341,24 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    if (checkval != level->prg[level->prgcurrent].color_offset_val[0])
    {
 	   YglProgramChange(level, prg);
+	   level->prg[level->prgcurrent].id = input->id;
 	   level->prg[level->prgcurrent].blendmode = input->blendmode;
 
    } else if( level->prg[level->prgcurrent].prgid != prg ) {
       YglProgramChange(level,prg);
+	  level->prg[level->prgcurrent].id = input->id;
 	  level->prg[level->prgcurrent].blendmode = input->blendmode;
    }
    else if (level->prg[level->prgcurrent].blendmode != input->blendmode){
 	   YglProgramChange(level, prg);
+	   level->prg[level->prgcurrent].id = input->id;
 	   level->prg[level->prgcurrent].blendmode = input->blendmode;
-  }
+   }
+   else if (input->id != level->prg[level->prgcurrent].id ){
+	   YglProgramChange(level, prg);
+	   level->prg[level->prgcurrent].id = input->id;
+	   level->prg[level->prgcurrent].blendmode = input->blendmode;
+   }
 // for polygon debug
   //else if (prg == PG_VFP1_GOURAUDSAHDING ){
   //	   YglProgramChange(level, prg);
