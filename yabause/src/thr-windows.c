@@ -110,6 +110,11 @@ void YabThreadYield(void)
 	SleepEx(0, 0);
 }
 
+void YabThreadUSleep( u32 stime )
+{
+	SleepEx(stime/1000, 0);
+}
+
 void YabThreadSleep(void) 
 {
    struct thd_s *thd = (struct thd_s *)TlsGetValue(hnd_key);

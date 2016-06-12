@@ -56,6 +56,8 @@ typedef struct
    u32 io_addr;
    int need_write;
    u16 write_data;
+   int updated;
+   int last_step;
 }ScspDsp;
 
 //dsp instruction format
