@@ -88,6 +88,12 @@ void YabThreadSleep(void)
    pause();
 }
 
+void YabThreadUSleep( u32 stime )
+{
+	usleep(stime);
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 void YabThreadRemoteSleep(unsigned int id)
