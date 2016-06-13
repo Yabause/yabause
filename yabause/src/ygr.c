@@ -30,6 +30,9 @@
 #include <stdarg.h>
 #include "tsunami/yab_tsunami.h"
 #include "mpeg_card.h"
+#ifdef WIN32
+#include "Windows.h"
+#endif
 
 void Cs2Exec(u32 timing);
 
@@ -95,12 +98,23 @@ struct Ygr
 }ygr_cxt = { 0 };
 
 
+
 u16 read_fifo()
 {
    int ptr = ygr_cxt.fifo_read_ptr;
 
    if(ygr_cxt.transfer_ctrl & 4)
-     assert(ygr_cxt.fifo_num_stored > 0);
+   {
+      assert(ygr_cxt.fifo_num_stored > 0);
+
+      if (ygr_cxt.fifo_num_stored <= 0)
+      {
+#ifdef WIN32
+         DebugBreak();
+#endif
+      }
+
+   }
 
    ygr_cxt.fifo_read_ptr++;
    ygr_cxt.fifo_read_ptr &= FIFO_MASK;
