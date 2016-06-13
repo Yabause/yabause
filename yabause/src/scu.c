@@ -441,6 +441,7 @@ struct QueuedDma
    int starting_factor;
    int level;
    u32 indirect_address;
+   int is_last_indirect;
 }scu_dma_queue[16] = { 0 };
 
 int get_write_add_value(u32 reg_val)
@@ -511,9 +512,13 @@ void dma_finished(struct QueuedDma * dma)
 
 void dma_read_indirect(struct QueuedDma * dma)
 {
+   u32 address = MappedMemoryReadLongNocache(MSH2, dma->indirect_address + 8);
    dma->count = MappedMemoryReadLongNocache(MSH2, dma->indirect_address);
    dma->write_address = MappedMemoryReadLongNocache(MSH2, dma->indirect_address + 4);
-   dma->read_address = MappedMemoryReadLongNocache(MSH2, dma->indirect_address + 8);
+   dma->read_address = address & (~0x80000000);
+
+   if (address & 0x80000000)
+      dma->is_last_indirect = 1;
 }
 
 int get_bus_type(u32 src, u32 dst);
@@ -524,7 +529,7 @@ void check_dma_finished(struct QueuedDma *dma)
    {
       if (dma->is_indirect)
       {
-         if (dma->read_address & 0x80000000)
+         if (dma->is_last_indirect)
          {
             dma->status = DMA_FINISHED;
             dma_finished(dma);
