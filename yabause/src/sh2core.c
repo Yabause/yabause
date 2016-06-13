@@ -2034,7 +2034,7 @@ void WDTExec(SH2_struct *sh, u32 cycles) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 sh2_dma_access(u32 addr, u16 data, int is_read, int size)
+u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size)
 {
    addr &= 0xfffffff;
 
