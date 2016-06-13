@@ -2507,6 +2507,8 @@ u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size)
    return 0;
 }
 
+int sh2_check_wait(SH2_struct * sh, u32 addr, int size);
+
 void dma_tick(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA, int * active)
 {
    int src_increment = 0;
@@ -2514,6 +2516,13 @@ void dma_tick(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRD
    u8 dest_inc_mode = (*CHCR >> 14) & 3;
    u8 src_inc_mode = (*CHCR >> 12) & 3;
    u8 size = (*CHCR >> 10) & 3;
+   int check_size = size;
+
+   if (check_size > 2)
+      check_size = 2;//size 3 is also long size writes
+
+   if (sh2_check_wait(sh, *SAR, check_size))
+      return;
 
    if (dest_inc_mode == 1)
       dst_increment = 1;

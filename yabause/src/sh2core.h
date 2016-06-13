@@ -558,7 +558,7 @@ void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *sh, u32 addr, u16 data);
 int SH2SaveState(SH2_struct *context, FILE *fp);
 int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
 
-u32 sh2_dma_access(u32 addr, u16 data, int is_read, int size);
+u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size);
 
 #if defined(SH2_DYNAREC)
 extern SH2Interface_struct SH2Dynarec;

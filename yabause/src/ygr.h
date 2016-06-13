@@ -44,6 +44,6 @@ void FASTCALL sh2_ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 data);
 void FASTCALL sh2_ygr_a_bus_write_long(SH2_struct * sh, u32 addr, u32 data);
 
 void ygr_cd_irq(u8 flags);
-int sh2_a_bus_check_wait(u32 addr);
+int sh2_a_bus_check_wait(u32 addr, int size);
 int ygr_dreq_asserted();
 #endif

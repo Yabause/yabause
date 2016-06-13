@@ -128,11 +128,11 @@ SH2Interface_struct SH2DebugInterpreter = {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int sh2_check_wait(SH2_struct * sh, u32 addr)
+int sh2_check_wait(SH2_struct * sh, u32 addr, int size)
 {
    if ((addr & 0x0fffffff) == 0x05818000)
    {
-      if (sh2_a_bus_check_wait(addr))
+      if (sh2_a_bus_check_wait(addr, size))
          return 1;
    }
 
@@ -1413,7 +1413,7 @@ static void FASTCALL SH2movll(SH2_struct * sh)
 {
    u32 addr = sh->regs.R[INSTRUCTION_C(sh->instruction)];
 
-   if (sh2_check_wait(sh, addr))
+   if (sh2_check_wait(sh, addr, 2))
    {
       sh->cycles++;
       return;
@@ -1558,7 +1558,7 @@ static void FASTCALL SH2movwl(SH2_struct * sh)
    s32 n = INSTRUCTION_B(sh->instruction);
    u32 addr = sh->regs.R[m];
 
-   if (sh2_check_wait(sh, addr))
+   if (sh2_check_wait(sh, addr, 1))
    {
       sh->cycles++;
       return;

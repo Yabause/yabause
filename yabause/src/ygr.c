@@ -197,10 +197,12 @@ int ygr_dreq_asserted()
 }
 
 
-int sh2_a_bus_check_wait(u32 addr)
+int sh2_a_bus_check_wait(u32 addr, int size)
 {
    //if something is in the fifo, no wait
-   if (ygr_cxt.fifo_num_stored)
+   if (size == 1 && ygr_cxt.fifo_num_stored)//word size
+      return 0;
+   else if (size == 2 && ygr_cxt.fifo_num_stored >= 2)//long size
       return 0;
    else
    {
