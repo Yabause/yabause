@@ -516,6 +516,7 @@ void dma_read_indirect(struct QueuedDma * dma)
    dma->count = MappedMemoryReadLongNocache(MSH2, dma->indirect_address);
    dma->write_address = MappedMemoryReadLongNocache(MSH2, dma->indirect_address + 4);
    dma->read_address = address & (~0x80000000);
+   dma->second_word = 0;
 
    if (address & 0x80000000)
       dma->is_last_indirect = 1;
