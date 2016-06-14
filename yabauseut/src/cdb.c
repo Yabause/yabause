@@ -2015,3 +2015,169 @@ void misc_cd_test()
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+u32 current_addr = 0x2580000C;
+
+u16 write_data[] = { 0xdead,0xbeef,0xcafe,0xf00d };
+
+u32 write_data32[] = { 
+   0x0000dead, 0x0000beef, 0x0000cafe, 0x0000f00d, 
+   0x0000f33d, 0x0000face, 0x0000ba5e, 0x0000ba11 };
+
+int data_pos = 0;
+
+#define CDB_REG_HIRQMASK32    *((volatile u32 *)0x2589000C)
+
+void increment_addr(int do_32)
+{
+   if (do_32)
+   {
+      current_addr += 4;
+   }
+   else
+   {
+      if ((current_addr & 2) == 0)
+         current_addr += 2;
+      else
+         current_addr += 0xe;
+   }
+}
+
+void write_column(int x_pos, int do_32)
+{
+   int i;
+   for (i = 0; i < 24; i++)
+   {
+      volatile u16* test_ptr = ((volatile u16 *)current_addr);
+      volatile u32* test_ptr32 = ((volatile u32 *)current_addr);
+
+      if (do_32)
+         CDB_REG_HIRQMASK = 0;
+
+      if(do_32)
+         *test_ptr32 = write_data32[data_pos++];
+      else
+         *test_ptr = write_data[data_pos++];
+
+      if (do_32)
+      {
+         if (data_pos > 7)
+            data_pos = 0;
+      }
+      else
+      {
+         if (data_pos > 3)
+            data_pos = 0;
+      }
+
+      if(do_32)
+         vdp_printf(&test_disp_font, x_pos * 8, i * 8, 0xF, "%08X %08X           ", current_addr, CDB_REG_HIRQMASK32);
+      else
+         vdp_printf(&test_disp_font, x_pos * 8, i * 8, 0xF, "%08X %04X           ", current_addr, CDB_REG_HIRQMASK);
+
+      increment_addr(do_32);
+   }
+}
+
+void do_display(int is_32)
+{
+   if (is_32)
+   {
+      write_column(0, is_32);
+      write_column(20, is_32);
+   }
+   else
+   {
+      write_column(0, is_32);
+      write_column(14, is_32);
+      write_column(28, is_32);
+   }
+}
+
+void ygr_write_mapping_test()
+{
+   test_disp_font.transparent = 0;
+
+   int is_32 = 1;
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         do_display(is_32);
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         current_addr &= 0xfffff000;
+         current_addr += 0x400C;
+         do_display(is_32);
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+         reset_system();
+   }
+}
+
+void read_do_column(int x_pos, int do_32)
+{
+   int i;
+   for (i = 0; i < 24; i++)
+   {
+      volatile u16* test_ptr = ((volatile u16 *)current_addr);
+      volatile u32* test_ptr32 = ((volatile u32 *)current_addr);
+
+      if (do_32)
+         vdp_printf(&test_disp_font, x_pos * 8, i * 8, 0xF, "%08X %08X           ", current_addr, *test_ptr32);
+      else
+         vdp_printf(&test_disp_font, x_pos * 8, i * 8, 0xF, "%08X %04X           ", current_addr, *test_ptr);
+
+      increment_addr(do_32);
+   }
+}
+
+void do_read_display(int is_32)
+{
+   if (is_32)
+   {
+      read_do_column(0, is_32);
+      read_do_column(20, is_32);
+   }
+   else
+   {
+      read_do_column(0, is_32);
+      read_do_column(14, is_32);
+      read_do_column(28, is_32);
+   }
+}
+
+void ygr_read_mapping_test()
+{
+   CDB_REG_HIRQMASK = 0xdead;
+
+   test_disp_font.transparent = 0;
+
+   int is_32 = 1;
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         do_read_display(is_32);
+      }
+
+      if (per[0].but_push_once & PAD_B)
+      {
+         current_addr &= 0xfffff000;
+         current_addr += 0x400C;
+         do_read_display(is_32);
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+         reset_system();
+   }
+}

@@ -113,7 +113,6 @@ u16 read_fifo()
          DebugBreak();
 #endif
       }
-
    }
 
    ygr_cxt.fifo_read_ptr++;
@@ -429,52 +428,57 @@ char* get_status(u16 cr1)
 //replacements for Cs2ReadWord etc
 u16 FASTCALL ygr_a_bus_read_word(u32 addr) {
    u16 val = 0;
-   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
-   switch (addr) {
-   case 0x90008:
-   case 0x9000A:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.HIRQ);
-      return ygr_cxt.regs.HIRQ;
-   case 0x9000C:
-   case 0x9000E:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.HIRQMASK);
-      return ygr_cxt.regs.HIRQMASK;
-   case 0x90018:
-   case 0x9001A:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR1);
-      return ygr_cxt.regs.RR1;
-   case 0x9001C:
-   case 0x9001E:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR2);
-      return ygr_cxt.regs.RR2;
-   case 0x90020:
-   case 0x90022:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR3);
-      return ygr_cxt.regs.RR3;
-   case 0x90024:
-   case 0x90026:
-      LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR4);
-      ygr_cxt.mbx_status |= 2;
-      CDLOG("abus cdb response: CR1: %04x CR2: %04x CR3: %04x CR4: %04x HIRQ: %04x Status: %s\n", ygr_cxt.regs.RR1, ygr_cxt.regs.RR2, ygr_cxt.regs.RR3, ygr_cxt.regs.RR4, ygr_cxt.regs.HIRQ, get_status(ygr_cxt.regs.RR1));
-      return ygr_cxt.regs.RR4;
-   case 0x90028:
-   case 0x9002A:
-      return ygr_cxt.regs.MPEGRGB;
-   case 0x98000:
-      // transfer info
+   if ((addr & 0x7FFF) <= 0xFFF)
    {
-      u16 val = read_fifo();
-      verify_fifo_log(val);
-      tsunami_log_value("SH2_R_FIFO", val, 16);
-      return val;
-   }
-      break;
-   default:
-      LOG("ygr\t: Undocumented register read %08X\n", addr);
-      break;
-   }
+      addr &= 0x3F;
 
+      switch (addr) {
+      case 0x00:
+      case 0x02:
+         // transfer info
+      {
+         u16 val = read_fifo();
+         verify_fifo_log(val);
+         tsunami_log_value("SH2_R_FIFO", val, 16);
+         return val;
+      }
+      break;
+      case 0x08:
+      case 0x0A:
+         LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.HIRQ);
+         return ygr_cxt.regs.HIRQ;
+      case 0x0C:
+      case 0x0E:
+         LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.HIRQMASK);
+         return ygr_cxt.regs.HIRQMASK;
+      case 0x18:
+      case 0x1A:
+         LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR1);
+         return ygr_cxt.regs.RR1;
+      case 0x1C:
+      case 0x1E:
+         LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR2);
+         return ygr_cxt.regs.RR2;
+      case 0x20:
+      case 0x22:
+         LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR3);
+         return ygr_cxt.regs.RR3;
+      case 0x24:
+      case 0x26:
+         LLECDLOG("Cs2ReadWord %08X %04X\n", addr, ygr_cxt.regs.RR4);
+         ygr_cxt.mbx_status |= 2;
+         CDLOG("abus cdb response: CR1: %04x CR2: %04x CR3: %04x CR4: %04x HIRQ: %04x Status: %s\n", ygr_cxt.regs.RR1, ygr_cxt.regs.RR2, ygr_cxt.regs.RR3, ygr_cxt.regs.RR4, ygr_cxt.regs.HIRQ, get_status(ygr_cxt.regs.RR1));
+         return ygr_cxt.regs.RR4;
+      case 0x28:
+      case 0x2A:
+         return ygr_cxt.regs.MPEGRGB;
+      default:
+         LOG("ygr\t: Undocumented register read %08X\n", addr);
+         break;
+      }
+   }
+   assert(0);
    return val;
 }
 
@@ -726,42 +730,46 @@ void ygr_a_bus_cd_cmd_log(void)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL ygr_a_bus_write_word(u32 addr, u16 val) {
-   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
-   switch (addr) {
-   case 0x90008:
-   case 0x9000A:
-      ygr_cxt.regs.HIRQ &= val;
-      return;
-   case 0x9000C:
-   case 0x9000E: 
-      ygr_cxt.regs.HIRQMASK = val;
-      return;
-   case 0x90018:
-   case 0x9001A: 
-      ygr_cxt.regs.CR1 = val;
-      return;
-   case 0x9001C:
-   case 0x9001E: 
-      ygr_cxt.regs.CR2 = val;
-      return;
-   case 0x90020:
-   case 0x90022: 
-      ygr_cxt.regs.CR3 = val;
-      return;
-   case 0x90024:
-   case 0x90026: 
-      ygr_cxt.regs.CR4 = val;
-      SH2SendInterrupt(SH1, 70, (sh1_cxt.onchip.intc.iprb >> 4) & 0xf);
-      ygr_a_bus_cd_cmd_log();
-      return;
-   case 0x90028:
-   case 0x9002A: 
-      ygr_cxt.regs.MPEGRGB = val;
-      return;
-   default:
-      LOG("ygr\t:Undocumented register write %08X\n", addr);
-      break;
+   if ((addr & 0x7FFF) <= 0xFFF)
+   {
+      addr &= 0x3F;
+
+      switch (addr) {
+      case 0x08:
+      case 0x0A:
+         ygr_cxt.regs.HIRQ &= val;
+         return;
+      case 0x0C:
+      case 0x0E:
+         ygr_cxt.regs.HIRQMASK = val;
+         return;
+      case 0x18:
+      case 0x1A:
+         ygr_cxt.regs.CR1 = val;
+         return;
+      case 0x1C:
+      case 0x1E:
+         ygr_cxt.regs.CR2 = val;
+         return;
+      case 0x20:
+      case 0x22:
+         ygr_cxt.regs.CR3 = val;
+         return;
+      case 0x24:
+      case 0x26:
+         ygr_cxt.regs.CR4 = val;
+         SH2SendInterrupt(SH1, 70, (sh1_cxt.onchip.intc.iprb >> 4) & 0xf);
+         ygr_a_bus_cd_cmd_log();
+         return;
+      case 0x28:
+      case 0x2A:
+         ygr_cxt.regs.MPEGRGB = val;
+         return;
+      default:
+         LOG("ygr\t:Undocumented register write %08X\n", addr);
+         break;
+      }
    }
 }
 
@@ -769,59 +777,68 @@ void FASTCALL ygr_a_bus_write_word(u32 addr, u16 val) {
 
 u32 FASTCALL ygr_a_bus_read_long(u32 addr) {
    u32 val = 0;
-   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
-   switch (addr) {
-   case 0x90008:
-      //2 copies?
-      return ((ygr_cxt.regs.HIRQ << 16) | ygr_cxt.regs.HIRQ);
-   case 0x9000C: 
-      return ((ygr_cxt.regs.HIRQMASK << 16) | ygr_cxt.regs.HIRQMASK);
-   case 0x90018: 
-      return ((ygr_cxt.regs.RR1 << 16) | ygr_cxt.regs.RR1);
-   case 0x9001C: 
-      return ((ygr_cxt.regs.RR2 << 16) | ygr_cxt.regs.RR2);
-   case 0x90020: 
-      return ((ygr_cxt.regs.RR3 << 16) | ygr_cxt.regs.RR3);
-   case 0x90024:
-      ygr_cxt.mbx_status |= 2;
-      return ((ygr_cxt.regs.RR4 << 16) | ygr_cxt.regs.RR4);
-   case 0x90028:
-      return ((ygr_cxt.regs.MPEGRGB << 16) | ygr_cxt.regs.MPEGRGB);
-   case 0x18000:
+   if ((addr & 0x7FFF) <= 0xFFF)
    {
-      u32 top;
-      top = read_fifo();
-      tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
-      top <<= 16;
-      top |= read_fifo();
-      tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
-      make_fifo_log(top);
-      verify_fifo_log(top);
-      return top;
-   }
-   default:
-      LOG("ygr\t: Undocumented register read %08X\n", addr);
-      break;
-   }
+      addr &= 0x3F;
 
+      switch (addr) {
+      case 0x00:
+      {
+         u32 top;
+         top = read_fifo();
+         tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
+         top <<= 16;
+         top |= read_fifo();
+         tsunami_log_value("SH2_R_FIFO", top & 0xffff, 16);
+         make_fifo_log(top);
+         verify_fifo_log(top);
+         return top;
+      }
+      case 0x08:
+         return ((ygr_cxt.regs.HIRQ << 16) | ygr_cxt.regs.HIRQ);
+      case 0x0C:
+         return ((ygr_cxt.regs.HIRQMASK << 16) | ygr_cxt.regs.HIRQMASK);
+      case 0x18:
+         return ((ygr_cxt.regs.RR1 << 16) | ygr_cxt.regs.RR1);
+      case 0x1C:
+         return ((ygr_cxt.regs.RR2 << 16) | ygr_cxt.regs.RR2);
+      case 0x20:
+         return ((ygr_cxt.regs.RR3 << 16) | ygr_cxt.regs.RR3);
+      case 0x24:
+         ygr_cxt.mbx_status |= 2;
+         return ((ygr_cxt.regs.RR4 << 16) | ygr_cxt.regs.RR4);
+      case 0x28:
+         return ((ygr_cxt.regs.MPEGRGB << 16) | ygr_cxt.regs.MPEGRGB);
+      default:
+         LOG("ygr\t: Undocumented register read %08X\n", addr);
+         break;
+      }
+   }
    return val;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL ygr_a_bus_write_long(UNUSED u32 addr, UNUSED u32 val) {
-   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
-   switch (addr)
+   if ((addr & 0x7FFF) <= 0xFFF)
    {
-   case 0x18000:
-      // transfer data
-      break;
-   default:
-      LOG("ygr\t: Undocumented register write %08X\n", addr);
-      //         T3WriteLong(Cs2Area->mem, addr, val);
-      break;
+      addr &= 0x3F;
+
+      switch (addr)
+      {
+      case 0x0c:
+         ygr_cxt.regs.HIRQMASK = val;//gets truncated
+         break;
+      case 0x18000:
+         // transfer data
+         break;
+      default:
+         LOG("ygr\t: Undocumented register write %08X\n", addr);
+         //         T3WriteLong(Cs2Area->mem, addr, val);
+         break;
+      }
    }
 }
 
