@@ -31,7 +31,7 @@
 #include "tsunami/yab_tsunami.h"
 #include "mpeg_card.h"
 #ifdef WIN32
-#include "Windows.h"
+#include "windows.h"
 #endif
 
 void Cs2Exec(u32 timing);
