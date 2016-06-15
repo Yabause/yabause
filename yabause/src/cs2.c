@@ -1140,6 +1140,10 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: Command: initializeCDSystem %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2InitializeCDSystem();
       break;
+    case 0x05:
+       CDLOG("cs2\t: Command: Open Tray %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+       Cs2OpenTray();
+       break;
     case 0x06:
       CDLOG("cs2\t: Command: endDataTransfer %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2EndDataTransfer();
@@ -1153,6 +1157,10 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: Command: seekDisc %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SeekDisc();
       break;
+    case 0x12:
+      CDLOG("cs2\t: Command: Scan Disc %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2ScanDisc();
+      break;
     case 0x20:
       CDLOG("cs2\t: Command: getSubcodeQRW %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2GetSubcodeQRW();
@@ -1160,6 +1168,11 @@ void Cs2Execute(void) {
     case 0x30:
       CDLOG("cs2\t: Command: setCDDeviceConnection %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetCDDeviceConnection();
+      break;
+    case 0x31:
+      CDLOG("cs2\t: Command: Get CD Device Connection\n");
+      Cs2SetCDDeviceConnection();
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x32:
       CDLOG("cs2\t: Command: getLastBufferDestination %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
@@ -1169,6 +1182,11 @@ void Cs2Execute(void) {
     case 0x40:
       CDLOG("cs2\t: Command: setFilterRange %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetFilterRange();
+      break;
+    case 0x41:
+      CDLOG("cs2\t: Command: Get Filter Range\n");
+      Cs2GetFilterRange();
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
     case 0x42:
       CDLOG("cs2\t: Command: setFilterSubheaderConditions %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
@@ -1192,6 +1210,11 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: Command: setFilterConnection %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetFilterConnection();
       break;
+    case 0x47:
+       CDLOG("cs2\t: Command: getFilterConnection %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+       Cs2GetFilterConnection();
+       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+       break;
     case 0x48:
       CDLOG("cs2\t: Command: resetSelector %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2ResetSelector();
@@ -1221,6 +1244,15 @@ void Cs2Execute(void) {
       Cs2GetSectorInfo();
       CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       break;
+    case 0x55:
+      CDLOG("cs2\t: Command: Exec FAD Search %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2ExecFadSearch();
+      break;
+    case 0x56:
+      CDLOG("cs2\t: Command: Get FAD Search Results %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2GetFadSearchResults();
+      CDLOG("cs2\t: ret: %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      break;
     case 0x60:
       CDLOG("cs2\t: Command: setSectorLength %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2SetSectorLength();
@@ -1244,12 +1276,14 @@ void Cs2Execute(void) {
       CDLOG("cs2\t: Command: putSectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
       Cs2PutSectorData();
       break;
-	 case 0x65:
-		 CDLOG("cs2\t: Command: Unimplemented copySectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
-		 break;
-	 case 0x66:
-		 CDLOG("cs2\t: Command: Unimplemented moveSectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
-		 break;
+    case 0x65:
+      CDLOG("cs2\t: Command: copySectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2CopySectorData();
+      break;
+    case 0x66:
+      CDLOG("cs2\t: Command: moveSectorData %04x %04x %04x %04x %04x\n", Cs2Area->reg.HIRQ, Cs2Area->reg.CR1, Cs2Area->reg.CR2, Cs2Area->reg.CR3, Cs2Area->reg.CR4);
+      Cs2MoveSectorData();
+      break;
     case 0x67:
       CDLOG("cs2\t: Command: getCopyError\n");
       Cs2GetCopyError();
@@ -1495,6 +1529,17 @@ void Cs2InitializeCDSystem(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Cs2OpenTray(void)
+{
+   u16 val = 0;
+
+   Cs2Area->status = CDB_STAT_OPEN;
+   doCDReport(Cs2Area->status);
+   Cs2Area->reg.HIRQ = val | CDB_HIRQ_CMOK | CDB_HIRQ_DCHG;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void Cs2EndDataTransfer(void) {
   s32 i;
   if (Cs2Area->cdwnum)
@@ -1679,19 +1724,19 @@ void Cs2SeekDisc(void) {
   {
      // Seek by FAD
      u32 sdFAD;
-	 int i;
+    int i;
 
      sdFAD = ((Cs2Area->reg.CR1 & 0x0F) << 16) | Cs2Area->reg.CR2;
-	 Cs2Area->status = CDB_STAT_PAUSE;
-	 for (i = 0; i < 16; i++){
-		 u32 tfad = Cs2Area->TOC[i] & 0x00FFFFFF;
-		 if (tfad >= sdFAD){
-			 Cs2SetupDefaultPlayStats(i, 1);
-			 Cs2Area->FAD = sdFAD;
-			 break;
-		 }
-	 }
-		 
+    Cs2Area->status = CDB_STAT_PAUSE;
+    for (i = 0; i < 16; i++){
+       u32 tfad = Cs2Area->TOC[i] & 0x00FFFFFF;
+       if (tfad >= sdFAD){
+          Cs2SetupDefaultPlayStats(i, 1);
+          Cs2Area->FAD = sdFAD;
+          break;
+       }
+    }
+       
   }
   else
   {
@@ -1720,6 +1765,15 @@ void Cs2SeekDisc(void) {
 
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2ScanDisc(void) {
+   Cs2Area->status = CDB_STAT_SCAN;
+
+   // finish me
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1809,6 +1863,17 @@ void Cs2SetCDDeviceConnection(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Cs2GetCDDeviceConnection(void)
+{
+   Cs2Area->reg.CR1 = (Cs2Area->status << 8);
+   Cs2Area->reg.CR2 = 0;
+   Cs2Area->reg.CR3 = Cs2Area->outconcddevnum << 8; 
+   Cs2Area->reg.CR4 = 0;
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void Cs2GetLastBufferDestination(void) {
   Cs2Area->reg.CR1 = (Cs2Area->status << 8);
   Cs2Area->reg.CR2 = 0;
@@ -1830,6 +1895,20 @@ void Cs2SetFilterRange(void) {
   // return default cd stats
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2GetFilterRange(void) {
+   u8 sfrfilternum;
+
+   sfrfilternum = Cs2Area->reg.CR3 >> 8;
+
+   Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->filter[sfrfilternum].FAD & 0xFF0000) >> 16);
+   Cs2Area->reg.CR2 = Cs2Area->filter[sfrfilternum].FAD & 0xFFFF;
+   Cs2Area->reg.CR3 = ((Cs2Area->filter[sfrfilternum].range & 0xFF0000) >> 16);
+   Cs2Area->reg.CR4 = Cs2Area->filter[sfrfilternum].range & 0xFFFF;
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1925,6 +2004,21 @@ void Cs2SetFilterConnection(void) {
 
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2GetFilterConnection(void) {
+   u8 sfcfilternum;
+
+   sfcfilternum = Cs2Area->reg.CR3 >> 8;
+
+   Cs2Area->reg.CR1 = (Cs2Area->status << 8);
+   Cs2Area->reg.CR2 = (Cs2Area->filter[sfcfilternum].condtrue << 8) | Cs2Area->filter[sfcfilternum].condfalse;
+   Cs2Area->reg.CR3 = 0;
+   Cs2Area->reg.CR4 = 0;
+
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2141,6 +2235,21 @@ void Cs2GetSectorInfo(void) {
 
   Cs2Area->reg.CR1 = (CDB_STAT_REJECT << 8) | (Cs2Area->reg.CR1 & 0xFF);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2ExecFadSearch(void) {
+   // finish me
+   doCDReport(Cs2Area->status);
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2GetFadSearchResults(void) {
+   // finish me
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2386,6 +2495,22 @@ void Cs2PutSectorData(void) {
       doCDReport(CDB_STAT_REJECT);
       Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_EHST;
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2CopySectorData(void) {
+   // finish me
+   doCDReport(Cs2Area->status);
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ECPY;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Cs2MoveSectorData(void) {
+   // finish me
+   doCDReport(Cs2Area->status);
+   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ECPY;
 }
 
 //////////////////////////////////////////////////////////////////////////////
