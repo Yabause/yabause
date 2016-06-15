@@ -212,17 +212,20 @@ int ygr_dreq_asserted()
 
 int sh2_a_bus_check_wait(u32 addr, int size)
 {
-   //if something is in the fifo, no wait
-   if (size == 1 && ygr_cxt.fifo_num_stored)//word size
-      return 0;
-   else if (size == 2 && ygr_cxt.fifo_num_stored >= 2)//long size
-      return 0;
-   else
+   if (((addr & 0x7FFF) <= 0xFFF) && ((addr &= 0x3F) <= 2))
    {
-      if ((ygr_cxt.transfer_ctrl >> 2) & 1)
-         return 1;//more data expected
-      else
+      //if something is in the fifo, no wait
+      if (size == 1 && ygr_cxt.fifo_num_stored)//word size
          return 0;
+      else if (size == 2 && ygr_cxt.fifo_num_stored >= 2)//long size
+         return 0;
+      else
+      {
+         if ((ygr_cxt.transfer_ctrl >> 2) & 1)
+            return 1;//more data expected
+         else
+            return 0;
+      }
    }
 
    return 0;

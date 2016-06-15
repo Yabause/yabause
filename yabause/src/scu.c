@@ -721,9 +721,14 @@ u16 a_b_access_word(u32 addr, u16 data, int is_read)
    return 0;
 }
 
+int sh2_check_wait(SH2_struct * sh, u32 addr, int size);
+
 //cpu-bus to a or b bus
 void scu_dma_tick_32_to_16(struct QueuedDma *dma)
 {
+   if (sh2_check_wait(NULL, dma->read_address, 2))
+      return;
+
    if (!dma->second_word)
    {
       dma->buffer = MappedMemoryReadLongNocache(MSH2, dma->read_address);
@@ -748,6 +753,9 @@ void scu_dma_tick_32_to_16(struct QueuedDma *dma)
 
 void scu_dma_tick_16_to_16(struct QueuedDma *dma)
 {
+   if (sh2_check_wait(NULL, dma->read_address, 1))
+      return;
+
    if (!dma->second_word)
    {
       u16 src_val = a_b_access_word(dma->read_address, 0, 1);
@@ -797,7 +805,12 @@ void scu_sort_dma()
 
 void scu_dma_tick_32(struct QueuedDma * dma)
 {
-   u32 src_val = MappedMemoryReadLongNocache(MSH2, dma->read_address);
+   u32 src_val = 0;
+
+   if (sh2_check_wait(NULL, dma->read_address, 2))
+      return;
+   
+   src_val = MappedMemoryReadLongNocache(MSH2, dma->read_address);
    MappedMemoryWriteLongNocache(MSH2, dma->write_address, src_val);
 
    dma->read_address += dma->read_add;

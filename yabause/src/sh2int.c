@@ -130,7 +130,7 @@ SH2Interface_struct SH2DebugInterpreter = {
 
 int sh2_check_wait(SH2_struct * sh, u32 addr, int size)
 {
-   if ((addr & 0x0fffffff) == 0x05818000)
+   if (((addr & 0xff00000) == 0x05800000))
    {
       if (sh2_a_bus_check_wait(addr, size))
          return 1;
