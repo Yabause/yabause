@@ -3046,9 +3046,6 @@ u16 FASTCALL Sh2ScuReadWord(SH2_struct *sh, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2ScuReadLong(SH2_struct *sh, u32 addr) {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return ScuReadLong(addr);
 }
 

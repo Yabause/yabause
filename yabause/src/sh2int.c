@@ -164,45 +164,40 @@ static u32 FASTCALL FetchSH1MpegRom(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL FetchBios(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-   return T2ReadWord(BiosRom, addr & 0x7FFFF);
-#endif
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return T2ReadWord(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchCs0(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-   return CartridgeArea->Cs0ReadWord(sh, addr);
-#endif
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return CartridgeArea->Cs0ReadWord(sh, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchLWram(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-	return T2ReadWord(LowWram, addr & 0xFFFFF);
-#endif
-
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return T2ReadWord(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchHWram(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-	return T2ReadWord(HighWram, addr & 0xFFFFF);
-#endif
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return T2ReadWord(HighWram, addr & 0xFFFFF);
 }
 
 extern u8 * Vdp1Ram;
@@ -229,11 +224,17 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 #endif
 
    // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-   if ((addr & 0xC0000000) == 0xC0000000) sh->instruction = DataArrayReadWord(sh, addr);
+   if (yabsys.sh2_cache_enabled)
+   {
+      if ((addr & 0xC0000000) == 0xC0000000) 
+         sh->instruction = DataArrayReadWord(sh, addr);
+      else
+         sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
+   }
    else
-#endif
-   sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
+   {
+      sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
+   }
 
    // Execute it
    ((opcodefunc *)sh->opcodes)[sh->instruction](sh);
@@ -2965,11 +2966,18 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 
       // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context, context->regs.PC);
+
+      if (yabsys.sh2_cache_enabled)
+      {
+         if ((context->regs.PC & 0xC0000000) == 0xC0000000)
+            context->instruction = DataArrayReadWord(context, context->regs.PC);
+         else
+            context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
       else
-#endif
-      context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      {
+         context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
 
       SH2HandleBackTrace(context);
       SH2HandleStepOverOut(context);
@@ -3000,23 +3008,31 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
    SH2HandleInterrupts(context);
 
-#ifndef EXEC_FROM_CACHE
-   if (context->isIdle)
-      SH2idleParse(context, cycles);
-   else
-      SH2idleCheck(context, cycles);
-#endif
+   if ((!yabsys.sh2_cache_enabled) && (context->model != SHMT_SH1))
+   {
+      if (context->isIdle)
+         SH2idleParse(context, cycles);
+      else
+         SH2idleCheck(context, cycles);
+   }
 
    while(context->cycles < cycles)
    {
       int cycles_before = context->cycles;
       int cycles_diff = 0;
       // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context, context->regs.PC);
+
+      if (yabsys.sh2_cache_enabled)
+      {
+         if ((context->regs.PC & 0xC0000000) == 0xC0000000)
+            context->instruction = DataArrayReadWord(context, context->regs.PC);
+         else
+            context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
       else
-#endif
-      context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      {
+         context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
 
       // Execute it
       ((opcodefunc *)context->opcodes)[context->instruction](context);

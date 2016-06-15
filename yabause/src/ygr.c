@@ -843,9 +843,6 @@ void FASTCALL ygr_a_bus_write_long(UNUSED u32 addr, UNUSED u32 val) {
 }
 
 u16 FASTCALL sh2_ygr_a_bus_read_word(SH2_struct * sh, u32 addr) {
-#if CACHE_ENABLE
-   sh->cycles += 17;
-#endif
    return ygr_a_bus_read_word(addr);
 }
 

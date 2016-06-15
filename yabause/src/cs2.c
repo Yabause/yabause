@@ -1597,7 +1597,7 @@ void Cs2PlayDisc(void) {
   }
 
   // setup play mode here
-#if CDDEBUG
+#ifdef CDDEBUG
   if (pdpmode != 0)
      CDLOG("cs2\t: playDisc: Unsupported play mode = %02X\n", pdpmode);
 #endif
