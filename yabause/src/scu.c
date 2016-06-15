@@ -487,12 +487,15 @@ void dma_finished(struct QueuedDma * dma)
    switch (dma->level)
    {
    case 0:
+      ScuRegs->DSTA &= ~(1 << 4);//clear dma operation flag
       ScuSendLevel0DMAEnd();
       break;
    case 1:
+      ScuRegs->DSTA &= ~(1 << 8);
       ScuSendLevel1DMAEnd();
       break;
    case 2:
+      ScuRegs->DSTA &= ~(1 << 12);
       ScuSendLevel2DMAEnd();
       break;
    }
@@ -928,7 +931,16 @@ void scu_enqueue_dma(struct QueuedDma *dma,
    if (!scu_active_dma_exists())
    {
       if (scu_dma_queue[0].status == DMA_QUEUED)
+      {
          scu_dma_queue[0].status = DMA_ACTIVE;
+
+         if (scu_dma_queue[0].level == 0)
+            ScuRegs->DSTA |= (1 << 4);//set dma operation flag
+         else if (scu_dma_queue[0].level == 1)
+            ScuRegs->DSTA |= (1 << 8);
+         else if (scu_dma_queue[0].level == 2)
+            ScuRegs->DSTA |= (1 << 12);
+      }
    }
 }
 
