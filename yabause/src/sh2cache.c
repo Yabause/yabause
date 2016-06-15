@@ -425,7 +425,6 @@ u32 sh2_cache_refill_read(SH2_struct *sh, u32 addr)
 void sh2_refill_cache(SH2_struct *sh, cache_enty * ca, int lruway, u32 entry, u32 addr)
 {
    int i;
-   sh->cycles += 4;
    for (i = 0; i < 16; i += 4) {
       u32 val = sh2_cache_refill_read(sh, (addr & 0xFFFFFFF0) + i);
       ca->way[lruway][entry].data[i + 0] = (val >> 24) & 0xff;

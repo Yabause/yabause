@@ -76,6 +76,13 @@ int SH1Init(int coreid)
    SH1->isslave = 0;
    SH1->model = SHMT_SH1;
 
+   SH1->MappedMemoryReadByte = Sh1MemoryReadByte;
+   SH1->MappedMemoryReadWord = Sh1MemoryReadWord;
+   SH1->MappedMemoryReadLong = Sh1MemoryReadLong;
+   SH1->MappedMemoryWriteByte = Sh1MemoryWriteByte;
+   SH1->MappedMemoryWriteWord = Sh1MemoryWriteWord;
+   SH1->MappedMemoryWriteLong = Sh1MemoryWriteLong;
+
    // So which core do we want?
    if (coreid == SH2CORE_DEFAULT)
       coreid = 0; // Assume we want the first one
@@ -106,6 +113,28 @@ int SH1Init(int coreid)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void sh2_set_read_write_funcs(SH2_struct * sh)
+{
+   if (yabsys.sh2_cache_enabled)
+   {
+      sh->MappedMemoryReadByte = MappedMemoryReadByteCacheEnabled;
+      sh->MappedMemoryReadWord = MappedMemoryReadWordCacheEnabled;
+      sh->MappedMemoryReadLong = MappedMemoryReadLongCacheEnabled;
+      sh->MappedMemoryWriteByte = MappedMemoryWriteByteCacheEnabled;
+      sh->MappedMemoryWriteWord = MappedMemoryWriteWordCacheEnabled;
+      sh->MappedMemoryWriteLong = MappedMemoryWriteLongCacheEnabled;
+   }
+   else
+   {
+      sh->MappedMemoryReadByte = MappedMemoryReadByteNocache;
+      sh->MappedMemoryReadWord = MappedMemoryReadWordNocache;
+      sh->MappedMemoryReadLong = MappedMemoryReadLongNocache;
+      sh->MappedMemoryWriteByte = MappedMemoryWriteByteNocache;
+      sh->MappedMemoryWriteWord = MappedMemoryWriteWordNocache;
+      sh->MappedMemoryWriteLong = MappedMemoryWriteLongNocache;
+   }
+}
+
 int SH2Init(int coreid)
 {
    int i;
@@ -121,6 +150,8 @@ int SH2Init(int coreid)
    MSH2->isslave = 0;
    MSH2->model = SHMT_SH2;
 
+   sh2_set_read_write_funcs(MSH2);
+
    // SSH2
    if ((SSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
       return -1;
@@ -131,6 +162,8 @@ int SH2Init(int coreid)
    SSH2->onchip.BCR1 = 0x8000;
    SSH2->isslave = 1;
    SSH2->model = SHMT_SH2;
+
+   sh2_set_read_write_funcs(SSH2);
 
    // So which core do we want?
    if (coreid == SH2CORE_DEFAULT)
@@ -248,8 +281,8 @@ void SH2Reset(SH2_struct *context)
 void SH2PowerOn(SH2_struct *context) {
    SH2Interface_struct *core=context->core;
    u32 VBR = core->GetVBR(context);
-   core->SetPC(context, MappedMemoryReadLong(context, VBR));
-   core->SetGPR(context, 15, MappedMemoryReadLong(context, VBR+4));
+   core->SetPC(context, context->MappedMemoryReadLong(context, VBR));
+   core->SetGPR(context, 15, context->MappedMemoryReadLong(context, VBR+4));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -316,7 +349,7 @@ int SH2StepOver(SH2_struct *context, void (*func)(void *, u32, void *))
    if (core)
    {
       u32 tmp = core->GetPC(context);
-      u16 inst=MappedMemoryReadWord(context, context->regs.PC);
+      u16 inst= context->MappedMemoryReadWord(context, context->regs.PC);
 
       // If instruction is jsr, bsr, or bsrf, step over it
       if ((inst & 0xF000) == 0xB000 || // BSR 

@@ -372,6 +372,14 @@ struct SH2_struct
    readwordfunc ReadWordList[0x1000];
    readlongfunc ReadLongList[0x1000];
 
+   writebytefunc MappedMemoryWriteByte;
+   writewordfunc MappedMemoryWriteWord;
+   writelongfunc MappedMemoryWriteLong;
+
+   readbytefunc MappedMemoryReadByte;
+   readwordfunc MappedMemoryReadWord;
+   readlongfunc MappedMemoryReadLong;
+
    sh2regs_struct regs;
    Onchip_struct onchip;
 

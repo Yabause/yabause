@@ -4679,9 +4679,6 @@ SoundRamWriteLong (u32 addr, u32 val)
 u8 FASTCALL
 Sh2ScspReadByte(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 48;
-#endif
    return ScspReadByte(addr);
 }
 
@@ -4690,9 +4687,6 @@ Sh2ScspReadByte(SH2_struct *sh, u32 addr)
 void FASTCALL
 Sh2ScspWriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 18;
-#endif
    ScspWriteByte(addr, val);
 }
 
@@ -4701,9 +4695,6 @@ Sh2ScspWriteByte(SH2_struct *sh, u32 addr, u8 val)
 u16 FASTCALL
 Sh2ScspReadWord(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 48;
-#endif
    return ScspReadWord(addr);
 }
 
@@ -4712,9 +4703,6 @@ Sh2ScspReadWord(SH2_struct *sh, u32 addr)
 void FASTCALL
 Sh2ScspWriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 18;
-#endif
    ScspWriteWord(addr, val);
 }
 
@@ -4723,9 +4711,6 @@ Sh2ScspWriteWord(SH2_struct *sh, u32 addr, u16 val)
 u32 FASTCALL
 Sh2ScspReadLong(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 48;
-#endif
    return ScspReadLong(addr);
 }
 
@@ -4734,9 +4719,6 @@ Sh2ScspReadLong(SH2_struct *sh, u32 addr)
 void FASTCALL
 Sh2ScspWriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 31;
-#endif
    ScspWriteLong(addr, val);
 }
 
@@ -4745,9 +4727,6 @@ Sh2ScspWriteLong(SH2_struct *sh, u32 addr, u32 val)
 u8 FASTCALL
 Sh2SoundRamReadByte(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 48;
-#endif
    return SoundRamReadByte(addr);
 }
 
@@ -4756,9 +4735,6 @@ Sh2SoundRamReadByte(SH2_struct *sh, u32 addr)
 void FASTCALL
 Sh2SoundRamWriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 18;
-#endif
    SoundRamWriteByte(addr, val);
 }
 
@@ -4767,9 +4743,6 @@ Sh2SoundRamWriteByte(SH2_struct *sh, u32 addr, u8 val)
 u16 FASTCALL
 Sh2SoundRamReadWord(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 48;
-#endif
    return SoundRamReadWord(addr);
 }
 
@@ -4778,9 +4751,6 @@ Sh2SoundRamReadWord(SH2_struct *sh, u32 addr)
 void FASTCALL
 Sh2SoundRamWriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 18;
-#endif
    SoundRamWriteWord(addr, val);
 }
 
@@ -4789,9 +4759,6 @@ Sh2SoundRamWriteWord(SH2_struct *sh, u32 addr, u16 val)
 u32 FASTCALL
 Sh2SoundRamReadLong(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 48;
-#endif
    return SoundRamReadLong(addr);
 }
 
@@ -4800,9 +4767,6 @@ Sh2SoundRamReadLong(SH2_struct *sh, u32 addr)
 void FASTCALL
 Sh2SoundRamWriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 32;
-#endif
    SoundRamWriteLong(addr, val);
 }
 

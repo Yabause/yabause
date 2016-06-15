@@ -58,6 +58,7 @@ typedef struct
    int use_cd_block_lle;
    int use_sh2_dma_timing;
    int use_scu_dma_timing;
+   int sh2_cache_enabled;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -113,6 +114,7 @@ typedef struct
    int use_cd_block_lle;
    int use_sh2_dma_timing;
    int use_scu_dma_timing;
+   int sh2_cache_enabled;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

@@ -168,6 +168,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.use_cd_block_lle = init->use_cd_block_lle;
    yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
    yabsys.use_scu_dma_timing = init->use_scu_dma_timing;
+   yabsys.sh2_cache_enabled = init->sh2_cache_enabled;
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -840,30 +841,30 @@ int YabauseEmulate(void) {
 void YabauseStartSlave(void) {
    if (yabsys.emulatebios)
    {
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFE0, 0xA55A03F1); // BCR1
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFE4, 0xA55A00FC); // BCR2
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFE8, 0xA55A5555); // WCR
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFEC, 0xA55A0070); // MCR
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFE0, 0xA55A03F1); // BCR1
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFE4, 0xA55A00FC); // BCR2
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFE8, 0xA55A5555); // WCR
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFEC, 0xA55A0070); // MCR
 
-      MappedMemoryWriteWord(SSH2, 0xFFFFFEE0, 0x0000); // ICR
-      MappedMemoryWriteWord(SSH2, 0xFFFFFEE2, 0x0000); // IPRA
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE60, 0x0F00); // VCRWDT
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE62, 0x6061); // VCRA
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE64, 0x6263); // VCRB
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE66, 0x6465); // VCRC
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE68, 0x6600); // VCRD
-      MappedMemoryWriteWord(SSH2, 0xFFFFFEE4, 0x6869); // VCRWDT
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFA8, 0x0000006C); // VCRDMA1
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFA0, 0x0000006D); // VCRDMA0
-      MappedMemoryWriteLong(SSH2, 0xFFFFFF0C, 0x0000006E); // VCRDIV
-      MappedMemoryWriteLong(SSH2, 0xFFFFFE10, 0x00000081); // TIER
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFEE0, 0x0000); // ICR
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFEE2, 0x0000); // IPRA
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE60, 0x0F00); // VCRWDT
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE62, 0x6061); // VCRA
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE64, 0x6263); // VCRB
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE66, 0x6465); // VCRC
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE68, 0x6600); // VCRD
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFEE4, 0x6869); // VCRWDT
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFA8, 0x0000006C); // VCRDMA1
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFA0, 0x0000006D); // VCRDMA0
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFF0C, 0x0000006E); // VCRDIV
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFE10, 0x00000081); // TIER
 
       SH2GetRegisters(SSH2, &SSH2->regs);
       SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
       SSH2->regs.VBR = 0x06000400;
-      SSH2->regs.PC = MappedMemoryReadLong(MSH2, 0x06000250);
-      if (MappedMemoryReadLong(MSH2, 0x060002AC) != 0)
-         SSH2->regs.R[15] = MappedMemoryReadLong(MSH2, 0x060002AC);
+      SSH2->regs.PC = MSH2->MappedMemoryReadLong(MSH2, 0x06000250);
+      if (MSH2->MappedMemoryReadLong(MSH2, 0x060002AC) != 0)
+         SSH2->regs.R[15] = MSH2->MappedMemoryReadLong(MSH2, 0x060002AC);
       SH2SetRegisters(SSH2, &SSH2->regs);
    }
    else

@@ -236,7 +236,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          } else {
             u32 counter = 0;
             while (counter < TransferSize) {
-               u32 tmp = MappedMemoryReadLong(MSH2, ReadAddress);
+               u32 tmp = MappedMemoryReadLongNocache(MSH2, ReadAddress);
                MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)(tmp >> 16));
                WriteAddress += WriteAdd;
                MappedMemoryWriteWordNocache(MSH2, WriteAddress, (u16)tmp);
@@ -955,11 +955,6 @@ void scu_dma_tick_all(u32 cycles)
    }
 }
 
-u32 scu_dma_access(u32 addr, u32 data, int is_read, int size)
-{
-   return sh2_dma_access(addr, data, is_read, size);
-}
-
 static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
    u8 ReadAdd, WriteAdd;
 
@@ -1002,9 +997,9 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
       // Indirect DMA
 
       for (;;) {
-         u32 ThisTransferSize = scu_dma_access(dmainfo->WriteAddress, 0, 1, 2);
-         u32 ThisWriteAddress = scu_dma_access(dmainfo->WriteAddress + 4, 0, 1, 2);
-         u32 ThisReadAddress  = scu_dma_access(dmainfo->WriteAddress + 8, 0, 1, 2);
+         u32 ThisTransferSize = MappedMemoryReadLongNocache(MSH2,dmainfo->WriteAddress);
+         u32 ThisWriteAddress = MappedMemoryReadLongNocache(MSH2, dmainfo->WriteAddress + 4);
+         u32 ThisReadAddress  = MappedMemoryReadLongNocache(MSH2, dmainfo->WriteAddress + 8);
 
          //LOG("SCU Indirect DMA: src %08x, dst %08x, size = %08x\n", ThisReadAddress, ThisWriteAddress, ThisTransferSize);
          DoDMA(ThisReadAddress & 0x7FFFFFFF, ReadAdd, ThisWriteAddress,
@@ -3039,18 +3034,12 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 
 
 u8 FASTCALL Sh2ScuReadByte(SH2_struct *sh, u32 addr) {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return ScuReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2ScuReadWord(SH2_struct *sh, u32 addr) {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return ScuReadWord(addr);
 }
 
@@ -3066,27 +3055,18 @@ u32 FASTCALL Sh2ScuReadLong(SH2_struct *sh, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2ScuWriteByte(SH2_struct *sh, u32 addr, u8 val) {
-#if CACHE_ENABLE
-   sh->cycles += 4;
-#endif
    ScuWriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2ScuWriteWord(SH2_struct *sh, u32 addr, UNUSED u16 val) {
-#if CACHE_ENABLE
-   sh->cycles += 4;
-#endif
    ScuWriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2ScuWriteLong(SH2_struct *sh, u32 addr, u32 val) {
-#if CACHE_ENABLE
-   sh->cycles += 4;
-#endif
    ScuWriteLong(addr, val);
 }
 

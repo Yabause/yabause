@@ -341,12 +341,14 @@ static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) 
 extern "C" {
 #endif
 void MappedMemoryInit(SH2_struct *msh1, SH2_struct *ssh2, SH2_struct *sh1);
-u8 FASTCALL MappedMemoryReadByte(SH2_struct *sh, u32 addr);
-u16 FASTCALL MappedMemoryReadWord(SH2_struct *sh, u32 addr);
-u32 FASTCALL MappedMemoryReadLong(SH2_struct *sh, u32 addr);
-void FASTCALL MappedMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val);
-void FASTCALL MappedMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val);
-void FASTCALL MappedMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
+
+u8 FASTCALL MappedMemoryReadByteCacheEnabled(SH2_struct *sh, u32 addr);
+u16 FASTCALL MappedMemoryReadWordCacheEnabled(SH2_struct *sh, u32 addr);
+u32 FASTCALL MappedMemoryReadLongCacheEnabled(SH2_struct *sh, u32 addr);
+void FASTCALL MappedMemoryWriteByteCacheEnabled(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL MappedMemoryWriteWordCacheEnabled(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL MappedMemoryWriteLongCacheEnabled(SH2_struct *sh, u32 addr, u32 val);
+
 u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr);
 u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr);
 u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr);

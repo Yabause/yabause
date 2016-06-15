@@ -417,9 +417,6 @@ static void FASTCALL Sh2UnhandledMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_
 
 static u8 FASTCALL Sh2HighWramMemoryReadByte(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return HighWramMemoryReadByte(addr);
 }
 
@@ -427,9 +424,6 @@ static u8 FASTCALL Sh2HighWramMemoryReadByte(SH2_struct *sh, u32 addr)
 
 static u16 FASTCALL Sh2HighWramMemoryReadWord(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return HighWramMemoryReadWord(addr);
 }
 
@@ -437,9 +431,6 @@ static u16 FASTCALL Sh2HighWramMemoryReadWord(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL Sh2HighWramMemoryReadLong(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return HighWramMemoryReadLong(addr);
 }
 
@@ -447,9 +438,6 @@ static u32 FASTCALL Sh2HighWramMemoryReadLong(SH2_struct *sh, u32 addr)
 
 static void FASTCALL Sh2HighWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 4;
-#endif
    HighWramMemoryWriteByte(addr, val);
 }
 
@@ -457,9 +445,6 @@ static void FASTCALL Sh2HighWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val
 
 static void FASTCALL Sh2HighWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 4;
-#endif
    HighWramMemoryWriteWord(addr, val);
 }
 
@@ -467,9 +452,6 @@ static void FASTCALL Sh2HighWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 va
 
 static void FASTCALL Sh2HighWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 4;
-#endif
    HighWramMemoryWriteLong(addr, val);
 }
 
@@ -477,9 +459,6 @@ static void FASTCALL Sh2HighWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 va
 
 static u8 FASTCALL Sh2LowWramMemoryReadByte(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return LowWramMemoryReadByte(addr);
 }
 
@@ -487,9 +466,6 @@ static u8 FASTCALL Sh2LowWramMemoryReadByte(SH2_struct *sh, u32 addr)
 
 static u16 FASTCALL Sh2LowWramMemoryReadWord(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 8;
-#endif
    return LowWramMemoryReadWord(addr);
 }
 
@@ -497,9 +473,6 @@ static u16 FASTCALL Sh2LowWramMemoryReadWord(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL Sh2LowWramMemoryReadLong(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   sh->cycles += 15;
-#endif
    return LowWramMemoryReadLong(addr);
 }
 
@@ -507,9 +480,6 @@ static u32 FASTCALL Sh2LowWramMemoryReadLong(SH2_struct *sh, u32 addr)
 
 static void FASTCALL Sh2LowWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 7;
-#endif
    LowWramMemoryWriteByte(addr, val);
 }
 
@@ -517,9 +487,6 @@ static void FASTCALL Sh2LowWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val)
 
 static void FASTCALL Sh2LowWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 7;
-#endif
    LowWramMemoryWriteWord(addr, val);
 }
 
@@ -527,9 +494,6 @@ static void FASTCALL Sh2LowWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val
 
 static void FASTCALL Sh2LowWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val)
 {
-#if CACHE_ENABLE
-   sh->cycles += 15;
-#endif
    LowWramMemoryWriteLong(addr, val);
 }
 
@@ -799,19 +763,8 @@ void MappedMemoryInit(SH2_struct *msh2, SH2_struct *ssh2, SH2_struct *sh1)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL MappedMemoryReadByte(SH2_struct *sh, u32 addr) {
-   if (sh->model == SHMT_SH1)
-   {
-      return Sh1MemoryReadByte(sh, addr);
-   }
-   else
-   {
-#if CACHE_ENABLE
+u8 FASTCALL MappedMemoryReadByteCacheEnabled(SH2_struct *sh, u32 addr) {
       return cache_memory_read_b(sh, &sh->onchip.cache, addr);
-#else
-      return MappedMemoryReadByteNocache(sh, addr);
-#endif
-   }
 }
 
 u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr)
@@ -864,19 +817,9 @@ u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-u16 FASTCALL MappedMemoryReadWord(SH2_struct *sh, u32 addr){
-   if (sh->model == SHMT_SH1)
-   {
-      return Sh1MemoryReadWord(sh, addr);
-   }
-   else
-   {
-#if CACHE_ENABLE
-      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-      return MappedMemoryReadWordNocache(sh, addr);
-#endif
-   }
+
+u16 FASTCALL MappedMemoryReadWordCacheEnabled(SH2_struct *sh, u32 addr) {
+   return cache_memory_read_w(sh, &sh->onchip.cache, addr);
 }
 
 u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr)
@@ -929,19 +872,9 @@ u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-u32 FASTCALL MappedMemoryReadLong(SH2_struct *sh, u32 addr){
-   if (sh->model == SHMT_SH1)
-   {
-      return Sh1MemoryReadLong(sh, addr);
-   }
-   else
-   {
-#if CACHE_ENABLE
-      return cache_memory_read_l(sh, &sh->onchip.cache, addr);
-#else
-      return MappedMemoryReadLongNocache(sh, addr);
-#endif
-   }
+
+u32 FASTCALL MappedMemoryReadLongCacheEnabled(SH2_struct *sh, u32 addr) {
+   return cache_memory_read_l(sh, &sh->onchip.cache, addr);
 }
 
 u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
@@ -998,21 +931,10 @@ u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL MappedMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val){
-   if (sh->model == SHMT_SH1)
-   {
-      Sh1MemoryWriteByte(sh, addr, val);
-   }
-   else
-   {
-#if CACHE_ENABLE
-      cache_memory_write_b(sh, &sh->onchip.cache, addr, val);
-#else
-      MappedMemoryWriteByteNocache(sh, addr, val);
-#endif
-   }
-}
 
+void FASTCALL MappedMemoryWriteByteCacheEnabled(SH2_struct *sh, u32 addr, u8 val) {
+   cache_memory_write_b(sh, &sh->onchip.cache, addr, val);
+}
 void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
 {
 
@@ -1066,20 +988,11 @@ void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL MappedMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val){
-   if (sh->model == SHMT_SH1)
-   {
-      Sh1MemoryWriteWord(sh, addr, val);
-   }
-   else
-   {
-#if CACHE_ENABLE
-      cache_memory_write_w(sh, &sh->onchip.cache, addr, val);
-#else
-      MappedMemoryWriteWordNocache(sh, addr, val);
-#endif
-   }
+
+void FASTCALL MappedMemoryWriteWordCacheEnabled(SH2_struct *sh, u32 addr, u16 val) {
+   cache_memory_write_w(sh, &sh->onchip.cache, addr, val);
 }
+
 void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val)
 {
    switch (addr >> 29)
@@ -1132,20 +1045,9 @@ void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL MappedMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val){
 
-   if (sh->model == SHMT_SH1)
-   {
-      Sh1MemoryWriteLong(sh, addr, val);
-   }
-   else
-   {
-#if CACHE_ENABLE
-      cache_memory_write_l(sh, &sh->onchip.cache, addr, val);
-#else
-      MappedMemoryWriteLongNocache(sh, addr, val);
-#endif
-   }
+void FASTCALL MappedMemoryWriteLongCacheEnabled(SH2_struct *sh, u32 addr, u32 val) {
+   cache_memory_write_l(sh, &sh->onchip.cache, addr, val);
 }
 
 void FASTCALL MappedMemoryWriteLongNocache(SH2_struct *sh, u32 addr, u32 val)
@@ -1242,7 +1144,7 @@ int MappedMemoryLoad(SH2_struct *sh, const char *filename, u32 addr)
    fclose(fp);
 
    for (i = 0; i < filesize; i++)
-      MappedMemoryWriteByte(sh, addr+i, buffer[i]);
+      MappedMemoryWriteByteNocache(sh, addr+i, buffer[i]);
 
    free(buffer);
 
@@ -1270,7 +1172,7 @@ int MappedMemorySave(SH2_struct *sh, const char *filename, u32 addr, u32 size)
    }
 
    for (i = 0; i < size; i++)
-      buffer[i] = MappedMemoryReadByte(sh, addr+i);
+      buffer[i] = MappedMemoryReadByteNocache(sh, addr+i);
 
    fwrite((void *)buffer, 1, size, fp);
    fclose(fp);
