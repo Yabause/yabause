@@ -23,7 +23,10 @@
 
 int SH2Dis(SH2_struct *context, u32 addr, char *string)
 {
-   SH2Disasm(addr, MappedMemoryReadWordNocache(context, addr), 0, NULL, string);
+   if(context->model == SHMT_SH1)
+      SH2Disasm(addr, context->MappedMemoryReadWord(context, addr), 0, NULL, string);
+   else
+      SH2Disasm(addr, MappedMemoryReadWordNocache(context, addr), 0, NULL, string);
    return 2;
 }
 
