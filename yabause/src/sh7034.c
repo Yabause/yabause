@@ -4252,8 +4252,8 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
       //onchip ram
       CDTRACE("wbram: %08X %02X\n", addr, data);
       T2WriteByte(sh1->ram, addr & 0x1fff, data);
-      update_cr_response_values(addr);
-      update_transfer_buffer();
+//      update_cr_response_values(addr);
+//      update_transfer_buffer();
       return;
 
       if (a27)
@@ -4565,7 +4565,7 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
 
       CDTRACE("wwram: %08X %04X\n", addr, data);
       T2WriteWord(sh1->ram, addr & 0x1fff,data);
-      update_cr_response_values(addr);
+      //update_cr_response_values(addr);
 
       return;
 
@@ -4766,7 +4766,7 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       //onchip ram
       CDTRACE("wlram: %08X %08X\n", addr, data);
       T2WriteLong(sh1->ram, addr & 0x1fff, data);
-      update_cr_response_values(addr);
+      //update_cr_response_values(addr);
       return;
       if (a27)
       {
@@ -5107,6 +5107,171 @@ void tick_timer(int which)
    }
 }
 
+u16 update_tcnt_fraction(int which, s32 cycles, u8 division)
+{
+   int remainder = 0;
+
+   sh1_cxt.onchip.itu.channel[which].tcnt_fraction += cycles % division;
+
+   if (sh1_cxt.onchip.itu.channel[which].tcnt_fraction >= division)
+   {
+      remainder = 1;
+      sh1_cxt.onchip.itu.channel[which].tcnt_fraction -= division;
+   }
+   return sh1_cxt.onchip.itu.channel[which].tcnt + (cycles / division) + remainder;
+}
+
+u16 update_tcnt_fast(int which, s32 cycles)
+{
+   
+   switch (sh1_cxt.onchip.itu.channel[which].tcr & 7)
+   {
+   case 0:
+      return sh1_cxt.onchip.itu.channel[which].tcnt + cycles; //internal clock speed
+      break;
+   case 1:
+      return update_tcnt_fraction(which, cycles, 2);
+      break;
+   case 2:
+      return update_tcnt_fraction(which, cycles, 4);
+      break;
+   case 3:
+      return update_tcnt_fraction(which, cycles, 8);
+      break;
+   default:
+      assert(0);
+   }
+}
+
+int check_gr_range(u16 gr, u16 old_tcnt, u16 new_tcnt)
+{
+   if (new_tcnt < old_tcnt)
+   {
+      //overflow occured
+
+      if (gr >= old_tcnt || gr <= new_tcnt)
+      {
+         return 1;
+      }
+   }
+   else
+   {
+      //linear range check
+      if (gr >= old_tcnt && gr <= new_tcnt)
+      {
+         return 1;
+      }
+   }
+
+   return 0;
+}
+
+void tick_timer_fast(int which, s32 cycles)
+{
+   u16 old_tcnt = sh1_cxt.onchip.itu.channel[which].tcnt;
+   u16 new_tcnt = 0;
+   int timer_is_counting = sh1_cxt.onchip.itu.tstr & (1 << which);
+   int gra_match = 0, grb_match = 0;
+
+   if (timer_is_counting)
+   {
+      new_tcnt = update_tcnt_fast(which, cycles);
+   }
+
+   gra_match = check_gr_range(sh1_cxt.onchip.itu.channel[which].gra, old_tcnt, new_tcnt);
+   grb_match = check_gr_range(sh1_cxt.onchip.itu.channel[which].grb, old_tcnt, new_tcnt);
+
+   if (timer_is_counting && (sh1_cxt.onchip.itu.channel[which].tier & (1 << 2)))
+   {
+      if (new_tcnt < old_tcnt)
+      {
+         //overflow interrupt
+         TIMERTRACE("*****TCNT4 OVF interrupt*******\n");
+
+         if (which == 4)
+            SH2SendInterrupt(SH1, 98, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+
+         cycles_since = 0;
+      }
+   }
+
+   //timer compare a
+   if (gra_match)
+   {
+      switch (sh1_cxt.onchip.itu.channel[which].tior & 7)
+      {
+      case 0:
+         sh1_cxt.onchip.itu.channel[which].tsr |= 1;
+
+         //cleared by gra compare match
+         if (((sh1_cxt.onchip.itu.channel[which].tcr >> 5) & 3) == 1)
+            new_tcnt = 0;
+
+         if (sh1_cxt.onchip.itu.channel[which].tier & 1)
+            SH2SendInterrupt(SH1, 96, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+         break;
+      case 1:
+         //output 0
+         sh1_cxt.onchip.itu.channel[which].tsr &= ~(1 << 1);
+         break;
+      case 2:
+         //output 1
+         sh1_cxt.onchip.itu.channel[which].tsr |= (1 << 1);
+         break;
+      case 3:
+         //toggles
+         break;
+      case 4:
+         break;
+      case 5:
+         break;
+      case 6:
+         break;
+      case 7:
+         break;
+      }
+   }
+
+   //timer compare b
+   if (grb_match)
+   {
+      switch ((sh1_cxt.onchip.itu.channel[which].tior >> 4) & 7)
+      {
+      case 0:
+         sh1_cxt.onchip.itu.channel[which].tsr |= 2;
+
+         if (((sh1_cxt.onchip.itu.channel[which].tcr >> 5) & 3) == 2)
+            new_tcnt = 0;
+
+         if (sh1_cxt.onchip.itu.channel[which].tier & 2)
+            SH2SendInterrupt(SH1, 97, (sh1_cxt.onchip.intc.iprd >> 4) & 0xf);
+         break;
+      case 1:
+         //output 0
+         sh1_cxt.onchip.itu.channel[which].tsr &= ~(1 << 1);
+         break;
+      case 2:
+         //output 1
+         sh1_cxt.onchip.itu.channel[which].tsr |= (1 << 1);
+         break;
+      case 3:
+         //toggles
+         break;
+      case 4:
+         break;
+      case 5:
+         break;
+      case 6:
+         break;
+      case 7:
+         break;
+      }
+   }
+
+   sh1_cxt.onchip.itu.channel[which].tcnt = new_tcnt;
+}
+
+
 void sh1_serial_recieve_bit(int bit, int channel);
 void sh1_serial_transmit_bit(int channel, int* output_bit);
 
@@ -5167,10 +5332,14 @@ void tick_serial(int channel)
    }
 }
 
+#define FAST_TIMERS
+
 void sh1_onchip_run_cycle()
 {
+#ifndef FAST_TIMERS
    tick_timer(3);
    tick_timer(4);
+#endif
 
    tick_serial(0);
 
@@ -5180,6 +5349,12 @@ void sh1_onchip_run_cycle()
 void sh1_onchip_run_cycles(s32 cycles)
 {
    int i;
+
+#ifdef FAST_TIMERS
+   tick_timer_fast(3, cycles);
+   tick_timer_fast(4, cycles);
+#endif
+
    for (i = 0; i < cycles; i++)
       sh1_onchip_run_cycle();
 }
