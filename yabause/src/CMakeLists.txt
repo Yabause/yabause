@@ -610,7 +610,7 @@ if (YAB_OPTIMIZED_DMA)
 endif()
 
 # SH2 Trace
-option(SH2_TRACE "Enable SH2 tracing" ON)
+option(SH2_TRACE "Enable SH2 tracing" OFF)
 if (SH2_TRACE)
 	add_definitions(-DSH2_TRACE=1)
 endif()
