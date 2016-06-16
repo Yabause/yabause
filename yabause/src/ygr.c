@@ -739,6 +739,9 @@ void FASTCALL ygr_a_bus_write_word(u32 addr, u16 val) {
       addr &= 0x3F;
 
       switch (addr) {
+      case 0x00:
+         DebugBreak();
+         break;
       case 0x08:
       case 0x0A:
          ygr_cxt.regs.HIRQ &= val;
@@ -831,6 +834,10 @@ void FASTCALL ygr_a_bus_write_long(UNUSED u32 addr, UNUSED u32 val) {
 
       switch (addr)
       {
+      case 0x00:
+         write_fifo(val >> 16);
+         write_fifo(val);
+         break;
       case 0x0c:
          ygr_cxt.regs.HIRQMASK = val;//gets truncated
          break;
