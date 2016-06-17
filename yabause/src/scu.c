@@ -483,6 +483,9 @@ int scu_active_dma_exists()
 
 void dma_finished(struct QueuedDma * dma)
 {
+   if (dma->bus_type == DMA_TRANSFER_A_TO_B)
+      ScuRegs->DSTA &= ~0x300000;
+
    //complete
    switch (dma->level)
    {
@@ -940,6 +943,9 @@ void scu_enqueue_dma(struct QueuedDma *dma,
             ScuRegs->DSTA |= (1 << 8);
          else if (scu_dma_queue[0].level == 2)
             ScuRegs->DSTA |= (1 << 12);
+
+         if (dma->bus_type == DMA_TRANSFER_A_TO_B)
+            ScuRegs->DSTA |= 0x300000;
       }
    }
 }
