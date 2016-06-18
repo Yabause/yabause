@@ -65,6 +65,8 @@ int ScuInit(void) {
    if ((ScuBP = (scubp_struct *) calloc(1, sizeof(scubp_struct))) == NULL)
       return -1;
 
+   ScuDsp->jmpaddr = 0xFFFFFFFF;
+
    for (i = 0; i < MAX_BREAKPOINTS; i++)
       ScuBP->codebreakpoint[i].addr = 0xFFFFFFFF;
    ScuBP->numcodebreakpoints = 0;
@@ -442,6 +444,14 @@ struct QueuedDma
    int level;
    u32 indirect_address;
    int is_last_indirect;
+   int is_dsp;
+   int dsp_dma_type;
+   int dsp_bank;
+   int dsp_add;
+   u32 dsp_address;
+   u8 program_ram_counter;
+   u8 dsp_add_setting;
+   u32 dsp_orig_count;
 }scu_dma_queue[16] = { 0 };
 
 int get_write_add_value(u32 reg_val)
@@ -481,6 +491,21 @@ int scu_active_dma_exists()
    return 0;
 }
 
+void dma_finish(struct QueuedDma * dma)
+{
+   memset(dma, 0, sizeof(struct QueuedDma));
+
+   dma->status = DMA_FINISHED;
+
+   scu_sort_dma();
+
+   if (!scu_active_dma_exists())
+   {
+      if (scu_dma_queue[0].status == DMA_QUEUED)
+         scu_dma_queue[0].status = DMA_ACTIVE;
+   }
+}
+
 void dma_finished(struct QueuedDma * dma)
 {
    if (dma->bus_type == DMA_TRANSFER_A_TO_B)
@@ -503,17 +528,7 @@ void dma_finished(struct QueuedDma * dma)
       break;
    }
 
-   memset(dma, 0, sizeof(struct QueuedDma));
-
-   dma->status = DMA_FINISHED;
-
-   scu_sort_dma();
-
-   if (!scu_active_dma_exists())
-   {
-      if (scu_dma_queue[0].status == DMA_QUEUED)
-         scu_dma_queue[0].status = DMA_ACTIVE;
-   }
+   dma_finish(dma);
 }
 
 void dma_read_indirect(struct QueuedDma * dma)
@@ -883,6 +898,29 @@ int get_bus_type(u32 src, u32 dst)
    return 0;
 }
 
+void scu_dma_sort_activate(struct QueuedDma *dma)
+{
+   scu_sort_dma();
+
+   if (!scu_active_dma_exists())
+   {
+      if (scu_dma_queue[0].status == DMA_QUEUED)
+      {
+         scu_dma_queue[0].status = DMA_ACTIVE;
+
+         if (scu_dma_queue[0].level == 0)
+            ScuRegs->DSTA |= (1 << 4);//set dma operation flag
+         else if (scu_dma_queue[0].level == 1)
+            ScuRegs->DSTA |= (1 << 8);
+         else if (scu_dma_queue[0].level == 2)
+            ScuRegs->DSTA |= (1 << 12);
+
+         if (dma->bus_type == DMA_TRANSFER_A_TO_B)
+            ScuRegs->DSTA |= 0x300000;
+      }
+   }
+}
+
 
 void scu_enqueue_dma(struct QueuedDma *dma, 
    u32 read_reg, u32 write_reg, u32 count_reg, u32 add_reg, u32 mode_reg, int level)
@@ -929,25 +967,7 @@ void scu_enqueue_dma(struct QueuedDma *dma,
    //sort dmas, if there are queued dmas but none are active
    //then activate one
 
-   scu_sort_dma();
-
-   if (!scu_active_dma_exists())
-   {
-      if (scu_dma_queue[0].status == DMA_QUEUED)
-      {
-         scu_dma_queue[0].status = DMA_ACTIVE;
-
-         if (scu_dma_queue[0].level == 0)
-            ScuRegs->DSTA |= (1 << 4);//set dma operation flag
-         else if (scu_dma_queue[0].level == 1)
-            ScuRegs->DSTA |= (1 << 8);
-         else if (scu_dma_queue[0].level == 2)
-            ScuRegs->DSTA |= (1 << 12);
-
-         if (dma->bus_type == DMA_TRANSFER_A_TO_B)
-            ScuRegs->DSTA |= 0x300000;
-      }
-   }
+   scu_dma_sort_activate(dma);
 }
 
 void scu_insert_dma(u32 read_reg, u32 write_reg, u32 count_reg, u32 add_reg, u32 mode_reg, int level)
@@ -965,9 +985,137 @@ void scu_insert_dma(u32 read_reg, u32 write_reg, u32 count_reg, u32 add_reg, u32
    scu_sort_dma();
 }
 
+void adjust_ra0_wa0(struct QueuedDma * dma)
+{
+   scudspregs_struct * sc = ScuDsp;
+
+   if (dma->dsp_dma_type == 1 || dma->dsp_dma_type == 3)
+   {
+      switch (dma->dsp_add_setting)
+      {
+      case 0:
+      case 1:
+      case 4:
+      case 5:
+         sc->RA0 += 1;
+         break;
+      case 2:
+      case 3:
+      case 6:
+      case 7:
+         sc->RA0 += dma->dsp_orig_count;
+      default:
+         break;
+      }
+   }
+   else if (dma->dsp_dma_type == 2 || dma->dsp_dma_type == 4)
+   {
+      switch (dma->dsp_add_setting)
+      {
+      case 0:
+         sc->WA0 += 1;
+         break;
+      case 1:
+         sc->WA0 += dma->dsp_orig_count;
+         break;
+      case 2:
+         sc->WA0 += (dma->dsp_orig_count * 2) - 1;
+         break;
+      case 3:
+         sc->WA0 += (dma->dsp_orig_count * 4) - 3;
+         break;
+      case 4:
+         sc->WA0 += (dma->dsp_orig_count * 8) - 7;
+         break;
+      case 5:
+         sc->WA0 += (dma->dsp_orig_count * 16) - 15;
+         break;
+      case 6:
+         sc->WA0 += (dma->dsp_orig_count * 32) - 31;
+         break;
+      case 7:
+         sc->WA0 += (dma->dsp_orig_count * 64) - 63;
+         break;
+      default:
+         break;
+      }
+   }
+}
+
+void scu_dma_tick_dsp(struct QueuedDma * dma)
+{
+   scudspregs_struct * sc = ScuDsp;
+
+   if (dma->dsp_dma_type == 1)
+   {
+      sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
+      sc->CT[dma->dsp_bank]++;
+      sc->CT[dma->dsp_bank] &= 0x3F;
+
+      //todo
+      if(dma->dsp_address != 0x05818000)
+         dma->dsp_address += 1 << 2;
+
+      dma->count--;
+   }
+   else if (dma->dsp_dma_type == 2)
+   {
+      u32 Val = sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]];
+      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val >> 16);
+      dma->dsp_address += dma->dsp_add << 1;
+      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val & 0xffff);
+      dma->dsp_address += dma->dsp_add << 1;
+
+      sc->CT[dma->dsp_bank]++;
+      sc->CT[dma->dsp_bank] &= 0x3F;
+      dma->count--;
+   }
+   else if (dma->dsp_dma_type == 3)
+   {
+      if (dma->dsp_bank > 3)
+      {
+         sc->ProgramRam[dma->program_ram_counter++] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
+         dma->dsp_address += dma->dsp_add << 1;
+         dma->count--;
+      }
+      else
+      {
+         sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
+         sc->CT[dma->dsp_bank]++;
+         sc->CT[dma->dsp_bank] &= 0x3F;
+         dma->dsp_address += dma->dsp_add;
+         dma->count--;
+      }
+   }
+   else if (dma->dsp_dma_type == 4)
+   {
+      u32 Val = sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]];
+      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val >> 16);
+      dma->dsp_address += dma->dsp_add << 1;
+      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val & 0xffff);
+      dma->dsp_address += dma->dsp_add << 1;
+
+      sc->CT[dma->dsp_bank]++;
+      sc->CT[dma->dsp_bank] &= 0x3F;
+      dma->count--;
+   }
+
+   if (dma->count == 0)
+   {
+      ScuRegs->DSTA &= ~1;
+
+      ScuRegs->DSTA &= ~0x700000;
+
+      sc->ProgControlPort.part.T0 = 0;
+      dma_finish(dma);
+   }
+}
+
 void scu_dma_tick(struct QueuedDma * dma)
 {
-   if (dma->bus_type == DMA_TRANSFER_CPU_TO_B)
+   if (dma->is_dsp)
+      scu_dma_tick_dsp(dma);
+   else if (dma->bus_type == DMA_TRANSFER_CPU_TO_B)
       scu_dma_tick_32_to_16(dma);
    else if (dma->bus_type == DMA_TRANSFER_A_TO_B)
       scu_dma_tick_16_to_16(dma);
@@ -1264,7 +1412,33 @@ static u32 readdmasrc(u8 num, u8 add)
    return 0;
 }
 
+void scu_insert_dsp_dma(struct QueuedDma *dma)
+{
+   int i = 0;
+   if (dma->count == 0)
+      dma->count = dma->dsp_orig_count = 256;
 
+   ScuRegs->DSTA |= 1;
+
+   for (i = 0; i < 16; i++)
+   {
+      if (scu_dma_queue[i].status == DMA_FINISHED)
+      {
+         scu_dma_queue[i] = *dma;
+         break;
+      }
+   }
+
+   scu_dma_sort_activate(dma);
+}
+
+void set_dsta(u32 addr)
+{
+   if (is_a_bus(addr))
+      ScuRegs->DSTA |= 0x500000;
+   else if (is_b_bus(addr))
+      ScuRegs->DSTA |= 0x600000;
+}
 
 void dsp_dma01(scudspregs_struct *sc, u32 inst)
 {
@@ -1284,6 +1458,31 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     case 5: add = 16; break;
     case 6: add = 32; break;
     case 7: add = 64; break;
+    }
+
+    if (yabsys.use_scu_dma_timing)
+    {
+       struct QueuedDma my_dma = { 0 };
+       struct QueuedDma * dma = &my_dma;
+
+       dma->is_dsp = 1;
+       dma->dsp_dma_type = 1;
+       dma->dsp_add = add;
+       dma->dsp_add_setting = (inst >> 15) & 0x07;
+       dma->dsp_bank = sel;
+       dma->count = dma->dsp_orig_count = imm;
+       dma->dsp_address = sc->RA0 << 2;
+       dma->status = DMA_QUEUED;
+       dma->level = 3;
+
+       set_dsta(sc->RA0 << 2);
+
+       if (((inst >> 11) & 0x0F) != 0x08)
+          adjust_ra0_wa0(dma);
+
+       scu_insert_dsp_dma(&my_dma);
+       sc->ProgControlPort.part.T0 = 1;
+       return;
     }
 
     if (add != 1)
@@ -1329,55 +1528,114 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
+    if (yabsys.use_scu_dma_timing)
+    {
+       struct QueuedDma dma = { 0 };
+
+       dma.is_dsp = 1;
+       dma.dsp_dma_type = 2;
+       dma.dsp_add = add;
+       dma.dsp_bank = sel;
+       dma.dsp_add_setting = (inst >> 15) & 0x07;
+       dma.count = dma.dsp_orig_count = imm;
+       dma.dsp_address = sc->WA0 << 2;
+       dma.status = DMA_QUEUED;
+       dma.level = 3;
+
+       if (((inst >> 10) & 0x1F) != 0x14)
+          adjust_ra0_wa0(&dma);
+
+       set_dsta(sc->WA0 << 2);
+
+       scu_insert_dsp_dma(&dma);
+       sc->ProgControlPort.part.T0 = 1;
+       return;
+    }
+
     if (add != 1)
     {
-        for ( i = 0; i < imm; i++)
-        {
-            u32 Val = sc->MD[sel][sc->CT[sel]];
-            u32 Adr = (sc->WA0 << 2);
-            //LOG("SCU DSP DMA02 D:%08x V:%08x", Adr, Val);
-            MappedMemoryWriteLongNocache(MSH2, Adr, Val);
-            sc->CT[sel]++;
-            sc->WA0 += add >> 1;
-            sc->CT[sel] &= 0x3F;
-        }
+       for (i = 0; i < imm; i++)
+       {
+          u32 Val = sc->MD[sel][sc->CT[sel]];
+          u32 Adr = (sc->WA0 << 2);
+          //LOG("SCU DSP DMA02 D:%08x V:%08x", Adr, Val);
+          MappedMemoryWriteLongNocache(MSH2, Adr, Val);
+          sc->CT[sel]++;
+          sc->WA0 += add >> 1;
+          sc->CT[sel] &= 0x3F;
+       }
     }
-    else{
+    else {
 
-        for ( i = 0; i < imm; i++)
-        {
-            u32 Val = sc->MD[sel][sc->CT[sel]];
-            u32 Adr = (sc->WA0 << 2);
+       for (i = 0; i < imm; i++)
+       {
+          u32 Val = sc->MD[sel][sc->CT[sel]];
+          u32 Adr = (sc->WA0 << 2);
 
-            MappedMemoryWriteLongNocache(MSH2, Adr, Val);
-            sc->CT[sel]++;
-            sc->CT[sel] &= 0x3F;
-            sc->WA0 += 1;
-        }
+          MappedMemoryWriteLongNocache(MSH2, Adr, Val);
+          sc->CT[sel]++;
+          sc->CT[sel] &= 0x3F;
+          sc->WA0 += 1;
+       }
 
     }
     sc->ProgControlPort.part.T0 = 0;
 }
 
+void determine_a_bus_add(struct QueuedDma* dma, u32 inst)
+{
+   if ((is_a_bus(dma->dsp_address)))
+   {
+      if (((inst >> 15) & 0x01) == 0)
+         dma->dsp_add = 0;
+   }
+}
+
 void dsp_dma03(scudspregs_struct *sc, u32 inst)
 {
-    u32 Counter = 0;
-    u32 i;
-    int DestinationId;
+   u32 Counter = 0;
+   u32 i;
+   int DestinationId;
 
-    switch ((inst & 0x7))
-    {
-    case 0x00: Counter = sc->MD[0][sc->CT[0]]; break;
-    case 0x01: Counter = sc->MD[1][sc->CT[1]]; break;
-    case 0x02: Counter = sc->MD[2][sc->CT[2]]; break;
-    case 0x03: Counter = sc->MD[3][sc->CT[3]]; break;
-    case 0x04: Counter = sc->MD[0][sc->CT[0]]; ScuDsp->CT[0]++; break;
-    case 0x05: Counter = sc->MD[1][sc->CT[1]]; ScuDsp->CT[1]++; break;
-    case 0x06: Counter = sc->MD[2][sc->CT[2]]; ScuDsp->CT[2]++; break;
-    case 0x07: Counter = sc->MD[3][sc->CT[3]]; ScuDsp->CT[3]++; break;
-    }
+   switch ((inst & 0x7))
+   {
+   case 0x00: Counter = sc->MD[0][sc->CT[0]]; break;
+   case 0x01: Counter = sc->MD[1][sc->CT[1]]; break;
+   case 0x02: Counter = sc->MD[2][sc->CT[2]]; break;
+   case 0x03: Counter = sc->MD[3][sc->CT[3]]; break;
+   case 0x04: Counter = sc->MD[0][sc->CT[0]]; ScuDsp->CT[0]++; break;
+   case 0x05: Counter = sc->MD[1][sc->CT[1]]; ScuDsp->CT[1]++; break;
+   case 0x06: Counter = sc->MD[2][sc->CT[2]]; ScuDsp->CT[2]++; break;
+   case 0x07: Counter = sc->MD[3][sc->CT[3]]; ScuDsp->CT[3]++; break;
+   }
 
-    DestinationId = (inst >> 8) & 0x7;
+   DestinationId = (inst >> 8) & 0x7;
+
+   if (yabsys.use_scu_dma_timing)
+   {
+      struct QueuedDma dma = { 0 };
+      dma.is_dsp = 1;
+      dma.dsp_dma_type = 3;
+      dma.dsp_add = 4;
+      dma.dsp_add_setting = (inst >> 15) & 0x7;
+      dma.dsp_bank = DestinationId;
+      dma.count = dma.dsp_orig_count = Counter;
+      dma.dsp_address = sc->RA0 << 2;
+
+      determine_a_bus_add(&dma, inst);
+
+      dma.status = DMA_QUEUED;
+      dma.level = 3;
+
+      set_dsta(sc->RA0 << 2);
+
+      if (((inst >> 11) & 0x0F) != 0x0C)
+         adjust_ra0_wa0(&dma);
+
+      scu_insert_dsp_dma(&dma);
+      sc->ProgControlPort.part.T0 = 1;
+      return;
+   }
 
     if (DestinationId > 3)
     {
@@ -1423,7 +1681,7 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     case 0x06: Counter = sc->MD[2][sc->CT[2]]; ScuDsp->CT[2]++; break;
     case 0x07: Counter = sc->MD[3][sc->CT[3]]; ScuDsp->CT[3]++; break;
     }
-    
+
     switch (((inst >> 15) & 0x07))
     {
     case 0: add = 0; break;
@@ -1434,6 +1692,31 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     case 5: add = 16; break;
     case 6: add = 32; break;
     case 7: add = 64; break;
+    }
+
+    if (yabsys.use_scu_dma_timing)
+    {
+       struct QueuedDma dma = { 0 };
+       dma.is_dsp = 1;
+       dma.dsp_dma_type = 4;
+       dma.dsp_add = add;
+       dma.dsp_bank = sel;
+       dma.dsp_add_setting = (inst >> 15) & 0x07;
+       dma.count = dma.dsp_orig_count = Counter;
+       dma.dsp_address = sc->WA0 << 2;
+       dma.status = DMA_QUEUED;
+       dma.level = 3;
+
+       determine_a_bus_add(&dma, inst);
+
+       if (((inst >> 10) & 0x1F) != 0x1C)
+          adjust_ra0_wa0(&dma);
+
+       set_dsta(sc->WA0 << 2);
+
+       scu_insert_dsp_dma(&dma);
+       sc->ProgControlPort.part.T0 = 1;
+       return;
     }
 
     for (i = 0; i < Counter; i++)
