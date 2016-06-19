@@ -126,7 +126,7 @@ typedef struct {
     s32 cog;
     s32 cob;
     int linescreen;
-
+	int id;
 } YglSprite;
 
 typedef struct {
@@ -269,6 +269,7 @@ typedef struct {
    float * matrix;
    int mosaic[2];
    u32 lineTexture;
+   int id;
 } YglProgram;
 
 typedef struct {

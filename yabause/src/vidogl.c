@@ -2349,6 +2349,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	tile.WindowArea1 = info->WindowArea1;
 	tile.LogicWin = info->LogicWin;
 	tile.lineTexture = info->lineTexture;
+	tile.id = info->id;
 
 	tile.cellw = tile.cellh = info->patternpixelwh;
 	tile.flipfunction = info->flipfunction;
@@ -2373,7 +2374,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 	//	return;
 	//}
 
-	if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincx == 1.0f)
+	if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincx == 1.0f && info->coordincy == 1.0f )
 	{                                                 // coordinate inc is not supported yet.
 		winmode = Vdp2CheckWindowRange(info, x-cx, y-cy, tile.cellw, info->lineinc);
 		if (winmode == 0) // all outside, no need to draw 
@@ -2617,9 +2618,9 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 
 	for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
 		int targetv = 0;
-		sx = info->x + info->lineinfo[lineindex].LineScrollValH;
+		sx = info->x + info->lineinfo[ (int)(lineindex*info->coordincy) ].LineScrollValH;
 		if (VDPLINE_SY(info->islinescroll)) {
-			targetv = info->y + info->lineinfo[lineindex].LineScrollValV;
+			targetv = info->y + info->lineinfo[(int)(lineindex*info->coordincy)].LineScrollValV;
 		}else{
 			targetv = info->y + v;
 		}
@@ -2632,7 +2633,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
 			targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
 		}
 
-		info->coordincx = info->lineinfo[lineindex].CoordinateIncH / 256.0f;
+		info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
 		info->coordincx = 1.0f / info->coordincx;
 		if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
 		info->draww = (int)((float)vdp2width / info->coordincx);
@@ -5227,7 +5228,7 @@ static void Vdp2DrawNBG0(void)
    YglCache tmpc;
    info.dst=0;
    info.uclipmode=0;
-   
+   info.id = 0;
    info.coordincx = 1.0f;
    info.coordincy = 1.0f;
 
@@ -5579,6 +5580,7 @@ static void Vdp2DrawNBG1(void)
 	YglTexture texture;
 	YglCache tmpc;
 	info.dst = 0;
+	info.id = 1;
 	info.uclipmode = 0;
 	info.cor = 0;
 	info.cog = 0;
@@ -5825,6 +5827,7 @@ static void Vdp2DrawNBG2(void)
    vdp2draw_struct info;
    YglTexture texture;
    info.dst=0;
+   info.id = 2;
    info.uclipmode=0;
    info.cor = 0;
    info.cog = 0;
@@ -5927,6 +5930,7 @@ static void Vdp2DrawNBG3(void)
 {
    vdp2draw_struct info;
    YglTexture texture;
+   info.id = 3;
    info.dst=0;
    info.uclipmode=0;
    info.cor = 0;
@@ -6035,6 +6039,7 @@ static void Vdp2DrawRBG0(void)
 	g_rgb0.rgb_type = 0;
 
 	info->dst = 0;
+	info->id = 4;
 	info->uclipmode = 0;
 	info->cor = 0;
 	info->cog = 0;
