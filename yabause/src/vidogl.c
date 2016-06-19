@@ -6657,7 +6657,8 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA( vdp2draw_stru
    {
       if( info->pWinInfo[v].WinShowLine == 0 )
       {
-         return (&paraA);
+		  h = (paraA.KtablV + (paraA.deltaKAx * h));
+		  return info->GetKValueA(&paraA, h);
       }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
