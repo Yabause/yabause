@@ -1779,25 +1779,33 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
        return;
     }
 
-    if (add != 1)
-    {
-        for (i = 0; i < imm; i++)
-        {
+	//LOG("DSP DMA01 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
+
+	// is A-Bus?
+	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
+		if (add > 1){
+			add = 1;
+		}
+
+		for (i = 0; i < imm; i++)
+		{
             sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLongNocache(MSH2, (sc->RA0 << 2));
-            sc->CT[sel]++;
-            sc->CT[sel] &= 0x3F;
-            sc->RA0 += 1; // add?
-        }
-    }
-    else{
-        for (i = 0; i < imm; i++)
-        {
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += add;
+			
+		}
+	}
+	else{
+		for (i = 0; i < imm ; i++)
+		{
             sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLongNocache(MSH2, (sc->RA0 << 2));
-            sc->CT[sel]++;
-            sc->CT[sel] &= 0x3F;
-            sc->RA0 += 1;
-        }
-    }
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += (add>>1);
+		}
+	}
 
     sc->ProgControlPort.part.T0 = 0;
 }
@@ -1889,7 +1897,8 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 {
    u32 Counter = 0;
    u32 i;
-   int DestinationId;
+	int add;
+	int sel;
 
    switch ((inst & 0x7))
    {
@@ -1903,6 +1912,47 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
    case 0x07: Counter = sc->MD[3][sc->CT[3]]; ScuDsp->CT[3]++; break;
    }
 
+	switch (((inst >> 15) & 0x07))
+	{
+	case 0: add = 0; break;
+	case 1: add = 1; break;
+	case 2: add = 2; break;
+	case 3: add = 4; break;
+	case 4: add = 8; break;
+	case 5: add = 16; break;
+	case 6: add = 32; break;
+	case 7: add = 64; break;
+	}
+	
+	sel = (inst >> 8) & 0x3;
+
+	//LOG("DSP DMA03 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
+
+	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
+		if (add > 1){
+			add = 1;
+		}
+		for (i = 0; i < Counter; i++)
+		{
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += add;
+		}
+	}
+	else{
+		for (i = 0; i < Counter; i++)
+		{
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += (add>>1);
+		}
+	}
+
+
+#if 0
    DestinationId = (inst >> 8) & 0x7;
 
    if (yabsys.use_scu_dma_timing)
@@ -1954,6 +2004,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
             sc->RA0 += incl;
         }
     }
+#endif
     sc->ProgControlPort.part.T0 = 0;
 }
 
@@ -2020,7 +2071,7 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
         MappedMemoryWriteLongNocache(MSH2, Adr, Val);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
-        sc->WA0 += 1;
+		sc->WA0 += add;
 
     }
     sc->ProgControlPort.part.T0 = 0;
@@ -2116,6 +2167,7 @@ void ScuExec(u32 cycles) {
    int scu_dma_cycles = cycles;
    int real_timing = 1;
 
+   timing = timing ;
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
       while (timing > 0) {
@@ -3420,6 +3472,7 @@ u16 FASTCALL ScuReadWord(u32 addr) {
 
 u32 FASTCALL ScuReadLong(u32 addr) {
    addr &= 0xFF;
+   //LOG("Scu read %08X:%08X\n", addr);
    switch(addr) {
       case 0:
          return ScuRegs->D0R;
@@ -3487,6 +3540,7 @@ void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
 
 void FASTCALL ScuWriteLong(u32 addr, u32 val) {
    addr &= 0xFF;
+	//LOG("Scu write %08X:%08X\n", addr, val);
    switch(addr) {
       case 0:
          ScuRegs->D0R = val;
@@ -3651,6 +3705,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0xA0:
          ScuRegs->IMS = val;
+		 //LOG("scu\t: IMS = %02X\n", val);
          ScuTestInterruptMask();
          break;
       case 0xA4:
@@ -3775,9 +3830,11 @@ static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 
-   if (!(ScuRegs->IMS & mask))
-      SH2SendInterrupt(MSH2, vector, level);
-   else
+	if (!(ScuRegs->IMS & mask)){
+		//if (vector != 0x41) LOG("INT %d", vector);
+		SH2SendInterrupt(MSH2, vector, level);
+	}
+	else
    {
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
