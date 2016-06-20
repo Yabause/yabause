@@ -1089,6 +1089,9 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
 
    if (dma->dsp_dma_type == 1)
    {
+      if (sh2_check_wait(NULL, dma->dsp_address, 2))
+         return;
+
       sc->MD[dma->dsp_bank][dma->ct] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
       dma->ct++;
       dma->ct &= 0x3F;
@@ -1185,6 +1188,9 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
       }
       else
       {
+         if (sh2_check_wait(NULL, dma->dsp_address, 2))
+            return;
+
          sc->MD[dma->dsp_bank][dma->ct] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
          dma->ct++;
          dma->ct &= 0x3F;
@@ -1538,11 +1544,9 @@ void scu_insert_dsp_dma(struct QueuedDma *dma)
 
    dma->ct = ScuDsp->CT[dma->dsp_bank];
 
-   if (dma->dsp_dma_type == 1 || dma->dsp_dma_type == 3)
-   {
-      ScuDsp->CT[dma->dsp_bank] += dma->count;
-      ScuDsp->CT[dma->dsp_bank] &= 0x3f;
-   }
+   //count is added instantly for both reads and writes
+   ScuDsp->CT[dma->dsp_bank] += dma->count;
+   ScuDsp->CT[dma->dsp_bank] &= 0x3f;
 
    for (i = 0; i < 16; i++)
    {
