@@ -62,6 +62,7 @@
 #define SCUREG_VER   (*(volatile u32 *)0x25FE00C8)
 
 void dsp_copy_str_to_offset(char*result);
+void scu_dsp_dma_tests();
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -74,6 +75,7 @@ void scu_test()
    { "Interrupt Test", &scu_int_test, },
    { "DMA Test" , &scu_dma_test, },
    { "DSP Test" , &scu_dsp_test, },
+   { "DSP DMA Test", &scu_dsp_dma_tests, },
 //   { "Misc" , &scumisctest, },
    { "\0", NULL }
    };
@@ -1489,8 +1491,7 @@ void do_flag_dma(u32 src_addr, u32 dst_addr, u32 read_add, u32 write_add, u32 le
    }
 }
 
-#define AUTOMATED 1
-#define VERIFY 0
+#define AUTO 1
 
 u32 results2[][65] = {
 {0xdead0000, 0xdead0000, 0xcafef00d, 0xcafef00d, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000},
@@ -1753,7 +1754,7 @@ u32 results2[][65] = {
 
 int results2_pos = 0;
 
-void dsp_test_end_results(u32* addr_ptr, int pos, int add_mode, int type, int hold, int length)
+void dsp_test_end_results(u32* addr_ptr, int pos, int add_mode, int type, int hold, int length, int user_wait_display, int verify)
 {
    int i;
    SCU_REG_PDA = 0;
@@ -1800,7 +1801,7 @@ void dsp_test_end_results(u32* addr_ptr, int pos, int add_mode, int type, int ho
    sprintf(result, "},\n");
    dsp_copy_str_to_offset(result);
 
-   if (AUTOMATED == 0)
+   if (user_wait_display)
    {
       vdp_printf(&test_disp_font, 22 * 8, 0 * 8, 0xF, "DSP");
       vdp_printf(&test_disp_font, 31 * 8, 0 * 8, 0xF, "DSTA");
@@ -1840,7 +1841,7 @@ void dsp_test_end_results(u32* addr_ptr, int pos, int add_mode, int type, int ho
    }
    else
    {
-      if (VERIFY)
+      if (verify || AUTO)
       {
          int fail = 0;
 
@@ -1848,15 +1849,21 @@ void dsp_test_end_results(u32* addr_ptr, int pos, int add_mode, int type, int ho
          {
             if (data[i] != results2[results2_pos][i])
             {
-               vdp_printf(&test_disp_font, 0 * 8, 26 * 8, 0xF, "%02X %08X should be %08X %08X", i, data[i], results2[results2_pos][i], addr_ptr);
-               vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "add %d type %d hold %d result pos %d len %d", add_mode, type, hold, results2_pos, length);
+               if (!AUTO)
+               {
+                  vdp_printf(&test_disp_font, 0 * 8, 26 * 8, 0xF, "%02X %08X should be %08X %08X", i, data[i], results2[results2_pos][i], addr_ptr);
+                  vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "add %d type %d hold %d result pos %d len %d", add_mode, type, hold, results2_pos, length);
+               }
                fail = 1;
 
                int q;
 
-               for (q = 0; q < 26; q++)
+               if (!AUTO)
                {
-                  vdp_printf(&test_disp_font, 20 * 8, q * 8, 0xF, "%02X %08X %08X", q, data[q], results2[results2_pos][q]);
+                  for (q = 0; q < 26; q++)
+                  {
+                     vdp_printf(&test_disp_font, 20 * 8, q * 8, 0xF, "%02X %08X %08X", q, data[q], results2[results2_pos][q]);
+                  }
                }
                break;
             }
@@ -1864,19 +1871,26 @@ void dsp_test_end_results(u32* addr_ptr, int pos, int add_mode, int type, int ho
 
          if (fail)
          {
-            for (;;)
+            if (!AUTO)
             {
-               vdp_vsync();
-
-               if (per[0].but_push_once & PAD_A)
+               for (;;)
                {
-                  break;
-               }
+                  vdp_vsync();
 
-               if (per[0].but_push_once & PAD_Y)
-               {
-                  reset_system();
+                  if (per[0].but_push_once & PAD_A)
+                  {
+                     break;
+                  }
+
+                  if (per[0].but_push_once & PAD_Y)
+                  {
+                     reset_system();
+                  }
                }
+            }
+            else
+            {
+               stage_status = STAGESTAT_BADDATA;
             }
          }
 
@@ -1937,7 +1951,7 @@ void write_wa0_ra0(int type, u32 addr)
    SCU_REG_PPD = MVI_Imm_d(addr >> 2, ra0_wa0);
 }
 
-void write_dma_to_dsp_data(u32* addr_ptr, u32 length)
+void dsp_clear()
 {
    int i, j;
 
@@ -1951,6 +1965,13 @@ void write_dma_to_dsp_data(u32* addr_ptr, u32 length)
          SCU_REG_PDD = 0;
       }
    }
+}
+
+void write_dma_to_dsp_data(u32* addr_ptr, u32 length)
+{
+   int i, j;
+
+   dsp_clear();
 
    for (i = 0; i < length; i += 2)
    {
@@ -2018,7 +2039,7 @@ void dsp_init_stop(u32 length, int type)
    }
 }
 
-void dsp_dma_to_dsp(u32 src_dest_addr, u32 bank, u32 add_mode, u8 length, int type, int addr_clear, int hold)
+void dsp_dma_to_dsp(u32 src_dest_addr, u32 bank, u32 add_mode, u8 length, int type, int addr_clear, int hold, int user_wait_display)
 {
    u32* addr_ptr = (volatile u32*)(src_dest_addr);
 
@@ -2038,12 +2059,11 @@ void dsp_dma_to_dsp(u32 src_dest_addr, u32 bank, u32 add_mode, u8 length, int ty
 
    dsp_exec_read_dsta();
 
-   dsp_test_end_results(addr_ptr, 0, add_mode, type, hold, length);
-
+   dsp_test_end_results(addr_ptr, 0, add_mode, type, hold, length, user_wait_display, 0);
 }
 
 //back to back dma to test CT and RA0/WA0 regs
-void dsp_dma_multiple(u32 addr, u32 bank, u32 add_mode, u8 length, int type, int ct, int hold)
+void dsp_dma_multiple(u32 addr, u32 bank, u32 add_mode, u8 length, int type, int ct, int hold, int user_wait_display, int verify)
 {
    u32* addr_ptr = (volatile u32*)(addr);
 
@@ -2077,17 +2097,16 @@ void dsp_dma_multiple(u32 addr, u32 bank, u32 add_mode, u8 length, int type, int
 
    dsp_exec_read_dsta();
 
-   dsp_test_end_results(addr_ptr, 0, add_mode, type, hold, length);
+   dsp_test_end_results(addr_ptr, 0, add_mode, type, hold, length, user_wait_display, verify);
 }
 
-void test_dmas(u32 address)
+void test_dma_reads(u32 address, int user_wait_display, int verify)
 {
    int length = 2;
    int add_mode = 0;
    int count_bank = 1;
    int type = 1;
    int hold = 0;
-
    //type 1 / 5
    for (hold = 0; hold <= 1; hold++)
    {
@@ -2095,7 +2114,7 @@ void test_dmas(u32 address)
       {
          for (add_mode = DMAADD_0; add_mode <= DMAADD_64; add_mode++)
          {
-            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 1, count_bank, hold);
+            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 1, count_bank, hold, user_wait_display, verify);
          }
       }
    }
@@ -2107,10 +2126,19 @@ void test_dmas(u32 address)
       {
          for (add_mode = DMAADD_0; add_mode <= DMAADD_64; add_mode++)
          {
-            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 3, count_bank, hold);
+            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 3, count_bank, hold, user_wait_display, verify);
          }
       }
    }
+}
+
+void test_dma_writes(u32 address, int user_wait_display, int verify)
+{
+   int length = 2;
+   int add_mode = 0;
+   int count_bank = 1;
+   int type = 1;
+   int hold = 0;
 
    //type 2 / 6
    for (hold = 0; hold <= 1; hold++)
@@ -2119,7 +2147,7 @@ void test_dmas(u32 address)
       {
          for (add_mode = DMAADD_0; add_mode <= DMAADD_64; add_mode++)
          {
-            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 2, count_bank, hold);
+            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 2, count_bank, hold, user_wait_display, verify);
          }
       }
    }
@@ -2131,7 +2159,7 @@ void test_dmas(u32 address)
       {
          for (add_mode = DMAADD_0; add_mode <= DMAADD_64; add_mode++)
          {
-            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 4, count_bank, hold);
+            dsp_dma_multiple(address, DMARAM_0, add_mode, length, 4, count_bank, hold, user_wait_display, verify);
          }
       }
    }
@@ -2139,38 +2167,103 @@ void test_dmas(u32 address)
 
 void dsp_dma_multiple_test()
 {
-   test_disp_font.transparent = 0;
+   if(!AUTO)
+      test_disp_font.transparent = 0;
+
+   //show each result and wait for user input
+   int user_wait_display = 0;
+
+   //check against known good results
+   int verify = 0;
 
    int i;
 
    for(i = 0; i < 13; i++)
       vdp_vsync();
 
-   results2_pos = 0;
+   test_dma_reads(0x26070000, user_wait_display, verify);
+   test_dma_writes(0x26070000, user_wait_display, verify);
 
-   test_dmas(0x26070000);//high wram (c bus)
+   test_dma_reads(0x25c01000, user_wait_display, verify);
+   test_dma_writes(0x25c01000, user_wait_display, verify);
 
-   test_dmas(0x25c01000);//vdp1 ram (b bus)
+   //test_dma_reads(0x22000000,user_wait_display, verify);
+   //test_dma_writes(0x22000000,user_wait_display, verify);
 
-   //test_dmas(0x22000000);//cart (a bus)
 
-   vdp_printf(&test_disp_font, 0 * 8, 25 * 8, 0xF, "finished");
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
 
-   for (;;)
+   if (!AUTO)
    {
-      vdp_vsync();
-      ud_check(0);
+      vdp_printf(&test_disp_font, 0 * 8, 25 * 8, 0xF, "finished");
 
-      if (per[0].but_push_once & PAD_A)
+      for (;;)
       {
-         break;
-      }
+         vdp_vsync();
+         ud_check(0);
 
-      if (per[0].but_push_once & PAD_Y)
-      {
-         reset_system();
+         if (per[0].but_push_once & PAD_A)
+         {
+            break;
+         }
+
+         if (per[0].but_push_once & PAD_Y)
+         {
+            reset_system();
+         }
       }
    }
+}
+
+void dsp_dma_c_bus_read()
+{
+   results2_pos = 0;
+
+   test_dma_reads(0x26070000, 0, 1);//high wram (c bus)
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void dsp_dma_c_bus_write()
+{
+   test_dma_writes(0x26070000, 0, 1);
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void dsp_dma_b_bus_read()
+{
+   test_dma_reads(0x25c01000, 0, 1);//vdp1 ram (b bus)
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void dsp_dma_b_bus_write()
+{
+   test_dma_writes(0x25c01000, 0, 1);
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void dsp_dma_a_bus_read()
+{
+   //test_dma_reads(0x22000000,0, 1);//cart (a bus)
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void dsp_dma_a_bus_write()
+{
+   //test_dma_writes(0x22000000,0, 1);
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
 }
 
 void dsp_print_banks(int start_x)
@@ -2198,6 +2291,28 @@ void dsp_print_banks(int start_x)
    }
 }
 
+void dsp_print_full_bank(int which, int start_x)
+{
+   int j, i;
+
+   u32 bank[64] = { 0 };
+
+   SCU_REG_PDA = which << 6 | 0;
+
+   for (i = 0; i < 64; i++)
+   {
+      bank[i] = SCU_REG_PDD;
+   }
+
+   for (i = 0; i < 16; i++)
+   {
+      vdp_printf(&test_disp_font, (start_x + 0) * 8, (i + 1) * 8, 0xF, "%08X", bank[i+0]);
+      vdp_printf(&test_disp_font, (start_x + 9) * 8, (i + 1) * 8, 0xF, "%08X", bank[i+16]);
+      vdp_printf(&test_disp_font, (start_x + 18) * 8, (i + 1) * 8, 0xF, "%08X", bank[i+32]);
+      vdp_printf(&test_disp_font, (start_x + 27) * 8, (i + 1) * 8, 0xF, "%08X", bank[i+48]);
+   }
+}
+
 void dma_test_no_wait(int num_nops, int add_mode)
 {
    u32 addr = 0x25c01000;
@@ -2214,6 +2329,11 @@ void dma_test_no_wait(int num_nops, int add_mode)
 
    write_wa0_ra0(type, addr);
 
+   length = 8;
+
+   SCU_REG_PPD = MOV_Imm_d(0, MOVDEST_CT2);
+   SCU_REG_PPD = MOV_Imm_d(0, MOVDEST_CT3);
+
    write_dma_instruction(type, DMARAM_0, add_mode, length, ct, hold);
 
    int i;
@@ -2227,43 +2347,69 @@ void dma_test_no_wait(int num_nops, int add_mode)
 
    write_dma_instruction(type, DMARAM_3, add_mode, length, ct, hold);
 
-   write_jump(7 + num_nops);
+   write_jump(9 + num_nops);
 
    SCU_REG_PPD = END();
 
    dsp_exec_read_dsta();
 
-   vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "%08X", num_nops);
-
-   dsp_print_banks(0);
-
-   for (;;)
+   if (!AUTO)
    {
-      vdp_vsync();
-      ud_check(0);
+      vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "%08X", num_nops);
 
-      if (per[0].but_push_once & PAD_A)
-      {
-         break;
-      }
+      dsp_print_banks(0);
 
-      if (per[0].but_push_once & PAD_Y)
+      for (;;)
       {
-         reset_system();
+         vdp_vsync();
+         ud_check(0);
+
+         if (per[0].but_push_once & PAD_A)
+         {
+            break;
+         }
+
+         if (per[0].but_push_once & PAD_Y)
+         {
+            reset_system();
+         }
       }
    }
 }
 
 //submit dmas without waiting for the first to complete
+//demonstrates that multiple dmas can be queued with
+//proper ra0 / wa0 increment
 void dsp_multiple_submit()
 {
-   test_disp_font.transparent = 0;
-   int add_mode = 0;
-   for (add_mode = DMAADD_0; add_mode <= DMAADD_64; add_mode++)
+   if(!AUTO)
+      test_disp_font.transparent = 0;
+
+   dma_test_no_wait(0, DMAADD_2);
+
+   u32 bank[4] = { 0 };
+
+   int j;
+
+   for (j = 0; j < 4; j++)
    {
-      dma_test_no_wait(0, add_mode);
-      dma_test_no_wait(64, add_mode);
-      dma_test_no_wait(128, add_mode);
+      SCU_REG_PDA = j << 6 | 0;
+
+      bank[j] = SCU_REG_PDD;
+   }
+
+   if (AUTO)
+   {
+      if (bank[0] != 0xdead0000)
+         stage_status = STAGESTAT_BADDATA;
+      else if (bank[1] != 0xdead0008)
+         stage_status = STAGESTAT_BADDATA;
+      else if (bank[2] != 0xdead0010)
+         stage_status = STAGESTAT_BADDATA;
+      else if (bank[3] != 0xdead0018)
+         stage_status = STAGESTAT_BADDATA;
+      else
+         stage_status = STAGESTAT_DONE;
    }
 }
 
@@ -2310,23 +2456,26 @@ void dsp_dma_timing_impl(int length)
 
    dsp_exec_read_dsta();
 
-   vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "%08X", length);
-
-   dsp_print_banks(0);
-
-   for (;;)
+   if (!AUTO)
    {
-      vdp_vsync();
-      ud_check(0);
+      vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "%08X", length);
 
-      if (per[0].but_push_once & PAD_A)
-      {
-         break;
-      }
+      dsp_print_banks(0);
 
-      if (per[0].but_push_once & PAD_Y)
+      for (;;)
       {
-         reset_system();
+         vdp_vsync();
+         ud_check(0);
+
+         if (per[0].but_push_once & PAD_A)
+         {
+            break;
+         }
+
+         if (per[0].but_push_once & PAD_Y)
+         {
+            reset_system();
+         }
       }
    }
 }
@@ -2335,8 +2484,178 @@ void dsp_dma_timing()
 {
    int i;
    test_disp_font.transparent = 0;
-   for (i = 0; i < 256; i += 4)
+   for (i = 0; i < 256; i += 16)
    {
       dsp_dma_timing_impl(i);
+   }
+}
+
+//see if the dma count is added to ct immediately
+void dma_ct_add(int add_mode, int type, u32 * bank)
+{
+   u32 addr = 0x25c01000;
+   int length = 16;
+   int ct = 0;
+   int hold = 0;
+   int i;
+
+   u32* addr_ptr = (volatile u32*)(addr);
+
+   write_test_data(addr_ptr, type, 1, 64);
+
+   dsp_init_stop(length, type);
+
+   write_wa0_ra0(type, addr);
+
+   write_dma_instruction(type, DMARAM_0, add_mode, length, ct, hold);
+
+   SCU_REG_PPD = MVI_Imm_d(0x00c0ffee, MVIDEST_MC0);
+
+   write_jump(5);
+
+   SCU_REG_PPD = END();
+
+   dsp_exec_read_dsta();
+
+   if(!AUTO)
+      dsp_print_full_bank(0, 0);
+
+   SCU_REG_PDA = 0 << 6 | 0;
+
+   for (i = 0; i < 64; i++)
+      bank[i] = SCU_REG_PDD;
+
+   if (!AUTO)
+   {
+      for (;;)
+      {
+         vdp_vsync();
+         ud_check(0);
+
+         if (per[0].but_push_once & PAD_A)
+         {
+            break;
+         }
+
+         if (per[0].but_push_once & PAD_Y)
+         {
+            reset_system();
+         }
+      }
+   }
+}
+
+void dma_ct_add_test1()
+{
+   if (!AUTO)
+      test_disp_font.transparent = 0;
+
+   u32 bank[64] = { 0 };
+
+   dma_ct_add(1, 1, bank);
+
+   if (AUTO)
+   {
+      if (bank[16] != 0x00c0ffee)
+         stage_status = STAGESTAT_BADDATA;
+      else
+         stage_status = STAGESTAT_DONE;
+   }
+}
+
+void dma_ct_add_test2()
+{
+   if (!AUTO)
+      test_disp_font.transparent = 0;
+
+   u32 bank[64] = { 0 };
+
+   dma_ct_add(1, 2, bank);
+
+   if (AUTO)
+   {
+      if (bank[16] != 0x00c0ffee)
+         stage_status = STAGESTAT_BADDATA;
+      else
+         stage_status = STAGESTAT_DONE;
+   }
+}
+
+int is_out_of_range(int target, int val)
+{
+   int fudge = 4;
+   int max = target + fudge;
+   int min = target - fudge;
+
+   if (min <= 0)
+      min = 1;
+
+   if (val > max || val < min)
+      return 1;
+
+   return 0;
+}
+
+void check_dma_timing(int count, int expected)
+{
+   dsp_dma_timing_impl(count);
+
+   u32 time = 0;
+   SCU_REG_PDA = 0 << 6 | 0;
+   time = SCU_REG_PDD;
+
+   if (is_out_of_range(expected, time))
+   {
+      stage_status = STAGESTAT_BADDATA;
+      vdp_printf(&test_disp_font, 0 * 8, 27 * 8, 0xF, "%08X", time);
+   }
+}
+
+void dma_timing_256()
+{
+   check_dma_timing(0, 0x23);
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void dma_timing_16()
+{
+   check_dma_timing(16, 5);
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void dma_timing_32()
+{
+   check_dma_timing(32, 7);
+
+   if (stage_status != STAGESTAT_BADDATA)
+      stage_status = STAGESTAT_DONE;
+}
+
+void scu_dsp_dma_tests()
+{
+   if (AUTO)
+   {
+      unregister_all_tests();
+      register_test(&dma_ct_add_test1, "CT reg += DMA count instantly (read)");
+      register_test(&dma_ct_add_test2, "CT reg += DMA count instantly (write)");
+      register_test(&dma_timing_256, "DMA timing 0 (256) words VDP1 RAM");
+      register_test(&dma_timing_16, "DMA timing 16 words VDP1 RAM");
+      register_test(&dma_timing_32, "DMA timing 32 words VDP1 RAM");
+      register_test(&dsp_multiple_submit, "Multiple DMA submit RA0/WA0 check");
+      register_test(&dsp_dma_c_bus_read, "DSP DMA C-bus Reads");
+      register_test(&dsp_dma_c_bus_write, "DSP DMA C-bus Writes");
+      register_test(&dsp_dma_b_bus_read, "DSP DMA B-bus Reads");
+      register_test(&dsp_dma_b_bus_write, "DSP DMA B-bus Writes");
+      register_test(&dsp_dma_a_bus_read, "DSP DMA A-bus Reads");
+      register_test(&dsp_dma_a_bus_write, "DSP DMA A-bus Writes");
+      do_tests("SCU DSP DMA tests", 0, 0);
+   }
+   else
+   {
+
    }
 }
