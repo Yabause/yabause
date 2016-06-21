@@ -37,6 +37,7 @@
 #include "vdp2.h"
 #include "ygr.h"
 #include "assert.h"
+#include <stdarg.h>
 
 #ifdef OPTIMIZED_DMA
 # include "cs2.h"
@@ -452,6 +453,8 @@ struct QueuedDma
    u8 program_ram_counter;
    u8 dsp_add_setting;
    u32 dsp_orig_count;
+   u8 ct;
+   int num_written;
 }scu_dma_queue[16] = { 0 };
 
 int get_write_add_value(u32 reg_val)
@@ -1010,34 +1013,72 @@ void adjust_ra0_wa0(struct QueuedDma * dma)
    }
    else if (dma->dsp_dma_type == 2 || dma->dsp_dma_type == 4)
    {
-      switch (dma->dsp_add_setting)
+      if ((dma->dsp_address & 0x0F000000) == 0x06000000)
       {
-      case 0:
-         sc->WA0 += 1;
-         break;
-      case 1:
-         sc->WA0 += dma->dsp_orig_count;
-         break;
-      case 2:
-         sc->WA0 += (dma->dsp_orig_count * 2) - 1;
-         break;
-      case 3:
-         sc->WA0 += (dma->dsp_orig_count * 4) - 3;
-         break;
-      case 4:
-         sc->WA0 += (dma->dsp_orig_count * 8) - 7;
-         break;
-      case 5:
-         sc->WA0 += (dma->dsp_orig_count * 16) - 15;
-         break;
-      case 6:
-         sc->WA0 += (dma->dsp_orig_count * 32) - 31;
-         break;
-      case 7:
-         sc->WA0 += (dma->dsp_orig_count * 64) - 63;
-         break;
-      default:
-         break;
+         switch (dma->dsp_add_setting)
+         {
+         case 0:
+            sc->WA0 += 1;
+            break;
+         case 1:
+            if (dma->dsp_orig_count == 1 || dma->dsp_orig_count == 2)
+               sc->WA0 += 1;
+            else
+               sc->WA0 += (dma->dsp_orig_count >> 1) + 1;
+            break;
+         case 2:
+            sc->WA0 += dma->dsp_orig_count;
+            break;
+         case 3:
+            sc->WA0 += (dma->dsp_orig_count * 2) - 1;
+            break;
+         case 4:
+            sc->WA0 += (dma->dsp_orig_count * 4) - 3;
+            break;
+         case 5:
+            sc->WA0 += (dma->dsp_orig_count * 8) - 7;
+            break;
+         case 6:
+            sc->WA0 += (dma->dsp_orig_count * 16) - 15;
+            break;
+         case 7:
+            sc->WA0 += (dma->dsp_orig_count * 32) - 31;
+            break;
+         default:
+            break;
+         }
+      }
+      else
+      {
+         switch (dma->dsp_add_setting)
+         {
+         case 0:
+            sc->WA0 += 1;
+            break;
+         case 1:
+            sc->WA0 += dma->dsp_orig_count;
+            break;
+         case 2:
+            sc->WA0 += (dma->dsp_orig_count * 2) - 1;
+            break;
+         case 3:
+            sc->WA0 += (dma->dsp_orig_count * 4) - 3;
+            break;
+         case 4:
+            sc->WA0 += (dma->dsp_orig_count * 8) - 7;
+            break;
+         case 5:
+            sc->WA0 += (dma->dsp_orig_count * 16) - 15;
+            break;
+         case 6:
+            sc->WA0 += (dma->dsp_orig_count * 32) - 31;
+            break;
+         case 7:
+            sc->WA0 += (dma->dsp_orig_count * 64) - 63;
+            break;
+         default:
+            break;
+         }
       }
    }
 }
@@ -1048,26 +1089,93 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
 
    if (dma->dsp_dma_type == 1)
    {
-      sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
-      sc->CT[dma->dsp_bank]++;
-      sc->CT[dma->dsp_bank] &= 0x3F;
+      if (sh2_check_wait(NULL, dma->dsp_address, 2))
+         return;
+
+      sc->MD[dma->dsp_bank][dma->ct] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
+      dma->ct++;
+      dma->ct &= 0x3F;
+
+      if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+      {
+         switch (dma->dsp_add_setting)
+         {
+         case 0:
+         case 1:
+         case 4:
+         case 5:
+            break;
+         case 2:
+         case 3:
+         case 6:
+         case 7:
+            dma->dsp_address += 4;
+            break;
+         default:
+            break;
+         }
+      }
 
       //todo
-      if(dma->dsp_address != 0x05818000)
+      else if (dma->dsp_address != 0x05818000)
          dma->dsp_address += 1 << 2;
 
       dma->count--;
    }
-   else if (dma->dsp_dma_type == 2)
+   else if (dma->dsp_dma_type == 2 || dma->dsp_dma_type == 4)
    {
-      u32 Val = sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]];
-      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val >> 16);
-      dma->dsp_address += dma->dsp_add << 1;
-      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val & 0xffff);
-      dma->dsp_address += dma->dsp_add << 1;
 
-      sc->CT[dma->dsp_bank]++;
-      sc->CT[dma->dsp_bank] &= 0x3F;
+      if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+      {
+         u32 Val = sc->MD[dma->dsp_bank][dma->ct];
+         MappedMemoryWriteLongNocache(MSH2, dma->dsp_address, Val);
+
+         if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+         {
+            switch (dma->dsp_add_setting)
+            {
+            case 0:
+               break;
+            case 1:
+               if(dma->num_written & 1)
+                  dma->dsp_address += 4;
+
+               dma->num_written++;
+               break;
+            case 2:
+               dma->dsp_address += 4;
+               break;
+            case 3:
+               dma->dsp_address += 8;
+               break;
+            case 4:
+               dma->dsp_address += 16;
+               break;
+            case 5: 
+               dma->dsp_address += 32;
+               break;
+            case 6:
+               dma->dsp_address += 64;
+               break;
+            case 7:
+               dma->dsp_address += 128;
+               break;
+            default:
+               break;
+            }
+         }
+      }
+      else
+      {
+         u32 Val = sc->MD[dma->dsp_bank][dma->ct];
+         MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val >> 16);
+         dma->dsp_address += dma->dsp_add << 1;
+         MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val & 0xffff);
+         dma->dsp_address += dma->dsp_add << 1;
+      }
+
+      dma->ct++;
+      dma->ct &= 0x3F;
       dma->count--;
    }
    else if (dma->dsp_dma_type == 3)
@@ -1080,24 +1188,37 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
       }
       else
       {
-         sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
-         sc->CT[dma->dsp_bank]++;
-         sc->CT[dma->dsp_bank] &= 0x3F;
-         dma->dsp_address += dma->dsp_add;
+         if (sh2_check_wait(NULL, dma->dsp_address, 2))
+            return;
+
+         sc->MD[dma->dsp_bank][dma->ct] = MappedMemoryReadLongNocache(MSH2, dma->dsp_address);
+         dma->ct++;
+         dma->ct &= 0x3F;
+
+         if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+         {
+            switch (dma->dsp_add_setting)
+            {
+            case 0:
+            case 1:
+            case 4:
+            case 5:
+               break;
+            case 2:
+            case 3:
+            case 6:
+            case 7:
+               dma->dsp_address += 4;
+               break;
+            default:
+               break;
+            }
+         }
+         else
+            dma->dsp_address += dma->dsp_add;
+
          dma->count--;
       }
-   }
-   else if (dma->dsp_dma_type == 4)
-   {
-      u32 Val = sc->MD[dma->dsp_bank][sc->CT[dma->dsp_bank]];
-      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val >> 16);
-      dma->dsp_address += dma->dsp_add << 1;
-      MappedMemoryWriteWordNocache(MSH2, dma->dsp_address, Val & 0xffff);
-      dma->dsp_address += dma->dsp_add << 1;
-
-      sc->CT[dma->dsp_bank]++;
-      sc->CT[dma->dsp_bank] &= 0x3F;
-      dma->count--;
    }
 
    if (dma->count == 0)
@@ -1107,6 +1228,7 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
       ScuRegs->DSTA &= ~0x700000;
 
       sc->ProgControlPort.part.T0 = 0;
+
       dma_finish(dma);
    }
 }
@@ -1419,6 +1541,12 @@ void scu_insert_dsp_dma(struct QueuedDma *dma)
       dma->count = dma->dsp_orig_count = 256;
 
    ScuRegs->DSTA |= 1;
+
+   dma->ct = ScuDsp->CT[dma->dsp_bank];
+
+   //count is added instantly for both reads and writes
+   ScuDsp->CT[dma->dsp_bank] += dma->count;
+   ScuDsp->CT[dma->dsp_bank] &= 0x3f;
 
    for (i = 0; i < 16; i++)
    {
@@ -1793,12 +1921,34 @@ static void writedmadest(u8 num, u32 val, u8 add)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void dsp_trace_log(const char * format, ...)
+{
+   static int started = 0;
+   static FILE* fp = NULL;
+   va_list l;
+
+   if (!started)
+   {
+      fp = fopen("C:/yabause/log.txt", "w");
+
+      if (!fp)
+      {
+         return;
+      }
+      started = 1;
+   }
+
+   va_start(l, format);
+   vfprintf(fp, format, l);
+   va_end(l);
+}
+
+
 void ScuExec(u32 cycles) {
    int i;
    u32 timing = cycles / 2;
-
-   if(yabsys.use_scu_dma_timing)
-      scu_dma_tick_all(cycles);
+   int scu_dma_cycles = cycles;
+   int real_timing = 1;
 
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
@@ -1816,6 +1966,13 @@ void ScuExec(u32 cycles) {
 
          instruction = ScuDsp->ProgramRam[ScuDsp->PC];
 
+         if (real_timing && (scu_dma_queue[0].status == DMA_ACTIVE))
+         {
+            scu_dma_tick(&scu_dma_queue[0]);
+            scu_dma_tick(&scu_dma_queue[0]);
+            scu_dma_cycles-=2;
+         }
+         
          incFlg[0] = 0;
          incFlg[1] = 0;
          incFlg[2] = 0;
@@ -2326,6 +2483,7 @@ void ScuExec(u32 cycles) {
                      }
 
                      LOG("dsp has ended\n");
+                     dsp_trace_log("END\n");
                      ScuDsp->ProgControlPort.part.P = ScuDsp->PC+1;
                      timing = 1;
                      break;
@@ -2342,6 +2500,9 @@ void ScuExec(u32 cycles) {
 		 
 
 		 //LOG("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
+		 //LOG("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
+         dsp_trace_log("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
+
 
          ScuDsp->PC++;
 
@@ -2359,6 +2520,11 @@ void ScuExec(u32 cycles) {
 
          timing--;
       }
+   }
+
+   if (scu_dma_cycles > 0)
+   {
+      scu_dma_tick_all(scu_dma_cycles);
    }
 }
 
