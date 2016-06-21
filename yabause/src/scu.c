@@ -425,6 +425,10 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
 #define DMA_TRANSFER_A_TO_CPU 3
 #define DMA_TRANSFER_B_TO_CPU 4
 
+#define DSP_CPU_BUS 1
+#define DSP_B_BUS 2
+#define DSP_A_BUS 3
+
 void scu_sort_dma();
 
 struct QueuedDma
@@ -455,6 +459,7 @@ struct QueuedDma
    u32 dsp_orig_count;
    u8 ct;
    int num_written;
+   int dsp_bus;
 }scu_dma_queue[16] = { 0 };
 
 int get_write_add_value(u32 reg_val)
@@ -992,6 +997,11 @@ void adjust_ra0_wa0(struct QueuedDma * dma)
 {
    scudspregs_struct * sc = ScuDsp;
 
+   int is_a_bus = ((dma->dsp_address & 0x0F000000) >= 0x02000000 &&
+      (dma->dsp_address & 0x0FF00000) <= 0x05800000);
+
+   int is_c_bus = (dma->dsp_address & 0x0F000000) == 0x06000000;
+
    if (dma->dsp_dma_type == 1 || dma->dsp_dma_type == 3)
    {
       switch (dma->dsp_add_setting)
@@ -1013,7 +1023,7 @@ void adjust_ra0_wa0(struct QueuedDma * dma)
    }
    else if (dma->dsp_dma_type == 2 || dma->dsp_dma_type == 4)
    {
-      if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+      if (is_c_bus || is_a_bus)
       {
          switch (dma->dsp_add_setting)
          {
@@ -1050,6 +1060,8 @@ void adjust_ra0_wa0(struct QueuedDma * dma)
       }
       else
       {
+         //b-bus
+
          switch (dma->dsp_add_setting)
          {
          case 0:
@@ -1096,7 +1108,7 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
       dma->ct++;
       dma->ct &= 0x3F;
 
-      if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+      if (dma->dsp_bus == DSP_CPU_BUS || dma->dsp_bus == DSP_A_BUS)
       {
          switch (dma->dsp_add_setting)
          {
@@ -1115,54 +1127,48 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
             break;
          }
       }
-
-      //todo
-      else if (dma->dsp_address != 0x05818000)
-         dma->dsp_address += 1 << 2;
+      else
+         dma->dsp_address += 4;
 
       dma->count--;
    }
    else if (dma->dsp_dma_type == 2 || dma->dsp_dma_type == 4)
    {
-
-      if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+      if (dma->dsp_bus == DSP_A_BUS || dma->dsp_bus == DSP_CPU_BUS)
       {
          u32 Val = sc->MD[dma->dsp_bank][dma->ct];
          MappedMemoryWriteLongNocache(MSH2, dma->dsp_address, Val);
 
-         if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+         switch (dma->dsp_add_setting)
          {
-            switch (dma->dsp_add_setting)
-            {
-            case 0:
-               break;
-            case 1:
-               if(dma->num_written & 1)
-                  dma->dsp_address += 4;
-
-               dma->num_written++;
-               break;
-            case 2:
+         case 0:
+            break;
+         case 1:
+            if (dma->num_written & 1)
                dma->dsp_address += 4;
-               break;
-            case 3:
-               dma->dsp_address += 8;
-               break;
-            case 4:
-               dma->dsp_address += 16;
-               break;
-            case 5: 
-               dma->dsp_address += 32;
-               break;
-            case 6:
-               dma->dsp_address += 64;
-               break;
-            case 7:
-               dma->dsp_address += 128;
-               break;
-            default:
-               break;
-            }
+
+            dma->num_written++;
+            break;
+         case 2:
+            dma->dsp_address += 4;
+            break;
+         case 3:
+            dma->dsp_address += 8;
+            break;
+         case 4:
+            dma->dsp_address += 16;
+            break;
+         case 5:
+            dma->dsp_address += 32;
+            break;
+         case 6:
+            dma->dsp_address += 64;
+            break;
+         case 7:
+            dma->dsp_address += 128;
+            break;
+         default:
+            break;
          }
       }
       else
@@ -1195,7 +1201,7 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
          dma->ct++;
          dma->ct &= 0x3F;
 
-         if ((dma->dsp_address & 0x0F000000) == 0x06000000)
+         if (dma->dsp_bus == DSP_CPU_BUS || dma->dsp_bus == DSP_A_BUS)
          {
             switch (dma->dsp_add_setting)
             {
@@ -1534,11 +1540,25 @@ static u32 readdmasrc(u8 num, u8 add)
    return 0;
 }
 
+int dsp_get_bus(u32 addr)
+{
+   if (is_a_bus(addr))
+      return DSP_A_BUS;
+
+   if (is_b_bus(addr))
+      return DSP_B_BUS;
+
+   return DSP_CPU_BUS;
+}
+
+
 void scu_insert_dsp_dma(struct QueuedDma *dma)
 {
    int i = 0;
    if (dma->count == 0)
       dma->count = dma->dsp_orig_count = 256;
+
+   dma->dsp_bus = dsp_get_bus(dma->dsp_address);
 
    ScuRegs->DSTA |= 1;
 
@@ -1567,6 +1587,7 @@ void set_dsta(u32 addr)
    else if (is_b_bus(addr))
       ScuRegs->DSTA |= 0x600000;
 }
+
 
 void dsp_dma01(scudspregs_struct *sc, u32 inst)
 {
@@ -1968,7 +1989,6 @@ void ScuExec(u32 cycles) {
 
          if (real_timing && (scu_dma_queue[0].status == DMA_ACTIVE))
          {
-            scu_dma_tick(&scu_dma_queue[0]);
             scu_dma_tick(&scu_dma_queue[0]);
             scu_dma_cycles-=2;
          }
@@ -2483,7 +2503,7 @@ void ScuExec(u32 cycles) {
                      }
 
                      LOG("dsp has ended\n");
-                     dsp_trace_log("END\n");
+                     //dsp_trace_log("END\n");
                      ScuDsp->ProgControlPort.part.P = ScuDsp->PC+1;
                      timing = 1;
                      break;
@@ -2501,7 +2521,7 @@ void ScuExec(u32 cycles) {
 
 		 //LOG("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
 		 //LOG("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
-         dsp_trace_log("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
+        //dsp_trace_log("RX=%08X,RY=%08X,MUL=%16X\n", ScuDsp->RX, ScuDsp->RY, ScuDsp->MUL.all);
 
 
          ScuDsp->PC++;
