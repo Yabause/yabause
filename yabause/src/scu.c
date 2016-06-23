@@ -424,6 +424,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
 #define DMA_TRANSFER_CPU_TO_B 2
 #define DMA_TRANSFER_A_TO_CPU 3
 #define DMA_TRANSFER_B_TO_CPU 4
+#define DMA_TRANSFER_CPU_TO_A 5
+#define DMA_TRANSFER_B_TO_A 6
 
 #define DSP_CPU_BUS 1
 #define DSP_B_BUS 2
@@ -436,10 +438,13 @@ struct QueuedDma
    u32 read_address;
    u32 write_address;
    u32 count;
+   u32 original_count;
+   int count_mod_4;
    int status;
    int second_word;
    u32 buffer;
    u32 read_add;
+   int add_setting;
    u32 write_add;
    int bus_type;
    int is_indirect;
@@ -542,7 +547,7 @@ void dma_finished(struct QueuedDma * dma)
 void dma_read_indirect(struct QueuedDma * dma)
 {
    u32 address = MappedMemoryReadLongNocache(MSH2, dma->indirect_address + 8);
-   dma->count = MappedMemoryReadLongNocache(MSH2, dma->indirect_address);
+   dma->original_count = dma->count = MappedMemoryReadLongNocache(MSH2, dma->indirect_address);
    dma->write_address = MappedMemoryReadLongNocache(MSH2, dma->indirect_address + 4);
    dma->read_address = address & (~0x80000000);
    dma->second_word = 0;
@@ -578,229 +583,238 @@ void check_dma_finished(struct QueuedDma *dma)
    }
 }
 
-//access a or b bus
-u16 a_b_access_word(u32 addr, u16 data, int is_read)
+void get_write_add_b(struct QueuedDma * dma)
 {
-   addr &= 0xfffffff;
+   switch (dma->add_setting)
+   {
+   case 0:
+      break;
+   case 1:
+         dma->write_address += 2;
+      break;
+   case 2:
+         dma->write_address += 4;
+      break;
+   case 3:
+         dma->write_address += 8;
+      break;
+   case 4:
+         dma->write_address += 16;
+      break;
+   case 5:
+         dma->write_address += 32;
+      break;
+   case 6:
+         dma->write_address += 64;
+      break;
+   case 7:
+         dma->write_address += 128;
+      break;
+   }
+}
 
-   if (addr >= 0x2000000 && addr <= 0x3ffffff)
+void get_write_add_a_to_cpu(struct QueuedDma * dma)
+{
+   switch (dma->add_setting)
    {
-      //cs0
-      if (is_read)
-      {
-         return CartridgeArea->Cs0ReadWord(MSH2, addr);
-      }
-      else
-      {
-         CartridgeArea->Cs0WriteWord(MSH2, addr, data);
-         return 0;
-      }
+   case 0:
+      break;
+   case 1:
+      if ((dma->num_written % 8) == 0)
+         dma->write_address += 4;
+      break;
+   case 2:
+      dma->write_address += 4;
+      break;
+   case 3:
+      dma->write_address += 8;
+      break;
+   case 4:
+      dma->write_address += 16;
+      break;
+   case 5:
+      dma->write_address += 32;
+      break;
+   case 6:
+      dma->write_address += 64;
+      break;
+   case 7:
+      dma->write_address += 128;
+      break;
    }
-   else if (addr >= 0x4000000 && addr <= 0x4ffffff)
-   {
-      //cs1
-      if (is_read)
-      {
-         return Cs1ReadWord(MSH2, addr);
-      }
-      else
-      {
-         Cs1WriteWord(MSH2, addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5000000 && addr <= 0x57fffff)
-   {
-      //dummy
-   }
-   else if (addr >= 0x5800000 && addr <= 0x58fffff)
-   {
-      //cs2
-      if (yabsys.use_cd_block_lle)
-      {
-         if (is_read)
-         {
-            return ygr_a_bus_read_word(addr);
-         }
-         else
-         {
-            ygr_a_bus_write_word(addr, data);
-            return 0;
-         }
-      }
-      else
-      {
-         if (is_read)
-         {
-            return Cs2ReadWord(MSH2, addr);
-         }
-         else
-         {
-            Cs2WriteWord(MSH2, addr, data);
-            return 0;
-         }
-      }
-   }
-   else if (addr >= 0x5a00000 && addr <= 0x5afffff)
-   {
-      //sound ram
-      if (is_read)
-      {
-         return SoundRamReadWord(addr);
-      }
-      else
-      {
-         SoundRamWriteWord(addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5b00000 && addr <= 0x5bfffff)
-   {
-      //scsp regs
-      if (is_read)
-      {
-         return ScspReadWord(addr);
-      }
-      else
-      {
-         ScspWriteWord(addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5c00000 && addr <= 0x5c7ffff)
-   {
-      //vdp1 ram
-      if (is_read)
-      {
-         return Vdp1RamReadWord(addr);
-      }
-      else
-      {
-         Vdp1RamWriteWord(addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5c80000 && addr <= 0x5cfffff)
-   {
-      //vdp1 framebuffer
-      if (is_read)
-      {
-         return Vdp1FrameBufferReadWord(addr);
-      }
-      else
-      {
-         Vdp1FrameBufferWriteWord(addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5d00000 && addr <= 0x5d7ffff)
-   {
-      //vdp1 registers
-      if (is_read)
-      {
-         return Vdp1ReadWord(addr);
-      }
-      else
-      {
-         Vdp1WriteWord(addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5e00000 && addr <= 0x5efffff)
-   {
-      //vdp2 ram
-      if (is_read)
-      {
-         return Vdp2RamReadWord(addr);
-      }
-      else
-      {
-         Vdp2RamWriteWord(addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5f00000 && addr <= 0x5f7ffff)
-   {
-      //vdp2 color ram
-      if (is_read)
-      {
-         return Vdp2ColorRamReadWord(addr);
-      }
-      else
-      {
-         Vdp2ColorRamWriteWord(addr, data);
-         return 0;
-      }
-   }
-   else if (addr >= 0x5f80000 && addr <= 0x5fbffff)
-   {
-      //vdp2 registers
-      if (is_read)
-      {
-         return Vdp2ReadWord(addr);
-      }
-      else
-      {
-         Vdp2WriteWord(addr, data);
-         return 0;
-      }
-   }
-
-   assert(0);
-   return 0;
 }
 
 int sh2_check_wait(SH2_struct * sh, u32 addr, int size);
+void get_add(struct QueuedDma * dma);
 
-//cpu-bus to a or b bus
-void scu_dma_tick_32_to_16(struct QueuedDma *dma)
+void do_writes_b(struct QueuedDma* dma)
+{
+   if (!dma->second_word)
+   {
+      dma->buffer = MappedMemoryReadLongNocache(MSH2, dma->read_address);
+      MappedMemoryWriteWordNocache(MSH2, dma->write_address, dma->buffer >> 16);
+      dma->second_word = 1;
+      dma->count -= 2;
+      dma->num_written += 2;
+      get_write_add_b(dma);
+   }
+   else
+   {
+      MappedMemoryWriteWordNocache(MSH2, dma->write_address, dma->buffer & 0xffff);
+      dma->read_address += dma->read_add;
+      dma->count -= 2;
+      dma->num_written += 2;
+      dma->second_word = 0;
+      get_write_add_b(dma);
+   }
+}
+
+void scu_dma_tick_to_b(struct QueuedDma *dma)
 {
    if (sh2_check_wait(NULL, dma->read_address, 2))
       return;
 
-   if (!dma->second_word)
+   if (dma->count_mod_4 == 0)
    {
-      dma->buffer = MappedMemoryReadLongNocache(MSH2, dma->read_address);
-      a_b_access_word(dma->write_address, (u16)(dma->buffer >> 16), 0);
-      dma->read_address += dma->read_add;
-      dma->write_address += dma->write_add;
-      dma->second_word = 1;
-      dma->count-=2;
+      do_writes_b(dma);
    }
-   else
+   else if (dma->count_mod_4 == 1)
    {
-      //no read
-      a_b_access_word(dma->write_address, (u16)(dma->buffer & 0xffff), 0);
-      //no read increment
-      dma->write_address += dma->write_add;
-      dma->second_word = 0;
-      dma->count -= 2;
+      //this mode will write 0x90 at the end of a dma for some reason
+      if ((dma->original_count >= 0x5 ) 
+         && (dma->add_setting >= 2 ) && dma->count == 1)
+      {
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address, (dma->buffer >> 8) & 0xff);
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address + 2, 0x90);
+         dma->count = 0;
+      }
+      else if (dma->count == 1 && dma->original_count > 1 && dma->add_setting == 0)
+      {
+         u8 byte = MappedMemoryReadByteNocache(MSH2, dma->read_address);
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address + 2, 0x90);
+         dma->count = 0;
+      }
+      else if (dma->count == 1)
+      {
+         u8 byte = MappedMemoryReadByteNocache(MSH2, dma->read_address);
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address, byte);
+         dma->count = 0;
+      }
+      else
+      {
+         do_writes_b(dma);
+      }
+   }
+   else if (dma->count_mod_4 == 2)
+   {
+      if (dma->count == 2)
+      {
+         u16 word = MappedMemoryReadWordNocache(MSH2, dma->read_address);
+         MappedMemoryWriteWordNocache(MSH2, dma->write_address, word);
+         dma->count = 0;
+      }
+      else 
+         do_writes_b(dma);
+   }
+   else if (dma->count_mod_4 == 3)
+   {
+      if (dma->count == 3 && dma->original_count > 3)
+      {
+         dma->buffer = MappedMemoryReadLongNocache(MSH2, dma->read_address);
+         MappedMemoryWriteWordNocache(MSH2, dma->write_address, dma->buffer >> 16);
+
+         get_write_add_b(dma);
+
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address, (dma->buffer >> 8) & 0xFF);
+         dma->count = 0;
+      }
+      else if (dma->count == 3)
+      {
+         dma->buffer = MappedMemoryReadLongNocache(MSH2, dma->read_address);
+         MappedMemoryWriteWordNocache(MSH2, dma->write_address, dma->buffer >> 16);
+
+         get_write_add_b(dma);
+
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address, (dma->buffer >> 8) & 0xFF);
+         dma->count = 0;
+      }
+      else
+      {
+         do_writes_b(dma);
+      }
    }
 
    check_dma_finished(dma);
 }
 
-void scu_dma_tick_16_to_16(struct QueuedDma *dma)
+void do_writes_a_to_cpu(struct QueuedDma * dma)
 {
-   if (sh2_check_wait(NULL, dma->read_address, 1))
-      return;
-
    if (!dma->second_word)
    {
-      u16 src_val = a_b_access_word(dma->read_address, 0, 1);
-      a_b_access_word(dma->write_address, src_val, 0);
-      dma->write_address += dma->write_add;
+      dma->buffer = MappedMemoryReadWordNocache(MSH2, dma->read_address) << 16;
       dma->second_word = 1;
       dma->count -= 2;
+      dma->num_written += 2;
    }
    else
    {
-      u16 src_val = a_b_access_word(dma->read_address + 2, 0, 1);
-      a_b_access_word(dma->write_address, (u16)(src_val & 0xffff), 0);
+      dma->buffer |= MappedMemoryReadWordNocache(MSH2, dma->read_address + 2);
+      MappedMemoryWriteLongNocache(MSH2, dma->write_address, dma->buffer);
       dma->read_address += dma->read_add;
-      dma->write_address += dma->write_add;
-      dma->second_word = 0;
       dma->count -= 2;
+      dma->num_written += 2;
+      dma->second_word = 0;
+      get_write_add_a_to_cpu(dma);
+   }
+}
+
+void scu_dma_tick_a_to_cpu(struct QueuedDma *dma)
+{
+   if (sh2_check_wait(NULL, dma->read_address, 2))
+      return;
+
+   if (dma->count_mod_4 == 0)
+   {
+      do_writes_a_to_cpu(dma);
+   }
+   else if (dma->count_mod_4 == 1)
+   {
+      if (dma->count == 1)
+      {
+         u8 byte = MappedMemoryReadByteNocache(MSH2, dma->read_address);
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address, byte);
+         dma->count = 0;
+      }
+      else
+      {
+         do_writes_a_to_cpu(dma);
+      }
+   }
+   else if (dma->count_mod_4 == 2)
+   {
+      if (dma->count == 2)
+      {
+         u16 word = MappedMemoryReadWordNocache(MSH2, dma->read_address);
+         MappedMemoryWriteWordNocache(MSH2, dma->write_address, word);
+         dma->count = 0;
+      }
+      else  do_writes_a_to_cpu(dma);
+   }
+   else if (dma->count_mod_4 == 3)
+   {
+      if (dma->count == 3)
+      {
+         dma->buffer = MappedMemoryReadWordNocache(MSH2, dma->read_address) << 16;
+         MappedMemoryWriteWordNocache(MSH2, dma->write_address, dma->buffer >> 16);
+         dma->buffer |= MappedMemoryReadWordNocache(MSH2, dma->read_address + 2);
+
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address + 2, (dma->buffer >> 8) & 0xFF);
+         dma->count = 0;
+      }
+      else
+      {
+         do_writes_a_to_cpu(dma);
+      }
    }
 
    check_dma_finished(dma);
@@ -903,6 +917,12 @@ int get_bus_type(u32 src, u32 dst)
    if (src_type_b && dst_type_cpu)
       return DMA_TRANSFER_B_TO_CPU;
 
+   if (src_type_cpu && dst_type_a)
+      return DMA_TRANSFER_CPU_TO_A;
+
+   if (src_type_b && dst_type_a)
+      return DMA_TRANSFER_B_TO_A;
+
    return 0;
 }
 
@@ -937,16 +957,19 @@ void scu_enqueue_dma(struct QueuedDma *dma,
 
    dma->read_address = read_reg;
    dma->indirect_address = dma->write_address = write_reg;
+   dma->add_setting = add_reg & 0x7;
    dma->write_add = get_write_add_value(add_reg & 0x7);
    dma->is_indirect = (mode_reg >> 24) & 1;
    dma->read_addr_update = (mode_reg >> 16) & 1;
    dma->write_addr_update = (mode_reg >> 8) & 1;
    dma->starting_factor = mode_reg & 7;
-   dma->count = count_reg;
+   dma->original_count = dma->count = count_reg;
    dma->level = level;
 
    if (dma->is_indirect)
       dma_read_indirect(dma);
+
+   dma->count_mod_4 = dma->count % 4;
 
    if (dma->starting_factor != 7)
       dma->status = DMA_WAITING_FACTOR;//wait for an event
@@ -1239,15 +1262,136 @@ void scu_dma_tick_dsp(struct QueuedDma * dma)
    }
 }
 
+void get_write_add_from_b(struct QueuedDma * dma)
+{
+   switch (dma->add_setting)
+   {
+   case 0:
+      break;
+   case 1:
+      if ((dma->num_written % 8) == 0)
+         dma->write_address += 4;
+      break;
+   case 2:
+      if ((dma->num_written % 4) == 0)
+         dma->write_address += 4;
+      break;
+   case 3:
+      if ((dma->num_written % 4) == 0)
+         dma->write_address += 8;
+      break;
+   case 4:
+      if ((dma->num_written % 4) == 0)
+         dma->write_address += 16;
+      break;
+   case 5:
+      if ((dma->num_written % 4) == 0)
+         dma->write_address += 32;
+      break;
+   case 6:
+      if ((dma->num_written % 4) == 0)
+         dma->write_address += 64;
+      break;
+   case 7:
+      if ((dma->num_written % 4) == 0)
+         dma->write_address += 128;
+      break;
+   }
+}
+
+void do_write_from_b(struct QueuedDma * dma)
+{
+   if (!dma->second_word)
+   {
+      dma->buffer = MappedMemoryReadWordNocache(MSH2, dma->read_address) << 16;
+      dma->second_word = 1;
+      dma->count -= 2;
+      dma->num_written += 2;
+   }
+   else
+   {
+      dma->buffer |= MappedMemoryReadWordNocache(MSH2, dma->read_address + 2);
+      MappedMemoryWriteLongNocache(MSH2, dma->write_address, dma->buffer);
+      dma->read_address += 4;
+      dma->count -= 2;
+      dma->num_written += 2;
+      dma->second_word = 0;
+
+      get_write_add_a_to_cpu(dma);
+   }
+}
+
+void scu_dma_tick_from_b(struct QueuedDma * dma)
+{
+   if (sh2_check_wait(NULL, dma->read_address, 1))
+      return;
+
+   if(dma->count_mod_4 == 0)
+   {
+      do_write_from_b(dma);
+   }
+   else if (dma->count_mod_4 == 1)
+   {
+      if (dma->count == 1)
+      {
+         u8 byte = MappedMemoryReadByteNocache(MSH2, dma->read_address);
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address, byte);
+         dma->count = 0;
+      }
+      else
+      {
+         do_write_from_b(dma);
+      }
+   }
+   else if (dma->count_mod_4 == 2)
+   {
+      if (dma->count == 2)
+      {
+         u16 word = MappedMemoryReadWordNocache(MSH2, dma->read_address);
+         MappedMemoryWriteWordNocache(MSH2, dma->write_address, word);
+         dma->count = 0;
+      }
+      else 
+         do_write_from_b(dma);
+   }
+   else if (dma->count_mod_4 == 3)
+   {
+      if (dma->count == 3)
+      {
+         u16 word = MappedMemoryReadWordNocache(MSH2, dma->read_address);
+         MappedMemoryWriteWordNocache(MSH2, dma->write_address, word);
+
+         u8 byte = MappedMemoryReadByteNocache(MSH2, dma->read_address + 2);
+         MappedMemoryWriteByteNocache(MSH2, dma->write_address + 2, byte);
+         dma->count = 0;
+      }
+      else
+      {
+         do_write_from_b(dma);
+      }
+   }
+
+   check_dma_finished(dma);
+}
+
 void scu_dma_tick(struct QueuedDma * dma)
 {
    if (dma->is_dsp)
       scu_dma_tick_dsp(dma);
-   else if (dma->bus_type == DMA_TRANSFER_CPU_TO_B)
-      scu_dma_tick_32_to_16(dma);
-   else if (dma->bus_type == DMA_TRANSFER_A_TO_B)
-      scu_dma_tick_16_to_16(dma);
+
+   //destination is b-bus
+   else if (dma->bus_type == DMA_TRANSFER_CPU_TO_B || dma->bus_type == DMA_TRANSFER_A_TO_B)
+      scu_dma_tick_to_b(dma);
+
+   //a -> c , c -> a
+   else if (dma->bus_type == DMA_TRANSFER_A_TO_CPU || dma->bus_type == DMA_TRANSFER_CPU_TO_A)
+      scu_dma_tick_a_to_cpu(dma);
+
+   //from b-bus
+   else if (dma->bus_type == DMA_TRANSFER_B_TO_CPU || dma->bus_type == DMA_TRANSFER_B_TO_A)
+      scu_dma_tick_from_b(dma);
    else
+      //should not happen
       scu_dma_tick_32(dma);
 }
 
