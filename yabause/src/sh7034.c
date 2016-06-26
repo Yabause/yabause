@@ -5141,6 +5141,8 @@ u16 update_tcnt_fast(int which, s32 cycles)
    default:
       assert(0);
    }
+
+   return 0;
 }
 
 int check_gr_range(u16 gr, u16 old_tcnt, u16 new_tcnt)
@@ -5641,10 +5643,14 @@ void tick_dma(int which)
       return;
 
    //not dreq based dma
-   if (mode != 2)
+   if (!(mode == 2 || mode == 3))
       return;
 
    if (!ygr_dreq_asserted())
+      return;
+
+   //put / get sector data uses mode 3 
+   if (mode == 3 && fifo_empty())
       return;
 
    destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;

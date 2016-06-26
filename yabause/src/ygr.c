@@ -147,6 +147,12 @@ int fifo_full()
    return ygr_cxt.fifo_num_stored == FIFO_SIZE;
 }
 
+
+int fifo_empty()
+{
+   return ygr_cxt.fifo_num_stored == 0;
+}
+
 //#define WRITE_FIFO_LOG
 //#define VERIFY_FIFO_LOG
 
