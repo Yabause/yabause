@@ -1358,10 +1358,11 @@ void scu_dma_tick_from_b(struct QueuedDma * dma)
    {
       if (dma->count == 3)
       {
+         u8 byte;
          u16 word = MappedMemoryReadWordNocache(MSH2, dma->read_address);
          MappedMemoryWriteWordNocache(MSH2, dma->write_address, word);
 
-         u8 byte = MappedMemoryReadByteNocache(MSH2, dma->read_address + 2);
+         byte = MappedMemoryReadByteNocache(MSH2, dma->read_address + 2);
          MappedMemoryWriteByteNocache(MSH2, dma->write_address + 2, byte);
          dma->count = 0;
       }
