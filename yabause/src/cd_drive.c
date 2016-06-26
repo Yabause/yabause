@@ -609,10 +609,6 @@ int do_command()
    {
       do_seek_common(ReadingDataSectors);
       update_seek_status();
-      Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
-
-
-      do_dataread();
 
       comm_state = NoTransfer;
       return TIME_READSECTOR / cdd_cxt.speed;
