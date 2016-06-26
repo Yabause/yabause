@@ -74,6 +74,10 @@ static INLINE void fad2msf_bcd(s32 fad, u8 *msf);
 //When reading sectors SH1 expects irq7 delta timing to be within a margin of -/+ 28 ticks. Adjust as required
 #define TIME_READSECTOR 8730
 
+//1 second / 75 sectors == 13333.333...
+//2299 time for transferring 13 bytes, start signal etc
+#define TIME_AUDIO_SECTOR (13333 - 2299)
+
 struct CdDriveContext cdd_cxt;
 
 enum CdStatusOperations
@@ -412,7 +416,7 @@ int continue_command()
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
 
       if (is_audio)
-         return TIME_READSECTOR;
+         return TIME_AUDIO_SECTOR;
       else
          return TIME_READSECTOR / cdd_cxt.speed;
    }
