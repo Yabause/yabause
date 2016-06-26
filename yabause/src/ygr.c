@@ -202,7 +202,11 @@ void verify_fifo_log(u32 data_in)
 
 int ygr_dreq_asserted()
 {
-   if (fifo_full())
+   if (fifo_empty() && ((ygr_cxt.transfer_ctrl & 5) == 5))//put / get sector
+   {
+      return 0;
+   }
+   else if (fifo_full())
    {
       tsunami_log_value("DREQ", 0, 1);
       return 0;
@@ -316,7 +320,7 @@ void ygr_sh1_write_word(u32 addr, u16 data)
       write_fifo(data);
       return;
    case 2:
-      if (ygr_cxt.transfer_ctrl & 2)
+      if (data & 2)
       {
          ygr_cxt.fifo_read_ptr = 0;
          ygr_cxt.fifo_write_ptr = 0;

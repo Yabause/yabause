@@ -5643,14 +5643,10 @@ void tick_dma(int which)
       return;
 
    //not dreq based dma
-   if (!(mode == 2 || mode == 3))
+   if (!(mode == 2 || mode == 3))//put / get sector data uses mode 3 
       return;
 
    if (!ygr_dreq_asserted())
-      return;
-
-   //put / get sector data uses mode 3 
-   if (mode == 3 && fifo_empty())
       return;
 
    destination_mode = sh1_cxt.onchip.dmac.channel[which].chcr >> 14;
