@@ -228,7 +228,7 @@ void update_status_info()
    } else {
        cdd_cxt.state.q_subcode = cdd_cxt.tracks[track_num - 1].ctrladr;
        cdd_cxt.state.index_field = index;
-       cdd_cxt.state.track_number = track_num;
+       cdd_cxt.state.track_number = num2bcd(track_num);
    }
 }
 
