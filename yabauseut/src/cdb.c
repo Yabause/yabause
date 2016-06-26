@@ -1547,27 +1547,37 @@ void test_cmd_set_sector_length()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void test_cmd_get_sector_data()
+int cd_get_sector_data_rs(cd_cmd_struct *cd_cmd_rs, u8 buf_num, u16 sect_num)
 {
    cd_cmd_struct cd_cmd;
-   cd_cmd_struct cd_cmd_rs;
    int ret;
+
+   cd_cmd.CR1 = 0x6100;
+   cd_cmd.CR2 = 0x0000;
+   cd_cmd.CR3 = buf_num << 8;
+   cd_cmd.CR4 = sect_num;
+
+   if ((ret = cd_exec_command(HIRQ_EHST | HIRQ_DRDY, &cd_cmd, cd_cmd_rs)) != IAPETUS_ERR_OK)
+   {   
+      do_tests_error_noarg(ret);
+      return FALSE;
+   }
+   return TRUE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void test_cmd_get_sector_data()
+{
+   cd_cmd_struct cd_cmd_rs;
    u8 buf[2352];
    u32 *ptr=(u32 *)buf;
    int i;
 
-   cd_cmd.CR1 = 0x6100;
-   cd_cmd.CR2 = 0x0000;
-   cd_cmd.CR3 = 0x0100;
-   cd_cmd.CR4 = 0x0001;
-
-   if ((ret = cd_exec_command(HIRQ_EHST | HIRQ_DRDY, &cd_cmd, &cd_cmd_rs)) != IAPETUS_ERR_OK)
-   {   
-      do_tests_error_noarg(ret);
+   if (!cd_get_sector_data_rs(&cd_cmd_rs, 1, 1))
       return;
-   }
 
-   tests_log_textf("%04X %04X %04X %04X %04X\n", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
+   //tests_log_textf("%04X %04X %04X %04X %04X\n", CDB_REG_HIRQ, cd_cmd_rs.CR1, cd_cmd_rs.CR2, cd_cmd_rs.CR3, cd_cmd_rs.CR4);
 
    if (!cd_wait_hirq(HIRQ_DRDY))
    {
@@ -1674,6 +1684,8 @@ void test_cmd_put_sector_data()
    cd_cmd_struct cd_cmd_rs;
    int ret;
    int i;
+   int bad_data, first_bad;
+   u32 data_fetched;
 
    cd_cmd.CR1 = 0x6400;
    cd_cmd.CR2 = 0x0000;
@@ -1705,6 +1717,44 @@ void test_cmd_put_sector_data()
    if (!cd_wait_hirq(HIRQ_EHST))
    {
       do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   // Fetch data back
+   if (!cd_get_sector_data_rs(&cd_cmd_rs, 2, 1))
+      return;
+
+   if (!cd_wait_hirq(HIRQ_DRDY))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   bad_data=0;
+   for (i = 0; i < (2048 / 4); i++)
+   {
+      u32 data = CDB_REG_DATATRNS;
+      if (data != i && bad_data == 0)
+      {
+         first_bad=i;
+         bad_data=1;
+         data_fetched=data;
+      }
+   }
+
+   if (!cd_end_transfer_rs(&cd_cmd_rs, HIRQ_EHST))
+      return;
+
+   if (!cd_wait_hirq(HIRQ_EHST))
+   {
+      do_cdb_tests_unexp_cr_data_error();
+      return;
+   }
+
+   if (bad_data)
+   {
+      tests_log_textf("put data retrieve mismatch: off $08X, expected %08X, received %08X\n", first_bad, first_bad, data_fetched);
+      stage_status = STAGESTAT_BADDATA;
       return;
    }
 
