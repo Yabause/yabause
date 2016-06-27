@@ -147,51 +147,51 @@ static INLINE int select_way_to_replace(SH2_struct *sh, u32 lru)
    return 0;
 }
 
-//we use the real measurements from a console then scale them down a bit
-//to account for other delays
-#define CYCLE_RATIO (0.8)
+//values are from console measurements and have extra delays included
+//delay 0 if the measured cycles are 7 or less, otherwise subtract 7
+#define ADJUST_CYCLES(n) (n <= 7 ? 0 : (n - 7))
 
 int get_cache_through_timing_read_byte_word(u32 addr)
 {
    addr = (addr >> 16) & 0xFFF;
 
    if (addr >= 0x000 && addr <= 0x00f)//bios
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(15);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(15);
    else if (addr >= 0x018 && addr <= 0x01f)//bup
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x020 && addr <= 0x02f)//lwram
-      return 14 * CYCLE_RATIO;
+      return ADJUST_CYCLES(14);
    //ignore input capture
    else if (addr >= 0x200 && addr <= 0x3ff)//cs0
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x400 && addr <= 0x4ff)//cs1
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x580 && addr <= 0x58f)//cs2
-      return 24 * CYCLE_RATIO;
+      return ADJUST_CYCLES(24);
    else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
-      return 53 * CYCLE_RATIO;
+      return ADJUST_CYCLES(53);
    else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
-      return 52 * CYCLE_RATIO;
+      return ADJUST_CYCLES(52);
    else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
-      return 51 * CYCLE_RATIO;
+      return ADJUST_CYCLES(51);
    else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
-      return 51 * CYCLE_RATIO;
+      return ADJUST_CYCLES(51);
    else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
-      return 35 * CYCLE_RATIO;
+      return ADJUST_CYCLES(35);
    else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
-      return 44 * CYCLE_RATIO;
+      return ADJUST_CYCLES(44);
    else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
-      return 44 * CYCLE_RATIO;
+      return ADJUST_CYCLES(44);
    else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
-      return 44 * CYCLE_RATIO;
+      return ADJUST_CYCLES(44);
    else if (addr >= 0x5fe && addr <= 0x5fe)//scu
-      return 14 * CYCLE_RATIO;
+      return ADJUST_CYCLES(14);
    else if (addr >= 0x600 && addr <= 0x7ff)//hwram
-      return 14 * CYCLE_RATIO;
+      return ADJUST_CYCLES(14);
 
-   return 1;
+   return 0;
 }
 
 int get_cache_through_timing_read_long(u32 addr)
@@ -199,42 +199,42 @@ int get_cache_through_timing_read_long(u32 addr)
    addr = (addr >> 16) & 0xFFF;
 
    if (addr >= 0x000 && addr <= 0x00f)//bios
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(23);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(23);
    else if (addr >= 0x018 && addr <= 0x01f)//bup
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x020 && addr <= 0x02f)//lwram
-      return 21 * CYCLE_RATIO;
+      return ADJUST_CYCLES(21);
    //ignore input capture
    else if (addr >= 0x200 && addr <= 0x3ff)//cs0
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x400 && addr <= 0x4ff)//cs1
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x580 && addr <= 0x58f)//cs2
-      return 24 * CYCLE_RATIO;
+      return ADJUST_CYCLES(24);
    else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
-      return 53 * CYCLE_RATIO;
+      return ADJUST_CYCLES(53);
    else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
-      return 52 * CYCLE_RATIO;
+      return ADJUST_CYCLES(52);
    else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
-      return 51 * CYCLE_RATIO;
+      return ADJUST_CYCLES(51);
    else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
-      return 51 * CYCLE_RATIO;
+      return ADJUST_CYCLES(51);
    else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
-      return 35 * CYCLE_RATIO;
+      return ADJUST_CYCLES(35);
    else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
-      return 44 * CYCLE_RATIO;
+      return ADJUST_CYCLES(44);
    else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
-      return 44 * CYCLE_RATIO;
+      return ADJUST_CYCLES(44);
    else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
-      return 44 * CYCLE_RATIO;
+      return ADJUST_CYCLES(44);
    else if (addr >= 0x5fe && addr <= 0x5fe)//scu
-      return 14 * CYCLE_RATIO;
+      return ADJUST_CYCLES(14);
    else if (addr >= 0x600 && addr <= 0x7ff)//hwram
-      return 14 * CYCLE_RATIO;
+      return ADJUST_CYCLES(14);
 
-   return 1;
+   return 0;
 }
 
 int get_cache_through_timing_write_byte_word(u32 addr)
@@ -242,42 +242,42 @@ int get_cache_through_timing_write_byte_word(u32 addr)
    addr = (addr >> 16) & 0xFFF;
 
    if (addr >= 0x000 && addr <= 0x00f)//bios
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(8);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(8);
    else if (addr >= 0x018 && addr <= 0x01f)//bup
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x020 && addr <= 0x02f)//lwram
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    //ignore input capture
    else if (addr >= 0x200 && addr <= 0x3ff)//cs0
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x400 && addr <= 0x4ff)//cs1
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x580 && addr <= 0x58f)//cs2
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
-      return 19 * CYCLE_RATIO;
+      return ADJUST_CYCLES(19);
    else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
-      return 19 * CYCLE_RATIO;
+      return ADJUST_CYCLES(19);
    else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
-      return 11 * CYCLE_RATIO;
+      return ADJUST_CYCLES(11);
    else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
-      return 11 * CYCLE_RATIO;
+      return ADJUST_CYCLES(11);
    else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
-      return 11 * CYCLE_RATIO;
+      return ADJUST_CYCLES(11);
    else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
-      return 8 * CYCLE_RATIO;
+      return ADJUST_CYCLES(8);
    else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    else if (addr >= 0x5fe && addr <= 0x5fe)//scu
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    else if (addr >= 0x600 && addr <= 0x7ff)//hwram
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
 
-   return 1;
+   return 0;
 }
 
 int get_cache_through_timing_write_long(u32 addr)
@@ -285,42 +285,42 @@ int get_cache_through_timing_write_long(u32 addr)
    addr = (addr >> 16) & 0xFFF;
 
    if (addr >= 0x000 && addr <= 0x00f)//bios
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(16);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(16);
    else if (addr >= 0x018 && addr <= 0x01f)//bup
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x020 && addr <= 0x02f)//lwram
-      return 14 * CYCLE_RATIO;
+      return ADJUST_CYCLES(14);
    //ignore input capture
    else if (addr >= 0x200 && addr <= 0x3ff)//cs0
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x400 && addr <= 0x4ff)//cs1
-      return 1 * CYCLE_RATIO;
+      return ADJUST_CYCLES(1);
    else if (addr >= 0x580 && addr <= 0x58f)//cs2
-      return 14 * CYCLE_RATIO;
+      return ADJUST_CYCLES(14);
    else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
-      return 33 * CYCLE_RATIO;
+      return ADJUST_CYCLES(33);
    else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
-      return 32 * CYCLE_RATIO;
+      return ADJUST_CYCLES(32);
    else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
-      return 12 * CYCLE_RATIO;
+      return ADJUST_CYCLES(12);
    else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
-      return 12 * CYCLE_RATIO;
+      return ADJUST_CYCLES(12);
    else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
-      return 11 * CYCLE_RATIO;
+      return ADJUST_CYCLES(11);
    else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
-      return 8 * CYCLE_RATIO;
+      return ADJUST_CYCLES(8);
    else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    else if (addr >= 0x5fe && addr <= 0x5fe)//scu
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
    else if (addr >= 0x600 && addr <= 0x7ff)//hwram
-      return 7 * CYCLE_RATIO;
+      return ADJUST_CYCLES(7);
 
-   return 1;
+   return 0;
 }
 void cache_memory_write_b(SH2_struct *sh, cache_enty * ca, u32 addr, u8 val){
 
