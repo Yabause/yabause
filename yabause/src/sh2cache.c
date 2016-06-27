@@ -155,7 +155,7 @@ int get_cache_through_timing_read_byte_word(u32 addr)
 {
    addr = (addr >> 16) & 0xFFF;
 
-   if (addr >= 0x000 && addr <= 0x00f)//bios
+   if (addr <= 0x00f)//bios
       return ADJUST_CYCLES(15);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
       return ADJUST_CYCLES(15);
@@ -198,7 +198,7 @@ int get_cache_through_timing_read_long(u32 addr)
 {
    addr = (addr >> 16) & 0xFFF;
 
-   if (addr >= 0x000 && addr <= 0x00f)//bios
+   if (addr <= 0x00f)//bios
       return ADJUST_CYCLES(23);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
       return ADJUST_CYCLES(23);
@@ -241,7 +241,7 @@ int get_cache_through_timing_write_byte_word(u32 addr)
 {
    addr = (addr >> 16) & 0xFFF;
 
-   if (addr >= 0x000 && addr <= 0x00f)//bios
+   if (addr <= 0x00f)//bios
       return ADJUST_CYCLES(8);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
       return ADJUST_CYCLES(8);
@@ -284,7 +284,7 @@ int get_cache_through_timing_write_long(u32 addr)
 {
    addr = (addr >> 16) & 0xFFF;
 
-   if (addr >= 0x000 && addr <= 0x00f)//bios
+   if (addr <= 0x00f)//bios
       return ADJUST_CYCLES(16);
    else if (addr >= 0x010 && addr <= 0x017)//smpc
       return ADJUST_CYCLES(16);
