@@ -1070,42 +1070,36 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Sh2Vdp2ReadByte(SH2_struct *sh, u32 addr) {
-   sh->cycles += 40;
    return Vdp2ReadByte(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Sh2Vdp2ReadWord(SH2_struct *sh, u32 addr) {
-   sh->cycles += 40;
    return Vdp2ReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Sh2Vdp2ReadLong(SH2_struct *sh, u32 addr) {
-   sh->cycles += 40;
    return Vdp2ReadLong(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2WriteByte(SH2_struct *sh, u32 addr, UNUSED u8 val) {
-   sh->cycles += 7;
    Vdp2WriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2WriteWord(SH2_struct *sh, u32 addr, u16 val) {
-   sh->cycles += 7;
    Vdp2WriteWord(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Sh2Vdp2WriteLong(SH2_struct *sh, u32 addr, u32 val) {
-   sh->cycles += 8;
    Vdp2WriteLong(addr, val);
 }
 

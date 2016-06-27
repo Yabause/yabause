@@ -147,6 +147,181 @@ static INLINE int select_way_to_replace(SH2_struct *sh, u32 lru)
    return 0;
 }
 
+//we use the real measurements from a console then scale them down a bit
+//to account for other delays
+#define CYCLE_RATIO (0.8)
+
+int get_cache_through_timing_read_byte_word(u32 addr)
+{
+   addr = (addr >> 16) & 0xFFF;
+
+   if (addr >= 0x000 && addr <= 0x00f)//bios
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x010 && addr <= 0x017)//smpc
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x018 && addr <= 0x01f)//bup
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x020 && addr <= 0x02f)//lwram
+      return 14 * CYCLE_RATIO;
+   //ignore input capture
+   else if (addr >= 0x200 && addr <= 0x3ff)//cs0
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x400 && addr <= 0x4ff)//cs1
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x580 && addr <= 0x58f)//cs2
+      return 24 * CYCLE_RATIO;
+   else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
+      return 53 * CYCLE_RATIO;
+   else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
+      return 52 * CYCLE_RATIO;
+   else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
+      return 51 * CYCLE_RATIO;
+   else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
+      return 51 * CYCLE_RATIO;
+   else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
+      return 35 * CYCLE_RATIO;
+   else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
+      return 44 * CYCLE_RATIO;
+   else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
+      return 44 * CYCLE_RATIO;
+   else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
+      return 44 * CYCLE_RATIO;
+   else if (addr >= 0x5fe && addr <= 0x5fe)//scu
+      return 14 * CYCLE_RATIO;
+   else if (addr >= 0x600 && addr <= 0x7ff)//hwram
+      return 14 * CYCLE_RATIO;
+
+   return 1;
+}
+
+int get_cache_through_timing_read_long(u32 addr)
+{
+   addr = (addr >> 16) & 0xFFF;
+
+   if (addr >= 0x000 && addr <= 0x00f)//bios
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x010 && addr <= 0x017)//smpc
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x018 && addr <= 0x01f)//bup
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x020 && addr <= 0x02f)//lwram
+      return 21 * CYCLE_RATIO;
+   //ignore input capture
+   else if (addr >= 0x200 && addr <= 0x3ff)//cs0
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x400 && addr <= 0x4ff)//cs1
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x580 && addr <= 0x58f)//cs2
+      return 24 * CYCLE_RATIO;
+   else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
+      return 53 * CYCLE_RATIO;
+   else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
+      return 52 * CYCLE_RATIO;
+   else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
+      return 51 * CYCLE_RATIO;
+   else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
+      return 51 * CYCLE_RATIO;
+   else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
+      return 35 * CYCLE_RATIO;
+   else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
+      return 44 * CYCLE_RATIO;
+   else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
+      return 44 * CYCLE_RATIO;
+   else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
+      return 44 * CYCLE_RATIO;
+   else if (addr >= 0x5fe && addr <= 0x5fe)//scu
+      return 14 * CYCLE_RATIO;
+   else if (addr >= 0x600 && addr <= 0x7ff)//hwram
+      return 14 * CYCLE_RATIO;
+
+   return 1;
+}
+
+int get_cache_through_timing_write_byte_word(u32 addr)
+{
+   addr = (addr >> 16) & 0xFFF;
+
+   if (addr >= 0x000 && addr <= 0x00f)//bios
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x010 && addr <= 0x017)//smpc
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x018 && addr <= 0x01f)//bup
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x020 && addr <= 0x02f)//lwram
+      return 7 * CYCLE_RATIO;
+   //ignore input capture
+   else if (addr >= 0x200 && addr <= 0x3ff)//cs0
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x400 && addr <= 0x4ff)//cs1
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x580 && addr <= 0x58f)//cs2
+      return 7 * CYCLE_RATIO;
+   else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
+      return 19 * CYCLE_RATIO;
+   else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
+      return 19 * CYCLE_RATIO;
+   else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
+      return 11 * CYCLE_RATIO;
+   else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
+      return 11 * CYCLE_RATIO;
+   else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
+      return 11 * CYCLE_RATIO;
+   else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
+      return 7 * CYCLE_RATIO;
+   else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
+      return 8 * CYCLE_RATIO;
+   else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
+      return 7 * CYCLE_RATIO;
+   else if (addr >= 0x5fe && addr <= 0x5fe)//scu
+      return 7 * CYCLE_RATIO;
+   else if (addr >= 0x600 && addr <= 0x7ff)//hwram
+      return 7 * CYCLE_RATIO;
+
+   return 1;
+}
+
+int get_cache_through_timing_write_long(u32 addr)
+{
+   addr = (addr >> 16) & 0xFFF;
+
+   if (addr >= 0x000 && addr <= 0x00f)//bios
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x010 && addr <= 0x017)//smpc
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x018 && addr <= 0x01f)//bup
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x020 && addr <= 0x02f)//lwram
+      return 14 * CYCLE_RATIO;
+   //ignore input capture
+   else if (addr >= 0x200 && addr <= 0x3ff)//cs0
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x400 && addr <= 0x4ff)//cs1
+      return 1 * CYCLE_RATIO;
+   else if (addr >= 0x580 && addr <= 0x58f)//cs2
+      return 14 * CYCLE_RATIO;
+   else if (addr >= 0x5a0 && addr <= 0x5af)//sound ram
+      return 33 * CYCLE_RATIO;
+   else if (addr >= 0x5b0 && addr <= 0x5bf)//scsp regs
+      return 32 * CYCLE_RATIO;
+   else if (addr >= 0x5c0 && addr <= 0x5c7)//vdp1 ram
+      return 12 * CYCLE_RATIO;
+   else if (addr >= 0x5c8 && addr <= 0x5cf)//vdp1 fb
+      return 12 * CYCLE_RATIO;
+   else if (addr >= 0x5d0 && addr <= 0x5d7)//vdp1 regs
+      return 11 * CYCLE_RATIO;
+   else if (addr >= 0x5e0 && addr <= 0x5ef)//vdp2 ram
+      return 7 * CYCLE_RATIO;
+   else if (addr >= 0x5f0 && addr <= 0x5f7)//vdp2 color
+      return 8 * CYCLE_RATIO;
+   else if (addr >= 0x5f8 && addr <= 0x5fb)//vdp2 regs
+      return 7 * CYCLE_RATIO;
+   else if (addr >= 0x5fe && addr <= 0x5fe)//scu
+      return 7 * CYCLE_RATIO;
+   else if (addr >= 0x600 && addr <= 0x7ff)//hwram
+      return 7 * CYCLE_RATIO;
+
+   return 1;
+}
 void cache_memory_write_b(SH2_struct *sh, cache_enty * ca, u32 addr, u8 val){
 
 	switch (addr & AREA_MASK){
@@ -180,6 +355,7 @@ void cache_memory_write_b(SH2_struct *sh, cache_enty * ca, u32 addr, u8 val){
 	}
 	break;
 	case CACHE_THROUGH:
+      sh->cycles += get_cache_through_timing_write_byte_word(addr);
 		MappedMemoryWriteByteNocache(sh, addr, val);
 		break;
 	default:
@@ -228,6 +404,7 @@ void cache_memory_write_w(SH2_struct *sh, cache_enty * ca, u32 addr, u16 val){
 	}
 	break;
 	case CACHE_THROUGH:
+      sh->cycles += get_cache_through_timing_write_byte_word(addr);
 		MappedMemoryWriteWordNocache(sh, addr, val);
 		break;
 	default:
@@ -301,6 +478,7 @@ void cache_memory_write_l(SH2_struct *sh, cache_enty * ca, u32 addr, u32 val){
 	}
 	break;
 	case CACHE_THROUGH:
+      sh->cycles += get_cache_through_timing_write_long(addr);
 		MappedMemoryWriteLongNocache(sh, addr, val);
 		break;
 	default:
@@ -425,6 +603,9 @@ u32 sh2_cache_refill_read(SH2_struct *sh, u32 addr)
 void sh2_refill_cache(SH2_struct *sh, cache_enty * ca, int lruway, u32 entry, u32 addr)
 {
    int i;
+
+   sh->cycles += 4;
+
    for (i = 0; i < 16; i += 4) {
       u32 val = sh2_cache_refill_read(sh, (addr & 0xFFFFFFF0) + i);
       ca->way[lruway][entry].data[i + 0] = (val >> 24) & 0xff;
@@ -475,6 +656,7 @@ u8 cache_memory_read_b(SH2_struct *sh, cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
+      sh->cycles += get_cache_through_timing_read_byte_word(addr);
 		return MappedMemoryReadByteNocache(sh, addr);
 		break;
 	default:
@@ -527,6 +709,7 @@ u16 cache_memory_read_w(SH2_struct *sh, cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
+      sh->cycles += get_cache_through_timing_read_byte_word(addr);
 		return MappedMemoryReadWordNocache(sh, addr);
 		break;
 	default:
@@ -593,6 +776,7 @@ u32 cache_memory_read_l(SH2_struct *sh, cache_enty * ca, u32 addr){
 	}
 	break;
 	case CACHE_THROUGH:
+      sh->cycles += get_cache_through_timing_read_long(addr);
 		return MappedMemoryReadLongNocache(sh, addr);
 		break;
 	default:
