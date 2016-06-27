@@ -99,7 +99,6 @@ newline:
 	mov	MSH2, %rax
 	mov	NumberOfInterruptsOffset, %ecx
 	sub	%edx, %ebx  /* sh2cycles(full line) - decilinecycles*9 */
-	mov	%rax, CurrentSH2
 	mov	%ebx, -52(%rbp) /* sh2cycles */
 	cmp	$0, (%rax, %rcx)
 	jne	master_handle_interrupts
@@ -135,7 +134,6 @@ slave_entry:
 	je	cc_interrupt_master /* slave not running */
 	mov	SSH2, %rax
 	mov	NumberOfInterruptsOffset, %ecx
-	mov	%rax, CurrentSH2
 	cmp	$0, (%rax, %rcx)
 	jne	slave_handle_interrupts
 	mov	slave_cc, %esi
@@ -180,7 +178,6 @@ cc_interrupt_master:
 	mov	master_cc, %esi
 	mov	MSH2, %rax
 	mov	NumberOfInterruptsOffset, %ecx
-	mov	%rax, CurrentSH2
 	cmpl	$0, (%rax, %rcx)
 	jne	master_handle_interrupts
 	sub	%ebx, %esi
@@ -510,7 +507,7 @@ WriteInvalidateLong:
 	mov	%edi, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteLong
+	jnc	MappedMemoryWriteLongNocache
 	/*push	%rax*/
 	/*push	%rcx*/
 	push	%rdx /* unused, for stack alignment */
@@ -522,7 +519,7 @@ WriteInvalidateLong:
 	pop	%rdx /* unused, for stack alignment */
 	/*pop	%rcx*/
 	/*pop	%rax*/
-	jmp	MappedMemoryWriteLong
+	jmp	MappedMemoryWriteLongNocache
 	.size	WriteInvalidateLong, .-WriteInvalidateLong
 .globl WriteInvalidateWord
 	.type	WriteInvalidateWord, @function
@@ -530,7 +527,7 @@ WriteInvalidateWord:
 	mov	%edi, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteWord
+	jnc	MappedMemoryWriteWordNocache
 	/*push	%rax*/
 	/*push	%rcx*/
 	push	%rdx /* unused, for stack alignment */
@@ -542,7 +539,7 @@ WriteInvalidateWord:
 	pop	%rdx /* unused, for stack alignment */
 	/*pop	%rcx*/
 	/*pop	%rax*/
-	jmp	MappedMemoryWriteWord
+	jmp	MappedMemoryWriteWordNocache
 	.size	WriteInvalidateWord, .-WriteInvalidateWord
 .globl WriteInvalidateByteSwapped
 	.type	WriteInvalidateByteSwapped, @function
@@ -555,7 +552,7 @@ WriteInvalidateByte:
 	mov	%edi, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteByte
+	jnc	MappedMemoryWriteByteNocache
 	/*push	%rax*/
 	/*push	%rcx*/
 	push	%rdx /* unused, for stack alignment */
@@ -567,7 +564,7 @@ WriteInvalidateByte:
 	pop	%rdx /* unused, for stack alignment */
 	/*pop	%rcx*/
 	/*pop	%rax*/
-	jmp	MappedMemoryWriteByte
+	jmp	MappedMemoryWriteByteNocache
 	.size	WriteInvalidateByte, .-WriteInvalidateByte
 
 .globl div1
@@ -645,10 +642,10 @@ macl:
 	mov	%eax, %r13d /* MACL */
 	mov	%ebp, %r14d
 	mov	%edi, %r15d
-	call	MappedMemoryReadLong
+	call	MappedMemoryReadLongNocache
 	mov	%eax, %esi
 	mov	%r14d, %edi
-	call	MappedMemoryReadLong
+	call	MappedMemoryReadLongNocache
 	lea	4(%r14), %ebp
 	lea	4(%r15), %edi
 	imul	%esi
@@ -683,10 +680,10 @@ macw:
 	mov	%eax, %r13d /* MACL */
 	mov	%ebp, %r14d
 	mov	%edi, %r15d
-	call	MappedMemoryReadWord
+	call	MappedMemoryReadWordNocache
 	movswl	%ax, %esi
 	mov	%r14d, %edi
-	call	MappedMemoryReadWord
+	call	MappedMemoryReadWordNocache
 	movswl	%ax, %eax
 	lea	2(%r14), %ebp
 	lea	2(%r15), %edi

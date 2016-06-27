@@ -39,6 +39,24 @@
 #define SH2REG_DVDNTUH2 (*(volatile u32 *)0xFFFFFF38)
 #define SH2REG_DVDNTUL2 (*(volatile u32 *)0xFFFFFF3C)
 
+#define SH2REG_SAR0     (*(volatile u32 *)0xFFFFFF80)
+#define SH2REG_DAR0     (*(volatile u32 *)0xFFFFFF84)
+#define SH2REG_TCR0     (*(volatile u32 *)0xFFFFFF88)
+#define SH2REG_CHCR0    (*(volatile u32 *)0xFFFFFF8C)
+#define SH2REG_VCRMDA0  (*(volatile u32 *)0xFFFFFFA0)
+#define SH2REG_DRCR0    (*(volatile u8  *)0xFFFFFE71)
+
+#define SH2REG_SAR1     (*(volatile u32 *)0xFFFFFF90)
+#define SH2REG_DAR1     (*(volatile u32 *)0xFFFFFF94)
+#define SH2REG_TCR1     (*(volatile u32 *)0xFFFFFF98)
+#define SH2REG_CHCR1    (*(volatile u32 *)0xFFFFFF9C)
+#define SH2REG_VCRMDA1  (*(volatile u32 *)0xFFFFFFA8)
+#define SH2REG_DRCR1    (*(volatile u8  *)0xFFFFFE72)
+
+#define SH2REG_DMAOR    (*(volatile u32 *)0xFFFFFFB0)
+
+#define RSTCSR_W (*(volatile u16 *)0XFFFFFE82)
+
 void div_mirror_test(void);
 void div_operation_test(void);
 void div_interrupt_test(void);
@@ -470,5 +488,376 @@ void cache_test()
       SH2REG_CCR = 0;//disable
 
       cache_print_and_wait();
+   }
+}
+
+void test_sh2_dma_impl(
+   u32 src_addr, 
+   u32 dst_addr,
+   u32 count, 
+   u8 transfer_size
+   )
+{
+   volatile u32 *source = (volatile u32 *)(src_addr);
+   volatile u32 *dest = (volatile u32 *)(dst_addr);
+   int i;
+
+   clear_framebuffer();
+
+   //read te
+   volatile u32 dummy = SH2REG_CHCR0;
+
+   //and clear it
+   SH2REG_CHCR0 = 0;
+
+   //read nmif
+   dummy = SH2REG_DMAOR;
+
+   //and clear it
+   SH2REG_DMAOR = 0;
+
+   for (i = 0; i < count; i+=2)
+   {
+      source[i] =   0xdeadbeef;
+      source[i+2] = 0xcafef00d;
+   }
+
+   for (i = 0; i < count; i++)
+   {
+      dest[i] = 0;
+   }
+
+   u8 round_robin = 0;
+   u8 all_dma_enabled = 1;
+
+   SH2REG_DMAOR =
+      (round_robin << 3) |
+      all_dma_enabled;
+
+   SH2REG_SAR0 = src_addr;
+   SH2REG_DAR0 = dst_addr;
+   SH2REG_TCR0 = count;
+
+   u8 destination_address_mode = 1;
+   u8 source_address_mode = 1;
+   u8 transfer_enabled = 1;
+   u8 auto_request_mode = 1;//must be set
+
+   SH2REG_CHCR0 =
+      (destination_address_mode << 14) |
+      (source_address_mode << 12) |
+      (transfer_size << 10) |
+      (auto_request_mode << 9) |
+      transfer_enabled;
+
+   while (!(SH2REG_CHCR0 & 2)) {}//wait for TE to be set
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      vdp_printf(&test_disp_font, 0 * 8, 4 * 8, 0xC, "SAR0 0x%08x DAR0 0x%08x", 
+         SH2REG_SAR0,
+         SH2REG_DAR0);
+
+      vdp_printf(&test_disp_font, 0 * 8, 5 * 8, 0xC, "TCR0 0x%08x CHR0 0x%08x",
+         SH2REG_TCR0,
+         SH2REG_CHCR0);
+
+      vdp_printf(&test_disp_font, 0 * 8, 6 * 8, 0xC, "DMAOR 0x%08x",
+         SH2REG_DMAOR);
+
+      volatile u8 de = SH2REG_CHCR0 & 1;
+      volatile u8 dme = SH2REG_DMAOR & 1;
+      volatile u8 te = (SH2REG_CHCR0 >> 1) & 1;
+      volatile u8 nmif = (SH2REG_DMAOR >> 1) & 1;
+      volatile u8 ae = (SH2REG_DMAOR >> 2) & 1;
+
+      vdp_printf(&test_disp_font, 0 * 8, 7 * 8, 0xC, "DE %01x DME %01x TE %01x NMIF %01x AE %01x",
+         de,dme,te,nmif,ae);
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
+      }
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         break;
+      }
+   }
+}
+
+void test_sh2_dma()
+{
+   test_sh2_dma_impl(0x260ED000, 0x25E00000, 0x1000, 2);
+   test_sh2_dma_impl(0x260ED000, 0x25E00000, 0x800, 3);
+}
+
+u32 do_test_asm(u32 value, u32 addr, int is_write, int size, u32 * b2, int num_times)
+{
+   u32 a = value;
+   u32 b = addr;
+   u32 c = num_times;
+   u32 a_out, b_out, sr;
+
+   if (is_write)
+   {
+      if (size == 0)
+      {
+         asm(
+            "mov %[a],r0\n\t"
+            "mov %[b],r1\n\t"
+            "mov %[c],r2\n\t"
+            "mov #0, r3\n\t"//loop counter
+            "loop%=:  \n\t"
+            "cmp/ge r2,r3 \n\t"
+            "bt end%= \n\t"
+            "add #1, r3 \n\t"
+            "mov.b r0, @r1\n\t"
+            "bra loop%=        \n\t"
+            "nop           \n\t"
+            "end%=:           \n\t"
+            "mov r0,%[a_out]\n\t"
+            "mov r1,%[b_out]\n\t"
+            : [a_out] "=r" (a_out), [b_out] "=r" (b_out), [sr] "=r" (sr)//output
+            : [a] "r" (a), [b] "r" (b), [c] "r" (c)//input
+            : "r0", "r1", "r2", "r3");//clobbers
+      }
+      else if (size == 1)
+      {
+         asm(
+            "mov %[a],r0\n\t"
+            "mov %[b],r1\n\t"
+            "mov %[c],r2\n\t"
+            "mov #0, r3\n\t"//loop counter
+            "loop%=:  \n\t"
+            "cmp/ge r2,r3 \n\t"
+            "bt end%= \n\t"
+            "add #1, r3 \n\t"
+            "mov.w r0, @r1\n\t"
+            "bra loop%=        \n\t"
+            "nop           \n\t"
+            "end%=:           \n\t"
+            "mov r0,%[a_out]\n\t"
+            "mov r1,%[b_out]\n\t"
+            : [a_out] "=r" (a_out), [b_out] "=r" (b_out), [sr] "=r" (sr)//output
+            : [a] "r" (a), [b] "r" (b), [c] "r" (c)//input
+            : "r0", "r1", "r2", "r3");//clobbers
+      }
+      else
+      {
+         asm(
+            "mov %[a],r0\n\t"
+            "mov %[b],r1\n\t"
+            "mov %[c],r2\n\t"
+            "mov #0, r3\n\t"//loop counter
+            "loop%=:  \n\t"
+            "cmp/ge r2,r3 \n\t"
+            "bt end%= \n\t"
+            "add #1, r3 \n\t"
+            "mov.l r0, @r1\n\t"
+            "bra loop%=        \n\t"
+            "nop           \n\t"
+            "end%=:           \n\t"
+            "mov r0,%[a_out]\n\t"
+            "mov r1,%[b_out]\n\t"
+            : [a_out] "=r" (a_out), [b_out] "=r" (b_out), [sr] "=r" (sr)//output
+            : [a] "r" (a), [b] "r" (b), [c] "r" (c)//input
+            : "r0", "r1", "r2", "r3");//clobbers
+      }
+
+
+   }
+   else
+   {
+      if (size == 0)
+      {
+         asm(
+            "mov %[a],r0\n\t"
+            "mov %[b],r1\n\t"
+            "mov %[c],r2\n\t"
+            "mov #0, r3\n\t"//loop counter
+            "loop%=:  \n\t"
+            "cmp/ge r2,r3 \n\t"
+            "bt end%= \n\t"
+            "add #1, r3 \n\t"
+            "mov.b @r1, r0\n\t"
+            "bra loop%=        \n\t"
+            "nop           \n\t"
+            "end%=:           \n\t"
+            "mov r0,%[a_out]\n\t"
+            "mov r1,%[b_out]\n\t"
+            : [a_out] "=r" (a_out), [b_out] "=r" (b_out), [sr] "=r" (sr)//output
+            : [a] "r" (a), [b] "r" (b), [c] "r" (c)//input
+            : "r0", "r1", "r2", "r3");//clobbers
+      }
+      else if (size == 1)
+      {
+         asm(
+            "mov %[a],r0\n\t"
+            "mov %[b],r1\n\t"
+            "mov %[c],r2\n\t"
+            "mov #0, r3\n\t"//loop counter
+            "loop%=:  \n\t"
+            "cmp/ge r2,r3 \n\t"
+            "bt end%= \n\t"
+            "add #1, r3 \n\t"
+            "mov.w @r1, r0\n\t"
+            "bra loop%=       \n\t"
+            "nop           \n\t"
+            "end%=:           \n\t"
+            "mov r0,%[a_out]\n\t"
+            "mov r1,%[b_out]\n\t"
+            : [a_out] "=r" (a_out), [b_out] "=r" (b_out), [sr] "=r" (sr)//output
+            : [a] "r" (a), [b] "r" (b), [c] "r" (c)//input
+            : "r0", "r1", "r2", "r3");//clobbers
+      }
+      else
+      {
+         asm(
+            "mov %[a],r0\n\t"
+            "mov %[b],r1\n\t"
+            "mov %[c],r2\n\t"
+            "mov #0, r3\n\t"//loop counter
+            "loop%=:  \n\t"
+            "cmp/ge r2,r3 \n\t"
+            "bt end%= \n\t"
+            "add #1, r3 \n\t"
+            "mov.l @r1, r0\n\t"
+            "bra loop%=        \n\t"
+            "nop           \n\t"
+            "end%=:           \n\t"
+            "mov r0,%[a_out]\n\t"
+            "mov r1,%[b_out]\n\t"
+            : [a_out] "=r" (a_out), [b_out] "=r" (b_out), [sr] "=r" (sr)//output
+            : [a] "r" (a), [b] "r" (b), [c] "r" (c)//input
+            : "r0", "r1", "r2", "r3");//clobbers
+      }
+
+   }
+
+   *b2 = b_out;
+
+   return a_out;
+}
+
+void clear_framebuffer();
+
+void sh2_write_timing(u32 destination, char*test_name, int is_write, int size)
+{
+   clear_framebuffer();
+
+   int print_pos = 10;
+
+   int i;
+
+   if (is_write)
+      vdp_printf(&test_disp_font, 0 * 8, 1 * 8, 0xF, "write to %s", test_name);
+   else
+      vdp_printf(&test_disp_font, 0 * 8, 1 * 8, 0xF, "read from %s", test_name);
+
+   if (size == 0)
+      vdp_printf(&test_disp_font, 0 * 8, 2 * 8, 0xF, "byte");
+   else if (size == 1)
+      vdp_printf(&test_disp_font, 0 * 8, 2 * 8, 0xF, "word");
+   else
+      vdp_printf(&test_disp_font, 0 * 8, 2 * 8, 0xF, "long");
+
+   for (i = 0; i < 5; i++)
+   {
+      vdp_wait_vblankin();
+
+      int num_writes = 2048;
+
+      //zero watchdog timer
+      SH2_REG_WTCNT_W(0);
+      RSTCSR_W = 0;
+
+      //enable timer
+      SH2_REG_WTCSR_W(1 << 5);
+
+      u8 wdt_end_time = SH2_REG_WTCNT_R;
+
+      //disable timer
+      SH2_REG_WTCSR_W(0);
+
+      frc_clear();
+      u32 b2 = 0;
+
+      u32 output = do_test_asm(0xdeadbeef, destination, is_write, size, &b2, num_writes);
+
+      u32 frc_end_time = frc_get();
+
+      vdp_printf(&test_disp_font, 0 * 8, print_pos * 8, 0xF, "frc: %d (~%d cycles), ~%d cycles", frc_end_time, frc_end_time * 8, (frc_end_time * 8) / num_writes);
+      vdp_printf(&test_disp_font, 0 * 8, (print_pos + 6) * 8, 0xF, "%08X %08X", output, b2);
+      print_pos++;
+   }
+
+   for (;;)
+   {
+      vdp_wait_vblankin();
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         break;
+      }
+
+      if (per[0].but_push_once & PAD_Y)
+      {
+         reset_system();
+      }
+   }
+}
+
+void do_timing(int is_write, int size)
+{
+
+   int i = is_write;
+   int j = size;
+
+   sh2_write_timing(0x20000000, "bios", i, j);
+
+   sh2_write_timing(0x20100000, "smpc", i, j);
+
+   sh2_write_timing(0x25E00000, "vdp2 vram", i, j);
+
+   sh2_write_timing(0x25f00000, "vdp2 color ram", i, j);
+
+   if ((i != 1) && (j != 2))//crashes
+      sh2_write_timing(0x25f80026, "vdp2 regs", i, j);
+
+   sh2_write_timing(0x25a00000, "scsp ram", i, j);
+
+   sh2_write_timing(0x25b00000, "scsp regs", i, j);
+
+   sh2_write_timing(0x25C00000, "vdp1 ram", i, j);
+
+   sh2_write_timing(0x25C80000, "vdp1 framebuffer", i, j);
+
+   sh2_write_timing(0x25d00000, "vdp1 regs", i, j);
+
+   sh2_write_timing(0x20200000, "low work ram", i, j);
+
+   sh2_write_timing(0x260FF000, "high work ram", i, j);
+
+   sh2_write_timing(0x25890008, "ygr", i, j);
+
+   sh2_write_timing(0x25fe0000, "scu regs", i, j);
+}
+
+void sh2_write_timing_test()
+{
+   (*(volatile u8  *)0xFFFFFE92) = 1;//enable cache
+
+   int i = 1;
+
+   for (i = 0; i < 2; i++)
+   {
+      int j;
+      for (j = 0; j < 3; j++)
+      {
+         do_timing(i, j);
+      }
    }
 }

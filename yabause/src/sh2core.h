@@ -280,6 +280,9 @@ typedef struct
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
    cache_enty cache;
+   int dma0_active;
+   int dma1_active;
+   int dma_robin;
 } Onchip_struct;
 
 typedef struct
@@ -339,14 +342,44 @@ enum SH2STEPTYPE
    SH2ST_STEPOUT
 };
 
+enum SHMODELTYPE
+{
+   SHMT_SH1,
+   SHMT_SH2
+};
+
 typedef struct
 {
    u32 addr;
    u64 count;
 } tilInfo_struct;
 
-typedef struct
+typedef struct SH2Interface_struct SH2Interface_struct;
+
+struct SH2_struct
 {
+   struct SH2Interface_struct *core;
+   enum SHMODELTYPE model;
+
+   void *opcodes[0x10000];
+   void *fetchlist[0x100];
+
+   writebytefunc WriteByteList[0x1000];
+   writewordfunc WriteWordList[0x1000];
+   writelongfunc WriteLongList[0x1000];
+
+   readbytefunc ReadByteList[0x1000];
+   readwordfunc ReadWordList[0x1000];
+   readlongfunc ReadLongList[0x1000];
+
+   writebytefunc MappedMemoryWriteByte;
+   writewordfunc MappedMemoryWriteWord;
+   writelongfunc MappedMemoryWriteLong;
+
+   readbytefunc MappedMemoryReadByte;
+   readwordfunc MappedMemoryReadWord;
+   readlongfunc MappedMemoryReadLong;
+
    sh2regs_struct regs;
    Onchip_struct onchip;
 
@@ -397,15 +430,15 @@ typedef struct
       int maxNum;
    } trackInfLoop;
 
-} SH2_struct;
+};
 
-typedef struct
+struct SH2Interface_struct
 {
    int id;
    const char *Name;
 
-   int (*Init)(void);
-   void (*DeInit)(void);
+   int (*Init)(enum SHMODELTYPE model, SH2_struct *msh, SH2_struct *ssh);
+   void (*DeInit)();
    void (*Reset)(SH2_struct *context);
    void FASTCALL (*Exec)(SH2_struct *context, u32 cycles);
 
@@ -436,14 +469,16 @@ typedef struct
                          const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
    void (*WriteNotify)(u32 start, u32 length);
-} SH2Interface_struct;
+};
 
+extern SH2_struct *SH1;
 extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
-extern SH2_struct *CurrentSH2;
 extern SH2Interface_struct *SH2Core;
 
+int SH1Init(int coreid);
 int SH2Init(int coreid);
+void SH1DeInit(void);
 void SH2DeInit(void);
 void SH2Reset(SH2_struct *context);
 void SH2PowerOn(SH2_struct *context);
@@ -504,31 +539,34 @@ u32 *SH2GetBacktraceList(SH2_struct *context, int *size);
 void SH2HandleStepOverOut(SH2_struct *context);
 void SH2HandleTrackInfLoop(SH2_struct *context);
 
-void DMAExec(void);
-void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);
+void DMAExec(SH2_struct *sh);
+void DMATransfer(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);
+void sh2_dma_exec(SH2_struct *sh, u32 cycles);
 
-u8 FASTCALL OnchipReadByte(u32 addr);
-u16 FASTCALL OnchipReadWord(u32 addr);
-u32 FASTCALL OnchipReadLong(u32 addr);
-void FASTCALL OnchipWriteByte(u32 addr, u8 val);
-void FASTCALL OnchipWriteWord(u32 addr, u16 val);
-void FASTCALL OnchipWriteLong(u32 addr, u32 val);
+u8 FASTCALL OnchipReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL OnchipReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL OnchipReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL OnchipWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL OnchipWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL OnchipWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
-u32 FASTCALL AddressArrayReadLong(u32 addr);
-void FASTCALL AddressArrayWriteLong(u32 addr, u32 val);
+u32 FASTCALL AddressArrayReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL AddressArrayWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
-u8 FASTCALL DataArrayReadByte(u32 addr);
-u16 FASTCALL DataArrayReadWord(u32 addr);
-u32 FASTCALL DataArrayReadLong(u32 addr);
-void FASTCALL DataArrayWriteByte(u32 addr, u8 val);
-void FASTCALL DataArrayWriteWord(u32 addr, u16 val);
-void FASTCALL DataArrayWriteLong(u32 addr, u32 val);
+u8 FASTCALL DataArrayReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL DataArrayReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL DataArrayReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL DataArrayWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL DataArrayWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL DataArrayWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
-void FASTCALL MSH2InputCaptureWriteWord(u32 addr, u16 data);
-void FASTCALL SSH2InputCaptureWriteWord(u32 addr, u16 data);
+void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *sh, u32 addr, u16 data);
+void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *sh, u32 addr, u16 data);
 
 int SH2SaveState(SH2_struct *context, FILE *fp);
 int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
+
+u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size);
 
 #if defined(SH2_DYNAREC)
 extern SH2Interface_struct SH2Dynarec;

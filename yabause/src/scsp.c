@@ -569,9 +569,9 @@ void op3(struct Slot * slot)
       return;
 
    if (!slot->regs.pcm8b)
-      slot->state.wave = SoundRamReadWord(addr);
+      slot->state.wave = c68k_word_read(addr);
    else
-      slot->state.wave = SoundRamReadByte(addr) << 8;
+      slot->state.wave = c68k_byte_read(addr) << 8;
 
    slot->state.output = slot->state.wave;
 }
@@ -4467,7 +4467,7 @@ static s32 savedcycles;  // Cycles left over from the last M68KExec() call
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL
+u32 FASTCALL
 c68k_byte_read (const u32 adr)
 {
   if (adr < 0x100000)
@@ -4526,6 +4526,54 @@ scu_interrupt_handler (void)
 {
   // send interrupt to scu
   ScuSendSoundRequest ();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL
+ScspReadByte (u32 addr)
+{
+   return scsp_r_b(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+ScspWriteByte (u32 addr, u8 val)
+{
+   scsp_w_b(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL
+ScspReadWord (u32 addr)
+{
+   return scsp_r_w(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+ScspWriteWord (u32 addr, u16 val)
+{
+   scsp_w_w(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL
+ScspReadLong (u32 addr)
+{
+   return scsp_r_d(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+ScspWriteLong (u32 addr, u32 val)
+{
+   scsp_w_d(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4624,6 +4672,102 @@ SoundRamWriteLong (u32 addr, u32 val)
 
   T2WriteLong (SoundRam, addr, val);
   M68K->WriteNotify (addr, 4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL
+Sh2ScspReadByte(SH2_struct *sh, u32 addr)
+{
+   return ScspReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+Sh2ScspWriteByte(SH2_struct *sh, u32 addr, u8 val)
+{
+   ScspWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL
+Sh2ScspReadWord(SH2_struct *sh, u32 addr)
+{
+   return ScspReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+Sh2ScspWriteWord(SH2_struct *sh, u32 addr, u16 val)
+{
+   ScspWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL
+Sh2ScspReadLong(SH2_struct *sh, u32 addr)
+{
+   return ScspReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+Sh2ScspWriteLong(SH2_struct *sh, u32 addr, u32 val)
+{
+   ScspWriteLong(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL
+Sh2SoundRamReadByte(SH2_struct *sh, u32 addr)
+{
+   return SoundRamReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+Sh2SoundRamWriteByte(SH2_struct *sh, u32 addr, u8 val)
+{
+   SoundRamWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL
+Sh2SoundRamReadWord(SH2_struct *sh, u32 addr)
+{
+   return SoundRamReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+Sh2SoundRamWriteWord(SH2_struct *sh, u32 addr, u16 val)
+{
+   SoundRamWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL
+Sh2SoundRamReadLong(SH2_struct *sh, u32 addr)
+{
+   return SoundRamReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL
+Sh2SoundRamWriteLong(SH2_struct *sh, u32 addr, u32 val)
+{
+   SoundRamWriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4981,6 +5125,26 @@ ScspReceiveCDDA (const u8 *sector)
      cdda_next_in += 2352;
 
   cdda_out_left += 2352;
+
+  if (cdda_out_left > sizeof(cddabuf.data))
+    {
+      SCSPLOG ("WARNING: CDDA buffer overrun\n");
+      cdda_out_left = sizeof(cddabuf.data);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScspReceiveMpeg (const u8 *samples, int len)
+{
+  memcpy(cddabuf.data+cdda_next_in, samples, len);
+
+  if (sizeof(cddabuf.data)-cdda_next_in <= len)
+     cdda_next_in = 0;
+  else
+     cdda_next_in += len;
+
+  cdda_out_left += len;
 
   if (cdda_out_left > sizeof(cddabuf.data))
     {

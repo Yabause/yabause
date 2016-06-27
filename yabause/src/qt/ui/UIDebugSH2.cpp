@@ -21,9 +21,12 @@
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 
-int SH2Dis(u32 addr, char *string)
+int SH2Dis(SH2_struct *context, u32 addr, char *string)
 {
-   SH2Disasm(addr, MappedMemoryReadWord(addr), 0, NULL, string);
+   if(context->model == SHMT_SH1)
+      SH2Disasm(addr, context->MappedMemoryReadWord(context, addr), 0, NULL, string);
+   else
+      SH2Disasm(addr, MappedMemoryReadWordNocache(context, addr), 0, NULL, string);
    return 2;
 }
 
@@ -31,26 +34,38 @@ void SH2BreakpointHandler (SH2_struct *context, u32 addr, void *userdata)
 {
    UIYabause* ui = QtYabause::mainWindow( false );
 
-   if (context == MSH2)
+   if (context == SH1)
+      emit ui->breakpointHandlerSH1(userdata == NULL ? true : false);
+   else if (context == MSH2)
       emit ui->breakpointHandlerMSH2(userdata == NULL ? true : false);
    else
       emit ui->breakpointHandlerSSH2(userdata == NULL ? true : false);
 }
 
-UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
-	: UIDebugCPU( mYabauseThread, p )
+UIDebugSH2::UIDebugSH2(UIDebugCPU::PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* p )
+	: UIDebugCPU( proc, mYabauseThread, p )
 {
-   if (master)
-   {
-      this->setWindowTitle(QtYabause::translate("Debug Master SH2"));
-      debugSH2 = MSH2;
-   }
-   else
-   {
-      this->setWindowTitle(QtYabause::translate("Debug Slave SH2"));
-      debugSH2 = SSH2;
-   }
-   gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
+	switch (proc)
+	{
+		case UIDebugCPU::PROC_SH1:
+			this->setWindowTitle(QtYabause::translate("Debug Master SH1"));
+			gbRegisters->setTitle(QtYabause::translate("SH1 Registers"));
+			debugSH2 = SH1;
+			break;
+		case UIDebugCPU::PROC_MSH2:
+			this->setWindowTitle(QtYabause::translate("Debug Master SH2"));
+			gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
+			debugSH2 = MSH2;
+			break;
+		case UIDebugCPU::PROC_SSH2:
+			this->setWindowTitle(QtYabause::translate("Debug Slave SH2"));
+			gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
+			debugSH2 = SSH2;
+			break;
+		default: break;
+	}
+
+	lwDisassembledCode->setContext(debugSH2);
 
    if (debugSH2)
    {
@@ -77,8 +92,11 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
          }
       }
 
-      lwDisassembledCode->setDisassembleFunction(SH2Dis);
-      lwDisassembledCode->setEndAddress(0x06100000);
+      lwDisassembledCode->setDisassembleFunction((int (*)(void *, u32, char *))SH2Dis);
+		if (debugSH2->model == SHMT_SH1)
+			lwDisassembledCode->setEndAddress(0x09080000);
+		else
+			lwDisassembledCode->setEndAddress(0x06100000);
       lwDisassembledCode->setMinimumInstructionSize(2);
       gbBackTrace->setVisible( true );
 
@@ -391,7 +409,7 @@ void UIDebugSH2::reserved3()
 				int op = sh2iasm(text.toLatin1().data(), errorMsg);
 				if (op != 0)
 				{
-					MappedMemoryWriteWord(debugSH2->regs.PC, op);
+					MappedMemoryWriteWordNocache(debugSH2, debugSH2->regs.PC, op);
 					break;
 				}
 				else

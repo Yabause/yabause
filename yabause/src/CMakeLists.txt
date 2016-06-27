@@ -22,7 +22,7 @@ set(yabause_HEADERS
 	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
-	yabause.h ygl.h yui.h sh2cache.h)
+	yabause.h ygl.h yui.h sh2cache.h sh7034.h ygr.h cd_drive.h tsunami/yab_tsunami.h mpeg_card.h)
 
 set(yabause_SOURCES
 	bios.c
@@ -38,7 +38,7 @@ set(yabause_SOURCES
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c ygles.c yglshaderes.c sh2cache.c)
+	yabause.c ygles.c yglshaderes.c sh2cache.c sh7034.c ygr.c cd_drive.c tsunami/yab_tsunami.c tsunami/Tsunami.c mpeg_card.c)
 
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
@@ -47,10 +47,14 @@ else()
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
 endif()
 
-option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
-if (YAB_WANT_SH2_CACHE)
-    add_definitions(-DCACHE_ENABLE=1)
-    add_definitions(-DEXEC_FROM_CACHE=1)
+option(YAB_WANT_MPEG "Enable MPEG decoding" OFF)
+if(YAB_WANT_MPEG)
+  find_package(FFmpeg)
+  if(FFMPEG_FOUND)
+    add_definitions(-DHAVE_MPEG=1)
+    include_directories(${FFMPEG_INCLUDE_DIRS})
+    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${FFMPEG_LIBRARIES}) 
+  endif()
 endif()
 
 option(YAB_USE_SSF "Include SSF player." ON)
@@ -599,12 +603,6 @@ if (YAB_PORT_OSD)
 	add_definitions(-DYAB_PORT_OSD=1)
 endif()
 
-# Exec from cache
-option(YAB_EXEC_FROM_CACHE "Allow code execution from 0xC0000000" OFF)
-if (YAB_EXEC_FROM_CACHE)
-	add_definitions(-DEXEC_FROM_CACHE=1)
-endif()
-
 # Optimized DMA
 option(YAB_OPTIMIZED_DMA "Use optimized DMA when possible" OFF)
 if (YAB_OPTIMIZED_DMA)
@@ -612,7 +610,7 @@ if (YAB_OPTIMIZED_DMA)
 endif()
 
 # SH2 Trace
-option(SH2_TRACE "Enable SH2 tracing" ON)
+option(SH2_TRACE "Enable SH2 tracing" OFF)
 if (SH2_TRACE)
 	add_definitions(-DSH2_TRACE=1)
 endif()

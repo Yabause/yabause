@@ -92,7 +92,6 @@ newline:
 	mov	MSH2, %eax
 	mov	NumberOfInterruptsOffset, %ecx
 	sub	%edx, %ebx  /* sh2cycles(full line) - decilinecycles*9 */
-	mov	%eax, CurrentSH2
 	mov	%ebx, -24(%ebp) /* sh2cycles */
 	cmp	$0, (%eax, %ecx)
 	jne	master_handle_interrupts
@@ -130,7 +129,6 @@ slave_entry:
 	je	cc_interrupt_master /* slave not running */
 	mov	SSH2, %eax
 	mov	NumberOfInterruptsOffset, %ecx
-	mov	%eax, CurrentSH2
 	cmp	$0, (%eax, %ecx)
 	jne	slave_handle_interrupts
 	mov	slave_cc, %esi
@@ -177,7 +175,6 @@ cc_interrupt_master:
 	mov	master_cc, %esi
 	mov	MSH2, %eax
 	mov	NumberOfInterruptsOffset, %ecx
-	mov	%eax, CurrentSH2
 	cmp	$0, (%eax, %ecx)
 	jne	master_handle_interrupts
 	sub	%ebx, %esi
@@ -517,7 +514,7 @@ WriteInvalidateLong:
 	mov	%eax, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteLong
+	jnc	MappedMemoryWriteLongNocache
 	push	%eax
 	push	%edx
 	push	%eax
@@ -525,7 +522,7 @@ WriteInvalidateLong:
 	pop	%eax
 	pop	%edx
 	pop	%eax
-	jmp	MappedMemoryWriteLong
+	jmp	MappedMemoryWriteLongNocache
 	.size	WriteInvalidateLong, .-WriteInvalidateLong
 .globl WriteInvalidateWord
 	.type	WriteInvalidateWord, @function
@@ -533,7 +530,7 @@ WriteInvalidateWord:
 	mov	%eax, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteWord
+	jnc	MappedMemoryWriteWordNocache
 	push	%eax
 	push	%edx
 	push	%eax
@@ -541,7 +538,7 @@ WriteInvalidateWord:
 	pop	%eax
 	pop	%edx
 	pop	%eax
-	jmp	MappedMemoryWriteWord
+	jmp	MappedMemoryWriteWordNocache
 	.size	WriteInvalidateWord, .-WriteInvalidateWord
 .globl WriteInvalidateByteSwapped
 	.type	WriteInvalidateByteSwapped, @function
@@ -554,7 +551,7 @@ WriteInvalidateByte:
 	mov	%eax, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteByte
+	jnc	MappedMemoryWriteByteNocache
 	push	%eax
 	push	%edx
 	push	%eax
@@ -562,7 +559,7 @@ WriteInvalidateByte:
 	pop	%eax
 	pop	%edx
 	pop	%eax
-	jmp	MappedMemoryWriteByte
+	jmp	MappedMemoryWriteByteNocache
 	.size	WriteInvalidateByte, .-WriteInvalidateByte
 
 .globl div1
@@ -639,10 +636,10 @@ macl:
 	push	%edx /* MACH */
 	push	%eax /* MACL */
 	mov	%edi, %eax
-	call	MappedMemoryReadLong
+	call	MappedMemoryReadLongNocache
 	mov	%eax, %esi
 	mov	%ebp, %eax
-	call	MappedMemoryReadLong
+	call	MappedMemoryReadLongNocache
 	add	$4, %ebp
 	add	$4, %edi
 	imul	%esi
@@ -677,10 +674,10 @@ macw:
 	push	%edx /* MACH */
 	push	%eax /* MACL */
 	mov	%edi, %eax
-	call	MappedMemoryReadWord
+	call	MappedMemoryReadWordNocache
 	movswl	%ax, %esi
 	mov	%ebp, %eax
-	call	MappedMemoryReadWord
+	call	MappedMemoryReadWordNocache
 	movswl	%ax, %eax
 	add	$2, %ebp
 	add	$2, %edi

@@ -25,21 +25,42 @@
 
 UIHexEditor::UIHexEditor( QWidget* p )
 {
+	proc = UIDebugCPU::PROC_MSH2;
+	rebuildTabs();
+}
+
+void UIHexEditor::rebuildTabs()
+{
    QList<QString> tabList;
    QList<u32> startList;
    QList<u32> endList;
-   tabList   << "All"      << "BIOS"     << "LWRAM"    << "HWRAM"     << 
-                "CS0"      << "CS1"      << "CS2"      << "68K RAM"   << 
-                "VDP1 RAM" << "VDP1 FB"  << "VDP2 RAM" << "VDP2 CRAM";
-   startList << 0x00000000 << 0x00000000 << 0x00200000 << 0x06000000 <<
-                0x02000000 << 0x04000000 << 0x05800000 << 0x05A00000 <<
-                0x05C00000 << 0x05C80000 << 0x05E00000 << 0x05F00000;
-   endList   << 0x07FFFFFF << 0x0017FFFF << 0x002FFFFF << 0x060FFFFF <<
-                0x03FFFFFF << 0x04FFFFFF << 0x058FFFFF << 0x05AFFFFF <<
-                0x05C7FFFF << 0x05CFFFFF << 0x05EFFFFF << 0x05F7FFFF;
+
+   clear();
+   //if (proc == UIDebugCPU::PROC_MSH2 || proc == UIDebugCPU::PROC_SSH2)
+   if (proc != UIDebugCPU::PROC_SH1)
+   {
+      tabList   << "All"      << "BIOS"     << "LWRAM"    << "HWRAM"     << 
+         "CS0"      << "CS1"      << "CS2"      << "68K RAM"   << 
+         "VDP1 RAM" << "VDP1 FB"  << "VDP2 RAM" << "VDP2 CRAM";
+      startList << 0x00000000 << 0x00000000 << 0x00200000 << 0x06000000 <<
+         0x02000000 << 0x04000000 << 0x05800000 << 0x05A00000 <<
+         0x05C00000 << 0x05C80000 << 0x05E00000 << 0x05F00000;
+      endList   << 0x07FFFFFF << 0x0017FFFF << 0x002FFFFF << 0x060FFFFF <<
+         0x03FFFFFF << 0x04FFFFFF << 0x058FFFFF << 0x05AFFFFF <<
+         0x05C7FFFF << 0x05CFFFFF << 0x05EFFFFF << 0x05F7FFFF;
+   }
+   else
+   {
+      tabList   << "All" << "ROM" << "REG" << "DRAM" << "CS2" << "RAM Mirror";
+      startList << 0x00000000 << 0x00000000 << 0x05FFFE00 << 0x09000000 <<
+         0x0A000000 << 0x0F000000;
+      endList   << 0xFFFFFFFF << 0x0000FFFF << 0x05FFFFFF << 0x0907FFFF <<
+         0x0A1FFFFF << 0x0F07FFFF;
+   }
    for (int i=0; i < tabList.count(); i++)
    {
       UIHexEditorWnd *hexEditorWnd = new UIHexEditorWnd (this);
+      hexEditorWnd->setProc(proc);
       hexEditorWnd->setStartAddress(startList[i]);
       hexEditorWnd->setEndAddress(endList[i]);
       addTab(hexEditorWnd, tabList[i]);
@@ -65,6 +86,12 @@ u32 UIHexEditor::getEndAddress()
    return hexEditorWnd->getEndAddress();
 }
 
+void UIHexEditor::setProc( UIDebugCPU::PROCTYPE proc )
+{
+   this->proc = proc;
+   rebuildTabs();
+}
+
 bool UIHexEditor::saveSelected( QString filename )
 {
    UIHexEditorWnd *hexEditorWnd=(UIHexEditorWnd *)currentWidget();
@@ -73,12 +100,12 @@ bool UIHexEditor::saveSelected( QString filename )
 
 bool UIHexEditor::saveTab(QString filename)
 {
-	UIHexEditorWnd *hexEditorWnd = (UIHexEditorWnd *)currentWidget();
-	return hexEditorWnd->saveTab(filename);
+   UIHexEditorWnd *hexEditorWnd = (UIHexEditorWnd *)currentWidget();
+   return hexEditorWnd->saveTab(filename);
 }
 
 UIHexEditorWnd::UIHexEditorWnd( QWidget* p )
-	: QAbstractScrollArea( p )
+   : QAbstractScrollArea( p )
 {
    gapSizeAddrHex = 10;
    gapSizeHexText = 16;
@@ -106,7 +133,6 @@ UIHexEditorWnd::UIHexEditorWnd( QWidget* p )
 
    setMouseTracking(true);
 }
-
 
 void UIHexEditorWnd::sliderUpdate(int value)
 {
@@ -146,6 +172,11 @@ u32 UIHexEditorWnd::getAddress()
    return cursorAddr;
 }
 
+void UIHexEditorWnd::setProc( UIDebugCPU::PROCTYPE proc )
+{
+   this->proc = proc;
+}
+
 void UIHexEditorWnd::setFont(const QFont &font)
 {
    QWidget::setFont(font);
@@ -168,24 +199,38 @@ void UIHexEditorWnd::goToAddress(u32 address, bool setCursor)
 
 u8 UIHexEditorWnd::readByte(u32 addr)
 {
-   if ((addr >= 0x05D00000 && addr < 0x05D80000) ||
-      (addr >= 0x05F80000 && addr < 0x05FC0000))
-      return MappedMemoryReadWord(addr & (~0x1)) >> ((1-(addr & 0x1))<<3);
+   if (proc == UIDebugCPU::PROC_MSH2 || proc == UIDebugCPU::PROC_SSH2)
+   {
+      if ((addr >= 0x05D00000 && addr < 0x05D80000) ||
+         (addr >= 0x05F80000 && addr < 0x05FC0000))
+         return MappedMemoryReadWordNocache(MSH2, addr & (~0x1)) >> ((1-(addr & 0x1))<<3);
+      else
+         return MappedMemoryReadByteNocache(MSH2, addr);
+   }
+   else if (proc == UIDebugCPU::PROC_SH1)
+      return SH1->MappedMemoryReadByte(SH1, addr);
    else
-      return MappedMemoryReadByte(addr);
+      return MappedMemoryReadByteNocache(MSH2, addr);
 }
 
 void UIHexEditorWnd::writeByte(u32 addr, u8 val)
 {
-   if ((addr >= 0x05D00000 && addr < 0x05D80000) ||
-      (addr >= 0x05F80000 && addr < 0x05FC0000))
+   if (proc == UIDebugCPU::PROC_MSH2 || proc == UIDebugCPU::PROC_SSH2)
    {
-      u16 word = MappedMemoryReadWord(addr & (~0x1)) & (0xFF << ((addr & 0x1)<<3) );
-      word |= (val << ((1-(addr & 0x1))<<3));
-      MappedMemoryWriteWord(addr & (~0x1), word);
+      if ((addr >= 0x05D00000 && addr < 0x05D80000) ||
+         (addr >= 0x05F80000 && addr < 0x05FC0000))
+      {
+         u16 word = MappedMemoryReadWordNocache(MSH2, addr & (~0x1)) & (0xFF << ((addr & 0x1)<<3) );
+         word |= (val << ((1-(addr & 0x1))<<3));
+         MappedMemoryWriteWordNocache(MSH2, addr & (~0x1), word);
+      }
+      else
+         MappedMemoryWriteByteNocache(MSH2, addr, val);
    }
+   else if (proc == UIDebugCPU::PROC_SH1)
+      SH1->MappedMemoryWriteByte(SH1, addr, val);
    else
-      MappedMemoryWriteByte(addr, val);
+      MappedMemoryWriteByteNocache(MSH2, addr, val);
 }
 
 void UIHexEditorWnd::clear(u32 index, int len)

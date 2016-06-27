@@ -29,6 +29,14 @@ if (IAPETUS_INCLUDE_DIR STREQUAL "IAPETUS_INCLUDE_DIR-NOTFOUND")
    set(IAPETUS_INCLUDE_DIR ${source_dir}/src)
 endif(IAPETUS_INCLUDE_DIR STREQUAL "IAPETUS_INCLUDE_DIR-NOTFOUND")
 
+option(WANT_BUILDCD "Build Test ISO with YabauseUT included" OFF)
+if (WANT_BUILDCD)
+    find_program(VCDBUILD
+                NAMES vcdbuild
+                PATHS ${CMAKE_CURRENT_SOURCE_DIR}/src/buildcd
+                REQUIRED )
+endif()
+
 PROJECT(YabauseUT C)
 
 include_directories(${IAPETUS_INCLUDE_DIR})

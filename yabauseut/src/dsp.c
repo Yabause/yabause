@@ -121,7 +121,7 @@ static int dsp_output_offset = 0;
 //result string copied to end of vdp1 ram
 void dsp_copy_str_to_offset(char*result)
 {
-   char* dest = (char *)VDP1_RAM + dsp_output_offset + 0x70000;
+   char* dest = (char *)VDP1_RAM + dsp_output_offset + 0x20000;
    strcpy(dest, result);
    dsp_output_offset += strlen(result);
 }

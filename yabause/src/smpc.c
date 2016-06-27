@@ -590,14 +590,14 @@ void SmpcExec(s32 t) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL SmpcReadByte(u32 addr) {
+u8 FASTCALL SmpcReadByte(SH2_struct *sh, u32 addr) {
    addr &= 0x7F;
    return SmpcRegsT[addr >> 1];
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL SmpcReadWord(USED_IF_SMPC_DEBUG u32 addr) {
+u16 FASTCALL SmpcReadWord(UNUSED SH2_struct *sh, USED_IF_SMPC_DEBUG u32 addr) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register read word - %08X\n", addr);
    return 0;
@@ -605,7 +605,7 @@ u16 FASTCALL SmpcReadWord(USED_IF_SMPC_DEBUG u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL SmpcReadLong(USED_IF_SMPC_DEBUG u32 addr) {
+u32 FASTCALL SmpcReadLong(UNUSED SH2_struct *sh, USED_IF_SMPC_DEBUG u32 addr) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register read long - %08X\n", addr);
    return 0;
@@ -704,7 +704,7 @@ u8 do_th_mode(u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
+void FASTCALL SmpcWriteByte(SH2_struct *sh, u32 addr, u8 val) {
    addr &= 0x7F;
    SmpcRegsT[addr >> 1] = val;
 
@@ -859,14 +859,14 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteWord(USED_IF_SMPC_DEBUG u32 addr, UNUSED u16 val) {
+void FASTCALL SmpcWriteWord(SH2_struct *sh, USED_IF_SMPC_DEBUG u32 addr, UNUSED u16 val) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteLong(USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
+void FASTCALL SmpcWriteLong(SH2_struct *sh, USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register write long - %08X\n", addr);
 }

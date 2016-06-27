@@ -137,6 +137,78 @@ void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+u8 FASTCALL Sh2Vdp2RamReadByte(SH2_struct *sh, u32 addr) {
+   return Vdp2RamReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL Sh2Vdp2RamReadWord(SH2_struct *sh, u32 addr) {
+   return Vdp2RamReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL Sh2Vdp2RamReadLong(SH2_struct *sh, u32 addr) {
+   return Vdp2RamReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2RamWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+   Vdp2RamWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2RamWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+   Vdp2RamWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2RamWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+   Vdp2RamWriteLong(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL Sh2Vdp2ColorRamReadByte(SH2_struct *sh, u32 addr) {
+   return Vdp2ColorRamReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL Sh2Vdp2ColorRamReadWord(SH2_struct *sh, u32 addr) {
+   return Vdp2ColorRamReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL Sh2Vdp2ColorRamReadLong(SH2_struct *sh, u32 addr) {
+   return Vdp2ColorRamReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2ColorRamWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+   Vdp2ColorRamWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2ColorRamWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+   Vdp2ColorRamWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2ColorRamWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+   Vdp2ColorRamWriteLong(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 int Vdp2Init(void) {
    if ((Vdp2Regs = (Vdp2 *) calloc(1, sizeof(Vdp2))) == NULL)
       return -1;
@@ -295,7 +367,7 @@ void Vdp2HBlankOUT(void) {
 
       for (i = 0; i < 88; i++)
       {
-         cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(cell_scroll_table_start_addr + i * 4);
+         cell_scroll_data[yabsys.LineCount].data[i] = T1ReadLong(Vdp2Ram, cell_scroll_table_start_addr + i * 4);
       }
    }
 }
@@ -993,6 +1065,42 @@ void FASTCALL Vdp2WriteLong(u32 addr, u32 val) {
    Vdp2WriteWord(addr,val>>16);
    Vdp2WriteWord(addr+2,val&0xFFFF);
    return;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL Sh2Vdp2ReadByte(SH2_struct *sh, u32 addr) {
+   return Vdp2ReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL Sh2Vdp2ReadWord(SH2_struct *sh, u32 addr) {
+   return Vdp2ReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL Sh2Vdp2ReadLong(SH2_struct *sh, u32 addr) {
+   return Vdp2ReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2WriteByte(SH2_struct *sh, u32 addr, UNUSED u8 val) {
+   Vdp2WriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2WriteWord(SH2_struct *sh, u32 addr, u16 val) {
+   Vdp2WriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp2WriteLong(SH2_struct *sh, u32 addr, u32 val) {
+   Vdp2WriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
