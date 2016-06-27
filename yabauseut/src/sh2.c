@@ -744,7 +744,7 @@ u32 do_test_asm(u32 value, u32 addr, int is_write, int size, u32 * b2, int num_t
 
 void clear_framebuffer();
 
-void write_timing(u32 destination, char*test_name, int is_write, int size)
+void sh2_write_timing(u32 destination, char*test_name, int is_write, int size)
 {
    clear_framebuffer();
 
@@ -816,34 +816,34 @@ void do_timing(int is_write, int size)
    int i = is_write;
    int j = size;
 
-   write_timing(0x20000000, "bios", i, j);
+   sh2_write_timing(0x20000000, "bios", i, j);
 
-   write_timing(0x20100000, "smpc", i, j);
+   sh2_write_timing(0x20100000, "smpc", i, j);
 
-   write_timing(0x25E00000, "vdp2 vram", i, j);
+   sh2_write_timing(0x25E00000, "vdp2 vram", i, j);
 
-   write_timing(0x25f00000, "vdp2 color ram", i, j);
+   sh2_write_timing(0x25f00000, "vdp2 color ram", i, j);
 
    if ((i != 1) && (j != 2))//crashes
-      write_timing(0x25f80026, "vdp2 regs", i, j);
+      sh2_write_timing(0x25f80026, "vdp2 regs", i, j);
 
-   write_timing(0x25a00000, "scsp ram", i, j);
+   sh2_write_timing(0x25a00000, "scsp ram", i, j);
 
-   write_timing(0x25b00000, "scsp regs", i, j);
+   sh2_write_timing(0x25b00000, "scsp regs", i, j);
 
-   write_timing(0x25C00000, "vdp1 ram", i, j);
+   sh2_write_timing(0x25C00000, "vdp1 ram", i, j);
 
-   write_timing(0x25C80000, "vdp1 framebuffer", i, j);
+   sh2_write_timing(0x25C80000, "vdp1 framebuffer", i, j);
 
-   write_timing(0x25d00000, "vdp1 regs", i, j);
+   sh2_write_timing(0x25d00000, "vdp1 regs", i, j);
 
-   write_timing(0x20200000, "low work ram", i, j);
+   sh2_write_timing(0x20200000, "low work ram", i, j);
 
-   write_timing(0x260FF000, "high work ram", i, j);
+   sh2_write_timing(0x260FF000, "high work ram", i, j);
 
-   write_timing(0x25890008, "ygr", i, j);
+   sh2_write_timing(0x25890008, "ygr", i, j);
 
-   write_timing(0x25fe0000, "scu regs", i, j);
+   sh2_write_timing(0x25fe0000, "scu regs", i, j);
 }
 
 void sh2_write_timing_test()
