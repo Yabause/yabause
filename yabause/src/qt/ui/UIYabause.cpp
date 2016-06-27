@@ -349,9 +349,6 @@ void UIYabause::resizeIntegerScaling()
 
    int multiplier = vs->value("Video/IntegerPixelScalingMultiplier").toInt();
 
-   if (multiplier % 2 != 0)
-      return;
-
    int vdp2width = 0;
    int vdp2height = 0;
    int vdp2interlace = 0;
@@ -370,12 +367,12 @@ void UIYabause::resizeIntegerScaling()
    if (vdp2width < 640)
       width = vdp2width * multiplier;
    else
-      width = vdp2width * (multiplier / 2);
+      width = vdp2width * (multiplier / 2.0);
 
    if (!vdp2interlace)
       height = vdp2height * multiplier;
    else
-      height = vdp2height * (multiplier / 2);
+      height = vdp2height * (multiplier / 2.0);
 
    mYabauseGL->resize(width, height);
 
