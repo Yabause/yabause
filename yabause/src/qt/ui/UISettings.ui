@@ -786,6 +786,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>(CD Block LLE requires cdb105.bin, Sh2 Dma Timing, Scu Dma Timing and Sh2 Cache enabled)</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1055,7 +1065,7 @@
  </connections>
  <buttongroups>
   <buttongroup name="bgShowToolbar"/>
-  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowMenubar"/>
+  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>
