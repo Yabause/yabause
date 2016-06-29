@@ -120,6 +120,8 @@
     <string name="title_activity_game_select" translatable="false">uoYabause</string>
     <string name="polygon_generation_type">Polygon Generation Type</string>
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
+    <string name="sound_engine">Sound Engine</string>
+    <string name="choose_sound_engine">Choose sound engine</string>
 
     <string name="invitation_title">Send App Invite uoYabause</string>
     <string name="invitation_message">Play SEGA Saturn games using this app!</string>
