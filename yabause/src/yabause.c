@@ -166,9 +166,18 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.use_cd_block_lle = init->use_cd_block_lle;
-   yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
-   yabsys.use_scu_dma_timing = init->use_scu_dma_timing;
-   yabsys.sh2_cache_enabled = init->sh2_cache_enabled;
+   if (yabsys.use_cd_block_lle)
+   {
+      yabsys.use_sh2_dma_timing = 1;
+      yabsys.use_scu_dma_timing = 1;
+      yabsys.sh2_cache_enabled = 1;
+   }
+   else
+   {
+      yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
+      yabsys.use_scu_dma_timing = init->use_scu_dma_timing;
+      yabsys.sh2_cache_enabled = init->sh2_cache_enabled;
+   }
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -242,6 +251,12 @@ int YabauseInit(yabauseinit_struct *init)
                return -2;
             }
          }
+         else
+         {
+            YabSetError(YAB_ERR_CANNOTINIT, _("CD Block. It needs a SH1 ROM Defined."));
+            return -1;
+         }
+
          if (init->mpegpath != NULL && strlen(init->mpegpath))
          {
             if (LoadMpegRom(init->mpegpath) != 0)
@@ -326,6 +341,12 @@ int YabauseInit(yabauseinit_struct *init)
    }
    else
       yabsys.emulatebios = 1;
+
+   if (yabsys.emulatebios && yabsys.use_cd_block_lle)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("CD Block. A real bios must be defined and enabled for CD Block LLE. Emulated bios not supported."));
+      return -1;
+   }
 
    yabsys.usequickload = 0;
 
