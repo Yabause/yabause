@@ -120,6 +120,7 @@ class YabauseRunnable implements Runnable
     public static native void pause();
     public static native void resume();
     public static native void setPolygonGenerationMode( int pg );
+    public static native void setSoundEngine( int engine );
 
     private boolean inited;
     private boolean paused;
@@ -724,6 +725,11 @@ public class Yabause extends Activity
         Log.d(TAG, "getGamePath " + getGamePath());
         Log.d(TAG, "getMemoryPath " + getMemoryPath());
         Log.d(TAG, "getCartridgePath " + getCartridgePath());
+
+        String ssound = sharedPref.getString("pref_sound_engine", "1");
+        Integer isound = new Integer(ssound);
+        YabauseRunnable.setSoundEngine(isound);
+        Log.d(TAG, "setSoundEngine " + isound.toString());
     }
 
     public String getBiosPath() {
