@@ -29,5 +29,12 @@
         <item>2</item>
     </string-array>
 
-
+    <string-array name="entries_sound_engine_list_preference" translatable="false" >
+        <item>Current(High quality version for high-end devices)</item>
+        <item>Legacy(for low-end devices)</item>
+    </string-array>
+    <string-array name="entryvalues_sound_engine_list_preference" translatable="false">
+        <item>1</item>
+        <item>0</item>
+    </string-array>
 </resources>

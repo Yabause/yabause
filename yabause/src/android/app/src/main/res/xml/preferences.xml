@@ -115,6 +115,15 @@
             android:key="pref_audio"
             android:title="@string/audio_output"
             android:defaultValue="true" />
+
+        <ListPreference
+            android:key="pref_sound_engine"
+            android:title="@string/sound_engine"
+            android:dialogTitle="@string/choose_sound_engine"
+            android:entries="@array/entries_sound_engine_list_preference"
+            android:entryValues="@array/entryvalues_sound_engine_list_preference"
+            android:defaultValue="1" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>
