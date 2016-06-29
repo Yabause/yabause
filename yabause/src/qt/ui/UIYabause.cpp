@@ -1202,6 +1202,9 @@ void UIYabause::on_aTraceLogging_triggered( bool toggled )
 	return;
 }
 
+void UIYabause::on_aHelpDocumentation_triggered()
+{ QDesktopServices::openUrl( QUrl( aHelpDocumentation->statusTip() ) ); }
+
 void UIYabause::on_aHelpCompatibilityList_triggered()
 { QDesktopServices::openUrl( QUrl( aHelpCompatibilityList->statusTip() ) ); }
 
