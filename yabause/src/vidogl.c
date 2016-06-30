@@ -3642,10 +3642,11 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-   if (cmd.CMDSIZE == 0){
+   if ((cmd.CMDSIZE & 0x8000)){
 	   regs->EDSR |= 2;
 	   return; // BAD Command
    }
+
    sprite.dst=0;
    sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
@@ -3769,7 +3770,6 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    if (cmd.CMDSIZE == 0){
-	   regs->EDSR |= 2;
 	   return; // BAD Command
    }
 
@@ -3977,7 +3977,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    if (cmd.CMDSIZE == 0){
-	   regs->EDSR |= 2;
 	   return; // BAD Command
    }
 
