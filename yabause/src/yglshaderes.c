@@ -892,13 +892,13 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "uniform int u_fbohegiht;                                                                     \n"
 "in vec4 v_texcoord;                                                                     \n"
 "in vec4 v_vtxcolor;                                                                     \n"
-"out vec4 fragColor; \n "
+"out highp vec4 fragColor; \n "
 "void main() {                                                                                \n"
 "  vec2 addr = v_texcoord.st;                                                                 \n"
 "  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));   \n"
 "  addr.s = addr.s / (v_texcoord.q);                                                          \n"
 "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
-"  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
+"  highp vec4 spriteColor = texture(u_sprite,addr);                                               \n"
 "  if( spriteColor.a == 0.0 ) discard;      \n"
 "	//memoryBarrier(); \n"
 "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
@@ -906,11 +906,12 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "  if( fboColor.a > 0.028  )                                                               \n"
 "  {                                                                                          \n"
 "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
-"    fragColor.a = fboColor.a ;                              \n"             
-"  }else{                                                                                     \n"
-"    fragColor = spriteColor;                                                              \n"
-"    int additional = int(spriteColor.a * 255.0);                                            \n"
-"    fragColor.a = (120.0 + float(additional & 0x07)) / 255.0 ;                              \n"
+"    fragColor.a = fboColor.a ;                         \n"
+"  }else{                                               \n"
+"    fragColor = spriteColor;                           \n"
+"    int additional = int(spriteColor.a * 255.0);       \n"
+"    highp float alpha = float((additional/8)*8)/255.0; \n"
+"    fragColor.a = spriteColor.a-alpha + 0.5;           \n"
 "  }                                                                                          \n"
 "}\n";
 const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
@@ -1461,16 +1462,83 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, floa
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	_Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_mvpMatrix");
-
 	glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-	return 0;
-   return 0;
+
+    return 0;
 }
 
 int Ygl_cleanupVDP2DrawFramebuffer_addcolor(void * p){
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	return 0;
-   return 0;
+}
+
+/*------------------------------------------------------------------------------------
+*  VDP2 Draw Frame buffer Operation( Shadow drawing for ADD color mode )
+* ----------------------------------------------------------------------------------*/
+
+const GLchar Yglprg_vdp2_drawfb_addcolor_shadow_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+"precision highp sampler2D; \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;\n"
+"in vec2 v_texcoord;\n"
+"uniform sampler2D s_vdp1FrameBuffer;\n"
+"uniform float u_from;\n"
+"uniform float u_to;\n"
+"uniform vec4 u_coloroffset;\n"
+"out vec4 fragColor;\n"
+"void main()\n"
+"{\n"
+"  vec2 addr = v_texcoord;\n"
+"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  highp int additional = int(fbColor.a * 255.0);\n"
+"  highp float alpha = float((additional/8)*8)/255.0;\n"
+"  highp float depth = ((float(additional&0x07))/10.0) + 0.05;\n"
+"  if( depth < u_from || depth > u_to ){ discard;return;}\n"
+"  if( alpha <= 0.0){\n"
+"     discard;\n"
+"  }else if( alpha < 0.75 && fbColor.r == 0 && fbColor.g == 0 && fbColor.b == 0 ){\n"
+"     fragColor = fbColor;\n"
+"     fragColor.a = alpha;\n"
+"     gl_FragDepth =  (depth+1.0)/2.0;\n"
+"  }else{\n"
+"     discard;\n"
+"  }\n "
+"}\n";
+
+
+const GLchar * pYglprg_vdp2_drawfb_addcolor_shadow_f[] = { Yglprg_vdp2_drawfb_addcolor_shadow_f, NULL };
+
+static int idvdp1FrameBuffer_addcolor_shadow;
+static int idfrom_addcolor_shadow;
+static int idto_addcolor_shadow;
+static int idcoloroffset_addcolor_shadow;
+
+int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float to, float * offsetcol)
+{
+	YglProgram * prg;
+	prg = p;
+
+	glUseProgram(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW]);
+	glUniform1i(idvdp1FrameBuffer_addcolor_shadow, 0);
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1f(idfrom_addcolor_shadow, from);
+	glUniform1f(idto_addcolor_shadow, to);
+	glUniform4fv(idcoloroffset_addcolor_shadow, 1, offsetcol);
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
+	_Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_mvpMatrix");
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	return 0;
+}
+
+int Ygl_cleanupVDP2DrawFramebuffer_addcolor_shadow(void * p){
+	
+	return 0;
 }
 
 /*------------------------------------------------------------------------------------
@@ -1825,6 +1893,16 @@ int YglProgramInit()
    idfrom_addcolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_from");
    idto_addcolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_to");
    idcoloroffset_addcolor = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR], (const GLchar *)"u_coloroffset");
+
+   //
+   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_addcolor_shadow_f, NULL, NULL, NULL) != 0)
+	   return -1;
+
+   idvdp1FrameBuffer_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"s_vdp1FrameBuffer");;
+   idfrom_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_from");
+   idto_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_to");
+   idcoloroffset_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_coloroffset");
+
 
    //
    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA, pYglprg_vdp2_drawfb_linecolor_destination_alpha_v, pYglprg_vdp2_drawfb_linecolor_destination_alpha_f, NULL, NULL, NULL) != 0)

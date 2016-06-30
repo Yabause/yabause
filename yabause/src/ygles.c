@@ -2566,6 +2566,7 @@ void YglRenderFrameBuffer(int from, int to) {
 	GLfloat texcord[12];
 	float offsetcol[4];
 	int bwin0, bwin1, logwin0, logwin1, winmode;
+	int is_addcolor = 0;
 
 	YglGenFrameBuffer();
 
@@ -2586,6 +2587,7 @@ void YglRenderFrameBuffer(int from, int to) {
 		}
 		else{
 			Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+			is_addcolor = 1;
 		}
 	}
 	else if ((Vdp2Regs->CCCTL & 0x340) == 0x240 && (Vdp2Regs->LNCLEN & 0x20)){
@@ -2868,6 +2870,14 @@ void YglRenderFrameBuffer(int from, int to) {
    glVertexAttribPointer(_Ygl->renderfb.vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)vertices );
    glVertexAttribPointer(_Ygl->renderfb.texcoordp,2,GL_FLOAT,GL_FALSE,0,(GLvoid *)texcord );
    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+   if (is_addcolor == 1){
+	   Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+	   glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
+	   glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);
+	   glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
+	   glDrawArrays(GL_TRIANGLES, 0, 6);
+   }
 
    if( bwin0 || bwin1 )
    {
