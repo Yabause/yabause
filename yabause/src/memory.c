@@ -60,6 +60,10 @@
 #include "vidsoft.h"
 #include "vidogl.h"
 
+#ifdef SH2_TRACE
+#include "sh2trace.h"
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 *SH1Rom;
@@ -933,11 +937,16 @@ u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL MappedMemoryWriteByteCacheEnabled(SH2_struct *sh, u32 addr, u8 val) {
+#ifdef SH2_TRACE
+   sh2_trace_writeb(addr, val);
+#endif
    cache_memory_write_b(sh, &sh->onchip.cache, addr, val);
 }
 void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
 {
-
+#ifdef SH2_TRACE
+   sh2_trace_writeb(addr, val);
+#endif
    switch (addr >> 29)
    {
       case 0x0:
@@ -990,11 +999,17 @@ void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL MappedMemoryWriteWordCacheEnabled(SH2_struct *sh, u32 addr, u16 val) {
+#ifdef SH2_TRACE
+   sh2_trace_writew(addr, val);
+#endif
    cache_memory_write_w(sh, &sh->onchip.cache, addr, val);
 }
 
 void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val)
 {
+#ifdef SH2_TRACE
+   sh2_trace_writew(addr, val);
+#endif
    switch (addr >> 29)
    {
       case 0x0:
@@ -1047,11 +1062,17 @@ void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL MappedMemoryWriteLongCacheEnabled(SH2_struct *sh, u32 addr, u32 val) {
+#ifdef SH2_TRACE
+   sh2_trace_writel(addr, val);
+#endif
    cache_memory_write_l(sh, &sh->onchip.cache, addr, val);
 }
 
 void FASTCALL MappedMemoryWriteLongNocache(SH2_struct *sh, u32 addr, u32 val)
 {
+#ifdef SH2_TRACE
+   sh2_trace_writel(addr, val);
+#endif
    switch (addr >> 29)
    {
       case 0x0:
