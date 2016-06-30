@@ -37,21 +37,6 @@
 
 #ifdef SH2_TRACE
 #include "sh2trace.h"
-# define MappedMemoryWriteByte(s,a,v)  do { \
-    uint32_t __a = (a), __v = (v);        \
-    sh2_trace_writeb(__a, __v);           \
-    MappedMemoryWriteByte(s, __a, __v);      \
-} while (0)
-# define MappedMemoryWriteWord(s,a,v)  do { \
-    uint32_t __a = (a), __v = (v);        \
-    sh2_trace_writew(__a, __v);           \
-    MappedMemoryWriteWord(s, __a, __v);      \
-} while (0)
-# define MappedMemoryWriteLong(s,a,v)  do { \
-    uint32_t __a = (a), __v = (v);        \
-    sh2_trace_writel(__a, __v);           \
-    MappedMemoryWriteLong(s, __a, __v);      \
-} while (0)
 #endif
 
 SH2Interface_struct SH2Interpreter = {
