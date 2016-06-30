@@ -4184,6 +4184,16 @@ scsp_r_w (u32 a)
         break;
      }
   }
+  else if (a >= 0xE00 && a <= 0xE7F)
+  {
+     u32 address = (a - 0xE00) / 2;
+     return scsp_dsp.mems[address];
+  }
+  else if (a >= 0xEE0 && a <= 0xEE3)
+  {
+     u32 address = (a - 0xEE0) / 2;
+     return scsp_dsp.exts[address];
+  }
   else if (a < 0xee4)
     {
 
