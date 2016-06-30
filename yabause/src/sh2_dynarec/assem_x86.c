@@ -3122,7 +3122,7 @@ void do_rmwstub(int n)
     output_byte(12+16);
     emit_writeword(ECX,(int)&MSH2->cycles);
   }*/
-  emit_call((int)MappedMemoryReadByte);
+  emit_call((int)MappedMemoryReadByteNocache);
   emit_mov(EAX,EDX);
   if(rs==EAX||rs==ECX||rs==EDX)
     emit_readword_indexed(0,ESP,EAX);
