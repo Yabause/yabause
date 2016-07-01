@@ -23,6 +23,7 @@
 #include "yuitransfer.h"
 #include "../core.h"
 #include "../memory.h"
+#include "../sh2core.h"
 
 static void yui_transfer_class_init	(YuiTransferClass * klass);
 static void yui_transfer_init		(YuiTransfer      * yfe);
@@ -218,7 +219,7 @@ static void yui_transfer_exec(UNUSED GtkWidget * widget, YuiTransfer * yt) {
 	switch(yt->mode) {
 		case YUI_TRANSFER_LOAD:
 			sscanf(gtk_entry_get_text(GTK_ENTRY(yt->from_entry)), "%x", &from);
-			MappedMemoryLoad(gtk_entry_get_text(GTK_ENTRY(yt->file_entry)), from);
+			MappedMemoryLoad(MSH2, gtk_entry_get_text(GTK_ENTRY(yt->file_entry)), from);
 			break;
 		case YUI_TRANSFER_LOAD_EXEC:
 			sscanf(gtk_entry_get_text(GTK_ENTRY(yt->from_entry)), "%x", &from);
@@ -227,7 +228,7 @@ static void yui_transfer_exec(UNUSED GtkWidget * widget, YuiTransfer * yt) {
 		case YUI_TRANSFER_STORE:
 			sscanf(gtk_entry_get_text(GTK_ENTRY(yt->from_entry)), "%x", &from);
 			sscanf(gtk_entry_get_text(GTK_ENTRY(yt->to_entry)), "%x", &to);
-			MappedMemorySave(gtk_entry_get_text(GTK_ENTRY(yt->file_entry)), from, to - from);
+			MappedMemorySave(MSH2, gtk_entry_get_text(GTK_ENTRY(yt->file_entry)), from, to - from);
 			break;
 	}
 

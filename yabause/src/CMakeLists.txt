@@ -101,7 +101,7 @@ endif ()
 
 # math library
 if (UNIX)
-    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "m")
+    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "m -pthread")
 endif()
 
 # Bigendian

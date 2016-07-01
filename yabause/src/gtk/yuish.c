@@ -537,7 +537,7 @@ static void SH2UpdateCodeList( YuiSh *sh2, u32 addr) {
 
   for (i = 0; i < 24; i++) {
     SH2GetRegisters(sh2->debugsh, &sh2regs);
-    SH2Disasm(offset+2*i, MappedMemoryReadWord(offset+2*i), 0, &sh2regs, lineBuf);
+    SH2Disasm(offset+2*i, MappedMemoryReadWordNocache(MSH2, offset+2*i), 0, &sh2regs, lineBuf);
 
     sscanf(lineBuf, "0x%8X: %[^\n]", &address, command_s);
     sprintf(address_s, "0x%08X", address);
