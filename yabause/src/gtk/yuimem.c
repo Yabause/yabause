@@ -271,7 +271,7 @@ static void yui_mem_content_changed( GtkCellRendererText *cellrenderertext,
     if ( hexaDigitToInt( *curs )!=-1 ) {
 
       if ( k==-1 ) k = hexaDigitToInt( *curs );
-      else { MappedMemoryWriteByte( addr++, 16*k + hexaDigitToInt( *curs ) ); k = -1;
+      else { MappedMemoryWriteByteNocache(MSH2, addr++, 16*k + hexaDigitToInt( *curs ) ); k = -1;
       }
     }
   }
@@ -289,7 +289,7 @@ static void yui_mem_update(YuiMem * ym) {
 	for(i = 0;i < 6;i++) {
 		sprintf(address, "%08x", ym->address + (8 * i));
 		for(j = 0;j < 8;j++) {
-			sprintf(dump + (j * 3), "%02x ", MappedMemoryReadByte(ym->address + (8 * i) + j));
+			sprintf(dump + (j * 3), "%02x ", MappedMemoryReadByteNocache(MSH2, ym->address + (8 * i) + j));
 		}
 
 		gtk_list_store_append(ym->store, &iter);
