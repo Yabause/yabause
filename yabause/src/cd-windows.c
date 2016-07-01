@@ -303,6 +303,55 @@ s32 SPTICDReadTOC(u32 *TOC) {
 
 static s32 SPTICDReadTOC10(CDInterfaceToc10 *TOC)
 {
+   if (hCDROM != INVALID_HANDLE_VALUE)
+   {
+      BOOL success;
+      DWORD dwBytesReturned=0;
+      int size = 256 * sizeof(CDROM_TOC_FULL_TOC_DATA_BLOCK) + sizeof(CDROM_TOC_FULL_TOC_DATA);
+      unsigned char buf[256 * sizeof(CDROM_TOC_FULL_TOC_DATA_BLOCK) + sizeof(CDROM_TOC_FULL_TOC_DATA)];
+      CDROM_TOC_FULL_TOC_DATA *full_toc = (CDROM_TOC_FULL_TOC_DATA *)buf;
+      CDROM_READ_TOC_EX toc_ex;
+
+      ZeroMemory(&toc_ex, sizeof(toc_ex));
+      toc_ex.Format = CDROM_READ_TOC_EX_FORMAT_FULL_TOC;
+      toc_ex.Msf = TRUE;
+      toc_ex.SessionTrack = 1;
+
+      success=DeviceIoControl(hCDROM, IOCTL_CDROM_READ_TOC_EX,
+         &toc_ex, sizeof(CDROM_READ_TOC_EX), 
+         full_toc, size, &dwBytesReturned, NULL);
+
+      if (success)
+      {
+         int i;
+         int num_toc=0;
+         for (i = 0; i < 256; i++) 
+         {
+            if (full_toc->Descriptors[i].Adr == 1 && full_toc->Descriptors[i].SessionNumber == 1) 
+            {
+               u8 point = full_toc->Descriptors[i].Point;
+
+               if (point < MAXIMUM_NUMBER_TRACKS || point == 0xA0 || point == 0xA1 || point == 0xA2) 
+               {
+                  TOC[num_toc].ctrladr = (full_toc->Descriptors[i].Control << 4) | full_toc->Descriptors[i].Adr;
+                  TOC[num_toc].tno = full_toc->Descriptors[i].Reserved1;
+                  TOC[num_toc].point = full_toc->Descriptors[i].Point;
+                  TOC[num_toc].min = full_toc->Descriptors[i].MsfExtra[0];
+                  TOC[num_toc].sec = full_toc->Descriptors[i].MsfExtra[1];
+                  TOC[num_toc].frame = full_toc->Descriptors[i].MsfExtra[2];
+                  TOC[num_toc].zero = full_toc->Descriptors[i].Zero;
+                  TOC[num_toc].pmin = full_toc->Descriptors[i].Msf[0];
+                  TOC[num_toc].psec = full_toc->Descriptors[i].Msf[1];
+                  TOC[num_toc].pframe = full_toc->Descriptors[i].Msf[2];
+                  num_toc++;
+               } 
+            }
+         }
+
+         return num_toc;
+      }
+   }
+
    return 0;
 }
 
