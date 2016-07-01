@@ -31,6 +31,7 @@
 #include "vdp2.h"
 #include "vidsoft.h"
 #include "threads.h"
+#include "sh2core.h"
 
 u8 * Vdp1Ram;
 u8 * Vdp1FrameBuffer;
@@ -156,6 +157,78 @@ void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
    }
 
    T1WriteLong(Vdp1FrameBuffer, addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL Sh2Vdp1RamReadByte(SH2_struct *sh, u32 addr) {
+   return Vdp1RamReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL Sh2Vdp1RamReadWord(SH2_struct *sh, u32 addr) {
+   return Vdp1RamReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL Sh2Vdp1RamReadLong(SH2_struct *sh, u32 addr) {
+   return Vdp1RamReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1RamWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+   Vdp1RamWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1RamWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+   Vdp1RamWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1RamWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+   Vdp1RamWriteLong(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL Sh2Vdp1FrameBufferReadByte(SH2_struct *sh, u32 addr) {
+   return Vdp1FrameBufferReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL Sh2Vdp1FrameBufferReadWord(SH2_struct *sh, u32 addr) {
+   return Vdp1FrameBufferReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL Sh2Vdp1FrameBufferReadLong(SH2_struct *sh, u32 addr) {
+   return Vdp1FrameBufferReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1FrameBufferWriteByte(SH2_struct *sh, u32 addr, u8 val) {
+   Vdp1FrameBufferWriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1FrameBufferWriteWord(SH2_struct *sh, u32 addr, u16 val) {
+   Vdp1FrameBufferWriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1FrameBufferWriteLong(SH2_struct *sh, u32 addr, u32 val) {
+   Vdp1FrameBufferWriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -347,6 +420,42 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
    addr &= 0xFF;
    LOG("trying to long-write a Vdp1 register - %08X\n", addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 FASTCALL Sh2Vdp1ReadByte(SH2_struct *sh, u32 addr) {
+   return Vdp1ReadByte(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u16 FASTCALL Sh2Vdp1ReadWord(SH2_struct *sh, u32 addr) {
+   return Vdp1ReadWord(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL Sh2Vdp1ReadLong(SH2_struct *sh, u32 addr) {
+   return Vdp1ReadLong(addr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1WriteByte(SH2_struct *sh, u32 addr, UNUSED u8 val) {
+   Vdp1WriteByte(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1WriteWord(SH2_struct *sh, u32 addr, u16 val) {
+   Vdp1WriteWord(addr, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void FASTCALL Sh2Vdp1WriteLong(SH2_struct *sh, u32 addr, UNUSED u32 val) {
+   Vdp1WriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -24,11 +24,11 @@
 #include "cs0.h"
 #include "memory.h"
 
-u8 FASTCALL 	Cs1ReadByte(u32);
-u16 FASTCALL 	Cs1ReadWord(u32);
-u32 FASTCALL 	Cs1ReadLong(u32);
-void FASTCALL 	Cs1WriteByte(u32, u8);
-void FASTCALL 	Cs1WriteWord(u32, u16);
-void FASTCALL 	Cs1WriteLong(u32, u32);
+u8 FASTCALL 	Cs1ReadByte(SH2_struct *, u32);
+u16 FASTCALL 	Cs1ReadWord(SH2_struct *, u32);
+u32 FASTCALL 	Cs1ReadLong(SH2_struct *, u32);
+void FASTCALL 	Cs1WriteByte(SH2_struct *, u32, u8);
+void FASTCALL 	Cs1WriteWord(SH2_struct *, u32, u16);
+void FASTCALL 	Cs1WriteLong(SH2_struct *, u32, u32);
 
 #endif

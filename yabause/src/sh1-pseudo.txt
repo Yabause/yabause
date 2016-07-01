@@ -1,0 +1,1605 @@
+#define RDR0 (*(u8*)(0x5FFFEC5))
+#define TDR0 (*(u8*)(0x5FFFEC3))
+#define SSR0 (*(u8*)(0x5FFFEC4))
+
+u8 unk_F0002C4[12]; // just a pointer in ram, but is used like an array of 12 bytes
+struct // data is at 0x0F0002D0(11 byte structure)
+{
+   u8 status; // F0002D0
+   u8 q; // F0002D1
+   u8 track; // F0002D2
+   u8 index; // F0002D3
+   u16 mmss; // F0002D4
+   u8 ff; // F0002D6
+   u8 zero_not; // F0002D7
+   u8 abs_mm; // F0002D8
+   u8 abs_ss; // F0002D9
+   u8 abs_ff; // F0002DA
+} cd_rx;
+#define TRANSFER_STATUS (*(u8*)(0xf0002db))
+u8 cd_mech_buff[12]; // data is at 0x0F000304
+#define cd_mech_csum (*(u8*)(0xf000310))
+#define cd_mech_bytes (*(u8*)(0xf000311))
+
+void vectITU3IMIB3()
+{
+   // interrupt when OE from the drive mech falls
+   // PB3 is output enable, PB2 is start strobe
+   TSR3 &= 0xFD;
+   cd_mech_return_method = 0;
+   r1 = cd_mech_bytes & 0x7F;
+
+   if (!(cd_mech_bytes & 0x7F))
+   {
+      // start of new transfer(loc_97CE)
+
+      // backup register R4-R13, PR, GBR, MACH/MACL
+      // save stack to running_task[tcb.saved_sp]
+      // set stack to 0xF0008F8
+      cd_mech_return_method = 1;
+
+      if (PBDR & 0x4)
+      {
+         // 9828
+         cd_mech_bytes = 0x80;
+         //goto 9794
+      }
+      else
+      {
+         // 9802
+         if (cd_mech_bytes == 0)
+         {
+            // 980A
+            if (unk_F0002C4[11] == 0)
+            {
+               // 9832
+               memset(cd_mech_buff, 0, 11);
+               cd_mech_buff[11] = 0xFF;
+            }
+            else
+            {
+               // 9832
+               memcpy(cd_mech_buff, unk_F0002C4, 12);
+               u8 chksum = cd_mech_buff[0];
+               for (i = 1; i < 11; i++)
+                  chksum = cd_mech_buff[i];
+               cd_mech_buff[11] = ~chksum;
+               unk_F0002C4[11] = 0;
+            }
+         }
+
+         // 981E
+         TRANSFER_STATUS = 0; // clears rx packet ok flag
+         cd_mech_csum2 = 0; // clears csum
+      }
+   }
+   // old transfer
+   else if (PBDR & 0x4)
+       goto 9768;
+
+   //97ca reset the byte count
+   cd_mech_bytes = 0; //mov #0, r1
+ 
+   //9768
+   cd_mech_bytes++; //add #1, r1 , mov r1, r0 , mov.b r0, @(0xd, r3)
+   
+   // Is upcoming data parity byte(number 13 is somewhat deceiving)
+   if (cd_mech_bytes == 13) //cmp/eq #13, r0
+   {
+      //97ac
+      u8 received_data = RDR0;//mov.b @((RDR0 - SMR0), gbr), r0
+      received_data = ~received_data; //97ae invert checksum
+ 
+      u8 data_to_transmit;
+      //97B2 make sure checksum matches calculated checksum
+      if (received_data != cd_mech_csum)
+      {
+         //97c6
+         // checksum failure
+         data_to_transmit = 1;
+      }
+      else
+      {
+         //97b6
+         // checksum is good
+         TRANSFER_STATUS = 1;
+         data_to_transmit = 0;
+      }
+ 
+      //97be
+      TDR0 = data_to_transmit;
+      SSR0 |= 0x40;
+   }
+   else
+   {
+      //9776
+      u8 to_transmit = cd_mech_buff[cd_mech_bytes-1];//mov r3, r2. add #-1, r2. mov.b @(r0, r2), r0
+      TDR0 = to_transmit;//mov.b r0, @((TDR0 - SMR0), gbr)
+ 
+      if (cd_mech_bytes != 1)//cmp/eq #1, r0
+      {   //9784
+         u8 received_data = RDR0;
+         *((u8 *)cd_rx)[cd_mech_bytes-2] = received_data; // even though this is referenced as F0002CE, 
+                                                          // it really end up being cd_rx_status since 
+                                                          // cd_mech_bytes >= 2
+         cd_mech_csum += received_data;
+      }
+   }
+ 
+   //97be, 9784, 9776 and 9828 all come here
+   SSR0 = 0;//9794
+ 
+   if (cd_mech_return_method != 0)//cmp/eq #0, r0
+   {
+      //9876
+      next_task(); //mov.l #schedule_running_task, r1, jmp @r1
+   }
+   else
+      return;//979e
+}
+
+//task6
+
+#define YGR_CR1_REG (*(u16*)(0xA000010))
+#define YGR_CR2_REG (*(u16*)(0xA000012))
+#define YGR_CR3_REG (*(u16*)(0xA000014))
+#define YGR_CR4_REG (*(u16*)(0xA000016))
+
+#define YGR_HIRQ_REG (*(u16*)(0xA00001E))
+#define YGR_1A_REG (*(u16*)(0xA00001A))
+#define UNKN (*(u8*)(0xf000894))
+#define UNKN2 (*(u8*)(0xf0002A6))
+#define PBDR_L (*(u8*)(0x5FFFFC3))//lower byte of pbdr
+#define AUTH_BUSY (*(u8*)(0xf0007b0))
+
+#define CR_BUFFER ((u8*)(0x0F00026C))
+
+void loc_2914()
+{
+   //PB6, pin 104, deemphasis output
+   //low == demp off
+   //high == demp on
+   PBDR_L &= 0xBF;
+}
+
+void loc_28b0()
+{
+   if (UNKN & 0x10)
+   {
+      //28dc
+      YGR_1A_REG &= 0xffef;
+
+      if (UNKN2 & 0x28)//gbr == 0xf00025c
+      {
+         goto loc_2920;
+      }
+      else
+      {
+         //28ee
+         if (cd_stat == 6)
+         {
+loc_28f8:
+            //28f8
+            //0x4 means reading?
+            //readtoc == 0x4
+            //readdata == 0x36 (0x4 is set)
+            //readaudio == 0x34
+            if(cd_rx.status & 0x4)//F0002D0
+               goto loc_2920;
+            else
+            {
+               if (cd_stat == 0)
+               {
+                  goto loc_2920;
+               }
+               else
+               {
+                  //subcode q data has preemphasis set?
+                  //turn deemphasis pin on or off
+                  if (cd_rx.q & 0x10)//F0002D1
+                     goto loc_2914;
+                  else
+                     goto loc_290a;
+               }
+            }
+
+
+         }
+         else
+         {
+            //28f4
+            if (cd_stat == 0xc)
+               goto loc_2914;
+            else
+               goto loc_28f8;
+         }
+      }
+   }
+   else
+   {
+      //28c0
+      YGR_1A_REG |= 0x10;
+
+      if (UNKN & 0x80)
+      {
+         //290a
+         PBDR_L |= 0x40;//PB6
+         goto loc_291c;
+      }
+      else
+      {
+         //28d2
+         loc_2914();
+         goto loc_291c;
+      }
+   } 
+
+   u16 cr1, cr2, cr3, cr4;
+loc_291c:
+   //reload gbr with cd stat
+loc_2920:
+   if (AUTH_BUSY & 1)
+   {
+      //2932
+
+      if (cd_stat != 0)//2938
+      {
+         //use the second cr response
+         cr1 = CR_BUFFER[4];
+         cr2 = CR_BUFFER[5];
+         cr3 = CR_BUFFER[6];
+         cr4 = CR_BUFFER[7];
+      }
+      else
+      {
+         cr1 = CR_BUFFER[0];
+         cr2 = CR_BUFFER[1];
+         cr3 = CR_BUFFER[2];
+         cr4 = CR_BUFFER[3];
+      }
+
+      cr1 |= 0x2000;//periodic
+   }
+   else
+   {
+      //2928
+      cr1 = 0x20ff;
+      cr2 = 0xffff;
+      cr3 = 0xffff;
+      cr4 = 0xffff;
+   }
+
+loc_296a:
+   if (mbx_stat & 2)
+   {
+      //2982
+      YGR_CR1_REG = cr1;
+      YGR_CR2_REG = cr2;
+      YGR_CR3_REG = cr3;
+      YGR_CR4_REG = cr4;
+   }
+
+   //298a
+   YGR_HIRQ_REG |= 0x400;
+
+   wait();//2994
+}
+
+{
+   //3858
+   if (cd_rx_status & 0x4 && cd_rx_track == 0)
+   {
+      // 4 must be set to read TOC and track must be zero
+      //386A
+      auth_counter1 = cd_rx_track+1;
+
+      if (cd_rx_status & 0x8) 
+      {
+         //3876
+         count_Q_and_8++;
+      }
+      else
+      {
+         //387E
+         count_Q_and_not_8++;
+      }
+
+      //3884
+      if (cd_rx_Q & 0xF == 1)
+      {
+         //388C
+         drive_version = cd_rx_zero_not;
+         u32 track = bcd2num(&cd_rx_status+cd_rx_index);
+         if (track < 1)
+            goto loc_38D0;
+         if (track > 99)
+            goto loc_38D8;
+
+         for (;;)
+         {
+            //38AC
+            u32 toc_data = msf2frames(&cd_rx_status+8 /* F0002D8 */) | (cd_rx_Q << 24);
+
+            // is track leadout?
+            if (track_index != 102) 
+            {
+               //38DC
+               put_toc_entry(track_index, toc_data); // put toc_data into toc[track_index]
+
+               for(;;)
+               {
+                  //38E6
+                  if (cd_leadout != 0xFFFFFFFF &&
+                      cd_first_info_track != 0xFFFFFFFF)
+                  {
+                     //38F6
+                     u8 ctladr = r2 = (cd_first_info_track >> 16) & 0xFF
+                     if (cd_last_info_track != 0xFFFFFFFF)
+                     {
+                        //a0,a1,a2 entries in toc
+                        //3904
+                        r3 = (cd_last_info_track >> 16) & 0xFF
+                        if (r3 >= r2)
+                        {
+                           //390C 
+                           r0 = (cd_first_info_track >> 8) & 0xFF;
+                           if (r0 == 0x10)
+                           {
+                              //3914
+                              ctladr = (cd_store_last_infotrack >> 16) & 0xFF;
+                              ctladr += !((cd_store_last_infotrack >> 24) & 0x40)
+                              r2 = (cd_first_info_track >> 16) & 0xFF;
+                              r1 = (cd_last_info_track >> 16) & 0xFF;
+
+                              if (r2 == r3)
+                              {
+                                 //392E
+                                 r0 = cd_last_info_track >> 3;
+                                 if (!(r0 & 0x40))
+                                    goto loc_394A;
+                              }
+                           }
+                           //3936
+                           r2 = toc_data+r2;
+                           r3 = toc_data+r3;
+                           while (r2 <= r3)
+                           {
+                              //3940
+                              //check all info tracks present
+                              if (r2[0] == 0xFFFFFFFF)
+                                 goto loc_39AC;
+                           }
+                           //394A
+
+                           // TOC read complete.
+                           ((unsigned char *)&dram_nsession)[byte_F000289] = ctladr; 
+                           byte_F000289++;
+                           if (unk_F00025F & 0x80)
+                              goto loc_382C;
+
+                           //395E
+                           cd_leadout = task6_dtype2a;
+                           cd_last_info_track = task6_dtype1a;
+                           cd_first_info_track = task6_dtype0a;
+                           *((unsigned char *)&dram_nsession) = ctladr;
+
+                           if (toc_data[0] == 0xFFFFFFFF)
+                           {
+                               //3982
+                               toc_data[0] = cd_leadout;
+                           }
+
+                           //398A
+                           *((unsigned char *)toc_data)[0] = ctladr;
+                           byte_F0002A4 = 0;
+                           cd_seek_now = dword_9000214+0x96
+
+                           sub_2E2C(cd_seek_now, 0, 0); // assuming that args are r5, r6, r7(doesn't look like r4 is used)
+                           task6_state = 0x16;
+                        }
+                     }
+                  }
+
+                  //39AC
+                  goto loc_28B0;
+
+                  //39B0
+                  if (r0 != 5 || r5[3] != 0xB0)
+                     goto loc_39AC;
+
+                  toc_data[0] = msf2frames(r5+8);
+                  r0 = msf2frames(r5+4);
+
+                  if (r0 > unk_9000210)
+                  {
+                     //39E2
+                     dword_9000214 = unk_9000210;
+                     unk_9000210 = r0;
+                  }
+
+                  //39E6
+                  unk_F00025F |= 3;
+                  goto loc_39AC;
+
+                  //39EC
+                  r4 = byte_F000289-1;
+                  goto loc_395E;
+
+                  //39F4
+                  //task6_handle_toc_Q
+                  u32 *toc_ptr;
+                  if (cd_rx_index == 0xA0)
+                  {
+                     //39FA
+                     toc_ptr = &cd_first_info_track;
+                  }
+                  //3A04
+                  else if (cd_rx_index == 0xA1)
+                  {
+                     toc_ptr = &cd_last_info_track;
+                  }
+                  //3A3E
+                  else if (cd_rx_index == 0xA2)
+                  {
+                     // leadout
+                     r1 = 102;
+                     break; // goto loc_38AC
+                  }
+                  else
+                     goto loc_39AC;
+
+                  // Write 0xA0/0xA1 info tracks
+
+                  //3A0A
+                  u32 toc = bcd2num(r5+byte_F0002D8) | (cd_rx_Q << 8);
+                  toc <<= 16;
+                  toc |= (byte_F0002D8 << 8) >> 16;
+
+                  *toc_ptr = toc; 
+                  toc_ptr+=0xC;
+                  // was first info track?
+                  if (toc_ptr == &task6_dtype0a)
+                  {
+                     //3A34
+                     // don't set info track twice
+                     if (*toc_ptr != 0xFFFFFFFF)
+                        continue; // goto loc_38E6
+                  }
+
+                  *toc_ptr = toc;
+                  // goto loc_38E6
+               }
+            }
+            else
+               goto loc_3A46;
+         }
+      }
+      else
+         goto loc_39B0
+
+   }
+   else
+      goto loc_3262
+
+}
+
+
+#define YGR_0C   (*(volatile u16 *)0xA00000C)
+#define MPEG_00   (*(volatile u16 *)0xA100000)
+#define MPEG_16   (*(volatile u16 *)0xA100016)
+#define MPEG_1A   (*(volatile u16 *)0xA10001A)
+#define MPEG_22   (*(volatile u16 *)0xA100022)
+#define MPEG_30   (*(volatile u16 *)0xA100030)
+#define MPEG_32   (*(volatile u16 *)0xA100032)
+#define MPEG_34   (*(volatile u16 *)0xA100034)
+#define MPEG_36   (*(volatile u16 *)0xA100036)
+#define mpeg_sound_control_reg   (*(volatile u16 *)0xA180008)
+#define UNK_F0007B1   (*(volatile u8 *)0xF0007B1)
+#define mpeg_req_e0e2   (*(volatile u8 *)0x907538a)
+
+//mpeg_asic_kick_check2
+//it seems that to succeed, r11 must be less than 0x400,
+//r12 must be less than 0x200 and count_r13 must not 
+//become negative
+int mpeg_c01c(u32 input)
+{
+   u32 count_r13 = 0;//loop counter
+   u32 r8 = input & 0xFF;//value set before function call
+loc_c01c:
+   count_r13 = 0x20;
+   u16 r0 = MPEG_34;
+   u32 r12 = 0;
+   u32 r11 = 0;
+
+loc_c01e:
+   if (r0 & 1)
+   {
+      //c038
+      r0 = r12;
+      r0 <<= 8;
+      r0 >>= 1;
+      MPEG_30 = r0;
+      MPEG_32 = 0xFE00;
+      MPEG_34 = 0xFFFC;
+      r11 = 0;
+
+loc_c04a:
+      //c04a
+      count_r13 = 0x50;
+
+loc_c04c:
+      //c04c
+      r0 = MPEG_34;
+
+      if (r0 & 4)
+      {
+         //c05c
+         MPEG_36 = r12 + r11 + r8;//r0 gets overwritten
+         r11 += 2;
+
+         if (r11 >= 0x400)
+            goto loc_c04a;//loop
+         else
+         {
+            r12 += 1;
+
+            if (r12 >= 0x200)
+               goto loc_c01c;
+            else
+               return 0;//success
+         }
+
+      }
+      else
+      {
+         //c052
+         count_r13--;
+         if (count_r13 >= 0)
+            goto loc_c04c;//loop
+         else
+            return -1;//fail
+      }
+   }
+   else
+   {
+      //c024
+      MPEG_34 = 0xffff;
+      r0 = MPEG_36;
+      MPEG_36 = 0;
+
+      count_r13--;
+
+      if (count_r13 >= 0)
+         goto loc_c01e;//loop
+      else
+         return -1;//fail
+   }
+
+   return -1;
+}
+
+//mpeg_initcall3
+//test dma of undecoded mpeg sound data to sound chip?
+void loc_be7c()
+{
+   //dma is 16 bit
+   //incoming data is valid
+   //clock divide factor = 80
+   mpeg_sound_control_reg = 0x8209;
+   CHCR3 = 0x1808;
+   TIOR0 = 0xd;
+   TIER0 = 1;
+
+   u32 source_data_addr = 0x907539c;
+
+   //zero the buffer
+   while (r0 < 0x24)
+   {
+      (*(volatile u16 *)source_data_addr + r0) = 0;
+      r0 += 2;
+   }
+
+   //no dma should have occured thus far
+   if (CHCR3 & 2)
+      goto fail;
+
+   SAR3 = source_data_addr;
+   DAR3 = 0xA180000;//sound chip data rx reg
+   DTR3 = 4;//length
+   CHCR3 |= 1;//start dma
+
+   r12 = 5 << 8;
+
+   //wait for dma to complete
+   while (r12 > 0)
+   {
+      r12--;
+   }
+   
+   //dma didn't happen, fail
+   if (!(CHCR3 & 2))
+      goto fail;
+
+   return 0;//success
+
+fail:
+   return -1;
+}
+
+//mpeg_initcall1
+void loc_bcc4()
+{
+   MPEG_1A = 0xfff;
+
+   //same as the audio one, mpeg dma buffer it seems
+   u32 dma_data[] = 0x907539c;
+
+   dma_data[0] = 0x1b3;//sequence header
+   dma_data[3] = 0x1b5;//visual object start code
+   dma_data[4] = 0x1b2;//user data start code
+   dma_data[5] = 0x1b8;//group of pictures start code
+   dma_data[7] = 0x1b5;//group extension data
+   /*
+   [0x00000000]	0x000001b3
+   [0x00000001]	0x64eafa3e
+   [0x00000002]	0x20b9f728
+   [0x00000003]	0x000001b5
+   [0x00000004]	0x000001b2
+   [0x00000005]	0x000001b8
+   [0x00000006]	0x97abd9e8
+   [0x00000007]	0x000001b5
+   [0x00000008]	0x00000000
+   */
+   
+   //no dma must have occured
+   if (CHCR2 & 2)
+      goto fail;
+
+   SAR2 = 0x907539c;
+   DAR2 = 0xA10001E;
+   DTCR2 = 0x12;
+   CHCR2 |= 1;//start dma
+
+   if (!(CHCR3 & 2))
+      goto fail;
+
+   return 0;
+
+fail:
+   return -1;
+}
+
+void loc_907c974()
+{
+   u16 sound_status = *(volatile u16 *)0xA180008);
+
+   //check header decode results
+
+   if (sound_status & 0x8000)//layer 1 or 2
+      goto loc_907c99e;
+   else if ((sound_status & 0x3000) == 0x3000)//frequency is "reserved"
+      goto loc_907c99e;
+   else if ((sound_status & 0x0F00) == 0)//bitrate is "free format"
+      goto loc_907c99e;
+   else if ((sound_status & 0x0F00) == 0x0F00)//bitrate is "invalid"
+      goto loc_907c99e;
+   else
+      goto 907c9c4;
+
+loc_907c99e:
+
+   //loc_907ca12
+
+   //setting clkdiv
+   r0 = *unk_f000884;
+   r0 &= 0xfff0;
+
+   r4 &= 0xf;
+   r0 |= r4;
+
+   *unk_f000884 = r0;
+   *sound_status = r0;
+
+
+}
+//get time code
+void loc_907f46e()
+{
+   //GOP timecode format
+   //hours minutes seconds picture
+   //byte 4 .hhhhhmm
+   //byte 5 mmmm.sss
+   //byte 6 sssppppp
+   //byte 7 p.......
+
+   MPEG_22 = 6;//offset into GOP
+   r12 = MPEG_22;
+
+   MPEG_22 = 4;
+   r13 = (MPEG_22 & 0xff) << 16;
+
+   MPEG_22 = 5;
+   r13 |= MPEG_22 & 0xffff;
+
+   //loc_907f560
+   //convert into 
+   //hour min sec pic format
+   //1 byte each
+}
+
+void loc_9e92()
+{
+   MPEG_22 = 0;
+   r11 = (MPEG_22 & 0xfff) << 16;
+   MPEG_22 = 1;
+   r13 = MPEG_22 & 0xfff;
+
+   r13 |= r11;
+}
+
+
+void loc_9fbe()
+{
+   //f000854 == partial video reg mirror?
+   MPEG_02 = *(f000854 + 2);
+   MPEG_04 = *(f000854 + 4);
+   MPEG_06 = *(f000854 + 6);
+   MPEG_08 = *(f000854 + 8);
+   MPEG_0a = *(f000854 + 0xa);
+   MPEG_0c = *(f000854 + 0xc);
+   MPEG_0e = *(f000854 + 0xe);
+   MPEG_10 = *(f000854 + 0x10);
+}
+
+void rom_a018()
+{
+   MPEG_1A = 0x7fff;
+}
+
+#define MPEG_INT_FLAGS_ADDR 0xf000848
+#define MPEG_INT_FLAGS_ARR (volatile u8 *)(MPEG_INT_FLAGS_ADDR)
+#define MPEG_INT_FLAGS (*(volatile u32 *)(MPEG_INT_FLAGS_ADDR))
+
+#define MPEG_INT_MASK_ADDR 0xf00084c
+#define MPEG_INT_MASK (*(volatile u32 *)(MPEG_INT_MASK_ADDR))
+//software-specific
+#define SEQUENCE_END 0x00000400
+#define VIDEO_DECODING_ERROR 0x00000010 
+
+#define VIDEO_PLAY_STATUS (*(volatile u8 *)(0xf00089c))
+#define AUDIO_PLAY_STATUS (*(volatile u8 *)(0xf00089d))
+
+//lower byte of cr3
+#define MPEG_AUDIO_STATUS (*(volatile u8 *)(0xf000845))
+
+#define VPS_TRANSFERRING 0x4
+#define VPS_CHANGING 0x5
+
+//CR4 in mpeg status
+#define MPEG_VIDEO_STATUS (*(volatile u16 *)(0xf000846))
+
+#define MVS_DECODING_OPERATION 1
+#define MVS_DISPLAY 2
+#define MVS_PAUSE 4
+#define MVS_FREEZE 8
+
+#define MVS_LAST_PICTURE_DISPLAY 0x10
+#define MVS_ODD_NUMBER_FIELD 0x20
+#define MVS_UPDATE_PICTURE 0x40
+#define MVS_VIDEO_ERROR 0x80
+
+#define MVS_OUTPUT_PREP_COMPLETE 0x100
+#define MVS_FIRST_PICTURE_DISPLAY 0x800
+#define MVS_VIDEO_BUFFER_EMPTY 0x1000
+
+#define VIDEO_DMA_SRC_ADDR (*(u32*)(0x90752C0));
+#define DMA_UNK_SRC_04 (*(u32*)(0x90752C0 + 0x4));
+#define AUDIO_DMA_SRC_ADDR (*(u32*)(0x90752C0 + 0xC));
+#define AUDIO_DMA_DEST (*(u32*)(0x90752C0 + 0x14));
+#define VIDEO_DMA_COUNT (*(u16*)(0x90752C0 + 0x18));
+#define DMA_UNK_COUNT_1A (*(u16*)(0x90752C0 + 0x1a));
+#define AUDIO_DMA_COUNT (*(u16*)(0x90752C0 + 0x1E));
+
+void irqITU2IMIB2()
+{
+   TSR2 &= 0xfd;
+   r0 = MPEG_00;
+   r1_status = MPEG_00;
+   r0 &= r1_status;
+   r1_status = MPEG_00;
+   r1_status &= r0;
+
+   if (mpeg_inited & 0x80)//unk_f000890 + 2
+   {
+      //a1f0
+      r5 = *(unk_f000850 + 2);
+      *(unk_f000850 + 2) = 0xffff;
+      r1_status &= r5 | 0x30f;
+      *unk_f000850 = r1_status;
+     
+      //update video status cr4
+
+      u16 r2_flags_to_clear = 
+         MVS_DECODING_OPERATION |
+         MVS_DISPLAY |
+         MVS_PAUSE |
+         MVS_FREEZE |
+
+         MVS_ODD_NUMBER_FIELD |
+         MVS_UPDATE_PICTURE |
+
+         MVS_OUTPUT_PREP_COMPLETE;
+
+      r0 = (~r1_status) & flags_to_clear;//0x16f;
+      r7_mpeg_stat = MPEG_VIDEO_STATUS;
+
+      //a20e
+      if (r1_status & 0x10)
+         r7_mpeg_stat &= ~flags_to_clear;//~0x016f
+
+      //a216
+      MPEG_VIDEO_STATUS = r7_mpeg_stat | r0;
+      r4 = 0;
+
+      //a220
+      if (r1_status & 0x40)
+      {
+         r4 |= r5;
+         r0 = *(unk_f000890 + 3);
+
+         if (r0 & 0x44)
+            do_dram_call28();
+      }
+
+      //a23c
+      if (r1_status & 0x2000)
+      {
+         //a244
+         *(unk_f000890 + 1) = *(unk_f000890 + 1) | 1;
+
+         MPEG_INT_FLAGS |= SEQUENCE_END;
+
+         if (MPEG_INT_MASK & SEQUENCE_END)
+            asic_hirq_set = 0x2000;
+      }
+
+      //a260
+      if (r1_status & 0x1000)//r5 shifted right by 1
+      {
+         *(unk_f000890 + 1) = *(unk_f000890 + 1) | 4;
+      }
+
+      //a26e
+      if (r1_status & 0x0800)//r6 shifted right by 1
+      {
+         r4 |= r5;
+      }
+
+      //a27c
+      if (r1_status & 0x0080)//r6 shifted right by 4
+      {
+         MPEG_INT_FLAGS |= VIDEO_DECODING_ERROR;
+
+         if (MPEG_INT_MASK & VIDEO_DECODING_ERROR)
+            asic_hirq_set = 0x2000;
+      }
+
+      r5 >>= 2;
+
+      //a278
+      if (r1_status & 0x10)
+      {
+         //a29c
+         r4 |= r5;
+
+         if (*(unk_f000890 + 3) & 0x11)
+            goto set_mpcm;
+
+         //a2a6
+         if ((mpeg_reg_mirror_14 & 0x41) == 0x41)//mode == playing video and vsync
+            goto set_mpcm;
+
+         //a2b2
+         if (VIDEO_PLAY_STATUS != VPS_TRANSFERRING)
+         {
+            if (VIDEO_PLAY_STATUS == VPS_CHANGING)
+               goto set_mpcm;
+         }
+         
+         //a2be 
+         if ((r0 & 1) == 0)
+            do_dram_call26();
+
+         //a2cc
+         if ((r0 & 0x10) == 0)
+            do_dram_call27();
+      }
+
+
+set_mpcm:
+      asic_hirq_set = 0x1000;
+
+      if (!r4)
+      {
+         r0 = *(unk_f000890 + 6);
+         *(unk_f000890 + 6) = r0 | r4;
+         r11 = 0x88c0010;
+         trap(0x21);
+      }
+
+   }
+   else
+   {
+      //a340
+
+      //incrementing a timer?
+
+      if (r0 & 0x10)
+         r3 = 0x0100;//a34c
+
+
+      if (r0 & 0x20)
+         r3 += 1;//a352
+
+      *unk_f00089e += r3;
+   }
+
+   schedule_running_task();
+}
+
+void status()
+{
+   r0 = *f00089c;
+   r2 = ((r0 & 0xff) << 8) |( (r0 & 0xff00 )>> 8);
+   r0 >>= 8;
+   r2 >>= 4;
+   r0 |= r2;
+
+   r3 = (*f000891) >> 1;//byte
+
+   r0 = r0 & 0xffff0000 >> 16 | ;
+   r0 |= r12;
+   
+}
+
+//test dmas for mpeg
+void setup_dma_to_cs2()
+{
+   r10 = 0xa100000;
+   r9 = 0xa180000;
+   MPEG_1A = 0x7fff;
+
+   //dma is all 0s
+   *unk_f000840 = 0;//long write
+
+   clear_chcr23_timer012();
+
+   MPEG_02 = 0x6c;
+
+   SAR2 = unk_f000840;
+   SAR3 = unk_f000840;
+
+   DAR2 = 0xa10001e;
+   DAR3 = 0xa180000;
+
+   MPEG_20 = 0xffef;
+}
+
+void timer_check_and_init_mpeg()
+{
+   r8 = 0;
+
+   if (MPEG_02 == 0x006c)
+   {
+
+   }
+   else
+      r8 |= 1;
+}
+
+void rom_call21()
+{
+   MPEG_20 = 0x47af;
+   MPEG_1A = 0xff7e;
+   MPEG_14 = 0xfff3;
+   MPEG_02 = 0x0096;
+   MPEG_00 = 0x88fe;
+
+}
+
+//bad6
+void rom_call4C()
+{
+   r0 = *unk_9075388;
+   r6 = *unk_9075389;
+   r0 |= r6;
+
+   if (r0 & 0xf)
+   {
+   loc_ba5e:
+
+      //ba5e
+      r0 = *unk_9075388;
+
+      //ba62
+      if (r0 & 1)
+      {
+         do_dram_call36();
+         r0 = *unk_9075388;
+      }
+
+      //ba74
+      if (r0 & 2)
+      {
+         do_dram_call35();
+         r0 = *unk_9075388;
+      }
+
+      //ba86
+      if (r0 & 4)
+      {
+         do_dram_call45();
+         r0 = *unk_9075388;
+      }
+
+      //ba98
+      if (r0 & 8)
+      {
+         do_dram_call46();
+         r0 = *unk_9075388;
+      }
+
+      //baa6
+      r0 = *unk_9075389;
+
+      if (r0 == 0)
+         goto rom_call4C;
+
+      //baae
+      if (r0 & 1)
+         do_dram_call4E();
+
+      //bab8
+      if (r0 & 2)
+         do_dram_call4D();
+
+      //bac2
+      if (r0 & 4)
+         do_dram_call50();
+
+      //bacc
+      if (r0 & 8)
+         do_dram_call4F();
+
+      //bace
+      goto rom_call4C;
+   }
+   else
+   {
+      task9();
+   }
+}
+
+int return_zero() { return 0; }
+int mpeg_initcall1() { return 0; }
+int mpeg_initcall3() { return 0; }
+int mpeg_initcall4() { return 0; }
+int do_dram_call56() { return 0; }
+
+int(*init_ptrs[5]) (void) =
+{
+   return_zero,
+   mpeg_initcall1,
+   return_zero,
+   mpeg_initcall3,
+   mpeg_initcall4
+};
+
+void task9()
+{
+   trap(0x23);
+   r0 = r11 & 0xff;
+
+   if (r0 == 0)
+   {
+      if (mpeg_inited & 0x80)
+         goto loc_ba5e;//check if dram calls need to be made
+      else
+      {
+         //bae8
+         r0 = r11 & 0xff;
+
+         if (r0 >= 2)
+         {
+            //baf4
+            *f0007b1 = 0;
+
+            //bafe
+            //function pointer call loop
+            int which = 0;//r1
+            u32 r2 = 1;
+
+            for (;;)
+            {
+               int return_value = 1;//r0
+               return_value = init_ptrs[which]();
+
+               if (return_value != 0)
+                  UNK_F0007B1 |= r2;//test failed
+
+               which++;//r1+=4
+
+               r2 <<= 1;
+
+               if (which > 4)// r1 < r5, r5 == 0x10
+                  break;
+            }
+
+            //bb1e
+
+            if (UNK_F0007B1 == 0)
+            {
+               //bb28
+
+               //all tests passed
+
+               if (mpeg_req_e0e2 & 1)//cmd e0 was sucessful (authenticate device)
+               {
+                  r0 = load_mpeg_rom();
+                  //r1 will be 2 either way so the
+                  //return value of load_mpeg_rom seems to have
+                  //no effect
+
+                  r2 = mpeg_authL << 8;
+
+                  goto bba4;
+               }
+
+               if (mpeg_req_e0e2 & 2)//cmd e2 was sucessful (get mpeg rom)
+               {
+                  //bb54
+                  do_dram_call56();
+
+                  r2 = 2;
+
+                  if (!r13)
+                     r2 = 3;
+
+                  //bb66
+
+                  r1 = mpeg_authL;
+
+                  goto bba4;
+               }
+
+               goto task9;
+            }
+            else
+            {
+               //bb6e
+
+               //one or more tests failed
+
+               if (mpeg_req_e0e2 & 1)//mpeg_req_e0e2 is set to 1 in cmd_E0 (authenticate device) if success
+               {
+bb7e:
+                  clear_dram_907b000_to9080000();
+
+                  //bb86
+               }
+
+               if (mpeg_req_e0e2 & 2)//and set to 2 in cmd_E2 (get mpeg rom) if success
+               {
+                  //bb90
+               }
+               else
+                  goto bb7e;//clear dram
+            }
+
+         }
+         else
+            goto task9;
+      }
+   }
+   else
+   {
+      //bbc6
+      YGR_0C = 3;
+      MPEG_1A = 0;
+
+      if (mpeg_inited & 0x80)
+      {
+         //bbe2
+         _a4d0_mpeg_erase();
+         asic_hirq_set = 0x800;
+         goto task9;
+      }
+      else
+      {
+         r11 = 0x8090004;
+         trap(0x21);
+         goto task9;
+      }
+   }
+}
+
+//erase 0xf000840-0xf0008a0
+//and   0x90752a0-0x90753EC
+//this apparently erases mpeg_inited (0xf000892)
+void _a4d0_mpeg_erase()
+{
+   r11 = 0xf00089c + 4;//f0008a0
+   r12 = 0xf000840;
+
+   r0 = 0;
+
+   while (r11 != r12)
+   {
+      *r11 = 0;
+      r11--;
+   }
+
+   r11 = 0x90753e8 + 4;
+   r12 = 0x90752a0;
+
+   while (r11 != r12)
+   {
+      *r11 = 0;
+      r11--;
+   }
+}
+
+void bba4()
+{
+   r1 <<= 24; // 0xff000000
+
+   temp = (r2 << 16) & 0xFFFF0000;//r2 can be 0, 1, 3, others?
+   r1 = (r1 >> 16) & 0x0000FFFF;
+   r1 |= temp;
+
+   r1 >>= 8;
+
+   mpeg_authL = r1;
+   mpeg_req_e0e2 = 0;
+   auth_busy = 0;
+   asic_hirq_set = 0x80;
+
+   task9();
+}
+
+void loc_907bd02()
+{
+   *(unk_f000890 + 4) &= 0xfc;
+   *(unk_f000890 + 4) |= 1;
+
+   *(unk_9075324 + 0x4) = *(unk_9075324 + 0xc);//long
+   *(unk_9075324 + 0x14) = *(unk_9075324 + 0x1c);//long
+   *(unk_9075324 + 0) = *(unk_9075324 + 0x24);//word
+   *(unk_9075324 + 0x1c) = 0;
+
+   //...
+
+   TCR2 = DMA_UNK_COUNT_1A;
+   SAR2 = DMA_UNK_SRC_04;
+   DAR2 = 0xa10001e;
+   MPEG_0C = 8;
+   CHCR2 &= 0xfd;//lower byte only
+   CHCR2 |= 4;//enable interrupt
+
+   MPEG_INT_FLAGS |= VIDEO_STREAM_CHANGED;//0x02
+
+   if (MPEG_INT_MASK & VIDEO_STREAM_CHANGED)
+      asic_hirq_set = 0x2000;
+
+}
+
+void loc_907e78a()
+{
+   MPEG_30 = 0;
+   MPEG_32 = 0xfa04;
+   MPEG_34 = 0xfffc;
+
+   r13 = 0x50;
+
+   while (r13 > 0)
+   {
+      r0 = MPEG_36;
+      r13--;
+   }
+
+   _907e6f4();
+
+   r0 = MPEG_34;
+   r0 = MPEG_34;
+}
+
+void loc_907e76e()
+{
+   count = 0x20;
+
+   while (count > 0)
+   {
+      if (MPEG_34 & 1)
+         return 0;
+      else
+      {
+         MPEG_34 = 0xffff;
+         temp = MPEG_36;
+         MPEG_36 = temp;
+         count--;
+      }
+   }
+
+   return -1;
+}
+
+void ___()
+{
+   //907e382
+   MPEG_30 = r8;
+   MPEG_32 = 0xfa04;
+   MPEG_34 = 0xfffc;
+
+   //907e43a
+   MPEG_30 = r8;
+   MPEG_32 = 0xfe04;
+   MPEG_34 = 0xfffc;
+}
+
+void sub_907e6f4(int * count)
+{
+   *count = 0x20;
+
+   while (*count > 0)
+   {
+      *count--;
+
+      if (MPEG_34 & 1)
+      {
+         //dummy reads
+         temp = MPEG_34;
+         temp = MPEG_34;
+         return 0;
+      }
+      else
+      {
+         MPEG_34 = 0xffff;
+         temp = MPEG_34;
+         MPEG_34 = temp;
+      }
+   }
+
+   return -1;
+}
+
+void _907dc5a()
+{
+   MPEG_30 = r2 >> 3;
+   MPEG_32 = 0xffb0;
+   MPEG_34 = 0xfffc;
+
+   sub_907e7ec();
+
+   r0 = 0x50;
+}
+
+void _907da9e()
+{
+   r0 = MPEG_00;
+   r0 &= unk_f00852;
+   unk_f00852 = r0;
+   r0 >>= 8;
+
+   if (r0 & 1)
+   {
+      MPEG_16 = 0x00fe;
+      do_rom_call59();
+   }
+   else
+   {
+      //907daf6
+      do_dram_call43();
+   }
+}
+
+void sub_907d9f6()
+{
+   unk_f000897 |= 2;
+   r7 = unk_f000854 | 1;
+   unk_f000854 = r7;
+   MPEG_00 = r7;
+   unk_f000897 &= 0xfd;
+}
+
+void sub_907d9b0()
+{
+   unk_f000897 |= 4;
+   r7 = (*(unk_f000854 + 0x16)) & 0xcfff;
+   MPEG_1A = r7;
+   MPEG_1A = r7;
+   unk_f000897 &= 0xfb;
+}
+
+void sub_907d994()
+{
+   unk_f000897 |= 2;
+   r7 = unk_f000854 & 0xfffe;
+   unk_f000854 = r7;
+   MPEG_00 = r7;
+   unk_f000897 &= 0xfd;
+}
+
+void sub_907d988()
+{
+   MPEG_18 = 0xffdf;
+}
+
+void _907d7be()
+{
+   if ((MPEG_06 & 0x3f) == unk_907537a)
+   {
+      //907d7d2
+   }
+   else
+      return;
+}
+
+void loc_907d5ce()
+{
+   MPEG_22 = 6;
+   r0 = (MPEG_22 >> 8) & 0xe0;
+
+   if (r0 == 0x20)
+   {
+      if (r0 == 0x40)
+      {
+         do_dram_call3d();
+         return;
+      }
+      else
+      {
+         //loc_907d614
+      }
+   }
+   else
+   {
+      //loc_907d614
+   }
+
+}
+
+void loc_907d6a0()
+{
+   unk_f000897 |= 8;
+   MPEG_22 = 6;
+   r0 = (MPEG_22 >> 8) & 0xe0;
+
+   if (r0 == 0x20)
+   {
+      *unk_907537a = MPEG_22 & 0x3f; // byte ptr
+      *unk_9075378 = 8;
+   }
+   else
+   {
+
+   }
+}
+
+void loc_907d4ae()
+{
+   unk_f000897 |= 4;
+   r7 = (*(unk_f000854 + 0x16)) & 0x8fff;
+   MPEG_1A = r7;
+   MPEG_1A = r7;
+   unk_f000897 &= 0xfb;
+}
+
+void loc_907d24a()
+{
+   if (r0 & 0x20)
+   {
+      r6 = (*(unk_f000854 + 0x16)) & 0x8fff;
+      MPEG_1A = r6;
+      MPEG_1A = r6;
+   }
+   else if (r0 & 0x10)
+   {
+      //907d2c0
+   }
+   else
+   {
+      r6 = (*(unk_f000854 + 0x16)) & 0xcfff;
+      MPEG_1A = r6;
+      MPEG_1A = r6;
+   }
+
+}
+
+void loc_907d320()
+{
+   MPEG_0C = 8;
+   *unk_f000894 |= 1;
+   VIDEO_PLAY_STATUS |= VPS_TRANSFERRING;
+   MPEG_1E = 0;
+   SAR2 = VIDEO_DMA_SRC_ADDR;
+   DAR2 = 0xa10001e;
+   TCR2 = VIDEO_DMA_COUNT;
+   CHCR2 = 0x190d;
+}
+
+void loc_907d948()
+{
+   SAR3 = AUDIO_DMA_SRC_ADDR;
+   DAR3 = AUDIO_DMA_DEST;
+   TCR3 = AUDIO_DMA_COUNT;
+
+   u32 flags = AUDIO_STREAM_DATA_ERROR | NEXT_AUDIO_STREAM_DATA_ERROR;
+   MPEG_INT_FLAGS |= flags;//0x000A0000
+
+   if(MPEG_INT_MASK & flags)
+      asic_hirq_set = 0x2000;
+
+}
+
+#define STATUS_PIC_INFO (*(u8*)(0xf000844));
+#define I_FRAME 1
+#define P_FRAME 2
+#define B_FRAME 3
+#define D_FRAME 4
+
+void sub_907d078()
+{
+   MPEG_22 = 6;
+
+   if (unk_f000895 & 1)
+   {
+      goto loc_907d0b6;
+   }
+   else
+   {
+
+   }
+
+   //907d0c6
+   STATUS_PIC_INFO = MPEG_22 >> 13;
+
+   r0 = 0x3e;
+   r2 = MPEG_AUDIO_STATUS;
+}
+
+void loc_907b9ce()
+{
+   u8 val1 = *(0x90752e4 + 0x2c);
+   u32 *ptr = *(0x90752e4 + 0x30);
+   ptr[0] = (val1 << 16) | (r2 & 0xffff);
+
+   unk_f000897 |= 8; //set flag?
+
+   //get upper byte?
+   MPEG_22 = 4;
+   r0 = MPEG_22 & 0xff;
+   r2 = r0 << 16;
+
+   //get lower word?
+   MPEG_22 = 5;
+   r0 = MPEG_22 & 0xffff;
+   r2 |= r0;
+
+   r0 = r2;
+
+   MPEG_34 = r0;
+
+   *unk_f000897 = r0 & 0xf7; //clear flag?
+
+
+
+   //907ba2c
+
+   if (*F000850 & 0x40)//sequence start detected
+   {
+      MPEG_INT_FLAGS |= SEQUENCE_START_DETECTED;
+
+      if (MPEG_INT_MASK & SEQUENCE_START_DETECTED)
+         asic_hirq_set = 0x2000;
+   }
+}

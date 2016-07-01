@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include "core.h"
 
+typedef struct SH2_struct SH2_struct;
+
 /* Type 1 Memory, faster for byte (8 bits) accesses */
 
 u8 * T1MemoryInit(u32);
@@ -338,23 +340,28 @@ static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void MappedMemoryInit(void);
-u8 FASTCALL MappedMemoryReadByte(u32 addr);
-u16 FASTCALL MappedMemoryReadWord(u32 addr);
-u32 FASTCALL MappedMemoryReadLong(u32 addr);
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val);
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val);
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
+void MappedMemoryInit(SH2_struct *msh1, SH2_struct *ssh2, SH2_struct *sh1);
+
+u8 FASTCALL MappedMemoryReadByteCacheEnabled(SH2_struct *sh, u32 addr);
+u16 FASTCALL MappedMemoryReadWordCacheEnabled(SH2_struct *sh, u32 addr);
+u32 FASTCALL MappedMemoryReadLongCacheEnabled(SH2_struct *sh, u32 addr);
+void FASTCALL MappedMemoryWriteByteCacheEnabled(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL MappedMemoryWriteWordCacheEnabled(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL MappedMemoryWriteLongCacheEnabled(SH2_struct *sh, u32 addr, u32 val);
+
+u8 FASTCALL MappedMemoryReadByteNocache(SH2_struct *sh, u32 addr);
+u16 FASTCALL MappedMemoryReadWordNocache(SH2_struct *sh, u32 addr);
+u32 FASTCALL MappedMemoryReadLongNocache(SH2_struct *sh, u32 addr);
+void FASTCALL MappedMemoryWriteByteNocache(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL MappedMemoryWriteWordNocache(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL MappedMemoryWriteLongNocache(SH2_struct *sh, u32 addr, u32 val);
 #ifdef __cplusplus
 }
 #endif
 
+extern u8 *SH1Rom;
+extern u8 *SH1Dram;
+extern u8 *SH1MpegRom;
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -367,21 +374,13 @@ extern u8 *BiosRom;
 extern u8 *BupRam;
 extern u8 BupRamWritten;
 
-typedef void (FASTCALL *writebytefunc)(u32, u8);
-typedef void (FASTCALL *writewordfunc)(u32, u16);
-typedef void (FASTCALL *writelongfunc)(u32, u32);
+typedef void (FASTCALL *writebytefunc)(SH2_struct *, u32, u8);
+typedef void (FASTCALL *writewordfunc)(SH2_struct *, u32, u16);
+typedef void (FASTCALL *writelongfunc)(SH2_struct *, u32, u32);
 
-typedef u8 (FASTCALL *readbytefunc)(u32);
-typedef u16 (FASTCALL *readwordfunc)(u32);
-typedef u32 (FASTCALL *readlongfunc)(u32);
-
-extern writebytefunc WriteByteList[0x1000];
-extern writewordfunc WriteWordList[0x1000];
-extern writelongfunc WriteLongList[0x1000];
-
-extern readbytefunc ReadByteList[0x1000];
-extern readwordfunc ReadWordList[0x1000];
-extern readlongfunc ReadLongList[0x1000];
+typedef u8 (FASTCALL *readbytefunc)(SH2_struct *, u32);
+typedef u16 (FASTCALL *readwordfunc)(SH2_struct *, u32);
+typedef u32 (FASTCALL *readlongfunc)(SH2_struct *, u32);
 
 typedef struct {
 u32 addr;
@@ -407,10 +406,12 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                                   const char *searchstr,
                                   result_struct *prevresults, u32 *maxresults);
 
-int MappedMemoryLoad(const char *filename, u32 addr);
-int MappedMemorySave(const char *filename, u32 addr, u32 size);
+int MappedMemoryLoad(SH2_struct *sh, const char *filename, u32 addr);
+int MappedMemorySave(SH2_struct *sh, const char *filename, u32 addr, u32 size);
 void MappedMemoryLoadExec(const char *filename, u32 pc);
 
+int LoadSH1Rom(const char *filename);
+int LoadMpegRom(const char *filename);
 int LoadBios(const char *filename);
 int LoadBackupRam(const char *filename);
 void FormatBackupRam(void *mem, u32 size);
@@ -423,5 +424,71 @@ int YabSaveStateStream(FILE *stream);
 int YabLoadStateStream(FILE *stream);
 int YabSaveStateBuffer(void **buffer, size_t *size);
 int YabLoadStateBuffer(const void *buffer, size_t size);
+
+
+u8 FASTCALL UnhandledMemoryReadByte(USED_IF_DEBUG u32 addr);
+u16 FASTCALL UnhandledMemoryReadWord(USED_IF_DEBUG u32 addr);
+u32 FASTCALL UnhandledMemoryReadLong(USED_IF_DEBUG u32 addr);
+void FASTCALL UnhandledMemoryWriteByte(USED_IF_DEBUG u32 addr, UNUSED u8 val);
+void FASTCALL UnhandledMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val);
+void FASTCALL UnhandledMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val);
+u8 FASTCALL HighWramMemoryReadByte(u32 addr);
+u16 FASTCALL HighWramMemoryReadWord(u32 addr);
+u32 FASTCALL HighWramMemoryReadLong(u32 addr);
+void FASTCALL HighWramMemoryWriteByte(u32 addr, u8 val);
+void FASTCALL HighWramMemoryWriteWord(u32 addr, u16 val);
+void FASTCALL HighWramMemoryWriteLong(u32 addr, u32 val);
+u8 FASTCALL LowWramMemoryReadByte(u32 addr);
+u16 FASTCALL LowWramMemoryReadWord(u32 addr);
+u32 FASTCALL LowWramMemoryReadLong(u32 addr);
+void FASTCALL LowWramMemoryWriteByte(u32 addr, u8 val);
+void FASTCALL LowWramMemoryWriteWord(u32 addr, u16 val);
+void FASTCALL LowWramMemoryWriteLong(u32 addr, u32 val);
+u8 FASTCALL BiosRomMemoryReadByte(u32 addr);
+u16 FASTCALL BiosRomMemoryReadWord(u32 addr);
+u32 FASTCALL BiosRomMemoryReadLong(u32 addr);
+void FASTCALL BiosRomMemoryWriteByte(UNUSED u32 addr, UNUSED u8 val);
+void FASTCALL BiosRomMemoryWriteWord(UNUSED u32 addr, UNUSED u16 val);
+void FASTCALL BiosRomMemoryWriteLong(UNUSED u32 addr, UNUSED u32 val);
+u8 FASTCALL BupRamMemoryReadByte(u32 addr);
+u16 FASTCALL BupRamMemoryReadWord(USED_IF_DEBUG u32 addr);
+u32 FASTCALL BupRamMemoryReadLong(USED_IF_DEBUG u32 addr);
+void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val);
+void FASTCALL BupRamMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val);
+void FASTCALL BupRamMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val);
+
+#if 0
+u8 FASTCALL UnhandledMemoryReadByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr);
+u16 FASTCALL UnhandledMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr);
+u32 FASTCALL UnhandledMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr);
+void FASTCALL UnhandledMemoryWriteByte(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u8 val);
+void FASTCALL UnhandledMemoryWriteWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u16 val);
+void FASTCALL UnhandledMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u32 val);
+u8 FASTCALL HighWramMemoryReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL HighWramMemoryReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL HighWramMemoryReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL HighWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL HighWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL HighWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
+u8 FASTCALL LowWramMemoryReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL LowWramMemoryReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL LowWramMemoryReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL LowWramMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL LowWramMemoryWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL LowWramMemoryWriteLong(SH2_struct *sh, u32 addr, u32 val);
+u8 FASTCALL BiosRomMemoryReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL BiosRomMemoryReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL BiosRomMemoryReadLong(SH2_struct *sh, u32 addr);
+static void FASTCALL BiosRomMemoryWriteByte(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u8 val);
+static void FASTCALL BiosRomMemoryWriteWord(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u16 val);
+void FASTCALL BiosRomMemoryWriteLong(UNUSED SH2_struct *sh, UNUSED u32 addr, UNUSED u32 val);
+static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL BupRamMemoryReadWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr);
+u32 FASTCALL BupRamMemoryReadLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr);
+void FASTCALL BupRamMemoryWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL BupRamMemoryWriteWord(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u16 val);
+void FASTCALL BupRamMemoryWriteLong(UNUSED SH2_struct *sh, USED_IF_DEBUG u32 addr, UNUSED u32 val);
+#endif
+
 
 #endif

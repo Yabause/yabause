@@ -25,6 +25,7 @@
 #include <QTabWidget>
 #include <QVBoxLayout>
 #include "../QtYabause.h"
+#include "UIDebugCPU.h"
 
 class UIHexEditorWnd : public QAbstractScrollArea
 {
@@ -38,11 +39,13 @@ public:
    void setEndAddress(u32 address);
    u32 getEndAddress();
    u32 getAddress();
+   void setProc( UIDebugCPU::PROCTYPE proc );
    void goToAddress(u32 address, bool setCursor=true);
    virtual void setFont(const QFont &font);
    bool saveSelected(QString filename);
    bool saveTab(QString filename);
 private:
+   UIDebugCPU::PROCTYPE proc;
    u8 readByte(u32 addr);
    void writeByte(u32 addr, u8 val);
    void keyPressCursor(QKeyEvent *event);
@@ -124,10 +127,12 @@ public:
    void goToAddress(u32 address, bool setCursor=true);
    u32 getStartAddress();
    u32 getEndAddress();
+   void setProc( UIDebugCPU::PROCTYPE proc );
    bool saveSelected(QString filename);
    bool saveTab(QString filename);
 private:
-   ;
+   UIDebugCPU::PROCTYPE proc;
+   void rebuildTabs();
 };
 
 #endif // UIHEXEDITOR_H

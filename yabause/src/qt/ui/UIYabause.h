@@ -117,6 +117,7 @@ public slots:
 	void cursorRestore();
 	void toggleEmulateMouse( bool enable );
 
+	void breakpointHandlerSH1(bool displayMessage);
 	void breakpointHandlerMSH2(bool displayMessage);
 	void breakpointHandlerSSH2(bool displayMessage);
 	void breakpointHandlerM68K();
@@ -174,9 +175,11 @@ protected slots:
    void on_aViewDebugSCSPChan_triggered();
 	void on_aViewDebugSCSPDSP_triggered();
 	void on_aViewDebugSCUDSP_triggered();
+	void on_aViewDebugSH1_triggered();
 	void on_aViewDebugMemoryEditor_triggered();
 	void on_aTraceLogging_triggered( bool toggled );
 	// help menu
+   void on_aHelpDocumentation_triggered();
 	void on_aHelpCompatibilityList_triggered();
 	void on_aHelpAbout_triggered();
 	// toolbar

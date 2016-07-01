@@ -331,7 +331,7 @@ int go_to_next_test(int &current_test, std::string filename, yabauseinit_struct 
       return -1;
 
    MappedMemoryLoadExec(filename.c_str(), 0);
-   MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
+   MappedMemoryWriteByteNocache(MSH2, VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
 
    return 1;
 }
@@ -811,7 +811,7 @@ namespace yabauseut
          return -1;
 
       MappedMemoryLoadExec(yabause_ut_filename.c_str(), 0);
-      MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
+      MappedMemoryWriteByteNocache(MSH2, VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
 
       bool write_images = false;
 
@@ -829,7 +829,7 @@ namespace yabauseut
          //emulate a frame
          PERCore->HandleEvents();
 
-         status = MappedMemoryReadByte(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS);
+         status = MappedMemoryReadByteNocache(MSH2, VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS);
 
          if (status == AUTO_TEST_MESSAGE_SENT)
          {
@@ -898,7 +898,7 @@ namespace yabauseut
                   return -1;
 
                MappedMemoryLoadExec(yabause_ut_filename.c_str() , 0);
-               MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
+               MappedMemoryWriteByteNocache(MSH2, VDP2_VRAM + AUTO_TEST_SELECT_ADDRESS, current_test);
 
                go_to_next_test(current_test, yabause_ut_filename, yinit);
 
@@ -974,7 +974,7 @@ namespace yabauseut
                printf("Unrecognized message type: %s\n", message);
             }
 
-            MappedMemoryWriteByte(VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS, AUTO_TEST_MESSAGE_RECEIVED);
+            MappedMemoryWriteByteNocache(MSH2, VDP2_VRAM + AUTO_TEST_STATUS_ADDRESS, AUTO_TEST_MESSAGE_RECEIVED);
          }
       }
       return stats.regressions || stats.screenshot.diffs;

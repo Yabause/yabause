@@ -36,6 +36,7 @@
 static int LinuxCDInit(const char *);
 static void LinuxCDDeInit(void);
 static s32 LinuxCDReadTOC(u32 *);
+static s32 LinuxCDReadTOC10(CDInterfaceToc10 *);
 static int LinuxCDGetStatus(void);
 static int LinuxCDReadSectorFAD(u32, void *);
 static void LinuxCDReadAheadFAD(u32);
@@ -47,6 +48,7 @@ CDInterface ArchCD = {
 	LinuxCDDeInit,
 	LinuxCDGetStatus,
 	LinuxCDReadTOC,
+	LinuxCDReadTOC10,
 	LinuxCDReadSectorFAD,
 	LinuxCDReadAheadFAD,
 };
@@ -128,6 +130,11 @@ static s32 LinuxCDReadTOC(u32 * TOC)
       return (0xCC * 2);
    }
 
+   return 0;
+}
+
+static s32 LinuxCDReadTOC10(CDInterfaceToc10 *TOC)
+{
    return 0;
 }
 

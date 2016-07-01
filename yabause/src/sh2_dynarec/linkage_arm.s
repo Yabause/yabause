@@ -734,11 +734,11 @@ WriteInvalidateLong:
 	ldr	r2, [r12, r2, lsl #2]
 	mov	r12, #1
 	tst	r12, r2, ror r3
-	beq	MappedMemoryWriteLong
+	beq	MappedMemoryWriteLongNocache
 	push	{r0, r1, r2, lr}
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
-	b	MappedMemoryWriteLong
+	b	MappedMemoryWriteLongNocache
 	.size	WriteInvalidateLong, .-WriteInvalidateLong
 	.align	2
 	.global	WriteInvalidateWord
@@ -756,11 +756,11 @@ WriteInvalidateWord:
 	/*uxth	r1, r1*/
 	bic	r1, r1, #0xFF0000
 	tst	r12, r2, ror r3
-	beq	MappedMemoryWriteWord
+	beq	MappedMemoryWriteWordNocache
 	push	{r0, r1, r2, lr}
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
-	b	MappedMemoryWriteWord
+	b	MappedMemoryWriteWordNocache
 	.size	WriteInvalidateWord, .-WriteInvalidateWord
 	.align	2
 	.global	WriteInvalidateByteSwapped
@@ -780,11 +780,11 @@ WriteInvalidateByte:
 	mov	r12, #1
 	and	r1, r1, #0xff
 	tst	r12, r2, ror r3
-	beq	MappedMemoryWriteByte
+	beq	MappedMemoryWriteByteNocache
 	push	{r0, r1, r2, lr}
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
-	b	MappedMemoryWriteByte
+	b	MappedMemoryWriteByteNocache
 	.size	WriteInvalidateByte, .-WriteInvalidateByte
 
 	.align	2
@@ -862,10 +862,10 @@ macl:
 	mov	r8, r0 /* MACL */
 	mov	r9, r1 /* MACH */
 	mov	r0, r6
-	bl	MappedMemoryReadLong
+	bl	MappedMemoryReadLongNocache
 	mov	r10, r0
 	mov	r0, r5
-	bl	MappedMemoryReadLong
+	bl	MappedMemoryReadLongNocache
 	add	r5, r5, #4
 	add	r6, r6, #4
 	mov	r12, r0
@@ -899,11 +899,11 @@ macw:
 	mov	r8, r0 /* MACL */
 	mov	r9, r1 /* MACH */
 	mov	r0, r6
-	bl	MappedMemoryReadWord
+	bl	MappedMemoryReadWordNocache
 	/*sxth	r10, r0*/
 	lsl	r10, r0, #16
 	mov	r0, r5
-	bl	MappedMemoryReadWord
+	bl	MappedMemoryReadWordNocache
 	add	r5, r5, #2
 	add	r6, r6, #2
 	lsl	r12, r0, #16

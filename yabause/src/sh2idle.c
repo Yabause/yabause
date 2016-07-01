@@ -45,7 +45,7 @@ u32 bDet, bChg;
    only depends on <src> register(s) (and potentially constant values,
    including memory content which is constant in an idle loop) */
 
-#define delayCheck(PC) SH2idleCheckIterate( fetchlist[((PC) >> 20) & 0x0FF](PC), PC )
+#define delayCheck(PC) SH2idleCheckIterate(context, ((fetchfunc *)context->fetchlist)[((PC) >> 20) & 0x0FF](context, PC), PC )
 
 #define implies(dest,src) if ( src ) bDet |= dest; else bChg |= dest;
 #define implies2(dest,dest2,src) if ( src ) bDet |= dest|dest2; else bChg |= dest|dest2;
@@ -86,7 +86,7 @@ u32 bDet, bChg;
 #define srcPR (bDet & destPR)
 #define isConst(src) if ( (bDet & destCONST) && !src ) return 0; 
 
-static int FASTCALL SH2idleCheckIterate(u16 instruction, u32 PC) {
+static int FASTCALL SH2idleCheckIterate(SH2_struct *context, u16 instruction, u32 PC) {
   // update bDet after execution of <instruction>
   // return 0 : cannot continue idle check, probably because of a memory write
 
@@ -475,7 +475,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
 
   for (;;) {
       // Fetch Instruction
-       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+       context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
 
       if ( INSTRUCTION_A(context->instruction)==8 ) {
 
@@ -508,9 +508,9 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
 	  context->cycles += 3;
 	  goto branching_reached;
 	  break;
-	default: opcodes[context->instruction](context);
+	default: ((opcodefunc *)context->opcodes)[context->instruction](context);
 	}
-	} else opcodes[context->instruction](context);
+	} else ((opcodefunc *)context->opcodes)[context->instruction](context);
       if ( context->cycles >= cycles ) return;
     }
  branching_reached:
@@ -521,10 +521,10 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   cyclesCheckEnd = context->cycles + MAX_CYCLE_CHECK;
 
   if ( isDelayed ) {
-    context->instruction = fetchlist[((loopEnd+2) >> 20) & 0x0FF](loopEnd+2);
-    opcodes[context->instruction](context);
+    context->instruction = ((fetchfunc *)context->fetchlist)[((loopEnd+2) >> 20) & 0x0FF](context, loopEnd+2);
+    ((opcodefunc *)context->opcodes)[context->instruction](context);
     context->regs.PC -= 2;
-    if ( !SH2idleCheckIterate(context->instruction,0) ) return;
+    if ( !SH2idleCheckIterate(context,context->instruction,0) ) return;
   }
   
   // First pass
@@ -532,17 +532,17 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   while ( context->regs.PC != loopEnd ) {
 
     PC1 = context->regs.PC;
-    context->instruction = fetchlist[(PC1 >> 20) & 0x0FF](PC1);
-    if ( !SH2idleCheckIterate(context->instruction,PC1) ) return;    
-    opcodes[context->instruction](context);
+    context->instruction = ((fetchfunc *)context->fetchlist)[(PC1 >> 20) & 0x0FF](context, PC1);
+    if ( !SH2idleCheckIterate(context,context->instruction,PC1) ) return;    
+    ((opcodefunc *)context->opcodes)[context->instruction](context);
     if ( context->cycles >= cyclesCheckEnd ) return;
   }
 
   // conditional jump 
 
   PC2 = context->regs.PC;
-  context->instruction = fetchlist[(PC2 >> 20) & 0x0FF](PC2);
-  opcodes[context->instruction](context);
+  context->instruction = ((fetchfunc *)context->fetchlist)[(PC2 >> 20) & 0x0FF](context, PC2);
+  ((opcodefunc *)context->opcodes)[context->instruction](context);
   if ( context->regs.PC != loopBegin ) return; // We are not in a single loop... forget it
 
   // Mark unchanged registers as deterministic registers
@@ -553,17 +553,17 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
   // Second pass
 
   if ( isDelayed )
-    if ( !SH2idleCheckIterate(fetchlist[((loopEnd+2) >> 20) & 0x0FF](loopEnd+2),0) ) return;
+    if ( !SH2idleCheckIterate(context,((fetchfunc *)context->fetchlist)[((loopEnd+2) >> 20) & 0x0FF](context, loopEnd+2),0) ) return;
 
   while ( context->regs.PC != loopEnd ) {
     
     PC3 = context->regs.PC;
-    context->instruction = fetchlist[(PC3 >> 20) & 0x0FF](PC3);
-    if ( !SH2idleCheckIterate(context->instruction,PC3) ) return;    
-    opcodes[context->instruction](context);
+    context->instruction = ((fetchfunc *)context->fetchlist)[(PC3 >> 20) & 0x0FF](context, PC3);
+    if ( !SH2idleCheckIterate(context,context->instruction,PC3) ) return;    
+    ((opcodefunc *)context->opcodes)[context->instruction](context);
   }
-  context->instruction = fetchlist[(PC2 >> 20) & 0x0FF](PC2);
-  opcodes[context->instruction](context);  
+  context->instruction = ((fetchfunc *)context->fetchlist)[(PC2 >> 20) & 0x0FF](context, PC2);
+  ((opcodefunc *)context->opcodes)[context->instruction](context);  
   
   if ( context->regs.PC != loopBegin ) return;
 
@@ -599,24 +599,24 @@ void FASTCALL SH2idleParse( SH2_struct *context, u32 cycles ) {
   for(;;) {
     
     u32 PC = context->regs.PC;
-    context->instruction = fetchlist[(PC >> 20) & 0x0FF](PC);
+    context->instruction = ((fetchfunc *)context->fetchlist)[(PC >> 20) & 0x0FF](context, PC);
     if ( INSTRUCTION_A(context->instruction)==8 ) {
       switch( INSTRUCTION_B(context->instruction) ) {
       case 13: //SH2bts
       case 9:  //SH2bt
 	if ( !context->regs.SR.part.T ) context->isIdle = 0;
 	else DROP_IDLE;
-	opcodes[context->instruction](context);
+	((opcodefunc *)context->opcodes)[context->instruction](context);
 	return;
       case 15: //SH2bfs
       case 11: //SH2bf
 	if ( context->regs.SR.part.T ) context->isIdle = 0;
 	else DROP_IDLE;
-	opcodes[context->instruction](context);
+	((opcodefunc *)context->opcodes)[context->instruction](context);
 	return;
       }   
     }
-    opcodes[context->instruction](context);
+    ((opcodefunc *)context->opcodes)[context->instruction](context);
   }
 }
 

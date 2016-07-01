@@ -42,6 +42,20 @@ void FASTCALL   Vdp2ColorRamWriteByte(u32, u8);
 void FASTCALL   Vdp2ColorRamWriteWord(u32, u16);
 void FASTCALL   Vdp2ColorRamWriteLong(u32, u32);
 
+u8 FASTCALL     Sh2Vdp2RamReadByte(SH2_struct *, u32);
+u16 FASTCALL    Sh2Vdp2RamReadWord(SH2_struct *, u32);
+u32 FASTCALL    Sh2Vdp2RamReadLong(SH2_struct *, u32);
+void FASTCALL   Sh2Vdp2RamWriteByte(SH2_struct *, u32, u8);
+void FASTCALL   Sh2Vdp2RamWriteWord(SH2_struct *, u32, u16);
+void FASTCALL   Sh2Vdp2RamWriteLong(SH2_struct *, u32, u32);
+
+u8 FASTCALL     Sh2Vdp2ColorRamReadByte(SH2_struct *, u32);
+u16 FASTCALL    Sh2Vdp2ColorRamReadWord(SH2_struct *, u32);
+u32 FASTCALL    Sh2Vdp2ColorRamReadLong(SH2_struct *, u32);
+void FASTCALL   Sh2Vdp2ColorRamWriteByte(SH2_struct *, u32, u8);
+void FASTCALL   Sh2Vdp2ColorRamWriteWord(SH2_struct *, u32, u16);
+void FASTCALL   Sh2Vdp2ColorRamWriteLong(SH2_struct *, u32, u32);
+
 typedef struct {
    u16 TVMD;   // 0x25F80000
    u16 EXTEN;  // 0x25F80002
@@ -395,6 +409,13 @@ u32 FASTCALL    Vdp2ReadLong(u32);
 void FASTCALL   Vdp2WriteByte(u32, u8);
 void FASTCALL   Vdp2WriteWord(u32, u16);
 void FASTCALL   Vdp2WriteLong(u32, u32);
+
+u8 FASTCALL     Sh2Vdp2ReadByte(SH2_struct *, u32);
+u16 FASTCALL    Sh2Vdp2ReadWord(SH2_struct *, u32);
+u32 FASTCALL    Sh2Vdp2ReadLong(SH2_struct *, u32);
+void FASTCALL   Sh2Vdp2WriteByte(SH2_struct *, u32, u8);
+void FASTCALL   Sh2Vdp2WriteWord(SH2_struct *, u32, u16);
+void FASTCALL   Sh2Vdp2WriteLong(SH2_struct *, u32, u32);
 
 int Vdp2SaveState(FILE *fp);
 int Vdp2LoadState(FILE *fp, int version, int size);

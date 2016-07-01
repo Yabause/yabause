@@ -23,7 +23,7 @@
 #include "UIMemoryTransfer.h"
 #include "../CommonDialogs.h"
 
-UIDebugCPU::UIDebugCPU( YabauseThread *mYabauseThread, QWidget* p )
+UIDebugCPU::UIDebugCPU( PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* p )
 	: QDialog( p )
 {
 	// set up dialog
@@ -54,6 +54,7 @@ UIDebugCPU::UIDebugCPU( YabauseThread *mYabauseThread, QWidget* p )
 
 	connect( lwDisassembledCode, SIGNAL( toggleCodeBreakpoint(u32) ), this, SLOT( toggleCodeBreakpoint(u32) ) );
 
+	this->context = proc;
 	this->mYabauseThread = mYabauseThread;
 
 	// retranslate widgets
@@ -259,7 +260,7 @@ void UIDebugCPU::on_pbMemoryTransfer_clicked()
 
 void UIDebugCPU::on_pbMemoryEditor_clicked()
 {	
-	UIMemoryEditor( mYabauseThread, this ).exec();
+	UIMemoryEditor( context, mYabauseThread, this ).exec();
 }
 
 void UIDebugCPU::on_pbReserved1_clicked()

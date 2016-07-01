@@ -20,7 +20,7 @@
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 
-int SCUDSPDis(u32 addr, char *string)
+int SCUDSPDis(void *context, u32 addr, char *string)
 {
    ScuDspDisasm((u8)addr, string);
    return 1;
@@ -34,7 +34,7 @@ void SCUDSPBreakpointHandler (u32 addr)
 }
 
 UIDebugSCUDSP::UIDebugSCUDSP( YabauseThread *mYabauseThread, QWidget* p )
-	: UIDebugCPU( mYabauseThread, p )
+   : UIDebugCPU( PROC_SCUDSP, mYabauseThread, p )
 {
    this->setWindowTitle(QtYabause::translate("Debug SCU DSP"));
    gbRegisters->setTitle(QtYabause::translate("DSP Registers"));

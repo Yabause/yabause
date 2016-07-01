@@ -29,8 +29,9 @@ public:
 	UIDisasm( QWidget* parent = 0 );
 
    void setSelectionColor(const QColor &color);
-   void setDisassembleFunction(int (*func)(u32, char *));
+   void setDisassembleFunction(int (*func)(void *, u32, char *));
    void setEndAddress(u32 address);
+   void setContext(void *context);
    void goToAddress(u32 address, bool vCenter=true);
    void setPC(u32 address);
    void setMinimumInstructionSize(int instructionSize);
@@ -39,8 +40,9 @@ private:
 
    int fontWidth, fontHeight;
    QColor selectionColor;
+   void *context;
 
-   int (*disassembleFunction)(u32 address, char *string);
+   int (*disassembleFunction)(void *context, u32 address, char *string);
    u32 address;
    bool vCenter;
    u32 endAddress;

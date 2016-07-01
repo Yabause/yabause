@@ -91,12 +91,12 @@ void SmpcINTBACKEnd(void);
 void SmpcCKCHG320(void);
 void SmpcCKCHG352(void);
 
-u8 FASTCALL	SmpcReadByte(u32);
-u16 FASTCALL	SmpcReadWord(u32);
-u32 FASTCALL	SmpcReadLong(u32);
-void FASTCALL	SmpcWriteByte(u32, u8);
-void FASTCALL	SmpcWriteWord(u32, u16);
-void FASTCALL	SmpcWriteLong(u32, u32);
+u8 FASTCALL	SmpcReadByte(SH2_struct *, u32);
+u16 FASTCALL	SmpcReadWord(SH2_struct *, u32);
+u32 FASTCALL	SmpcReadLong(SH2_struct *, u32);
+void FASTCALL	SmpcWriteByte(SH2_struct *, u32, u8);
+void FASTCALL	SmpcWriteWord(SH2_struct *, u32, u16);
+void FASTCALL	SmpcWriteLong(SH2_struct *, u32, u32);
 
 int SmpcSaveState(FILE *fp);
 int SmpcLoadState(FILE *fp, int version, int size);

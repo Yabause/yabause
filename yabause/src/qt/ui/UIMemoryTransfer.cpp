@@ -143,7 +143,7 @@ void UIMemoryTransfer::accept()
    if (rbDownload->isChecked())
    {
       // Let's do a ram dump
-      MappedMemorySave(leFile->text().toLatin1(), startAddress, endAddress - startAddress);
+      MappedMemorySave(MSH2, leFile->text().toLatin1(), startAddress, endAddress - startAddress);
    }
    else
    {
@@ -156,7 +156,7 @@ void UIMemoryTransfer::accept()
       }
       else
       {
-         MappedMemoryLoad(leFile->text().toLatin1(), startAddress);
+         MappedMemoryLoad(MSH2, leFile->text().toLatin1(), startAddress);
       }
    }
 

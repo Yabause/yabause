@@ -21,7 +21,7 @@
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 
-int M68KDis(u32 addr, char *string)
+int M68KDis(void *context, u32 addr, char *string)
 {
    return (int)(M68KDisasm(addr, string) - addr);
 }
@@ -34,7 +34,7 @@ void M68KBreakpointHandler (u32 addr)
 }
 
 UIDebugM68K::UIDebugM68K( YabauseThread *mYabauseThread, QWidget* p )
-	: UIDebugCPU(mYabauseThread, p )
+   : UIDebugCPU(PROC_M68K, mYabauseThread, p )
 {
    this->setWindowTitle(QtYabause::translate("Debug M68K"));
    gbRegisters->setTitle(QtYabause::translate("M68K Registers"));
