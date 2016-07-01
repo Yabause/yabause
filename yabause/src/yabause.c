@@ -236,6 +236,14 @@ int YabauseInit(yabauseinit_struct *init)
    // Initialize CD Block 
    if (init->use_cd_block_lle)
    {
+#if defined(SH2_DYNAREC)
+      if (init->sh1coretype == SH2CORE_DYNAREC)
+      {
+         YabSetError(YAB_ERR_CANNOTINIT, _("SH1. Dynarec core not supported for SH1 emulation."));
+         return -1;
+      }
+#endif
+
       if (SH1Init(init->sh1coretype) != 0)
       {
          YabSetError(YAB_ERR_CANNOTINIT, _("SH1"));
