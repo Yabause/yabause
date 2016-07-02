@@ -8210,8 +8210,6 @@ void DynarecSlaveHandleInterrupts()
   //printf("master_cc=%d slave_cc=%d\n",master_cc,slave_cc);
 }
 
-#define SH2CORE_DYNAREC 2
-
 void SH2InterpreterSendInterrupt(SH2_struct *context, u8 level, u8 vector);
 int SH2InterpreterGetInterrupts(SH2_struct *context,
                                 interrupt_struct interrupts[MAX_INTERRUPTS]);
