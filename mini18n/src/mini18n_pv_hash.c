@@ -20,12 +20,14 @@
 #include "mini18n_pv_hash.h"
 #include "mini18n_pv_file.h"
 #include "mini18n_pv_file_yts.h"
+#include "mini18n_pv_file_csv.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 static mini18n_file_t * loaders[] = {
+   &mini18n_file_csv,
 	&mini18n_file_yts,
 	NULL
 };

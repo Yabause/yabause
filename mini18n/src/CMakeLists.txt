@@ -4,6 +4,7 @@ set(mini18n_SOURCES
     mini18n_pv_data.c
     mini18n_pv_file_po.c
     mini18n_pv_file_yts.c
+    mini18n_pv_file_csv.c
     mini18n_pv_hash.c
     mini18n_pv_list.c)
 
