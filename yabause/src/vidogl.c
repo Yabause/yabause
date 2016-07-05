@@ -589,10 +589,11 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
    u8 MSB_SHADOW = 0;
    u32 alpha = 0xFF;
+   u8 addcolor = 0;
    int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
    VDP1LOG("Making new sprite %08X\n", charAddr);
    
-   if (fixVdp2Regs->SDCTL != 0 && MSB != 0 ){
+   if (/*fixVdp2Regs->SDCTL != 0 &&*/ MSB != 0 ){
 	   MSB_SHADOW = 1;
    }
 
@@ -600,6 +601,8 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       ednmode = 1;
    else 
       ednmode = 0;
+
+   addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
    
    Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow );
 
@@ -609,40 +612,42 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    if( ((fixVdp2Regs->CCCTL >> 6) & 0x01) == 0x01  )
    {
 	   switch (SPCCCS)
-      {
-      case 0:
-         if( priority <= ((fixVdp2Regs->SPCTL>>8)&0x07) )
-		 if ((fixVdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
-			 alpha = 0x80;  // Key value for color calcuration
-		 }
-		 else{
-			 alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-		 }
-         break;
-      case 1:
-         if( priority == ((fixVdp2Regs->SPCTL>>8)&0x07) )
-		 if ((fixVdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
-			 alpha = 0x80;  // Key value for color calcuration
-		 }
-		 else{
-			 alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-		 }
-         break;
-      case 2:
-		if( priority >= ((fixVdp2Regs->SPCTL>>8)&0x07) )
-		if ((fixVdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
-			alpha = 0x80;  // Key value for color calcuration
-		}else{
-			alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-		}
+	   {
+	   case 0:
+		   if (priority <= ((fixVdp2Regs->SPCTL >> 8) & 0x07)){
+			   if (addcolor){  // Add Color calcuration mode 
+				   alpha = 0x80;  // Key value for color calcuration
+			   }
+			   else{
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   }
+		   }
+		   break;
+	   case 1:
+		   if (priority == ((fixVdp2Regs->SPCTL >> 8) & 0x07)){
+			   if (addcolor){  // Add Color calcuration mode 
+				   alpha = 0x80;  // Key value for color calcuration
+			   }
+			   else{
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   }
+		   }
+		   break;
+	   case 2:
+		   if (priority >= ((fixVdp2Regs->SPCTL >> 8) & 0x07)){
+			   if (addcolor){  // Add Color calcuration mode 
+				   alpha = 0x80;  // Key value for color calcuration
+			   }else{
+				   alpha = 0xF8 - ((colorcl << 3) & 0xF8);
+			   }
+			}
         break;
       case 3:
-		if ((fixVdp2Regs->CCCTL & 0x540) == 0x140){  // Add Color calcuration mode 
-		  talpha = 0x80;  // Key value for color calcuration
-		}
-		else{
-		  talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-		}
+		  if (addcolor){  // Add Color calcuration mode 
+			talpha = 0x80;  // Key value for color calcuration
+		  }else{
+			talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+		  }
 		break;
       }
 
@@ -3642,10 +3647,11 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-   if (cmd.CMDSIZE == 0){
+   if ((cmd.CMDSIZE & 0x8000)){
 	   regs->EDSR |= 2;
 	   return; // BAD Command
    }
+
    sprite.dst=0;
    sprite.blendmode = VDP1_COLOR_CL_REPLACE;
    sprite.linescreen = 0;
@@ -3769,7 +3775,6 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    if (cmd.CMDSIZE == 0){
-	   regs->EDSR |= 2;
 	   return; // BAD Command
    }
 
@@ -3977,7 +3982,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
    if (cmd.CMDSIZE == 0){
-	   regs->EDSR |= 2;
 	   return; // BAD Command
    }
 

@@ -215,6 +215,7 @@ enum
    PG_LINECOLOR_INSERT,
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
+   PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW,
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA,
    PG_VDP2_DRAWFRAMEBUFF_PERLINE,
    PG_VDP2_BLUR,
@@ -432,6 +433,7 @@ int YglSetLevelBlendmode( int pri, int mode );
 
 void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
 int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, float * offsetcol);
+int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float to, float * offsetcol);
 void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float from, float to, float * offsetcol);
 void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol );
 
