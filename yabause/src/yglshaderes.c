@@ -1500,7 +1500,7 @@ const GLchar Yglprg_vdp2_drawfb_addcolor_shadow_f[] =
 "  if( depth < u_from || depth > u_to ){ discard;return;}\n"
 "  if( alpha <= 0.0){\n"
 "     discard;\n"
-"  }else if( alpha < 0.75 && fbColor.r == 0 && fbColor.g == 0 && fbColor.b == 0 ){\n"
+"  }else if( alpha < 0.75 && fbColor.r == 0.0 && fbColor.g == 0.0 && fbColor.b == 0.0 ){\n"
 "     fragColor = fbColor;\n"
 "     fragColor.a = alpha;\n"
 "     gl_FragDepth =  (depth+1.0)/2.0;\n"
