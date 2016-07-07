@@ -137,12 +137,12 @@ static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
 
    if (sh->regs.R[5] == 0)
    {
-      MappedMemoryWriteLong(sh, 0x06000900+(sh->regs.R[4] << 2), 0x06000610);      
+      sh->MappedMemoryWriteLong(sh, 0x06000900+(sh->regs.R[4] << 2), 0x06000610);      
       sh->cycles += 8;
    }
    else
    {
-      MappedMemoryWriteLong(sh, 0x06000900+(sh->regs.R[4] << 2), sh->regs.R[5]);
+      sh->MappedMemoryWriteLong(sh, 0x06000900+(sh->regs.R[4] << 2), sh->regs.R[5]);
       sh->cycles += 9;
    }
 
@@ -159,7 +159,7 @@ static void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
    // check me
 //   LOG("BiosGetScuInterrupt\n"); 
 
-   sh->regs.R[0] = MappedMemoryReadLong(sh, 0x06000900+(sh->regs.R[4] << 2));
+   sh->regs.R[0] = sh->MappedMemoryReadLong(sh, 0x06000900+(sh->regs.R[4] << 2));
    sh->cycles += 5;
 
    sh->regs.PC = sh->regs.PR;
@@ -176,12 +176,12 @@ static void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
 
    if (sh->regs.R[5] == 0)
    {            
-      MappedMemoryWriteLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2), interruptlist[sh->isslave][sh->regs.R[4]]);
+      sh->MappedMemoryWriteLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2), interruptlist[sh->isslave][sh->regs.R[4]]);
       sh->cycles += 8;
    }
    else
    {
-      MappedMemoryWriteLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2), sh->regs.R[5]);
+      sh->MappedMemoryWriteLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2), sh->regs.R[5]);
       sh->cycles += 9;
    }
 
@@ -198,7 +198,7 @@ static void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
    // check me
 //   LOG("BiosGetSh2Interrupt\n");
 
-   sh->regs.R[0] = MappedMemoryReadLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2));
+   sh->regs.R[0] = sh->MappedMemoryReadLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2));
    sh->cycles += 5;
 
    sh->regs.PC = sh->regs.PR;
@@ -216,12 +216,12 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
 
    if (!sh->isslave)
    {
-      MappedMemoryWriteLong(sh, 0x06000348, sh->regs.R[4]);
-      MappedMemoryWriteLong(sh, 0x25FE00A0, sh->regs.R[4]); // Interrupt Mask Register
+      sh->MappedMemoryWriteLong(sh, 0x06000348, sh->regs.R[4]);
+      sh->MappedMemoryWriteLong(sh, 0x25FE00A0, sh->regs.R[4]); // Interrupt Mask Register
    }
 
    if (!(sh->regs.R[4] & 0x8000)) // double check this
-      MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
+      sh->MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
 
    sh->cycles += 17;
 
@@ -240,16 +240,16 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 //   LOG("BiosChangeScuInterruptMask\n");
 
    // Read Stored Scu Interrupt Mask, AND it by R4, OR it by R5, then put it back
-   newmask = (MappedMemoryReadLong(sh, 0x06000348) & sh->regs.R[4]) | sh->regs.R[5];
+   newmask = (sh->MappedMemoryReadLong(sh, 0x06000348) & sh->regs.R[4]) | sh->regs.R[5];
    if (!sh->isslave)
    {
-      MappedMemoryWriteLong(sh, 0x06000348, newmask);
-      MappedMemoryWriteLong(sh, 0x25FE00A0, newmask); // Interrupt Mask Register
-      MappedMemoryWriteLong(sh, 0x25FE00A4, (u32)(s16)sh->regs.R[4]); // Interrupt Status Register
+      sh->MappedMemoryWriteLong(sh, 0x06000348, newmask);
+      sh->MappedMemoryWriteLong(sh, 0x25FE00A0, newmask); // Interrupt Mask Register
+      sh->MappedMemoryWriteLong(sh, 0x25FE00A4, (u32)(s16)sh->regs.R[4]); // Interrupt Status Register
    }
 
    if (!(sh->regs.R[4] & 0x8000)) // double check this
-      MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
+      sh->MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
 
    sh->cycles += 20;
 
@@ -286,13 +286,13 @@ static void FASTCALL BiosGetSemaphore(SH2_struct * sh)
    // check me
    LOG("BiosGetSemaphore\n");
   
-   if ((temp = MappedMemoryReadByte(sh, 0x06000B00 + sh->regs.R[4])) == 0)
+   if ((temp = sh->MappedMemoryReadByte(sh, 0x06000B00 + sh->regs.R[4])) == 0)
       sh->regs.R[0] = 1;
    else
       sh->regs.R[0] = 0;
 
    temp |= 0x80;
-   MappedMemoryWriteByte(sh, 0x06000B00 + sh->regs.R[4], temp);
+   sh->MappedMemoryWriteByte(sh, 0x06000B00 + sh->regs.R[4], temp);
    
    sh->cycles += 11;
    sh->regs.PC = sh->regs.PR;
@@ -308,7 +308,7 @@ static void FASTCALL BiosClearSemaphore(SH2_struct * sh)
    // check me
    LOG("BiosClearSemaphore\n");
 
-   MappedMemoryWriteByte(sh, 0x06000B00 + sh->regs.R[4], 0);
+   sh->MappedMemoryWriteByte(sh, 0x06000B00 + sh->regs.R[4], 0);
 
    sh->cycles += 5;
    sh->regs.PC = sh->regs.PR;
@@ -326,14 +326,14 @@ static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
    LOG("BiosChangeSystemClock\n");
 
    // Set new system clock speed
-   MappedMemoryWriteLong(sh, 0x06000324, sh->regs.R[4]);
+   sh->MappedMemoryWriteLong(sh, 0x06000324, sh->regs.R[4]);
 
-   MappedMemoryWriteLong(sh, 0x25FE00A8, 0); // Clear A-bus Interrupt ACK
-   MappedMemoryWriteLong(sh, 0x25FE00B8, 0); // Clear A-Bus Refresh
+   sh->MappedMemoryWriteLong(sh, 0x25FE00A8, 0); // Clear A-bus Interrupt ACK
+   sh->MappedMemoryWriteLong(sh, 0x25FE00B8, 0); // Clear A-Bus Refresh
    
-   MappedMemoryWriteByte(sh, 0xFFFFFE91, 0x80); // Transition to standby mode
-   MappedMemoryWriteWord(sh, 0xFFFFFE80, 0xA51D); // Set WDT counter
-   MappedMemoryWriteWord(sh, 0xFFFFFEE0, 0x8000); // Set NMI edge select to high
+   sh->MappedMemoryWriteByte(sh, 0xFFFFFE91, 0x80); // Transition to standby mode
+   sh->MappedMemoryWriteWord(sh, 0xFFFFFE80, 0xA51D); // Set WDT counter
+   sh->MappedMemoryWriteWord(sh, 0xFFFFFEE0, 0x8000); // Set NMI edge select to high
 
    if (sh->regs.R[4] == 0)
       SmpcCKCHG320();
@@ -344,24 +344,24 @@ static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
    for (j = 0; j < 3; j++)
    {
       for (i = 0; i < 7; i++)
-         MappedMemoryWriteLong(sh, 0x25FE0000+(j*0xC)+(i*4), 0);
+         sh->MappedMemoryWriteLong(sh, 0x25FE0000+(j*0xC)+(i*4), 0);
    }
 
-   MappedMemoryWriteLong(sh, 0x25FE0060, 0); // Clear DMA force stop
-   MappedMemoryWriteLong(sh, 0x25FE0080, 0); // Clear DSP Control Port
-   MappedMemoryWriteLong(sh, 0x25FE00B0, 0x1FF01FF0); // Reset A-Bus Set
-   MappedMemoryWriteLong(sh, 0x25FE00B4, 0x1FF01FF0);
-   MappedMemoryWriteLong(sh, 0x25FE00B8, 0x1F); // Reset A-Bus Refresh
-   MappedMemoryWriteLong(sh, 0x25FE00A8, 0x1); // Reset A-bus Interrupt ACK
-   MappedMemoryWriteLong(sh, 0x25FE0090, 0x3FF); // Reset Timer 0 Compare
-   MappedMemoryWriteLong(sh, 0x25FE0094, 0x1FF); // Reset Timer 1 Set Data
-   MappedMemoryWriteLong(sh, 0x25FE0098, 0); // Reset Timer 1 Mode
+   sh->MappedMemoryWriteLong(sh, 0x25FE0060, 0); // Clear DMA force stop
+   sh->MappedMemoryWriteLong(sh, 0x25FE0080, 0); // Clear DSP Control Port
+   sh->MappedMemoryWriteLong(sh, 0x25FE00B0, 0x1FF01FF0); // Reset A-Bus Set
+   sh->MappedMemoryWriteLong(sh, 0x25FE00B4, 0x1FF01FF0);
+   sh->MappedMemoryWriteLong(sh, 0x25FE00B8, 0x1F); // Reset A-Bus Refresh
+   sh->MappedMemoryWriteLong(sh, 0x25FE00A8, 0x1); // Reset A-bus Interrupt ACK
+   sh->MappedMemoryWriteLong(sh, 0x25FE0090, 0x3FF); // Reset Timer 0 Compare
+   sh->MappedMemoryWriteLong(sh, 0x25FE0094, 0x1FF); // Reset Timer 1 Set Data
+   sh->MappedMemoryWriteLong(sh, 0x25FE0098, 0); // Reset Timer 1 Mode
 
-   mask = MappedMemoryReadLong(sh, 0x06000348);
-   MappedMemoryWriteLong(sh, 0x25FE00A0, mask); // Interrupt Mask Register
+   mask = sh->MappedMemoryReadLong(sh, 0x06000348);
+   sh->MappedMemoryWriteLong(sh, 0x25FE00A0, mask); // Interrupt Mask Register
 
    if (!(mask & 0x8000))
-      MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
+      sh->MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -380,7 +380,7 @@ static void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
 
    for (i = 0; i < 0x20; i++)
    {
-      scumasklist[i] = MappedMemoryReadLong(sh, sh->regs.R[4]+(i << 2));
+      scumasklist[i] = sh->MappedMemoryReadLong(sh, sh->regs.R[4]+(i << 2));
       sh2masklist[i] = (scumasklist[i] >> 16);
       if (scumasklist[i] & 0x8000)
          scumasklist[i] |= 0xFFFF0000;
@@ -481,7 +481,7 @@ static int CalcSaveSize(SH2_struct *sh, u32 tableaddr, int blocksize)
    for(;;)
    {
        u16 block;
-       block = (MappedMemoryReadByte(sh, tableaddr) << 8) | MappedMemoryReadByte(sh, tableaddr + 2);
+       block = (sh->MappedMemoryReadByte(sh, tableaddr) << 8) | sh->MappedMemoryReadByte(sh, tableaddr + 2);
        if (block == 0)
          break;
        tableaddr += 4;
@@ -503,7 +503,7 @@ static u32 GetFreeSpace(SH2_struct *sh, UNUSED u32 device, u32 size, u32 addr, u
    for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(sh, addr + i + 1)) < 0)
+      if (((s8)sh->MappedMemoryReadByte(sh, addr + i + 1)) < 0)
       {
          // Now figure out how many blocks this save is
          usedblocks += (CalcSaveSize(sh, addr+i+0x45, blocksize) + 1);
@@ -522,7 +522,7 @@ static u32 FindSave(SH2_struct *sh, UNUSED u32 device, u32 stringaddr, u32 block
    for (i = ((blockoffset * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(sh, addr + i + 1)) < 0)
+      if (((s8)sh->MappedMemoryReadByte(sh, addr + i + 1)) < 0)
       {
          int i3;
 
@@ -530,9 +530,9 @@ static u32 FindSave(SH2_struct *sh, UNUSED u32 device, u32 stringaddr, u32 block
          // the data over
          for (i3 = 0; i3 < 11; i3++)
          {            
-            u8 data = MappedMemoryReadByte(sh, stringaddr+i3);
+            u8 data = sh->MappedMemoryReadByte(sh, stringaddr+i3);
                 
-            if (MappedMemoryReadByte(sh, addr+i+0x9+(i3*2)) != data)
+            if (sh->MappedMemoryReadByte(sh, addr+i+0x9+(i3*2)) != data)
             {
                if (data == 0)
                   // There's no string to match
@@ -563,7 +563,7 @@ static u32 FindSave2(SH2_struct *sh, UNUSED u32 device, const char *string, u32 
    for (i = ((blockoffset * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(sh, addr + i + 1)) < 0)
+      if (((s8)sh->MappedMemoryReadByte(sh, addr + i + 1)) < 0)
       {
          int i3;
 
@@ -571,7 +571,7 @@ static u32 FindSave2(SH2_struct *sh, UNUSED u32 device, const char *string, u32 
          // the data over
          for (i3 = 0; i3 < 11; i3++)
          {            
-            if (MappedMemoryReadByte(sh, addr+i+0x9+(i3*2)) != string[i3])
+            if (sh->MappedMemoryReadByte(sh, addr+i+0x9+(i3*2)) != string[i3])
             {
                if (string[i3] == 0)
                   // There's no string to match
@@ -597,7 +597,7 @@ static u32 FindSave2(SH2_struct *sh, UNUSED u32 device, const char *string, u32 
 
 static void DeleteSave(SH2_struct *sh, u32 addr, u32 blockoffset, u32 blocksize)
 {
-    MappedMemoryWriteByte(sh, addr + (blockoffset * blocksize * 2) + 0x1, 0x00);
+   sh->MappedMemoryWriteByte(sh, addr + (blockoffset * blocksize * 2) + 0x1, 0x00);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -619,7 +619,7 @@ static u16 *GetFreeBlocks(SH2_struct *sh, u32 addr, u32 blocksize, u32 numblocks
    for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(sh, addr + i + 1)) < 0)
+      if (((s8)sh->MappedMemoryReadByte(sh, addr + i + 1)) < 0)
       {
          tableaddr = addr+i+0x45;
          blocktbl[i / (blocksize << 1)] = 1;
@@ -628,7 +628,7 @@ static u16 *GetFreeBlocks(SH2_struct *sh, u32 addr, u32 blocksize, u32 numblocks
          for(;;)
          {
             u16 block;
-            block = (MappedMemoryReadByte(sh, tableaddr) << 8) | MappedMemoryReadByte(sh, tableaddr + 2);
+            block = (sh->MappedMemoryReadByte(sh, tableaddr) << 8) | sh->MappedMemoryReadByte(sh, tableaddr + 2);
             if (block == 0)
                break;
             tableaddr += 4;
@@ -686,7 +686,7 @@ static u16 *ReadBlockTable(SH2_struct *sh, u32 addr, u32 *tableaddr, int block, 
    for(i = 0; i < numblocks[0]; i++)
    {
        u16 block;
-       block = (MappedMemoryReadByte(sh, tableaddr[0]) << 8) | MappedMemoryReadByte(sh, tableaddr[0] + 2);
+       block = (sh->MappedMemoryReadByte(sh, tableaddr[0]) << 8) | sh->MappedMemoryReadByte(sh, tableaddr[0] + 2);
        tableaddr[0] += 4;
 
        if (((tableaddr[0]-1) & ((blocksize << 1) - 1)) == 0)
@@ -711,41 +711,41 @@ static void FASTCALL BiosBUPInit(SH2_struct * sh)
 //   LOG("BiosBUPInit. arg1 = %08X, arg2 = %08X, arg3 = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6]);
 
    // Setup Function table
-   MappedMemoryWriteLong(sh, 0x06000354, sh->regs.R[5]);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x00, 0x00000380);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x04, 0x00000384);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x08, 0x00000388);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x0C, 0x0000038C);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x10, 0x00000390);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x14, 0x00000394);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x18, 0x00000398);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x1C, 0x0000039C);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x20, 0x000003A0);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x24, 0x000003A4);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x28, 0x000003A8);
-   MappedMemoryWriteLong(sh, sh->regs.R[5]+0x2C, 0x000003AC);
+   sh->MappedMemoryWriteLong(sh, 0x06000354, sh->regs.R[5]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x00, 0x00000380);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x04, 0x00000384);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x08, 0x00000388);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x0C, 0x0000038C);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x10, 0x00000390);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x14, 0x00000394);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x18, 0x00000398);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x1C, 0x0000039C);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x20, 0x000003A0);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x24, 0x000003A4);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x28, 0x000003A8);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[5]+0x2C, 0x000003AC);
 
    // Setup Device list
 
    // First Device
-   MappedMemoryWriteWord(sh, sh->regs.R[6], 1); // ID
-   MappedMemoryWriteWord(sh, sh->regs.R[6]+0x2, 1); // Number of partitions
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[6], 1); // ID
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[6]+0x2, 1); // Number of partitions
 
    // Second Device
    if ((CartridgeArea->cartid & 0xF0) == 0x20)
    {
-      MappedMemoryWriteWord(sh, sh->regs.R[6]+0x4, 2); // ID
-      MappedMemoryWriteWord(sh, sh->regs.R[6]+0x6, 1); // Number of partitions
+      sh->MappedMemoryWriteWord(sh, sh->regs.R[6]+0x4, 2); // ID
+      sh->MappedMemoryWriteWord(sh, sh->regs.R[6]+0x6, 1); // Number of partitions
    }
    else
    {
-      MappedMemoryWriteWord(sh, sh->regs.R[6]+0x4, 0); // ID
-      MappedMemoryWriteWord(sh, sh->regs.R[6]+0x6, 0); // Number of partitions
+      sh->MappedMemoryWriteWord(sh, sh->regs.R[6]+0x4, 0); // ID
+      sh->MappedMemoryWriteWord(sh, sh->regs.R[6]+0x6, 0); // Number of partitions
    }
 
    // Third Device
-   MappedMemoryWriteWord(sh, sh->regs.R[6]+0x08, 0); // ID
-   MappedMemoryWriteWord(sh, sh->regs.R[6]+0x0A, 0); // Number of partitions
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[6]+0x08, 0); // ID
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[6]+0x0A, 0); // Number of partitions
 
    // cycles need to be incremented
 
@@ -816,12 +816,12 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
    aftersize = (((blocksize - 6) * freeblocks) - 30) - needsize;
    if (aftersize < 0) aftersize = 0;
 
-   MappedMemoryWriteLong(sh, sh->regs.R[6], size); // Size of Backup Ram (in bytes)
-   MappedMemoryWriteLong(sh, sh->regs.R[6]+0x4, size / blocksize); // Size of Backup Ram (in blocks)
-   MappedMemoryWriteLong(sh, sh->regs.R[6]+0x8, blocksize); // Size of block
-   MappedMemoryWriteLong(sh, sh->regs.R[6]+0xC, ((blocksize - 6) * freeblocks) - 30); // Free space(in bytes)
-   MappedMemoryWriteLong(sh, sh->regs.R[6]+0x10, freeblocks); // Free space(in blocks)
-   MappedMemoryWriteLong(sh, sh->regs.R[6]+0x14, aftersize / blocksize); // writable block size
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[6], size); // Size of Backup Ram (in bytes)
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[6]+0x4, size / blocksize); // Size of Backup Ram (in blocks)
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[6]+0x8, blocksize); // Size of block
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[6]+0xC, ((blocksize - 6) * freeblocks) - 30); // Free space(in bytes)
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[6]+0x10, freeblocks); // Free space(in blocks)
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[6]+0x14, aftersize / blocksize); // writable block size
 
    // cycles need to be incremented
 
@@ -881,7 +881,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    }
 
    // Let's figure out how many blocks will be needed for the save
-   datasize = MappedMemoryReadLong(sh, sh->regs.R[5]+0x1C);
+   datasize = sh->MappedMemoryReadLong(sh, sh->regs.R[5]+0x1C);
    savesize = (datasize + 0x1D) / (blocksize - 6);
    if ((datasize + 0x1D) % (blocksize - 6))
       savesize++;
@@ -909,12 +909,12 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    // Create save
    workaddr = addr + (blocktbl[0] * blocksize * 2);
 
-   MappedMemoryWriteByte(sh, workaddr+0x1, 0x80);
+   sh->MappedMemoryWriteByte(sh, workaddr+0x1, 0x80);
 
    // Copy over filename
    for (i = workaddr+0x9; i < ((workaddr+0x9) + (11 * 2)); i+=2)
    {
-      MappedMemoryWriteByte(sh, i, MappedMemoryReadByte(sh, sh->regs.R[5]));
+      sh->MappedMemoryWriteByte(sh, i, sh->MappedMemoryReadByte(sh, sh->regs.R[5]));
       sh->regs.R[5]++;
    }
 
@@ -923,12 +923,12 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    // Copy over comment
    for (i = workaddr+0x21; i < ((workaddr+0x21) + (10 * 2)); i+=2)
    {
-      MappedMemoryWriteByte(sh, i, MappedMemoryReadByte(sh, sh->regs.R[5]));
+      sh->MappedMemoryWriteByte(sh, i, sh->MappedMemoryReadByte(sh, sh->regs.R[5]));
       sh->regs.R[5]++;
    }
 
    // Copy over language
-   MappedMemoryWriteByte(sh, workaddr+0x1F, MappedMemoryReadByte(sh, sh->regs.R[5]));
+   sh->MappedMemoryWriteByte(sh, workaddr+0x1F, sh->MappedMemoryReadByte(sh, sh->regs.R[5]));
    sh->regs.R[5]++;
 
    sh->regs.R[5]++;
@@ -936,14 +936,14 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    // Copy over date
    for (i = workaddr+0x35; i < ((workaddr+0x35) + (4 * 2)); i+=2)
    {
-      MappedMemoryWriteByte(sh, i, MappedMemoryReadByte(sh, sh->regs.R[5]));
+      sh->MappedMemoryWriteByte(sh, i, sh->MappedMemoryReadByte(sh, sh->regs.R[5]));
       sh->regs.R[5]++;
    }
 
    // Copy over data size
    for (i = workaddr+0x3D; i < ((workaddr+0x3D) + (4 * 2)); i+=2)
    {
-      MappedMemoryWriteByte(sh, i, MappedMemoryReadByte(sh, sh->regs.R[5]));
+      sh->MappedMemoryWriteByte(sh, i, sh->MappedMemoryReadByte(sh, sh->regs.R[5]));
       sh->regs.R[5]++;
    }
 
@@ -952,9 +952,9 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    for (i = 1; i < savesize; i++)
    {
-      MappedMemoryWriteByte(sh, workaddr, (u8)(blocktbl[i] >> 8));
+      sh->MappedMemoryWriteByte(sh, workaddr, (u8)(blocktbl[i] >> 8));
       workaddr+=2;
-      MappedMemoryWriteByte(sh, workaddr, (u8)blocktbl[i]);
+      sh->MappedMemoryWriteByte(sh, workaddr, (u8)blocktbl[i]);
       workaddr+=2;
 
       if (((workaddr-1) & ((blocksize << 1) - 1)) == 0)
@@ -966,15 +966,15 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    }
 
    // Write 2 blank bytes so we now how large the table size is next time
-   MappedMemoryWriteByte(sh, workaddr, 0);
+   sh->MappedMemoryWriteByte(sh, workaddr, 0);
    workaddr+=2;
-   MappedMemoryWriteByte(sh, workaddr, 0);
+   sh->MappedMemoryWriteByte(sh, workaddr, 0);
    workaddr+=2;
 
    // Lastly, write the actual save data
    while (datasize > 0)
    {
-      MappedMemoryWriteByte(sh, workaddr, MappedMemoryReadByte(sh, sh->regs.R[6]));
+      sh->MappedMemoryWriteByte(sh, workaddr, sh->MappedMemoryReadByte(sh, sh->regs.R[6]));
       datasize--;
       sh->regs.R[6]++;
       workaddr+=2;
@@ -1037,8 +1037,8 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    }
 
    tableaddr = addr + (block * blocksize * 2) + 0x3D;
-   datasize = (MappedMemoryReadByte(sh, tableaddr) << 24) | (MappedMemoryReadByte(sh, tableaddr + 2) << 16) |
-              (MappedMemoryReadByte(sh, tableaddr+4) << 8) | MappedMemoryReadByte(sh, tableaddr + 6);
+   datasize = (sh->MappedMemoryReadByte(sh, tableaddr) << 24) | (sh->MappedMemoryReadByte(sh, tableaddr + 2) << 16) |
+              (sh->MappedMemoryReadByte(sh, tableaddr+4) << 8) | sh->MappedMemoryReadByte(sh, tableaddr + 6);
 
    // Read in Block Table
    if ((blocktbl = ReadBlockTable(sh, addr, &tableaddr, block, blocksize, &numblocks, &blocksread)) == NULL)
@@ -1053,7 +1053,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    // Now let's read in the data
    while (datasize > 0)
    {
-      MappedMemoryWriteByte(sh, sh->regs.R[6], MappedMemoryReadByte(sh, tableaddr));
+      sh->MappedMemoryWriteByte(sh, sh->regs.R[6], sh->MappedMemoryReadByte(sh, tableaddr));
       datasize--;
       sh->regs.R[6]++;
       tableaddr+=2;
@@ -1133,7 +1133,7 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
 //   int findmatch = MappedMemoryReadByte(sh->regs.R[5]);
 
    for (i = 0; i < 12; i++)
-      filename[i] = MappedMemoryReadByte(sh, sh->regs.R[5]+i);
+      filename[i] = sh->MappedMemoryReadByte(sh, sh->regs.R[5]+i);
 
    LOG("BiosBUPDirectory. arg1 = %d, arg2 = %s, arg3 = %08X, arg4 = %08X, PR = %08X\n", sh->regs.R[4], filename, sh->regs.R[6], sh->regs.R[7], sh->regs.PR);
 
@@ -1188,30 +1188,30 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
       // Copy over filename
       for (i4 = block+0x9; i4 < ((block+0x9) + (11 * 2)); i4+=2)
       {
-         MappedMemoryWriteByte(sh, sh->regs.R[7], MappedMemoryReadByte(sh, i4));
+         sh->MappedMemoryWriteByte(sh, sh->regs.R[7], sh->MappedMemoryReadByte(sh, i4));
          sh->regs.R[7]++;
       }
-      MappedMemoryWriteByte(sh, sh->regs.R[7], 0);
+      sh->MappedMemoryWriteByte(sh, sh->regs.R[7], 0);
       sh->regs.R[7]++;
 
       // Copy over comment
       for (i4 = block+0x21; i4 < ((block+0x21) + (10 * 2)); i4+=2)
       {
-         MappedMemoryWriteByte(sh, sh->regs.R[7], MappedMemoryReadByte(sh, i4));
+         sh->MappedMemoryWriteByte(sh, sh->regs.R[7], sh->MappedMemoryReadByte(sh, i4));
          sh->regs.R[7]++;
       }
 
       // Copy over language
-      MappedMemoryWriteByte(sh, sh->regs.R[7], MappedMemoryReadByte(sh, block+0x1F));
+      sh->MappedMemoryWriteByte(sh, sh->regs.R[7], sh->MappedMemoryReadByte(sh, block+0x1F));
       sh->regs.R[7]++;
 
-      MappedMemoryWriteByte(sh, sh->regs.R[7], 0);
+      sh->MappedMemoryWriteByte(sh, sh->regs.R[7], 0);
       sh->regs.R[7]++;
 
       // Copy over date
       for (i4 = block+0x35; i4 < ((block+0x35) + (4 * 2)); i4+=2)
       {
-         MappedMemoryWriteByte(sh, sh->regs.R[7], MappedMemoryReadByte(sh, i4));
+         sh->MappedMemoryWriteByte(sh, sh->regs.R[7], sh->MappedMemoryReadByte(sh, i4));
          sh->regs.R[7]++;
       }
 
@@ -1220,14 +1220,14 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
       {
          u8 data;
          datasize <<= 8;
-         data = MappedMemoryReadByte(sh, i4);
-         MappedMemoryWriteByte(sh, sh->regs.R[7], data);
+         data = sh->MappedMemoryReadByte(sh, i4);
+         sh->MappedMemoryWriteByte(sh, sh->regs.R[7], data);
          datasize |= data;
          sh->regs.R[7]++;
       }
 
       // Calculate block size from the data size, and then copy it over
-      MappedMemoryWriteWord(sh, sh->regs.R[7], (u16)(((datasize + 0x1D) / (blocksize - 6)) + 1));
+      sh->MappedMemoryWriteWord(sh, sh->regs.R[7], (u16)(((datasize + 0x1D) / (blocksize - 6)) + 1));
       sh->regs.R[7] += 4;
    }
 
@@ -1277,8 +1277,8 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
    }
 
    tableaddr = addr + (block * blocksize * 2) + 0x3D;
-   datasize = (MappedMemoryReadByte(sh, tableaddr) << 24) | (MappedMemoryReadByte(sh, tableaddr + 2) << 16) |
-              (MappedMemoryReadByte(sh, tableaddr+4) << 8) | MappedMemoryReadByte(sh, tableaddr + 6);
+   datasize = (sh->MappedMemoryReadByte(sh, tableaddr) << 24) | (sh->MappedMemoryReadByte(sh, tableaddr + 2) << 16) |
+              (sh->MappedMemoryReadByte(sh, tableaddr+4) << 8) | sh->MappedMemoryReadByte(sh, tableaddr + 6);
 
    // Read in Block Table
    if ((blocktbl = ReadBlockTable(sh, addr, &tableaddr, block, blocksize, &numblocks, &blocksread)) == NULL)
@@ -1293,7 +1293,7 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
    // Now let's read in the data, and check to see if it matches 
    while (datasize > 0)
    {
-      if (MappedMemoryReadByte(sh, sh->regs.R[6]) != MappedMemoryReadByte(sh, tableaddr))
+      if (sh->MappedMemoryReadByte(sh, sh->regs.R[6]) != sh->MappedMemoryReadByte(sh, tableaddr))
       {
          free(blocktbl);
          // Ok, the data doesn't match
@@ -1336,10 +1336,10 @@ static void ConvertMonthAndDay(SH2_struct *sh, u32 data, u32 monthaddr, u32 daya
    if (data < monthtbl[0])
    {
       // Month
-      MappedMemoryWriteByte(sh, monthaddr, 1);
+      sh->MappedMemoryWriteByte(sh, monthaddr, 1);
 
       // Day
-      MappedMemoryWriteByte(sh, dayaddr, (u8)(data + 1));
+      sh->MappedMemoryWriteByte(sh, dayaddr, (u8)(data + 1));
       return;
    }
 
@@ -1352,21 +1352,21 @@ static void ConvertMonthAndDay(SH2_struct *sh, u32 data, u32 monthaddr, u32 daya
    if (type == 1)
    {
       // Month
-      MappedMemoryWriteByte(sh, monthaddr, (u8)(i + 1));
+      sh->MappedMemoryWriteByte(sh, monthaddr, (u8)(i + 1));
 
       // Day
       if ((i + 1) == 2)
-         MappedMemoryWriteByte(sh, dayaddr, (u8)(data - monthtbl[(i - 1)] + 1));
+         sh->MappedMemoryWriteByte(sh, dayaddr, (u8)(data - monthtbl[(i - 1)] + 1));
       else
-         MappedMemoryWriteByte(sh, dayaddr, (u8)(data - monthtbl[(i - 1)]));
+         sh->MappedMemoryWriteByte(sh, dayaddr, (u8)(data - monthtbl[(i - 1)]));
    }
    else
    {
       // Month
-      MappedMemoryWriteByte(sh, monthaddr, (u8)(i + 1));
+      sh->MappedMemoryWriteByte(sh, monthaddr, (u8)(i + 1));
       
       // Day
-      MappedMemoryWriteByte(sh, dayaddr, (u8)(data - monthtbl[(i - 1)] + 1));
+      sh->MappedMemoryWriteByte(sh, dayaddr, (u8)(data - monthtbl[(i - 1)] + 1));
    }
 }
 
@@ -1386,18 +1386,18 @@ static void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    date = sh->regs.R[4];
 
    // Time
-   MappedMemoryWriteByte(sh, sh->regs.R[5]+3, (u8)((date % 0x5A0) / 0x3C));
+   sh->MappedMemoryWriteByte(sh, sh->regs.R[5]+3, (u8)((date % 0x5A0) / 0x3C));
 
    // Minute
-   MappedMemoryWriteByte(sh, sh->regs.R[5]+4, (u8)(date % 0x3C));
+   sh->MappedMemoryWriteByte(sh, sh->regs.R[5]+4, (u8)(date % 0x3C));
 
    div = date / 0x5A0;
 
    // Week
    if (div > 0xAB71)
-      MappedMemoryWriteByte(sh, sh->regs.R[5]+5, (u8)((div + 1) % 7));
+      sh->MappedMemoryWriteByte(sh, sh->regs.R[5]+5, (u8)((div + 1) % 7));
    else
-      MappedMemoryWriteByte(sh, sh->regs.R[5]+5, (u8)((div + 2) % 7));
+      sh->MappedMemoryWriteByte(sh, sh->regs.R[5]+5, (u8)((div + 2) % 7));
 
    yearremainder = div % 0x5B5;
 
@@ -1413,7 +1413,7 @@ static void FASTCALL BiosBUPGetDate(SH2_struct * sh)
    }
 
    // Year
-   MappedMemoryWriteByte(sh, sh->regs.R[5], (u8)(((div / 0x5B5) * 4) + yearoffset));
+   sh->MappedMemoryWriteByte(sh, sh->regs.R[5], (u8)(((div / 0x5B5) * 4) + yearoffset));
    
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -1437,14 +1437,14 @@ static void FASTCALL BiosBUPSetDate(SH2_struct * sh)
    LOG("BiosBUPSetDate. PR = %08X\n", sh->regs.PR);
 
    // Year
-   data = MappedMemoryReadByte(sh, sh->regs.R[4]);
+   data = sh->MappedMemoryReadByte(sh, sh->regs.R[4]);
    date = (data / 4) * 0x5B5;
    remainder = data % 4;
    if (remainder)
       date += (remainder * 0x16D) + 1;
 
    // Month
-   data = MappedMemoryReadByte(sh, sh->regs.R[4]+1);
+   data = sh->MappedMemoryReadByte(sh, sh->regs.R[4]+1);
    if (data != 1 && data < 13)
    {
       date += monthtbl[data - 2];
@@ -1453,14 +1453,14 @@ static void FASTCALL BiosBUPSetDate(SH2_struct * sh)
    }
 
    // Day
-   date += MappedMemoryReadByte(sh, sh->regs.R[4]+2) - 1;
+   date += sh->MappedMemoryReadByte(sh, sh->regs.R[4]+2) - 1;
    date *= 0x5A0;
 
    // Hour
-   date += (MappedMemoryReadByte(sh, sh->regs.R[4]+3) * 0x3C);
+   date += (sh->MappedMemoryReadByte(sh, sh->regs.R[4]+3) * 0x3C);
 
    // Minute
-   date += MappedMemoryReadByte(sh, sh->regs.R[4]+4);
+   date += sh->MappedMemoryReadByte(sh, sh->regs.R[4]+4);
 
    sh->regs.R[0] = date;
    sh->regs.PC = sh->regs.PR;
@@ -1475,40 +1475,40 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
 
    // Save R0-R7, PR, GBR, and old Interrupt mask to stack
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[0]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[0]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[1]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[1]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[2]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[2]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[3]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[3]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], MappedMemoryReadLong(sh, 0x06000348));
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->MappedMemoryReadLong(sh, 0x06000348));
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[4]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[4]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[5]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[5]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[6]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[6]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[7]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.R[7]);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.PR);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.PR);
    sh->regs.R[15] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.GBR);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15], sh->regs.GBR);
 
    // Set SR according to vector
    sh->regs.SR.all = (u32)sh2masklist[vector - 0x40];
 
    // Write new Interrupt mask value   
-   MappedMemoryWriteLong(sh, 0x06000348, MappedMemoryReadLong(sh, 0x06000348) | scumasklist[vector - 0x40]);
-   MappedMemoryWriteLong(sh, 0x25FE00A0, MappedMemoryReadLong(sh, 0x06000348) | scumasklist[vector - 0x40]);
+   sh->MappedMemoryWriteLong(sh, 0x06000348, sh->MappedMemoryReadLong(sh, 0x06000348) | scumasklist[vector - 0x40]);
+   sh->MappedMemoryWriteLong(sh, 0x25FE00A0, sh->MappedMemoryReadLong(sh, 0x06000348) | scumasklist[vector - 0x40]);
 
    // Set PR to our Interrupt Return handler
    sh->regs.PR = 0x00000480;
 
    // Now execute the interrupt
-   sh->regs.PC = MappedMemoryReadLong(sh, 0x06000900+(vector << 2));
+   sh->regs.PC = sh->MappedMemoryReadLong(sh, 0x06000900+(vector << 2));
 //   LOG("Interrupt PC = %08X. Read from %08X\n", sh->regs.PC, 0x06000900+(vector << 2));
 
    sh->cycles += 33;
@@ -1524,36 +1524,36 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // Restore R0-R7, PR, GBR, and old Interrupt mask from stack
-   sh->regs.GBR = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.GBR = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.PR = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.PR = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.R[7] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[7] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.R[6] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[6] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.R[5] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[5] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.R[4] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[4] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
    // Return SR back to normal
    sh->regs.SR.all = 0xF0;
-   oldmask = MappedMemoryReadLong(sh, sh->regs.R[15]);
-   MappedMemoryWriteLong(sh, 0x06000348, oldmask);
-   MappedMemoryWriteLong(sh, 0x25FE00A0, oldmask);
+   oldmask = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->MappedMemoryWriteLong(sh, 0x06000348, oldmask);
+   sh->MappedMemoryWriteLong(sh, 0x25FE00A0, oldmask);
    sh->regs.R[15] += 4;
-   sh->regs.R[3] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[3] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.R[2] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[2] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.R[1] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[1] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.R[0] = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.R[0] = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
 
-   sh->regs.PC = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.PC = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.SR.all = MappedMemoryReadLong(sh, sh->regs.R[15]) & 0x000003F3;
+   sh->regs.SR.all = sh->MappedMemoryReadLong(sh, sh->regs.R[15]) & 0x000003F3;
    sh->regs.R[15] += 4;
 
    sh->cycles += 24;
@@ -1773,7 +1773,7 @@ saveinfo_struct *BupGetSaveList(SH2_struct *sh, u32 device, int *numsaves)
    for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(sh, addr + i + 1)) < 0)
+      if (((s8)sh->MappedMemoryReadByte(sh, addr + i + 1)) < 0)
          savecount++;
    }
 
@@ -1790,22 +1790,22 @@ saveinfo_struct *BupGetSaveList(SH2_struct *sh, u32 device, int *numsaves)
    for (i = ((2 * blocksize) << 1); i < (size << 1); i += (blocksize << 1))
    {
       // Find a block with the start of a save
-      if (((s8)MappedMemoryReadByte(sh, addr + i + 1)) < 0)
+      if (((s8)sh->MappedMemoryReadByte(sh, addr + i + 1)) < 0)
       {
          workaddr = addr + i;
 
          // Copy over filename
          for (j = 0; j < 11; j++)
-            save[savecount].filename[j] = MappedMemoryReadByte(sh, workaddr+0x9+(j * 2));
+            save[savecount].filename[j] = sh->MappedMemoryReadByte(sh, workaddr+0x9+(j * 2));
          save[savecount].filename[11] = '\0';
 
          // Copy over comment
          for (j = 0; j < 10; j++)
-            save[savecount].comment[j] = MappedMemoryReadByte(sh, workaddr+0x21+(j * 2));
+            save[savecount].comment[j] = sh->MappedMemoryReadByte(sh, workaddr+0x21+(j * 2));
          save[savecount].comment[10] = '\0';
 
          // Copy over language
-         save[savecount].language = MappedMemoryReadByte(sh, workaddr+0x1F);
+         save[savecount].language = sh->MappedMemoryReadByte(sh, workaddr+0x1F);
 
          // Copy over Date(fix me)
          save[savecount].year = 0;
@@ -1816,10 +1816,10 @@ saveinfo_struct *BupGetSaveList(SH2_struct *sh, u32 device, int *numsaves)
          save[savecount].week = 0;
 
          // Copy over data size
-         save[savecount].datasize = (MappedMemoryReadByte(sh, workaddr+0x3D) << 24) |
-                                    (MappedMemoryReadByte(sh, workaddr+0x3F) << 16) |
-                                    (MappedMemoryReadByte(sh, workaddr+0x41) << 8) |
-                                    MappedMemoryReadByte(sh, workaddr+0x43);
+         save[savecount].datasize = (sh->MappedMemoryReadByte(sh, workaddr+0x3D) << 24) |
+                                    (sh->MappedMemoryReadByte(sh, workaddr+0x3F) << 16) |
+                                    (sh->MappedMemoryReadByte(sh, workaddr+0x41) << 8) |
+            sh->MappedMemoryReadByte(sh, workaddr+0x43);
 
          // Calculate size in blocks
          save[savecount].blocksize = CalcSaveSize(sh, workaddr+0x45, blocksize) + 1;

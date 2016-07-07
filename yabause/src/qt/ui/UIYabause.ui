@@ -236,6 +236,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="aHelpDocumentation"/>
     <addaction name="aHelpCompatibilityList"/>
     <addaction name="aHelpAbout"/>
    </widget>
@@ -860,7 +861,7 @@
   </action>
   <action name="aHelpCompatibilityList">
    <property name="icon">
-    <iconset resource="../resources/resources.qrc">
+    <iconset>
      <normaloff>:/actions/icons/actions/compatibility.png</normaloff>:/actions/icons/actions/compatibility.png</iconset>
    </property>
    <property name="text">
@@ -965,6 +966,14 @@
    </property>
    <property name="text">
     <string>SH1</string>
+   </property>
+  </action>
+  <action name="aHelpDocumentation">
+   <property name="text">
+    <string>Documentation</string>
+   </property>
+   <property name="statusTip">
+    <string>http://wiki.yabause.org/index.php5?title=Documentations</string>
    </property>
   </action>
  </widget>

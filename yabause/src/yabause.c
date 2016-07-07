@@ -97,6 +97,7 @@
 #include "sh7034.h"
 #include "cd_drive.h"
 #include "tsunami/yab_tsunami.h"
+#include "mpeg_card.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -165,8 +166,18 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.use_cd_block_lle = init->use_cd_block_lle;
-   yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
-   yabsys.use_scu_dma_timing = init->use_scu_dma_timing;
+   if (yabsys.use_cd_block_lle)
+   {
+      yabsys.use_sh2_dma_timing = 1;
+      yabsys.use_scu_dma_timing = 1;
+      yabsys.sh2_cache_enabled = 1;
+   }
+   else
+   {
+      yabsys.use_sh2_dma_timing = init->use_sh2_dma_timing;
+      yabsys.use_scu_dma_timing = init->use_scu_dma_timing;
+      yabsys.sh2_cache_enabled = init->sh2_cache_enabled;
+   }
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -219,12 +230,20 @@ int YabauseInit(yabauseinit_struct *init)
    if ((SH1Dram = T2MemoryInit(0x80000)) == NULL)
       return -1;
 
-   if ((SH1MpegRom = T2MemoryInit(0x8000)) == NULL)
+   if ((SH1MpegRom = T2MemoryInit(0x80000)) == NULL)
       return -1;
 
    // Initialize CD Block 
    if (init->use_cd_block_lle)
    {
+#if defined(SH2_DYNAREC)
+      if (init->sh1coretype == SH2CORE_DYNAREC)
+      {
+         YabSetError(YAB_ERR_CANNOTINIT, _("SH1. Dynarec core not supported for SH1 emulation."));
+         return -1;
+      }
+#endif
+
       if (SH1Init(init->sh1coretype) != 0)
       {
          YabSetError(YAB_ERR_CANNOTINIT, _("SH1"));
@@ -237,6 +256,20 @@ int YabauseInit(yabauseinit_struct *init)
             if (LoadSH1Rom(init->sh1rompath) != 0)
             {
                YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->sh1rompath);
+               return -2;
+            }
+         }
+         else
+         {
+            YabSetError(YAB_ERR_CANNOTINIT, _("CD Block. It needs a SH1 ROM Defined."));
+            return -1;
+         }
+
+         if (init->mpegpath != NULL && strlen(init->mpegpath))
+         {
+            if (LoadMpegRom(init->mpegpath) != 0)
+            {
+               YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->mpegpath);
                return -2;
             }
          }
@@ -316,6 +349,12 @@ int YabauseInit(yabauseinit_struct *init)
    }
    else
       yabsys.emulatebios = 1;
+
+   if (yabsys.emulatebios && yabsys.use_cd_block_lle)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("CD Block. A real bios must be defined and enabled for CD Block LLE. Emulated bios not supported."));
+      return -1;
+   }
 
    yabsys.usequickload = 0;
 
@@ -742,6 +781,7 @@ int YabauseEmulate(void) {
             // VBlankOUT
             PROFILE_START("VDP1/VDP2");
             Vdp2VBlankOUT();
+            set_mpeg_video_irq();//guessing: set video irq once per frame
             yabsys.LineCount = 0;
             oneframeexec = 1;
             PROFILE_STOP("VDP1/VDP2");
@@ -830,30 +870,30 @@ int YabauseEmulate(void) {
 void YabauseStartSlave(void) {
    if (yabsys.emulatebios)
    {
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFE0, 0xA55A03F1); // BCR1
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFE4, 0xA55A00FC); // BCR2
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFE8, 0xA55A5555); // WCR
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFEC, 0xA55A0070); // MCR
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFE0, 0xA55A03F1); // BCR1
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFE4, 0xA55A00FC); // BCR2
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFE8, 0xA55A5555); // WCR
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFEC, 0xA55A0070); // MCR
 
-      MappedMemoryWriteWord(SSH2, 0xFFFFFEE0, 0x0000); // ICR
-      MappedMemoryWriteWord(SSH2, 0xFFFFFEE2, 0x0000); // IPRA
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE60, 0x0F00); // VCRWDT
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE62, 0x6061); // VCRA
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE64, 0x6263); // VCRB
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE66, 0x6465); // VCRC
-      MappedMemoryWriteWord(SSH2, 0xFFFFFE68, 0x6600); // VCRD
-      MappedMemoryWriteWord(SSH2, 0xFFFFFEE4, 0x6869); // VCRWDT
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFA8, 0x0000006C); // VCRDMA1
-      MappedMemoryWriteLong(SSH2, 0xFFFFFFA0, 0x0000006D); // VCRDMA0
-      MappedMemoryWriteLong(SSH2, 0xFFFFFF0C, 0x0000006E); // VCRDIV
-      MappedMemoryWriteLong(SSH2, 0xFFFFFE10, 0x00000081); // TIER
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFEE0, 0x0000); // ICR
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFEE2, 0x0000); // IPRA
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE60, 0x0F00); // VCRWDT
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE62, 0x6061); // VCRA
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE64, 0x6263); // VCRB
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE66, 0x6465); // VCRC
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFE68, 0x6600); // VCRD
+      SSH2->MappedMemoryWriteWord(SSH2, 0xFFFFFEE4, 0x6869); // VCRWDT
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFA8, 0x0000006C); // VCRDMA1
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFFA0, 0x0000006D); // VCRDMA0
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFF0C, 0x0000006E); // VCRDIV
+      SSH2->MappedMemoryWriteLong(SSH2, 0xFFFFFE10, 0x00000081); // TIER
 
       SH2GetRegisters(SSH2, &SSH2->regs);
       SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
       SSH2->regs.VBR = 0x06000400;
-      SSH2->regs.PC = MappedMemoryReadLong(MSH2, 0x06000250);
-      if (MappedMemoryReadLong(MSH2, 0x060002AC) != 0)
-         SSH2->regs.R[15] = MappedMemoryReadLong(MSH2, 0x060002AC);
+      SSH2->regs.PC = MSH2->MappedMemoryReadLong(MSH2, 0x06000250);
+      if (MSH2->MappedMemoryReadLong(MSH2, 0x060002AC) != 0)
+         SSH2->regs.R[15] = MSH2->MappedMemoryReadLong(MSH2, 0x060002AC);
       SH2SetRegisters(SSH2, &SSH2->regs);
    }
    else

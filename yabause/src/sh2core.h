@@ -372,6 +372,14 @@ struct SH2_struct
    readwordfunc ReadWordList[0x1000];
    readlongfunc ReadLongList[0x1000];
 
+   writebytefunc MappedMemoryWriteByte;
+   writewordfunc MappedMemoryWriteWord;
+   writelongfunc MappedMemoryWriteLong;
+
+   readbytefunc MappedMemoryReadByte;
+   readwordfunc MappedMemoryReadWord;
+   readlongfunc MappedMemoryReadLong;
+
    sh2regs_struct regs;
    Onchip_struct onchip;
 
@@ -557,6 +565,8 @@ void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *sh, u32 addr, u16 data);
 
 int SH2SaveState(SH2_struct *context, FILE *fp);
 int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
+
+u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size);
 
 #if defined(SH2_DYNAREC)
 extern SH2Interface_struct SH2Dynarec;

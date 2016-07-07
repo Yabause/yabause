@@ -28,6 +28,16 @@
 #include "memory.h"
 #include "yabause.h"
 #include "sh7034.h"
+#include "cs0.h"
+#include "cs1.h"
+#include "cs2.h"
+#include "scsp.h"
+#include "vdp1.h"
+#include "vdp2.h"
+#include "ygr.h"
+#include "assert.h"
+#include "smpc.h"
+#include "scu.h"
 
 // SH1/SH2 differences
 // SH1's mac.w operates at a smaller precision. 16x16+42 instead of 16x16+64
@@ -66,6 +76,13 @@ int SH1Init(int coreid)
    SH1->isslave = 0;
    SH1->model = SHMT_SH1;
 
+   SH1->MappedMemoryReadByte = Sh1MemoryReadByte;
+   SH1->MappedMemoryReadWord = Sh1MemoryReadWord;
+   SH1->MappedMemoryReadLong = Sh1MemoryReadLong;
+   SH1->MappedMemoryWriteByte = Sh1MemoryWriteByte;
+   SH1->MappedMemoryWriteWord = Sh1MemoryWriteWord;
+   SH1->MappedMemoryWriteLong = Sh1MemoryWriteLong;
+
    // So which core do we want?
    if (coreid == SH2CORE_DEFAULT)
       coreid = 0; // Assume we want the first one
@@ -96,6 +113,28 @@ int SH1Init(int coreid)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void sh2_set_read_write_funcs(SH2_struct * sh)
+{
+   if (yabsys.sh2_cache_enabled)
+   {
+      sh->MappedMemoryReadByte = MappedMemoryReadByteCacheEnabled;
+      sh->MappedMemoryReadWord = MappedMemoryReadWordCacheEnabled;
+      sh->MappedMemoryReadLong = MappedMemoryReadLongCacheEnabled;
+      sh->MappedMemoryWriteByte = MappedMemoryWriteByteCacheEnabled;
+      sh->MappedMemoryWriteWord = MappedMemoryWriteWordCacheEnabled;
+      sh->MappedMemoryWriteLong = MappedMemoryWriteLongCacheEnabled;
+   }
+   else
+   {
+      sh->MappedMemoryReadByte = MappedMemoryReadByteNocache;
+      sh->MappedMemoryReadWord = MappedMemoryReadWordNocache;
+      sh->MappedMemoryReadLong = MappedMemoryReadLongNocache;
+      sh->MappedMemoryWriteByte = MappedMemoryWriteByteNocache;
+      sh->MappedMemoryWriteWord = MappedMemoryWriteWordNocache;
+      sh->MappedMemoryWriteLong = MappedMemoryWriteLongNocache;
+   }
+}
+
 int SH2Init(int coreid)
 {
    int i;
@@ -111,6 +150,8 @@ int SH2Init(int coreid)
    MSH2->isslave = 0;
    MSH2->model = SHMT_SH2;
 
+   sh2_set_read_write_funcs(MSH2);
+
    // SSH2
    if ((SSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
       return -1;
@@ -121,6 +162,8 @@ int SH2Init(int coreid)
    SSH2->onchip.BCR1 = 0x8000;
    SSH2->isslave = 1;
    SSH2->model = SHMT_SH2;
+
+   sh2_set_read_write_funcs(SSH2);
 
    // So which core do we want?
    if (coreid == SH2CORE_DEFAULT)
@@ -238,8 +281,8 @@ void SH2Reset(SH2_struct *context)
 void SH2PowerOn(SH2_struct *context) {
    SH2Interface_struct *core=context->core;
    u32 VBR = core->GetVBR(context);
-   core->SetPC(context, MappedMemoryReadLong(context, VBR));
-   core->SetGPR(context, 15, MappedMemoryReadLong(context, VBR+4));
+   core->SetPC(context, context->MappedMemoryReadLong(context, VBR));
+   core->SetGPR(context, 15, context->MappedMemoryReadLong(context, VBR+4));
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -248,14 +291,15 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
    context->core->Exec(context, cycles);
 
-   FRTExec(context, cycles);
-   WDTExec(context, cycles);
-
-   if(yabsys.use_sh2_dma_timing && context->model == SHMT_SH2)
-       sh2_dma_exec(context, cycles);
-
    if(context->model == SHMT_SH1)
       sh1_onchip_run_cycles(cycles);
+   else
+      FRTExec(context, cycles);
+
+   WDTExec(context, cycles);
+
+   if (context->model == SHMT_SH2 && yabsys.use_sh2_dma_timing)
+      sh2_dma_exec(context, cycles);
 
    if (UNLIKELY(context->cycles < cycles))
       context->cycles = 0;
@@ -305,7 +349,7 @@ int SH2StepOver(SH2_struct *context, void (*func)(void *, u32, void *))
    if (core)
    {
       u32 tmp = core->GetPC(context);
-      u16 inst=MappedMemoryReadWord(context, context->regs.PC);
+      u16 inst= context->MappedMemoryReadWord(context, context->regs.PC);
 
       // If instruction is jsr, bsr, or bsrf, step over it
       if ((inst & 0xF000) == 0xB000 || // BSR 
@@ -1816,110 +1860,118 @@ void FASTCALL OnchipWriteLong(SH2_struct *sh, u32 addr, u32 val)  {
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL AddressArrayReadLong(SH2_struct *sh, u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (sh->onchip.CCR >> 6) & 3;
-   int entry = (addr & 0x3FC) >> 4;
-   u32 data = sh->onchip.cache.way[way][entry].tag;
-   data |= sh->onchip.cache.lru[entry] << 4;
-   data |= sh->onchip.cache.way[way][entry].v << 2;
-   return data;
-#else
-   return sh->AddressArray[(addr & 0x3FC) >> 2];
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (sh->onchip.CCR >> 6) & 3;
+      int entry = (addr & 0x3FC) >> 4;
+      u32 data = sh->onchip.cache.way[way][entry].tag;
+      data |= sh->onchip.cache.lru[entry] << 4;
+      data |= sh->onchip.cache.way[way][entry].v << 2;
+      return data;
+   }
+   else
+      return sh->AddressArray[(addr & 0x3FC) >> 2];
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL AddressArrayWriteLong(SH2_struct *sh, u32 addr, u32 val)  {
-#ifdef CACHE_ENABLE
-   int way = (sh->onchip.CCR >> 6) & 3;
-   int entry = (addr & 0x3FC) >> 4;
-   sh->onchip.cache.way[way][entry].tag = addr & 0x1FFFFC00;
-   sh->onchip.cache.way[way][entry].v = (addr >> 2) & 1;
-   sh->onchip.cache.lru[entry] = (val >> 4) & 0x3f;
-#else
-   sh->AddressArray[(addr & 0x3FC) >> 2] = val;
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (sh->onchip.CCR >> 6) & 3;
+      int entry = (addr & 0x3FC) >> 4;
+      sh->onchip.cache.way[way][entry].tag = addr & 0x1FFFFC00;
+      sh->onchip.cache.way[way][entry].v = (addr >> 2) & 1;
+      sh->onchip.cache.lru[entry] = (val >> 4) & 0x3f;
+   }
+   else
+      sh->AddressArray[(addr & 0x3FC) >> 2] = val;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL DataArrayReadByte(SH2_struct *sh, u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   return sh->onchip.cache.way[way][entry].data[addr&0xf];
-#else
-   return T2ReadByte(sh->DataArray, addr & 0xFFF);
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (addr >> 10) & 3;
+      int entry = (addr >> 4) & 0x3f;
+      return sh->onchip.cache.way[way][entry].data[addr & 0xf];
+   }
+   else
+      return T2ReadByte(sh->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL DataArrayReadWord(SH2_struct *sh, u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   return ((u16)(sh->onchip.cache.way[way][entry].data[addr&0xf]) << 8) | sh->onchip.cache.way[way][entry].data[(addr&0xf) + 1];
-#else
-   return T2ReadWord(sh->DataArray, addr & 0xFFF);
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (addr >> 10) & 3;
+      int entry = (addr >> 4) & 0x3f;
+      return ((u16)(sh->onchip.cache.way[way][entry].data[addr & 0xf]) << 8) | sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 1];
+   }
+   else
+      return T2ReadWord(sh->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL DataArrayReadLong(SH2_struct *sh, u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   u32 data = ((u32)(sh->onchip.cache.way[way][entry].data[addr&0xf]) << 24) |
-      ((u32)(sh->onchip.cache.way[way][entry].data[(addr& 0xf) + 1]) << 16) |
-      ((u32)(sh->onchip.cache.way[way][entry].data[(addr& 0xf) + 2]) << 8) |
-      ((u32)(sh->onchip.cache.way[way][entry].data[(addr& 0xf) + 3]) << 0);
-   return data;
-#else
-   return T2ReadLong(sh->DataArray, addr & 0xFFF);
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (addr >> 10) & 3;
+      int entry = (addr >> 4) & 0x3f;
+      u32 data = ((u32)(sh->onchip.cache.way[way][entry].data[addr & 0xf]) << 24) |
+         ((u32)(sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 1]) << 16) |
+         ((u32)(sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 2]) << 8) |
+         ((u32)(sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 3]) << 0);
+      return data;
+   }
+   else
+      return T2ReadLong(sh->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteByte(SH2_struct *sh, u32 addr, u8 val)  {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   sh->onchip.cache.way[way][entry].data[addr&0xf] = val;
-#else
-   T2WriteByte(sh->DataArray, addr & 0xFFF, val);
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (addr >> 10) & 3;
+      int entry = (addr >> 4) & 0x3f;
+      sh->onchip.cache.way[way][entry].data[addr & 0xf] = val;
+   }
+   else
+      T2WriteByte(sh->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteWord(SH2_struct *sh, u32 addr, u16 val)  {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   sh->onchip.cache.way[way][entry].data[addr&0xf] = val >> 8;
-   sh->onchip.cache.way[way][entry].data[(addr&0xf) + 1] = val;
-#else
-   T2WriteWord(sh->DataArray, addr & 0xFFF, val);
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (addr >> 10) & 3;
+      int entry = (addr >> 4) & 0x3f;
+      sh->onchip.cache.way[way][entry].data[addr & 0xf] = val >> 8;
+      sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 1] = val;
+   }
+   else
+      T2WriteWord(sh->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteLong(SH2_struct *sh, u32 addr, u32 val)  {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   sh->onchip.cache.way[way][entry].data[(addr& 0xf)] = ((val >> 24) & 0xFF);
-   sh->onchip.cache.way[way][entry].data[(addr& 0xf) + 1] = ((val >> 16) & 0xFF);
-   sh->onchip.cache.way[way][entry].data[(addr& 0xf) + 2] = ((val >> 8) & 0xFF);
-   sh->onchip.cache.way[way][entry].data[(addr& 0xf) + 3] = ((val >> 0) & 0xFF);
-#else
-   T2WriteLong(sh->DataArray, addr & 0xFFF, val);
-#endif
+   if (yabsys.sh2_cache_enabled)
+   {
+      int way = (addr >> 10) & 3;
+      int entry = (addr >> 4) & 0x3f;
+      sh->onchip.cache.way[way][entry].data[(addr & 0xf)] = ((val >> 24) & 0xFF);
+      sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 1] = ((val >> 16) & 0xFF);
+      sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 2] = ((val >> 8) & 0xFF);
+      sh->onchip.cache.way[way][entry].data[(addr & 0xf) + 3] = ((val >> 0) & 0xFF);
+   }
+   else
+      T2WriteLong(sh->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2023,6 +2075,481 @@ void WDTExec(SH2_struct *sh, u32 cycles) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+u32 sh2_dma_access(u32 addr, u32 data, int is_read, int size)
+{
+   addr &= 0xfffffff;
+
+   if (addr <= 0x00fffff)
+   {
+      //bios
+      if (is_read)
+      {
+         if (size == 0)
+            return BiosRomMemoryReadByte(addr);
+         else if (size == 1)
+            return BiosRomMemoryReadWord(addr);
+         else
+            return BiosRomMemoryReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            BiosRomMemoryWriteByte(addr, data);
+         else if (size == 1)
+            BiosRomMemoryWriteWord(addr, data);
+         else
+            BiosRomMemoryWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x0100000 && addr <= 0x017ffff)
+   {
+      //smpc
+      if (is_read)
+      {
+         if (size == 0)
+            return SmpcReadByte(MSH2, addr);
+         else if (size == 1)
+            return SmpcReadWord(MSH2, addr);
+         else
+            return SmpcReadLong(MSH2, addr);
+      }
+      else
+      {
+         if (size == 0)
+            SmpcWriteByte(MSH2, addr, data);
+         else if (size == 1)
+            SmpcWriteWord(MSH2, addr, data);
+         else
+            SmpcWriteLong(MSH2, addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x0180000 && addr <= 0x01fffff)
+   {
+      //backup ram
+      if (is_read)
+      {
+         if (size == 0)
+            return BupRamMemoryReadByte(addr);
+         else if (size == 1)
+            return BupRamMemoryReadWord(addr);
+         else
+            return BupRamMemoryReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            BupRamMemoryWriteByte(addr, data);
+         else if (size == 1)
+            BupRamMemoryWriteWord(addr, data);
+         else
+            BupRamMemoryWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x0200000 && addr <= 0x02fffff)
+   {
+      //low wram
+      if (is_read)
+      {
+         if (size == 0)
+            return LowWramMemoryReadByte(addr);
+         else if (size == 1)
+            return LowWramMemoryReadWord(addr);
+         else
+            return LowWramMemoryReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            LowWramMemoryWriteByte(addr, data);
+         else if (size == 1)
+            LowWramMemoryWriteWord(addr, data);
+         else
+            LowWramMemoryWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x1000000 && addr <= 0x17fffff)
+   {
+      //ssh2 input capture
+      if (is_read)
+      {
+         if (size == 0)
+            return UnhandledMemoryReadByte(addr);
+         else if (size == 1)
+            return UnhandledMemoryReadWord(addr);
+         else
+            return UnhandledMemoryReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            UnhandledMemoryWriteByte(addr, data);
+         else if (size == 1)
+            SSH2InputCaptureWriteWord(MSH2, addr, data);
+         else
+            UnhandledMemoryWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x1800000 && addr <= 0x1ffffff)
+   {
+      //msh2 input capture
+      if (is_read)
+      {
+         if (size == 0)
+            return UnhandledMemoryReadByte(addr);
+         else if (size == 1)
+            return UnhandledMemoryReadWord(addr);
+         else
+            return UnhandledMemoryReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            UnhandledMemoryWriteByte(addr, data);
+         else if (size == 1)
+            MSH2InputCaptureWriteWord(MSH2, addr, data);
+         else
+            UnhandledMemoryWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x2000000 && addr <= 0x3ffffff)
+   {
+      //cs0
+      if (is_read)
+      {
+         if(size == 0)
+            return CartridgeArea->Cs0ReadByte(MSH2, addr);
+         else if (size == 1)
+            return CartridgeArea->Cs0ReadWord(MSH2, addr);
+         else
+            return CartridgeArea->Cs0ReadLong(MSH2, addr);
+      }
+      else
+      {
+         if(size == 0)
+            CartridgeArea->Cs0WriteByte(MSH2, addr, data);
+         else if (size == 1)
+            CartridgeArea->Cs0WriteWord(MSH2, addr, data);
+         else
+            CartridgeArea->Cs0WriteLong(MSH2, addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x4000000 && addr <= 0x4ffffff)
+   {
+      if (is_read)
+      {
+         if (size == 0)
+            return Cs1ReadByte(MSH2, addr);
+         else if (size == 1)
+            return Cs1ReadWord(MSH2, addr);
+         else
+            return Cs1ReadLong(MSH2, addr);
+      }
+      else
+      {
+         if (size == 0)
+            Cs1WriteByte(MSH2, addr, data);
+         else if (size == 1)
+            Cs1WriteWord(MSH2, addr, data);
+         else
+            Cs1WriteLong(MSH2, addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5000000 && addr <= 0x57fffff)
+   {
+      //dummy
+   }
+   else if (addr >= 0x5800000 && addr <= 0x58fffff)
+   {
+      //cs2
+      if (yabsys.use_cd_block_lle)
+      {
+         if (is_read)
+         {
+            if (size == 0)
+               return Cs2ReadByte(MSH2, addr);
+            else if (size == 1)
+               return ygr_a_bus_read_word(addr);
+            else
+               return ygr_a_bus_read_long(addr);
+         }
+         else
+         {
+            if (size == 0)
+               Cs2WriteByte(MSH2, addr, data);
+            else if (size == 1)
+               ygr_a_bus_write_word(addr, data);
+            else
+               ygr_a_bus_write_long(addr, data);
+            return 0;
+         }
+      }
+      else
+      {
+         if (is_read)
+         {
+            if (size == 0)
+               return Cs2ReadByte(MSH2, addr);
+            else if (size == 1)
+               return Cs2ReadWord(MSH2, addr);
+            else
+               return Cs2ReadLong(MSH2, addr);
+         }
+         else
+         {
+            if (size == 0)
+               Cs2WriteByte(MSH2, addr, data);
+            else if (size == 1)
+               Cs2WriteWord(MSH2, addr, data);
+            else
+               Cs2WriteLong(MSH2, addr, data);
+            return 0;
+         }
+      }
+   }
+   else if (addr >= 0x5a00000 && addr <= 0x5afffff)
+   {
+      //sound ram
+      if (is_read)
+      {
+         if (size == 0)
+            return SoundRamReadByte(addr);
+         else if (size == 1)
+            return SoundRamReadWord(addr);
+         else
+            return SoundRamReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            SoundRamWriteByte(addr, data);
+         else if (size == 1)
+            SoundRamWriteWord(addr, data);
+         else
+            SoundRamWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5b00000 && addr <= 0x5bfffff)
+   {
+      //scsp regs
+      if (is_read)
+      {
+         if (size == 0)
+            return ScspReadByte(addr);
+         else if (size == 1)
+            return ScspReadWord(addr);
+         else
+            return ScspReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            ScspWriteByte(addr, data);
+         else if (size == 1)
+            ScspWriteWord(addr, data);
+         else
+            ScspWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5c00000 && addr <= 0x5c7ffff)
+   {
+      //vdp1 ram
+      if (is_read)
+      {
+         if (size == 0)
+            return Vdp1RamReadByte(addr);
+         else if (size == 1)
+            return Vdp1RamReadWord(addr);
+         else
+            return Vdp1RamReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            Vdp1RamWriteByte(addr, data);
+         else if (size == 1)
+            Vdp1RamWriteWord(addr, data);
+         else
+            Vdp1RamWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5c80000 && addr <= 0x5cfffff)
+   {
+      //vdp1 framebuffer
+      if (is_read)
+      {
+         if (size == 0)
+            return Vdp1FrameBufferReadByte(addr);
+         else if (size == 1)
+            return Vdp1FrameBufferReadWord(addr);
+         else
+            return Vdp1FrameBufferReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            Vdp1FrameBufferWriteByte(addr, data);
+         else if (size == 1)
+            Vdp1FrameBufferWriteWord(addr, data);
+         else
+            Vdp1FrameBufferWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5d00000 && addr <= 0x5d7ffff)
+   {
+      //vdp1 registers
+      if (is_read)
+      {
+         if (size == 0)
+            return Vdp1ReadByte(addr);
+         else if (size == 1)
+            return Vdp1ReadWord(addr);
+         else
+            return Vdp1ReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            Vdp1WriteByte(addr, data);
+         else if (size == 1)
+            Vdp1WriteWord(addr, data);
+         else
+            Vdp1WriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5e00000 && addr <= 0x5efffff)
+   {
+      //vdp2 ram
+      if (is_read)
+      {
+         if (size == 0)
+            return Vdp2RamReadByte(addr);
+         else if (size == 1)
+            return Vdp2RamReadWord(addr);
+         else
+            return Vdp2RamReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            Vdp2RamWriteByte(addr, data);
+         else if (size == 1)
+            Vdp2RamWriteWord(addr, data);
+         else
+            Vdp2RamWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5f00000 && addr <= 0x5f7ffff)
+   {
+      //vdp2 color ram
+      if (is_read)
+      {
+         if (size == 0)
+            return Vdp2ColorRamReadByte(addr);
+         else if (size == 1)
+            return Vdp2ColorRamReadWord(addr);
+         else
+            return Vdp2ColorRamReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            Vdp2ColorRamWriteByte(addr, data);
+         else if (size == 1)
+            Vdp2ColorRamWriteWord(addr, data);
+         else
+            Vdp2ColorRamWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5f80000 && addr <= 0x5fbffff)
+   {
+      //vdp2 registers
+      if (is_read)
+      {
+         if (size == 0)
+            return Vdp2ReadByte(addr);
+         else if (size == 1)
+            return Vdp2ReadWord(addr);
+         else
+            return Vdp2ReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            Vdp2WriteByte(addr, data);
+         else if (size == 1)
+            Vdp2WriteWord(addr, data);
+         else
+            Vdp2WriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x5fe0000 && addr <= 0x5feffff)
+   {
+      //scu registers
+      if (is_read)
+      {
+         if (size == 0)
+            return ScuReadByte(addr);
+         else if (size == 1)
+            return ScuReadWord(addr);
+         else
+            return ScuReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            ScuWriteByte(addr, data);
+         else if (size == 1)
+            ScuWriteWord(addr, data);
+         else
+            ScuWriteLong(addr, data);
+         return 0;
+      }
+   }
+   else if (addr >= 0x6000000 && addr <= 0x7ffffff)
+   {
+      //scu registers
+      if (is_read)
+      {
+         if (size == 0)
+            return HighWramMemoryReadByte(addr);
+         else if (size == 1)
+            return HighWramMemoryReadWord(addr);
+         else
+            return HighWramMemoryReadLong(addr);
+      }
+      else
+      {
+         if (size == 0)
+            HighWramMemoryWriteByte(addr, data);
+         else if (size == 1)
+            HighWramMemoryWriteWord(addr, data);
+         else
+            HighWramMemoryWriteLong(addr, data);
+         return 0;
+      }
+   }
+   assert(0);
+   return 0;
+}
+
+int sh2_check_wait(SH2_struct * sh, u32 addr, int size);
+
 void dma_tick(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA, int * active)
 {
    int src_increment = 0;
@@ -2030,6 +2557,13 @@ void dma_tick(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRD
    u8 dest_inc_mode = (*CHCR >> 14) & 3;
    u8 src_inc_mode = (*CHCR >> 12) & 3;
    u8 size = (*CHCR >> 10) & 3;
+   int check_size = size;
+
+   if (check_size > 2)
+      check_size = 2;//size 3 is also long size writes
+
+   if (sh2_check_wait(sh, *SAR, check_size))
+      return;
 
    if (dest_inc_mode == 1)
       dst_increment = 1;
@@ -2043,20 +2577,20 @@ void dma_tick(SH2_struct *sh, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRD
 
    if (size == 0)
    {
-      u8 source_val = MappedMemoryReadByteNocache(sh, *SAR);
-      MappedMemoryWriteByteNocache(sh, *DAR, source_val);
+      u8 source_val = sh2_dma_access(*SAR,0,1,0);
+      sh2_dma_access(*DAR, source_val,0,0);
    }
    else if (size == 1)
    {
-      u16 source_val = MappedMemoryReadWordNocache(sh, *SAR);
-      MappedMemoryWriteWordNocache(sh,*DAR, source_val);
+      u16 source_val = sh2_dma_access(*SAR, 0, 1, 1);
+      sh2_dma_access(*DAR, source_val, 0, 1);
       src_increment *= 2;
       dst_increment *= 2;
    }
    else if (size == 2 || size == 3)
    {
-      u32 source_val = MappedMemoryReadLongNocache(sh, *SAR);
-      MappedMemoryWriteLongNocache(sh, *DAR, source_val);
+      u32 source_val = sh2_dma_access(*SAR, 0, 1, 2);
+      sh2_dma_access(*DAR, source_val, 0, 2);
       src_increment *= 4;
       dst_increment *= 4;
    }

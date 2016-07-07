@@ -514,7 +514,7 @@ WriteInvalidateLong:
 	mov	%eax, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteLong
+	jnc	MappedMemoryWriteLongNocache
 	push	%eax
 	push	%edx
 	push	%eax
@@ -522,7 +522,7 @@ WriteInvalidateLong:
 	pop	%eax
 	pop	%edx
 	pop	%eax
-	jmp	MappedMemoryWriteLong
+	jmp	MappedMemoryWriteLongNocache
 	.size	WriteInvalidateLong, .-WriteInvalidateLong
 .globl WriteInvalidateWord
 	.type	WriteInvalidateWord, @function
@@ -530,7 +530,7 @@ WriteInvalidateWord:
 	mov	%eax, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteWord
+	jnc	MappedMemoryWriteWordNocache
 	push	%eax
 	push	%edx
 	push	%eax
@@ -538,7 +538,7 @@ WriteInvalidateWord:
 	pop	%eax
 	pop	%edx
 	pop	%eax
-	jmp	MappedMemoryWriteWord
+	jmp	MappedMemoryWriteWordNocache
 	.size	WriteInvalidateWord, .-WriteInvalidateWord
 .globl WriteInvalidateByteSwapped
 	.type	WriteInvalidateByteSwapped, @function
@@ -551,7 +551,7 @@ WriteInvalidateByte:
 	mov	%eax, %ecx
 	shr	$12, %ecx
 	bt	%ecx, cached_code
-	jnc	MappedMemoryWriteByte
+	jnc	MappedMemoryWriteByteNocache
 	push	%eax
 	push	%edx
 	push	%eax
@@ -559,7 +559,7 @@ WriteInvalidateByte:
 	pop	%eax
 	pop	%edx
 	pop	%eax
-	jmp	MappedMemoryWriteByte
+	jmp	MappedMemoryWriteByteNocache
 	.size	WriteInvalidateByte, .-WriteInvalidateByte
 
 .globl div1
@@ -636,10 +636,10 @@ macl:
 	push	%edx /* MACH */
 	push	%eax /* MACL */
 	mov	%edi, %eax
-	call	MappedMemoryReadLong
+	call	MappedMemoryReadLongNocache
 	mov	%eax, %esi
 	mov	%ebp, %eax
-	call	MappedMemoryReadLong
+	call	MappedMemoryReadLongNocache
 	add	$4, %ebp
 	add	$4, %edi
 	imul	%esi
@@ -674,10 +674,10 @@ macw:
 	push	%edx /* MACH */
 	push	%eax /* MACL */
 	mov	%edi, %eax
-	call	MappedMemoryReadWord
+	call	MappedMemoryReadWordNocache
 	movswl	%ax, %esi
 	mov	%ebp, %eax
-	call	MappedMemoryReadWord
+	call	MappedMemoryReadWordNocache
 	movswl	%ax, %eax
 	add	$2, %ebp
 	add	$2, %edi

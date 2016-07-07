@@ -134,8 +134,8 @@ void test_dsp_timing();
 #define JMP_NS_Imm(imm) ()
 #define JMP_C_Imm(imm) ()
 #define JMP_NC_Imm(imm) ()
-#define JMP_T0_Imm(imm) ()
-#define JMP_NT0_Imm(imm) ()
+#define JMP_T0_Imm(imm) (0xD0000000 | (0x68 << 19) | imm)
+#define JMP_NT0_Imm(imm) (0xD0000000 | (0x48 << 19) | imm)
 #define JMP_ZS_Imm(imm) ()
 #define JMP_NZS_Imm(imm) ()
 

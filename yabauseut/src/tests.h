@@ -28,6 +28,9 @@
 #define AUTO_TEST_MESSAGE_SENT 1
 #define AUTO_TEST_MESSAGE_RECEIVED 2
 
+#define TEST_LOG_ADDRESS 0x00200000
+#define TEST_LOG_SIZE    0x000C0000
+
 enum STAGESTAT
 {
    STAGESTAT_USERCUSTOM=-8,
@@ -52,7 +55,9 @@ void tests_wait_press();
 void do_tests(const char *testname, int x, int y);
 void register_test(void (*func)(void), const char *name);
 void unregister_all_tests();
-void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line);
+void tests_log_text(char *text);
+void tests_log_textf(char *format, ...);
+void tests_disp_iapetus_error(enum IAPETUS_ERR err, char *file, int line, char *format, ...);
 
 void auto_test_all_finished();
 void auto_test_take_screenshot();
@@ -80,5 +85,14 @@ extern font_struct test_disp_font;
       } \
    } 
 
+#define do_tests_error(r, ...) \
+   tests_disp_iapetus_error(r, __FILE__, __LINE__, __VA_ARGS__); \
+   stage_status = STAGESTAT_BADDATA;
+
+#define do_tests_error_noarg(ret) \
+   do_tests_error(ret, "");
+
+#define do_tests_unexp_data_error(...) \
+   do_tests_error(IAPETUS_ERR_UNEXPECTDATA, __VA_ARGS__);
 
 #endif

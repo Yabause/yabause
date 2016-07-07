@@ -17,6 +17,8 @@
 
 #define IOCTL_CDROM_READ_TOC \
   CTL_CODE(IOCTL_CDROM_BASE, 0x0000, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_CDROM_READ_TOC_EX \
+  CTL_CODE(IOCTL_CDROM_BASE, 0x0015, METHOD_BUFFERED, FILE_READ_ACCESS)
 
 typedef struct _TRACK_DATA {
   UCHAR  Reserved;
@@ -51,3 +53,32 @@ typedef struct _SCSI_PASS_THROUGH_DIRECT {
   ULONG SenseInfoOffset;
   UCHAR Cdb[16];
 }SCSI_PASS_THROUGH_DIRECT,*PSCSI_PASS_THROUGH_DIRECT;
+
+#define CDROM_READ_TOC_EX_FORMAT_FULL_TOC 0x02
+
+typedef struct _CDROM_READ_TOC_EX {
+  UCHAR  Format : 4;
+  UCHAR  Reserved1 : 3;
+  UCHAR  Msf : 1;
+  UCHAR  SessionTrack;
+  UCHAR  Reserved2;
+  UCHAR  Reserved3;
+} CDROM_READ_TOC_EX, *PCDROM_READ_TOC_EX;
+
+typedef struct _CDROM_TOC_FULL_TOC_DATA_BLOCK {
+  UCHAR  SessionNumber;
+  UCHAR  Control : 4;
+  UCHAR  Adr : 4;
+  UCHAR  Reserved1;
+  UCHAR  Point;
+  UCHAR  MsfExtra[3];
+  UCHAR  Zero;
+  UCHAR  Msf[3];
+} CDROM_TOC_FULL_TOC_DATA_BLOCK, *PCDROM_TOC_FULL_TOC_DATA_BLOCK;
+
+typedef struct _CDROM_TOC_FULL_TOC_DATA {
+  UCHAR  Length[2];
+  UCHAR  FirstCompleteSession;
+  UCHAR  LastCompleteSession;
+  CDROM_TOC_FULL_TOC_DATA_BLOCK  Descriptors[0];
+} CDROM_TOC_FULL_TOC_DATA, *PCDROM_TOC_FULL_TOC_DATA;

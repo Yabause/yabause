@@ -1,3 +1,58 @@
+0.9.14 -> 0.9.15
+ general:
+  - Added CCD (CloneCD) file format support (CyberWarriorX)
+  - Added missing scroll values to Vdp2 debugger (Guillaume)
+  - Bug fixes for Panzer Dragoon games (Devmiyax)
+  - HLE CD Block fix for Guardian Heroes (Devmiyax)
+  - Improvements to screenshot feature (Guillaume)
+  - Fixed Golden Axe controls (Devmiyax)
+  - Fixes for Soukyu Gurentai (Devmiyax)
+  - Control fixes for games such as Tempest, World Heroes, Chaos Control (d356)
+  - Convert OpenAL core to YabThreads (Amon-X)
+  - Added Put Sector support in the HLE CD block (CyberWarriorX)
+  - Fixes for 68K reset instruction (CyberWarriorX)
+  - Added Musashi 68K core
+  - Sh2 cache emulation (Devmiyax, d356)
+  - Low-level CD Block emulation (jhl, CyberWarriorX, d356)
+  - Added optional timing for Sh2 and Scu Dma (d356)
+ vidsoft:
+  - Updated to use modern OpenGL (rdanbrook)
+  - Added bilinear filtering (rdanbrook)
+  - Fixes for Vdp1 outside clipping, line color screen and per-pixel priority (d356)
+  - Added multi-threaded rendering (d356)
+  - Added support for high-resolution video modes (d356)
+  - Added support for Vdp2 sprite window, line scroll interval bit (d356)
+  - Fixes for Scorcher, Dracula X, F1 Challenge, Sonic 2 interlaced mode (d356)
+ opengl:
+  - Numerous fixes and improvements (Devmiyax)
+ sound:
+  - MIDI input/output support (CyberWarriorX)
+  - Added "New Scsp" sound core with scsp dsp support and improved timing (d356)
+  - Added SSF sound format playing
+ scu dsp:
+  - Fixes for Dragon Force 2 (CyberWarriorX)
+  - Fixes for Dead or Alive (Devmiyax)
+  - ALU / flag handling fixes, fixes Croc (d356)
+ macos:
+  - OpenGL initialization fixes (CandyFace)
+ android:
+  - Interface improvements (Guillaume)
+  - Added Multitouch support for the on-screen pad (Guillaume)
+  - Added Pad support (Guillaume)
+  - Added OpenSL sound core (Devmiyax)
+  - Improved support for Android TV (Guillaume)
+  - Show screenshot from savestates (Guillaume)
+ qt:
+  - Fixed dumping selected memory bug, added save tab (esperknight)
+  - Fixed SCU DSP step function (CyberWarriorX)
+  - Fixed cheat search bugs (CyberWarriorX)
+  - Added Scsp slot debug playing (CyberWarriorX)
+  - Linux support for multiple joysticks (Guillaume)
+  - Added Modem settings (CyberWarriorX)
+  - Added integer pixel scaling option (d356)
+  - Improvements for mouse emulation (CyberWarriorX)
+  - Added Racing Wheel, Mission Stick and Double Mission Stick controllers (d356)
+  - Added ability to toggle HLE Bios emulation (CyberWarriorX)
 0.9.13 -> 0.9.14
  general:
   - Fixed crash when bin is not found in a bin/cue.

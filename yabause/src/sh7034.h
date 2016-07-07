@@ -46,6 +46,8 @@ void sh1_init_func();
 void sh1_serial_recieve_bit(int bit, int channel);
 void sh1_set_start(int state);
 void sh1_serial_transmit_bit(int channel, int* output_bit);
+void sh1_assert_tioca(int which);
+void sh1_assert_tiocb(int which);
 
 struct Onchip
 {
@@ -255,6 +257,7 @@ void sh1_exec(struct Sh1 * sh1, s32 cycles);
 void sh1_onchip_run_cycles(s32 cycles);
 void sh1_set_output_enable_rising_edge();
 void sh1_set_output_enable_falling_edge();
+void sh1_dma_exec(s32 cycles);
 
 // SCI SCR bits
 #define SCI_TIE               0x80        /* Transmit interrupt enable */

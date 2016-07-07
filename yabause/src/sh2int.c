@@ -32,24 +32,11 @@
 #include "memory.h"
 #include "bios.h"
 #include "yabause.h"
+#include "ygr.h"
+#include "sh7034.h"
 
 #ifdef SH2_TRACE
 #include "sh2trace.h"
-# define MappedMemoryWriteByte(s,a,v)  do { \
-    uint32_t __a = (a), __v = (v);        \
-    sh2_trace_writeb(__a, __v);           \
-    MappedMemoryWriteByte(s, __a, __v);      \
-} while (0)
-# define MappedMemoryWriteWord(s,a,v)  do { \
-    uint32_t __a = (a), __v = (v);        \
-    sh2_trace_writew(__a, __v);           \
-    MappedMemoryWriteWord(s, __a, __v);      \
-} while (0)
-# define MappedMemoryWriteLong(s,a,v)  do { \
-    uint32_t __a = (a), __v = (v);        \
-    sh2_trace_writel(__a, __v);           \
-    MappedMemoryWriteLong(s, __a, __v);      \
-} while (0)
 #endif
 
 SH2Interface_struct SH2Interpreter = {
@@ -126,6 +113,19 @@ SH2Interface_struct SH2DebugInterpreter = {
 
 //////////////////////////////////////////////////////////////////////////////
 
+int sh2_check_wait(SH2_struct * sh, u32 addr, int size)
+{
+   if (((addr & 0xff00000) == 0x05800000))
+   {
+      if (sh2_a_bus_check_wait(addr, size))
+         return 1;
+   }
+
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static u32 FASTCALL FetchSH1Rom(SH2_struct *sh, u32 addr)
 {
 	return T2ReadWord(SH1Rom, addr & 0xFFFF);
@@ -149,45 +149,40 @@ static u32 FASTCALL FetchSH1MpegRom(SH2_struct *sh, u32 addr)
 
 static u32 FASTCALL FetchBios(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-   return T2ReadWord(BiosRom, addr & 0x7FFFF);
-#endif
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return T2ReadWord(BiosRom, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchCs0(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-   return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-   return CartridgeArea->Cs0ReadWord(sh, addr);
-#endif
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return CartridgeArea->Cs0ReadWord(sh, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchLWram(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-	return T2ReadWord(LowWram, addr & 0xFFFFF);
-#endif
-
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return T2ReadWord(LowWram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchHWram(SH2_struct *sh, u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(sh, &sh->onchip.cache, addr);
-#else
-	return T2ReadWord(HighWram, addr & 0xFFFFF);
-#endif
+   if (yabsys.sh2_cache_enabled)
+      return cache_memory_read_w(sh, &sh->onchip.cache, addr);
+   else
+      return T2ReadWord(HighWram, addr & 0xFFFFF);
 }
 
 extern u8 * Vdp1Ram;
@@ -214,11 +209,17 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 #endif
 
    // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-   if ((addr & 0xC0000000) == 0xC0000000) sh->instruction = DataArrayReadWord(sh, addr);
+   if (yabsys.sh2_cache_enabled)
+   {
+      if ((addr & 0xC0000000) == 0xC0000000) 
+         sh->instruction = DataArrayReadWord(sh, addr);
+      else
+         sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
+   }
    else
-#endif
-   sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
+   {
+      sh->instruction = ((fetchfunc *)sh->fetchlist)[(addr >> 20) & 0x0FF](sh, addr);
+   }
 
    // Execute it
    ((opcodefunc *)sh->opcodes)[sh->instruction](sh);
@@ -241,18 +242,18 @@ static void FASTCALL SH2undecoded(SH2_struct * sh)
 
    // Save regs.SR on stack
    sh->regs.R[15]-=4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.SR.all);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.SR.all);
 
    // Save regs.PC on stack
    sh->regs.R[15]-=4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.PC + 2);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.PC + 2);
 
    // What caused the exception? The delay slot or a general instruction?
    // 4 for General Instructions, 6 for delay slot
    vectnum = 4; //  Fix me
 
    // Jump to Exception service routine
-   sh->regs.PC = MappedMemoryReadLong(sh, sh->regs.VBR+(vectnum<<2));
+   sh->regs.PC = sh->MappedMemoryReadLong(sh, sh->regs.VBR+(vectnum<<2));
    sh->cycles++;
 }
 
@@ -364,9 +365,9 @@ static void FASTCALL SH2andm(SH2_struct * sh)
    s32 temp;
    s32 source = INSTRUCTION_CD(sh->instruction);
 
-   temp = (s32) MappedMemoryReadByte(sh, sh->regs.GBR + sh->regs.R[0]);
+   temp = (s32)sh->MappedMemoryReadByte(sh, sh->regs.GBR + sh->regs.R[0]);
    temp &= source;
-   MappedMemoryWriteByte(sh, (sh->regs.GBR + sh->regs.R[0]),temp);
+   sh->MappedMemoryWriteByte(sh, (sh->regs.GBR + sh->regs.R[0]),temp);
    sh->regs.PC += 2;
    sh->cycles += 3;
 }
@@ -968,7 +969,7 @@ static void FASTCALL SH2ldcmgbr(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.GBR = MappedMemoryReadLong(sh, sh->regs.R[m]);
+   sh->regs.GBR = sh->MappedMemoryReadLong(sh, sh->regs.R[m]);
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles += 3;
@@ -980,7 +981,7 @@ static void FASTCALL SH2ldcmsr(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.SR.all = MappedMemoryReadLong(sh, sh->regs.R[m]) & 0x000003F3;
+   sh->regs.SR.all = sh->MappedMemoryReadLong(sh, sh->regs.R[m]) & 0x000003F3;
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles += 3;
@@ -992,7 +993,7 @@ static void FASTCALL SH2ldcmvbr(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.VBR = MappedMemoryReadLong(sh, sh->regs.R[m]);
+   sh->regs.VBR = sh->MappedMemoryReadLong(sh, sh->regs.R[m]);
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles += 3;
@@ -1041,7 +1042,7 @@ static void FASTCALL SH2ldsmacl(SH2_struct * sh)
 static void FASTCALL SH2ldsmmach(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_B(sh->instruction);
-   sh->regs.MACH = MappedMemoryReadLong(sh, sh->regs.R[m]);
+   sh->regs.MACH = sh->MappedMemoryReadLong(sh, sh->regs.R[m]);
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1052,7 +1053,7 @@ static void FASTCALL SH2ldsmmach(SH2_struct * sh)
 static void FASTCALL SH2ldsmmacl(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_B(sh->instruction);
-   sh->regs.MACL = MappedMemoryReadLong(sh, sh->regs.R[m]);
+   sh->regs.MACL = sh->MappedMemoryReadLong(sh, sh->regs.R[m]);
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1063,7 +1064,7 @@ static void FASTCALL SH2ldsmmacl(SH2_struct * sh)
 static void FASTCALL SH2ldsmpr(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_B(sh->instruction);
-   sh->regs.PR = MappedMemoryReadLong(sh, sh->regs.R[m]);
+   sh->regs.PR = sh->MappedMemoryReadLong(sh, sh->regs.R[m]);
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1088,9 +1089,9 @@ static void FASTCALL SH2macl(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   tempn = (s32) MappedMemoryReadLong(sh, sh->regs.R[n]);
+   tempn = (s32)sh->MappedMemoryReadLong(sh, sh->regs.R[n]);
    sh->regs.R[n] += 4;
-   tempm = (s32) MappedMemoryReadLong(sh, sh->regs.R[m]);
+   tempm = (s32)sh->MappedMemoryReadLong(sh, sh->regs.R[m]);
    sh->regs.R[m] += 4;
 
    if ((s32) (tempn^tempm) < 0)
@@ -1181,9 +1182,9 @@ static void FASTCALL SH2macw(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   tempn=(s32) MappedMemoryReadWord(sh, sh->regs.R[n]);
+   tempn=(s32)sh->MappedMemoryReadWord(sh, sh->regs.R[n]);
    sh->regs.R[n]+=2;
-   tempm=(s32) MappedMemoryReadWord(sh, sh->regs.R[m]);
+   tempm=(s32)sh->MappedMemoryReadWord(sh, sh->regs.R[m]);
    sh->regs.R[m]+=2;
    templ=sh->regs.MACL;
    tempm=((s32)(s16)tempn*(s32)(s16)tempm);
@@ -1256,7 +1257,7 @@ static void FASTCALL SH2movbl(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s8)MappedMemoryReadByte(sh, sh->regs.R[m]);
+   sh->regs.R[n] = (s32)(s8)sh->MappedMemoryReadByte(sh, sh->regs.R[m]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1268,7 +1269,7 @@ static void FASTCALL SH2movbl0(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s8)MappedMemoryReadByte(sh, sh->regs.R[m] + sh->regs.R[0]);
+   sh->regs.R[n] = (s32)(s8)sh->MappedMemoryReadByte(sh, sh->regs.R[m] + sh->regs.R[0]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1280,7 +1281,7 @@ static void FASTCALL SH2movbl4(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 disp = INSTRUCTION_D(sh->instruction);
 
-   sh->regs.R[0] = (s32)(s8)MappedMemoryReadByte(sh, sh->regs.R[m] + disp);
+   sh->regs.R[0] = (s32)(s8)sh->MappedMemoryReadByte(sh, sh->regs.R[m] + disp);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1291,7 +1292,7 @@ static void FASTCALL SH2movblg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
   
-   sh->regs.R[0] = (s32)(s8)MappedMemoryReadByte(sh, sh->regs.GBR + disp);
+   sh->regs.R[0] = (s32)(s8)sh->MappedMemoryReadByte(sh, sh->regs.GBR + disp);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1303,7 +1304,7 @@ static void FASTCALL SH2movbm(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   MappedMemoryWriteByte(sh, (sh->regs.R[n] - 1),sh->regs.R[m]);
+   sh->MappedMemoryWriteByte(sh, (sh->regs.R[n] - 1),sh->regs.R[m]);
    sh->regs.R[n] -= 1;
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1316,7 +1317,7 @@ static void FASTCALL SH2movbp(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s8)MappedMemoryReadByte(sh, sh->regs.R[m]);
+   sh->regs.R[n] = (s32)(s8)sh->MappedMemoryReadByte(sh, sh->regs.R[m]);
    if (n != m)
      sh->regs.R[m] += 1;
    sh->regs.PC += 2;
@@ -1330,7 +1331,7 @@ static void FASTCALL SH2movbs(SH2_struct * sh)
    int b = INSTRUCTION_B(sh->instruction);
    int c = INSTRUCTION_C(sh->instruction);
 
-   MappedMemoryWriteByte(sh, sh->regs.R[b], sh->regs.R[c]);
+   sh->MappedMemoryWriteByte(sh, sh->regs.R[b], sh->regs.R[c]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1339,7 +1340,7 @@ static void FASTCALL SH2movbs(SH2_struct * sh)
 
 static void FASTCALL SH2movbs0(SH2_struct * sh)
 {
-   MappedMemoryWriteByte(sh, sh->regs.R[INSTRUCTION_B(sh->instruction)] + sh->regs.R[0],
+   sh->MappedMemoryWriteByte(sh, sh->regs.R[INSTRUCTION_B(sh->instruction)] + sh->regs.R[0],
                          sh->regs.R[INSTRUCTION_C(sh->instruction)]);
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1352,7 +1353,7 @@ static void FASTCALL SH2movbs4(SH2_struct * sh)
    s32 disp = INSTRUCTION_D(sh->instruction);
    s32 n = INSTRUCTION_C(sh->instruction);
 
-   MappedMemoryWriteByte(sh, sh->regs.R[n]+disp,sh->regs.R[0]);
+   sh->MappedMemoryWriteByte(sh, sh->regs.R[n]+disp,sh->regs.R[0]);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1363,7 +1364,7 @@ static void FASTCALL SH2movbsg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
 
-   MappedMemoryWriteByte(sh, sh->regs.GBR + disp,sh->regs.R[0]);
+   sh->MappedMemoryWriteByte(sh, sh->regs.GBR + disp,sh->regs.R[0]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1387,7 +1388,7 @@ static void FASTCALL SH2movli(SH2_struct * sh)
    s32 disp = INSTRUCTION_CD(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = MappedMemoryReadLong(sh, ((sh->regs.PC + 4) & 0xFFFFFFFC) + (disp << 2));
+   sh->regs.R[n] = sh->MappedMemoryReadLong(sh, ((sh->regs.PC + 4) & 0xFFFFFFFC) + (disp << 2));
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1396,7 +1397,15 @@ static void FASTCALL SH2movli(SH2_struct * sh)
 
 static void FASTCALL SH2movll(SH2_struct * sh)
 {
-   sh->regs.R[INSTRUCTION_B(sh->instruction)] = MappedMemoryReadLong(sh, sh->regs.R[INSTRUCTION_C(sh->instruction)]);
+   u32 addr = sh->regs.R[INSTRUCTION_C(sh->instruction)];
+
+   if (sh2_check_wait(sh, addr, 2))
+   {
+      sh->cycles++;
+      return;
+   }
+
+   sh->regs.R[INSTRUCTION_B(sh->instruction)] = sh->MappedMemoryReadLong(sh, addr);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1405,7 +1414,7 @@ static void FASTCALL SH2movll(SH2_struct * sh)
 
 static void FASTCALL SH2movll0(SH2_struct * sh)
 {
-   sh->regs.R[INSTRUCTION_B(sh->instruction)] = MappedMemoryReadLong(sh, sh->regs.R[INSTRUCTION_C(sh->instruction)] + sh->regs.R[0]);
+   sh->regs.R[INSTRUCTION_B(sh->instruction)] = sh->MappedMemoryReadLong(sh, sh->regs.R[INSTRUCTION_C(sh->instruction)] + sh->regs.R[0]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1418,7 +1427,7 @@ static void FASTCALL SH2movll4(SH2_struct * sh)
    s32 disp = INSTRUCTION_D(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = MappedMemoryReadLong(sh, sh->regs.R[m] + (disp << 2));
+   sh->regs.R[n] = sh->MappedMemoryReadLong(sh, sh->regs.R[m] + (disp << 2));
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1429,7 +1438,7 @@ static void FASTCALL SH2movllg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
 
-   sh->regs.R[0] = MappedMemoryReadLong(sh, sh->regs.GBR + (disp << 2));
+   sh->regs.R[0] = sh->MappedMemoryReadLong(sh, sh->regs.GBR + (disp << 2));
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1441,7 +1450,7 @@ static void FASTCALL SH2movlm(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   MappedMemoryWriteLong(sh, sh->regs.R[n] - 4,sh->regs.R[m]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[n] - 4,sh->regs.R[m]);
    sh->regs.R[n] -= 4;
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1454,7 +1463,7 @@ static void FASTCALL SH2movlp(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = MappedMemoryReadLong(sh, sh->regs.R[m]);
+   sh->regs.R[n] = sh->MappedMemoryReadLong(sh, sh->regs.R[m]);
    if (n != m) sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1467,7 +1476,7 @@ static void FASTCALL SH2movls(SH2_struct * sh)
    int b = INSTRUCTION_B(sh->instruction);
    int c = INSTRUCTION_C(sh->instruction);
 
-   MappedMemoryWriteLong(sh, sh->regs.R[b], sh->regs.R[c]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[b], sh->regs.R[c]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1476,7 +1485,7 @@ static void FASTCALL SH2movls(SH2_struct * sh)
 
 static void FASTCALL SH2movls0(SH2_struct * sh)
 {
-   MappedMemoryWriteLong(sh, sh->regs.R[INSTRUCTION_B(sh->instruction)] + sh->regs.R[0],
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[INSTRUCTION_B(sh->instruction)] + sh->regs.R[0],
                          sh->regs.R[INSTRUCTION_C(sh->instruction)]);
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1490,7 +1499,7 @@ static void FASTCALL SH2movls4(SH2_struct * sh)
    s32 disp = INSTRUCTION_D(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   MappedMemoryWriteLong(sh, sh->regs.R[n]+(disp<<2),sh->regs.R[m]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[n]+(disp<<2),sh->regs.R[m]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1501,7 +1510,7 @@ static void FASTCALL SH2movlsg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
 
-   MappedMemoryWriteLong(sh, sh->regs.GBR+(disp<<2),sh->regs.R[0]);
+   sh->MappedMemoryWriteLong(sh, sh->regs.GBR+(disp<<2),sh->regs.R[0]);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1522,7 +1531,7 @@ static void FASTCALL SH2movwi(SH2_struct * sh)
    s32 disp = INSTRUCTION_CD(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s16)MappedMemoryReadWord(sh, sh->regs.PC + (disp<<1) + 4);
+   sh->regs.R[n] = (s32)(s16)sh->MappedMemoryReadWord(sh, sh->regs.PC + (disp<<1) + 4);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1533,8 +1542,15 @@ static void FASTCALL SH2movwl(SH2_struct * sh)
 {
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
+   u32 addr = sh->regs.R[m];
 
-   sh->regs.R[n] = (s32)(s16)MappedMemoryReadWord(sh, sh->regs.R[m]);
+   if (sh2_check_wait(sh, addr, 1))
+   {
+      sh->cycles++;
+      return;
+   }
+
+   sh->regs.R[n] = (s32)(s16)sh->MappedMemoryReadWord(sh, addr);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1546,7 +1562,7 @@ static void FASTCALL SH2movwl0(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s16)MappedMemoryReadWord(sh, sh->regs.R[m]+sh->regs.R[0]);
+   sh->regs.R[n] = (s32)(s16)sh->MappedMemoryReadWord(sh, sh->regs.R[m]+sh->regs.R[0]);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1558,7 +1574,7 @@ static void FASTCALL SH2movwl4(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 disp = INSTRUCTION_D(sh->instruction);
 
-   sh->regs.R[0] = (s32)(s16)MappedMemoryReadWord(sh, sh->regs.R[m]+(disp<<1));
+   sh->regs.R[0] = (s32)(s16)sh->MappedMemoryReadWord(sh, sh->regs.R[m]+(disp<<1));
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1569,7 +1585,7 @@ static void FASTCALL SH2movwlg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
 
-   sh->regs.R[0] = (s32)(s16)MappedMemoryReadWord(sh, sh->regs.GBR+(disp<<1));
+   sh->regs.R[0] = (s32)(s16)sh->MappedMemoryReadWord(sh, sh->regs.GBR+(disp<<1));
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1581,7 +1597,7 @@ static void FASTCALL SH2movwm(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   MappedMemoryWriteWord(sh, sh->regs.R[n] - 2,sh->regs.R[m]);
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[n] - 2,sh->regs.R[m]);
    sh->regs.R[n] -= 2;
    sh->regs.PC += 2;
    sh->cycles++;
@@ -1594,7 +1610,7 @@ static void FASTCALL SH2movwp(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s16)MappedMemoryReadWord(sh, sh->regs.R[m]);
+   sh->regs.R[n] = (s32)(s16)sh->MappedMemoryReadWord(sh, sh->regs.R[m]);
    if (n != m)
       sh->regs.R[m] += 2;
    sh->regs.PC += 2;
@@ -1608,7 +1624,7 @@ static void FASTCALL SH2movws(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   MappedMemoryWriteWord(sh, sh->regs.R[n],sh->regs.R[m]);
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[n],sh->regs.R[m]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1617,7 +1633,7 @@ static void FASTCALL SH2movws(SH2_struct * sh)
 
 static void FASTCALL SH2movws0(SH2_struct * sh)
 {
-   MappedMemoryWriteWord(sh, sh->regs.R[INSTRUCTION_B(sh->instruction)] + sh->regs.R[0],
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[INSTRUCTION_B(sh->instruction)] + sh->regs.R[0],
                          sh->regs.R[INSTRUCTION_C(sh->instruction)]);
    sh->regs.PC+=2;
    sh->cycles++;
@@ -1630,7 +1646,7 @@ static void FASTCALL SH2movws4(SH2_struct * sh)
    s32 disp = INSTRUCTION_D(sh->instruction);
    s32 n = INSTRUCTION_C(sh->instruction);
 
-   MappedMemoryWriteWord(sh, sh->regs.R[n]+(disp<<1),sh->regs.R[0]);
+   sh->MappedMemoryWriteWord(sh, sh->regs.R[n]+(disp<<1),sh->regs.R[0]);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1641,7 +1657,7 @@ static void FASTCALL SH2movwsg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
 
-   MappedMemoryWriteWord(sh, sh->regs.GBR+(disp<<1),sh->regs.R[0]);
+   sh->MappedMemoryWriteWord(sh, sh->regs.GBR+(disp<<1),sh->regs.R[0]);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1753,9 +1769,9 @@ static void FASTCALL SH2orm(SH2_struct * sh)
    s32 temp;
    s32 source = INSTRUCTION_CD(sh->instruction);
 
-   temp = (s32) MappedMemoryReadByte(sh, sh->regs.GBR + sh->regs.R[0]);
+   temp = (s32)sh->MappedMemoryReadByte(sh, sh->regs.GBR + sh->regs.R[0]);
    temp |= source;
-   MappedMemoryWriteByte(sh, sh->regs.GBR + sh->regs.R[0],temp);
+   sh->MappedMemoryWriteByte(sh, sh->regs.GBR + sh->regs.R[0],temp);
    sh->regs.PC += 2;
    sh->cycles += 3;
 }
@@ -1866,9 +1882,9 @@ static void FASTCALL SH2rte(SH2_struct * sh)
 {
    u32 temp;
    temp=sh->regs.PC;
-   sh->regs.PC = MappedMemoryReadLong(sh, sh->regs.R[15]);
+   sh->regs.PC = sh->MappedMemoryReadLong(sh, sh->regs.R[15]);
    sh->regs.R[15] += 4;
-   sh->regs.SR.all = MappedMemoryReadLong(sh, sh->regs.R[15]) & 0x000003F3;
+   sh->regs.SR.all = sh->MappedMemoryReadLong(sh, sh->regs.R[15]) & 0x000003F3;
    sh->regs.R[15] += 4;
    sh->cycles += 4;
    SH2delay(sh, temp + 2);
@@ -2043,7 +2059,7 @@ static void FASTCALL SH2stcmgbr(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
    sh->regs.R[n]-=4;
-   MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.GBR);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.GBR);
    sh->regs.PC+=2;
    sh->cycles += 2;
 }
@@ -2054,7 +2070,7 @@ static void FASTCALL SH2stcmsr(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
    sh->regs.R[n]-=4;
-   MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.SR.all);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.SR.all);
    sh->regs.PC+=2;
    sh->cycles += 2;
 }
@@ -2065,7 +2081,7 @@ static void FASTCALL SH2stcmvbr(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
    sh->regs.R[n]-=4;
-   MappedMemoryWriteLong(sh,sh->regs.R[n],sh->regs.VBR);
+   sh->MappedMemoryWriteLong(sh,sh->regs.R[n],sh->regs.VBR);
    sh->regs.PC+=2;
    sh->cycles += 2;
 }
@@ -2116,7 +2132,7 @@ static void FASTCALL SH2stsmmach(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
    sh->regs.R[n] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACH); 
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACH);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -2127,7 +2143,7 @@ static void FASTCALL SH2stsmmacl(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
    sh->regs.R[n] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACL);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACL);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -2138,7 +2154,7 @@ static void FASTCALL SH2stsmpr(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
    sh->regs.R[n] -= 4;
-   MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.PR);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.PR);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -2267,7 +2283,7 @@ static void FASTCALL SH2tas(SH2_struct * sh)
    s32 temp;
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   temp=(s32) MappedMemoryReadByte(sh, sh->regs.R[n]);
+   temp=(s32)sh->MappedMemoryReadByte(sh, sh->regs.R[n]);
 
    if (temp==0)
       sh->regs.SR.part.T=1;
@@ -2275,7 +2291,7 @@ static void FASTCALL SH2tas(SH2_struct * sh)
       sh->regs.SR.part.T=0;
 
    temp|=0x00000080;
-   MappedMemoryWriteByte(sh, sh->regs.R[n],temp);
+   sh->MappedMemoryWriteByte(sh, sh->regs.R[n],temp);
    sh->regs.PC+=2;
    sh->cycles += 4;
 }
@@ -2287,10 +2303,10 @@ static void FASTCALL SH2trapa(SH2_struct * sh)
    s32 imm = INSTRUCTION_CD(sh->instruction);
 
    sh->regs.R[15]-=4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.SR.all);
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.SR.all);
    sh->regs.R[15]-=4;
-   MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.PC + 2);
-   sh->regs.PC = MappedMemoryReadLong(sh, sh->regs.VBR+(imm<<2));
+   sh->MappedMemoryWriteLong(sh, sh->regs.R[15],sh->regs.PC + 2);
+   sh->regs.PC = sh->MappedMemoryReadLong(sh, sh->regs.VBR+(imm<<2));
    sh->cycles += 8;
 }
 
@@ -2335,7 +2351,7 @@ static void FASTCALL SH2tstm(SH2_struct * sh)
    s32 temp;
    s32 i = INSTRUCTION_CD(sh->instruction);
 
-   temp=(s32) MappedMemoryReadByte(sh, sh->regs.GBR+sh->regs.R[0]);
+   temp=(s32)sh->MappedMemoryReadByte(sh, sh->regs.GBR+sh->regs.R[0]);
    temp&=i;
 
    if (temp==0)
@@ -2376,9 +2392,9 @@ static void FASTCALL SH2xorm(SH2_struct * sh)
    s32 source = INSTRUCTION_CD(sh->instruction);
    s32 temp;
 
-   temp = (s32) MappedMemoryReadByte(sh, sh->regs.GBR + sh->regs.R[0]);
+   temp = (s32)sh->MappedMemoryReadByte(sh, sh->regs.GBR + sh->regs.R[0]);
    temp ^= source;
-   MappedMemoryWriteByte(sh, sh->regs.GBR + sh->regs.R[0],temp);
+   sh->MappedMemoryWriteByte(sh, sh->regs.GBR + sh->regs.R[0],temp);
    sh->regs.PC += 2;
    sh->cycles += 3;
 }
@@ -2837,11 +2853,11 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
    if (15 > context->regs.SR.part.I) // Since UBC's interrupt are always level 15
    {
       context->regs.R[15] -= 4;
-      MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
+      context->MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
       context->regs.R[15] -= 4;
-      MappedMemoryWriteLong(context, context->regs.R[15], context->regs.PC);
+      context->MappedMemoryWriteLong(context, context->regs.R[15], context->regs.PC);
       context->regs.SR.part.I = 15;
-      context->regs.PC = MappedMemoryReadLong(context, context->regs.VBR + (12 << 2));
+      context->regs.PC = context->MappedMemoryReadLong(context, context->regs.VBR + (12 << 2));
       LOG("interrupt successfully handled\n");
    }
    context->onchip.BRCR |= flag;
@@ -2856,11 +2872,11 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
       if (context->interrupts[context->NumberOfInterrupts-1].level > context->regs.SR.part.I)
       {
          context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
+         context->MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
          context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context, context->regs.R[15], context->regs.PC);
+         context->MappedMemoryWriteLong(context, context->regs.R[15], context->regs.PC);
          context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts-1].level;
-         context->regs.PC = MappedMemoryReadLong(context, context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
+         context->regs.PC = context->MappedMemoryReadLong(context, context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
          context->NumberOfInterrupts--;
          context->isIdle = 0;
          context->isSleeping = 0;
@@ -2883,6 +2899,8 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
    while(context->cycles < cycles)
    {
+      int cycles_before = context->cycles;
+      int cycles_diff = 0;
 #ifdef SH2_UBC   	   
       int ubcinterrupt=0, ubcflag=0;
 #endif
@@ -2933,11 +2951,18 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 
       // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context, context->regs.PC);
+
+      if (yabsys.sh2_cache_enabled)
+      {
+         if ((context->regs.PC & 0xC0000000) == 0xC0000000)
+            context->instruction = DataArrayReadWord(context, context->regs.PC);
+         else
+            context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
       else
-#endif
-      context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      {
+         context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
 
       SH2HandleBackTrace(context);
       SH2HandleStepOverOut(context);
@@ -2945,6 +2970,11 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       ((opcodefunc *)context->opcodes)[context->instruction](context);
+
+      cycles_diff = context->cycles - cycles_before;
+
+      if (context->model == SHMT_SH1)
+         sh1_dma_exec(cycles_diff);
 
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
@@ -2963,24 +2993,39 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
    SH2HandleInterrupts(context);
 
-#ifndef EXEC_FROM_CACHE
-   if (context->isIdle)
-      SH2idleParse(context, cycles);
-   else
-      SH2idleCheck(context, cycles);
-#endif
+   if ((!yabsys.sh2_cache_enabled) && (context->model != SHMT_SH1))
+   {
+      if (context->isIdle)
+         SH2idleParse(context, cycles);
+      else
+         SH2idleCheck(context, cycles);
+   }
 
    while(context->cycles < cycles)
    {
+      int cycles_before = context->cycles;
+      int cycles_diff = 0;
       // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context, context->regs.PC);
+
+      if (yabsys.sh2_cache_enabled)
+      {
+         if ((context->regs.PC & 0xC0000000) == 0xC0000000)
+            context->instruction = DataArrayReadWord(context, context->regs.PC);
+         else
+            context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
       else
-#endif
-      context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      {
+         context->instruction = ((fetchfunc *)context->fetchlist)[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      }
 
       // Execute it
       ((opcodefunc *)context->opcodes)[context->instruction](context);
+
+      cycles_diff = context->cycles - cycles_before;
+
+      if (context->model == SHMT_SH1)
+         sh1_dma_exec(cycles_diff);
    }
 }
 

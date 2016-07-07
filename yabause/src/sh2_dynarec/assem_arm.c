@@ -2791,11 +2791,11 @@ void do_readstub(int n)
     emit_loadreg(CCREG,2);
   }
   if(type==LOADB_STUB)
-    emit_call((int)MappedMemoryReadByte);
+    emit_call((int)MappedMemoryReadByteNocache);
   if(type==LOADW_STUB)
-    emit_call((int)MappedMemoryReadWord);
+    emit_call((int)MappedMemoryReadWordNocache);
   if(type==LOADL_STUB)
-    emit_call((int)MappedMemoryReadLong);
+    emit_call((int)MappedMemoryReadLongNocache);
   if(type==LOADS_STUB)
   {
     // RTE instruction, pop PC and SR from stack
@@ -2803,7 +2803,7 @@ void do_readstub(int n)
     assert(pc>=0);
     if(rs<4||rs==12)
       emit_writeword(rs,(int)&dynarec_local+24);
-    emit_call((int)MappedMemoryReadLong);
+    emit_call((int)MappedMemoryReadLongNocache);
     if(rs==1||rs==2||rs==3||rs==12)
       emit_readword((int)&dynarec_local+24,rs);
     if(pc==0) {
@@ -2821,7 +2821,7 @@ void do_readstub(int n)
       }else
         emit_addimm(rs,4,0);
     }
-    emit_call((int)MappedMemoryReadLong);
+    emit_call((int)MappedMemoryReadLongNocache);
     assert(rt>=0);
     if(rt!=0) emit_mov(0,rt);
     if(pc<4||pc==12)
@@ -2859,11 +2859,11 @@ void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target
   save_regs(reglist);
   emit_movimm(addr,0);
   if(type==LOADB_STUB)
-    emit_call((int)MappedMemoryReadByte);
+    emit_call((int)MappedMemoryReadByteNocache);
   if(type==LOADW_STUB)
-    emit_call((int)MappedMemoryReadWord);
+    emit_call((int)MappedMemoryReadWordNocache);
   if(type==LOADL_STUB)
-    emit_call((int)MappedMemoryReadLong);
+    emit_call((int)MappedMemoryReadLongNocache);
   assert(type!=LOADS_STUB);
   if(type==LOADB_STUB)
   {
@@ -2980,7 +2980,7 @@ void do_rmwstub(int n)
     emit_writeword(0,(int)&dynarec_local+24);
   
   //if(i_regmap[HOST_CCREG]==CCREG) emit_storereg(CCREG,HOST_CCREG);//DEBUG
-  emit_call((int)MappedMemoryReadByte);
+  emit_call((int)MappedMemoryReadByteNocache);
   //emit_mov(0,1);
   if(type==RMWA_STUB)
     emit_andimm(0,imm[i],1);

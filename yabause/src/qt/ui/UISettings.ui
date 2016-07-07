@@ -390,7 +390,7 @@
           <number>4</number>
          </property>
          <property name="singleStep">
-          <number>2</number>
+          <number>1</number>
          </property>
         </widget>
        </item>
@@ -423,7 +423,7 @@
        <item>
         <widget class="QCheckBox" name="cbNewScsp">
          <property name="text">
-          <string>Use new scsp</string>
+          <string>Enable higher quality sound (may be slower)</string>
          </property>
         </widget>
        </item>
@@ -779,6 +779,23 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbEnableSh2Cache">
+         <property name="text">
+          <string>Enable Sh2 Cache</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>(CD Block LLE requires cdb105.bin, a real BIOS, and no dynamic recompilers. Sh2 Dma Timing, Scu Dma Timing and Sh2 Cache must also be enabled)</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1048,7 +1065,7 @@
  </connections>
  <buttongroups>
   <buttongroup name="bgShowToolbar"/>
-  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowMenubar"/>
+  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>

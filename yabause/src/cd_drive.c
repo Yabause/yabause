@@ -74,6 +74,10 @@ static INLINE void fad2msf_bcd(s32 fad, u8 *msf);
 //When reading sectors SH1 expects irq7 delta timing to be within a margin of -/+ 28 ticks. Adjust as required
 #define TIME_READSECTOR 8730
 
+//1 second / 75 sectors == 13333.333...
+//2299 time for transferring 13 bytes, start signal etc
+#define TIME_AUDIO_SECTOR (13333 - 2299)
+
 struct CdDriveContext cdd_cxt;
 
 enum CdStatusOperations
@@ -226,9 +230,9 @@ void update_status_info()
         cdd_cxt.state.index_field = 1;
         cdd_cxt.state.track_number = 0xaa;
    } else {
-       cdd_cxt.state.q_subcode = cdd_cxt.toc[track_num - 1].ctrladr;
+       cdd_cxt.state.q_subcode = cdd_cxt.tracks[track_num - 1].ctrladr;
        cdd_cxt.state.index_field = index;
-       cdd_cxt.state.track_number = track_num;
+       cdd_cxt.state.track_number = num2bcd(track_num);
    }
 }
 
@@ -363,6 +367,7 @@ void make_ring_status()
 
    set_checksum(cdd_cxt.state_data);
 }
+void ScspReceiveCDDA(const u8 *sector);
 
 int continue_command()
 {
@@ -382,13 +387,38 @@ int continue_command()
    else if (cdd_cxt.state.current_operation == ReadingDataSectors ||
             cdd_cxt.state.current_operation == ReadingAudioData)
    {
+      int is_audio = 1;
+
+      if (cdd_cxt.disc_fad < 150)
+         is_audio = 0;
+
+      if (cdd_cxt.disc_fad >= get_track_start_fad(-1))
+         is_audio = 0;
+
+      if (cdd_cxt.state.current_operation != ReadingAudioData)
+         is_audio = 0;
+
       comm_state = NoTransfer;
-      do_dataread();
+
+      if (is_audio)
+      {
+         u8 buf[2448];		
+         Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
+         ScspReceiveCDDA(buf);
+         cdd_cxt.disc_fad++;
+         Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
+      }
+      else
+         do_dataread();
 
       update_status_info();
       cdd_cxt.state.current_operation = (cdd_cxt.state.q_subcode & 0x40) ? ReadingDataSectors : ReadingAudioData;
       make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
-      return TIME_READSECTOR / cdd_cxt.speed;
+
+      if (is_audio)
+         return TIME_AUDIO_SECTOR;
+      else
+         return TIME_READSECTOR / cdd_cxt.speed;
    }
    else if (cdd_cxt.state.current_operation == Stopped)
    {
@@ -518,7 +548,10 @@ int do_command()
          CDInterfaceToc10 *entry = &cdd_cxt.toc[i*3];
          entry->ctrladr = toc[i].ctrladr;
          entry->tno = toc[i].tno;
-         entry->point = toc[i].point;
+         if(toc[i].point > 0x99)
+            entry->point = toc[i].point;
+         else
+            entry->point = toc[i].point = num2bcd(toc[i].point);
          entry->min = num2bcd(toc[i].min);
          entry->sec = num2bcd(toc[i].sec);
          entry->frame = num2bcd(i*3);
@@ -561,14 +594,21 @@ int do_command()
       comm_state = NoTransfer;
       return TIME_PERIODIC / cdd_cxt.speed;
       break;
+   case 0x5:
+   //prevent scan from crashing the drive for now
+   case 0xa:
+   case 0xb:
+      CDLOG("unknown command 5\n");
+      //just idle for now
+      cdd_cxt.state.current_operation = Idle;
+      make_status_data(&cdd_cxt.state, cdd_cxt.state_data);
+      comm_state = NoTransfer;
+      return TIME_PERIODIC / cdd_cxt.speed;
+      break;
    case 0x6:
    {
       do_seek_common(ReadingDataSectors);
       update_seek_status();
-      Cs2Area->cdi->ReadAheadFAD(cdd_cxt.disc_fad);
-
-
-      do_dataread();
 
       comm_state = NoTransfer;
       return TIME_READSECTOR / cdd_cxt.speed;
@@ -589,6 +629,7 @@ int do_command()
       return TIME_READING;
       break;
    }
+#if 0
    case 0xa:
       //scan forward
       CDLOG("scan forward\n");
@@ -597,6 +638,7 @@ int do_command()
       //scan backwards
       CDLOG("scan backwards\n");
       break;
+#endif
    }
 
    assert(0);
@@ -605,7 +647,84 @@ int do_command()
 }
 
 
-extern u8 transfer_buffer[13];
+char* get_status_string(int status)
+{
+   u32 track_fad = msf_bcd2fad(cdd_cxt.state_data[4], cdd_cxt.state_data[5], cdd_cxt.state_data[6]);
+   u32 abs_fad = msf_bcd2fad(cdd_cxt.state_data[8], cdd_cxt.state_data[9], cdd_cxt.state_data[10]);
+
+   static char str[256] = { 0 };
+
+   switch (status)
+   {
+   case 0x46:
+      sprintf(str, "%s %d %d", "Idle", track_fad, abs_fad);
+      return str;
+   case 0x12:
+      return "Stopped";
+   case 0x22:
+      sprintf(str, "%s %d %d", "Seeking", track_fad, abs_fad);
+      return str;
+   case 0x36:
+      sprintf(str, "%s %d %d", "Reading Data Sectors", track_fad, abs_fad);
+      return str;
+   case 0x34:
+      sprintf(str, "%s %d %d", "Reading Audio Data", track_fad, abs_fad);
+      return str;
+   default:
+      return "";
+   }
+   return "";
+}
+
+char * get_command_string(int command)
+{
+   u32 fad = get_fad_from_command(cdd_cxt.received_data);
+
+   static char str[256] = { 0 };
+
+   switch (command)
+   {
+   case 0x0:
+      return "";
+   case 0x2:
+      return "Seeking Ring";
+   case 0x3:
+      return "Read TOC";
+   case 0x4:
+      return "Stop Disc";
+   case 0x6:
+      sprintf(str, "%s %d", "Read", fad);
+      return str;
+   case 0x8:
+      return "Pause";
+   case 0x9:
+      sprintf(str, "%s %d", "Seek", fad);
+      return str;
+   default:
+      return "";
+      break;
+   }
+   return "";
+}
+
+void do_cd_logging()
+{
+   char str[1024] = { 0 };
+   int i;
+
+   for (i = 0; i < 12; i++)
+      sprintf(str + strlen(str), "%02X ", cdd_cxt.received_data[i]);
+
+   sprintf(str + strlen(str), " || ");
+
+   for (i = 0; i < 12; i++)
+      sprintf(str + strlen(str), "%02X ", cdd_cxt.state_data[i]);
+
+   sprintf(str + strlen(str), " %s ||  %s", get_command_string(cdd_cxt.received_data[0]), get_status_string(cdd_cxt.state_data[0]));
+
+   CDLOG("%s\n", str);
+}
+
 int cd_command_exec()
 {
    if (comm_state == Reset)
@@ -654,17 +773,39 @@ int cd_command_exec()
    }
    else if (comm_state == WaitToRxio)
    {
-#if 1
+#ifdef CDDEBUG
+      //debug logging
+      static u8 previous_state = 0;
+
       if (cdd_cxt.received_data[11] != 0xff && cdd_cxt.received_data[0])
       {
+         char str[1024] = { 0 }; 
          int i;
-         RXTRACE("CMD: ");
 
          for (i = 0; i < 13; i++)
-            RXTRACE(" %02X", cdd_cxt.received_data[i]);
-         RXTRACE("\n");
+            sprintf(str + strlen(str), "%02X ", cdd_cxt.received_data[i]);
+
+         CDLOG("CMD: %s\n", str);
+      }
+
+      if (cdd_cxt.state_data[0] != previous_state)
+      {
+         char str[1024] = { 0 };
+         int i;
+
+         previous_state = cdd_cxt.state_data[0];
+
+         for (i = 0; i < 13; i++)
+            sprintf(str + strlen(str), "%02X ", cdd_cxt.state_data[i]);
+
+         CDLOG("STA: %s\n", str);
       }
 #endif
+
+#ifdef DO_LOGGING
+      do_cd_logging();
+#endif
+
       //handle the command
       return do_command();
    }

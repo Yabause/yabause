@@ -349,9 +349,6 @@ void UIYabause::resizeIntegerScaling()
 
    int multiplier = vs->value("Video/IntegerPixelScalingMultiplier").toInt();
 
-   if (multiplier % 2 != 0)
-      return;
-
    int vdp2width = 0;
    int vdp2height = 0;
    int vdp2interlace = 0;
@@ -370,12 +367,12 @@ void UIYabause::resizeIntegerScaling()
    if (vdp2width < 640)
       width = vdp2width * multiplier;
    else
-      width = vdp2width * (multiplier / 2);
+      width = vdp2width * (multiplier / 2.0);
 
    if (!vdp2interlace)
       height = vdp2height * multiplier;
    else
-      height = vdp2height * (multiplier / 2);
+      height = vdp2height * (multiplier / 2.0);
 
    mYabauseGL->resize(width, height);
 
@@ -753,6 +750,7 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["Advanced/EnableCDBlockLLE"]!=hash["Advanced/EnableCDBlockLLE"] ||
          newhash["Advanced/EnableSh2DmaTiming"] != hash["Advanced/EnableSh2DmaTiming"] ||
          newhash["Advanced/EnableScuDmaTiming"] != hash["Advanced/EnableScuDmaTiming"] ||
+         newhash["Advanced/EnableSh2Cache"] != hash["Advanced/EnableSh2Cache"] ||
 			newhash["Advanced/SH2Interpreter"]!=hash["Advanced/SH2Interpreter"] ||
          newhash["Advanced/68kCore"] != hash["Advanced/68kCore"] ||
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
@@ -1088,7 +1086,7 @@ void UIYabause::breakpointHandlerSH1(bool displayMessage)
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2(SH1, mYabauseThread, this ).exec();
+	UIDebugSH2(UIDebugCPU::PROC_SH1, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerMSH2(bool displayMessage)
@@ -1096,7 +1094,7 @@ void UIYabause::breakpointHandlerMSH2(bool displayMessage)
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2(MSH2, mYabauseThread, this ).exec();
+	UIDebugSH2(UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerSSH2(bool displayMessage)
@@ -1104,7 +1102,7 @@ void UIYabause::breakpointHandlerSSH2(bool displayMessage)
 	YabauseLocker locker( mYabauseThread );
 	if (displayMessage)
 		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2(SSH2, mYabauseThread, this ).exec();
+	UIDebugSH2(UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::breakpointHandlerM68K()
@@ -1131,13 +1129,13 @@ void UIYabause::breakpointHandlerSCSPDSP()
 void UIYabause::on_aViewDebugMSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( MSH2, mYabauseThread, this ).exec();
+	UIDebugSH2( UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugSSH2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( SSH2, mYabauseThread, this ).exec();
+	UIDebugSH2( UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugVDP1_triggered()
@@ -1187,13 +1185,13 @@ void UIYabause::on_aViewDebugSCSPDSP_triggered()
 void UIYabause::on_aViewDebugSH1_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( SH1, mYabauseThread, this ).exec();
+	UIDebugSH2( UIDebugCPU::PROC_SH1, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugMemoryEditor_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	UIMemoryEditor( mYabauseThread, this ).exec();
+	UIMemoryEditor( UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aTraceLogging_triggered( bool toggled )
@@ -1203,6 +1201,9 @@ void UIYabause::on_aTraceLogging_triggered( bool toggled )
 #endif
 	return;
 }
+
+void UIYabause::on_aHelpDocumentation_triggered()
+{ QDesktopServices::openUrl( QUrl( aHelpDocumentation->statusTip() ) ); }
 
 void UIYabause::on_aHelpCompatibilityList_triggered()
 { QDesktopServices::openUrl( QUrl( aHelpCompatibilityList->statusTip() ) ); }

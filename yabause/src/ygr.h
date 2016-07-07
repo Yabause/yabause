@@ -31,11 +31,20 @@ void ygr_sh1_write_byte(u32 addr, u8 data);
 void ygr_sh1_write_word(u32 addr, u16 data);
 void ygr_sh1_write_long(u32 addr, u32 data);
 
-u16 FASTCALL ygr_a_bus_read_word(SH2_struct * sh, u32 addr);
-u32 FASTCALL  ygr_a_bus_read_long(SH2_struct * sh, u32 addr);
+u16 FASTCALL ygr_a_bus_read_word(u32 addr);
+u32 FASTCALL  ygr_a_bus_read_long(u32 addr);
 
-void FASTCALL ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 data);
-void FASTCALL ygr_a_bus_write_long(SH2_struct * sh, u32 addr, u32 data);
+void FASTCALL ygr_a_bus_write_word(u32 addr, u16 data);
+void FASTCALL ygr_a_bus_write_long(u32 addr, u32 data);
+
+u16 FASTCALL sh2_ygr_a_bus_read_word(SH2_struct * sh, u32 addr);
+u32 FASTCALL  sh2_ygr_a_bus_read_long(SH2_struct * sh, u32 addr);
+
+void FASTCALL sh2_ygr_a_bus_write_word(SH2_struct * sh, u32 addr, u16 data);
+void FASTCALL sh2_ygr_a_bus_write_long(SH2_struct * sh, u32 addr, u32 data);
 
 void ygr_cd_irq(u8 flags);
+int sh2_a_bus_check_wait(u32 addr, int size);
+int ygr_dreq_asserted();
+int fifo_empty();
 #endif
