@@ -478,7 +478,7 @@ void UISettings::loadSettings()
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
-   cbNewScsp->setChecked(s->value("Sound/NewScsp", false).toBool());
+   cbNewScsp->setChecked(s->value("Sound/NewScsp", true).toBool());
 
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
