@@ -423,7 +423,7 @@
        <item>
         <widget class="QCheckBox" name="cbNewScsp">
          <property name="text">
-          <string>Use new scsp</string>
+          <string>Enable higher quality sound (may be slower)</string>
          </property>
         </widget>
        </item>
