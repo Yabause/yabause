@@ -61,7 +61,11 @@ int Check_Skip_Key();
 
 PerInterface_struct PERDIRECTX = {
 PERCORE_DIRECTX,
+#ifdef HAVE_XINPUT
+"DirectX/XInput Input Interface",
+#else
 "DirectX Input Interface",
+#endif
 PERDXInit,
 PERDXDeInit,
 PERDXHandleEvents,
