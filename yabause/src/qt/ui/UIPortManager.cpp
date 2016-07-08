@@ -39,13 +39,13 @@ buttonid = key & 0xFFFF;
 const QString UIPortManager::mSettingsKey = "Input/Port/%1/Id/%2/Controller/%3/Key/%4";
 const QString UIPortManager::mSettingsType = "Input/Port/%1/Id/%2/Type";
 
-UIPortManager::UIPortManager( QWidget* parent )
+UIPortManager::UIPortManager( QWidget* parent)
 	: QGroupBox( parent )
 {
 	mPort = -1;
 	mCore = 0;
 	setupUi( this );
-
+   
 	foreach ( QComboBox* cb, findChildren<QComboBox*>( QRegExp( "cbTypeController*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
 	{
 		cb->addItem( QtYabause::translate( "None" ), 0 );
@@ -184,165 +184,49 @@ void UIPortManager::tbSetJoystick_clicked()
 	uint controllerId = sender()->objectName().remove( "tbSetJoystick" ).toUInt();
 	QComboBox* cb = findChild<QComboBox*>( QString( "cbTypeController%1" ).arg( controllerId ) );
 	uint type = cb->itemData(cb->currentIndex()).toUInt();
+
+   //no peripherals are added to the core here, that should only be done in reloadControllers
+
 	switch (type)
 	{
 		case PERPAD:
 		{
-			QMap<uint, PerPad_struct*>& padsbits = *QtYabause::portPadsBits( mPort );
-
-			PerPad_struct* padBits = padsbits[ controllerId ];
-
-			if ( !padBits )
-			{
-				padBits = PerPadAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
-
-				if ( !padBits )
-				{
-					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
-					return;
-				}
-
-				padsbits[ controllerId ] = padBits;
-			}
-
 			UIPadSetting ups( mCore, mPort, controllerId, type, this );
 			ups.exec();
 			break;
 		}
       case PERWHEEL:
       {
-         QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits(mPort);
-
-         PerAnalog_struct* analogBits = analogbits[controllerId];
-
-         if (!analogBits)
-         {
-            analogBits = PerWheelAdd(mPort == 1 ? &PORTDATA1 : &PORTDATA2);
-
-            if (!analogBits)
-            {
-               CommonDialogs::warning(QtYabause::translate("Can't plug in the new controller, cancelling."));
-               return;
-            }
-
-            analogbits[controllerId] = analogBits;
-         }
-
          UIWheelSetting uas(mCore, mPort, controllerId, type, this);
          uas.exec();
          break;
       }
       case PERMISSIONSTICK:
       {
-         QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits(mPort);
-
-         PerAnalog_struct* analogBits = analogbits[controllerId];
-
-         if (!analogBits)
-         {
-            analogBits = PerMissionStickAdd(mPort == 1 ? &PORTDATA1 : &PORTDATA2);
-
-            if (!analogBits)
-            {
-               CommonDialogs::warning(QtYabause::translate("Can't plug in the new controller, cancelling."));
-               return;
-            }
-
-            analogbits[controllerId] = analogBits;
-         }
-
          UIMissionStickSetting uas(mCore, mPort, controllerId, type, this);
          uas.exec();
          break;
       }
       case PERTWINSTICKS:
       {
-         QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits(mPort);
-
-         PerAnalog_struct* analogBits = analogbits[controllerId];
-
-         if (!analogBits)
-         {
-            analogBits = PerTwinSticksAdd(mPort == 1 ? &PORTDATA1 : &PORTDATA2);
-
-            if (!analogBits)
-            {
-               CommonDialogs::warning(QtYabause::translate("Can't plug in the new controller, cancelling."));
-               return;
-            }
-
-            analogbits[controllerId] = analogBits;
-         }
-
          UIDoubleMissionStickSetting uas(mCore, mPort, controllerId, type, this);
          uas.exec();
          break;
       }
 		case PER3DPAD:
 		{
-			QMap<uint, PerAnalog_struct*>& analogbits = *QtYabause::portAnalogBits( mPort );
-
-			PerAnalog_struct* analogBits = analogbits[ controllerId ];
-
-			if ( !analogBits )
-			{
-				analogBits = Per3DPadAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
-
-				if ( !analogBits )
-				{
-					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
-					return;
-				}
-
-				analogbits[ controllerId ] = analogBits;
-			}
-
 			UI3DControlPadSetting uas( mCore, mPort, controllerId, type, this );
 			uas.exec();
 			break;
 		}
 		case PERGUN:
 		{
-			QMap<uint, PerGun_struct*>& gunbits = *QtYabause::portGunBits( mPort );
-
-			PerGun_struct* gunBits = gunbits[ controllerId ];
-
-			if ( !gunBits )
-			{
-				gunBits = PerGunAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
-
-				if ( !gunBits )
-				{
-					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
-					return;
-				}
-
-				gunbits[ controllerId ] = gunBits;
-			}
-
 			UIGunSetting ums( mCore, mPort, controllerId, type, this );
 			ums.exec();
 			break;
 		}
 		case PERMOUSE:
 		{
-			QMap<uint, PerMouse_struct*>& mousebits = *QtYabause::portMouseBits( mPort );
-
-			PerMouse_struct* mouseBits = mousebits[ controllerId ];
-
-			if ( !mouseBits )
-			{
-				mouseBits = PerMouseAdd( mPort == 1 ? &PORTDATA1 : &PORTDATA2 );
-
-				if ( !mouseBits )
-				{
-					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
-					return;
-				}
-
-				mousebits[ controllerId ] = mouseBits;
-			}
-
 			UIMouseSetting ums( mCore, mPort, controllerId, type, this );
 			ums.exec();
 			break;
