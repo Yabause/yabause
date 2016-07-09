@@ -340,7 +340,7 @@ int PERDXInit(void)
 				return -1;
 		}
 	}
-	PerPortReset();
+
 	//LoadDefaultPort1A();
 	PERCORE_INITIALIZED = 1;
 	return 0;
