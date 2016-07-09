@@ -61,7 +61,11 @@ int Check_Skip_Key();
 
 PerInterface_struct PERDIRECTX = {
 PERCORE_DIRECTX,
+#ifdef HAVE_XINPUT
+"DirectX/XInput Input Interface",
+#else
 "DirectX Input Interface",
+#endif
 PERDXInit,
 PERDXDeInit,
 PERDXHandleEvents,
@@ -118,10 +122,10 @@ BOOL bCleanupCOM=FALSE;
 
 HRESULT SetupForIsXInputDevice()
 {
-	IWbemLocator *pIWbemLocator = NULL;
-	IEnumWbemClassObject *pEnumDevices = NULL;
-	IWbemClassObject *pDevices[20] = {0};
-	IWbemServices *pIWbemServices = NULL;
+IWbemLocator * pIWbemLocator = NULL;
+	IEnumWbemClassObject * pEnumDevices = NULL;
+	IWbemClassObject * pDevices[20] = {0};
+	IWbemServices * pIWbemServices = NULL;
 	BSTR bstrNamespace = NULL;
 	BSTR bstrDeviceID = NULL;
 	BSTR bstrClassName = NULL;
@@ -130,57 +134,54 @@ HRESULT SetupForIsXInputDevice()
 	UINT iDevice = 0;
 	VARIANT var;
 	HRESULT hr;
-
-	hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+	
+	hr = CoInitialize(NULL);
 	bCleanupCOM = SUCCEEDED(hr);
 	
-	// Create WMI
-	hr = CoCreateInstance( &CLSID_WbemContext,
-		NULL,
-		CLSCTX_INPROC_SERVER,
-		&IID_IWbemContext,
-		(LPVOID*) &pIWbemLocator);
-	if( FAILED(hr) || pIWbemLocator == NULL )
+	hr = CoCreateInstance(&CLSID_WbemLocator,
+	                      NULL,
+	                      CLSCTX_INPROC_SERVER,
+	                      &IID_IWbemLocator,
+	                      (LPVOID *) &pIWbemLocator);
+	if (FAILED(hr) || pIWbemLocator == NULL) {
+		YabSetError(YAB_ERR_CANNOTINIT, "pIWbemLocator");
 		goto bail;
-
-	bstrNamespace = SysAllocString( L"\\\\.\\root\\cimv2" );if( bstrNamespace == NULL ) goto bail;
-	bstrClassName = SysAllocString( L"Win32_PNPEntity" );   if( bstrClassName == NULL ) goto bail;
-	bstrDeviceID  = SysAllocString( L"DeviceID" );          if( bstrDeviceID == NULL )  goto bail;
-
-	// Connect to WMI 	
-	hr = IWbemLocator_ConnectServer(pIWbemLocator, bstrNamespace, NULL, NULL, NULL, 
-		0L, NULL, NULL, &pIWbemServices );
-
-	if( FAILED(hr) || pIWbemServices == NULL )
+	}
+	
+	bstrNamespace = SysAllocString(L"\\\\.\\root\\cimv2"); if (bstrNamespace == NULL) {goto bail;}
+	bstrClassName = SysAllocString(L"Win32_PNPEntity");    if (bstrClassName == NULL) {goto bail;}
+	bstrDeviceID  = SysAllocString(L"DeviceID");           if (bstrDeviceID == NULL)  {goto bail;}
+	
+	hr = IWbemLocator_ConnectServer(pIWbemLocator, bstrNamespace, NULL, NULL, 0L,
+	                                0L, NULL, NULL, &pIWbemServices);
+	if (FAILED(hr) || pIWbemServices == NULL) 
+   {
+		YabSetError(YAB_ERR_CANNOTINIT, "pIWbemServices");
 		goto bail;
-
-	// Switch security level to IMPERSONATE
-	CoSetProxyBlanket( (IUnknown *)pIWbemServices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL, 
-		RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE );                    
-
-	hr = IWbemServices_CreateInstanceEnum( pIWbemServices, bstrClassName, 0, NULL, &pEnumDevices ); 
-	if( FAILED(hr) || pEnumDevices == NULL )
+	}
+	
+	CoSetProxyBlanket((IUnknown *) pIWbemServices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+	                  RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+	
+	hr = IWbemServices_CreateInstanceEnum(pIWbemServices, bstrClassName, 0, NULL, &pEnumDevices);
+	if (FAILED(hr) || pEnumDevices == NULL) 
+   {
+		YabSetError(YAB_ERR_CANNOTINIT, "pEnumDevices");
 		goto bail;
-
-	// Loop over all devices
-	for(;;)
-	{
-		// Get 20 at a time		
-		hr = IEnumWbemClassObject_Next( pEnumDevices, 10000, 20, pDevices, &uReturned );
+	}
+	
+	for (;;) 
+   {
+		// Get 20 at a time
+		hr = IEnumWbemClassObject_Next(pEnumDevices, 10000, 20, pDevices, &uReturned);
 		if( FAILED(hr) || 
 			uReturned == 0 )
 			break;
-
-		for( iDevice=0; iDevice<uReturned; iDevice++ )
-		{
-			// For each device, get its device ID
-			hr = IWbemClassObject_Get( pDevices[iDevice], bstrDeviceID, 0L, &var, NULL, NULL );
-			if( SUCCEEDED( hr ) && var.vt == VT_BSTR && var.bstrVal != NULL )
-			{
-				// Check if the device ID contains "IG_".  If it does, then it's an XInput device
-				// This information can not be found from DirectInput 
-				if( wcsstr( var.bstrVal, L"IG_" ) )
-				{
+		for (iDevice = 0; iDevice < uReturned; iDevice++) 
+      {
+			hr = IWbemClassObject_Get(pDevices[iDevice], bstrDeviceID, 0L, &var, NULL, NULL);
+			if (SUCCEEDED(hr) && var.vt == VT_BSTR && var.bstrVal != NULL) {
+				if (wcsstr(var.bstrVal, L"IG_")) {
 					// If it does, then get the VID/PID from var.bstrVal
 					DWORD dwPid = 0, dwVid = 0;
 					WCHAR* strVid;
@@ -294,7 +295,7 @@ BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 
 int PERDXInit(void)
 {
-	char tempstr[512];
+	char tempstr[512];//sprintf(tempstr, "Input. DirectInput8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
 	HRESULT ret;
 	int user_index=0;
 	u32 i;
@@ -620,7 +621,7 @@ u32 PERDXScan(u32 flags)
 		{
 			XINPUT_STATE state;
 			ZeroMemory( &state, sizeof(XINPUT_STATE) );
-			if (XInputGetState(dev_list[i].user_index, &state) != ERROR_DEVICE_NOT_CONNECTED)
+			if (XInputGetState(dev_list[i].user_index, &state) == ERROR_DEVICE_NOT_CONNECTED)
 				continue;
 
 			// Handle axis		
