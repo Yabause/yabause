@@ -395,6 +395,7 @@ void PollAxisAsButton(u32 pad, int min_id, int max_id, int deadzone, int val)
 
 void PollTriggerAsButton(u32 pad, int min_id, int max_id, int deadzone, int val)
 {
+#ifdef HAVE_XINPUT
    //stick value is set to this PollKeys
    u32 stick = XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
    if (val > deadzone)
@@ -407,6 +408,7 @@ void PollTriggerAsButton(u32 pad, int min_id, int max_id, int deadzone, int val)
       DX_PerKeyUp(pad, stick, min_id);
       DX_PerKeyUp(pad, stick, max_id);
    }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
