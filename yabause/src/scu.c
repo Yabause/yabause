@@ -189,6 +189,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
+	LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
    if (ReadAdd == 0) {
       // DMA fill
 
@@ -1511,6 +1512,17 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 static u32 readgensrc(u8 num)
 {
    u32 val;
+
+   if( num <= 7  ){
+	   incFlg[(num & 0x3)] |= ((num >> 2) & 0x01);
+	   return ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]];
+   }else{
+	  if( num == 0x9)  // ALL
+		  return (u32)ScuDsp->ALU.part.L;
+	  else if( num == 0xA ) // ALH
+		  return (u32)((ScuDsp->ALU.all & (u64)(0x0000ffffffff0000))  >> 16);
+   }
+#if 0
    switch(num) {
       case 0x0: // M0
          return ScuDsp->MD[0][ScuDsp->CT[0]];
@@ -1542,7 +1554,7 @@ static u32 readgensrc(u8 num)
          return (u32)((ScuDsp->ALU.all & (u64)(0x0000ffffffff0000))  >> 16);
       default: break;
    }
-
+#endif
    return 0;
 }
 
@@ -3501,7 +3513,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D0AD = val;
          break;
       case 0x10:
-         if (val & 0x1)
+		  if ((val & 0x1) && ((ScuRegs->D0MD&0x7)==0x7) )
          {
             if (yabsys.use_scu_dma_timing)
                scu_insert_dma(ScuRegs->D0R, ScuRegs->D0W, ScuRegs->D0C, ScuRegs->D0AD, ScuRegs->D0MD, 0);
@@ -3522,9 +3534,6 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D0EN = val;
          break;
       case 0x14:
-         if ((val & 0x7) != 7) {
-            LOG("scu\t: DMA mode 0 interrupt start factor not implemented\n");
-         }
          ScuRegs->D0MD = val;
          break;
       case 0x20:
@@ -3540,7 +3549,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D1AD = val;
          break;
       case 0x30:
-         if (val & 0x1)
+		  if ((val & 0x1) && ((ScuRegs->D1MD&0x07) == 0x7))
          {
             if (yabsys.use_scu_dma_timing)
                scu_insert_dma(ScuRegs->D1R, ScuRegs->D1W, ScuRegs->D1C, ScuRegs->D1AD, ScuRegs->D1MD, 1);
@@ -3561,9 +3570,6 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D1EN = val;
          break;
       case 0x34:
-         if ((val & 0x7) != 7) {
-            LOG("scu\t: DMA mode 1 interrupt start factor not implemented\n");
-         }
          ScuRegs->D1MD = val;
          break;
       case 0x40:
@@ -3579,7 +3585,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D2AD = val;
          break;
       case 0x50:
-         if (val & 0x1)
+		  if ((val & 0x1) && ((ScuRegs->D2MD & 0x7) == 0x7))
          {
             if (yabsys.use_scu_dma_timing)
                scu_insert_dma(ScuRegs->D2R, ScuRegs->D2W, ScuRegs->D2C, ScuRegs->D2AD, ScuRegs->D2MD, 2);
@@ -3600,9 +3606,6 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D2EN = val;
          break;
       case 0x54:
-         if ((val & 0x7) != 7) {
-            LOG("scu\t: DMA mode 2 interrupt start factor not implemented\n");
-         }
          ScuRegs->D2MD = val;
          break;
       case 0x60:
@@ -3784,11 +3787,51 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
    }
 }
 
+// 3.2 DMA control register
+INLINE void ScuChekIntrruptDMA(int id){
+
+	if ((ScuRegs->D0EN & 0x100) && (ScuRegs->D0MD & 0x07) == id){
+		scudmainfo_struct dmainfo;
+		dmainfo.mode = 0;
+		dmainfo.ReadAddress = ScuRegs->D0R;
+		dmainfo.WriteAddress = ScuRegs->D0W;
+		dmainfo.TransferNumber = ScuRegs->D0C;
+		dmainfo.AddValue = ScuRegs->D0AD;
+		dmainfo.ModeAddressUpdate = ScuRegs->D0MD;
+		ScuDMA(&dmainfo);
+		ScuRegs->D0EN = 0;
+	}
+	if ((ScuRegs->D1EN & 0x100) && (ScuRegs->D1MD & 0x07) == id){
+		scudmainfo_struct dmainfo;
+		dmainfo.mode = 1;
+		dmainfo.ReadAddress = ScuRegs->D1R;
+		dmainfo.WriteAddress = ScuRegs->D1W;
+		dmainfo.TransferNumber = ScuRegs->D1C;
+		dmainfo.AddValue = ScuRegs->D1AD;
+		dmainfo.ModeAddressUpdate = ScuRegs->D1MD;
+		ScuDMA(&dmainfo);
+		ScuRegs->D1EN = 0;
+	}
+	if ((ScuRegs->D2EN & 0x100) && (ScuRegs->D2MD & 0x07) == id){
+		scudmainfo_struct dmainfo;
+		dmainfo.mode = 2;
+		dmainfo.ReadAddress = ScuRegs->D2R;
+		dmainfo.WriteAddress = ScuRegs->D2W;
+		dmainfo.TransferNumber = ScuRegs->D2C;
+		dmainfo.AddValue = ScuRegs->D0AD;
+		dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
+		ScuDMA(&dmainfo);
+		ScuRegs->D2EN = 0;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
+   ScuChekIntrruptDMA(0);
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3800,6 +3843,7 @@ void ScuSendVBlankOUT(void) {
       if (ScuRegs->timer0 == ScuRegs->T0C)
          ScuSendTimer0();
    }
+   ScuChekIntrruptDMA(1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3816,18 +3860,21 @@ void ScuSendHBlankIN(void) {
 
       // FIX ME - Should handle timer 1 as well
    }
+   ScuChekIntrruptDMA(2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendTimer0(void) {
    SendInterrupt(0x43, 0xC, 0x0008, 0x00000008);
+   ScuChekIntrruptDMA(3);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendTimer1(void) {
    SendInterrupt(0x44, 0xB, 0x0010, 0x00000010);
+   ScuChekIntrruptDMA(4);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3840,6 +3887,7 @@ void ScuSendDSPEnd(void) {
 
 void ScuSendSoundRequest(void) {
    SendInterrupt(0x46, 0x9, 0x0040, 0x00000040);
+   ScuChekIntrruptDMA(5);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3882,6 +3930,7 @@ void ScuSendDMAIllegal(void) {
 
 void ScuSendDrawEnd(void) {
    SendInterrupt(0x4D, 0x2, 0x2000, 0x00002000);
+   ScuChekIntrruptDMA(6);
 }
 
 //////////////////////////////////////////////////////////////////////////////
