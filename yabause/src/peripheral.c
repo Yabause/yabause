@@ -813,7 +813,8 @@ void PerKeyDown(u32 key)
 	{
 		if (key == perkeyconfig[i].key)
 		{
-			perkeyconfig[i].base->Press(perkeyconfig[i].controller);
+         if(perkeyconfig[i].base->Press)
+			   perkeyconfig[i].base->Press(perkeyconfig[i].controller);
 		}
 		i++;
 	}
@@ -829,7 +830,8 @@ void PerKeyUp(u32 key)
 	{
 		if (key == perkeyconfig[i].key)
 		{
-			perkeyconfig[i].base->Release(perkeyconfig[i].controller);
+         if(perkeyconfig[i].base->Release)
+			   perkeyconfig[i].base->Release(perkeyconfig[i].controller);
 		}
 		i++;
 	}

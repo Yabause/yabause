@@ -57,8 +57,8 @@ UIDoubleMissionStickSetting::UIDoubleMissionStickSetting( PerInterface_struct* c
    mButtons[tbAxis7Up] = PERANALOG_AXIS7;
    mButtons[tbAxis7Down] = PERANALOG_AXIS7;
 
-	mNames[ PERPAD_RIGHT_TRIGGER ] = QtYabause::translate( "Right trigger" );;
-	mNames[ PERPAD_LEFT_TRIGGER ] = QtYabause::translate( "Left trigger" );;
+	mNames[ PERPAD_RIGHT_TRIGGER ] = QtYabause::translate( "Right trigger" );
+	mNames[ PERPAD_LEFT_TRIGGER ] = QtYabause::translate( "Left trigger" );
 	mNames[ PERPAD_START ] = "Start";
 	mNames[ PERPAD_A ] = "A";
 	mNames[ PERPAD_B ] = "B";
@@ -75,15 +75,15 @@ UIDoubleMissionStickSetting::UIDoubleMissionStickSetting( PerInterface_struct* c
    mNames[PERANALOG_AXIS6] = "Left Stick Axis Y";
    mNames[PERANALOG_AXIS7] = "Left Stick Axis Throttle";
 
-	mScanMasks[ PERPAD_RIGHT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_LEFT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_START ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_A ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_B ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_C ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_X ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_Y ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_Z ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+	mScanMasks[ PERPAD_RIGHT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_LEFT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_START ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_A ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_B ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_C ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_X ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_Y ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+	mScanMasks[ PERPAD_Z ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
 
 	mScanMasks[ PERANALOG_AXIS1 ] = PERSF_AXIS;
 	mScanMasks[ PERANALOG_AXIS2 ] = PERSF_AXIS;

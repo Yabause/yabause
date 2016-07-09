@@ -25,62 +25,62 @@
 #include <QStylePainter>
 #include <QStyleOptionToolButton>
 
-UIMissionStickSetting::UIMissionStickSetting( PerInterface_struct* core, uint port, uint pad, uint perType, QWidget* parent )
-	: UIControllerSetting( core, port, pad, perType, parent )
+UIMissionStickSetting::UIMissionStickSetting(PerInterface_struct* core, uint port, uint pad, uint perType, QWidget* parent)
+   : UIControllerSetting(core, port, pad, perType, parent)
 {
-   setupUi( this );
-	setInfos(lInfos);	
+   setupUi(this);
+   setInfos(lInfos);
 
-	mButtons[ tbRightTrigger ] = PERPAD_RIGHT_TRIGGER;
-	mButtons[ tbLeftTrigger ] = PERPAD_LEFT_TRIGGER;
-	mButtons[ tbStart ] = PERPAD_START;
-	mButtons[ tbA ] = PERPAD_A;
-	mButtons[ tbB ] = PERPAD_B;
-	mButtons[ tbC ] = PERPAD_C;
-	mButtons[ tbX ] = PERPAD_X;
-	mButtons[ tbY ] = PERPAD_Y;
-	mButtons[ tbZ ] = PERPAD_Z;
-	mButtons[ tbAxis1Left ] = PERANALOG_AXIS1;
-	mButtons[ tbAxis1Right ] = PERANALOG_AXIS1;
-	mButtons[ tbAxis2Up ] = PERANALOG_AXIS2;
-	mButtons[ tbAxis2Down ] = PERANALOG_AXIS2;
-	mButtons[ tbAxis3Up] = PERANALOG_AXIS3;
-   mButtons[ tbAxis3Down] = PERANALOG_AXIS3;
+   mButtons[tbRightTrigger] = PERPAD_RIGHT_TRIGGER;
+   mButtons[tbLeftTrigger] = PERPAD_LEFT_TRIGGER;
+   mButtons[tbStart] = PERPAD_START;
+   mButtons[tbA] = PERPAD_A;
+   mButtons[tbB] = PERPAD_B;
+   mButtons[tbC] = PERPAD_C;
+   mButtons[tbX] = PERPAD_X;
+   mButtons[tbY] = PERPAD_Y;
+   mButtons[tbZ] = PERPAD_Z;
+   mButtons[tbAxis1Left] = PERANALOG_AXIS1;
+   mButtons[tbAxis1Right] = PERANALOG_AXIS1;
+   mButtons[tbAxis2Up] = PERANALOG_AXIS2;
+   mButtons[tbAxis2Down] = PERANALOG_AXIS2;
+   mButtons[tbAxis3Up] = PERANALOG_AXIS3;
+   mButtons[tbAxis3Down] = PERANALOG_AXIS3;
 
-	mNames[ PERPAD_RIGHT_TRIGGER ] = QtYabause::translate( "Right trigger" );;
-	mNames[ PERPAD_LEFT_TRIGGER ] = QtYabause::translate( "Left trigger" );;
-	mNames[ PERPAD_START ] = "Start";
-	mNames[ PERPAD_A ] = "A";
-	mNames[ PERPAD_B ] = "B";
-	mNames[ PERPAD_C ] = "C";
-	mNames[ PERPAD_X ] = "X";
-	mNames[ PERPAD_Y ] = "Y";
-	mNames[ PERPAD_Z ] = "Z";
-	mNames[ PERANALOG_AXIS1 ] = "Axis X";
-	mNames[ PERANALOG_AXIS2 ] = "Axis Y";
+   mNames[PERPAD_RIGHT_TRIGGER] = QtYabause::translate("Right trigger");;
+   mNames[PERPAD_LEFT_TRIGGER] = QtYabause::translate("Left trigger");;
+   mNames[PERPAD_START] = "Start";
+   mNames[PERPAD_A] = "A";
+   mNames[PERPAD_B] = "B";
+   mNames[PERPAD_C] = "C";
+   mNames[PERPAD_X] = "X";
+   mNames[PERPAD_Y] = "Y";
+   mNames[PERPAD_Z] = "Z";
+   mNames[PERANALOG_AXIS1] = "Axis X";
+   mNames[PERANALOG_AXIS2] = "Axis Y";
    mNames[PERANALOG_AXIS3] = "Axis Throttle";
 
-	mScanMasks[ PERPAD_RIGHT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_LEFT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_START ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_A ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_B ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_C ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_X ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_Y ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERPAD_Z ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-	mScanMasks[ PERANALOG_AXIS1 ] = PERSF_AXIS;
-	mScanMasks[ PERANALOG_AXIS2 ] = PERSF_AXIS;
+   mScanMasks[PERPAD_RIGHT_TRIGGER] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_LEFT_TRIGGER] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_START] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_A] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_B] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_C] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_X] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_Y] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERPAD_Z] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
+   mScanMasks[PERANALOG_AXIS1] = PERSF_AXIS;
+   mScanMasks[PERANALOG_AXIS2] = PERSF_AXIS;
 	mScanMasks[ PERANALOG_AXIS3 ] = PERSF_AXIS;
 
 	loadPadSettings();
 	
 	foreach ( QToolButton* tb, findChildren<QToolButton*>() )
-	{
-		tb->installEventFilter( this );
-		connect( tb, SIGNAL( clicked() ), this, SLOT( tbButton_clicked() ) );
-	}
-	
+   {
+      tb->installEventFilter(this);
+      connect(tb, SIGNAL(clicked()), this, SLOT(tbButton_clicked()));
+   }
+
 	connect( mTimer, SIGNAL( timeout() ), this, SLOT( timer_timeout() ) );
 
 	QtYabause::retranslateWidget( this );
