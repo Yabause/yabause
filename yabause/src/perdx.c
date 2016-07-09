@@ -393,6 +393,24 @@ void PollAxisAsButton(u32 pad, int min_id, int max_id, int deadzone, int val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+void PollTriggerAsButton(u32 pad, int min_id, int max_id, int deadzone, int val)
+{
+   //stick value is set to this PollKeys
+   u32 stick = XINPUT_GAMEPAD_TRIGGER_THRESHOLD;
+   if (val > deadzone)
+   {
+      DX_PerKeyUp(pad, stick, max_id);
+      DX_PerKeyDown(pad, stick, min_id);
+   }
+   else
+   {
+      DX_PerKeyUp(pad, stick, min_id);
+      DX_PerKeyUp(pad, stick, max_id);
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 #ifdef HAVE_XINPUT
 void PollXInputButtons(u32 pad, XINPUT_STATE *state)
 {
@@ -460,6 +478,8 @@ void PollKeys(void)
 								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRY);
 
 			PollXInputButtons(i, &state);
+         PollTriggerAsButton(i, XI_TRIGGERL, XI_TRIGGERL, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, state.Gamepad.bLeftTrigger);
+         PollTriggerAsButton(i, XI_TRIGGERR, XI_TRIGGERR, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, state.Gamepad.bRightTrigger);
 			continue;
 		}
 		else if (dev_list[i].lpDIDevice == NULL)
