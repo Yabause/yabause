@@ -268,7 +268,8 @@ BOOL IsXInputDevice( const GUID* guidProduct )
 BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 {
    if (GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_GAMEPAD ||
-       GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_JOYSTICK)
+       GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_JOYSTICK ||
+       GET_DIDEVICE_TYPE(lpddi->dwDevType) == DI8DEVTYPE_1STPERSON)//xbox one controller uses this type
    {     
 #ifdef HAVE_XINPUT
 		if (IsXInputDevice(&lpddi->guidProduct))
@@ -647,7 +648,7 @@ u32 PERDXScan(u32 flags)
 													XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE,
 													XI_THUMBRY, XI_THUMBRY)) != 0)
 					return scan;
-
+            
 				// L Trigger
 				if ((scan = ScanXInputTrigger(i, state.Gamepad.bLeftTrigger, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, 
 													XINPUT_GAMEPAD_TRIGGER_THRESHOLD, XI_TRIGGERL)) != 0)
