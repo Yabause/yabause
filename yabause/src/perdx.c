@@ -240,6 +240,7 @@ void CleanupForIsXInputDevice()
 		pNode = (XINPUT_DEVICE_NODE *)pNode->pNext;
 		SAFE_DELETE( pDelete );
 	}
+   g_pXInputDeviceList = NULL;
 
 	if( bCleanupCOM )
 		CoUninitialize();
@@ -427,7 +428,7 @@ void PollKeys(void)
 		{
 			XINPUT_STATE state;
 			ZeroMemory( &state, sizeof(XINPUT_STATE) );
-			if (XInputGetState(dev_list[i].user_index, &state) != ERROR_DEVICE_NOT_CONNECTED)
+			if (XInputGetState(dev_list[i].user_index, &state) == ERROR_DEVICE_NOT_CONNECTED)
 				continue;
 
 			// Handle axis			
