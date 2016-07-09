@@ -428,15 +428,22 @@ void PollKeys(void)
 		if (dev_list[i].is_xinput_device)
 		{
 			XINPUT_STATE state;
+         u8 axislx, axisly, axisrx, axisry;
 			ZeroMemory( &state, sizeof(XINPUT_STATE) );
 			if (XInputGetState(dev_list[i].user_index, &state) == ERROR_DEVICE_NOT_CONNECTED)
 				continue;
 
+         //convert signed values to 0-255
+         axislx = ((state.Gamepad.sThumbLX >> 8) - 0x80) & 0xff;
+         axisly = ~(((state.Gamepad.sThumbLY >> 8) - 0x80) & 0xff);//invert so that up == 0x00
+         axisrx = ((state.Gamepad.sThumbRX >> 8) - 0x80) & 0xff;
+         axisry = ~(((state.Gamepad.sThumbRY >> 8) - 0x80) & 0xff);
+
 			// Handle axis			
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLX, (u8)((state.Gamepad.sThumbLX) >> 8));
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLY, (u8)((state.Gamepad.sThumbLY) >> 8));
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRX, (u8)((state.Gamepad.sThumbRX) >> 8));
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRY, (u8)((state.Gamepad.sThumbRY) >> 8));
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLX, axislx);
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLY, axisly);
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRX, axisrx);
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRY, axisry);
 			DX_PerAxisValue(i, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, XI_TRIGGERL, state.Gamepad.bLeftTrigger);
 			DX_PerAxisValue(i, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, XI_TRIGGERR, state.Gamepad.bRightTrigger);
 			
