@@ -76,6 +76,7 @@ import android.app.ActivityManager;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -122,6 +123,10 @@ class YabauseRunnable implements Runnable
     public static native void setPolygonGenerationMode( int pg );
     public static native void setSoundEngine( int engine );
 
+    public static native void openTray();
+    public static native void closeTray();
+
+
     private boolean inited;
     private boolean paused;
 
@@ -162,7 +167,7 @@ class YabauseHandler extends Handler {
 }
 
 
-public class Yabause extends Activity
+public class Yabause extends Activity implements  FileDialog.FileSelectedListener
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
@@ -175,6 +180,7 @@ public class Yabause extends Activity
     private int video_interface;
     private boolean waiting_reault = false;
     private Tracker mTracker;
+    private int tray_state = 0;
 
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
@@ -301,6 +307,26 @@ public class Yabause extends Activity
         };
         findViewById(R.id.button_load_state).setOnClickListener(LoadStateClickListener);
 
+        View.OnClickListener OpenTrayListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if( tray_state == 0 ) {
+                    YabauseRunnable.openTray();
+                    Button btn = (Button)findViewById(R.id.button_open_cd);
+                    btn.setText("Close CD tray");
+                    tray_state = 1;
+                }else{
+                    FileDialog fd = new FileDialog(Yabause.this,"");
+                    fd.addFileListener(Yabause.this);
+                    fd.showDialog();
+                }
+                Yabause.this.showBottomMenu();
+            }
+        };
+        findViewById(R.id.button_open_cd).setOnClickListener(OpenTrayListener);
+
+
         View.OnClickListener ExitClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -327,6 +353,20 @@ public class Yabause extends Activity
 
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
+    }
+
+    @Override
+    // after disc change event
+    public void fileSelected(File file) {
+
+        if( file != null ) {
+            gamepath = file.getAbsolutePath();
+        }
+        Button btn = (Button)findViewById(R.id.button_open_cd);
+        tray_state = 0;
+        btn.setText("Open CD tray");
+
+        YabauseRunnable.closeTray();
     }
 
     @Override

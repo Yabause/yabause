@@ -166,9 +166,9 @@ int Vdp2Init(void) {
    Vdp2Reset();
 
 #if defined(YAB_ASYNC_RENDERING)
-   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(1);
-   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(1);
-   if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(1);
+   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(16);
+   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(16);
+   if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(16);
    yabsys.wait_line_count = -1;
 #endif
 
