@@ -215,7 +215,7 @@
        <item row="2" column="0">
         <widget class="QCheckBox" name="cbEnableBiosEmulation">
          <property name="text">
-          <string>Enable Bios Emulation</string>
+          <string>Enable Built-in HLE Bios</string>
          </property>
         </widget>
        </item>
