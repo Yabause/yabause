@@ -169,6 +169,8 @@ UIYabause::UIYabause( QWidget* parent )
 	translations = QtYabause::getTranslationList();
 	
 	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
+
+	mIsCdIn = true;
 }
 
 UIYabause::~UIYabause()
@@ -829,10 +831,41 @@ void UIYabause::on_aFileSettings_triggered()
 	}
 }
 
+void UIYabause::on_actionOpen_Tray_triggered()
+{
+	YabauseLocker locker(mYabauseThread);
+
+	if (mIsCdIn){
+		mYabauseThread->OpenTray();
+		mIsCdIn = false;
+	}
+	else{
+		const QString fn = CommonDialogs::getOpenFileName(QtYabause::volatileSettings()->value("Recents/ISOs").toString(), QtYabause::translate("Select your iso/cue/bin file"), QtYabause::translate("CD Images (*.iso *.cue *.bin *.mds *.ccd)"));
+		if (!fn.isEmpty())
+		{
+			VolatileSettings* vs = QtYabause::volatileSettings();
+			const int currentCDCore = vs->value("General/CdRom").toInt();
+			const QString currentCdRomISO = vs->value("General/CdRomISO").toString();
+
+			QtYabause::settings()->setValue("Recents/ISOs", fn);
+
+			vs->setValue("autostart", false);
+			vs->setValue("General/CdRom", ISOCD.id);
+			vs->setValue("General/CdRomISO", fn);
+			vs->setValue("General/PlaySSF", false);
+
+			refreshStatesActions();
+
+		}
+		mYabauseThread->CloseTray();
+		mIsCdIn = true;
+	}
+}
+
 void UIYabause::on_aFileOpenISO_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
 	if ( !fn.isEmpty() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();

@@ -91,6 +91,7 @@ static int DummyCDGetStatus(void);
 static s32 DummyCDReadTOC(u32 *);
 static int DummyCDReadSectorFAD(u32, void *);
 static void DummyCDReadAheadFAD(u32);
+static void DummyCDSetStatus(int status );
 
 CDInterface DummyCD = {
 CDCORE_DUMMY,
@@ -101,6 +102,7 @@ DummyCDGetStatus,
 DummyCDReadTOC,
 DummyCDReadSectorFAD,
 DummyCDReadAheadFAD,
+DummyCDSetStatus,
 };
 
 static int ISOCDInit(const char *);
@@ -109,6 +111,7 @@ static int ISOCDGetStatus(void);
 static s32 ISOCDReadTOC(u32 *);
 static int ISOCDReadSectorFAD(u32, void *);
 static void ISOCDReadAheadFAD(u32);
+static void ISOCDSetStatus(int status);
 
 CDInterface ISOCD = {
 CDCORE_ISO,
@@ -119,6 +122,7 @@ ISOCDGetStatus,
 ISOCDReadTOC,
 ISOCDReadSectorFAD,
 ISOCDReadAheadFAD,
+ISOCDSetStatus,
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -159,6 +163,10 @@ static int DummyCDGetStatus(void)
 	// another disc.
 
 	return 0;
+}
+
+static void DummyCDSetStatus(int status){
+	return;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -360,6 +368,7 @@ enum IMG_TYPE { IMG_NONE, IMG_ISO, IMG_BINCUE, IMG_MDS, IMG_CCD, IMG_NRG };
 enum IMG_TYPE imgtype = IMG_ISO;
 static u32 isoTOC[102];
 static disc_info_struct disc;
+static int iso_cd_status = 0;
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
@@ -1147,6 +1156,7 @@ static int ISOCDInit(const char * iso) {
 
    memset(isoTOC, 0xFF, 0xCC * 2);
    memset(&disc, 0, sizeof(disc));
+   iso_cd_status = 0;
 
    if (!iso)
       return -1;
@@ -1234,7 +1244,20 @@ static void ISOCDDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 static int ISOCDGetStatus(void) {
-   return disc.session_num > 0 ? 0 : 2;
+	if (iso_cd_status == 0){
+		return disc.session_num > 0 ? 0 : 2;
+	}
+
+	return iso_cd_status;
+}
+
+//#define CDCORE_NORMAL 0
+//#define CDCORE_NODISC 2
+//#define CDCORE_OPEN   3
+
+static void ISOCDSetStatus(int status){
+	iso_cd_status = status;
+	return;
 }
 
 //////////////////////////////////////////////////////////////////////////////

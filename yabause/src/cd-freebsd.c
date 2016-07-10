@@ -37,6 +37,7 @@ static s32 FreeBSDCDReadTOC(u32 *);
 static int FreeBSDCDGetStatus(void);
 static int FreeBSDCDReadSectorFAD(u32, void *);
 static void FreeBSDCDReadAheadFAD(u32);
+static void FreeBSDCDSetStatus(int status);
 
 CDInterface ArchCD = {
 	CDCORE_ARCH,
@@ -47,6 +48,7 @@ CDInterface ArchCD = {
 	FreeBSDCDReadTOC,
 	FreeBSDCDReadSectorFAD,
 	FreeBSDCDReadAheadFAD,
+    FreeBSDCDSetStatus,
 };
 
 static int hCDROM;
@@ -146,6 +148,10 @@ static int FreeBSDCDGetStatus(void) {
 	// see ../windows/cd.cc for more info
 
 	return 0;
+}
+
+static void FreeBSDCDSetStatus(int status){
+
 }
 
 static int FreeBSDCDReadSectorFAD(u32 FAD, void *buffer) {

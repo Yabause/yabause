@@ -858,6 +858,26 @@ void Cs2Reset(void) {
   Cs2Area->mpegstm[1].audchannum = Cs2Area->mpegstm[1].vidchannum = 0x00;
 }
 
+
+void Cs2ForceOpenTray(){
+	if (Cs2Area->cdi){
+		Cs2Area->cdi->SetStatus(CDCORE_OPEN);
+		Cs2Reset();
+	}
+};
+
+int Cs2ForceCloseTray( int coreid, const char * cdpath ){
+
+  int ret = 0;
+   if ((ret = Cs2ChangeCDCore(coreid, cdpath)) != 0)
+      return ret;
+
+  Cs2Reset();
+
+  return 0;
+};
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2Exec(u32 timing) {
