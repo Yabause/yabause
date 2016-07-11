@@ -241,7 +241,7 @@ static void FlipToggle(NSMenuItem *item) {
 - (void)startEmulationWithCDCore:(int)cdcore CDPath:(const char *)fn
 {
     if(!_running) {
-        yabauseinit_struct yinit;
+		yabauseinit_struct yinit = {0};
         int initok;
         NSString *bios = [prefs biosPath];
         NSString *mpeg = [prefs mpegPath];
