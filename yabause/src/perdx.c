@@ -374,20 +374,21 @@ void PERDXDeInit(void)
 
 void PollAxisAsButton(u32 pad, int min_id, int max_id, int deadzone, int val)
 {
+    //deadzone is part of the id
 	if ( val < -deadzone )
 	{
-		DX_PerKeyUp( pad, 0, max_id );
-		DX_PerKeyDown( pad, 0, min_id );
+		DX_PerKeyUp( pad, deadzone, max_id );
+		DX_PerKeyDown( pad, deadzone, min_id );
 	}
 	else if ( val > deadzone )
 	{
-		DX_PerKeyUp( pad, 0, min_id );
-		DX_PerKeyDown( pad, 0, max_id );
+		DX_PerKeyUp( pad, deadzone, min_id );
+		DX_PerKeyDown( pad, deadzone, max_id );
 	}
 	else
 	{
-		DX_PerKeyUp( pad, 0, min_id );
-		DX_PerKeyUp( pad, 0, max_id );
+		DX_PerKeyUp( pad, deadzone, min_id );
+		DX_PerKeyUp( pad, deadzone, max_id );
 	}
 }
 
@@ -460,23 +461,23 @@ void PollKeys(void)
          axisry = ~(((state.Gamepad.sThumbRY >> 8) - 0x80) & 0xff);
 
 			// Handle axis			
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLX, axislx);
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLY, axisly);
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRX, axisrx);
-			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRY, axisry);
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLX + PAD_DIR_AXISLEFT, axislx);
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XI_THUMBLY + PAD_DIR_AXISDOWN, axisly);
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRX + PAD_DIR_AXISLEFT, axisrx);
+			DX_PerAxisValue(i, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XI_THUMBRY + PAD_DIR_AXISDOWN, axisry);
 			DX_PerAxisValue(i, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, XI_TRIGGERL, state.Gamepad.bLeftTrigger);
 			DX_PerAxisValue(i, XINPUT_GAMEPAD_TRIGGER_THRESHOLD, XI_TRIGGERR, state.Gamepad.bRightTrigger);
 			
 			// Left Stick
-			PollAxisAsButton(i, XI_THUMBL+PAD_DIR_AXISLEFT, XI_THUMBL+PAD_DIR_AXISRIGHT,
+			PollAxisAsButton(i, XI_THUMBLX+PAD_DIR_AXISLEFT, XI_THUMBLX+PAD_DIR_AXISRIGHT,
 								XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, state.Gamepad.sThumbLX);
-			PollAxisAsButton(i, XI_THUMBL+PAD_DIR_AXISUP, XI_THUMBL+PAD_DIR_AXISDOWN,
+			PollAxisAsButton(i, XI_THUMBLY+PAD_DIR_AXISUP, XI_THUMBLY+PAD_DIR_AXISDOWN,
 								XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, state.Gamepad.sThumbLY);
 
 			// Right Stick
-			PollAxisAsButton(i, XI_THUMBR+PAD_DIR_AXISLEFT, XI_THUMBR+PAD_DIR_AXISRIGHT,
+			PollAxisAsButton(i, XI_THUMBRX+PAD_DIR_AXISLEFT, XI_THUMBRX+PAD_DIR_AXISRIGHT,
 								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRX);
-			PollAxisAsButton(i, XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN,
+			PollAxisAsButton(i, XI_THUMBRY+PAD_DIR_AXISUP, XI_THUMBRY+PAD_DIR_AXISDOWN,
 								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRY);
 
 			PollXInputButtons(i, &state);
@@ -655,27 +656,29 @@ u32 PERDXScan(u32 flags)
 			if (XInputGetState(dev_list[i].user_index, &state) == ERROR_DEVICE_NOT_CONNECTED)
 				continue;
 
+            //min_id max_id have to match for scan and poll
 			// Handle axis		
 			if (flags & PERSF_AXIS)
 			{
 				// L Thumb
 				if ((scan = ScanXInputAxis(i, state.Gamepad.sThumbLX,
 													XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE,
-													XI_THUMBLX, XI_THUMBLX)) != 0)
+               XI_THUMBLX + PAD_DIR_AXISLEFT, XI_THUMBLX + PAD_DIR_AXISRIGHT)) != 0)
 					return scan;
 				if ((scan = ScanXInputAxis(i, state.Gamepad.sThumbLY,
 													XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE, XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE,
-													XI_THUMBLY, XI_THUMBLY)) != 0)
+               XI_THUMBLY + PAD_DIR_AXISUP, XI_THUMBLY + PAD_DIR_AXISDOWN)) != 0)
 					return scan;
 
 				// R Thumb
 				if ((scan = ScanXInputAxis(i, state.Gamepad.sThumbRX,
 													XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE,
-													XI_THUMBRX, XI_THUMBRX)) != 0)
+               XI_THUMBRX + PAD_DIR_AXISLEFT, XI_THUMBRX + PAD_DIR_AXISRIGHT)) != 0)
 					return scan;
+
 				if ((scan = ScanXInputAxis(i, state.Gamepad.sThumbRY,
 													XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE,
-													XI_THUMBRY, XI_THUMBRY)) != 0)
+               XI_THUMBRY + PAD_DIR_AXISUP, XI_THUMBRY + PAD_DIR_AXISDOWN)) != 0)
 					return scan;
             
 				// L Trigger
