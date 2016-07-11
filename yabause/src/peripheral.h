@@ -35,10 +35,15 @@
  */
 
 #define PERPAD				0x02
+//virtual on twin sticks is a standard controller from
+//the saturn's point of view
+//we just insert a standard pad and map it differently
+//this id is just for keeping track of it in the GUI
+#define PERVIRTUALON   0x102
 #define PERWHEEL			0x13
 #define PERMISSIONSTICK	0x15
 #define PER3DPAD			0x16
-#define PERTWINSTICKS	0x19//double mission sticks use same id
+#define PERTWINSTICKS	0x19//double mission sticks
 #define PERGUN				0x25
 #define PERKEYBOARD		0x34
 #define PERMOUSE			0xE3

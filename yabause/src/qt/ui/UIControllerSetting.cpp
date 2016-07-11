@@ -61,6 +61,7 @@ void UIControllerSetting::setScanFlags(u32 scanMask)
 	switch (mPerType)
 	{
 		case PERPAD:
+      case PERVIRTUALON:
 			scanFlags = PERSF_KEY | PERSF_BUTTON | PERSF_HAT | PERSF_AXIS;
 			break;
 		case PERWHEEL:
