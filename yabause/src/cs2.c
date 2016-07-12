@@ -874,6 +874,14 @@ int Cs2ForceCloseTray( int coreid, const char * cdpath ){
 
   Cs2Reset();
 
+  if (yabsys.emulatebios)
+  {
+	  if (YabauseQuickLoadGame() != 0)
+	  {
+		  YabSetError(YAB_ERR_CANNOTINIT, _("Game"));
+		  return -2;
+	  }
+  }
   return 0;
 };
 

@@ -317,7 +317,10 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
                     btn.setText("Close CD tray");
                     tray_state = 1;
                 }else{
-                    FileDialog fd = new FileDialog(Yabause.this,"");
+
+                    File file = new File(gamepath);
+                    String path = file.getParent();
+                    FileDialog fd = new FileDialog(Yabause.this,path);
                     fd.addFileListener(Yabause.this);
                     fd.showDialog();
                 }
