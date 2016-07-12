@@ -38,7 +38,9 @@
 
 M68K_struct *M68KCoreList[] = {
     &M68KDummy,
+#ifdef HAVE_C68K
     &M68KC68K,
+#endif
     NULL
 };
 
