@@ -55,6 +55,14 @@
     else {
         [_prefs setBool:YES forKey:@"Emulate BIOS"];
     }
+	
+	if([_prefs objectForKey:@"Enable Multithreading"]) {
+		[enableThreads setState:[_prefs boolForKey:@"Enable Multithreading"] ?
+				   NSOnState : NSOffState];
+	}
+	else {
+		[_prefs setBool:YES forKey:@"Enable Multithreading"];
+	}
 
     if([_prefs objectForKey:@"MPEG ROM Path"]) {
         [mpegPath setStringValue:[_prefs objectForKey:@"MPEG ROM Path"]];
@@ -268,6 +276,13 @@
     [_prefs synchronize];
 }
 
+- (IBAction)threadsToggle:(id)sender
+{
+	/* Update the preferences file. */
+	[_prefs setBool:([sender state] == NSOnState) forKey:@"Enable Multithreading"];
+	[_prefs synchronize];
+}
+
 - (IBAction)buttonSelect:(id)sender
 {
     NSInteger rv;
@@ -429,6 +444,11 @@
 - (BOOL)emulateBios
 {
     return [emulateBios state] == NSOnState;
+}
+
+- (BOOL)enableThreads
+{
+	return [enableThreads state] == NSOnState;
 }
 
 - (NSString *)mpegPath

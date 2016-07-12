@@ -266,7 +266,18 @@ static void FlipToggle(NSMenuItem *item) {
         yinit.frameskip = [frameskip state] == NSOnState;
         yinit.clocksync = 0;
         yinit.basetime = 0;
-        yinit.usethreads = 0;
+		
+		if([prefs enableThreads])
+		{
+			int num_threads = [[NSProcessInfo processInfo] processorCount];
+			
+			if(num_threads > 1)
+			{
+				yinit.usethreads = 1;
+				yinit.numthreads = num_threads;
+			}
+		}
+		
         yinit.skip_load = 0;
 
         /* Set up the internal save ram if specified. */
