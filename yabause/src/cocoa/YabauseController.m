@@ -126,7 +126,7 @@ static void FlipToggle(NSMenuItem *item) {
 - (IBAction)runISO:(id)sender
 {
     NSOpenPanel *p = [NSOpenPanel openPanel];
-    NSArray *types = [NSArray arrayWithObjects:@"iso", @"cue", nil];
+    NSArray *types = [NSArray arrayWithObjects:@"iso", @"cue", @"mds", @"ccd", nil];
 
     [p setAllowedFileTypes:types];
     if([p runModal] == NSFileHandlingPanelOKButton) {
