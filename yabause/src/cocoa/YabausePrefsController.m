@@ -56,6 +56,21 @@
         [_prefs setBool:YES forKey:@"Emulate BIOS"];
     }
 	
+	if([_prefs objectForKey:@"SH1 Rom Path"]) {
+		[sh1Path setStringValue:[_prefs stringForKey:@"SH1 Rom Path"]];
+	}
+	else {
+		[_prefs setObject:@"" forKey:@"SH1 Rom Path"];
+	}
+	
+	if([_prefs objectForKey:@"Enable CD Block LLE"]) {
+		[cdbLLE setState:[_prefs boolForKey:@"Enable CD Block LLE"] ?
+				   NSOnState : NSOffState];
+	}
+	else {
+		[_prefs setBool:NO forKey:@"Enable CD Block LLE"];
+	}
+	
 	if([_prefs objectForKey:@"Enable Higher Quality Sound"]) {
 		[newScsp setState:[_prefs boolForKey:@"Enable Higher Quality Sound"] ?
 				   NSOnState : NSOffState];
@@ -146,6 +161,9 @@
 {
     id obj = [notification object];
 
+	if(obj == sh1Path) {
+		[_prefs setObject:[sh1Path stringValue] forKey:@"SH1 Rom Path"];
+	}
     if(obj == biosPath) {
         [_prefs setObject:[biosPath stringValue] forKey:@"BIOS Path"];
     }
@@ -232,6 +250,21 @@
     }
 }
 
+- (IBAction)sh1Browse:(id)sender
+{
+	NSOpenPanel *p = [NSOpenPanel openPanel];
+	
+	[p setTitle:@"Select a Saturn SH1 Rom"];
+	
+	if([p runModal] == NSFileHandlingPanelOKButton) {
+		[sh1Path setStringValue:[[[p URLs] objectAtIndex:0] path]];
+		
+		/* Update the preferences file. */
+		[_prefs setObject:[sh1Path stringValue] forKey:@"SH1 Rom Path"];
+		[_prefs synchronize];
+	}
+}
+
 - (IBAction)mpegBrowse:(id)sender
 {
     NSOpenPanel *p = [NSOpenPanel openPanel];
@@ -282,6 +315,13 @@
     /* Update the preferences file. */
     [_prefs setBool:([sender state] == NSOnState) forKey:@"Emulate BIOS"];
     [_prefs synchronize];
+}
+
+- (IBAction)cdbToggle:(id)sender
+{
+	/* Update the preferences file. */
+	[_prefs setBool:([sender state] == NSOnState) forKey:@"Enable CD Block LLE"];
+	[_prefs synchronize];
 }
 
 - (IBAction)scspToggle:(id)sender
@@ -456,9 +496,19 @@
     return [biosPath stringValue];
 }
 
+- (NSString *)sh1Path
+{
+	return [sh1Path stringValue];
+}
+
 - (BOOL)emulateBios
 {
     return [emulateBios state] == NSOnState;
+}
+
+- (BOOL)cdbLLE
+{
+	return [cdbLLE state] == NSOnState;
 }
 
 - (BOOL)newScsp

@@ -596,7 +596,7 @@ u32 sh2_cache_refill_read(SH2_struct *sh, u32 addr)
       //high wram
       return HighWramMemoryReadLong(addr);
    }
-   assert(0);
+
    return 0;
 }
 

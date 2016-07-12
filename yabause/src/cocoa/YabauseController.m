@@ -278,6 +278,18 @@ static void FlipToggle(NSMenuItem *item) {
 			}
 		}
 		
+		NSString *sh1 = [prefs sh1Path];
+		
+		if([prefs cdbLLE] && [sh1 length] > 0)
+		{
+			yinit.sh1rompath = [sh1 UTF8String];
+		
+			yinit.use_cd_block_lle = 1;
+			yinit.use_scu_dma_timing = 1;
+			yinit.use_sh2_dma_timing = 1;
+			yinit.sh2_cache_enabled = 1;
+		}
+		
 		yinit.use_new_scsp = [prefs newScsp];
 		
         yinit.skip_load = 0;
