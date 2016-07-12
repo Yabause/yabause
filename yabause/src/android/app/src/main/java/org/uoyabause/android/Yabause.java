@@ -311,13 +311,14 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
             @Override
             public void onClick(View v) {
 
+                Button btn = (Button)findViewById(R.id.button_open_cd);
                 if( tray_state == 0 ) {
                     YabauseRunnable.openTray();
-                    Button btn = (Button)findViewById(R.id.button_open_cd);
                     btn.setText("Close CD tray");
                     tray_state = 1;
                 }else{
-
+                    btn.setText("Open CD tray");
+                    tray_state = 0;
                     File file = new File(gamepath);
                     String path = file.getParent();
                     FileDialog fd = new FileDialog(Yabause.this,path);
@@ -366,9 +367,6 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
             gamepath = file.getAbsolutePath();
         }
         Button btn = (Button)findViewById(R.id.button_open_cd);
-        tray_state = 0;
-        btn.setText("Open CD tray");
-
         YabauseRunnable.closeTray();
     }
 
