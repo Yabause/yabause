@@ -29,6 +29,7 @@
     IBOutlet NSTextField *cartPath;
     IBOutlet NSPopUpButton *cartType;
     IBOutlet NSButton *emulateBios;
+	IBOutlet NSButton *newScsp;
 	IBOutlet NSButton *enableThreads;
     IBOutlet NSTextField *mpegPath;
     IBOutlet NSPopUpButton *region;
@@ -61,6 +62,7 @@
 - (IBAction)bramBrowse:(id)sender;
 - (IBAction)cartBrowse:(id)sender;
 - (IBAction)biosToggle:(id)sender;
+- (IBAction)scspToggle:(id)sender;
 - (IBAction)threadsToggle:(id)sender;
 - (IBAction)buttonSelect:(id)sender;
 
@@ -73,6 +75,7 @@
 - (int)videoCore;
 - (NSString *)biosPath;
 - (BOOL)emulateBios;
+- (BOOL)newScsp;
 - (BOOL)enableThreads;
 - (NSString *)mpegPath;
 - (NSString *)bramPath;

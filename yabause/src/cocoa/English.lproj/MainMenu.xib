@@ -501,7 +501,7 @@
 					<reference key="NSWindow"/>
 					<reference key="NSNextKeyView" ref="616240904"/>
 				</object>
-				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
+				<string key="NSScreenRect">{{0, 0}, {1280, 777}}</string>
 				<string key="NSMinSize">{320, 246}</string>
 				<string key="NSMaxSize">{10000000000000, 10000000000000}</string>
 				<bool key="NSWindowIsRestorable">YES</bool>
@@ -622,11 +622,11 @@
 																	<reference key="NSControlView" ref="477632682"/>
 																	<int key="NSButtonFlags">1211912448</int>
 																	<int key="NSButtonFlags2">2</int>
-																	<object class="NSCustomResource" key="NSNormalImage" id="145272784">
+																	<object class="NSCustomResource" key="NSNormalImage" id="473884529">
 																		<string key="NSClassName">NSImage</string>
 																		<string key="NSResourceName">NSSwitch</string>
 																	</object>
-																	<object class="NSButtonImageSource" key="NSAlternateImage" id="703350208">
+																	<object class="NSButtonImageSource" key="NSAlternateImage" id="650080337">
 																		<string key="NSImageName">NSSwitch</string>
 																	</object>
 																	<string key="NSAlternateContents"/>
@@ -1025,7 +1025,7 @@
 																<string key="NSFrame">{{15, 10}, {262, 26}}</string>
 																<reference key="NSSuperview" ref="863403035"/>
 																<reference key="NSWindow"/>
-																<reference key="NSNextKeyView" ref="913035480"/>
+																<reference key="NSNextKeyView" ref="810788680"/>
 																<bool key="NSEnabled">YES</bool>
 																<object class="NSPopUpButtonCell" key="NSCell" id="26675444">
 																	<int key="NSCellFlags">-2076180416</int>
@@ -1103,26 +1103,53 @@
 												<int key="NSTitlePosition">2</int>
 												<bool key="NSTransparent">NO</bool>
 											</object>
-											<object class="NSButton" id="913035480">
+											<object class="NSButton" id="810788680">
 												<reference key="NSNextResponder" ref="286928283"/>
 												<int key="NSvFlags">268</int>
 												<string key="NSFrame">{{7, 194}, {157, 18}}</string>
 												<reference key="NSSuperview" ref="286928283"/>
 												<reference key="NSWindow"/>
-												<reference key="NSNextKeyView"/>
+												<reference key="NSNextKeyView" ref="577633154"/>
 												<string key="NSReuseIdentifierKey">_NS:9</string>
 												<bool key="NSEnabled">YES</bool>
-												<object class="NSButtonCell" key="NSCell" id="623016836">
+												<object class="NSButtonCell" key="NSCell" id="422561442">
 													<int key="NSCellFlags">-2080374784</int>
 													<int key="NSCellFlags2">268435456</int>
 													<string key="NSContents">Enable Multithreading</string>
 													<reference key="NSSupport" ref="565921524"/>
 													<string key="NSCellIdentifier">_NS:9</string>
-													<reference key="NSControlView" ref="913035480"/>
+													<reference key="NSControlView" ref="810788680"/>
 													<int key="NSButtonFlags">1211912448</int>
 													<int key="NSButtonFlags2">2</int>
-													<reference key="NSNormalImage" ref="145272784"/>
-													<reference key="NSAlternateImage" ref="703350208"/>
+													<reference key="NSNormalImage" ref="473884529"/>
+													<reference key="NSAlternateImage" ref="650080337"/>
+													<string key="NSAlternateContents"/>
+													<string key="NSKeyEquivalent"/>
+													<int key="NSPeriodicDelay">200</int>
+													<int key="NSPeriodicInterval">25</int>
+												</object>
+												<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
+											</object>
+											<object class="NSButton" id="577633154">
+												<reference key="NSNextResponder" ref="286928283"/>
+												<int key="NSvFlags">268</int>
+												<string key="NSFrame">{{7, 174}, {253, 18}}</string>
+												<reference key="NSSuperview" ref="286928283"/>
+												<reference key="NSWindow"/>
+												<reference key="NSNextKeyView"/>
+												<string key="NSReuseIdentifierKey">_NS:9</string>
+												<bool key="NSEnabled">YES</bool>
+												<object class="NSButtonCell" key="NSCell" id="890806195">
+													<int key="NSCellFlags">-2080374784</int>
+													<int key="NSCellFlags2">268435456</int>
+													<string key="NSContents">Enable Higher Quality Sound (Slower)</string>
+													<reference key="NSSupport" ref="565921524"/>
+													<string key="NSCellIdentifier">_NS:9</string>
+													<reference key="NSControlView" ref="577633154"/>
+													<int key="NSButtonFlags">1211912448</int>
+													<int key="NSButtonFlags2">2</int>
+													<reference key="NSNormalImage" ref="473884529"/>
+													<reference key="NSAlternateImage" ref="650080337"/>
 													<string key="NSAlternateContents"/>
 													<string key="NSKeyEquivalent"/>
 													<int key="NSPeriodicDelay">200</int>
@@ -2139,7 +2166,7 @@
 					<reference key="NSWindow"/>
 					<reference key="NSNextKeyView" ref="237016232"/>
 				</object>
-				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
+				<string key="NSScreenRect">{{0, 0}, {1280, 777}}</string>
 				<string key="NSMaxSize">{10000000000000, 10000000000000}</string>
 				<bool key="NSWindowIsRestorable">YES</bool>
 			</object>
@@ -2246,7 +2273,7 @@
 					</array>
 					<string key="NSFrameSize">{220, 115}</string>
 				</object>
-				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
+				<string key="NSScreenRect">{{0, 0}, {1280, 777}}</string>
 				<string key="NSMaxSize">{10000000000000, 10000000000000}</string>
 				<bool key="NSWindowIsRestorable">YES</bool>
 			</object>
@@ -2940,7 +2967,7 @@
 					<object class="IBActionConnection" key="connection">
 						<string key="label">threadsToggle:</string>
 						<reference key="source" ref="466938992"/>
-						<reference key="destination" ref="913035480"/>
+						<reference key="destination" ref="810788680"/>
 					</object>
 					<int key="connectionID">1257</int>
 				</object>
@@ -2948,9 +2975,25 @@
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">enableThreads</string>
 						<reference key="source" ref="466938992"/>
-						<reference key="destination" ref="913035480"/>
+						<reference key="destination" ref="810788680"/>
 					</object>
 					<int key="connectionID">1258</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">newScsp</string>
+						<reference key="source" ref="466938992"/>
+						<reference key="destination" ref="577633154"/>
+					</object>
+					<int key="connectionID">1261</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">scspToggle:</string>
+						<reference key="source" ref="466938992"/>
+						<reference key="destination" ref="577633154"/>
+					</object>
+					<int key="connectionID">1262</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
@@ -3389,7 +3432,8 @@
 						<array class="NSMutableArray" key="children">
 							<reference ref="488979442"/>
 							<reference ref="504822661"/>
-							<reference ref="913035480"/>
+							<reference ref="810788680"/>
+							<reference ref="577633154"/>
 						</array>
 						<reference key="parent" ref="23461264"/>
 					</object>
@@ -4364,16 +4408,29 @@
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">1255</int>
-						<reference key="object" ref="913035480"/>
+						<reference key="object" ref="810788680"/>
 						<array class="NSMutableArray" key="children">
-							<reference ref="623016836"/>
+							<reference ref="422561442"/>
 						</array>
 						<reference key="parent" ref="286928283"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">1256</int>
-						<reference key="object" ref="623016836"/>
-						<reference key="parent" ref="913035480"/>
+						<reference key="object" ref="422561442"/>
+						<reference key="parent" ref="810788680"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1259</int>
+						<reference key="object" ref="577633154"/>
+						<array class="NSMutableArray" key="children">
+							<reference ref="890806195"/>
+						</array>
+						<reference key="parent" ref="286928283"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1260</int>
+						<reference key="object" ref="890806195"/>
+						<reference key="parent" ref="577633154"/>
 					</object>
 				</array>
 			</object>
@@ -4447,6 +4504,8 @@
 				<string key="1253.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="1255.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="1256.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="1259.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="1260.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="129.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="130.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="131.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4607,7 +4666,7 @@
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">1258</int>
+			<int key="maxID">1262</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -4799,6 +4858,7 @@
 						<string key="cartSelected:">id</string>
 						<string key="mpegBrowse:">id</string>
 						<string key="regionSelected:">id</string>
+						<string key="scspToggle:">id</string>
 						<string key="soundCoreSelected:">id</string>
 						<string key="threadsToggle:">id</string>
 						<string key="videoCoreSelected:">id</string>
@@ -4844,6 +4904,10 @@
 							<string key="name">regionSelected:</string>
 							<string key="candidateClassName">id</string>
 						</object>
+						<object class="IBActionInfo" key="scspToggle:">
+							<string key="name">scspToggle:</string>
+							<string key="candidateClassName">id</string>
+						</object>
 						<object class="IBActionInfo" key="soundCoreSelected:">
 							<string key="name">soundCoreSelected:</string>
 							<string key="candidateClassName">id</string>
@@ -4868,6 +4932,7 @@
 						<string key="emulateBios">NSButton</string>
 						<string key="enableThreads">NSButton</string>
 						<string key="mpegPath">NSTextField</string>
+						<string key="newScsp">NSButton</string>
 						<string key="prefsPane">NSPanel</string>
 						<string key="region">NSPopUpButton</string>
 						<string key="soundCore">NSPopUpButton</string>
@@ -4914,6 +4979,10 @@
 							<string key="name">mpegPath</string>
 							<string key="candidateClassName">NSTextField</string>
 						</object>
+						<object class="IBToOneOutletInfo" key="newScsp">
+							<string key="name">newScsp</string>
+							<string key="candidateClassName">NSButton</string>
+						</object>
 						<object class="IBToOneOutletInfo" key="prefsPane">
 							<string key="name">prefsPane</string>
 							<string key="candidateClassName">NSPanel</string>
@@ -4949,6 +5018,7 @@
 						<string key="cartSelected:">id</string>
 						<string key="mpegBrowse:">id</string>
 						<string key="regionSelected:">id</string>
+						<string key="scspToggle:">id</string>
 						<string key="soundCoreSelected:">id</string>
 						<string key="threadsToggle:">id</string>
 						<string key="videoCoreSelected:">id</string>
@@ -4992,6 +5062,10 @@
 						</object>
 						<object class="IBActionInfo" key="regionSelected:">
 							<string key="name">regionSelected:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="scspToggle:">
+							<string key="name">scspToggle:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 						<object class="IBActionInfo" key="soundCoreSelected:">

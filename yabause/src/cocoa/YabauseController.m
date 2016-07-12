@@ -278,6 +278,8 @@ static void FlipToggle(NSMenuItem *item) {
 			}
 		}
 		
+		yinit.use_new_scsp = [prefs newScsp];
+		
         yinit.skip_load = 0;
 
         /* Set up the internal save ram if specified. */

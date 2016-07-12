@@ -56,6 +56,14 @@
         [_prefs setBool:YES forKey:@"Emulate BIOS"];
     }
 	
+	if([_prefs objectForKey:@"Enable Higher Quality Sound"]) {
+		[newScsp setState:[_prefs boolForKey:@"Enable Higher Quality Sound"] ?
+				   NSOnState : NSOffState];
+	}
+	else {
+		[_prefs setBool:YES forKey:@"Enable Higher Quality Sound"];
+	}
+	
 	if([_prefs objectForKey:@"Enable Multithreading"]) {
 		[enableThreads setState:[_prefs boolForKey:@"Enable Multithreading"] ?
 				   NSOnState : NSOffState];
@@ -276,6 +284,13 @@
     [_prefs synchronize];
 }
 
+- (IBAction)scspToggle:(id)sender
+{
+	/* Update the preferences file. */
+	[_prefs setBool:([sender state] == NSOnState) forKey:@"Enable Higher Quality Sound"];
+	[_prefs synchronize];
+}
+
 - (IBAction)threadsToggle:(id)sender
 {
 	/* Update the preferences file. */
@@ -444,6 +459,11 @@
 - (BOOL)emulateBios
 {
     return [emulateBios state] == NSOnState;
+}
+
+- (BOOL)newScsp
+{
+	return [newScsp state] == NSOnState;
 }
 
 - (BOOL)enableThreads
