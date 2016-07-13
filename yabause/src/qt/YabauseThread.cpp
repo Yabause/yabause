@@ -89,6 +89,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		killTimer( mTimerId );
 		mTimerId = -1;
+		YabauseOnPause();
 	}
 	else {
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
@@ -398,6 +399,19 @@ bool YabauseThread::emulationPaused()
 {
 	//QMutexLocker l( &mMutex );
 	return mPause;
+}
+
+void YabauseThread::OpenTray(){
+	Cs2ForceOpenTray();
+}
+
+void YabauseThread::CloseTray(){
+
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	mYabauseConf.cdcoretype = vs->value("General/CdRom", mYabauseConf.cdcoretype).toInt();
+	mYabauseConf.cdpath = strdup(vs->value("General/CdRomISO", mYabauseConf.cdpath).toString().toLatin1().constData());
+
+	Cs2ForceCloseTray(mYabauseConf.cdcoretype, mYabauseConf.cdpath);
 }
 
 void YabauseThread::resetYabauseConf()

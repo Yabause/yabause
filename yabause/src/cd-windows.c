@@ -58,6 +58,7 @@ static s32 SPTICDReadTOC(u32 *);
 static int SPTICDGetStatus(void);
 static int SPTICDReadSectorFAD(u32, void *);
 static void SPTICDReadAheadFAD(u32);
+static void SPTICDSetStatus( int status );
 
 CDInterface ArchCD = {
 CDCORE_ARCH,
@@ -68,6 +69,7 @@ SPTICDGetStatus,
 SPTICDReadTOC,
 SPTICDReadSectorFAD,
 SPTICDReadAheadFAD,
+SPTICDSetStatus,
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -248,6 +250,10 @@ int SPTICDGetStatus() {
 	status = drivestatus;
 	LeaveCriticalSection(&cd_cs);
 	return status;
+}
+
+static void SPTICDSetStatus(int status){
+
 }
 
 //////////////////////////////////////////////////////////////////////////////

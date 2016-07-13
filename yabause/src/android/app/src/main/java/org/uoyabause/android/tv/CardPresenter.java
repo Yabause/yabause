@@ -74,7 +74,12 @@ public class CardPresenter extends Presenter {
         ImageCardView cardView = (ImageCardView) viewHolder.view;
 
         Log.d(TAG, "onBindViewHolder");
-        cardView.setTitleText(game.game_title);
+
+        if( game.device_infomation.equals("CD-1/1")){
+            cardView.setTitleText(game.game_title);
+        }else {
+            cardView.setTitleText(game.game_title + " " + game.device_infomation);
+        }
 
         String rate="";
         for( int i=0; i < game.rating; i++ ){

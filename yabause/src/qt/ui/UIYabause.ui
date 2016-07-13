@@ -178,6 +178,7 @@
     <addaction name="aFileOpenISO"/>
     <addaction name="aFileOpenCDRom"/>
     <addaction name="aFileOpenSSF"/>
+    <addaction name="actionOpen_Tray"/>
     <addaction name="separator"/>
     <addaction name="mFileSaveState"/>
     <addaction name="mFileLoadState"/>
@@ -858,19 +859,18 @@
     <string>Ctrl+C</string>
    </property>
   </action>
-   <action name="aHelpReport">
-     <property name="icon">
-       <iconset resource="../resources/resources.qrc">
-         <normaloff>:/actions/icons/actions/compatibility.png</normaloff>:/actions/icons/actions/compatibility.png
-       </iconset>
-     </property>
-     <property name="text">
-       <string>Bug report</string>
-     </property>
-     <property name="statusTip">
-       <string>https://github.com/devmiyax/yabause/issues</string>
-     </property>
-   </action>  
+  <action name="aHelpReport">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/compatibility.png</normaloff>:/actions/icons/actions/compatibility.png</iconset>
+   </property>
+   <property name="text">
+    <string>Bug report</string>
+   </property>
+   <property name="statusTip">
+    <string>https://github.com/devmiyax/yabause/issues</string>
+   </property>
+  </action>
   <action name="aHelpCompatibilityList">
    <property name="icon">
     <iconset resource="../resources/resources.qrc">
@@ -969,6 +969,14 @@
   <action name="aFileOpenSSF">
    <property name="text">
     <string>Open SSF</string>
+   </property>
+  </action>
+  <action name="actionOpen_Tray">
+   <property name="text">
+    <string>Open&amp;Tray</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Tray</string>
    </property>
   </action>
  </widget>
