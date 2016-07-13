@@ -18,8 +18,8 @@
     <widget class="QTabWidget" name="twPages">
      <property name="font">
       <font>
-       <weight>75</weight>
-       <bold>true</bold>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="currentIndex">
@@ -574,6 +574,12 @@
        </item>
        <item row="4" column="0">
         <widget class="QLabel" name="lCartridgeModemPort">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="text">
           <string>Port</string>
          </property>
@@ -749,6 +755,12 @@
        </item>
        <item>
         <widget class="QLabel" name="lSH1Interpreter">
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
          <property name="text">
           <string>SH1 Interpreter</string>
          </property>
@@ -1064,8 +1076,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowToolbar"/>
-  <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowLogWindow"/>
+  <buttongroup name="bgShowMenubar"/>
+  <buttongroup name="bgShowToolbar"/>
  </buttongroups>
 </ui>
