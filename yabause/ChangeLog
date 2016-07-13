@@ -11,10 +11,11 @@
   - Convert OpenAL core to YabThreads (Amon-X)
   - Added Put Sector support in the HLE CD block (CyberWarriorX)
   - Fixes for 68K reset instruction (CyberWarriorX)
-  - Added Musashi 68K core
+  - Added Musashi 68K core (code by Karl Stenerud)
   - Sh2 cache emulation (Devmiyax, d356)
   - Low-level CD Block emulation (jhl, CyberWarriorX, d356)
   - Added optional timing for Sh2 and Scu Dma (d356)
+  - Fixes for XInput controllers (CyberWarriorX)
  vidsoft:
   - Updated to use modern OpenGL (rdanbrook)
   - Added bilinear filtering (rdanbrook)
@@ -28,7 +29,7 @@
  sound:
   - MIDI input/output support (CyberWarriorX)
   - Added "New Scsp" sound core with scsp dsp support and improved timing (d356)
-  - Added SSF sound format playing
+  - Added SSF sound format playing (code by R. Belmont, Richard Bannister, Neil Corlett)
  scu dsp:
   - Fixes for Dragon Force 2 (CyberWarriorX)
   - Fixes for Dead or Alive (Devmiyax)
