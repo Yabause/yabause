@@ -90,6 +90,7 @@ pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t g_mtxFuncSync = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t g_cndFuncSync = PTHREAD_COND_INITIALIZER;
 
+
 float vertices [] = {
    -1.0f, 1.0f, 0, 0,
    1.0f, 1.0f, 0, 0,
@@ -119,6 +120,8 @@ enum RenderThreadMessage {
         MSG_PAUSE,
         MSG_RESUME,
         MSG_SCREENSHOT,
+        MSG_OPEN_TRAY,
+        MSG_CLOSE_TRAY
 
 };
 
@@ -593,10 +596,10 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
 {
 	yprintf("sending MSG_PAUSE 1");
-    //pthread_mutex_lock(&g_mtxGlLock);
+    pthread_mutex_lock(&g_mtxGlLock);
 	yprintf("sending MSG_PAUSE 2");
     g_msg = MSG_PAUSE;
-    //pthread_mutex_unlock(&g_mtxGlLock);
+    pthread_mutex_unlock(&g_mtxGlLock);
 }
 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv* env )
@@ -605,6 +608,25 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv*
     g_msg = MSG_RESUME;
     pthread_mutex_unlock(&g_mtxGlLock);
 }
+
+JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_openTray( JNIEnv* env )
+{
+    yprintf("sending MSG_OPEN_TRAY");
+    pthread_mutex_lock(&g_mtxGlLock);
+    g_msg = MSG_OPEN_TRAY;
+    pthread_mutex_unlock(&g_mtxGlLock);
+}
+
+JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_closeTray( JNIEnv* env )
+{
+    yprintf("sending MSG_CLOSE_TRAY");
+    s_cdpath = GetGamePath();    
+    pthread_mutex_lock(&g_mtxGlLock);
+    yprintf("new cd is %s",s_cdpath);    
+    g_msg = MSG_CLOSE_TRAY;
+    pthread_mutex_unlock(&g_mtxGlLock);
+}
+
 
 JNIEXPORT jstring  JNICALL Java_org_uoyabause_android_YabauseRunnable_getCurrentGameCode( JNIEnv* env)
 {
@@ -1114,7 +1136,7 @@ destroy() {
     g_Context = EGL_NO_CONTEXT;
     g_Surface = EGL_NO_SURFACE;
     g_Pbuffer = EGL_NO_SURFACE;
-    
+ 
     return;
 }
 
@@ -1266,12 +1288,11 @@ void renderLoop()
 
     while (renderingEnabled != 0) {
 
-        pthread_mutex_lock(&g_mtxGlLock);
-        
         if (g_Display && pause == 0) {
            YabauseExec();
         }
-        
+
+        pthread_mutex_lock(&g_mtxGlLock);        
         // process incoming messages
         switch (g_msg) {
 
@@ -1315,6 +1336,14 @@ void renderLoop()
                 ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 0;
                 break;
+            case MSG_OPEN_TRAY:
+                YUI_LOG("MSG_OPEN_TRAY");
+                Cs2ForceOpenTray();
+                break;
+            case MSG_CLOSE_TRAY:
+                YUI_LOG("MSG_CLOSE_TRAY");
+                Cs2ForceCloseTray(CDCORE_ISO, s_cdpath);
+                break;                
             case MSG_SCREENSHOT:
                 YUI_LOG("MSG_SCREENSHOT");
                 s_status = saveScreenshot(screenShotFilename);
