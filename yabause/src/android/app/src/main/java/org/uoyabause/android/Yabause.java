@@ -92,10 +92,16 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
+
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+
 
 class YabauseRunnable implements Runnable
 {  
@@ -181,6 +187,7 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
     private boolean waiting_reault = false;
     private Tracker mTracker;
     private int tray_state = 0;
+    private AdView mAdView = null;
 
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
@@ -354,6 +361,8 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
             }
         };
         findViewById(R.id.button_report).setOnClickListener(ReportClickListener);
+
+        MobileAds.initialize(getApplicationContext(),  getString(R.string.banner_ad_unit_id));
 
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
@@ -611,12 +620,28 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
             //objectAnimator.setDuration(1000);
             //objectAnimator.start();
 
+            SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
+            Boolean hasDonated = prefs.getBoolean("donated", false);
+            if( hasDonated == false ) {
+                mAdView = (AdView) findViewById(R.id.adView);
+                AdRequest adRequest = new AdRequest.Builder()
+                        .addTestDevice("4A2A0B16E08299C20C50AD591CC49E08")
+                        .addTestDevice("303A789B146C169D4BDB5652D928FF8E")
+                        .build();
+                mAdView.loadAd(adRequest);
+                mAdView.setVisibility(View.VISIBLE);
+            }
+
             View button = findViewById(R.id.button_screen_shot);
             button.requestFocus();
             menu_showing = true;
-        }else{
+
+         }else{
             YabauseRunnable.resume();
             audio.unmute(audio.SYSTEM);
+
+            if( mAdView != null )
+                mAdView.setVisibility(View.GONE);
 
             v.setVisibility(View.GONE);
             v.setTranslationY(v.getHeight());
