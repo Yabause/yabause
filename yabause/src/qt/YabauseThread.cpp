@@ -89,7 +89,6 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		killTimer( mTimerId );
 		mTimerId = -1;
-		YabauseOnPause();
 	}
 	else {
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
