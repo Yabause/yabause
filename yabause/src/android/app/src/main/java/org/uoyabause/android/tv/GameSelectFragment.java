@@ -82,6 +82,7 @@ import org.uoyabause.android.YabauseStorage;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
@@ -173,6 +174,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         prepareBackgroundManager();
         setupUIElements();
         setupEventListeners();
+
+        MobileAds.initialize(application, getActivity().getString(R.string.ad_app_id));
 
         mInterstitialAd = new InterstitialAd(getActivity());
         mInterstitialAd.setAdUnitId(getActivity().getString(R.string.banner_ad_unit_id));
