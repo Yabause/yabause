@@ -622,6 +622,10 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     @Override
     public void fileSelected(File file) {
         String apath;
+        if( file == null ){ // canceled
+            return;
+        }
+
         apath = file.getAbsolutePath();
 
         YabauseStorage storage = YabauseStorage.getStorage();
