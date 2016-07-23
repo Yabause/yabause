@@ -59,6 +59,7 @@ typedef struct
    int use_sh2_dma_timing;
    int use_scu_dma_timing;
    int sh2_cache_enabled;
+   int use_scsp_dsp_dynarec;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -115,6 +116,7 @@ typedef struct
    int use_sh2_dma_timing;
    int use_scu_dma_timing;
    int sh2_cache_enabled;
+   int use_scsp_dsp_jit;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

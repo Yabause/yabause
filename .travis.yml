@@ -4,7 +4,27 @@ matrix:
     # linux gcc
     - compiler: gcc
       env: testenv="linux gcc"
-      
+
+    # linux gcc 6
+    - compiler: gcc
+      sudo: true
+      dist: trusty
+      env: testenv="linux gcc-6"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-6
+            - g++-6
+            - qt5-default
+            - libqt5opengl5-dev
+            - lib32stdc++6
+            - qtmultimedia5-dev
+      before_script:
+        - export CC=gcc-6
+        - export CXX=g++-6
+                  
     # linux clang
     - compiler: clang
       env: testenv="linux clang"
