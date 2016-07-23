@@ -1126,7 +1126,7 @@ const GLchar Yglprg_vdp2_drawfb_f[] =
 
 const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
 
-void Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to , float * offsetcol )
+void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend)
 {
    YglProgram * prg;
    prg = p;
@@ -1146,6 +1146,13 @@ void Ygl_uniformVDP2DrawFramebuffer( void * p, float from, float to , float * of
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
    
+
+   if (blend != 0){
+	   glEnable(GL_BLEND);
+   }else{
+	   glDisable(GL_BLEND);
+   }
+
    
    _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_mvpMatrix");
 }

@@ -609,7 +609,8 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    
    alpha = 0xF8;
    talpha = 0xF8;
-   if( ((fixVdp2Regs->CCCTL >> 6) & 0x01) == 0x01  )
+   // Enable sprite color control? and top color?
+   if ((fixVdp2Regs->CCCTL & 0x040) == 0x040 || (fixVdp2Regs->CCCTL & 0x140) == 0x100 )
    {
 	   switch (SPCCCS)
 	   {
@@ -6713,12 +6714,12 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB( vdp2draw_stru
       {
         if( info->pWinInfo[v].WinShowLine == 0 )
         {
-            return &paraA;
+			h = (paraB.KtablV + (paraB.deltaKAx * h));
+			return info->GetKValueB(&paraB, h);
         }else{
          if( h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd )
          {
-            h = (paraA.KtablV+(paraA.deltaKAx * h));
-            return info->GetKValueA( &paraA, h );
+			 return &paraA;
          }else{
             h = (paraB.KtablV+(paraB.deltaKAx * h));
             return info->GetKValueB( &paraB, h );
