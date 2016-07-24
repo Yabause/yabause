@@ -428,6 +428,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbScspDspDynarec">
+         <property name="text">
+          <string>Enable SCSP DSP Dynamic Recompiler</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1076,8 +1083,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowToolbar"/>
+  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>
