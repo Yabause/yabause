@@ -383,6 +383,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
    mYabauseConf.use_new_scsp = (int)vs->value("Sound/NewScsp", mYabauseConf.use_new_scsp).toBool();
    mYabauseConf.use_scsp_dsp_dynarec = (int)vs->value("Sound/EnableScspDspDynarec", mYabauseConf.use_scsp_dsp_dynarec).toBool();
+   mYabauseConf.use_scu_dsp_jit = (int)vs->value("Advanced/EnableScuDspDynarec", mYabauseConf.use_scu_dsp_jit).toBool();
 
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );

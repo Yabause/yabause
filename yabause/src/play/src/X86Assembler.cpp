@@ -954,7 +954,7 @@ void CX86Assembler::WriteEvId(uint8 nOp, const CAddress& Address, uint32 nConsta
 void CX86Assembler::WriteEvIq(uint8 nOp, const CAddress& Address, uint64 nConstant)
 {
 	unsigned int nConstantSize(GetMinimumConstantSize64(nConstant));
-	assert(nConstantSize <= 4);
+	//assert(nConstantSize <= 4); //GetMinimumConstantSize64 seems to sign extend 32 bit values
 
 	WriteRexByte(true, Address);
 	CAddress NewAddress(Address);

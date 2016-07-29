@@ -280,6 +280,8 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+   yabsys.use_scu_dsp_jit = init->use_scu_dsp_jit;
+
    if (ScuInit() != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SCU"));

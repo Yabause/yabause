@@ -756,7 +756,9 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
 			newhash["General/CdRomISO"]!=hash["General/CdRomISO"] ||
 			newhash["General/ClockSync"]!=hash["General/ClockSync"] ||
-			newhash["General/FixedBaseTime"]!=hash["General/FixedBaseTime"]
+			newhash["General/FixedBaseTime"]!=hash["General/FixedBaseTime"] ||
+         newhash["Advanced/EnableScuDspDynarec"] != hash["Advanced/EnableScuDspDynarec"] ||
+         newhash["Sound/EnableScspDspDynarec"] != hash["Sound/EnableScspDspDynarec"]
 		)
 		{
 			if ( mYabauseThread->pauseEmulation( true, true ) )
