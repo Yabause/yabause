@@ -68,7 +68,7 @@ struct DspContext
 };
 
 Jitter::CJitter jit(Jitter::CreateCodeGen());
-struct DspContext cxt;
+static struct DspContext cxt;
 
 #define BLOCK_SIZE 4 //number of dsp instructions per block
 #define NUM_BLOCKS (128 / BLOCK_SIZE)
