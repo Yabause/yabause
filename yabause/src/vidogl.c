@@ -610,7 +610,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    alpha = 0xF8;
    talpha = 0xF8;
    // Enable sprite color control? and top color?
-   if ((fixVdp2Regs->CCCTL & 0x040) == 0x040 || (fixVdp2Regs->CCCTL & 0x140) == 0x100 )
+   if ((fixVdp2Regs->CCCTL & 0x040) == 0x040 || (fixVdp2Regs->CCCTL & 0x240) == 0x200 )
    {
 	   switch (SPCCCS)
 	   {
