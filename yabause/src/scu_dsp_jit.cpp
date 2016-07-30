@@ -92,16 +92,6 @@ struct ScuDspContext
 
 static struct ScuDspContext cxt;
 
-u32 get_md(int bank, int which)
-{
-   return cxt.md[bank][which];
-}
-
-void set_md(int bank, int which, u32 data)
-{
-   cxt.md[bank][which] = data;
-}
-
 void increment_ct(int which)
 {
    //load pointer to ct[which] for final store
@@ -136,18 +126,21 @@ void do_readgensrc(u32 num, int need_increment[4])
    case 5:
    case 6:
    case 7:
-      //bank
-      jit.PushCst(md_bank);
-      
-      //ct value for bank
+      jit.PushRelAddrRef(offsetof(ScuDspContext, md[md_bank]));
+
       jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
       jit.PushCst(md_bank * 4);
       jit.AddRef();
       jit.LoadFromRef();
 
-      jit.Call(reinterpret_cast<void*>(&get_md), 2, Jitter::CJitter::RETURN_VALUE_32);
-      jit.PullRel(offsetof(ScuDspContext, read_data));
+      //ct value is on stack, adjust for u32
+      jit.Shl(2);
 
+      jit.AddRef();
+      jit.LoadFromRef();
+
+      jit.PullRel(offsetof(ScuDspContext, read_data));
+      
       if (num & 4)
          need_increment[num & 3] = 1;
       break;
@@ -215,48 +208,32 @@ void do_ad2_flags(u64 input)
 
 void do_zero_flag()
 {
+   //control &= ~CONTROL_Z;
+   //control |= (alul == 0) << 21;
    jit.PushRel(offsetof(ScuDspContext, alul));
    jit.PushCst(0);
-   jit.BeginIf(Jitter::CONDITION_EQ);
-   {
-      jit.PushRel(offsetof(ScuDspContext, control));
-      jit.PushCst(CONTROL_Z);
-      jit.Or();
-      jit.PullRel(offsetof(ScuDspContext, control));
-   }
-   jit.Else();
-   {
-      jit.PushRel(offsetof(ScuDspContext, control));
-      jit.PushCst(~CONTROL_Z);
-      jit.And();
-      jit.PullRel(offsetof(ScuDspContext, control));
-   }
-   jit.EndIf();
+   jit.Cmp(Jitter::CONDITION_EQ);
+   jit.Shl(21);
+   jit.PushRel(offsetof(ScuDspContext, control));
+   jit.PushCst(~CONTROL_Z);
+   jit.And();
+   jit.Or();
+   jit.PullRel(offsetof(ScuDspContext, control));
 }
 
 void do_sign_flag()
 {
-   //if ((alul & 0x80000000) != 0) control |= CONTROL_S;
-   //else control &= ~CONTROL_S;
+   //control &= ~CONTROL_S;
+   //control |= ((alul & 0x80000000) >> 9);
    jit.PushRel(offsetof(ScuDspContext, alul));
    jit.PushCst(0x80000000);
    jit.And();
-   jit.PushCst(0);
-   jit.BeginIf(Jitter::CONDITION_NE);
-   {
-      jit.PushRel(offsetof(ScuDspContext, control));
-      jit.PushCst(CONTROL_S);
-      jit.Or();
-      jit.PullRel(offsetof(ScuDspContext, control));
-   }
-   jit.Else();
-   {
-      jit.PushRel(offsetof(ScuDspContext, control));
-      jit.PushCst(~CONTROL_S);
-      jit.And();
-      jit.PullRel(offsetof(ScuDspContext, control));
-   }
-   jit.EndIf();
+   jit.Srl(9);
+   jit.PushRel(offsetof(ScuDspContext, control));
+   jit.PushCst(~CONTROL_S);
+   jit.And();
+   jit.Or();
+   jit.PullRel(offsetof(ScuDspContext, control));
 }
 
 void do_flags(u32 instr)
@@ -296,29 +273,19 @@ void do_alu_op(u32 instr)
       jit.ExtLow64();
       jit.PullRel(offsetof(ScuDspContext, alul));
 
-      //if ((alu_result & 0x100000000) != 0) control |= CONTROL_C;
-      //else control &= ~CONTROL_C
+      //temp = (aluh & 0x100000000) >> 32;
+      //control &= ~CONTROL_C;
+      //control |= temp << 20;
       jit.PushCst64(0x100000000);
       jit.And64();
       jit.ExtHigh64();
-      jit.PushCst(0);
-      jit.BeginIf(Jitter::CONDITION_NE);
-      {
-         jit.PushRel(offsetof(ScuDspContext, control));
-         jit.PushCst(CONTROL_C);
-         jit.Or();
-         jit.PullRel(offsetof(ScuDspContext, control));
-      }
-      jit.Else();
-      {
-         jit.PushRel(offsetof(ScuDspContext, control));
-         jit.PushCst(~CONTROL_C);
-         jit.And();
-         jit.PullRel(offsetof(ScuDspContext, control));
-      }
-      jit.EndIf();
 
-      assert(jit.IsStackEmpty());
+      jit.Shl(20);
+      jit.PushRel(offsetof(ScuDspContext, control));
+      jit.PushCst(~CONTROL_C);
+      jit.And();
+      jit.Or();
+      jit.PullRel(offsetof(ScuDspContext, control));
 
       sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh), 0xFFFFFFFF);
 
@@ -506,16 +473,21 @@ void recompile_alu(Jitter::CJitter & jit, u32 instruction)
 
 void recompile_set_md(u32 bank, u32 data)
 {
-   jit.PushCst(bank);
+   jit.PushRelAddrRef(offsetof(ScuDspContext, md[bank]));
 
    jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
    jit.PushCst(bank * 4);
    jit.AddRef();
    jit.LoadFromRef();
 
+   //ct value is on stack, adjust for u32
+   jit.Shl(2);
+
+   jit.AddRef();
+
    jit.PushCst(data);
 
-   jit.Call(reinterpret_cast<void*>(&set_md), 3, Jitter::CJitter::RETURN_VALUE_NONE);
+   jit.StoreAtRef();
 }
 
 void recompile_move_immediate(u32 instruction, int is_imm_d)
@@ -760,12 +732,17 @@ void write_d1_bus(int num, u32 value, int is_const, size_t offset)
    case 0x1:
    case 0x2:
    case 0x3:
-      jit.PushCst(bank);
+      jit.PushRelAddrRef(offsetof(ScuDspContext, md[bank]));
 
       jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
       jit.PushCst(bank * 4);
       jit.AddRef();
       jit.LoadFromRef();
+
+      //ct value is on stack, adjust for u32
+      jit.Shl(2);
+
+      jit.AddRef();
 
       if (is_const)
       {
@@ -775,12 +752,11 @@ void write_d1_bus(int num, u32 value, int is_const, size_t offset)
       else
          jit.PushRel(offset);
 
-      jit.Call(reinterpret_cast<void*>(&set_md), 3, Jitter::CJitter::RETURN_VALUE_NONE);
+      jit.StoreAtRef();
 
       increment_ct(bank);
       break;
    case 0x4:
-
       if (is_const)
       {
          jit.PushCst(value);
