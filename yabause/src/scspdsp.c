@@ -20,8 +20,43 @@
 #include "scsp.h"
 #include "scspdsp.h"
 
-s32 float_to_int(u16 f_val);
-u16 int_to_float(u32 i_val);
+struct ScspDsp
+{
+   u16 coef[64];
+   u16 madrs[32];
+   u64 mpro[128];
+   s32 temp[128];
+   s32 mems[32];
+   s32 mixs[16];
+   s16 efreg[16];
+   s16 exts[2];
+
+   u32 mdec_ct;
+   s32 inputs;
+   s32 b;
+   s32 x;
+   s16 y;
+   s32 acc;
+   s32 shifted;
+   s32 y_reg;
+   u16 frc_reg;
+   u16 adrs_reg;
+
+   s32 mul_out;
+
+   u32 mrd_value;
+
+   int rbl;
+   int rbp;
+
+   int need_read;
+   int need_nofl;
+   u32 io_addr;
+   int need_write;
+   u16 write_data;
+} scsp_dsp;
+
+struct ScspDspInterface dsp_inf;
 
 //saturate 24 bit signed integer
 static INLINE s32 saturate_24(s32 value)
@@ -35,7 +70,7 @@ static INLINE s32 saturate_24(s32 value)
    return value;
 }
 
-void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
+void ScspDspExec(struct ScspDsp* dsp, int addr, u8 * sound_ram)
 {
    u16* sound_ram_16 = (u16*)sound_ram;
    u64 mul_temp = 0;
@@ -240,7 +275,7 @@ s32 float_to_int(u16 f_val)
    return ret_val;
 }
 
-u16 int_to_float(u32 i_val)
+u32 int_to_float(u32 i_val)
 {
    u32 sign = (i_val >> 23) & 1;
    u32 exponent = 0;
@@ -283,6 +318,21 @@ u16 int_to_float(u32 i_val)
       i_val ^= (0x7ff | (1 << 15));
 
    return i_val;
+}
+
+void int_set_mpro(u64 input, u32 addr)
+{
+   scsp_dsp.mpro[addr] = input;
+}
+
+void int_set_coef(u32 input, u32 addr)
+{
+   scsp_dsp.coef[addr] = input;
+}
+
+void int_set_madrs(u32 input, u32 addr)
+{
+   scsp_dsp.madrs[addr] = input;
 }
 
 int ScspDspAssembleGetValue(char* instruction)
@@ -656,3 +706,91 @@ void ScspDspDisassembleToFile(char * filename)
 
    fclose(fp);
 }
+
+void int_set_rbl_rbp(u32 rbl, u32 rbp)
+{
+   scsp_dsp.rbl = rbl;
+   scsp_dsp.rbp = rbp;
+}
+
+void int_set_exts(u32 l, u32 r)
+{
+   scsp_dsp.exts[0] = l;
+   scsp_dsp.exts[1] = r;
+}
+
+void int_set_mixs(u32 i, u32 data)
+{
+   scsp_dsp.mixs[i] += data << 4;
+
+}
+
+u32 int_get_effect_out(int i)
+{
+   if (i < 16)
+      return scsp_dsp.efreg[i];
+   else if (i == 16)
+      return scsp_dsp.exts[0];
+   else if (i == 17)
+      return scsp_dsp.exts[1];
+
+   return 0;
+}
+
+u32 int_get_coef(u32 addr)
+{
+   return scsp_dsp.coef[addr];
+}
+
+u32 int_get_exts(u32 addr)
+{
+   return scsp_dsp.exts[addr];
+}
+
+u32 int_get_madrs(u32 addr)
+{
+   return scsp_dsp.madrs[addr];
+}
+
+u32 int_get_mems(u32 addr)
+{
+   return scsp_dsp.mems[addr];
+}
+
+u64 int_get_mpro(u32 addr)
+{
+   return scsp_dsp.mpro[addr];
+}
+
+void scsp_dsp_int_exec()
+{
+   int i;
+
+   for (i = 0; i < 128; i++)
+      ScspDspExec(&scsp_dsp, i, SoundRam);
+
+   scsp_dsp.mdec_ct--;
+
+   for (i = 0; i < 16; i++)
+      scsp_dsp.mixs[i] = 0;
+}
+
+void scsp_dsp_int_init()
+{
+   memset(&scsp_dsp, 0, sizeof(struct ScspDsp));
+
+   dsp_inf.get_effect_out = int_get_effect_out;
+   dsp_inf.set_coef = int_set_coef;
+   dsp_inf.set_exts = int_set_exts;
+   dsp_inf.set_madrs = int_set_madrs;
+   dsp_inf.set_mixs = int_set_mixs;
+   dsp_inf.set_mpro = int_set_mpro;
+   dsp_inf.set_rbl_rbp = int_set_rbl_rbp;
+   dsp_inf.get_coef = int_get_coef;
+   dsp_inf.get_exts = int_get_exts;
+   dsp_inf.get_madrs = int_get_madrs;
+   dsp_inf.get_mems = int_get_mems;
+   dsp_inf.get_mpro = int_get_mpro;
+   dsp_inf.exec = scsp_dsp_int_exec;
+}
+

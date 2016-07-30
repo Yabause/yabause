@@ -428,6 +428,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbScspDspDynarec">
+         <property name="text">
+          <string>Enable SCSP DSP Dynamic Recompiler</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -798,6 +805,13 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbScuDspDynarec">
+         <property name="text">
+          <string>Enable SCU DSP Dynamic Recompiler</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label_3">
          <property name="text">
           <string>(CD Block LLE requires cdb105.bin, a real BIOS, and no dynamic recompilers. Sh2 Dma Timing, Scu Dma Timing and Sh2 Cache must also be enabled)</string>
@@ -1076,8 +1090,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowToolbar"/>
+  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>

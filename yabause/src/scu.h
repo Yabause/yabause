@@ -317,4 +317,16 @@ void ScuDspClearCodeBreakpoints(void);
 int ScuSaveState(FILE *fp);
 int ScuLoadState(FILE *fp, int version, int size);
 
+struct ScuDspInterface
+{
+   void(*set_program)(u32 val);
+   void(*set_data_address)(u32 val);
+   void(*set_data_ram_data)(u32 val);
+   void(*set_program_control)(u32 val);
+   u32(*get_program_control)();
+   u32(*get_data_ram)();
+};
+
+extern struct ScuDspInterface scu_dsp_inf;
+
 #endif

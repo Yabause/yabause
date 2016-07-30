@@ -38,6 +38,7 @@
 #include "ygr.h"
 #include "assert.h"
 #include <stdarg.h>
+#include "scu_dsp_jit.h"
 
 #ifdef OPTIMIZED_DMA
 # include "cs2.h"
@@ -51,7 +52,8 @@ scudspregs_struct * ScuDsp;
 scubp_struct * ScuBP;
 static int incFlg[4] = { 0 };
 static void ScuTestInterruptMask(void);
-
+struct ScuDspInterface scu_dsp_inf;
+void scu_dsp_init();
 //////////////////////////////////////////////////////////////////////////////
 
 int ScuInit(void) {
@@ -73,6 +75,15 @@ int ScuInit(void) {
    ScuBP->numcodebreakpoints = 0;
    ScuBP->BreakpointCallBack=NULL;
    ScuBP->inbreakpoint=0;
+
+#ifdef HAVE_PLAY_JIT
+   if (yabsys.use_scu_dsp_jit)
+      scu_dsp_jit_init();
+   else
+      scu_dsp_init();
+#else
+   scu_dsp_init();
+#endif
    
    return 0;
 }
@@ -2152,28 +2163,6 @@ static void writedmadest(u8 num, u32 val, u8 add)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void dsp_trace_log(const char * format, ...)
-{
-   static int started = 0;
-   static FILE* fp = NULL;
-   va_list l;
-
-   if (!started)
-   {
-      fp = fopen("C:/yabause/log.txt", "w");
-
-      if (!fp)
-      {
-         return;
-      }
-      started = 1;
-   }
-
-   va_start(l, format);
-   vfprintf(fp, format, l);
-   va_end(l);
-}
-
 
 void ScuExec(u32 cycles) {
    int i;
@@ -2181,7 +2170,14 @@ void ScuExec(u32 cycles) {
    int scu_dma_cycles = cycles;
    int real_timing = 1;
 
-   timing = timing ;
+#ifdef HAVE_PLAY_JIT
+   if (yabsys.use_scu_dsp_jit)
+   {
+      scu_dsp_jit_exec(cycles);
+      return;
+   }
+#endif
+
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
       while (timing > 0) {
@@ -3484,6 +3480,60 @@ u16 FASTCALL ScuReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void scu_dsp_int_set_program(u32 val)
+{
+   ScuDsp->ProgramRam[ScuDsp->PC] = val;
+   ScuDsp->PC++;
+   ScuDsp->ProgControlPort.part.P = ScuDsp->PC;
+}
+
+void scu_dsp_int_set_data_address(u32 val)
+{
+   ScuDsp->DataRamPage = (val >> 6) & 3;
+   ScuDsp->DataRamReadAddress = val & 0x3F;
+}
+
+void scu_dsp_int_set_data_ram_data(u32 val)
+{
+   if (!ScuDsp->ProgControlPort.part.EX) {
+      ScuDsp->MD[ScuDsp->DataRamPage][ScuDsp->DataRamReadAddress] = val;
+      ScuDsp->DataRamReadAddress++;
+   }
+}
+
+void scu_dsp_int_set_program_control(u32 val)
+{
+   ScuDsp->ProgControlPort.all = (ScuDsp->ProgControlPort.all & 0x00FC0000) | (val & 0x060380FF);
+
+   if (ScuDsp->ProgControlPort.part.LE) {
+      // set pc
+      ScuDsp->PC = (u8)ScuDsp->ProgControlPort.part.P;
+      LOG("scu\t: DSP set pc = %02X\n", ScuDsp->PC);
+   }
+}
+u32 scu_dsp_int_get_program_control()
+{
+   return (ScuDsp->ProgControlPort.all & 0x00FD00FF);
+}
+
+u32 scu_dsp_int_get_data_ram()
+{
+   if (!ScuDsp->ProgControlPort.part.EX)
+      return ScuDsp->MD[ScuDsp->DataRamPage][ScuDsp->DataRamReadAddress++];
+
+   return 0;
+}
+
+void scu_dsp_init()
+{
+   scu_dsp_inf.get_data_ram = scu_dsp_int_get_data_ram;
+   scu_dsp_inf.get_program_control = scu_dsp_int_get_program_control;
+   scu_dsp_inf.set_data_address = scu_dsp_int_set_data_address;
+   scu_dsp_inf.set_data_ram_data = scu_dsp_int_set_data_ram_data;
+   scu_dsp_inf.set_program = scu_dsp_int_set_program;
+   scu_dsp_inf.set_program_control = scu_dsp_int_set_program_control;
+}
+
 u32 FASTCALL ScuReadLong(u32 addr) {
    addr &= 0xFF;
    //LOG("Scu read %08X:%08X\n", addr);
@@ -3509,12 +3559,9 @@ u32 FASTCALL ScuReadLong(u32 addr) {
       case 0x7C:
          return ScuRegs->DSTA;
       case 0x80: // DSP Program Control Port
-         return (ScuDsp->ProgControlPort.all & 0x00FD00FF);
+         return scu_dsp_inf.get_program_control();
       case 0x8C: // DSP Data Ram Data Port
-         if (!ScuDsp->ProgControlPort.part.EX)
-            return ScuDsp->MD[ScuDsp->DataRamPage][ScuDsp->DataRamReadAddress++];
-         else
-            return 0;
+         return scu_dsp_inf.get_data_ram();
       case 0xA4:
          return ScuRegs->IST;
       case 0xA8:
@@ -3669,14 +3716,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0x80: // DSP Program Control Port
          LOG("scu\t: wrote %08X to DSP Program Control Port\n", val);
-         ScuDsp->ProgControlPort.all = (ScuDsp->ProgControlPort.all & 0x00FC0000) | (val & 0x060380FF);
-
-         if (ScuDsp->ProgControlPort.part.LE) {
-            // set pc
-            ScuDsp->PC = (u8)ScuDsp->ProgControlPort.part.P;
-            LOG("scu\t: DSP set pc = %02X\n", ScuDsp->PC);
-         }
-
+         scu_dsp_inf.set_program_control(val);
 #if DEBUG
          if (ScuDsp->ProgControlPort.part.EX)
             LOG("scu\t: DSP executing: PC = %02X\n", ScuDsp->PC);
@@ -3684,20 +3724,14 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0x84: // DSP Program Ram Data Port
 //         LOG("scu\t: wrote %08X to DSP Program ram offset %02X\n", val, ScuDsp->PC);
-         ScuDsp->ProgramRam[ScuDsp->PC] = val;
-         ScuDsp->PC++;
-         ScuDsp->ProgControlPort.part.P = ScuDsp->PC;
+         scu_dsp_inf.set_program(val);
          break;
       case 0x88: // DSP Data Ram Address Port
-         ScuDsp->DataRamPage = (val >> 6) & 3;
-         ScuDsp->DataRamReadAddress = val & 0x3F;
+         scu_dsp_inf.set_data_address(val);
          break;
       case 0x8C: // DSP Data Ram Data Port
 //         LOG("scu\t: wrote %08X to DSP Data Ram Data Port Page %d offset %02X\n", val, ScuDsp->DataRamPage, ScuDsp->DataRamReadAddress);
-         if (!ScuDsp->ProgControlPort.part.EX) {
-            ScuDsp->MD[ScuDsp->DataRamPage][ScuDsp->DataRamReadAddress] = val;
-            ScuDsp->DataRamReadAddress++;
-         }
+         scu_dsp_inf.set_data_ram_data(val);
          break;
       case 0x90:
          ScuRegs->T0C = val;

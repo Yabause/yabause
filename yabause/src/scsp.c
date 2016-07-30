@@ -98,7 +98,7 @@
 #include "yabause.h"
 #include "scsp.h"
 #include "scspdsp.h"
-
+#include "scsp_dsp_jit.h"
 #if 0
 #include "windows/aviout.h"
 #endif
@@ -1359,38 +1359,24 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
          *out_l = *out_l + ((disdl_applied >> pan_val_l) >> 2);
          *out_r = *out_r + ((disdl_applied >> pan_val_r) >> 2);
 
-         scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
+         dsp_inf.set_mixs(s->slots[last_step].regs.isel, mixs_input);
       }
    }
 
-   scsp_dsp.rbp = rbp;
-   scsp_dsp.rbl = rbl;
+   dsp_inf.set_rbl_rbp(rbl, rbp);
+   dsp_inf.set_exts(cd_in_l, cd_in_r);
 
-   scsp_dsp.exts[0] = cd_in_l;
-   scsp_dsp.exts[1] = cd_in_r;
-
-   for (i = 0; i < 128; i++)
-      ScspDspExec(&scsp_dsp, i, SoundRam);
-
-   scsp_dsp.mdec_ct--;
-
-   for (i = 0; i < 16; i++)
-      scsp_dsp.mixs[i] = 0;
-
+   dsp_inf.exec();
+  
    for (i = 0; i < 18; i++)//16,17 are exts0/1
    {
       int efsdl = get_sdl_shift(s->slots[i].regs.efsdl);
-      s16 efsdl_applied = 0; 
+      s16 efsdl_applied = 0;
 
       int pan_val_l = 0, pan_val_r = 0;
       s16 panned_l = 0, panned_r = 0;
-
-      if (i < 16)
-         efsdl_applied = (scsp_dsp.efreg[i] >> efsdl);
-      else if (i == 16)
-         efsdl_applied = scsp_dsp.exts[0] >> efsdl;
-      else if (i == 17)
-         efsdl_applied = scsp_dsp.exts[1] >> efsdl;
+      
+      efsdl_applied = dsp_inf.get_effect_out(i) >> efsdl;
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
@@ -1422,7 +1408,14 @@ void new_scsp_reset(struct Scsp* s)
    fill_plfo_tables();
    fill_alfo_tables();
 
-   memset(&scsp_dsp, 0, sizeof(ScspDsp));
+#ifdef HAVE_PLAY_JIT
+   if (yabsys.use_scsp_dsp_jit)
+      scsp_dsp_jit_init();
+   else
+      scsp_dsp_int_init();
+#else
+   scsp_dsp_int_init();
+#endif
 
    new_scsp_outbuf_pos = 0;
    new_scsp_cycles = 0;
@@ -3979,12 +3972,12 @@ scsp_w_w (u32 a, u16 d)
   else if (a >= 0x700 && a < 0x780)
   {
      u32 address = (a - 0x700) / 2;
-     scsp_dsp.coef[address] = d >> 3;//lower 3 bits seem to be discarded
+     dsp_inf.set_coef(d >> 3, address);//lower 3 bits seem to be discarded
   }
   else if (a >= 0x780 && a < 0x7A0)
   {
      u32 address = (a - 0x780) / 2;
-     scsp_dsp.madrs[address] = d;
+     dsp_inf.set_madrs(d, address);
   }
   else if (a >= 0x7A0 && a < 0x7C0)
   {
@@ -3994,29 +3987,34 @@ scsp_w_w (u32 a, u16 d)
   else if (a >= 0x800 && a < 0xC00)
   {
      u32 address = (a - 0x800) / 8;
-     u64 current_val = scsp_dsp.mpro[address];
+     u64 current_val = dsp_inf.get_mpro(address);
+#ifdef HAVE_PLAY_JIT
+     scsp_dsp_jit_need_recompile();
+#endif
 
      switch (a & 0xf)
      {
      case 0:
      case 8:
-        scsp_dsp.mpro[address] = (current_val & 0x0000ffffffffffff) | (u64)d << (u64)48;
+        current_val = (current_val & 0x0000ffffffffffff) | (u64)d << (u64)48;
         break;
      case 2:
      case 0xa:
-        scsp_dsp.mpro[address] = (current_val & 0xffff0000ffffffff) | (u64)d << (u64)32;
+        current_val = (current_val & 0xffff0000ffffffff) | (u64)d << (u64)32;
         break;
      case 4:
      case 0xc:
-        scsp_dsp.mpro[address] = (current_val  & 0xffffffff0000ffff) | (u64)d << (u64)16;
+        current_val = (current_val  & 0xffffffff0000ffff) | (u64)d << (u64)16;
         break;
      case 6:
      case 0xe:
-        scsp_dsp.mpro[address] = (current_val & 0xffffffffffff0000) | d;
+        current_val = (current_val & 0xffffffffffff0000) | d;
         break;
      default:
         break;
      }
+
+     dsp_inf.set_mpro(current_val, address);
   }
   else if (a < 0xee4)
     {
@@ -4145,40 +4143,40 @@ scsp_r_w (u32 a)
   else if (a >= 0x700 && a < 0x780)
   {
      u32 address = (a - 0x700) / 2;
-     return scsp_dsp.coef[address] << 3;
+     return dsp_inf.get_coef(address) << 3;
   }
   else if (a >= 0x780 && a < 0x7A0)
   {
      u32 address = (a - 0x780) / 2;
-     return scsp_dsp.madrs[address];
+     return dsp_inf.get_madrs(address);
   }
   else if (a >= 0x7A0 && a < 0x7C0)
   {
      //madrs mirror
      u32 address = (a - 0x7A0) / 2;
-     return scsp_dsp.madrs[address];
+     return dsp_inf.get_madrs(address);
   }
   else if (a >= 0x800 && a < 0xC00)
   {
      u32 address = (a - 0x800) / 8;
-
+     u64 value = dsp_inf.get_mpro(address);
      switch (a & 0xf)
      {
      case 0:
      case 8:
-        return (scsp_dsp.mpro[address] >> (u64)48) & 0xffff;
+        return (value >> (u64)48) & 0xffff;
         break;
      case 2:
      case 0xa:
-        return (scsp_dsp.mpro[address] >> (u64)32) & 0xffff;
+        return (value >> (u64)32) & 0xffff;
         break;
      case 4:
      case 0xc:
-        return (scsp_dsp.mpro[address] >> (u64)16) & 0xffff;
+        return (value >> (u64)16) & 0xffff;
         break;
      case 6:
      case 0xe:
-        return scsp_dsp.mpro[address] & 0xffff;
+        return value & 0xffff;
         break;
      default:
         break;
@@ -4187,12 +4185,12 @@ scsp_r_w (u32 a)
   else if (a >= 0xE00 && a <= 0xE7F)
   {
      u32 address = (a - 0xE00) / 2;
-     return scsp_dsp.mems[address];
+     return dsp_inf.get_mems(address);
   }
   else if (a >= 0xEE0 && a <= 0xEE3)
   {
      u32 address = (a - 0xEE0) / 2;
-     return scsp_dsp.exts[address];
+     return dsp_inf.get_exts(address);
   }
   else if (a < 0xee4)
     {
@@ -4304,6 +4302,8 @@ scsp_reset (void)
 
   if (use_new_scsp)
      new_scsp_reset(&new_scsp);
+  else
+     scsp_dsp_int_init();
 }
 
 void

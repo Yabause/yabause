@@ -104,8 +104,6 @@
 yabsys_struct yabsys;
 const char *bupfilename = NULL;
 u64 tickfreq;
-//todo this ought to be in scspdsp.c
-ScspDsp scsp_dsp = { 0 };
 char ssf_track_name[256] = { 0 };
 char ssf_artist[256] = { 0 };
 
@@ -282,6 +280,8 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+   yabsys.use_scu_dsp_jit = init->use_scu_dsp_jit;
+
    if (ScuInit() != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SCU"));
@@ -427,6 +427,8 @@ int YabauseInit(yabauseinit_struct *init)
       VIDSoftSetNumLayerThreads(0);
       VIDSoftSetNumPriorityThreads(0);
    }
+
+   yabsys.use_scsp_dsp_jit = init->use_scsp_dsp_dynarec;
 
    scsp_set_use_new(init->use_new_scsp);
 

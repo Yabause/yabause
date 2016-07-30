@@ -479,6 +479,7 @@ void UISettings::loadSettings()
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
    cbNewScsp->setChecked(s->value("Sound/NewScsp", true).toBool());
+   cbScspDspDynarec->setChecked(s->value("Sound/EnableScspDspDynarec", true).toBool());
 
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
@@ -502,6 +503,7 @@ void UISettings::loadSettings()
    cbEnableSh2Cache->setChecked(s->value("Advanced/EnableSh2Cache").toBool());
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
    cb68kCore->setCurrentIndex(cb68kCore->findData(s->value("Advanced/68kCore", QtYabause::default68kCore().id).toInt()));
+   cbScuDspDynarec->setChecked(s->value("Advanced/EnableScuDspDynarec", false).toBool());
 
 	// view
 	bgShowMenubar->setId( rbMenubarNever, BD_NEVERHIDE );
@@ -578,7 +580,8 @@ void UISettings::saveSettings()
 
 	// sound
 	s->setValue( "Sound/SoundCore", cbSoundCore->itemData( cbSoundCore->currentIndex() ).toInt() );
-   s->setValue( "Sound/NewScsp", cbNewScsp->isChecked());
+   s->setValue( "Sound/NewScsp", cbNewScsp->isChecked()); 
+   s->setValue("Sound/EnableScspDspDynarec", cbScspDspDynarec->isChecked());
 
 	// cartridge/memory
 	s->setValue( "Cartridge/Type", cbCartridge->itemData( cbCartridge->currentIndex() ).toInt() );
@@ -602,6 +605,7 @@ void UISettings::saveSettings()
    s->setValue("Advanced/EnableSh2Cache", cbEnableSh2Cache->isChecked());
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
    s->setValue("Advanced/68kCore", cb68kCore->itemData(cb68kCore->currentIndex()).toInt());
+   s->setValue("Advanced/EnableScuDspDynarec", cbScuDspDynarec->isChecked());
 
 	// view
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );

@@ -22,42 +22,6 @@
 
 #include "core.h"
 
-typedef struct
-{
-   u16 coef[64];
-   u16 madrs[32];
-   u64 mpro[128];
-   s32 temp[128];
-   s32 mems[32];
-   s32 mixs[16];
-   s16 efreg[16];
-   s16 exts[2];
-
-   u32 mdec_ct;
-   s32 inputs;
-   s32 b;
-   s32 x;
-   s16 y;
-   s32 acc;
-   s32 shifted;
-   s32 y_reg;
-   u16 frc_reg;
-   u16 adrs_reg;
-
-   s32 mul_out;
-
-   u32 mrd_value;
-
-   int rbl;
-   int rbp;
-
-   int need_read;
-   int need_nofl;
-   u32 io_addr;
-   int need_write;
-   u16 write_data;
-}ScspDsp;
-
 //dsp instruction format
 
 //bits 63-48
@@ -150,8 +114,27 @@ union ScspDspInstruction {
 #endif
 
 void ScspDspDisasm(u8 addr, char *outstring);
-void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram);
+s32 float_to_int(u16 f_val);
+u32 int_to_float(u32 i_val);
 
-extern ScspDsp scsp_dsp;
+struct ScspDspInterface
+{
+   void (*set_rbl_rbp)(u32 rbl, u32 rbp);
+   void(*set_exts)(u32 l, u32 r);
+   void(*set_mixs)(u32 i, u32 data);
+   u32(*get_effect_out)(int i);
+   void(*set_mpro)(u64 input, u32 addr);
+   u64 (*get_mpro)(u32 addr);
+   void(*set_coef)(u32 input, u32 addr);
+   void(*set_madrs)(u32 input, u32 addr);
+   u32(*get_coef)(u32 addr);
+   u32(*get_exts)(u32 addr);
+   u32(*get_madrs)(u32 addr);
+   u32(*get_mems)(u32 addr);
+   void(*exec)();
+};
 
+extern struct ScspDspInterface dsp_inf;
+
+void scsp_dsp_int_init();
 #endif
