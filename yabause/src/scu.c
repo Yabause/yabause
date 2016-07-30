@@ -1935,7 +1935,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 		}
 		for (i = 0; i < Counter; i++)
 		{
-			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLongNocache(MSH2,(sc->RA0 << 2));
 			sc->CT[sel]++;
 			sc->CT[sel] &= 0x3F;
 			sc->RA0 += add;
@@ -1944,7 +1944,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 	else{
 		for (i = 0; i < Counter; i++)
 		{
-			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLongNocache(MSH2, (sc->RA0 << 2));
 			sc->CT[sel]++;
 			sc->CT[sel] &= 0x3F;
 			sc->RA0 += (add>>1);
