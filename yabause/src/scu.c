@@ -1741,6 +1741,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     u8  add;
     u8  addr = sc->CT[sel];
     u32 i;
+	u32 abus_check;
 
     switch (((inst >> 15) & 0x07))
     {
@@ -1782,7 +1783,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
 	//LOG("DSP DMA01 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
 
 	// is A-Bus?
-	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+	abus_check = ((sc->RA0 << 2) & 0x0FF00000);
 	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
 		if (add > 1){
 			add = 1;
@@ -1899,6 +1900,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
    u32 i;
 	int add;
 	int sel;
+	u32 abus_check;
 
    switch ((inst & 0x7))
    {
@@ -1928,7 +1930,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 
 	//LOG("DSP DMA03 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
 
-	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+	abus_check = ((sc->RA0 << 2) & 0x0FF00000);
 	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
 		if (add > 1){
 			add = 1;
