@@ -105,25 +105,16 @@ void op1(Jitter::CJitter& jit, ScspDspInstruction instruction)
    {
       if (instruction.part.ira <= 0x1f)
       {
-         jit.PushRelAddrRef(offsetof(DspContext, mems));
-         jit.PushCst((instruction.part.ira & 0x1f) * 4);
-         jit.AddRef();
-         jit.LoadFromRef();
+         jit.PushRel(offsetof(DspContext, mems[instruction.part.ira & 0x1f]));
       }
       else if (instruction.part.ira >= 0x20 && instruction.part.ira <= 0x2f)
       {
-         jit.PushRelAddrRef(offsetof(DspContext, mixs));
-         jit.PushCst((instruction.part.ira - 0x20) * 4);
-         jit.AddRef();
-         jit.LoadFromRef();
+         jit.PushRel(offsetof(DspContext, mixs[instruction.part.ira - 0x20]));
          jit.Shl(4);
       }
       else
       {
-         jit.PushRelAddrRef(offsetof(DspContext, exts));
-         jit.PushCst(((instruction.part.ira - 0x30) & 1) * 4);
-         jit.AddRef();
-         jit.LoadFromRef();
+         jit.PushRel(offsetof(DspContext, exts[(instruction.part.ira - 0x30) & 1]));
          jit.Shl(8);
       }
 
@@ -162,10 +153,7 @@ void op1(Jitter::CJitter& jit, ScspDspInstruction instruction)
       jit.PushRel(offsetof(DspContext, frc_reg));
       break;
    case 1:
-      jit.PushRelAddrRef(offsetof(DspContext, coef));
-      jit.PushCst(instruction.part.coef * 4);
-      jit.AddRef();
-      jit.LoadFromRef();
+      jit.PushRel(offsetof(DspContext, coef[instruction.part.coef]));
       jit.PushCst(0xFFFF);
       jit.And();
       break;
@@ -255,12 +243,9 @@ void op2(Jitter::CJitter& jit, ScspDspInstruction instruction)
    if (instruction.part.ewt)
    {
       //efreg[ewa] = (shifted >> 8);
-      jit.PushRelAddrRef(offsetof(DspContext, efreg));
-      jit.PushCst(instruction.part.ewa * 4);
-      jit.AddRef();
       jit.PushRel(offsetof(DspContext, shifted));
       jit.Srl(8);
-      jit.StoreAtRef();
+      jit.PullRel(offsetof(DspContext, efreg[instruction.part.ewa]));
    }
 
    if (instruction.part.twt)//temp[((instruction.part.twa) + mdec_ct) & 0x7F] = shifted
@@ -393,14 +378,8 @@ void op3(Jitter::CJitter& jit, ScspDspInstruction instruction, int step)
 
    if (instruction.part.iwt)
    {
-      jit.PushRelAddrRef(offsetof(DspContext, mems));
-      jit.PushCst(instruction.part.iwa * 4);
-      jit.AddRef();
-
       jit.PushRel(offsetof(DspContext, read_data));
-
-      //assignment
-      jit.StoreAtRef();
+      jit.PullRel(offsetof(DspContext, mems[instruction.part.iwa]));
    }
 }
 
@@ -522,12 +501,7 @@ void op4(Jitter::CJitter& jit, ScspDspInstruction instruction)
 void op5(Jitter::CJitter& jit, ScspDspInstruction instruction)
 {
    //addr = madrs[masa];
-   jit.PushRelAddrRef(offsetof(DspContext, madrs));
-   jit.PushCst(instruction.part.masa * 4);
-
-   jit.AddRef();
-   jit.LoadFromRef();
-
+   jit.PushRel(offsetof(DspContext, madrs[instruction.part.masa]));
    
    jit.PushCst(0xFFFF);
    jit.And();
