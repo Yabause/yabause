@@ -84,6 +84,9 @@ extern "C"
 
    M68K_struct * M68KCoreList[] = {
       &M68KDummy,
+   #ifdef HAVE_MUSASHI
+      &M68KMusashi,
+   #endif
    #ifdef HAVE_C68K
       &M68KC68K,
    #endif
@@ -544,7 +547,7 @@ namespace game_testing
       yinit.percoretype = PERCORE_DUMMY;
       yinit.sh2coretype = SH2CORE_INTERPRETER;
       yinit.vidcoretype = VIDCORE_SOFT;
-      yinit.m68kcoretype = M68KCORE_C68K;
+      yinit.m68kcoretype = M68KCORE_MUSASHI;
       yinit.sndcoretype = SNDCORE_DUMMY;
       yinit.cdcoretype = CDCORE_ISO;
       yinit.carttype = CART_NONE;

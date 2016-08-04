@@ -39,11 +39,11 @@ extern CDInterface SPTICD;
 extern "C" {
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
-#ifdef HAVE_C68K
-&M68KC68K,
-#endif
 #ifdef HAVE_MUSASHI
 &M68KMusashi,
+#endif
+#ifdef HAVE_C68K
+&M68KC68K,
 #endif
 NULL
 };
@@ -454,10 +454,10 @@ PerInterface_struct QtYabause::defaultPERCore()
 
 M68K_struct QtYabause::default68kCore()
 {
-#ifdef HAVE_C68K
+#ifdef HAVE_MUSASHI
+return M68KMusashi;
+#elif HAVE_C68K
    return M68KC68K;
-#elif HAVE_MUSASHI
-   return M68KMusashi;
 #else
    return M68KDummy;
 #endif
