@@ -252,7 +252,7 @@ static void FlipToggle(NSMenuItem *item) {
         yinit.sh2coretype = SH2CORE_DEFAULT;
         yinit.vidcoretype = [prefs videoCore];
         yinit.sndcoretype = [prefs soundCore];
-        yinit.m68kcoretype = M68KCORE_C68K;
+        yinit.m68kcoretype = M68KCORE_MUSASHI;
         yinit.cdcoretype = cdcore;
         yinit.carttype = [prefs cartType];
         yinit.regionid = [prefs region];

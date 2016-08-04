@@ -410,7 +410,7 @@ void YabauseThread::resetYabauseConf()
 	// free structure
 	memset( &mYabauseConf, 0, sizeof( yabauseinit_struct ) );
 	// fill default structure
-	mYabauseConf.m68kcoretype = M68KCORE_C68K;
+	mYabauseConf.m68kcoretype = M68KCORE_MUSASHI;
 	mYabauseConf.percoretype = QtYabause::defaultPERCore().id;
 	mYabauseConf.sh1coretype = SH2CORE_DEFAULT;
 	mYabauseConf.use_cd_block_lle = 0;

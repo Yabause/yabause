@@ -54,6 +54,9 @@ static char cartpath[256] = "\0";
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
+#ifdef HAVE_MUSASHI
+&M68KMusashi,
+#endif
 #ifdef HAVE_C68K
 &M68KC68K,
 #endif
@@ -145,7 +148,7 @@ static GtkWidget * yui_new(void) {
 }
 
 static void yui_settings_init(void) {
-	yinit.m68kcoretype = M68KCORE_C68K;
+	yinit.m68kcoretype = M68KCORE_MUSASHI;
 	yinit.percoretype = PERCORE_GTK;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
 #ifdef HAVE_LIBGTKGLEXT

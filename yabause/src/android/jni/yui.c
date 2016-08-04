@@ -482,7 +482,7 @@ Java_org_yabause_android_YabauseRunnable_init( JNIEnv* env, jobject obj, jobject
 
     memset(&yinit, 0, sizeof(yabauseinit_struct));
 
-    yinit.m68kcoretype = M68KCORE_C68K;
+    yinit.m68kcoretype = M68KCORE_MUSASHI;
     yinit.percoretype = PERCORE_DUMMY;
 #ifdef SH2_DYNAREC
     yinit.sh2coretype = 2;
