@@ -94,23 +94,12 @@ static struct ScuDspContext cxt;
 
 void increment_ct(int which)
 {
-   //load pointer to ct[which] for final store
-   jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
-   jit.PushCst(which * 4);
-   jit.AddRef();
-   
-   //temp = (ct[which] + 1) & 0x3f;
-   jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
-   jit.PushCst(which * 4);
-   jit.AddRef();
-   jit.LoadFromRef();
+   jit.PushRel(offsetof(ScuDspContext, ct[which]));
    jit.PushCst(1);
    jit.Add();
    jit.PushCst(0x3f);
    jit.And();
-
-   //ct[which] = temp;
-   jit.StoreAtRef();
+   jit.PullRel(offsetof(ScuDspContext, ct[which]));
 }
 
 void do_readgensrc(u32 num, int need_increment[4])
@@ -127,20 +116,13 @@ void do_readgensrc(u32 num, int need_increment[4])
    case 6:
    case 7:
       jit.PushRelAddrRef(offsetof(ScuDspContext, md[md_bank]));
+      jit.PushRel(offsetof(ScuDspContext, ct[md_bank]));
 
-      jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
-      jit.PushCst(md_bank * 4);
-      jit.AddRef();
-      jit.LoadFromRef();
-
-      //ct value is on stack, adjust for u32
       jit.Shl(2);
-
       jit.AddRef();
       jit.LoadFromRef();
-
       jit.PullRel(offsetof(ScuDspContext, read_data));
-      
+
       if (num & 4)
          need_increment[num & 3] = 1;
       break;
@@ -165,23 +147,19 @@ void do_readgensrc(u32 num, int need_increment[4])
    }
 }
 
-void sign_extend_32(Jitter::CJitter & jit, size_t src_offset_lo, size_t dst_offset_hi, u32 value)
+void sign_extend_32(Jitter::CJitter & jit, size_t src_offset_lo, size_t dst_offset_hi)
 {
+   //sign extend cmp result to fill upper 32 bits
+   //if(src & 0x80000000)
+   //  dest = 0xffffffff;
    jit.PushRel(src_offset_lo);
    jit.PushCst(0x80000000);
    jit.And();
-   jit.PushCst(0);
-   jit.BeginIf(Jitter::CONDITION_NE);
-   {
-      jit.PushCst(value);
-      jit.PullRel(dst_offset_hi);
-   }
-   jit.Else();
-   {
-      jit.PushCst(0);
-      jit.PullRel(dst_offset_hi);
-   }
-   jit.EndIf();
+   jit.PushCst(0x80000000);
+   jit.Cmp(Jitter::CONDITION_EQ);
+   jit.Shl(31);
+   jit.Sra(31);
+   jit.PullRel(dst_offset_hi);
 }
 
 //todo write hardware test, recompile
@@ -256,6 +234,10 @@ void do_alu_op(u32 instr)
    //add / sub
    if (instr == 4 || instr == 5)
    {
+      //dummy store to prevent assert (codegen match problem)
+      jit.PushCst64(1);
+      jit.PullRel64(offsetof(ScuDspContext, temp));
+
       jit.PushRel(offsetof(ScuDspContext, acl));
       jit.PushRel(offsetof(ScuDspContext, zero));//MergeTo64 seems unable to use constants
       jit.MergeTo64();
@@ -287,7 +269,7 @@ void do_alu_op(u32 instr)
       jit.Or();
       jit.PullRel(offsetof(ScuDspContext, control));
 
-      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh), 0xFFFFFFFF);
+      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh));
 
       do_zero_flag();
       do_sign_flag();
@@ -316,7 +298,7 @@ void do_alu_op(u32 instr)
 
       jit.PullRel(offsetof(ScuDspContext, alul));
 
-      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh), 0xFFFFFFFF);
+      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh));
 
       do_flags(instr);
    }
@@ -359,7 +341,7 @@ void recompile_alu(Jitter::CJitter & jit, u32 instruction)
    switch (instr)
    {
    case 0x0: // NOP
-      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh), 0xFFFFFFFF);
+      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh));
       jit.PushRel(offsetof(ScuDspContext, acl));
       jit.PullRel(offsetof(ScuDspContext, alul));
       break;
@@ -401,7 +383,7 @@ void recompile_alu(Jitter::CJitter & jit, u32 instruction)
    case 0x9: // RR
       do_shift_rotate_right_carry();
 
-      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh), 0xFFFFFFFF);
+      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh));
 
       jit.PushRel(offsetof(ScuDspContext, acl));
       jit.Sra(1);
@@ -425,7 +407,7 @@ void recompile_alu(Jitter::CJitter & jit, u32 instruction)
    case 0xA: // SL
    case 0xB: // RL
       do_left_carry(31);
-      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh), 0xFFFFFFFF);
+      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh));
 
       jit.PushRel(offsetof(ScuDspContext, acl));
       jit.Shl(1);
@@ -448,7 +430,7 @@ void recompile_alu(Jitter::CJitter & jit, u32 instruction)
    case 0xF: // RL8
       do_left_carry(24);
 
-      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh), 0xFFFFFFFF);
+      sign_extend_32(jit, offsetof(ScuDspContext, acl), offsetof(ScuDspContext, aluh));
       //alul = acl << 8;
       jit.PushRel(offsetof(ScuDspContext, acl));
       jit.Shl(8);
@@ -475,10 +457,7 @@ void recompile_set_md(u32 bank, u32 data)
 {
    jit.PushRelAddrRef(offsetof(ScuDspContext, md[bank]));
 
-   jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
-   jit.PushCst(bank * 4);
-   jit.AddRef();
-   jit.LoadFromRef();
+   jit.PushRel(offsetof(ScuDspContext, ct[bank]));
 
    //ct value is on stack, adjust for u32
    jit.Shl(2);
@@ -720,7 +699,7 @@ void readgen_helper(u32 readgen, size_t off_hi, size_t off_lo, int need_incremen
    jit.PushRel(offsetof(ScuDspContext, read_data));
    jit.PullRel(off_lo);
 
-   sign_extend_32(jit, offsetof(ScuDspContext, read_data), off_hi, 0xFFFFFFFF);
+   sign_extend_32(jit, offsetof(ScuDspContext, read_data), off_hi);
 }
 
 void write_d1_bus(int num, u32 value, int is_const, size_t offset)
@@ -733,11 +712,7 @@ void write_d1_bus(int num, u32 value, int is_const, size_t offset)
    case 0x2:
    case 0x3:
       jit.PushRelAddrRef(offsetof(ScuDspContext, md[bank]));
-
-      jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
-      jit.PushCst(bank * 4);
-      jit.AddRef();
-      jit.LoadFromRef();
+      jit.PushRel(offsetof(ScuDspContext, ct[bank]));
 
       //ct value is on stack, adjust for u32
       jit.Shl(2);
@@ -778,10 +753,7 @@ void write_d1_bus(int num, u32 value, int is_const, size_t offset)
 
       jit.PullRel(offsetof(ScuDspContext, pl));
 
-      jit.PushCst(0);
-      jit.PullRel(offsetof(ScuDspContext, ph));
-
-      sign_extend_32(jit, offsetof(ScuDspContext, pl), offsetof(ScuDspContext, ph), 0xFFFFFFFF);
+      sign_extend_32(jit, offsetof(ScuDspContext, pl), offsetof(ScuDspContext, ph));
       break;
    case 0x6:
       if (is_const)
@@ -844,13 +816,6 @@ void write_d1_bus(int num, u32 value, int is_const, size_t offset)
    case 0xE:
    case 0xF:
       //ct[which] = val;
-
-      //load pointer to ct[which] for final store
-      jit.PushRelAddrRef(offsetof(ScuDspContext, ct));
-      jit.PushCst(which * 4);
-      jit.AddRef();
-
-      //temp = (ct[which] + 1) & 0x3f;
       if (is_const)
       {
          jit.PushCst(value);
@@ -866,7 +831,8 @@ void write_d1_bus(int num, u32 value, int is_const, size_t offset)
       }
 
       //ct[which] = temp;
-      jit.StoreAtRef();
+      jit.PullRel(offsetof(ScuDspContext, ct[which]));
+
       break;
    default: 
       break;
