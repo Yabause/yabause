@@ -139,7 +139,7 @@ static s32 LinuxCDReadTOC10(CDInterfaceToc10 *TOC)
    {
       struct cdrom_tochdr ctTOC;
       struct cdrom_tocentry ctTOCent;
-      u8 num_toc = 0;
+      u8 i, num_toc = 0;
 
       memset(&ctTOC, 0xFF, sizeof(struct cdrom_tochdr));
 
@@ -147,7 +147,7 @@ static s32 LinuxCDReadTOC10(CDInterfaceToc10 *TOC)
          return 0;
 
       ctTOCent.cdte_format = CDROM_MSF;
-      for(u8 i = ctTOC.cdth_trk0;i <= ctTOC.cdth_trk1;i++)
+      for(i = ctTOC.cdth_trk0;i <= ctTOC.cdth_trk1;i++)
       {
          ctTOCent.cdte_track = i;
          if (ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent) == -1)
