@@ -135,6 +135,92 @@ static s32 LinuxCDReadTOC(u32 * TOC)
 
 static s32 LinuxCDReadTOC10(CDInterfaceToc10 *TOC)
 {
+   if (hCDROM != -1)
+   {
+      struct cdrom_tochdr ctTOC;
+      struct cdrom_tocentry ctTOCent;
+      u8 i, num_toc = 0;
+
+      memset(&ctTOC, 0xFF, sizeof(struct cdrom_tochdr));
+
+      if (ioctl(hCDROM, CDROMREADTOCHDR, &ctTOC) == -1)
+         return 0;
+
+      ctTOCent.cdte_format = CDROM_MSF;
+      for(i = ctTOC.cdth_trk0;i <= ctTOC.cdth_trk1;i++)
+      {
+         ctTOCent.cdte_track = i;
+         if (ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent) == -1)
+	    return 0;
+
+         TOC[num_toc].ctrladr = (ctTOCent.cdte_ctrl << 4 | ctTOCent.cdte_adr);
+         TOC[num_toc].tno = 0;
+         TOC[num_toc].point = i;
+         TOC[num_toc].min = num_toc + 150;
+         TOC[num_toc].sec = num_toc + 150;
+         TOC[num_toc].frame = num_toc + 150;
+         TOC[num_toc].zero = 0;
+         TOC[num_toc].pmin = ctTOCent.cdte_addr.msf.minute;
+         TOC[num_toc].psec = ctTOCent.cdte_addr.msf.second;
+         TOC[num_toc].pframe = ctTOCent.cdte_addr.msf.frame;
+
+         num_toc++;
+      }
+
+      // A0
+      ctTOCent.cdte_track = ctTOC.cdth_trk0;
+      if (ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent) == -1)
+         return 0;
+      TOC[num_toc].ctrladr = (ctTOCent.cdte_ctrl << 4 | ctTOCent.cdte_adr);
+      TOC[num_toc].tno = 0;
+      TOC[num_toc].point = 0xA0;
+      TOC[num_toc].min = num_toc + 150;
+      TOC[num_toc].sec = num_toc + 150;
+      TOC[num_toc].frame = num_toc + 150;
+      TOC[num_toc].zero = 0;
+      TOC[num_toc].pmin = ctTOC.cdth_trk0;
+      TOC[num_toc].psec = 0;
+      TOC[num_toc].pframe = 0;
+
+      num_toc++;
+
+      // A1
+      ctTOCent.cdte_track = ctTOC.cdth_trk1;
+      if (ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent) == -1)
+         return 0;
+      TOC[num_toc].ctrladr = (ctTOCent.cdte_ctrl << 4 | ctTOCent.cdte_adr);
+      TOC[num_toc].tno = 0;
+      TOC[num_toc].point = 0xA1;
+      TOC[num_toc].min = num_toc + 150;
+      TOC[num_toc].sec = num_toc + 150;
+      TOC[num_toc].frame = num_toc + 150;
+      TOC[num_toc].zero = 0;
+      TOC[num_toc].pmin = ctTOC.cdth_trk1;
+      TOC[num_toc].psec = 0;
+      TOC[num_toc].pframe = 0;
+
+      num_toc++;
+
+      // A2
+      ctTOCent.cdte_track = CDROM_LEADOUT;
+      if (ioctl(hCDROM, CDROMREADTOCENTRY, &ctTOCent) == -1)
+         return 0;
+      TOC[num_toc].ctrladr = (ctTOCent.cdte_ctrl << 4 | ctTOCent.cdte_adr);
+      TOC[num_toc].tno = 0;
+      TOC[num_toc].point = 0xA2;
+      TOC[num_toc].min = num_toc + 150;
+      TOC[num_toc].sec = num_toc + 150;
+      TOC[num_toc].frame = num_toc + 150;
+      TOC[num_toc].zero = 0;
+      TOC[num_toc].pmin = ctTOCent.cdte_addr.msf.minute;
+      TOC[num_toc].psec = ctTOCent.cdte_addr.msf.second;
+      TOC[num_toc].pframe = ctTOCent.cdte_addr.msf.frame;
+
+      num_toc++;
+
+      return num_toc;
+   }
+
    return 0;
 }
 
