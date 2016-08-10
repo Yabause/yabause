@@ -356,6 +356,8 @@ typedef struct
 
 typedef struct SH2Interface_struct SH2Interface_struct;
 
+#include "sh2_jit.h"
+
 struct SH2_struct
 {
    struct SH2Interface_struct *core;
@@ -382,6 +384,8 @@ struct SH2_struct
 
    sh2regs_struct regs;
    Onchip_struct onchip;
+
+   struct Sh2JitContext jit;
 
    struct
    {

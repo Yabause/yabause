@@ -729,7 +729,7 @@ option(YAB_USE_PLAY_JIT "Enable Play codegen and dynarecs." ON)
 if (YAB_USE_PLAY_JIT AND COMPILER_SUPPORTS_CXX11)
     add_subdirectory(play)
     add_definitions(-DHAVE_PLAY_JIT=1)
-    set(yabause_SOURCES ${yabause_SOURCES} scsp_dsp_jit.cpp scu_dsp_jit.cpp)
+    set(yabause_SOURCES ${yabause_SOURCES} scsp_dsp_jit.cpp scu_dsp_jit.cpp sh2_jit.cpp)
     include_directories(play/include)
 endif()
 

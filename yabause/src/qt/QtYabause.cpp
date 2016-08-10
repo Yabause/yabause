@@ -23,6 +23,13 @@
 #include "Settings.h"
 #include "VolatileSettings.h"
 
+#ifdef HAVE_PLAY_JIT
+extern "C"
+{
+#include "../sh2_jit.h"
+}
+#endif
+
 #include <QApplication>
 #include <QLabel>
 #include <QGroupBox>
@@ -53,6 +60,9 @@ SH2Interface_struct *SH2CoreList[] = {
 &SH2DebugInterpreter,
 #ifdef SH2_DYNAREC
 &SH2Dynarec,
+#endif
+#ifdef HAVE_PLAY_JIT
+&SH2Jit,
 #endif
 NULL
 };

@@ -5701,7 +5701,7 @@ int print_mpeg_jump = 0;
 void sh1_dma_exec(s32 cycles)
 {
 	int i;
-
+#if 0 //re-enable when mpeg is fixed
    if (SH1->regs.PC == 0xf914)
       print_mpeg_jump = 1;
 
@@ -5725,7 +5725,7 @@ void sh1_dma_exec(s32 cycles)
 
    if (SH1->regs.PC == 0xbece)
       sh1_cxt.onchip.dmac.channel[3].chcr |= 2;
-
+#endif
    for (i = 0; i < cycles; i++)
       tick_dma(1);
 }
