@@ -435,3 +435,4 @@
 "SH1 Registers","SH1 Registers"
 "Enable SCSP DSP Dynamic Recompiler","Enable SCSP DSP Dynamic Recompiler"
 "Enable SCU DSP Dynamic Recompiler","Enable SCU DSP Dynamic Recompiler"
+"SH Jit","SH Jit"
