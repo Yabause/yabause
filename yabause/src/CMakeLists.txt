@@ -718,6 +718,19 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(STATUS "CodeGen doesn't build in Clang yet. Dynarecs disabled.")
 else()
     CHECK_CXX_COMPILER_FLAG(-std=c++11 COMPILER_SUPPORTS_CXX11)
+
+    check_cxx_source_compiles("
+        #include <list>
+        int main() {
+            std::list<int> list;
+            list.erase(list.cbegin());
+        }
+        " CXX11_ERASE_CONST)
+
+    if(NOT CXX11_ERASE_CONST)
+        set(COMPILER_SUPPORTS_CXX11 OFF)
+    endif()
+
     if(COMPILER_SUPPORTS_CXX11)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
     else()
