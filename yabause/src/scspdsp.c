@@ -174,7 +174,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 
    if (dsp->need_read)
    {
-      u16 temp = sound_ram_16[dsp->io_addr & 0x7ffff];
+      u16 temp = sound_ram_16[dsp->io_addr & 0x3ffff];
       if (dsp->need_nofl)
          dsp->mrd_value = temp << 8;
       else
@@ -185,7 +185,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 
    if (dsp->need_write)
    {
-      sound_ram_16[dsp->io_addr] = dsp->write_data;
+	   sound_ram_16[dsp->io_addr & 0x3ffff] = dsp->write_data;
       dsp->need_write = 0;
    }
 
