@@ -87,11 +87,15 @@ matrix:
     # android port
     - compiler: gcc
       env: testenv="android port"
+      jdk: oraclejdk8
       language: android
       android:
         components:
-          - platform-tools
           - tools
+          - tools
+          - platform-tools
+          - build-tools-24.0.1
+          - android-24
       script:
         - wget http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip
         - unzip -q android-ndk-r11c-linux-x86_64.zip
