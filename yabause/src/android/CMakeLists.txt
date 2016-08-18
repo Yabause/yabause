@@ -10,16 +10,14 @@ if(NOT SDK_ANDROID)
     message(FATAL_ERROR "sdk android tool not found, bye")
 endif()
 
-find_program(ANT NAMES ant ant.bat)
-
-if(NOT ANT)
-    message(FATAL_ERROR "ant not found, bye")
-endif()
-
 if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 	set(yabause_android_SHADOW
-		build.xml
-		project.properties
+		AndroidManifest.xml
+		build.gradle
+		gradlew
+		gradlew.bat
+		gradle/wrapper/gradle-wrapper.jar
+		gradle/wrapper/gradle-wrapper.properties
 		jni/yui.c
 		jni/miniegl.h
 		jni/sndaudiotrack.c
@@ -88,18 +86,17 @@ configure_file(
 )
 
 configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml.in
-	${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml
-	@ONLY
+       ${CMAKE_CURRENT_SOURCE_DIR}/gradle.properties.in
+       ${CMAKE_CURRENT_BINARY_DIR}/gradle.properties
+       @ONLY
 )
 
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/local.properties"
-	COMMAND ${SDK_ANDROID} update project -p "${CMAKE_CURRENT_BINARY_DIR}"
+	COMMAND ${SDK_ANDROID} update project -p "${CMAKE_CURRENT_BINARY_DIR}" --target android-24
 	DEPENDS
 		"${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
-		"${CMAKE_CURRENT_BINARY_DIR}/build.xml"
-		"${CMAKE_CURRENT_BINARY_DIR}/project.properties"
+		"${CMAKE_CURRENT_BINARY_DIR}/build.gradle"
 		"${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk"
 )
 
@@ -160,28 +157,22 @@ set(yabause_android_SRC
     "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseStorage.java"
 )
 
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-debug.apk"
-	COMMAND "${ANT}" ARGS "debug"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
-	DEPENDS ${yabause_android_SRC}
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
-	DEPENDS ${yabause_android_RES}
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+set(yabause_android_GRADLEW
+	"${CMAKE_CURRENT_BINARY_DIR}/gradlew"
+	"${CMAKE_CURRENT_BINARY_DIR}/gradlew.bat"
+	"${CMAKE_CURRENT_BINARY_DIR}/gradle/wrapper/gradle-wrapper.jar"
+	"${CMAKE_CURRENT_BINARY_DIR}/gradle/wrapper/gradle-wrapper.properties"
 )
 
 add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-release-unsigned.apk"
-	COMMAND "${ANT}" ARGS "release"
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build/outputs/apk/Yabause-release.apk"
+	COMMAND "${CMAKE_CURRENT_BINARY_DIR}/gradlew" build
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
 	DEPENDS ${yabause_android_SRC}
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/gradle.properties"
 	DEPENDS ${yabause_android_RES}
+	DEPENDS ${yabause_android_GRADLEW}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-release-unsigned.apk")
-else()
-    add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-debug.apk")
-endif()
+add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/build/outputs/apk/Yabause-release.apk")

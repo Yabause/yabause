@@ -1,0 +1,65 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.1.2'
+    }
+}
+apply plugin: 'com.android.application'
+
+dependencies {
+    repositories {
+        jcenter()
+    }
+}
+
+android {
+    defaultConfig {
+        versionCode 1
+        versionName getProperty('yabause.versionName')
+
+        minSdkVersion 8
+        targetSdkVersion 24
+    }
+
+    compileSdkVersion 24
+    buildToolsVersion "24.0.1"
+
+    if (project.hasProperty('yabause.store') && project.hasProperty('yabause.store.password')
+        && project.hasProperty('yabause.alias') && project.hasProperty('yabause.alias.password')) {
+        signingConfigs {
+            release {
+                storeFile file(getProperty('yabause.store'))
+                storePassword getProperty('yabause.store.password')
+                keyAlias getProperty('yabause.alias')
+                keyPassword getProperty('yabause.alias.password')
+            }
+        }
+
+        buildTypes {
+            release {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+            jniLibs.srcDir 'libs'
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+project.ext.set("archivesBaseName", "Yabause");

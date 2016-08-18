@@ -1,0 +1,3 @@
+yabause.versionName=@YAB_VERSION@
+
+org.gradle.jvmargs=-Xmx2048M
