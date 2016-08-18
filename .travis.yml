@@ -87,8 +87,7 @@ matrix:
     # android port
     - compiler: gcc
       env: testenv="android port"
-      jdk:
-        - oraclejdk8
+      jdk: oraclejdk8
       language: android
       android:
         components:
