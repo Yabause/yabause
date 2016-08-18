@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="org.yabause.android"
-      android:versionCode="1"
-      android:versionName="@YAB_VERSION@">
+      package="org.yabause.android">
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="21"/>
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <application android:label="@string/app_name" android:icon="@drawable/icon" android:banner="@drawable/banner">
@@ -38,8 +35,5 @@
 
         <activity android:name="YabauseSettings"
                   android:screenOrientation="landscape" />
-
-        <uses-library required="false" name="com.sec.android.app.multiwindow"> </uses-library>
-        <meta-data android:name="com.sec.android.support.multiwindow" android:value="true" />
     </application>
 </manifest>
