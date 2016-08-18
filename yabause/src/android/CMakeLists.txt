@@ -95,7 +95,7 @@ configure_file(
 
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/local.properties"
-	COMMAND ${SDK_ANDROID} update project -p "${CMAKE_CURRENT_BINARY_DIR}" --target android-24
+	COMMAND ${SDK_ANDROID} update project -p "${CMAKE_CURRENT_BINARY_DIR}" --target android-21
 	DEPENDS
 		"${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
 		"${CMAKE_CURRENT_BINARY_DIR}/build.gradle"
