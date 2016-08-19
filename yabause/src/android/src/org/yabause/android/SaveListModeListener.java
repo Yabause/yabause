@@ -21,6 +21,8 @@ package org.yabause.android;
 
 import java.util.TreeSet;
 
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
@@ -30,6 +32,7 @@ import android.widget.AbsListView.MultiChoiceModeListener;
 
 import org.yabause.android.SaveListAdapter;
 
+@TargetApi(Build.VERSION_CODES.HONEYCOMB)
 public class SaveListModeListener implements MultiChoiceModeListener {
 
     private SaveListAdapter adapter;
@@ -47,9 +50,9 @@ public class SaveListModeListener implements MultiChoiceModeListener {
         // such as update the title in the CAB
 
         if (checked) {
-            selection.add(new Long(id));
+            selection.add(Long.valueOf(id));
         } else {
-            selection.remove(new Long(id));
+            selection.remove(Long.valueOf(id));
         }
 
         mode.setTitle("" + selection.size());

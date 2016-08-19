@@ -1,5 +1,7 @@
 package org.yabause.android;
 
+import android.annotation.TargetApi;
+import android.os.Build;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -8,11 +10,12 @@ import java.util.ArrayList;
 import org.yabause.android.PadEvent;
 import org.yabause.android.PadManager;
 
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 class PadManagerV16 extends PadManager {
-    private ArrayList deviceIds;
+    private ArrayList<Integer> deviceIds;
 
     PadManagerV16() {
-        deviceIds = new ArrayList();
+        deviceIds = new ArrayList<Integer>();
 
         int[] ids = InputDevice.getDeviceIds();
         for (int deviceId : ids) {
