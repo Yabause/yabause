@@ -30,7 +30,7 @@ import android.graphics.RectF;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
-import java.util.HashMap;
+import android.util.SparseIntArray;
 
 import org.yabause.android.PadEvent;
 
@@ -89,10 +89,13 @@ interface OnPadListener {
     public abstract boolean onPad(PadEvent event);
 }
 
-class YabausePad extends View implements OnTouchListener {
+public class YabausePad extends View implements OnTouchListener {
     private PadButton buttons[];
     private OnPadListener listener = null;
-    private HashMap<Integer, Integer> active;
+    private SparseIntArray active;
+    private Paint paint;
+    private Paint apaint;
+    private Paint tpaint;
 
     public YabausePad(Context context) {
         super(context);
@@ -132,19 +135,19 @@ class YabausePad extends View implements OnTouchListener {
         buttons[PadEvent.BUTTON_Y] = new ActionButton("Y");
         buttons[PadEvent.BUTTON_Z] = new ActionButton("Z");
 
-        active = new HashMap<Integer, Integer>();
+        active = new SparseIntArray();
+
+        paint = new Paint();
+        paint.setARGB(0x80, 0x80, 0x80, 0x80);
+        apaint = new Paint();
+        apaint.setARGB(0x80, 0xFF, 0x00, 0x00);
+        tpaint = new Paint();
+        tpaint.setARGB(0x80, 0xFF, 0xFF, 0xFF);
     }
 
     @Override public void onDraw(Canvas canvas) {
-        Paint paint = new Paint();
-        paint.setARGB(0x80, 0x80, 0x80, 0x80);
-        Paint apaint = new Paint();
-        apaint.setARGB(0x80, 0xFF, 0x00, 0x00);
-        Paint tpaint = new Paint();
-        tpaint.setARGB(0x80, 0xFF, 0xFF, 0xFF);
-
         for(int i = 0;i < PadEvent.BUTTON_LAST;i++) {
-            Paint p = active.containsValue(i) ? apaint : paint;
+            Paint p = active.indexOfValue(i) >= 0 ? apaint : paint;
             buttons[i].draw(canvas, p, tpaint);
         }
     }
@@ -169,8 +172,9 @@ class YabausePad extends View implements OnTouchListener {
             }
         }
 
-        if (((action == event.ACTION_UP) || (action == event.ACTION_POINTER_UP)) && active.containsKey(index)) {
-            int i = active.remove(index);
+        if (((action == event.ACTION_UP) || (action == event.ACTION_POINTER_UP)) && (active.indexOfKey(index) >= 0)) {
+            int i = active.get(index);
+            active.delete(index);
             pe = new PadEvent(1, i);
         }
 

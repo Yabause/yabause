@@ -324,7 +324,7 @@ public class Yabause extends Activity implements OnPadListener
 
         String cart = sharedPref.getString("pref_cart", "");
         if (cart.length() > 0) {
-            Integer i = new Integer(cart);
+            Integer i = Integer.valueOf(cart);
             carttype = i.intValue();
         } else
             carttype = -1;

@@ -35,7 +35,7 @@ import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.view.View;
 
-class YabauseView extends SurfaceView implements Callback {
+public class YabauseView extends SurfaceView implements Callback {
     private static String TAG = "YabauseView";
     private static final boolean DEBUG = false; 
 
@@ -56,7 +56,6 @@ class YabauseView extends SurfaceView implements Callback {
 
     private void init() {
        getHolder().addCallback(this);
-       getHolder().setType(SurfaceHolder.SURFACE_TYPE_GPU);
     }
     
     private boolean initGLES(){
