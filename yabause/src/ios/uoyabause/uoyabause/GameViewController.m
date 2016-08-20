@@ -68,17 +68,19 @@ int swapAglBuffer ()
 const char * GetBiosPath(){
     NSString * path = [[NSBundle mainBundle] pathForResource:  @"bios" ofType: @"bin"];
     return [path cStringUsingEncoding:1];
+    //return NULL;
 }
 
 const char * GetGamePath(){
     NSString * path = [[NSBundle mainBundle] pathForResource:  @"nights" ofType: @"iso"];
     return [path cStringUsingEncoding:1];
+
 }
 
 const char * GetMemoryPath(){
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
     NSString *docs_dir = [paths objectAtIndex:0];
-    NSString* aFile = [docs_dir stringByAppendingPathComponent: @"somedocthatdefinitelyexists.doc"];
+    NSString* aFile = [docs_dir stringByAppendingPathComponent: @"memory2.bin"];
     return [aFile fileSystemRepresentation];
 }
 
