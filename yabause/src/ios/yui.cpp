@@ -120,7 +120,7 @@ int start_emulation( int width, int height ){
     glClearColor( 0.0f, 0.0f,0.0f,1.0f);
     glClear( GL_COLOR_BUFFER_BIT );
 
-    yinit.m68kcoretype = M68KCORE_C68K;
+    yinit.m68kcoretype = M68KCORE_Q68; //M68KCORE_Q68; //M68KCORE_DUMMY; //M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_OGL;
@@ -136,6 +136,7 @@ int start_emulation( int width, int height ){
     yinit.cartpath = s_cartpath;
     
     printf("bios %s¥n",s_biospath);
+    LogStart();
 
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;

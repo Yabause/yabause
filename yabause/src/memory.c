@@ -48,7 +48,7 @@
 #include "movie.h"
 
 #ifdef HAVE_LIBGL
-#define USE_OPENGL
+//#define USE_OPENGL
 #endif
 
 #ifdef USE_OPENGL

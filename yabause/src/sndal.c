@@ -80,18 +80,28 @@ static pthread_t thd;
 static int soundvolume = 1;
 static int soundlen;
 
+#ifdef AL_DEBUG
+#define LOG printf
+#else
+#define LOG
+#endif
+
 static void *sound_update_thd(void *ptr __attribute__((unused)))    {
     ALint proc;
     ALuint buf;
     u8 data[2048];
     u8 *soundbuf = (u8 *)buffer;
     int i;
+    u32 alerror;
 
     while(!thd_done)    {
         /* See if the stream needs updating yet. */
+        LOG("AL_BUFFERS_PROCESSED in\n");
         alGetSourcei(source, AL_BUFFERS_PROCESSED, &proc);
+        LOG("AL_BUFFERS_PROCESSED out %d\n",proc);
 
-        if(alGetError() != AL_NO_ERROR) {
+        if( (alerror=alGetError()) != AL_NO_ERROR) {
+            LOG("AL_BUFFERS_PROCESSED alGetError %d\n", alerror);
             continue;
         }
 
@@ -100,9 +110,12 @@ static void *sound_update_thd(void *ptr __attribute__((unused)))    {
         /* Go through each buffer that needs more data. */
         while(proc--)   {
             /* Unqueue the old buffer, so that it can be filled again. */
+            LOG("alSourceUnqueueBuffers in\n");
             alSourceUnqueueBuffers(source, 1, &buf);
-
-            if(alGetError() != AL_NO_ERROR) {
+            LOG("alSourceUnqueueBuffers out\n");
+            
+            if( (alerror=alGetError()) != AL_NO_ERROR) {
+                LOG("alGetError %d\n", alerror);
                 continue;
             }
 
@@ -113,9 +126,14 @@ static void *sound_update_thd(void *ptr __attribute__((unused)))    {
                 data[i] = soundbuf[soundpos];
                 ++soundpos;
             }
+            
+            LOG("sound_update_thd soundpos = %d\n",soundpos);
 
             alBufferData(buf, AL_FORMAT_STEREO16, data, 2048, SOUND_FREQ);
+            
+            LOG("alSourceQueueBuffers in\n");
             alSourceQueueBuffers(source, 1, &buf);
+            LOG("alSourceQueueBuffers out\n");
         }
 
         pthread_mutex_unlock(&mutex);
@@ -318,20 +336,32 @@ int SNDALChangeVideoFormat(int vertfreq)    {
 u32 SNDALGetAudioSpace()    {
     u32 freespace=0;
 
+    
     if(soundoffset > soundpos)
         freespace = soundbufsize - soundoffset + soundpos;
     else
         freespace = soundpos - soundoffset;
 
+    LOG("%d,%d,%d,%d\n",freespace,soundbufsize,soundoffset,soundpos);
+    
     return (freespace / sizeof(s16) / 2);
 }
 
+static int sound_pause = 0;
+
 void SNDALMuteAudio()   {
-    alSourcePause(source);
+    
+    if( sound_pause == 0){
+        alSourcePause(source);
+        sound_pause = 1;
+    }
 }
 
 void SNDALUnMuteAudio() {
-    alSourcePlay(source);
+    if( sound_pause == 1){
+        alSourcePlay(source);
+        sound_pause = 0;
+    }
 }
 
 void SNDALSetVolume(int vol)    {
