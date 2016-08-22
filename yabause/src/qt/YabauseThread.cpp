@@ -150,6 +150,7 @@ void YabauseThread::reloadControllers()
 			
 			switch ( type )
 			{
+            case PERVIRTUALON:
 				case PERPAD:
 				{
 					PerPad_struct* padbits = PerPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );

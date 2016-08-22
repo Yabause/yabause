@@ -19,6 +19,7 @@
 */
 #include "UIPortManager.h"
 #include "UIPadSetting.h"
+#include "UITwinStickSetting.h"
 #include "UI3DControlPadSetting.h"
 #include "UIWheelSetting.h"
 #include "UIMissionStickSetting.h"
@@ -57,6 +58,7 @@ UIPortManager::UIPortManager( QWidget* parent)
       cb->addItem( QtYabause::translate( "Gun" ), PERGUN );
       //cb->addItem( QtYabause::translate( "Keyboard" ), PERKEYBOARD );
 		cb->addItem( QtYabause::translate( "Mouse" ), PERMOUSE );
+      cb->addItem(QtYabause::translate("Virtual On Twin Sticks"), PERVIRTUALON);
 
 		connect( cb, SIGNAL( currentIndexChanged( int ) ), this, SLOT( cbTypeController_currentIndexChanged( int ) ) );
 	}
@@ -149,6 +151,7 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 	switch ( type )
 	{
 		case PERPAD:
+      case PERVIRTUALON:
       case PERMISSIONSTICK:
       case PERTWINSTICKS:
 		case PERWHEEL:
@@ -195,6 +198,12 @@ void UIPortManager::tbSetJoystick_clicked()
 			ups.exec();
 			break;
 		}
+      case PERVIRTUALON:
+      {
+         UITwinStickSetting ups(mCore, mPort, controllerId, type, this);
+         ups.exec();
+         break;
+      }
       case PERWHEEL:
       {
          UIWheelSetting uas(mCore, mPort, controllerId, type, this);
