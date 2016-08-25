@@ -1,10 +1,10 @@
-find_program(NDK_BUILD ndk-build)
+find_program(NDK_BUILD ndk-build PATHS $ENV{ANDROID_NDK_HOME})
 
 if(NOT NDK_BUILD)
     message(FATAL_ERROR "ndk build not found, bye")
 endif()
 
-find_program(SDK_ANDROID android)
+find_program(SDK_ANDROID android PATHS $ENV{ANDROID_HOME} PATH_SUFFIXES tools)
 
 if(NOT SDK_ANDROID)
     message(FATAL_ERROR "sdk android tool not found, bye")
@@ -18,6 +18,7 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		gradlew.bat
 		gradle/wrapper/gradle-wrapper.jar
 		gradle/wrapper/gradle-wrapper.properties
+		jni/Application.mk
 		jni/yui.c
 		jni/miniegl.h
 		jni/sndaudiotrack.c
@@ -172,6 +173,7 @@ add_custom_command(
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/gradle.properties"
 	DEPENDS ${yabause_android_RES}
 	DEPENDS ${yabause_android_GRADLEW}
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/Application.mk"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
