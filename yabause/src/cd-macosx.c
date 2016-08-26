@@ -45,6 +45,7 @@ static int MacOSXCDGetStatus(void);
 static s32 MacOSXCDReadTOC(u32 *);
 static int MacOSXCDReadSectorFAD(u32, void *);
 static void MacOSXCDReadAheadFAD(u32);
+static void MacOSXCDSetStatus(int status);
 
 CDInterface ArchCD = {
 CDCORE_ARCH,
@@ -55,6 +56,7 @@ MacOSXCDGetStatus,
 MacOSXCDReadTOC,
 MacOSXCDReadSectorFAD,
 MacOSXCDReadAheadFAD,
+MacOSXCDSetStatus,
 };
 
 static int hCDROM;
@@ -183,6 +185,10 @@ static int MacOSXCDGetStatus(void)
 
 	//Return that disc is present and spinning.  2 and 3 can't happen in the mac port, i don't understand what "not spinning" is supposed to say
 	return 0;
+}
+
+static void MacOSXCDSetStatus(int status){
+
 }
 
 static int MacOSXCDReadSectorFAD(u32 FAD, void *buffer) 

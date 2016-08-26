@@ -82,11 +82,14 @@ int g_minorminor_version=0;
 int g_EnagleFPS = 0;
 int g_CpuType = 2;
 int g_VideoFilter = 0;
+int g_PolygonGenerationMode = 0;
+static int g_SoundEngine = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t g_mtxFuncSync = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t g_cndFuncSync = PTHREAD_COND_INITIALIZER;
+
 
 float vertices [] = {
    -1.0f, 1.0f, 0, 0,
@@ -117,6 +120,8 @@ enum RenderThreadMessage {
         MSG_PAUSE,
         MSG_RESUME,
         MSG_SCREENSHOT,
+        MSG_OPEN_TRAY,
+        MSG_CLOSE_TRAY
 
 };
 
@@ -130,6 +135,9 @@ M68K_struct * M68KCoreList[] = {
 #endif
 #ifdef HAVE_Q68
 &M68KQ68,
+#endif
+#ifdef HAVE_MUSASHI
+&M68KMusashi,
 #endif
 NULL
 };
@@ -169,6 +177,14 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDOGL,
 NULL
 };
+
+#ifdef YAB_PORT_OSD
+#include "nanovg/nanovg_osdcore.h"
+OSD_struct *OSDCoreList[] = {
+&OSDNnovg,
+NULL
+};
+#endif
 
 void YuidrawSoftwareBuffer();
 static int saveScreenshot( const char * filename );
@@ -338,12 +354,11 @@ void YuiSwapBuffers(void)
    if( g_Display == EGL_NO_DISPLAY ){
       return;
    }
-   SetOSDToggle(g_EnagleFPS);
-   OSDDisplayMessages(NULL,0,0);
    if( s_vidcoretype == VIDCORE_SOFT ){
        YuidrawSoftwareBuffer();
    }
    eglSwapBuffers(g_Display,g_Surface);
+   SetOSDToggle(g_EnagleFPS);   
 }
 
 GLuint LoadShader ( GLenum type, const char *shaderSrc )
@@ -581,10 +596,10 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
 {
 	yprintf("sending MSG_PAUSE 1");
-    //pthread_mutex_lock(&g_mtxGlLock);
+    pthread_mutex_lock(&g_mtxGlLock);
 	yprintf("sending MSG_PAUSE 2");
     g_msg = MSG_PAUSE;
-    //pthread_mutex_unlock(&g_mtxGlLock);
+    pthread_mutex_unlock(&g_mtxGlLock);
 }
 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv* env )
@@ -593,6 +608,25 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_resume( JNIEnv*
     g_msg = MSG_RESUME;
     pthread_mutex_unlock(&g_mtxGlLock);
 }
+
+JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_openTray( JNIEnv* env )
+{
+    yprintf("sending MSG_OPEN_TRAY");
+    pthread_mutex_lock(&g_mtxGlLock);
+    g_msg = MSG_OPEN_TRAY;
+    pthread_mutex_unlock(&g_mtxGlLock);
+}
+
+JNIEXPORT void JNICALL Java_org_uoyabause_android_YabauseRunnable_closeTray( JNIEnv* env )
+{
+    yprintf("sending MSG_CLOSE_TRAY");
+    s_cdpath = GetGamePath();    
+    pthread_mutex_lock(&g_mtxGlLock);
+    yprintf("new cd is %s",s_cdpath);    
+    g_msg = MSG_CLOSE_TRAY;
+    pthread_mutex_unlock(&g_mtxGlLock);
+}
+
 
 JNIEXPORT jstring  JNICALL Java_org_uoyabause_android_YabauseRunnable_getCurrentGameCode( JNIEnv* env)
 {
@@ -938,7 +972,9 @@ int initEgl( ANativeWindow* window )
     glClearColor( 0.0f, 0.0f,0.0f,1.0f);
     glClear( GL_COLOR_BUFFER_BIT );
 
-    yinit.m68kcoretype = M68KCORE_C68K;
+	memset(&yinit,0,sizeof(yinit));
+    //yinit.m68kcoretype = M68KCORE_C68K;
+	yinit.m68kcoretype = M68KCORE_MUSASHI;
     yinit.percoretype = PERCORE_DUMMY;
 #ifdef SH2_DYNAREC
     yinit.sh2coretype = g_CpuType;
@@ -967,7 +1003,9 @@ int initEgl( ANativeWindow* window )
     yinit.usethreads = 0;
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
-    
+	yinit.polygon_generation_mode = g_PolygonGenerationMode;
+	yinit.use_new_scsp = g_SoundEngine;
+
     res = YabauseInit(&yinit);
     if (res != 0) {
       YUI_LOG("Fail to YabauseInit %d", res);
@@ -1007,7 +1045,7 @@ int initEgl( ANativeWindow* window )
 		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
 	}
 
-    ScspSetFrameAccurate(1);
+    //ScspSetFrameAccurate(1);
 
     if( s_vidcoretype == VIDCORE_OGL ){
         OSDChangeCore(OSDCORE_NANOVG);
@@ -1098,7 +1136,7 @@ destroy() {
     g_Context = EGL_NO_CONTEXT;
     g_Surface = EGL_NO_SURFACE;
     g_Pbuffer = EGL_NO_SURFACE;
-    
+ 
     return;
 }
 
@@ -1144,6 +1182,18 @@ void
 Java_org_uoyabause_android_YabauseRunnable_setFilter( JNIEnv* env, jobject obj, jint filter )
 {
     g_VideoFilter = filter;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setSoundEngine( JNIEnv* env, jobject obj, jint sound_engine )
+{
+    g_SoundEngine = sound_engine;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv* env, jobject obj, jint pgm )
+{
+	g_PolygonGenerationMode = pgm;
 }
 
 
@@ -1232,16 +1282,17 @@ void renderLoop()
 {
     int renderingEnabled = 1;
     int pause = 0;
+	
+	YabThreadSetCurrentThreadAffinityMask(0x00);
 
 
     while (renderingEnabled != 0) {
 
-        pthread_mutex_lock(&g_mtxGlLock);
-        
         if (g_Display && pause == 0) {
            YabauseExec();
         }
-        
+
+        pthread_mutex_lock(&g_mtxGlLock);        
         // process incoming messages
         switch (g_msg) {
 
@@ -1285,6 +1336,14 @@ void renderLoop()
                 ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 0;
                 break;
+            case MSG_OPEN_TRAY:
+                YUI_LOG("MSG_OPEN_TRAY");
+                Cs2ForceOpenTray();
+                break;
+            case MSG_CLOSE_TRAY:
+                YUI_LOG("MSG_CLOSE_TRAY");
+                Cs2ForceCloseTray(CDCORE_ISO, s_cdpath);
+                break;                
             case MSG_SCREENSHOT:
                 YUI_LOG("MSG_SCREENSHOT");
                 s_status = saveScreenshot(screenShotFilename);

@@ -10,5 +10,11 @@
 #import <GLKit/GLKit.h>
 
 @interface GameViewController : GLKViewController
+{
+    
+    UInt32					iPodIsPlaying;
+}
+
+@property (nonatomic, assign)	UInt32		iPodIsPlaying;		// Whether the iPod is playing
 
 @end

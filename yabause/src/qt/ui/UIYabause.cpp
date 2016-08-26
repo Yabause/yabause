@@ -31,6 +31,7 @@
 #include "UIDebugM68K.h"
 #include "UIDebugSCUDSP.h"
 #include "UIDebugSCSP.h"
+#include "UIDebugSCSPChan.h"
 #include "UIDebugSCSPDSP.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
@@ -111,6 +112,7 @@ UIYabause::UIYabause( QWidget* parent )
 	mLogDock->setVisible( false );
 	mCanLog = true;
 	oldMouseX = oldMouseY = 0;
+	mouseCaptured = false;
 
 #ifndef SH2_TRACE
 	aTraceLogging->setVisible(false);
@@ -167,6 +169,8 @@ UIYabause::UIYabause( QWidget* parent )
 	translations = QtYabause::getTranslationList();
 	
 	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
+
+	mIsCdIn = true;
 }
 
 UIYabause::~UIYabause()
@@ -212,14 +216,38 @@ void UIYabause::closeEvent( QCloseEvent* e )
 }
 
 void UIYabause::keyPressEvent( QKeyEvent* e )
-{ PerKeyDown( e->key() ); }
+{ 
+	if (emulateMouse && mouseCaptured && e->key() == Qt::Key_Escape)
+		mouseCaptured = false;
+	else
+		PerKeyDown( e->key() ); 
+}
 
 void UIYabause::keyReleaseEvent( QKeyEvent* e )
 { PerKeyUp( e->key() ); }
 
+void UIYabause::leaveEvent( QEvent* e )
+{
+	if (emulateMouse && mouseCaptured)
+	{
+		// lock cursor to center
+		int midX = geometry().x()+(width()/2); // widget global x
+		int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+
+		QPoint newPos(midX, midY);
+		this->cursor().setPos(newPos);
+	}
+}
+
 void UIYabause::mousePressEvent( QMouseEvent* e )
 { 
-	PerKeyDown( (1 << 31) | e->button() );
+	if (emulateMouse && !mouseCaptured)
+	{
+		this->setCursor(Qt::BlankCursor);
+		mouseCaptured = true;
+	}
+	else
+		PerKeyDown( (1 << 31) | e->button() );
 }
 
 void UIYabause::mouseReleaseEvent( QMouseEvent* e )
@@ -241,30 +269,30 @@ void UIYabause::cursorRestore()
 
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
 { 
-	int x = (e->x()-oldMouseX)*mouseXRatio;
-	int y = (oldMouseY-e->y())*mouseYRatio;
+	int midX = geometry().x()+(width()/2); // widget global x
+	int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+
+	int x = (e->x()-(width()/2))*mouseXRatio;
+	int y = ((menubar->height()+toolBar->height()+(height()/2))-e->y())*mouseYRatio;
 	int minAdj = mouseSensitivity/100;
 
 	// If minimum movement is less than x, wait until next pass to apply	
 	if (abs(x) < minAdj) x = 0;
 	if (abs(y) < minAdj) y = 0;
 
-	PerAxisMove((1 << 30), x, y);
-
-	oldMouseX = oldMouseX+(x/mouseXRatio);
-	oldMouseY = oldMouseY-(y/mouseYRatio);	
+	if (mouseCaptured)
+		PerAxisMove((1 << 30), x, y);
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 
 	if (!isFullScreen())
 	{
-		if (emulateMouse)
+		if (emulateMouse && mouseCaptured)
 		{
-			int menuToolHeight = menubar->height() + toolBar->height();
-			if (oldMouseY > menuToolHeight)
-				this->setCursor(Qt::BlankCursor);
-			else
-				this->setCursor(Qt::ArrowCursor);
+			// lock cursor to center
+			QPoint newPos(midX, midY);
+			this->cursor().setPos(newPos);
+			this->setCursor(Qt::BlankCursor);
 			return;
 		}
 		else
@@ -272,24 +300,17 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 	}
 	else
 	{
-		if (vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER)
+		if (emulateMouse && mouseCaptured)
+		{
+			this->setCursor(Qt::BlankCursor);
+			return;
+		}
+		else if (vs->value( "View/Menubar" ).toInt() == BD_SHOWONFSHOVER)
 		{
 			if (e->y() < showMenuBarHeight)
 				menubar->show();
 			else
-			{
 				menubar->hide();
-				if (emulateMouse)
-				{
-					this->setCursor(Qt::BlankCursor);
-					return;
-				}
-			}
-		}
-		else if (emulateMouse)
-		{
-			this->setCursor(Qt::BlankCursor);
-			return;
 		}
 
 		hideMouseTimer->start(3 * 1000);
@@ -305,8 +326,70 @@ void UIYabause::resizeEvent( QResizeEvent* event )
 	QMainWindow::resizeEvent( event );
 }
 
+void UIYabause::adjustHeight(int & height)
+{
+   // Compensate for menubar and toolbar
+   VolatileSettings* vs = QtYabause::volatileSettings();
+   if (vs->value("View/Menubar").toInt() != BD_ALWAYSHIDE)
+      height += menubar->height();
+   if (vs->value("View/Toolbar").toInt() != BD_ALWAYSHIDE)
+      height += toolBar->height();
+}
+
+void UIYabause::resizeIntegerScaling()
+{
+   if (!VIDCore || VIDCore->id != VIDCORE_SOFT)
+      return;
+
+   if (isFullScreen() || emulateMouse)
+      return;
+
+   VolatileSettings* vs = QtYabause::volatileSettings();
+
+   if (!vs->value("Video/EnableIntegerPixelScaling").toBool())
+      return;
+
+   int multiplier = vs->value("Video/IntegerPixelScalingMultiplier").toInt();
+
+   if (multiplier % 2 != 0)
+      return;
+
+   int vdp2width = 0;
+   int vdp2height = 0;
+   int vdp2interlace = 0;
+
+   if (!VIDCore->GetNativeResolution)
+      return;
+
+   VIDCore->GetNativeResolution(&vdp2width, &vdp2height, &vdp2interlace);
+
+   if (vdp2width == 0 || vdp2height == 0)
+      return;
+
+   int width = 0;
+   int height = 0;
+
+   if (vdp2width < 640)
+      width = vdp2width * multiplier;
+   else
+      width = vdp2width * (multiplier / 2);
+
+   if (!vdp2interlace)
+      height = vdp2height * multiplier;
+   else
+      height = vdp2height * (multiplier / 2);
+
+   mYabauseGL->resize(width, height);
+
+   adjustHeight(height);
+
+   setMinimumSize(width, height);
+   resize(width, height);
+}
+
 void UIYabause::swapBuffers()
 { 
+   resizeIntegerScaling();
 	mYabauseGL->swapBuffers(); 
 	mYabauseGL->makeCurrent();
 }
@@ -395,12 +478,7 @@ void UIYabause::fixAspectRatio( int width )
 
 			mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
 
-			// Compensate for menubar and toolbar
-			VolatileSettings* vs = QtYabause::volatileSettings();
-			if (vs->value( "View/Menubar" ).toInt() != BD_ALWAYSHIDE)
-				height += menubar->height();
-			if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
-				height += toolBar->height();
+         adjustHeight(height);
 
 			setFixedHeight( height );
 			break;
@@ -544,6 +622,10 @@ void UIYabause::fullscreenRequested( bool f )
 
 		setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
 		setMinimumSize( 0,0 );
+		QPoint ps;
+		ps.setX(0);
+		ps.setY(0);
+		this->move(ps);
 
 		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
 						f, vs->value("Video/VideoFormat").toInt());
@@ -667,11 +749,13 @@ void UIYabause::on_aFileSettings_triggered()
 			newhash[key] = ss->value(key);
 		}
 		if(newhash["General/Bios"]!=hash["General/Bios"] ||
+			newhash["General/EnableEmulatedBios"]!=hash["General/EnableEmulatedBios"] ||
 			newhash["Advanced/Region"]!=hash["Advanced/Region"] ||
 			newhash["Cartridge/Type"]!=hash["Cartridge/Type"] ||
 			newhash["Memory/Path"]!=hash["Memory/Path"] ||
 			newhash["MpegROM/Path" ]!=hash["MpegROM/Path" ] ||
 			newhash["Advanced/SH2Interpreter" ]!=hash["Advanced/SH2Interpreter" ] ||
+         newhash["Advanced/68kCore"] != hash["Advanced/68kCore"] ||
 			newhash["General/CdRom"]!=hash["General/CdRom"] ||
 			newhash["General/CdRomISO"]!=hash["General/CdRomISO"] ||
 			newhash["General/ClockSync"]!=hash["General/ClockSync"] ||
@@ -719,7 +803,10 @@ void UIYabause::on_aFileSettings_triggered()
 		
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
-		
+
+      if (newhash["Sound/NewScsp"].toBool() != hash["Sound/NewScsp"])
+         scsp_set_use_new(newhash["Sound/NewScsp"].toInt());
+
 		if (newhash["Video/WindowWidth"] != hash["Video/WindowWidth"] || newhash["Video/WindowHeight"] != hash["Video/WindowHeight"] ||
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
 			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
@@ -744,10 +831,41 @@ void UIYabause::on_aFileSettings_triggered()
 	}
 }
 
+void UIYabause::on_actionOpen_Tray_triggered()
+{
+	YabauseLocker locker(mYabauseThread);
+
+	if (mIsCdIn){
+		mYabauseThread->OpenTray();
+		mIsCdIn = false;
+	}
+	else{
+		const QString fn = CommonDialogs::getOpenFileName(QtYabause::volatileSettings()->value("Recents/ISOs").toString(), QtYabause::translate("Select your iso/cue/bin file"), QtYabause::translate("CD Images (*.iso *.cue *.bin *.mds *.ccd)"));
+		if (!fn.isEmpty())
+		{
+			VolatileSettings* vs = QtYabause::volatileSettings();
+			const int currentCDCore = vs->value("General/CdRom").toInt();
+			const QString currentCdRomISO = vs->value("General/CdRomISO").toString();
+
+			QtYabause::settings()->setValue("Recents/ISOs", fn);
+
+			vs->setValue("autostart", false);
+			vs->setValue("General/CdRom", ISOCD.id);
+			vs->setValue("General/CdRomISO", fn);
+			vs->setValue("General/PlaySSF", false);
+
+			refreshStatesActions();
+
+		}
+		mYabauseThread->CloseTray();
+		mIsCdIn = true;
+	}
+}
+
 void UIYabause::on_aFileOpenISO_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
 	if ( !fn.isEmpty() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
@@ -759,11 +877,37 @@ void UIYabause::on_aFileOpenISO_triggered()
 		vs->setValue( "autostart", false );
 		vs->setValue( "General/CdRom", ISOCD.id );
 		vs->setValue( "General/CdRomISO", fn );
+      vs->setValue("General/PlaySSF", false);
 		
 		mYabauseThread->pauseEmulation( false, true );
 		
 		refreshStatesActions();
 	}
+}
+
+void UIYabause::on_aFileOpenSSF_triggered()
+{
+   YabauseLocker locker(mYabauseThread);
+
+   const QString fn = CommonDialogs::getOpenFileName(
+      QtYabause::volatileSettings()->value("Recents/SSFs").toString(), 
+      QtYabause::translate("Select your ssf file"), 
+      QtYabause::translate("Sega Saturn Sound Format files (*.ssf *.minissf)"));
+
+   if (!fn.isEmpty())
+   {
+      VolatileSettings* vs = QtYabause::volatileSettings();
+
+      QtYabause::settings()->setValue("Recents/SSFs", fn);
+
+      vs->setValue("autostart", false);
+      vs->setValue("General/SSFPath", fn);
+      vs->setValue("General/PlaySSF", true);
+
+      mYabauseThread->pauseEmulation(false, true);
+
+      refreshStatesActions();
+   }
 }
 
 void UIYabause::on_aFileOpenCDRom_triggered()
@@ -785,6 +929,7 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 		vs->setValue( "autostart", false );
 		vs->setValue( "General/CdRom", QtYabause::defaultCDCore().id );
 		vs->setValue( "General/CdRomISO", fn );
+      vs->setValue("General/PlaySSF", false);
 
 		mYabauseThread->pauseEmulation( false, true );
 
@@ -968,7 +1113,6 @@ void UIYabause::on_aViewLayerRBG0_triggered()
 void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
-	//ToggleFullScreen();
 }
 
 void UIYabause::breakpointHandlerMSH2(bool displayMessage)
@@ -1050,6 +1194,14 @@ void UIYabause::on_aViewDebugSCSP_triggered()
 	UIDebugSCSP( this ).exec();
 }
 
+void UIYabause::on_aViewDebugSCSPChan_triggered()
+{
+   if (use_new_scsp)
+      UIDebugSCSPChan(this).exec();
+   else
+      CommonDialogs::information( QtYabause::translate( "Only available with new scsp code(USE_NEW_SCSP=1)" ) );
+}
+
 void UIYabause::on_aViewDebugSCSPDSP_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
@@ -1064,8 +1216,15 @@ void UIYabause::on_aViewDebugMemoryEditor_triggered()
 
 void UIYabause::on_aTraceLogging_triggered( bool toggled )
 {
-	SetInsTracingToggle(toggled? 1 : 0);
+#ifdef SH2_TRACE
+	SH2SetInsTracing(toggled? 1 : 0);
+#endif
 	return;
+}
+
+void UIYabause::on_aHelpReport_triggered()
+{
+	QDesktopServices::openUrl(QUrl(aHelpReport->statusTip()));
 }
 
 void UIYabause::on_aHelpCompatibilityList_triggered()

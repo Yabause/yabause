@@ -16,6 +16,8 @@ package org.uoyabause.android.tv;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.InputDevice;
+import android.view.KeyEvent;
 
 import org.uoyabause.android.R;
 
@@ -31,5 +33,18 @@ public class GameSelectActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game_select);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent (KeyEvent event){
+
+        InputDevice dev = InputDevice.getDevice(event.getDeviceId());
+        if( dev.getName().contains("HuiJia")){
+            if( event.getKeyCode() > 200 ){
+                return true;
+            }
+
+        }
+        return super.dispatchKeyEvent(event);
     }
 }

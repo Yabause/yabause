@@ -25,6 +25,9 @@
 #include "vdp2.h"
 #include "debug.h"
 
+#define YGL_TESS_COUNT (8)
+#define YGL_MAX_NEED_BUFFER (12*YGL_TESS_COUNT*YGL_TESS_COUNT)
+
 typedef struct 
 {
    short LineScrollValH;
@@ -116,6 +119,7 @@ typedef struct
    s32 cog;
    s32 cob;
    int linescreen;
+   int id;
 
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
@@ -161,6 +165,7 @@ typedef struct
    int mosaicymask;
    int islinescroll;
    u32 linescrolltbl;
+   u32 lineTexture;
    u32 lineinc;
    vdp2Lineinfo * lineinfo;
    int wctl;
@@ -184,7 +189,18 @@ typedef struct
    vdp2rotationparameter_struct * FASTCALL (*GetRParam)(void *, int h,int v);
    u32 LineColorBase;
    
-   void (*LoadLineParams)(void *, int line, Vdp2* lines);
+   void (*LoadLineParams)(void *, void *, int line, Vdp2* lines);
+
+   int bad_cycle_setting;
+
+   struct Pipeline
+   {
+      int paladdr;
+      int charaddr;
+      int flipfunction;
+   }pipe[2];
+
+
 } vdp2draw_struct;
 
 

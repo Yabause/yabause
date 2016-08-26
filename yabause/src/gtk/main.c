@@ -332,10 +332,6 @@ static gboolean yui_settings_load(void) {
 	/* peripheral core */
 	yinit.percoretype = g_key_file_get_integer(keyfile, "General", "PerCore", 0);
 
-	/* audio sync */
-	tmp = g_key_file_get_boolean(keyfile, "General", "AudioSync", 0);
-	ScspSetFrameAccurate(tmp);
-
 	/* clock sync */
 	tmp = yinit.clocksync;
 	yinit.clocksync = g_key_file_get_boolean(keyfile, "General", "ClockSync", 0);

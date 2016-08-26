@@ -42,6 +42,9 @@ M68K_struct * M68KCoreList[] = {
 #ifdef HAVE_C68K
 &M68KC68K,
 #endif
+#ifdef HAVE_MUSASHI
+&M68KMusashi,
+#endif
 NULL
 };
 
@@ -108,12 +111,16 @@ NULL
 };
 
 #ifdef YAB_PORT_OSD
+#include "nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
 &OSDDummy,
 #ifdef HAVE_LIBGLUT
 &OSDGlut,
 #endif
 &OSDSoft,
+#ifdef HAVE_LIBGL
+&OSDNnovg,
+#endif
 NULL
 };
 #endif
@@ -449,9 +456,20 @@ PerInterface_struct QtYabause::defaultPERCore()
 #endif
 }
 
+M68K_struct QtYabause::default68kCore()
+{
+#ifdef HAVE_C68K
+   return M68KC68K;
+#elif HAVE_MUSASHI
+   return M68KMusashi;
+#else
+   return M68KDummy;
+#endif
+}
+
 SH2Interface_struct QtYabause::defaultSH2Core()
 {
-	return SH2Interpreter;
+   return SH2Interpreter;
 }
 
 QMap<uint, PerPad_struct*>* QtYabause::portPadsBits( uint portNumber )

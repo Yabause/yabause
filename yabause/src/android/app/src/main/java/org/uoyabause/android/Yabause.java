@@ -76,6 +76,7 @@ import android.app.ActivityManager;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
@@ -118,7 +119,13 @@ class YabauseRunnable implements Runnable
     public static native void savestate( String path );
     public static native void loadstate( String path );
     public static native void pause();
-    public static native void resume();  
+    public static native void resume();
+    public static native void setPolygonGenerationMode( int pg );
+    public static native void setSoundEngine( int engine );
+
+    public static native void openTray();
+    public static native void closeTray();
+
 
     private boolean inited;
     private boolean paused;
@@ -160,7 +167,7 @@ class YabauseHandler extends Handler {
 }
 
 
-public class Yabause extends Activity
+public class Yabause extends Activity implements  FileDialog.FileSelectedListener
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
@@ -173,6 +180,7 @@ public class Yabause extends Activity
     private int video_interface;
     private boolean waiting_reault = false;
     private Tracker mTracker;
+    private int tray_state = 0;
 
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
@@ -299,6 +307,30 @@ public class Yabause extends Activity
         };
         findViewById(R.id.button_load_state).setOnClickListener(LoadStateClickListener);
 
+        View.OnClickListener OpenTrayListener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Button btn = (Button)findViewById(R.id.button_open_cd);
+                if( tray_state == 0 ) {
+                    YabauseRunnable.openTray();
+                    btn.setText("Close CD tray");
+                    tray_state = 1;
+                }else{
+                    btn.setText("Open CD tray");
+                    tray_state = 0;
+                    File file = new File(gamepath);
+                    String path = file.getParent();
+                    FileDialog fd = new FileDialog(Yabause.this,path);
+                    fd.addFileListener(Yabause.this);
+                    fd.showDialog();
+                }
+                Yabause.this.showBottomMenu();
+            }
+        };
+        findViewById(R.id.button_open_cd).setOnClickListener(OpenTrayListener);
+
+
         View.OnClickListener ExitClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -328,6 +360,17 @@ public class Yabause extends Activity
     }
 
     @Override
+    // after disc change event
+    public void fileSelected(File file) {
+
+        if( file != null ) {
+            gamepath = file.getAbsolutePath();
+        }
+        Button btn = (Button)findViewById(R.id.button_open_cd);
+        YabauseRunnable.closeTray();
+    }
+
+    @Override
     public void onPause()
     {
         YabauseRunnable.pause();
@@ -339,8 +382,10 @@ public class Yabause extends Activity
     public void onResume()
     {
         super.onResume();
-        mTracker.setScreenName(TAG);
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        if( mTracker != null ) {
+            mTracker.setScreenName(TAG);
+            mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        }
         audio.unmute(audio.SYSTEM);
         YabauseRunnable.resume();
     }
@@ -625,6 +670,13 @@ public class Yabause extends Activity
         YabauseRunnable.setFilter(ifilter);
         Log.d(TAG, "setFilter " + ifilter.toString());
 
+        String sPg = sharedPref.getString("pref_polygon_generation", "0");
+        Integer iPg = new Integer(sPg);
+        YabauseRunnable.setPolygonGenerationMode(iPg);
+        Log.d(TAG, "setPolygonGenerationMode " + iPg.toString());
+
+
+
         boolean audioout = sharedPref.getBoolean("pref_audio", true);
         if (audioout) {
             audio.unmute(audio.USER);
@@ -714,6 +766,11 @@ public class Yabause extends Activity
         Log.d(TAG, "getGamePath " + getGamePath());
         Log.d(TAG, "getMemoryPath " + getMemoryPath());
         Log.d(TAG, "getCartridgePath " + getCartridgePath());
+
+        String ssound = sharedPref.getString("pref_sound_engine", "1");
+        Integer isound = new Integer(ssound);
+        YabauseRunnable.setSoundEngine(isound);
+        Log.d(TAG, "setSoundEngine " + isound.toString());
     }
 
     public String getBiosPath() {

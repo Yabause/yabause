@@ -24,10 +24,6 @@
 
 #include "core.h"
 
-typedef enum {
-	FILTER_NONE=0,
-	FILTER_FXAA,
-} yabause_filter_type;
 
 typedef struct
 {
@@ -41,6 +37,7 @@ typedef struct
    u8 regionid;
    const char *biospath;
    const char *cdpath;
+   const char *ssfpath;
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
@@ -54,7 +51,10 @@ typedef struct
    int numthreads;
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
-   yabause_filter_type video_filter_type;
+   int video_filter_type;
+   int polygon_generation_mode;
+   int play_ssf;
+   int use_new_scsp;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -107,10 +107,17 @@ typedef struct
    int emulatebios;
    int usequickload;
    int wait_line_count;
+   int playing_ssf;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;
 
 int YabauseEmulate(void);
+
+extern u32 saved_scsp_cycles;
+extern u32 saved_m68k_cycles;
+#define SCSP_FRACTIONAL_BITS 20
+u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
+
 
 #endif

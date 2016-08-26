@@ -107,7 +107,12 @@ void YabThreadWait(unsigned int id)
 
 void YabThreadYield(void) 
 {
-   SwitchToThread();
+	SleepEx(0, 0);
+}
+
+void YabThreadUSleep( u32 stime )
+{
+	SleepEx(stime/1000, 0);
 }
 
 void YabThreadSleep(void) 
@@ -218,50 +223,42 @@ int YabWaitEventQueue(YabEventQueue * queue_t){
 
 typedef struct YabMutex_win32
 {
-//	pthread_mutex_t mutex;
-	HANDLE mutex;
+	CRITICAL_SECTION mutex;
 } YabMutex_win32;
 
 void YabThreadLock(YabMutex * mtx){
-#if 1
-	// Todo: implement Windows version
-#else
-	YabMutex_pthread * pmtx;
-	pmtx = (YabMutex_pthread *)mtx;
-	pthread_mutex_lock(&pmtx->mutex);
-#endif 
+	YabMutex_win32 * pmtx;
+	pmtx = (YabMutex_win32 *)mtx;
+	EnterCriticalSection(&pmtx->mutex);
 }
 
 void YabThreadUnLock(YabMutex * mtx){
-#if 1
-	// Todo: implement Windows version
-#else
-	YabMutex_pthread * pmtx;
-	pmtx = (YabMutex_pthread *)mtx;
-	pthread_mutex_unlock(&pmtx->mutex);
-#endif
+	YabMutex_win32 * pmtx;
+	pmtx = (YabMutex_win32 *)mtx;
+	LeaveCriticalSection(&pmtx->mutex);
 }
 
 YabMutex * YabThreadCreateMutex(){
-#if 1
-	// Todo: implement Windows version
-	return (YabMutex *)0x000000;
-#else
-	YabMutex_pthread * mtx = (YabMutex_pthread *)malloc(sizeof(YabMutex_pthread));
-	pthread_mutex_init(&mtx->mutex, NULL);
+	YabMutex_win32 * mtx = (YabMutex_win32 *)malloc(sizeof(YabMutex_win32));
+	InitializeCriticalSection(&mtx->mutex);
 	return (YabMutex *)mtx;
-#endif
 }
 
 void YabThreadFreeMutex( YabMutex * mtx ){
-#if 1
-    // Todo: implement Windows version
-#else    
-    if( mtx != NULL ){
-        pthread_mutex_destroy(&mtx->mutex);
-        free(mtx);
-    }
-#endif    
+
+	if (mtx != NULL){
+		DeleteCriticalSection(&((YabMutex_win32 *)mtx)->mutex);
+		free(mtx);
+	}
+}
+
+void YabThreadSetCurrentThreadAffinityMask(int mask)
+{
+	SetThreadIdealProcessor(GetCurrentThread(), mask);
+}
+
+int YabThreadGetCurrentThreadAffinityMask(){
+	return GetCurrentProcessorNumber();
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -58,6 +58,13 @@
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="Open CD tray"
+            android:id="@+id/button_open_cd"
+            android:layout_gravity="center" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="Exit"
             android:id="@+id/button_exit"
             android:layout_gravity="center" />

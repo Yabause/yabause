@@ -257,14 +257,20 @@ void VideoDeInit(void) {
 void Vdp1Reset(void) {
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
+   Vdp1Regs->TVMR = 0;
+   Vdp1Regs->EWDR = 0;
+   Vdp1Regs->EWLR = 0;
+   Vdp1Regs->EWRR = 0;
+   Vdp1Regs->ENDR = 0;
    VIDCore->Vdp1Reset();
 }
 
-int VideoSetFilterType( int video_filter_type )
+int VideoSetSetting( int type, int value )
 {
-	if (VIDCore) VIDCore->SetFilterType(video_filter_type);
+	if (VIDCore) VIDCore->SetSettingValue( type, value );
 	return 0;
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -331,10 +337,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
          Vdp1Regs->PTMR = val;
 #if YAB_ASYNC_RENDERING
 		 if (val == 1){ 
-			 yabsys.wait_line_count = yabsys.LineCount+30; 
-			 if (yabsys.wait_line_count >= 225){
-				 yabsys.wait_line_count = 224;
-			 }
+			 yabsys.wait_line_count = 220;
 			 YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
 		}
 #else
@@ -417,6 +420,13 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          }
       }
 
+	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
+	  if (regs->EDSR & 0x02){
+		  regs->LOPR = regs->addr >> 3;
+		  regs->COPR = regs->addr >> 3;
+		  return;
+	  }
+
       // Next, determine where to go next
       switch ((command & 0x3000) >> 12) {
       case 0: // NEXT, jump to following table
@@ -480,7 +490,6 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
-            VIDCore->Vdp1DrawEnd();
             regs->LOPR = regs->addr >> 3;
             regs->COPR = regs->addr >> 3;
             return;
@@ -535,12 +544,12 @@ void Vdp1Draw(void)
 
    VIDCore->Vdp1DrawStart();
 
+   VIDCore->Vdp1DrawEnd();
+
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
    ScuSendDrawEnd();
-   VIDCore->Vdp1DrawEnd();
-
 
 }
 
@@ -588,6 +597,10 @@ int Vdp1SaveState(FILE *fp)
 {
    int offset;
    IOCheck_struct check = { 0, 0 };
+#ifdef IMPROVED_SAVESTATES
+   int i = 0;
+   u8 back_framebuffer[0x40000] = { 0 };
+#endif
 
    offset = StateWriteHeader(fp, "VDP1", 1);
 
@@ -597,6 +610,12 @@ int Vdp1SaveState(FILE *fp)
    // Write VDP1 ram
    ywrite(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
+#ifdef IMPROVED_SAVESTATES
+   for (i = 0; i < 0x40000; i++)
+      back_framebuffer[i] = Vdp1FrameBufferReadByte(i);
+
+   ywrite(&check, (void *)back_framebuffer, 0x40000, 1, fp);
+#endif
    return StateFinishHeader(fp, offset);
 }
 
@@ -605,6 +624,10 @@ int Vdp1SaveState(FILE *fp)
 int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check = { 0, 0 };
+#ifdef IMPROVED_SAVESTATES
+   int i = 0;
+   u8 back_framebuffer[0x40000] = { 0 };
+#endif
 
    // Read registers
    yread(&check, (void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
@@ -612,6 +635,12 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    // Read VDP1 ram
    yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
+#ifdef IMPROVED_SAVESTATES
+   yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
+
+   for (i = 0; i < 0x40000; i++)
+      Vdp1FrameBufferWriteByte(i, back_framebuffer[i]);
+#endif
    return size;
 }
 
@@ -1047,7 +1076,10 @@ static INLINE int DoEndcode(int count, u32 *charAddr, u32 **textdata, int width,
 {
    if (count > 1)
    {
-      charAddr[0] += (int)((float)(width - xoff + oddpixel) / (float)(8 / pixelsize));
+      float divisor = (float)(8 / pixelsize);
+
+      if(divisor != 0)
+         charAddr[0] += (int)((float)(width - xoff + oddpixel) / divisor);
       memset(textdata[0], 0, sizeof(u32) * (width - xoff));
       textdata[0] += (width - xoff);
       return 1;
@@ -1382,6 +1414,8 @@ void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDDummSetFilterMode(int type){};
 void VIDDummSync(){};
+void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
+void VIDDummyVdp2DispOff(void);
 
 VideoInterface_struct VIDDummy = {
 	VIDCORE_DUMMY,
@@ -1411,6 +1445,8 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyGetGlSize,
 	VIDDummSetFilterMode,
 	VIDDummSync,
+	VIDDummyGetNativeResolution,
+	VIDDummyVdp2DispOff,
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1554,5 +1590,20 @@ void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out)
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
+{
+   *width = 0;
+   *height = 0;
+   *interlace = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VIDDummyVdp2DispOff(void)
 {
 }

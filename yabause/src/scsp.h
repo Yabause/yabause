@@ -48,6 +48,11 @@ typedef struct
    void (*MuteAudio)(void);
    void (*UnMuteAudio)(void);
    void (*SetVolume)(int volume);
+#ifdef USE_SCSPMIDI
+	int (*MidiChangePorts)(int inport, int outport);
+	u8 (*MidiIn)(int *isdata);
+	int (*MidiOut)(u8 data);
+#endif
 } SoundInterface_struct;
 
 typedef struct
@@ -65,9 +70,9 @@ typedef struct
 
 #define MAX_BREAKPOINTS 10
 
-#if defined(ARCH_IS_LINUX)
+//#if defined(ARCH_IS_LINUX)
 #define ASYNC_SCSP
-#endif
+//#endif
 
 typedef struct
 {
@@ -82,6 +87,7 @@ typedef struct
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
+extern int use_new_scsp;
 
 u8 FASTCALL SoundRamReadByte(u32 addr);
 u16 FASTCALL SoundRamReadWord(u32 addr);
@@ -92,7 +98,6 @@ void FASTCALL SoundRamWriteLong(u32 addr, u32 val);
 
 int ScspInit(int coreid);
 int ScspChangeSoundCore(int coreid);
-void ScspSetFrameAccurate(int on);
 void ScspDeInit(void);
 void M68KStart(void);
 void M68KStop(void);
@@ -148,4 +153,13 @@ int M68KDelCodeBreakpoint(u32 addr);
 m68kcodebreakpoint_struct *M68KGetBreakpointList(void);
 void M68KClearCodeBreakpoints(void);
 
+void scsp_debug_instrument_get_data(int i, u32 * sa, int * is_muted);
+void scsp_debug_instrument_set_mute(u32 sa, int mute);
+void scsp_debug_instrument_clear();
+void scsp_debug_get_envelope(int chan, int * env, int * state);
+void scsp_debug_set_mode(int mode);
+void scsp_set_use_new(int which);
+void new_scsp_exec(s32 cycles);
+
+extern int use_new_scsp;
 #endif

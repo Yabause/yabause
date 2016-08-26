@@ -51,7 +51,6 @@ set( SOURCES
  jni/yui.c
  jni/sndaudiotrack.c
  jni/sndopensl.c
- jni/osdcore.c
 )
 
 

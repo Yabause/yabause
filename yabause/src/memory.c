@@ -47,9 +47,9 @@
 #include "yui.h"
 #include "movie.h"
 
-#ifdef HAVE_LIBGL
+//#ifdef HAVE_LIBGL
 //#define USE_OPENGL
-#endif
+//#endif
 
 #ifdef USE_OPENGL
 #include "ygl.h"
@@ -57,6 +57,16 @@
 
 #include "vidsoft.h"
 #include "vidogl.h"
+
+#if CACHE_ENABLE
+#else
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr); }
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr); }
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr); }
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val);  }
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val); }
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val); }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -519,8 +529,14 @@ void MappedMemoryInit()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u8 FASTCALL MappedMemoryReadByte(u32 addr){
+	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr);
+}
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr)
+#else
 u8 FASTCALL MappedMemoryReadByte(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
@@ -570,8 +586,14 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u16 FASTCALL MappedMemoryReadWord(u32 addr){
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+}
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr)
+#else
 u16 FASTCALL MappedMemoryReadWord(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
@@ -621,8 +643,14 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u32 FASTCALL MappedMemoryReadLong(u32 addr){
+	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr);
+}
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr)
+#else
 u32 FASTCALL MappedMemoryReadLong(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
@@ -676,9 +704,16 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val){
+	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val);
+}
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val)
+#else
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
+#endif
 {
+
    switch (addr >> 29)
    {
       case 0x0:
@@ -729,8 +764,14 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val){
+	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val);
+}
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val)
+#else
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
+#endif
 {
    switch (addr >> 29)
    {
@@ -782,8 +823,14 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val){
+	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val);
+}
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val)
+#else
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
+#endif
 {
    switch (addr >> 29)
    {
@@ -843,7 +890,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
 int MappedMemoryLoad(const char *filename, u32 addr)
 {
    FILE *fp;
-   u32 filesize;
+   long filesize;
    u8 *buffer;
    u32 i;
    size_t num_read = 0;
@@ -857,6 +904,14 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    // Calculate file size
    fseek(fp, 0, SEEK_END);
    filesize = ftell(fp);
+
+   if (filesize <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      fclose(fp);
+      return -1;//error
+   }
+
    fseek(fp, 0, SEEK_SET);
 
    if ((buffer = (u8 *)malloc(filesize)) == NULL)
@@ -1140,6 +1195,8 @@ int YabSaveStateStream(FILE *fp)
    glPixelZoom(1,1);
    glReadBuffer(GL_BACK);
    glReadPixels(0, 0, outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   #else
+   //memcpy(buf, dispbuffer, totalsize);
    #endif
    YuiSwapBuffers();
 
@@ -1222,6 +1279,7 @@ int YabLoadStateStream(FILE *fp)
    int movieposition;
    int temp;
    u32 temp32;
+	int test_endian;
 
    headersize = 0xC;
    check.done = 0;
@@ -1259,10 +1317,11 @@ int YabLoadStateStream(FILE *fp)
    }
 
 #ifdef WORDS_BIGENDIAN
-   if (endian == 1)
+   test_endian = endian == 1;
 #else
-   if (endian == 0)
+   test_endian = endian == 0;
 #endif
+   if (test_endian)
    {
       // should setup reading so it's byte-swapped
       YabSetError(YAB_ERR_OTHER, (void *)"Load State byteswapping not supported");
@@ -1640,7 +1699,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
    u32 i=0;
    result_struct *results;
    u32 numresults=0;
-   unsigned long searchval;
+   unsigned long searchval = 0;
    int issigned=0;
    u32 addr;
 

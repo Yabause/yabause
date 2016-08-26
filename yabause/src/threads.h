@@ -34,6 +34,7 @@ enum {
    YAB_THREAD_NETLINKLISTENER,
    YAB_THREAD_NETLINKCONNECT,
    YAB_THREAD_NETLINKCLIENT,
+   YAB_THREAD_OPENAL,
    YAB_THREAD_VIDSOFT_LAYER_NBG3,
    YAB_THREAD_VIDSOFT_LAYER_NBG2,
    YAB_THREAD_VIDSOFT_LAYER_NBG1,
@@ -45,6 +46,7 @@ enum {
    YAB_THREAD_VIDSOFT_PRIORITY_2,
    YAB_THREAD_VIDSOFT_PRIORITY_3,
    YAB_THREAD_VIDSOFT_PRIORITY_4,
+   YAB_THREAD_VIDSOFT_LAYER_SPRITE,
    YAB_NUM_THREADS      // Total number of subthreads
 };
 
@@ -99,7 +101,10 @@ void YabThreadUnLock( YabMutex * mtx );
 YabMutex * YabThreadCreateMutex();
 void YabThreadFreeMutex( YabMutex * mtx );
 
+void YabThreadSetCurrentThreadAffinityMask(int mask);
+int YabThreadGetCurrentThreadAffinityMask();
 
+void YabThreadUSleep( unsigned int stime );
 
 ///////////////////////////////////////////////////////////////////////////
 

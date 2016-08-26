@@ -13,6 +13,7 @@ set(yabause_HEADERS
 	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
 	debug.h
 	error.h
+	gameinfo.h
 	japmodem.h
 	m68kcore.h m68kd.h memory.h movie.h
 	netlink.h
@@ -23,6 +24,8 @@ set(yabause_HEADERS
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h
 	shaders/FXAA_DefaultES.h
+	frameprofile.h
+	sh2cache.h
 )
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
@@ -35,25 +38,35 @@ set(yabause_SOURCES
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
 	error.c
+	gameinfo.c
 	japmodem.c
 	m68kcore.c m68kd.c memory.c movie.c
 	netlink.c
 	osdcore.c
 	peripheral.c profile.c
+	frameprofile.c
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
-	yabause.c )
+	yabause.c
+	sh2cache.c )
+	add_definitions(-DIMPROVED_SAVESTATES)
 if (ANDROID)
     add_definitions(-DANDROID=1)
 	add_definitions(-DYAB_PORT_OSD)
 	add_definitions(-D_OGLES3_)
 	add_definitions(-DYAB_ASYNC_RENDERING)
+	add_definitions(-DYAB_PORT_OSD)
+	include_directories(./ ./nanovg)		
 	set(yabause_SOURCES
 		${yabause_SOURCES}
 		yglcache.c
 		ygles.c
-		yglshaderes.c )
+		yglshaderes.c 
+		nanovg/nanovg.c 
+		nanovg/nanovg_osdcore.h 
+		nanovg/nanovg_osdcore.c
+		)
 endif()
 
 if (IOS)
@@ -61,6 +74,7 @@ add_definitions(-DIOS=1)
 add_definitions(-DHAVE_LIBGL)
 add_definitions(-DYAB_PORT_OSD)
 add_definitions(-D_OGLES3_)
+add_definitions(-DYAB_ASYNC_RENDERING)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
@@ -86,6 +100,33 @@ else()
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
 endif()
 
+option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
+if (YAB_WANT_SH2_CACHE)
+    add_definitions(-DCACHE_ENABLE=1)
+    add_definitions(-DEXEC_FROM_CACHE=1)
+endif()
+
+option(YAB_USE_SSF "Include SSF player." ON)
+if (YAB_USE_SSF)
+  find_package(ZLIB)
+
+  if (ZLIB_FOUND)
+    add_definitions(-DYAB_WANT_SSF=1)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${ZLIB_LIBRARIES})
+
+    set(yabause_SOURCES ${yabause_SOURCES} 
+      aosdk/corlett.c
+      aosdk/eng_ssf.c
+      aosdk/ssf.c)
+
+    set(yabause_HEADERS ${yabause_HEADERS} 
+      aosdk/ao.h
+      aosdk/corlett.h
+      aosdk/ssf.h)
+  endif()
+endif()
+
 # new SCSP
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
 if (YAB_USE_SCSP2)
@@ -94,6 +135,12 @@ if (YAB_USE_SCSP2)
 	set(yabause_HEADERS ${yabause_HEADERS} scsp2.h)
 else()
 	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
+endif()
+
+# Enable SCSP MIDI hooks in sound interface
+option(YAB_USE_SCSPMIDI "Enable SCSP Midi support")
+if (YAB_USE_SCSPMIDI)
+	add_definitions(-DUSE_SCSPMIDI=1)
 endif()
 
 # disable strdup warning in MSVC
@@ -207,6 +254,14 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		add_definitions(-DHAVE_LIBGL=1)
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
 
+		include_directories(./ ./nanovg)
+		set(yabause_SOURCES ${yabause_SOURCES} 
+			nanovg/nanovg.c 
+			nanovg/nanovg_osdcore.h 
+			nanovg/nanovg_osdcore.c
+		)
+		add_definitions(-DYAB_PORT_OSD)
+		
 		include(FindGLUT)
 		if (GLUT_FOUND)
 			message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
@@ -234,16 +289,22 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
-		add_definitions(-D_USEGLEW_)
-		add_definitions(-DGLEW_STATIC)
-		include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
-		set(yabause_SOURCES
-			${yabause_SOURCES}
-			gllibs/glew/glew.c
-			yglcache.c
-			ygles.c
-			yglshaderes.c )
 
+        include(FindGLEW)
+        add_definitions(-D_USEGLEW_)
+        if (GLEW_FOUND)
+            include_directories( ${GLEW_INCLUDE_DIRS})
+            set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLEW_LIBRARIES})
+        else()
+		    add_definitions(-DGLEW_STATIC)
+		    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+			set(yabause_SOURCES
+				${yabause_SOURCES}
+				gllibs/glew/glew.c
+				yglcache.c
+				ygles.c
+				yglshaderes.c )
+		endif()
 	endif(OPENGL_FOUND)
 endif ()
 
@@ -442,6 +503,9 @@ if (WIN32)
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "wsock32")
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "ws2_32")
 	endif()
+	if (YAB_USE_SCSPMIDI)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} winmm)
+	endif()
 
 endif (WIN32)
 
@@ -538,6 +602,53 @@ if (YAB_WANT_C68K)
 		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "-O3")
 	endif()
 endif(YAB_WANT_C68K)
+
+option(YAB_WANT_MUSASHI "Enable musashi 68k" ON)
+#TODO cross compile builds m68kmake for the target platform instead
+#of the native one, making it impossible to generate the core
+if (YAB_WANT_MUSASHI)
+    set (MUSASHI_GENERATED_SOURCES 
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopac.c
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopdm.c
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopnz.c
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kops.c)
+
+    set (MUSASHI_GENERATED_HEADERS
+        ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kops.h)
+
+    include(ExternalProject)
+    ExternalProject_Add(m68kmake
+        DOWNLOAD_COMMAND ""
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/musashi
+        CMAKE_GENERATOR "${CMAKE_GENERATOR}"
+        INSTALL_COMMAND ""
+        BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/musashi
+    )
+
+    add_definitions(-DHAVE_MUSASHI=1)
+
+	include_directories(
+      ${CMAKE_CURRENT_BINARY_DIR}/musashi
+      ${CMAKE_CURRENT_SOURCE_DIR}/musashi
+    )
+
+	set(yabause_SOURCES ${yabause_SOURCES} 
+      ${MUSASHI_GENERATED_SOURCES}
+      musashi/m68kdasm.c
+      musashi/m68kcpu.c
+      m68kmusashi.c
+      )
+
+	set(yabause_HEADERS 
+      ${yabause_HEADERS} 
+      musashi/m68k.h
+      musashi/m68kcpu.h
+      ${MUSASHI_GENERATED_HEADERS}
+      m68kmusashi.h
+      )
+
+    set_property(SOURCE ${MUSASHI_GENERATED_SOURCES} ${MUSASHI_GENERATED_HEADERS} PROPERTY GENERATED ON)
+endif(YAB_WANT_MUSASHI)
 
 # q68
 option(YAB_WANT_Q68 "enable q68 compilation" OFF)
@@ -687,18 +798,12 @@ if (CMAKE_COMPILER_IS_GNUCC AND YAB_FORCE_SECURE_STRINGS)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat -Werror=format-security")
 endif()
 
-if (NOT ANDROID)
-    option(YAB_WANT_VIDSOFT_PRIORITY_THREADING "Use threads for vidsoft priority" OFF)
-    option(YAB_WANT_VIDSOFT_LAYER_THREADING "Use threads for vidsoft layers" OFF)
-
-    if (YAB_WANT_VIDSOFT_PRIORITY_THREADING)
-        add_definitions(-DWANT_VIDSOFT_PRIORITY_THREADING)
-        message(STATUS "Using vidsoft priority threading")
-    endif()
-
-    if (YAB_WANT_VIDSOFT_LAYER_THREADING)
-        add_definitions(-DWANT_VIDSOFT_LAYER_THREADING)
-        message(STATUS "Using vidsoft layer threading")
+option(YAB_WERROR "Treat all warnings as errors." OFF)
+if (YAB_WERROR)
+    if(MSVC)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /WX")
+    else()
+	    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     endif()
 endif()
 
@@ -710,6 +815,10 @@ add_library(yabause OBJECT ${yabause_SOURCES} ${yabause_HEADERS})
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)
 endif(YAB_WANT_C68K)
+
+if (YAB_WANT_MUSASHI)
+	add_dependencies(yabause m68kmake)
+endif(YAB_WANT_MUSASHI)
 
 macro(yab_port_start)
 	if (YAB_PORT_BUILT AND NOT YAB_MULTIBUILD)
@@ -744,6 +853,9 @@ endforeach(PORT)
 # this is stupid, but CMake automatic definitions are based on variables...
 if (YAB_WANT_C68K)
 	set(HAVE_C68K ON)
+endif()
+if (YAB_WANT_MUSASHI)
+	set(HAVE_MUSASHI ON)
 endif()
 if (YAB_WANT_Q68)
 	set(HAVE_Q68 ON)

@@ -178,6 +178,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
+	//LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
    if (ReadAdd == 0) {
       // DMA fill
 
@@ -508,6 +509,17 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 static u32 readgensrc(u8 num)
 {
    u32 val;
+
+   if( num <= 7  ){
+	   incFlg[(num & 0x3)] |= ((num >> 2) & 0x01);
+	   return ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]];
+   }else{
+	  if( num == 0x9)  // ALL
+		  return (u32)ScuDsp->ALU.part.L;
+	  else if( num == 0xA ) // ALH
+		  return (u32)((ScuDsp->ALU.all & (u64)(0x0000ffffffff0000))  >> 16);
+   }
+#if 0
    switch(num) {
       case 0x0: // M0
          return ScuDsp->MD[0][ScuDsp->CT[0]];
@@ -539,7 +551,7 @@ static u32 readgensrc(u8 num)
          return (u32)((ScuDsp->ALU.all & (u64)(0x0000ffffffff0000))  >> 16);
       default: break;
    }
-
+#endif
    return 0;
 }
 
@@ -704,25 +716,32 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-    if (add != 1)
-    {
-        for (i = 0; i < imm; i++)
-        {
-            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
-            sc->CT[sel]++;
-            sc->CT[sel] &= 0x3F;
-            sc->RA0 += 1; // add?
-        }
-    }
-    else{
-        for (i = 0; i < imm; i++)
-        {
-            sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
-            sc->CT[sel]++;
-            sc->CT[sel] &= 0x3F;
-            sc->RA0 += 1;
-        }
-    }
+	//LOG("DSP DMA01 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
+
+	// is A-Bus?
+	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
+		if (add > 1){
+			add = 1;
+		}
+		for (i = 0; i < imm; i++)
+		{
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += add;
+			
+		}
+	}
+	else{
+		for (i = 0; i < imm ; i++)
+		{
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += (add>>1);
+		}
+	}
 
     sc->ProgControlPort.part.T0 = 0;
 }
@@ -746,6 +765,8 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
     case 6: add = 32; break;
     case 7: add = 64; break;
     }
+
+	//LOG("DSP DMA02 addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), imm, add);
 
     if (add != 1)
     {
@@ -781,7 +802,8 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 {
     u32 Counter = 0;
     u32 i;
-    int DestinationId;
+	int add;
+	int sel;
 
     switch ((inst & 0x7))
     {
@@ -795,6 +817,47 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
     case 0x07: Counter = sc->MD[3][sc->CT[3]]; ScuDsp->CT[3]++; break;
     }
 
+	switch (((inst >> 15) & 0x07))
+	{
+	case 0: add = 0; break;
+	case 1: add = 1; break;
+	case 2: add = 2; break;
+	case 3: add = 4; break;
+	case 4: add = 8; break;
+	case 5: add = 16; break;
+	case 6: add = 32; break;
+	case 7: add = 64; break;
+	}
+	
+	sel = (inst >> 8) & 0x3;
+
+	//LOG("DSP DMA03 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
+
+	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
+	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
+		if (add > 1){
+			add = 1;
+		}
+		for (i = 0; i < Counter; i++)
+		{
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += add;
+		}
+	}
+	else{
+		for (i = 0; i < Counter; i++)
+		{
+			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+			sc->CT[sel]++;
+			sc->CT[sel] &= 0x3F;
+			sc->RA0 += (add>>1);
+		}
+	}
+
+
+#if 0
     DestinationId = (inst >> 8) & 0x7;
 
     if (DestinationId > 3)
@@ -820,6 +883,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
             sc->RA0 += incl;
         }
     }
+#endif
     sc->ProgControlPort.part.T0 = 0;
 }
 
@@ -854,6 +918,8 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
+	//LOG("DSP DMA04 addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), Counter, add);
+
     for (i = 0; i < Counter; i++)
     {
         u32 Val = sc->MD[sel][sc->CT[sel]];
@@ -861,7 +927,7 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
         MappedMemoryWriteLong(Adr, Val);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
-        sc->WA0 += 1;
+		sc->WA0 += add;
 
     }
     sc->ProgControlPort.part.T0 = 0;
@@ -931,6 +997,7 @@ static void writedmadest(u8 num, u32 val, u8 add)
 void ScuExec(u32 timing) {
    int i;
 
+   timing = timing ;
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
       while (timing > 0) {
@@ -2220,6 +2287,7 @@ u16 FASTCALL ScuReadWord(u32 addr) {
 
 u32 FASTCALL ScuReadLong(u32 addr) {
    addr &= 0xFF;
+   //LOG("Scu read %08X:%08X\n", addr);
    switch(addr) {
       case 0:
          return ScuRegs->D0R;
@@ -2287,6 +2355,8 @@ void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
 
 void FASTCALL ScuWriteLong(u32 addr, u32 val) {
    addr &= 0xFF;
+	//if (addr!= 0xA0)
+	//LOG("Scu write %08X:%08X\n", addr, val);
    switch(addr) {
       case 0:
          ScuRegs->D0R = val;
@@ -2301,7 +2371,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D0AD = val;
          break;
       case 0x10:
-         if (val & 0x1)
+		  if ((val & 0x1) && ((ScuRegs->D0MD&0x7)==0x7) )
          {
             scudmainfo_struct dmainfo;
 
@@ -2317,9 +2387,6 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D0EN = val;
          break;
       case 0x14:
-         if ((val & 0x7) != 7) {
-            LOG("scu\t: DMA mode 0 interrupt start factor not implemented\n");
-         }
          ScuRegs->D0MD = val;
          break;
       case 0x20:
@@ -2335,7 +2402,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D1AD = val;
          break;
       case 0x30:
-         if (val & 0x1)
+		  if ((val & 0x1) && ((ScuRegs->D1MD&0x07) == 0x7))
          {
             scudmainfo_struct dmainfo;
 
@@ -2351,9 +2418,6 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D1EN = val;
          break;
       case 0x34:
-         if ((val & 0x7) != 7) {
-            LOG("scu\t: DMA mode 1 interrupt start factor not implemented\n");
-         }
          ScuRegs->D1MD = val;
          break;
       case 0x40:
@@ -2369,7 +2433,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D2AD = val;
          break;
       case 0x50:
-         if (val & 0x1)
+		  if ((val & 0x1) && ((ScuRegs->D2MD & 0x7) == 0x7))
          {
             scudmainfo_struct dmainfo;
 
@@ -2385,9 +2449,6 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          ScuRegs->D2EN = val;
          break;
       case 0x54:
-         if ((val & 0x7) != 7) {
-            LOG("scu\t: DMA mode 2 interrupt start factor not implemented\n");
-         }
          ScuRegs->D2MD = val;
          break;
       case 0x60:
@@ -2403,7 +2464,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
             LOG("scu\t: DSP set pc = %02X\n", ScuDsp->PC);
          }
 
-#if DEBUG
+#ifdef DEBUG
          if (ScuDsp->ProgControlPort.part.EX)
             LOG("scu\t: DSP executing: PC = %02X\n", ScuDsp->PC);
 #endif
@@ -2436,6 +2497,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0xA0:
          ScuRegs->IMS = val;
+		 //LOG("scu\t: IMS = %02X\n", val);
          ScuTestInterruptMask();
          break;
       case 0xA4:
@@ -2525,20 +2587,62 @@ static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 
-   if (!(ScuRegs->IMS & mask))
-      SH2SendInterrupt(MSH2, vector, level);
-   else
+	if (!(ScuRegs->IMS & mask)){
+		//if (vector != 0x41) LOG("INT %d", vector);
+		SH2SendInterrupt(MSH2, vector, level);
+	}
+	else
    {
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
    }
 }
 
+// 3.2 DMA control register
+INLINE void ScuChekIntrruptDMA(int id){
+
+	if ((ScuRegs->D0EN & 0x100) && (ScuRegs->D0MD & 0x07) == id){
+		scudmainfo_struct dmainfo;
+		dmainfo.mode = 0;
+		dmainfo.ReadAddress = ScuRegs->D0R;
+		dmainfo.WriteAddress = ScuRegs->D0W;
+		dmainfo.TransferNumber = ScuRegs->D0C;
+		dmainfo.AddValue = ScuRegs->D0AD;
+		dmainfo.ModeAddressUpdate = ScuRegs->D0MD;
+		ScuDMA(&dmainfo);
+		ScuRegs->D0EN = 0;
+	}
+	if ((ScuRegs->D1EN & 0x100) && (ScuRegs->D1MD & 0x07) == id){
+		scudmainfo_struct dmainfo;
+		dmainfo.mode = 1;
+		dmainfo.ReadAddress = ScuRegs->D1R;
+		dmainfo.WriteAddress = ScuRegs->D1W;
+		dmainfo.TransferNumber = ScuRegs->D1C;
+		dmainfo.AddValue = ScuRegs->D1AD;
+		dmainfo.ModeAddressUpdate = ScuRegs->D1MD;
+		ScuDMA(&dmainfo);
+		ScuRegs->D1EN = 0;
+	}
+	if ((ScuRegs->D2EN & 0x100) && (ScuRegs->D2MD & 0x07) == id){
+		scudmainfo_struct dmainfo;
+		dmainfo.mode = 2;
+		dmainfo.ReadAddress = ScuRegs->D2R;
+		dmainfo.WriteAddress = ScuRegs->D2W;
+		dmainfo.TransferNumber = ScuRegs->D2C;
+		dmainfo.AddValue = ScuRegs->D0AD;
+		dmainfo.ModeAddressUpdate = ScuRegs->D2MD;
+		ScuDMA(&dmainfo);
+		ScuRegs->D2EN = 0;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
+   ScuChekIntrruptDMA(0);
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2550,6 +2654,7 @@ void ScuSendVBlankOUT(void) {
       if (ScuRegs->timer0 == ScuRegs->T0C)
          ScuSendTimer0();
    }
+   ScuChekIntrruptDMA(1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2566,18 +2671,21 @@ void ScuSendHBlankIN(void) {
 
       // FIX ME - Should handle timer 1 as well
    }
+   ScuChekIntrruptDMA(2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendTimer0(void) {
    SendInterrupt(0x43, 0xC, 0x0008, 0x00000008);
+   ScuChekIntrruptDMA(3);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendTimer1(void) {
    SendInterrupt(0x44, 0xB, 0x0010, 0x00000010);
+   ScuChekIntrruptDMA(4);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2590,6 +2698,7 @@ void ScuSendDSPEnd(void) {
 
 void ScuSendSoundRequest(void) {
    SendInterrupt(0x46, 0x9, 0x0040, 0x00000040);
+   ScuChekIntrruptDMA(5);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2632,6 +2741,7 @@ void ScuSendDMAIllegal(void) {
 
 void ScuSendDrawEnd(void) {
    SendInterrupt(0x4D, 0x2, 0x2000, 0x00002000);
+   ScuChekIntrruptDMA(6);
 }
 
 //////////////////////////////////////////////////////////////////////////////
