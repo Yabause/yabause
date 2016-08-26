@@ -90,6 +90,8 @@ protected:
 	int searchType;
 	QList <supportedRes_struct> supportedResolutions;
 	int oldMouseX, oldMouseY;
+	bool mouseCaptured;
+
 	float mouseXRatio, mouseYRatio;
 	int mouseSensitivity;
 	bool emulateMouse;
@@ -101,10 +103,13 @@ protected:
 	virtual void closeEvent( QCloseEvent* event );
 	virtual void keyPressEvent( QKeyEvent* event );
 	virtual void keyReleaseEvent( QKeyEvent* event );
+	virtual void leaveEvent(QEvent * event);
 	virtual void mousePressEvent( QMouseEvent* event );
 	virtual void mouseReleaseEvent( QMouseEvent* event );
 	virtual void mouseMoveEvent( QMouseEvent* event );
 	virtual void resizeEvent( QResizeEvent* event );
+
+	bool mIsCdIn;
 
 public slots:
 	void appendLog( const char* msg );
@@ -129,10 +134,14 @@ protected slots:
 	void toggleFullscreen( int width, int height, bool f, int videoFormat );
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();
+   void adjustHeight(int & height);
+   void resizeIntegerScaling();
 	// file menu
 	void on_aFileSettings_triggered();
 	void on_aFileOpenISO_triggered();
 	void on_aFileOpenCDRom_triggered();
+   void on_aFileOpenSSF_triggered();
+   void on_actionOpen_Tray_triggered();
 	void on_mFileSaveState_triggered( QAction* );
 	void on_mFileLoadState_triggered( QAction* );
 	void on_aFileSaveStateAs_triggered();
@@ -164,12 +173,14 @@ protected slots:
 	void on_aViewDebugVDP1_triggered();
 	void on_aViewDebugVDP2_triggered();
 	void on_aViewDebugM68K_triggered();
-	void on_aViewDebugSCSP_triggered();
+   void on_aViewDebugSCSP_triggered();
+   void on_aViewDebugSCSPChan_triggered();
 	void on_aViewDebugSCSPDSP_triggered();
 	void on_aViewDebugSCUDSP_triggered();
 	void on_aViewDebugMemoryEditor_triggered();
 	void on_aTraceLogging_triggered( bool toggled );
 	// help menu
+	void on_aHelpReport_triggered();
 	void on_aHelpCompatibilityList_triggered();
 	void on_aHelpAbout_triggered();
 	// toolbar

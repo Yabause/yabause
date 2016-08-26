@@ -11,9 +11,30 @@
     <string-array name="entries_video_filte_list_preference" translatable="false">
         <item>@string/video_filter_none</item>
         <item>@string/video_filter_fxaa</item>
+        <item>@string/video_filter_scanline</item>
     </string-array>
     <string-array name="entryvalues_video_filte_list_preference" translatable="false">
         <item>0</item>
         <item>1</item>
+        <item>2</item>
+    </string-array>
+    <string-array name="entries_polygon_generation_type" translatable="false" >
+        <item>Triangle using perspective correction</item>
+        <item>CPU Tessellation</item>
+        <item>GPU Tessellation</item>
+    </string-array>
+    <string-array name="entryvalues_polygon_generation_type" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="entries_sound_engine_list_preference" translatable="false" >
+        <item>Current(High quality version for high-end devices)</item>
+        <item>Legacy(for low-end devices)</item>
+    </string-array>
+    <string-array name="entryvalues_sound_engine_list_preference" translatable="false">
+        <item>1</item>
+        <item>0</item>
     </string-array>
 </resources>

@@ -23,6 +23,7 @@
 
 #include "core.h"
 #include "memory.h"
+#include "sh2cache.h"
 
 #define SH2CORE_DEFAULT     -1
 #define MAX_INTERRUPTS 50
@@ -30,6 +31,9 @@
 #ifdef MACH
 #undef MACH
 #endif
+
+//#define DMPHISTORY
+
 
 // UBC Flags
 #define BBR_CPA_NONE			(0 << 6)
@@ -278,6 +282,7 @@ typedef struct
    u16 RTCSR;  // 0xFFFFFFF0
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
+   cache_enty cache;
 } Onchip_struct;
 
 typedef struct
@@ -395,8 +400,11 @@ typedef struct
       int maxNum;
    } trackInfLoop;
 
+#ifdef DMPHISTORY
    u32 pchistory[0x100];
+   sh2regs_struct regshistory[0x100];
    u32 pchistory_index;
+#endif
 
 } SH2_struct;
 

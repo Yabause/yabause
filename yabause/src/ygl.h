@@ -25,6 +25,56 @@
     #include <GLES3/gl3ext.h>
     #include <EGL/egl.h>
 
+
+#define GL_GEOMETRY_SHADER                0x8DD9
+
+#define GL_ARB_tessellation_shader
+
+#ifdef GL_ARB_tessellation_shader
+#define GL_PATCHES                        0x000E
+#define GL_PATCH_VERTICES                 0x8E72
+#define GL_PATCH_DEFAULT_INNER_LEVEL      0x8E73
+#define GL_PATCH_DEFAULT_OUTER_LEVEL      0x8E74
+#define GL_TESS_CONTROL_OUTPUT_VERTICES   0x8E75
+#define GL_TESS_GEN_MODE                  0x8E76
+#define GL_TESS_GEN_SPACING               0x8E77
+#define GL_TESS_GEN_VERTEX_ORDER          0x8E78
+#define GL_TESS_GEN_POINT_MODE            0x8E79
+/* reuse GL_TRIANGLES */
+/* reuse GL_QUADS */
+#define GL_ISOLINES                       0x8E7A
+/* reuse GL_EQUAL */
+#define GL_FRACTIONAL_ODD                 0x8E7B
+#define GL_FRACTIONAL_EVEN                0x8E7C
+/* reuse GL_CCW */
+/* reuse GL_CW */
+#define GL_MAX_PATCH_VERTICES             0x8E7D
+#define GL_MAX_TESS_GEN_LEVEL             0x8E7E
+#define GL_MAX_TESS_CONTROL_UNIFORM_COMPONENTS 0x8E7F
+#define GL_MAX_TESS_EVALUATION_UNIFORM_COMPONENTS 0x8E80
+#define GL_MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS 0x8E81
+#define GL_MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS 0x8E82
+#define GL_MAX_TESS_CONTROL_OUTPUT_COMPONENTS 0x8E83
+#define GL_MAX_TESS_PATCH_COMPONENTS      0x8E84
+#define GL_MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS 0x8E85
+#define GL_MAX_TESS_EVALUATION_OUTPUT_COMPONENTS 0x8E86
+#define GL_MAX_TESS_CONTROL_UNIFORM_BLOCKS 0x8E89
+#define GL_MAX_TESS_EVALUATION_UNIFORM_BLOCKS 0x8E8A
+#define GL_MAX_TESS_CONTROL_INPUT_COMPONENTS 0x886C
+#define GL_MAX_TESS_EVALUATION_INPUT_COMPONENTS 0x886D
+#define GL_MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS 0x8E1E
+#define GL_MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS 0x8E1F
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER 0x84F0
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER 0x84F1
+#define GL_TESS_EVALUATION_SHADER         0x8E87
+#define GL_TESS_CONTROL_SHADER            0x8E88
+#endif
+
+#if defined(__ANDROID__)
+typedef void(*PFNGLPATCHPARAMETERIPROC) (GLenum pname, GLint value);
+extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
+#endif
+
 #elif defined(_WIN32)
 
 #include <windows.h>
@@ -41,6 +91,49 @@
 #elif defined(IOS)
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
+
+#define GL_GEOMETRY_SHADER                0x8DD9
+
+#ifndef GL_ARB_tessellation_shader
+#define GL_PATCHES                        0x000E
+#define GL_PATCH_VERTICES                 0x8E72
+#define GL_PATCH_DEFAULT_INNER_LEVEL      0x8E73
+#define GL_PATCH_DEFAULT_OUTER_LEVEL      0x8E74
+#define GL_TESS_CONTROL_OUTPUT_VERTICES   0x8E75
+#define GL_TESS_GEN_MODE                  0x8E76
+#define GL_TESS_GEN_SPACING               0x8E77
+#define GL_TESS_GEN_VERTEX_ORDER          0x8E78
+#define GL_TESS_GEN_POINT_MODE            0x8E79
+/* reuse GL_TRIANGLES */
+/* reuse GL_QUADS */
+#define GL_ISOLINES                       0x8E7A
+/* reuse GL_EQUAL */
+#define GL_FRACTIONAL_ODD                 0x8E7B
+#define GL_FRACTIONAL_EVEN                0x8E7C
+/* reuse GL_CCW */
+/* reuse GL_CW */
+#define GL_MAX_PATCH_VERTICES             0x8E7D
+#define GL_MAX_TESS_GEN_LEVEL             0x8E7E
+#define GL_MAX_TESS_CONTROL_UNIFORM_COMPONENTS 0x8E7F
+#define GL_MAX_TESS_EVALUATION_UNIFORM_COMPONENTS 0x8E80
+#define GL_MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS 0x8E81
+#define GL_MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS 0x8E82
+#define GL_MAX_TESS_CONTROL_OUTPUT_COMPONENTS 0x8E83
+#define GL_MAX_TESS_PATCH_COMPONENTS      0x8E84
+#define GL_MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS 0x8E85
+#define GL_MAX_TESS_EVALUATION_OUTPUT_COMPONENTS 0x8E86
+#define GL_MAX_TESS_CONTROL_UNIFORM_BLOCKS 0x8E89
+#define GL_MAX_TESS_EVALUATION_UNIFORM_BLOCKS 0x8E8A
+#define GL_MAX_TESS_CONTROL_INPUT_COMPONENTS 0x886C
+#define GL_MAX_TESS_EVALUATION_INPUT_COMPONENTS 0x886D
+#define GL_MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS 0x8E1E
+#define GL_MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS 0x8E1F
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER 0x84F0
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER 0x84F1
+#define GL_TESS_EVALUATION_SHADER         0x8E87
+#define GL_TESS_CONTROL_SHADER            0x8E88
+#endif
+
 #elif  defined(__APPLE__)
     #include <OpenGL/gl.h>
     #include <OpenGL/gl3.h>
@@ -79,7 +172,7 @@ typedef struct {
     s32 cog;
     s32 cob;
     int linescreen;
-
+	int id;
 } YglSprite;
 
 typedef struct {
@@ -115,14 +208,16 @@ typedef struct {
 } YglTextureManager;
 
 extern YglTextureManager * YglTM;
-extern YglTextureManager * YglTM_vdp1;
+//extern YglTextureManager * YglTM_vdp1;
 
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(YglTextureManager * tm );
 void YglTMReset( YglTextureManager * tm );
+void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height);
+void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h);
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 void YglTmPush(YglTextureManager * tm);
-void YglTmPull(YglTextureManager * tm);
+void YglTmPull(YglTextureManager * tm, u32 flg);
 
 
 void YglCacheInit(YglTextureManager * tm);
@@ -138,33 +233,60 @@ void YglCacheReset(YglTextureManager * tm);
 #define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
 #define VDP1_COLOR_CL_MESH 0x80
 
+#define VDP2_CC_NONE 0x00
+#define VDP2_CC_RATE 0x01
+#define VDP2_CC_ADD  0x02
+
+#define VDP2_CC_BLUR  0x03
+
 enum
 {
    PG_NORMAL=1,
    PG_VDP1_NORMAL,
    PG_VFP1_GOURAUDSAHDING,
+   PG_VFP1_GOURAUDSAHDING_TESS,
    PG_VFP1_STARTUSERCLIP,
    PG_VFP1_ENDUSERCLIP,
-   PG_VFP1_HALFTRANS,    
+   PG_VFP1_HALFTRANS, 
+   PG_VFP1_HALFTRANS_TESS,
    PG_VFP1_SHADOW,
+   PG_VFP1_SHADOW_TESS,
    PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
+   PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
    PG_VFP1_MESH,
+   PG_VFP1_MESH_TESS,
    PG_VDP2_ADDBLEND,
    PG_VDP2_DRAWFRAMEBUFF,    
-   PG_VDP2_STARTWINDOW,
-   PG_VDP2_ENDWINDOW,
    PG_WINDOW,
    PG_LINECOLOR_INSERT,
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
+   PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW,
+   PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA,
+   PG_VDP2_DRAWFRAMEBUFF_PERLINE,
+   PG_VDP2_BLUR,
+   PG_VDP2_MOSAIC,
+   PG_VDP2_PER_LINE_ALPHA,
    PG_MAX,
 };
 
-typedef enum 
-{
-	AA_NONE=0,
-	AA_FXAA
-} AAMODE;
+
+
+typedef struct {
+	GLint  sprite;
+	GLint  tessLevelInner;
+	GLint  tessLevelOuter;
+	GLint  fbo;
+	GLint  fbowidth;
+	GLint  fboheight;
+	GLint  texsize;
+} YglVdp1CommonParam;
+
+#define TESS_COUNT (8)
+void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
+int Ygl_uniformVdp1CommonParam(void * p);
+int Ygl_cleanupVdp1CommonParam(void * p);
+
 
 typedef struct {
    int prgid;
@@ -190,6 +312,11 @@ typedef struct {
    float color_offset_val[4];
    int (*setupUniform)(void *);
    int (*cleanupUniform)(void *);
+   YglVdp1CommonParam * ids;
+   float * matrix;
+   int mosaic[2];
+   u32 lineTexture;
+   int id;
 } YglProgram;
 
 typedef struct {
@@ -205,6 +332,43 @@ typedef struct
 {
     GLfloat   m[4][4];
 } YglMatrix;
+
+typedef enum
+{
+	AA_NONE = 0,
+	AA_FXAA,
+	AA_SCANLINE_FILTER,
+} AAMODE;
+
+typedef enum
+{
+	PERSPECTIVE_CORRECTION = 0,
+	CPU_TESSERATION,
+	GPU_TESSERATION
+} POLYGONMODE;
+
+
+typedef enum {
+	VDP_SETTING_FILTERMODE = 0,
+	VDP_SETTING_POLYGON_MODE
+} enSettings;
+
+
+typedef enum {
+	NBG0 = 0,
+	NBG1,
+	NBG2,
+	NBG3,
+	RBG0,
+	SPRITE,
+	enBGMAX
+} enBG;
+
+typedef struct {
+	u32 lincolor_tex;
+	u32 linecolor_pbo;
+	u32 * lincolor_buf;
+} YglPerLineInfo;
 
 typedef struct {
    //GLuint texture;
@@ -223,6 +387,7 @@ typedef struct {
    // VDP1 Info
    int vdp1_maxpri;
    int vdp1_minpri;
+   u32 vdp1_lineTexture;
    
    // VDP1 Framebuffer
    int rwidth;
@@ -242,6 +407,9 @@ typedef struct {
    GLuint fxaa_fbotex;
    GLuint fxaa_stencil;
    GLuint fxaa_depth;
+
+   GLuint tmpfbo;
+   GLuint tmpfbotex;
 
    // Message Layer
    int msgwidth;
@@ -271,10 +439,12 @@ typedef struct {
    u32 * lincolor_buf;
 
    AAMODE aamode;
-
+   POLYGONMODE polygonmode;
    YglTextureManager * texture_manager;
    GLsync sync;
     GLuint default_fbo;
+   YglPerLineInfo bg[enBGMAX];
+   u32 targetfbo;
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -283,10 +453,10 @@ extern Ygl * _Ygl;
 int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
-float * YglQuad(YglSprite *, YglTexture *,YglCache * c);
-void YglQuadOffset(YglSprite * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy);
-void YglCachedQuadOffset(YglSprite * input, YglCache * cache, int cx, int cy, float sx, float sy);
-void YglCachedQuad(YglSprite *, YglCache *);
+float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c);
+void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy);
+void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy);
+void YglCachedQuad(vdp2draw_struct *, YglCache *);
 void YglRender(void);
 void YglReset(void);
 void YglShowTexture(void);
@@ -297,14 +467,19 @@ void YglSetClearColor(float r, float g, float b);
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 
+int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c);
+void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache);
 
+u32 * YglGetPerlineBuf(YglPerLineInfo * perline);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
 
 void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
 int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, float * offsetcol);
-void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol );
+int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float to, float * offsetcol);
+void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float from, float to, float * offsetcol);
+void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol, int blend );
 
 void YglNeedToUpdateWindow();
 
@@ -335,9 +510,16 @@ void YglSetLineColor(u32 * pbuf, int size);
 
 int Ygl_uniformWindow(void * p );
 int YglProgramInit();
+int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 
 int YglGenerateAABuffer();
+
+void Vdp2RgbTextureSync();
+int YglGenerateAABuffer();
+int YglSetupWindow(YglProgram * prg);
+int YglCleanUpWindow(YglProgram * prg);
+void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int size);
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 

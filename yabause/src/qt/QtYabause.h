@@ -70,6 +70,10 @@ extern "C"
 #ifdef ARCH_IS_MACOSX
     #include "../sndmac.h"
 #endif
+
+#ifdef SH2_TRACE
+	#include "../sh2trace.h"
+#endif
 }
 
 #include <QString>
@@ -118,6 +122,7 @@ namespace QtYabause
 	OSD_struct defaultOSDCore();
 	PerInterface_struct defaultPERCore();
 	SH2Interface_struct defaultSH2Core();
+   M68K_struct default68kCore();
 	
 	// padsbits
 	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );

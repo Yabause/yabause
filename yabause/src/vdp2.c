@@ -36,6 +36,7 @@
 #include "osdcore.h"
 #include "threads.h"
 #include "yui.h"
+#include "frameprofile.h"
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -43,6 +44,7 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
@@ -51,14 +53,19 @@ u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
 int vbalnk_wait = 0;
+int voutflg = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 YabEventQueue * rcv_evqueue = NULL;
+YabEventQueue * vdp1_rcv_evqueue = NULL;
+YabEventQueue * vout_rcv_evqueue = NULL;
 static u64 syncticks = 0;       // CPU time sync for real time.
 void VdpProc( void *arg );      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
 static int vdp_proc_running = 0;
+
+//#define LOG yprintf
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -161,7 +168,9 @@ int Vdp2Init(void) {
    Vdp2Reset();
 
 #if defined(YAB_ASYNC_RENDERING)
-   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(1);
+   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(16);
+   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(16);
+   if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(16);
    yabsys.wait_line_count = -1;
 #endif
 
@@ -275,14 +284,19 @@ void Vdp2Reset(void) {
    Vdp2Internal.ColorMode = 0;
 
    Vdp2External.disptoggle = 0xFF;
+   Vdp2External.perline_alpha_a = 0;
+   Vdp2External.perline_alpha_b = 0;
+   Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
+   Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
 }
 
-//#define LOG yprintf
 
 ///////////////////////////////////////////////////////////////////////////////
 void VdpProc( void *arg ){
 
     int evcode;
+
+
 
     if( YuiUseOGLOnThisThread() < 0 ){
         LOG("VDP2 Fail to USE GL");
@@ -291,20 +305,25 @@ void VdpProc( void *arg ){
 
     vdp_proc_running = 1;
     while( vdp_proc_running ){
+		YabThreadSetCurrentThreadAffinityMask(0x01);
         evcode = YabWaitEventQueue(evqueue);
         switch(evcode){
         case VDPEV_VBLANK_IN:
-			LOG("VDPEV_VBLANK_IN\n");
+			FrameProfileAdd("VIN start");
             vdp2VBlankIN();
+			FrameProfileAdd("VIN end");
             break;
         case VDPEV_VBLANK_OUT:
-			LOG("****************  VDPEV_VBLANK_OUT ******************\n");
+			FrameProfileAdd("VOUT start");
             vdp2VBlankOUT();
+			FrameProfileAdd("VOUT end");
+			YabAddEventQueue(vout_rcv_evqueue, 0);
             break;
         case VDPEV_DIRECT_DRAW:
-			LOG("VDPEV_DIRECT_DRAW\n");
+			FrameProfileAdd("DirectDraw start");
             Vdp1Draw();
-			YabAddEventQueue(rcv_evqueue, 0);
+			FrameProfileAdd("DirectDraw end");
+			YabAddEventQueue(vdp1_rcv_evqueue, 0);
             break;
         case VDPEV_MAKECURRENT:
             YuiUseOGLOnThisThread();
@@ -336,13 +355,13 @@ void vdp2VBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
+   FrameProfileAdd("VIN flag");
    YabAddEventQueue(rcv_evqueue, 0);
    VIDCore->Sync();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankIN(void) {
-    //LOG("VDP2:VDPEV_VBLANK_IN\n");
 #if defined(YAB_ASYNC_RENDERING)
     if( vdp_proc_running == 0 ){
         YuiRevokeOGLOnThisThread();
@@ -350,12 +369,16 @@ void Vdp2VBlankIN(void) {
         YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
 	vbalnk_wait = 0;
+	FrameProfileAdd("VIN event");
    YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
    YabWaitEventQueue(rcv_evqueue);
+   FrameProfileAdd("VIN sync");
 
 #else
+
+	FrameProfileAdd("VIN start");
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
 
@@ -372,6 +395,8 @@ void Vdp2VBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
+
+   FrameProfileAdd("VIN end");
 #endif
 }
 
@@ -388,15 +413,85 @@ void Vdp2HBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2HBlankOUT(void) {
+   int i;
    Vdp2Regs->TVSTAT &= ~0x0004;
 
-   if (yabsys.LineCount < 270)
-      memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+   if (yabsys.LineCount < yabsys.VBlankLineCount)
+   {
+      u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
+	   memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+         for (i = 0; i < 88; i++)
+      {
+         cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(cell_scroll_table_start_addr + i * 4);
+      }
+	   
+
+	   if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
+		   *Vdp2External.perline_alpha |= 0x1;
+	   }
+	   else if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
+		   *Vdp2External.perline_alpha |= 0x1;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x02) != (Vdp2Lines[yabsys.LineCount].BGON & 0x02)){
+		   *Vdp2External.perline_alpha |= 0x2;
+	   }
+	   else if ((Vdp2Lines[0].CCRNA & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0xFF00)){
+		   *Vdp2External.perline_alpha |= 0x2;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x04) != (Vdp2Lines[yabsys.LineCount].BGON & 0x04)){
+		   *Vdp2External.perline_alpha |= 0x4;
+	   }
+	   else if ((Vdp2Lines[0].CCRNB & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0xFF00)){
+		   *Vdp2External.perline_alpha |= 0x4;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x08) != (Vdp2Lines[yabsys.LineCount].BGON & 0x08)){
+		   *Vdp2External.perline_alpha |= 0x8;
+	   }
+	   else if ((Vdp2Lines[0].CCRNB & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0x00FF)){
+		   *Vdp2External.perline_alpha |= 0x8;
+	   }
+
+	   if ((Vdp2Lines[0].BGON & 0x10) != (Vdp2Lines[yabsys.LineCount].BGON & 0x10)){
+		   *Vdp2External.perline_alpha |= 0x10;
+	   }
+	   else if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
+		   *Vdp2External.perline_alpha |= 0x10;
+	   }
+
+	   if ( Vdp2Lines[0].COBR != Vdp2Lines[yabsys.LineCount].COBR ){
+
+		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+	   }
+	   if ( Vdp2Lines[0].COAR != Vdp2Lines[yabsys.LineCount].COAR ){
+
+		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+	   }
+
+   }
 
 #if defined(YAB_ASYNC_RENDERING)
-   if (yabsys.wait_line_count != -1 && yabsys.wait_line_count >= yabsys.LineCount){
+   if ( yabsys.LineCount == 0 ){
+	   if( vdp_proc_running == 0 ){
+		   YuiRevokeOGLOnThisThread();
+		   evqueue = YabThreadCreateQueue(32);
+		   YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+	   }
+	   FrameProfileAdd("VOUT event");
+	   voutflg = 1;
+	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
+   }else if( voutflg == 1 && yabsys.LineCount >= 220 ){
+	   YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
+	   voutflg = 0;
+	   FrameProfileAdd("VOUT sync");
+   }
+
+   if (yabsys.wait_line_count != -1 && yabsys.LineCount >= yabsys.wait_line_count ){
 	   yabsys.wait_line_count = -1;
-	   YabWaitEventQueue(rcv_evqueue); // sync Direct VDP1 Draw
+	   YabWaitEventQueue(vdp1_rcv_evqueue); // sync Direct VDP1 Draw
+	   FrameProfileAdd("DirectDraw sync");
    }
 #endif
 }
@@ -414,7 +509,45 @@ static void FPSDisplay(void)
    static int fpsframecount = 0;
    static u64 fpsticks;
 
-   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+   FILE * fp = NULL;
+   FILE * gup_fp = NULL;
+   char fname[128];
+   char buf[64];
+   int i;
+   int cpu_f[8];
+   int gpu_f;
+
+   if (gup_fp == NULL){
+	   gup_fp = fopen("/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq", "r");
+   }
+
+   if (gup_fp != NULL){
+	   fread(buf, 1, 64, gup_fp);
+	   gpu_f = atoi(buf);
+	   fclose(gup_fp);
+   }
+   else{
+	   gpu_f = 0;
+   }
+   
+   for( i=0; i<8; i++ ){
+	   sprintf(fname,"/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq",i);
+	   fp = fopen(fname, "r");
+	   if( fp ){
+		   fread(buf, 1, 64, fp);
+		   cpu_f[i] = atoi(buf);
+		   fclose(fp);
+	   }else{
+		   cpu_f[i] = 0;
+	   }
+   }
+
+
+   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS , gpu = %d, cpu0 = %d, cpu1 = %d, cpu2 = %d, cpu3 = %d, cpu4 = %d, cpu5 = %d, cpu6 = %d, cpu7 = %d"
+					, fps, yabsys.IsPal ? 50 : 60, gpu_f / 1000000,
+					cpu_f[0] / 1000, cpu_f[1] / 1000, cpu_f[2] / 1000, cpu_f[3] / 1000,
+					cpu_f[4] / 1000, cpu_f[5] / 1000, cpu_f[6] / 1000, cpu_f[7] / 1000);
+   
    OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
    fpsframecount++;
    if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
@@ -459,12 +592,12 @@ void vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
-   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
-
    VIDCore->Vdp2DrawStart();
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
    }
+   
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
 
    FPSDisplay();
    if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
@@ -533,19 +666,26 @@ void vdp2VBlankOUT(void) {
       onesecondticks += diffticks;
       lastticks = curticks;
    }
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-    //LOG("VDP2:VDPEV_VBLANK_OUT\n");
-#if defined(YAB_ASYNC_RENDERING)
+	if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
+		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
+		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
+		*Vdp2External.perline_alpha = 0;
+	}
+	else{
+		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
+		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+		*Vdp2External.perline_alpha = 0;
+	}
 
-   if( vdp_proc_running == 0 ){
-       YuiRevokeOGLOnThisThread();
-       evqueue = YabThreadCreateQueue(32);
-       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-   }
+#ifdef _VDP_PROFILE_
+	FrameProfileShow();
+	FrameProfileInit();
+#endif
+#if defined(YAB_ASYNC_RENDERING)
 
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
@@ -566,9 +706,6 @@ void Vdp2VBlankOUT(void) {
       if (SmpcRegs->EXLE & 0x1)
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
     }
-
-   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
-
 #else
    static int framestoskip = 0;
    static int framesskipped = 0;
@@ -578,7 +715,7 @@ void Vdp2VBlankOUT(void) {
    static u32 framecount = 0;
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
-   //LOG("****************  VDPEV_VBLANK_OUT ******************\n");
+   FrameProfileAdd("VOUT start");
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
    }else{ // p02_50.htm#TVSTAT_
@@ -600,11 +737,14 @@ void Vdp2VBlankOUT(void) {
       saved = NULL;
    }
 
-   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    VIDCore->Vdp2DrawStart();
-
    if (Vdp2Regs->TVMD & 0x8000) {
       VIDCore->Vdp2DrawScreens();
+   }
+   
+   {
+      VIDCore->Vdp2DispOff();
+   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
    }
 
    FPSDisplay();
@@ -684,6 +824,7 @@ void Vdp2VBlankOUT(void) {
       if (SmpcRegs->EXLE & 0x1)
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
 	}
+   FrameProfileAdd("VOUT end");
 #endif
 }
 
@@ -1347,3 +1488,5 @@ void VdpRevoke( void ){
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+

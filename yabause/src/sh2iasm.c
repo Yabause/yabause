@@ -967,6 +967,9 @@ int rebuild_args(const char *arg1,const char *arg2,sh_operand_info *a1,
    char s1[30],s2[30];
    char *bp;
 
+   if (strlen(arg1) >= 30 || strlen(arg2) >= 30)
+      return 1;//error
+
    strcpy(s1,arg1);
    strcpy(s2,arg2);
    bp = NULL;

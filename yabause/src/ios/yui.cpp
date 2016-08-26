@@ -22,6 +22,11 @@ extern "C"{
 #define YUI_LOG printf
 #define MAKE_PAD(a,b) ((a<<24)|(b))
 
+extern "C"{
+    void RevokeOGLOnThisThread();
+    void UseOGLOnThisThread();
+}
+
 // Setting Infomation From
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
@@ -36,7 +41,7 @@ int s_vidcoretype = VIDCORE_OGL;
 int s_player2Enable = -1;
 int g_EnagleFPS = 1;
 int g_CpuType = 2;
-yabause_filter_type g_VideoFilter = FILTER_NONE;
+int g_VideoFilter = 0;
 VideoInterface_struct *VIDCoreList[] = {
     &VIDDummy,
     &VIDSoft,
@@ -51,6 +56,9 @@ M68K_struct * M68KCoreList[] = {
 #endif
 #ifdef HAVE_Q68
     &M68KQ68,
+#endif
+#ifdef HAVE_MUSASHI
+&M68KMusashi,
 #endif
     NULL
 };
@@ -120,7 +128,7 @@ int start_emulation( int width, int height ){
     glClearColor( 0.0f, 0.0f,0.0f,1.0f);
     glClear( GL_COLOR_BUFFER_BIT );
 
-    yinit.m68kcoretype = M68KCORE_Q68; //M68KCORE_Q68; //M68KCORE_DUMMY; //M68KCORE_C68K;
+    yinit.m68kcoretype = M68KCORE_MUSASHI; //M68KCORE_Q68; //M68KCORE_Q68; //M68KCORE_DUMMY; //M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_OGL;
@@ -145,7 +153,8 @@ int start_emulation( int width, int height ){
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
     s_vidcoretype = VIDCORE_OGL;
-     
+    yinit.use_new_scsp = 1;
+
     res = YabauseInit(&yinit);
     if (res != 0) {
       YUI_LOG("Fail to YabauseInit %d", res);
@@ -185,7 +194,7 @@ int start_emulation( int width, int height ){
 		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
 	}
 
-    ScspSetFrameAccurate(1);
+    //ScspSetFrameAccurate(1);
     ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
     ScspSetVolume(100);
 
@@ -223,9 +232,13 @@ int start_emulation( int width, int height ){
         swapAglBuffer();
         
     }
+
+
     int YuiRevokeOGLOnThisThread(){
+        RevokeOGLOnThisThread();
     }
     int YuiUseOGLOnThisThread(){
+        UseOGLOnThisThread();
     }
     
     int emulation_step(){

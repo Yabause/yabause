@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -170,6 +171,9 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
         final boolean supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000;
 
+        boolean deviceSupportsAEP = getPackageManager().hasSystemFeature
+                (PackageManager.FEATURE_OPENGLES_EXTENSION_PACK);
+
         if( supportsEs3 ) {
           video_labels.add(res.getString(R.string.opengl_video_interface));
           video_values.add("1");
@@ -198,6 +202,20 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             filter_setting.setEnabled(true);
         }else{
             filter_setting.setEnabled(false);
+        }
+
+         /* Polygon Generation */
+        ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
+        polygon_setting.setSummary(polygon_setting.getEntry());
+        if( video_cart.getValue().equals("1") ){
+            polygon_setting.setEnabled(true);
+        }else{
+            polygon_setting.setEnabled(false);
+        }
+
+        if( deviceSupportsAEP == false ){
+            polygon_setting.setEntries(new String[]{"Triangles using perspective correction","CPU Tessellation"});
+            polygon_setting.setEntryValues(new String[]{"0", "1"});
         }
 
         /* Plyaer1 input device */
@@ -235,6 +253,9 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             }
         });
 
+        ListPreference soundengine_setting = (ListPreference) getPreferenceManager().findPreference("pref_sound_engine");
+        soundengine_setting.setSummary(soundengine_setting.getEntry());
+
       }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
@@ -266,10 +287,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         String selInputdevice = sharedPref.getString("pref_player2_inputdevice", "65535");
 
         for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
-        	if( !selInputdevice.equals( padm.getId(inputType) ) ){
+        	//if( !selInputdevice.equals( padm.getId(inputType) ) ){
         		Inputlabels.add(padm.getName(inputType));
         		Inputvalues.add(padm.getId(inputType)); 
-        	}
+        	//}
         }
 
         CharSequence[] input_entries = new CharSequence[Inputlabels.size()];
@@ -323,10 +344,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
         for(int inputType = 0;inputType < padm.getDeviceCount();inputType++) {
         	
-        	if( !selInputdevice.equals( padm.getId(inputType) ) ){
+        	//if( !selInputdevice.equals( padm.getId(inputType) ) ){
         		Inputlabels_p2.add(padm.getName(inputType));
         		Inputvalues_p2.add(padm.getId(inputType));
-        	}
+        	//}
         }
 
         CharSequence[] input_entries_p2 = new CharSequence[Inputlabels_p2.size()];
@@ -359,7 +380,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
     
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("pref_bios") || key.equals("pref_cart") || key.equals("pref_video") || key.equals("pref_cpu") || key.equals("pref_filter")  ) {
+        if (key.equals("pref_bios") || key.equals("pref_cart") || key.equals("pref_video") || key.equals("pref_cpu") || key.equals("pref_filter") || key.equals("pref_sound_engine")  ) {
             ListPreference pref = (ListPreference) findPreference(key);
             pref.setSummary(pref.getEntry());
 
@@ -369,6 +390,14 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
                     filter_setting.setEnabled(true);
                 }else{
                     filter_setting.setEnabled(false);
+                }
+
+                ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
+                polygon_setting.setSummary(polygon_setting.getEntry());
+                if( pref.getValue().equals("1") ){
+                    polygon_setting.setEnabled(true);
+                }else{
+                    polygon_setting.setEnabled(false);
                 }
             }
         }

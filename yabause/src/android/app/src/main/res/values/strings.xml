@@ -85,6 +85,7 @@
 
     <string name="video_filter_none">None</string>
     <string name="video_filter_fxaa">FXAA(works only NVIDIA devices)</string>
+    <string name="video_filter_scanline">Scanline filter</string>
     <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
@@ -116,6 +117,10 @@
     <string name="oops">Oops</string>
 
     <string name="title_activity_game_select" translatable="false">uoYabause</string>
+    <string name="polygon_generation_type">Polygon Generation Type</string>
+    <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
+    <string name="sound_engine">Sound Engine</string>
+    <string name="choose_sound_engine">Choose sound engine</string>
 
 </resources>
 	

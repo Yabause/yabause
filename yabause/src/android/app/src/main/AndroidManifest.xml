@@ -2,8 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="org.uoyabause.android"
-    android:versionCode="45"
-    android:versionName="0.2.0beta">
+    android:versionCode="72"
+    android:versionName="0.2.9a">
 
     <uses-sdk
         android:minSdkVersion="19"
@@ -12,20 +12,18 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
 
-    <uses-feature
-        android:name="android.software.leanback"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.touchscreen"
-        android:required="false" />
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" />
     <uses-feature android:glEsVersion="0x00030000" />
+    <uses-feature android:name="android.hardware.opengles.aep" android:required="true" />
 
     <application
         android:name=".YabauseApplication"
@@ -36,6 +34,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Leanback">
 
+        <meta-data android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
         <meta-data
             android:name="AA_DB_NAME"
             android:value="localgameinfo.db" />

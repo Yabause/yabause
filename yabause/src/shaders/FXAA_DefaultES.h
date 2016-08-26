@@ -4,15 +4,14 @@ const GLchar Yglprg_fxaa_v[] =
 #else
 "#version 330 \n"
 #endif
-" attribute vec2 aPosition; \n"
-" attribute vec2 aTexCoord; \n"
-"  \n"
-" varying vec2 vTexCoord; \n"
+"layout (location = 0) in vec2 aPosition;   \n"
+"layout (location = 1) in vec2 aTexCoord;   \n"
+"out  highp vec2 vTexCoord;     \n"
 "  \n"
 " void main(void) \n"
 " { \n"
-    " vTexCoord = aTexCoord;     \n"
-      " gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); \n"
+" vTexCoord = aTexCoord;     \n"
+" gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); \n"
 " } \n";
 
 const GLchar Yglprg_fxaa_f[] = 

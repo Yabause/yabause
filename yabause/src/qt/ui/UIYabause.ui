@@ -177,6 +177,8 @@
     <addaction name="separator"/>
     <addaction name="aFileOpenISO"/>
     <addaction name="aFileOpenCDRom"/>
+    <addaction name="aFileOpenSSF"/>
+    <addaction name="actionOpen_Tray"/>
     <addaction name="separator"/>
     <addaction name="mFileSaveState"/>
     <addaction name="mFileLoadState"/>
@@ -223,6 +225,7 @@
     <addaction name="aViewDebugM68K"/>
     <addaction name="aViewDebugSCUDSP"/>
     <addaction name="aViewDebugSCSP"/>
+    <addaction name="aViewDebugSCSPChan"/>
     <addaction name="aViewDebugSCSPDSP"/>
     <addaction name="separator"/>
     <addaction name="aViewDebugMemoryEditor"/>
@@ -233,6 +236,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="aHelpReport"/>
     <addaction name="aHelpCompatibilityList"/>
     <addaction name="aHelpAbout"/>
    </widget>
@@ -855,6 +859,18 @@
     <string>Ctrl+C</string>
    </property>
   </action>
+  <action name="aHelpReport">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/compatibility.png</normaloff>:/actions/icons/actions/compatibility.png</iconset>
+   </property>
+   <property name="text">
+    <string>Bug report</string>
+   </property>
+   <property name="statusTip">
+    <string>https://github.com/devmiyax/yabause/issues</string>
+   </property>
+  </action>
   <action name="aHelpCompatibilityList">
    <property name="icon">
     <iconset resource="../resources/resources.qrc">
@@ -864,7 +880,7 @@
     <string>Compatibility List</string>
    </property>
    <property name="statusTip">
-    <string>http://wiki.yabause.org/index.php5?title=Compatibility_list</string>
+    <string>http://www.uoyabause.org/games</string>
    </property>
   </action>
   <action name="aSound">
@@ -943,6 +959,24 @@
    </property>
    <property name="text">
     <string>Trace Logging</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCSPChan">
+   <property name="text">
+    <string>SCSP Channels</string>
+   </property>
+  </action>
+  <action name="aFileOpenSSF">
+   <property name="text">
+    <string>Open SSF</string>
+   </property>
+  </action>
+  <action name="actionOpen_Tray">
+   <property name="text">
+    <string>Open&amp;Tray</string>
+   </property>
+   <property name="toolTip">
+    <string>Open Tray</string>
    </property>
   </action>
  </widget>
