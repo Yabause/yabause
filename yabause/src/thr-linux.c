@@ -340,8 +340,8 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 
 int YabThreadGetCurrentThreadAffinityMask()
 {
-	return sched_getcpu(); //my_set.__bits;
-
+	//return sched_getcpu(); //my_set.__bits;
+    return 0;
 }
 
 

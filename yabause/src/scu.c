@@ -2599,7 +2599,7 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 }
 
 // 3.2 DMA control register
-INLINE void ScuChekIntrruptDMA(int id){
+static INLINE void ScuChekIntrruptDMA(int id){
 
 	if ((ScuRegs->D0EN & 0x100) && (ScuRegs->D0MD & 0x07) == id){
 		scudmainfo_struct dmainfo;

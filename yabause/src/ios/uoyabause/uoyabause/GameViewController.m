@@ -65,6 +65,7 @@ EAGLContext *g_share_context = nil;
 
 @implementation GameViewController
 @synthesize iPodIsPlaying;
+static GameViewController *sharedData_ = nil;
 
 // C "trampoline" function to invoke Objective-C method
 int swapAglBuffer ()
@@ -89,7 +90,14 @@ const char * GetBiosPath(){
 }
 
 const char * GetGamePath(){
-    NSString * path = [[NSBundle mainBundle] pathForResource:  @"nights" ofType: @"iso"];
+    
+    if( sharedData_ == nil ){
+        return nil;
+    }
+    //NSString * path = [[NSBundle mainBundle] pathForResource:  @"nights" ofType: @"iso"];
+    //NSString * path = [[NSBundle mainBundle] pathForResource:  @"gd" ofType: @"cue"];
+    NSString *path = sharedData_.selected_file; //[NSString stringWithFormat:@"%@/gd.cue" , [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]];
+    
     return [path cStringUsingEncoding:1];
 
 }
@@ -225,6 +233,39 @@ int GetPlayer2Device(){
                     PerKeyUp(PERPAD_A);
                 }
             }];
+            
+            [self.controller.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+                if(pressed){
+                    PerKeyDown(PERPAD_C);
+                }else{
+                    PerKeyUp(PERPAD_C);
+                }
+            }];
+            
+            [self.controller.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+                if(pressed){
+                    PerKeyDown(PERPAD_Z);
+                }else{
+                    PerKeyUp(PERPAD_Z);
+                }
+            }];
+            
+            [self.controller.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+                if(pressed){
+                    PerKeyDown(PERPAD_LEFT_TRIGGER);
+                }else{
+                    PerKeyUp(PERPAD_LEFT_TRIGGER);
+                }
+            }];
+            
+            [self.controller.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
+                if(pressed){
+                    PerKeyDown(PERPAD_RIGHT_TRIGGER);
+                }else{
+                    PerKeyUp(PERPAD_RIGHT_TRIGGER);
+                }
+            }];
+            
             [self.controller.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
                     PerKeyDown(PERPAD_X);
@@ -274,6 +315,13 @@ int GetPlayer2Device(){
                     PerKeyUp(PERPAD_RIGHT);
                 }
             }];
+            [self.controller.extendedGamepad.rightThumbstick setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue) {
+                if(yValue >= 0.5 || yValue <= -0.5 ){
+                    PerKeyDown(PERPAD_START);
+                }else{
+                    PerKeyUp(PERPAD_START);
+                }
+            }];
         }
     }
     
@@ -306,7 +354,7 @@ int GetPlayer2Device(){
                                              selector:@selector(foundController)
                                                  name:GCControllerDidConnectNotification
                                                object:nil];
-}
+}   
 
 - (void)foundController {
     NSLog(@"Found Controller");
@@ -314,7 +362,7 @@ int GetPlayer2Device(){
     //if (self.controllerCallbackSetup) {
     //    self.controllerCallbackSetup([[GCController controllers] firstObject]);
     //}
-    //[self stop];
+    //[self stop];  
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(controllerDidDisconnect)
                                                  name:GCControllerDidDisconnectNotification
@@ -326,6 +374,7 @@ int GetPlayer2Device(){
 
 - (void)viewDidLoad
 {
+    sharedData_ = self;
     [super viewDidLoad];
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
@@ -379,7 +428,7 @@ int GetPlayer2Device(){
 
    
     
-    self.preferredFramesPerSecond =60;
+    self.preferredFramesPerSecond =120;
 
     
   

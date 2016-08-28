@@ -11,10 +11,11 @@
 
 @interface GameViewController : GLKViewController
 {
-    
     UInt32					iPodIsPlaying;
+    NSString *selected_file;
 }
 
-@property (nonatomic, assign)	UInt32		iPodIsPlaying;		// Whether the iPod is playing
+@property (nonatomic, assign) UInt32		iPodIsPlaying;		// Whether the iPod is playing
+@property (nonatomic, copy) NSString *selected_file;
 
 @end
