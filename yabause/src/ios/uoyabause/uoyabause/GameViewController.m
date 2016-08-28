@@ -33,6 +33,18 @@
 #define PERPAD_X	10
 #define PERPAD_Y	11
 #define PERPAD_Z	12
+
+#define CART_NONE            0
+#define CART_PAR             1
+#define CART_BACKUPRAM4MBIT  2
+#define CART_BACKUPRAM8MBIT  3
+#define CART_BACKUPRAM16MBIT 4
+#define CART_BACKUPRAM32MBIT 5
+#define CART_DRAM8MBIT       6
+#define CART_DRAM32MBIT      7
+#define CART_NETLINK         8
+#define CART_ROM16MBIT       9
+
 void PerKeyDown(unsigned int key);
 void PerKeyUp(unsigned int key);
 int start_emulation( int width, int height );
@@ -95,12 +107,8 @@ const char * GetGamePath(){
     if( sharedData_ == nil ){
         return nil;
     }
-    //NSString * path = [[NSBundle mainBundle] pathForResource:  @"nights" ofType: @"iso"];
-    //NSString * path = [[NSBundle mainBundle] pathForResource:  @"gd" ofType: @"cue"];
-    NSString *path = sharedData_.selected_file; //[NSString stringWithFormat:@"%@/gd.cue" , [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]];
-    
+    NSString *path = sharedData_.selected_file;
     return [path cStringUsingEncoding:1];
-
 }
 
 const char * GetMemoryPath(){
@@ -137,29 +145,55 @@ const char * GetMemoryPath(){
         
     }else {
         NSLog (@"File not found, file will be created");
-        //if (![filemgr createFileAtPath:filePath contents:nil attributes:nil]){
-        //    NSLog(@"Create file returned NO");
-        //}
     }
-    
-    
-    //NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    //NSString *docs_dir = [paths objectAtIndex:0];
-    //NSString* aFile = [docs_dir stringByAppendingPathComponent: @"memory2.bin"];
-    
-    //NSString* aFile = [NSString stringWithFormat:@"%@/memory.bin" , [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]];
     
     return [filePath fileSystemRepresentation];
 }
 
 int GetCartridgeType(){
-    return 0;
+    return CART_BACKUPRAM32MBIT;
 }
+
 int GetVideoInterface(){
     return 0;
 }
+
 const char * GetCartridgePath(){
-    return NULL;
+    BOOL isDir;
+    NSFileManager *filemgr;
+    filemgr = [NSFileManager defaultManager];
+    NSString * fileName = @"cart/memory32.bin";
+    
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    
+    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
+    NSLog(@"full path name: %@", filePath);
+    
+    
+    NSString *docDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+    NSString *dirName = [docDir stringByAppendingPathComponent:@"cart"];
+    
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if(![fm fileExistsAtPath:dirName isDirectory:&isDir])
+    {
+        if([fm createDirectoryAtPath:dirName withIntermediateDirectories:YES attributes:nil error:nil])
+            NSLog(@"Directory Created");
+        else
+            NSLog(@"Directory Creation Failed");
+    }
+    else
+        NSLog(@"Directory Already Exist");
+    
+    // check if file exists
+    if ([filemgr fileExistsAtPath: filePath] == YES){
+        NSLog(@"File exists");
+        
+    }else {
+        NSLog (@"File not found, file will be created");
+    }
+    return [filePath fileSystemRepresentation];
 }
 
 int GetPlayer2Device(){

@@ -24,13 +24,21 @@ class FileSelectController :UITableViewController {
     override func viewDidLoad(){
             super.viewDidLoad()
         
+        file_list.removeAll()
         let manager = NSFileManager.defaultManager()
         let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
         
         do {
-            file_list = try manager.contentsOfDirectoryAtPath(documentsPath)
-            for path in file_list {
-                print("Found \(path)")
+            let all_file_list = try manager.contentsOfDirectoryAtPath(documentsPath)
+            for path in all_file_list {
+                var isDir: ObjCBool = false
+                if manager.fileExistsAtPath(documentsPath + "/" + path, isDirectory: &isDir) {
+                    if( Bool(isDir) == false ){
+                        file_list.append(path);
+                    }
+                } else {
+                    
+                }
             }
         }catch{
         }
