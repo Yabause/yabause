@@ -15,7 +15,7 @@ set( SOURCES
 set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/uoyabause/ )
 
 add_library(${LIBRARY_NAME}  $<TARGET_OBJECTS:yabause>  ${SOURCES}  )
-set_xcode_property (${LIBRARY_NAME} GCC_GENERATE_DEBUGGING_SYMBOLS YES)
+#set_xcode_property (${LIBRARY_NAME} GCC_GENERATE_DEBUGGING_SYMBOLS YES)
 include_directories( ${YABAUSE_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/../ ${PROJECT_SOURCE_DIR}/../ )
 target_link_libraries(${LIBRARY_NAME}   ${YABAUSE_LIBRARIES} )
 

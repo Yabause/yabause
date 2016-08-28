@@ -19,7 +19,7 @@
 		644232C41C6580010050611E /* uoyabauseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232C31C6580010050611E /* uoyabauseTests.m */; };
 		644232CF1C6580010050611E /* uoyabauseUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232CE1C6580010050611E /* uoyabauseUITests.m */; };
 		646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
-		646C87B71C66E37F0091B3B6 /* nights.iso in Resources */ = {isa = PBXBuildFile; fileRef = 646C87B61C66E37F0091B3B6 /* nights.iso */; };
+		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		64EEC2E91C66BB8A004DCD2C /* bios.bin in Resources */ = {isa = PBXBuildFile; fileRef = 64EEC2E81C66BB8A004DCD2C /* bios.bin */; };
 /* End PBXBuildFile section */
 
@@ -61,7 +61,8 @@
 		644232CE1C6580010050611E /* uoyabauseUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = uoyabauseUITests.m; sourceTree = "<group>"; };
 		644232D01C6580010050611E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		646C87B41C66DDD20091B3B6 /* libyabause_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libyabause_ios.a; sourceTree = "<group>"; };
-		646C87B61C66E37F0091B3B6 /* nights.iso */ = {isa = PBXFileReference; lastKnownFileType = file; path = nights.iso; sourceTree = "<group>"; };
+		648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uoyabause-Bridging-Header.h"; sourceTree = "<group>"; };
+		648926681D719E9500D92D58 /* FileSelectController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSelectController.swift; sourceTree = "<group>"; };
 		64EEC2E81C66BB8A004DCD2C /* bios.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = bios.bin; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -117,7 +118,6 @@
 		644232A41C6580000050611E /* uoyabause */ = {
 			isa = PBXGroup;
 			children = (
-				646C87B61C66E37F0091B3B6 /* nights.iso */,
 				64EEC2E81C66BB8A004DCD2C /* bios.bin */,
 				644232A81C6580000050611E /* AppDelegate.h */,
 				644232A91C6580000050611E /* AppDelegate.m */,
@@ -126,10 +126,12 @@
 				644232AF1C6580000050611E /* GameViewController.h */,
 				644232B01C6580000050611E /* GameViewController.m */,
 				644232B21C6580000050611E /* Main.storyboard */,
+				648926681D719E9500D92D58 /* FileSelectController.swift */,
 				644232B51C6580000050611E /* Assets.xcassets */,
 				644232B71C6580000050611E /* LaunchScreen.storyboard */,
 				644232BA1C6580000050611E /* Info.plist */,
 				644232A51C6580000050611E /* Supporting Files */,
+				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
 			);
 			path = uoyabause;
 			sourceTree = "<group>";
@@ -222,6 +224,7 @@
 		6442329A1C6580000050611E /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 0730;
 				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = devMiyax;
 				TargetAttributes = {
@@ -270,7 +273,6 @@
 				644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */,
 				64EEC2E91C66BB8A004DCD2C /* bios.bin in Resources */,
 				644232AC1C6580000050611E /* Shader.fsh in Resources */,
-				646C87B71C66E37F0091B3B6 /* nights.iso in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,6 +298,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				644232AA1C6580000050611E /* AppDelegate.m in Sources */,
+				648926691D719E9500D92D58 /* FileSelectController.swift in Sources */,
 				644232B11C6580000050611E /* GameViewController.m in Sources */,
 				644232A71C6580000050611E /* main.m in Sources */,
 			);
@@ -437,11 +440,14 @@
 		644232D41C6580010050611E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = uoyabause/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -452,17 +458,24 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.uoyabause;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
 			};
 			name = Debug;
 		};
 		644232D51C6580010050611E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = uoyabause/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -473,6 +486,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.uoyabause;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
+				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = arm64;
 			};
 			name = Release;
 		};

@@ -24,6 +24,8 @@
 #include <windows.h>
 #endif
 #ifdef _VDP_PROFILE_
+#include "time.h"
+#include "threads.h"
 
 // rendering performance
 typedef struct {
