@@ -33,7 +33,7 @@ static char cartpath[256] = "\0";
 static char screenShotFilename[256] = "\0";
 const char * s_biospath = NULL;
 const char * s_cdpath = NULL;
-const char * s_buppath = NULL;
+char s_buppath[256];
 const char * s_cartpath = NULL;
 int s_carttype;
 char s_savepath[256] ="\0";
@@ -110,7 +110,7 @@ int start_emulation( int width, int height ){
 
     s_biospath = GetBiosPath();
     s_cdpath = GetGamePath();
-    s_buppath = GetMemoryPath();
+    strcpy(s_buppath,GetMemoryPath());
     s_cartpath = GetCartridgePath();
     s_vidcoretype = GetVideoInterface();
     s_carttype =  GetCartridgeType();
@@ -140,6 +140,7 @@ int start_emulation( int width, int height ){
     yinit.biospath = s_biospath;
     yinit.cdpath = s_cdpath;
     yinit.buppath = s_buppath;
+    printf("buppath = %s\n",yinit.buppath);
     yinit.carttype = s_carttype;
     yinit.cartpath = s_cartpath;
     
@@ -243,6 +244,11 @@ int start_emulation( int width, int height ){
     
     int emulation_step(){
         YabauseExec();
+    }
+
+    int enterBackGround(){
+        YabFlushBackups();
+        return 0;
     }
     
 }

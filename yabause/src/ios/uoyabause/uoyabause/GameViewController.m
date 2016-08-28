@@ -18,6 +18,8 @@
  *
  * @{
  */
+
+
 #define PERPAD_UP	0
 #define PERPAD_RIGHT	1
 #define PERPAD_DOWN	2
@@ -33,10 +35,9 @@
 #define PERPAD_Z	12
 void PerKeyDown(unsigned int key);
 void PerKeyUp(unsigned int key);
-
-
 int start_emulation( int width, int height );
 int emulation_step();
+int enterBackGround();
 
 EAGLContext *g_context = nil;
 EAGLContext *g_share_context = nil;
@@ -103,10 +104,52 @@ const char * GetGamePath(){
 }
 
 const char * GetMemoryPath(){
+    BOOL isDir;
+    NSFileManager *filemgr;
+    filemgr = [NSFileManager defaultManager];
+    NSString * fileName = @"backup/memory.bin";
+    
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *docs_dir = [paths objectAtIndex:0];
-    NSString* aFile = [docs_dir stringByAppendingPathComponent: @"memory2.bin"];
-    return [aFile fileSystemRepresentation];
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    
+    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
+    NSLog(@"full path name: %@", filePath);
+    
+    
+    NSString *docDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+    NSString *dirName = [docDir stringByAppendingPathComponent:@"backup"];
+    
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if(![fm fileExistsAtPath:dirName isDirectory:&isDir])
+    {
+        if([fm createDirectoryAtPath:dirName withIntermediateDirectories:YES attributes:nil error:nil])
+            NSLog(@"Directory Created");
+        else
+            NSLog(@"Directory Creation Failed");
+    }
+    else
+        NSLog(@"Directory Already Exist");
+    
+    // check if file exists
+    if ([filemgr fileExistsAtPath: filePath] == YES){
+        NSLog(@"File exists");
+        
+    }else {
+        NSLog (@"File not found, file will be created");
+        //if (![filemgr createFileAtPath:filePath contents:nil attributes:nil]){
+        //    NSLog(@"Create file returned NO");
+        //}
+    }
+    
+    
+    //NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    //NSString *docs_dir = [paths objectAtIndex:0];
+    //NSString* aFile = [docs_dir stringByAppendingPathComponent: @"memory2.bin"];
+    
+    //NSString* aFile = [NSString stringWithFormat:@"%@/memory.bin" , [NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]];
+    
+    return [filePath fileSystemRepresentation];
 }
 
 int GetCartridgeType(){
@@ -497,7 +540,8 @@ int GetPlayer2Device(){
 
 - (void)didEnterBackground {
     
-     GLKView *view = (GLKView *)self.view;
+    GLKView *view = (GLKView *)self.view;
+    enterBackGround();
     
     //if (view.active)
         [view resignFirstResponder];
