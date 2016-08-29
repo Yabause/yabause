@@ -102,7 +102,7 @@ matrix:
 
         - export ANDROID_NDK_HOME=$(pwd)/android-ndk-r11c/
 
-        - cmake -DCMAKE_BUILD_TYPE=Release -DSH2_DYNAREC=OFF -DCMAKE_TOOLCHAIN_FILE=../src/android/android.cmake -DYAB_PORTS=android ..
+        - cmake -DCMAKE_BUILD_TYPE=Release -DSH2_DYNAREC=OFF -DCMAKE_TOOLCHAIN_FILE=../src/android/armeabi.cmake -DYAB_PORTS=android ..
         - make
 
       after_success:
