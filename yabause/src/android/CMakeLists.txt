@@ -18,7 +18,6 @@ if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
 		gradlew.bat
 		gradle/wrapper/gradle-wrapper.jar
 		gradle/wrapper/gradle-wrapper.properties
-		jni/Application.mk
 		jni/yui.c
 		jni/miniegl.h
 		jni/sndaudiotrack.c
@@ -83,6 +82,12 @@ set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/jni/Android.mk.in
 	${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk
+	@ONLY
+)
+
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/jni/Application.mk.in
+	${CMAKE_CURRENT_BINARY_DIR}/jni/Application.mk
 	@ONLY
 )
 
