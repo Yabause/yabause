@@ -22,6 +22,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QScrollBar>
+#include <QFile>
 
 UIHexEditor::UIHexEditor( QWidget* p )
 {
@@ -1053,7 +1054,7 @@ bool UIHexEditorWnd::saveTab(QString filename)
 
 bool UIHexEditorWnd::saveMemory(QString filename, u32 startAddress, u32 endAddress)
 {
-	FILE *fp = fopen(filename.toLatin1(), "wb");
+	FILE *fp = fopen(QFile::encodeName( filename ), "wb");
 	u32 size = (u32)(endAddress - startAddress);
 
 	if (fp == NULL)
