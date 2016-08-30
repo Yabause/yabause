@@ -207,7 +207,7 @@ void UIDebugSCUDSP::reserved1()
 	if (!ScuRegs)
 		return;
    if ( !s.isNull() )
-      ScuDspSaveProgram(s.toLatin1());
+      ScuDspSaveProgram(QFile::encodeName(s));
 }
 
 void UIDebugSCUDSP::reserved2()
@@ -216,7 +216,7 @@ void UIDebugSCUDSP::reserved2()
 	if (!ScuRegs)
 		return;
    if ( !s.isNull() )
-      ScuDspSaveMD(s.toLatin1(), 0);
+      ScuDspSaveMD(QFile::encodeName(s), 0);
 }
 
 void UIDebugSCUDSP::reserved3()
@@ -225,7 +225,7 @@ void UIDebugSCUDSP::reserved3()
 	if (!ScuRegs)
 		return;
    if ( !s.isNull() )
-      ScuDspSaveMD(s.toLatin1(), 1);
+      ScuDspSaveMD(QFile::encodeName(s), 1);
 }
 
 void UIDebugSCUDSP::reserved4()
@@ -234,7 +234,7 @@ void UIDebugSCUDSP::reserved4()
 	if (!ScuRegs)
 		return;
    if ( !s.isNull() )
-      ScuDspSaveMD(s.toLatin1(), 2);
+      ScuDspSaveMD(QFile::encodeName(s), 2);
 }
 
 void UIDebugSCUDSP::reserved5()
@@ -243,6 +243,6 @@ void UIDebugSCUDSP::reserved5()
 	if (!ScuRegs)
 		return;
    if ( !s.isNull() )
-      ScuDspSaveMD(s.toLatin1(), 3);
+      ScuDspSaveMD(QFile::encodeName(s), 3);
 }
 

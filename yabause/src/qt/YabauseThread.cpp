@@ -29,6 +29,7 @@
 #include <QDateTime>
 #include <QStringList>
 #include <QDebug>
+#include <QFile>
 
 YabauseThread::YabauseThread( QObject* o )
 	: QObject( o )
@@ -105,7 +106,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 				vs->value("autostart/binary/address").toUInt());
 		}
 		else if (vs->value("autostart/load").toBool()) {
-			YabLoadStateSlot( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString().toLatin1().constData(), vs->value("autostart/load/slot").toInt() );
+			YabLoadStateSlot( QFile::encodeName( QtYabause::volatileSettings()->value( "General/SaveStates", getDataDirPath() ).toString() ).constData(), vs->value("autostart/load/slot").toInt() );
 		}
 		vs->setValue("autostart", false);
 	}
@@ -368,17 +369,18 @@ void YabauseThread::reloadSettings()
 	if (vs->value("General/EnableEmulatedBios", false).toBool())
 		mYabauseConf.biospath = strdup( "" );
 	else
-		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
-	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
-   mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
-   mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
-   showFPS = vs->value( "General/ShowFPS", false ).toBool();
+		mYabauseConf.biospath = strdup( QFile::encodeName( vs->value( "General/Bios", mYabauseConf.biospath ).toString()).constData() );
+
+	mYabauseConf.cdpath = strdup( QFile::encodeName( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString()).constData());
+	mYabauseConf.ssfpath = strdup( QFile::encodeName( vs->value("General/SSFPath", mYabauseConf.ssfpath).toString()).constData());
+	mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
+	showFPS = vs->value( "General/ShowFPS", false ).toBool();
 	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
 	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
-	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
-	mYabauseConf.sh1rompath = strdup( vs->value( "SH1ROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
-	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
-	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
+	mYabauseConf.buppath = strdup( QFile::encodeName( vs->value( "Memory/Path", mYabauseConf.buppath ).toString()).constData() );
+	mYabauseConf.sh1rompath = strdup( QFile::encodeName( vs->value( "SH1ROM/Path", mYabauseConf.mpegpath ).toString()).constData() );
+	mYabauseConf.mpegpath = strdup( QFile::encodeName( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString()).constData() );
+	mYabauseConf.cartpath = strdup( QFile::encodeName( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString()).constData() );
 	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
 	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
