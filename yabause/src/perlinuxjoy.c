@@ -66,7 +66,7 @@ static void LinuxJoyInit(perlinuxjoy_struct * joystick, const char * path)
    int fd;
    int axisinit[MAXAXIS];
    struct js_event evt;
-   size_t num_read;
+   ssize_t num_read;
 
    joystick->fd = open(path, O_RDONLY | O_NONBLOCK);
 
@@ -106,7 +106,7 @@ static void LinuxJoyDeInit(perlinuxjoy_struct * joystick)
 static void LinuxJoyHandleEvents(perlinuxjoy_struct * joystick)
 {
    struct js_event evt;
-   size_t num_read;
+   ssize_t num_read;
 
    if (joystick->fd == -1) return;
 
@@ -142,7 +142,7 @@ static void LinuxJoyHandleEvents(perlinuxjoy_struct * joystick)
 static int LinuxJoyScan(perlinuxjoy_struct * joystick)
 {
    struct js_event evt;
-   size_t num_read;
+   ssize_t num_read;
 
    if (joystick->fd == -1) return 0;
 
@@ -169,7 +169,7 @@ static int LinuxJoyScan(perlinuxjoy_struct * joystick)
 static void LinuxJoyFlush(perlinuxjoy_struct * joystick)
 {
    struct js_event evt;
-   size_t num_read;
+   ssize_t num_read;
 
    if (joystick->fd == -1) return;
 
