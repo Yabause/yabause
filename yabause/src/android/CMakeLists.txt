@@ -114,7 +114,7 @@ add_custom_command(
 )
 
 add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
+	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libs/${ANDROID_ABI}/libyabause.so"
 	COMMAND "${NDK_BUILD}"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/yui.c"
@@ -173,7 +173,7 @@ set(yabause_android_GRADLEW
 add_custom_command(
 	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build/outputs/apk/Yabause-release.apk"
 	COMMAND "${CMAKE_CURRENT_BINARY_DIR}/gradlew" build
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
+	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/${ANDROID_ABI}/libyabause.so"
 	DEPENDS ${yabause_android_SRC}
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/gradle.properties"
 	DEPENDS ${yabause_android_RES}
