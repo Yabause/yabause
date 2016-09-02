@@ -39,7 +39,7 @@
    <property name="geometry">
     <rect>
      <x>120</x>
-     <y>140</y>
+     <y>180</y>
      <width>21</width>
      <height>31</height>
     </rect>
@@ -60,8 +60,8 @@
   <widget class="QToolButton" name="tbY">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>140</y>
+     <x>165</x>
+     <y>170</y>
      <width>21</width>
      <height>31</height>
     </rect>
@@ -82,8 +82,8 @@
   <widget class="QToolButton" name="tbZ">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>150</y>
+     <x>210</x>
+     <y>180</y>
      <width>21</width>
      <height>31</height>
     </rect>
@@ -104,8 +104,8 @@
   <widget class="QToolButton" name="tbC">
    <property name="geometry">
     <rect>
-     <x>200</x>
-     <y>190</y>
+     <x>210</x>
+     <y>225</y>
      <width>21</width>
      <height>31</height>
     </rect>
@@ -126,8 +126,8 @@
   <widget class="QToolButton" name="tbB">
    <property name="geometry">
     <rect>
-     <x>160</x>
-     <y>180</y>
+     <x>165</x>
+     <y>215</y>
      <width>21</width>
      <height>31</height>
     </rect>
@@ -149,7 +149,7 @@
    <property name="geometry">
     <rect>
      <x>120</x>
-     <y>180</y>
+     <y>225</y>
      <width>21</width>
      <height>31</height>
     </rect>
@@ -192,8 +192,8 @@
   <widget class="QToolButton" name="tbRightTrigger">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>190</y>
+     <x>260</x>
+     <y>240</y>
      <width>41</width>
      <height>51</height>
     </rect>
@@ -215,7 +215,7 @@
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>180</y>
+     <y>240</y>
      <width>41</width>
      <height>51</height>
     </rect>
@@ -306,8 +306,8 @@
   <widget class="QToolButton" name="tbAxis2Down">
    <property name="geometry">
     <rect>
-     <x>390</x>
-     <y>270</y>
+     <x>405</x>
+     <y>265</y>
      <width>31</width>
      <height>30</height>
     </rect>
@@ -328,8 +328,8 @@
   <widget class="QToolButton" name="tbAxis1Right">
    <property name="geometry">
     <rect>
-     <x>430</x>
-     <y>220</y>
+     <x>440</x>
+     <y>210</y>
      <width>30</width>
      <height>31</height>
     </rect>
@@ -351,7 +351,7 @@
    <property name="geometry">
     <rect>
      <x>430</x>
-     <y>70</y>
+     <y>85</y>
      <width>31</width>
      <height>30</height>
     </rect>
@@ -372,8 +372,8 @@
   <widget class="QToolButton" name="tbAxis3Down">
    <property name="geometry">
     <rect>
-     <x>430</x>
-     <y>150</y>
+     <x>435</x>
+     <y>165</y>
      <width>31</width>
      <height>30</height>
     </rect>
