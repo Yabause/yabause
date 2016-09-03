@@ -2601,6 +2601,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 				currentPixel = (colorbank&0xff00) | currentPixel;
 			break;
 		case 0x5://16bpp bank
+		case 0x6://prohibited, used by (at least) Beach de Reach and seems to behave like 0x5
 			endcode = 0x7fff;
          currentPixel = Vdp1ReadPattern64k(characterAddress + (linenumber*characterWidth * 2), currentlineindex, ram);
 			if(isTextured && endcodesEnabled && currentPixel == endcode)
