@@ -42,6 +42,14 @@ QString getDataDirPath()
 #endif
    QCoreApplication::setApplicationName(oldApplicationName);
 	return path;
+#elif defined Q_OS_LINUX
+	QString xdgpath = QString( "%1/.local/share/yabause" ).arg( QDir::homePath() );
+	if ( ! QFile::exists( xdgpath ) )
+	{
+		QDir dir;
+		dir.mkpath( xdgpath );
+	}
+	return xdgpath;
 #else
 	return QApplication::applicationDirPath();
 #endif
