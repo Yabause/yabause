@@ -49,14 +49,99 @@
                     <view key="view" contentMode="scaleToFill" id="3se-qz-xqx" customClass="GLKView">
                         <rect key="frame" x="0.0" y="0.0" width="736" height="414"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <view alpha="0.0" contentMode="scaleToFill" fixedFrame="YES" restorationIdentifier="Controller" translatesAutoresizingMaskIntoConstraints="NO" id="Tx6-hj-MGk">
+                                <rect key="frame" x="0.0" y="0.0" width="736" height="415"/>
+                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9oE-0a-kNO">
+                                <rect key="frame" x="62" y="321" width="135" height="42"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="DEn-TB-PHU">
+                                <rect key="frame" x="156" y="239" width="41" height="124"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="BNQ-eB-xJ8">
+                                <rect key="frame" x="62" y="227" width="135" height="43"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="On8-aM-a63">
+                                <rect key="frame" x="56" y="227" width="46" height="136"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="feZ-s6-qlE">
+                                <rect key="frame" x="35" y="91" width="122" height="35"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NnT-bI-EjB">
+                                <rect key="frame" x="178" y="390" width="60" height="24"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="u30-nf-mJe">
+                                <rect key="frame" x="573" y="91" width="122" height="35"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5Zj-V5-vjn">
+                                <rect key="frame" x="483" y="328" width="68" height="66"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="anA-9c-dHn">
+                                <rect key="frame" x="452" y="245" width="68" height="66"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="S7a-N2-VlC">
+                                <rect key="frame" x="520" y="212" width="68" height="66"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Fdj-7A-TTh">
+                                <rect key="frame" x="590" y="188" width="68" height="66"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="bMf-uB-TYg">
+                                <rect key="frame" x="551" y="286" width="68" height="66"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zJr-X4-ef5">
+                                <rect key="frame" x="627" y="262" width="68" height="66"/>
+                                <color key="backgroundColor" white="0.33333333333333331" alpha="1" colorSpace="calibratedWhite"/>
+                            </view>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="pad_l" translatesAutoresizingMaskIntoConstraints="NO" id="d5A-Fc-uxH">
+                                <rect key="frame" x="0.0" y="75" width="258" height="340"/>
+                            </imageView>
+                            <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="pad_r" translatesAutoresizingMaskIntoConstraints="NO" id="7bA-cb-PyC">
+                                <rect key="frame" x="440" y="74" width="296" height="340"/>
+                            </imageView>
+                        </subviews>
                         <color key="backgroundColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                     </view>
                     <simulatedOrientationMetrics key="simulatedOrientationMetrics" orientation="landscapeRight"/>
                     <simulatedScreenMetrics key="simulatedDestinationMetrics" type="retina55"/>
+                    <connections>
+                        <outlet property="a_button" destination="5Zj-V5-vjn" id="EGp-JV-iRI"/>
+                        <outlet property="b_button" destination="bMf-uB-TYg" id="sCi-lR-cRZ"/>
+                        <outlet property="c_button" destination="zJr-X4-ef5" id="lSA-Pn-aBH"/>
+                        <outlet property="down_button" destination="9oE-0a-kNO" id="2xX-Wm-gKg"/>
+                        <outlet property="left_button" destination="On8-aM-a63" id="v9o-HU-BjD"/>
+                        <outlet property="left_panel" destination="d5A-Fc-uxH" id="AYI-Mc-yDD"/>
+                        <outlet property="left_trigger" destination="feZ-s6-qlE" id="SC8-s5-wP6"/>
+                        <outlet property="right_button" destination="DEn-TB-PHU" id="8tg-Cw-ew9"/>
+                        <outlet property="right_panel" destination="7bA-cb-PyC" id="JrY-89-Oma"/>
+                        <outlet property="right_trigger" destination="u30-nf-mJe" id="Jjx-oB-e3Y"/>
+                        <outlet property="start_button" destination="NnT-bI-EjB" id="4Qc-m2-pbC"/>
+                        <outlet property="up_button" destination="BNQ-eB-xJ8" id="wtW-yC-HU6"/>
+                        <outlet property="x_button" destination="anA-9c-dHn" id="rEB-Au-IAA"/>
+                        <outlet property="y_button" destination="S7a-N2-VlC" id="vix-Vj-az1"/>
+                        <outlet property="z_button" destination="Fdj-7A-TTh" id="S0s-Sr-BwT"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="SZV-WD-TEh" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="886" y="-227"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="pad_l" width="700" height="1080"/>
+        <image name="pad_r" width="780" height="1080"/>
+    </resources>
 </document>

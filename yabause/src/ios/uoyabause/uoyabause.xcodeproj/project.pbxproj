@@ -20,6 +20,7 @@
 		644232CF1C6580010050611E /* uoyabauseUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232CE1C6580010050611E /* uoyabauseUITests.m */; };
 		646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
+		64A951B31D7A7A8A00870912 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 64A951B21D7A7A8A00870912 /* Settings.bundle */; };
 		64EEC2E91C66BB8A004DCD2C /* bios.bin in Resources */ = {isa = PBXBuildFile; fileRef = 64EEC2E81C66BB8A004DCD2C /* bios.bin */; };
 /* End PBXBuildFile section */
 
@@ -63,6 +64,7 @@
 		646C87B41C66DDD20091B3B6 /* libyabause_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libyabause_ios.a; sourceTree = "<group>"; };
 		648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uoyabause-Bridging-Header.h"; sourceTree = "<group>"; };
 		648926681D719E9500D92D58 /* FileSelectController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSelectController.swift; sourceTree = "<group>"; };
+		64A951B21D7A7A8A00870912 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = ../Settings.bundle; sourceTree = "<group>"; };
 		64EEC2E81C66BB8A004DCD2C /* bios.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = bios.bin; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -118,6 +120,7 @@
 		644232A41C6580000050611E /* uoyabause */ = {
 			isa = PBXGroup;
 			children = (
+				64A951B21D7A7A8A00870912 /* Settings.bundle */,
 				64EEC2E81C66BB8A004DCD2C /* bios.bin */,
 				644232A81C6580000050611E /* AppDelegate.h */,
 				644232A91C6580000050611E /* AppDelegate.m */,
@@ -273,6 +276,7 @@
 				644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */,
 				64EEC2E91C66BB8A004DCD2C /* bios.bin in Resources */,
 				644232AC1C6580000050611E /* Shader.fsh in Resources */,
+				64A951B31D7A7A8A00870912 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -443,8 +447,8 @@
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = uoyabause/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
@@ -471,8 +475,8 @@
 				ARCHS = arm64;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_IDENTITY = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer: smiyax73@gmail.com (538WW6HQWN)";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = uoyabause/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
