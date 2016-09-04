@@ -97,7 +97,7 @@ void OSDPushMessageDirect(char * msg){
 
 int VIDOGLInit(void);
 void VIDOGLDeInit(void);
-void VIDOGLResize(unsigned int, unsigned int, int);
+void VIDOGLResize(int,int,unsigned int, unsigned int, int);
 int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
 void VIDOGLVdp1DrawStart(void);
@@ -3440,7 +3440,7 @@ void VIDOGLDeInit(void)
 
 int _VIDOGLIsFullscreen;
 
-void VIDOGLResize(unsigned int w, unsigned int h, int on)
+void VIDOGLResize(int originx, int originy , unsigned int w, unsigned int h, int on)
 {
 //   glDeleteTextures(1, &_Ygl->texture);
 
@@ -3449,12 +3449,14 @@ void VIDOGLResize(unsigned int w, unsigned int h, int on)
    GlHeight=h;
    GlWidth=w;
 
+   _Ygl->originx = originx;
+   _Ygl->originy = originy;
    _Ygl->width = w;
    _Ygl->height = h;
 
    
    YglGLInit(2048, 1024);
-   glViewport(0, 0, w, h);
+   glViewport(originx, originy, w, h);
    YglNeedToUpdateWindow();
 
    SetSaturnResolution(vdp2width, vdp2height);

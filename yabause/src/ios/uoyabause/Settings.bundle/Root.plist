@@ -129,8 +129,8 @@
 			<string>PSMultiValueSpecifier</string>
 			<key>Values</key>
 			<array>
-				<integer>0</integer>
 				<integer>1</integer>
+				<integer>0</integer>
 			</array>
 			<key>Titles</key>
 			<array>
@@ -143,22 +143,6 @@
 			<string>sound_engine</string>
 			<key>DefaultValue</key>
 			<real>0</real>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSGroupSpecifier</string>
-			<key>Title</key>
-			<string>Input Device</string>
-		</dict>
-		<dict>
-			<key>Type</key>
-			<string>PSToggleSwitchSpecifier</string>
-			<key>Title</key>
-			<string>Use MFI device if available</string>
-			<key>Key</key>
-			<string>mfi</string>
-			<key>DefaultValue</key>
-			<true/>
 		</dict>
 	</array>
 </dict>

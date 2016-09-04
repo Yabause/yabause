@@ -286,7 +286,7 @@ int main( int argc, char * argcv[] )
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-	VIDCore->Resize(width,height,0);
+	VIDCore->Resize(0,0,width,height,0);
 
     vg = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
     if (vg == NULL) {

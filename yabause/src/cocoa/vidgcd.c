@@ -71,7 +71,7 @@ static void PopUserClipping(void);
 
 int VIDGCDInit(void);
 void VIDGCDDeInit(void);
-void VIDGCDResize(unsigned int, unsigned int, int);
+void VIDGCDResize(int,int,unsigned int, unsigned int, int);
 int VIDGCDIsFullscreen(void);
 int VIDGCDVdp1Reset(void);
 void VIDGCDVdp1DrawStart(void);
@@ -1584,7 +1584,7 @@ void VIDGCDDeInit(void)
 
 static int IsFullscreen = 0;
 
-void VIDGCDResize(unsigned int w, unsigned int h, int on)
+void VIDGCDResize(int, int, unsigned int w, unsigned int h, int on)
 {
 #ifdef USE_OPENGL
    IsFullscreen = on;

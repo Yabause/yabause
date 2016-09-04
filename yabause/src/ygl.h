@@ -376,6 +376,8 @@ typedef struct {
    int st;
    char message[512];
    int msglength;
+   int originx;
+   int originy;
    unsigned int width;
    unsigned int height;
    unsigned int depth;
