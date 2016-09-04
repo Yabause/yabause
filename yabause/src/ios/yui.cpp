@@ -99,10 +99,14 @@ extern "C" {
     int GetVideoInterface();
     const char * GetCartridgePath();
     int GetPlayer2Device();
+    int GetEnableFPS();
+    int GetEnableFrameSkip();
+    int GetUseNewScsp();
+    int GetVideFilterType();
     
 int swapAglBuffer ();
     
-int start_emulation( int width, int height ){
+int start_emulation( int originx, int originy, int width, int height ){
 	int i;
     int res;
     yabauseinit_struct yinit;
@@ -122,19 +126,20 @@ int start_emulation( int width, int height ){
     YUI_LOG("%s",glGetString(GL_EXTENSIONS));
     //YUI_LOG("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
 
+    g_EnagleFPS = GetEnableFPS();
  
     glViewport(0,0,width,height);
 
     glClearColor( 0.0f, 0.0f,0.0f,1.0f);
     glClear( GL_COLOR_BUFFER_BIT );
 
+    memset( &yinit,0,sizeof(yinit) );
     yinit.m68kcoretype = M68KCORE_MUSASHI; //M68KCORE_Q68; //M68KCORE_Q68; //M68KCORE_DUMMY; //M68KCORE_C68K;
     yinit.percoretype = PERCORE_DUMMY;
     yinit.sh2coretype = SH2CORE_DEFAULT;
     yinit.vidcoretype = VIDCORE_OGL;
     yinit.sndcoretype = SNDCORE_AL; //SNDCORE_DEFAULT;
     yinit.cdcoretype = CDCORE_ISO;
-    yinit.carttype = 0;//GetCartridgeType();
     yinit.regionid = 0;
 
     yinit.biospath = s_biospath;
@@ -149,12 +154,13 @@ int start_emulation( int width, int height ){
 
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
-    yinit.frameskip = 0;
+    yinit.frameskip = GetEnableFrameSkip();
     yinit.usethreads = 0;
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
     s_vidcoretype = VIDCORE_OGL;
-    yinit.use_new_scsp = 1;
+    yinit.use_new_scsp = GetUseNewScsp();
+    yinit.video_filter_type = GetVideFilterType();
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -208,7 +214,7 @@ int start_emulation( int width, int height ){
 	   {
 		  if (VIDCoreList[i]->id == s_vidcoretype)
 		  {
-			 VIDCoreList[i]->Resize(width,height,0);
+			 VIDCoreList[i]->Resize(originx,originy,width,height,0);
 			 break;
 		  }
 	   }

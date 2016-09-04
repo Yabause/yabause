@@ -21,6 +21,7 @@
 		646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		64A951B31D7A7A8A00870912 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 64A951B21D7A7A8A00870912 /* Settings.bundle */; };
+		64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 		64EEC2E91C66BB8A004DCD2C /* bios.bin in Resources */ = {isa = PBXBuildFile; fileRef = 64EEC2E81C66BB8A004DCD2C /* bios.bin */; };
 /* End PBXBuildFile section */
 
@@ -65,6 +66,7 @@
 		648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uoyabause-Bridging-Header.h"; sourceTree = "<group>"; };
 		648926681D719E9500D92D58 /* FileSelectController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSelectController.swift; sourceTree = "<group>"; };
 		64A951B21D7A7A8A00870912 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = ../Settings.bundle; sourceTree = "<group>"; };
+		64D450081D7C0E6C004E2615 /* MainScreenController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainScreenController.swift; sourceTree = "<group>"; };
 		64EEC2E81C66BB8A004DCD2C /* bios.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = bios.bin; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -129,6 +131,7 @@
 				644232AF1C6580000050611E /* GameViewController.h */,
 				644232B01C6580000050611E /* GameViewController.m */,
 				644232B21C6580000050611E /* Main.storyboard */,
+				64D450081D7C0E6C004E2615 /* MainScreenController.swift */,
 				648926681D719E9500D92D58 /* FileSelectController.swift */,
 				644232B51C6580000050611E /* Assets.xcassets */,
 				644232B71C6580000050611E /* LaunchScreen.storyboard */,
@@ -305,6 +308,7 @@
 				648926691D719E9500D92D58 /* FileSelectController.swift in Sources */,
 				644232B11C6580000050611E /* GameViewController.m in Sources */,
 				644232A71C6580000050611E /* main.m in Sources */,
+				64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

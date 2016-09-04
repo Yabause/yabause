@@ -47,7 +47,7 @@
 
 void PerKeyDown(unsigned int key);
 void PerKeyUp(unsigned int key);
-int start_emulation( int width, int height );
+int start_emulation( int originx, int originy, int width, int height );
 int emulation_step();
 int enterBackGround();
 
@@ -89,7 +89,7 @@ int _sound_engine = 0;
 @synthesize iPodIsPlaying;
 static GameViewController *sharedData_ = nil;
 
-// C "trampoline" function to invoke Objective-C method
+
 int swapAglBuffer ()
 {
     EAGLContext* context = [EAGLContext currentContext];
@@ -97,6 +97,9 @@ int swapAglBuffer ()
     return 0;
 }
 
+/*-------------------------------------------------------------------------------------
+ Settings
+---------------------------------------------------------------------------------------*/
 - (void)loadSettings {
 
     NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
@@ -105,7 +108,7 @@ int swapAglBuffer ()
     _fps = [userDefaults boolForKey: @"fps"];
     _frame_skip = [userDefaults boolForKey: @"frame_skip"];
     _aspect_rate = [userDefaults boolForKey: @"aspect_rate"];
-    _filter = [userDefaults boolForKey: @"aspect_rate"];
+    _filter = [userDefaults boolForKey: @"filter"];
     _sound_engine = [userDefaults boolForKey: @"sound_engine"];
 }
 
@@ -182,6 +185,27 @@ int GetVideoInterface(){
     return 0;
 }
 
+int GetEnableFPS(){
+    if( _fps == YES )
+        return 1;
+    
+    return 0;
+}
+
+int GetEnableFrameSkip(){
+    if( _frame_skip == YES ){
+        return 1;
+    }
+    return 0;
+}
+
+int GetUseNewScsp(){
+    return _sound_engine;
+}
+
+int GetVideFilterType(){
+    return _filter;
+}
 
 const char * GetCartridgePath(){
     BOOL isDir;
@@ -707,6 +731,31 @@ int GetPlayer2Device(){
     [self start_button ].alpha = 0.0f;
     
     [self loadSettings];
+#if 1
+    if( _aspect_rate ){
+        CGRect newFrame = self.view.frame;
+        int specw = self.view.frame.size.width;
+        int spech = self.view.frame.size.height;
+        float specratio = (float)specw / (float)spech;
+        int saturnw = 320;
+        int saturnh = 224;
+        float saturnraito = (float)saturnw/ (float)saturnh;
+        float revraito = (float) saturnh/ (float)saturnw;
+        
+        if( specratio > saturnraito ){
+            
+            newFrame.size.width = spech * saturnraito;
+            newFrame.size.height = spech;
+            newFrame.origin.x = (self.view.frame.size.width - newFrame.size.width)/2.0;
+            //[self.view setFrame:newFrame];
+            self.view.frame = newFrame;
+        }else{
+            newFrame.size.width = specw * revraito;
+            newFrame.size.height = specw;
+            [self.view setFrame:newFrame];
+        }
+    }
+#endif
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
@@ -802,9 +851,14 @@ int GetPlayer2Device(){
     [EAGLContext setCurrentContext:self.context];
     GLKView *view = (GLKView *)self.view;
     view.context = self.context;
+    view.contentScaleFactor = [UIScreen mainScreen].scale;
      [view bindDrawable ];
     
-    start_emulation(1920,1080);
+    CGFloat scale = [[UIScreen mainScreen] scale];
+    printf("viewport(%f,%f)\n",[view frame].size.width,[view frame].size.height);
+    start_emulation([view frame].origin.x*scale, [view frame].origin.y*scale, [view frame].size.width*scale,[view frame].size.height*scale);
+    
+    //start_emulation(1920,1080);
     
 }
 

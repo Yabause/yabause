@@ -2434,6 +2434,7 @@ void YglRenderVDP1(void) {
    glDisable(GL_BLEND);
    glCullFace(GL_FRONT_AND_BACK);
    glDisable(GL_CULL_FACE);
+   glViewport(0,0,_Ygl->width,_Ygl->height);
 
    for( j=0;j<(level->prgcurrent+1); j++ )
    {
@@ -2908,6 +2909,9 @@ void YglRender(void) {
    int ccwindow = 0;
 
    YGLLOG("YglRender\n");
+
+   glViewport(_Ygl->originx,_Ygl->originy,_Ygl->width,_Ygl->height);
+   //printf("viewport(%d,%d)\n", GlWidth,GlHeight);
 
    FrameProfileAdd("YglRender start");
    if ((Vdp2Regs->TVMD & 0x8000) == 0){
