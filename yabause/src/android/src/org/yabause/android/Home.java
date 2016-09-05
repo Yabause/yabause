@@ -19,9 +19,12 @@
 
 package org.yabause.android;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.view.View;
+import android.os.Build;
 import android.os.Bundle;
 
 import org.yabause.android.GameList;
@@ -36,6 +39,12 @@ public class Home extends Activity
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.home);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if ((checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{ Manifest.permission.WRITE_EXTERNAL_STORAGE }, 0);
+            }
+        }
     }
 
     public void onLoadGame(View view)

@@ -100,6 +100,11 @@ public class YabauseStorage {
 
     public String[] getGameFiles() {
         String[] gamefiles = games.list(new GameFilter());
+        if (gamefiles == null) {
+            /* We're on Android >= 6 and we don't have permission
+            to access external storage */
+            gamefiles = new String[0];
+        }
         return gamefiles;
     }
 
