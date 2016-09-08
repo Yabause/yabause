@@ -30,25 +30,24 @@
 
 // Thread handles for each Yabause subthread
 static pthread_t thread_handle[YAB_NUM_THREADS];
+static pthread_mutex_t thread_mutex[YAB_NUM_THREADS];
+static pthread_cond_t thread_cond[YAB_NUM_THREADS];
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void dummy_sighandler(int signum_unused) {}  // For thread sleep/wake
-
 int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
 {
-   // Set up a dummy signal handler for SIGUSR1 so we can return from pause()
-   // in YabThreadSleep()
-   static const struct sigaction sa = {.sa_handler = dummy_sighandler};
-   if (sigaction(SIGUSR1, &sa, NULL) != 0)
-   {
-      perror("sigaction(SIGUSR1)");
-      return -1;
-   }
-
    if (thread_handle[id])
    {
       fprintf(stderr, "YabThreadStart: thread %u is already started!\n", id);
+      return -1;
+   }
+
+   pthread_mutex_init(&thread_mutex[id], NULL);
+
+   if (pthread_cond_init(&thread_cond[id], NULL) != 0)
+   {
+      perror("pthread_cond_init");
       return -1;
    }
 
@@ -84,7 +83,24 @@ void YabThreadYield(void)
 
 void YabThreadSleep(void)
 {
-   pause();
+   pthread_t thread;
+   unsigned int i, id;
+
+   id = YAB_NUM_THREADS;
+
+   thread = pthread_self();
+   for(i = 0;i < YAB_NUM_THREADS;i++)
+   {
+      if(thread_handle[i] == thread) {
+         id = i;
+      }
+   }
+
+   if (id == YAB_NUM_THREADS) return;
+
+   pthread_mutex_lock(&thread_mutex[id]);
+   pthread_cond_wait(&thread_cond[id], &thread_mutex[id]);
+   pthread_mutex_unlock(&thread_mutex[id]);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -100,7 +116,9 @@ void YabThreadWake(unsigned int id)
    if (!thread_handle[id])
       return;  // Thread isn't running
 
-   pthread_kill(thread_handle[id], SIGUSR1);
+   pthread_mutex_lock(&thread_mutex[id]);
+   pthread_cond_signal(&thread_cond[id]);
+   pthread_mutex_unlock(&thread_mutex[id]);
 }
 
 //////////////////////////////////////////////////////////////////////////////
