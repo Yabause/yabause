@@ -11,7 +11,9 @@ SET(CMAKE_C_COMPILER ${TOOLCHAIN}/arm-linux-androideabi-gcc)
 SET(CMAKE_CXX_COMPILER ${TOOLCHAIN}/arm-linux-androideabi-g++)
 SET(CMAKE_ASM-ATT_COMPILER ${TOOLCHAIN}/arm-linux-androideabi-as)
 
-set(SYSROOT "$ENV{ANDROID_NDK_HOME}/platforms/android-24/arch-arm/usr")
+set(ANDROID_PLATFORM android-19)
+
+set(SYSROOT "$ENV{ANDROID_NDK_HOME}/platforms/${ANDROID_PLATFORM}/arch-arm/usr")
 
 set(CMAKE_C_FLAGS "--sysroot=${SYSROOT}" CACHE STRING "GCC flags" FORCE)
 set(CMAKE_CXX_FLAGS "--sysroot=${SYSROOT}" CACHE STRING "G++ flags" FORCE)

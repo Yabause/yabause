@@ -11,7 +11,9 @@ SET(CMAKE_C_COMPILER ${TOOLCHAIN}/i686-linux-android-gcc)
 SET(CMAKE_CXX_COMPILER ${TOOLCHAIN}/i686-linux-android-g++)
 SET(CMAKE_ASM-ATT_COMPILER ${TOOLCHAIN}/i686-linux-android-as)
 
-set(SYSROOT "$ENV{ANDROID_NDK_HOME}/platforms/android-24/arch-x86/usr")
+set(ANDROID_PLATFORM android-24)
+
+set(SYSROOT "$ENV{ANDROID_NDK_HOME}/platforms/${ANDROID_PLATFORM}/arch-x86/usr")
 
 set(CMAKE_C_FLAGS "--sysroot=${SYSROOT}" CACHE STRING "GCC flags" FORCE)
 set(CMAKE_CXX_FLAGS "--sysroot=${SYSROOT}" CACHE STRING "G++ flags" FORCE)
