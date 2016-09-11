@@ -95,6 +95,7 @@ extern "C" {
     const char * GetBiosPath();
     const char * GetGamePath();
     const char * GetMemoryPath();
+    const char * GetStateSavePath();
     int GetCartridgeType();
     int GetVideoInterface();
     const char * GetCartridgePath();
@@ -116,6 +117,7 @@ int start_emulation( int originx, int originy, int width, int height ){
     s_cdpath = GetGamePath();
     strcpy(s_buppath,GetMemoryPath());
     strcpy(s_cartpath,GetCartridgePath());
+    strcpy(s_savepath,GetStateSavePath());
     s_vidcoretype = GetVideoInterface();
     s_carttype =  GetCartridgeType();
     //s_player2Enable = GetPlayer2Device();
@@ -248,7 +250,25 @@ int start_emulation( int originx, int originy, int width, int height ){
         UseOGLOnThisThread();
     }
     
-    int emulation_step(){
+    int emulation_step( int command ){
+
+        int rtn;
+
+        switch (command ) {
+            case 1:
+                YUI_LOG("MSG_SAVE_STATE %s\n",s_savepath);
+                if( (rtn = YabSaveStateSlot(s_savepath, 1)) != 0 ){
+                    YUI_LOG("StateSave is failed %d\n",rtn);
+                }
+                break;
+            case 2:
+                YUI_LOG("MSG_LOAD_STATE %s\n",s_savepath);
+                 if( (rtn = YabLoadStateSlot(s_savepath, 1)) != 0 ){
+                    YUI_LOG("StateLoad is failed %d\n",rtn);
+                }               
+                break;            
+        }
+
         YabauseExec();
     }
 

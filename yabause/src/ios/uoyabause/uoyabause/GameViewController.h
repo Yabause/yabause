@@ -11,8 +11,9 @@
 
 @interface GameViewController : GLKViewController
 {
-    UInt32					iPodIsPlaying;
+    UInt32	 iPodIsPlaying;
     NSString *selected_file;
+    
 }
 
 @property (nonatomic, assign) UInt32		iPodIsPlaying;		// Whether the iPod is playing
@@ -34,4 +35,8 @@
 @property (weak, nonatomic) IBOutlet UIView *x_button;
 @property (weak, nonatomic) IBOutlet UIView *y_button;
 @property (weak, nonatomic) IBOutlet UIView *z_button;
+
+- (void)saveState;
+- (void)loadState;
+
 @end
