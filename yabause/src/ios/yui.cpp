@@ -272,6 +272,18 @@ int start_emulation( int originx, int originy, int width, int height ){
         YabauseExec();
     }
 
+    int MuteSound(){
+        ScspMuteAudio(SCSP_MUTE_SYSTEM);
+        return 0;
+    }
+
+    int UnMuteSound(){
+        ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+        return 0;
+    }
+
+    
+
     int enterBackGround(){
         YabFlushBackups();
         return 0;

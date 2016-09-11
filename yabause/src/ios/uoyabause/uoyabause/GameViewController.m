@@ -51,6 +51,8 @@ void PerKeyUp(unsigned int key);
 int start_emulation( int originx, int originy, int width, int height );
 int emulation_step( int command );
 int enterBackGround();
+int MuteSound();
+int UnMuteSound();
 
 EAGLContext *g_context = nil;
 EAGLContext *g_share_context = nil;
@@ -100,9 +102,27 @@ const char * GetBiosPath(){
     if( _bios == YES ){
         return NULL;
     }
-    NSString * path = [[NSBundle mainBundle] pathForResource:  @"bios" ofType: @"bin"];
-    return [path cStringUsingEncoding:1];
-    //return NULL;
+    
+    NSFileManager *filemgr;
+    filemgr = [NSFileManager defaultManager];
+    NSString * fileName = @"bios.bin";
+    
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    
+    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
+    NSLog(@"full path name: %@", filePath);
+    
+    // check if file exists
+    if ([filemgr fileExistsAtPath: filePath] == YES){
+        NSLog(@"File exists");
+        
+    }else {
+        NSLog (@"File not found, file will be created");
+        return NULL;
+    }
+    
+    return [filePath fileSystemRepresentation];
 }
 
 const char * GetGamePath(){
@@ -749,6 +769,15 @@ int GetPlayer2Device(){
     [self completionWirelessControllerDiscovery];
 }
 
+-(void)setPaused:(BOOL)paused
+{
+    [super setPaused:paused];
+    if( paused == YES ){
+        MuteSound();
+    }else{
+        UnMuteSound();
+    }
+}
 
 - (void)viewDidLoad
 {
