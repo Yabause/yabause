@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 640323861C673BE200DA91D8 /* OpenAL.framework */; };
+		64204ADE1D84878E002EA3F5 /* GameRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */; };
+		64204AE11D84A440002EA3F5 /* SidebarViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204AE01D84A440002EA3F5 /* SidebarViewController.m */; };
 		644232A71C6580000050611E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A61C6580000050611E /* main.m */; };
 		644232AA1C6580000050611E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A91C6580000050611E /* AppDelegate.m */; };
 		644232AC1C6580000050611E /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 644232AB1C6580000050611E /* Shader.fsh */; };
@@ -21,6 +23,7 @@
 		646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		64A951B31D7A7A8A00870912 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 64A951B21D7A7A8A00870912 /* Settings.bundle */; };
+		64BC4F011D8084420071689C /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64BC4F001D8084420071689C /* SWRevealViewController.m */; };
 		64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 		64EEC2E91C66BB8A004DCD2C /* bios.bin in Resources */ = {isa = PBXBuildFile; fileRef = 64EEC2E81C66BB8A004DCD2C /* bios.bin */; };
 /* End PBXBuildFile section */
@@ -44,6 +47,10 @@
 
 /* Begin PBXFileReference section */
 		640323861C673BE200DA91D8 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		64204ADC1D8486FB002EA3F5 /* GameRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameRevealViewController.h; sourceTree = "<group>"; };
+		64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameRevealViewController.m; sourceTree = "<group>"; };
+		64204ADF1D84A440002EA3F5 /* SidebarViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SidebarViewController.h; sourceTree = "<group>"; };
+		64204AE01D84A440002EA3F5 /* SidebarViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SidebarViewController.m; sourceTree = "<group>"; };
 		644232A21C6580000050611E /* uoyabause.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = uoyabause.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232A61C6580000050611E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		644232A81C6580000050611E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -66,6 +73,8 @@
 		648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uoyabause-Bridging-Header.h"; sourceTree = "<group>"; };
 		648926681D719E9500D92D58 /* FileSelectController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSelectController.swift; sourceTree = "<group>"; };
 		64A951B21D7A7A8A00870912 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = ../Settings.bundle; sourceTree = "<group>"; };
+		64BC4EFF1D8084420071689C /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
+		64BC4F001D8084420071689C /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
 		64D450081D7C0E6C004E2615 /* MainScreenController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainScreenController.swift; sourceTree = "<group>"; };
 		64EEC2E81C66BB8A004DCD2C /* bios.bin */ = {isa = PBXFileReference; lastKnownFileType = archive.macbinary; path = bios.bin; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -122,6 +131,7 @@
 		644232A41C6580000050611E /* uoyabause */ = {
 			isa = PBXGroup;
 			children = (
+				64BC4EFE1D8083FF0071689C /* SWRevealViewController */,
 				64A951B21D7A7A8A00870912 /* Settings.bundle */,
 				64EEC2E81C66BB8A004DCD2C /* bios.bin */,
 				644232A81C6580000050611E /* AppDelegate.h */,
@@ -166,6 +176,19 @@
 				644232D01C6580010050611E /* Info.plist */,
 			);
 			path = uoyabauseUITests;
+			sourceTree = "<group>";
+		};
+		64BC4EFE1D8083FF0071689C /* SWRevealViewController */ = {
+			isa = PBXGroup;
+			children = (
+				64204ADF1D84A440002EA3F5 /* SidebarViewController.h */,
+				64204AE01D84A440002EA3F5 /* SidebarViewController.m */,
+				64BC4EFF1D8084420071689C /* SWRevealViewController.h */,
+				64204ADC1D8486FB002EA3F5 /* GameRevealViewController.h */,
+				64BC4F001D8084420071689C /* SWRevealViewController.m */,
+				64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */,
+			);
+			name = SWRevealViewController;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -304,11 +327,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				64204ADE1D84878E002EA3F5 /* GameRevealViewController.m in Sources */,
 				644232AA1C6580000050611E /* AppDelegate.m in Sources */,
 				648926691D719E9500D92D58 /* FileSelectController.swift in Sources */,
+				64204AE11D84A440002EA3F5 /* SidebarViewController.m in Sources */,
 				644232B11C6580000050611E /* GameViewController.m in Sources */,
 				644232A71C6580000050611E /* main.m in Sources */,
 				64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */,
+				64BC4F011D8084420071689C /* SWRevealViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

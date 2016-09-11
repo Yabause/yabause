@@ -13,6 +13,7 @@
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AudioToolbox/ExtendedAudioFile.h>
+#import "GameRevealViewController.h"
 
 /** @defgroup pad Pad
  *
@@ -48,7 +49,7 @@
 void PerKeyDown(unsigned int key);
 void PerKeyUp(unsigned int key);
 int start_emulation( int originx, int originy, int width, int height );
-int emulation_step();
+int emulation_step( int command );
 int enterBackGround();
 
 EAGLContext *g_context = nil;
@@ -65,51 +66,26 @@ int _sound_engine = 0;
 
 
 @interface GameViewController () {
-    GLuint _program;
-    
-    GLKMatrix4 _modelViewProjectionMatrix;
-    GLKMatrix3 _normalMatrix;
-    float _rotation;
-    
-    GLuint _vertexArray;
-    GLuint _vertexBuffer;
-    
-  
+   int command;
 }
+
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) EAGLContext *share_context;
 @property (nonatomic, strong) GCController *controller;
+@property (nonatomic, assign) int command;
 
 - (void)setupGL;
 - (void)tearDownGL;
 
 @end
 
-@implementation GameViewController
-@synthesize iPodIsPlaying;
 static GameViewController *sharedData_ = nil;
-
 
 int swapAglBuffer ()
 {
     EAGLContext* context = [EAGLContext currentContext];
     [context presentRenderbuffer:GL_RENDERBUFFER];
     return 0;
-}
-
-/*-------------------------------------------------------------------------------------
- Settings
----------------------------------------------------------------------------------------*/
-- (void)loadSettings {
-
-    NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
-    _bios = [userDefaults boolForKey: @"bios"];
-    _cart = (int)[userDefaults integerForKey: @"cart"];
-    _fps = [userDefaults boolForKey: @"fps"];
-    _frame_skip = [userDefaults boolForKey: @"frame_skip"];
-    _aspect_rate = [userDefaults boolForKey: @"aspect_rate"];
-    _filter = [userDefaults boolForKey: @"filter"];
-    _sound_engine = [userDefaults boolForKey: @"sound_engine"];
 }
 
 void RevokeOGLOnThisThread(){
@@ -136,6 +112,37 @@ const char * GetGamePath(){
     }
     NSString *path = sharedData_.selected_file;
     return [path cStringUsingEncoding:1];
+}
+
+const char * GetStateSavePath(){
+    BOOL isDir;
+    NSFileManager *filemgr;
+    filemgr = [NSFileManager defaultManager];
+    NSString * fileName = @"state/";
+    
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    
+    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
+    NSLog(@"full path name: %@", filePath);
+    
+    
+    NSString *docDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+    NSString *dirName = [docDir stringByAppendingPathComponent:@"state"];
+    
+    
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if(![fm fileExistsAtPath:dirName isDirectory:&isDir])
+    {
+        if([fm createDirectoryAtPath:dirName withIntermediateDirectories:YES attributes:nil error:nil])
+            NSLog(@"Directory Created");
+        else
+            NSLog(@"Directory Creation Failed");
+    }
+    else
+        NSLog(@"Directory Already Exist");
+
+    return [filePath fileSystemRepresentation];
 }
 
 const char * GetMemoryPath(){
@@ -272,6 +279,41 @@ const char * GetCartridgePath(){
 
 int GetPlayer2Device(){
     return -1;
+}
+
+
+@implementation GameViewController
+@synthesize iPodIsPlaying;
+@synthesize selected_file;
+
+
+- (void)saveState{
+    self.command = 1;
+}
+
+- (void)loadState{
+    self.command = 2;
+}
+
+/*-------------------------------------------------------------------------------------
+ Settings
+---------------------------------------------------------------------------------------*/
+
+- (void)loadSettings {
+
+    NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
+    _bios = [userDefaults boolForKey: @"bios"];
+    _cart = (int)[userDefaults integerForKey: @"cart"];
+    _fps = [userDefaults boolForKey: @"fps"];
+    _frame_skip = [userDefaults boolForKey: @"frame_skip"];
+    _aspect_rate = [userDefaults boolForKey: @"aspect_rate"];
+    _filter = [userDefaults boolForKey: @"filter"];
+    _sound_engine = [userDefaults boolForKey: @"sound_engine"];
+}
+
+- (id)init
+{
+   return [super init];
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
@@ -713,8 +755,17 @@ int GetPlayer2Device(){
     sharedData_ = self;
     [super viewDidLoad];
     
-    self.view.multipleTouchEnabled = YES;
+    GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+    if ( revealViewController )
+    {
+        //[self.sidebarButton setTarget: self.revealViewController];
+        //SWRevealViewControllerSetSegue        [self.sidebarButton setAction: @selector( revealToggle: )];
+        [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
+        self.selected_file = revealViewController.selected_file;
+    }
     
+    self.view.multipleTouchEnabled = YES;
+    self.command = 0;
 
     [self left_button ].alpha = 0.0f;
     [self right_button ].alpha = 0.0f;
@@ -731,7 +782,7 @@ int GetPlayer2Device(){
     [self start_button ].alpha = 0.0f;
     
     [self loadSettings];
-#if 1
+
     if( _aspect_rate ){
         CGRect newFrame = self.view.frame;
         int specw = self.view.frame.size.width;
@@ -747,15 +798,17 @@ int GetPlayer2Device(){
             newFrame.size.width = spech * saturnraito;
             newFrame.size.height = spech;
             newFrame.origin.x = (self.view.frame.size.width - newFrame.size.width)/2.0;
-            //[self.view setFrame:newFrame];
+            newFrame.origin.y = (self.view.frame.size.height - newFrame.size.height)/2.0;
             self.view.frame = newFrame;
         }else{
             newFrame.size.width = specw * revraito;
             newFrame.size.height = specw;
-            [self.view setFrame:newFrame];
+            newFrame.origin.x = (self.view.frame.size.width - newFrame.size.width)/2.0;
+            newFrame.origin.y = (self.view.frame.size.height - newFrame.size.height)/2.0;
+            self.view.frame = newFrame;
         }
     }
-#endif
+
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
@@ -872,7 +925,8 @@ int GetPlayer2Device(){
 
 - (void)update
 {
-    emulation_step();
+    emulation_step(self.command);
+    self.command = 0;
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect

@@ -73,9 +73,8 @@ class FileSelectController :UITableViewController {
     // Segue 準備
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject!) {
         if (segue.identifier == "toSubViewController") {
-            let subVC: GameViewController = (segue.destinationViewController as? GameViewController)!
-            // SubViewController のselectedImgに選択された画像を設定する
-            subVC.selected_file = selected_file_path
+            let subVCmain: GameRevealViewController = (segue.destinationViewController as? GameRevealViewController)!
+            subVCmain.selected_file = selected_file_path
         }
     }
     
