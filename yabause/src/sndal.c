@@ -421,6 +421,7 @@ void SNDALMuteAudio()   {
     
     if( sound_pause == 0){
         alSourcePause(source);
+        alSourcef(source, AL_GAIN, 0.0f);
         sound_pause = 1;
     }
 }
@@ -428,6 +429,7 @@ void SNDALMuteAudio()   {
 void SNDALUnMuteAudio() {
     if( sound_pause == 1){
         alSourcePlay(source);
+        alSourcef(source, AL_GAIN, 1.0f);
         sound_pause = 0;
     }
 }
