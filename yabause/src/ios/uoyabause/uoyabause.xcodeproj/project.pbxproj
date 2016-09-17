@@ -10,6 +10,22 @@
 		640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 640323861C673BE200DA91D8 /* OpenAL.framework */; };
 		64204ADE1D84878E002EA3F5 /* GameRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */; };
 		64204AE11D84A440002EA3F5 /* SidebarViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204AE01D84A440002EA3F5 /* SidebarViewController.m */; };
+		64228ED71D88817300588323 /* GoogleMobileAds.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228ED61D88817300588323 /* GoogleMobileAds.framework */; };
+		64228ED91D8882D200588323 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228ED81D8882D200588323 /* SystemConfiguration.framework */; };
+		64228EDF1D8883C400588323 /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EDE1D8883C400588323 /* MediaPlayer.framework */; };
+		64228EE11D88840000588323 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE01D88840000588323 /* AdSupport.framework */; };
+		64228EE31D88844000588323 /* EventKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE21D88844000588323 /* EventKitUI.framework */; };
+		64228EE51D88845400588323 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE41D88845400588323 /* EventKit.framework */; };
+		64228EE71D8884AB00588323 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE61D8884AB00588323 /* StoreKit.framework */; };
+		64228EE91D8884D700588323 /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE81D8884D700588323 /* SafariServices.framework */; };
+		64228EEB1D88850B00588323 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EEA1D88850B00588323 /* MessageUI.framework */; };
+		64228EED1D8885F200588323 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EEC1D8885F200588323 /* CoreBluetooth.framework */; };
+		64228EEF1D8885F800588323 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EEE1D8885F800588323 /* CoreMotion.framework */; };
+		64228EF11D88864200588323 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EF01D88864200588323 /* AudioToolbox.framework */; };
+		64228EF31D88866300588323 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EF21D88866300588323 /* CoreTelephony.framework */; };
+		64228EF51D88868300588323 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EF41D88868300588323 /* CoreGraphics.framework */; };
+		64228EF71D8886AE00588323 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EF61D8886AE00588323 /* MobileCoreServices.framework */; };
+		64228EF91D88900F00588323 /* apikey.plist in Resources */ = {isa = PBXBuildFile; fileRef = 64228EF81D88900F00588323 /* apikey.plist */; };
 		644232A71C6580000050611E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A61C6580000050611E /* main.m */; };
 		644232AA1C6580000050611E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A91C6580000050611E /* AppDelegate.m */; };
 		644232AC1C6580000050611E /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 644232AB1C6580000050611E /* Shader.fsh */; };
@@ -50,6 +66,24 @@
 		64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameRevealViewController.m; sourceTree = "<group>"; };
 		64204ADF1D84A440002EA3F5 /* SidebarViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SidebarViewController.h; sourceTree = "<group>"; };
 		64204AE01D84A440002EA3F5 /* SidebarViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SidebarViewController.m; sourceTree = "<group>"; };
+		64228ED61D88817300588323 /* GoogleMobileAds.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = GoogleMobileAds.framework; sourceTree = "<group>"; };
+		64228ED81D8882D200588323 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		64228EDA1D88834C00588323 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
+		64228EDC1D88837700588323 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		64228EDE1D8883C400588323 /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
+		64228EE01D88840000588323 /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
+		64228EE21D88844000588323 /* EventKitUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = EventKitUI.framework; path = System/Library/Frameworks/EventKitUI.framework; sourceTree = SDKROOT; };
+		64228EE41D88845400588323 /* EventKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = EventKit.framework; path = System/Library/Frameworks/EventKit.framework; sourceTree = SDKROOT; };
+		64228EE61D8884AB00588323 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		64228EE81D8884D700588323 /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
+		64228EEA1D88850B00588323 /* MessageUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MessageUI.framework; path = System/Library/Frameworks/MessageUI.framework; sourceTree = SDKROOT; };
+		64228EEC1D8885F200588323 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		64228EEE1D8885F800588323 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
+		64228EF01D88864200588323 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		64228EF21D88866300588323 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
+		64228EF41D88868300588323 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		64228EF61D8886AE00588323 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		64228EF81D88900F00588323 /* apikey.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = apikey.plist; sourceTree = "<group>"; };
 		644232A21C6580000050611E /* uoyabause.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = uoyabause.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232A61C6580000050611E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		644232A81C6580000050611E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -82,6 +116,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				64228EF71D8886AE00588323 /* MobileCoreServices.framework in Frameworks */,
+				64228EF51D88868300588323 /* CoreGraphics.framework in Frameworks */,
+				64228EF31D88866300588323 /* CoreTelephony.framework in Frameworks */,
+				64228EF11D88864200588323 /* AudioToolbox.framework in Frameworks */,
+				64228EEF1D8885F800588323 /* CoreMotion.framework in Frameworks */,
+				64228EED1D8885F200588323 /* CoreBluetooth.framework in Frameworks */,
+				64228EEB1D88850B00588323 /* MessageUI.framework in Frameworks */,
+				64228EE91D8884D700588323 /* SafariServices.framework in Frameworks */,
+				64228EE71D8884AB00588323 /* StoreKit.framework in Frameworks */,
+				64228EE51D88845400588323 /* EventKit.framework in Frameworks */,
+				64228EE31D88844000588323 /* EventKitUI.framework in Frameworks */,
+				64228EE11D88840000588323 /* AdSupport.framework in Frameworks */,
+				64228EDF1D8883C400588323 /* MediaPlayer.framework in Frameworks */,
+				64228ED91D8882D200588323 /* SystemConfiguration.framework in Frameworks */,
+				64228ED71D88817300588323 /* GoogleMobileAds.framework in Frameworks */,
 				640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */,
 				646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */,
 			);
@@ -107,6 +156,23 @@
 		644232991C6580000050611E = {
 			isa = PBXGroup;
 			children = (
+				64228EF61D8886AE00588323 /* MobileCoreServices.framework */,
+				64228EF41D88868300588323 /* CoreGraphics.framework */,
+				64228EF21D88866300588323 /* CoreTelephony.framework */,
+				64228EF01D88864200588323 /* AudioToolbox.framework */,
+				64228EEE1D8885F800588323 /* CoreMotion.framework */,
+				64228EEC1D8885F200588323 /* CoreBluetooth.framework */,
+				64228EEA1D88850B00588323 /* MessageUI.framework */,
+				64228EE81D8884D700588323 /* SafariServices.framework */,
+				64228EE61D8884AB00588323 /* StoreKit.framework */,
+				64228EE41D88845400588323 /* EventKit.framework */,
+				64228EE21D88844000588323 /* EventKitUI.framework */,
+				64228EE01D88840000588323 /* AdSupport.framework */,
+				64228EDE1D8883C400588323 /* MediaPlayer.framework */,
+				64228EDC1D88837700588323 /* AVFoundation.framework */,
+				64228EDA1D88834C00588323 /* CoreMedia.framework */,
+				64228ED81D8882D200588323 /* SystemConfiguration.framework */,
+				64228ED61D88817300588323 /* GoogleMobileAds.framework */,
 				640323861C673BE200DA91D8 /* OpenAL.framework */,
 				646C87B41C66DDD20091B3B6 /* libyabause_ios.a */,
 				644232A41C6580000050611E /* uoyabause */,
@@ -145,6 +211,7 @@
 				644232BA1C6580000050611E /* Info.plist */,
 				644232A51C6580000050611E /* Supporting Files */,
 				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
+				64228EF81D88900F00588323 /* apikey.plist */,
 			);
 			path = uoyabause;
 			sourceTree = "<group>";
@@ -295,6 +362,7 @@
 			files = (
 				644232B41C6580000050611E /* Main.storyboard in Resources */,
 				644232AE1C6580000050611E /* Shader.vsh in Resources */,
+				64228EF91D88900F00588323 /* apikey.plist in Resources */,
 				644232B61C6580000050611E /* Assets.xcassets in Resources */,
 				644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */,
 				644232AC1C6580000050611E /* Shader.fsh in Resources */,
@@ -461,6 +529,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				ONLY_ACTIVE_ARCH = NO;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
@@ -476,6 +545,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = uoyabause/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -504,6 +577,10 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = uoyabause/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
