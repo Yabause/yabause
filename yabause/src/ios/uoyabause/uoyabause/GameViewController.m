@@ -75,6 +75,8 @@ int _sound_engine = 0;
 @property (strong, nonatomic) EAGLContext *share_context;
 @property (nonatomic, strong) GCController *controller;
 @property (nonatomic, assign) int command;
+@property (nonatomic, assign) Boolean _return;
+
 
 - (void)setupGL;
 - (void)tearDownGL;
@@ -585,7 +587,7 @@ int GetPlayer2Device(){
 
 - (void)controllerDidConnect:(NSNotification *)notification
 {
-    
+    [self foundController];
 }
 
 - (void)controllerDidDisconnect
@@ -940,6 +942,8 @@ int GetPlayer2Device(){
     printf("viewport(%f,%f)\n",[view frame].size.width,[view frame].size.height);
     start_emulation([view frame].origin.x*scale, [view frame].origin.y*scale, [view frame].size.width*scale,[view frame].size.height*scale);
     
+    self._return = YES;
+    
     //start_emulation(1920,1080);
     
 }
@@ -954,19 +958,29 @@ int GetPlayer2Device(){
 
 - (void)update
 {
+    if( self._return == YES ){
+        GLKView *view = (GLKView *)self.view;
+        GLint defaultFBO;
+        [view bindDrawable];
+        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
+        printf("DEFAULT FBO: %d\n", defaultFBO);
+        self._return = NO;
+        
+    }
+    
     emulation_step(self.command);
     self.command = 0;
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-    
 }
 
 - (void)didEnterBackground {
     
     GLKView *view = (GLKView *)self.view;
     enterBackGround();
+    [self setPaused:true];
     
     //if (view.active)
         [view resignFirstResponder];
@@ -974,7 +988,13 @@ int GetPlayer2Device(){
 
 - (void)didBecomeActive {
     //if (self.view.active)
-        [self.view becomeFirstResponder];
+    [self.view becomeFirstResponder];
+    
+    [self setPaused:false];
+    
+
+    
+    self._return = YES;
 }
 
 - (BOOL)canBecomeFirstResponder {
@@ -995,6 +1015,7 @@ int GetPlayer2Device(){
 - (void)deleteBackward {
     // This space intentionally left blank to complete protocol
 }
+
 
 
 @end

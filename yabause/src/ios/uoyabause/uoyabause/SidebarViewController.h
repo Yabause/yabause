@@ -7,7 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
+@import GoogleMobileAds;
 
-@interface SidebarViewController : UITableViewController  <UITableViewDelegate, UITableViewDataSource>
-
+@interface SidebarViewController : UITableViewController  <UITableViewDelegate, UITableViewDataSource, GADInterstitialDelegate>
+@property (weak, nonatomic) IBOutlet GADBannerView *banner;
+@property(nonatomic, strong) GADInterstitial *interstitial;
 @end

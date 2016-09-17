@@ -14,11 +14,14 @@
 @interface SidebarViewController ()
 
 @property (nonatomic, strong) NSArray *menuItems;
+
 @end
 
 @implementation SidebarViewController {
     NSArray *menuItems;
 }
+
+
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
@@ -32,6 +35,26 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
+    NSString* path = [[NSBundle mainBundle] pathForResource:@"apikey" ofType:@"plist"];
+    NSDictionary *dic = [NSDictionary dictionaryWithContentsOfFile:path];
+    NSString* keyval = [dic objectForKey:@"ADMOB_KEY"];
+    NSArray* plist = [NSArray arrayWithContentsOfFile:path];
+    self.banner.adUnitID = keyval;
+    self.banner.rootViewController = self;
+    GADRequest *request = [GADRequest request];
+    request.testDevices = @[@"2077ef9a63d2b398840261c8221a0c9b"];
+    [self.banner loadRequest:request];
+   
+    NSString* keyval_in = [dic objectForKey:@"ADMOB_KEY_FULLSCREEN"];
+    self.interstitial =
+    [[GADInterstitial alloc] initWithAdUnitID:keyval_in];
+    self.interstitial.delegate = self;
+    GADRequest *request_in = [GADRequest request];
+    // Request test ads on devices you specify. Your test device ID is printed to the console when
+    // an ad request is made.
+    //request.testDevices = @[ kGADSimulatorID, @"2077ef9a63d2b398840261c8221a0c9b" ];
+    [self.interstitial loadRequest:request_in];
 
 }
 
@@ -76,20 +99,27 @@
         switch(indexPath.row){
             case 0:
             {
+ 
+                
             
             UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"uoYabause" message:@"Are you sure you want to exit?" preferredStyle:UIAlertControllerStyleAlert];
             
             // addActionした順に左から右にボタンが配置されます
             [alertController addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                   exit(0);
+                if (self.interstitial.isReady) {
+                    [self.interstitial presentFromRootViewController:self];
+                } else {
+                    exit(0);
+                }
             }]];
             [alertController addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             }]];
             
             [self presentViewController:alertController animated:YES completion:nil];
+
             break;
             }
-            case 1:
+            case 2:
             {
                 GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
                 if ( revealViewController )
@@ -103,7 +133,7 @@
                 
                 break;
             }
-            case 2:
+            case 3:
             {
                 GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
                 if ( revealViewController )
@@ -139,6 +169,9 @@
 }
 
 
+- (void)interstitialDidDismissScreen:(GADInterstitial *)ad {
+    exit(0);
+}
 
 
 @end
