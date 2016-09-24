@@ -93,7 +93,6 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     
-    [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
     if(indexPath.section == 0) { // 1個目のセクションです。
         
         switch(indexPath.row){
@@ -104,16 +103,17 @@
             
             UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"uoYabause" message:@"Are you sure you want to exit?" preferredStyle:UIAlertControllerStyleAlert];
             
-            // addActionした順に左から右にボタンが配置されます
-            [alertController addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                if (self.interstitial.isReady) {
-                    [self.interstitial presentFromRootViewController:self];
-                } else {
-                    exit(0);
-                }
-            }]];
-            [alertController addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            }]];
+                // addActionした順に左から右にボタンが配置されます
+                [alertController addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    if (self.interstitial.isReady) {
+                        [self.interstitial presentFromRootViewController:self];
+                    } else {
+                        exit(0);
+                    }
+                }]];
+                [alertController addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
+                }]];
             
             [self presentViewController:alertController animated:YES completion:nil];
 
@@ -130,6 +130,7 @@
                         [view saveState];
                     }
                 }
+                [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
                 
                 break;
             }
@@ -144,7 +145,7 @@
                         [view loadState];
                     }
                 }
-                
+                [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
                 break;
                 
             }

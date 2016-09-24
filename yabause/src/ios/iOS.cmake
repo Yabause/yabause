@@ -27,7 +27,7 @@
 # find_host_package (PROGRAM ARGS)
 #  A macro used to find executable programs on the host system, not within the iOS environment.
 #  Thanks to the android-cmake project for providing the command
-
+# cmake ../yabause -DCMAKE_TOOLCHAIN_FILE=../yabause/src/ios/iOS.cmake -DIOS_PLATFORM=SIMULATOR64
 # Standard settings
 set (CMAKE_SYSTEM_NAME Darwin)
 set (CMAKE_SYSTEM_VERSION 1)
