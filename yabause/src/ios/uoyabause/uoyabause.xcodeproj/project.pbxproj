@@ -36,6 +36,7 @@
 		644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 644232B71C6580000050611E /* LaunchScreen.storyboard */; };
 		644232C41C6580010050611E /* uoyabauseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232C31C6580010050611E /* uoyabauseTests.m */; };
 		644232CF1C6580010050611E /* uoyabauseUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232CE1C6580010050611E /* uoyabauseUITests.m */; };
+		645EA6C21D95647200A7A5D8 /* libz.1.1.3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */; };
 		646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		64A951B31D7A7A8A00870912 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 64A951B21D7A7A8A00870912 /* Settings.bundle */; };
@@ -102,6 +103,7 @@
 		644232CA1C6580010050611E /* uoyabauseUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = uoyabauseUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232CE1C6580010050611E /* uoyabauseUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = uoyabauseUITests.m; sourceTree = "<group>"; };
 		644232D01C6580010050611E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.1.1.3.tbd; path = usr/lib/libz.1.1.3.tbd; sourceTree = SDKROOT; };
 		646C87B41C66DDD20091B3B6 /* libyabause_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libyabause_ios.a; sourceTree = "<group>"; };
 		648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uoyabause-Bridging-Header.h"; sourceTree = "<group>"; };
 		648926681D719E9500D92D58 /* FileSelectController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSelectController.swift; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				645EA6C21D95647200A7A5D8 /* libz.1.1.3.tbd in Frameworks */,
 				64228EF71D8886AE00588323 /* MobileCoreServices.framework in Frameworks */,
 				64228EF51D88868300588323 /* CoreGraphics.framework in Frameworks */,
 				64228EF31D88866300588323 /* CoreTelephony.framework in Frameworks */,
@@ -156,6 +159,7 @@
 		644232991C6580000050611E = {
 			isa = PBXGroup;
 			children = (
+				645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */,
 				64228EF61D8886AE00588323 /* MobileCoreServices.framework */,
 				64228EF41D88868300588323 /* CoreGraphics.framework */,
 				64228EF21D88866300588323 /* CoreTelephony.framework */,

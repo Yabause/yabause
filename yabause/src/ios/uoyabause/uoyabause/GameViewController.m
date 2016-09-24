@@ -349,57 +349,69 @@ int GetPlayer2Device(){
     {
         CGPoint point = [touch locationInView:[self view]];
         
-        if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
-            [self right_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_RIGHT);
+        if( CGRectContainsPoint([ [self left_view ]frame ], point) ){
+        
+            point = [touch locationInView:[self left_view]];
+            
+            if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
+                [self right_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_RIGHT);
+            }
+            if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
+                [self left_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_LEFT);
+            }
+            if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
+                [self up_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_UP);
+            }
+            if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
+                [self down_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_DOWN);
+            }
+            if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
+                [self left_trigger ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_LEFT_TRIGGER);
+            }
+
+            if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
+                [self start_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_START);
+            }
         }
-        if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
-            [self left_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_LEFT);
-        }
-        if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
-            [self up_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_UP);
-        }
-        if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
-            [self down_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_DOWN);
-        }
-        if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
-            [self left_trigger ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_LEFT_TRIGGER);
-        }
-        if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
-            [self right_trigger ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_RIGHT_TRIGGER);
-        }
-        if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
-            [self a_button ].backgroundColor = [UIColor redColor];
-             PerKeyDown(PERPAD_A);
-        }
-        if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
-            [self b_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_B);
-        }
-        if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
-            [self c_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_C);
-        }
-        if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
-            [self x_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_X);
-        }
-        if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
-            [self y_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_Y);
-        }
-        if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
-            [self z_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_Z);
-        }
-        if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
-            [self start_button ].backgroundColor = [UIColor redColor];
-            PerKeyDown(PERPAD_START);
+        
+        if( CGRectContainsPoint([ [self right_view ]frame ], point) ){
+            
+            point = [touch locationInView:[self right_view]];
+            
+            if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
+                [self a_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_A);
+            }
+            if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
+                [self b_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_B);
+            }
+            if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
+                [self c_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_C);
+            }
+            if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
+                [self x_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_X);
+            }
+            if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
+                [self y_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_Y);
+            }
+            if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
+                [self z_button ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_Z);
+            }
+            if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
+                [self right_trigger ].backgroundColor = [UIColor redColor];
+                PerKeyDown(PERPAD_RIGHT_TRIGGER);
+            }
         }
         
         i++;
@@ -419,7 +431,9 @@ int GetPlayer2Device(){
     {
         CGPoint point = [touch locationInView:[self view]];
         
-        if( CGRectContainsPoint([ [self left_panel ]frame ], point)){
+        if( CGRectContainsPoint([ [self left_view ]frame ], point) ){
+            
+            point = [touch locationInView:[self left_view]];
         
             if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
                 [self right_button ].backgroundColor = [UIColor redColor];
@@ -464,59 +478,76 @@ int GetPlayer2Device(){
     NSSet *allTouches = [event allTouches];
     for (UITouch *touch in allTouches)
     {
+        
+        
         CGPoint point = [touch locationInView:[self view]];
-        if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
-            [self right_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_RIGHT);
+        
+        
+        if( CGRectContainsPoint([ [self left_view ]frame ], point) ){
+            
+            point = [touch locationInView:[self left_view]];
+            
+            if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
+                [self right_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_RIGHT);
+            }
+            if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
+                [self left_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_LEFT);
+            }
+            if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
+                [self up_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_UP);
+            }
+            if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
+                [self down_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_DOWN);
+            }
+            if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
+                [self left_trigger ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_LEFT_TRIGGER);
+            }
+
+            if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
+                [self start_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_START);
+            }
         }
-        if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
-            [self left_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_LEFT);
+        
+        if( CGRectContainsPoint([ [self right_view ]frame ], point) ){
+            
+            point = [touch locationInView:[self right_view]];
+            
+            if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
+                [self a_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_A);
+            }
+            if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
+                [self b_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_B);
+            }
+            if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
+                [self c_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_C);
+            }
+            if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
+                [self x_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_X);
+            }
+            if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
+                [self y_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_Y);
+            }
+            if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
+                [self z_button ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_Z);
+            }
+            if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
+                [self right_trigger ].backgroundColor = [UIColor darkGrayColor];
+                PerKeyUp(PERPAD_RIGHT_TRIGGER);
+            }
         }
-        if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
-            [self up_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_UP);
-        }
-        if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
-            [self down_button ].backgroundColor = [UIColor darkGrayColor];
-             PerKeyUp(PERPAD_DOWN);
-        }
-        if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
-            [self left_trigger ].backgroundColor = [UIColor darkGrayColor];
-              PerKeyUp(PERPAD_LEFT_TRIGGER);
-        }
-        if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
-             [self right_trigger ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_RIGHT_TRIGGER);
-        }
-        if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
-            [self a_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_A);
-        }
-        if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
-            [self b_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_B);
-        }
-        if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
-            [self c_button ].backgroundColor = [UIColor darkGrayColor];
-             PerKeyUp(PERPAD_C);
-        }
-        if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
-            [self x_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_X);
-        }
-        if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
-            [self y_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_Y);
-        }
-        if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
-            [self z_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_Z);
-        }
-        if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
-            [self start_button ].backgroundColor = [UIColor darkGrayColor];
-            PerKeyUp(PERPAD_START);
-        }
+
         i++;
     }
 }
@@ -797,6 +828,9 @@ int GetPlayer2Device(){
     
     self.view.multipleTouchEnabled = YES;
     self.command = 0;
+    
+     [self right_view].backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.0f];
+    [self left_view].backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.0f];
 
     [self left_button ].alpha = 0.0f;
     [self right_button ].alpha = 0.0f;
