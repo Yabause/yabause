@@ -307,7 +307,7 @@ static gboolean yui_settings_load(void) {
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
 	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.vidcoretype)) {
 		VideoChangeCore(yinit.vidcoretype);
-		VIDCore->Resize(
+		VIDCore->Resize(0,0,
 			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.width,
 			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.height,
 			FALSE);

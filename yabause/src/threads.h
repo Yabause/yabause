@@ -104,6 +104,8 @@ void YabThreadFreeMutex( YabMutex * mtx );
 void YabThreadSetCurrentThreadAffinityMask(int mask);
 int YabThreadGetCurrentThreadAffinityMask();
 
+void YabThreadUSleep( unsigned int stime );
+
 ///////////////////////////////////////////////////////////////////////////
 
 #endif  // THREADS_H

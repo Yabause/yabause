@@ -18,7 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#if defined(HAVE_LIBGL) || defined(__ANDROID__)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
 #if defined(__ANDROID__)
     #include <GLES3/gl3.h>
@@ -86,7 +86,53 @@ extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
     #include <GL/gl.h>
     #include "glext.h"
     extern PFNGLACTIVETEXTUREPROC glActiveTexture;
-  #endif
+#endif
+
+#elif defined(IOS)
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
+
+#define GL_GEOMETRY_SHADER                0x8DD9
+
+#ifndef GL_ARB_tessellation_shader
+#define GL_PATCHES                        0x000E
+#define GL_PATCH_VERTICES                 0x8E72
+#define GL_PATCH_DEFAULT_INNER_LEVEL      0x8E73
+#define GL_PATCH_DEFAULT_OUTER_LEVEL      0x8E74
+#define GL_TESS_CONTROL_OUTPUT_VERTICES   0x8E75
+#define GL_TESS_GEN_MODE                  0x8E76
+#define GL_TESS_GEN_SPACING               0x8E77
+#define GL_TESS_GEN_VERTEX_ORDER          0x8E78
+#define GL_TESS_GEN_POINT_MODE            0x8E79
+/* reuse GL_TRIANGLES */
+/* reuse GL_QUADS */
+#define GL_ISOLINES                       0x8E7A
+/* reuse GL_EQUAL */
+#define GL_FRACTIONAL_ODD                 0x8E7B
+#define GL_FRACTIONAL_EVEN                0x8E7C
+/* reuse GL_CCW */
+/* reuse GL_CW */
+#define GL_MAX_PATCH_VERTICES             0x8E7D
+#define GL_MAX_TESS_GEN_LEVEL             0x8E7E
+#define GL_MAX_TESS_CONTROL_UNIFORM_COMPONENTS 0x8E7F
+#define GL_MAX_TESS_EVALUATION_UNIFORM_COMPONENTS 0x8E80
+#define GL_MAX_TESS_CONTROL_TEXTURE_IMAGE_UNITS 0x8E81
+#define GL_MAX_TESS_EVALUATION_TEXTURE_IMAGE_UNITS 0x8E82
+#define GL_MAX_TESS_CONTROL_OUTPUT_COMPONENTS 0x8E83
+#define GL_MAX_TESS_PATCH_COMPONENTS      0x8E84
+#define GL_MAX_TESS_CONTROL_TOTAL_OUTPUT_COMPONENTS 0x8E85
+#define GL_MAX_TESS_EVALUATION_OUTPUT_COMPONENTS 0x8E86
+#define GL_MAX_TESS_CONTROL_UNIFORM_BLOCKS 0x8E89
+#define GL_MAX_TESS_EVALUATION_UNIFORM_BLOCKS 0x8E8A
+#define GL_MAX_TESS_CONTROL_INPUT_COMPONENTS 0x886C
+#define GL_MAX_TESS_EVALUATION_INPUT_COMPONENTS 0x886D
+#define GL_MAX_COMBINED_TESS_CONTROL_UNIFORM_COMPONENTS 0x8E1E
+#define GL_MAX_COMBINED_TESS_EVALUATION_UNIFORM_COMPONENTS 0x8E1F
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_CONTROL_SHADER 0x84F0
+#define GL_UNIFORM_BLOCK_REFERENCED_BY_TESS_EVALUATION_SHADER 0x84F1
+#define GL_TESS_EVALUATION_SHADER         0x8E87
+#define GL_TESS_CONTROL_SHADER            0x8E88
+#endif
 
 #elif  defined(__APPLE__)
     #include <OpenGL/gl.h>
@@ -330,6 +376,8 @@ typedef struct {
    int st;
    char message[512];
    int msglength;
+   int originx;
+   int originy;
    unsigned int width;
    unsigned int height;
    unsigned int depth;
@@ -396,11 +444,9 @@ typedef struct {
    POLYGONMODE polygonmode;
    YglTextureManager * texture_manager;
    GLsync sync;
-
+    GLuint default_fbo;
    YglPerLineInfo bg[enBGMAX];
-
    u32 targetfbo;
-
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -469,6 +515,7 @@ int YglProgramInit();
 int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 
+int YglGenerateAABuffer();
 
 void Vdp2RgbTextureSync();
 int YglGenerateAABuffer();
@@ -523,6 +570,8 @@ extern PFNGLFRAMEBUFFERTEXTURELAYERPROC glFramebufferTextureLayer;
 extern PFNGLUNIFORM4FPROC glUniform4f;
 extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
+
+
 
 #endif // !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_)
 

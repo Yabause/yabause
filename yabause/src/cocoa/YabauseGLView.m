@@ -108,7 +108,7 @@
     }
 
     if(VIDCore)
-        VIDCore->Resize([self width], [self height], !_isFullscreen);
+        VIDCore->Resize(0,0,[self width], [self height], !_isFullscreen);
 
     _isFullscreen = !_isFullscreen;
 }
@@ -146,7 +146,7 @@
     CGLLockContext(cxt);
 
     if(VIDCore)
-        VIDCore->Resize([self width], [self height], !!_isFullscreen);
+        VIDCore->Resize(0,0,[self width], [self height], !!_isFullscreen);
 
     CGLUnlockContext(cxt);
 
