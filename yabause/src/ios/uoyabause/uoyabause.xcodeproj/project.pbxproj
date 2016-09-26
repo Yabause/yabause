@@ -26,6 +26,7 @@
 		64228EF51D88868300588323 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EF41D88868300588323 /* CoreGraphics.framework */; };
 		64228EF71D8886AE00588323 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EF61D8886AE00588323 /* MobileCoreServices.framework */; };
 		64228EF91D88900F00588323 /* apikey.plist in Resources */ = {isa = PBXBuildFile; fileRef = 64228EF81D88900F00588323 /* apikey.plist */; };
+		64373A371D979E5F00B3C7BA /* settings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 64373A361D979E5F00B3C7BA /* settings.plist */; };
 		644232A71C6580000050611E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A61C6580000050611E /* main.m */; };
 		644232AA1C6580000050611E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A91C6580000050611E /* AppDelegate.m */; };
 		644232AC1C6580000050611E /* Shader.fsh in Resources */ = {isa = PBXBuildFile; fileRef = 644232AB1C6580000050611E /* Shader.fsh */; };
@@ -37,9 +38,9 @@
 		644232C41C6580010050611E /* uoyabauseTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232C31C6580010050611E /* uoyabauseTests.m */; };
 		644232CF1C6580010050611E /* uoyabauseUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232CE1C6580010050611E /* uoyabauseUITests.m */; };
 		645EA6C21D95647200A7A5D8 /* libz.1.1.3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */; };
+		645EA6C61D975B3D00A7A5D8 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */; };
 		646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
-		64A951B31D7A7A8A00870912 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 64A951B21D7A7A8A00870912 /* Settings.bundle */; };
 		64BC4F011D8084420071689C /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64BC4F001D8084420071689C /* SWRevealViewController.m */; };
 		64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 /* End PBXBuildFile section */
@@ -85,6 +86,7 @@
 		64228EF41D88868300588323 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		64228EF61D8886AE00588323 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		64228EF81D88900F00588323 /* apikey.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = apikey.plist; sourceTree = "<group>"; };
+		64373A361D979E5F00B3C7BA /* settings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = settings.plist; sourceTree = "<group>"; };
 		644232A21C6580000050611E /* uoyabause.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = uoyabause.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232A61C6580000050611E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		644232A81C6580000050611E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -104,10 +106,10 @@
 		644232CE1C6580010050611E /* uoyabauseUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = uoyabauseUITests.m; sourceTree = "<group>"; };
 		644232D01C6580010050611E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.1.1.3.tbd; path = usr/lib/libz.1.1.3.tbd; sourceTree = SDKROOT; };
+		645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SettingsViewController.swift; sourceTree = "<group>"; };
 		646C87B41C66DDD20091B3B6 /* libyabause_ios.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libyabause_ios.a; sourceTree = "<group>"; };
 		648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "uoyabause-Bridging-Header.h"; sourceTree = "<group>"; };
 		648926681D719E9500D92D58 /* FileSelectController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSelectController.swift; sourceTree = "<group>"; };
-		64A951B21D7A7A8A00870912 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = Settings.bundle; path = ../Settings.bundle; sourceTree = "<group>"; };
 		64BC4EFF1D8084420071689C /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
 		64BC4F001D8084420071689C /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
 		64D450081D7C0E6C004E2615 /* MainScreenController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainScreenController.swift; sourceTree = "<group>"; };
@@ -200,7 +202,6 @@
 			isa = PBXGroup;
 			children = (
 				64BC4EFE1D8083FF0071689C /* SWRevealViewController */,
-				64A951B21D7A7A8A00870912 /* Settings.bundle */,
 				644232A81C6580000050611E /* AppDelegate.h */,
 				644232A91C6580000050611E /* AppDelegate.m */,
 				644232AB1C6580000050611E /* Shader.fsh */,
@@ -210,12 +211,14 @@
 				644232B21C6580000050611E /* Main.storyboard */,
 				64D450081D7C0E6C004E2615 /* MainScreenController.swift */,
 				648926681D719E9500D92D58 /* FileSelectController.swift */,
+				645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */,
 				644232B51C6580000050611E /* Assets.xcassets */,
 				644232B71C6580000050611E /* LaunchScreen.storyboard */,
 				644232BA1C6580000050611E /* Info.plist */,
 				644232A51C6580000050611E /* Supporting Files */,
 				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
 				64228EF81D88900F00588323 /* apikey.plist */,
+				64373A361D979E5F00B3C7BA /* settings.plist */,
 			);
 			path = uoyabause;
 			sourceTree = "<group>";
@@ -365,12 +368,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				644232B41C6580000050611E /* Main.storyboard in Resources */,
+				64373A371D979E5F00B3C7BA /* settings.plist in Resources */,
 				644232AE1C6580000050611E /* Shader.vsh in Resources */,
 				64228EF91D88900F00588323 /* apikey.plist in Resources */,
 				644232B61C6580000050611E /* Assets.xcassets in Resources */,
 				644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */,
 				644232AC1C6580000050611E /* Shader.fsh in Resources */,
-				64A951B31D7A7A8A00870912 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -398,6 +401,7 @@
 				64204ADE1D84878E002EA3F5 /* GameRevealViewController.m in Sources */,
 				644232AA1C6580000050611E /* AppDelegate.m in Sources */,
 				648926691D719E9500D92D58 /* FileSelectController.swift in Sources */,
+				645EA6C61D975B3D00A7A5D8 /* SettingsViewController.swift in Sources */,
 				64204AE11D84A440002EA3F5 /* SidebarViewController.m in Sources */,
 				644232B11C6580000050611E /* GameViewController.m in Sources */,
 				644232A71C6580000050611E /* main.m in Sources */,

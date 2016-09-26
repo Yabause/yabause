@@ -12,7 +12,7 @@ import GoogleMobileAds
 
 class MainScreenController :UIViewController {
 
-    @IBOutlet weak var menu_setting: UIBarButtonItem!
+//    @IBOutlet weak var menu_setting: UIBarButtonItem!
     @IBOutlet weak var bannerView: GADBannerView!
     
     var val: Int = 0
@@ -32,8 +32,8 @@ class MainScreenController :UIViewController {
         bannerView.loadRequest(request)
         //bannerView.hidden = true
         
-        menu_setting.action = "onClickMyButton:"
-        menu_setting.tag = 0
+//        menu_setting.action = "onClickMyButton:"
+//        menu_setting.tag = 0
         
         val = 0
     }

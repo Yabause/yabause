@@ -321,8 +321,47 @@ int GetPlayer2Device(){
  Settings
 ---------------------------------------------------------------------------------------*/
 
+- (NSString *)GetSettingFilePath {
+    
+    NSFileManager *filemgr;
+    filemgr = [NSFileManager defaultManager];
+    NSString * fileName = @"settings.plist";
+    
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+    NSString *libraryDirectory = [paths objectAtIndex:0];
+    
+    NSString *filePath = [libraryDirectory stringByAppendingPathComponent: fileName];
+    NSLog(@"full path name: %@", filePath);
+    
+    // check if file exists
+    if ([filemgr fileExistsAtPath: filePath] == YES){
+        NSLog(@"File exists");
+        
+    }else {
+        NSBundle *bundle = [NSBundle mainBundle];
+        NSString *path = [bundle pathForResource:@"settings" ofType:@"plist"];
+        [filemgr copyItemAtPath:path toPath:filePath error:nil];
+    }
+    
+    return filePath;
+}
+
 - (void)loadSettings {
 
+    NSBundle *bundle = [NSBundle mainBundle];
+    //読み込むプロパティリストのファイルパスを指定
+    NSString *path = [self GetSettingFilePath];
+    //プロパティリストの中身データを取得
+    NSDictionary *dic = [NSDictionary dictionaryWithContentsOfFile:path];
+    _bios = [[dic objectForKey: @"builtin bios"] boolValue];
+    _cart = [[dic objectForKey: @"cartridge"] intValue];
+    _fps = [[dic objectForKey: @"show fps"]boolValue];
+    _frame_skip = [[dic objectForKey: @"frame skip"]boolValue];
+    _aspect_rate = [[dic objectForKey: @"keep aspect rate"]boolValue];
+    _filter = 0; //[0; //userDefaults boolForKey: @"filter"];
+    _sound_engine = [[dic objectForKey: @"sound engine"] intValue];
+    
+    /*
     NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
     _bios = [userDefaults boolForKey: @"bios"];
     _cart = (int)[userDefaults integerForKey: @"cart"];
@@ -331,6 +370,7 @@ int GetPlayer2Device(){
     _aspect_rate = [userDefaults boolForKey: @"aspect_rate"];
     _filter = [userDefaults boolForKey: @"filter"];
     _sound_engine = [userDefaults boolForKey: @"sound_engine"];
+     */
 }
 
 - (id)init
@@ -478,10 +518,7 @@ int GetPlayer2Device(){
     NSSet *allTouches = [event allTouches];
     for (UITouch *touch in allTouches)
     {
-        
-        
         CGPoint point = [touch locationInView:[self view]];
-        
         
         if( CGRectContainsPoint([ [self left_view ]frame ], point) ){
             
