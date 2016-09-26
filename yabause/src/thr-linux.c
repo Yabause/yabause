@@ -25,7 +25,18 @@
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
-#include <malloc.h>
+//#include <malloc.h>
+#include <stdlib.h>
+
+
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+
+pid_t gettid(void)
+{
+    return syscall(SYS_gettid);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -315,6 +326,7 @@ extern int __sched_cpucount(size_t setsize, cpu_set_t* set);
 
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {
+#if 0    
     int err, syscallres;
     pid_t pid = gettid();
 
@@ -323,12 +335,13 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 	CPU_SET(mask, &my_set);
 	CPU_SET(mask+4, &my_set);
 	sched_setaffinity(pid,sizeof(my_set), &my_set);
+#endif    
 }
 
 int YabThreadGetCurrentThreadAffinityMask()
 {
-	return sched_getcpu(); //my_set.__bits;
-
+	//return sched_getcpu(); //my_set.__bits;
+    return 0;
 }
 
 

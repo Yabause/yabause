@@ -33,7 +33,9 @@
 #include "vdp1.h"
 #include "yabause.h"
 #include "movie.h"
-
+#include "osdcore.h"
+#include "threads.h"
+#include "yui.h"
 #include "frameprofile.h"
 
 u8 * Vdp2Ram;
@@ -668,7 +670,6 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-
 	if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
 		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
 		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
@@ -714,7 +715,6 @@ void Vdp2VBlankOUT(void) {
    static u32 framecount = 0;
    static u64 onesecondticks = 0;
    static VideoInterface_struct * saved = NULL;
-
    FrameProfileAdd("VOUT start");
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
@@ -1452,11 +1452,11 @@ void ToggleFullScreen(void)
 {
    if (VIDCore->IsFullscreen())
    {
-      VIDCore->Resize(320, 224, 0);
+      VIDCore->Resize(0,0,320, 224, 0);
    }
    else
    {
-      VIDCore->Resize(640, 480, 1);
+      VIDCore->Resize(0,0,640, 480, 1);
    }
 }
 

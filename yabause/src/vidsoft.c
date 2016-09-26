@@ -75,7 +75,7 @@ static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); 
 int VIDSoftInit(void);
 void VIDSoftSetupGL(void);
 void VIDSoftDeInit(void);
-void VIDSoftResize(unsigned int, unsigned int, int);
+void VIDSoftResize(int,int,unsigned int, unsigned int, int);
 int VIDSoftIsFullscreen(void);
 int VIDSoftVdp1Reset(void);
 void VIDSoftVdp1DrawStart(void);
@@ -2217,7 +2217,7 @@ void VIDSoftSetBilinear(int b)
 
 void VIDSoftSetupGL(void)
 {
-#if !defined(ANDROID)
+#if !defined(ANDROID) && !defined(IOS)
 #ifdef USE_OPENGL
    GLint status;
    GLint texAttrib;
@@ -2347,7 +2347,7 @@ void VIDSoftDeInit(void)
 
 static int IsFullscreen = 0;
 
-void VIDSoftResize(unsigned int w, unsigned int h, int on)
+void VIDSoftResize(int x, int y, unsigned int w, unsigned int h, int on)
 {
 #ifdef USE_OPENGL
    IsFullscreen = on;

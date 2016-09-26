@@ -1053,7 +1053,7 @@ int initEgl( ANativeWindow* window )
 	   {
 		  if (VIDCoreList[i]->id == s_vidcoretype)
 		  {
-			 VIDCoreList[i]->Resize(width,height,0);
+			 VIDCoreList[i]->Resize(0,0,width,height,0);
 			 break;
 		  }
 	   }
@@ -1108,7 +1108,7 @@ int switchWindow( ANativeWindow* window ){
 	  if (VIDCoreList[i]->id == s_vidcoretype)
 	  {
 		YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,width,height);
-		 VIDCoreList[i]->Resize(width,height,0);
+		 VIDCoreList[i]->Resize(0,0,width,height,0);
 		 break;
 	  }
    }
