@@ -87,6 +87,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <math.h>
+#include <limits.h>
 
 #include "c68k/c68k.h"
 #include "cs2.h"

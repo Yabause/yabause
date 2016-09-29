@@ -69,6 +69,29 @@ if (ANDROID)
 		)
 endif()
 
+if (IOS)
+add_definitions(-DIOS=1)
+add_definitions(-DHAVE_LIBGL)
+add_definitions(-DYAB_PORT_OSD)
+add_definitions(-D_OGLES3_)
+add_definitions(-DYAB_ASYNC_RENDERING)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
+IF (${SIMULATOR})
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mios-simulator-version-min=6.0")
+ENDIF()
+set(yabause_SOURCES
+${yabause_SOURCES}
+yglcache.c
+ygles.c
+yglshaderes.c )
+endif (IOS)
+
+include_directories(nanovg)
+set(yabause_SOURCES ${yabause_SOURCES} nanovg/nanovg.c)
 
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
@@ -131,11 +154,11 @@ if (UNIX)
 endif()
 
 # Bigendian
-include(TestBigEndian)
-test_big_endian(WORDS_BIGENDIAN)
-if (WORDS_BIGENDIAN)
-	add_definitions(-DWORDS_BIGENDIAN=1)
-endif (WORDS_BIGENDIAN)
+#include(TestBigEndian)
+#test_big_endian(WORDS_BIGENDIAN)
+#if (WORDS_BIGENDIAN)
+#	add_definitions(-DWORDS_BIGENDIAN=1)
+#endif (WORDS_BIGENDIAN)
 
 include(CheckCSourceCompiles)
 
@@ -356,7 +379,7 @@ if (MINI18N_FOUND)
 endif()
 
 # APPLE // not necessary mac os x, but i don't care ;)
-if (APPLE)
+if (APPLE AND NOT IOS)
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY NAMES CoreFoundation )
 	FIND_LIBRARY(IOKIT_LIBRARY NAMES IOKit )
 	set(yabause_SOURCES ${yabause_SOURCES} macjoy.c permacjoy.c cd-macosx.c sndmac.c)
@@ -367,7 +390,8 @@ if (APPLE)
 	if (HAVE_FBO)
 		add_definitions(-DHAVE_FBO=1)
 	endif()
-endif (APPLE)
+endif (APPLE AND NOT IOS)
+
 
 # Visual Studio
 if (MSVC)
@@ -697,7 +721,7 @@ endif()
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.c /*thr-dummy.c*/ )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	add_definitions(-DARCH_IS_FREEBSD=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
@@ -786,7 +810,11 @@ endif()
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
-add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
+if( IOS )
+	add_library(yabause OBJECT ${yabause_SOURCES} ${yabause_HEADERS})
+else()
+	add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
+endif()
 
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)

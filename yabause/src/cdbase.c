@@ -970,9 +970,15 @@ static int GetIntCCD(ccd_struct *ccd, char *section, char *name)
 	int i;
 	for (i = 0; i < ccd->num_dict; i++)
 	{
+#if (IOS)
+        if (strcasecmp(ccd->dict[i].section, section) == 0 &&
+            strcasecmp(ccd->dict[i].name, name) == 0)
+#else
 		if (stricmp(ccd->dict[i].section, section) == 0 &&
 			 stricmp(ccd->dict[i].name, name) == 0)
+#endif
 			return strtol(ccd->dict[i].value, NULL, 0);
+        
 	}
 
 	return -1;
@@ -1145,6 +1151,9 @@ void BuildTOC()
    isoTOC[101] = (isoTOC[session->track_num - 1] & 0xFF000000) | session->fad_end;
 }
 
+#if (IOS)
+#define stricmp strcasecmp
+#endif
 //////////////////////////////////////////////////////////////////////////////
 
 static int ISOCDInit(const char * iso) {

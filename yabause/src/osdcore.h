@@ -83,4 +83,6 @@ int  GetOSDToggle(void);
 void SetOSDToggle(int toggle);
 void DisplayMessage(const char* str);
 
+void OSDAddFrameProfileData( char * label, u32 data );
+
 #endif
