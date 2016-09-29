@@ -52,7 +52,19 @@
     sh2_trace_writel(__a, __v);           \
     MappedMemoryWriteLong(__a, __v);      \
 } while (0)
+
+void SetInsTracingToggle(int toggle)
+{
+	SH2SetInsTracing(toggle ? 1 : 0);
+}
+#else
+void SetInsTracingToggle(int toggle)
+{
+
+}
 #endif
+
+
 
 opcodefunc opcodes[0x10000];
 
@@ -587,7 +599,7 @@ static void FASTCALL SH2cmpim(SH2_struct * sh)
 
    imm = (s32)(s8)i;
 
-   if (sh->regs.R[0] == (u32) imm) // FIXME: ouais ½ doit ½re bon...
+   if (sh->regs.R[0] == (u32) imm) // FIXME: ouais ï¿½ doit ï¿½re bon...
       sh->regs.SR.part.T = 1;
    else
       sh->regs.SR.part.T = 0;
@@ -2894,7 +2906,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       opcodes[context->instruction](context);
-
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
 	     SH2UBCInterrupt(context, ubcflag);

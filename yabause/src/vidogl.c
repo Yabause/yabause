@@ -22,7 +22,7 @@
 /*! \file vidogl.c
     \brief OpenGL video renderer
 */
-#if defined(HAVE_LIBGL) || defined(__ANDROID__)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
 #include <math.h>
 #define EPSILON (1e-10 )
@@ -59,6 +59,7 @@ int yprintf( const char * fmt, ... )
 
 void OSDPushMessageDirect(char * msg){
 }
+
 #endif
 
 #define YGL_THREAD_DEBUG
@@ -96,7 +97,7 @@ void OSDPushMessageDirect(char * msg){
 
 int VIDOGLInit(void);
 void VIDOGLDeInit(void);
-void VIDOGLResize(unsigned int, unsigned int, int);
+void VIDOGLResize(int,int,unsigned int, unsigned int, int);
 int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
 void VIDOGLVdp1DrawStart(void);
@@ -3439,7 +3440,7 @@ void VIDOGLDeInit(void)
 
 int _VIDOGLIsFullscreen;
 
-void VIDOGLResize(unsigned int w, unsigned int h, int on)
+void VIDOGLResize(int originx, int originy , unsigned int w, unsigned int h, int on)
 {
 //   glDeleteTextures(1, &_Ygl->texture);
 
@@ -3448,12 +3449,14 @@ void VIDOGLResize(unsigned int w, unsigned int h, int on)
    GlHeight=h;
    GlWidth=w;
 
+   _Ygl->originx = originx;
+   _Ygl->originy = originy;
    _Ygl->width = w;
    _Ygl->height = h;
 
    
    YglGLInit(2048, 1024);
-   glViewport(0, 0, w, h);
+   glViewport(originx, originy, w, h);
    YglNeedToUpdateWindow();
 
    SetSaturnResolution(vdp2width, vdp2height);
@@ -6789,6 +6792,10 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK( vdp2draw_struc
    return NULL;
 }
 
+void VIDOGLSetFilterMode(int type){
+    _Ygl->aamode = type;
+    return;
+}
 
 #endif
 
@@ -6807,3 +6814,4 @@ void VIDOGLSetSettingValueMode(int type, int value){
 	
 	return;
 }
+
