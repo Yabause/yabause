@@ -810,7 +810,11 @@ endif()
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
-add_library(yabause OBJECT ${yabause_SOURCES} ${yabause_HEADERS})
+if( IOS )
+	add_library(yabause OBJECT ${yabause_SOURCES} ${yabause_HEADERS})
+else()
+	add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
+endif()
 
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)
