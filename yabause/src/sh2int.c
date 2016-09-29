@@ -55,7 +55,7 @@
 
 void SetInsTracingToggle(int toggle)
 {
-	SetInsTracing(toggle ? 1 : 0);
+	SH2SetInsTracing(toggle ? 1 : 0);
 }
 #else
 void SetInsTracingToggle(int toggle)

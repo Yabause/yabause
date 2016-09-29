@@ -33,11 +33,12 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+#ifdef ARCH_IS_MACOSX
 pid_t gettid(void)
 {
     return syscall(SYS_gettid);
 }
-
+#endif
 //////////////////////////////////////////////////////////////////////////////
 
 // Thread handles for each Yabause subthread
