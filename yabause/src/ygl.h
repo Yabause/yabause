@@ -70,10 +70,8 @@
 #define GL_TESS_CONTROL_SHADER            0x8E88
 #endif
 
-#if defined(__ANDROID__)
 typedef void(*PFNGLPATCHPARAMETERIPROC) (GLenum pname, GLint value);
 extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
-#endif
 
 #elif defined(_WIN32)
 
@@ -133,6 +131,11 @@ extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
 #define GL_TESS_EVALUATION_SHADER         0x8E87
 #define GL_TESS_CONTROL_SHADER            0x8E88
 #endif
+
+typedef void(*PFNGLPATCHPARAMETERIPROC) (GLenum pname, GLint value);
+extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
+
+
 
 #elif  defined(__APPLE__)
     #include <OpenGL/gl.h>

@@ -45,7 +45,7 @@ extern vdp2rotationparameter_struct  paraA;
 
 #define ATLAS_BIAS (0.025f)
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(IOS)
 PFNGLPATCHPARAMETERIPROC glPatchParameteri = NULL;
 #endif
 
@@ -2458,8 +2458,8 @@ void YglRenderVDP1(void) {
           }
 
 		  if (PG_VFP1_GOURAUDSAHDING_TESS == level->prg[j].prgid || PG_VFP1_MESH_TESS == level->prg[j].prgid ){
-			  //if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
-			  //glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
+			  if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
+			  glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
 		  }
 		  else{
 			  glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
