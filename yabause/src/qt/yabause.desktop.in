@@ -5,4 +5,4 @@ Comment=Sega Saturn emulator
 TryExec=yabause
 Exec=@YAB_PORT_NAME@
 Icon=yabause
-Categories=Game;Emulator;
+Categories=Qt;Game;Emulator;
