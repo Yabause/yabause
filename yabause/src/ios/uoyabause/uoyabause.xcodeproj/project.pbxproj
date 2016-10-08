@@ -16,7 +16,6 @@
 		64228EE11D88840000588323 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE01D88840000588323 /* AdSupport.framework */; };
 		64228EE31D88844000588323 /* EventKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE21D88844000588323 /* EventKitUI.framework */; };
 		64228EE51D88845400588323 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE41D88845400588323 /* EventKit.framework */; };
-		64228EE71D8884AB00588323 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE61D8884AB00588323 /* StoreKit.framework */; };
 		64228EE91D8884D700588323 /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE81D8884D700588323 /* SafariServices.framework */; };
 		64228EEB1D88850B00588323 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EEA1D88850B00588323 /* MessageUI.framework */; };
 		64228EED1D8885F200588323 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EEC1D8885F200588323 /* CoreBluetooth.framework */; };
@@ -129,7 +128,6 @@
 				64228EED1D8885F200588323 /* CoreBluetooth.framework in Frameworks */,
 				64228EEB1D88850B00588323 /* MessageUI.framework in Frameworks */,
 				64228EE91D8884D700588323 /* SafariServices.framework in Frameworks */,
-				64228EE71D8884AB00588323 /* StoreKit.framework in Frameworks */,
 				64228EE51D88845400588323 /* EventKit.framework in Frameworks */,
 				64228EE31D88844000588323 /* EventKitUI.framework in Frameworks */,
 				64228EE11D88840000588323 /* AdSupport.framework in Frameworks */,
@@ -331,6 +329,7 @@
 					644232A11C6580000050611E = {
 						CreatedOnToolsVersion = 7.2.1;
 						DevelopmentTeam = 8EMBASFBPT;
+						LastSwiftMigration = 0800;
 					};
 					644232BE1C6580010050611E = {
 						CreatedOnToolsVersion = 7.2.1;
@@ -552,6 +551,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 8EMBASFBPT;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -571,6 +571,7 @@
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
@@ -584,6 +585,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = 8EMBASFBPT;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -602,6 +604,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
