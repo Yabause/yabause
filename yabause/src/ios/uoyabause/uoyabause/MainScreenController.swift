@@ -20,16 +20,16 @@ class MainScreenController :UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let filePath = NSBundle.mainBundle().pathForResource("apikey", ofType: "plist")
+        let filePath = Bundle.main.path(forResource: "apikey", ofType: "plist")
         let plist = NSDictionary(contentsOfFile:filePath!)
-        let value = plist?.valueForKey("ADMOB_KEY") as! String
+        let value = plist?.value(forKey: "ADMOB_KEY") as! String
         
         bannerView.adUnitID = value
         
         bannerView.rootViewController = self
         let request = GADRequest()
         //request.testDevices = ["ea16d8d48e439597ec9e49ec690fe356"]
-        bannerView.loadRequest(request)
+        bannerView.load(request)
         //bannerView.hidden = true
         
 //        menu_setting.action = "onClickMyButton:"
@@ -38,8 +38,8 @@ class MainScreenController :UIViewController {
         val = 0
     }
     
-    internal func onClickMyButton(sender: UIButton){
-        let url = NSURL(string:UIApplicationOpenSettingsURLString)
-        UIApplication.sharedApplication().openURL(url!)
+    internal func onClickMyButton(_ sender: UIButton){
+        let url = URL(string:UIApplicationOpenSettingsURLString)
+        UIApplication.shared.openURL(url!)
     }
 }
