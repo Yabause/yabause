@@ -1013,7 +1013,13 @@ int initEgl( ANativeWindow* window )
     }
 
     PerPortReset();
-    padbits = PerPadAdd(&PORTDATA1);
+    padbits = Per3DPadAdd(&PORTDATA1);
+
+    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
     PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
     PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
     PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
@@ -1029,7 +1035,13 @@ int initEgl( ANativeWindow* window )
     PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
 	
 	if( s_player2Enable != -1 ) {
-		padbits = PerPadAdd(&PORTDATA2);
+		padbits = Per3DPadAdd(&PORTDATA2);
+    
+        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
 		PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
 		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
 		PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
@@ -1155,14 +1167,118 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-//	yprintf("press: %d,%d",player,key);
+	yprintf("press: %d,%d",player,key);
     PerKeyDown(MAKE_PAD(player,key));
 }
+
+
+void
+Java_org_uoyabause_android_YabauseRunnable_switch_1padmode( JNIEnv* env, jobject obj, jint mode )
+{
+    void * padbits;
+    if( mode == 0 ) {
+
+        PerPortReset();
+        padbits = PerPadAdd(&PORTDATA1);
+
+        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        
+        if( s_player2Enable != -1 ) {
+            padbits = PerPadAdd(&PORTDATA2);
+        
+            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        }
+
+    }else if( mode == 1 ){
+
+        PerPortReset();
+        padbits = Per3DPadAdd(&PORTDATA1);
+
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
+        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        
+        if( s_player2Enable != -1 ) {
+            padbits = Per3DPadAdd(&PORTDATA2);
+        
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
+            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        }
+    }
+
+
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint key, jint player, jint val )
+{
+	yprintf("axis: %d,%d,%d",player,key,val);
+    PerAxisValue(MAKE_PAD(player,key),val); // from 0 to 255
+}
+
+
+
+
 
 void
 Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-//	yprintf("release: %d,%d",player,key);
+	yprintf("release: %d,%d",player,key);
     PerKeyUp(MAKE_PAD(player,key));
 }
 

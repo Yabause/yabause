@@ -98,12 +98,18 @@ import android.view.LayoutInflater;
     	map.add(PadEvent.BUTTON_X);
     	map.add(PadEvent.BUTTON_Y);
     	map.add(PadEvent.BUTTON_Z);
+		map.add(PadEvent.PERANALOG_AXIS_X); // left to right
+		map.add(PadEvent.PERANALOG_AXIS_Y); // up to down
+		map.add(PadEvent.PERANALOG_AXIS_LTRIGGER); // left trigger
+		map.add(PadEvent.PERANALOG_AXIS_RTRIGGER); // right trigger
+
 		setDialogTitle(R.string.input_the_key);
     	setPositiveButtonText(null);  // OKボタンを非表示にする	
     	
     	setDialogLayoutResource(R.layout.keymap);
 
 		motions = new ArrayList<MotionMap>();
+        motions.add( new MotionMap(MotionEvent.AXIS_X));
 		motions.add( new MotionMap(MotionEvent.AXIS_Y));
 		motions.add( new MotionMap(MotionEvent.AXIS_PRESSURE));
 		motions.add( new MotionMap(MotionEvent.AXIS_SIZE));
@@ -129,7 +135,7 @@ import android.view.LayoutInflater;
 		motions.add( new MotionMap(MotionEvent.AXIS_BRAKE ));
 		motions.add( new MotionMap(MotionEvent.AXIS_DISTANCE ));
 		motions.add( new MotionMap(MotionEvent.AXIS_TILT ));
-		//motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_1 ));
+		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_1 ));
 		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_2 ));
 		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_3 ));
 		motions.add( new MotionMap(MotionEvent.AXIS_GENERIC_4 ));
@@ -263,6 +269,12 @@ import android.view.LayoutInflater;
 			jsonObject.put("BUTTON_Y", dmykey);
 			jsonObject.put("BUTTON_Z", dmykey);
 
+            jsonObject.put("PERANALOG_AXIS_X", dmykey);
+            jsonObject.put("PERANALOG_AXIS_Y", dmykey);
+            jsonObject.put("PERANALOG_AXIS_LTRIGGER", dmykey);
+            jsonObject.put("PERANALOG_AXIS_RTRIGGER", dmykey);
+
+
 	    	for (HashMap.Entry<Integer,Integer> entry : Keymap.entrySet()) {
 	    	    // キーを取得
 	    		Integer key = entry.getKey();
@@ -282,6 +294,10 @@ import android.view.LayoutInflater;
 	    		case PadEvent.BUTTON_X: jsonObject.put("BUTTON_X", key); break;
 	    		case PadEvent.BUTTON_Y: jsonObject.put("BUTTON_Y", key); break;
 	    		case PadEvent.BUTTON_Z: jsonObject.put("BUTTON_Z", key); break;
+                    case PadEvent.PERANALOG_AXIS_X: jsonObject.put("PERANALOG_AXIS_X", key); break;
+                    case PadEvent.PERANALOG_AXIS_Y: jsonObject.put("PERANALOG_AXIS_Y", key); break;
+                    case PadEvent.PERANALOG_AXIS_LTRIGGER: jsonObject.put("PERANALOG_AXIS_LTRIGGER", key); break;
+                    case PadEvent.PERANALOG_AXIS_RTRIGGER: jsonObject.put("PERANALOG_AXIS_RTRIGGER", key); break;
 	    		}
 	    	}
 	    	
@@ -314,7 +330,7 @@ import android.view.LayoutInflater;
     	Keymap.put(padkey,map.get(index));
     	Log.d("setKeymap","index =" + index +": pad = " + padkey );
     	index++;
-    	
+
     	if( index >= map.size() ){
     		saveSettings();
     		Dialog dlg = this.getDialog();
@@ -338,6 +354,10 @@ import android.view.LayoutInflater;
 		case PadEvent.BUTTON_X:setMessage(res.getString(R.string.x_button)); break;
 		case PadEvent.BUTTON_Y: setMessage(res.getString(R.string.y_button)); break;
 		case PadEvent.BUTTON_Z: setMessage(res.getString(R.string.z_button)); break;
+        case PadEvent.PERANALOG_AXIS_X: setMessage(res.getString(R.string.axis_x)); break;
+        case PadEvent.PERANALOG_AXIS_Y:setMessage(res.getString(R.string.axis_y)); break;
+        case PadEvent.PERANALOG_AXIS_LTRIGGER: setMessage(res.getString(R.string.axis_l)); break;
+        case PadEvent.PERANALOG_AXIS_RTRIGGER: setMessage(res.getString(R.string.axis_r)); break;
 		}	 
 		
 		return true;
@@ -364,6 +384,12 @@ import android.view.LayoutInflater;
 				}
 
 				Log.d("Yabause", "key:" + event.getScanCode() + " value: " + event.getAction() );
+
+                if( map.get(index) == PadEvent.PERANALOG_AXIS_X || map.get(index) == PadEvent.PERANALOG_AXIS_Y ||
+                        map.get(index) == PadEvent.PERANALOG_AXIS_LTRIGGER || map.get(index) == PadEvent.PERANALOG_AXIS_RTRIGGER ){
+                    onkey = false;
+                    return true;
+                }
 
 				if (event.getRepeatCount() == 0 && event.getAction() == KeyEvent.ACTION_UP) {
 					onkey = false;
@@ -403,10 +429,10 @@ import android.view.LayoutInflater;
 						keyCode = event.getScanCode();
 					}
                 	Integer PadKey = Keymap.get(keyCode);
-                	if( PadKey != null ) {
-                		Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
-                		return true;
-                	}
+                	//if( PadKey != null ) {
+                	//	Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
+                	//	return true;
+                	//}
     	    		return setKeymap(keyCode);        	
                 }
             }
@@ -433,27 +459,38 @@ import android.view.LayoutInflater;
 					continue;
 				}
 
+                if( map.get(index) == PadEvent.PERANALOG_AXIS_X || map.get(index) == PadEvent.PERANALOG_AXIS_Y ||
+                        map.get(index) == PadEvent.PERANALOG_AXIS_LTRIGGER || map.get(index) == PadEvent.PERANALOG_AXIS_RTRIGGER ){
+                    if( Float.compare(value,-1.0f) <= 0 || Float.compare(value,1.0f) >= 0) {
+                        motions.get(i).oldval = value;
+                        Integer PadKey = Keymap.get(motions.get(i).id);
+                        if( PadKey == null ) {
+                            return setKeymap(motions.get(i).id);
+                        }
+                    }
+                }else {
 
-				if( Float.compare(value,-1.0f) <= 0) {
-					motions.get(i).oldval = value;
-					Integer PadKey = Keymap.get(motions.get(i).id|0x8000|0x80000000);
-					if( PadKey != null ) {
-						Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
-						return true;
-					}else{
-						return setKeymap(motions.get(i).id|0x8000|0x80000000);
-					}
-				}
-				if( Float.compare(value,1.0f) >= 0) {
-					motions.get(i).oldval = value;
-					Integer PadKey = Keymap.get(motions.get(i).id|0x80000000);
-					if( PadKey != null ) {
-						Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
-						return true;
-					}else{
-						return setKeymap(motions.get(i).id|0x80000000);
-					}
-				}
+                    if (Float.compare(value, -1.0f) <= 0) {
+                        motions.get(i).oldval = value;
+                        Integer PadKey = Keymap.get(motions.get(i).id | 0x8000 | 0x80000000);
+                        //if( PadKey != null ) {
+                        //	Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
+                        //	return true;
+                        //}else{
+                            return setKeymap(motions.get(i).id | 0x8000 | 0x80000000);
+                        //}
+                    }
+                    if (Float.compare(value, 1.0f) >= 0) {
+                        motions.get(i).oldval = value;
+                        Integer PadKey = Keymap.get(motions.get(i).id | 0x80000000);
+                        //if( PadKey != null ) {
+                        //	Toast.makeText(context_m, R.string.this_key_has_already_been_set, Toast.LENGTH_SHORT).show();
+                        //	return true;
+                        //}else{
+                        return setKeymap(motions.get(i).id | 0x80000000);
+                        //}
+                    }
+                }
 			}
 		}
 		return false;

@@ -33,6 +33,8 @@ import org.json.JSONObject;
 import org.uoyabause.android.PadEvent;
 import org.uoyabause.android.PadManager;
 
+import static org.uoyabause.android.PadManager.MODE_ANALOG;
+
 
 //class InputInfo{
 //	public float _oldRightTrigger = 0.0f;
@@ -68,6 +70,10 @@ class BasicInputDevice {
         Keymap.put(KeyEvent.KEYCODE_BUTTON_X, PadEvent.BUTTON_X);
         Keymap.put(KeyEvent.KEYCODE_BUTTON_Y, PadEvent.BUTTON_Y);
         Keymap.put(KeyEvent.KEYCODE_BUTTON_L1, PadEvent.BUTTON_Z);
+        Keymap.put(MotionEvent.AXIS_X, PadEvent.PERANALOG_AXIS_X);
+        Keymap.put(MotionEvent.AXIS_Y, PadEvent.PERANALOG_AXIS_Y);
+        Keymap.put(MotionEvent.AXIS_LTRIGGER, PadEvent.PERANALOG_AXIS_LTRIGGER);
+        Keymap.put(MotionEvent.AXIS_RTRIGGER, PadEvent.PERANALOG_AXIS_RTRIGGER);
     }
 
     public void loadSettings( String setting_filename ) {
@@ -101,6 +107,11 @@ class BasicInputDevice {
             Keymap.put(jsonObject.getInt("BUTTON_Y"), PadEvent.BUTTON_Y);
             Keymap.put(jsonObject.getInt("BUTTON_Z"), PadEvent.BUTTON_Z);
 
+            Keymap.put(jsonObject.getInt("PERANALOG_AXIS_X"), PadEvent.PERANALOG_AXIS_X);
+            Keymap.put(jsonObject.getInt("PERANALOG_AXIS_Y"), PadEvent.PERANALOG_AXIS_Y);
+            Keymap.put(jsonObject.getInt("PERANALOG_AXIS_LTRIGGER"), PadEvent.PERANALOG_AXIS_LTRIGGER);
+            Keymap.put(jsonObject.getInt("PERANALOG_AXIS_RTRIGGER"), PadEvent.PERANALOG_AXIS_RTRIGGER);
+
         } catch (IOException e) {
             e.printStackTrace();
             loadDefault();
@@ -118,11 +129,50 @@ class BasicInputDevice {
             MotionEvent motionEvent = (MotionEvent) event;
 
             for(HashMap.Entry<Integer, Integer> e : Keymap.entrySet()) {
-                //System.out.println(e.getKey() + " : " + e.getValue());
+                System.out.println(e.getKey() + " : " + e.getValue());
+
+                // AnalogDevices
+                Integer  sat_btn = e.getValue();
                 int btn = e.getKey();
+
+                if( _pdm.getAnalogMode() == MODE_ANALOG ) {
+                    float motion_value = motionEvent.getAxisValue((btn & 0x00007FFF));
+
+                    if (sat_btn == PadEvent.PERANALOG_AXIS_X || sat_btn == PadEvent.PERANALOG_AXIS_Y ) {
+
+                        float nomalize_value = (int) ((motion_value * 128.0) + 128);
+                        if( nomalize_value > 255 ) nomalize_value = 255;
+                        if( nomalize_value < 0 ) nomalize_value = 0;
+
+                        YabauseRunnable.axis(sat_btn, _playerindex, (int)nomalize_value );
+
+                        continue;
+                    }else if( sat_btn == PadEvent.PERANALOG_AXIS_LTRIGGER || sat_btn == PadEvent.PERANALOG_AXIS_RTRIGGER ){
+
+                        float nomalize_value = (int) ((motion_value * 255.0));
+                        if( nomalize_value > 255 ) nomalize_value = 255;
+                        if( nomalize_value < 0 ) nomalize_value = 0;
+
+                        YabauseRunnable.axis(sat_btn, _playerindex, (int)nomalize_value );
+
+                        // ToDo: Need to trigger event
+                        //Keymap.put(MotionEvent.AXIS_LTRIGGER, PadEvent.BUTTON_LEFT_TRIGGER);
+                        //Keymap.put(MotionEvent.AXIS_RTRIGGER, PadEvent.BUTTON_RIGHT_TRIGGER);
+
+                        continue;
+
+                    }
+
+                }else{
+                    if (sat_btn == PadEvent.PERANALOG_AXIS_X || sat_btn == PadEvent.PERANALOG_AXIS_Y || sat_btn == PadEvent.PERANALOG_AXIS_LTRIGGER || sat_btn == PadEvent.PERANALOG_AXIS_RTRIGGER){
+                        continue;
+                    }
+                }
+
+
                 if( (btn&0x80000000) != 0 ) {
                     float motion_value = motionEvent.getAxisValue((btn&0x00007FFF));
-                    if( (btn&0x8000) != 0 ){
+                    if( (btn&0x8000) != 0 ){  // Dir
 
                         if (Float.compare(motion_value, -0.8f) < 0) { // ON
                             if( _testmode)
@@ -159,6 +209,8 @@ class BasicInputDevice {
                         }
                     }
                 }
+
+                // AnalogDvice
 
             }
         }
