@@ -363,12 +363,17 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
         ((Switch)findViewById(R.id.pad_mode_switch)).setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener(){
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                YabausePad padv = (YabausePad)findViewById(R.id.yabause_pad);
+
                if( isChecked ) {
                    Yabause.this.padm.setAnalogMode(PadManager.MODE_ANALOG);
                    YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG);
+                   padv.setPadMode(PadManager.MODE_ANALOG);
                }else{
                    Yabause.this.padm.setAnalogMode(PadManager.MODE_HAT);
                    YabauseRunnable.switch_padmode(PadManager.MODE_HAT);
+                   padv.setPadMode(PadManager.MODE_HAT);
                }
 
                 SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Yabause.this);
@@ -376,6 +381,7 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
                 editor.putBoolean("pref_analog_pad", isChecked);
                 editor.apply();
 
+                Yabause.this.showBottomMenu();
 
             }
         });
@@ -801,12 +807,16 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
         boolean analog = sharedPref.getBoolean("pref_analog_pad", false);
         ((Switch)findViewById(R.id.pad_mode_switch)).setChecked(analog);
         Log.d(TAG, "analog pad? " + analog);
+        YabausePad padv = (YabausePad)findViewById(R.id.yabause_pad);
+
         if( analog ) {
             Yabause.this.padm.setAnalogMode(PadManager.MODE_ANALOG);
             YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG);
+            padv.setPadMode(PadManager.MODE_ANALOG);
         }else{
             Yabause.this.padm.setAnalogMode(PadManager.MODE_HAT);
             YabauseRunnable.switch_padmode(PadManager.MODE_HAT);
+            padv.setPadMode(PadManager.MODE_HAT);
         }
     }
 

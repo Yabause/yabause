@@ -78,7 +78,7 @@ int g_buf_height = -1;
 int g_major_version=0;
 int g_minor_version=0;
 int g_minorminor_version=0;
-
+int g_pad_mode = -1;
 int g_EnagleFPS = 0;
 int g_CpuType = 2;
 int g_VideoFilter = 0;
@@ -109,6 +109,7 @@ int s_vidcoretype = VIDCORE_OGL;
 int s_player2Enable = -1;
 
 #define MAKE_PAD(a,b) ((a<<24)|(b))
+void update_pad_mode();
 
 enum RenderThreadMessage {
         MSG_NONE = 0,
@@ -1012,50 +1013,7 @@ int initEgl( ANativeWindow* window )
       return -1;
     }
 
-    PerPortReset();
-    padbits = Per3DPadAdd(&PORTDATA1);
-
-    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
-    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
-    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
-    PerSetKey(MAKE_PAD(0,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
-
-    PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	
-	if( s_player2Enable != -1 ) {
-		padbits = Per3DPadAdd(&PORTDATA2);
-    
-        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
-        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
-        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
-        PerSetKey(MAKE_PAD(1,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
-
-		PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	}
+    update_pad_mode();
 
     //ScspSetFrameAccurate(1);
 
@@ -1171,12 +1129,9 @@ Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint
     PerKeyDown(MAKE_PAD(player,key));
 }
 
-
-void
-Java_org_uoyabause_android_YabauseRunnable_switch_1padmode( JNIEnv* env, jobject obj, jint mode )
-{
+void update_pad_mode(){
     void * padbits;
-    if( mode == 0 ) {
+    if( g_pad_mode == 0 ) {
 
         PerPortReset();
         padbits = PerPadAdd(&PORTDATA1);
@@ -1213,7 +1168,7 @@ Java_org_uoyabause_android_YabauseRunnable_switch_1padmode( JNIEnv* env, jobject
             PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
         }
 
-    }else if( mode == 1 ){
+    }else if( g_pad_mode == 1 ){
 
         PerPortReset();
         padbits = Per3DPadAdd(&PORTDATA1);
@@ -1261,7 +1216,13 @@ Java_org_uoyabause_android_YabauseRunnable_switch_1padmode( JNIEnv* env, jobject
         }
     }
 
+}
 
+void
+Java_org_uoyabause_android_YabauseRunnable_switch_1padmode( JNIEnv* env, jobject obj, jint mode )
+{
+    g_pad_mode = mode;
+    update_pad_mode();
 }
 
 void
