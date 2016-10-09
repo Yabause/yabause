@@ -121,7 +121,11 @@ class BasicInputDevice {
         }
     }
 
-
+    // Limitaions
+    // SS Controller adapter ... Left trigger and Right Trigger is not recognizeed as analog button. you need to skip them
+    // Moga 000353 ... OK
+    // SMACON ... Left trigger and Right Trigger is not recognizeed as analog button. you need to skip them
+    // ipega ... OK, but too sensitive.
     public int onGenericMotionEvent(MotionEvent event ) {
         int rtn = 0;
         if (event.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK)) {
@@ -129,7 +133,7 @@ class BasicInputDevice {
             MotionEvent motionEvent = (MotionEvent) event;
 
             for(HashMap.Entry<Integer, Integer> e : Keymap.entrySet()) {
-                System.out.println(e.getKey() + " : " + e.getValue());
+                //System.out.println(e.getKey() + " : " + e.getValue());
 
                 // AnalogDevices
                 Integer  sat_btn = e.getValue();
