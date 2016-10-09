@@ -21,50 +21,55 @@
     <LinearLayout
         android:id="@+id/menu_view"
         android:gravity="center"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="80dp"
-        android:translationY="80dp"
-        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="left"
         android:background="#444444">
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Screen Shot"
             android:id="@+id/button_screen_shot"
             android:layout_gravity="center" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Report"
             android:id="@+id/button_report"
             android:layout_gravity="center" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Save State"
             android:id="@+id/button_save_sate"
             android:layout_gravity="center" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Load State"
             android:id="@+id/button_load_state"
             android:layout_gravity="center" />
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Open CD tray"
             android:id="@+id/button_open_cd"
             android:layout_gravity="center" />
 
+        <Switch
+            android:text="Analog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/pad_mode_switch" />
+
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Exit"
             android:id="@+id/button_exit"

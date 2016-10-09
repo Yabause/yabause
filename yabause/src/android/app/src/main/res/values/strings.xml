@@ -53,6 +53,10 @@
     <string name="down">Down</string>
     <string name="left">Left</string>
     <string name="right">Right</string>
+    <string name="axis_x">Analog X</string>
+    <string name="axis_y">Analog Y</string>
+    <string name="axis_l">Analog L Trigger</string>
+    <string name="axis_r">Analog R Trigger</string>
     <string name="l_trigger">L Triger</string>
     <string name="r_trigger">R Triger</string>
     <string name="start">Start</string>
