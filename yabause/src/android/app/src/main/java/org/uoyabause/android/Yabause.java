@@ -397,7 +397,6 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
 
-        MobileAds.initialize(application, getString(R.string.ad_app_id));
     }
 
     @Override
@@ -651,38 +650,6 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
             //ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(v, "translationY", v.getHeight(), 0);
             //objectAnimator.setDuration(1000);
             //objectAnimator.start();
-
-            SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
-            Boolean hasDonated = prefs.getBoolean("donated", false);
-            if( hasDonated == false ) {
-                mAdView = (AdView) findViewById(R.id.adView);
-                AdRequest adRequest = new AdRequest.Builder()
-//                        .addTestDevice("4A2A0B16E08299C20C50AD591CC49E08")
-//                        .addTestDevice("303A789B146C169D4BDB5652D928FF8E")
-                        .build();
-                mAdView.loadAd(adRequest);
-                mAdView.setAdListener(new AdListener() {
-                    @Override
-                    public void onAdFailedToLoad(int errorCode) {
-                        switch( errorCode){
-                            case AdRequest.ERROR_CODE_INTERNAL_ERROR:
-                                Log.d("Yabause","AdRequest.ERROR_CODE_INTERNAL_ERROR");
-                                break;
-                            case AdRequest.ERROR_CODE_INVALID_REQUEST:
-                                Log.d("Yabause","AdRequest.ERROR_CODE_INVALID_REQUEST");
-                                break;
-                            case AdRequest.ERROR_CODE_NETWORK_ERROR:
-                                Log.d("Yabause","AdRequest.ERROR_CODE_NETWORK_ERROR");
-                                break;
-                            case AdRequest.ERROR_CODE_NO_FILL:
-                                Log.d("Yabause","AdRequest.ERROR_CODE_NO_FILL");
-                                break;
-                        }
-
-                    }
-                });
-                mAdView.setVisibility(View.VISIBLE);
-            }
 
             View button = findViewById(R.id.button_screen_shot);
             button.requestFocus();

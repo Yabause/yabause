@@ -77,16 +77,5 @@
     </LinearLayout>
 
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"
-        android:layout_gravity="center|bottom"
-        ads:adSize="BANNER"
-        ads:adUnitId="@string/banner_ad_unit_id2">
-    </com.google.android.gms.ads.AdView>
-
 </FrameLayout>
 

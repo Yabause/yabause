@@ -176,7 +176,6 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         setupEventListeners();
 
         MobileAds.initialize(application, getActivity().getString(R.string.ad_app_id));
-
         mInterstitialAd = new InterstitialAd(getActivity());
         mInterstitialAd.setAdUnitId(getActivity().getString(R.string.banner_ad_unit_id));
         requestNewInterstitial();
@@ -682,14 +681,14 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 Boolean hasDonated = prefs.getBoolean("donated", false);
                 if( hasDonated == false ) {
                     double rn = Math.random();
-                    if (rn <= 0.3333) {
+                    if (rn <= 0.5) {
                         UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
                         if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
                             if (mInterstitialAd.isLoaded()) {
                                 mInterstitialAd.show();
                             }
                         }
-                    } else if (rn > 0.3333 && rn <= 0.6666) {
+                    } else if (rn > 0.5) {
                         Intent intent = new Intent(getActivity(), DonateActivity.class);
                         startActivity(intent);
                     }
