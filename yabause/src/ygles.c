@@ -3063,8 +3063,8 @@ void YglRender(void) {
 		YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
 	}
 	else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		//YglBlitScanlineFilter(_Ygl->fxaa_fbotex, GlHeight, _Ygl->rheight );
+		glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+		YglBlitScanlineFilter(_Ygl->fxaa_fbotex, GlHeight, _Ygl->rheight );
 	}
 
 render_finish:
