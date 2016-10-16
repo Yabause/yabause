@@ -2308,7 +2308,7 @@ static const char fblit_img[] =
 "out vec4 fragColor;            \n"
 "void main () \n"
 "{ \n"
-"  vec4 src = texture2D( u_Src, v_Uv ); \n"
+"  vec4 src = texture( u_Src, v_Uv ); \n"
 "  fragColor = src; \n"
 "}\n";
 
