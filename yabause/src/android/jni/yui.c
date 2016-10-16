@@ -596,9 +596,7 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( 
 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
 {
-	yprintf("sending MSG_PAUSE 1");
     pthread_mutex_lock(&g_mtxGlLock);
-	yprintf("sending MSG_PAUSE 2");
     g_msg = MSG_PAUSE;
     pthread_mutex_unlock(&g_mtxGlLock);
 }
@@ -701,10 +699,17 @@ jint Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject 
     jboolean dummy;
     const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
 
+    pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_SAVE_STATE;
-    //YabSaveStateSlot(path, 1);
+    pthread_mutex_unlock(&g_mtxGlLock);
+
     (*env)->ReleaseStringUTFChars(env,path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
     return 0;
 }
 
@@ -713,11 +718,17 @@ jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject 
     jboolean dummy;
     const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
 
+    pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_LOAD_STATE;
-    //YabLoadStateSlot(path, 1);
+    pthread_mutex_unlock(&g_mtxGlLock);
 
     (*env)->ReleaseStringUTFChars(env,path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
     return 0;
 }
 
@@ -1396,12 +1407,27 @@ void renderLoop()
                 break;
 
             case MSG_SAVE_STATE:
+            {
+                int ret;
                 YUI_LOG("MSG_SAVE_STATE");
-                YabSaveStateSlot(s_savepath, 1);
-                break;
+                if( (ret = YabSaveStateSlot(s_savepath, 1)) != 0 ){
+                    yprintf("State save is failed %d",ret);
+                }else{
+                    yprintf("State save is succsesfull!");
+                }
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);                
+            }
+            break;
 
             case MSG_LOAD_STATE:
+                YUI_LOG("MSG_LOAD_STATE");
                 YabLoadStateSlot(s_savepath, 1);
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);
+
                 break;
             case MSG_PAUSE:
                 YUI_LOG("MSG_PAUSE");
