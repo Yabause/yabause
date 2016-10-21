@@ -630,6 +630,24 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
 }
 
+//////////////////////////////////////////////////////////////////////////////
+int IsExtensionPresent(const char* name_substr)
+{
+    int i;
+    GLint num_ext = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &num_ext);
+
+
+    for (i = 0; i < num_ext; i++)
+    {
+        if (strstr((const char*)glGetStringi(GL_EXTENSIONS, i), name_substr) != NULL)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -714,7 +732,7 @@ int YglGLInit(int width, int height) {
 
    _Ygl->pFrameBuffer = NULL;
 
-   if( strstr((const char*)glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
+   if(IsExtensionPresent("packed_depth_stencil"))
    {
       if( _Ygl->rboid_depth != 0 ) glDeleteRenderbuffers(1,&_Ygl->rboid_depth);
       glGenRenderbuffers(1, &_Ygl->rboid_depth);
@@ -856,7 +874,7 @@ int YglInit(int width, int height, unsigned int depth) {
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    if( strstr((const char*)glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
+   if(IsExtensionPresent("packed_depth_stencil"))
    {
       if( _Ygl->rboid_depth != 0 ) glDeleteRenderbuffers(1,&_Ygl->rboid_depth);
       glGenRenderbuffers(1, &_Ygl->rboid_depth);

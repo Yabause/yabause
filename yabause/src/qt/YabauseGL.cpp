@@ -30,6 +30,14 @@ YabauseGL::YabauseGL( QWidget* p )
 		p->setFocusPolicy( Qt::StrongFocus );
 		setFocusProxy( p );
 	}
+
+    // Configure GL context version to 3.3
+    QGLFormat glFormat;
+    glFormat.setVersion( 3, 3 );
+    glFormat.setProfile( QGLFormat::CoreProfile ); // Requires >=Qt-4.8.0
+    glFormat.setSampleBuffers( true );
+
+    this->setFormat(glFormat);
 }
 
 void YabauseGL::showEvent( QShowEvent* e )
