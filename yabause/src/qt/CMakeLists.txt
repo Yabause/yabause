@@ -43,12 +43,21 @@ else()
 		set( QT_USE_QTMAIN TRUE )
 	endif()
 	
-	find_package(Qt4)
+	# Qt Version >=4.8 is required to use the GL Core profile
+	if (OPENGL_FOUND)
+		find_package(Qt4 4.8)
 
-	if (NOT QT4_FOUND)
-		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
-		return ()
-	endif ()
+		if (NOT QT4_FOUND)
+			message(STATUS "NO QT4_FOUND (V4.8 required) OR Qt5_FOUND")
+			return ()
+		endif ()
+	else()
+		find_package(Qt4)
+		if (NOT QT4_FOUND)
+			message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
+			return ()
+		endif ()
+	endif()
 
 	message (WARNING "Qt4 is deprecated. Support will be removed in the future.")
 
