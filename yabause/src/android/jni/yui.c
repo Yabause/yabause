@@ -1405,6 +1405,7 @@ void renderLoop()
                 break;
             case MSG_PAUSE:
                 YUI_LOG("MSG_PAUSE");
+                YabFlushBackups();
                 ScspMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 1;
                 break;
