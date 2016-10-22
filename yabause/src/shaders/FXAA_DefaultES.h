@@ -19,8 +19,8 @@ const GLchar Yglprg_fxaa_f[] =
 "#version 300 es \n"
 #else
 "#version 330 \n"
-#endif
 " #extension GL_ARB_gpu_shader5: enable \n"
+#endif
 " precision mediump float; \n"
 " #define FXAA_PC 1 \n"
 " #define FXAA_GLSL_120 0 \n"
@@ -1059,11 +1059,12 @@ const GLchar Yglprg_fxaa_f[] =
 "  \n"
 " uniform sampler2D uSourceTex; \n"
 " uniform vec2 RCPFrame; \n"
-" varying vec2 vTexCoord; \n"
+" in vec2 vTexCoord; \n"
+" out vec4 fragColor;            \n"
 "  \n"
 " void main(void) \n"
 " { \n"
-    " gl_FragColor = FxaaPixelShader(vTexCoord, \n"
+    " fragColor = FxaaPixelShader(vTexCoord, \n"
 				" FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f),		// FxaaFloat4 fxaaConsolePosPos, \n"
         " uSourceTex,							// FxaaTex tex, \n"
         " uSourceTex,							// FxaaTex fxaaConsole360TexExpBiasNegOne, \n"
