@@ -88,8 +88,9 @@
     <string name="choose_video_filter">Choose Video Filter</string>
 
     <string name="video_filter_none">None</string>
-    <string name="video_filter_fxaa">FXAA(works only NVIDIA devices)</string>
-    <string name="video_filter_scanline">Scanline filter</string>
+    <string name="video_filter_fxaa">FXAA</string>
+    <string name="video_filter_scanline">Scanline</string>
+    <string name="video_filter_bilinear">Bilinear(Enables only when Native resolution is not selected)</string>
     <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
@@ -125,6 +126,9 @@
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
     <string name="sound_engine">Sound Engine</string>
     <string name="choose_sound_engine">Choose sound engine</string>
+
+    <string name="video_resolution">Rendering Resolution</string>
+    <string name="choose_video_resolution">Choose Rendering Resolution</string>
 
 </resources>
 	

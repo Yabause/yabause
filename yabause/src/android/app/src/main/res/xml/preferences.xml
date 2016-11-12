@@ -48,7 +48,7 @@
         <CheckBoxPreference
             android:key="pref_frameskip"
             android:title="@string/frameskip"
-            android:defaultValue="true" />
+            android:defaultValue="false" />
         
         <CheckBoxPreference
             android:key="pref_keepaspectrate"
@@ -69,6 +69,14 @@
             android:dialogTitle="@string/choose_polygon_generation_type"
             android:entries="@array/entries_polygon_generation_type"
             android:entryValues="@array/entryvalues_polygon_generation_type"
+            android:defaultValue="0" />
+
+        <ListPreference
+            android:key="pref_resolution"
+            android:title="@string/video_resolution"
+            android:dialogTitle="@string/choose_video_resolution"
+            android:entries="@array/entries_video_resolution_list_preference"
+            android:entryValues="@array/entryvalues_video_resolution_list_preference"
             android:defaultValue="0" />
 
      </PreferenceCategory>        
