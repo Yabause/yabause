@@ -256,6 +256,9 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         ListPreference soundengine_setting = (ListPreference) getPreferenceManager().findPreference("pref_sound_engine");
         soundengine_setting.setSummary(soundengine_setting.getEntry());
 
+        ListPreference resolution_setting = (ListPreference) getPreferenceManager().findPreference("pref_resolution");
+        resolution_setting.setSummary(resolution_setting.getEntry());
+
       }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
@@ -386,7 +389,8 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             key.equals("pref_cpu") || 
             key.equals("pref_filter") || 
             key.equals("pref_polygon_generation") || 
-            key.equals("pref_sound_engine")  
+            key.equals("pref_sound_engine" ||
+            key.equals("pref_resolution"))  
             ) {
             ListPreference pref = (ListPreference) findPreference(key);
             pref.setSummary(pref.getEntry());

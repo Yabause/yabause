@@ -160,8 +160,8 @@ int Ygl_uniformVdp1CommonParam(void * p){
 		glUniform1i(param->fbo, 1);
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
-		glUniform1i(param->fbowidth, GlWidth);
-		glUniform1i(param->fboheight, GlHeight);
+    glUniform1i(param->fbowidth, _Ygl->width);
+    glUniform1i(param->fboheight, _Ygl->height);
 #if !defined(_OGLES3_)
 		if (glTextureBarrierNV) glTextureBarrierNV();
 #endif
@@ -2276,8 +2276,8 @@ int YglProgramChange( YglLevel * level, int prgid )
 
 //----------------------------------------------------------------------------------------
 static int blit_prg = -1;
-static int u_w;
-static int u_h;
+static int u_w = -1;
+static int u_h = -1;
 
 static const char vblit_img[] =
 #if defined (_OGLES3_)
@@ -2285,16 +2285,16 @@ static const char vblit_img[] =
 #else
       "#version 330 \n"
 #endif
-"layout (location = 0) in vec2 a_Position; \n"
-"layout (location = 1) in vec2 a_Uv;       \n"
-"uniform float u_w; \n"
-"uniform float u_h; \n"
-"out vec2	v_Uv;                    \n"  
-"void main()                              \n"
-"{                                        \n"
-"   gl_Position = vec4((a_Position.x*u_w)-1.0, (a_Position.y*u_h)-1.0, 0.0, 1.0);  \n" 
-"   v_Uv = a_Uv;                          \n"
-"}";
+  "layout (location = 0) in vec2 aPosition;   \n"
+  "layout (location = 1) in vec2 aTexCoord;   \n"
+  "out  highp vec2 vTexCoord;     \n"
+  "  \n"
+  " void main(void) \n"
+  " { \n"
+  " vTexCoord = aTexCoord;     \n"
+  " gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); \n"
+  " } \n";
+
 
 static const char fblit_img[] =
 #if defined (_OGLES3_)
@@ -2302,20 +2302,18 @@ static const char fblit_img[] =
 #else
       "#version 330 \n"
 #endif
-"precision mediump float;     \n"
-"uniform sampler2D u_Src; \n"
-"in vec2  v_Uv;          \n"
-"out vec4 fragColor;            \n"
-"void main () \n"
-"{ \n"
-"  vec4 src = texture( u_Src, v_Uv ); \n"
-"  fragColor = src; \n"
-"}\n";
-
-
+  "precision highp float;       \n"
+  "in highp vec2 vTexCoord;     \n"
+  "uniform sampler2D u_Src;     \n"
+  "out vec4 fragColor;            \n"
+  "void main()                                         \n"
+  "{                                                   \n"
+  "  fragColor = texture( u_Src, vTexCoord ) ; \n"
+  "} \n";
 
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
+  float aspectRatio = 1.0;
   float vb[] = { 0, 0, 
     2.0, 0.0, 
     2.0, 2.0, 
@@ -2328,6 +2326,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
+
   if (blit_prg == -1){
     GLuint vshader;
     GLuint fshader;
@@ -2337,9 +2336,10 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     const GLchar * fblit_img_v[] = { fblit_img, NULL };
 
     blit_prg = glCreateProgram();
-    if (blit_prg == 0) return -1;
+    if (blit_prg == 0){
+      return -1;
+    }
 
-    glUseProgram(blit_prg);
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -2352,7 +2352,6 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
       blit_prg = -1;
       return -1;
     }
-
     glShaderSource(fshader, 1, fblit_img_v, NULL);
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
@@ -2374,10 +2373,8 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
       return -1;
     }
 
-     glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
-     u_w = glGetUniformLocation(blit_prg, "u_w");
-     u_h = glGetUniformLocation(blit_prg, "u_h");
-
+    glUseProgram(blit_prg);
+    glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
   }
   else{
     glUseProgram(blit_prg);
@@ -2387,16 +2384,34 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 
+  float const vertexPosition[] = {
+    aspectRatio, -1.0f,
+    -aspectRatio, -1.0f,
+    aspectRatio, 1.0f,
+    -aspectRatio, 1.0f };
+
+  float const textureCoord[] = {
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f };
+
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
-  glUniform1f(u_w, w);
-  glUniform1f(u_h, h);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, srcTexture);
-  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+  if (_Ygl->aamode == AA_BILNEAR_FILTER) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  }
+  else{
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
   glActiveTexture(GL_TEXTURE0);
@@ -2436,12 +2451,18 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
 		GLint compiled, linked;
 
 		const GLchar * fxaa_v[] = { Yglprg_fxaa_v, NULL };
-		const GLchar * fxaa_f[] = { Yglprg_fxaa_f, NULL };
+    GLchar * fxaa_f[2] = { Yglprg_fxaa_f_option_nv, Yglprg_fxaa_f };
+
+    if (strstr(glGetString(GL_VENDOR), "NVIDIA") == NULL){
+      fxaa_f[0] = Yglprg_fxaa_f_option_others;
+    }
+    else{
+      fxaa_f[0] = Yglprg_fxaa_f_option_nv;
+    }
 
 		fxaa_prg = glCreateProgram();
 		if (fxaa_prg == 0) return -1;
 
-		glUseProgram(fxaa_prg);
 		vshader = glCreateShader(GL_VERTEX_SHADER);
 		fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -2449,17 +2470,17 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
 		glCompileShader(vshader);
 		glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
 		if (compiled == GL_FALSE) {
-			printf("Compile error in vertex shader.\n");
+      YGLLOG("Compile error in vertex shader.\n");
 			Ygl_printShaderError(vshader);
 			fxaa_prg = -1;
 			return -1;
 		}
 
-		glShaderSource(fshader, 1, fxaa_f, NULL);
+		glShaderSource(fshader, 2, fxaa_f, NULL);
 		glCompileShader(fshader);
 		glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
 		if (compiled == GL_FALSE) {
-			printf("Compile error in fragment shader.\n");
+      YGLLOG("Compile error in fragment shader.\n");
 			Ygl_printShaderError(fshader);
 			fxaa_prg = -1;
 			return -1;
@@ -2470,12 +2491,12 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
 		glLinkProgram(fxaa_prg);
 		glGetProgramiv(fxaa_prg, GL_LINK_STATUS, &linked);
 		if (linked == GL_FALSE) {
-			printf("Link error..\n");
+      YGLLOG("Link error..\n");
 			Ygl_printShaderError(fxaa_prg);
 			fxaa_prg = -1;
 			return -1;
 		}
-
+    glUseProgram(fxaa_prg);
 		glUniform1i(glGetUniformLocation(fxaa_prg, "uSourceTex"), 0);
 		u_frame = glGetUniformLocation(fxaa_prg, "RCPFrame");
 		a_PosCoord = glGetAttribLocation(fxaa_prg,"aPosition");
@@ -2953,7 +2974,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 		perlinealpha_prg = glCreateProgram();
 		if (perlinealpha_prg == 0) return -1;
 
-		glUseProgram(perlinealpha_prg);
+
 		vshader = glCreateShader(GL_VERTEX_SHADER);
 		fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -2987,7 +3008,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 			perlinealpha_prg = -1;
 			return -1;
 		}
-
+		glUseProgram(perlinealpha_prg);
 		int id_src = glGetUniformLocation(perlinealpha_prg, "u_Src");
 		glUniform1i(id_src, 0);
 		int id_line = glGetUniformLocation(perlinealpha_prg, "u_Line");

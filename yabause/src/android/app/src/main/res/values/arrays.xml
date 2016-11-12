@@ -8,15 +8,17 @@
         <item>2</item>
         <item>0</item>
     </string-array>
-    <string-array name="entries_video_filte_list_preference" translatable="false">
+    <string-array name="entries_video_filte_list_preference" >
         <item>@string/video_filter_none</item>
         <item>@string/video_filter_fxaa</item>
         <item>@string/video_filter_scanline</item>
+        <item>@string/video_filter_bilinear</item>
     </string-array>
     <string-array name="entryvalues_video_filte_list_preference" translatable="false">
         <item>0</item>
         <item>1</item>
         <item>2</item>
+        <item>3</item>
     </string-array>
     <string-array name="entries_polygon_generation_type" translatable="false" >
         <item>Triangle using perspective correction</item>
@@ -37,4 +39,18 @@
         <item>1</item>
         <item>0</item>
     </string-array>
+
+    <string-array name="entries_video_resolution_list_preference"  >
+        <item>Native(native resolution of this android device)</item>
+        <item>4x</item>
+        <item>2x</item>
+        <item>Original</item>
+    </string-array>
+    <string-array name="entryvalues_video_resolution_list_preference" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+
 </resources>
