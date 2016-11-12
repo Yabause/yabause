@@ -3445,18 +3445,15 @@ void VIDOGLResize(int originx, int originy , unsigned int w, unsigned int h, int
 //   glDeleteTextures(1, &_Ygl->texture);
 
    _VIDOGLIsFullscreen = on;
-
-   GlHeight=h;
-   GlWidth=w;
-
+   
+   GlWidth = w;
+   GlHeight = h;
+   
    _Ygl->originx = originx;
    _Ygl->originy = originy;
-   _Ygl->width = w;
-   _Ygl->height = h;
-
    
    YglGLInit(2048, 1024);
-   glViewport(originx, originy, w, h);
+   glViewport(originx, originy, GlWidth, GlHeight);
    YglNeedToUpdateWindow();
 
    SetSaturnResolution(vdp2width, vdp2height);
@@ -6800,18 +6797,21 @@ void VIDOGLSetFilterMode(int type){
 #endif
 
 void VIDOGLSetSettingValueMode(int type, int value){
-	
-	switch (type) {
-	case VDP_SETTING_FILTERMODE:
-		_Ygl->aamode = value;
-		break;
-	case VDP_SETTING_POLYGON_MODE:
-		if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION){
-			YglTesserationProgramInit();
-		}
-		_Ygl->polygonmode = value;
-	}
-	
-	return;
+  
+  switch (type) {
+  case VDP_SETTING_FILTERMODE:
+    _Ygl->aamode = value;
+    break;
+  case VDP_SETTING_RESOLUTION_MODE:
+    _Ygl->resolution_mode = value;
+    break;		
+  case VDP_SETTING_POLYGON_MODE:
+    if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION){
+      YglTesserationProgramInit();
+    }
+    _Ygl->polygonmode = value;
+  }
+  
+  return;
 }
 
