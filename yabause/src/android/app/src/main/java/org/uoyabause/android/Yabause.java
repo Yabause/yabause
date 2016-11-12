@@ -125,7 +125,7 @@ class YabauseRunnable implements Runnable
     public static native void resume();
     public static native void setPolygonGenerationMode( int pg );
     public static native void setSoundEngine( int engine );
-
+    public static native void setResolutionMode( int resoution_mode );
     public static native void openTray();
     public static native void closeTray();
 
@@ -818,6 +818,10 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
             YabauseRunnable.switch_padmode(PadManager.MODE_HAT);
             padv.setPadMode(PadManager.MODE_HAT);
         }
+
+        Integer resolution_setting =  new Integer(sharedPref.getString("pref_resolution","0"));
+        YabauseRunnable.setResolutionMode(resolution_setting);
+
     }
 
     public String getBiosPath() {

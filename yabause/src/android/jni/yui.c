@@ -84,6 +84,7 @@ int g_CpuType = 2;
 int g_VideoFilter = 0;
 int g_PolygonGenerationMode = 0;
 static int g_SoundEngine = 0;
+static int g_resolution_mode = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -1017,6 +1018,7 @@ int initEgl( ANativeWindow* window )
     yinit.video_filter_type = g_VideoFilter;
 	yinit.polygon_generation_mode = g_PolygonGenerationMode;
 	yinit.use_new_scsp = g_SoundEngine;
+    yinit.resolution_mode =g_resolution_mode;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1276,6 +1278,12 @@ void
 Java_org_uoyabause_android_YabauseRunnable_setSoundEngine( JNIEnv* env, jobject obj, jint sound_engine )
 {
     g_SoundEngine = sound_engine;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setResolutionMode( JNIEnv* env, jobject obj, jint resolution_mode )
+{
+    g_resolution_mode = resolution_mode;
 }
 
 void
