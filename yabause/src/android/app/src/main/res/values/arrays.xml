@@ -40,7 +40,7 @@
         <item>0</item>
     </string-array>
 
-    <string-array name="entries_video_resolution_list_preference"  >
+    <string-array name="entries_video_resolution_list_preference" translatable="false" >
         <item>Native(native resolution of this android device)</item>
         <item>4x</item>
         <item>2x</item>
