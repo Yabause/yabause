@@ -127,10 +127,6 @@
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
     <string name="sound_engine">Sound Engine</string>
     <string name="choose_sound_engine">Choose sound engine</string>
-
-    <string name="video_resolution">Rendering Resolution</string>
-    <string name="choose_video_resolution">Choose Rendering Resolution</string>
-
     <string name="invitation_title">Send App Invite uoYabause</string>
     <string name="invitation_message">Play SEGA Saturn games using this app!</string>
     <string name="invitation_deep_link"  translatable="false" >https://b472u.app.goo.gl/YJ5F</string>
