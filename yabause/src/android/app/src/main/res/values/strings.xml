@@ -126,10 +126,6 @@
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
     <string name="sound_engine">Sound Engine</string>
     <string name="choose_sound_engine">Choose sound engine</string>
-
-    <string name="video_resolution">Rendering Resolution</string>
-    <string name="choose_video_resolution">Choose Rendering Resolution</string>
-
     <string name="video_resolution">Rendering Resolution</string>
     <string name="choose_video_resolution">Choose Rendering Resolution</string>
 

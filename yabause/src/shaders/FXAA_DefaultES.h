@@ -39,19 +39,6 @@ const GLchar Yglprg_fxaa_f_option_others[] =
 " #define FXAA_QUALITY__PRESET 29 \n"
 " #define FXAA_GREEN_AS_LUMA 1 \n";
 
-const GLchar Yglprg_fxaa_f_option_others[] =
-#if defined (_OGLES3_)
-"#version 300 es \n"
-#else
-"#version 330 \n"
-#endif
-" precision mediump float; \n"
-" #define FXAA_PC 1 \n"
-" #define FXAA_GLSL_130 1 \n"
-" #define FXAA_QUALITY__PRESET 29 \n"
-" #define FXAA_GREEN_AS_LUMA 1 \n";
-
-
 const GLchar Yglprg_fxaa_f[] = 
 "  \n"
 "  \n"
