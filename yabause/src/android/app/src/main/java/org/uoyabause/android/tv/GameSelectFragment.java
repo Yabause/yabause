@@ -152,6 +152,23 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         setupUIElements();
         setupEventListeners();
 
+        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+        HeaderItem gridHeader = new HeaderItem(0, "PREFERENCES");
+        GridItemPresenter mGridPresenter = new GridItemPresenter();
+        ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
+        gridRowAdapter.add(getResources().getString(R.string.setting));
+
+        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+            //    gridRowAdapter.add(getResources().getString(R.string.invite));
+        }
+        gridRowAdapter.add(getResources().getString(R.string.donation));
+        gridRowAdapter.add(getString(R.string.load_game));
+        gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+
+        mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+        setAdapter(mRowsAdapter);
+
         myHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -204,7 +221,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private void loadRows() {
 
        int addindex = 0;
-        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+       mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
 
         //-----------------------------------------------------------------
         // Recent Play Game
@@ -310,6 +327,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private void prepareBackgroundManager() {
         mBackgroundManager = BackgroundManager.getInstance(getActivity());
         mBackgroundManager.attach(getActivity().getWindow());
+        mDefaultBackground = getResources().getDrawable(R.drawable.saturn);
         mMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(mMetrics);
     }
@@ -539,8 +557,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             gameinfo.lastplay_date = c.getTime();
             gameinfo.save();
         }else{
-            //ToDo オープン失敗めーっせーじ
-            return;
+            //ToDo オープン失敗めーっせ��            return;
         }
 
         Intent intent = new Intent(getActivity(), Yabause.class);
@@ -570,3 +587,4 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
 
 }
+
