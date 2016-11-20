@@ -1492,6 +1492,9 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
 
   if (input->linescreen == 1){
     prg = PG_LINECOLOR_INSERT;
+    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
+      prg = PG_LINECOLOR_INSERT_DESTALPHA;
+    }
   }
   else if (input->linescreen == 2){ // per line operation by HBLANK
     prg = PG_VDP2_PER_LINE_ALPHA;
@@ -1740,6 +1743,10 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
 
    if (input->linescreen == 1){
      prg = PG_LINECOLOR_INSERT;
+     if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
+       prg = PG_LINECOLOR_INSERT_DESTALPHA;
+     }
+
    }
    else if (input->linescreen == 2){ // per line operation by HBLANK
      prg = PG_VDP2_PER_LINE_ALPHA;
@@ -2069,6 +2076,10 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 
   if (input->linescreen == 1){
     prg = PG_LINECOLOR_INSERT;
+    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
+      prg = PG_LINECOLOR_INSERT_DESTALPHA;
+    }
+
   }
   else if (input->linescreen == 2){ // per line operation by HBLANK
     prg = PG_VDP2_PER_LINE_ALPHA;
@@ -2213,6 +2224,9 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 
   if (input->linescreen == 1){
     prg = PG_LINECOLOR_INSERT;
+    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
+      prg = PG_LINECOLOR_INSERT_DESTALPHA;
+    }
   }
   else if (input->linescreen == 2){ // per line operation by HBLANK
     prg = PG_VDP2_PER_LINE_ALPHA;
@@ -2822,6 +2836,7 @@ void YglRenderFrameBuffer(int from, int to) {
        }
      }
 
+     Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 0 );
      glDrawArrays(GL_TRIANGLES, 0, 6);
 
      glDepthFunc(GL_GEQUAL);
@@ -2962,7 +2977,7 @@ void YglRender(void) {
 
    YglSetVdp2Window();
 
-  // 12.14 CCRTMD                               // MSB perpxel transparent is not uported yet
+  // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
     YglRenderDestinationAlpha();
   }
@@ -3040,6 +3055,7 @@ void YglRender(void) {
           glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
 
           if (level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow) ){
+            level->prg[j].matrix = (GLfloat*)dmtx.m;
             YglCleanUpWindow(&level->prg[j]);
           }
 
@@ -3239,67 +3255,19 @@ int YglCleanUpWindow(YglProgram * prg){
   int logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
   int winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
 
-  if (bwin_cc0 || bwin_cc1){
-
+  if (bwin_cc0 || bwin_cc1) {
+    // Disable Color clacuration then draw outside of window
+    glDisable(GL_STENCIL_TEST);
+    glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_GREATER);
     glDisable(GL_BLEND);
-
-    if (prg->bwin0 && !prg->bwin1)
-    {
-      if (prg->logwin0)
-      {
-        glStencilFunc(GL_EQUAL, 0x01, 0x01);
-      }
-      else{
-        glStencilFunc(GL_NOTEQUAL, 0x01, 0x01);
-      }
-    }
-    else if (!prg->bwin0 && prg->bwin1) {
-
-      if (prg->logwin1)
-      {
-        glStencilFunc(GL_EQUAL, 0x02, 0x02);
-      }
-      else{
-        glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
-      }
-    }
-    else if (prg->bwin0 && prg->bwin1) {
-      // and
-      if (prg->winmode == 0x0)
-      {
-        if (prg->logwin0 == 1 && prg->logwin1 == 1){
-          glStencilFunc(GL_EQUAL, 0x03, 0x03);
-        }
-        else if (prg->logwin0 == 0 && prg->logwin1 == 0){
-          glStencilFunc(GL_GREATER, 0x01, 0x03);
-        }
-        else{
-          glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        }
-
-      }
-      // OR
-      else if (prg->winmode == 0x01)
-      {
-        if (prg->logwin0 == 1 && prg->logwin1 == 1){
-          glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-        }
-        else if (prg->logwin0 == 0 && prg->logwin1 == 0){
-          glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-        }
-        else{
-          glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        }
-      }
-    }
-    else{
-      glDisable(GL_STENCIL_TEST);
-      glStencilFunc(GL_ALWAYS, 0, 0xFF);
-    }
-
+    Ygl_setNormalshader(prg);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->quads);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->textcoords);
     glDrawArrays(GL_TRIANGLES, 0, prg->currentQuad / 2);
     glDepthFunc(GL_GEQUAL);
+    Ygl_cleanupNormal(prg);
+    glUseProgram(prg->prg);
   }
 
   glEnable(GL_BLEND);
@@ -3390,8 +3358,10 @@ void YglRenderDestinationAlpha(void) {
 
       if (level->prg[j].currentQuad != 0)
       {
-        if (level->prg[j].prgid == PG_LINECOLOR_INSERT || level->prg[j].prgid == PG_VDP2_PER_LINE_ALPHA ){
-          glDisable(GL_BLEND);
+        if (level->prg[j].prgid == PG_LINECOLOR_INSERT || 
+            level->prg[j].prgid == PG_LINECOLOR_INSERT_DESTALPHA ||
+            level->prg[j].prgid == PG_VDP2_PER_LINE_ALPHA ) {
+              glDisable(GL_BLEND);
         }
         else{
           if (level->prg[j].blendmode == 0){
@@ -3422,6 +3392,7 @@ void YglRenderDestinationAlpha(void) {
         glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
         
         if (level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
+          level->prg[j].matrix = (GLfloat*)dmtx.m;
           YglCleanUpWindow(&level->prg[j]);
         }
 
@@ -3614,6 +3585,7 @@ void YglChangeResolution(int w, int h) {
       break;
     }
   }
+
   _Ygl->rwidth = w;
   _Ygl->rheight = h;
 }
