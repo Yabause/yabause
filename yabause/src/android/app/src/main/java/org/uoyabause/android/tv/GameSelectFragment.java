@@ -25,11 +25,13 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.ProgressDialog;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -557,7 +559,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             gameinfo.lastplay_date = c.getTime();
             gameinfo.save();
         }else{
-            //ToDo オープン失敗めーっせ��            return;
+            return;
         }
 
         Intent intent = new Intent(getActivity(), Yabause.class);

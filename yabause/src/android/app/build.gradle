@@ -1,32 +1,22 @@
-apply plugin: 'com.android.model.application'
-apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.android.application'
 
-model {
-    android {
+android {
     compileSdkVersion 25
     buildToolsVersion "24.0.1"
 
-        defaultConfig.with {
-            applicationId = "org.uoyabause.android"
-            minSdkVersion.apiLevel = 19
-            targetSdkVersion.apiLevel = 22
-        }
-        //lintOptions {
-        //    disable 'MissingTranslation'
-       // }
-
-        //useLibrary 'org.apache.http.legacy'
+    defaultConfig {
+        applicationId "org.uoyabause.android"
+        minSdkVersion 19
+        targetSdkVersion 22
     }
-    android.buildTypes {
+
+    //useLibrary 'org.apache.http.legacy'
+    buildTypes {
         release {
-            minifyEnabled = false
-            proguardFiles.add(file('proguard-rules.txt'))
-            ndk {
-                debuggable = true
-            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-
 
 }
 
@@ -35,8 +25,6 @@ repositories {
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url 'http://fan-adn.github.io/nendSDK-Android-lib/library' }
 }
-
-
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
@@ -51,11 +39,11 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:25.0.0'
     compile 'com.android.support:cardview-v7:25.0.0'
     compile 'com.android.support:leanback-v17:25.0.0'
-    compile 'com.github.bumptech.glide:glide:3.4.+'
+    compile 'com.github.bumptech.glide:glide:3.4.0'
     compile 'commons-io:commons-io:2.4'
     compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
 
 }
 
 // ADD THIS AT THE BOTTOM
-apply plugin: 'com.google.gms.google-services'
+//apply plugin: 'com.google.gms.google-services'
