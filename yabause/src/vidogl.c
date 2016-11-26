@@ -606,7 +606,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
    
    Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow );
-
    
    alpha = 0xF8;
    talpha = 0xF8;
@@ -646,9 +645,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         break;
       case 3:
       if (addcolor){  // Add Color calcuration mode 
-      talpha = 0x80;  // Key value for color calcuration
+        talpha = 0x80;  // Key value for color calcuration
       }else{
-      talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+        talpha = 0xF8 - ((colorcl << 3) & 0xF8);
       }
     break;
       }
@@ -1081,6 +1080,14 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       {
          // 16 bpp Bank mode
          u16 i, j;
+
+         // hard/vdp2/hon/p09_20.htm#no9_21
+         // スプライトデータがRGB形式の場合は、スプライト用レジスタ0が選択されます。
+         u8 *cclist = (u8 *)&fixVdp2Regs->CCRSA;
+         cclist[0] & 0x1F;
+         u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
+         rgb_alpha |= priority;
+
          for(i = 0;i < sprite->h;i++)
          {
             for(j = 0;j < sprite->w;j++)
@@ -1089,31 +1096,25 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr += 2;
 
                //if (!(dot & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
-               if (!(dot & 0x8000) && !SPD) *texture->textdata++ = 0x00;
-         else if (dot == 0x0000){ *texture->textdata++ = 0x00; }
-               else if( (dot == 0x7FFF) && !END ) *texture->textdata++ = 0x0;
-         else if (MSB_SHADOW){
-           *texture->textdata++ = (0x80 | priority) << 24;
-         }
-         else if (dot == nromal_shadow){
-           *texture->textdata++ = (shadow_alpha << 24);
-         }
-         else if (SPCCCS == 0x03 && (dot&0x8000) ){
-           //if (dot & 0x8000){
-             *texture->textdata++ = SAT2YAB1(talpha, dot);
-           //}
-           //else{
-           //	   *texture->textdata++ = Vdp2ColorRamGetColor(dot, talpha);
-           //}
-         }
-         else{
-           if (dot & 0x8000){
-             *texture->textdata++ = SAT2YAB1(alpha, dot);
-           }
-           else{
-             *texture->textdata++ = Vdp2ColorRamGetColor(dot, alpha); 
-           }
-         }
+               if (!(dot & 0x8000) && !SPD) {
+                 *texture->textdata++ = 0x00;
+               } else if (dot == 0x0000){ 
+                 *texture->textdata++ = 0x00; 
+               } else if ((dot == 0x7FFF) && !END) {
+                 *texture->textdata++ = 0x0;
+               } else if (MSB_SHADOW){
+                  *texture->textdata++ = (0x80 | priority) << 24;
+               } else if (dot == nromal_shadow){
+                  *texture->textdata++ = (shadow_alpha << 24);
+               } else if (SPCCCS == 0x03 && (dot&0x8000) ){
+                  *texture->textdata++ = SAT2YAB1(talpha, dot);
+                }else{
+                  if (dot & 0x8000){
+                    *texture->textdata++ = SAT2YAB1(rgb_alpha, dot);
+                  }else{
+                   *texture->textdata++ = Vdp2ColorRamGetColor(dot, alpha); 
+                  }
+               }
             }
             texture->textdata += texture->w;
          }
