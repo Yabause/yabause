@@ -561,24 +561,31 @@ static void writed1busdest(u8 num, u32 val)
 {
    switch(num) { 
       case 0x0:
+        if ( val == 0x0000c100 ) {
+          int a = 0;
+        }
           ScuDsp->MD[0][ScuDsp->CT[0]] = val;
-          ScuDsp->CT[0]++;
-          ScuDsp->CT[0] &= 0x3f;
+          incFlg[0] = 1;
+          //ScuDsp->CT[0]++;
+          //ScuDsp->CT[0] &= 0x3f;
           return;
       case 0x1:
           ScuDsp->MD[1][ScuDsp->CT[1]] = val;
-          ScuDsp->CT[1]++;
-          ScuDsp->CT[1] &= 0x3f;
+          incFlg[1] = 1;
+          //ScuDsp->CT[1]++;
+          //ScuDsp->CT[1] &= 0x3f;
           return;
       case 0x2:
           ScuDsp->MD[2][ScuDsp->CT[2]] = val;
-          ScuDsp->CT[2]++;
-          ScuDsp->CT[2] &= 0x3f;
+          incFlg[2] = 1;
+          //ScuDsp->CT[2]++;
+          //ScuDsp->CT[2] &= 0x3f;
           return;
       case 0x3:
           ScuDsp->MD[3][ScuDsp->CT[3]] = val;
-          ScuDsp->CT[3]++;
-          ScuDsp->CT[3] &= 0x3f;
+          incFlg[3] = 1;
+          //ScuDsp->CT[3]++;
+          //ScuDsp->CT[3] &= 0x3f;
           return;
       case 0x4:
           ScuDsp->RX = val;
@@ -716,7 +723,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-	//LOG("DSP DMA01 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
+	LOG("DSP DMA01 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
 
 	// is A-Bus?
 	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
@@ -746,6 +753,77 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     sc->ProgControlPort.part.T0 = 0;
 }
 
+void dsp_dma_write_d0bus(scudspregs_struct *sc, int sel, int add, int count){
+
+  int i;
+  u32 Adr = (sc->WA0 << 2) & 0x0FFFFFFF;
+
+  // A-BUS?
+  if (Adr >= 0x02000000 && Adr < 0x05A00000){
+
+    if (add > 1) add = 1;
+
+    for (i = 0; i < count; i++)
+    {
+      u32 Val = sc->MD[sel][sc->CT[sel]];
+      Adr = (sc->WA0 << 2);
+      MappedMemoryWriteLong(Adr, Val);
+      sc->CT[sel]++;
+      sc->WA0 += add;
+      sc->CT[sel] &= 0x3F;
+    }
+  }
+  else
+    // B-BUS?
+    if (Adr >= 0x05A00000 && Adr < 0x06000000){
+
+      if (add == 0) add = 1;
+
+      for (i = 0; i < count; i++)
+      {
+        u32 Val = sc->MD[sel][sc->CT[sel]];
+        MappedMemoryWriteWord(Adr, (Val>>16));
+        MappedMemoryWriteWord(Adr+2, Val);
+        sc->CT[sel]++;
+        sc->CT[sel] &= 0x3F;
+        Adr += (add << 2);
+      }
+      sc->WA0 = sc->WA0 + ((add*count));
+    }
+  // CPU-BUS
+    else{
+
+      if (add == 0) add = 1;
+
+      if (add == 1){
+        for (i = 0; i < count; i++)
+        {
+          u32 Val = sc->MD[sel][sc->CT[sel]];
+          Adr = (sc->WA0 << 2);
+          MappedMemoryWriteLong(Adr, Val);
+          sc->CT[sel]++;
+          sc->CT[sel] &= 0x3F;
+          sc->WA0 += 1;
+        }
+      }
+      else{
+        for (i = 0; i < count; i++)
+        {
+          u32 Val = sc->MD[sel][sc->CT[sel]];
+          Adr = (sc->WA0 << 2);
+          MappedMemoryWriteLong(Adr, Val);
+          sc->CT[sel]++;
+          sc->CT[sel] &= 0x3F;
+          sc->WA0 += (add >> 1);
+        }
+      }
+
+    }
+
+    sc->ProgControlPort.part.T0 = 0;
+
+}
+
 void dsp_dma02(scudspregs_struct *sc, u32 inst)
 {
     u32 imm = ((inst & 0xFF));      
@@ -766,36 +844,8 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-	//LOG("DSP DMA02 addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), imm, add);
-
-    if (add != 1)
-    {
-        for ( i = 0; i < imm; i++)
-        {
-            u32 Val = sc->MD[sel][sc->CT[sel]];
-            u32 Adr = (sc->WA0 << 2);
-            //LOG("SCU DSP DMA02 D:%08x V:%08x", Adr, Val);
-            MappedMemoryWriteLong(Adr, Val);
-            sc->CT[sel]++;
-            sc->WA0 += add >> 1;
-            sc->CT[sel] &= 0x3F;
-        }
-    }
-    else{
-
-        for ( i = 0; i < imm; i++)
-        {
-            u32 Val = sc->MD[sel][sc->CT[sel]];
-            u32 Adr = (sc->WA0 << 2);
-
-            MappedMemoryWriteLong(Adr, Val);
-            sc->CT[sel]++;
-            sc->CT[sel] &= 0x3F;
-            sc->WA0 += 1;
-        }
-
-    }
-    sc->ProgControlPort.part.T0 = 0;
+	LOG("DSP DMA02 addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), imm, add);
+  dsp_dma_write_d0bus(sc, sel, add, imm);
 }
 
 void dsp_dma03(scudspregs_struct *sc, u32 inst)
@@ -829,9 +879,10 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 	case 7: add = 64; break;
 	}
 	
-	sel = (inst >> 8) & 0x3;
+	sel = (inst >> 8) & 0x7;
+  int index = 0;
 
-	//LOG("DSP DMA03 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
+	LOG("DSP DMA03 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
 
 	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
 	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
@@ -840,19 +891,32 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 		}
 		for (i = 0; i < Counter; i++)
 		{
-			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
-			sc->CT[sel]++;
-			sc->CT[sel] &= 0x3F;
+      if (sel == 0x04){
+        sc->ProgramRam[index] = MappedMemoryReadLong((sc->RA0 << 2));
+        index++;
+      }
+      else{
+        sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+        sc->CT[sel]++;
+        sc->CT[sel] &= 0x3F;
+      }
 			sc->RA0 += add;
+
 		}
 	}
 	else{
 		for (i = 0; i < Counter; i++)
 		{
-			sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
-			sc->CT[sel]++;
-			sc->CT[sel] &= 0x3F;
-			sc->RA0 += (add>>1);
+
+      if (sel == 0x04){
+        sc->ProgramRam[index] = MappedMemoryReadLong((sc->RA0 << 2));
+        index++;
+      }else{
+        sc->MD[sel][sc->CT[sel]] = MappedMemoryReadLong((sc->RA0 << 2));
+        sc->CT[sel]++;
+        sc->CT[sel] &= 0x3F;
+      }
+      sc->RA0 += (add >> 1);
 		}
 	}
 
@@ -918,19 +982,10 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-	//LOG("DSP DMA04 addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), Counter, add);
+	LOG("DSP DMA04 addr=%08X cnt= %d add = %d sel=%d\n", (sc->WA0 << 2), Counter, add,sel );
+  dsp_dma_write_d0bus(sc, sel, add, Counter);
 
-    for (i = 0; i < Counter; i++)
-    {
-        u32 Val = sc->MD[sel][sc->CT[sel]];
-        u32 Adr = (sc->WA0 << 2);
-        MappedMemoryWriteLong(Adr, Val);
-        sc->CT[sel]++;
-        sc->CT[sel] &= 0x3F;
-		sc->WA0 += add;
 
-    }
-    sc->ProgControlPort.part.T0 = 0;
 }
 
 void dsp_dma05(scudspregs_struct *sc, u32 inst)
@@ -1014,21 +1069,33 @@ void ScuExec(u32 timing) {
 
          instruction = ScuDsp->ProgramRam[ScuDsp->PC];
 
+         if (0x0806700a == instruction /*&& ScuDsp->PC == 0xcc*/){
+           //ScuBP->inbreakpoint = 1;
+           //if (ScuBP->BreakpointCallBack) ScuBP->BreakpointCallBack(ScuBP->codebreakpoint[i].addr);
+           //ScuBP->inbreakpoint = 0;
+
+           int a = 0;
+
+           //instruction = 0x08067009;
+         }
+
          incFlg[0] = 0;
          incFlg[1] = 0;
          incFlg[2] = 0;
          incFlg[3] = 0;
+
+         ScuDsp->ALU.all = ScuDsp->AC.all;
 
          // ALU commands
          switch (instruction >> 26)
          {
             case 0x0: // NOP
                //AC is moved as-is to the ALU
-               ScuDsp->ALU.all = ScuDsp->AC.part.L;
+              //ScuDsp->ALU.all = ScuDsp->AC.all;
                break;
             case 0x1: // AND
                //the upper 16 bits of AC are not modified for and, or, add, sub, rr and rl8
-               ScuDsp->ALU.all = (s64)(ScuDsp->AC.part.L & ScuDsp->P.part.L) | (ScuDsp->AC.part.L & 0xffff00000000);
+              ScuDsp->ALU.all = (s64)((u32)ScuDsp->AC.part.L & (u32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1043,7 +1110,7 @@ void ScuExec(u32 timing) {
                ScuDsp->ProgControlPort.part.C = 0;
                break;
             case 0x2: // OR
-               ScuDsp->ALU.all = (s64)(ScuDsp->AC.part.L | ((u32)ScuDsp->P.part.L)) | (ScuDsp->AC.part.L & 0xffff00000000);
+              ScuDsp->ALU.all = (u64)((u32)ScuDsp->AC.part.L | (u32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1058,7 +1125,7 @@ void ScuExec(u32 timing) {
                ScuDsp->ProgControlPort.part.C = 0;
                break;
             case 0x3: // XOR
-               ScuDsp->ALU.all = (s64)(ScuDsp->AC.part.L ^ (u32)ScuDsp->P.part.L) | (ScuDsp->AC.part.L & 0xffff00000000);
+              ScuDsp->ALU.all = (u64)((u32)ScuDsp->AC.part.L ^ (u32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1073,7 +1140,7 @@ void ScuExec(u32 timing) {
                ScuDsp->ProgControlPort.part.C = 0;
                break;
             case 0x4: // ADD
-               ScuDsp->ALU.all = (u64)((u32)ScuDsp->AC.part.L + (u32)ScuDsp->P.part.L) | (ScuDsp->AC.part.L & 0xffff00000000);
+              ScuDsp->ALU.all = (u64)((s32)ScuDsp->AC.part.L + (s32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1097,7 +1164,7 @@ void ScuExec(u32 timing) {
                //   ScuDsp->ProgControlPort.part.V = 0;
                break;
             case 0x5: // SUB
-               ScuDsp->ALU.all = (s64)((s32)ScuDsp->AC.part.L - (u32)ScuDsp->P.part.L) | (ScuDsp->AC.part.L & 0xffff00000000);
+              ScuDsp->ALU.all = (s64)((s32)ScuDsp->AC.part.L - (s32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1149,9 +1216,9 @@ void ScuExec(u32 timing) {
             case 0x8: // SR
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L & 0x1;
 
-               ScuDsp->ALU.all = (s64)((ScuDsp->AC.part.L & 0x80000000) | (ScuDsp->AC.part.L >> 1)) | (ScuDsp->AC.part.L & 0xffff00000000);
+               ScuDsp->ALU.all = (s64)((ScuDsp->AC.part.L & 0x80000000) | (ScuDsp->AC.part.L >> 1)) | (ScuDsp->AC.all & 0xffff00000000);
 
-               if (ScuDsp->ALU.all == 0)
+               if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
@@ -1168,9 +1235,9 @@ void ScuExec(u32 timing) {
             case 0x9: // RR
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L & 0x1;
 
-               ScuDsp->ALU.all = (s64)((ScuDsp->ProgControlPort.part.C << 31) | ((u32)ScuDsp->AC.part.L >> 1) | (ScuDsp->AC.part.L & 0xffff00000000));
+               ScuDsp->ALU.all = (u32)(ScuDsp->ProgControlPort.part.C << 31) | ((u32)ScuDsp->AC.part.L >> 1) | (ScuDsp->AC.all & 0xffff00000000);
                
-               if (ScuDsp->ALU.all == 0)
+               if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
@@ -1186,7 +1253,7 @@ void ScuExec(u32 timing) {
             case 0xA: // SL
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L >> 31;
 
-               ScuDsp->ALU.all = (s64)((u32)(ScuDsp->AC.part.L << 1)) | (ScuDsp->AC.part.L & 0xffff00000000);
+               ScuDsp->ALU.all = (s64)((u32)(ScuDsp->AC.part.L << 1)) | (ScuDsp->AC.all & 0xffff00000000);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1203,9 +1270,9 @@ void ScuExec(u32 timing) {
 
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L >> 31;
 
-               ScuDsp->ALU.all = (s64)(((u32)ScuDsp->AC.part.L << 1) | ScuDsp->ProgControlPort.part.C) | (ScuDsp->AC.part.L & 0xffff00000000);
+               ScuDsp->ALU.all = (s64)(((u32)ScuDsp->AC.part.L << 1) | ScuDsp->ProgControlPort.part.C) | (ScuDsp->AC.all & 0xffff00000000);
                
-               if (ScuDsp->ALU.all == 0)
+               if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
@@ -1218,9 +1285,9 @@ void ScuExec(u32 timing) {
                break;
             case 0xF: // RL8
 
-               ScuDsp->ALU.all = (s64)((u32)(ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF)) | (ScuDsp->AC.part.L & 0xffff00000000);
+              ScuDsp->ALU.all = (s64)((u32)(ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF)) | (ScuDsp->AC.all & 0xffff00000000);
 
-               if (ScuDsp->ALU.all == 0)
+              if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
@@ -1239,6 +1306,7 @@ void ScuExec(u32 timing) {
             default: break;
          }
 
+         
          switch (instruction >> 30) {
             case 0x00: // Operation Commands
 
@@ -1296,14 +1364,13 @@ void ScuExec(u32 timing) {
                      break;
                   case 3: // MOV [s],[d]
                      writed1busdest((instruction >> 8) & 0xF, readgensrc(instruction & 0xF));
-                     if (incFlg[0] != 0){ ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3f; incFlg[0] = 0; };
-                     if (incFlg[1] != 0){ ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3f; incFlg[1] = 0; };
-                     if (incFlg[2] != 0){ ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3f; incFlg[2] = 0; };
-                     if (incFlg[3] != 0){ ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3f; incFlg[3] = 0; };
                      break;
                   default: break;
                }
-
+               if (incFlg[0] != 0){ ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3f; incFlg[0] = 0; };
+               if (incFlg[1] != 0){ ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3f; incFlg[1] = 0; };
+               if (incFlg[2] != 0){ ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3f; incFlg[2] = 0; };
+               if (incFlg[3] != 0){ ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3f; incFlg[3] = 0; };
                break;
             case 0x02: // Load Immediate Commands
                if ((instruction >> 25) & 1)
@@ -1420,7 +1487,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           LOG("scu\t: JMP NS: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           //LOG("scu\t: JMP NS: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x43: // JMP NZS, Imm
                            if (!ScuDsp->ProgControlPort.part.Z || !ScuDsp->ProgControlPort.part.S)
@@ -1429,7 +1496,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           LOG("scu\t: JMP NZS: Z = %d, S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           //LOG("scu\t: JMP NZS: Z = %d, S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x44: // JMP NC, Imm
                            if (!ScuDsp->ProgControlPort.part.C)
@@ -1445,7 +1512,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           LOG("scu\t: JMP NT0: T0 = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.T0, (unsigned int)ScuDsp->jmpaddr);
+                           //LOG("scu\t: JMP NT0: T0 = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.T0, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x61: // JMP Z,Imm
                            if (ScuDsp->ProgControlPort.part.Z)
@@ -1461,7 +1528,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           LOG("scu\t: JMP S: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           //LOG("scu\t: JMP S: S = %d, jmpaddr = %08X\n", (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x63: // JMP ZS, Imm
                            if (ScuDsp->ProgControlPort.part.Z || ScuDsp->ProgControlPort.part.S)
@@ -1470,7 +1537,7 @@ void ScuExec(u32 timing) {
                               ScuDsp->delayed = 0; 
                            }
 
-                           LOG("scu\t: JMP ZS: Z = %d, S = %d, jmpaddr = %08X\n", ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
+                           //LOG("scu\t: JMP ZS: Z = %d, S = %d, jmpaddr = %08X\n", ScuDsp->ProgControlPort.part.Z, (unsigned int)ScuDsp->ProgControlPort.part.S, (unsigned int)ScuDsp->jmpaddr);
                            break;
                         case 0x64: // JMP C, Imm
                            if (ScuDsp->ProgControlPort.part.C)
