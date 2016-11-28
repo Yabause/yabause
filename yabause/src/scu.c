@@ -1095,7 +1095,7 @@ void ScuExec(u32 timing) {
                break;
             case 0x1: // AND
                //the upper 16 bits of AC are not modified for and, or, add, sub, rr and rl8
-              ScuDsp->ALU.all = (s64)((u32)ScuDsp->AC.part.L & (u32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
+              ScuDsp->ALU.part.L = (s64)((u32)ScuDsp->AC.part.L & (u32)ScuDsp->P.part.L);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1110,7 +1110,7 @@ void ScuExec(u32 timing) {
                ScuDsp->ProgControlPort.part.C = 0;
                break;
             case 0x2: // OR
-              ScuDsp->ALU.all = (u64)((u32)ScuDsp->AC.part.L | (u32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
+              ScuDsp->ALU.part.L = (u64)((u32)ScuDsp->AC.part.L | (u32)ScuDsp->P.part.L);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1125,7 +1125,7 @@ void ScuExec(u32 timing) {
                ScuDsp->ProgControlPort.part.C = 0;
                break;
             case 0x3: // XOR
-              ScuDsp->ALU.all = (u64)((u32)ScuDsp->AC.part.L ^ (u32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
+              ScuDsp->ALU.part.L = (u64)((u32)ScuDsp->AC.part.L ^ (u32)ScuDsp->P.part.L);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1140,7 +1140,7 @@ void ScuExec(u32 timing) {
                ScuDsp->ProgControlPort.part.C = 0;
                break;
             case 0x4: // ADD
-              ScuDsp->ALU.all = (u64)((s32)ScuDsp->AC.part.L + (s32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
+              ScuDsp->ALU.part.L = (u64)((s32)ScuDsp->AC.part.L + (s32)ScuDsp->P.part.L);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1164,7 +1164,7 @@ void ScuExec(u32 timing) {
                //   ScuDsp->ProgControlPort.part.V = 0;
                break;
             case 0x5: // SUB
-              ScuDsp->ALU.all = (s64)((s32)ScuDsp->AC.part.L - (s32)ScuDsp->P.part.L) | (ScuDsp->AC.all & 0xffff00000000);
+              ScuDsp->ALU.part.L = (s64)((s32)ScuDsp->AC.part.L - (s32)ScuDsp->P.part.L);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1216,26 +1216,26 @@ void ScuExec(u32 timing) {
             case 0x8: // SR
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L & 0x1;
 
-               ScuDsp->ALU.all = (s64)((ScuDsp->AC.part.L & 0x80000000) | (ScuDsp->AC.part.L >> 1)) | (ScuDsp->AC.all & 0xffff00000000);
+               ScuDsp->ALU.part.L = (ScuDsp->AC.part.L & 0x80000000) | (ScuDsp->AC.part.L >> 1);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
 
-               if ((s64)ScuDsp->ALU.part.L < 0)
+               if (ScuDsp->ALU.part.L & 0x80000000)
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
 
                //0x00000001 >> 1 will set the carry bit
                //ScuDsp->ProgControlPort.part.C = ScuDsp->ALU.part.L >> 31; would not handle this case
-
+                ScuDsp->AC.part.L = ScuDsp->ALU.part.L;
                break;
             case 0x9: // RR
                ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L & 0x1;
 
-               ScuDsp->ALU.all = (u32)(ScuDsp->ProgControlPort.part.C << 31) | ((u32)ScuDsp->AC.part.L >> 1) | (ScuDsp->AC.all & 0xffff00000000);
+               ScuDsp->ALU.part.L = ((u32)(ScuDsp->ProgControlPort.part.C) << 31) | ((u32)(ScuDsp->AC.part.L) >> 1) ;
                
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1244,48 +1244,52 @@ void ScuExec(u32 timing) {
 
                //rotating 0x00000001 right will produce 0x80000000 and set 
                //the sign bit.
-               if (ScuDsp->ALU.part.L < 0)
+               if (ScuDsp->ALU.part.L & 0x80000000)
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
 
+                //ScuDsp->AC.part.L = ScuDsp->ALU.part.L;
                break;
             case 0xA: // SL
-               ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L >> 31;
+               ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L >> 31) & 0x01;
 
-               ScuDsp->ALU.all = (s64)((u32)(ScuDsp->AC.part.L << 1)) | (ScuDsp->AC.all & 0xffff00000000);
+               ScuDsp->ALU.part.L = (u32)(ScuDsp->AC.part.L << 1);
 
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
 
-               if ((s64)ScuDsp->ALU.part.L < 0)
+               if (ScuDsp->ALU.part.L & 0x80000000)
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
 
+               // ScuDsp->AC.part.L = ScuDsp->ALU.part.L;
                break;
             case 0xB: // RL
 
-               ScuDsp->ProgControlPort.part.C = ScuDsp->AC.part.L >> 31;
+               ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L >> 31) & 0x01;
 
-               ScuDsp->ALU.all = (s64)(((u32)ScuDsp->AC.part.L << 1) | ScuDsp->ProgControlPort.part.C) | (ScuDsp->AC.all & 0xffff00000000);
+               ScuDsp->ALU.part.L = (((u32)ScuDsp->AC.part.L << 1) | ScuDsp->ProgControlPort.part.C);
                
                if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
                else
                   ScuDsp->ProgControlPort.part.Z = 0;
 			   
-               if ((s64)ScuDsp->ALU.part.L < 0)
+               if (ScuDsp->ALU.part.L & 0x80000000)
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
                
+               //ScuDsp->AC.part.L = ScuDsp->ALU.part.L;
                break;
             case 0xF: // RL8
 
-              ScuDsp->ALU.all = (s64)((u32)(ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF)) | (ScuDsp->AC.all & 0xffff00000000);
+              ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L >> 24) & 0x01;
+              ScuDsp->ALU.part.L  = ((u32)(ScuDsp->AC.part.L << 8) | ((ScuDsp->AC.part.L >> 24) & 0xFF)) ;
 
               if (ScuDsp->ALU.part.L == 0)
                   ScuDsp->ProgControlPort.part.Z = 1;
@@ -1294,14 +1298,14 @@ void ScuExec(u32 timing) {
 
                //rotating 0x00ffffff left 8 will produce 0xffffff00 and
                //set the sign bit
-               if ((s64)ScuDsp->ALU.part.L < 0)
+               if ( ScuDsp->ALU.part.L & 0x80000000 )
                   ScuDsp->ProgControlPort.part.S = 1;
                else
                   ScuDsp->ProgControlPort.part.S = 0;
 
                //rotating 0xff000000 left 8 will produce 0x000000ff and set the
                //carry bit
-               ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L >> 24) & 1;
+               //ScuDsp->ProgControlPort.part.C = (ScuDsp->AC.part.L >> 24) & 0x01;
                break;
             default: break;
          }
