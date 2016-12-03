@@ -278,6 +278,7 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
   int vidwidth, vidheight;
   float fontsize = 14.0f;
   int maxlen = 0;
+  int i = 0;
 
   if (message->type != OSDMSG_FPS) return;
 
@@ -304,18 +305,19 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
 
   nvgText(vg, LeftX, TxtY, message->message, NULL);
   TxtY += fontsize;
-
+#if 0
   int linecnt = (vidheight - TxtY) / fontsize;
   int start_point = current_history_index - linecnt;
   if (start_point < 0) {
     start_point = MAX_LOG_HISTORY - start_point;
   }
-  for (int i = 0; i < linecnt; i++){
+  for (i = 0; i < linecnt; i++){
     nvgText(vg, LeftX, TxtY, log_histroy[start_point], NULL);
     start_point++;
     start_point %= MAX_LOG_HISTORY;
     TxtY += fontsize;
   }
+#endif
    ProfileDrawGraph();
    nvgEndFrame(vg);
 
