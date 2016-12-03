@@ -18,23 +18,28 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-#ifndef YABAUSEGL_H
-#define YABAUSEGL_H
+#ifndef YABAUSESOFTGL_H
+#define YABAUSESOFTGL_H
 
-#include <QGLWidget>
+#include <QWidget>
+#include <QImage>
 
-class YabauseGL : public QGLWidget
+class YabauseSoftGL : public QWidget
 {
 	Q_OBJECT
-	
+
 public:
-	YabauseGL( QWidget* parent = 0 );
-	
+	YabauseSoftGL( QWidget* parent = 0 );
+
 	void updateView( const QSize& size = QSize() );
+	virtual void swapBuffers();
+	QImage grabFrameBuffer(bool withAlpha = false);
+	virtual void paintEvent( QPaintEvent * event );
+	void makeCurrent();
 
 protected:
 	virtual void showEvent( QShowEvent* event );
 	virtual void resizeGL( int w, int h );
 };
 
-#endif // YABAUSEGL_H
+#endif // YABAUSESOFTGL_H

@@ -1,6 +1,4 @@
-/*  Copyright 2005 Guillaume Duhamel
-	Copyright 2005-2006 Theo Berkau
-	Copyright 2008 Filipe Azevedo <pasnox@gmail.com>
+/*	Copyright 2016 Guillaume Duhamel
 
 	This file is part of Yabause.
 
@@ -18,23 +16,39 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-#ifndef YABAUSEGL_H
-#define YABAUSEGL_H
+#ifndef YABAUSEGLPROXY_H
+#define YABAUSEGLPROXY_H
 
-#include <QGLWidget>
+#include <QWidget>
 
-class YabauseGL : public QGLWidget
+class YabauseGL;
+class YabauseSoftGL;
+
+class YabauseGLProxy : public QObject
 {
 	Q_OBJECT
-	
-public:
-	YabauseGL( QWidget* parent = 0 );
-	
-	void updateView( const QSize& size = QSize() );
 
 protected:
-	virtual void showEvent( QShowEvent* event );
-	virtual void resizeGL( int w, int h );
+	int mImpl;
+	YabauseGL * mYabauseGL;
+	YabauseSoftGL * mYabauseSoft;
+
+public:
+	static const int DEFAULT;
+	static const int OPENGL;
+	static const int SOFTWARE;
+
+	YabauseGLProxy( QWidget* parent = 0, int impl = DEFAULT );
+
+	void updateView( const QSize& size = QSize() );
+	virtual void swapBuffers();
+	QImage grabFrameBuffer(bool withAlpha = false);
+	void makeCurrent();
+	void setMouseTracking(bool track);
+	void resize(int width, int height);
+
+	QWidget * getWidget();
+	void select(QWidget * parent, int impl);
 };
 
-#endif // YABAUSEGL_H
+#endif // YABAUSEGLPROXY_H

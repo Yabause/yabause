@@ -36,7 +36,7 @@
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
-#include "../YabauseGL.h"
+#include "../YabauseGLProxy.h"
 #include "../QtYabause.h"
 #include "../CommonDialogs.h"
 
@@ -97,9 +97,9 @@ UIYabause::UIYabause( QWidget* parent )
 		cbVideoDriver->addItem( VIDCoreList[i]->Name, VIDCoreList[i]->id );
 	cbVideoDriver->blockSignals( false );
 	// create glcontext
-	mYabauseGL = new YabauseGL( this );
+	mYabauseGL = new YabauseGLProxy( this );
 	// and set it as central application widget
-	setCentralWidget( mYabauseGL );
+	setCentralWidget( mYabauseGL->getWidget() );
 	// create log widget
 	teLog = new QTextEdit( this );
 	teLog->setReadOnly( true );
@@ -137,6 +137,7 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( hideMouseTimer, SIGNAL( timeout() ), this, SLOT( hideMouse() ));
 	connect( mouseCursorTimer, SIGNAL( timeout() ), this, SLOT( cursorRestore() ));
 	connect( mYabauseThread, SIGNAL( toggleEmulateMouse( bool ) ), this, SLOT( toggleEmulateMouse( bool ) ) );
+	connect( mYabauseThread, SIGNAL( disableGL() ), this, SLOT( disableGL() ) );
 
 	// Load shortcuts
 	VolatileSettings* vs = QtYabause::volatileSettings();
@@ -959,10 +960,6 @@ void UIYabause::on_aFileScreenshot_triggered()
 	for ( int i = 0; i < filters.count(); i++ )
 		filters[i] = QtYabause::translate( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
 
-#if defined(HAVE_LIBGL) && !defined(QT_OPENGL_ES_1) && !defined(QT_OPENGL_ES_2)
-	glReadBuffer(GL_FRONT);
-#endif
-
 	// take screenshot of gl view
 	QImage screenshot = mYabauseGL->grabFrameBuffer();
 	
@@ -1291,4 +1288,10 @@ void UIYabause::reset()
 void UIYabause::toggleEmulateMouse( bool enable )
 {
 	emulateMouse = enable;
+}
+
+void UIYabause::disableGL( )
+{
+	mYabauseGL->select(this, YabauseGLProxy::SOFTWARE);
+	setCentralWidget( mYabauseGL->getWidget() );
 }

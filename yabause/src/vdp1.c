@@ -38,6 +38,7 @@ u8 * Vdp1FrameBuffer;
 
 VideoInterface_struct *VIDCore=NULL;
 extern VideoInterface_struct *VIDCoreList[];
+int VideoUseGL = 1;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1685,4 +1686,11 @@ void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
 
 void VIDDummyVdp2DispOff(void)
 {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void VideoDisableGL(void)
+{
+   VideoUseGL = 0;
 }

@@ -18,13 +18,13 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-#include "YabauseGL.h"
+#include "YabauseSoftGL.h"
 #include "QtYabause.h"
 #include "../vidsoft.h"
 
 #include <QPainter>
 
-YabauseGL::YabauseGL( QWidget* p )
+YabauseSoftGL::YabauseSoftGL( QWidget* p )
 	: QWidget( p )
 {
 	setFocusPolicy( Qt::StrongFocus );
@@ -35,23 +35,23 @@ YabauseGL::YabauseGL( QWidget* p )
 	}
 }
 
-void YabauseGL::showEvent( QShowEvent* e )
+void YabauseSoftGL::showEvent( QShowEvent* e )
 {
 }
 
-void YabauseGL::resizeGL( int w, int h )
+void YabauseSoftGL::resizeGL( int w, int h )
 { updateView( QSize( w, h ) ); }
 
-void YabauseGL::updateView( const QSize& s )
+void YabauseSoftGL::updateView( const QSize& s )
 {
 }
 
-void YabauseGL::swapBuffers()
+void YabauseSoftGL::swapBuffers()
 {
 	this->update(this->rect());
 }
 
-QImage YabauseGL::grabFrameBuffer(bool withAlpha)
+QImage YabauseSoftGL::grabFrameBuffer(bool withAlpha)
 {
 	int buf_width, buf_height;
 
@@ -70,7 +70,7 @@ QImage YabauseGL::grabFrameBuffer(bool withAlpha)
 	return image;
 }
 
-void YabauseGL::paintEvent( QPaintEvent * event )
+void YabauseSoftGL::paintEvent( QPaintEvent * event )
 {
 	int buf_width, buf_height;
 
@@ -90,6 +90,6 @@ void YabauseGL::paintEvent( QPaintEvent * event )
 	p.drawImage(this->rect(), image);
 }
 
-void YabauseGL::makeCurrent()
+void YabauseSoftGL::makeCurrent()
 {
 }
