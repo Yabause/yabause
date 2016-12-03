@@ -134,5 +134,8 @@
     <string name="invitation_cta">Install!</string>
     <string name="invite">Introduce</string>
     <string name="invite_message">Would you like to introduce this app?</string>
+    <string name="video_resolution">Rendering Resolution</string>
+    <string name="choose_video_resolution">Choose Rendering Resolution</string>
+
 </resources>
 	
