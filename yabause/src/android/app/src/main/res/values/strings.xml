@@ -32,9 +32,10 @@
     <string name="skip">Skip</string>
     <string name="donation">Support</string>
     <string name="donate_message">
-        Support our development!\n\n
-		You can support the upstream project of uoYabause by making a donation directly on their website http://yabause.org . 
-		You can also support this project uoYabause by clicking the donate button below, this will help towards development of more accurate emulation, input devices and a wider range of devices.
+        Support our development! \n\n
+        You can support the upstream project of uoYabause by making a donation directly on their website http://yabause.org.
+        You can also support this project uoYabause by clicking the donate button below, this will help towards development of more accurate emulation, input devices and a wider range of devices.
+        This screen and advertisement screen will not be shown, If you have donated.
     </string>
     <string name="thank_you">Thank you for your donation!</string>
     <string name="error_consume">Faild to consume.</string>
@@ -126,6 +127,9 @@
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
     <string name="sound_engine">Sound Engine</string>
     <string name="choose_sound_engine">Choose sound engine</string>
+    <string name="video_resolution">Rendering Resolution</string>
+    <string name="choose_video_resolution">Choose Rendering Resolution</string>
+
     <string name="video_resolution">Rendering Resolution</string>
     <string name="choose_video_resolution">Choose Rendering Resolution</string>
 
