@@ -30,7 +30,7 @@ extern "C" {
 #include "../screen.h"
 }
 
-class YabauseGL;
+class YabauseGLProxy;
 class QTextEdit;
 class QDockWidget;
 
@@ -80,7 +80,7 @@ public:
 	virtual bool eventFilter( QObject* o, QEvent* e );
 
 protected:
-	YabauseGL* mYabauseGL;
+	YabauseGLProxy* mYabauseGL;
 	YabauseThread* mYabauseThread;
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
@@ -116,6 +116,7 @@ public slots:
 	void hideMouse();
 	void cursorRestore();
 	void toggleEmulateMouse( bool enable );
+	void disableGL();
 
 	void breakpointHandlerSH1(bool displayMessage);
 	void breakpointHandlerMSH2(bool displayMessage);

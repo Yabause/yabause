@@ -68,6 +68,7 @@ signals:
 	void pause( bool paused );
 	void reset();
 	void toggleEmulateMouse( bool enable );
+	void disableGL();
 };
 
 #endif // YABAUSETHREAD_H

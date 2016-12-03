@@ -152,7 +152,8 @@ set( yabause_qt_MOC_HEADERS
     ui/UIHexEditor.h
     ui/UIMemoryEditor.h
     ui/UIMemorySearch.h
-	YabauseGL.h
+	YabauseSoftGL.h
+	YabauseGLProxy.h
 	VolatileSettings.h
 	Settings.h
 	YabauseThread.h )
@@ -200,13 +201,14 @@ set( yabause_qt_SOURCES
     ui/UIMemorySearch.cpp
 	Settings.cpp
 	VolatileSettings.cpp
+	YabauseGLProxy.cpp
+	YabauseSoftGL.cpp
 	YabauseThread.cpp
 	Arguments.cpp )
 
 if( OPENGL_FOUND )
+	set( yabause_qt_MOC_HEADERS ${yabause_qt_MOC_HEADERS} YabauseGL.h )
 	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseGL.cpp )
-else()
-	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseSoftGL.cpp )
 endif()
 
 if(Qt5_FOUND) 

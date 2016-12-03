@@ -55,6 +55,14 @@ void YabauseThread::initEmulation()
 {
 	reloadSettings();
 	mInit = YabauseInit( &mYabauseConf );
+#ifdef HAVE_LIBGL
+	if (mInit == -1)
+	{
+		VideoDisableGL();
+		emit disableGL();
+		mInit = YabauseInit( &mYabauseConf );
+	}
+#endif
 	SetOSDToggle(showFPS);
 }
 
