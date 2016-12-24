@@ -78,12 +78,13 @@ int g_buf_height = -1;
 int g_major_version=0;
 int g_minor_version=0;
 int g_minorminor_version=0;
-
+int g_pad_mode = -1;
 int g_EnagleFPS = 0;
 int g_CpuType = 2;
 int g_VideoFilter = 0;
 int g_PolygonGenerationMode = 0;
 static int g_SoundEngine = 0;
+static int g_resolution_mode = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -109,6 +110,7 @@ int s_vidcoretype = VIDCORE_OGL;
 int s_player2Enable = -1;
 
 #define MAKE_PAD(a,b) ((a<<24)|(b))
+void update_pad_mode();
 
 enum RenderThreadMessage {
         MSG_NONE = 0,
@@ -595,9 +597,7 @@ JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_toggleShowFps( 
 
 JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_pause( JNIEnv* env )
 {
-	yprintf("sending MSG_PAUSE 1");
     pthread_mutex_lock(&g_mtxGlLock);
-	yprintf("sending MSG_PAUSE 2");
     g_msg = MSG_PAUSE;
     pthread_mutex_unlock(&g_mtxGlLock);
 }
@@ -700,10 +700,17 @@ jint Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject 
     jboolean dummy;
     const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
 
+    pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_SAVE_STATE;
-    //YabSaveStateSlot(path, 1);
+    pthread_mutex_unlock(&g_mtxGlLock);
+
     (*env)->ReleaseStringUTFChars(env,path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
     return 0;
 }
 
@@ -712,11 +719,17 @@ jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject 
     jboolean dummy;
     const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
 
+    pthread_mutex_lock(&g_mtxGlLock);
     strcpy(s_savepath,cpath);
     g_msg =MSG_LOAD_STATE;
-    //YabLoadStateSlot(path, 1);
+    pthread_mutex_unlock(&g_mtxGlLock);
 
     (*env)->ReleaseStringUTFChars(env,path, cpath);
+
+    pthread_mutex_lock(&g_mtxFuncSync); 
+    pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
+    pthread_mutex_unlock(&g_mtxFuncSync);
+
     return 0;
 }
 
@@ -1005,6 +1018,7 @@ int initEgl( ANativeWindow* window )
     yinit.video_filter_type = g_VideoFilter;
 	yinit.polygon_generation_mode = g_PolygonGenerationMode;
 	yinit.use_new_scsp = g_SoundEngine;
+    yinit.resolution_mode =g_resolution_mode;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1012,38 +1026,7 @@ int initEgl( ANativeWindow* window )
       return -1;
     }
 
-    PerPortReset();
-    padbits = PerPadAdd(&PORTDATA1);
-    PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	
-	if( s_player2Enable != -1 ) {
-		padbits = PerPadAdd(&PORTDATA2);
-		PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	}
+    update_pad_mode();
 
     //ScspSetFrameAccurate(1);
 
@@ -1155,14 +1138,121 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-//	yprintf("press: %d,%d",player,key);
+	//yprintf("press: %d,%d",player,key);
     PerKeyDown(MAKE_PAD(player,key));
 }
+
+void update_pad_mode(){
+    void * padbits;
+    if( g_pad_mode == 0 ) {
+
+        PerPortReset();
+        padbits = PerPadAdd(&PORTDATA1);
+
+        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        
+        if( s_player2Enable != -1 ) {
+            padbits = PerPadAdd(&PORTDATA2);
+        
+            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        }
+
+    }else if( g_pad_mode == 1 ){
+
+        PerPortReset();
+        padbits = Per3DPadAdd(&PORTDATA1);
+
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+        PerSetKey(MAKE_PAD(0,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
+        PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+        PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        
+        if( s_player2Enable != -1 ) {
+            padbits = Per3DPadAdd(&PORTDATA2);
+        
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+            PerSetKey(MAKE_PAD(1,PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
+            PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
+            PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
+        }
+    }
+
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_switch_1padmode( JNIEnv* env, jobject obj, jint mode )
+{
+    g_pad_mode = mode;
+    update_pad_mode();
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint key, jint player, jint val )
+{
+	//yprintf("axis: %d,%d,%d",player,key,val);
+    PerAxisValue(MAKE_PAD(player,key),val); // from 0 to 255
+}
+
+
+
+
 
 void
 Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-//	yprintf("release: %d,%d",player,key);
+	//yprintf("release: %d,%d",player,key);
     PerKeyUp(MAKE_PAD(player,key));
 }
 
@@ -1188,6 +1278,12 @@ void
 Java_org_uoyabause_android_YabauseRunnable_setSoundEngine( JNIEnv* env, jobject obj, jint sound_engine )
 {
     g_SoundEngine = sound_engine;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setResolutionMode( JNIEnv* env, jobject obj, jint resolution_mode )
+{
+    g_resolution_mode = resolution_mode;
 }
 
 void
@@ -1319,15 +1415,31 @@ void renderLoop()
                 break;
 
             case MSG_SAVE_STATE:
+            {
+                int ret;
                 YUI_LOG("MSG_SAVE_STATE");
-                YabSaveStateSlot(s_savepath, 1);
-                break;
+                if( (ret = YabSaveStateSlot(s_savepath, 1)) != 0 ){
+                    yprintf("State save is failed %d",ret);
+                }else{
+                    yprintf("State save is succsesfull!");
+                }
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);                
+            }
+            break;
 
             case MSG_LOAD_STATE:
+                YUI_LOG("MSG_LOAD_STATE");
                 YabLoadStateSlot(s_savepath, 1);
+                pthread_mutex_lock(&g_mtxFuncSync);
+                pthread_cond_signal(&g_cndFuncSync);
+                pthread_mutex_unlock(&g_mtxFuncSync);
+
                 break;
             case MSG_PAUSE:
                 YUI_LOG("MSG_PAUSE");
+                YabFlushBackups();
                 ScspMuteAudio(SCSP_MUTE_SYSTEM);
                 pause = 1;
                 break;

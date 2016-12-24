@@ -14,20 +14,32 @@ const GLchar Yglprg_fxaa_v[] =
 " gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); \n"
 " } \n";
 
-const GLchar Yglprg_fxaa_f[] = 
+const GLchar Yglprg_fxaa_f_option_nv[] =
 #if defined (_OGLES3_)
 "#version 300 es \n"
 #else
 "#version 330 \n"
 #endif
-" #extension GL_ARB_gpu_shader5: enable \n"
 " precision mediump float; \n"
 " #define FXAA_PC 1 \n"
-" #define FXAA_GLSL_120 0 \n"
 " #define FXAA_GLSL_130 1 \n"
-" #define FXAA_QUALITY__PRESET 39 \n"
-"  \n"
-" #define FXAA_GREEN_AS_LUMA 1 \n"
+" #define FXAA_QUALITY__PRESET 29 \n"
+" #define FXAA_GREEN_AS_LUMA 1 \n";
+
+const GLchar Yglprg_fxaa_f_option_others[] =
+#if defined (_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"#extension GL_ARB_gpu_shader5: enable \n"
+" precision mediump float; \n"
+" #define FXAA_PC 1 \n"
+" #define FXAA_GLSL_130 1 \n"
+" #define FXAA_QUALITY__PRESET 29 \n"
+" #define FXAA_GREEN_AS_LUMA 1 \n";
+
+const GLchar Yglprg_fxaa_f[] = 
 "  \n"
 "  \n"
 " /*--------------------------------------------------------------------------*/ \n"
@@ -1059,11 +1071,12 @@ const GLchar Yglprg_fxaa_f[] =
 "  \n"
 " uniform sampler2D uSourceTex; \n"
 " uniform vec2 RCPFrame; \n"
-" varying vec2 vTexCoord; \n"
+" in vec2 vTexCoord; \n"
+" out vec4 fragColor;            \n"
 "  \n"
 " void main(void) \n"
 " { \n"
-    " gl_FragColor = FxaaPixelShader(vTexCoord, \n"
+    " fragColor = FxaaPixelShader(vTexCoord, \n"
 				" FxaaFloat4(0.0f, 0.0f, 0.0f, 0.0f),		// FxaaFloat4 fxaaConsolePosPos, \n"
         " uSourceTex,							// FxaaTex tex, \n"
         " uSourceTex,							// FxaaTex fxaaConsole360TexExpBiasNegOne, \n"
