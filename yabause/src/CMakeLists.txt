@@ -60,9 +60,6 @@ if (ANDROID)
 	include_directories(./ ./nanovg)		
 	set(yabause_SOURCES
 		${yabause_SOURCES}
-		yglcache.c
-		ygles.c
-		yglshaderes.c 
 		nanovg/nanovg.c 
 		nanovg/nanovg_osdcore.h 
 		nanovg/nanovg_osdcore.c
@@ -256,6 +253,9 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 
 		include_directories(./ ./nanovg)
 		set(yabause_SOURCES ${yabause_SOURCES} 
+			yglcache.c
+			ygles.c
+			yglshaderes.c 
 			nanovg/nanovg.c 
 			nanovg/nanovg_osdcore.h 
 			nanovg/nanovg_osdcore.c
