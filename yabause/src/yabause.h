@@ -55,6 +55,7 @@ typedef struct
    int polygon_generation_mode;
    int play_ssf;
    int use_new_scsp;
+   int resolution_mode;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0

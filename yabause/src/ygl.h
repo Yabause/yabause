@@ -262,6 +262,7 @@ enum
    PG_VDP2_DRAWFRAMEBUFF,    
    PG_WINDOW,
    PG_LINECOLOR_INSERT,
+   PG_LINECOLOR_INSERT_DESTALPHA,
    PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW,
@@ -338,9 +339,10 @@ typedef struct
 
 typedef enum
 {
-	AA_NONE = 0,
-	AA_FXAA,
-	AA_SCANLINE_FILTER,
+  AA_NONE = 0,
+  AA_FXAA,
+  AA_SCANLINE_FILTER,
+  AA_BILNEAR_FILTER,
 } AAMODE;
 
 typedef enum
@@ -350,10 +352,18 @@ typedef enum
 	GPU_TESSERATION
 } POLYGONMODE;
 
+typedef enum
+{
+	RES_NATIVE = 0,
+	RES_4x,
+	RES_2x,
+    RES_ORIGINAL
+} RESOLUTION_MODE;
 
 typedef enum {
 	VDP_SETTING_FILTERMODE = 0,
-	VDP_SETTING_POLYGON_MODE
+	VDP_SETTING_POLYGON_MODE,
+    VDP_SETTING_RESOLUTION_MODE
 } enSettings;
 
 
@@ -445,6 +455,7 @@ typedef struct {
 
    AAMODE aamode;
    POLYGONMODE polygonmode;
+   RESOLUTION_MODE resolution_mode;
    YglTextureManager * texture_manager;
    GLsync sync;
     GLuint default_fbo;

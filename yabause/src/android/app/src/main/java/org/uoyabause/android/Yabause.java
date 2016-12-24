@@ -77,7 +77,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
 import android.content.pm.PackageManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.bumptech.glide.load.engine.Resource;
@@ -103,6 +105,7 @@ class YabauseRunnable implements Runnable
     public static native void deinit();
     public static native void exec();
     public static native void press(int key, int player);
+    public static native void axis(int key, int player, int val);
     public static native void release(int key, int player);
     public static native int initViewport( Surface sf, int width, int hieght);
     public static native int drawScreen();
@@ -122,9 +125,11 @@ class YabauseRunnable implements Runnable
     public static native void resume();
     public static native void setPolygonGenerationMode( int pg );
     public static native void setSoundEngine( int engine );
-
+    public static native void setResolutionMode( int resoution_mode );
     public static native void openTray();
     public static native void closeTray();
+
+    public static native void switch_padmode( int mode );
 
 
     private boolean inited;
@@ -354,6 +359,33 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
             }
         };
         findViewById(R.id.button_report).setOnClickListener(ReportClickListener);
+
+        ((Switch)findViewById(R.id.pad_mode_switch)).setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener(){
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+                YabausePad padv = (YabausePad)findViewById(R.id.yabause_pad);
+
+               if( isChecked ) {
+                   Yabause.this.padm.setAnalogMode(PadManager.MODE_ANALOG);
+                   YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG);
+                   padv.setPadMode(PadManager.MODE_ANALOG);
+               }else{
+                   Yabause.this.padm.setAnalogMode(PadManager.MODE_HAT);
+                   YabauseRunnable.switch_padmode(PadManager.MODE_HAT);
+                   padv.setPadMode(PadManager.MODE_HAT);
+               }
+
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Yabause.this);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putBoolean("pref_analog_pad", isChecked);
+                editor.apply();
+
+                Yabause.this.showBottomMenu();
+
+            }
+        });
+
 
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
@@ -771,6 +803,25 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
         Integer isound = new Integer(ssound);
         YabauseRunnable.setSoundEngine(isound);
         Log.d(TAG, "setSoundEngine " + isound.toString());
+
+        boolean analog = sharedPref.getBoolean("pref_analog_pad", false);
+        ((Switch)findViewById(R.id.pad_mode_switch)).setChecked(analog);
+        Log.d(TAG, "analog pad? " + analog);
+        YabausePad padv = (YabausePad)findViewById(R.id.yabause_pad);
+
+        if( analog ) {
+            Yabause.this.padm.setAnalogMode(PadManager.MODE_ANALOG);
+            YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG);
+            padv.setPadMode(PadManager.MODE_ANALOG);
+        }else{
+            Yabause.this.padm.setAnalogMode(PadManager.MODE_HAT);
+            YabauseRunnable.switch_padmode(PadManager.MODE_HAT);
+            padv.setPadMode(PadManager.MODE_HAT);
+        }
+
+        Integer resolution_setting =  new Integer(sharedPref.getString("pref_resolution","0"));
+        YabauseRunnable.setResolutionMode(resolution_setting);
+
     }
 
     public String getBiosPath() {

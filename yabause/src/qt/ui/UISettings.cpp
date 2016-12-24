@@ -82,12 +82,19 @@ const Items mVideoFormats = Items()
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
 	<< Item("1", "FXAA")
-	<< Item("2", "Scanline filter");
+	<< Item("2", "Scanline filter")
+  << Item("3", "Bilinear");
 
 const Items mPolygonGenerationMode = Items()
 	<< Item("0", "Triangles usin perspectiove correction")
 	<< Item("1", "CPU Tesseration")
 	<< Item("2", "GPU Tesseration");
+
+const Items mResolutionMode = Items()
+<< Item("0", "Native(native resolution of whindow)")
+<< Item("1", "4x")
+<< Item("2", "2x")
+<< Item("3", "Original");
 
 UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
@@ -332,6 +339,10 @@ void UISettings::loadCores()
 	foreach(const Item& it, mPolygonGenerationMode)
 		cbPolygonGeneration->addItem(QtYabause::translate(it.Name), it.id);
 
+  // Resolution
+  foreach(const Item& it, mResolutionMode)
+    cbResolution->addItem(QtYabause::translate(it.Name), it.id);
+
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )
 		cbSoundCore->addItem( QtYabause::translate( SNDCoreList[i]->Name ), SNDCoreList[i]->id );
@@ -487,6 +498,7 @@ void UISettings::loadSettings()
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
 	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
 	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
+  cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
 
    cbEnableIntegerPixelScaling->setChecked(s->value("Video/EnableIntegerPixelScaling", false).toBool());
    sbIntegerPixelScalingMultiplier->setValue(s->value("Video/IntegerPixelScalingMultiplier", 2).toInt());
@@ -577,7 +589,7 @@ void UISettings::saveSettings()
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
 	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
-
+  s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());
    s->setValue("Video/EnableIntegerPixelScaling", cbEnableIntegerPixelScaling->isChecked());
    s->setValue("Video/IntegerPixelScalingMultiplier", sbIntegerPixelScalingMultiplier->value());
 
