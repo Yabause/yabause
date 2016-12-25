@@ -45,6 +45,11 @@ public:
 	void makeCurrent();
 #endif
 
+  int viewport_width_;
+  int viewport_height_;
+  int viewport_origin_x_;
+  int viewport_origin_y_;
+
 protected:
 	virtual void showEvent( QShowEvent* event );
 	virtual void resizeGL( int w, int h );
