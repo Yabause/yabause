@@ -65,7 +65,7 @@ BOOL _frame_skip = NO;
 BOOL _aspect_rate = NO;
 int _filter = 0;
 int _sound_engine = 0;
-
+int _rendering_resolution = 0;
 
 @interface GameViewController () {
    int command;
@@ -236,6 +236,11 @@ int GetVideFilterType(){
     return _filter;
 }
 
+int GetResolutionType(){
+    NSLog (@"GetResolutionType %d",_rendering_resolution);
+    return _rendering_resolution;
+}
+
 const char * GetCartridgePath(){
     BOOL isDir;
     NSFileManager *filemgr;
@@ -360,6 +365,7 @@ int GetPlayer2Device(){
     _aspect_rate = [[dic objectForKey: @"keep aspect rate"]boolValue];
     _filter = 0; //[0; //userDefaults boolForKey: @"filter"];
     _sound_engine = [[dic objectForKey: @"sound engine"] intValue];
+    _rendering_resolution = [[dic objectForKey: @"rendering resolution"] intValue];
     
     /*
     NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
