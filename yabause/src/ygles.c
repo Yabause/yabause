@@ -2960,7 +2960,22 @@ void YglRender(void) {
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
      _Ygl->targetfbo = _Ygl->default_fbo;
    }
-  glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
+
+   if (_Ygl->resolution_mode != RES_NATIVE ) {
+     glViewport(0, 0, _Ygl->width, _Ygl->height);
+   }
+   else{
+     glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
+   }
+
+   if (_Ygl->aamode == AA_FXAA){
+     glViewport(0, 0, _Ygl->width, _Ygl->height);
+   }
+
+   if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256){
+     glViewport(0, 0, _Ygl->width, _Ygl->height);
+   }
+
 
    glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
    glClearDepthf(0.0f);
