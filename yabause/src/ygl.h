@@ -73,6 +73,11 @@
 typedef void(*PFNGLPATCHPARAMETERIPROC) (GLenum pname, GLint value);
 extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
 
+#define GL_TEXTURE_UPDATE_BARRIER_BIT     0x00000100
+#define GL_FRAMEBUFFER_BARRIER_BIT        0x00000400
+typedef void (* PFNGLMEMORYBARRIERPROC) (GLbitfield barriers);
+extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
+
 #elif defined(_WIN32)
 
 #include <windows.h>

@@ -48,6 +48,7 @@ extern vdp2rotationparameter_struct  paraA;
 
 #if defined(__ANDROID__) || defined(IOS)
 PFNGLPATCHPARAMETERIPROC glPatchParameteri = NULL;
+PFNGLMEMORYBARRIERPROC glMemoryBarrier = NULL;
 #endif
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz)
@@ -1215,6 +1216,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
 #if defined(__ANDROID__)
    glPatchParameteri = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glPatchParameteri");
+   glMemoryBarrier = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glMemoryBarrier");
 #endif
 
    glGetError();
