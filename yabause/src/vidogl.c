@@ -3078,9 +3078,9 @@ void Vdp2PreFetchKtable( vdp2rotationparameter_struct * param, int hres, int vre
 
   int need_to_update = param->K_update;
   int maxdot = hres * param->deltaKAx;
-  if (maxdot == 0) maxdot = 1;
+  if (maxdot <= 0) maxdot = 1;
   int maxline = vres*param->deltaKAst * maxdot;
-  if (maxline == 0){
+  if (maxline <= 0){
     maxline = 1;
   }
 
@@ -3105,8 +3105,15 @@ void Vdp2PreFetchKtable( vdp2rotationparameter_struct * param, int hres, int vre
   }
 
   if (need_to_update == 1) {
-    for (int i = 0; i < maxline; i++) {
+    int i = 0;
+    for (i = 0; i < maxline; i++) {
       if (param->coefdatasize == 2){ // 1word size
+
+        if (param->prefecth_k1w == NULL){
+          param->prefecth_k1w = malloc(sizeof(u16)*maxline);
+          param->ktablesize = maxline;
+        }
+
         if (param->k_mem_type == 0) { // vram
           param->prefecth_k1w[i] = T1ReadWord(Vdp2Ram, (param->coeftbladdr + (i << 1)) & 0x7FFFF);
         }
@@ -3115,6 +3122,11 @@ void Vdp2PreFetchKtable( vdp2rotationparameter_struct * param, int hres, int vre
         }
       }
       else { // 2word size
+
+        if (param->prefecth_k2w == NULL){
+          param->prefecth_k2w = malloc(sizeof(u32)*maxline);
+          param->ktablesize = maxline;
+        }
         if (param->k_mem_type == 0) { // vram
           param->prefecth_k2w[i] = T1ReadLong(Vdp2Ram, (param->coeftbladdr + (i << 2)) & 0x7FFFF);
         }
@@ -3268,9 +3280,9 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg){
       h = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
       v = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
 
-      if (i == 0){
-        //LOG("%d=%d", j, (int)v);
-      }
+      //if (i == 0){ // for Debug
+      //  LOG("%d=%d", j, (int)v);
+      //}
       if (info->isbitmap)
       {
 
@@ -3480,6 +3492,7 @@ int VIDOGLInit(void)
    g_rgb1.vdp2_sync_flg = -1;
    vdp1wratio = 1;
    vdp1hratio = 1;
+
 
    return 0;
 }
@@ -6132,6 +6145,12 @@ static void Vdp2DrawRBG0(void)
    
    Vdp2ReadRotationTable(0, &paraA, fixVdp2Regs, Vdp2Ram);
    Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
+   Vdp2ColorRamUpdated = 0;
+   A0_Updated = 0;
+   A1_Updated = 0;
+   B0_Updated = 0;
+   B1_Updated = 0;
+
    paraA.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
    paraB.PlaneAddr = (void FASTCALL (*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
    paraA.charaddr = (fixVdp2Regs->MPOFR & 0x7) * 0x20000;
@@ -6440,12 +6459,6 @@ void VIDOGLVdp2DrawScreens(void)
     Vdp2DrawRBG0();
     FrameProfileAdd("RBG0 end");
    }
-
-   Vdp2ColorRamUpdated = 0;
-   A0_Updated = 0;
-   A1_Updated = 0;
-   B0_Updated = 0;
-   B1_Updated = 0;
 
 }
 
