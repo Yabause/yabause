@@ -117,6 +117,10 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 	}
 }
 
+#ifdef _WINDOWS
+#include <Windows.h>
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 
 void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ...) {
@@ -150,13 +154,27 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
     break;
   case DEBUG_CALLBACK:
     {
-      int i;
+      int i=0;
       int strnewhash = 0;
-      i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, (long)line);
+#ifdef _WINDOWS
+      static FILE * dfp = NULL;
+      if (dfp == NULL){
+        dfp = fopen("debug.txt", "w");
+      }
+#endif
+      //i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, (long)line);
       i += vsprintf(strtmp + i, format, l);
-      for ( ; i>0 ; i-- ) strnewhash += (int)(strtmp[i]);
-      if ( strnewhash != strhash ) d->output.callback( strtmp );
-      strhash = strnewhash;
+     // for ( ; i>0 ; i-- ) strnewhash += (int)(strtmp[i]);
+      //if (strnewhash != strhash) {
+        //OutputDebugString(strtmp);
+        //d->output.callback(strtmp);
+        OSDNanovgAddLogString(strtmp);
+#ifdef _WINDOWS
+        fprintf(dfp, "%s\n",strtmp);
+        fflush(dfp);
+#endif
+      //}
+      //strhash = strnewhash;
     }
     break;
   }
