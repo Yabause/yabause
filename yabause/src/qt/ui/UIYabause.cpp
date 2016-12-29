@@ -520,9 +520,10 @@ void UIYabause::fixAspectRatio( int width , int height )
 
         mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
 
-        adjustHeight(height);
+        adjustHeight(height );
+        mYabauseGL->viewport_height_ = height - heightOffset;
+        setFixedHeight(height);
 
-        setFixedHeight( height );
       }
 			break;
 		}
