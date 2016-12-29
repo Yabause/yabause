@@ -533,6 +533,9 @@ int Ygl_uniformWindow(void * p );
 int YglProgramInit();
 int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
+void Ygl_setNormalshader(YglProgram * prg);
+int Ygl_cleanupNormal(void * p);
+int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v);
 
 int YglGenerateAABuffer();
 
