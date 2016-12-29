@@ -311,78 +311,169 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
 
    if (parameter->coefenab)
    {
-	  int perdot = 0;
+	    int perdot = 0;
+      float ftmp;
+      u32 tmp;
+
+      parameter->K_update = 0;
 
       // Read in coefficient values
       i = T1ReadLong(ram, addr);
-      parameter->KAst = (float)(unsigned)(i & 0xFFFFFFC0) / 65536;
+      ftmp = (float)(unsigned)(i & 0xFFFFFFC0) / 65536;
+      if (ftmp != parameter->KAst){
+        parameter->K_update = 1;
+      }
+      parameter->KAst = ftmp;
       addr += 4;
 
       i = T1ReadLong(ram, addr);
-      parameter->deltaKAst = (float) (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
+      ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
+      if (ftmp != parameter->deltaKAst){
+        parameter->K_update = 1;
+      }
+      parameter->deltaKAst = ftmp;
       addr += 4;     
 
-	  // hard/vdp2/hon/p06_20.htm#no6_21
-	  switch (bank)
-	  {
-	  case VDP2_VRAM_A0:
-		  perdot = (regs->RAMCTL&0x03);
-		  break;
-	  case VDP2_VRAM_A1:
-		  perdot = ((regs->RAMCTL>>2) & 0x03);
-		  break;
-	  case VDP2_VRAM_B0:
-		  perdot = ((regs->RAMCTL >> 4) & 0x03);
-		  break;
-	  case VDP2_VRAM_B1:
-		  perdot = ((regs->RAMCTL >> 6) & 0x03);
-		  break;
-	  }
+      if (regs->RAMCTL & 0x8000){
+        if (parameter->k_mem_type == 0){
+          parameter->ktablesize = 0;
+        }
+        parameter->k_mem_type = 1; // use cram
+        i = T1ReadLong(ram, addr);
+        ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
+        if (ftmp != parameter->deltaKAx){
+          parameter->K_update = 1;
+        }
+        parameter->deltaKAx = ftmp;
 
-	  if (perdot != 1){
-		  parameter->deltaKAx = 0.0f;
-	  }
-	  else{
-		  i = T1ReadLong(ram, addr);
-		  parameter->deltaKAx = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
-	  }
+        if (Vdp2ColorRamUpdated){
+          parameter->K_update = 1;
+        }
+      }
+      else{
+        if (parameter->k_mem_type == 1) {
+          parameter->ktablesize = 0;
+        }
+        parameter->k_mem_type = 0; // use vram
+        // hard/vdp2/hon/p06_20.htm#no6_21
+        switch (bank)
+        {
+        case VDP2_VRAM_A0:
+          perdot = (regs->RAMCTL & 0x03);
+          if (A0_Updated){
+            parameter->K_update = 1;
+          }
+          break;
+        case VDP2_VRAM_A1:
+          perdot = ((regs->RAMCTL >> 2) & 0x03);
+          if (A1_Updated){
+            parameter->K_update = 1;
+          }
+          break;
+        case VDP2_VRAM_B0:
+          perdot = ((regs->RAMCTL >> 4) & 0x03);
+          if (B0_Updated){
+            parameter->K_update = 1;
+          }
+          break;
+        case VDP2_VRAM_B1:
+          perdot = ((regs->RAMCTL >> 6) & 0x03);
+          if (B1_Updated){
+            parameter->K_update = 1;
+          }
+          break;
+        }
+
+        if (perdot != 1){
+          if (parameter->deltaKAx != 0.0){
+            parameter->K_update = 1;
+          }
+          parameter->deltaKAx = 0.0f;
+        }
+        else{
+          i = T1ReadLong(ram, addr);
+          ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
+          if (ftmp != parameter->deltaKAst){
+            parameter->K_update = 1;
+          }
+          parameter->deltaKAx = ftmp;
+        }
+      }
+
+
 	  addr += 4;
 
-      if (which == 0)
-      {
-         parameter->coefdatasize = (regs->KTCTL & 0x2 ? 2 : 4);
-         parameter->coeftbladdr = ((regs->KTAOF & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
-         parameter->coefmode = (regs->KTCTL >> 2) & 0x3;
-		 parameter->use_coef_for_linecolor = (regs->KTCTL>>4) & 0x01;
-      }
-      else
-      {
-         parameter->coefdatasize = (regs->KTCTL & 0x200 ? 2 : 4);
-         parameter->coeftbladdr = (((regs->KTAOF >> 8) & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
-         parameter->coefmode = (regs->KTCTL >> 10) & 0x3;
-		 parameter->use_coef_for_linecolor = (regs->KTCTL >> 12) & 0x01;
-		 if (regs->RPMD == 0x02){
-			 parameter->deltaKAx = 0.0f; // hard/vdp2/hon/p06_35.htm#RPMD_
-		 }
-      }
+    if (which == 0) {
 
+      tmp = (regs->KTCTL & 0x2 ? 2 : 4);
+      if (tmp != parameter->coefdatasize){
+        parameter->K_update = 1;
+      }
+      parameter->coefdatasize = tmp;
 
-   }
-   else{
-	   parameter->use_coef_for_linecolor = 0;
-   }
+      tmp = ((regs->KTAOF & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
+      if (tmp != parameter->coeftbladdr){
+        parameter->K_update = 1;
+      }
+      parameter->coeftbladdr = tmp;
+
+      tmp = (regs->KTCTL >> 2) & 0x3;
+      if (tmp != parameter->coefmode){
+        parameter->K_update = 1;
+      }
+      parameter->coefmode = tmp;
+
+      tmp = (regs->KTCTL >> 4) & 0x01;
+      if (tmp != parameter->use_coef_for_linecolor){
+        parameter->K_update = 1;
+      }
+      parameter->use_coef_for_linecolor = tmp;
+
+    }else{
+
+      tmp = (regs->KTCTL & 0x200 ? 2 : 4);
+      if (tmp != parameter->coefdatasize){
+        parameter->K_update = 1;
+      }
+      parameter->coefdatasize = tmp;
+
+      tmp = (((regs->KTAOF >> 8) & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
+      if (tmp != parameter->coeftbladdr){
+        parameter->K_update = 1;
+      }
+      parameter->coeftbladdr = tmp;
+
+      tmp = (regs->KTCTL >> 10) & 0x3;
+      if (tmp != parameter->coefmode){
+        parameter->K_update = 1;
+      }
+      parameter->coefmode = tmp;
+
+      tmp = (regs->KTCTL >> 12) & 0x01;
+      if (tmp != parameter->use_coef_for_linecolor){
+        parameter->K_update = 1;
+      }
+      parameter->use_coef_for_linecolor = tmp;
+
+		  if (regs->RPMD == 0x02){
+        if (parameter->deltaKAx != 0.0f ) parameter->K_update = 1;
+		  	parameter->deltaKAx = 0.0f; // hard/vdp2/hon/p06_35.htm#RPMD_
+		  }
+    }
+
+  }
+  else{
+    parameter->use_coef_for_linecolor = 0;
+  }
    
-   VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n"
-       "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n"
-       "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n"
-       "deltaKAst: %f deltaKAx: %f kadr %08X\n", 
-       parameter->Xst, parameter->Yst, parameter->Zst, parameter->deltaXst,
-       parameter->deltaYst, parameter->deltaX, parameter->deltaY,
-       parameter->A, parameter->B, parameter->C, parameter->D, parameter->E,
-       parameter->F, parameter->Px, parameter->Py, parameter->Pz,
-       parameter->Cx, parameter->Cy, parameter->Cz, parameter->Mx,
-       parameter->My, parameter->kx, parameter->ky, parameter->KAst,
-       parameter->deltaKAst, parameter->deltaKAx,parameter->coeftbladdr);
+  VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n", parameter->Xst, parameter->Yst, parameter->Zst, parameter->deltaXst,
+    parameter->deltaYst, parameter->deltaX);
+  VDP2LOG("deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n", parameter->deltaY,
+    parameter->A, parameter->B, parameter->C, parameter->D, parameter->E,
+    parameter->F, parameter->Px, parameter->Py, parameter->Pz);
+  VDP2LOG("Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n", parameter->Cx, parameter->Cy, parameter->Cz, parameter->Mx,
+    parameter->My, parameter->kx, parameter->ky, parameter->KAst);
+  VDP2LOG("deltaKAst: %f deltaKAx: %f kadr %08X\n",parameter->deltaKAst, parameter->deltaKAx,parameter->coeftbladdr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
