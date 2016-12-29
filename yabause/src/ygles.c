@@ -48,6 +48,7 @@ extern vdp2rotationparameter_struct  paraA;
 
 #if defined(__ANDROID__) || defined(IOS)
 PFNGLPATCHPARAMETERIPROC glPatchParameteri = NULL;
+PFNGLMEMORYBARRIERPROC glMemoryBarrier = NULL;
 #endif
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz)
@@ -1216,6 +1217,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
 #if defined(__ANDROID__)
    glPatchParameteri = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glPatchParameteri");
+   glMemoryBarrier = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glMemoryBarrier");
 #endif
 
    glGetError();
@@ -1938,7 +1940,7 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   program->color_offset_val[0] = (float)(input->cor) / 255.0f;
   program->color_offset_val[1] = (float)(input->cog) / 255.0f;
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
-  program->color_offset_val[3] = 0;
+  program->color_offset_val[3] = 0.0;
 
   if (output != NULL){
     YglTMAllocate(_Ygl->texture_manager, output, input->w, input->h, &x, &y);
@@ -2431,10 +2433,13 @@ void YglRenderVDP1(void) {
      color = Vdp1Regs->EWDR;
      priority = 0;
 
-     if (color & 0x8000)
+     if (color & 0x8000){
+       //if ((color & 0x7FFF) == 0){
+       //  alpha = 0;
+       //}
+       alpha = 0xF8;
        priority = Vdp2Regs->PRISA & 0x7;
-     else
-     {
+     }else{
        int shadow, colorcalc;
        Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
@@ -2442,16 +2447,16 @@ void YglRenderVDP1(void) {
 #else
        priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
 #endif
+       if (color == 0)
+       {
+         alpha = 0;
+         priority = 0;
+       }
+       else{
+         alpha = 0xF8;
+       }
      }
 
-     if (color == 0)
-     {
-       alpha = 0;
-       priority = 0;
-     }
-     else{
-       alpha = 0xF8;
-     }
      alpha |= priority;
 
      glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
@@ -2490,7 +2495,7 @@ void YglRenderVDP1(void) {
              glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
           }
 
-      if (PG_VFP1_GOURAUDSAHDING_TESS == level->prg[j].prgid || PG_VFP1_MESH_TESS == level->prg[j].prgid ){
+      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }
@@ -2961,7 +2966,22 @@ void YglRender(void) {
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
      _Ygl->targetfbo = _Ygl->default_fbo;
    }
-  glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
+
+   if (_Ygl->resolution_mode != RES_NATIVE ) {
+     glViewport(0, 0, _Ygl->width, _Ygl->height);
+   }
+   else{
+     glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
+   }
+
+   if (_Ygl->aamode == AA_FXAA){
+     glViewport(0, 0, _Ygl->width, _Ygl->height);
+   }
+
+   if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256){
+     glViewport(0, 0, _Ygl->width, _Ygl->height);
+   }
+
 
    glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
    glClearDepthf(0.0f);

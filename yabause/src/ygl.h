@@ -73,6 +73,11 @@
 typedef void(*PFNGLPATCHPARAMETERIPROC) (GLenum pname, GLint value);
 extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
 
+#define GL_TEXTURE_UPDATE_BARRIER_BIT     0x00000100
+#define GL_FRAMEBUFFER_BARRIER_BIT        0x00000400
+typedef void (* PFNGLMEMORYBARRIERPROC) (GLbitfield barriers);
+extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
+
 #elif defined(_WIN32)
 
 #include <windows.h>
@@ -247,17 +252,12 @@ enum
    PG_NORMAL=1,
    PG_VDP1_NORMAL,
    PG_VFP1_GOURAUDSAHDING,
-   PG_VFP1_GOURAUDSAHDING_TESS,
    PG_VFP1_STARTUSERCLIP,
    PG_VFP1_ENDUSERCLIP,
    PG_VFP1_HALFTRANS, 
-   PG_VFP1_HALFTRANS_TESS,
    PG_VFP1_SHADOW,
-   PG_VFP1_SHADOW_TESS,
    PG_VFP1_GOURAUDSAHDING_HALFTRANS, 
-   PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
    PG_VFP1_MESH,
-   PG_VFP1_MESH_TESS,
    PG_VDP2_ADDBLEND,
    PG_VDP2_DRAWFRAMEBUFF,    
    PG_WINDOW,
@@ -271,6 +271,11 @@ enum
    PG_VDP2_BLUR,
    PG_VDP2_MOSAIC,
    PG_VDP2_PER_LINE_ALPHA,
+   PG_VFP1_GOURAUDSAHDING_TESS,
+   PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
+   PG_VFP1_HALFTRANS_TESS,
+   PG_VFP1_SHADOW_TESS,
+   PG_VFP1_MESH_TESS,
    PG_MAX,
 };
 
@@ -528,6 +533,9 @@ int Ygl_uniformWindow(void * p );
 int YglProgramInit();
 int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
+void Ygl_setNormalshader(YglProgram * prg);
+int Ygl_cleanupNormal(void * p);
+int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v);
 
 int YglGenerateAABuffer();
 

@@ -1,5 +1,7 @@
 %1 Images (*.%2)|Images %1 (*.%2)
 %1/%2 blocks free|%1/%2 blocs libres
+3D Control Pad Configuration|Configuration de la Manette 3D Control
+68000 Core|Noyau 68000 :
 &About...|&A Propos De...
 &Action Replay|&Action Replay
 &Backup Manager...|&Gestion des Sauvegardes...
@@ -11,7 +13,7 @@
 &Cheats List...|Liste de &Cheats...
 &Clear|&Effacer
 &Close|&Fermer
-&Debug|&Debug
+&Debug|&Débug
 &Delete|&Effacer
 &Emulation|&Emulation
 &File|&Fichier
@@ -45,6 +47,7 @@
 4 Mbit Backup Ram|Sauvegarde RAM 4 Mbit
 503/512 blocks free|503/512 blocs libres
 510/512 blocks free|510/512 blocs libres
+68000 Core|Noya du 68000 :
 8 Mbit Backup Ram|Sauvegarde RAM 8 Mbit
 8 Mbit Dram|Dram 8 Mbit
 8-bit|8-bit
@@ -58,8 +61,11 @@ Add Cheat|Ajouter un Cheat
 Add Codes...|Ajouter des Codes...
 Add Raw Memory Code|Ajouter un Code Mémoire Brut
 Address|Adresse
+Address|Adresse
 Address :|Adresse :
 Advanced|Avancé
+All Files (*)|Tous les Fichiers (*)
+All Files|Tous les Fichiers
 Always|Toujours
 Are you sure you want to delete '%1' ?|Etes vous sûr de vouloir supprimer '%1' ?
 Are you sure you want to format '%1' ?|Etes vous sûr de vouloir formater '%1' ?
@@ -71,19 +77,24 @@ Awaiting input for|Attente de l'entrée pour
 Axis|Axes
 Backtrace|Traceur
 Backup Ram Manager|Gestion des Sauvegardes
+Bilinear Filtering (Restart required)|Filtrage Bilinéaire (Redémarrage nécessaire)
 Binary Files (*.bin)|Fichiers Binaires (*.bin)
 Bios|Bios :
 Block Size :|Taille du Bloc :
 Browse|Parcourir
+Bug report|Rapport de Bug
 Byte|Byte
 Byte Write|Ecrire un Byte
+C68k Interface|Interface C68k
 CD Images (*.iso *.cue *.bin)|Images CD (*.iso *.cue *.bin)
 Cancel|Annuler
 Cannot initialize|Ne peut pas Initialiser
 Cannot initialize Windows SPTI Driver|Ne peut pas initialiser le pilote SPTI
+Can't plug in the new controller, cancelling.|Ne peut pas brancher dans le nouveau contrôleur, annuler.
 Cart/Memory|Cartouche/Mémoire
 Cartridge|Cartouche :
 Cd-Rom|CD-Rom :
+CD Images (*.iso *.cue *.bin *.mds *.ccd)|Images CD (*.iso *.cue *.bin *.mds *.ccd)
 Central/South America (NTSC)|Amérique du Sud/Centrale (NTSC)
 Central/South America (PAL)|Amérique du Sud/Centrale (PAL)
 Cheat &Search...|&Rechercher un Cheat...
@@ -92,22 +103,33 @@ Cheat Type|Type de Cheat
 Cheats|Cheats
 Cheats File|Fichier Cheat
 Choose a binary file|Choisir un Fichier Binaire
+Choose a binary or program file|Choisir un fichier binaire ou un programme
+Choose a bios file|Choisir un Fichier Bios
 Choose a cartridge file|Choisir un Fichier Cartouche
 Choose a cdrom drive/mount point|Choisir un lecteur CD ou un point de montage
 Choose a cheat file to open|Choisir un fichier de Cheat à ouvrir
 Choose a cheat file to save to|Choisir un fichier de Cheat à enregistrer
 Choose a file to save your state|Choisir un fichier où enregistrer l'état
+Choose a folder to store save states|Choisir un Dossier pour les Sauvegardes d'Etats
 Choose a location for binary file|Choisir le Chemin du Fichier Binaire
+Choose a location for your binary file|Choisir le Chemin pour votre Fichier Binaire
+Choose a location for your bitmap|Choisir le Chemin pour le Fichier Bitmap
 Choose a location for your screenshot|Choisir un nom de fichier pour votre capture d'écran
+Choose a location for your wav file|Choisir le Chemin pour votre Fichier WAV
 Choose a memory file|Choisir un Fichier Mémoire
 Choose a mpeg rom|Choisir une Rom MPEG
+Choose a sh1 rom|Choisir une ROM SH1
 Clear configuration|Vider la Configuration
 Close|Fermer
 Code|Code
 Code Breakpoints|Interruptions du Code
+COFF Program Files (*.cof *.coff)|Fichiers Programme COFF (*.cof *.coff)
 Comment :|Commentaire :
 Common Control Registers|Registres de Contrôle Commun
 Compare Type|Type de Comparaison
+Compatibility List|Liste de Compatibilité
+CPU Tesseration|Tesselation CPU
+GPU Tesseration|Tesselation GPU
 DSP Control Registers|Registres de Contrôle DSP
 DSP Registers|Registres DSP
 Data Size|Taille Donnée
@@ -117,6 +139,7 @@ Debug CPU|Débug CPU
 Debug M68K|Débug M68K
 Debug Master SH2|Débug Master SH2
 Debug SCU DSP|Débug SCU DSP
+Debug SCSP|Débug SCSP
 Debug Slave SH2|Débug SH2 Esclave
 Debug VDP1|Débug VDP1
 Debug VDP2Viewer|Débug VDP2Viewer
@@ -134,18 +157,27 @@ Display on Hover|Afficher en Passant le Curseur
 Down|Bas
 Download|Télécharger
 Draw End|Fin Dessin
+Dummy 68k Interface|Interface 68k Factice
 Dummy CD Drive|Lecteur de CD Factice
 Dummy Input Interface|Interface Contrôleur Factice
 Dummy OSD Interface|Interface OSD Factice
 Dummy Sound Interface|Interface Son Factice
 Dummy Video Interface|Interface Vidéo Factice
 Edit configuration|Editer la Configuration
+ELF Program Files (*elf)|Fichiers Programme ELF (*.elf)
 Emu-Compatibility|Emu-Compatibilité
 Emulation|Emulation
 Enable|Activer
+Enable Bios Emulation|Activer l'Emulation du Bios
+Enable CD Block Low-level Emulation|Activer l'Emulation du Bloc CD Bas Niveau (LLE)
 Enable Frame Skip/Limiter|Active le Saut  d'Image/Limitateur
+Enable Multithreading|Activer les Processus Multiples
+Enable Sh2 Dma Timing|Activer le Timing DMA du SH2
+Enable Scu Dma Timing|Activer le Timing DMA du SCU
+Enable Sh2 Cache|Activer le Cache SH2
 Enabled|Activé
 End Address:|Adresse de Fin :
+Enter new assembly code: |Entrer un Nouveau Code Assembleur :
 English|Anglais
 Enter New Value|Entrer une Nouvelle Valeur
 Europe + others (PAL)|Europe + Autres (PAL)
@@ -155,6 +187,10 @@ File|Fichier
 File Name :|Nom du Fichier :
 File transfer|Transfert de Fichier
 File:|Fichier :
+Filter mode|Mode Filtre
+Fit to window|Correspond à la Fenêtre
+Fixed aspect ratio: 4:3|Correction des Propotions : 4:3
+Fixed aspect ratio: 16:9|Correction des Propotions : 16:9
 Format|Formater
 Frame Skip/Limiter|Saut d'Image/Limitateur
 French|Français
@@ -169,6 +205,9 @@ German|Allemand
 Glut OSD Interface|Interface OSD GLut
 Goto Address|Va sur l'Adresse
 Greater then|Plus grand que
+Gun|Pistolet
+Gun Configuration|Configuration du Pistolet
+Gun/Mouse Sensitivity|Sensibilité de la Souris/Pistolet
 Hard Reset|Redémarrage Matériel
 Height|Hauteur :
 Hex value(s)|Valeur(s) Héx
@@ -176,6 +215,7 @@ Hide Menubar|Cacher la Barre de Menu
 Hide Toolbar|Cacher la Barre d'Outil
 ISO-File Virtual Drive|Lecteur de Fichier ISO Virtuel
 Information...|Information...
+Inline Assembly|Assembleur En Ligne
 Input|Contrôleur
 Invalid Address|Adresse Invalide
 Invalid Value|Valeur Invalide
@@ -187,7 +227,9 @@ Korea (NTSC)|Corée (NTSC)
 L&oad State|&Charger un Etat
 Language :|Langage :
 Layer|Couche
+Left button:|Bouton Gauche :
 Left|Gauche
+Left Stick:|Stick Gauche :
 Left trigger|Gâchette Gauche
 Less than|Moins que
 Linux CD Drive|Lecteur CD Linux
@@ -217,6 +259,7 @@ Middle|Moyen
 Mouse|Souris
 Mouse Configuration|Configuration de la Souris
 Mpeg ROM|ROM MPEG :
+Musashi Interface|Interface Musashi
 NBG0|NBG0
 NBG0/RBG1 Info|Info NBG0/RBG1
 NBG1|NBG1
@@ -225,24 +268,33 @@ NBG2|NBG2
 NBG2 Info|Info NBG2
 NBG3|NBG3
 NBG3 Info|Info NBG3
+nanovg OSD Interface|Interface Nanovg OSD
+Native(native resolution of whindow)|Natif (résolution native de la fenêtre)
 Netlink|Réseau
 Never|Jamais
 None|Aucun
+None|Aucun
 Normal Sprite|Sprite Normal
 North America (NTSC)|Amérique du Nord (NTSC)
+Number of Threads|Nombre de Processus
 OSD Core|Noyau OSD
 Ok|Ok
 On fullscreen|Plein Ecran
 On message|Sur le Message
+Only available with new scsp code(USE_NEW_SCSP=1)|Uniquement disponible avec le nouveau code SCSP (UTILISER_NOUVEAU_SCSP=1)
 Open &CD Rom...|Ouvrir un &CD Rom...
 Open &ISO...|Ouvrir un &ISO...
 Open CD Rom|Ouvrir un CD ROM
+Open SSF|Ouvrir lecteur SSF
+OpenTray|Ouvrir le Plateau
 OpenGL Video Interface|Interface Vidéo OpenGL
 Options|Options
 Other Debug|Autre Débug
 Pad|Manette
 Pad Configuration|Configuration de la Manette
 Pause|Pause
+Play Slot|Lancer
+Polygon Generation|Génération des Polygones
 Press Esc key to cancel|Pressez Echap pour Annuler
 Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Interface Qt du Clavier
@@ -250,25 +302,32 @@ Quit|Quitter
 R&un|L&ancer
 RBG0|RGB0
 RBG0 Info|Info RBG0
-Read|Ecrire
+Read|Lecture
 Region|Région :
 Registers|Registres
+Remove Peripheral|Supprime le Périphérique
 Reset|Redémarrer
 Resolution|Résolution :
 Right|Droite
+Right button:|Bouton Droit :
+Right Stick:|Stick Droit :
 Right trigger|Gâchette Droite
 Run|Lancer
 S&ave State|S&auvegarder un Etat
 SCSP|SCSP
+SCSP Channels|Canaux SCSP
 SCU-DSP|SCU-DSP
 SDL Joystick Interface|Interface SDL du Joystick
 SDL Sound Interface|Interface SDL du Son
+SH1 Registers|Registres SH1
+SH1 Interpreter|Interpréteur SH1
 SH2 Debugger Interpreter|Interpréteur de Débugeur SH2
 SH2 Dynamic Recompiler|Recompileur Dynamique SH2
 SH2 Interpreter|Interpréteur SH2 :
 SH2 Registers|Registres SH2
 SSH2|SSH2
 Save|Sauvegarder
+Save As Bitmap|Sauvegarder en Bitmap
 Save As WAV|Sauvegarder en  WAV
 Save Bitmap|Sauvegarder en Bitmap
 Save Information|Informations sur la Sauvegarde
@@ -283,8 +342,11 @@ Save Slot Registers|Sauvegarder Emplacement Registres
 Save State|Sauvegarder l'Etat
 Save State As|Sauvegarder l'Etat sous
 Save States|Sauvegarde d'Etat :
+Save Tab|Sauv. Onglet
+Scanline filter|Filtre Scanline
 Sc&reenshot|Copie d'Ec&ran
 Screen Enabled|Ecran Activé
+Screen Select:|Choix del'Ecran :
 Screenshot|Capture d'Ecran
 Search|Rechercher
 Search Criteria|Critère de Recherche
@@ -295,6 +357,7 @@ Select a file to load your state|Choisissez un fichier pour charger l'état
 Select your iso/cue/bin file|Choisissez votre fichier iso/cue/bin
 Set PC to Start Address|Sélection PC vers l'Adresse de Démarrage
 Settings|Paramètres
+Shortcut|Raccourcis
 Shortcuts|Raccourcis
 Show FPS|Afficher les FPS
 Show Log Window|Afficher la Fenêtre Journal
@@ -317,6 +380,10 @@ Status|Statut
 Step Into|Entrer Dans
 Step Out|Sortir
 Step Over|Sauter
+Stick left button: same as A|Bouton Gauche Stick : pareil que A
+Stick right button: same as B|Bouton Droite Stick : pareil que B
+Stick trigger: same as C|GâchetteStick : pareil que C
+Stop|Arrêter
 Store|Stocker
 Synchronize Saturn internal clock with set time|Synchroniser l'Horloge Interne de la Saturn avec l'Heure
 System Clipping Coordinates|Coordonnées Clippind Système
@@ -326,8 +393,10 @@ To|Vers
 To File...|Vers un Fichier...
 Tools|Outils
 Track Inf Loop Results|Résultats In Piste en Boucle
+Trace Logging|Enregistreur de Trace
 Transfer|Transfert
 Translation|Traduction :
+Triangles usin perspectiove correction|Triangles utilisant la correction de perspective
 Type:|Type :
 Unable to add code|Ne peut pas ajouter de Code
 Unable to change description|Ne peut pas changer la Description
@@ -341,11 +410,14 @@ Unsigned 32-bit value|Valeur Non Signé 32-bit
 Unsigned 8-bit value|Valeur Non Signé 8-bit
 Up|Haut
 Upload|Upload
+Use integer pixel scaling|Utiliser l'échelle des pixels entier
+Use new scsp|Utiliser le nouveau SCSP
 Use System Locale|Utiliser les paramètres régionaux
 VDP1|VDP1
 VDP1 Command Info|Info Commande VDP1
 VDP1 Command List|Liste Commande VDP1
 VDP2|VDP2
+VDP2Viewer Viewer|Visualiseur VDP2Viewer
 Value|Valeur
 Value :|Valeur :
 Value:|Valeur :
@@ -353,11 +425,12 @@ Vdp1|VDP1
 Vdp2|VDP2
 Video|Vidéo
 Video Core|Noyau Vidéo :
-Video Driver|Pilote Vidéo :
-Video Format|Format Vidéo :
+Video Driver|Pilote Vidéo
+Video Format|Format Vidéo
 View|Visualiser
 Viewer|Visualiseur
 Waiting Input...|En Attente du Contrôleur
+Warning...|Avertissement...
 Width|Largeur :
 Window Resolution|Résolution Fenêtrée
 Windows SPTI Driver|Pilote Windows SPTI

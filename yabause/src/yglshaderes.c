@@ -164,8 +164,10 @@ int Ygl_uniformVdp1CommonParam(void * p){
     glUniform1i(param->fboheight, _Ygl->height);
 #if !defined(_OGLES3_)
     if (glTextureBarrierNV) glTextureBarrierNV();
+#else
+    if( glMemoryBarrier ) glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT);
 #endif
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0); 
   }
 
 
@@ -911,10 +913,10 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
 "  highp vec4 spriteColor = texture(u_sprite,addr);                                               \n"
 "  if( spriteColor.a == 0.0 ) discard;      \n"
-"	//memoryBarrier(); \n"
+"	 //memoryBarrier(); \n"
 "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
 "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
-"  if( fboColor.a > 0.028  )                                                               \n"
+"  if( fboColor.a > 0.0/*28*/  )                                                               \n"
 "  {                                                                                          \n"
 "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
 "    fragColor.a = fboColor.a ;                         \n"
