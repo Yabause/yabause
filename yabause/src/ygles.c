@@ -1939,7 +1939,7 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   program->color_offset_val[0] = (float)(input->cor) / 255.0f;
   program->color_offset_val[1] = (float)(input->cog) / 255.0f;
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
-  program->color_offset_val[3] = 0;
+  program->color_offset_val[3] = 0.0;
 
   if (output != NULL){
     YglTMAllocate(_Ygl->texture_manager, output, input->w, input->h, &x, &y);
@@ -2494,7 +2494,7 @@ void YglRenderVDP1(void) {
              glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
           }
 
-      if (PG_VFP1_GOURAUDSAHDING_TESS == level->prg[j].prgid || PG_VFP1_MESH_TESS == level->prg[j].prgid ){
+      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }
