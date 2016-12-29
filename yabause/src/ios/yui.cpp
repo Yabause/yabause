@@ -104,6 +104,7 @@ extern "C" {
     int GetEnableFrameSkip();
     int GetUseNewScsp();
     int GetVideFilterType();
+    int GetResolutionType();
     
 int swapAglBuffer ();
     
@@ -120,6 +121,7 @@ int start_emulation( int originx, int originy, int width, int height ){
     strcpy(s_savepath,GetStateSavePath());
     s_vidcoretype = GetVideoInterface();
     s_carttype =  GetCartridgeType();
+    
     //s_player2Enable = GetPlayer2Device();
 
     YUI_LOG("%s",glGetString(GL_VENDOR));
@@ -163,6 +165,7 @@ int start_emulation( int originx, int originy, int width, int height ){
     s_vidcoretype = VIDCORE_OGL;
     yinit.use_new_scsp = GetUseNewScsp();
     yinit.video_filter_type = GetVideFilterType();
+    yinit.resolution_mode = GetResolutionType();
 
     res = YabauseInit(&yinit);
     if (res != 0) {
