@@ -171,6 +171,8 @@ UIYabause::UIYabause( QWidget* parent )
 	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
 
 	mIsCdIn = true;
+
+
 }
 
 UIYabause::~UIYabause()
@@ -320,8 +322,13 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 
 void UIYabause::resizeEvent( QResizeEvent* event )
 {
+  mYabauseGL->viewport_width_ = event->size().width();
+  mYabauseGL->viewport_height_ = event->size().height();
+  mYabauseGL->viewport_origin_x_ = 0;
+  mYabauseGL->viewport_origin_y_ = 0;
+
 	if (event->oldSize().width() != event->size().width())
-		fixAspectRatio(event->size().width());
+    fixAspectRatio(event->size().width(), event->size().height());
 
 	QMainWindow::resizeEvent( event );
 }
@@ -455,7 +462,7 @@ void UIYabause::sizeRequested( const QSize& s )
 	resize( width, height ); 
 }
 
-void UIYabause::fixAspectRatio( int width )
+void UIYabause::fixAspectRatio( int width , int height )
 {
 	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio").toInt();
 
@@ -468,19 +475,56 @@ void UIYabause::fixAspectRatio( int width )
 		case 1:
 		case 2:
 		{
-			int heightOffset = toolBar->height()+menubar->height();
-			int height;
+      if (this->isFullScreen()) {
 
-			if ( aspectRatio == 1 )
-				height = 3 * ((float) width / 4);
-			else
-				height = 9 * ((float) width / 16);
+        if (aspectRatio == 1) {
+          float specratio = (float)width / (float)height;
+          int saturnw = 4;
+          int saturnh = 3;
 
-			mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
+          if (aspectRatio == 1){
+            saturnw = 4;
+            saturnh = 3;
+          }
+          else{
+            saturnw = 16;
+            saturnh = 9;
+          }
+          float saturnraito = (float)saturnw / (float)saturnh;
+          float revraito = (float)saturnh / (float)saturnw;
 
-         adjustHeight(height);
+          if (specratio > saturnraito){
 
-			setFixedHeight( height );
+            mYabauseGL->viewport_width_ = height * saturnraito;
+            mYabauseGL->viewport_height_ = height;
+            mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
+            mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
+          }
+          else{
+            mYabauseGL->viewport_width_ = width;
+            mYabauseGL->viewport_height_ = height * revraito;
+            mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
+            mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
+          }
+        }
+
+      }
+      else{
+        int heightOffset = toolBar->height()+menubar->height();
+        int height;
+
+        if ( aspectRatio == 1 )
+          height = 3 * ((float) width / 4);
+        else
+          height = 9 * ((float) width / 16);
+
+        mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
+
+        adjustHeight(height );
+        mYabauseGL->viewport_height_ = height - heightOffset;
+        setFixedHeight(height);
+
+      }
 			break;
 		}
 	}
@@ -811,7 +855,7 @@ void UIYabause::on_aFileSettings_triggered()
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
 			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
 			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
-		fixAspectRatio( rect().width() );
+    fixAspectRatio(rect().width(), rect().height());
 		
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||

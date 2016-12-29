@@ -671,7 +671,6 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             gameinfo.lastplay_date = c.getTime();
             gameinfo.save();
         }else{
-            //ToDo オープン失敗めーっせーじ
             return;
         }
 

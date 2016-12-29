@@ -392,54 +392,50 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
             key.equals("pref_sound_engine" ) ||
             key.equals("pref_resolution")
             ) {
-            ListPreference pref = (ListPreference) findPreference(key);
-            pref.setSummary(pref.getEntry());
+                ListPreference pref = (ListPreference) findPreference(key);
+                pref.setSummary(pref.getEntry());
 
-            if( key.equals("pref_video")   ){
-                ListPreference filter_setting = (ListPreference) getPreferenceManager().findPreference("pref_filter");
-                if( pref.getValue().equals("1")){
-                    filter_setting.setEnabled(true);
-                }else{
-                    filter_setting.setEnabled(false);
-                }
+                if (key.equals("pref_video")) {
+                    ListPreference filter_setting = (ListPreference) getPreferenceManager().findPreference("pref_filter");
+                    if (pref.getValue().equals("1")) {
+                        filter_setting.setEnabled(true);
+                    } else {
+                        filter_setting.setEnabled(false);
+                    }
 
-                ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
-                polygon_setting.setSummary(polygon_setting.getEntry());
-                if( pref.getValue().equals("1") ){
-                    polygon_setting.setEnabled(true);
-                }else{
-                    polygon_setting.setEnabled(false);
+                    ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
+                    polygon_setting.setSummary(polygon_setting.getEntry());
+                    if (pref.getValue().equals("1")) {
+                        polygon_setting.setEnabled(true);
+                    } else {
+                        polygon_setting.setEnabled(false);
+                    }
                 }
+            } else if (key.equals("pref_player1_inputdevice")) {
+                ListPreference pref = (ListPreference) findPreference(key);
+                pref.setSummary(pref.getEntry());
+                SyncInputDevice();
+                SyncInputDeviceForPlayer2();
+            } else if (key.equals("pref_player2_inputdevice")) {
+                ListPreference pref = (ListPreference) findPreference(key);
+                pref.setSummary(pref.getEntry());
+                SyncInputDevice();
+                SyncInputDeviceForPlayer2();
             }
         }
-        
-        else if (key.equals("pref_player1_inputdevice") ) {
-        	ListPreference pref = (ListPreference) findPreference(key);
-        	pref.setSummary(pref.getEntry());
-        	SyncInputDevice();
-        	SyncInputDeviceForPlayer2();
-        }
-        
-        else if (key.equals("pref_player2_inputdevice") ) {
-        	ListPreference pref = (ListPreference) findPreference(key);
-        	pref.setSummary(pref.getEntry());
-        	SyncInputDevice();
-        	SyncInputDeviceForPlayer2();
-        }
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        getPreferenceScreen().getSharedPreferences()
-                .registerOnSharedPreferenceChangeListener(this);
-    }
+        @Override
+        protected void onResume () {
+            super.onResume();
+            getPreferenceScreen().getSharedPreferences()
+                    .registerOnSharedPreferenceChangeListener(this);
+        }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        getPreferenceScreen().getSharedPreferences()
-                .unregisterOnSharedPreferenceChangeListener(this);
-    }
+        @Override
+        protected void onPause () {
+            super.onPause();
+            getPreferenceScreen().getSharedPreferences()
+                    .unregisterOnSharedPreferenceChangeListener(this);
+        }
 
 }

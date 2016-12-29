@@ -19,19 +19,27 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     let _cart_group = 0
     let _cart_index = 1
     var _CartPickerIsShowing = false
-    private let cartArray: NSArray = ["None","4 Mbit BackupRam","8 Mbit BackupRam","16 Mbit BackupRam","32 Mbit BackupRam","8 Mbit DRAM","32 Mbit DRAM"]
-    private let cartValues: NSArray = [ 0,2,3,4,5,6,7]
+    fileprivate let cartArray: NSArray = ["None","4 Mbit BackupRam","8 Mbit BackupRam","16 Mbit BackupRam","32 Mbit BackupRam","8 Mbit DRAM","32 Mbit DRAM"]
+    fileprivate let cartValues: NSArray = [ 0,2,3,4,5,6,7]
     @IBOutlet weak var _cart_sel_label: UILabel!
     @IBOutlet weak var _picker: UIPickerView!
    
-
+   
     let _sound_group = 2
     let _sound_index = 0
     var _SoundPickerIsShowing = false
-    private let soundArray: NSArray = ["High Quality but heavy","Low Quality but light"]
-    private let soundValues: NSArray = [ 1,0 ]
+    fileprivate let soundArray: NSArray = ["High Quality but heavy","Low Quality but light"]
+    fileprivate let soundValues: NSArray = [ 1,0 ]
     @IBOutlet weak var _sound_picker_label: UILabel!
     @IBOutlet weak var _soundPicker: UIPickerView!
+
+    let _resolution_group = 1
+    let _resolution_index = 3
+    var _ResolutionPickerIsShowing = false
+    fileprivate let resolutionArray: NSArray = ["Native","4x","2x","Original"]
+    fileprivate let resolutionValues: NSArray = [ 0,1,2,3]
+    @IBOutlet weak var _resolution_sel_label: UILabel!
+    @IBOutlet weak var _resolution_picker: UIPickerView!
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -44,24 +52,27 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        _picker.hidden = !_CartPickerIsShowing
+        _picker.isHidden = !_CartPickerIsShowing
         _picker.delegate = self
         _picker.dataSource = self
         
-        _soundPicker.hidden = !_SoundPickerIsShowing
+        _soundPicker.isHidden = !_SoundPickerIsShowing
         _soundPicker.delegate = self
         _soundPicker.dataSource = self
         
-
+        _resolution_picker.isHidden = !_SoundPickerIsShowing
+        _resolution_picker.delegate = self
+        _resolution_picker.dataSource = self
+        
         //
         let plist = getSettingPlist()
         
-        _BultinBiosswitch.on = plist.valueForKey("builtin bios") as! Bool
-        _showFpsSwitch.on = plist.valueForKey("show fps") as! Bool
-        _showFrameSkip.on = plist.valueForKey("frame skip") as! Bool
-        _keepAspectRate.on = plist.valueForKey("keep aspect rate") as! Bool
+        _BultinBiosswitch.isOn = plist.value(forKey: "builtin bios") as! Bool
+        _showFpsSwitch.isOn = plist.value(forKey: "show fps") as! Bool
+        _showFrameSkip.isOn = plist.value(forKey: "frame skip") as! Bool
+        _keepAspectRate.isOn = plist.value(forKey: "keep aspect rate") as! Bool
         
-        let cart_index = plist.valueForKey("cartridge") as! Int
+        let cart_index = plist.value(forKey: "cartridge") as! Int
         
         var index : Int = 0
         for  i in cartValues {
@@ -72,7 +83,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         }
        
         
-        let sound_index = plist.valueForKey("sound engine") as! Int
+        let sound_index = plist.value(forKey: "sound engine") as! Int
         
         index = 0
         for  i in soundValues {
@@ -82,11 +93,22 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
             index += 1;
         }
         
-    
+        var resolution_index = plist.value(forKey: "rendering resolution") as? Int
+        if( resolution_index == nil ){
+            resolution_index = 0
+        }
+        
+        index = 0
+        for  i in resolutionValues {
+            if( resolution_index == i as! Int){
+                _resolution_sel_label.text = resolutionArray[index] as! String
+            }
+            index += 1;
+        }
     }
     
     func getSettingFilname() -> String {
-        let libraryPath = NSSearchPathForDirectoriesInDomains(.LibraryDirectory, .UserDomainMask, true)[0] as! String
+        let libraryPath = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)[0] 
         let filename = "settings.plist"
         let filePath = libraryPath + "/" + filename
         
@@ -95,13 +117,13 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     
     func getSettingPlist() -> NSMutableDictionary {
         let filePath = getSettingFilname()
-        let manager = NSFileManager()
-        if( !manager.fileExistsAtPath(filePath) ){
-            let bundelfilePath = NSBundle.mainBundle().pathForResource("settings", ofType: "plist")
+        let manager = FileManager()
+        if( !manager.fileExists(atPath: filePath) ){
+            let bundelfilePath = Bundle.main.path(forResource: "settings", ofType: "plist")
             do{
                 
                 try
-                    NSFileManager.defaultManager().copyItemAtPath(bundelfilePath!, toPath: filePath)
+                    FileManager.default.copyItem(atPath: bundelfilePath!, toPath: filePath)
                 
             } catch let error as NSError {
                 // Catch fires here, with an NSError being thrown
@@ -118,7 +140,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
      pickerに表示する列数を返すデータソースメソッド.
      (実装必須)
      */
-    func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
         return 1
     }
     
@@ -126,13 +148,16 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
      pickerに表示する行数を返すデータソースメソッド.
      (実装必須)
      */
-    func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int{
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int{
         
         if( pickerView == _picker){
             return cartArray.count
         }
-        if( pickerView == _soundPicker){
+        else if( pickerView == _soundPicker){
             return soundArray.count
+        }
+        else if( pickerView == _resolution_picker){
+            return resolutionArray.count
         }
         return 0;
         
@@ -142,49 +167,65 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     /*
      pickerに表示する値を返すデリゲートメソッド.
      */
-    func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         
         if( pickerView == _picker){
             return cartArray[row] as? String
         }
- 
-        if( pickerView == _soundPicker){
+        else if( pickerView == _soundPicker){
             return soundArray[row] as? String
         }
-        
+        else if( pickerView == _resolution_picker){
+            return resolutionArray[row] as? String
+        }
         return soundArray[row] as? String
     }
     
     /*
      pickerが選択された際に呼ばれるデリゲートメソッド.
      */
-    func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         
         if( pickerView == _picker ){
         
             let plist = getSettingPlist();
-            plist.setObject(cartValues[row], forKey: "cartridge")
-            plist.writeToFile(getSettingFilname(), atomically: true)
+            plist.setObject(cartValues[row], forKey: "cartridge" as NSCopying)
+            plist.write(toFile: getSettingFilname(), atomically: true)
             
             _cart_sel_label.text = cartArray[row] as! String
        
             _CartPickerIsShowing = false;
-            _picker.hidden = !_CartPickerIsShowing;
+            _picker.isHidden = !_CartPickerIsShowing;
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
         }
         
-        if( pickerView == _soundPicker ){
+        else if( pickerView == _soundPicker ){
             
             let plist = getSettingPlist();
-            plist.setObject(soundValues[row], forKey: "sound engine")
-            plist.writeToFile(getSettingFilname(), atomically: true)
+            plist.setObject(soundValues[row], forKey: "sound engine" as NSCopying)
+            plist.write(toFile: getSettingFilname(), atomically: true)
             
             
             _sound_picker_label.text = soundArray[row] as! String
             
             _SoundPickerIsShowing = false;
-            _soundPicker.hidden = !_SoundPickerIsShowing;
+            _soundPicker.isHidden = !_SoundPickerIsShowing;
+            self.tableView.beginUpdates()
+            self.tableView.endUpdates()
+        }
+        
+        else if( pickerView == _resolution_picker ){
+            
+            let plist = getSettingPlist();
+            plist.setObject(resolutionValues[row], forKey: "rendering resolution" as NSCopying)
+            plist.write(toFile: getSettingFilname(), atomically: true)
+            
+            
+            _resolution_sel_label.text = resolutionArray[row] as! String
+            
+            _ResolutionPickerIsShowing = false;
+            _resolution_picker.isHidden = !_ResolutionPickerIsShowing;
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
         }
@@ -192,49 +233,49 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     }
     
     
-    @IBAction func biosChanged(sender: AnyObject) {
+    @IBAction func biosChanged(_ sender: AnyObject) {
         
         let plist = getSettingPlist();
-        plist.setObject(_BultinBiosswitch.on, forKey: "builtin bios")
-        plist.writeToFile(getSettingFilname(), atomically: true)
+        plist.setObject(_BultinBiosswitch.isOn, forKey: "builtin bios" as NSCopying)
+        plist.write(toFile: getSettingFilname(), atomically: true)
         
     }
     
-    @IBAction func ShowFPSChanged(sender: AnyObject) {
+    @IBAction func ShowFPSChanged(_ sender: AnyObject) {
        
         let plist = getSettingPlist();
-        plist.setObject(_showFpsSwitch.on, forKey: "show fps")
-        plist.writeToFile(getSettingFilname(), atomically: true)
+        plist.setObject(_showFpsSwitch.isOn, forKey: "show fps" as NSCopying)
+        plist.write(toFile: getSettingFilname(), atomically: true)
     }
     
-    @IBAction func FrameSkipChanged(sender: AnyObject) {
+    @IBAction func FrameSkipChanged(_ sender: AnyObject) {
         
         let plist = getSettingPlist();
-        plist.setObject(_showFrameSkip.on, forKey: "frame skip")
-        plist.writeToFile(getSettingFilname(), atomically: true)
+        plist.setObject(_showFrameSkip.isOn, forKey: "frame skip" as NSCopying)
+        plist.write(toFile: getSettingFilname(), atomically: true)
         
 
     }
-    @IBAction func AspectrateChnaged(sender: AnyObject) {
+    @IBAction func AspectrateChnaged(_ sender: AnyObject) {
         let plist = getSettingPlist();
-        plist.setObject(_keepAspectRate.on, forKey: "keep aspect rate")
-        plist.writeToFile(getSettingFilname(), atomically: true)
+        plist.setObject(_keepAspectRate.isOn, forKey: "keep aspect rate" as NSCopying)
+        plist.write(toFile: getSettingFilname(), atomically: true)
         
     }
     
-    override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath){
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath){
         
-        if( indexPath.section == _cart_group && indexPath.row == _cart_index){
+        if( (indexPath as NSIndexPath).section == _cart_group && (indexPath as NSIndexPath).row == _cart_index){
             _CartPickerIsShowing = !_CartPickerIsShowing;
-            _picker.hidden = !_CartPickerIsShowing;
+            _picker.isHidden = !_CartPickerIsShowing;
   
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
             
-            if( _picker.hidden == false ){
+            if( _picker.isHidden == false ){
                 
                 self._picker.alpha = 0
-                UIView.animateWithDuration(0.25, animations: { () -> Void in
+                UIView.animate(withDuration: 0.25, animations: { () -> Void in
                     self._picker.alpha = 1.0
                     }, completion: {(Bool) -> Void in
                    
@@ -242,18 +283,38 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
             }
         }
   
-        if( indexPath.section == _sound_group && indexPath.row == _sound_index){
+        if( (indexPath as NSIndexPath).section == _sound_group && (indexPath as NSIndexPath).row == _sound_index){
             _SoundPickerIsShowing = !_SoundPickerIsShowing;
-            _soundPicker.hidden = !_SoundPickerIsShowing;
+            _soundPicker.isHidden = !_SoundPickerIsShowing;
             
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
             
-            if( _soundPicker.hidden == false ){
+            if( _soundPicker.isHidden == false ){
                 
                 self._soundPicker.alpha = 0
-                UIView.animateWithDuration(0.25, animations: { () -> Void in
+                UIView.animate(withDuration: 0.25, animations: { () -> Void in
                     self._soundPicker.alpha = 1.0
+                    }, completion: {(Bool) -> Void in
+                        
+                })
+            }
+        }
+        
+       
+       
+        if( (indexPath as NSIndexPath).section == _resolution_group && (indexPath as NSIndexPath).row == _resolution_index){
+            _ResolutionPickerIsShowing = !_ResolutionPickerIsShowing;
+            _resolution_picker.isHidden = !_ResolutionPickerIsShowing;
+            
+            self.tableView.beginUpdates()
+            self.tableView.endUpdates()
+            
+            if( _resolution_picker.isHidden == false ){
+                
+                self._resolution_picker.alpha = 0
+                UIView.animate(withDuration: 0.25, animations: { () -> Void in
+                    self._resolution_picker.alpha = 1.0
                     }, completion: {(Bool) -> Void in
                         
                 })
@@ -262,17 +323,21 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     }
     
     
-    override func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         var height: CGFloat = self.tableView.rowHeight
         
-        if ( indexPath.section == _cart_group && indexPath.row == _cart_index+1){
+        if ( (indexPath as NSIndexPath).section == _cart_group && (indexPath as NSIndexPath).row == _cart_index+1){
             height =  self._CartPickerIsShowing ? self._DATEPICKER_CELL_HEIGHT : CGFloat(0)
         }
 
-        if ( indexPath.section == _sound_group && indexPath.row == _sound_index+1){
+        if ( (indexPath as NSIndexPath).section == _sound_group && (indexPath as NSIndexPath).row == _sound_index+1){
             height =  self._SoundPickerIsShowing ? self._DATEPICKER_CELL_HEIGHT : CGFloat(0)
         }
-
+        
+        if ( (indexPath as NSIndexPath).section == _resolution_group && (indexPath as NSIndexPath).row == _resolution_index+1){
+            height =  self._ResolutionPickerIsShowing ? self._DATEPICKER_CELL_HEIGHT : CGFloat(0)
+        }
+        
         return height
     }
     

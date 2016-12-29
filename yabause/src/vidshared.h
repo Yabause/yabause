@@ -93,6 +93,12 @@ typedef struct
    int MskV;
    u32 lineaddr;
    u32 PlaneAddrv[16];
+
+   u16 * prefecth_k1w;
+   u32 * prefecth_k2w;
+   int ktablesize;
+   u8 k_mem_type;
+   u8 K_update;
    
 } vdp2rotationparameter_struct;
 

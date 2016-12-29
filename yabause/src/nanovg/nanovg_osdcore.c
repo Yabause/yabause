@@ -149,9 +149,12 @@ static int current_log_history_index = 0;
 
 void OSDNanovgAddLogString(char * log){
   int index;
-  index = current_log_history_index % MAX_LOG_HISTORY;
+  index = current_log_history_index;
   strncpy(log_histroy[index], log, 128);
   current_log_history_index++;
+  if (current_log_history_index >= MAX_LOG_HISTORY){
+    current_log_history_index = 0;
+  }
 }
 
 
@@ -305,11 +308,11 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
 
   nvgText(vg, LeftX, TxtY, message->message, NULL);
   TxtY += fontsize;
-#if 0
+
   int linecnt = (vidheight - TxtY) / fontsize;
-  int start_point = current_history_index - linecnt;
+  int start_point = current_log_history_index - linecnt;
   if (start_point < 0) {
-    start_point = MAX_LOG_HISTORY - start_point;
+    start_point = MAX_LOG_HISTORY + start_point;
   }
   for (i = 0; i < linecnt; i++){
     nvgText(vg, LeftX, TxtY, log_histroy[start_point], NULL);
