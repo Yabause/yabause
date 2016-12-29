@@ -4347,21 +4347,22 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
 #endif
    isSquare = 1;
-   for (i = 0; i < 3; i++){
-     float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
-     float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
-     float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
-     float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
-     float dot = dx*d2x + dy*d2y;
 
-     // Big polygon is forced as square( Gungriffon )
-     if (dx > 200){
-       isSquare = 1;
-       break;
-     }
-     if (dot >= EPSILON || dot <= -EPSILON){
-       isSquare = 0;
-       break;
+   float cx = sprite.vertices[4] - sprite.vertices[0];
+   float cy = sprite.vertices[5] - sprite.vertices[1];
+
+   // Big polygon is forced as square( Gungriffon )
+   if ( fabsf(cx*cy) < 160){
+     for (i = 0; i < 3; i++){
+       float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
+       float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
+       float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+       float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
+       float dot = dx*d2x + dy*d2y;
+       if (dot >= EPSILON || dot <= -EPSILON){
+         isSquare = 0;
+         break;
+       }
      }
    }
 
