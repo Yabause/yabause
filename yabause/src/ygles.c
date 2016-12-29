@@ -2430,10 +2430,13 @@ void YglRenderVDP1(void) {
      color = Vdp1Regs->EWDR;
      priority = 0;
 
-     if (color & 0x8000)
+     if (color & 0x8000){
+       //if ((color & 0x7FFF) == 0){
+       //  alpha = 0;
+       //}
+       alpha = 0xF8;
        priority = Vdp2Regs->PRISA & 0x7;
-     else
-     {
+     }else{
        int shadow, colorcalc;
        Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
 #ifdef WORDS_BIGENDIAN
@@ -2441,16 +2444,16 @@ void YglRenderVDP1(void) {
 #else
        priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
 #endif
+       if (color == 0)
+       {
+         alpha = 0;
+         priority = 0;
+       }
+       else{
+         alpha = 0xF8;
+       }
      }
 
-     if (color == 0)
-     {
-       alpha = 0;
-       priority = 0;
-     }
-     else{
-       alpha = 0xF8;
-     }
      alpha |= priority;
 
      glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
