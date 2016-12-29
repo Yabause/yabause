@@ -40,6 +40,11 @@
 static Vdp2 baseVdp2Regs;
 static Vdp2 * fixVdp2Regs=NULL;
 
+#ifdef PERFRAME_LOG
+int fount = 0;
+FILE *ppfp = NULL;
+#endif
+
 #ifdef _WINDOWS
 int yprintf( const char * fmt, ... )
 {
@@ -3551,13 +3556,26 @@ int VIDOGLVdp1Reset(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
 void VIDOGLVdp1DrawStart(void)
 {
    int i;
    int maxpri;
    int minpri;
    int line = 0;
+
+ #ifdef PERFRAME_LOG
+   if (ppfp == NULL){
+     ppfp = fopen("ppfp0.txt","w");
+   }
+   else{
+     char fname[64];
+     sprintf(fname, "ppfp%d.txt", fount);
+     fclose(ppfp);
+     ppfp = fopen(fname, "w");
+   }
+   fount++;
+#endif
+
    fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
    if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
    memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
@@ -4318,8 +4336,18 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.vertices[5] = (s16)cmd.CMDYC;
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
-
+#ifdef PERFRAME_LOG
+   if (ppfp != NULL) {
+     fprintf(ppfp, "BEFORE %d,%d,%d,%d,%d,%d,%d,%d\n",
+       (int)sprite.vertices[0], (int)sprite.vertices[1],
+       (int)sprite.vertices[2], (int)sprite.vertices[3],
+       (int)sprite.vertices[4], (int)sprite.vertices[5],
+       (int)sprite.vertices[6],(int)sprite.vertices[7]
+       );
+   }
+#endif
    isSquare = 1;
+#if 0
    for (i = 0; i < 3; i++){
      float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
      float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
@@ -4331,6 +4359,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
        break;
      }
    }
+#endif
+
    if (isSquare){
      // find upper left opsition
      float minx = 65535.0f;
@@ -4340,13 +4370,49 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      sprite.dst = 0;
 
      for (i = 0; i < 4; i++){
-       if (sprite.vertices[(i << 1) + 0] <= minx && sprite.vertices[(i << 1) + 1] <= miny){
-         minx = sprite.vertices[(i << 1) + 0];
-         miny = sprite.vertices[(i << 1) + 1];
-         lt_index = i;
+       if (sprite.vertices[(i << 1) + 0] <= minx /*&& sprite.vertices[(i << 1) + 1] <= miny*/){
+
+         if (minx == sprite.vertices[(i << 1) + 0]){
+           if (sprite.vertices[(i << 1) + 1] < miny) {
+             minx = sprite.vertices[(i << 1) + 0];
+             miny = sprite.vertices[(i << 1) + 1];
+             lt_index = i;
+           }
+         }
+         else{
+           minx = sprite.vertices[(i << 1) + 0];
+           miny = sprite.vertices[(i << 1) + 1];
+           lt_index = i;
+         }
        }
      }
 
+     float adx = sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
+     float ady = sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+     float bdx = sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
+     float bdy = sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+     float cross = (adx * bdy) - (bdx * ady);
+
+     // clockwise
+     if (cross >= 0) {
+       sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] += 1;
+       sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] += 0;
+       sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] += 1;
+       sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] += 1;
+       sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 0] += 0;
+       sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 1] += 1;
+     }
+     // counter-clockwise
+     else{
+       sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] += 0;
+       sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] += 1;
+       sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] += 1;
+       sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] += 1;
+       sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 0] += 1;
+       sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 1] += 0;
+     }
+
+#if 0
      for (i = 0; i < 4; i++){
        if (i != lt_index){
          // vectorize
@@ -4355,6 +4421,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          float nx;
          float ny;
 
+         if (sprite.vertices[(i << 1) + 1] == 78){
+           int a = 0;
+         }
+
          // normalize
          float len = fabsf(sqrtf(dx*dx + dy*dy));
          if (len <= EPSILON){
@@ -4362,24 +4432,39 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          }
          nx = dx / len;
          ny = dy / len;
-         if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
-         if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
+#if 0
+         if (nx >= EPSILON){ nx = 5.0f; }
+         else if (nx <= -EPSILON){ nx = -5.0f; }
+         else nx = 0.0f;
+
+         if (ny >= EPSILON){ ny = 5.0f; }
+         else if (ny <= -EPSILON){ ny = -5.0f; }
+         else ny = 0.0f;
+#endif
+
+         if (nx >= EPSILON &&  nx < 1.0 ){ nx = 1.0; }
+         else if (nx <= -EPSILON && nx > -1.0){ nx = -1.0; }
+         if (ny >= EPSILON &&  ny < 1.0){ ny = 1.0; }
+         else if (ny <= -EPSILON && ny > -1.0){ ny = -1.0; }
 
          // expand vertex
          sprite.vertices[(i << 1) + 0] += nx;
          sprite.vertices[(i << 1) + 1] += ny;
        }
      }
+#endif
    }
 
+#if 0
    // Line Polygon
    if ( (sprite.vertices[1] == sprite.vertices[3]) && // Y1 == Y2
      (sprite.vertices[3]  == sprite.vertices[5]) && // Y2 == Y3
      (sprite.vertices[5]  == sprite.vertices[7]))   // Y3 == Y4
    {
-     sprite.vertices[3] += 1;
-     sprite.vertices[7] += 1;
+       sprite.vertices[7] += 1;
+       sprite.vertices[5] += 1;
    }
+
    // Line Polygon
    if ((sprite.vertices[0] == sprite.vertices[2]) &&
      (sprite.vertices[2] == sprite.vertices[4]) &&
@@ -4387,6 +4472,19 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      sprite.vertices[4] += 1;
      sprite.vertices[6] += 1;
    }
+#endif
+
+#ifdef PERFRAME_LOG
+   if (ppfp != NULL) {
+     fprintf(ppfp, "AFTER %d,%d,%d,%d,%d,%d,%d,%d\n",
+       (int)sprite.vertices[0], (int)sprite.vertices[1],
+       (int)sprite.vertices[2], (int)sprite.vertices[3],
+       (int)sprite.vertices[4], (int)sprite.vertices[5],
+       (int)sprite.vertices[6], (int)sprite.vertices[7]
+       );
+   }
+#endif
+
    sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
    sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
    sprite.vertices[2] = (sprite.vertices[2] + Vdp1Regs->localX) * vdp1wratio;
