@@ -164,8 +164,10 @@ int Ygl_uniformVdp1CommonParam(void * p){
     glUniform1i(param->fboheight, _Ygl->height);
 #if !defined(_OGLES3_)
     if (glTextureBarrierNV) glTextureBarrierNV();
+#else
+    if( glMemoryBarrier ) glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT);
 #endif
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0); 
   }
 
 
