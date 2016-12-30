@@ -6682,6 +6682,8 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W( vdp2rotationparameter_
 {
    float kval;
    int   kdata;
+
+   if (index<0 || index >=param->ktablesize ) return NULL;
       
    kdata = param->prefecth_k2w[index];
    if( kdata & 0x80000000 ) return NULL;
@@ -6711,6 +6713,8 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W( vdp2rotationparameter_
    float kval;
    u16   kdata;
   
+   if (index<0 || index >= param->ktablesize) return NULL;
+
    kdata = param->prefecth_k1w[index];
    if( kdata & 0x8000 ) return NULL;
 
