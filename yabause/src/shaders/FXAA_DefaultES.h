@@ -20,6 +20,7 @@ const GLchar Yglprg_fxaa_f_option_nv[] =
 #else
 "#version 330 \n"
 #endif
+"#extension GL_ARB_gpu_shader5: enable \n"
 " precision mediump float; \n"
 " #define FXAA_PC 1 \n"
 " #define FXAA_GLSL_130 1 \n"
@@ -32,7 +33,6 @@ const GLchar Yglprg_fxaa_f_option_others[] =
 #else
 "#version 330 \n"
 #endif
-"#extension GL_ARB_gpu_shader5: enable \n"
 " precision mediump float; \n"
 " #define FXAA_PC 1 \n"
 " #define FXAA_GLSL_130 1 \n"
