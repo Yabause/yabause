@@ -39,6 +39,8 @@
 @property (weak, nonatomic) IBOutlet UIView *y_button;
 @property (weak, nonatomic) IBOutlet UIView *z_button;
 
+@property (weak, nonatomic) IBOutlet UIButton *remapButton;
+
 - (void)saveState;
 - (void)loadState;
 
