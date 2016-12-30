@@ -715,7 +715,6 @@ int GetPlayer2Device(){
 {
     
     void (^mfiButtonHandler)(KeyMapMappableButton,BOOL) = ^void(KeyMapMappableButton mfiButton, BOOL pressed) {
-        NSLog(@"calling mfi button handler with button: %li , key remap mode = %@ , currently mapped key: %li",(long)mfiButton,self.isKeyRemappingMode ? @"YES" : @"NO", self.currentlyMappingKey);
         if ( self.isKeyRemappingMode && self.currentlyMappingKey != NSNotFound ) {
             [self.keyMapper mapKey:self.currentlyMappingKey ToControl:mfiButton];
             if ( self.remapAlertController != nil ) {
@@ -1215,8 +1214,15 @@ int GetPlayer2Device(){
         [self.remapAlertController dismissViewControllerAnimated:YES completion:nil];
         self.currentlyMappingKey = NSNotFound;
     }];
+    UIAlertAction *unbind = [UIAlertAction actionWithTitle:@"Unbind" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self.keyMapper unmapKey:saturnKey];
+        self.currentlyMappingKey = NSNotFound;
+        [self refreshViewsWithKeyRemaps];
+        [self.remapAlertController dismissViewControllerAnimated:YES completion:nil];
+    }];
     self.isKeyRemappingMode = YES;
     [self.remapAlertController addAction:cancel];
+    [self.remapAlertController addAction:unbind];
     self.currentlyMappingKey = saturnKey;
     [self presentViewController:self.remapAlertController animated:YES completion:nil];
 }
