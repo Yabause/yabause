@@ -2630,11 +2630,10 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture){
   info->patternpixelwh = 8*info->patternwh;
   info->draww = (int)((float)vdp2width / info->coordincx);
   info->drawh = (int)((float)vdp2height / info->coordincy);
-
+    
   int res_shift = 0;
   if (vdp2height >= 440) res_shift = 1;
-
-
+  
   for (v = 0; v < info->drawh; v += info->lineinc){  // ToDo: info->coordincy
     int targetv = 0;
     sx = info->x + info->lineinfo[ (int)(lineindex*info->coordincy) ].LineScrollValH;
@@ -2717,6 +2716,8 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
   int dot_on_planex;
   int dot_on_pagex;
   int h, v;
+  int cell_count = 0;
+
   const int planeh_shift = 9 + (info->planeh - 1);
   const int planew_shift = 9 + (info->planew - 1);
   const int plane_shift = 9;
@@ -2734,34 +2735,52 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture){
   for (v = -info->patternpixelwh; v < info->drawh + info->patternpixelwh; v += info->patternpixelwh){
     int targetv = 0;
     sx = info->x;
-    targetv = info->y + v;
 
-    if (info->isverticalscroll)	{
-      // this is *wrong*, vertical scroll use a different value per cell
-      // info->verticalscrolltbl should be incremented by info->verticalscrollinc
-      // each time there's a cell change and reseted at the end of the line...
-      // or something like that :)
-      targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
+    if (!info->isverticalscroll) {
+      targetv = info->y + v;
+      // determine which chara shoud be used.
+      //mapy   = (v+sy) / (512 * info->planeh);
+      mapy = (targetv) >> planeh_shift;
+      //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+      dot_on_planey = (targetv)-(mapy << planeh_shift);
+      mapy = mapy & 0x01;
+      //planey = dot_on_planey / 512;
+      planey = dot_on_planey >> plane_shift;
+      //int dot_on_pagey = dot_on_planey - planey * 512;
+      dot_on_pagey = dot_on_planey & plane_mask;
+      planey = planey & (info->planeh - 1);
+      //pagey = dot_on_pagey / (512 / info->pagewh);
+      pagey = dot_on_pagey >> page_shift;
+      //chary = dot_on_pagey - pagey*(512 / info->pagewh);
+      chary = dot_on_pagey & page_mask;
+      if (pagey < 0) pagey = info->pagewh - 1 + pagey;
+    }
+    else{
+      cell_count = 0;
     }
 
-    // determine which chara shoud be used.
-    //mapy   = (v+sy) / (512 * info->planeh);
-    mapy = (targetv) >> planeh_shift;
-    //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-    dot_on_planey = (targetv)-(mapy << planeh_shift);
-    mapy = mapy & 0x01;
-    //planey = dot_on_planey / 512;
-    planey = dot_on_planey >> plane_shift;
-    //int dot_on_pagey = dot_on_planey - planey * 512;
-    dot_on_pagey = dot_on_planey & plane_mask;
-    planey = planey & (info->planeh - 1);
-    //pagey = dot_on_pagey / (512 / info->pagewh);
-    pagey = dot_on_pagey >> page_shift;
-    //chary = dot_on_pagey - pagey*(512 / info->pagewh);
-    chary = dot_on_pagey & page_mask;
-    if (pagey < 0) pagey = info->pagewh - 1 + pagey;
-
     for (h = -info->patternpixelwh; h < info->draww + info->patternpixelwh; h += info->patternpixelwh){
+
+      if (info->isverticalscroll)	{
+        targetv = info->y + v + (T1ReadLong(Vdp2Ram, info->verticalscrolltbl + cell_count) >> 16);
+        cell_count += info->verticalscrollinc;
+        // determine which chara shoud be used.
+        //mapy   = (v+sy) / (512 * info->planeh);
+        mapy = (targetv) >> planeh_shift;
+        //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
+        dot_on_planey = (targetv)-(mapy << planeh_shift);
+        mapy = mapy & 0x01;
+        //planey = dot_on_planey / 512;
+        planey = dot_on_planey >> plane_shift;
+        //int dot_on_pagey = dot_on_planey - planey * 512;
+        dot_on_pagey = dot_on_planey & plane_mask;
+        planey = planey & (info->planeh - 1);
+        //pagey = dot_on_pagey / (512 / info->pagewh);
+        pagey = dot_on_pagey >> page_shift;
+        //chary = dot_on_pagey - pagey*(512 / info->pagewh);
+        chary = dot_on_pagey & page_mask;
+        if (pagey < 0) pagey = info->pagewh - 1 + pagey;
+      }
 
       //mapx = (h + sx) / (512 * info->planew);
       mapx = (h + sx) >> planew_shift;
