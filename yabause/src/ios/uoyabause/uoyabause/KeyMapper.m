@@ -1,6 +1,5 @@
 //
 //  KeyMapper.m
-//  activegs
 //
 //  Created by Yoshi Sugawara on 4/9/16.
 //
