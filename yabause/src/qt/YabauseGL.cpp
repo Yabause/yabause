@@ -34,6 +34,10 @@ YabauseGL::YabauseGL( QWidget* p )
 		p->setFocusPolicy( Qt::StrongFocus );
 		setFocusProxy( p );
 	}
+  viewport_width_ = 0;
+  viewport_height_ = 0;
+  viewport_origin_x_ = 0;
+  viewport_origin_y_ = 0;
 }
 
 void YabauseGL::showEvent( QShowEvent* e )
@@ -53,7 +57,7 @@ void YabauseGL::updateView( const QSize& s )
 	const QSize size = s.isValid() ? s : this->size();
 	glViewport( 0, 0, size.width(), size.height() );
 	if ( VIDCore )
-		VIDCore->Resize( 0,0,size.width(), size.height(), 0 );
+    VIDCore->Resize(viewport_origin_x_, viewport_origin_y_, viewport_width_, viewport_height_, 0);
 }
 
 

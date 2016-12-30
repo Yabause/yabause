@@ -1331,7 +1331,15 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          }
          return;
       case 0x010:
+        
          CurrentSH2->onchip.TIER = (val & 0x8E) | 0x1;
+         if ((val & 0x80) && (CurrentSH2 == SSH2) && (SSH2->onchip.FTCSR & 0x80)){
+            SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
+         }
+
+         if ((val & 0x80) && (CurrentSH2 == MSH2) && (MSH2->onchip.FTCSR & 0x80)){
+           SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
+         }
          return;
       case 0x011:
          CurrentSH2->onchip.FTCSR = (CurrentSH2->onchip.FTCSR & (val & 0xFE)) | (val & 0x1);
@@ -1564,6 +1572,12 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
 void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
    switch (addr)
    {
+   case 0x010:
+     CurrentSH2->onchip.TIER = (val & 0x8E) | 0x1;
+     break;
+   case 0x060:
+     CurrentSH2->onchip.IPRB = val & 0xFF00;
+     break;
       case 0x100:
       case 0x120:
          CurrentSH2->onchip.DVSR = val;
@@ -1762,7 +1776,7 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
          CurrentSH2->onchip.RTCOR = val & 0xFF;
          return;
       default:
-         LOG("Unhandled Onchip long write %08X\n", (int)addr);
+         LOG("Unhandled Onchip long write %08X,%08X\n", (int)addr, val);
          break;
    }
 }

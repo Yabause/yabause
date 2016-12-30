@@ -127,7 +127,7 @@ public slots:
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
-	void fixAspectRatio( int width );
+	void fixAspectRatio( int width, int height  );
 	void getSupportedResolutions();
 	int isResolutionValid( int width, int height, int bpp, int freq );
 	int findBestVideoFreq( int width, int height, int bpp, int videoFormat );

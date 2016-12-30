@@ -24,7 +24,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     @IBOutlet weak var _cart_sel_label: UILabel!
     @IBOutlet weak var _picker: UIPickerView!
    
-
+   
     let _sound_group = 2
     let _sound_index = 0
     var _SoundPickerIsShowing = false
@@ -32,6 +32,14 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     fileprivate let soundValues: NSArray = [ 1,0 ]
     @IBOutlet weak var _sound_picker_label: UILabel!
     @IBOutlet weak var _soundPicker: UIPickerView!
+
+    let _resolution_group = 1
+    let _resolution_index = 3
+    var _ResolutionPickerIsShowing = false
+    fileprivate let resolutionArray: NSArray = ["Native","4x","2x","Original"]
+    fileprivate let resolutionValues: NSArray = [ 0,1,2,3]
+    @IBOutlet weak var _resolution_sel_label: UILabel!
+    @IBOutlet weak var _resolution_picker: UIPickerView!
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -52,7 +60,10 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         _soundPicker.delegate = self
         _soundPicker.dataSource = self
         
-
+        _resolution_picker.isHidden = !_SoundPickerIsShowing
+        _resolution_picker.delegate = self
+        _resolution_picker.dataSource = self
+        
         //
         let plist = getSettingPlist()
         
@@ -82,7 +93,18 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
             index += 1;
         }
         
-    
+        var resolution_index = plist.value(forKey: "rendering resolution") as? Int
+        if( resolution_index == nil ){
+            resolution_index = 0
+        }
+        
+        index = 0
+        for  i in resolutionValues {
+            if( resolution_index == i as! Int){
+                _resolution_sel_label.text = resolutionArray[index] as! String
+            }
+            index += 1;
+        }
     }
     
     func getSettingFilname() -> String {
@@ -131,8 +153,11 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         if( pickerView == _picker){
             return cartArray.count
         }
-        if( pickerView == _soundPicker){
+        else if( pickerView == _soundPicker){
             return soundArray.count
+        }
+        else if( pickerView == _resolution_picker){
+            return resolutionArray.count
         }
         return 0;
         
@@ -147,11 +172,12 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         if( pickerView == _picker){
             return cartArray[row] as? String
         }
- 
-        if( pickerView == _soundPicker){
+        else if( pickerView == _soundPicker){
             return soundArray[row] as? String
         }
-        
+        else if( pickerView == _resolution_picker){
+            return resolutionArray[row] as? String
+        }
         return soundArray[row] as? String
     }
     
@@ -174,7 +200,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
             self.tableView.endUpdates()
         }
         
-        if( pickerView == _soundPicker ){
+        else if( pickerView == _soundPicker ){
             
             let plist = getSettingPlist();
             plist.setObject(soundValues[row], forKey: "sound engine" as NSCopying)
@@ -185,6 +211,21 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
             
             _SoundPickerIsShowing = false;
             _soundPicker.isHidden = !_SoundPickerIsShowing;
+            self.tableView.beginUpdates()
+            self.tableView.endUpdates()
+        }
+        
+        else if( pickerView == _resolution_picker ){
+            
+            let plist = getSettingPlist();
+            plist.setObject(resolutionValues[row], forKey: "rendering resolution" as NSCopying)
+            plist.write(toFile: getSettingFilname(), atomically: true)
+            
+            
+            _resolution_sel_label.text = resolutionArray[row] as! String
+            
+            _ResolutionPickerIsShowing = false;
+            _resolution_picker.isHidden = !_ResolutionPickerIsShowing;
             self.tableView.beginUpdates()
             self.tableView.endUpdates()
         }
@@ -259,6 +300,26 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
                 })
             }
         }
+        
+       
+       
+        if( (indexPath as NSIndexPath).section == _resolution_group && (indexPath as NSIndexPath).row == _resolution_index){
+            _ResolutionPickerIsShowing = !_ResolutionPickerIsShowing;
+            _resolution_picker.isHidden = !_ResolutionPickerIsShowing;
+            
+            self.tableView.beginUpdates()
+            self.tableView.endUpdates()
+            
+            if( _resolution_picker.isHidden == false ){
+                
+                self._resolution_picker.alpha = 0
+                UIView.animate(withDuration: 0.25, animations: { () -> Void in
+                    self._resolution_picker.alpha = 1.0
+                    }, completion: {(Bool) -> Void in
+                        
+                })
+            }
+        }
     }
     
     
@@ -272,7 +333,11 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         if ( (indexPath as NSIndexPath).section == _sound_group && (indexPath as NSIndexPath).row == _sound_index+1){
             height =  self._SoundPickerIsShowing ? self._DATEPICKER_CELL_HEIGHT : CGFloat(0)
         }
-
+        
+        if ( (indexPath as NSIndexPath).section == _resolution_group && (indexPath as NSIndexPath).row == _resolution_index+1){
+            height =  self._ResolutionPickerIsShowing ? self._DATEPICKER_CELL_HEIGHT : CGFloat(0)
+        }
+        
         return height
     }
     
