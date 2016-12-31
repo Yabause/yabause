@@ -149,6 +149,26 @@
                 break;
                 
             }
+                
+            case 4:
+            {
+                GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+                if ( revealViewController )
+                {
+                    [revealViewController revealToggleAnimated:YES];
+                    GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+                    if( view ){
+                        if ( [view isCurrentlyRemappingControls] ) {
+                            self.showRemapControlsLabel.text = @"Show Remap Controls";
+                        } else {
+                            self.showRemapControlsLabel.text = @"Hide Remap Controls";
+                        }
+                        [view startKeyRemapping:nil];
+                    }
+                }
+                [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
+                break;
+            }
         }
         
     }
@@ -169,10 +189,25 @@
     
 }
 
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    // hide the remap controls overlay if there is no mfi controller present
+    if ( indexPath.row == 4 ) {
+        GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+        GameViewController * vc = (GameViewController * )[revealViewController frontViewController];
+        if ( ![vc hasControllerConnected] ) {
+            return 0.0;
+        }
+    }
+    return 44.0;
+}
+
 
 - (void)interstitialDidDismissScreen:(GADInterstitial *)ad {
     exit(0);
 }
 
+-(void)refreshContents {
+    [self.tableView reloadData];
+}
 
 @end
