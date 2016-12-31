@@ -12,4 +12,9 @@
 @interface SidebarViewController : UITableViewController  <UITableViewDelegate, UITableViewDataSource, GADInterstitialDelegate>
 @property (weak, nonatomic) IBOutlet GADBannerView *banner;
 @property(nonatomic, strong) GADInterstitial *interstitial;
+
+@property (strong, nonatomic) IBOutlet UILabel *showRemapControlsLabel;
+
+-(void)refreshContents;
+
 @end

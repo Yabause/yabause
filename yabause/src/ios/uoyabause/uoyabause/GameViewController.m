@@ -17,6 +17,7 @@
 #import "GameRevealViewController.h"
 #import "SaturnControllerKeys.h"
 #import "KeyMapper.h"
+#import "SidebarViewController.h"
 
 /** @defgroup pad Pad
  *
@@ -708,7 +709,7 @@ int GetPlayer2Device(){
 - (void)controllerDidDisconnect
 {
     [self setControllerOverlayHidden:NO];
-    self.remapButton.hidden = YES;
+    [self updateSideMenu];
 }
 
 -(void)completionWirelessControllerDiscovery
@@ -845,8 +846,8 @@ int GetPlayer2Device(){
                                                object:nil];
     [self refreshViewsWithKeyRemaps];
     [self setControllerOverlayHidden:YES];
-    self.remapButton.hidden = NO;
     [self completionWirelessControllerDiscovery];
+    [self updateSideMenu];
 }
 
 -(void)setControllerOverlayHidden:(BOOL)hidden {
@@ -1029,10 +1030,6 @@ int GetPlayer2Device(){
     self.keyMapper = [[KeyMapper alloc] init];
     [self.keyMapper loadFromDefaults];
     self.remapLabelViews = [NSMutableArray array];
-    self.remapButton.layer.borderWidth = 1.0;
-    self.remapButton.layer.borderColor = [self.remapButton.tintColor CGColor];
-    self.remapButton.hidden = YES;
-  
     [self setupGL];
 }
 
@@ -1160,11 +1157,9 @@ int GetPlayer2Device(){
     [self refreshViewsWithKeyRemaps];
     if ( self.isKeyRemappingMode ) {
         self.isKeyRemappingMode = NO;
-        [self.remapButton setSelected:NO];
         [self setControllerOverlayHidden:YES];
     } else {
         self.isKeyRemappingMode = YES;
-        [self.remapButton setSelected:YES];
         [self setControllerOverlayHidden:NO];
     }
 }
@@ -1209,7 +1204,6 @@ int GetPlayer2Device(){
         preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
         self.isKeyRemappingMode = NO;
-        [self.remapButton setSelected:NO];
         [self setControllerOverlayHidden:YES];
         [self.remapAlertController dismissViewControllerAnimated:YES completion:nil];
         self.currentlyMappingKey = NSNotFound;
@@ -1225,6 +1219,19 @@ int GetPlayer2Device(){
     [self.remapAlertController addAction:unbind];
     self.currentlyMappingKey = saturnKey;
     [self presentViewController:self.remapAlertController animated:YES completion:nil];
+}
+
+-(void)updateSideMenu {
+    GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+    if ( revealViewController )
+    {
+        SidebarViewController *svc = (SidebarViewController*) revealViewController.rearViewController;
+        [svc refreshContents];
+    }
+}
+
+-(BOOL)isCurrentlyRemappingControls {
+    return self.isKeyRemappingMode;
 }
 
 @end
