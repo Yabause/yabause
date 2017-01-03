@@ -155,6 +155,12 @@ void  OSDAddFrameProfileData( char * label, u32 data ){
    }
 }
 
+void  OSDAddLogString( char * log ){
+   if (OSD && OSD->AddLogString){
+      OSD->AddLogString(log);
+   }
+}
+
 void OSDToggle(int what)
 {
    if ((what < 0) || (what >= OSDMSG_COUNT)) return;
@@ -263,7 +269,9 @@ OSD_struct OSDGlut = {
     OSDGlutDeInit,
     OSDGlutReset,
     OSDGlutDisplayMessage,
-    OSDGlutUseBuffer
+    OSDGlutUseBuffer,
+    NULL,
+    NULL
 };
 
 int OSDGlutInit(void)
@@ -348,7 +356,8 @@ OSD_struct OSDSoft = {
     OSDSoftReset,
     OSDSoftDisplayMessage,
     OSDSoftUseBuffer,
-	NULL
+	NULL,
+    NULL
 };
 
 int OSDSoftInit(void)
