@@ -254,6 +254,8 @@ void YuiSwapBuffers(void) {
    }
 
    SDL_GL_SwapWindow(window);
+   SetOSDToggle(1);
+
   if (frameskip == 1)
     usleep(time_left());
 
