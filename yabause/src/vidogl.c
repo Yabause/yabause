@@ -173,6 +173,7 @@ int vdp1cob=0;
 
 static int vdp2width;
 static int vdp2height;
+static int vdp2_interlace = 0;
 static int nbg0priority=0;
 static int nbg1priority=0;
 static int nbg2priority=0;
@@ -6649,10 +6650,13 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
       case 3: // Double-density Interlace
          height *= 2;
          hratio = 2;
+         vdp2_interlace = 1;
          break;
       case 2: // Single-density Interlace
       case 0: // Non-interlace
-      default: break;
+      default:
+          vdp2_interlace = 0; 
+          break;
    }
 
    SetSaturnResolution(width, height);
@@ -6669,9 +6673,9 @@ void YglGetGlSize(int *width, int *height)
 
 void VIDOGLGetNativeResolution(int *width, int *height, int*interlace)
 {
-   *width = 0;
-   *height = 0;
-   *interlace = 0;
+   *width = vdp2width;
+   *height = vdp2height;
+   *interlace = vdp2_interlace;
 }
 
 void VIDOGLVdp2DispOff()
