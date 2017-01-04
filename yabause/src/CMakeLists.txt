@@ -30,7 +30,7 @@ set(yabause_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
+set(YAB_PORTS "sdl;qt" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
@@ -289,6 +289,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
+		add_definitions(-D_OGLES3_)
 
         include(FindGLEW)
         add_definitions(-D_USEGLEW_)
