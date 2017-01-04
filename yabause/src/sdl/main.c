@@ -124,7 +124,7 @@ NULL
 #ifdef YAB_PORT_OSD
 #include "nanovg/nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
-&OSDDummy,
+&OSDNnovg,
 NULL
 };
 #endif
