@@ -19,7 +19,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <SDL2/SDL.h>
+#include <assert.h>
+#if defined(_USEGLEW_)
+#include <GL/glew.h>
+#endif
+#include <GLFW/glfw3.h>
 
 #include "../yabause.h"
 #include "../gameinfo.h"
@@ -151,9 +155,8 @@ static int fullscreen = 0;
 static char biospath[256] = "\0";
 static char cdpath[256] = "\0";
 
-SDL_Window *window;
-SDL_Texture* fb;
-SDL_Renderer* rdr;
+GLFWwindow* g_window = NULL;
+GLFWwindow* g_offscreen_context;
 
 yabauseinit_struct yinit;
 
@@ -192,35 +195,12 @@ void YuiErrorMsg(const char * string) {
     fprintf(stderr, "%s\n\r", string);
 }
 
-void YuiDrawSoftwareBuffer() {
-
-    int buf_width, buf_height;
-    int error;
-
-    VIDCore->GetGlSize(&buf_width, &buf_height);
-   SDL_Rect rect;
-  rect.x = 0;
-  rect.y = 0;
-  rect.w = buf_width;
-  rect.h = buf_height;
-  SDL_Rect dest;
-  dest.x = 0;
-  dest.y = 0;
-  dest.w = WINDOW_WIDTH;
-  dest.h = WINDOW_HEIGHT;
-   SDL_UpdateTexture(fb,&rect,dispbuffer,buf_width*sizeof(pixel_t));
-   SDL_RenderCopy(rdr,fb,&rect,&dest);
-   SDL_RenderPresent(rdr);
-}
-
 int YuiRevokeOGLOnThisThread(){
-  // Todo: needs to imp for async rendering
-  return 0;
+    return 0;
 }
 
 int YuiUseOGLOnThisThread(){
-  // Todo: needs to imp for async rendering
-  return 0;
+    return 0;
 }
 
 static unsigned long nextFrameTime = 0;
@@ -249,19 +229,17 @@ static unsigned long time_left(void)
 
 void YuiSwapBuffers(void) {
 
-   if( window == NULL ){
+   if( g_window == NULL ){
       return;
    }
 
-   SDL_GL_SwapWindow(window);
+   glfwSwapBuffers(g_window);
    SetOSDToggle(1);
 
   if (frameskip == 1)
     usleep(time_left());
 
   nextFrameTime += delayUs;
-
-   //lastFrameTime = getCurrentTimeUs(0);
 }
 
 void YuiInit() {
@@ -290,54 +268,38 @@ void YuiInit() {
 	yinit.numthreads = 4;
 }
 
-void SDLInit(void) {
-	SDL_GLContext context;
-	Uint32 flags = (fullscreen == 1)?SDL_WINDOW_FULLSCREEN|SDL_WINDOW_OPENGL:SDL_WINDOW_OPENGL;
+void error_callback(int error, const char* description)
+{
+  fputs(description, stderr);
+}
 
-	SDL_InitSubSystem(SDL_INIT_VIDEO);
+static int SetupOpenGL() {
+  if (!glfwInit())
+            exit(EXIT_FAILURE);
 
-#ifdef _OGL_
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#endif
+  glfwSetErrorCallback(error_callback);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API) ;
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_RED_BITS,8);
+  glfwWindowHint(GLFW_GREEN_BITS,8);
+  glfwWindowHint(GLFW_BLUE_BITS,8);
 
-	SDL_GL_SetSwapInterval(1);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  g_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Yabause", NULL, NULL);
+  if (!g_window)
+  {
+      glfwTerminate();
+      exit(EXIT_FAILURE);
+  }
 
-	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 5);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 0);
+    glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+    g_offscreen_context = glfwCreateWindow(WINDOW_WIDTH,WINDOW_HEIGHT, "", NULL, g_window);
 
-	
-	window = SDL_CreateWindow("OpenGL Window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WINDOW_WIDTH, WINDOW_HEIGHT, flags);
-	if (!window) {
-    		fprintf(stderr, "Couldn't create window: %s\n", SDL_GetError());
-    		return;
-	}
+  glfwMakeContextCurrent(g_window);
+    glfwSwapInterval(0);
+    glewExperimental=GL_TRUE;
 
-	context = SDL_GL_CreateContext(window);
-	if (!context) {
-    		fprintf(stderr, "Couldn't create context: %s\n", SDL_GetError());
-    		return;
-	}
-
-	rdr = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-#ifdef _OGL_
-        glClearColor( 0.0f,0.0f,0.0f,1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-#else
-        SDL_RenderClear(rdr);
-#ifdef USE_16BPP
-        fb = SDL_CreateTexture(rdr,SDL_PIXELFORMAT_ABGR1555,SDL_TEXTUREACCESS_STREAMING, 704, 512);
-#else
-        fb = SDL_CreateTexture(rdr,SDL_PIXELFORMAT_ABGR8888,SDL_TEXTUREACCESS_STREAMING, 704, 512);
-#endif
-#endif
-
-  nextFrameTime = getCurrentTimeUs(0) + delayUs;
 }
 
 void displayGameInfo(char *filename) {
@@ -350,11 +312,44 @@ void displayGameInfo(char *filename) {
     printf("Game Info:\n\tSystem: %s\n\tCompany: %s\n\tItemNum:%s\n\tVersion:%s\n\tDate:%s\n\tCDInfo:%s\n\tRegion:%s\n\tPeripheral:%s\n\tGamename:%s\n", info.system, info.company, info.itemnum, info.version, info.date, info.cdinfo, info.region, info.peripheral, info.gamename);
 }
 
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+    glfwSetWindowShouldClose(window, GL_TRUE);
+
+  if( action == GLFW_PRESS )
+  {
+    //int yabaky = g_Keymap[key];
+    PerKeyDown(key);
+  }else if( action == GLFW_RELEASE  ){
+    //int yabaky = g_Keymap[key];
+    PerKeyUp(key);
+  }
+}
+
+static void KeyInit() {
+  void * padbits;
+
+    PerPortReset();
+  padbits = PerPadAdd(&PORTDATA1);
+
+  PerSetKey(GLFW_KEY_UP, PERPAD_UP, padbits);
+  PerSetKey(GLFW_KEY_RIGHT, PERPAD_RIGHT, padbits);
+  PerSetKey(GLFW_KEY_DOWN, PERPAD_DOWN, padbits);
+  PerSetKey(GLFW_KEY_LEFT, PERPAD_LEFT, padbits);
+    PerSetKey(GLFW_KEY_Q, PERPAD_RIGHT_TRIGGER, padbits);
+    PerSetKey(GLFW_KEY_E, PERPAD_LEFT_TRIGGER, padbits);
+  PerSetKey(GLFW_KEY_ENTER, PERPAD_START, padbits);
+    PerSetKey(GLFW_KEY_Z, PERPAD_A, padbits);
+    PerSetKey(GLFW_KEY_X, PERPAD_B, padbits);
+    PerSetKey(GLFW_KEY_C, PERPAD_C, padbits);
+    PerSetKey(GLFW_KEY_A, PERPAD_X, padbits);
+    PerSetKey(GLFW_KEY_S, PERPAD_Y, padbits);
+    PerSetKey(GLFW_KEY_D, PERPAD_Z, padbits);
+}
+
 int main(int argc, char *argv[]) {
 	int i;
-	SDL_Event event;
-	int quit = SDL_FALSE;
-	SDL_GameController* ctrl;
 
 	LogStart();
 	LogChangeOutput( DEBUG_STDERR, NULL );
@@ -434,38 +429,36 @@ int main(int argc, char *argv[]) {
 	 }
       }
    }
-        SDLInit();
+  SetupOpenGL();
+
+  glfwSetKeyCallback(g_window, key_callback);
 
 	YabauseDeInit();
 
-        if (YabauseInit(&yinit) != 0) printf("YabauseInit error \n\r");
+  if (YabauseInit(&yinit) != 0) printf("YabauseInit error \n\r");
+
+  KeyInit();
 
   if (yinit.vidcoretype == VIDCORE_OGL) {
     VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_ORIGINAL);
     VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
   }
 
-	while (quit == SDL_FALSE)
-	{
-		if (SDL_PollEvent(&event))
-		{
-   			switch(event.type)
-    			{
-     				case SDL_QUIT:
-      					quit = SDL_TRUE;
-      				break;
-				case SDL_KEYDOWN:
-					printf("Key down!");
-				break;
-     			}
-  		}
+  nextFrameTime = getCurrentTimeUs(0) + delayUs;
 
-	        PERCore->HandleEvents();
-	}
+  while (!glfwWindowShouldClose(g_window))
+  {
+
+        YabauseExec();
+
+        glfwPollEvents();
+  }
+
 
 	YabauseDeInit();
 	LogStop();
-	SDL_Quit();
+  glfwDestroyWindow(g_window);
+  glfwTerminate();
 
 	return 0;
 }
