@@ -133,23 +133,6 @@ NULL
 };
 #endif
 
-static GLint g_FrameBuffer = 0;
-static GLint g_SWFrameBuffer = 0;
-static GLint g_VertexBuffer = 0;
-static GLint g_VertexDevBuffer = 0;
-static GLint g_VertexSWBuffer = 0;
-static GLint programObject  = 0;
-static GLint positionLoc    = 0;
-static GLint texCoordLoc    = 0;
-static GLint samplerLoc     = 0;
-
-int g_buf_width = -1;
-int g_buf_height = -1;
-
-int fbo_buf_width = -1;
-int fbo_buf_height = -1;
-
-static int resizeFilter = GL_NEAREST;
 static int fullscreen = 0;
 
 static char biospath[256] = "\0";
@@ -159,37 +142,6 @@ GLFWwindow* g_window = NULL;
 GLFWwindow* g_offscreen_context;
 
 yabauseinit_struct yinit;
-
-static int error;
-
-static float vertices [] = {
-   -1.0f, 1.0f, 0, 0,
-   1.0f, 1.0f, 1.0f, 0,
-   1.0f, -1.0f, 1.0f, 1.0f,
-   -1.0f,-1.0f, 0, 1.0f
-};
-
-static float swVertices [] = {
-   -1.0f, 1.0f, 0, 0,
-   1.0f, 1.0f, 1.0f, 0,
-   1.0f, -1.0f, 1.0f, 1.0f,
-   -1.0f,-1.0f, 0, 1.0f
-};
-
-static const float squareVertices [] = {
-   -1.0f, 1.0f, 0, 0,
-   1.0f, 1.0f, 1.0f, 0,
-   1.0f, -1.0f, 1.0f, 1.0f,
-   -1.0f,-1.0f, 0, 1.0f
-};
-
-
-static float devVertices [] = {
-   -1.0f, 1.0f, 0, 0,
-   1.0f, 1.0f, 1.0f, 0,
-   1.0f, -1.0f, 1.0f, 1.0f,
-   -1.0f,-1.0f, 0, 1.0f
-};
 
 void YuiErrorMsg(const char * string) {
     fprintf(stderr, "%s\n\r", string);
@@ -253,7 +205,7 @@ void YuiInit() {
 	yinit.percoretype = PERCORE_SDLJOY;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
 #ifdef FORCE_CORE_SOFT
-        yinit.vidcoretype = VIDCORE_SOFT;
+  yinit.vidcoretype = VIDCORE_SOFT;
 #else
 	yinit.vidcoretype = VIDCORE_OGL; //VIDCORE_SOFT  
 #endif
@@ -266,7 +218,7 @@ void YuiInit() {
 	yinit.buppath = NULL;
 	yinit.mpegpath = NULL;
 	yinit.cartpath = NULL;
-        yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
+  yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
 	yinit.skip_load = 0;
 
@@ -281,7 +233,7 @@ void error_callback(int error, const char* description)
 
 static int SetupOpenGL() {
   if (!glfwInit())
-            exit(EXIT_FAILURE);
+    exit(EXIT_FAILURE);
 
   glfwSetErrorCallback(error_callback);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -295,27 +247,27 @@ static int SetupOpenGL() {
   g_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Yabause", NULL, NULL);
   if (!g_window)
   {
-      glfwTerminate();
-      exit(EXIT_FAILURE);
+    glfwTerminate();
+    exit(EXIT_FAILURE);
   }
 
-    glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
-    g_offscreen_context = glfwCreateWindow(WINDOW_WIDTH,WINDOW_HEIGHT, "", NULL, g_window);
+  glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+  g_offscreen_context = glfwCreateWindow(WINDOW_WIDTH,WINDOW_HEIGHT, "", NULL, g_window);
 
   glfwMakeContextCurrent(g_window);
-    glfwSwapInterval(0);
-    glewExperimental=GL_TRUE;
+  glfwSwapInterval(0);
+  glewExperimental=GL_TRUE;
 
 }
 
 void displayGameInfo(char *filename) {
-    GameInfo info;
-    if (! GameInfoFromPath(filename, &info))
-    {
-       return;
-    }
+  GameInfo info;
+  if (! GameInfoFromPath(filename, &info))
+  {
+    return;
+  }
 
-    printf("Game Info:\n\tSystem: %s\n\tCompany: %s\n\tItemNum:%s\n\tVersion:%s\n\tDate:%s\n\tCDInfo:%s\n\tRegion:%s\n\tPeripheral:%s\n\tGamename:%s\n", info.system, info.company, info.itemnum, info.version, info.date, info.cdinfo, info.region, info.peripheral, info.gamename);
+  printf("Game Info:\n\tSystem: %s\n\tCompany: %s\n\tItemNum:%s\n\tVersion:%s\n\tDate:%s\n\tCDInfo:%s\n\tRegion:%s\n\tPeripheral:%s\n\tGamename:%s\n", info.system, info.company, info.itemnum, info.version, info.date, info.cdinfo, info.region, info.peripheral, info.gamename);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -336,22 +288,22 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 static void KeyInit() {
   void * padbits;
 
-    PerPortReset();
+  PerPortReset();
   padbits = PerPadAdd(&PORTDATA1);
 
   PerSetKey(GLFW_KEY_UP, PERPAD_UP, padbits);
   PerSetKey(GLFW_KEY_RIGHT, PERPAD_RIGHT, padbits);
   PerSetKey(GLFW_KEY_DOWN, PERPAD_DOWN, padbits);
   PerSetKey(GLFW_KEY_LEFT, PERPAD_LEFT, padbits);
-    PerSetKey(GLFW_KEY_Q, PERPAD_RIGHT_TRIGGER, padbits);
-    PerSetKey(GLFW_KEY_E, PERPAD_LEFT_TRIGGER, padbits);
+  PerSetKey(GLFW_KEY_Q, PERPAD_RIGHT_TRIGGER, padbits);
+  PerSetKey(GLFW_KEY_E, PERPAD_LEFT_TRIGGER, padbits);
   PerSetKey(GLFW_KEY_ENTER, PERPAD_START, padbits);
-    PerSetKey(GLFW_KEY_Z, PERPAD_A, padbits);
-    PerSetKey(GLFW_KEY_X, PERPAD_B, padbits);
-    PerSetKey(GLFW_KEY_C, PERPAD_C, padbits);
-    PerSetKey(GLFW_KEY_A, PERPAD_X, padbits);
-    PerSetKey(GLFW_KEY_S, PERPAD_Y, padbits);
-    PerSetKey(GLFW_KEY_D, PERPAD_Z, padbits);
+  PerSetKey(GLFW_KEY_Z, PERPAD_A, padbits);
+  PerSetKey(GLFW_KEY_X, PERPAD_B, padbits);
+  PerSetKey(GLFW_KEY_C, PERPAD_C, padbits);
+  PerSetKey(GLFW_KEY_A, PERPAD_X, padbits);
+  PerSetKey(GLFW_KEY_S, PERPAD_Y, padbits);
+  PerSetKey(GLFW_KEY_D, PERPAD_Z, padbits);
 }
 
 int main(int argc, char *argv[]) {
@@ -363,78 +315,72 @@ int main(int argc, char *argv[]) {
 	YuiInit();
 
 //handle command line arguments
-   for (i = 1; i < argc; ++i) {
-      if (argv[i]) {
-         //show usage
-         if (0 == strcmp(argv[i], "-h") || 0 == strcmp(argv[i], "-?") || 0 == strcmp(argv[i], "--help")) {
-            print_usage(argv[0]);
-            return 0;
-         }
-			
-         //set bios
-         if (0 == strcmp(argv[i], "-b") && argv[i + 1]) {
-            strncpy(biospath, argv[i + 1], 256);
-            yinit.biospath = biospath;
-	 } else if (strstr(argv[i], "--bios=")) {
-            strncpy(biospath, argv[i] + strlen("--bios="), 256);
-            yinit.biospath = biospath;
-	 }
-         //set iso
-         else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
-            strncpy(cdpath, argv[i + 1], 256);
-	    yinit.cdcoretype = 1;
-	    yinit.cdpath = cdpath;
-	    displayGameInfo(cdpath);
-	 } else if (strstr(argv[i], "--iso=")) {
-            strncpy(cdpath, argv[i] + strlen("--iso="), 256);
-	    yinit.cdcoretype = 1;
-	    yinit.cdpath = cdpath;
-	 }
-         //set cdrom
-	 else if (0 == strcmp(argv[i], "-c") && argv[i + 1]) {
-            strncpy(cdpath, argv[i + 1], 256);
-	    yinit.cdcoretype = 2;
-	    yinit.cdpath = cdpath;
-	 } else if (strstr(argv[i], "--cdrom=")) {
-            strncpy(cdpath, argv[i] + strlen("--cdrom="), 256);
-	    yinit.cdcoretype = 2;
-	    yinit.cdpath = cdpath;
-	 }
-         // Set sound
-         else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0) {
-	    yinit.sndcoretype = 0;
-	 }
-         // Set sound
-         else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
-	    fullscreen = 1;
-	 }
-         // Set sound
-         else if (strcmp(argv[i], "-rb") == 0 || strcmp(argv[i], "--resizebilinear") == 0) {
-	    resizeFilter = GL_LINEAR;
-	 }
-	 else if (strcmp(argv[i], "-sc") == 0 || strcmp(argv[i], "--softcore") == 0) {
-	    yinit.vidcoretype = VIDCORE_SOFT;
-	 }
-         // Auto frame skip
-         else if (strstr(argv[i], "--vsyncoff")) {
-              frameskip = 0;
-         }
-	 // Binary
-	 else if (strstr(argv[i], "--binary=")) {
-	    char binname[1024];
-	    unsigned int binaddress;
-	    int bincount;
-
-	    bincount = sscanf(argv[i] + strlen("--binary="), "%[^:]:%x", binname, &binaddress);
-	    if (bincount > 0) {
-	       if (bincount < 2) binaddress = 0x06004000;
-
-               //yui_window_run(YUI_WINDOW(yui));
-	       MappedMemoryLoadExec(binname, binaddress);
-	    }
-	 }
+  for (i = 1; i < argc; ++i) {
+    if (argv[i]) {
+      //show usage
+      if (0 == strcmp(argv[i], "-h") || 0 == strcmp(argv[i], "-?") || 0 == strcmp(argv[i], "--help")) {
+        print_usage(argv[0]);
+        return 0;
       }
-   }
+			
+      //set bios
+      if (0 == strcmp(argv[i], "-b") && argv[i + 1]) {
+        strncpy(biospath, argv[i + 1], 256);
+        yinit.biospath = biospath;
+      } else if (strstr(argv[i], "--bios=")) {
+        strncpy(biospath, argv[i] + strlen("--bios="), 256);
+        yinit.biospath = biospath;
+      }
+      //set iso
+      else if (0 == strcmp(argv[i], "-i") && argv[i + 1]) {
+        strncpy(cdpath, argv[i + 1], 256);
+        yinit.cdcoretype = 1;
+        yinit.cdpath = cdpath;
+        displayGameInfo(cdpath);
+      } else if (strstr(argv[i], "--iso=")) {
+        strncpy(cdpath, argv[i] + strlen("--iso="), 256);
+        yinit.cdcoretype = 1;
+        yinit.cdpath = cdpath;
+      }
+      //set cdrom
+      else if (0 == strcmp(argv[i], "-c") && argv[i + 1]) {
+        strncpy(cdpath, argv[i + 1], 256);
+        yinit.cdcoretype = 2;
+        yinit.cdpath = cdpath;
+      } else if (strstr(argv[i], "--cdrom=")) {
+        strncpy(cdpath, argv[i] + strlen("--cdrom="), 256);
+        yinit.cdcoretype = 2;
+        yinit.cdpath = cdpath;
+      }
+      // Set sound
+      else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0) {
+        yinit.sndcoretype = 0;
+      }
+      // Set sound
+      else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
+        fullscreen = 1;
+      }
+      else if (strcmp(argv[i], "-sc") == 0 || strcmp(argv[i], "--softcore") == 0) {
+        yinit.vidcoretype = VIDCORE_SOFT;
+      }
+      // Auto frame skip
+      else if (strstr(argv[i], "--vsyncoff")) {
+        frameskip = 0;
+      }
+      // Binary
+      else if (strstr(argv[i], "--binary=")) {
+        char binname[1024];
+        unsigned int binaddress;
+        int bincount;
+
+        bincount = sscanf(argv[i] + strlen("--binary="), "%[^:]:%x", binname, &binaddress);
+        if (bincount > 0) {
+          if (bincount < 2) binaddress = 0x06004000;
+          MappedMemoryLoadExec(binname, binaddress);
+        }
+      }
+    }
+  }
   SetupOpenGL();
 
   glfwSetKeyCallback(g_window, key_callback);
@@ -454,12 +400,9 @@ int main(int argc, char *argv[]) {
 
   while (!glfwWindowShouldClose(g_window))
   {
-
         YabauseExec();
-
         glfwPollEvents();
   }
-
 
 	YabauseDeInit();
 	LogStop();
