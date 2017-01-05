@@ -181,9 +181,11 @@ int Vdp2Init(void) {
 
 void Vdp2DeInit(void) {
 #if defined(YAB_ASYNC_RENDERING)
-   //YabAddEventQueue(evqueue,VDPEV_FINSH);
-   vdp_proc_running = 0;
-   YabThreadWait(YAB_THREAD_VDP);
+   if (vdp_proc_running == 1) {
+   	YabAddEventQueue(evqueue,VDPEV_FINSH);
+   	//vdp_proc_running = 0;
+   	YabThreadWait(YAB_THREAD_VDP);
+   }
 #endif
    if (Vdp2Regs)
       free(Vdp2Regs);
