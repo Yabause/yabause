@@ -196,11 +196,17 @@ void YuiErrorMsg(const char * string) {
 }
 
 int YuiRevokeOGLOnThisThread(){
-    return 0;
+#if defined(YAB_ASYNC_RENDERING)
+  glfwMakeContextCurrent(g_offscreen_context);
+#endif
+  return 0;
 }
 
 int YuiUseOGLOnThisThread(){
-    return 0;
+#if defined(YAB_ASYNC_RENDERING)
+  glfwMakeContextCurrent(g_window);
+#endif
+  return 0;
 }
 
 static unsigned long nextFrameTime = 0;
@@ -458,6 +464,7 @@ int main(int argc, char *argv[]) {
 	YabauseDeInit();
 	LogStop();
   glfwDestroyWindow(g_window);
+  glfwDestroyWindow(g_offscreen_context);
   glfwTerminate();
 
 	return 0;
