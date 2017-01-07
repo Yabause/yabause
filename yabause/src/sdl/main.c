@@ -291,19 +291,19 @@ static void KeyInit() {
   PerPortReset();
   padbits = PerPadAdd(&PORTDATA1);
 
-  PerSetKey(GLFW_KEY_UP, PERPAD_UP, padbits);
-  PerSetKey(GLFW_KEY_RIGHT, PERPAD_RIGHT, padbits);
-  PerSetKey(GLFW_KEY_DOWN, PERPAD_DOWN, padbits);
-  PerSetKey(GLFW_KEY_LEFT, PERPAD_LEFT, padbits);
-  PerSetKey(GLFW_KEY_Q, PERPAD_RIGHT_TRIGGER, padbits);
-  PerSetKey(GLFW_KEY_E, PERPAD_LEFT_TRIGGER, padbits);
-  PerSetKey(GLFW_KEY_ENTER, PERPAD_START, padbits);
-  PerSetKey(GLFW_KEY_Z, PERPAD_A, padbits);
-  PerSetKey(GLFW_KEY_X, PERPAD_B, padbits);
-  PerSetKey(GLFW_KEY_C, PERPAD_C, padbits);
-  PerSetKey(GLFW_KEY_A, PERPAD_X, padbits);
-  PerSetKey(GLFW_KEY_S, PERPAD_Y, padbits);
-  PerSetKey(GLFW_KEY_D, PERPAD_Z, padbits);
+  PerSetKey(PERPAD_UP, PERPAD_UP, padbits);
+  PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, padbits);
+  PerSetKey(PERPAD_DOWN, PERPAD_DOWN, padbits);
+  PerSetKey(PERPAD_LEFT, PERPAD_LEFT, padbits);
+  PerSetKey(PERPAD_RIGHT_TRIGGER, PERPAD_RIGHT_TRIGGER, padbits);
+  PerSetKey(PERPAD_LEFT_TRIGGER, PERPAD_LEFT_TRIGGER, padbits);
+  PerSetKey(PERPAD_START, PERPAD_START, padbits);
+  PerSetKey(PERPAD_A, PERPAD_A, padbits);
+  PerSetKey(PERPAD_B, PERPAD_B, padbits);
+  PerSetKey(PERPAD_C, PERPAD_C, padbits);
+  PerSetKey(PERPAD_X, PERPAD_X, padbits);
+  PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
+  PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
 }
 
 int main(int argc, char *argv[]) {
@@ -400,7 +400,7 @@ int main(int argc, char *argv[]) {
 
   while (!glfwWindowShouldClose(g_window))
   {
-        YabauseExec();
+        if (PERCore->HandleEvents() == -1) glfwSetWindowShouldClose(g_window, GL_TRUE);
         glfwPollEvents();
   }
 
