@@ -180,7 +180,7 @@ static int LinuxJoyInit(perlinuxjoy_struct * joystick, const char * path, int id
       printf("is not supported\n");
       return -1;
    } else {
-      printf("is supported\n");
+      printf("is supported => Player %d\n", id+1);
    }
    joystick->axiscount = 0;
    joystick->id = id;
