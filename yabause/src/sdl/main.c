@@ -87,9 +87,6 @@ NULL
 
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
-#ifdef HAVE_LIBSDL
-&PERSDLJoy,
-#endif
 #ifdef ARCH_IS_LINUX
 &PERLinuxJoy,
 #endif
@@ -202,7 +199,7 @@ void YuiSwapBuffers(void) {
 
 void YuiInit() {
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
-	yinit.percoretype = PERCORE_SDLJOY;
+	yinit.percoretype = PERCORE_LINUXJOY;
 	yinit.sh2coretype = SH2CORE_DEFAULT;
 #ifdef FORCE_CORE_SOFT
   yinit.vidcoretype = VIDCORE_SOFT;
