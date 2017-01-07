@@ -285,25 +285,44 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   }
 }
 
+#define KEYPAD(key, player) ((player << 17)|key)
+
 static void KeyInit() {
   void * padbits;
 
   PerPortReset();
   padbits = PerPadAdd(&PORTDATA1);
 
-  PerSetKey(PERPAD_UP, PERPAD_UP, padbits);
-  PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, padbits);
-  PerSetKey(PERPAD_DOWN, PERPAD_DOWN, padbits);
-  PerSetKey(PERPAD_LEFT, PERPAD_LEFT, padbits);
-  PerSetKey(PERPAD_RIGHT_TRIGGER, PERPAD_RIGHT_TRIGGER, padbits);
-  PerSetKey(PERPAD_LEFT_TRIGGER, PERPAD_LEFT_TRIGGER, padbits);
-  PerSetKey(PERPAD_START, PERPAD_START, padbits);
-  PerSetKey(PERPAD_A, PERPAD_A, padbits);
-  PerSetKey(PERPAD_B, PERPAD_B, padbits);
-  PerSetKey(PERPAD_C, PERPAD_C, padbits);
-  PerSetKey(PERPAD_X, PERPAD_X, padbits);
-  PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
-  PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
+  PerSetKey(KEYPAD(PERPAD_UP, 0), PERPAD_UP, padbits);
+  PerSetKey(KEYPAD(PERPAD_RIGHT, 0), PERPAD_RIGHT, padbits);
+  PerSetKey(KEYPAD(PERPAD_DOWN, 0), PERPAD_DOWN, padbits);
+  PerSetKey(KEYPAD(PERPAD_LEFT, 0), PERPAD_LEFT, padbits);
+  PerSetKey(KEYPAD(PERPAD_RIGHT_TRIGGER, 0), PERPAD_RIGHT_TRIGGER, padbits);
+  PerSetKey(KEYPAD(PERPAD_LEFT_TRIGGER, 0), PERPAD_LEFT_TRIGGER, padbits);
+  PerSetKey(KEYPAD(PERPAD_START, 0), PERPAD_START, padbits);
+  PerSetKey(KEYPAD(PERPAD_A, 0), PERPAD_A, padbits);
+  PerSetKey(KEYPAD(PERPAD_B, 0), PERPAD_B, padbits);
+  PerSetKey(KEYPAD(PERPAD_C, 0), PERPAD_C, padbits);
+  PerSetKey(KEYPAD(PERPAD_X, 0), PERPAD_X, padbits);
+  PerSetKey(KEYPAD(PERPAD_Y, 0), PERPAD_Y, padbits);
+  PerSetKey(KEYPAD(PERPAD_Z, 0), PERPAD_Z, padbits);
+
+  padbits = PerPadAdd(&PORTDATA2);
+
+  PerSetKey(KEYPAD(PERPAD_UP, 1), PERPAD_UP, padbits);
+  PerSetKey(KEYPAD(PERPAD_RIGHT, 1), PERPAD_RIGHT, padbits);
+  PerSetKey(KEYPAD(PERPAD_DOWN, 1), PERPAD_DOWN, padbits);
+  PerSetKey(KEYPAD(PERPAD_LEFT, 1), PERPAD_LEFT, padbits);
+  PerSetKey(KEYPAD(PERPAD_RIGHT_TRIGGER, 1), PERPAD_RIGHT_TRIGGER, padbits);
+  PerSetKey(KEYPAD(PERPAD_LEFT_TRIGGER, 1), PERPAD_LEFT_TRIGGER, padbits);
+  PerSetKey(KEYPAD(PERPAD_START, 1), PERPAD_START, padbits);
+  PerSetKey(KEYPAD(PERPAD_A, 1), PERPAD_A, padbits);
+  PerSetKey(KEYPAD(PERPAD_B, 1), PERPAD_B, padbits);
+  PerSetKey(KEYPAD(PERPAD_C, 1), PERPAD_C, padbits);
+  PerSetKey(KEYPAD(PERPAD_X, 1), PERPAD_X, padbits);
+  PerSetKey(KEYPAD(PERPAD_Y, 1), PERPAD_Y, padbits);
+  PerSetKey(KEYPAD(PERPAD_Z, 1), PERPAD_Z, padbits);
+
 }
 
 int main(int argc, char *argv[]) {
