@@ -408,7 +408,8 @@ int main(int argc, char *argv[]) {
   KeyInit();
 
   if (yinit.vidcoretype == VIDCORE_OGL) {
-    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_ORIGINAL);
+    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_NATIVE);
+    VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_FXAA);
     VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
   }
 
