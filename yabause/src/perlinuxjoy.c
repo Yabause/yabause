@@ -41,7 +41,7 @@ typedef struct {
    int code[PERGUN_AXIS+1+SERVICE_BUTTON_NUMBER];
 } joymapping_struct;
 
-#define MAPPING_NB 1
+#define MAPPING_NB 2
 
 joymapping_struct joyMapping[MAPPING_NB] = {
    {"SZMy-power LTD CO.  Dual Box WII", 
@@ -76,6 +76,40 @@ joymapping_struct joyMapping[MAPPING_NB] = {
          -1,                      //PERGUN_START
          -1,                      //PERGUN_AXIS
          JS_EVENT_BUTTON<<8 | 10, //SERVICE_BUTTON_EXIT
+      }
+   },
+   {"Sony PLAYSTATION(R)3 Controller", 
+      {
+         JS_EVENT_BUTTON<<8 | 4, //PERPAD_UP
+         JS_EVENT_BUTTON<<8 | 5, //PERPAD_RIGHT
+         JS_EVENT_BUTTON<<8 | 6, //PERPAD_DOWN
+         JS_EVENT_BUTTON<<8 | 7, //PERPAD_LEFT
+         JS_EVENT_BUTTON<<8 | 9,  //PERPAD_RIGHT_TRIGGER
+         JS_EVENT_BUTTON<<8 | 8,  //PERPAD_LEFT_TRIGGER
+         JS_EVENT_BUTTON<<8 | 3,  //PERPAD_START
+         JS_EVENT_BUTTON<<8 | 14, //PERPAD_A
+         JS_EVENT_BUTTON<<8 | 13, //PERPAD_B
+         JS_EVENT_BUTTON<<8 | 11, //PERPAD_C
+         JS_EVENT_BUTTON<<8 | 15, //PERPAD_X
+         JS_EVENT_BUTTON<<8 | 12, //PERPAD_Y
+         JS_EVENT_BUTTON<<8 | 10, //PERPAD_Z
+         -1,                      //PERMOUSE_LEFT
+         -1,                      //PERMOUSE_MIDDLE
+         -1,                      //PERMOUSE_RIGHT
+         -1,                      //PERMOUSE_START
+         -1,                      //PERMOUSE_AXIS
+         -1,                      //PERANALOG_AXIS1
+         -1,                      //PERANALOG_AXIS2
+         -1,                      //PERANALOG_AXIS3
+         -1,                      //PERANALOG_AXIS4
+         -1,                      //PERANALOG_AXIS5
+         -1,                      //PERANALOG_AXIS6
+         -1,                      //PERANALOG_AXIS7
+         -1,                      //PERGUN_TRIGGER
+         -1,
+         -1,                      //PERGUN_START
+         -1,                      //PERGUN_AXIS
+         JS_EVENT_BUTTON<<8 | 16, //SERVICE_BUTTON_EXIT
       }
    },
 };
