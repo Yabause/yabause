@@ -5425,6 +5425,7 @@ static void Vdp2DrawNBG0(void)
    {
       // RBG1 mode
       info.enable = fixVdp2Regs->BGON & 0x20;
+      if (!info.enable) return;
 
       // Read in Parameter B
     Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
@@ -5498,6 +5499,7 @@ static void Vdp2DrawNBG0(void)
    {
       // NBG0 mode
       info.enable = fixVdp2Regs->BGON & 0x1;
+      if (!info.enable) return;
 
       if((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
       {
@@ -5781,6 +5783,7 @@ static void Vdp2DrawNBG1(void)
   info.cob = 0;
 
   info.enable = fixVdp2Regs->BGON & 0x2;
+  if (!info.enable) return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x200);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 2) & 0x3;
 
@@ -6028,6 +6031,7 @@ static void Vdp2DrawNBG2(void)
    info.cob = 0;
 
    info.enable = fixVdp2Regs->BGON & 0x4;
+   if (!info.enable) return;
    info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
    info.specialprimode = (fixVdp2Regs->SFPRMD >> 4) & 0x3;
 
@@ -6133,6 +6137,7 @@ static void Vdp2DrawNBG3(void)
 
 
    info.enable = fixVdp2Regs->BGON & 0x8;
+   if (!info.enable) return;
    info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
    info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
 
@@ -6241,6 +6246,7 @@ static void Vdp2DrawRBG0(void)
   info->cob = 0;
 
   info->enable = fixVdp2Regs->BGON & 0x10;
+  if (!info->enable) return;
   info->priority = fixVdp2Regs->PRIR & 0x7;
   if (!(info->enable & Vdp2External.disptoggle) || (info->priority == 0)){
 
