@@ -2494,6 +2494,9 @@ void YglRenderVDP1(void) {
              glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
           }
 
+      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING ) {
+        glEnable(GL_BLEND);
+      }
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
