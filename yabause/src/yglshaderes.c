@@ -120,6 +120,9 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->fbo = glGetUniformLocation(pgid, (const GLchar *)"u_fbo");
   param->fbowidth = glGetUniformLocation(pgid, (const GLchar *)"u_fbowidth");
   param->fboheight = glGetUniformLocation(pgid, (const GLchar *)"u_fbohegiht");
+  param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
+  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
+  param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
 }
 
 int Ygl_uniformVdp1CommonParam(void * p){
@@ -736,11 +739,33 @@ const GLchar Yglprg_vdp1_gouraudshading_f[] =
 "  fragColor   = spriteColor;                                          \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
 "  fragColor.a = spriteColor.a;                                        \n"
-"  //fragColor = vec4(1.0,0.0,0.0,1.0);                                        \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
+const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                                                 \n"
+"uniform sampler2D u_sprite;                                              \n"
+"in vec4 v_texcoord;                                                 \n"
+"in vec4 v_vtxcolor;                                                 \n"
+"out vec4 fragColor;            \n"
+"void main() {                                                            \n"
+"  vec2 addr = v_texcoord.st;                                             \n"
+"  addr.s = addr.s / (v_texcoord.q);                                      \n"
+"  addr.t = addr.t / (v_texcoord.q);                                      \n"
+"  vec4 spriteColor = texture(u_sprite,addr);                           \n"
+"  fragColor   = spriteColor;                                          \n"
+"  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
+"  fragColor.a = spriteColor.a;                                        \n"
+"}\n";
+const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshading_spd_f, NULL };
+
 static YglVdp1CommonParam id_g = { 0 };
+static YglVdp1CommonParam id_spd_g = { 0 };
 
 
 /*------------------------------------------------------------------------------------
@@ -931,6 +956,7 @@ const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
 
 static YglVdp1CommonParam mesh = { 0 };
 static YglVdp1CommonParam grow_tess = { 0 };
+static YglVdp1CommonParam grow_spd_tess = { 0 };
 static YglVdp1CommonParam mesh_tess = { 0 };
 
 
@@ -1828,6 +1854,11 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING], &id_g);
 
+   if (YglInitShader(PG_VFP1_GOURAUDSAHDING_SPD, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_spd_f, 1, NULL, NULL, NULL) != 0)
+     return -1;
+
+   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_SPD], &id_spd_g);
+
 
    YGLLOG("PG_VDP2_DRAWFRAMEBUFF --START--\n");
 
@@ -1997,6 +2028,18 @@ int YglTesserationProgramInit()
 
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], &grow_tess);
 
+    YGLLOG("PG_VFP1_GOURAUDSAHDING_SPD_TESS");
+    if (YglInitShader(PG_VFP1_GOURAUDSAHDING_SPD_TESS,
+      pYglprg_vdp1_gouraudshading_tess_v,
+      pYglprg_vdp1_gouraudshading_spd_f,
+      1,
+      pYglprg_vdp1_gouraudshading_tess_c,
+      pYglprg_vdp1_gouraudshading_tess_e,
+      pYglprg_vdp1_gouraudshading_tess_g) != 0)
+      return -1;
+
+    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MESH_TESS], &grow_spd_tess);
+
     //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VFP1_MESH_TESS");
     if (YglInitShader(PG_VFP1_MESH_TESS,
@@ -2009,6 +2052,7 @@ int YglTesserationProgramInit()
       return -1;
 
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MESH_TESS], &mesh_tess);
+
 
     //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS");
@@ -2158,9 +2202,21 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->vertexp = 0;
      current->texcoordp = 1; 
       level->prg[level->prgcurrent].vaid = 2;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING],(const GLchar *)"u_texMatrix");
-      current->tex0 = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"s_texture");
+      current->mtxModelView = id_g.mtxModelView;
+      current->mtxTexture = id_g.mtxTexture;
+      current->tex0 = id_g.tex0;
+   }
+   else if (prgid == PG_VFP1_GOURAUDSAHDING_SPD)
+   {
+     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
+     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
+     level->prg[level->prgcurrent].ids = &id_g;
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     level->prg[level->prgcurrent].vaid = 2;
+     current->mtxModelView = id_g.mtxModelView;
+     current->mtxTexture = id_g.mtxTexture;
+     current->tex0 = id_g.tex0;
    }
    else if (prgid == PG_VFP1_GOURAUDSAHDING_TESS ){
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
@@ -2169,11 +2225,22 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->vertexp = 0;
      current->texcoordp = 1;
      level->prg[level->prgcurrent].vaid = 2;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], (const GLchar *)"u_mvpMatrix");
+     current->mtxModelView = grow_tess.mtxModelView;
      current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"u_texMatrix");
      current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"s_texture");
    }
-   else if( prgid == PG_VFP1_STARTUSERCLIP )
+   else if (prgid == PG_VFP1_GOURAUDSAHDING_SPD_TESS){
+     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
+     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
+     level->prg[level->prgcurrent].ids = &grow_spd_tess;
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     level->prg[level->prgcurrent].vaid = 2;
+     current->mtxModelView = grow_tess.mtxModelView;
+     current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"u_texMatrix");
+     current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"s_texture");
+   }
+   else if (prgid == PG_VFP1_STARTUSERCLIP)
    {
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformStartUserClip;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupStartUserClip;

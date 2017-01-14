@@ -267,6 +267,7 @@ void YglCacheReset(YglTextureManager * tm);
 #define VDP1_COLOR_CL_GROW_LUMINACE 0x30
 #define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
 #define VDP1_COLOR_CL_MESH 0x80
+#define VDP1_COLOR_SPD 0xA0
 
 #define VDP2_CC_NONE 0x00
 #define VDP2_CC_RATE 0x01
@@ -279,6 +280,7 @@ enum
    PG_NORMAL=1,
    PG_VDP1_NORMAL,
    PG_VFP1_GOURAUDSAHDING,
+   PG_VFP1_GOURAUDSAHDING_SPD,
    PG_VFP1_STARTUSERCLIP,
    PG_VFP1_ENDUSERCLIP,
    PG_VFP1_HALFTRANS, 
@@ -303,6 +305,7 @@ enum
    PG_VFP1_HALFTRANS_TESS,
    PG_VFP1_SHADOW_TESS,
    PG_VFP1_MESH_TESS,
+   PG_VFP1_GOURAUDSAHDING_SPD_TESS,
    PG_MAX,
 };
 
@@ -316,6 +319,9 @@ typedef struct {
 	GLint  fbowidth;
 	GLint  fboheight;
 	GLint  texsize;
+  GLuint mtxModelView;
+  GLuint mtxTexture;
+  GLuint tex0;
 } YglVdp1CommonParam;
 
 #define TESS_COUNT (8)
