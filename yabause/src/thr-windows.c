@@ -249,6 +249,14 @@ int YabWaitEventQueue(YabEventQueue * queue_t){
 #endif
 }
 
+int YaGetQueueSize(YabEventQueue * queue_t){
+  int size = 0;
+  YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
+  EnterCriticalSection(&(queue->mutex));
+  size = queue->size;
+  LeaveCriticalSection(&(queue->mutex));
+  return size;
+}
 
 typedef struct YabMutex_win32
 {
