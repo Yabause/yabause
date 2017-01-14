@@ -1384,8 +1384,8 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
    }
 // for polygon debug
   //else if (prg == PG_VFP1_GOURAUDSAHDING ){
-  //	   YglProgramChange(level, prg);
-  // }
+  //   YglProgramChange(level, prg);
+  //}
    program = &level->prg[level->prgcurrent];
 
    if ((program->currentQuad + YGL_MAX_NEED_BUFFER) >= program->maxQuad) {
@@ -1490,6 +1490,9 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   }
   else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
     prg = PG_VFP1_SHADOW;
+  }
+  else if (input->blendmode == VDP1_COLOR_SPD){
+    prg = PG_VFP1_GOURAUDSAHDING_SPD;
   }
 
   if (input->linescreen == 1){
@@ -1716,7 +1719,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   return 0;
 }
 
-
 int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg) {
    unsigned int x, y;
    YglProgram *program;
@@ -1741,6 +1743,9 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    }
    else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
      prg = PG_VFP1_SHADOW;
+   }
+   else if (input->blendmode == VDP1_COLOR_SPD){
+     prg = PG_VFP1_GOURAUDSAHDING_SPD;
    }
 
    if (input->linescreen == 1){
@@ -1927,7 +1932,9 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
     prg = PG_VFP1_SHADOW_TESS;
   }
-
+  else if (input->blendmode == VDP1_COLOR_SPD){
+    prg = PG_VFP1_GOURAUDSAHDING_SPD_TESS;
+  }
 
   program = YglGetProgram(input, prg);
   if (program == NULL) return -1;
@@ -2345,7 +2352,66 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   return 0;
 }
 
+void YglEraseWriteVDP1(void) {
 
+	if (((Vdp1Regs->FBCR & 2) == 0) ||     // One cycle mode
+		Vdp1External.manualerase ||       // Manual Erace (FCM1 FCT0)
+		Vdp1External.vbalnk_erase == 1   // VBlank Erace (VBE1) 
+	)
+	{
+		u16 color;
+		int priority;
+		u16 alpha;
+		if (_Ygl->vdp1FrameBuff[0] == 0) return;
+		glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe], 0);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
+
+		color = Vdp1Regs->EWDR;
+		priority = 0;
+
+		if (color & 0x8000){
+			//if ((color & 0x7FFF) == 0){
+			//  alpha = 0;
+			//}
+			alpha = 0xF8;
+			priority = Vdp2Regs->PRISA & 0x7;
+		}
+		else{
+			int shadow, colorcalc;
+			Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+			priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
+			if (color == 0)
+			{
+				alpha = 0;
+				priority = 0;
+			}
+			else{
+				alpha = 0xF8;
+			}
+		}
+		alpha |= priority;
+		glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		Vdp1External.manualerase = 0;
+    LOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+		glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+	}
+
+}
+
+void YglFrameChangeVDP1(){
+  if (((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
+  {
+    u32 current_drawframe = 0;
+    current_drawframe = _Ygl->drawframe;
+    _Ygl->drawframe = _Ygl->readframe;
+    _Ygl->readframe = current_drawframe;
+    Vdp1External.manualchange = 0;
+    /*YGL*/LOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+  }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 void YglRenderVDP1(void) {
@@ -2356,20 +2422,12 @@ void YglRenderVDP1(void) {
    int status;
    FrameProfileAdd("YglRenderVDP1 start");
    YabThreadLock(_Ygl->mutex);
-   //if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
-  if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
-   {
-     u32 current_drawframe = 0;
-     current_drawframe = _Ygl->drawframe;
-     _Ygl->drawframe = _Ygl->readframe;
-     _Ygl->readframe = current_drawframe;
-     Vdp1External.manualchange = 0;
-     YGLLOG("YglRenderVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
-   }
 
-   if (_Ygl->pFrameBuffer != NULL) {
+   LOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
+
+	if (_Ygl->pFrameBuffer != NULL) {
      _Ygl->pFrameBuffer = NULL;
-   glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
+	glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
      glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
      glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -2399,8 +2457,12 @@ void YglRenderVDP1(void) {
       //YGLLOG("Framebuffer status OK = %08X\n", status );
    }
 
+#if 0
    // Many regressions to Enable it
-   if (((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualerase || (Vdp1Regs->FBCR & 3) == 3 )
+   if ( ((Vdp1Regs->FBCR & 2) == 0) ||     // One cycle mode
+	     Vdp1External.manualerase ||       // Manual Erace (FCM1 FCT0)
+		 ((Vdp1Regs->TVMR>>3)&0x01) == 1   // VBlank Erace (VBE1)
+	  ) 
    {
      u16 color;
      int priority;
@@ -2461,10 +2523,10 @@ void YglRenderVDP1(void) {
      glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
      Vdp1External.manualerase = 0;
-     YGLLOG("YglRenderVDP1: clear %d\n", _Ygl->drawframe);
+     /*YGL*/LOG("YglRenderVDP1: clear %d\n", _Ygl->drawframe);
 
    }
-
+#endif
 
 
    glDisable(GL_DEPTH_TEST);
@@ -2521,6 +2583,7 @@ void YglRenderVDP1(void) {
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    glEnable(GL_DEPTH_TEST);
    glEnable(GL_BLEND);
+
    FrameProfileAdd("YglRenderVDP1 end");
 }
 
@@ -2528,9 +2591,7 @@ void YglDmyRenderVDP1(void) {
 
     Vdp1External.manualerase = 0;
 
-    if ( (((Vdp1Regs->TVMR & 0x08)==0) && ((Vdp1Regs->FBCR & 0x03)==0x03) ) ||
-          ((Vdp1Regs->FBCR & 2) == 0) ||
-          Vdp1External.manualchange )
+	if (((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
     {
     u32 current_drawframe = 0;
     current_drawframe = _Ygl->drawframe;
@@ -2996,6 +3057,8 @@ void YglRender(void) {
    ccwindow |= ((Vdp2Regs->WCTLD >> 11) & 0x01);
 
    YglSetVdp2Window();
+
+   LOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
 
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
