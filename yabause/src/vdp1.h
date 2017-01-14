@@ -23,9 +23,10 @@
 
 #include "memory.h"
 
-#define VIDCORE_DEFAULT         -1
+#define VIDCORE_DEFAULT         -1  
 #define VIDCORE_DUMMY           0
 
+//#define YAB_ASYNC_RENDERING 1
 
 typedef struct {
    u16 TVMR;
@@ -120,6 +121,8 @@ typedef struct {
    int disptoggle;
    int manualerase;
    int manualchange;
+   int vbalnk_erase;
+   int frame_change_plot;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;
