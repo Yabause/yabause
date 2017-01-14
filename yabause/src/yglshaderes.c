@@ -2038,7 +2038,7 @@ int YglTesserationProgramInit()
       pYglprg_vdp1_gouraudshading_tess_g) != 0)
       return -1;
 
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MESH_TESS], &grow_spd_tess);
+    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_SPD_TESS], &grow_spd_tess);
 
     //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VFP1_MESH_TESS");
