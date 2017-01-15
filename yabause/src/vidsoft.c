@@ -91,6 +91,8 @@ void VIDSoftVdp1SystemClipping(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
+void VIDSoftVdp1EraseWrite(){};
+void VIDSoftVdp1FrameChange(){};
 int VIDSoftVdp2Reset(void);
 void VIDSoftVdp2DrawStart(void);
 void VIDSoftVdp2DrawEnd(void);
@@ -130,6 +132,8 @@ VIDSoftVdp1SystemClipping,
 VIDSoftVdp1LocalCoordinate,
 VIDSoftVdp1ReadFrameBuffer,
 VIDSoftVdp1WriteFrameBuffer,
+VIDSoftVdp1EraseWrite,
+VIDSoftVdp1FrameChange,
 VIDSoftVdp2Reset,
 VIDSoftVdp2DrawStart,
 VIDSoftVdp2DrawEnd,
