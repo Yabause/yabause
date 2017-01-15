@@ -180,6 +180,10 @@ int Vdp1Init(void) {
 
    Vdp1External.disptoggle = 1;
 
+   Vdp1Regs->TVMR = 0;
+   Vdp1Regs->FBCR = 0;
+   Vdp1Regs->PTMR = 0;
+
    return 0;
 }
 
@@ -286,11 +290,13 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
-		  LOG("Read EDSR %X\n", Vdp1Regs->EDSR );
+        LOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
          return Vdp1Regs->EDSR;
       case 0x12:
+        LOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
          return Vdp1Regs->LOPR;
       case 0x14:
+        LOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
          return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
@@ -318,30 +324,46 @@ void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
-   addr &= 0xFF;
-   switch(addr) {
-      case 0x0:
-         Vdp1Regs->TVMR = val;
-         break;
-      case 0x2:
-         Vdp1Regs->FBCR = val;
-         if ((Vdp1Regs->FBCR & 3) == 3)
-         {
-            Vdp1External.manualchange = 1;
-         }
-         else if ((Vdp1Regs->FBCR & 3) == 2)
-            Vdp1External.manualerase = 1;
-         break;
-      case 0x4:
-         Vdp1Regs->COPR = 0;
-         Vdp1Regs->PTMR = val;
+  addr &= 0xFF;
+  switch(addr) {
+    case 0x0:
+      Vdp1Regs->TVMR = val;
+      LOG("Write VBE=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
+    break;
+    case 0x2:
+      LOG("Write FCM=%d FCT=%d VBE=%d line = %d\n", (val & 0x02) >> 1, (val & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
+      Vdp1Regs->FBCR = val;
+      if ((Vdp1Regs->FBCR & 3) == 3) {
+        Vdp1External.manualchange = 1;
+      }
+      else if ((Vdp1Regs->FBCR & 3) == 2) {
+        Vdp1External.manualerase = 1;
+      }
+      break;
+    case 0x4:
+      LOG("Write PTMR %X line = %d", val, yabsys.LineCount);
+      Vdp1Regs->COPR = 0;
+      Vdp1Regs->PTMR = val;
+      if (Vdp1Regs->PTMR == 2){ // Draw when frame is changed
+        Vdp1External.frame_change_plot = 1;
+      }
+      else{
+        Vdp1External.frame_change_plot = 0;
+      }
 #if YAB_ASYNC_RENDERING
-		 if (val == 1){ 
-			 yabsys.wait_line_count = 220;
-			 YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
-		}
+      if (val == 1){ 
+        LOG("VDP1: VDPEV_DIRECT_DRAW");
+        yabsys.wait_line_count = yabsys.LineCount + 100;
+        yabsys.wait_line_count %= yabsys.MaxLineCount;
+        Vdp1Regs->EDSR >>= 1;
+        YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
+      }
 #else
-		 if (val == 1){ LOG("VDP1: VDPEV_DIRECT_DRAW\n");  Vdp1Draw(); }
+    if (val == 1){
+      LOG("VDP1: VDPEV_DIRECT_DRAW\n");  
+        Vdp1Regs->EDSR >>= 1;
+        Vdp1Draw(); 
+    }
 #endif
          break;
       case 0x6:
@@ -527,6 +549,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 
 void Vdp1Draw(void) 
 {
+  LOG("Vdp1Draw");
    if (!Vdp1External.disptoggle)
    {
       Vdp1NoDraw();
@@ -538,7 +561,7 @@ void Vdp1Draw(void)
    // beginning of a frame
    // BEF <- CEF
    // CEF <- 0
-   Vdp1Regs->EDSR >>= 1;
+   //Vdp1Regs->EDSR >>= 1;
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
 
@@ -559,7 +582,7 @@ void Vdp1NoDraw(void) {
    // beginning of a frame (ST-013-R3-061694 page 53)
    // BEF <- CEF
    // CEF <- 0
-   Vdp1Regs->EDSR >>= 1;
+   //Vdp1Regs->EDSR >>= 1;
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
 
@@ -1438,6 +1461,8 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyVdp1LocalCoordinate,
 	VIDDummVdp1ReadFrameBuffer,
 	VIDDummVdp1WriteFrameBuffer,
+  VIDDummSync,
+  VIDDummSync,
 	VIDDummyVdp2Reset,
 	VIDDummyVdp2DrawStart,
 	VIDDummyVdp2DrawEnd,
