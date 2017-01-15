@@ -434,9 +434,9 @@ void Vdp2VBlankIN(void) {
   YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
-  do {
+  //do {
     YabWaitEventQueue(rcv_evqueue);
-  } while (YaGetQueueSize(rcv_evqueue) != 0);
+  //} while (YaGetQueueSize(rcv_evqueue) != 0);
    FrameProfileAdd("VIN sync");
 
 #else
@@ -552,9 +552,9 @@ void Vdp2HBlankOUT(void) {
    }
    else if (voutflg == 1 && yabsys.LineCount >= (yabsys.VBlankLineCount - 1)){
 
-     do {
+     //do {
       YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
-     } while (YaGetQueueSize(vout_rcv_evqueue) != 0);
+     //} while (YaGetQueueSize(vout_rcv_evqueue) != 0);
 
       voutflg = 0;
 	   FrameProfileAdd("VOUT sync");
@@ -563,9 +563,9 @@ void Vdp2HBlankOUT(void) {
 
    if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count ){
 	   yabsys.wait_line_count = -1;
-     do {
+     //do {
        YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
-     } while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
+     //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
 
 	   FrameProfileAdd("DirectDraw sync");
    }
