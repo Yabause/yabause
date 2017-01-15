@@ -552,7 +552,7 @@ void Vdp2HBlankOUT(void) {
 	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
 
    }
-   else if (voutflg == 1 && yabsys.LineCount >= (yabsys.VBlankLineCount - 12)){
+   else if (voutflg == 1 && yabsys.LineCount >= (yabsys.VBlankLineCount - 1)){
 
      do {
       YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
@@ -680,14 +680,21 @@ void vdp2VBlankOUT(void) {
   }
   
   // VBlank Erase
-  YglEraseWriteVDP1();
+  if (Vdp1External.vbalnk_erase ||  // VBlank Erace (VBE1) 
+    ((Vdp1Regs->FBCR & 2) == 0) ){  // One cycle mode
+    VIDCore->Vdp1EraseWrite();
+  }
 
   // Frame Change
-  if (Vdp1External.manualchange == 1 ||  // Manual Cahnge
+  if (Vdp1External.manualchange == 1 ||  // Manual Change
     (Vdp1Regs->FBCR & 0x03) == 0x00)   // One cycle mode
   {
+    if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
+      VIDCore->Vdp1EraseWrite();
+      Vdp1External.manualerase = 0;
+    }
 
-    YglFrameChangeVDP1();
+    VIDCore->Vdp1FrameChange();
     Vdp1Regs->EDSR >>= 1;
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1){
@@ -847,21 +854,27 @@ void Vdp2VBlankOUT(void) {
    }
 
    // VBlank Erase
-   YglEraseWriteVDP1();
+   if (Vdp1External.vbalnk_erase ||  // VBlank Erace (VBE1) 
+     ((Vdp1Regs->FBCR & 2) == 0)){  // One cycle mode
+     VIDCore->Vdp1EraseWrite();
+   }
 
    // Frame Change
-   if (Vdp1External.manualchange == 1 ||  // Manual Cahnge
+   if (Vdp1External.manualchange == 1 ||  // Manual Change
      (Vdp1Regs->FBCR & 0x03) == 0x00)   // One cycle mode
    {
+     if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
+       VIDCore->Vdp1EraseWrite();
+       Vdp1External.manualerase = 0;
+     }
 
-     YglFrameChangeVDP1();
+     VIDCore->Vdp1FrameChange();
      Vdp1Regs->EDSR >>= 1;
      // if Plot Trigger mode == 0x02 draw start
      if (Vdp1External.frame_change_plot == 1){
        Vdp1Draw();
      }
    }
-   
 
    FPSDisplay();
    //if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
