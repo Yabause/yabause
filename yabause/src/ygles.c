@@ -2433,9 +2433,10 @@ void YglRenderVDP1(void) {
      color = Vdp1Regs->EWDR;
      priority = 0;
 
-     if (color & 0x8000)
+     if (color & 0x8000) {
        priority = Vdp2Regs->PRISA & 0x7;
-     else
+       alpha = 0xF8;
+     } else
      {
        int shadow, colorcalc;
        Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
