@@ -286,6 +286,7 @@ Open &CD Rom...|Ouvrir un &CD Rom...
 Open &ISO...|Ouvrir un &ISO...
 Open CD Rom|Ouvrir un CD ROM
 Open SSF|Ouvrir lecteur SSF
+Open&Tray|Ouvrir le Plateau
 OpenTray|Ouvrir le Plateau
 OpenGL Video Interface|Interface Vidéo OpenGL
 Options|Options
@@ -370,6 +371,7 @@ Slot Info|Info Emplacement
 Slot Number:|Numéro d'Emplacement :
 Software OSD Interface|Interface OSD Logiciel
 Software Video Interface|Interface Vidéo Logiciel
+Sound...|Son...
 Sound|Son
 Sound Core|Noyau Son :
 Spanish|Espagnol
