@@ -60,6 +60,9 @@ if (ANDROID)
 	include_directories(./ ./nanovg)		
 	set(yabause_SOURCES
 		${yabause_SOURCES}
+		yglcache.c
+		ygles.c
+		yglshaderes.c 
 		nanovg/nanovg.c 
 		nanovg/nanovg_osdcore.h 
 		nanovg/nanovg_osdcore.c
@@ -253,9 +256,6 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 
 		include_directories(./ ./nanovg)
 		set(yabause_SOURCES ${yabause_SOURCES} 
-			yglcache.c
-			ygles.c
-			yglshaderes.c 
 			nanovg/nanovg.c 
 			nanovg/nanovg_osdcore.h 
 			nanovg/nanovg_osdcore.c
@@ -276,7 +276,6 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		if (GLXGETPROCADDRESS_OK)
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
 		endif()
-		add_definitions(-DYAB_ASYNC_RENDERING)
 		string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
 		if( glfw )
 			if (WIN32)
@@ -290,8 +289,15 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
-		add_definitions(-D_OGLES3_)
-
+		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+			add_definitions(-D_OGLES3_)
+			add_definitions(-DYAB_ASYNC_RENDERING)
+			set(yabause_SOURCES ${yabause_SOURCES} 
+				yglcache.c
+				ygles.c
+				yglshaderes.c
+			)
+		endif()
         include(FindGLEW)
         add_definitions(-D_USEGLEW_)
         if (GLEW_FOUND)
