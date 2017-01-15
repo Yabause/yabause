@@ -2342,15 +2342,11 @@ void YglEraseWriteVDP1(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
-  if (((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
-  {
-    u32 current_drawframe = 0;
-    current_drawframe = _Ygl->drawframe;
-    _Ygl->drawframe = _Ygl->readframe;
-    _Ygl->readframe = current_drawframe;
-    Vdp1External.manualchange = 0;
-    /*YGL*/LOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
-  }
+  u32 current_drawframe = 0;
+  current_drawframe = _Ygl->drawframe;
+  _Ygl->drawframe = _Ygl->readframe;
+  _Ygl->readframe = current_drawframe;
+  /*YGL*/LOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 
 //////////////////////////////////////////////////////////////////////////////
