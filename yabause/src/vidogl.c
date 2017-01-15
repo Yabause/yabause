@@ -39,7 +39,7 @@
 
 static Vdp2 baseVdp2Regs;
 static Vdp2 * fixVdp2Regs=NULL;
-
+//#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
 int fount = 0;
 FILE *ppfp = NULL;
@@ -4317,7 +4317,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 
 
-
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    u16 color;
@@ -4336,7 +4335,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    vdp1cmd_struct cmd;
 
    sprite.linescreen = 0;
-
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
     
@@ -4357,6 +4355,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.vertices[5] = (s16)cmd.CMDYC;
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
+
 #ifdef PERFRAME_LOG
    if (ppfp != NULL) {
      fprintf(ppfp, "BEFORE %d,%d,%d,%d,%d,%d,%d,%d\n",
@@ -4369,22 +4368,22 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 #endif
    isSquare = 1;
 
-   float cx = sprite.vertices[4] - sprite.vertices[0];
-   float cy = sprite.vertices[5] - sprite.vertices[1];
+   for (i = 0; i < 3; i++){
+     float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
+     float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
+     float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+     float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
 
-   // Big polygon is forced as square( Gungriffon )
-   if ( fabsf(cx*cy) < 160){
-     for (i = 0; i < 3; i++){
-       float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
-       float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
-       float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
-       float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
-       float dot = dx*d2x + dy*d2y;
-       if (dot >= EPSILON || dot <= -EPSILON){
-         isSquare = 0;
-         break;
-       }
+     float dot = dx*d2x + dy*d2y;
+     if (dot >= EPSILON || dot <= -EPSILON){
+       isSquare = 0;
+       break;
      }
+   }
+
+   // For gungiliffon big polygon
+   if (sprite.vertices[2] - sprite.vertices[0] > 350){
+     isSquare = 1;
    }
 
    if (isSquare){
