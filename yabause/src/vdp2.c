@@ -693,6 +693,7 @@ void vdp2VBlankOUT(void) {
     }
 
     VIDCore->Vdp1FrameChange();
+    Vdp1External.manualchange = 0;
     Vdp1Regs->EDSR >>= 1;
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1){
@@ -867,6 +868,7 @@ void Vdp2VBlankOUT(void) {
      }
 
      VIDCore->Vdp1FrameChange();
+     Vdp1External.manualchange = 0;
      Vdp1Regs->EDSR >>= 1;
      // if Plot Trigger mode == 0x02 draw start
      if (Vdp1External.frame_change_plot == 1){
