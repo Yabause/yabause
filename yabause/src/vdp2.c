@@ -71,6 +71,8 @@ static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
 static int vdp_proc_running = 0;
 
+int g_frame_count = 0;
+
 //#define LOG yprintf
 
 //////////////////////////////////////////////////////////////////////////////
@@ -684,7 +686,7 @@ void vdp2VBlankOUT(void) {
   }
 
   // Frame Change
-  if (Vdp1External.manualchange == 1 ||  // Manual Change
+  if (Vdp1External.manualchange_on_frame == 1 ||  // Manual Change
     (Vdp1Regs->FBCR & 0x03) == 0x00)   // One cycle mode
   {
     if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
@@ -693,7 +695,7 @@ void vdp2VBlankOUT(void) {
     }
 
     VIDCore->Vdp1FrameChange();
-    Vdp1External.manualchange = 0;
+    Vdp1External.manualchange_on_frame = 0;
     Vdp1Regs->EDSR >>= 1;
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1){
@@ -772,7 +774,18 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-  LOG("***** VOUT *****");
+  g_frame_count++;
+
+  //if (g_frame_count == 60){
+  //  YabSaveStateSlot(".\\", 1);
+  //}
+
+  //if (g_frame_count >= 1){
+  //  YabLoadStateSlot(".\\", 1);
+  //}
+
+
+  LOG("***** VOUT %d *****", g_frame_count);
   if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
     Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
@@ -791,11 +804,24 @@ void Vdp2VBlankOUT(void) {
     Vdp1External.vbalnk_erase = 0;
   }
 
+  if (Vdp1Regs->PTMR == 2){ // Draw when frame is changed
+    Vdp1External.frame_change_plot = 1;
+  }
+  else{
+    Vdp1External.frame_change_plot = 0;
+  }
+
 #ifdef _VDP_PROFILE_
   FrameProfileShow();
   FrameProfileInit();
 #endif
 #if defined(YAB_ASYNC_RENDERING)
+
+  if (Vdp1External.manualchange == 1){
+    Vdp1External.manualchange_on_frame = 1;
+    Vdp1External.manualchange = 0;
+  }
+
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;
    }else{ // p02_50.htm#TVSTAT_

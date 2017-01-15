@@ -758,9 +758,7 @@ const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
 "  addr.s = addr.s / (v_texcoord.q);                                      \n"
 "  addr.t = addr.t / (v_texcoord.q);                                      \n"
 "  vec4 spriteColor = texture(u_sprite,addr);                           \n"
-"  fragColor   = spriteColor;                                          \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
-"  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshading_spd_f, NULL };
 
@@ -2210,13 +2208,13 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &id_g;
+     level->prg[level->prgcurrent].ids = &id_spd_g;
      current->vertexp = 0;
      current->texcoordp = 1;
      level->prg[level->prgcurrent].vaid = 2;
-     current->mtxModelView = id_g.mtxModelView;
-     current->mtxTexture = id_g.mtxTexture;
-     current->tex0 = id_g.tex0;
+     current->mtxModelView = id_spd_g.mtxModelView;
+     current->mtxTexture = id_spd_g.mtxTexture;
+     current->tex0 = id_spd_g.tex0;
    }
    else if (prgid == PG_VFP1_GOURAUDSAHDING_TESS ){
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;

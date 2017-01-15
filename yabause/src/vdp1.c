@@ -344,16 +344,10 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       LOG("Write PTMR %X line = %d", val, yabsys.LineCount);
       Vdp1Regs->COPR = 0;
       Vdp1Regs->PTMR = val;
-      if (Vdp1Regs->PTMR == 2){ // Draw when frame is changed
-        Vdp1External.frame_change_plot = 1;
-      }
-      else{
-        Vdp1External.frame_change_plot = 0;
-      }
 #if YAB_ASYNC_RENDERING
       if (val == 1){ 
         LOG("VDP1: VDPEV_DIRECT_DRAW");
-        yabsys.wait_line_count = yabsys.LineCount + 100;
+        yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
         Vdp1Regs->EDSR >>= 1;
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
@@ -591,7 +585,6 @@ void Vdp1NoDraw(void) {
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
    ScuSendDrawEnd();
-   Vdp1External.manualchange = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
