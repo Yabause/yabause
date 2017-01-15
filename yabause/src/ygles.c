@@ -2356,6 +2356,7 @@ void YglRenderVDP1(void) {
    int status;
    FrameProfileAdd("YglRenderVDP1 start");
    YabThreadLock(_Ygl->mutex);
+   _Ygl->vdp1_hasMesh = 0;
    //if ((((Vdp1Regs->TVMR & 0x08) == 0) && ((Vdp1Regs->FBCR & 0x03) == 0x03)) ||
   if ( ((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
    {
@@ -2494,6 +2495,9 @@ void YglRenderVDP1(void) {
              glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
           }
 
+      if ( level->prg[j].blendmode == VDP1_COLOR_CL_MESH ) {
+        _Ygl->vdp1_hasMesh = 1;
+      }
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING ) {
         glEnable(GL_BLEND);
       }
@@ -2646,7 +2650,7 @@ void YglRenderFrameBuffer(int from, int to) {
       Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture);
     }
     else{
-      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1 );
+      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, _Ygl->vdp1_hasMesh || (Vdp2Regs->CCCTL & 0x40) );
     }
   }
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
