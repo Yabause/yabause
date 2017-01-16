@@ -559,7 +559,7 @@ void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
 void YglTmPush(YglTextureManager * tm){
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  if (tm->texture != NULL) {
+  if (tm->texture != NULL ) {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tm->width, tm->yMax, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -2371,9 +2371,6 @@ void YglRenderVDP1(void) {
   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
   level = &(_Ygl->levels[_Ygl->depth]);
-  glDisable(GL_STENCIL_TEST);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   cprg = -1;
 
@@ -2391,11 +2388,14 @@ void YglRenderVDP1(void) {
     //YGLLOG("Framebuffer status OK = %08X\n", status );
   }
 
+  glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
   glCullFace(GL_FRONT_AND_BACK);
   glDisable(GL_CULL_FACE);
   glViewport(0,0,_Ygl->width,_Ygl->height);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
     if( level->prg[j].prgid != cprg ) {
