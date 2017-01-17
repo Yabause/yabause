@@ -4003,12 +4003,15 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
 
    if (IS_REPLACE(CMDPMOD)){
-
+     if ( (CMDPMOD & 0x8000) )
+        sprite.blendmode = VDP1_COLOR_CL_MESH;
+     else {
      if ( (CMDPMOD & 0x40) != 0) {
         sprite.blendmode = VDP1_COLOR_SPD;
      } else{
        sprite.blendmode = VDP1_COLOR_CL_REPLACE;
      }
+   }
    }
    else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
      sprite.blendmode = VDP1_COLOR_CL_SHADOW;
