@@ -1,5 +1,7 @@
 project(yabause)
 
+#to compile sdl port, use "cmake -DYAB_PORTS=sdl -DYAB_ASYNC_RENDERING ../yabause"
+
 include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
@@ -291,7 +293,6 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		add_definitions(-D_OGL3_)
 		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 			add_definitions(-D_OGLES3_)
-			add_definitions(-DYAB_ASYNC_RENDERING)
 			set(yabause_SOURCES ${yabause_SOURCES} 
 				yglcache.c
 				ygles.c
