@@ -2417,8 +2417,8 @@ void YglRenderVDP1(void) {
 
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING  && level->prg[j].prgid <= PG_VFP1_MESH ) {
         _Ygl->vdp1_hasMesh = 1;
-        glEnable(GL_BLEND);
       }
+
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
