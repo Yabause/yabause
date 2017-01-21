@@ -347,6 +347,19 @@ void Vdp2Reset(void) {
    Vdp2External.perline_alpha_b = 0;
    Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
    Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+
+#if defined(YAB_ASYNC_RENDERING)
+   if (rcv_evqueue != NULL){
+     YabThreadDestoryQueue(rcv_evqueue);
+     rcv_evqueue = YabThreadCreateQueue(8);
+   }
+   if (vdp1_rcv_evqueue != NULL){
+     YabThreadDestoryQueue(vdp1_rcv_evqueue);
+     vdp1_rcv_evqueue = YabThreadCreateQueue(8);
+   }
+   yabsys.wait_line_count = -1;
+#endif
+
 }
 
 
@@ -572,7 +585,7 @@ void Vdp2HBlankOUT(void) {
     }
     else{
       LOG("REMOVE VOUT WAIT");
-      yabsys.wait_line_count = -1;
+      //yabsys.wait_line_count = -1;
     }
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
   }
