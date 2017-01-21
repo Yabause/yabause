@@ -42,4 +42,8 @@
 - (void)saveState;
 - (void)loadState;
 
+- (BOOL)hasControllerConnected;
+- (IBAction)startKeyRemapping:(id)sender;
+- (BOOL)isCurrentlyRemappingControls;
+
 @end

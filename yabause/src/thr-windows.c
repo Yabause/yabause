@@ -144,9 +144,9 @@ typedef struct YabEventQueue_win32
 	int size;
 	int in;
 	int out;
-//	pthread_mutex_t mutex;
-//	pthread_cond_t cond_full;
-//	pthread_cond_t cond_empty;
+	CRITICAL_SECTION mutex;
+	HANDLE cond_full;
+	HANDLE cond_empty;
 } YabEventQueue_win32;
 
 
@@ -157,16 +157,24 @@ YabEventQueue * YabThreadCreateQueue(int qsize){
 	p->size = 0;
 	p->in = 0;
 	p->out = 0;
-	//pthread_mutex_init(&p->mutex, NULL);
-	//pthread_cond_init(&p->cond_full, NULL);
-	//pthread_cond_init(&p->cond_empty, NULL);
-
+  InitializeCriticalSection(&p->mutex);
+  p->cond_full = CreateEvent(NULL, FALSE, FALSE, NULL);
+  p->cond_empty = CreateEvent(NULL, FALSE, FALSE, NULL);
 	return (YabEventQueue *)p;
 }
 
 void YabThreadDestoryQueue(YabEventQueue * queue_t){
 #if 1
-	// Todo: implement Windows version
+  CRITICAL_SECTION mutex;
+  YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
+  mutex = queue->mutex;
+  while (queue->size == queue->capacity)
+    WaitForSingleObject(queue->cond_full,INFINITE);
+
+  EnterCriticalSection(&mutex);
+  free(queue->buffer);
+  free(queue);
+  LeaveCriticalSection(&mutex);
 #else
 	//pthread_mutex_t mutex;
 	YabEventQueue_win32 * queue = (YabEventQueue_pthread*)queue_t;
@@ -184,7 +192,17 @@ void YabThreadDestoryQueue(YabEventQueue * queue_t){
 
 void YabAddEventQueue(YabEventQueue * queue_t, int evcode){
 #if 1
-	// Todo: implement Windows version
+  YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
+  while (queue->size == queue->capacity)
+    WaitForSingleObject(queue->cond_full, INFINITE);
+
+  EnterCriticalSection(&(queue->mutex));
+  queue->buffer[queue->in] = evcode;
+  ++queue->size;
+  ++queue->in;
+  queue->in %= queue->capacity;
+  LeaveCriticalSection(&(queue->mutex));
+  SetEvent(queue->cond_empty);
 #else
 	YabEventQueue_pthread * queue = (YabEventQueue_pthread*)queue_t;
 	pthread_mutex_lock(&(queue->mutex));
@@ -202,8 +220,19 @@ void YabAddEventQueue(YabEventQueue * queue_t, int evcode){
 
 int YabWaitEventQueue(YabEventQueue * queue_t){
 #if 1
-	// Todo: implement Windows version
-	return 0;
+  int value;
+  YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
+  while (queue->size == 0)
+    WaitForSingleObject(queue->cond_empty, INFINITE);
+
+  EnterCriticalSection(&(queue->mutex));
+  value = queue->buffer[queue->out];
+  --queue->size;
+  ++queue->out;
+  queue->out %= queue->capacity;
+  LeaveCriticalSection(&(queue->mutex));
+  SetEvent(queue->cond_full);
+  return value; 
 #else
 	int value;
 	YabEventQueue_pthread * queue = (YabEventQueue_pthread*)queue_t;
@@ -220,6 +249,14 @@ int YabWaitEventQueue(YabEventQueue * queue_t){
 #endif
 }
 
+int YaGetQueueSize(YabEventQueue * queue_t){
+  int size = 0;
+  YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
+  EnterCriticalSection(&(queue->mutex));
+  size = queue->size;
+  LeaveCriticalSection(&(queue->mutex));
+  return size;
+}
 
 typedef struct YabMutex_win32
 {
