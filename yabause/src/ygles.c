@@ -2437,11 +2437,12 @@ void YglRenderVDP1(void) {
   
   level->prgcurrent = 0;
 
-  if(_Ygl->sync != 0) {
+  if (_Ygl->sync != 0) {
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
   }
-  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
