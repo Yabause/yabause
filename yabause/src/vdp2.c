@@ -227,8 +227,8 @@ int Vdp2Init(void) {
    Vdp2Reset();
 
 #if defined(YAB_ASYNC_RENDERING)
-   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(2);
-   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(2);
+   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(8);
+   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(8);
    if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(2);
    yabsys.wait_line_count = -1;
 #endif
@@ -355,14 +355,11 @@ void VdpProc( void *arg ){
 
   int evcode;
 
-
-
   if( YuiUseOGLOnThisThread() < 0 ){
     LOG("VDP2 Fail to USE GL");
     return;
   }
 
-  vdp_proc_running = 1;
   while( vdp_proc_running ){
     YabThreadSetCurrentThreadAffinityMask(0x01);
     evcode = YabWaitEventQueue(evqueue);
@@ -376,12 +373,13 @@ void VdpProc( void *arg ){
       FrameProfileAdd("VOUT start");
       vdp2VBlankOUT();
       FrameProfileAdd("VOUT end");
-      YabAddEventQueue(vout_rcv_evqueue, 0);
+      //YabAddEventQueue(vout_rcv_evqueue, 0);
       break;
     case VDPEV_DIRECT_DRAW:
       FrameProfileAdd("DirectDraw start");
       LOG("VDP1: VDPEV_DIRECT_DRAW(T)");
       Vdp1Draw();
+      VIDCore->Vdp1DrawEnd();
       FrameProfileAdd("DirectDraw end");
       YabAddEventQueue(vdp1_rcv_evqueue, 0);
       break;
@@ -427,6 +425,7 @@ void Vdp2VBlankIN(void) {
 
 #if defined(YAB_ASYNC_RENDERING)
   if( vdp_proc_running == 0 ){
+    vdp_proc_running = 1;
     YuiRevokeOGLOnThisThread();
     evqueue = YabThreadCreateQueue(32);
     YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
@@ -545,14 +544,30 @@ void Vdp2HBlankOUT(void) {
 	   if( vdp_proc_running == 0 ){
 		   YuiRevokeOGLOnThisThread();
 		   evqueue = YabThreadCreateQueue(32);
+       vdp_proc_running = 1;
 		   YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
 	   }
 	   FrameProfileAdd("VOUT event");
 	   voutflg = 1;
+     // Manual Change
+     if (Vdp1External.manualchange == 1){
+       Vdp1External.swap_frame_buffer = 1;
+       Vdp1External.manualchange = 0;
+     }
+     // One Cyclemode
+     if ((Vdp1Regs->FBCR & 0x03) == 0x00){
+       Vdp1External.swap_frame_buffer = 1;
+     }
+     if (Vdp1External.swap_frame_buffer == 1 && Vdp1External.frame_change_plot == 1)
+     {
+        LOG("SET VOUT WAIT");
+        yabsys.wait_line_count = 55;
+     }
 	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
 
    }
-   else if (voutflg == 1 && yabsys.LineCount >= (yabsys.VBlankLineCount - 1)){
+#if 0
+   else if (voutflg == 1 && yabsys.LineCount >= yabsys.VBlankLineCount){
 
      //do {
       YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
@@ -562,13 +577,14 @@ void Vdp2HBlankOUT(void) {
 	   FrameProfileAdd("VOUT sync");
 	   LOG("***** VOUT SYNC *****");
    }
-
+#endif
    if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count ){
 	   yabsys.wait_line_count = -1;
+     LOG("**WAIT START**");
      //do {
        YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
      //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
-
+     LOG("**WAIT END**");
 	   FrameProfileAdd("DirectDraw sync");
    }
 #endif
@@ -659,6 +675,7 @@ void vdp2VBlankOUT(void) {
   static u32 framecount = 0;
   static u64 onesecondticks = 0;
   static VideoInterface_struct * saved = NULL;
+  int isrender = 0;
 
   LOG("***** VOUT(T) *****");
 
@@ -675,19 +692,15 @@ void vdp2VBlankOUT(void) {
 
   VIDCore->Vdp2DrawStart();
 
-  if (Vdp2Regs->TVMD & 0x8000) {
-    VIDCore->Vdp2DrawScreens();
-  }
-  
+
   // VBlank Erase
   if (Vdp1External.vbalnk_erase ||  // VBlank Erace (VBE1) 
-    ((Vdp1Regs->FBCR & 2) == 0) ){  // One cycle mode
+    ((Vdp1Regs->FBCR & 2) == 0)){  // One cycle mode
     VIDCore->Vdp1EraseWrite();
   }
 
   // Frame Change
-  if (Vdp1External.manualchange_on_frame == 1 ||  // Manual Change
-    (Vdp1Regs->FBCR & 0x03) == 0x00)   // One cycle mode
+  if (Vdp1External.swap_frame_buffer == 1)
   {
     if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
       VIDCore->Vdp1EraseWrite();
@@ -695,12 +708,25 @@ void vdp2VBlankOUT(void) {
     }
 
     VIDCore->Vdp1FrameChange();
-    Vdp1External.manualchange_on_frame = 0;
+    Vdp1External.swap_frame_buffer = 0;
     Vdp1Regs->EDSR >>= 1;
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1){
       Vdp1Draw();
+      isrender = 1;
     }
+  }
+
+  if (isrender){
+    YabAddEventQueue(vdp1_rcv_evqueue, 0);
+  }
+
+  if (Vdp2Regs->TVMD & 0x8000) {
+    VIDCore->Vdp2DrawScreens();
+  }
+  
+  if (isrender){
+    VIDCore->Vdp1DrawEnd();
   }
 
    FPSDisplay();
@@ -799,15 +825,13 @@ void Vdp2VBlankOUT(void) {
 
   if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){  // VBlank Erace (VBE1)
     Vdp1External.vbalnk_erase = 1;
-  }
-  else{
+  }else{
     Vdp1External.vbalnk_erase = 0;
   }
 
   if (Vdp1Regs->PTMR == 2){ // Draw when frame is changed
     Vdp1External.frame_change_plot = 1;
-  }
-  else{
+  }else{
     Vdp1External.frame_change_plot = 0;
   }
 
@@ -816,11 +840,6 @@ void Vdp2VBlankOUT(void) {
   FrameProfileInit();
 #endif
 #if defined(YAB_ASYNC_RENDERING)
-
-  if (Vdp1External.manualchange == 1){
-    Vdp1External.manualchange_on_frame = 1;
-    Vdp1External.manualchange = 0;
-  }
 
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
 	   vdp2_is_odd_frame = 1;

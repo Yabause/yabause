@@ -125,7 +125,7 @@ typedef struct {
    int manualchange;
    int vbalnk_erase;
    int frame_change_plot;
-   int manualchange_on_frame;
+   int swap_frame_buffer;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;

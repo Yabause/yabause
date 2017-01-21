@@ -829,9 +829,12 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     YabThreadUnLock( _Ygl->mutex );
   }
 
+  while (_Ygl->vpd1_running){ YabThreadYield(); }
+
+  YabThreadLock(_Ygl->mutex);
   if (_Ygl->pFrameBuffer == NULL){
     FrameProfileAdd("ReadFrameBuffer start");
-    YabThreadLock( _Ygl->mutex );
+    LOG("READ FRAME");
     if (_Ygl->sync != 0){
       glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
       glDeleteSync( _Ygl->sync );
@@ -849,7 +852,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 #endif
     YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
     FrameProfileAdd("ReadFrameBuffer unlock");
-    YabThreadUnLock(_Ygl->mutex);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glReadPixels(0, _Ygl->rheight-Vdp1Regs->systemclipY2, _Ygl->rwidth, Vdp1Regs->systemclipY2, GL_RGBA, GL_UNSIGNED_BYTE, 0);
@@ -865,6 +867,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
         *(u32*)out = 0x00000000;
         break;
       }
+      YabThreadUnLock(_Ygl->mutex);
       return;
     }
     FrameProfileAdd("ReadFrameBuffer end");
@@ -892,6 +895,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     }
     break;
   }
+  YabThreadUnLock(_Ygl->mutex);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2331,13 +2335,13 @@ void YglEraseWriteVDP1(void) {
     else{
       alpha = 0xF8;
     }
-
-    alpha |= priority;
-    glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    LOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   }
+  alpha |= priority;
+  glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  LOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+  
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2387,6 +2391,8 @@ void YglRenderVDP1(void) {
   }else{
     //YGLLOG("Framebuffer status OK = %08X\n", status );
   }
+  //glClearColor(0,0,0,0);
+  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);
@@ -2434,8 +2440,8 @@ void YglRenderVDP1(void) {
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
   }
-
   _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);

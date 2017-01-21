@@ -3572,6 +3572,7 @@ void VIDOGLVdp1DrawStart(void)
    int maxpri;
    int minpri;
    int line = 0;
+   _Ygl->vpd1_running = 1;
 
  #ifdef PERFRAME_LOG
    if (ppfp == NULL){
@@ -3722,9 +3723,9 @@ void VIDOGLVdp1DrawStart(void)
 
 void VIDOGLVdp1DrawEnd(void)
 {
-  Vdp2DrawRotationSync();
   YglTmPush(YglTM);
   YglRenderVDP1();
+  _Ygl->vpd1_running = 0;
 }
 
 #define IS_MESH(a) (a&0x100)
@@ -4575,6 +4576,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    // RGB mode
    if (color & 0x8000){
+
+     if (spd){
+       sprite.blendmode = VDP1_COLOR_SPD;
+     }
 
      int vdp1spritetype = fixVdp2Regs->SPCTL & 0xF;
      if (color != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(fixVdp2Regs->SPCTL & 0x10)) ){
@@ -6594,7 +6599,7 @@ void VIDOGLVdp2DrawScreens(void)
     Vdp2DrawRBG0();
     FrameProfileAdd("RBG0 end");
    }
-
+   Vdp2DrawRotationSync();
 }
 
 //////////////////////////////////////////////////////////////////////////////
