@@ -121,7 +121,7 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->fbowidth = glGetUniformLocation(pgid, (const GLchar *)"u_fbowidth");
   param->fboheight = glGetUniformLocation(pgid, (const GLchar *)"u_fbohegiht");
   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
-  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
+  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrfix");
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
 }
 
@@ -759,6 +759,7 @@ const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
 "  addr.t = addr.t / (v_texcoord.q);                                      \n"
 "  vec4 spriteColor = texture(u_sprite,addr);                           \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
+"  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshading_spd_f, NULL };
 

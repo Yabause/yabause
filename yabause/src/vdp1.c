@@ -321,6 +321,8 @@ void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
 
+extern YabEventQueue * vdp1_rcv_evqueue;
+
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
@@ -347,6 +349,12 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 #if YAB_ASYNC_RENDERING
       if (val == 1){ 
         LOG("VDP1: VDPEV_DIRECT_DRAW");
+        if (yabsys.wait_line_count != -1){
+          yabsys.wait_line_count = -1;
+          YabWaitEventQueue(vdp1_rcv_evqueue);
+        }
+
+        LOG("SET DIRECT WAIT");
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
         Vdp1Regs->EDSR >>= 1;
@@ -561,7 +569,7 @@ void Vdp1Draw(void)
 
    VIDCore->Vdp1DrawStart();
 
-   VIDCore->Vdp1DrawEnd();
+   //VIDCore->Vdp1DrawEnd();
 
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
