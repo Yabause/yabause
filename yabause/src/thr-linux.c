@@ -196,6 +196,15 @@ int YabWaitEventQueue( YabEventQueue * queue_t ){
     return value;
 }
 
+int YaGetQueueSize(YabEventQueue * queue_t){
+  int size = 0;
+  YabEventQueue_pthread * queue = (YabEventQueue_pthread*)queue_t;
+  pthread_mutex_lock(&(queue->mutex));
+  size = queue->size;
+  pthread_mutex_unlock(&(queue->mutex));
+  return size;
+}
+
 
 typedef struct YabMutex_pthread
 {
@@ -228,6 +237,7 @@ void YabThreadFreeMutex( YabMutex * mtx ){
         free(pmtx);
     }
 }
+
 
 
 #define _GNU_SOURCE

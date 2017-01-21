@@ -57,6 +57,7 @@ static void OSDNanovgReset(void);
 static void OSDNanovgDisplayMessage(OSDMessage_struct * message,pixel_t * buffer, int w, int h);
 static void OSDNanovgAddFrameProfileData( char * label, u32 data );
 static int OSDNanovgUseBuffer(void);
+void OSDNanovgAddLogString(char * log);
 
 OSD_struct OSDNnovg = {
     OSDCORE_NANOVG,
@@ -66,7 +67,8 @@ OSD_struct OSDNnovg = {
     OSDNanovgReset,
     OSDNanovgDisplayMessage,
 	OSDNanovgUseBuffer,
-	OSDNanovgAddFrameProfileData
+	OSDNanovgAddFrameProfileData,
+  OSDNanovgAddLogString
 };
 
 static NVGcontext* vg = NULL;

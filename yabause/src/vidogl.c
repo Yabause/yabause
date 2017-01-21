@@ -39,7 +39,7 @@
 
 static Vdp2 baseVdp2Regs;
 static Vdp2 * fixVdp2Regs=NULL;
-
+//#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
 int fount = 0;
 FILE *ppfp = NULL;
@@ -150,6 +150,8 @@ VIDOGLVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
 VIDOGLVdp1ReadFrameBuffer,
 NULL,
+YglEraseWriteVDP1,
+YglFrameChangeVDP1,
 VIDOGLVdp2Reset,
 VIDOGLVdp2DrawStart,
 VIDOGLVdp2DrawEnd,
@@ -579,34 +581,34 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
 
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture)
 {
-   int shadow = 0;
-   int priority = 0;
-   int colorcl = 0;
+  int shadow = 0;
+  int priority = 0;
+  int colorcl = 0;
+  
+  int ednmode;
+  int endcnt = 0;
+  int nromal_shadow = 0;
+  u32 talpha = 0x00; // MSB Color calcuration mode
+  u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
+  u32 charAddr = cmd->CMDSRCA * 8;
+  u32 dot;
+  u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
+  u8 END = ((cmd->CMDPMOD & 0x80) != 0);
+  u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
+  u8 MSB_SHADOW = 0;
+  u32 alpha = 0xFF;
+  u8 addcolor = 0;
+  int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
+  VDP1LOG("Making new sprite %08X\n", charAddr);
    
-   int ednmode;
-   int endcnt = 0;
-   int nromal_shadow = 0;
-   u32 talpha = 0x00; // MSB Color calcuration mode
-   u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
-   u32 charAddr = cmd->CMDSRCA * 8;
-   u32 dot;
-   u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
-   u8 END = ((cmd->CMDPMOD & 0x80) != 0);
-   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
-   u8 MSB_SHADOW = 0;
-   u32 alpha = 0xFF;
-   u8 addcolor = 0;
-   int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
-   VDP1LOG("Making new sprite %08X\n", charAddr);
-   
-   if (/*fixVdp2Regs->SDCTL != 0 &&*/ MSB != 0 ){
-     MSB_SHADOW = 1;
-   }
+  if (/*fixVdp2Regs->SDCTL != 0 &&*/ MSB != 0 ){
+    MSB_SHADOW = 1;
+  }
 
-   if( (cmd->CMDPMOD & 0x20) == 0)
-      ednmode = 1;
-   else 
-      ednmode = 0;
+  if( (cmd->CMDPMOD & 0x20) == 0)
+    ednmode = 1;
+  else
+    ednmode = 0;
 
    addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
    
@@ -666,78 +668,67 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    talpha |= priority;
    shadow_alpha |= priority;
 
-   switch((cmd->CMDPMOD >> 3) & 0x7)
-   {
-      case 0:
-      {
-         // 4 bpp Bank mode
-      u32 colorBank = cmd->CMDCOLR; // &0xFFF0;
-         u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
-         u16 i;
+  switch((cmd->CMDPMOD >> 3) & 0x7)
+  {
+  case 0:
+  {
+    // 4 bpp Bank mode
+    u32 colorBank = cmd->CMDCOLR; // &0xFFF0;
+    u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
+    u16 i;
 
-         for(i = 0;i < sprite->h;i++)
-         {
-            u16 j;
-            j = 0;
-            while(j < sprite->w)
-            {
-               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
+    for(i = 0;i < sprite->h;i++) {
+      u16 j;
+      j = 0;
+      while(j < sprite->w) {
+        dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
-               // Pixel 1
-               if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
-         else if (MSB_SHADOW){
+        // Pixel 1
+        if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
+        else if (MSB_SHADOW){
+          *texture->textdata++ = (0x80 | priority) << 24;
+        }else if (((dot >> 4) | colorBank) == 0x0000){
+          //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+          //talpha |= priority;
+          *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
+        }else if (((dot >> 4) | colorBank) == nromal_shadow){
+          *texture->textdata++ = (shadow_alpha << 24);
+        }else{
+          int colorindex = ((dot >> 4) | colorBank) + colorOffset;
+          if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)){
+            *texture->textdata++ = SAT2YAB1(alpha, colorindex);
+          }else{
+            if (SPCCCS == 0x03){
+              u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+              if (checkcol & 0x8000){
+                *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+              }else{
+                *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+              }
+            }else{
+              *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+            }
+          }
+        }
+        j += 1;
+
+        // Pixel 2
+        if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
+        else if (MSB_SHADOW){
            *texture->textdata++ = (0x80 | priority) << 24;
-         }
-         else if (((dot >> 4) | colorBank) == 0x0000){
-           //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-           //talpha |= priority;
-           *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
-         }
-         else if (((dot >> 4) | colorBank) == nromal_shadow){
-           *texture->textdata++ = (shadow_alpha << 24);
-         }
-         else{
-           int colorindex = ((dot >> 4) | colorBank) + colorOffset;
-           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)){
-             *texture->textdata++ = SAT2YAB1(alpha, colorindex);
-           }else{
-             if (SPCCCS == 0x03){
-               u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
-               if (checkcol & 0x8000){
-                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
-               }
-               else{
-                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
-               }
-             }
-             else{
-               *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
-             }
-           }
-         }
-               j += 1;
-
-               // Pixel 2
-               if (((dot & 0xF) == 0) && !SPD) *texture->textdata++  = 0x00;
-               else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
-         else if (MSB_SHADOW){
-           *texture->textdata++ = (0x80 | priority) << 24;
-         }
-               else if (((dot & 0x0F) | colorBank) == 0x0000){
-                 //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-                 //talpha |= priority;
-           *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
-         }
-         else if (((dot & 0xF) | colorBank) == nromal_shadow){
-           *texture->textdata++ = (shadow_alpha << 24);
-         }
-         else{
-           int colorindex = ((dot & 0xF) | colorBank) + colorOffset;
-           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)){
-             *texture->textdata++ = SAT2YAB1(alpha, colorindex);
-           }
-           else{
+        }else if (((dot & 0x0F) | colorBank) == 0x0000){
+          //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
+          //talpha |= priority;
+          *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
+        }else if (((dot & 0xF) | colorBank) == nromal_shadow){
+          *texture->textdata++ = (shadow_alpha << 24);
+        }else{
+          int colorindex = ((dot & 0xF) | colorBank) + colorOffset;
+          if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)){
+            *texture->textdata++ = SAT2YAB1(alpha, colorindex);
+          }else{
              if (SPCCCS == 0x03){
                u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
                if (checkcol & 0x8000){
@@ -3581,6 +3572,7 @@ void VIDOGLVdp1DrawStart(void)
    int maxpri;
    int minpri;
    int line = 0;
+   _Ygl->vpd1_running = 1;
 
  #ifdef PERFRAME_LOG
    if (ppfp == NULL){
@@ -3731,9 +3723,9 @@ void VIDOGLVdp1DrawStart(void)
 
 void VIDOGLVdp1DrawEnd(void)
 {
-  Vdp2DrawRotationSync();
   YglTmPush(YglTM);
   YglRenderVDP1();
+  _Ygl->vpd1_running = 0;
 }
 
 #define IS_MESH(a) (a&0x100)
@@ -4009,9 +4001,14 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    {
       tmp |= 0x00020000;
    }
-   
+
    if (IS_REPLACE(CMDPMOD)){
-     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+
+     if ( (CMDPMOD & 0x40) != 0) {
+        sprite.blendmode = VDP1_COLOR_SPD;
+     } else{
+       sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+     }
    }
    else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
      sprite.blendmode = VDP1_COLOR_CL_SHADOW;
@@ -4255,7 +4252,12 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    
    if (IS_REPLACE(CMDPMOD)){
-     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+     if ((CMDPMOD & 0x40) != 0) {
+       sprite.blendmode = VDP1_COLOR_SPD;
+     }
+     else{
+       sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+     }
    }
    else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
      sprite.blendmode = VDP1_COLOR_CL_SHADOW;
@@ -4315,7 +4317,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 
 
-
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
    u16 color;
@@ -4334,7 +4335,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    vdp1cmd_struct cmd;
 
    sprite.linescreen = 0;
-
 
    Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
     
@@ -4355,6 +4355,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.vertices[5] = (s16)cmd.CMDYC;
    sprite.vertices[6] = (s16)cmd.CMDXD;
    sprite.vertices[7] = (s16)cmd.CMDYD;
+
 #ifdef PERFRAME_LOG
    if (ppfp != NULL) {
      fprintf(ppfp, "BEFORE %d,%d,%d,%d,%d,%d,%d,%d\n",
@@ -4367,22 +4368,22 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 #endif
    isSquare = 1;
 
-   float cx = sprite.vertices[4] - sprite.vertices[0];
-   float cy = sprite.vertices[5] - sprite.vertices[1];
+   for (i = 0; i < 3; i++){
+     float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
+     float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
+     float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+     float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
 
-   // Big polygon is forced as square( Gungriffon )
-   if ( fabsf(cx*cy) < 160){
-     for (i = 0; i < 3; i++){
-       float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
-       float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
-       float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
-       float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
-       float dot = dx*d2x + dy*d2y;
-       if (dot >= EPSILON || dot <= -EPSILON){
-         isSquare = 0;
-         break;
-       }
+     float dot = dx*d2x + dy*d2y;
+     if (dot >= EPSILON || dot <= -EPSILON){
+       isSquare = 0;
+       break;
      }
+   }
+
+   // For gungiliffon big polygon
+   if (sprite.vertices[2] - sprite.vertices[0] > 350){
+     isSquare = 1;
    }
 
    if (isSquare){
@@ -4557,18 +4558,28 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    sprite.cog = 0x00;
    sprite.cob = 0x00;
                   
+   int spd = ((CMDPMOD & 0x40) != 0);
+
    // Pallet mode
    if (IS_REPLACE(CMDPMOD) && color == 0 ) 
    {
-    YglQuadGrowShading(&sprite, &texture, NULL, NULL);
-      alpha = 0;   
-    alpha |= priority;
-    *texture.textdata = SAT2YAB1(alpha, color);
-    return;
+     if (spd){
+       sprite.blendmode = VDP1_COLOR_SPD;
+     }
+
+     YglQuadGrowShading(&sprite, &texture, NULL, NULL);
+     alpha = 0x0;
+     alpha |= priority;
+     *texture.textdata = SAT2YAB1(alpha, color);
+     return;
    }
 
    // RGB mode
    if (color & 0x8000){
+
+     if (spd){
+       sprite.blendmode = VDP1_COLOR_SPD;
+     }
 
      int vdp1spritetype = fixVdp2Regs->SPCTL & 0xF;
      if (color != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(fixVdp2Regs->SPCTL & 0x10)) ){
@@ -4585,7 +4596,12 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    alpha = 0xF8;
    if (IS_REPLACE(CMDPMOD)){
-     alpha = 0xF8;
+     if ((CMDPMOD & 0x40) != 0) {
+       sprite.blendmode = VDP1_COLOR_SPD;
+     }
+     else{
+       alpha = 0xF8;
+     }
    }
    else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
      alpha = 0xF8;
@@ -5202,6 +5218,8 @@ void VIDOGLVdp2DrawEnd(void)
   YglTmPush(YglTM);
   
    YglRender();
+
+
    /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
    function that would be called here and during a manual change */
    //Vdp1External.manualchange = 0;
@@ -6581,7 +6599,7 @@ void VIDOGLVdp2DrawScreens(void)
     Vdp2DrawRBG0();
     FrameProfileAdd("RBG0 end");
    }
-
+   Vdp2DrawRotationSync();
 }
 
 //////////////////////////////////////////////////////////////////////////////

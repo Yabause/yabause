@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "osdcore.h"
+
 //////////////////////////////////////////////////////////////////////////////
 
 Debug * DebugInit(const char * n, DebugOutType t, char * s) {
@@ -168,7 +170,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
       //if (strnewhash != strhash) {
         //OutputDebugString(strtmp);
         //d->output.callback(strtmp);
-        OSDNanovgAddLogString(strtmp);
+        OSDAddLogString(strtmp);
 #ifdef _WINDOWS
         fprintf(dfp, "%s\n",strtmp);
         fflush(dfp);

@@ -152,7 +152,22 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 typedef void(*PFNGLPATCHPARAMETERIPROC) (GLenum pname, GLint value);
 extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
 
+#define GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT 0x00000001
+#define GL_ELEMENT_ARRAY_BARRIER_BIT      0x00000002
+#define GL_UNIFORM_BARRIER_BIT            0x00000004
+#define GL_TEXTURE_FETCH_BARRIER_BIT      0x00000008
+#define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
+#define GL_COMMAND_BARRIER_BIT            0x00000040
+#define GL_PIXEL_BUFFER_BARRIER_BIT       0x00000080
+#define GL_TEXTURE_UPDATE_BARRIER_BIT     0x00000100
+#define GL_BUFFER_UPDATE_BARRIER_BIT      0x00000200
+#define GL_FRAMEBUFFER_BARRIER_BIT        0x00000400
+#define GL_TRANSFORM_FEEDBACK_BARRIER_BIT 0x00000800
+#define GL_ATOMIC_COUNTER_BARRIER_BIT     0x00001000
+#define GL_ALL_BARRIER_BITS               0xFFFFFFFF
 
+typedef void (* PFNGLMEMORYBARRIERPROC) (GLbitfield barriers);
+extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 
 #elif  defined(__APPLE__)
     #include <OpenGL/gl.h>
@@ -252,6 +267,7 @@ void YglCacheReset(YglTextureManager * tm);
 #define VDP1_COLOR_CL_GROW_LUMINACE 0x30
 #define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
 #define VDP1_COLOR_CL_MESH 0x80
+#define VDP1_COLOR_SPD 0xA0
 
 #define VDP2_CC_NONE 0x00
 #define VDP2_CC_RATE 0x01
@@ -264,6 +280,7 @@ enum
    PG_NORMAL=1,
    PG_VDP1_NORMAL,
    PG_VFP1_GOURAUDSAHDING,
+   PG_VFP1_GOURAUDSAHDING_SPD,
    PG_VFP1_STARTUSERCLIP,
    PG_VFP1_ENDUSERCLIP,
    PG_VFP1_HALFTRANS, 
@@ -288,6 +305,7 @@ enum
    PG_VFP1_HALFTRANS_TESS,
    PG_VFP1_SHADOW_TESS,
    PG_VFP1_MESH_TESS,
+   PG_VFP1_GOURAUDSAHDING_SPD_TESS,
    PG_MAX,
 };
 
@@ -301,6 +319,9 @@ typedef struct {
 	GLint  fbowidth;
 	GLint  fboheight;
 	GLint  texsize;
+  GLuint mtxModelView;
+  GLuint mtxTexture;
+  GLuint tex0;
 } YglVdp1CommonParam;
 
 #define TESS_COUNT (8)
@@ -478,6 +499,7 @@ typedef struct {
     GLuint default_fbo;
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;
+   int vpd1_running;
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -556,6 +578,10 @@ int YglGenerateAABuffer();
 int YglSetupWindow(YglProgram * prg);
 int YglCleanUpWindow(YglProgram * prg);
 void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int size);
+
+void YglEraseWriteVDP1();
+void YglFrameChangeVDP1();
+
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
 
