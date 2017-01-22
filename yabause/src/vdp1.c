@@ -290,7 +290,7 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
-        LOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
+        //LOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
          return Vdp1Regs->EDSR;
       case 0x12:
         LOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
@@ -348,14 +348,16 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       Vdp1Regs->PTMR = val;
 #if YAB_ASYNC_RENDERING
       if (val == 1){ 
-        LOG("VDP1: VDPEV_DIRECT_DRAW");
-        if (yabsys.wait_line_count != -1){
+        LOG("VDP1: VDPEV_DIRECT_DRAW %d", YaGetQueueSize(vdp1_rcv_evqueue));
+        if ( YaGetQueueSize(vdp1_rcv_evqueue) > 0){
           yabsys.wait_line_count = -1;
-          YabWaitEventQueue(vdp1_rcv_evqueue);
+          do{
+            YabWaitEventQueue(vdp1_rcv_evqueue);
+          } while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
         }
-        LOG("SET DIRECT WAIT");
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
+        LOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
         Vdp1Regs->EDSR >>= 1;
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
       }
