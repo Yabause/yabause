@@ -360,6 +360,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         LOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
         Vdp1Regs->EDSR >>= 1;
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
+        YabThreadYield();
       }
 #else
     if (val == 1){
