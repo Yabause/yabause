@@ -349,9 +349,11 @@ typedef struct {
    GLuint mtxModelView;
    GLuint mtxTexture;
    GLuint color_offset;
+   GLuint height_ratio;
    GLuint tex0;
    GLuint tex1;
    float color_offset_val[4];
+   float *color_offset_arr;
    int (*setupUniform)(void *);
    int (*cleanupUniform)(void *);
    YglVdp1CommonParam * ids;
