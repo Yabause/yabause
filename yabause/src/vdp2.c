@@ -557,7 +557,8 @@ void Vdp2HBlankOUT(void) {
     }
 
     // One Cyclemode
-    if ((Vdp1Regs->FBCR & 0x03) == 0x00){
+    if ((Vdp1Regs->FBCR & 0x03) == 0x00 || 
+      (Vdp1Regs->FBCR & 0x03) == 0x01) {  // 0x01 is treated as one cyscle mode in Sonic R.
       Vdp1External.swap_frame_buffer = 1;
     }
 
