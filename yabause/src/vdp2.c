@@ -591,8 +591,9 @@ void Vdp2HBlankOUT(void) {
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
   }
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
+    
+    LOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
     yabsys.wait_line_count = -1;
-    LOG("**WAIT START**");
     //do {
       YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
     //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
