@@ -3574,6 +3574,7 @@ void VIDOGLVdp1DrawStart(void)
    int line = 0;
    _Ygl->vpd1_running = 1;
 
+
  #ifdef PERFRAME_LOG
    if (ppfp == NULL){
      ppfp = fopen("ppfp0.txt","w");
@@ -3595,7 +3596,7 @@ void VIDOGLVdp1DrawStart(void)
    u8 *sprprilist = (u8 *)&fixVdp2Regs->PRISA;
 
    FrameProfileAdd("Vdp1Command start");
-   
+
    if (_Ygl->texture_manager == NULL){
      _Ygl->texture_manager = YglTM;
      YglTMReset(YglTM);
@@ -5199,6 +5200,11 @@ void VIDOGLVdp2DrawStart(void)
   }
   YglReset();
 
+  if (_Ygl->sync != 0){
+    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
+    glDeleteSync(_Ygl->sync);
+    _Ygl->sync = 0;
+  }
   YglTmPull(YglTM,0);
   YglTMReset(YglTM);
   YglCacheReset(YglTM);
@@ -5211,7 +5217,6 @@ void VIDOGLVdp2DrawStart(void)
 
 void VIDOGLVdp2DrawEnd(void)
 {
-  
   Vdp2DrawRotationSync();
   FrameProfileAdd("Vdp2DrawRotationSync end");
 
@@ -6701,7 +6706,8 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W( vdp2rotationparameter_
    float kval;
    int   kdata;
 
-   if (index<0 || index >=param->ktablesize ) return NULL;
+   if (index < 0) index = 0;
+   if (index >= param->ktablesize) index = param->ktablesize-1;
       
    kdata = param->prefecth_k2w[index];
    if( kdata & 0x80000000 ) return NULL;
@@ -6731,7 +6737,8 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W( vdp2rotationparameter_
    float kval;
    u16   kdata;
   
-   if (index<0 || index >= param->ktablesize) return NULL;
+   if (index < 0) index = 0;
+   if (index >= param->ktablesize) index = param->ktablesize - 1;
 
    kdata = param->prefecth_k1w[index];
    if( kdata & 0x8000 ) return NULL;
