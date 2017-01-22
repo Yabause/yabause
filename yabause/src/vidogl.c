@@ -3574,6 +3574,7 @@ void VIDOGLVdp1DrawStart(void)
    int line = 0;
    _Ygl->vpd1_running = 1;
 
+
  #ifdef PERFRAME_LOG
    if (ppfp == NULL){
      ppfp = fopen("ppfp0.txt","w");
@@ -3595,7 +3596,7 @@ void VIDOGLVdp1DrawStart(void)
    u8 *sprprilist = (u8 *)&fixVdp2Regs->PRISA;
 
    FrameProfileAdd("Vdp1Command start");
-   
+
    if (_Ygl->texture_manager == NULL){
      _Ygl->texture_manager = YglTM;
      YglTMReset(YglTM);
@@ -5199,6 +5200,11 @@ void VIDOGLVdp2DrawStart(void)
   }
   YglReset();
 
+  if (_Ygl->sync != 0){
+    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
+    glDeleteSync(_Ygl->sync);
+    _Ygl->sync = 0;
+  }
   YglTmPull(YglTM,0);
   YglTMReset(YglTM);
   YglCacheReset(YglTM);
@@ -5211,7 +5217,6 @@ void VIDOGLVdp2DrawStart(void)
 
 void VIDOGLVdp2DrawEnd(void)
 {
-  
   Vdp2DrawRotationSync();
   FrameProfileAdd("Vdp2DrawRotationSync end");
 
