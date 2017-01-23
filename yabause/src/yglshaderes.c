@@ -244,7 +244,7 @@ void Ygl_setNormalshader(YglProgram * prg) {
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
   glUniform4fv(id_normal_color_offset, 512, prg->color_offset_arr);
-  glUniform1f(id_normal_height_ratio, (float)_Ygl->rheight/(float)_Ygl->height);
+  glUniform1f(id_normal_height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glUniformMatrix4fv(id_normal_matrix, 1, GL_FALSE, prg->matrix);
 }
 
@@ -258,7 +258,7 @@ int Ygl_uniformNormal(void * p)
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
   glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
-  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/(float)_Ygl->height);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   return 0;
 }
 
@@ -316,7 +316,7 @@ int Ygl_uniformMosaic(void * p)
   glEnableVertexAttribArray(prg->texcoordp);
   glUniform1i(id_normal_s_texture, 0);
   glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
-  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/(float)_Ygl->height);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   return 0;
@@ -358,7 +358,7 @@ int Ygl_uniformPerLineAlpha(void * p)
   glEnableVertexAttribArray(prg->texcoordp);
   glUniform1i(id_normal_s_texture, 0);
   glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
-  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/(float)_Ygl->height);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   return 0;
@@ -401,7 +401,7 @@ int Ygl_uniformNormal_blur(void * p)
   glEnableVertexAttribArray(prg->texcoordp);
   glUniform1i(id_normal_s_texture, 0);
   glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
-  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/(float)_Ygl->height);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   return 0;
 }
@@ -1625,6 +1625,7 @@ const GLchar Yglprg_linecol_f[] =
 "uniform vec4 u_color_offset[512];\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
+"uniform float hratio; \n"
 "uniform sampler2D s_texture;\n"
 "uniform sampler2D s_line;\n"
 "out vec4 fragColor;\n"
@@ -1641,11 +1642,11 @@ const GLchar Yglprg_linecol_f[] =
 "  if(txcol.a > 0.0){\n";
 
 const GLchar Yglprg_linecol_main_f[] =
-"    fragColor = txcol+u_color_offset[int(gl_FragCoord.y*u_emu_height)]+lncol;\n"
+"    fragColor = txcol+u_color_offset[int(gl_FragCoord.y*hratio)]+lncol;\n"
 "    fragColor.a = 1.0;\n";
 
 const GLchar Yglprg_linecol_destalpha_f[] =
-"    fragColor = (txcol * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset[int(gl_FragCoord.y*u_emu_height)];\n"
+"    fragColor = (txcol * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset[int(gl_FragCoord.y*hratio)];\n"
 "    fragColor.a =txcol.a;\n";
 
 
@@ -1663,6 +1664,7 @@ typedef struct _LinecolUniform{
   int s_line;
   int color_offset;
   int emu_height;
+  int height_ratio;
   int vheight;
 } LinecolUniform;
 
@@ -1685,6 +1687,7 @@ int Ygl_uniformLinecolorInsert(void * p)
   glUniform1i(param->s_line, 1);
   glUniform4fv(param->color_offset, 512, prg->color_offset_arr);
   glUniform1f(param->emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(param->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));  
   glUniform1f(param->vheight, (float)_Ygl->height);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
@@ -1952,6 +1955,7 @@ int YglProgramInit()
    linecol.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_color_offset");
    linecol.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_emu_height");
    linecol.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_vheight");
+   linecol.height_ratio = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"hratio");
 
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_f, 3, NULL, NULL, NULL) != 0)
      return -1;
