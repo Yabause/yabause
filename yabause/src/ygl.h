@@ -448,6 +448,7 @@ typedef struct {
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
+   int density;
    int drawframe;
    int readframe;
    GLuint rboid_depth;
@@ -518,6 +519,7 @@ void YglRender(void);
 void YglReset(void);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
+void YglSetDensity(int d);
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
 void YglSetClearColor(float r, float g, float b);

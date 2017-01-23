@@ -1133,6 +1133,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->depth = depth;
   _Ygl->rwidth = 320;
   _Ygl->rheight = 240;
+  _Ygl->density = 1;
 
   if ((_Ygl->levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
     return -1;
@@ -3527,6 +3528,10 @@ void YglChangeResolution(int w, int h) {
 
   _Ygl->rwidth = w;
   _Ygl->rheight = h;
+}
+
+void YglSetDensity(int d) {
+  _Ygl->density = d;
 }
 
 //////////////////////////////////////////////////////////////////////////////
