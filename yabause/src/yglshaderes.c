@@ -224,7 +224,7 @@ const GLchar Yglprg_normal_f[] =
 "  addr.y = int(v_texcoord.y);                        \n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  if(txcol.a > 0.0)\n                                 "
-"     fragColor = clamp(txcol+u_color_offset[int(gl_FragCoord.y/hratio)],vec4(0.0),vec4(1.0));\n                         "
+"     fragColor = clamp(txcol+u_color_offset[int(gl_FragCoord.y*hratio)],vec4(0.0),vec4(1.0));\n                         "
 "  else \n                                            "
 "     discard;\n                                      "
 "}                                                   \n";
@@ -450,7 +450,7 @@ const GLchar Yglprg_DestinationAlpha_f[] =
 "  ivec2 screenpos = gl_FragCoord.xy;                    \n"
 "  float depth = texelFetch( s_depth, screenpos,0 ).x;   \n"
 "  if(txcol.a > 0.0 ){                                   \n"
-"     fragColor = clamp(txcol+u_color_offset[int(gl_FragCoord.y/hratio)],vec4(0.0),vec4(1.0)); \n"
+"     fragColor = clamp(txcol+u_color_offset[int(gl_FragCoord.y*hratio)],vec4(0.0),vec4(1.0)); \n"
 "     if( depth == gl_FragCoord.z )                                \n"
 "         fragColor.a = texelFetch( s_dest, screenpos,0 ).x        \n"
 "  }else \n                                            "
@@ -1641,11 +1641,11 @@ const GLchar Yglprg_linecol_f[] =
 "  if(txcol.a > 0.0){\n";
 
 const GLchar Yglprg_linecol_main_f[] =
-"    fragColor = txcol+u_color_offset[int(gl_FragCoord.y/u_emu_height)]+lncol;\n"
+"    fragColor = txcol+u_color_offset[int(gl_FragCoord.y*u_emu_height)]+lncol;\n"
 "    fragColor.a = 1.0;\n";
 
 const GLchar Yglprg_linecol_destalpha_f[] =
-"    fragColor = (txcol * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset[int(gl_FragCoord.y/u_emu_height)];\n"
+"    fragColor = (txcol * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset[int(gl_FragCoord.y*u_emu_height)];\n"
 "    fragColor.a =txcol.a;\n";
 
 
