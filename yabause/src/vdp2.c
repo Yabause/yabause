@@ -469,16 +469,6 @@ void Vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Vdp2HBlankIN(void) {
-   Vdp2Regs->TVSTAT |= 0x0004;
-   ScuSendHBlankIN();
-
-   if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x41, 0x2);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, int line)
 {
   int mask = 0;
@@ -532,11 +522,21 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, int line)
   }
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp2HBlankIN(void) {
+   Vdp2Regs->TVSTAT |= 0x0004;
+   ScuSendHBlankIN();
+
+   if (yabsys.IsSSH2Running)
+      SH2SendInterrupt(SSH2, 0x41, 0x2);
+
+   ReadVdp2ColorOffset(Vdp2Regs, yabsys.LineCount);
+}
+
 void Vdp2HBlankOUT(void) {
    int i;
    Vdp2Regs->TVSTAT &= ~0x0004;
-
-   ReadVdp2ColorOffset(Vdp2Regs, yabsys.LineCount);
 
    if (yabsys.LineCount < yabsys.VBlankLineCount)
    {
