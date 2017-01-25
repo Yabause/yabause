@@ -1456,7 +1456,8 @@ u32 FASTCALL Vdp2ColorRamGetColorCM01SC2(vdp2draw_struct * info, u32 colorindex,
    u32 tmp;
    u16 code = ((fixVdp2Regs->SFSEL & (1<< info->id)) == 0)?(fixVdp2Regs->SFCODE & 0xFF):(fixVdp2Regs->SFCODE & 0xFF00)>>8;
    tmp = T2ReadWord(Vdp2ColorRam, (colorindex<<1) & 0xFFF);
-   if( (info->specialcolorfunction & 1) == 0 )
+
+   if( info->specialcolorfunction == 0 )
    {
       return SAT2YAB1(0xFF,tmp);
    };
@@ -1477,7 +1478,7 @@ u32 FASTCALL Vdp2ColorRamGetColorCM01SC1(vdp2draw_struct * info, u32 colorindex,
 {
    u32 tmp;
    tmp = T2ReadWord(Vdp2ColorRam, (colorindex<<1) & 0xFFF);   
-   if( (info->specialcolorfunction & 1) == 0 )
+   if( info->specialcolorfunction == 0 )
    {
       return SAT2YAB1(0xFF,tmp);
    }
@@ -5465,6 +5466,7 @@ static void Vdp2DrawNBG0(void)
    info.enable = 0;
 
    info.cellh = 256;
+   info.specialcolorfunction = 0;
 
 
    Vdp2GeneratePerLineColorCalcuration(&info, NBG0);
@@ -5830,6 +5832,7 @@ static void Vdp2DrawNBG1(void)
   info.cor = 0;
   info.cog = 0;
   info.cob = 0;
+  info.specialcolorfunction = 0;
 
   info.enable = fixVdp2Regs->BGON & 0x2;
   if (!info.enable) return;
@@ -5850,6 +5853,7 @@ static void Vdp2DrawNBG1(void)
     info.paladdr = (fixVdp2Regs->BMPNA & 0x700) >> 4;
     info.flipfunction = 0;
     info.specialfunction = 0;
+    info.specialcolorfunction = (fixVdp2Regs->BMPNA & 0x1000) >> 4;
   }
   else
   {
@@ -6078,6 +6082,7 @@ static void Vdp2DrawNBG2(void)
    info.cor = 0;
    info.cog = 0;
    info.cob = 0;
+info.specialcolorfunction = 0;
 
    info.enable = fixVdp2Regs->BGON & 0x4;
    if (!info.enable) return;
@@ -6183,6 +6188,7 @@ static void Vdp2DrawNBG3(void)
    info.cor = 0;
    info.cog = 0;
    info.cob = 0;
+info.specialcolorfunction = 0;
 
 
    info.enable = fixVdp2Regs->BGON & 0x8;
@@ -6293,6 +6299,7 @@ static void Vdp2DrawRBG0(void)
   info->cor = 0;
   info->cog = 0;
   info->cob = 0;
+info->specialcolorfunction = 0;
 
   info->enable = fixVdp2Regs->BGON & 0x10;
   if (!info->enable) return;
