@@ -38,7 +38,7 @@
         This screen and advertisement screen will not be shown, If you have donated.
     </string>
     <string name="thank_you">Thank you for your donation!</string>
-    <string name="error_consume">Faild to consume.</string>
+    <string name="error_consume">Failed to consume.</string>
     <string name="do_donation">Donate</string>
     <string name="no_thank_you">No, Thank you.</string>
     <string name="donate_3doller">$3</string>
