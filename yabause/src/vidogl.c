@@ -2054,19 +2054,46 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   u32 color;
   u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
 
-  u16 code = (fixVdp2Regs->SFSEL & (1<< info->id) != 0)?(fixVdp2Regs->SFCODE & 0xFF):(fixVdp2Regs->SFCODE & 0xFF00)>>8;
+  u16 code = ((fixVdp2Regs->SFSEL & (1<< info->id)) == 0)?(fixVdp2Regs->SFCODE & 0xFF):(fixVdp2Regs->SFCODE & 0xFF00)>>8;
 
   u32 alpha = info->alpha;
 
-  if ((info->specialcolorfunction!= 0) && (info->specialcolormode == 2) && ((dot & 0xFF00) != (code << 8))) alpha = 0xFF;
   if (!(dot & 0xFF00) && info->transparencyenable) color = 0x00000000;
-  else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), alpha);
+  
+  else {
+    if ((info->specialcolorfunction!= 0) && (info->specialcolormode == 2)) {
+	alpha = 0xFF;
+	u8 low4bytes = (dot & 0x0F00)>>8;
+	if ((code & 0x1) && ((low4bytes == 0x0) || (low4bytes == 0x1))) alpha = info->alpha;
+	if ((code & 0x2) && ((low4bytes == 0x2) || (low4bytes == 0x3))) alpha = info->alpha;
+	if ((code & 0x4) && ((low4bytes == 0x4) || (low4bytes == 0x5))) alpha = info->alpha;
+	if ((code & 0x8) && ((low4bytes == 0x6) || (low4bytes == 0x7))) alpha = info->alpha;
+	if ((code & 0x10) && ((low4bytes == 0x8) || (low4bytes == 0x9))) alpha = info->alpha;
+	if ((code & 0x20) && ((low4bytes == 0xA) || (low4bytes == 0xB))) alpha = info->alpha;
+	if ((code & 0x40) && ((low4bytes == 0xC) || (low4bytes == 0xD))) alpha = info->alpha;
+	if ((code & 0x80) && ((low4bytes == 0xE) || (low4bytes == 0xF))) alpha = info->alpha;
+    }
+    color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | ((dot & 0xFF00) >> 8)), alpha);
+  }
   *texture->textdata++ = color;
 
   alpha = info->alpha;
-  if ((info->specialcolorfunction!= 0) && (info->specialcolormode == 2) && ((dot & 0xFF) != code)) alpha = 0xFF;
   if (!(dot & 0xFF) && info->transparencyenable) color = 0x00000000;
-  else color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), alpha);
+  else  {
+    if ((info->specialcolorfunction!= 0) && (info->specialcolormode == 2)) {
+	alpha = 0xFF;
+	u8 low4bytes = (dot & 0x0F00)>>8;
+	if ((code & 0x1) && ((low4bytes == 0x0) || (low4bytes == 0x1))) alpha = info->alpha;
+	if ((code & 0x2) && ((low4bytes == 0x2) || (low4bytes == 0x3))) alpha = info->alpha;
+	if ((code & 0x4) && ((low4bytes == 0x4) || (low4bytes == 0x5))) alpha = info->alpha;
+	if ((code & 0x8) && ((low4bytes == 0x6) || (low4bytes == 0x7))) alpha = info->alpha;
+	if ((code & 0x10) && ((low4bytes == 0x8) || (low4bytes == 0x9))) alpha = info->alpha;
+	if ((code & 0x20) && ((low4bytes == 0xA) || (low4bytes == 0xB))) alpha = info->alpha;
+	if ((code & 0x40) && ((low4bytes == 0xC) || (low4bytes == 0xD))) alpha = info->alpha;
+	if ((code & 0x80) && ((low4bytes == 0xE) || (low4bytes == 0xF))) alpha = info->alpha;
+    }
+    color = info->Vdp2ColorRamGetColor(info, info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), alpha);
+  }
   *texture->textdata++ = color;
   return 0;
 }
