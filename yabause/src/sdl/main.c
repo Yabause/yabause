@@ -58,6 +58,9 @@
 #define WINDOW_WIDTH 1200
 #define WINDOW_HEIGHT ((int)((float)WINDOW_WIDTH/AR))
 
+#define  WINDOW_WIDTH_LOW 600
+#define WINDOW_HEIGHT_LOW ((int)((float)WINDOW_WIDTH_LOW/AR))
+
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
@@ -131,6 +134,7 @@ NULL
 #endif
 
 static int fullscreen = 0;
+static int lowres_mode = 0;
 
 static char biospath[256] = "\0";
 static char cdpath[256] = "\0";
@@ -241,7 +245,12 @@ static int SetupOpenGL() {
   glfwWindowHint(GLFW_GREEN_BITS,8);
   glfwWindowHint(GLFW_BLUE_BITS,8);
 
-  g_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Yabause", NULL, NULL);
+  if (lowres_mode == 0){
+    g_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Yabause", NULL, NULL);
+  } else {
+    g_window = glfwCreateWindow(WINDOW_WIDTH_LOW, WINDOW_HEIGHT_LOW, "Yabause", NULL, NULL);
+
+  }
   if (!g_window)
   {
     glfwTerminate();
@@ -376,6 +385,10 @@ int main(int argc, char *argv[]) {
       else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
         fullscreen = 1;
       }
+      // Low resolution mode
+      else if (strcmp(argv[i], "-lr") == 0 || strcmp(argv[i], "--lowres") == 0) {
+        lowres_mode = 1;
+      }
       else if (strcmp(argv[i], "-sc") == 0 || strcmp(argv[i], "--softcore") == 0) {
         yinit.vidcoretype = VIDCORE_SOFT;
       }
@@ -408,9 +421,15 @@ int main(int argc, char *argv[]) {
   KeyInit();
 
   if (yinit.vidcoretype == VIDCORE_OGL) {
-    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_NATIVE);
-    VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_FXAA);
-    VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
+    if (lowres_mode == 0){
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_NATIVE);
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_FXAA);
+      VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
+    } else {
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_ORIGINAL);
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_NONE);
+      VIDCore->Resize(0, 0, WINDOW_WIDTH_LOW, WINDOW_HEIGHT_LOW, 1);
+    }
   }
 
   nextFrameTime = getCurrentTimeUs(0) + delayUs;
