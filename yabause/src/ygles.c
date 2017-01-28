@@ -2331,8 +2331,8 @@ void YglEraseWriteVDP1(void) {
     priority = Vdp2Regs->PRISA & 0x7;
   }
   else{
-    int shadow, colorcalc;
-    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+    int shadow, normalshadow, colorcalc;
+    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
     priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
     if (color == 0) {
       alpha = 0;

@@ -959,12 +959,13 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int *priority, int *colorcalc)
+static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int *normalshadow, int *priority, int *colorcalc)
 {
    spritepixelinfo_struct spi;
 
    Vdp1GetSpritePixelInfo(type, pixel, &spi);
    *shadow = spi.msbshadow;
+   *normalshadow = spi.normalshadow;
    *priority = spi.priority;
    *colorcalc = spi.colorcalc;
 }
