@@ -691,7 +691,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
         else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
         else if (MSB_SHADOW){
-          *texture->textdata++ = (0x80 | priority) << 24;
+          *texture->textdata++ = (0x80) << 24;
         }else if (((dot >> 4) | colorBank) == 0x0000){
           //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
           //talpha |= priority;
@@ -721,7 +721,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = 0x00;
         else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
         else if (MSB_SHADOW){
-           *texture->textdata++ = (0x80 | priority) << 24;
+           *texture->textdata++ = (0x80) << 24;
         }else if (((dot & 0x0F) | colorBank) == 0x0000){
           //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
           //talpha |= priority;
@@ -788,7 +788,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                   if (temp & 0x8000)
                   {
           	    if (MSB_SHADOW){
-                      *texture->textdata++ = (0x80 | priority) << 24;
+                      *texture->textdata++ = (0x80) << 24;
                     }
                     else{
                       *texture->textdata++ = SAT2YAB1(alpha, temp);
@@ -839,7 +839,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                         }
                         alpha |= priority;
                         if (MSB_SHADOW){
-                          *texture->textdata++ = (0x80 | priority) << 24;
+                          *texture->textdata++ = (0x80) << 24;
                         }
                         else{
                           *texture->textdata++ = Vdp2ColorRamGetColor(temp + colorOffset, alpha);
@@ -869,7 +869,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                   	if (temp & 0x8000)
                   	{
             			if (MSB_SHADOW){
-              			*texture->textdata++ = (0x80 | priority) << 24;
+              			*texture->textdata++ = (0x80) << 24;
             		}
             		else{
               			*texture->textdata++ = SAT2YAB1(alpha, temp);
@@ -920,7 +920,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                         }
                         alpha |= priority;
             if (MSB_SHADOW){
-              *texture->textdata++ = (0x80 | priority) << 24;
+              *texture->textdata++ = (0x80) << 24;
             }
             else{
               *texture->textdata++ = Vdp2ColorRamGetColor(temp + colorOffset, alpha);
@@ -956,7 +956,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( (dot == 0x3F) && !END ) *texture->textdata++ = 0x00;
          else if (MSB_SHADOW){
-           *texture->textdata++ = (0x80|priority)<< 24;
+           *texture->textdata++ = (0x80)<< 24;
          }
          else if (((dot & 0x3F) | colorBank) == nromal_shadow){
            *texture->textdata++ = (shadow_alpha << 24);
@@ -1003,7 +1003,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
                else if( (dot == 0x7F) && !END ) *texture->textdata++ = 0x00;
          else if (MSB_SHADOW){
-           *texture->textdata++ = (0x80 | priority) << 24;
+           *texture->textdata++ = (0x80) << 24;
          }
          else if (((dot & 0x7F) | colorBank) == nromal_shadow){
            *texture->textdata++ = (shadow_alpha << 24);
@@ -1051,7 +1051,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          else if (dot == 0x0000){ *texture->textdata++ = 0x00; }
                else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x0;
          else if (MSB_SHADOW){
-           *texture->textdata++ = (0x80 | priority) << 24;
+           *texture->textdata++ = (0x80) << 24;
          }
          else if ((dot | colorBank) == nromal_shadow){
            *texture->textdata++ = (shadow_alpha << 24);
@@ -1108,7 +1108,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                } else if ((dot == 0x7FFF) && !END) {
                  *texture->textdata++ = 0x0;
                } else if (MSB_SHADOW){
-                  *texture->textdata++ = (0x80 | priority) << 24;
+                  *texture->textdata++ = (0x80) << 24;
                } else if (dot == nromal_shadow){
                   *texture->textdata++ = (shadow_alpha << 24);
                } else if (SPCCCS == 0x03 && (dot&0x8000) ){
