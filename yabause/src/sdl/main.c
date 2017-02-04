@@ -212,13 +212,13 @@ void YuiInit() {
 #endif
 	yinit.sndcoretype = SNDCORE_SDL;
 	yinit.cdcoretype = CDCORE_DEFAULT;
-	yinit.carttype = CART_NONE;
+	yinit.carttype = CART_DRAM32MBIT;
 	yinit.regionid = REGION_EUROPE;
 	yinit.biospath = NULL;
 	yinit.cdpath = NULL;
 	yinit.buppath = NULL;
 	yinit.mpegpath = NULL;
-	yinit.cartpath = NULL;
+	yinit.cartpath = "./backup32Mb.ram";
   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
 	yinit.skip_load = 0;
