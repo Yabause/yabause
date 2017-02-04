@@ -14,7 +14,7 @@
     <string name="fps">FPS</string>
     <string name="frameskip">Frameskip</string>
     <string name="keepaspectrate">Keep original aspect rate</string>
-    <string name="choose_input_device">Choose input deivce</string>
+    <string name="choose_input_device">Choose input Device</string>
     <string name="input_device_title">Player1 Input Device</string>
     <string name="input_device_title_player2">Player2 Input Device</string>
     <string name="input_device">Choose</string>
@@ -38,7 +38,7 @@
         This screen and advertisement screen will not be shown, If you have donated.
     </string>
     <string name="thank_you">Thank you for your donation!</string>
-    <string name="error_consume">Faild to consume.</string>
+    <string name="error_consume">Failed to consume.</string>
     <string name="do_donation">Donate</string>
     <string name="no_thank_you">No, Thank you.</string>
     <string name="donate_3doller">$3</string>
@@ -57,8 +57,8 @@
     <string name="axis_y">Analog Y</string>
     <string name="axis_l">Analog L Trigger</string>
     <string name="axis_r">Analog R Trigger</string>
-    <string name="l_trigger">L Triger</string>
-    <string name="r_trigger">R Triger</string>
+    <string name="l_trigger">L Trigger</string>
+    <string name="r_trigger">R Trigger</string>
     <string name="start">Start</string>
     <string name="a_button">A</string>
     <string name="b_button">B</string>
@@ -67,7 +67,7 @@
     <string name="y_button">Y</string>
     <string name="z_button">Z</string>
 
-    <string name="scale">Sacle</string>
+    <string name="scale">Scale</string>
     <string name="do_you_want_to_save_this_setting">Do you want to save this setting?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>

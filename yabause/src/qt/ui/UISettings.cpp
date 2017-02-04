@@ -86,12 +86,12 @@ const Items mVideoFilterMode = Items()
   << Item("3", "Bilinear");
 
 const Items mPolygonGenerationMode = Items()
-	<< Item("0", "Triangles usin perspectiove correction")
-	<< Item("1", "CPU Tesseration")
-	<< Item("2", "GPU Tesseration");
+	<< Item("0", "Triangles using perspective correction")
+	<< Item("1", "CPU Tesselation")
+	<< Item("2", "GPU Tesselation");
 
 const Items mResolutionMode = Items()
-<< Item("0", "Native(native resolution of whindow)")
+<< Item("0", "Native (native resolution of Window)")
 << Item("1", "4x")
 << Item("2", "2x")
 << Item("3", "Original");
