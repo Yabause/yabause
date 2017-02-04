@@ -12,7 +12,7 @@
     <string name="choose_video_core">Choisir le Noyau Vidéo</string>
     <string name="audio_output">Sortie Audio</string>
     <string name="fps">FPS</string>
-    <string name="frameskip">Saut d\ 'Image</string>
+    <string name="frameskip">Saut d\'Image</string>
     <string name="keepaspectrate">Conserver les Proportions</string>
     <string name="choose_input_device">Choisir un Périphérique d\'Entrée</string>
     <string name="input_device_title">Joueur 1 - Périphérique d\'Entrée</string>
@@ -35,7 +35,7 @@
         Supporter notre développement ! \n\n
         Vous pouvez supporter le projet uoYabause en amont en faisant une donation directement sur leur site web http://yabause.org.
         Vous pouvez aussi supporter le projet uoYabause en cliquant sur le bouton de donation ci dessous, ce qui permettra le développement d\'une émulation plus précise, des contrôleurs et une plus grande gamme de périphèrique.
-        Cette écran et l\'écran d'\'avertissement ne seront pas affiché, si vous avez fait un don.
+        Cette écran et l\'écran d\'\'avertissement ne seront pas affiché, si vous avez fait un don.
     </string>
     <string name="thank_you">Merci pour votre don!</string>
     <string name="error_consume">Echec de consommation.</string>
@@ -91,7 +91,7 @@
     <string name="video_filter_none">Aucun</string>
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">Scanline</string>
-    <string name="video_filter_bilinear">Bilinèaire (Actif seulement quand la résolution de base n'est pas sélectionné)</string>
+    <string name="video_filter_bilinear">Bilinèaire (Actif seulement quand la résolution de base n\'est pas sélectionné)</string>
     <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Relatif aux Vidéos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
@@ -103,7 +103,7 @@
     <string name="init_text">00:00</string>
     <string name="play_pause_description">Lancer le Bouton Pause</string>
     <string name="loading">Chargement&#8230;</string>
-    <string name="no_video_found">Aucune vidéo n'a été trouvée</string>
+    <string name="no_video_found">Aucune vidéo n\'a été trouvée</string>
     <string name="about_app">A Propos du Lecteur DemoCast</string>
     <string name="version">Version : %1$s</string>
     <string name="popular_header">Vidéos Populaire</string>
@@ -116,9 +116,9 @@
 
     <!-- Error messages -->
     <string name="video_error_media_load_timeout">Expiration du Chargement du Média</string>
-    <string name="video_error_server_inaccessible">Le Serveur de Média n'a pas pu être atteint</string>
+    <string name="video_error_server_inaccessible">Le Serveur de Média n\'a pas pu être atteint</string>
     <string name="video_error_unknown_error">Le chargement de la vidéo a échoué</string>
-    <string name="error_fragment_message">Une erreur s'est produite</string>
+    <string name="error_fragment_message">Une erreur s\'est produite</string>
     <string name="dismiss_error">Rejeter</string>
     <string name="oops">Oups</string>
 
@@ -129,8 +129,4 @@
     <string name="choose_sound_engine">Choisir un Moteur Son</string>
     <string name="video_resolution">Résolution du Rendu</string>
     <string name="choose_video_resolution">Choisir la Résolution du Rendu</string>
-
-    <string name="video_resolution">Résolution du Rendu</string>
-    <string name="choose_video_resolution">Choisir la Résolution du Rendu</string>
-
 </resources>
