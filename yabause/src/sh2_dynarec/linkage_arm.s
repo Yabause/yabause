@@ -27,7 +27,7 @@
 	.eabi_attribute 26, 2
 	.eabi_attribute 30, 6
        .eabi_attribute 18, 4*/
-	.file	"linkage_arm.s"
+	.file	"linkage_arm.s" 
 	.global	sh2_dynarec_target
 	.global	dynarec_local
 	.global	master_reg
@@ -119,7 +119,12 @@ memory_map = restore_candidate + 512
 	.global	YabauseDynarecOneFrameExec
 	.type	YabauseDynarecOneFrameExec, %function
 YabauseDynarecOneFrameExec:
-	ldr	r12, .dlptr
+	ldr	r3, .YABAUSEDYNARECONEFRAMEEXEC_PIC_VAL
+.YABAUSEDYNARECONEFRAMEEXEC_PIC:
+	add r3, pc
+	ldr	r12, .YABAUSEDYNARECONEFRAMEEXEC_PIC_VAL+4
+	ldr r12, [r3,r12]
+	add r12,#28
 	str	r0, [r12, #m68kcycles-dynarec_local-28]
 	str	r1, [r12, #m68kcenticycles-dynarec_local-28]
 	mov	r2, #0
@@ -130,16 +135,26 @@ YabauseDynarecOneFrameExec:
 newline:
 	/*movw	r0, #:lower16:decilinestop_p*/
 	/*movt	r0, #:upper16:decilinestop_p*/
-	ldr	r0, .dspptr
+	ldr	r12, .NEWLINE_PIC_VAL
+.NEWLINE_PIC:	
+	add r12, pc
+	ldr	r0, .NEWLINE_PIC_VAL+4	
+	ldr r0, [r0,r12]
 	/*movw	r1, #:lower16:yabsys_timing_bits*/
 	/*movt	r1, #:upper16:yabsys_timing_bits*/
-	ldr	r1, .ytbptr
+	//ldr	r1, .ytbptr
+	ldr	r1, .NEWLINE_PIC_VAL+8
+	ldr r1, [r1,r12]	
 	/*movw	r2, #:lower16:SH2CycleFrac_p*/
-	ldr	r2, .scfptr
+	//ldr	r2, .scfptr
+	ldr	r2, .NEWLINE_PIC_VAL+12
+	ldr r2, [r2,r12]		
 	ldr	r0, [r0] /* pointer to decilinestop */
 	/*movt	r2, #:upper16:SH2CycleFrac_p*/
 	/*movw	r3, #:lower16:yabsys_timing_mask*/
-	ldr	r3, .ytmptr
+	//ldr	r3, .ytmptr
+	ldr	r3, .NEWLINE_PIC_VAL+16
+	ldr r3, [r3,r12]	
 	ldr	r1, [r1] /* yabsys_timing_bits */
 	/*movt	r3, #:upper16:yabsys_timing_mask*/
 	ldr	r2, [r2] /* pointer to SH2CycleFrac */
@@ -156,16 +171,22 @@ newline:
 	add	r5, r5, r4 /* cyclesinc+=SH2CycleFrac */
 	/*movw	r7, #:lower16:MSH2*/
 	/*movt	r7, #:upper16:MSH2*/
-	ldr	r7, .msh2ptr
+	//ldr	r7, .msh2ptr
+	ldr	r7, .NEWLINE_PIC_VAL+20
+	ldr r7, [r7,r12]	
 	orr	r3, r3, #1 /* ((YABSYS_TIMING_MASK << 1) | 1) */
 	/*movw	r8, #:lower16:NumberOfInterruptsOffset*/
 	/*movt	r8, #:upper16:NumberOfInterruptsOffset*/
-	ldr	r8, .nioptr
+	//ldr	r8, .nioptr
+	ldr	r8, .NEWLINE_PIC_VAL+24
+	ldr r8, [r8,r12]		
 	and	r3, r5, r3 /* SH2CycleFrac &= ... */
 	lsr	r5, r5, r1 /* scucycles */
 	/*movw	r9, #:lower16:CurrentSH2*/
 	/*movt	r9, #:upper16:CurrentSH2*/
-	ldr	r9, .csh2ptr
+	//ldr	r9, .csh2ptr
+	ldr	r9, .NEWLINE_PIC_VAL+28
+	ldr r9, [r9,r12]	
 	ldr	r7, [r7] /* MSH2 */
 	ldr	r8, [r8] /* NumberOfInterruptsOffset */
 	str	r5, [fp, #scucycles-dynarec_local]
@@ -187,10 +208,19 @@ master_handle_interrupts:
 	ldr	r14, [fp, #master_ip-dynarec_local]
 	sub	r10, r10, r6
 	mov	pc, r14
-.dlptr:
-	.word	dynarec_local+28
-.dspptr:
-	.word	decilinestop_p
+.YABAUSEDYNARECONEFRAMEEXEC_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.YABAUSEDYNARECONEFRAMEEXEC_PIC+8)
+	.word dynarec_local(GOT)	
+.NEWLINE_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.NEWLINE_PIC+8)
+	.word decilinestop_p(GOT)
+	.word yabsys_timing_bits(GOT)
+	.word SH2CycleFrac_p(GOT)
+	.word yabsys_timing_mask(GOT)
+	.word MSH2(GOT)
+	.word NumberOfInterruptsOffset(GOT)
+	.word CurrentSH2(GOT)
+/*	
 .ytbptr:
 	.word	yabsys_timing_bits
 .scfptr:
@@ -221,8 +251,8 @@ master_handle_interrupts:
 	.word	invalidate_count
 .ccptr:
 	.word	cached_code
+*/
 	.size	YabauseDynarecOneFrameExec, .-YabauseDynarecOneFrameExec
-
 	.global	slave_entry
 	.type	slave_entry, %function
 slave_entry:
@@ -235,15 +265,25 @@ slave_entry:
 	ldr	r4, [fp, #slave_ip-dynarec_local]
 	/*movw	r7, #:lower16:SSH2*/
 	/*movt	r7, #:upper16:SSH2*/
-	ldr	r7, .ssh2ptr
+	ldr	r12, .slave_entry_val
+.SLAVE_ENTRY_PIC:
+  add	r12, pc
+	//ldr	r7, .ssh2ptr
+  ldr	r7, .slave_entry_val+4
+	ldr	r7, [r12,r7]
 	tst	r4, r4
 	beq	cc_interrupt_master
 	/*movw	r8, #:lower16:NumberOfInterruptsOffset*/
 	ldr	r6, [fp, #sh2cycles-dynarec_local]
 	/*movt	r8, #:upper16:NumberOfInterruptsOffset*/
-	ldr	r8, .nioptr
+	//ldr	r8, .nioptr
+  ldr	r8, .slave_entry_val+8
+	ldr	r8, [r12,r8]
+	tst	r4, r4	
 	/*movw	r9, #:lower16:CurrentSH2*/
-	ldr	r9, .csh2ptr
+	//ldr	r9, .csh2ptr
+  ldr	r9, .slave_entry_val+12
+	ldr	r9, [r12,r9]
 	ldr	r7, [r7]
 	/*movt	r9, #:upper16:CurrentSH2*/
 	ldr	r8, [r8]
@@ -259,8 +299,13 @@ slave_handle_interrupts:
 	ldr	r10, [fp, #slave_cc-dynarec_local]
 	sub	r10, r10, r6
 	ldr	pc, [fp, #slave_ip-dynarec_local]
+.slave_entry_val:
+	.word _GLOBAL_OFFSET_TABLE_-(.SLAVE_ENTRY_PIC+8)
+	.word	SSH2(GOT)
+	.word	NumberOfInterruptsOffset(GOT)
+	.word	CurrentSH2(GOT)
 	.size	slave_entry, .-slave_entry
-
+//---------------------------------------------------------------------
 	.global	cc_interrupt
 	.type	cc_interrupt, %function
 cc_interrupt:
@@ -271,6 +316,7 @@ cc_interrupt:
 	ldr	r0, [fp, #sh2cycles-dynarec_local]
 	bl	WDTExec
 	.size	cc_interrupt, .-cc_interrupt
+//---------------------------------------------------------------------
 	.global	cc_interrupt_master
 	.type	cc_interrupt_master, %function
 cc_interrupt_master:
@@ -290,9 +336,18 @@ cc_interrupt_master:
 	/*movt	r8, #:upper16:NumberOfInterruptsOffset*/
 	/*movw	r9, #:lower16:CurrentSH2*/
 	/*movt	r9, #:upper16:CurrentSH2*/
-	ldr	r7, .msh2ptr
-	ldr	r8, .nioptr
-	ldr	r9, .csh2ptr
+	ldr	r12, .cc_interrupt_master_val
+.cc_interrupt_master_PIC:
+  add r12, pc
+	//ldr	r7, .msh2ptr
+	ldr	r7, .cc_interrupt_master_val+4
+	ldr r7, [r7, r12]
+	//ldr	r8, .nioptr
+	ldr	r8, .cc_interrupt_master_val+8
+	ldr r8, [r8, r12]
+	//ldr	r9, .csh2ptr	
+	ldr	r9, .cc_interrupt_master_val+12
+	ldr r9, [r9, r12]
 	ldr	r7, [r7] /* MSH2 */
 	ldr	r8, [r8] /* NumberOfInterruptsOffset */
 	ldr	r12, [r7, r8]
@@ -309,18 +364,27 @@ cc_interrupt_master:
 .A3:
 	ldr	r0, [fp, #scucycles-dynarec_local]
 	bl	ScuExec
+	bl	M68KSync
+	bl	Vdp2HBlankOUT	
+	bl	ScspExec	
 	/*movw	r4, #:lower16:linecount_p*/
 	/*movt	r4, #:upper16:linecount_p*/
-	ldr	r4, .lcpptr
-	bl	M68KSync
+	ldr	r12, .A3_PIC_VAL
+.A3_PIC:	
+	add r12, pc
+	//ldr	r4, .lcpptr
+	ldr	r4, .A3_PIC_VAL+4
+	ldr r4, [r4, r12]
 	/*movw	r5, #:lower16:vblanklinecount_p*/
 	/*movt	r5, #:upper16:vblanklinecount_p*/
-	ldr	r5, .vlcpptr
-	bl	Vdp2HBlankOUT
+	//ldr	r5, .vlcpptr
+	ldr	r5, .A3_PIC_VAL+8
+	ldr r5, [r5, r12]	
 	/*movw	r6, #:lower16:maxlinecount_p*/
 	/*movt	r6, #:upper16:maxlinecount_p*/
-	ldr	r6, .mlcpptr
-	bl	ScspExec
+	//ldr	r6, .mlcpptr
+	ldr	r6, .A3_PIC_VAL+12
+	ldr r6, [r6, r12]	
 	ldr	r4, [r4] /* pointer to linecount */
 	ldr	r5, [r5] /* pointer to vblanklinecount */
 	ldr	r6, [r6] /* pointer to maxlinecount */
@@ -340,16 +404,27 @@ nextline:
       /*const u32 usecinc = yabsys.DecilineUsec * 10;*/
 	/*movw	r3, #:lower16:decilineusec_p*/
 	/*movt	r3, #:upper16:decilineusec_p*/
-	ldr	r3, .dupptr
+	ldr	r12, .NEXTLINE_PIC_VAL
+.NEXTLINE_PIC:	
+	add r12, pc
+	ldr	r3, .NEXTLINE_PIC_VAL+4
+	ldr r3, [r3, r12]	
+	//ldr	r3, .dupptr
 	/*movw	r5, #:lower16:UsecFrac_p*/
 	/*movt	r5, #:upper16:UsecFrac_p*/
-	ldr	r5, .ufpptr
+	//ldr	r5, .ufpptr
+	ldr	r5, .NEXTLINE_PIC_VAL+8
+	ldr r5, [r5, r12]	
 	/*movw	r8, #:lower16:yabsys_timing_bits*/
 	/*movt	r8, #:upper16:yabsys_timing_bits*/
-	ldr	r8, .ytbptr
+	//ldr	r8, .ytbptr
+	ldr	r8, .NEXTLINE_PIC_VAL+12
+	ldr r8, [r8, r12]	
 	/*movw	r9, #:lower16:yabsys_timing_mask*/
 	/*movt	r9, #:upper16:yabsys_timing_mask*/
-	ldr	r9, .ytmptr
+	//ldr	r9, .ytmptr
+	ldr	r9, .NEXTLINE_PIC_VAL+16
+	ldr r9, [r9, r12]
 	ldr	r3, [r3] /* pointer to decilineusec */
 	ldr	r5, [r5] /* pointer to usecfrac */
 	ldr	r8, [r8] /* yabsys_timing_bits */
@@ -369,7 +444,12 @@ nextline:
 	/*movw	r8, #:lower16:saved_centicycles*/
 	str	r10, [r5] /* usecfrac */
 	/*movt	r8, #:upper16:saved_centicycles*/
-	ldr	r8, .scptr
+	//ldr	r8, .scptr
+	ldr	r12, .NEXTLINE_PIC_VAL2
+.NEXTLINE_PIC2:	
+	add r12, pc	
+	ldr	r8, .NEXTLINE_PIC_VAL2+4
+	ldr r8, [r8, r12]	
 	ldr	r1, [fp, #m68kcenticycles-dynarec_local]
 	ldr	r2, [r8]
 	ldr	r0, [fp, #m68kcycles-dynarec_local]
@@ -389,7 +469,12 @@ nextframe:
 	/*movw	r0, #:lower16:invalidate_count /* FIX: Put into dynarec_local? */
 	add	r3, fp, #restore_candidate-dynarec_local
 	/*movt	r0, #:upper16:invalidate_count*/
-	ldr	r0, .icptr
+	ldr	r12, .NEXTFRAME_PIC_VAL
+.NEXTFRAME_PIC:	
+	add r12, pc	
+	ldr	r0, .NEXTFRAME_PIC_VAL+4
+	ldr r0, [r0, r12]		
+	//ldr	r0, .icptr
 	add	r2, r2, #1
 	and	r2, r2, #0x3f
 	str	r2, [fp, #rccount-dynarec_local]
@@ -421,8 +506,30 @@ vblankin:
 	bl	CheatDoPatches
 	add	r0, r0, #0 /* NOP for Cortex-A8 branch predictor */
 	b	nextline
+.cc_interrupt_master_val:
+	.word _GLOBAL_OFFSET_TABLE_-(.cc_interrupt_master_PIC+8)
+	.word MSH2(GOT)
+	.word NumberOfInterruptsOffset(GOT)
+	.word CurrentSH2(GOT)	
+.A3_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.A3_PIC+8)
+	.word linecount_p(GOT)
+	.word vblanklinecount_p(GOT)
+	.word maxlinecount_p(GOT)
+.NEXTLINE_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.NEXTLINE_PIC+8)	
+	.word decilineusec_p(GOT)
+	.word UsecFrac_p(GOT)
+	.word yabsys_timing_bits(GOT)
+	.word yabsys_timing_mask(GOT)
+.NEXTLINE_PIC_VAL2:
+	.word _GLOBAL_OFFSET_TABLE_-(.NEXTLINE_PIC2+8)		
+	.word saved_centicycles(GOT)	
+.NEXTFRAME_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.NEXTFRAME_PIC+8)	
+	.word invalidate_count(GOT)
 	.size	cc_interrupt_master, .-cc_interrupt_master
-
+//--------------------------------------------------------------
 	.align	2
 	.global	dyna_linker
 	.type	dyna_linker, %function
@@ -430,7 +537,12 @@ dyna_linker:
 	/* r0 = virtual target address */
 	/* r1 = instruction to patch */
 	mov	r6, #2048
-	ldr	r3, .jiptr
+	ldr	r12, .DYNA_LINKER_PIC_VAL
+.DYNA_LINKER_PIC:	
+	add r12, pc	
+	ldr	r3, .DYNA_LINKER_PIC_VAL+4	
+	ldr	r3, [r3,r12]
+	//ldr	r3, .jiptr
 	mvn	r2, #0x20000
 	ldr	r7, [r1]
 	sub	r6, r6, #1
@@ -465,9 +577,16 @@ dyna_linker:
 	mov	pc, r4
 .B3:
 	/* hash_table lookup */
-	ldr	r3, .jdptr
+	ldr	r12, .B3_PIC_VAL
+.B3_PIC:	
+	add r12, pc	
+	ldr	r3, .B3_PIC_VAL+4	
+	ldr	r3, [r3,r12]
+	//ldr	r3, .jdptr
 	eor	r4, r0, r0, lsl #16
-	ldr	r6, .htptr
+	ldr	r6, .B3_PIC_VAL+8	
+	ldr	r6, [r6,r12]
+//	ldr	r6, .htptr
 	lsr	r4, r4, #12
 	bic	r4, r4, #15
 	ldr	r5, [r3, r2, lsl #2]
@@ -505,12 +624,21 @@ dyna_linker:
 	beq	dyna_linker
 	/* shouldn't happen */
 	b	.-8
+.DYNA_LINKER_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.DYNA_LINKER_PIC+8)	
+	.word jump_in(GOT)	
+.B3_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.B3_PIC+8)	
+	.word jump_dirty(GOT)
+	.word hash_table(GOT)
+/*
 .jiptr:
 	.word	jump_in
 .jdptr:
 	.word	jump_dirty
 .htptr:
 	.word	hash_table
+*/	
 	.align	2
 	.global	jump_vaddr_r0_master
 	.type	jump_vaddr_r0_master, %function
@@ -673,7 +801,12 @@ jump_vaddr_slave:
 	.global	jump_vaddr
 	.type	jump_vaddr, %function
 jump_vaddr:
-	ldr	r1, .htptr
+	ldr	r12, .JUMP_VADDR_PIC_VAL
+.JUMP_VADDR_PIC:	
+	add r12, pc	
+	ldr	r1, .JUMP_VADDR_PIC_VAL+4
+  ldr r1, [r1, r12]
+	//ldr	r1, .htptr
 	mvn	r3, #15
 	and	r2, r3, r2, lsr #12
 	ldr	r2, [r1, r2]!
@@ -684,7 +817,11 @@ jump_vaddr:
 	ldreq	pc, [r1, #12]
 	bl	get_addr
 	mov	pc, r0
+.JUMP_VADDR_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.JUMP_VADDR_PIC+8)	
+	.word hash_table(GOT)
 	.size	jump_vaddr, .-jump_vaddr
+//-----------------------------------------------------------------------
 	.align	2
 	.global	verify_code
 	.type	verify_code, %function
@@ -721,15 +858,20 @@ verify_code:
 	bl	get_addr
 	mov	pc, r0
 	.size	verify_code, .-verify_code
-
+//-----------------------------------------------------------------------
 	.align	2
 	.global	WriteInvalidateLong
 	.type	WriteInvalidateLong, %function
 WriteInvalidateLong:
 	/*movw	r12, #:lower16:cached_code*/
-	lsr	r2, r0, #17
 	/*movt	r12, #:upper16:cached_code*/
-	ldr	r12, .ccptr
+	ldr	r3, .WRITEINVALIDATELONG_PIC_VAL
+.WRITEINVALIDATELONG_PIC:	
+	add r3, pc	
+	ldr	r12, .WRITEINVALIDATELONG_PIC_VAL+4
+	ldr r12, [r3,r12]
+	//ldr	r12, .ccptr
+	lsr	r2, r0, #17	
 	lsr	r3, r0, #12
 	ldr	r2, [r12, r2, lsl #2]
 	mov	r12, #1
@@ -739,15 +881,24 @@ WriteInvalidateLong:
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
 	b	MappedMemoryWriteLong
+.WRITEINVALIDATELONG_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.WRITEINVALIDATELONG_PIC+8)	
+	.word cached_code(GOT)	
 	.size	WriteInvalidateLong, .-WriteInvalidateLong
+//-----------------------------------------------------------------------	
 	.align	2
 	.global	WriteInvalidateWord
 	.type	WriteInvalidateWord, %function
 WriteInvalidateWord:
 	/*movw	r12, #:lower16:cached_code*/
-	lsr	r2, r0, #17
 	/*movt	r12, #:upper16:cached_code*/
-	ldr	r12, .ccptr
+	ldr	r3, .WRITEINVALIDATEWORD_PIC_VAL
+.WRITEINVALIDATEWORD_PIC:	
+	add r3, pc	
+	ldr	r12, .WRITEINVALIDATEWORD_PIC_VAL+4
+	ldr r12, [r3,r12]	
+//	ldr	r12, .ccptr
+	lsr	r2, r0, #17	
 	lsr	r3, r0, #12
 	bic	r1, r1, #0xFF000000
 	ldr	r2, [r12, r2, lsl #2]
@@ -761,20 +912,31 @@ WriteInvalidateWord:
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
 	b	MappedMemoryWriteWord
+.WRITEINVALIDATEWORD_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.WRITEINVALIDATEWORD_PIC+8)	
+	.word cached_code(GOT)	
 	.size	WriteInvalidateWord, .-WriteInvalidateWord
+//-----------------------------------------------------------------------	
 	.align	2
 	.global	WriteInvalidateByteSwapped
 	.type	WriteInvalidateByteSwapped, %function
 WriteInvalidateByteSwapped:
 	eor	r0, r0, #1
 	.size	WriteInvalidateByteSwapped, .-WriteInvalidateByteSwapped
+//-----------------------------------------------------------------------	
+	.align	2
 	.global	WriteInvalidateByte
 	.type	WriteInvalidateByte, %function
 WriteInvalidateByte:
 	/*movw	r12, #:lower16:cached_code*/
-	lsr	r2, r0, #17
 	/*movt	r12, #:upper16:cached_code*/
-	ldr	r12, .ccptr
+	ldr	r3, .WRITEINVALIDATEBYTE_PIC_VAL
+.WRITEINVALIDATEBYTE_PIC:	
+	add r3, pc	
+	ldr	r12, .WRITEINVALIDATEBYTE_PIC_VAL+4
+	ldr r12, [r3,r12]		
+	//ldr	r12, .ccptr
+	lsr	r2, r0, #17	
 	lsr	r3, r0, #12
 	ldr	r2, [r12, r2, lsl #2]
 	mov	r12, #1
@@ -785,8 +947,11 @@ WriteInvalidateByte:
 	bl	invalidate_addr
 	pop	{r0, r1, r2, lr}
 	b	MappedMemoryWriteByte
+.WRITEINVALIDATEBYTE_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.WRITEINVALIDATEBYTE_PIC+8)	
+	.word cached_code(GOT)		
 	.size	WriteInvalidateByte, .-WriteInvalidateByte
-
+//-----------------------------------------------------------------------
 	.align	2
 	.global	div1
 	.type	div1, %function
@@ -932,7 +1097,12 @@ master_handle_bios:
 	/*movw	r1, #:lower16:MSH2*/
 	str	r0, [fp, #master_pc-dynarec_local]
 	/*movt	r1, #:upper16:MSH2*/
-	ldr	r1, .msh2ptr
+	ldr	r12, .MASTER_HANDLE_BIOS_PIC_VAL
+.MASTER_HANDLE_BIOS_PIC:	
+	add r12, pc	
+	ldr	r1, .MASTER_HANDLE_BIOS_PIC_VAL+4
+  ldr r1, [r1, r12]
+	//ldr	r1, .msh2ptr
 	str	r10, [fp, #master_cc-dynarec_local]
 	str	r14, [fp, #master_ip-dynarec_local]
 	ldr	r0, [r1] /* MSH2 */
@@ -940,8 +1110,11 @@ master_handle_bios:
 	ldr	r14, [fp, #master_ip-dynarec_local]
 	ldr	r10, [fp, #master_cc-dynarec_local]
 	mov	pc, lr
+.MASTER_HANDLE_BIOS_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.MASTER_HANDLE_BIOS_PIC+8)
+  .word   MSH2(GOT)
 	.size	master_handle_bios, .-master_handle_bios
-
+//----------------------------------------------------------------------
 	.align	2
 	.global	slave_handle_bios
 	.type	slave_handle_bios, %function
@@ -949,7 +1122,12 @@ slave_handle_bios:
 	/*movw	r1, #:lower16:SSH2*/
 	str	r0, [fp, #slave_pc-dynarec_local]
 	/*movt	r1, #:upper16:SSH2*/
-	ldr	r1, .ssh2ptr
+	ldr	r12, .SLAVE_HANDLE_BIOS_PIC_VAL
+.SLAVE_HANDLE_BIOS_PIC:
+	add r12, pc	
+	ldr	r1, .SLAVE_HANDLE_BIOS_PIC_VAL+4
+  ldr r1, [r1, r12]	
+	//ldr	r1, .ssh2ptr
 	str	r10, [fp, #slave_cc-dynarec_local]
 	str	r14, [fp, #slave_ip-dynarec_local]
 	ldr	r0, [r1] /* SSH2 */
@@ -957,8 +1135,11 @@ slave_handle_bios:
 	ldr	r14, [fp, #slave_ip-dynarec_local]
 	ldr	r10, [fp, #slave_cc-dynarec_local]
 	mov	pc, lr
+.SLAVE_HANDLE_BIOS_PIC_VAL:
+	.word _GLOBAL_OFFSET_TABLE_-(.SLAVE_HANDLE_BIOS_PIC+8)
+  .word   SSH2(GOT)	
 	.size	slave_handle_bios, .-slave_handle_bios
-
+//----------------------------------------------------------------------
 /* __clear_cache syscall for Linux OS with broken libraries */
 	.align	2
 	.global	clear_cache
@@ -966,12 +1147,12 @@ slave_handle_bios:
 clear_cache:
 	push	{r7, lr}
 	mov	r7, #2
-	mov	r2, #0
+	mov	r2, #0  
 	orr	r7, #0xf0000
 	svc	0x00000000
 	pop	{r7, pc}
 	.size	clear_cache, .-clear_cache
-
+//----------------------------------------------------------------------
 	.align	2
 	.global	breakpoint
 	.type	breakpoint, %function
