@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">uoYabause</string>
     <string name="menu_exit">Quitter</string>
     <string name="menu_save_state">Sauvegarder un Etat</string>
@@ -8,68 +8,129 @@
     <string name="setting">Configuration</string>
     <string name="choose_bios">Choisir un BIOS</string>
     <string name="choose_cartridge">Choisir une Cartouche</string>
+    <string name="choose_cpu_core">Choisir le Noyau Processeur</string>
     <string name="choose_video_core">Choisir le Noyau Vidéo</string>
-    <string name="audio_output">Emuler un Jeu avec l\'Audio</string>
-    <string name="fps">Afficher les Images par Secondes (FPS)</string>
-    <string name="frameskip">Sautd\' Image</string>
+    <string name="audio_output">Sortie Audio</string>
+    <string name="fps">FPS</string>
+    <string name="frameskip">Saut d\ 'Image</string>
     <string name="keepaspectrate">Conserver les Proportions</string>
     <string name="choose_input_device">Choisir un Périphérique d\'Entrée</string>
     <string name="input_device_title">Joueur 1 - Périphérique d\'Entrée</string>
     <string name="input_device_title_player2">Joueur 2 - Périphérique d\'Entrée</string>
     <string name="input_device">Choisir</string>
     <string name="input_device_setting">Changer la Disposition des Touches</string>
-    <string name="onscrenn_pad_setting">Changer les Contrôles Tactiles</string>    
-    <string name="bios">BIOS</string>
+    <string name="onscrenn_pad_setting">Changer les Contrôles Tactiles</string>
+    <string name="nopad">Aucun</string>
+    <string name="bios">Bios</string>
     <string name="cartridge">Cartouche</string>
-    <string name="video_core">Type d\'Accélération...</string>
+    <string name="cpu_core">Noyau Processeur</string>
+    <string name="video_core">Noyau Vidéo</string>
     <string name="setting_sound">Son</string>
     <string name="setting_graphics">Graphisme</string>
     <string name="setting_general">Général</string>
     <string name="msg_opengl_not_supported">Votre appareil ne prend pas en charge OpenGL ES 3.0 ou supérieur.\nVous ne pouvez pas choisir l\'accélération matériel (OpenGL).\n</string>
     <string name="skip">Passer</string>
-    <string name="donation">Aidez Nous</string>
+    <string name="donation">Support</string>
     <string name="donate_message">
-        Aide au développement !\n\n
-        Vous pouvez participer au développement en faisant un don directement sur notre site http://yabause.org . Vous pouvez aussi faire un don en soutenant le projet uoYabause en cliquant sur le bouton ci dessous, ce qui permettra le développement d\'une émulation plus précise, de nouveaux contrôles et une plus grande gamme de périphérique prise en charge.﻿
+        Supporter notre développement ! \n\n
+        Vous pouvez supporter le projet uoYabause en amont en faisant une donation directement sur leur site web http://yabause.org.
+        Vous pouvez aussi supporter le projet uoYabause en cliquant sur le bouton de donation ci dessous, ce qui permettra le développement d\'une émulation plus précise, des contrôleurs et une plus grande gamme de périphèrique.
+        Cette écran et l\'écran d'\'avertissement ne seront pas affiché, si vous avez fait un don.
     </string>
     <string name="thank_you">Merci pour votre don!</string>
-    <string name="error_consume">Erreur de consommation.</string>
-    <string name="do_donation">Faire un don!</string>
+    <string name="error_consume">Echec de consommation.</string>
+    <string name="do_donation">Faire un don !</string>
     <string name="no_thank_you">Non, merci.</string>
     <string name="donate_3doller">$3</string>
     <string name="donate_5doller">$5</string>
     <string name="donate_10doller">$10</string>
     <string name="donate_30doller">$30</string>
-    <string name="input_the_key">Appuyez sur le bouton</string>
+
+    <string name="input_the_key">Pressez une Touche</string>
     <string name="joystick_is_not_connected">Le joystick n\'est pas connecté.</string>
-    <string name="this_key_has_already_been_set">Ce bouton est déjà en cours d\'utilisation.</string>
-	<string name="up">Haut</string>
-	<string name="down">Bas</string>
-	<string name="left">Gauche</string>
-	<string name="right">Droite</string>
-	<string name="l_trigger">Gâchette L (Gauche)</string>
-	<string name="r_trigger">Gâchette R (Droite)</string>
-	<string name="start">Bouton Start (Démarrer)</string>
-	<string name="a_button">A</string>
-	<string name="b_button">B</string>
-	<string name="c_button">C</string>
-	<string name="x_button">X</string>
-	<string name="y_button">Y</string>
-	<string name="z_button">Z</string>
-	
-	<string name="scale">Echelle</string>
-	<string name="do_you_want_to_save_this_setting">Voulez vous enregistrer ce paramètre?</string>
-	<string name="yes">Oui</string>
-	<string name="no">No</string>
-	<string name="exit">Quitter</string>
-	<string name="ignore">Ignorer</string>
-	
-	<string name="opengl_video_interface">Accélération Matériel (OpenGL)</string>
-	<string name="software_video_interface">Accélération Logiciel</string>
-	<string name="onscreen_pad">Contrôles Tactiles</string>
-	<string name="select_from_other_directory">Choisir depuis un autre répertoire.</string>
-	
-	<string name="menu_save_screenshot">Capture d\'Ecran</string>
-	
-		
+    <string name="this_key_has_already_been_set">Cette touche a déjà été utilisée.</string>
+    <string name="up">Haut</string>
+    <string name="down">Bas</string>
+    <string name="left">Gauche</string>
+    <string name="right">Droite</string>
+    <string name="axis_x">X Analogique</string>
+    <string name="axis_y">Y Analogique</string>
+    <string name="axis_l">L (Gauche) Analogique </string>
+    <string name="axis_r">R (Droite] Analogique</string>
+    <string name="l_trigger">Gâchette L (Gauche)</string>
+    <string name="r_trigger">Gâchette R (Droite)</string>
+    <string name="start">Start</string>
+    <string name="a_button">A</string>
+    <string name="b_button">B</string>
+    <string name="c_button">C</string>
+    <string name="x_button">X</string>
+    <string name="y_button">Y</string>
+    <string name="z_button">Z</string>
+
+    <string name="scale">Echelle</string>
+    <string name="do_you_want_to_save_this_setting">Voulez-vous enregistrer ce paramètre ?</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="exit">Quitter</string>
+    <string name="ignore">Ignorer</string>
+
+    <string name="dynrec_cpu_interface">Recompileur Dynamique( rapide mais moins précis )</string>
+    <string name="software_cpu_interface">Interprèteur ( lent mais plus précis )</string>
+
+    <string name="opengl_video_interface">Interface Vidéo OpenGL</string>
+    <string name="software_video_interface">Interface Vidéo Logiciel</string>
+    <string name="onscreen_pad">Contrôles Tactiles</string>
+    <string name="select_from_other_directory">Choisir depuis un autre répertoire.</string>
+
+    <string name="menu_save_screenshot">Capture d\'Ecran</string>
+    <string name="menu_report">Rapporter</string>
+
+    <string name="video_filter">Filtre</string>
+    <string name="choose_video_filter">Choisir un Filtre Vidéo</string>
+
+    <string name="video_filter_none">Aucun</string>
+    <string name="video_filter_fxaa">FXAA</string>
+    <string name="video_filter_scanline">Scanline</string>
+    <string name="video_filter_bilinear">Bilinèaire (Actif seulement quand la résolution de base n'est pas sélectionné)</string>
+    <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
+    <string name="related_movies">Relatif aux Vidéos</string>
+    <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
+    <string name="error">Erreur</string>
+    <string name="ok">OK</string>
+    <string name="pause">Pause</string>
+    <string name="play">Lancer</string>
+    <string name="stop">Arrêter</string>
+    <string name="init_text">00:00</string>
+    <string name="play_pause_description">Lancer le Bouton Pause</string>
+    <string name="loading">Chargement&#8230;</string>
+    <string name="no_video_found">Aucune vidéo n'a été trouvée</string>
+    <string name="about_app">A Propos du Lecteur DemoCast</string>
+    <string name="version">Version : %1$s</string>
+    <string name="popular_header">Vidéos Populaire</string>
+    <string name="preferences">PREFERENCES</string>
+    <string name="grid_view">Grille de Visualisation</string>
+    <string name="error_fragment">Fragment d\'Erreur</string>
+    <string name="personal_settings">Paramètres Personnalisés</string>
+    <string name="refresh_db">Rafraîchir la Liste de Jeu</string>
+    <string name="select_bk_image">Sélectionner une Image en Arrière Plan</string>
+
+    <!-- Error messages -->
+    <string name="video_error_media_load_timeout">Expiration du Chargement du Média</string>
+    <string name="video_error_server_inaccessible">Le Serveur de Média n'a pas pu être atteint</string>
+    <string name="video_error_unknown_error">Le chargement de la vidéo a échoué</string>
+    <string name="error_fragment_message">Une erreur s'est produite</string>
+    <string name="dismiss_error">Rejeter</string>
+    <string name="oops">Oups</string>
+
+    <string name="title_activity_game_select" translatable="false">uoYabause</string>
+    <string name="polygon_generation_type">Type de Génération du Polygone</string>
+    <string name="choose_polygon_generation_type">Choisir un Type de Génération de Polygone</string>
+    <string name="sound_engine">Moteur Son</string>
+    <string name="choose_sound_engine">Choisir un Moteur Son</string>
+    <string name="video_resolution">Résolution du Rendu</string>
+    <string name="choose_video_resolution">Choisir la Résolution du Rendu</string>
+
+    <string name="video_resolution">Résolution du Rendu</string>
+    <string name="choose_video_resolution">Choisir la Résolution du Rendu</string>
+
 </resources>
