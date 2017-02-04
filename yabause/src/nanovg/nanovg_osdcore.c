@@ -281,7 +281,7 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
   int Height = 13;
   int msglength;
   int vidwidth, vidheight;
-  float fontsize = 14.0f;
+  float fontsize = 18.0f;
   int maxlen = 0;
   int i = 0;
 
