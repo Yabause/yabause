@@ -774,7 +774,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   const int Line = (addr >> 10);
   const int Pix = ((addr & 0x3FF) >> 1);
   
-  if (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2){
+  if (Pix <= Vdp1Regs->systemclipX2 || Line <= Vdp1Regs->systemclipY2){
   //if (1){
     switch (type)
     {
@@ -791,7 +791,8 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       break;
     }
     return;
-  }
+  } else 
+    return;
 
   if (_Ygl->smallfbo == 0) {
     GLuint error;
