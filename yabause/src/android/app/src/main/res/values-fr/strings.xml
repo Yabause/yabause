@@ -92,7 +92,6 @@
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">Scanline</string>
     <string name="video_filter_bilinear">Bilinèaire (Actif seulement quand la résolution de base n\'est pas sélectionné)</string>
-    <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Relatif aux Vidéos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
     <string name="error">Erreur</string>
@@ -122,7 +121,6 @@
     <string name="dismiss_error">Rejeter</string>
     <string name="oops">Oups</string>
 
-    <string name="title_activity_game_select" translatable="false">uoYabause</string>
     <string name="polygon_generation_type">Type de Génération du Polygone</string>
     <string name="choose_polygon_generation_type">Choisir un Type de Génération de Polygone</string>
     <string name="sound_engine">Moteur Son</string>
