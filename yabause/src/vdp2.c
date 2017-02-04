@@ -581,14 +581,11 @@ void Vdp2HBlankOUT(void) {
     voutflg = 1;
     if (Vdp1External.swap_frame_buffer == 1 && Vdp1External.frame_change_plot == 1)
     {
-      LOG("SET VOUT WAIT");
-      yabsys.wait_line_count = 55;
-    }
-    else{
-      LOG("REMOVE VOUT WAIT");
-      //yabsys.wait_line_count = -1;
+      yabsys.wait_line_count = 10;
+      LOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
     }
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
+    YabThreadYield();
   }
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
     
