@@ -92,7 +92,7 @@
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">Scanline</string>
     <string name="video_filter_bilinear">Bilinear(Enables only when Native resolution is not selected)</string>
-    <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
+    <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
     <string name="error">Error</string>
