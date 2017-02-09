@@ -290,13 +290,13 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
-        //LOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
+        FRAMELOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
          return Vdp1Regs->EDSR;
       case 0x12:
-        LOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
+        FRAMELOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
          return Vdp1Regs->LOPR;
       case 0x14:
-        LOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
+        FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
          return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
@@ -330,10 +330,10 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
   switch(addr) {
     case 0x0:
       Vdp1Regs->TVMR = val;
-      LOG("Write VBE=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
+      FRAMELOG("Write VBE=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
     break;
     case 0x2:
-      LOG("Write FCM=%d FCT=%d VBE=%d line = %d\n", (val & 0x02) >> 1, (val & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
+      FRAMELOG("Write FCM=%d FCT=%d VBE=%d line = %d\n", (val & 0x02) >> 1, (val & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
       Vdp1Regs->FBCR = val;
       if ((Vdp1Regs->FBCR & 3) == 3) {
         Vdp1External.manualchange = 1;
@@ -343,27 +343,27 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       }
       break;
     case 0x4:
-      LOG("Write PTMR %X line = %d", val, yabsys.LineCount);
+      FRAMELOG("Write PTMR %X line = %d", val, yabsys.LineCount);
       Vdp1Regs->COPR = 0;
       Vdp1Regs->PTMR = val;
 #if YAB_ASYNC_RENDERING
       if (val == 1){ 
-        LOG("VDP1: VDPEV_DIRECT_DRAW %d", YaGetQueueSize(vdp1_rcv_evqueue));
+        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW %d/%d", YaGetQueueSize(vdp1_rcv_evqueue), yabsys.LineCount);
         if ( YaGetQueueSize(vdp1_rcv_evqueue) > 0){
           yabsys.wait_line_count = -1;
           do{
             YabWaitEventQueue(vdp1_rcv_evqueue);
           } while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
         }
+        Vdp1Regs->EDSR >>= 1;
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
-        LOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
-        Vdp1Regs->EDSR >>= 1;
+        FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
       }
 #else
     if (val == 1){
-      LOG("VDP1: VDPEV_DIRECT_DRAW\n");  
+      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1Regs->EDSR >>= 1;
         Vdp1Draw(); 
         VIDCore->Vdp1DrawEnd();
@@ -553,7 +553,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 
 void Vdp1Draw(void) 
 {
-  LOG("Vdp1Draw");
+  FRAMELOG("Vdp1Draw");
    if (!Vdp1External.disptoggle)
    {
       Vdp1NoDraw();
@@ -577,6 +577,8 @@ void Vdp1Draw(void)
    Vdp1Regs->EDSR |= 2;
    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
    ScuSendDrawEnd();
+
+   FRAMELOG("Vdp1Draw end at %d line", yabsys.LineCount);
 
 }
 

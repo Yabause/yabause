@@ -834,7 +834,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   YabThreadLock(_Ygl->mutex);
   if (_Ygl->pFrameBuffer == NULL){
     FrameProfileAdd("ReadFrameBuffer start");
-    LOG("READ FRAME");
+    FRAMELOG("READ FRAME");
     if (_Ygl->sync != 0){
       glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
       glDeleteSync( _Ygl->sync );
@@ -2339,7 +2339,7 @@ void YglEraseWriteVDP1(void) {
   alpha |= priority;
   glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  LOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   
 }
@@ -2350,7 +2350,7 @@ void YglFrameChangeVDP1(){
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
   _Ygl->readframe = current_drawframe;
-  /*YGL*/LOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+  FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2362,7 +2362,7 @@ void YglRenderVDP1(void) {
   FrameProfileAdd("YglRenderVDP1 start");
   YabThreadLock(_Ygl->mutex);
 
-  LOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
+  FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
   if (_Ygl->pFrameBuffer != NULL) {
     _Ygl->pFrameBuffer = NULL;
@@ -2907,7 +2907,7 @@ void YglRender(void) {
 
    YglSetVdp2Window();
 
-   LOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
+   FRAMELOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
 
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
