@@ -3052,6 +3052,13 @@ static void FASTCALL Vdp2DrawRotation( RBGDrawInfo * rbg )
      rbg->line_texture.w = 0;
    }
 
+   if (info->lineTexture != 0){
+     info->cor = 0;
+     info->cog = 0;
+     info->cob = 0;
+     info->linescreen = 2;
+   }
+
    if (rbg->async){
 
      u64 cacheaddr = 0x80000000BAD;
@@ -5435,7 +5442,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id){
             linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 5) + 0x7) << 24;
             break;
           case RBG0:
-            //linebuf[line] = (((~Vdp2Lines[line >> line_shift].ccr & 0x1F) << 3) + 0x7) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) << 3) + 0x7) << 24;
             break;
           }
 
@@ -6209,7 +6216,7 @@ static void Vdp2DrawNBG3(void)
    info.cor = 0;
    info.cog = 0;
    info.cob = 0;
-info.specialcolorfunction = 0;
+   info.specialcolorfunction = 0;
 
 
    info.enable = fixVdp2Regs->BGON & 0x8;
@@ -6320,8 +6327,7 @@ static void Vdp2DrawRBG0(void)
   info->cor = 0;
   info->cog = 0;
   info->cob = 0;
-info->specialcolorfunction = 0;
-
+  info->specialcolorfunction = 0;
   info->enable = fixVdp2Regs->BGON & 0x10;
   if (!info->enable) return;
   info->priority = fixVdp2Regs->PRIR & 0x7;
@@ -6332,6 +6338,9 @@ info->specialcolorfunction = 0;
     }
     return;
   }
+
+  Vdp2GeneratePerLineColorCalcuration(info, RBG0);
+
    info->transparencyenable = !(fixVdp2Regs->BGON & 0x1000);
    info->specialprimode = (fixVdp2Regs->SFPRMD >> 8) & 0x3;
 

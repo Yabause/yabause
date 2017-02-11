@@ -3050,15 +3050,16 @@ const GLchar perlinealpha_blit_f[] =
 "    addr.x = int(u_th * v_texcoord.y);\n"
 "    addr.y = 0; \n"
 "    txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
-"    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;      \n"
-"    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;      \n"
-"    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;      \n"
+"    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;\n"
+"    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;\n"
+"    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;\n"
 "    if( txcol.a > 0.0 ) \n"
 "       fragColor = txcol; \n                        "
-"	 else \n"
+"    else \n"
 "       discard; \n                        "
-"  }else \n                                            "
-"     discard;\n                                      "
+"  }else{ \n"
+"    discard; \n"
+"  }\n                                            "
 "}                                                   \n";
 
 static int perlinealpha_prg = -1;
