@@ -769,13 +769,29 @@ int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf 
   return 0;
 }
 
+void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
+  switch (type)
+  {
+  case 0:
+    T1WriteByte(Vdp1FrameBuffer, addr, val);
+    break;
+  case 1:
+    T1WriteWord(Vdp1FrameBuffer, addr, val);
+    break;
+  case 2:
+    T1WriteLong(Vdp1FrameBuffer, addr, val);
+    break;
+  default:
+    break;
+  }
+  _Ygl->cpu_framebuffer_write++;
+}
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   const int Line = (addr >> 10);
   const int Pix = ((addr & 0x3FF) >> 1);
   
-  if (Pix <= Vdp1Regs->systemclipX2 || Line <= Vdp1Regs->systemclipY2){
-  //if (1){
+  if (_Ygl->cpu_framebuffer_write || (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2)){
     switch (type)
     {
     case 0:
@@ -791,8 +807,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       break;
     }
     return;
-  } else 
-    return;
+  }
 
   if (_Ygl->smallfbo == 0) {
     GLuint error;
@@ -2443,6 +2458,7 @@ void YglRenderVDP1(void) {
         glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
       }
       level->prg[j].currentQuad = 0;
+      _Ygl->cpu_framebuffer_write = 0;
     }
 
     if( level->prg[j].cleanupUniform ){
