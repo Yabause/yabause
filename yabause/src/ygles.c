@@ -1482,7 +1482,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
   program->color_offset_val[3] = 0;
 
-  program->color_offset_arr = screen_color_offset[input->id];
 
   pos = program->quads + program->currentQuad;
   float * colv = (program->vertexAttribute + (program->currentQuad * 2));
@@ -1743,8 +1742,6 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    program->color_offset_val[2] = (float)(input->cob)/255.0f;
    program->color_offset_val[3] = 0;
 
-   program->color_offset_arr = screen_color_offset[input->id];
-
    if (output != NULL){
      YglTMAllocate(_Ygl->texture_manager, output, input->w, input->h, &x, &y);
    }
@@ -1920,8 +1917,6 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
   program->color_offset_val[3] = 0.0;
 
-  program->color_offset_arr = screen_color_offset[input->id];
-
   if (output != NULL){
     YglTMAllocate(_Ygl->texture_manager, output, input->w, input->h, &x, &y);
   }
@@ -2088,8 +2083,6 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
   program->color_offset_val[1] = (float)(input->cog) / 255.0f;
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
   program->color_offset_val[3] = 0;
-
-  program->color_offset_arr = screen_color_offset[input->id];
   //info->cor
 
   vHeight = input->vertices[5] - input->vertices[1];
@@ -2235,8 +2228,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   program->color_offset_val[1] = (float)(input->cog) / 255.0f;
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
   program->color_offset_val[3] = 0;
-
-  program->color_offset_arr = screen_color_offset[input->id];
   //info->cor
 
   pos = program->quads + program->currentQuad;
