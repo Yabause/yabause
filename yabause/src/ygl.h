@@ -349,9 +349,11 @@ typedef struct {
    GLuint mtxModelView;
    GLuint mtxTexture;
    GLuint color_offset;
+   GLuint height_ratio;
    GLuint tex0;
    GLuint tex1;
    float color_offset_val[4];
+   float *color_offset_arr;
    int (*setupUniform)(void *);
    int (*cleanupUniform)(void *);
    YglVdp1CommonParam * ids;
@@ -441,10 +443,12 @@ typedef struct {
    int vdp1_maxpri;
    int vdp1_minpri;
    u32 vdp1_lineTexture;
+   int vdp1_hasMesh;
    
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
+   int density;
    int drawframe;
    int readframe;
    GLuint rboid_depth;
@@ -516,6 +520,7 @@ void YglRender(void);
 void YglReset(void);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
+void YglSetDensity(int d);
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
 void YglSetClearColor(float r, float g, float b);

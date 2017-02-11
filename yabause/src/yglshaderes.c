@@ -121,7 +121,7 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->fbowidth = glGetUniformLocation(pgid, (const GLchar *)"u_fbowidth");
   param->fboheight = glGetUniformLocation(pgid, (const GLchar *)"u_fbohegiht");
   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
-  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrfix");
+  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
 }
 
@@ -213,7 +213,8 @@ const GLchar Yglprg_normal_f[] =
 #endif
 "precision highp float;                            \n"
 "in highp vec4 v_texcoord;                            \n"
-"uniform vec4 u_color_offset;    \n"
+"uniform vec4 u_color_offset[512];    \n"
+"uniform float hratio;                 \n"
 "uniform sampler2D s_texture;                        \n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
@@ -223,7 +224,7 @@ const GLchar Yglprg_normal_f[] =
 "  addr.y = int(v_texcoord.y);                        \n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  if(txcol.a > 0.0)\n                                 "
-"     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
+"     fragColor = clamp(txcol+u_color_offset[int(gl_FragCoord.y*hratio)],vec4(0.0),vec4(1.0));\n                         "
 "  else \n                                            "
 "     discard;\n                                      "
 "}                                                   \n";
@@ -231,6 +232,7 @@ const GLchar * pYglprg_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_s_texture_size = -1;
 static int id_normal_color_offset = -1;
+static int id_normal_height_ratio = -1;
 static int id_normal_matrix = -1;
 
 //
@@ -241,7 +243,8 @@ void Ygl_setNormalshader(YglProgram * prg) {
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform4fv(id_normal_color_offset, 1, prg->color_offset_val);
+  glUniform4fv(id_normal_color_offset, 512, prg->color_offset_arr);
+  glUniform1f(id_normal_height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glUniformMatrix4fv(id_normal_matrix, 1, GL_FALSE, prg->matrix);
 }
 
@@ -254,7 +257,8 @@ int Ygl_uniformNormal(void * p)
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   return 0;
 }
 
@@ -311,7 +315,8 @@ int Ygl_uniformMosaic(void * p)
   glEnableVertexAttribArray(prg->vertexp);
   glEnableVertexAttribArray(prg->texcoordp);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   return 0;
@@ -352,7 +357,8 @@ int Ygl_uniformPerLineAlpha(void * p)
   glEnableVertexAttribArray(prg->vertexp);
   glEnableVertexAttribArray(prg->texcoordp);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   return 0;
@@ -394,7 +400,8 @@ int Ygl_uniformNormal_blur(void * p)
   glEnableVertexAttribArray(prg->vertexp);
   glEnableVertexAttribArray(prg->texcoordp);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  glUniform4fv(prg->color_offset, 512, prg->color_offset_arr);
+  glUniform1f(prg->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   return 0;
 }
@@ -428,7 +435,8 @@ const GLchar Yglprg_DestinationAlpha_f[] =
 #endif
 "precision highp float;                                  \n"
 "in highp vec4 v_texcoord;                               \n"
-"uniform vec4 u_color_offset;                            \n"
+"uniform vec4 u_color_offset[512];                       \n"
+"uniform float hratio;                                   \n"
 "uniform sampler2D s_texture;                            \n"
 "uniform sampler2D s_depth;                              \n"
 "uniform sampler2D s_dest;                               \n"
@@ -442,7 +450,7 @@ const GLchar Yglprg_DestinationAlpha_f[] =
 "  ivec2 screenpos = gl_FragCoord.xy;                    \n"
 "  float depth = texelFetch( s_depth, screenpos,0 ).x;   \n"
 "  if(txcol.a > 0.0 ){                                   \n"
-"     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0)); \n"
+"     fragColor = clamp(txcol+u_color_offset[int(gl_FragCoord.y*hratio)],vec4(0.0),vec4(1.0)); \n"
 "     if( depth == gl_FragCoord.z )                                \n"
 "         fragColor.a = texelFetch( s_dest, screenpos,0 ).x        \n"
 "  }else \n                                            "
@@ -937,10 +945,10 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
 "  highp vec4 spriteColor = texture(u_sprite,addr);                                               \n"
 "  if( spriteColor.a == 0.0 ) discard;      \n"
-"	 //memoryBarrier(); \n"
+"	//memoryBarrier(); \n"
 "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
 "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
-"  if( fboColor.a > 0.0/*28*/  )                                                               \n"
+"  if( fboColor.a > 0.028  )                                                               \n"
 "  {                                                                                          \n"
 "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
 "    fragColor.a = fboColor.a ;                         \n"
@@ -1252,7 +1260,7 @@ static int id_fblinecol_s_perline = -1;
 static int id_fblinecol_emu_height_perline = -1;
 static int id_fblinecol_vheight_perline = -1;
 
-void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture )
+void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture)
 {
   YglProgram * prg;
   prg = p;
@@ -1615,9 +1623,10 @@ const GLchar Yglprg_linecol_f[] =
 #endif
 "precision highp float;\n"
 "in highp vec4 v_texcoord;\n"
-"uniform vec4 u_color_offset;\n"
+"uniform vec4 u_color_offset[512];\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
+"uniform float hratio; \n"
 "uniform sampler2D s_texture;\n"
 "uniform sampler2D s_line;\n"
 "out vec4 fragColor;\n"
@@ -1634,11 +1643,11 @@ const GLchar Yglprg_linecol_f[] =
 "  if(txcol.a > 0.0){\n";
 
 const GLchar Yglprg_linecol_main_f[] =
-"    fragColor = txcol+u_color_offset+lncol;\n"
+"    fragColor = txcol+u_color_offset[int(gl_FragCoord.y*hratio)]+lncol;\n"
 "    fragColor.a = 1.0;\n";
 
 const GLchar Yglprg_linecol_destalpha_f[] =
-"    fragColor = (txcol * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset;\n"
+"    fragColor = (txcol * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset[int(gl_FragCoord.y*hratio)];\n"
 "    fragColor.a =txcol.a;\n";
 
 
@@ -1656,6 +1665,7 @@ typedef struct _LinecolUniform{
   int s_line;
   int color_offset;
   int emu_height;
+  int height_ratio;
   int vheight;
 } LinecolUniform;
 
@@ -1676,8 +1686,9 @@ int Ygl_uniformLinecolorInsert(void * p)
   glEnableVertexAttribArray(1);
   glUniform1i(param->s_texture, 0);
   glUniform1i(param->s_line, 1);
-  glUniform4fv(param->color_offset, 1, prg->color_offset_val);
+  glUniform4fv(param->color_offset, 512, prg->color_offset_arr);
   glUniform1f(param->emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(param->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));  
   glUniform1f(param->vheight, (float)_Ygl->height);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
@@ -1817,6 +1828,7 @@ int YglProgramInit()
   id_normal_s_texture = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
   id_normal_s_texture_size = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_texsize");
   id_normal_color_offset = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
+  id_normal_height_ratio = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"hratio");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_mvpMatrix");
 
 #if 0
@@ -1944,6 +1956,7 @@ int YglProgramInit()
    linecol.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_color_offset");
    linecol.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_emu_height");
    linecol.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_vheight");
+   linecol.height_ratio = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"hratio");
 
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_f, 3, NULL, NULL, NULL) != 0)
      return -1;
@@ -2163,6 +2176,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->texcoordp = 1;
      current->mtxModelView = id_normal_matrix; 
      current->color_offset = id_normal_color_offset;
+     current->height_ratio = id_normal_height_ratio;
    }
    else if (prgid == PG_VDP2_MOSAIC)
    {
@@ -2367,6 +2381,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->mtxModelView = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_texMatrix");
      current->color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_color_offset");
+     current->height_ratio = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"hratio");
      current->tex0 = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"s_texture");
    }
    else if (prgid == PG_LINECOLOR_INSERT_DESTALPHA)
@@ -2378,6 +2393,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->mtxModelView = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_texMatrix");
      current->color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_color_offset");
+     current->height_ratio = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"hratio");
      current->tex0 = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"s_texture");
    }
    else if (prgid == PG_VDP2_BLUR)
@@ -2389,6 +2405,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"u_texMatrix");
      current->color_offset = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"u_color_offset");
+     current->height_ratio = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"hratio");
      current->tex0 = glGetUniformLocation(_prgid[PG_VDP2_BLUR], (const GLchar *)"s_texture");
    }else{
       level->prg[level->prgcurrent].setupUniform = NULL;
