@@ -74,5 +74,6 @@
     <string name="video_filter_none">なし</string>
     <string name="choose_video_filter">ビデオフィルタの選択</string>
     <string name="cpu_core">CPUコアの選択</string>
+    <string name="transparency">透明度</string>
 
 </resources>
