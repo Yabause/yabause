@@ -488,8 +488,6 @@ void Vdp2HBlankIN(void) {
 
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x41, 0x2);
-
-   ReadVdp2ColorOffset(Vdp2Regs, yabsys.LineCount);
 }
 
 void Vdp2HBlankOUT(void) {
