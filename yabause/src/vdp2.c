@@ -51,7 +51,6 @@ u8 B0_Updated = 0;
 u8 B1_Updated = 0;
 
 struct CellScrollData cell_scroll_data[270];
-int screen_color_offset[6][512*4];
 Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
@@ -480,59 +479,6 @@ void Vdp2VBlankIN(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, int line)
-{
-  int mask = 0;
-  s32 cor, cog, cob = 0;
-  for (int i=0; i < 6; i++) {
-    mask = 1 << i;
-    if (regs->CLOFEN & mask)
-    {
-      // color offset enable
-     if (regs->CLOFSL & mask)
-      {
-         // color offset B
-      cor = regs->COBR & 0xFF;
-      if (regs->COBR & 0x100)
-            cor |= 0xFFFFFF00;
-
-      cog = regs->COBG & 0xFF;
-      if (regs->COBG & 0x100)
-            cog |= 0xFFFFFF00;
-
-      cob = regs->COBB & 0xFF;
-      if (regs->COBB & 0x100)
-            cob |= 0xFFFFFF00;
-      }
-      else
-      {
-         // color offset A
-      cor = regs->COAR & 0xFF;
-      if (regs->COAR & 0x100)
-            cor |= 0xFFFFFF00;
-
-      cog = regs->COAG & 0xFF;
-      if (regs->COAG & 0x100)
-            cog |= 0xFFFFFF00;
-
-      cob = regs->COAB & 0xFF;
-      if (regs->COAB & 0x100)
-            cob |= 0xFFFFFF00;
-      }
-   }
-   else{ // color offset disable
-      cor=0;
-      cob=0;
-      cog=0;
-
-    }
-   screen_color_offset[i][4*line+0] = (float)cor / 255.0f;
-   screen_color_offset[i][4*line+1] = (float)cog / 255.0f;
-   screen_color_offset[i][4*line+2] = (float)cob / 255.0f;
-   screen_color_offset[i][4*line+3] = 0.0f;
-  }
-}
 
 //////////////////////////////////////////////////////////////////////////////
 
