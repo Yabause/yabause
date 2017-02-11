@@ -81,5 +81,6 @@
     <string name="invitation_title">このアプリを紹介する</string>
     <string name="invite">紹介</string>
     <string name="invite_message">このアプリを紹介しませんか？</string>
+    <string name="transparency">透明度</string>
 
 </resources>
