@@ -121,7 +121,7 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->fbowidth = glGetUniformLocation(pgid, (const GLchar *)"u_fbowidth");
   param->fboheight = glGetUniformLocation(pgid, (const GLchar *)"u_fbohegiht");
   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
-  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrfix");
+  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
 }
 
@@ -937,10 +937,10 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
 "  highp vec4 spriteColor = texture(u_sprite,addr);                                               \n"
 "  if( spriteColor.a == 0.0 ) discard;      \n"
-"	 //memoryBarrier(); \n"
+"	//memoryBarrier(); \n"
 "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
 "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
-"  if( fboColor.a > 0.0/*28*/  )                                                               \n"
+"  if( fboColor.a > 0.028  )                                                               \n"
 "  {                                                                                          \n"
 "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
 "    fragColor.a = fboColor.a ;                         \n"
@@ -1618,6 +1618,7 @@ const GLchar Yglprg_linecol_f[] =
 "uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
+"uniform float hratio; \n"
 "uniform sampler2D s_texture;\n"
 "uniform sampler2D s_line;\n"
 "out vec4 fragColor;\n"
@@ -1656,6 +1657,7 @@ typedef struct _LinecolUniform{
   int s_line;
   int color_offset;
   int emu_height;
+  int height_ratio;
   int vheight;
 } LinecolUniform;
 
@@ -1678,6 +1680,7 @@ int Ygl_uniformLinecolorInsert(void * p)
   glUniform1i(param->s_line, 1);
   glUniform4fv(param->color_offset, 1, prg->color_offset_val);
   glUniform1f(param->emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(param->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));  
   glUniform1f(param->vheight, (float)_Ygl->height);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
@@ -1944,6 +1947,7 @@ int YglProgramInit()
    linecol.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_color_offset");
    linecol.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_emu_height");
    linecol.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_vheight");
+   linecol.height_ratio = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"hratio");
 
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_f, 3, NULL, NULL, NULL) != 0)
      return -1;
@@ -3046,15 +3050,16 @@ const GLchar perlinealpha_blit_f[] =
 "    addr.x = int(u_th * v_texcoord.y);\n"
 "    addr.y = 0; \n"
 "    txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
-"    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;      \n"
-"    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;      \n"
-"    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;      \n"
+"    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;\n"
+"    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;\n"
+"    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;\n"
 "    if( txcol.a > 0.0 ) \n"
 "       fragColor = txcol; \n                        "
-"	 else \n"
+"    else \n"
 "       discard; \n                        "
-"  }else \n                                            "
-"     discard;\n                                      "
+"  }else{ \n"
+"    discard; \n"
+"  }\n                                            "
 "}                                                   \n";
 
 static int perlinealpha_prg = -1;

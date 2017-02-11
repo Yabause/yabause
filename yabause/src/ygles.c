@@ -769,13 +769,29 @@ int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf 
   return 0;
 }
 
+void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
+  switch (type)
+  {
+  case 0:
+    T1WriteByte(Vdp1FrameBuffer, addr, val);
+    break;
+  case 1:
+    T1WriteWord(Vdp1FrameBuffer, addr, val);
+    break;
+  case 2:
+    T1WriteLong(Vdp1FrameBuffer, addr, val);
+    break;
+  default:
+    break;
+  }
+  _Ygl->cpu_framebuffer_write++;
+}
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   const int Line = (addr >> 10);
   const int Pix = ((addr & 0x3FF) >> 1);
   
-  if (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2){
-  //if (1){
+  if (_Ygl->cpu_framebuffer_write || (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2)){
     switch (type)
     {
     case 0:
@@ -834,7 +850,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   YabThreadLock(_Ygl->mutex);
   if (_Ygl->pFrameBuffer == NULL){
     FrameProfileAdd("ReadFrameBuffer start");
-    LOG("READ FRAME");
+    FRAMELOG("READ FRAME");
     if (_Ygl->sync != 0){
       glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
       glDeleteSync( _Ygl->sync );
@@ -1138,6 +1154,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->depth = depth;
   _Ygl->rwidth = 320;
   _Ygl->rheight = 240;
+  _Ygl->density = 1;
 
   if ((_Ygl->levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
     return -1;
@@ -2326,8 +2343,8 @@ void YglEraseWriteVDP1(void) {
     priority = Vdp2Regs->PRISA & 0x7;
   }
   else{
-    int shadow, colorcalc;
-    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &priority, &colorcalc);
+    int shadow, normalshadow, colorcalc;
+    Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
     priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
     if (color == 0) {
       alpha = 0;
@@ -2340,7 +2357,7 @@ void YglEraseWriteVDP1(void) {
   alpha |= priority;
   glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-  LOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   
 }
@@ -2351,7 +2368,7 @@ void YglFrameChangeVDP1(){
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
   _Ygl->readframe = current_drawframe;
-  /*YGL*/LOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+  FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2362,8 +2379,9 @@ void YglRenderVDP1(void) {
   int status;
   FrameProfileAdd("YglRenderVDP1 start");
   YabThreadLock(_Ygl->mutex);
+  _Ygl->vdp1_hasMesh = 0;
 
-  LOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
+  FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
   if (_Ygl->pFrameBuffer != NULL) {
     _Ygl->pFrameBuffer = NULL;
@@ -2421,6 +2439,10 @@ void YglRenderVDP1(void) {
         glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
       }
 
+      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING  && level->prg[j].prgid <= PG_VFP1_MESH ) {
+        _Ygl->vdp1_hasMesh = 1;
+      }
+
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
@@ -2428,6 +2450,7 @@ void YglRenderVDP1(void) {
         glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
       }
       level->prg[j].currentQuad = 0;
+      _Ygl->cpu_framebuffer_write = 0;
     }
 
     if( level->prg[j].cleanupUniform ){
@@ -2437,11 +2460,12 @@ void YglRenderVDP1(void) {
   
   level->prgcurrent = 0;
 
-  if (_Ygl->sync != 0) {
+  if(_Ygl->sync != 0) {
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
   }
-  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+
+  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
 
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
@@ -2554,7 +2578,7 @@ void YglRenderFrameBuffer(int from, int to) {
       Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture);
     }
     else{
-      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, (Vdp2Regs->CCCTL & 0x40) );
+      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, _Ygl->vdp1_hasMesh || (Vdp2Regs->CCCTL & 0x40) );
     }
   }
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
@@ -2908,7 +2932,7 @@ void YglRender(void) {
 
    YglSetVdp2Window();
 
-   LOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
+   FRAMELOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
 
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
    if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
@@ -3521,6 +3545,10 @@ void YglChangeResolution(int w, int h) {
 
   _Ygl->rwidth = w;
   _Ygl->rheight = h;
+}
+
+void YglSetDensity(int d) {
+  _Ygl->density = d;
 }
 
 //////////////////////////////////////////////////////////////////////////////

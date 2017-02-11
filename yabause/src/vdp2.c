@@ -240,9 +240,11 @@ int Vdp2Init(void) {
 
 void Vdp2DeInit(void) {
 #if defined(YAB_ASYNC_RENDERING)
-   //YabAddEventQueue(evqueue,VDPEV_FINSH);
-   vdp_proc_running = 0;
-   YabThreadWait(YAB_THREAD_VDP);
+   if (vdp_proc_running == 1) {
+   	YabAddEventQueue(evqueue,VDPEV_FINSH);
+   	//vdp_proc_running = 0;
+   	YabThreadWait(YAB_THREAD_VDP);
+   }
 #endif
    if (Vdp2Regs)
       free(Vdp2Regs);
@@ -390,7 +392,7 @@ void VdpProc( void *arg ){
       break;
     case VDPEV_DIRECT_DRAW:
       FrameProfileAdd("DirectDraw start");
-      LOG("VDP1: VDPEV_DIRECT_DRAW(T)");
+      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
       Vdp1Draw();
       VIDCore->Vdp1DrawEnd();
       FrameProfileAdd("DirectDraw end");
@@ -426,7 +428,7 @@ void vdp2VBlankIN(void) {
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
    FrameProfileAdd("VIN flag");
-   LOG("**** VIN(T) *****\n");
+   FRAMELOG("**** VIN(T) *****\n");
    YabAddEventQueue(rcv_evqueue, 0);
    VIDCore->Sync();
 
@@ -434,7 +436,7 @@ void vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankIN(void) {
-  LOG("***** VIN *****");
+  FRAMELOG("***** VIN *****");
 
 #if defined(YAB_ASYNC_RENDERING)
   if( vdp_proc_running == 0 ){
@@ -478,6 +480,8 @@ void Vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////////////
+
 void Vdp2HBlankIN(void) {
    Vdp2Regs->TVSTAT |= 0x0004;
    ScuSendHBlankIN();
@@ -485,8 +489,6 @@ void Vdp2HBlankIN(void) {
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x41, 0x2);
 }
-
-//////////////////////////////////////////////////////////////////////////////
 
 void Vdp2HBlankOUT(void) {
   int i;
@@ -548,6 +550,9 @@ void Vdp2HBlankOUT(void) {
 
   }
 
+   //if (yabsys.LineCount == 0){
+   //  vdp2VBlankOUT();
+   //}
   if (yabsys.LineCount == 0){
     FrameProfileAdd("VOUT event");
     // Manual Change
@@ -565,11 +570,11 @@ void Vdp2HBlankOUT(void) {
     // Plot trigger mode = Draw when frame is changed
     if (Vdp1Regs->PTMR == 2){
       Vdp1External.frame_change_plot = 1;
-      LOG("frame_change_plot 1");
+      FRAMELOG("frame_change_plot 1");
     }
     else{
       Vdp1External.frame_change_plot = 0;
-      LOG("frame_change_plot 0");
+      FRAMELOG("frame_change_plot 0");
     }
 #if defined(YAB_ASYNC_RENDERING)
     if (vdp_proc_running == 0){
@@ -582,19 +587,19 @@ void Vdp2HBlankOUT(void) {
     if (Vdp1External.swap_frame_buffer == 1 && Vdp1External.frame_change_plot == 1)
     {
       yabsys.wait_line_count = 10;
-      LOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+      FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
     }
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
     YabThreadYield();
   }
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
     
-    LOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
+    FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
     yabsys.wait_line_count = -1;
     //do {
       YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
     //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
-    LOG("**WAIT END**");
+      FRAMELOG("**WAIT END**");
     FrameProfileAdd("DirectDraw sync");
   }
 #else
@@ -692,7 +697,7 @@ void vdp2VBlankOUT(void) {
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
 
-  LOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer,Vdp1External.frame_change_plot);
+  FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
   if (skipnextframe && (!saved))
   {
@@ -826,7 +831,7 @@ void Vdp2VBlankOUT(void) {
   //  YabLoadStateSlot(".\\", 1);
   //}
 
-  LOG("***** VOUT %d *****", g_frame_count);
+  FRAMELOG("***** VOUT %d *****", g_frame_count);
   if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
     Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;

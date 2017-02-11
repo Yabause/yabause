@@ -441,10 +441,12 @@ typedef struct {
    int vdp1_maxpri;
    int vdp1_minpri;
    u32 vdp1_lineTexture;
+   int vdp1_hasMesh;
    
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
+   int density;
    int drawframe;
    int readframe;
    GLuint rboid_depth;
@@ -500,6 +502,7 @@ typedef struct {
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;
    int vpd1_running;
+   int cpu_framebuffer_write;
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -516,6 +519,7 @@ void YglRender(void);
 void YglReset(void);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
+void YglSetDensity(int d);
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
 void YglSetClearColor(float r, float g, float b);
