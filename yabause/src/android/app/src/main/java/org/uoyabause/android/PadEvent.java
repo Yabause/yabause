@@ -33,13 +33,14 @@ class PadEvent {
     final static int BUTTON_X = 10;
     final static int BUTTON_Y = 11;
     final static int BUTTON_Z = 12;
+    final static int BUTTON_LAST = 13;
 
     final static int PERANALOG_AXIS_X = 18; // left to right
     final static int PERANALOG_AXIS_Y = 19; // up to down
     final static int PERANALOG_AXIS_RTRIGGER = 20; // right trigger
     final static int PERANALOG_AXIS_LTRIGGER = 21; // left trigger
 
-    final static int BUTTON_LAST = 22;
+
 
 
     private int action;
