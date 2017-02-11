@@ -49,12 +49,14 @@ void LogStart(void);
 void LogStop(void);
 void LogChangeOutput(DebugOutType t, char * s);
 
+//#define DEBUG 1
 #ifdef DEBUG
 #define LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
 #define LOG(...)
 #endif
 
+//#define CDDEBUG 1
 #ifdef CDDEBUG
 #define CDLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -67,6 +69,7 @@ void LogChangeOutput(DebugOutType t, char * s);
 #define NETLINK_LOG(...)
 #endif
 
+//#define SCSP_DEBUG 1
 #ifdef SCSP_DEBUG
 #define SCSPLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -85,6 +88,7 @@ void LogChangeOutput(DebugOutType t, char * s);
 #define VDP1LOG(...)
 #endif
 
+//#define VDP2_DEBUG 1
 #ifdef VDP2_DEBUG
 #define VDP2LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -101,6 +105,13 @@ void LogChangeOutput(DebugOutType t, char * s);
 #define YGLLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
 #define YGLLOG(...)
+#endif
+
+
+#ifdef FRAME_DEBUG
+#define FRAMELOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
+#else
+#define FRAMELOG(...)
 #endif
 
 #endif

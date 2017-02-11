@@ -1,5 +1,7 @@
 project(yabause)
 
+#to compile sdl port, use "cmake -DYAB_PORTS=sdl -DYAB_ASYNC_RENDERING ../yabause"
+
 include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
@@ -30,7 +32,7 @@ set(yabause_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "gtk;qt;dreamcast;cocoa;runner" CACHE STRING "List of ports to build")
+set(YAB_PORTS "sdl;qt" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
@@ -289,7 +291,14 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
-
+		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+			add_definitions(-D_OGLES3_)
+			set(yabause_SOURCES ${yabause_SOURCES} 
+				yglcache.c
+				ygles.c
+				yglshaderes.c
+			)
+		endif()
         include(FindGLEW)
         add_definitions(-D_USEGLEW_)
         if (GLEW_FOUND)
@@ -514,7 +523,12 @@ option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 # SH2 dynamic recompiler
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
-option(SH2_DYNAREC "SH2 dynamic recompiler" ON)
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
+	option(SH2_DYNAREC "SH2 dynamic recompiler" OFF)
+else ()
+	option(SH2_DYNAREC "SH2 dynamic recompiler" ON)
+endif()
+
 if (SH2_DYNAREC)
 	if( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
 		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
