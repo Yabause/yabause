@@ -24,6 +24,7 @@ public class PadTestActivity extends Activity implements OnPadListener {
 
 	YabausePad mPadView;
 	SeekBar mSlide;
+    SeekBar mTransSlide;
     private PadManager padm;
     TextView tv;
 
@@ -48,10 +49,9 @@ public class PadTestActivity extends Activity implements OnPadListener {
         mPadView.setTestmode(true);
         mPadView.setOnPadListener(this);
         mPadView.show(true);
+
         mSlide   = (SeekBar)findViewById(R.id.button_scale);
-        
         mSlide.setProgress( (int)(mPadView.getScale()*100.0f) );
-        
         mSlide.setOnSeekBarChangeListener(
                 new OnSeekBarChangeListener() {
                     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -67,6 +67,25 @@ public class PadTestActivity extends Activity implements OnPadListener {
                     }
                 }
         );
+
+        mTransSlide   = (SeekBar)findViewById(R.id.button_transparent);
+        mTransSlide.setProgress( (int)(mPadView.getTrans()*100.0f) );
+        mTransSlide.setOnSeekBarChangeListener(
+                new OnSeekBarChangeListener() {
+                    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                        mPadView.setTrans((float) progress / 100.0f);
+                        mPadView.invalidate();
+                    }
+
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+                    }
+
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+                    }
+                }
+        );
+
+
         tv = (TextView)findViewById(R.id.text_status);
     }
     
@@ -83,6 +102,12 @@ public class PadTestActivity extends Activity implements OnPadListener {
    			 	float value = (float)mSlide.getProgress()/100.0f;
    			 	editor.putFloat("pref_pad_scale", value );
    			 	editor.commit();
+
+                value = (float)mTransSlide.getProgress()/100.0f;
+                editor.putFloat("pref_pad_trans", value );
+                editor.commit();
+
+
    			 	PadTestActivity.super.onBackPressed();
             }});  
         alert.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
@@ -96,8 +121,8 @@ public class PadTestActivity extends Activity implements OnPadListener {
 	}
 
 
-    @Override public boolean onGenericMotionEvent(MotionEvent event) {
-
+//    @Override public boolean onGenericMotionEvent(MotionEvent event) {
+/*
         int rtn = padm.onGenericMotionEvent(event);
         if (rtn != 0) {
             tv.setText(padm.getStatusString());
@@ -106,8 +131,9 @@ public class PadTestActivity extends Activity implements OnPadListener {
         }
         tv.setText(padm.getStatusString());
         tv.invalidate();
-        return super.onGenericMotionEvent(event);
-    }
+*/
+//        return super.onGenericMotionEvent(event);
+//    }
 
     @Override
     public boolean dispatchKeyEvent (KeyEvent event){
@@ -150,12 +176,10 @@ public class PadTestActivity extends Activity implements OnPadListener {
 
 	@Override
 	public boolean onPad(PadEvent event) {
-		
 		TextView tv = (TextView)findViewById(R.id.text_status);
 		tv.setText(mPadView.getStatusString());
 		tv.invalidate();
-		
-		return false;
+		return true;
 	}	
 	
 }
