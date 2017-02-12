@@ -8,8 +8,8 @@ android {
         applicationId "org.uoyabause.android"
         minSdkVersion 19
         targetSdkVersion 22
-        versionCode 91
-        versionName '0.4.1'
+        versionCode 92
+        versionName '0.4.2'
     }
 
     buildTypes {
