@@ -9,13 +9,14 @@
         
     <LinearLayout 
         
-        android:layout_width="600dp"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
         android:layout_gravity="center"
         android:id="@+id/screen_main"
         android:visibility="visible"
-        android:orientation="vertical">
+        android:orientation="vertical"
+		android:layout_margin="30dp">
     
 	    <TextView
 	        android:id="@+id/test1"

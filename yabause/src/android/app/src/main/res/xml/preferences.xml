@@ -55,6 +55,11 @@
             android:title="@string/keepaspectrate"
             android:defaultValue="true" />
 
+        <CheckBoxPreference
+            android:key="pref_landscape"
+            android:title="@string/lock_landscape"
+            android:defaultValue="false" />
+
         <ListPreference
             android:key="pref_filter"
             android:title="@string/video_filter"

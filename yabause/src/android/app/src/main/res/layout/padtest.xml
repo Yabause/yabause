@@ -24,53 +24,53 @@
 		android:orientation="vertical"
 		android:layout_margin="20dp">
 
-        <LinearLayout
-            android:layout_width="400dp"
-            android:layout_height="wrap_content"
-            >
+        <LinearLayout android:layout_height="wrap_content"
+            android:layout_width="300dp"
+            android:layout_margin="10dp"
+            android:layout_gravity="center_horizontal">
 
             <TextView
                 android:id="@+id/editText1"
-                android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:text="@string/scale" >
+                android:text="@string/scale"
+                android:layout_width="90dp">
             </TextView>
 
 
             <SeekBar
                 android:id="@+id/button_scale"
-                android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:max="100"
                 android:progress="100"
                 android:clickable="false"
-                android:focusable="false" />
+                android:focusable="false"
+                android:layout_width="200dp" />
 
         </LinearLayout>
 
         <LinearLayout
-            android:layout_width="400dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_margin="10dp">
+            android:layout_margin="10dp"
+            android:layout_width="300dp">
 
             <TextView
                 android:id="@+id/editText_transparent"
-                android:layout_width="80dp"
                 android:layout_height="wrap_content"
-                android:text="@string/transparency" >
+                android:text="@string/transparency"
+                android:layout_width="90dip">
             </TextView>
 
 
             <SeekBar
                 android:id="@+id/button_transparent"
-                android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:max="100"
                 android:progress="100"
                 android:clickable="false"
-                android:focusable="false" />
+                android:focusable="false"
+                android:layout_width="200dp" />
         </LinearLayout>
 	</LinearLayout>
 
