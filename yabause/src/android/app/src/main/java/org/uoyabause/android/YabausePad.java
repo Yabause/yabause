@@ -520,7 +520,10 @@ public class YabausePad extends View implements OnTouchListener {
 
         if( testmode ){
         	status = "";
-        	status += "UP:";
+            status += "START:";
+            if( buttons[PadEvent.BUTTON_START].isOn() ) status += "ON "; else status += "OFF ";
+
+            status += "\nUP:";
         	if( buttons[PadEvent.BUTTON_UP].isOn() ) status += "ON "; else status += "OFF "; 
         	status += "DOWN:";
         	if( buttons[PadEvent.BUTTON_DOWN].isOn() ) status += "ON "; else status += "OFF "; 
@@ -572,10 +575,16 @@ public class YabausePad extends View implements OnTouchListener {
         
         float dens = getResources().getDisplayMetrics().density;
         dens /= 2.0;
-        
-        wscale = (float)width / basewidth ; 
-        hscale = (float)height / baseheight;    
-        
+
+
+        if (width > height) {
+            wscale = (float) width / basewidth;
+            hscale = (float) height / baseheight;
+        }else{
+            wscale = (float) width / baseheight;
+            hscale = (float) height / basewidth;
+        }
+
         int bitmap_height = bitmap_pad_right.getHeight();
     	
         matrix_right.reset();
@@ -627,7 +636,7 @@ public class YabausePad extends View implements OnTouchListener {
         matrix_left.reset();
         matrix_left.postTranslate(0, - bitmap_pad_right.getHeight());
         matrix_left.postScale(base_scale*wscale/dens, base_scale*hscale/dens);
-        matrix_left.postTranslate(0, height);        
+        matrix_left.postTranslate(0, height);
         
         setMeasuredDimension(width, height);
     }

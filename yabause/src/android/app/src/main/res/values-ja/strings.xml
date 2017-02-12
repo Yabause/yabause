@@ -82,5 +82,6 @@
     <string name="invite">紹介</string>
     <string name="invite_message">このアプリを紹介しませんか？</string>
     <string name="transparency">透明度</string>
+    <string name="lock_landscape">横画面 固定</string>
 
 </resources>
