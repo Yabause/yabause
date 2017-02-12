@@ -12,6 +12,7 @@
     <string name="choose_video_core">Choose Video Core</string>
     <string name="audio_output">Audio output</string>
     <string name="fps">FPS</string>
+    <string name="lock_landscape">Lock Landscape Mode</string>
     <string name="frameskip">Frameskip</string>
     <string name="keepaspectrate">Keep original aspect rate</string>
     <string name="choose_input_device">Choose input Device</string>

@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -31,6 +32,14 @@ public class PadTestActivity extends Activity implements OnPadListener {
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean lock_landscape = sharedPref.getBoolean("pref_landscape", false);
+        if( lock_landscape == true ){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }else{
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
+
         super.onCreate(savedInstanceState);
 
         padm = PadManager.getPadManager();

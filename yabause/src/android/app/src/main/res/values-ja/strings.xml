@@ -75,5 +75,6 @@
     <string name="choose_video_filter">ビデオフィルタの選択</string>
     <string name="cpu_core">CPUコアの選択</string>
     <string name="transparency">透明度</string>
+    <string name="lock_landscape">横画面 固定</string>
 
 </resources>
