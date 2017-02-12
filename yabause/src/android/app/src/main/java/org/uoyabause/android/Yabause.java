@@ -41,6 +41,7 @@ import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -228,6 +229,14 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
     @Override
     public void onCreate(Bundle savedInstanceState)    
     {
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Yabause.this);
+        boolean lock_landscape = sharedPref.getBoolean("pref_landscape", false);
+        if( lock_landscape == true ){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }else{
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
+
         super.onCreate(savedInstanceState);
         System.gc();
 
@@ -684,6 +693,7 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
 
     private void readPreferences() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
         boolean fps = sharedPref.getBoolean("pref_fps", false);
         YabauseRunnable.enableFPS(fps ? 1 : 0);
         Log.d(TAG,"enable FPS " + fps);
