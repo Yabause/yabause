@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.UiModeManager;
 import android.content.Context;
@@ -41,6 +43,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v17.leanback.app.BackgroundManager;
 import android.support.v17.leanback.app.BrowseFragment;
 import android.support.v17.leanback.widget.ArrayObjectAdapter;
@@ -52,6 +55,7 @@ import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
@@ -79,7 +83,7 @@ import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
 
-public class GameSelectFragment extends BrowseFragment implements FileDialog.FileSelectedListener {
+public class GameSelectFragment extends BrowseFragment implements FileDialog.FileSelectedListener  {
     private static final String TAG = "GameSelectFragment";
 
     private static final int BACKGROUND_UPDATE_DELAY = 300;
@@ -103,6 +107,69 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
     private ProgressDialog mProgressDialog = null;
     private Boolean isShowProgress = false;
+
+
+    private static final int REQUEST_STORAGE = 1;
+    private static String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    /**
+     * Called when the 'show camera' button is clicked.
+     * Callback is defined in resource layout definition.
+     */
+    public int checkStoragePermission() {
+
+        // Verify that all required contact permissions have been granted.
+        if (ActivityCompat.checkSelfPermission(getActivity(),Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(getActivity(),Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            // Contacts permissions have not been granted.
+            Log.i(TAG, "Storage permissions has NOT been granted. Requesting permissions.");
+            if ( shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
+                  || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+            }else {
+                requestPermissions(PERMISSIONS_STORAGE, REQUEST_STORAGE);
+            }
+            return -1;
+
+        }
+        return 0;
+    }
+
+    boolean verifyPermissions(int[] grantResults) {
+        // At least one result must be checked.
+        if(grantResults.length < 1){
+            return false;
+        }
+
+        // Verify that each required permission has been granted, otherwise return false.
+        for (int result : grantResults) {
+            if (result != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == REQUEST_STORAGE) {
+            Log.i(TAG, "Received response for contact permissions request.");
+            // We have requested multiple permissions for contacts, so all of them need to be
+            // checked.
+            if (verifyPermissions(grantResults) == true ){
+                    updateGameList();
+            } else {
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+
     public void showDialog() {
         if( mProgressDialog == null && isShowProgress == false ) {
             mProgressDialog = new ProgressDialog(getActivity());
@@ -185,6 +252,10 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }
             }
         };
+        if( checkStoragePermission() == 0 ) {
+            updateBackGraound();
+            updateGameList();
+        }
     }
 
     void updateGameList(){
@@ -205,7 +276,6 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             mTracker.send(new HitBuilders.ScreenViewBuilder().build());
         }
         updateBackGraound();
-        updateGameList();
     }
 
     @Override
@@ -354,7 +424,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             }
 
         }
-        mBackgroundManager.setDimLayer(mDefaultBackground);
+        mBackgroundManager.setDrawable(mDefaultBackground);
 
     }
 
@@ -470,7 +540,9 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
                 }else if( ((String) item).indexOf(getString(R.string.refresh_db)) >= 0 ){
                     refresh_level = 3;
-                    updateGameList();
+                    if( checkStoragePermission() == 0 ) {
+                        updateGameList();
+                    }
                 }
             }
 
@@ -578,7 +650,9 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             case SETTING_ACTIVITY:
                 if( resultCode == GAMELIST_NEED_TO_UPDATED ){
                     refresh_level = 3;
-                    updateGameList();
+                    if( checkStoragePermission() == 0 ) {
+                        updateGameList();
+                    }
                 }
                 break;
             default:
