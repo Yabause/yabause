@@ -2,18 +2,20 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "24.0.1"
+    buildToolsVersion "25.0.2"
 
     defaultConfig {
         applicationId "org.uoyabause.android"
         minSdkVersion 19
-        targetSdkVersion 22
+        targetSdkVersion 25
         versionCode 92
         versionName '0.4.2'
     }
 
     buildTypes {
         release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->
                 renameAPK(variant, defaultConfig, 'R')
             }
@@ -31,13 +33,7 @@ android {
         abortOnError false
     }
 
-    //useLibrary 'org.apache.http.legacy'
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
+
 
 }
 
@@ -59,17 +55,17 @@ repositories {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.google.firebase:firebase-core:9.6.1'
-    compile 'com.google.firebase:firebase-crash:9.6.1'
-    compile 'com.google.firebase:firebase-ads:9.6.1'
-    compile 'com.google.firebase:firebase-messaging:9.6.1'
-    compile 'com.google.firebase:firebase-invites:9.6.1'
-    compile 'com.google.android.gms:play-services-analytics:9.6.1'
+    compile 'com.google.firebase:firebase-core:10.0.1'
+    compile 'com.google.firebase:firebase-crash:10.0.1'
+    compile 'com.google.firebase:firebase-ads:10.0.1'
+    compile 'com.google.firebase:firebase-messaging:10.0.1'
+    compile 'com.google.firebase:firebase-invites:10.0.1'
+    compile 'com.google.android.gms:play-services-analytics:10.0.1'
     compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
-    compile 'com.android.support:appcompat-v7:25.0.0'
-    compile 'com.android.support:recyclerview-v7:25.0.0'
-    compile 'com.android.support:cardview-v7:25.0.0'
-    compile 'com.android.support:leanback-v17:25.0.0'
+    compile 'com.android.support:appcompat-v7:25.1.1'
+    compile 'com.android.support:recyclerview-v7:25.1.1'
+    compile 'com.android.support:cardview-v7:25.1.1'
+    compile 'com.android.support:leanback-v17:25.1.1'
     compile 'com.github.bumptech.glide:glide:3.4.0'
     compile 'commons-io:commons-io:2.4'
     compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
