@@ -32,8 +32,8 @@ import org.uoyabause.android.R;
 public class CardPresenter extends Presenter {
     private static final String TAG = "CardPresenter";
 
-    private static int CARD_WIDTH = 313;
-    private static int CARD_HEIGHT = 176;
+    private static int CARD_WIDTH = 320;
+    private static int CARD_HEIGHT = 224;
     private static int sSelectedBackgroundColor;
     private static int sDefaultBackgroundColor;
     private Drawable mDefaultCardImage;
@@ -75,16 +75,19 @@ public class CardPresenter extends Presenter {
 
         Log.d(TAG, "onBindViewHolder");
 
-        if( game.device_infomation.equals("CD-1/1")){
-            cardView.setTitleText(game.game_title);
-        }else {
-            cardView.setTitleText(game.game_title + " " + game.device_infomation);
-        }
+        cardView.setTitleText(game.game_title);
+
 
         String rate="";
         for( int i=0; i < game.rating; i++ ){
             rate += "★";
         }
+        if( game.device_infomation.equals("CD-1/1")){
+
+        }else {
+            rate += " " + game.device_infomation;
+        }
+
         cardView.setContentText(rate);
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
 
