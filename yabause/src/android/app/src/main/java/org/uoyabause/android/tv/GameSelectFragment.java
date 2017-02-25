@@ -36,10 +36,14 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -56,14 +60,17 @@ import android.support.v17.leanback.widget.OnItemViewClickedListener;
 import android.support.v17.leanback.widget.OnItemViewSelectedListener;
 import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
+import android.support.v17.leanback.widget.RowHeaderPresenter;
 import android.support.v17.leanback.widget.RowPresenter;
 import android.app.AlertDialog;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -98,6 +105,8 @@ import com.google.android.gms.appinvite.AppInviteReferral;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.crash.FirebaseCrash;
 
+import static android.R.attr.bitmap;
+
 public class GameSelectFragment extends BrowseFragment implements FileDialog.FileSelectedListener  {
     private static final String TAG = "GameSelectFragment";
 
@@ -110,7 +119,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private static final int REQUEST_INVITE = 0x1121;
 
     private final Handler mHandler = new Handler();
-    private ArrayObjectAdapter mRowsAdapter;
+    private ArrayObjectAdapter mRowsAdapter = null;
     private Drawable mDefaultBackground;
     private DisplayMetrics mMetrics;
     private Timer mBackgroundTimer;
@@ -138,21 +147,23 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
      */
     public int checkStoragePermission() {
 
-        // Verify that all required contact permissions have been granted.
-        if (ActivityCompat.checkSelfPermission(getActivity(),Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED
-                || ActivityCompat.checkSelfPermission(getActivity(),Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Contacts permissions have not been granted.
-            Log.i(TAG, "Storage permissions has NOT been granted. Requesting permissions.");
-            if ( shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
-                  || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        if (Build.VERSION.SDK_INT >= 23) {
+            // Verify that all required contact permissions have been granted.
+            if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED
+                    || ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Contacts permissions have not been granted.
+                Log.i(TAG, "Storage permissions has NOT been granted. Requesting permissions.");
+                if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
+                        || shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
 
-            }else {
-                requestPermissions(PERMISSIONS_STORAGE, REQUEST_STORAGE);
+                } else {
+                    requestPermissions(PERMISSIONS_STORAGE, REQUEST_STORAGE);
+                }
+                return -1;
+
             }
-            return -1;
-
         }
         return 0;
     }
@@ -229,6 +240,12 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     UpdateGameDatabaseTask mUpdateThread = null;
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);  // これで onCreate は 1 度しか呼ばれない
+    }
+
+    @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
@@ -242,22 +259,24 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         setupUIElements();
         setupEventListeners();
 
-        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
-        HeaderItem gridHeader = new HeaderItem(0, "PREFERENCES");
-        GridItemPresenter mGridPresenter = new GridItemPresenter();
-        ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
-        gridRowAdapter.add(getResources().getString(R.string.setting));
+        if( mRowsAdapter == null ) {
+            mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
+            HeaderItem gridHeader = new HeaderItem(0, "PREFERENCES");
+            GridItemPresenter mGridPresenter = new GridItemPresenter();
+            ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
+            gridRowAdapter.add(getResources().getString(R.string.setting));
 
-        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
-        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
-            //    gridRowAdapter.add(getResources().getString(R.string.invite));
+            UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+            if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+                //    gridRowAdapter.add(getResources().getString(R.string.invite));
+            }
+            gridRowAdapter.add(getResources().getString(R.string.donation));
+            gridRowAdapter.add(getString(R.string.load_game));
+            gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+
+            mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
+            setAdapter(mRowsAdapter);
         }
-        gridRowAdapter.add(getResources().getString(R.string.donation));
-        gridRowAdapter.add(getString(R.string.load_game));
-        gridRowAdapter.add(getResources().getString(R.string.refresh_db));
-
-        mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
-        setAdapter(mRowsAdapter);
 
         MobileAds.initialize(application, getActivity().getString(R.string.ad_app_id));
         mInterstitialAd = new InterstitialAd(getActivity());
@@ -270,43 +289,6 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 requestNewInterstitial();
             }
         });
-
-/*
-        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
-        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
-
-            SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
-            long introduce = prefs.getLong("introduce", 0);
-            Date date = new Date(System.currentTimeMillis());
-            if (introduce == 0) {
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putLong("introduce", date.getTime());
-                editor.commit();
-            } else {
-
-                long introduce_count = prefs.getLong("introduce_count", 0);
-
-                if (date.getTime() - introduce > (3L * 24L * 60L * 60L * 1000L) && introduce_count == 0) {
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putLong("introduce", date.getTime());
-                    editor.putLong("introduce_count", 1);
-                    editor.commit();
-
-                    new AlertDialog.Builder(getActivity())
-                            .setTitle(R.string.invite)
-                            .setMessage(R.string.invite_message)
-                            .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    GameSelectFragment.this.onInviteClicked();
-                                }
-                            })
-                            .setNegativeButton(R.string.no, null)
-                            .show();
-                }
-            }
-        }
-*/
 
         myHandler = new Handler() {
             @Override
@@ -330,6 +312,17 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
 
     void updateGameList(){
+
+        if (Build.VERSION.SDK_INT >= 23) {
+            // Verify that all required contact permissions have been granted.
+            if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED
+                    || ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return;
+            }
+        }
+
         if( mUpdateThread == null ) {
             showDialog();
             mUpdateThread = new UpdateGameDatabaseTask();
@@ -344,12 +337,13 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             mTracker.setScreenName(TAG);
             mTracker.send(new HitBuilders.ScreenViewBuilder().build());
         }
-        updateBackGraound();
+        updateGameList();
     }
 
     @Override
     public void onDestroy() {
         dismissDialog();
+        this.setSelectedPosition(-1,false );
         System.gc();
         super.onDestroy();
 /*
@@ -477,6 +471,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
     private void prepareBackgroundManager() {
         mBackgroundManager = BackgroundManager.getInstance(getActivity());
+        mBackgroundManager.setAutoReleaseOnStop(false);
         mBackgroundManager.attach(getActivity().getWindow());
         mDefaultBackground = getResources().getDrawable(R.drawable.saturn);
         mMetrics = new DisplayMetrics();
@@ -489,6 +484,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         String image_path = sp.getString("select_image", "err");
         if( image_path.equals("err") ) {
             mDefaultBackground = getResources().getDrawable(R.drawable.saturn);
+            mBackgroundManager.setDrawable(mDefaultBackground);
         }else{
             try {
 
@@ -497,13 +493,48 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 InputStream inputStream = getActivity().getContentResolver().openInputStream(Uri.parse(image_path));
-                mDefaultBackground = Drawable.createFromStream(inputStream, image_path );
+
+                BitmapFactory.Options imageOptions = new BitmapFactory.Options();
+                imageOptions.inJustDecodeBounds = true;
+                BitmapFactory.decodeStream(inputStream, null, imageOptions);
+                Log.v("image", "Original Image Size: " + imageOptions.outWidth + " x " + imageOptions.outHeight);
+
+                inputStream.close();
+
+                Bitmap bitmap;
+                int imageSizeMax = 1920;
+                inputStream = getActivity().getContentResolver().openInputStream(Uri.parse(image_path));
+                float imageScaleWidth = (float)imageOptions.outWidth / imageSizeMax;
+                float imageScaleHeight = (float)imageOptions.outHeight / imageSizeMax;
+
+                if (imageScaleWidth > 2 && imageScaleHeight > 2) {
+                    BitmapFactory.Options imageOptions2 = new BitmapFactory.Options();
+
+                    // 縦横、小さい方に縮小するスケールを合わせる
+                    int imageScale = (int)Math.floor((imageScaleWidth > imageScaleHeight ? imageScaleHeight : imageScaleWidth));
+
+                    // inSampleSizeには2のべき上が入るべきなので、imageScaleに最も近く、かつそれ以下の2のべき上の数を探す
+                    for (int i = 2; i <= imageScale; i *= 2) {
+                        imageOptions2.inSampleSize = i;
+                    }
+
+                    bitmap = BitmapFactory.decodeStream(inputStream, null, imageOptions2);
+                    Log.v("image", "Sample Size: 1/" + imageOptions2.inSampleSize);
+                } else {
+                    bitmap = BitmapFactory.decodeStream(inputStream);
+                }
+
+                inputStream.close();
+                //mDefaultBackground = Drawable.createFromStream(inputStream, image_path );
+                mBackgroundManager.setBitmap(bitmap);
+
             } catch (Exception e) {
                 mDefaultBackground = getResources().getDrawable(R.drawable.saturn);
+                mBackgroundManager.setDrawable(mDefaultBackground);
             }
 
         }
-        mBackgroundManager.setDrawable(mDefaultBackground);
+
 
     }
 
@@ -685,6 +716,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         }
     }
 */
+
     private class GridItemPresenter extends Presenter {
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent) {
@@ -765,6 +797,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                         updateGameList();
                     }
                 }
+                this.updateBackGraound();
                 break;
             case YABAUSE_ACTIVITY:
                 SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
