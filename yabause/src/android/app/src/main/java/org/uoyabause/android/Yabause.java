@@ -47,6 +47,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
 import android.view.InputDevice;
@@ -81,6 +84,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.load.engine.Resource;
@@ -99,6 +103,7 @@ import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
+import android.support.design.widget.NavigationView;
 
 class YabauseRunnable implements Runnable
 {  
@@ -119,6 +124,7 @@ class YabauseRunnable implements Runnable
     public static native void setVolume(int volume);
     public static native int screenshot( String filename );
     public static native String getCurrentGameCode();
+    public static native String getGameTitle();
     public static native String getGameinfo();
     public static native void savestate( String path );
     public static native void loadstate( String path );
@@ -173,7 +179,7 @@ class YabauseHandler extends Handler {
 }
 
 
-public class Yabause extends Activity implements  FileDialog.FileSelectedListener
+public class Yabause extends AppCompatActivity implements  FileDialog.FileSelectedListener, NavigationView.OnNavigationItemSelectedListener
 {
     private static final String TAG = "Yabause";
     private YabauseRunnable yabauseThread;
@@ -187,6 +193,9 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
     private boolean waiting_reault = false;
     private Tracker mTracker;
     private int tray_state = 0;
+    DrawerLayout mDrawerLayout;
+    NavigationView mNavigationView;
+
 
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
@@ -244,6 +253,53 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
         mTracker = application.getDefaultTracker();
 
         setContentView(R.layout.main);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON|WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
+        mDrawerLayout.setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        mNavigationView = (NavigationView)findViewById(R.id.nav_view);
+        mNavigationView.setNavigationItemSelectedListener(this);
+        DrawerLayout.DrawerListener drawerListener = new DrawerLayout.DrawerListener() {
+            @Override
+            public void onDrawerSlide(View view, float v) {
+            }
+
+            @Override
+            public void onDrawerOpened(View view) {
+                if( menu_showing == false ) {
+                    String name = YabauseRunnable.getGameTitle();
+                    TextView tx = (TextView)findViewById(R.id.menu_title);
+                    if( tx != null ) {
+                        tx.setText(name);
+                    }
+                    menu_showing = true;
+                    YabauseRunnable.pause();
+                    audio.mute(audio.SYSTEM);
+                }
+            }
+
+            @Override
+            public void onDrawerClosed(View view) {
+
+                if( waiting_reault == false && menu_showing == true ) {
+                    menu_showing = false;
+                    YabauseRunnable.resume();
+                    audio.unmute(audio.SYSTEM);
+                }
+
+            }
+
+            @Override
+            public void onDrawerStateChanged(int i) {
+            }
+        };
+        this.mDrawerLayout.setDrawerListener(drawerListener);
+
 
         audio = new YabauseAudio(this);
 
@@ -267,11 +323,21 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
         padm = PadManager.getPadManager();
         padm.loadSettings();
         waiting_reault = false;
-        View v = findViewById(R.id.menu_view);
-        v.setVisibility(View.GONE);
-        View.OnClickListener ScreenshotClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+
+        handler = new YabauseHandler(this);
+        yabauseThread = new YabauseRunnable(this);
+
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        switch(id){
+            case R.id.save_screen:{
                 DateFormat dateFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
                 Date date = new Date();
 
@@ -280,7 +346,7 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
                         dateFormat.format(date) + ".png";
 
                 if (YabauseRunnable.screenshot(screen_shot_save_path) != 0) {
-                    return;
+                    break;
                 }
 
                 waiting_reault = true;
@@ -296,58 +362,62 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
                 Uri uri = cr.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
                 shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
                 shareIntent.setType("image/png");
-                startActivityForResult(Intent.createChooser(shareIntent, "share screenshot to"), R.id.save_screen);
+                startActivityForResult(Intent.createChooser(shareIntent, "share screenshot to"), 0x01);
             }
-        };
-        findViewById(R.id.button_screen_shot).setOnClickListener(ScreenshotClickListener);
-
-        View.OnClickListener SaveStateClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            break;
+            case R.id.report:
+                startReport();
+                break;
+            case R.id.save_state: {
                 String save_path = YabauseStorage.getStorage().getStateSavePath();
                 YabauseRunnable.savestate(save_path);
-                Yabause.this.showBottomMenu();
             }
-        };
-        findViewById(R.id.button_save_sate).setOnClickListener(SaveStateClickListener);
-
-        View.OnClickListener LoadStateClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            break;
+            case R.id.load_state: {
                 String save_path = YabauseStorage.getStorage().getStateSavePath();
                 YabauseRunnable.loadstate(save_path);
-                Yabause.this.showBottomMenu();
             }
-        };
-        findViewById(R.id.button_load_state).setOnClickListener(LoadStateClickListener);
-
-        View.OnClickListener OpenTrayListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Button btn = (Button)findViewById(R.id.button_open_cd);
-                if( tray_state == 0 ) {
+            break;
+            case R.id.button_open_cd: {
+                if (tray_state == 0) {
                     YabauseRunnable.openTray();
-                    btn.setText("Close CD tray");
+                    item.setTitle(getString(R.string.close_cd_tray));
                     tray_state = 1;
-                }else{
-                    btn.setText("Open CD tray");
+                } else {
+                    item.setTitle(getString(R.string.open_cd_tray));
                     tray_state = 0;
                     File file = new File(gamepath);
                     String path = file.getParent();
-                    FileDialog fd = new FileDialog(Yabause.this,path);
+                    FileDialog fd = new FileDialog(Yabause.this, path);
                     fd.addFileListener(Yabause.this);
                     fd.showDialog();
                 }
+            }
+            break;
+            case R.id.pad_mode:{
+                YabausePad padv = (YabausePad)findViewById(R.id.yabause_pad);
+                boolean mode = false;
+                if (item.isChecked()){
+                    item.setChecked(false);
+                    Yabause.this.padm.setAnalogMode(PadManager.MODE_HAT);
+                    YabauseRunnable.switch_padmode(PadManager.MODE_HAT);
+                    padv.setPadMode(PadManager.MODE_HAT);
+                    mode = false;
+                }else{
+                    item.setChecked(true);
+                    Yabause.this.padm.setAnalogMode(PadManager.MODE_ANALOG);
+                    YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG);
+                    padv.setPadMode(PadManager.MODE_ANALOG);
+                    mode = true;
+                }
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Yabause.this);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putBoolean("pref_analog_pad", mode);
+                editor.apply();
                 Yabause.this.showBottomMenu();
             }
-        };
-        findViewById(R.id.button_open_cd).setOnClickListener(OpenTrayListener);
-
-
-        View.OnClickListener ExitClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+            break;
+            case R.id.exit:
                 YabauseRunnable.deinit();
                 try {
                     Thread.sleep(1000);
@@ -357,47 +427,11 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
                 //android.os.Process.killProcess(android.os.Process.myPid());
                 finish();
                 android.os.Process.killProcess(android.os.Process.myPid());
-            }
-        };
-        findViewById(R.id.button_exit).setOnClickListener(ExitClickListener);
-
-        View.OnClickListener ReportClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startReport();
-            }
-        };
-        findViewById(R.id.button_report).setOnClickListener(ReportClickListener);
-
-        ((Switch)findViewById(R.id.pad_mode_switch)).setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener(){
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
-                YabausePad padv = (YabausePad)findViewById(R.id.yabause_pad);
-
-               if( isChecked ) {
-                   Yabause.this.padm.setAnalogMode(PadManager.MODE_ANALOG);
-                   YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG);
-                   padv.setPadMode(PadManager.MODE_ANALOG);
-               }else{
-                   Yabause.this.padm.setAnalogMode(PadManager.MODE_HAT);
-                   YabauseRunnable.switch_padmode(PadManager.MODE_HAT);
-                   padv.setPadMode(PadManager.MODE_HAT);
-               }
-
-                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(Yabause.this);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putBoolean("pref_analog_pad", isChecked);
-                editor.apply();
-
-                Yabause.this.showBottomMenu();
-
-            }
-        });
-
-
-        handler = new YabauseHandler(this);
-        yabauseThread = new YabauseRunnable(this);
+                break;
+        }
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
     }
 
     @Override
@@ -563,7 +597,8 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
     @Override
     protected void onActivityResult( int requestCode, int resultCode, Intent data) {
     	switch(requestCode){
-    	    case R.id.save_screen:
+    	    case 0x01:
+                 waiting_reault = false;
                  showBottomMenu();
                 break;
     	}
@@ -638,38 +673,21 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
 
     private boolean menu_showing = false;
     private void showBottomMenu(){
-        View v = findViewById(R.id.menu_view);
-
-        if(menu_showing == false) {
-            YabauseRunnable.pause();
-            audio.mute(audio.SYSTEM);
-
-            v.setVisibility(View.VISIBLE);
-            v.setTranslationY(0);
-            v.invalidate();
-
-            //ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(v, "translationY", v.getHeight(), 0);
-            //objectAnimator.setDuration(1000);
-            //objectAnimator.start();
-
-            View button = findViewById(R.id.button_screen_shot);
-            button.requestFocus();
-            menu_showing = true;
-        }else{
+        if ( menu_showing == true ) {
+            menu_showing = false;
             YabauseRunnable.resume();
             audio.unmute(audio.SYSTEM);
-
-            v.setVisibility(View.GONE);
-            v.setTranslationY(v.getHeight());
-            v.invalidate();
-
-            //ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(v, "translationY", 0, v.getHeight());
-            //objectAnimator.setDuration(1000);
-            //objectAnimator.start();
-
-            View button = findViewById(R.id.yabause_view);
-            button.requestFocus();
-            menu_showing = false;
+             this.mDrawerLayout.closeDrawer(GravityCompat.START);
+        } else {
+            menu_showing = true;
+            YabauseRunnable.pause();
+            audio.mute(audio.SYSTEM);
+            String name = YabauseRunnable.getGameTitle();
+            TextView tx = (TextView)findViewById(R.id.menu_title);
+            if( tx != null ) {
+                tx.setText(name);
+            }
+            this.mDrawerLayout.openDrawer(GravityCompat.START);
         }
     }
 
@@ -682,13 +700,7 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
                 Toast.makeText(Yabause.this, Yabause.this.errmsg, Toast.LENGTH_LONG).show();
             }
         });
-/*
-        Message message = handler.obtainMessage();
-        Bundle bundle = new Bundle();
-        bundle.putString("message", msg);
-        message.setData(bundle);
-        handler.sendMessage(message);
-*/
+
     }
 
     private void readPreferences() {
@@ -815,7 +827,7 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
         Log.d(TAG, "setSoundEngine " + isound.toString());
 
         boolean analog = sharedPref.getBoolean("pref_analog_pad", false);
-        ((Switch)findViewById(R.id.pad_mode_switch)).setChecked(analog);
+        //((Switch)findViewById(R.id.pad_mode_switch)).setChecked(analog);
         Log.d(TAG, "analog pad? " + analog);
         YabausePad padv = (YabausePad)findViewById(R.id.yabause_pad);
 
@@ -870,7 +882,7 @@ public class Yabause extends Activity implements  FileDialog.FileSelectedListene
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) {
-            View decorView = findViewById(R.id.yabause_view);
+            View decorView = findViewById(R.id.drawer_layout);
             decorView.setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                             | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION

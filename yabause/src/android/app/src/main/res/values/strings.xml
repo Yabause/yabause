@@ -2,6 +2,7 @@
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">uoYabause</string>
     <string name="menu_exit">Exit</string>
+    <string name="menu_reset">Reset</string>
     <string name="menu_save_state">Save State</string>
     <string name="menu_load_state">Load State</string>
     <string name="load_game">Load Game</string>
@@ -131,6 +132,9 @@
     <string name="choose_sound_engine">Choose sound engine</string>
     <string name="video_resolution">Rendering Resolution</string>
     <string name="choose_video_resolution">Choose Rendering Resolution</string>
+    <string name="open_cd_tray">Open CD Tray</string>
+    <string name="close_cd_tray">Close CD Tray</string>
+    <string name="menu_analog">Eanble Analog Control</string>
 
 </resources>
 	
