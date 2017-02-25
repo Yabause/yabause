@@ -1308,6 +1308,26 @@ Java_org_uoyabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, 
     ScspSetVolume(volume);
 }
 
+jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env) {
+	
+	char * buf;
+	
+	jstring rtn;
+	if( cdip == NULL ) return NULL;
+	buf = (char*)malloc(1024);
+	if( buf == NULL ) return NULL;
+    if( strcmp(cdip->cdinfo,"CD-1/1") == 0 ){
+        sprintf(buf,"%s",cdip->gamename);
+    }else{
+	    sprintf(buf,"%s(%s)",cdip->gamename,cdip->cdinfo);
+    }
+			
+	rtn = (*env)->NewStringUTF(env,buf);
+	free(buf);
+	return rtn;
+}
+
+
 jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env) {
 	
 	char * buf;
