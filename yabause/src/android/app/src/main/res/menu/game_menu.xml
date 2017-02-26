@@ -13,6 +13,10 @@
         android:icon="@android:drawable/ic_menu_revert"
         android:title="@string/menu_reset" />
 
+    <item android:id="@+id/menu_item_cheat"
+        android:icon="@android:drawable/ic_menu_send"
+        android:title="@string/menu_cheat" />
+
     <group
         android:id="@+id/menu_other"
         android:checkableBehavior="single">

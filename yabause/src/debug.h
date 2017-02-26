@@ -49,7 +49,7 @@ void LogStart(void);
 void LogStop(void);
 void LogChangeOutput(DebugOutType t, char * s);
 
-//#define DEBUG 1
+//#define DEBUG 0
 #ifdef DEBUG
 #define LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
