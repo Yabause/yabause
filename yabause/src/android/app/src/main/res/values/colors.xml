@@ -9,7 +9,7 @@
     <color name="img_soft_opaque">#30FF0000</color>
     <color name="img_full_opaque">#00000000</color>
     <color name="black_opaque">#AA000000</color>
-    <color name="black">#FF000000</color>
+    <color name="black">#000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="orange_transparent">#AAFADCA7</color>
     <color name="orange">#FADCA7</color>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:text="TextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/text_description"
+        android:layout_weight="0.7"
+        android:layout_gravity="center_vertical"
+        android:layout_margin="5dp" />
+
+    <ToggleButton
+        android:text="Enable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/toggleButton_enable_cheat"
+        android:layout_weight="0.1"
+        android:layout_gravity="center_vertical|end" />
+
+    <Button
+        android:text="Edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_cheat_edit"
+        android:layout_weight="0.1"
+        android:layout_gravity="center_vertical|end"
+        />
+
+    <Button
+        android:text="Del"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_delete_cheat"
+        android:layout_weight="0.1"
+        android:layout_gravity="center_vertical|end" />
+
+</LinearLayout>

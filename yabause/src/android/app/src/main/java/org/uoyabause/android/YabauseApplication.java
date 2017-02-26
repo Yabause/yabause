@@ -10,6 +10,7 @@ import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.iid.FirebaseInstanceId;
 
 /**
@@ -26,6 +27,8 @@ public class YabauseApplication extends com.activeandroid.app.Application {
         super.onCreate();
         ActiveAndroid.initialize(this);
         YabauseApplication.context = getApplicationContext();
+
+        FirebaseApp.initializeApp(YabauseApplication.context);
     }
 
     public static Context getAppContext() {

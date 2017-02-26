@@ -142,6 +142,8 @@
     <string name="open_cd_tray">Open CD Tray</string>
     <string name="close_cd_tray">Close CD Tray</string>
     <string name="menu_analog">Eanble Analog Control</string>
+    <string name="menu_cheat">Cheat</string>
+    <string name="add_new_code">Add New Code</string>
 
 </resources>
 	
