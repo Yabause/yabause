@@ -143,6 +143,8 @@ class YabauseRunnable implements Runnable
 
     public static native void switch_padmode( int mode );
 
+    public static native void updateCheat( String[] cheat_code );
+
 
     private boolean inited;
     private boolean paused;
@@ -270,9 +272,13 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
         mNavigationView = (NavigationView)findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
+        if( sharedPref.getBoolean("pref_analog_pad", false) == true) {
+            mNavigationView.setCheckedItem(R.id.pad_mode);
+        }
         DrawerLayout.DrawerListener drawerListener = new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(View view, float v) {
+
             }
 
             @Override
@@ -423,7 +429,14 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                 Yabause.this.showBottomMenu();
             }
             break;
-            case R.id.exit:
+            case R.id.menu_item_cheat: {
+                waiting_reault = true;
+                CheatEditDialog newFragment = new CheatEditDialog();
+                newFragment.setGameCode(YabauseRunnable.getCurrentGameCode(),this.cheat_codes);
+                newFragment.show(getFragmentManager(), "Cheat");
+            }
+            break;
+            case R.id.exit: {
                 YabauseRunnable.deinit();
                 try {
                     Thread.sleep(1000);
@@ -433,7 +446,8 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                 //android.os.Process.killProcess(android.os.Process.myPid());
                 finish();
                 android.os.Process.killProcess(android.os.Process.myPid());
-                break;
+            }
+            break;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -527,6 +541,20 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
     static final int REPORT_STATE_FAIL_CONNECTION = -2;
     static final int REPORT_STATE_FAIL_AUTH = -3;
     public int _report_status = REPORT_STATE_INIT;
+
+    String[] cheat_codes = null;
+    void updateCheatCode( String[] cheat_codes ){
+
+        this.cheat_codes = cheat_codes;
+
+        YabauseRunnable.updateCheat(cheat_codes);
+
+        if( waiting_reault ) {
+            waiting_reault = false;
+            YabauseRunnable.resume();
+            audio.unmute(audio.SYSTEM);
+        }
+    }
 
     void doReportCurrentGame( int rating, String message, boolean screenshot ){
         current_report = new ReportContents();

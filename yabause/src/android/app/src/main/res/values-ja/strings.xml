@@ -100,5 +100,6 @@
     <string name="open_cd_tray">CDのふたを開ける</string>
     <string name="close_cd_tray">CDのふたを閉じる</string>
     <string name="menu_analog">アナログ有効</string>
+    <string name="menu_cheat">チート</string>
 
 </resources>
