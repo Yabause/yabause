@@ -6,6 +6,7 @@ import com.activeandroid.ActiveAndroid;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
+import com.google.firebase.FirebaseApp;
 
 /**
  * Created by shinya on 2015/12/30.
@@ -20,6 +21,8 @@ public class YabauseApplication extends com.activeandroid.app.Application {
         super.onCreate();
         ActiveAndroid.initialize(this);
         YabauseApplication.context = getApplicationContext();
+
+        FirebaseApp.initializeApp(YabauseApplication.context);
     }
 
     public static Context getAppContext() {

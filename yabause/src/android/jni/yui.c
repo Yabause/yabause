@@ -1327,6 +1327,35 @@ jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env) {
 	return rtn;
 }
 
+void Java_org_uoyabause_android_YabauseRunnable_updateCheat(JNIEnv *env, jobject object, jobjectArray stringArray) {
+
+    if( stringArray == NULL || (*env)->GetArrayLength(env,stringArray) == 0 ){
+        CheatClearCodes();    
+        return;
+    }
+
+    int stringCount = (*env)->GetArrayLength(env,stringArray);
+    int i = 0;
+    int index = 0;
+    char *rawString;
+
+    CheatClearCodes();
+    for (i=0; i<stringCount; i++) {
+        jstring string = (jstring) ((*env)->GetObjectArrayElement(env,stringArray, i));
+        if( string == NULL ){
+            continue;
+        }
+        rawString = (*env)->GetStringUTFChars(env,string, 0);
+        // Don't forget to call `ReleaseStringUTFChars` when you're done.
+
+        index = CheatAddARCode(rawString);
+        CheatEnableCode(index);
+        (*env)->ReleaseStringUTFChars(env,string,rawString);
+    }
+    // CheatDoPatches(); will call at  Vblank-in
+    return;
+}
+
 
 jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env) {
 	
