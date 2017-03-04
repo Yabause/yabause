@@ -31,6 +31,7 @@ import com.activeandroid.annotation.Table;
 @Table(name = "Cheat")
 public class Cheat extends Model {
     public String key;
+    public boolean local = true;
 
     @Column(name = "gameid")
     public String gameid;
