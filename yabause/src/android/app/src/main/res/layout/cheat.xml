@@ -10,8 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="0.8"
         android:id="@+id/list_cheats"
-        android:focusable="false"
-        android:focusableInTouchMode="false" />
+    />
 
     <LinearLayout
         android:orientation="vertical"
