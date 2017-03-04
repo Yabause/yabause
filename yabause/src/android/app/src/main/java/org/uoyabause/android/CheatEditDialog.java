@@ -277,6 +277,11 @@ public class CheatEditDialog extends DialogFragment implements AdapterView.OnIte
 
             final Activity activity = getActivity();
 
+            if( parent.Cheats.get(position).local == false ){
+                CharSequence[]  clouditems = {"Enable"};
+                items = clouditems;
+            }
+
             if( isEnable == true ){
                 items[0] = "Disable";
             }
@@ -350,6 +355,7 @@ public class CheatEditDialog extends DialogFragment implements AdapterView.OnIte
                         newitem.description = (String)child.child("description").getValue();
                         newitem.cheat_code = (String)child.child("cheat_code").getValue();
                         newitem.enable = false;
+                        newitem.local = false;
                         CheatAdapter.add(newitem);
                     }
 
