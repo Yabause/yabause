@@ -25,14 +25,15 @@
         android:layout_height="wrap_content"
         android:id="@+id/textView3" />
 
+
     <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:digits="0123456789ABCDEF "
-        android:maxLines="1"
-        android:imeOptions="actionDone"
-        android:inputType="textCapCharacters"
+        android:digits="0123456789ABCDEF \n"
+        android:inputType="textCapCharacters|textMultiLine"
         android:ems="10"
+        android:maxLines="64"
+        android:scrollbars="vertical"
         android:id="@+id/editText_code" />
 
     <LinearLayout
