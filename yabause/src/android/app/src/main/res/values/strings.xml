@@ -138,5 +138,24 @@
     <string name="menu_cheat">Cheat</string>
     <string name="add_new_code">Add New Code</string>
 
+    <string name="enable">Enable</string>
+    <string name="disable">Disable</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="select_game_directory">Select Game Directory</string>
+
+
+    <string name="sound_curent">Current(High quality version for high-end devices)</string>
+    <string name="sound_legacy">Legacy(for low-end devices)</string>
+
+    <string name="res_native">Native(native resolution of this android device)</string>
+    <string name="res_4x">4x</string>
+    <string name="res_2x">2x</string>
+    <string name="res_original">Original</string>
+
+    <string name="poly_triangle">Triangle using perspective correction</string>
+    <string name="poly_cpu_tess">CPU Tessellation</string>
+    <string name="poly_gpu_tess">GPU Tessellation</string>
+
 </resources>
 	
