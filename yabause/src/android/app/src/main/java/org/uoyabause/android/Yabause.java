@@ -116,6 +116,7 @@ class YabauseRunnable implements Runnable
     public static native int init(Yabause yabause);
     public static native void deinit();
     public static native void exec();
+    public static native void reset();
     public static native void press(int key, int player);
     public static native void axis(int key, int player, int val);
     public static native void release(int key, int player);
@@ -141,11 +142,8 @@ class YabauseRunnable implements Runnable
     public static native void setResolutionMode( int resoution_mode );
     public static native void openTray();
     public static native void closeTray();
-
     public static native void switch_padmode( int mode );
-
     public static native void updateCheat( String[] cheat_code );
-
 
     private boolean inited;
     private boolean paused;
@@ -379,6 +377,9 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                 startActivityForResult(Intent.createChooser(shareIntent, "share screenshot to"), 0x01);
             }
             break;
+            case R.id.reset:
+                YabauseRunnable.reset();
+                break;
             case R.id.report:
                 startReport();
                 break;
