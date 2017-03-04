@@ -1,21 +1,27 @@
 package org.uoyabause.android;
 
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.database.DataSetObserver;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
 import android.widget.Button;
@@ -24,8 +30,11 @@ import android.widget.EditText;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -39,30 +48,17 @@ import java.util.List;
 /**
  * Created by shinya on 2017/02/25.
  */
-class Cheat {
-    public String key;
-    public String description;
-    public String cheat_code;
-    public boolean enable;
-
-    public Cheat(){
-
-    }
-    public Cheat( String description, String cheat_code){
-        this.description = description;
-        this.cheat_code = cheat_code;
-        this.enable = false;
-    }
-}
 
 class CheatListAdapter extends BaseAdapter implements ListAdapter {
-    private ArrayList<Cheat> list = new ArrayList<Cheat>();
+    private List<Cheat> list = new ArrayList<Cheat>();
     private Context context;
     private CheatEditDialog parent;
 
 
-    public CheatListAdapter(CheatEditDialog parent, ArrayList<Cheat> list, Context context) {
-        this.list = list;
+    public CheatListAdapter(CheatEditDialog parent, List<Cheat> list, Context context) {
+        if( list != null ) {
+            this.list = list;
+        }
         this.parent = parent;
         this.context = context;
     }
@@ -95,7 +91,14 @@ class CheatListAdapter extends BaseAdapter implements ListAdapter {
         TextView listItemText = (TextView)view.findViewById(R.id.text_description);
         listItemText.setText(list.get(position).description);
 
+        if( list.get(position).enable ){
+            listItemText.setTextColor( ContextCompat.getColor(context,R.color.colorAccent) );
+        }else{
+            listItemText.setTextColor( ContextCompat.getColor(context,R.color.disable) );
+        }
+
         //Handle buttons and add onClickListeners
+/*
         Button deleteBtn = (Button)view.findViewById(R.id.button_delete_cheat);
         Button addBtn = (Button)view.findViewById(R.id.button_cheat_edit);
         ToggleButton enableBtn = (ToggleButton)view.findViewById(R.id.toggleButton_enable_cheat);
@@ -109,15 +112,6 @@ class CheatListAdapter extends BaseAdapter implements ListAdapter {
             }
         });
 
-/*
-        enableBtn.setOnCheckedChangeListener( new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton toggleButton, boolean isChecked) {
-                //setItemChecked(position,isChecked);
-                list.get(position).enable = isChecked;
-            }
-        }) ;
-*/
         deleteBtn.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
@@ -130,7 +124,7 @@ class CheatListAdapter extends BaseAdapter implements ListAdapter {
                 CheatListAdapter.this.parent.EditCheat(position);
             }
         });
-
+*/
         return view;
     }
 
@@ -146,20 +140,18 @@ class CheatListAdapter extends BaseAdapter implements ListAdapter {
 }
 
 
-public class CheatEditDialog extends DialogFragment {
+public class CheatEditDialog extends DialogFragment implements AdapterView.OnItemClickListener {
 
     private DatabaseReference mDatabase;
-    private String mGameCode;
+    protected String mGameCode;
     ListView mListView;
-    private ArrayList<Cheat> Cheats = new ArrayList<Cheat>();
+    protected List<Cheat> Cheats = new ArrayList<Cheat>();
     CheatListAdapter CheatAdapter;
     //List<Cheat> Cheats;
     String[] mCheatListCode;
     ArrayAdapter<String> adapter;
 
     View mContent;
-    Animation inAnimation;
-    Animation outAnimation;
 
     int editing_ = -1;
 
@@ -194,6 +186,8 @@ public class CheatEditDialog extends DialogFragment {
         activity.updateCheatCode(mCheatListCode);
     }
 
+
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
@@ -201,15 +195,148 @@ public class CheatEditDialog extends DialogFragment {
             return null;
         }
 
-        Cheats = new ArrayList<Cheat>();
-        CheatAdapter = new CheatListAdapter(this,Cheats,getActivity());
+        if( LoadData(mGameCode) == -1 ) {
+            return null;
+        }
 
-        mDatabase = FirebaseDatabase.getInstance().getReference().child("cheats").child(mGameCode);
-        if( mDatabase == null){
+        if( Cheats == null ){
             return null;
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        LayoutInflater inflater = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mContent = inflater.inflate(R.layout.cheat, null);
+        builder.setView(mContent);
+        mListView = (ListView)mContent.findViewById(R.id.list_cheats);
+        mListView.setAdapter(CheatAdapter);
+        mListView.setOnItemClickListener(this);
+        //getActivity().registerForContextMenu(mListView);
+
+        View edit_view = mContent.findViewById(R.id.edit_cheat_view);
+        edit_view.setVisibility(View.GONE);
+
+        // Add new item
+        Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
+        add_new_button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                View edit_view = mContent.findViewById(R.id.edit_cheat_view);
+                edit_view.setVisibility(View.VISIBLE);
+                Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
+                add_new_button.setVisibility(View.GONE);
+                View desc = mContent.findViewById(R.id.editText_cheat_desc);
+                desc.requestFocus();
+                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.showSoftInput(desc, InputMethodManager.SHOW_IMPLICIT);
+                editing_ = -1;
+            }
+        });
+
+        // Apply Button
+        Button button_apply = (Button)mContent.findViewById(R.id.button_cheat_edit_apply);
+        button_apply.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+
+                EditText  desc = (EditText )mContent.findViewById(R.id.editText_cheat_desc);
+                EditText  ccode = (EditText)mContent.findViewById(R.id.editText_code);
+
+                View edit_view = mContent.findViewById(R.id.edit_cheat_view);
+                edit_view.setVisibility(View.GONE);
+                Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
+                add_new_button.setVisibility(View.VISIBLE);
+
+                // new item
+                if( editing_ == -1 ){
+                    NewItem( mGameCode, desc.getText().toString(), ccode.getText().toString() );
+                }else{
+                    UpdateItem( editing_ , mGameCode, desc.getText().toString(), ccode.getText().toString() );
+                }
+
+            }
+        });
+
+        Button button_cancel = (Button)mContent.findViewById(R.id.button_edit_cheat_cancel);
+        button_cancel.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                View edit_view = mContent.findViewById(R.id.edit_cheat_view);
+                edit_view.setVisibility(View.GONE);
+                Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
+                add_new_button.setVisibility(View.VISIBLE);
+            }
+        });
+        return builder.create();
+    }
+
+    public static class MenuDialogFragment extends DialogFragment {
+
+        public boolean isEnable = false;
+        public int position;
+        public CheatEditDialog parent;
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            CharSequence[] items = {"Enable", "Edit", "Delete"};
+
+            final Activity activity = getActivity();
+
+            if( isEnable == true ){
+                items[0] = "Disable";
+            }
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+            builder.setItems(items, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    switch (which) {
+                        case 0:
+                            parent.Cheats.get(position).enable = !isEnable;
+                            parent.CheatAdapter.notifyDataSetChanged();
+                            break;
+                        case 1:
+                            parent.EditCheat(position);
+                            break;
+                        case 2:
+                            parent.RemoveCheat(position);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+            return builder.create();
+        }
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id){
+        // ダイアログを表示する
+        MenuDialogFragment newFragment = new MenuDialogFragment();
+        newFragment.isEnable = Cheats.get(position).enable;
+        newFragment.position = position;
+        newFragment.parent = this;
+        newFragment.show(getFragmentManager(), "cheat_edit_menu");
+    }
+
+    void NewItem( String gameid, String desc, String value ){
+        String key = mDatabase.push().getKey();
+        mDatabase.child(key).child("description").setValue(desc);
+        mDatabase.child(key).child("cheat_code").setValue(value);
+    }
+
+    void UpdateItem( int index , String gameid, String desc, String value ){
+        mDatabase.child(Cheats.get(index).key).child("description").setValue(desc);
+        mDatabase.child(Cheats.get(index).key).child("cheat_code").setValue(value);
+    }
+
+    public void Remove( int index ) {
+        mDatabase.child(Cheats.get(index).key).removeValue();
+    }
+
+    public int LoadData( String gameid ) {
+        Cheats = new ArrayList<Cheat>();
+        CheatAdapter = new CheatListAdapter(this,Cheats,getActivity());
+        mDatabase = FirebaseDatabase.getInstance().getReference().child("cheats").child(mGameCode);
+        if( mDatabase == null){
+            return -1;
+        }
+
         ValueEventListener cheatDataListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -243,77 +370,10 @@ public class CheatEditDialog extends DialogFragment {
             }
             @Override
             public void onCancelled(DatabaseError databaseError) {
-             }
+            }
         };
         mDatabase.addValueEventListener(cheatDataListener);
-
-        LayoutInflater inflater = (LayoutInflater)getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mContent = inflater.inflate(R.layout.cheat, null);
-        builder.setView(mContent);
-        mListView = (ListView)mContent.findViewById(R.id.list_cheats);
-        mListView.setAdapter(CheatAdapter);
-
-        // Edit
-        inAnimation = (Animation) AnimationUtils.loadAnimation(getActivity(), R.anim.in_animation);
-        outAnimation= (Animation) AnimationUtils.loadAnimation(getActivity(), R.anim.out_animation);
-
-        View edit_view = mContent.findViewById(R.id.edit_cheat_view);
-        edit_view.setVisibility(View.GONE);
-
-        // Add new item
-        Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
-        add_new_button.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                View edit_view = mContent.findViewById(R.id.edit_cheat_view);
-                edit_view.startAnimation(inAnimation);
-                edit_view.setVisibility(View.VISIBLE);
-                Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
-                add_new_button.setVisibility(View.GONE);
-                View desc = mContent.findViewById(R.id.editText_cheat_desc);
-                desc.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                imm.showSoftInput(desc, InputMethodManager.SHOW_IMPLICIT);
-                editing_ = -1;
-            }
-        });
-
-        // Apply Button
-        Button button_apply = (Button)mContent.findViewById(R.id.button_cheat_edit_apply);
-        button_apply.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-
-                EditText  desc = (EditText )mContent.findViewById(R.id.editText_cheat_desc);
-                EditText  ccode = (EditText)mContent.findViewById(R.id.editText_code);
-
-                View edit_view = mContent.findViewById(R.id.edit_cheat_view);
-                edit_view.startAnimation(outAnimation);
-                edit_view.setVisibility(View.GONE);
-                Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
-                add_new_button.setVisibility(View.VISIBLE);
-
-                // new item
-                if( editing_ == -1 ){
-                    String key = mDatabase.push().getKey();
-                    mDatabase.child(key).child("description").setValue(desc.getText().toString());
-                    mDatabase.child(key).child("cheat_code").setValue(ccode.getText().toString());
-                }else{
-                     mDatabase.child(Cheats.get(editing_).key).child("description").setValue(desc.getText().toString());
-                    mDatabase.child(Cheats.get(editing_).key).child("cheat_code").setValue(ccode.getText().toString());
-                }
-            }
-        });
-
-        Button button_cancel = (Button)mContent.findViewById(R.id.button_edit_cheat_cancel);
-        button_cancel.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                View edit_view = mContent.findViewById(R.id.edit_cheat_view);
-                edit_view.startAnimation(outAnimation);
-                edit_view.setVisibility(View.GONE);
-                Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
-                add_new_button.setVisibility(View.VISIBLE);
-            }
-        });
-        return builder.create();
+        return 0;
     }
 
     public void RemoveCheat( int pos ){
@@ -324,20 +384,15 @@ public class CheatEditDialog extends DialogFragment {
                 .setPositiveButton("YES", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        CheatEditDialog.this.removeCurrent();
+                        CheatEditDialog.this.Remove( editing_ );
                     }
                 })
                 .setNegativeButton("No", null)
                 .show();
     }
 
-    public void removeCurrent(){
-        mDatabase.child(Cheats.get(editing_).key).removeValue();
-    }
-
     public void EditCheat( int pos ){
         View edit_view = mContent.findViewById(R.id.edit_cheat_view);
-        edit_view.startAnimation(inAnimation);
         edit_view.setVisibility(View.VISIBLE);
         Button add_new_button = (Button)mContent.findViewById(R.id.add_new_cheat);
         add_new_button.setVisibility(View.GONE);

@@ -11,6 +11,7 @@
     <color name="black_opaque">#AA000000</color>
     <color name="black">#000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="disable">#FF808080</color>
     <color name="orange_transparent">#AAFADCA7</color>
     <color name="orange">#FADCA7</color>
     <color name="yellow">#EEFF41</color>
