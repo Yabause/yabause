@@ -115,5 +115,6 @@
     <string name="res_original">オリジナル(サターンの解像度)</string>
     <string name="sound_curent">最新(クオリティは高いが遅い)</string>
     <string name="sound_legacy">旧エンジン(クオリティは低いが速い)</string>
+    <string name="poly_triangle">パースペクティブコレクション</string>
 
 </resources>
