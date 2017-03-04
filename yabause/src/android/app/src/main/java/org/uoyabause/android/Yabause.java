@@ -1,5 +1,5 @@
 /*  Copyright 2011-2013 Guillaume Duhamel
-	Copyright 2015 devMiyax(Shinya Miyamoto)
+	Copyright 2015-2017 devMiyax(devmiyax@gmail.com)
 
     This file is part of Yabause.
 
