@@ -65,7 +65,7 @@
 	<string name="exit">終了</string>
 	<string name="ignore">無視</string>
 	
-	<string name="opengl_video_interface">OpenGL Video Interface</string>
+	<string name="opengl_video_interface">OpenGL描画</string>
 	<string name="software_video_interface">ソフトウェア描画</string>
 	<string name="onscreen_pad">オンスクリーンパッド</string>
 	<string name="select_from_other_directory">他のディレクトリから選択</string>
@@ -94,5 +94,19 @@
     <string name="close_cd_tray">CDのふたを閉じる</string>
     <string name="menu_analog">アナログ有効</string>
     <string name="menu_cheat">チート</string>
+    <string name="add_new_code">チートコードを追加</string>
+    <string name="delete">削除</string>
+    <string name="disable">無効化</string>
+    <string name="enable">有効化</string>
+    <string name="edit">編集</string>
+    <string name="select_game_directory">ゲームディレクトリの選択</string>
+    <string name="polygon_generation_type">ポリゴン生成方法</string>
+    <string name="dynrec_cpu_interface">ダイナミックリコンパイラ(速いけどバグあり)</string>
+    <string name="poly_cpu_tess">CPUテッセレーション</string>
+    <string name="poly_gpu_tess">GPUテッセレーション</string>
+    <string name="res_native">ネイティブ(このデバイスの解像度で描画)</string>
+    <string name="res_original">オリジナル(サターンの解像度)</string>
+    <string name="sound_curent">最新(クオリティは高いが遅い)</string>
+    <string name="sound_legacy">旧エンジン(クオリティは低いが速い)</string>
 
 </resources>

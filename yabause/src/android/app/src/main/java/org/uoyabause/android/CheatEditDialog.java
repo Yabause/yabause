@@ -277,13 +277,18 @@ public class CheatEditDialog extends DialogFragment implements AdapterView.OnIte
 
             final Activity activity = getActivity();
 
+            items[0] = getResources().getString(R.string.enable);
+            items[1] = getResources().getString(R.string.edit);
+            items[2] = getResources().getString(R.string.delete);
+
             if( parent.Cheats.get(position).local == false ){
                 CharSequence[]  clouditems = {"Enable"};
+                clouditems[0] = getResources().getString(R.string.enable);
                 items = clouditems;
             }
 
             if( isEnable == true ){
-                items[0] = "Disable";
+                items[0] = getResources().getString(R.string.disable);
             }
 
             AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
