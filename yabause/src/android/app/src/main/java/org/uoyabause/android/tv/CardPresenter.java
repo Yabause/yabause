@@ -48,8 +48,6 @@ public class CardPresenter extends Presenter {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        Log.d(TAG, "onCreateViewHolder");
-
         sDefaultBackgroundColor = parent.getResources().getColor(R.color.default_background);
         sSelectedBackgroundColor = parent.getResources().getColor(R.color.selected_background);
         mDefaultCardImage = parent.getResources().getDrawable(R.drawable.movie);
@@ -72,12 +70,7 @@ public class CardPresenter extends Presenter {
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
         GameInfo game = (GameInfo) item;
         ImageCardView cardView = (ImageCardView) viewHolder.view;
-
-        Log.d(TAG, "onBindViewHolder");
-
         cardView.setTitleText(game.game_title);
-
-
         String rate="";
         for( int i=0; i < game.rating; i++ ){
             rate += "★";
@@ -103,7 +96,6 @@ public class CardPresenter extends Presenter {
 
     @Override
     public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
-        Log.d(TAG, "onUnbindViewHolder");
         ImageCardView cardView = (ImageCardView) viewHolder.view;
         // Remove references to images so that the garbage collector can free up memory
         cardView.setBadgeImage(null);

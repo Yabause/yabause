@@ -28,6 +28,7 @@ import java.lang.Runnable;
 import java.net.URI;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.io.File;
@@ -269,6 +270,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         if( sharedPref.getBoolean("pref_analog_pad", false) == true) {
             mNavigationView.setCheckedItem(R.id.pad_mode);
         }
+
         DrawerLayout.DrawerListener drawerListener = new DrawerLayout.DrawerListener() {
             @Override
             public void onDrawerSlide(View view, float v) {
@@ -425,7 +427,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
             break;
             case R.id.menu_item_cheat: {
                 waiting_reault = true;
-                CheatEditDialog newFragment = new CheatEditDialog();
+                CheatEditDialogStandalone newFragment = new CheatEditDialogStandalone();
                 newFragment.setGameCode(YabauseRunnable.getCurrentGameCode(),this.cheat_codes);
                 newFragment.show(getFragmentManager(), "Cheat");
             }
@@ -537,10 +539,17 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
 
     String[] cheat_codes = null;
     void updateCheatCode( String[] cheat_codes ){
-
         this.cheat_codes = cheat_codes;
-
-        YabauseRunnable.updateCheat(cheat_codes);
+        int index = 0;
+        ArrayList<String> send_codes = new ArrayList<String>();
+        for( int i=0; i<cheat_codes.length; i++  ){
+            String[] tmp = cheat_codes[i].split("\n", -1);
+            for( int j =0; j<tmp.length; j++ ){
+                send_codes.add(tmp[j]);
+            }
+        }
+        String[] cheat_codes_array = (String[])send_codes.toArray(new String[0]);
+        YabauseRunnable.updateCheat(cheat_codes_array);
 
         if( waiting_reault ) {
             waiting_reault = false;

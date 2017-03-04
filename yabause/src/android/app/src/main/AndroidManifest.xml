@@ -37,10 +37,10 @@
             android:value="localgameinfo.db" />
         <meta-data
             android:name="AA_DB_VERSION"
-            android:value="1" />
+            android:value="2" />
         <meta-data
             android:name="AA_MODELS"
-            android:value="org.uoyabause.android.GameInfo, org.uoyabause.android.GameStatus" />
+            android:value="org.uoyabause.android.GameInfo, org.uoyabause.android.GameStatus, org.uoyabause.android.Cheat" />
 
         <activity
             android:name=".tv.GameSelectActivity"
