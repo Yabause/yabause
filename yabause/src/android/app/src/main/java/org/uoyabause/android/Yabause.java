@@ -554,6 +554,9 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
 
         if( waiting_reault ) {
             waiting_reault = false;
+            menu_showing = false;
+            View mainview = (View)findViewById(R.id.yabause_view);
+            mainview.requestFocus();
             YabauseRunnable.resume();
             audio.unmute(audio.SYSTEM);
         }
@@ -713,6 +716,8 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
     private void showBottomMenu(){
         if ( menu_showing == true ) {
             menu_showing = false;
+            View mainview = (View)findViewById(R.id.yabause_view);
+            mainview.requestFocus();
             YabauseRunnable.resume();
             audio.unmute(audio.SYSTEM);
              this.mDrawerLayout.closeDrawer(GravityCompat.START);
