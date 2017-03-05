@@ -123,7 +123,8 @@ enum RenderThreadMessage {
         MSG_RESUME,
         MSG_SCREENSHOT,
         MSG_OPEN_TRAY,
-        MSG_CLOSE_TRAY
+        MSG_CLOSE_TRAY,
+        MSG_RESET
 
 };
 
@@ -1136,6 +1137,15 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 }
 
 void
+Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
+{
+    yprintf("sending MSG_OPEN_TRAY");
+    pthread_mutex_lock(&g_mtxGlLock);
+    g_msg = MSG_RESET;
+    pthread_mutex_unlock(&g_mtxGlLock);    
+}
+
+void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
 	//yprintf("press: %d,%d",player,key);
@@ -1511,6 +1521,9 @@ void renderLoop()
                 pthread_mutex_lock(&g_mtxFuncSync);
                 pthread_cond_signal(&g_cndFuncSync);
                 pthread_mutex_unlock(&g_mtxFuncSync);
+                break;
+            case MSG_RESET:
+                YabauseReset();
                 break;
             default:
                 break;
