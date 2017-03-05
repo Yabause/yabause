@@ -14,12 +14,14 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.ContextMenu;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -263,6 +265,24 @@ public class CheatEditDialog extends DialogFragment implements AdapterView.OnIte
                 add_new_button.setVisibility(View.VISIBLE);
             }
         });
+
+        ((EditText)mContent.findViewById(R.id.editText_code)).setOnEditorActionListener(
+                new EditText.OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        //For ShieldTV
+                        if ( actionId == EditorInfo.IME_ACTION_NEXT) {
+                            EditText edit_view = (EditText)mContent.findViewById(R.id.editText_code);
+                            String currentstr = edit_view.getText().toString();
+                            currentstr += System.lineSeparator();
+                            edit_view.setText(currentstr);
+                            return true;
+                        }
+                        // Return true if you have consumed the action, else false.
+                        return false;
+                    }
+                });
+
         return builder.create();
     }
 
