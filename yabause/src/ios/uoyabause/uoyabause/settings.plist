@@ -12,6 +12,8 @@
 	<false/>
 	<key>cartridge</key>
 	<integer>0</integer>
+	<key>rendering resolution</key>
+	<integer>0</integer>
 	<key>builtin bios</key>
 	<true/>
 </dict>

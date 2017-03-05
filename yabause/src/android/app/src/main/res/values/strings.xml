@@ -2,6 +2,7 @@
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">uoYabause</string>
     <string name="menu_exit">Exit</string>
+    <string name="menu_reset">Reset</string>
     <string name="menu_save_state">Save State</string>
     <string name="menu_load_state">Load State</string>
     <string name="load_game">Load Game</string>
@@ -12,9 +13,10 @@
     <string name="choose_video_core">Choose Video Core</string>
     <string name="audio_output">Audio output</string>
     <string name="fps">FPS</string>
+    <string name="lock_landscape">Lock Landscape Mode</string>
     <string name="frameskip">Frameskip</string>
     <string name="keepaspectrate">Keep original aspect rate</string>
-    <string name="choose_input_device">Choose input deivce</string>
+    <string name="choose_input_device">Choose input Device</string>
     <string name="input_device_title">Player1 Input Device</string>
     <string name="input_device_title_player2">Player2 Input Device</string>
     <string name="input_device">Choose</string>
@@ -38,7 +40,7 @@
         This screen and advertisement screen will not be shown, If you have donated.
     </string>
     <string name="thank_you">Thank you for your donation!</string>
-    <string name="error_consume">Faild to consume.</string>
+    <string name="error_consume">Failed to consume.</string>
     <string name="do_donation">Donate</string>
     <string name="no_thank_you">No, Thank you.</string>
     <string name="donate_3doller">$3</string>
@@ -57,8 +59,8 @@
     <string name="axis_y">Analog Y</string>
     <string name="axis_l">Analog L Trigger</string>
     <string name="axis_r">Analog R Trigger</string>
-    <string name="l_trigger">L Triger</string>
-    <string name="r_trigger">R Triger</string>
+    <string name="l_trigger">L Trigger</string>
+    <string name="r_trigger">R Trigger</string>
     <string name="start">Start</string>
     <string name="a_button">A</string>
     <string name="b_button">B</string>
@@ -67,7 +69,8 @@
     <string name="y_button">Y</string>
     <string name="z_button">Z</string>
 
-    <string name="scale">Sacle</string>
+    <string name="scale">Scale</string>
+    <string name="transparency">Transparency</string>
     <string name="do_you_want_to_save_this_setting">Do you want to save this setting?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
@@ -92,7 +95,7 @@
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">Scanline</string>
     <string name="video_filter_bilinear">Bilinear(Enables only when Native resolution is not selected)</string>
-    <string name="browse_title" translatable="false"><![CDATA[Videos by Your Company]]></string>
+    <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
     <string name="error">Error</string>
@@ -127,10 +130,6 @@
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
     <string name="sound_engine">Sound Engine</string>
     <string name="choose_sound_engine">Choose sound engine</string>
-
-    <string name="video_resolution">Rendering Resolution</string>
-    <string name="choose_video_resolution">Choose Rendering Resolution</string>
-
     <string name="invitation_title">Send App Invite uoYabause</string>
     <string name="invitation_message">Play SEGA Saturn games using this app!</string>
     <string name="invitation_deep_link"  translatable="false" >https://b472u.app.goo.gl/YJ5F</string>
@@ -138,5 +137,32 @@
     <string name="invitation_cta">Install!</string>
     <string name="invite">Introduce</string>
     <string name="invite_message">Would you like to introduce this app?</string>
+    <string name="video_resolution">Rendering Resolution</string>
+    <string name="choose_video_resolution">Choose Rendering Resolution</string>
+    <string name="open_cd_tray">Open CD Tray</string>
+    <string name="close_cd_tray">Close CD Tray</string>
+    <string name="menu_analog">Eanble Analog Control</string>
+    <string name="menu_cheat">Cheat</string>
+    <string name="add_new_code">Add New Code</string>
+
+    <string name="enable">Enable</string>
+    <string name="disable">Disable</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="select_game_directory">Select Game Directory</string>
+
+
+    <string name="sound_curent">Current(High quality version for high-end devices)</string>
+    <string name="sound_legacy">Legacy(for low-end devices)</string>
+
+    <string name="res_native">Native(native resolution of this android device)</string>
+    <string name="res_4x">4x</string>
+    <string name="res_2x">2x</string>
+    <string name="res_original">Original</string>
+
+    <string name="poly_triangle">Triangle using perspective correction</string>
+    <string name="poly_cpu_tess">CPU Tessellation</string>
+    <string name="poly_gpu_tess">GPU Tessellation</string>
+
 </resources>
 	

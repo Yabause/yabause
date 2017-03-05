@@ -6,6 +6,7 @@
 //  Copyright © 2016年 devMiyax. All rights reserved.
 //
 
+#import <QuartzCore/QuartzCore.h>
 #import "GameViewController.h"
 #import <OpenGLES/ES2/glext.h>
 @import GameController;
@@ -14,26 +15,15 @@
 #import <AudioToolbox/AudioToolbox.h>
 #import <AudioToolbox/ExtendedAudioFile.h>
 #import "GameRevealViewController.h"
+#import "SaturnControllerKeys.h"
+#import "KeyMapper.h"
+#import "SidebarViewController.h"
 
 /** @defgroup pad Pad
  *
  * @{
  */
 
-
-#define PERPAD_UP	0
-#define PERPAD_RIGHT	1
-#define PERPAD_DOWN	2
-#define PERPAD_LEFT	3
-#define PERPAD_RIGHT_TRIGGER 4
-#define PERPAD_LEFT_TRIGGER 5
-#define PERPAD_START	6
-#define PERPAD_A	7
-#define PERPAD_B	8
-#define PERPAD_C	9
-#define PERPAD_X	10
-#define PERPAD_Y	11
-#define PERPAD_Z	12
 
 #define CART_NONE            0
 #define CART_PAR             1
@@ -65,7 +55,7 @@ BOOL _frame_skip = NO;
 BOOL _aspect_rate = NO;
 int _filter = 0;
 int _sound_engine = 0;
-
+int _rendering_resolution = 0;
 
 @interface GameViewController () {
    int command;
@@ -77,6 +67,11 @@ int _sound_engine = 0;
 @property (nonatomic, assign) int command;
 @property (nonatomic, assign) Boolean _return;
 
+@property (nonatomic,strong) KeyMapper *keyMapper;
+@property (nonatomic) BOOL isKeyRemappingMode;
+@property (nonatomic,strong) UIAlertController *remapAlertController;
+@property (nonatomic) SaturnKey currentlyMappingKey;
+@property (nonatomic,strong) NSMutableArray *remapLabelViews;
 
 - (void)setupGL;
 - (void)tearDownGL;
@@ -84,6 +79,8 @@ int _sound_engine = 0;
 @end
 
 static GameViewController *sharedData_ = nil;
+static NSDictionary *saturnKeyDescriptions;
+static NSDictionary *saturnKeyToViewMappings;
 
 int swapAglBuffer ()
 {
@@ -236,6 +233,11 @@ int GetVideFilterType(){
     return _filter;
 }
 
+int GetResolutionType(){
+    NSLog (@"GetResolutionType %d",_rendering_resolution);
+    return _rendering_resolution;
+}
+
 const char * GetCartridgePath(){
     BOOL isDir;
     NSFileManager *filemgr;
@@ -360,6 +362,7 @@ int GetPlayer2Device(){
     _aspect_rate = [[dic objectForKey: @"keep aspect rate"]boolValue];
     _filter = 0; //[0; //userDefaults boolForKey: @"filter"];
     _sound_engine = [[dic objectForKey: @"sound engine"] intValue];
+    _rendering_resolution = [[dic objectForKey: @"rendering resolution"] intValue];
     
     /*
     NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
@@ -395,28 +398,28 @@ int GetPlayer2Device(){
             
             if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
                 [self right_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_RIGHT);
+                PerKeyDown(SaturnKeyRight);
             }
             if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
                 [self left_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_LEFT);
+                PerKeyDown(SaturnKeyLeft);
             }
             if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
                 [self up_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_UP);
+                PerKeyDown(SaturnKeyUp);
             }
             if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
                 [self down_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_DOWN);
+                PerKeyDown(SaturnKeyDown);
             }
             if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
                 [self left_trigger ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_LEFT_TRIGGER);
+                PerKeyDown(SaturnKeyLeftTrigger);
             }
 
             if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
                 [self start_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_START);
+                PerKeyDown(SaturnKeyStart);
             }
         }
         
@@ -426,31 +429,31 @@ int GetPlayer2Device(){
             
             if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
                 [self a_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_A);
+                PerKeyDown(SaturnKeyA);
             }
             if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
                 [self b_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_B);
+                PerKeyDown(SaturnKeyB);
             }
             if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
                 [self c_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_C);
+                PerKeyDown(SaturnKeyC);
             }
             if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
                 [self x_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_X);
+                PerKeyDown(SaturnKeyX);
             }
             if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
                 [self y_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_Y);
+                PerKeyDown(SaturnKeyY);
             }
             if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
                 [self z_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_Z);
+                PerKeyDown(SaturnKeyZ);
             }
             if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
                 [self right_trigger ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_RIGHT_TRIGGER);
+                PerKeyDown(SaturnKeyRightTrigger);
             }
         }
         
@@ -477,31 +480,31 @@ int GetPlayer2Device(){
         
             if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
                 [self right_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_RIGHT);
+                PerKeyDown(SaturnKeyRight);
             }else{
                 [self right_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_RIGHT);
+                PerKeyUp(SaturnKeyRight);
             }
             if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
                 [self left_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_LEFT);
+                PerKeyDown(SaturnKeyLeft);
             }else{
                 [self left_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_LEFT);
+                PerKeyUp(SaturnKeyLeft);
             }
             if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
                 [self up_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_UP);
+                PerKeyDown(SaturnKeyUp);
             }else{
                 [self up_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_UP);
+                PerKeyUp(SaturnKeyUp);
             }
             if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
                 [self down_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(PERPAD_DOWN);
+                PerKeyDown(SaturnKeyDown);
             }else{
                 [self down_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_DOWN);
+                PerKeyUp(SaturnKeyDown);
             }
         }
 
@@ -512,7 +515,7 @@ int GetPlayer2Device(){
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    if( [self hasControllerConnected ] ) return;
+    if( [self hasControllerConnected ] && !self.isKeyRemappingMode ) return;
     
     int i=0;
     NSSet *allTouches = [event allTouches];
@@ -526,28 +529,38 @@ int GetPlayer2Device(){
             
             if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
                 [self right_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_RIGHT);
+                PerKeyUp(SaturnKeyRight);
             }
             if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
                 [self left_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_LEFT);
+                PerKeyUp(SaturnKeyLeft);
             }
             if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
                 [self up_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_UP);
+                PerKeyUp(SaturnKeyUp);
             }
             if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
                 [self down_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_DOWN);
+                PerKeyUp(SaturnKeyDown);
             }
             if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
                 [self left_trigger ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_LEFT_TRIGGER);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyLeftTrigger];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyLeftTrigger);
+                }
             }
 
             if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
                 [self start_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_START);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyStart];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyStart);
+                }
             }
         }
         
@@ -557,31 +570,66 @@ int GetPlayer2Device(){
             
             if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
                 [self a_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_A);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyA];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyA);
+                }
             }
             if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
                 [self b_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_B);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyB];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyB);
+                }
             }
             if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
                 [self c_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_C);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyC];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyC);
+                }
             }
             if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
                 [self x_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_X);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyX];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyX);
+                }
             }
             if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
                 [self y_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_Y);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyY];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyY);
+                }
             }
             if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
                 [self z_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_Z);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyZ];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyZ);
+                }
             }
             if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
                 [self right_trigger ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(PERPAD_RIGHT_TRIGGER);
+                if ( self.isKeyRemappingMode ) {
+                    [self showRemapControlAlertWithSaturnKey:SaturnKeyRightTrigger];
+                    return;
+                } else {
+                    PerKeyUp(SaturnKeyRightTrigger);
+                }
             }
         }
 
@@ -660,123 +708,100 @@ int GetPlayer2Device(){
 
 - (void)controllerDidDisconnect
 {
-    [self left_panel ].hidden = NO;
-    [self right_panel ].hidden = NO;
-    [self left_button ].hidden = NO;
-    [self right_button ].hidden = NO;
-    [self up_button ].hidden = NO;
-    [self down_button ].hidden = NO;
-    [self a_button ].hidden = NO;
-    [self b_button ].hidden = NO;
-    [self c_button ].hidden = NO;
-    [self x_button ].hidden = NO;
-    [self y_button ].hidden = NO;
-    [self z_button ].hidden = NO;
-    [self left_trigger ].hidden = NO;
-    [self right_trigger ].hidden = NO;
-    [self start_button ].hidden = NO;
+    [self setControllerOverlayHidden:NO];
+    [self updateSideMenu];
 }
 
 -(void)completionWirelessControllerDiscovery
 {
+    
+    void (^mfiButtonHandler)(KeyMapMappableButton,BOOL) = ^void(KeyMapMappableButton mfiButton, BOOL pressed) {
+        if ( self.isKeyRemappingMode && self.currentlyMappingKey != NSNotFound ) {
+            [self.keyMapper mapKey:self.currentlyMappingKey ToControl:mfiButton];
+            if ( self.remapAlertController != nil ) {
+                [self.remapAlertController dismissViewControllerAnimated:YES completion:nil];
+            }
+            [self.keyMapper saveKeyMapping];
+            self.currentlyMappingKey = NSNotFound;
+            [self refreshViewsWithKeyRemaps];
+        } else {
+            SaturnKey saturnKey = [self.keyMapper getMappedKeyForControl:mfiButton];
+            if ( saturnKey != NSNotFound ) {
+                if(pressed){
+                    PerKeyDown(saturnKey);
+                }else{
+                    PerKeyUp(saturnKey);
+                }
+            }
+        }
+    };
+    
     if( [GCController controllers].count >= 1 ){
         self.controller = [GCController controllers][0];
         if (self.controller.gamepad) {
             
             [self.controller.gamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_A);
-                }else{
-                    PerKeyUp(PERPAD_A);
-                }
+                mfiButtonHandler(MFI_BUTTON_A, pressed);
             }];
             
             [self.controller.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_C);
-                }else{
-                    PerKeyUp(PERPAD_C);
-                }
+                mfiButtonHandler(MFI_BUTTON_RS, pressed);
             }];
             
             [self.controller.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_Z);
-                }else{
-                    PerKeyUp(PERPAD_Z);
-                }
+                mfiButtonHandler(MFI_BUTTON_LS, pressed);
             }];
             
             [self.controller.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_LEFT_TRIGGER);
-                }else{
-                    PerKeyUp(PERPAD_LEFT_TRIGGER);
-                }
+                mfiButtonHandler(MFI_BUTTON_LT, pressed);
             }];
             
             [self.controller.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_RIGHT_TRIGGER);
-                }else{
-                    PerKeyUp(PERPAD_RIGHT_TRIGGER);
-                }
+                mfiButtonHandler(MFI_BUTTON_RT, pressed);
             }];
             
             [self.controller.gamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_X);
-                }else{
-                    PerKeyUp(PERPAD_X);
-                }
+                mfiButtonHandler(MFI_BUTTON_X, pressed);
             }];
             [self.controller.gamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_Y);
-                }else{
-                    PerKeyUp(PERPAD_Y);
-                }
+                mfiButtonHandler(MFI_BUTTON_Y, pressed);
             }];
             [self.controller.gamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                if(pressed){
-                    PerKeyDown(PERPAD_B);
-                }else{
-                    PerKeyUp(PERPAD_B);
-                }
+                mfiButtonHandler(MFI_BUTTON_B, pressed);
             }];
             [self.controller.gamepad.dpad.up setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
-                    PerKeyDown(PERPAD_UP);
+                    PerKeyDown(SaturnKeyUp);
                 }else{
-                    PerKeyUp(PERPAD_UP);
+                    PerKeyUp(SaturnKeyUp);
                 }
             }];
             [self.controller.gamepad.dpad.down setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
-                    PerKeyDown(PERPAD_DOWN);
+                    PerKeyDown(SaturnKeyDown);
                 }else{
-                    PerKeyUp(PERPAD_DOWN);
+                    PerKeyUp(SaturnKeyDown);
                 }
             }];
             [self.controller.gamepad.dpad.left setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
-                    PerKeyDown(PERPAD_LEFT);
+                    PerKeyDown(SaturnKeyLeft);
                 }else{
-                    PerKeyUp(PERPAD_LEFT);
+                    PerKeyUp(SaturnKeyLeft);
                 }
             }];
             [self.controller.gamepad.dpad.right setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
-                    PerKeyDown(PERPAD_RIGHT);
+                    PerKeyDown(SaturnKeyRight);
                 }else{
-                    PerKeyUp(PERPAD_RIGHT);
+                    PerKeyUp(SaturnKeyRight);
                 }
             }];
             [self.controller.extendedGamepad.rightThumbstick setValueChangedHandler:^(GCControllerDirectionPad *dpad, float xValue, float yValue) {
                 if(yValue >= 0.5 || yValue <= -0.5 ){
-                    PerKeyDown(PERPAD_START);
+                    PerKeyDown(SaturnKeyStart);
                 }else{
-                    PerKeyUp(PERPAD_START);
+                    PerKeyUp(SaturnKeyStart);
                 }
             }];
         }
@@ -819,24 +844,32 @@ int GetPlayer2Device(){
                                              selector:@selector(controllerDidDisconnect)
                                                  name:GCControllerDidDisconnectNotification
                                                object:nil];
-    
-    [self left_panel ].hidden = YES;
-    [self right_panel ].hidden = YES;
-    [self left_button ].hidden = YES;
-    [self right_button ].hidden = YES;
-    [self up_button ].hidden = YES;
-    [self down_button ].hidden = YES;
-    [self a_button ].hidden = YES;
-    [self b_button ].hidden = YES;
-    [self c_button ].hidden = YES;
-    [self x_button ].hidden = YES;
-    [self y_button ].hidden = YES;
-    [self z_button ].hidden = YES;
-    [self left_trigger ].hidden = YES;
-    [self right_trigger ].hidden = YES;
-    [self start_button ].hidden = YES;
-    
+    [self refreshViewsWithKeyRemaps];
+    [self setControllerOverlayHidden:YES];
     [self completionWirelessControllerDiscovery];
+    [self updateSideMenu];
+}
+
+-(void)setControllerOverlayHidden:(BOOL)hidden {
+    [self left_panel ].hidden = hidden;
+    [self right_panel ].hidden = hidden;
+    [self left_button ].hidden = hidden;
+    [self right_button ].hidden = hidden;
+    [self up_button ].hidden = hidden;
+    [self down_button ].hidden = hidden;
+    [self a_button ].hidden = hidden;
+    [self b_button ].hidden = hidden;
+    [self c_button ].hidden = hidden;
+    [self x_button ].hidden = hidden;
+    [self y_button ].hidden = hidden;
+    [self z_button ].hidden = hidden;
+    [self left_trigger ].hidden = hidden;
+    [self right_trigger ].hidden = hidden;
+    [self start_button ].hidden = hidden;
+    
+    [self.remapLabelViews enumerateObjectsUsingBlock:^(UILabel *  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        obj.hidden = [self hasControllerConnected] && hidden == NO ? NO : hidden;
+    }];
 }
 
 -(void)setPaused:(BOOL)paused
@@ -964,9 +997,39 @@ int GetPlayer2Device(){
    
     
     self.preferredFramesPerSecond =120;
-
     
-  
+    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        saturnKeyDescriptions =
+        @{
+          [NSNumber numberWithInteger:SaturnKeyA] : @"A",
+          [NSNumber numberWithInteger:SaturnKeyB] : @"B",
+          [NSNumber numberWithInteger:SaturnKeyC] : @"C",
+          [NSNumber numberWithInteger:SaturnKeyX] : @"X",
+          [NSNumber numberWithInteger:SaturnKeyY] : @"Y",
+          [NSNumber numberWithInteger:SaturnKeyZ] : @"Z",
+          [NSNumber numberWithInteger:SaturnKeyLeftTrigger] : @"LT",
+          [NSNumber numberWithInteger:SaturnKeyRightTrigger] : @"RT",
+          [NSNumber numberWithInteger:SaturnKeyStart] : @"Start",
+          };
+        
+        saturnKeyToViewMappings =
+        @{
+          [NSNumber numberWithInteger:SaturnKeyA] : _a_button,
+          [NSNumber numberWithInteger:SaturnKeyB] : _b_button,
+          [NSNumber numberWithInteger:SaturnKeyC] : _c_button,
+          [NSNumber numberWithInteger:SaturnKeyX] : _x_button,
+          [NSNumber numberWithInteger:SaturnKeyY] : _y_button,
+          [NSNumber numberWithInteger:SaturnKeyZ] : _z_button,
+          [NSNumber numberWithInteger:SaturnKeyLeftTrigger] : _left_trigger,
+          [NSNumber numberWithInteger:SaturnKeyRightTrigger] : _right_trigger,
+          [NSNumber numberWithInteger:SaturnKeyStart] : _start_button,
+          };
+    });
+    self.keyMapper = [[KeyMapper alloc] init];
+    [self.keyMapper loadFromDefaults];
+    self.remapLabelViews = [NSMutableArray array];
     [self setupGL];
 }
 
@@ -1087,6 +1150,88 @@ int GetPlayer2Device(){
     // This space intentionally left blank to complete protocol
 }
 
+#pragma mark -
+#pragma mark Key Remapping
 
+-(IBAction)startKeyRemapping:(id)sender {
+    [self refreshViewsWithKeyRemaps];
+    if ( self.isKeyRemappingMode ) {
+        self.isKeyRemappingMode = NO;
+        [self setControllerOverlayHidden:YES];
+    } else {
+        self.isKeyRemappingMode = YES;
+        [self setControllerOverlayHidden:NO];
+    }
+}
+
+-(void)refreshViewsWithKeyRemaps {
+    if ( self.remapLabelViews.count > 0 ) {
+        [self.remapLabelViews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    }
+    [self.remapLabelViews removeAllObjects];
+    
+    for (NSNumber *button in saturnKeyToViewMappings.allKeys) {
+        NSMutableString *buttonNames = [NSMutableString string];
+        NSArray *mfiButtons = [self.keyMapper getControlsForMappedKey:button.integerValue];
+        NSUInteger mfiButtonIndex = 0;
+        for (NSNumber *mfiButton in mfiButtons) {
+            if ( mfiButtonIndex++ > 0 ) {
+                [buttonNames appendString:@" / "];
+            }
+            [buttonNames appendString:[KeyMapper controlToDisplayName:mfiButton.integerValue]];
+        }
+        if ( mfiButtons.count > 0 ) {
+            UILabel *mappedLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+            mappedLabel.text = buttonNames;
+            mappedLabel.alpha = 0.6f;
+            mappedLabel.font = [UIFont boldSystemFontOfSize:16.0];
+            mappedLabel.textColor = [UIColor redColor];
+            mappedLabel.translatesAutoresizingMaskIntoConstraints = NO;
+            UIView *saturnButtonView = [saturnKeyToViewMappings objectForKey:button];
+            [self.view addSubview:mappedLabel];
+            [self.view addConstraint:[NSLayoutConstraint constraintWithItem:mappedLabel attribute:NSLayoutAttributeCenterX relatedBy:NSLayoutRelationEqual toItem:saturnButtonView attribute:NSLayoutAttributeCenterX multiplier:1.0 constant:0.0]];
+            [self.view addConstraint:[NSLayoutConstraint constraintWithItem:mappedLabel attribute:NSLayoutAttributeCenterY relatedBy:NSLayoutRelationEqual toItem:saturnButtonView attribute:NSLayoutAttributeCenterY multiplier:1.0 constant:0.0]];
+            [self.view bringSubviewToFront:mappedLabel];
+            [self.remapLabelViews addObject:mappedLabel];
+            [self.view setNeedsLayout];
+        }
+    }
+}
+
+
+-(void)showRemapControlAlertWithSaturnKey:(SaturnKey)saturnKey {
+    self.remapAlertController = [UIAlertController alertControllerWithTitle:@"Remap Key"                                                                message:[NSString stringWithFormat:@"Press a button to map the [%@] key",[saturnKeyDescriptions objectForKey:[NSNumber numberWithInteger:saturnKey]]]
+        preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancel = [UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        self.isKeyRemappingMode = NO;
+        [self setControllerOverlayHidden:YES];
+        [self.remapAlertController dismissViewControllerAnimated:YES completion:nil];
+        self.currentlyMappingKey = NSNotFound;
+    }];
+    UIAlertAction *unbind = [UIAlertAction actionWithTitle:@"Unbind" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self.keyMapper unmapKey:saturnKey];
+        self.currentlyMappingKey = NSNotFound;
+        [self refreshViewsWithKeyRemaps];
+        [self.remapAlertController dismissViewControllerAnimated:YES completion:nil];
+    }];
+    self.isKeyRemappingMode = YES;
+    [self.remapAlertController addAction:cancel];
+    [self.remapAlertController addAction:unbind];
+    self.currentlyMappingKey = saturnKey;
+    [self presentViewController:self.remapAlertController animated:YES completion:nil];
+}
+
+-(void)updateSideMenu {
+    GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+    if ( revealViewController )
+    {
+        SidebarViewController *svc = (SidebarViewController*) revealViewController.rearViewController;
+        [svc refreshContents];
+    }
+}
+
+-(BOOL)isCurrentlyRemappingControls {
+    return self.isKeyRemappingMode;
+}
 
 @end

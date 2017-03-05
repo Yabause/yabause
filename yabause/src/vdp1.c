@@ -180,6 +180,10 @@ int Vdp1Init(void) {
 
    Vdp1External.disptoggle = 1;
 
+   Vdp1Regs->TVMR = 0;
+   Vdp1Regs->FBCR = 0;
+   Vdp1Regs->PTMR = 0;
+
    return 0;
 }
 
@@ -286,11 +290,13 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
-		  LOG("Read EDSR %X\n", Vdp1Regs->EDSR );
+        FRAMELOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
          return Vdp1Regs->EDSR;
       case 0x12:
+        FRAMELOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
          return Vdp1Regs->LOPR;
       case 0x14:
+        FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
          return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
@@ -315,33 +321,54 @@ void FASTCALL Vdp1WriteByte(u32 addr, UNUSED u8 val) {
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
 
+extern YabEventQueue * vdp1_rcv_evqueue;
+
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
-   addr &= 0xFF;
-   switch(addr) {
-      case 0x0:
-         Vdp1Regs->TVMR = val;
-         break;
-      case 0x2:
-         Vdp1Regs->FBCR = val;
-         if ((Vdp1Regs->FBCR & 3) == 3)
-         {
-            Vdp1External.manualchange = 1;
-         }
-         else if ((Vdp1Regs->FBCR & 3) == 2)
-            Vdp1External.manualerase = 1;
-         break;
-      case 0x4:
-         Vdp1Regs->COPR = 0;
-         Vdp1Regs->PTMR = val;
+  addr &= 0xFF;
+  switch(addr) {
+    case 0x0:
+      Vdp1Regs->TVMR = val;
+      FRAMELOG("Write VBE=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
+    break;
+    case 0x2:
+      FRAMELOG("Write FCM=%d FCT=%d VBE=%d line = %d\n", (val & 0x02) >> 1, (val & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
+      Vdp1Regs->FBCR = val;
+      if ((Vdp1Regs->FBCR & 3) == 3) {
+        Vdp1External.manualchange = 1;
+      }
+      else if ((Vdp1Regs->FBCR & 3) == 2) {
+        Vdp1External.manualerase = 1;
+      }
+      break;
+    case 0x4:
+      FRAMELOG("Write PTMR %X line = %d", val, yabsys.LineCount);
+      Vdp1Regs->COPR = 0;
+      Vdp1Regs->PTMR = val;
 #if YAB_ASYNC_RENDERING
-		 if (val == 1){ 
-			 yabsys.wait_line_count = 220;
-			 YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
-		}
+      if (val == 1){ 
+        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW %d/%d", YaGetQueueSize(vdp1_rcv_evqueue), yabsys.LineCount);
+        if ( YaGetQueueSize(vdp1_rcv_evqueue) > 0){
+          yabsys.wait_line_count = -1;
+          do{
+            YabWaitEventQueue(vdp1_rcv_evqueue);
+          } while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
+        }
+        Vdp1Regs->EDSR >>= 1;
+        yabsys.wait_line_count = yabsys.LineCount + 50;
+        yabsys.wait_line_count %= yabsys.MaxLineCount;
+        FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
+        YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
+        YabThreadYield();
+      }
 #else
-		 if (val == 1){ LOG("VDP1: VDPEV_DIRECT_DRAW\n");  Vdp1Draw(); }
+    if (val == 1){
+      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
+        Vdp1Regs->EDSR >>= 1;
+        Vdp1Draw(); 
+        VIDCore->Vdp1DrawEnd();
+    }
 #endif
          break;
       case 0x6:
@@ -527,6 +554,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 
 void Vdp1Draw(void) 
 {
+  FRAMELOG("Vdp1Draw");
    if (!Vdp1External.disptoggle)
    {
       Vdp1NoDraw();
@@ -538,18 +566,20 @@ void Vdp1Draw(void)
    // beginning of a frame
    // BEF <- CEF
    // CEF <- 0
-   Vdp1Regs->EDSR >>= 1;
+   //Vdp1Regs->EDSR >>= 1;
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
 
    VIDCore->Vdp1DrawStart();
 
-   VIDCore->Vdp1DrawEnd();
+   //VIDCore->Vdp1DrawEnd();
 
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
    ScuSendDrawEnd();
+
+   FRAMELOG("Vdp1Draw end at %d line", yabsys.LineCount);
 
 }
 
@@ -559,7 +589,7 @@ void Vdp1NoDraw(void) {
    // beginning of a frame (ST-013-R3-061694 page 53)
    // BEF <- CEF
    // CEF <- 0
-   Vdp1Regs->EDSR >>= 1;
+   //Vdp1Regs->EDSR >>= 1;
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
 
@@ -568,7 +598,6 @@ void Vdp1NoDraw(void) {
    // we set two bits to 1
    Vdp1Regs->EDSR |= 2;
    ScuSendDrawEnd();
-   Vdp1External.manualchange = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1438,6 +1467,8 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyVdp1LocalCoordinate,
 	VIDDummVdp1ReadFrameBuffer,
 	VIDDummVdp1WriteFrameBuffer,
+  VIDDummSync,
+  VIDDummSync,
 	VIDDummyVdp2Reset,
 	VIDDummyVdp2DrawStart,
 	VIDDummyVdp2DrawEnd,

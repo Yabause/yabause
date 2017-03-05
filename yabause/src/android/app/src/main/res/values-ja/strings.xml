@@ -50,7 +50,7 @@
 	<string name="left">Left</string>
 	<string name="right">Right</string>
 	<string name="l_trigger">L Triger</string>
-	<string name="r_trigger">R Triger</string>
+	<string name="r_trigger">R Trigger</string>
 	<string name="start">Start</string>
 	<string name="a_button">A</string>
 	<string name="b_button">B</string>
@@ -66,8 +66,8 @@
 	<string name="exit">終了</string>
 	<string name="ignore">無視</string>
 	
-	<string name="opengl_video_interface">OpenGL Video Interface</string>
-	<string name="software_video_interface">Software Video Interface</string>
+	<string name="opengl_video_interface">OpenGL描画</string>
+	<string name="software_video_interface">ソフトウェア描画</string>
 	<string name="onscreen_pad">オンスクリーンパッド</string>
 	<string name="select_from_other_directory">他のディレクトリから選択</string>
     <string name="video_filter">フィルタ</string>
@@ -81,5 +81,40 @@
     <string name="invitation_title">このアプリを紹介する</string>
     <string name="invite">紹介</string>
     <string name="invite_message">このアプリを紹介しませんか？</string>
+    <string name="transparency">透明度</string>
+    <string name="lock_landscape">横画面 固定</string>
+    <string name="choose_polygon_generation_type">ポリゴン描画方法の選択</string>
+    <string name="choose_sound_engine">サウンドエンジンの選択</string>
+    <string name="choose_video_resolution">描画解像度の選択</string>
+    <string name="donation">サポート</string>
+    <string name="error">エラー</string>
+    <string name="menu_report">レポート</string>
+    <string name="menu_reset">リセット</string>
+    <string name="menu_save_screenshot">スクリーンショット</string>
+    <string name="select_bk_image">背景画像の選択</string>
+    <string name="software_cpu_interface">インタプリタCPU(遅いけど正確)</string>
+    <string name="sound_engine">サウンドエンジン</string>
+    <string name="video_filter_bilinear">バイリニア</string>
+    <string name="video_filter_scanline">スキャンライン</string>
+    <string name="video_resolution">描画解像度</string>
+    <string name="open_cd_tray">CDのふたを開ける</string>
+    <string name="close_cd_tray">CDのふたを閉じる</string>
+    <string name="menu_analog">アナログ有効</string>
+    <string name="menu_cheat">チート</string>
+    <string name="add_new_code">チートコードを追加</string>
+    <string name="delete">削除</string>
+    <string name="disable">無効化</string>
+    <string name="enable">有効化</string>
+    <string name="edit">編集</string>
+    <string name="select_game_directory">ゲームディレクトリの選択</string>
+    <string name="polygon_generation_type">ポリゴン生成方法</string>
+    <string name="dynrec_cpu_interface">ダイナミックリコンパイラ(速いけどバグあり)</string>
+    <string name="poly_cpu_tess">CPUテッセレーション</string>
+    <string name="poly_gpu_tess">GPUテッセレーション</string>
+    <string name="res_native">ネイティブ(このデバイスの解像度で描画)</string>
+    <string name="res_original">オリジナル(サターンの解像度)</string>
+    <string name="sound_curent">最新(クオリティは高いが遅い)</string>
+    <string name="sound_legacy">旧エンジン(クオリティは低いが速い)</string>
+    <string name="poly_triangle">パースペクティブコレクション</string>
 
 </resources>

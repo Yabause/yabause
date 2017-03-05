@@ -196,6 +196,15 @@ int YabWaitEventQueue( YabEventQueue * queue_t ){
     return value;
 }
 
+int YaGetQueueSize(YabEventQueue * queue_t){
+  int size = 0;
+  YabEventQueue_pthread * queue = (YabEventQueue_pthread*)queue_t;
+  pthread_mutex_lock(&(queue->mutex));
+  size = queue->size;
+  pthread_mutex_unlock(&(queue->mutex));
+  return size;
+}
+
 
 typedef struct YabMutex_pthread
 {
@@ -230,8 +239,11 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 }
 
 
+
 #define _GNU_SOURCE
 #include <sched.h>
+
+#if !(defined ARCH_IS_LINUX) || (defined ANDROID)
  
 extern int clone(int (*)(void*), void*, int, void*, ...);
 extern int unshare(int);
@@ -324,6 +336,8 @@ extern void       __sched_cpufree(cpu_set_t* set);
 #define CPU_COUNT_S(setsize, set)  __sched_cpucount((setsize), (set))
 
 extern int __sched_cpucount(size_t setsize, cpu_set_t* set);
+
+#endif
 
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {

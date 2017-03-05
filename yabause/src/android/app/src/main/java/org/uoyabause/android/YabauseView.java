@@ -1,4 +1,5 @@
 /*  Copyright 2011-2013 Guillaume Duhamel
+    Copyright 2015-2017 devMiyax(smiyaxdev@gmail.com)
 
     This file is part of Yabause.
 
@@ -16,6 +17,7 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+
 
 package org.uoyabause.android;
 

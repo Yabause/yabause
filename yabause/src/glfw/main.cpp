@@ -10,12 +10,6 @@
 #endif
 #include <GLFW/glfw3.h>
 #include <map>
-#define NANOVG_GLES3_IMPLEMENTATION
-#include "nanovg.h"
-#include "nanovg_gl.h"
-#include "perf.h"
-#include "Roboto-Bold.h"
-#include "Roboto-Regular.h"
 
 using std::map;
 
@@ -35,10 +29,16 @@ extern "C" {
 #include "cs2.h"
 #include "debug.h"
 #include "sndal.h"
+#include "osdcore.h"
 
 #ifdef _WINDOWS
-  static char biospath[256] = "E:/wkcvs/Emulation/Saturn/satourne v1.0.2p/roms/saturn_bios.bin";
-  static char cdpath[256] = "E:/gameiso/VF1.img";
+  //static char biospath[256] = "G:/wkcvs/Emulation/Saturn/satourne v1.0.2p/roms/saturn_bios.bin";
+  static char * biospath = NULL;
+  static char cdpath[256] = "C:/ext/osusume/SonycR.cue";
+  //static char cdpath[256] = "C:/ext/osusume/akumazyou/ws-dracula_x.bin";
+  //static char cdpath[256] = "C:/ext/osusume/thunder_force_v[www.segasoluce.net]/thunder_force.iso";
+  //static char cdpath[256] = "C:/ext/osusume/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn)/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn).mds";
+  //static char cdpath[256] = "C:/ext/osusume/Black Matrix (J)(Saturn)/black_matrix.bin";
   //static char cdpath[256] = "E:/gameiso/brtrck.bin";
   //static char cdpath[256] = "E:/gameiso/Sonic 3D Blast (U)(Saturn)/125 Sonic 3D Blast (U).bin";
   //static char cdpath[256] = "E:/gameiso/sonicjam.iso";
@@ -63,6 +63,9 @@ M68K_struct * M68KCoreList[] = {
 	#ifdef HAVE_Q68
 	&M68KQ68,
 	#endif
+#ifdef HAVE_MUSASHI
+  &M68KMusashi,
+#endif
 	NULL
 };
 
@@ -97,9 +100,15 @@ VideoInterface_struct *VIDCoreList[] = {
 	NULL
 };
 
+#ifdef YAB_PORT_OSD
+#include "nanovg/nanovg_osdcore.h"
+OSD_struct *OSDCoreList[] = {
+  &OSDNnovg,
+  NULL
+};
+#endif
+
 GLFWwindow* g_window = NULL;
-PerfGraph fps;
-NVGcontext* vg = NULL;
 
 void DrawDebugInfo()
 {
@@ -109,9 +118,6 @@ void DrawDebugInfo()
     glfwGetFramebufferSize(g_window, &winWidth, &winHeight);
 	pxRatio = (float)winWidth / (float)winHeight;
     glfwGetFramebufferSize(g_window, &fbWidth, &fbHeight);
-    nvgBeginFrame(vg, winWidth, winHeight, pxRatio);
-    renderGraph(vg, 5,5, &fps);
-    nvgEndFrame(vg);
 }
 
 void YuiErrorMsg(const char *string)
@@ -127,9 +133,8 @@ void YuiSwapBuffers(void)
     dt = t - prevt;
     prevt = t;
 
-    updateGraph(&fps, dt);
-    DrawDebugInfo();
 	glfwSwapBuffers(g_window);
+  SetOSDToggle(1);
 }
 
 void error_callback(int error, const char* description)
@@ -142,6 +147,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, GL_TRUE);
 
+
 	if( action == GLFW_PRESS )
 	{
 		//int yabaky = g_Keymap[key];
@@ -149,6 +155,17 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	}else if( action == GLFW_RELEASE  ){
 		//int yabaky = g_Keymap[key];
 		PerKeyUp(key);
+
+    if (key == GLFW_KEY_F1){
+      YabSaveStateSlot(".\\", 1);
+      LOG("SAVE SLOT 1");
+    }
+
+    if (key == GLFW_KEY_F2){
+      YabLoadStateSlot(".\\", 1);
+      LOG("LOAD SLOT 1");
+    }
+
 	}
 }
 
@@ -158,7 +175,7 @@ int yabauseinit()
 	yabauseinit_struct yinit;
 	void * padbits;
 
-	yinit.m68kcoretype = M68KCORE_C68K;
+  yinit.m68kcoretype = M68KCORE_MUSASHI;
 	yinit.percoretype = PERCORE_DUMMY;
 #ifdef SH2_DYNAREC
     yinit.sh2coretype = 2;
@@ -182,6 +199,11 @@ int yabauseinit()
     yinit.frameskip = 0;
     yinit.usethreads = 1;
     yinit.skip_load = 0;    
+    yinit.video_filter_type = 0;
+    yinit.polygon_generation_mode = 0;
+    yinit.use_new_scsp = 0;
+    yinit.resolution_mode = 0;
+
 	res = YabauseInit(&yinit);
     if( res == -1)
     {
@@ -210,9 +232,11 @@ int yabauseinit()
 	g_Keymap[PERPAD_LEFT] = GLFW_KEY_LEFT;
 	g_Keymap[PERPAD_START] = GLFW_KEY_ENTER;
 
-	ScspSetFrameAccurate(1);
-
-
+  OSDInit(0);
+  OSDChangeCore(OSDCORE_NANOVG);
+  
+  LogStart();
+  LogChangeOutput(DEBUG_CALLBACK, NULL);
 
 	return 0;
 }
@@ -261,7 +285,7 @@ int main( int argc, char * argcv[] )
     g_offscreen_context = glfwCreateWindow(width,height, "", NULL, g_window);
 
 	glfwMakeContextCurrent(g_window);
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
 #if defined(_USEGLEW_)
     GLenum err = glewInit();
@@ -288,24 +312,6 @@ int main( int argc, char * argcv[] )
     }
 	VIDCore->Resize(0,0,width,height,0);
 
-    vg = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG);
-    if (vg == NULL) {
-        printf("Could not init nanovg.\n");
-        return -1;
-    }
-
-    fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len,0);
-    if (fontNormal == -1) {
-        printf("Could not add font italic.\n");
-        return -1;
-    }
-    fontBold = nvgCreateFontMem(vg, "sans", Roboto_Bold_ttf, Roboto_Bold_ttf_len,0);
-    if (fontBold == -1) {
-        printf("Could not add font bold.\n");
-        return -1;
-    }
-
-    initGraph(&fps, GRAPH_RENDER_FPS, "Frame Time");
     glfwSetTime(0);
     double prevt = glfwGetTime();
 
@@ -317,7 +323,6 @@ int main( int argc, char * argcv[] )
         glfwPollEvents();
 	}
 
-    nvgDeleteGLES3(vg);
 	YabauseDeInit();
 	glfwDestroyWindow(g_window);
 	glfwTerminate();

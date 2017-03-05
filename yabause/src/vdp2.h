@@ -27,6 +27,11 @@
 
 extern u8 * Vdp2Ram;
 extern u8 * Vdp2ColorRam;
+extern u8 Vdp2ColorRamUpdated;
+extern u8 A0_Updated;
+extern u8 A1_Updated;
+extern u8 B0_Updated;
+extern u8 B1_Updated;
 
 u8 FASTCALL     Vdp2RamReadByte(u32);
 u16 FASTCALL    Vdp2RamReadWord(u32);

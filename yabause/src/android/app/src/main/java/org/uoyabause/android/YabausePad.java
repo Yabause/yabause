@@ -1,4 +1,5 @@
 /*  Copyright 2013 Guillaume Duhamel
+    Copyright 2017 devMiyax(smiyaxdev@gmail.com)
 
     This file is part of Yabause.
 
@@ -47,10 +48,12 @@ import org.uoyabause.android.PadEvent;
 class PadButton {
     protected RectF rect;
     protected int isOn;
+    protected int pointid_;
     Paint back;
     float scale;
 
     PadButton() {
+        pointid_ = -1;
         isOn = -1;
         rect = new RectF();
         scale = 1.0f;
@@ -85,12 +88,13 @@ class PadButton {
       }
     }
 
-    void On( int index ){
-      isOn = index;
+    void On( int index  ){
+        isOn = index;
     }
 
     void Off(){
-      isOn = -1;
+        isOn = -1;
+        pointid_ = -1;
     }
 
     boolean isOn( int index ){
@@ -100,14 +104,19 @@ class PadButton {
         return false;
       }
     }
-    
-    boolean isOn(){
+
+    boolean isOn( ){
         if( isOn != -1 ){
             return true;
-          }else{
-        	return false;
-          }	
+        }else{
+            return false;
+        }
     }
+
+    int getPointId(){
+        return isOn;
+    }
+
 }
 
 
@@ -220,6 +229,7 @@ public class YabausePad extends View implements OnTouchListener {
     private int _axi_x = 128;
     private int _axi_y = 128;
     private int _pad_mode = 0;
+    private float _transparent = 1.0f;
 
     public void setPadMode( int mode ){
         _pad_mode = mode;
@@ -258,7 +268,16 @@ public class YabausePad extends View implements OnTouchListener {
     public float getScale(){
     	return base_scale;
     }
-    
+
+    public void setTrans( float scale ){
+        this._transparent = scale;
+    }
+
+    public float getTrans(){
+        return _transparent;
+    }
+
+
     public void setTestmode( boolean test ){
     	this.testmode = test;
     }
@@ -273,6 +292,7 @@ public class YabausePad extends View implements OnTouchListener {
 
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getContext());
         base_scale= sharedPref.getFloat("pref_pad_scale", 0.5f);
+        _transparent = sharedPref.getFloat("pref_pad_trans",1.0f);
 
         buttons = new PadButton[PadEvent.BUTTON_LAST];
         buttons[PadEvent.BUTTON_UP]    = new DPadButton();
@@ -312,6 +332,8 @@ public class YabausePad extends View implements OnTouchListener {
             return;
         }
 
+        mPaint.setAlpha( (int)(255.0f*_transparent) );
+
         canvas.drawBitmap(bitmap_pad_left, matrix_left, mPaint);
         canvas.drawBitmap(bitmap_pad_right, matrix_right, mPaint);
         
@@ -345,147 +367,163 @@ public class YabausePad extends View implements OnTouchListener {
         this.listener = listener;
     }
 
-    public boolean onTouch(View v, MotionEvent event) {
-        int action = event.getActionMasked();
-        //int index = event.getActionIndex();
-        int cnt = event.getPointerCount();
-
-        for( int findex = 0; findex < cnt; findex++ ) {
-            int index = event.getPointerId(findex);//i番目ののpointIdを取得
-            int posx = (int) event.getX(findex);
-            int posy = (int) event.getY(findex);
-            PadEvent pe = null;
-
-            float hitsize = 15.0f * wscale * base_scale;
-            RectF hittest = new RectF((int) (posx - hitsize), (int) (posy - hitsize), (int) (posx + hitsize), (int) (posy + hitsize));
-
-            if ((action == event.ACTION_DOWN) || (action == event.ACTION_POINTER_DOWN) || (action == event.ACTION_MOVE)) {
-                for (int i = PadEvent.BUTTON_RIGHT_TRIGGER; i < (PadEvent.BUTTON_Z + 1); i++) {
-                    if (buttons[i].intersects(hittest)) {
-                        if (!testmode) YabauseRunnable.press(i, 0);
-                        buttons[i].On(index);
-                        //invalidate();
-                    } else if (buttons[i].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(i, 0);
-                        buttons[i].Off();
-                        //invalidate();
-                    }
-                }
-
-                if (_pad_mode == 0) {
-
-                    if (buttons[PadEvent.BUTTON_UP].intersects(hittest)) {
-                        if (!testmode) YabauseRunnable.press(PadEvent.BUTTON_UP, 0);
-                        buttons[PadEvent.BUTTON_UP].On(index);
-                    } else if (buttons[PadEvent.BUTTON_UP].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_UP, 0);
-                        buttons[PadEvent.BUTTON_UP].Off();
-                    }
-
-                    if (buttons[PadEvent.BUTTON_DOWN].intersects(hittest)) {
-                        if (!testmode) YabauseRunnable.press(PadEvent.BUTTON_DOWN, 0);
-                        buttons[PadEvent.BUTTON_DOWN].On(index);
-                    } else if (buttons[PadEvent.BUTTON_DOWN].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_DOWN, 0);
-                        buttons[PadEvent.BUTTON_DOWN].Off();
-                    }
-
-                    if (buttons[PadEvent.BUTTON_LEFT].intersects(hittest)) {
-                        if (!testmode) YabauseRunnable.press(PadEvent.BUTTON_LEFT, 0);
-                        buttons[PadEvent.BUTTON_LEFT].On(index);
-                    } else if (buttons[PadEvent.BUTTON_LEFT].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_LEFT, 0);
-                        buttons[PadEvent.BUTTON_LEFT].Off();
-                    }
-
-                    if (buttons[PadEvent.BUTTON_RIGHT].intersects(hittest)) {
-                        if (!testmode) YabauseRunnable.press(PadEvent.BUTTON_RIGHT, 0);
-                        buttons[PadEvent.BUTTON_RIGHT].On(index);
-                    } else if (buttons[PadEvent.BUTTON_RIGHT].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_RIGHT, 0);
-                        buttons[PadEvent.BUTTON_RIGHT].Off();
-                    }
-
-                } else {
-                    if (_analog_pad.intersects(hittest)) {
-                        _analog_pad.On(index);
-                        _axi_x = _analog_pad.getXvalue(posx);
-                        _axi_y = _analog_pad.getYvalue(posy);
-                        invalidate();
-                        if (!testmode) {
-                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x);
-                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_Y, 0, _axi_y);
-                        }
-
-                        //invalidate();
-                    } else if (_analog_pad.isOn(index)) {
-                        _analog_pad.Off();
-                        _axi_x = 128;
-                        _axi_y = 128;
-                        invalidate();
-                        if (!testmode) {
-                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x);
-                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_Y, 0, _axi_y);
-                        }
-                        //invalidate();
-                    }
-                }
-
+    private void updatePad(RectF hittest, int posx, int posy, int pointerId){
+        if (_analog_pad.intersects(hittest)) {
+            _analog_pad.On(pointerId);
+            _axi_x = _analog_pad.getXvalue(posx);
+            _axi_y = _analog_pad.getYvalue(posy);
+            invalidate();
+            if (!testmode) {
+                YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x);
+                YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_Y, 0, _axi_y);
             }
-
-            if (((action == event.ACTION_UP) || (action == event.ACTION_POINTER_UP))) {
-                for (int i = PadEvent.BUTTON_RIGHT_TRIGGER; i < (PadEvent.BUTTON_Z + 1); i++) {
-                    if (buttons[i].isOn(index)) {
-                        buttons[i].Off();
-                        if (!testmode) YabauseRunnable.release(i, 0);
-                        //invalidate();
-                    }
-                }
-
-                if (_pad_mode == 0) {
-                    if (buttons[PadEvent.BUTTON_UP].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_UP, 0);
-                        buttons[PadEvent.BUTTON_UP].Off();
-                    }
-                    if (buttons[PadEvent.BUTTON_DOWN].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_DOWN, 0);
-                        buttons[PadEvent.BUTTON_DOWN].Off();
-                    }
-                    if (buttons[PadEvent.BUTTON_LEFT].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_LEFT, 0);
-                        buttons[PadEvent.BUTTON_LEFT].Off();
-                    }
-                    if (buttons[PadEvent.BUTTON_RIGHT].isOn(index)) {
-                        if (!testmode) YabauseRunnable.release(PadEvent.BUTTON_RIGHT, 0);
-                        buttons[PadEvent.BUTTON_RIGHT].Off();
-                    }
-                } else {
-                    if (_analog_pad.isOn(index)) {
-                        _analog_pad.Off();
-                        _axi_x = 128;
-                        _axi_y = 128;
-                        if (!testmode) {
-                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x);
-                            YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_Y, 0, _axi_y);
-                        }
-                        invalidate();
-                    }
-                }
-
+        } else if (_analog_pad.isOn(pointerId)) {
+            _analog_pad.Off();
+            _axi_x = 128;
+            _axi_y = 128;
+            invalidate();
+            if (!testmode) {
+                YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x);
+                YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_Y, 0, _axi_y);
             }
         }
-/*        
-        for(int i = 0;i < PadEvent.BUTTON_LAST;i++) {
-            if( buttons[i].isOn(index) ){
-              buttons[i].Off();
-              if(!testmode) YabauseRunnable.release(i);
-              invalidate();
+    }
+    private void releasePad(int pointerId) {
+        if (_analog_pad.isOn(pointerId)) {
+            _analog_pad.Off();
+            _axi_x = 128;
+            _axi_y = 128;
+            if (!testmode) {
+                YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x);
+                YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_Y, 0, _axi_y);
             }
-        }       
-*/        
+            invalidate();
+        }
+    }
+
+    public boolean onTouch(View v, MotionEvent event) {
+
+        int action = event.getActionMasked();
+        int touchCount = event.getPointerCount();
+
+        int pointerIndex = event.getActionIndex();
+        int pointerId = event.getPointerId(pointerIndex);
+        int posx = (int) event.getX(pointerIndex);
+        int posy = (int) event.getY(pointerIndex);
+
+        float hitsize = 15.0f * wscale * base_scale;
+        RectF hittest = new RectF((int) (posx - hitsize), (int) (posy - hitsize), (int) (posx + hitsize), (int) (posy + hitsize));
+
+
+        switch (action) {
+            case MotionEvent.ACTION_DOWN:
+                for (int btnindex = 0; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
+                    if( buttons[btnindex].intersects(hittest) ) {
+                        buttons[btnindex].On(pointerId);
+                    }
+                }
+
+                if (_pad_mode == 1) {
+                    updatePad(hittest, posx, posy, pointerId);
+                }
+
+                break;
+
+            case MotionEvent.ACTION_POINTER_DOWN:
+                for (int btnindex = 0; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
+                    if( buttons[btnindex].intersects(hittest) ) {
+                        buttons[btnindex].On(pointerId);
+                    }
+                }
+                if (_pad_mode == 1) {
+                    updatePad(hittest, posx, posy, pointerId);
+                }
+
+                break;
+
+            case MotionEvent.ACTION_POINTER_UP:
+                for (int btnindex = 0; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
+                    if( buttons[btnindex].intersects(hittest) ) {
+                        buttons[btnindex].Off();
+                    }
+                }
+
+                if (_pad_mode == 1) {
+                    releasePad(pointerId);
+                }
+
+                break;
+
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                for (int btnindex = 0; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
+                    if( buttons[btnindex].intersects(hittest) ) {
+                        buttons[btnindex].Off();
+                    }
+                }
+
+                if (_pad_mode == 1) {
+                    releasePad(pointerId);
+                }
+
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+
+                for(int index = 0; index < touchCount; index++) {
+
+                    int eventID2 = event.getPointerId(index);
+                    float x2 =event.getX(index);
+                    float y2 =event.getY(index);
+
+                    RectF hittest2 = new RectF((int) (x2 - hitsize), (int) (y2 - hitsize), (int) (x2 + hitsize), (int) (y2 + hitsize));
+
+                    for (int btnindex = 0; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
+                        if( eventID2 ==  buttons[btnindex].getPointId() ){
+                            if(  buttons[btnindex].intersects(hittest2) == false ){
+                                buttons[btnindex].Off();
+                            }
+                        } else if(  buttons[btnindex].intersects(hittest2) ) {
+                            buttons[btnindex].On(eventID2);
+                        }
+                    }
+
+                    if (_pad_mode == 1) {
+                        updatePad(hittest2, (int)x2, (int)y2, eventID2);
+                    }
+               }
+               break;
+        }
+
+        if (!testmode) {
+
+            if (_pad_mode == 0) {
+
+                for (int btnindex = 0; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
+                    if (buttons[btnindex].isOn()) {
+                        YabauseRunnable.press(btnindex, 0);
+                    } else {
+                        YabauseRunnable.release(btnindex, 0);
+                    }
+                }
+            }else{
+                for (int btnindex = PadEvent.BUTTON_RIGHT_TRIGGER; btnindex < PadEvent.BUTTON_LAST; btnindex++) {
+                    if (buttons[btnindex].isOn()) {
+                        YabauseRunnable.press(btnindex, 0);
+                    } else {
+                        YabauseRunnable.release(btnindex, 0);
+                    }
+                }
+            }
+        }
+
+
         if( testmode ){
         	status = "";
-        	status += "UP:";
+            status += "START:";
+            if( buttons[PadEvent.BUTTON_START].isOn() ) status += "ON "; else status += "OFF ";
+
+            status += "\nUP:";
         	if( buttons[PadEvent.BUTTON_UP].isOn() ) status += "ON "; else status += "OFF "; 
         	status += "DOWN:";
         	if( buttons[PadEvent.BUTTON_DOWN].isOn() ) status += "ON "; else status += "OFF "; 
@@ -519,12 +557,9 @@ public class YabausePad extends View implements OnTouchListener {
             if( _analog_pad.isOn() ) status += "ON " + _axi_y; else status += "OFF " + _axi_y;
 
         }
- 
         if ((listener != null) ) {
              listener.onPad(null);
-            return true;
         }
-
         return true;
     }
 
@@ -540,10 +575,16 @@ public class YabausePad extends View implements OnTouchListener {
         
         float dens = getResources().getDisplayMetrics().density;
         dens /= 2.0;
-        
-        wscale = (float)width / basewidth ; 
-        hscale = (float)height / baseheight;    
-        
+
+
+        if (width > height) {
+            wscale = (float) width / basewidth;
+            hscale = (float) height / baseheight;
+        }else{
+            wscale = (float) width / baseheight;
+            hscale = (float) height / basewidth;
+        }
+
         int bitmap_height = bitmap_pad_right.getHeight();
     	
         matrix_right.reset();
@@ -595,7 +636,7 @@ public class YabausePad extends View implements OnTouchListener {
         matrix_left.reset();
         matrix_left.postTranslate(0, - bitmap_pad_right.getHeight());
         matrix_left.postScale(base_scale*wscale/dens, base_scale*hscale/dens);
-        matrix_left.postTranslate(0, height);        
+        matrix_left.postTranslate(0, height);
         
         setMeasuredDimension(width, height);
     }

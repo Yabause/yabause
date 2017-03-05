@@ -57,6 +57,7 @@ static void OSDNanovgReset(void);
 static void OSDNanovgDisplayMessage(OSDMessage_struct * message,pixel_t * buffer, int w, int h);
 static void OSDNanovgAddFrameProfileData( char * label, u32 data );
 static int OSDNanovgUseBuffer(void);
+void OSDNanovgAddLogString(char * log);
 
 OSD_struct OSDNnovg = {
     OSDCORE_NANOVG,
@@ -66,7 +67,8 @@ OSD_struct OSDNnovg = {
     OSDNanovgReset,
     OSDNanovgDisplayMessage,
 	OSDNanovgUseBuffer,
-	OSDNanovgAddFrameProfileData
+	OSDNanovgAddFrameProfileData,
+  OSDNanovgAddLogString
 };
 
 static NVGcontext* vg = NULL;
@@ -143,6 +145,20 @@ void OSDPushMessageDirect( char * msg ){
 }
 #endif
 
+#define MAX_LOG_HISTORY (256)
+static char log_histroy[MAX_LOG_HISTORY][128];
+static int current_log_history_index = 0;
+
+void OSDNanovgAddLogString(char * log){
+  int index;
+  index = current_log_history_index;
+  strncpy(log_histroy[index], log, 128);
+  current_log_history_index++;
+  if (current_log_history_index >= MAX_LOG_HISTORY){
+    current_log_history_index = 0;
+  }
+}
+
 
 void OSDNanovgAddFrameProfileData( char * label, u32 data ){
 	int index;
@@ -195,106 +211,118 @@ NVGcolor graph_colors[MAX_PROFILE_CNT]={
 
 void ProfileDrawGraph(){
 	int i,j;
-	int historyindx;
-	float targetY = 500.0f;
-	
-	if( current_history_index<MAX_HISTORY ){
-		current_history_index++;
-		return;
-	} 
-	
-	historyindx = current_history_index % MAX_HISTORY;
-	
-	if( frameinfo_histroy[historyindx].cnt == 0 ){
-		return;
-	}
+int historyindx;
+float targetY = 500.0f;
 
-	float startX = 0.0f;
-	float width = 32.0f;
-	
-	for( i=0; i< MAX_HISTORY; i++ ){
-		
-		float startY = 32;
-		for( j=0; j<frameinfo_histroy[historyindx].cnt; j++ ){
-			
-			float height = frameinfo_histroy[historyindx].time[j] * targetY/16666.0f;
-			nvgBeginPath(vg);
-			nvgRect(vg, startX,startY, width,height);
-			nvgFillColor(vg, graph_colors[j]);
-			nvgFill(vg);
-			startY += height;
-		}
-		
-		if( i ==(MAX_HISTORY-1) ) {
-			float textY = 32;
-			for( j=0; j<frameinfo_histroy[historyindx].cnt; j++ ){
-				char buf[128];
-				nvgFillColor(vg, nvgRGBA(255,255,255,255));
-				sprintf(buf,"%s:%d",frameinfo_histroy[historyindx].label[j],(int)(frameinfo_histroy[historyindx].time[j]));
-				nvgText(vg, startX + width, textY,buf, NULL);
-				textY += 24;
-			}
-		}
-		
-		startX += width;
-		historyindx = (historyindx+1) % MAX_HISTORY;
-	}
-	
+if (current_history_index < MAX_HISTORY){
+  current_history_index++;
+  return;
+}
 
-	// Draw target line
-	nvgBeginPath(vg);
-	nvgMoveTo(vg, 0, targetY+32);
-	nvgLineTo(vg, 32*32, targetY+32);
-	nvgStrokeColor(vg, nvgRGBA(255,0,0,255));
-	nvgStroke(vg);
+historyindx = current_history_index % MAX_HISTORY;
+
+if (frameinfo_histroy[historyindx].cnt == 0){
+  return;
+}
+
+float startX = 0.0f;
+float width = 32.0f;
+
+for (i = 0; i < MAX_HISTORY; i++){
+
+  float startY = 32;
+  for (j = 0; j < frameinfo_histroy[historyindx].cnt; j++){
+
+    float height = frameinfo_histroy[historyindx].time[j] * targetY / 16666.0f;
+    nvgBeginPath(vg);
+    nvgRect(vg, startX, startY, width, height);
+    nvgFillColor(vg, graph_colors[j]);
+    nvgFill(vg);
+    startY += height;
+  }
+
+  if (i == (MAX_HISTORY - 1)) {
+    float textY = 32;
+    for (j = 0; j < frameinfo_histroy[historyindx].cnt; j++){
+      char buf[128];
+      nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
+      sprintf(buf, "%s:%d", frameinfo_histroy[historyindx].label[j], (int)(frameinfo_histroy[historyindx].time[j]));
+      nvgText(vg, startX + width, textY, buf, NULL);
+      textY += 24;
+    }
+  }
+
+  startX += width;
+  historyindx = (historyindx + 1) % MAX_HISTORY;
+}
 
 
-	// Reset indexs;
-	current_history_index++;
-	profile_index = 0;
+// Draw target line
+nvgBeginPath(vg);
+nvgMoveTo(vg, 0, targetY + 32);
+nvgLineTo(vg, 32 * 32, targetY + 32);
+nvgStrokeColor(vg, nvgRGBA(255, 0, 0, 255));
+nvgStroke(vg);
+
+
+// Reset indexs;
+current_history_index++;
+profile_index = 0;
 
 }
- 
 
 
-void OSDNanovgDisplayMessage(OSDMessage_struct * message,pixel_t * buffer, int w, int h)
+
+void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h)
 {
-   int LeftX=10;
-   int Width=500;
-   int TxtY=22;
-   int Height=13;
-   int msglength;
-   int vidwidth, vidheight;
-   float fontsize = 24.0f;
-   int maxlen = 0;
+  int LeftX = 10;
+  int Width = 500;
+  int TxtY = 22;
+  int Height = 13;
+  int msglength;
+  int vidwidth, vidheight;
+  float fontsize = 18.0f;
+  int maxlen = 0;
+  int i = 0;
 
-   if( message->type != OSDMSG_FPS ) return;
+  if (message->type != OSDMSG_FPS) return;
 
-   VIDCore->GetGlSize(&vidwidth, &vidheight);
-   Width = vidwidth - 2 * LeftX;
+  VIDCore->GetGlSize(&vidwidth, &vidheight);
+  Width = vidwidth - 2 * LeftX;
 
-   switch(message->type) {
-      case OSDMSG_STATUS:
-         TxtY = vidheight - (Height + TxtY);
-         break;
-   }
+  switch (message->type) {
+  case OSDMSG_STATUS:
+    TxtY = vidheight - (Height + TxtY);
+    break;
+  }
 
-   msglength = strlen(message->message);
+  msglength = strlen(message->message);
 
 
 
-   nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
+  nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
 
-   nvgFontSize(vg, fontsize);
-   nvgFontFace(vg, "sans");
-   nvgFillColor(vg, nvgRGBA(255,255,255,255));
+  nvgFontSize(vg, fontsize);
+  nvgFontFace(vg, "sans");
+  nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));
 
-   nvgTextAlign(vg,NVG_ALIGN_LEFT|NVG_ALIGN_MIDDLE);
-   
-   nvgText(vg, LeftX,TxtY,message->message, NULL);
-   TxtY+=fontsize;
-   
+  nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
 
+  nvgText(vg, LeftX, TxtY, message->message, NULL);
+  TxtY += fontsize;
+#if 1
+  int linecnt = (vidheight - TxtY) / fontsize;
+  int start_point = current_log_history_index - linecnt;
+  if (start_point < 0) {
+    start_point = MAX_LOG_HISTORY + start_point;
+  }
+  for (i = 0; i < linecnt; i++){
+    nvgText(vg, LeftX, TxtY, log_histroy[start_point], NULL);
+    start_point++;
+    start_point %= MAX_LOG_HISTORY;
+    TxtY += fontsize;
+  }
+#endif
    ProfileDrawGraph();
    nvgEndFrame(vg);
 
