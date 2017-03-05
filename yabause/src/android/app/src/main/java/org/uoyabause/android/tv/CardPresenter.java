@@ -32,8 +32,8 @@ import org.uoyabause.android.R;
 public class CardPresenter extends Presenter {
     private static final String TAG = "CardPresenter";
 
-    private static int CARD_WIDTH = 313;
-    private static int CARD_HEIGHT = 176;
+    private static int CARD_WIDTH = 320;
+    private static int CARD_HEIGHT = 224;
     private static int sSelectedBackgroundColor;
     private static int sDefaultBackgroundColor;
     private Drawable mDefaultCardImage;
@@ -48,8 +48,6 @@ public class CardPresenter extends Presenter {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        Log.d(TAG, "onCreateViewHolder");
-
         sDefaultBackgroundColor = parent.getResources().getColor(R.color.default_background);
         sSelectedBackgroundColor = parent.getResources().getColor(R.color.selected_background);
         mDefaultCardImage = parent.getResources().getDrawable(R.drawable.movie);
@@ -72,19 +70,17 @@ public class CardPresenter extends Presenter {
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
         GameInfo game = (GameInfo) item;
         ImageCardView cardView = (ImageCardView) viewHolder.view;
-
-        Log.d(TAG, "onBindViewHolder");
-
-        if( game.device_infomation.equals("CD-1/1")){
-            cardView.setTitleText(game.game_title);
-        }else {
-            cardView.setTitleText(game.game_title + " " + game.device_infomation);
-        }
-
+        cardView.setTitleText(game.game_title);
         String rate="";
         for( int i=0; i < game.rating; i++ ){
             rate += "★";
         }
+        if( game.device_infomation.equals("CD-1/1")){
+
+        }else {
+            rate += " " + game.device_infomation;
+        }
+
         cardView.setContentText(rate);
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
 
@@ -100,7 +96,6 @@ public class CardPresenter extends Presenter {
 
     @Override
     public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
-        Log.d(TAG, "onUnbindViewHolder");
         ImageCardView cardView = (ImageCardView) viewHolder.view;
         // Remove references to images so that the garbage collector can free up memory
         cardView.setBadgeImage(null);

@@ -14,11 +14,19 @@
 
 package org.uoyabause.android.tv;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
+import android.view.View;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -38,6 +46,15 @@ public class GameSelectActivity extends Activity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean lock_landscape = sharedPref.getBoolean("pref_landscape", false);
+        if( lock_landscape == true ){
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }else{
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        }
+
         super.onCreate(savedInstanceState);
 
         GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
@@ -50,6 +67,11 @@ public class GameSelectActivity extends Activity {
         Log.d(TAG, "InstanceID token: " + FirebaseInstanceId.getInstance().getToken());
 
         setContentView(R.layout.activity_game_select);
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
     }
 
     @Override

@@ -59,6 +59,7 @@ typedef struct {
     void (*DisplayMessage)(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
     int (*UseBuffer)(void);
 	void (*AddFrameProfileData)( char * label, u32 data );
+  void (*AddLogString)( char * log );
 } OSD_struct;
 
 int OSDInit(int coreid);
@@ -84,5 +85,7 @@ void SetOSDToggle(int toggle);
 void DisplayMessage(const char* str);
 
 void OSDAddFrameProfileData( char * label, u32 data );
+
+void  OSDAddLogString( char * log );
 
 #endif

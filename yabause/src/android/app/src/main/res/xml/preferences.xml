@@ -5,7 +5,7 @@
 
         <org.uoyabause.android.GameDirectoriesDialogPreference
             android:key="pref_game_directory"
-            android:title="Select Game Directory"
+            android:title="@string/select_game_directory"
             android:summary="" />
 
         <Preference
@@ -54,6 +54,11 @@
             android:key="pref_keepaspectrate"
             android:title="@string/keepaspectrate"
             android:defaultValue="true" />
+
+        <CheckBoxPreference
+            android:key="pref_landscape"
+            android:title="@string/lock_landscape"
+            android:defaultValue="false" />
 
         <ListPreference
             android:key="pref_filter"

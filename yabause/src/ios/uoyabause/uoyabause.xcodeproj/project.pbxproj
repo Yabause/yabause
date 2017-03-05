@@ -16,7 +16,6 @@
 		64228EE11D88840000588323 /* AdSupport.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE01D88840000588323 /* AdSupport.framework */; };
 		64228EE31D88844000588323 /* EventKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE21D88844000588323 /* EventKitUI.framework */; };
 		64228EE51D88845400588323 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE41D88845400588323 /* EventKit.framework */; };
-		64228EE71D8884AB00588323 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE61D8884AB00588323 /* StoreKit.framework */; };
 		64228EE91D8884D700588323 /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EE81D8884D700588323 /* SafariServices.framework */; };
 		64228EEB1D88850B00588323 /* MessageUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EEA1D88850B00588323 /* MessageUI.framework */; };
 		64228EED1D8885F200588323 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 64228EEC1D8885F200588323 /* CoreBluetooth.framework */; };
@@ -43,6 +42,8 @@
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		64BC4F011D8084420071689C /* SWRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64BC4F001D8084420071689C /* SWRevealViewController.m */; };
 		64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
+		921C9D6E1E108E1F009065E6 /* KeyMapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 921C9D6D1E108E1F009065E6 /* KeyMapper.m */; };
+		921C9D721E1628B5009065E6 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 921C9D711E1628B4009065E6 /* QuartzCore.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -113,6 +114,10 @@
 		64BC4EFF1D8084420071689C /* SWRevealViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SWRevealViewController.h; sourceTree = "<group>"; };
 		64BC4F001D8084420071689C /* SWRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SWRevealViewController.m; sourceTree = "<group>"; };
 		64D450081D7C0E6C004E2615 /* MainScreenController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainScreenController.swift; sourceTree = "<group>"; };
+		921C9D6C1E108E1E009065E6 /* KeyMapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = KeyMapper.h; sourceTree = "<group>"; };
+		921C9D6D1E108E1F009065E6 /* KeyMapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = KeyMapper.m; sourceTree = "<group>"; };
+		921C9D6F1E109021009065E6 /* SaturnControllerKeys.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SaturnControllerKeys.h; sourceTree = "<group>"; };
+		921C9D711E1628B4009065E6 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -120,6 +125,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				921C9D721E1628B5009065E6 /* QuartzCore.framework in Frameworks */,
 				645EA6C21D95647200A7A5D8 /* libz.1.1.3.tbd in Frameworks */,
 				64228EF71D8886AE00588323 /* MobileCoreServices.framework in Frameworks */,
 				64228EF51D88868300588323 /* CoreGraphics.framework in Frameworks */,
@@ -129,7 +135,6 @@
 				64228EED1D8885F200588323 /* CoreBluetooth.framework in Frameworks */,
 				64228EEB1D88850B00588323 /* MessageUI.framework in Frameworks */,
 				64228EE91D8884D700588323 /* SafariServices.framework in Frameworks */,
-				64228EE71D8884AB00588323 /* StoreKit.framework in Frameworks */,
 				64228EE51D88845400588323 /* EventKit.framework in Frameworks */,
 				64228EE31D88844000588323 /* EventKitUI.framework in Frameworks */,
 				64228EE11D88840000588323 /* AdSupport.framework in Frameworks */,
@@ -185,6 +190,7 @@
 				644232C21C6580010050611E /* uoyabauseTests */,
 				644232CD1C6580010050611E /* uoyabauseUITests */,
 				644232A31C6580000050611E /* Products */,
+				921C9D701E1628B4009065E6 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -208,6 +214,8 @@
 				644232AD1C6580000050611E /* Shader.vsh */,
 				644232AF1C6580000050611E /* GameViewController.h */,
 				644232B01C6580000050611E /* GameViewController.m */,
+				921C9D6C1E108E1E009065E6 /* KeyMapper.h */,
+				921C9D6D1E108E1F009065E6 /* KeyMapper.m */,
 				644232B21C6580000050611E /* Main.storyboard */,
 				64D450081D7C0E6C004E2615 /* MainScreenController.swift */,
 				648926681D719E9500D92D58 /* FileSelectController.swift */,
@@ -219,6 +227,7 @@
 				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
 				64228EF81D88900F00588323 /* apikey.plist */,
 				64373A361D979E5F00B3C7BA /* settings.plist */,
+				921C9D6F1E109021009065E6 /* SaturnControllerKeys.h */,
 			);
 			path = uoyabause;
 			sourceTree = "<group>";
@@ -260,6 +269,14 @@
 				64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */,
 			);
 			name = SWRevealViewController;
+			sourceTree = "<group>";
+		};
+		921C9D701E1628B4009065E6 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				921C9D711E1628B4009065E6 /* QuartzCore.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -330,7 +347,8 @@
 				TargetAttributes = {
 					644232A11C6580000050611E = {
 						CreatedOnToolsVersion = 7.2.1;
-						DevelopmentTeam = 8EMBASFBPT;
+						DevelopmentTeam = R72X3BF4KE;
+						LastSwiftMigration = 0800;
 					};
 					644232BE1C6580010050611E = {
 						CreatedOnToolsVersion = 7.2.1;
@@ -406,6 +424,7 @@
 				644232B11C6580000050611E /* GameViewController.m in Sources */,
 				644232A71C6580000050611E /* main.m in Sources */,
 				64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */,
+				921C9D6E1E108E1F009065E6 /* KeyMapper.m in Sources */,
 				64BC4F011D8084420071689C /* SWRevealViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -552,6 +571,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = R72X3BF4KE;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -571,6 +591,7 @@
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};
@@ -584,6 +605,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				DEVELOPMENT_TEAM = R72X3BF4KE;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -602,6 +624,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				SWIFT_OBJC_BRIDGING_HEADER = "uoyabause/uoyabause-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = arm64;
 			};

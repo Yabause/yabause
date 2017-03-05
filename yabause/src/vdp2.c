@@ -44,6 +44,12 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+u8 Vdp2ColorRamUpdated = 0;
+u8 A0_Updated = 0;
+u8 A1_Updated = 0;
+u8 B0_Updated = 0;
+u8 B1_Updated = 0;
+
 struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
@@ -64,6 +70,8 @@ void VdpProc( void *arg );      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
 static int vdp_proc_running = 0;
+
+int g_frame_count = 0;
 
 //#define LOG yprintf
 
@@ -92,6 +100,20 @@ u32 FASTCALL Vdp2RamReadLong(u32 addr) {
 
 void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
    addr &= 0x7FFFF;
+
+   if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
+     A0_Updated = 1;
+   }
+   else if (A1_Updated == 0 &&  addr >= 0x20000 && addr < 0x40000){
+     A1_Updated = 1;
+   }
+   else if (B0_Updated == 0 && addr >= 0x40000 && addr < 0x60000){
+     B0_Updated = 1;
+   }
+   else if (B1_Updated == 0 && addr >= 0x60000 && addr < 0x80000){
+     B1_Updated = 1;
+   }
+
    T1WriteByte(Vdp2Ram, addr, val);
 }
 
@@ -99,6 +121,19 @@ void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
 
 void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
    addr &= 0x7FFFF;
+   if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
+     A0_Updated = 1;
+   }
+   else if (A1_Updated == 0 && addr >= 0x20000 && addr < 0x40000){
+     A1_Updated = 1;
+   }
+   else if (B0_Updated == 0 && addr >= 0x40000 && addr < 0x60000){
+     B0_Updated = 1;
+   }
+   else if (B1_Updated == 0 && addr >= 0x60000 && addr < 0x80000){
+     B1_Updated = 1;
+   }
+
    T1WriteWord(Vdp2Ram, addr, val);
 }
 
@@ -106,6 +141,20 @@ void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
+
+   if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
+     A0_Updated = 1;
+   }
+   else if (A1_Updated == 0 && addr >= 0x20000 && addr < 0x40000){
+     A1_Updated = 1;
+   }
+   else if (B0_Updated == 0 && addr >= 0x40000 && addr < 0x60000){
+     B0_Updated = 1;
+   }
+   else if (B1_Updated == 0 && addr >= 0x60000 && addr < 0x80000){
+     B1_Updated = 1;
+   }
+
    T1WriteLong(Vdp2Ram, addr, val);
 }
 
@@ -141,6 +190,11 @@ void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
 
 void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    addr &= 0xFFF;
+   if (Vdp2ColorRamUpdated == 0){
+     if (val != T2ReadWord(Vdp2ColorRam, addr)){
+       Vdp2ColorRamUpdated = 1;
+     }
+   }
    T2WriteWord(Vdp2ColorRam, addr, val);
 //   if (Vdp2Internal.ColorMode == 0)
 //      T1WriteWord(Vdp2ColorRam, addr + 0x800, val);
@@ -150,6 +204,11 @@ void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
    addr &= 0xFFF;
+   if (Vdp2ColorRamUpdated == 0){
+     if (val != T2ReadLong(Vdp2ColorRam, addr)){
+       Vdp2ColorRamUpdated = 1;
+     }
+   }
    T2WriteLong(Vdp2ColorRam, addr, val);
 }
 
@@ -168,9 +227,9 @@ int Vdp2Init(void) {
    Vdp2Reset();
 
 #if defined(YAB_ASYNC_RENDERING)
-   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(16);
-   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(16);
-   if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(16);
+   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(8);
+   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(8);
+   if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(2);
    yabsys.wait_line_count = -1;
 #endif
 
@@ -181,9 +240,11 @@ int Vdp2Init(void) {
 
 void Vdp2DeInit(void) {
 #if defined(YAB_ASYNC_RENDERING)
-   //YabAddEventQueue(evqueue,VDPEV_FINSH);
-   vdp_proc_running = 0;
-   YabThreadWait(YAB_THREAD_VDP);
+   if (vdp_proc_running == 1) {
+   	YabAddEventQueue(evqueue,VDPEV_FINSH);
+   	//vdp_proc_running = 0;
+   	YabThreadWait(YAB_THREAD_VDP);
+   }
 #endif
    if (Vdp2Regs)
       free(Vdp2Regs);
@@ -288,54 +349,66 @@ void Vdp2Reset(void) {
    Vdp2External.perline_alpha_b = 0;
    Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
    Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+
+#if defined(YAB_ASYNC_RENDERING)
+   if (rcv_evqueue != NULL){
+     YabThreadDestoryQueue(rcv_evqueue);
+     rcv_evqueue = YabThreadCreateQueue(8);
+   }
+   if (vdp1_rcv_evqueue != NULL){
+     YabThreadDestoryQueue(vdp1_rcv_evqueue);
+     vdp1_rcv_evqueue = YabThreadCreateQueue(8);
+   }
+   yabsys.wait_line_count = -1;
+#endif
+
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 void VdpProc( void *arg ){
 
-    int evcode;
+  int evcode;
 
+  if( YuiUseOGLOnThisThread() < 0 ){
+    LOG("VDP2 Fail to USE GL");
+    return;
+  }
 
-
-    if( YuiUseOGLOnThisThread() < 0 ){
-        LOG("VDP2 Fail to USE GL");
-        return;
+  while( vdp_proc_running ){
+    YabThreadSetCurrentThreadAffinityMask(0x01);
+    evcode = YabWaitEventQueue(evqueue);
+    switch(evcode){
+    case VDPEV_VBLANK_IN:
+      FrameProfileAdd("VIN start");
+      vdp2VBlankIN();
+      FrameProfileAdd("VIN end");
+      break;
+    case VDPEV_VBLANK_OUT:
+      FrameProfileAdd("VOUT start");
+      vdp2VBlankOUT();
+      FrameProfileAdd("VOUT end");
+      //YabAddEventQueue(vout_rcv_evqueue, 0);
+      break;
+    case VDPEV_DIRECT_DRAW:
+      FrameProfileAdd("DirectDraw start");
+      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
+      Vdp1Draw();
+      VIDCore->Vdp1DrawEnd();
+      FrameProfileAdd("DirectDraw end");
+      YabAddEventQueue(vdp1_rcv_evqueue, 0);
+      break;
+    case VDPEV_MAKECURRENT:
+      YuiUseOGLOnThisThread();
+      break;
+    case VDPEV_REVOKE:
+      YuiRevokeOGLOnThisThread();
+      break;
+    case VDPEV_FINSH:
+      vdp_proc_running = 0;
+      break;
     }
-
-    vdp_proc_running = 1;
-    while( vdp_proc_running ){
-		YabThreadSetCurrentThreadAffinityMask(0x01);
-        evcode = YabWaitEventQueue(evqueue);
-        switch(evcode){
-        case VDPEV_VBLANK_IN:
-			FrameProfileAdd("VIN start");
-            vdp2VBlankIN();
-			FrameProfileAdd("VIN end");
-            break;
-        case VDPEV_VBLANK_OUT:
-			FrameProfileAdd("VOUT start");
-            vdp2VBlankOUT();
-			FrameProfileAdd("VOUT end");
-			YabAddEventQueue(vout_rcv_evqueue, 0);
-            break;
-        case VDPEV_DIRECT_DRAW:
-			FrameProfileAdd("DirectDraw start");
-            Vdp1Draw();
-			FrameProfileAdd("DirectDraw end");
-			YabAddEventQueue(vdp1_rcv_evqueue, 0);
-            break;
-        case VDPEV_MAKECURRENT:
-            YuiUseOGLOnThisThread();
-            break;
-        case VDPEV_REVOKE:
-            YuiRevokeOGLOnThisThread();
-            break;
-        case VDPEV_FINSH:
-            vdp_proc_running = 0;
-            break;
-        }
-    }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -345,10 +418,9 @@ void vdp2VBlankIN(void) {
    /* I'm not 100% sure about this, but it seems that when using manual change
    we should swap framebuffers in the "next field" and thus, clear the CEF...
    now we're lying a little here as we're not swapping the framebuffers. */
-   if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
+   //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
-
    Vdp2Regs->TVSTAT |= 0x0008;
 
    ScuSendVBlankIN();
@@ -356,28 +428,34 @@ void vdp2VBlankIN(void) {
    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x43, 0x6);
    FrameProfileAdd("VIN flag");
+   FRAMELOG("**** VIN(T) *****\n");
    YabAddEventQueue(rcv_evqueue, 0);
    VIDCore->Sync();
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankIN(void) {
+  FRAMELOG("***** VIN *****");
+
 #if defined(YAB_ASYNC_RENDERING)
-    if( vdp_proc_running == 0 ){
-        YuiRevokeOGLOnThisThread();
-        evqueue = YabThreadCreateQueue(32);
-        YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-    }
-	vbalnk_wait = 0;
-	FrameProfileAdd("VIN event");
-   YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
+  if( vdp_proc_running == 0 ){
+    vdp_proc_running = 1;
+    YuiRevokeOGLOnThisThread();
+    evqueue = YabThreadCreateQueue(32);
+    YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+  }
+  vbalnk_wait = 0;
+  FrameProfileAdd("VIN event");
+  YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
    // sync
-   YabWaitEventQueue(rcv_evqueue);
+  //do {
+    YabWaitEventQueue(rcv_evqueue);
+  //} while (YaGetQueueSize(rcv_evqueue) != 0);
    FrameProfileAdd("VIN sync");
 
 #else
-
 	FrameProfileAdd("VIN start");
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
@@ -385,7 +463,7 @@ void Vdp2VBlankIN(void) {
    /* I'm not 100% sure about this, but it seems that when using manual change
    we should swap framebuffers in the "next field" and thus, clear the CEF...
    now we're lying a little here as we're not swapping the framebuffers. */
-   if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
+   //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
    VIDCore->Vdp2DrawEnd();
    VIDCore->Sync();
@@ -402,6 +480,8 @@ void Vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+//////////////////////////////////////////////////////////////////////////////
+
 void Vdp2HBlankIN(void) {
    Vdp2Regs->TVSTAT |= 0x0004;
    ScuSendHBlankIN();
@@ -410,89 +490,121 @@ void Vdp2HBlankIN(void) {
       SH2SendInterrupt(SSH2, 0x41, 0x2);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
 void Vdp2HBlankOUT(void) {
-   int i;
-   Vdp2Regs->TVSTAT &= ~0x0004;
+  int i;
+  Vdp2Regs->TVSTAT &= ~0x0004;
 
-   if (yabsys.LineCount < yabsys.VBlankLineCount)
-   {
-      u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
-	   memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
-         for (i = 0; i < 88; i++)
-      {
-         cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(cell_scroll_table_start_addr + i * 4);
-      }
-	   
+  if (yabsys.LineCount < yabsys.VBlankLineCount)
+  {
+    u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
+    memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
+    for (i = 0; i < 88; i++)
+    {
+      cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(cell_scroll_table_start_addr + i * 4);
+    }
 
-	   if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
-		   *Vdp2External.perline_alpha |= 0x1;
-	   }
-	   else if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
-		   *Vdp2External.perline_alpha |= 0x1;
-	   }
 
-	   if ((Vdp2Lines[0].BGON & 0x02) != (Vdp2Lines[yabsys.LineCount].BGON & 0x02)){
-		   *Vdp2External.perline_alpha |= 0x2;
-	   }
-	   else if ((Vdp2Lines[0].CCRNA & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0xFF00)){
-		   *Vdp2External.perline_alpha |= 0x2;
-	   }
+    if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
+      *Vdp2External.perline_alpha |= 0x1;
+    }
+    else if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
+      *Vdp2External.perline_alpha |= 0x1;
+    }
 
-	   if ((Vdp2Lines[0].BGON & 0x04) != (Vdp2Lines[yabsys.LineCount].BGON & 0x04)){
-		   *Vdp2External.perline_alpha |= 0x4;
-	   }
-	   else if ((Vdp2Lines[0].CCRNB & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0xFF00)){
-		   *Vdp2External.perline_alpha |= 0x4;
-	   }
+    if ((Vdp2Lines[0].BGON & 0x02) != (Vdp2Lines[yabsys.LineCount].BGON & 0x02)){
+      *Vdp2External.perline_alpha |= 0x2;
+    }
+    else if ((Vdp2Lines[0].CCRNA & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0xFF00)){
+      *Vdp2External.perline_alpha |= 0x2;
+    }
 
-	   if ((Vdp2Lines[0].BGON & 0x08) != (Vdp2Lines[yabsys.LineCount].BGON & 0x08)){
-		   *Vdp2External.perline_alpha |= 0x8;
-	   }
-	   else if ((Vdp2Lines[0].CCRNB & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0x00FF)){
-		   *Vdp2External.perline_alpha |= 0x8;
-	   }
+    if ((Vdp2Lines[0].BGON & 0x04) != (Vdp2Lines[yabsys.LineCount].BGON & 0x04)){
+      *Vdp2External.perline_alpha |= 0x4;
+    }
+    else if ((Vdp2Lines[0].CCRNB & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0xFF00)){
+      *Vdp2External.perline_alpha |= 0x4;
+    }
 
-	   if ((Vdp2Lines[0].BGON & 0x10) != (Vdp2Lines[yabsys.LineCount].BGON & 0x10)){
-		   *Vdp2External.perline_alpha |= 0x10;
-	   }
-	   else if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
-		   *Vdp2External.perline_alpha |= 0x10;
-	   }
+    if ((Vdp2Lines[0].BGON & 0x08) != (Vdp2Lines[yabsys.LineCount].BGON & 0x08)){
+      *Vdp2External.perline_alpha |= 0x8;
+    }
+    else if ((Vdp2Lines[0].CCRNB & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0x00FF)){
+      *Vdp2External.perline_alpha |= 0x8;
+    }
 
-	   if ( Vdp2Lines[0].COBR != Vdp2Lines[yabsys.LineCount].COBR ){
+    if ((Vdp2Lines[0].BGON & 0x10) != (Vdp2Lines[yabsys.LineCount].BGON & 0x10)){
+      *Vdp2External.perline_alpha |= 0x10;
+    }
+    else if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
+      *Vdp2External.perline_alpha |= 0x10;
+    }
 
-		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
-	   }
-	   if ( Vdp2Lines[0].COAR != Vdp2Lines[yabsys.LineCount].COAR ){
+    if (Vdp2Lines[0].COBR != Vdp2Lines[yabsys.LineCount].COBR){
 
-		   *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
-	   }
+      *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+    }
+    if (Vdp2Lines[0].COAR != Vdp2Lines[yabsys.LineCount].COAR){
 
-   }
+      *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+    }
 
+  }
+
+   //if (yabsys.LineCount == 0){
+   //  vdp2VBlankOUT();
+   //}
+  if (yabsys.LineCount == 0){
+    FrameProfileAdd("VOUT event");
+    // Manual Change
+    if (Vdp1External.manualchange == 1){
+      Vdp1External.swap_frame_buffer = 1;
+      Vdp1External.manualchange = 0;
+    }
+
+    // One Cyclemode
+    if ((Vdp1Regs->FBCR & 0x03) == 0x00 || 
+      (Vdp1Regs->FBCR & 0x03) == 0x01) {  // 0x01 is treated as one cyscle mode in Sonic R.
+      Vdp1External.swap_frame_buffer = 1;
+    }
+
+    // Plot trigger mode = Draw when frame is changed
+    if (Vdp1Regs->PTMR == 2){
+      Vdp1External.frame_change_plot = 1;
+      FRAMELOG("frame_change_plot 1");
+    }
+    else{
+      Vdp1External.frame_change_plot = 0;
+      FRAMELOG("frame_change_plot 0");
+    }
 #if defined(YAB_ASYNC_RENDERING)
-   if ( yabsys.LineCount == 0 ){
-	   if( vdp_proc_running == 0 ){
-		   YuiRevokeOGLOnThisThread();
-		   evqueue = YabThreadCreateQueue(32);
-		   YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-	   }
-	   FrameProfileAdd("VOUT event");
-	   voutflg = 1;
-	   YabAddEventQueue(evqueue,VDPEV_VBLANK_OUT);
-   }else if( voutflg == 1 && yabsys.LineCount >= 220 ){
-	   YabWaitEventQueue(vout_rcv_evqueue); // sync VOUT
-	   voutflg = 0;
-	   FrameProfileAdd("VOUT sync");
-   }
-
-   if (yabsys.wait_line_count != -1 && yabsys.LineCount >= yabsys.wait_line_count ){
-	   yabsys.wait_line_count = -1;
-	   YabWaitEventQueue(vdp1_rcv_evqueue); // sync Direct VDP1 Draw
-	   FrameProfileAdd("DirectDraw sync");
-   }
+    if (vdp_proc_running == 0){
+      YuiRevokeOGLOnThisThread();
+      evqueue = YabThreadCreateQueue(32);
+      vdp_proc_running = 1;
+      YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
+    }
+    voutflg = 1;
+    if (Vdp1External.swap_frame_buffer == 1 && Vdp1External.frame_change_plot == 1)
+    {
+      yabsys.wait_line_count = 10;
+      FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+    }
+    YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
+    YabThreadYield();
+  }
+  if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
+    
+    FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
+    yabsys.wait_line_count = -1;
+    //do {
+      YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
+    //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
+      FRAMELOG("**WAIT END**");
+    FrameProfileAdd("DirectDraw sync");
+  }
+#else
+    vdp2VBlankOUT();
+  }
 #endif
 }
 
@@ -506,104 +618,141 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 
 static void FPSDisplay(void)
 {
-   static int fpsframecount = 0;
-   static u64 fpsticks;
+  static int fpsframecount = 0;
+  static u64 fpsticks;
 #if 1 // FPS only
    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS ", fps, yabsys.IsPal ? 50 : 60);
 #else
-   FILE * fp = NULL;
-   FILE * gup_fp = NULL;
-   char fname[128];
-   char buf[64];
-   int i;
-   int cpu_f[8];
-   int gpu_f;
+  FILE * fp = NULL;
+  FILE * gup_fp = NULL;
+  char fname[128];
+  char buf[64];
+  int i;
+  int cpu_f[8];
+  int gpu_f;
 
-   if (gup_fp == NULL){
-	   gup_fp = fopen("/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq", "r");
-   }
+  if (gup_fp == NULL){
+    gup_fp = fopen("/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq", "r");
+  }
 
-   if (gup_fp != NULL){
-	   fread(buf, 1, 64, gup_fp);
-	   gpu_f = atoi(buf);
-	   fclose(gup_fp);
-   }
-   else{
-	   gpu_f = 0;
-   }
-   
-   for( i=0; i<8; i++ ){
-	   sprintf(fname,"/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq",i);
-	   fp = fopen(fname, "r");
-	   if( fp ){
-		   fread(buf, 1, 64, fp);
-		   cpu_f[i] = atoi(buf);
-		   fclose(fp);
-	   }else{
-		   cpu_f[i] = 0;
-	   }
-   }
+  if (gup_fp != NULL){
+    fread(buf, 1, 64, gup_fp);
+    gpu_f = atoi(buf);
+    fclose(gup_fp);
+  }
+  else{
+    gpu_f = 0;
+  }
+
+  for (i = 0; i < 8; i++){
+    sprintf(fname, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
+    fp = fopen(fname, "r");
+    if (fp){
+      fread(buf, 1, 64, fp);
+      cpu_f[i] = atoi(buf);
+      fclose(fp);
+    }
+    else{
+      cpu_f[i] = 0;
+    }
+  }
 
 
-   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS , gpu = %d, cpu0 = %d, cpu1 = %d, cpu2 = %d, cpu3 = %d, cpu4 = %d, cpu5 = %d, cpu6 = %d, cpu7 = %d"
-					, fps, yabsys.IsPal ? 50 : 60, gpu_f / 1000000,
-					cpu_f[0] / 1000, cpu_f[1] / 1000, cpu_f[2] / 1000, cpu_f[3] / 1000,
-					cpu_f[4] / 1000, cpu_f[5] / 1000, cpu_f[6] / 1000, cpu_f[7] / 1000);
+  OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS , gpu = %d, cpu0 = %d, cpu1 = %d, cpu2 = %d, cpu3 = %d, cpu4 = %d, cpu5 = %d, cpu6 = %d, cpu7 = %d"
+    , fps, yabsys.IsPal ? 50 : 60, gpu_f / 1000000,
+    cpu_f[0] / 1000, cpu_f[1] / 1000, cpu_f[2] / 1000, cpu_f[3] / 1000,
+    cpu_f[4] / 1000, cpu_f[5] / 1000, cpu_f[6] / 1000, cpu_f[7] / 1000);
 #endif   
-   OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
-   fpsframecount++;
-   if(YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
-   {
-      fps = fpsframecount;
-      fpsframecount = 0;
-      fpsticks = YabauseGetTicks();
-   }
+  OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
+  fpsframecount++;
+  if (YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
+  {
+    fps = fpsframecount;
+    fpsframecount = 0;
+    fpsticks = YabauseGetTicks();
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void SpeedThrottleEnable(void) {
-   throttlespeed = 1;
+  throttlespeed = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void SpeedThrottleDisable(void) {
-   throttlespeed = 0;
+  throttlespeed = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankOUT(void) {
-   static int framestoskip = 0;
-   static int framesskipped = 0;
-   static int skipnextframe = 0;
-   static u64 curticks = 0;
-   static u64 diffticks = 0;
-   static u32 framecount = 0;
-   static u64 onesecondticks = 0;
-   static VideoInterface_struct * saved = NULL;
+  static int framestoskip = 0;
+  static int framesskipped = 0;
+  static int skipnextframe = 0;
+  static u64 curticks = 0;
+  static u64 diffticks = 0;
+  static u32 framecount = 0;
+  static u64 onesecondticks = 0;
+  static VideoInterface_struct * saved = NULL;
+  int isrender = 0;
 
-   if (skipnextframe && (! saved))
-   {
-      saved = VIDCore;
-      VIDCore = &VIDDummy;
-   }
-   else if (saved && (! skipnextframe))
-   {
-      VIDCore = saved;
-      saved = NULL;
-   }
+  FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
-   VIDCore->Vdp2DrawStart();
-   if (Vdp2Regs->TVMD & 0x8000) {
-      VIDCore->Vdp2DrawScreens();
-   }
-   
-   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
+  if (skipnextframe && (!saved))
+  {
+    saved = VIDCore;
+    VIDCore = &VIDDummy;
+  }
+  else if (saved && (!skipnextframe))
+  {
+    VIDCore = saved;
+    saved = NULL;
+  }
+
+  VIDCore->Vdp2DrawStart();
+
+  // VBlank Erase
+  if (Vdp1External.vbalnk_erase ||  // VBlank Erace (VBE1) 
+    ((Vdp1Regs->FBCR & 2) == 0)){  // One cycle mode
+    VIDCore->Vdp1EraseWrite();
+  }
+
+  // Frame Change
+  if (Vdp1External.swap_frame_buffer == 1)
+  {
+    if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
+      VIDCore->Vdp1EraseWrite();
+      Vdp1External.manualerase = 0;
+    }
+
+    VIDCore->Vdp1FrameChange();
+    Vdp1External.swap_frame_buffer = 0;
+    Vdp1Regs->EDSR >>= 1;
+    // if Plot Trigger mode == 0x02 draw start
+    if (Vdp1External.frame_change_plot == 1){
+      Vdp1Draw();
+      isrender = 1;
+    }
+  }
+
+#if defined(YAB_ASYNC_RENDERING)
+  if (isrender){
+    YabAddEventQueue(vdp1_rcv_evqueue, 0);
+  }
+#endif
+
+  if (Vdp2Regs->TVMD & 0x8000) {
+    VIDCore->Vdp2DrawScreens();
+  }
+
+  if (isrender){
+    VIDCore->Vdp1DrawEnd();
+  }
 
    FPSDisplay();
-   if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
-      Vdp1External.manualerase = 1;
+   //if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
+   //   Vdp1External.manualerase = 1;
 
    if (!skipnextframe)
    {
@@ -672,30 +821,46 @@ void vdp2VBlankOUT(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
-	if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
-		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
-		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
-		*Vdp2External.perline_alpha = 0;
-	}
-	else{
-		Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
-		Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
-		*Vdp2External.perline_alpha = 0;
-	}
+  g_frame_count++;
+
+  //if (g_frame_count == 60){
+  //  YabSaveStateSlot(".\\", 1);
+  //}
+
+  //if (g_frame_count >= 1){
+  //  YabLoadStateSlot(".\\", 1);
+  //}
+
+  FRAMELOG("***** VOUT %d *****", g_frame_count);
+  if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
+    Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
+    Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
+    *Vdp2External.perline_alpha = 0;
+  }
+  else{
+    Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
+    Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+    *Vdp2External.perline_alpha = 0;
+  }
+
+  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){  // VBlank Erace (VBE1)
+    Vdp1External.vbalnk_erase = 1;
+  }else{
+    Vdp1External.vbalnk_erase = 0;
+  }
 
 #ifdef _VDP_PROFILE_
-	FrameProfileShow();
-	FrameProfileInit();
+  FrameProfileShow();
+  FrameProfileInit();
 #endif
-#if defined(YAB_ASYNC_RENDERING)
 
    if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
-	   vdp2_is_odd_frame = 1;
+     vdp2_is_odd_frame = 1;
    }else{ // p02_50.htm#TVSTAT_
-	   if (vdp2_is_odd_frame)
-		   vdp2_is_odd_frame = 0;
-	   else
-		   vdp2_is_odd_frame = 1;
+     if (vdp2_is_odd_frame)
+       vdp2_is_odd_frame = 0;
+     else
+       vdp2_is_odd_frame = 1;
    }
 
    Vdp2Regs->TVSTAT = ((Vdp2Regs->TVSTAT & ~0x0008) & ~0x0002) | (vdp2_is_odd_frame << 1);
@@ -707,127 +872,8 @@ void Vdp2VBlankOUT(void) {
       // Only Latch if EXLTEN is enabled
       if (SmpcRegs->EXLE & 0x1)
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
-    }
-#else
-   static int framestoskip = 0;
-   static int framesskipped = 0;
-   static int skipnextframe = 0;
-   static u64 curticks = 0;
-   static u64 diffticks = 0;
-   static u32 framecount = 0;
-   static u64 onesecondticks = 0;
-   static VideoInterface_struct * saved = NULL;
-   FrameProfileAdd("VOUT start");
-   if (((Vdp2Regs->TVMD >> 6) & 0x3) == 0){
-	   vdp2_is_odd_frame = 1;
-   }else{ // p02_50.htm#TVSTAT_
-	   if (vdp2_is_odd_frame)
-		   vdp2_is_odd_frame = 0;
-	   else
-		   vdp2_is_odd_frame = 1;
-   }
-   
-   Vdp2Regs->TVSTAT = ((Vdp2Regs->TVSTAT & ~0x0008) & ~0x0002) | (vdp2_is_odd_frame << 1);
-   if (skipnextframe && (! saved))
-   {
-      saved = VIDCore;
-      VIDCore = &VIDDummy;
-   }
-   else if (saved && (! skipnextframe))
-   {
-      VIDCore = saved;
-      saved = NULL;
    }
 
-   VIDCore->Vdp2DrawStart();
-   if (Vdp2Regs->TVMD & 0x8000) {
-      VIDCore->Vdp2DrawScreens();
-   }
-   
-   {
-      VIDCore->Vdp2DispOff();
-   if (Vdp1Regs->PTMR == 2) Vdp1Draw();
-   }
-
-   FPSDisplay();
-   if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
-      Vdp1External.manualerase = 1;
-
-   if (!skipnextframe)
-   {
-      framesskipped = 0;
-
-      if (framestoskip > 0)
-         skipnextframe = 1;
-   }
-   else
-   {
-      framestoskip--;
-
-      if (framestoskip < 1)
-         skipnextframe = 0;
-      else
-         skipnextframe = 1;
-
-      framesskipped++;
-   }
-
-   // Do Frame Skip/Frame Limiting/Speed Throttling here
-   if (throttlespeed)
-   {
-      // Should really depend on how fast we're rendering the frames
-      if (framestoskip < 1)
-         framestoskip = 6;
-   }
-   //when in frame advance, disable frame skipping
-   else if (autoframeskipenab && FrameAdvanceVariable == 0)
-   {
-      framecount++;
-
-      if (framecount > (yabsys.IsPal ? 50 : 60))
-      {
-         framecount = 1;
-         onesecondticks = 0;
-      }
-
-      curticks = YabauseGetTicks();
-      diffticks = curticks-lastticks;
-
-      if ((onesecondticks+diffticks) > ((yabsys.OneFrameTime * (u64)framecount) + (yabsys.OneFrameTime / 2)) &&
-          framesskipped < 9)
-      {
-         // Skip the next frame
-         skipnextframe = 1;
-
-         // How many frames should we skip?
-         framestoskip = 1;
-      }
-      else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)))
-      {
-         // Check to see if we need to limit speed at all
-         for (;;)
-         {
-            curticks = YabauseGetTicks();
-            diffticks = curticks-lastticks;
-            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
-               break;
-         }
-      }
-
-      onesecondticks += diffticks;
-      lastticks = curticks;
-   }
-
-   ScuSendVBlankOUT();
-   
-   if (Vdp2Regs->EXTEN & 0x200) // Should be revised for accuracy(should occur only occur on the line it happens at, etc.)
-   {
-      // Only Latch if EXLTEN is enabled
-      if (SmpcRegs->EXLE & 0x1)
-         Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
-	}
-   FrameProfileAdd("VOUT end");
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

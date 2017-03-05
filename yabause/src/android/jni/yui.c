@@ -123,7 +123,8 @@ enum RenderThreadMessage {
         MSG_RESUME,
         MSG_SCREENSHOT,
         MSG_OPEN_TRAY,
-        MSG_CLOSE_TRAY
+        MSG_CLOSE_TRAY,
+        MSG_RESET
 
 };
 
@@ -1136,6 +1137,15 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 }
 
 void
+Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
+{
+    yprintf("sending MSG_OPEN_TRAY");
+    pthread_mutex_lock(&g_mtxGlLock);
+    g_msg = MSG_RESET;
+    pthread_mutex_unlock(&g_mtxGlLock);    
+}
+
+void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
 	//yprintf("press: %d,%d",player,key);
@@ -1308,6 +1318,55 @@ Java_org_uoyabause_android_YabauseRunnable_setVolume( JNIEnv* env, jobject obj, 
     ScspSetVolume(volume);
 }
 
+jstring Java_org_uoyabause_android_YabauseRunnable_getGameTitle(JNIEnv *env) {
+	
+	char * buf;
+	
+	jstring rtn;
+	if( cdip == NULL ) return NULL;
+	buf = (char*)malloc(1024);
+	if( buf == NULL ) return NULL;
+    if( strcmp(cdip->cdinfo,"CD-1/1") == 0 ){
+        sprintf(buf,"%s",cdip->gamename);
+    }else{
+	    sprintf(buf,"%s(%s)",cdip->gamename,cdip->cdinfo);
+    }
+			
+	rtn = (*env)->NewStringUTF(env,buf);
+	free(buf);
+	return rtn;
+}
+
+void Java_org_uoyabause_android_YabauseRunnable_updateCheat(JNIEnv *env, jobject object, jobjectArray stringArray) {
+
+    if( stringArray == NULL || (*env)->GetArrayLength(env,stringArray) == 0 ){
+        CheatClearCodes();    
+        return;
+    }
+
+    int stringCount = (*env)->GetArrayLength(env,stringArray);
+    int i = 0;
+    int index = 0;
+    char *rawString;
+
+    CheatClearCodes();
+    for (i=0; i<stringCount; i++) {
+        jstring string = (jstring) ((*env)->GetObjectArrayElement(env,stringArray, i));
+        if( string == NULL ){
+            continue;
+        }
+        rawString = (*env)->GetStringUTFChars(env,string, 0);
+        // Don't forget to call `ReleaseStringUTFChars` when you're done.
+
+        index = CheatAddARCode(rawString);
+        CheatEnableCode(index);
+        (*env)->ReleaseStringUTFChars(env,string,rawString);
+    }
+    // CheatDoPatches(); will call at  Vblank-in
+    return;
+}
+
+
 jstring Java_org_uoyabause_android_YabauseRunnable_getGameinfo(JNIEnv *env) {
 	
 	char * buf;
@@ -1462,6 +1521,9 @@ void renderLoop()
                 pthread_mutex_lock(&g_mtxFuncSync);
                 pthread_cond_signal(&g_cndFuncSync);
                 pthread_mutex_unlock(&g_mtxFuncSync);
+                break;
+            case MSG_RESET:
+                YabauseReset();
                 break;
             default:
                 break;

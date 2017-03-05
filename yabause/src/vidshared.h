@@ -93,6 +93,12 @@ typedef struct
    int MskV;
    u32 lineaddr;
    u32 PlaneAddrv[16];
+
+   u16 * prefecth_k1w;
+   u32 * prefecth_k2w;
+   int ktablesize;
+   u8 k_mem_type;
+   u8 K_update;
    
 } vdp2rotationparameter_struct;
 
@@ -103,7 +109,7 @@ typedef struct
     int WinHEnd;
 } vdp2WindowInfo;
 
-typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int);
+typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int, u8);
 typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, int, int);
 
 typedef struct 
@@ -154,7 +160,7 @@ typedef struct
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
-   u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int );
+   u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int, u8 );
    u32 FASTCALL (*PostPixelFetchCalc)(void *, u32);
    int patternpixelwh;
    int draww;
@@ -953,12 +959,13 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
 
 //////////////////////////////////////////////////////////////////////////////
 
-static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int *priority, int *colorcalc)
+static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int *normalshadow, int *priority, int *colorcalc)
 {
    spritepixelinfo_struct spi;
 
    Vdp1GetSpritePixelInfo(type, pixel, &spi);
    *shadow = spi.msbshadow;
+   *normalshadow = spi.normalshadow;
    *priority = spi.priority;
    *colorcalc = spi.colorcalc;
 }

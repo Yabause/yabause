@@ -25,17 +25,17 @@ class FileSelectController :UITableViewController {
             super.viewDidLoad()
         
         file_list.removeAll()
-        let manager = NSFileManager.defaultManager()
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+        let manager = FileManager.default
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
         
         do {
-            let all_file_list = try manager.contentsOfDirectoryAtPath(documentsPath)
+            let all_file_list = try manager.contentsOfDirectory(atPath: documentsPath)
             for path in all_file_list {
                 var isDir: ObjCBool = false
-                if manager.fileExistsAtPath(documentsPath + "/" + path, isDirectory: &isDir) {
-                    if( Bool(isDir) == false ){
+                if manager.fileExists(atPath: documentsPath + "/" + path, isDirectory: &isDir) && !isDir.boolValue {
+                
                         file_list.append(path);
-                    }
+
                 } else {
                     
                 }
@@ -48,32 +48,32 @@ class FileSelectController :UITableViewController {
         super.didReceiveMemoryWarning()
     }
     
-    override func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
 
         return file_list.count
     }
     
-    override func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell{
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
       
        
-        var cell = tableView.dequeueReusableCellWithIdentifier("files")! as UITableViewCell
-        cell.textLabel!.text = file_list[indexPath.row];
+        let cell = tableView.dequeueReusableCell(withIdentifier: "files")! as UITableViewCell
+        cell.textLabel!.text = file_list[(indexPath as NSIndexPath).row];
         return cell
     }
     
-    override func tableView(table: UITableView, didSelectRowAtIndexPath indexPath:NSIndexPath) {
+    override func tableView(_ table: UITableView, didSelectRowAt indexPath:IndexPath) {
         
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true)[0] as String
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
         
-        selected_file_path = documentsPath + "/" + file_list[indexPath.row]
-        performSegueWithIdentifier("toSubViewController",sender: nil)
+        selected_file_path = documentsPath + "/" + file_list[(indexPath as NSIndexPath).row]
+        performSegue(withIdentifier: "toSubViewController",sender: nil)
         
     }
     
     // Segue 準備
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject!) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any!) {
         if (segue.identifier == "toSubViewController") {
-            let subVCmain: GameRevealViewController = (segue.destinationViewController as? GameRevealViewController)!
+            let subVCmain: GameRevealViewController = (segue.destination as? GameRevealViewController)!
             subVCmain.selected_file = selected_file_path
         }
     }
