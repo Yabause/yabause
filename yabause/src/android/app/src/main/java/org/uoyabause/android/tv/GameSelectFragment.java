@@ -134,8 +134,6 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     String alphabet[]={ "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z" };
 
     private ProgressDialog mProgressDialog = null;
-    private Boolean isShowProgress = false;
-
 
     private static final int REQUEST_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -201,18 +199,18 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
 
     public void showDialog() {
-        if( mProgressDialog == null && isShowProgress == false ) {
+        if( mProgressDialog == null  ) {
             mProgressDialog = new ProgressDialog(getActivity());
             mProgressDialog.setMessage("Updating...");
             mProgressDialog.show();
-            isShowProgress = true;
         }
     }
     public void dismissDialog() {
-        if( mProgressDialog != null && isShowProgress == true ) {
-            mProgressDialog.dismiss();
+        if( mProgressDialog != null ) {
+            if( mProgressDialog.isShowing() ) {
+                mProgressDialog.dismiss();
+            }
             mProgressDialog = null;
-            isShowProgress = false;
         }
     }
 
