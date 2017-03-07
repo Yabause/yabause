@@ -337,10 +337,13 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         }
         updateGameList();
     }
-
+    @Override
+    public void onPause(){
+        dismissDialog();
+        super.onPause();
+    }
     @Override
     public void onDestroy() {
-        dismissDialog();
         this.setSelectedPosition(-1,false );
         System.gc();
         super.onDestroy();
