@@ -304,7 +304,10 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         }
         updateGameList();
     }
-
+    @Override
+    public void onPause(){
+        super.onPause();
+    }
     @Override
     public void onDestroy() {
         this.setSelectedPosition(-1,false );
