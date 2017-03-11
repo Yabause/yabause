@@ -148,13 +148,6 @@ typedef struct {
   u8 track;
   u8 index;
 
-  // mpeg specific stats
-  u8 actionstatus;
-  u8 pictureinfo;
-  u8 mpegaudiostatus;
-  u16 mpegvideostatus;
-  u16 vcounter;
-
   // authentication variables
   u16 satauth;
   u16 mpgauth;
@@ -238,7 +231,15 @@ typedef struct {
   CDInterface * cdi;
 
   int carttype;
-  int playtype;  
+  int playtype; 
+
+  // mpeg specific stats
+  u8 actionstatus;
+  u8 pictureinfo;
+  u8 mpegaudiostatus;
+  u16 mpegvideostatus;
+  u16 vcounter;
+
 } Cs2;
 
 typedef struct {
