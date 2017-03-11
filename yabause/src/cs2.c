@@ -2100,6 +2100,8 @@ void Cs2CalculateActualSize(void) {
   else
      Cs2Area->calcsize = 0;
 
+  CDLOG("Cs2Area->calcsize = %d", Cs2Area->calcsize);
+
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_ESEL;
 }
@@ -3329,6 +3331,7 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
          // Free Block
          rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
          Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+         rfspartition->block[rfspartition->numblocks - 1] = NULL;
          rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
 
          // Sort remaining blocks
@@ -3395,6 +3398,7 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
                // Free previous read sector
                rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
                Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+               rfspartition->block[rfspartition->numblocks - 1] = NULL;
                rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
        
                // Sort remaining blocks
@@ -3433,6 +3437,7 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
             // Free previous read sector
             rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
             Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+            rfspartition->block[rfspartition->numblocks - 1] = NULL;
             rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
        
             // Sort remaining blocks
@@ -3458,6 +3463,7 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
    // Free the remaining sector
    rfspartition->size -= rfspartition->block[rfspartition->numblocks - 1]->size;
    Cs2FreeBlock(rfspartition->block[rfspartition->numblocks - 1]);
+   rfspartition->block[rfspartition->numblocks - 1] = NULL;
    rfspartition->blocknum[rfspartition->numblocks - 1] = 0xFF;
 
    // Sort remaining blocks
@@ -3753,6 +3759,7 @@ u8 Cs2GetIP(int autoregion) {
       // Free Block
       gripartition->size -= gripartition->block[gripartition->numblocks - 1]->size;
       Cs2FreeBlock(gripartition->block[gripartition->numblocks - 1]);
+      gripartition->block[gripartition->numblocks - 1] = NULL;
       gripartition->blocknum[gripartition->numblocks - 1] = 0xFF;
 
       // Sort remaining blocks
@@ -3773,7 +3780,7 @@ u8 Cs2GetRegionID(void)
 //////////////////////////////////////////////////////////////////////////////
 
 int Cs2SaveState(FILE * fp) {
-   int offset, i;
+   int offset, i, i2;
    IOCheck_struct check = { 0, 0 };
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
@@ -3798,11 +3805,13 @@ int Cs2SaveState(FILE * fp) {
    // Write other cd block internal variables
    ywrite(&check, (void *) &Cs2Area->satauth, 2, 1, fp);
    ywrite(&check, (void *) &Cs2Area->mpgauth, 2, 1, fp);
+
    ywrite(&check, (void *) &Cs2Area->transfercount, 4, 1, fp);
    ywrite(&check, (void *) &Cs2Area->cdwnum, 4, 1, fp);
    ywrite(&check, (void *) Cs2Area->TOC, 4, 102, fp);
    ywrite(&check, (void *) &Cs2Area->playFAD, 4, 1, fp);
    ywrite(&check, (void *) &Cs2Area->playendFAD, 4, 1, fp);
+   ywrite(&check, (void *) &Cs2Area->maxrepeat, 4, 1, fp);
    ywrite(&check, (void *) &Cs2Area->getsectsize, 4, 1, fp);
    ywrite(&check, (void *) &Cs2Area->putsectsize, 4, 1, fp);
    ywrite(&check, (void *) &Cs2Area->calcsize, 4, 1, fp);
@@ -3815,6 +3824,8 @@ int Cs2SaveState(FILE * fp) {
    ywrite(&check, (void *) &Cs2Area->isaudio, 1, 1, fp);
    ywrite(&check, (void *) &Cs2Area->transfileinfo, 1, 12, fp);
    ywrite(&check, (void *) &Cs2Area->lastbuffer, 1, 1, fp);
+   ywrite(&check, (void *)&Cs2Area->transscodeq, 5*2, 1, fp);
+   ywrite(&check, (void *)&Cs2Area->transscoderw, 12*2, 1, fp);
    ywrite(&check, (void *) &Cs2Area->_command, 1, 1, fp);
    {
       u32 temp = (Cs2Area->_periodictiming + 3) / 3;
@@ -3843,6 +3854,16 @@ int Cs2SaveState(FILE * fp) {
       ywrite(&check, (void *)&Cs2Area->partition[i].size, 4, 1, fp);
       ywrite(&check, (void *)Cs2Area->partition[i].blocknum, 1, MAX_BLOCKS, fp);
       ywrite(&check, (void *)&Cs2Area->partition[i].numblocks, 1, 1, fp);
+
+      u32 index = 0;
+      for (i2 = 0; i2 < MAX_BLOCKS; i2++)
+      {
+        if (Cs2Area->partition[i].block[i2] == NULL)
+          index = 0xFFFFFFFF;
+        else
+          index = Cs2Area->partition[i].block[i2] - Cs2Area->block;
+        ywrite(&check, &index, 4, 1, fp);
+      }
    }
 
    // Write filter data
@@ -3865,6 +3886,8 @@ int Cs2SaveState(FILE * fp) {
    ywrite(&check, (void *)Cs2Area->mpegcon, sizeof(mpegcon_struct), 2, fp);
    ywrite(&check, (void *)Cs2Area->mpegstm, sizeof(mpegstm_struct), 2, fp);
 
+   ywrite(&check, (void *)&Cs2Area->playtype, 4, 1, fp);
+
    return StateFinishHeader(fp, offset);
 }
 
@@ -3874,7 +3897,10 @@ int Cs2LoadState(FILE * fp, int version, int size) {
    int i, i2;
    IOCheck_struct check = { 0, 0 };
 
+   Cs2Reset();
+
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
+   CDLOG("************* Cs2LoadState *********************");
 
    // Read cart type
    yread(&check, (void *)&Cs2Area->carttype, 4, 1, fp);
@@ -3894,11 +3920,13 @@ int Cs2LoadState(FILE * fp, int version, int size) {
    // Read other cd block internal variables
    yread(&check, (void *)&Cs2Area->satauth, 2, 1, fp);
    yread(&check, (void *)&Cs2Area->mpgauth, 2, 1, fp);
+
    yread(&check, (void *)&Cs2Area->transfercount, 4, 1, fp);
    yread(&check, (void *)&Cs2Area->cdwnum, 4, 1, fp);
    yread(&check, (void *)Cs2Area->TOC, 4, 102, fp);
    yread(&check, (void *)&Cs2Area->playFAD, 4, 1, fp);
    yread(&check, (void *)&Cs2Area->playendFAD, 4, 1, fp);
+   yread(&check, (void *)&Cs2Area->maxrepeat, 4, 1, fp);
    yread(&check, (void *)&Cs2Area->getsectsize, 4, 1, fp);
    yread(&check, (void *)&Cs2Area->putsectsize, 4, 1, fp);
    yread(&check, (void *)&Cs2Area->calcsize, 4, 1, fp);
@@ -3912,6 +3940,8 @@ int Cs2LoadState(FILE * fp, int version, int size) {
       yread(&check, (void *)&Cs2Area->isaudio, 1, 1, fp);
    yread(&check, (void *)&Cs2Area->transfileinfo, 1, 12, fp);
    yread(&check, (void *)&Cs2Area->lastbuffer, 1, 1, fp);
+   yread(&check, (void *)&Cs2Area->transscodeq, 5 * 2, 1, fp);
+   yread(&check, (void *)&Cs2Area->transscoderw, 12 * 2, 1, fp);
    yread(&check, (void *)&Cs2Area->_command, 1, 1, fp);
    {
       u32 temp;
@@ -3968,12 +3998,16 @@ int Cs2LoadState(FILE * fp, int version, int size) {
       yread(&check, (void *)Cs2Area->partition[i].blocknum, 1, MAX_BLOCKS, fp);
       yread(&check, (void *)&Cs2Area->partition[i].numblocks, 1, 1, fp);
 
+      u32 index=0;
       for (i2 = 0; i2 < MAX_BLOCKS; i2++)
       {
-         if (Cs2Area->partition[i].blocknum[i2] == 0xFF)
-            Cs2Area->partition[i].block[i2] = NULL;
-         else
-            Cs2Area->partition[i].block[i2] = Cs2Area->block + Cs2Area->partition[i].blocknum[i2];
+        yread(&check, (void *)&index, 4, 1, fp);
+        if (index == 0xFFFFFFFF){
+          Cs2Area->partition[i].block[i2] = NULL;
+        }
+        else{
+          Cs2Area->partition[i].block[i2] = Cs2Area->block + index;
+        }
       }
    }
 
@@ -3996,6 +4030,8 @@ int Cs2LoadState(FILE * fp, int version, int size) {
    yread(&check, (void *)&Cs2Area->mpegintmask, 4, 1, fp);
    yread(&check, (void *)Cs2Area->mpegcon, sizeof(mpegcon_struct), 2, fp);
    yread(&check, (void *)Cs2Area->mpegstm, sizeof(mpegstm_struct), 2, fp);
+
+   yread(&check, (void *)&Cs2Area->playtype, 4, 1, fp);
 
    return size;
 }
