@@ -2488,7 +2488,7 @@ scsp_set_b (u32 a, u8 d)
 {
   if ((a != 0x408) && (a != 0x41D))
     {
-      SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
+      //SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
     }
 
   scsp_ccr[a ^ 3] = d;
@@ -2662,7 +2662,7 @@ scsp_set_w (u32 a, u16 d)
 {
   if ((a != 0x418) && (a != 0x41A) && (a != 0x422))
     {
-      SCSPLOG("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
+      //SCSPLOG("scsp : reg w %.2X = %.4X\n", a & 0x3E, d);
     }
 
   *(u16 *)&scsp_ccr[a ^ 2] = d;
@@ -2793,7 +2793,7 @@ scsp_get_b (u32 a)
 
   if ((a != 0x09) && (a != 0x21))
     {
-      SCSPLOG("r_b scsp : reg %.2X\n", a);
+      SCSPLOG("r_b s %.2X\n", a);
     }
 //  if (a == 0x09) SCSPLOG("r_b scsp 09 = %.2X\n", ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0x1) << 7);
 
@@ -3928,10 +3928,13 @@ scsp_w_b (u32 a, u8 d)
 
   if (a < 0x400)
     {
-       if (use_new_scsp)
-          scsp_slot_write_byte(&new_scsp, a, d);
-       else
-          scsp_slot_set_b(a >> 5, a, d);
+      if (use_new_scsp){
+        scsp_isr[a ^ 3] = d;
+        scsp_slot_write_byte(&new_scsp, a, d);
+      }
+      else{
+        scsp_slot_set_b(a >> 5, a, d);
+      }
       FLUSH_SCSP ();
       return;
     }
@@ -3972,10 +3975,13 @@ scsp_w_w (u32 a, u16 d)
 
   if (a < 0x400)
     {
-       if (use_new_scsp)
-          scsp_slot_write_word(&new_scsp, a, d);
-       else
-          scsp_slot_set_w(a >> 5, a, d);
+      if (use_new_scsp){
+        *(u16 *)&scsp_isr[a ^ 2] = d;
+        scsp_slot_write_word(&new_scsp, a, d);
+      }
+      else{
+        scsp_slot_set_w(a >> 5, a, d);
+      }
       FLUSH_SCSP ();
       return;
     }
@@ -4061,7 +4067,9 @@ scsp_w_d (u32 a, u32 d)
     {
        if (use_new_scsp)
        {
+         *(u16 *)&scsp_isr[a ^ 2] = d >> 16;
           scsp_slot_write_word(&new_scsp, a + 0, d >> 16);
+          *(u16 *)&scsp_isr[(a + 2) ^ 2] = d & 0xffff;
           scsp_slot_write_word(&new_scsp, a + 2, d & 0xffff);
        }
        else
@@ -5653,8 +5661,12 @@ SoundLoadState (FILE *fp, int version, int size)
       // Internal variables need to be regenerated
       for(i = 0; i < 32; i++)
         {
-          for (i2 = 0; i2 < 0x20; i2+=2)
-            scsp_slot_set_w (i, 0x1E - i2, scsp_slot_get_w (i, 0x1E - i2));
+          for (i2 = 0; i2 < 0x20; i2 += 2){
+            //scsp_slot_set_w (i, 0x1E - i2, scsp_slot_get_w (i, 0x1E - i2));
+            u32 addr = (i << 5) + 0x1E - i2;
+            u16 val = *(u16 *)&scsp_isr[addr ^ 2];
+            scsp_w_w(addr, val);
+          }
         }
 
       scsp_set_w (0x402, scsp_get_w (0x402));
