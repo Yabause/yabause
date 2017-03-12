@@ -19,4 +19,6 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#7a7af4</color>
+    <color name="halfTransparent">#80000000</color>
+    <color name="cardview_initial_background">#71C3DE</color>
 </resources>
