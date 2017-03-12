@@ -48,6 +48,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -128,7 +130,7 @@ class YabauseRunnable implements Runnable
     public static native String getCurrentGameCode();
     public static native String getGameTitle();
     public static native String getGameinfo();
-    public static native void savestate( String path );
+    public static native String savestate( String path );
     public static native void loadstate( String path );
     public static native void pause();
     public static native void resume();
@@ -379,12 +381,40 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                 break;
             case R.id.save_state: {
                 String save_path = YabauseStorage.getStorage().getStateSavePath();
-                YabauseRunnable.savestate(save_path);
+                String current_gamecode = YabauseRunnable.getCurrentGameCode();
+                File save_root = new File(YabauseStorage.getStorage().getStateSavePath(),current_gamecode);
+                if (! save_root.exists()) save_root.mkdir();
+                String save_filename = YabauseRunnable.savestate(save_path+current_gamecode);
+                if( save_filename != "" ){
+                    int point = save_filename.lastIndexOf(".");
+                    if (point != -1) {
+                        save_filename = save_filename.substring(0, point);
+                    }
+                    String screen_shot_save_path = save_filename + ".png";
+                    if (YabauseRunnable.screenshot(screen_shot_save_path) != 0){
+                        Toast.makeText(this,"Failed to save the current state", Toast.LENGTH_LONG );
+                    }else {
+                        Toast.makeText(this, "Current state is saved as " + save_filename, Toast.LENGTH_LONG);
+                    }
+                }else{
+                    Toast.makeText(this,"Failed to save the current state", Toast.LENGTH_LONG );
+                }
             }
             break;
             case R.id.load_state: {
+                //String save_path = YabauseStorage.getStorage().getStateSavePath();
+                //YabauseRunnable.loadstate(save_path);
+                String basepath;
                 String save_path = YabauseStorage.getStorage().getStateSavePath();
-                YabauseRunnable.loadstate(save_path);
+                String current_gamecode = YabauseRunnable.getCurrentGameCode();
+                basepath = save_path + current_gamecode;
+                waiting_reault = true;
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                StateListFragment fragment = new StateListFragment();
+                fragment.setBasePath(basepath);
+                transaction.replace(R.id.ext_fragment, fragment, StateListFragment.TAG );
+                transaction.show(fragment);
+                transaction.commit();
             }
             break;
             case R.id.button_open_cd: {
@@ -562,6 +592,38 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         }
     }
 
+    public void cancelStateLoad(){
+        if( waiting_reault ) {
+            waiting_reault = false;
+            menu_showing = false;
+            View mainview = (View)findViewById(R.id.yabause_view);
+            mainview.requestFocus();
+            YabauseRunnable.resume();
+            audio.unmute(audio.SYSTEM);
+        }
+    }
+
+    public void loadState( String filename ){
+
+        YabauseRunnable.loadstate(filename);
+
+        Fragment fg = getSupportFragmentManager().findFragmentByTag(StateListFragment.TAG);
+        if( fg != null ){
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+            transaction.remove(fg);
+            transaction.commit();
+        }
+
+        if( waiting_reault ) {
+            waiting_reault = false;
+            menu_showing = false;
+            View mainview = (View)findViewById(R.id.yabause_view);
+            mainview.requestFocus();
+            YabauseRunnable.resume();
+            audio.unmute(audio.SYSTEM);
+        }
+    }
+
     void doReportCurrentGame( int rating, String message, boolean screenshot ){
         current_report = new ReportContents();
         current_report._rating = rating;
@@ -665,13 +727,28 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         int keyCode = event.getKeyCode();
 
         if ( keyCode == KeyEvent.KEYCODE_BACK) {
+
             if( event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0 ){
+
+                Fragment fg = getSupportFragmentManager().findFragmentByTag(StateListFragment.TAG);
+                if( fg != null ){
+                    this.cancelStateLoad();
+                    FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                    transaction.remove(fg);
+                    transaction.commit();
+                    return true;
+                }
+
                 showBottomMenu();
             }
             return true;
         }
 
         if( menu_showing ){
+            return super.dispatchKeyEvent(event);
+        }
+
+        if( this.waiting_reault ){
             return super.dispatchKeyEvent(event);
         }
 
