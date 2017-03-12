@@ -59,6 +59,7 @@ static jobject yabause;
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
 static char screenShotFilename[256] = "\0";
+static char last_state_filename[256] = "\0";
 
 EGLDisplay g_Display = EGL_NO_DISPLAY;
 EGLSurface g_Surface = EGL_NO_SURFACE;
@@ -198,9 +199,10 @@ static int saveScreenshot( const char * filename );
 /* Override printf for debug*/
 int yprintf( const char * fmt, ... )
 {
+    int result = 0;
    va_list ap;
    va_start(ap, fmt);
-   int result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
+   result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
    va_end(ap);
    return result;
 }
@@ -696,9 +698,10 @@ int initEGLFunc()
 }
 #endif
 
-jint Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject thiz, jstring  path ){
+jstring Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject thiz, jstring  path ){
 
     jboolean dummy;
+    if( cdip == NULL ) return NULL;
     const char *cpath = (*env)->GetStringUTFChars(env,path, &dummy);
 
     pthread_mutex_lock(&g_mtxGlLock);
@@ -712,7 +715,7 @@ jint Java_org_uoyabause_android_YabauseRunnable_savestate( JNIEnv* env, jobject 
     pthread_cond_wait(&g_cndFuncSync,&g_mtxFuncSync);
     pthread_mutex_unlock(&g_mtxFuncSync);
 
-    return 0;
+    return (*env)->NewStringUTF(env,(const char*)last_state_filename);
 }
 
 jint Java_org_uoyabause_android_YabauseRunnable_loadstate( JNIEnv* env, jobject thiz, jstring  path ){
@@ -1347,15 +1350,13 @@ void Java_org_uoyabause_android_YabauseRunnable_updateCheat(JNIEnv *env, jobject
     int stringCount = (*env)->GetArrayLength(env,stringArray);
     int i = 0;
     int index = 0;
-    char *rawString;
-
     CheatClearCodes();
     for (i=0; i<stringCount; i++) {
         jstring string = (jstring) ((*env)->GetObjectArrayElement(env,stringArray, i));
         if( string == NULL ){
             continue;
         }
-        rawString = (*env)->GetStringUTFChars(env,string, 0);
+        const char * rawString = (*env)->GetStringUTFChars(env,string, 0);
         // Don't forget to call `ReleaseStringUTFChars` when you're done.
 
         index = CheatAddARCode(rawString);
@@ -1476,12 +1477,12 @@ void renderLoop()
             case MSG_SAVE_STATE:
             {
                 int ret;
+                time_t t = time(NULL);
                 YUI_LOG("MSG_SAVE_STATE");
-                if( (ret = YabSaveStateSlot(s_savepath, 1)) != 0 ){
-                    yprintf("State save is failed %d",ret);
-                }else{
-                    yprintf("State save is succsesfull!");
-                }
+
+                sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
+                ret = YabSaveState(last_state_filename);
+
                 pthread_mutex_lock(&g_mtxFuncSync);
                 pthread_cond_signal(&g_cndFuncSync);
                 pthread_mutex_unlock(&g_mtxFuncSync);                
@@ -1489,13 +1490,32 @@ void renderLoop()
             break;
 
             case MSG_LOAD_STATE:
+            {
+                int rtn;
                 YUI_LOG("MSG_LOAD_STATE");
-                YabLoadStateSlot(s_savepath, 1);
+                rtn = YabLoadState(s_savepath);
+                switch(rtn){
+                case 0:
+                    YUI_LOG("Load State: OK");
+                    break;
+                case -1:
+                    YUI_LOG("Load State: File Not Found");
+                    break;
+                case -2:
+                    YUI_LOG("Load State: Bad format");
+                    break;
+                case -3:
+                    YUI_LOG("Load State: Bad format deep inside");
+                    break;                    
+                default:
+                    YUI_LOG("Load State: Fail unkown");
+                    break;                    
+                }
                 pthread_mutex_lock(&g_mtxFuncSync);
                 pthread_cond_signal(&g_cndFuncSync);
                 pthread_mutex_unlock(&g_mtxFuncSync);
-
-                break;
+            }
+            break;
             case MSG_PAUSE:
                 YUI_LOG("MSG_PAUSE");
                 YabFlushBackups();
