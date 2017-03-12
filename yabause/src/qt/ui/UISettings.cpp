@@ -515,7 +515,7 @@ void UISettings::loadSettings()
 	bgShowToolbar->setId( rbToolbarNever, BD_NEVERHIDE );
 	bgShowToolbar->setId( rbToolbarFullscreen, BD_HIDEFS );
 	bgShowToolbar->setId( rbToolbarAlways, BD_ALWAYSHIDE );
-	bgShowToolbar->button( s->value( "View/Toolbar", BD_HIDEFS ).toInt() )->setChecked( true );
+	bgShowToolbar->button( s->value( "View/Toolbar", BD_ALWAYSHIDE ).toInt() )->setChecked( true );
 
 	bgShowLogWindow->setId( rbLogWindowNever, 0 );
 	bgShowLogWindow->setId( rbLogWindowMessage, 1 );
@@ -611,6 +611,9 @@ void UISettings::saveSettings()
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );
 	s->setValue( "View/Toolbar", bgShowToolbar->checkedId() );
 	s->setValue( "View/LogWindow", bgShowLogWindow->checkedId() );
+	
+	// have the settings been saved before?
+	s->setValue( "Settings/Saved", true );
 
 	// shortcuts
 	applyShortcuts();

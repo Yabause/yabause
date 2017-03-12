@@ -187,7 +187,11 @@ void UIYabause::showEvent( QShowEvent* e )
 		LogStart();
 		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
 		VolatileSettings* vs = QtYabause::volatileSettings();
-
+		
+		// Disable the toolbar if settings have not been saved yet
+		if ( !vs->value( "Settings/Saved" ).toBool() )
+			toolBar->hide();
+		
 		if ( vs->value( "View/Menubar" ).toInt() == BD_ALWAYSHIDE )
 			menubar->hide();
 		if ( vs->value( "View/Toolbar" ).toInt() == BD_ALWAYSHIDE )
