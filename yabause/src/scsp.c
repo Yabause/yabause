@@ -5460,6 +5460,71 @@ SoundSaveState (FILE *fp)
   ywrite (&check, (void *)&temp, 4, 1, fp);
 #endif
 
+  ywrite(&check, (void *)&use_new_scsp, 1, sizeof(int), fp);
+  ywrite (&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
+  for (i = 0; i < 32; i++) {
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.kx, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.kb, sizeof(u8),  1,fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.sbctl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.ssctl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.lpctl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.pcm8b, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.sa, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.lsa, sizeof(u16), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.lea, sizeof(u16), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.d2r, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.d1r, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.hold, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.ar, sizeof(u8),  1,fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.unknown1, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.ls, sizeof(u8),  1,fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.krs, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.dl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.rr, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.unknown2, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.si, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.sd, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.tl, sizeof(u16), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.mdl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.mdxsl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.mdysl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.unknown3, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.oct, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.unknown4, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.fns, sizeof(u16), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.re, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.lfof, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.plfows, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.plfos, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.alfows, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.alfos, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.unknown5, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.isel,  sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.imxl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.disdl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.dipan, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.efsdl, sizeof(u8), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].regs.efpan, sizeof(u8), 1, fp);
+
+    ywrite (&check, (void *)&new_scsp.slots[i].state.wave, sizeof(u16), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.backwards, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.envelope, sizeof(int), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.output, sizeof(s16), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.attenuation, sizeof(u16), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.step_count, sizeof(int), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.sample_counter, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.envelope_steps_taken, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.waveform_phase_value, sizeof(s32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.sample_offset, sizeof(s32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.address_pointer, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.lfo_counter, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.lfo_pos, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.num, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.is_muted, sizeof(u32), 1, fp);
+
+  }
+
+
   // Now for the SCSP registers
   ywrite (&check, (void *)scsp_reg, 0x1000, 1, fp);
 
@@ -5641,6 +5706,71 @@ SoundLoadState (FILE *fp, int version, int size)
   yread (&check, (void *)&temp, 4, 1, fp);
   M68K->SetPC (temp);
 #endif
+
+  yread(&check, (void *)&use_new_scsp, 1, sizeof(int), fp);
+  yread(&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
+  for (i = 0; i < 32; i++) {
+    yread (&check, (void *)&new_scsp.slots[i].regs.kx, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.kb, sizeof(u8),  1,fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.sbctl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.ssctl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.lpctl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.pcm8b, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.sa, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.lsa, sizeof(u16), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.lea, sizeof(u16), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.d2r, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.d1r, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.hold, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.ar, sizeof(u8),  1,fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.unknown1, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.ls, sizeof(u8),  1,fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.krs, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.dl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.rr, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.unknown2, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.si, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.sd, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.tl, sizeof(u16), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.mdl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.mdxsl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.mdysl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.unknown3, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.oct, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.unknown4, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.fns, sizeof(u16), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.re, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.lfof, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.plfows, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.plfos, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.alfows, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.alfos, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.unknown5, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.isel,  sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.imxl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.disdl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.dipan, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.efsdl, sizeof(u8), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].regs.efpan, sizeof(u8), 1, fp);
+
+    yread (&check, (void *)&new_scsp.slots[i].state.wave, sizeof(u16), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.backwards, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.envelope, sizeof(int), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.output, sizeof(s16), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.attenuation, sizeof(u16), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.step_count, sizeof(int), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.sample_counter, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.envelope_steps_taken, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.waveform_phase_value, sizeof(s32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.sample_offset, sizeof(s32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.address_pointer, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.lfo_counter, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.lfo_pos, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.num, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.is_muted, sizeof(u32), 1, fp);
+
+  }
+
 
   // Now for the SCSP registers
   yread (&check, (void *)scsp_reg, 0x1000, 1, fp);
@@ -5833,6 +5963,7 @@ SoundLoadState (FILE *fp, int version, int size)
       yread (&check, (void *)&scsp.mcipd, 4, 1, fp);
 
       yread (&check, (void *)scsp.stack, 4, 32 * 2, fp);
+
     }
 
   return size;
