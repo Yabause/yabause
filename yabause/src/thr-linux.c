@@ -100,7 +100,7 @@ void YabThreadSleep(void)
    pause();
 }
 
-void YabThreadUSleep( u32 stime )
+void YabThreadUSleep( unsigned int stime )
 {
 	usleep(stime);
 }
