@@ -1,7 +1,9 @@
 package org.uoyabause.android;
 
+import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -10,11 +12,14 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -59,6 +64,16 @@ class StateItemComparator implements Comparator<StateItem> {
     }
 }
 
+class StateItemInvComparator implements Comparator<StateItem> {
+    @Override
+    public int compare(StateItem p1, StateItem p2) {
+        int diff = p1._savedate.compareTo(p2._savedate);
+        if( diff > 0 ){
+            return 1;
+        }
+        return -1;
+    }
+}
 
 class StateItemAdapter extends RecyclerView.Adapter<StateItemAdapter.ViewHolder> implements View.OnClickListener {
     private static final String TAG = "CustomAdapter";
@@ -90,15 +105,28 @@ class StateItemAdapter extends RecyclerView.Adapter<StateItemAdapter.ViewHolder>
         private final TextView textView;
         private final ImageView imageView;
         private final CardView cardView;
+        //private final Toolbar toolbar;
 
         public ViewHolder(View v) {
             super(v);
             v.setClickable(true);
             textView = (TextView) v.findViewById(R.id.textView);
+/*
+            toolbar = (Toolbar) v.findViewById(R.id.card_toolbar);
+            if (toolbar != null) {
+                // inflate your menu
+                toolbar.inflateMenu(R.menu.state);
+                toolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem menuItem) {
+                        return true;
+                    }
+                });
+            }
+*/
             imageView = (ImageView) v.findViewById(R.id.imageView);
             cardView = (CardView) v.findViewById(R.id.cardview);
         }
-
         public TextView getTextView() {
             return textView;
         }
@@ -108,6 +136,9 @@ class StateItemAdapter extends RecyclerView.Adapter<StateItemAdapter.ViewHolder>
         public CardView getCardView() {
             return cardView;
         }
+        //public Toolbar getToolBar() {
+        //    return toolbar;
+        //}
     }
 
     private OnItemClickListener mListener;
@@ -159,8 +190,8 @@ class StateItemAdapter extends RecyclerView.Adapter<StateItemAdapter.ViewHolder>
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         Log.d(TAG, "Element " + position + " set.");
-
         viewHolder.getTextView().setText(new SimpleDateFormat(DATE_PATTERN).format(_state_items.get(position)._savedate));
+        //viewHolder.getToolBar().setTitle(new SimpleDateFormat(DATE_PATTERN).format(_state_items.get(position)._savedate));
         Context cx = viewHolder.getImageView().getContext();
         Glide.with(cx)
                 .load(new File(_state_items.get(position)._image_filename))
@@ -181,6 +212,19 @@ class StateItemAdapter extends RecyclerView.Adapter<StateItemAdapter.ViewHolder>
     public int getItemCount() {
         return _state_items.size();
     }
+
+    public void remove( int position ) {
+        File file = new File(_state_items.get(position)._filename);
+        if( file != null ){
+            file.delete();
+        }
+        file = new File(_state_items.get(position)._image_filename);
+        if( file != null ){
+            file.delete();
+        }
+        _state_items.remove(position);
+        notifyItemRemoved(position);
+    }
 }
 
 public class StateListFragment extends Fragment implements StateItemAdapter.OnItemClickListener, View.OnKeyListener {
@@ -188,16 +232,58 @@ public class StateListFragment extends Fragment implements StateItemAdapter.OnIt
     public static final String TAG = "StateListFragment";
     protected RecyclerView mRecyclerView;
     protected RecyclerView.LayoutManager mLayoutManager;
+    protected View emptyView;
     protected StateItemAdapter mAdapter;
     ArrayList<StateItem> _state_items = null;
+    ItemTouchHelper mHelper;
     int mSelectedItem = 0;
-
-
-
     protected String _basepath = "";
 
     public void setBasePath( String basepath ){
         this._basepath = basepath;
+    }
+
+    public static void checkMaxFileCount( String basepath ){
+        ArrayList<StateItem>  state_items = new ArrayList<StateItem>();
+
+        File folder = new File(basepath);
+        if( folder == null ){
+            return ;
+        }
+
+        File[] listOfFiles = folder.listFiles();
+        if(listOfFiles==null ){
+            return;
+        }
+
+        for (int i = 0; i < listOfFiles.length; i++) {
+            if (listOfFiles[i].isFile()) {
+                String filename = listOfFiles[i].getName();
+                int point = filename.lastIndexOf(".");
+                if (point != -1) {
+                    String ext = filename.substring(point, point + 4);
+                    if( ext.equals(".yss")){
+                        StateItem item = new StateItem();
+                        item._filename = basepath + "/" + filename;
+                        item._image_filename = basepath + "/" + filename.substring(0, point) + ".png";
+                        item._savedate =  new Date(listOfFiles[i].lastModified());
+                        state_items.add(item);
+                    }
+                }
+            }
+        }
+
+        int filecount = state_items.size();
+        if( filecount > 10 ){
+            for( int i = 0; i < filecount-10; i++ ) {
+                Collections.sort(state_items, new StateItemInvComparator());
+                File save_file = new File(state_items.get(i)._filename);
+                save_file.delete();
+                File img_file = new File(state_items.get(i)._image_filename);
+                img_file.delete();
+            }
+        }
+
     }
 
     @Override
@@ -239,7 +325,6 @@ public class StateListFragment extends Fragment implements StateItemAdapter.OnIt
             Collections.sort(_state_items, new StateItemComparator());
         }
 
-
     }
 
     @Override
@@ -248,7 +333,7 @@ public class StateListFragment extends Fragment implements StateItemAdapter.OnIt
 
         View rootView = inflater.inflate(R.layout.state_list_frag, container, false);
         rootView.setTag(TAG);
-        View v = rootView.findViewById(R.id.textView_empty);
+        emptyView = rootView.findViewById(R.id.textView_empty);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recyclerView);
 
         if( _state_items.size() == 0 ){
@@ -257,7 +342,7 @@ public class StateListFragment extends Fragment implements StateItemAdapter.OnIt
             return rootView;
         }
 
-        v.setVisibility(View.GONE);
+        emptyView.setVisibility(View.GONE);
         mAdapter = new StateItemAdapter();
         mAdapter.setStateItems(_state_items);
         mAdapter.setOnItemClickListener(this);
@@ -278,6 +363,76 @@ public class StateListFragment extends Fragment implements StateItemAdapter.OnIt
         rootView.requestFocus();
         rootView.setOnKeyListener(this);
 
+        ItemTouchHelper.SimpleCallback callback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+
+                // 横にスワイプされたら要素を消す
+                int swipedPosition = viewHolder.getAdapterPosition();
+                mAdapter.remove(swipedPosition);
+                if( mAdapter.getItemCount() == 0 ){
+                    emptyView.setVisibility(View.VISIBLE);
+                    mRecyclerView.setVisibility(View.GONE);
+                }
+            }
+        };
+
+        mHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
+            @Override
+            public int getMovementFlags(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+//ここでドラッグ動作、Swipe動作を指定します
+//ドラッグさせたくないとか、Swipeさせたくない場合はここで分岐してアクションを指定しないことでドラッグできない行などを指定できます
+//ドラッグは長押しで自動的に開始されます
+                return makeFlag(ItemTouchHelper.ACTION_STATE_IDLE, ItemTouchHelper.RIGHT) | makeFlag(ItemTouchHelper.ACTION_STATE_SWIPE, ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) |
+                        makeFlag(ItemTouchHelper.ACTION_STATE_DRAG, ItemTouchHelper.DOWN | ItemTouchHelper.UP);
+            }
+
+
+            //ドラッグで場所を移動した際の処理を記述します
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder viewHolder1) {
+                //((StateItemAdapter) recyclerView.getAdapter()).move(viewHolder.getAdapterPosition(), viewHolder1.getAdapterPosition());
+                return true;
+            }
+
+
+            //選択ステータスが変更された場合の処理を指定します
+//この例ではAdapterView内のcontainerViewを表示にしています
+//containerViewには背景色を指定しており、ドラッグが開始された際に見やすくなるようにしています
+            @Override
+            public void onSelectedChanged(RecyclerView.ViewHolder viewHolder, int actionState) {
+                super.onSelectedChanged(viewHolder, actionState);
+
+                //if (actionState == ItemTouchHelper.ACTION_STATE_DRAG)
+                 //   ((StateItemAdapter.holder) viewHolder).container.setVisibility(View.VISIBLE);
+            }
+            //選択が終わった時（Dragが終わった時など）の処理を指定します
+//今回はアイテムをDropした際にcontainerViewを非表示にして通常表示に戻しています
+            @Override
+            public void clearView(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+               // ((StateItemAdapter.holder) viewHolder).container.setVisibility(View.GONE);
+            }
+
+
+            //Swipeされた際の処理です。
+//
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int i) {
+                ((StateItemAdapter) mRecyclerView.getAdapter()).remove(viewHolder.getAdapterPosition());
+                if( mAdapter.getItemCount() == 0 ){
+                    emptyView.setVisibility(View.VISIBLE);
+                    mRecyclerView.setVisibility(View.GONE);
+                }
+            }
+        });
+        mHelper.attachToRecyclerView(mRecyclerView);
+        mRecyclerView.addItemDecoration(mHelper);
         return rootView;
 
     }
@@ -292,20 +447,26 @@ public class StateListFragment extends Fragment implements StateItemAdapter.OnIt
     void  selectPrevious(){
         if (mSelectedItem < 1)
             return;
-        selectItem(--mSelectedItem);
+        selectItem(mSelectedItem-1);
     }
 
     void  selectNext(){
         if (mSelectedItem >= mAdapter.getItemCount()-1)
             return;
-        selectItem(++mSelectedItem);
+        selectItem(mSelectedItem+1);
     }
 
 
     private void selectItem(int position){
+        if( position < 0 ) position = 0;
+        if( position >= mAdapter.getItemCount() ) position = mAdapter.getItemCount()-1;
+
+        int pre = mSelectedItem;
+
         mSelectedItem = position;
         mAdapter.setSelected(mSelectedItem);
-        mAdapter.notifyDataSetChanged();
+        mAdapter.notifyItemChanged(pre);
+        mAdapter.notifyItemChanged(mSelectedItem);
         mRecyclerView.stopScroll();
         mRecyclerView.smoothScrollToPosition(position);
 
@@ -343,6 +504,31 @@ public class StateListFragment extends Fragment implements StateItemAdapter.OnIt
                 if( main != null ) {
                     main.loadState( _state_items.get(mSelectedItem)._filename );
                 }
+                break;
+            case KeyEvent.KEYCODE_BUTTON_X:
+
+                new AlertDialog.Builder(getActivity())
+                        .setMessage(getString(R.string.delete_confirm))
+                        .setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                mAdapter.remove( mSelectedItem );
+                                if( mAdapter.getItemCount() == 0 ){
+                                    emptyView.setVisibility(View.VISIBLE);
+                                    mRecyclerView.setVisibility(View.GONE);
+                                }else {
+
+                                    int newsel =mSelectedItem;
+                                    if (newsel >= mAdapter.getItemCount() - 1) {
+                                        newsel -= 1;
+                                    }
+                                    selectItem(newsel);
+                                }
+                            }
+                        })
+                        .setNegativeButton(getString(R.string.cancel), null)
+                        .show();
+
                 break;
             case KeyEvent.KEYCODE_DPAD_UP:
                 selectPrevious();
