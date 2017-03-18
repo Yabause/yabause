@@ -1482,6 +1482,7 @@ int YabLoadStateStream(FILE *fp)
 
 int YabSaveStateSlot(const char *dirpath, u8 slot)
 {
+  int rtn;
    char filename[512];
 
    if (cdip == NULL)
@@ -1492,13 +1493,17 @@ int YabSaveStateSlot(const char *dirpath, u8 slot)
 #else
    sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
-   return YabSaveState(filename);
+   ScspMuteAudio(1);
+   rtn = YabSaveState(filename);
+   ScspUnMuteAudio(1);
+   return rtn;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int YabLoadStateSlot(const char *dirpath, u8 slot)
 {
+   int rtn;
    char filename[512];
 
    if (cdip == NULL)
@@ -1509,7 +1514,10 @@ int YabLoadStateSlot(const char *dirpath, u8 slot)
 #else
    sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
-   return YabLoadState(filename);
+   ScspMuteAudio(1);
+   rtn = YabLoadState(filename);
+   ScspUnMuteAudio(1);
+   return rtn;
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -48,6 +48,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -86,6 +87,7 @@ import android.content.pm.PackageManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -220,22 +222,22 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         mProgressDialog = null;
         isShowProgress = false;
         waiting_reault = false;
-
+        final DrawerLayout layout = (DrawerLayout) findViewById(R.id.drawer_layout);
         switch( _report_status){
             case   REPORT_STATE_INIT:
-                Toast.makeText(this, "Fail to send your report. internal error", Toast.LENGTH_SHORT).show();
+                Snackbar.make(layout, "Fail to send your report. internal error", Snackbar.LENGTH_SHORT).show();
                 break;
             case   REPORT_STATE_SUCCESS:
-                Toast.makeText(this, "Success to send your report. Thank you for your collaboration.", Toast.LENGTH_SHORT).show();
+                Snackbar.make(layout, "Success to send your report. Thank you for your collaboration.", Snackbar.LENGTH_SHORT).show();
                 break;
             case   REPORT_STATE_FAIL_DUPE:
-                Toast.makeText(this, "Fail to send your report. You've sent a report for same game, same device and same vesion.", Toast.LENGTH_SHORT).show();
+                Snackbar.make(layout, "Fail to send your report. You've sent a report for same game, same device and same vesion.", Snackbar.LENGTH_SHORT).show();
                 break;
             case   REPORT_STATE_FAIL_CONNECTION:
-                Toast.makeText(this, "Fail to send your report. Server is down.", Toast.LENGTH_SHORT).show();
+                Snackbar.make(layout, "Fail to send your report. Server is down.", Snackbar.LENGTH_SHORT).show();
                 break;
             case   REPORT_STATE_FAIL_AUTH:
-                Toast.makeText(this, "Fail to send your report. Authorizing is failed.", Toast.LENGTH_SHORT).show();
+                Snackbar.make(layout, "Fail to send your report. Authorizing is failed.", Snackbar.LENGTH_SHORT).show();
                 break;
 
         }
@@ -390,6 +392,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                 String current_gamecode = YabauseRunnable.getCurrentGameCode();
                 File save_root = new File(YabauseStorage.getStorage().getStateSavePath(),current_gamecode);
                 if (! save_root.exists()) save_root.mkdir();
+
                 String save_filename = YabauseRunnable.savestate(save_path+current_gamecode);
                 if( save_filename != "" ){
                     int point = save_filename.lastIndexOf(".");
@@ -398,13 +401,16 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                     }
                     String screen_shot_save_path = save_filename + ".png";
                     if (YabauseRunnable.screenshot(screen_shot_save_path) != 0){
-                        Toast.makeText(this,"Failed to save the current state", Toast.LENGTH_LONG );
+                        Snackbar.make(this.mDrawerLayout, "Failed to save the current state", Snackbar.LENGTH_SHORT).show();
                     }else {
-                        Toast.makeText(this, "Current state is saved as " + save_filename, Toast.LENGTH_LONG);
+                        Snackbar.make(this.mDrawerLayout, "Current state is saved as " + save_filename, Snackbar.LENGTH_LONG).show();
                     }
                 }else{
-                    Toast.makeText(this,"Failed to save the current state", Toast.LENGTH_LONG );
+                    Snackbar.make(this.mDrawerLayout, "Failed to save the current state", Snackbar.LENGTH_SHORT).show();
                 }
+
+                StateListFragment.checkMaxFileCount(save_path + current_gamecode);
+
             }
             break;
             case R.id.load_state: {
@@ -825,7 +831,8 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         Log.d(TAG, "errorMsg " + msg);
         runOnUiThread(new Runnable() {
             public void run() {
-                Toast.makeText(Yabause.this, Yabause.this.errmsg, Toast.LENGTH_LONG).show();
+                final DrawerLayout layout = (DrawerLayout) findViewById(R.id.drawer_layout);
+                Snackbar.make(layout, Yabause.this.errmsg, Snackbar.LENGTH_SHORT) .show();
             }
         });
 
