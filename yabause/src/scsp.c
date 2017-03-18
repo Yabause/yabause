@@ -5446,6 +5446,7 @@ SoundSaveState (FILE *fp)
 
   // Save 68k registers first
   ywrite (&check, (void *)&IsM68KRunning, 1, 1, fp);
+  ywrite(&check, (void *)&savedcycles, sizeof(u32), 1, fp );
 
 #ifdef IMPROVED_SAVESTATES
   M68K->SaveState(fp);
@@ -5469,6 +5470,7 @@ SoundSaveState (FILE *fp)
 #endif
 
   ywrite(&check, (void *)&use_new_scsp, 1, sizeof(int), fp);
+  ywrite(&check, (void *)&new_scsp_cycles, 1, sizeof(u32), fp);
   ywrite (&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
   for (i = 0; i < 32; i++) {
     ywrite (&check, (void *)&new_scsp.slots[i].regs.kx, sizeof(u8), 1, fp);
@@ -5678,6 +5680,39 @@ SoundSaveState (FILE *fp)
 
   ywrite (&check, (void *)scsp.stack, 4, 32 * 2, fp);
 
+  ywrite(&check, (void *)scsp_dsp.coef, sizeof(u16), 64, fp);
+  ywrite(&check, (void *)scsp_dsp.madrs, sizeof(u16), 32, fp);
+  ywrite(&check, (void *)scsp_dsp.mpro, sizeof(u64), 128, fp);
+  ywrite(&check, (void *)scsp_dsp.temp, sizeof(s32), 128, fp);
+  ywrite(&check, (void *)scsp_dsp.mems, sizeof(s32), 32, fp);
+  ywrite(&check, (void *)scsp_dsp.mixs, sizeof(s32), 16, fp);
+  ywrite(&check, (void *)scsp_dsp.efreg, sizeof(s16), 16, fp);
+  ywrite(&check, (void *)scsp_dsp.exts, sizeof(s16), 2, fp);
+  ywrite(&check, (void *)&scsp_dsp.mdec_ct, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.inputs, sizeof(s32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.b, sizeof(s32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.x, sizeof(s32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.y, sizeof(s16), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.acc, sizeof(s32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.shifted, sizeof(s32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.y_reg, sizeof(s32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.frc_reg, sizeof(u16), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.adrs_reg, sizeof(u16), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.mul_out, sizeof(s32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.mrd_value, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.rbl, sizeof(int), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.rbp, sizeof(int), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.need_read, sizeof(int), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.io_addr, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.need_write, sizeof(int), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.write_data, sizeof(u16), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.updated, sizeof(int), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.last_step, sizeof(int), 1, fp);
+
+  ywrite(&check, (void *)&ScspInternalVars->scsptiming1, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&ScspInternalVars->scsptiming2, sizeof(u32), 1, fp);
+
+
   return StateFinishHeader (fp, offset);
 }
 
@@ -5692,7 +5727,8 @@ SoundLoadState (FILE *fp, int version, int size)
   IOCheck_struct check = { 0, 0 };
 
   // Read 68k registers first
-  yread (&check, (void *)&IsM68KRunning, 1, 1, fp);
+  yread(&check, (void *)&IsM68KRunning, 1, 1, fp);
+  yread(&check, (void *)&savedcycles, sizeof(u32), 1, fp);
 
 #ifdef IMPROVED_SAVESTATES
   M68K->LoadState(fp);
@@ -5716,6 +5752,7 @@ SoundLoadState (FILE *fp, int version, int size)
 #endif
 
   yread(&check, (void *)&use_new_scsp, 1, sizeof(int), fp);
+  yread(&check, (void *)&new_scsp_cycles, 1, sizeof(u32), fp);
   yread(&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
   for (i = 0; i < 32; i++) {
     yread (&check, (void *)&new_scsp.slots[i].regs.kx, sizeof(u8), 1, fp);
@@ -5977,6 +6014,39 @@ SoundLoadState (FILE *fp, int version, int size)
       yread (&check, (void *)scsp.stack, 4, 32 * 2, fp);
 
     }
+
+    yread(&check, (void *)scsp_dsp.coef, sizeof(u16), 64, fp);
+    yread(&check, (void *)scsp_dsp.madrs, sizeof(u16), 32, fp);
+    yread(&check, (void *)scsp_dsp.mpro, sizeof(u64), 128, fp);
+    yread(&check, (void *)scsp_dsp.temp, sizeof(s32), 128, fp);
+    yread(&check, (void *)scsp_dsp.mems, sizeof(s32), 32, fp);
+    yread(&check, (void *)scsp_dsp.mixs, sizeof(s32), 16, fp);
+    yread(&check, (void *)scsp_dsp.efreg, sizeof(s16), 16, fp);
+    yread(&check, (void *)scsp_dsp.exts, sizeof(s16), 2, fp);
+    yread(&check, (void *)&scsp_dsp.mdec_ct, sizeof(u32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.inputs, sizeof(s32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.b, sizeof(s32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.x, sizeof(s32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.y, sizeof(s16), 1, fp);
+    yread(&check, (void *)&scsp_dsp.acc, sizeof(s32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.shifted, sizeof(s32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.y_reg, sizeof(s32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.frc_reg, sizeof(u16), 1, fp);
+    yread(&check, (void *)&scsp_dsp.adrs_reg, sizeof(u16), 1, fp);
+    yread(&check, (void *)&scsp_dsp.mul_out, sizeof(s32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.mrd_value, sizeof(u32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.rbl, sizeof(int), 1, fp);
+    yread(&check, (void *)&scsp_dsp.rbp, sizeof(int), 1, fp);
+    yread(&check, (void *)&scsp_dsp.need_read, sizeof(int), 1, fp);
+    yread(&check, (void *)&scsp_dsp.io_addr, sizeof(u32), 1, fp);
+    yread(&check, (void *)&scsp_dsp.need_write, sizeof(int), 1, fp);
+    yread(&check, (void *)&scsp_dsp.write_data, sizeof(u16), 1, fp);
+    yread(&check, (void *)&scsp_dsp.updated, sizeof(int), 1, fp);
+    yread(&check, (void *)&scsp_dsp.last_step, sizeof(int), 1, fp);
+
+    yread(&check, (void *)&ScspInternalVars->scsptiming1, sizeof(u32), 1, fp);
+    yread(&check, (void *)&ScspInternalVars->scsptiming2, sizeof(u32), 1, fp);
+
 
   return size;
 }
