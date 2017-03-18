@@ -98,8 +98,10 @@
     <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">Related Videos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
+    <string name="delete_confirm">"Are you sure want to delete this item?"</string>string>
     <string name="error">Error</string>
-    <string name="ok">OK</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
     <string name="pause">Pause</string>
     <string name="play">Play</string>
     <string name="stop">Stop</string>
@@ -156,6 +158,9 @@
     <string name="poly_triangle">Triangle using perspective correction</string>
     <string name="poly_cpu_tess">CPU Tessellation</string>
     <string name="poly_gpu_tess">GPU Tessellation</string>
+
+    <string name="menu_load">Load</string>
+    <string name="menu_delete">Delete</string>
 
 </resources>
 	
