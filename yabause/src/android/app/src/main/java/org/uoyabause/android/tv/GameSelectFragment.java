@@ -221,7 +221,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);  // これで onCreate は 1 度しか呼ばれな�    }
+        setRetainInstance(true);
+    }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -467,13 +468,10 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
 
                 if (imageScaleWidth > 2 && imageScaleHeight > 2) {
                     BitmapFactory.Options imageOptions2 = new BitmapFactory.Options();
-
-                    // 縦横、小さざ�に縮小するスケールを合わせ�                    int imageScale = (int)Math.floor((imageScaleWidth > imageScaleHeight ? imageScaleHeight : imageScaleWidth));
-
-                    // inSampleSizeには2のべき上が入るべきなので、imageScaleに最も近く、かつそれ以下�2のべき上�数を探�                    for (int i = 2; i <= imageScale; i *= 2) {
+                    int imageScale = (int)Math.floor((imageScaleWidth > imageScaleHeight ? imageScaleHeight : imageScaleWidth));
+                    for (int i = 2; i <= imageScale; i *= 2) {
                         imageOptions2.inSampleSize = i;
                     }
-
                     bitmap = BitmapFactory.decodeStream(inputStream, null, imageOptions2);
                     Log.v("image", "Sample Size: 1/" + imageOptions2.inSampleSize);
                 } else {
