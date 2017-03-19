@@ -2,6 +2,7 @@
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">uoYabause</string>
     <string name="menu_exit">Quitter</string>
+	<string name="menu_reset">Redémarrer</string>
     <string name="menu_save_state">Sauvegarder un Etat</string>
     <string name="menu_load_state">Charger un Etat</string>
     <string name="load_game">Charger un Jeu</string>
@@ -12,11 +13,12 @@
     <string name="choose_video_core">Choisir le Noyau Vidéo</string>
     <string name="audio_output">Sortie Audio</string>
     <string name="fps">FPS</string>
-    <string name="frameskip">Saut d\'Image</string>
+    <string name="lock_landscape">Bloquer le mode Paysage</string>
+    <string name="frameskip">Saut d'Image</string>
     <string name="keepaspectrate">Conserver les Proportions</string>
-    <string name="choose_input_device">Choisir un Périphérique d\'Entrée</string>
-    <string name="input_device_title">Joueur 1 - Périphérique d\'Entrée</string>
-    <string name="input_device_title_player2">Joueur 2 - Périphérique d\'Entrée</string>
+    <string name="choose_input_device">Choisir un Périphérique d'Entrée</string>
+    <string name="input_device_title">Joueur 1 - Périphérique d'Entrée</string>
+    <string name="input_device_title_player2">Joueur 2 - Périphérique d'Entrée</string>
     <string name="input_device">Choisir</string>
     <string name="input_device_setting">Changer la Disposition des Touches</string>
     <string name="onscrenn_pad_setting">Changer les Contrôles Tactiles</string>
@@ -28,7 +30,7 @@
     <string name="setting_sound">Son</string>
     <string name="setting_graphics">Graphisme</string>
     <string name="setting_general">Général</string>
-    <string name="msg_opengl_not_supported">Votre appareil ne prend pas en charge OpenGL ES 3.0 ou supérieur.\nVous ne pouvez pas choisir l\'accélération matériel (OpenGL).\n</string>
+    <string name="msg_opengl_not_supported">Votre appareil ne prend pas en charge OpenGL ES 3.0 ou supérieur.\nVous ne pouvez pas choisir l'interface vidéo OpenGL.\n</string>
     <string name="skip">Passer</string>
     <string name="donation">Support</string>
     <string name="donate_message">
@@ -47,7 +49,7 @@
     <string name="donate_30doller">$30</string>
 
     <string name="input_the_key">Pressez une Touche</string>
-    <string name="joystick_is_not_connected">Le joystick n\'est pas connecté.</string>
+    <string name="joystick_is_not_connected">Le joystick n'est pas connecté.</string>
     <string name="this_key_has_already_been_set">Cette touche a déjà été utilisée.</string>
     <string name="up">Haut</string>
     <string name="down">Bas</string>
@@ -68,13 +70,14 @@
     <string name="z_button">Z</string>
 
     <string name="scale">Echelle</string>
+    <string name="transparency">Transparence</string>
     <string name="do_you_want_to_save_this_setting">Voulez-vous enregistrer ce paramètre ?</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <string name="exit">Quitter</string>
     <string name="ignore">Ignorer</string>
 
-    <string name="dynrec_cpu_interface">Recompileur Dynamique( rapide mais moins précis )</string>
+    <string name="dynrec_cpu_interface">Recompileur Dynamique ( rapide mais moins précis )</string>
     <string name="software_cpu_interface">Interprèteur ( lent mais plus précis )</string>
 
     <string name="opengl_video_interface">Interface Vidéo OpenGL</string>
@@ -82,7 +85,7 @@
     <string name="onscreen_pad">Contrôles Tactiles</string>
     <string name="select_from_other_directory">Choisir depuis un autre répertoire.</string>
 
-    <string name="menu_save_screenshot">Capture d\'Ecran</string>
+    <string name="menu_save_screenshot">Capture d'Ecran</string>
     <string name="menu_report">Rapporter</string>
 
     <string name="video_filter">Filtre</string>
@@ -92,7 +95,8 @@
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">Scanline</string>
     <string name="video_filter_bilinear">Bilinèaire (Actif seulement quand la résolution de base n\'est pas sélectionné)</string>
-    <string name="related_movies">Relatif aux Vidéos</string>
+    <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
+	<string name="related_movies">Relatif aux Vidéos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
     <string name="error">Erreur</string>
     <string name="ok">OK</string>
@@ -102,13 +106,13 @@
     <string name="init_text">00:00</string>
     <string name="play_pause_description">Lancer le Bouton Pause</string>
     <string name="loading">Chargement&#8230;</string>
-    <string name="no_video_found">Aucune vidéo n\'a été trouvée</string>
+    <string name="no_video_found">Aucune vidéo n'a été trouvée</string>
     <string name="about_app">A Propos du Lecteur DemoCast</string>
     <string name="version">Version : %1$s</string>
     <string name="popular_header">Vidéos Populaire</string>
     <string name="preferences">PREFERENCES</string>
     <string name="grid_view">Grille de Visualisation</string>
-    <string name="error_fragment">Fragment d\'Erreur</string>
+    <string name="error_fragment">Fragment d'Erreur</string>
     <string name="personal_settings">Paramètres Personnalisés</string>
     <string name="refresh_db">Rafraîchir la Liste de Jeu</string>
     <string name="select_bk_image">Sélectionner une Image en Arrière Plan</string>
@@ -117,14 +121,41 @@
     <string name="video_error_media_load_timeout">Expiration du Chargement du Média</string>
     <string name="video_error_server_inaccessible">Le Serveur de Média n\'a pas pu être atteint</string>
     <string name="video_error_unknown_error">Le chargement de la vidéo a échoué</string>
-    <string name="error_fragment_message">Une erreur s\'est produite</string>
+    <string name="error_fragment_message">Une erreur s'est produite</string>
     <string name="dismiss_error">Rejeter</string>
     <string name="oops">Oups</string>
 
-    <string name="polygon_generation_type">Type de Génération du Polygone</string>
+    <string name="title_activity_game_select" translatable="false">uoYabause</string>
+	<string name="polygon_generation_type">Type de Génération du Polygone</string>
     <string name="choose_polygon_generation_type">Choisir un Type de Génération de Polygone</string>
     <string name="sound_engine">Moteur Son</string>
     <string name="choose_sound_engine">Choisir un Moteur Son</string>
     <string name="video_resolution">Résolution du Rendu</string>
     <string name="choose_video_resolution">Choisir la Résolution du Rendu</string>
+    <string name="open_cd_tray">Ouvrir le Plateau du CD</string>
+    <string name="close_cd_tray">Fermer le Plateau du CD</string>
+    <string name="menu_analog">Activer les Contrôles Analogiques</string>
+    <string name="menu_cheat">Cheat</string>
+    <string name="add_new_code">Ajouter un Nouveau Code</string>
+
+    <string name="enable">Activer</string>
+    <string name="disable">Désactiver</string>
+    <string name="edit">Editer</string>
+    <string name="delete">Effacer</string>
+    <string name="select_game_directory">Choisir un Répertoire de Jeu</string>
+
+
+    <string name="sound_curent">En cours (version Haute Qualité pour les périphériques puissants)</string>
+    <string name="sound_legacy">Hérité (pour les périphériques moins puissants)</string>
+
+    <string name="res_native">Native (résolution native de ce périphérique Android)</string>
+    <string name="res_4x">4x</string>
+    <string name="res_2x">2x</string>
+    <string name="res_original">Original</string>
+
+    <string name="poly_triangle">Correction de Perspective en utilisant les Triangles</string>
+    <string name="poly_cpu_tess">Tesselation CPU</string>
+    <string name="poly_gpu_tess">Tessalation GPU</string>
+
 </resources>
+
