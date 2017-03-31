@@ -204,7 +204,11 @@ void YuiSwapBuffers(void) {
 void YuiInit() {
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
 	yinit.percoretype = PERCORE_LINUXJOY;
+#ifdef SH2_DYNAREC
 	yinit.sh2coretype = 2;
+#else
+	yinit.sh2coretype = 0;
+#endif
 #ifdef FORCE_CORE_SOFT
   yinit.vidcoretype = VIDCORE_SOFT;
 #else
