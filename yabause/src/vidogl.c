@@ -6604,7 +6604,11 @@ static void Vdp2DrawRBG0(void)
    else{
      if ((fixVdp2Regs->CCCTL & 0x410) == 0x10)
      {
-       info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+       if ((*Vdp2External.perline_alpha_draw & 0x10) != 0) {
+            info->alpha = 0xFF;
+       } else {
+            info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+       }
        if (fixVdp2Regs->CCCTL & 0x100 && info->specialcolormode == 0)
        {
          info->blendmode = VDP2_CC_ADD;
