@@ -20,6 +20,8 @@
 */
 
 #include <assert.h>
+#include <unistd.h>
+#include <sys/time.h>
 #if defined(_USEGLEW_)
 #include <GL/glew.h>
 #endif
@@ -284,55 +286,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
-
-  if( action == GLFW_PRESS )
-  {
-    //int yabaky = g_Keymap[key];
-    PerKeyDown(key);
-  }else if( action == GLFW_RELEASE  ){
-    //int yabaky = g_Keymap[key];
-    PerKeyUp(key);
-  }
-}
-
-#define KEYPAD(key, player) ((player << 17)|key)
-
-static void KeyInit() {
-  void * padbits;
-
-  PerPortReset();
-  padbits = PerPadAdd(&PORTDATA1);
-
-  PerSetKey(KEYPAD(PERPAD_UP, 0), PERPAD_UP, padbits);
-  PerSetKey(KEYPAD(PERPAD_RIGHT, 0), PERPAD_RIGHT, padbits);
-  PerSetKey(KEYPAD(PERPAD_DOWN, 0), PERPAD_DOWN, padbits);
-  PerSetKey(KEYPAD(PERPAD_LEFT, 0), PERPAD_LEFT, padbits);
-  PerSetKey(KEYPAD(PERPAD_RIGHT_TRIGGER, 0), PERPAD_RIGHT_TRIGGER, padbits);
-  PerSetKey(KEYPAD(PERPAD_LEFT_TRIGGER, 0), PERPAD_LEFT_TRIGGER, padbits);
-  PerSetKey(KEYPAD(PERPAD_START, 0), PERPAD_START, padbits);
-  PerSetKey(KEYPAD(PERPAD_A, 0), PERPAD_A, padbits);
-  PerSetKey(KEYPAD(PERPAD_B, 0), PERPAD_B, padbits);
-  PerSetKey(KEYPAD(PERPAD_C, 0), PERPAD_C, padbits);
-  PerSetKey(KEYPAD(PERPAD_X, 0), PERPAD_X, padbits);
-  PerSetKey(KEYPAD(PERPAD_Y, 0), PERPAD_Y, padbits);
-  PerSetKey(KEYPAD(PERPAD_Z, 0), PERPAD_Z, padbits);
-
-  padbits = PerPadAdd(&PORTDATA2);
-
-  PerSetKey(KEYPAD(PERPAD_UP, 1), PERPAD_UP, padbits);
-  PerSetKey(KEYPAD(PERPAD_RIGHT, 1), PERPAD_RIGHT, padbits);
-  PerSetKey(KEYPAD(PERPAD_DOWN, 1), PERPAD_DOWN, padbits);
-  PerSetKey(KEYPAD(PERPAD_LEFT, 1), PERPAD_LEFT, padbits);
-  PerSetKey(KEYPAD(PERPAD_RIGHT_TRIGGER, 1), PERPAD_RIGHT_TRIGGER, padbits);
-  PerSetKey(KEYPAD(PERPAD_LEFT_TRIGGER, 1), PERPAD_LEFT_TRIGGER, padbits);
-  PerSetKey(KEYPAD(PERPAD_START, 1), PERPAD_START, padbits);
-  PerSetKey(KEYPAD(PERPAD_A, 1), PERPAD_A, padbits);
-  PerSetKey(KEYPAD(PERPAD_B, 1), PERPAD_B, padbits);
-  PerSetKey(KEYPAD(PERPAD_C, 1), PERPAD_C, padbits);
-  PerSetKey(KEYPAD(PERPAD_X, 1), PERPAD_X, padbits);
-  PerSetKey(KEYPAD(PERPAD_Y, 1), PERPAD_Y, padbits);
-  PerSetKey(KEYPAD(PERPAD_Z, 1), PERPAD_Z, padbits);
-
 }
 
 int main(int argc, char *argv[]) {
@@ -421,8 +374,6 @@ int main(int argc, char *argv[]) {
 	YabauseDeInit();
 
   if (YabauseInit(&yinit) != 0) printf("YabauseInit error \n\r");
-
-  KeyInit();
 
   if (yinit.vidcoretype == VIDCORE_OGL) {
     if (lowres_mode == 0){
