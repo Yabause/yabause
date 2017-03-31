@@ -516,7 +516,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     u32 colorBank = cmd->CMDCOLR & 0xFF00;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
     if (MSB) color = (alpha << 24);
-    else if (colorBank == 0x0000){
+    else if ((colorBank == 0x0000) && (SPD == 0)){
       color = SAT2YAB1(priority, colorBank);
     }
     else if (color == nromal_shadow){
