@@ -166,6 +166,7 @@ VIDOGLVdp2DispOff
 
 float vdp1wratio=1;
 float vdp1hratio=1;
+static int vdp1_interlace = 0;
 
 int GlWidth=320;
 int GlHeight=224;
@@ -1398,8 +1399,12 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
    }
 
    // Is double-interlace enabled?
-   if (Vdp1Regs->FBCR & 0x8)
+   if (Vdp1Regs->FBCR & 0x8) {
       vdp1h=2;
+      vdp1_interlace = (Vdp1Regs->FBCR & 0x4)?2:1;
+  } else {
+      vdp1_interlace = 0;
+  }
 
    vdp1wratio = (float)vdp2widthratio / vdp1w;
    vdp1hratio = (float)vdp2heightratio / vdp1h;
@@ -2283,10 +2288,18 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   int incv = 1.0 / info->coordincy*256.0;
   int inch = 1.0 / info->coordincx*256.0;
 
+  int lineinc = 1;
+  int linestart = 0;
+
   int height = vdp2height;
   if (height >= 448) height >>= 1;
 
-  for (i = 0; i < height; i++)
+  if (vdp1_interlace != 0) {
+    lineinc=2;
+    linestart = vdp1_interlace -1;
+  }
+
+  for (i = linestart; i < lineinc*height; i+=lineinc)
   {
     int sh, sv;
     int v;
