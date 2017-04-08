@@ -1,7 +1,6 @@
 %1 Images (*.%2)|Images %1 (*.%2)
 %1/%2 blocks free|%1/%2 blocs libres
 3D Control Pad Configuration|Configuration de la Manette 3D Control
-68000 Core|Noyau 68000 :
 &About...|&A Propos De...
 &Action Replay|&Action Replay
 &Backup Manager...|&Gestion des Sauvegardes...
@@ -47,7 +46,7 @@
 4 Mbit Backup Ram|Sauvegarde RAM 4 Mbit
 503/512 blocks free|503/512 blocs libres
 510/512 blocks free|510/512 blocs libres
-68000 Core|Noya du 68000 :
+68000 Core|Noyau du 68000 :
 8 Mbit Backup Ram|Sauvegarde RAM 8 Mbit
 8 Mbit Dram|Dram 8 Mbit
 8-bit|8-bit
