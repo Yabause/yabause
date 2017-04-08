@@ -166,6 +166,7 @@ VIDOGLVdp2DispOff
 
 float vdp1wratio=1;
 float vdp1hratio=1;
+static int vdp1_interlace = 0;
 
 int GlWidth=320;
 int GlHeight=224;
@@ -516,7 +517,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     u32 colorBank = cmd->CMDCOLR & 0xFF00;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
     if (MSB) color = (alpha << 24);
-    else if (colorBank == 0x0000){
+    else if ((colorBank == 0x0000) && (SPD == 0)){
       color = SAT2YAB1(priority, colorBank);
     }
     else if (color == nromal_shadow){
@@ -1398,8 +1399,12 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
    }
 
    // Is double-interlace enabled?
-   if (Vdp1Regs->FBCR & 0x8)
+   if (Vdp1Regs->FBCR & 0x8) {
       vdp1h=2;
+      vdp1_interlace = (Vdp1Regs->FBCR & 0x4)?2:1;
+  } else {
+      vdp1_interlace = 0;
+  }
 
    vdp1wratio = (float)vdp2widthratio / vdp1w;
    vdp1hratio = (float)vdp2heightratio / vdp1h;
@@ -2234,7 +2239,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       }
       break;
     case 1:
-      baseaddr += ((sh + sv * (info->cellw >> 1)) << 1);
+      baseaddr += sh + sv * info->cellw;
       for (j = 0; j < vdp2width; j += 2)
       {
         Vdp2GetPixel8bpp(info, baseaddr, texture);
@@ -2283,10 +2288,18 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   int incv = 1.0 / info->coordincy*256.0;
   int inch = 1.0 / info->coordincx*256.0;
 
+  int lineinc = 1;
+  int linestart = 0;
+
   int height = vdp2height;
   if (height >= 448) height >>= 1;
 
-  for (i = 0; i < height; i++)
+  if (vdp1_interlace != 0) {
+    lineinc=2;
+    linestart = vdp1_interlace -1;
+  }
+
+  for (i = linestart; i < lineinc*height; i+=lineinc)
   {
     int sh, sv;
     int v;
@@ -6604,7 +6617,11 @@ static void Vdp2DrawRBG0(void)
    else{
      if ((fixVdp2Regs->CCCTL & 0x410) == 0x10)
      {
-       info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+       if ((*Vdp2External.perline_alpha_draw & 0x10) != 0) {
+            info->alpha = 0xFF;
+       } else {
+            info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+       }
        if (fixVdp2Regs->CCCTL & 0x100 && info->specialcolormode == 0)
        {
          info->blendmode = VDP2_CC_ADD;
