@@ -2292,10 +2292,11 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   int linestart = 0;
 
   int height = vdp2height;
-  if (height >= 448) height >>= 1;
+  if ((vdp1_interlace != 0) || (height >= 448)) {
+    lineinc=2;
+  }
 
   if (vdp1_interlace != 0) {
-    lineinc=2;
     linestart = vdp1_interlace -1;
   }
 
