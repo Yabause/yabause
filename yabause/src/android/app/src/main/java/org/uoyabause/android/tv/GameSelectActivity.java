@@ -75,11 +75,6 @@ public class GameSelectActivity extends Activity {
     }
 
     @Override
-    public void onResume(){
-        super.onResume();
-    }
-
-    @Override
     public boolean dispatchKeyEvent (KeyEvent event){
 
         InputDevice dev = InputDevice.getDevice(event.getDeviceId());

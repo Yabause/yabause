@@ -673,9 +673,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }else if( ((String) item).indexOf("GoogleDrive") >= 0) {
                     onGoogleDriveClciked();
                 }
-                }
             }
-
         }
     }
 

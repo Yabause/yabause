@@ -39,18 +39,10 @@
         <FrameLayout
             android:id="@+id/ext_fragment"
             android:layout_weight="2"
+            android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
         </FrameLayout>
-        android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:fitsSystemWindows="false"
-        app:insetForeground="#0000"
-        android:background="#80101010"
-        app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/game_menu" />
 
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
