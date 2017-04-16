@@ -291,36 +291,38 @@ void Cs2GetHardwareInfo(void);             // 0x01
 void Cs2GetToc(void);                      // 0x02
 void Cs2GetSessionInfo(void);              // 0x03
 void Cs2InitializeCDSystem(void);          // 0x04
-// Open Tray                               // 0x05
+void Cs2OpenTray(void);                    // 0x05
 void Cs2EndDataTransfer(void);             // 0x06
 void Cs2PlayDisc(void);                    // 0x10
 void Cs2SeekDisc(void);                    // 0x11
-// Scan Disc                               // 0x12
+void Cs2ScanDisc(void);                    // 0x12
 void Cs2GetSubcodeQRW(void);               // 0x20
 void Cs2SetCDDeviceConnection(void);       // 0x30
-// get CD Device Connection                // 0x31
+void Cs2GetCDDeviceConnection(void);       // 0x31
 void Cs2GetLastBufferDestination(void);    // 0x32
 void Cs2SetFilterRange(void);              // 0x40
-// get Filter Range                        // 0x41
+void Cs2GetFilterRange(void);              // 0x41
 void Cs2SetFilterSubheaderConditions(void);// 0x42
 void Cs2GetFilterSubheaderConditions(void);// 0x43
 void Cs2SetFilterMode(void);               // 0x44
 void Cs2GetFilterMode(void);               // 0x45
 void Cs2SetFilterConnection(void);         // 0x46
-// Get Filter Connection                   // 0x47
+void Cs2GetFilterConnection(void);         // 0x47
 void Cs2ResetSelector(void);               // 0x48
 void Cs2GetBufferSize(void);               // 0x50
 void Cs2GetSectorNumber(void);             // 0x51
 void Cs2CalculateActualSize(void);         // 0x52
 void Cs2GetActualSize(void);               // 0x53
 void Cs2GetSectorInfo(void);               // 0x54
+void Cs2ExecFadSearch(void);               // 0x55
+void Cs2GetFadSearchResults(void);         // 0x56
 void Cs2SetSectorLength(void);             // 0x60
 void Cs2GetSectorData(void);               // 0x61
 void Cs2DeleteSectorData(void);            // 0x62
 void Cs2GetThenDeleteSectorData(void);     // 0x63
 void Cs2PutSectorData(void);               // 0x64
-// Copy Sector Data                        // 0x65
-// Move Sector Data                        // 0x66
+void Cs2CopySectorData(void);              // 0x65
+void Cs2MoveSectorData(void);              // 0x66
 void Cs2GetCopyError(void);                // 0x67
 void Cs2ChangeDirectory(void);             // 0x70
 void Cs2ReadDirectory(void);               // 0x71

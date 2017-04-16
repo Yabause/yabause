@@ -488,7 +488,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
             }
             break;
         }
-
+        drawer.closeDrawer(GravityCompat.START);
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -804,7 +804,6 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
 
     private boolean menu_showing = false;
     private void showBottomMenu(){
-
         if ( menu_showing == true ) {
             menu_showing = false;
             View mainview = (View)findViewById(R.id.yabause_view);

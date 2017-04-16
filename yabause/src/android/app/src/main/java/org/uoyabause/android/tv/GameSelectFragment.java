@@ -107,6 +107,8 @@ import com.google.firebase.crash.FirebaseCrash;
 
 import static android.R.attr.bitmap;
 
+import static android.R.attr.bitmap;
+
 public class GameSelectFragment extends BrowseFragment implements FileDialog.FileSelectedListener  {
     private static final String TAG = "GameSelectFragment";
 
@@ -670,6 +672,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                     onInviteClicked();
                 }else if( ((String) item).indexOf("GoogleDrive") >= 0) {
                     onGoogleDriveClciked();
+                }
                 }
             }
 

@@ -213,4 +213,9 @@ void UIDebugM68K::stepInto()
 {
    if (M68K)
       M68KStep();
+
+   m68kregs_struct m68kregs;
+   M68KGetRegisters(&m68kregs);
+   updateCodeList(m68kregs.PC);
+   updateRegList();
 }

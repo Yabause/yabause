@@ -58,6 +58,14 @@ typedef struct
    u16 write_data;
    int updated;
    int last_step;
+
+   s64 product;
+   u32 read_value;
+   u32 write_value;
+   int read_pending;
+   int write_pending;
+   u32 shift_reg;
+
 }ScspDsp;
 
 //dsp instruction format
@@ -128,7 +136,11 @@ union ScspDspInstruction {
       u64 zero : 1;
       u64 negb : 1;
       u64 yrl : 1;
+      u64 shift0 : 1;
+      u64 shift1 : 1;
+#if 0
       u64 shift : 2;
+#endif
       u64 frcl : 1;
       u64 adrl : 1;
       u64 ewa : 4;
