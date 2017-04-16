@@ -35,185 +35,227 @@ static INLINE s32 saturate_24(s32 value)
    return value;
 }
 
+
+#define sign_x_to_s32(_bits, _value) (((int)((u32)(_value) << (32 - _bits))) >> (32 - _bits))
+#define min(a,b) (a<b)?a:b
+
+static INLINE unsigned clz(u32 v)
+{
+#if defined(__GNUC__) || defined(__clang__) || defined(__ICC) || defined(__INTEL_COMPILER)
+  return __builtin_clz(v);
+#elif defined(_MSC_VER)
+  unsigned long idx;
+
+  _BitScanReverse(&idx, v);
+
+  return 31 ^ idx;
+#else
+  unsigned ret = 0;
+  unsigned tmp;
+
+  tmp = !(v & 0xFFFF0000) << 4; v <<= tmp; ret += tmp;
+  tmp = !(v & 0xFF000000) << 3; v <<= tmp; ret += tmp;
+  tmp = !(v & 0xF0000000) << 2; v <<= tmp; ret += tmp;
+  tmp = !(v & 0xC0000000) << 1; v <<= tmp; ret += tmp;
+  tmp = !(v & 0x80000000) << 0;            ret += tmp;
+
+  return(ret);
+#endif
+}
+
 void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 {
-   u16* sound_ram_16 = (u16*)sound_ram;
-   u64 mul_temp = 0;
-   int nofl = 0;
-   u32 x_temp = 0;
-   s32 y_extended = 0;
-   union ScspDspInstruction instruction;
-   u32 address = 0;
-   s32 shift_temp = 0;
-   instruction.all = scsp_dsp.mpro[addr];
+  u16* sound_ram_16 = (u16*)sound_ram;
+  u64 mul_temp = 0;
+  int nofl = 0;
+  u32 x_temp = 0;
+  s32 y_extended = 0;
+  union ScspDspInstruction inst;
+  u32 address = 0;
+  s32 shift_temp = 0;
 
-   nofl = (instruction.all >> 8) & 1;
+  inst.all = scsp_dsp.mpro[addr];
 
-   if (instruction.part.ira <= 0x1f)
-      dsp->inputs = dsp->mems[instruction.part.ira & 0x1f];
-   else if (instruction.part.ira >= 0x20 && instruction.part.ira <= 0x2f)
-      dsp->inputs = dsp->mixs[instruction.part.ira - 0x20] << 4;
-   else if (instruction.part.ira == 0x30 || instruction.part.ira == 0x31)
-      dsp->inputs = dsp->exts[(instruction.part.ira - 0x30) & 1];
+#if 0
+  const u64 instr = scsp_dsp.mpro[addr];
+  const int NXADDR = (instr >> 0) & 1;
+  const int ADRGB = (instr >> 1) & 1;
+  const unsigned MASA = (instr >> 2) & 0x1F;
+  const int NOFL = (instr >> 8) & 1;
+  const unsigned CRA = (instr >> 9) & 0x3F;
+  const int BSEL = (instr >> 16) & 1;
+  const int ZERO = (instr >> 17) & 1;
+  const int NEGB = (instr >> 18) & 1;
+  const int YRL = (instr >> 19) & 1;
+  const int SHFT0 = (instr >> 20) & 1;
+  const int SHFT1 = (instr >> 21) & 1;
+  const int FRCL = (instr >> 22) & 1;
+  const int ADRL = (instr >> 23) & 1;
+  const unsigned EWA = (instr >> 24) & 0x0F;
+  const int EWT = (instr >> 28) & 1;
+  const int MRT = (instr >> 29) & 1;
+  const int MWT = (instr >> 30) & 1;
+  const int TABLE = (instr >> 31) & 1;
+  const unsigned IWA = (instr >> 32) & 0x1F;
+  const int IWT = (instr >> 37) & 1;
+  const unsigned IRA = (instr >> 38) & 0x3F;
+  const unsigned YSEL = (instr >> 45) & 0x03;
+  const int XSEL = (instr >> 47) & 1;
+  const unsigned TEMPWriteAddr = (inst.part.twa + dsp->mdec_ct) & 0x7F;
+  const int TWT = (instr >> 55) & 1;
+  const unsigned TEMPReadAddr = (inst.part.tra + dsp->mdec_ct) & 0x7F;
 
-   if (instruction.part.iwt)
-      dsp->mems[instruction.part.iwa] = dsp->mrd_value;
+  if (NXADDR != inst.part.nxadr){ abort(); }
+  if (ADRGB != inst.part.adreb){ abort(); }
+  if (MASA != inst.part.masa){ abort(); }
+  if (NOFL != inst.part.nofl){ abort(); }
+  if (CRA != inst.part.coef){ abort(); }
+  if (BSEL != inst.part.bsel){ abort(); }
+  if (ZERO != inst.part.zero){ abort(); }
+  if (NEGB != inst.part.negb){ abort(); }
+  if (YRL != inst.part.yrl){ abort(); }
+  if (SHFT0 != inst.part.shift0){ abort(); }
+  if (SHFT1 != inst.part.shift1){ abort(); }
+  if (FRCL != inst.part.frcl){ abort(); }
+  if (ADRL != inst.part.adrl){ abort(); }
+  if (EWA != inst.part.ewa){ abort(); }
+  if (EWT != inst.part.ewt){ abort(); }
+  if (MRT != inst.part.mrd){ abort(); }
+  if (MWT != inst.part.mwt){ abort(); }
+  if (TABLE != inst.part.table){ abort(); }
+  if (IWA != inst.part.iwa){ abort(); }
+  if (IWT != inst.part.iwt){ abort(); }
+  if (IRA != inst.part.ira){ abort(); }
+  if (YSEL != inst.part.ysel){ abort(); }
+  if (XSEL != inst.part.xsel){ abort(); }
+  if (((instr >> 48) & 0x7F)  != inst.part.twa){ abort(); }
+#endif
+  const unsigned TEMPWriteAddr = (inst.part.twa + dsp->mdec_ct) & 0x7F;
+  const unsigned TEMPReadAddr = (inst.part.tra + dsp->mdec_ct) & 0x7F;
 
-   if (instruction.part.bsel == 0)
-   {
-      s32 temp_val = dsp->temp[(instruction.part.tra + dsp->mdec_ct) & 0x7f];
+  if (inst.part.ira & 0x20) {
+    if (inst.part.ira & 0x10) {
+      if (!(inst.part.ira & 0xE))
+        dsp->inputs = dsp->exts[inst.part.ira & 0x1] << 8;
+    }else{
+      dsp->inputs = dsp->mixs[inst.part.ira & 0xF] << 4;
+    }
+  }else{
+    dsp->inputs = dsp->mems[inst.part.ira & 0x1F];
+  }
 
-      if (temp_val & 0x800000)
-         temp_val |= 0x3000000;//sign extend to 26 bits
+  const int INPUTS = sign_x_to_s32(24, dsp->inputs);
+  const int TEMP = sign_x_to_s32(24, dsp->temp[TEMPReadAddr]);
+  const int X_SEL_Inputs[2] = { TEMP, INPUTS };
+  const u16 Y_SEL_Inputs[4] = { 
+    dsp->frc_reg, dsp->coef[inst.part.coef], 
+    (u16)((dsp->y_reg >> 11) & 0x1FFF), 
+    (u16)((dsp->y_reg >> 4) & 0x0FFF) 
+  };
+  const u32 SGA_Inputs[2] = { (u32)TEMP, dsp->shift_reg }; // ToDO:?
 
-      dsp->b = temp_val;
-   }
-   else if (instruction.part.bsel == 1)
-      dsp->b = dsp->acc;
 
-   if (instruction.part.negb)
-      dsp->b = 0 - dsp->b;
 
-   if (instruction.part.zero)
-      dsp->b = 0;
+  if (inst.part.yrl) {
+    dsp->y_reg = INPUTS & 0xFFFFFF;
+  }
 
-   if (instruction.part.xsel == 0)
-      dsp->x = dsp->temp[(instruction.part.tra + dsp->mdec_ct) & 0x7f];
-   else if (instruction.part.xsel == 1)
-      dsp->x = dsp->inputs;
+  int ShifterOutput;
 
-   if (instruction.part.ysel == 0)
-      dsp->y = dsp->frc_reg;
-   else if (instruction.part.ysel == 1)
-   {
-      dsp->y = dsp->coef[instruction.part.coef];
+  ShifterOutput = (u32)sign_x_to_s32(26, dsp->shift_reg) << (inst.part.shift0 ^ inst.part.shift1);
 
-      if (dsp->coef[instruction.part.coef] & 0x8000)
-         dsp->y |= 0xE000;
-   }
-   else if (instruction.part.ysel == 2)
-      dsp->y = (dsp->y_reg >> 11) & 0x1FFF;
-   else if (instruction.part.ysel == 3)
-      dsp->y = (dsp->y_reg >> 4) & 0xFFF;
+  if (!inst.part.shift1)
+  {
+    if(ShifterOutput > 0x7FFFFF)
+      ShifterOutput = 0x7FFFFF;
+    else if(ShifterOutput < -0x800000)
+      ShifterOutput = 0x800000;
+  }
+  ShifterOutput &= 0xFFFFFF;
 
-   y_extended = dsp->y;
+  if (inst.part.ewt)
+    dsp->efreg[inst.part.ewa] = (ShifterOutput >> 8);
 
-   if (dsp->y & (1 << 12))
-      y_extended |= 0xffffe000;
+  if (inst.part.twt)
+    dsp->temp[TEMPWriteAddr] = ShifterOutput;
 
-   if (instruction.part.yrl)
-      dsp->y_reg = dsp->inputs;
+  if (inst.part.frcl)
+  {
+    const unsigned F_SEL_Inputs[2] = { (unsigned)(ShifterOutput >> 11), (unsigned)(ShifterOutput & 0xFFF) };
 
-   shift_temp = 0;
+    dsp->frc_reg = F_SEL_Inputs[inst.part.shift0 & inst.part.shift1];
+    //printf("FRCL: 0x%08x\n", DSP.FRC_REG);
+  }
 
-   if (instruction.part.shift == 0)
-      shift_temp = saturate_24(dsp->acc);
-   else if (instruction.part.shift == 1)
-      shift_temp = saturate_24(dsp->acc * 2);
-   else if (instruction.part.shift == 2)
-      shift_temp = (dsp->acc * 2) & 0xffffff;
-   else if (instruction.part.shift == 2)
-      shift_temp = dsp->acc & 0xffffff;
+  dsp->product = ((s64)sign_x_to_s32(13, Y_SEL_Inputs[inst.part.ysel]) * X_SEL_Inputs[inst.part.xsel]) >> 12;
 
-   if (instruction.part.ewt)
-      dsp->efreg[instruction.part.ewa] = (shift_temp >> 8) & 0xffff;
+  u32 SGAOutput;
 
-   x_temp = dsp->x;
+  SGAOutput = SGA_Inputs[inst.part.bsel];
 
-   if (dsp->x & 0x800000)
-      x_temp |= 0xff000000;
+  if (inst.part.negb)
+    SGAOutput = -SGAOutput;
 
-   mul_temp = (u64)(s32)x_temp * (u64)y_extended;//prevent clipping
-   dsp->acc = (mul_temp >> 12) + dsp->b;
-   dsp->mul_out = (mul_temp >> 12);
+  if (inst.part.zero)
+    SGAOutput = 0;
 
-   dsp->acc &= 0xffffff;
+  dsp->shift_reg = (dsp->product + SGAOutput) & 0x3FFFFFF;
+  //
+  //
+  if (inst.part.iwt)
+  {
+    dsp->mems[inst.part.iwa] = dsp->read_value;
+  }
 
-   if (dsp->acc & 0x800000)
-      dsp->acc |= 0xff000000;
+  if (dsp->read_pending)
+  {
+    u16 tmp = sound_ram_16[dsp->io_addr];
+    dsp->read_value = (dsp->read_pending == 2) ? (tmp << 8) : float_to_int(tmp);
+    dsp->read_pending = 0;
+  }
+  else if (dsp->write_pending)
+  {
+    if (!(dsp->io_addr & 0x40000))
+      sound_ram_16[dsp->io_addr] = dsp->write_value;
+    dsp->write_pending = 0;
+  }
+  {
+    u16 addr;
 
-   if (instruction.part.twt)
-      dsp->temp[(instruction.part.twa + dsp->mdec_ct) & 0x7f] = shift_temp & 0xffffff;
+    addr = dsp->madrs[inst.part.masa];
+    addr += inst.part.nxadr;
 
-   dsp->shifted = dsp->acc & 0x3ffffff;
+    if (inst.part.adreb)
+    {
+      addr += sign_x_to_s32(12, dsp->adrs_reg);
+    }
 
-   if (instruction.part.frcl)
-   {
-      if (instruction.part.shift == 3)
-         dsp->frc_reg = shift_temp & 0xFFF;
-      else
-         dsp->frc_reg = (shift_temp >> 11) & 0x1FFF;
-   }
+    if (!inst.part.table)
+    {
+      addr += dsp->mdec_ct;
+      addr &= (0x2000 << dsp->rbl) - 1;
+    }
 
-   address = dsp->madrs[instruction.part.masa];
+    dsp->io_addr = (addr + (dsp->rbp << 12)) & 0x7FFFF;
 
-   if (instruction.part.table == 0)
-      address += dsp->mdec_ct;
+    if (inst.part.mrd)
+    {
+      dsp->read_pending = 1 + inst.part.nofl;
+    }
+    if (inst.part.mwt)
+    {
+      dsp->write_pending = 1;
+      dsp->write_value = inst.part.nofl ? (ShifterOutput >> 8) : int_to_float(ShifterOutput);
+    }
+    if (inst.part.adrl)
+    {
+      const u16 A_SEL_Inputs[2] = { (u16)((INPUTS >> 16) & 0xFFF), (u16)(ShifterOutput >> 12) };
 
-   if (instruction.part.adreb)
-      address += dsp->adrs_reg & 0xfff;
-
-   if (instruction.part.nxadr)
-      address += 1;
-
-   if (instruction.part.table == 0)
-   {
-      if (dsp->rbl == 0)
-         address &= 0x1fff;
-      else if (dsp->rbl == 1)
-         address &= 0x3fff;
-      else if (dsp->rbl == 2)
-         address &= 0x7fff;
-      else if (dsp->rbl == 3)
-         address &= 0xffff;
-   }
-   else if (instruction.part.table == 1)
-      address &= 0xffff;
-
-   address += (dsp->rbp << 11) * 2;
-
-   if (dsp->need_read)
-   {
-      u16 temp = sound_ram_16[dsp->io_addr & 0x3ffff];
-      if (dsp->need_nofl)
-         dsp->mrd_value = temp << 8;
-      else
-         dsp->mrd_value = float_to_int(temp) & 0xffffff;
-      dsp->need_read = 0;
-      dsp->need_nofl = 0;
-   }
-
-   if (dsp->need_write)
-   {
-	   sound_ram_16[dsp->io_addr & 0x3ffff] = dsp->write_data;
-      dsp->need_write = 0;
-   }
-
-   dsp->io_addr = address;
-
-   if (instruction.part.mrd)
-   {
-      dsp->need_read = 1;
-      dsp->need_nofl = nofl;
-   }
-
-   if (instruction.part.mwt)
-   {
-      dsp->need_write = 1;
-      if (nofl)
-         dsp->write_data = shift_temp >> 8;
-      else
-         dsp->write_data = int_to_float(shift_temp);
-   }
-
-   if (instruction.part.adrl)
-   {
-      if (instruction.part.shift == 3)
-         dsp->adrs_reg = (shift_temp >> 12) & 0xFFF;
-      else
-         dsp->adrs_reg = dsp->inputs >> 16;
-   }
+      dsp->adrs_reg = A_SEL_Inputs[inst.part.shift0 & inst.part.shift1];
+    }
+  }
 }
+
 
 //sign extended to 32 bits instead of 24
 s32 float_to_int(u16 f_val)
@@ -376,7 +418,7 @@ u64 ScspDspAssembleLine(char* line)
 
    if ((temp = strstr(line, "shift")))
    {
-      instruction.part.shift = ScspDspAssembleGetValue(temp);
+      instruction.part.shift1 = ScspDspAssembleGetValue(temp);
    }
 
    if (strstr(line, "yrl"))
@@ -540,9 +582,9 @@ void ScspDspDisasm(u8 addr, char *outstring)
       outstring += strlen(outstring);
    }
 
-   if (instruction.part.shift)
+   if (instruction.part.shift1)
    {
-      sprintf(outstring, "shift %d ", (int)(instruction.part.shift & 3));
+      sprintf(outstring, "shift %d ", (int)(instruction.part.shift1 & 3));
       outstring += strlen(outstring);
    }
 
@@ -630,11 +672,11 @@ void ScspDspDisasm(u8 addr, char *outstring)
       outstring += strlen(outstring);
    }
 
-   if (instruction.part.unknown3)
-   {
-      sprintf(outstring, "unknown3 %d", (int)(instruction.part.unknown3 & 3));
-      outstring += strlen(outstring);
-   }
+//   if (instruction.part.unknown3)
+ //  {
+ //     sprintf(outstring, "unknown3 %d", (int)(instruction.part.unknown3 & 3));
+ //     outstring += strlen(outstring);
+ //  }
 }
 
 void ScspDspDisassembleToFile(char * filename)

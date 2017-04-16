@@ -323,6 +323,7 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
     TxtY += fontsize;
   }
 #endif
+#endif
    ProfileDrawGraph();
    nvgEndFrame(vg);
 

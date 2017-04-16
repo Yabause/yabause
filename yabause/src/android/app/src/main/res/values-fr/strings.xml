@@ -2,6 +2,7 @@
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">uoYabause</string>
     <string name="menu_exit">Quitter</string>
+	<string name="menu_reset">Redémarrer</string>
     <string name="menu_save_state">Sauvegarder un Etat</string>
     <string name="menu_load_state">Charger un Etat</string>
     <string name="load_game">Charger un Jeu</string>
@@ -12,6 +13,7 @@
     <string name="choose_video_core">Choisir le Noyau Vidéo</string>
     <string name="audio_output">Sortie Audio</string>
     <string name="fps">FPS</string>
+    <string name="lock_landscape">Bloquer le mode Paysage</string>
     <string name="frameskip">Saut d\'Image</string>
     <string name="keepaspectrate">Conserver les Proportions</string>
     <string name="choose_input_device">Choisir un Périphérique d\'Entrée</string>
@@ -28,7 +30,7 @@
     <string name="setting_sound">Son</string>
     <string name="setting_graphics">Graphisme</string>
     <string name="setting_general">Général</string>
-    <string name="msg_opengl_not_supported">Votre appareil ne prend pas en charge OpenGL ES 3.0 ou supérieur.\nVous ne pouvez pas choisir l\'accélération matériel (OpenGL).\n</string>
+    <string name="msg_opengl_not_supported">Votre appareil ne prend pas en charge OpenGL ES 3.0 ou supérieur.\nVous ne pouvez pas choisir l\'interface vidéo OpenGL.\n</string>
     <string name="skip">Passer</string>
     <string name="donation">Support</string>
     <string name="donate_message">
@@ -68,13 +70,14 @@
     <string name="z_button">Z</string>
 
     <string name="scale">Echelle</string>
+    <string name="transparency">Transparence</string>
     <string name="do_you_want_to_save_this_setting">Voulez-vous enregistrer ce paramètre ?</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <string name="exit">Quitter</string>
     <string name="ignore">Ignorer</string>
 
-    <string name="dynrec_cpu_interface">Recompileur Dynamique( rapide mais moins précis )</string>
+    <string name="dynrec_cpu_interface">Recompileur Dynamique ( rapide mais moins précis )</string>
     <string name="software_cpu_interface">Interprèteur ( lent mais plus précis )</string>
 
     <string name="opengl_video_interface">Interface Vidéo OpenGL</string>
@@ -92,7 +95,8 @@
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">Scanline</string>
     <string name="video_filter_bilinear">Bilinèaire (Actif seulement quand la résolution de base n\'est pas sélectionné)</string>
-    <string name="related_movies">Relatif aux Vidéos</string>
+    <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
+	<string name="related_movies">Relatif aux Vidéos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
     <string name="error">Erreur</string>
     <string name="ok">OK</string>
@@ -121,10 +125,37 @@
     <string name="dismiss_error">Rejeter</string>
     <string name="oops">Oups</string>
 
-    <string name="polygon_generation_type">Type de Génération du Polygone</string>
+    <string name="title_activity_game_select" translatable="false">uoYabause</string>
+	<string name="polygon_generation_type">Type de Génération du Polygone</string>
     <string name="choose_polygon_generation_type">Choisir un Type de Génération de Polygone</string>
     <string name="sound_engine">Moteur Son</string>
     <string name="choose_sound_engine">Choisir un Moteur Son</string>
     <string name="video_resolution">Résolution du Rendu</string>
     <string name="choose_video_resolution">Choisir la Résolution du Rendu</string>
+    <string name="open_cd_tray">Ouvrir le Plateau du CD</string>
+    <string name="close_cd_tray">Fermer le Plateau du CD</string>
+    <string name="menu_analog">Activer les Contrôles Analogiques</string>
+    <string name="menu_cheat">Cheat</string>
+    <string name="add_new_code">Ajouter un Nouveau Code</string>
+
+    <string name="enable">Activer</string>
+    <string name="disable">Désactiver</string>
+    <string name="edit">Editer</string>
+    <string name="delete">Effacer</string>
+    <string name="select_game_directory">Choisir un Répertoire de Jeu</string>
+
+
+    <string name="sound_curent">En cours (version Haute Qualité pour les périphériques puissants)</string>
+    <string name="sound_legacy">Hérité (pour les périphériques moins puissants)</string>
+
+    <string name="res_native">Native (résolution native de ce périphérique Android)</string>
+    <string name="res_4x">4x</string>
+    <string name="res_2x">2x</string>
+    <string name="res_original">Original</string>
+
+    <string name="poly_triangle">Correction de Perspective en utilisant les Triangles</string>
+    <string name="poly_cpu_tess">Tesselation CPU</string>
+    <string name="poly_gpu_tess">Tessalation GPU</string>
+
 </resources>
+
