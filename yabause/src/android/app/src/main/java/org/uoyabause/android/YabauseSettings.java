@@ -95,6 +95,15 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
         dires.setActivity(this);
 
+        Preference filePicker = (Preference) findPreference("pref_game_download_directory");
+        filePicker.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                //Intent intent = new Intent(......); //Intent to start openIntents File Manager
+                //startActivityForResult(intent, requestMode);
+                return true;
+            }
+        })
       
     	InputSettingPrefernce inputsetting1 = (InputSettingPrefernce)findPreference("pref_inputdef_file");
         inputsetting1.setPlayerAndFileame(0,"keymap");
