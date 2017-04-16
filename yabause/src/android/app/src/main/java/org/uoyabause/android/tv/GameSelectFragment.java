@@ -130,6 +130,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private FirebaseAnalytics mFirebaseAnalytics;
 
     static public int refresh_level = 2;
+    static public GameSelectFragment isForeground = null;
 
     String alphabet[]={ "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z" };
 
@@ -165,6 +166,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         }
         return 0;
     }
+
 
     boolean verifyPermissions(int[] grantResults) {
         // At least one result must be checked.
@@ -271,6 +273,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             gridRowAdapter.add(getResources().getString(R.string.donation));
             gridRowAdapter.add(getString(R.string.load_game));
             gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+            gridRowAdapter.add("GoogleDrive");
 
             mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
             setAdapter(mRowsAdapter);
@@ -331,6 +334,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     @Override
     public void onResume(){
         super.onResume();
+        isForeground = this;
         if( mTracker != null ) {
             mTracker.setScreenName(TAG);
             mTracker.send(new HitBuilders.ScreenViewBuilder().build());
@@ -339,6 +343,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
     @Override
     public void onPause(){
+        isForeground = null;
         dismissDialog();
         super.onPause();
     }
@@ -405,6 +410,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         gridRowAdapter.add(getResources().getString(R.string.donation));
         gridRowAdapter.add(getString(R.string.load_game));
         gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+        gridRowAdapter.add("GoogleDrive");
 
         mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
         addindex++;
@@ -662,10 +668,32 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                     startActivity(intent);
                 }else if(  ((String) item).indexOf(getString(R.string.invite)) >= 0){
                     onInviteClicked();
+                }else if( ((String) item).indexOf("GoogleDrive") >= 0) {
+                    onGoogleDriveClciked();
                 }
             }
 
         }
+    }
+
+    private void onGoogleDriveClciked() {
+
+        PackageManager pm = getActivity().getPackageManager();
+        try {
+            pm.getPackageInfo("org.uoyabause.gdrive", PackageManager.GET_ACTIVITIES);
+
+            Intent intent = new Intent("org.uoyabause.gdrive.LAUNCH");
+            startActivity(intent);
+
+        } catch (PackageManager.NameNotFoundException e) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=org.uoyabause.android"));
+            try {
+                getActivity().startActivity(intent);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
     }
 
     private void onInviteClicked() {

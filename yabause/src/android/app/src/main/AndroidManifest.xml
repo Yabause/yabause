@@ -121,6 +121,14 @@
                 <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
             </intent-filter>
         </service>
+
+        <receiver android:name=".tv.DownloadReceiver">
+            <intent-filter>
+                <action android:name="org.uoyabause.download.COMPLETE" />
+                <action android:name="org.uoyabause.download.FAILED" />
+             </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>
