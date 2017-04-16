@@ -76,60 +76,6 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 
   inst.all = scsp_dsp.mpro[addr];
 
-#if 0
-  const u64 instr = scsp_dsp.mpro[addr];
-  const int NXADDR = (instr >> 0) & 1;
-  const int ADRGB = (instr >> 1) & 1;
-  const unsigned MASA = (instr >> 2) & 0x1F;
-  const int NOFL = (instr >> 8) & 1;
-  const unsigned CRA = (instr >> 9) & 0x3F;
-  const int BSEL = (instr >> 16) & 1;
-  const int ZERO = (instr >> 17) & 1;
-  const int NEGB = (instr >> 18) & 1;
-  const int YRL = (instr >> 19) & 1;
-  const int SHFT0 = (instr >> 20) & 1;
-  const int SHFT1 = (instr >> 21) & 1;
-  const int FRCL = (instr >> 22) & 1;
-  const int ADRL = (instr >> 23) & 1;
-  const unsigned EWA = (instr >> 24) & 0x0F;
-  const int EWT = (instr >> 28) & 1;
-  const int MRT = (instr >> 29) & 1;
-  const int MWT = (instr >> 30) & 1;
-  const int TABLE = (instr >> 31) & 1;
-  const unsigned IWA = (instr >> 32) & 0x1F;
-  const int IWT = (instr >> 37) & 1;
-  const unsigned IRA = (instr >> 38) & 0x3F;
-  const unsigned YSEL = (instr >> 45) & 0x03;
-  const int XSEL = (instr >> 47) & 1;
-  const unsigned TEMPWriteAddr = (inst.part.twa + dsp->mdec_ct) & 0x7F;
-  const int TWT = (instr >> 55) & 1;
-  const unsigned TEMPReadAddr = (inst.part.tra + dsp->mdec_ct) & 0x7F;
-
-  if (NXADDR != inst.part.nxadr){ abort(); }
-  if (ADRGB != inst.part.adreb){ abort(); }
-  if (MASA != inst.part.masa){ abort(); }
-  if (NOFL != inst.part.nofl){ abort(); }
-  if (CRA != inst.part.coef){ abort(); }
-  if (BSEL != inst.part.bsel){ abort(); }
-  if (ZERO != inst.part.zero){ abort(); }
-  if (NEGB != inst.part.negb){ abort(); }
-  if (YRL != inst.part.yrl){ abort(); }
-  if (SHFT0 != inst.part.shift0){ abort(); }
-  if (SHFT1 != inst.part.shift1){ abort(); }
-  if (FRCL != inst.part.frcl){ abort(); }
-  if (ADRL != inst.part.adrl){ abort(); }
-  if (EWA != inst.part.ewa){ abort(); }
-  if (EWT != inst.part.ewt){ abort(); }
-  if (MRT != inst.part.mrd){ abort(); }
-  if (MWT != inst.part.mwt){ abort(); }
-  if (TABLE != inst.part.table){ abort(); }
-  if (IWA != inst.part.iwa){ abort(); }
-  if (IWT != inst.part.iwt){ abort(); }
-  if (IRA != inst.part.ira){ abort(); }
-  if (YSEL != inst.part.ysel){ abort(); }
-  if (XSEL != inst.part.xsel){ abort(); }
-  if (((instr >> 48) & 0x7F)  != inst.part.twa){ abort(); }
-#endif
   const unsigned TEMPWriteAddr = (inst.part.twa + dsp->mdec_ct) & 0x7F;
   const unsigned TEMPReadAddr = (inst.part.tra + dsp->mdec_ct) & 0x7F;
 
@@ -153,8 +99,6 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
     (u16)((dsp->y_reg >> 4) & 0x0FFF) 
   };
   const u32 SGA_Inputs[2] = { (u32)TEMP, dsp->shift_reg }; // ToDO:?
-
-
 
   if (inst.part.yrl) {
     dsp->y_reg = INPUTS & 0xFFFFFF;
