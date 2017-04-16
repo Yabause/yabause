@@ -124,6 +124,7 @@ int new_scsp_outbuf_pos = 0;
 s32 new_scsp_outbuf_l[900] = { 0 };
 s32 new_scsp_outbuf_r[900] = { 0 };
 int new_scsp_cycles = 0;
+int g_scsp_lock = 0;
 
 enum EnvelopeStates
 {
@@ -1358,8 +1359,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         *out_l = *out_l + ((disdl_applied >> pan_val_l) >> 2);
-         *out_r = *out_r + ((disdl_applied >> pan_val_r) >> 2);
+         *out_l = *out_l + ((disdl_applied >> pan_val_l)>>1);
+         *out_r = *out_r + ((disdl_applied >> pan_val_r)>>1);
 
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
@@ -1385,6 +1386,9 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
    for (i = 0; i < scsp_dsp.last_step; i++)
       ScspDspExec(&scsp_dsp, i, SoundRam);
 
+   if (!scsp_dsp.mdec_ct){
+     scsp_dsp.mdec_ct = (0x2000 << rbl);
+   }
    scsp_dsp.mdec_ct--;
 
    for (i = 0; i < 16; i++)
@@ -1407,8 +1411,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      panned_l = (efsdl_applied >> pan_val_l) >> 2;
-      panned_r = (efsdl_applied >> pan_val_r) >> 2;
+      panned_l = (efsdl_applied >> pan_val_l)>>1;
+      panned_r = (efsdl_applied >> pan_val_r)>>1;
 
       *out_l = *out_l + panned_l;
       *out_r = *out_r + panned_r;
@@ -4696,6 +4700,8 @@ ScspInit (int coreid)
   scspsoundgenpos = 0;
   scspsoundoutleft = 0;
 
+  g_scsp_lock = 0;
+
   return ScspChangeSoundCore (coreid);
 }
 
@@ -4788,6 +4794,7 @@ void
 M68KStart (void)
 {
   M68K->Reset ();
+  ScspReset();
   savedcycles = 0;
   IsM68KRunning = 1;
 }
@@ -4797,6 +4804,8 @@ M68KStart (void)
 void
 M68KStop (void)
 {
+  M68K->Reset();
+  ScspReset();
   IsM68KRunning = 0;
 }
 
@@ -4805,7 +4814,10 @@ M68KStop (void)
 void
 ScspReset (void)
 {
+  g_scsp_lock = 1;
+  YabThreadUSleep(100000);
   scsp_reset();
+  g_scsp_lock = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5067,6 +5079,8 @@ void ScspAsynMain( void * p ){
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
   while (thread_running){
 
+    while (g_scsp_lock){ YabThreadUSleep(1);  }
+
     // Run 1 sample(44100Hz)
     MM68KExec(samplecnt);
 
@@ -5102,6 +5116,7 @@ void ScspAsynMain( void * p ){
       //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
       before = checktime;
     }
+    
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }
