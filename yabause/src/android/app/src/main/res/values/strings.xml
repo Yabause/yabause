@@ -165,10 +165,6 @@
     <string name="poly_triangle">Triangle using perspective correction</string>
     <string name="poly_cpu_tess">CPU Tessellation</string>
     <string name="poly_gpu_tess">GPU Tessellation</string>
-
-    <string name="menu_load">Load</string>
-    <string name="menu_delete">Delete</string>
-
     <string name="menu_load">Load</string>
     <string name="menu_delete">Delete</string>
 </resources>
