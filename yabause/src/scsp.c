@@ -1403,11 +1403,11 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
       s16 panned_l = 0, panned_r = 0;
 
       if (i < 16)
-         efsdl_applied = (scsp_dsp.efreg[i] >> efsdl);
+        efsdl_applied = (scsp_dsp.efreg[i] >> efsdl);
       else if (i == 16)
-         efsdl_applied = scsp_dsp.exts[0] >> efsdl;
+        efsdl_applied = scsp_dsp.exts[0] >>  efsdl;
       else if (i == 17)
-         efsdl_applied = scsp_dsp.exts[1] >> efsdl;
+        efsdl_applied = scsp_dsp.exts[1] >>  efsdl;
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
@@ -3947,6 +3947,59 @@ scsp_w_b (u32 a, u8 d)
     {
 
     }
+  else if (a >= 0x700 && a < 0x780)
+  {
+    u32 address = (a - 0x700) / 2;
+    u16 current_val = scsp_dsp.coef[address];
+    if((a & 0x1) == 0){
+      scsp_dsp.coef[address] = (current_val & 0x00FF) | (u16)d<<4;
+    }
+    else{
+      scsp_dsp.coef[address] = (current_val & 0xFF00) | (u16)d;
+    }
+  }
+  else if (a >= 0x800 && a < 0xC00){
+    u32 address = (a - 0x800) / 8;
+    u64 current_val = scsp_dsp.mpro[address];
+
+    switch (a & 0xf)
+    {
+    case 0:
+    case 8:
+      scsp_dsp.mpro[address] = (current_val & 0x00ffffffffffffff) | (u64)d << (u64)56;
+      break;
+    case 1:
+    case 9:
+      scsp_dsp.mpro[address] = (current_val & 0xff00ffffffffffff) | (u64)d << (u64)48;
+      break;
+    case 2:
+    case 10:
+      scsp_dsp.mpro[address] = (current_val & 0xffff00ffffffffff) | (u64)d << (u64)40;
+      break;
+    case 3:
+    case 11:
+      scsp_dsp.mpro[address] = (current_val & 0xffffff00ffffffff) | (u64)d << (u64)32;
+      break;
+    case 4:
+    case 12:
+      scsp_dsp.mpro[address] = (current_val & 0xffffffff00ffffff) | (u64)d << (u64)24;
+      break;
+    case 5:
+    case 13:
+      scsp_dsp.mpro[address] = (current_val & 0xffffffffff00ffff) | (u64)d << (u64)16;
+      break;
+    case 6:
+    case 14:
+      scsp_dsp.mpro[address] = (current_val & 0xffffffffffff00ff) | (u64)d << (u64)8;
+      break;
+    case 7:
+    case 15:
+      scsp_dsp.mpro[address] = (current_val & 0xffffffffffffff00) | (u64)d;
+      break;
+    default:
+      break;
+    }
+  }
   else if (a < 0xee4)
     {
       a &= 0x3ff;
@@ -3997,7 +4050,7 @@ scsp_w_w (u32 a, u16 d)
   else if (a >= 0x700 && a < 0x780)
   {
      u32 address = (a - 0x700) / 2;
-     scsp_dsp.coef[address] = d >> 3;//lower 3 bits seem to be discarded
+     scsp_dsp.coef[address] = d; // >> 3;//lower 3 bits seem to be discarded
   }
   else if (a >= 0x780 && a < 0x7A0)
   {
@@ -4018,8 +4071,8 @@ scsp_w_w (u32 a, u16 d)
      {
      case 0:
      case 8:
-        scsp_dsp.mpro[address] = (current_val & 0x0000ffffffffffff) | (u64)d << (u64)48;
-        break;
+       scsp_dsp.mpro[address] = (current_val & 0x0000ffffffffffff) | (u64)d << (u64)48;
+       break;
      case 2:
      case 0xa:
         scsp_dsp.mpro[address] = (current_val & 0xffff0000ffffffff) | (u64)d << (u64)32;
