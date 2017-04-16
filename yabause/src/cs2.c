@@ -107,6 +107,15 @@ static INLINE void doMPEGReport(u8 status)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void Cs2SetIRQ(u32 irq){
+  Cs2Area->reg.HIRQ |= irq;
+  if (Cs2Area->reg.HIRQ & Cs2Area->reg.HIRQMASK){
+    ScuSendExternalInterrupt00();
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 u8 FASTCALL Cs2ReadByte(u32 addr)
 {
    return CartridgeArea->Cs2ReadByte(addr);
@@ -408,13 +417,6 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
   return val;
 }
 
-
-void Cs2SetIRQ(u32 irq){
-  Cs2Area->reg.HIRQ |= irq;
-  if (Cs2Area->reg.HIRQ & Cs2Area->reg.HIRQMASK){
-    ScuSendExternalInterrupt00();
-  }
-}
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Cs2WriteLong(UNUSED u32 addr, UNUSED u32 val) {
