@@ -94,7 +94,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
   const int TEMP = sign_x_to_s32(24, dsp->temp[TEMPReadAddr]);
   const int X_SEL_Inputs[2] = { TEMP, INPUTS };
   const u16 Y_SEL_Inputs[4] = { 
-    dsp->frc_reg, dsp->coef[inst.part.coef], 
+    dsp->frc_reg, (dsp->coef[inst.part.coef] >> 3),
     (u16)((dsp->y_reg >> 11) & 0x1FFF), 
     (u16)((dsp->y_reg >> 4) & 0x0FFF) 
   };
