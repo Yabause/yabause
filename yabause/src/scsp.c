@@ -916,8 +916,10 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
    case 0:
       slot->regs.kb = (data >> 3) & 1;//has to be done first
 
-      if ((data >> 4) & 1)//keyonex
-         keyonex(s);
+      if ((data >> 4) & 1) { //keyonex
+        SCSPLOG("KEY ON %d:1", slot_num);
+        keyonex(s);
+      }
  
       slot->regs.sbctl = (data >> 1) & 3;
       slot->regs.ssctl = (slot->regs.ssctl & 1) | ((data & 1) << 1);
@@ -1145,8 +1147,10 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
    case 0:
       slot->regs.kb = (data >> 11) & 1;//has to be done before keyonex
 
-      if (data & (1 << 12))
-         keyonex(s);
+      if (data & (1 << 12)){
+        SCSPLOG("KEY ON %d:2", slot_num);
+        keyonex(s);
+      }
 
       slot->regs.sbctl = (data >> 9) & 3;
       slot->regs.ssctl = (data >> 7) & 3;
@@ -1938,7 +1942,7 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
 
   slot_t *slot = &(scsp.slot[s]);
 
-  SCSPLOG("slot %d : reg %.2X = %.2X\n", s, a & 0x1F, d);
+  //SCSPLOG("slot %d : reg %.2X = %.2X\n", s, a & 0x1F, d);
 
   scsp_isr[a ^ 3] = d;
 
@@ -1949,7 +1953,10 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
       slot->sbctl = (d >> 1) & 3;
       slot->ssctl = (slot->ssctl & 1) + ((d & 1) << 1);
 
-      if (d & 0x10) scsp_slot_keyonoff ();
+      if (d & 0x10){
+        SCSPLOG("slot %d : KeyOn", s);
+        scsp_slot_keyonoff();
+      }
       return;
 
     case 0x01: // SSCTL(low bit)/LPCTL/8B/SA(highest 4 bits)
@@ -3949,7 +3956,7 @@ scsp_w_b (u32 a, u8 d)
     }
   else if (a >= 0x700 && a < 0x780)
   {
-    u32 address = (a - 0x700) / 2;
+    u32 address = (a - 0x700)>>1;
     u16 current_val = scsp_dsp.coef[address];
     if((a & 0x1) == 0){
       scsp_dsp.coef[address] = (current_val & 0x00FF) | (u16)d<<4;
@@ -3957,6 +3964,18 @@ scsp_w_b (u32 a, u8 d)
     else{
       scsp_dsp.coef[address] = (current_val & 0xFF00) | (u16)d;
     }
+    return;
+  }
+  else if (a >= 0x780 && a < 0x7C0){
+    u32 address = (a - 0x780)>>1;
+    u16 current_val = scsp_dsp.madrs[address];
+    if ((a & 0x1) == 0){
+      scsp_dsp.madrs[address] = (current_val & 0x00FF) | (u16)d << 4;
+    }
+    else{
+      scsp_dsp.madrs[address] = (current_val & 0xFF00) | (u16)d;
+    }
+    return;
   }
   else if (a >= 0x800 && a < 0xC00){
     u32 address = (a - 0x800) / 8;
@@ -3999,9 +4018,11 @@ scsp_w_b (u32 a, u8 d)
     default:
       break;
     }
+    return;
   }
-  else if (a < 0xee4)
+  else if (a > 0xC00 && a <= 0xee2)
     {
+      SCSPLOG("WARNING: scsp dsp internal w_w to %08lx w/ %04x\n", a, d);
       a &= 0x3ff;
       scsp_dcr[a ^ 3] = d;
       return;
@@ -4043,26 +4064,18 @@ scsp_w_w (u32 a, u16 d)
           return;
         }
     }
-  else if (a < 0x700)
-    {
-
-    }
   else if (a >= 0x700 && a < 0x780)
   {
      u32 address = (a - 0x700) / 2;
      scsp_dsp.coef[address] = d; // >> 3;//lower 3 bits seem to be discarded
+     return;
   }
-  else if (a >= 0x780 && a < 0x7A0)
+  else if (a >= 0x780 && a < 0x7BF)
   {
-     u32 address = (a - 0x780) / 2;
+     u32 address = (a&0x3F) / 2;
      scsp_dsp.madrs[address] = d;
-  }
-  else if (a >= 0x7A0 && a < 0x7C0)
-  {
-     //madrs mirror
-     //seems to read only (todo test)
-  }
-  else if (a >= 0x800 && a < 0xC00)
+     return;
+  }else if (a >= 0x800 && a < 0xC00)
   {
      u32 address = (a - 0x800) / 8;
      u64 current_val = scsp_dsp.mpro[address];
@@ -4088,10 +4101,12 @@ scsp_w_w (u32 a, u16 d)
      default:
         break;
      }
-	 scsp_dsp.updated = 1;
+     scsp_dsp.updated = 1;
+     return;
   }
   else if (a < 0xee4)
     {
+      SCSPLOG("WARNING: scsp dsp internal w_w to %08lx w/ %04x\n", a, d);
       a &= 0x3ff;
       *(u16 *)&scsp_dcr[a ^ 2] = d;
       return;
@@ -4479,7 +4494,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
       scsp_decay_rate[i] = scsp_decay_rate[63];
       scsp_null_rate[i - 64] = 0;
     }
-
+#if 0
   for(i = 0; i < 96; i++)
     {
       SCSPLOG ("attack rate[%d] = %.8X -> %.8X\n", i, scsp_attack_rate[i],
@@ -4487,7 +4502,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
       SCSPLOG ("decay rate[%d] = %.8X -> %.8X\n", i, scsp_decay_rate[i],
                scsp_decay_rate[i] >> SCSP_ENV_LB);
     }
-
+#endif
   for(i = 0; i < 256; i++)
     scsp_tl_table[i] = scsp_round(pow(10, ((double)i * -0.3762) / 20) * 1024.0);
 
