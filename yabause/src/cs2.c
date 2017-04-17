@@ -3776,6 +3776,31 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
      *partition = Cs2FilterData(Cs2Area->outconcddev, isaudio);
      return 0;
   }
+  else{
+    // read a sector using cd interface function to workblock.data
+    if (!Cs2Area->cdi->ReadSectorFAD(rfsFAD, Cs2Area->workblock.data))
+    {
+      *partition = NULL;
+      return -2;
+    }
+
+    Cs2Area->workblock.size = Cs2Area->getsectsize;
+    Cs2Area->workblock.FAD = rfsFAD;
+
+    if (memcmp(syncheader, Cs2Area->workblock.data, 12) != 0) isaudio = 1;
+
+    // force 1x speed if reading from an audio track
+    Cs2Area->isaudio = isaudio;
+    Cs2SetTiming(1);
+
+    // if mode 2 track, setup the subheader values
+    if (isaudio)
+    {
+      ScspReceiveCDDA(Cs2Area->workblock.data);
+      *partition = NULL;
+      return 0;
+    }
+  }
 
   *partition = NULL;
   return -1;
