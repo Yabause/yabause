@@ -1001,7 +1001,7 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "  fragColor.r = FragColor.r * 0.5;\n "
       "  fragColor.g = FragColor.g * 0.5;\n "
       "  fragColor.b = FragColor.b * 0.5;\n "
-      "  fragColor.a = 1.0;\n "
+      "  fragColor.a = FragColor.a;\n "
       "}                                                   \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
 static YglVdp1CommonParam half_luminance = { 0 };
