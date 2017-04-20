@@ -997,9 +997,11 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "  addr.s = addr.s / (v_texcoord.q);                 \n"
       "  addr.t = addr.t / (v_texcoord.q);                 \n"
       "  vec4 FragColor = texture( s_texture, addr );      \n"
-      "  /*if( FragColor.a == 0.0 ) discard;*/                \n"
-      "  fragColor = FragColor;\n "
-      "  fragColor.a = 0.5;\n "
+      "  if( FragColor.a == 0.0 ) discard;                \n"
+      "  fragColor.r = FragColor.r * 0.5;\n "
+      "  fragColor.g = FragColor.g * 0.5;\n "
+      "  fragColor.b = FragColor.b * 0.5;\n "
+      "  fragColor.a = 1.0;\n "
       "}                                                   \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
 static YglVdp1CommonParam half_luminance = { 0 };
