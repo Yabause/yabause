@@ -956,6 +956,8 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
       slot->regs.d1r = (slot->regs.d1r & 0x1c) | ((data >> 6) & 3);
       slot->regs.hold = (data >> 5) & 1;
       slot->regs.ar = data & 0x1f;
+      if (slot->regs.ar < 0x010) slot->regs.ar = 0x10; // for Darius Gaiden
+      if (slot->regs.hold) slot->regs.ar = 0x1f; // SCSP Users manual 4.2
       break;
    case 10:
       slot->regs.unknown1 = (data >> 7) & 1;
@@ -1172,6 +1174,8 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
       slot->regs.d1r = (data >> 6) & 0x1f;
       slot->regs.hold = (data >> 5) & 1;
       slot->regs.ar = data & 0x1f;
+      if (slot->regs.ar < 0x010) slot->regs.ar = 0x10; // for Darius Gaiden
+      if (slot->regs.hold) slot->regs.ar = 0x1f; // SCSP Users manual 4.2
       break;
    case 5:
       slot->regs.unknown1 = (data >> 15) & 1;
