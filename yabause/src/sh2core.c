@@ -188,10 +188,10 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    FRTExec(cycles);
    WDTExec(cycles);
 
-   if (UNLIKELY(context->cycles < cycles))
-      context->cycles = 0;
-   else
-      context->cycles -= cycles;
+   //if (UNLIKELY(context->cycles < cycles))
+   //   context->cycles = 0;
+   //else
+   //   context->cycles -= cycles;
 }
 
 //////////////////////////////////////////////////////////////////////////////
