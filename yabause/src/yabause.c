@@ -513,6 +513,25 @@ u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions
    return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (lines * divisions_per_line);
 }
 
+#if defined(SH2_DYNAREC)
+int master_cc_dmy = 0;
+#endif
+
+u32 YabauseGetCpuTime(){
+
+#if defined(SH2_DYNAREC)
+  if (SH2Core->id == 2/*SH2CORE_DYNAREC*/){
+    master_cc_dmy += 256;
+    return (u32)master_cc_dmy; // ToDo
+  }
+  else{
+    return MSH2->cycles;
+  }
+#else
+  return MSH2->cycles;
+#endif
+}
+
 int YabauseEmulate(void) {
    int oneframeexec = 0;
 
@@ -574,6 +593,9 @@ int YabauseEmulate(void) {
      return 0;
    }
    #endif
+
+   MSH2->cycles = 0;
+   SSH2->cycles = 0;
 
    while (!oneframeexec)
    {
