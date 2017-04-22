@@ -125,6 +125,38 @@ s32 new_scsp_outbuf_l[900] = { 0 };
 s32 new_scsp_outbuf_r[900] = { 0 };
 int new_scsp_cycles = 0;
 int g_scsp_lock = 0;
+YabMutex * g_scsp_mtx = NULL;
+
+//#include <stdatomic.h>
+#include "sh2core.h"
+
+/*_Atomic*/ u32 m68kcycle = 0;
+extern SH2_struct *MSH2;
+#define CLOCK_SYNC_SHIFT (0)
+void MainCpuSync(){
+  int timeout = 0;
+  u32 pre = m68kcycle;
+  while (MSH2->cycles > (m68kcycle >> CLOCK_SYNC_SHIFT) ){
+    timeout++;
+    // OverFlow
+    if (pre >= m68kcycle){
+      return;
+    }
+  }
+}
+
+void SoundCpuSync(){
+  int timeout = 0;
+  u32 pre = MSH2->cycles;
+  while ((m68kcycle >> CLOCK_SYNC_SHIFT) < MSH2->cycles){
+    timeout++;
+    // OverFlow
+    if (pre >= MSH2->cycles){
+      return;
+    }
+  }
+}
+
 
 enum EnvelopeStates
 {
@@ -911,6 +943,8 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
    struct Slot * slot = &s->slots[slot_num];
    u32 offset = (addr - (0x20 * slot_num));
 
+   SCSPLOG("Slot Write %d:%d \n", slot_num, addr);
+
    switch (offset)
    {
    case 0:
@@ -1143,6 +1177,8 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
    int slot_num = (addr >> 5) & 0x1f;
    struct Slot * slot = &s->slots[slot_num];
    u32 offset = (addr - (0x20 * slot_num));
+
+   SCSPLOG("Slot Write %d:%d\n", slot_num, addr);
 
    switch (offset >> 1)
    {
@@ -4512,6 +4548,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 
   scsp_reset();
   thread_running = 0;
+  g_scsp_mtx = YabThreadCreateMutex();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4564,10 +4601,12 @@ static s32 savedcycles;  // Cycles left over from the last M68KExec() call
 static u32 FASTCALL
 c68k_byte_read (const u32 adr)
 {
+  u32 rtn;
   if (adr < 0x100000)
-    return T2ReadByte(SoundRam, adr & 0x7FFFF);
+    rtn = T2ReadByte(SoundRam, adr & 0x7FFFF);
   else
-    return scsp_r_b(adr);
+    rtn = scsp_r_b(adr);
+  return rtn;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4575,10 +4614,15 @@ c68k_byte_read (const u32 adr)
 static void FASTCALL
 c68k_byte_write (const u32 adr, u32 data)
 {
-  if (adr < 0x100000)
+  if (adr < 0x100000){
+//    if ((adr & 0x7FFF0) == 0x3c20){
+//      SCSPLOG("c68k_word_write %08X:%02X\n", adr, data);
+//    }
     T2WriteByte(SoundRam, adr & 0x7FFFF, data);
-  else
+  }
+  else{
     scsp_w_b(adr, data);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4587,10 +4631,12 @@ c68k_byte_write (const u32 adr, u32 data)
 u32 FASTCALL
 c68k_word_read (const u32 adr)
 {
+  u32 rtn;
   if (adr < 0x100000)
-    return T2ReadWord(SoundRam, adr & 0x7FFFF);
+    rtn = T2ReadWord(SoundRam, adr & 0x7FFFF);
   else
-    return scsp_r_w(adr);
+    rtn = scsp_r_w(adr);
+  return rtn;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4598,10 +4644,15 @@ c68k_word_read (const u32 adr)
 static void FASTCALL
 c68k_word_write (const u32 adr, u32 data)
 {
-  if (adr < 0x100000)
-    T2WriteWord (SoundRam, adr & 0x7FFFF, data);
-  else
-    scsp_w_w (adr, data);
+  if (adr < 0x100000){
+//    if ((adr & 0x7FFF0) == 0x3c20){
+//      SCSPLOG("c68k_word_write %08X:%04X @ %d\n", adr, data, (m68kcycle >> CLOCK_SYNC_SHIFT) );
+//    }
+    T2WriteWord(SoundRam, adr & 0x7FFFF, data);
+  }
+  else{
+    scsp_w_w(adr, data);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4628,14 +4679,16 @@ u8 FASTCALL
 SoundRamReadByte (u32 addr)
 {
   addr &= 0xFFFFF;
+  u8 val = 0;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
   else if (addr > 0x7FFFF)
-    return 0xFF;
+    val = 0xFF;
 
-  return T2ReadByte (SoundRam, addr);
+  val = T2ReadByte(SoundRam, addr);
+  return val;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4661,13 +4714,16 @@ u16 FASTCALL
 SoundRamReadWord (u32 addr)
 {
   addr &= 0xFFFFF;
+  u16 val = 0;
 
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
   else if (addr > 0x7FFFF)
     return 0xFFFF;
 
-  return T2ReadWord (SoundRam, addr);
+  val = T2ReadWord (SoundRam, addr);
+  return val;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4693,14 +4749,23 @@ u32 FASTCALL
 SoundRamReadLong (u32 addr)
 {
   addr &= 0xFFFFF;
+  u32 val;
+  u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
   else if (addr > 0x7FFFF)
-    return 0xFFFFFFFF;
+    val = 0xFFFFFFFF;
 
-  return T2ReadLong (SoundRam, addr);
+  //MainCpuSync();
+  val = T2ReadLong(SoundRam, addr);
+
+  if (IsM68KRunning)
+    while (pre_cycle == m68kcycle){ YabThreadYield(); };
+
+  return val;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4709,6 +4774,7 @@ void FASTCALL
 SoundRamWriteLong (u32 addr, u32 val)
 {
   addr &= 0xFFFFF;
+  u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
@@ -4718,6 +4784,10 @@ SoundRamWriteLong (u32 addr, u32 val)
 
   T2WriteLong (SoundRam, addr, val);
   M68K->WriteNotify (addr, 4);
+
+  if (IsM68KRunning)
+    while (pre_cycle == m68kcycle){ YabThreadYield(); };
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5137,6 +5207,7 @@ void ScspExec(){
   ScspInternalVars->scsptiming1++;
 #else
 
+
 void ScspAsynMain( void * p ){
 
   u64 before;
@@ -5146,15 +5217,20 @@ void ScspAsynMain( void * p ){
   const int framecnt = 188160; // 11289600/60
   int frame = 0;
 
-  YabThreadSetCurrentThreadAffinityMask( 0x03 );
+  const u32 base_clock = (u32)( (644.8412698/(256.0/16.0)) * (1 << CLOCK_SYNC_SHIFT));
+  
 
+  YabThreadSetCurrentThreadAffinityMask( 0x03 );
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
   while (thread_running){
 
     while (g_scsp_lock){ YabThreadUSleep(1);  }
 
     // Run 1 sample(44100Hz)
-    MM68KExec(samplecnt);
+    for (int i = 0; i < 256; i += 16){
+      MM68KExec(16);
+      m68kcycle += base_clock;
+    }
 
     if (use_new_scsp) {
       new_scsp_exec(512);
@@ -5187,6 +5263,8 @@ void ScspAsynMain( void * p ){
       checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
       //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
       before = checktime;
+      //m68kcycle = 0; // m68kcycle - (473958.3333 * (1 << CLOCK_SYNC_SHIFT));
+      //SCSPLOG("SOUNC SYNC 60Hz");
     }
     
   }
