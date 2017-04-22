@@ -3997,12 +3997,12 @@ scsp_w_b (u32 a, u8 d)
   else if (a >= 0x700 && a < 0x780)
   {
     u32 address = (a - 0x700)>>1;
-    u16 current_val = scsp_dsp.coef[address];
+    u16 current_val = (scsp_dsp.coef[address]<<3);
     if((a & 0x1) == 0){
-      scsp_dsp.coef[address] = (current_val & 0x00FF) | (u16)d<<4;
+      scsp_dsp.coef[address] = ((current_val & 0x00FF) | (u16)d<<8)>>3;
     }
     else{
-      scsp_dsp.coef[address] = (current_val & 0xFF00) | (u16)d;
+      scsp_dsp.coef[address] = ((current_val & 0xFF00) | (u16)d)>>3;
     }
     return;
   }
@@ -4010,7 +4010,7 @@ scsp_w_b (u32 a, u8 d)
     u32 address = (a - 0x780)>>1;
     u16 current_val = scsp_dsp.madrs[address];
     if ((a & 0x1) == 0){
-      scsp_dsp.madrs[address] = (current_val & 0x00FF) | (u16)d << 4;
+      scsp_dsp.madrs[address] = (current_val & 0x00FF) | (u16)d << 8;
     }
     else{
       scsp_dsp.madrs[address] = (current_val & 0xFF00) | (u16)d;
@@ -4107,7 +4107,7 @@ scsp_w_w (u32 a, u16 d)
   else if (a >= 0x700 && a < 0x780)
   {
      u32 address = (a - 0x700) / 2;
-     scsp_dsp.coef[address] = d; // >> 3;//lower 3 bits seem to be discarded
+     scsp_dsp.coef[address] = d >> 3;//lower 3 bits seem to be discarded
      return;
   }
   else if (a >= 0x780 && a < 0x7BF)
