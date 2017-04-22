@@ -4774,7 +4774,7 @@ void FASTCALL
 SoundRamWriteLong (u32 addr, u32 val)
 {
   addr &= 0xFFFFF;
-  u32 pre_cycle = m68kcycle;
+  //u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
@@ -4785,8 +4785,8 @@ SoundRamWriteLong (u32 addr, u32 val)
   T2WriteLong (SoundRam, addr, val);
   M68K->WriteNotify (addr, 4);
 
-  if (IsM68KRunning)
-    while (pre_cycle == m68kcycle){ YabThreadYield(); };
+  //if (IsM68KRunning)
+  //  while (pre_cycle == m68kcycle){ YabThreadYield(); };
 
 }
 
@@ -5216,6 +5216,7 @@ void ScspAsynMain( void * p ){
   const int samplecnt = 256; // 11289600/44100
   const int framecnt = 188160; // 11289600/60
   int frame = 0;
+  int i;
 
   const u32 base_clock = (u32)( (644.8412698/(256.0/16.0)) * (1 << CLOCK_SYNC_SHIFT));
   
@@ -5227,7 +5228,7 @@ void ScspAsynMain( void * p ){
     while (g_scsp_lock){ YabThreadUSleep(1);  }
 
     // Run 1 sample(44100Hz)
-    for (int i = 0; i < 256; i += 16){
+    for (i = 0; i < 256; i += 16){
       MM68KExec(16);
       m68kcycle += base_clock;
     }
