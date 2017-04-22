@@ -127,36 +127,17 @@ int new_scsp_cycles = 0;
 int g_scsp_lock = 0;
 YabMutex * g_scsp_mtx = NULL;
 
-//#include <stdatomic.h>
+
 #include "sh2core.h"
 
-/*_Atomic*/ u32 m68kcycle = 0;
-extern SH2_struct *MSH2;
-#define CLOCK_SYNC_SHIFT (0)
-void MainCpuSync(){
-  int timeout = 0;
-  u32 pre = m68kcycle;
-  while (MSH2->cycles > (m68kcycle >> CLOCK_SYNC_SHIFT) ){
-    timeout++;
-    // OverFlow
-    if (pre >= m68kcycle){
-      return;
-    }
-  }
-}
+#if defined(__GNUC__)
+#include <stdatomic.h>
+_Atomic u32 m68kcycle = 0;
+#else
+u32 m68kcycle = 0;
+#endif
 
-void SoundCpuSync(){
-  int timeout = 0;
-  u32 pre = MSH2->cycles;
-  while ((m68kcycle >> CLOCK_SYNC_SHIFT) < MSH2->cycles){
-    timeout++;
-    // OverFlow
-    if (pre >= MSH2->cycles){
-      return;
-    }
-  }
-}
-
+#define CLOCK_SYNC_SHIFT (4)
 
 enum EnvelopeStates
 {
@@ -604,9 +585,9 @@ void op3(struct Slot * slot)
       return;
 
    if (!slot->regs.pcm8b)
-      slot->state.wave = SoundRamReadWord(addr);
+     slot->state.wave = T2ReadWord(SoundRam, addr); //SoundRamReadWord(addr);
    else
-      slot->state.wave = SoundRamReadByte(addr) << 8;
+     slot->state.wave = T2ReadByte(SoundRam, addr) << 8; //SoundRamReadByte(addr) << 8;
 
    slot->state.output = slot->state.wave;
 }
@@ -4688,6 +4669,7 @@ SoundRamReadByte (u32 addr)
     val = 0xFF;
 
   val = T2ReadByte(SoundRam, addr);
+  //SCSPLOG("SoundRamReadByte %08X:%02X",addr,val);
   return val;
 }
 
@@ -4704,11 +4686,36 @@ SoundRamWriteByte (u32 addr, u8 val)
   else if (addr > 0x7FFFF)
     return;
 
+  //SCSPLOG("SoundRamWriteByte %08X:%02X", addr, val);
   T2WriteByte (SoundRam, addr, val);
   M68K->WriteNotify (addr, 1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+// From CPU
+u32 pre_cpu_clock = 0;
+void SyncSh2And68k(){
+
+  u32 current_cpu_clock = YabauseGetCpuTime();
+
+  //SCSPLOG("SyncSh2And68k cpu=%08X, 68k=%08X", current_cpu_clock, m68kcycle);
+  //yprintf("SyncSh2And68k cpu=%08X, 68k=%08X", current_cpu_clock, m68kcycle);
+
+  // Sync 44.1KHz
+  u32 cpu_clock_diff = current_cpu_clock - pre_cpu_clock;
+  if (cpu_clock_diff >= 256){
+
+     u32 pre_68k_clcok = m68kcycle;
+
+     if (IsM68KRunning)
+      while (pre_68k_clcok == m68kcycle){ YabThreadYield(); };
+
+    pre_cpu_clock = current_cpu_clock;
+    
+  }
+
+}
 
 u16 FASTCALL
 SoundRamReadWord (u32 addr)
@@ -4722,6 +4729,9 @@ SoundRamReadWord (u32 addr)
     return 0xFFFF;
 
   val = T2ReadWord (SoundRam, addr);
+
+  SyncSh2And68k();
+
   return val;
 
 }
@@ -4738,7 +4748,7 @@ SoundRamWriteWord (u32 addr, u16 val)
     addr &= 0x3FFFF;
   else if (addr > 0x7FFFF)
     return;
-
+  //SCSPLOG("SoundRamWriteWord %08X:%04X", addr, val);
   T2WriteWord (SoundRam, addr, val);
   M68K->WriteNotify (addr, 2);
 }
@@ -4760,9 +4770,11 @@ SoundRamReadLong (u32 addr)
 
   //MainCpuSync();
   val = T2ReadLong(SoundRam, addr);
+ // SCSPLOG("SoundRamReadLong %08X:%08X", addr, val);
+  //if (IsM68KRunning)
+  //  while (pre_cycle == m68kcycle){ YabThreadYield(); };
 
-  if (IsM68KRunning)
-    while (pre_cycle == m68kcycle){ YabThreadYield(); };
+  SyncSh2And68k();
 
   return val;
 
@@ -4782,6 +4794,7 @@ SoundRamWriteLong (u32 addr, u32 val)
   else if (addr > 0x7FFFF)
     return;
 
+  //SCSPLOG("SoundRamWriteLong %08X:%08X", addr, val);
   T2WriteLong (SoundRam, addr, val);
   M68K->WriteNotify (addr, 4);
 
@@ -5248,7 +5261,7 @@ void ScspAsynMain( void * p ){
       ScspExecAsync();
       int sleeptime = 0;
       u64 checktime = 0;
-
+      m68kcycle = 0;
       do {
         now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
         if (now > before){
@@ -5264,8 +5277,6 @@ void ScspAsynMain( void * p ){
       checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
       //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
       before = checktime;
-      //m68kcycle = 0; // m68kcycle - (473958.3333 * (1 << CLOCK_SYNC_SHIFT));
-      //SCSPLOG("SOUNC SYNC 60Hz");
     }
     
   }

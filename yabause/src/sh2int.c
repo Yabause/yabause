@@ -2922,16 +2922,17 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
 FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
-   SH2HandleInterrupts(context);
+  u32 target_cycle = context->cycles + cycles;
+  SH2HandleInterrupts(context);
 
 #ifndef EXEC_FROM_CACHE
    if (context->isIdle)
-      SH2idleParse(context, cycles);
+     SH2idleParse(context, target_cycle);
    else
-      SH2idleCheck(context, cycles);
+     SH2idleCheck(context, target_cycle);
 #endif
 
-   while(context->cycles < cycles)
+   while (context->cycles < target_cycle)
    {
       // Fetch Instruction
 #ifdef EXEC_FROM_CACHE
