@@ -275,7 +275,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             gridRowAdapter.add(getResources().getString(R.string.donation));
             gridRowAdapter.add(getString(R.string.load_game));
             gridRowAdapter.add(getResources().getString(R.string.refresh_db));
-            gridRowAdapter.add("GoogleDrive");
+            //gridRowAdapter.add("GoogleDrive");
 
             mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
             setAdapter(mRowsAdapter);
@@ -412,7 +412,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         gridRowAdapter.add(getResources().getString(R.string.donation));
         gridRowAdapter.add(getString(R.string.load_game));
         gridRowAdapter.add(getResources().getString(R.string.refresh_db));
-        gridRowAdapter.add("GoogleDrive");
+        //gridRowAdapter.add("GoogleDrive");
 
         mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
         addindex++;
