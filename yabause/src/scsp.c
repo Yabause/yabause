@@ -4949,7 +4949,7 @@ void
 M68KStart (void)
 {
   M68K->Reset ();
-  ScspReset();
+  //ScspReset();
   savedcycles = 0;
   IsM68KRunning = 1;
 }
@@ -4960,7 +4960,7 @@ void
 M68KStop (void)
 {
   M68K->Reset();
-  ScspReset();
+  //ScspReset();
   IsM68KRunning = 0;
 }
 
@@ -5248,7 +5248,7 @@ void ScspAsynMain( void * p ){
     }
 
     if (use_new_scsp) {
-      new_scsp_exec((step<<1));
+      new_scsp_exec((samplecnt << 1));
     }else{
       scsp_update_timer(1);
     }
