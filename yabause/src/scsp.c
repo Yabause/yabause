@@ -124,6 +124,7 @@ int new_scsp_outbuf_pos = 0;
 s32 new_scsp_outbuf_l[900] = { 0 };
 s32 new_scsp_outbuf_r[900] = { 0 };
 int new_scsp_cycles = 0;
+int g_scsp_lock = 0;
 
 enum EnvelopeStates
 {
@@ -1358,8 +1359,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         *out_l = *out_l + ((disdl_applied >> pan_val_l) >> 2);
-         *out_r = *out_r + ((disdl_applied >> pan_val_r) >> 2);
+         *out_l = *out_l + ((disdl_applied >> pan_val_l)>>1);
+         *out_r = *out_r + ((disdl_applied >> pan_val_r)>>1);
 
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
@@ -1385,6 +1386,9 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
    for (i = 0; i < scsp_dsp.last_step; i++)
       ScspDspExec(&scsp_dsp, i, SoundRam);
 
+   if (!scsp_dsp.mdec_ct){
+     scsp_dsp.mdec_ct = (0x2000 << rbl);
+   }
    scsp_dsp.mdec_ct--;
 
    for (i = 0; i < 16; i++)
@@ -1407,8 +1411,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      panned_l = (efsdl_applied >> pan_val_l) >> 2;
-      panned_r = (efsdl_applied >> pan_val_r) >> 2;
+      panned_l = (efsdl_applied >> pan_val_l)>>1;
+      panned_r = (efsdl_applied >> pan_val_r)>>1;
 
       *out_l = *out_l + panned_l;
       *out_r = *out_r + panned_r;
@@ -1727,7 +1731,7 @@ scsp_trigger_sound_interrupt (u32 id)
    scsp.sintf (level);
 }
 
-static void
+INLINE void
 scsp_main_interrupt (u32 id)
 {
 //  if (scsp.mcipd & id) return;
@@ -1740,7 +1744,7 @@ scsp_main_interrupt (u32 id)
     scsp_trigger_main_interrupt (id);
 }
 
-static void
+INLINE void
 scsp_sound_interrupt (u32 id)
 {
 //  if (scsp.scipd & id) return;
@@ -3755,10 +3759,8 @@ scsp_update_timer (u32 len)
 
    if (scsp.timacnt >= 0xFF00)
    {
-      if (!(scsp.scipd & 0x40))
-         scsp_sound_interrupt(0x40);
-      if (!(scsp.mcipd & 0x40))
-         scsp_main_interrupt(0x40);
+      scsp_sound_interrupt(0x40);
+      scsp_main_interrupt(0x40);
       scsp.timacnt -= 0xFF00;
    }
 
@@ -3766,10 +3768,8 @@ scsp_update_timer (u32 len)
 
    if (scsp.timbcnt >= 0xFF00)
    {
-      if (!(scsp.scipd & 0x80))
-         scsp_sound_interrupt(0x80);
-      if (!(scsp.mcipd & 0x80))
-         scsp_main_interrupt(0x80);
+      scsp_sound_interrupt(0x80);
+      scsp_main_interrupt(0x80);
       scsp.timbcnt -= 0xFF00;
    }
 
@@ -3777,20 +3777,16 @@ scsp_update_timer (u32 len)
 
    if (scsp.timccnt >= 0xFF00)
    {
-      if (!(scsp.scipd & 0x100))
-         scsp_sound_interrupt(0x100);
-      if (!(scsp.mcipd & 0x100))
-         scsp_main_interrupt(0x100);
+      scsp_sound_interrupt(0x100);
+      scsp_main_interrupt(0x100);
       scsp.timccnt -= 0xFF00;
    }
 
    // 1F interrupt can't be accurate here...
    if (len)
    {
-      if (!(scsp.scipd & 0x400))
-         scsp_sound_interrupt(0x400);
-      if (!(scsp.mcipd & 0x400))
-         scsp_main_interrupt(0x400);
+      scsp_sound_interrupt(0x400);
+      scsp_main_interrupt(0x400);
    }
 }
 
@@ -4704,6 +4700,8 @@ ScspInit (int coreid)
   scspsoundgenpos = 0;
   scspsoundoutleft = 0;
 
+  g_scsp_lock = 0;
+
   return ScspChangeSoundCore (coreid);
 }
 
@@ -4796,6 +4794,7 @@ void
 M68KStart (void)
 {
   M68K->Reset ();
+  ScspReset();
   savedcycles = 0;
   IsM68KRunning = 1;
 }
@@ -4805,6 +4804,8 @@ M68KStart (void)
 void
 M68KStop (void)
 {
+  M68K->Reset();
+  ScspReset();
   IsM68KRunning = 0;
 }
 
@@ -4813,7 +4814,10 @@ M68KStop (void)
 void
 ScspReset (void)
 {
+  g_scsp_lock = 1;
+  YabThreadUSleep(100000);
   scsp_reset();
+  g_scsp_lock = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5063,94 +5067,58 @@ void ScspExec(){
 
 void ScspAsynMain( void * p ){
 
-	u64 before;
-	u64 now;
-	u32 difftime;
+  u64 before;
+  u64 now;
+  u32 difftime;
+  const int samplecnt = 256; // 11289600/44100
+  const int framecnt = 188160; // 11289600/60
+  int frame = 0;
 
-	YabThreadSetCurrentThreadAffinityMask( 0x03 );
+  YabThreadSetCurrentThreadAffinityMask( 0x03 );
 
-	u32 m68k_cycles_per_deciline = 0;
-	u32 scsp_cycles_per_deciline = 0;
+  before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+  while (thread_running){
 
-	int lines = 0;
-	int frames = 0;
+    while (g_scsp_lock){ YabThreadUSleep(1);  }
 
-	if (yabsys.IsPal)
-	{
-		lines = 313;
-		frames = 50;
-	}
-	else
-	{
-		lines = 263; 
-		frames = 60;
-	}
+    // Run 1 sample(44100Hz)
+    MM68KExec(samplecnt);
 
-	scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, 10);
-	m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, 10);
+    if (use_new_scsp) {
+      new_scsp_exec(512);
+    }else{
+      scsp_update_timer(1);
+    }
 
-	//clock_gettime(CLOCK_MONOTONIC, &before);
-	before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-	int DecilineCount = 0;
-	while (thread_running){
-		
-		int need_to_sync = 0;
+    // Sync 1 Frame(60Hz)
+    frame += samplecnt;
+    if (frame >= framecnt){
+      frame = frame - framecnt;
+      ScspInternalVars->scsptiming2 = 0;
+      ScspInternalVars->scsptiming1 = scsplines;
+      ScspExecAsync();
+      int sleeptime = 0;
+      u64 checktime = 0;
 
-		DecilineCount++;
+      do {
+        now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+        if (now > before){
+          difftime = now - before;
+        }
+        else{
+          difftime = now + (ULLONG_MAX - before);
+        }
+        sleeptime = (16666 - difftime);
+        if (sleeptime > 10000) YabThreadUSleep(0);
+      } while (sleeptime > 0);
 
-		if (DecilineCount == 10){
-			ScspInternalVars->scsptiming2 +=
-				((scspsoundlen << 16) + scsplines / 2) / scsplines;
-			if (!use_new_scsp)
-				scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
-			ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
-			ScspInternalVars->scsptiming1++;
-
-			if (ScspInternalVars->scsptiming1 >= scsplines){
-				need_to_sync = 1;
-			}
-			ScspExecAsync();
-			DecilineCount = 0;
-		}
-
-		u32 m68k_integer_part = 0, scsp_integer_part = 0;
-		saved_m68k_cycles += m68k_cycles_per_deciline;
-		m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
-		MM68KExec(m68k_integer_part);
-		saved_m68k_cycles -= m68k_integer_part << SCSP_FRACTIONAL_BITS;
-
-		if (use_new_scsp) {
-			saved_scsp_cycles += scsp_cycles_per_deciline;
-			scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
-			new_scsp_exec(scsp_integer_part);
-			saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
-		}
-
-		if( need_to_sync){
-			int sleeptime = 0;
-			u64 checktime = 0;
-			//u64 operation_time = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-
-			do {
-				now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-				if (now > before){
-					difftime = now - before;
-				}
-				else{
-					difftime = now + (ULLONG_MAX - before);
-				}
-				sleeptime = (16666 - difftime);
-				if (sleeptime > 10000 ) YabThreadUSleep(0);
-			}while( sleeptime > 0);
-
-			checktime = YabauseGetTicks()* 1000000 / yabsys.tickfreq;
-			//yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
-			before = checktime;
-
-		}
-	}
-
-	YabThreadWake(YAB_THREAD_SCSP);
+      checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+      //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
+      before = checktime;
+    }
+    
+  }
+  YabThreadWake(YAB_THREAD_SCSP);
 }
 
 void ScspExec(){
@@ -5158,6 +5126,7 @@ void ScspExec(){
 	if (thread_running == 0){
 		thread_running = 1;
 		YabThreadStart(YAB_THREAD_SCSP, ScspAsynMain, NULL);
+    YabThreadUSleep(100000);
 	}
 }
 void ScspExecAsync() {
