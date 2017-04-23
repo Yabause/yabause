@@ -5227,11 +5227,12 @@ void ScspAsynMain( void * p ){
   u64 now;
   u32 difftime;
   const int samplecnt = 256; // 11289600/44100
+  const int step = 16;
   const int framecnt = 188160; // 11289600/60
   int frame = 0;
   int i;
 
-  const u32 base_clock = (u32)( (644.8412698/(256.0/16.0)) * (1 << CLOCK_SYNC_SHIFT));
+  const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
   
 
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
@@ -5241,13 +5242,13 @@ void ScspAsynMain( void * p ){
     while (g_scsp_lock){ YabThreadUSleep(1);  }
 
     // Run 1 sample(44100Hz)
-    for (i = 0; i < 256; i += 16){
-      MM68KExec(16);
+    for (i = 0; i < samplecnt; i += step){
+      MM68KExec(step);
       m68kcycle += base_clock;
     }
 
     if (use_new_scsp) {
-      new_scsp_exec(512);
+      new_scsp_exec((step<<1));
     }else{
       scsp_update_timer(1);
     }
