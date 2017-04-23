@@ -958,6 +958,54 @@ static YglVdp1CommonParam grow_tess = { 0 };
 static YglVdp1CommonParam grow_spd_tess = { 0 };
 static YglVdp1CommonParam mesh_tess = { 0 };
 
+/*------------------------------------------------------------------------------------
+*  VDP1 Half luminance Operaion
+* ----------------------------------------------------------------------------------*/
+const GLchar Yglprg_vdp1_half_luminance_v[] =
+#if defined(_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+      "uniform mat4 u_mvpMatrix;    \n"
+    "uniform vec2 u_texsize;    \n"
+      "layout (location = 0) in vec4 a_position;   \n"
+      "layout (location = 1) in vec4 a_texcoord;   \n"
+      "out   vec4 v_texcoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      "   gl_Position = a_position*u_mvpMatrix; \n"
+      "   v_texcoord  = a_texcoord; \n"
+    "   v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
+    "   v_texcoord.y  = v_texcoord.y / u_texsize.y;\n"
+      "} ";
+const GLchar * pYglprg_vdp1_half_luminance_v[] = {Yglprg_vdp1_half_luminance_v, NULL};
+
+const GLchar Yglprg_vpd1_half_luminance_f[] =
+#if defined(_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+      "precision highp float;                            \n"
+      "in vec4 v_texcoord;                            \n"
+      "uniform sampler2D s_texture;                        \n"
+      "out vec4 fragColor;            \n"
+      "void main()                                         \n"
+      "{                                                   \n"
+      "  vec2 addr = v_texcoord.st;                        \n"
+      "  addr.s = addr.s / (v_texcoord.q);                 \n"
+      "  addr.t = addr.t / (v_texcoord.q);                 \n"
+      "  vec4 FragColor = texture( s_texture, addr );      \n"
+      "  if( FragColor.a == 0.0 ) discard;                \n"
+      "  fragColor.r = FragColor.r * 0.5;\n "
+      "  fragColor.g = FragColor.g * 0.5;\n "
+      "  fragColor.b = FragColor.b * 0.5;\n "
+      "  fragColor.a = FragColor.a;\n "
+      "}                                                   \n";
+const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
+static YglVdp1CommonParam half_luminance = { 0 };
+
 
 /*------------------------------------------------------------------------------------
 *  VDP1 Shadow Operation
@@ -1913,6 +1961,13 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS], &id_ght);
 
+   //-----------------------------------------------------------------------------------------------------------
+   YGLLOG("PG_VFP1_HALF_LUMINANCE\n");
+
+   if (YglInitShader(PG_VFP1_HALF_LUMINANCE, pYglprg_vdp1_half_luminance_v, pYglprg_vdp1_half_luminance_f, 1, NULL, NULL, NULL) != 0)
+     return -1;
+
+   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_HALF_LUMINANCE], &half_luminance);
 
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VFP1_MESH\n");
@@ -2318,6 +2373,15 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].vaid = 2;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VFP1_MESH], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = -1;
+   }else if( prgid == PG_VFP1_HALF_LUMINANCE )
+   {
+      current->setupUniform    = Ygl_uniformVdp1Normal;
+      current->cleanupUniform  = Ygl_cleanupVdp1Normal;
+      current->vertexp = 0;
+      current->texcoordp = 1;
+      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VFP1_HALF_LUMINANCE],(const GLchar *)"u_mvpMatrix");
+      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VFP1_HALF_LUMINANCE],(const GLchar *)"u_texMatrix");
+      current->tex0 = glGetUniformLocation(_prgid[PG_VFP1_HALF_LUMINANCE], (const GLchar *)"s_texture");
    }
    else if (prgid == PG_VFP1_MESH_TESS)
    {
