@@ -2292,10 +2292,11 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   int linestart = 0;
 
   int height = vdp2height;
-  if (height >= 448) height >>= 1;
+  if ((vdp1_interlace != 0) || (height >= 448)) {
+    lineinc=2;
+  }
 
   if (vdp1_interlace != 0) {
-    lineinc=2;
     linestart = vdp1_interlace -1;
   }
 
@@ -3872,7 +3873,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      sprite.blendmode = VDP1_COLOR_CL_SHADOW;
    }
    else if (IS_HALF_LUMINANCE(CMDPMOD)){
-     // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+      sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
    }
    else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
      tmp |= 0x00010000;
@@ -4080,7 +4081,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      sprite.blendmode = VDP1_COLOR_CL_SHADOW;
    }
    else if (IS_HALF_LUMINANCE(CMDPMOD)){
-     // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE; 
    }
    else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
      tmp |= 0x00010000;
@@ -4329,7 +4330,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      sprite.blendmode = VDP1_COLOR_CL_SHADOW;
    }
    else if (IS_HALF_LUMINANCE(CMDPMOD)){
-     // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE; 
    }
    else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
      tmp |= 0x00010000;
@@ -4676,7 +4677,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    else if (IS_HALF_LUMINANCE(CMDPMOD)){
      alpha = 0xF8;
-     // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE; 
    }
    else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
      alpha = 0x80;
@@ -4901,7 +4902,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      polygon.blendmode = VDP1_COLOR_CL_SHADOW;
    }
    else if (IS_HALF_LUMINANCE(CMDPMOD)){
-     // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+     polygon.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE; 
    }
    else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
      polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
@@ -5165,7 +5166,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      polygon.blendmode = VDP1_COLOR_CL_SHADOW;
    }
    else if (IS_HALF_LUMINANCE(CMDPMOD)){
-     // sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINACE;  not implement 
+     polygon.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE; 
    }
    else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)){
      polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;

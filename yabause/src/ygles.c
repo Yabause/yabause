@@ -1454,6 +1454,10 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   {
     prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
   }
+  else if (input->blendmode == VDP1_COLOR_CL_HALF_LUMINANCE)
+  {
+    prg = PG_VFP1_HALF_LUMINANCE;
+  }
   else if (input->blendmode == VDP1_COLOR_CL_MESH)
   {
     prg = PG_VFP1_MESH;
@@ -1706,6 +1710,9 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
    {
       prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+   }
+   else if (input->blendmode == VDP1_COLOR_CL_HALF_LUMINANCE) {
+      prg = PG_VFP1_HALF_LUMINANCE;
    }
    else if (input->blendmode == VDP1_COLOR_CL_MESH)
    {
