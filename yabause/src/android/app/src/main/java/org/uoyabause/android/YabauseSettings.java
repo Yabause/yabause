@@ -94,7 +94,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
         GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
         dires.setActivity(this);
-
+/*
         Preference filePicker = (Preference) findPreference("pref_game_download_directory");
         filePicker.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
@@ -104,7 +104,7 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
                 return true;
             }
         });
-
+*/
     	InputSettingPrefernce inputsetting1 = (InputSettingPrefernce)findPreference("pref_inputdef_file");
         inputsetting1.setPlayerAndFileame(0,"keymap");
     	InputSettingPrefernce inputsetting2 = (InputSettingPrefernce)findPreference("pref_player2_inputdef_file");
