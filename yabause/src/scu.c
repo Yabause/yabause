@@ -2515,9 +2515,11 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0xA4:
          ScuRegs->IST &= val;
+         ScuTestInterruptMask();
          break;
       case 0xA8:
          ScuRegs->AIACK = val;
+         ScuTestInterruptMask();
          break;
       case 0xB0:
          ScuRegs->ASR0 = val;
@@ -2546,8 +2548,25 @@ void ScuTestInterruptMask()
    // Handle SCU interrupts
    for (i = 0; i < ScuRegs->NumberOfInterrupts; i++)
    {
-      if (!(ScuRegs->IMS & ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].mask))
-      {
+     u32 mask = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].mask;
+
+     // A-BUS?
+     if (mask & 0xFFFF0000){
+       if (ScuRegs->AIACK){
+         ScuRegs->AIACK = 0;
+         if (!(ScuRegs->IMS & 0x8000)) {
+           SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level);
+           ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit;
+
+           // Shorten list
+           for (i2 = ScuRegs->NumberOfInterrupts - 1 - i; i2 < (ScuRegs->NumberOfInterrupts - 1); i2++)
+             memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2 + 1], sizeof(scuinterrupt_struct));
+
+           ScuRegs->NumberOfInterrupts--;
+           ScuRegs->AIACK = 0;
+         }
+       }
+     }else if (!(ScuRegs->IMS & mask)) {
          SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
          ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].statusbit;
 
@@ -2600,7 +2619,15 @@ static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 
-	if (!(ScuRegs->IMS & mask)){
+  // A-BUS?
+  if ((mask & 0xFFFF0000) ){
+    if (ScuRegs->AIACK){
+      ScuRegs->AIACK = 0;
+      if (!(ScuRegs->IMS & 0x8000)){
+        SH2SendInterrupt(MSH2, vector, level);
+      }
+    }
+  }else if (!(ScuRegs->IMS & mask)){
 		//if (vector != 0x41) LOG("INT %d", vector);
 		SH2SendInterrupt(MSH2, vector, level);
 	}
