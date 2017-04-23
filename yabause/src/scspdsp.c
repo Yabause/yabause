@@ -180,7 +180,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
       addr &= (0x2000 << dsp->rbl) - 1;
     }
 
-    dsp->io_addr = (addr + (dsp->rbp << 12)) & 0x7FFFF;
+    dsp->io_addr = (addr + (dsp->rbp << 12)) & 0x3FFFF;
 
     if (inst.part.mrd)
     {
