@@ -7,12 +7,12 @@
             android:key="pref_game_directory"
             android:title="@string/select_game_directory"
             android:summary="" />
-
+<!--
         <org.uoyabause.android.GameDirectoriesDialogPreference
             android:key="pref_game_download_directory"
             android:title="Download Directory"
             android:summary="" />
-
+-->
         <Preference
             android:key="select_image"
             android:title="@string/select_bk_image" />
