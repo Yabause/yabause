@@ -518,8 +518,8 @@ static u32 readgensrc(u8 num)
    u32 val;
 
    if( num <= 7  ){
-	   incFlg[(num & 0x3)] |= ((num >> 2) & 0x01);
-	   return ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]&0x3F];
+     incFlg[(num & 0x3)] |= ((num >> 2) & 0x01);
+     return ScuDsp->MD[(num & 0x3)][ScuDsp->CT[(num & 0x3)]&0x3F];
    }else{
      if (num == 0x9)  // ALL
        return (u32)ScuDsp->ALU.part.L;
@@ -559,7 +559,7 @@ static u32 readgensrc(u8 num)
       default: break;
    }
 #endif
-   return 0;
+   return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -568,9 +568,6 @@ static void writed1busdest(u8 num, u32 val)
 {
    switch(num) { 
       case 0x0:
-        if ( val == 0x0000c100 ) {
-          int a = 0;
-        }
           ScuDsp->MD[0][ScuDsp->CT[0]&0x3F] = val;
           incFlg[0] = 1;
           return;
@@ -606,15 +603,19 @@ static void writed1busdest(u8 num, u32 val)
           return;
       case 0xC:
           ScuDsp->CT[0] = (u8)val;
+          incFlg[0] = 0;
           return;
       case 0xD:
           ScuDsp->CT[1] = (u8)val;
+          incFlg[1] = 0;
           return;
       case 0xE:
           ScuDsp->CT[2] = (u8)val;
+          incFlg[2] = 0;
           return;
       case 0xF:
           ScuDsp->CT[3] = (u8)val;
+          incFlg[3] = 0;
           return;
       default: break;
    }
@@ -645,7 +646,7 @@ static void writeloadimdest(u8 num, u32 val)
           ScuDsp->RX = val;
           return;
       case 0x5: // PL
-          ScuDsp->P.all = (s64)val;
+          ScuDsp->P.all = (s32)val;
           return;
       case 0x6: // RA0
           val = (val & 0x1FFFFFF);
@@ -656,14 +657,16 @@ static void writeloadimdest(u8 num, u32 val)
           ScuDsp->WA0 = val;
           return;
       case 0xA: // LOP
-          ScuDsp->LOP = (u16)val;
+          ScuDsp->LOP = (u16)(val & 0x0FFF);
           return;
       case 0xC: // PC->TOP, PC
           ScuDsp->TOP = ScuDsp->PC+1;
           ScuDsp->jmpaddr = val;
           ScuDsp->delayed = 0;
           return;
-      default: break;
+      default: 
+        LOG("writeloadimdest BAD NUM %d,%d",num,val);
+        break;
    }
 }
 
@@ -1258,24 +1261,23 @@ void ScuExec(u32 timing) {
 
          
          switch (instruction >> 30) {
-            case 0x00: // Operation Commands
-
-               // X-bus
-               if ((instruction >> 23) & 0x4)
-               {
-                  // MOV [s], X
-                  ScuDsp->RX = readgensrc((instruction >> 20) & 0x7);
-               }
+         case 0x00: // Operation Commands
                switch ((instruction >> 23) & 0x3)
                {
                   case 2: // MOV MUL, P
-                     ScuDsp->P.all = ScuDsp->MUL.all;
+                    ScuDsp->P.all = (s64)ScuDsp->RX * (s32)ScuDsp->RY; // ScuDsp->MUL.all;
                      break;
                   case 3: // MOV [s], P
                      //s32 cast to sign extend
                     ScuDsp->P.all = (s64)(s32)readgensrc((instruction >> 20) & 0x7);
                      break;
                   default: break;
+               }
+               // X-bus
+               if ((instruction >> 23) & 0x4)
+               {
+                 // MOV [s], X
+                 ScuDsp->RX = readgensrc((instruction >> 20) & 0x7);
                }
 
                // Y-bus
@@ -1547,7 +1549,7 @@ void ScuExec(u32 timing) {
                break;
          }
 
-         ScuDsp->MUL.all = (s64)ScuDsp->RX * (s64)ScuDsp->RY;
+         //ScuDsp->MUL.all = (s64)ScuDsp->RX * (s32)ScuDsp->RY;
          
          if (incFlg[0] != 0){ ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3f; incFlg[0] = 0; };
          if (incFlg[1] != 0){ ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3f; incFlg[1] = 0; };
