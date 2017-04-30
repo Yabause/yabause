@@ -613,14 +613,18 @@ int YabauseEmulate(void) {
 
          if (!yabsys.playing_ssf)
          {
-            PROFILE_START("MSH2");
-            SH2Exec(MSH2, sh2cycles);
-            PROFILE_STOP("MSH2");
+           int i;
+           int step = sh2cycles;
+           for (i = 0; i < sh2cycles; i += step){
+             PROFILE_START("MSH2");
+             SH2Exec(MSH2, step);
+             PROFILE_STOP("MSH2");
 
-            PROFILE_START("SSH2");
-            if (yabsys.IsSSH2Running)
-               SH2Exec(SSH2, sh2cycles);
-            PROFILE_STOP("SSH2");
+             PROFILE_START("SSH2");
+             if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, step);
+             PROFILE_STOP("SSH2");
+           }
          }
 
 #ifdef USE_SCSP2
