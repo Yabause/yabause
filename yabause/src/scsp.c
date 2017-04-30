@@ -4704,7 +4704,7 @@ void SyncSh2And68k(){
 
   // Sync 44.1KHz
   u32 cpu_clock_diff = current_cpu_clock - pre_cpu_clock;
-  if (cpu_clock_diff >= 256){
+  if (cpu_clock_diff >= 32){ //256){
 
      u32 pre_68k_clcok = m68kcycle;
 
@@ -4729,7 +4729,7 @@ SoundRamReadWord (u32 addr)
     return 0xFFFF;
 
   val = T2ReadWord (SoundRam, addr);
-
+  SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
   SyncSh2And68k();
 
   return val;
@@ -4770,7 +4770,7 @@ SoundRamReadLong (u32 addr)
 
   //MainCpuSync();
   val = T2ReadLong(SoundRam, addr);
- // SCSPLOG("SoundRamReadLong %08X:%08X", addr, val);
+  SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
   //if (IsM68KRunning)
   //  while (pre_cycle == m68kcycle){ YabThreadYield(); };
 
@@ -5228,8 +5228,10 @@ void ScspAsynMain( void * p ){
   u32 difftime;
   const int samplecnt = 256; // 11289600/44100
   const int step = 16;
-  const int framecnt = 188160; // 11289600/60
+  const int frame_div = 4;
+  const int framecnt = 188160 / frame_div; // 11289600/60
   int frame = 0;
+  int frame_count = 0;
   int i;
 
   const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
@@ -5253,13 +5255,17 @@ void ScspAsynMain( void * p ){
       scsp_update_timer(1);
     }
 
-    // Sync 1 Frame(60Hz)
+    // Sync 1/4 Frame(60Hz)
     frame += samplecnt;
     if (frame >= framecnt){
       frame = frame - framecnt;
-      ScspInternalVars->scsptiming2 = 0;
-      ScspInternalVars->scsptiming1 = scsplines;
-      ScspExecAsync();
+      frame_count++;
+      if (frame_count >= frame_div){
+        ScspInternalVars->scsptiming2 = 0;
+        ScspInternalVars->scsptiming1 = scsplines;
+        ScspExecAsync();
+        frame_count = 0;
+      }
       int sleeptime = 0;
       u64 checktime = 0;
       m68kcycle = 0;
@@ -5271,7 +5277,7 @@ void ScspAsynMain( void * p ){
         else{
           difftime = now + (ULLONG_MAX - before);
         }
-        sleeptime = (16666 - difftime);
+        sleeptime = ((16666 / frame_div) - difftime);
         if (sleeptime > 10000) YabThreadUSleep(0);
       } while (sleeptime > 0);
 
