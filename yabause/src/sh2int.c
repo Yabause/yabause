@@ -779,7 +779,12 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
    s32 tempm,tempn,fnLmL;
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
-  
+
+   const u64 result = (s64)(s32)sh->regs.R[n] * (s32)sh->regs.R[m];
+
+   sh->regs.MACL = result >> 0;
+   sh->regs.MACH = result >> 32;
+#if 0  
    tempn = (s32)sh->regs.R[n];
    tempm = (s32)sh->regs.R[m];
    if (tempn < 0)
@@ -826,6 +831,7 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
    }
    sh->regs.MACH = Res2;
    sh->regs.MACL = Res0;
+#endif
    sh->regs.PC += 2;
    sh->cycles += 2;
 }
@@ -1091,12 +1097,31 @@ static void FASTCALL SH2macl(SH2_struct * sh)
    s32 tempm,tempn,fnLmL;
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
+   u32 pre_macl;
+   u32 pre_mach;
 
-   tempn = (s32) MappedMemoryReadLong(sh->regs.R[n]);
+   s32 m0, m1;
+
+   m1 = tempn = (s32) MappedMemoryReadLong(sh->regs.R[n]);
    sh->regs.R[n] += 4;
-   tempm = (s32) MappedMemoryReadLong(sh->regs.R[m]);
+   m0 = tempm = (s32) MappedMemoryReadLong(sh->regs.R[m]);
    sh->regs.R[m] += 4;
 
+#if 1 // fast and better
+   u64 a, b, sum;
+   a = sh->regs.MACL | ((u64)sh->regs.MACH << 32);
+   b = (s64)m0 * m1;
+   sum = a+b;
+   if (sh->regs.SR.part.S == 1 && sum > 0x00007FFFFFFFFFFFULL && sum < 0xFFFF800000000000ULL)
+   {
+     if((s64)b < 0)
+       sum = 0xFFFF800000000000ULL;
+     else
+       sum = 0x00007FFFFFFFFFFFULL;
+   }
+   sh->regs.MACL = sum; 
+   sh->regs.MACH = sum >> 32;
+#else
    if ((s32) (tempn^tempm) < 0)
       fnLmL = -1;
    else
@@ -1144,9 +1169,15 @@ static void FASTCALL SH2macl(SH2_struct * sh)
       Res0=sh->regs.MACL+Res0;
       if (sh->regs.MACL>Res0)
          Res2++;
-      if (sh->regs.MACH & 0x00008000);
-      else Res2 += sh->regs.MACH | 0xFFFF0000;
-      Res2+=(sh->regs.MACH&0x0000FFFF);
+      //if (sh->regs.MACH & 0x00008000);
+      //else Res2 += sh->regs.MACH | 0xFFFF0000;
+
+      if (sh->regs.MACH & 0x00008000){
+        Res2 -= (sh->regs.MACH & 0x0000FFFF);
+      }
+      else{
+        Res2 += (sh->regs.MACH & 0x0000FFFF);
+      }
       if(((s32)Res2<0)&&(Res2<0xFFFF8000))
       {
          Res2=0x00008000;
@@ -1171,7 +1202,7 @@ static void FASTCALL SH2macl(SH2_struct * sh)
       sh->regs.MACH=Res2;
       sh->regs.MACL=Res0;
    }
-
+#endif
    sh->regs.PC+=2;
    sh->cycles += 3;
 }
