@@ -68,6 +68,9 @@ void YabSetError(int type, const void *extra)
          AllocAmendPrintString(_("Cannot initialize "), extra);
          break;
       case YAB_ERR_SH2INVALIDOPCODE:
+#ifdef DMPHISTORY
+        SH2DumpHistory(CurrentSH2);
+#endif
          sh = (SH2_struct *)extra;
          SH2GetRegisters(sh, &sh->regs);
          sprintf(tempstr, "%s SH2 invalid opcode\n\n"

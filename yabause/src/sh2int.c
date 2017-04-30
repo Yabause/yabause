@@ -2859,6 +2859,7 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
 
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
+  u32 target_cycle = context->cycles + cycles;
 #ifdef SH2_TRACE
    /* Avoid accumulating leftover cycles multiple times, since the trace
     * code automatically adds state->cycles to the cycle accumulator when
@@ -2868,7 +2869,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
    SH2HandleInterrupts(context);
 
-   while(context->cycles < cycles)
+   while (context->cycles < target_cycle)
    {
 #ifdef SH2_UBC   	   
       int ubcinterrupt=0, ubcflag=0;
