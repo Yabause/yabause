@@ -144,6 +144,32 @@ fetchfunc fetchlist[0x100];
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void SH2HandleInterrupts(SH2_struct *context)
+{
+  if (context->NumberOfInterrupts != 0)
+  {
+    if (context->interrupts[context->NumberOfInterrupts - 1].level > context->regs.SR.part.I)
+    {
+      //if (context->interrupts[context->NumberOfInterrupts - 1].vector != 67) {
+        u32 persr = context->regs.SR.part.I;
+        context->regs.R[15] -= 4;
+        MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
+        context->regs.R[15] -= 4;
+        MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
+        context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
+        context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
+        LOG("**** Exception vecnum=%u, PC=%08X PreSR=%08X,level=%08X", context->interrupts[context->NumberOfInterrupts - 1].vector, context->regs.PC, persr, context->regs.SR.part.I);
+      //}
+      context->NumberOfInterrupts--;
+      context->isIdle = 0;
+      context->isSleeping = 0;
+    }
+}
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+
 static u32 FASTCALL FetchBios(u32 addr)
 {
 #if CACHE_ENABLE
@@ -199,6 +225,9 @@ static u32 FASTCALL FetchVram(u32 addr)
 
 static u32 FASTCALL FetchInvalid(UNUSED u32 addr)
 {
+#ifdef DMPHISTORY
+  SH2DumpHistory(CurrentSH2);
+#endif
    return 0xFFFF;
 }
 
@@ -1015,6 +1044,7 @@ static void FASTCALL SH2ldcsr(SH2_struct * sh)
    sh->regs.SR.all = sh->regs.R[INSTRUCTION_B(sh->instruction)]&0x000003F3;
    sh->regs.PC += 2;
    sh->cycles++;
+   SH2HandleInterrupts(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2834,26 +2864,6 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
    context->onchip.BRCR |= flag;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void SH2HandleInterrupts(SH2_struct *context)
-{
-   if (context->NumberOfInterrupts != 0)
-   {
-      if (context->interrupts[context->NumberOfInterrupts-1].level > context->regs.SR.part.I)
-      {
-         context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
-         context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
-         context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts-1].level;
-         context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
-         context->NumberOfInterrupts--;
-         context->isIdle = 0;
-         context->isSleeping = 0;
-      }
-   }
-}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2866,7 +2876,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
     * printing a trace line */
    sh2_trace_add_cycles(-((s32)context->cycles));
 #endif
-
+   
    SH2HandleInterrupts(context);
 
    while (context->cycles < target_cycle)
@@ -2874,7 +2884,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #ifdef SH2_UBC   	   
       int ubcinterrupt=0, ubcflag=0;
 #endif
-	
       SH2HandleBreakpoints(context);
 
 #ifdef SH2_TRACE
@@ -2966,6 +2975,7 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 
    while (context->cycles < target_cycle)
    {
+
       // Fetch Instruction
 #ifdef EXEC_FROM_CACHE
       if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
@@ -3116,6 +3126,11 @@ void SH2InterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
    {
       if (context->interrupts[i].vector == vector)
          return;
+   }
+
+   // Ignore Timer0 and Timer1 when masked
+   if ((vector == 67 || vector == 68) && level <= context->regs.SR.part.I){
+     return;
    }
 
    context->interrupts[context->NumberOfInterrupts].level = level;
