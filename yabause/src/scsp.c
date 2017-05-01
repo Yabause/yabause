@@ -924,7 +924,7 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
    struct Slot * slot = &s->slots[slot_num];
    u32 offset = (addr - (0x20 * slot_num));
 
-   SCSPLOG("Slot Write %d:%d \n", slot_num, addr);
+   //SCSPLOG("Slot Write %d:%d \n", slot_num, addr);
 
    switch (offset)
    {
@@ -932,7 +932,7 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
       slot->regs.kb = (data >> 3) & 1;//has to be done first
 
       if ((data >> 4) & 1) { //keyonex
-        SCSPLOG("KEY ON %d:1", slot_num);
+        //SCSPLOG("KEY ON %d:1", slot_num);
         keyonex(s);
       }
  
@@ -1159,7 +1159,7 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
    struct Slot * slot = &s->slots[slot_num];
    u32 offset = (addr - (0x20 * slot_num));
 
-   SCSPLOG("Slot Write %d:%d\n", slot_num, addr);
+   //SCSPLOG("Slot Write %d:%d\n", slot_num, addr);
 
    switch (offset >> 1)
    {
@@ -1167,7 +1167,7 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
       slot->regs.kb = (data >> 11) & 1;//has to be done before keyonex
 
       if (data & (1 << 12)){
-        SCSPLOG("KEY ON %d:2", slot_num);
+        //SCSPLOG("KEY ON %d:2", slot_num);
         keyonex(s);
       }
 
@@ -4270,34 +4270,43 @@ scsp_r_w (u32 a)
   }
   else if (a >= 0x800 && a < 0xC00)
   {
-     u32 address = (a - 0x800) / 8;
+    u32 address = (a - 0x800) / 8;
 
-     switch (a & 0xf)
-     {
-     case 0:
-     case 8:
-        return (scsp_dsp.mpro[address] >> (u64)48) & 0xffff;
-        break;
-     case 2:
-     case 0xa:
-        return (scsp_dsp.mpro[address] >> (u64)32) & 0xffff;
-        break;
-     case 4:
-     case 0xc:
-        return (scsp_dsp.mpro[address] >> (u64)16) & 0xffff;
-        break;
-     case 6:
-     case 0xe:
-        return scsp_dsp.mpro[address] & 0xffff;
-        break;
-     default:
-        break;
-     }
-  }
-  else if (a < 0xee4)
+    switch (a & 0xf)
     {
-
+    case 0:
+    case 8:
+      return (scsp_dsp.mpro[address] >> (u64)48) & 0xffff;
+      break;
+    case 2:
+    case 0xa:
+      return (scsp_dsp.mpro[address] >> (u64)32) & 0xffff;
+      break;
+    case 4:
+    case 0xc:
+      return (scsp_dsp.mpro[address] >> (u64)16) & 0xffff;
+      break;
+    case 6:
+    case 0xe:
+      return scsp_dsp.mpro[address] & 0xffff;
+      break;
+    default:
+      break;
     }
+  } else if (a >= 0xE80 && a <= 0xEBF){
+    if (!(a & 0x2)){
+      return scsp_dsp.mixs[((a & 0x3F) >> 2)]&0x00000F;
+    }
+    else{
+      return (scsp_dsp.mixs[((a & 0x3F) >> 2)]>>4)&0xFFFF;
+    }
+  }else if (a >= 0xEC0 && a <= 0xEDF){
+    return scsp_dsp.efreg[a & 0x1F];
+  }else if (a == 0xee0) { 
+    return scsp_dsp.exts[0]; 
+  }else if (a == 0xee2) { 
+    return scsp_dsp.exts[1]; 
+  }
 
   SCSPLOG ("WARNING: scsp r_w to %08lx\n", a);
 
@@ -4333,7 +4342,7 @@ scsp_r_d (u32 a)
     }
   else if (a < 0xee4)
     {
-
+      if (a == 0xee0) { return ((u32)(scsp_dsp.exts[0]) << 16) | (u32)scsp_dsp.exts[1]; }
     }
 
   SCSPLOG("WARNING: scsp r_d to %08lx\n", a);
@@ -4596,9 +4605,9 @@ static void FASTCALL
 c68k_byte_write (const u32 adr, u32 data)
 {
   if (adr < 0x100000){
-//    if ((adr & 0x7FFF0) == 0x3c20){
-//      SCSPLOG("c68k_word_write %08X:%02X\n", adr, data);
-//    }
+    //if ((adr & 0xFFF) == 0x790){
+    //  SCSPLOG("c68k_word_write %08X:%02X\n", adr, data);
+    //}
     T2WriteByte(SoundRam, adr & 0x7FFFF, data);
   }
   else{
