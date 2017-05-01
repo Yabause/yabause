@@ -1384,8 +1384,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         *out_l = *out_l + ((disdl_applied >> pan_val_l)>>1);
-         *out_r = *out_r + ((disdl_applied >> pan_val_r)>>1);
+         *out_l = *out_l + ((disdl_applied >> pan_val_l)>>0);
+         *out_r = *out_r + ((disdl_applied >> pan_val_r)>>0);
 
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
@@ -1436,8 +1436,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      panned_l = (efsdl_applied >> pan_val_l)>>1;
-      panned_r = (efsdl_applied >> pan_val_r)>>1;
+      panned_l = (efsdl_applied >> pan_val_l)>>0;
+      panned_r = (efsdl_applied >> pan_val_r)>>0;
 
       *out_l = *out_l + panned_l;
       *out_r = *out_r + panned_r;
@@ -4696,7 +4696,9 @@ SoundRamWriteByte (u32 addr, u8 val)
 // From CPU
 u32 pre_cpu_clock = 0;
 void SyncSh2And68k(){
-
+#if 0
+  return;
+#else
   u32 current_cpu_clock = YabauseGetCpuTime();
 
   //SCSPLOG("SyncSh2And68k cpu=%08X, 68k=%08X", current_cpu_clock, m68kcycle);
@@ -4714,7 +4716,7 @@ void SyncSh2And68k(){
     pre_cpu_clock = current_cpu_clock;
     
   }
-
+#endif
 }
 
 u16 FASTCALL
