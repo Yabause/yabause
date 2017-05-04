@@ -2865,6 +2865,28 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
 }
 
 
+void SH2HandleBreakpoints(SH2_struct *context)
+{
+  int i;
+
+  for (i = 0; i < context->bp.numcodebreakpoints; i++) {
+
+    if ((context->regs.PC == context->bp.codebreakpoint[i].addr) && context->bp.inbreakpoint == 0) {
+      context->bp.inbreakpoint = 1;
+      SH2DumpHistory(context);
+      if (context->bp.BreakpointCallBack)
+        context->bp.BreakpointCallBack(context, context->bp.codebreakpoint[i].addr, context->bp.BreakpointUserData);
+      context->bp.inbreakpoint = 0;
+    }
+  }
+
+  if (context->bp.breaknow) {
+    context->bp.breaknow = 0;
+    context->bp.BreakpointCallBack(context, context->regs.PC, context->bp.BreakpointUserData);
+  }
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
