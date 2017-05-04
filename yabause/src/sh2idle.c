@@ -617,6 +617,7 @@ void FASTCALL SH2idleParse( SH2_struct *context, u32 cycles ) {
       }   
     }
     opcodes[context->instruction](context);
+    if ( context->cycles >= cycles ) return;
   }
 }
 
