@@ -4703,27 +4703,15 @@ SoundRamWriteByte (u32 addr, u8 val)
 //////////////////////////////////////////////////////////////////////////////
 
 // From CPU
+u32 pre_frame_count = 0;
 u32 pre_cpu_clock = 0;
+u32 pre_68k_clcok = 0;
+int sh2_read_req = 0;
 void SyncSh2And68k(){
-
-  u32 current_cpu_clock = YabauseGetCpuTime();
-
-  //SCSPLOG("SyncSh2And68k cpu=%08X, 68k=%08X", current_cpu_clock, m68kcycle);
-  //yprintf("SyncSh2And68k cpu=%08X, 68k=%08X", current_cpu_clock, m68kcycle);
-
-  // Sync 44.1KHz
-  u32 cpu_clock_diff = current_cpu_clock - pre_cpu_clock;
-  if (cpu_clock_diff >= 32){ //256){
-
-     u32 pre_68k_clcok = m68kcycle;
-
-     if (IsM68KRunning)
-      while (pre_68k_clcok == m68kcycle){ YabThreadYield(); };
-
-    pre_cpu_clock = current_cpu_clock;
-    
+  if (IsM68KRunning) {
+    sh2_read_req++;
+    YabThreadYield();
   }
-
 }
 
 u16 FASTCALL
@@ -4737,9 +4725,10 @@ SoundRamReadWord (u32 addr)
   else if (addr > 0x7FFFF)
     return 0xFFFF;
 
-  val = T2ReadWord (SoundRam, addr);
-  SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
+  //SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
   SyncSh2And68k();
+
+  val = T2ReadWord (SoundRam, addr);
 
   return val;
 
@@ -4777,13 +4766,10 @@ SoundRamReadLong (u32 addr)
   else if (addr > 0x7FFFF)
     val = 0xFFFFFFFF;
 
-  //MainCpuSync();
-  val = T2ReadLong(SoundRam, addr);
-  SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
-  //if (IsM68KRunning)
-  //  while (pre_cycle == m68kcycle){ YabThreadYield(); };
-
+  //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
   SyncSh2And68k();
+
+  val = T2ReadLong(SoundRam, addr);
 
   return val;
 
@@ -5248,6 +5234,7 @@ void ScspAsynMain( void * p ){
 
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+  u32 wait_clock = 0;
   while (thread_running){
 
     while (g_scsp_lock){ YabThreadUSleep(1);  }
@@ -5257,6 +5244,8 @@ void ScspAsynMain( void * p ){
       MM68KExec(step);
       m68kcycle += base_clock;
     }
+    
+    wait_clock = 0;
 
     if (use_new_scsp) {
       new_scsp_exec((samplecnt << 1));
@@ -5278,6 +5267,7 @@ void ScspAsynMain( void * p ){
       int sleeptime = 0;
       u64 checktime = 0;
       m68kcycle = 0;
+      sh2_read_req = 0;
       do {
         now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
         if (now > before){
@@ -5288,6 +5278,22 @@ void ScspAsynMain( void * p ){
         }
         sleeptime = ((16666 / frame_div) - difftime);
         if (sleeptime > 10000) YabThreadUSleep(0);
+
+        if(sh2_read_req != 0) {
+          for (i = 0; i < samplecnt; i += step) {
+            MM68KExec(step);
+            m68kcycle += base_clock;
+          }
+          frame += samplecnt;
+          if (use_new_scsp) {
+            new_scsp_exec((samplecnt << 1));
+          }
+          else {
+            scsp_update_timer(1);
+          }
+          sh2_read_req = 0;
+        }
+
       } while (sleeptime > 0);
 
       checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;

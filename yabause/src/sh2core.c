@@ -123,6 +123,8 @@ void SH2DeInit()
 void SH2Reset(SH2_struct *context)
 {
    int i;
+
+   SH2Core->Reset(context);
    
    // Reset general registers
    for (i = 0; i < 15; i++)
@@ -151,9 +153,6 @@ void SH2Reset(SH2_struct *context)
    // Reset Interrupts
    memset((void *)context->interrupts, 0, sizeof(interrupt_struct) * MAX_INTERRUPTS);
    SH2Core->SetInterrupts(context, 0, context->interrupts);
-
-   // Core specific reset
-   SH2Core->Reset(context);
 
    // Reset Onchip modules
    OnchipReset(context);
@@ -222,8 +221,8 @@ void SH2Step(SH2_struct *context)
 
       // Sometimes it doesn't always execute one instruction,
       // let's make sure it did
-      if (tmp == SH2Core->GetPC(context))
-         SH2Exec(context, 1);
+      //if (tmp == SH2Core->GetPC(context))
+      //   SH2Exec(context, 1);
    }
 }
 
@@ -2273,7 +2272,7 @@ void SH2DumpHistory(SH2_struct *context){
 		int index = context->pchistory_index;
 		for (i = 0; i < 0xFF; i++){
 		  char lineBuf[128];
-		  SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, &context->regshistory[index & 0xFF], lineBuf);
+		  SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, NULL /*&context->regshistory[index & 0xFF]*/, lineBuf);
 		  fprintf(history,lineBuf);
 		  fprintf(history, "\n");
 		  index--;

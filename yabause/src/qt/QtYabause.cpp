@@ -54,6 +54,8 @@ SH2Interface_struct *SH2CoreList[] = {
 #ifdef SH2_DYNAREC
 &SH2Dynarec,
 #endif
+&SH2Dyn,
+&SH2DynDebug,
 NULL
 };
 

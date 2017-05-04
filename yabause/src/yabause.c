@@ -96,6 +96,8 @@
 #include "aosdk/ssf.h"
 #endif
 
+#include <inttypes.h>
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -532,8 +534,15 @@ u32 YabauseGetCpuTime(){
 #endif
 }
 
+u32 YabauseGetFrameCount() {
+  return yabsys.frame_count;
+}
+
+#define YAB_STATICS
+
 int YabauseEmulate(void) {
    int oneframeexec = 0;
+   yabsys.frame_count++;
 
    const u32 cyclesinc =
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;
@@ -596,7 +605,7 @@ int YabauseEmulate(void) {
 
    MSH2->cycles = 0;
    SSH2->cycles = 0;
-
+   u64 cpu_emutime = 0;
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
@@ -611,21 +620,30 @@ int YabauseEmulate(void) {
          sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
          yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
+#ifdef YAB_STATICS
+		 u64 current_cpu_clock = YabauseGetTicks();
+#endif
          if (!yabsys.playing_ssf)
          {
-           int i;
-           int step = sh2cycles;
-           for (i = 0; i < sh2cycles; i += step){
-             PROFILE_START("MSH2");
-             SH2Exec(MSH2, step);
-             PROFILE_STOP("MSH2");
+           u32 i;
+		   const u32 div = 3;
+           const u32 step  = sh2cycles>> div;
+		   const u32 amari = sh2cycles - (step<< div);
+		   
+		   SH2Exec(MSH2, amari);
+		   if (yabsys.IsSSH2Running)
+			   SH2Exec(SSH2, amari);
 
-             PROFILE_START("SSH2");
+           for (i = amari; i < sh2cycles; i += step){
+             SH2Exec(MSH2, step);
              if (yabsys.IsSSH2Running)
                SH2Exec(SSH2, step);
-             PROFILE_STOP("SSH2");
            }
+
          }
+#ifdef YAB_STATICS
+		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
+#endif
 
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
@@ -786,6 +804,11 @@ int YabauseEmulate(void) {
       OSDPushMessage(OSDMSG_STATUS, 1, "ARTIST %s", ssf_artist);
    }
 
+#endif
+   
+#ifdef YAB_STATICS
+   LOG("CPUTIME = %" PRId64 "\n", cpu_emutime);
+   if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
    return 0;
