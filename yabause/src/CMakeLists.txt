@@ -11,8 +11,6 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
 set(yabause_HEADERS
-	sh2_dynarec2/DynarecSh2.h
-	sh2_dynarec2/opcodes.h
 	bios.h
 	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
 	debug.h
@@ -38,8 +36,6 @@ set(YAB_PORTS "sdl;qt" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
-  sh2_dynarec2/DynarecSh2CInterface.cpp  
-	sh2_dynarec2/DynarecSh2.cpp
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
@@ -242,7 +238,7 @@ if (STDINT_H_FOUND)
 endif()
 
 find_package(Threads)
-set(YABAUSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec2/dynalib ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 # 16BPP
 set(YAB_RGB "" CACHE STRING "Bit configuration of pixels in the display buffer.")

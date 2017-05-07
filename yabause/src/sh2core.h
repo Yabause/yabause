@@ -25,11 +25,6 @@
 #include "memory.h"
 #include "sh2cache.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #define SH2CORE_DEFAULT     -1
 #define MAX_INTERRUPTS 50
 
@@ -411,8 +406,6 @@ typedef struct
    u32 pchistory_index;
 #endif
 
-   void * ext;  
-
 } SH2_struct;
 
 typedef struct
@@ -488,7 +481,26 @@ void SH2ClearCodeBreakpoints(SH2_struct *context);
 void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *r, char *string);
 void SH2DumpHistory(SH2_struct *context);
 
-void SH2HandleBreakpoints(SH2_struct *context);
+static INLINE void SH2HandleBreakpoints(SH2_struct *context)
+{
+   int i;
+
+   for (i=0; i < context->bp.numcodebreakpoints; i++) {
+
+      if ((context->regs.PC == context->bp.codebreakpoint[i].addr) && context->bp.inbreakpoint == 0) {
+         context->bp.inbreakpoint = 1;
+		 SH2DumpHistory(context);
+         if (context->bp.BreakpointCallBack)
+             context->bp.BreakpointCallBack(context, context->bp.codebreakpoint[i].addr, context->bp.BreakpointUserData);
+         context->bp.inbreakpoint = 0;
+      }
+   }
+
+   if (context->bp.breaknow) {
+      context->bp.breaknow = 0;
+      context->bp.BreakpointCallBack(context, context->regs.PC, context->bp.BreakpointUserData);
+   }
+}
 
 static void SH2BreakNow(SH2_struct *context)
 {
@@ -532,12 +544,6 @@ int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
 
 #if defined(SH2_DYNAREC)
 extern SH2Interface_struct SH2Dynarec;
-#endif
-
-extern SH2Interface_struct SH2Dyn;
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif

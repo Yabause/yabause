@@ -123,8 +123,6 @@ void SH2DeInit()
 void SH2Reset(SH2_struct *context)
 {
    int i;
-
-   SH2Core->Reset(context);
    
    // Reset general registers
    for (i = 0; i < 15; i++)
@@ -153,6 +151,9 @@ void SH2Reset(SH2_struct *context)
    // Reset Interrupts
    memset((void *)context->interrupts, 0, sizeof(interrupt_struct) * MAX_INTERRUPTS);
    SH2Core->SetInterrupts(context, 0, context->interrupts);
+
+   // Core specific reset
+   SH2Core->Reset(context);
 
    // Reset Onchip modules
    OnchipReset(context);
