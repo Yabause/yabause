@@ -109,6 +109,7 @@ typedef struct
    int usequickload;
    int wait_line_count;
    int playing_ssf;
+   u32 frame_count;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;
