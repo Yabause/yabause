@@ -4703,28 +4703,15 @@ SoundRamWriteByte (u32 addr, u8 val)
 //////////////////////////////////////////////////////////////////////////////
 
 // From CPU
+u32 pre_frame_count = 0;
 u32 pre_cpu_clock = 0;
 u32 pre_68k_clcok = 0;
 int sh2_read_req = 0;
 void SyncSh2And68k(){
-  u32 current_cpu_clock = YabauseGetCpuTime();
-
-  SCSPLOG("SyncSh2And68k cpu=%d, 68k=%d", current_cpu_clock, m68kcycle);
-  //yprintf("SyncSh2And68k cpu=%08X, 68k=%08X", current_cpu_clock, m68kcycle);
-
-  if (pre_68k_clcok == 0) {
-    pre_68k_clcok = m68kcycle;
+  if (IsM68KRunning) {
+    sh2_read_req++;
+    YabThreadYield();
   }
-  // Sync 44.1KHz
-  u32 cpu_clock_diff = current_cpu_clock - pre_cpu_clock;
-  if (cpu_clock_diff >= 256){
-     if (IsM68KRunning) {
-       sh2_read_req++;
-       while (pre_68k_clcok == m68kcycle) { YabThreadYield(); };
-     }
-     pre_68k_clcok = 0;
-  }
-  pre_cpu_clock = current_cpu_clock;
 }
 
 u16 FASTCALL
@@ -4738,7 +4725,7 @@ SoundRamReadWord (u32 addr)
   else if (addr > 0x7FFFF)
     return 0xFFFF;
 
-  SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
+  //SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
   SyncSh2And68k();
 
   val = T2ReadWord (SoundRam, addr);
@@ -4779,7 +4766,7 @@ SoundRamReadLong (u32 addr)
   else if (addr > 0x7FFFF)
     val = 0xFFFFFFFF;
 
-  SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
+  //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
   SyncSh2And68k();
 
   val = T2ReadLong(SoundRam, addr);

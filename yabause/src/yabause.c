@@ -534,8 +534,13 @@ u32 YabauseGetCpuTime(){
 #endif
 }
 
+u32 YabauseGetFrameCount() {
+  return yabsys.frame_count;
+}
+
 int YabauseEmulate(void) {
    int oneframeexec = 0;
+   yabsys.frame_count++;
 
    const u32 cyclesinc =
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;
