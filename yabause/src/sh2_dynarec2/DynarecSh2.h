@@ -46,7 +46,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define FREEMEM(x,a)	if(x){ VirtualFree(x, a,MEM_RELEASE ); x = NULL;}
 #else
 #define ALLOCATE(x)	malloc(x)
-#define FREEMEM(x)	if(x){ free(x); x = NULL;}
+#define FREEMEM(x,a)	if(x){ free(x); x = NULL;}
 #endif
 
 const int MAX_INSTSIZE = 0xFFFF+1;
@@ -265,6 +265,8 @@ extern "C"
   
 }
 
+#ifdef _WINDOWS
+
 #define dynaLock()	__asm \
 {                         \
     __asm push edx         \
@@ -275,5 +277,11 @@ extern "C"
    /*__asm pop ebx*/          \
    __asm pop edx          \
 }
+
+#else
+#define dynaLock()
+#define dynaFree()
+#endif
+
 
 #endif // _DYNAREC_SH2_H_
