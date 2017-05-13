@@ -404,9 +404,9 @@ x86op_desc asm_list[] =
   opdesc(SHLR8,0,1),
   opdesc(SHLL16,0,1),
   opdesc(SHLR16,0,1),
-  opdesc(STC_SR,0xFF,1),
-  opdesc(STC_GBR,0xFF,1),
-  opdesc(STC_VBR,0xFF,1),
+  opdesc(STC_SR,0xFF,1,1),
+  opdesc(STC_GBR,0xFF,1,1),
+  opdesc(STC_VBR,0xFF,1,1),
   opdesc(STS_MACH,0xFF,1),
   opdesc(STS_MACL,0xFF,1),
   opdesc(STS_PR,0xFF,1),
@@ -414,9 +414,9 @@ x86op_desc asm_list[] =
   opdesc(STC_SR_MEM,0xFF,2),
   opdesc(STC_GBR_MEM,0xFF,2),
   opdesc(STC_VBR_MEM,0xFF,2),
-  opdesc(STS_MACH_DEC,0xFF,2),
-  opdesc(STS_MACL_DEC,0xFF,2),
-  opdesc(STSMPR,0xFF,1),     // 0x4022
+  opdesc(STS_MACH_DEC,0xFF,2,1),
+  opdesc(STS_MACL_DEC,0xFF,2,1),
+  opdesc(STSMPR,0xFF,1,1),     // 0x4022
   opdesc(LDC_SR,0xFF,1),
   opdesc(LDCGBR,0xFF,1),
   opdesc(LDC_VBR,0xFF,1),
@@ -469,7 +469,7 @@ x86op_desc asm_list[] =
   opdesc(XTRCT,0,1),
   opdesc(MOVBS,0,1), 
   opdesc(MOVWS,0,1),
-  opdesc(MOVLS,0,1),
+  opdesc(MOVLS,0,1,1),
   opdesc(MOVBL,0,1), // 6000
   opdesc(MOVWL,0,1), // 6001
   opdesc(MOVL_MEM_REG,0,1),
@@ -477,25 +477,25 @@ x86op_desc asm_list[] =
   opdesc(MAC_W,0,3),  // 0x400f
   opdesc(MOVBP,0,1),  // 6004
   opdesc(MOVWP,0,1),  // 6005
-  opdesc(MOVLP,0,1),  // 6006
-  opdesc(MOVBM,0,1),  // 0x2004,
+  opdesc(MOVLP,0,1,1),  // 6006
+  opdesc(MOVBM,0,1,1),  // 0x2004,
   opdesc(MOVWM,0,1),  // 0x2005,
-  opdesc(MOVLM,0,1),  // 0x2006
-  opdesc(MOVBS0,0,1), // 0x0004
-  opdesc(MOVWS0,0,1), // 0x0005
-  opdesc(MOVLS0,0,1), // 0x0006
+  opdesc(MOVLM,0,1,1),  // 0x2006
+  opdesc(MOVBS0,0,1,1), // 0x0004
+  opdesc(MOVWS0,0,1,1), // 0x0005
+  opdesc(MOVLS0,0,1,1), // 0x0006
   opdesc(MOVBL0,0,1), // 0x000C
   opdesc(MOVWL0,0,1), // 0x000D 
   opdesc(MOVLL0,0,1), // 0x000E
-  opdesc(MOVBL4,0,1), // 0x8400
+  opdesc(MOVBL4,0,1,1), // 0x8400
   opdesc(MOVWL4,0,1), // 0x8500
   opdesc(MOVBS4,0,1), // 0x8000
-  opdesc(MOVWS4,0,1), // 0x8100
-  opdesc(MOVLS4,0,1), // 0x1000
+  opdesc(MOVWS4,0,1,1), // 0x8100
+  opdesc(MOVLS4,0,1,1), // 0x1000
   opdesc(MOVLL4,0,1), // 0x5000 ,1
-  opdesc(MOVBSG,0,1), // 0xC000
-  opdesc(MOVWSG,0,1), // 0xc100
-  opdesc(MOVLSG,0,1), // 0xC200
+  opdesc(MOVBSG,0,1,1), // 0xC000
+  opdesc(MOVWSG,0,1,1), // 0xc100
+  opdesc(MOVLSG,0,1,1), // 0xC200
   opdesc(MOVBLG,0,1), // 0xC400
   opdesc(MOVWLG,0,1), // 0xC500
   opdesc(MOVLLG,0,1), // 0xC600
@@ -508,16 +508,16 @@ x86op_desc asm_list[] =
   opdesc(BSR,2,2),
   opdesc(MOVWI,0,1),
   opdesc(MOVLI,0, 1),
-  opdesc(AND_B,0,3),
-  opdesc(OR_B,0,3),
+  opdesc(AND_B,0,3,1),
+  opdesc(OR_B,0,3,1),
   opdesc(TST_B,0, 1),
-  opdesc(XOR_B,0,3),
+  opdesc(XOR_B,0,3,1),
   opdesc(ANDI,0,1),
   opdesc(CMP_EQ_IMM,0,1),
   opdesc(ORI,0,1),
   opdesc(TSTI,0,1),  // C800
   opdesc(XORI,0,1),
-  opdesc(TRAPA,5,8), // 0xc300
+  opdesc(TRAPA,5,8,1), // 0xc300
   opdesc(ADDI,0,1),
   opdesc(MOVI,0,1),
   opNULL
@@ -642,6 +642,8 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   u32 addr = page->b_addr;
   u32 start_addr = page->b_addr;
   u8 *ptr, *startptr;
+  u32 instruction_counter = 0;
+  u32 write_memory_counter = 0;
 
   startptr = ptr = page->code;
   i = 0;
@@ -675,6 +677,8 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
     delayslot_seperator_counter_offset = 6;
   }
   
+  page->isInfinityLoop = false;
+
   MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
   while (ptr - startptr < MaxSize) {
     // translate the opcode and insert code
@@ -689,7 +693,10 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 #ifdef BUILD_INFO
     DumpInstX( i, addr-2, op  );
 #endif
-   
+
+    instruction_counter++;
+    write_memory_counter = asm_list[i].write_count;
+
     if (asm_list[i].func == 0) {
       LOG("Unimplemented Opcode (0x%4x) at 0x%8x\n", op, addr-2);
       // TODO: Stop Slave
@@ -765,12 +772,44 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
       *counterpos = cycle;
       ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
     }
-    if( asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00 ) break;
+    if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {
+
+      u32 jumppc = 0xBADADD;
+
+      // Loop Detectator
+      
+      //immediate w/o delay branch
+      if (asm_list[i].delay == 1) {
+        jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
+
+      //offset3
+      }
+      else if (asm_list[i].delay == 2) {
+        temp = (op & 0xfff) << 1;
+        if (temp & 0x1000)
+          temp |= 0xfffff000;
+        jumppc = addr + ((signed)(op & 0xfff) << 1);
+      
+      //immediate
+      }
+      else if (asm_list[i].delay == 3) {
+        jumppc = addr + ((signed char)(op & 0xff) << 1);
+      }
+
+      if (start_addr == jumppc ) {
+
+        if (write_memory_counter == 0) {
+          page->isInfinityLoop = true;
+        }
+      }
+      break;
+    }
   }
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
 
-  page->isInfinityLoop = false;
+
+  
 
   return;
 }
@@ -915,7 +954,7 @@ int DynarecSh2::Execute(){
     
   //LOG("\n---dynaExecute %08X----\n", GET_PC() );
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2); 
-
+  if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
 }
 

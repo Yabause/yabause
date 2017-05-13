@@ -116,10 +116,11 @@ struct x86op_desc
   const unsigned char *off3;
   unsigned char delay;
   unsigned char cycle;
+  unsigned char write_count;
 
   x86op_desc(void(*ifunc)(), const unsigned short *isize, const unsigned char *isrc,
     const unsigned char *idest, const unsigned char *ioff1, const unsigned char *iimm,
-    const unsigned char *ioff3, const unsigned char idelay, const unsigned char icycle)
+    const unsigned char *ioff3, const unsigned char idelay, const unsigned char icycle, const unsigned char iwrite_count = 0)
   {
     func = ifunc;
     size = isize;
@@ -130,6 +131,7 @@ struct x86op_desc
     off3 = ioff3;
     delay = idelay;
     cycle = icycle;
+    write_count = iwrite_count;
   };
 
 };
