@@ -25,14 +25,38 @@
 ; r5  
 ; r6
 ; r7   <- Address of GenReg
-; r8   <- Address of PC
-; r9   <- Address of SysReg
-; r10  <- Address of CtrlReg
+; r8   <- PC
+; r9   <- ClockCounter
+; r10  <- 
 ; r11
 ; r12 ip
 ; r13 sp
 ; r14 lr
 ; r15 pc
+
+  u32 GenReg[16];
+  u32 CtrlReg[3];
+  u32 SysReg[6];
+
+  inline u32 GET_MACH() { return m_pDynaSh2->SysReg[0]; }
+  inline u32 GET_MACL() { return m_pDynaSh2->SysReg[1]; }
+  inline u32 GET_PR() { return m_pDynaSh2->SysReg[2]; }
+  inline u32 GET_PC() { return m_pDynaSh2->SysReg[3]; }
+  inline u32 GET_COUNT() { return m_pDynaSh2->SysReg[4]; } 
+  inline u32 GET_ICOUNT() { return m_pDynaSh2->SysReg[5]; } 
+  inline u32 GET_SR() { return m_pDynaSh2->CtrlReg[0]; }
+  inline u32 GET_GBR() { return m_pDynaSh2->CtrlReg[1]; }
+  inline u32 GET_VBR() { return m_pDynaSh2->CtrlReg[2]; }
+
+  MACH   [r7, #(16+3+0)*4 ]  
+  MACL   [r7, #(16+3+1)*4 ]  
+  PR     [r7, #(16+3+2)*4 ]  
+  PC     [r7, #(16+3+3)*4 ]  
+  COUNT  [r7, #(16+3+4)*4 ]  
+  ICOUNT [r7, #(16+3+4)*4 ]  
+  SR     [r7, #(16+0)*4 ]  
+  GBR     [r7, #(16+1)*4 ]  
+  VBR     [r7, #(16+2)*4 ]  
 
 
   http://www.mztn.org/slasm/arm07.html
@@ -46,13 +70,79 @@ extern _memGetByte, _memGetWord, _memGetLong
 extern _memSetByte, _memSetWord, _memSetLong
 extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 */
-
-
+ 
+ 
 .macro opfunc name
 .section .text 
   .global x86_\name
+  .type	x86_\name, %function
   x86_\name:
 .endm
+
+.macro LDR_MACH reg
+  ldr \reg , [r7, #(16+3+0)*4 ]  
+.endm  
+
+.macro LDR_MACL reg
+  ldr \reg , [r7, #(16+3+1)*4 ]  
+.endm  
+
+.macro LDR_PR reg
+   ldr \reg , [r7, #(16+3+2)*4 ] 
+.endm
+
+.macro LDR_PC reg
+   ldr \reg , [r7, #(16+3+3)*4 ] 
+.endm
+
+.macro LDR_COUNT reg
+   ldr \reg , [r7, #(16+3+4)*4 ] 
+.endm
+
+.macro LDR_SR reg
+   ldr \reg , [r7, #(16+0)*4 ] 
+.endm
+
+.macro LDR_GBR reg
+   ldr \reg , [r7, #(16+1)*4 ] 
+.endm
+
+.macro LDR_VBR reg
+   ldr \reg , [r7, #(16+2)*4 ] 
+.endm
+
+.macro STR_MACH reg
+  str \reg , [r7, #(16+3+0)*4 ]  
+.endm  
+
+.macro STR_MACL reg
+  str \reg , [r7, #(16+3+1)*4 ]  
+.endm  
+
+.macro STR_PR reg
+  str \reg , [r7, #(16+3+2)*4 ] 
+.endm
+
+.macro STR_PC reg
+  str \reg , [r7, #(16+3+3)*4 ] 
+.endm
+
+.macro STR_COUNT reg
+  str \reg , [r7, #(16+3+4)*4 ] 
+.endm
+
+.macro STR_SR reg
+  str \reg , [r7, #(16+0)*4 ] 
+.endm
+
+.macro STR_GBR reg
+  str \reg , [r7, #(16+1)*4 ] 
+.endm
+
+.macro STR_VBR reg
+  str \reg , [r7, #(16+2)*4 ] 
+.endm
+
 
 .macro opdesc name,b,c,d,e,f,g
 .section .data
@@ -81,52 +171,86 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 
 
 .text
-.align  1
+.align  2
 
 //-----------------------------------------------------
 // Begining of block
 // r7   <- Address of GenReg
-// r8   <- Address of PC
-// r9   <- Address of SysReg
-// r10  <- Address of CtrlReg
+// r8   <- PC
+// r9   <- Clock Counter
 .global prologue
 prologue:
-add r0,r10      // 2
+stmfd  sp!, {r0-r10, lr}   // push regs
+mov r7, r0      // GenReg( r0 has adress of m_pDynaSh2)
+LDR_PC r8       // PC
+LDR_COUNT r9    // ClockCounter
+.size	prologue, .-prologue // 16
+
 
 //-----------------------------------------------------
-// normal part par instruction
+// normal part par instruction 
 .global seperator_normal
 seperator_normal:
-.size	seperator_normal, .-seperator_normal
+add r8, #2    // 3 PC += 2
+add r9, #1    // 4 Clock += 1  
+.size	seperator_normal, .-seperator_normal // 8
 
-//-----------------------------------------------------
+//----------------------------------------------------- 
 // Delay slot part par instruction
 .global seperator_delay_slot
 seperator_delay_slot:
-bl	SH2HandleBreakpoints
+mvn r1, #0 // load 0xFFFFFF 
+tst r0, r1 // Check need to branch
+bne continue  
+add r8, #2    // PC += 2
+STR_PC r8
+add r9, #1    // Clock += 1  
+STR_COUNT r9
+ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+continue:
+mov r8, r0    // copy jump addr
+sub r8, #2    // PC -= 2
+.size seperator_delay_slot, .-seperator_delay_slot // 40
+  
 
 //-----------------------------------------------------
 // Delay slot part par instruction
 .global seperator_delay_after
 seperator_delay_after:
-bl	SH2HandleBreakpoints
+add r8, #2    // PC += 2
+STR_PC r8     // store to memory
+add r9, #1    // Clock += 1  
+STR_COUNT r9  // store to memory
+ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+.size seperator_delay_after, .-seperator_delay_after // 20
+
 
 //-------------------------------------------------------
 // End of block
 .global epilogue
 epilogue:
-mov	pc, r14
+STR_PC r8     // store PC to memory
+STR_COUNT r9  // store COUNTER to memory
+ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+.size	epilogue, .-epilogue // 12
 
 //-----------------------------------------------------
 // Jump part
 .global PageFlip
 PageFlip:
+mvn r1, #0 // load 0xFFFFFF 
+tst r0, r1 // 7
+bne PageFlip.continue     // 2
+STR_PC r0
+ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+PageFlip.continue:
+.size	PageFlip, .-PageFlip // 22
 
 //-------------------------------------------------------
 // normal part par instruction( for debug build )
 .global seperator_d_normal
 seperator_d_normal:
-
+bl	SH2HandleBreakpoints
 
 //------------------------------------------------------
 // Delay slot part par instruction( for debug build )
@@ -355,11 +479,17 @@ opfunc AND
 opdesc OR,		16,4,12,0,0,0
 opfunc OR
 
-opdesc XOR,		16,4,12,0,0,0
+opdesc XOR,		20,0xff,12,0xff,0xff,0xff
 opfunc XOR
+mov r2, #0
+ldr r0,[r7,r2]   // get INSTRUCTION_B
+ldr r1,[r7,#0]   // get INSTRUCTION_C
+eor r0,r1        // xor  
+str r0,[r7,r2]   // R[B] = xor
 
 opdesc ADDI,	9,0,4,0,8,0
 opfunc ADDI
+mov r2, #0
 
 opdesc AND_B,	35,0,0,0,21,0
 opfunc AND_B
@@ -385,11 +515,24 @@ opfunc JSR
 opdesc BRA,		29,0,0,0,0,5
 opfunc BRA
 
-opdesc BSR,		37,0,0,0,0,13
+opdesc BSR,		40,0xFF,0xFF,0xFF,0xFF,16
 opfunc BSR
+mov r1,r8          // Load PC
+add r1, #4         // PC += 4
+STR_PR r1          // PR(SysReg[2]) = PC
+and r0, #0         // clear
+add r0, #0         // get disp from instruction
+tst r0, #0x0800    // if(disp&0x800)
+beq BSR.continue
+orr r0, #0xF000    // disp |= 0xFFFFF000
+BSR.continue:
+lsl r0, #1         // disp << 1
+add r0, r1         // PC = PC+disp
+
 
 opdesc BSRF,		24,0,4,0,0,0
 opfunc BSRF
+add r0, r1         // PC = PC+disp
 
 opdesc BRAF,		16,0,4,0,0,0
 opfunc BRAF

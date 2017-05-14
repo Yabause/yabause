@@ -1,0 +1,3 @@
+break DynarecSh2.cpp:1079
+r 0 ./bios.bin
+layout asm
