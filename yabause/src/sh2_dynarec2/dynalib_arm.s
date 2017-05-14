@@ -38,16 +38,6 @@
   u32 CtrlReg[3];
   u32 SysReg[6];
 
-  inline u32 GET_MACH() { return m_pDynaSh2->SysReg[0]; }
-  inline u32 GET_MACL() { return m_pDynaSh2->SysReg[1]; }
-  inline u32 GET_PR() { return m_pDynaSh2->SysReg[2]; }
-  inline u32 GET_PC() { return m_pDynaSh2->SysReg[3]; }
-  inline u32 GET_COUNT() { return m_pDynaSh2->SysReg[4]; } 
-  inline u32 GET_ICOUNT() { return m_pDynaSh2->SysReg[5]; } 
-  inline u32 GET_SR() { return m_pDynaSh2->CtrlReg[0]; }
-  inline u32 GET_GBR() { return m_pDynaSh2->CtrlReg[1]; }
-  inline u32 GET_VBR() { return m_pDynaSh2->CtrlReg[2]; }
-
   MACH   [r7, #(16+3+0)*4 ]  
   MACL   [r7, #(16+3+1)*4 ]  
   PR     [r7, #(16+3+2)*4 ]  
@@ -515,7 +505,7 @@ opfunc JSR
 opdesc BRA,		29,0,0,0,0,5
 opfunc BRA
 
-opdesc BSR,		40,0xFF,0xFF,0xFF,0xFF,16
+opdesc BSR,		48,0xFF,0xFF,0xFF,0xFF,16
 opfunc BSR
 mov r1,r8          // Load PC
 add r1, #4         // PC += 4
@@ -524,7 +514,9 @@ and r0, #0         // clear
 add r0, #0         // get disp from instruction
 tst r0, #0x0800    // if(disp&0x800)
 beq BSR.continue
-orr r0, #0xF000    // disp |= 0xFFFFF000
+mvn r2, #0
+and r2, #0xF000
+orr r0, r2         // disp |= 0xFFFFF000
 BSR.continue:
 lsl r0, #1         // disp << 1
 add r0, r1         // PC = PC+disp
