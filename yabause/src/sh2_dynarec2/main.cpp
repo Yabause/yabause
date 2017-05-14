@@ -178,7 +178,12 @@ int readProgram(const char * addr, const char * filename) {
   }
   fclose(fp);
 
-  SH2Core->SetPC(CurrentSH2, startaddr);
+	u32 VBR = SH2Core->GetVBR(CurrentSH2);
+  SH2Core->SetPC(CurrentSH2, MappedMemoryReadLong(VBR));
+  SH2Core->SetGPR(CurrentSH2, 15, MappedMemoryReadLong(VBR+4));
+
+
+  printf("Starting %08X, %s\n",SH2Core->GetPC(CurrentSH2),filename );
 
   SH2Core->Exec(CurrentSH2, 32);
   
