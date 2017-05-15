@@ -298,7 +298,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define SEPERATORSIZE_DEBUG  24
 #define SEPERATORSIZE_DELAY_SLOT  40
 #define SEPERATORSIZE_DELAY_AFTER  20
-#define DALAY_CLOCK_OFFSET 12
+#define DALAY_CLOCK_OFFSET 8
 #define SEPERATORSIZE_DELAYD 34
 #define EPILOGSIZE		      12
 #define DELAYJUMPSIZE	     22
@@ -943,6 +943,13 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 
 DynarecSh2::DynarecSh2() {
   m_pDynaSh2     = new tagSH2;
+  m_pDynaSh2->getmembyte = (uintptr_t)memGetByte;
+  m_pDynaSh2->getmemword = (uintptr_t)memGetWord;
+  m_pDynaSh2->getmemlong = (uintptr_t)memGetLong;
+  m_pDynaSh2->setmembyte = (uintptr_t)memSetByte;
+  m_pDynaSh2->setmemword = (uintptr_t)memSetWord;
+  m_pDynaSh2->setmemlong = (uintptr_t)memSetLong;
+  
   m_pCompiler = CompileBlocks::getInstance();
   m_ClockCounter = 0;
   m_IntruptTbl.clear();
