@@ -43,11 +43,16 @@
   PR     [r7, #(16+3+2)*4 ]  
   PC     [r7, #(16+3+3)*4 ]  
   COUNT  [r7, #(16+3+4)*4 ]  
-  ICOUNT [r7, #(16+3+4)*4 ]  
+  ICOUNT [r7, #(16+3+5)*4 ]  
   SR     [r7, #(16+0)*4 ]  
   GBR     [r7, #(16+1)*4 ]  
   VBR     [r7, #(16+2)*4 ]  
-
+  getmembyte = [r7, #(16+3+6+0)*4 ] ;
+  getmemword = [r7, #(16+3+6+1)*4 ] ;
+  getmemlong = [r7, #(16+3+6+2)*4 ] ;
+  setmembyte = [r7, #(16+3+6+3)*4 ] ;
+  setmemword = [r7, #(16+3+6+4)*4 ] ;
+  setmemlong = [r7, #(16+3+6+5)*4 ] ;
 
   http://www.mztn.org/slasm/arm07.html
   http://qiita.com/edo_m18/items/a7c747c5bed600dca977
@@ -68,6 +73,38 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
   .type	x86_\name, %function
   x86_\name:
 .endm
+
+.macro CALL_GETMEM_BYTE 
+  ldr r10 , [r7, #(16+3+6+0)*4 ]  
+  blx r10
+.endm  
+
+.macro CALL_GETMEM_WORD 
+  ldr r10 , [r7, #(16+3+6+1)*4 ]  
+  blx r10
+.endm  
+
+.macro CALL_GETMEM_LONG
+  ldr r10 , [r7, #(16+3+6+2)*4 ]  
+  blx r10
+.endm  
+
+
+.macro CALL_SETMEM_BYTE 
+  ldr r10 , [r7, #(16+3+6+3)*4 ]  
+  blx r10
+.endm  
+
+.macro CALL_SETMEM_WORD 
+  ldr r10 , [r7, #(16+3+6+4)*4 ]  
+  blx r10
+.endm  
+
+.macro CALL_SETMEM_LONG
+  ldr r10 , [r7, #(16+3+6+5)*4 ]  
+  blx r10
+.endm  
+
 
 .macro LDR_MACH reg
   ldr \reg , [r7, #(16+3+0)*4 ]  
@@ -344,8 +381,14 @@ opdesc STC_VBR_MEM,	30,0,13,0,0,0
 opfunc STC_VBR_MEM
 
 
-opdesc MOVBL,	28,4,20,0,0,0
+opdesc MOVBL,	28,0,4,0xff,0xff,0xff
 opfunc MOVBL
+mov  r0, #0  // m
+mov  r1, #0  // n
+ldr  r0, [r7, r0, asl #2] // r0 = R[m] 
+CALL_GETMEM_BYTE
+sxtb r0, r0
+str  r0, [r7, r1, asl #2]
 
 
 opdesc MOVWL,		26,4,20,0,0,0
@@ -370,8 +413,13 @@ opfunc MOVW_A
 opdesc MOVL_A,	37,0,4,0,17,0
 opfunc MOVL_A
 
-opdesc MOVI,	13,0,4,0,9,0
+opdesc MOVI,	16,0xff,0,0xff,4,0xff
 opfunc MOVI
+mov r0, #0  // i
+mov r1, #0  // n
+sxtb r0, r0 // (signed char)i
+str  r0, [r7, r1] // R[n] = (int)i
+
 
 //----------------------
 
@@ -591,8 +639,11 @@ opfunc LDC_VBR
 opdesc LDC_VBR_INC,	29,0,4,0,0,0
 opfunc LDC_VBR_INC
 
-opdesc STS_PR,		11,0,4,0,0,0
+opdesc STS_PR,		12,0xFF,0,0xFF,0xff,0xff
 opfunc STS_PR
+mov r0, #0
+LDR_PR  r1
+str     r1, [r7, r0]
 
 opdesc STSMPR,	26,0,4,0,0,0
 opfunc STSMPR
@@ -626,8 +677,18 @@ opdesc MOVWI,	31,0,4,0,8,0
 opfunc MOVWI
 
 
-opdesc MOVLI,       40,0,4,0,8,0
+opdesc MOVLI,       36,0xff,0,0xff,4,0xff
 opfunc MOVLI
+mov r3, #0 // n
+mov r2, #0 // disp
+mov r1, r8 // GET PC
+add r1, r1, #4
+bic r1, r1, #3
+add r0, r1, r2, asl #2 // read addr
+CALL_GETMEM_LONG
+str r0, [r7, r3] // R[n] = readval
+
+
 
 opdesc MOVBL4, 29,4,0,8,0,0
 opfunc MOVBL4
@@ -667,9 +728,15 @@ opfunc MOVWSG
 opdesc MOVLSG,    30,0,0,0,8,0
 opfunc MOVLSG
 
-opdesc MOVBS,	25,4,12,0,0,0
+opdesc MOVBS,	24,4,0,0xff,0xff,0xff
 opfunc MOVBS
+mov r0, #0 // b
+mov r1, #0 // c
+ldr  r0, [r7, r0]
+ldrb  r1, [r7, r1]
+CALL_SETMEM_BYTE // 2cyclte
 
+        
 opdesc MOVWS,	25,4,12,0,0,0
 opfunc MOVWS
 

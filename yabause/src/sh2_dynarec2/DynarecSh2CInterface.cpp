@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h> 
+#include <stdint.h>
 #include "sh2core.h"
 #include "DynarecSh2.h"
 
@@ -338,6 +339,7 @@ void SH2DynShowSttaics(SH2_struct * master, SH2_struct * slave ){
 void memSetByte(u32 addr , u8 data )
 {
   dynaLock();
+  printf("memSetByte %08X, %08X\n", addr, data);
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -418,6 +420,7 @@ void memSetLong(u32 addr , u32 data )
 u8 memGetByte(u32 addr)
 {
   dynaLock();
+  printf("memGetByte %08X\n", addr);
   u8 val;
   val = MappedMemoryReadByte(addr);
   dynaFree();
@@ -427,6 +430,7 @@ u8 memGetByte(u32 addr)
 u16 memGetWord(u32 addr)
 {
   dynaLock();
+  //printf("memGetWord %08X", addr);
   u16 val;
   val = MappedMemoryReadWord(addr);
   dynaFree();
@@ -439,6 +443,7 @@ u32 memGetLong(u32 addr)
   u32 val;
   val = MappedMemoryReadLong(addr);
   dynaFree();
+  printf("memGetLong addr=%08X val=%08X\n", addr, val);
   return val;
 }
 

@@ -77,8 +77,12 @@ struct tagSH2
   u32 GenReg[16];
   u32 CtrlReg[3];
   u32 SysReg[6];
-  u16 instr;
-  u32 dmy[6];
+  uintptr_t getmembyte;
+  uintptr_t getmemword;
+  uintptr_t getmemlong;
+  uintptr_t setmembyte;
+  uintptr_t setmemword;
+  uintptr_t setmemlong;
 };
 
 // Instruction
