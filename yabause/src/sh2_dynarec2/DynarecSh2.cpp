@@ -296,7 +296,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define SEPERATORSIZE_NORMAL 8
 #define NORMAL_CLOCK_OFFSET 4
 #define SEPERATORSIZE_DEBUG  24
-#define SEPERATORSIZE_DELAY_SLOT  40
+#define SEPERATORSIZE_DELAY_SLOT  36
 #define SEPERATORSIZE_DELAY_AFTER  20
 #define DALAY_CLOCK_OFFSET 8
 #define SEPERATORSIZE_DELAYD 34
@@ -687,7 +687,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, u32 * ParentT = NULL)
   }
 
   blockCount = LastMakeBlock;
-
+  
   if (g_CompleBlock[blockCount].b_addr != 0x00) {
     switch (g_CompleBlock[blockCount].b_addr & 0x0FF00000) {
     case 0x00000000:
@@ -919,7 +919,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
         if (start_addr == jumppc) {
 
           if (write_memory_counter == 0) {
-            page->isInfinityLoop = true;
+            //page->isInfinityLoop = true;
           }
         }
       }
@@ -1090,7 +1090,7 @@ int DynarecSh2::Execute(){
 
   printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-  printf("dynaExecute end VPC=%08X----\n", GET_PC() );
+  printf("dynaExecute end VPC=%08X PR=%08X count=%d----\n", GET_PC(), GET_PR(), GET_COUNT() );
   //exit(0);
 
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
