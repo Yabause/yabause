@@ -366,6 +366,7 @@ void memSetByte(u32 addr , u8 data )
 void memSetWord(u32 addr, u16 data )
 {
   dynaLock();
+  printf("memSetWord %08X, %08X\n", addr, data);
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -392,6 +393,7 @@ void memSetWord(u32 addr, u16 data )
 void memSetLong(u32 addr , u32 data )
 {
   dynaLock();
+  printf("memSetLong %08X, %08X\n", addr, data);
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {

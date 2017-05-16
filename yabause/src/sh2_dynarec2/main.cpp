@@ -35,6 +35,7 @@ int reset(SH2_struct *context);
 u8 *HighWram;
 u8 *LowWram;
 u8 *BiosRom;
+bool romlock = false;
 
 
 int main(int argv, char * argcv[]) {
@@ -171,11 +172,13 @@ int readProgram(const char * addr, const char * filename) {
 
   file_size = stbuf.st_size;
 
+  romlock = false;
   u32 copyaddr = startaddr;
   for (int i = 0; i < file_size; i++) {
     MappedMemoryWriteByte(copyaddr, fgetc(fp));
     copyaddr++;
   }
+  romlock = true;
   fclose(fp);
 
 	u32 VBR = SH2Core->GetVBR(CurrentSH2);
@@ -185,7 +188,8 @@ int readProgram(const char * addr, const char * filename) {
 
   printf("Starting %08X, %s\n",SH2Core->GetPC(CurrentSH2),filename );
 
-  SH2Core->Exec(CurrentSH2, 32);
+  while(1)
+    SH2Core->Exec(CurrentSH2,32);
   
   return 0;
 }
@@ -292,7 +296,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val) {
   {
     // ROM
   case 0x00000000:
-    BiosRom[addr & 0xFFFFF] = val;
+    if(!romlock) BiosRom[addr & 0xFFFFF] = val;
     break;
 
     // Low Memory
@@ -317,7 +321,7 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val) {
   {
     // ROM
   case 0x00000000:
-    *((u16 *)(BiosRom + (addr& 0xFFFFF) )) = BSWAP16L(val);
+    if(!romlock) *((u16 *)(BiosRom + (addr& 0xFFFFF) )) = BSWAP16L(val);
     break;
 
     // Low Memory
@@ -342,7 +346,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val) {
   {
     // ROM
   case 0x00000000:
-    *((u32 *)(BiosRom + (addr & 0xFFFFF))) = BSWAP32(val);
+    if(!romlock) *((u32 *)(BiosRom + (addr & 0xFFFFF))) = BSWAP32(val);
     break;
 
     // Low Memory
