@@ -762,6 +762,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   i = 0;
   j = 0;
   count = 0;  
+  memset((void*)ptr,0,sizeof(char)*MAXBLOCKSIZE);
   memcpy((void*)ptr, (void*)prologue, PROLOGSIZE);
   ptr += PROLOGSIZE;
   int MaxSize = 0;
@@ -1089,6 +1090,10 @@ int DynarecSh2::Execute(){
   //LOG("\n---dynaExecute %08X----\n", GET_PC() );
 
   printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
+
+  if( 0x20000204 == GET_PC() ){
+    int a=0;
+  }
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
   printf("dynaExecute end VPC=%08X PR=%08X count=%d----\n", GET_PC(), GET_PR(), GET_COUNT() );
   //exit(0);
