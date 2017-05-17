@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
-objdump -b binary -D -marm 20000200.bin > asm.txt
+objdump -b binary -D -marm $1 > $1.txt
 
