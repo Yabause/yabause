@@ -275,7 +275,7 @@ ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
 .size	epilogue, .-epilogue // 12
 
 //-----------------------------------------------------
-// Jump part
+// Jump part 20
 .global PageFlip
 PageFlip:
 mvn r1, #0 // load 0xFFFFFF 
@@ -769,9 +769,12 @@ opfunc JSR
 opdesc BRA,		29,0,0,0,0,5
 opfunc BRA
 
-opdesc BSR,		48,0xFF,0xFF,0xFF,0xFF,0
+opdesc BSR,		52,0xFF,0xFF,0xFF,0xFF,0
 opfunc BSR
-mov r0, #0 // disp  ToDo: how to load 0x133
+mov r0, #0 // for arm5
+mov r2, #0
+lsl r0, #8
+orr r0, r2
 mov r1, r8 
 add r1, r1, #4   // PC += 4
 STR_PR r1    // PR(SysReg[2]) = PC
@@ -814,11 +817,25 @@ opfunc RTE
 opdesc TRAPA,	      75,0,0,0,50,0
 opfunc TRAPA
 
-opdesc BT,		30,0,0,0,18,0
+opdesc BT,		28,0xff,0xff,0xff,0,0xff
 opfunc BT
+mov r0, #0 // disp
+LDR_SR r1
+mov r2, r8 // PC
+tst     r1, #1
+addne   r0, r2, r0, asl #1
+addne   r0, r0, #4
+mvneq   r0, #0
 
-opdesc BF,		30,0,0,0,18,0
+opdesc BF,		28,0xff,0xff,0xff,0,0xff
 opfunc BF
+mov r0, #0 // disp
+LDR_SR r1
+mov r2, r8 // PC
+tst     r1, #1
+addeq   r0, r2, r0, asl #1
+addeq   r0, r0, #4
+mvnne   r0, #0
 
 opdesc BF_S,		32,0xFF,0xFF,0xFF,0,0xFF
 opfunc BF_S
@@ -856,9 +873,14 @@ opfunc STS_MACL
 opdesc STS_MACL_DEC,	26,0,4,0,0,0
 opfunc STS_MACL_DEC
 
-opdesc LDC_SR,	21,0,4,0,0,0
+opdesc LDC_SR,	24,0xff,0,0xff,0xff,0xff
 opfunc LDC_SR
-
+mov     r1, #0  // m
+ldr     r0, [r7, r1] // r5 = R[m] 
+bic     r0, r0, #12
+mov     r0, r0, asl #22
+mov     r0, r0, lsr #22  // SR = r0 & 0x000003f3;
+STR_SR  r0
 
 opdesc LDC_SR_INC,	44,0xff,0,0xff,0xff,0xff
 opfunc LDC_SR_INC
@@ -874,8 +896,12 @@ add     r5, r5, #4
 str     r5, [r7, r1]
 
 
-opdesc LDCGBR,	16,0,4,0,0,0
+opdesc LDCGBR,	12,0xff,0,0xff,0xff,0xff
 opfunc LDCGBR
+mov     r0, #0  // m
+ldr     r0, [r7, r0] // r5 = R[m] 
+STR_GBR  r0
+
 
 opdesc LDC_GBR_INC,	44,0xff,0,0xff,0xff,0xff
 opfunc LDC_GBR_INC
@@ -891,8 +917,11 @@ add     r5, r5, #4
 str     r5, [r7, r1]
 
 
-opdesc LDC_VBR,	16,0,4,0,0,0
+opdesc LDC_VBR,	12,0xff,0,0xff,0xff,0xff
 opfunc LDC_VBR
+mov     r0, #0  // m
+ldr     r0, [r7, r0] // r5 = R[m] 
+STR_VBR  r0
 
 opdesc LDC_VBR_INC,	44,0xff,0,0xff,0xff,0xff
 opfunc LDC_VBR_INC
@@ -1003,17 +1032,37 @@ opfunc MOVBLG
 opdesc MOVWLG,    26,0,0,0,5,0
 opfunc MOVWLG
 
-opdesc MOVLLG,    25,0,0,0,5,0
+opdesc MOVLLG,    24,0xff,0xff,0xff,0,0xff
 opfunc MOVLLG
+mov r0, #0
+LDR_GBR r1
+add     r0, r1, r0, asl #2
+CALL_GETMEM_LONG
+str     r0, [r7]
 
-opdesc MOVBSG,    26,0,0,0,8,0
+opdesc MOVBSG,    24,0xff,0xff,0xff,0,0xff
 opfunc MOVBSG
+mov r0, #0 // disp
+LDR_GBR r1 // GBR
+add     r0, r1
+ldr     r1, [r7]
+CALL_SETMEM_BYTE
 
-opdesc MOVWSG,    30,0,0,0,8,0
+opdesc MOVWSG,    24,0xff,0xff,0xff,0,0xff
 opfunc MOVWSG
+mov r0, #0 // disp
+LDR_GBR r1 // GBR
+add     r0, r1, r0, asl #1
+ldr     r1, [r7]
+CALL_SETMEM_WORD
 
-opdesc MOVLSG,    30,0,0,0,8,0
+opdesc MOVLSG,    24,0xff,0xff,0xff,0,0xff
 opfunc MOVLSG
+mov r0, #0 // disp
+LDR_GBR r1 // GBR
+add     r0, r1, r0, asl #2
+ldr     r1, [r7]
+CALL_SETMEM_LONG
 
 opdesc MOVBS,	24,4,0,0xff,0xff,0xff
 opfunc MOVBS

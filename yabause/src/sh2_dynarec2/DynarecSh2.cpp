@@ -301,7 +301,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define DALAY_CLOCK_OFFSET 8
 #define SEPERATORSIZE_DELAYD 34
 #define EPILOGSIZE		      12
-#define DELAYJUMPSIZE	     22
+#define DELAYJUMPSIZE	     20
 #endif
 
 
@@ -743,8 +743,15 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
   if (*(op->imm) != 0xFF)
     *(ptr + *(op->imm)) = (u8)(opcode & 0xff);
 
+#if 1
+  if (*(op->off3) != 0xFF){
+    *(ptr + *(op->off3)) = (u8)((opcode>>8) & 0x0f);
+    *(ptr + *(op->off3)+4) = (u8)(opcode & 0xff);
+  }
+#else  
   if (*(op->off3) != 0xFF)
     *(u16*)(ptr + *(op->off3)) = (u16)(opcode & 0xfff);
+#endif  
 }
 
 
