@@ -766,8 +766,17 @@ opfunc JMP
 opdesc JSR,		19,0,12,0,0,0
 opfunc JSR
 
-opdesc BRA,		29,0,0,0,0,5
+opdesc BRA,		36,0xFF,0xFF,0xFF,0xFF,0
 opfunc BRA
+mov r0, #0 // for arm5
+mov r1, #0
+lsl r0, #8
+orr r0, r1
+tst     r0, #2048
+mvnne   r0, r0, asl #20
+mvnne   r0, r0, lsr #20
+add     r0, r8, r0, asl #1
+add     r0, r0, #4
 
 opdesc BSR,		52,0xFF,0xFF,0xFF,0xFF,0
 opfunc BSR
@@ -804,8 +813,12 @@ opdesc BSRF,		24,0,4,0,0,0
 opfunc BSRF
 add r0, r1         // PC = PC+disp
 
-opdesc BRAF,		16,0,4,0,0,0
+opdesc BRAF,		16,0xff,0,0xff,0xff,0xff
 opfunc BRAF
+mov r0, #0 // m
+ldr r0, [r7, r0]
+add r0, r0, #4
+add r0, r0, r8
 
 opdesc RTS,			4,0xff,0xff,0xff,0xff,0xff
 opfunc RTS
