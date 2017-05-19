@@ -799,6 +799,8 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   }
   
   page->isInfinityLoop = false;
+  
+  printf("*********** start block *************\n", startptr, op, addr);
 
   MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
   while (ptr - startptr < MaxSize) {
@@ -1095,14 +1097,13 @@ int DynarecSh2::Execute(){
    }
     
   //LOG("\n---dynaExecute %08X----\n", GET_PC() );
+    //printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
 
-  printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
-
-  if( 0x20000204 == GET_PC() ){
+  if( 0x2000028E == GET_PC() ){
     int a=0;
   }
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-  printf("dynaExecute end VPC=%08X PR=%08X count=%d----\n", GET_PC(), GET_PR(), GET_COUNT() );
+  //printf("dynaExecute end VPC=%08X PR=%08X count=%d----\n", GET_PC(), GET_PR(), GET_COUNT() );
   //exit(0);
 
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;

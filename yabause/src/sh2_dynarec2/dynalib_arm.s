@@ -323,17 +323,37 @@ opfunc DIV0U
 opdesc SETT,	3,0,0,0,0,0
 opfunc SETT
 
-opdesc SLEEP,	14,0,0,0,0,0
+opdesc SLEEP,	4,0xff,0xff,0xff,0xff,0xff
 opfunc SLEEP
+sub r8, #2
 
-opdesc SWAP_W,	19,4,15,0,0,0
+opdesc SWAP_W,	20,0,4,0xff,0xff,0xff
 opfunc SWAP_W
+mov r0, #0 // m
+mov r1, #0 // n
+ldr r2, [r7, r0]
+REV16 r3, r2
+str r3, [r7, r1]
 
-opdesc SWAP_B,	18,4,14,0,0,0
+opdesc SWAP_B,	20,0,4,0xff,0xff,0xff
 opfunc SWAP_B
+mov r0, #0 // m
+mov r1, #0 // n
+ldr r2, [r7, r0]
+REV r3, r2
+str r3, [r7, r1]
 
-opdesc TST,	29,4,12,0,0,0
+opdesc TST,	36,0,4,0xff,0xff,0xff
 opfunc TST
+mov r0, #0 // m
+mov r1, #0 // n
+LDR_SR r2
+ldr     r1, [r7, r1]
+ldr     r3, [r7, r0]
+tst     r1, r3
+orreq   r2, r2, #1
+bicne   r2, r2, #1
+STR_SR r2
 
 
 opdesc TSTI,	23,0,0,0,6,0
@@ -483,7 +503,7 @@ str  r3, [r7, r5]
 MOVWP.continue:
 
 
-opdesc MOVLP,	56,0,4,0xff,0xff,0xff
+opdesc MOVLP,	48,0,4,0xff,0xff,0xff
 opfunc MOVLP
 mov  r0, #0 // m
 mov  r1, #0 // n
@@ -493,11 +513,9 @@ mov  r6, r1
 CALL_GETMEM_LONG
 cmp  r6, r5
 str  r0, [r7, r6]
-bne  MOVLP.continue   
-ldr  r3, [r7, r5]
-add  r3, r3, #4
-str  r3, [r7, r5]
-MOVLP.continue:
+ldrne  r3, [r7, r5]
+addne  r3, r3, #4
+strne  r3, [r7, r5]
 
 
 opdesc MOVW_A,	38,0,4,0,17,0
@@ -760,11 +778,17 @@ opfunc TST_B
 // Jump Opcodes
 //------------
 
-opdesc JMP,		11,0,4,0,0,0
+opdesc JMP,		8,0xff,0,0xff,0xff,0xff
 opfunc JMP
+mov r0, #0
+ldr r0, [r7,r0]
 
-opdesc JSR,		19,0,12,0,0,0
+opdesc JSR,		16,0xff,0,0xff,0xff,0xff
 opfunc JSR
+mov r0, #0
+add r1, r8, #4
+STR_PR r1
+ldr r0, [r7,r0]
 
 opdesc BRA,		36,0xFF,0xFF,0xFF,0xFF,0
 opfunc BRA
@@ -991,16 +1015,15 @@ opfunc LDS_MACL_INC
 //Mov Opcodes
 //-----------
 
-opdesc MOVA,	28,0xff,0xff,0xff,0,0xff
+opdesc MOVA,	24,0xff,0xff,0xff,0,0xff
 opfunc MOVA
 mov     r1, #0  // disp
-ldr     r0, [r7]
 mov     r2, r8  // PC
-add     r1, r1, #4
-bic     r1, r1, #3
-add     r0, r0, r1, asl #2
-str     r0, [r7]
-		
+add     r2, r2, #4
+bic     r2, r2, #3
+add     r2, r2, r1, asl #2
+str     r2, [r7]
+
 
 opdesc MOVWI,	31,0,4,0,8,0
 opfunc MOVWI
@@ -1030,15 +1053,35 @@ opfunc MOVWL4
 opdesc MOVLL4, 33,4,28,8,0,0
 opfunc MOVLL4
  
-opdesc MOVBS4,	29,7,0,15,0,0
+opdesc MOVBS4,	24,0,0xff,4,0xff,0xff
 opfunc MOVBS4
+mov r0, #0 // n
+mov r1, #0 // disp
+ldr r2, [r7, r0]
+add r0, r2, r1
+ldr r1, [r7]
+CALL_SETMEM_BYTE
 
-opdesc MOVWS4,	32,7,0,15,0,0
+opdesc MOVWS4,	24,0,0xff,4,0xff,0xff
 opfunc MOVWS4
+mov r0, #0 // n
+mov r1, #0 // disp
+ldr r2, [r7, r0]
+add r0, r2, r1, asl #1
+ldr r1, [r7]
+CALL_SETMEM_WORD
 
-opdesc MOVLS4,	36,4,12,20,0,0
+opdesc MOVLS4,	32,0,8,4,0xff,0xff
 opfunc MOVLS4
- 
+mov r0, #0 // m
+mov r1, #0 // disp
+mov r2, #0 // n
+ldr r2, [r7, r2 ]
+ldr r3, [r7, r0 ]
+add r0, r2, r1, asl #2
+mov r1, r3
+CALL_SETMEM_LONG
+
 opdesc MOVBLG,    24,0,0,0,5,0
 opfunc MOVBLG
 
@@ -1181,4 +1224,5 @@ opfunc MAC_L
 //-------------------------------------------------------------
 opdesc MAC_W, 120,5,31,0,0,0
 opfunc MAC_W
+
 
