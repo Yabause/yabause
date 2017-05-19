@@ -339,7 +339,7 @@ void SH2DynShowSttaics(SH2_struct * master, SH2_struct * slave ){
 void memSetByte(u32 addr , u8 data )
 {
   dynaLock();
-  printf("memSetByte %08X, %08X\n", addr, data);
+  //printf("memSetByte %08X, %08X\n", addr, data);
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -366,7 +366,7 @@ void memSetByte(u32 addr , u8 data )
 void memSetWord(u32 addr, u16 data )
 {
   dynaLock();
-  printf("memSetWord %08X, %08X\n", addr, data);
+  //printf("memSetWord %08X, %08X\n", addr, data);
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -393,7 +393,7 @@ void memSetWord(u32 addr, u16 data )
 void memSetLong(u32 addr , u32 data )
 {
   dynaLock();
-  printf("memSetLong %08X, %08X\n", addr, data);
+  //printf("memSetLong %08X, %08X\n", addr, data);
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -422,7 +422,7 @@ void memSetLong(u32 addr , u32 data )
 u8 memGetByte(u32 addr)
 {
   dynaLock();
-  printf("memGetByte %08X\n", addr);
+  //printf("memGetByte %08X\n", addr);
   u8 val;
   val = MappedMemoryReadByte(addr);
   dynaFree();
@@ -445,7 +445,7 @@ u32 memGetLong(u32 addr)
   u32 val;
   val = MappedMemoryReadLong(addr);
   dynaFree();
-  printf("memGetLong addr=%08X val=%08X\n", addr, val);
+  //printf("memGetLong addr=%08X val=%08X\n", addr, val);
   return val;
 }
 
