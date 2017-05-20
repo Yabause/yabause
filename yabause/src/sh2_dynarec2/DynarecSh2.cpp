@@ -301,7 +301,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define DALAY_CLOCK_OFFSET 8
 #define SEPERATORSIZE_DELAYD 34
 #define EPILOGSIZE		      12
-#define DELAYJUMPSIZE	     20
+#define DELAYJUMPSIZE	     28
 #endif
 
 
@@ -1099,7 +1099,10 @@ int DynarecSh2::Execute(){
   //LOG("\n---dynaExecute %08X----\n", GET_PC() );
     //printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
 
-  if( 0x2000028E == GET_PC() ){
+  if( 0x06000000 == (GET_PC()&0x0F000000) ){
+    printf("dynaExecute start PC=%08X VPC=%08X SR=%08X----\n", (uintptr_t)pBlock->code, GET_PC(), GET_SR() );
+  }
+  if( 0x0600072E == GET_PC() ){
     int a=0;
   }
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);

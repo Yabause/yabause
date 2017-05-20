@@ -278,12 +278,15 @@ ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
 // Jump part 20
 .global PageFlip
 PageFlip:
-mvn r1, #0 // load 0xFFFFFF 
-tst r0, r1 // 7
-bne PageFlip.continue     // 2
+cmn r0, #1 // 7
+bne PageFlip.jmp     // 2
+STR_PC r8     // store PC to memory
+STR_COUNT r9  // store COUNTER to memory
+ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+PageFlip.jmp:
 STR_PC r0
 ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
-PageFlip.continue:
+
 .size	PageFlip, .-PageFlip // 22
 
 //-------------------------------------------------------
@@ -596,7 +599,7 @@ CALL_GETMEM_LONG
 str r0, [r7, r5]
 
 
-opdesc MOVBP,	60,0,4,0xff,0xff,0xff
+opdesc MOVBP,	52,0,4,0xff,0xff,0xff
 opfunc MOVBP
 mov  r0, #0 // m
 mov  r1, #0 // n
@@ -604,17 +607,15 @@ mov  r5, r0
 ldr  r0, [r7, r0]
 mov  r6, r1
 CALL_GETMEM_BYTE
-cmp  r6, r5
 sxtb r0, r0
 str  r0, [r7, r6]
-bne  MOVBP.continue   
-ldr  r3, [r7, r5]
-add  r3, r3, #1
-str  r3, [r7, r5]
-MOVBP.continue:
+cmp  r6, r5
+ldrne  r3, [r7, r5]
+addne  r3, r3, #1
+strne  r3, [r7, r5]
 
 
-opdesc MOVWP,	60,0,4,0xff,0xff,0xff
+opdesc MOVWP,	52,0,4,0xff,0xff,0xff
 opfunc MOVWP
 mov  r0, #0 // m
 mov  r1, #0 // n
@@ -622,14 +623,13 @@ mov  r5, r0
 ldr  r0, [r7, r0]
 mov  r6, r1
 CALL_GETMEM_WORD
-cmp  r6, r5
 sxth r0, r0
 str  r0, [r7, r6]
-bne  MOVWP.continue   
-ldr  r3, [r7, r5]
-add  r3, r3, #2
-str  r3, [r7, r5]
-MOVWP.continue:
+cmp  r6, r5
+ldrne  r3, [r7, r5]
+addne  r3, r3, #2
+strne  r3, [r7, r5]
+
 
 
 opdesc MOVLP,	48,0,4,0xff,0xff,0xff
@@ -751,7 +751,7 @@ orrge   r0, r1, #1
 biclt   r0, r1, #1
 STR_SR  r0
 
-opdesc CMP_PL,	23,0xff,0,0xff,0xff,0xff
+opdesc CMP_PL,	24,0xff,0,0xff,0xff,0xff
 opfunc CMP_PL
 ldr     r0, [r7, #0]
 LDR_SR  r2
@@ -1182,9 +1182,10 @@ LDR_VBR r0         // VBR
 add r0, r0, r1, asl #2 // PC = MappedMemoryReadLong(VBR+(imm<<2));
 CALL_GETMEM_LONG
 
-opdesc BT,		28,0xff,0xff,0xff,0,0xff
+opdesc BT,		32,0xff,0xff,0xff,0,0xff
 opfunc BT
 mov r0, #0 // disp
+sxtb r0,r0
 LDR_SR r1
 mov r2, r8 // PC
 tst     r1, #1
@@ -1192,9 +1193,10 @@ addne   r0, r2, r0, asl #1
 addne   r0, r0, #4
 mvneq   r0, #0
 
-opdesc BF,		28,0xff,0xff,0xff,0,0xff
+opdesc BF,		32,0xff,0xff,0xff,0,0xff
 opfunc BF
 mov r0, #0 // disp
+sxtb r0,r0
 LDR_SR r1
 mov r2, r8 // PC
 tst     r1, #1
