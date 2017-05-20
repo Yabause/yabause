@@ -731,10 +731,10 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 {
   // multiply source and dest regions by 4 (size of register) 
 
-  if (*(op->src) != 0xFF)
+  if (*(op->src) != 0xFF) // C
     *(ptr + *(op->src)) = (u8)(((opcode >> 4) & 0xf) << 2);
 
-  if (*(op->dest) != 0xFF)
+  if (*(op->dest) != 0xFF) // B
     *(ptr + *(op->dest)) = (u8)(((opcode >> 8) & 0xf) << 2);
 
   if (*(op->off1) != 0xFF)
