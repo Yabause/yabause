@@ -317,12 +317,6 @@ opdesc NOP,		4,0xff,0xff,0xff,0xff,0xff
 opfunc NOP
 nop
 
-opdesc DIV0U,	12,0xff,0xff,0xff,0xff,0xff
-opfunc DIV0U
-LDR_SR r0
-and r0,0xfffffcfe
-STR_SR r0
-
 opdesc SETT,	12,0xff,0xff,0xff,0xff,0xff
 opfunc SETT
 LDR_SR r0
@@ -393,11 +387,15 @@ ldr  r3, [r7]
 orr  r0, r0, r3
 str  r0, [r7]
 
-opdesc CMP_EQ_IMM,	25,0,0,0,8,0
-opfunc CMP_EQ_IMM
-
-opdesc XTRCT,	23,4,12,0,0,0
+opdesc XTRCT,	28,0,4,0xff,0xff,0xff
 opfunc XTRCT
+mov r0, #0 // m
+mov r1, #0 // n
+ldr     r3, [r7, r1]
+ldr     r0, [r7, r0]
+mov     r3, r3, lsr #16
+orr     r3, r3, r0, asl #16
+str     r3, [r7, r1]
 
 opdesc ADD,		24,0,4,0xff,0xff,0xff
 opfunc ADD
@@ -408,14 +406,62 @@ ldr r3, [r7, r0]
 add r3, r3, r1
 str r3, [r7, r0]
 
-opdesc ADDC,	33,4,12,0,0,0
+opdesc ADDC,	48,0,4,0xff,0xff,0xff
 opfunc ADDC
+mov r0, #0 // source
+mov r1, #0 // dest
+ldr r2, [r7, r0] // r2 = R[source]
+LDR_SR r0        // r0 = SR
+ldr r3, [r7, r1] // r3 = R[dest]
+adds r2, r3       // r2+r3
+and r3, r0, #1   // r3 = r0 & 1
+orrcs r4, r0, #1 // check carry
+biccc r4, r0, #1 // check not carry
+add r2, r3
+STR_SR r4
+str r2, [r7, r1]
 
-opdesc ADDV, 24,4,12,0,0,0
+opdesc ADDV, 40,0,4,0xff,0xff,0xff
 opfunc ADDV
+mov r0, #0 // source
+mov r1, #0 // dest
+ldr r2, [r7, r0] // r2 = R[source]
+LDR_SR r0        // r0 = SR
+ldr r3, [r7, r1] // r3 = R[dest]
+adds r2, r3       // r2+r3
+orrvs r4, r0, #1 // check overflow
+bicvc r4, r0, #1 // check not overflow
+STR_SR r4
+str r2, [r7, r1]
 
-opdesc SUBC,	33,4,12,0,0,0
+opdesc SUBV, 40,0,4,0xff,0xff,0xff
+opfunc SUBV
+mov r0, #0 // source
+mov r1, #0 // dest
+ldr r2, [r7, r0] // r2 = R[source]
+LDR_SR r0        // r0 = SR
+ldr r3, [r7, r1] // r3 = R[dest]
+subs r2, r3       // r2+r3
+orrvs r4, r0, #1 // check overflow
+bicvc r4, r0, #1 // check not overflow
+STR_SR r4
+str r2, [r7, r1]
+
+opdesc SUBC,	48,0,4,0xff,0xff,0xff
 opfunc SUBC
+mov r0, #0 // source
+mov r1, #0 // dest
+ldr r2, [r7, r0] // r2 = R[source]  
+LDR_SR r0        // r0 = SR
+ldr r3, [r7, r1] // r3 = R[dest]
+subs r2, r3       // r2+r3
+and r3, r0, #1   // r3 = r0 & 1
+orrcs r4, r0, #1 // check carry
+biccc r4, r0, #1 // check not carry
+sub r2, r3
+STR_SR r4
+str r2, [r7, r1]
+
 
 opdesc SUB,		24,0,4,0xff,0xff,0xff
 opfunc SUB
@@ -435,8 +481,7 @@ ldr  r3, [r2, r0]
 mvn  r3, r3
 str  r3, [r7, r1]
 
-
-opdesc NEG,		18,4,14,0,0,0
+opdesc NEG,		20,0,4,0xff,0xff,0xff
 opfunc NEG
 mov r0, #0 // m
 mov r1, #0 // n
@@ -444,8 +489,20 @@ ldr  r3, [r2, r0]
 rsb  r3, r3, #0
 str  r3, [r7, r1]
 
-opdesc NEGC,	50,4,14,0,0,0
+opdesc NEGC,	48,0,4,0xff,0xff,0xff
 opfunc NEGC
+mov r0, #0 // source
+mov r1, #0 // dest
+ldr r2, [r7, r0] // r2 = R[source]  
+LDR_SR r0        // r0 = SR
+ldr r3, [r7, r1] // r3 = R[dest]
+rsb r2, r3, #0   // r2 = 0 - r3
+and r3, r0, #1   // r3 = r0 & 1
+orrcs r4, r0, #1 // check carry
+biccc r4, r0, #1 // check not carry
+sub r2, r3
+STR_SR r4
+str r2, [r7, r1]
 
 opdesc EXTUB,	16,0,4,0xff,0xff,0xff
 opfunc EXTUB
@@ -481,34 +538,52 @@ str  r3, [r7, r1]
 //Store Register Opcodes
 //----------------------
 
-opdesc STC_SR_MEM,	23,0,6,0,0,0
+opdesc STC_SR_MEM,	28,0xff,0,0xff,0xff,0xff
 opfunc STC_SR_MEM
+mov r2, #0  // n
+ldr r0, [r7, r2] // R[n]
+sub r0, #4       // 
+str r0, [r7, r2] // R[n] -= 4
+LDR_SR r1
+CALL_SETMEM_LONG
 
-opdesc STC_GBR_MEM,	30,0,13,0,0,0
+
+opdesc STC_GBR_MEM,	28,0xff,0,0xff,0xff,0xff
 opfunc STC_GBR_MEM
+mov r2, #0  // n
+ldr r0, [r7, r2] // R[n]
+sub r0, #4       // 
+str r0, [r7, r2] // R[n] -= 4
+LDR_GBR r1
+CALL_SETMEM_LONG
 
-opdesc STC_VBR_MEM,	30,0,13,0,0,0
+opdesc STC_VBR_MEM,	28,0xff,0,0xff,0xff,0xff
 opfunc STC_VBR_MEM
-
+mov r2, #0  // n
+ldr r0, [r7, r2] // R[n]
+sub r0, #4       // 
+str r0, [r7, r2] // R[n] -= 4
+LDR_VBR r1
+CALL_SETMEM_LONG
 
 opdesc MOVBL,	28,0,4,0xff,0xff,0xff
 opfunc MOVBL
 mov  r0, #0  // m
 mov  r4, #0  // n
-ldr  r0, [r7, r0, asl #2] // r0 = R[m] 
+ldr  r0, [r7, r0] // r0 = R[m] 
 CALL_GETMEM_BYTE
 sxtb r0, r0
-str  r0, [r7, r4, asl #2]
+str  r0, [r7, r4]
 
 
 opdesc MOVWL,		28,0,4,0xff,0xff,0xff
 opfunc MOVWL
 mov  r0, #0  // m
 mov  r4, #0  // n
-ldr  r0, [r7, r0, asl #2] // r0 = R[m] 
+ldr  r0, [r7, r0] // r0 = R[m] 
 CALL_GETMEM_WORD
 sxth r0, r0
-str  r0, [r7, r4, asl #2]
+str  r0, [r7, r4]
 
 
 opdesc MOVL_MEM_REG, 28,0,4,0xff,0xff,0xff
@@ -571,13 +646,6 @@ ldrne  r3, [r7, r5]
 addne  r3, r3, #4
 strne  r3, [r7, r5]
 
-
-opdesc MOVW_A,	38,0,4,0,17,0
-opfunc MOVW_A
-
-opdesc MOVL_A,	37,0,4,0,17,0
-opfunc MOVL_A
-
 opdesc MOVI,	16,0xff,0,0xff,4,0xff
 opfunc MOVI
 mov r1, #0  // n
@@ -590,21 +658,21 @@ str  r0, [r7, r1] // R[n] = (int)i
 
 opdesc MOVBL0,	40,0,4,0xff,0xff,0xff
 opfunc MOVBL0
-mov r0,  #0  // b
-mov r1 , #0  // c
+mov r0,  #0  
+mov r1 , #0  
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
 add r0, r1, asl #2
-CALL_GETMEM_WORD
+CALL_GETMEM_BYTE
 sxtb r0,r0
 str r0, [r7, r5]
 
 
 opdesc MOVWL0,	40,0,4,0xff,0xff,0xff
 opfunc MOVWL0
-mov r0,  #0  // b
-mov r1 , #0  // c
+mov r0,  #0  
+mov r1 , #0  
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
@@ -616,8 +684,8 @@ str r0, [r7, r5]
 
 opdesc MOVLL0,	36,0,4,0xff,0xff,0xff
 opfunc MOVLL0
-mov r0,  #0  // b
-mov r1 , #0  // c
+mov r0,  #0  
+mov r1 , #0  
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
@@ -626,17 +694,37 @@ CALL_GETMEM_LONG
 str r0, [r7, r5]
 
 
-opdesc MOVT,		15,0,4,0,0,0
+opdesc MOVT,	16,0xff,0x0,0xff,0xff,0xff 
 opfunc MOVT
+mov r0,  #0  
+LDR_SR r1
+and r1, #1
+str r1, [r7, r0];
 
-opdesc MOVBS0,	28,4,12,0,0,0
+opdesc MOVBS0,	24,0x0,0x4,0xff,0xff,0xff
 opfunc MOVBS0
+mov r1 , #0
+ldr r0, [r7, #0]
+ldr r2, [r7]
+add r0, r0, r2
+CALL_SETMEM_BYTE
 
-opdesc MOVWS0,	28,4,12,0,0,0
+
+opdesc MOVWS0,	24,0x0,0x4,0xff,0xff,0xff
 opfunc MOVWS0
+mov r1 , #0
+ldr r0, [r7, #0]
+ldr r2, [r7]
+add r0, r0, r2
+CALL_SETMEM_WORD
 
-opdesc MOVLS0,	28,4,12,0,0,0
+opdesc MOVLS0,	24,0x0,0x4,0xff,0xff,0xff
 opfunc MOVLS0
+mov r1 , #0
+ldr r0, [r7, #0]
+ldr r2, [r7]
+add r0, r0, r2
+CALL_SETMEM_LONG
 
 //===========================================================================
 //Verified Opcodes
@@ -654,8 +742,7 @@ orreq   r0, r1, #1   // if( R[n] == 0 ) SR |= 0x01
 bicne   r0, r1, #1   // if( R[n] != 0 ) SR &= ^0x01;
 STR_SR  r0           // SR = r0		
 
-
-opdesc CMP_PZ,	17,0,4,0,0,0
+opdesc CMP_PZ,	24,0xff,0,0xff,0xff,0xff
 opfunc CMP_PZ
 ldr     r0, [r7, #0]
 LDR_SR  r2
@@ -664,7 +751,7 @@ orrge   r0, r1, #1
 biclt   r0, r1, #1
 STR_SR  r0
 
-opdesc CMP_PL,	23,0xff,4,0xff,0xff,0xff
+opdesc CMP_PL,	23,0xff,0,0xff,0xff,0xff
 opfunc CMP_PL
 ldr     r0, [r7, #0]
 LDR_SR  r2
@@ -727,36 +814,132 @@ orrgt   r0, r2, #1
 bicle   r0, r2, #1
 STR_SR  r0
 
+opdesc CMP_EQ_IMM,	28,0xff,0xff,0xff,0,0xff
+opfunc CMP_EQ_IMM
+mov r0, #0 // imm
+LDR_SR  r1
+ldr     r3, [r7]
+cmp     r3, r0
+orreq   r0, r1, #1
+bicne   r0, r1, #1
+STR_SR  r0
 
-opdesc ROTL,	23,0,4,0,0,0
+// string cmp
+opdesc CMPSTR, 60,0,4,0xff,0xff,0xff
+opfunc CMPSTR
+mov r0, #0 // m
+mov r1, #0 // n
+ldr r1, [r7, r1] // R[n]
+ldr r3, [r7, r0] // R[m]
+eor r3, r3, r1   // temp= R[n]^R[m];
+movs r1, r3, lsr #24 // r1 = temp>>24
+mov  r0, r3, asr #16 // r0 = temp>>16
+movne   r1, #1       
+moveq   r1, #0
+tst     r0, #255
+moveq   r1, #0
+andne   r1, r1, #1
+cmp     r1, #0
+beq     CMPSTR.L2
+mov     r1, r3, asr #8
+tst     r1, #255
+movne   r1, #1
+moveq   r1, #0
+tst     r3, #255
+moveq   r3, #0
+andne   r3, r1, #1
+cmp     r3, #0
+beq     CMPSTR.L2
+LDR_SR  r2
+bic     r0, r2, #1
+CMPSTR.L2:
+LDR_SR  r2
+orr     r0, r2, #1
+STR_SR  r0
+
+//http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0489fj/CIHDDCIF.html
+
+opdesc ROTL,	36,0xff,0,0xff,0xff,0xff
 opfunc ROTL
+mov r0, #0   // n
+LDR_SR r1    // r1 = SR
+ldr r2, [r7, r0]
+lsls r2, #1       // r2 <<= 1  
+andcs r1, #0x01  // if( C==1 ) T=1;
+andcs r2, #0x01  // if( C==1 ) r2 |= 1;
+biccc r1, #0x01  // if( C==0 ) T=0;
+str r2, [r7, r0]
+STR_SR r1 
 
-opdesc ROTR,	25,0,4,0,0,0
+opdesc ROTR,	32,0xff,0,0xff,0xff,0xff
 opfunc ROTR
+mov r0, #0   // n
+LDR_SR r1    // r1 = SR
+ldr r2, [r7, r0]
+rors r2, #1       // r2 >>= 1  
+andcs r1, #0x01  // if( C==1 ) T=1;
+biccc r1, #0x01  // if( C==0 ) T=0;
+str r2, [r7, r0]
+STR_SR r1 
 
-opdesc ROTCL,	30,0,4,0,0,0
+opdesc ROTCL,	40,0xff,0,0xff,0xff,0xff
 opfunc ROTCL
+mov r0, #0   // n
+LDR_SR r1    // r1 = SR
+and r3, r1 , #1 // r3 = SR.T
+ldr r2, [r7, r0]
+lsls r2, #1       // r2 <<= 1  
+andcs r1, #0x01  // if( C==1 ) T=1;
+biccc r1, #0x01  // if( C==0 ) T=0;
+orr r2, r3
+str r2, [r7, r0]
+STR_SR r1 
 
-opdesc ROTCR,	36,0,4,0,0,0
+opdesc ROTCR,	44,0xff,0,0xff,0xff,0xff
 opfunc ROTCR
+mov r0, #0   // n
+LDR_SR r1    // r1 = SR
+and r3, r1 , #1 // r3 = SR.T
+lsl r3, #31     // 
+ldr r2, [r7, r0]
+rors r2, #1       // r2 <<= 1  
+andcs r1, #0x01  // if( C==1 ) T=1;
+biccc r1, #0x01  // if( C==0 ) T=0;
+orr r2, r3
+str r2, [r7, r0]
+STR_SR r1 
 
-opdesc SHL,		32,0xff,4,0xff,0xff,0xff
+opdesc SHL,		32,0xff,0,0xff,0xff,0xff
 opfunc SHL
 mov r0, #0 
 LDR_SR r1
 ldr r2, [r7, r0]
-lsl r2, #1       // r2 <<= 1  
+lsls r2, #1       // r2 <<= 1  
 andcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 STR_SR r1 
 
 
-opdesc SHLR,	25,0,4,0,0,0
+opdesc SHLR,	28,0xff,0,0xff,0xff,0xff
 opfunc SHLR
+mov r0, #0 
+LDR_SR r1
+ldr r2, [r7, r0]
+lsrs r2, #1  // r2 >>= 1
+andcs r1, #0x01  // if( C==1 ) T=1;
+biccc r1, #0x01  // if( C==0 ) T=0;
+str r2, [r7, r0]
 
-opdesc SHAR,	22,0,4,0,0,0
+opdesc SHAR,	28,0xff,0,0xff,0xff,0xff
 opfunc SHAR
+mov r0, #0 
+LDR_SR r1
+ldr r2, [r7, r0]
+asrs r2, #1  // r2 >>= 1
+andcs r1, #0x01  // if( C==1 ) T=1;
+biccc r1, #0x01  // if( C==0 ) T=0;
+str r2, [r7, r0]
 
 opdesc SHLL2,	16,0xff,0,0xff,0xff,0xff
 opfunc SHLL2
@@ -880,6 +1063,16 @@ CALL_SETMEM_BYTE
 
 opdesc TST_B,	34,0,0,0,25,0
 opfunc TST_B
+LDR_GBR r0
+ldr     r1, [r7]
+add     r0, r0, r1 
+CALL_GETMEM_BYTE    // MappedMemoryReadByte( GBR+R[0] );
+tst     r0, #0      // temp&=i;
+LDR_SR  r1
+orreq   r1, r1, #1
+bicne   r1, r1, #1
+STR_SR  r1
+
 
 // Jump Opcodes
 //------------
@@ -954,11 +1147,40 @@ opdesc RTS,			4,0xff,0xff,0xff,0xff,0xff
 opfunc RTS
 LDR_PR r0
 
-opdesc RTE,			46,0,0,0,0,0
+opdesc RTE,			68,0xff,0xff,0xff,0xff,0xff
 opfunc RTE
+ldr     r0, [r7, #60]
+CALL_GETMEM_LONG
+mov     r4, r0 // PC
+ldr     r0, [r7, #60]
+add     r0, r0, #4
+str     r0, [r7, #60]
+CALL_GETMEM_LONG
+ldr     r3, [r7, #60]
+add     r3, r3, #4
+str     r3, [r7, #60]
+bic     r0, r0, #12
+mov     r0, r0, asl #22
+mov     r0, r0, lsr #22 // SR & 0x000003F3
+STR_SR  r0
+mov     r0, r5
 
-opdesc TRAPA,	      75,0,0,0,50,0
+opdesc TRAPA,	  68,0xff,0xff,0xff,56,0xff
 opfunc TRAPA
+ldr r0, [r7, #60]  // r0 = R[15]
+sub r0, #4         // r0 -= 4
+LDR_SR r1          // r1 = SR
+CALL_SETMEM_LONG   // MappedMemoryWriteLong(R[15],SR);
+ldr r0, [r7, #60]  // r0 = R[15]
+sub r0, #8         // r0 -= 8
+str r0, [r7, #60]  // R[15] = r0
+mov r1, r8         // r1 = PC
+add r1, #2         // r1 += 2
+CALL_SETMEM_LONG   // MappedMemoryWriteLong(R[15],PC + 2);
+mov r1, #0         // r1 = imm
+LDR_VBR r0         // VBR
+add r0, r0, r1, asl #2 // PC = MappedMemoryReadLong(VBR+(imm<<2));
+CALL_GETMEM_LONG
 
 opdesc BT,		28,0xff,0xff,0xff,0,0xff
 opfunc BT
@@ -995,26 +1217,46 @@ mvnne   r0, #0
 //Store/Load Opcodes
 //------------------
 
-opdesc STC_SR,	10,0,4,0,0,0
+opdesc STC_SR,	8,0xff,4,0xff,0xff,0xff
 opfunc STC_SR
+LDR_SR r1
+str r1, [r7, #0 ] // R[n] = SR
 
-opdesc STC_GBR,	18,0,4,0,0,0
+opdesc STC_GBR,	8,0xff,4,0xff,0xff,0xff
 opfunc STC_GBR
+LDR_GBR r1
+str r1, [r7, #0 ] // R[n] = GBR
 
-opdesc STC_VBR,	18,0,4,0,0,0
+opdesc STC_VBR,	8,0xff,4,0xff,0xff,0xff
 opfunc STC_VBR
+LDR_VBR r1
+str r1, [r7, #0 ] // R[n] = VBR
 
-opdesc STS_MACH, 10,0,4,0,0,0
+opdesc STS_MACH, 8,0xff,4,0xff,0xff,0xff
 opfunc STS_MACH
+LDR_MACL r1
+str r1, [r7, #0 ] // R[n] = MACL
 
-opdesc STS_MACH_DEC,	25,0,4,0,0,0
+
+opdesc STS_MACH_DEC, 20,0xff,4,0xff,0xff,0xff
 opfunc STS_MACH_DEC
+ldr r0, [r7, #0 ]
+sub r0, #4
+LDR_MACH r1
+CALL_SETMEM_LONG
 
-opdesc STS_MACL, 11,0,4,0,0,0
+
+opdesc STS_MACL, 8,0xff,4,0xff,0xff,0xff
 opfunc STS_MACL
+LDR_MACL r1
+str r1, [r7, #0 ] // R[n] = MACL
 
-opdesc STS_MACL_DEC,	26,0,4,0,0,0
+opdesc STS_MACL_DEC, 20,0xff,4,0xff,0xff,0xff
 opfunc STS_MACL_DEC
+ldr r0, [r7, #0 ]
+sub r0, #4
+LDR_MACL r1
+CALL_SETMEM_LONG
 
 opdesc LDC_SR,	24,0xff,0,0xff,0xff,0xff
 opfunc LDC_SR
@@ -1086,8 +1328,12 @@ mov r0, #0
 LDR_PR  r1
 str     r1, [r7, r0]
 
-opdesc STSMPR,	26,0,4,0,0,0
+opdesc STSMPR,	20,0xff,4,0xff,0xff,0xff
 opfunc STSMPR
+ldr r0, [r7, #0 ]
+sub r0, #4
+LDR_PR r1
+CALL_SETMEM_LONG
 
 opdesc LDS_PR,		12,0xff,0,0xff,0xff,0xff
 opfunc LDS_PR
@@ -1097,6 +1343,12 @@ STR_PR r0
 
 opdesc LDS_PR_INC,	24,0,4,0,0,0
 opfunc LDS_PR_INC
+mov r2, #0 // m
+ldr r0, [r7, r2 ]
+add r1, r0 , #4
+CALL_GETMEM_LONG
+STR_PR r0       // MACH = ReadLong(sh->regs.R[m]);
+str r1, [r7, r2 ]
 
 opdesc LDS_MACH,		12,0xff,0,0xff,0xff,0xff
 opfunc LDS_MACH
@@ -1105,8 +1357,15 @@ ldr r0, [r7, r0]
 STR_MACH r0
 
 
-opdesc LDS_MACH_INC,	23,0,4,0,0,0
+opdesc LDS_MACH_INC,	24,0xff,0,0xff,0xff,0xff
 opfunc LDS_MACH_INC
+mov r2, #0 // m
+ldr r0, [r7, r2 ]
+add r1, r0 , #4
+CALL_GETMEM_LONG
+STR_MACH r0       // MACH = ReadLong(sh->regs.R[m]);
+str r1, [r7, r2 ]
+
 
 opdesc LDS_MACL,		12,0xff,0,0xff,0xff,0xff
 opfunc LDS_MACL
@@ -1115,8 +1374,14 @@ ldr r0, [r7, r0]
 STR_MACL r0
 
 
-opdesc LDS_MACL_INC,	24,0,4,0,0,0
+opdesc LDS_MACL_INC,	24,0xff,0,0xff,0xff,0xff
 opfunc LDS_MACL_INC
+mov r2, #0 // m
+ldr r0, [r7, r2 ]
+add r1, r0 , #4
+CALL_GETMEM_LONG
+STR_MACL r0       // MACH = ReadLong(sh->regs.R[m]);
+str r1, [r7, r2 ]
 
 //Mov Opcodes
 //-----------
@@ -1131,11 +1396,18 @@ add     r2, r2, r1, asl #2
 str     r2, [r7]
 
 
-opdesc MOVWI,	31,0,4,0,8,0
+opdesc MOVWI,	40,0xff,0,0xff,4,0xff
 opfunc MOVWI
+mov r4, #0 // n
+mov r2, #0 // disp
+mov r1, r8 // GET PC
+add r1, r1, r2, asl #1 // PC += (disp << 1)
+add r0, r1, #4  // PC += 4
+CALL_GETMEM_WORD
+sxth r0,r0
+str r0, [r7, r4] // R[n] = readval
 
-
-opdesc MOVLI,       36,0xff,0,0xff,4,0xff
+opdesc MOVLI,  36,0xff,0,0xff,4,0xff
 opfunc MOVLI
 mov r4, #0 // n
 mov r2, #0 // disp
@@ -1147,18 +1419,32 @@ CALL_GETMEM_LONG
 str r0, [r7, r4] // R[n] = readval
 
 
-
-opdesc MOVBL4, 29,4,0,8,0,0
+opdesc MOVBL4, 28,0,0xff,4,0xff,0xff
 opfunc MOVBL4
+ldr r2, [r7, #0 ]
+mov r1, #0 // disp
+add r0, r2, r1
+CALL_GETMEM_BYTE
+sxtb r0,r0
+str  r0, [r7, #0]
 
-
-opdesc MOVWL4, 31,4,0,8,0,0
+opdesc MOVWL4, 28,0,0xff,4,0xff,0xff
 opfunc MOVWL4
+ldr r2, [r7, #0]
+mov r1, #0 // disp
+add r0, r2, r1, asl #1
+CALL_GETMEM_WORD
+sxth r0,r0
+str  r0, [r7, #0]
 
-
-opdesc MOVLL4, 33,4,28,8,0,0
+opdesc MOVLL4, 20,0,20,4,0xff,0xff
 opfunc MOVLL4
- 
+ldr r2, [r7, #0]
+mov r1, #0 // disp
+add r0, r2, r1, asl #2
+CALL_GETMEM_LONG
+str r0, [r7, #0]
+
 opdesc MOVBS4,	24,0,0xff,4,0xff,0xff
 opfunc MOVBS4
 mov r0, #0 // n
@@ -1188,11 +1474,23 @@ add r0, r2, r1, asl #2
 mov r1, r3
 CALL_SETMEM_LONG
 
-opdesc MOVBLG,    24,0,0,0,5,0
+opdesc MOVBLG,    28,0xff,0xff,0xff,0,0xff
 opfunc MOVBLG
+mov r0, #0
+LDR_GBR r1
+add     r0, r1, r0
+CALL_GETMEM_BYTE
+sxtb r0,r0
+str  r0, [r7]
 
-opdesc MOVWLG,    26,0,0,0,5,0
+opdesc MOVWLG,     28,0xff,0xff,0xff,0,0xff
 opfunc MOVWLG
+mov r0, #0
+LDR_GBR r1
+add     r0, r1, r0, asl #1
+CALL_GETMEM_WORD
+sxth r0,r0
+str  r0, [r7]
 
 opdesc MOVLLG,    24,0xff,0xff,0xff,0,0xff
 opfunc MOVLLG
@@ -1244,7 +1542,6 @@ ldr  r1, [r7, r1]
 sxth r1,r1
 CALL_SETMEM_WORD // 2cyclte
 
-
 opdesc MOVLS,	24,4,0,0xff,0xff,0xff
 opfunc MOVLS
 mov r0, #0 // b
@@ -1252,8 +1549,6 @@ mov r1, #0 // c
 ldr  r0, [r7, r0]
 ldr  r1, [r7, r1]
 CALL_SETMEM_LONG // 2cyclte
-
-
 
 opdesc MOVR,		16,4,0,0xff,0xff,0xff
 opfunc MOVR
@@ -1263,70 +1558,256 @@ ldr  r1, [r7, r1]
 str  r1, [r7, r0]
 
 
-opdesc MOVBM,		29,4,12,0,0,0
+opdesc MOVBM,		32,0,4,0xff,0xff,0xff
 opfunc MOVBM
+mov r2, #0 // m
+mov r3, #0 // n
+ldr  r0, [r7, r3] // addr R[n]
+ldrb r1, [r7, r2] // val  R[m]
+sub  r0, #1
+str  r0, [r7, r3] // R[n] -= 1
+CALL_SETMEM_BYTE // 2cyclte
 
-opdesc MOVWM,		29,4,12,0,0,0
+opdesc MOVWM,		32,0,4,0xff,0xff,0xff
 opfunc MOVWM
+mov r2, #0 // m
+mov r3, #0 // n
+ldr  r0, [r7, r3] // addr R[n]
+ldrh r1, [r7, r2] // val  R[m]
+sub  r0, #2
+str  r0, [r7, r3] // R[n] -= 2
+CALL_SETMEM_WORD // 2cyclte
 
-opdesc MOVLM,		29,4,12,0,0,0
+opdesc MOVLM,		32,0,4,0xff,0xff,0xff
 opfunc MOVLM
+mov r2, #0 // m
+mov r3, #0 // n
+ldr  r0, [r7, r3] // addr R[n]
+ldr  r1, [r7, r2] // val  R[m]
+sub  r0, #4
+str  r0, [r7, r3] // R[n] -= 4
+CALL_SETMEM_WORD // 2cyclte
 
-opdesc TAS,  46,0,4,0,0,0
+opdesc TAS,  64,0xff,0,0xff,0xff,0xff
 opfunc TAS
+mov     r0, #0 // n
+LDR_SR  r1   // SR
+mov     r5, r0
+ldr     r0, [r7, r0]
+CALL_GETMEM_BYTE
+cmp     r0, #0
+mvn     r1, r0, asl #25
+orreq   r4, r4, #1
+mvn     r1, r1, lsr #25
+bicne   r4, r4, #1
+ldr     r0, [r7, r5]
+STR_SR  r4
+uxtb    r1, r1
+CALL_SETMEM_BYTE
+       
 
-opdesc SUBV, 24,4,12,0,0,0
-opfunc SUBV
+opdesc DIV0U,	12,0xff,0xff,0xff,0xff,0xff
+opfunc DIV0U
+LDR_SR r0
+//and r0,0xfffffcfe
+bic     r0, r0, #768
+bic     r0, r0, #1
+STR_SR r0
 
-// string cmp
-opdesc CMPSTR, 60,4,12,0,0,0
-opfunc CMPSTR
-
-//-------------------------------------------------------------
-//div0s 
-opdesc DIV0S, 78,36,4,0,0,0
+opdesc DIV0S, 60,0,4,0xff,0xff,0xff
 opfunc DIV0S
+ldr  r2, [r7, #0 ] // m
+ldr  r3, [r7, #0 ] // n
+cmp  r3, #0
+LDR_SR  r3
+bicge   r3, r3, #64
+orrlt   r3, r3, #64
+cmp     r2, #0
+bicge   r3, r3, #128
+orrlt   r3, r3, #128
+mov     r2, r3, asr #6
+eor     r2, r2, r3, asr #7
+tst     r2, #1
+orrne   r3, r3, #1
+biceq   r3, r3, #1
+STR_SR     r3
 
 
-//===============================================================
-// DIV1   1bit Divid operation
-// 
-// size = 69 + 135 + 132 + 38 = 374 
-//===============================================================
-opdesc DIV1, 410,62,7,0,0,0
+opdesc DIV1, 204,0,4,0xff,0xff,0xff
 opfunc DIV1
+mov r0, #0 // m
+mov r1, #0 // n
+ldr     r5, [r7, r1] 
+LDR_SR  r3
+cmp     r5, #0
+mov     ip, r3, asr #6
+bicge   r3, r3, #64
+orrlt   r3, r3, #64
+and     ip, ip, #1
+and     r2, r3, #1
+cmp     ip, #0
+orr     r2, r2, r5, asl #1
+str     r2, [r7, r1]
+
+bne     DIV1.L13
+ands    r4, r3, #128
+beq     DIV1.L15
+cmp     r4, #1
+bne     DIV1.L13
+ldr     r0, [r7, r0]
+add     r0, r2, r0
+cmp     r0, r2
+movcs   r2, #0
+movcc   r2, #1
+ands    r4, r3, #64
+str     r0, [r7, r1]
+beq     DIV1.L21
+cmp     r4, #64
+bne     DIV1.L13
+
+DIV1.L22:
+  cmp     r2, #0
+  beq     DIV1.L24
+
+DIV1.L29:
+  orr     r3, r3, #64
+
+DIV1.L13:
+  mov     r2, r3, asr #6
+  eor     r2, r2, r3, asr #7
+  tst     r2, #1
+  orreq   r3, r3, #1
+  bicne   r3, r3, #1
+  STR_SR  r3
+  b DIV1.FINISH
+
+DIV1.L15:
+  ldr     r0, [r7, r0] // R[m]
+  rsb     r0, r0, r2
+  cmp     r0, r2
+  movls   r2, #0
+  movhi   r2, #1
+  ands    r4, r3, #64
+  str     r0, [r7, r1] // R[n]
+  beq     DIV1.L22
+  cmp     r4, #64
+  bne     DIV1.L13
+DIV1.L21:
+  cmp     r2, #0
+  beq     DIV1.L29
+DIV1.L24:
+  bic     r3, r3, #64
+  b       DIV1.L13
+DIV1.FINISH:
 
 //------------------------------------------------------------
 //dmuls
-opdesc DMULS, 27,6,14,0,0,0
+opdesc DMULS, 20,0,4,0xff,0xff,0xff
 opfunc DMULS
+ldr     r3, [r2, #0]
+ldr     r2, [r2, #0]
+smull   r2, r3, r3, r2
+STR_MACH r3
+STR_MACL r2
 
 //------------------------------------------------------------
 //dmulu 32bit -> 64bit Mul
-opdesc DMULU, 27,6,14,0,0,0
+opdesc DMULU, 20,0,4,0xff,0xff,0xff
 opfunc DMULU
+ldr     r3, [r2, #0]
+ldr     r2, [r2, #0]
+umull   r2, r3, r3, r2
+STR_MACH r3
+STR_MACL r2
 
 //--------------------------------------------------------------
 // mull 32bit -> 32bit Multip
-opdesc MULL, 25,6,14,0,0,0
+opdesc MULL, 16,0,4,0xff,0xff,0xff
 opfunc MULL
+ldr     r2, [r7, #0]
+ldr     r0, [r7, #0]
+mul     r0, r0, r2
+STR_MACL r0
 
 //--------------------------------------------------------------
 // muls 16bit -> 32 bit Multip
-opdesc MULS, 38,6,17,0,0,0
+opdesc MULS, 16,0,4,0xff,0xff,0xff
 opfunc MULS
+ldr     r2, [r7, #0]
+ldr     r0, [r7, #0]
+smulbb  r0, r2, r0
+STR_MACL r0
+
 
 //--------------------------------------------------------------
 // mulu 16bit -> 32 bit Multip
-opdesc MULU, 38,6,17,0,0,0
+opdesc MULU, 24,0,4,0xff,0xff,0xff
 opfunc MULU
+ldr     r2, [r7, #0]
+ldr     r0, [r7, #0]
+uxth    r2, r2
+uxth    r0, r0
+mul     r0, r0, r2
+STR_MACL r0
 
 //--------------------------------------------------------------
 // MACL   ans = 32bit -> 64 bit MUL
 //        (MACH << 32 + MACL)  + ans 
 //-------------------------------------------------------------
-opdesc MAC_L, 145,5,30,0,0,0 
+opdesc MAC_L, 208,0,4,0xff,0xff,0xff 
 opfunc MAC_L
+mov r0, #0
+mov r1, #0
+mov r5, r0 
+ldr r0, [r7, r1]
+mov r4, r1
+CALL_GETMEM_LONG
+ldr r3, [r7, r4]
+add r3, r3, #4
+str r3, [r7, r4]
+mov r4, #0
+mov r5, r0 
+ldr r0, [r7, r6]
+CALL_GETMEM_LONG
+ldr r2, [r7, r6]
+add r2, r2, #4
+str r2, [r7, r6]
+LDR_MACL r1
+mov r3,r5
+LDR_MACH r5
+LDR_SR r2       
+orr     r6, r4, r1
+orr     ip, r5, r1, asr #31
+smull   r0, r1, r0, r3
+adds    r6, r6, r0
+adc     ip, ip, r1
+
+tst     r2, #2
+beq     MAC_L.NO_S
+        mov     r5, #0
+        mov     r4, #32768
+        adds    r5, r5, r6
+        movt    r4, 65535
+        adc     r4, r4, ip
+        mvn     r2, #65536
+        cmp     r4, r2
+        mvn     r3, #0
+        cmpeq   r5, r3
+        bhi     MAC_L.NO_S
+        cmp     r0, #0
+        sbcs    r2, r1, #0
+        mov     r2, #32768
+        movw    r1, #32767
+        movt    r2, 65535
+        mvnge   r4, #0
+        movge   r2, r1
+        b       MAC_L.FINISH
+MAC_L.NO_S:
+  mov     r4, r6
+  mov     r2, ip
+MAC_L.FINISH:
+  STR_MACL  r4
+  STR_MACH  r2
 
 
 //--------------------------------------------------------------
@@ -1335,5 +1816,53 @@ opfunc MAC_L
 //-------------------------------------------------------------
 opdesc MAC_W, 120,5,31,0,0,0
 opfunc MAC_W
-
-
+  mov r0, #0  // m
+  mov r1, #0  // n
+  mov     r6, r0
+  ldr     r0, [r7, r0]
+  mov     r4, r2
+  mov     r5, r1
+  CALL_GETMEM_WORD
+  ldr     r3, [r7, r6]
+  add     r3, r3, #2
+  str     r3, [r7, r6]
+  uxth    r6, r0
+  ldr     r0, [r7, r5]
+  CALL_GETMEM_WORD
+  ldr     r2, [r4, r7]
+  LDR_SR r3
+  add     r2, r2, #2
+  str     r2, [r7, r5]
+  ands    r1, r3, #2
+  uxth    r0, r0
+  beq     MAC_W.L15
+  smulbb  r0, r6, r0
+  LDR_MACL r6
+  mvn     r5, #1
+  mvn     r4, #0
+  adds    r2, r0, r6
+  mov     r3, r0, asr #31
+  adc     r3, r3, r6, asr #31
+  adds    r6, r2, #-2147483648
+  sbc     r1, r3, #0
+  cmp     r1, r5
+  cmpeq   r6, r4
+  bhi     MAC_W.L17
+  cmp     r0, #0
+  LDR_MACH r0        
+  movlt   r2, #-2147483648
+  mvnge   r2, #-2147483648
+  orr     r0, r0, #1
+  STR_MACH  r0
+MAC_W.L17:
+  STR_MACL     r2
+  b MAC_W.FINISH
+MAC_W.L15:
+  LDR_MACL r4
+  LDR_MACH r3  
+  orr     r2, r1, r4
+  orr     r3, r3, r4, asr #31
+  smlalbb r2, r3, r6, r0
+  STR_MACL  r2
+  STR_MACH  r3
+MAC_W.FINISH:
