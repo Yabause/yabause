@@ -11,8 +11,6 @@ cmake_minimum_required(VERSION 2.8)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
 set(yabause_HEADERS
-	sh2_dynarec2/DynarecSh2.h
-	sh2_dynarec2/opcodes.h
 	bios.h
 	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
 	debug.h
@@ -38,8 +36,6 @@ set(YAB_PORTS "sdl;qt" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
-  sh2_dynarec2/DynarecSh2CInterface.cpp  
-	sh2_dynarec2/DynarecSh2.cpp
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
@@ -110,6 +106,37 @@ option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
 if (YAB_WANT_SH2_CACHE)
     add_definitions(-DCACHE_ENABLE=1)
     add_definitions(-DEXEC_FROM_CACHE=1)
+endif()
+
+#-------------------------------------------------------
+
+option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
+if (YAB_WANT_DYNAREC_DEVMIYAX)
+	add_definitions(-DDYNAREC_DEVMIYAX=1)
+
+  set(yabause_SOURCES
+    ${yabause_SOURCES}
+    sh2_dynarec2/DynarecSh2CInterface.cpp  
+	  sh2_dynarec2/DynarecSh2.cpp)
+
+	set(yabause_HEADERS
+		${yabause_HEADERS}
+	  sh2_dynarec2/DynarecSh2.h
+	  sh2_dynarec2/opcodes.h)
+
+		if (MSVC) # NASM
+	  	set(YABAUSE_LIBRARIES 
+			  ${YABAUSE_LIBRARIES} 
+			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec2/dynalib )
+		else() # UNIX(GAS)
+			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
+				enable_language(ASM-ATT)
+				set(yabause_SOURCES 
+				  ${yabause_SOURCES}
+					sh2_dynarec2/dynalib_arm.s)
+			endif ()
+		endif ()
+		
 endif()
 
 option(YAB_USE_SSF "Include SSF player." ON)
@@ -242,7 +269,7 @@ if (STDINT_H_FOUND)
 endif()
 
 find_package(Threads)
-set(YABAUSE_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec2/dynalib ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 # 16BPP
 set(YAB_RGB "" CACHE STRING "Bit configuration of pixels in the display buffer.")
