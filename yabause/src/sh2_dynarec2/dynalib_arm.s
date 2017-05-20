@@ -317,11 +317,17 @@ opdesc NOP,		4,0xff,0xff,0xff,0xff,0xff
 opfunc NOP
 nop
 
-opdesc DIV0U,	6,0,0,0,0,0
+opdesc DIV0U,	12,0xff,0xff,0xff,0xff,0xff
 opfunc DIV0U
+LDR_SR r0
+and r0,0xfffffcfe
+STR_SR r0
 
-opdesc SETT,	3,0,0,0,0,0
+opdesc SETT,	12,0xff,0xff,0xff,0xff,0xff
 opfunc SETT
+LDR_SR r0
+orr r0 , #1
+STR_SR r0
 
 opdesc SLEEP,	4,0xff,0xff,0xff,0xff,0xff
 opfunc SLEEP
@@ -356,18 +362,36 @@ bicne   r2, r2, #1
 STR_SR r2
 
 
-opdesc TSTI,	23,0,0,0,6,0
+opdesc TSTI,	28,0xff,0xff,0xff,0,0xff
 opfunc TSTI
+mov     r0, #0   // n
+LDR_SR  r1
+ldr     r3, [r7] // R[0]
+tst     r0, r3
+orreq   r0, r1, #1
+bicne   r0, r1, #1
+STR_SR  r0
 
-
-opdesc ANDI,	9,0,0,0,5,0
+opdesc ANDI,	16,0xff,0xff,0xff,0,0xff
 opfunc ANDI
+mov  r0, #0
+ldr  r3, [r7]
+and  r0, r0, r3
+str  r0, [r7]
 
-opdesc XORI,	9,0,0,0,5,0
+opdesc XORI,	16,0xff,0xff,0xff,0,0xff
 opfunc XORI
+mov  r0, #0
+ldr  r3, [r7]
+eor  r0, r0, r3
+str  r0, [r7]
 
-opdesc ORI,	9,0,0,0,5,0
+opdesc ORI,	16,0xff,0xff,0xff,0,0xff
 opfunc ORI
+mov  r0, #0
+ldr  r3, [r7]
+orr  r0, r0, r3
+str  r0, [r7]
 
 opdesc CMP_EQ_IMM,	25,0,0,0,8,0
 opfunc CMP_EQ_IMM
@@ -403,26 +427,56 @@ sub r3, r3, r1
 str r3, [r7, r0]
 
 
-opdesc NOT,		18,4,14,0,0,0
+opdesc NOT,		20,0,4,0xff,0xff,0xff
 opfunc NOT
+mov r0, #0 // m
+mov r1, #0 // n
+ldr  r3, [r2, r0]
+mvn  r3, r3
+str  r3, [r7, r1]
+
 
 opdesc NEG,		18,4,14,0,0,0
 opfunc NEG
+mov r0, #0 // m
+mov r1, #0 // n
+ldr  r3, [r2, r0]
+rsb  r3, r3, #0
+str  r3, [r7, r1]
 
 opdesc NEGC,	50,4,14,0,0,0
 opfunc NEGC
 
-opdesc EXTUB,	21,4,17,0,0,0
+opdesc EXTUB,	16,0,4,0xff,0xff,0xff
 opfunc EXTUB
+mov r0, #0 // m
+mov r1, #0 // n
+ldrb    r3, [r7, r0]    @ zero_extendqisi2
+str     r3, [r7, r1]
 
-opdesc EXTU_W,	21,4,17,0,0,0
+opdesc EXTU_W,	20,0,4,0xff,0xff,0xff
 opfunc EXTU_W
+mov r0, #0 // m
+mov r1, #0 // n
+ldr  r3, [r2, r0]
+uxth r3, r3
+str  r3, [r7, r1]
 
-opdesc EXTS_B,	19,4,15,0,0,0
+opdesc EXTS_B,	20,0,4,0xff,0xff,0xff
 opfunc EXTS_B
+mov r0, #0 // m
+mov r1, #0 // n
+ldr  r3, [r2, r0]
+sxtb r3, r3
+str  r3, [r7, r1]
 
-opdesc EXTS_W,	17,4,13,0,0,0
+opdesc EXTS_W,	20,0,4,0xff,0xff,0xff
 opfunc EXTS_W
+mov r0, #0 // m
+mov r1, #0 // n
+ldr  r3, [r2, r0]
+sxth r3, r3
+str  r3, [r7, r1]
 
 //Store Register Opcodes
 //----------------------
@@ -603,24 +657,76 @@ STR_SR  r0           // SR = r0
 
 opdesc CMP_PZ,	17,0,4,0,0,0
 opfunc CMP_PZ
+ldr     r0, [r7, #0]
+LDR_SR  r2
+cmp     r0, #0
+orrge   r0, r1, #1
+biclt   r0, r1, #1
+STR_SR  r0
 
-opdesc CMP_PL,	23,0,4,0,0,0
+opdesc CMP_PL,	23,0xff,4,0xff,0xff,0xff
 opfunc CMP_PL
+ldr     r0, [r7, #0]
+LDR_SR  r2
+cmp     r0, #0
+orrgt   r0, r1, #1
+bicle   r0, r1, #1
+STR_SR  r0
 
-opdesc CMP_EQ,	24,4,12,0,0,0
+
+opdesc CMP_EQ,	28,0,4,0xff,0xff,0xff
 opfunc CMP_EQ
+ldr     r0, [r7, #0]
+ldr     r3, [r7, #0]
+LDR_SR  r2
+cmp     r0, r3
+orreq   r0, r2, #1
+bicne   r0, r2, #1
+STR_SR  r0
 
-opdesc CMP_HS,	24,4,12,0,0,0
+opdesc CMP_HS,	28,0,4,0xff,0xff,0xff
 opfunc CMP_HS
+ldr     r0, [r7, #0]
+ldr     r3, [r7, #0]
+LDR_SR  r2
+cmp     r0, r3
+orrcs   r0, r2, #1
+biccc   r0, r2, #1
+STR_SR  r0
 
-opdesc CMP_HI,	24,4,12,0,0,0
+
+opdesc CMP_HI,	28,0,4,0xff,0xff,0xff
 opfunc CMP_HI
+ldr     r0, [r7, #0]
+ldr     r3, [r7, #0]
+LDR_SR  r2
+cmp     r0, r3
+orrhi   r0, r2, #1
+bicls   r0, r2, #1
+STR_SR  r0
 
-opdesc CMP_GE,	24,4,12,0,0,0
+
+opdesc CMP_GE,	28,0,4,0xff,0xff,0xff
 opfunc CMP_GE
+ldr     r0, [r7, #0]
+ldr     r3, [r7, #0]
+LDR_SR  r2
+cmp     r0, r3
+orrge   r0, r2, #1
+biclt   r0, r2, #1
+STR_SR  r0
 
-opdesc CMP_GT,	24,4,12,0,0,0
+
+opdesc CMP_GT,	28,0,4,0xff,0xff,0xff
 opfunc CMP_GT
+ldr     r0, [r7, #0]
+ldr     r3, [r7, #0]
+LDR_SR  r2
+cmp     r0, r3
+orrgt   r0, r2, #1
+bicle   r0, r2, #1
+STR_SR  r0
+
 
 opdesc ROTL,	23,0,4,0,0,0
 opfunc ROTL
@@ -1149,8 +1255,13 @@ CALL_SETMEM_LONG // 2cyclte
 
 
 
-opdesc MOVR,		16,4,12,0,0,0
+opdesc MOVR,		16,4,0,0xff,0xff,0xff
 opfunc MOVR
+mov r0, #0 // b
+mov r1, #0 // c
+ldr  r1, [r7, r1]
+str  r1, [r7, r0]
+
 
 opdesc MOVBM,		29,4,12,0,0,0
 opfunc MOVBM
