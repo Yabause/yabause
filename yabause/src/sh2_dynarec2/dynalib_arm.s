@@ -285,6 +285,7 @@ STR_COUNT r9  // store COUNTER to memory
 ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
 PageFlip.jmp:
 STR_PC r0
+STR_COUNT r9  // store COUNTER to memory
 ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
 
 .size	PageFlip, .-PageFlip // 22
@@ -480,7 +481,7 @@ opdesc NOT,		20,0,4,0xff,0xff,0xff
 opfunc NOT
 mov r0, #0 // m
 mov r1, #0 // n
-ldr  r3, [r2, r0]
+ldr  r3, [r7, r0]
 mvn  r3, r3
 str  r3, [r7, r1]
 
@@ -488,7 +489,7 @@ opdesc NEG,		20,0,4,0xff,0xff,0xff
 opfunc NEG
 mov r0, #0 // m
 mov r1, #0 // n
-ldr  r3, [r2, r0]
+ldr  r3, [r7, r0]
 rsb  r3, r3, #0
 str  r3, [r7, r1]
 
@@ -518,7 +519,7 @@ opdesc EXTU_W,	20,0,4,0xff,0xff,0xff
 opfunc EXTU_W
 mov r0, #0 // m
 mov r1, #0 // n
-ldr  r3, [r2, r0]
+ldr  r3, [r7, r0]
 uxth r3, r3
 str  r3, [r7, r1]
 
@@ -526,7 +527,7 @@ opdesc EXTS_B,	20,0,4,0xff,0xff,0xff
 opfunc EXTS_B
 mov r0, #0 // m
 mov r1, #0 // n
-ldr  r3, [r2, r0]
+ldr  r3, [r7, r0]
 sxtb r3, r3
 str  r3, [r7, r1]
 
@@ -534,7 +535,7 @@ opdesc EXTS_W,	20,0,4,0xff,0xff,0xff
 opfunc EXTS_W
 mov r0, #0 // m
 mov r1, #0 // n
-ldr  r3, [r2, r0]
+ldr  r3, [r7, r0]
 sxth r3, r3
 str  r3, [r7, r1]
 
@@ -591,8 +592,8 @@ str  r0, [r7, r4]
 
 opdesc MOVL_MEM_REG, 28,0,4,0xff,0xff,0xff
 opfunc MOVL_MEM_REG
+mov r1,  #0  // b
 mov r0,  #0  // b
-mov r1 , #0  // c
 mov r5, r0
 ldr r0, [r7, r1]
 CALL_GETMEM_LONG
@@ -1327,10 +1328,10 @@ str     r5, [r7, r1]
 opdesc STS_PR,		12,0xFF,0,0xFF,0xff,0xff
 opfunc STS_PR
 mov r0, #0
-LDR_PR  r1
+LDR_PR  r1 
 str     r1, [r7, r0]
 
-opdesc STSMPR,	20,0xff,4,0xff,0xff,0xff
+opdesc STSMPR,	20,0xff,0,0xff,0xff,0xff
 opfunc STSMPR
 ldr r0, [r7, #0 ]
 sub r0, #4
@@ -1439,7 +1440,7 @@ CALL_GETMEM_WORD
 sxth r0,r0
 str  r0, [r7, #0]
 
-opdesc MOVLL4, 20,0,20,4,0xff,0xff
+opdesc MOVLL4, 24,0,20,4,0xff,0xff
 opfunc MOVLL4
 ldr r2, [r7, #0]
 mov r1, #0 // disp
@@ -1447,7 +1448,7 @@ add r0, r2, r1, asl #2
 CALL_GETMEM_LONG
 str r0, [r7, #0]
 
-opdesc MOVBS4,	24,0,0xff,4,0xff,0xff
+opdesc MOVBS4,	28,0,0xff,4,0xff,0xff
 opfunc MOVBS4
 mov r0, #0 // n
 mov r1, #0 // disp
@@ -1456,7 +1457,7 @@ add r0, r2, r1
 ldr r1, [r7]
 CALL_SETMEM_BYTE
 
-opdesc MOVWS4,	24,0,0xff,4,0xff,0xff
+opdesc MOVWS4,	28,0,0xff,4,0xff,0xff
 opfunc MOVWS4
 mov r0, #0 // n
 mov r1, #0 // disp
@@ -1465,7 +1466,7 @@ add r0, r2, r1, asl #1
 ldr r1, [r7]
 CALL_SETMEM_WORD
 
-opdesc MOVLS4,	32,0,8,4,0xff,0xff
+opdesc MOVLS4,	36,0,8,4,0xff,0xff
 opfunc MOVLS4
 mov r0, #0 // m
 mov r1, #0 // disp
@@ -1706,8 +1707,8 @@ DIV1.FINISH:
 //dmuls
 opdesc DMULS, 20,0,4,0xff,0xff,0xff
 opfunc DMULS
-ldr     r3, [r2, #0]
-ldr     r2, [r2, #0]
+ldr     r3, [r7, #0]
+ldr     r2, [r7, #0]
 smull   r2, r3, r3, r2
 STR_MACH r3
 STR_MACL r2
@@ -1716,8 +1717,8 @@ STR_MACL r2
 //dmulu 32bit -> 64bit Mul
 opdesc DMULU, 20,0,4,0xff,0xff,0xff
 opfunc DMULU
-ldr     r3, [r2, #0]
-ldr     r2, [r2, #0]
+ldr     r3, [r7, #0]
+ldr     r2, [r7, #0]
 umull   r2, r3, r3, r2
 STR_MACH r3
 STR_MACL r2
