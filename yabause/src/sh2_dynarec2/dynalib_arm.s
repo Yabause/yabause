@@ -764,8 +764,8 @@ STR_SR  r0
 
 opdesc CMP_EQ,	28,0,4,0xff,0xff,0xff
 opfunc CMP_EQ
-ldr     r0, [r7, #0]
 ldr     r3, [r7, #0]
+ldr     r0, [r7, #0]
 LDR_SR  r2
 cmp     r0, r3
 orreq   r0, r2, #1
@@ -774,8 +774,8 @@ STR_SR  r0
 
 opdesc CMP_HS,	28,0,4,0xff,0xff,0xff
 opfunc CMP_HS
-ldr     r0, [r7, #0]
 ldr     r3, [r7, #0]
+ldr     r0, [r7, #0]
 LDR_SR  r2
 cmp     r0, r3
 orrcs   r0, r2, #1
@@ -785,8 +785,8 @@ STR_SR  r0
 
 opdesc CMP_HI,	28,0,4,0xff,0xff,0xff
 opfunc CMP_HI
-ldr     r0, [r7, #0]
 ldr     r3, [r7, #0]
+ldr     r0, [r7, #0]
 LDR_SR  r2
 cmp     r0, r3
 orrhi   r0, r2, #1
@@ -796,8 +796,8 @@ STR_SR  r0
 
 opdesc CMP_GE,	28,0,4,0xff,0xff,0xff
 opfunc CMP_GE
-ldr     r0, [r7, #0]
 ldr     r3, [r7, #0]
+ldr     r0, [r7, #0]
 LDR_SR  r2
 cmp     r0, r3
 orrge   r0, r2, #1
@@ -807,8 +807,8 @@ STR_SR  r0
 
 opdesc CMP_GT,	28,0,4,0xff,0xff,0xff
 opfunc CMP_GT
-ldr     r0, [r7, #0]
 ldr     r3, [r7, #0]
+ldr     r0, [r7, #0]
 LDR_SR  r2
 cmp     r0, r3
 orrgt   r0, r2, #1
@@ -1062,7 +1062,7 @@ add     r0, r5, r6  // GBR+R0
 CALL_SETMEM_BYTE
 
 
-opdesc TST_B,	34,0,0,0,25,0
+opdesc TST_B,	34,0xff,0xff,0xff,20,0xff
 opfunc TST_B
 LDR_GBR r0
 ldr     r1, [r7]
@@ -1133,9 +1133,16 @@ lsl r0, #1         // disp << 1
 add r0, r1         // PC = PC+disp
 */
 
-opdesc BSRF,		24,0,4,0,0,0
+opdesc BSRF,		28,0xff,0,0xff,0xff,0xff  // ToDo:
 opfunc BSRF
-add r0, r1         // PC = PC+disp
+mov r0, #0 // m
+ldr r0, [r7, r0]
+mov r1, r8
+add r1, #4
+STR_PR r1
+add r0, r8
+add r0, #4
+
 
 opdesc BRAF,		16,0xff,0,0xff,0xff,0xff
 opfunc BRAF
@@ -1241,10 +1248,12 @@ LDR_MACL r1
 str r1, [r7, #0 ] // R[n] = MACL
 
 
-opdesc STS_MACH_DEC, 20,0xff,4,0xff,0xff,0xff
+opdesc STS_MACH_DEC, 28,0xff,0,0xff,0xff,0xff
 opfunc STS_MACH_DEC
-ldr r0, [r7, #0 ]
+mov r2, #0
+ldr r0, [r7, r2 ]
 sub r0, #4
+ldr r0, [r7, r2 ]
 LDR_MACH r1
 CALL_SETMEM_LONG
 
@@ -1254,10 +1263,12 @@ opfunc STS_MACL
 LDR_MACL r1
 str r1, [r7, #0 ] // R[n] = MACL
 
-opdesc STS_MACL_DEC, 20,0xff,4,0xff,0xff,0xff
+opdesc STS_MACL_DEC, 28,0xff,0,0xff,0xff,0xff
 opfunc STS_MACL_DEC
-ldr r0, [r7, #0 ]
+mov r2, #0
+ldr r0, [r7, r2 ]
 sub r0, #4
+ldr r0, [r7, r2 ]
 LDR_MACL r1
 CALL_SETMEM_LONG
 
@@ -1331,10 +1342,12 @@ mov r0, #0
 LDR_PR  r1 
 str     r1, [r7, r0]
 
-opdesc STSMPR,	20,0xff,0,0xff,0xff,0xff
+opdesc STSMPR,	28,0xff,0,0xff,0xff,0xff
 opfunc STSMPR
-ldr r0, [r7, #0 ]
+mov r4, #0
+ldr r0, [r7, r4 ]
 sub r0, #4
+str r0, [r7, r4 ]
 LDR_PR r1
 CALL_SETMEM_LONG
 
@@ -1344,14 +1357,15 @@ mov r0, #0 // b
 ldr r0, [r7, r0]
 STR_PR r0
 
-opdesc LDS_PR_INC,	24,0,4,0,0,0
+opdesc LDS_PR_INC,	28,0xff,0,0xff,0xff,0xff
 opfunc LDS_PR_INC
 mov r2, #0 // m
 ldr r0, [r7, r2 ]
 add r1, r0 , #4
+str r1, [r7, r2 ]
 CALL_GETMEM_LONG
 STR_PR r0       // MACH = ReadLong(sh->regs.R[m]);
-str r1, [r7, r2 ]
+
 
 opdesc LDS_MACH,		12,0xff,0,0xff,0xff,0xff
 opfunc LDS_MACH
@@ -1360,14 +1374,14 @@ ldr r0, [r7, r0]
 STR_MACH r0
 
 
-opdesc LDS_MACH_INC,	24,0xff,0,0xff,0xff,0xff
+opdesc LDS_MACH_INC,	28,0xff,0,0xff,0xff,0xff
 opfunc LDS_MACH_INC
 mov r2, #0 // m
 ldr r0, [r7, r2 ]
 add r1, r0 , #4
+str r1, [r7, r2 ]
 CALL_GETMEM_LONG
 STR_MACH r0       // MACH = ReadLong(sh->regs.R[m]);
-str r1, [r7, r2 ]
 
 
 opdesc LDS_MACL,		12,0xff,0,0xff,0xff,0xff
@@ -1377,14 +1391,14 @@ ldr r0, [r7, r0]
 STR_MACL r0
 
 
-opdesc LDS_MACL_INC,	24,0xff,0,0xff,0xff,0xff
+opdesc LDS_MACL_INC,	28,0xff,0,0xff,0xff,0xff
 opfunc LDS_MACL_INC
 mov r2, #0 // m
 ldr r0, [r7, r2 ]
 add r1, r0 , #4
+str r1, [r7, r2 ]
 CALL_GETMEM_LONG
 STR_MACL r0       // MACH = ReadLong(sh->regs.R[m]);
-str r1, [r7, r2 ]
 
 //Mov Opcodes
 //-----------
@@ -1817,7 +1831,7 @@ MAC_L.FINISH:
 // MACW   ans = 32bit -> 64 bit MUL
 //        (MACH << 32 + MACL)  + ans 
 //-------------------------------------------------------------
-opdesc MAC_W, 120,5,31,0,0,0
+opdesc MAC_W, 120,5,31,0xff,0xff,0xff
 opfunc MAC_W
   mov r0, #0  // m
   mov r1, #0  // n
