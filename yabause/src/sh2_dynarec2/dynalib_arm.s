@@ -815,9 +815,10 @@ orrgt   r0, r2, #1
 bicle   r0, r2, #1
 STR_SR  r0
 
-opdesc CMP_EQ_IMM,	28,0xff,0xff,0xff,0,0xff
+opdesc CMP_EQ_IMM,	32,0xff,0xff,0xff,0,0xff
 opfunc CMP_EQ_IMM
 mov r0, #0 // imm
+sxtb r0,r0
 LDR_SR  r1
 ldr     r3, [r7]
 cmp     r3, r0
@@ -991,28 +992,28 @@ opfunc AND
 mov r0, #0
 mov r1, #0
 ldr r3, [r7, r1]
-ldr r1, [r7, r0]
-and r3, r3, r1
-str r3, [r7, r0]
+ldr r0, [r7, r0]
+and r3, r3, r0
+str r3, [r7, r1]
 
 opdesc OR,		24,0,4,0xff,0xff,0xff
 opfunc OR
 mov r0, #0
 mov r1, #0
 ldr r3, [r7, r1]
-ldr r1, [r7, r0]
-orr r3, r3, r1
-str r3, [r7, r0]
+ldr r0, [r7, r0]
+orr r3, r3, r0
+str r3, [r7, r1]
 
 
 opdesc XOR,		24,0,4,0xff,0xff,0xff
 opfunc XOR
-mov r2, #0  // get INSTRUCTION_B
-mov r3, #0  // get INSTRUCTION_C
+mov r2, #0  // get INSTRUCTION_C
+mov r3, #0  // get INSTRUCTION_B
 ldr r0,[r7,r2]   
 ldr r1,[r7,r3]   
 eor r0,r1        // xor  
-str r0,[r7,r2]   // R[B] = xor
+str r0,[r7,r3]   // R[B] = xor
 
 opdesc ADDI,	20,0xff,4,0xff,0,0xff
 opfunc ADDI
@@ -1603,7 +1604,7 @@ ldr  r0, [r7, r3] // addr R[n]
 ldr  r1, [r7, r2] // val  R[m]
 sub  r0, #4
 str  r0, [r7, r3] // R[n] -= 4
-CALL_SETMEM_WORD // 2cyclte
+CALL_SETMEM_LONG // 2cyclte
 
 opdesc TAS,  64,0xff,0,0xff,0xff,0xff
 opfunc TAS
