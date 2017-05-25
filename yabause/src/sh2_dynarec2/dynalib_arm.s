@@ -403,8 +403,8 @@ str     r3, [r7, r1]
 
 opdesc ADD,		24,0,4,0xff,0xff,0xff
 opfunc ADD
-mov r0, #0 // b
-mov r1, #0 // c
+mov r1, #0 // b
+mov r0, #0 // c
 ldr r1, [r7, r1]
 ldr r3, [r7, r0]
 add r3, r3, r1
@@ -469,8 +469,8 @@ str r2, [r7, r1]
 
 opdesc SUB,		24,0,4,0xff,0xff,0xff
 opfunc SUB
-mov r0, #0 // b
-mov r1, #0 // c
+mov r1, #0 // b
+mov r0, #0 // c
 ldr r1, [r7, r1]
 ldr r3, [r7, r0]
 sub r3, r3, r1
@@ -592,7 +592,7 @@ str  r0, [r7, r4]
 
 opdesc MOVL_MEM_REG, 28,0,4,0xff,0xff,0xff
 opfunc MOVL_MEM_REG
-mov r1,  #0  // b
+mov r1,  #0  // c
 mov r0,  #0  // b
 mov r5, r0
 ldr r0, [r7, r1]
@@ -659,8 +659,8 @@ str  r0, [r7, r1] // R[n] = (int)i
 
 opdesc MOVBL0,	40,0,4,0xff,0xff,0xff
 opfunc MOVBL0
-mov r0,  #0  
-mov r1 , #0  
+mov r1,  #0  
+mov r0 , #0  
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
@@ -672,8 +672,8 @@ str r0, [r7, r5]
 
 opdesc MOVWL0,	40,0,4,0xff,0xff,0xff
 opfunc MOVWL0
-mov r0,  #0  
-mov r1 , #0  
+mov r1,  #0  
+mov r0 , #0  
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
@@ -685,8 +685,8 @@ str r0, [r7, r5]
 
 opdesc MOVLL0,	36,0,4,0xff,0xff,0xff
 opfunc MOVLL0
-mov r0,  #0  
-mov r1 , #0  
+mov r1,  #0  
+mov r0 , #0  
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
@@ -1099,7 +1099,7 @@ lsl r0, #8
 orr r0, r1
 tst     r0, #2048
 mvnne   r0, r0, asl #20
-mvnne   r0, r0, lsr #20
+mvnne   r0, r0, asr #20
 add     r0, r8, r0, asl #1
 add     r0, r0, #4
 
