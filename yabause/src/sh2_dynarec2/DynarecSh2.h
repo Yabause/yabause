@@ -121,6 +121,7 @@ struct x86op_desc
   unsigned char delay;
   unsigned char cycle;
   unsigned char write_count;
+  unsigned char build_count;
 
   x86op_desc(void(*ifunc)(), const unsigned short *isize, const unsigned char *isrc,
     const unsigned char *idest, const unsigned char *ioff1, const unsigned char *iimm,
@@ -136,6 +137,7 @@ struct x86op_desc
     delay = idelay;
     cycle = icycle;
     write_count = iwrite_count;
+    build_count = 0;
   };
 
 };

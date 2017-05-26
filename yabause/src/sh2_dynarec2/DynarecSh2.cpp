@@ -824,6 +824,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 #endif
 
     instruction_counter++;
+    asm_list[i].build_count++;
     write_memory_counter = asm_list[i].write_count;
 
     if (asm_list[i].func == 0) {
