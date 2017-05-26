@@ -1160,7 +1160,7 @@ opdesc RTE,			68,0xff,0xff,0xff,0xff,0xff
 opfunc RTE
 ldr     r0, [r7, #60]
 CALL_GETMEM_LONG
-mov     r4, r0 // PC
+mov     r5, r0 // PC
 ldr     r0, [r7, #60]
 add     r0, r0, #4
 str     r0, [r7, #60]
