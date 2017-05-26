@@ -664,7 +664,7 @@ mov r0 , #0
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
-add r0, r1, asl #2
+add r0, r1
 CALL_GETMEM_BYTE
 sxtb r0,r0
 str r0, [r7, r5]
@@ -677,7 +677,7 @@ mov r0 , #0
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
-add r0, r1, asl #2
+add r0, r1
 CALL_GETMEM_WORD
 sxth r0,r0
 str r0, [r7, r5]
@@ -690,7 +690,7 @@ mov r0 , #0
 mov r5, r0
 ldr r0, [r7, r1]
 ldr r1, [r7]
-add r0, r1, asl #2
+add r0, r1
 CALL_GETMEM_LONG
 str r0, [r7, r5]
 
@@ -704,7 +704,7 @@ str r1, [r7, r0];
 
 opdesc MOVBS0,	24,0x0,0x4,0xff,0xff,0xff
 opfunc MOVBS0
-mov r1 , #0
+ldr r1, [r7, #0]
 ldr r0, [r7, #0]
 ldr r2, [r7]
 add r0, r0, r2
@@ -713,7 +713,7 @@ CALL_SETMEM_BYTE
 
 opdesc MOVWS0,	24,0x0,0x4,0xff,0xff,0xff
 opfunc MOVWS0
-mov r1 , #0
+ldr r1, [r7, #0]
 ldr r0, [r7, #0]
 ldr r2, [r7]
 add r0, r0, r2
@@ -721,7 +721,7 @@ CALL_SETMEM_WORD
 
 opdesc MOVLS0,	24,0x0,0x4,0xff,0xff,0xff
 opfunc MOVLS0
-mov r1 , #0
+ldr r1, [r7, #0]
 ldr r0, [r7, #0]
 ldr r2, [r7]
 add r0, r0, r2
