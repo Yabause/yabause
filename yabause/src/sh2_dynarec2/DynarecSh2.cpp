@@ -153,7 +153,7 @@ i_desc opcode_list[] =
   { ND4_F,    "mov.b r0, @(0x%03X, r%d)", 0xff00, 0x8000,	0, sh2_MOVB_R0_DISP},
   { ND4_F,    "mov.w r0, @(0x%03X, r%d)", 0xff00, 0x8100,	0, sh2_MOVW_R0_DISP},
   { NMD_F,    "mov.l r%d, @(0x%03X, r%d)",0xf000, 0x1000,	0, sh2_MOVL_DISP_MEM},
-  { NMD_F,    "mov.l @(0x%03X, r%d), r%d",0xf000, 0x5000,	0, sh2_MOVL_MEM_DISP},
+  { NMD_F,    "mov.l @(0x%03X, r%d), r%d",0xf000, 0x5000,	0, MOVLL4},
   { D_F,      "mov.b r0, @(0x%03X, gbr)",	0xff00, 0xc000,	1, sh2_MOVB_R0_GBR},
   { D_F,      "mov.w r0, @(0x%03X, gbr)",	0xff00, 0xc100,	2, sh2_MOVW_R0_GBR},
   { D_F,      "mov.l r0, @(0x%03X, gbr)",	0xff00, 0xc200,	4, sh2_MOVL_R0_GBR},
@@ -301,7 +301,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define DALAY_CLOCK_OFFSET 8
 #define SEPERATORSIZE_DELAYD 34
 #define EPILOGSIZE		      12
-#define DELAYJUMPSIZE	     28
+#define DELAYJUMPSIZE	     32
 #endif
 
 
@@ -722,7 +722,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, u32 * ParentT = NULL)
 }
 
 void CompileBlocks::ShowStatics() {
-  LOG("Compile %d/%d", compile_count_, exec_count_);
+  //LOG("Compile %d/%d\n", compile_count_, exec_count_);
   compile_count_ = 0;
   exec_count_ = 0;
 }
@@ -800,7 +800,9 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   
   page->isInfinityLoop = false;
   
+#ifdef BUILD_INFO  
   printf("*********** start block *************\n", startptr, op, addr);
+#endif
 
   MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
   while (ptr - startptr < MaxSize) {
@@ -811,8 +813,9 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
     if (0x1b == op) { // SLEEP
       page->isInfinityLoop = true;
     }
-
+#ifdef BUILD_INFO  
     printf("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
+#endif    
 
     if( ParentT ){
       ParentT[(addr&0x000FFFFF)>>1] = (start_addr&0x000FFFFF)>>1;
@@ -835,6 +838,9 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
       memcpy((void*)ptr, (void*)nomal_seperator, nomal_seperator_size);
       instrSize[blockCount][count++] = nomal_seperator_size;
       ptr += nomal_seperator_size;
+
+      exit(0);
+
       break;
     }
 
@@ -968,6 +974,7 @@ DynarecSh2::DynarecSh2() {
   pre_exe_count_ = 0;
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
+  pre_PC_ = 0;
 }
 
 void DynarecSh2::ResetCPU(){
@@ -1097,15 +1104,29 @@ int DynarecSh2::Execute(){
    }
     
   //LOG("\n---dynaExecute %08X----\n", GET_PC() );
-    //printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
 
-  if( 0x06000000 == (GET_PC()&0x0F000000) ){
-    printf("dynaExecute start PC=%08X VPC=%08X SR=%08X----\n", (uintptr_t)pBlock->code, GET_PC(), GET_SR() );
-  }
-  if( 0x0600072E == GET_PC() ){
+  //if( pre_PC_ != GET_PC() ) {
+  //  printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
+  //  pre_PC_ = GET_PC();
+ // }
+  if( 0x060008F4 == GET_PC() ){
     int a=0;
   }
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
+
+  if( 0x06000F84 == GET_PC() ) {   
+    printf("%08X PR= %08X R[15]=%08X, val=%08X\n", GET_PC(), GET_PR(), m_pDynaSh2->GenReg[15],
+    memGetLong(m_pDynaSh2->GenReg[15])  );
+    //exit(0);
+  }
+
+  if( 0x060200A0 == GET_PC() ) {   
+    printf("%08X R[0]= %08X R[15]=%08X, val=%08X\n", GET_PC(), m_pDynaSh2->GenReg[0], m_pDynaSh2->GenReg[15],
+    memGetLong(m_pDynaSh2->GenReg[15])  );
+    exit(0);
+  }
+
+
   //printf("dynaExecute end VPC=%08X PR=%08X count=%d----\n", GET_PC(), GET_PR(), GET_COUNT() );
   //exit(0);
 
@@ -1132,6 +1153,8 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   m_IntruptTbl.push_back(tmp);
   m_IntruptTbl.unique(); 
 
+  printf("AddInterrupt v:%d l:%d\n", Vector, level );
+
   if( m_IntruptTbl.size() > 1 ) {
     m_IntruptTbl.sort();
   }
@@ -1147,6 +1170,8 @@ int DynarecSh2::CheckInterupt(){
   if( m_IntruptTbl.size() == 0 ) {
     return 0;
   }
+
+  printf("CheckInterupt %d\n", m_IntruptTbl.size() );
   
   dlstIntct::iterator pos = m_IntruptTbl.begin();
   if( InterruptRutine((*pos).Vector, (*pos).level ) != 0 ) {
@@ -1174,17 +1199,17 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3]);
     m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
-#if defined(DEBUG_CPU)
-    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
-#endif
+//#if defined(DEBUG_CPU)
+    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
+//#endif
     return 1;
   }
-  return 0;
+  return 0; 
 }
-
+  
 void DynarecSh2::ShowStatics(){
 #if defined(DEBUG_CPU)
-  LOG("Exec cnt %d interruput_chk_cnt_ = %d, interruput_cnt_ = %d", GET_COUNT() - pre_cnt_, interruput_chk_cnt_, interruput_cnt_ );
+  LOG("\nExec cnt %d interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, interruput_chk_cnt_, interruput_cnt_ );
   pre_cnt_ = GET_COUNT();
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
