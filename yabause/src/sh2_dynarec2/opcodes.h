@@ -138,9 +138,10 @@ void FASTCALL sh2_XORI(tagSH2*){};
 void FASTCALL sh2_ORI(tagSH2*){};
 void FASTCALL sh2_TST_B(tagSH2*){};
 void FASTCALL sh2_AND_B(tagSH2*){};
-void FASTCALL sh2_XOR_B(tagSH2*){};
+void FASTCALL sh2_XOR_B(tagSH2*){}; 
 void FASTCALL sh2_OR_B(tagSH2*){};
 void FASTCALL sh2_MOV_DISP_L(tagSH2*){};
 void FASTCALL sh2_MOVI(tagSH2*){};
+void FASTCALL MOVLL4(tagSH2*){};
 
 #endif
