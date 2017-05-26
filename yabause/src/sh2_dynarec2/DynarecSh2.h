@@ -230,6 +230,7 @@ public:
   u32 interruput_chk_cnt_;
   u32 interruput_cnt_ ;
   void ShowStatics();
+  void ShowCompileInfo();
  
   inline u32 * GetGenRegPtr() { return m_pDynaSh2->GenReg; }
   inline u32 GET_MACH() { return m_pDynaSh2->SysReg[0]; }

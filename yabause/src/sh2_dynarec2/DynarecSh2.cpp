@@ -898,6 +898,8 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
         LOG("Unimplemented Opcode (0x%4x) at 0x%8x\n", temp, addr-2);
         break;
       }
+      
+      asm_list[j].build_count++;
 
       cycle += asm_list[j].cycle;
       memcpy((void*)ptr, (void*)(asm_list[j].func), *(asm_list[j].size));
@@ -1216,3 +1218,12 @@ void DynarecSh2::ShowStatics(){
   interruput_cnt_ = 0;
 #endif
 }
+
+void DynarecSh2::ShowCompileInfo(){
+  int i = 0;
+  while (asm_list[i].func != NULL) {
+    printf("%s: %d\n", opcode_list[i].mnem, asm_list[i].build_count);
+    i++;
+  }
+}
+
