@@ -119,6 +119,10 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
   blx r10
 .endm  
 
+.macro CALL_EACHCLOCK
+  ldr r10 , [r7, #(16+3+6+6)*4 ]  
+  blx r10
+.endm  
 
 .macro LDR_MACH reg
   ldr \reg , [r7, #(16+3+0)*4 ]  
@@ -294,12 +298,36 @@ ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
 // normal part par instruction( for debug build )
 .global seperator_d_normal
 seperator_d_normal:
-bl	SH2HandleBreakpoints
+add r8, #2    // PC += 2
+add r9, #1    // Clock += 1  
+STR_PC r8     // store to memory
+STR_COUNT r9  // store to memory
+CALL_EACHCLOCK
+tst r0, #1
+bne seperator_d_normal.continue
+ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+seperator_d_normal.continue:
 
 //------------------------------------------------------
 // Delay slot part par instruction( for debug build )
 .global seperator_d_delay
 seperator_d_delay:
+push {r0}
+STR_PC r8     // store to memory
+STR_COUNT r9  // store to memory
+CALL_EACHCLOCK
+pop {r0}
+cmn r0, #1 // Check need to branch
+bne seperator_d_delay.continue  
+add r8, #2    // PC += 2
+STR_PC r8
+add r9, #1    // Clock += 1  
+STR_COUNT r9
+ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+seperator_d_delay.continue:
+mov r8, r0    // copy jump addr
+sub r8, #2    // PC -= 2
+.size seperator_delay_slot, .-seperator_delay_slot // 40
 
 
 opdesc CLRT, 12,0xff,0xff,0xff,0xff,0xff
@@ -746,7 +774,7 @@ STR_SR  r0           // SR = r0
 opdesc CMP_PZ,	24,0xff,0,0xff,0xff,0xff
 opfunc CMP_PZ
 ldr     r0, [r7, #0]
-LDR_SR  r2
+LDR_SR  r1
 cmp     r0, #0
 orrge   r0, r1, #1
 biclt   r0, r1, #1
@@ -755,7 +783,7 @@ STR_SR  r0
 opdesc CMP_PL,	24,0xff,0,0xff,0xff,0xff
 opfunc CMP_PL
 ldr     r0, [r7, #0]
-LDR_SR  r2
+LDR_SR  r1
 cmp     r0, #0
 orrgt   r0, r1, #1
 bicle   r0, r1, #1
@@ -766,20 +794,20 @@ opdesc CMP_EQ,	28,0,4,0xff,0xff,0xff
 opfunc CMP_EQ
 ldr     r3, [r7, #0]
 ldr     r0, [r7, #0]
-LDR_SR  r2
+LDR_SR  r1
 cmp     r0, r3
-orreq   r0, r2, #1
-bicne   r0, r2, #1
+orreq   r0, r1, #1
+bicne   r0, r1, #1
 STR_SR  r0
 
 opdesc CMP_HS,	28,0,4,0xff,0xff,0xff
 opfunc CMP_HS
 ldr     r3, [r7, #0]
 ldr     r0, [r7, #0]
-LDR_SR  r2
+LDR_SR  r1
 cmp     r0, r3
-orrcs   r0, r2, #1
-biccc   r0, r2, #1
+orrcs   r0, r1, #1
+biccc   r0, r1, #1
 STR_SR  r0
 
 
@@ -787,10 +815,10 @@ opdesc CMP_HI,	28,0,4,0xff,0xff,0xff
 opfunc CMP_HI
 ldr     r3, [r7, #0]
 ldr     r0, [r7, #0]
-LDR_SR  r2
+LDR_SR  r1
 cmp     r0, r3
-orrhi   r0, r2, #1
-bicls   r0, r2, #1
+orrhi   r0, r1, #1
+bicls   r0, r1, #1
 STR_SR  r0
 
 
@@ -798,10 +826,10 @@ opdesc CMP_GE,	28,0,4,0xff,0xff,0xff
 opfunc CMP_GE
 ldr     r3, [r7, #0]
 ldr     r0, [r7, #0]
-LDR_SR  r2
+LDR_SR  r1
 cmp     r0, r3
-orrge   r0, r2, #1
-biclt   r0, r2, #1
+orrge   r0, r1, #1
+biclt   r0, r1, #1
 STR_SR  r0
 
 
@@ -809,10 +837,10 @@ opdesc CMP_GT,	28,0,4,0xff,0xff,0xff
 opfunc CMP_GT
 ldr     r3, [r7, #0]
 ldr     r0, [r7, #0]
-LDR_SR  r2
+LDR_SR  r1
 cmp     r0, r3
-orrgt   r0, r2, #1
-bicle   r0, r2, #1
+orrgt   r0, r1, #1
+bicle   r0, r1, #1
 STR_SR  r0
 
 opdesc CMP_EQ_IMM,	32,0xff,0xff,0xff,0,0xff
@@ -867,11 +895,12 @@ mov r0, #0   // n
 LDR_SR r1    // r1 = SR
 ldr r2, [r7, r0]
 lsls r2, #1       // r2 <<= 1  
-andcs r1, #0x01  // if( C==1 ) T=1;
-andcs r2, #0x01  // if( C==1 ) r2 |= 1;
+orrcs r1, #0x01  // if( C==1 ) T=1;
+orrcs r2, #0x01  // if( C==1 ) r2 |= 1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 STR_SR r1 
+
 
 opdesc ROTR,	32,0xff,0,0xff,0xff,0xff
 opfunc ROTR
@@ -879,7 +908,7 @@ mov r0, #0   // n
 LDR_SR r1    // r1 = SR
 ldr r2, [r7, r0]
 rors r2, #1       // r2 >>= 1  
-andcs r1, #0x01  // if( C==1 ) T=1;
+orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 STR_SR r1 
@@ -890,12 +919,13 @@ mov r0, #0   // n
 LDR_SR r1    // r1 = SR
 and r3, r1 , #1 // r3 = SR.T
 ldr r2, [r7, r0]
-lsls r2, #1       // r2 <<= 1  
-andcs r1, #0x01  // if( C==1 ) T=1;
-biccc r1, #0x01  // if( C==0 ) T=0;
+lsls r2, r2, #1       // r2 <<= 1  
+biccc r1, r1, #1  // if( C==0 ) T=0;
+orrcs r1,  #1  // if( C==1 ) T=1;
 orr r2, r3
 str r2, [r7, r0]
 STR_SR r1 
+
 
 opdesc ROTCR,	44,0xff,0,0xff,0xff,0xff
 opfunc ROTCR
@@ -905,7 +935,7 @@ and r3, r1 , #1 // r3 = SR.T
 lsl r3, #31     // 
 ldr r2, [r7, r0]
 rors r2, #1       // r2 <<= 1  
-andcs r1, #0x01  // if( C==1 ) T=1;
+orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 orr r2, r3
 str r2, [r7, r0]
@@ -917,7 +947,7 @@ mov r0, #0
 LDR_SR r1
 ldr r2, [r7, r0]
 lsls r2, #1       // r2 <<= 1  
-andcs r1, #0x01  // if( C==1 ) T=1;
+orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 STR_SR r1 
@@ -929,7 +959,7 @@ mov r0, #0
 LDR_SR r1
 ldr r2, [r7, r0]
 lsrs r2, #1  // r2 >>= 1
-andcs r1, #0x01  // if( C==1 ) T=1;
+orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 
@@ -939,7 +969,7 @@ mov r0, #0
 LDR_SR r1
 ldr r2, [r7, r0]
 asrs r2, #1  // r2 >>= 1
-andcs r1, #0x01  // if( C==1 ) T=1;
+orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 
@@ -1254,7 +1284,7 @@ opfunc STS_MACH_DEC
 mov r2, #0
 ldr r0, [r7, r2 ]
 sub r0, #4
-ldr r0, [r7, r2 ]
+str r0, [r7, r2 ]
 LDR_MACH r1
 CALL_SETMEM_LONG
 
@@ -1269,7 +1299,7 @@ opfunc STS_MACL_DEC
 mov r2, #0
 ldr r0, [r7, r2 ]
 sub r0, #4
-ldr r0, [r7, r2 ]
+str r0, [r7, r2 ]
 LDR_MACL r1
 CALL_SETMEM_LONG
 
@@ -1624,7 +1654,7 @@ uxtb    r1, r1
 CALL_SETMEM_BYTE
        
 
-opdesc DIV0U,	12,0xff,0xff,0xff,0xff,0xff
+opdesc DIV0U,	16,0xff,0xff,0xff,0xff,0xff
 opfunc DIV0U
 LDR_SR r0
 //and r0,0xfffffcfe
@@ -1651,72 +1681,94 @@ biceq   r3, r3, #1
 STR_SR     r3
 
 
-opdesc DIV1, 204,0,4,0xff,0xff,0xff
+opdesc DIV1, (75*4),0,4,0xff,0xff,0xff
 opfunc DIV1
 mov r0, #0 // m
 mov r1, #0 // n
-ldr     r5, [r7, r1] 
+ldr r5, [r7, r1]
 LDR_SR  r3
-cmp     r5, #0
-mov     ip, r3, asr #6
-bicge   r3, r3, #64
-orrlt   r3, r3, #64
-and     ip, ip, #1
-and     r2, r3, #1
-cmp     ip, #0
-orr     r2, r2, r5, asl #1
-str     r2, [r7, r1]
-
-bne     DIV1.L13
-ands    r4, r3, #128
-beq     DIV1.L15
-cmp     r4, #1
-bne     DIV1.L13
-ldr     r0, [r7, r0]
-add     r0, r2, r0
-cmp     r0, r2
-movcs   r2, #0
-movcc   r2, #1
-ands    r4, r3, #64
-str     r0, [r7, r1]
-beq     DIV1.L21
-cmp     r4, #64
-bne     DIV1.L13
-
-DIV1.L22:
-  cmp     r2, #0
-  beq     DIV1.L24
-
-DIV1.L29:
-  orr     r3, r3, #64
-
-DIV1.L13:
-  mov     r2, r3, asr #6
-  eor     r2, r2, r3, asr #7
-  tst     r2, #1
-  orreq   r3, r3, #1
-  bicne   r3, r3, #1
+  cmp r5, #0
+  mov ip, r3, asr #8
+  bicge r3, r3, #256
+  orrlt r3, r3, #256
+  and ip, ip, #1
+  and r2, r3, #1
+  cmp ip, #1
+  orr r2, r2, r5, asl #1
+  str r2, [r7, r1]
+  bne DIV1.L40
+  ands  lr, r3, #128
+  beq DIV1.L17
+  cmp lr, #128
+  bne DIV1.L6
+  ldr r0, [r7, r0]
+  rsb r0, r0, r2
+  cmp r0, r2
+  movls r2, #0
+  movhi r2, #1
+  ands  lr, r3, #512
+  str r0, [r7, r1]
+  beq DIV1.L23
+DIV1.L38:
+  cmp lr, #512
+  bne DIV1.L6
+DIV1.L24:
+  cmp r2, #0
+  bne DIV1.L30
+DIV1.L26:
+  bic r3, r3, #256
+DIV1.L6:
+  mov r2, r3, asr #8
+  eor r2, r2, r3, asr #9
+  tst r2, #1
+  orreq r3, r3, #1
+  bicne r3, r3, #1
   STR_SR  r3
   b DIV1.FINISH
-
-DIV1.L15:
-  ldr     r0, [r7, r0] // R[m]
-  rsb     r0, r0, r2
-  cmp     r0, r2
-  movls   r2, #0
-  movhi   r2, #1
-  ands    r4, r3, #64
-  str     r0, [r7, r1] // R[n]
-  beq     DIV1.L22
-  cmp     r4, #64
-  bne     DIV1.L13
-DIV1.L21:
-  cmp     r2, #0
-  beq     DIV1.L29
-DIV1.L24:
-  bic     r3, r3, #64
-  b       DIV1.L13
+DIV1.L40:
+  ands  lr, r3, #512
+  beq DIV1.L7
+  cmp lr, #1
+  bne DIV1.L6
+  ldr r0, [r7, r0] // R[m]
+  add r0, r2, r0
+  cmp r0, r2
+  movcs r2, #0
+  movcc r2, #1
+  ands  lr, r3, #256
+  str r0, [r7, r1] // R[n]
+  bne DIV1.L38
+  b DIV1.L23
+DIV1.L7:
+  ldr r0, [r7, r0] // R[m]
+  rsb r0, r0, r2
+  cmp r0, r2
+  movls r2, #0
+  movhi r2, #1
+  ands  lr, r3, #256
+  str r0, [r7, r1] // R[n]
+  beq DIV1.L24
+DIV1.L37:
+  cmp lr, #256
+  bne DIV1.L6
+DIV1.L23:
+  cmp r2, #0
+  bne DIV1.L26
+DIV1.L30:
+  orr r3, r3, #256
+  b DIV1.L6
+DIV1.L17:
+  ldr r0, [r7, r0] // R[m]
+  add r0, r2, r0
+  cmp r0, r2
+  movcs r2, #0
+  movcc r2, #1
+  ands  lr, r3, #256
+  str r0, [r7, r1] // R[n]
+  bne DIV1.L37
+  b DIV1.L24
 DIV1.FINISH:
+STR_PC r8
 
 //------------------------------------------------------------
 //dmuls
