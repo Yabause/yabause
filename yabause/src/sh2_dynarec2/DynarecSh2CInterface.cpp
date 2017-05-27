@@ -396,7 +396,7 @@ void memSetLong(u32 addr , u32 data )
   //printf("memSetLong %08X, %08X\n", addr, data);
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
-  {
+  {  
     // Low Memory
   case 0x00200000:
     block->LookupTableLow[addr & 0x000FFFFF] = NULL;
@@ -422,7 +422,6 @@ void memSetLong(u32 addr , u32 data )
 u8 memGetByte(u32 addr)
 {
   dynaLock();
-  //printf("memGetByte %08X\n", addr);
   u8 val;
   val = MappedMemoryReadByte(addr);
   dynaFree();
@@ -432,12 +431,13 @@ u8 memGetByte(u32 addr)
 u16 memGetWord(u32 addr)
 {
   dynaLock();
-  //printf("memGetWord %08X", addr);
   u16 val;
   val = MappedMemoryReadWord(addr);
   dynaFree();
   return val;
 }
+
+
 
 u32 memGetLong(u32 addr)
 {
@@ -445,9 +445,10 @@ u32 memGetLong(u32 addr)
   u32 val;
   val = MappedMemoryReadLong(addr);
   dynaFree();
-  //printf("memGetLong addr=%08X val=%08X\n", addr, val);
   return val;
 }
+
+
 
 
 //************************************************
@@ -476,6 +477,28 @@ int DebugDelayClock() {
 
 int DebugEachClock() {
   dynaLock();
+#if 0
+if( DynarecSh2::CurrentContext->GET_PC() >= 0x0602E3C2 &&  DynarecSh2::CurrentContext->GET_PC() < 0x0602E468 ) {
+   u32 addrn = DynarecSh2::CurrentContext->GetGenRegPtr()[6]-4;
+   u32 addrm = DynarecSh2::CurrentContext->GetGenRegPtr()[7]-4;
+   printf("%08X: MACL R[%d]=%08X@%08X,R[%d]=%08X@%08X,MACH=%08X,MACL=%08X\n",
+      DynarecSh2::CurrentContext->GET_PC(),
+      6,addrn,MappedMemoryReadLong(addrn),
+      7,addrm,MappedMemoryReadLong(addrm),
+      DynarecSh2::CurrentContext->GET_MACH(),
+      DynarecSh2::CurrentContext->GET_MACL()
+   );
+}
+#endif
+/*   
+  printf("%08X: DIV1 R[1]=%08X,m:%08X,n:%08X,SR:%08X\n", 
+    DynarecSh2::CurrentContext->GET_PC(), 
+    DynarecSh2::CurrentContext->GetGenRegPtr()[1],
+    DynarecSh2::CurrentContext->GetGenRegPtr()[4], 
+    DynarecSh2::CurrentContext->GetGenRegPtr()[3], 
+    DynarecSh2::CurrentContext->GET_SR());
+*/
+#if 0    
 #ifdef DMPHISTORY
   CurrentSH2->pchistory_index++;
   CurrentSH2->pchistory[CurrentSH2->pchistory_index & 0xFF] = DynarecSh2::CurrentContext->GET_PC();
@@ -483,12 +506,11 @@ int DebugEachClock() {
 #endif
   DynaCheckBreakPoint(DynarecSh2::CurrentContext->GET_PC());
 
-
   if (DynarecSh2::CurrentContext->CheckOneStep()){
     dynaFree();
     return 1;
   }
-
+#endif
   dynaFree();
   return 0;
 }

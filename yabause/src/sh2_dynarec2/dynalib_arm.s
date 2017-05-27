@@ -120,6 +120,7 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 .endm  
 
 .macro CALL_EACHCLOCK
+  STR_PC r8
   ldr r10 , [r7, #(16+3+6+6)*4 ]  
   blx r10
 .endm  
@@ -225,7 +226,7 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 // r9   <- Clock Counter
 .global prologue
 prologue:
-stmfd  sp!, {r0-r10, lr}   // push regs
+stmfd  sp!, {r4-r10, lr}   // push regs
 mov r7, r0      // GenReg( r0 has adress of m_pDynaSh2)
 LDR_PC r8       // PC
 LDR_COUNT r9    // ClockCounter
@@ -250,7 +251,7 @@ add r8, #2    // PC += 2
 STR_PC r8
 add r9, #1    // Clock += 1  
 STR_COUNT r9
-ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 continue:
 mov r8, r0    // copy jump addr
 sub r8, #2    // PC -= 2
@@ -265,7 +266,7 @@ add r8, #2    // PC += 2
 STR_PC r8     // store to memory
 add r9, #1    // Clock += 1  
 STR_COUNT r9  // store to memory
-ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 .size seperator_delay_after, .-seperator_delay_after // 20
 
 
@@ -275,7 +276,7 @@ ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
 epilogue:
 STR_PC r8     // store PC to memory
 STR_COUNT r9  // store COUNTER to memory
-ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 .size	epilogue, .-epilogue // 12
 
 //-----------------------------------------------------
@@ -286,11 +287,11 @@ cmn r0, #1 // 7
 bne PageFlip.jmp     // 2
 STR_PC r8     // store PC to memory
 STR_COUNT r9  // store COUNTER to memory
-ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 PageFlip.jmp:
 STR_PC r0
 STR_COUNT r9  // store COUNTER to memory
-ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 
 .size	PageFlip, .-PageFlip // 22
 
@@ -305,7 +306,7 @@ STR_COUNT r9  // store to memory
 CALL_EACHCLOCK
 tst r0, #1
 bne seperator_d_normal.continue
-ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 seperator_d_normal.continue:
 
 //------------------------------------------------------
@@ -323,7 +324,7 @@ add r8, #2    // PC += 2
 STR_PC r8
 add r9, #1    // Clock += 1  
 STR_COUNT r9
-ldmfd  sp!, {r0-r10, pc} // pop regs and resturn
+ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 seperator_d_delay.continue:
 mov r8, r0    // copy jump addr
 sub r8, #2    // PC -= 2
@@ -953,7 +954,7 @@ str r2, [r7, r0]
 STR_SR r1 
 
 
-opdesc SHLR,	28,0xff,0,0xff,0xff,0xff
+opdesc SHLR,	32,0xff,0,0xff,0xff,0xff
 opfunc SHLR
 mov r0, #0 
 LDR_SR r1
@@ -962,6 +963,7 @@ lsrs r2, #1  // r2 >>= 1
 orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
+STR_SR r1 
 
 opdesc SHAR,	28,0xff,0,0xff,0xff,0xff
 opfunc SHAR
@@ -1275,7 +1277,7 @@ str r1, [r7, #0 ] // R[n] = VBR
 
 opdesc STS_MACH, 8,0xff,4,0xff,0xff,0xff
 opfunc STS_MACH
-LDR_MACL r1
+LDR_MACH r1
 str r1, [r7, #0 ] // R[n] = MACL
 
 
@@ -1824,11 +1826,11 @@ STR_MACL r0
 // MACL   ans = 32bit -> 64 bit MUL
 //        (MACH << 32 + MACL)  + ans 
 //-------------------------------------------------------------
-opdesc MAC_L, 208,0,4,0xff,0xff,0xff 
+opdesc MAC_L, ((52+3)*4),0,4,0xff,0xff,0xff 
 opfunc MAC_L
 mov r0, #0
 mov r1, #0
-mov r5, r0 
+mov r6, r0 
 ldr r0, [r7, r1]
 mov r4, r1
 CALL_GETMEM_LONG
@@ -1847,10 +1849,9 @@ mov r3,r5
 LDR_MACH r5
 LDR_SR r2       
 orr     r6, r4, r1
-orr     ip, r5, r1, asr #31
 smull   r0, r1, r0, r3
 adds    r6, r6, r0
-adc     ip, ip, r1
+adc     ip, r5, r1
 
 tst     r2, #2
 beq     MAC_L.NO_S
@@ -1878,7 +1879,7 @@ MAC_L.NO_S:
 MAC_L.FINISH:
   STR_MACL  r4
   STR_MACH  r2
-
+CALL_EACHCLOCK
 
 //--------------------------------------------------------------
 // MACW   ans = 32bit -> 64 bit MUL

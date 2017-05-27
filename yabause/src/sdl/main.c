@@ -356,6 +356,10 @@ int main(int argc, char *argv[]) {
       else if (strcmp(argv[i], "-sc") == 0 || strcmp(argv[i], "--softcore") == 0) {
         yinit.vidcoretype = VIDCORE_SOFT;
       }
+      else if (strcmp(argv[i], "-ci") == 0 ) {
+        yinit.sh2coretype = 1;
+      }
+
       // Auto frame skip
       else if (strstr(argv[i], "--vsyncoff")) {
         frameskip = 0;
