@@ -808,7 +808,7 @@ int YabauseEmulate(void) {
    
 #ifdef YAB_STATICS
    LOG("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
-   if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
+   //if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
    return 0;
