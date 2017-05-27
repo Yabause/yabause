@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "DynarecSh2.h"
 #include "opcodes.h"
 //#define DEBUG_CPU
-#define BUILD_INFO
+//#define BUILD_INFO
 #define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
@@ -291,15 +291,17 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define DELAYJUMPSIZE	     17
 #define DALAY_CLOCK_OFFSET 6
 #define NORMAL_CLOCK_OFFSET 6
+#define NORMAL_CLOCK_OFFSET_DEBUG 3
 #else
 #define PROLOGSIZE		     16    
 #define SEPERATORSIZE_NORMAL 8
 #define NORMAL_CLOCK_OFFSET 4
-#define SEPERATORSIZE_DEBUG  24
+#define NORMAL_CLOCK_OFFSET_DEBUG 4
+#define SEPERATORSIZE_DEBUG  36
 #define SEPERATORSIZE_DELAY_SLOT  36
 #define SEPERATORSIZE_DELAY_AFTER  20
 #define DALAY_CLOCK_OFFSET 8
-#define SEPERATORSIZE_DELAYD 34
+#define SEPERATORSIZE_DELAYD 60
 #define EPILOGSIZE		      12
 #define DELAYJUMPSIZE	     32
 #endif
@@ -784,7 +786,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   if (debug_mode_) {
     nomal_seperator = (void*)seperator_d_normal;
     nomal_seperator_size = SEPERATORSIZE_DEBUG;
-    nomal_seperator_counter_offset = 3;
+    nomal_seperator_counter_offset = NORMAL_CLOCK_OFFSET_DEBUG;
     delay_seperator = (void*)seperator_d_delay;
     delay_seperator_size = SEPERATORSIZE_DELAYD;
     delayslot_seperator_counter_offset = DALAY_CLOCK_OFFSET;
@@ -949,7 +951,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
   ptr += EPILOGSIZE;
 
-#if 1 // Dump code
+#if 0 // Dump code
   char fname[64];
   sprintf(fname,"%08X.bin",start_addr);
   FILE * fp = fopen(fname, "wb");
@@ -968,6 +970,7 @@ DynarecSh2::DynarecSh2() {
   m_pDynaSh2->setmembyte = (uintptr_t)memSetByte;
   m_pDynaSh2->setmemword = (uintptr_t)memSetWord;
   m_pDynaSh2->setmemlong = (uintptr_t)memSetLong;
+  m_pDynaSh2->eachclock = (uintptr_t)DebugEachClock;
   
   m_pCompiler = CompileBlocks::getInstance();
   m_ClockCounter = 0;
@@ -1107,31 +1110,11 @@ int DynarecSh2::Execute(){
    }
     
   //LOG("\n---dynaExecute %08X----\n", GET_PC() );
-
-  //if( pre_PC_ != GET_PC() ) {
-  //  printf("dynaExecute start PC=%08X VPC=%08X----\n", (uintptr_t)pBlock->code, GET_PC() );
-  //  pre_PC_ = GET_PC();
- // }
-  if( 0x060008F4 == GET_PC() ){
-    int a=0;
-  }
+  //if( 0x0602E51A == GET_PC() ){
+   // ShowCompileInfo();
+   // exit(0);
+  //}
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-
-  if( 0x06000F84 == GET_PC() ) {   
-    printf("%08X PR= %08X R[15]=%08X, val=%08X\n", GET_PC(), GET_PR(), m_pDynaSh2->GenReg[15],
-    memGetLong(m_pDynaSh2->GenReg[15])  );
-    //exit(0);
-  }
-
-  if( 0x060200A0 == GET_PC() ) {   
-    printf("%08X R[0]= %08X R[15]=%08X, val=%08X\n", GET_PC(), m_pDynaSh2->GenReg[0], m_pDynaSh2->GenReg[15],
-    memGetLong(m_pDynaSh2->GenReg[15])  );
-    exit(0);
-  }
-
-
-  //printf("dynaExecute end VPC=%08X PR=%08X count=%d----\n", GET_PC(), GET_PR(), GET_COUNT() );
-  //exit(0);
 
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
@@ -1156,7 +1139,7 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   m_IntruptTbl.push_back(tmp);
   m_IntruptTbl.unique(); 
 
-  printf("AddInterrupt v:%d l:%d\n", Vector, level );
+  //printf("AddInterrupt v:%d l:%d\n", Vector, level );
 
   if( m_IntruptTbl.size() > 1 ) {
     m_IntruptTbl.sort();
@@ -1174,7 +1157,7 @@ int DynarecSh2::CheckInterupt(){
     return 0;
   }
 
-  printf("CheckInterupt %d\n", m_IntruptTbl.size() );
+  //printf("CheckInterupt %d\n", m_IntruptTbl.size() );
   
   dlstIntct::iterator pos = m_IntruptTbl.begin();
   if( InterruptRutine((*pos).Vector, (*pos).level ) != 0 ) {
@@ -1202,9 +1185,9 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3]);
     m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
-//#if defined(DEBUG_CPU)
+#if defined(DEBUG_CPU)
     LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
-//#endif
+#endif
     return 1;
   }
   return 0; 

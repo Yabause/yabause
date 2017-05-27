@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define _DYNAREC_SH2_H_
 
 #include <list>
+#include <sys/types.h>
+#include <stdint.h>
 
 //****************************************************
 // Defiens
@@ -83,6 +85,7 @@ struct tagSH2
   uintptr_t setmembyte;
   uintptr_t setmemword;
   uintptr_t setmemlong;
+  uintptr_t eachclock;
 };
 
 // Instruction
