@@ -1314,10 +1314,11 @@ mov     r0, r0, asl #22
 mov     r0, r0, lsr #22  // SR = r0 & 0x000003f3;
 STR_SR  r0
 
-opdesc LDC_SR_INC,	44,0xff,0,0xff,0xff,0xff
+opdesc LDC_SR_INC,	(12*4),0xff,0,0xff,0xff,0xff
 opfunc LDC_SR_INC
 mov     r1, #0  // m
 ldr     r5, [r7, r1] // r5 = R[m] 
+mov     r4, r1
 mov     r0, r5
 CALL_GETMEM_LONG
 bic     r0, r0, #12
@@ -1325,7 +1326,7 @@ mov     r0, r0, asl #22
 mov     r0, r0, lsr #22  // SR = r0 & 0x000003f3;
 STR_SR  r0
 add     r5, r5, #4
-str     r5, [r7, r1]
+str     r5, [r7, r4]
 
 
 opdesc LDCGBR,	12,0xff,0,0xff,0xff,0xff
@@ -1335,18 +1336,14 @@ ldr     r0, [r7, r0] // r5 = R[m]
 STR_GBR  r0
 
 
-opdesc LDC_GBR_INC,	44,0xff,0,0xff,0xff,0xff
+opdesc LDC_GBR_INC,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc LDC_GBR_INC
-mov     r1, #0  // m
-ldr     r5, [r7, r1] // r5 = R[m] 
-mov     r0, r5
+mov r2, #0 // m
+ldr r0, [r7, r2 ]
+add r1, r0 , #4
+str r1, [r7, r2 ]
 CALL_GETMEM_LONG
-bic     r0, r0, #12
-mov     r0, r0, asl #22
-mov     r0, r0, lsr #22  // SR = r0 & 0x000003f3;
-STR_GBR  r0
-add     r5, r5, #4
-str     r5, [r7, r1]
+STR_GBR r0 
 
 
 opdesc LDC_VBR,	12,0xff,0,0xff,0xff,0xff
@@ -1355,18 +1352,14 @@ mov     r0, #0  // m
 ldr     r0, [r7, r0] // r5 = R[m] 
 STR_VBR  r0
 
-opdesc LDC_VBR_INC,	44,0xff,0,0xff,0xff,0xff
+opdesc LDC_VBR_INC,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc LDC_VBR_INC
-mov     r1, #0  // m
-ldr     r5, [r7, r1] // r5 = R[m] 
-mov     r0, r5
+mov r2, #0 // m
+ldr r0, [r7, r2 ]
+add r1, r0 , #4
+str r1, [r7, r2 ]
 CALL_GETMEM_LONG
-bic     r0, r0, #12
-mov     r0, r0, asl #22
-mov     r0, r0, lsr #22  // SR = r0 & 0x000003f3;
-STR_VBR  r0
-add     r5, r5, #4
-str     r5, [r7, r1]
+STR_VBR r0 
 
 
 opdesc STS_PR,		12,0xFF,0,0xFF,0xff,0xff
@@ -1778,9 +1771,9 @@ opdesc DMULS, 20,0,4,0xff,0xff,0xff
 opfunc DMULS
 ldr     r3, [r7, #0]
 ldr     r2, [r7, #0]
-smull   r2, r3, r3, r2
-STR_MACH r3
-STR_MACL r2
+smull   r0, r1, r3, r2
+STR_MACH r1
+STR_MACL r0
 
 //------------------------------------------------------------
 //dmulu 32bit -> 64bit Mul
@@ -1788,9 +1781,9 @@ opdesc DMULU, 20,0,4,0xff,0xff,0xff
 opfunc DMULU
 ldr     r3, [r7, #0]
 ldr     r2, [r7, #0]
-umull   r2, r3, r3, r2
-STR_MACH r3
-STR_MACL r2
+umull   r0, r1, r3, r2
+STR_MACH r1
+STR_MACL r0
 
 //--------------------------------------------------------------
 // mull 32bit -> 32bit Multip
@@ -1798,8 +1791,8 @@ opdesc MULL, 16,0,4,0xff,0xff,0xff
 opfunc MULL
 ldr     r2, [r7, #0]
 ldr     r0, [r7, #0]
-mul     r0, r0, r2
-STR_MACL r0
+mul     r1, r0, r2
+STR_MACL r1
 
 //--------------------------------------------------------------
 // muls 16bit -> 32 bit Multip
@@ -1819,14 +1812,14 @@ ldr     r2, [r7, #0]
 ldr     r0, [r7, #0]
 uxth    r2, r2
 uxth    r0, r0
-mul     r0, r0, r2
-STR_MACL r0
+mul     r1, r0, r2
+STR_MACL r1
 
 //--------------------------------------------------------------
 // MACL   ans = 32bit -> 64 bit MUL
 //        (MACH << 32 + MACL)  + ans 
 //-------------------------------------------------------------
-opdesc MAC_L, ((52+3)*4),0,4,0xff,0xff,0xff 
+opdesc MAC_L, ((52)*4),0,4,0xff,0xff,0xff 
 opfunc MAC_L
 mov r0, #0
 mov r1, #0
@@ -1849,8 +1842,8 @@ mov r3,r5
 LDR_MACH r5
 LDR_SR r2       
 orr     r6, r4, r1
-smull   r0, r1, r0, r3
-adds    r6, r6, r0
+smull   r4, r1, r0, r3
+adds    r6, r6, r4
 adc     ip, r5, r1
 
 tst     r2, #2
@@ -1879,7 +1872,7 @@ MAC_L.NO_S:
 MAC_L.FINISH:
   STR_MACL  r4
   STR_MACH  r2
-CALL_EACHCLOCK
+//CALL_EACHCLOCK
 
 //--------------------------------------------------------------
 // MACW   ans = 32bit -> 64 bit MUL
