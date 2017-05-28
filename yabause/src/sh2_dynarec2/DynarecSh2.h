@@ -46,6 +46,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <Windows.h>
 #define ALLOCATE(x) VirtualAlloc(NULL, x, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #define FREEMEM(x,a)	if(x){ VirtualFree(x, a,MEM_RELEASE ); x = NULL;}
+#elif defined(ARCH_IS_LINUX)
+#include <sys/mman.h>
+#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_FILE|MAP_PRIVATE ,-1, 0);
+#define FREEMEM(x,a) munmap(x,a);
 #else
 #define ALLOCATE(x)	malloc(x)
 #define FREEMEM(x,a)	if(x){ free(x); x = NULL;}
