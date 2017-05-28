@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-//#define DEBUG_CPU
-//#define BUILD_INFO
+#define DEBUG_CPU
+#define BUILD_INFO
 #define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
@@ -643,6 +643,7 @@ Block *CompileBlocks::Init(Block *dynaCode)
   dynaCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
   memset((void*)dynaCode, 0, sizeof(Block)*NUMOFBLOCKS);
 
+  printf("LookupTable = %d\n",sizeof(LookupTable));
   //
   memset(LookupTable, 0, sizeof(LookupTable));
   memset(LookupParentTable, 0, sizeof(LookupParentTable));
@@ -955,8 +956,10 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   char fname[64];
   sprintf(fname,"%08X.bin",start_addr);
   FILE * fp = fopen(fname, "wb");
-  fwrite(page->code, sizeof(char), (uintptr_t)ptr - (uintptr_t)page->code, fp);
-  fclose(fp);
+  if(fp){
+    fwrite(page->code, sizeof(char), (uintptr_t)ptr - (uintptr_t)page->code, fp);
+    fclose(fp);
+  }
 #endif
 
   return;
@@ -1110,12 +1113,19 @@ int DynarecSh2::Execute(){
    }
     
   //LOG("\n---dynaExecute %08X----\n", GET_PC() );
-  //if( 0x0602E51A == GET_PC() ){
+  //if( 0x06000928 == GET_PC() ){
    // ShowCompileInfo();
    // exit(0);
+  // LOG("%08X: R[15]=%08X\n", GET_PC() ,GetGenRegPtr()[15] );
   //}
+  //u32 prepc  = GET_PC();
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-
+  //if( GET_PC() == 0x0000000 ) {
+  //LOG("%08X -> %08X\n", GET_PC() );
+  //ShowCompileInfo();
+  //exit(0);    
+  //}
+  
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
 }
