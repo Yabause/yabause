@@ -80,6 +80,7 @@ extern _memSetByte, _memSetWord, _memSetLong
 extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 */
  
+.arch armv7-a
  
 .macro opfunc name
 .section .text 
@@ -215,9 +216,8 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 // Basic
 //=====================================================
 
-
 .text
-.align  2
+.align  4
 
 //-----------------------------------------------------
 // Begining of block
@@ -226,7 +226,7 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 // r9   <- Clock Counter
 .global prologue
 prologue:
-stmfd  sp!, {r4-r10, lr}   // push regs
+push {r4-r10, lr}   // push regs
 mov r7, r0      // GenReg( r0 has adress of m_pDynaSh2)
 LDR_PC r8       // PC
 LDR_COUNT r9    // ClockCounter
@@ -251,7 +251,7 @@ add r8, #2    // PC += 2
 STR_PC r8
 add r9, #1    // Clock += 1  
 STR_COUNT r9
-ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
+pop {r4-r10, pc} // pop regs and resturn
 continue:
 mov r8, r0    // copy jump addr
 sub r8, #2    // PC -= 2
@@ -266,7 +266,7 @@ add r8, #2    // PC += 2
 STR_PC r8     // store to memory
 add r9, #1    // Clock += 1  
 STR_COUNT r9  // store to memory
-ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
+pop {r4-r10, pc} // pop regs and resturn
 .size seperator_delay_after, .-seperator_delay_after // 20
 
 
@@ -276,7 +276,7 @@ ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
 epilogue:
 STR_PC r8     // store PC to memory
 STR_COUNT r9  // store COUNTER to memory
-ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
+pop {r4-r10, pc}  // pop regs and resturn
 .size	epilogue, .-epilogue // 12
 
 //-----------------------------------------------------
@@ -287,11 +287,11 @@ cmn r0, #1 // 7
 bne PageFlip.jmp     // 2
 STR_PC r8     // store PC to memory
 STR_COUNT r9  // store COUNTER to memory
-ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
+pop {r4-r10, pc} // pop regs and resturn
 PageFlip.jmp:
 STR_PC r0
 STR_COUNT r9  // store COUNTER to memory
-ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
+pop {r4-r10, pc} // pop regs and resturn
 
 .size	PageFlip, .-PageFlip // 22
 
@@ -306,25 +306,25 @@ STR_COUNT r9  // store to memory
 CALL_EACHCLOCK
 tst r0, #1
 bne seperator_d_normal.continue
-ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
+pop {r4-r10, pc} // pop regs and resturn
 seperator_d_normal.continue:
 
 //------------------------------------------------------
 // Delay slot part par instruction( for debug build )
 .global seperator_d_delay
 seperator_d_delay:
-push {r0}
+push {r0,r1}
 STR_PC r8     // store to memory
 STR_COUNT r9  // store to memory
 CALL_EACHCLOCK
-pop {r0}
+pop {r0,r1}
 cmn r0, #1 // Check need to branch
 bne seperator_d_delay.continue  
 add r8, #2    // PC += 2
 STR_PC r8
 add r9, #1    // Clock += 1  
 STR_COUNT r9
-ldmfd  sp!, {r4-r10, pc} // pop regs and resturn
+pop {r4-r10, pc} // pop regs and resturn
 seperator_d_delay.continue:
 mov r8, r0    // copy jump addr
 sub r8, #2    // PC -= 2
@@ -1135,7 +1135,7 @@ mvnne   r0, r0, asr #20
 add     r0, r8, r0, asl #1
 add     r0, r0, #4
 
-opdesc BSR,		52,0xFF,0xFF,0xFF,0xFF,0
+opdesc BSR,		(13*4),0xFF,0xFF,0xFF,0xFF,0
 opfunc BSR
 mov r0, #0 // for arm5
 mov r2, #0
@@ -1334,7 +1334,7 @@ opfunc LDCGBR
 mov     r0, #0  // m
 ldr     r0, [r7, r0] // r5 = R[m] 
 STR_GBR  r0
-
+ 
 
 opdesc LDC_GBR_INC,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc LDC_GBR_INC
