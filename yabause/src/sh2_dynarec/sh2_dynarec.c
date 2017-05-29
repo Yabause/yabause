@@ -235,6 +235,7 @@ void macl();
 void macw();
 void master_handle_bios();
 void slave_handle_bios();
+void add_to_linker(int addr,int target,int ext);
 
 // Needed by assembler
 void wb_register(signed char r,signed char regmap[],u32 dirty);
