@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <string.h>
 #include <malloc.h> 
 #include <stdint.h>
-
+#include <unistd.h> // chaceflush
 #include <core.h>
 #include "sh2core.h"
 #include "debug.h"
@@ -30,12 +30,29 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-#define DEBUG_CPU
+//#define DEBUG_CPU
 #define BUILD_INFO
 #define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
+
+#if !defined(ANDROID)
+void cacheflush(uintptr_t begin, uintptr_t end, int flag )
+{ 
+    const int syscall = 0xf0002;
+      __asm __volatile (
+     "mov   r0, %0\n"      
+     "mov   r1, %1\n"
+     "mov   r7, %2\n"
+     "mov     r2, #0x0\n"
+     "svc     0x00000000\n"
+     :
+     : "r" (begin), "r" (end), "r" (syscall)
+     : "r0", "r1", "r7"
+    );
+}
+#endif
 
 i_desc opcode_list[] =
 {
@@ -951,11 +968,17 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
   ptr += EPILOGSIZE;
-  
+
+  cacheflush((uintptr_t)page->code,(uintptr_t)ptr,0);
+
 #if 0 // Dump code
   char fname[64];
+#if defined(ANDROID)
   sprintf(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
-  FILE * fp = fopen(fname, "wb");
+#else
+  sprintf(fname,"%08X.bin",start_addr);
+#endif
+   FILE * fp = fopen(fname, "wb");
   if(fp){
     fwrite(page->code, sizeof(char), (uintptr_t)ptr - (uintptr_t)page->code, fp);
     fclose(fp);
