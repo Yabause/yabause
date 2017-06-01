@@ -22,7 +22,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <string.h>
 #include <malloc.h> 
 #include <stdint.h>
-
 #include <core.h>
 #include "sh2core.h"
 #include "debug.h"
@@ -30,12 +29,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-#define DEBUG_CPU
+//#define DEBUG_CPU
 #define BUILD_INFO
 #define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
+
+#if defined(ARCH_IS_LINUX)
+#include <unistd.h> // chaceflush
+
+#if !defined(ANDROID)
+void cacheflush(uintptr_t begin, uintptr_t end, int flag )
+{ 
+    const int syscall = 0xf0002;
+      __asm __volatile (
+     "mov   r0, %0\n"      
+     "mov   r1, %1\n"
+     "mov   r7, %2\n"
+     "mov     r2, #0x0\n"
+     "svc     0x00000000\n"
+     :
+     : "r" (begin), "r" (end), "r" (syscall)
+     : "r0", "r1", "r7"
+    );
+}
+#endif
+
+#endif
 
 i_desc opcode_list[] =
 {
@@ -746,14 +767,14 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
   if (*(op->imm) != 0xFF)
     *(ptr + *(op->imm)) = (u8)(opcode & 0xff);
 
-#if 1
-  if (*(op->off3) != 0xFF){
-    *(ptr + *(op->off3)) = (u8)((opcode>>8) & 0x0f);
-    *(ptr + *(op->off3)+4) = (u8)(opcode & 0xff);
-  }
-#else  
+#if _WINDOWS
   if (*(op->off3) != 0xFF)
     *(u16*)(ptr + *(op->off3)) = (u16)(opcode & 0xfff);
+#else  
+  if (*(op->off3) != 0xFF) {
+    *(ptr + *(op->off3)) = (u8)((opcode >> 8) & 0x0f);
+    *(ptr + *(op->off3) + 4) = (u8)(opcode & 0xff);
+  }
 #endif  
 }
 
@@ -804,7 +825,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   page->isInfinityLoop = false;
   
 #ifdef BUILD_INFO  
-  printf("*********** start block *************\n", startptr, op, addr);
+  printf("*********** start block *************\n");
 #endif
 
   MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
@@ -951,11 +972,19 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
   ptr += EPILOGSIZE;
-  
+
+#if defined(ARCH_IS_LINUX)
+  cacheflush((uintptr_t)page->code,(uintptr_t)ptr,0);
+#endif
+
 #if 0 // Dump code
   char fname[64];
+#if defined(ANDROID)
   sprintf(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
-  FILE * fp = fopen(fname, "wb");
+#else
+  sprintf(fname,"%08X.bin",start_addr);
+#endif
+   FILE * fp = fopen(fname, "wb");
   if(fp){
     fwrite(page->code, sizeof(char), (uintptr_t)ptr - (uintptr_t)page->code, fp);
     fclose(fp);

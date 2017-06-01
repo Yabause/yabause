@@ -200,28 +200,28 @@ mov  [edx],eax             ; 2
 ;Begin x86 Opcodes
 ;=================
 
-opdesc CLRT,	3,0,0,0,0,0
+opdesc CLRT,	3,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc CLRT
 and dword [ebx],byte 0xfe
 
-opdesc CLRMAC,	7,0,0,0,0,0
+opdesc CLRMAC,	7,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc CLRMAC
 and dword [esi],byte 0   ;4
 and dword [esi+4],byte 0 ;4
 
-opdesc NOP,		1,0,0,0,0,0
+opdesc NOP,		1,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc NOP
 nop
 
-opdesc DIV0U,	6,0,0,0,0,0
+opdesc DIV0U,	6,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc DIV0U
 and dword [ebx],0xfffffcfe
 
-opdesc SETT,	3,0,0,0,0,0
+opdesc SETT,	3,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc SETT
 or [ebx],byte 1
 
-opdesc SLEEP,	14,0,0,0,0,0
+opdesc SLEEP,	14,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc SLEEP
 add dword [edx+4],byte 1   ;4 
 mov  eax,_EachClock ;5
@@ -231,7 +231,7 @@ popad               ;1
 ret                 ;1
 
 
-opdesc SWAP_W,	19,4,15,0,0,0
+opdesc SWAP_W,	19,4,15,0xff,0xff,0xff
 opfunc SWAP_W
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -241,7 +241,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov [ebp],eax       ;2
 
-opdesc SWAP_B,	18,4,14,0,0,0
+opdesc SWAP_B,	18,4,14,0xff,0xff,0xff
 opfunc SWAP_B
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -252,7 +252,7 @@ add ebp,byte $00    ;3
 mov [ebp],eax       ;2
 
 
-opdesc TST,	29,4,12,0,0,0
+opdesc TST,	29,4,12,0xff,0xff,0xff
 opfunc TST
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -264,7 +264,7 @@ getflag 6           ;7
 and dword [ebx],byte 0xfe ;3
 or [ebx],eax        ;2
 
-opdesc TSTI,	23,0,0,0,6,0
+opdesc TSTI,	23,0xff,0xff,0xff,6,0xff
 opfunc TSTI
 mov  ebp,edi        ;2
 mov  eax,[ebp]      ;3
@@ -274,28 +274,28 @@ and dword [ebx],byte 0xfe ;3
 or [ebx],eax        ;2
 
 
-opdesc ANDI,	9,0,0,0,5,0
+opdesc ANDI,	9,0xff,0xff,0xff,5,0xff
 opfunc ANDI
 mov ebp,edi         ;2
 xor eax,eax         ;2
 mov al,byte $00     ;2
 and dword [ebp],eax ;3
 
-opdesc XORI,	9,0,0,0,5,0
+opdesc XORI,	9,0xff,0xff,0xff,5,0xff
 opfunc XORI
 mov ebp,edi         ;2
 xor eax,eax         ;2
 mov al,byte $00     ;2
 xor dword [ebp],eax ;3
 
-opdesc ORI,	9,0,0,0,5,0
+opdesc ORI,	9,0xff,0xff,0xff,5,0xff
 opfunc ORI
 mov ebp,edi         ;2
 xor eax,eax         ;2
 mov al,byte $00     ;2
 or dword [ebp],eax  ;3
 
-opdesc CMP_EQ_IMM,	25,0,0,0,8,0
+opdesc CMP_EQ_IMM,	25,0xff,0xff,0xff,8,0xff
 opfunc CMP_EQ_IMM
 mov ebp,edi         ;2
 mov eax,[ebp]       ;3
@@ -304,7 +304,7 @@ getflag 6           ;7
 and dword [ebx], 0xFFFFFFE ;6
 or [ebx],eax        ;2 
 
-opdesc XTRCT,	23,4,12,0,0,0
+opdesc XTRCT,	23,4,12,0xff,0xff,0xff
 opfunc XTRCT
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -315,7 +315,7 @@ shl eax,16          ;3
 shr dword [ebp],16  ;3
 or [ebp],eax        ;2
 
-opdesc ADD,		16,4,12,0,0,0
+opdesc ADD,		16,4,12,0xff,0xff,0xff
 opfunc ADD
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -324,7 +324,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 add [ebp],eax       ;2
 
-opdesc ADDC,	33,4,12,0,0,0
+opdesc ADDC,	33,4,12,0xff,0xff,0xff
 opfunc ADDC
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -342,7 +342,7 @@ ADDC_END:
 
 
 ; add with overflow check
-opdesc ADDV, 24,4,12,0,0,0
+opdesc ADDV, 24,4,12,0xff,0xff,0xff
 opfunc ADDV
 mov  ebp,edi          ;2
 add  ebp,byte $00     ;3
@@ -355,7 +355,7 @@ jno	 NO_OVER_FLO      ;2
 or   [ebx], byte 01   ;3
 NO_OVER_FLO
 
-opdesc SUBC,	33,4,12,0,0,0
+opdesc SUBC,	33,4,12,0xff,0xff,0xff
 opfunc SUBC
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -374,7 +374,7 @@ SUBC_END:
 
 
 
-opdesc SUB,		16,4,12,0,0,0
+opdesc SUB,		16,4,12,0xff,0xff,0xff
 opfunc SUB
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -384,7 +384,7 @@ add ebp,byte $00    ;3
 sub [ebp],eax       ;2
 
 
-opdesc NOT,		18,4,14,0,0,0
+opdesc NOT,		18,4,14,0xff,0xff,0xff
 opfunc NOT
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -394,7 +394,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov [ebp],eax       ;2
 
-opdesc NEG,		18,4,14,0,0,0
+opdesc NEG,		18,4,14,0xff,0xff,0xff
 opfunc NEG
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -404,7 +404,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov [ebp],eax       ;2
 
-opdesc NEGC,	50,4,14,0,0,0
+opdesc NEGC,	50,4,14,0xff,0xff,0xff
 opfunc NEGC
 mov ebp,edi               ;2
 add ebp,byte $00          ;3
@@ -426,7 +426,7 @@ jna NEGC_NOT_LESS_OLD     ;2
 or  [ebx], byte 1         ;2
 NEGC_NOT_LESS_OLD:
 
-opdesc EXTUB,	21,4,17,0,0,0
+opdesc EXTUB,	21,4,17,0xff,0xff,0xff
 opfunc EXTUB
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -436,7 +436,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov [ebp],eax       ;3
 
-opdesc EXTU_W,	21,4,17,0,0,0
+opdesc EXTU_W,	21,4,17,0xff,0xff,0xff
 opfunc EXTU_W
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -446,7 +446,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov [ebp],eax       ;3
 
-opdesc EXTS_B,	19,4,15,0,0,0
+opdesc EXTS_B,	19,4,15,0xff,0xff,0xff
 opfunc EXTS_B
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -457,7 +457,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov [ebp],eax       ;3
 
-opdesc EXTS_W,	17,4,13,0,0,0
+opdesc EXTS_W,	17,4,13,0xff,0xff,0xff
 opfunc EXTS_W
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -470,7 +470,7 @@ mov [ebp],eax       ;2
 ;Store Register Opcodes
 ;----------------------
 
-opdesc STC_SR_MEM,	23,0,6,0,0,0
+opdesc STC_SR_MEM,	23,0xff,6,0xff,0xff,0xff
 opfunc STC_SR_MEM
 push dword [ebx]        ;2
 mov  ebp,edi            ;2
@@ -482,7 +482,7 @@ call eax                ;2
 pop  eax                ;1
 pop  eax                ;1
 
-opdesc STC_GBR_MEM,	30,0,13,0,0,0
+opdesc STC_GBR_MEM,	30,0xff,13,0xff,0xff,0xff
 opfunc STC_GBR_MEM
 mov  ebp,edi            ;2
 add  ebp,byte 68        ;3
@@ -497,7 +497,7 @@ call eax                ;2
 pop  eax                ;1
 pop  eax                ;1
 
-opdesc STC_VBR_MEM,	30,0,13,0,0,0
+opdesc STC_VBR_MEM,	30,0xff,13,0xff,0xff,0xff
 opfunc STC_VBR_MEM
 mov  ebp,edi            ;2
 add  ebp,byte 72        ;3
@@ -515,7 +515,7 @@ pop  eax                ;1
 
 ;------------------------------
 
-opdesc MOVBL,	28,4,20,0,0,0
+opdesc MOVBL,	28,4,20,0xff,0xff,0xff
 opfunc MOVBL
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -531,7 +531,7 @@ mov [ebp],eax       ;3
 pop eax             ;1
 
 
-opdesc MOVWL,		26,4,20,0,0,0
+opdesc MOVWL,		26,4,20,0xff,0xff,0xff
 opfunc MOVWL
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -545,7 +545,7 @@ cwde                ;1
 mov [ebp],eax       ;3
 pop eax             ;1
 
-opdesc MOVL_MEM_REG,		25,4,20,0,0,0
+opdesc MOVL_MEM_REG,		25,4,20,0xff,0xff,0xff
 opfunc MOVL_MEM_REG
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -558,7 +558,7 @@ add ebp,byte $00    ;3
 mov [ebp],eax       ;3
 pop eax             ;1
 
-opdesc MOVBP,	31,4,23,0,0,0
+opdesc MOVBP,	31,4,23,0xff,0xff,0xff
 opfunc MOVBP
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -575,7 +575,7 @@ mov [ebp],eax       ;3
 pop eax             ;1
 
 
-opdesc MOVWP,	30,4,24,0,0,0
+opdesc MOVWP,	30,4,24,0xff,0xff,0xff
 opfunc MOVWP
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -590,7 +590,7 @@ cwde                ;1
 mov [ebp],eax       ;3
 pop eax             ;1
 
-opdesc MOVLP,	29,4,24,0,0,0
+opdesc MOVLP,	29,4,24,0xff,0xff,0xff
 opfunc MOVLP
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -605,7 +605,7 @@ mov [ebp],eax       ;3
 pop eax             ;1
 
 
-opdesc MOVW_A,	38,0,4,0,17,0
+opdesc MOVW_A,	38,0xff,4,0xff,17,0xff
 opfunc MOVW_A
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -626,7 +626,7 @@ cwde                ;1
 mov [ebp],eax       ;2
 pop eax             ;1
 
-opdesc MOVL_A,	37,0,4,0,17,0
+opdesc MOVL_A,	37,0xff,4,0xff,17,0xff
 opfunc MOVL_A
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -646,7 +646,7 @@ pop edx             ;1
 mov [ebp],eax       ;2
 pop eax             ;1
 
-opdesc MOVI,	13,0,4,0,9,0
+opdesc MOVI,	13,0xff,4,0xff,9,0xff
 opfunc MOVI
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -656,7 +656,7 @@ mov [ebp],eax       ;3
 
 ;----------------------
 
-opdesc MOVBL0,	30,4,22,0,0,0
+opdesc MOVBL0,	30,4,22,0xff,0xff,0xff
 opfunc MOVBL0
 mov ebp,edi          ;2
 add ebp,byte $00     ;3
@@ -672,7 +672,7 @@ cwde                 ;1
 mov [ebp],eax        ;3
 pop  eax             ;1
 
-opdesc MOVWL0,	28,4,22,0,0,0
+opdesc MOVWL0,	28,4,22,0xff,0xff,0xff
 opfunc MOVWL0
 mov ebp,edi          ;2
 add ebp,byte $00     ;3
@@ -687,7 +687,7 @@ cwde                 ;1
 mov [ebp],eax        ;3
 pop  eax             ;1
 
-opdesc MOVLL0,	27,4,22,0,0,0
+opdesc MOVLL0,	27,4,22,0xff,0xff,0xff
 opfunc MOVLL0
 mov ebp,edi          ;2
 add ebp,byte $00     ;3
@@ -701,7 +701,7 @@ add ebp,byte $00     ;3
 mov [ebp],eax        ;3
 pop  eax             ;1
 
-opdesc MOVT,		15,0,4,0,0,0
+opdesc MOVT,		15,0xff,4,0xff,0xff,0xff
 opfunc MOVT
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -709,7 +709,7 @@ mov eax,[ebx]       ;2
 and dword eax,1     ;5
 mov [ebp],eax       ;3
 
-opdesc MOVBS0,	28,4,12,0,0,0
+opdesc MOVBS0,	28,4,12,0xff,0xff,0xff
 opfunc MOVBS0
 mov  ebp,edi         ;2
 add  ebp,byte $00    ;3 m(4..7)
@@ -724,7 +724,7 @@ call eax             ;2
 pop  eax             ;1
 pop  eax             ;1
 
-opdesc MOVWS0,	28,4,12,0,0,0
+opdesc MOVWS0,	28,4,12,0xff,0xff,0xff
 opfunc MOVWS0
 mov  ebp,edi         ;2
 add  ebp,byte $00    ;3 m(4..7)
@@ -739,7 +739,7 @@ call eax             ;2
 pop  eax             ;1
 pop  eax             ;1
 
-opdesc MOVLS0,	28,4,12,0,0,0
+opdesc MOVLS0,	28,4,12,0xff,0xff,0xff
 opfunc MOVLS0
 mov  ebp,edi         ;2
 add  ebp,byte $00    ;3 m(4..7)
@@ -758,7 +758,7 @@ pop  eax             ;1
 ;Verified Opcodes
 ;===========================================================================
 
-opdesc DT,		20,0,4,0,0,0
+opdesc DT,		20,0xff,4,0xff,0xff,0xff
 opfunc DT
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -769,7 +769,7 @@ jne .continue       ;2
 or dword [ebx],byte 1 ;3
 .continue
 
-opdesc CMP_PZ,	17,0,4,0,0,0
+opdesc CMP_PZ,	17,0xff,4,0xff,0xff,0xff
 opfunc CMP_PZ
 mov ebp,edi               ;2
 add ebp,byte $00          ;3
@@ -779,7 +779,7 @@ jl .continue              ;2
 or [ebx], byte 1          ;3
 .continue
 
-opdesc CMP_PL,	23,0,4,0,0,0
+opdesc CMP_PL,	23,0xff,4,0xff,0xff,0xff
 opfunc CMP_PL
 mov ebp,edi                 ;2
 add ebp,byte $00            ;3
@@ -789,7 +789,7 @@ jle .continue               ;2
 or [ebx], byte 1            ;3 Set T Flg
 .continue
 
-opdesc CMP_EQ,	24,4,12,0,0,0
+opdesc CMP_EQ,	24,4,12,0xff,0xff,0xff
 opfunc CMP_EQ
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -802,7 +802,7 @@ jne .continue       ;2
 or [ebx],byte 1     ;3 [edp] == eax
 .continue
 
-opdesc CMP_HS,	24,4,12,0,0,0
+opdesc CMP_HS,	24,4,12,0xff,0xff,0xff
 opfunc CMP_HS
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -815,7 +815,7 @@ jb .continue        ;2
 or [ebx],byte 1     ;3 
 .continue
 
-opdesc CMP_HI,	24,4,12,0,0,0
+opdesc CMP_HI,	24,4,12,0xff,0xff,0xff
 opfunc CMP_HI
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -828,7 +828,7 @@ jbe .continue       ;2
 or [ebx],byte 1     ;3 
 .continue
 
-opdesc CMP_GE,	24,4,12,0,0,0
+opdesc CMP_GE,	24,4,12,0xff,0xff,0xff
 opfunc CMP_GE
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -841,7 +841,7 @@ jl .continue        ;2
 or [ebx],byte 1     ;3 
 .continue
 
-opdesc CMP_GT,	24,4,12,0,0,0
+opdesc CMP_GT,	24,4,12,0xff,0xff,0xff
 opfunc CMP_GT
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -854,7 +854,7 @@ jle .continue       ;2
 or [ebx],byte 1     ;3 
 .continue
 
-opdesc ROTL,	23,0,4,0,0,0
+opdesc ROTL,	23,0xff,4,0xff,0xff,0xff
 opfunc ROTL
 mov ebp,edi               ;2
 add ebp,byte $00          ;3
@@ -865,7 +865,7 @@ or [ebx],eax              ;2
 shl dword [ebp],byte 1    ;4
 or [ebp],eax              ;2
 
-opdesc ROTR,	25,0,4,0,0,0
+opdesc ROTR,	25,0xff,4,0xff,0xff,0xff
 opfunc ROTR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -877,7 +877,7 @@ shr dword [ebp],1   ;2
 shl eax,byte 31     ;3
 or [ebp],eax        ;2
 
-opdesc ROTCL,	30,0,4,0,0,0
+opdesc ROTCL,	30,0xff,4,0xff,0xff,0xff
 opfunc ROTCL
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -891,7 +891,7 @@ shl dword [ebp],byte 1 ;4
 or [ebp],eax        ;2
 
 
-opdesc ROTCR,	36,0,4,0,0,0
+opdesc ROTCR,	36,0xff,4,0xff,0xff,0xff
 opfunc ROTCR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -905,7 +905,7 @@ or [ebx],ecx        ;2
 shr dword [ebp],byte 1 ;4
 or [ebp],eax        ;2
 
-opdesc SHL,		20,0,4,0,0,0
+opdesc SHL,		20,0xff,4,0xff,0xff,0xff
 opfunc SHL
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -915,7 +915,7 @@ and dword [ebx],byte 0xfe ;3
 or [ebx],eax        ;2
 shl dword [ebp],byte 1 ;4
 
-opdesc SHLR,	25,0,4,0,0,0
+opdesc SHLR,	25,0xff,4,0xff,0xff,0xff
 opfunc SHLR
 mov ebp,edi                 ;2
 add ebp,byte $00            ;3
@@ -925,7 +925,7 @@ and dword [ebx], 0xFFFFFFFE ;6
 or [ebx],eax                ;2
 shr dword [ebp],byte 1      ;4
 
-;opdesc SHAR,	33,0,4,0,0,0
+;opdesc SHAR,	33,0xff,4,0xff,0xff,0xff
 ;opfunc SHAR
 ;mov ebp,edi         ;2
 ;add ebp,byte $00    ;3
@@ -934,11 +934,11 @@ shr dword [ebp],byte 1      ;4
 ;and dword [ebx],byte 0xfe ;3
 ;or [ebx],eax        ;2
 ;mov eax,[ebp]       ;2
-;and eax,0x80000000  ;5
+;and eax,0xffx80000000  ;5
 ;shr dword [ebp],byte 1 ;4
 ;or [ebp],eax        ;2
 
-opdesc SHAR,	22,0,4,0,0,0
+opdesc SHAR,	22,0xff,4,0xff,0xff,0xff
 opfunc SHAR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -950,43 +950,43 @@ sar dword [ebp],byte 1 ;4
 
 
 
-opdesc SHLL2,	9,0,4,0,0,0
+opdesc SHLL2,	9,0xff,4,0xff,0xff,0xff
 opfunc SHLL2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 shl dword [ebp],byte 2 ;4
 
-opdesc SHLR2,	9,0,4,0,0,0
+opdesc SHLR2,	9,0xff,4,0xff,0xff,0xff
 opfunc SHLR2
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 shr dword [ebp],byte 2 ;4
 
-opdesc SHLL8,	9,0,4,0,0,0
+opdesc SHLL8,	9,0xff,4,0xff,0xff,0xff
 opfunc SHLL8
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 shl dword[ebp],byte 8  ;4
 
-opdesc SHLR8,	9,0,4,0,0,0
+opdesc SHLR8,	9,0xff,4,0xff,0xff,0xff
 opfunc SHLR8
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 shr dword [ebp],byte 8 ;4
 
-opdesc SHLL16,	9,0,4,0,0,0
+opdesc SHLL16,	9,0xff,4,0xff,0xff,0xff
 opfunc SHLL16
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 shl dword [ebp],byte 16 ;4
 
-opdesc SHLR16,	9,0,4,0,0,0
+opdesc SHLR16,	9,0xff,4,0xff,0xff,0xff
 opfunc SHLR16
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 shr dword [ebp],byte 16 ;4
 
-opdesc AND,		16,4,12,0,0,0
+opdesc AND,		16,4,12,0xff,0xff,0xff
 opfunc AND
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -995,7 +995,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 and [ebp],eax       ;2
 
-opdesc OR,		16,4,12,0,0,0
+opdesc OR,		16,4,12,0xff,0xff,0xff
 opfunc OR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1004,7 +1004,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 or [ebp],eax        ;2
 
-opdesc XOR,		16,4,12,0,0,0
+opdesc XOR,		16,4,12,0xff,0xff,0xff
 opfunc XOR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1013,14 +1013,14 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 xor [ebp],eax       ;3
 
-opdesc ADDI,	9,0,4,0,8,0
+opdesc ADDI,	9,0xff,4,0xff,8,0xff
 opfunc ADDI
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 add dword [ebp],byte $00 ;4
 
 
-opdesc AND_B,	35,0,0,0,21,0
+opdesc AND_B,	35,0xff,0xff,0xff,21,0xff
 opfunc AND_B
 push edx            ;1
 ctrlreg_load 1      ;5
@@ -1038,7 +1038,7 @@ call eax            ;2
 add esp, byte 8     ;3
 pop edx             ;1
 
-opdesc OR_B,	36,0,0,0,22,0
+opdesc OR_B,	36,0xff,0xff,0xff,22,0xff
 opfunc OR_B
 push edx
 mov  ebp,edi          ;2
@@ -1060,7 +1060,7 @@ pop  eax              ;1
 pop  edx              ;1
 
 
-opdesc XOR_B,	36,0,0,0,22,0
+opdesc XOR_B,	36,0xff,0xff,0xff,22,0xff
 opfunc XOR_B
 push edx
 mov  ebp,edi          ;2
@@ -1083,7 +1083,7 @@ pop  edx              ;1
 
 
 
-opdesc TST_B,	34,0,0,0,25,0
+opdesc TST_B,	34,0xff,0xff,0xff,25,0xff
 opfunc TST_B
 ctrlreg_load 1        ;5
 mov  eax,[ebp]        ;3 Get GBR
@@ -1102,14 +1102,14 @@ pop eax               ;1
 ;Jump Opcodes
 ;------------
 
-opdesc JMP,		11,0,4,0,0,0
+opdesc JMP,		11,0xff,4,0xff,0xff,0xff
 opfunc JMP
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;2
 mov [esp],eax       ;3
 
-opdesc JSR,		19,0,12,0,0,0
+opdesc JSR,		19,0xff,12,0xff,0xff,0xff
 opfunc JSR
 mov eax,[edx]       ;2
 add eax,byte 4      ;3
@@ -1119,7 +1119,7 @@ add ebp,byte $00    ;3
 mov eax,[ebp]       ;3
 mov [esp],eax       ;3
 
-opdesc BRA,		29,0,0,0,0,5
+opdesc BRA,		29,0xff,0xff,0xff,0xff,5
 opfunc BRA
 and eax,byte 00     ;3
 mov ax,0            ;4
@@ -1132,7 +1132,7 @@ add eax,byte 4      ;3
 add eax,dword [edx] ;2
 mov [esp],eax       ;3
 
-opdesc BSR,		37,0,0,0,0,13
+opdesc BSR,		37,0xff,0xff,0xff,0xff,13
 opfunc BSR
 mov eax,[edx]       ;2
 add eax,byte 4      ;3
@@ -1148,7 +1148,7 @@ add eax,byte 4      ;3
 add eax,dword [edx] ;2
 mov [esp],eax       ;3
 
-opdesc BSRF,		24,0,4,0,0,0
+opdesc BSRF,		24,0xff,4,0xff,0xff,0xff
 opfunc BSRF
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1160,7 +1160,7 @@ add eax,dword [ebp] ;3
 add eax,byte 4      ;3
 mov [esp],eax       ;3
 
-opdesc BRAF,		16,0,4,0,0,0
+opdesc BRAF,		16,0xff,4,0xff,0xff,0xff
 opfunc BRAF
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1170,12 +1170,12 @@ add eax,byte 4      ;4
 mov [esp],eax       ;3
 
 
-opdesc RTS,			6,0,0,0,0,0
+opdesc RTS,			6,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc RTS
 mov eax,[esi+8]     ;3
 mov [esp],eax       ;3
 
-opdesc RTE,			46,0,0,0,0,0
+opdesc RTE,			46,0xFF,0xFF,0xFF,0xFF,0xFF
 opfunc RTE
 mov  ebp,edi            ;2
 add  ebp,byte 60        ;3
@@ -1193,7 +1193,7 @@ add  dword [ebp],byte 4 ;4
 pop  eax                ;1
 pop  eax                ;1
 
-opdesc TRAPA,	      75,0,0,0,50,0
+opdesc TRAPA,	      75,0xFF,0xFF,0xFF,50,0xFF
 opfunc TRAPA
 mov  ebp,edi          ;2
 add  ebp,byte 60      ;3
@@ -1226,7 +1226,7 @@ pop  eax              ;1
 
 
 
-opdesc BT,		30,0,0,0,18,0
+opdesc BT,		30,0xFF,0xFF,0xFF,18,0xFF
 opfunc BT
 and [esp],dword 0   ;7
 bt dword [ebx],0    ;4
@@ -1239,7 +1239,7 @@ add eax,dword [edx] ;2
 mov [esp],eax       ;3
 .continue
 
-opdesc BF,		30,0,0,0,18,0
+opdesc BF,		30,0xFF,0xFF,0xFF,18,0xFF
 opfunc BF
 and [esp],dword 0   ;7
 bt dword [ebx],0    ;4
@@ -1252,7 +1252,7 @@ add eax,dword [edx] ;2
 mov [esp],eax       ;3
 .continue
 
-opdesc BF_S,		23,0,0,0,11,0
+opdesc BF_S,		23,0xFF,0xFF,0xFF,11,0xFF
 opfunc BF_S
 bt dword [ebx],0    ;4
 jc .continue        ;2
@@ -1268,14 +1268,14 @@ mov [esp],eax       ;3
 ;Store/Load Opcodes
 ;------------------
 
-opdesc STC_SR,	10,0,4,0,0,0
+opdesc STC_SR,	10,0xFF,4,0xFF,0xFF,0xFF
 opfunc STC_SR
 mov ebp,edi
 add ebp,byte $00
 mov eax,[ebx]
 mov [ebp],eax
 
-opdesc STC_GBR,	18,0,4,0,0,0
+opdesc STC_GBR,	18,0xFF,4,0xFF,0xFF,0xFF
 opfunc STC_GBR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1285,7 +1285,7 @@ mov eax,[ebp]       ;2
 pop ebp             ;1
 mov [ebp],eax       ;2
 
-opdesc STC_VBR,	18,0,4,0,0,0
+opdesc STC_VBR,	18,0xFF,4,0xFF,0xFF,0xFF
 opfunc STC_VBR
 mov ebp,edi
 add ebp,byte $00
@@ -1295,14 +1295,14 @@ mov eax,[ebp]
 pop ebp
 mov [ebp],eax
 
-opdesc STS_MACH, 10,0,4,0,0,0
+opdesc STS_MACH, 10,0xFF,4,0xFF,0xFF,0xFF
 opfunc STS_MACH
 mov ebp,edi       ;2
 add ebp,byte $00  ;3
 mov eax,[esi]     ;2
 mov [ebp],eax     ;2
 
-opdesc STS_MACH_DEC,	25,0,4,0,0,0
+opdesc STS_MACH_DEC,	25,0xFF,4,0xFF,0xFF,0xFF
 opfunc STS_MACH_DEC
 mov ebp,edi       ;2
 add ebp,byte $00  ;3
@@ -1316,14 +1316,14 @@ call eax          ;2
 pop eax ;1
 pop eax ;1
 
-opdesc STS_MACL, 11,0,4,0,0,0
+opdesc STS_MACL, 11,0xFF,4,0xFF,0xFF,0xFF
 opfunc STS_MACL
 mov ebp,edi       ;2
 add ebp,byte $00  ;3
 mov eax,[esi+4]   ;3
 mov [ebp],eax     ;2
 
-opdesc STS_MACL_DEC,	26,0,4,0,0,0
+opdesc STS_MACL_DEC,	26,0xFF,4,0xFF,0xFF,0xFF
 opfunc STS_MACL_DEC
 mov ebp,edi       ;2
 add ebp,byte $00  ;3
@@ -1338,14 +1338,14 @@ pop eax ;1
 pop eax ;1
 
 
-;opdesc LDC_SR,	9,0,4,0,0,0
+;opdesc LDC_SR,	9,0xFF,4,0xFF,0xFF,0xFF
 ;opfunc LDC_SR
 ;mov ebp,edi
 ;add ebp,byte $00
 ;mov eax,[ebp]
 ;mov [ebx],eax
 
-opdesc LDC_SR,	21,0,4,0,0,0
+opdesc LDC_SR,	21,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDC_SR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1356,7 +1356,7 @@ add ebp,byte 64     ;3
 mov [ebp],eax       ;2
 
 
-opdesc LDC_SR_INC,	28,0,4,0,0,0
+opdesc LDC_SR_INC,	28,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDC_SR_INC
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1369,7 +1369,7 @@ mov dword [ebx],eax ;3
 add dword [ebp],byte 4 ;3
 pop eax             ;1
 
-opdesc LDCGBR,	16,0,4,0,0,0
+opdesc LDCGBR,	16,0xff,4,0xFF,0xFF,0xFF
 opfunc LDCGBR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1378,7 +1378,7 @@ mov ebp,edi         ;2
 add ebp,byte 68     ;3
 mov [ebp],eax       ;3
 
-opdesc LDC_GBR_INC,	29,0,4,0,0,0
+opdesc LDC_GBR_INC,	29,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDC_GBR_INC
 mov  ebp,edi            ;2
 add  ebp,byte $00       ;3
@@ -1393,7 +1393,7 @@ mov  dword [ebp],eax    ;3
 pop  eax                ;1
 
 
-opdesc LDC_VBR,	16,0,4,0,0,0
+opdesc LDC_VBR,	16,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDC_VBR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1402,7 +1402,7 @@ mov ebp,edi         ;2
 add ebp,byte 72     ;3
 mov [ebp],eax       ;2
 
-opdesc LDC_VBR_INC,	29,0,4,0,0,0
+opdesc LDC_VBR_INC,	29,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDC_VBR_INC
 mov  ebp,edi            ;2
 add  ebp,byte $00       ;3
@@ -1416,14 +1416,14 @@ add  ebp,byte 72        ;3
 mov  dword [ebp],eax    ;3
 pop  eax                ;1
 
-opdesc STS_PR,		11,0,4,0,0,0
+opdesc STS_PR,		11,0xFF,4,0xFF,0xFF,0xFF
 opfunc STS_PR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[esi+8]     ;3
 mov [ebp],eax       ;3
 
-opdesc STSMPR,	26,0,4,0,0,0
+opdesc STSMPR,	26,0xFF,4,0xFF,0xFF,0xFF
 opfunc STSMPR
 mov ebp,edi       ;2
 add ebp,byte $00  ;3
@@ -1437,14 +1437,14 @@ call eax          ;2
 pop eax           ;1
 pop eax           ;1
 
-opdesc LDS_PR,		11,0,4,0,0,0
+opdesc LDS_PR,		11,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDS_PR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;2
 mov [esi+8],eax     ;4
 
-opdesc LDS_PR_INC,	24,0,4,0,0,0
+opdesc LDS_PR_INC,	24,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDS_PR_INC
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1456,14 +1456,14 @@ mov [esi+8],eax     ;3
 add dword [ebp],byte 4 ;4
 pop eax             ;1
 
-opdesc LDS_MACH,		10,0,4,0,0,0
+opdesc LDS_MACH,		10,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDS_MACH
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov eax,[ebp]       ;2
 mov [esi],eax       ;2
 
-opdesc LDS_MACH_INC,	23,0,4,0,0,0
+opdesc LDS_MACH_INC,	23,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDS_MACH_INC
 mov ebp,edi            ;2
 add ebp,byte $00       ;3
@@ -1475,7 +1475,7 @@ mov [esi],eax          ;2
 add dword [ebp],byte 4 ;3
 pop eax                ;1
 
-opdesc LDS_MACL,		11,0,4,0,0,0
+opdesc LDS_MACL,		11,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDS_MACL
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1483,7 +1483,7 @@ mov eax,[ebp]       ;2
 mov [esi+4],eax     ;2
 
 
-opdesc LDS_MACL_INC,	24,0,4,0,0,0
+opdesc LDS_MACL_INC,	24,0xFF,4,0xFF,0xFF,0xFF
 opfunc LDS_MACL_INC
 mov ebp,edi            ;2
 add ebp,byte $00       ;3
@@ -1498,7 +1498,7 @@ pop eax                ;1
 ;Mov Opcodes
 ;-----------
 
-opdesc MOVA,	25,0,0,0,14,0
+opdesc MOVA,	25,0xFF,0xFF,0xFF,14,0xFF
 opfunc MOVA
 mov ebp,edi         ;2
 mov eax,[edx]       ;2
@@ -1513,7 +1513,7 @@ mov [ebp],eax       ;2
 pop eax             ;1
 
 
-opdesc MOVWI,	31,0,4,0,8,0
+opdesc MOVWI,	31,0xFF,4,0xFF,8,0xFF
 opfunc MOVWI
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1530,7 +1530,7 @@ mov [ebp],eax       ;3
 pop eax             ;1
 
 
-opdesc MOVLI,       40,0,4,0,8,0
+opdesc MOVLI,       40,0xFF,4,0xFF,8,0xFF
 opfunc MOVLI
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1549,7 +1549,7 @@ mov [ebp],eax       ;3
 pop eax             ;1
 pop ecx             ;1
 
-opdesc MOVBL4, 29,4,0,8,0,0
+opdesc MOVBL4, 29,4,0xFF,8,0xFF,0xFF
 opfunc MOVBL4
 mov  ebp,edi          ;2  Get R0 adress
 add  ebp,byte $00     ;3
@@ -1566,7 +1566,7 @@ mov  [ebp],eax        ;3
 pop  eax              ;1
 
 
-opdesc MOVWL4, 31,4,0,8,0,0
+opdesc MOVWL4, 31,4,0xFF,8,0xFF,0xFF
 opfunc MOVWL4
 mov  ebp,edi          ;2  Get R0 adress
 add  ebp,byte $00     ;3
@@ -1583,7 +1583,7 @@ mov  [ebp],eax        ;3
 pop  eax              ;1
 
 
-opdesc MOVLL4, 33,4,28,8,0,0
+opdesc MOVLL4, 33,4,28,8,0xFF,0xFF
 opfunc MOVLL4
 mov  ebp,edi          ;2  Get R0 adress
 add  ebp,byte $00     ;3
@@ -1599,7 +1599,7 @@ add  ebp,byte $00     ;3
 mov  [ebp],eax        ;3
 pop  eax              ;1
  
-opdesc MOVBS4,	29,7,0,15,0,0
+opdesc MOVBS4,	29,7,0xFF,15,0xFF,0xFF
 opfunc MOVBS4
 mov ebp,edi         ;2  Get R0 address
 push dword [ebp]    ;3  Set to Func
@@ -1613,7 +1613,7 @@ call eax            ;2  Call Func
 pop eax             ;1
 pop eax             ;1
 
-opdesc MOVWS4,	32,7,0,15,0,0
+opdesc MOVWS4,	32,7,0xFF,15,0xFF,0xFF
 opfunc MOVWS4
 mov ebp,edi         ;2  Get R0 address
 push dword [ebp]    ;3  Set to Func
@@ -1629,7 +1629,7 @@ pop eax             ;1
 pop eax             ;1
 
 
-opdesc MOVLS4,	36,4,12,20,0,0
+opdesc MOVLS4,	36,4,12,20,0xFF,0xFF
 opfunc MOVLS4
 mov  ebp,edi         ;2 
 add  ebp,byte $00    ;3 Get m 4..7
@@ -1647,7 +1647,7 @@ pop  eax             ;1
 pop  eax             ;1
 
  
-opdesc MOVBLG,    24,0,0,0,5,0
+opdesc MOVBLG,    24,0xFF,0xFF,0xFF,5,0xFF
 opfunc MOVBLG
 mov  ebp,edi           ;2  Get R0 adress
 xor  eax,eax           ;2  clear eax
@@ -1662,7 +1662,7 @@ mov  [ebp],eax         ;3
 pop  eax               ;1
 
 
-opdesc MOVWLG,    26,0,0,0,5,0
+opdesc MOVWLG,    26,0xFF,0xFF,0xFF,5,0xFF
 opfunc MOVWLG
 mov  ebp,edi           ;2  Get R0 adress
 xor  eax,eax           ;2  clear eax
@@ -1677,7 +1677,7 @@ mov  [ebp],eax         ;3
 pop  eax               ;1
 
 
-opdesc MOVLLG,    25,0,0,0,5,0
+opdesc MOVLLG,    25,0xFF,0xFF,0xFF,5,0xFF
 opfunc MOVLLG
 mov  ebp,edi           ;2  Get R0 adress
 xor  eax,eax           ;2  clear eax
@@ -1691,7 +1691,7 @@ mov  [ebp],eax         ;3
 pop  eax               ;1
 
 
-opdesc MOVBSG,    26,0,0,0,8,0
+opdesc MOVBSG,    26,0xFF,0xFF,0xFF,8,0xFF
 opfunc MOVBSG
 mov  ebp,edi         ;2  Get R0 adress
 push dword [ebp]     ;3
@@ -1706,7 +1706,7 @@ call eax             ;2
 pop  eax             ;1
 pop  eax             ;1
 
-opdesc MOVWSG,    30,0,0,0,8,0
+opdesc MOVWSG,    30,0xFF,0xFF,0xFF,8,0xFF
 opfunc MOVWSG
 mov  ebp,edi         ;2  Get R0 adress
 push dword [ebp]     ;3
@@ -1722,7 +1722,7 @@ call eax             ;2
 pop  eax             ;1
 pop  eax             ;1
 
-opdesc MOVLSG,    30,0,0,0,8,0
+opdesc MOVLSG,    30,0xFF,0xFF,0xFF,8,0xFF
 opfunc MOVLSG
 mov  ebp,edi         ;2  Get R0 adress
 push dword [ebp]     ;3
@@ -1739,7 +1739,7 @@ pop  eax             ;1
 pop  eax             ;1
 
 
-opdesc MOVBS,	25,4,12,0,0,0
+opdesc MOVBS,	25,4,12,0xFF,0xFF,0xFF
 opfunc MOVBS
 mov  ebp,edi         ;2
 add  ebp,byte $00    ;3
@@ -1753,7 +1753,7 @@ pop  eax             ;1
 pop  eax             ;1
 
 
-opdesc MOVWS,	25,4,12,0,0,0
+opdesc MOVWS,	25,4,12,0xFF,0xFF,0xFF
 opfunc MOVWS
 mov  ebp,edi          ;2
 add  ebp,byte $00     ;3
@@ -1766,7 +1766,7 @@ call eax              ;2
 pop  eax              ;1
 pop  eax              ;1
 
-opdesc MOVLS,	25,4,12,0,0,0
+opdesc MOVLS,	25,4,12,0xFF,0xFF,0xFF
 opfunc MOVLS
 mov  ebp,edi         ;2
 add  ebp,byte $00    ;3
@@ -1780,7 +1780,7 @@ pop  eax             ;1
 pop  eax             ;1
 
 
-opdesc MOVR,		16,4,12,0,0,0
+opdesc MOVR,		16,4,12,0xFF,0xFF,0xFF
 opfunc MOVR
 mov ebp,edi         ;2
 add ebp,byte $00    ;3
@@ -1789,7 +1789,7 @@ mov ebp,edi         ;2
 add ebp,byte $00    ;3
 mov [ebp],eax       ;3
 
-opdesc MOVBM,		29,4,12,0,0,0
+opdesc MOVBM,		29,4,12,0xFF,0xFF,0xFF
 opfunc MOVBM
 mov  ebp,edi             ;2
 add  ebp,byte $00        ;3  
@@ -1803,7 +1803,7 @@ call eax                 ;2
 pop  eax                 ;1
 pop  eax                 ;1
 
-opdesc MOVWM,		29,4,12,0,0,0
+opdesc MOVWM,		29,4,12,0xFF,0xFF,0xFF
 opfunc MOVWM
 mov  ebp,edi             ;2
 add  ebp,byte $00        ;3  
@@ -1819,7 +1819,7 @@ pop  eax                 ;1
 
 
 
-opdesc MOVLM,		29,4,12,0,0,0
+opdesc MOVLM,		29,4,12,0xFF,0xFF,0xFF
 opfunc MOVLM
 mov  ebp,edi             ;2
 add  ebp,byte $00        ;3  
@@ -1835,7 +1835,7 @@ pop  eax                 ;1
 
 ;------------- added ------------------
 
-opdesc TAS,  46,0,4,0,0,0
+opdesc TAS,  46,0xFF,4,0xFF,0xFF,0xFF
 opfunc TAS
 mov  ebp,edi             ;2
 add  ebp,byte $00        ;3
@@ -1859,7 +1859,7 @@ pop eax                   ;1
 
 
 ; sub with overflow check
-opdesc SUBV, 24,4,12,0,0,0
+opdesc SUBV, 24,4,12,0xFF,0xFF,0xFF
 opfunc SUBV
 mov  ebp,edi          ;2
 add  ebp,byte $00     ;3 m 4...7
@@ -1874,7 +1874,7 @@ NO_OVER_FLOS
 
 
 ; string cmp
-opdesc CMPSTR, 60,4,12,0,0,0
+opdesc CMPSTR, 60,4,12,0xFF,0xFF,0xFF
 opfunc CMPSTR
 mov  ebp,edi          ;2
 add  ebp,byte $00     ;3
@@ -1905,7 +1905,7 @@ ENDPROC:
 
 ;-------------------------------------------------------------
 ;div0s 
-opdesc DIV0S, 78,36,4,0,0,0
+opdesc DIV0S, 78,36,4,0xFF,0xFF,0xFF
 opfunc DIV0S
 mov  ebp,edi                 ;2 SetQ
 add  ebp,byte $00            ;3 8..11
@@ -1940,7 +1940,7 @@ continue3:
 ; 
 ; size = 69 + 135 + 132 + 38 = 374 
 ;===============================================================
-opdesc DIV1, 410,62,7,0,0,0
+opdesc DIV1, 410,62,7,0xFF,0xFF,0xFF
 opfunc DIV1
 
 ; 69
@@ -2156,7 +2156,7 @@ pop edx  ;1
 
 ;------------------------------------------------------------
 ;dmuls
-opdesc DMULS, 27,6,14,0,0,0
+opdesc DMULS, 27,6,14,0xFF,0xFF,0xFF
 opfunc DMULS
 mov  ecx,edx            ;2 Save PC
 mov  ebp,edi            ;2  
@@ -2172,7 +2172,7 @@ mov  edx,ecx            ;2
 
 ;------------------------------------------------------------
 ;dmulu 32bit -> 64bit Mul
-opdesc DMULU, 27,6,14,0,0,0
+opdesc DMULU, 27,6,14,0xFF,0xFF,0xFF
 opfunc DMULU
 mov  ecx,edx            ;2 Save PC
 mov  ebp,edi            ;2  
@@ -2188,7 +2188,7 @@ mov  edx,ecx            ;2
 
 ;--------------------------------------------------------------
 ; mull 32bit -> 32bit Multip
-opdesc MULL, 25,6,14,0,0,0
+opdesc MULL, 25,6,14,0xFF,0xFF,0xFF
 opfunc MULL
 mov  ecx,edx            ;2 Save PC
 mov  ebp,edi            ;2  
@@ -2203,7 +2203,7 @@ mov  edx,ecx            ;2
 
 ;--------------------------------------------------------------
 ; muls 16bit -> 32 bit Multip
-opdesc MULS, 38,6,17,0,0,0
+opdesc MULS, 38,6,17,0xFF,0xFF,0xFF
 opfunc MULS
 mov  ecx,edx           ;2 Save PC
 mov  ebp,edi           ;2  
@@ -2222,7 +2222,7 @@ mov  edx,ecx            ;2
 
 ;--------------------------------------------------------------
 ; mulu 16bit -> 32 bit Multip
-opdesc MULU, 38,6,17,0,0,0
+opdesc MULU, 38,6,17,0xFF,0xFF,0xFF
 opfunc MULU
 mov  ecx,edx           ;2 Save PC
 mov  ebp,edi           ;2  
@@ -2243,7 +2243,7 @@ mov  edx,ecx            ;2
 ; MACL   ans = 32bit -> 64 bit MUL
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
-opdesc MAC_L, 145,5,30,0,0,0 
+opdesc MAC_L, 145,5,30,0xFF,0xFF,0xFF 
 opfunc MAC_L
 push edx                      ;1 Save PC
 mov  ebp,edi                  ;2  
@@ -2309,7 +2309,7 @@ pop  edx                      ;1 = 42
 ; MACW   ans = 32bit -> 64 bit MUL
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
-opdesc MAC_W, 120,5,31,0,0,0
+opdesc MAC_W, 120,5,31,0xFF,0xFF,0xFF
 opfunc MAC_W
 push edx                      ;1 Save PC
 mov  ebp,edi                  ;2  

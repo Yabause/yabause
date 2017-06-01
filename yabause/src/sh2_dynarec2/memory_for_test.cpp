@@ -10,6 +10,8 @@ u8 *LowWram;
 u8 *BiosRom;
 bool romlock = false;
 
+SH2_struct *CurrentSH2;
+yabsys_struct yabsys;
 
 
 #ifdef __GNUC__
