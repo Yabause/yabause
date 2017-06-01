@@ -48,8 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define FREEMEM(x,a)	if(x){ VirtualFree(x, a,MEM_RELEASE ); x = NULL;}
 #elif defined(ARCH_IS_LINUX)
 #include <sys/mman.h>
-//#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_FILE|MAP_PRIVATE ,-1, 0);
-#define ALLOCATE(x) mmap ((void*)0x6000000, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS ,-1, 0);
+#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_FILE|MAP_PRIVATE ,-1, 0);
+//#define ALLOCATE(x) mmap ((void*)0x6000000, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS ,-1, 0);
 #define FREEMEM(x,a) munmap(x,a);
 #else
 #define ALLOCATE(x)	malloc(x)
@@ -62,8 +62,8 @@ const int MAX_INSTSIZE = 0xFFFF+1;
 // Structs
 //****************************************************
 
-const int NUMOFBLOCKS = 4240;
-const int MAXBLOCKSIZE = 3200;
+const int NUMOFBLOCKS = 1024;
+const int MAXBLOCKSIZE = 3072-(4*4);
 #define MAINMEMORY_SIZE (0x100000);
 #define ROM_SIZE (0x80000);
 
@@ -72,8 +72,8 @@ struct Block
   unsigned char code[MAXBLOCKSIZE];
   unsigned long b_addr; //beginning PC
   unsigned long e_addr; //ending PC
-  unsigned long reserved;
-  bool isInfinityLoop;
+  unsigned long pad;
+  unsigned long isInfinityLoop;
 };
 
 #define IN_INFINITY_LOOP (-1)
