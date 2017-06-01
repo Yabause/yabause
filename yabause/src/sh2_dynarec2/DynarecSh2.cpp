@@ -979,8 +979,12 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 
 #if 0 // Dump code
   char fname[64];
+#if defined(ANDROID)
+  sprintf(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
+#else
   sprintf(fname,"%08X.bin",start_addr);
-  FILE * fp = fopen(fname, "wb");
+#endif
+   FILE * fp = fopen(fname, "wb");
   if(fp){
     fwrite(page->code, sizeof(char), (uintptr_t)ptr - (uintptr_t)page->code, fp);
     fclose(fp);
@@ -1143,7 +1147,20 @@ int DynarecSh2::Execute(){
    // exit(0);
   // LOG("%08X: R[15]=%08X\n", GET_PC() ,GetGenRegPtr()[15] );
   //}
-  //u32 prepc  = GET_PC();
+  u32 prepc  = GET_PC();
+    LOG("\n---dynaExecute %08X----\n", GET_PC() );
+#if 0
+    static FILE * fp = NULL;
+    char fname[64];
+    sprintf(fname,"/mnt/sdcard/yabause/intlog.txt");
+    if( fp == NULL ) {
+        fp = fopen(fname, "w");
+    }
+    if(fp){
+        fprintf(fp,"\n---dynaExecute %08X----\n", GET_PC());
+        fflush(fp);
+    }
+#endif
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
   //if( GET_PC() == 0x0000000 ) {
   //LOG("%08X -> %08X\n", GET_PC() );

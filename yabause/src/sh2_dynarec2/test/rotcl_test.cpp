@@ -6,8 +6,6 @@
 #include "memory_for_test.h"
 #include "DynarecSh2.h"
 
-SH2_struct *CurrentSH2;
-yabsys_struct yabsys;
 
 namespace {
 
