@@ -10,6 +10,24 @@ android {
         targetSdkVersion 25
         versionCode 98
         versionName '0.4.4'
+
+        externalNativeBuild {
+
+            // For ndk-build, instead use ndkBuild {}
+            cmake {
+
+                // Passes optional arguments to CMake.
+                arguments "-DANDROID_ABI=armeabi-v7a","-DANDROID_NATIVE_API_LEVEL=19","-DYAB_PORTS=android",
+                        "-DYAB_WANT_C68K=FALSE","-DYAB_WANT_ARM7=TRUE","-DYAB_WANT_DYNAREC_DEVMIYAX=TRUE",
+                        "-DANDROID_FORCE_ARM_BUILD=TRUE"
+            }
+        }
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            abiFilters 'armeabi-v7a'
+        }
+
     }
 
     buildTypes {
@@ -34,6 +52,11 @@ android {
     }
 
 
+    externalNativeBuild {
+        cmake {
+            path '../../../CMakeLists.txt'
+        }
+    }
 }
 
 def renameAPK(variant, defaultConfig, buildType) {
