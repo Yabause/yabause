@@ -439,7 +439,7 @@ ldr r3, [r7, r0]
 add r3, r3, r1
 str r3, [r7, r0]
 
-opdesc ADDC,	48,0,4,0xff,0xff,0xff
+opdesc ADDC,	52,0,4,0xff,0xff,0xff
 opfunc ADDC
 mov r0, #0 // source
 mov r1, #0 // dest
@@ -450,7 +450,8 @@ adds r2, r3       // r2+r3
 and r3, r0, #1   // r3 = r0 & 1
 orrcs r4, r0, #1 // check carry
 biccc r4, r0, #1 // check not carry
-add r2, r3
+adds r2, r3
+orrcs r4, r0, #1 // check carry
 STR_SR r4
 str r2, [r7, r1]
 
@@ -480,20 +481,21 @@ bicvc r4, r0, #1 // check not overflow
 STR_SR r4
 str r2, [r7, r1]
 
-opdesc SUBC,	48,0,4,0xff,0xff,0xff
+opdesc SUBC,	52,0,4,0xff,0xff,0xff
 opfunc SUBC
 mov r0, #0 // source
 mov r1, #0 // dest
 ldr r2, [r7, r0] // r2 = R[source]  
 LDR_SR r0        // r0 = SR
 ldr r3, [r7, r1] // r3 = R[dest]
-subs r2, r3       // r2+r3
-and r3, r0, #1   // r3 = r0 & 1
-orrcs r4, r0, #1 // check carry
-biccc r4, r0, #1 // check not carry
-sub r2, r3
+subs r3, r2       // r3-r2
+and r2, r0, #1   // r3 = r0 & 1
+orrcc r4, r0, #1 // check carry
+biccs r4, r0, #1 // check not carry
+subs r3, r2      // r3 = r3 -T
+orrcc r4, r0, #1 // check carry
 STR_SR r4
-str r2, [r7, r1]
+str r3, [r7, r1]
 
 
 opdesc SUB,		24,0,4,0xff,0xff,0xff
