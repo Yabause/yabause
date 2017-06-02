@@ -62,7 +62,7 @@ const int MAX_INSTSIZE = 0xFFFF+1;
 // Structs
 //****************************************************
 
-const int NUMOFBLOCKS = 1024;
+const int NUMOFBLOCKS = 1024*4;
 const int MAXBLOCKSIZE = 3072-(4*4);
 #define MAINMEMORY_SIZE (0x100000);
 #define ROM_SIZE (0x80000);

@@ -490,14 +490,37 @@ if( DynarecSh2::CurrentContext->GET_PC() >= 0x0602E3C2 &&  DynarecSh2::CurrentCo
    );
 }
 #endif
-/*   
-  printf("%08X: DIV1 R[1]=%08X,m:%08X,n:%08X,SR:%08X\n", 
+
+#if 0
+  #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
+  #define INSTRUCTION_C(x) ((x & 0x00F0) >> 4)
+
+  u32 pc = DynarecSh2::CurrentContext->GET_PC();
+  u16 inst = memGetWord(pc);
+  s32 m = INSTRUCTION_C(inst);
+  s32 n = INSTRUCTION_B(inst);
+  printf("%08X: DIV0S %04X R[%d]:%08X,R[%d]:%08X,SR:%08X\n", 
     DynarecSh2::CurrentContext->GET_PC(), 
-    DynarecSh2::CurrentContext->GetGenRegPtr()[1],
-    DynarecSh2::CurrentContext->GetGenRegPtr()[4], 
-    DynarecSh2::CurrentContext->GetGenRegPtr()[3], 
+    inst,
+    m,DynarecSh2::CurrentContext->GetGenRegPtr()[m], 
+    n,DynarecSh2::CurrentContext->GetGenRegPtr()[n], 
     DynarecSh2::CurrentContext->GET_SR());
-*/
+#endif
+
+#if 0
+u32 pc = DynarecSh2::CurrentContext->GET_PC();
+if( pc == 0x060133C8 ) {
+  u16 inst = memGetWord(pc);
+  s32 m = INSTRUCTION_C(inst);
+  s32 n = INSTRUCTION_B(inst);
+  printf("%08X: DIV1(O) m:%08X,n:%08X,SR:%08X\n", 
+    DynarecSh2::CurrentContext->GET_PC(), 
+    DynarecSh2::CurrentContext->GetGenRegPtr()[m], 
+    DynarecSh2::CurrentContext->GetGenRegPtr()[n], 
+    DynarecSh2::CurrentContext->GET_SR());
+}
+#endif
+
 #if 0    
 #ifdef DMPHISTORY
   CurrentSH2->pchistory_index++;

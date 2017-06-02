@@ -1665,20 +1665,19 @@ ldr  r2, [r7, #0 ] // m
 ldr  r3, [r7, #0 ] // n
 cmp  r3, #0
 LDR_SR  r3
-bicge   r3, r3, #64
-orrlt   r3, r3, #64
+bicge   r3, r3, #256
+orrlt   r3, r3, #256
 cmp     r2, #0
-bicge   r3, r3, #128
-orrlt   r3, r3, #128
-mov     r2, r3, asr #6
-eor     r2, r2, r3, asr #7
+bicge   r3, r3, #512
+orrlt   r3, r3, #512
+mov     r2, r3, asr #8
+eor     r2, r2, r3, asr #9
 tst     r2, #1
 orrne   r3, r3, #1
 biceq   r3, r3, #1
 STR_SR     r3
 
-
-opdesc DIV1, (75*4),0,4,0xff,0xff,0xff
+opdesc DIV1, ((74)*4),0,4,0xff,0xff,0xff
 opfunc DIV1
 mov r0, #0 // m
 mov r1, #0 // n
@@ -1765,7 +1764,7 @@ DIV1.L17:
   bne DIV1.L37
   b DIV1.L24
 DIV1.FINISH:
-STR_PC r8
+
 
 //------------------------------------------------------------
 //dmuls
