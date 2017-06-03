@@ -54,7 +54,22 @@ TEST_F(XtractTest, normal) {
 
 }
 
+TEST_F(XtractTest, normal2) {
 
+  pctx_->GetGenRegPtr()[3]=0x00000003;
+  pctx_->GetGenRegPtr()[0]=0x6631C000;
+
+  // xtract r3,r0
+  memSetWord( 0x06000000, 0x203D );
+  memSetWord( 0x06000002, 0x000b );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0x00036631, pctx_->GetGenRegPtr()[0] );
+
+}
 
 
 
