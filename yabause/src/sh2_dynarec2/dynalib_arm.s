@@ -967,7 +967,7 @@ biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 STR_SR r1 
 
-opdesc SHAR,	28,0xff,0,0xff,0xff,0xff
+opdesc SHAR,	(8*4),0xff,0,0xff,0xff,0xff
 opfunc SHAR
 mov r0, #0 
 LDR_SR r1
@@ -976,6 +976,8 @@ asrs r2, #1  // r2 >>= 1
 orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
+STR_SR r1 
+
 
 opdesc SHLL2,	16,0xff,0,0xff,0xff,0xff
 opfunc SHLL2
@@ -1677,93 +1679,80 @@ orrne   r3, r3, #1
 biceq   r3, r3, #1
 STR_SR     r3
 
-opdesc DIV1, ((74)*4),0,4,0xff,0xff,0xff
+opdesc DIV1, (64*4),0,4,0xff,0xff,0xff
 opfunc DIV1
 mov r0, #0 // m
 mov r1, #0 // n
-ldr r5, [r7, r1]
-LDR_SR  r3
-  cmp r5, #0
-  mov ip, r3, asr #8
-  bicge r3, r3, #256
-  orrlt r3, r3, #256
-  and ip, ip, #1
-  and r2, r3, #1
-  cmp ip, #1
-  orr r2, r2, r5, asl #1
-  str r2, [r7, r1]
-  bne DIV1.L40
-  ands  lr, r3, #128
-  beq DIV1.L17
-  cmp lr, #128
-  bne DIV1.L6
-  ldr r0, [r7, r0]
-  rsb r0, r0, r2
-  cmp r0, r2
-  movls r2, #0
-  movhi r2, #1
-  ands  lr, r3, #512
-  str r0, [r7, r1]
-  beq DIV1.L23
-DIV1.L38:
-  cmp lr, #512
-  bne DIV1.L6
-DIV1.L24:
-  cmp r2, #0
-  bne DIV1.L30
-DIV1.L26:
-  bic r3, r3, #256
-DIV1.L6:
-  mov r2, r3, asr #8
-  eor r2, r2, r3, asr #9
-  tst r2, #1
-  orreq r3, r3, #1
-  bicne r3, r3, #1
-  STR_SR  r3
-  b DIV1.FINISH
-DIV1.L40:
-  ands  lr, r3, #512
-  beq DIV1.L7
-  cmp lr, #1
-  bne DIV1.L6
-  ldr r0, [r7, r0] // R[m]
-  add r0, r2, r0
-  cmp r0, r2
-  movcs r2, #0
-  movcc r2, #1
-  ands  lr, r3, #256
-  str r0, [r7, r1] // R[n]
-  bne DIV1.L38
-  b DIV1.L23
-DIV1.L7:
-  ldr r0, [r7, r0] // R[m]
-  rsb r0, r0, r2
-  cmp r0, r2
-  movls r2, #0
-  movhi r2, #1
-  ands  lr, r3, #256
-  str r0, [r7, r1] // R[n]
-  beq DIV1.L24
-DIV1.L37:
-  cmp lr, #256
-  bne DIV1.L6
-DIV1.L23:
-  cmp r2, #0
-  bne DIV1.L26
-DIV1.L30:
-  orr r3, r3, #256
-  b DIV1.L6
-DIV1.L17:
-  ldr r0, [r7, r0] // R[m]
-  add r0, r2, r0
-  cmp r0, r2
-  movcs r2, #0
-  movcc r2, #1
-  ands  lr, r3, #256
-  str r0, [r7, r1] // R[n]
-  bne DIV1.L37
-  b DIV1.L24
+  LDR_SR r3
+	ldr	r4, [r7, r1]
+	cmp	r4, #0
+	ubfx	r2, r3, #8, #1
+	bicge	r3, r3, #256
+	orrlt	r3, r3, #256
+	cmp	r2, #1
+	and	r2, r3, #1
+	orr	r2, r2, r4, asl #1
+	str	r2, [r7, r1]
+	ldr	r0, [r7, r0]
+	bne	DIV1.L41
+	tst	r3, #512
+	bne	DIV1.L21
+	add	r0, r2, r0
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movcs	r2, #0
+	movcc	r2, #1
+	tst	r3, #256
+	bne	DIV1.L34
+	b	DIV1.L25
+DIV1.L41:
+	tst	r3, #512
+	beq	DIV1.L42
+	add	r0, r2, r0
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movcs	r2, #0
+	movcc	r2, #1
+	tst	r3, #256
+	bne	DIV1.L25
+DIV1.L34:
+	cmp	r2, #0
+	bne	DIV1.L27
+DIV1.L31:
+	orr	r3, r3, #256
+DIV1.L16:
+	mov	r2, r3, asr #8
+	eor	r2, r2, r3, asr #9
+	tst	r2, #1
+	orreq	r3, r3, #1
+	bicne	r3, r3, #1
+	STR_SR r3
+	b DIV1.FINISH
+DIV1.L42:
+	rsb	r0, r0, r2
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movls	r2, #0
+	movhi	r2, #1
+	tst	r3, #256
+	bne	DIV1.L34
+DIV1.L25:
+	cmp	r2, #0
+	bne	DIV1.L31
+DIV1.L27:
+	bic	r3, r3, #256
+	b	DIV1.L16
+DIV1.L21:
+	rsb	r0, r0, r2
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movls	r2, #0
+	movhi	r2, #1
+	tst	r3, #256
+	bne	DIV1.L25
+	b	DIV1.L34
 DIV1.FINISH:
+
 
 
 //------------------------------------------------------------
