@@ -30,8 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "DynarecSh2.h"
 #include "opcodes.h"
 //#define DEBUG_CPU
-#define BUILD_INFO
-#define LOG printf
+//#define BUILD_INFO
+//#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
@@ -1147,8 +1147,8 @@ int DynarecSh2::Execute(){
    // exit(0);
   // LOG("%08X: R[15]=%08X\n", GET_PC() ,GetGenRegPtr()[15] );
   //}
-  u32 prepc  = GET_PC();
-    LOG("\n---dynaExecute %08X----\n", GET_PC() );
+  //u32 prepc  = GET_PC();
+   // LOG("\n---dynaExecute %08X----\n", GET_PC() );
 #if 0
     static FILE * fp = NULL;
     char fname[64];
@@ -1179,7 +1179,7 @@ bool operator < (const dIntcTbl & data1 , const dIntcTbl & data2 )
 bool operator == (const dIntcTbl & data1 , const dIntcTbl & data2 )
 {
   return ( data1.Vector == data2.Vector );
-} 
+}
 
 void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
 {
