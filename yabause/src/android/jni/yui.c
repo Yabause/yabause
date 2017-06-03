@@ -1008,7 +1008,10 @@ int initEgl( ANativeWindow* window )
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
     yinit.percoretype = PERCORE_DUMMY;
 #ifdef SH2_DYNAREC
-    yinit.sh2coretype = 3; //g_CpuType;
+    yinit.sh2coretype = g_CpuType;
+    if( yinit.sh2coretype == 2 ){
+        yinit.sh2coretype = 3;
+    }
 #else
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
