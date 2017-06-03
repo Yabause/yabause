@@ -365,8 +365,8 @@ opfunc SWAP_W
 mov r0, #0 // m
 mov r1, #0 // n
 ldr r2, [r7, r0]
-REV16 r3, r2
-str r3, [r7, r1]
+mov r2, r2, ror #16
+str r2, [r7, r1]
 
 opdesc SWAP_B,	20,0,4,0xff,0xff,0xff
 opfunc SWAP_B
@@ -1804,6 +1804,7 @@ uxth    r2, r2
 uxth    r0, r0
 mul     r1, r0, r2
 STR_MACL r1
+//CALL_EACHCLOCK
 
 //--------------------------------------------------------------
 // MACL   ans = 32bit -> 64 bit MUL

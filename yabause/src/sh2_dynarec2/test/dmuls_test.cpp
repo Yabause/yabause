@@ -72,5 +72,22 @@ TEST_F(DmulsTest, normal_) {
 }
 
 
+TEST_F(DmulsTest, normal_s) {
+
+    pctx_->GetGenRegPtr()[4]=0xFFF5D04F;
+    pctx_->GetGenRegPtr()[5]=0x0000056D;
+
+    // dmul r4, r5
+    memSetWord( 0x06000000, 0x345D );
+    memSetWord( 0x06000002, 0x000b );  // rts
+    memSetWord( 0x06000004, 0x0009 );  // nop
+
+    pctx_->SET_PC( 0x06000000 );
+    pctx_->Execute();
+
+    EXPECT_EQ( 0xFFFFFFFF, pctx_->GET_MACH() );
+    EXPECT_EQ( 0xC8BB3CA3, pctx_->GET_MACL() );
+
+}
 
 }  // namespace

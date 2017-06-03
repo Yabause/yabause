@@ -63,8 +63,30 @@ TEST_F(MaclTest, normal) {
 
 }
 
+TEST_F(MaclTest, normal2) {
 
+// 0602e3c2: macli 0x067f R[6]=0x00036420@0x06001EC4 R[7]=0xffff1cc5@0x060300c0  MACL 0x00000000 MACH 0x00000000
+// 0602e3c2: maclo 0x067f MACL 0xfd6f8ca0 MACH 0xfffffffc
 
+  pctx_->GetGenRegPtr()[6]=0x06001F04;
+  pctx_->GetGenRegPtr()[7]=0x060300c0;
+  pctx_->SET_MACH(0);
+  pctx_->SET_MACL(0);
 
+  memSetLong( 0x06001F04, 0x00036420 );
+  memSetLong( 0x060300c0, 0xffff1cc5 );
+
+  // mac.l @r7+, @r6+
+  memSetWord( 0x06000000, 0x067F );
+  memSetWord( 0x06000002, 0x000b );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0xfffffffc, pctx_->GET_MACH() );
+  EXPECT_EQ( 0xfd6f8ca0, pctx_->GET_MACL() );
+
+}
 
 }  // namespace
