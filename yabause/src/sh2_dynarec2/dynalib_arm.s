@@ -892,12 +892,12 @@ STR_SR  r0
 
 //http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0489fj/CIHDDCIF.html
 
-opdesc ROTL,	36,0xff,0,0xff,0xff,0xff
+opdesc ROTL,	(9*4),0xff,0,0xff,0xff,0xff
 opfunc ROTL
 mov r0, #0   // n
 LDR_SR r1    // r1 = SR
 ldr r2, [r7, r0]
-lsls r2, #1       // r2 <<= 1  
+lsls r2, r2, #1       // r2 <<= 1  
 orrcs r1, #0x01  // if( C==1 ) T=1;
 orrcs r2, #0x01  // if( C==1 ) r2 |= 1;
 biccc r1, #0x01  // if( C==0 ) T=0;
@@ -1635,11 +1635,12 @@ sub  r0, #4
 str  r0, [r7, r3] // R[n] -= 4
 CALL_SETMEM_LONG // 2cyclte
 
-opdesc TAS,  64,0xff,0,0xff,0xff,0xff
+opdesc TAS,  (17*4),0xff,0,0xff,0xff,0xff
 opfunc TAS
 mov     r0, #0 // n
 LDR_SR  r1   // SR
 mov     r5, r0
+mov     r4, r1
 ldr     r0, [r7, r0]
 CALL_GETMEM_BYTE
 cmp     r0, #0
