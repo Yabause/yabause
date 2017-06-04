@@ -237,6 +237,8 @@ public:
   u32 pre_cnt_;
   u32 interruput_chk_cnt_;
   u32 interruput_cnt_ ;
+  u32 loopskip_cnt_ ;
+
   void ShowStatics();
   void ShowCompileInfo();
  
