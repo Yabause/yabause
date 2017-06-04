@@ -524,7 +524,7 @@ x86op_desc asm_list[] =
   opdesc(SLEEP,0,3,0),
   opdesc(CMP_PL,0,1,0),
   opdesc(CMP_PZ,0,1,0),
-  opdesc(DT,0,1,0),
+  opdesc(DT,0,1,1),
   opdesc(MOVT,0,1,0),
   opdesc(ROTL,0,1,0),
   opdesc(ROTR,0,1,0),
@@ -547,9 +547,9 @@ x86op_desc asm_list[] =
   opdesc(STS_MACL,0xFF,1,0),
   opdesc(STS_PR,0xFF,1,0),
   opdesc(TAS,0,4,0),         // 0x401b
-  opdesc(STC_SR_MEM,0xFF,2,0),
-  opdesc(STC_GBR_MEM,0xFF,2,0),
-  opdesc(STC_VBR_MEM,0xFF,2,0),
+  opdesc(STC_SR_MEM,0xFF,2,1),
+  opdesc(STC_GBR_MEM,0xFF,2,1),
+  opdesc(STC_VBR_MEM,0xFF,2,1),
   opdesc(STS_MACH_DEC,0xFF,2,1),
   opdesc(STS_MACL_DEC,0xFF,2,1),
   opdesc(STSMPR,0xFF,1,1),     // 0x4022
@@ -561,7 +561,7 @@ x86op_desc asm_list[] =
   opdesc(LDS_PR,0xFF,1,0),
   opdesc(JMP, 3,2,0),
   opdesc(JSR, 4,2,0),
-  opdesc(LDC_SR_INC,0xFF,3,0),
+  opdesc(LDC_SR_INC,0xFF,3,0),  
   opdesc(LDC_GBR_INC,0xFF,3,0),
   opdesc(LDC_VBR_INC,0xFF,3,0),
   opdesc(LDS_MACH_INC,0xFF,1,0),
@@ -569,8 +569,8 @@ x86op_desc asm_list[] =
   opdesc(LDS_PR_INC,0xFF,1,0),
   opdesc(BRAF,4,2,0),
   opdesc(BSRF,4,2,0),
-  opdesc(ADD,0,1,0),
-  opdesc(ADDC,0,1,0),
+  opdesc(ADD,0,1,1),
+  opdesc(ADDC,0,1,1),
   opdesc(ADDV,0,1,0),  // 0x300F
   opdesc(AND,0,1,0),
   opdesc(CMP_EQ,0,1,0),
@@ -746,7 +746,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, u32 * ParentT = NULL)
 }
 
 void CompileBlocks::ShowStatics() {
-  //LOG("Compile %d/%d\n", compile_count_, exec_count_);
+  DebugLog("Compile %d/%d\n", compile_count_, exec_count_);
   compile_count_ = 0;
   exec_count_ = 0;
 }
@@ -837,6 +837,27 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
     if (0x1b == op) { // SLEEP
       page->isInfinityLoop = true;
     }
+
+    // Inifinity Loop Detection
+    if (count == 0 && (op & 0xF00F) == 0x6000) {
+      u32 loopcheck = memGetLong(addr + 2);
+      if ((loopcheck & 0xFF00FFFF) == 0xC80089FC) { // test, bf
+        page->isInfinityLoop = true;
+      }
+    }
+
+    // Look for specific bf/bt/bra instructions that branch to address < PC
+    if (
+      write_memory_counter == 0 && 
+      ((op & 0x8B80) == 0x8B80 || // bf
+      (op & 0x8F80) == 0x8F80 || // bf/s 
+      (op & 0x8980) == 0x8980 || // bt
+      (op & 0x8D80) == 0x8D80 || // bt/s 
+      (op & 0xA800) == 0xA800))   // bra
+    {
+      page->isInfinityLoop = true;
+    }
+    
 #ifdef BUILD_INFO  
     printf("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
 #endif    
@@ -957,7 +978,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
       else if (asm_list[i].delay == 3) {
         jumppc = addr + ((signed char)(op & 0xff) << 1);
       }
-
+ 
       if (!debug_mode_) {
         if (start_addr == jumppc) {
 
@@ -1059,6 +1080,7 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
   while (GET_COUNT() < targetcnt) {
     if (Execute() == IN_INFINITY_LOOP ) {
       SET_COUNT(targetcnt);
+      loopskip_cnt_++;
     }
     CurrentSH2->cycles = GET_COUNT();
   }
@@ -1246,12 +1268,13 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
 }
   
 void DynarecSh2::ShowStatics(){
-#if defined(DEBUG_CPU)
-  LOG("\nExec cnt %d interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, interruput_chk_cnt_, interruput_cnt_ );
+//#if defined(DEBUG_CPU)
+  DebugLog("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
   pre_cnt_ = GET_COUNT();
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
-#endif
+  loopskip_cnt_ = 0;
+//#endif
 }
 
 void DynarecSh2::ShowCompileInfo(){
