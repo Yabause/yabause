@@ -410,7 +410,7 @@ opdesc XORI,	16,0xff,0xff,0xff,0,0xff
 opfunc XORI
 mov  r0, #0
 ldr  r3, [r7]
-eor  r0, r0, r3
+eor  r0, r3, r0
 str  r0, [r7]
 
 opdesc ORI,	16,0xff,0xff,0xff,0,0xff
@@ -1099,7 +1099,7 @@ add     r0, r5, r6  // GBR+R0
 CALL_SETMEM_BYTE
 
 
-opdesc TST_B,	34,0xff,0xff,0xff,20,0xff
+opdesc TST_B,	(10*4),0xff,0xff,0xff,20,0xff
 opfunc TST_B
 LDR_GBR r0
 ldr     r1, [r7]
