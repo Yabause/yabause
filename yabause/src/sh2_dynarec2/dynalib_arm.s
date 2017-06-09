@@ -858,7 +858,7 @@ bicne   r0, r1, #1
 STR_SR  r0
 
 // string cmp
-opdesc CMPSTR, 60,0,4,0xff,0xff,0xff
+opdesc CMPSTR, (29*4),0,4,0xff,0xff,0xff
 opfunc CMPSTR
 mov r0, #0 // m
 mov r1, #0 // n
@@ -885,10 +885,13 @@ cmp     r3, #0
 beq     CMPSTR.L2
 LDR_SR  r2
 bic     r0, r2, #1
+b CMPSTR.FINISH
 CMPSTR.L2:
 LDR_SR  r2
 orr     r0, r2, #1
+CMPSTR.FINISH:
 STR_SR  r0
+
 
 //http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0489fj/CIHDDCIF.html
 
