@@ -70,6 +70,7 @@ TEST_F(MaclTest, normal2) {
 
   pctx_->GetGenRegPtr()[6]=0x06001F04;
   pctx_->GetGenRegPtr()[7]=0x060300c0;
+  pctx_->SET_SR( 0xFFFFFFFF );
   pctx_->SET_MACH(0);
   pctx_->SET_MACL(0);
 
