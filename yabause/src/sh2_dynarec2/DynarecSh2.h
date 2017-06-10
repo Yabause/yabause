@@ -241,7 +241,8 @@ public:
 
   void ShowStatics();
   void ShowCompileInfo();
- 
+  void ResetCompileInfo();
+
   inline u32 * GetGenRegPtr() { return m_pDynaSh2->GenReg; }
   inline u32 GET_MACH() { return m_pDynaSh2->SysReg[0]; }
   inline u32 GET_MACL() { return m_pDynaSh2->SysReg[1]; }
