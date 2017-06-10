@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "debug.h"
 #include "yabause.h"
 
+
 #define SH2CORE_DYNAMIC             3
 #define SH2CORE_DYNAMIC_DEBUG             4
 
@@ -141,6 +142,7 @@ void SH2DynReset(SH2_struct *context) {
   if (context->ext == NULL){
     DynarecSh2 * pctx = new DynarecSh2();
     context->ext = (void*)pctx;
+    pctx->SetContext(context);
   }
 
   DynarecSh2 * pctx = (DynarecSh2*)context->ext;

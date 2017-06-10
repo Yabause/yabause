@@ -26,11 +26,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "bios.h"
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
 //#define DEBUG_CPU
-#define BUILD_INFO
+//#define BUILD_INFO
 //#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
@@ -707,8 +708,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, u32 * ParentT = NULL)
     switch (g_CompleBlock[blockCount].b_addr & 0x0FF00000) {
     case 0x00000000:
       if (yabsys.emulatebios) {
-        // ToDo: bios emulation
-        exit(0);
+        return NULL;
       }
       else {
         LookupTableRom[g_CompleBlock[blockCount].b_addr & 0x000FFFFF] = NULL;
@@ -1050,7 +1050,7 @@ void DynarecSh2::ResetCPU(){
   m_IntruptTbl.clear();
 }
 
-void DynarecSh2::ExecuteCount( u32 Count ) {
+void DynarecSh2::ExecuteCount(u32 Count ) {
   
   u32 targetcnt = 0;
   
@@ -1102,6 +1102,10 @@ int DynarecSh2::CheckOneStep() {
   return 0;
 }
 
+void DynarecSh2::Undecoded() {
+
+}
+
 int DynarecSh2::Execute(){
 
   Block * pBlock = NULL;
@@ -1113,6 +1117,12 @@ int DynarecSh2::Execute(){
     
   // ROM
   case 0x00000000:
+
+    if (yabsys.emulatebios && (GET_PC() & 0x0FF00000) == 0) {
+      BiosHandleFunc(ctx_);
+      return IN_INFINITY_LOOP;
+    }
+
     pBlock = m_pCompiler->LookupTableRom[ GET_PC() & 0x000FFFFF ];
     if( pBlock == NULL )
     {
@@ -1122,7 +1132,7 @@ int DynarecSh2::Execute(){
           yabsys.IsSSH2Running = 0;
           return IN_INFINITY_LOOP;
         }else {
-          exit(0);
+          return IN_INFINITY_LOOP;
         }
       }
       m_pCompiler->LookupTableRom[ GET_PC() & 0x000FFFFF ] = pBlock;
@@ -1162,6 +1172,7 @@ int DynarecSh2::Execute(){
           return IN_INFINITY_LOOP;
         }
         else {
+          LOG("Fail to comple %08X", GET_PC());
           exit(0);
         }
       }
