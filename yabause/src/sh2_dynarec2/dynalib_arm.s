@@ -1884,55 +1884,53 @@ MAC_L.FINISH:
 // MACW   ans = 32bit -> 64 bit MUL
 //        (MACH << 32 + MACL)  + ans 
 //-------------------------------------------------------------
-opdesc MAC_W, 120,5,31,0xff,0xff,0xff
+opdesc MAC_W, (42*4),0,4,0xff,0xff,0xff
 opfunc MAC_W
   mov r0, #0  // m
   mov r1, #0  // n
-  mov     r6, r0
-  ldr     r0, [r7, r0]
-  mov     r4, r2
-  mov     r5, r1
-  CALL_GETMEM_WORD
-  ldr     r3, [r7, r6]
-  add     r3, r3, #2
-  str     r3, [r7, r6]
-  uxth    r6, r0
-  ldr     r0, [r7, r5]
-  CALL_GETMEM_WORD
-  ldr     r2, [r4, r7]
-  LDR_SR r3
-  add     r2, r2, #2
-  str     r2, [r7, r5]
-  ands    r1, r3, #2
-  uxth    r0, r0
-  beq     MAC_W.L15
-  smulbb  r0, r6, r0
-  LDR_MACL r6
-  mvn     r5, #1
-  mvn     r4, #0
-  adds    r2, r0, r6
-  mov     r3, r0, asr #31
-  adc     r3, r3, r6, asr #31
-  adds    r6, r2, #-2147483648
-  sbc     r1, r3, #0
-  cmp     r1, r5
-  cmpeq   r6, r4
-  bhi     MAC_W.L17
-  cmp     r0, #0
-  LDR_MACH r0        
-  movlt   r2, #-2147483648
-  mvnge   r2, #-2147483648
-  orr     r0, r0, #1
-  STR_MACH  r0
-MAC_W.L17:
-  STR_MACL     r2
-  b MAC_W.FINISH
-MAC_W.L15:
-  LDR_MACL r4
-  LDR_MACH r3  
-  orr     r2, r1, r4
-  orr     r3, r3, r4, asr #31
-  smlalbb r2, r3, r6, r0
-  STR_MACL  r2
-  STR_MACH  r3
+	mov	r5, r0
+	ldr	r0, [r7, r0]
+	mov	r6, r1
+	CALL_GETMEM_WORD
+	ldr	r3, [r7, r5]
+	add	r3, r3, #2
+	str	r3, [r7, r5]
+	uxth	r5, r0
+	ldr	r0, [r7, r6]
+	CALL_GETMEM_WORD
+  LDR_MACL r2
+  LDR_SR lr
+	ldr	r1, [r7, r6]
+	mov	r3, r2, asr #31
+	add	r1, r1, #2
+	str	r1, [r7, r6]
+	smulbb	r0, r5, r0
+	adds	r2, r2, r0
+	adc	r3, r3, r0, asr #31
+	tst	lr, #2
+	beq	MAC_W.L2
+	adds	r6, r2, #-2147483648
+	mvn	r5, #1
+	sbc	r12, r3, #0
+	mvn	r4, #0
+	cmp	r12, r5
+	cmpeq	r6, r4
+	bhi	MAC_W.L4
+	cmp	r0, #0
+	ldr	r1, [r3]
+	movlt	r2, #-2147483648
+	mvnge	r2, #-2147483648
+	orr	r1, r1, #1
+	STR_MACH r1
+MAC_W.L4:
+	STR_MACL r2
+	b MAC_W.FINISH
+MAC_W.L2:
+  STR_MACL r2
+  STR_MACH r3
 MAC_W.FINISH:
+
+
+  
+  
+  
