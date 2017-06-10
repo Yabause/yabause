@@ -368,11 +368,22 @@ ldr r2, [r7, r0]
 mov r2, r2, ror #16
 str r2, [r7, r1]
 
-opdesc SWAP_B,	20,0,4,0xff,0xff,0xff
+opdesc SWAP_B,	(10*4),0,4,0xff,0xff,0xff
 opfunc SWAP_B
 mov r0, #0 // m
 mov r1, #0 // n
-ldr r2, [r7, r0]
+ldr r0, [r7, r0]
+mov r2, r0, asl #8
+mov r3, r0, asl #16
+uxth  r2, r2
+mov r0, r0, lsr #16
+orr r3, r2, r3, lsr #24
+orr r3, r3, r0, asl #16
+str r3, [r7, r1]
+ 
+
+
+
 REV r3, r2
 str r3, [r7, r1]
 
