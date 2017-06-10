@@ -208,36 +208,36 @@ i_desc opcode_list[] =
 
 void DumpInstX( int i, u32 pc, u16 op  )
 {
-   printf( "%08X : ", pc );
+   LOG( "%08X : ", pc );
 
   if (opcode_list[i].format == ZERO_F)
-    printf("%s", opcode_list[i].mnem);
+    LOG("%s", opcode_list[i].mnem);
   else if (opcode_list[i].format == N_F)
-    printf(opcode_list[i].mnem, (op >> 8) & 0xf);
+    LOG(opcode_list[i].mnem, (op >> 8) & 0xf);
   else if (opcode_list[i].format == M_F)
-    printf(opcode_list[i].mnem, (op >> 8) & 0xf);
+    LOG(opcode_list[i].mnem, (op >> 8) & 0xf);
   else if (opcode_list[i].format == NM_F)
-    printf(opcode_list[i].mnem, (op >> 4) & 0xf, (op >> 8) & 0xf);
+    LOG(opcode_list[i].mnem, (op >> 4) & 0xf, (op >> 8) & 0xf);
   else if (opcode_list[i].format == MD_F)
   {
     if (op & 0x100)
-      printf(opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
+      LOG(opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
     else
-      printf(opcode_list[i].mnem, op & 0xf, (op >> 4) & 0xf);
+      LOG(opcode_list[i].mnem, op & 0xf, (op >> 4) & 0xf);
   }
   else if (opcode_list[i].format == ND4_F)
   {
     if (op & 0x100)
-      printf(opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
+      LOG(opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
     else
-      printf(opcode_list[i].mnem, (op & 0xf), (op >> 4) & 0xf);
+      LOG(opcode_list[i].mnem, (op & 0xf), (op >> 4) & 0xf);
   }
   else if (opcode_list[i].format == NMD_F)
   {
     if ((op & 0xf000) == 0x1000)
-      printf(opcode_list[i].mnem, (op >> 4) & 0xf, (op & 0xf) * 4, (op >> 8) & 0xf);
+      LOG(opcode_list[i].mnem, (op >> 4) & 0xf, (op & 0xf) * 4, (op >> 8) & 0xf);
     else
-      printf(opcode_list[i].mnem, (op & 0xf) * 4, (op >> 4) & 0xf, (op >> 8) & 0xf);
+      LOG(opcode_list[i].mnem, (op & 0xf) * 4, (op >> 4) & 0xf, (op >> 8) & 0xf);
   }
   else if (opcode_list[i].format == D_F)
   {
@@ -245,51 +245,51 @@ void DumpInstX( int i, u32 pc, u16 op  )
     {
       if ((op & 0xff00) == 0xc700)
       {
-        printf(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4);
-//				printf("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + PC);
+        LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4);
+//				LOG("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + PC);
       }
       else
-        printf(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat);
+        LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat);
     }
     else
     {
       if (op & 0x80)  /* sign extend */
-        printf(opcode_list[i].mnem, (((op & 0xff) + 0xffffff00) * 2) + pc + 4);
+        LOG(opcode_list[i].mnem, (((op & 0xff) + 0xffffff00) * 2) + pc + 4);
       else
-        printf(opcode_list[i].mnem, ((op & 0xff) * 2) + pc + 4);
+        LOG(opcode_list[i].mnem, ((op & 0xff) * 2) + pc + 4);
     }        
   }
   else if (opcode_list[i].format == D12_F)
   {
     if (op & 0x800)         /* sign extend */
-      printf(opcode_list[i].mnem, ((op & 0xfff) + 0xfffff000) * 2 + pc + 4);
+      LOG(opcode_list[i].mnem, ((op & 0xfff) + 0xfffff000) * 2 + pc + 4);
     else
-      printf(opcode_list[i].mnem, (op & 0xfff) * 2 + pc + 4);
+      LOG(opcode_list[i].mnem, (op & 0xfff) * 2 + pc + 4);
   }
   else if (opcode_list[i].format == ND8_F)
   {
     if ((op & 0xf000) == 0x9000)    /* .W */
     {
-      printf(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
-      //printf("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + pc);
+      LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
+      //LOG("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + pc);
     }
     else  /* .L */
     {
-      printf(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
-      //printf("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + ((pc) & 0xfffffffc));
+      LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
+      //LOG("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + ((pc) & 0xfffffffc));
     }
   }
   else if (opcode_list[i].format == I_F)
-    printf(opcode_list[i].mnem, op & 0xff);
+    LOG(opcode_list[i].mnem, op & 0xff);
   else if (opcode_list[i].format == NI_F)
-    printf(opcode_list[i].mnem, op & 0xff, (op >> 8) & 0xf);
+    LOG(opcode_list[i].mnem, op & 0xff, (op >> 8) & 0xf);
   else
   {
-    printf("unrecognized\n");
+    LOG("unrecognized\n");
     return;
   }
 
-  printf( "\n");
+  LOG( "\n");
   return;
 }
 
@@ -349,7 +349,6 @@ opinit(NOP);
 opinit(DIV0U);
 opinit(SETT);
 opinit(SLEEP);
-
 opinit(STS_MACH);
 opinit(STS_MACL);
 opinit(STS_MACH_DEC);
@@ -374,13 +373,11 @@ opinit(STC_SR_MEM);
 opinit(STC_VBR_MEM);
 opinit(STC_GBR_MEM);
 opinit(STSMPR);
-
 opinit(CMP_EQ);
 opinit(CMP_HI);
 opinit(CMP_GE);
 opinit(CMP_HS);
 opinit(CMP_GT);
-
 opinit(DT);
 opinit(CMP_PL);
 opinit(CMP_PZ);
@@ -397,7 +394,6 @@ opinit(SHLL8);
 opinit(SHLR8);
 opinit(SHLL16);
 opinit(SHLR16);
-
 opinit(AND);
 opinit(OR);
 opinit(XOR);
@@ -411,26 +407,22 @@ opinit(NEG);
 opinit(NEGC);
 opinit(TST);
 opinit(TSTI);
-
 opinit(AND_B);
 opinit(OR_B);
 opinit(TST_B);
 opinit(XOR_B);
-
 opinit(ADDI);
 opinit(ANDI);
 opinit(ORI);
 opinit(XORI);
 opinit(MOVI);
 opinit(CMP_EQ_IMM);
-
 opinit(SWAP_B);
 opinit(SWAP_W);
 opinit(EXTUB);
 opinit(EXTU_W);
 opinit(EXTS_B);
 opinit(EXTS_W);
-
 opinit(BT)
 opinit(BF);
 opinit(BF_S);
@@ -442,7 +434,6 @@ opinit(BSRF);
 opinit(BRAF);
 opinit(RTE);
 opinit(RTS);
-
 opinit(MOVA);
 opinit(MOVT);
 opinit(MOVBL);
@@ -664,7 +655,7 @@ Block *CompileBlocks::Init(Block *dynaCode)
   dynaCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
   memset((void*)dynaCode, 0, sizeof(Block)*NUMOFBLOCKS);
 
-  printf("LookupTable = %d\n",sizeof(LookupTable));
+  LOG("LookupTable = %d\n",sizeof(LookupTable));
   //
   memset(LookupTable, 0, sizeof(LookupTable));
   memset(LookupParentTable, 0, sizeof(LookupParentTable));
@@ -825,7 +816,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   page->isInfinityLoop = false;
   
 #ifdef BUILD_INFO  
-  printf("*********** start block *************\n");
+  LOG("*********** start block *************\n");
 #endif
 
   MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
@@ -859,7 +850,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
     }
     
 #ifdef BUILD_INFO  
-    printf("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
+    LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
 #endif    
 
     if( ParentT ){
@@ -1001,9 +992,9 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 #if 0 // Dump code
   char fname[64];
 #if defined(ANDROID)
-  sprintf(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
+  sLOG(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
 #else
-  sprintf(fname,"%08X.bin",start_addr);
+  sLOG(fname,"%08X.bin",start_addr);
 #endif
    FILE * fp = fopen(fname, "wb");
   if(fp){
@@ -1163,33 +1154,22 @@ int DynarecSh2::Execute(){
     break;  
    }
     
-  //LOG("\n---dynaExecute %08X----\n", GET_PC() );
-  //if( 0x06000928 == GET_PC() ){
-   // ShowCompileInfo();
-   // exit(0);
-  // LOG("%08X: R[15]=%08X\n", GET_PC() ,GetGenRegPtr()[15] );
-  //}
-  //u32 prepc  = GET_PC();
-   // LOG("\n---dynaExecute %08X----\n", GET_PC() );
 #if 0
     static FILE * fp = NULL;
     char fname[64];
-    sprintf(fname,"/mnt/sdcard/yabause/intlog.txt");
+    sLOG(fname,"/mnt/sdcard/yabause/intlog.txt");
     if( fp == NULL ) {
         fp = fopen(fname, "w");
     }
     if(fp){
-        fprintf(fp,"\n---dynaExecute %08X----\n", GET_PC());
+        fLOG(fp,"\n---dynaExecute %08X----\n", GET_PC());
         fflush(fp);
     }
 #endif
+  //u32 prepc  = GET_PC();
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-  //if( GET_PC() == 0x0000000 ) {
-  //LOG("%08X -> %08X\n", GET_PC() );
-  //ShowCompileInfo();
-  //exit(0);    
-  //}
-  
+
+
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
 }
@@ -1213,7 +1193,7 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   m_IntruptTbl.push_back(tmp);
   m_IntruptTbl.unique(); 
 
-  //printf("AddInterrupt v:%d l:%d\n", Vector, level );
+  //LOG("AddInterrupt v:%d l:%d\n", Vector, level );
 
   if( m_IntruptTbl.size() > 1 ) {
     m_IntruptTbl.sort();
@@ -1231,7 +1211,7 @@ int DynarecSh2::CheckInterupt(){
     return 0;
   }
 
-  //printf("CheckInterupt %d\n", m_IntruptTbl.size() );
+  //LOG("CheckInterupt %d\n", m_IntruptTbl.size() );
   
   dlstIntct::iterator pos = m_IntruptTbl.begin();
   if( InterruptRutine((*pos).Vector, (*pos).level ) != 0 ) {
@@ -1268,20 +1248,27 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
 }
   
 void DynarecSh2::ShowStatics(){
-//#if defined(DEBUG_CPU)
+#if defined(DEBUG_CPU)
   DebugLog("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
   pre_cnt_ = GET_COUNT();
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
   loopskip_cnt_ = 0;
-//#endif
+#endif
 }
 
 void DynarecSh2::ShowCompileInfo(){
   int i = 0;
   while (asm_list[i].func != NULL) {
-    printf("%s: %d\n", opcode_list[i].mnem, asm_list[i].build_count);
+    LOG("%s: %d\n", opcode_list[i].mnem, asm_list[i].build_count);
     i++;
   }
 }
 
+void DynarecSh2::ResetCompileInfo() {
+  int i = 0;
+  while (asm_list[i].func != NULL) {
+    asm_list[i].build_count = 0;
+    i++;
+  }
+}

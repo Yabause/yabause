@@ -1122,19 +1122,13 @@ static void FASTCALL SH2ldspr(SH2_struct * sh)
 
 static void FASTCALL SH2macl(SH2_struct * sh)
 {
-   u32 RnL,RnH,RmL,RmH,Res0,Res1,Res2;
-   u32 temp0,temp1,temp2,temp3;
-   s32 tempm,tempn,fnLmL;
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
-   u32 pre_macl;
-   u32 pre_mach;
-
    s32 m0, m1;
 
-   m1 = tempn = (s32) MappedMemoryReadLong(sh->regs.R[n]);
+   m1 = (s32) MappedMemoryReadLong(sh->regs.R[n]);
    sh->regs.R[n] += 4;
-   m0 = tempm = (s32) MappedMemoryReadLong(sh->regs.R[m]);
+   m0 = (s32) MappedMemoryReadLong(sh->regs.R[m]);
    sh->regs.R[m] += 4;
 
 #if 1 // fast and better
@@ -1142,12 +1136,14 @@ static void FASTCALL SH2macl(SH2_struct * sh)
    a = sh->regs.MACL | ((u64)sh->regs.MACH << 32);
    b = (s64)m0 * m1;
    sum = a+b;
-   if (sh->regs.SR.part.S == 1 && sum > 0x00007FFFFFFFFFFFULL && sum < 0xFFFF800000000000ULL)
-   {
-     if((s64)b < 0)
-       sum = 0xFFFF800000000000ULL;
-     else
-       sum = 0x00007FFFFFFFFFFFULL;
+   if (sh->regs.SR.part.S == 1) {
+     if (sum > 0x00007FFFFFFFFFFFULL && sum < 0xFFFF800000000000ULL)
+     {
+       if ((s64)b < 0)
+         sum = 0xFFFF800000000000ULL;
+       else
+         sum = 0x00007FFFFFFFFFFFULL;
+     }
    }
    sh->regs.MACL = sum; 
    sh->regs.MACH = sum >> 32;
@@ -1238,7 +1234,43 @@ static void FASTCALL SH2macl(SH2_struct * sh)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#if 1
+static void FASTCALL SH2macw(SH2_struct * sh)
+{
+  s16 m0, m1;
+  u32 templ;
+  s32 m = INSTRUCTION_C(sh->instruction);
+  s32 n = INSTRUCTION_B(sh->instruction);
 
+  m0 = (s32)MappedMemoryReadWord(sh->regs.R[m]);
+  sh->regs.R[m] += 2;
+  m1 = (s32)MappedMemoryReadWord(sh->regs.R[n]);
+  sh->regs.R[n] += 2;
+
+  s32 b = (s32)m0 * m1;
+  u64 sum = (s64)(s32)sh->regs.MACL + b;
+
+  if (sh->regs.SR.part.S == 1) {
+    if (sum > 0x000000007FFFFFFFULL && sum < 0xFFFFFFFF80000000ULL)
+    {
+      sh->regs.MACH |= 1;
+
+      if (b < 0)
+        sum = 0x80000000ULL;
+      else
+        sum = 0x7FFFFFFFULL;
+    }
+    sh->regs.MACL = sum;
+  }
+  else {
+    sh->regs.MACL = sum;
+    sh->regs.MACH = sum >> 32;
+  }
+  sh->regs.PC += 2;
+  sh->cycles += 3;
+}
+
+#else
 static void FASTCALL SH2macw(SH2_struct * sh)
 {
    s32 tempm,tempn,dest,src,ans;
@@ -1293,6 +1325,7 @@ static void FASTCALL SH2macw(SH2_struct * sh)
    sh->regs.PC+=2;
    sh->cycles += 3;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
