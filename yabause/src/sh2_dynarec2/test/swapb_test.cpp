@@ -43,35 +43,51 @@ TEST_F(SwapbTest, normal) {
   pctx_->GetGenRegPtr()[4]=0x00120000;
 
   // swap.w r2,r4
-  memSetWord( 0x06000000, 0x6249 );
+  memSetWord( 0x06000000, 0x6248 );
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x00000012, pctx_->GetGenRegPtr()[2] );
+  EXPECT_EQ( 0x00120000, pctx_->GetGenRegPtr()[2] );
   EXPECT_EQ( 0x00120000, pctx_->GetGenRegPtr()[4] );
 
 }
 TEST_F(SwapbTest, normal2) {
 
-  // 0602EA70: swapwin 6239, R[2]=00000002 R[3]=AABBCCDD
-  // 0602EA70: swapwout 6239, R[2]=CCDDAABB R[3]=AABBCCDD
-
   pctx_->GetGenRegPtr()[2]=0x00000002;
   pctx_->GetGenRegPtr()[3]=0xAABBCCDD;
 
   // swap.w r2,r3
-  memSetWord( 0x06000000, 0x6239 );
+  memSetWord( 0x06000000, 0x6238 );
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xCCDDAABB, pctx_->GetGenRegPtr()[2] );
+  EXPECT_EQ( 0xAABBDDCC, pctx_->GetGenRegPtr()[2] );
   EXPECT_EQ( 0xAABBCCDD, pctx_->GetGenRegPtr()[3] );
+
+}
+
+TEST_F(SwapbTest, sonicr) {
+
+
+  pctx_->GetGenRegPtr()[13]=0x00000000;
+  pctx_->GetGenRegPtr()[0]=0x00000001;
+
+  // swap.w r2,r3
+  memSetWord( 0x06000000, 0x6d08 );
+  memSetWord( 0x06000002, 0x000b );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0x00000100, pctx_->GetGenRegPtr()[13] );
+  EXPECT_EQ( 0x00000001, pctx_->GetGenRegPtr()[0] );
 
 }
 
