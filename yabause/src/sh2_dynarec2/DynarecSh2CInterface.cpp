@@ -24,7 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <stdint.h>
 #include "sh2core.h"
 #include "DynarecSh2.h"
-
+#include "debug.h"
+#include "yabause.h"
 
 #define SH2CORE_DYNAMIC             3
 #define SH2CORE_DYNAMIC_DEBUG             4
@@ -339,7 +340,8 @@ void SH2DynShowSttaics(SH2_struct * master, SH2_struct * slave ){
 void memSetByte(u32 addr , u8 data )
 {
   dynaLock();
-  //printf("memSetByte %08X, %08X\n", addr, data);
+  //LOG("memSetWord %08X, %08X\n", addr, data);
+
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -366,7 +368,8 @@ void memSetByte(u32 addr , u8 data )
 void memSetWord(u32 addr, u16 data )
 {
   dynaLock();
-  //printf("memSetWord %08X, %08X\n", addr, data);
+  //LOG("memSetWord %08X, %08X\n", addr, data);
+
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -393,7 +396,8 @@ void memSetWord(u32 addr, u16 data )
 void memSetLong(u32 addr , u32 data )
 {
   dynaLock();
-  //printf("memSetLong %08X, %08X\n", addr, data);
+  //LOG("memSetLong %08X, %08X\n", addr, data);
+
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {  

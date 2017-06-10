@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "DynarecSh2.h"
 #include "opcodes.h"
 //#define DEBUG_CPU
-//#define BUILD_INFO
+#define BUILD_INFO
 //#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
@@ -731,13 +731,15 @@ Block * CompileBlocks::CompileBlock(u32 pc, u32 * ParentT = NULL)
 
   g_CompleBlock[blockCount].b_addr = pc;
 
-  EmmitCode(&g_CompleBlock[blockCount], ParentT);
+  if (EmmitCode(&g_CompleBlock[blockCount], ParentT) != 0) {
+    return NULL;
+  }
 
   return &g_CompleBlock[blockCount];
 }
 
 void CompileBlocks::ShowStatics() {
-  DebugLog("Compile %d/%d\n", compile_count_, exec_count_);
+  LOG("Compile %d/%d\n", compile_count_, exec_count_);
   compile_count_ = 0;
   exec_count_ = 0;
 }
@@ -770,7 +772,7 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 }
 
 
-void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
+int CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 {
   int i, j, jmp = 0, count = 0;
   u16 op, temp;
@@ -848,14 +850,16 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
     {
       page->isInfinityLoop = true;
     }
+
+    
     
 #ifdef BUILD_INFO  
     LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
 #endif    
 
-    if( ParentT ){
-      ParentT[(addr&0x000FFFFF)>>1] = (start_addr&0x000FFFFF)>>1;
-    }
+    //if( ParentT ){
+    //  ParentT[(addr&0x000FFFFF)>>1] = (start_addr&0x000FFFFF)>>1;
+    //}
     addr += 2;
 
 #ifdef BUILD_INFO
@@ -876,7 +880,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
       instrSize[blockCount][count++] = nomal_seperator_size;
       ptr += nomal_seperator_size;
 
-      exit(0);
+      return -1;
 
       break;
     }
@@ -932,6 +936,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 #endif
       if (asm_list[j].func == 0) {
         LOG("Unimplemented Opcode (0x%4x) at 0x%8x\n", temp, addr-2);
+        return -1;
         break;
       }
       
@@ -1003,7 +1008,7 @@ void CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   }
 #endif
 
-  return;
+  return 0;
 }
 
 DynarecSh2::DynarecSh2() {
@@ -1102,7 +1107,7 @@ int DynarecSh2::Execute(){
   Block * pBlock = NULL;
 
   m_pCompiler->exec_count_++;
-    
+
   switch( GET_PC() & 0x0FF00000 )
   {
     
@@ -1112,6 +1117,14 @@ int DynarecSh2::Execute(){
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
+      if (pBlock == NULL) {
+        if (this->is_slave_) {
+          yabsys.IsSSH2Running = 0;
+          return IN_INFINITY_LOOP;
+        }else {
+          exit(0);
+        }
+      }
       m_pCompiler->LookupTableRom[ GET_PC() & 0x000FFFFF ] = pBlock;
     }
     break;
@@ -1122,6 +1135,15 @@ int DynarecSh2::Execute(){
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
+      if (pBlock == NULL) {
+        if (this->is_slave_) {
+          yabsys.IsSSH2Running = 0;
+          return IN_INFINITY_LOOP;
+        }
+        else {
+          exit(0);
+        }
+      }
       m_pCompiler->LookupTableLow[ GET_PC() & 0x000FFFFF ] = pBlock;
     }
     break;
@@ -1134,6 +1156,15 @@ int DynarecSh2::Execute(){
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC(), (u32*)m_pCompiler->LookupParentTable);
+      if (pBlock == NULL) {
+        if (this->is_slave_) {
+          yabsys.IsSSH2Running = 0;
+          return IN_INFINITY_LOOP;
+        }
+        else {
+          exit(0);
+        }
+      }
       m_pCompiler->LookupTable[ (GET_PC() & 0x000FFFFF)>>1 ] = pBlock;
     } 
     break;
@@ -1146,10 +1177,28 @@ int DynarecSh2::Execute(){
       if( pBlock == NULL )
       {
         pBlock = m_pCompiler->CompileBlock(GET_PC());
+        if (pBlock == NULL) {
+          if (this->is_slave_) {
+            yabsys.IsSSH2Running = 0;
+            return IN_INFINITY_LOOP;
+          }
+          else {
+            exit(0);
+          }
+        }
         m_pCompiler->LookupTableC[ GET_PC() & 0x000FFFFF ] = pBlock;
       } 
     }else{
       pBlock = m_pCompiler->CompileBlock(GET_PC());
+      if (pBlock == NULL) {
+        if (this->is_slave_) {
+          yabsys.IsSSH2Running = 0;
+          return IN_INFINITY_LOOP;
+        }
+        else {
+          exit(0);
+        }
+      }
     }
     break;  
    }
@@ -1157,18 +1206,17 @@ int DynarecSh2::Execute(){
 #if 0
     static FILE * fp = NULL;
     char fname[64];
-    sLOG(fname,"/mnt/sdcard/yabause/intlog.txt");
+    sprintf(fname,"/mnt/sdcard/yabause/intlog.txt");
     if( fp == NULL ) {
         fp = fopen(fname, "w");
     }
     if(fp){
-        fLOG(fp,"\n---dynaExecute %08X----\n", GET_PC());
+        fprintf(fp,"\n---dynaExecute %08X----\n", GET_PC());
         fflush(fp);
     }
 #endif
   //u32 prepc  = GET_PC();
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-
 
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
