@@ -207,6 +207,7 @@ typedef void(*dynaFunc)(tagSH2*);
 
 class DynarecSh2
 {
+  SH2_struct *parent;
   tagSH2 *  m_pDynaSh2;
   CompileBlocks * m_pCompiler;
   int       m_ClockCounter;
@@ -216,13 +217,14 @@ class DynarecSh2
   s32 pre_exe_count_;
   bool is_slave_ = false;
   u32 pre_PC_;
-
+  SH2_struct * ctx_;
 
 public:
   DynarecSh2();
   static DynarecSh2 * CurrentContext;
   void SetCurrentContext(){ CurrentContext = this; }
   void SetSlave(bool is_slave) { is_slave_ = is_slave; }
+  void SetContext(SH2_struct * ctx) { ctx_= ctx;}
   bool IsSlave() { return is_slave_;  }
 
   void AddInterrupt( u8 Vector, u8 level );
@@ -231,8 +233,9 @@ public:
   int CheckOneStep();
 
   void ResetCPU();  
-  void ExecuteCount( u32 Count );
+  void ExecuteCount(u32 Count );
   int Execute();
+  void Undecoded();
 
   u32 pre_cnt_;
   u32 interruput_chk_cnt_;
