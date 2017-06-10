@@ -193,7 +193,7 @@ public:
   void FindOpCode(u16 opcode, u8 * instindex);
   void BuildInstructionList();
 
-  void EmmitCode(Block *page, u32 * ParentT = NULL);
+  int EmmitCode(Block *page, u32 * ParentT = NULL);
 
   // statics
   u32 compile_count_;
