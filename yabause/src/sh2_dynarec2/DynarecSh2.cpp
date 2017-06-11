@@ -1030,6 +1030,13 @@ DynarecSh2::DynarecSh2() {
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
   pre_PC_ = 0;
+  ctx_ = NULL;
+  mtx_ = YabThreadCreateMutex();
+  logenable_ = false;
+}
+
+DynarecSh2::~DynarecSh2(){
+  YabThreadFreeMutex(mtx_);
 }
 
 void DynarecSh2::ResetCPU(){
@@ -1050,7 +1057,7 @@ void DynarecSh2::ResetCPU(){
   m_IntruptTbl.clear();
 }
 
-void DynarecSh2::ExecuteCount(u32 Count ) {
+void DynarecSh2::ExecuteCount( u32 Count ) {
   
   u32 targetcnt = 0;
   
@@ -1102,10 +1109,6 @@ int DynarecSh2::CheckOneStep() {
   return 0;
 }
 
-void DynarecSh2::Undecoded() {
-
-}
-
 int DynarecSh2::Execute(){
 
   Block * pBlock = NULL;
@@ -1118,7 +1121,7 @@ int DynarecSh2::Execute(){
   // ROM
   case 0x00000000:
 
-    if (yabsys.emulatebios && (GET_PC() & 0x0FF00000) == 0) {
+    if (yabsys.emulatebios){
       BiosHandleFunc(ctx_);
       return IN_INFINITY_LOOP;
     }
@@ -1132,7 +1135,7 @@ int DynarecSh2::Execute(){
           yabsys.IsSSH2Running = 0;
           return IN_INFINITY_LOOP;
         }else {
-          return IN_INFINITY_LOOP;
+          exit(0);
         }
       }
       m_pCompiler->LookupTableRom[ GET_PC() & 0x000FFFFF ] = pBlock;
@@ -1172,7 +1175,6 @@ int DynarecSh2::Execute(){
           return IN_INFINITY_LOOP;
         }
         else {
-          LOG("Fail to comple %08X", GET_PC());
           exit(0);
         }
       }
@@ -1227,7 +1229,17 @@ int DynarecSh2::Execute(){
     }
 #endif
   //u32 prepc  = GET_PC();
+  //if( 0x06040CF2 == GET_PC() ){
+  //  logenable_ = true;
+  //}
+  //if( logenable_ )
+  //  LOG("\n---dynaExecute start %08X----\n", GET_PC());
+
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
+
+  //if( logenable_ )
+  //  LOG("\n---dynaExecute end %08X----\n", GET_PC());
+
 
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
@@ -1248,17 +1260,19 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   tmp.Vector = Vector;
   tmp.level  = level;
 
+  YabThreadLock(mtx_);
   m_bIntruptSort = false;
   m_IntruptTbl.push_back(tmp);
   m_IntruptTbl.unique(); 
 
-  //LOG("AddInterrupt v:%d l:%d\n", Vector, level );
+  //printf("AddInterrupt v:%d l:%d\n", Vector, level );
 
   if( m_IntruptTbl.size() > 1 ) {
     m_IntruptTbl.sort();
   }
   m_bIntruptSort = true;
   m_pDynaSh2->SysReg[5] = m_IntruptTbl.begin()->level<<4;
+  YabThreadUnLock(mtx_);
 }
 
 
@@ -1271,7 +1285,8 @@ int DynarecSh2::CheckInterupt(){
   }
 
   //LOG("CheckInterupt %d\n", m_IntruptTbl.size() );
-  
+    
+  YabThreadLock(mtx_);  
   dlstIntct::iterator pos = m_IntruptTbl.begin();
   if( InterruptRutine((*pos).Vector, (*pos).level ) != 0 ) {
     m_IntruptTbl.pop_front();
@@ -1280,8 +1295,10 @@ int DynarecSh2::CheckInterupt(){
     }else{
       m_pDynaSh2->SysReg[5] = 0x0000;
     }
+    YabThreadUnLock(mtx_);
     return 1;
   }
+  YabThreadUnLock(mtx_);
   return 0;
 }
 

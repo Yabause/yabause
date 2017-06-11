@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <list>
 #include <sys/types.h>
 #include <stdint.h>
+#include "threads.h"
 
 //****************************************************
 // Defiens
@@ -218,9 +219,12 @@ class DynarecSh2
   bool is_slave_ = false;
   u32 pre_PC_;
   SH2_struct * ctx_;
+  YabMutex * mtx_;
+  bool logenable_;
 
 public:
   DynarecSh2();
+  ~DynarecSh2();
   static DynarecSh2 * CurrentContext;
   void SetCurrentContext(){ CurrentContext = this; }
   void SetSlave(bool is_slave) { is_slave_ = is_slave; }
