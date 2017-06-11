@@ -1594,13 +1594,12 @@ ldrb  r1, [r7, r1]
 CALL_SETMEM_BYTE // 2cyclte
 
         
-opdesc MOVWS,	28,4,0,0xff,0xff,0xff
+opdesc MOVWS,	(6*4),4,0,0xff,0xff,0xff
 opfunc MOVWS
 mov r0, #0 // b
 mov r1, #0 // c
 ldr  r0, [r7, r0]
 ldr  r1, [r7, r1]
-sxth r1,r1
 CALL_SETMEM_WORD // 2cyclte
 
 opdesc MOVLS,	24,4,0,0xff,0xff,0xff
