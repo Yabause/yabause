@@ -626,13 +626,15 @@ int YabauseEmulate(void) {
          if (!yabsys.playing_ssf)
          {
            u32 i;
-		   const u32 div = 3;
-           const u32 step  = sh2cycles>> div;
-		   const u32 amari = sh2cycles - (step<< div);
+           const u32 div = 2;
+           const u32 step  = sh2cycles >> div;
+		       const u32 amari = sh2cycles - (step<< div);
 		   
-		   SH2Exec(MSH2, amari);
-		   if (yabsys.IsSSH2Running)
-			   SH2Exec(SSH2, amari);
+           if( amari != 0 ){
+		        SH2Exec(MSH2, amari);
+		        if (yabsys.IsSSH2Running)
+			        SH2Exec(SSH2, amari);
+           }
 
            for (i = amari; i < sh2cycles; i += step){
              SH2Exec(MSH2, step);
@@ -807,8 +809,8 @@ int YabauseEmulate(void) {
 #endif
    
 #ifdef YAB_STATICS
-   LOG("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
-   //if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
+   DebugLog("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
+   if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
    return 0;

@@ -11,65 +11,65 @@
 
 namespace {
 
-class XtractTest : public ::testing::Test {
+class ShllTest : public ::testing::Test {
  protected:
    DynarecSh2 * pctx_;
 
-  XtractTest() {
+  ShllTest() {
     initMemory();
     pctx_ = new DynarecSh2();  
     pctx_->SetCurrentContext();
   }
 
-  virtual ~XtractTest() {
+  virtual ~ShllTest() {
     delete pctx_;    
   }   
 
 virtual void SetUp() {
-  printf("XtractTest::SetUp\n");
-  
+   
 }
 
 virtual void TearDown() {
-  printf("XtractTest::TearDown\n");
-
 }
 
 };
 
-TEST_F(XtractTest, normal) {
+TEST_F(ShllTest, normal) {
 
-  pctx_->GetGenRegPtr()[0]=0x00000000;
-  pctx_->GetGenRegPtr()[1]=0x00000001;
+  pctx_->GetGenRegPtr()[2]=0x00000001;
+  pctx_->SET_SR(0x000000E0);
 
-  // xtract r1,r0
-  memSetWord( 0x06000000, 0x201D );
+  // shlr2
+  memSetWord( 0x06000000, 0x4200 );
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x00010000, pctx_->GetGenRegPtr()[0] );
+  EXPECT_EQ( 0x00000002, pctx_->GetGenRegPtr()[2] );
+  EXPECT_EQ( 0x000000E0, pctx_->GET_SR() );
 
 }
 
-TEST_F(XtractTest, normal2) {
+TEST_F(ShllTest, tflg) {
 
-  pctx_->GetGenRegPtr()[3]=0x00000003;
-  pctx_->GetGenRegPtr()[0]=0x6631C000;
+  pctx_->GetGenRegPtr()[2]=0x80000001;
+  pctx_->SET_SR(0x000000E0);
 
-  // xtract r3,r0
-  memSetWord( 0x06000000, 0x203D );
+  // shlr2
+  memSetWord( 0x06000000, 0x4200 );
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x00036631, pctx_->GetGenRegPtr()[0] );
+  EXPECT_EQ( 0x00000002, pctx_->GetGenRegPtr()[2] );
+  EXPECT_EQ( 0x000000E1, pctx_->GET_SR() );
 
 }
+
 
 
 

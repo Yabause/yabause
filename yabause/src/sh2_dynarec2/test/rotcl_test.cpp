@@ -45,6 +45,7 @@ TEST_F(RotclTest, normal) {
   memSetWord( 0x000004, 0x0009 );  // nop
 
   pctx_->SET_PC( 0x000000 );
+  pctx_->SET_SR( 0x000000 );
   pctx_->Execute();
 
   EXPECT_EQ( 0x00, (pctx_->GET_SR()&0x01) );
@@ -63,6 +64,7 @@ TEST_F(RotclTest, carry) {
   memSetWord( 0x000002, 0x000b );  // rts
   memSetWord( 0x000004, 0x0009 );  // nop
   pctx_->SET_PC( 0x000000 );
+  pctx_->SET_SR( 0x000000 );
   pctx_->Execute();
 
   EXPECT_EQ( 0x01, (pctx_->GET_SR()&0x01) );
