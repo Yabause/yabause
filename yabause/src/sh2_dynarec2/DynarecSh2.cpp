@@ -857,9 +857,9 @@ int CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
     LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
 #endif    
 
-    //if( ParentT ){
-    //  ParentT[(addr&0x000FFFFF)>>1] = (start_addr&0x000FFFFF)>>1;
-    //}
+    if( ParentT ){
+      ParentT[(addr&0x000FFFFF)>>1] = (start_addr&0x000FFFFF)>>1;
+    }
     addr += 2;
 
 #ifdef BUILD_INFO
@@ -1117,12 +1117,11 @@ int DynarecSh2::Execute(){
     
   // ROM
   case 0x00000000:
-    pBlock = m_pCompiler->LookupTableRom[ (GET_PC() & 0x000FFFFF)>>1 ];
     if (yabsys.emulatebios && (GET_PC() & 0x0FF00000) == 0) {
       BiosHandleFunc(ctx_);
       return IN_INFINITY_LOOP;
     }
-
+    pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
@@ -1134,16 +1133,16 @@ int DynarecSh2::Execute(){
           return IN_INFINITY_LOOP;
         }
       }
+      m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
     }
     break;
 
   // Low Memory
   case 0x00200000:
-    pBlock = m_pCompiler->LookupTableLow[ (GET_PC()&0x000FFFFF)>>1 ];
+    pBlock = m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1];
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
-      m_pCompiler->LookupTableLow[ (GET_PC() & 0x000FFFFF)>>1 ] = pBlock;
       if (pBlock == NULL) {
         if (this->is_slave_) {
           yabsys.IsSSH2Running = 0;
@@ -1153,6 +1152,7 @@ int DynarecSh2::Execute(){
           exit(0);
         }
       }
+      m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
     }
     break;
 

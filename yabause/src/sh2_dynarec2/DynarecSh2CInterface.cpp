@@ -382,7 +382,7 @@ void memSetWord(u32 addr, u16 data )
   // High Memory
    case 0x06000000: {
      block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
-     u16 blockaddr = block->LookupParentTable[(addr & 0x000FFFFF) >> 1];
+     u32 blockaddr = block->LookupParentTable[(addr & 0x000FFFFF) >> 1];
      if (blockaddr != 0) {
        block->LookupParentTable[ (addr & 0x000FFFFF)>>1 ] = 0;
        block->LookupTable[blockaddr] = NULL;
