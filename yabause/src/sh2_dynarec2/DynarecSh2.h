@@ -177,11 +177,11 @@ public:
   Block * g_CompleBlock;
   
   u8 dsh2_instructions[MAX_INSTSIZE];
-  Block* LookupTable[0x100000 >> 1];
-  u16 LookupParentTable[0x100000 >> 1];
-  Block* LookupTableRom[0x80000];
-  Block* LookupTableLow[0x100000];
-  Block* LookupTableC[0x8000];
+  Block* LookupTable[0x100000>>1];    
+  u32 LookupParentTable[0x100000>>1];
+  Block* LookupTableRom[0x80000>>1];
+  Block* LookupTableLow[0x100000>>1];
+  Block* LookupTableC[0x8000>>1];
   Block * dCode;
   
  
