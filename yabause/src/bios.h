@@ -26,6 +26,10 @@
 
 #include "sh2core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
    char filename[12];
@@ -58,5 +62,11 @@ void BupFormat(u32 device);
 int BupCopySave(u32 srcdevice, u32 dstdevice, const char *savename);
 int BupImportSave(u32 device, const char *filename);
 int BupExportSave(u32 device, const char *savename, const char *filename);
+
+#ifdef __cplusplus
+}
 #endif
+
+
+#endif //  BIOS_H
 

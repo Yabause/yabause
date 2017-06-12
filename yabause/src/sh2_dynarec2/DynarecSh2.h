@@ -48,8 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define FREEMEM(x,a)	if(x){ VirtualFree(x, a,MEM_RELEASE ); x = NULL;}
 #elif defined(ARCH_IS_LINUX)
 #include <sys/mman.h>
-//#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_FILE|MAP_PRIVATE ,-1, 0);
-#define ALLOCATE(x) mmap ((void*)0x6000000, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS ,-1, 0);
+#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_FILE|MAP_PRIVATE ,-1, 0);
+//#define ALLOCATE(x) mmap ((void*)0x6000000, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS ,-1, 0);
 #define FREEMEM(x,a) munmap(x,a);
 #else
 #define ALLOCATE(x)	malloc(x)
@@ -62,8 +62,8 @@ const int MAX_INSTSIZE = 0xFFFF+1;
 // Structs
 //****************************************************
 
-const int NUMOFBLOCKS = 4240;
-const int MAXBLOCKSIZE = 3200;
+const int NUMOFBLOCKS = 1024*4;
+const int MAXBLOCKSIZE = 3072-(4*4);
 #define MAINMEMORY_SIZE (0x100000);
 #define ROM_SIZE (0x80000);
 
@@ -72,8 +72,8 @@ struct Block
   unsigned char code[MAXBLOCKSIZE];
   unsigned long b_addr; //beginning PC
   unsigned long e_addr; //ending PC
-  unsigned long reserved;
-  bool isInfinityLoop;
+  unsigned long pad;
+  unsigned long isInfinityLoop;
 };
 
 #define IN_INFINITY_LOOP (-1)
@@ -193,7 +193,7 @@ public:
   void FindOpCode(u16 opcode, u8 * instindex);
   void BuildInstructionList();
 
-  void EmmitCode(Block *page, u32 * ParentT = NULL);
+  int EmmitCode(Block *page, u32 * ParentT = NULL);
 
   // statics
   u32 compile_count_;
@@ -207,6 +207,7 @@ typedef void(*dynaFunc)(tagSH2*);
 
 class DynarecSh2
 {
+  SH2_struct *parent;
   tagSH2 *  m_pDynaSh2;
   CompileBlocks * m_pCompiler;
   int       m_ClockCounter;
@@ -216,13 +217,14 @@ class DynarecSh2
   s32 pre_exe_count_;
   bool is_slave_ = false;
   u32 pre_PC_;
-
+  SH2_struct * ctx_;
 
 public:
   DynarecSh2();
   static DynarecSh2 * CurrentContext;
   void SetCurrentContext(){ CurrentContext = this; }
   void SetSlave(bool is_slave) { is_slave_ = is_slave; }
+  void SetContext(SH2_struct * ctx) { ctx_= ctx;}
   bool IsSlave() { return is_slave_;  }
 
   void AddInterrupt( u8 Vector, u8 level );
@@ -231,15 +233,19 @@ public:
   int CheckOneStep();
 
   void ResetCPU();  
-  void ExecuteCount( u32 Count );
+  void ExecuteCount(u32 Count );
   int Execute();
+  void Undecoded();
 
   u32 pre_cnt_;
   u32 interruput_chk_cnt_;
   u32 interruput_cnt_ ;
+  u32 loopskip_cnt_ ;
+
   void ShowStatics();
   void ShowCompileInfo();
- 
+  void ResetCompileInfo();
+
   inline u32 * GetGenRegPtr() { return m_pDynaSh2->GenReg; }
   inline u32 GET_MACH() { return m_pDynaSh2->SysReg[0]; }
   inline u32 GET_MACL() { return m_pDynaSh2->SysReg[1]; }

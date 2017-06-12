@@ -20,8 +20,8 @@
 
 SH2_struct *MSH2 = NULL;
 SH2_struct *SSH2 = NULL;
-SH2_struct *CurrentSH2;
-yabsys_struct yabsys;
+extern SH2_struct *CurrentSH2;
+extern yabsys_struct yabsys;
 SH2Interface_struct *SH2Core = NULL;
 SH2Interface_struct *SH2CoreList[] = {
   &SH2Dyn,

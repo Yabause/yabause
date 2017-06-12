@@ -24,6 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <stdint.h>
 #include "sh2core.h"
 #include "DynarecSh2.h"
+#include "debug.h"
+#include "yabause.h"
 
 
 #define SH2CORE_DYNAMIC             3
@@ -140,6 +142,7 @@ void SH2DynReset(SH2_struct *context) {
   if (context->ext == NULL){
     DynarecSh2 * pctx = new DynarecSh2();
     context->ext = (void*)pctx;
+    pctx->SetContext(context);
   }
 
   DynarecSh2 * pctx = (DynarecSh2*)context->ext;
@@ -339,7 +342,8 @@ void SH2DynShowSttaics(SH2_struct * master, SH2_struct * slave ){
 void memSetByte(u32 addr , u8 data )
 {
   dynaLock();
-  //printf("memSetByte %08X, %08X\n", addr, data);
+  //LOG("memSetWord %08X, %08X\n", addr, data);
+
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -366,7 +370,8 @@ void memSetByte(u32 addr , u8 data )
 void memSetWord(u32 addr, u16 data )
 {
   dynaLock();
-  //printf("memSetWord %08X, %08X\n", addr, data);
+  //LOG("memSetWord %08X, %08X\n", addr, data);
+
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
@@ -398,7 +403,8 @@ void memSetWord(u32 addr, u16 data )
 void memSetLong(u32 addr , u32 data )
 {
   dynaLock();
-  //printf("memSetLong %08X, %08X\n", addr, data);
+  //LOG("memSetLong %08X, %08X\n", addr, data);
+
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {  
@@ -495,14 +501,37 @@ if( DynarecSh2::CurrentContext->GET_PC() >= 0x0602E3C2 &&  DynarecSh2::CurrentCo
    );
 }
 #endif
-/*   
-  printf("%08X: DIV1 R[1]=%08X,m:%08X,n:%08X,SR:%08X\n", 
+
+#if 0
+  #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
+  #define INSTRUCTION_C(x) ((x & 0x00F0) >> 4)
+
+  u32 pc = DynarecSh2::CurrentContext->GET_PC();
+  u16 inst = memGetWord(pc);
+  s32 m = INSTRUCTION_C(inst);
+  s32 n = INSTRUCTION_B(inst);
+  printf("%08X: DIV0S %04X R[%d]:%08X,R[%d]:%08X,SR:%08X\n", 
     DynarecSh2::CurrentContext->GET_PC(), 
-    DynarecSh2::CurrentContext->GetGenRegPtr()[1],
-    DynarecSh2::CurrentContext->GetGenRegPtr()[4], 
-    DynarecSh2::CurrentContext->GetGenRegPtr()[3], 
+    inst,
+    m,DynarecSh2::CurrentContext->GetGenRegPtr()[m], 
+    n,DynarecSh2::CurrentContext->GetGenRegPtr()[n], 
     DynarecSh2::CurrentContext->GET_SR());
-*/
+#endif
+
+#if 0
+u32 pc = DynarecSh2::CurrentContext->GET_PC();
+if( pc == 0x060133C8 ) {
+  u16 inst = memGetWord(pc);
+  s32 m = INSTRUCTION_C(inst);
+  s32 n = INSTRUCTION_B(inst);
+  printf("%08X: DIV1(O) m:%08X,n:%08X,SR:%08X\n", 
+    DynarecSh2::CurrentContext->GET_PC(), 
+    DynarecSh2::CurrentContext->GetGenRegPtr()[m], 
+    DynarecSh2::CurrentContext->GetGenRegPtr()[n], 
+    DynarecSh2::CurrentContext->GET_SR());
+}
+#endif
+
 #if 0    
 #ifdef DMPHISTORY
   CurrentSH2->pchistory_index++;

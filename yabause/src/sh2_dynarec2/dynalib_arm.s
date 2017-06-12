@@ -365,14 +365,25 @@ opfunc SWAP_W
 mov r0, #0 // m
 mov r1, #0 // n
 ldr r2, [r7, r0]
-REV16 r3, r2
-str r3, [r7, r1]
+mov r2, r2, ror #16
+str r2, [r7, r1]
 
-opdesc SWAP_B,	20,0,4,0xff,0xff,0xff
+opdesc SWAP_B,	(10*4),0,4,0xff,0xff,0xff
 opfunc SWAP_B
 mov r0, #0 // m
 mov r1, #0 // n
-ldr r2, [r7, r0]
+ldr r0, [r7, r0]
+mov r2, r0, asl #8
+mov r3, r0, asl #16
+uxth  r2, r2
+mov r0, r0, lsr #16
+orr r3, r2, r3, lsr #24
+orr r3, r3, r0, asl #16
+str r3, [r7, r1]
+ 
+
+
+
 REV r3, r2
 str r3, [r7, r1]
 
@@ -410,7 +421,7 @@ opdesc XORI,	16,0xff,0xff,0xff,0,0xff
 opfunc XORI
 mov  r0, #0
 ldr  r3, [r7]
-eor  r0, r0, r3
+eor  r0, r3, r0
 str  r0, [r7]
 
 opdesc ORI,	16,0xff,0xff,0xff,0,0xff
@@ -439,7 +450,7 @@ ldr r3, [r7, r0]
 add r3, r3, r1
 str r3, [r7, r0]
 
-opdesc ADDC,	48,0,4,0xff,0xff,0xff
+opdesc ADDC,	52,0,4,0xff,0xff,0xff
 opfunc ADDC
 mov r0, #0 // source
 mov r1, #0 // dest
@@ -450,7 +461,8 @@ adds r2, r3       // r2+r3
 and r3, r0, #1   // r3 = r0 & 1
 orrcs r4, r0, #1 // check carry
 biccc r4, r0, #1 // check not carry
-add r2, r3
+adds r2, r3
+orrcs r4, r0, #1 // check carry
 STR_SR r4
 str r2, [r7, r1]
 
@@ -480,20 +492,21 @@ bicvc r4, r0, #1 // check not overflow
 STR_SR r4
 str r2, [r7, r1]
 
-opdesc SUBC,	48,0,4,0xff,0xff,0xff
+opdesc SUBC,	52,0,4,0xff,0xff,0xff
 opfunc SUBC
 mov r0, #0 // source
 mov r1, #0 // dest
 ldr r2, [r7, r0] // r2 = R[source]  
 LDR_SR r0        // r0 = SR
 ldr r3, [r7, r1] // r3 = R[dest]
-subs r2, r3       // r2+r3
-and r3, r0, #1   // r3 = r0 & 1
-orrcs r4, r0, #1 // check carry
-biccc r4, r0, #1 // check not carry
-sub r2, r3
+subs r3, r2       // r3-r2
+and r2, r0, #1   // r3 = r0 & 1
+orrcc r4, r0, #1 // check carry
+biccs r4, r0, #1 // check not carry
+subs r3, r2      // r3 = r3 -T
+orrcc r4, r0, #1 // check carry
 STR_SR r4
-str r2, [r7, r1]
+str r3, [r7, r1]
 
 
 opdesc SUB,		24,0,4,0xff,0xff,0xff
@@ -856,7 +869,7 @@ bicne   r0, r1, #1
 STR_SR  r0
 
 // string cmp
-opdesc CMPSTR, 60,0,4,0xff,0xff,0xff
+opdesc CMPSTR, (29*4),0,4,0xff,0xff,0xff
 opfunc CMPSTR
 mov r0, #0 // m
 mov r1, #0 // n
@@ -883,19 +896,22 @@ cmp     r3, #0
 beq     CMPSTR.L2
 LDR_SR  r2
 bic     r0, r2, #1
+b CMPSTR.FINISH
 CMPSTR.L2:
 LDR_SR  r2
 orr     r0, r2, #1
+CMPSTR.FINISH:
 STR_SR  r0
+
 
 //http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0489fj/CIHDDCIF.html
 
-opdesc ROTL,	36,0xff,0,0xff,0xff,0xff
+opdesc ROTL,	(9*4),0xff,0,0xff,0xff,0xff
 opfunc ROTL
 mov r0, #0   // n
 LDR_SR r1    // r1 = SR
 ldr r2, [r7, r0]
-lsls r2, #1       // r2 <<= 1  
+lsls r2, r2, #1       // r2 <<= 1  
 orrcs r1, #0x01  // if( C==1 ) T=1;
 orrcs r2, #0x01  // if( C==1 ) r2 |= 1;
 biccc r1, #0x01  // if( C==0 ) T=0;
@@ -965,7 +981,7 @@ biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
 STR_SR r1 
 
-opdesc SHAR,	28,0xff,0,0xff,0xff,0xff
+opdesc SHAR,	(8*4),0xff,0,0xff,0xff,0xff
 opfunc SHAR
 mov r0, #0 
 LDR_SR r1
@@ -974,6 +990,8 @@ asrs r2, #1  // r2 >>= 1
 orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 str r2, [r7, r0]
+STR_SR r1 
+
 
 opdesc SHLL2,	16,0xff,0,0xff,0xff,0xff
 opfunc SHLL2
@@ -1095,7 +1113,7 @@ add     r0, r5, r6  // GBR+R0
 CALL_SETMEM_BYTE
 
 
-opdesc TST_B,	34,0xff,0xff,0xff,20,0xff
+opdesc TST_B,	(10*4),0xff,0xff,0xff,20,0xff
 opfunc TST_B
 LDR_GBR r0
 ldr     r1, [r7]
@@ -1631,11 +1649,12 @@ sub  r0, #4
 str  r0, [r7, r3] // R[n] -= 4
 CALL_SETMEM_LONG // 2cyclte
 
-opdesc TAS,  64,0xff,0,0xff,0xff,0xff
+opdesc TAS,  (17*4),0xff,0,0xff,0xff,0xff
 opfunc TAS
 mov     r0, #0 // n
 LDR_SR  r1   // SR
 mov     r5, r0
+mov     r4, r1
 ldr     r0, [r7, r0]
 CALL_GETMEM_BYTE
 cmp     r0, #0
@@ -1663,107 +1682,93 @@ ldr  r2, [r7, #0 ] // m
 ldr  r3, [r7, #0 ] // n
 cmp  r3, #0
 LDR_SR  r3
-bicge   r3, r3, #64
-orrlt   r3, r3, #64
+bicge   r3, r3, #256
+orrlt   r3, r3, #256
 cmp     r2, #0
-bicge   r3, r3, #128
-orrlt   r3, r3, #128
-mov     r2, r3, asr #6
-eor     r2, r2, r3, asr #7
+bicge   r3, r3, #512
+orrlt   r3, r3, #512
+mov     r2, r3, asr #8
+eor     r2, r2, r3, asr #9
 tst     r2, #1
 orrne   r3, r3, #1
 biceq   r3, r3, #1
 STR_SR     r3
 
-
-opdesc DIV1, (75*4),0,4,0xff,0xff,0xff
+opdesc DIV1, (64*4),0,4,0xff,0xff,0xff
 opfunc DIV1
 mov r0, #0 // m
 mov r1, #0 // n
-ldr r5, [r7, r1]
-LDR_SR  r3
-  cmp r5, #0
-  mov ip, r3, asr #8
-  bicge r3, r3, #256
-  orrlt r3, r3, #256
-  and ip, ip, #1
-  and r2, r3, #1
-  cmp ip, #1
-  orr r2, r2, r5, asl #1
-  str r2, [r7, r1]
-  bne DIV1.L40
-  ands  lr, r3, #128
-  beq DIV1.L17
-  cmp lr, #128
-  bne DIV1.L6
-  ldr r0, [r7, r0]
-  rsb r0, r0, r2
-  cmp r0, r2
-  movls r2, #0
-  movhi r2, #1
-  ands  lr, r3, #512
-  str r0, [r7, r1]
-  beq DIV1.L23
-DIV1.L38:
-  cmp lr, #512
-  bne DIV1.L6
-DIV1.L24:
-  cmp r2, #0
-  bne DIV1.L30
-DIV1.L26:
-  bic r3, r3, #256
-DIV1.L6:
-  mov r2, r3, asr #8
-  eor r2, r2, r3, asr #9
-  tst r2, #1
-  orreq r3, r3, #1
-  bicne r3, r3, #1
-  STR_SR  r3
-  b DIV1.FINISH
-DIV1.L40:
-  ands  lr, r3, #512
-  beq DIV1.L7
-  cmp lr, #1
-  bne DIV1.L6
-  ldr r0, [r7, r0] // R[m]
-  add r0, r2, r0
-  cmp r0, r2
-  movcs r2, #0
-  movcc r2, #1
-  ands  lr, r3, #256
-  str r0, [r7, r1] // R[n]
-  bne DIV1.L38
-  b DIV1.L23
-DIV1.L7:
-  ldr r0, [r7, r0] // R[m]
-  rsb r0, r0, r2
-  cmp r0, r2
-  movls r2, #0
-  movhi r2, #1
-  ands  lr, r3, #256
-  str r0, [r7, r1] // R[n]
-  beq DIV1.L24
-DIV1.L37:
-  cmp lr, #256
-  bne DIV1.L6
-DIV1.L23:
-  cmp r2, #0
-  bne DIV1.L26
-DIV1.L30:
-  orr r3, r3, #256
-  b DIV1.L6
-DIV1.L17:
-  ldr r0, [r7, r0] // R[m]
-  add r0, r2, r0
-  cmp r0, r2
-  movcs r2, #0
-  movcc r2, #1
-  ands  lr, r3, #256
-  str r0, [r7, r1] // R[n]
-  bne DIV1.L37
-  b DIV1.L24
+  LDR_SR r3
+	ldr	r4, [r7, r1]
+	cmp	r4, #0
+	ubfx	r2, r3, #8, #1
+	bicge	r3, r3, #256
+	orrlt	r3, r3, #256
+	cmp	r2, #1
+	and	r2, r3, #1
+	orr	r2, r2, r4, asl #1
+	str	r2, [r7, r1]
+	ldr	r0, [r7, r0]
+	bne	DIV1.L41
+	tst	r3, #512
+	bne	DIV1.L21
+	add	r0, r2, r0
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movcs	r2, #0
+	movcc	r2, #1
+	tst	r3, #256
+	bne	DIV1.L34
+	b	DIV1.L25
+DIV1.L41:
+	tst	r3, #512
+	beq	DIV1.L42
+	add	r0, r2, r0
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movcs	r2, #0
+	movcc	r2, #1
+	tst	r3, #256
+	bne	DIV1.L25
+DIV1.L34:
+	cmp	r2, #0
+	bne	DIV1.L27
+DIV1.L31:
+	orr	r3, r3, #256
+DIV1.L16:
+	mov	r2, r3, asr #8
+	eor	r2, r2, r3, asr #9
+	tst	r2, #1
+	orreq	r3, r3, #1
+	bicne	r3, r3, #1
+	STR_SR r3
+	b DIV1.FINISH
+DIV1.L42:
+	rsb	r0, r0, r2
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movls	r2, #0
+	movhi	r2, #1
+	tst	r3, #256
+	bne	DIV1.L34
+DIV1.L25:
+	cmp	r2, #0
+	bne	DIV1.L31
+DIV1.L27:
+	bic	r3, r3, #256
+	b	DIV1.L16
+DIV1.L21:
+	rsb	r0, r0, r2
+	str	r0, [r7, r1]
+	cmp	r0, r2
+	movls	r2, #0
+	movhi	r2, #1
+	tst	r3, #256
+	bne	DIV1.L25
+	b	DIV1.L34
 DIV1.FINISH:
-STR_PC r8
+
+
 
 //------------------------------------------------------------
 //dmuls
@@ -1814,6 +1819,7 @@ uxth    r2, r2
 uxth    r0, r0
 mul     r1, r0, r2
 STR_MACL r1
+//CALL_EACHCLOCK
 
 //--------------------------------------------------------------
 // MACL   ans = 32bit -> 64 bit MUL
@@ -1878,55 +1884,53 @@ MAC_L.FINISH:
 // MACW   ans = 32bit -> 64 bit MUL
 //        (MACH << 32 + MACL)  + ans 
 //-------------------------------------------------------------
-opdesc MAC_W, 120,5,31,0xff,0xff,0xff
+opdesc MAC_W, (42*4),0,4,0xff,0xff,0xff
 opfunc MAC_W
   mov r0, #0  // m
   mov r1, #0  // n
-  mov     r6, r0
-  ldr     r0, [r7, r0]
-  mov     r4, r2
-  mov     r5, r1
-  CALL_GETMEM_WORD
-  ldr     r3, [r7, r6]
-  add     r3, r3, #2
-  str     r3, [r7, r6]
-  uxth    r6, r0
-  ldr     r0, [r7, r5]
-  CALL_GETMEM_WORD
-  ldr     r2, [r4, r7]
-  LDR_SR r3
-  add     r2, r2, #2
-  str     r2, [r7, r5]
-  ands    r1, r3, #2
-  uxth    r0, r0
-  beq     MAC_W.L15
-  smulbb  r0, r6, r0
-  LDR_MACL r6
-  mvn     r5, #1
-  mvn     r4, #0
-  adds    r2, r0, r6
-  mov     r3, r0, asr #31
-  adc     r3, r3, r6, asr #31
-  adds    r6, r2, #-2147483648
-  sbc     r1, r3, #0
-  cmp     r1, r5
-  cmpeq   r6, r4
-  bhi     MAC_W.L17
-  cmp     r0, #0
-  LDR_MACH r0        
-  movlt   r2, #-2147483648
-  mvnge   r2, #-2147483648
-  orr     r0, r0, #1
-  STR_MACH  r0
-MAC_W.L17:
-  STR_MACL     r2
-  b MAC_W.FINISH
-MAC_W.L15:
-  LDR_MACL r4
-  LDR_MACH r3  
-  orr     r2, r1, r4
-  orr     r3, r3, r4, asr #31
-  smlalbb r2, r3, r6, r0
-  STR_MACL  r2
-  STR_MACH  r3
+	mov	r5, r0
+	ldr	r0, [r7, r0]
+	mov	r6, r1
+	CALL_GETMEM_WORD
+	ldr	r3, [r7, r5]
+	add	r3, r3, #2
+	str	r3, [r7, r5]
+	uxth	r5, r0
+	ldr	r0, [r7, r6]
+	CALL_GETMEM_WORD
+  LDR_MACL r2
+  LDR_SR lr
+	ldr	r1, [r7, r6]
+	mov	r3, r2, asr #31
+	add	r1, r1, #2
+	str	r1, [r7, r6]
+	smulbb	r0, r5, r0
+	adds	r2, r2, r0
+	adc	r3, r3, r0, asr #31
+	tst	lr, #2
+	beq	MAC_W.L2
+	adds	r6, r2, #-2147483648
+	mvn	r5, #1
+	sbc	r12, r3, #0
+	mvn	r4, #0
+	cmp	r12, r5
+	cmpeq	r6, r4
+	bhi	MAC_W.L4
+	cmp	r0, #0
+	ldr	r1, [r3]
+	movlt	r2, #-2147483648
+	mvnge	r2, #-2147483648
+	orr	r1, r1, #1
+	STR_MACH r1
+MAC_W.L4:
+	STR_MACL r2
+	b MAC_W.FINISH
+MAC_W.L2:
+  STR_MACL r2
+  STR_MACH r3
 MAC_W.FINISH:
+
+
+  
+  
+  
