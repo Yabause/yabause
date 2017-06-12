@@ -300,12 +300,12 @@ void SH2DynWriteNotify(u32 start, u32 length){
   switch (start & 0x0FF00000){
     // ROM
   case 0x00000000:
-      block->LookupTableRom[start & 0x000FFFFF] = NULL;
+      block->LookupTableRom[ (start&0x000FFFFF)>>1 ] = NULL;
     break;
 
   // Low Memory
   case 0x00200000:
-    block->LookupTableLow[start & 0x000FFFFF] = NULL;
+    block->LookupTableLow[ (start&0x000FFFFF)>>1 ] = NULL;
     break;
     // High Memory
   case 0x06000000:
@@ -315,7 +315,7 @@ void SH2DynWriteNotify(u32 start, u32 length){
     // Cache
   default:
     if ((start & 0xFF000000) == 0xC0000000){
-      block->LookupTableC[start & 0x000FFFFF] = NULL;
+      block->LookupTableC[ (start&0x000FFFFF)>>1 ] = NULL;
     }
     break;
   }
@@ -345,18 +345,18 @@ void memSetByte(u32 addr , u8 data )
   {
   // Low Memory
   case 0x00200000:
-    block->LookupTableLow[addr & 0x000FFFFF] = NULL;
+    block->LookupTableLow[  (addr&0x000FFFFF)>>1 ] = NULL;
     break;
   // High Memory
   case 0x06000000:
-    block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
+    block->LookupTable[ (addr&0x000FFFFF)>>1 ] = NULL;
     break;
 
   // Cache
   default:
     if ((addr & 0xFF000000) == 0xC0000000)
     {
-      block->LookupTableC[addr & 0x000FFFFF] = NULL;
+      block->LookupTableC[ (addr&0x000FFFFF)>>1] = NULL;
     }
   }
   MappedMemoryWriteByte(addr, data);
@@ -372,18 +372,23 @@ void memSetWord(u32 addr, u16 data )
   {
   // Low Memory
    case 0x00200000:
-    block->LookupTableLow[addr & 0x000FFFFF] = NULL;
+    block->LookupTableLow[ (addr&0x000FFFFF)>>1 ] = NULL;
     break;
   // High Memory
-  case 0x06000000:
-    block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
+   case 0x06000000: {
+     block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
+     u16 blockaddr = block->LookupParentTable[(addr & 0x000FFFFF) >> 1];
+     if (blockaddr != 0) {
+       block->LookupParentTable[ (addr & 0x000FFFFF)>>1 ] = 0;
+       block->LookupTable[blockaddr] = NULL;
+     }
+   }
     break;
-
   // Cache
   default:
     if ((addr & 0xFF000000) == 0xC0000000)
     {
-      block->LookupTableC[addr & 0x000FFFFF] = NULL;
+      block->LookupTableC[ (addr&0x000FFFFF) >> 1] = NULL;
     }
   }
   MappedMemoryWriteWord(addr, data);
@@ -399,8 +404,8 @@ void memSetLong(u32 addr , u32 data )
   {  
     // Low Memory
   case 0x00200000:
-    block->LookupTableLow[addr & 0x000FFFFF] = NULL;
-    block->LookupTableLow[(addr & 0x000FFFFF)+2] = NULL;
+    block->LookupTableLow[ (addr & 0x000FFFFF)>>1  ] = NULL;
+    block->LookupTableLow[ ((addr & 0x000FFFFF)>>1) + 1 ] = NULL;
     break;
   // High Memory
   case 0x06000000:
@@ -412,7 +417,7 @@ void memSetLong(u32 addr , u32 data )
   default:
     if ((addr & 0xFF000000) == 0xC0000000)
     {
-      block->LookupTableC[addr & 0x000FFFFF] = NULL;
+      block->LookupTableC[ (addr&0x000FFFFF)>>1 ] = NULL;
     }
   }
   MappedMemoryWriteLong(addr, data);

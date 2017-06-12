@@ -720,19 +720,19 @@ Block * CompileBlocks::CompileBlock(u32 pc, u32 * ParentT = NULL)
         exit(0);
       }
       else {
-        LookupTableRom[g_CompleBlock[blockCount].b_addr & 0x000FFFFF] = NULL;
+        LookupTableRom[ (g_CompleBlock[blockCount].b_addr&0x000FFFFF)>>1  ] = NULL;
       }
       break;
     case 0x00200000:
-      LookupTableLow[g_CompleBlock[blockCount].b_addr & 0x000FFFFF] = NULL;
+      LookupTableLow[ (g_CompleBlock[blockCount].b_addr&0x000FFFFF)>>1 ] = NULL;
       break;
     case 0x06000000:
       /*case 0x06100000:*/
-      LookupTable[(g_CompleBlock[blockCount].b_addr & 0x000FFFFF) >> 1] = NULL;
+      LookupTable[ (g_CompleBlock[blockCount].b_addr & 0x000FFFFF)>>1 ] = NULL;
       break;
     default:
       if ((g_CompleBlock[blockCount].b_addr & 0xFF000000) == 0xC0000000) {
-        LookupTableC[g_CompleBlock[blockCount].b_addr & 0x000FFFFF] = NULL;
+        LookupTableC[ (g_CompleBlock[blockCount].b_addr & 0x000FFFFF)>>1   ] = NULL;
       }
       break;
     }
@@ -1095,21 +1095,21 @@ int DynarecSh2::Execute(){
     
   // ROM
   case 0x00000000:
-    pBlock = m_pCompiler->LookupTableRom[ GET_PC() & 0x000FFFFF ];
+    pBlock = m_pCompiler->LookupTableRom[ (GET_PC() & 0x000FFFFF)>>1 ];
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
-      m_pCompiler->LookupTableRom[ GET_PC() & 0x000FFFFF ] = pBlock;
+      m_pCompiler->LookupTableRom[ (GET_PC()&0x000FFFFF)>>1 ] = pBlock;
     }
     break;
 
   // Low Memory
   case 0x00200000:
-    pBlock = m_pCompiler->LookupTableLow[ GET_PC() & 0x000FFFFF ];
+    pBlock = m_pCompiler->LookupTableLow[ (GET_PC()&0x000FFFFF)>>1 ];
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
-      m_pCompiler->LookupTableLow[ GET_PC() & 0x000FFFFF ] = pBlock;
+      m_pCompiler->LookupTableLow[ (GET_PC() & 0x000FFFFF)>>1 ] = pBlock;
     }
     break;
 
@@ -1129,11 +1129,11 @@ int DynarecSh2::Execute(){
   default:
     if( (GET_PC() & 0xFF000000) == 0xC0000000 )
     {
-      pBlock = m_pCompiler->LookupTableC[ GET_PC() & 0x000FFFFF ];
+      pBlock = m_pCompiler->LookupTableC[ (GET_PC() & 0x000FFFFF)>>1 ];
       if( pBlock == NULL )
       {
         pBlock = m_pCompiler->CompileBlock(GET_PC());
-        m_pCompiler->LookupTableC[ GET_PC() & 0x000FFFFF ] = pBlock;
+        m_pCompiler->LookupTableC[ (GET_PC()&0x000FFFFF)>>1 ] = pBlock;
       } 
     }else{
       pBlock = m_pCompiler->CompileBlock(GET_PC());
