@@ -162,6 +162,7 @@ void SH2DynDebugReset(SH2_struct *context) {
   if (context->ext == NULL) {
     DynarecSh2 * pctx = new DynarecSh2();
     context->ext = (void*)pctx;
+    pctx->SetContext(context);
   }
 
   DynarecSh2 * pctx = (DynarecSh2*)context->ext;
