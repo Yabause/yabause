@@ -354,7 +354,11 @@ void memSetByte(u32 addr , u8 data )
     break;
   // High Memory
   case 0x06000000:
+#if defined(SET_DIRTY)
+    block->setDirty(addr);
+#else
     block->LookupTable[ (addr&0x000FFFFF)>>1 ] = NULL;
+#endif
     break;
 
   // Cache
@@ -382,12 +386,12 @@ void memSetWord(u32 addr, u16 data )
     break;
   // High Memory
    case 0x06000000: {
+#if defined(SET_DIRTY)
+     block->setDirty(addr);
+#else
      block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
-     u32 blockaddr = block->LookupParentTable[(addr & 0x000FFFFF) >> 1];
-     if (blockaddr != 0) {
-       block->LookupParentTable[ (addr & 0x000FFFFF)>>1 ] = 0;
-       block->LookupTable[blockaddr] = NULL;
-     }
+#endif
+    
    }
     break;
   // Cache
@@ -416,8 +420,13 @@ void memSetLong(u32 addr , u32 data )
     break;
   // High Memory
   case 0x06000000:
+#if defined(SET_DIRTY)
+    block->setDirty(addr);
+    block->setDirty(addr+2);
+#else
     block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
     block->LookupTable[((addr & 0x000FFFFF) >> 1) + 1] = NULL;
+#endif
     break;
 
   // Cache
