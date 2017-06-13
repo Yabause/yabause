@@ -659,7 +659,7 @@ Block *CompileBlocks::Init(Block *dynaCode)
   LOG("LookupTable = %d\n",sizeof(LookupTable));
   //
   memset(LookupTable, 0, sizeof(LookupTable));
-  memset(LookupParentTable, 0, sizeof(LookupParentTable));
+  //memset(LookupParentTable, 0, sizeof(LookupParentTable));
   memset(LookupTableRom, 0, sizeof(LookupTableRom));
   memset(LookupTableLow, 0, sizeof(LookupTableLow));
   memset(LookupTableC, 0, sizeof(LookupTableC));
@@ -693,7 +693,7 @@ void CompileBlocks::BuildInstructionList()
   }
 }
 
-Block * CompileBlocks::CompileBlock(u32 pc, u32 * ParentT = NULL)
+Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
 {
   compile_count_++;
 
@@ -772,7 +772,7 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 }
 
 
-int CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
+int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 {
   int i, j, jmp = 0, count = 0;
   u16 op, temp;
@@ -825,6 +825,14 @@ int CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
   while (ptr - startptr < MaxSize) {
     // translate the opcode and insert code
     op = memGetWord(addr);
+#ifdef SET_DIRTY
+    if (ParentT) {
+      u32 keepaddr = adress_mask(addr);
+      ParentT[keepaddr].push_back(adress_mask(start_addr));
+      ParentT[keepaddr].unique();
+    }
+#endif
+
     i = dsh2_instructions[op];
 
     if (0x1b == op) { // SLEEP
@@ -850,16 +858,12 @@ int CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
     {
       page->isInfinityLoop = true;
     }
-
     
     
 #ifdef BUILD_INFO  
     LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
 #endif    
 
-    if( ParentT ){
-      ParentT[(addr&0x000FFFFF)>>1] = (start_addr&0x000FFFFF)>>1;
-    }
     addr += 2;
 
 #ifdef BUILD_INFO
@@ -929,6 +933,13 @@ int CompileBlocks::EmmitCode(Block *page, u32 * ParentT )
 
       // Get NExt instruction
       temp = memGetWord(addr);
+#ifdef SET_DIRTY
+      if (ParentT) {
+        u32 keepaddr = adress_mask(addr);
+        ParentT[keepaddr].push_back(adress_mask(start_addr));
+        ParentT[keepaddr].unique();
+      }
+#endif
       addr += 2;
       j = opcodeIndex(temp);
 #ifdef BUILD_INFO
@@ -1166,7 +1177,7 @@ int DynarecSh2::Execute(){
     pBlock = m_pCompiler->LookupTable[ (GET_PC() & 0x000FFFFF)>>1 ];
     if( pBlock == NULL )
     {
-      pBlock = m_pCompiler->CompileBlock(GET_PC(), (u32*)m_pCompiler->LookupParentTable);
+      pBlock = m_pCompiler->CompileBlock(GET_PC(), m_pCompiler->LookupParentTable);
       if (pBlock == NULL) {
         if (this->is_slave_) {
           yabsys.IsSSH2Running = 0;

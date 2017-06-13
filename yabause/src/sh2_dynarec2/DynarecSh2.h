@@ -59,6 +59,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 const int MAX_INSTSIZE = 0xFFFF+1;
 
+using std::list;
+
+typedef list<u32> addrs;
+
 //****************************************************
 // Structs
 //****************************************************
@@ -109,6 +113,10 @@ struct i_desc
 extern i_desc opcode_list[];
 
 
+inline u32 adress_mask(u32 addr) {
+  return (addr & 0x000FFFFF)>>1;
+}
+
 // Interrupt Table
 struct dIntcTbl
 {
@@ -151,12 +159,22 @@ struct x86op_desc
 
 };
 
+#define SET_DIRTY
+extern "C" {
+  void DebugLog(const char * format, ...);
+}
+
 class CompileBlocks {
 private:
   CompileBlocks(){
     debug_mode_ = false;
     BuildInstructionList();
     dCode = Init(dCode);
+#ifdef SET_DIRTY
+    LookupParentTable = new addrs[0x100000 >> 1];
+#else
+    LookupParentTable = NULL;
+#endif
   }
   ~CompileBlocks(){
     FREEMEM(dCode, sizeof(Block)*NUMOFBLOCKS);
@@ -178,23 +196,40 @@ public:
   
   u8 dsh2_instructions[MAX_INSTSIZE];
   Block* LookupTable[0x100000>>1];    
-  u32 LookupParentTable[0x100000>>1];
+  //addrs LookupParentTable[0x100000>>1];
+  addrs * LookupParentTable;
   Block* LookupTableRom[0x80000>>1];
   Block* LookupTableLow[0x100000>>1];
   Block* LookupTableC[0x8000>>1];
   Block * dCode;
   
+  inline void setDirty(u32 addr) {
+    addr = adress_mask(addr);
+    if (LookupParentTable[addr].size() == 0) return;
+    for (auto it = LookupParentTable[addr].begin(); it != LookupParentTable[addr].end(); it++) {
+      if (LookupTable[*it] != NULL) {
+        for (u32 i = adress_mask(LookupTable[*it]->b_addr) ;
+             i <= adress_mask(LookupTable[*it]->e_addr); i++ ) {
+          if (i != addr) {
+            LookupParentTable[i].remove(*it);
+          }
+        }
+        LookupTable[*it] = NULL;
+      }
+    }
+    LookupParentTable[addr].clear();
+  }
  
   Block *Init(Block*);
 
-  Block * CompileBlock( u32 pc, u32 * ParentT );
+  Block * CompileBlock( u32 pc, addrs * ParentT );
 
   void opcodePass(x86op_desc *op, u16 opcode, u8 *ptr);  
   int  opcodeIndex(u16 code );
   void FindOpCode(u16 opcode, u8 * instindex);
   void BuildInstructionList();
 
-  int EmmitCode(Block *page, u32 * ParentT = NULL);
+  int EmmitCode(Block *page, addrs * ParentT = NULL);
 
   // statics
   u32 compile_count_;
