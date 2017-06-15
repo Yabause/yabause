@@ -479,7 +479,7 @@ bicvc r4, r0, #1 // check not overflow
 STR_SR r4
 str r2, [r7, r1]
 
-opdesc SUBV, 40,0,4,0xff,0xff,0xff
+opdesc SUBV, (40+12),0,4,0xff,0xff,0xff
 opfunc SUBV
 mov r0, #0 // source
 mov r1, #0 // dest
@@ -491,6 +491,7 @@ orrvs r4, r0, #1 // check overflow
 bicvc r4, r0, #1 // check not overflow
 STR_SR r4
 str r2, [r7, r1]
+CALL_EACHCLOCK
 
 opdesc SUBC,	52,0,4,0xff,0xff,0xff
 opfunc SUBC
@@ -1224,7 +1225,7 @@ mov     r0, r0, lsr #22 // SR & 0x000003F3
 STR_SR  r0
 mov     r0, r5
 
-opdesc TRAPA,	  68,0xff,0xff,0xff,56,0xff
+opdesc TRAPA,	  (17*4),0xff,0xff,0xff,(13*4),0xff
 opfunc TRAPA
 ldr r0, [r7, #60]  // r0 = R[15]
 sub r0, #4         // r0 -= 4
@@ -1236,10 +1237,11 @@ str r0, [r7, #60]  // R[15] = r0
 mov r1, r8         // r1 = PC
 add r1, #2         // r1 += 2
 CALL_SETMEM_LONG   // MappedMemoryWriteLong(R[15],PC + 2);
-mov r1, #0         // r1 = imm
 LDR_VBR r0         // VBR
+mov r1, #0         // r1 = imm
 add r0, r0, r1, asl #2 // PC = MappedMemoryReadLong(VBR+(imm<<2));
 CALL_GETMEM_LONG
+
 
 opdesc BT,		32,0xff,0xff,0xff,0,0xff
 opfunc BT
