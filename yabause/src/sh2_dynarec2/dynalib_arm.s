@@ -479,7 +479,7 @@ bicvc r4, r0, #1 // check not overflow
 STR_SR r4
 str r2, [r7, r1]
 
-opdesc SUBV, (40+12),0,4,0xff,0xff,0xff
+opdesc SUBV, 40,0,4,0xff,0xff,0xff
 opfunc SUBV
 mov r0, #0 // source
 mov r1, #0 // dest
@@ -491,7 +491,7 @@ orrvs r4, r0, #1 // check overflow
 bicvc r4, r0, #1 // check not overflow
 STR_SR r4
 str r2, [r7, r1]
-CALL_EACHCLOCK
+
 
 opdesc SUBC,	52,0,4,0xff,0xff,0xff
 opfunc SUBC
@@ -952,7 +952,7 @@ LDR_SR r1    // r1 = SR
 and r3, r1 , #1 // r3 = SR.T
 lsl r3, #31     // 
 ldr r2, [r7, r0]
-rors r2, #1       // r2 <<= 1  
+lsrs r2, #1       // r2 <<= 1  
 orrcs r1, #0x01  // if( C==1 ) T=1;
 biccc r1, #0x01  // if( C==0 ) T=0;
 orr r2, r3
