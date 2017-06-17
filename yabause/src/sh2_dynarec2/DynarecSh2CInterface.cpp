@@ -309,11 +309,13 @@ void SH2DynWriteNotify(u32 start, u32 length){
 
   // Low Memory
   case 0x00200000:
-    block->LookupTableLow[ (start&0x000FFFFF)>>1 ] = NULL;
+    for (u32 addr = start; addr< start + length; addr += 2)
+      block->LookupTableLow[ (addr&0x000FFFFF)>>1 ] = NULL;
     break;
     // High Memory
   case 0x06000000:
-    block->LookupTable[(start & 0x000FFFFF) >> 1] = NULL;
+    for( u32 addr = start; addr< start+length; addr+=2 )
+      block->setDirty(addr);
     break;
 
     // Cache
@@ -498,6 +500,30 @@ int DebugDelayClock() {
 
 int DebugEachClock() {
   dynaLock();
+
+  #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
+  #define INSTRUCTION_C(x) ((x & 0x00F0) >> 4)
+
+#if 0
+  u32 pc = DynarecSh2::CurrentContext->GET_PC();
+  u16 inst = memGetWord(pc);
+  s32 m = INSTRUCTION_C(inst);
+  s32 n = INSTRUCTION_B(inst);
+
+  LOG("%08X: rotcrout R%d=%08X, SR=%08X\n", 
+    DynarecSh2::CurrentContext->GET_PC(), 
+    n,DynarecSh2::CurrentContext->GetGenRegPtr()[n], 
+    DynarecSh2::CurrentContext->GET_SR());
+#endif
+
+#if 0  
+  LOG("%08X: subc R%d=%08X R%d=%08X SR=%08X\n", 
+    DynarecSh2::CurrentContext->GET_PC(), 
+    m,DynarecSh2::CurrentContext->GetGenRegPtr()[m], 
+    n,DynarecSh2::CurrentContext->GetGenRegPtr()[n], 
+    DynarecSh2::CurrentContext->GET_SR());
+#endif
+
 #if 0
 if( DynarecSh2::CurrentContext->GET_PC() >= 0x0602E3C2 &&  DynarecSh2::CurrentContext->GET_PC() < 0x0602E468 ) {
    u32 addrn = DynarecSh2::CurrentContext->GetGenRegPtr()[6]-4;
@@ -542,7 +568,7 @@ if( pc == 0x060133C8 ) {
 }
 #endif
 
-#if 0    
+
 #ifdef DMPHISTORY
   CurrentSH2->pchistory_index++;
   CurrentSH2->pchistory[CurrentSH2->pchistory_index & 0xFF] = DynarecSh2::CurrentContext->GET_PC();
@@ -554,7 +580,7 @@ if( pc == 0x060133C8 ) {
     dynaFree();
     return 1;
   }
-#endif
+
   dynaFree();
   return 0;
 }
