@@ -849,17 +849,16 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
     // Look for specific bf/bt/bra instructions that branch to address < PC
     if (
-      write_memory_counter == 0 && 
+      write_memory_counter == 0 &&
       ((op & 0x8B80) == 0x8B80 || // bf
       (op & 0x8F80) == 0x8F80 || // bf/s 
-      (op & 0x8980) == 0x8980 || // bt
-      (op & 0x8D80) == 0x8D80 || // bt/s 
-      (op & 0xA800) == 0xA800))   // bra
+        (op & 0x8980) == 0x8980 || // bt
+        (op & 0x8D80) == 0x8D80 || // bt/s 
+        (op & 0xA800) == 0xA800))   // bra
     {
       page->isInfinityLoop = true;
     }
-    
-    
+
 #ifdef BUILD_INFO  
     LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
 #endif    
@@ -872,7 +871,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
     instruction_counter++;
     asm_list[i].build_count++;
-    write_memory_counter = asm_list[i].write_count;
+    write_memory_counter += asm_list[i].write_count;
 
     if (asm_list[i].func == 0) {
       LOG("Unimplemented Opcode (0x%4x) at 0x%8x\n", op, addr-2);
@@ -952,6 +951,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       }
       
       asm_list[j].build_count++;
+      write_memory_counter += asm_list[j].write_count;
 
       cycle += asm_list[j].cycle;
       memcpy((void*)ptr, (void*)(asm_list[j].func), *(asm_list[j].size));
@@ -962,38 +962,40 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       *counterpos = cycle;
       ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
     }
+
     if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {
-
-      u32 jumppc = 0xBADADD;
-
       // Loop Detectator
-      
+#if 0
+      u32 jumppc = 0xBADADD;
       //immediate w/o delay branch
       if (asm_list[i].delay == 1) {
         jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
 
-      //offset3
+          //offset3
       }
-      else if (asm_list[i].delay == 2) {
-        temp = (op & 0xfff) << 1;
-        if (temp & 0x1000)
-          temp |= 0xfffff000;
-        jumppc = addr + ((signed)(op & 0xfff) << 1);
-      
-      //immediate
-      }
-      else if (asm_list[i].delay == 3) {
-        jumppc = addr + ((signed char)(op & 0xff) << 1);
-      }
- 
-      if (!debug_mode_) {
-        if (start_addr == jumppc) {
+        else if (asm_list[i].delay == 2) {
+          temp = (op & 0xfff) << 1;
+          if (temp & 0x1000)
+            temp |= 0xfffff000;
+          jumppc = addr + ((signed)(op & 0xfff) << 1);
 
-          if (write_memory_counter == 0) {
-            //page->isInfinityLoop = true;
-          }
+          //immediate
         }
-      }
+        else if (asm_list[i].delay == 3) {
+          jumppc = addr + ((signed char)(op & 0xff) << 1);
+        }
+
+        LOG("isInfinityLoop %08X, 0x%04X @ 0x%08X to %08X\n", start_addr, op, addr, jumppc);
+
+        if (!debug_mode_) {
+          //if (start_addr == jumppc) {
+          //  if (write_memory_counter == 0) {
+              page->isInfinityLoop = true;
+            //}
+          //}
+        }
+     }
+#endif 
       break;
     }
   }
@@ -1237,19 +1239,13 @@ int DynarecSh2::Execute(){
         fflush(fp);
     }
 #endif
-  //u32 prepc  = GET_PC();
-  //if( 0x06040CF2 == GET_PC() ){
-  //  logenable_ = true;
+  u32 prepc  = GET_PC();
+  //if(yabsys.frame_count == 1000){
+ //   logenable_ = true;
   //}
   //if( logenable_ )
-  //  LOG("\n---dynaExecute start %08X----\n", GET_PC());
-
+  //  LOG("[%s] dynaExecute start %08X", (is_slave_ == false) ? "M" : "S", GET_PC());
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-
-  //if( logenable_ )
-  //  LOG("\n---dynaExecute end %08X----\n", GET_PC());
-
-
   if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
 }
@@ -1334,7 +1330,7 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
   
 void DynarecSh2::ShowStatics(){
 #if defined(DEBUG_CPU)
-  DebugLog("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
+  LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
   pre_cnt_ = GET_COUNT();
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
