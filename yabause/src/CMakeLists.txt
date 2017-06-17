@@ -821,11 +821,11 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a9 -mfpu=neon -ffast-math -mfloat-abi=soft")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -mcpu=cortex-a9 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti -mfloat-abi=soft")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3  -std=c++11  -mcpu=cortex-a9 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti -mfloat-abi=soft")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -ffast-math -fno-exceptions -fno-rtti  ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -std=c++11  -ffast-math -fno-exceptions -fno-rtti  ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC
