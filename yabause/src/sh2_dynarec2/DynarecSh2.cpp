@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "DynarecSh2.h"
 #include "opcodes.h"
 //#define DEBUG_CPU
-#define BUILD_INFO
+//#define BUILD_INFO
 //#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
@@ -825,8 +825,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   LOG("*********** start block *************\n");
 #endif
 
-  MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
-  while (ptr - startptr < MaxSize) {
+  //MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
+  //while (ptr - startptr < MaxSize) {
+  while (1) {
     // translate the opcode and insert code
     op = memGetWord(addr);
 #ifdef SET_DIRTY
@@ -838,6 +839,25 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 #endif
 
     i = dsh2_instructions[op];
+    
+    u32 calsize;
+
+    // CheckSize
+    u8 delay = asm_list[i].delay;
+    if ( delay == 0 || delay == 0xFF) {
+      calsize  = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + EPILOGSIZE;
+    }else if(delay == 1 || delay == 5) {
+      calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + DELAYJUMPSIZE + EPILOGSIZE;
+    } else {
+      u32 op2 = memGetWord(addr+2);
+      u32 delayop = dsh2_instructions[op2];
+      calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + delay_seperator_size + SEPERATORSIZE_DELAY_AFTER + EPILOGSIZE;
+    }
+
+    if (calsize >= MAXBLOCKSIZE) {
+      break;
+    }
+
 
     if (0x1b == op) { // SLEEP
       page->isInfinityLoop = true;
@@ -1013,6 +1033,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
   ptr += EPILOGSIZE;
+
+#ifdef BUILD_INFO 
+  LOG("*********** end block size = %08X *************\n", (ptr - startptr));
+#endif 
 
 #if defined(ARCH_IS_LINUX)
   cacheflush((uintptr_t)page->code,(uintptr_t)ptr,0);
