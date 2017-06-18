@@ -1215,7 +1215,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
   glDisable(GL_DEPTH_TEST);
   glDepthFunc(GL_GEQUAL);
-  glClearDepthf(0.0f);
+//  glClearDepthf(0.0f);
 
   glCullFace(GL_FRONT_AND_BACK);
   glDisable(GL_CULL_FACE);
