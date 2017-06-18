@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "DynarecSh2.h"
 #include "opcodes.h"
 //#define DEBUG_CPU
-//#define BUILD_INFO
+#define BUILD_INFO
 //#define LOG printf
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
@@ -538,7 +538,7 @@ x86op_desc asm_list[] =
   opdesc(STS_MACH,0xFF,1,0),
   opdesc(STS_MACL,0xFF,1,0),
   opdesc(STS_PR,0xFF,1,0),
-  opdesc(TAS,0,4,0),         // 0x401b
+  opdesc(TAS,0,4,1),         // 0x401b
   opdesc(STC_SR_MEM,0xFF,2,1),
   opdesc(STC_GBR_MEM,0xFF,2,1),
   opdesc(STC_VBR_MEM,0xFF,2,1),
@@ -595,8 +595,8 @@ x86op_desc asm_list[] =
   opdesc(TST,0,1,0),
   opdesc(XOR,0,1,0),
   opdesc(XTRCT,0,1,0),
-  opdesc(MOVBS,0,1,0),
-  opdesc(MOVWS,0,1,0),
+  opdesc(MOVBS,0,1,1),
+  opdesc(MOVWS,0,1,1),
   opdesc(MOVLS,0,1,1),
   opdesc(MOVBL,0,1,0), // 6000
   opdesc(MOVWL,0,1,0), // 6001
@@ -782,6 +782,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 instruction_counter = 0;
   u32 write_memory_counter = 0;
 
+  if (0x060A02F4 == start_addr) {
+    int a = 0;
+  }
+
   startptr = ptr = page->code;
   i = 0;
   j = 0;
@@ -847,17 +851,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       }
     }
 
-    // Look for specific bf/bt/bra instructions that branch to address < PC
-    if (
-      write_memory_counter == 0 &&
-      ((op & 0x8B80) == 0x8B80 || // bf
-      (op & 0x8F80) == 0x8F80 || // bf/s 
-        (op & 0x8980) == 0x8980 || // bt
-        (op & 0x8D80) == 0x8D80 || // bt/s 
-        (op & 0xA800) == 0xA800))   // bra
-    {
-      page->isInfinityLoop = true;
-    }
 
 #ifdef BUILD_INFO  
     LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
@@ -966,35 +959,53 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {
       // Loop Detectator
 #if 0
-      u32 jumppc = 0xBADADD;
-      //immediate w/o delay branch
-      if (asm_list[i].delay == 1) {
-        jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
-
-          //offset3
+      // Look for specific bf/bt/bra instructions that branch to address < PC
+      if (
+        /*instruction_counter > 1 &&*/
+        write_memory_counter == 0 &&
+        (
+          (op & 0x8B80) == 0x8B80 || // bf
+          (op & 0x8F80) == 0x8F80 || // bf/s 
+          (op & 0x8980) == 0x8980 || // bt
+          (op & 0x8D80) == 0x8D80 || // bt/s 
+          (op & 0xA800) == 0xA800))   // bra
+      {
+        //page->isInfinityLoop = true;
+//#ifdef BUILD_INFO  
+        //LOG("InfinityLoopt %08X, 0x%04X @ %08X \n", start_addr, op, addr);
+//#endif
       }
+#endif
+
+#if 1
+        u32 jumppc = 0xFFFFFFFF;
+        //immediate w/o delay branch
+        if (asm_list[i].delay == 1) {
+          jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
+
+        //offset3
+        }
         else if (asm_list[i].delay == 2) {
           temp = (op & 0xfff) << 1;
           if (temp & 0x1000)
             temp |= 0xfffff000;
           jumppc = addr + ((signed)(op & 0xfff) << 1);
 
-          //immediate
+        //immediate
         }
         else if (asm_list[i].delay == 3) {
           jumppc = addr + ((signed char)(op & 0xff) << 1);
         }
 
-        LOG("isInfinityLoop %08X, 0x%04X @ 0x%08X to %08X\n", start_addr, op, addr, jumppc);
-
-        if (!debug_mode_) {
-          //if (start_addr == jumppc) {
-          //  if (write_memory_counter == 0) {
+        // jump to inside and no write is happend
+        if (jumppc >= start_addr &&  jumppc < (addr-2)) {
+          if (write_memory_counter == 0) {
               page->isInfinityLoop = true;
-            //}
-          //}
+#ifdef BUILD_INFO 
+              LOG("InfinityLoop block %08X 0x%04X  from 0x%08X to 0x%08X\n", start_addr, op, addr - 2, jumppc);
+#endif
+          }
         }
-     }
 #endif 
       break;
     }
@@ -1246,7 +1257,7 @@ int DynarecSh2::Execute(){
   //if( logenable_ )
   //  LOG("[%s] dynaExecute start %08X", (is_slave_ == false) ? "M" : "S", GET_PC());
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-  if (pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
+  if (!m_pCompiler->debug_mode_ && pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
 }
 
@@ -1321,7 +1332,7 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
 #if defined(DEBUG_CPU)
-    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
+//    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
 #endif
     return 1;
   }
