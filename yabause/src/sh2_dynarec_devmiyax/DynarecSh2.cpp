@@ -659,7 +659,6 @@ Block *CompileBlocks::Init(Block *dynaCode)
   LOG("LookupTable = %d\n",sizeof(LookupTable));
   //
   memset(LookupTable, 0, sizeof(LookupTable));
-  //memset(LookupParentTable, 0, sizeof(LookupParentTable));
   memset(LookupTableRom, 0, sizeof(LookupTableRom));
   memset(LookupTableLow, 0, sizeof(LookupTableLow));
   memset(LookupTableC, 0, sizeof(LookupTableC));
@@ -782,10 +781,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 instruction_counter = 0;
   u32 write_memory_counter = 0;
 
-  if (0x060A02F4 == start_addr) {
-    int a = 0;
-  }
-
   startptr = ptr = page->code;
   i = 0;
   j = 0;
@@ -855,9 +850,8 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }
 
     if (calsize >= MAXBLOCKSIZE) {
-      break;
+      break; // no space is available
     }
-
 
     if (0x1b == op) { // SLEEP
       page->isInfinityLoop = true;
@@ -870,7 +864,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
         page->isInfinityLoop = true;
       }
     }
-
 
 #ifdef BUILD_INFO  
     LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
@@ -978,55 +971,34 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
     if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {
       // Loop Detectator
-#if 0
-      // Look for specific bf/bt/bra instructions that branch to address < PC
-      if (
-        /*instruction_counter > 1 &&*/
-        write_memory_counter == 0 &&
-        (
-          (op & 0x8B80) == 0x8B80 || // bf
-          (op & 0x8F80) == 0x8F80 || // bf/s 
-          (op & 0x8980) == 0x8980 || // bt
-          (op & 0x8D80) == 0x8D80 || // bt/s 
-          (op & 0xA800) == 0xA800))   // bra
-      {
-        //page->isInfinityLoop = true;
-//#ifdef BUILD_INFO  
-        //LOG("InfinityLoopt %08X, 0x%04X @ %08X \n", start_addr, op, addr);
-//#endif
+      u32 jumppc = 0xFFFFFFFF;
+      //immediate w/o delay branch
+      if (asm_list[i].delay == 1) {
+        jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
+
+      //offset3
       }
-#endif
+      else if (asm_list[i].delay == 2) {
+        temp = (op & 0xfff) << 1;
+        if (temp & 0x1000)
+          temp |= 0xfffff000;
+        jumppc = addr + ((signed)(op & 0xfff) << 1);
 
-#if 1
-        u32 jumppc = 0xFFFFFFFF;
-        //immediate w/o delay branch
-        if (asm_list[i].delay == 1) {
-          jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
+      //immediate
+      }
+      else if (asm_list[i].delay == 3) {
+        jumppc = addr + ((signed char)(op & 0xff) << 1);
+      }
 
-        //offset3
-        }
-        else if (asm_list[i].delay == 2) {
-          temp = (op & 0xfff) << 1;
-          if (temp & 0x1000)
-            temp |= 0xfffff000;
-          jumppc = addr + ((signed)(op & 0xfff) << 1);
-
-        //immediate
-        }
-        else if (asm_list[i].delay == 3) {
-          jumppc = addr + ((signed char)(op & 0xff) << 1);
-        }
-
-        // jump to inside and no write is happend
-        if (jumppc >= start_addr &&  jumppc < (addr-2)) {
-          if (write_memory_counter == 0) {
-              page->isInfinityLoop = true;
+      // jump to inside and no write is happend
+      if (jumppc >= start_addr &&  jumppc < (addr-2)) {
+        if (write_memory_counter == 0) {
+          page->isInfinityLoop = true;
 #ifdef BUILD_INFO 
               LOG("InfinityLoop block %08X 0x%04X  from 0x%08X to 0x%08X\n", start_addr, op, addr - 2, jumppc);
 #endif
-          }
         }
-#endif 
+      }
       break;
     }
   }

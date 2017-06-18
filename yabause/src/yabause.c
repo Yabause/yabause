@@ -538,7 +538,7 @@ u32 YabauseGetFrameCount() {
   return yabsys.frame_count;
 }
 
-#define YAB_STATICS
+//#define YAB_STATICS
 
 int YabauseEmulate(void) {
    int oneframeexec = 0;
@@ -636,7 +636,7 @@ int YabauseEmulate(void) {
 			        SH2Exec(SSH2, amari);
            }
 
-           for (i = amari; i < sh2cycles; i += step){
+           for (i = amari; i < sh2cycles; i += step){ 
              SH2Exec(MSH2, step);
              if (yabsys.IsSSH2Running)
                SH2Exec(SSH2, step);
@@ -810,7 +810,29 @@ int YabauseEmulate(void) {
    
 #ifdef YAB_STATICS
    DebugLog("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
+#if 0
+   if (yabsys.frame_count >= 4000 ) {
+     static FILE * pfm = NULL;
+     if (pfm == NULL) {
+#ifdef ANDROID
+       pfm = fopen("/mnt/sdcard/cpu.txt", "w");
+#else
+       pfm = fopen("cpu.txt", "w");
+#endif
+     }
+     if (pfm) {
+       fprintf(pfm, "%d\t%" PRId64 "\n", yabsys.frame_count, cpu_emutime);
+       fflush(pfm);
+     }
+     if( yabsys.frame_count >= 6100) {
+       fclose(pfm);
+       exit(0);
+     }
+   }
+#endif
+#if DYNAREC_DEVMIYAX
    if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
+#endif
 #endif
 
    return 0;
