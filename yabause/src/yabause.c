@@ -96,6 +96,8 @@
 #include "aosdk/ssf.h"
 #endif
 
+#include <inttypes.h>
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -536,6 +538,8 @@ u32 YabauseGetFrameCount() {
   return yabsys.frame_count;
 }
 
+//#define YAB_STATICS
+
 int YabauseEmulate(void) {
    int oneframeexec = 0;
    yabsys.frame_count++;
@@ -601,7 +605,7 @@ int YabauseEmulate(void) {
 
    MSH2->cycles = 0;
    SSH2->cycles = 0;
-
+   u64 cpu_emutime = 0;
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
@@ -616,21 +620,32 @@ int YabauseEmulate(void) {
          sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
          yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
+#ifdef YAB_STATICS
+		 u64 current_cpu_clock = YabauseGetTicks();
+#endif
          if (!yabsys.playing_ssf)
          {
-           int i;
-           int step = sh2cycles;
-           for (i = 0; i < sh2cycles; i += step){
-             PROFILE_START("MSH2");
-             SH2Exec(MSH2, step);
-             PROFILE_STOP("MSH2");
+           u32 i;
+           const u32 div = 2;
+           const u32 step  = sh2cycles >> div;
+		       const u32 amari = sh2cycles - (step<< div);
+		   
+           if( amari != 0 ){
+		        SH2Exec(MSH2, amari);
+		        if (yabsys.IsSSH2Running)
+			        SH2Exec(SSH2, amari);
+           }
 
-             PROFILE_START("SSH2");
+           for (i = amari; i < sh2cycles; i += step){ 
+             SH2Exec(MSH2, step);
              if (yabsys.IsSSH2Running)
                SH2Exec(SSH2, step);
-             PROFILE_STOP("SSH2");
            }
+
          }
+#ifdef YAB_STATICS
+		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
+#endif
 
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
@@ -791,6 +806,33 @@ int YabauseEmulate(void) {
       OSDPushMessage(OSDMSG_STATUS, 1, "ARTIST %s", ssf_artist);
    }
 
+#endif
+   
+#ifdef YAB_STATICS
+   DebugLog("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
+#if 0
+   if (yabsys.frame_count >= 4000 ) {
+     static FILE * pfm = NULL;
+     if (pfm == NULL) {
+#ifdef ANDROID
+       pfm = fopen("/mnt/sdcard/cpu.txt", "w");
+#else
+       pfm = fopen("cpu.txt", "w");
+#endif
+     }
+     if (pfm) {
+       fprintf(pfm, "%d\t%" PRId64 "\n", yabsys.frame_count, cpu_emutime);
+       fflush(pfm);
+     }
+     if( yabsys.frame_count >= 6100) {
+       fclose(pfm);
+       exit(0);
+     }
+   }
+#endif
+#if DYNAREC_DEVMIYAX
+   if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
+#endif
 #endif
 
    return 0;

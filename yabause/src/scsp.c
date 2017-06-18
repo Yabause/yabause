@@ -364,6 +364,9 @@ struct AlfoTables
 
 struct AlfoTables alfo;
 
+void scsp_main_interrupt (u32 id);
+void scsp_sound_interrupt (u32 id);
+
 void fill_plfo_tables()
 {
    int i;
@@ -1756,8 +1759,8 @@ scsp_trigger_sound_interrupt (u32 id)
    scsp.sintf (level);
 }
 
-INLINE void
-scsp_main_interrupt (u32 id)
+
+void scsp_main_interrupt (u32 id)
 {
 //  if (scsp.mcipd & id) return;
 //  if (id != 0x400) SCSPLOG("scsp main interrupt %.4X\n", id);
@@ -1769,8 +1772,7 @@ scsp_main_interrupt (u32 id)
     scsp_trigger_main_interrupt (id);
 }
 
-INLINE void
-scsp_sound_interrupt (u32 id)
+void scsp_sound_interrupt (u32 id)
 {
 //  if (scsp.scipd & id) return;
 
@@ -4708,8 +4710,6 @@ u32 pre_cpu_clock = 0;
 u32 pre_68k_clcok = 0;
 int sh2_read_req = 0;
 void SyncSh2And68k(){
-  return;
-#else
   if (IsM68KRunning) {
     sh2_read_req++;
     YabThreadYield();

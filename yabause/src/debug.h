@@ -24,39 +24,43 @@
 #include "core.h"
 #include <stdio.h>
 
-typedef enum { DEBUG_STRING, DEBUG_STREAM , DEBUG_STDOUT, DEBUG_STDERR, DEBUG_CALLBACK } DebugOutType;
+#ifdef __cplusplus
+extern "C"{
+#endif
 
-typedef struct {
-	DebugOutType output_type;
-	union {
-		FILE * stream;
-		char * string;
-	        void  (*callback) (char*);
-	} output;
-	char * name;
-} Debug;
+  typedef enum { DEBUG_STRING, DEBUG_STREAM, DEBUG_STDOUT, DEBUG_STDERR, DEBUG_CALLBACK } DebugOutType;
 
-Debug * DebugInit(const char *, DebugOutType, char *);
-void DebugDeInit(Debug *);
+  typedef struct {
+    DebugOutType output_type;
+    union {
+      FILE * stream;
+      char * string;
+      void(*callback) (char*);
+    } output;
+    char * name;
+  } Debug;
 
-void DebugChangeOutput(Debug *, DebugOutType, char *);
+  Debug * DebugInit(const char *, DebugOutType, char *);
+  void DebugDeInit(Debug *);
 
-void DebugPrintf(Debug *, const char *, u32, const char *, ...);
+  void DebugChangeOutput(Debug *, DebugOutType, char *);
 
-extern Debug * MainLog;
+  void DebugPrintf(Debug *, const char *, u32, const char *, ...);
 
-void LogStart(void);
-void LogStop(void);
-void LogChangeOutput(DebugOutType t, char * s);
+  extern Debug * MainLog;
 
-//#define DEBUG 0
+  void LogStart(void);
+  void LogStop(void);
+  void LogChangeOutput(DebugOutType t, char * s);
+
+//#define DEBUG 1
 #ifdef DEBUG
 #define LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
 #define LOG(...)
 #endif
 
-//#define CDDEBUG 1
+  //#define CDDEBUG 1
 #ifdef CDDEBUG
 #define CDLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -69,7 +73,7 @@ void LogChangeOutput(DebugOutType t, char * s);
 #define NETLINK_LOG(...)
 #endif
 
-//#define SCSP_DEBUG 1
+  //#define SCSP_DEBUG 1
 #ifdef SCSP_DEBUG
 #define SCSPLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -88,7 +92,7 @@ void LogChangeOutput(DebugOutType t, char * s);
 #define VDP1LOG(...)
 #endif
 
-//#define VDP2_DEBUG 1
+  //#define VDP2_DEBUG 1
 #ifdef VDP2_DEBUG
 #define VDP2LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -113,5 +117,10 @@ void LogChangeOutput(DebugOutType t, char * s);
 #else
 #define FRAMELOG(...)
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

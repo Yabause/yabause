@@ -152,6 +152,9 @@ SH2Interface_struct *SH2CoreList[] = {
 #ifdef SH2_DYNAREC
 &SH2Dynarec,
 #endif
+#ifdef DYNAREC_DEVMIYAX
+&SH2Dyn,
+#endif
 NULL
 };
 
@@ -187,7 +190,7 @@ NULL
 OSD_struct *OSDCoreList[] = {
 &OSDNnovg,
 NULL
-};
+};  
 #endif
 
 void YuidrawSoftwareBuffer();
@@ -206,6 +209,17 @@ int yprintf( const char * fmt, ... )
    va_end(ap);
    return result;
 }
+
+int printf( const char * fmt, ... )
+{
+    int result = 0;
+   va_list ap;
+   va_start(ap, fmt);
+   result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
+   va_end(ap);
+   return result;
+}
+
 
 #define YUI_LOG yprintf
 //#define YUI_LOG
@@ -464,7 +478,7 @@ int YuiInitProgramForSoftwareRendering()
         glGetProgramInfoLog ( programObject, infoLen, NULL, infoLog );
         YUI_LOG ( "Error linking program:\n%s\n", infoLog );
         free ( infoLog );
-         return;
+         return GL_FALSE;
       }
 
       glDeleteProgram ( programObject );
@@ -1107,7 +1121,7 @@ int switchWindow( ANativeWindow* window ){
     return 0;
 }
 
-destroy() {
+int destroy() {
     YabauseDeInit();
 
     eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
@@ -1124,7 +1138,7 @@ destroy() {
     g_Surface = EGL_NO_SURFACE;
     g_Pbuffer = EGL_NO_SURFACE;
  
-    return;
+    return 0;
 }
 
 void
