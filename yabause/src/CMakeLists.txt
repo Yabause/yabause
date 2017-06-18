@@ -117,24 +117,24 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 
   set(yabause_SOURCES
     ${yabause_SOURCES}
-    sh2_dynarec2/DynarecSh2CInterface.cpp  
-	  sh2_dynarec2/DynarecSh2.cpp)
+    sh2_dynarec_devmiyax/DynarecSh2CInterface.cpp  
+	  sh2_dynarec_devmiyax/DynarecSh2.cpp)
 
 	set(yabause_HEADERS
 		${yabause_HEADERS}
-	  sh2_dynarec2/DynarecSh2.h
-	  sh2_dynarec2/opcodes.h)
+	  sh2_dynarec_devmiyax/DynarecSh2.h
+	  sh2_dynarec_devmiyax/opcodes.h)
 
 		if (MSVC) # NASM
 	  	set(YABAUSE_LIBRARIES 
 			  ${YABAUSE_LIBRARIES} 
-			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec2/dynalib )
+			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib )
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)
 				set(yabause_SOURCES 
 				  ${yabause_SOURCES}
-					sh2_dynarec2/dynalib_arm.s)
+					sh2_dynarec_devmiyax/dynalib_arm.s)
 			endif ()
 		endif ()
 
