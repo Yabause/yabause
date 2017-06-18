@@ -8,18 +8,19 @@ android {
         applicationId "org.uoyabause.android"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 98
-        versionName '0.4.4'
+        versionCode 120
+        versionName '0.5.x'
 
+/*
         externalNativeBuild {
 
             // For ndk-build, instead use ndkBuild {}
             cmake {
 
-                // Passes optional arguments to CMake.
+                //cd  Passes optional arguments to CMake.
                 arguments "-DANDROID_ABI=armeabi-v7a","-DANDROID_NATIVE_API_LEVEL=19","-DYAB_PORTS=android",
                         "-DYAB_WANT_C68K=FALSE","-DYAB_WANT_ARM7=TRUE","-DYAB_WANT_DYNAREC_DEVMIYAX=TRUE",
-                        "-DANDROID_FORCE_ARM_BUILD=TRUE"
+                        "-DANDROID_FORCE_ARM_BUILD=FALSE","-DCMAKE_BUILD_TYPE=Release"
             }
         }
         ndk {
@@ -27,7 +28,7 @@ android {
             // libraries Gradle should build and package with your APK.
             abiFilters 'armeabi-v7a'
         }
-
+*/
     }
 
     buildTypes {
@@ -51,12 +52,13 @@ android {
         abortOnError false
     }
 
-
+/*
     externalNativeBuild {
         cmake {
             path '../../../CMakeLists.txt'
         }
     }
+*/
 }
 
 def renameAPK(variant, defaultConfig, buildType) {
