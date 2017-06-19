@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-#define DEBUG_CPU
+//#define DEBUG_CPU
 //#define BUILD_INFO
 //#define LOG printf
 
@@ -779,6 +779,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u8 *ptr, *startptr;
   u32 instruction_counter = 0;
   u32 write_memory_counter = 0;
+  u32 calsize;
 
   startptr = ptr = page->code;
   i = 0;
@@ -833,8 +834,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 #endif
 
     i = dsh2_instructions[op];
-    
-    u32 calsize;
+    if (asm_list[i].func == 0) {
+      return -1;  // bad instruction code
+    }
 
     // CheckSize
     u8 delay = asm_list[i].delay;
@@ -877,21 +879,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     instruction_counter++;
     asm_list[i].build_count++;
     write_memory_counter += asm_list[i].write_count;
-
-    if (asm_list[i].func == 0) {
-      LOG("Unimplemented Opcode (0x%4x) at 0x%8x\n", op, addr-2);
-      // TODO: Stop Slave
-      //if( g_CurrentContext->m_pSaturnSh2->m_bSlave ){
-      //  g_Saturn->m_bSlaveRunning = false;
-      //}
-      memcpy((void*)ptr, (void*)nomal_seperator, nomal_seperator_size);
-      instrSize[blockCount][count++] = nomal_seperator_size;
-      ptr += nomal_seperator_size;
-
-      return -1;
-
-      break;
-    }
 
     // Regular Opcode ( No Delay Branch )
     if (asm_list[i].delay == 0) { 
@@ -1130,8 +1117,7 @@ int DynarecSh2::CheckOneStep() {
 
 void DynarecSh2::Undecoded(){
 
-  LOG("Undecoded %08X", GET_PC());
-
+//  LOG("Undecoded %08X", GET_PC());
   // Save regs.SR on stack
   GetGenRegPtr()[15] -= 4;
   memSetLong(GetGenRegPtr()[15], GET_SR());
@@ -1146,7 +1132,9 @@ void DynarecSh2::Undecoded(){
   u32 vectnum = 4; //  Fix me
 
   // Jump to Exception service routine
-  SET_PC(memGetLong(GET_VBR() + (vectnum << 2)));
+  u32 newpc = memGetLong(GET_VBR() + (vectnum << 2));
+  SET_PC(newpc);
+
   return;
 }
 
