@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <malloc.h> 
 #include <stdint.h>
 #include <core.h>
+
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
@@ -30,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-//#define DEBUG_CPU
+#define DEBUG_CPU
 //#define BUILD_INFO
 //#define LOG printf
 
@@ -656,8 +657,6 @@ Block *CompileBlocks::Init(Block *dynaCode)
   dynaCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
   memset((void*)dynaCode, 0, sizeof(Block)*NUMOFBLOCKS);
 
-  LOG("LookupTable = %d\n",sizeof(LookupTable));
-  //
   memset(LookupTable, 0, sizeof(LookupTable));
   //memset(LookupParentTable, 0, sizeof(LookupParentTable));
   memset(LookupTableRom, 0, sizeof(LookupTableRom));
@@ -1157,6 +1156,28 @@ int DynarecSh2::CheckOneStep() {
   return 0;
 }
 
+void DynarecSh2::Undecoded(){
+
+  LOG("Undecoded %08X", GET_PC());
+
+  // Save regs.SR on stack
+  GetGenRegPtr()[15] -= 4;
+  memSetLong(GetGenRegPtr()[15], GET_SR());
+
+  // Save regs.PC on stack
+  GetGenRegPtr()[15] -= 4;
+  memSetLong(GetGenRegPtr()[15], GET_PC()+2);
+
+
+  // What caused the exception? The delay slot or a general instruction?
+  // 4 for General Instructions, 6 for delay slot
+  u32 vectnum = 4; //  Fix me
+
+  // Jump to Exception service routine
+  SET_PC(memGetLong(GET_VBR() + (vectnum << 2)));
+  return;
+}
+
 int DynarecSh2::Execute(){
 
   Block * pBlock = NULL;
@@ -1177,12 +1198,8 @@ int DynarecSh2::Execute(){
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
       m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
     }
@@ -1195,13 +1212,8 @@ int DynarecSh2::Execute(){
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }
-        else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
       m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
     }
@@ -1216,13 +1228,8 @@ int DynarecSh2::Execute(){
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC(), m_pCompiler->LookupParentTable);
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }
-        else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
       m_pCompiler->LookupTable[ (GET_PC() & 0x000FFFFF)>>1 ] = pBlock;
     } 
@@ -1238,25 +1245,15 @@ int DynarecSh2::Execute(){
         pBlock = m_pCompiler->CompileBlock(GET_PC());
         m_pCompiler->LookupTableC[ (GET_PC()&0x000FFFFF)>>1 ] = pBlock;
         if (pBlock == NULL) {
-          if (this->is_slave_) {
-            yabsys.IsSSH2Running = 0;
-            return IN_INFINITY_LOOP;
-          }
-          else {
-            exit(0);
-          }
+           Undecoded();
+           return IN_INFINITY_LOOP;
         }
       } 
     }else{
       pBlock = m_pCompiler->CompileBlock(GET_PC());
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }
-        else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
     }
     break;  
@@ -1280,7 +1277,17 @@ int DynarecSh2::Execute(){
   //}
   //if( logenable_ )
   //  LOG("[%s] dynaExecute start %08X", (is_slave_ == false) ? "M" : "S", GET_PC());
+#if defined(DEBUG_CPU)
+  if (statics_trigger_) {
+    u64 pretime = YabauseGetTicks();
+    ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
+    compie_statics_[prepc].count++;
+    compie_statics_[prepc].time += YabauseGetTicks() - pretime;
+  }
+#else
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
+#endif
+
   if (!m_pCompiler->debug_mode_ && pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
   return 0;
 }
@@ -1370,6 +1377,15 @@ void DynarecSh2::ShowStatics(){
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
   loopskip_cnt_ = 0;
+  if (statics_trigger_) {
+    statics_trigger_ = false;
+    auto node = compie_statics_.begin();
+    while (node != compie_statics_.end()) {
+      LOG("%08X\t%d\t%d", node->first, node->second.count, node->second.time);
+      node++;
+    }
+    compie_statics_.clear();
+  }
 #endif
 }
 
