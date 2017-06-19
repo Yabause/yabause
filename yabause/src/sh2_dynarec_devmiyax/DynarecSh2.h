@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define _DYNAREC_SH2_H_
 
 #include <list>
+#include <map>
 #include <sys/types.h>
 #include <stdint.h>
 #include "threads.h"
@@ -60,8 +61,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 const int MAX_INSTSIZE = 0xFFFF+1;
 
 using std::list;
+using std::map;
 
 typedef list<u32> addrs;
+
+struct CompileStaticsNode {
+  u32 time;
+  u32 count;
+};
+
+typedef map<u32, CompileStaticsNode> MapCompileStatics;
 
 //****************************************************
 // Structs
@@ -219,7 +228,8 @@ public:
     }
     LookupParentTable[addr].clear();
   }
- 
+
+
   Block *Init(Block*);
 
   Block * CompileBlock( u32 pc, addrs * ParentT );
@@ -235,6 +245,7 @@ public:
   u32 compile_count_;
   u32 exec_count_;
 
+
   void ShowStatics();
   void SetDebugMode(bool debug) { debug_mode_ = debug;  }
 };
@@ -243,6 +254,7 @@ typedef void(*dynaFunc)(tagSH2*);
 
 class DynarecSh2
 {
+protected:
   SH2_struct *parent;
   tagSH2 *  m_pDynaSh2;
   CompileBlocks * m_pCompiler;
@@ -256,6 +268,15 @@ class DynarecSh2
   SH2_struct * ctx_;
   YabMutex * mtx_;
   bool logenable_;
+
+  u32 pre_cnt_;
+  u32 interruput_chk_cnt_;
+  u32 interruput_cnt_;
+  u32 loopskip_cnt_;
+
+  bool statics_trigger_ = false;
+  MapCompileStatics compie_statics_;
+
 
 public:
   DynarecSh2();
@@ -275,11 +296,6 @@ public:
   void ExecuteCount(u32 Count );
   int Execute();
   void Undecoded();
-
-  u32 pre_cnt_;
-  u32 interruput_chk_cnt_;
-  u32 interruput_cnt_ ;
-  u32 loopskip_cnt_ ;
 
   void ShowStatics();
   void ShowCompileInfo();
@@ -304,6 +320,8 @@ public:
   inline void SET_SR(u32 v ) { m_pDynaSh2->CtrlReg[0] = v; }
   inline void SET_GBR( u32 v ) { m_pDynaSh2->CtrlReg[1] = v; }
   inline void SET_VBR( u32 v ) { m_pDynaSh2->CtrlReg[2] = v; }  
+
+  void TriggerStatics() { statics_trigger_ = true; }
   
 };
 
