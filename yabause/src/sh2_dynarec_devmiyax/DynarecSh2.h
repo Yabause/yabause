@@ -22,6 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include <list>
 #include <map>
+#include <string>
+
 #include <sys/types.h>
 #include <stdint.h>
 #include "threads.h"
@@ -62,6 +64,7 @@ const int MAX_INSTSIZE = 0xFFFF+1;
 
 using std::list;
 using std::map;
+using std::string;
 
 typedef list<u32> addrs;
 
@@ -276,7 +279,7 @@ protected:
 
   bool statics_trigger_ = false;
   MapCompileStatics compie_statics_;
-
+  string message_buf;
 
 public:
   DynarecSh2();
@@ -322,6 +325,7 @@ public:
   inline void SET_VBR( u32 v ) { m_pDynaSh2->CtrlReg[2] = v; }  
 
   void TriggerStatics() { statics_trigger_ = true; }
+  int GetCurrentStatics(string & buf);
   
 };
 
