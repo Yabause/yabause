@@ -361,7 +361,9 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    scsp_set_use_new(init->use_new_scsp);
-
+#ifdef WEBINTERFACE
+   YabStartHttpServer();
+#endif
    return 0;
 }
 
@@ -830,9 +832,9 @@ int YabauseEmulate(void) {
      }
    }
 #endif
-#if DYNAREC_DEVMIYAX
-   if( SH2Core->id == 3 ) SH2DynShowSttaics(MSH2, SSH2);
 #endif
+#if DYNAREC_DEVMIYAX
+   if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
    return 0;

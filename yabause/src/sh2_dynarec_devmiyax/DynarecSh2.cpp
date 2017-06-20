@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-//#define DEBUG_CPU
+#define DEBUG_CPU
 //#define BUILD_INFO
 //#define LOG printf
 
@@ -1329,6 +1329,10 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
   }
   return 0; 
 }
+
+#include <iomanip> 
+#include <sstream>      // std::ostringstream
+using std::ostringstream;
   
 void DynarecSh2::ShowStatics(){
 #if defined(DEBUG_CPU)
@@ -1338,16 +1342,59 @@ void DynarecSh2::ShowStatics(){
   interruput_cnt_ = 0;
   loopskip_cnt_ = 0;
   if (statics_trigger_) {
-    statics_trigger_ = false;
+    message_buf = "Address\tCount\tTime\n";
     auto node = compie_statics_.begin();
     while (node != compie_statics_.end()) {
-      LOG("%08X\t%d\t%d", node->first, node->second.count, node->second.time);
+      //LOG("%08X\t%d\t%d", node->first, node->second.count, node->second.time);
+      std::ostringstream s;
+      s << "0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << node->first << "\t";
+      s << std::dec << node->second.count << "\t";
+      s << node->second.time << "\n";
+      message_buf += s.str();
       node++;
     }
     compie_statics_.clear();
+    statics_trigger_ = false;
   }
 #endif
 }
+
+int DynarecSh2::GetCurrentStatics(string & buf) {
+#if !defined(DEBUG_CPU)
+  buf = "Not Debug Mode\n";
+#else
+  // reentrant
+  if (statics_trigger_) return -1;
+
+  statics_trigger_ = true;
+  while (statics_trigger_) {
+    YabThreadUSleep(1);
+  }
+
+  buf = message_buf;
+#endif
+  return 0;
+
+}
+
+extern SH2_struct *MSH2;
+extern SH2_struct *SSH2;
+
+
+int DynarecSh2GetCurrentStatics( int cpuid, string & buf) {
+  
+  DynarecSh2* pctx = NULL;
+  if (cpuid == 0) {
+    pctx = ((DynarecSh2*)MSH2->ext);
+  }else if( cpuid == 1) {
+    pctx = ((DynarecSh2*)SSH2->ext);
+  }else {
+    return -1;
+  }
+  return pctx->GetCurrentStatics(buf);
+
+}
+
 
 void DynarecSh2::ShowCompileInfo(){
   int i = 0;
