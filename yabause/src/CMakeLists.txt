@@ -95,6 +95,15 @@ endif (IOS)
 include_directories(nanovg)
 set(yabause_SOURCES ${yabause_SOURCES} nanovg/nanovg.c)
 
+option(WEB_INTERFACE "Access with http" OFF)
+if (WEB_INTERFACE)
+  add_definitions(-DWEBINTERFACE)
+  include_directories( webinterface/include )
+  add_subdirectory(webinterface)
+endif()
+
+
+
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
@@ -924,3 +933,6 @@ option(YAB_TESTS "Build test programs for cores" OFF)
 if (YAB_TESTS)
 	add_subdirectory("tools")
 endif()
+
+
+
