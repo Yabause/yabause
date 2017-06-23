@@ -4,6 +4,11 @@
 #include <cstring>
 #include <string>
 
+#include "sh2core.h"
+#include "debug.h"
+#include "yabause.h"
+#include "../sh2_dynarec_devmiyax/DynarecSh2.h"
+
 #include <iostream>
 #include <string>
 #include <vector>
@@ -17,7 +22,10 @@
 #include <cctype>
 #include <ctype.h>
 
+#include <iomanip> 
+#include <sstream>      // std::ostringstream
 
+using std::ostringstream;
 using std::string;
 
 #ifdef _WIN32
@@ -34,7 +42,7 @@ bool exitNow = false;
 
 
 int DynarecSh2GetCurrentStatics( int cpuid, string & buf);
-
+void DynarecSh2GetDisasmebleString(string & out, unsigned int  from, unsigned int to);
 
 class ExampleHandler : public CivetHandler
 {
@@ -52,8 +60,8 @@ public:
     mg_printf(conn,"<p>To see Master CPU Execute Statics <a href=\"execute_statics/?cpu=0\">click here</a></p>\r\n");
     mg_printf(conn,"<p>To see Slave CPU Execute Statics <a href=\"execute_statics/?cpu=1\">click here</a></p>\r\n");
     mg_printf(conn,
-      "<p>To see a page from the A handler with a parameter "
-      "<a href=\"a?param=1\">click here</a></p>\r\n");
+      "<p>To DisAssemble code "
+      "<a href=\"disassemble?from=0x06000000&to=0x06000040\">click here</a></p>\r\n");
     mg_printf(conn,
       "<p>To see a page from the A/B handler <a "
       "href=\"a/b\">click here</a></p>\r\n");
@@ -103,13 +111,53 @@ vector<string> split(const string& s, const string& delim, const bool keep_empty
   return result;
 }
 
+int HexToInt(std::string hex) {
+  int a = 0;
+  int tmp = 0;
+  int step = 0;
+  auto c = hex.end();
+  c--;
+  while (c != hex.begin()) {
+    switch (*c) {
+    case '0': tmp = 0; break;
+    case '1': tmp = 1; break;
+    case '2': tmp = 2; break;
+    case '3': tmp = 3; break;
+    case '4': tmp = 4; break;
+    case '5': tmp = 5; break;
+    case '6': tmp = 6; break;
+    case '7': tmp = 7; break;
+    case '8': tmp = 8; break;
+    case '9': tmp = 9; break;
+    case 'a': tmp = 10; break;
+    case 'A': tmp = 10; break;
+    case 'b': tmp = 11; break;
+    case 'B': tmp = 11; break;
+    case 'c': tmp = 12; break;
+    case 'C': tmp = 12; break;
+    case 'd': tmp = 13; break;
+    case 'D': tmp = 13; break;
+    case 'e': tmp = 14; break;
+    case 'E': tmp = 14; break;
+    case 'f': tmp = 15; break;
+    case 'F': tmp = 15; break;
+    default: tmp = 0;
+    }
+    
+    // 0,16,256,4096
+    a += tmp*(1<<(step*4));
+    step++;
+    c--;
+  }
+  return a;
+}
 
 std::map<std::string, std::string>& map_pairs(const char* character, std::map<std::string, std::string>& Elements)
 {
   string test;
   string key;
   string value;
-  vector<string>::iterator it;
+  vector<string>::iterator it;  
   string character_string = character;
   vector<string> words;
 
@@ -144,19 +192,97 @@ public:
   bool
     handleGet(CivetServer *server, struct mg_connection *conn)
   {
+    MapCompileStatics cpu_exeute_statics;
+
+    mg_printf(conn,
+      "HTTP/1.1 200 OK\r\nContent-Type: "
+      "text/json\r\nConnection: close\r\n\r\n");
+
+   const  mg_request_info *  rq = mg_get_request_info(conn);
+
+   if (rq->query_string == NULL) {
+     mg_printf(conn, "Failed!");
+     return true;
+   }
+
+   std::map<std::string, std::string> query_map;
+   map_pairs(rq->query_string, query_map);
+   
+   int cpuid = std::stoi(query_map["cpu"]);
+    
+    DynarecSh2GetCurrentStatics(cpuid, cpu_exeute_statics);
+    string message_buf;
+
+    // Generate JSON String
+    /*
+    {
+      "CpuStatics" :
+      [ 
+        {"start":"0x1111","end":0xFFFF","count":100,"time":100},
+        {"start":"0x1111","end":0xFFFF","count":100,"time":100}
+      ]
+    }
+    */
+    message_buf = "{\"CpuStatics\" :[";
+    auto node = cpu_exeute_statics.begin();
+    while (node != cpu_exeute_statics.end()) {
+      std::ostringstream s;
+      s << "{\"start\":\"0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << node->first << "\", ";
+      s << "\"end\":\"0x" << node->second.end_addr << "\", ";
+      s << "\"count\":" << std::dec << node->second.count << ",";
+      s << "\"time\":" << std::dec << node->second.time << "}";
+      message_buf += s.str();
+      node++;
+      if (node != cpu_exeute_statics.end()) {
+        message_buf += ",\n";
+      }
+    }
+    message_buf += "]}";
+/*
+    {
+      "sources" :
+      [
+
+      {
+        "file" : "C:/work/EagleXX/build/CMakeFiles/glfw"
+      },
+*/
+
+    //mg_printf(conn, "<html><body>\r\n");
+    mg_printf(conn, message_buf.c_str());
+    //mg_printf(conn, "</body></html>\r\n");
+
+    return true;
+  }
+};
+
+
+class DissAssemble : public CivetHandler
+{
+public:
+  bool
+    handleGet(CivetServer *server, struct mg_connection *conn)
+  {
     std::string st;
 
     mg_printf(conn,
       "HTTP/1.1 200 OK\r\nContent-Type: "
       "text/plain\r\nConnection: close\r\n\r\n");
 
-   const  mg_request_info *  rq = mg_get_request_info(conn);
-   std::map<std::string, std::string> query_map;
-   map_pairs(rq->query_string, query_map);
-   
-   int cpuid = std::stoi(query_map["cpu"]);
-    
-    DynarecSh2GetCurrentStatics(cpuid,st);
+    const  mg_request_info *  rq = mg_get_request_info(conn);
+
+    if (rq->query_string == NULL) {
+      mg_printf(conn, "Failed!");
+      return true;
+    }
+
+    std::map<std::string, std::string> query_map;
+    map_pairs(rq->query_string, query_map);
+
+    int from = HexToInt(query_map["from"]);
+    int to = HexToInt(query_map["to"]);
+
+    DynarecSh2GetDisasmebleString(st,from,to);
 
     mg_printf(conn, st.c_str());
 
@@ -168,6 +294,7 @@ public:
 CivetServer * server;
 ExampleHandler h_ex;
 ExecuteStatics h_execute_statics;
+DissAssemble h_disassemble;
 
 extern "C" {
 
@@ -181,12 +308,15 @@ int YabStartHttpServer() {
     cpp_options.push_back(options[i]);
   }
 
+  //int val = HexToInt(string("0x06000000"));
+
   // CivetServer server(options); // <-- C style start
   server = new CivetServer(cpp_options); // <-- C++ style start
 
   
   server->addHandler(EXAMPLE_URI, h_ex);
   server->addHandler("/execute_statics", h_execute_statics);
+  server->addHandler("/disassemble", h_disassemble);
 
   return 0;
 }
