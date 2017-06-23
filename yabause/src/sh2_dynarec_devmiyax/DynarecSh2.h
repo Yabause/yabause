@@ -71,9 +71,11 @@ typedef list<u32> addrs;
 struct CompileStaticsNode {
   u32 time;
   u32 count;
+  u32 end_addr;
 };
 
 typedef map<u32, CompileStaticsNode> MapCompileStatics;
+int DynarecSh2GetCurrentStatics(int cpuid, MapCompileStatics & buf);
 
 //****************************************************
 // Structs
@@ -232,7 +234,6 @@ public:
     LookupParentTable[addr].clear();
   }
 
-
   Block *Init(Block*);
 
   Block * CompileBlock( u32 pc, addrs * ParentT );
@@ -325,8 +326,9 @@ public:
   inline void SET_VBR( u32 v ) { m_pDynaSh2->CtrlReg[2] = v; }  
 
   void TriggerStatics() { statics_trigger_ = true; }
-  int GetCurrentStatics(string & buf);
-  
+  int GetCurrentStatics(MapCompileStatics & buf);
+  void GetDisasmebleString(string & out, u32 from, u32 to);
+
 };
 
 
@@ -347,6 +349,7 @@ extern "C"
   u32 memGetLong(u32);  
   
 }
+
 
 #ifdef _WINDOWS
 
