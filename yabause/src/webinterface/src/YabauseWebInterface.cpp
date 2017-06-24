@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
 #include "CivetServer.h"
+#include <stdio.h>
 #include <cstring>
 #include <string>
 
@@ -51,17 +52,13 @@ using std::vector;
 using std::cout;
 using std::endl;
 
+
+
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <unistd.h>
 #endif
-
-#define DOCUMENT_ROOT "."
-#define PORT "8081"
-#define EXAMPLE_URI "/"
-#define EXIT_URI "/exit"
-bool exitNow = false;
 
 extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
@@ -85,6 +82,9 @@ public:
       "<p>To DisAssemble code "
       "<a href=\"disassemble?from=0x06000000&to=0x06000040\">click here</a></p>\r\n");
     mg_printf(conn,
+      "<p>memory"
+      "<a href=\"memory?from=0x06000000&type=0&size=1024\">click here</a></p>\r\n");
+    mg_printf(conn,
       "<p>To see a page from the A/B handler <a "
       "href=\"a/b\">click here</a></p>\r\n");
     mg_printf(conn,
@@ -93,9 +93,6 @@ public:
     mg_printf(conn,
       "<p>To see a page from the WebSocket handler <a "
       "href=\"ws\">click here</a></p>\r\n");
-    mg_printf(conn,
-      "<p>To exit <a href=\"%s\">click here</a></p>\r\n",
-      EXIT_URI);
     mg_printf(conn, "</body></html>\r\n");
     return true;
   }
@@ -233,7 +230,7 @@ public:
     std::map<std::string, std::string> query_map;
     map_pairs(rq->query_string, query_map);
 
-    int cpuid = std::stoi(query_map["cpu"]);
+    int cpuid = atoi(query_map["cpu"].c_str());
     DynarecSh2Resume(cpuid);
     return true;
   }
@@ -280,7 +277,7 @@ public:
    std::map<std::string, std::string> query_map;
    map_pairs(rq->query_string, query_map);
    
-   int cpuid = std::stoi(query_map["cpu"]);
+   int cpuid = atoi(query_map["cpu"].c_str());
     
     DynarecSh2GetCurrentStatics(cpuid, cpu_exeute_statics);
     string message_buf;
@@ -361,11 +358,91 @@ public:
 };
 
 
+class GetMemory : public CivetHandler
+{
+public:
+  bool
+    handleGet(CivetServer *server, struct mg_connection *conn)
+  {
+    std::string st;
+    const  mg_request_info *  rq = mg_get_request_info(conn);
+
+    if (rq->query_string == NULL) {
+      mg_printf(conn, "Failed!");
+      return true;
+    }
+
+    std::map<std::string, std::string> query_map;
+    map_pairs(rq->query_string, query_map);
+
+    u32 from = HexToInt(query_map["from"]);
+    u32 type = atoi(query_map["type"].c_str());
+    u32 size = atoi(query_map["size"].c_str());
+
+    vector<u32> vbuf;
+
+    picojson::value v1;
+    picojson::object  o;
+
+    v1.set<picojson::object>(picojson::object());
+    v1.get<picojson::object>()["type"] = picojson::value((double)type);
+    v1.get<picojson::object>()["start"] = picojson::value((double)from);
+    v1.get<picojson::object>()["memory"].set<picojson::array>(picojson::array());
+
+    switch (type) {
+    case 0: // byte
+    {
+      for (u32 i = from; i < from + size; i ++) {
+        v1.get<picojson::object>()["memory"].get<picojson::array>().push_back(picojson::value((double)memGetByte(i)));
+      }
+    }
+      break;
+    case 1: // word
+    {
+      for (u32 i = from; i < from+size; i += 2) {
+        v1.get<picojson::object>()["memory"].get<picojson::array>().push_back(picojson::value((double)memGetWord(i)));
+      }
+    }
+    break;
+    case 2: // dword
+    {
+      {
+        for (u32 i = from; i < from + size; i += 4) {
+          v1.get<picojson::object>()["memory"].get<picojson::array>().push_back(picojson::value((double)memGetLong(i)));
+        }
+      }
+    }
+    break;
+    default:
+      return false;
+      break;
+    }
+
+    mg_printf(conn,
+      "HTTP/1.1 200 OK\r\nContent-Type: "
+      "application/json\r\nConnection: close\r\n"
+      "Access-Control-Allow-Origin: *\r\n\r\n");
+
+    mg_printf(conn, v1.serialize().c_str());
+
+    return true;
+  }
+};
+
+
+
 CivetServer * server = nullptr;
 ExampleHandler h_ex;
 ExecuteStatics h_execute_statics;
 DissAssemble h_disassemble;
 Resume h_resume;
+GetMemory h_getMemory;
+
+#define DOCUMENT_ROOT "."
+#define PORT "8081"
+#define EXAMPLE_URI "/"
+#define EXIT_URI "/exit"
+bool exitNow = false;
 
 extern "C" {
 
@@ -387,6 +464,7 @@ int YabStartHttpServer() {
   server->addHandler("/execute_statics", h_execute_statics);
   server->addHandler("/disassemble", h_disassemble);
   server->addHandler("/resume", h_resume);
+  server->addHandler("/memory", h_getMemory);
 
   return 0;
 }

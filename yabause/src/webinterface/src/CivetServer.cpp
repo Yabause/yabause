@@ -282,9 +282,9 @@ CivetServer::CivetServer(const char **options,
 	}
 	callbacks.connection_close = closeHandler;
 	context = mg_start(&callbacks, this, options);
-	if (context == NULL)
-		throw CivetException("null context when constructing CivetServer. "
-		                     "Possible problem binding to port.");
+	//if (context == NULL)
+	//	throw CivetException("null context when constructing CivetServer. "
+	//	                     "Possible problem binding to port.");
 }
 
 CivetServer::CivetServer(std::vector<std::string> options,
@@ -308,9 +308,9 @@ CivetServer::CivetServer(std::vector<std::string> options,
 	pointers.push_back(0);
 
 	context = mg_start(&callbacks, this, &pointers[0]);
-	if (context == NULL)
-		throw CivetException("null context when constructing CivetServer. "
-		                     "Possible problem binding to port.");
+	//if (context == NULL)
+	//	throw CivetException("null context when constructing CivetServer. "
+	//	                     "Possible problem binding to port.");
 }
 
 CivetServer::~CivetServer()
