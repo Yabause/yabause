@@ -75,7 +75,6 @@ struct CompileStaticsNode {
 };
 
 typedef map<u32, CompileStaticsNode> MapCompileStatics;
-int DynarecSh2GetCurrentStatics(int cpuid, MapCompileStatics & buf);
 
 //****************************************************
 // Structs
@@ -278,9 +277,17 @@ protected:
   u32 interruput_cnt_;
   u32 loopskip_cnt_;
 
-  bool statics_trigger_ = false;
+  enum enDebugState {
+    NORMAL,
+    REQUESTED,
+    COLLECTING,
+    FINISHED,
+  };
+  
+  enDebugState statics_trigger_ = NORMAL;
   MapCompileStatics compie_statics_;
   string message_buf;
+
 
 public:
   DynarecSh2();
@@ -325,9 +332,8 @@ public:
   inline void SET_GBR( u32 v ) { m_pDynaSh2->CtrlReg[1] = v; }
   inline void SET_VBR( u32 v ) { m_pDynaSh2->CtrlReg[2] = v; }  
 
-  void TriggerStatics() { statics_trigger_ = true; }
   int GetCurrentStatics(MapCompileStatics & buf);
-  void GetDisasmebleString(string & out, u32 from, u32 to);
+  int Resume();
 
 };
 
@@ -349,7 +355,6 @@ extern "C"
   u32 memGetLong(u32);  
   
 }
-
 
 #ifdef _WINDOWS
 

@@ -1238,7 +1238,7 @@ int DynarecSh2::Execute(){
   //if( logenable_ )
   //  LOG("[%s] dynaExecute start %08X", (is_slave_ == false) ? "M" : "S", GET_PC());
 #if defined(DEBUG_CPU)
-  if (statics_trigger_) {
+  if (statics_trigger_ == COLLECTING) {
     u64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
     compie_statics_[prepc].count++;
@@ -1335,16 +1335,22 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
 }
 
 
-void DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
+int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
   char linebuf[128];
-  if (from > to) return;
+  if (from > to) return -1;
   for (u32 i = from; i < (to+2); i += 2) {
     SH2Disasm(i, memGetWord(i), 0, NULL, linebuf);
     out += linebuf;
     out += "\n";
   }
+  return 0;
 }
-  
+
+int DynarecSh2::Resume() {
+  statics_trigger_ = NORMAL;
+  return 0;
+}
+
 void DynarecSh2::ShowStatics(){
 #if defined(DEBUG_CPU)
   LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
@@ -1352,25 +1358,21 @@ void DynarecSh2::ShowStatics(){
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
   loopskip_cnt_ = 0;
-  if (statics_trigger_) {
-#if 0
-    message_buf = "Addres\tEnd\tCount\tTime\n";
-    auto node = compie_statics_.begin();
-    while (node != compie_statics_.end()) {
-      //LOG("%08X\t%d\t%d", node->first, node->second.count, node->second.time);
-      std::ostringstream s;
-      s << "<p>0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << node->first << "\t";
-      s << "0x" << node->second.end_addr << "\t";
-      s << std::dec << node->second.count << "\t";
-      s << node->second.time << "\t";
-      s << "<a href=\"/disassemble?from=0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << node->first;
-      s << "&to=0x" << node->second.end_addr << "\">click here</a></p>\r\n";
-      message_buf += s.str();
-      node++;
+
+  switch (statics_trigger_) {
+  case NORMAL:
+    break;
+  case REQUESTED:
+    statics_trigger_ = COLLECTING;
+    break;
+  case COLLECTING:
+    statics_trigger_ = FINISHED;
+    while (FINISHED == statics_trigger_) {
+      YabThreadUSleep(10000);
     }
-    compie_statics_.clear();
-#endif
-    statics_trigger_ = false;
+    break;
+  case FINISHED:
+    break;
   }
 #endif
 }
@@ -1379,58 +1381,19 @@ int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
 #if !defined(DEBUG_CPU)
   buf = "Not Debug Mode\n";
 #else
-  // reentrant
-  if (statics_trigger_) return -1;
 
-  statics_trigger_ = true;
-  while (statics_trigger_) {
-    YabThreadUSleep(1);
+  if (statics_trigger_ != NORMAL && statics_trigger_ != FINISHED) return -1;
+
+  statics_trigger_ = REQUESTED;
+  while (statics_trigger_!= FINISHED) {
+    YabThreadUSleep(10000);
   }
-  //compie_statics_;
+  
   buf = compie_statics_;
   compie_statics_.clear();
 #endif
   return 0;
 }
-
-extern SH2_struct *MSH2;
-extern SH2_struct *SSH2;
-
-int DynarecSh2GetCurrentStatics(int cpuid, MapCompileStatics & buf) {
-  DynarecSh2* pctx = NULL;
-  if (cpuid == 0) {
-    pctx = ((DynarecSh2*)MSH2->ext);
-  }
-  else if (cpuid == 1) {
-    pctx = ((DynarecSh2*)SSH2->ext);
-  }
-  else {
-    return -1;
-  }
-
-  if (pctx) {
-    return pctx->GetCurrentStatics(buf);
-  }
-  return -1;
-}
-
-int DynarecSh2GetCurrentStatics( int cpuid, string & buf) {
-  
-  DynarecSh2* pctx = NULL;
-  if (cpuid == 0) {
-    pctx = ((DynarecSh2*)MSH2->ext);
-  }else if( cpuid == 1) {
-    pctx = ((DynarecSh2*)SSH2->ext);
-  }else {
-    return -1;
-  }
-
-  if (pctx) {
-    //return pctx->GetCurrentStatics(buf);
-  }
-  return -1;
-}
-
 
 void DynarecSh2::ShowCompileInfo(){
   int i = 0;

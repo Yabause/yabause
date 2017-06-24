@@ -1,4 +1,21 @@
+/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
 
+This file is part of Yabause.
+
+Yabause is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+Yabause is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Yabause; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
+*/
 
 #include "CivetServer.h"
 #include <cstring>
@@ -21,12 +38,18 @@
 #include <cstring>
 #include <cctype>
 #include <ctype.h>
+#include <iomanip>
+#include <sstream>
+#include <map>
 
-#include <iomanip> 
-#include <sstream>      // std::ostringstream
+#include "picojson.h"
 
+using std::map;
 using std::ostringstream;
 using std::string;
+using std::vector;
+using std::cout;
+using std::endl;
 
 #ifdef _WIN32
 #include <windows.h>
@@ -40,9 +63,8 @@ using std::string;
 #define EXIT_URI "/exit"
 bool exitNow = false;
 
-
-int DynarecSh2GetCurrentStatics( int cpuid, string & buf);
-void DynarecSh2GetDisasmebleString(string & out, unsigned int  from, unsigned int to);
+extern SH2_struct *MSH2;
+extern SH2_struct *SSH2;
 
 class ExampleHandler : public CivetHandler
 {
@@ -78,16 +100,6 @@ public:
     return true;
   }
 };
-
-#include <map>
-using std::map;
-
-void QueryParamToMap(char * qurty, map<string, string>) {
-
-}
-
-
-using namespace std;
 
 vector<string> split(const string& s, const string& delim, const bool keep_empty = true)
 {
@@ -186,9 +198,70 @@ std::map<std::string, std::string>& map_pairs(const char* character, std::map<st
 }
 
 
+
+
+class Resume : public CivetHandler
+{
+public:
+
+  int DynarecSh2Resume(int cpuid) {
+    DynarecSh2* pctx = NULL;
+    if (cpuid == 0) {
+      pctx = ((DynarecSh2*)MSH2->ext);
+    }
+    else if (cpuid == 1) {
+      pctx = ((DynarecSh2*)SSH2->ext);
+    }
+    else {
+      return -1;
+    }
+
+    if (pctx) {
+      return pctx->Resume();
+    }
+    return -1;
+  }
+
+  bool
+    handleGet(CivetServer *server, struct mg_connection *conn)
+  {
+    const  mg_request_info *  rq = mg_get_request_info(conn);
+    if (rq->query_string == NULL) {
+      mg_printf(conn, "Failed!");
+      return true;
+    }
+    std::map<std::string, std::string> query_map;
+    map_pairs(rq->query_string, query_map);
+
+    int cpuid = std::stoi(query_map["cpu"]);
+    DynarecSh2Resume(cpuid);
+    return true;
+  }
+};
+
+
 class ExecuteStatics : public CivetHandler
 {
 public:
+
+  int DynarecSh2GetCurrentStatics(int cpuid, MapCompileStatics & buf) {
+    DynarecSh2* pctx = NULL;
+    if (cpuid == 0) {
+      pctx = ((DynarecSh2*)MSH2->ext);
+    }
+    else if (cpuid == 1) {
+      pctx = ((DynarecSh2*)SSH2->ext);
+    }
+    else {
+      return -1;
+    }
+
+    if (pctx) {
+      return pctx->GetCurrentStatics(buf);
+    }
+    return -1;
+  }
+
   bool
     handleGet(CivetServer *server, struct mg_connection *conn)
   {
@@ -196,15 +269,14 @@ public:
 
     mg_printf(conn,
       "HTTP/1.1 200 OK\r\nContent-Type: "
-      "text/json\r\nConnection: close\r\n\r\n");
+      "application/json\r\nConnection: close\r\n"
+      "Access-Control-Allow-Origin: *\r\n\r\n");
 
    const  mg_request_info *  rq = mg_get_request_info(conn);
-
    if (rq->query_string == NULL) {
      mg_printf(conn, "Failed!");
      return true;
    }
-
    std::map<std::string, std::string> query_map;
    map_pairs(rq->query_string, query_map);
    
@@ -228,7 +300,7 @@ public:
     while (node != cpu_exeute_statics.end()) {
       std::ostringstream s;
       s << "{\"start\":\"0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex << node->first << "\", ";
-      s << "\"end\":\"0x" << node->second.end_addr << "\", ";
+      s << "\"end\":\"0x" << std::uppercase << std::setfill('0') << std::setw(8) << std::hex  << node->second.end_addr << "\", ";
       s << "\"count\":" << std::dec << node->second.count << ",";
       s << "\"time\":" << std::dec << node->second.time << "}";
       message_buf += s.str();
@@ -238,19 +310,7 @@ public:
       }
     }
     message_buf += "]}";
-/*
-    {
-      "sources" :
-      [
-
-      {
-        "file" : "C:/work/EagleXX/build/CMakeFiles/glfw"
-      },
-*/
-
-    //mg_printf(conn, "<html><body>\r\n");
     mg_printf(conn, message_buf.c_str());
-    //mg_printf(conn, "</body></html>\r\n");
 
     return true;
   }
@@ -264,11 +324,6 @@ public:
     handleGet(CivetServer *server, struct mg_connection *conn)
   {
     std::string st;
-
-    mg_printf(conn,
-      "HTTP/1.1 200 OK\r\nContent-Type: "
-      "text/plain\r\nConnection: close\r\n\r\n");
-
     const  mg_request_info *  rq = mg_get_request_info(conn);
 
     if (rq->query_string == NULL) {
@@ -279,26 +334,44 @@ public:
     std::map<std::string, std::string> query_map;
     map_pairs(rq->query_string, query_map);
 
-    int from = HexToInt(query_map["from"]);
-    int to = HexToInt(query_map["to"]);
+    u32 from = HexToInt(query_map["from"]);
+    u32 to = HexToInt(query_map["to"]);
 
-    DynarecSh2GetDisasmebleString(st,from,to);
+    picojson::value v1;
+    picojson::object  o;
+    char linebuf[128];
 
-    mg_printf(conn, st.c_str());
+    v1.set<picojson::object>(picojson::object());
+    v1.get<picojson::object>()["code"].set<picojson::array>(picojson::array());
+
+    for (u32 i = from; i < (to + 2); i += 2) {
+      SH2Disasm(i, memGetWord(i), 0, NULL, linebuf);
+      v1.get<picojson::object>()["code"].get<picojson::array>().push_back(picojson::value(linebuf));
+    }
+
+    mg_printf(conn,
+      "HTTP/1.1 200 OK\r\nContent-Type: "
+      "application/json\r\nConnection: close\r\n"
+      "Access-Control-Allow-Origin: *\r\n\r\n");
+
+    mg_printf(conn, v1.serialize().c_str() );
 
     return true;
   }
 };
 
 
-CivetServer * server;
+CivetServer * server = nullptr;
 ExampleHandler h_ex;
 ExecuteStatics h_execute_statics;
 DissAssemble h_disassemble;
+Resume h_resume;
 
 extern "C" {
 
 int YabStartHttpServer() {
+
+  if (server != nullptr) return 0;
 
   const char *options[] = {
     "document_root", DOCUMENT_ROOT, "listening_ports", PORT, 0 };
@@ -308,15 +381,12 @@ int YabStartHttpServer() {
     cpp_options.push_back(options[i]);
   }
 
-  //int val = HexToInt(string("0x06000000"));
-
-  // CivetServer server(options); // <-- C style start
   server = new CivetServer(cpp_options); // <-- C++ style start
-
   
   server->addHandler(EXAMPLE_URI, h_ex);
   server->addHandler("/execute_statics", h_execute_statics);
   server->addHandler("/disassemble", h_disassemble);
+  server->addHandler("/resume", h_resume);
 
   return 0;
 }
