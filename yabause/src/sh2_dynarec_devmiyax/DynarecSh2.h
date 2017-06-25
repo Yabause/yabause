@@ -21,6 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define _DYNAREC_SH2_H_
 
 #include <list>
+#include <map>
+#include <string>
+
 #include <sys/types.h>
 #include <stdint.h>
 #include "threads.h"
@@ -60,8 +63,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 const int MAX_INSTSIZE = 0xFFFF+1;
 
 using std::list;
+using std::map;
+using std::string;
 
 typedef list<u32> addrs;
+
+struct CompileStaticsNode {
+  u32 time;
+  u32 count;
+  u32 end_addr;
+};
+
+typedef map<u32, CompileStaticsNode> MapCompileStatics;
 
 //****************************************************
 // Structs
@@ -74,12 +87,15 @@ const int MAXBLOCKSIZE = 3072-(4*4);
 
 struct Block
 {
-  unsigned char code[MAXBLOCKSIZE];
-  unsigned long b_addr; //beginning PC
-  unsigned long e_addr; //ending PC
-  unsigned long pad;
-  unsigned long isInfinityLoop;
+  u8  code[MAXBLOCKSIZE];
+  u32 b_addr; //beginning PC
+  u32 e_addr; //ending PC
+  u32 pad;
+  u32 flags;
 };
+
+#define BLOCK_LOOP  (0x01)
+#define BLOCK_WRITE (0x02)
 
 #define IN_INFINITY_LOOP (-1)
 
@@ -219,7 +235,7 @@ public:
     }
     LookupParentTable[addr].clear();
   }
- 
+
   Block *Init(Block*);
 
   Block * CompileBlock( u32 pc, addrs * ParentT );
@@ -235,6 +251,7 @@ public:
   u32 compile_count_;
   u32 exec_count_;
 
+
   void ShowStatics();
   void SetDebugMode(bool debug) { debug_mode_ = debug;  }
 };
@@ -243,6 +260,7 @@ typedef void(*dynaFunc)(tagSH2*);
 
 class DynarecSh2
 {
+protected:
   SH2_struct *parent;
   tagSH2 *  m_pDynaSh2;
   CompileBlocks * m_pCompiler;
@@ -256,6 +274,23 @@ class DynarecSh2
   SH2_struct * ctx_;
   YabMutex * mtx_;
   bool logenable_;
+
+  u32 pre_cnt_;
+  u32 interruput_chk_cnt_;
+  u32 interruput_cnt_;
+  u32 loopskip_cnt_;
+
+  enum enDebugState {
+    NORMAL,
+    REQUESTED,
+    COLLECTING,
+    FINISHED,
+  };
+  
+  enDebugState statics_trigger_ = NORMAL;
+  MapCompileStatics compie_statics_;
+  string message_buf;
+
 
 public:
   DynarecSh2();
@@ -275,11 +310,6 @@ public:
   void ExecuteCount(u32 Count );
   int Execute();
   void Undecoded();
-
-  u32 pre_cnt_;
-  u32 interruput_chk_cnt_;
-  u32 interruput_cnt_ ;
-  u32 loopskip_cnt_ ;
 
   void ShowStatics();
   void ShowCompileInfo();
@@ -304,7 +334,10 @@ public:
   inline void SET_SR(u32 v ) { m_pDynaSh2->CtrlReg[0] = v; }
   inline void SET_GBR( u32 v ) { m_pDynaSh2->CtrlReg[1] = v; }
   inline void SET_VBR( u32 v ) { m_pDynaSh2->CtrlReg[2] = v; }  
-  
+
+  int GetCurrentStatics(MapCompileStatics & buf);
+  int Resume();
+
 };
 
 

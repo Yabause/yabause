@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <malloc.h> 
 #include <stdint.h>
 #include <core.h>
+
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
@@ -30,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-//#define DEBUG_CPU
+#define DEBUG_CPU
 //#define BUILD_INFO
 //#define LOG printf
 
@@ -656,8 +657,6 @@ Block *CompileBlocks::Init(Block *dynaCode)
   dynaCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
   memset((void*)dynaCode, 0, sizeof(Block)*NUMOFBLOCKS);
 
-  LOG("LookupTable = %d\n",sizeof(LookupTable));
-  //
   memset(LookupTable, 0, sizeof(LookupTable));
   memset(LookupTableRom, 0, sizeof(LookupTableRom));
   memset(LookupTableLow, 0, sizeof(LookupTableLow));
@@ -780,6 +779,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u8 *ptr, *startptr;
   u32 instruction_counter = 0;
   u32 write_memory_counter = 0;
+  u32 calsize;
 
   startptr = ptr = page->code;
   i = 0;
@@ -796,6 +796,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   void * delay_seperator;
   u32 delay_seperator_size;
   u8 delayslot_seperator_counter_offset;
+
+  if (0x06006094 == start_addr) {
+    int a = 0;
+  }
 
   if (debug_mode_) {
     nomal_seperator = (void*)seperator_d_normal;
@@ -814,7 +818,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     delayslot_seperator_counter_offset = DALAY_CLOCK_OFFSET;
   }
   
-  page->isInfinityLoop = false;
+  page->flags = 0;
   
 #ifdef BUILD_INFO  
   LOG("*********** start block *************\n");
@@ -834,8 +838,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 #endif
 
     i = dsh2_instructions[op];
-    
-    u32 calsize;
+    if (asm_list[i].func == 0) {
+      return -1;  // bad instruction code
+    }
 
     // CheckSize
     u8 delay = asm_list[i].delay;
@@ -854,14 +859,14 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }
 
     if (0x1b == op) { // SLEEP
-      page->isInfinityLoop = true;
+      page->flags |= BLOCK_LOOP;
     }
 
     // Inifinity Loop Detection
     if (count == 0 && (op & 0xF00F) == 0x6000) {
       u32 loopcheck = memGetLong(addr + 2);
       if ((loopcheck & 0xFF00FFFF) == 0xC80089FC) { // test, bf
-        page->isInfinityLoop = true;
+        page->flags |= BLOCK_LOOP;
       }
     }
 
@@ -878,21 +883,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     instruction_counter++;
     asm_list[i].build_count++;
     write_memory_counter += asm_list[i].write_count;
-
-    if (asm_list[i].func == 0) {
-      LOG("Unimplemented Opcode (0x%4x) at 0x%8x\n", op, addr-2);
-      // TODO: Stop Slave
-      //if( g_CurrentContext->m_pSaturnSh2->m_bSlave ){
-      //  g_Saturn->m_bSlaveRunning = false;
-      //}
-      memcpy((void*)ptr, (void*)nomal_seperator, nomal_seperator_size);
-      instrSize[blockCount][count++] = nomal_seperator_size;
-      ptr += nomal_seperator_size;
-
-      return -1;
-
-      break;
-    }
 
     // Regular Opcode ( No Delay Branch )
     if (asm_list[i].delay == 0) { 
@@ -993,11 +983,27 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       // jump to inside and no write is happend
       if (jumppc >= start_addr &&  jumppc < (addr-2)) {
         if (write_memory_counter == 0) {
-          page->isInfinityLoop = true;
+          page->flags |= BLOCK_LOOP;
 #ifdef BUILD_INFO 
               LOG("InfinityLoop block %08X 0x%04X  from 0x%08X to 0x%08X\n", start_addr, op, addr - 2, jumppc);
 #endif
         }
+      }
+      else if (jumppc < start_addr && write_memory_counter == 0 ) {
+
+        Block * tmp = NULL; 
+        if ( (jumppc&0x0FF00000) == 0x06000000 && (start_addr & 0x0FF00000) == 0x06000000) {
+          tmp = LookupTable[(jumppc & 0x000FFFFF) >> 1];
+        }else if ((jumppc & 0x0FF00000) == 0x00200000 && (start_addr & 0x0FF00000) == 0x00200000) {
+          tmp = LookupTableLow[(jumppc & 0x000FFFFF) >> 1];
+        }
+        else if ((jumppc & 0x0FF00000) == 0x00000000 && (start_addr & 0x0FF00000) == 0x00000000) {
+          tmp = LookupTableRom[(jumppc & 0x000FFFFF) >> 1];
+        }
+        if (tmp != NULL && (tmp->flags&BLOCK_WRITE) == 0 && (tmp->e_addr+2) == page->b_addr ) {
+          page->flags |= BLOCK_LOOP;
+        }
+
       }
       break;
     }
@@ -1005,6 +1011,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
   ptr += EPILOGSIZE;
+
+  if (write_memory_counter > 0) {
+    page->flags |= BLOCK_WRITE;
+  }
 
 #ifdef BUILD_INFO 
   LOG("*********** end block size = %08X *************\n", (ptr - startptr));
@@ -1108,17 +1118,14 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
     CurrentSH2->cycles = GET_COUNT();
   }
 
-  if (Count == 1) {
-    one_step_ = true;
-    pre_exe_count_ = 0;
-  }
-  else {
-    one_step_ = false;
-    pre_exe_count_ = m_pDynaSh2->SysReg[4] - targetcnt;
-    if (pre_exe_count_ < 0) {
-      pre_exe_count_ = 0;
-    }
-  }
+  //if (Count == 1) {
+  //  one_step_ = true;
+  //  pre_exe_count_ = 0;
+  //}
+  //else {
+  //  one_step_ = false;
+  pre_exe_count_ = m_pDynaSh2->SysReg[4] - targetcnt;
+  //}
 }
 
 int DynarecSh2::CheckOneStep() {
@@ -1127,6 +1134,29 @@ int DynarecSh2::CheckOneStep() {
     return 1;
   }
   return 0;
+}
+
+void DynarecSh2::Undecoded(){
+
+//  LOG("Undecoded %08X", GET_PC());
+  // Save regs.SR on stack
+  GetGenRegPtr()[15] -= 4;
+  memSetLong(GetGenRegPtr()[15], GET_SR());
+
+  // Save regs.PC on stack
+  GetGenRegPtr()[15] -= 4;
+  memSetLong(GetGenRegPtr()[15], GET_PC()+2);
+
+
+  // What caused the exception? The delay slot or a general instruction?
+  // 4 for General Instructions, 6 for delay slot
+  u32 vectnum = 4; //  Fix me
+
+  // Jump to Exception service routine
+  u32 newpc = memGetLong(GET_VBR() + (vectnum << 2));
+  SET_PC(newpc);
+
+  return;
 }
 
 int DynarecSh2::Execute(){
@@ -1149,12 +1179,8 @@ int DynarecSh2::Execute(){
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
       m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
     }
@@ -1167,13 +1193,8 @@ int DynarecSh2::Execute(){
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }
-        else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
       m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
     }
@@ -1188,13 +1209,8 @@ int DynarecSh2::Execute(){
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC(), m_pCompiler->LookupParentTable);
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }
-        else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
       m_pCompiler->LookupTable[ (GET_PC() & 0x000FFFFF)>>1 ] = pBlock;
     } 
@@ -1210,25 +1226,15 @@ int DynarecSh2::Execute(){
         pBlock = m_pCompiler->CompileBlock(GET_PC());
         m_pCompiler->LookupTableC[ (GET_PC()&0x000FFFFF)>>1 ] = pBlock;
         if (pBlock == NULL) {
-          if (this->is_slave_) {
-            yabsys.IsSSH2Running = 0;
-            return IN_INFINITY_LOOP;
-          }
-          else {
-            exit(0);
-          }
+           Undecoded();
+           return IN_INFINITY_LOOP;
         }
       } 
     }else{
       pBlock = m_pCompiler->CompileBlock(GET_PC());
       if (pBlock == NULL) {
-        if (this->is_slave_) {
-          yabsys.IsSSH2Running = 0;
-          return IN_INFINITY_LOOP;
-        }
-        else {
-          exit(0);
-        }
+        Undecoded();
+        return IN_INFINITY_LOOP;
       }
     }
     break;  
@@ -1252,8 +1258,24 @@ int DynarecSh2::Execute(){
   //}
   //if( logenable_ )
   //  LOG("[%s] dynaExecute start %08X", (is_slave_ == false) ? "M" : "S", GET_PC());
+#if defined(DEBUG_CPU)
+  if (statics_trigger_ == COLLECTING) {
+    u64 pretime = YabauseGetTicks();
+    ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
+    compie_statics_[prepc].count++;
+    compie_statics_[prepc].time += YabauseGetTicks() - pretime;
+    compie_statics_[prepc].end_addr = pBlock->e_addr;
+  }
+  else {
+    ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
+  }
+#else
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
-  if (!m_pCompiler->debug_mode_ && pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
+#endif
+
+  if (!m_pCompiler->debug_mode_ && (pBlock->flags&BLOCK_LOOP)) {
+    return IN_INFINITY_LOOP;
+  }
   return 0;
 }
 
@@ -1334,7 +1356,24 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
   }
   return 0; 
 }
-  
+
+
+int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
+  char linebuf[128];
+  if (from > to) return -1;
+  for (u32 i = from; i < (to+2); i += 2) {
+    SH2Disasm(i, memGetWord(i), 0, NULL, linebuf);
+    out += linebuf;
+    out += "\n";
+  }
+  return 0;
+}
+
+int DynarecSh2::Resume() {
+  statics_trigger_ = NORMAL;
+  return 0;
+}
+
 void DynarecSh2::ShowStatics(){
 #if defined(DEBUG_CPU)
   LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() - pre_cnt_, loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
@@ -1342,7 +1381,41 @@ void DynarecSh2::ShowStatics(){
   interruput_chk_cnt_ = 0;
   interruput_cnt_ = 0;
   loopskip_cnt_ = 0;
+
+  switch (statics_trigger_) {
+  case NORMAL:
+    break;
+  case REQUESTED:
+    statics_trigger_ = COLLECTING;
+    break;
+  case COLLECTING:
+    statics_trigger_ = FINISHED;
+    while (FINISHED == statics_trigger_) {
+      YabThreadUSleep(10000);
+    }
+    break;
+  case FINISHED:
+    break;
+  }
 #endif
+}
+
+int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
+#if !defined(DEBUG_CPU)
+  buf = "Not Debug Mode\n";
+#else
+
+  if (statics_trigger_ != NORMAL && statics_trigger_ != FINISHED) return -1;
+
+  statics_trigger_ = REQUESTED;
+  while (statics_trigger_!= FINISHED) {
+    YabThreadUSleep(10000);
+  }
+  
+  buf = compie_statics_;
+  compie_statics_.clear();
+#endif
+  return 0;
 }
 
 void DynarecSh2::ShowCompileInfo(){
