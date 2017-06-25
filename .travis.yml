@@ -87,23 +87,23 @@ matrix:
 
       after_success:
         #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-android.apk
-        - curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
+        #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
 
-addons:
-  coverity_scan:
-    project:
-      name: "Yabause/yabause"
-      description: "Build submitted via Travis CI"
-    notification_email: guillaume.duhamel@gmail.com
-    build_command_prepend: "cmake ..;"
-    build_command: "make"
-    branch_pattern: coverity_scan
+#addons:
+#  coverity_scan:
+#    project:
+#      name: "Yabause/yabause"
+#      description: "Build submitted via Travis CI"
+#    notification_email: guillaume.duhamel@gmail.com
+#    build_command_prepend: "cmake ..;"
+#    build_command: "make"
+#    branch_pattern: coverity_scan
 
 env:
   global:
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
     # via the "travis encrypt" command using the project repo's public key
-    - secure: "sopS90ts/MzipWazyLIeLtDkSWZyV9HeMfR8mIglxWuo76T/mOCT0m4fFPRQeJ1OHO3hWMbpYzKt357B/gwcpbq1/MTm6l+mhkxTKGBmrLpT9bz3GfQcQG3UgtOBp5bgUFc0xB2geN5BYrNCiKExmuMqTFByMKvIjiRWzwiCJflc74iNHTzS4j3y/wfRypnhJ8HIyU9YSwB43QzvtvmwgHRNcQ8Z7Hsto4qs4anEM4fnKWD5yyD+sFFnZIaCtDLXcKAi8HY0ILf2jxO5SLxzv0R9tyBkbXLaaSVfHWR3NOFMJtT4vq1v+XzcD2p1c9PxsxmIsOK2TLpYEx7sCmddO5zSs884turwu1ZDT/1pUQODSaxVpCRlE+NVDoUl6tqa3DGW1rIxzp/NjRzo4WEP2+fAvPVQSKG8l7GuHhgY1m8D0lHesaNXFr6D6hiKDEmMc1/nVKW8ohMPQxC1/g7tfM61zCkDcwc5CEtB6lNxEr3Db1M1u7X0pOCbPTgt0mNJcpGlNNDRnjh4gb+gXmFMAsJKTSy4/i4ExhMvTQqUp9LA7Bu0SdCT74rH5wS2oPw65aiijFDdaItk1ZapASphwzVV4IoKMQ7/6ZWEHccLZQ63a4hSSFD0upn5qcAhGlZwdUc4wYRFayUo5pzxYbui9Zlv/XxYEC5K8vI4EunmcBw="
+#    - secure: "sopS90ts/MzipWazyLIeLtDkSWZyV9HeMfR8mIglxWuo76T/mOCT0m4fFPRQeJ1OHO3hWMbpYzKt357B/gwcpbq1/MTm6l+mhkxTKGBmrLpT9bz3GfQcQG3UgtOBp5bgUFc0xB2geN5BYrNCiKExmuMqTFByMKvIjiRWzwiCJflc74iNHTzS4j3y/wfRypnhJ8HIyU9YSwB43QzvtvmwgHRNcQ8Z7Hsto4qs4anEM4fnKWD5yyD+sFFnZIaCtDLXcKAi8HY0ILf2jxO5SLxzv0R9tyBkbXLaaSVfHWR3NOFMJtT4vq1v+XzcD2p1c9PxsxmIsOK2TLpYEx7sCmddO5zSs884turwu1ZDT/1pUQODSaxVpCRlE+NVDoUl6tqa3DGW1rIxzp/NjRzo4WEP2+fAvPVQSKG8l7GuHhgY1m8D0lHesaNXFr6D6hiKDEmMc1/nVKW8ohMPQxC1/g7tfM61zCkDcwc5CEtB6lNxEr3Db1M1u7X0pOCbPTgt0mNJcpGlNNDRnjh4gb+gXmFMAsJKTSy4/i4ExhMvTQqUp9LA7Bu0SdCT74rH5wS2oPw65aiijFDdaItk1ZapASphwzVV4IoKMQ7/6ZWEHccLZQ63a4hSSFD0upn5qcAhGlZwdUc4wYRFayUo5pzxYbui9Zlv/XxYEC5K8vI4EunmcBw="
 
 language: cpp
 
@@ -118,5 +118,5 @@ before_install:
   - export GIT_HASH=$(git rev-parse --short HEAD)
 
 script:
-  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON ..
+  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON -DYAB_WANT_DYNAREC_DEDVMIYAX ..
   - make
