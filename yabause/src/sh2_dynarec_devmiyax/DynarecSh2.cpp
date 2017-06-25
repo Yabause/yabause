@@ -797,6 +797,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 delay_seperator_size;
   u8 delayslot_seperator_counter_offset;
 
+  if (0x06006094 == start_addr) {
+    int a = 0;
+  }
+
   if (debug_mode_) {
     nomal_seperator = (void*)seperator_d_normal;
     nomal_seperator_size = SEPERATORSIZE_DEBUG;
@@ -814,7 +818,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     delayslot_seperator_counter_offset = DALAY_CLOCK_OFFSET;
   }
   
-  page->isInfinityLoop = false;
+  page->flags = 0;
   
 #ifdef BUILD_INFO  
   LOG("*********** start block *************\n");
@@ -855,14 +859,14 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }
 
     if (0x1b == op) { // SLEEP
-      page->isInfinityLoop = true;
+      page->flags |= BLOCK_LOOP;
     }
 
     // Inifinity Loop Detection
     if (count == 0 && (op & 0xF00F) == 0x6000) {
       u32 loopcheck = memGetLong(addr + 2);
       if ((loopcheck & 0xFF00FFFF) == 0xC80089FC) { // test, bf
-        page->isInfinityLoop = true;
+        page->flags |= BLOCK_LOOP;
       }
     }
 
@@ -979,11 +983,27 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       // jump to inside and no write is happend
       if (jumppc >= start_addr &&  jumppc < (addr-2)) {
         if (write_memory_counter == 0) {
-          page->isInfinityLoop = true;
+          page->flags |= BLOCK_LOOP;
 #ifdef BUILD_INFO 
               LOG("InfinityLoop block %08X 0x%04X  from 0x%08X to 0x%08X\n", start_addr, op, addr - 2, jumppc);
 #endif
         }
+      }
+      else if (jumppc < start_addr && write_memory_counter == 0 ) {
+
+        Block * tmp = NULL; 
+        if ( (jumppc&0x0FF00000) == 0x06000000 && (start_addr & 0x0FF00000) == 0x06000000) {
+          tmp = LookupTable[(jumppc & 0x000FFFFF) >> 1];
+        }else if ((jumppc & 0x0FF00000) == 0x00200000 && (start_addr & 0x0FF00000) == 0x00200000) {
+          tmp = LookupTableLow[(jumppc & 0x000FFFFF) >> 1];
+        }
+        else if ((jumppc & 0x0FF00000) == 0x00000000 && (start_addr & 0x0FF00000) == 0x00000000) {
+          tmp = LookupTableRom[(jumppc & 0x000FFFFF) >> 1];
+        }
+        if (tmp != NULL && (tmp->flags&BLOCK_WRITE) == 0 && (tmp->e_addr+2) == page->b_addr ) {
+          page->flags |= BLOCK_LOOP;
+        }
+
       }
       break;
     }
@@ -991,6 +1011,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
   ptr += EPILOGSIZE;
+
+  if (write_memory_counter > 0) {
+    page->flags |= BLOCK_WRITE;
+  }
 
 #ifdef BUILD_INFO 
   LOG("*********** end block size = %08X *************\n", (ptr - startptr));
@@ -1094,17 +1118,14 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
     CurrentSH2->cycles = GET_COUNT();
   }
 
-  if (Count == 1) {
-    one_step_ = true;
-    pre_exe_count_ = 0;
-  }
-  else {
-    one_step_ = false;
-    pre_exe_count_ = m_pDynaSh2->SysReg[4] - targetcnt;
-    if (pre_exe_count_ < 0) {
-      pre_exe_count_ = 0;
-    }
-  }
+  //if (Count == 1) {
+  //  one_step_ = true;
+  //  pre_exe_count_ = 0;
+  //}
+  //else {
+  //  one_step_ = false;
+  pre_exe_count_ = m_pDynaSh2->SysReg[4] - targetcnt;
+  //}
 }
 
 int DynarecSh2::CheckOneStep() {
@@ -1252,7 +1273,9 @@ int DynarecSh2::Execute(){
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
 #endif
 
-  if (!m_pCompiler->debug_mode_ && pBlock->isInfinityLoop) return IN_INFINITY_LOOP;
+  if (!m_pCompiler->debug_mode_ && (pBlock->flags&BLOCK_LOOP)) {
+    return IN_INFINITY_LOOP;
+  }
   return 0;
 }
 
