@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-#define DEBUG_CPU
+//#define DEBUG_CPU
 //#define BUILD_INFO
 //#define LOG printf
 
@@ -797,10 +797,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 delay_seperator_size;
   u8 delayslot_seperator_counter_offset;
 
-  if (0x06006094 == start_addr) {
-    int a = 0;
-  }
-
   if (debug_mode_) {
     nomal_seperator = (void*)seperator_d_normal;
     nomal_seperator_size = SEPERATORSIZE_DEBUG;
@@ -1402,7 +1398,7 @@ void DynarecSh2::ShowStatics(){
 
 int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
 #if !defined(DEBUG_CPU)
-  buf = "Not Debug Mode\n";
+  return -1;
 #else
 
   if (statics_trigger_ != NORMAL && statics_trigger_ != FINISHED) return -1;
