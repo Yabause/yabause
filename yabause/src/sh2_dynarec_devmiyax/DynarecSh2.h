@@ -87,12 +87,15 @@ const int MAXBLOCKSIZE = 3072-(4*4);
 
 struct Block
 {
-  unsigned char code[MAXBLOCKSIZE];
-  unsigned long b_addr; //beginning PC
-  unsigned long e_addr; //ending PC
-  unsigned long pad;
-  unsigned long isInfinityLoop;
+  u8  code[MAXBLOCKSIZE];
+  u32 b_addr; //beginning PC
+  u32 e_addr; //ending PC
+  u32 pad;
+  u32 flags;
 };
+
+#define BLOCK_LOOP  (0x01)
+#define BLOCK_WRITE (0x02)
 
 #define IN_INFINITY_LOOP (-1)
 
