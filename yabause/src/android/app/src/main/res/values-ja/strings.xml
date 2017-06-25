@@ -101,7 +101,8 @@
     <string name="edit">編集</string>
     <string name="select_game_directory">ゲームディレクトリの選択</string>
     <string name="polygon_generation_type">ポリゴン生成方法</string>
-    <string name="dynrec_cpu_interface">ダイナミックリコンパイラ(速いけどバグあり)</string>
+    <string name="new_dynrec_cpu_interface">新ダイナミックリコンパイラ(インタプリタより速く,旧ダイナミックリコンパイラより正確)</string>
+    <string name="dynrec_cpu_interface">旧ダイナミックリコンパイラ(速いけどバグあり)</string>
     <string name="poly_cpu_tess">CPUテッセレーション</string>
     <string name="poly_gpu_tess">GPUテッセレーション</string>
     <string name="res_native">ネイティブ(このデバイスの解像度で描画)</string>

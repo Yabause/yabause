@@ -28,7 +28,7 @@
             android:dialogTitle="@string/choose_cpu_core"
             android:entries="@array/entries_cpu_list_preference"
             android:entryValues="@array/entryvalues_cpu_list_preference"
-            android:defaultValue="2" />
+            android:defaultValue="3" />
 	</PreferenceCategory>
 
 
