@@ -5273,13 +5273,11 @@ void VIDOGLVdp2DrawStart(void)
     YglTM = YglTMInit(new_width, new_height);
   }
   YglReset();
-#if 0
   if (_Ygl->sync != 0){
     glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
   }
-#endif
   YglTmPull(YglTM,0);
   YglTMReset(YglTM);
   YglCacheReset(YglTM);
