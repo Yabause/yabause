@@ -956,7 +956,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
                charAddr++;
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( (dot == 0x3F) && !END ) *texture->textdata++ = 0x00;
+               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x00;
          else if (MSB_SHADOW){
            *texture->textdata++ = (0x80)<< 24;
          }
@@ -1003,7 +1003,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                charAddr++;
 
                if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-               else if( (dot == 0x7F) && !END ) *texture->textdata++ = 0x00;
+               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x00;
          else if (MSB_SHADOW){
            *texture->textdata++ = (0x80) << 24;
          }
