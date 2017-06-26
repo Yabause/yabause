@@ -94,6 +94,8 @@ void YabAddEventQueue( YabEventQueue * queue_t, int evcode );
 // YabWaitEventQueue: recive event
 int YabWaitEventQueue( YabEventQueue * queue_t );
 
+int YaGetQueueSize(YabEventQueue * queue_t);
+
 typedef void * YabMutex;
 
 void YabThreadLock( YabMutex * mtx );
