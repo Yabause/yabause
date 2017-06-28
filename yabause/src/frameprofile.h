@@ -20,7 +20,12 @@
 #ifndef _FRAME_PROFILE_H_
 #define _FRAME_PROFILE_H_
 
-//#define _VDP_PROFILE_
+#define _VDP_PROFILE_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #ifdef _VDP_PROFILE_
 void FrameProfileInit();
@@ -31,6 +36,22 @@ void FrameProfileShow();
 #define FrameProfileAdd
 #define FrameProfileShow
 #endif
+
+// rendering performance
+typedef struct {
+  char event[32];
+  u32 time;
+  u32 tid;
+} ProfileInfo;
+
+
+int FrameGetLastProfile(ProfileInfo ** p, int * size);
+
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif
 

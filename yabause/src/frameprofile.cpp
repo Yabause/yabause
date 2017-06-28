@@ -27,12 +27,11 @@
 #include "time.h"
 #include "threads.h"
 
-// rendering performance
-typedef struct {
-	char event[32];
-	u32 time;
-	u32 tid;
-} ProfileInfo;
+
+YabMutex * _profile_mutex = NULL;  
+
+
+extern "C" {
 
 #define MAX_PROFILE_COUNT (256)
 ProfileInfo g_pf[MAX_PROFILE_COUNT];
@@ -40,6 +39,10 @@ u32 current_profile_index = 0;
 
 
 void FrameProfileInit(){
+  if (_profile_mutex == NULL) {
+    _profile_mutex = YabThreadCreateMutex();
+  }
+  YabThreadLock(_profile_mutex);
 	current_profile_index = 0;
 }
 
@@ -78,5 +81,25 @@ void FrameProfileShow(){
 		}
 		OSDAddFrameProfileData(g_pf[i].event, intime);
 	}
+  if(_profile_mutex!=NULL) YabThreadUnLock(_profile_mutex);
+
 }
+
+int FrameGetLastProfile( ProfileInfo ** p, int * size ) {
+
+  if (_profile_mutex == NULL) {
+    _profile_mutex = YabThreadCreateMutex();
+  }
+  YabThreadLock(_profile_mutex);
+  (*p) = (ProfileInfo*)malloc(sizeof(ProfileInfo) * current_profile_index);
+  for (int i = 0; i < current_profile_index; i++) {
+    memcpy( &(*p)[i], &g_pf[i], sizeof(ProfileInfo) );
+  }
+  *size = current_profile_index;
+  YabThreadUnLock(_profile_mutex);
+  return 0;
+}
+
 #endif
+
+}
