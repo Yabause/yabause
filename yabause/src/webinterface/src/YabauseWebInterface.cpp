@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "frameprofile.h"
 #include "../sh2_dynarec_devmiyax/DynarecSh2.h"
 
 #include <iostream>
@@ -429,6 +430,57 @@ public:
   }
 };
 
+class GetFrameprofile : public CivetHandler
+{
+public:
+  bool
+    handleGet(CivetServer *server, struct mg_connection *conn)
+  {
+    std::string st;
+    vector<u32> vbuf;
+
+    picojson::value v1;
+
+    ProfileInfo * pfp = NULL;
+    int size;
+
+    v1.set<picojson::object>(picojson::object());
+    v1.get<picojson::object>()["profile"].set<picojson::array>(picojson::array());
+
+
+    FrameGetLastProfile( &pfp,&size);
+
+    u32 intime = 0;
+    u32 extime = 0;
+    for (int i = 0; i < size; i++) {
+      if (i > 0) {
+        intime = pfp[i].time - pfp[i - 1].time;
+        extime += intime;
+      }
+      picojson::value v2;
+      v2.set<picojson::object>(picojson::object());
+      v2.get<picojson::object>()["event"] = picojson::value(pfp[i].event);
+      v2.get<picojson::object>()["time"] = picojson::value((double)intime);
+      v1.get<picojson::object>()["profile"].get<picojson::array>().push_back(v2);
+    }
+
+    if (pfp != NULL) {
+      free((void*)pfp);
+    }
+
+
+    mg_printf(conn,
+      "HTTP/1.1 200 OK\r\nContent-Type: "
+      "application/json\r\nConnection: close\r\n"
+      "Access-Control-Allow-Origin: *\r\n\r\n");
+
+    mg_printf(conn, v1.serialize().c_str());
+
+    return true;
+  }
+};
+
+
 
 
 CivetServer * server = nullptr;
@@ -437,6 +489,7 @@ ExecuteStatics h_execute_statics;
 DissAssemble h_disassemble;
 Resume h_resume;
 GetMemory h_getMemory;
+GetFrameprofile h_frame_profile;
 
 #define DOCUMENT_ROOT "."
 #define PORT "8081"
@@ -465,6 +518,7 @@ int YabStartHttpServer() {
   server->addHandler("/disassemble", h_disassemble);
   server->addHandler("/resume", h_resume);
   server->addHandler("/memory", h_getMemory);
+  server->addHandler("/frame", h_frame_profile);
 
   return 0;
 }
