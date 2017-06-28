@@ -20,6 +20,10 @@
 #ifndef OSDCORE_H
 #define OSDCORE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core.h"
 
 #define OSDCORE_DUMMY    0
@@ -87,5 +91,9 @@ void DisplayMessage(const char* str);
 void OSDAddFrameProfileData( char * label, u32 data );
 
 void  OSDAddLogString( char * log );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
