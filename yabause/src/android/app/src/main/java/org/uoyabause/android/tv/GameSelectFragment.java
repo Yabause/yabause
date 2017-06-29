@@ -17,8 +17,11 @@ package org.uoyabause.android.tv;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.URI;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -142,6 +145,37 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private static String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
+    /**
+     * Get IP address from first non-localhost interface
+     * @param ipv4  true=return ipv4, false=return ipv6
+     * @return  address or empty string
+     */
+    public static String getIPAddress(boolean useIPv4) {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress();
+                        //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                        boolean isIPv4 = sAddr.indexOf(':')<0;
+
+                        if (useIPv4) {
+                            if (isIPv4)
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%'); // drop ip6 zone suffix
+                                return delim<0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) { } // for now eat exceptions
+        return "";
+    }
     /**
      * Called when the 'show camera' button is clicked.
      * Callback is defined in resource layout definition.
@@ -549,6 +583,9 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
      * @return
      */
     public static String getVersionName(Context context){
+
+//        return getIPAddress(true);
+
         PackageManager pm = context.getPackageManager();
         String versionName = "";
         try{
@@ -558,6 +595,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             e.printStackTrace();
         }
         return versionName;
+
     }
 
     private void setupUIElements() {
