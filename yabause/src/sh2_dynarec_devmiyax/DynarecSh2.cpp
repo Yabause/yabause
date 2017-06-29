@@ -1290,6 +1290,11 @@ bool operator == (const dIntcTbl & data1 , const dIntcTbl & data2 )
 
 void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
 {
+  // Ignore Timer0 and Timer1 when masked
+  if ((Vector == 67 || Vector == 68) && level <= ((m_pDynaSh2->CtrlReg[0] >> 4) & 0x0F)){
+    return;
+  }
+
   dIntcTbl tmp;
   tmp.Vector = Vector;
   tmp.level  = level;
@@ -1300,6 +1305,8 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   m_IntruptTbl.unique(); 
 
   //printf("AddInterrupt v:%d l:%d\n", Vector, level );
+
+
 
   if( m_IntruptTbl.size() > 1 ) {
     m_IntruptTbl.sort();
