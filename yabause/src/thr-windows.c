@@ -266,11 +266,13 @@ typedef struct YabMutex_win32
 void YabThreadLock(YabMutex * mtx){
 	YabMutex_win32 * pmtx;
 	pmtx = (YabMutex_win32 *)mtx;
+  if (mtx == NULL) return;
 	EnterCriticalSection(&pmtx->mutex);
 }
 
 void YabThreadUnLock(YabMutex * mtx){
 	YabMutex_win32 * pmtx;
+  if (mtx == NULL) return;
 	pmtx = (YabMutex_win32 *)mtx;
 	LeaveCriticalSection(&pmtx->mutex);
 }

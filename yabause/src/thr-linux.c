@@ -353,10 +353,22 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 #endif
 }
 
+#include <sys/syscall.h>
+//...
+int getCpuId() {
+
+    unsigned cpu;
+    if (syscall(__NR_getcpu, &cpu, NULL, NULL) < 0) {
+        return -1;
+    } else {
+        return (int) cpu;
+    }
+}
+
 int YabThreadGetCurrentThreadAffinityMask()
 {
-#if 0 // it needs more than android-21
-	return sched_getcpu(); //my_set.__bits;
+#if 1 // it needs more than android-21
+	return getCpuId();  //sched_getcpu(); //my_set.__bits;
 #else
 	return 0;
 #endif
