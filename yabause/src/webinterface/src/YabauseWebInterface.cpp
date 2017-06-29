@@ -481,7 +481,44 @@ public:
 };
 
 
+class ResumeFrameprofile : public CivetHandler
+{
+public:
+  bool
+    handleGet(CivetServer *server, struct mg_connection *conn)
+  {
+    picojson::value v1;
+    FrameResume();
+    mg_printf(conn,
+      "HTTP/1.1 200 OK\r\nContent-Type: "
+      "text/text\r\nConnection: close\r\n"
+      "Access-Control-Allow-Origin: *\r\n\r\n");
 
+    mg_printf(conn, "OK");
+
+    return true;
+  }
+};
+
+
+class ConnectionTest : public CivetHandler
+{
+public:
+  bool
+    handleGet(CivetServer *server, struct mg_connection *conn)
+  {
+    picojson::value v1;
+
+    mg_printf(conn,
+      "HTTP/1.1 200 OK\r\nContent-Type: "
+      "text/text\r\nConnection: close\r\n"
+      "Access-Control-Allow-Origin: *\r\n\r\n");
+
+    mg_printf(conn, "OK");
+
+    return true;
+  }
+};
 
 CivetServer * server = nullptr;
 ExampleHandler h_ex;
@@ -490,6 +527,8 @@ DissAssemble h_disassemble;
 Resume h_resume;
 GetMemory h_getMemory;
 GetFrameprofile h_frame_profile;
+ResumeFrameprofile h_resume_frame;
+ConnectionTest h_test;
 
 #define DOCUMENT_ROOT "."
 #define PORT "8081"
@@ -519,6 +558,8 @@ int YabStartHttpServer() {
   server->addHandler("/resume", h_resume);
   server->addHandler("/memory", h_getMemory);
   server->addHandler("/frame", h_frame_profile);
+  server->addHandler("/resume_frame", h_resume_frame);
+  server->addHandler("/test", h_test);
 
   return 0;
 }

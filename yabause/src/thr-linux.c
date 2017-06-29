@@ -353,6 +353,18 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 #endif    
 }
 
+#include <sys/syscall.h>
+//...
+int getCpuId() {
+
+    unsigned cpu;
+    if (syscall(__NR_getcpu, &cpu, NULL, NULL) < 0) {
+        return -1;
+    } else {
+        return (int) cpu;
+    }
+}
+
 int YabThreadGetCurrentThreadAffinityMask()
 {
 	//return sched_getcpu(); //my_set.__bits;
