@@ -302,19 +302,21 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
 
                     if( adView != null ) {
                         LinearLayout lp = (LinearLayout) findViewById(R.id.navilayer);
-                        final int mCount = lp.getChildCount();
-                        boolean find = false;
-                        for (int i = 0; i < mCount; ++i) {
-                            final View mChild = lp.getChildAt(i);
-                            if (mChild == adView) {
-                                find = true;
+                        if( lp != null ) {
+                            final int mCount = lp.getChildCount();
+                            boolean find = false;
+                            for (int i = 0; i < mCount; ++i) {
+                                final View mChild = lp.getChildAt(i);
+                                if (mChild == adView) {
+                                    find = true;
+                                }
                             }
+                            if (find == false) {
+                                lp.addView(adView);
+                            }
+                            AdRequest adRequest = new AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build();
+                            adView.loadAd(adRequest);
                         }
-                        if (find == false) {
-                            lp.addView(adView);
-                        }
-                        AdRequest adRequest = new AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build();
-                        adView.loadAd(adRequest);
                     }
 
 
@@ -867,19 +869,21 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
             }
             if( adView != null ) {
                 LinearLayout lp = (LinearLayout) findViewById(R.id.navilayer);
-                final int mCount = lp.getChildCount();
-                boolean find = false;
-                for (int i = 0; i < mCount; ++i) {
-                    final View mChild = lp.getChildAt(i);
-                    if (mChild == adView) {
-                        find = true;
+                if( lp != null ) {
+                    final int mCount = lp.getChildCount();
+                    boolean find = false;
+                    for (int i = 0; i < mCount; ++i) {
+                        final View mChild = lp.getChildAt(i);
+                        if (mChild == adView) {
+                            find = true;
+                        }
                     }
+                    if (find == false) {
+                        lp.addView(adView);
+                    }
+                    AdRequest adRequest = new AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build();
+                    adView.loadAd(adRequest);
                 }
-                if (find == false) {
-                    lp.addView(adView);
-                }
-                AdRequest adRequest = new AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build();
-                adView.loadAd(adRequest);
             }
             this.mDrawerLayout.openDrawer(GravityCompat.START);
         }
