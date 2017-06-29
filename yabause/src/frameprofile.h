@@ -20,7 +20,10 @@
 #ifndef _FRAME_PROFILE_H_
 #define _FRAME_PROFILE_H_
 
+#if defined(WEBINTERFACE)
 #define _VDP_PROFILE_
+#endif
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +49,7 @@ typedef struct {
 
 
 int FrameGetLastProfile(ProfileInfo ** p, int * size);
-
+int FrameResume();
 
 #ifdef __cplusplus
 }
