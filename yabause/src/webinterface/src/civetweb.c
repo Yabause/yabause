@@ -536,6 +536,7 @@ typedef unsigned short int in_port_t;
 #define mg_opendir(conn, x) (opendir(x))
 #define mg_closedir(x) (closedir(x))
 #define mg_readdir(x) (readdir(x))
+#define timegm(x) (x)
 #define ERRNO (errno)
 #define INVALID_SOCKET (-1)
 #define INT64_FMT PRId64
