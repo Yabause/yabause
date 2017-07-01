@@ -21,7 +21,7 @@
 #define _FRAME_PROFILE_H_
 
 #if defined(WEBINTERFACE)
-#define _VDP_PROFILE_
+//#define _VDP_PROFILE_
 #endif
 
 
