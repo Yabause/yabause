@@ -980,7 +980,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       }
 
       // jump to inside and no write is happend
-      if (jumppc >= start_addr &&  jumppc < (addr-2)) {
+      if (jumppc >= start_addr &&  jumppc < addr ) {
         if (write_memory_counter == 0) {
           page->flags |= BLOCK_LOOP;
 #ifdef BUILD_INFO 
