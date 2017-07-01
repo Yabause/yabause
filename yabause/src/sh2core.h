@@ -277,6 +277,7 @@ typedef struct
    u32 DAR1;   // 0xFFFFFF94
    u32 TCR1;   // 0xFFFFFF98
    u32 CHCR1;  // 0xFFFFFF9C
+   u32 CHCR1M;
    u32 VCRDMA0;// 0xFFFFFFA0
    u32 VCRDMA1;// 0xFFFFFFA8
    u32 DMAOR;  // 0xFFFFFFB0
