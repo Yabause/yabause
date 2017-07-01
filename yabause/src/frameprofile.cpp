@@ -134,6 +134,16 @@ int FrameResume() {
   return 0;
 }
 
+}
+
+
+#else
+int FrameGetLastProfile(ProfileInfo ** p, int * size) {
+  return -1;
+}
+int FrameResume() {
+  return -1;
+}
 #endif
 
-}
+
