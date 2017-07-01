@@ -47,6 +47,7 @@ Smpc * SmpcRegs;
 u8 * SmpcRegsT;
 SmpcInternal * SmpcInternalVars;
 int intback_wait_for_line = 0;
+u8 bustmp = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -592,6 +593,11 @@ void SmpcExec(s32 t) {
 
 u8 FASTCALL SmpcReadByte(u32 addr) {
    addr &= 0x7F;
+   if (addr == 0x063) {
+     bustmp &= ~0x01;
+     bustmp |= SmpcRegs->SF;
+     return bustmp;
+   }
    return SmpcRegsT[addr >> 1];
 }
 
@@ -706,6 +712,7 @@ u8 do_th_mode(u8 val)
 
 void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
    addr &= 0x7F;
+   bustmp = val;
    SmpcRegsT[addr >> 1] = val;
 
    switch(addr) {
@@ -730,7 +737,7 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
          SmpcSetTiming();
          return;
       case 0x63:
-         SmpcRegs->SF &= 0x1;
+         SmpcRegs->SF &= val;
          return;
       case 0x75: // PDR1
          // FIX ME (should support other peripherals)
