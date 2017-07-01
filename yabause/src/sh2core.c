@@ -221,7 +221,7 @@ void SH2Step(SH2_struct *context)
 
       // Sometimes it doesn't always execute one instruction,
       // let's make sure it did
-      //if (tmp == SH2Core->GetPC(context))
+      if (tmp == SH2Core->GetPC(context))
       //   SH2Exec(context, 1);
    }
 }
@@ -1261,6 +1261,7 @@ u32 FASTCALL OnchipReadLong(u32 addr) {
       case 0x198:
          return CurrentSH2->onchip.TCR1;
       case 0x19C:
+          CurrentSH2->onchip.CHCR1M = 0;
          return CurrentSH2->onchip.CHCR1;
       case 0x1A0:
          return CurrentSH2->onchip.VCRDMA0;
@@ -1734,10 +1735,13 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
       case 0x19C:
          CurrentSH2->onchip.CHCR1 = val & 0xFFFF;
 
+         CurrentSH2->onchip.CHCR1 = (val & ~2) | (CurrentSH2->onchip.CHCR1 & (val| CurrentSH2->onchip.CHCR1M) & 2);
+
+
          // If the DMAOR DME bit is set and AE and NMIF bits are cleared,
          // and CHCR's DE bit is set and TE bit is cleared,
          // do a dma transfer
-         if ((CurrentSH2->onchip.DMAOR & 7) == 1 && (val & 0x3) == 1)
+         if ((CurrentSH2->onchip.DMAOR & 7) == 1 && (CurrentSH2->onchip.CHCR1 & 0x3) == 1)
             DMAExec();
          return;
       case 0x1A0:
@@ -2004,6 +2008,8 @@ void DMAExec(void) {
          DMATransfer(&CurrentSH2->onchip.CHCR1, &CurrentSH2->onchip.SAR1,
 		     &CurrentSH2->onchip.DAR1,  &CurrentSH2->onchip.TCR1,
                      &CurrentSH2->onchip.VCRDMA1);
+
+         CurrentSH2->onchip.CHCR1M |= 2;
       }
       else { // channel 0 > channel 1 priority
          DMATransfer(&CurrentSH2->onchip.CHCR0, &CurrentSH2->onchip.SAR0,
@@ -2012,6 +2018,7 @@ void DMAExec(void) {
          DMATransfer(&CurrentSH2->onchip.CHCR1, &CurrentSH2->onchip.SAR1,
 		     &CurrentSH2->onchip.DAR1,  &CurrentSH2->onchip.TCR1,
 		     &CurrentSH2->onchip.VCRDMA1);
+         CurrentSH2->onchip.CHCR1M |= 2;
       }
    }
    else { // only one channel wants DMA
@@ -2025,6 +2032,7 @@ void DMAExec(void) {
          DMATransfer(&CurrentSH2->onchip.CHCR1, &CurrentSH2->onchip.SAR1,
 		     &CurrentSH2->onchip.DAR1,  &CurrentSH2->onchip.TCR1,
 		     &CurrentSH2->onchip.VCRDMA1);
+         CurrentSH2->onchip.CHCR1M |= 2;
          return;
       }
    }
