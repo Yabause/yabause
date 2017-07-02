@@ -39,6 +39,7 @@
   #endif
 
 #elif  defined(__APPLE__)
+    #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
     #include <OpenGL/gl.h>
     #include <OpenGL/gl3.h>
 
