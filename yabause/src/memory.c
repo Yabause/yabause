@@ -542,6 +542,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -554,7 +555,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
          break;
       }
 */
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          return DataArrayReadByte(addr);
@@ -599,6 +600,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -611,7 +613,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
          break;
       }
 */
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          return DataArrayReadWord(addr);
@@ -656,6 +658,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -673,7 +676,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
          // Address Array
          return AddressArrayReadLong(addr);
       }
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          return DataArrayReadLong(addr);
@@ -718,6 +721,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -731,7 +735,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
          return;
       }
 */
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          DataArrayWriteByte(addr, val);
@@ -777,20 +781,21 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
          WriteWordList[(addr >> 16) & 0xFFF](addr, val);
          return;
       }
-/*
+
       case 0x2:
       {
          // Purge Area
          return;
       }
-*/
-      case 0x4:
+
+      //case 0x4:
       case 0x6:
          // Data Array
          DataArrayWriteWord(addr, val);
@@ -836,6 +841,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -853,7 +859,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
          AddressArrayWriteLong(addr, val);
          return;
       }
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          DataArrayWriteLong(addr, val);

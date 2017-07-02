@@ -291,7 +291,7 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
    switch(addr) {
       case 0x10:
         FRAMELOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
-         return Vdp1Regs->EDSR;
+        return Vdp1Regs->EDSR;
       case 0x12:
         FRAMELOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
          return Vdp1Regs->LOPR;
@@ -336,9 +336,11 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       FRAMELOG("Write FCM=%d FCT=%d VBE=%d line = %d\n", (val & 0x02) >> 1, (val & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
       Vdp1Regs->FBCR = val;
       if ((Vdp1Regs->FBCR & 3) == 3) {
+        FRAMELOG("manual change\n");
         Vdp1External.manualchange = 1;
       }
       else if ((Vdp1Regs->FBCR & 3) == 2) {
+        FRAMELOG("manual release\n");
         Vdp1External.manualerase = 1;
       }
       break;
@@ -574,11 +576,10 @@ void Vdp1Draw(void)
    //VIDCore->Vdp1DrawEnd();
 
    // we set two bits to 1
-   Vdp1Regs->EDSR |= 2;
-   Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
-   ScuSendDrawEnd();
-
-   FRAMELOG("Vdp1Draw end at %d line", yabsys.LineCount);
+   //Vdp1Regs->EDSR |= 2;
+   //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+   //ScuSendDrawEnd();
+   //FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
 
 }
 

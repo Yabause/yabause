@@ -1,3 +1,4 @@
+
 /*  Copyright 2003-2005 Guillaume Duhamel
     Copyright 2004-2007 Theo Berkau
     Copyright 2015 Shinya Miyamoto(devmiyax)
@@ -584,10 +585,13 @@ void Vdp2HBlankOUT(void) {
       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
     voutflg = 1;
-    if (Vdp1External.swap_frame_buffer == 1 && Vdp1External.frame_change_plot == 1)
+    if (Vdp1External.swap_frame_buffer == 1 )
     {
-      yabsys.wait_line_count = 10;
-      FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+      Vdp1Regs->EDSR >>= 1;
+      if (Vdp1External.frame_change_plot == 1) {
+        yabsys.wait_line_count = 30;
+        FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+      }
     }
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
     YabThreadYield();
@@ -601,10 +605,23 @@ void Vdp2HBlankOUT(void) {
     //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
       FRAMELOG("**WAIT END**");
     FrameProfileAdd("DirectDraw sync");
+    
+    Vdp1Regs->EDSR |= 2;
+    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+    ScuSendDrawEnd();
+    FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
   }
 #else
     vdp2VBlankOUT();
   }
+  else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
+    Vdp1Regs->EDSR |= 2;
+    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+    ScuSendDrawEnd();
+    FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+    VIDCore->Vdp1DrawEnd();
+  }
+     
 #endif
 }
 
@@ -726,9 +743,15 @@ void vdp2VBlankOUT(void) {
 
     VIDCore->Vdp1FrameChange();
     Vdp1External.swap_frame_buffer = 0;
+#if !defined(YAB_ASYNC_RENDERING)
     Vdp1Regs->EDSR >>= 1;
+#endif
+
+    FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
+
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1){
+      FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
       Vdp1Draw();
       isrender = 1;
     }
@@ -738,6 +761,8 @@ void vdp2VBlankOUT(void) {
   if (isrender){
     YabAddEventQueue(vdp1_rcv_evqueue, 0);
   }
+#else
+  yabsys.wait_line_count = 30;
 #endif
 
   if (Vdp2Regs->TVMD & 0x8000) {
