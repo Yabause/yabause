@@ -789,6 +789,7 @@ void Vdp1DebugGetCommandNumberName(u32 number, char *outstring)
 {
    u32 addr;
    u16 command;
+   char *command_name;
 
    *outstring = '\0';
 
@@ -800,8 +801,6 @@ void Vdp1DebugGetCommandNumberName(u32 number, char *outstring)
          outstring = "Draw End";
          return;
       }
-
-      char *command_name;
 
       // Figure out command name
       switch (command & 0x000F)
