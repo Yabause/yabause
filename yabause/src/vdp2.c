@@ -744,6 +744,7 @@ void vdp2VBlankOUT(void) {
     }
 
     VIDCore->Vdp1FrameChange();
+    Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1External.swap_frame_buffer = 0;
 #if !defined(YAB_ASYNC_RENDERING)
     Vdp1Regs->EDSR >>= 1;

@@ -150,16 +150,15 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
   {
     if (context->interrupts[context->NumberOfInterrupts - 1].level > context->regs.SR.part.I)
     {
-      //if (context->interrupts[context->NumberOfInterrupts - 1].vector != 67) {
-        u32 persr = context->regs.SR.part.I;
-        context->regs.R[15] -= 4;
-        MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
-        context->regs.R[15] -= 4;
-        MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
-        context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
-        context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
-        LOG("**** Exception vecnum=%u, PC=%08X PreSR=%08X,level=%08X", context->interrupts[context->NumberOfInterrupts - 1].vector, context->regs.PC, persr, context->regs.SR.part.I);
-      //}
+      u32 oldpc = context->regs.PC;
+      u32 persr = context->regs.SR.part.I;
+      context->regs.R[15] -= 4;
+      MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
+      context->regs.R[15] -= 4;
+      MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
+      context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
+      context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
+      LOG("[%s] Exception %u, vecnum=%u, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
       context->NumberOfInterrupts--;
       context->isIdle = 0;
       context->isSleeping = 0;
