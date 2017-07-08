@@ -34,7 +34,7 @@
 //#define YGLDEBUG yprintf
 //#define YGLLOG yprintf
 
-extern u8 * Vdp1FrameBuffer;
+extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
 
 static int YglIsNeedFrameBuffer();
@@ -773,13 +773,13 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   switch (type)
   {
   case 0:
-    T1WriteByte(Vdp1FrameBuffer, addr, val);
+    T1WriteByte(Vdp1FrameBuffer[_Ygl->drawframe], addr, val);
     break;
   case 1:
-    T1WriteWord(Vdp1FrameBuffer, addr, val);
+    T1WriteWord(Vdp1FrameBuffer[_Ygl->drawframe], addr, val);
     break;
   case 2:
-    T1WriteLong(Vdp1FrameBuffer, addr, val);
+    T1WriteLong(Vdp1FrameBuffer[_Ygl->drawframe], addr, val);
     break;
   default:
     break;
@@ -795,13 +795,13 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     switch (type)
     {
     case 0:
-      *(u8*)out = T1ReadByte(Vdp1FrameBuffer, addr);
+      *(u8*)out = T1ReadByte(Vdp1FrameBuffer[_Ygl->drawframe], addr);
       break;
     case 1:
-      *(u16*)out = T1ReadWord(Vdp1FrameBuffer, addr);
+      *(u16*)out = T1ReadWord(Vdp1FrameBuffer[_Ygl->drawframe], addr);
       break;
     case 2:
-      *(u32*)out = T1ReadLong(Vdp1FrameBuffer, addr);
+      *(u32*)out = T1ReadLong(Vdp1FrameBuffer[_Ygl->drawframe], addr);
       break;
     default:
       break;
