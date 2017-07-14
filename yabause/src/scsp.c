@@ -4772,6 +4772,33 @@ SoundRamReadLong (u32 addr)
   SyncSh2And68k();
 
   val = T2ReadLong(SoundRam, addr);
+#if 1 // This is the workround
+  if (addr == 0x500) {
+
+    if (val == 0xFFFFFFFF ) {
+      char * code = Cs2GetCurrentGmaecode();
+      if (strcmp(code, "T-1229G") == 0) {
+        u64 before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+        while (val == 0xFFFFFFFF) {
+          YabThreadUSleep(16666);
+          SyncSh2And68k();
+          val = T2ReadLong(SoundRam, addr);
+          LOG("read Addr val=%04X, %08X(%d)\n", val, YabauseGetFrameCount(), yabsys.LineCount);
+        }
+        while (val == 0x0) {
+          YabThreadUSleep(16666);
+          SyncSh2And68k();
+          val = T2ReadLong(SoundRam, addr);
+          LOG("read Addr val=%04X, %08X(%d)\n", val, YabauseGetFrameCount(), yabsys.LineCount);
+        }
+
+        u32 checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+        LOG("Sync wait time =%d\n", (s32)(checktime - before));
+      }
+    }
+
+  }
+#endif
 
   return val;
 
