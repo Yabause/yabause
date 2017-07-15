@@ -4777,7 +4777,7 @@ SoundRamReadLong (u32 addr)
 
     if (val == 0xFFFFFFFF ) {
       char * code = Cs2GetCurrentGmaecode();
-      if (strcmp(code, "T-1229G") == 0) {
+      if (strcmp(code, "T-1229G") == 0 || strcmp(code, "T-1228G") == 0 ) {
         u64 before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
         while (val == 0xFFFFFFFF) {
           YabThreadUSleep(16666);
