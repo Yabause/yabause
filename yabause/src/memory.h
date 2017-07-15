@@ -21,374 +21,366 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 #include "core.h"
 
 #define CACHE_ENABLE 0 
 
-/* Type 1 Memory, faster for byte (8 bits) accesses */
+  /* Type 1 Memory, faster for byte (8 bits) accesses */
 
-u8 * T1MemoryInit(u32);
-void T1MemoryDeInit(u8 *);
+  u8 * T1MemoryInit(u32);
+  void T1MemoryDeInit(u8 *);
 
-static INLINE u8 T1ReadByte(u8 * mem, u32 addr)
-{
-   return mem[addr];
-}
+  static INLINE u8 T1ReadByte(u8 * mem, u32 addr)
+  {
+    return mem[addr];
+  }
 
-static INLINE u16 T1ReadWord(u8 * mem, u32 addr)
-{
+  static INLINE u16 T1ReadWord(u8 * mem, u32 addr)
+  {
 #ifdef WORDS_BIGENDIAN
-   return *((u16 *) (mem + addr));
+    return *((u16 *) (mem + addr));
 #else
-   return BSWAP16L(*((u16 *) (mem + addr)));
+    return BSWAP16L(*((u16 *)(mem + addr)));
 #endif
-}
+  }
 
-static INLINE u32 T1ReadLong(u8 * mem, u32 addr)
-{
+  static INLINE u32 T1ReadLong(u8 * mem, u32 addr)
+  {
 #ifdef WORDS_BIGENDIAN
-   return *((u32 *) (mem + addr));
+    return *((u32 *) (mem + addr));
 #else
-   return BSWAP32(*((u32 *) (mem + addr)));
+    return BSWAP32(*((u32 *)(mem + addr)));
 #endif
-}
+  }
 
-static INLINE void T1WriteByte(u8 * mem, u32 addr, u8 val)
-{
-   mem[addr] = val;
-}
+  static INLINE void T1WriteByte(u8 * mem, u32 addr, u8 val)
+  {
+    mem[addr] = val;
+  }
 
-static INLINE void T1WriteWord(u8 * mem, u32 addr, u16 val)
-{
+  static INLINE void T1WriteWord(u8 * mem, u32 addr, u16 val)
+  {
 #ifdef WORDS_BIGENDIAN
-   *((u16 *) (mem + addr)) = val;
+    *((u16 *) (mem + addr)) = val;
 #else
-   *((u16 *) (mem + addr)) = BSWAP16L(val);
+    *((u16 *)(mem + addr)) = BSWAP16L(val);
 #endif
-}
+  }
 
-static INLINE void T1WriteLong(u8 * mem, u32 addr, u32 val)
-{
+  static INLINE void T1WriteLong(u8 * mem, u32 addr, u32 val)
+  {
 #ifdef WORDS_BIGENDIAN
-   *((u32 *) (mem + addr)) = val;
+    *((u32 *) (mem + addr)) = val;
 #else
-   *((u32 *) (mem + addr)) = BSWAP32(val);
+    *((u32 *)(mem + addr)) = BSWAP32(val);
 #endif
-}
+  }
 
-/* Type 2 Memory, faster for word (16 bits) accesses */
+  /* Type 2 Memory, faster for word (16 bits) accesses */
 
 #define T2MemoryInit(x) (T1MemoryInit(x))
 #define T2MemoryDeInit(x) (T1MemoryDeInit(x))
 
-static INLINE u8 T2ReadByte(u8 * mem, u32 addr)
-{
+  static INLINE u8 T2ReadByte(u8 * mem, u32 addr)
+  {
 #ifdef WORDS_BIGENDIAN
-   return mem[addr];
+    return mem[addr];
 #else
-   return mem[addr ^ 1];
+    return mem[addr ^ 1];
 #endif
-}
+  }
 
-static INLINE u16 T2ReadWord(u8 * mem, u32 addr)
-{
-   return *((u16 *) (mem + addr));
-}
+  static INLINE u16 T2ReadWord(u8 * mem, u32 addr)
+  {
+    return *((u16 *)(mem + addr));
+  }
 
-static INLINE u32 T2ReadLong(u8 * mem, u32 addr)
-{
+  static INLINE u32 T2ReadLong(u8 * mem, u32 addr)
+  {
 #ifdef WORDS_BIGENDIAN
-   return *((u32 *) (mem + addr));
+    return *((u32 *) (mem + addr));
 #else
-   return WSWAP32(*((u32 *) (mem + addr)));
+    return WSWAP32(*((u32 *)(mem + addr)));
 #endif
-}
+  }
 
-static INLINE void T2WriteByte(u8 * mem, u32 addr, u8 val)
-{
+  static INLINE void T2WriteByte(u8 * mem, u32 addr, u8 val)
+  {
 #ifdef WORDS_BIGENDIAN
-   mem[addr] = val;
+    mem[addr] = val;
 #else
-   mem[addr ^ 1] = val;
+    mem[addr ^ 1] = val;
 #endif
-}
+  }
 
-static INLINE void T2WriteWord(u8 * mem, u32 addr, u16 val)
-{
-   *((u16 *) (mem + addr)) = val;
-}
+  static INLINE void T2WriteWord(u8 * mem, u32 addr, u16 val)
+  {
+    *((u16 *)(mem + addr)) = val;
+  }
 
-static INLINE void T2WriteLong(u8 * mem, u32 addr, u32 val)
-{
+  static INLINE void T2WriteLong(u8 * mem, u32 addr, u32 val)
+  {
 #ifdef WORDS_BIGENDIAN
-   *((u32 *) (mem + addr)) = val;
+    *((u32 *) (mem + addr)) = val;
 #else
-   *((u32 *) (mem + addr)) = WSWAP32(val);
+    *((u32 *)(mem + addr)) = WSWAP32(val);
 #endif
-}
+  }
 
-/* Type 3 Memory, faster for long (32 bits) accesses */
+  /* Type 3 Memory, faster for long (32 bits) accesses */
 
-typedef struct
-{
-   u8 * base_mem;
-   u8 * mem;
-} T3Memory;
+  typedef struct
+  {
+    u8 * base_mem;
+    u8 * mem;
+  } T3Memory;
 
-T3Memory * T3MemoryInit(u32);
-void T3MemoryDeInit(T3Memory *);
+  T3Memory * T3MemoryInit(u32);
+  void T3MemoryDeInit(T3Memory *);
 
-static INLINE u8 T3ReadByte(T3Memory * mem, u32 addr)
-{
+  static INLINE u8 T3ReadByte(T3Memory * mem, u32 addr)
+  {
 #ifdef WORDS_BIGENDIAN
-	return mem->mem[addr];
+    return mem->mem[addr];
 #else
-	return (mem->mem - addr - 1)[0];
+    return (mem->mem - addr - 1)[0];
 #endif
-}
+  }
 
-static INLINE u16 T3ReadWord(T3Memory * mem, u32 addr)
-{
+  static INLINE u16 T3ReadWord(T3Memory * mem, u32 addr)
+  {
 #ifdef WORDS_BIGENDIAN
-        return *((u16 *) (mem->mem + addr));
+    return *((u16 *) (mem->mem + addr));
 #else
-	return ((u16 *) (mem->mem - addr - 2))[0];
+    return ((u16 *)(mem->mem - addr - 2))[0];
 #endif
-}
+  }
 
-static INLINE u32 T3ReadLong(T3Memory * mem, u32 addr)
-{
+  static INLINE u32 T3ReadLong(T3Memory * mem, u32 addr)
+  {
 #ifdef WORDS_BIGENDIAN
-	return *((u32 *) (mem->mem + addr));
+    return *((u32 *) (mem->mem + addr));
 #else
-	return ((u32 *) (mem->mem - addr - 4))[0];
+    return ((u32 *)(mem->mem - addr - 4))[0];
 #endif
-}
+  }
 
-static INLINE void T3WriteByte(T3Memory * mem, u32 addr, u8 val)
-{
+  static INLINE void T3WriteByte(T3Memory * mem, u32 addr, u8 val)
+  {
 #ifdef WORDS_BIGENDIAN
-	mem->mem[addr] = val;
+    mem->mem[addr] = val;
 #else
-	(mem->mem - addr - 1)[0] = val;
+    (mem->mem - addr - 1)[0] = val;
 #endif
-}
+  }
 
-static INLINE void T3WriteWord(T3Memory * mem, u32 addr, u16 val)
-{
+  static INLINE void T3WriteWord(T3Memory * mem, u32 addr, u16 val)
+  {
 #ifdef WORDS_BIGENDIAN
-	*((u16 *) (mem->mem + addr)) = val;
+    *((u16 *) (mem->mem + addr)) = val;
 #else
-	((u16 *) (mem->mem - addr - 2))[0] = val;
+    ((u16 *)(mem->mem - addr - 2))[0] = val;
 #endif
-}
+  }
 
-static INLINE void T3WriteLong(T3Memory * mem, u32 addr, u32 val)
-{
+  static INLINE void T3WriteLong(T3Memory * mem, u32 addr, u32 val)
+  {
 #ifdef WORDS_BIGENDIAN
-	*((u32 *) (mem->mem + addr)) = val;
+    *((u32 *) (mem->mem + addr)) = val;
 #else
-	((u32 *) (mem->mem - addr - 4))[0] = val;
+    ((u32 *)(mem->mem - addr - 4))[0] = val;
 #endif
-}
+  }
 
-static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
-{
-   FILE *fp;
-   u32 filesize, filesizecheck;
-   u8 *buffer;
-   u32 i;
+  static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
+  {
+    FILE *fp;
+    u32 filesize, filesizecheck;
+    u8 *buffer;
+    u32 i;
 
-   if (!filename)
+    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "rb")) == NULL)
+    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;
 
-   // Calculate file size
-   fseek(fp, 0, SEEK_END);
-   filesize = ftell(fp);
-   fseek(fp, 0, SEEK_SET);
+    // Calculate file size
+    fseek(fp, 0, SEEK_END);
+    filesize = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
 
-   if (filesize > size)
-   {
+    if (filesize > size)
+    {
       fclose(fp);
       return -1;
-   }
+    }
 
-   if ((buffer = (u8 *)malloc(filesize)) == NULL)
-   {
+    if ((buffer = (u8 *)malloc(filesize)) == NULL)
+    {
       fclose(fp);
       return -1;
-   }
+    }
 
-   filesizecheck = (u32)fread((void *)buffer, 1, filesize, fp);
-   fclose(fp);
+    filesizecheck = (u32)fread((void *)buffer, 1, filesize, fp);
+    fclose(fp);
 
-   if (filesizecheck != filesize)
-   {
+    if (filesizecheck != filesize)
+    {
       free(buffer);
       return -1;
-   }
+    }
 
-   switch (type)
-   {
-      case 1:
-      {
-         for (i = 0; i < filesize; i++)
-            T1WriteByte((u8 *) mem, i, buffer[i]);
-         break;
-      }
-      case 2:
-      {
-         for (i = 0; i < filesize; i++)
-            T2WriteByte((u8 *) mem, i, buffer[i]);
-         break;
-      }
-      case 3:
-      {
-         for (i = 0; i < filesize; i++)
-            T3WriteByte((T3Memory *) mem, i, buffer[i]);
-         break;
-      }
-      default:
-      {
-         free(buffer);
-         return -1;
-      }
-   }
-
-   free(buffer);
-
-   return 0;
-}
-
-static INLINE int T123Save(void * mem, u32 size, int type, const char *filename)
-{
-   FILE *fp;
-   u8 *buffer;
-   u32 i;
-   u32 sizecheck;
-
-   if (filename == NULL)
-      return 0;
-
-   if (filename[0] == 0x00)
-      return 0;
-
-   if ((buffer = (u8 *)malloc(size)) == NULL)
-      return -1;
-
-   switch (type)
-   {
-      case 1:
-      {
-         for (i = 0; i < size; i++)
-            buffer[i] = T1ReadByte((u8 *) mem, i);
-         break;
-      }
-      case 2:
-      {
-         for (i = 0; i < size; i++)
-            buffer[i] = T2ReadByte((u8 *) mem, i);
-         break;
-      }
-      case 3:
-      {
-         for (i = 0; i < size; i++)
-            buffer[i] = T3ReadByte((T3Memory *) mem, i);
-         break;
-      }
-      default:
-      {
-         free(buffer);
-         return -1;
-      }
-   }
-
-   if ((fp = fopen(filename, "wb")) == NULL)
-   {
+    switch (type)
+    {
+    case 1:
+    {
+      for (i = 0; i < filesize; i++)
+        T1WriteByte((u8 *)mem, i, buffer[i]);
+      break;
+    }
+    case 2:
+    {
+      for (i = 0; i < filesize; i++)
+        T2WriteByte((u8 *)mem, i, buffer[i]);
+      break;
+    }
+    case 3:
+    {
+      for (i = 0; i < filesize; i++)
+        T3WriteByte((T3Memory *)mem, i, buffer[i]);
+      break;
+    }
+    default:
+    {
       free(buffer);
       return -1;
-   }
+    }
+    }
 
-   sizecheck = (u32)fwrite((void *)buffer, 1, size, fp);
-   fclose(fp);
-   free(buffer);
+    free(buffer);
 
-   if (sizecheck != size) return -1;
+    return 0;
+  }
 
-   return 0;
-}
+  static INLINE int T123Save(void * mem, u32 size, int type, const char *filename)
+  {
+    FILE *fp;
+    u8 *buffer;
+    u32 i;
+    u32 sizecheck;
 
-/* Dummy memory, always returns 0 */
+    if (filename == NULL)
+      return 0;
 
-typedef void Dummy;
+    if (filename[0] == 0x00)
+      return 0;
 
-Dummy * DummyInit(u32);
-void DummyDeInit(Dummy *);
+    if ((buffer = (u8 *)malloc(size)) == NULL)
+      return -1;
 
-static INLINE u8 DummyReadByte(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
-static INLINE u16 DummyReadWord(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
-static INLINE u32 DummyReadLong(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
+    switch (type)
+    {
+    case 1:
+    {
+      for (i = 0; i < size; i++)
+        buffer[i] = T1ReadByte((u8 *)mem, i);
+      break;
+    }
+    case 2:
+    {
+      for (i = 0; i < size; i++)
+        buffer[i] = T2ReadByte((u8 *)mem, i);
+      break;
+    }
+    case 3:
+    {
+      for (i = 0; i < size; i++)
+        buffer[i] = T3ReadByte((T3Memory *)mem, i);
+      break;
+    }
+    default:
+    {
+      free(buffer);
+      return -1;
+    }
+    }
 
-static INLINE void DummyWriteByte(Dummy UNUSED * d, u32 UNUSED a, u8 UNUSED v) {}
-static INLINE void DummyWriteWord(Dummy UNUSED * d, u32 UNUSED a, u16 UNUSED v) {}
-static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) {}
+    if ((fp = fopen(filename, "wb")) == NULL)
+    {
+      free(buffer);
+      return -1;
+    }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void MappedMemoryInit(void);
-u8 FASTCALL MappedMemoryReadByte(u32 addr);
-u16 FASTCALL MappedMemoryReadWord(u32 addr);
-u32 FASTCALL MappedMemoryReadLong(u32 addr);
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val);
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val);
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
-#ifdef __cplusplus
-}
-#endif
+    sizecheck = (u32)fwrite((void *)buffer, 1, size, fp);
+    fclose(fp);
+    free(buffer);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern u8 *HighWram;
-#ifdef __cplusplus
-}
-#endif
-extern u8 *LowWram;
-extern u8 *BiosRom;
-extern u8 *BupRam;
-extern u8 BupRamWritten;
+    if (sizecheck != size) return -1;
 
-typedef void (FASTCALL *writebytefunc)(u32, u8);
-typedef void (FASTCALL *writewordfunc)(u32, u16);
-typedef void (FASTCALL *writelongfunc)(u32, u32);
+    return 0;
+  }
 
-typedef u8 (FASTCALL *readbytefunc)(u32);
-typedef u16 (FASTCALL *readwordfunc)(u32);
-typedef u32 (FASTCALL *readlongfunc)(u32);
+  /* Dummy memory, always returns 0 */
 
-extern writebytefunc WriteByteList[0x1000];
-extern writewordfunc WriteWordList[0x1000];
-extern writelongfunc WriteLongList[0x1000];
+  typedef void Dummy;
 
-extern readbytefunc ReadByteList[0x1000];
-extern readwordfunc ReadWordList[0x1000];
-extern readlongfunc ReadLongList[0x1000];
+  Dummy * DummyInit(u32);
+  void DummyDeInit(Dummy *);
 
-typedef struct {
-u32 addr;
-u32 val;
-} result_struct;
+  static INLINE u8 DummyReadByte(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
+  static INLINE u16 DummyReadWord(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
+  static INLINE u32 DummyReadLong(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
+
+  static INLINE void DummyWriteByte(Dummy UNUSED * d, u32 UNUSED a, u8 UNUSED v) {}
+  static INLINE void DummyWriteWord(Dummy UNUSED * d, u32 UNUSED a, u16 UNUSED v) {}
+  static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) {}
+
+  void MappedMemoryInit(void);
+  u8 FASTCALL MappedMemoryReadByte(u32 addr);
+  u16 FASTCALL MappedMemoryReadWord(u32 addr);
+  u32 FASTCALL MappedMemoryReadLong(u32 addr);
+  void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
+  void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
+  void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
+  u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
+  u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
+  u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
+  void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val);
+  void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val);
+  void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
+
+  extern u8 *HighWram;
+  extern u8 *LowWram;
+  extern u8 *BiosRom;
+  extern u8 *BupRam;
+  extern u8 BupRamWritten;
+
+  typedef void (FASTCALL *writebytefunc)(u32, u8);
+  typedef void (FASTCALL *writewordfunc)(u32, u16);
+  typedef void (FASTCALL *writelongfunc)(u32, u32);
+
+  typedef u8(FASTCALL *readbytefunc)(u32);
+  typedef u16(FASTCALL *readwordfunc)(u32);
+  typedef u32(FASTCALL *readlongfunc)(u32);
+
+  extern writebytefunc WriteByteList[0x1000];
+  extern writewordfunc WriteWordList[0x1000];
+  extern writelongfunc WriteLongList[0x1000];
+
+  extern readbytefunc ReadByteList[0x1000];
+  extern readwordfunc ReadWordList[0x1000];
+  extern readlongfunc ReadLongList[0x1000];
+
+  typedef struct {
+    u32 addr;
+    u32 val;
+  } result_struct;
 
 #define SEARCHBYTE              0
 #define SEARCHWORD              1
@@ -405,25 +397,29 @@ u32 val;
 #define SEARCHREL8BIT           (6 << 4)
 #define SEARCHREL16BIT          (7 << 4)
 
-result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
-                                  const char *searchstr,
-                                  result_struct *prevresults, u32 *maxresults);
+  result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
+    const char *searchstr,
+    result_struct *prevresults, u32 *maxresults);
 
-int MappedMemoryLoad(const char *filename, u32 addr);
-int MappedMemorySave(const char *filename, u32 addr, u32 size);
-void MappedMemoryLoadExec(const char *filename, u32 pc);
+  int MappedMemoryLoad(const char *filename, u32 addr);
+  int MappedMemorySave(const char *filename, u32 addr, u32 size);
+  void MappedMemoryLoadExec(const char *filename, u32 pc);
 
-int LoadBios(const char *filename);
-int LoadBackupRam(const char *filename);
-void FormatBackupRam(void *mem, u32 size);
+  int LoadBios(const char *filename);
+  int LoadBackupRam(const char *filename);
+  void FormatBackupRam(void *mem, u32 size);
 
-int YabSaveState(const char *filename);
-int YabLoadState(const char *filename);
-int YabSaveStateSlot(const char *dirpath, u8 slot);
-int YabLoadStateSlot(const char *dirpath, u8 slot);
-int YabSaveStateStream(FILE *stream);
-int YabLoadStateStream(FILE *stream);
-int YabSaveStateBuffer(void **buffer, size_t *size);
-int YabLoadStateBuffer(const void *buffer, size_t size);
+  int YabSaveState(const char *filename);
+  int YabLoadState(const char *filename);
+  int YabSaveStateSlot(const char *dirpath, u8 slot);
+  int YabLoadStateSlot(const char *dirpath, u8 slot);
+  int YabSaveStateStream(FILE *stream);
+  int YabLoadStateStream(FILE *stream);
+  int YabSaveStateBuffer(void **buffer, size_t *size);
+  int YabLoadStateBuffer(const void *buffer, size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

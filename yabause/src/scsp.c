@@ -131,8 +131,8 @@ YabMutex * g_scsp_mtx = NULL;
 #include "sh2core.h"
 
 #if defined(__GNUC__)
-#include <stdatomic.h>
-_Atomic u32 m68kcycle = 0;
+//#include <stdatomic.h>
+/*_Atomic*/ u32 m68kcycle = 0;
 #else
 u32 m68kcycle = 0;
 #endif
@@ -363,6 +363,9 @@ struct AlfoTables
 };
 
 struct AlfoTables alfo;
+
+void scsp_main_interrupt (u32 id);
+void scsp_sound_interrupt (u32 id);
 
 void fill_plfo_tables()
 {
@@ -1756,8 +1759,8 @@ scsp_trigger_sound_interrupt (u32 id)
    scsp.sintf (level);
 }
 
-INLINE void
-scsp_main_interrupt (u32 id)
+
+void scsp_main_interrupt (u32 id)
 {
 //  if (scsp.mcipd & id) return;
 //  if (id != 0x400) SCSPLOG("scsp main interrupt %.4X\n", id);
@@ -1769,8 +1772,7 @@ scsp_main_interrupt (u32 id)
     scsp_trigger_main_interrupt (id);
 }
 
-INLINE void
-scsp_sound_interrupt (u32 id)
+void scsp_sound_interrupt (u32 id)
 {
 //  if (scsp.scipd & id) return;
 
