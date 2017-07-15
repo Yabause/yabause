@@ -222,7 +222,7 @@ void SH2Step(SH2_struct *context)
       // Sometimes it doesn't always execute one instruction,
       // let's make sure it did
       if (tmp == SH2Core->GetPC(context))
-      //   SH2Exec(context, 1);
+         SH2Exec(context, 1);
    }
 }
 
