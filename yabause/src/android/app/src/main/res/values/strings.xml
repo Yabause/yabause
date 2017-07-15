@@ -77,6 +77,7 @@
     <string name="exit">Exit</string>
     <string name="ignore">Ignore</string>
 
+    <string name="new_dynrec_cpu_interface">New Dynamic Recompiler( Work in progress)</string>
     <string name="dynrec_cpu_interface">Dynamic Recompiler( fast but less accurate )</string>
     <string name="software_cpu_interface">Interpreter( slow but more accurate )</string>
 

@@ -24,6 +24,9 @@
 
 #include "core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct
 {
@@ -121,5 +124,10 @@ extern u32 saved_m68k_cycles;
 #define SCSP_FRACTIONAL_BITS 20
 u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
 u32 YabauseGetCpuTime();
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif
