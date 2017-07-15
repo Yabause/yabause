@@ -1387,8 +1387,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         *out_l = *out_l + ((disdl_applied >> pan_val_l)>>0);
-         *out_r = *out_r + ((disdl_applied >> pan_val_r)>>0);
+         *out_l = *out_l + ((disdl_applied >> pan_val_l)>>1);
+         *out_r = *out_r + ((disdl_applied >> pan_val_r)>>1);
 
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
