@@ -2400,7 +2400,9 @@ void YglRenderVDP1(void) {
   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
   level = &(_Ygl->levels[_Ygl->depth]);
-
+    if( level == NULL ) {
+        return;
+    }
   cprg = -1;
 
   YglGenFrameBuffer();

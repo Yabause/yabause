@@ -1089,7 +1089,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          u16 i, j;
 
          // hard/vdp2/hon/p09_20.htm#no9_21
-         // ƒXƒvƒ‰ƒCƒgƒf[ƒ^‚ªRGBŒ`Ž®‚Ìê‡‚ÍAƒXƒvƒ‰ƒCƒg—pƒŒƒWƒXƒ^0‚ª‘I‘ð‚³‚ê‚Ü‚·B
+         // ï¿½Xï¿½vï¿½ï¿½ï¿½Cï¿½gï¿½fï¿½[ï¿½^ï¿½ï¿½RGBï¿½`ï¿½ï¿½ï¿½Ìê‡ï¿½ÍAï¿½Xï¿½vï¿½ï¿½ï¿½Cï¿½gï¿½pï¿½ï¿½ï¿½Wï¿½Xï¿½^0ï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½B
          u8 *cclist = (u8 *)&fixVdp2Regs->CCRSA;
          cclist[0] &= 0x1F;
          u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
@@ -3594,6 +3594,11 @@ int _VIDOGLIsFullscreen;
 
 void VIDOGLResize(int originx, int originy , unsigned int w, unsigned int h, int on)
 {
+
+  if( originx == 0 && originy == 0 && w == 0 && h == 0 && on == 0 ){
+    YglGLInit(8,8); // Just rebuild texture
+  } 
+
    _VIDOGLIsFullscreen = on;
    
    GlWidth = w;
@@ -5268,7 +5273,6 @@ void VIDOGLVdp2DrawStart(void)
     YglTM = YglTMInit(new_width, new_height);
   }
   YglReset();
-
   if (_Ygl->sync != 0){
     glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
     glDeleteSync(_Ygl->sync);
