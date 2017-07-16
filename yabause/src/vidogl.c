@@ -616,25 +616,25 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
   else
     ednmode = 0;
 
-   addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
+  addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
    
-   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow );
+  Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow );
    
-   alpha = 0xF8;
-   talpha = 0xF8;
-   // Enable sprite color control? and top color?
-   if ((fixVdp2Regs->CCCTL & 0x040) == 0x040 || (fixVdp2Regs->CCCTL & 0x240) == 0x200 )
-   {
-     switch (SPCCCS)
-     {
-     case 0:
-       if (priority <= ((fixVdp2Regs->SPCTL >> 8) & 0x07)){
-         if (addcolor){  // Add Color calcuration mode 
-           alpha = 0x80;  // Key value for color calcuration
-         }
-         else{
+  alpha = 0xF8;
+  talpha = 0xF8;
+  
+  // Enable sprite color control? and top color?
+  if ((fixVdp2Regs->CCCTL & 0x040) == 0x040 || (fixVdp2Regs->CCCTL & 0x240) == 0x200 )
+  {
+    switch (SPCCCS)
+    {
+    case 0:
+      if (priority <= ((fixVdp2Regs->SPCTL >> 8) & 0x07)){
+        if (addcolor){  // Add Color calcuration mode 
+          alpha = 0x80;  // Key value for color calcuration
+        }else{
            alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-         }
+        }
        }
        break;
      case 1:
@@ -694,10 +694,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
         else if (MSB_SHADOW){
           *texture->textdata++ = (0x80) << 24;
-        }else if (((dot >> 4) | colorBank) == 0x0000){
+//        }else if (((dot >> 4) | colorBank) == 0x0000){
           //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
           //talpha |= priority;
-          *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
+//          *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
         }else if (((dot >> 4) | colorBank) == nromal_shadow){
           *texture->textdata++ = (shadow_alpha << 24);
         }else{
@@ -724,10 +724,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
         else if (MSB_SHADOW){
            *texture->textdata++ = (0x80) << 24;
-        }else if (((dot & 0x0F) | colorBank) == 0x0000){
+        //}else if (((dot & 0x0F) | colorBank) == 0x0000){
           //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
           //talpha |= priority;
-          *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
+        //  *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
         }else if (((dot & 0xF) | colorBank) == nromal_shadow){
           *texture->textdata++ = (shadow_alpha << 24);
         }else{
@@ -789,7 +789,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                   temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
                   if (temp & 0x8000)
                   {
-          	    if (MSB_SHADOW){
+                    if (MSB_SHADOW){
                       *texture->textdata++ = (0x80) << 24;
                     }
                     else{
@@ -4068,7 +4068,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      if ( (CMDPMOD & 0x8000) )
         sprite.blendmode = VDP1_COLOR_CL_MESH;
      else {
-     if ( (CMDPMOD & 0x40) != 0) {
+     if ( ((CMDPMOD & 0x40) != 0) && ((CMDPMOD & 0x20) != 0) ) {
         sprite.blendmode = VDP1_COLOR_SPD;
      } else{
        sprite.blendmode = VDP1_COLOR_CL_REPLACE;
@@ -4317,7 +4317,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    
    if (IS_REPLACE(CMDPMOD)){
-     if ((CMDPMOD & 0x40) != 0) {
+     if (((CMDPMOD & 0x40) != 0) && ((CMDPMOD & 0x20) != 0)) {
        sprite.blendmode = VDP1_COLOR_SPD;
      }
      else{
