@@ -1037,51 +1037,44 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
       }
       case 4:
       {
-         // 8 bpp(256 color) Bank mode
+        // 8 bpp(256 color) Bank mode
         u32 colorBank = cmd->CMDCOLR & 0xFF00;
-         u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
-         u16 i, j;
+        u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
+        u16 i, j;
 
-         for(i = 0;i < sprite->h;i++)
-         {
-            for(j = 0;j < sprite->w;j++)
-            {
-               dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
-               charAddr++;
-
-               if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-         else if (dot == 0x0000){ *texture->textdata++ = 0x00; }
-               else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x0;
-         else if (MSB_SHADOW){
-           *texture->textdata++ = (0x80) << 24;
-         }
-         else if ((dot | colorBank) == nromal_shadow){
-           *texture->textdata++ = (shadow_alpha << 24);
-         }
-         else{
-           const int colorindex = (dot | colorBank) + colorOffset;
-           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)){
-             *texture->textdata++ = SAT2YAB1(alpha, colorindex);
-           }
-           else{
-             if (SPCCCS == 0x03){
-               u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
-               if (checkcol & 0x8000){
-                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
-               }
-               else{
-                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
-               }
-             }
-             else{
-               *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
-             }
-           }
-         }
+        for(i = 0;i < sprite->h;i++) {
+          for(j = 0;j < sprite->w;j++) {
+            dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
+            charAddr++;
+            if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
+            else if( (dot == 0xFF) && !END ) *texture->textdata++ = 0x0;
+            else if (MSB_SHADOW) {
+              *texture->textdata++ = (0x80) << 24;
+            }else if ((dot | colorBank) == nromal_shadow) {
+              *texture->textdata++ = (shadow_alpha << 24);
+            }else{
+              const int colorindex = (dot | colorBank) + colorOffset;
+              if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+                *texture->textdata++ = SAT2YAB1(alpha, colorindex);
+              }else if (colorindex == 0x0000) { 
+                *texture->textdata++ = 0x00; 
+              }else{
+                if (SPCCCS == 0x03){
+                  u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                  if (checkcol & 0x8000){
+                    *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+                  }else{
+                    *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+                  }
+                }else{
+                  *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+                }
+              }
             }
-            texture->textdata += texture->w;
-         }
-         break;
+          }
+          texture->textdata += texture->w;
+        }
+        break;
       }
       case 5:
       {
@@ -1089,7 +1082,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          u16 i, j;
 
          // hard/vdp2/hon/p09_20.htm#no9_21
-         // ï¿½Xï¿½vï¿½ï¿½ï¿½Cï¿½gï¿½fï¿½[ï¿½^ï¿½ï¿½RGBï¿½`ï¿½ï¿½ï¿½Ìê‡ï¿½ÍAï¿½Xï¿½vï¿½ï¿½ï¿½Cï¿½gï¿½pï¿½ï¿½ï¿½Wï¿½Xï¿½^0ï¿½ï¿½ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½B
+         // E½XE½vE½E½E½CE½gE½fE½[E½^E½E½RGBE½`E½E½E½Ìê‡E½ÍAE½XE½vE½E½E½CE½gE½pE½E½E½WE½XE½^0E½E½E½IE½E½E½E½E½E½E½Ü‚ï¿½E½B
          u8 *cclist = (u8 *)&fixVdp2Regs->CCRSA;
          cclist[0] &= 0x1F;
          u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
