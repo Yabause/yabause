@@ -66,7 +66,7 @@ TEST_F(CmpPzTest, Zero) {
 TEST_F(CmpPzTest, min) {
 
   pctx_->GetGenRegPtr()[1]=0xFFFFFFFE; // m
-  pctx_->SET_SR(0x00000E0);
+  pctx_->SET_SR(0x00000E1);
 
   memSetWord( 0x06000000, 0x4111 );  // cmppz R[1]
   memSetWord( 0x06000002, 0x000b );  // rts

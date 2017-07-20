@@ -28,6 +28,7 @@ YabauseGL::YabauseGL( QWidget* p )
 
   QGLFormat fmt;
   fmt.setProfile(QGLFormat::CompatibilityProfile);
+  fmt.setSwapInterval(0);
   setFormat(fmt);
 
 	if ( p ) {

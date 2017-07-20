@@ -40,13 +40,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
-
+#ifdef DYNAREC_X64
+extern const unsigned short prologue_size;
+extern const unsigned short epilogue_size;
+extern const unsigned short seperator_normal_size;
+extern const unsigned short seperator_delay_size;
+extern const unsigned short seperator_delay_slot_size;
+extern const unsigned short seperator_delay_after_size;
+extern const unsigned short seperator_d_normal_size;
+extern const unsigned short seperator_d_delay_size;
+extern const unsigned short PageFlip_size;
+#endif
 #if defined(ARCH_IS_LINUX)
 #include <unistd.h> // chaceflush
 
 #if !defined(ANDROID)
 void cacheflush(uintptr_t begin, uintptr_t end, int flag )
 { 
+#ifdef __arm__
     const int syscall = 0xf0002;
       __asm __volatile (
      "mov   r0, %0\n"      
@@ -58,6 +69,9 @@ void cacheflush(uintptr_t begin, uintptr_t end, int flag )
      : "r" (begin), "r" (end), "r" (syscall)
      : "r0", "r1", "r7"
     );
+#else
+__builtin___clear_cache((void*)begin, (void*)end);
+#endif
 }
 #endif
 
@@ -319,19 +333,33 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define NORMAL_CLOCK_OFFSET 6
 #define NORMAL_CLOCK_OFFSET_DEBUG 3
 #else
-#define PROLOGSIZE		     16    
-#define SEPERATORSIZE_NORMAL 8
-#define NORMAL_CLOCK_OFFSET 4
+#ifdef DYNAREC_X64
+#define PROLOGSIZE			(prologue_size)  
+#define SEPERATORSIZE_NORMAL		(seperator_normal_size)
+#define NORMAL_CLOCK_OFFSET 8
 #define NORMAL_CLOCK_OFFSET_DEBUG 4
-#define SEPERATORSIZE_DEBUG  36
-#define SEPERATORSIZE_DELAY_SLOT  36
-#define SEPERATORSIZE_DELAY_AFTER  20
+#define SEPERATORSIZE_DEBUG		(seperator_d_normal_size)
+#define SEPERATORSIZE_DELAY_SLOT	(seperator_delay_slot_size)
+#define SEPERATORSIZE_DELAY_AFTER	(seperator_delay_after_size)
 #define DALAY_CLOCK_OFFSET 8
-#define SEPERATORSIZE_DELAYD 60
-#define EPILOGSIZE		      12
-#define DELAYJUMPSIZE	     32
+#define SEPERATORSIZE_DELAYD		(seperator_d_delay_size)
+#define EPILOGSIZE			(epilogue_size)
+#define DELAYJUMPSIZE			(PageFlip_size)
+#else
+#define PROLOGSIZE			16  
+#define SEPERATORSIZE_NORMAL		8
+#define NORMAL_CLOCK_OFFSET 		4
+#define NORMAL_CLOCK_OFFSET_DEBUG 	4
+#define SEPERATORSIZE_DEBUG		36
+#define SEPERATORSIZE_DELAY_SLOT	36
+#define SEPERATORSIZE_DELAY_AFTER	20
+#define DALAY_CLOCK_OFFSET 		8
+#define SEPERATORSIZE_DELAYD		60
+#define EPILOGSIZE			12
+#define DELAYJUMPSIZE			32
 #endif
 
+#endif
 
 #define MININSTRSIZE    3
 #define MAXINSTRSIZE	416
@@ -339,7 +367,9 @@ void DumpInstX( int i, u32 pc, u16 op  )
 
 #define SAFEPAGESIZE	MAXBLOCKSIZE - MAXINSTRSIZE - SEPERATORSIZE_DELAY_SLOT - SEPERATORSIZE_DELAY_AFTER - SEPERATORSIZE_NORMAL - EPILOGSIZE
 #define MAXINSTRCNT		MAXBLOCKSIZE/(MININSTRSIZE+SEPERATORSIZE_NORMAL)
+#ifndef DYNAREC_X64
 int instrSize[NUMOFBLOCKS][MAXINSTRCNT];
+#endif
 
 #define opinit(x)	extern const unsigned short x##_size; \
                     extern const unsigned char x##_src, x##_dest, x##_off1, x##_imm, x##_off3; \
@@ -428,7 +458,8 @@ opinit(EXTUB);
 opinit(EXTU_W);
 opinit(EXTS_B);
 opinit(EXTS_W);
-opinit(BT)
+opinit(BT);
+opinit(BT_S);
 opinit(BF);
 opinit(BF_S);
 opinit(JMP);
@@ -635,7 +666,7 @@ x86op_desc asm_list[] =
   opdesc(BF,1,3, 0),
   opdesc(BF_S,3,2, 0),
   opdesc(BT,1,3, 0),
-  opdesc(BT,3,2, 0),
+  opdesc(BT_S,3,2, 0),
   opdesc(BRA,2,2, 0),
   opdesc(BSR,2,2, 0),
   opdesc(MOVWI,0,1, 0),
@@ -653,7 +684,46 @@ x86op_desc asm_list[] =
   opdesc(ADDI,0,1, 0),
   opdesc(MOVI,0,1, 0),
   opNULL
-}; 
+};
+
+static MemArea getMemArea(u32 addr) {
+/*
+00000000-000FFFFF : Boot ROM (512K, mirrored every 512K)
+ 00100000-0017FFFF : SMPC registers (128 bytes, mirrored every 128 bytes)
+ 00180000-001FFFFF : Backup RAM (64K, mirrored every 64K) [1]
+ 00200000-002FFFFF : Work RAM Low (1MB)
+ 00300000-003FFFFF : Random data on every read (mostly $00)
+ 00400000-007FFFFF : Always returns $0000.
+ 00800000-00FFFFFF : Always returns $00000001000200030004000500060007.
+ 01000000-01FFFFFF : Always returns $FFFF. [4]
+ 02000000-03FFFFFF : A-Bus CS0
+ 04000000-04FFFFFF : A-Bus CS1
+ 05000000-057FFFFF : A-Bus Dummy
+ 05800000-058FFFFF : A-Bus CS2 [2]
+ 05900000-059FFFFF : Lockup when read
+ 05A00000-05AFFFFF : 68000 Work RAM (512K) [9]
+ 05B00000-05BFFFFF : SCSP registers (4K, mirrored every 4K)
+ 05C00000-05C7FFFF : VDP1 VRAM (512K)
+ 05C80000-05CFFFFF : VDP1 Framebuffer (256K, mirrored every 256K) [7]
+ 05D00000-05D7FFFF : VDP1 Registers [6]
+ 05D80000-05DFFFFF : Lockup when read
+ 05E00000-05EFFFFF : VDP2 VRAM (512K, mirrored every 512K)
+ 05F00000-05F7FFFF : VDP2 CRAM (4K, mirrored every 4K) [8]
+ 05F80000-05FBFFFF : VDP2 registers (512 bytes, mirrored every 512 bytes)
+ 05FC0000-05FDFFFF : Always returns $000E0000
+ 05FE0000-05FEFFFF : SCU registers (256 bytes, mirrored every 256 bytes)
+ 05FF0000-05FFFFFF : Unknown registers (256 bytes, mirrored every 256 bytes) [3]
+ 06000000-07FFFFFF : Work RAM High (1MB, mirrored every 1MB)
+*/
+  u32 memArea = addr & 0x0FF00000;
+  if (memArea < 0x00100000)
+    return BIOS_MEM;
+  if ((memArea >= 0x00200000) && (memArea < 0x00300000))
+    return LO_MEM;
+  if ((memArea >= 0x06000000) && (memArea < 0x08000000))
+    return HI_MEM;
+  return UNDEF_MEM;
+}
 
 Block *CompileBlocks::Init(Block *dynaCode)
 {
@@ -706,20 +776,24 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
   blockCount = LastMakeBlock;
   
   if (g_CompleBlock[blockCount].b_addr != 0x00) {
-    switch (g_CompleBlock[blockCount].b_addr & 0x0FF00000) {
-    case 0x00000000:
+
+    MemArea blockArea = getMemArea(g_CompleBlock[blockCount].b_addr);
+    switch (blockArea) {
+    case BIOS_MEM:
+#ifndef TEST_MODE
       if (yabsys.emulatebios) {
         return NULL;
       }
-      else {
-        LookupTableRom[ (g_CompleBlock[blockCount].b_addr&0x000FFFFF)>>1  ] = NULL;
+      else
+#endif 
+      {
+        LookupTableRom[ (g_CompleBlock[blockCount].b_addr&0x0007FFFF)>>1  ] = NULL;
       }
       break;
-    case 0x00200000:
+    case LO_MEM:
       LookupTableLow[ (g_CompleBlock[blockCount].b_addr&0x000FFFFF)>>1 ] = NULL;
       break;
-    case 0x06000000:
-      /*case 0x06100000:*/
+    case HI_MEM:
       LookupTable[ (g_CompleBlock[blockCount].b_addr & 0x000FFFFF)>>1 ] = NULL;
       break;
     default:
@@ -764,11 +838,16 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 #if _WINDOWS
   if (*(op->off3) != 0xFF)
     *(u16*)(ptr + *(op->off3)) = (u16)(opcode & 0xfff);
-#else  
+#else
+#ifdef DYNAREC_X64
+  if (*(op->off3) != 0xFF)
+    *(u16*)(ptr + *(op->off3)) = (u16)(opcode & 0xfff);
+#else
   if (*(op->off3) != 0xFF) {
     *(ptr + *(op->off3)) = (u8)((opcode >> 8) & 0x0f);
     *(ptr + *(op->off3) + 4) = (u8)(opcode & 0xff);
   }
+#endif
 #endif  
 }
 
@@ -891,7 +970,11 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     if (asm_list[i].delay == 0) { 
       memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
+#ifndef DYNAREC_X64
       instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size;
+#else
+      count+=1;
+#endif
       opcodePass(&asm_list[i], op, ptr);
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
@@ -902,7 +985,11 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     else if (asm_list[i].delay == 0xFF ) { 
       memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
+#ifndef DYNAREC_X64
       instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size;
+#else
+      count+=1;
+#endif
       opcodePass(&asm_list[i], op, ptr);
       ptr += *(asm_list[i].size) + nomal_seperator_size;
     }
@@ -912,7 +999,11 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
       memcpy((void*)(ptr + *(asm_list[i].size)+ nomal_seperator_size), (void*)PageFlip, DELAYJUMPSIZE);
+#ifndef DYNAREC_X64
       instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
+#else
+      count+=1;
+#endif
       opcodePass(&asm_list[i], op, ptr);
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
@@ -925,7 +1016,11 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u8 cycle = asm_list[i].cycle;
       memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)delay_seperator, delay_seperator_size);
+#ifndef DYNAREC_X64
       instrSize[blockCount][count++] = *(asm_list[i].size) + delay_seperator_size;
+#else
+      count+=1;
+#endif
       opcodePass(&asm_list[i], op, ptr);
       ptr += *(asm_list[i].size) + delay_seperator_size;
 
@@ -955,7 +1050,11 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       cycle += asm_list[j].cycle;
       memcpy((void*)ptr, (void*)(asm_list[j].func), *(asm_list[j].size));
       memcpy((void*)(ptr + *(asm_list[j].size)), (void*)seperator_delay_after, SEPERATORSIZE_DELAY_AFTER);
+#ifndef DYNAREC_X64
       instrSize[blockCount][count++] = *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
+#else
+      count+=1;
+#endif
       opcodePass(&asm_list[j], temp, ptr);
       u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
       *counterpos = cycle;
@@ -995,13 +1094,16 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       else if (jumppc < start_addr && write_memory_counter == 0 ) {
 
         Block * tmp = NULL; 
-        if ( (jumppc&0x0FF00000) == 0x06000000 && (start_addr & 0x0FF00000) == 0x06000000) {
+
+        MemArea areaJump = getMemArea(jumppc);
+        MemArea areaStart = getMemArea(start_addr);
+        if ( areaJump == HI_MEM && areaStart == HI_MEM) {
           tmp = LookupTable[(jumppc & 0x000FFFFF) >> 1];
-        }else if ((jumppc & 0x0FF00000) == 0x00200000 && (start_addr & 0x0FF00000) == 0x00200000) {
+        }else if (areaJump == LO_MEM && areaStart == LO_MEM) {
           tmp = LookupTableLow[(jumppc & 0x000FFFFF) >> 1];
         }
-        else if ((jumppc & 0x0FF00000) == 0x00000000 && (start_addr & 0x0FF00000) == 0x00000000) {
-          tmp = LookupTableRom[(jumppc & 0x000FFFFF) >> 1];
+        else if (areaJump == BIOS_MEM && areaStart == BIOS_MEM) {
+          tmp = LookupTableRom[(jumppc & 0x0007FFFF) >> 1];
         }
         if (tmp != NULL && (tmp->flags&BLOCK_WRITE) == 0 && (tmp->e_addr+2) == page->b_addr ) {
           page->flags |= BLOCK_LOOP;
@@ -1077,12 +1179,12 @@ void DynarecSh2::ResetCPU(){
   memset((void*)m_pDynaSh2->CtrlReg, 0, sizeof(u32) * 3);
   memset((void*)m_pDynaSh2->SysReg, 0, sizeof(u32) * 6);
 
-  m_pDynaSh2->CtrlReg[0] = 0x000000;  // SR
-  m_pDynaSh2->CtrlReg[2] = 0x000000; // VBR
-  m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2]);
-  m_pDynaSh2->GenReg[15] = memGetLong(m_pDynaSh2->CtrlReg[2] + 4);
-  m_pDynaSh2->SysReg[4] = 0;
-  m_pDynaSh2->SysReg[5] = 0;
+  SET_SR(0x000000);  // SR
+  SET_VBR(0x000000); // VBR
+  SET_PC(memGetLong(GET_VBR()));
+  m_pDynaSh2->GenReg[15] = memGetLong(GET_VBR() + 4); //Stack Pointer
+  SET_COUNT(0);
+  SET_ICOUNT(0);
   pre_cnt_ = 0;
   pre_exe_count_ = 0;
   interruput_chk_cnt_ = 0;
@@ -1168,16 +1270,18 @@ int DynarecSh2::Execute(){
 
   m_pCompiler->exec_count_++;
 
-  switch( GET_PC() & 0x0FF00000 )
+  switch( getMemArea(GET_PC()) )
   {
     
   // ROM
-  case 0x00000000:
-    if (yabsys.emulatebios){
+  case BIOS_MEM:
+    if (yabsys.emulatebios) {
+#ifndef TEST_MODE
       BiosHandleFunc(ctx_);
-      return IN_INFINITY_LOOP;
+#endif
+      return 0;
     }
-    pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
+    pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x0007FFFF) >> 1];
     if( pBlock == NULL )
     {
       pBlock = m_pCompiler->CompileBlock(GET_PC());
@@ -1185,12 +1289,12 @@ int DynarecSh2::Execute(){
         Undecoded();
         return IN_INFINITY_LOOP;
       }
-      m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
+      m_pCompiler->LookupTableRom[(GET_PC() & 0x0007FFFF) >> 1] = pBlock;
     }
     break;
 
   // Low Memory
-  case 0x00200000:
+  case LO_MEM:
     pBlock = m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1];
     if( pBlock == NULL )
     {
@@ -1204,8 +1308,7 @@ int DynarecSh2::Execute(){
     break;
 
   // High Memory
-  case 0x06000000:
-  /*case 0x06100000:*/
+  case HI_MEM:
 
     pBlock = m_pCompiler->LookupTable[ (GET_PC() & 0x000FFFFF)>>1 ];
     if( pBlock == NULL )
@@ -1367,7 +1470,7 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
   return 0; 
 }
 
-
+#ifndef TEST_MODE
 int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
   char linebuf[128];
   if (from > to) return -1;
@@ -1378,6 +1481,7 @@ int DynarecSh2GetDisasmebleString(string & out, u32 from, u32 to) {
   }
   return 0;
 }
+#endif
 
 int DynarecSh2::Resume() {
   statics_trigger_ = NORMAL;
@@ -1411,10 +1515,7 @@ void DynarecSh2::ShowStatics(){
 }
 
 int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
-#if !defined(DEBUG_CPU)
-//  buf = "Not Debug Mode\n";
-#else
-
+#if defined(DEBUG_CPU)
   if (statics_trigger_ != NORMAL && statics_trigger_ != FINISHED) return -1;
 
   statics_trigger_ = REQUESTED;

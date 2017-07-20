@@ -1239,6 +1239,19 @@ add eax,dword [edx] ;2
 mov [esp],eax       ;3
 .continue
 
+opdesc BT_S,		23,0xFF,0xFF,0xFF,11,0xFF
+opfunc BT_S
+bt dword [ebx],0    ;4
+jnc .continue        ;2
+and eax,byte 00     ;3
+or eax,byte 00      ;3
+shl eax,byte 1      ;3
+add eax,byte 4      ;3
+add eax,dword [edx] ;2
+mov [esp],eax       ;3
+.continue
+
+
 opdesc BF,		30,0xFF,0xFF,0xFF,18,0xFF
 opfunc BF
 and [esp],dword 0   ;7

@@ -99,7 +99,7 @@ Settings::Settings( QObject* o )
 	This used to be "beginGroup( mProgramVersion );" so users would lose their
 	config with each new release...
 	*/
-	beginGroup( "0.9.11" );
+	beginGroup( "1.0" );
 }
 
 Settings::~Settings()

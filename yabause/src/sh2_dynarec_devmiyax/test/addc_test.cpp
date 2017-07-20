@@ -34,6 +34,9 @@ virtual void TearDown() {
 
 TEST_F(AddcTest, normal) {
 
+  for (int i = 0; i<16; i++)
+    pctx_->GetGenRegPtr()[i] = 0xFFFFFFFF;
+
   pctx_->GetGenRegPtr()[2]=0x00000000; //source
   pctx_->GetGenRegPtr()[3]=0x000000e0; //dest
   pctx_->SET_SR(0x00000E0);
@@ -46,12 +49,19 @@ TEST_F(AddcTest, normal) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
+  for (int i = 0; i<2; i++)
+    EXPECT_EQ( 0xFFFFFFFF, pctx_->GetGenRegPtr()[i] );
   EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[2] );
   EXPECT_EQ( 0x000000E0, pctx_->GetGenRegPtr()[3] );
+  for (int i = 4; i<16; i++)
+    EXPECT_EQ( 0xFFFFFFFF, pctx_->GetGenRegPtr()[i] );
   EXPECT_EQ( 0x000000E0, pctx_->GET_SR() );
 }
 
 TEST_F(AddcTest, normal_T1) {
+
+  for (int i = 0; i<16; i++)
+    pctx_->GetGenRegPtr()[i] = 0x00000000;
 
    pctx_->GetGenRegPtr()[2]=0xFFFFFFFF;
    pctx_->GetGenRegPtr()[3]=0x00000001;
@@ -65,12 +75,19 @@ TEST_F(AddcTest, normal_T1) {
    pctx_->SET_PC( 0x06000000 );
    pctx_->Execute();
 
+  for (int i = 0; i<2; i++)
+    EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[i] );
    EXPECT_EQ( 0xffffffff, pctx_->GetGenRegPtr()[2] );
    EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[3] );
+  for (int i = 4; i<16; i++)
+    EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[i] );
    EXPECT_EQ( 0x000000E1, pctx_->GET_SR() );
 }
 
 TEST_F(AddcTest, normal_T21) {
+
+  for (int i = 0; i<16; i++)
+    pctx_->GetGenRegPtr()[i] = 0x00000000;
 
    pctx_->GetGenRegPtr()[2]=0xFFFFFFFF;
    pctx_->GetGenRegPtr()[3]=0x00000000;
@@ -84,8 +101,12 @@ TEST_F(AddcTest, normal_T21) {
    pctx_->SET_PC( 0x06000000 );
    pctx_->Execute();
 
+  for (int i = 0; i<2; i++)
+    EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[i] );
    EXPECT_EQ( 0xffffffff, pctx_->GetGenRegPtr()[2] );
    EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[3] );
+  for (int i = 4; i<16; i++)
+    EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[i] );
    EXPECT_EQ( 0x000000E1, pctx_->GET_SR() );
 }
 }  // namespacegPtr

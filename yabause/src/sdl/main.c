@@ -130,8 +130,6 @@ VideoInterface_struct *VIDCoreList[] = {
 NULL
 };
 
-#define FORCE_CORE_SOFT
-
 #ifdef YAB_PORT_OSD
 #include "nanovg/nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
@@ -214,12 +212,12 @@ void YuiInit() {
 #if defined(DYNAREC_DEVMIYAX)
   yinit.sh2coretype = 3;
 #elif defined(SH2_DYNAREC)
-//	yinit.sh2coretype = 2;
+	yinit.sh2coretype = 2;
 #else
 	yinit.sh2coretype = 0;
 #endif
 #ifdef FORCE_CORE_SOFT
-  yinit.vidcoretype = 0; //VIDCORE_SOFT;
+  yinit.vidcoretype = VIDCORE_SOFT;
 #else
 	yinit.vidcoretype = VIDCORE_OGL; //VIDCORE_SOFT  
 #endif
@@ -250,10 +248,10 @@ static int SetupOpenGL() {
     exit(EXIT_FAILURE);
 
   glfwSetErrorCallback(error_callback);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API) ;
-  //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_RED_BITS,8);
   glfwWindowHint(GLFW_GREEN_BITS,8);
   glfwWindowHint(GLFW_BLUE_BITS,8);

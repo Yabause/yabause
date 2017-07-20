@@ -32,7 +32,7 @@ set(yabause_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "sdl;qt" CACHE STRING "List of ports to build")
+set(YAB_PORTS "linux;qt" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
@@ -119,7 +119,7 @@ endif()
 
 #-------------------------------------------------------
 
-option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
+option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" ON)
 if (YAB_WANT_DYNAREC_DEVMIYAX)
 	add_definitions(-DDYNAREC_DEVMIYAX=1)
 	
@@ -144,6 +144,17 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 				set(yabause_SOURCES 
 				  ${yabause_SOURCES}
 					sh2_dynarec_devmiyax/dynalib_arm.s)
+                        else ()
+                        	if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+ 				  enable_language(ASM_NASM)
+ 				  set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -O3 -l func.lst")
+ 				  add_definitions(-DARCH_IS_LINUX=1)
+ 				  add_definitions(-DDYNAREC_X64=1)
+ 				  add_definitions(-DYAB_ASYNC_RENDERING)
+ 				  set(yabause_SOURCES 
+ 				    ${yabause_SOURCES}
+ 				    sh2_dynarec_devmiyax/dynalib_x64.nasm)
+				endif ()
 			endif ()
 		endif ()
 
@@ -564,12 +575,7 @@ option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 # SH2 dynamic recompiler
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
-if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
-	option(SH2_DYNAREC "SH2 dynamic recompiler" OFF)
-else ()
-	option(SH2_DYNAREC "SH2 dynamic recompiler" ON)
-endif()
-
+option(SH2_DYNAREC "SH2 dynamic recompiler" ON)
 if (SH2_DYNAREC)
 	if( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
 		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
@@ -812,6 +818,13 @@ else ()
 	add_definitions(-DUNKNOWN_ARCH=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
 endif ()
+
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-PIE -no-pie")
+        set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -fno-PIE -no-pie")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-PIE -no-pie" )
+endif()
+
 
 set(YAB_OPTIMIZATION "-O3" CACHE STRING "Override optimization level")
 

@@ -85,6 +85,13 @@ const int MAXBLOCKSIZE = 3072-(4*4);
 #define MAINMEMORY_SIZE (0x100000);
 #define ROM_SIZE (0x80000);
 
+typedef enum {
+  UNDEF_MEM = 0,
+  BIOS_MEM,
+  LO_MEM,
+  HI_MEM
+} MemArea;
+
 struct Block
 {
   u8  code[MAXBLOCKSIZE];
@@ -331,7 +338,7 @@ public:
   inline void SET_PC( u32 v ) { m_pDynaSh2->SysReg[3] = v; }
   inline void SET_COUNT( u32 v ) { m_pDynaSh2->SysReg[4] = v; } 
   inline void SET_ICOUNT(u32 v ) { m_pDynaSh2->SysReg[5] = v; } 
-  inline void SET_SR(u32 v ) { m_pDynaSh2->CtrlReg[0] = v; }
+  inline void SET_SR(u32 v ) { m_pDynaSh2->CtrlReg[0] = v & 0x3F3; }
   inline void SET_GBR( u32 v ) { m_pDynaSh2->CtrlReg[1] = v; }
   inline void SET_VBR( u32 v ) { m_pDynaSh2->CtrlReg[2] = v; }  
 

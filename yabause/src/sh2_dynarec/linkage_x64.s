@@ -246,11 +246,13 @@ finishline:
 	adc	$0, %edi
 	mov	%ecx, saved_centicycles
 	call	M68KExec
+	call	SyncScspDynarec
 	add	$8, %rsp /* Align stack */
 	ret
 vblankin:
 	call	SmpcINTBACKEnd
 	call	Vdp2VBlankIN
+        call    Vdp2VBlank
 	call	CheatDoPatches
 	jmp	nextline
 nextframe:

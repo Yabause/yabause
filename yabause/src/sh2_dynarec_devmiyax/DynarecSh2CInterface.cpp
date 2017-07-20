@@ -298,22 +298,62 @@ void SH2DynSetPC(SH2_struct *context, u32 value){
   pctx->SET_PC(value);
 }
 
+static MemArea getMemArea(u32 addr) {
+/*
+00000000-000FFFFF : Boot ROM (512K, mirrored every 512K)
+ 00100000-0017FFFF : SMPC registers (128 bytes, mirrored every 128 bytes)
+ 00180000-001FFFFF : Backup RAM (64K, mirrored every 64K) [1]
+ 00200000-002FFFFF : Work RAM Low (1MB)
+ 00300000-003FFFFF : Random data on every read (mostly $00)
+ 00400000-007FFFFF : Always returns $0000.
+ 00800000-00FFFFFF : Always returns $00000001000200030004000500060007.
+ 01000000-01FFFFFF : Always returns $FFFF. [4]
+ 02000000-03FFFFFF : A-Bus CS0
+ 04000000-04FFFFFF : A-Bus CS1
+ 05000000-057FFFFF : A-Bus Dummy
+ 05800000-058FFFFF : A-Bus CS2 [2]
+ 05900000-059FFFFF : Lockup when read
+ 05A00000-05AFFFFF : 68000 Work RAM (512K) [9]
+ 05B00000-05BFFFFF : SCSP registers (4K, mirrored every 4K)
+ 05C00000-05C7FFFF : VDP1 VRAM (512K)
+ 05C80000-05CFFFFF : VDP1 Framebuffer (256K, mirrored every 256K) [7]
+ 05D00000-05D7FFFF : VDP1 Registers [6]
+ 05D80000-05DFFFFF : Lockup when read
+ 05E00000-05EFFFFF : VDP2 VRAM (512K, mirrored every 512K)
+ 05F00000-05F7FFFF : VDP2 CRAM (4K, mirrored every 4K) [8]
+ 05F80000-05FBFFFF : VDP2 registers (512 bytes, mirrored every 512 bytes)
+ 05FC0000-05FDFFFF : Always returns $000E0000
+ 05FE0000-05FEFFFF : SCU registers (256 bytes, mirrored every 256 bytes)
+ 05FF0000-05FFFFFF : Unknown registers (256 bytes, mirrored every 256 bytes) [3]
+ 06000000-07FFFFFF : Work RAM High (1MB, mirrored every 1MB)
+*/
+  u32 memArea = addr & 0x0FF00000;
+  if (memArea < 0x00100000)
+    return BIOS_MEM;
+  if ((memArea >= 0x00200000) && (memArea < 0x00300000))
+    return LO_MEM;
+  if ((memArea >= 0x06000000) && (memArea < 0x08000000))
+    return HI_MEM;
+  return UNDEF_MEM;
+}
+
+
 void SH2DynWriteNotify(u32 start, u32 length){
   CompileBlocks * block = CompileBlocks::getInstance();
   
-  switch (start & 0x0FF00000){
+  switch (getMemArea(start)){
     // ROM
-  case 0x00000000:
+  case BIOS_MEM:
       block->LookupTableRom[ (start&0x000FFFFF)>>1 ] = NULL;
     break;
 
   // Low Memory
-  case 0x00200000:
+  case LO_MEM:
     for (u32 addr = start; addr< start + length; addr += 2)
       block->LookupTableLow[ (addr&0x000FFFFF)>>1 ] = NULL;
     break;
     // High Memory
-  case 0x06000000:
+  case HI_MEM:
     for( u32 addr = start; addr< start+length; addr+=2 )
       block->setDirty(addr);
     break;
@@ -348,14 +388,14 @@ void memSetByte(u32 addr , u8 data )
   //LOG("memSetWord %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
-  switch (addr & 0x0FF00000)
+  switch (getMemArea(addr))
   {
   // Low Memory
-  case 0x00200000:
+  case LO_MEM:
     block->LookupTableLow[  (addr&0x000FFFFF)>>1 ] = NULL;
     break;
   // High Memory
-  case 0x06000000:
+  case HI_MEM:
 #if defined(SET_DIRTY)
     block->setDirty(addr);
 #else
@@ -380,14 +420,14 @@ void memSetWord(u32 addr, u16 data )
   //LOG("memSetWord %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
-  switch (addr & 0x0FF00000)
+  switch (getMemArea(addr))
   {
   // Low Memory
-   case 0x00200000:
+   case LO_MEM:
     block->LookupTableLow[ (addr&0x000FFFFF)>>1 ] = NULL;
     break;
   // High Memory
-   case 0x06000000: {
+   case HI_MEM: {
 #if defined(SET_DIRTY)
      block->setDirty(addr);
 #else
@@ -413,15 +453,16 @@ void memSetLong(u32 addr , u32 data )
   //LOG("memSetLong %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
-  switch (addr & 0x0FF00000)
+
+  switch (getMemArea(addr))
   {  
     // Low Memory
-  case 0x00200000:
+  case LO_MEM:
     block->LookupTableLow[ (addr & 0x000FFFFF)>>1  ] = NULL;
     block->LookupTableLow[ ((addr & 0x000FFFFF)>>1) + 1 ] = NULL;
     break;
   // High Memory
-  case 0x06000000:
+  case HI_MEM:
 #if defined(SET_DIRTY)
     block->setDirty(addr);
     block->setDirty(addr+2);
@@ -438,6 +479,7 @@ void memSetLong(u32 addr , u32 data )
       block->LookupTableC[ (addr&0x000FFFFF)>>1 ] = NULL;
     }
   }
+
   MappedMemoryWriteLong(addr, data);
   dynaFree();
 }

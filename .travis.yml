@@ -118,5 +118,5 @@ before_install:
   - export GIT_HASH=$(git rev-parse --short HEAD)
 
 script:
-  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON -DYAB_WANT_DYNAREC_DEDVMIYAX ..
+  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON cmake -DYAB_WANT_DYNAREC_DEVMIYAX=ON ..
   - make

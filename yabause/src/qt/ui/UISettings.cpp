@@ -545,6 +545,7 @@ void UISettings::saveSettings()
 {
 	// get settings pointer
 	Settings* s = QtYabause::settings();
+        s->setValue( "General/Version", Settings::programVersion() );
 
 	// general
 	s->setValue( "General/Bios", leBios->text() );

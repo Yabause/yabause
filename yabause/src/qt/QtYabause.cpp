@@ -164,6 +164,7 @@ extern "C"
 
 UIYabause* QtYabause::mainWindow( bool create )
 {
+        qputenv("QT_AUTO_SCREEN_SCALE_FACTOR", "1");
 	if ( !mUIYabause && create )
 		mUIYabause = new UIYabause;
 	return mUIYabause;

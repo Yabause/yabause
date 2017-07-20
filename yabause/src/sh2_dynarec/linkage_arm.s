@@ -503,6 +503,8 @@ vblankin:
 	add	r0, r0, #0 /* NOP for Cortex-A8 branch predictor */
 	bl	Vdp2VBlankIN
 	add	r0, r0, #0 /* NOP for Cortex-A8 branch predictor */
+	bl	Vdp2VBlank
+	add	r0, r0, #0 /* NOP for Cortex-A8 branch predictor */
 	bl	CheatDoPatches
 	add	r0, r0, #0 /* NOP for Cortex-A8 branch predictor */
 	b	nextline
