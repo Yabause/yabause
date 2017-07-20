@@ -2172,7 +2172,7 @@ static void FASTCALL SH2stcmvbr(SH2_struct * sh)
 static void FASTCALL SH2stcsr(SH2_struct * sh)
 {
    s32 n = INSTRUCTION_B(sh->instruction);
-   sh->regs.R[n] = sh->regs.SR.all;
+   sh->regs.R[n] = sh->regs.SR.all & 0x3F3;
    sh->regs.PC+=2;
    sh->cycles++;
 }
