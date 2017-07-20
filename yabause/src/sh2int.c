@@ -1233,7 +1233,7 @@ static void FASTCALL SH2macl(SH2_struct * sh)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#if 1
+#if 0
 static void FASTCALL SH2macw(SH2_struct * sh)
 {
   s16 m0, m1;
