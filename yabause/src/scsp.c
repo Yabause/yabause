@@ -365,9 +365,7 @@ struct AlfoTables
 
 #if defined(ASYNC_SCSP)
 //global variables
-static YabCond *scspDone;
-static YabCond *sh2Done;
-static YabMutex *scspSh2Mut;
+static YabBarrier *AVBarrier;
 #endif
 struct AlfoTables alfo;
 
@@ -4957,11 +4955,7 @@ ScspDeInit (void)
   scsp_mute_flags = 0;
   thread_running = 0; 
 #if defined(ASYNC_SCSP)
-  YabThreadCondSignal(scspDone);
-  YabThreadCondSignal(sh2Done);
-  YabThreadFreeCond(scspDone);
-  YabThreadFreeCond(sh2Done);
-  scspDone = sh2Done = NULL;
+  AVBarrier = NULL;
   YabThreadWait(YAB_THREAD_SCSP);
 #endif
 
@@ -5264,21 +5258,18 @@ void ScspExec(){
 
 void SyncScsp() {
     if ((thread_running == 1) && (yabsys.LineCount == yabsys.MaxLineCount)) {
-        YabThreadCondSignal(sh2Done);
-        if (isAutoFrameSkip() == 0) YabThreadCondWait(scspDone, scspSh2Mut);
+        if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
     }
 }
 
 void SyncScspDynarec() {
     if ((thread_running == 1) && (yabsys.LineCount == (yabsys.MaxLineCount-1))) {
-        YabThreadCondSignal(sh2Done);
-        if (isAutoFrameSkip() == 0) YabThreadCondWait(scspDone, scspSh2Mut);
+        if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
     }
 }
  
 void syncWithSH2() {
-    YabThreadCondSignal(scspDone);
-    if (isAutoFrameSkip() == 0) YabThreadCondWait(sh2Done, scspSh2Mut);
+    if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
 }
 
 void ScspAsynMain( void * p ){
@@ -5372,9 +5363,7 @@ void ScspExec(){
 
 	if (thread_running == 0){
 		thread_running = 1;
-                scspDone = YabThreadCreateCond();
-                sh2Done = YabThreadCreateCond();
-                scspSh2Mut = YabThreadCreateMutex();
+                AVBarrier = YabThreadCreateBarrier(2);
 		YabThreadStart(YAB_THREAD_SCSP, ScspAsynMain, NULL);
     YabThreadUSleep(100000);
 	}

@@ -293,6 +293,26 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 
 //////////////////////////////////////////////////////////////////////////////
 
+typedef struct YabBarrier_win32
+{
+  SYNCHRONIZATION_BARRIER barrier;
+} YabBarrier_win32;
+
+void YabThreadBarrierWait(YabBarrier *bar){
+    if (bar == NULL) return;
+    YabBarrier_win32 * pctx;
+    pctx = (YabBarrier_win32 *)bar;
+    EnterSynchronizationBarrier(&pctx->barrier, 0);
+}
+
+YabBarrier * YabThreadCreateBarrier(int nbWorkers){
+    YabBarrier_win32 * mtx = (YabBarrier_win32 *)malloc(sizeof(YabBarrier_win32));
+    InitializeSynchronizationBarrier( &mtx->barrier, nbWorkers, -1 );
+    return (YabBarrier *)mtx;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 typedef struct YabCond_win32
 {
 	CONDITION_VARIABLE cond;

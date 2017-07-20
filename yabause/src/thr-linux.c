@@ -258,6 +258,26 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 
 //////////////////////////////////////////////////////////////////////////////
 
+typedef struct YabBarrier_pthread
+{
+  pthread_barrier_t barrier;
+} YabBarrier_pthread;
+
+void YabThreadBarrierWait(YabBarrier *bar){
+    if (bar == NULL) return;
+    YabBarrier_pthread * pctx;
+    pctx = (YabBarrier_pthread *)bar;
+    pthread_barrier_wait(&pctx->barrier);
+}
+
+YabBarrier * YabThreadCreateBarrier(int nbWorkers){
+    YabBarrier_pthread * mtx = (YabBarrier_pthread *)malloc(sizeof(YabBarrier_pthread));
+    pthread_barrier_init( &mtx->barrier,NULL, nbWorkers);
+    return (YabBarrier *)mtx;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 typedef struct YabCond_pthread
 {
   pthread_cond_t cond;

@@ -116,6 +116,11 @@ void YabThreadCondSignal(YabCond *cond);
 YabCond * YabThreadCreateCond();
 void YabThreadFreeCond( YabCond * mtx );
 
+typedef void * YabBarrier;
+
+void YabThreadBarrierWait(YabBarrier *bar);
+YabBarrier * YabThreadCreateBarrier(int nbWorkers);
+
 void YabThreadSetCurrentThreadAffinityMask(int mask);
 int YabThreadGetCurrentThreadAffinityMask();
 
