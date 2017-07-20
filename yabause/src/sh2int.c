@@ -252,8 +252,10 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 #endif
 
    // Execute it
-   sh->regs.PC -= 2;
+   u32 tmp = sh->regs.PC;
+   sh->regs.PC = addr;
    opcodes[sh->instruction](sh);
+   sh->regs.PC = tmp;
    
 }
 
