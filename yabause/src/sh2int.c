@@ -427,21 +427,21 @@ static void FASTCALL SH2bf(SH2_struct * sh)
 
 static void FASTCALL SH2bfs(SH2_struct * sh)
 {
+   u32 temp = sh->regs.PC;
    if (sh->regs.SR.part.T == 0)
    {
       s32 disp = (s32)(s8)sh->instruction;
-      u32 temp = sh->regs.PC;
 
       sh->regs.PC = sh->regs.PC + (disp << 1) + 4;
 
       sh->cycles += 2;
-      SH2delay(sh, temp + 2);
    }
    else
    {
-      sh->regs.PC += 2;
+      sh->regs.PC += 4;
       sh->cycles++;
    }
+   SH2delay(sh, temp + 2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -523,20 +523,20 @@ static void FASTCALL SH2bt(SH2_struct * sh)
 
 static void FASTCALL SH2bts(SH2_struct * sh)
 {
+   u32 temp = sh->regs.PC;
    if (sh->regs.SR.part.T)
    {
       s32 disp = (s32)(s8)sh->instruction;
-      u32 temp = sh->regs.PC;
 
       sh->regs.PC += (disp << 1) + 4;
       sh->cycles += 2;
-      SH2delay(sh, temp + 2);
    }
    else
    {
-      sh->regs.PC+=2;
+      sh->regs.PC+=4;
       sh->cycles++;
    }
+   SH2delay(sh, temp + 2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
