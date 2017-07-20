@@ -3021,14 +3021,14 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
   SH2HandleInterrupts(context);
-
+#if 0
 #ifndef EXEC_FROM_CACHE
    if (context->isIdle)
      SH2idleParse(context, target_cycle);
    else
      SH2idleCheck(context, target_cycle);
 #endif
-
+#endif
    while (context->cycles < target_cycle)
    {
 
