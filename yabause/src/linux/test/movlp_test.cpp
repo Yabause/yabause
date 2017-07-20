@@ -35,10 +35,10 @@ virtual void TearDown() {
 TEST_F(MovlpTest, normal) {
 
 
-  MSH2->regs.R[0]=0x0000030c;
+  MSH2->regs.R[0]=0x0600030c;
   MSH2->regs.R[6]=0xe0000000;
 
-  MappedMemoryWriteLong(0x0000030c,0x04);
+  MappedMemoryWriteLong(0x0600030c,0x04);
 
   // mova
   MappedMemoryWriteWord( 0x0600024c, 0x6606 );
@@ -48,15 +48,15 @@ TEST_F(MovlpTest, normal) {
   MSH2->regs.PC =( 0x0600024c );
   SH2Exec(MSH2, 1);
 
-  EXPECT_EQ( 0x0000310, MSH2->regs.R[0] );
-  EXPECT_EQ( 0x0000004, MSH2->regs.R[6] );
+  EXPECT_EQ( 0x06000310, MSH2->regs.R[0] );
+  EXPECT_EQ( 0x00000004, MSH2->regs.R[6] );
 }
 
 TEST_F(MovlpTest, samereg) {
 
-    MSH2->regs.R[0]=0x0000030c;
+    MSH2->regs.R[0]=0x0600030c;
 
-    MappedMemoryWriteLong(0x0000030c,0x04);
+    MappedMemoryWriteLong(0x0600030c,0x04);
 
     // mova
     MappedMemoryWriteWord( 0x0600024c, 0x6006 );
