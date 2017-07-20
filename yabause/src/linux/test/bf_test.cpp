@@ -53,6 +53,8 @@ TEST_F(BfTest, normal2) {
   // rtcl R[0]
 
   MappedMemoryWriteWord(0x06002E4C,0x8BF0);
+  MappedMemoryWriteWord(0x06002E4E, 0x0009 );
+  MappedMemoryWriteWord(0x06002E30, 0x000b );
 
 
 

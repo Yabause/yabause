@@ -33,7 +33,7 @@ virtual void TearDown() {
 
 TEST_F(ClrtTest, normal) {
 
-  MSH2->regs.SR.all = (0x00003FF);
+  MSH2->regs.SR.all = (0x00003F3);
 
   MappedMemoryWriteWord( 0x06000000, 0x0008 );  // clrt
   MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts

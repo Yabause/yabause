@@ -42,13 +42,13 @@ TEST_F(BraTest, normal) {
   EXPECT_EQ( 0x0600304A, MSH2->regs.PC );
 
   // BRA
-  MappedMemoryWriteWord( 0x00000220, 0xA015 );
-  MappedMemoryWriteWord( 0x00000222, 0x277A );  // nop
+  MappedMemoryWriteWord( 0x06000220, 0xA015 );
+  MappedMemoryWriteWord( 0x06000222, 0x277A );  // nop
 
-  MSH2->regs.PC = ( 0x00000220 );
+  MSH2->regs.PC = ( 0x06000220 );
   SH2Exec(MSH2, 1);
 
-  EXPECT_EQ( 0x0000024E, MSH2->regs.PC );
+  EXPECT_EQ( 0x0600024E, MSH2->regs.PC );
 
 }
 
