@@ -250,11 +250,9 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
    sh->pchistory[sh->pchistory_index & 0xFF] = addr;
    sh->regshistory[sh->pchistory_index & 0xFF] = sh->regs;
 #endif
-
    // Execute it
    sh->regs.PC -= 2;
    opcodes[sh->instruction](sh);
-   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -433,13 +431,14 @@ static void FASTCALL SH2bfs(SH2_struct * sh)
       sh->regs.PC = sh->regs.PC + (disp << 1) + 4;
 
       sh->cycles += 2;
+      SH2delay(sh, temp + 2);
    }
    else
    {
-      sh->regs.PC += 4;
+      sh->regs.PC += 2;
       sh->cycles++;
    }
-   SH2delay(sh, temp + 2);
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -528,13 +527,13 @@ static void FASTCALL SH2bts(SH2_struct * sh)
 
       sh->regs.PC += (disp << 1) + 4;
       sh->cycles += 2;
+      SH2delay(sh, temp + 2);
    }
    else
    {
-      sh->regs.PC+=4;
+      sh->regs.PC+=2;
       sh->cycles++;
    }
-   SH2delay(sh, temp + 2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
