@@ -355,7 +355,11 @@ void SH2DynWriteNotify(u32 start, u32 length){
     // High Memory
   case HI_MEM:
     for( u32 addr = start; addr< start+length; addr+=2 )
+#if defined(SET_DIRTY)
       block->setDirty(addr);
+#else
+      block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
+#endif
     break;
 
     // Cache

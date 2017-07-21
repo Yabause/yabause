@@ -182,7 +182,7 @@ struct x86op_desc
 
 };
 
-#define SET_DIRTY
+//#define SET_DIRTY
 extern "C" {
   void DebugLog(const char * format, ...);
 }
