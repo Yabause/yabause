@@ -356,7 +356,7 @@ mov  dword [PC], eax               ; 2
 pop  rax                     ; 1
 POPAD
 ret                          ; 1
-.continue:
+.continue: 
 END PageFlip
 
 ;-------------------------------------------------------
@@ -1209,8 +1209,9 @@ GET_BYTE_IMM al
 cbw
 cwde
 shl eax,byte 1      ;3
-add eax,byte 2      ;3
-add dword [PC], eax
+add eax,byte 4      ;3
+add eax, dword [PC] ;2
+mov dword [rsp], eax
 .continue:
 opdesc BT,		0xFF,0xFF,0xFF,11,0xFF
 
@@ -1236,8 +1237,9 @@ GET_BYTE_IMM al
 cbw
 cwde
 shl eax, byte 1      ;3
-add eax, byte 2      ;3
-add dword [PC], eax ;2
+add eax, byte 4      ;3
+add eax, dword [PC] ;2
+mov dword [rsp], eax
 .continue:
 opdesc BF,		0xFF,0xFF,0xFF,11,0xFF
 
