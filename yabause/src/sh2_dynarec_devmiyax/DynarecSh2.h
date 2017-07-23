@@ -119,6 +119,7 @@ struct tagSH2
   uintptr_t setmemword;
   uintptr_t setmemlong;
   uintptr_t eachclock;
+  uintptr_t checkint;
 };
 
 // Instruction
@@ -162,10 +163,11 @@ struct x86op_desc
   unsigned char cycle;
   unsigned char write_count;
   unsigned char build_count;
+  unsigned char checkint;
 
   x86op_desc(void(*ifunc)(), const unsigned short *isize, const unsigned char *isrc,
     const unsigned char *idest, const unsigned char *ioff1, const unsigned char *iimm,
-    const unsigned char *ioff3, const unsigned char idelay, const unsigned char icycle, const unsigned char iwrite_count = 0)
+    const unsigned char *ioff3, const unsigned char idelay, const unsigned char icycle, const unsigned char iwrite_count = 0, const unsigned char icheckint = 0)
   {
     func = ifunc;
     size = isize;
@@ -178,6 +180,7 @@ struct x86op_desc
     cycle = icycle;
     write_count = iwrite_count;
     build_count = 0;
+    checkint = icheckint;
   };
 
 };
@@ -362,7 +365,9 @@ extern "C"
 
   u8 memGetByte(u32);
   u16 memGetWord(u32);
-  u32 memGetLong(u32);  
+  u32 memGetLong(u32);
+
+  void CheckInterruptLoop();
   
 }
 

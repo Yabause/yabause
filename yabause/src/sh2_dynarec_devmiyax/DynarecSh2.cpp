@@ -50,6 +50,7 @@ extern const unsigned short seperator_delay_after_size;
 extern const unsigned short seperator_d_normal_size;
 extern const unsigned short seperator_d_delay_size;
 extern const unsigned short PageFlip_size;
+extern const unsigned short check_interrupt_size;
 #endif
 #if defined(ARCH_IS_LINUX)
 #include <unistd.h> // chaceflush
@@ -314,9 +315,9 @@ void DumpInstX( int i, u32 pc, u16 op  )
 
 
 
-#define opdesc(op, y, c, d)	x86op_desc(x86_##op, &op##_size, &op##_src, &op##_dest, &op##_off1, &op##_imm, &op##_off3, y, c, d)
+#define opdesc(op, y, c, d, e)	x86op_desc(x86_##op, &op##_size, &op##_src, &op##_dest, &op##_off1, &op##_imm, &op##_off3, y, c, d, e)
 
-#define opNULL			x86op_desc(0,0,0,0,0,0,0,0,0,0)
+#define opNULL			x86op_desc(0,0,0,0,0,0,0,0,0,0,0)
 
 #if _WINDOWS
 #define PROLOGSIZE		     27    
@@ -528,6 +529,7 @@ void seperator_normal(void);
 void seperator_delay(void);
 void seperator_delay_slot(void);
 void seperator_delay_after(void);
+void check_interrupt(void);
 
 void seperator_d_normal(void);
 void seperator_d_delay(void);
@@ -541,148 +543,148 @@ extern x86op_desc asm_list[];
 
 x86op_desc asm_list[] =
 {
-  opdesc(CLRT,0,1,0),       
-  opdesc(CLRMAC,0,1,0),
-  opdesc(DIV0U,0,1,0),
-  opdesc(NOP,0,1,0),
-  opdesc(RTE,4,4,0),
-  opdesc(RTS,4,2,0),
-  opdesc(SETT,0,1,0),
-  opdesc(SLEEP,0,3,0),
-  opdesc(CMP_PL,0,1,0),
-  opdesc(CMP_PZ,0,1,0),
-  opdesc(DT,0,1,1),
-  opdesc(MOVT,0,1,0),
-  opdesc(ROTL,0,1,0),
-  opdesc(ROTR,0,1,0),
-  opdesc(ROTCL,0,1,0),
-  opdesc(ROTCR,0,1,0),
-  opdesc(SHL,0,1,0),
-  opdesc(SHAR,0,1,0),
-  opdesc(SHL,0,1,0),
-  opdesc(SHLR,0,1,0),
-  opdesc(SHLL2,0,1,0),
-  opdesc(SHLR2,0,1,0),
-  opdesc(SHLL8,0,1,0),
-  opdesc(SHLR8,0,1,0),
-  opdesc(SHLL16,0,1,0),
-  opdesc(SHLR16,0,1,0),
-  opdesc(STC_SR,0xFF,1,1),
-  opdesc(STC_GBR,0xFF,1,1),
-  opdesc(STC_VBR,0xFF,1,1),
-  opdesc(STS_MACH,0xFF,1,0),
-  opdesc(STS_MACL,0xFF,1,0),
-  opdesc(STS_PR,0xFF,1,0),
-  opdesc(TAS,0,4,1),         // 0x401b
-  opdesc(STC_SR_MEM,0xFF,2,1),
-  opdesc(STC_GBR_MEM,0xFF,2,1),
-  opdesc(STC_VBR_MEM,0xFF,2,1),
-  opdesc(STS_MACH_DEC,0xFF,2,1),
-  opdesc(STS_MACL_DEC,0xFF,2,1),
-  opdesc(STSMPR,0xFF,1,1),     // 0x4022
-  opdesc(LDC_SR,0xFF,1,0),
-  opdesc(LDCGBR,0xFF,1,0),
-  opdesc(LDC_VBR,0xFF,1,0),
-  opdesc(LDS_MACH,0xFF,1,0),
-  opdesc(LDS_MACL,0xFF,1,0),
-  opdesc(LDS_PR,0xFF,1,0),
-  opdesc(JMP, 3,2,0),
-  opdesc(JSR, 4,2,0),
-  opdesc(LDC_SR_INC,0xFF,3,0),  
-  opdesc(LDC_GBR_INC,0xFF,3,0),
-  opdesc(LDC_VBR_INC,0xFF,3,0),
-  opdesc(LDS_MACH_INC,0xFF,1,0),
-  opdesc(LDS_MACL_INC,0xFF,1,0),
-  opdesc(LDS_PR_INC,0xFF,1,0),
-  opdesc(BRAF,4,2,0),
-  opdesc(BSRF,4,2,0),
-  opdesc(ADD,0,1,1),
-  opdesc(ADDC,0,1,1),
-  opdesc(ADDV,0,1,0),  // 0x300F
-  opdesc(AND,0,1,0),
-  opdesc(CMP_EQ,0,1,0),
-  opdesc(CMP_HS,0,1,0),
-  opdesc(CMP_GE,0,1,0),
-  opdesc(CMP_HI,0,1,0),
-  opdesc(CMP_GT,0,1,0),
-  opdesc(CMPSTR,0,1,0), // 0x200C
-  opdesc(DIV1,0,1,0),   // 0x3004
-  opdesc(DIV0S,0,1,0),  // 0x2007
-  opdesc(DMULS,0,4,0),  // 0x300D
-  opdesc(DMULU,0,4,0),  // 0x3005
-  opdesc(EXTS_B,0,1,0),
-  opdesc(EXTS_W,0,1,0),
-  opdesc(EXTUB,0,1,0),
-  opdesc(EXTU_W,0,1,0),
-  opdesc(MOVR,0,1,0),  // 0x6003
-  opdesc(MULL,0,4,0),  // 0x0007
-  opdesc(MULS,0,3,0),  // 0x200f
-  opdesc(MULU,0,3,0),  // 0x200e
-  opdesc(NEG,0,1,0),
-  opdesc(NEGC,0,1,0),
-  opdesc(NOT,0,1,0),
-  opdesc(OR,0,1,0),
-  opdesc(SUB,0,1,0),
-  opdesc(SUBC,0,1,0),
-  opdesc(SUBV,0,1,0),  // 0x300B
-  opdesc(SWAP_B,0,1,0),
-  opdesc(SWAP_W,0,1,0),
-  opdesc(TST,0,1,0),
-  opdesc(XOR,0,1,0),
-  opdesc(XTRCT,0,1,0),
-  opdesc(MOVBS,0,1,1),
-  opdesc(MOVWS,0,1,1),
-  opdesc(MOVLS,0,1,1),
-  opdesc(MOVBL,0,1,0), // 6000
-  opdesc(MOVWL,0,1,0), // 6001
-  opdesc(MOVL_MEM_REG,0,1,0),
-  opdesc(MAC_L,0,3,0),  // 0x000f
-  opdesc(MAC_W,0,3,0),  // 0x400f
-  opdesc(MOVBP,0,1,0),  // 6004
-  opdesc(MOVWP,0,1,0),  // 6005
-  opdesc(MOVLP,0,1,1),  // 6006
-  opdesc(MOVBM,0,1,1),  // 0x2004,
-  opdesc(MOVWM,0,1, 0),  // 0x2005,
-  opdesc(MOVLM,0,1,1),  // 0x2006
-  opdesc(MOVBS0,0,1,1), // 0x0004
-  opdesc(MOVWS0,0,1,1), // 0x0005
-  opdesc(MOVLS0,0,1,1), // 0x0006
-  opdesc(MOVBL0,0,1, 0), // 0x000C
-  opdesc(MOVWL0,0,1, 0), // 0x000D 
-  opdesc(MOVLL0,0,1, 0), // 0x000E
-  opdesc(MOVBL4,0,1,1), // 0x8400
-  opdesc(MOVWL4,0,1, 0), // 0x8500
-  opdesc(MOVBS4,0,1, 0), // 0x8000
-  opdesc(MOVWS4,0,1,1), // 0x8100
-  opdesc(MOVLS4,0,1,1), // 0x1000
-  opdesc(MOVLL4,0,1, 0), // 0x5000 ,1
-  opdesc(MOVBSG,0,1,1), // 0xC000
-  opdesc(MOVWSG,0,1,1), // 0xc100
-  opdesc(MOVLSG,0,1,1), // 0xC200
-  opdesc(MOVBLG,0,1, 0), // 0xC400
-  opdesc(MOVWLG,0,1, 0), // 0xC500
-  opdesc(MOVLLG,0,1, 0), // 0xC600
-  opdesc(MOVA,0,1, 0),
-  opdesc(BF,1,3, 0),
-  opdesc(BF_S,3,2, 0),
-  opdesc(BT,1,3, 0),
-  opdesc(BT_S,3,2, 0),
-  opdesc(BRA,2,2, 0),
-  opdesc(BSR,2,2, 0),
-  opdesc(MOVWI,0,1, 0),
-  opdesc(MOVLI,0, 1, 0),
-  opdesc(AND_B,0,3,1),
-  opdesc(OR_B,0,3,1),
-  opdesc(TST_B,0, 1, 0),
-  opdesc(XOR_B,0,3,1),
-  opdesc(ANDI,0,1, 0),
-  opdesc(CMP_EQ_IMM,0,1, 0),
-  opdesc(ORI,0,1, 0),
-  opdesc(TSTI,0,1, 0),  // C800
-  opdesc(XORI,0,1, 0),
-  opdesc(TRAPA,5,8,1), // 0xc300
-  opdesc(ADDI,0,1, 0),
-  opdesc(MOVI,0,1, 0),
+  opdesc(CLRT,0,1,0,0),       
+  opdesc(CLRMAC,0,1,0,0),
+  opdesc(DIV0U,0,1,0,0),
+  opdesc(NOP,0,1,0,0),
+  opdesc(RTE,4,4,0,1),
+  opdesc(RTS,4,2,0,0),
+  opdesc(SETT,0,1,0,0),
+  opdesc(SLEEP,0,3,0,0),
+  opdesc(CMP_PL,0,1,0,0),
+  opdesc(CMP_PZ,0,1,0,0),
+  opdesc(DT,0,1,1,0),
+  opdesc(MOVT,0,1,0,0),
+  opdesc(ROTL,0,1,0,0),
+  opdesc(ROTR,0,1,0,0),
+  opdesc(ROTCL,0,1,0,0),
+  opdesc(ROTCR,0,1,0,0),
+  opdesc(SHL,0,1,0,0),
+  opdesc(SHAR,0,1,0,0),
+  opdesc(SHL,0,1,0,0),
+  opdesc(SHLR,0,1,0,0),
+  opdesc(SHLL2,0,1,0,0),
+  opdesc(SHLR2,0,1,0,0),
+  opdesc(SHLL8,0,1,0,0),
+  opdesc(SHLR8,0,1,0,0),
+  opdesc(SHLL16,0,1,0,0),
+  opdesc(SHLR16,0,1,0,0),
+  opdesc(STC_SR,0xFF,1,1,0),
+  opdesc(STC_GBR,0xFF,1,1,0),
+  opdesc(STC_VBR,0xFF,1,1,0),
+  opdesc(STS_MACH,0xFF,1,0,0),
+  opdesc(STS_MACL,0xFF,1,0,0),
+  opdesc(STS_PR,0xFF,1,0,0),
+  opdesc(TAS,0,4,1,0),         // 0x401b
+  opdesc(STC_SR_MEM,0xFF,2,1,0),
+  opdesc(STC_GBR_MEM,0xFF,2,1,0),
+  opdesc(STC_VBR_MEM,0xFF,2,1,0),
+  opdesc(STS_MACH_DEC,0xFF,2,1,0),
+  opdesc(STS_MACL_DEC,0xFF,2,1,0),
+  opdesc(STSMPR,0xFF,1,1,0),     // 0x4022
+  opdesc(LDC_SR,0xFF,1,0,1),
+  opdesc(LDCGBR,0xFF,1,0,0),
+  opdesc(LDC_VBR,0xFF,1,0,0),
+  opdesc(LDS_MACH,0xFF,1,0,0),
+  opdesc(LDS_MACL,0xFF,1,0,0),
+  opdesc(LDS_PR,0xFF,1,0,0),
+  opdesc(JMP, 3,2,0,0),
+  opdesc(JSR, 4,2,0,0),
+  opdesc(LDC_SR_INC,0xFF,3,0,1),  
+  opdesc(LDC_GBR_INC,0xFF,3,0,0),
+  opdesc(LDC_VBR_INC,0xFF,3,0,0),
+  opdesc(LDS_MACH_INC,0xFF,1,0,0),
+  opdesc(LDS_MACL_INC,0xFF,1,0,0),
+  opdesc(LDS_PR_INC,0xFF,1,0,0),
+  opdesc(BRAF,4,2,0,0),
+  opdesc(BSRF,4,2,0,0),
+  opdesc(ADD,0,1,1,0),
+  opdesc(ADDC,0,1,1,0),
+  opdesc(ADDV,0,1,0,0),  // 0x300F
+  opdesc(AND,0,1,0,0),
+  opdesc(CMP_EQ,0,1,0,0),
+  opdesc(CMP_HS,0,1,0,0),
+  opdesc(CMP_GE,0,1,0,0),
+  opdesc(CMP_HI,0,1,0,0),
+  opdesc(CMP_GT,0,1,0,0),
+  opdesc(CMPSTR,0,1,0,0), // 0x200C
+  opdesc(DIV1,0,1,0,0),   // 0x3004
+  opdesc(DIV0S,0,1,0,0),  // 0x2007
+  opdesc(DMULS,0,4,0,0),  // 0x300D
+  opdesc(DMULU,0,4,0,0),  // 0x3005
+  opdesc(EXTS_B,0,1,0,0),
+  opdesc(EXTS_W,0,1,0,0),
+  opdesc(EXTUB,0,1,0,0),
+  opdesc(EXTU_W,0,1,0,0),
+  opdesc(MOVR,0,1,0,0),  // 0x6003
+  opdesc(MULL,0,4,0,0),  // 0x0007
+  opdesc(MULS,0,3,0,0),  // 0x200f
+  opdesc(MULU,0,3,0,0),  // 0x200e
+  opdesc(NEG,0,1,0,0),
+  opdesc(NEGC,0,1,0,0),
+  opdesc(NOT,0,1,0,0),
+  opdesc(OR,0,1,0,0),
+  opdesc(SUB,0,1,0,0),
+  opdesc(SUBC,0,1,0,0),
+  opdesc(SUBV,0,1,0,0),  // 0x300B
+  opdesc(SWAP_B,0,1,0,0),
+  opdesc(SWAP_W,0,1,0,0),
+  opdesc(TST,0,1,0,0),
+  opdesc(XOR,0,1,0,0),
+  opdesc(XTRCT,0,1,0,0),
+  opdesc(MOVBS,0,1,1,0),
+  opdesc(MOVWS,0,1,1,0),
+  opdesc(MOVLS,0,1,1,0),
+  opdesc(MOVBL,0,1,0,0), // 6000
+  opdesc(MOVWL,0,1,0,0), // 6001
+  opdesc(MOVL_MEM_REG,0,1,0,0),
+  opdesc(MAC_L,0,3,0,0),  // 0x000f
+  opdesc(MAC_W,0,3,0,0),  // 0x400f
+  opdesc(MOVBP,0,1,0,0),  // 6004
+  opdesc(MOVWP,0,1,0,0),  // 6005
+  opdesc(MOVLP,0,1,1,0),  // 6006
+  opdesc(MOVBM,0,1,1,0),  // 0x2004,
+  opdesc(MOVWM,0,1, 0,0),  // 0x2005,
+  opdesc(MOVLM,0,1,1,0),  // 0x2006
+  opdesc(MOVBS0,0,1,1,0), // 0x0004
+  opdesc(MOVWS0,0,1,1,0), // 0x0005
+  opdesc(MOVLS0,0,1,1,0), // 0x0006
+  opdesc(MOVBL0,0,1, 0,0), // 0x000C
+  opdesc(MOVWL0,0,1, 0,0), // 0x000D 
+  opdesc(MOVLL0,0,1, 0,0), // 0x000E
+  opdesc(MOVBL4,0,1,1,0), // 0x8400
+  opdesc(MOVWL4,0,1, 0,0), // 0x8500
+  opdesc(MOVBS4,0,1, 0,0), // 0x8000
+  opdesc(MOVWS4,0,1,1,0), // 0x8100
+  opdesc(MOVLS4,0,1,1,0), // 0x1000
+  opdesc(MOVLL4,0,1, 0,0), // 0x5000 ,1
+  opdesc(MOVBSG,0,1,1,0), // 0xC000
+  opdesc(MOVWSG,0,1,1,0), // 0xc100
+  opdesc(MOVLSG,0,1,1,0), // 0xC200
+  opdesc(MOVBLG,0,1, 0,0), // 0xC400
+  opdesc(MOVWLG,0,1, 0,0), // 0xC500
+  opdesc(MOVLLG,0,1, 0,0), // 0xC600
+  opdesc(MOVA,0,1, 0,0),
+  opdesc(BF,1,3, 0,0),
+  opdesc(BF_S,3,2, 0,0),
+  opdesc(BT,1,3, 0,0),
+  opdesc(BT_S,3,2, 0,0),
+  opdesc(BRA,2,2, 0,0),
+  opdesc(BSR,2,2, 0,0),
+  opdesc(MOVWI,0,1, 0,0),
+  opdesc(MOVLI,0, 1, 0,0),
+  opdesc(AND_B,0,3,1,0),
+  opdesc(OR_B,0,3,1,0),
+  opdesc(TST_B,0, 1, 0,0),
+  opdesc(XOR_B,0,3,1,0),
+  opdesc(ANDI,0,1, 0,0),
+  opdesc(CMP_EQ_IMM,0,1, 0,0),
+  opdesc(ORI,0,1, 0,0),
+  opdesc(TSTI,0,1, 0,0),  // C800
+  opdesc(XORI,0,1, 0,0),
+  opdesc(TRAPA,5,8,1,0), // 0xc300
+  opdesc(ADDI,0,1, 0,0),
+  opdesc(MOVI,0,1, 0,0),
   opNULL
 };
 
@@ -805,7 +807,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
   }
 
   g_CompleBlock[blockCount].b_addr = pc;
-
+//printf("Emit 0x%x\n", pc);
   if (EmmitCode(&g_CompleBlock[blockCount], ParentT) != 0) {
     return NULL;
   }
@@ -935,6 +937,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + delay_seperator_size + SEPERATORSIZE_DELAY_AFTER + EPILOGSIZE;
     }
+    if (asm_list[i].checkint == 1) {
+      calsize += check_interrupt_size;
+    }
 
     if (calsize >= MAXBLOCKSIZE) {
       break; // no space is available
@@ -979,6 +984,12 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
       ptr += *(asm_list[i].size) + nomal_seperator_size;
+      
+      if (asm_list[i].checkint == 1) {
+         memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
+         ptr += check_interrupt_size;
+      }
+
     }
 
     // No Intrupt Func ToDo: Never end block these functions
@@ -992,6 +1003,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 #endif
       opcodePass(&asm_list[i], op, ptr);
       ptr += *(asm_list[i].size) + nomal_seperator_size;
+      if (asm_list[i].checkint == 1) {
+         memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
+         ptr += check_interrupt_size;
+      }
     }
 
     // Normal Jump
@@ -1008,6 +1023,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
       ptr += *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
+      if (asm_list[i].checkint == 1) {
+         memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
+         ptr += check_interrupt_size;
+      }
     }
 
     // Jmp With Delay Operation
@@ -1059,6 +1078,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
       *counterpos = cycle;
       ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
+      if ((asm_list[i].checkint == 1) || (asm_list[j].checkint == 1)) {
+         memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
+         ptr += check_interrupt_size;
+      }
     }
 
     if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {
@@ -1155,6 +1178,7 @@ DynarecSh2::DynarecSh2() {
   m_pDynaSh2->setmemword = (uintptr_t)memSetWord;
   m_pDynaSh2->setmemlong = (uintptr_t)memSetLong;
   m_pDynaSh2->eachclock = (uintptr_t)DebugEachClock;
+  m_pDynaSh2->checkint = (uintptr_t)CheckInterruptLoop;
   
   m_pCompiler = CompileBlocks::getInstance();
   m_ClockCounter = 0;
@@ -1172,6 +1196,12 @@ DynarecSh2::DynarecSh2() {
 
 DynarecSh2::~DynarecSh2(){
   YabThreadFreeMutex(mtx_);
+}
+
+void CheckInterruptLoop() {
+  if ((DynarecSh2::CurrentContext->GET_SR() & 0xF0) < DynarecSh2::CurrentContext->GET_ICOUNT()) {
+    DynarecSh2::CurrentContext->CheckInterupt();
+  }
 }
 
 void DynarecSh2::ResetCPU(){
@@ -1210,10 +1240,7 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
     m_pDynaSh2->SysReg[4] = 0;
   }
 
-
-  if ((GET_SR() & 0xF0) < GET_ICOUNT()) {
-    this->CheckInterupt();
-  }
+  CheckInterruptLoop();
 
   while (GET_COUNT() < targetcnt) {
     if (Execute() == IN_INFINITY_LOOP ) {
@@ -1262,6 +1289,14 @@ void DynarecSh2::Undecoded(){
   SET_PC(newpc);
 
   return;
+}
+
+void a(Block * block, tagSH2 *dyna) {
+  ((dynaFunc)((void*)(block->code)))(dyna);
+}
+
+void executeBlock(Block * block, tagSH2 *dyna) {
+  a(block, dyna);
 }
 
 int DynarecSh2::Execute(){
@@ -1376,7 +1411,7 @@ int DynarecSh2::Execute(){
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
   }
 #else
-  ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
+executeBlock(pBlock, m_pDynaSh2);
 #endif
 
   if (!m_pCompiler->debug_mode_ && (pBlock->flags&BLOCK_LOOP)) {
@@ -1430,8 +1465,6 @@ int DynarecSh2::CheckInterupt(){
   if( m_IntruptTbl.size() == 0 ) {
     return 0;
   }
-
-  //LOG("CheckInterupt %d\n", m_IntruptTbl.size() );
     
   YabThreadLock(mtx_);  
   dlstIntct::iterator pos = m_IntruptTbl.begin();
@@ -1462,9 +1495,9 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3]);
     m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
-#if defined(DEBUG_CPU)
-//    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level);
-#endif
+//#if defined(DEBUG_CPU)
+    printf("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X (%08X)\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level, ((m_pDynaSh2->CtrlReg[0] >> 4) & 0x0F));
+//#endif
     return 1;
   }
   return 0; 

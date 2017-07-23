@@ -344,7 +344,7 @@ void SH2DynWriteNotify(u32 start, u32 length){
   switch (getMemArea(start)){
     // ROM
   case BIOS_MEM:
-      block->LookupTableRom[ (start&0x000FFFFF)>>1 ] = NULL;
+      block->LookupTableRom[ (start&0x0007FFFF)>>1 ] = NULL;
     break;
 
   // Low Memory
