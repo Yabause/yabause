@@ -452,6 +452,7 @@ opfunc TST
 GET_R SCRATCH1
 mov eax,dword [SCRATCH1]       ;2
 GET_R SCRATCH1
+CLEAR_T
 test dword [SCRATCH1],eax      ;2
 jne end_tst
 SET_T
@@ -703,16 +704,19 @@ opdesc MOVL_MEM_REG,		4,17,0xff,0xff,0xff
 
 opfunc MOVBP
 GET_R SCRATCH1
-mov eax,[SCRATCH1]       ;3
-inc dword [SCRATCH1]     ;3
-push eax            ;1
+mov eax, [SCRATCH1]       ;3
+push eax
 CALL_GETMEM_BYTE
-GET_R SCRATCH1
 cbw                 ;1
 cwde                ;1
-mov dword [SCRATCH1],eax       ;3
+GET_R edx
+cmp SCRATCH1,edx
+je continue_movbp
+inc dword [SCRATCH1]     ;3
+continue_movbp:
+mov dword [edx],eax       ;3
 pop eax             ;1
-opdesc MOVBP,	4,23,0xff,0xff,0xff
+opdesc MOVBP,	4,21,0xff,0xff,0xff
 
 
 opfunc MOVWP
@@ -725,7 +729,7 @@ cmp SCRATCH1,edx
 je continue_movwp
 add dword [SCRATCH1],byte 2
 continue_movwp:
-mov dword [ebx],eax       ;3
+mov dword [edx],eax       ;3
 pop eax
 opdesc MOVWP,	4,18,0xff,0xff,0xff
 
@@ -952,13 +956,15 @@ opdesc ROTL,	0xff,4,0xff,0xff,0xff
 
 opfunc ROTCL
 GET_R ebp
-mov eax,[ebx]       ;2
-and dword eax,1     ;5
-mov ecx,[ebp]       ;2
-shr ecx,byte 31     ;3
+mov eax,[ebp]       ;2
+shl dword [ebp],byte 1     ;3
+shr eax,byte 31     ;3
+and eax,byte 1     ;3
+TEST_IS_T
+jnc continue_rotcl
+or dword [ebp],byte 1
+continue_rotcl:
 CLEAR_T
-or [ebx],ecx        ;2
-shl dword [ebp],byte 1 ;4
 SET_T_R eax
 opdesc ROTCL,	0xff,4,0xff,0xff,0xff
 
@@ -1115,60 +1121,59 @@ mov [esp],eax       ;3
 opdesc JMP,		0xff,4,0xff,0xff,0xff
 
 opfunc JSR
-mov eax,[edx]       ;2
+mov eax, dword [PC]       ;2
 add eax,byte 4      ;3
 SET_PR eax
 GET_R ebp
-mov eax,[ebp]       ;3
-mov [esp],eax       ;3
-opdesc JSR,		0xff,12,0xff,0xff,0xff
+mov eax,dword [ebp]       ;3
+mov dword [esp],eax       ;3
+opdesc JSR,		0xff,14,0xff,0xff,0xff
 
 opfunc BRA
-and eax,byte 00     ;3
-mov ax,0            ;4
-shl eax,byte 1      ;3
-cmp ax,0xfff        ;4
-jle .continue       ;2
-or eax,0xfffff000   ;5
+mov ax, 0x0ABF     ;3
+bt ax, 11        ;4
+jnc .continue       ;2
+or ax,0xf000   ;5
 .continue:
+cwde
+shl eax, 1
 add eax,byte 4      ;3
-add eax,dword [edx] ;2
-mov [esp],eax       ;3
-opdesc BRA,		0xff,0xff,0xff,0xff,5
+add eax,dword [PC] ;2
+mov dword [esp],eax       ;3
+opdesc BRA,		0xff,0xff,0xff,0xff,2
 
 opfunc BSR
-mov eax,[edx]       ;2
+mov eax,dword [PC]       ;2
 add eax,byte 4      ;3
 SET_PR eax
-and eax,byte 00     ;3
-mov ax,0            ;4
-shl eax,byte 1      ;3
-cmp ax,0xfff        ;4
-jle .continue       ;2
-or eax,0xfffff000   ;5
+xor edx, edx
+or dx,word 0x0ABE   ;3
+bt edx, 11        ;4
+jnc .continue       ;2
+or edx,0xfffff000   ;5
 .continue:
-add eax,byte 4      ;3
-add eax,dword [edx] ;2
-mov [esp],eax       ;3
-opdesc BSR,		0xff,0xff,0xff,0xff,13
+shl edx,byte 1      ;3
+add edx,eax ;2
+mov dword [esp],edx  
+opdesc BSR,		0xff,0xff,0xff,0xff,15
 
 opfunc BSRF
 GET_R ebp
-mov eax,[edx]       ;2
+mov eax,dword [PC]       ;2
 add eax,byte 4      ;3
 SET_PR eax
-mov eax,[edx]       ;3
+mov eax,dword [PC]       ;3
 add eax,dword [ebp] ;3
 add eax,byte 4      ;3
-mov [esp],eax       ;3
+mov dword [esp],eax       ;3
 opdesc BSRF,		0xff,4,0xff,0xff,0xff
 
 opfunc BRAF
 GET_R ebp
-mov eax,[edx]       ;2
+mov eax,dword [PC]       ;2
 add eax,dword [ebp] ;3
 add eax,byte 4      ;4
-mov [esp],eax       ;3
+mov dword [esp],eax       ;3
 opdesc BRAF,		0xff,4,0xff,0xff,0xff
 
 
@@ -1210,8 +1215,7 @@ shl  eax,2            ;3
 add  eax,[CTRL_REG+8]      ;3 ADD VBR
 push eax              ;1
 CALL_GETMEM_LONG
-mov  [PC],eax        ;3
-sub  [PC],byte 2     ;3
+mov  dword [esp],eax        ;3
 pop  eax              ;1
 pop  eax              ;1
 pop  eax              ;1
@@ -1234,16 +1238,18 @@ mov dword [esp],eax       ;3
 opdesc BT,		0xFF,0xFF,0xFF,9,0xFF
 
 opfunc BT_S
-bt dword [ebx],0    ;4
+xor eax,eax     ;3
+TEST_IS_T
 jnc .continue        ;2
-and eax,byte 00     ;3
-or eax,byte 00      ;3
-shl eax,byte 1      ;3
-add eax,byte 4      ;3
-add eax,dword [edx] ;2
-mov [esp],eax       ;3
+GET_BYTE_IMM al
+cbw
+cwde
+shl eax, byte 1      ;3
 .continue:
-opdesc BT_S,		0xFF,0xFF,0xFF,11,0xFF
+add eax, byte 4      ;3
+add eax, dword [PC] ;2
+mov dword [esp], eax
+opdesc BT_S,		0xFF,0xFF,0xFF,9,0xFF
 
 opfunc BF
 xor eax,eax     ;3
@@ -1260,16 +1266,18 @@ mov dword [esp],eax       ;3
 opdesc BF,		0xFF,0xFF,0xFF,9,0xFF
 
 opfunc BF_S
-bt dword [ebx],0    ;4
+xor eax,eax     ;3
+TEST_IS_T
 jc .continue        ;2
-and eax,byte 00     ;3
-or eax,byte 00      ;3
-shl eax,byte 1      ;3
-add eax,byte 4      ;3
-add eax,dword [edx] ;2
-mov [esp],eax       ;3
+GET_BYTE_IMM al
+cbw
+cwde
+shl eax, byte 1      ;3
 .continue:
-opdesc BF_S,		0xFF,0xFF,0xFF,11,0xFF
+add eax, byte 4      ;3
+add eax, dword [PC] ;2
+mov dword [esp], eax
+opdesc BF_S,		0xFF,0xFF,0xFF,9,0xFF
 
 ;Store/Load Opcodes
 ;------------------
@@ -1282,20 +1290,14 @@ opdesc STC_SR,	0xFF,4,0xFF,0xFF,0xFF
 
 opfunc STC_GBR
 GET_R ebp
-push ebp            ;1
-GET_GBR ebp
-mov eax,[ebp]       ;2
-pop ebp             ;1
-mov [ebp],eax       ;2
+GET_GBR eax
+mov dword [ebp],eax
 opdesc STC_GBR,	0xFF,4,0xFF,0xFF,0xFF
 
 opfunc STC_VBR
 GET_R ebp
-push ebp
-GET_VBR ebp
-mov eax,[ebp]
-pop ebp
-mov [ebp],eax
+GET_VBR eax
+mov dword [ebp],eax
 opdesc STC_VBR,	0xFF,4,0xFF,0xFF,0xFF
 
 opfunc STS_MACH
@@ -1345,6 +1347,7 @@ GET_R ebp
 push dword [ebp]       ;2
 CALL_GETMEM_LONG
 SET_SR eax ;3
+add dword [ebp],byte 4 ;3
 pop eax             ;1
 opdesc LDC_SR_INC,	0xFF,4,0xFF,0xFF,0xFF
 
@@ -1448,48 +1451,46 @@ opdesc LDS_MACL_INC,	0xFF,4,0xFF,0xFF,0xFF
 ;-----------
 
 opfunc MOVA
-mov ebp,GEN_REG         ;2
-mov eax,[edx]       ;2
+GET_R0 ebp
+mov eax,[PC]       ;2
+and eax, 0xfffffffc   ;3
 add eax,byte 4      ;3
-and eax,byte 0xfffffffc   ;3
 push eax            ;1
 xor eax,eax         ;2
-mov al,byte $00     ;3
+GET_BYTE_IMM al
 shl eax,byte 2      ;3
 add eax,dword [esp] ;2
-mov [ebp],eax       ;2
+mov dword [ebp],eax       ;2
 pop eax             ;1
-opdesc MOVA,	0xFF,0xFF,0xFF,14,0xFF
+opdesc MOVA,	0xFF,0xFF,0xFF,16,0xFF
 
 opfunc MOVWI
 GET_R ebp
 xor eax,eax         ;2
-mov al,00           ;2
-shl ax,byte 1       ;1
-add eax,[edx]       ;2 
+GET_BYTE_IMM al
+shl eax,byte 1       ;1
+add eax,[PC]       ;2 
 add eax,byte 4      ;3
 push eax            ;1
 CALL_GETMEM_WORD
 cwde                ;1
-mov [ebp],eax       ;3
+mov dword [ebp],eax       ;3
 pop eax             ;1
 opdesc MOVWI,	0xFF,4,0xFF,8,0xFF
 
 opfunc MOVLI
 GET_R ebp
 xor eax,eax         ;2
-mov al,00           ;2
-shl ax,byte 2       ;3
-push ecx            ;1
-mov ecx,[edx]       ;2
-add ecx,byte 4      ;3
-and ecx,0xFFFFFFFC  ;6
-add eax,ecx         ;2 
+GET_BYTE_IMM al
+shl eax,byte 2       ;3
+mov edx,dword [PC]       ;23
+and edx,0xFFFFFFFC  ;6
+add edx,byte 4      ;
+add eax,edx         ;2 
 push eax            ;1
 CALL_GETMEM_LONG
-mov [ebp],eax       ;3
+mov dword [ebp],eax       ;3
 pop eax             ;1
-pop ecx             ;1
 opdesc MOVLI,       0xFF,4,0xFF,8,0xFF
 
 opfunc MOVBL4
@@ -2125,13 +2126,15 @@ opdesc MULU, 6,17,0xFF,0xFF,0xFF
 opfunc MAC_L
 GET_R ebp
 push dword [ebp]          ;3
-CALL_GETMEM_LONG
-mov  edx,eax                  ;2
 add  dword [ebp], 4           ;7 R[n] += 4
+CALL_GETMEM_LONG
+push eax                  ;2
 GET_R ebp
 push dword [ebp]          ;3                      ;1
-CALL_GETMEM_LONG
 add  dword [ebp], 4           ;7 R[m] += 4 
+CALL_GETMEM_LONG
+pop edx
+pop edx
 push edi                      ;1 Save GenReg
 GET_MACL ecx            ;3 load macl
 imul edx                      ;2 eax <- low, edx <- high
@@ -2167,35 +2170,32 @@ or   ecx,0FFFFFFFFh           ;3 sum = 0x00007FFFFFFFFFFFULL;
 mov  edi,7FFFh                ;5
 END_PROC:
 SET_MACH edi
-pop  edi                      ; 1 Restore GenReg
 SET_MACL ecx
+pop  edi                      ; 1 Restore GenReg
 pop  eax                      ;1
-pop  eax                      ;1
-opdesc MAC_L, 4,23,0xFF,0xFF,0xFF
+opdesc MAC_L, 4,22,0xFF,0xFF,0xFF
 
 ;--------------------------------------------------------------
 ; MACW   ans = 32bit -> 64 bit MUL
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
 opfunc MAC_W
-push edx                      ;1 Save PC
-mov  ebp,edi                  ;2  
-add  ebp,byte $00             ;3 4..7
-mov  eax,dword [ebp]          ;3
-push eax                      ;1
-CALL_GETMEM_WORD
-movsx  edx,ax                 ;3
+GET_R ebp
+push dword [ebp]
 add  dword [ebp], 2           ;7 R[n] += 2
-mov  ebp,edi                  ;2 
-add  ebp,byte $00             ;3 8..11
-mov  eax,dword [ebp]          ;3
-push eax                      ;1
 CALL_GETMEM_WORD
+movsx  edx,ax
+push edx
+GET_R ebp
+push dword [ebp]          ;3
 add  dword [ebp], 2           ;7 R[m] += 2
+CALL_GETMEM_WORD
+pop edx
+pop edx
 cwde                          ;1 Sigin extention
 imul edx                      ;2 eax <- low, edx <- high
-test dword [ebx], 0x00000002  ;6 check S flg
-je   MACW_NO_S_FLG                 ;2 if( S == 0 ) goto 'no sign proc'
+TEST_IS_S
+jnc   MACW_NO_S_FLG                 ;2 if( S == 0 ) goto 'no sign proc'
 
 MACW_S_FLG:
   add dword [SYS_REG+4],eax   ;3 MACL = ansL + MACL
@@ -2223,9 +2223,7 @@ MACW_NO_CARRY:
 
 END_MACW:
 pop  eax                        ;1
-pop  eax                        ;1
-pop  edx                        ;1
-opdesc MAC_W, 5,31,0xFF,0xFF,0xFF
+opdesc MAC_W, 4,25,0xFF,0xFF,0xFF
   
  
 end:
