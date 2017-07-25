@@ -887,7 +887,7 @@ opdesc CMP_HI,	6,16,0xff,0xff,0xff
 
 opfunc CMP_GE
 GET_R SCRATCH1
-mov eax,dword [SCRATCH1rbp]       ;2
+mov eax,dword [SCRATCH1]       ;2
 GET_R SCRATCH1
 CLEAR_T
 cmp dword [SCRATCH1],eax       ;3
@@ -1071,7 +1071,7 @@ and al, $7F     ;2
 mov edi, ebx
 mov esi, eax
 CALL_SETMEM_BYTE
-opdesc AND_B,	0xff,0xff,0xff,20,0xff
+opdesc AND_B,	0xff,0xff,0xff,18,0xff
 
 opfunc OR_B
 GET_R0 rbp
