@@ -1204,7 +1204,7 @@ push dword [CTRL_REG]      ;2 SR
 push dword [ebp]      ;3
 CALL_SETMEM_LONG
 sub  dword [ebp],4    ;7
-mov  eax,dword [PC]        ;3 PC
+mov  eax,dword [PC+8]        ;3 PC
 add  eax,byte 2       ;3
 push eax              ;1
 push dword [ebp]      ;2
@@ -1214,13 +1214,13 @@ GET_BYTE_IMM al
 shl  eax,2            ;3
 add  eax,[CTRL_REG+8]      ;3 ADD VBR
 push eax              ;1
-CALL_GETMEM_LONG
-mov  dword [esp],eax        ;3
-pop  eax              ;1
-pop  eax              ;1
-pop  eax              ;1
-pop  eax              ;1
-pop  eax              ;1
+CALL_GETMEM_LONG       ;3
+pop  edx              ;1
+pop  edx              ;1
+pop  edx              ;1
+pop  edx              ;1
+pop  edx              ;1
+mov  dword [esp],eax 
 opdesc TRAPA,	      0xFF,0xFF,0xFF,47,0xFF
 
 opfunc BT
