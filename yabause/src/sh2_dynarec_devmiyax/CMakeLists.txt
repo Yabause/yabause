@@ -1,3 +1,11 @@
+
+option(YAB_FORCE_32BITS "Compile in 32 bit compatible mode" OFF)
+
+if (YAB_FORCE_32BITS)
+set (CC_ARCH_FLAGS -m32)
+endif (YAB_FORCE_32BITS)
+
+
 cmake_minimum_required (VERSION 2.8.11)
 project (dynalib_test)
 
@@ -19,7 +27,7 @@ set(SOURCES
 if (MSVC)    
   add_definitions(-DHAVE_C99_VARIADIC_MACROS)
   link_directories(${CMAKE_CURRENT_SOURCE_DIR})
-  set (LIBRARIES  ${CMAKE_CURRENT_SOURCE_DIR}/dynalib.obj )
+  set (LIBRARIES  ${CMAKE_CURRENT_SOURCE_DIR}/dynalib_w32.obj )
   set (CMAKE_EXE_LINKER_FLAGS /SAFESEH:NO )
 else (MSVC)
 if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
@@ -30,11 +38,23 @@ if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -march=armv7-a -g")
 else ()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
     enable_language(ASM_NASM)
-    set(SOURCES ${SOURCES} dynalib_x64.nasm)
+    SET(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> -o <OBJECT> <SOURCE>")
+    if (YAB_FORCE_32BITS)
+       SET(CMAKE_ASM_NASM_COMPILER_ARG1 "-f elf32")
+       set(SOURCES ${SOURCES} dynalib_i386.nasm)
+    else ()
+       SET(CMAKE_ASM_NASM_COMPILER_ARG1 "-f elf64")
+       set(SOURCES ${SOURCES} dynalib_x64.nasm)
+    endif()
+    set(CMAKE_ASM_NASM_FLAGS "-O3 -l func.lst")
+else ()
+    set (YABAUSE_LIB ${CMAKE_CURRENT_SOURCE_DIR}/dynalib_w32.obj)
+endif()
     set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -O3 -l func.lst")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -std=gnu++11")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 ${CC_ARCH_FLAGS} -g -std=gnu++11")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 ${CC_ARCH_FLAGS} -g")
     add_definitions(-DARCH_IS_LINUX=1)
     add_definitions(-DDYNAREC_X64=1)
     add_definitions(-DTEST_MODE=1)
@@ -68,9 +88,8 @@ endif()
 
 ExternalProject_Add(googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
-    CMAKE_ARGS -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
+    CMAKE_ARGS -DCMAKE_CXX_FLAGS=${CC_ARCH_FLAGS} -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=DebugLibs
     -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=ReleaseLibs
-    -DCMAKE_CXX_FLAGS=${MSVC_COMPILER_DEFS}
     -Dgtest_force_shared_crt=${GTEST_FORCE_SHARED_CRT}
     -Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
     -DBUILD_GTEST=ON
@@ -98,13 +117,33 @@ find_package( Threads )
 set(PROJECT_TEST_NAME Compatibility_test)
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CC_ARCH_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CC_ARCH_FLAGS}")
+
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+    enable_language(ASM_NASM)
+    SET(CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_ASM_NASM_COMPILER> -o <OBJECT> <SOURCE>")
+    if (YAB_FORCE_32BITS)
+       SET(CMAKE_ASM_NASM_COMPILER_ARG1 "-f elf32")
+       set(SOURCES ${SOURCES} dynalib_i386.nasm)
+    else ()
+       SET(CMAKE_ASM_NASM_COMPILER_ARG1 "-f elf64")
+       set(SOURCES ${SOURCES} dynalib_x64.nasm)
+    endif()
+    set(CMAKE_ASM_NASM_FLAGS "-O3 -l func.lst")
+else ()
+    set (YABAUSE_LIB ${CMAKE_CURRENT_SOURCE_DIR}/dynalib_w32.obj)
+endif()
+
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${SOURCES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
+
 target_link_libraries(${PROJECT_TEST_NAME}
     ${GTEST_LIBS_DIR}/libgtest.a
    ${GTEST_LIBS_DIR}/libgtest_main.a
+   ${YABAUSE_LIB}
 )
         
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
