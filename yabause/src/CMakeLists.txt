@@ -137,7 +137,9 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 		if (MSVC) # NASM
 	  	set(YABAUSE_LIBRARIES 
 			  ${YABAUSE_LIBRARIES} 
-			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib )
+			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_w32 )
+                add_definitions(-DDYNAREC_X64=1)
+ 		add_definitions(-DYAB_ASYNC_RENDERING)
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)
@@ -145,15 +147,19 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 				  ${yabause_SOURCES}
 					sh2_dynarec_devmiyax/dynalib_arm.s)
                         else ()
+ 				add_definitions(-DARCH_IS_LINUX=1)
+ 				add_definitions(-DDYNAREC_X64=1)
+ 				add_definitions(-DYAB_ASYNC_RENDERING)
+				enable_language(ASM_NASM)
+				set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -O3 -l func.lst")
                         	if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
- 				  enable_language(ASM_NASM)
- 				  set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -O3 -l func.lst")
- 				  add_definitions(-DARCH_IS_LINUX=1)
- 				  add_definitions(-DDYNAREC_X64=1)
- 				  add_definitions(-DYAB_ASYNC_RENDERING)
  				  set(yabause_SOURCES 
  				    ${yabause_SOURCES}
  				    sh2_dynarec_devmiyax/dynalib_x64.nasm)
+                                else ()
+ 				  set(yabause_SOURCES 
+ 				    ${yabause_SOURCES}
+ 				    sh2_dynarec_devmiyax/dynalib_i386.nasm)
 				endif ()
 			endif ()
 		endif ()
