@@ -38,32 +38,46 @@ bits 64
 section .code
 
 %macro opfunc 1
+	global _x86_%1
+	_x86_%1:
 	global x86_%1
 	x86_%1:
 %endmacro
 
 %macro opfuncend 1
-	global x86_%1_end
 	x86_%1_end:
 	global %1_size
 	%1_size dw (x86_%1_end - x86_%1)
+	global _%1_size
+	_%1_size dw %1_size
 %endmacro
 
 %macro opdesc 6
-	global x86_%1_end
 	x86_%1_end:
 	global %1_size
+	global _%1_size
 	%1_size dw (x86_%1_end - x86_%1)
+	_%1_size dw (x86_%1_end - x86_%1)
 	global %1_src
+	global _%1_src
 	%1_src db %2
+	_%1_src db %2
 	global %1_dest
+	global _%1_dest
 	%1_dest db %3
+	_%1_dest db %3
 	global %1_off1
+	global _%1_off1
 	%1_off1 db %4
+	_%1_off1 db %4
 	global %1_imm
+	global _%1_imm
 	%1_imm db %5
+	_%1_imm db %5
 	global %1_off3
+	global _%1_off3
 	%1_off3 db %6
+	_%1_off3 db %6
 %endmacro
 
 %define GEN_REG r12
@@ -203,7 +217,7 @@ section .code
 %endmacro
 
 ;Memory Functions
-extern DelayEachClock, DebugEachClock, DebugDelayClock
+;extern DebugEachClock, DebugDelayClock
 
 %macro CALL_FUNC 1
   mov r8, [SYS_REG + 28 + %1*8]
@@ -264,14 +278,17 @@ extern DelayEachClock, DebugEachClock, DebugDelayClock
 
 %macro START 1
 	global %1
+	global _%1
 	%1:
+	_%1:
 %endmacro
 
 %macro END 1
-	global %1_end
 	%1_end:
 	global %1_size
+	global _%1_size
 	%1_size dw (%1_end - %1)
+	_%1_size dw (%1_end - %1)
 %endmacro
 
 ;=====================================================
@@ -377,8 +394,8 @@ END PageFlip
 ;Size = 39 Bytes
 START seperator_d_normal
 add dword [PC+4], byte 1 ;4 Clock += 1
-mov  rax,DebugEachClock ;5
-call rax                 ;2
+;mov  rax,DebugEachClock ;5
+;call rax                 ;2
 test rax, 0x01           ;5 finish 
 jz  NEXT_D_INST          ;2
 pop rax                  ;1 
@@ -392,8 +409,8 @@ END seperator_d_normal
 ; Delay slot part par instruction( for debug build )
 ;Size = 52 Bytes
 START seperator_d_delay
-mov  rax,DebugDelayClock ;5
-call rax                   ;2
+;mov  rax,DebugDelayClock ;5
+;call rax                   ;2
 test dword [rsp], 0xFFFFFFFF ; 7
 jnz   .continue               ; 2
 add dword [PC], byte 2   ;3 PC += 2
