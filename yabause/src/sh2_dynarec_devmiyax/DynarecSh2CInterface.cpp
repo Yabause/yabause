@@ -251,7 +251,7 @@ u32 SH2DynGetPC(SH2_struct *context){
 void SH2DynSetRegisters(SH2_struct *context, const sh2regs_struct *regs){
   DynarecSh2 *pctx = (DynarecSh2*)context->ext;
   memcpy(pctx->GetGenRegPtr(), regs->R , sizeof(regs->R));
-  pctx->SET_MACH(regs->GBR);
+  pctx->SET_GBR(regs->GBR);
   pctx->SET_VBR(regs->VBR);
   pctx->SET_SR(regs->SR.all);
   pctx->SET_MACH(regs->MACH);
