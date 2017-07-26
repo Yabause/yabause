@@ -1082,7 +1082,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
          u16 i, j;
 
          // hard/vdp2/hon/p09_20.htm#no9_21
-         // ・ｽX・ｽv・ｽ・ｽ・ｽC・ｽg・ｽf・ｽ[・ｽ^・ｽ・ｽRGB・ｽ`・ｽ・ｽ・ｽﾌ場合・ｽﾍ、・ｽX・ｽv・ｽ・ｽ・ｽC・ｽg・ｽp・ｽ・ｽ・ｽW・ｽX・ｽ^0・ｽ・ｽ・ｽI・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ・ｽﾜゑｿｽ・ｽB
+         // \81E\BDX\81E\BDv\81E\BD\81E\BD\81E\BDC\81E\BDg\81E\BDf\81E\BD[\81E\BD^\81E\BD\81E\BDRGB\81E\BD`\81E\BD\81E\BD\81E\BDﾌ場合\81E\BDﾍ、\81E\BDX\81E\BDv\81E\BD\81E\BD\81E\BDC\81E\BDg\81E\BDp\81E\BD\81E\BD\81E\BDW\81E\BDX\81E\BD^0\81E\BD\81E\BD\81E\BDI\81E\BD\81E\BD\81E\BD\81E\BD\81E\BD\81E\BD\81E\BDﾜゑｿｽ\81E\BDB
          u8 *cclist = (u8 *)&fixVdp2Regs->CCRSA;
          cclist[0] &= 0x1F;
          u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
