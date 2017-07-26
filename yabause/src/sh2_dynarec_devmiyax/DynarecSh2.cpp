@@ -41,16 +41,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
 #ifdef DYNAREC_X64
-extern const unsigned short prologue_size;
-extern const unsigned short epilogue_size;
-extern const unsigned short seperator_normal_size;
-extern const unsigned short seperator_delay_size;
-extern const unsigned short seperator_delay_slot_size;
-extern const unsigned short seperator_delay_after_size;
-extern const unsigned short seperator_d_normal_size;
-extern const unsigned short seperator_d_delay_size;
-extern const unsigned short PageFlip_size;
-extern const unsigned short check_interrupt_size;
+extern unsigned short prologue_size;
+extern unsigned short epilogue_size;
+extern unsigned short seperator_normal_size;
+extern unsigned short seperator_delay_size;
+extern unsigned short seperator_delay_slot_size;
+extern unsigned short seperator_delay_after_size;
+extern unsigned short seperator_d_normal_size;
+extern unsigned short seperator_d_delay_size;
+extern unsigned short PageFlip_size;
+extern unsigned short check_interrupt_size;
 #endif
 #if defined(ARCH_IS_LINUX)
 #include <unistd.h> // chaceflush
