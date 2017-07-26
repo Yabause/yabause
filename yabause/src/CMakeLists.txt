@@ -139,7 +139,6 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 			  ${YABAUSE_LIBRARIES} 
 			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_w32 )
                 add_definitions(-DDYNAREC_X64=1)
- 		add_definitions(-DYAB_ASYNC_RENDERING)
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)
