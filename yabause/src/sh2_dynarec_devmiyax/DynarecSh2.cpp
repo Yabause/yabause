@@ -342,7 +342,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define SEPERATORSIZE_DEBUG		(seperator_d_normal_size)
 #define SEPERATORSIZE_DELAY_SLOT	(seperator_delay_slot_size)
 #define SEPERATORSIZE_DELAY_AFTER	(seperator_delay_after_size)
-#define DALAY_CLOCK_OFFSET 8
+#define DALAY_CLOCK_OFFSET 10
 #define SEPERATORSIZE_DELAYD		(seperator_d_delay_size)
 #define EPILOGSIZE			(epilogue_size)
 #define DELAYJUMPSIZE			(PageFlip_size)
