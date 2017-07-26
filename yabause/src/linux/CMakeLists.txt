@@ -42,6 +42,8 @@ install(TARGETS yabause-linux DESTINATION "bin")
 install(FILES "doc/yabause.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
 install(FILES "yabause.png" DESTINATION "share/pixmaps")
 
+option(INTERPRETER_TEST "Build the interpreter test suite" OFF)
+if (INTERPRETER_TEST)
 
 #--------------------------------------------------------------
 # Google Unit Test Library
@@ -105,3 +107,4 @@ target_link_libraries(${PROJECT_TEST_NAME}
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
 
 add_test(test1 ${PROJECT_TEST_NAME})
+endif (INTERPRETER_TEST)
