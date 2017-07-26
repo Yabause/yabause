@@ -137,7 +137,7 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 		if (MSVC) # NASM
 	  	set(YABAUSE_LIBRARIES 
 			  ${YABAUSE_LIBRARIES} 
-			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_w32 )
+			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_w32.obj )
                 add_definitions(-DDYNAREC_X64=1)
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
