@@ -1681,7 +1681,7 @@ test eax,eax             ;3
 jne  NOT_ZERO            ;2
 SET_T
 NOT_ZERO:              
-or   eax, 0xffffff80        ;3
+or   eax, 0x00000080        ;3
 mov  esi, eax
 mov  edi, dword [rbp]          ;3
 CALL_SETMEM_BYTE
