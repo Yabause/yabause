@@ -88,8 +88,7 @@ TEST_F(BfTest, bfs) {
   // rtcl R[0]
 
   memSetWord(0x06002E4C,0x8F0B);
-  memSetWord( 0x06002E4E, 0x000b );  // rts
-  memSetWord( 0x06002E50, 0x0009 );  // nop 
+  memSetWord( 0x06002E4E, 0x0009 );  // nop 
 
   pctx_->SET_PC( 0x06002E4C );
   pctx_->SET_SR( 0x000000);
@@ -98,8 +97,7 @@ TEST_F(BfTest, bfs) {
   EXPECT_EQ( 0x06002E4C+4+(0xB<<1), pctx_->GET_PC() );
 
   memSetWord(0x06002E4C,0x8F0B);
-  memSetWord( 0x06002E4E, 0x000b );  // rts
-  memSetWord( 0x06002E50, 0x0009 );  // nop 
+  memSetWord( 0x06002E4E, 0x0009 );  // nop 
 
   pctx_->SET_PC( 0x06002E4C );
   pctx_->SET_SR( 0x000001);
@@ -121,8 +119,7 @@ TEST_F(BfTest, bfs) {
   EXPECT_EQ( 0x06002E4C+4+(0xFFFFFF8B<<1), pctx_->GET_PC() );
 
   memSetWord(0x06002E4C,0x8F8B);
-  memSetWord( 0x06002E4E, 0x000b );  // rts
-  memSetWord( 0x06002E50, 0x0009 );  // nop 
+  memSetWord( 0x06002E4E, 0x0009 );  // nop 
 
   pctx_->SET_PC( 0x06002E4C );
   pctx_->SET_SR( 0x000001);
