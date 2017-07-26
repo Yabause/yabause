@@ -433,8 +433,6 @@ SET_T
 opdesc SETT,	0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc SLEEP
-add dword [SYS_REG+4],byte 1   ;4 
-CALL_EACH_CLOCK
 pop  rax                     ; 1
 POPAD
 ret                 ;1
