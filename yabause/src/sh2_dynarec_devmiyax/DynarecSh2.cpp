@@ -1495,9 +1495,9 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3]);
     m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
-//#if defined(DEBUG_CPU)
-    printf("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X (%08X)\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level, ((m_pDynaSh2->CtrlReg[0] >> 4) & 0x0F));
-//#endif
+#if defined(DEBUG_CPU)
+    LOG("**** [%s] Exception vecnum=%u, PC=%08X to %08X, level=%08X (%08X)\n", (is_slave_==false)?"M":"S", Vector, prepc, m_pDynaSh2->SysReg[3], level, ((m_pDynaSh2->CtrlReg[0] >> 4) & 0x0F));
+#endif
     return 1;
   }
   return 0; 
