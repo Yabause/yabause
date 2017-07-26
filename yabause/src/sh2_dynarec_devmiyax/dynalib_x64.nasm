@@ -341,7 +341,17 @@ END check_interrupt
 ; Delay slot part par instruction
 ;Size = 40 Bytes
 START seperator_delay_slot
+test dword [rsp], 0xFFFFFFFF ; 7
+jnz   .continue               ; 2
 add dword [PC], byte 2   ;3 PC += 2
+add dword [PC+4], byte 1 ;4 Clock += 1
+pop  rax                     ; 1
+POPAD
+ret                          ; 1
+.continue:
+mov  eax, dword [rsp]  
+sub  eax,byte 2            ; 3
+mov  dword [PC],eax             ; 2
 END seperator_delay_slot
 
 
@@ -349,8 +359,7 @@ END seperator_delay_slot
 ; End part of delay slot
 ;Size = 19 Bytes
 START seperator_delay_after
-mov eax, dword [rsp]
-mov dword [PC], eax   ;
+add dword [PC], byte 2   ;3 PC += 2
 add dword [PC+4], byte 1 ;4 Clock += 1
 pop  rax                  ; 1
 POPAD
@@ -1236,7 +1245,7 @@ opdesc BT,		0xFF,0xFF,0xFF,11,0xFF
 opfunc BT_S
 xor eax,eax     ;3
 TEST_IS_T
-jnc .continue        ;2       ;2
+jnc .continue        ;2
 GET_BYTE_IMM al
 cbw
 cwde
@@ -1264,7 +1273,7 @@ opdesc BF,		0xFF,0xFF,0xFF,11,0xFF
 opfunc BF_S
 xor eax,eax     ;3
 TEST_IS_T
-jc .continue        ;2       ;2
+jc .continue        ;2
 GET_BYTE_IMM al
 cbw
 cwde

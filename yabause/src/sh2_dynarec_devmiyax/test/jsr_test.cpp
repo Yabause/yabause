@@ -37,7 +37,8 @@ TEST_F(JsrTest, jsr) {
   pctx_->GetGenRegPtr()[1]=0x03216721;
 
   memSetWord( 0x06000000, 0x410B );
-  memSetWord( 0x06000002, 0x0009 );
+  memSetWord( 0x06000002, 0x000b );
+  memSetWord( 0x06000004, 0x0009 );
 
   pctx_->SET_PC( 0x06000000 );
   pctx_->SET_SR( 0x00000000 );

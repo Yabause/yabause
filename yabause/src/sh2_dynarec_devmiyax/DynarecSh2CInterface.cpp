@@ -189,12 +189,10 @@ void SH2DynSendInterrupt(SH2_struct *context, u8 vector, u8 level){
 }
 
 int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INTERRUPTS]){
-printf("Get\n");
   return 0;
 }
 
 void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrupt_struct interrupts[MAX_INTERRUPTS]){
-printf("Set %d\n", num_interrupts);
   return;
 }
 
@@ -342,7 +340,7 @@ static MemArea getMemArea(u32 addr) {
 
 void SH2DynWriteNotify(u32 start, u32 length){
   CompileBlocks * block = CompileBlocks::getInstance();
-  //printf("Write notify 0x%x (%x)\n", start, length); 
+  
   switch (getMemArea(start)){
     // ROM
   case BIOS_MEM:
@@ -391,8 +389,7 @@ void SH2DynShowSttaics(SH2_struct * master, SH2_struct * slave ){
 void memSetByte(u32 addr , u8 data )
 {
   dynaLock();
-  // if ((addr & 0x05F00000) != 0)
-  //  printf("memSetWord %08X, %08X\n", addr, data);
+  //LOG("memSetWord %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (getMemArea(addr))
@@ -424,8 +421,7 @@ void memSetByte(u32 addr , u8 data )
 void memSetWord(u32 addr, u16 data )
 {
   dynaLock();
-  // if ((addr & 0x05F00000) != 0)
-  //  printf("memSetWord %08X, %08X\n", addr, data);
+  //LOG("memSetWord %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (getMemArea(addr))
@@ -458,8 +454,7 @@ void memSetWord(u32 addr, u16 data )
 void memSetLong(u32 addr , u32 data )
 {
   dynaLock();
-  // if ((addr & 0x05F00000) != 0)
-  //  printf("memSetLong %08X, %08X\n", addr, data);
+  //LOG("memSetLong %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
 
