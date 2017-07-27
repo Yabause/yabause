@@ -312,7 +312,6 @@ section .code
 ; Size = 27 Bytes
 START prologue
 PUSHAD
-push qword 00      ;4 (JumpAddr)
 mov GEN_REG,rdi        ;GEN_REG = m_pDynaSh2
 mov CTRL_REG,rdi        
 add CTRL_REG,byte 64    ;r13 = m_pDynaSh2 + 16 * 4 bytes   
@@ -332,7 +331,6 @@ END  seperator_normal
 
 START check_interrupt
 CALL_CHECK_INT
-pop  rax                     ; 1
 POPAD
 ret
 END check_interrupt
@@ -341,6 +339,7 @@ END check_interrupt
 ; Delay slot part par instruction
 ;Size = 40 Bytes
 START seperator_delay_slot
+sub dword [PC], byte 2                       ; 1
 END seperator_delay_slot
 
 
@@ -348,10 +347,8 @@ END seperator_delay_slot
 ; End part of delay slot
 ;Size = 19 Bytes
 START seperator_delay_after
-mov eax, dword [rsp]
-mov dword [PC], eax   ;
+add dword [PC], byte 2   ;
 add dword [PC+4], byte 1 ;4 Clock += 1
-pop  rax                  ; 1
 POPAD
 ret                       ; 1
 END seperator_delay_after
@@ -360,7 +357,6 @@ END seperator_delay_after
 ; End of block
 ; Size = 10 Bytes
 START epilogue
-pop rax         ;1
 POPAD
 ret             ;1
 END epilogue
@@ -369,14 +365,8 @@ END epilogue
 ; Jump part
 ; Size = 27 Bytes
 START PageFlip
-test dword [rsp], 0xFFFFFFFF ; 7
-jz   .continue               ; 2
-mov  eax,dword [rsp]               ; 3
-mov  dword [PC], eax               ; 2
-pop  rax                     ; 1
 POPAD
 ret                          ; 1
-.continue: 
 END PageFlip
 
 ;-------------------------------------------------------
@@ -388,7 +378,6 @@ add dword [PC+4], byte 1 ;4 Clock += 1
 ;call rax                 ;2
 test rax, 0x01           ;5 finish 
 jz  NEXT_D_INST          ;2
-pop rax                  ;1 
 POPAD
 ret                      ;1
 NEXT_D_INST:
@@ -405,7 +394,6 @@ test dword [rsp], 0xFFFFFFFF ; 7
 jnz   .continue               ; 2
 add dword [PC], byte 2   ;3 PC += 2
 add dword [PC+4], byte 1 ;4 Clock += 1
-pop  rax                     ; 1
 POPAD
 ret                          ; 1
 .continue:
@@ -440,7 +428,6 @@ SET_T
 opdesc SETT,	0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc SLEEP
-pop  rax                     ; 1
 POPAD
 ret                 ;1
 opdesc SLEEP,	0xFF,0xFF,0xFF,0xFF,0xFF
@@ -1121,7 +1108,7 @@ opdesc TST_B,	0xff,0xff,0xff,28,0xff
 opfunc JMP
 GET_R rbp
 mov eax,dword [rbp]       ;2
-mov dword [rsp],eax       ;3
+mov dword [PC],eax       ;3
 opdesc JMP,		0xff,6,0xff,0xff,0xff
 
 opfunc JSR
@@ -1130,7 +1117,7 @@ add eax,byte 4      ;3
 SET_PR eax
 GET_R rbp
 mov eax,dword [rbp]       ;3
-mov dword [rsp],eax       ;3
+mov dword [PC],eax       ;3
 opdesc JSR,		0xff,16,0xff,0xff,0xff
 
 opfunc BRA
@@ -1142,8 +1129,7 @@ or ax,0xf000   ;5
 cwde
 shl eax, 1
 add eax,byte 4      ;3
-add eax,dword [PC] ;2
-mov dword [rsp], eax       ;3
+add dword [PC],eax ;2      ;3
 opdesc BRA,		0xff,0xff,0xff,0xff,2
 
 opfunc BSR
@@ -1158,7 +1144,7 @@ or ebx,0xfffff000   ;5
 .continue:
 shl ebx,byte 1      ;3
 add ebx,eax ;2
-mov dword [rsp],ebx       ;3
+mov dword [PC],ebx       ;3
 opdesc BSR,		0xff,0xff,0xff,0xff,15
 
 opfunc BSRF
@@ -1167,7 +1153,7 @@ mov eax,dword [PC]       ;2
 add eax,byte 4      ;3
 SET_PR eax
 add eax,dword [rbp] ;3
-mov dword [rsp],eax       ;3
+mov dword [PC],eax       ;3
 opdesc BSRF,		0xff,6,0xff,0xff,0xff
 
 opfunc BRAF
@@ -1175,20 +1161,20 @@ GET_R rbp
 mov eax,dword [PC]       ;2
 add eax,dword [rbp] ;3
 add eax,byte 4      ;4
-mov dword [rsp],eax       ;3
+mov dword [PC],eax       ;3
 opdesc BRAF,		0xff,6,0xff,0xff,0xff
 
 
 opfunc RTS
 GET_PR eax     ;3
-mov dword [rsp],eax       ;3
+mov dword [PC],eax       ;3
 opdesc RTS,			0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc RTE
 GET_R_ID 15,rbp
 mov edi, dword [rbp]        ;3
 CALL_GETMEM_LONG
-mov dword [rsp], eax
+mov dword [PC], eax
 add dword [rbp], byte 4
 mov edi, dword [rbp]
 CALL_GETMEM_LONG 
@@ -1213,7 +1199,8 @@ shl  eax,2            ;3
 add  eax, dword [CTRL_REG+8]      ;3 ADD VBR
 mov  edi,eax
 CALL_GETMEM_LONG
-mov  dword [rsp],eax        ;3
+mov  dword [PC],eax        ;3
+sub  dword [PC], byte 2        ;3
 opdesc TRAPA,	      0xFF,0xFF,0xFF,53,0xFF
 
 opfunc BT
@@ -1224,37 +1211,34 @@ GET_BYTE_IMM al
 cbw
 cwde
 shl eax,byte 1      ;3
-add eax,byte 4      ;3
-add eax, dword [PC] ;2
-mov dword [rsp], eax
+add eax,byte 2      ;3
+add dword [PC], eax ;2
 .continue:
 opdesc BT,		0xFF,0xFF,0xFF,11,0xFF
 
 opfunc BT_S
-xor eax,eax     ;3
 TEST_IS_T
 jnc .continue        ;2       ;2
+xor eax,eax     ;3
 GET_BYTE_IMM al
 cbw
 cwde
 shl eax, byte 1      ;3
+add dword [PC], eax ;2
 .continue:
-add eax, byte 4      ;3
-add eax, dword [PC] ;2
-mov dword [rsp], eax
+add dword [PC], byte 4 ;2
 opdesc BT_S,		0xFF,0xFF,0xFF,11,0xFF
 
 opfunc BF
-xor eax,eax     ;3
 TEST_IS_T
 jc .continue        ;2
+xor eax,eax     ;3
 GET_BYTE_IMM al
 cbw
 cwde
 shl eax, byte 1      ;3
-add eax, byte 4      ;3
-add eax, dword [PC] ;2
-mov dword [rsp], eax
+add eax, byte 2      ;3
+add dword [PC], eax ;2
 .continue:
 opdesc BF,		0xFF,0xFF,0xFF,11,0xFF
 
@@ -1266,10 +1250,9 @@ GET_BYTE_IMM al
 cbw
 cwde
 shl eax, byte 1      ;3
+add dword [PC], eax ;2
 .continue:
-add eax, byte 4      ;3
-add eax, dword [PC] ;2
-mov dword [rsp], eax
+add dword [PC], byte 4      ;3
 opdesc BF_S,		0xFF,0xFF,0xFF,11,0xFF
 
 ;Store/Load Opcodes
@@ -1426,8 +1409,8 @@ opdesc LDS_MACL_INC,	0xFF,6,0xFF,0xFF,0xFF
 opfunc MOVA
 GET_R0 rbp
 mov ebx,[PC]       ;2
-and ebx, 0xfffffffc   ;3
 add ebx,byte 4      ;3
+and ebx, 0xfffffffc   ;3
 xor eax,eax         ;2
 GET_BYTE_IMM al
 shl eax,byte 2      ;3
@@ -1456,8 +1439,8 @@ xor eax,eax         ;2
 GET_BYTE_IMM al
 shl eax,byte 2       ;3
 mov edi,dword [PC]       ;2
-and edi,0xFFFFFFFC  ;6
 add edi,byte 4      ;3
+and edi,0xFFFFFFFC  ;6
 add edi,eax         ;2            ;1
 CALL_GETMEM_LONG
 mov dword [rbp],eax       ;3
