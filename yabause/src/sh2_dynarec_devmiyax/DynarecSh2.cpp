@@ -864,6 +864,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 instruction_counter = 0;
   u32 write_memory_counter = 0;
   u32 calsize;
+  int need_int = 0;
 
   startptr = ptr = page->code;
   i = 0;
@@ -985,9 +986,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       *counterpos = asm_list[i].cycle;
       ptr += *(asm_list[i].size) + nomal_seperator_size;
       
-      if (asm_list[i].checkint == 1) {
+      if ((asm_list[i].checkint == 1) || (need_int == 1)) {
          memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
          ptr += check_interrupt_size;
+         need_int = 0;
       }
 
     }
@@ -1004,8 +1006,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       opcodePass(&asm_list[i], op, ptr);
       ptr += *(asm_list[i].size) + nomal_seperator_size;
       if (asm_list[i].checkint == 1) {
-         memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
-         ptr += check_interrupt_size;
+         need_int = 1;
       }
     }
 
@@ -1023,10 +1024,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
       ptr += *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
-      if (asm_list[i].checkint == 1) {
-         memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
-         ptr += check_interrupt_size;
-      }
     }
 
     // Jmp With Delay Operation
@@ -1078,10 +1075,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
       *counterpos = cycle;
       ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
-      if ((asm_list[i].checkint == 1) || (asm_list[j].checkint == 1)) {
-         memcpy((void*)ptr, (void*)check_interrupt, check_interrupt_size);
-         ptr += check_interrupt_size;
-      }
     }
 
     if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {

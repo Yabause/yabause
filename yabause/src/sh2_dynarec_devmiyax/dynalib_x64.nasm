@@ -348,9 +348,7 @@ END seperator_delay_slot
 ;Size = 19 Bytes
 START seperator_delay_after
 add dword [PC], byte 2   ;
-add dword [PC+4], byte 1 ;4 Clock += 1
-POPAD
-ret                       ; 1
+add dword [PC+4], byte 1 ;4 Clock += 1                ; 1
 END seperator_delay_after
 
 ;-------------------------------------------------------
@@ -364,9 +362,7 @@ END epilogue
 ;------------------------------------------------------
 ; Jump part
 ; Size = 27 Bytes
-START PageFlip
-POPAD
-ret                          ; 1
+START PageFlip                       ; 1
 END PageFlip
 
 ;-------------------------------------------------------
