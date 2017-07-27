@@ -341,7 +341,6 @@ END check_interrupt
 ; Delay slot part par instruction
 ;Size = 40 Bytes
 START seperator_delay_slot
-add dword [PC], byte 2   ;3 PC += 2
 END seperator_delay_slot
 
 
