@@ -1486,6 +1486,7 @@ int DynarecSh2::InterruptRutine(u8 Vector, u8 level)
     memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->CtrlReg[0]);
     m_pDynaSh2->GenReg[15] -= 4;
     memSetLong(m_pDynaSh2->GenReg[15], m_pDynaSh2->SysReg[3]);
+    m_pDynaSh2->CtrlReg[0] &= ~(0x000000F0);
     m_pDynaSh2->CtrlReg[0] |= ((u32)(level << 4) & 0x000000F0);
     m_pDynaSh2->SysReg[3] = memGetLong(m_pDynaSh2->CtrlReg[2] + (((u32)Vector) << 2));
 #if defined(DEBUG_CPU)
