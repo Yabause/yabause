@@ -1167,9 +1167,7 @@ GET_R rbp
 mov eax,dword [PC]       ;2
 add eax,byte 4      ;3
 SET_PR eax
-mov eax,[PC]       ;3
 add eax,dword [rbp] ;3
-add eax,byte 4      ;3
 mov dword [rsp],eax       ;3
 opdesc BSRF,		0xff,6,0xff,0xff,0xff
 
