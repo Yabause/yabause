@@ -467,23 +467,16 @@ opdesc TSTI,	0xff,0xff,0xff,15,0xff
 
 
 opfunc ANDI
-GET_R0 SCRATCH1
-and dword [SCRATCH1],byte 0x7f ;3
-opdesc ANDI,	0xff,0xff,0xff,6,0xff
+and dword [GEN_REG],dword 0x000000ff ;3
+opdesc ANDI,	0xff,0xff,0xff,4,0xff
 
 opfunc XORI
-GET_R0 SCRATCH1
-xor eax, eax
-GET_BYTE_IMM al
-xor dword [SCRATCH1],eax ;3
-opdesc XORI,	0xff,0xff,0xff,6,0xff
+xor byte [GEN_REG],byte 0x7f ;3
+opdesc XORI,	0xff,0xff,0xff,4,0xff
 
 opfunc ORI
-GET_R0 SCRATCH1
-xor eax,eax         ;2
-GET_BYTE_IMM al
-or dword [SCRATCH1],eax ;3
-opdesc ORI,	0xff,0xff,0xff,6,0xff
+or byte [GEN_REG],byte 0x7f ;3
+opdesc ORI,	0xff,0xff,0xff,4,0xff
 
 opfunc CMP_EQ_IMM
 mov eax, [GEN_REG]            ;2
@@ -492,7 +485,8 @@ cmp eax, byte 0x7F ;4
 jne .continue
 SET_T
 .continue:
-opdesc CMP_EQ_IMM,	0xff,0xff,0xff,14,0xff
+opdesc CMP_EQ_IMM,     0xff,0xff,0xff,14,0xff
+
 
 opfunc XTRCT
 GET_R SCRATCH1
