@@ -258,7 +258,6 @@ section .code
 
 %macro PUSHAD 0
         push rbx           ;1
-        push rsp           ;1
         push rbp           ;1
         push r12           ;1
         push r13           ;1
@@ -272,7 +271,6 @@ section .code
 	pop r13           ;1
 	pop r12           ;1
 	pop rbp           ;1
-	pop rsp           ;1
 	pop rbx           ;1
 %endmacro
 
@@ -412,7 +410,6 @@ and dword [SYS_REG+4], 0 ;4
 opdesc CLRMAC,	0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc NOP
-nop
 opdesc NOP,		0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc DIV0U
