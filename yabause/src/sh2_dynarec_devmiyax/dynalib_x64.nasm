@@ -468,9 +468,7 @@ opdesc TSTI,	0xff,0xff,0xff,15,0xff
 
 opfunc ANDI
 GET_R0 SCRATCH1
-xor eax, eax
-GET_BYTE_IMM al
-and dword [SCRATCH1],eax ;3
+and dword [SCRATCH1],byte 0x7f ;3
 opdesc ANDI,	0xff,0xff,0xff,6,0xff
 
 opfunc XORI
