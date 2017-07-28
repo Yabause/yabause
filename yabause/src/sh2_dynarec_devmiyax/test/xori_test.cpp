@@ -57,7 +57,7 @@ TEST_F(XoriTest, normal) {
 TEST_F(XoriTest, max) {
 
 
-  pctx_->GetGenRegPtr()[0]=0xFFFFFFFF;
+  pctx_->GetGenRegPtr()[0]=0xDEADCAFF;
 
   // xori
   memSetWord( 0x06000000, 0xca01 );
@@ -67,7 +67,7 @@ TEST_F(XoriTest, max) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xfffffffe, pctx_->GetGenRegPtr()[0]  );
+  EXPECT_EQ( 0xDEADCAfe, pctx_->GetGenRegPtr()[0]  );
 
 }
 

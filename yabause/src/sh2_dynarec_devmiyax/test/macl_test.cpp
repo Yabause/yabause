@@ -68,13 +68,13 @@ TEST_F(MaclTest, normal2) {
 // 0602e3c2: macli 0x067f R[6]=0x00036420@0x06001EC4 R[7]=0xffff1cc5@0x060300c0  MACL 0x00000000 MACH 0x00000000
 // 0602e3c2: maclo 0x067f MACL 0xfd6f8ca0 MACH 0xfffffffc
 
-  pctx_->GetGenRegPtr()[6]=0x06001F04;
+  pctx_->GetGenRegPtr()[6]=0x06001EC4;
   pctx_->GetGenRegPtr()[7]=0x060300c0;
-  pctx_->SET_SR( 0xFFFFFFFF );
+  pctx_->SET_SR( 0x3F3 );
   pctx_->SET_MACH(0);
   pctx_->SET_MACL(0);
 
-  memSetLong( 0x06001F04, 0x00036420 );
+  memSetLong( 0x06001EC4, 0x00036420 );
   memSetLong( 0x060300c0, 0xffff1cc5 );
 
   // mac.l @r7+, @r6+

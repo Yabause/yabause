@@ -34,7 +34,7 @@ virtual void TearDown() {
 
 TEST_F(LdcTest, normal) {
 
-  pctx_->GetGenRegPtr()[0]=0xFFFFFFFF; //source
+  pctx_->GetGenRegPtr()[0]=0xDEADCFFF; //source
 
   // subc r1,r2
   memSetWord( 0x06000000, 0x400E );
@@ -45,7 +45,7 @@ TEST_F(LdcTest, normal) {
   pctx_->SET_SR( 0x00000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0xFFFFFFFF, pctx_->GetGenRegPtr()[0] );
+  EXPECT_EQ( 0xDEADCFFF, pctx_->GetGenRegPtr()[0] );
   EXPECT_EQ( 0x3F3, pctx_->GET_SR() );
 }
 

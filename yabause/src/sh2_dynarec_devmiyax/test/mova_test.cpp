@@ -198,6 +198,7 @@ TEST_F(MovaTest, movbs) {
   pctx_->Execute();
 
  EXPECT_EQ( 0xFE, memGetByte(0x0600024C) );
+ EXPECT_EQ( 0xFEFFFFFF, memGetLong(0x0600024C) );
 
 
   pctx_->GetGenRegPtr()[0]=0xFFFFFFFF;
@@ -891,7 +892,7 @@ TEST_F(MovaTest, movt) {
 TEST_F(MovaTest, movbl) {
 //MOVBL
   pctx_->GetGenRegPtr()[0]=0x0600024C;
-  pctx_->GetGenRegPtr()[1]=0xFFFFFFFF;
+  pctx_->GetGenRegPtr()[1]=0xDEADCAFE;
 
   memSetWord( 0x06000246, 0x6100 ); 
   memSetWord( 0x06000248, 0x000b );  // rts
@@ -905,7 +906,7 @@ TEST_F(MovaTest, movbl) {
  EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[1] );
 
   pctx_->GetGenRegPtr()[0]=0x0600024C;
-  pctx_->GetGenRegPtr()[1]=0xFFFFFFFF;
+  pctx_->GetGenRegPtr()[1]=0xDEADCAFE;
 
   memSetWord( 0x06000246, 0x6100 ); 
   memSetWord( 0x06000248, 0x000b );  // rts
@@ -922,7 +923,7 @@ TEST_F(MovaTest, movbl) {
 TEST_F(MovaTest, movwl) {
 //MOVWL
   pctx_->GetGenRegPtr()[0]=0x06000250;
-  pctx_->GetGenRegPtr()[1]=0xFFFFFFFF;
+  pctx_->GetGenRegPtr()[1]=0xDEADCAFE;
 
   memSetWord( 0x06000246, 0x6101 ); 
   memSetWord( 0x06000248, 0x000b );  // rts
@@ -951,7 +952,7 @@ TEST_F(MovaTest, movwl) {
 TEST_F(MovaTest, movwi) {
 //MOVWI
 
-  pctx_->GetGenRegPtr()[0]=0xFFFFFFFF;
+  pctx_->GetGenRegPtr()[0]=0xDEADCAFE;
 
   memSetWord( 0x06000246, 0x9003 ); 
   memSetWord( 0x06000248, 0x000b );  // rts
@@ -963,7 +964,7 @@ TEST_F(MovaTest, movwi) {
 
  EXPECT_EQ( 0x00007EAD, pctx_->GetGenRegPtr()[0] );
 
-  pctx_->GetGenRegPtr()[0]=0xFFFFFFFF;
+  pctx_->GetGenRegPtr()[0]=0xDEADCAFE;
 
   memSetWord( 0x06000246, 0x9083 ); 
   memSetWord( 0x06000248, 0x000b );  // rts
