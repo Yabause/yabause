@@ -891,19 +891,12 @@ SET_T
 opdesc CMP_GT,	6,16,0xff,0xff,0xff
 
 opfunc ROTR
-GET_R rbp
-mov eax,dword [rbp]       ;2
-shr dword [rbp],byte 1     ;3
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 and eax,byte 1     ;3
 CLEAR_T
 SET_T_R eax
-TEST_IS_T
-jnc continue_rotr
-xor eax, eax
-or eax, byte 1
-shl eax, byte 31
-or dword [rbp],eax
-continue_rotr:
+ror dword [SCRATCH1], 1
 opdesc ROTR,	0xff,6,0xff,0xff,0xff
 
 opfunc ROTCR
