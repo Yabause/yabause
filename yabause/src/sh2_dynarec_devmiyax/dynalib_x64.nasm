@@ -409,8 +409,7 @@ CLEAR_T
 opdesc CLRT,  0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc CLRMAC
-and dword [SYS_REG], 0   ;4
-and dword [SYS_REG+4], 0 ;4
+and qword [SYS_REG], 0   ;4
 opdesc CLRMAC,	0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc NOP
