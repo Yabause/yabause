@@ -582,13 +582,12 @@ mov dword [SCRATCH1],eax       ;2
 opdesc NEG,		6,18,0xff,0xff,0xff
 
 opfunc NEGC
-GET_R rbp
-mov ecx,[rbp]             ;3
+GET_R SCRATCH1
+mov ecx,[SCRATCH1]             ;3
 neg ecx                   ;2
 GET_R SCRATCH1
 mov dword [SCRATCH1],ecx             ;3
-GET_SR eax
-and dword eax,1           ;5
+GET_T eax
 sub dword [SCRATCH1],eax             ;3
 CLEAR_T
 cmp ecx,0                 ;5
@@ -813,7 +812,6 @@ opfunc DT
 GET_R SCRATCH1
 CLEAR_T
 dec dword [SCRATCH1]     ;3
-cmp dword [SCRATCH1],byte 0 ;4
 jne .continue       ;2
 SET_T
 .continue:
