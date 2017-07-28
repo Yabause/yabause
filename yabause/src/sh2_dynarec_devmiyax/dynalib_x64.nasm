@@ -1,4 +1,4 @@
-; Copyright 2017 devMiyax(smiyaxdev@gmail.com)
+; Copyright 2017 FCare(francois.caron.perso@gmail.com)
 ; 
 ; This file is part of Yabause.
 ; 
@@ -1169,9 +1169,9 @@ sub  dword [PC], byte 2        ;3
 opdesc TRAPA,	      0xFF,0xFF,0xFF,53,0xFF
 
 opfunc BT
-xor eax,eax     ;3
 TEST_IS_T
 jnc .continue        ;2
+xor eax,eax     ;3
 GET_BYTE_IMM al
 cbw
 cwde
@@ -1208,9 +1208,9 @@ add dword [PC], eax ;2
 opdesc BF,		0xFF,0xFF,0xFF,11,0xFF
 
 opfunc BF_S
-xor eax,eax     ;3
 TEST_IS_T
 jc .continue        ;2       ;2
+xor eax,eax     ;3
 GET_BYTE_IMM al
 cbw
 cwde
@@ -1429,7 +1429,7 @@ opfunc MOVWL4
 GET_R rbp
 xor  eax,eax          ;2  Clear rax
 GET_BYTE_IMM al
-shl  ax, byte 1       ;3  << 1
+shl  eax, byte 1       ;3  << 1
 add  eax,dword [rbp]        ;2
 mov edi, eax
 CALL_GETMEM_WORD
@@ -1442,13 +1442,13 @@ opfunc MOVLL4
 GET_R rbp
 xor  eax,eax          ;2  Clear rax
 GET_BYTE_IMM al
-shl  ax, byte 2       ;3  << 2
+shl  eax, byte 2       ;3  << 2
 add  eax,dword [rbp]        ;2
 mov edi, eax
 CALL_GETMEM_LONG
 GET_R rbp
 mov  dword [rbp],eax        ;3
-opdesc MOVLL4, 6,33,10,0xFF,0xFF
+opdesc MOVLL4, 6,32,10,0xFF,0xFF
 
  
 opfunc MOVBS4
@@ -1539,7 +1539,7 @@ GET_R0 rbp
 mov esi, dword [rbp]
 xor  eax,eax         ;2  Clear rax
 GET_BYTE_IMM al
-shl  ax,byte 1       ;3  Shift left 2
+shl  eax,byte 1       ;3  Shift left 2
 GET_GBR edi
 add  edi, eax ;2  GBR + IMM( Adress for Get Value )
 CALL_SETMEM_WORD
@@ -1623,7 +1623,6 @@ opfunc TAS
 GET_R rbp
 mov edi, dword [rbp]         ;3
 CALL_GETMEM_BYTE
-and  eax,0x000000FF      ;5
 CLEAR_T
 test eax,eax             ;3
 jne  NOT_ZERO            ;2
@@ -1939,31 +1938,27 @@ opdesc MULL, 6,16,0xFF,0xFF,0xFF
 ; muls 16bit -> 32 bit Multip
 opfunc MULS
 GET_R rbp
-xor  eax,eax           ;2
 mov  ax,word [rbp]     ;3
 GET_R rbp
-xor  edx,edx           ;2
 mov  dx,word [rbp]     ;3  
 imul dx                ;2
 shl  edx, byte 16      ;3
 add  dx, ax            ;2
 SET_MACL edx ;3 store MACL   
-opdesc MULS, 6,19,0xFF,0xFF,0xFF
+opdesc MULS, 6,17,0xFF,0xFF,0xFF
 
 ;--------------------------------------------------------------
 ; mulu 16bit -> 32 bit Multip
 opfunc MULU
 GET_R rbp
-xor  eax,eax           ;2
 mov  ax,word [rbp]     ;3
 GET_R rbp
-xor  edx,edx           ;2
 mov  dx,word [rbp]     ;3  
 mul dx                ;2
 shl  edx, byte 16      ;3
 add  dx, ax            ;2
 SET_MACL edx ;3 store MACL   
-opdesc MULU, 6,19,0xFF,0xFF,0xFF
+opdesc MULU, 6,17,0xFF,0xFF,0xFF
 
 ;--------------------------------------------------------------
 ; MACL   ans = 32bit -> 64 bit MUL
