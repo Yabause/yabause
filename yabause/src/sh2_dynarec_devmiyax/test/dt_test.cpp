@@ -83,6 +83,20 @@ TEST_F(DtTest, normal) {
  EXPECT_EQ( 0x0, pctx_->GetGenRegPtr()[2] );
  EXPECT_EQ( 0x1, pctx_->GET_SR() );
 
+  pctx_->GetGenRegPtr()[2]=0xF0001;
+
+  memSetWord( 0x06000246, 0x4210 ); 
+  memSetWord( 0x06000248, 0x000b );  // rts
+  memSetWord( 0x0600024A, 0x0009 );  // nop 
+  memSetLong( 0x0600024C, 0xDEADCAFE ); 
+
+  pctx_->SET_PC( 0x06000246 );
+  pctx_->SET_SR( 0x1 );
+  pctx_->Execute();
+
+ EXPECT_EQ( 0xF0000, pctx_->GetGenRegPtr()[2] );
+ EXPECT_EQ( 0x0, pctx_->GET_SR() );
+
 }
 
 TEST_F(DtTest, negative) {
