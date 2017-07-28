@@ -158,9 +158,9 @@ section .code
 	or dword [CTRL_REG], 0x1
 %endmacro
 
-%macro SET_T_R 1
+%macro SET_T_R 2
 	CLEAR_T
-	bt %1,0x0
+	bt %1,%2
 	jnc .end
 	SET_T
 	.end:
@@ -897,7 +897,7 @@ opdesc CMP_GT,	6,16,0xff,0xff,0xff
 opfunc ROTR
 GET_R SCRATCH1
 mov eax,dword [SCRATCH1]       ;2
-SET_T_R eax
+SET_T_R eax, 0
 ror dword [SCRATCH1], 1
 opdesc ROTR,	0xff,6,0xff,0xff,0xff
 
@@ -911,27 +911,25 @@ mov ecx, 1
 shl ecx, byte 31
 or dword [rbp],ecx
 continue_rotcr:  ;2
-SET_T_R eax
+SET_T_R eax, 0
 opdesc ROTCR,	0xff,6,0xff,0xff,0xff
 
 opfunc ROTL
 GET_R rbp
 mov eax,dword [rbp]       ;2
-shr eax,byte 31     ;3
 rol dword [SCRATCH1], 1
-SET_T_R eax
+SET_T_R eax, 31
 opdesc ROTL,	0xff,6,0xff,0xff,0xff
 
 opfunc ROTCL
 GET_R rbp
 mov eax,dword [rbp]       ;2
 shl dword [rbp],byte 1     ;3
-shr eax,byte 31     ;3
 TEST_IS_T
 jnc continue_rotcl
 or dword [rbp],byte 1
 continue_rotcl:
-SET_T_R eax
+SET_T_R eax,31
 opdesc ROTCL,	0xff,6,0xff,0xff,0xff
 
 opfunc SHL
