@@ -86,6 +86,8 @@ section .code
 %define PC r15
 %define R0 GEN_REG
 %define R15 GEN_REG+15*4
+%define GBR CTRL_REG+4
+
 
 %define SCRATCH1 rbp
 
@@ -1352,7 +1354,7 @@ opdesc LDS_MACL_INC,	0xFF,6,0xFF,0xFF,0xFF
 opfunc MOVA
 mov ebx,[PC]       ;2
 add ebx,byte 4      ;3
-and ebx, 0xfffffffc   ;3
+and bl, 0xfc   ;3
 GET_BYTE_IMM eax
 shl eax,byte 2      ;3
 add eax, ebx ;2
@@ -1362,11 +1364,10 @@ opdesc MOVA,	0xFF,0xFF,0xFF,10,0xFF
 
 opfunc MOVWI
 GET_R SCRATCH1
-GET_BYTE_IMM eax
-shl eax,byte 1       ;1
-add eax,[PC]       ;2 
-add eax,byte 4      ;3
-mov edi, eax
+GET_BYTE_IMM edi
+shl edi,byte 1       ;1
+add edi,[PC]       ;2 
+add edi,byte 4      ;3
 CALL_GETMEM_WORD
 cwde                ;1
 mov dword [SCRATCH1], eax       ;3
@@ -1387,9 +1388,8 @@ opdesc MOVLI,       0xFF,6,0xFF,8,0xFF
 
 opfunc MOVBL4
 GET_R SCRATCH1
-GET_BYTE_IMM eax
-add  eax,dword [SCRATCH1]        ;3
-mov edi, eax
+GET_BYTE_IMM edi
+add  edi,dword [SCRATCH1]        ;3
 CALL_GETMEM_BYTE
 cbw                   ;1  Sign extension byte -> word
 cwde                  ;1  Sign extension qword -> dword
@@ -1399,10 +1399,9 @@ opdesc MOVBL4, 6,0xFF,8,0xFF,0xFF
 
 opfunc MOVWL4
 GET_R SCRATCH1
-GET_BYTE_IMM eax
-shl  eax, byte 1       ;3  << 1
-add  eax,dword [SCRATCH1]        ;2
-mov edi, eax
+GET_BYTE_IMM edi
+shl  edi, byte 1       ;3  << 1
+add  edi,dword [SCRATCH1]        ;2
 CALL_GETMEM_WORD
 cwde                  ;2  sign 
 mov  dword [R0],eax        ;3
@@ -1410,14 +1409,13 @@ opdesc MOVWL4, 6,0xFF,8,0xFF,0xFF
 
 opfunc MOVLL4
 GET_R SCRATCH1
-GET_BYTE_IMM eax
-shl  eax, byte 2       ;3  << 2
-add  eax,dword [SCRATCH1]        ;2
-mov edi, eax
+GET_BYTE_IMM edi
+shl  edi, byte 2       ;3  << 2
+add  edi,dword [SCRATCH1]        ;2
 CALL_GETMEM_LONG
 GET_R SCRATCH1
 mov  dword [SCRATCH1],eax        ;3
-opdesc MOVLL4, 6,33,8,0xFF,0xFF
+opdesc MOVLL4, 6,31,8,0xFF,0xFF
 
  
 opfunc MOVBS4
@@ -1441,19 +1439,17 @@ opdesc MOVWS4,	10,0xFF,12,0xFF,0xFF
 opfunc MOVLS4
 GET_R SCRATCH1
 mov esi, dword [SCRATCH1]     ;3
+GET_BYTE_IMM edi
+shl edi,byte 2  
 GET_R SCRATCH1
-mov edi, dword [SCRATCH1]     ;3
-GET_BYTE_IMM eax
-shl eax,byte 2      ;3
-add edi,eax ;2
+add edi, dword [SCRATCH1]     ;3
 CALL_SETMEM_LONG
-opdesc MOVLS4,	6,16,21,0xFF,0xFF
+opdesc MOVLS4,	6,24,11,0xFF,0xFF
 
  
 opfunc MOVBLG
-GET_BYTE_IMM eax
-GET_GBR edi
-add  edi, eax;3  GBR + IMM( Adress for Get Value )
+GET_BYTE_IMM edi
+add edi, dword [GBR]
 CALL_GETMEM_BYTE
 cbw                    ;1
 cwde                   ;1
@@ -1462,10 +1458,9 @@ opdesc MOVBLG,    0xFF,0xFF,0xFF,1,0xFF
 
 
 opfunc MOVWLG
-GET_BYTE_IMM eax
-shl  eax,byte 1         ;3  Shift left 2
-GET_GBR edi
-add  edi, eax;3  GBR + IMM( Adress for Get Value )
+GET_BYTE_IMM edi
+shl  edi,byte 1         ;3  Shift left 2
+add edi, dword [GBR]
 CALL_GETMEM_WORD
 cwde                   ;1
 mov  dword [R0],eax         ;3
@@ -1473,10 +1468,9 @@ opdesc MOVWLG,    0xFF,0xFF,0xFF,1,0xFF
 
 
 opfunc MOVLLG
-GET_BYTE_IMM eax
-shl  eax,byte 2         ;3  Shift left 2
-GET_GBR edi
-add  edi, eax;3  GBR + IMM( Adress for Get Value )
+GET_BYTE_IMM edi
+shl  edi,byte 2         ;3  Shift left 2
+add edi, dword [GBR]
 CALL_GETMEM_LONG
 mov  dword [R0],eax         ;3
 opdesc MOVLLG,    0xFF,0xFF,0xFF,1,0xFF
@@ -1484,27 +1478,24 @@ opdesc MOVLLG,    0xFF,0xFF,0xFF,1,0xFF
 
 opfunc MOVBSG
 mov esi, dword [R0]     ;3
-GET_BYTE_IMM eax
-GET_GBR edi
-add  edi,eax ;2  GBR + IMM( Adress for Get Value )
+GET_BYTE_IMM edi
+add edi, dword [GBR]
 CALL_SETMEM_BYTE
 opdesc MOVBSG,    0xFF,0xFF,0xFF,5,0xFF
 
 opfunc MOVWSG
 mov esi, dword [R0]
-GET_BYTE_IMM eax
-shl  eax,byte 1       ;3  Shift left 2
-GET_GBR edi
-add  edi, eax ;2  GBR + IMM( Adress for Get Value )
+GET_BYTE_IMM edi
+shl  edi,byte 1       ;3  Shift left 2
+add edi, dword [GBR]
 CALL_SETMEM_WORD
 opdesc MOVWSG,    0xFF,0xFF,0xFF,5,0xFF
 
 opfunc MOVLSG
 mov esi, dword [R0]     ;3
-GET_BYTE_IMM eax
-shl eax,byte 2       ;3  Shift left 2
-GET_GBR edi
-add  edi,eax ;2  GBR + IMM( Adress for Get Value )
+GET_BYTE_IMM edi
+shl edi,byte 2       ;3  Shift left 2
+add edi, dword [GBR]
 CALL_SETMEM_LONG
 opdesc MOVLSG,    0xFF,0xFF,0xFF,5,0xFF
 
@@ -1580,7 +1571,7 @@ test eax,eax             ;3
 jne  NOT_ZERO            ;2
 SET_T
 NOT_ZERO:              
-or   eax, 0x00000080        ;3
+or   al, 0x80        ;3
 mov  esi, eax
 mov  edi, dword [SCRATCH1]          ;3
 CALL_SETMEM_BYTE
@@ -1634,15 +1625,15 @@ opfunc DIV0S
 GET_R SCRATCH1
 CLEAR_Q
 mov  eax, 0                  ;5 Zero Clear rax     
-test dword [SCRATCH1],0x80000000  ;7 Test sign
-je   continue                ;2 if ZF = 1 then goto NO_SIGN
+bt dword [SCRATCH1],31  ;7 Test sign
+jnc   continue                ;2 if ZF = 1 then goto NO_SIGN
 SET_Q
 inc  eax                     ;1 
 continue:
 GET_R SCRATCH1
 CLEAR_M
-test dword [SCRATCH1],0x80000000  ;7 Test sign
-je   continue2               ;2 if ZF = 1 then goto NO_SIGN
+bt dword [SCRATCH1],31  ;7 Test sign
+jnc   continue2               ;2 if ZF = 1 then goto NO_SIGN
 SET_M
 inc  eax                     ;1
 continue2:
@@ -1651,7 +1642,7 @@ test eax, 1                  ;5 if( Q != M ) SetT(1)
 je  continue3                ;2
 SET_T
 continue3:
-opdesc DIV0S, 45,6,0xFF,0xFF,0xFF
+opdesc DIV0S, 43,6,0xFF,0xFF,0xFF
  
 
 ;===============================================================
@@ -1666,8 +1657,8 @@ GET_R r8                    ;2 r8 = @R[n]
 GET_SR ecx		    ;ecx = old SR
 mov  eax,dword [r8]         ;3 R[n]
 
-test eax,0x80000000          ;5 
-je   NOZERO                  ;2
+bt eax,31          ;5 
+jnc   NOZERO                  ;2
 SET_Q
 jmp  CONTINUE                ;3
 NOZERO:
@@ -1687,15 +1678,15 @@ GET_R SCRATCH1
 mov  r9d,dword [SCRATCH1]               ;3 R[m]
 
 ;switch( old_q )
-test ecx,0x00000100          ;6 old_q == 1 ?
-jne   Q_FLG_TMP              ;2
+bt ecx,8          ;6 old_q == 1 ?
+jc   Q_FLG_TMP              ;2
 
 ;----------------------------------------------------------
 ; 8 + 62 + 3 + 62 = 135
 NQ_FLG: 
 
-test ecx,0x00000200          ;6 M == 1 ?
-jne  NQ_M_FLG                ;2
+bt ecx,9          ;6 M == 1 ?
+jc  NQ_M_FLG                ;2
 
 	;--------------------------------------------------
 	; 62
@@ -1768,8 +1759,8 @@ jmp Q_FLG; 3
 Q_FLG:   
 
 
-test ecx,0x200 ; M == 1 ?
-jne  Q_M_FLG
+bt ecx,9 ; M == 1 ?
+jc  Q_M_FLG
 
 	;--------------------------------------------------
 	Q_NM_FLG:
@@ -1845,7 +1836,7 @@ cmp  eax, r9d                  ;2
 jne  NO_Q_M                   ;2
 SET_T
 NO_Q_M:
-opdesc DIV1, 62,6,0xFF,0xFF,0xFF
+opdesc DIV1, 61,6,0xFF,0xFF,0xFF
 
 ;======================================================
 ; end of DIV1
