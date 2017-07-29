@@ -84,6 +84,8 @@ section .code
 %define CTRL_REG r13
 %define SYS_REG r14
 %define PC r15
+%define R0 GEN_REG
+%define R15 GEN_REG+15*4
 
 %define SCRATCH1 rbp
 
@@ -105,10 +107,6 @@ section .code
 	mov %2, %1
 	shl %2, byte 2
 	add %2, GEN_REG              
-%endmacro
-
-%macro GET_R0 1
-	mov %1, GEN_REG              
 %endmacro
 
 %macro SET_MACH 1
@@ -156,7 +154,7 @@ section .code
 %endmacro
 
 %macro CLEAR_T 0
-	and dword [CTRL_REG], 0x3F2
+	btr dword [CTRL_REG], 0x0
 %endmacro
 
 %macro SET_T 0
@@ -461,14 +459,13 @@ end_tst:
 opdesc TST,	6,16,0xff,0xff,0xff
 
 opfunc TSTI
-GET_R0 SCRATCH1
-mov eax,dword [SCRATCH1]       ;2
+mov eax,dword [R0]       ;2
 CLEAR_T
 test al,$00        ;5  Imidiate Val
 jne end_tsti
 SET_T
 end_tsti:
-opdesc TSTI,	0xff,0xff,0xff,15,0xff
+opdesc TSTI,	0xff,0xff,0xff,11,0xff
 
 
 opfunc ANDI
@@ -490,7 +487,7 @@ cmp eax, byte 0x7F ;4
 jne .continue
 SET_T
 .continue:
-opdesc CMP_EQ_IMM,     0xff,0xff,0xff,14,0xff
+opdesc CMP_EQ_IMM,     0xff,0xff,0xff,12,0xff
 
 
 opfunc XTRCT
@@ -902,33 +899,33 @@ TEST_IS_T
 jnc continue_rotcr
 mov ecx, 1
 shl ecx, byte 31
-or dword [rbp],ecx
+or dword [SCRATCH1],ecx
 continue_rotcr:  ;2
 SET_T_R eax, 0
 opdesc ROTCR,	0xff,6,0xff,0xff,0xff
 
 opfunc ROTL
-GET_R rbp
-mov eax,dword [rbp]       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 rol dword [SCRATCH1], 1
 SET_T_R eax, 31
 opdesc ROTL,	0xff,6,0xff,0xff,0xff
 
 opfunc ROTCL
-GET_R rbp
-mov eax,dword [rbp]       ;2
-shl dword [rbp],byte 1     ;3
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
+shl dword [SCRATCH1],byte 1     ;3
 TEST_IS_T
 jnc continue_rotcl
-or dword [rbp],byte 1
+or dword [SCRATCH1],byte 1
 continue_rotcl:
 SET_T_R eax,31
 opdesc ROTCL,	0xff,6,0xff,0xff,0xff
 
 opfunc SHL
-GET_R rbp
-mov eax, dword [rbp]
-shl dword [rbp], byte 1
+GET_R SCRATCH1
+mov eax, dword [SCRATCH1]
+shl dword [SCRATCH1], byte 1
 CLEAR_T
 shr eax,byte 31     ;3
 test eax, 1
@@ -938,9 +935,9 @@ cont_shl:
 opdesc SHL,		0xff,6,0xff,0xff,0xff
 
 opfunc SHLR
-GET_R rbp
-mov eax, dword [rbp]
-shr dword [rbp], byte 1
+GET_R SCRATCH1
+mov eax, dword [SCRATCH1]
+shr dword [SCRATCH1], byte 1
 and dword eax,1             ;5
 CLEAR_T
 test eax, 1
@@ -950,9 +947,9 @@ cont_shlr:
 opdesc SHLR,	0xff,6,0xff,0xff,0xff
 
 opfunc SHAR
-GET_R rbp
-mov eax,dword [rbp]
-shr dword [rbp], byte 1
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]
+shr dword [SCRATCH1], byte 1
 CLEAR_T
 test eax, 1
 je cont_shar
@@ -960,65 +957,65 @@ SET_T
 cont_shar:
 shr eax, byte 31
 shl eax, byte 31
-or dword [rbp], eax
+or dword [SCRATCH1], eax
 opdesc SHAR,	0xff,6,0xff,0xff,0xff
 
 
 opfunc SHLL2
-GET_R rbp
-shl dword [rbp],byte 2 ;4
+GET_R SCRATCH1
+shl dword [SCRATCH1],byte 2 ;4
 opdesc SHLL2,	0xff,6,0xff,0xff,0xff
 
 opfunc SHLR2
-GET_R rbp
-shr dword [rbp],byte 2 ;4
+GET_R SCRATCH1
+shr dword [SCRATCH1],byte 2 ;4
 opdesc SHLR2,	0xff,6,0xff,0xff,0xff
 
 opfunc SHLL8
-GET_R rbp
-shl dword [rbp],byte 8 ;4
+GET_R SCRATCH1
+shl dword [SCRATCH1],byte 8 ;4
 opdesc SHLL8,	0xff,6,0xff,0xff,0xff
 
 opfunc SHLR8
-GET_R rbp
-shr dword [rbp],byte 8 ;4
+GET_R SCRATCH1
+shr dword [SCRATCH1],byte 8 ;4
 opdesc SHLR8,	0xff,6,0xff,0xff,0xff
 
 
 opfunc SHLL16
-GET_R rbp
-shl dword [rbp],byte 16 ;4
+GET_R SCRATCH1
+shl dword [SCRATCH1],byte 16 ;4
 opdesc SHLL16,	0xff,6,0xff,0xff,0xff
 
 opfunc SHLR16
-GET_R rbp
-shr dword [rbp],byte 16 ;4
+GET_R SCRATCH1
+shr dword [SCRATCH1],byte 16 ;4
 opdesc SHLR16,	0xff,6,0xff,0xff,0xff
 
 opfunc AND
-GET_R rbp
-mov eax,dword [rbp]       ;2
-GET_R rbp
-and dword [rbp],eax       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
+GET_R SCRATCH1
+and dword [SCRATCH1],eax       ;2
 opdesc AND,		6,16,0xff,0xff,0xff
 
 opfunc OR
-GET_R rbp
-mov eax,dword [rbp]       ;2
-GET_R rbp
-or dword [rbp],eax       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
+GET_R SCRATCH1
+or dword [SCRATCH1],eax       ;2
 opdesc OR,		6,16,0xff,0xff,0xff
 
 opfunc XOR
-GET_R rbp
-mov eax,dword [rbp]       ;2
-GET_R rbp
-xor dword[rbp],eax       ;3
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
+GET_R SCRATCH1
+xor dword[SCRATCH1],eax       ;3
 opdesc XOR,		6,16,0xff,0xff,0xff
 
 opfunc ADDI
-GET_R rbp
-add dword [rbp],byte $00 ;4
+GET_R SCRATCH1
+add dword [SCRATCH1],byte 0x7F ;4
 opdesc ADDI,	0xff,6,0xff,10,0xff
 
 opfunc AND_B
@@ -1033,48 +1030,45 @@ CALL_SETMEM_BYTE
 opdesc AND_B,	0xff,0xff,0xff,18,0xff
 
 opfunc OR_B
-GET_R0 rbp
 GET_GBR ebx
-add  ebx, dword [rbp]
+add  ebx, dword [R0]
 mov edi, ebx
 CALL_GETMEM_BYTE
 or al, $00      ;2
 mov edi, ebx
 mov esi, eax
 CALL_SETMEM_BYTE
-opdesc OR_B,	0xff,0xff,0xff,20,0xff
+opdesc OR_B,	0xff,0xff,0xff,18,0xff
 
 opfunc XOR_B
-GET_R0 rbp
 GET_GBR ebx
-add  ebx, dword [rbp]
+add  ebx, dword [R0]
 mov edi, ebx
 CALL_GETMEM_BYTE
 xor al, 0xFF      ;2
 mov edi, ebx
 mov esi, eax
 CALL_SETMEM_BYTE
-opdesc XOR_B,	0xff,0xff,0xff,20,0xff
+opdesc XOR_B,	0xff,0xff,0xff,18,0xff
 
 opfunc TST_B
-GET_R0 rbp
 CLEAR_T
 GET_GBR ebx
-add  ebx, dword [rbp]
+add  ebx, dword [R0]
 mov edi, ebx
 CALL_GETMEM_BYTE
 test al, $00
 jne .continue         ;2
 SET_T
 .continue:
-opdesc TST_B,	0xff,0xff,0xff,28,0xff
+opdesc TST_B,	0xff,0xff,0xff,24,0xff
 
 ;Jump Opcodes
 ;------------
 
 opfunc JMP
-GET_R rbp
-mov eax,dword [rbp]       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 mov dword [PC],eax       ;3
 opdesc JMP,		0xff,6,0xff,0xff,0xff
 
@@ -1082,8 +1076,8 @@ opfunc JSR
 mov eax, dword [PC]       ;2
 add eax,byte 4      ;3
 SET_PR eax
-GET_R rbp
-mov eax,dword [rbp]       ;3
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;3
 mov dword [PC],eax       ;3
 opdesc JSR,		0xff,16,0xff,0xff,0xff
 
@@ -1115,18 +1109,18 @@ mov dword [PC],ebx       ;3
 opdesc BSR,		0xff,0xff,0xff,0xff,15
 
 opfunc BSRF
-GET_R rbp
+GET_R SCRATCH1
 mov eax,dword [PC]       ;2
 add eax,byte 4      ;3
 SET_PR eax
-add eax,dword [rbp] ;3
+add eax,dword [SCRATCH1] ;3
 mov dword [PC],eax       ;3
 opdesc BSRF,		0xff,6,0xff,0xff,0xff
 
 opfunc BRAF
-GET_R rbp
+GET_R SCRATCH1
 mov eax,dword [PC]       ;2
-add eax,dword [rbp] ;3
+add eax,dword [SCRATCH1] ;3
 add eax,byte 4      ;4
 mov dword [PC],eax       ;3
 opdesc BRAF,		0xff,6,0xff,0xff,0xff
@@ -1138,27 +1132,25 @@ mov dword [PC],eax       ;3
 opdesc RTS,			0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc RTE
-GET_R_ID 15,rbp
-mov edi, dword [rbp]        ;3
+mov edi, dword [R15]        ;3
 CALL_GETMEM_LONG
 mov dword [PC], eax
-add dword [rbp], byte 4
-mov edi, dword [rbp]
+add dword [R15], byte 4
+mov edi, dword [R15]
 CALL_GETMEM_LONG 
 SET_SR eax
-add dword [rbp], byte 4
+add dword [R15], byte 4
 opdesc RTE,			0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc TRAPA
-GET_R_ID 15,rbp
-sub  dword [rbp], byte 4    ;7
-mov edi, dword [rbp]        ;3
+sub  dword [R15], byte 4    ;7
+mov edi, dword [R15]        ;3
 GET_SR esi
 CALL_SETMEM_LONG
-sub  dword [rbp], byte 4    ;7
+sub  dword [R15], byte 4    ;7
 mov  esi,dword [PC]        ;3 PC
 add  esi,byte 2       ;3
-mov edi, dword [rbp]        ;3
+mov edi, dword [R15]        ;3
 CALL_SETMEM_LONG
 GET_BYTE_IMM eax
 shl  eax,2            ;3
@@ -1167,7 +1159,7 @@ mov  edi,eax
 CALL_GETMEM_LONG
 mov  dword [PC],eax        ;3
 sub  dword [PC], byte 2        ;3
-opdesc TRAPA,	      0xFF,0xFF,0xFF,51,0xFF
+opdesc TRAPA,	      0xFF,0xFF,0xFF,47,0xFF
 
 opfunc BT
 TEST_IS_T
@@ -1213,68 +1205,68 @@ opdesc BF_S,		0xFF,0xFF,0xFF,12,0xFF
 ;------------------
 
 opfunc STC_SR
-GET_R rbp
+GET_R SCRATCH1
 GET_SR eax     ;2
-mov dword [rbp],eax     ;2
+mov dword [SCRATCH1],eax     ;2
 opdesc STC_SR,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STC_GBR
-GET_R rbp
+GET_R SCRATCH1
 GET_GBR eax
-mov dword [rbp],eax
+mov dword [SCRATCH1],eax
 opdesc STC_GBR,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STC_VBR
-GET_R rbp
+GET_R SCRATCH1
 GET_VBR eax
-mov dword [rbp],eax
+mov dword [SCRATCH1],eax
 opdesc STC_VBR,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STS_MACH
-GET_R rbp
+GET_R SCRATCH1
 GET_MACH eax     ;2
-mov dword [rbp],eax     ;2
+mov dword [SCRATCH1],eax     ;2
 opdesc STS_MACH, 0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STS_MACH_DEC
-GET_R rbp
-sub dword [rbp],byte 4 ;3
+GET_R SCRATCH1
+sub dword [SCRATCH1],byte 4 ;3
 GET_MACH esi 
-mov edi,dword [rbp]     ;2
+mov edi,dword [SCRATCH1]     ;2
 CALL_SETMEM_LONG
 opdesc STS_MACH_DEC,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STS_MACL
-GET_R rbp
+GET_R SCRATCH1
 GET_MACL eax     ;2
-mov dword [rbp],eax     ;2
+mov dword [SCRATCH1],eax     ;2
 opdesc STS_MACL, 0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STS_MACL_DEC
-GET_R rbp
-sub dword [rbp],byte 4 ;3
+GET_R SCRATCH1
+sub dword [SCRATCH1],byte 4 ;3
 GET_MACL esi 
-mov edi,dword [rbp]     ;2
+mov edi,dword [SCRATCH1]     ;2
 CALL_SETMEM_LONG
 opdesc STS_MACL_DEC,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDC_SR
-GET_R rbp
-mov eax,dword [rbp]       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 SET_SR eax
 opdesc LDC_SR,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDC_SR_INC
-GET_R rbp
-mov edi,dword [rbp]       ;2
+GET_R SCRATCH1
+mov edi,dword [SCRATCH1]       ;2
 CALL_GETMEM_LONG
 SET_SR eax ;3
-add dword [rbp],byte 4 ;3
+add dword [SCRATCH1],byte 4 ;3
 opdesc LDC_SR_INC,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDCGBR
-GET_R rbp
-mov eax,dword [rbp]       ;3
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;3
 SET_GBR eax
 opdesc LDCGBR,	0xff,6,0xFF,0xFF,0xFF
 
@@ -1287,93 +1279,92 @@ SET_GBR eax ;3
 opdesc LDC_GBR_INC,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDC_VBR
-GET_R rbp
-mov eax,dword [rbp]       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 SET_VBR eax
 opdesc LDC_VBR,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDC_VBR_INC
-GET_R rbp
-mov edi,dword [rbp]       ;2
+GET_R SCRATCH1
+mov edi,dword [SCRATCH1]       ;2
 CALL_GETMEM_LONG
 SET_VBR eax ;3
-add dword [rbp],byte 4 ;3
+add dword [SCRATCH1],byte 4 ;3
 opdesc LDC_VBR_INC,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STS_PR
-GET_R rbp
+GET_R SCRATCH1
 GET_PR eax     ;2
-mov dword [rbp],eax     ;2
+mov dword [SCRATCH1],eax     ;2
 opdesc STS_PR,		0xFF,6,0xFF,0xFF,0xFF
 
 opfunc STSMPR
-GET_R rbp
-sub  dword [rbp],byte 4 ;4
-mov edi, dword[rbp]
+GET_R SCRATCH1
+sub  dword [SCRATCH1],byte 4 ;4
+mov edi, dword[SCRATCH1]
 GET_PR esi
 CALL_SETMEM_LONG
 opdesc STSMPR,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDS_PR
-GET_R rbp
-mov eax,dword [rbp]       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 SET_PR eax
 opdesc LDS_PR,		0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDS_PR_INC
-GET_R rbp
-mov edi,dword [rbp]       ;3
+GET_R SCRATCH1
+mov edi,dword [SCRATCH1]       ;3
 CALL_GETMEM_LONG
 SET_PR eax
-add dword [rbp],byte 4 ;4
+add dword [SCRATCH1],byte 4 ;4
 opdesc LDS_PR_INC,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDS_MACH
-GET_R rbp
-mov eax,dword [rbp]       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 SET_MACH eax
 opdesc LDS_MACH,		0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDS_MACH_INC
-GET_R rbp
-mov edi,dword [rbp]          ;2
+GET_R SCRATCH1
+mov edi,dword [SCRATCH1]          ;2
 CALL_GETMEM_LONG
 SET_MACH eax        ;2
-add dword [rbp],byte 4 ;3
+add dword [SCRATCH1],byte 4 ;3
 opdesc LDS_MACH_INC,	0xFF,6,0xFF,0xFF,0xFF
 
 opfunc LDS_MACL
-GET_R rbp
-mov eax,dword [rbp]       ;2
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;2
 SET_MACL eax
 opdesc LDS_MACL,		0xFF,6,0xFF,0xFF,0xFF
 
 
 opfunc LDS_MACL_INC
-GET_R rbp
-mov edi,dword [rbp]          ;2
+GET_R SCRATCH1
+mov edi,dword [SCRATCH1]          ;2
 CALL_GETMEM_LONG
 SET_MACL eax        ;2
-add dword [rbp],byte 4 ;3
+add dword [SCRATCH1],byte 4 ;3
 opdesc LDS_MACL_INC,	0xFF,6,0xFF,0xFF,0xFF
 
 ;Mov Opcodes
 ;-----------
 
 opfunc MOVA
-GET_R0 rbp
 mov ebx,[PC]       ;2
 add ebx,byte 4      ;3
 and ebx, 0xfffffffc   ;3
 GET_BYTE_IMM eax
 shl eax,byte 2      ;3
 add eax, ebx ;2
-mov dword [rbp],eax       ;2
-opdesc MOVA,	0xFF,0xFF,0xFF,13,0xFF
+mov dword [R0],eax       ;2
+opdesc MOVA,	0xFF,0xFF,0xFF,10,0xFF
 
 
 opfunc MOVWI
-GET_R rbp
+GET_R SCRATCH1
 GET_BYTE_IMM eax
 shl eax,byte 1       ;1
 add eax,[PC]       ;2 
@@ -1381,12 +1372,12 @@ add eax,byte 4      ;3
 mov edi, eax
 CALL_GETMEM_WORD
 cwde                ;1
-mov dword [rbp], eax       ;3
+mov dword [SCRATCH1], eax       ;3
 opdesc MOVWI,	0xFF,6,0xFF,8,0xFF
 
 
 opfunc MOVLI
-GET_R rbp
+GET_R SCRATCH1
 GET_BYTE_IMM eax
 shl eax,byte 2       ;3
 mov edi,dword [PC]       ;2
@@ -1394,73 +1385,67 @@ add edi,byte 4      ;3
 and edi,0xFFFFFFFC  ;6
 add edi,eax         ;2            ;1
 CALL_GETMEM_LONG
-mov dword [rbp],eax       ;3
+mov dword [SCRATCH1],eax       ;3
 opdesc MOVLI,       0xFF,6,0xFF,8,0xFF
 
 opfunc MOVBL4
-GET_R rbp
+GET_R SCRATCH1
 GET_BYTE_IMM eax
-add  eax,dword [rbp]        ;3
+add  eax,dword [SCRATCH1]        ;3
 mov edi, eax
 CALL_GETMEM_BYTE
-GET_R0 rbp
 cbw                   ;1  Sign extension byte -> word
 cwde                  ;1  Sign extension qword -> dword
-mov  dword [rbp],eax        ;3
+mov  dword [R0],eax        ;3
 opdesc MOVBL4, 6,0xFF,8,0xFF,0xFF
 
 
 opfunc MOVWL4
-GET_R rbp
+GET_R SCRATCH1
 GET_BYTE_IMM eax
 shl  eax, byte 1       ;3  << 1
-add  eax,dword [rbp]        ;2
+add  eax,dword [SCRATCH1]        ;2
 mov edi, eax
 CALL_GETMEM_WORD
-GET_R0 rbp
 cwde                  ;2  sign 
-mov  dword [rbp],eax        ;3
+mov  dword [R0],eax        ;3
 opdesc MOVWL4, 6,0xFF,8,0xFF,0xFF
 
 opfunc MOVLL4
-GET_R rbp
+GET_R SCRATCH1
 GET_BYTE_IMM eax
 shl  eax, byte 2       ;3  << 2
-add  eax,dword [rbp]        ;2
+add  eax,dword [SCRATCH1]        ;2
 mov edi, eax
 CALL_GETMEM_LONG
-GET_R rbp
-mov  dword [rbp],eax        ;3
+GET_R SCRATCH1
+mov  dword [SCRATCH1],eax        ;3
 opdesc MOVLL4, 6,33,8,0xFF,0xFF
 
  
 opfunc MOVBS4
-GET_R0 rbp
-mov esi, dword [rbp]     ;3
-GET_R rbp
-and edi,00000000h   ;5  
-or  edi,byte $00    ;3  Get Disp value
-add edi,dword [rbp]       ;3  Add Disp value
+GET_R SCRATCH1
+mov esi, dword [R0]     ;3
+GET_BYTE_IMM edi
+add edi,dword [SCRATCH1]       ;3  Add Disp value
 CALL_SETMEM_BYTE
-opdesc MOVBS4,	12,0xFF,18,0xFF,0xFF
+opdesc MOVBS4,	6,0xFF,12,0xFF,0xFF
 
 opfunc MOVWS4
-GET_R0 rbp
-mov esi, dword [rbp]     ;3
-GET_R rbp
-and edi,00000000h   ;5  
-or  edi,byte $00    ;3  Get Disp value
+mov esi, dword [R0]     ;3
+GET_R SCRATCH1
+GET_BYTE_IMM edi
 shl edi,byte 1      ;3  Shift Left
-add edi,dword [rbp]       ;3  Add Disp value
+add edi,dword [SCRATCH1]       ;3  Add Disp value
 CALL_SETMEM_WORD
-opdesc MOVWS4,	12,0xFF,18,0xFF,0xFF
+opdesc MOVWS4,	10,0xFF,12,0xFF,0xFF
 
 
 opfunc MOVLS4
-GET_R rbp
-mov esi, dword [rbp]     ;3
-GET_R rbp
-mov edi, dword [rbp]     ;3
+GET_R SCRATCH1
+mov esi, dword [SCRATCH1]     ;3
+GET_R SCRATCH1
+mov edi, dword [SCRATCH1]     ;3
 GET_BYTE_IMM eax
 shl eax,byte 2      ;3
 add edi,eax ;2
@@ -1469,135 +1454,129 @@ opdesc MOVLS4,	6,16,21,0xFF,0xFF
 
  
 opfunc MOVBLG
-GET_R0 rbp
 GET_BYTE_IMM eax
 GET_GBR edi
 add  edi, eax;3  GBR + IMM( Adress for Get Value )
 CALL_GETMEM_BYTE
 cbw                    ;1
 cwde                   ;1
-mov  dword [rbp],eax         ;3
-opdesc MOVBLG,    0xFF,0xFF,0xFF,4,0xFF
+mov  dword [R0],eax         ;3
+opdesc MOVBLG,    0xFF,0xFF,0xFF,1,0xFF
 
 
 opfunc MOVWLG
-GET_R0 rbp
 GET_BYTE_IMM eax
 shl  eax,byte 1         ;3  Shift left 2
 GET_GBR edi
 add  edi, eax;3  GBR + IMM( Adress for Get Value )
 CALL_GETMEM_WORD
 cwde                   ;1
-mov  dword [rbp],eax         ;3
-opdesc MOVWLG,    0xFF,0xFF,0xFF,4,0xFF
+mov  dword [R0],eax         ;3
+opdesc MOVWLG,    0xFF,0xFF,0xFF,1,0xFF
 
 
 opfunc MOVLLG
-GET_R0 rbp
 GET_BYTE_IMM eax
 shl  eax,byte 2         ;3  Shift left 2
 GET_GBR edi
 add  edi, eax;3  GBR + IMM( Adress for Get Value )
 CALL_GETMEM_LONG
-mov  dword [rbp],eax         ;3
-opdesc MOVLLG,    0xFF,0xFF,0xFF,4,0xFF
+mov  dword [R0],eax         ;3
+opdesc MOVLLG,    0xFF,0xFF,0xFF,1,0xFF
 
 
 opfunc MOVBSG
-GET_R0 rbp
-mov esi, dword [rbp]     ;3
+mov esi, dword [R0]     ;3
 GET_BYTE_IMM eax
 GET_GBR edi
 add  edi,eax ;2  GBR + IMM( Adress for Get Value )
 CALL_SETMEM_BYTE
-opdesc MOVBSG,    0xFF,0xFF,0xFF,7,0xFF
+opdesc MOVBSG,    0xFF,0xFF,0xFF,5,0xFF
 
 opfunc MOVWSG
-GET_R0 rbp
-mov esi, dword [rbp]
+mov esi, dword [R0]
 GET_BYTE_IMM eax
 shl  eax,byte 1       ;3  Shift left 2
 GET_GBR edi
 add  edi, eax ;2  GBR + IMM( Adress for Get Value )
 CALL_SETMEM_WORD
-opdesc MOVWSG,    0xFF,0xFF,0xFF,7,0xFF
+opdesc MOVWSG,    0xFF,0xFF,0xFF,5,0xFF
 
 opfunc MOVLSG
-GET_R0 rbp
-mov esi, dword [rbp]     ;3
+mov esi, dword [R0]     ;3
 GET_BYTE_IMM eax
 shl eax,byte 2       ;3  Shift left 2
 GET_GBR edi
 add  edi,eax ;2  GBR + IMM( Adress for Get Value )
 CALL_SETMEM_LONG
-opdesc MOVLSG,    0xFF,0xFF,0xFF,7,0xFF
+opdesc MOVLSG,    0xFF,0xFF,0xFF,5,0xFF
 
 
 opfunc MOVBS
-GET_R rbp
-mov esi, dword [rbp]
-GET_R rbp
-mov edi, dword [rbp]
+GET_R SCRATCH1
+mov esi, dword [SCRATCH1]
+GET_R SCRATCH1
+mov edi, dword [SCRATCH1]
 CALL_SETMEM_BYTE
 opdesc MOVBS,	6,16,0xFF,0xFF,0xFF
 
 
 opfunc MOVWS
-GET_R rbp
-mov esi, dword [rbp]
-GET_R rbp
-mov edi, dword [rbp]
+GET_R SCRATCH1
+mov esi, dword [SCRATCH1]
+GET_R SCRATCH1
+mov edi, dword [SCRATCH1]
 CALL_SETMEM_WORD
 opdesc MOVWS,	6,16,0xFF,0xFF,0xFF
 
 opfunc MOVLS
-GET_R rbp
-mov esi, dword [rbp]
-GET_R rbp
-mov edi, dword [rbp]
+GET_R SCRATCH1
+mov esi, dword [SCRATCH1]
+GET_R SCRATCH1
+mov edi, dword [SCRATCH1]
 CALL_SETMEM_LONG
 opdesc MOVLS,	6,16,0xFF,0xFF,0xFF
 
 
 opfunc MOVR
-GET_R rbp
-mov eax,dword [rbp]       ;3
-GET_R rbp
-mov dword [rbp],eax       ;3
+GET_R SCRATCH1
+mov eax,dword [SCRATCH1]       ;3
+GET_R SCRATCH1
+mov dword [SCRATCH1],eax       ;3
 opdesc MOVR,		6,16,0xFF,0xFF,0xFF
 
 opfunc MOVBM
-GET_R rbp 
-mov esi, dword [rbp]
-GET_R rbp 
-sub  dword [rbp],byte 1  ;4
-mov edi, dword [rbp]
+GET_R SCRATCH1 
+mov esi, dword [SCRATCH1]
+GET_R SCRATCH1 
+sub  dword [SCRATCH1],byte 1  ;4
+mov edi, dword [SCRATCH1]
 CALL_SETMEM_BYTE
 opdesc MOVBM,		6,16,0xFF,0xFF,0xFF
 
 opfunc MOVWM
-GET_R rbp 
-mov esi, dword [rbp]
-GET_R rbp 
-sub  dword [rbp],byte 2  ;4
-mov edi, dword [rbp]
+GET_R SCRATCH1 
+mov esi, dword [SCRATCH1]
+GET_R SCRATCH1 
+sub  dword [SCRATCH1],byte 2  ;4
+mov edi, dword [SCRATCH1]
 CALL_SETMEM_WORD
 opdesc MOVWM,		6,16,0xFF,0xFF,0xFF
 
 opfunc MOVLM
-GET_R rbp  
-mov esi,dword [rbp]         ;3 Set data
-GET_R rbp
-sub  dword [rbp],byte 4  ;4
-mov edi, dword [rbp]         ;3 Set addr
+GET_R SCRATCH1  
+mov esi,dword [SCRATCH1]         ;3 Set data
+GET_R SCRATCH1
+sub  dword [SCRATCH1],byte 4  ;4
+mov edi, dword [SCRATCH1]         ;3 Set addr
 CALL_SETMEM_LONG
 opdesc MOVLM,		6,16,0xFF,0xFF,0xFF
 
 ;------------- added ------------------
 
 opfunc TAS
-GET_R rbp
-mov edi, dword [rbp]         ;3
+GET_R SCRATCH1
+mov edi, dword [SCRATCH1]         ;3
 CALL_GETMEM_BYTE
 CLEAR_T
 test eax,eax             ;3
@@ -1606,18 +1585,18 @@ SET_T
 NOT_ZERO:              
 or   eax, 0x00000080        ;3
 mov  esi, eax
-mov  edi, dword [rbp]          ;3
+mov  edi, dword [SCRATCH1]          ;3
 CALL_SETMEM_BYTE
 opdesc TAS,  0xFF,6,0xFF,0xFF,0xFF
 
 
 ; sub with overflow check
 opfunc SUBV
-GET_R rbp
-mov  eax,dword [rbp]        ;3
-GET_R rbp
+GET_R SCRATCH1
+mov  eax,dword [SCRATCH1]        ;3
+GET_R SCRATCH1
 CLEAR_T
-sub  dword [rbp],eax        ;3 R[n] = R[n] - R[m]
+sub  dword [SCRATCH1],eax        ;3 R[n] = R[n] - R[m]
 jno	 NO_OVER_FLOS     ;2
 SET_T
 NO_OVER_FLOS:
@@ -1626,10 +1605,10 @@ opdesc SUBV, 6,16,0xFF,0xFF,0xFF
 
 ; string cmp
 opfunc CMPSTR
-GET_R rbp
-mov  eax,[rbp]        ;3
-GET_R rbp
-mov  ecx,[rbp]        ;3
+GET_R SCRATCH1
+mov  eax,[SCRATCH1]        ;3
+GET_R SCRATCH1
+mov  ecx,[SCRATCH1]        ;3
 xor  eax,ecx          ;2  
 CLEAR_T
 mov  ecx,eax          ;2  
@@ -1655,17 +1634,17 @@ opdesc CMPSTR, 6,16,0xFF,0xFF,0xFF
 ;-------------------------------------------------------------
 ;div0s 
 opfunc DIV0S
-GET_R rbp
+GET_R SCRATCH1
 CLEAR_Q
 mov  eax, 0                  ;5 Zero Clear rax     
-test dword [rbp],0x80000000  ;7 Test sign
+test dword [SCRATCH1],0x80000000  ;7 Test sign
 je   continue                ;2 if ZF = 1 then goto NO_SIGN
 SET_Q
 inc  eax                     ;1 
 continue:
-GET_R rbp
+GET_R SCRATCH1
 CLEAR_M
-test dword [rbp],0x80000000  ;7 Test sign
+test dword [SCRATCH1],0x80000000  ;7 Test sign
 je   continue2               ;2 if ZF = 1 then goto NO_SIGN
 SET_M
 inc  eax                     ;1
@@ -1707,8 +1686,8 @@ or   dword [r8],eax         ;3
 
 ;Get R[n],R[m]
 mov  eax,dword [r8]               ;3 R[n]
-GET_R rbp
-mov  r9d,dword [rbp]               ;3 R[m]
+GET_R SCRATCH1
+mov  r9d,dword [SCRATCH1]               ;3 R[m]
 
 ;switch( old_q )
 test ecx,0x00000100          ;6 old_q == 1 ?
@@ -1878,10 +1857,10 @@ opdesc DIV1, 62,6,0xFF,0xFF,0xFF
 ;------------------------------------------------------------
 ;dmuls
 opfunc DMULS
-GET_R rbp
-mov  eax,dword [rbp]    ;3
-GET_R rbp
-mov  edx,dword [rbp]    ;3  
+GET_R SCRATCH1
+mov  eax,dword [SCRATCH1]    ;3
+GET_R SCRATCH1
+mov  edx,dword [SCRATCH1]    ;3  
 imul edx                ;2
 SET_MACH edx  ;2 store MACH             
 SET_MACL eax  ;3 store MACL   
@@ -1890,10 +1869,10 @@ opdesc DMULS, 6,16,0xFF,0xFF,0xFF
 ;------------------------------------------------------------
 ;dmulu 32bit -> 64bit Mul
 opfunc DMULU
-GET_R rbp
-mov  eax,dword [rbp]    ;3
-GET_R rbp
-mov  edx,dword [rbp]    ;3  
+GET_R SCRATCH1
+mov  eax,dword [SCRATCH1]    ;3
+GET_R SCRATCH1
+mov  edx,dword [SCRATCH1]    ;3  
 mul  edx                ;2
 SET_MACH edx  ;2 store MACH             
 SET_MACL eax  ;3 store MACL     
@@ -1902,10 +1881,10 @@ opdesc DMULU, 6,16,0xFF,0xFF,0xFF
 ;--------------------------------------------------------------
 ; mull 32bit -> 32bit Multip
 opfunc MULL
-GET_R rbp
-mov  eax,dword [rbp]    ;3
-GET_R rbp
-mov  edx,dword [rbp]    ;3  
+GET_R SCRATCH1
+mov  eax,dword [SCRATCH1]    ;3
+GET_R SCRATCH1
+mov  edx,dword [SCRATCH1]    ;3  
 imul edx                ;2
 SET_MACL eax  ;3 store MACL  
 opdesc MULL, 6,16,0xFF,0xFF,0xFF
@@ -1913,10 +1892,10 @@ opdesc MULL, 6,16,0xFF,0xFF,0xFF
 ;--------------------------------------------------------------
 ; muls 16bit -> 32 bit Multip
 opfunc MULS
-GET_R rbp
-mov  ax,word [rbp]     ;3
-GET_R rbp
-mov  dx,word [rbp]     ;3  
+GET_R SCRATCH1
+mov  ax,word [SCRATCH1]     ;3
+GET_R SCRATCH1
+mov  dx,word [SCRATCH1]     ;3  
 imul dx                ;2
 shl  edx, byte 16      ;3
 add  dx, ax            ;2
@@ -1926,10 +1905,10 @@ opdesc MULS, 6,17,0xFF,0xFF,0xFF
 ;--------------------------------------------------------------
 ; mulu 16bit -> 32 bit Multip
 opfunc MULU
-GET_R rbp
-mov  ax,word [rbp]     ;3
-GET_R rbp
-mov  dx,word [rbp]     ;3  
+GET_R SCRATCH1
+mov  ax,word [SCRATCH1]     ;3
+GET_R SCRATCH1
+mov  dx,word [SCRATCH1]     ;3  
 mul dx                ;2
 shl  edx, byte 16      ;3
 add  dx, ax            ;2
@@ -1941,15 +1920,15 @@ opdesc MULU, 6,17,0xFF,0xFF,0xFF
 ;        (MACH << 32 + MACL)  + ans 
 ;------------------------------------------------------------- 
 opfunc MAC_L
-GET_R rbp
-mov  edi,dword [rbp]          ;3
+GET_R SCRATCH1
+mov  edi,dword [SCRATCH1]          ;3
 CALL_GETMEM_LONG
 mov  edx,eax                  ;2
-add  dword [rbp], 4           ;7 R[n] += 4
-GET_R rbp
-mov  edi,dword [rbp]          ;3
+add  dword [SCRATCH1], 4           ;7 R[n] += 4
+GET_R SCRATCH1
+mov  edi,dword [SCRATCH1]          ;3
 CALL_GETMEM_LONG
-add  dword [rbp], 4           ;7 R[m] += 4 
+add  dword [SCRATCH1], 4           ;7 R[m] += 4 
 GET_MACL ecx            ;3 load macl
 imul edx                      ;2 eax <- low, edx <- high
 GET_MACH edi               ;3 load mach
@@ -1993,15 +1972,15 @@ opdesc MAC_L, 6,29,0xFF,0xFF,0xFF
 ;        (MACH << 32 + MACL)  + ans 
 ;-------------------------------------------------------------
 opfunc MAC_W
-GET_R rbp
-mov  edi,dword [rbp]          ;3
+GET_R SCRATCH1
+mov  edi,dword [SCRATCH1]          ;3
 CALL_GETMEM_WORD
 movsx  edx,ax                 ;3
-add  dword [rbp], 2           ;7 R[n] += 2
-GET_R rbp
-mov  edi,dword [rbp]          ;3
+add  dword [SCRATCH1], 2           ;7 R[n] += 2
+GET_R SCRATCH1
+mov  edi,dword [SCRATCH1]          ;3
 CALL_GETMEM_WORD
-add  dword [rbp], 2           ;7 R[m] += 2
+add  dword [SCRATCH1], 2           ;7 R[m] += 2
 cwde                          ;1 Sigin extention
 imul edx                      ;2 rax <- low, rdx <- high
 TEST_IS_S
