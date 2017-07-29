@@ -52,7 +52,7 @@ TEST_F(MulsTest, normal) {
 }
 
 TEST_F(MulsTest, negative) {
-  pctx_->GetGenRegPtr()[0]=0xFFFFFFFE;
+  pctx_->GetGenRegPtr()[0]=0x0000FFFE;
   pctx_->GetGenRegPtr()[1]=0x00005555;
 
   // macl r1, r3
