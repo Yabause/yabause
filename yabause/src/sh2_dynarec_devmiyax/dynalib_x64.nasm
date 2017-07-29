@@ -92,7 +92,12 @@ section .code
 	add %1,byte 0x7F    
 %endmacro
 
-%macro GET_BYTE_IMM 1      
+%macro GET_BYTE_IMM 1   
+	mov %1, 0x7F    
+%endmacro
+
+%macro GET_SIGNED_BYTE_IMM 1 
+	xor %1, %1  
 	or %1, 0x7F    
 %endmacro
 
@@ -727,12 +732,9 @@ opdesc MOVLP,	6,23,0xff,0xff,0xff
 
 opfunc MOVI
 GET_R SCRATCH1
-xor eax,eax         ;2
-GET_BYTE_IMM al
-cbw
-cwde
+GET_SIGNED_BYTE_IMM eax
 mov dword [SCRATCH1],eax       ;3
-opdesc MOVI,	0xff,6,0xff,10,0xff
+opdesc MOVI,	0xff,6,0xff,11,0xff
 
 ;----------------------
 
@@ -1158,67 +1160,54 @@ mov  esi,dword [PC]        ;3 PC
 add  esi,byte 2       ;3
 mov edi, dword [rbp]        ;3
 CALL_SETMEM_LONG
-xor  eax,eax          ;2
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl  eax,2            ;3
 add  eax, dword [CTRL_REG+8]      ;3 ADD VBR
 mov  edi,eax
 CALL_GETMEM_LONG
 mov  dword [PC],eax        ;3
 sub  dword [PC], byte 2        ;3
-opdesc TRAPA,	      0xFF,0xFF,0xFF,53,0xFF
+opdesc TRAPA,	      0xFF,0xFF,0xFF,51,0xFF
 
 opfunc BT
 TEST_IS_T
 jnc .continue        ;2
-xor eax,eax     ;3
-GET_BYTE_IMM al
-cbw
-cwde
+GET_SIGNED_BYTE_IMM eax
 shl eax,byte 1      ;3
 add eax,byte 2      ;3
 add dword [PC], eax ;2
 .continue:
-opdesc BT,		0xFF,0xFF,0xFF,11,0xFF
+opdesc BT,		0xFF,0xFF,0xFF,12,0xFF
 
 opfunc BT_S
 TEST_IS_T
 jnc .continue        ;2       ;2
-xor eax,eax     ;3
-GET_BYTE_IMM al
-cbw
-cwde
+GET_SIGNED_BYTE_IMM eax
 shl eax, byte 1      ;3
 add dword [PC], eax ;2
 .continue:
 add dword [PC], byte 4 ;2
-opdesc BT_S,		0xFF,0xFF,0xFF,11,0xFF
+opdesc BT_S,		0xFF,0xFF,0xFF,12,0xFF
 
 opfunc BF
 TEST_IS_T
 jc .continue        ;2
-xor eax,eax     ;3
-GET_BYTE_IMM al
-cbw
-cwde
+GET_SIGNED_BYTE_IMM eax
 shl eax, byte 1      ;3
 add eax, byte 2      ;3
 add dword [PC], eax ;2
 .continue:
-opdesc BF,		0xFF,0xFF,0xFF,11,0xFF
+opdesc BF,		0xFF,0xFF,0xFF,12,0xFF
 
 opfunc BF_S
 TEST_IS_T
 jc .continue        ;2       ;2
-xor eax,eax     ;3
-GET_BYTE_IMM al
-cbw
-cwde
+GET_SIGNED_BYTE_IMM eax
 shl eax, byte 1      ;3
 add dword [PC], eax ;2
 .continue:
 add dword [PC], byte 4      ;3
-opdesc BF_S,		0xFF,0xFF,0xFF,11,0xFF
+opdesc BF_S,		0xFF,0xFF,0xFF,12,0xFF
 
 ;Store/Load Opcodes
 ;------------------
@@ -1376,18 +1365,16 @@ GET_R0 rbp
 mov ebx,[PC]       ;2
 add ebx,byte 4      ;3
 and ebx, 0xfffffffc   ;3
-xor eax,eax         ;2
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl eax,byte 2      ;3
 add eax, ebx ;2
 mov dword [rbp],eax       ;2
-opdesc MOVA,	0xFF,0xFF,0xFF,15,0xFF
+opdesc MOVA,	0xFF,0xFF,0xFF,13,0xFF
 
 
 opfunc MOVWI
 GET_R rbp
-xor eax,eax         ;2
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl eax,byte 1       ;1
 add eax,[PC]       ;2 
 add eax,byte 4      ;3
@@ -1395,13 +1382,12 @@ mov edi, eax
 CALL_GETMEM_WORD
 cwde                ;1
 mov dword [rbp], eax       ;3
-opdesc MOVWI,	0xFF,6,0xFF,10,0xFF
+opdesc MOVWI,	0xFF,6,0xFF,8,0xFF
 
 
 opfunc MOVLI
 GET_R rbp
-xor eax,eax         ;2
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl eax,byte 2       ;3
 mov edi,dword [PC]       ;2
 add edi,byte 4      ;3
@@ -1409,12 +1395,11 @@ and edi,0xFFFFFFFC  ;6
 add edi,eax         ;2            ;1
 CALL_GETMEM_LONG
 mov dword [rbp],eax       ;3
-opdesc MOVLI,       0xFF,6,0xFF,10,0xFF
+opdesc MOVLI,       0xFF,6,0xFF,8,0xFF
 
 opfunc MOVBL4
 GET_R rbp
-xor  eax,eax          ;2  Clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 add  eax,dword [rbp]        ;3
 mov edi, eax
 CALL_GETMEM_BYTE
@@ -1422,13 +1407,12 @@ GET_R0 rbp
 cbw                   ;1  Sign extension byte -> word
 cwde                  ;1  Sign extension qword -> dword
 mov  dword [rbp],eax        ;3
-opdesc MOVBL4, 6,0xFF,10,0xFF,0xFF
+opdesc MOVBL4, 6,0xFF,8,0xFF,0xFF
 
 
 opfunc MOVWL4
 GET_R rbp
-xor  eax,eax          ;2  Clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl  eax, byte 1       ;3  << 1
 add  eax,dword [rbp]        ;2
 mov edi, eax
@@ -1436,19 +1420,18 @@ CALL_GETMEM_WORD
 GET_R0 rbp
 cwde                  ;2  sign 
 mov  dword [rbp],eax        ;3
-opdesc MOVWL4, 6,0xFF,10,0xFF,0xFF
+opdesc MOVWL4, 6,0xFF,8,0xFF,0xFF
 
 opfunc MOVLL4
 GET_R rbp
-xor  eax,eax          ;2  Clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl  eax, byte 2       ;3  << 2
 add  eax,dword [rbp]        ;2
 mov edi, eax
 CALL_GETMEM_LONG
 GET_R rbp
 mov  dword [rbp],eax        ;3
-opdesc MOVLL4, 6,32,10,0xFF,0xFF
+opdesc MOVLL4, 6,33,8,0xFF,0xFF
 
  
 opfunc MOVBS4
@@ -1478,83 +1461,76 @@ GET_R rbp
 mov esi, dword [rbp]     ;3
 GET_R rbp
 mov edi, dword [rbp]     ;3
-xor eax,eax         ;2
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl eax,byte 2      ;3
 add edi,eax ;2
 CALL_SETMEM_LONG
-opdesc MOVLS4,	6,16,23,0xFF,0xFF
+opdesc MOVLS4,	6,16,21,0xFF,0xFF
 
  
 opfunc MOVBLG
 GET_R0 rbp
-xor  eax,eax           ;2  clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 GET_GBR edi
 add  edi, eax;3  GBR + IMM( Adress for Get Value )
 CALL_GETMEM_BYTE
 cbw                    ;1
 cwde                   ;1
 mov  dword [rbp],eax         ;3
-opdesc MOVBLG,    0xFF,0xFF,0xFF,6,0xFF
+opdesc MOVBLG,    0xFF,0xFF,0xFF,4,0xFF
 
 
 opfunc MOVWLG
 GET_R0 rbp
-xor  eax,eax           ;2  clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl  eax,byte 1         ;3  Shift left 2
 GET_GBR edi
 add  edi, eax;3  GBR + IMM( Adress for Get Value )
 CALL_GETMEM_WORD
 cwde                   ;1
 mov  dword [rbp],eax         ;3
-opdesc MOVWLG,    0xFF,0xFF,0xFF,6,0xFF
+opdesc MOVWLG,    0xFF,0xFF,0xFF,4,0xFF
 
 
 opfunc MOVLLG
 GET_R0 rbp
-xor  eax,eax           ;2  clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl  eax,byte 2         ;3  Shift left 2
 GET_GBR edi
 add  edi, eax;3  GBR + IMM( Adress for Get Value )
 CALL_GETMEM_LONG
 mov  dword [rbp],eax         ;3
-opdesc MOVLLG,    0xFF,0xFF,0xFF,6,0xFF
+opdesc MOVLLG,    0xFF,0xFF,0xFF,4,0xFF
 
 
 opfunc MOVBSG
 GET_R0 rbp
 mov esi, dword [rbp]     ;3
-xor  eax,eax         ;2  Clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 GET_GBR edi
 add  edi,eax ;2  GBR + IMM( Adress for Get Value )
 CALL_SETMEM_BYTE
-opdesc MOVBSG,    0xFF,0xFF,0xFF,9,0xFF
+opdesc MOVBSG,    0xFF,0xFF,0xFF,7,0xFF
 
 opfunc MOVWSG
 GET_R0 rbp
 mov esi, dword [rbp]
-xor  eax,eax         ;2  Clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl  eax,byte 1       ;3  Shift left 2
 GET_GBR edi
 add  edi, eax ;2  GBR + IMM( Adress for Get Value )
 CALL_SETMEM_WORD
-opdesc MOVWSG,    0xFF,0xFF,0xFF,9,0xFF
+opdesc MOVWSG,    0xFF,0xFF,0xFF,7,0xFF
 
 opfunc MOVLSG
 GET_R0 rbp
 mov esi, dword [rbp]     ;3
-xor  eax,eax         ;2  Clear rax
-GET_BYTE_IMM al
+GET_BYTE_IMM eax
 shl eax,byte 2       ;3  Shift left 2
 GET_GBR edi
 add  edi,eax ;2  GBR + IMM( Adress for Get Value )
 CALL_SETMEM_LONG
-opdesc MOVLSG,    0xFF,0xFF,0xFF,9,0xFF
+opdesc MOVLSG,    0xFF,0xFF,0xFF,7,0xFF
 
 
 opfunc MOVBS
