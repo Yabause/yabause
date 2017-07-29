@@ -469,15 +469,15 @@ opdesc TSTI,	0xff,0xff,0xff,11,0xff
 
 
 opfunc ANDI
-and dword [GEN_REG],dword 0x000000ff ;3
+and dword [R0],dword 0x000000ff ;3
 opdesc ANDI,	0xff,0xff,0xff,4,0xff
 
 opfunc XORI
-xor byte [GEN_REG],byte 0x7f ;3
+xor byte [R0],byte 0x7f ;3
 opdesc XORI,	0xff,0xff,0xff,4,0xff
 
 opfunc ORI
-or byte [GEN_REG],byte 0x7f ;3
+or byte [R0],byte 0x7f ;3
 opdesc ORI,	0xff,0xff,0xff,4,0xff
 
 opfunc CMP_EQ_IMM
@@ -511,19 +511,18 @@ GET_R SCRATCH1
 mov dword eax,[SCRATCH1]
 GET_R SCRATCH1
 mov dword ebx,[SCRATCH1]
-mov dword ecx,[CTRL_REG]
-btr dword ecx,0   ;4  Replace x86 T bit with the current one, set the sh2 one
+TEST_IS_T
+CLEAR_T
 jnc ADD_REG
 add ebx, 1
 jnc ADD_REG
-or ecx, byte 1    ;3  CTRL_REG |= 1 //Carry
+SET_T
 ADD_REG:
 add ebx,eax       ;3  rn = rm +rn (with carry)
 jnc ADDC_NO_CARRY   ;2
-or ecx, byte 1    ;3  CTRL_REG |= 1 //Carry
+SET_T
 ADDC_NO_CARRY:
 mov dword [rbp], ebx
-mov dword [CTRL_REG], ecx
 opdesc ADDC,	6,16,0xff,0xff,0xff
 
 
@@ -738,7 +737,7 @@ opdesc MOVI,	0xff,6,0xff,11,0xff
 opfunc MOVBL0
 GET_R SCRATCH1
 mov edi,dword [SCRATCH1]        ;3
-add edi,dword [GEN_REG]
+add edi,dword [R0]
 CALL_GETMEM_BYTE
 GET_R SCRATCH1
 cbw                  ;1
@@ -749,7 +748,7 @@ opdesc MOVBL0,	6,27,0xff,0xff,0xff
 opfunc MOVWL0
 GET_R SCRATCH1
 mov edi,dword [SCRATCH1]        ;3
-add edi,dword [GEN_REG]        ;2
+add edi,dword [R0]        ;2
 CALL_GETMEM_WORD
 GET_R SCRATCH1
 cwde                 ;1
@@ -759,7 +758,7 @@ opdesc MOVWL0,	6,27,0xff,0xff,0xff
 opfunc MOVLL0
 GET_R SCRATCH1
 mov edi,dword [SCRATCH1]        ;3
-add edi,dword [GEN_REG]        ;2
+add edi,dword [R0]        ;2
 CALL_GETMEM_LONG
 GET_R SCRATCH1
 mov dword [SCRATCH1],eax        ;3
@@ -774,7 +773,7 @@ opdesc MOVT,		0xff,6,0xff,0xff,0xff
 opfunc MOVBS0
 GET_R SCRATCH1
 mov edi,dword [SCRATCH1]        ;3
-add edi,dword [GEN_REG]        ;2
+add edi,dword [R0]        ;2
 GET_R SCRATCH1
 mov  esi,dword [SCRATCH1]       ;3
 CALL_SETMEM_BYTE
@@ -783,7 +782,7 @@ opdesc MOVBS0,	20,6,0xff,0xff,0xff
 opfunc MOVWS0
 GET_R SCRATCH1
 mov edi,dword [SCRATCH1]        ;3
-add edi,dword [GEN_REG]        ;2
+add edi,dword [R0]        ;2
 GET_R SCRATCH1
 mov  esi,dword [SCRATCH1]       ;3
 CALL_SETMEM_WORD         ;1
@@ -792,7 +791,7 @@ opdesc MOVWS0,	20,6,0xff,0xff,0xff
 opfunc MOVLS0
 GET_R SCRATCH1
 mov edi,dword [SCRATCH1]        ;3
-add edi,dword [GEN_REG]        ;2
+add edi,dword [R0]        ;2
 GET_R SCRATCH1
 mov  esi,dword [SCRATCH1]       ;3
 CALL_SETMEM_LONG
@@ -897,9 +896,7 @@ mov eax,dword [SCRATCH1]       ;2
 shr dword [SCRATCH1],byte 1     ;3
 TEST_IS_T
 jnc continue_rotcr
-mov ecx, 1
-shl ecx, byte 31
-or dword [SCRATCH1],ecx
+bts dword [SCRATCH1], 31
 continue_rotcr:  ;2
 SET_T_R eax, 0
 opdesc ROTCR,	0xff,6,0xff,0xff,0xff
@@ -927,9 +924,8 @@ GET_R SCRATCH1
 mov eax, dword [SCRATCH1]
 shl dword [SCRATCH1], byte 1
 CLEAR_T
-shr eax,byte 31     ;3
-test eax, 1
-je cont_shl
+bt eax,byte 31     ;3
+jnc cont_shl
 SET_T
 cont_shl:
 opdesc SHL,		0xff,6,0xff,0xff,0xff
@@ -951,13 +947,14 @@ GET_R SCRATCH1
 mov eax,dword [SCRATCH1]
 shr dword [SCRATCH1], byte 1
 CLEAR_T
-test eax, 1
-je cont_shar
+bt eax, 0
+jnc cont_shar
 SET_T
 cont_shar:
-shr eax, byte 31
-shl eax, byte 31
-or dword [SCRATCH1], eax
+bt eax, 31
+jnc .end
+bts dword [SCRATCH1], 31
+.end:
 opdesc SHAR,	0xff,6,0xff,0xff,0xff
 
 
@@ -1094,19 +1091,19 @@ add dword [PC],eax ;2      ;3
 opdesc BRA,		0xff,0xff,0xff,0xff,2
 
 opfunc BSR
-mov eax,dword [PC]       ;2
-add eax,byte 4      ;3
-SET_PR eax
-xor ebx, ebx
-or bx,word 0x0ABE   ;3
-bt ebx, 11        ;4
+mov ebx,dword [PC]       ;2
+add ebx,byte 4      ;3
+SET_PR ebx
+mov ax, 0x0ABE   ;3
+bt ax, 11        ;4
 jnc .continue       ;2
-or ebx,0xfffff000   ;5
+or ax,0xf000   ;5
 .continue:
-shl ebx,byte 1      ;3
-add ebx,eax ;2
-mov dword [PC],ebx       ;3
-opdesc BSR,		0xff,0xff,0xff,0xff,15
+cwde
+shl eax, 1      ;3
+add eax,ebx ;2
+mov dword [PC],eax       ;3
+opdesc BSR,		0xff,0xff,0xff,0xff,12
 
 opfunc BSRF
 GET_R SCRATCH1
