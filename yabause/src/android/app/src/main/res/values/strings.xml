@@ -17,8 +17,8 @@
     <string name="frameskip">跳帧</string>
     <string name="keepaspectrate">保留原始宽高比</string>
     <string name="choose_input_device">选择输入设备</string>
-    <string name="input_device_title">玩家1 输入设备</string>
-    <string name="input_device_title_player2">玩家2 输入设备</string>
+    <string name="input_device_title">玩家1输入设备</string>
+    <string name="input_device_title_player2">玩家2输入设备</string>
     <string name="input_device">选择</string>
     <string name="input_device_setting">编辑按键映射</string>
     <string name="onscrenn_pad_setting">编辑虚拟按键</string>
@@ -77,9 +77,9 @@
     <string name="exit">退出</string>
     <string name="ignore">忽略</string>
 
-    <string name="new_dynrec_cpu_interface">新动态重编译器(比解释器快. 比旧动态重编译器更准确)</string>
-    <string name="dynrec_cpu_interface">旧动态重编译器(快速但不准确)</string>
-    <string name="software_cpu_interface">解释器(慢但更准确)</string>
+    <string name="new_dynrec_cpu_interface">新动态重编译器 (比解释器快. 比旧动态重编译器更准确)</string>
+    <string name="dynrec_cpu_interface">旧动态重编译器 (快速但不准确)</string>
+    <string name="software_cpu_interface">解释器 (慢但更准确)</string>
 
     <string name="opengl_video_interface">OpenGL 视频接口</string>
     <string name="software_video_interface">软件视频接口</string>
@@ -95,7 +95,7 @@
     <string name="video_filter_none">无</string>
     <string name="video_filter_fxaa">FXAA</string>
     <string name="video_filter_scanline">扫描线</string>
-    <string name="video_filter_bilinear">双线性(仅在未选择本机分辨率时启用)</string>
+    <string name="video_filter_bilinear">双线性 (仅在未选择本机分辨率时启用)</string>
     <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
     <string name="related_movies">相关视频</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
