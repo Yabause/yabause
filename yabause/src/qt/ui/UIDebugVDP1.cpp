@@ -37,12 +37,13 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p )
    {
       for (int i=0;;i++)
       {
-         char *string;
+         char outstring[256];
 
-         if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
+         Vdp1DebugGetCommandNumberName(i, outstring);
+         if (*outstring == '\0')
             break;
 
-         lwCommandList->addItem(QtYabause::translate(string));
+         lwCommandList->addItem(QtYabause::translate(outstring));
       }
    }
 
