@@ -687,24 +687,26 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           *texture->textdata++ = (shadow_alpha << 24);
         }
         else {
-          int colorindex = ((dot >> 4) | colorBank) + colorOffset;
-          if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = SAT2YAB1(alpha, colorindex);
-          }
-          else {
-            if (SPCCCS == 0x03) {
-              u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
-              if (checkcol & 0x8000) {
-                *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
-              }
-              else {
-                *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
-              }
+          // VDP2 Operation
+          int colorindex = ((dot >> 4) | colorBank);
+
+          // hard/vdp1/hon/p02_11.htm 0 data is ignoerd
+          if (colorindex == 0) {
+            *texture->textdata++ = SAT2YAB1(priority, 0);
+          }else {
+            colorindex  += colorOffset;
+            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+              *texture->textdata++ = SAT2YAB1(alpha, colorindex);
             }
             else {
-
-              if (colorindex == 0) {
-                *texture->textdata++ = SAT2YAB1(priority, 0);
+              if (SPCCCS == 0x03) {
+                u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                if (checkcol & 0x8000) {
+                  *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+                }
+                else {
+                  *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+                }
               }
               else {
                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
@@ -728,23 +730,26 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           *texture->textdata++ = (shadow_alpha << 24);
         }
         else {
-          int colorindex = ((dot & 0xF) | colorBank) + colorOffset;
-          if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = SAT2YAB1(alpha, colorindex);
-          }
-          else {
-            if (SPCCCS == 0x03) {
-              u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
-              if (checkcol & 0x8000) {
-                *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
-              }
-              else {
-                *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
-              }
+          // VDP2 Operation
+          int colorindex = ((dot & 0xF) | colorBank);
+
+          // hard/vdp1/hon/p02_11.htm 0 data is ignoerd
+          if (colorindex == 0) {
+            *texture->textdata++ = SAT2YAB1(priority, 0);
+          }else {
+            colorindex += colorOffset;
+            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+              *texture->textdata++ = SAT2YAB1(alpha, colorindex);
             }
             else {
-              if (colorindex == 0) {
-                *texture->textdata++ = SAT2YAB1(priority, 0);
+              if (SPCCCS == 0x03) {
+                u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                if (checkcol & 0x8000) {
+                  *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, talpha);
+                }
+                else {
+                  *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+                }
               }
               else {
                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
