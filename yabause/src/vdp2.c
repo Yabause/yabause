@@ -1482,7 +1482,8 @@ int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
    // Read internal variables
    yread(&check, (void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
 
-   YglGLInit(8, 8);
+   if(VIDCore) VIDCore->Resize(0,0,0,0,0);
+
 
    return size;
 }
