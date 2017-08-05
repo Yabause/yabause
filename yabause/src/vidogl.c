@@ -591,7 +591,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
   int priority = 0;
   int colorcl = 0;
   
-  int ednmode;
   int endcnt = 0;
   int nromal_shadow = 0;
   u32 talpha = 0x00; // MSB Color calcuration mode
@@ -611,10 +610,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     MSB_SHADOW = 1;
   }
 
-  if( (cmd->CMDPMOD & 0x20) == 0)
-    ednmode = 1;
-  else
-    ednmode = 0;
 
    addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
    
@@ -694,10 +689,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         else if( ((dot >> 4) == 0x0F) && !END ) *texture->textdata++ = 0x00;
         else if (MSB_SHADOW){
           *texture->textdata++ = (0x80) << 24;
-        }else if (((dot >> 4) | colorBank) == 0x0000){
+        //}else if (((dot >> 4) | colorBank) == 0x0000){
           //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
           //talpha |= priority;
-          *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
+        //  *texture->textdata++ = 0; //Vdp2ColorRamGetColor(((dot >> 4) | colorBank) + colorOffset, talpha);
         }else if (((dot >> 4) | colorBank) == nromal_shadow){
           *texture->textdata++ = (shadow_alpha << 24);
         }else{
@@ -713,7 +708,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
               }
             }else{
-              *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+
+              if (colorindex == 0) {
+                 *texture->textdata++ = SAT2YAB1(priority,0);
+              }else {
+                *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+              }
             }
           }
         }
@@ -724,10 +724,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         else if( ((dot & 0xF) == 0x0F) && !END ) *texture->textdata++ = 0x00;
         else if (MSB_SHADOW){
            *texture->textdata++ = (0x80) << 24;
-        }else if (((dot & 0x0F) | colorBank) == 0x0000){
+        //}else if (((dot & 0x0F) | colorBank) == 0x0000){
           //u32 talpha = 0xF8 - ((colorcl << 3) & 0xF8);
           //talpha |= priority;
-          *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
+        //  *texture->textdata++ = 0; // Vdp2ColorRamGetColor(((dot & 0xF) | colorBank) + colorOffset, talpha);
         }else if (((dot & 0xF) | colorBank) == nromal_shadow){
           *texture->textdata++ = (shadow_alpha << 24);
         }else{
@@ -745,7 +745,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                }
              }
              else{
-               *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+               if (colorindex == 0) {
+                 *texture->textdata++ = SAT2YAB1(priority, 0);
+               }
+               else {
+                 *texture->textdata++ = Vdp2ColorRamGetColor(colorindex, alpha);
+               }
              }
            }
          }
@@ -774,7 +779,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             {
                dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
-               if( ednmode && endcnt >= 2 )
+               if(!END && endcnt >= 2 )
                {
                   *texture->textdata++ = 0x00;
                }else if (((dot >> 4) == 0) && !SPD)
@@ -855,7 +860,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
                j += 1;
 
-               if( ednmode && endcnt >= 2 )
+               if( !END && endcnt >= 2 )
                {
                   *texture->textdata++ = 0x00;
                }else if (((dot & 0xF) == 0) && !SPD)
@@ -4068,11 +4073,11 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
      if ( (CMDPMOD & 0x8000) )
         sprite.blendmode = VDP1_COLOR_CL_MESH;
      else {
-     if ( (CMDPMOD & 0x40) != 0) {
-        sprite.blendmode = VDP1_COLOR_SPD;
-     } else{
-       sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-     }
+     //if ( (CMDPMOD & 0x40) != 0) { 
+     //   sprite.blendmode = VDP1_COLOR_SPD;
+     //} else{
+     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+     //}
    }
    }
    else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
@@ -4317,12 +4322,12 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
    
    if (IS_REPLACE(CMDPMOD)){
-     if ((CMDPMOD & 0x40) != 0) {
-       sprite.blendmode = VDP1_COLOR_SPD;
-     }
-     else{
-       sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-     }
+     //if ((CMDPMOD & 0x40) != 0) {
+     //  sprite.blendmode = VDP1_COLOR_SPD;
+     //}
+     //else{
+     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+     //}
    }
    else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)){
      sprite.blendmode = VDP1_COLOR_CL_SHADOW;
