@@ -77,7 +77,7 @@
     <string name="exit">Quitter</string>
     <string name="ignore">Ignorer</string>
 
-	<string name="new_dynrec_cpu_interface">Nouveau Recompileur Dynamic (plus rapide que l\'interpréteur. Plus précis que l'ancien Recompileur Dynamique)</string>
+	<string name="new_dynrec_cpu_interface">Nouveau Recompileur Dynamic (plus rapide que l\'interpréteur. Plus précis que l\'ancien Recompileur Dynamique)</string>
     <string name="dynrec_cpu_interface">Recompileur Dynamique ( rapide mais moins précis )</string>
     <string name="software_cpu_interface">Interprèteur ( lent mais plus précis )</string>
 
