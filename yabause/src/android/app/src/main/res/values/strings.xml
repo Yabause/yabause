@@ -154,14 +154,6 @@
     <string name="delete">Delete</string>
     <string name="select_game_directory">Select Game Directory</string>
 
-
-    <string name="enable">Enable</string>
-    <string name="disable">Disable</string>
-    <string name="edit">Edit</string>
-    <string name="delete">Delete</string>
-    <string name="select_game_directory">Select Game Directory</string>
-
-
     <string name="sound_curent">Current(High quality version for high-end devices)</string>
     <string name="sound_legacy">Legacy(for low-end devices)</string>
 
