@@ -5366,6 +5366,7 @@ static void Vdp2DrawBackScreen(void)
 {
   u32 scrAddr;
   int dot;
+  vdp2draw_struct info;
 
   static unsigned char lineColors[512 * 3];
   static int line[512 * 4];
@@ -5375,12 +5376,16 @@ static void Vdp2DrawBackScreen(void)
   else
     scrAddr = (((fixVdp2Regs->BKTAU & 0x3) << 16) | fixVdp2Regs->BKTAL) * 2;
 
+
+  ReadVdp2ColorOffset(fixVdp2Regs, &info, 0x20);
+
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
   dot = T1ReadWord(Vdp2Ram, scrAddr);
+
   YglSetClearColor(
-    (float)(dot & 0x1F) / (float)(0x1F),
-    (float)((dot & 0x3E0) >> 5) / (float)(0x1F),
-    (float)((dot & 0x7C00) >> 10) / (float)(0x1F)
+    (float)(((dot & 0x1F)<<3) +info.cor) / (float)(0xFF),
+    (float)((((dot & 0x3E0) >> 5) << 3) + info.cog) / (float)(0xFF),
+    (float)((((dot & 0x7C00) >> 10) << 3) + info.cob) / (float)(0xFF)
   );
 #else
   if (fixVdp2Regs->BKTAU & 0x8000)
