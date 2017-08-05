@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
-    <string name="Nom de l'app_name">uoYabause</string>
+    <string name="app_name">uoYabause</string>
     <string name="menu_exit">Quitter</string>
 	<string name="menu_reset">Redémarrer</string>
     <string name="menu_save_state">Sauvegarder un Etat</string>
