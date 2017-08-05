@@ -1412,7 +1412,7 @@ void DynarecSh2::ShowStatics(){
 
 int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
 #if !defined(DEBUG_CPU)
-  buf = "Not Debug Mode\n";
+//  buf = "Not Debug Mode\n";
 #else
 
   if (statics_trigger_ != NORMAL && statics_trigger_ != FINISHED) return -1;
