@@ -2344,9 +2344,31 @@ void YglEraseWriteVDP1(void) {
   color = Vdp1Regs->EWDR;
   priority = 0;
 
-  if (color & 0x8000){
-    alpha = 0xF8;
+  if ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
+
+    u8 rgb_alpha = 0xF8;
+    int tp = 0;
+    u8 spmode = Vdp2Regs->SPCTL & 0x0f;
+    if (spmode & 0x8){
+      if (!(color & 0xFF)) {
+        rgb_alpha = 0;
+      }
+    }
+    // vdp2/hon/p08_12.htm#no8_15
+    else if (Vdp2Regs->SPCTL & 0x10) { // Enable Sprite Window
+      if (spmode >= 0x2 && spmode <= 0x7) {
+        rgb_alpha = 0;
+      }
+    }
+    else {
+      u8 *cclist = (u8 *)&Vdp2Regs->CCRSA;
+      cclist[0] &= 0x1F;
+      u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
+    }
+
+    alpha = rgb_alpha;
     priority = Vdp2Regs->PRISA & 0x7;
+
   }
   else{
     int shadow, normalshadow, colorcalc;
