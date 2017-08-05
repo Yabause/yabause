@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name">uoYabause</string>
+    <string name="Nom de l'app_name">uoYabause</string>
     <string name="menu_exit">Quitter</string>
 	<string name="menu_reset">Redémarrer</string>
     <string name="menu_save_state">Sauvegarder un Etat</string>
@@ -77,6 +77,7 @@
     <string name="exit">Quitter</string>
     <string name="ignore">Ignorer</string>
 
+	<string name="new_dynrec_cpu_interface">Nouveau Recompileur Dynamic (plus rapide que l\'interpréteur. Plus précis que l'ancien Recompileur Dynamique)</string>
     <string name="dynrec_cpu_interface">Recompileur Dynamique ( rapide mais moins précis )</string>
     <string name="software_cpu_interface">Interprèteur ( lent mais plus précis )</string>
 
@@ -98,8 +99,10 @@
     <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
 	<string name="related_movies">Relatif aux Vidéos</string>
     <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
+	<string name="delete_confirm">"Etes-vous sûr de vouloier supprimer cet objet ?"</string>string>
     <string name="error">Erreur</string>
     <string name="ok">OK</string>
+	<string name="cancel">Annuler</string>
     <string name="pause">Pause</string>
     <string name="play">Lancer</string>
     <string name="stop">Arrêter</string>
@@ -156,6 +159,10 @@
     <string name="poly_triangle">Correction de Perspective en utilisant les Triangles</string>
     <string name="poly_cpu_tess">Tesselation CPU</string>
     <string name="poly_gpu_tess">Tessalation GPU</string>
+	
+	<string name="menu_load">Charger</string>
+    <string name="menu_delete">Effacer</string>
 
 </resources>
+
 
