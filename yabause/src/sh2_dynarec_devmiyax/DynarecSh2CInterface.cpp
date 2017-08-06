@@ -189,10 +189,28 @@ void SH2DynSendInterrupt(SH2_struct *context, u8 vector, u8 level){
 }
 
 int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INTERRUPTS]){
+  DynarecSh2 *pctx = (DynarecSh2*)context->ext;
+  dlstIntct::iterator itr = pctx->m_IntruptTbl.begin();
+  int i = 0;
+  while (itr != pctx->m_IntruptTbl.end()) {
+    interrupts[i].level = itr->level;
+    interrupts[i].vector = itr->Vector;
+    itr++;
+    i++;
+  }
+
   return 0;
 }
 
 void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrupt_struct interrupts[MAX_INTERRUPTS]){
+  DynarecSh2 *pctx = (DynarecSh2*)context->ext;
+  pctx->m_IntruptTbl.clear();
+  for (int i = 0; i < num_interrupts; i++) {
+    dIntcTbl tmp;
+    tmp.level = interrupts[i].level;
+    tmp.Vector = interrupts[i].vector;
+    pctx->m_IntruptTbl.push_back(tmp);
+  }
   return;
 }
 

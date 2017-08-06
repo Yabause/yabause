@@ -276,7 +276,6 @@ protected:
   tagSH2 *  m_pDynaSh2;
   CompileBlocks * m_pCompiler;
   int       m_ClockCounter;
-  dlstIntct m_IntruptTbl;
   bool      m_bIntruptSort;
   bool one_step_;
   s32 pre_exe_count_;
@@ -312,6 +311,7 @@ public:
   void SetContext(SH2_struct * ctx) { ctx_= ctx;}
   bool IsSlave() { return is_slave_;  }
 
+  dlstIntct m_IntruptTbl;
   void AddInterrupt( u8 Vector, u8 level );
   int CheckInterupt();
   int InterruptRutine(u8 Vector, u8 level);
