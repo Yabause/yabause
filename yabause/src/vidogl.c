@@ -1129,7 +1129,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           *texture->textdata++ = 0x00;
         }
         else if (dot == 0x0000) {
-          *texture->textdata++ = 0x00;
+          *texture->textdata++ = SAT2YAB1(priority, 0);
         }
         else if ((dot == 0x7FFF) && !END) {
           *texture->textdata++ = 0x0;
