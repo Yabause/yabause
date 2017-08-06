@@ -26,7 +26,14 @@
     <Button
         android:onClick="onSettings"
         android:text="@string/setting" />
-           
+        
+        </TableRow>
+        <TableRow>
+
+    <Button
+        android:onClick="onDonate"
+        android:text="@string/donation" />
+        
     </TableRow>
     </TableLayout>
         

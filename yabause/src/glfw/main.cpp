@@ -34,8 +34,10 @@ extern "C" {
 #ifdef _WINDOWS
   //static char biospath[256] = "G:/wkcvs/Emulation/Saturn/satourne v1.0.2p/roms/saturn_bios.bin";
   static char * biospath = NULL;
+  static char cdpath[256] = "C:/ext/osusume/SonycR.cue";
   //static char cdpath[256] = "C:/ext/osusume/akumazyou/ws-dracula_x.bin";
-  static char cdpath[256] = "C:/ext/osusume/thunder_force_v[www.segasoluce.net]/thunder_force.iso";
+  //static char cdpath[256] = "C:/ext/osusume/thunder_force_v[www.segasoluce.net]/thunder_force.iso";
+  //static char cdpath[256] = "C:/ext/osusume/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn)/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn).mds";
   //static char cdpath[256] = "C:/ext/osusume/Black Matrix (J)(Saturn)/black_matrix.bin";
   //static char cdpath[256] = "E:/gameiso/brtrck.bin";
   //static char cdpath[256] = "E:/gameiso/Sonic 3D Blast (U)(Saturn)/125 Sonic 3D Blast (U).bin";

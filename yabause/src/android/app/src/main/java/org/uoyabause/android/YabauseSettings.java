@@ -94,8 +94,17 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
 
         GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
         dires.setActivity(this);
-
-      
+/*
+        Preference filePicker = (Preference) findPreference("pref_game_download_directory");
+        filePicker.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                //Intent intent = new Intent(......); //Intent to start openIntents File Manager
+                //startActivityForResult(intent, requestMode);
+                return true;
+            }
+        });
+*/
     	InputSettingPrefernce inputsetting1 = (InputSettingPrefernce)findPreference("pref_inputdef_file");
         inputsetting1.setPlayerAndFileame(0,"keymap");
     	InputSettingPrefernce inputsetting2 = (InputSettingPrefernce)findPreference("pref_player2_inputdef_file");
@@ -383,15 +392,15 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
     
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if (key.equals("pref_bios") ||
-                    key.equals("pref_cart") ||
-                    key.equals("pref_video") ||
-                    key.equals("pref_cpu") ||
-                    key.equals("pref_filter") ||
-                    key.equals("pref_polygon_generation") ||
-                    key.equals("pref_sound_engine") ||
-                    key.equals("pref_resolution")
-                    ) {
+        if (key.equals("pref_bios") || 
+            key.equals("pref_cart") || 
+            key.equals("pref_video") || 
+            key.equals("pref_cpu") || 
+            key.equals("pref_filter") || 
+            key.equals("pref_polygon_generation") || 
+            key.equals("pref_sound_engine" ) ||
+            key.equals("pref_resolution")
+            ) {
                 ListPreference pref = (ListPreference) findPreference(key);
                 pref.setSummary(pref.getEntry());
 

@@ -131,8 +131,8 @@ YabMutex * g_scsp_mtx = NULL;
 #include "sh2core.h"
 
 #if defined(__GNUC__)
-//#include <stdatomic.h>
-/*_Atomic*/ u32 m68kcycle = 0;
+#include <stdatomic.h>
+_Atomic u32 m68kcycle = 0;
 #else
 u32 m68kcycle = 0;
 #endif
@@ -1439,8 +1439,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      panned_l = (efsdl_applied >> pan_val_l)>>1;
-      panned_r = (efsdl_applied >> pan_val_r)>>1;
+      panned_l = (efsdl_applied >> pan_val_l)>>0;
+      panned_r = (efsdl_applied >> pan_val_r)>>0;
 
       *out_l = *out_l + panned_l;
       *out_r = *out_r + panned_r;

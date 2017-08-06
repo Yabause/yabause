@@ -1,0 +1,5 @@
+yabause/src/android/res/values/security.xml
+/.gradle/
+/local.properties
+.DS_Store
+*.iml

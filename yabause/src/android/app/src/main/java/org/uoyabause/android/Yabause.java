@@ -41,8 +41,10 @@ import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
+import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -87,6 +89,7 @@ import android.content.pm.PackageManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -104,10 +107,16 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
+
+import com.google.android.gms.ads.AdSize;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import android.support.design.widget.NavigationView;
 
 class YabauseRunnable implements Runnable
@@ -200,7 +209,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
     private int tray_state = 0;
     DrawerLayout mDrawerLayout;
     NavigationView mNavigationView;
-
+    AdView adView = null;
 
     private ProgressDialog mProgressDialog;
     private Boolean isShowProgress;
@@ -282,14 +291,35 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
             @Override
             public void onDrawerOpened(View view) {
                 if( menu_showing == false ) {
-                    String name = YabauseRunnable.getGameTitle();
-                    TextView tx = (TextView)findViewById(R.id.menu_title);
-                    if( tx != null ) {
-                        tx.setText(name);
-                    }
-                    menu_showing = true;
+                      menu_showing = true;
                     YabauseRunnable.pause();
                     audio.mute(audio.SYSTEM);
+                    String name = YabauseRunnable.getGameTitle();
+                    TextView tx = (TextView) findViewById(R.id.menu_title);
+                    if (tx != null) {
+                        tx.setText(name);
+                    }
+
+                    if( adView != null ) {
+                        LinearLayout lp = (LinearLayout) findViewById(R.id.navilayer);
+                        if( lp != null ) {
+                            final int mCount = lp.getChildCount();
+                            boolean find = false;
+                            for (int i = 0; i < mCount; ++i) {
+                                final View mChild = lp.getChildAt(i);
+                                if (mChild == adView) {
+                                    find = true;
+                                }
+                            }
+                            if (find == false) {
+                                lp.addView(adView);
+                            }
+                            AdRequest adRequest = new AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build();
+                            adView.loadAd(adRequest);
+                        }
+                    }
+
+
                 }
             }
 
@@ -336,6 +366,30 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
 
         handler = new YabauseHandler(this);
         yabauseThread = new YabauseRunnable(this);
+
+        UiModeManager uiModeManager = (UiModeManager) getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+            SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
+            Boolean hasDonated = prefs.getBoolean("donated", false);
+            if( hasDonated ) {
+                adView = null;
+            }else {
+                adView = new AdView(this);
+                adView.setAdUnitId( getString(R.string.banner_ad_unit_id2) );
+                adView.setAdSize(AdSize.BANNER);
+                AdRequest adRequest = new AdRequest.Builder().build();
+                adView.loadAd(adRequest);
+                adView.setAdListener(new AdListener() {
+                    @Override
+                    public void onAdOpened() {
+                        // Save app state before going to the ad overlay.
+                    }
+                });
+            }
+        }else{
+            adView = null;
+        }
+
 
     }
 
@@ -812,6 +866,24 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
             TextView tx = (TextView)findViewById(R.id.menu_title);
             if( tx != null ) {
                 tx.setText(name);
+            }
+            if( adView != null ) {
+                LinearLayout lp = (LinearLayout) findViewById(R.id.navilayer);
+                if( lp != null ) {
+                    final int mCount = lp.getChildCount();
+                    boolean find = false;
+                    for (int i = 0; i < mCount; ++i) {
+                        final View mChild = lp.getChildAt(i);
+                        if (mChild == adView) {
+                            find = true;
+                        }
+                    }
+                    if (find == false) {
+                        lp.addView(adView);
+                    }
+                    AdRequest adRequest = new AdRequest.Builder().addTestDevice("303A789B146C169D4BDB5652D928FF8E").build();
+                    adView.loadAd(adRequest);
+                }
             }
             this.mDrawerLayout.openDrawer(GravityCompat.START);
         }

@@ -59,6 +59,12 @@ public class Home extends Activity
         Intent intent = new Intent(this, YabauseSettings.class);
         startActivity(intent);
     }
+    
+    public void onDonate(View view)
+    {
+        Intent intent = new Intent(this, DonateActivity.class);
+        startActivity(intent);   	
+    }
 
     /**
      * 
