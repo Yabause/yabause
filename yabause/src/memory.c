@@ -1059,7 +1059,10 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
 
    fp = tmpfile();
 
+   ScspLockThread();
    status = YabSaveStateStream(fp);
+   ScspUnLockThread();
+
    if (status != 0)
    {
       fclose(fp);
@@ -1094,8 +1097,9 @@ int YabSaveState(const char *filename)
 
    if ((fp = fopen(filename, "wb")) == NULL)
       return -1;
-
+   ScspLockThread();
    status = YabSaveStateStream(fp);
+   ScspUnLockThread();
    fclose(fp);
 
    return status;
@@ -1226,7 +1230,6 @@ int YabSaveStateStream(FILE *fp)
    free(buf);
 
    OSDPushMessage(OSDMSG_STATUS, 150, "STATE SAVED");
-
    return 0;
 }
 
@@ -1242,7 +1245,10 @@ int YabLoadStateBuffer(const void * buffer, size_t size)
 
    fseek(fp, 0, SEEK_SET);
 
+   ScspLockThread();
    status = YabLoadStateStream(fp);
+   ScspUnLockThread();
+
    fclose(fp);
 
    return status;
@@ -1262,7 +1268,10 @@ int YabLoadState(const char *filename)
    if ((fp = fopen(filename, "rb")) == NULL)
       return -1;
 
+   ScspLockThread();
    status = YabLoadStateStream(fp);
+   ScspUnLockThread();
+
    fclose(fp);
 
    return status;
@@ -1290,6 +1299,7 @@ int YabLoadStateStream(FILE *fp)
    headersize = 0xC;
    check.done = 0;
    check.size = 0;
+
 
    // Read signature
    yread(&check, (void *)id, 1, 3, fp);

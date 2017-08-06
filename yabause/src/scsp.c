@@ -4705,10 +4705,8 @@ SoundRamWriteByte (u32 addr, u8 val)
 //////////////////////////////////////////////////////////////////////////////
 
 // From CPU
-u32 pre_frame_count = 0;
-u32 pre_cpu_clock = 0;
-u32 pre_68k_clcok = 0;
 int sh2_read_req = 0;
+
 void SyncSh2And68k(){
   if (IsM68KRunning) {
     sh2_read_req++;
@@ -5228,6 +5226,15 @@ void new_scsp_update_samples(s32 *bufL, s32 *bufR, int scspsoundlen)
    }
 
    new_scsp_outbuf_pos = 0;
+}
+
+void ScspLockThread() {
+  g_scsp_lock = 1;
+  YabThreadUSleep(16666*2);
+}
+
+void ScspUnLockThread() {
+  g_scsp_lock = 0;
 }
 
 
@@ -5894,6 +5901,7 @@ SoundSaveState (FILE *fp)
   ywrite(&check, (void *)&ScspInternalVars->scsptiming1, sizeof(u32), 1, fp);
   ywrite(&check, (void *)&ScspInternalVars->scsptiming2, sizeof(u32), 1, fp);
 
+  g_scsp_lock = 0;
 
   return StateFinishHeader (fp, offset);
 }
@@ -5907,6 +5915,7 @@ SoundLoadState (FILE *fp, int version, int size)
   u32 temp;
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
+  
 
   // Read 68k registers first
   yread(&check, (void *)&IsM68KRunning, 1, 1, fp);
