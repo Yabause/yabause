@@ -1023,6 +1023,7 @@ int YglGenFrameBuffer() {
 
   YGLDEBUG("YglGLInit OK");
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+	_Ygl->targetfbo = 0;
   glBindTexture(GL_TEXTURE_2D, 0);
   rebuild_frame_buffer = 0;
   return 0;

@@ -133,6 +133,13 @@
     <string name="choose_polygon_generation_type">Choose Polygon Generation type</string>
     <string name="sound_engine">Sound Engine</string>
     <string name="choose_sound_engine">Choose sound engine</string>
+    <string name="invitation_title">Send App Invite uoYabause</string>
+    <string name="invitation_message">Play SEGA Saturn games using this app!</string>
+    <string name="invitation_deep_link"  translatable="false" >https://b472u.app.goo.gl/YJ5F</string>
+    <string name="invitation_custom_image"  translatable="false" >https://lh3.googleusercontent.com/orp-j3lNGj24xvfVBEQvwWyaVhOQ_aTGc0nwIInDXBlNGUnSOdB_hb8sPGSmgmd0Jvkx=h310-rw</string>
+    <string name="invitation_cta">Install!</string>
+    <string name="invite">Introduce</string>
+    <string name="invite_message">Would you like to introduce this app?</string>
     <string name="video_resolution">Rendering Resolution</string>
     <string name="choose_video_resolution">Choose Rendering Resolution</string>
     <string name="open_cd_tray">Open CD Tray</string>
@@ -151,6 +158,7 @@
     <string name="sound_legacy">Legacy(for low-end devices)</string>
 
     <string name="res_native">Native(native resolution of this android device)</string>
+    <string name="res_native">Native(native resolution of this android device)</string>
     <string name="res_4x">4x</string>
     <string name="res_2x">2x</string>
     <string name="res_original">Original</string>
@@ -158,9 +166,7 @@
     <string name="poly_triangle">Triangle using perspective correction</string>
     <string name="poly_cpu_tess">CPU Tessellation</string>
     <string name="poly_gpu_tess">GPU Tessellation</string>
-
     <string name="menu_load">Load</string>
     <string name="menu_delete">Delete</string>
-
 </resources>
 	

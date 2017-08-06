@@ -17,8 +17,12 @@ package org.uoyabause.android.tv;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.URI;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Timer;
@@ -29,6 +33,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.UiModeManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -60,6 +65,7 @@ import android.support.v17.leanback.widget.Presenter;
 import android.support.v17.leanback.widget.Row;
 import android.support.v17.leanback.widget.RowHeaderPresenter;
 import android.support.v17.leanback.widget.RowPresenter;
+import android.app.AlertDialog;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -77,6 +83,7 @@ import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.SimpleTarget;
 
+import org.uoyabause.android.DonateActivity;
 import org.uoyabause.android.FileDialog;
 import org.uoyabause.android.GameInfo;
 import org.uoyabause.android.GameList;
@@ -85,10 +92,23 @@ import org.uoyabause.android.Yabause;
 import org.uoyabause.android.YabauseApplication;
 import org.uoyabause.android.YabauseSettings;
 import org.uoyabause.android.YabauseStorage;
+
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.appinvite.AppInvite;
+import com.google.android.gms.appinvite.AppInviteInvitation;
+import com.google.android.gms.appinvite.AppInviteInvitationResult;
+import com.google.android.gms.appinvite.AppInviteReferral;
+import com.google.firebase.analytics.FirebaseAnalytics;
+import com.google.firebase.crash.FirebaseCrash;
+
+import static android.R.attr.bitmap;
 
 import static android.R.attr.bitmap;
 
@@ -101,6 +121,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private static final int NUM_ROWS = 6;
     private static final int NUM_COLS = 15;
 
+    private static final int REQUEST_INVITE = 0x1121;
+
     private final Handler mHandler = new Handler();
     private ArrayObjectAdapter mRowsAdapter = null;
     private Drawable mDefaultBackground;
@@ -109,8 +131,11 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private URI mBackgroundURI;
     private BackgroundManager mBackgroundManager;
     private Tracker mTracker;
+    private InterstitialAd mInterstitialAd;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
     static public int refresh_level = 2;
+    static public GameSelectFragment isForeground = null;
 
     String alphabet[]={ "A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z" };
 
@@ -120,6 +145,37 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     private static String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
+    /**
+     * Get IP address from first non-localhost interface
+     * @param ipv4  true=return ipv4, false=return ipv6
+     * @return  address or empty string
+     */
+    public static String getIPAddress(boolean useIPv4) {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress();
+                        //boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                        boolean isIPv4 = sAddr.indexOf(':')<0;
+
+                        if (useIPv4) {
+                            if (isIPv4)
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%'); // drop ip6 zone suffix
+                                return delim<0 ? sAddr.toUpperCase() : sAddr.substring(0, delim).toUpperCase();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) { } // for now eat exceptions
+        return "";
+    }
     /**
      * Called when the 'show camera' button is clicked.
      * Callback is defined in resource layout definition.
@@ -146,6 +202,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         }
         return 0;
     }
+
 
     boolean verifyPermissions(int[] grantResults) {
         // At least one result must be checked.
@@ -229,6 +286,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         Log.i(TAG, "onCreate");
         super.onActivityCreated(savedInstanceState);
 
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(getActivity());
+
         YabauseApplication application = (YabauseApplication) getActivity().getApplication();
         mTracker = application.getDefaultTracker();
 
@@ -250,10 +309,23 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             gridRowAdapter.add(getResources().getString(R.string.donation));
             gridRowAdapter.add(getString(R.string.load_game));
             gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+            //gridRowAdapter.add("GoogleDrive");
 
             mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
             setAdapter(mRowsAdapter);
         }
+
+        MobileAds.initialize(application, getActivity().getString(R.string.ad_app_id));
+        mInterstitialAd = new InterstitialAd(getActivity());
+        mInterstitialAd.setAdUnitId(getActivity().getString(R.string.banner_ad_unit_id));
+        requestNewInterstitial();
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                requestNewInterstitial();
+            }
+        });
 
         myHandler = new Handler() {
             @Override
@@ -269,6 +341,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }
             }
         };
+
         if( checkStoragePermission() == 0 ) {
             updateBackGraound();
             updateGameList();
@@ -292,13 +365,12 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             mUpdateThread = new UpdateGameDatabaseTask();
             mUpdateThread.execute("init");
         }
-
-
     }
 
     @Override
     public void onResume(){
         super.onResume();
+        isForeground = this;
         if( mTracker != null ) {
             mTracker.setScreenName(TAG);
             mTracker.send(new HitBuilders.ScreenViewBuilder().build());
@@ -307,6 +379,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
     @Override
     public void onPause(){
+        isForeground = null;
+        dismissDialog();
         super.onPause();
     }
     @Override
@@ -323,6 +397,8 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
 
     private void loadRows() {
+
+        if( !isAdded() ) return;
 
        int addindex = 0;
        mRowsAdapter = new ArrayObjectAdapter(new ListRowPresenter());
@@ -362,8 +438,16 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
         GridItemPresenter mGridPresenter = new GridItemPresenter();
         ArrayObjectAdapter gridRowAdapter = new ArrayObjectAdapter(mGridPresenter);
         gridRowAdapter.add(getResources().getString(R.string.setting));
+
+        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+        //    gridRowAdapter.add(getResources().getString(R.string.invite));
+        }
+        gridRowAdapter.add(getResources().getString(R.string.donation));
         gridRowAdapter.add(getString(R.string.load_game));
         gridRowAdapter.add(getResources().getString(R.string.refresh_db));
+        //gridRowAdapter.add("GoogleDrive");
+
         mRowsAdapter.add(new ListRow(gridHeader, gridRowAdapter));
         addindex++;
 
@@ -499,6 +583,9 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
      * @return
      */
     public static String getVersionName(Context context){
+
+//        return getIPAddress(true);
+
         PackageManager pm = context.getPackageManager();
         String versionName = "";
         try{
@@ -508,6 +595,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
             e.printStackTrace();
         }
         return versionName;
+
     }
 
     private void setupUIElements() {
@@ -567,6 +655,7 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
 */
     final int SETTING_ACTIVITY = 0x01;
+    final int YABAUSE_ACTIVITY = 0x02;
 
     private final class ItemViewClickedListener implements OnItemViewClickedListener {
         @Override
@@ -586,9 +675,16 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                             .build());
                 }
 
+                Bundle bundle = new Bundle();
+                bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "PLAY");
+                bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, game.game_title);
+                mFirebaseAnalytics.logEvent(
+                        FirebaseAnalytics.Event.SELECT_CONTENT, bundle
+                );
+
                 Intent intent = new Intent(getActivity(), Yabause.class);
                 intent.putExtra("org.uoyabause.android.FileNameEx", game.file_path );
-                startActivity(intent);
+                startActivityForResult(intent, YABAUSE_ACTIVITY);
             } else if (item instanceof String) {
                 if (((String) item).indexOf(getString(R.string.setting)) >= 0) {
                     Intent intent = new Intent(getActivity(), YabauseSettings.class);
@@ -607,10 +703,52 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                     if( checkStoragePermission() == 0 ) {
                         updateGameList();
                     }
+                }else if(  ((String) item).indexOf(getString(R.string.donation)) >= 0){
+                    Intent intent = new Intent(getActivity(), DonateActivity.class);
+                    startActivity(intent);
+                }else if(  ((String) item).indexOf(getString(R.string.invite)) >= 0){
+                    onInviteClicked();
+                }else if( ((String) item).indexOf("GoogleDrive") >= 0) {
+                    onGoogleDriveClciked();
                 }
             }
-
         }
+    }
+
+    private void onGoogleDriveClciked() {
+
+        PackageManager pm = getActivity().getPackageManager();
+        try {
+            pm.getPackageInfo("org.uoyabause.gdrive", PackageManager.GET_ACTIVITIES);
+
+            Intent intent = new Intent("org.uoyabause.gdrive.LAUNCH");
+            startActivity(intent);
+
+        } catch (PackageManager.NameNotFoundException e) {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=org.uoyabause.android"));
+            try {
+                getActivity().startActivity(intent);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+    }
+
+    private void onInviteClicked() {
+        Intent intent = new AppInviteInvitation.IntentBuilder(getString(R.string.invitation_title))
+                .setMessage(getString(R.string.invitation_message))
+                .setDeepLink(Uri.parse(getString(R.string.invitation_deep_link)))
+                .setCustomImage(Uri.parse(getString(R.string.invitation_custom_image)))
+                .setCallToActionText(getString(R.string.invitation_cta))
+                .build();
+        startActivityForResult(intent, REQUEST_INVITE);
+
+        SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+        Date date = new Date(System.currentTimeMillis());
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putLong("introduce", date.getTime());
+        editor.commit();
     }
 
     private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
@@ -668,6 +806,10 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     @Override
     public void fileSelected(File file) {
         String apath;
+        if( file == null ){ // canceled
+            return;
+        }
+
         apath = file.getAbsolutePath();
 
         YabauseStorage storage = YabauseStorage.getStorage();
@@ -710,7 +852,6 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         //Bundle bundle = data.getExtras();
-
         switch (requestCode) {
             case SETTING_ACTIVITY:
                 if( resultCode == GAMELIST_NEED_TO_UPDATED ){
@@ -721,6 +862,24 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
                 }
                 this.updateBackGraound();
                 break;
+            case YABAUSE_ACTIVITY:
+                SharedPreferences prefs = getActivity().getSharedPreferences("private", Context.MODE_PRIVATE);
+                Boolean hasDonated = prefs.getBoolean("donated", false);
+                if( hasDonated == false ) {
+                    double rn = Math.random();
+                    if (rn <= 0.5) {
+                        UiModeManager uiModeManager = (UiModeManager) getActivity().getSystemService(Context.UI_MODE_SERVICE);
+                        if (uiModeManager.getCurrentModeType() != Configuration.UI_MODE_TYPE_TELEVISION) {
+                            if (mInterstitialAd.isLoaded()) {
+                                mInterstitialAd.show();
+                            }
+                        }
+                    } else if (rn > 0.5) {
+                        Intent intent = new Intent(getActivity(), DonateActivity.class);
+                        startActivity(intent);
+                    }
+                }
+                break;
             default:
                 break;
         }
@@ -728,5 +887,11 @@ public class GameSelectFragment extends BrowseFragment implements FileDialog.Fil
     }
 
 
+    private void requestNewInterstitial() {
+        AdRequest adRequest = new AdRequest.Builder()
+                //.addTestDevice("YOUR_DEVICE_HASH")
+                .build();
+        mInterstitialAd.loadAd(adRequest);
+    }
 }
 

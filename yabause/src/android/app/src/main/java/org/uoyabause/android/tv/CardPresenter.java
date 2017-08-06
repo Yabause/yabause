@@ -14,9 +14,13 @@
 
 package org.uoyabause.android.tv;
 
+import android.app.Activity;
+import android.app.Fragment;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.support.v17.leanback.widget.ImageCardView;
 import android.support.v17.leanback.widget.Presenter;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.ViewGroup;
 
@@ -83,14 +87,18 @@ public class CardPresenter extends Presenter {
 
         cardView.setContentText(rate);
         cardView.setMainImageDimensions(CARD_WIDTH, CARD_HEIGHT);
-
+        Activity activity = (Activity)viewHolder.view.getContext();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed()) {
+            return;
+        }
         if( !game.image_url.equals("")) {
             Glide.with(viewHolder.view.getContext())
                     .load(game.image_url)
                     .centerCrop()
                     .error(mDefaultCardImage)
                     .into(cardView.getMainImageView());
-       }else{
+        }else{
+
         }
     }
 

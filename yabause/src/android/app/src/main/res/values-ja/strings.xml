@@ -15,7 +15,7 @@
     <string name="frameskip">フレームスキップ</string>
     <string name="keepaspectrate">オリジナルの画面サイズ</string>
     <string name="choose_input_device">入力デバイスの選択</string>
-    <string name="input_device_title">入力デバイス</string>
+    <string name="input_device_title">入力デバイス1</string>
     <string name="input_device">選択</string>
     <string name="input_device_setting">キーマップの編集</string>
     <string name="onscrenn_pad_setting">オンスクリーンパッドのテスト</string>    
@@ -31,6 +31,7 @@
                   私たちの開発を支援してください！\n\n
 		uoYabauseの上流プロジェクトYabauseの寄付は http://www.yabause.org/ で承っています。
 		また、下のボタンで直接uoYabauseに寄付を送ることができます。より正確なエミュレーション,より多くの入力デバイス,より多くのプラットフォームのサポートに役立てます。\n
+        寄付を行うとこの画面と広告画面は表示されなくなります。
     </string>
     <string name="thank_you">寄付をありがとうございました!</string>
     <string name="error_consume">送金に失敗しました。</string>
@@ -74,6 +75,12 @@
     <string name="video_filter_none">なし</string>
     <string name="choose_video_filter">ビデオフィルタの選択</string>
     <string name="cpu_core">CPUコアの選択</string>
+    <string name="input_device_title_player2">入力デバイス2</string>
+    <string name="invitation_cta">インストール</string>
+    <string name="invitation_message">セガサターンのゲームができるアプリです</string>
+    <string name="invitation_title">このアプリを紹介する</string>
+    <string name="invite">紹介</string>
+    <string name="invite_message">このアプリを紹介しませんか？</string>
     <string name="transparency">透明度</string>
     <string name="lock_landscape">横画面 固定</string>
     <string name="choose_polygon_generation_type">ポリゴン描画方法の選択</string>

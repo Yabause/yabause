@@ -129,5 +129,4 @@ u32 YabauseGetCpuTime();
 }
 #endif
 
-
 #endif

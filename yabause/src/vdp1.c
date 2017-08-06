@@ -369,6 +369,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         yabsys.wait_line_count %= yabsys.MaxLineCount;
         FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
+        YabThreadYield();
       }
 #else
     if (val == 1){
