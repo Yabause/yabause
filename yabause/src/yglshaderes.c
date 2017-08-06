@@ -369,6 +369,14 @@ int Ygl_cleanupPerLineAlpha(void * p)
   // Restore Default Matrix
   glViewport(0, 0, _Ygl->width, _Ygl->height);
 
+  if (prg->blendmode == VDP2_CC_RATE ) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }else if (prg->blendmode == VDP2_CC_ADD) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+  }
+
   // call blit method
   YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
@@ -3154,6 +3162,9 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
   vb[6] = 0;
   vb[7] = h - 1.0;
 
+  GLint programid;
+  glGetIntegerv(GL_CURRENT_PROGRAM, &programid);
+
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
   if (perlinealpha_prg == -1){
@@ -3239,6 +3250,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
   glActiveTexture(GL_TEXTURE0);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
+  glUseProgram(programid);
 
   return 0;
 }

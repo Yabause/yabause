@@ -5503,6 +5503,8 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
       line_shift = 0;
     }
 
+    info->blendmode = VDP2_CC_NONE;
+
     linebuf = YglGetPerlineBuf(&_Ygl->bg[id]);
     for (line = 0; line < _Ygl->rheight; line++) {
       if ((Vdp2Lines[line >> line_shift].BGON & bit) == 0x00) {
@@ -5512,7 +5514,14 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
         info->enable = 1;
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
-          switch (id) {
+          if ((fixVdp2Regs->CCCTL>>8) & bit) { // Add Color
+            info->blendmode = VDP2_CC_ADD;
+          }
+          else {
+            info->blendmode = VDP2_CC_RATE;
+          }
+ 
+         switch            (id) {
           case NBG0:
             linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) << 3) + 0x7) << 24;
             break;
@@ -5580,8 +5589,6 @@ static void Vdp2DrawNBG0(void)
   info.cellh = 256;
   info.specialcolorfunction = 0;
 
-
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG0);
 
   if (fixVdp2Regs->BGON & 0x20)
   {
@@ -5776,6 +5783,7 @@ static void Vdp2DrawNBG0(void)
     }
   }
 
+  Vdp2GeneratePerLineColorCalcuration(&info, NBG0);
   info.linescreen = 0;
   if (fixVdp2Regs->LNCLEN & 0x1)
     info.linescreen = 1;
@@ -5953,8 +5961,6 @@ static void Vdp2DrawNBG1(void)
 
   info.colornumber = (fixVdp2Regs->CHCTLA & 0x3000) >> 12;
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG1);
-
   if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x200) != 0)
   {
     ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 10, 0x3);
@@ -6012,6 +6018,7 @@ static void Vdp2DrawNBG1(void)
     }
   }
 
+  Vdp2GeneratePerLineColorCalcuration(&info, NBG1);
   info.linescreen = 0;
   if (fixVdp2Regs->LNCLEN & 0x2)
     info.linescreen = 1;
@@ -6204,8 +6211,6 @@ static void Vdp2DrawNBG2(void)
   info.colornumber = (fixVdp2Regs->CHCTLB & 0x2) >> 1;
   info.mapwh = 2;
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG2);
-
   ReadPlaneSize(&info, fixVdp2Regs->PLSZ >> 4);
   info.x = -((fixVdp2Regs->SCXN2 & 0x7FF) % (512 * info.planew));
   info.y = -((fixVdp2Regs->SCYN2 & 0x7FF) % (512 * info.planeh));
@@ -6245,6 +6250,7 @@ static void Vdp2DrawNBG2(void)
     }
   }
 
+  Vdp2GeneratePerLineColorCalcuration(&info, NBG2);
   info.linescreen = 0;
   if (fixVdp2Regs->LNCLEN & 0x4)
     info.linescreen = 1;
@@ -6310,9 +6316,6 @@ static void Vdp2DrawNBG3(void)
 
   info.colornumber = (fixVdp2Regs->CHCTLB & 0x20) >> 5;
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG3);
-
-
   info.mapwh = 2;
 
   ReadPlaneSize(&info, fixVdp2Regs->PLSZ >> 6);
@@ -6354,6 +6357,7 @@ static void Vdp2DrawNBG3(void)
     }
   }
 
+  Vdp2GeneratePerLineColorCalcuration(&info, NBG3);
   info.linescreen = 0;
   if (fixVdp2Regs->LNCLEN & 0x8)
     info.linescreen = 1;
