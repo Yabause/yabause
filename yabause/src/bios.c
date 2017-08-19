@@ -30,6 +30,9 @@
 #include "yabause.h"
 #include "error.h"
 
+const u32 tweak_backup_file_addr = 0x06300000;
+const int tweak_backup_file_size = 1024 * 1024 * 8;
+
 static u8 sh2masklist[0x20] = {
 0xF0, 0xE0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80,
 0x80, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 
@@ -437,10 +440,17 @@ static u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
    switch(device)
    {
       case 0:
-         *addr = 0x00180000;
-         *size = 0x8000;
-         *blocksize = 0x40;
-         return 0;
+        if (yabsys.extend_backup) {
+          *addr = tweak_backup_file_addr;
+          *size = tweak_backup_file_size;
+          *blocksize = 0x40;
+        }
+        else {
+          *addr      = 0x00180000;
+          *size      = 0x800;
+          *blocksize = 0x40;
+        }
+        return 0;
       case 1:
          if ((CartridgeArea->cartid & 0xF0) == 0x20)
          {
@@ -705,7 +715,7 @@ static u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, i
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BiosBUPInit(SH2_struct * sh)
+void FASTCALL BiosBUPInit(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
@@ -1859,13 +1869,17 @@ int BupDeleteSave(u32 device, const char *savename)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+extern FILE * pbackup;
 
 void BupFormat(u32 device)
 {
    switch (device)
    {
       case 0:
-         FormatBackupRam(BupRam, 0x10000);
+        if (pbackup!=NULL) {
+          FormatBackupRam(pbackup, tweak_backup_file_size);
+        }
+         //FormatBackupRam(BupRam, 0x10000);
          break;
       case 1:
          if ((CartridgeArea->cartid & 0xF0) == 0x20)
