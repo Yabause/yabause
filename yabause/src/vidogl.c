@@ -6136,40 +6136,55 @@ static void Vdp2DrawNBG1(void)
         info.sv = (fixVdp2Regs->SCYIN1 & 0x7FF);
         info.x = 0;
         info.y = 0;
+        info.vertices[0] = 0;
+        info.vertices[1] = 0;
+        info.vertices[2] = vdp2width;
+        info.vertices[3] = 0;
+        info.vertices[4] = vdp2width;
+        info.vertices[5] = vdp2height;
+        info.vertices[6] = 0;
+        info.vertices[7] = vdp2height;
+        vdp2draw_struct infotmp = info;
+        infotmp.cellw = vdp2width;
+        infotmp.cellh = vdp2height;
+        YglQuad(&infotmp, &texture, &tmpc);
+        Vdp2DrawBitmapLineScroll(&info, &texture);
+
       }
-
-      yy = info.y;
-      while (yy + info.y < vdp2height)
-      {
-        xx = info.x;
-        while (xx + info.x < vdp2width)
+      else {
+        yy = info.y;
+        while (yy + info.y < vdp2height)
         {
-          info.vertices[0] = xx;
-          info.vertices[1] = yy;
-          info.vertices[2] = (xx + info.cellw);
-          info.vertices[3] = yy;
-          info.vertices[4] = (xx + info.cellw);
-          info.vertices[5] = (yy + info.cellh);
-          info.vertices[6] = xx;
-          info.vertices[7] = (yy + info.cellh);
-
-          if (isCached == 0)
+          xx = info.x;
+          while (xx + info.x < vdp2width)
           {
-            YglQuad(&info, &texture, &tmpc);
-            if (info.islinescroll) {
-              Vdp2DrawBitmapLineScroll(&info, &texture);
+            info.vertices[0] = xx;
+            info.vertices[1] = yy;
+            info.vertices[2] = (xx + info.cellw);
+            info.vertices[3] = yy;
+            info.vertices[4] = (xx + info.cellw);
+            info.vertices[5] = (yy + info.cellh);
+            info.vertices[6] = xx;
+            info.vertices[7] = (yy + info.cellh);
+
+            if (isCached == 0)
+            {
+              YglQuad(&info, &texture, &tmpc);
+              if (info.islinescroll) {
+                Vdp2DrawBitmapLineScroll(&info, &texture);
+              }
+              else {
+                Vdp2DrawCell(&info, &texture);
+              }
+              isCached = 1;
             }
             else {
-              Vdp2DrawCell(&info, &texture);
+              YglCachedQuad(&info, &tmpc);
             }
-            isCached = 1;
+            xx += info.cellw;
           }
-          else {
-            YglCachedQuad(&info, &tmpc);
-          }
-          xx += info.cellw;
+          yy += info.cellh;
         }
-        yy += info.cellh;
       }
     }
   }
