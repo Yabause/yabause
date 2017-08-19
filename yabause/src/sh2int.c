@@ -261,7 +261,7 @@ static void FASTCALL SH2undecoded(SH2_struct * sh)
 {
    int vectnum;
 
-   if (yabsys.emulatebios)
+   if (yabsys.emulatebios || yabsys.extend_backup )
    {
       if (BiosHandleFunc(sh))
          return;
@@ -2917,6 +2917,20 @@ void SH2HandleBreakpoints(SH2_struct *context)
   }
 }
 
+inline void BackupHandler(SH2_struct *context) {
+
+  const u32 bupaddr = 0x0007d600; // MappedMemoryReadLong(0x06000358);
+  if (context->regs.PC == bupaddr) {
+    LOG("BUP_Init");
+    BiosBUPInit(context);
+    yabsys.extend_backup = 2;
+  }else if (yabsys.extend_backup == 2 &&
+    context->regs.PC >= 0x0380 &&
+    context->regs.PC <= 0x03A8) {
+    BiosHandleFunc(context);
+  }
+  return;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3001,6 +3015,11 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Execute it
       opcodes[context->instruction](context);
+      
+      if (yabsys.extend_backup) {
+        BackupHandler(context);
+      }
+
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
 	     SH2UBCInterrupt(context, ubcflag);
@@ -3011,6 +3030,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
    sh2_trace_add_cycles(context->cycles);
 #endif
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 

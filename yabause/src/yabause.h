@@ -113,6 +113,7 @@ typedef struct
    int wait_line_count;
    int playing_ssf;
    u32 frame_count;
+   int extend_backup;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;
