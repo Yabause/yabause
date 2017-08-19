@@ -82,7 +82,7 @@ u8 *HighWram;
 u8 *LowWram;
 u8 *BiosRom;
 u8 *BupRam;
-FILE * pbackup = NULL;
+
 extern int tweak_backup_file_size;
 extern u32 tweak_backup_file_addr;
 
@@ -148,7 +148,8 @@ void YabFreeMap(void * p) {
 #elif defined(_WINDOWS)
 
 #include <windows.h>
-HANDLE hFMWrite;
+HANDLE hFMWrite = INVALID_HANDLE_VALUE;
+HANDLE hFile = INVALID_HANDLE_VALUE;
 void * YabMemMap(char * filename, u32 size ) {
 
   struct stat sb;
@@ -156,22 +157,40 @@ void * YabMemMap(char * filename, u32 size ) {
   char *p;
   int fd;
 
+  hFile = CreateFileA(
+    filename, 
+    GENERIC_READ|GENERIC_WRITE, 
+    0, 
+    0, 
+    OPEN_EXISTING, 
+    FILE_ATTRIBUTE_NORMAL,
+    0);
+  if (INVALID_HANDLE_VALUE == hFile) {
+    DWORD errorMessageID = GetLastError();
+    LPSTR messageBuffer = NULL;
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+    LOG(messageBuffer);
+    return NULL;
+  }
+
   hFMWrite = CreateFileMapping(
-    (HANDLE)-1,
+    hFile,
     NULL,
     PAGE_READWRITE,
     0,
     size,
     "BACKUP");
-  if (hFMWrite == NULL)
+  if (hFMWrite == INVALID_HANDLE_VALUE)
     return NULL;
 
-  return MapViewOfFile(hFMWrite, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+  return MapViewOfFile(hFMWrite, FILE_MAP_ALL_ACCESS, 0, 0, size);
 }
 
 void YabFreeMap(void * p) {
   UnmapViewOfFile(p);
   CloseHandle(hFMWrite);
+  CloseHandle(hFile);
   hFMWrite = NULL;
 }
 
@@ -1208,7 +1227,8 @@ int CheckBackupFile(FILE *fp) {
   // Fill in header
   for (i2 = 0; i2 < 4; i2++) {
     for (i = 0; i < 32; i++) {
-      if (fgetc(fp) != header[i]) {
+      u8 val = fgetc(fp);
+      if ( val != header[i]) {
         return -1;
       }
     }

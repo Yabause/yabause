@@ -164,7 +164,6 @@ void YabauseChangeTiming(int freqtype) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-extern FILE * pbackup;
 extern int tweak_backup_file_size;
 
 int YabauseSh2Init(yabauseinit_struct *init)
@@ -232,13 +231,15 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
 
    if (yabsys.extend_backup) {
+     FILE * pbackup;
      bupfilename = init->buppath;
-     pbackup = fopen(bupfilename, "w+b");
+     pbackup = fopen(bupfilename, "a+b");
      if (pbackup == NULL) {
        YabSetError(YAB_ERR_CANNOTINIT, _("InternalBackup"));
        return -1;
      }
 
+     fseek(pbackup, 0, SEEK_SET);
      if (CheckBackupFile(pbackup) != 0) {
        FormatBackupRamFile(pbackup, tweak_backup_file_size);
      }

@@ -217,8 +217,9 @@ extern "C" {
 
     if (filesize > size)
     {
-      fclose(fp);
-      return -1;
+      //fclose(fp);
+      //return -1;
+      filesize = size;
     }
 
     if ((buffer = (u8 *)malloc(filesize)) == NULL)

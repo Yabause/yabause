@@ -1876,10 +1876,12 @@ void BupFormat(u32 device)
    switch (device)
    {
       case 0:
-        if (pbackup!=NULL) {
-          FormatBackupRam(pbackup, tweak_backup_file_size);
+        if (yabsys.extend_backup){
+          FormatBackupRam(BupRam, tweak_backup_file_size);
         }
-         //FormatBackupRam(BupRam, 0x10000);
+        else {
+          FormatBackupRam(BupRam, 0x10000);
+        }
          break;
       case 1:
          if ((CartridgeArea->cartid & 0xF0) == 0x20)
