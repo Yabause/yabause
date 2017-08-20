@@ -1021,14 +1021,14 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    LOG("BiosBUPWrite from %08X size %08X", workaddr, datasize);
 
-   FILE * fp = fopen("writecheck.bin","wb");
+   //FILE * fp = fopen("writecheck.bin","wb");
    // Lastly, write the actual save data
    while (datasize > 0)
    {
       MappedMemoryWriteByte(workaddr, MappedMemoryReadByte(sh->regs.R[6]));
-      fputc(MappedMemoryReadByte(sh->regs.R[6]),fp);
+      //fputc(MappedMemoryReadByte(sh->regs.R[6]),fp);
       
-      LOG("write block=%d, baddr = %08X, %08X, %02X", blockswritten, blocktbl[blockswritten], workaddr, MappedMemoryReadByte(sh->regs.R[6]));
+      //LOG("write block=%d, baddr = %08X, %08X, %02X", blockswritten, blocktbl[blockswritten], workaddr, MappedMemoryReadByte(sh->regs.R[6]));
 
       datasize--;
       sh->regs.R[6]++;
@@ -1041,7 +1041,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
          workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
       }
    }
-   fclose(fp);
+   //fclose(fp);
    free(blocktbl);
 
    YabFlushBackups();
@@ -1115,12 +1115,12 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
 
    LOG("BiosBUPRead from %08X size %08X", tableaddr, datasize);
 
-   FILE * fp = fopen("savecheck.bin", "wb");
+   //FILE * fp = fopen("savecheck.bin", "wb");
    // Now let's read in the data
    while (datasize > 0)
    {
       MappedMemoryWriteByte(sh->regs.R[6], MappedMemoryReadByte(tableaddr));
-      fputc( MappedMemoryReadByte(tableaddr),fp );
+      //fputc( MappedMemoryReadByte(tableaddr),fp );
       datasize--;
       sh->regs.R[6]++;
       tableaddr+=2;
@@ -1132,7 +1132,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
          blocksread++;
       }
    }
-   fclose(fp);
+   //fclose(fp);
    free(blocktbl);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
