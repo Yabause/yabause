@@ -63,6 +63,8 @@ int BupCopySave(u32 srcdevice, u32 dstdevice, const char *savename);
 int BupImportSave(u32 device, const char *filename);
 int BupExportSave(u32 device, const char *savename, const char *filename);
 
+void FASTCALL BiosBUPInit(SH2_struct * sh);
+
 #ifdef __cplusplus
 }
 #endif
