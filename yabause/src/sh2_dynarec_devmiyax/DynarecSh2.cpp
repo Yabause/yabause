@@ -1169,6 +1169,21 @@ int DynarecSh2::Execute(){
     
   // ROM
   case 0x00000000:
+    if (yabsys.extend_backup) {
+      const u32 bupaddr = 0x0007d600; // MappedMemoryReadLong(0x06000358);
+      if (GET_PC() == bupaddr) {
+        LOG("BUP_Init");
+        BiosBUPInit(ctx_);
+        yabsys.extend_backup = 2;
+        return IN_INFINITY_LOOP;
+      }
+      else if (yabsys.extend_backup == 2 &&
+        GET_PC() >= 0x0380 &&
+        GET_PC() <= 0x03A8) {
+        BiosHandleFunc(ctx_);
+        return IN_INFINITY_LOOP;
+      }
+    }
     if (yabsys.emulatebios){
       BiosHandleFunc(ctx_);
       return IN_INFINITY_LOOP;

@@ -109,30 +109,30 @@ void * YabMemMap(char * filename, u32 size ) {
   char *p;
   int fd;
 
-  fd = open(filename, O_RDONLY);
+  fd = open(filename, O_RDWR);
   if (fd ==-1) {
-    perror("open");
+    yprintf("YabMemMap: open failed");
     return NULL;
    }
 
   if (fstat(fd, &sb) ==-1) {
-    perror("fstat");
+    yprintf("YabMemMap: fstat failed");
     return NULL;
   }
 
-  if (!S_ISREG(sb.st_mode)) {
-    fprintf(stderr, "%s is not a file\n", filename);
-    return NULL;
-  }
+  //if (!S_ISREG(sb.st_mode)) {
+  //  yprintf("YabMemMap: %s is not a file\n", filename);
+  //  return NULL;
+  //}
 
   p = mmap(0, sb.st_size, PROT_READ| PROT_WRITE, MAP_SHARED, fd, 0);
   if (p == MAP_FAILED) {
-    perror("mmap");
-    return 1;
+    yprintf("YabMemMap: mmap failed");
+    return NULL;
   }
 
   if (close(fd) == -1) {
-    perror("close");
+    yprintf("YabMemMap: close failed");
     return NULL;
   }
 
@@ -831,18 +831,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
       case 0x5:
       {
          // Cache/Non-Cached
-         //return ReadLongList[(addr >> 16) & 0xFFF](addr);
-        u32 val = ReadLongList[(addr >> 16) & 0xFFF](addr);
-        if ((val&0x0FFFFFFF) == 0x00180000) {
-        //if (val == 0x26300000) {
-          //int a = 0;
-          LOG("ADDR=%08X, PC=%08X",addr, CurrentSH2->regs.PC );
-
-          //if( addr == 0x060707F8) {
-          //  val = 0x06300000;
-          //}
-        }
-        return val;
+         return ReadLongList[(addr >> 16) & 0xFFF](addr);
       }
 /*
       case 0x2:
@@ -904,9 +893,6 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
       case 0x4:
       case 0x5:
       {
-        if ((addr & 0x0FFFFFF0) == 0x060707F0) {
-          LOG("ADDR=%08X, PC=%08X VAL = %08X WRITE B", addr, CurrentSH2->regs.PC, val);
-        }
          // Cache/Non-Cached
          WriteByteList[(addr >> 16) & 0xFFF](addr, val);
          return;
@@ -967,11 +953,6 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
       case 0x4:
       case 0x5:
       {
-        if ((addr & 0x0FFFFFF0) == 0x060707F0) {
-          LOG("ADDR=%08X, PC=%08X VAL = %08X WRITE W", addr, CurrentSH2->regs.PC, val);
-        }
-
-
          // Cache/Non-Cached
          WriteWordList[(addr >> 16) & 0xFFF](addr, val);
          return;
@@ -1032,11 +1013,6 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
       case 0x4:
       case 0x5:
       {
-        if ( (addr&0x0FFFFFF0) == 0x060707F0 ) {
-          LOG("ADDR=%08X, PC=%08X VAL = %08X WRITE L", addr, CurrentSH2->regs.PC, val);
-        }
-
-
          // Cache/Non-Cached
          WriteLongList[(addr >> 16) & 0xFFF](addr, val);
          return;
@@ -1242,7 +1218,8 @@ int ExtendBackupFile(FILE *fp, u32 size ) {
   u32 acsize = ftell(fp);
   if (acsize < size) {
     // Clear the rest
-    for ( u32 i = (acsize&0xFFFFFFFE) ; i < size; i += 2)
+    u32 i;
+    for ( i = (acsize&0xFFFFFFFE) ; i < size; i += 2)
     {
       fputc(0xFF, fp);
       fputc(0x00, fp);
