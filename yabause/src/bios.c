@@ -709,6 +709,11 @@ static u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, i
    }
 
    tableaddr[0] += 4;
+   if (((tableaddr[0] - 1) & ((blocksize << 1) - 1)) == 0)
+   {
+     tableaddr[0] = addr + (blocktbl[blocksread[0]] * blocksize * 2) + 9;
+     blocksread[0]++;
+   }
 
    return blocktbl;
 }
@@ -770,7 +775,26 @@ static void FASTCALL BiosBUPSelectPartition(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-   LOG("BiosBUPSelectPartition. PR = %08X\n", sh->regs.PR);
+   u32 size;
+   u32 addr;
+   u32 blocksize;
+   u32 ret;
+   u32 freeblocks = 0;
+   u32 needsize;
+   int aftersize;
+
+   SH2GetRegisters(sh, &sh->regs);
+
+   LOG("BiosBUPSelectPartition. PR = %08X device = %d \n", sh->regs.PR, sh->regs.R[4] );
+
+   ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
+   if (ret != 0) {
+     // Error
+     sh->regs.R[0] = ret;
+     sh->regs.PC = sh->regs.PR;
+     SH2SetRegisters(sh, &sh->regs);
+     return;
+   }
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
    sh->regs.PC = sh->regs.PR;
@@ -979,13 +1003,33 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    // Write 2 blank bytes so we now how large the table size is next time
    MappedMemoryWriteByte(workaddr, 0);
    workaddr+=2;
+   if (((workaddr - 1) & ((blocksize << 1) - 1)) == 0)
+   {
+     // Next block
+     blockswritten++;
+     workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+   }
+
    MappedMemoryWriteByte(workaddr, 0);
    workaddr+=2;
+   if (((workaddr - 1) & ((blocksize << 1) - 1)) == 0)
+   {
+     // Next block
+     blockswritten++;
+     workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+   }
 
+   LOG("BiosBUPWrite from %08X size %08X", workaddr, datasize);
+
+   FILE * fp = fopen("writecheck.bin","wb");
    // Lastly, write the actual save data
    while (datasize > 0)
    {
       MappedMemoryWriteByte(workaddr, MappedMemoryReadByte(sh->regs.R[6]));
+      fputc(MappedMemoryReadByte(sh->regs.R[6]),fp);
+      
+      LOG("write block=%d, baddr = %08X, %08X, %02X", blockswritten, blocktbl[blockswritten], workaddr, MappedMemoryReadByte(sh->regs.R[6]));
+
       datasize--;
       sh->regs.R[6]++;
       workaddr+=2;
@@ -997,7 +1041,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
          workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
       }
    }
-
+   fclose(fp);
    free(blocktbl);
 
    YabFlushBackups();
@@ -1011,20 +1055,27 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
 static void FASTCALL BiosBUPRead(SH2_struct * sh)
 {
-   u32 size;
-   u32 addr;
-   u32 blocksize;
-   u32 block;
-   u32 ret;
-   u32 tableaddr;
-   u16 *blocktbl;
-   int numblocks;
-   int blocksread;
-   u32 datasize;
+  u32 size;
+  u32 addr;
+  u32 blocksize;
+  u32 block;
+  u32 ret;
+  u32 tableaddr;
+  u16 *blocktbl;
+  int numblocks;
+  int blocksread;
+  u32 datasize;
+  char fname[11];
 
-   SH2GetRegisters(sh, &sh->regs);
+  SH2GetRegisters(sh, &sh->regs);
 
-   LOG("BiosBUPRead\n", sh->regs.PR);
+  int i;
+  for (i = 0; i < 10; i++) {
+    fname[i] = MappedMemoryReadByte(sh->regs.R[5]+i);
+  }
+  fname[10] = 0;
+
+   LOG("BiosBUPRead rtn=%08X device=%d, %s, \n", sh->regs.PR, sh->regs.R[4], fname);
 
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
 
@@ -1040,6 +1091,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    // See if save exists
    if ((block = FindSave(sh->regs.R[4], sh->regs.R[5], 2, size, addr, blocksize)) == 0)
    {
+      LOG("BiosBUPRead not found");
       // save doesn't exist
       sh->regs.R[0] = 5;
       sh->regs.PC = sh->regs.PR;
@@ -1061,10 +1113,14 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
       return;
    }
 
+   LOG("BiosBUPRead from %08X size %08X", tableaddr, datasize);
+
+   FILE * fp = fopen("savecheck.bin", "wb");
    // Now let's read in the data
    while (datasize > 0)
    {
       MappedMemoryWriteByte(sh->regs.R[6], MappedMemoryReadByte(tableaddr));
+      fputc( MappedMemoryReadByte(tableaddr),fp );
       datasize--;
       sh->regs.R[6]++;
       tableaddr+=2;
@@ -1076,7 +1132,7 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
          blocksread++;
       }
    }
-
+   fclose(fp);
    free(blocktbl);
 
    sh->regs.R[0] = 0; // returns 0 if there's no error
@@ -1153,7 +1209,7 @@ static void FASTCALL BiosBUPDirectory(SH2_struct * sh)
    if (ret == 1)
    {
       // Error
-      sh->regs.R[0] = ret;
+     sh->regs.R[0] = 0; // should be return 0 when it's failed
       sh->regs.PC = sh->regs.PR;
       SH2SetRegisters(sh, &sh->regs);
       return;
@@ -1306,6 +1362,7 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
    {
       if (MappedMemoryReadByte(sh->regs.R[6]) != MappedMemoryReadByte(tableaddr))
       {
+         LOG("BiosBUPVerify. failed at %08X  want = %02X get = %08X\n", tableaddr, MappedMemoryReadByte(sh->regs.R[6]), MappedMemoryReadByte(tableaddr));
          free(blocktbl);
          // Ok, the data doesn't match
          sh->regs.R[0] = 7; // No match
