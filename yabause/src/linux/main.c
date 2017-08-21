@@ -196,13 +196,7 @@ void YuiSwapBuffers(void) {
 void YuiInit() {
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
 	yinit.percoretype = PERCORE_LINUXJOY;
-#if defined(DYNAREC_DEVMIYAX)
-  yinit.sh2coretype = 3;
-#elif defined(SH2_DYNAREC)
-	yinit.sh2coretype = 2;
-#else
 	yinit.sh2coretype = 0;
-#endif
 #ifdef FORCE_CORE_SOFT
   yinit.vidcoretype = VIDCORE_SOFT;
 #else
@@ -319,11 +313,18 @@ int main(int argc, char *argv[]) {
       else if (strcmp(argv[i], "-ci") == 0 ) {
         yinit.sh2coretype = 1;
       }
-      else if (strcmp(argv[i], "-cs") == 0 ) {
-printf("Use SW core emulation\n");
+      else if (strcmp(argv[i], "-cd") == 0 ) {
+      #if defined(DYNAREC_DEVMIYAX)
+        printf("Use new dynarec core emulation\n");
+        yinit.sh2coretype = 3;
+      #elif defined(SH2_DYNAREC)
+        printf("Use old dynarec core emulation\n");
+	yinit.sh2coretype = 2;
+      #else
+        printf("No dynarec core emulation: fallback on SW core emultaion\n");
         yinit.sh2coretype = 0;
+      #endif
       }
-
 
       // Auto frame skip
       else if (strstr(argv[i], "--vsyncoff")) {
