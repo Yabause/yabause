@@ -98,6 +98,8 @@
 
 #include <inttypes.h>
 
+//#define DEBUG_ACCURACY
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
@@ -602,6 +604,12 @@ int msh2cdiff = 0;
 int ssh2cdiff = 0;
 
 static int oneframeexec;
+
+#ifdef DEBUG_ACCURACY
+int totalMSH2CyclesRequested = 0;
+int totalSSH2CyclesRequested = 0;
+#endif
+
 u32 YabauseGetFrameCount() {
   return yabsys.frame_count;
 }
@@ -660,8 +668,18 @@ void emulate(int cycles, int endOfLine) {
          // and leave any odd remainder in SH2CycleFrac.
          u32 msh2cycles, ssh2cycles;
          yabsys.SH2CycleFrac += cycles;
-         msh2cycles = ((yabsys.SH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
-	 ssh2cycles = ((yabsys.SH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+         if ((cycles + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+           msh2cycles = 0;
+	   MSH2->cycles += cycles;
+         } else {
+           msh2cycles = ((yabsys.SH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+         }
+         if ((cycles + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+           ssh2cycles = 0;
+           SSH2->cycles += cycles;
+         } else {
+           ssh2cycles = ((yabsys.SH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+         }
          yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
 #ifdef YAB_STATICS
@@ -777,8 +795,6 @@ int YabauseEmulate(void) {
 #ifdef DEBUG_ACCURACY
 int totalMSH2cyclesPerFrame = MSH2->cycles;
 int totalSSH2cyclesPerFrame = SSH2->cycles;
-int totalMSH2CyclesRequested = 0;
-int totalSSH2CyclesRequested = 0;
 #endif
 
 

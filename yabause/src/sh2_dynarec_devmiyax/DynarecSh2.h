@@ -52,7 +52,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define FREEMEM(x,a)	if(x){ VirtualFree(x, a,MEM_RELEASE ); x = NULL;}
 #elif defined(ARCH_IS_LINUX)
 #include <sys/mman.h>
-#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_FILE|MAP_PRIVATE ,-1, 0);
+#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS |MAP_PRIVATE ,-1, 0);
 //#define ALLOCATE(x) mmap ((void*)0x6000000, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS ,-1, 0);
 #define FREEMEM(x,a) munmap(x,a);
 #else
@@ -99,6 +99,7 @@ struct Block
   u32 e_addr; //ending PC
   u32 pad;
   u32 flags;
+  u32 cycles;
 };
 
 #define BLOCK_LOOP  (0x01)
@@ -318,7 +319,10 @@ public:
 
   void ResetCPU();  
   void ExecuteCount(u32 Count );
-  int Execute();
+  int Execute(u32 *total);
+  int Execute() {
+    Execute(NULL);
+  }
   void Undecoded();
 
   void ShowStatics();
@@ -330,7 +334,6 @@ public:
   inline u32 GET_MACL() { return m_pDynaSh2->SysReg[1]; }
   inline u32 GET_PR() { return m_pDynaSh2->SysReg[2]; }
   inline u32 GET_PC() { return m_pDynaSh2->SysReg[3]; }
-  inline u32 GET_COUNT() { return m_pDynaSh2->SysReg[4]; } 
   inline u32 GET_ICOUNT() { return m_pDynaSh2->SysReg[5]; } 
   inline u32 GET_SR() { return m_pDynaSh2->CtrlReg[0]; }
   inline u32 GET_GBR() { return m_pDynaSh2->CtrlReg[1]; }
@@ -339,7 +342,6 @@ public:
   inline void SET_MACL( u32 v ) { m_pDynaSh2->SysReg[1] = v; }
   inline void SET_PR( u32 v ) { m_pDynaSh2->SysReg[2] = v; }
   inline void SET_PC( u32 v ) { m_pDynaSh2->SysReg[3] = v; }
-  inline void SET_COUNT( u32 v ) { m_pDynaSh2->SysReg[4] = v; } 
   inline void SET_ICOUNT(u32 v ) { m_pDynaSh2->SysReg[5] = v; } 
   inline void SET_SR(u32 v ) { m_pDynaSh2->CtrlReg[0] = v & 0x3F3; }
   inline void SET_GBR( u32 v ) { m_pDynaSh2->CtrlReg[1] = v; }

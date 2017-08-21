@@ -865,6 +865,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 write_memory_counter = 0;
   u32 calsize;
   int need_int = 0;
+  page->cycles = 0;
 
   startptr = ptr = page->code;
   i = 0;
@@ -982,8 +983,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       count+=1;
 #endif
       opcodePass(&asm_list[i], op, ptr);
-      u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
-      *counterpos = asm_list[i].cycle;
+      page->cycles += asm_list[i].cycle;
       ptr += *(asm_list[i].size) + nomal_seperator_size;
       
       if ((asm_list[i].checkint == 1) || (need_int == 1)) {
@@ -1004,6 +1004,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       count+=1;
 #endif
       opcodePass(&asm_list[i], op, ptr);
+      page->cycles += asm_list[i].cycle;
       ptr += *(asm_list[i].size) + nomal_seperator_size;
       if (asm_list[i].checkint == 1) {
          need_int = 1;
@@ -1021,15 +1022,14 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       count+=1;
 #endif
       opcodePass(&asm_list[i], op, ptr);
-      u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
-      *counterpos = asm_list[i].cycle;
+      page->cycles += asm_list[i].cycle;
       ptr += *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
     }
 
     // Jmp With Delay Operation
     else { 
 
-      u8 cycle = asm_list[i].cycle;
+      page->cycles += asm_list[i].cycle;
       memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)delay_seperator, delay_seperator_size);
 #ifndef DYNAREC_X64
@@ -1063,7 +1063,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       asm_list[j].build_count++;
       write_memory_counter += asm_list[j].write_count;
 
-      cycle += asm_list[j].cycle;
+      page->cycles += asm_list[j].cycle;
       memcpy((void*)ptr, (void*)(asm_list[j].func), *(asm_list[j].size));
       memcpy((void*)(ptr + *(asm_list[j].size)), (void*)seperator_delay_after, SEPERATORSIZE_DELAY_AFTER);
 #ifndef DYNAREC_X64
@@ -1072,8 +1072,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       count+=1;
 #endif
       opcodePass(&asm_list[j], temp, ptr);
-      u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
-      *counterpos = cycle;
       ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
     }
 
@@ -1206,7 +1204,6 @@ void DynarecSh2::ResetCPU(){
   SET_VBR(0x000000); // VBR
   SET_PC(memGetLong(GET_VBR()));
   m_pDynaSh2->GenReg[15] = memGetLong(GET_VBR() + 4); //Stack Pointer
-  SET_COUNT(0);
   SET_ICOUNT(0);
   pre_cnt_ = 0;
   pre_exe_count_ = 0;
@@ -1217,40 +1214,19 @@ void DynarecSh2::ResetCPU(){
 
 void DynarecSh2::ExecuteCount( u32 Count ) {
   
-  u32 targetcnt = 0;
-  
-  if (Count > pre_exe_count_) {
-    targetcnt = m_pDynaSh2->SysReg[4] + Count - pre_exe_count_;
-  }
-  else {
-    pre_exe_count_ = pre_exe_count_-Count;
-    return;
-  }
-
-  // Overflow
-  if (targetcnt < m_pDynaSh2->SysReg[4]){
-    targetcnt = Count + (0xFFFFFFFF - m_pDynaSh2->SysReg[4]) + 1;
-    m_pDynaSh2->SysReg[4] = 0;
-  }
+  u32 targetcnt = Count;
+  u32 total = 0;
 
   CheckInterruptLoop();
 
-  while (GET_COUNT() < targetcnt) {
-    if (Execute() == IN_INFINITY_LOOP ) {
-      SET_COUNT(targetcnt);
+  while (total < targetcnt) {
+    if (Execute(&total) == IN_INFINITY_LOOP ) {
+      total = targetcnt;
       loopskip_cnt_++;
     }
-    CurrentSH2->cycles = GET_COUNT();
+//printf("%d on %d\n", total, targetcnt);
   }
-
-  //if (Count == 1) {
-  //  one_step_ = true;
-  //  pre_exe_count_ = 0;
-  //}
-  //else {
-  //  one_step_ = false;
-  pre_exe_count_ = m_pDynaSh2->SysReg[4] - targetcnt;
-  //}
+  CurrentSH2->cycles += total;
 }
 
 int DynarecSh2::CheckOneStep() {
@@ -1292,7 +1268,7 @@ void executeBlock(Block * block, tagSH2 *dyna) {
   a(block, dyna);
 }
 
-int DynarecSh2::Execute(){
+int DynarecSh2::Execute(u32 * totalCycles){
 
   Block * pBlock = NULL;
 
@@ -1386,7 +1362,6 @@ int DynarecSh2::Execute(){
         fflush(fp);
     }
 #endif
-  u32 prepc  = GET_PC();
   //if(yabsys.frame_count == 1000){
  //   logenable_ = true;
   //}
@@ -1394,6 +1369,7 @@ int DynarecSh2::Execute(){
   //  LOG("[%s] dynaExecute start %08X", (is_slave_ == false) ? "M" : "S", GET_PC());
 #if defined(DEBUG_CPU)
   if (statics_trigger_ == COLLECTING) {
+    u32 prepc  = GET_PC();
     u64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
     compie_statics_[prepc].count++;
@@ -1404,8 +1380,10 @@ int DynarecSh2::Execute(){
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
   }
 #else
-executeBlock(pBlock, m_pDynaSh2);
+((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
 #endif
+
+  if (totalCycles != NULL) *totalCycles += pBlock->cycles;
 
   if (!m_pCompiler->debug_mode_ && (pBlock->flags&BLOCK_LOOP)) {
     return IN_INFINITY_LOOP;
