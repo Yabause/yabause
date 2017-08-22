@@ -92,6 +92,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         	e.printStackTrace();
         }
 
+        Preference myCheckbox = findPreference("pref_extend_internal_memory");
+        if( myCheckbox != null)
+            myCheckbox.setOnPreferenceChangeListener(myCheckboxListener);
+
         GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
         dires.setActivity(this);
 
@@ -422,8 +426,17 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
                 SyncInputDevice();
                 SyncInputDeviceForPlayer2();
             }
-        }
 
+      }
+
+    private Preference.OnPreferenceChangeListener myCheckboxListener = new Preference.OnPreferenceChangeListener() {
+
+        public boolean onPreferenceChange(Preference preference, Object newValue) {
+            //if( newValue == false ){
+            //}
+            return true;
+        }
+    };
         @Override
         protected void onResume () {
             super.onResume();

@@ -162,6 +162,7 @@
 
     <string name="menu_load">Load</string>
     <string name="menu_delete">Delete</string>
+    <string name="extend_internal_memory">Extend Internal Memory to 8MByte</string>
 
 </resources>
 	
