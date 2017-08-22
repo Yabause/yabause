@@ -133,6 +133,7 @@ class YabauseRunnable implements Runnable
     public static native int lockGL();
     public static native int unlockGL();
     public static native void enableFPS(int enable);
+    public static native void enableExtendedMemory(int enable);
     public static native void enableFrameskip(int enable);
     public static native void setCpu( int cpu );
     public static native void setFilter( int filter );
@@ -904,6 +905,10 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
 
     private void readPreferences() {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+
+        boolean extmemory = sharedPref.getBoolean("pref_extend_internal_memory", true);
+        YabauseRunnable.enableExtendedMemory(extmemory ? 1 : 0);
+        Log.d(TAG,"enable Extended Memory " + extmemory);
 
         boolean fps = sharedPref.getBoolean("pref_fps", false);
         YabauseRunnable.enableFPS(fps ? 1 : 0);

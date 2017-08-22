@@ -514,6 +514,8 @@ void UISettings::loadSettings()
 	leCartridgeModemPort->setText( s->value( "Cartridge/ModemPort", QString("1337") ).toString() );
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
+  checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory").toBool());
+  
 	
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
@@ -610,7 +612,8 @@ void UISettings::saveSettings()
 	s->setValue( "Cartridge/ModemPort", leCartridgeModemPort->text() );
 	s->setValue( "Memory/Path", leMemory->text() );
 	s->setValue( "MpegROM/Path", leMpegROM->text() );
-	
+  s->setValue("Memory/ExtendMemory", checkBox_extended_internal_backup->isChecked());
+
 	// input
 	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );	
 	s->setValue( "Input/GunMouseSensitivity", sGunMouseSensitivity->value() );

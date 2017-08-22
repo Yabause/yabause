@@ -2024,5 +2024,51 @@ int BupExportSave(UNUSED u32 device, UNUSED const char *savename, UNUSED const c
    return 0;
 }
 
+int BupExportSaveBuf(u32 device, const char *savename, char ** buf, int * bufsize )
+{
+  u32 ret;
+  u32 size;
+  u32 addr;
+  u32 blocksize;
+  u32 block;
+  u32 tableaddr;
+  u16 *blocktbl;
+  int numblocks;
+  int blocksread;
+  u32 datasize;
+  char fname[11];
+  int i;
+
+  ret = GetDeviceStats(device, &size, &addr, &blocksize);
+
+  // Make sure there's a proper header, and return if there's any other errors
+  if (ret == 1 || CheckHeader(device) != 0)
+     return -1;
+
+  // Let's find and get the save game
+  if ((block = FindSave2(device, savename, 2, size, addr, blocksize)) == 0) {
+     return -1;
+  }
+
+  tableaddr = addr + (block * blocksize * 2) + 0x3D;
+  //datasize = (MappedMemoryReadByte(tableaddr) << 24) | (MappedMemoryReadByte(tableaddr + 2) << 16) |
+  //           (MappedMemoryReadByte(tableaddr+4) << 8) | MappedMemoryReadByte(tableaddr + 6);
+
+  // Read in Block Table
+  if ((blocktbl = ReadBlockTable(addr, &tableaddr, block, blocksize, &numblocks, &blocksread)) == NULL)
+  {
+     return -1;
+  }  
+
+  datasize = numblocks*blocksize;
+  *buf = malloc( datasize );
+  for( i=0; i<datasize; i++  ){
+    buf[i] = MappedMemoryReadByte(tableaddr);
+  }
+
+   return 0;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
