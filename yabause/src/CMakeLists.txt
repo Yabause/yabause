@@ -645,7 +645,7 @@ if (SH2_DYNAREC)
 endif (SH2_DYNAREC)
 
 # c68k
-option(YAB_WANT_C68K "enable c68k compilation" ON)
+option(YAB_WANT_C68K "enable c68k compilation" OFF)
 if (YAB_WANT_C68K)
 	include(ExternalProject)
 	ExternalProject_Add(c68kinc
