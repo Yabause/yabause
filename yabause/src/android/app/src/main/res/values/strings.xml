@@ -170,5 +170,8 @@
     <string name="menu_delete">Delete</string>
     <string name="extend_internal_memory">Extend Internal Memory to 8MByte</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>
 	

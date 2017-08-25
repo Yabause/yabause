@@ -154,6 +154,13 @@ class YabauseRunnable implements Runnable
     public static native void switch_padmode( int mode );
     public static native void updateCheat( String[] cheat_code );
 
+    public static native String getDevicelist( );
+    public static native String getFilelist( int deviceid  );
+    public static native int deletefile( int index );
+    public static native String getFile( int index  );
+    public static native String putFile( );
+
+
     private boolean inited;
     private boolean paused;
 
@@ -402,6 +409,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         int id = item.getItemId();
 
         switch(id){
+            /*
             case R.id.save_screen:{
                 DateFormat dateFormat = new SimpleDateFormat("_yyyy_MM_dd_HH_mm_ss");
                 Date date = new Date();
@@ -430,6 +438,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                 startActivityForResult(Intent.createChooser(shareIntent, "share screenshot to"), 0x01);
             }
             break;
+            */
             case R.id.reset:
                 YabauseRunnable.reset();
                 break;
@@ -474,6 +483,22 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                 StateListFragment fragment = new StateListFragment();
                 fragment.setBasePath(basepath);
                 transaction.replace(R.id.ext_fragment, fragment, StateListFragment.TAG );
+                transaction.show(fragment);
+                transaction.commit();
+            }
+            break;
+            case R.id.menu_item_backup: {
+                //String save_path = YabauseStorage.getStorage().getStateSavePath();
+                //YabauseRunnable.loadstate(save_path);
+                String basepath;
+                String save_path = YabauseStorage.getStorage().getStateSavePath();
+                String current_gamecode = YabauseRunnable.getCurrentGameCode();
+                basepath = save_path + current_gamecode;
+                waiting_reault = true;
+                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                BackupManagerFragment fragment = new BackupManagerFragment();
+                //fragment.setBasePath(basepath);
+                transaction.replace(R.id.ext_fragment, fragment, BackupManagerFragment.TAG );
                 transaction.show(fragment);
                 transaction.commit();
             }
