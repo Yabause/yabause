@@ -51,6 +51,8 @@ set( SOURCES
  jni/yui.c
  jni/sndaudiotrack.c
  jni/sndopensl.c
+ jni/BackupManager.cpp
+ jni/jsoncpp.cpp
 )
 
 
@@ -63,6 +65,8 @@ set (PORT_LIBRARIES
  EGL
  z
 )
+
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSONCPP_NO_LOCALE_SUPPORT -fexceptions " )
 
 
 set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_NDK_ABI_NAME} )
