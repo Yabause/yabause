@@ -227,6 +227,7 @@ class StateItemAdapter extends RecyclerView.Adapter<StateItemAdapter.ViewHolder>
     }
 }
 
+
 public class StateListFragment extends Fragment implements StateItemAdapter.OnItemClickListener, View.OnKeyListener {
 
     public static final String TAG = "StateListFragment";
