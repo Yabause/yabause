@@ -13,16 +13,22 @@
         android:orientation="vertical">
 
         <RadioButton
-            android:id="@+id/radioButton"
+            android:id="@+id/radioButton_internal"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Internal Backup @string/frameskip" />
+            android:text="Internal Backup" />
 
         <RadioButton
-            android:id="@+id/radioButton2"
+            android:id="@+id/radioButton_external"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="External Backup @string/frameskip" />
+            android:text="External Backup" />
+
+        <RadioButton
+            android:id="@+id/radioButton_cloud"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cloud Backup" />
 
     </LinearLayout>
 

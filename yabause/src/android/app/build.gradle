@@ -99,6 +99,7 @@ dependencies {
     compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
     compile 'com.google.firebase:firebase-config:10.2.0'
     compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.google.code.gson:gson:2.2.4'
 }
 
 // ADD THIS AT THE BOTTOM

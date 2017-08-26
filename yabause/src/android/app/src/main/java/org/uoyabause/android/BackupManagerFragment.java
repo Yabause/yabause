@@ -14,15 +14,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
+
+import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 /*
 typedef struct
@@ -226,6 +234,10 @@ class BackupItemAdapter extends RecyclerView.Adapter<BackupItemAdapter.ViewHolde
     }
 }
 
+class BackupDevice {
+    public int id_;
+    public String name_;
+}
 
 
 /**
@@ -247,6 +259,8 @@ public class BackupManagerFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private List<BackupDevice> backup_devices_;
 
     private OnFragmentInteractionListener mListener;
 
@@ -280,34 +294,74 @@ public class BackupManagerFragment extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
-        String json;
-        json = YabauseRunnable.getDevicelist();
+        String jsonstr;
+        jsonstr = YabauseRunnable.getDevicelist();
+        backup_devices_ = new ArrayList<BackupDevice>();
+        try {
+
+            JSONObject json = new JSONObject(jsonstr);
+            JSONArray array = json.getJSONArray("devices");
+            for (int i = 0; i < array.length(); i++) {
+                JSONObject data = array.getJSONObject(i);
+                BackupDevice tmp = new BackupDevice();
+                tmp.name_ = data.getString("name");
+                tmp.id_= data.getInt("id");
+                backup_devices_.add(tmp);
+            }
+
+        }catch(JSONException e){
+            Log.e(TAG, "Fail to convert to json", e);
+        }
+
+        if( backup_devices_.size() == 0 ){
+            Log.e(TAG, "Can't find device");
+        }
+
+
+
+        //backup_devices_[0].name_;
+
 
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        View v = inflater.inflate(R.layout.fragment_backup_manager, container, false);
+
+        RadioButton b1 = (RadioButton)v.findViewById(R.id.radioButton_internal);
+        b1.setText(backup_devices_.get(0).name_);
+        if( backup_devices_.size() >= 2 ){
+            b1 = (RadioButton)v.findViewById(R.id.radioButton_external);
+            b1.setText(backup_devices_.get(1).name_);
+        }else{
+            b1 = (RadioButton)v.findViewById(R.id.radioButton_external);
+            b1.setEnabled(false);
+        }
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_backup_manager, container, false);
+        return v;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
+
     public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
+ //       if (mListener != null) {
+ //           mListener.onFragmentInteraction(uri);
+ //       }
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+/*
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
         } else {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+*/
     }
 
     @Override
