@@ -12,6 +12,11 @@
         android:layout_margin="32dp"
         android:orientation="vertical">
 
+        <RadioGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/radiogroup">
+
         <RadioButton
             android:id="@+id/radioButton_internal"
             android:layout_width="wrap_content"
@@ -29,6 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Cloud Backup" />
+        </RadioGroup>
 
     </LinearLayout>
 
