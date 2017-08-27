@@ -25,7 +25,7 @@
         <item
             android:id="@+id/menu_item_backup"
             android:icon="@android:drawable/ic_menu_save"
-            android:title="@string/backup_manager" />
+            android:title="@string/memory_manager" />
 
         <item android:id="@+id/save_state"
             android:title="@string/menu_save_state" />

@@ -93,8 +93,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         }
 
         Preference myCheckbox = findPreference("pref_extend_internal_memory");
-        if( myCheckbox != null)
+        if( myCheckbox != null) {
+            myCheckbox.setEnabled(false);
             myCheckbox.setOnPreferenceChangeListener(myCheckboxListener);
+        }
 
         GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
         dires.setActivity(this);
