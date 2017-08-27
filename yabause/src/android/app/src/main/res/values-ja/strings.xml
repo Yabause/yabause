@@ -118,6 +118,6 @@
     <string name="sound_legacy">旧エンジン(クオリティは低いが速い)</string>
     <string name="poly_triangle">パースペクティブコレクション</string>
     <string name="this_func_not_yet">この機能はまだ実装されていません</string>
-    <string name="backup_manager">バックアップ管理</string>
+    <string name="memory_manager">保存データー管理</string>
 
 </resources>
