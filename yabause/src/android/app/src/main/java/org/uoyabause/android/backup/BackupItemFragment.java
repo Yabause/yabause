@@ -1,5 +1,6 @@
 package org.uoyabause.android.backup;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -321,7 +322,11 @@ public class BackupItemFragment extends Fragment implements BackupItemRecyclerVi
 
                         break;
                     case R.id.copy_to_cloud:
-
+                        new AlertDialog.Builder(getActivity())
+                                .setTitle("Error")
+                                .setMessage(R.string.this_func_not_yet)
+                                .setPositiveButton("OK", null)
+                                .show();
                         break;
                     case R.id.delete:
                         YabauseRunnable.deletefile( backupitemi.index_ );
