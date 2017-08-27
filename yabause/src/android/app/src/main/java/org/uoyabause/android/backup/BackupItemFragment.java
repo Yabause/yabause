@@ -22,13 +22,48 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.uoyabause.android.R;
 import org.uoyabause.android.YabauseRunnable;
-import org.uoyabause.android.backup.dummy.DummyContent;
-import org.uoyabause.android.backup.dummy.DummyContent.DummyItem;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+class BackupDevice {
+    public int id_;
+    public String name_;
+}
+
+class BackupItem {
+    public int index_;
+    public String _filename;
+    public String _comment;
+    public int _language;
+    public Date _savedate;
+    public int _datasize;
+    public int _blocksize;
+
+    public BackupItem(){
+    }
+    public BackupItem(
+            int index,
+            String filename,
+            String comment,
+            int language,
+            Date savedate,
+            int datasize,
+            int blocksize
+
+    ){
+        index_ = index;
+        _filename = filename;
+        _comment =  comment;
+        _language = language;
+        _savedate = savedate;
+        _datasize = datasize;
+        _blocksize = blocksize;
+    }
+}
+
 
 /**
  * A fragment representing a list of Items.

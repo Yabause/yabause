@@ -11,7 +11,6 @@ import android.widget.TextView;
 
 import org.uoyabause.android.R;
 import org.uoyabause.android.backup.BackupItemFragment.OnListFragmentInteractionListener;
-import org.uoyabause.android.backup.dummy.DummyContent.DummyItem;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
