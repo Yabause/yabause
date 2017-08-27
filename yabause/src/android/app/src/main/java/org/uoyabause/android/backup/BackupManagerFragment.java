@@ -1,6 +1,8 @@
-package org.uoyabause.android;
+package org.uoyabause.android.backup;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -10,31 +12,31 @@ import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.bumptech.glide.Glide;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.uoyabause.android.R;
+import org.uoyabause.android.Yabause;
+import org.uoyabause.android.YabauseRunnable;
 
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-
-import static android.R.attr.id;
-import static android.webkit.ConsoleMessage.MessageLevel.LOG;
 
 /*
 typedef struct
@@ -54,6 +56,7 @@ typedef struct
 */
 
 class BackupItem {
+    public int index_;
     public String _filename;
     public String _comment;
     public int _language;
@@ -64,6 +67,7 @@ class BackupItem {
     public BackupItem(){
     }
     public BackupItem(
+            int index,
             String filename,
             String comment,
             int language,
@@ -72,6 +76,7 @@ class BackupItem {
             int blocksize
 
     ){
+        index_ = index;
         _filename = filename;
         _comment =  comment;
         _language = language;
@@ -133,6 +138,8 @@ class BackupItemAdapter extends RecyclerView.Adapter<BackupItemAdapter.ViewHolde
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final TextView textView;
+        private final TextView textSizeView;
+        private final TextView textDateView;
         private final CardView cardView;
         //private final Toolbar toolbar;
 
@@ -140,11 +147,20 @@ class BackupItemAdapter extends RecyclerView.Adapter<BackupItemAdapter.ViewHolde
             super(v);
             v.setClickable(true);
             textView = (TextView) v.findViewById(R.id.tvName);
+            textSizeView = (TextView) v.findViewById(R.id.tvSize);
+            textDateView = (TextView) v.findViewById(R.id.tvDate);
             cardView = (CardView) v.findViewById(R.id.cardview);
         }
         public TextView getTextView() {
             return textView;
         }
+        public TextView getSizeView() {
+            return textSizeView;
+        }
+        public TextView getDateView() {
+            return textDateView;
+        }
+
         public CardView getCardView() {
             return cardView;
         }
@@ -160,7 +176,7 @@ class BackupItemAdapter extends RecyclerView.Adapter<BackupItemAdapter.ViewHolde
     }
 
     public static interface OnItemClickListener {
-        public void onItemClick(BackupItemAdapter adapter, int position, BackupItem item);
+        public void onItemClick(BackupItemAdapter adapter, int position, BackupItem item, View v );
     }
 
     @Override
@@ -171,7 +187,7 @@ class BackupItemAdapter extends RecyclerView.Adapter<BackupItemAdapter.ViewHolde
         if (mListener != null) {
             int position = mRecycler.getChildAdapterPosition(view);
             BackupItem item = _items.get(position);
-            mListener.onItemClick(this, position, item);
+            mListener.onItemClick(this, position, item, view );
         }
     }
 
@@ -188,20 +204,23 @@ class BackupItemAdapter extends RecyclerView.Adapter<BackupItemAdapter.ViewHolde
     }
 
     public int dp2px( Context cx, int dp) {
-        WindowManager wm = (WindowManager) cx
-                .getSystemService(Context.WINDOW_SERVICE);
+        WindowManager wm = (WindowManager) cx.getSystemService(Context.WINDOW_SERVICE);
         Display display = wm.getDefaultDisplay();
         DisplayMetrics displaymetrics = new DisplayMetrics();
         display.getMetrics(displaymetrics);
         return (int) (dp * displaymetrics.density + 0.5f);
     }
 
-    static public final String DATE_PATTERN ="yyyy/MM/dd HH:mm:ss";
+    static public final String DATE_PATTERN ="yyyy/MM/dd HH:mm";
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, final int position) {
         Log.d(TAG, "Element " + position + " set.");
-        viewHolder.getTextView().setText(new SimpleDateFormat(DATE_PATTERN).format(_items.get(position)._savedate));
+        viewHolder.getTextView().setText(_items.get(position)._filename);
+        viewHolder.getDateView().setText(new SimpleDateFormat(DATE_PATTERN).format(_items.get(position)._savedate));
+        viewHolder.getSizeView().setText(String.format("%dByte",_items.get(position)._datasize));
+
+        //(new SimpleDateFormat(DATE_PATTERN).format(_items.get(position)._savedate));
         //viewHolder.getToolBar().setTitle(new SimpleDateFormat(DATE_PATTERN).format(_state_items.get(position)._savedate));
         //Context cx = viewHolder.getImageView().getContext();
         //Glide.with(cx)
@@ -209,14 +228,16 @@ class BackupItemAdapter extends RecyclerView.Adapter<BackupItemAdapter.ViewHolde
         //        .centerCrop()
         //        .override(dp2px(cx,220),dp2px(cx,220)*3/4)
         //        .into(viewHolder.getImageView());
-
+/*
+        Context cx = viewHolder.getCardView().getContext();
         if( selectpos == position ){
-            //viewHolder.getCardView().setBackgroundColor( cx.getResources().getColor(R.color.selected_background) );
+            viewHolder.getCardView().setBackgroundColor( cx.getResources().getColor(R.color.selected_background) );
             viewHolder.getCardView().setSelected(true);
         }else{
-            //viewHolder.getCardView().setBackgroundColor( cx.getResources().getColor(R.color.default_background) );
+            viewHolder.getCardView().setBackgroundColor( cx.getResources().getColor(R.color.default_background) );
             viewHolder.getCardView().setSelected(false);
         }
+*/
     }
 
     @Override
@@ -254,7 +275,7 @@ class BackupDevice {
  * Use the {@link BackupManagerFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class BackupManagerFragment extends Fragment implements BackupItemAdapter.OnItemClickListener {
+public class BackupManagerFragment extends Fragment implements BackupItemAdapter.OnItemClickListener,View.OnKeyListener {
 
     public static String TAG = "BackupManagerFragment";
     private List<BackupDevice> backup_devices_;
@@ -266,6 +287,7 @@ public class BackupManagerFragment extends Fragment implements BackupItemAdapter
     private OnFragmentInteractionListener mListener;
     private View v_;
 
+    int currentpage_ = 0;
 
     public BackupManagerFragment() {
         // Required empty public constructor
@@ -353,6 +375,7 @@ public class BackupManagerFragment extends Fragment implements BackupItemAdapter
             public void onCheckedChanged(RadioGroup group, int checkedId) {
                 RadioButton radioButton = (RadioButton) BackupManagerFragment.this.v_.findViewById(checkedId);
 
+                currentpage_ = checkedId;
                 if( checkedId == R.id.radioButton_internal) {
                     updateSaveList( backup_devices_.get(0).id_ );
                 }
@@ -387,7 +410,7 @@ public class BackupManagerFragment extends Fragment implements BackupItemAdapter
     }
 
     void updateSaveList( int device ){
-        String jsonstr = YabauseRunnable.getFilelist(0);
+        String jsonstr = YabauseRunnable.getFilelist(device);
         _items = new ArrayList<BackupItem>();
         try {
             JSONObject json = new JSONObject(jsonstr);
@@ -395,18 +418,19 @@ public class BackupManagerFragment extends Fragment implements BackupItemAdapter
             for (int i = 0; i < array.length(); i++) {
                 JSONObject data = array.getJSONObject(i);
                 BackupItem tmp = new BackupItem();
+                tmp.index_ = data.getInt("index");
                 tmp._filename = data.getString("filename");
                 tmp._comment= data.getString("comment");
                 tmp._datasize = data.getInt("datasize");
                 tmp._blocksize = data.getInt("blocksize");
 
                 String datestr = "";
-                datestr += String.format("%04d",data.getInt("year"));
+                datestr += String.format("%04d",data.getInt("year")+1980);
                 datestr += String.format("%02d",data.getInt("month"));
                 datestr += String.format("%02d",data.getInt("day"));
                 datestr += " ";
                 datestr += String.format("%02d",data.getInt("hour")) + ":";
-                datestr += String.format("%02d",data.getInt("minutes")) + ":00";
+                datestr += String.format("%02d",data.getInt("minute")) + ":00";
 
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
                 try{ tmp._savedate = sdf.parse(datestr); }catch( Exception e) {
@@ -414,6 +438,13 @@ public class BackupManagerFragment extends Fragment implements BackupItemAdapter
                     tmp._savedate = new Date();
                 }
                 _items.add(tmp);
+            }
+
+            if( recycle_view_ != null ) {
+                adapter_ = new BackupItemAdapter();
+                adapter_.setBackupItems(_items);
+                adapter_.setOnItemClickListener(this);
+                recycle_view_.setAdapter(adapter_);
             }
 
         }catch( JSONException e ){
@@ -478,8 +509,137 @@ public class BackupManagerFragment extends Fragment implements BackupItemAdapter
     }
 
     @Override
-    public void onItemClick(BackupItemAdapter adapter, int position, BackupItem item) {
+    public void onItemClick(BackupItemAdapter adapter, int position, BackupItem backupitem, View v ) {
+        // pass the imageview id
+        //View menuItemView = v_.findViewById(R.id.btn_song_list_more);
+        PopupMenu popup = new PopupMenu(getActivity(), v);
+        MenuInflater inflate = popup.getMenuInflater();
+        inflate.inflate(R.menu.backup, popup.getMenu());
+        //Log.e("position -- " + position);
+        final BackupItem backupitemi = backupitem;
+        final int position_ = position;
 
+        Menu popupMenu = popup.getMenu();
+
+        if( currentpage_ == R.id.radioButton_internal) {
+            popupMenu.findItem(R.id.copy_to_internal).setVisible(false);
+        }
+        else if( currentpage_ == R.id.radioButton_external) {
+            popupMenu.findItem(R.id.copy_to_external).setVisible(false);
+        }
+        else if( currentpage_ == R.id.radioButton_cloud) {
+            popupMenu.findItem(R.id.copy_to_cloud).setVisible(false);
+        }
+
+        // No external device
+        if( backup_devices_.size() <= 1 ){
+            popupMenu.findItem(R.id.copy_to_external).setVisible(false);
+        }
+
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.copy_to_internal:
+
+                        if( BackupManagerFragment.this.backup_devices_.size() >= 1 ) {
+                            BackupDevice bk = BackupManagerFragment.this.backup_devices_.get(0);
+                            YabauseRunnable.copy(bk.id_, backupitemi.index_ );
+                        }
+
+                        break;
+                    case R.id.copy_to_external:
+
+                        if( BackupManagerFragment.this.backup_devices_.size() >= 2 ) {
+                            BackupDevice bk = BackupManagerFragment.this.backup_devices_.get(1);
+                            YabauseRunnable.copy(bk.id_, backupitemi.index_ );
+                        }
+
+                        break;
+                    case R.id.copy_to_cloud:
+
+                        break;
+                    case R.id.delete:
+                        YabauseRunnable.deletefile( backupitemi.index_ );
+                        BackupManagerFragment.this.recycle_view_.removeViewAt(position_);
+                        BackupManagerFragment.this._items.remove(position_);
+                        BackupManagerFragment.this.adapter_.notifyItemRemoved(position_);
+                        BackupManagerFragment.this.adapter_.notifyItemRangeChanged(position_, BackupManagerFragment.this._items.size());
+                        break;
+                    default:
+                        return false;
+                }
+                return false;
+            }
+        });
+        popup.show();
+    }
+
+    void  selectPrevious(){
+        if (selected_item_ < 1)
+            return;
+        selectItem(selected_item_-1);
+    }
+
+    void  selectNext(){
+        if (selected_item_ >= adapter_.getItemCount()-1)
+            return;
+        selectItem(selected_item_+1);
+    }
+
+    @Override
+    public boolean onKey(View v, int keyCode, KeyEvent event) {
+        if(event.getAction() != KeyEvent.ACTION_DOWN) {
+            return false;
+        }
+        if( _items.size() == 0 ){
+            return false;
+        }
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_MEDIA_PLAY:
+            case KeyEvent.KEYCODE_MEDIA_PAUSE:
+            case KeyEvent.KEYCODE_SPACE:
+            case KeyEvent.KEYCODE_BUTTON_A:
+                //Yabause main = (Yabause)getActivity();
+                //if( main != null ) {
+                 //   main.loadState( _items.get(selected_item_)._filename );
+                //}
+                onItemClick(adapter_,selected_item_,_items.get(selected_item_),v);
+                break;
+            case KeyEvent.KEYCODE_BUTTON_X:
+
+                new AlertDialog.Builder(getActivity())
+                        .setMessage(getString(R.string.delete_confirm))
+                        .setPositiveButton(getString(R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                adapter_.remove( selected_item_ );
+                                if( adapter_.getItemCount() == 0 ){
+                                    //emptyView.setVisibility(View.VISIBLE);
+                                    recycle_view_.setVisibility(View.GONE);
+                                }else {
+
+                                    int newsel =selected_item_;
+                                    if (newsel >= adapter_.getItemCount() - 1) {
+                                        newsel -= 1;
+                                    }
+                                    selectItem(newsel);
+                                }
+                            }
+                        })
+                        .setNegativeButton(getString(R.string.cancel), null)
+                        .show();
+
+                break;
+            case KeyEvent.KEYCODE_DPAD_UP:
+                selectPrevious();
+                return true;
+            case KeyEvent.KEYCODE_DPAD_DOWN:
+                selectNext();
+                return true;
+        }
+        return false;
     }
 
     /**

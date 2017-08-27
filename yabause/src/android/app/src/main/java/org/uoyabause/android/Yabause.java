@@ -25,28 +25,18 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Runnable;
-import java.net.URI;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.io.File;
-import java.io.FileOutputStream;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.app.Activity;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -58,60 +48,30 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
-import android.view.InputDevice;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MenuInflater;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.WindowManager;
-import android.app.ActionBar.OnMenuVisibilityListener;
 import android.app.Dialog;
 import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
-import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ContentValues;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.preference.PreferenceManager;
 import android.view.View;
-import android.graphics.Bitmap;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.net.Uri;
 import android.view.Surface;
 import android.app.ActivityManager;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.ConfigurationInfo;
-import android.content.pm.PackageManager;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.bumptech.glide.load.engine.Resource;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
+import org.uoyabause.android.backup.BackupManagerFragment;
+import org.uoyabause.android.backup.TabBackupFragment;
 
 import com.google.android.gms.ads.AdSize;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.analytics.GoogleAnalytics;
-import com.google.android.gms.analytics.Logger;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.ads.AdListener;
@@ -119,74 +79,6 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import android.support.design.widget.NavigationView;
 
-class YabauseRunnable implements Runnable
-{  
-    public static native int init(Yabause yabause);
-    public static native void deinit();
-    public static native void exec();
-    public static native void reset();
-    public static native void press(int key, int player);
-    public static native void axis(int key, int player, int val);
-    public static native void release(int key, int player);
-    public static native int initViewport( Surface sf, int width, int hieght);
-    public static native int drawScreen();
-    public static native int lockGL();
-    public static native int unlockGL();
-    public static native void enableFPS(int enable);
-    public static native void enableExtendedMemory(int enable);
-    public static native void enableFrameskip(int enable);
-    public static native void setCpu( int cpu );
-    public static native void setFilter( int filter );
-    public static native void setVolume(int volume);
-    public static native int screenshot( String filename );
-    public static native String getCurrentGameCode();
-    public static native String getGameTitle();
-    public static native String getGameinfo();
-    public static native String savestate( String path );
-    public static native void loadstate( String path );
-    public static native void pause();
-    public static native void resume();
-    public static native void setPolygonGenerationMode( int pg );
-    public static native void setSoundEngine( int engine );
-    public static native void setResolutionMode( int resoution_mode );
-    public static native void openTray();
-    public static native void closeTray();
-    public static native void switch_padmode( int mode );
-    public static native void updateCheat( String[] cheat_code );
-
-    public static native String getDevicelist( );
-    public static native String getFilelist( int deviceid  );
-    public static native int deletefile( int index );
-    public static native String getFile( int index  );
-    public static native String putFile( );
-
-
-    private boolean inited;
-    private boolean paused;
-
-    public YabauseRunnable(Yabause yabause)
-    {
-        int ok = init(yabause);
-        Log.v("Yabause", "init = " + ok);
-        inited = (ok == 0);
-    }  
-
-    public void destroy() 
-    {
-        Log.v("Yabause", "destroying yabause...");
-        inited = false;
-        deinit();
-    }
-
-    public void run()
-    {
-        if (inited && (! paused))
-        {
-            exec();
-        }
-    }
-
-}
 
 class YabauseHandler extends Handler {
     private Yabause yabause;
@@ -488,17 +380,11 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
             }
             break;
             case R.id.menu_item_backup: {
-                //String save_path = YabauseStorage.getStorage().getStateSavePath();
-                //YabauseRunnable.loadstate(save_path);
-                String basepath;
-                String save_path = YabauseStorage.getStorage().getStateSavePath();
-                String current_gamecode = YabauseRunnable.getCurrentGameCode();
-                basepath = save_path + current_gamecode;
                 waiting_reault = true;
                 FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                BackupManagerFragment fragment = new BackupManagerFragment();
+                TabBackupFragment fragment = TabBackupFragment.newInstance("hoge","hoge");
                 //fragment.setBasePath(basepath);
-                transaction.replace(R.id.ext_fragment, fragment, BackupManagerFragment.TAG );
+                transaction.replace(R.id.ext_fragment, fragment, TabBackupFragment.TAG );
                 transaction.show(fragment);
                 transaction.commit();
             }
@@ -822,9 +708,22 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
                     transaction.remove(fg);
                     transaction.commit();
+                    View mainv = findViewById(R.id.yabause_view);
+                    mainv.setActivated(true);
+                    mainv.requestFocus();
                     return true;
                 }
 
+                fg = getSupportFragmentManager().findFragmentByTag(TabBackupFragment.TAG);
+                if( fg != null ){
+                     FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+                     transaction.remove(fg);
+                     transaction.commit();
+                    View mainv = findViewById(R.id.yabause_view);
+                    mainv.setActivated(true);
+                    mainv.requestFocus();
+                    return true;
+                }
                 showBottomMenu();
             }
             return true;
