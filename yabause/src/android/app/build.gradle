@@ -8,7 +8,7 @@ android {
         applicationId "org.uoyabause.android"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 114
+        versionCode 116
         versionName '0.5.5'
 
 /*
