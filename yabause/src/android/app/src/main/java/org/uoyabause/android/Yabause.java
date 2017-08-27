@@ -65,11 +65,8 @@ import android.content.pm.ConfigurationInfo;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import org.json.JSONObject;
-import org.uoyabause.android.backup.BackupManagerFragment;
 import org.uoyabause.android.backup.TabBackupFragment;
-
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.analytics.Tracker;
 import com.google.android.gms.analytics.HitBuilders;
