@@ -24,6 +24,7 @@ public:
   int deletefile( int index );
   int getFile( int index, string & jsonstr );
   int putFile( const string & jsonstr );
+  int copy( int target_device, int file_index );
 
 protected:  
   uint32_t currentbupdevice_ = 0;
@@ -35,6 +36,8 @@ protected:
 
 };
 
+jstring NewStringMS932(JNIEnv *env, const char *sjis);
+
 extern "C"{
 
 JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getDevicelist(JNIEnv* env) {
@@ -44,33 +47,38 @@ JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getDeviceli
   return env->NewStringUTF(jsonstr.c_str());
 }
 
-JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getFilelist(JNIEnv* env, jint deviceid ) {
+JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getFilelist(JNIEnv* env, jobject obj, jint deviceid ) {
   BackupManager * i = BackupManager::getInstance();
   string jsonstr;
   i->getFilelist(deviceid,jsonstr);
   return env->NewStringUTF(jsonstr.c_str());
 }
 
-JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_deletefile(JNIEnv* env, jint index ) {
+JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_deletefile(JNIEnv* env, jobject obj, jint index ) {
   BackupManager * i = BackupManager::getInstance();
   string jsonstr;
   return i->deletefile(index);
 }
 
-JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getFile(JNIEnv* env, jint index  ) {
+JNIEXPORT jstring JNICALL Java_org_uoyabause_android_YabauseRunnable_getFile(JNIEnv* env, jobject obj, jint index  ) {
   BackupManager * i = BackupManager::getInstance();
   string jsonstr;
   i->getFile(index,jsonstr);
   return env->NewStringUTF(jsonstr.c_str());
 }
 
-JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_putFile(JNIEnv* env, jstring jsonstr  ) {
+JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_putFile(JNIEnv* env, jobject obj, jstring jsonstr  ) {
   BackupManager * i = BackupManager::getInstance();
   jboolean dummy;
   const char *cpath = env->GetStringUTFChars( jsonstr, &dummy);
   int rtn = i->putFile(string(cpath));
   env->ReleaseStringUTFChars( jsonstr, cpath);
   return rtn;
+}
+
+JNIEXPORT jint JNICALL Java_org_uoyabause_android_YabauseRunnable_copy(JNIEnv* env, jobject obj, jint target, jint file  ) {
+  BackupManager * i = BackupManager::getInstance();
+  return i->copy(target,file);
 }
 
 

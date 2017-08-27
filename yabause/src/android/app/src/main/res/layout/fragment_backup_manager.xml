@@ -2,38 +2,37 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="org.uoyabause.android.BackupManagerFragment">
-
-    <!-- TODO: Update blank fragment layout -->
+    android:background="@color/halfTransparent"
+    tools:context="org.uoyabause.android.backup.BackupManagerFragment">
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="32dp"
+        android:layout_margin="4dp"
         android:orientation="vertical">
 
         <RadioGroup
+            android:id="@+id/radiogroup"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/radiogroup">
+            android:layout_height="wrap_content">
 
-        <RadioButton
-            android:id="@+id/radioButton_internal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Internal Backup" />
+            <RadioButton
+                android:id="@+id/radioButton_internal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Internal Backup" />
 
-        <RadioButton
-            android:id="@+id/radioButton_external"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="External Backup" />
+            <RadioButton
+                android:id="@+id/radioButton_external"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="External Backup" />
 
-        <RadioButton
-            android:id="@+id/radioButton_cloud"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Cloud Backup" />
+            <RadioButton
+                android:id="@+id/radioButton_cloud"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cloud Backup" />
         </RadioGroup>
 
     </LinearLayout>
@@ -43,18 +42,11 @@
         android:layout_height="match_parent"
         android:text="@string/hello_blank_fragment" />
 
-        <Button
-        android:id="@+id/button_delete"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="right"
-        android:layout_margin="32dp"
-        android:text="Delete" />
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/recyclerView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="120dp" />
 
 
 </FrameLayout>
