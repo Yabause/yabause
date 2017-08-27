@@ -428,8 +428,11 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
             mTracker.setScreenName(TAG);
             mTracker.send(new HitBuilders.ScreenViewBuilder().build());
         }
-        audio.unmute(audio.SYSTEM);
-        YabauseRunnable.resume();
+
+        if( waiting_reault == false  ) {
+            audio.unmute(audio.SYSTEM);
+            YabauseRunnable.resume();
+        }
     }
 
     @Override
@@ -659,6 +662,9 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                     View mainv = findViewById(R.id.yabause_view);
                     mainv.setActivated(true);
                     mainv.requestFocus();
+                    waiting_reault = false;
+                    YabauseRunnable.resume();
+                    audio.unmute(audio.SYSTEM);
                     return true;
                 }
 
@@ -670,6 +676,9 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
                     View mainv = findViewById(R.id.yabause_view);
                     mainv.setActivated(true);
                     mainv.requestFocus();
+                    waiting_reault = false;
+                    YabauseRunnable.resume();
+                    audio.unmute(audio.SYSTEM);
                     return true;
                 }
                 showBottomMenu();
