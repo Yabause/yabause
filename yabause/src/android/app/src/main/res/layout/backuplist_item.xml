@@ -2,8 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/margin_large"
-    android:layout_marginBottom="@dimen/margin_large"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/tools">
 
@@ -15,7 +15,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_margin="4dp"
         card_view:cardBackgroundColor="?attr/colorPrimaryDark"
-        card_view:cardCornerRadius="8dp"
+        card_view:cardCornerRadius="4dp"
         card_view:cardElevation="12dp">
 
 

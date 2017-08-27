@@ -1352,6 +1352,53 @@ static void ConvertMonthAndDay(u32 data, u32 monthaddr, u32 dayaddr, int type)
    }
 }
 
+static void ConvertMonthAndDayMem(u32 data, u8 * monthaddr, u8 * dayaddr, int type)
+{
+   int i;
+   u16 monthtbl[11] = { 31, 31+28, 31+28+31, 31+28+31+30, 31+28+31+30+31,
+                        31+28+31+30+31+30, 31+28+31+30+31+30+31,
+                        31+28+31+30+31+30+31+31, 31+28+31+30+31+30+31+31+30,
+                        31+28+31+30+31+30+31+31+30+31,
+                        31+28+31+30+31+30+31+31+30+31+30 };
+
+   if (data < monthtbl[0])
+   {
+      // Month
+      *monthaddr = 1;
+
+      // Day
+      *dayaddr = (u8)(data + 1);
+      return;
+   }
+
+   for (i = 1; i < 11; i++)
+   {
+      if (data <= monthtbl[i])
+         break;
+   }
+
+   if (type == 1)
+   {
+      // Month
+      *monthaddr = (u8)(i + 1);
+
+      // Day
+      if ((i + 1) == 2)
+         *dayaddr = (u8)(data - monthtbl[(i - 1)] + 1);
+      else
+         *dayaddr = (u8)(data - monthtbl[(i - 1)]);
+   }
+   else
+   {
+      // Month
+      *monthaddr = (u8)(i + 1);
+      
+      // Day
+      *dayaddr = (u8)(data - monthtbl[(i - 1)] + 1);
+   }
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BiosBUPGetDate(SH2_struct * sh)
@@ -1790,12 +1837,34 @@ saveinfo_struct *BupGetSaveList(u32 device, int *numsaves)
          save[savecount].language = MappedMemoryReadByte(workaddr+0x1F);
 
          // Copy over Date(fix me)
-         save[savecount].year = 0;
-         save[savecount].month = 0;
-         save[savecount].day = 0;
-         save[savecount].hour = 0;
-         save[savecount].minute = 0;
-         save[savecount].week = 0;
+         u32 date = (MappedMemoryReadByte(workaddr+0x35) << 24) |
+                    (MappedMemoryReadByte(workaddr+0x37) << 16) |
+                    (MappedMemoryReadByte(workaddr+0x39) << 8) |
+                    MappedMemoryReadByte(workaddr+0x3B);
+
+        save[savecount].date = date;
+        save[savecount].hour = (u8)((date % 0x5A0) / 0x3C);
+        save[savecount].minute = (u8)(date % 0x3C);
+           
+        u32 div = date / 0x5A0;
+        if (div > 0xAB71)
+          save[savecount].week = (u8)((div + 1) % 7);
+        else
+          save[savecount].week = (u8)((div + 2) % 7);
+
+        u32 yearremainder = div % 0x5B5;
+        u32 yearoffset;
+        if (yearremainder > 0x16E)
+        {
+           yearoffset = (yearremainder - 1) / 0x16D;
+           ConvertMonthAndDayMem((yearremainder - 1) % 0x16D, &save[savecount].month, &save[savecount].day, 0);
+        }
+        else
+        {
+           yearoffset = 0;
+           ConvertMonthAndDay(0, &save[savecount].month, &save[savecount].day, 1);
+        }
+        save[savecount].year = (u8)(((div / 0x5B5) * 4) + yearoffset);
 
          // Copy over data size
          save[savecount].datasize = (MappedMemoryReadByte(workaddr+0x3D) << 24) |
@@ -1961,6 +2030,7 @@ int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize )
 
   // Let's find and get the save game
   if ((block = FindSave2(device, savename, 2, size, addr, blocksize)) == 0) {
+     yprintf("%s is not found on this device(%d)", savename, device);
      return -1;
   }
 
@@ -1968,14 +2038,21 @@ int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize )
   datasize = (MappedMemoryReadByte(tableaddr) << 24) | (MappedMemoryReadByte(tableaddr + 2) << 16) |
              (MappedMemoryReadByte(tableaddr+4) << 8) | MappedMemoryReadByte(tableaddr + 6);
 
+  yprintf("tableaddr=%08X, datasize = %d", tableaddr, datasize );
+
   // Read in Block Table
   if ((blocktbl = ReadBlockTable(addr, &tableaddr, block, blocksize, &numblocks, &blocksread)) == NULL)
   {
-     return -1;
+    yprintf("ReadBlockTable failed", tableaddr, datasize );
+    return -1;
   }
 
-  LOG("BiosBUPRead from %08X size %08X", tableaddr, datasize);
+  LOG("BiosBUPExport from %08X size %08X", tableaddr, datasize);
   *buf = malloc(datasize);
+  if( (*buf) ==NULL ){
+    yprintf("Failed to allocate *buf");
+    return -1;
+  }
   *bufsize = datasize;
   
   //FILE * fp = fopen("savecheck.bin", "wb");
@@ -1983,7 +2060,7 @@ int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize )
   i=0;
   while (datasize > 0)
   {
-    *buf[i] = MappedMemoryReadByte(tableaddr);
+    (*buf)[i] = MappedMemoryReadByte(tableaddr);
      //fputc( MappedMemoryReadByte(tableaddr),fp );
      datasize--;
      i++;
@@ -1998,7 +2075,7 @@ int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize )
   }
   //fclose(fp);
   free(blocktbl);
-
+  yprintf("BiosBUPExport success!");
    return 0;
 }
 
@@ -2079,19 +2156,17 @@ int BiosBUPImport( u32 device, saveinfo_struct * saveinfo, const char * buf, int
    MappedMemoryWriteByte(workaddr+0x1F, saveinfo->language);
   
   // Copy over date
-  MappedMemoryWriteByte(workaddr+0x35, saveinfo->year);
-  MappedMemoryWriteByte(workaddr+0x35+2, saveinfo->month);
-  MappedMemoryWriteByte(workaddr+0x35+4, saveinfo->day);
-  MappedMemoryWriteByte(workaddr+0x35+6, saveinfo->hour);
-  MappedMemoryWriteByte(workaddr+0x35+8, saveinfo->minute);
-  MappedMemoryWriteByte(workaddr+0x35+10, saveinfo->week);
+  MappedMemoryWriteByte(workaddr+0x35, (saveinfo->date>>24)&0xFF);
+  MappedMemoryWriteByte(workaddr+0x37, (saveinfo->date>>16)&0xFF);
+  MappedMemoryWriteByte(workaddr+0x39, (saveinfo->date>>8)&0xFF);
+  MappedMemoryWriteByte(workaddr+0x3B, saveinfo->date&0xFF);
 
 
   // Copy over data size 
-  MappedMemoryWriteByte(workaddr+0x3D, (saveinfo->year>>24)&0xFF);
-  MappedMemoryWriteByte(workaddr+0x3F, (saveinfo->month>>16)&0xFF);
-  MappedMemoryWriteByte(workaddr+0x41, (saveinfo->day>>8)&0xFF);
-  MappedMemoryWriteByte(workaddr+0x43, saveinfo->hour&0xFF);
+  MappedMemoryWriteByte(workaddr+0x3D, (saveinfo->datasize>>24)&0xFF);
+  MappedMemoryWriteByte(workaddr+0x3F, (saveinfo->datasize>>16)&0xFF);
+  MappedMemoryWriteByte(workaddr+0x41, (saveinfo->datasize>>8)&0xFF);
+  MappedMemoryWriteByte(workaddr+0x43, saveinfo->datasize&0xFF);
 
    // write the block table
    workaddr += 0x45;
@@ -2247,6 +2322,42 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    SH2SetRegisters(sh, &sh->regs);
 }
 
+
+
+int BiosBUPStatusMem( int device, devicestatus_struct * status )
+{
+   u32 size;
+   u32 addr;
+   u32 blocksize;
+   u32 ret;
+   u32 freeblocks=0;
+   u32 needsize;
+   int aftersize;
+
+
+   // Fill in status variables
+   ret = GetDeviceStats(device, &size, &addr, &blocksize);
+
+   // Make sure there's a proper header, and return if there's any other errors
+   if (ret == 1 )
+   {
+      return -1;
+   }
+
+   freeblocks = GetFreeSpace(device, size, addr, blocksize);
+
+   needsize = 0;
+   aftersize = (((blocksize - 6) * freeblocks) - 30) - needsize;
+   if (aftersize < 0) aftersize = 0;
+
+   status->totalsize = size; // Size of Backup Ram (in bytes)
+   status->totalblock = size / blocksize; // Size of Backup Ram (in blocks)
+   status->blocksize = blocksize; // Size of block
+   status->freesize = ((blocksize - 6) * freeblocks) - 30; // Free space(in bytes)
+   status->freeblock = freeblocks; // Free space(in blocks)
+   status->datanum = aftersize / blocksize; // writable block size
+   return 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 

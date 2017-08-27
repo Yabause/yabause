@@ -9,4 +9,5 @@
     <dimen name="margin_medium">16dp</dimen>
     <dimen name="margin_large">32dp</dimen>
     <dimen name="margin_huge">64dp</dimen>
+    <dimen name="text_margin">16dp</dimen>
 </resources>
