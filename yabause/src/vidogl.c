@@ -2189,9 +2189,92 @@ static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr) {
   return color;
 }
 
+static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *texture) {
+  int i, j, h, addr, inc;
+  switch (info->colornumber)
+  {
+  case 0: // 4 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      for (j = 0; j < info->cellw; j += 4)
+      {
+        Vdp2GetPixel4bpp(info, info->charaddr, texture);
+        info->charaddr += 2;
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 1: // 8 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      for (j = 0; j < info->cellw; j += 2)
+      {
+
+        Vdp2GetPixel8bpp(info, info->charaddr, texture);
+        info->charaddr += 2;
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 2: // 16 BPP(palette)
+    for (i = 0; i < info->cellh; i++)
+    {
+      for (j = 0; j < info->cellw; j++)
+      {
+        *texture->textdata++ = Vdp2GetPixel16bpp(info, info->charaddr);
+        info->charaddr += 2;
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 3: // 16 BPP(RGB)
+    addr = info->charaddr;
+    info->charaddr += (vdp2_is_odd_frame)?0:2*info->cellw;
+    for (i = 0; i < info->cellh/2; i++)
+    {
+      for (j = 0; j < info->cellw; j++)
+      {
+        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr);
+        info->charaddr += 2;
+      }
+      info->charaddr += 2*info->cellw;
+      texture->textdata += texture->w;
+    }
+    info->charaddr = addr;
+    info->charaddr += (vdp2_is_odd_frame)?2*info->cellw:0;
+    for (i = 0; i < info->cellh/2; i++)
+    {
+      for (j = 0; j < info->cellw; j++)
+      {
+        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr);
+        info->charaddr += 2;
+      }
+      info->charaddr += 2*info->cellw;
+      texture->textdata += texture->w;
+    }
+    break;
+  case 4: // 32 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      for (j = 0; j < info->cellw; j++)
+      {
+        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
+        info->charaddr += 4;
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  }
+}
+
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 {
   int i, j;
+
+  if (vdp2_interlace == 1) {
+    Vdp2DrawCellInterlace(info, texture);
+    return;
+  }
 
   switch (info->colornumber)
   {
