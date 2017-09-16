@@ -159,7 +159,10 @@ int YuiUseOGLOnThisThread(){
 }
 
 static unsigned long nextFrameTime = 0;
-static unsigned long delayUs = 1000000/60;
+static unsigned long delayUs_NTSC = 1000000/60;
+static unsigned long delayUs_PAL = 1000000/50;
+
+#define delayUs ((yinit.videoformattype == VIDEOFORMATTYPE_PAL)?delayUs_PAL:delayUs_NTSC);
 
 static int frameskip = 1;
 
