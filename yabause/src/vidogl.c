@@ -2191,6 +2191,8 @@ static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr) {
 
 static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *texture) {
   int i, j, h, addr, inc;
+  unsigned int *start;
+  unsigned int color;
   switch (info->colornumber)
   {
   case 0: // 4 BPP
@@ -2229,28 +2231,38 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
     break;
   case 3: // 16 BPP(RGB)
     addr = info->charaddr;
-    info->charaddr += (vdp2_is_odd_frame)?0:2*info->cellw;
-    for (i = 0; i < info->cellh/2; i++)
+    inc = (info->cellw + texture->w);
+    start = texture->textdata;
+    texture->textdata += (info->cellw + texture->w)*info->cellh/2;
+    info->charaddr += (!vdp2_is_odd_frame)?0:2*info->cellw;
+    for (i = 0; i < info->cellh/2; i+=2)
     {
       for (j = 0; j < info->cellw; j++)
       {
-        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr);
+        color = Vdp2GetPixel16bppbmp(info, info->charaddr);
+        *(texture->textdata+inc) = color;
+        *texture->textdata = color;
+        *texture->textdata++;
         info->charaddr += 2;
       }
       info->charaddr += 2*info->cellw;
-      texture->textdata += texture->w;
+      texture->textdata += inc;
     }
     info->charaddr = addr;
-    info->charaddr += (vdp2_is_odd_frame)?2*info->cellw:0;
-    for (i = 0; i < info->cellh/2; i++)
+    info->charaddr += (!vdp2_is_odd_frame)?2*info->cellw:0;
+    texture->textdata = start;
+    for (i = 0; i < info->cellh/2; i+=2)
     {
       for (j = 0; j < info->cellw; j++)
       {
-        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr);
+        color = Vdp2GetPixel16bppbmp(info, info->charaddr);
+        *(texture->textdata+inc) = color;
+        *texture->textdata = color;
+        *texture->textdata++;
         info->charaddr += 2;
       }
       info->charaddr += 2*info->cellw;
-      texture->textdata += texture->w;
+      texture->textdata += inc;
     }
     break;
   case 4: // 32 BPP
@@ -5669,7 +5681,7 @@ static void Vdp2DrawNBG0(void)
   int i;
   info.enable = 0;
 
-  info.cellh = 256;
+  info.cellh = 256 << vdp2_interlace;
   info.specialcolorfunction = 0;
 
 
@@ -5687,6 +5699,7 @@ static void Vdp2DrawNBG0(void)
       // Bitmap Mode
 
       ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 2, 0x3);
+      if (vdp2_interlace) info.cellh *= 2;
 
       info.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
       info.paladdr = (fixVdp2Regs->BMPNA & 0x7) << 4;
@@ -5758,6 +5771,7 @@ static void Vdp2DrawNBG0(void)
       // Bitmap Mode
 
       ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 2, 0x3);
+      if (vdp2_interlace) info.cellh *= 2;
 
       info.x = -((fixVdp2Regs->SCXIN0 & 0x7FF) % info.cellw);
       info.y = -((fixVdp2Regs->SCYIN0 & 0x7FF) % info.cellh);
@@ -5931,9 +5945,9 @@ static void Vdp2DrawNBG0(void)
         vdp2draw_struct infotmp = info;
         infotmp.cellw = vdp2width;
         if (vdp2height >= 448)
-          infotmp.cellh = (vdp2height >> 1);
+          infotmp.cellh = (vdp2height >> 1) << vdp2_interlace;
         else
-          infotmp.cellh = vdp2height;
+          infotmp.cellh = vdp2height << vdp2_interlace;
         YglQuad(&infotmp, &texture, &tmpc);
         Vdp2DrawBitmapCoordinateInc(&info, &texture);
       }
@@ -5958,7 +5972,7 @@ static void Vdp2DrawNBG0(void)
           info.vertices[7] = vdp2height;
           vdp2draw_struct infotmp = info;
           infotmp.cellw = vdp2width;
-          infotmp.cellh = vdp2height;
+          infotmp.cellh = vdp2height << vdp2_interlace;
           YglQuad(&infotmp, &texture, &tmpc);
           Vdp2DrawBitmapLineScroll(&info, &texture);
 
