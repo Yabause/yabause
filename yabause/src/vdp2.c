@@ -79,39 +79,39 @@ int g_frame_count = 0;
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp2RamReadByte(u32 addr) {
-   addr &= 0x7FFFF;
+   addr &= 0xFFFFF;
    return T1ReadByte(Vdp2Ram, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp2RamReadWord(u32 addr) {
-   addr &= 0x7FFFF;
+   addr &= 0xFFFFF;
    return T1ReadWord(Vdp2Ram, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Vdp2RamReadLong(u32 addr) {
-   addr &= 0x7FFFF;
+   addr &= 0xFFFFF;
    return T1ReadLong(Vdp2Ram, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
-   addr &= 0x7FFFF;
+   addr &= 0xFFFFF;
 
-   if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
+   if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
    }
-   else if (A1_Updated == 0 &&  addr >= 0x20000 && addr < 0x40000){
+   else if (A1_Updated == 0 &&  addr >= (0x20000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x40000<<(Vdp2Regs->VRSIZE>>15))){
      A1_Updated = 1;
    }
-   else if (B0_Updated == 0 && addr >= 0x40000 && addr < 0x60000){
+   else if (B0_Updated == 0 && addr >= (0x40000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x60000<<(Vdp2Regs->VRSIZE>>15))){
      B0_Updated = 1;
    }
-   else if (B1_Updated == 0 && addr >= 0x60000 && addr < 0x80000){
+   else if (B1_Updated == 0 && addr >= (0x60000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x80000<<(Vdp2Regs->VRSIZE>>15))){
      B1_Updated = 1;
    }
 
@@ -121,17 +121,18 @@ void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
-   addr &= 0x7FFFF;
-   if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
+   addr &= 0xFFFFF;
+
+   if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
    }
-   else if (A1_Updated == 0 && addr >= 0x20000 && addr < 0x40000){
+   else if (A1_Updated == 0 &&  addr >= (0x20000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x40000<<(Vdp2Regs->VRSIZE>>15))){
      A1_Updated = 1;
    }
-   else if (B0_Updated == 0 && addr >= 0x40000 && addr < 0x60000){
+   else if (B0_Updated == 0 && addr >= (0x40000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x60000<<(Vdp2Regs->VRSIZE>>15))){
      B0_Updated = 1;
    }
-   else if (B1_Updated == 0 && addr >= 0x60000 && addr < 0x80000){
+   else if (B1_Updated == 0 && addr >= (0x60000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x80000<<(Vdp2Regs->VRSIZE>>15))){
      B1_Updated = 1;
    }
 
@@ -141,18 +142,18 @@ void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteLong(u32 addr, u32 val) {
-   addr &= 0x7FFFF;
+   addr &= 0xFFFFF;
 
-   if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
+   if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
    }
-   else if (A1_Updated == 0 && addr >= 0x20000 && addr < 0x40000){
+   else if (A1_Updated == 0 &&  addr >= (0x20000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x40000<<(Vdp2Regs->VRSIZE>>15))){
      A1_Updated = 1;
    }
-   else if (B0_Updated == 0 && addr >= 0x40000 && addr < 0x60000){
+   else if (B0_Updated == 0 && addr >= (0x40000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x60000<<(Vdp2Regs->VRSIZE>>15))){
      B0_Updated = 1;
    }
-   else if (B1_Updated == 0 && addr >= 0x60000 && addr < 0x80000){
+   else if (B1_Updated == 0 && addr >= (0x60000<<(Vdp2Regs->VRSIZE>>15)) && addr < (0x80000<<(Vdp2Regs->VRSIZE>>15))){
      B1_Updated = 1;
    }
 
@@ -219,7 +220,7 @@ int Vdp2Init(void) {
    if ((Vdp2Regs = (Vdp2 *) calloc(1, sizeof(Vdp2))) == NULL)
       return -1;
 
-   if ((Vdp2Ram = T1MemoryInit(0x80000)) == NULL)
+   if ((Vdp2Ram = T1MemoryInit(0x100000)) == NULL)
       return -1;
 
    if ((Vdp2ColorRam = T2MemoryInit(0x1000)) == NULL)
@@ -1479,7 +1480,7 @@ int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
    yread(&check, (void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
 
    // Read VDP2 ram
-   yread(&check, (void *)Vdp2Ram, 0x80000, 1, fp);
+   yread(&check, (void *)Vdp2Ram, 0x100000, 1, fp);
 
    // Read CRAM
    yread(&check, (void *)Vdp2ColorRam, 0x1000, 1, fp);
