@@ -5225,6 +5225,7 @@ void ScspUnLockThread() {
 //////////////////////////////////////////////////////////////////////////////
 #if !defined(ASYNC_SCSP)
 void SyncScsp() {}
+void SyncScspDynarec() {}
 void ScspExec(){
   u32 audiosize;
 
