@@ -2351,9 +2351,8 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture *texture)
 {
   int i, j;
-  int height = vdp2height;
 
-  for (i = 0; i < height; i++)
+  for (i = 0; i < info->cellh; i++)
   {
     int sh, sv;
     u32 baseaddr;
@@ -2376,11 +2375,10 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
     if (line->LineScrollValH >= 0 && line->LineScrollValH < sh) {
       sv -= 1;
     }
-
     switch (info->colornumber) {
     case 0:
       baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
-      for (j = 0; j < vdp2width; j += 4)
+      for (j = 0; j < info->cellw; j += 4)
       {
         Vdp2GetPixel4bpp(info, baseaddr, texture);
         baseaddr += 2;
@@ -2388,7 +2386,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       break;
     case 1:
       baseaddr += sh + sv * info->cellw;
-      for (j = 0; j < vdp2width; j += 2)
+      for (j = 0; j < info->cellw; j += 2)
       {
         Vdp2GetPixel8bpp(info, baseaddr, texture);
         baseaddr += 2;
@@ -2396,7 +2394,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       break;
     case 2:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
+      for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
         baseaddr += 2;
@@ -2405,7 +2403,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       break;
     case 3:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
+      for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
         baseaddr += 2;
@@ -2413,7 +2411,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       break;
     case 4:
       baseaddr += ((sh + sv * info->cellw) << 2);
-      for (j = 0; j < vdp2width; j++)
+      for (j = 0; j < info->cellw; j++)
       {
         //if (info->isverticalscroll){
         //	sv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl+(j>>3) ) >> 16;
