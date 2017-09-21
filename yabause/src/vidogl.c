@@ -2348,11 +2348,11 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
   }
 }
 
-static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture *texture)
+static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture *texture, int width, int height)
 {
   int i, j;
 
-  for (i = 0; i < info->cellh; i++)
+  for (i = 0; i < height; i++)
   {
     int sh, sv;
     u32 baseaddr;
@@ -2378,7 +2378,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
     switch (info->colornumber) {
     case 0:
       baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
-      for (j = 0; j < info->cellw; j += 4)
+      for (j = 0; j < width; j += 4)
       {
         Vdp2GetPixel4bpp(info, baseaddr, texture);
         baseaddr += 2;
@@ -2394,7 +2394,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       break;
     case 2:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < info->cellw; j++)
+      for (j = 0; j < width; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
         baseaddr += 2;
@@ -2403,7 +2403,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       break;
     case 3:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < info->cellw; j++)
+      for (j = 0; j < width; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
         baseaddr += 2;
@@ -2411,7 +2411,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
       break;
     case 4:
       baseaddr += ((sh + sv * info->cellw) << 2);
-      for (j = 0; j < info->cellw; j++)
+      for (j = 0; j < width; j++)
       {
         //if (info->isverticalscroll){
         //	sv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl+(j>>3) ) >> 16;
@@ -5972,7 +5972,7 @@ static void Vdp2DrawNBG0(void)
           infotmp.cellw = vdp2width;
           infotmp.cellh = vdp2height << vdp2_interlace;
           YglQuad(&infotmp, &texture, &tmpc);
-          Vdp2DrawBitmapLineScroll(&info, &texture);
+          Vdp2DrawBitmapLineScroll(&info, &texture, vdp2width, vdp2height);
 
         }
         else {
@@ -5995,7 +5995,7 @@ static void Vdp2DrawNBG0(void)
               {
                 YglQuad(&info, &texture, &tmpc);
                 if (info.islinescroll) {
-                  Vdp2DrawBitmapLineScroll(&info, &texture);
+                  Vdp2DrawBitmapLineScroll(&info, &texture, info.cellw, info.cellh);
                 }
                 else {
                   Vdp2DrawCell(&info, &texture);
@@ -6252,7 +6252,7 @@ static void Vdp2DrawNBG1(void)
           {
             YglQuad(&info, &texture, &tmpc);
             if (info.islinescroll) {
-              Vdp2DrawBitmapLineScroll(&info, &texture);
+              Vdp2DrawBitmapLineScroll(&info, &texture, info.cellw, info.cellh);
             }
             else {
               Vdp2DrawCell(&info, &texture);
