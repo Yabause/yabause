@@ -696,7 +696,8 @@ int YglGLInit(int width, int height) {
    }
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-   if( _Ygl->vdp1FrameBuff != 0 ) glDeleteTextures(2,_Ygl->vdp1FrameBuff);
+   if( _Ygl->vdp1FrameBuff != NULL ) // Why is this check even here? It will always be non-zero
+      glDeleteTextures(2,_Ygl->vdp1FrameBuff);
    glGenTextures(2,_Ygl->vdp1FrameBuff);
    glBindTexture(GL_TEXTURE_2D,_Ygl->vdp1FrameBuff[0]);
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, GlWidth, GlHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE,NULL);
