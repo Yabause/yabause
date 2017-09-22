@@ -584,6 +584,7 @@ void op2(struct Slot * slot, struct Scsp * s)
       slot->state.address_pointer = (s32)slot->regs.sa + (slot->state.sample_offset + md_out);
 }
 
+
 //waveform dram read
 void op3(struct Slot * slot)
 {
@@ -894,9 +895,9 @@ void scsp_debug_get_envelope(int chan, int * env, int * state)
 
 void keyon(struct Slot * slot) 
 {
-   if (slot->state.envelope == RELEASE)
+   if (slot->state.envelope == RELEASE )
    {
-      slot->state.envelope = ATTACK;
+     slot->state.envelope = ATTACK;
       slot->state.attenuation = 0x280;
       slot->state.sample_counter = 0;
       slot->state.step_count = 0;
@@ -1407,6 +1408,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
    int step_num = 0;
    int i = 0;
    int mvol_shift = 0;
+   s32 outl32 = 0;
+   s32 outr32 = 0;
 
    //run 32 steps to generate 1 full sample (512 clock cycles at 22579200hz)
    //7 operations happen simultaneously on different channels due to pipelining
@@ -1442,9 +1445,8 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         *out_l = *out_l + ((disdl_applied >> pan_val_l)>>1);
-         *out_r = *out_r + ((disdl_applied >> pan_val_r)>>1);
-
+         outl32 = outl32 + ((disdl_applied >> pan_val_l) >> 1);
+         outr32 = outr32 + ((disdl_applied >> pan_val_r) >> 1);
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
    }
@@ -1497,14 +1499,16 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
       panned_l = (efsdl_applied >> pan_val_l)>>1;
       panned_r = (efsdl_applied >> pan_val_r)>>1;
 
-      *out_l = *out_l + panned_l;
-      *out_r = *out_r + panned_r;
+      outl32 = outl32 + panned_l;
+      outr32 = outr32 + panned_r;
    }
 
    mvol_shift = 0xf - mvol;
 
-   *out_l = *out_l >> mvol_shift;
-   *out_r = *out_r >> mvol_shift;
+   outl32 = outl32 >> mvol_shift;
+   *out_l = min(SHRT_MAX, max(SHRT_MIN, outl32));
+   outr32 = outr32 >> mvol_shift;
+   *out_r = min(SHRT_MAX, max(SHRT_MIN, outr32));
 }
 
 void new_scsp_reset(struct Scsp* s)
