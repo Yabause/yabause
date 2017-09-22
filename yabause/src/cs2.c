@@ -85,6 +85,10 @@ extern CDInterface *CDCoreList[];
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Generate CD Status Report and store in CR registers
+ * @param[in]  status CD Play status
+ */
 static INLINE void doCDReport(u8 status)
 {
    Cs2Area->reg.CR1 = (status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
@@ -95,6 +99,10 @@ static INLINE void doCDReport(u8 status)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Generate MPEG Status Report and store in CR registers
+ * @param[in]  status CD Play status
+ */
 static INLINE void doMPEGReport(u8 status)
 {
    Cs2Area->reg.CR1 = (status << 8) | Cs2Area->actionstatus;
@@ -105,6 +113,12 @@ static INLINE void doMPEGReport(u8 status)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Reads byte from CS2 memory region
+ * @param[in]  sh   The current SH2 context
+ * @param[in]  addr Memory Address
+ * \return     Byte read from CS2 area
+ */
 u8 FASTCALL Cs2ReadByte(SH2_struct *sh, u32 addr)
 {
    return CartridgeArea->Cs2ReadByte(sh, addr);
@@ -112,6 +126,12 @@ u8 FASTCALL Cs2ReadByte(SH2_struct *sh, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Writes byte to CS2 memory region
+ * @param[in]  sh   The current SH2 context
+ * @param[in]  addr Memory Address
+ * @param[in]  val  Data to write to CS2 area
+ */
 void FASTCALL Cs2WriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    CartridgeArea->Cs2WriteByte(sh, addr, val);
@@ -119,6 +139,13 @@ void FASTCALL Cs2WriteByte(SH2_struct *sh, u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Reads word from CS2 memory region
+ * @param[in]  sh   The current SH2 context
+ * @param[in]  addr Memory Address
+ * \return     Word read from CS2 area
+ * \bug        Mapping isn't quite correct(as noted in source)
+ */
 u16 FASTCALL Cs2ReadWord(SH2_struct *sh, u32 addr) {
   u16 val = 0;
   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
@@ -257,6 +284,13 @@ u16 FASTCALL Cs2ReadWord(SH2_struct *sh, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Writes word to CS2 memory region
+ * @param[in]  sh   The current SH2 context
+ * @param[in]  addr Memory Address
+ * @param[in]  val  Data to write to CS2 area
+ * \bug        Mapping isn't quite correct(as noted in source)
+ */
 void FASTCALL Cs2WriteWord(SH2_struct *sh, u32 addr, u16 val) {
   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -295,6 +329,13 @@ void FASTCALL Cs2WriteWord(SH2_struct *sh, u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Reads long from CS2 memory region
+ * @param[in]  sh   The current SH2 context
+ * @param[in]  addr Memory Address
+ * \return     Long read from CS2 area
+ * \bug        Mapping isn't quite correct(as noted in source)
+ */
 u32 FASTCALL Cs2ReadLong(SH2_struct *sh, u32 addr) {
   s32 i;
   u32 val = 0;
@@ -403,6 +444,13 @@ u32 FASTCALL Cs2ReadLong(SH2_struct *sh, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Writes long to CS2 memory region
+ * @param[in]  sh   The current SH2 context
+ * @param[in]  addr Memory Address
+ * @param[in]  val  Data to write to CS2 area
+ * \bug        Mapping isn't quite correct(as noted in source)
+ */
 void FASTCALL Cs2WriteLong(SH2_struct *sh, u32 addr, u32 val) {
    addr &= 0xFFFFF; // fix me(I should really have proper mapping)
 
@@ -455,9 +503,11 @@ void FASTCALL Cs2WriteLong(SH2_struct *sh, u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-/* Copy "count" 32-bit words from the CD buffer to type-1 memory "dest" (a
- * native pointer), as though 0x25818000 had been read that many times */
-
+/*!
+ * Bulk Data Transfer from CD Block(as though 0x25818000 had been read that many times)
+ * @param[out] dest  Destination memory pointer(uses type-1 memory layout) 
+ * @param[in]  count Number of long's to copy over
+ */
 void FASTCALL Cs2RapidCopyT1(void *dest, u32 count)
 {
    u8 *dest8 = (u8 *) dest;
@@ -521,9 +571,11 @@ void FASTCALL Cs2RapidCopyT1(void *dest, u32 count)
 
 //////////////////////////////////////////////////////////////////////////////
 
-/* Copy "count" 32-bit words from the CD buffer to type-2 memory "dest" (a
- * native pointer), as though 0x25818000 had been read that many times */
-
+/*!
+ * Bulk Data Transfer from CD Block(as though 0x25818000 had been read that many times)
+ * @param[out] dest  Destination memory pointer(uses type-2 memory layout) 
+ * @param[in]  count Number of long's to copy over
+ */
 void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
 {
    u32 *dest32 = (u32 *) dest;
@@ -611,6 +663,16 @@ void FASTCALL Cs2RapidCopyT2(void *dest, u32 count)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CS2 region Initialization. Sets up CD Core, Netlink, and JP Modem(if they're enabled)
+ * @param[in]  carttype   Type of Cartridge connected(if any)
+ * @param[in]  coreid     CD core id to use for emulating cd device
+ * @param[in]  cdpath     Path to cd device
+ * @param[in]  mpegpath   Path to MPEG ROM
+ * @param[in]  modemip    Netlink/JP Modem IP to connect to or receive data from
+ * @param[in]  modemport  Netlink/JP Modem Port to connect to or receive data from
+ * \return 0 on success, < 0 on error
+ */
 int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *modemip, const char *modemport) {
    int ret;
 
@@ -647,6 +709,11 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Load new CD core and path.
+ * @param[in]  coreid   CD core id to use for emulating cd device
+ * @param[in]  cdpath   Path to cd device
+ */
 int Cs2ChangeCDCore(int coreid, const char *cdpath)
 {
    int i;
@@ -695,6 +762,9 @@ int Cs2ChangeCDCore(int coreid, const char *cdpath)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CS2 region Deinitialization.
+ */
 void Cs2DeInit(void) {
    if(Cs2Area != NULL) {
       if (Cs2Area->cdi != NULL) {
@@ -717,6 +787,9 @@ void Cs2DeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CS2 region reset. Puts the CD Block in a sane state, resets MPEG card, Netlink and JP Modem(if enabled)
+ */
 void Cs2Reset(void) {
   u32 i, i2;
 
@@ -857,6 +930,10 @@ void Cs2Reset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CS2 devices execution cycle. 
+ * @param[in]  timing Cycles to execute in usec
+ */
 void Cs2Exec(u32 timing) {
    Cs2Area->_statuscycles += timing * 3;
    Cs2Area->_periodiccycles += timing * 3;
@@ -1026,8 +1103,10 @@ void Cs2Exec(u32 timing) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-/* Returns the number of (emulated) microseconds before the next sector
- * will have been completely read in */
+/*!
+ * Returns the number of (emulated) microseconds before the next sector will have been completely read in
+ * \return microseconds
+ */
 int Cs2GetTimeToNextSector(void) {
    if ((Cs2Area->status & 0xF) != CDB_STAT_PLAY) {
       return 0;
@@ -1040,12 +1119,10 @@ int Cs2GetTimeToNextSector(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void Cs2Command(void) {
-  Cs2Area->_command = 1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
+/*!
+ * Sets the timing for periodic response(when the cd block regularly sends cd status data)
+ * @param[in]  playing Whether CD is playing
+ */
 void Cs2SetTiming(int playing) {
   if (playing) {
      if (Cs2Area->isaudio || Cs2Area->speed1x == 1)
@@ -1060,6 +1137,10 @@ void Cs2SetTiming(int playing) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Sets CD Block command execution timing
+ * @param[in]  cmd CD Block command
+ */
 void Cs2SetCommandTiming(u8 cmd) {
    switch(cmd) {
       default:
@@ -1070,6 +1151,9 @@ void Cs2SetCommandTiming(u8 cmd) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Execute CD Block command
+ */
 void Cs2Execute(void) {
   u16 instruction = Cs2Area->reg.CR1 >> 8;
 
@@ -1369,6 +1453,9 @@ void Cs2Execute(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_CD_Status.280x00.29">Get CD Status</a>
+ */
 void Cs2GetStatus(void) {
   doCDReport(Cs2Area->status);
   Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
@@ -1376,6 +1463,9 @@ void Cs2GetStatus(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Hardware_Info.280x01.29">Get Hardware Info</a>
+ */
 void Cs2GetHardwareInfo(void) {
   if ((Cs2Area->status & 0xF) != CDB_STAT_OPEN && (Cs2Area->status & 0xF) != CDB_STAT_NODISC)
      Cs2Area->isdiskchanged = 0;
@@ -1397,6 +1487,9 @@ void Cs2GetHardwareInfo(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_TOC.280x02.29">Get TOC</a>
+ */
 void Cs2GetToc(void) {
   Cs2Area->cdi->ReadTOC(Cs2Area->TOC);
 
@@ -1413,6 +1506,9 @@ void Cs2GetToc(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Session_Info.280x03.29">Get Session Info</a>
+ */
 void Cs2GetSessionInfo(void) {
 
   switch (Cs2Area->reg.CR1 & 0xFF) {
@@ -1439,6 +1535,10 @@ void Cs2GetSessionInfo(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Initialize_CD_System.280x04.29">Initialize CD System</a>
+ * \bug Not fully reseting CD Block. Need to verify what all is reset with LLE code
+ */
 void Cs2InitializeCDSystem(void) {
   u16 val = 0;
   u8 initflag = Cs2Area->reg.CR1 & 0xFF;
@@ -1488,6 +1588,9 @@ void Cs2InitializeCDSystem(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Open_Tray.280x05.29">Open Tray</a>
+ */
 void Cs2OpenTray(void)
 {
    u16 val = 0;
@@ -1499,6 +1602,9 @@ void Cs2OpenTray(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#End_Data_Transfer.280x06.29">End Data Transfer</a>
+ */
 void Cs2EndDataTransfer(void) {
   s32 i;
   if (Cs2Area->cdwnum)
@@ -1563,6 +1669,9 @@ void Cs2EndDataTransfer(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Play_Disc.280x10.29">Play Disc</a>
+ */
 void Cs2PlayDisc(void) {
   u32 pdspos;
   u32 pdepos;
@@ -1662,6 +1771,9 @@ void Cs2PlayDisc(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Seek_Disc.280x11.29">Seek Disc</a>
+ */
 void Cs2SeekDisc(void) {
   if (Cs2Area->reg.CR1 & 0x80)
   {
@@ -1712,6 +1824,10 @@ void Cs2SeekDisc(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Scan_Disc.280x12.29">Scan Disc</a>
+ * \bug Needs implementation
+ */
 void Cs2ScanDisc(void) {
    Cs2Area->status = CDB_STAT_SCAN;
 
@@ -1721,6 +1837,9 @@ void Cs2ScanDisc(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Subcode_Q.2FRW.280x20.29">Get Subcode Q/RW</a>
+ */
 void Cs2GetSubcodeQRW(void) {
    u32 rel_fad;
    u8 rel_m, rel_s, rel_f, m, s, f;
@@ -1788,6 +1907,9 @@ void Cs2GetSubcodeQRW(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Set_CD_Device_Connection.280x30.29">Set CD Device Connection</a>
+ */
 void Cs2SetCDDeviceConnection(void) {
   u32 scdcfilternum;
 
@@ -1806,6 +1928,9 @@ void Cs2SetCDDeviceConnection(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_CD_Device_Connection.280x31.29">Get CD Device Connection</a>
+ */
 void Cs2GetCDDeviceConnection(void)
 {
    Cs2Area->reg.CR1 = (Cs2Area->status << 8);
@@ -1817,6 +1942,9 @@ void Cs2GetCDDeviceConnection(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Last_Buffer_Destination.280x32.29">Get Last Buffer Destination</a>
+ */
 void Cs2GetLastBufferDestination(void) {
   Cs2Area->reg.CR1 = (Cs2Area->status << 8);
   Cs2Area->reg.CR2 = 0;
@@ -1827,6 +1955,9 @@ void Cs2GetLastBufferDestination(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Set_Filter_Range.280x40.29">Set Filter Range</a>
+ */
 void Cs2SetFilterRange(void) {
   u8 sfrfilternum;
 
@@ -1842,6 +1973,9 @@ void Cs2SetFilterRange(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Filter_Range.280x41.29">Get Filter Range</a>
+ */
 void Cs2GetFilterRange(void) {
    u8 sfrfilternum;
 
@@ -1856,6 +1990,9 @@ void Cs2GetFilterRange(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Set_Filter_Subheader_Conditions.280x42.29">Set Filter Subheader Conditions</a>
+ */
 void Cs2SetFilterSubheaderConditions(void) {
   u8 sfscfilternum;
 
@@ -1874,6 +2011,9 @@ void Cs2SetFilterSubheaderConditions(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Filter_Subheader_Conditions.280x43.29">Get Filter Subheader Conditions</a>
+ */
 void Cs2GetFilterSubheaderConditions(void) {
   u8 gfscfilternum;
 
@@ -1888,6 +2028,9 @@ void Cs2GetFilterSubheaderConditions(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Set_Filter_Mode.280x44.29">Set Filter Mode</a>
+ */
 void Cs2SetFilterMode(void) {
   u8 sfmfilternum;
 
@@ -1914,6 +2057,9 @@ void Cs2SetFilterMode(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Filter_Mode.280x45.29">Get Filter Mode</a>
+ */
 void Cs2GetFilterMode(void) {
   u8 gfmfilternum;
 
@@ -1928,6 +2074,9 @@ void Cs2GetFilterMode(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Set_Filter_Connection.280x46.29">Set Filter Connection</a>
+ */
 void Cs2SetFilterConnection(void) {
   u8 sfcfilternum;
 
@@ -1951,6 +2100,9 @@ void Cs2SetFilterConnection(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Filter_Connection.280x47.29">Get Filter Connection</a>
+ */
 void Cs2GetFilterConnection(void) {
    u8 sfcfilternum;
 
@@ -1966,6 +2118,9 @@ void Cs2GetFilterConnection(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Reset_Selector.280x48.29">Reset Selector</a>
+ */
 void Cs2ResetSelector(void) {
   // still needs a bit of work
   u32 i, i2;
@@ -2076,6 +2231,9 @@ void Cs2ResetSelector(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Buffer_Size.280x50.29">Get Buffer Size</a>
+ */
 void Cs2GetBufferSize(void) {
   Cs2Area->reg.CR1 = Cs2Area->status << 8;
   Cs2Area->reg.CR2 = (u16)Cs2Area->blockfreespace;
@@ -2086,6 +2244,9 @@ void Cs2GetBufferSize(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Sector_Number.280x51.29">Get Sector Number</a>
+ */
 void Cs2GetSectorNumber(void) {
   u32 gsnbufno;
 
@@ -2104,6 +2265,9 @@ void Cs2GetSectorNumber(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Calculate_Actual_Size.280x52.29">Calculate Actual Size</a>
+ */
 void Cs2CalculateActualSize(void) {
   u16 i;
   u32 casbufno;
@@ -2133,6 +2297,9 @@ void Cs2CalculateActualSize(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Actual_Size.280x53.29">Get Actual Size</a>
+ */
 void Cs2GetActualSize(void) {
   Cs2Area->reg.CR1 = (u16)((Cs2Area->status << 8) | ((Cs2Area->calcsize >> 16) & 0xFF));
   Cs2Area->reg.CR2 = (u16)Cs2Area->calcsize;
@@ -2143,6 +2310,9 @@ void Cs2GetActualSize(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Sector_Info.280x54.29">Get Sector Info</a>
+ */
 void Cs2GetSectorInfo(void) {
   u32 gsisctnum;
   u32 gsibufno;
@@ -2170,6 +2340,9 @@ void Cs2GetSectorInfo(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Execute_FAD_Search.280x55.29">Execute FAD Search</a>
+ */
 void Cs2ExecFadSearch(void) {
    // finish me
    doCDReport(Cs2Area->status);
@@ -2178,6 +2351,9 @@ void Cs2ExecFadSearch(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_FAD_Search_Results.280x56.29">Get FAD Search Results</a>
+ */
 void Cs2GetFadSearchResults(void) {
    // finish me
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
@@ -2185,6 +2361,9 @@ void Cs2GetFadSearchResults(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Set_Sector_Length.280x60.29">Set Sector Length</a>
+ */
 void Cs2SetSectorLength(void) {
   switch (Cs2Area->reg.CR1 & 0xFF) {
     case 0:
@@ -2224,6 +2403,12 @@ void Cs2SetSectorLength(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Calculate Sector Number for commands that fetch and delete sector data
+ * @param[in]      bufno      Buffer Number
+ * @param[in]      sectoffset Sector Offset
+ * @param[in/out]  sectnum    Sector Number
+ */
 static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectnum)
 {
    if (*sectoffset == 0xFFFF)
@@ -2240,6 +2425,9 @@ static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectn
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Sector_Data.280x61.29">Get Sector Data</a>
+ */
 void Cs2GetSectorData(void)
 {
    u32 gsdsectoffset;
@@ -2284,6 +2472,9 @@ void Cs2GetSectorData(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Delete_Sector_Data.280x62.29">Delete Sector Data</a>
+ */
 void Cs2DeleteSectorData(void)
 {
    u32 dsdsectoffset;
@@ -2335,6 +2526,9 @@ void Cs2DeleteSectorData(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Then_Delete_Sector_Data.280x63.29">Get Then Delete Sector Data</a>
+ */
 void Cs2GetThenDeleteSectorData(void)
 {
    u32 gtdsdsectoffset;
@@ -2380,6 +2574,9 @@ void Cs2GetThenDeleteSectorData(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Put_Sector_Data.280x64.29">Put Sector Data</a>
+ */
 void Cs2PutSectorData(void) {
    u32 psdbufno;
    u32 psdsectnum;
@@ -2430,6 +2627,9 @@ void Cs2PutSectorData(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Copy_Sector_Data.280x65.29">Copy Sector Data</a>
+ */
 void Cs2CopySectorData(void) {
    // finish me
    doCDReport(Cs2Area->status);
@@ -2438,6 +2638,9 @@ void Cs2CopySectorData(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Move_Sector_Data.280x66.29">Move Sector Data</a>
+ */
 void Cs2MoveSectorData(void) {
    // finish me
    doCDReport(Cs2Area->status);
@@ -2446,6 +2649,9 @@ void Cs2MoveSectorData(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_Copy_Error.280x67.29">Get Copy Error</a>
+ */
 void Cs2GetCopyError(void) {
   Cs2Area->reg.CR1 = Cs2Area->status << 8;
   Cs2Area->reg.CR2 = 0;
@@ -2456,6 +2662,9 @@ void Cs2GetCopyError(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Change_Directory.280x70.29">Change Directory</a>
+ */
 void Cs2ChangeDirectory(void) {
   u32 cdfilternum;
 
@@ -2484,6 +2693,9 @@ void Cs2ChangeDirectory(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Read_Directory.280x71.29">Read Directory</a>
+ */
 void Cs2ReadDirectory(void) {
   u32 rdfilternum;
 
@@ -2512,6 +2724,9 @@ void Cs2ReadDirectory(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_File_System_Scope.280x72.29">Get File System Scope</a>
+ */
 void Cs2GetFileSystemScope(void) {
   // may need to fix this
   Cs2Area->reg.CR1 = Cs2Area->status << 8;
@@ -2524,6 +2739,9 @@ void Cs2GetFileSystemScope(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Get_File_Info.280x73.29">Get File Info</a>
+ */
 void Cs2GetFileInfo(void) {
   u32 gfifid;
 
@@ -2557,6 +2775,9 @@ void Cs2GetFileInfo(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Read_File.280x74.29">Read File</a>
+ */
 void Cs2ReadFile(void) {
   u32 rfoffset, rffilternum, rffid, rfsize;
 
@@ -2588,6 +2809,9 @@ void Cs2ReadFile(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=CDCommands#Abort_File.280x75.29">Abort File</a>
+ */
 void Cs2AbortFile(void) {
   if ((Cs2Area->status & 0xF) != CDB_STAT_OPEN &&
       (Cs2Area->status & 0xF) != CDB_STAT_NODISC)
@@ -2601,6 +2825,9 @@ void Cs2AbortFile(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Get_Status.280x90.29">MPEG Get Status</a>
+ */
 void Cs2MpegGetStatus(void) {
    doMPEGReport(Cs2Area->status);
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
@@ -2608,6 +2835,9 @@ void Cs2MpegGetStatus(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Get_Interrupt.280x91.29">MPEG Get Interrupt</a>
+ */
 void Cs2MpegGetInterrupt(void) {
    u32 mgiworkinterrupt;
 
@@ -2626,6 +2856,9 @@ void Cs2MpegGetInterrupt(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Interrupt_Mask.280x92.29">MPEG Set Interrupt Mask</a>
+ */
 void Cs2MpegSetInterruptMask(void) {
    Cs2Area->mpegintmask = ((Cs2Area->reg.CR1 & 0xFF) << 16) | Cs2Area->reg.CR2;
 
@@ -2635,6 +2868,9 @@ void Cs2MpegSetInterruptMask(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Init.280x93.29">MPEG Init</a>
+ */
 void Cs2MpegInit(void) {
 
   if (Cs2Area->mpgauth)
@@ -2657,6 +2893,9 @@ void Cs2MpegInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Mode.280x94.29">MPEG Set Mode</a>
+ */
 void Cs2MpegSetMode(void) {
    u8 vidplaymode=Cs2Area->reg.CR1 & 0xFF;
    u8 dectimingmode=Cs2Area->reg.CR2 >> 8;
@@ -2681,6 +2920,9 @@ void Cs2MpegSetMode(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Play.280x95.29">MPEG Play</a>
+ */
 void Cs2MpegPlay(void) {
    // fix me
 
@@ -2690,6 +2932,9 @@ void Cs2MpegPlay(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Decoding_Method.280x96.29">MPEG Set Decoding Method</a>
+ */
 void Cs2MpegSetDecodingMethod(void) {
    // fix me
 
@@ -2699,6 +2944,9 @@ void Cs2MpegSetDecodingMethod(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Connection.280x9A.29">MPEG Set Connection</a>
+ */
 void Cs2MpegSetConnection(void) {
    int mscnext = (Cs2Area->reg.CR3 >> 8);
 
@@ -2729,6 +2977,9 @@ void Cs2MpegSetConnection(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Get_Connection.280x9B.29">MPEG Get Connection</a>
+ */
 void Cs2MpegGetConnection(void) {
    int mgcnext = (Cs2Area->reg.CR3 >> 8);
 
@@ -2754,6 +3005,9 @@ void Cs2MpegGetConnection(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Stream.280x9D.29">MPEG Set Stream</a>
+ */
 void Cs2MpegSetStream(void) {
    int mssnext = (Cs2Area->reg.CR3 >> 8);
 
@@ -2784,6 +3038,9 @@ void Cs2MpegSetStream(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Get_Stream.280x9E.29">MPEG Get Stream</a>
+ */
 void Cs2MpegGetStream(void) {
    int mgsnext = (Cs2Area->reg.CR3 >> 8);
 
@@ -2809,6 +3066,9 @@ void Cs2MpegGetStream(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Display.280xA0.29">MPEG Display</a>
+ */
 void Cs2MpegDisplay(void) {
    // fix me(should be setting display setting)
 
@@ -2818,6 +3078,9 @@ void Cs2MpegDisplay(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Window.280xA1.29">MPEG Set Window</a>
+ */
 void Cs2MpegSetWindow(void) {
    // fix me(should be setting windows settings)
 
@@ -2828,6 +3091,9 @@ void Cs2MpegSetWindow(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Border_Color.280xA2.29">MPEG Set Border Color</a>
+ */
 void Cs2MpegSetBorderColor(void) {
    // fix me(should be setting border color)
 
@@ -2837,6 +3103,9 @@ void Cs2MpegSetBorderColor(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Fade.280xA3.29">MPEG Set Fade</a>
+ */
 void Cs2MpegSetFade(void) {
    // fix me(should be setting fade setting)
 
@@ -2846,6 +3115,9 @@ void Cs2MpegSetFade(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_Video_Effects.280xA4.29">MPEG Set Video Effects</a>
+ */
 void Cs2MpegSetVideoEffects(void) {
    // fix me(should be setting video effects settings)
 
@@ -2855,6 +3127,9 @@ void Cs2MpegSetVideoEffects(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=MPEGCommands#MPEG_Set_LSI.280xAF.29">MPEG Set LSI</a>
+ */
 void Cs2MpegSetLSI(void) {
    // fix me(should be setting the LSI, among other things)
    Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK | CDB_HIRQ_MPCM;
@@ -2862,6 +3137,9 @@ void Cs2MpegSetLSI(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=OtherCommands#Authenticate_Device.280xE0.29">Authenticate Device</a>
+ */
 void Cs2AuthenticateDevice(void) {
   int mpegauth;
 
@@ -2913,6 +3191,9 @@ void Cs2AuthenticateDevice(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * CD Block command <a href="http://wiki.yabause.org/index.php5?title=OtherCommands#Get_Device_Authentication_Status.280xE1.29">Get Device Authentication Status</a>
+ */
 void Cs2IsDeviceAuthenticated(void) {
   Cs2Area->reg.CR1 = (Cs2Area->status << 8);
   if (Cs2Area->reg.CR2)
@@ -2926,6 +3207,9 @@ void Cs2IsDeviceAuthenticated(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * MPEG command <a href="http://wiki.yabause.org/index.php5?title=OtherCommands#Get_MPEG_Card_Boot_ROM.280xE2.29">Get MPEG Card Boot ROM</a>
+ */
 void Cs2GetMPEGRom(void) {
   u16 i;
   FILE * mpgfp;
@@ -2974,6 +3258,11 @@ void Cs2GetMPEGRom(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Determine track number from Frame Address
+ * @param[in]  val FAD value
+ * \return track index, 0 on failure if FAD not found, or 0xFF if TOC is invalid
+ */
 u8 Cs2FADToTrack(u32 val) {
   int i;
   for (i = 0; i < 99; i++)
@@ -2989,6 +3278,11 @@ u8 Cs2FADToTrack(u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Determine Frame Address from track number and index
+ * @param[in]  trackandindex Track and Index
+ * \return frame address or 0 if not found
+ */
 u32 Cs2TrackToFAD(u16 trackandindex) {
   if (trackandindex == 0xFFFF)
      // leadout position
@@ -3011,6 +3305,13 @@ u32 Cs2TrackToFAD(u16 trackandindex) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Determine MSF from Frame Address
+ * @param[in]  val FAD value
+ * @param[out] m minute
+ * @param[out] s second
+ * @param[out] f frame
+ */
 void Cs2FADToMSF(u32 val, u8 *m, u8 *s, u8 *f)
 {
    u32 temp;
@@ -3022,6 +3323,11 @@ void Cs2FADToMSF(u32 val, u8 *m, u8 *s, u8 *f)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Set Play Status to basic defaults
+ * @param[in]  track_number Track Number
+ * @param[in]  writeFAD     Updates FAD value if set to 1
+ */
 void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD) {
   if (track_number != 0xFF)
   {
@@ -3037,6 +3343,12 @@ void Cs2SetupDefaultPlayStats(u8 track_number, int writeFAD) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Allocate block from CD block buffer
+ * @param[out] blocknum Allocated block number
+ * @param[in]  sectsize Size of sector requested
+ * \return Allocated block_struct
+ */
 block_struct * Cs2AllocateBlock(u8 * blocknum, s32 sectsize) {
   u32 i;
   // find a free block
@@ -3062,6 +3374,10 @@ block_struct * Cs2AllocateBlock(u8 * blocknum, s32 sectsize) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Free Block in CD Block buffer
+ * @param[in]  blk Block to free
+ */
 void Cs2FreeBlock(block_struct * blk) {
   if (blk == NULL) return;
   blk->size = -1;
@@ -3072,6 +3388,10 @@ void Cs2FreeBlock(block_struct * blk) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Sort Blocks in CD Block partition
+ * @param[in]  part Partition
+ */
 void Cs2SortBlocks(partition_struct * part) {
   unsigned int from, to;
 
@@ -3094,6 +3414,11 @@ void Cs2SortBlocks(partition_struct * part) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Get Unfiltered(assumed to be true condition of filter) Partition 
+ * @param[in]  curfilter Filter
+ * \return partition_struct
+ */
 partition_struct * Cs2GetPartition(filter_struct * curfilter)
 {
   // go through various filter conditions here(fix me)
@@ -3103,6 +3428,12 @@ partition_struct * Cs2GetPartition(filter_struct * curfilter)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Filter Data(Sectors, etc.) into final partition
+ * @param[in]  curfilter Filter
+ * @param[in]  isaudio   Whether data is CD Audio
+ * \return partition_struct written to
+ */
 partition_struct * Cs2FilterData(filter_struct * curfilter, int isaudio)
 {
   int condresults;
@@ -3237,6 +3568,12 @@ partition_struct * Cs2FilterData(filter_struct * curfilter, int isaudio)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Copy Directory Record(see ISO9660 specs)
+ * @param[in]  buffer Pointer to directory record data(typically sector data)
+ * @param[out] dirrec Output Directory record
+ * \return partition_struct written to
+ */
 int Cs2CopyDirRecord(u8 * buffer, dirrec_struct * dirrec)
 {
   u8 * temp_pointer;
@@ -3340,6 +3677,13 @@ int Cs2CopyDirRecord(u8 * buffer, dirrec_struct * dirrec)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Go through directory records and read data into buffer
+ * @param[in]  curfilter Filter to use
+ * @param[in]  fid       File id to search
+ * @param[in]  isoffset  Whether to offset data(Read Directory command)
+ * \return 0 on success, < 0 on failure
+ */
 int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
 {
    u8 * workbuffer;
@@ -3531,6 +3875,10 @@ int Cs2ReadFileSystem(filter_struct * curfilter, u32 fid, int isoffset)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Setup Transfer of File Info Data through Data Transfer Register
+ * @param[in]  fid File ID
+ */
 void Cs2SetupFileInfoTransfer(u32 fid) {
   Cs2Area->transfileinfo[0] = (u8)(Cs2Area->fileinfo[fid].lba >> 24);
   Cs2Area->transfileinfo[1] = (u8)(Cs2Area->fileinfo[fid].lba >> 16);
@@ -3550,6 +3898,11 @@ void Cs2SetupFileInfoTransfer(u32 fid) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Read Sector Data without Filtering
+ * @param[in]  rufsFAD Frame Address to read
+ * \return partition_struct * where data was read to
+ */
 partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD) {
   partition_struct * rufspartition;
   char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -3637,6 +3990,12 @@ partition_struct * Cs2ReadUnFilteredSector(u32 rufsFAD) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Read Sector Data with Filtering
+ * @param[in]  rfsFAD    Frame Address to read
+ * @param[out] partition partition where data was read to
+ * \return 0 on success, < 0 on failure
+ */
 int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
   char syncheader[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                           0xFF, 0xFF, 0xFF, 0x00};
@@ -3692,6 +4051,11 @@ int Cs2ReadFilteredSector(u32 rfsFAD, partition_struct **partition) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Get IP from CD(First 16 sectors)
+ * @param[in]  autoregion Whether to auto-detect region
+ * \return auto-detected region or 0 if not detected
+ */
 u8 Cs2GetIP(int autoregion) {
    partition_struct * gripartition;
    u8 ret = 0;
@@ -3809,6 +4173,10 @@ u8 Cs2GetIP(int autoregion) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Get Region ID
+ * \return auto-detected region or 0 if not detected
+ */
 u8 Cs2GetRegionID(void)
 {
    return Cs2GetIP(1);
@@ -3816,6 +4184,11 @@ u8 Cs2GetRegionID(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Save CS2 region cpu and memory state
+ * @param[in]  fp File pointer to write to
+ * \return size of data written
+ */
 int Cs2SaveState(FILE * fp) {
    int offset, i;
    IOCheck_struct check = { 0, 0 };
@@ -3914,6 +4287,11 @@ int Cs2SaveState(FILE * fp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Load CS2 region cpu and memory state
+ * @param[in]  fp File pointer to read from
+ * \return size of data read
+ */
 int Cs2LoadState(FILE * fp, int version, int size) {
    int i, i2;
    IOCheck_struct check = { 0, 0 };
@@ -4044,7 +4422,16 @@ int Cs2LoadState(FILE * fp, int version, int size) {
    return size;
 }
 
+/*!
+ * Get Master SH2 stack address from IP data
+ * \return stack address
+ */
 u32 Cs2GetMasterStackAdress(){ if (cdip) return cdip->msh2stack; else return 0x6002000; }
+
+/*!
+ * Get Slave SH2 stack address from IP data
+ * \return stack address
+ */
 u32 Cs2GetSlaveStackAdress(){ if (cdip) return cdip->ssh2stack; else return 0x6001000; }
 
 //////////////////////////////////////////////////////////////////////////////
