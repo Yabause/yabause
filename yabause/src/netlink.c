@@ -50,6 +50,10 @@ static int NetworkReceive(void *buffer, int maxlength);
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Sets LSR value after checking if an interrupt needs to be triggered
+ * @param[in]  val new LSR value
+ */
 UNUSED static void NetlinkLSRChange(u8 val)
 {
    // If IER bit 2 is set and if any of the error or alarms bits are set(and
@@ -68,6 +72,11 @@ UNUSED static void NetlinkLSRChange(u8 val)
 #ifndef USESOCKET
 UNUSED
 #endif
+/*!
+ * Sets MSR value after checking if an interrupt needs to be triggered
+ * @param[in]  set   bitmask to set
+ * @param[in]  clear bitmask to clear
+ */
 static void NetlinkMSRChange(u8 set, u8 clear)
 {
    u8 change;
@@ -88,6 +97,12 @@ static void NetlinkMSRChange(u8 set, u8 clear)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Reads register(byte) from Netlink address space
+ * @param[in]  sh   SH2 context
+ * @param[in]  addr Address to read
+ * \return data from register
+ */
 u8 FASTCALL NetlinkReadByte(SH2_struct *sh, u32 addr)
 {
    u8 ret;
@@ -178,6 +193,10 @@ u8 FASTCALL NetlinkReadByte(SH2_struct *sh, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+* Write AT response to transmit buffer
+ * @param[in]  string String to write
+ */
 static void FASTCALL NetlinkDoATResponse(const char *string)
 {
    strcpy((char *)&NetlinkArea->outbuffer[NetlinkArea->outbufferend], string);
@@ -187,6 +206,12 @@ static void FASTCALL NetlinkDoATResponse(const char *string)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Parse AT parameter value
+ * @param[in]  val    Character
+ * @param[out] offset buffer offset
+ * \return integer value for parameter
+ */
 static int FASTCALL NetlinkFetchATParameter(u8 val, u32 *offset)
 {
    if (val >= '0' && val <= '9')
@@ -200,6 +225,9 @@ static int FASTCALL NetlinkFetchATParameter(u8 val, u32 *offset)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Checks if there's data in the receive buffer, and if so sends interrupt
+ */
 void NetlinkUpdateReceivedDataInt()
 {
    if (NetlinkArea->outbuffersize > 0)
@@ -215,6 +243,11 @@ void NetlinkUpdateReceivedDataInt()
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Removes character from string
+ * @param[in]  str String to change
+ * @param[in]  c   Character to remove
+ */
 void remove_all_chars(char* str, char c) 
 {
    char *pr = str, *pw = str;
@@ -227,6 +260,12 @@ void remove_all_chars(char* str, char c)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Writes byte data to register from Netlink address space
+ * @param[in]  sh   SH2 context
+ * @param[in]  addr Address to write
+ * @param[in]  val  Data to write
+ */
 void FASTCALL NetlinkWriteByte(SH2_struct *sh, u32 addr, u8 val)
 {
    switch (addr & 0xFFFFF)
@@ -618,6 +657,12 @@ void FASTCALL NetlinkWriteByte(SH2_struct *sh, u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Initialize Netlink 
+ * @param[in]  ip   IP to use for connecting or receiving
+ * @param[in]  port Port to use for connecting or receive
+ * \return 0
+ */
 int NetlinkInit(const char *ip, const char *port)
 {  
    if ((NetlinkArea = malloc(sizeof(Netlink))) == NULL)
@@ -685,6 +730,9 @@ int NetlinkInit(const char *ip, const char *port)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Deinitialize Netlink 
+ */
 void NetlinkDeInit(void)
 {
 #ifdef USESOCKET
@@ -697,6 +745,11 @@ void NetlinkDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Netlink execution cycle
+ * @param[in]  timing usec to execute
+ * \return 0
+ */
 void NetlinkExec(u32 timing)
 {
    NetlinkArea->cycles += timing;
@@ -788,6 +841,10 @@ void NetlinkExec(u32 timing)
 
 //////////////////////////////////////////////////////////////////////////////
 #ifdef USESOCKET
+/*!
+ * Thread for communicating to another instance of Yabause for Netlink
+ * @param[in]  data netlink_thread structure
+ */
 void netlink_client(void *data)
 {
    netlink_thread *client=(netlink_thread *)data;
@@ -844,6 +901,9 @@ void netlink_client(void *data)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Stop Netlink Client thread
+ */
 static void NetworkStopClient()
 {
    if (netlink_client_thread_running)
@@ -860,6 +920,10 @@ static void NetworkStopClient()
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Thread for listening for connections from other Yabause clients
+ * @param[in]  data YabSock structure
+ */
 void netlink_listener(void *data)
 {
    YabSock Listener=(YabSock)(pointer)data;
@@ -886,6 +950,9 @@ void netlink_listener(void *data)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Stop Netlink Listener thread
+ */
 static void NetworkStopListener()
 {
    if (netlink_listener_thread_running)
@@ -900,6 +967,10 @@ static void NetworkStopListener()
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Restart Netlink Listener thread
+ * @param[in]  port Port to listen on
+ */
 int NetworkRestartListener(int port)
 {
    int ret;
@@ -912,6 +983,11 @@ int NetworkRestartListener(int port)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Initialize Networking code
+ * @param[in]  port Port to listen on as a string
+ * \return 0 or < 0 on error
+ */
 static int NetworkInit(const char *port)
 {
    int ret;
@@ -930,6 +1006,10 @@ static int NetworkInit(const char *port)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Networking connect thread
+ * @param[in]  data netlink_thread structure
+ */
 void netlink_connect(void *data)
 {   
    netlink_thread *connect=(netlink_thread *)data;
@@ -955,6 +1035,9 @@ void netlink_connect(void *data)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Stop Network Connect thread
+ */
 static void NetworkStopConnect()
 {
    if (netlink_connect_thread_running)
@@ -971,6 +1054,11 @@ static void NetworkStopConnect()
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Start Networking Connect thread
+ * @param[in]  ip   IP to connect to as a string
+ * @param[in]  port Port to connect to as a string
+ */
 static void NetworkConnect(const char *ip, const char *port)
 {
    netlink_thread *connect;
@@ -984,6 +1072,9 @@ static void NetworkConnect(const char *ip, const char *port)
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Check to see if yabause clients are connected
+ */
 static int NetworkWaitForConnect()
 {
    if (netlink_client_thread_running)
@@ -994,6 +1085,9 @@ static int NetworkWaitForConnect()
 
 //////////////////////////////////////////////////////////////////////////////
 
+/*!
+ * Deinitialize Networking code
+ */
 static void NetworkDeInit(void)
 {
    NetworkStopListener();
