@@ -456,7 +456,7 @@ void op1(struct Slot * slot)
    int plfo_val = 0;
    int plfo_shifted = 0;
 
-   if (slot->state.attenuation > 0x3bf)
+   if (slot->state.attenuation >= 0x3bf)
       return;
 
    if (slot->state.lfo_counter % lfo_step_table[slot->regs.lfof] == 0)
@@ -495,7 +495,7 @@ void op2(struct Slot * slot, struct Scsp * s)
    s32 md_out = 0;
    s32 sample_delta = slot->state.waveform_phase_value >> 18;
 
-   if (slot->state.attenuation > 0x3bf)
+   if (slot->state.attenuation >= 0x3bf)
       return;
 
    if (slot->regs.mdl)
@@ -590,7 +590,7 @@ void op3(struct Slot * slot)
 {
    u32 addr = (slot->state.address_pointer) & 0x7FFFF;
 
-   if (slot->state.attenuation > 0x3bf)
+   if (slot->state.attenuation >= 0x3bf)
       return;
 
    if (!slot->regs.pcm8b)
@@ -756,7 +756,7 @@ s16 apply_volume(u16 tl, u16 slot_att, const s16 s)
 //level 1
 void op5(struct Slot * slot)
 {
-   if (slot->state.attenuation > 0x3bf)
+   if (slot->state.attenuation >= 0x3bf)
    {
       slot->state.output = 0;
       return;
@@ -908,7 +908,7 @@ void keyon(struct Slot * slot)
         slot->regs.sa &= 0xFFFFFE ;
       }
 
-#if 0      
+#if 0
       LOG("kx:%d kb:%d sbctl:%d ssctl:%d lpctl:%d pcm8b:%d"
         " sa:%X lsa:%d, lea:%d d2r:%d d1r:%d hold:%d"
         " ar:%d ls:%d krs:%d dl:%d rr:%d si:%d sd:%d tl:%d"
