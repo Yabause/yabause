@@ -898,6 +898,56 @@ void keyon(struct Slot * slot)
       slot->state.sample_offset = 0;
       slot->state.envelope_steps_taken = 0;
 
+      if ( !slot->regs.pcm8b && slot->regs.sa&0x01) {
+        slot->regs.sa &= 0xFFFFFE ;
+      }
+
+#if 0      
+      LOG("kx:%d kb:%d sbctl:%d ssctl:%d lpctl:%d pcm8b:%d"
+        " sa:%X lsa:%d, lea:%d d2r:%d d1r:%d hold:%d"
+        " ar:%d ls:%d krs:%d dl:%d rr:%d si:%d sd:%d tl:%d"
+        " mdl:%d mdxsl:%d mdysl:%d oct:%d fns:%d re:%d lfof:%d"
+        " plfows:%d plfos:%d alfows:%d alfos:%d isel:%d imxl:%d disdl:%d"
+        " dipan:%d efsdl:%d efpan:%d",
+        slot->regs.kx,
+        slot->regs.kb,
+        slot->regs.sbctl,
+        slot->regs.ssctl,
+        slot->regs.lpctl,
+        slot->regs.pcm8b,
+        slot->regs.sa,
+        slot->regs.lsa,
+        slot->regs.lea,
+        slot->regs.d2r,
+        slot->regs.d1r,
+        slot->regs.hold,
+        slot->regs.ar,
+        slot->regs.ls,
+        slot->regs.krs,
+        slot->regs.dl,
+        slot->regs.rr,
+        slot->regs.si,
+        slot->regs.sd,
+        slot->regs.tl,
+        slot->regs.mdl,
+        slot->regs.mdxsl,
+        slot->regs.mdysl,
+        slot->regs.oct,
+        slot->regs.fns,
+        slot->regs.re,
+        slot->regs.lfof,
+        slot->regs.plfows,
+        slot->regs.plfos,
+        slot->regs.alfows,
+        slot->regs.alfos,
+        slot->regs.isel,
+        slot->regs.imxl,
+        slot->regs.disdl,
+        slot->regs.dipan,
+        slot->regs.efsdl,
+        slot->regs.efpan);
+#endif
+
       if (new_scsp.debug_mode)
          scsp_debug_add_instrument(slot->regs.sa);
    }
