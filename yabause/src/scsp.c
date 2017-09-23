@@ -733,26 +733,15 @@ void op4(struct Slot * slot)
 
 s16 apply_volume(u16 tl, u16 slot_att, const s16 s)
 {
-   u32 tl_att = tl * 4;
-   u32 att_clipped = 0;
    s32 sample_att = 0;
-   u32 shift = 0;
+   s32 v = 0;
 
-   if (tl == 0xff) {
-     return 0;
-   }
+   v += tl * 4;
+   v += slot_att;
+   if (v > 0x3ff)
+     v = 0x3ff;
 
-   tl_att += slot_att;
-
-   att_clipped = tl_att;
-   att_clipped &= 0x3f;
-   att_clipped ^= 0x7f;
-   att_clipped += 1;
-
-   sample_att = s * att_clipped;
-   shift = tl_att >> 6;
-
-   sample_att = sample_att >> (shift + 7);
+   sample_att = (s * ((v & 0x3F) ^ 0x7F)) >> ((v >> 6) + 7);
 
    return sample_att;
 }
@@ -781,7 +770,6 @@ void op5(struct Slot * slot)
          alfo_val = alfo.noise_table[slot->state.lfo_pos];
 
       lfo_add = (((alfo_val + 1)) >> (7 - slot->regs.alfos)) << 1;
-
       sample = apply_volume(slot->regs.tl, slot->state.attenuation + lfo_add, slot->state.output);
       slot->state.output = sample;
    }
@@ -897,6 +885,8 @@ void scsp_debug_get_envelope(int chan, int * env, int * state)
    *state = new_scsp.slots[chan].state.envelope;
 }
 
+
+
 void keyon(struct Slot * slot) 
 {
    if (slot->state.envelope == RELEASE )
@@ -908,14 +898,14 @@ void keyon(struct Slot * slot)
       slot->state.sample_offset = 0;
       slot->state.envelope_steps_taken = 0;
 
-      if ( !slot->regs.pcm8b && slot->regs.sa&0x01) {
+      if ( !slot->regs.pcm8b && (slot->regs.sa&0x01) ) {
         slot->regs.sa &= 0xFFFFFE ;
       }
 
 #if 0
       LOG("kx:%d kb:%d sbctl:%d ssctl:%d lpctl:%d pcm8b:%d"
         " sa:%X lsa:%d, lea:%d d2r:%d d1r:%d hold:%d"
-        " ar:%d ls:%d krs:%d dl:%d rr:%d si:%d sd:%d tl:%d"
+        " ar:%d ls:%d krs:%d dl:%d rr:%d si:%d sd:%d tl:%X"
         " mdl:%d mdxsl:%d mdysl:%d oct:%d fns:%d re:%d lfof:%d"
         " plfows:%d plfos:%d alfows:%d alfos:%d isel:%d imxl:%d disdl:%d"
         " dipan:%d efsdl:%d efpan:%d",
@@ -974,10 +964,19 @@ void keyonex(struct Scsp *s)
    int channel;
    for (channel = 0; channel < 32; channel++)
    {
-      if (s->slots[channel].regs.kb)
-         keyon(&s->slots[channel]);
-      else
-         keyoff(&s->slots[channel]);
+     if (s->slots[channel].regs.kb) {
+
+       //if ( s->slots[channel].state.envelope == RELEASE) {
+       //  LOG("keyon %d", channel);
+       //}
+       keyon(&s->slots[channel]);
+     }
+     else {
+       //if ( s->slots[channel].state.envelope != RELEASE) {
+       //  LOG("keyoff %d state %d", channel, s->slots[channel].state.envelope );
+       //}
+       keyoff(&s->slots[channel]);
+     }
    }
 }
 
