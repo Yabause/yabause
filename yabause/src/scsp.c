@@ -733,6 +733,10 @@ s16 apply_volume(u16 tl, u16 slot_att, const s16 s)
    s32 sample_att = 0;
    u32 shift = 0;
 
+   if (tl == 0xff) {
+     return 0;
+   }
+
    tl_att += slot_att;
 
    att_clipped = tl_att;
