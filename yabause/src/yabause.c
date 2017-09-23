@@ -231,7 +231,6 @@ int YabauseInit(yabauseinit_struct *init)
    if ((LowWram = T2MemoryInit(0x100000)) == NULL)
       return -1;
 
-   yabsys.extend_backup = 1;
    if (yabsys.extend_backup) {
      bupfilename = init->buppath;
      pbackup = fopen(bupfilename, "w+b");

@@ -447,7 +447,7 @@ static u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
         }
         else {
           *addr      = 0x00180000;
-          *size      = 0x800;
+          *size      = 0x8000;
           *blocksize = 0x40;
         }
         return 0;
