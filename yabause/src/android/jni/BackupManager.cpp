@@ -237,7 +237,7 @@ int BackupManager::putFile( const string & rootstr ) {
   bin = base64_decode(base64);
   strncpy(save.filename,bin.c_str(),12);
 
-  base64 = header["filename"].asString();
+  base64 = header["comment"].asString();
   bin = base64_decode(base64);
   strncpy(save.comment,bin.c_str(),11);
 
