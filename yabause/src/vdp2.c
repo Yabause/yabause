@@ -59,7 +59,6 @@ static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
-int vbalnk_wait = 0;
 int voutflg = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
@@ -366,6 +365,12 @@ void Vdp2Reset(void) {
 
 }
 
+static void vdp1DirectDraw(void) {
+  Vdp1Regs->EDSR >>= 1;
+  Vdp1Draw();
+  VIDCore->Vdp1DrawEnd();
+  Vdp1Regs->EDSR |= 2;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 void VdpProc( void *arg ){
@@ -395,8 +400,7 @@ void VdpProc( void *arg ){
     case VDPEV_DIRECT_DRAW:
       FrameProfileAdd("DirectDraw start");
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
-      Vdp1Draw();
-      VIDCore->Vdp1DrawEnd();
+      vdp1DirectDraw();
       FrameProfileAdd("DirectDraw end");
       YabAddEventQueue(vdp1_rcv_evqueue, 0);
       break;
@@ -438,6 +442,8 @@ void vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlank(void) {
+}
+void Vdp2VBlank_sync(void) {
 #if !defined(YAB_ASYNC_RENDERING)
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
@@ -463,7 +469,6 @@ void Vdp2VBlankIN(void) {
     evqueue = YabThreadCreateQueue(32);
     YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
   }
-  vbalnk_wait = 0;
   FrameProfileAdd("VIN event");
   YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
@@ -473,6 +478,8 @@ void Vdp2VBlankIN(void) {
   //} while (YaGetQueueSize(rcv_evqueue) != 0);
    FrameProfileAdd("VIN sync");
 
+#else
+Vdp2VBlank_sync();
 #endif
 
    Vdp2Regs->TVSTAT |= 0x0008;
@@ -558,7 +565,6 @@ static void Vdp2HBlankOUT_displayed(int isDisplayed) {
     if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_mode == yabsys.LineCount)) {
         if (Vdp1External.plot_trigger_delay == 0) { 
 #if YAB_ASYNC_RENDERING
-
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW %d/%d", YaGetQueueSize(vdp1_rcv_evqueue), yabsys.LineCount);
         if ( YaGetQueueSize(vdp1_rcv_evqueue) > 0){
           yabsys.wait_line_count = -1;
@@ -566,24 +572,21 @@ static void Vdp2HBlankOUT_displayed(int isDisplayed) {
             YabWaitEventQueue(vdp1_rcv_evqueue);
           } while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
         }
-        Vdp1Regs->EDSR >>= 1;
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
         FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
 #else
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1Regs->EDSR >>= 1;
-        Vdp1Draw(); 
-        VIDCore->Vdp1DrawEnd();
+	vdp1DirectDraw();
 #endif
         } else {
             Vdp1External.plot_trigger_delay--;
         }
      }
 
-#if defined(YAB_ASYNC_RENDERING)
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
+#if defined(YAB_ASYNC_RENDERING)
     
     FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
     yabsys.wait_line_count = -1;
@@ -592,8 +595,19 @@ static void Vdp2HBlankOUT_displayed(int isDisplayed) {
     //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
       FRAMELOG("**WAIT END**");
     FrameProfileAdd("DirectDraw sync");
-   }
+    
+    Vdp1Regs->EDSR |= 2;
+    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+    ScuSendDrawEnd();
+    FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+#else
+    Vdp1Regs->EDSR |= 2;
+    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+    ScuSendDrawEnd();
+    FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
 #endif
+  }
+     
 }
 
 void Vdp2HBlankOUT() {
@@ -721,7 +735,7 @@ void vdp2VBlankOUT(void) {
     VIDCore->Vdp1FrameChange();
     Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1External.swap_frame_buffer = 0;
-    Vdp1Regs->EDSR >>= 1;
+    //Vdp1Regs->EDSR >>= 1;
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1){
      Vdp1Draw();
@@ -733,6 +747,8 @@ void vdp2VBlankOUT(void) {
   if (isrender){
     YabAddEventQueue(vdp1_rcv_evqueue, 0);
   }
+#else
+  yabsys.wait_line_count = 30;
 #endif
 
   if (Vdp2Regs->TVMD & 0x8000) {
@@ -896,14 +912,25 @@ void Vdp2VBlankOUT(void) {
       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
     voutflg = 1;
-    if (Vdp1External.swap_frame_buffer == 1 && Vdp1External.frame_change_plot == 1)
+    if (Vdp1External.swap_frame_buffer == 1)
     {
-      yabsys.wait_line_count = 10;
-      FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+      Vdp1Regs->EDSR >>= 1;
+      if (Vdp1External.frame_change_plot == 1) {
+        yabsys.wait_line_count = 30;
+        FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+      }
     }
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
     YabThreadYield();
 #else
+   if (Vdp1External.swap_frame_buffer == 1)
+    {
+      Vdp1Regs->EDSR >>= 1;
+      if (Vdp1External.frame_change_plot == 1) {
+        yabsys.wait_line_count = 30;
+        FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+      }
+    }
    vdp2VBlankOUT();
 #endif
 }

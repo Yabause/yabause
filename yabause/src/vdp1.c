@@ -375,8 +375,8 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1Regs->EDSR >>= 1;
         Vdp1Draw(); 
-        VIDCore->Vdp1DrawEnd();
 #endif
+        VIDCore->Vdp1DrawEnd();
         Vdp1External.plot_trigger_delay = 1;
         }
      }
@@ -581,13 +581,6 @@ void Vdp1Draw(void)
    Vdp1Regs->COPR = 0;
 
    VIDCore->Vdp1DrawStart();
-
-   //VIDCore->Vdp1DrawEnd();
-
-   // we set two bits to 1
-   Vdp1Regs->EDSR |= 2;
-   Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
-   ScuSendDrawEnd();
 
    FRAMELOG("Vdp1Draw end at %d line", yabsys.LineCount);
 
