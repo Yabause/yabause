@@ -128,7 +128,7 @@ void * YabMemMap(char * filename, u32 size ) {
   p = mmap(0, sb.st_size, PROT_READ| PROT_WRITE, MAP_SHARED, fd, 0);
   if (p == MAP_FAILED) {
     perror("mmap");
-    return 1;
+    return NULL;
   }
 
   if (close(fd) == -1) {
@@ -587,12 +587,14 @@ void MappedMemoryInit()
                                 &SmpcWriteByte,
                                 &SmpcWriteWord,
                                 &SmpcWriteLong);
+   if (BupRam != NULL) {
    FillMemoryArea(0x018, 0x01F, &BupRamMemoryReadByte,
                                 &BupRamMemoryReadWord,
                                 &BupRamMemoryReadLong,
                                 &BupRamMemoryWriteByte,
                                 &BupRamMemoryWriteWord,
                                 &BupRamMemoryWriteLong);
+   }
    FillMemoryArea(0x020, 0x02F, &LowWramMemoryReadByte,
                                 &LowWramMemoryReadWord,
                                 &LowWramMemoryReadLong,
@@ -689,12 +691,14 @@ void MappedMemoryInit()
                                 &HighWramMemoryWriteByte,
                                 &HighWramMemoryWriteWord,
                                 &HighWramMemoryWriteLong);
-   FillMemoryArea( ((tweak_backup_file_addr >> 16) & 0xFFF) , 0x7ff, &BupRamMemoryReadByte,
+      if (BupRam != NULL) {
+     FillMemoryArea( ((tweak_backup_file_addr >> 16) & 0xFFF) , 0x7ff, &BupRamMemoryReadByte,
      &BupRamMemoryReadWord,
      &BupRamMemoryReadLong,
      &BupRamMemoryWriteByte,
      &BupRamMemoryWriteWord,
      &BupRamMemoryWriteLong);
+     }
 }
 
 //////////////////////////////////////////////////////////////////////////////

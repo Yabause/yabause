@@ -465,7 +465,7 @@ void YabFlushBackups(void)
     else {
       if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-      T1MemoryDeInit(BupRam);
+      //T1MemoryDeInit(BupRam);
     }
   }
   CartFlush();

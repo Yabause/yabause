@@ -215,7 +215,8 @@ void YuiInit() {
 	yinit.regionid = REGION_EUROPE;
 	yinit.biospath = NULL;
 	yinit.cdpath = NULL;
-	yinit.buppath = NULL;
+	yinit.buppath = "./bup.ram";
+        yinit.extend_backup = 1;
 	yinit.mpegpath = NULL;
 	yinit.cartpath = "./backup32Mb.ram";
   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
