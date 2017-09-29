@@ -5304,7 +5304,7 @@ void ScspExec(){
 #else
 
 void SyncScsp() {
-    if ((thread_running == 1) && (yabsys.LineCount == yabsys.MaxLineCount)) {
+    if ((thread_running == 1) && (yabsys.LineCount == yabsys.MaxLineCount-1)) {
         if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
     }
 }

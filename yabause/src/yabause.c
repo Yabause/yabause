@@ -136,12 +136,7 @@ void print_usage(const char *program_name) {
 //////////////////////////////////////////////////////////////////////////////
 
 
-#define VBLANK_CYCLES_RATIO (0.5)
-#define HBLANK_CYCLES_RATIO (0.1)
-
-#define DECILINE_STEP (12.0)
-
-#define DECILINE_RATIO ((DECILINE_STEP - VBLANK_CYCLES_RATIO - VBLANK_CYCLES_RATIO)/(DECILINE_STEP))
+#define DECILINE_STEP (10.0)
 
 void YabauseChangeTiming(int freqtype) {
    // Setup all the variables related to timing
@@ -631,36 +626,23 @@ u32 YabauseGetCpuTime(){
 #endif
 }
 
-typedef enum {
-   VBLANKIN = 0,
-   VBLANK,
-   VBLANKOUT,
-   HBLANKIN,
-   HBLANK,
-   HBLANKOUT,
-   LINE
-} screenState;
-
 // cyclesinc
 
 int msh2cdiff = 0;
 int ssh2cdiff = 0;
-
-static int oneframeexec;
-
-#ifdef DEBUG_ACCURACY
-int totalMSH2CyclesRequested = 0;
-int totalSSH2CyclesRequested = 0;
-#endif
 
 u32 YabauseGetFrameCount() {
   return yabsys.frame_count;
 }
 
 //#define YAB_STATICS
-static u64 cpu_emutime = 0;
 
-void emulate(int cycles, int endOfLine) {
+int YabauseEmulate(void) {
+   int oneframeexec = 0;
+   yabsys.frame_count++;
+
+   const u32 cyclesinc =
+      yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop / DECILINE_STEP;
    const u32 usecinc =
       yabsys.DecilineMode ? yabsys.DecilineUsec : yabsys.DecilineUsec * DECILINE_STEP;
 
@@ -706,20 +688,41 @@ void emulate(int cycles, int endOfLine) {
    }
 #endif
 
-// Since we run the SCU with half the number of cycles we send
+   DoMovie();
+
+   #if defined(SH2_DYNAREC)
+   if(SH2Core->id==2) {
+     if (yabsys.IsPal)
+       YabauseDynarecOneFrameExec(722,0); // m68kcycles,m68kcenticycles
+     else
+       YabauseDynarecOneFrameExec(716,20);
+     return 0;
+   }
+   #endif
+
+   MSH2->cycles = 0;
+   SSH2->cycles = 0;
+   u64 cpu_emutime = 0;
+   while (!oneframeexec)
+   {
+      PROFILE_START("Total Emulation");
+
+      if (yabsys.DecilineMode) {
+
+         // Since we run the SCU with half the number of cycles we send
          // to SH2Exec(), we always compute an even number of cycles here
          // and leave any odd remainder in SH2CycleFrac.
          u32 msh2cycles, ssh2cycles;
-         yabsys.SH2CycleFrac += cycles;
-         if ((cycles + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         yabsys.SH2CycleFrac += cyclesinc;
+         if ((cyclesinc + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
            msh2cycles = 0;
-	   MSH2->cycles += cycles;
+	   MSH2->cycles += cyclesinc;
          } else {
            msh2cycles = ((yabsys.SH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
          }
-         if ((cycles + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         if ((cyclesinc + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
            ssh2cycles = 0;
-           SSH2->cycles += cycles;
+           SSH2->cycles += cyclesinc;
          } else {
            ssh2cycles = ((yabsys.SH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
          }
@@ -754,21 +757,113 @@ void emulate(int cycles, int endOfLine) {
 #ifdef YAB_STATICS
 		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
 #endif
-if (endOfLine == 0) return;
+
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
          ScspExec(1);
          PROFILE_STOP("SCSP");
 #endif
+
+         yabsys.DecilineCount++;
+         if(yabsys.DecilineCount == DECILINE_STEP-1)
+         {
+            // HBlankIN
+            PROFILE_START("hblankin");
+            Vdp2HBlankIN();
+            PROFILE_STOP("hblankin");
+         }
+
          PROFILE_START("SCU");
          ScuExec(msh2cycles / 2);
+         PROFILE_STOP("SCU");
+
+      } else {  // !DecilineMode
+
+         const u32 decilinecycles = yabsys.DecilineStop >> YABSYS_TIMING_BITS;
+         u32 sh2cycles;
+         yabsys.SH2CycleFrac += cyclesinc;
+         sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
+         yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
+         if (!yabsys.playing_ssf)
+         {
+            PROFILE_START("MSH2");
+            SH2Exec(MSH2, sh2cycles - decilinecycles);
+            PROFILE_STOP("MSH2");
+            PROFILE_START("SSH2");
+            if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, sh2cycles - decilinecycles);
+            PROFILE_STOP("SSH2");
+         }
+
+         PROFILE_START("hblankin");
+         Vdp2HBlankIN();
+         PROFILE_STOP("hblankin");
+
+         if (!yabsys.playing_ssf)
+         {
+            PROFILE_START("MSH2");
+            SH2Exec(MSH2, decilinecycles);
+            PROFILE_STOP("MSH2");
+            PROFILE_START("SSH2");
+            if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, decilinecycles);
+            PROFILE_STOP("SSH2");
+         }
+
+#ifdef USE_SCSP2
+         PROFILE_START("SCSP");
+         ScspExec(10);
+         PROFILE_STOP("SCSP");
+#endif
+
          PROFILE_START("SCU");
+         ScuExec(sh2cycles / 2);
+         PROFILE_STOP("SCU");
+
+      }  // if (yabsys.DecilineMode)
 
 #ifndef USE_SCSP2
       PROFILE_START("68K");
       M68KSync();  // Wait for the previous iteration to finish
       PROFILE_STOP("68K");
 #endif
+
+      if ((yabsys.LineCount == 0) && (yabsys.DecilineCount == 1))
+            Vdp2VBlankOUT();
+
+      if (!yabsys.DecilineMode || yabsys.DecilineCount == DECILINE_STEP)
+      {
+         // HBlankOUT
+         PROFILE_START("hblankout");
+         Vdp2HBlankOUT();
+         SyncScsp();
+         PROFILE_STOP("hblankout");
+#ifndef USE_SCSP2
+         PROFILE_START("SCSP");
+         ScspExec();
+         PROFILE_STOP("SCSP");
+#endif
+         yabsys.DecilineCount = 0;
+         yabsys.LineCount++;
+         if (yabsys.LineCount == yabsys.VBlankLineCount)
+         {
+            PROFILE_START("vblankin");
+            // VBlankIN
+            SmpcINTBACKEnd();
+            Vdp2VBlankIN();
+            Vdp2VBlank();
+            PROFILE_STOP("vblankin");
+            CheatDoPatches();
+         }
+         else if (yabsys.LineCount == yabsys.MaxLineCount)
+         {
+            // VBlankOUT
+            PROFILE_START("VDP1/VDP2");
+            yabsys.LineCount = 0;
+            oneframeexec = 1;
+            PROFILE_STOP("VDP1/VDP2");
+         }
+      }
 
       yabsys.UsecFrac += usecinc;
       PROFILE_START("SMPC");
@@ -810,120 +905,9 @@ if (endOfLine == 0) return;
 #endif
       }
 #endif
-}
-
-int YabauseEmulate(void) {
-   const u32 cyclesstep =
-      yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop / DECILINE_STEP;
-   u32 cyclesinc = cyclesstep;
-   yabsys.frame_count++;
-   cpu_emutime = 0;
-
-   oneframeexec = 0;
-
-   DoMovie();
-
-   #if defined(SH2_DYNAREC)
-   if(SH2Core->id==2) {
-     if (yabsys.IsPal)
-       YabauseDynarecOneFrameExec(722,0); // m68kcycles,m68kcenticycles
-     else
-       YabauseDynarecOneFrameExec(716,20);
-     return 0;
-   }
-   #endif
-
-   MSH2->cycles = 0;
-   SSH2->cycles = 0;
-#ifdef DEBUG_ACCURACY
-int totalMSH2cyclesPerFrame = MSH2->cycles;
-int totalSSH2cyclesPerFrame = SSH2->cycles;
-#endif
-
-
-   screenState state = VBLANKOUT;
-   yabsys.LineCount = 0;
-#ifndef USE_SCSP2
-            PROFILE_START("SCSP");
-            ScspExec();
-            PROFILE_STOP("SCSP");
-#endif
-   while (!oneframeexec)
-   {
-      PROFILE_START("Total Emulation");
-
-         switch (state) {
-         case VBLANKIN:
-            PROFILE_START("vblankin");
-            // VBlankIN
-            SmpcINTBACKEnd();
-            Vdp2VBlankIN();
-            PROFILE_STOP("vblankin");
-            CheatDoPatches();
-            state = VBLANK;
-         break;
-         case VBLANK:
-            emulate(cyclesinc * VBLANK_CYCLES_RATIO, 0);
-	    Vdp2VBlank();
-            cyclesinc -= cyclesinc * VBLANK_CYCLES_RATIO;
-            state = LINE;
-         break;
-         case VBLANKOUT:
-            PROFILE_START("vblankout");
-            Vdp2VBlankOUT();
-            PROFILE_START("vblankout");
-            state = LINE;
-         break;
-         case HBLANKIN:
-            PROFILE_START("hblankin");
-            Vdp2HBlankIN();
-            PROFILE_STOP("hblankin");
-            state = HBLANK;
-         break;
-         case HBLANK:
-            emulate(cyclesinc * HBLANK_CYCLES_RATIO, 0);
-            yabsys.DecilineCount = 0;
-            cyclesinc = yabsys.DecilineStop / DECILINE_STEP;
-            state = HBLANKOUT;
-         break;
-         case HBLANKOUT:
-            PROFILE_START("hblankout");
-            Vdp2HBlankOUT();
-	    emulate(cyclesinc * (1.0-HBLANK_CYCLES_RATIO),1);
-	    emulate(cyclesinc,1);
-            PROFILE_STOP("hblankout");
-            yabsys.LineCount++;
-            if (yabsys.LineCount == yabsys.MaxLineCount) {
-                oneframeexec = 1;
-            }
-            SyncScsp();
-            if (yabsys.LineCount == yabsys.VBlankLineCount) {
-               state = VBLANKIN;
-            } else {
-               state = LINE;
-            }
-         break;
-         case LINE:
-            emulate(cyclesinc, 1);
-            cyclesinc = cyclesstep;
-            yabsys.DecilineCount++;
-            if (yabsys.DecilineCount == DECILINE_STEP - 2) {
-               state = HBLANKIN;
-            }
-         break;
-         default:
-         break;
-         }
 
       PROFILE_STOP("Total Emulation");
    }
-
-#ifdef DEBUG_ACCURACY
-	totalMSH2cyclesPerFrame =  MSH2->cycles - totalMSH2cyclesPerFrame;
-	totalSSH2cyclesPerFrame = SSH2->cycles - totalSSH2cyclesPerFrame;
-	printf("MSH2 Accuracy %d cycles (%.2f\%)\n", totalMSH2CyclesRequested, 100.0 - (totalMSH2cyclesPerFrame - totalMSH2CyclesRequested)*100.0/totalMSH2CyclesRequested);
-	printf("SSH2 Accuracy %d cycles (%.2f\%)\n", totalSSH2CyclesRequested, 100.0 - (totalSSH2cyclesPerFrame - totalSSH2CyclesRequested)*100.0/totalSSH2CyclesRequested);
-#endif
 
 #ifndef USE_SCSP2
    M68KSync();
@@ -961,9 +945,9 @@ int totalSSH2cyclesPerFrame = SSH2->cycles;
      }
    }
 #endif
+#endif
 #if DYNAREC_DEVMIYAX
    if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
-#endif
 #endif
 
    return 0;
