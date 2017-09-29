@@ -793,7 +793,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
 	add_definitions(-DARCH_IS_LINUX=1)
-	add_definitions(-DYAB_ASYNC_RENDERING)
+	#add_definitions(-DYAB_ASYNC_RENDERING)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.c cd-linux.c)
 
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
