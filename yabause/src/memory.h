@@ -207,8 +207,9 @@ extern "C" {
     if (!filename)
       return -1;
 
-    if ((fp = fopen(filename, "w+b")) == NULL)
+    if ((fp = fopen(filename, "rb")) == NULL) {
       return -1;
+    }
 
     // Calculate file size
     fseek(fp, 0, SEEK_END);
