@@ -5697,7 +5697,7 @@ SoundSaveState (FILE *fp)
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
 
-  offset = StateWriteHeader (fp, "SCSP", 2);
+  offset = StateWriteHeader (fp, "SCSP", 3);
 
   // Save 68k registers first
   ywrite (&check, (void *)&IsM68KRunning, 1, 1, fp);
@@ -5966,6 +5966,13 @@ SoundSaveState (FILE *fp)
 
   ywrite(&check, (void *)&ScspInternalVars->scsptiming1, sizeof(u32), 1, fp);
   ywrite(&check, (void *)&ScspInternalVars->scsptiming2, sizeof(u32), 1, fp);
+
+  ywrite(&check, (void *)&cdda_next_in, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&cdda_out_left, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scsp_mute_flags, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scspsoundlen, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scsplines, sizeof(u32), 1, fp);
+
 
   g_scsp_lock = 0;
 
@@ -6303,6 +6310,14 @@ SoundLoadState (FILE *fp, int version, int size)
 
     yread(&check, (void *)&ScspInternalVars->scsptiming1, sizeof(u32), 1, fp);
     yread(&check, (void *)&ScspInternalVars->scsptiming2, sizeof(u32), 1, fp);
+
+    if (version >= 3) {
+      yread(&check, (void *)&cdda_next_in, sizeof(u32), 1, fp);
+      yread(&check, (void *)&cdda_out_left, sizeof(u32), 1, fp);
+      yread(&check, (void *)&scsp_mute_flags, sizeof(u32), 1, fp);
+      yread(&check, (void *)&scspsoundlen, sizeof(u32), 1, fp);
+      yread(&check, (void *)&scsplines, sizeof(u32), 1, fp);
+    }
 
 
   return size;
