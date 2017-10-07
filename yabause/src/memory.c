@@ -1451,7 +1451,7 @@ int YabSaveStateStream(FILE *fp)
       return -2;
    }
 
-   YuiSwapBuffers();
+   //YuiSwapBuffers();
    #ifdef USE_OPENGL
    glPixelZoom(1,1);
    glReadBuffer(GL_BACK);
@@ -1459,7 +1459,7 @@ int YabSaveStateStream(FILE *fp)
    #else
    //memcpy(buf, dispbuffer, totalsize);
    #endif
-   YuiSwapBuffers();
+   //YuiSwapBuffers();
 
    ywrite(&check, (void *)&outputwidth, sizeof(outputwidth), 1, fp);
    ywrite(&check, (void *)&outputheight, sizeof(outputheight), 1, fp);
@@ -1605,7 +1605,7 @@ int YabLoadStateStream(FILE *fp)
    fseek(fp, headersize, SEEK_SET);
 
    // Verify version here
-
+ 
    ScspMuteAudio(SCSP_MUTE_SYSTEM);
    
    if (StateCheckRetrieveHeader(fp, "CART", &version, &chunksize) != 0)
