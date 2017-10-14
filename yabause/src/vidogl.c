@@ -663,7 +663,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
   case 0:
   {
     // 4 bpp Bank mode
-    u32 colorBank = cmd->CMDCOLR; // &0xFFF0;
+    u32 colorBank = cmd->CMDCOLR&0xFFF0;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
     u16 i;
 
