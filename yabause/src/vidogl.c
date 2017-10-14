@@ -3458,7 +3458,6 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 
     for (i = 0; i < hres; i++)
     {
-
       parameter = info->GetRParam(info, i, j);
       if (parameter == NULL)
       {
@@ -7100,6 +7099,10 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struc
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct * info, int h, int v)
 {
+  if ((fixVdp2Regs->WCTLD & 0x04) == 0) {
+    return (&paraA);
+  }
+
   if (info->WindwAreaMode == 0)
   {
     if (info->pWinInfo[v].WinShowLine == 0)
