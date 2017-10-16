@@ -412,7 +412,13 @@ typedef struct
    u32 pchistory_index;
 #endif
 
-   void * ext;  
+   void * ext; 
+
+   u8 cacheOn;
+   u8 nbCacheWay;
+   u8 cacheLRU[64];
+   u8 cacheData[64][4][16];
+   u32 cacheTag[64][4];
 
 } SH2_struct;
 
@@ -490,6 +496,14 @@ void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *r, char *string);
 void SH2DumpHistory(SH2_struct *context);
 
 void SH2HandleBreakpoints(SH2_struct *context);
+
+
+u8 INLINE CacheReadByte(u32 addr);
+u16 INLINE CacheReadShort(u32 addr);
+u32 INLINE CacheReadLong(u32 addr);
+void INLINE CacheWriteByte(u32 addr, u32 val);
+void INLINE CacheWriteShort(u32 addr, u32 val);
+void INLINE CacheWriteLong(u32 addr, u32 val);
 
 static void SH2BreakNow(SH2_struct *context)
 {

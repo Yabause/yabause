@@ -186,7 +186,7 @@ static u32 FASTCALL FetchBios(u32 addr)
 #if CACHE_ENABLE
    return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
 #else
-   return T2ReadWord(BiosRom, addr & 0x7FFFF);
+   return MappedMemoryReadWord(addr);
 #endif
 }
 
@@ -208,7 +208,7 @@ static u32 FASTCALL FetchLWram(u32 addr)
 #if CACHE_ENABLE
 	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
 #else
-	return T2ReadWord(LowWram, addr & 0xFFFFF);
+	return MappedMemoryReadWord(addr);
 #endif
 
 }
@@ -220,7 +220,7 @@ static u32 FASTCALL FetchHWram(u32 addr)
 #if CACHE_ENABLE
 	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
 #else
-	return T2ReadWord(HighWram, addr & 0xFFFFF);
+	return MappedMemoryReadWord(addr);
 #endif
 }
 
@@ -2391,7 +2391,7 @@ static void FASTCALL SH2tas(SH2_struct * sh)
    s32 temp;
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   temp=(s32) MappedMemoryReadByte(sh->regs.R[n]);
+   temp=(s32) MappedMemoryReadByte(0X20000000|sh->regs.R[n]);
 
    if (temp==0)
       sh->regs.SR.part.T=1;
@@ -2834,13 +2834,13 @@ int SH2InterpreterInit()
             fetchlist[i] = FetchBios;
             break;
          case 0x002: // Low Work Ram
-            fetchlist[i] = FetchLWram;
+            fetchlist[i] = MappedMemoryReadWord;
             break;
          case 0x020: // CS0
-            fetchlist[i] = FetchCs0;
+            fetchlist[i] = MappedMemoryReadWord;
             break;
          case 0x05c: // Fighting Viper
-            fetchlist[i] = FetchVram;
+            fetchlist[i] = MappedMemoryReadWord;
             break;
          case 0x060: // High Work Ram
          case 0x061: 
@@ -2858,7 +2858,7 @@ int SH2InterpreterInit()
          case 0x06D: 
          case 0x06E: 
          case 0x06F:
-            fetchlist[i] = FetchHWram;
+            fetchlist[i] = MappedMemoryReadWord;
             break;
          default:
             fetchlist[i] = FetchInvalid;

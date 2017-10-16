@@ -685,12 +685,13 @@ void MappedMemoryInit()
                                 &ScuWriteByte,
                                 &ScuWriteWord,
                                 &ScuWriteLong);
-   FillMemoryArea(0x600, 0x610, &HighWramMemoryReadByte,
+   FillMemoryArea(0x600,  0x60F, &HighWramMemoryReadByte,
                                 &HighWramMemoryReadWord,
                                 &HighWramMemoryReadLong,
                                 &HighWramMemoryWriteByte,
                                 &HighWramMemoryWriteWord,
                                 &HighWramMemoryWriteLong);
+
       if (BupRam != NULL) {
      FillMemoryArea( ((tweak_backup_file_addr >> 16) & 0xFFF) , 0x7ff, &BupRamMemoryReadByte,
      &BupRamMemoryReadWord,
@@ -713,24 +714,23 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
 {
    switch (addr >> 29)
    {
-      case 0x0:
       case 0x1:
-      case 0x4:
-      case 0x5:
+      {
+        return ReadByteList[(addr >> 16) & 0xFFF](addr);
+      }
+      case 0x0:
       {
          // Cache/Non-Cached
-         return ReadByteList[(addr >> 16) & 0xFFF](addr);
+         if (CurrentSH2->cacheOn)
+           return CacheRead(addr, 1);
+         else
+           return ReadByteList[(addr >> 16) & 0xFFF](addr);
       }
-/*
-      case 0x2:
-      {
-         // Purge Area
-         break;
-      }
-*/
+
       //case 0x4:
       case 0x6:
          // Data Array
+       printf("DAta Byte R %x\n", addr);
          return DataArrayReadByte(addr);
       case 0x7:
       {
@@ -742,7 +742,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
-            // ???
+            // SDRAM
          }
          else
          {
@@ -752,6 +752,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
       }
       default:
       {
+printf("Hunandled Byte R %x\n", addr);
          return UnhandledMemoryReadByte(addr);
       }
    }
@@ -771,24 +772,23 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
 {
    switch (addr >> 29)
    {
-      case 0x0:
       case 0x1:
-      case 0x4:
-      case 0x5:
+      {
+        return ReadWordList[(addr >> 16) & 0xFFF](addr);
+      }
+      case 0x0:
       {
          // Cache/Non-Cached
-         return ReadWordList[(addr >> 16) & 0xFFF](addr);
+         if (CurrentSH2->cacheOn)
+           return CacheRead(addr, 2);
+         else
+           return ReadWordList[(addr >> 16) & 0xFFF](addr);
       }
-/*
-      case 0x2:
-      {
-         // Purge Area
-         break;
-      }
-*/
+
       //case 0x4:
       case 0x6:
          // Data Array
+       printf("DAta Word R %x\n", addr);
          return DataArrayReadWord(addr);
       case 0x7:
       {
@@ -800,7 +800,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
-            // ???
+            // SDRAM
          }
          else
          {
@@ -810,6 +810,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
       }
       default:
       {
+printf("Hunandled Word R %x\n", addr);
          return UnhandledMemoryReadWord(addr);
       }
    }
@@ -829,32 +830,20 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
 {
    switch (addr >> 29)
    {
-      case 0x0:
       case 0x1:
-      case 0x4:
-      case 0x5:
+      {
+        return ReadLongList[(addr >> 16) & 0xFFF](addr);
+      }
+      case 0x0:
       {
          // Cache/Non-Cached
-         //return ReadLongList[(addr >> 16) & 0xFFF](addr);
-        u32 val = ReadLongList[(addr >> 16) & 0xFFF](addr);
-        if ((val&0x0FFFFFFF) == 0x00180000) {
-        //if (val == 0x26300000) {
-          //int a = 0;
-          LOG("ADDR=%08X, PC=%08X",addr, CurrentSH2->regs.PC );
+         if (CurrentSH2->cacheOn)
+           return CacheRead(addr, 4);
+         else
+           return ReadLongList[(addr >> 16) & 0xFFF](addr);
+      }
 
-          //if( addr == 0x060707F8) {
-          //  val = 0x06300000;
-          //}
-        }
-        return val;
-      }
-/*
-      case 0x2:
-      {
-         // Purge Area
-         break;
-      }
-*/
+
       case 0x3:
       {
          // Address Array
@@ -863,6 +852,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
       //case 0x4:
       case 0x6:
          // Data Array
+       printf("Data Long R %x\n", addr);
          return DataArrayReadLong(addr);
       case 0x7:
       {
@@ -874,7 +864,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
-            // ???
+            // SDRAM
          }
          else
          {
@@ -884,6 +874,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
       }
       default:
       {
+printf("Hunandled Long R %x\n", addr);
          return UnhandledMemoryReadLong(addr);
       }
    }
@@ -903,27 +894,31 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
 
    switch (addr >> 29)
    {
-      case 0x0:
       case 0x1:
-      case 0x4:
-      case 0x5:
       {
-        if ((addr & 0x0FFFFFF0) == 0x060707F0) {
-          LOG("ADDR=%08X, PC=%08X VAL = %08X WRITE B", addr, CurrentSH2->regs.PC, val);
-        }
+        WriteByteList[(addr >> 16) & 0xFFF](addr, val);
+        return;
+      }
+      case 0x0:
+      {
          // Cache/Non-Cached
-         WriteByteList[(addr >> 16) & 0xFFF](addr, val);
+         if (CurrentSH2->cacheOn)
+           CacheWrite(addr, val, 1);
+         else
+           WriteByteList[(addr >> 16) & 0xFFF](addr, val);
          return;
       }
-/*
+
       case 0x2:
       {
          // Purge Area
+         CacheInvalidate(addr);
          return;
       }
-*/
+
       //case 0x4:
       case 0x6:
+       printf("Data Byte W %x\n", addr);
          // Data Array
          DataArrayWriteByte(addr, val);
          return;
@@ -938,7 +933,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
-            // ???
+            // SDRAM
          }
          else
          {
@@ -948,6 +943,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
       }
       default:
       {
+printf("Hunandled Byte W %x\n", addr);
          UnhandledMemoryWriteByte(addr, val);
          return;
       }
@@ -966,30 +962,32 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
 {
    switch (addr >> 29)
    {
-      case 0x0:
       case 0x1:
-      case 0x4:
-      case 0x5:
       {
-        if ((addr & 0x0FFFFFF0) == 0x060707F0) {
-          LOG("ADDR=%08X, PC=%08X VAL = %08X WRITE W", addr, CurrentSH2->regs.PC, val);
-        }
-
-
+        WriteWordList[(addr >> 16) & 0xFFF](addr, val);
+        return;
+      }
+      case 0x0:
+      {
          // Cache/Non-Cached
-         WriteWordList[(addr >> 16) & 0xFFF](addr, val);
+         if (CurrentSH2->cacheOn)
+           CacheWrite(addr, val, 2);
+         else
+           WriteWordList[(addr >> 16) & 0xFFF](addr, val);
          return;
       }
 
       case 0x2:
       {
          // Purge Area
+         CacheInvalidate(addr);
          return;
       }
 
       //case 0x4:
       case 0x6:
          // Data Array
+       printf("DAta Word W %x\n", addr);
          DataArrayWriteWord(addr, val);
          return;
       case 0x7:
@@ -1003,7 +1001,7 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
-            // ???
+            // SDRAM setup 
          }
          else
          {
@@ -1013,6 +1011,7 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
       }
       default:
       {
+printf("Hunandled Word W %x\n", addr);
          UnhandledMemoryWriteWord(addr, val);
          return;
       }
@@ -1031,23 +1030,24 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
 {
    switch (addr >> 29)
    {
-      case 0x0:
       case 0x1:
-      case 0x4:
-      case 0x5:
       {
-        if ( (addr&0x0FFFFFF0) == 0x060707F0 ) {
-          LOG("ADDR=%08X, PC=%08X VAL = %08X WRITE L", addr, CurrentSH2->regs.PC, val);
-        }
-
-
+        WriteLongList[(addr >> 16) & 0xFFF](addr, val);
+        return;
+      }
+      case 0x0:
+      {
          // Cache/Non-Cached
-         WriteLongList[(addr >> 16) & 0xFFF](addr, val);
+         if (CurrentSH2->cacheOn)
+           CacheWrite(addr, val, 4);
+         else
+           WriteLongList[(addr >> 16) & 0xFFF](addr, val);
          return;
       }
       case 0x2:
       {
          // Purge Area
+         CacheInvalidate(addr);
          return;
       }
       case 0x3:
@@ -1058,6 +1058,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
       }
       //case 0x4:
       case 0x6:
+       printf("Data Long W %x\n", addr);
          // Data Array
          DataArrayWriteLong(addr, val);
          return;
@@ -1072,7 +1073,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
-            // ???
+            // SDRAM
          }
          else
          {
@@ -1082,6 +1083,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
       }
       default:
       {
+printf("Hunandled Long W %x\n", addr);
          UnhandledMemoryWriteLong(addr, val);
          return;
       }

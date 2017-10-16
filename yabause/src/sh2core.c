@@ -1428,6 +1428,7 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
 		 }
 		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
 			 cache_enable(&CurrentSH2->onchip.cache);
+                         enableCache(CurrentSH2);
 		 }
 		 else{
 			 cache_disable(&CurrentSH2->onchip.cache);
@@ -1786,6 +1787,162 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void UpdateLRU(u8 line, u8 way) {
+//Table 8.3 SH7604_Hardware_Manual.pdf
+  switch (way) {
+    case 0:
+      CurrentSH2->cacheLRU[line] &= 0x7;
+    break;
+    case 1:
+      CurrentSH2->cacheLRU[line] &= 0x19;
+      CurrentSH2->cacheLRU[line] |= 0x20;
+    break;
+    case 2:
+      CurrentSH2->cacheLRU[line] &= 0x2A;
+      CurrentSH2->cacheLRU[line] |= 0x14;
+    break;
+    case 3:
+      CurrentSH2->cacheLRU[line] |= 0x0B;
+    break;
+    default:
+    break;
+  }
+}
+
+u8 getLRU(u8 line) {
+//Table 8.3 SH7604_Hardware_Manual.pdf
+  if ((CurrentSH2->cacheLRU[line] & 0x20) != 0) return 0;
+  if ((CurrentSH2->cacheLRU[line] & 0x10) != 0) return 0;
+  if ((CurrentSH2->cacheLRU[line] & 0x08) != 0) return 0;
+  if ((CurrentSH2->cacheLRU[line] & 0x04) != 0) return 1;
+  if ((CurrentSH2->cacheLRU[line] & 0x02) != 0) return 1;
+  if ((CurrentSH2->cacheLRU[line] & 0x01) != 0) return 2;  
+  return 3;
+}
+
+void CacheWriteThrough(u32 addr, u32 val, u8 size) {
+  switch(size) {
+  case 1:
+    WriteByteList[(addr >> 16) & 0xFFF](addr, val);
+    break;
+  case 2:
+    WriteWordList[(addr >> 16) & 0xFFF](addr, val);
+    break;
+  case 4:
+    WriteLongList[(addr >> 16) & 0xFFF](addr, val);
+    break;
+  }
+}
+
+void CacheWriteHit(u8 line, u8 way, u32 val, u8 byte, u8 size) {
+  u32 res = 0;
+  UpdateLRU(line, way);
+  switch (size) {
+  case 1:
+    CurrentSH2->cacheData[line][way][byte] = val;
+    break;
+  case 2:
+    CurrentSH2->cacheData[line][way][byte] = (val >> 8) & 0xFF;
+    CurrentSH2->cacheData[line][way][byte+1] = val & 0xFF;
+    break;
+  case 4:
+    CurrentSH2->cacheData[line][way][byte] = (val >> 24) & 0xFF;
+    CurrentSH2->cacheData[line][way][byte+1] = (val >> 16) & 0xFF;
+    CurrentSH2->cacheData[line][way][byte+2] = (val >> 8) & 0xFF;
+    CurrentSH2->cacheData[line][way][byte+3] = (val >> 0) & 0xFF;
+    break;
+  default:
+    break;
+  }
+}
+
+void CacheWrite(u32 addr, u32 val, u8 size) {
+  u8 line = (addr>>4)&0x3F;
+  u32 tag = (addr>>10)&0x7FFFF|0x80000;
+  u8 byte = addr&0xF;
+  u8 i=0;
+  for (i = 0; i<CurrentSH2->nbCacheWay; i++) {
+    if (CurrentSH2->cacheTag[line][i] == tag){
+      //printf("Write hit %x %d\n", addr, size);
+      CacheWriteHit(line, i, val, byte, size);
+      break;
+    }
+  }
+  return CacheWriteThrough(addr, val, size);
+}
+
+void enableCache() {
+  CurrentSH2->cacheOn = 1;
+  CurrentSH2->nbCacheWay = 4;
+}
+
+void disableCache() {
+  if (CurrentSH2->cacheOn == 1) {
+    CurrentSH2->cacheOn = 0;
+    //Need to invalidate full cache
+  }
+}
+
+u32 CacheReadHit(u8 line, u8 way, u8 byte, u8 size) {
+  u8 res[4];
+  UpdateLRU(line, way);
+  switch (size) {
+  case 1:
+    res[0] = CurrentSH2->cacheData[line][way][byte];
+    return res[0];
+  case 2:
+    res[1] = CurrentSH2->cacheData[line][way][byte];
+    res[0] = CurrentSH2->cacheData[line][way][byte+1];
+    return res[1]<<8 | res[0];
+  case 4:
+    res[3] = CurrentSH2->cacheData[line][way][byte];
+    res[2] = CurrentSH2->cacheData[line][way][byte+1];
+    res[1] = CurrentSH2->cacheData[line][way][byte+2];
+    res[0] = CurrentSH2->cacheData[line][way][byte+3];
+    return res[3]<<24 | res[2]<<16 | res[1]<<8 | res[0];
+  default:
+    break;
+  }
+  return 0;
+}
+
+u32 CacheReadMiss(u8 line, u32 tag, u8 byte, u8 size) {
+  u32 addr = (tag<<10)|(line<<4);
+  u8 way = getLRU(line);
+  u8 i;
+  for (i=0; i<16; i++) {
+    u8 fetch = ReadByteList[(addr >> 16) & 0xFFF](addr+i);
+    CurrentSH2->cacheData[line][way][i] = fetch;
+  }
+  CurrentSH2->cacheTag[line][way] = tag;
+  return CacheReadHit(line, way, byte, size);
+  
+}
+
+u32 CacheRead(u32 addr, u8 size) {
+  u8 line = (addr>>4)&0x3F;
+  u32 tag = (addr>>10)&0x7FFFF|0x80000;
+  u8 byte = addr&0xF;
+  u8 i=0;
+  for (i = 0; i<CurrentSH2->nbCacheWay; i++) {
+    if (CurrentSH2->cacheTag[line][i] == tag){
+      return CacheReadHit(line, i, byte, size);
+    }
+  }
+  return CacheReadMiss(line, tag, byte, size);
+}
+
+void CacheInvalidate(u32 addr){
+  u8 line = (addr>>4)&0x3F;
+  u32 tag = (addr>>10)&0x7FFFF;
+  u8 i=0;
+  for (i = 0; i<CurrentSH2->nbCacheWay; i++) {
+    if (CurrentSH2->cacheTag[line][i] == tag){
+      CurrentSH2->cacheTag[line][i] &= ~0x80000;
+    }
+  }
+}
+
 u32 FASTCALL AddressArrayReadLong(u32 addr) {
 #ifdef CACHE_ENABLE
    int way = (CurrentSH2->onchip.CCR >> 6) & 3;
@@ -1795,7 +1952,9 @@ u32 FASTCALL AddressArrayReadLong(u32 addr) {
    data |= CurrentSH2->onchip.cache.way[way][entry].v << 2;
    return data;
 #else
-   return CurrentSH2->AddressArray[(addr & 0x3FC) >> 2];
+  u8 line = (addr>>4)&0x3F;
+  u8 way = (CurrentSH2->onchip.CCR>>6)&0x3;
+  return ((CurrentSH2->cacheLRU[line]&0x3F)<<4) | ((CurrentSH2->cacheTag[line][way]&0x7FFFF)<<10) | (((CurrentSH2->cacheTag[line][way] != 0x0)&0x1)<<1)
 #endif
 }
 
@@ -1809,7 +1968,14 @@ void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
    CurrentSH2->onchip.cache.way[way][entry].v = (addr >> 2) & 1;
    CurrentSH2->onchip.cache.lru[entry] = (val >> 4) & 0x3f;
 #else
-   CurrentSH2->AddressArray[(addr & 0x3FC) >> 2] = val;
+  u8 line = (addr>>4)&0x3F;
+  u32 tag = (addr>>10)&0x7FFFF;
+  u8 valid = (addr>>2)&0x1;
+  u8 way = (CurrentSH2->onchip.CCR>>6)&0x3;
+  CurrentSH2->cacheLRU[line] = (val>>4)&0x3F;
+  CurrentSH2->cacheTag[line][way] = tag;
+  CurrentSH2->cacheV[line][way] = valid;
+
 #endif
 }
 
