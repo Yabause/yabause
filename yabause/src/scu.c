@@ -691,7 +691,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-	LOG("DSP DMA01 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
+  //LOG("DSP DMA01 read addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
 
 	// is A-Bus?
 	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
@@ -702,6 +702,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
 		for (i = 0; i < imm; i++)
 		{
       sc->MD[sel][sc->CT[sel] & 0x3F] = MappedMemoryReadLong((sc->RA0 << 2));
+      //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F] );
 			sc->CT[sel]++;
 			sc->CT[sel] &= 0x3F;
 			sc->RA0 += add;
@@ -712,6 +713,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
 		for (i = 0; i < imm ; i++)
 		{
       sc->MD[sel][sc->CT[sel] & 0x3F] = MappedMemoryReadLong((sc->RA0 << 2));
+      //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
 			sc->CT[sel]++;
 			sc->CT[sel] &= 0x3F;
 			sc->RA0 += (add>>1);
@@ -813,7 +815,7 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-	LOG("DSP DMA02 addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), imm, add);
+  //LOG("DSP DMA02 write addr=%08X cnt= %d add = %d\n", (sc->WA0 << 2), imm, add);
   dsp_dma_write_d0bus(sc, sel, add, imm);
 }
 
@@ -851,7 +853,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 	sel = (inst >> 8) & 0x7;
   int index = 0;
 
-	LOG("DSP DMA03 addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
+  //LOG("DSP DMA03 read addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
 
 	u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
 	if (abus_check >= 0x02000000 && abus_check < 0x05900000){
@@ -862,10 +864,12 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 		{
       if (sel == 0x04){
         sc->ProgramRam[index] = MappedMemoryReadLong((sc->RA0 << 2));
+        //LOG("read from %08X to P[%d] val %08X", (sc->RA0 << 2), index, sc->ProgramRam[index]);
         index++;
       }
       else{
         sc->MD[sel][sc->CT[sel]&0x3F] = MappedMemoryReadLong((sc->RA0 << 2));
+        //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
       }
@@ -879,9 +883,11 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
 
       if (sel == 0x04){
         sc->ProgramRam[index] = MappedMemoryReadLong((sc->RA0 << 2));
+        //LOG("read from %08X to P[%d] val %08X", (sc->RA0 << 2), index, sc->ProgramRam[index]);
         index++;
       }else{
         sc->MD[sel][sc->CT[sel]&0x3F] = MappedMemoryReadLong((sc->RA0 << 2));
+        //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
       }
@@ -951,7 +957,7 @@ void dsp_dma04(scudspregs_struct *sc, u32 inst)
     case 7: add = 64; break;
     }
 
-	LOG("DSP DMA04 addr=%08X cnt= %d add = %d sel=%d\n", (sc->WA0 << 2), Counter, add,sel );
+  //LOG("DSP DMA04 write addr=%08X cnt= %d add = %d sel=%d\n", (sc->WA0 << 2), Counter, add,sel );
   dsp_dma_write_d0bus(sc, sel, add, Counter);
 
 
@@ -1016,6 +1022,7 @@ void ScuExec(u32 timing) {
          }
 
          instruction = ScuDsp->ProgramRam[ScuDsp->PC];
+         //LOG("scu: dsp %08X @ %08X", instruction, ScuDsp->PC);
          incFlg[0] = 0;
          incFlg[1] = 0;
          incFlg[2] = 0;
@@ -2302,7 +2309,7 @@ u16 FASTCALL ScuReadWord(u32 addr) {
 
 u32 FASTCALL ScuReadLong(u32 addr) {
    addr &= 0xFF;
-   //LOG("Scu read %08X:%08X\n", addr);
+   //LOG("scu: read  %08X @ %08X", addr, CurrentSH2->regs.PC);
    switch(addr) {
       case 0:
          return ScuRegs->D0R;
@@ -2371,7 +2378,7 @@ void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
 void FASTCALL ScuWriteLong(u32 addr, u32 val) {
    addr &= 0xFF;
 	//if (addr!= 0xA0)
-	//LOG("Scu write %08X:%08X\n", addr, val);
+  //LOG("scu: write %08X:%08X @ %08X", addr, val, CurrentSH2->regs.PC);
    switch(addr) {
       case 0:
          ScuRegs->D0R = val;
@@ -2469,33 +2476,43 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
       case 0x60:
          ScuRegs->DSTP = val;
          break;
+      case 0x7C:
+        ScuRegs->DSTA = val;
+        break;
       case 0x80: // DSP Program Control Port
-         LOG("scu\t: wrote %08X to DSP Program Control Port\n", val);
+         LOG("scu: wrote %08X to DSP Program Control Port", val);
          ScuDsp->ProgControlPort.all = (ScuDsp->ProgControlPort.all & 0x00FC0000) | (val & 0x060380FF);
 
          if (ScuDsp->ProgControlPort.part.LE) {
             // set pc
             ScuDsp->PC = (u8)ScuDsp->ProgControlPort.part.P;
-            LOG("scu\t: DSP set pc = %02X\n", ScuDsp->PC);
+            LOG("scu: DSP set pc = %02X", ScuDsp->PC);
+         }
+
+         // Execution is rquested
+         if (val & 0x10000) {
+           // clear internal values
+           ScuDsp->jmpaddr = 0xffffffff;
          }
 
 #ifdef DEBUG
          if (ScuDsp->ProgControlPort.part.EX)
-            LOG("scu\t: DSP executing: PC = %02X\n", ScuDsp->PC);
+            LOG("scu: DSP executing: PC = %02X", ScuDsp->PC);
 #endif
          break;
       case 0x84: // DSP Program Ram Data Port
-//         LOG("scu\t: wrote %08X to DSP Program ram offset %02X\n", val, ScuDsp->PC);
+         //LOG("scu: wrote %08X to DSP Program ram offset %02X", val, ScuDsp->PC);
          ScuDsp->ProgramRam[ScuDsp->PC] = val;
          ScuDsp->PC++;
          ScuDsp->ProgControlPort.part.P = ScuDsp->PC;
          break;
       case 0x88: // DSP Data Ram Address Port
+         //LOG("scu: wrote %08X to DSP Data Ram ", val);
          ScuDsp->DataRamPage = (val >> 6) & 3;
          ScuDsp->DataRamReadAddress = val & 0x3F;
          break;
       case 0x8C: // DSP Data Ram Data Port
-//         LOG("scu\t: wrote %08X to DSP Data Ram Data Port Page %d offset %02X\n", val, ScuDsp->DataRamPage, ScuDsp->DataRamReadAddress);
+         //LOG("scu: wrote %08X to DSP Data Ram Data Port Page %d offset %02X", val, ScuDsp->DataRamPage, ScuDsp->DataRamReadAddress);
          if (!ScuDsp->ProgControlPort.part.EX) {
             ScuDsp->MD[ScuDsp->DataRamPage][ScuDsp->DataRamReadAddress] = val;
             ScuDsp->DataRamReadAddress++;
