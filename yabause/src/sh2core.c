@@ -2045,7 +2045,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
    int size;
    u32 i, i2;
 
-   LOG("sh2 dma src=%08X,dst=%08X,%d\n", *SAR, *DAR, *TCR);
+   //LOG("sh2 dma src=%08X,dst=%08X,%d\n", *SAR, *DAR, *TCR);
 
    if (!(*CHCR & 0x2)) { // TE is not set
       int srcInc;
