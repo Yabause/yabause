@@ -216,7 +216,7 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-   LOG("BiosSetScuInterruptMask\n");
+   //LOG("BiosSetScuInterruptMask\n");
 
    if (!sh->isslave)
    {
@@ -289,7 +289,7 @@ static void FASTCALL BiosGetSemaphore(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-   LOG("BiosGetSemaphore\n");
+//   LOG("BiosGetSemaphore\n");
   
    if ((temp = MappedMemoryReadByte(0x06000B00 + sh->regs.R[4])) == 0)
       sh->regs.R[0] = 1;
@@ -311,7 +311,7 @@ static void FASTCALL BiosClearSemaphore(SH2_struct * sh)
    SH2GetRegisters(sh, &sh->regs);
 
    // check me
-   LOG("BiosClearSemaphore\n");
+//   LOG("BiosClearSemaphore\n");
 
    MappedMemoryWriteByte(0x06000B00 + sh->regs.R[4], 0);
 
@@ -328,7 +328,7 @@ static void FASTCALL BiosChangeSystemClock(SH2_struct * sh)
    u32 mask;
    SH2GetRegisters(sh, &sh->regs);
 
-   LOG("BiosChangeSystemClock\n");
+//   LOG("BiosChangeSystemClock\n");
 
    // Set new system clock speed
    MappedMemoryWriteLongNocache(0x06000324, sh->regs.R[4]);
@@ -404,7 +404,7 @@ static void FASTCALL BiosExecuteCDPlayer(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-   LOG("BiosExecuteCDPlayer\n");
+//   LOG("BiosExecuteCDPlayer\n");
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -416,7 +416,7 @@ static void FASTCALL BiosPowerOnMemoryClear(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-   LOG("BiosPowerOnMemoryClear\n");
+//   LOG("BiosPowerOnMemoryClear\n");
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -428,7 +428,7 @@ static void FASTCALL BiosCheckMPEGCard(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-   LOG("BiosCheckMPEGCard\n");
+   //LOG("BiosCheckMPEGCard\n");
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -489,16 +489,19 @@ static int CalcSaveSize(u32 tableaddr, int blocksize)
 {
    int numblocks=0;
 
+
    // Now figure out how many blocks this save is
    for(;;)
    {
        u16 block;
        block = (MappedMemoryReadByte(tableaddr) << 8) | MappedMemoryReadByte(tableaddr + 2);
+//       LOG("CalcSaveSize: %08X,%d,%04X numblocks", tableaddr, numblocks, block);
        if (block == 0)
          break;
        tableaddr += 4;
-       if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
-          tableaddr += 8;
+       if (((tableaddr - 1) & ((blocksize << 1) - 1)) == 0) {
+         tableaddr += 8;
+       }
        numblocks++;
    }
 
@@ -684,30 +687,36 @@ static u16 *ReadBlockTable(u32 addr, u32 *tableaddr, int block, int blocksize, i
 {
    u16 *blocktbl = NULL;
    int i=0;
+   int allocsize = 32;
 
    tableaddr[0] = addr + (block * blocksize * 2) + 0x45;
    blocksread[0]=0;
 
-   // First of all figure out how large of buffer we need
-   numblocks[0] = CalcSaveSize(tableaddr[0], blocksize);
-
    // Allocate buffer
-   if ((blocktbl = (u16 *)malloc(sizeof(u16) * numblocks[0])) == NULL)
+   if ((blocktbl = (u16 *)malloc(sizeof(u16) * allocsize)) == NULL)
       return NULL;
 
    // Now read in the table
-   for(i = 0; i < numblocks[0]; i++)
+   int index = 0;
+   for(;;)
    {
        u16 block;
        block = (MappedMemoryReadByte(tableaddr[0]) << 8) | MappedMemoryReadByte(tableaddr[0] + 2);
+       if (block == 0) {
+         break;
+       }
        tableaddr[0] += 4;
-
        if (((tableaddr[0]-1) & ((blocksize << 1) - 1)) == 0)
        {
           tableaddr[0] = addr + (blocktbl[blocksread[0]] * blocksize * 2) + 9;
           blocksread[0]++;
        }
-       blocktbl[i] = block;
+       blocktbl[index] = block;
+       index++;
+       if (index >= allocsize ) {
+         allocsize *= 2;
+         blocktbl = (u16 *)realloc(blocktbl, sizeof(u16) * allocsize);
+       }
    }
 
    tableaddr[0] += 4;
@@ -726,7 +735,7 @@ void FASTCALL BiosBUPInit(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosBUPInit. arg1 = %08X, arg2 = %08X, arg3 = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6]);
+   LOG("BiosBUPInit. arg1 = %08X, arg2 = %08X, arg3 = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6]);
 
    // Setup Function table
    MappedMemoryWriteLongNocache(0x06000354, sh->regs.R[5]);
@@ -830,7 +839,7 @@ static void FASTCALL BiosBUPStatus(SH2_struct * sh)
 
    SH2GetRegisters(sh, &sh->regs);
 
-//   LOG("BiosBUPStatus. arg1 = %d, arg2 = %d, arg3 = %08X, PR = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6], sh->regs.PR);
+   LOG("BiosBUPStatus. arg1 = %d, arg2 = %d, arg3 = %08X, PR = %08X\n", sh->regs.R[4], sh->regs.R[5], sh->regs.R[6], sh->regs.PR);
 
    // Fill in status variables
    ret = GetDeviceStats(sh->regs.R[4], &size, &addr, &blocksize);
@@ -984,49 +993,46 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
 
    // write the block table
    workaddr += 0x45;
-
    for (i = 1; i < savesize; i++)
    {
       MappedMemoryWriteByte(workaddr, (u8)(blocktbl[i] >> 8));
-      workaddr+=2;
-      MappedMemoryWriteByte(workaddr, (u8)blocktbl[i]);
-      workaddr+=2;
-
-      if (((workaddr-1) & ((blocksize << 1) - 1)) == 0)
-      {
-         // Next block
+      MappedMemoryWriteByte(workaddr + 2, (u8)blocktbl[i]);
+      LOG("write block %08X,%d,%04X", workaddr, i, blocktbl[i]);
+      workaddr += 4;
+      if (((workaddr-1) & ((blocksize << 1) - 1)) == 0) {
          blockswritten++;
          workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+         //LOG("BiosBUPWrite %d, block move %08X, %d/%d", __LINE__, workaddr, blockswritten, savesize);
       }
    }
 
    // Write 2 blank bytes so we now how large the table size is next time
    MappedMemoryWriteByte(workaddr, 0);
    workaddr+=2;
-   if (((workaddr - 1) & ((blocksize << 1) - 1)) == 0)
-   {
-     // Next block
+   if (((workaddr - 1) & ((blocksize << 1) - 1)) == 0) {
      blockswritten++;
      workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+     LOG("BiosBUPWrite %d, block move %08X, %d/%d", __LINE__, workaddr, blockswritten, savesize);
    }
 
    MappedMemoryWriteByte(workaddr, 0);
    workaddr+=2;
-   if (((workaddr - 1) & ((blocksize << 1) - 1)) == 0)
-   {
-     // Next block
+   if (((workaddr - 1) & ((blocksize << 1) - 1)) == 0) {
      blockswritten++;
      workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+     LOG("BiosBUPWrite %d, block move %08X, %d/%d", __LINE__, workaddr, blockswritten, savesize);
    }
 
-   LOG("BiosBUPWrite from %08X size %08X", workaddr, datasize);
+   LOG("BiosBUPWrite from %08X size %08X", sh->regs.R[6], datasize);
 
-   //FILE * fp = fopen("writecheck.bin","wb");
+
    // Lastly, write the actual save data
+   //FILE * fp = fopen("writecheck.bin", "wb");
    while (datasize > 0)
    {
-      MappedMemoryWriteByte(workaddr, MappedMemoryReadByte(sh->regs.R[6]));
-      //fputc(MappedMemoryReadByte(sh->regs.R[6]),fp);
+      const u8 val = MappedMemoryReadByte(sh->regs.R[6]);
+      MappedMemoryWriteByte(workaddr, val);
+      //fputc(val,fp);
       
       //LOG("write block=%d, baddr = %08X, %08X, %02X", blockswritten, blocktbl[blockswritten], workaddr, MappedMemoryReadByte(sh->regs.R[6]));
 
@@ -1039,6 +1045,7 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
          // Next block
          blockswritten++;
          workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
+         LOG("BiosBUPWrite %d, block move %08X, %d/%d", __LINE__, workaddr, blockswritten, savesize);
       }
    }
    //fclose(fp);
@@ -2295,14 +2302,15 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
       return;
    }
 
-   LOG("BiosBUPRead from %08X size %08X", tableaddr, datasize);
+   LOG("BiosBUPRead from %08X size %08X to %08X", tableaddr, datasize, sh->regs.R[6] );
 
    //FILE * fp = fopen("savecheck.bin", "wb");
    // Now let's read in the data
    while (datasize > 0)
    {
-      MappedMemoryWriteByte(sh->regs.R[6], MappedMemoryReadByte(tableaddr));
-      //fputc( MappedMemoryReadByte(tableaddr),fp );
+     const u8 val = MappedMemoryReadByte(tableaddr);
+      MappedMemoryWriteByte(sh->regs.R[6], val);
+      //fputc(val,fp);
       datasize--;
       sh->regs.R[6]++;
       tableaddr+=2;
