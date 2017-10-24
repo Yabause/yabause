@@ -3509,13 +3509,53 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
             *(texture->textdata++) = 0x00;
             continue;
           }
+          x = h;
+          y = v;
+          if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
+            oldcellx = x >> rbg->patternshift;
+            oldcelly = y >> rbg->patternshift;
+
+            // Calculate which plane we're dealing with
+            planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
+            x &= parameter->MskH;
+            y &= parameter->MskV;
+            info->addr = parameter->PlaneAddrv[planenum];
+
+            // Figure out which page it's on(if plane size is not 1x1)
+            info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
+              ((x >> 9) * rbg->pagesize) +
+              (((y & 511) >> rbg->patternshift) * info->pagewh) +
+              ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
+
+            Vdp2PatternAddr(info); // Heh, this could be optimized
+          }
           break;
         case OVERMODE_512:
           if ((h < 0) || (h > 512) || (v < 0) || (v > 512)) {
             *(texture->textdata++) = 0x00;
             continue;
           }
+          x = h;
+          y = v;
+          if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
+              oldcellx = x >> rbg->patternshift;
+              oldcelly = y >> rbg->patternshift;
 
+              // Calculate which plane we're dealing with
+              planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
+              x &= parameter->MskH;
+              y &= parameter->MskV;
+              info->addr = parameter->PlaneAddrv[planenum];
+
+              // Figure out which page it's on(if plane size is not 1x1)
+              info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
+                ((x >> 9) * rbg->pagesize) +
+                (((y & 511) >> rbg->patternshift) * info->pagewh) +
+                ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
+
+              Vdp2PatternAddr(info); // Heh, this could be optimized
+          }
+          break;
         case OVERMODE_REPEAT: {
           h &= (parameter->MaxH - 1);
           v &= (parameter->MaxV - 1);
