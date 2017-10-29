@@ -2937,7 +2937,7 @@ int ScuLoadState(FILE *fp, UNUSED int version, int size)
    yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
 
    if (version >= 2) {
-     yread(&check, incFlg, sizeof(int), 1, fp);
+     yread(&check, incFlg, sizeof(int), 4, fp);
    }
    return size;
 }
