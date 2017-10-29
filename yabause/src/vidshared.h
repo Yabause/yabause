@@ -99,6 +99,8 @@ typedef struct
    int ktablesize;
    u8 k_mem_type;
    u8 K_update;
+
+   u16 over_pattern_name;
    
 } vdp2rotationparameter_struct;
 

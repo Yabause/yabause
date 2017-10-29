@@ -2630,6 +2630,58 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
 //////////////////////////////////////////////////////////////////////////////
 
+static void Vdp2PatternAddrUsingPatternname(vdp2draw_struct *info, u16 paternname )
+{
+    u16 tmp = paternname;
+    info->specialfunction = (info->supplementdata >> 9) & 0x1;
+    info->specialcolorfunction = (info->supplementdata >> 8) & 0x1;
+
+    switch (info->colornumber)
+    {
+    case 0: // in 16 colors
+      info->paladdr = ((tmp & 0xF000) >> 12) | ((info->supplementdata & 0xE0) >> 1);
+      break;
+    default: // not in 16 colors
+      info->paladdr = (tmp & 0x7000) >> 8;
+      break;
+    }
+
+    switch (info->auxmode)
+    {
+    case 0:
+      info->flipfunction = (tmp & 0xC00) >> 10;
+
+      switch (info->patternwh)
+      {
+      case 1:
+        info->charaddr = (tmp & 0x3FF) | ((info->supplementdata & 0x1F) << 10);
+        break;
+      case 2:
+        info->charaddr = ((tmp & 0x3FF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x1C) << 10);
+        break;
+      }
+      break;
+    case 1:
+      info->flipfunction = 0;
+
+      switch (info->patternwh)
+      {
+      case 1:
+        info->charaddr = (tmp & 0xFFF) | ((info->supplementdata & 0x1C) << 10);
+        break;
+      case 2:
+        info->charaddr = ((tmp & 0xFFF) << 2) | (info->supplementdata & 0x3) | ((info->supplementdata & 0x10) << 10);
+        break;
+      }
+      break;
+    }
+
+  if (!(fixVdp2Regs->VRSIZE & 0x8000))
+    info->charaddr &= 0x3FFF;
+
+  info->charaddr *= 0x20; // thanks Runik
+}
+
 static void Vdp2PatternAddr(vdp2draw_struct *info)
 {
   switch (info->patterndatasize)
@@ -3429,6 +3481,9 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     }
   }
 
+  paraA.over_pattern_name = fixVdp2Regs->OVPNRA;
+  paraB.over_pattern_name = fixVdp2Regs->OVPNRB;
+
   for (j = 0; j < vres; j++)
   {
 #if 0 // PERLINE
@@ -3543,15 +3598,6 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         // Tile
         int planenum;
         switch (parameter->screenover) {
-        case OVERMODE_REPEAT:
-          h &= (parameter->MaxH - 1);
-          v &= (parameter->MaxV - 1);
-          break;
-        case OVERMODE_SELPATNAME:
-          VDP2LOG("Screen-over mode 1 not implemented");
-          h &= (parameter->MaxH - 1);
-          v &= (parameter->MaxV - 1);
-          break;
         case OVERMODE_TRANSE:
           if ((h < 0) || (h >= parameter->MaxH) || (v < 0) || (v >= parameter->MaxV)) {
             *(texture->textdata++) = 0x00;
@@ -3563,30 +3609,59 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
             *(texture->textdata++) = 0x00;
             continue;
           }
-        }
 
-        x = h;
-        y = v;
+        case OVERMODE_REPEAT: {
+          h &= (parameter->MaxH - 1);
+          v &= (parameter->MaxV - 1);
+          x = h;
+          y = v;
+          if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
+              oldcellx = x >> rbg->patternshift;
+              oldcelly = y >> rbg->patternshift;
 
+              // Calculate which plane we're dealing with
+              planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
+              x &= parameter->MskH;
+              y &= parameter->MskV;
+              info->addr = parameter->PlaneAddrv[planenum];
 
-        if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly)
-        {
-          oldcellx = x >> rbg->patternshift;
-          oldcelly = y >> rbg->patternshift;
+              // Figure out which page it's on(if plane size is not 1x1)
+              info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
+                ((x >> 9) * rbg->pagesize) +
+                (((y & 511) >> rbg->patternshift) * info->pagewh) +
+                ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
 
-          // Calculate which plane we're dealing with
-          planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
-          x &= parameter->MskH;
-          y &= parameter->MskV;
-          info->addr = parameter->PlaneAddrv[planenum];
+              Vdp2PatternAddr(info); // Heh, this could be optimized
+            }
+          }
+          break;
+        case OVERMODE_SELPATNAME: {
+            x = h;
+            y = v;
+            if ((x >> rbg->patternshift) != oldcellx || (y >> rbg->patternshift) != oldcelly) {
+              oldcellx = x >> rbg->patternshift;
+              oldcelly = y >> rbg->patternshift;
 
-          // Figure out which page it's on(if plane size is not 1x1)
-          info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
-            ((x >> 9) * rbg->pagesize) +
-            (((y & 511) >> rbg->patternshift) * info->pagewh) +
-            ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
-
-          Vdp2PatternAddr(info); // Heh, this could be optimized
+              if ((h < 0) || (h >= parameter->MaxH) || (v < 0) || (v >= parameter->MaxV)) {
+                x &= parameter->MskH;
+                y &= parameter->MskV;
+                Vdp2PatternAddrUsingPatternname(info, parameter->over_pattern_name);
+              }
+              else {
+                planenum = (x >> parameter->ShiftPaneX) + ((y >> parameter->ShiftPaneY) << 2);
+                x &= parameter->MskH;
+                y &= parameter->MskV;
+                info->addr = parameter->PlaneAddrv[planenum];
+                // Figure out which page it's on(if plane size is not 1x1)
+                info->addr += (((y >> 9) * rbg->pagesize * info->planew) +
+                  ((x >> 9) * rbg->pagesize) +
+                  (((y & 511) >> rbg->patternshift) * info->pagewh) +
+                  ((x & 511) >> rbg->patternshift)) << info->patterndatasize;
+                  Vdp2PatternAddr(info); // Heh, this could be optimized
+              }
+            }
+          }
+          break;
         }
 
         // Figure out which pixel in the tile we want
