@@ -345,11 +345,17 @@ extern "C" {
 
   void MappedMemoryInit(void);
   u8 FASTCALL MappedMemoryReadByte(u32 addr);
+  u8 FASTCALL SH2MappedMemoryReadByte(u32 addr);
   u16 FASTCALL MappedMemoryReadWord(u32 addr);
+  u16 FASTCALL SH2MappedMemoryReadWord(u32 addr);
   u32 FASTCALL MappedMemoryReadLong(u32 addr);
+  u32 FASTCALL SH2MappedMemoryReadLong(u32 addr);
   void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
   void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
   void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
+  void FASTCALL SH2MappedMemoryWriteByte(u32 addr, u8 val);
+  void FASTCALL SH2MappedMemoryWriteWord(u32 addr, u16 val);
+  void FASTCALL SH2MappedMemoryWriteLong(u32 addr, u32 val);
   u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
   u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
   u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
@@ -363,13 +369,15 @@ extern "C" {
   extern u8 *BupRam;
   extern u8 BupRamWritten;
 
-  typedef void (FASTCALL *writebytefunc)(u32, u8);
-  typedef void (FASTCALL *writewordfunc)(u32, u16);
-  typedef void (FASTCALL *writelongfunc)(u32, u32);
+  typedef void (FASTCALL *writebytefunc)(u8*, u32, u8);
+  typedef void (FASTCALL *writewordfunc)(u8*, u32, u16);
+  typedef void (FASTCALL *writelongfunc)(u8*, u32, u32);
 
-  typedef u8(FASTCALL *readbytefunc)(u32);
-  typedef u16(FASTCALL *readwordfunc)(u32);
-  typedef u32(FASTCALL *readlongfunc)(u32);
+  typedef u8(FASTCALL *readbytefunc)(u8*, u32);
+  typedef u16(FASTCALL *readwordfunc)(u8*, u32);
+  typedef u32(FASTCALL *readlongfunc)(u8*, u32);
+
+  extern u8** MemoryBuffer[0x1000];
 
   extern writebytefunc WriteByteList[0x1000];
   extern writewordfunc WriteWordList[0x1000];
@@ -378,6 +386,13 @@ extern "C" {
   extern readbytefunc ReadByteList[0x1000];
   extern readwordfunc ReadWordList[0x1000];
   extern readlongfunc ReadLongList[0x1000];
+
+  extern readbytefunc CacheReadByteList[0x1000];
+  extern readwordfunc CacheReadWordList[0x1000];
+  extern readlongfunc CacheReadLongList[0x1000];
+  extern writebytefunc CacheWriteByteList[0x1000];
+  extern writewordfunc CacheWriteWordList[0x1000];
+  extern writelongfunc CacheWriteLongList[0x1000];
 
   typedef struct {
     u32 addr;
@@ -423,5 +438,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
+#define CACHE_LOG
 
 #endif

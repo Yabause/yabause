@@ -35,118 +35,118 @@ cartridge_struct *CartridgeArea;
 // Dummy/No Cart Functions
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DummyCs0ReadByte(UNUSED u32 addr)
+static u8 FASTCALL DummyCs0ReadByte(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DummyCs0ReadWord(UNUSED u32 addr)
+static u16 FASTCALL DummyCs0ReadWord(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DummyCs0ReadLong(UNUSED u32 addr)
+static u32 FASTCALL DummyCs0ReadLong(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs0WriteByte(UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL DummyCs0WriteByte(UNUSED u8* memory, UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs0WriteWord(UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL DummyCs0WriteWord(UNUSED u8* memory, UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs0WriteLong(UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL DummyCs0WriteLong(UNUSED u8* memory, UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DummyCs1ReadByte(UNUSED u32 addr)
+static u8 FASTCALL DummyCs1ReadByte(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DummyCs1ReadWord(UNUSED u32 addr)
+static u16 FASTCALL DummyCs1ReadWord(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DummyCs1ReadLong(UNUSED u32 addr)
+static u32 FASTCALL DummyCs1ReadLong(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs1WriteByte(UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL DummyCs1WriteByte(UNUSED u8* memory, UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs1WriteWord(UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL DummyCs1WriteWord(UNUSED u8* memory, UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs1WriteLong(UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL DummyCs1WriteLong(UNUSED u8* memory, UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DummyCs2ReadByte(UNUSED u32 addr)
+static u8 FASTCALL DummyCs2ReadByte(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DummyCs2ReadWord(UNUSED u32 addr)
+static u16 FASTCALL DummyCs2ReadWord(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DummyCs2ReadLong(UNUSED u32 addr)
+static u32 FASTCALL DummyCs2ReadLong(UNUSED u8* memory, UNUSED u32 addr)
 {
    return 0xFFFFFFFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs2WriteByte(UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL DummyCs2WriteByte(UNUSED u8* memory, UNUSED u32 addr, UNUSED u8 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs2WriteWord(UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL DummyCs2WriteWord(UNUSED u8* memory, UNUSED u32 addr, UNUSED u16 val)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DummyCs2WriteLong(UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL DummyCs2WriteLong(UNUSED u8* memory, UNUSED u32 addr, UNUSED u32 val)
 {
 }
 
@@ -181,7 +181,7 @@ u8 flbuf1[128];
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL FlashCs0ReadByte(u32 addr)
+static u8 FASTCALL FlashCs0ReadByte(UNUSED u8* memory, u32 addr)
 {
   flashstate* state;
   u8* reg;
@@ -209,27 +209,27 @@ static u8 FASTCALL FlashCs0ReadByte(u32 addr)
     case FL_SDP: 
     case FL_CMD: *state = FL_READ;
     case FL_READ:
-    default: return T2ReadByte(CartridgeArea->rom, addr);
+    default: return T2ReadByte(memory, addr);
     }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL FlashCs0ReadWord(u32 addr)
+static u16 FASTCALL FlashCs0ReadWord(UNUSED u8* memory, u32 addr)
 {
-  return ((u16)(FlashCs0ReadByte(addr) << 8) | (u16)(FlashCs0ReadByte(addr+1)));
+  return ((u16)(FlashCs0ReadByte(memory, addr) << 8) | (u16)(FlashCs0ReadByte(memory, addr+1)));
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL FlashCs0ReadLong(u32 addr)
+static u32 FASTCALL FlashCs0ReadLong(UNUSED u8* memory, u32 addr)
 {
-  return ((u32)FlashCs0ReadWord(addr) << 16) |(u32) FlashCs0ReadWord(addr + 2);
+  return ((u32)FlashCs0ReadWord(memory, addr) << 16) |(u32) FlashCs0ReadWord(memory, addr + 2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL FlashCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL FlashCs0WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    flashstate* state;
    u8* reg;
@@ -263,7 +263,7 @@ static void FASTCALL FlashCs0WriteByte(u32 addr, u8 val)
             addr &= 0xffffff00;
             for (i = 0; i <= 127; i++)
             {
-               T2WriteByte(CartridgeArea->rom, (addr + i*2 + j), buf[i]);
+               T2WriteByte(memory, (addr + i*2 + j), buf[i]);
             }
             *state = FL_READ;
          }
@@ -313,23 +313,23 @@ static void FASTCALL FlashCs0WriteByte(u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL FlashCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL FlashCs0WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
-  FlashCs0WriteByte(addr, (u8)(val >> 8));
-  FlashCs0WriteByte(addr + 1, (u8)(val & 0xff));
+  FlashCs0WriteByte(memory, addr, (u8)(val >> 8));
+  FlashCs0WriteByte(memory, addr + 1, (u8)(val & 0xff));
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL FlashCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL FlashCs0WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
-  FlashCs0WriteWord(addr, (u16)(val >> 16));
-  FlashCs0WriteWord(addr + 2, (u16)(val & 0xffff));
+  FlashCs0WriteWord(memory, addr, (u16)(val >> 16));
+  FlashCs0WriteWord(memory, addr + 2, (u16)(val & 0xffff));
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL AR4MCs0ReadByte(u32 addr)
+static u8 FASTCALL AR4MCs0ReadByte(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -338,7 +338,7 @@ static u8 FASTCALL AR4MCs0ReadByte(u32 addr)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   return FlashCs0ReadByte(addr);
+	   return FlashCs0ReadByte(memory,addr);
 //            return biosarea->getByte(addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Byte read\n");
@@ -366,7 +366,7 @@ static u8 FASTCALL AR4MCs0ReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL AR4MCs0ReadWord(u32 addr)
+static u16 FASTCALL AR4MCs0ReadWord(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -375,7 +375,7 @@ static u16 FASTCALL AR4MCs0ReadWord(u32 addr)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   return FlashCs0ReadWord(addr);
+	   return FlashCs0ReadWord(memory, addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Word read\n");
          break;
@@ -414,7 +414,7 @@ static u16 FASTCALL AR4MCs0ReadWord(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL AR4MCs0ReadLong(u32 addr)
+static u32 FASTCALL AR4MCs0ReadLong(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -423,7 +423,7 @@ static u32 FASTCALL AR4MCs0ReadLong(u32 addr)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   return FlashCs0ReadLong(addr);
+	   return FlashCs0ReadLong(memory, addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Long read\n");
          break;
@@ -462,7 +462,7 @@ static u32 FASTCALL AR4MCs0ReadLong(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL AR4MCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL AR4MCs0WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -471,7 +471,7 @@ static void FASTCALL AR4MCs0WriteByte(u32 addr, u8 val)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   FlashCs0WriteByte(addr, val);
+	   FlashCs0WriteByte(memory, addr, val);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport byte write\n");
          break;
@@ -497,7 +497,7 @@ static void FASTCALL AR4MCs0WriteByte(u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL AR4MCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL AR4MCs0WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -506,7 +506,7 @@ static void FASTCALL AR4MCs0WriteWord(u32 addr, u16 val)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   FlashCs0WriteWord(addr, val);
+	   FlashCs0WriteWord(memory, addr, val);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Word write\n");
          break;
@@ -532,7 +532,7 @@ static void FASTCALL AR4MCs0WriteWord(u32 addr, u16 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL AR4MCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL AR4MCs0WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -541,7 +541,7 @@ static void FASTCALL AR4MCs0WriteLong(u32 addr, u32 val)
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   FlashCs0WriteLong(addr, val);
+	   FlashCs0WriteLong(memory, addr, val);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Long write\n");
          break;
@@ -569,7 +569,7 @@ static void FASTCALL AR4MCs0WriteLong(u32 addr, u32 val)
 // 8 Mbit Dram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DRAM8MBITCs0ReadByte(u32 addr)
+static u8 FASTCALL DRAM8MBITCs0ReadByte(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -588,7 +588,7 @@ static u8 FASTCALL DRAM8MBITCs0ReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DRAM8MBITCs0ReadWord(u32 addr)
+static u16 FASTCALL DRAM8MBITCs0ReadWord(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -607,7 +607,7 @@ static u16 FASTCALL DRAM8MBITCs0ReadWord(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DRAM8MBITCs0ReadLong(u32 addr)
+static u32 FASTCALL DRAM8MBITCs0ReadLong(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -626,7 +626,7 @@ static u32 FASTCALL DRAM8MBITCs0ReadLong(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM8MBITCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL DRAM8MBITCs0WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -645,7 +645,7 @@ static void FASTCALL DRAM8MBITCs0WriteByte(u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM8MBITCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL DRAM8MBITCs0WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -664,7 +664,7 @@ static void FASTCALL DRAM8MBITCs0WriteWord(u32 addr, u16 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM8MBITCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL DRAM8MBITCs0WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -685,7 +685,7 @@ static void FASTCALL DRAM8MBITCs0WriteLong(u32 addr, u32 val)
 // 32 Mbit Dram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL DRAM32MBITCs0ReadByte(u32 addr)
+static u8 FASTCALL DRAM32MBITCs0ReadByte(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -705,7 +705,7 @@ static u8 FASTCALL DRAM32MBITCs0ReadByte(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL DRAM32MBITCs0ReadWord(u32 addr)
+static u16 FASTCALL DRAM32MBITCs0ReadWord(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -725,7 +725,7 @@ static u16 FASTCALL DRAM32MBITCs0ReadWord(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL DRAM32MBITCs0ReadLong(u32 addr)
+static u32 FASTCALL DRAM32MBITCs0ReadLong(UNUSED u8* memory, u32 addr)
 {
    addr &= 0x1FFFFFF;
 
@@ -745,7 +745,7 @@ static u32 FASTCALL DRAM32MBITCs0ReadLong(u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM32MBITCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL DRAM32MBITCs0WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -764,7 +764,7 @@ static void FASTCALL DRAM32MBITCs0WriteByte(u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM32MBITCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL DRAM32MBITCs0WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -783,7 +783,7 @@ static void FASTCALL DRAM32MBITCs0WriteWord(u32 addr, u16 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL DRAM32MBITCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL DRAM32MBITCs0WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    addr &= 0x1FFFFFF;
 
@@ -804,42 +804,42 @@ static void FASTCALL DRAM32MBITCs0WriteLong(u32 addr, u32 val)
 // 4 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP4MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP4MBITCs1ReadByte(UNUSED u8* memory, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP4MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP4MBITCs1ReadWord(UNUSED u8* memory, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP4MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP4MBITCs1ReadLong(UNUSED u8* memory, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP4MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP4MBITCs1WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP4MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP4MBITCs1WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP4MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP4MBITCs1WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0xFFFFF, val);
 }
@@ -848,42 +848,42 @@ static void FASTCALL BUP4MBITCs1WriteLong(u32 addr, u32 val)
 // 8 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP8MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP8MBITCs1ReadByte(UNUSED u8* memory, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP8MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP8MBITCs1ReadWord(UNUSED u8* memory, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP8MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP8MBITCs1ReadLong(UNUSED u8* memory, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP8MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP8MBITCs1WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP8MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP8MBITCs1WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP8MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP8MBITCs1WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0x1FFFFF, val);
 }
@@ -892,42 +892,42 @@ static void FASTCALL BUP8MBITCs1WriteLong(u32 addr, u32 val)
 // 16 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP16MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP16MBITCs1ReadByte(UNUSED u8* memory, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0x3FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP16MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP16MBITCs1ReadWord(UNUSED u8* memory, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0x3FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP16MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP16MBITCs1ReadLong(UNUSED u8* memory, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0x3FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP16MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP16MBITCs1WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0x3FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP16MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP16MBITCs1WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0x3FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP16MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP16MBITCs1WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0x3FFFFF, val);
 }
@@ -936,42 +936,42 @@ static void FASTCALL BUP16MBITCs1WriteLong(u32 addr, u32 val)
 // 32 Mbit Backup Ram
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BUP32MBITCs1ReadByte(u32 addr)
+static u8 FASTCALL BUP32MBITCs1ReadByte(UNUSED u8* memory, u32 addr)
 {
    return T1ReadByte(CartridgeArea->bupram, addr & 0x7FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BUP32MBITCs1ReadWord(u32 addr)
+static u16 FASTCALL BUP32MBITCs1ReadWord(UNUSED u8* memory, u32 addr)
 {
    return T1ReadWord(CartridgeArea->bupram, addr & 0x7FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BUP32MBITCs1ReadLong(u32 addr)
+static u32 FASTCALL BUP32MBITCs1ReadLong(UNUSED u8* memory, u32 addr)
 {
    return T1ReadLong(CartridgeArea->bupram, addr & 0x7FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP32MBITCs1WriteByte(u32 addr, u8 val)
+static void FASTCALL BUP32MBITCs1WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->bupram, addr & 0x7FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP32MBITCs1WriteWord(u32 addr, u16 val)
+static void FASTCALL BUP32MBITCs1WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->bupram, addr & 0x7FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BUP32MBITCs1WriteLong(u32 addr, u32 val)
+static void FASTCALL BUP32MBITCs1WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->bupram, addr & 0x7FFFFF, val);
 }
@@ -980,42 +980,42 @@ static void FASTCALL BUP32MBITCs1WriteLong(u32 addr, u32 val)
 // 16 Mbit Rom
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL ROM16MBITCs0ReadByte(u32 addr)
+static u8 FASTCALL ROM16MBITCs0ReadByte(UNUSED u8* memory, u32 addr)
 {
    return T1ReadByte(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL ROM16MBITCs0ReadWord(u32 addr)
+static u16 FASTCALL ROM16MBITCs0ReadWord(UNUSED u8* memory, u32 addr)
 {
    return T1ReadWord(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL ROM16MBITCs0ReadLong(u32 addr)
+static u32 FASTCALL ROM16MBITCs0ReadLong(UNUSED u8* memory, u32 addr)
 {
    return T1ReadLong(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL ROM16MBITCs0WriteByte(u32 addr, u8 val)
+static void FASTCALL ROM16MBITCs0WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 {
    T1WriteByte(CartridgeArea->rom, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL ROM16MBITCs0WriteWord(u32 addr, u16 val)
+static void FASTCALL ROM16MBITCs0WriteWord(UNUSED u8* memory, u32 addr, u16 val)
 {
    T1WriteWord(CartridgeArea->rom, addr & 0x1FFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL ROM16MBITCs0WriteLong(u32 addr, u32 val)
+static void FASTCALL ROM16MBITCs0WriteLong(UNUSED u8* memory, u32 addr, u32 val)
 {
    T1WriteLong(CartridgeArea->rom, addr & 0x1FFFFF, val);
 }

@@ -100,18 +100,18 @@ extern VideoInterface_struct VIDDummy;
 
 extern u8 * Vdp1Ram;
 
-u8 FASTCALL	Vdp1RamReadByte(u32);
-u16 FASTCALL	Vdp1RamReadWord(u32);
-u32 FASTCALL	Vdp1RamReadLong(u32);
-void FASTCALL	Vdp1RamWriteByte(u32, u8);
-void FASTCALL	Vdp1RamWriteWord(u32, u16);
-void FASTCALL	Vdp1RamWriteLong(u32, u32);
-u8 FASTCALL Vdp1FrameBufferReadByte(u32);
-u16 FASTCALL Vdp1FrameBufferReadWord(u32);
-u32 FASTCALL Vdp1FrameBufferReadLong(u32);
-void FASTCALL Vdp1FrameBufferWriteByte(u32, u8);
-void FASTCALL Vdp1FrameBufferWriteWord(u32, u16);
-void FASTCALL Vdp1FrameBufferWriteLong(u32, u32);
+u8 FASTCALL	Vdp1RamReadByte(u8*, u32);
+u16 FASTCALL	Vdp1RamReadWord(u8*, u32);
+u32 FASTCALL	Vdp1RamReadLong(u8*, u32);
+void FASTCALL	Vdp1RamWriteByte(u8*, u32, u8);
+void FASTCALL	Vdp1RamWriteWord(u8*, u32, u16);
+void FASTCALL	Vdp1RamWriteLong(u8*, u32, u32);
+u8 FASTCALL Vdp1FrameBufferReadByte(u8*, u32);
+u16 FASTCALL Vdp1FrameBufferReadWord(u8*, u32);
+u32 FASTCALL Vdp1FrameBufferReadLong(u8*, u32);
+void FASTCALL Vdp1FrameBufferWriteByte(u8*, u32, u8);
+void FASTCALL Vdp1FrameBufferWriteWord(u8*, u32, u16);
+void FASTCALL Vdp1FrameBufferWriteLong(u8*, u32, u32);
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
@@ -160,12 +160,12 @@ void VideoDeInit(void);
 void Vdp1Reset(void);
 int VideoSetSetting(int type, int value);
 
-u8 FASTCALL	Vdp1ReadByte(u32);
-u16 FASTCALL	Vdp1ReadWord(u32);
-u32 FASTCALL	Vdp1ReadLong(u32);
-void FASTCALL	Vdp1WriteByte(u32, u8);
-void FASTCALL	Vdp1WriteWord(u32, u16);
-void FASTCALL	Vdp1WriteLong(u32, u32);
+u8 FASTCALL	Vdp1ReadByte(u8*, u32);
+u16 FASTCALL	Vdp1ReadWord(u8*, u32);
+u32 FASTCALL	Vdp1ReadLong(u8*, u32);
+void FASTCALL	Vdp1WriteByte(u8*, u32, u8);
+void FASTCALL	Vdp1WriteWord(u8*, u32, u16);
+void FASTCALL	Vdp1WriteLong(u8*, u32, u32);
 
 void Vdp1Draw(void);
 void Vdp1NoDraw(void);

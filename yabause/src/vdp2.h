@@ -33,19 +33,19 @@ extern u8 A1_Updated;
 extern u8 B0_Updated;
 extern u8 B1_Updated;
 
-u8 FASTCALL     Vdp2RamReadByte(u32);
-u16 FASTCALL    Vdp2RamReadWord(u32);
-u32 FASTCALL    Vdp2RamReadLong(u32);
-void FASTCALL   Vdp2RamWriteByte(u32, u8);
-void FASTCALL   Vdp2RamWriteWord(u32, u16);
-void FASTCALL   Vdp2RamWriteLong(u32, u32);
+u8 FASTCALL     Vdp2RamReadByte(u8*, u32);
+u16 FASTCALL    Vdp2RamReadWord(u8*, u32);
+u32 FASTCALL    Vdp2RamReadLong(u8*, u32);
+void FASTCALL   Vdp2RamWriteByte(u8*, u32, u8);
+void FASTCALL   Vdp2RamWriteWord(u8*, u32, u16);
+void FASTCALL   Vdp2RamWriteLong(u8*, u32, u32);
 
-u8 FASTCALL     Vdp2ColorRamReadByte(u32);
-u16 FASTCALL    Vdp2ColorRamReadWord(u32);
-u32 FASTCALL    Vdp2ColorRamReadLong(u32);
-void FASTCALL   Vdp2ColorRamWriteByte(u32, u8);
-void FASTCALL   Vdp2ColorRamWriteWord(u32, u16);
-void FASTCALL   Vdp2ColorRamWriteLong(u32, u32);
+u8 FASTCALL     Vdp2ColorRamReadByte(u8*, u32);
+u16 FASTCALL    Vdp2ColorRamReadWord(u8*, u32);
+u32 FASTCALL    Vdp2ColorRamReadLong(u8*, u32);
+void FASTCALL   Vdp2ColorRamWriteByte(u8*, u32, u8);
+void FASTCALL   Vdp2ColorRamWriteWord(u8*, u32, u16);
+void FASTCALL   Vdp2ColorRamWriteLong(u8*, u32, u32);
 
 typedef struct {
    u16 TVMD;   // 0x25F80000
@@ -398,12 +398,12 @@ void Vdp2SendExternalLatch(int hcnt, int vcnt);
 void SpeedThrottleEnable(void);
 void SpeedThrottleDisable(void);
 
-u8 FASTCALL     Vdp2ReadByte(u32);
-u16 FASTCALL    Vdp2ReadWord(u32);
-u32 FASTCALL    Vdp2ReadLong(u32);
-void FASTCALL   Vdp2WriteByte(u32, u8);
-void FASTCALL   Vdp2WriteWord(u32, u16);
-void FASTCALL   Vdp2WriteLong(u32, u32);
+u8 FASTCALL     Vdp2ReadByte(u8*, u32);
+u16 FASTCALL    Vdp2ReadWord(u8*, u32);
+u32 FASTCALL    Vdp2ReadLong(u8*, u32);
+void FASTCALL   Vdp2WriteByte(u8*, u32, u8);
+void FASTCALL   Vdp2WriteWord(u8*, u32, u16);
+void FASTCALL   Vdp2WriteLong(u8*, u32, u32);
 
 int Vdp2SaveState(FILE *fp);
 int Vdp2LoadState(FILE *fp, int version, int size);

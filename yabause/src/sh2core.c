@@ -70,6 +70,14 @@ int SH2Init(int coreid)
    SSH2->onchip.BCR1 = 0x8000;
    SSH2->isslave = 1;
 
+   MSH2->cacheOn = 0;
+   SSH2->cacheOn = 0;
+
+   memset(MSH2->tagWay, 0x4, 64*0x80000);
+   memset(MSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
+   memset(SSH2->tagWay, 0x4, 64*0x80000);
+   memset(SSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
+
    // So which core do we want?
    if (coreid == SH2CORE_DEFAULT)
       coreid = 0; // Assume we want the first one
@@ -456,7 +464,7 @@ static u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
             CurrentSH2->bp.inbreakpoint = 0;
          }
 
-         return CurrentSH2->bp.memorybreakpoint[i].oldreadbyte(addr);
+         return CurrentSH2->bp.memorybreakpoint[i].oldreadbyte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
 
@@ -464,12 +472,12 @@ static u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
    for (i = 0; i < MSH2->bp.nummemorybreakpoints; i++)
    {
       if (((MSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
-         return MSH2->bp.memorybreakpoint[i].oldreadbyte(addr);
+         return MSH2->bp.memorybreakpoint[i].oldreadbyte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
    }
    for (i = 0; i < SSH2->bp.nummemorybreakpoints; i++)
    {
       if (((SSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
-         return SSH2->bp.memorybreakpoint[i].oldreadbyte(addr);
+         return SSH2->bp.memorybreakpoint[i].oldreadbyte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
    }
 
    return 0;
@@ -492,7 +500,7 @@ static u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
             CurrentSH2->bp.inbreakpoint = 0;
          }
 
-         return CurrentSH2->bp.memorybreakpoint[i].oldreadword(addr);
+         return CurrentSH2->bp.memorybreakpoint[i].oldreadword(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
 
@@ -500,12 +508,12 @@ static u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
    for (i = 0; i < MSH2->bp.nummemorybreakpoints; i++)
    {
       if (((MSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
-         return MSH2->bp.memorybreakpoint[i].oldreadword(addr);
+         return MSH2->bp.memorybreakpoint[i].oldreadword(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
    }
    for (i = 0; i < SSH2->bp.nummemorybreakpoints; i++)
    {
       if (((SSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
-         return SSH2->bp.memorybreakpoint[i].oldreadword(addr);
+         return SSH2->bp.memorybreakpoint[i].oldreadword(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
    }
 
    return 0;
@@ -528,7 +536,7 @@ static u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
             CurrentSH2->bp.inbreakpoint = 0;
          }
 
-         return CurrentSH2->bp.memorybreakpoint[i].oldreadlong(addr);
+         return CurrentSH2->bp.memorybreakpoint[i].oldreadlong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
 
@@ -536,12 +544,12 @@ static u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
    for (i = 0; i < MSH2->bp.nummemorybreakpoints; i++)
    {
       if (((MSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
-         return MSH2->bp.memorybreakpoint[i].oldreadlong(addr);
+         return MSH2->bp.memorybreakpoint[i].oldreadlong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
    }
    for (i = 0; i < SSH2->bp.nummemorybreakpoints; i++)
    {
       if (((SSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
-         return SSH2->bp.memorybreakpoint[i].oldreadlong(addr);
+         return SSH2->bp.memorybreakpoint[i].oldreadlong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
    }
 
    return 0;
@@ -564,7 +572,7 @@ static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
             CurrentSH2->bp.inbreakpoint = 0;
          }
 
-         CurrentSH2->bp.memorybreakpoint[i].oldwritebyte(addr, val);
+         CurrentSH2->bp.memorybreakpoint[i].oldwritebyte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -574,7 +582,7 @@ static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
    {
       if (((MSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
       {
-         MSH2->bp.memorybreakpoint[i].oldwritebyte(addr, val);
+         MSH2->bp.memorybreakpoint[i].oldwritebyte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -582,7 +590,7 @@ static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
    {
       if (((SSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
       {
-         SSH2->bp.memorybreakpoint[i].oldwritebyte(addr, val);
+         SSH2->bp.memorybreakpoint[i].oldwritebyte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -605,7 +613,7 @@ static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
             CurrentSH2->bp.inbreakpoint = 0;
          }
 
-         CurrentSH2->bp.memorybreakpoint[i].oldwriteword(addr, val);
+         CurrentSH2->bp.memorybreakpoint[i].oldwriteword(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -615,7 +623,7 @@ static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
    {
       if (((MSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
       {
-         MSH2->bp.memorybreakpoint[i].oldwriteword(addr, val);
+         MSH2->bp.memorybreakpoint[i].oldwriteword(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -623,7 +631,7 @@ static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
    {
       if (((SSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
       {
-         SSH2->bp.memorybreakpoint[i].oldwriteword(addr, val);
+         SSH2->bp.memorybreakpoint[i].oldwriteword(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -646,7 +654,7 @@ static void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
             CurrentSH2->bp.inbreakpoint = 0;
          }
 
-         CurrentSH2->bp.memorybreakpoint[i].oldwritelong(addr, val);
+         CurrentSH2->bp.memorybreakpoint[i].oldwritelong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -656,7 +664,7 @@ static void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
    {
       if (((MSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
       {
-         MSH2->bp.memorybreakpoint[i].oldwritelong(addr, val);
+         MSH2->bp.memorybreakpoint[i].oldwritelong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -664,7 +672,7 @@ static void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
    {
       if (((SSH2->bp.memorybreakpoint[i].addr >> 16) & 0xFFF) == ((addr >> 16) & 0xFFF))
       {
-         SSH2->bp.memorybreakpoint[i].oldwritelong(addr, val);
+         SSH2->bp.memorybreakpoint[i].oldwritelong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -1424,14 +1432,16 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
       case 0x092:
          CurrentSH2->onchip.CCR = val & 0xCF;
 		 if (val & 0x10){
-			 cache_clear(&CurrentSH2->onchip.cache);
+			 //cache_clear(&CurrentSH2->onchip.cache);
+			 InvalidateCache();
 		 }
 		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
-			 cache_enable(&CurrentSH2->onchip.cache);
+			 //cache_enable(&CurrentSH2->onchip.cache);
                          enableCache(CurrentSH2);
 		 }
 		 else{
-			 cache_disable(&CurrentSH2->onchip.cache);
+                         disableCache(CurrentSH2);  
+			 //cache_disable(&CurrentSH2->onchip.cache);
 		 }
          return;
       case 0x0E0:
@@ -1787,7 +1797,7 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void UpdateLRU(u8 line, u8 way) {
+static void UpdateLRU(u8 line, u8 way) {
 //Table 8.3 SH7604_Hardware_Manual.pdf
   switch (way) {
     case 0:
@@ -1809,31 +1819,33 @@ void UpdateLRU(u8 line, u8 way) {
   }
 }
 
-u8 getLRU(u8 line) {
+static u8 getLRU(u8 line) {
 //Table 8.3 SH7604_Hardware_Manual.pdf
-  if ((CurrentSH2->cacheLRU[line] & 0x20) != 0) return 0;
-  if ((CurrentSH2->cacheLRU[line] & 0x10) != 0) return 0;
-  if ((CurrentSH2->cacheLRU[line] & 0x08) != 0) return 0;
-  if ((CurrentSH2->cacheLRU[line] & 0x04) != 0) return 1;
-  if ((CurrentSH2->cacheLRU[line] & 0x02) != 0) return 1;
-  if ((CurrentSH2->cacheLRU[line] & 0x01) != 0) return 2;  
-  return 3;
+  u8 way = 3;
+  if ((CurrentSH2->cacheLRU[line] & 0x20) != 0) way=0;
+  if ((CurrentSH2->cacheLRU[line] & 0x10) != 0) way=0;
+  if ((CurrentSH2->cacheLRU[line] & 0x08) != 0) way=0;
+  if ((CurrentSH2->cacheLRU[line] & 0x04) != 0) way=1;
+  if ((CurrentSH2->cacheLRU[line] & 0x02) != 0) way=1;
+  if ((CurrentSH2->cacheLRU[line] & 0x01) != 0) way=2;
+  CurrentSH2->cacheLRU[line] = 0;  
+  return way;
 }
 
-void CacheWriteThrough(u32 addr, u32 val, u8 size) {
+static inline void CacheWriteThrough(u8* mem, u32 addr, u32 val, u8 size) {
   switch(size) {
   case 1:
-    WriteByteList[(addr >> 16) & 0xFFF](addr, val);
+    WriteByteList[(addr >> 16) & 0xFFF](mem, addr, val);
     break;
   case 2:
-    WriteWordList[(addr >> 16) & 0xFFF](addr, val);
+    WriteWordList[(addr >> 16) & 0xFFF](mem, addr, val);
     break;
   case 4:
-    WriteLongList[(addr >> 16) & 0xFFF](addr, val);
+    WriteLongList[(addr >> 16) & 0xFFF](mem, addr, val);
     break;
   }
 }
-
+#if 0
 void CacheWriteHit(u8 line, u8 way, u32 val, u8 byte, u8 size) {
   u32 res = 0;
   UpdateLRU(line, way);
@@ -1855,92 +1867,135 @@ void CacheWriteHit(u8 line, u8 way, u32 val, u8 byte, u8 size) {
     break;
   }
 }
+#endif
 
-void CacheWrite(u32 addr, u32 val, u8 size) {
+void CacheWrite(u8* mem, u32 addr, u32 val, u8 size) {
   u8 line = (addr>>4)&0x3F;
-  u32 tag = (addr>>10)&0x7FFFF|0x80000;
+  u32 tag = (addr>>10)&0x7FFFF;
   u8 byte = addr&0xF;
-  u8 i=0;
-  for (i = 0; i<CurrentSH2->nbCacheWay; i++) {
-    if (CurrentSH2->cacheTag[line][i] == tag){
+  u8 way=CurrentSH2->tagWay[line][tag];
+  if (way <= 0x3) {
       //printf("Write hit %x %d\n", addr, size);
-      CacheWriteHit(line, i, val, byte, size);
-      break;
-    }
+      //CacheWriteHit(line, i, val, byte, size);
+CurrentSH2->tagWay[line][tag] = 0x4; //temp invalidate line
+CurrentSH2->cacheTagArray[line][way] = 0x0;
   }
-  return CacheWriteThrough(addr, val, size);
+  return CacheWriteThrough(mem, addr, val, size);
+}
+
+void CacheWriteByte(u8* mem, u32 addr, u32 val){
+  return CacheWrite(mem, addr, val, 1);
+}
+void CacheWriteWord(u8* mem, u32 addr, u32 val){
+  return CacheWrite(mem, addr, val, 2);
+}
+void CacheWriteLong(u8* mem, u32 addr, u32 val){
+  return CacheWrite(mem, addr, val, 4);
+}
+
+void InvalidateCache() {
+  memset(CurrentSH2->tagWay, 0x4, 64*0x80000);
+  memset(CurrentSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
 }
 
 void enableCache() {
-  CurrentSH2->cacheOn = 1;
-  CurrentSH2->nbCacheWay = 4;
+  int i;
+  if (CurrentSH2->cacheOn == 0) {
+    CurrentSH2->cacheOn = 1;
+    CurrentSH2->nbCacheWay = 4;
+    for (i=0x0; i < 0x1000; i++)
+    {
+       CacheReadByteList[i] = CacheReadByte;
+       CacheReadWordList[i] = CacheReadWord;
+       CacheReadLongList[i] = CacheReadLong;
+       CacheWriteByteList[i] = CacheWriteByte;
+       CacheWriteWordList[i] = CacheWriteWord;
+       CacheWriteLongList[i] = CacheWriteLong;
+    }
+  printf("EnableCache...\n");
+  }
 }
 
 void disableCache() {
+  int i;
   if (CurrentSH2->cacheOn == 1) {
     CurrentSH2->cacheOn = 0;
-    //Need to invalidate full cache
-  }
-}
-
-u32 CacheReadHit(u8 line, u8 way, u8 byte, u8 size) {
-  u8 res[4];
-  UpdateLRU(line, way);
-  switch (size) {
-  case 1:
-    res[0] = CurrentSH2->cacheData[line][way][byte];
-    return res[0];
-  case 2:
-    res[1] = CurrentSH2->cacheData[line][way][byte];
-    res[0] = CurrentSH2->cacheData[line][way][byte+1];
-    return res[1]<<8 | res[0];
-  case 4:
-    res[3] = CurrentSH2->cacheData[line][way][byte];
-    res[2] = CurrentSH2->cacheData[line][way][byte+1];
-    res[1] = CurrentSH2->cacheData[line][way][byte+2];
-    res[0] = CurrentSH2->cacheData[line][way][byte+3];
-    return res[3]<<24 | res[2]<<16 | res[1]<<8 | res[0];
-  default:
-    break;
-  }
-  return 0;
-}
-
-u32 CacheReadMiss(u8 line, u32 tag, u8 byte, u8 size) {
-  u32 addr = (tag<<10)|(line<<4);
-  u8 way = getLRU(line);
-  u8 i;
-  for (i=0; i<16; i++) {
-    u8 fetch = ReadByteList[(addr >> 16) & 0xFFF](addr+i);
-    CurrentSH2->cacheData[line][way][i] = fetch;
-  }
-  CurrentSH2->cacheTag[line][way] = tag;
-  return CacheReadHit(line, way, byte, size);
-  
-}
-
-u32 CacheRead(u32 addr, u8 size) {
-  u8 line = (addr>>4)&0x3F;
-  u32 tag = (addr>>10)&0x7FFFF|0x80000;
-  u8 byte = addr&0xF;
-  u8 i=0;
-  for (i = 0; i<CurrentSH2->nbCacheWay; i++) {
-    if (CurrentSH2->cacheTag[line][i] == tag){
-      return CacheReadHit(line, i, byte, size);
+    for (i=0; i < 0x1000; i++)
+    {
+      CacheReadByteList[i] = ReadByteList[i];
+      CacheReadWordList[i] = ReadWordList[i];
+      CacheReadLongList[i] = ReadLongList[i];
+      CacheWriteByteList[i] = WriteByteList[i];
+      CacheWriteWordList[i] = WriteWordList[i];
+      CacheWriteLongList[i] = WriteLongList[i];
     }
+printf("DisableCache...\n");
+    InvalidateCache();
   }
-  return CacheReadMiss(line, tag, byte, size);
+}
+
+void CacheFetch(u8* memory, u8 line, u32 tag, u8 way) {
+  u8 i;
+  memcpy(CurrentSH2->cacheData[line][way], memory, 16);
+  UpdateLRU(line, way);
+  CurrentSH2->tagWay[line][tag] = way;
+  CurrentSH2->cacheTagArray[line][way] = tag;
+}
+
+u32 CacheReadByte(u8* memory, u32 addr) {
+  u8 line = (addr>>4)&0x3F;
+  u32 tag = (addr>>10)&0x7FFFF;
+  u8 byte = addr&0xF;
+  u8 way = CurrentSH2->tagWay[line][tag];
+  if ((way <= 0x3) && (CurrentSH2->cacheTagArray[line][way] == tag)) {
+    UpdateLRU(line, way);
+    u32 ret = ReadByteList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+    return ret;
+  }
+  way = getLRU(line);
+  CacheFetch(&memory[addr&0xFFFF0], line, tag, way);
+  u32 ret = ReadByteList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+  return ret;
+}
+
+u32 CacheReadWord(u8* memory, u32 addr) {
+  u8 line = (addr>>4)&0x3F;
+  u32 tag = (addr>>10)&0x7FFFF;
+  u8 byte = (addr&0xF);
+  u8 way = CurrentSH2->tagWay[line][tag];
+  if ((way <= 0x3) && (CurrentSH2->cacheTagArray[line][way] == tag)) {
+    UpdateLRU(line, way);
+    u32 ret = ReadWordList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+    return ret;
+  }
+  way = getLRU(line);
+  CacheFetch(&memory[addr&0xFFFF0], line, tag, way);
+  u32 ret = ReadWordList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+return ret;
+}
+
+u32 CacheReadLong(u8* memory, u32 addr) {
+  u8 line = (addr>>4)&0x3F;
+  u32 tag = (addr>>10)&0x7FFFF;
+  u8 byte = (addr&0xF);
+  u8 way = CurrentSH2->tagWay[line][tag];
+  if ((way <= 0x3) && (CurrentSH2->cacheTagArray[line][way] == tag)) {
+    UpdateLRU(line, way);
+    u32 ret = ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+return ret;
+  }
+  way = getLRU(line);
+  CacheFetch(&memory[addr&0xFFFF0], line, tag, way);
+  u32 ret = ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+return ret;
 }
 
 void CacheInvalidate(u32 addr){
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
-  u8 i=0;
-  for (i = 0; i<CurrentSH2->nbCacheWay; i++) {
-    if (CurrentSH2->cacheTag[line][i] == tag){
-      CurrentSH2->cacheTag[line][i] &= ~0x80000;
-    }
-  }
+  u8 way = CurrentSH2->tagWay[line][tag];
+  CurrentSH2->tagWay[line][tag] = 0x4;
+  if (way <= 0x3) CurrentSH2->cacheTagArray[line][way] = 0x0;
 }
 
 u32 FASTCALL AddressArrayReadLong(u32 addr) {
@@ -1954,7 +2009,7 @@ u32 FASTCALL AddressArrayReadLong(u32 addr) {
 #else
   u8 line = (addr>>4)&0x3F;
   u8 way = (CurrentSH2->onchip.CCR>>6)&0x3;
-  return ((CurrentSH2->cacheLRU[line]&0x3F)<<4) | ((CurrentSH2->cacheTag[line][way]&0x7FFFF)<<10) | (((CurrentSH2->cacheTag[line][way] != 0x0)&0x1)<<1)
+  return ((CurrentSH2->cacheLRU[line]&0x3F)<<4) | ((CurrentSH2->cacheTagArray[line][way]&0x7FFFF)<<10) | (CurrentSH2->cacheTagArray[line][way]!= 0x0)<<1)
 #endif
 }
 
@@ -1973,8 +2028,9 @@ void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
   u8 valid = (addr>>2)&0x1;
   u8 way = (CurrentSH2->onchip.CCR>>6)&0x3;
   CurrentSH2->cacheLRU[line] = (val>>4)&0x3F;
-  CurrentSH2->cacheTag[line][way] = tag;
-  CurrentSH2->cacheV[line][way] = valid;
+  CurrentSH2->cacheTagArray[line][way] = tag;
+  if (valid) CurrentSH2->tagWay[line][tag] = way+1;
+  else CurrentSH2->tagWay[line][tag] = 0x0;
 
 #endif
 }
@@ -1987,7 +2043,10 @@ u8 FASTCALL DataArrayReadByte(u32 addr) {
    int entry = (addr >> 4) & 0x3f;
    return CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf];
 #else
-   return T2ReadByte(CurrentSH2->DataArray, addr & 0xFFF);
+  u8 line = (addr>>4)&0x3F;
+  u8 byte = addr&0xF;
+  u8 way = (addr >> 10) & 3;
+  return ReadByteList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
 #endif
 }
 
@@ -1999,7 +2058,10 @@ u16 FASTCALL DataArrayReadWord(u32 addr) {
    int entry = (addr >> 4) & 0x3f;
    return ((u16)(CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf]) << 8) | CurrentSH2->onchip.cache.way[way][entry].data[(addr&0xf) + 1];
 #else
-   return T2ReadWord(CurrentSH2->DataArray, addr & 0xFFF);
+  u8 line = (addr>>4)&0x3F;
+  u8 byte = addr&0xF;
+  u8 way = (addr >> 10) & 3;
+  return ReadWordList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
 #endif
 }
 
@@ -2015,7 +2077,10 @@ u32 FASTCALL DataArrayReadLong(u32 addr) {
       ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 3]) << 0);
    return data;
 #else
-   return T2ReadLong(CurrentSH2->DataArray, addr & 0xFFF);
+  u8 line = (addr>>4)&0x3F;
+  u8 byte = addr&0xF;
+  u8 way = (addr >> 10) & 3;
+  return ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
 #endif
 }
 
@@ -2027,6 +2092,7 @@ void FASTCALL DataArrayWriteByte(u32 addr, u8 val)  {
    int entry = (addr >> 4) & 0x3f;
    CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf] = val;
 #else
+CACHE_LOG("Write Data byte %x\n", addr);
    T2WriteByte(CurrentSH2->DataArray, addr & 0xFFF, val);
 #endif
 }
@@ -2040,6 +2106,7 @@ void FASTCALL DataArrayWriteWord(u32 addr, u16 val)  {
    CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf] = val >> 8;
    CurrentSH2->onchip.cache.way[way][entry].data[(addr&0xf) + 1] = val;
 #else
+CACHE_LOG("Write Data word %x\n", addr);
    T2WriteWord(CurrentSH2->DataArray, addr & 0xFFF, val);
 #endif
 }
@@ -2055,6 +2122,7 @@ void FASTCALL DataArrayWriteLong(u32 addr, u32 val)  {
    CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 2] = ((val >> 8) & 0xFF);
    CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 3] = ((val >> 0) & 0xFF);
 #else
+CACHE_LOG("Write Data long %x\n", addr);
    T2WriteLong(CurrentSH2->DataArray, addr & 0xFFF, val);
 #endif
 }
@@ -2294,7 +2362,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 // Input Capture Specific
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
+void FASTCALL MSH2InputCaptureWriteWord(UNUSED u8* memory, UNUSED u32 addr, UNUSED u16 data)
 {
    // Set Input Capture Flag
    MSH2->onchip.FTCSR |= 0x80;
@@ -2309,7 +2377,7 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
+void FASTCALL SSH2InputCaptureWriteWord(UNUSED u8* memory, UNUSED u32 addr, UNUSED u16 data)
 {
    // Set Input Capture Flag
    SSH2->onchip.FTCSR |= 0x80;

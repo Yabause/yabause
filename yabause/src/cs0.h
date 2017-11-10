@@ -42,26 +42,26 @@ typedef struct
    int cartid;
    const char *filename;
 
-   u8 FASTCALL (*Cs0ReadByte)(u32 addr);
-   u16 FASTCALL (*Cs0ReadWord)(u32 addr);
-   u32 FASTCALL (*Cs0ReadLong)(u32 addr);
-   void FASTCALL (*Cs0WriteByte)(u32 addr, u8 val);
-   void FASTCALL (*Cs0WriteWord)(u32 addr, u16 val);
-   void FASTCALL (*Cs0WriteLong)(u32 addr, u32 val);
+   u8 FASTCALL (*Cs0ReadByte)(u8* memory, u32 addr);
+   u16 FASTCALL (*Cs0ReadWord)(u8* memory, u32 addr);
+   u32 FASTCALL (*Cs0ReadLong)(u8* memory, u32 addr);
+   void FASTCALL (*Cs0WriteByte)(u8* memory, u32 addr, u8 val);
+   void FASTCALL (*Cs0WriteWord)(u8* memory, u32 addr, u16 val);
+   void FASTCALL (*Cs0WriteLong)(u8* memory, u32 addr, u32 val);
 
-   u8 FASTCALL (*Cs1ReadByte)(u32 addr);
-   u16 FASTCALL (*Cs1ReadWord)(u32 addr);
-   u32 FASTCALL (*Cs1ReadLong)(u32 addr);
-   void FASTCALL (*Cs1WriteByte)(u32 addr, u8 val);
-   void FASTCALL (*Cs1WriteWord)(u32 addr, u16 val);
-   void FASTCALL (*Cs1WriteLong)(u32 addr, u32 val);
+   u8 FASTCALL (*Cs1ReadByte)(u8* memory, u32 addr);
+   u16 FASTCALL (*Cs1ReadWord)(u8* memory, u32 addr);
+   u32 FASTCALL (*Cs1ReadLong)(u8* memory, u32 addr);
+   void FASTCALL (*Cs1WriteByte)(u8* memory, u32 addr, u8 val);
+   void FASTCALL (*Cs1WriteWord)(u8* memory, u32 addr, u16 val);
+   void FASTCALL (*Cs1WriteLong)(u8* memory, u32 addr, u32 val);
 
-   u8 FASTCALL (*Cs2ReadByte)(u32 addr);
-   u16 FASTCALL (*Cs2ReadWord)(u32 addr);
-   u32 FASTCALL (*Cs2ReadLong)(u32 addr);
-   void FASTCALL (*Cs2WriteByte)(u32 addr, u8 val);
-   void FASTCALL (*Cs2WriteWord)(u32 addr, u16 val);
-   void FASTCALL (*Cs2WriteLong)(u32 addr, u32 val);
+   u8 FASTCALL (*Cs2ReadByte)(u8* memory, u32 addr);
+   u16 FASTCALL (*Cs2ReadWord)(u8* memory, u32 addr);
+   u32 FASTCALL (*Cs2ReadLong)(u8* memory, u32 addr);
+   void FASTCALL (*Cs2WriteByte)(u8* memory, u32 addr, u8 val);
+   void FASTCALL (*Cs2WriteWord)(u8* memory, u32 addr, u16 val);
+   void FASTCALL (*Cs2WriteLong)(u8* memory, u32 addr, u32 val);
 
    void *rom;
    void *bupram;

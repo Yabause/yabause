@@ -2286,7 +2286,7 @@ void ScuDspClearCodeBreakpoints(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL ScuReadByte(u32 addr) {
+u8 FASTCALL ScuReadByte(u8* mem, u32 addr) {
    addr &= 0xFF;
 
    switch(addr) {
@@ -2302,7 +2302,7 @@ u8 FASTCALL ScuReadByte(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL ScuReadWord(u32 addr) {
+u16 FASTCALL ScuReadWord(u8* mem, u32 addr) {
    addr &= 0xFF;
    LOG("Unhandled SCU Register word read %08X\n", addr);
 
@@ -2311,7 +2311,7 @@ u16 FASTCALL ScuReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL ScuReadLong(u32 addr) {
+u32 FASTCALL ScuReadLong(u8* mem, u32 addr) {
    addr &= 0xFF;
    //LOG("scu: read  %08X @ %08X", addr, CurrentSH2->regs.PC);
    switch(addr) {
@@ -2358,7 +2358,7 @@ u32 FASTCALL ScuReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteByte(u32 addr, u8 val) {
+void FASTCALL ScuWriteByte(u8* mem, u32 addr, u8 val) {
    addr &= 0xFF;
    switch(addr) {
       case 0xA7:
@@ -2372,14 +2372,14 @@ void FASTCALL ScuWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteWord(u32 addr, UNUSED u16 val) {
+void FASTCALL ScuWriteWord(u8* mem, u32 addr, UNUSED u16 val) {
    addr &= 0xFF;
    LOG("Unhandled SCU Register word write %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL ScuWriteLong(u32 addr, u32 val) {
+void FASTCALL ScuWriteLong(u8* mem, u32 addr, u32 val) {
    addr &= 0xFF;
   //if (addr!= 0xA0)
   //LOG("scu: write %08X:%08X @ %08X", addr, val, CurrentSH2->regs.PC);

@@ -418,7 +418,8 @@ typedef struct
    u8 nbCacheWay;
    u8 cacheLRU[64];
    u8 cacheData[64][4][16];
-   u32 cacheTag[64][4];
+   u8 tagWay[64][0x80000];
+   u32 cacheTagArray[64][4];
 
 } SH2_struct;
 
@@ -498,12 +499,12 @@ void SH2DumpHistory(SH2_struct *context);
 void SH2HandleBreakpoints(SH2_struct *context);
 
 
-u8 INLINE CacheReadByte(u32 addr);
-u16 INLINE CacheReadShort(u32 addr);
-u32 INLINE CacheReadLong(u32 addr);
-void INLINE CacheWriteByte(u32 addr, u32 val);
-void INLINE CacheWriteShort(u32 addr, u32 val);
-void INLINE CacheWriteLong(u32 addr, u32 val);
+u32 CacheReadByte(u8* mem, u32 addr);
+u32 CacheReadWord(u8* mem, u32 addr);
+u32 CacheReadLong(u8* mem, u32 addr);
+void CacheWriteByte(u8* mem, u32 addr, u32 val);
+void CacheWriteShort(u8* mem, u32 addr, u32 val);
+void CacheWriteLong(u8* mem, u32 addr, u32 val);
 
 static void SH2BreakNow(SH2_struct *context)
 {
@@ -539,8 +540,8 @@ void FASTCALL DataArrayWriteByte(u32 addr, u8 val);
 void FASTCALL DataArrayWriteWord(u32 addr, u16 val);
 void FASTCALL DataArrayWriteLong(u32 addr, u32 val);
 
-void FASTCALL MSH2InputCaptureWriteWord(u32 addr, u16 data);
-void FASTCALL SSH2InputCaptureWriteWord(u32 addr, u16 data);
+void FASTCALL MSH2InputCaptureWriteWord(UNUSED u8* mem, u32 addr, u16 data);
+void FASTCALL SSH2InputCaptureWriteWord(UNUSED u8* mem, u32 addr, u16 data);
 
 int SH2SaveState(SH2_struct *context, FILE *fp);
 int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
