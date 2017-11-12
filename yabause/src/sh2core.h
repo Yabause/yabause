@@ -499,11 +499,11 @@ void SH2DumpHistory(SH2_struct *context);
 void SH2HandleBreakpoints(SH2_struct *context);
 
 
-u32 CacheReadByte(u8* mem, u32 addr);
-u32 CacheReadWord(u8* mem, u32 addr);
+u8 CacheReadByte(u8* mem, u32 addr);
+u16 CacheReadWord(u8* mem, u32 addr);
 u32 CacheReadLong(u8* mem, u32 addr);
-void CacheWriteByte(u8* mem, u32 addr, u32 val);
-void CacheWriteShort(u8* mem, u32 addr, u32 val);
+void CacheWriteByte(u8* mem, u32 addr, u8 val);
+void CacheWriteShort(u8* mem, u32 addr, u16 val);
 void CacheWriteLong(u8* mem, u32 addr, u32 val);
 
 static void SH2BreakNow(SH2_struct *context)

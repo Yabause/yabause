@@ -44,6 +44,11 @@ void WDTExec(u32 cycles);
 u8 SCIReceiveByte(void);
 void SCITransmitByte(u8);
 
+
+void enableCache();
+void disableCache();
+void InvalidateCache();
+
 //////////////////////////////////////////////////////////////////////////////
 
 int SH2Init(int coreid)
@@ -449,7 +454,7 @@ void SH2ClearCodeBreakpoints(SH2_struct *context) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
+static u8 FASTCALL SH2MemoryBreakpointReadByte(u8* mem, u32 addr) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -485,7 +490,7 @@ static u8 FASTCALL SH2MemoryBreakpointReadByte(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
+static u16 FASTCALL SH2MemoryBreakpointReadWord(u8* mem, u32 addr) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -521,7 +526,7 @@ static u16 FASTCALL SH2MemoryBreakpointReadWord(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
+static u32 FASTCALL SH2MemoryBreakpointReadLong(u8* mem, u32 addr) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -557,7 +562,7 @@ static u32 FASTCALL SH2MemoryBreakpointReadLong(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
+static void FASTCALL SH2MemoryBreakpointWriteByte(u8* mem, u32 addr, u8 val) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -598,7 +603,7 @@ static void FASTCALL SH2MemoryBreakpointWriteByte(u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
+static void FASTCALL SH2MemoryBreakpointWriteWord(u8* mem, u32 addr, u16 val) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -639,7 +644,7 @@ static void FASTCALL SH2MemoryBreakpointWriteWord(u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL SH2MemoryBreakpointWriteLong(u32 addr, u32 val) {
+static void FASTCALL SH2MemoryBreakpointWriteLong(u8* mem, u32 addr, u32 val) {
    int i;
 
    for (i = 0; i < CurrentSH2->bp.nummemorybreakpoints; i++)
@@ -1880,17 +1885,17 @@ void CacheWrite(u8* mem, u32 addr, u32 val, u8 size) {
 CurrentSH2->tagWay[line][tag] = 0x4; //temp invalidate line
 CurrentSH2->cacheTagArray[line][way] = 0x0;
   }
-  return CacheWriteThrough(mem, addr, val, size);
+  CacheWriteThrough(mem, addr, val, size);
 }
 
-void CacheWriteByte(u8* mem, u32 addr, u32 val){
-  return CacheWrite(mem, addr, val, 1);
+void CacheWriteByte(u8* mem, u32 addr, u8 val){
+  CacheWrite(mem, addr, val, 1);
 }
-void CacheWriteWord(u8* mem, u32 addr, u32 val){
-  return CacheWrite(mem, addr, val, 2);
+void CacheWriteWord(u8* mem, u32 addr, u16 val){
+  CacheWrite(mem, addr, val, 2);
 }
 void CacheWriteLong(u8* mem, u32 addr, u32 val){
-  return CacheWrite(mem, addr, val, 4);
+  CacheWrite(mem, addr, val, 4);
 }
 
 void InvalidateCache() {
@@ -1942,7 +1947,7 @@ void CacheFetch(u8* memory, u8 line, u32 tag, u8 way) {
   CurrentSH2->cacheTagArray[line][way] = tag;
 }
 
-u32 CacheReadByte(u8* memory, u32 addr) {
+u8 CacheReadByte(u8* memory, u32 addr) {
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
   u8 byte = addr&0xF;
@@ -1958,7 +1963,7 @@ u32 CacheReadByte(u8* memory, u32 addr) {
   return ret;
 }
 
-u32 CacheReadWord(u8* memory, u32 addr) {
+u16 CacheReadWord(u8* memory, u32 addr) {
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
   u8 byte = (addr&0xF);
