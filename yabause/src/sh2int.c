@@ -183,34 +183,21 @@ static u32 FASTCALL FetchBios(u32 addr)
     }
   }
 
-#if CACHE_ENABLE
-   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
    return SH2MappedMemoryReadWord(addr);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchLWram(u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
 	return SH2MappedMemoryReadWord(addr);
-#endif
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchHWram(u32 addr)
 {
-#if CACHE_ENABLE
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-#else
 	return SH2MappedMemoryReadWord(addr);
-#endif
 }
 
 extern u8 * Vdp1Ram;

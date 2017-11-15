@@ -981,9 +981,9 @@ void YabauseStartSlave(void) {
       SH2GetRegisters(SSH2, &SSH2->regs);
       SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
       SSH2->regs.VBR = 0x06000400;
-      SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
-      if (MappedMemoryReadLong(0x060002AC) != 0)
-         SSH2->regs.R[15] = MappedMemoryReadLong(0x060002AC);
+      SSH2->regs.PC = SH2MappedMemoryReadLong(0x06000250);
+      if (SH2MappedMemoryReadLong(0x060002AC) != 0)
+         SSH2->regs.R[15] = SH2MappedMemoryReadLong(0x060002AC);
       SH2SetRegisters(SSH2, &SSH2->regs);
    }
    else {

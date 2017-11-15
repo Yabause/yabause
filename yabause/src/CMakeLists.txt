@@ -27,7 +27,6 @@ set(yabause_HEADERS
 	yabause.h ygl.h yui.h
 	shaders/FXAA_DefaultES.h
 	frameprofile.h
-	sh2cache.h
 )
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
@@ -51,7 +50,7 @@ set(yabause_SOURCES
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
-	sh2cache.c )
+	)
 	add_definitions(-DIMPROVED_SAVESTATES)
 if (ANDROID)
     add_definitions(-DANDROID=1)
@@ -109,12 +108,6 @@ if (YAB_USE_CXX)
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
 else()
 	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
-endif()
-
-option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
-if (YAB_WANT_SH2_CACHE)
-    add_definitions(-DCACHE_ENABLE=1)
-    add_definitions(-DEXEC_FROM_CACHE=1)
 endif()
 
 #-------------------------------------------------------

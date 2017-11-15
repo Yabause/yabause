@@ -170,7 +170,7 @@ void SH2Reset(SH2_struct *context)
    // Reset Onchip modules
    OnchipReset(context);
    CurrentSH2 = context;
-   cache_clear(&context->onchip.cache);
+   InvalidateCache();
 
    // Reset backtrace
    context->bt.numbacktrace = 0;
@@ -1437,16 +1437,13 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
       case 0x092:
          CurrentSH2->onchip.CCR = val & 0xCF;
 		 if (val & 0x10){
-			 //cache_clear(&CurrentSH2->onchip.cache);
 			 InvalidateCache();
 		 }
 		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
-			 //cache_enable(&CurrentSH2->onchip.cache);
                          enableCache(CurrentSH2);
 		 }
 		 else{
                          disableCache(CurrentSH2);  
-			 //cache_disable(&CurrentSH2->onchip.cache);
 		 }
          return;
       case 0x0E0:
@@ -1548,14 +1545,14 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
          return;
       case 0x092:
          CurrentSH2->onchip.CCR = val & 0xCF;
-		 if (val&0x10){
-			 cache_clear( &CurrentSH2->onchip.cache );
+		 if (val & 0x10){
+			 InvalidateCache();
 		 }
-		 if ((CurrentSH2->onchip.CCR & 0x01)){
-			 cache_enable(&CurrentSH2->onchip.cache);
+		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
+                         enableCache(CurrentSH2);
 		 }
 		 else{
-			 cache_disable(&CurrentSH2->onchip.cache);
+                         disableCache(CurrentSH2);  
 		 }
          return;
       case 0x0E0:
@@ -1987,12 +1984,12 @@ u32 CacheReadLong(u8* memory, u32 addr) {
   if ((way <= 0x3) && (CurrentSH2->cacheTagArray[line][way] == tag)) {
     UpdateLRU(line, way);
     u32 ret = ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-return ret;
+    return ret;
   }
   way = getLRU(line);
   CacheFetch(&memory[addr&0xFFFF0], line, tag, way);
   u32 ret = ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-return ret;
+  return ret;
 }
 
 void CacheInvalidate(u32 addr){
@@ -2004,132 +2001,70 @@ void CacheInvalidate(u32 addr){
 }
 
 u32 FASTCALL AddressArrayReadLong(u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (CurrentSH2->onchip.CCR >> 6) & 3;
-   int entry = (addr & 0x3FC) >> 4;
-   u32 data = CurrentSH2->onchip.cache.way[way][entry].tag;
-   data |= CurrentSH2->onchip.cache.lru[entry] << 4;
-   data |= CurrentSH2->onchip.cache.way[way][entry].v << 2;
-   return data;
-#else
   u8 line = (addr>>4)&0x3F;
   u8 way = (CurrentSH2->onchip.CCR>>6)&0x3;
-  return ((CurrentSH2->cacheLRU[line]&0x3F)<<4) | ((CurrentSH2->cacheTagArray[line][way]&0x7FFFF)<<10) | (CurrentSH2->cacheTagArray[line][way]!= 0x0)<<1)
-#endif
+  return ((CurrentSH2->cacheLRU[line]&0x3F)<<4) | ((CurrentSH2->cacheTagArray[line][way]&0x7FFFF)<<10) | ((CurrentSH2->cacheTagArray[line][way]!= 0x0)<<1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
-#ifdef CACHE_ENABLE
-   int way = (CurrentSH2->onchip.CCR >> 6) & 3;
-   int entry = (addr & 0x3FC) >> 4;
-   CurrentSH2->onchip.cache.way[way][entry].tag = addr & 0x1FFFFC00;
-   CurrentSH2->onchip.cache.way[way][entry].v = (addr >> 2) & 1;
-   CurrentSH2->onchip.cache.lru[entry] = (val >> 4) & 0x3f;
-#else
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
   u8 valid = (addr>>2)&0x1;
   u8 way = (CurrentSH2->onchip.CCR>>6)&0x3;
   CurrentSH2->cacheLRU[line] = (val>>4)&0x3F;
   CurrentSH2->cacheTagArray[line][way] = tag;
-  if (valid) CurrentSH2->tagWay[line][tag] = way+1;
-  else CurrentSH2->tagWay[line][tag] = 0x0;
-
-#endif
+  if (valid) CurrentSH2->tagWay[line][tag] = way;
+  else CurrentSH2->tagWay[line][tag] = 0x4;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL DataArrayReadByte(u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   return CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf];
-#else
   u8 line = (addr>>4)&0x3F;
   u8 byte = addr&0xF;
   u8 way = (addr >> 10) & 3;
   return ReadByteList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL DataArrayReadWord(u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   return ((u16)(CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf]) << 8) | CurrentSH2->onchip.cache.way[way][entry].data[(addr&0xf) + 1];
-#else
   u8 line = (addr>>4)&0x3F;
   u8 byte = addr&0xF;
   u8 way = (addr >> 10) & 3;
   return ReadWordList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL DataArrayReadLong(u32 addr) {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   u32 data = ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf]) << 24) |
-      ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 1]) << 16) |
-      ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 2]) << 8) |
-      ((u32)(CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 3]) << 0);
-   return data;
-#else
   u8 line = (addr>>4)&0x3F;
   u8 byte = addr&0xF;
   u8 way = (addr >> 10) & 3;
   return ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteByte(u32 addr, u8 val)  {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf] = val;
-#else
 CACHE_LOG("Write Data byte %x\n", addr);
    T2WriteByte(CurrentSH2->DataArray, addr & 0xFFF, val);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteWord(u32 addr, u16 val)  {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   CurrentSH2->onchip.cache.way[way][entry].data[addr&0xf] = val >> 8;
-   CurrentSH2->onchip.cache.way[way][entry].data[(addr&0xf) + 1] = val;
-#else
 CACHE_LOG("Write Data word %x\n", addr);
    T2WriteWord(CurrentSH2->DataArray, addr & 0xFFF, val);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteLong(u32 addr, u32 val)  {
-#ifdef CACHE_ENABLE
-   int way = (addr >> 10) & 3;
-   int entry = (addr >> 4) & 0x3f;
-   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf)] = ((val >> 24) & 0xFF);
-   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 1] = ((val >> 16) & 0xFF);
-   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 2] = ((val >> 8) & 0xFF);
-   CurrentSH2->onchip.cache.way[way][entry].data[(addr& 0xf) + 3] = ((val >> 0) & 0xFF);
-#else
 CACHE_LOG("Write Data long %x\n", addr);
    T2WriteLong(CurrentSH2->DataArray, addr & 0xFFF, val);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2307,7 +2242,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
       switch (size = ((*CHCR & 0x0C00) >> 10)) {
          case 0:
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteByteNocache(*DAR, MappedMemoryReadByteNocache(*SAR));
+				MappedMemoryWriteByte(*DAR, MappedMemoryReadByte(*SAR));
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -2319,7 +2254,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
             srcInc *= 2;
 
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteWordNocache(*DAR, MappedMemoryReadWordNocache(*SAR));
+				MappedMemoryWriteWord(*DAR, MappedMemoryReadWord(*SAR));
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -2331,7 +2266,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
             srcInc *= 4;
 
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteLongNocache(*DAR, MappedMemoryReadLongNocache(*SAR));
+				MappedMemoryWriteLong(*DAR, MappedMemoryReadLong(*SAR));
                *DAR += destInc;
                *SAR += srcInc;
             }
@@ -2344,7 +2279,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 
             for (i = 0; i < *TCR; i+=4) {
                for(i2 = 0; i2 < 4; i2++) {
-				   MappedMemoryWriteLongNocache(*DAR, MappedMemoryReadLongNocache(*SAR));
+				   MappedMemoryWriteLong(*DAR, MappedMemoryReadLong(*SAR));
                   *DAR += destInc;
                   *SAR += srcInc;
                }

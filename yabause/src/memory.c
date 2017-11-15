@@ -58,16 +58,6 @@
 #include "vidsoft.h"
 #include "vidogl.h"
 
-#if CACHE_ENABLE
-#else
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr); }
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr); }
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr); }
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val);  }
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val); }
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val); }
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 
 u8** MemoryBuffer[0x1000];
@@ -744,14 +734,7 @@ void MappedMemoryInit()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#if CACHE_ENABLE
-u8 FASTCALL MappedMemoryReadByte(u32 addr){
-	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr);
-}
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr)
-#else
 u8 FASTCALL MappedMemoryReadByte(u32 addr)
-#endif
 {
    switch (addr >> 29)
    {
@@ -835,14 +818,7 @@ printf("Hunandled Byte R %x\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#if CACHE_ENABLE
-u16 FASTCALL MappedMemoryReadWord(u32 addr){
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
-}
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr)
-#else
 u16 FASTCALL MappedMemoryReadWord(u32 addr)
-#endif
 {
 if (CurrentSH2->cacheOn == 1) CACHE_LOG("rw %x %x\n", addr, addr >> 29);
    switch (addr >> 29)
@@ -929,14 +905,7 @@ printf("Hunandled Word R %x\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#if CACHE_ENABLE
-u32 FASTCALL MappedMemoryReadLong(u32 addr){
-	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr);
-}
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr)
-#else
 u32 FASTCALL MappedMemoryReadLong(u32 addr)
-#endif
 {
   switch (addr >> 29)
    {
@@ -965,7 +934,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
       }
       default:
       {
-printf("Hunandled Long R %x\n", addr);
+printf("Hunandled Long R %x %d 0x%x\n", addr, (addr >> 29), (addr >> 16) & 0xFFF);
          return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -1016,7 +985,7 @@ u32 FASTCALL SH2MappedMemoryReadLong(u32 addr)
       }
       default:
       {
-printf("Hunandled Long R %x\n", addr);
+printf("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
          return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -1024,14 +993,7 @@ printf("Hunandled Long R %x\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val){
-	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val);
-}
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val)
-#else
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
-#endif
 {
    switch (addr >> 29)
    {
@@ -1126,14 +1088,7 @@ printf("Hunandled Byte W %x\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val){
-	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val);
-}
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val)
-#else
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
-#endif
 {
    switch (addr >> 29)
    {
@@ -1231,14 +1186,7 @@ printf("Hunandled Word W %x\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val){
-	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val);
-}
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val)
-#else
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
-#endif
 {
    switch (addr >> 29)
    {
