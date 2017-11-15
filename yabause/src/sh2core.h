@@ -23,7 +23,6 @@
 
 #include "core.h"
 #include "memory.h"
-#include "sh2cache.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -288,7 +287,6 @@ typedef struct
    u16 RTCSR;  // 0xFFFFFFF0
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
-   cache_enty cache;
 } Onchip_struct;
 
 typedef struct
