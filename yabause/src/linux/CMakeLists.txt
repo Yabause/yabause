@@ -42,7 +42,7 @@ install(TARGETS yabause-linux DESTINATION "bin")
 install(FILES "doc/yabause.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
 install(FILES "yabause.png" DESTINATION "share/pixmaps")
 
-option(INTERPRETER_TEST "Build the interpreter test suite" OFF)
+option(INTERPRETER_TEST "Build the interpreter test suite" ON)
 if (INTERPRETER_TEST)
 
 #--------------------------------------------------------------
@@ -56,7 +56,7 @@ include(ExternalProject)
 include_directories(${COMMON_INCLUDES})
 
 set(GTEST_FORCE_SHARED_CRT ON)
-set(GTEST_DISABLE_PTHREADS OFF)
+set(GTEST_DISABLE_PTHREADS ON)
 
 if(MINGW)
     set(GTEST_DISABLE_PTHREADS ON)
@@ -90,7 +90,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 # Unit test
 #--------------------------------------------------------------
 enable_testing()
-find_package( Threads )
+#find_package( Threads )
 set(PROJECT_TEST_NAME Sh2IntCompatibility_test)
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 

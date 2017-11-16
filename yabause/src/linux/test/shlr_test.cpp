@@ -40,7 +40,7 @@ TEST_F(ShlrTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00000000, MSH2->regs.R[2] );
   EXPECT_EQ( 0x00000001, MSH2->regs.SR.all );
@@ -58,7 +58,7 @@ TEST_F(ShlrTest, shift2) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x0000000F, MSH2->regs.R[2] );
   EXPECT_EQ( 0xE0, MSH2->regs.SR.all );
@@ -76,7 +76,7 @@ TEST_F(ShlrTest, shift8) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00FF003D, MSH2->regs.R[2] );
   EXPECT_EQ( 0x00000001, MSH2->regs.SR.all );
@@ -94,7 +94,7 @@ TEST_F(ShlrTest, shift16) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x0000DEAD, MSH2->regs.R[2] );
   EXPECT_EQ( 0x00000001, MSH2->regs.SR.all );

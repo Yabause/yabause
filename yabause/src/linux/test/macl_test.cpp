@@ -51,7 +51,7 @@ TEST_F(MaclTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00000001, MSH2->regs.MACH );
   EXPECT_EQ( 0x7EE9BBB6, MSH2->regs.MACL );
@@ -78,7 +78,7 @@ TEST_F(MaclTest, normal2) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xfffffffc, MSH2->regs.MACH );
   EXPECT_EQ( 0xfd6f8ca0, MSH2->regs.MACL );

@@ -36,6 +36,7 @@ int SH2DebugInterpreterInit(void);
 void SH2InterpreterDeInit(void);
 void SH2InterpreterReset(SH2_struct *context);
 void FASTCALL SH2InterpreterExec(SH2_struct *context, u32 cycles);
+void FASTCALL SH2InterpreterTestExec(SH2_struct *context, u32 cycles);
 void FASTCALL SH2DebugInterpreterExec(SH2_struct *context, u32 cycles);
 void SH2InterpreterGetRegisters(SH2_struct *context, sh2regs_struct *regs);
 u32 SH2InterpreterGetGPR(SH2_struct *context, int num);

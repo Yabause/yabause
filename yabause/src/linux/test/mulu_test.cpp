@@ -41,7 +41,7 @@ TEST_F(MuluTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x0168, MSH2->regs.MACL );
 
@@ -59,7 +59,7 @@ TEST_F(MuluTest, middle) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x40000000, MSH2->regs.MACL );
 
@@ -76,7 +76,7 @@ TEST_F(MuluTest, max) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xfffe0001, MSH2->regs.MACL );
 
@@ -93,7 +93,7 @@ TEST_F(MuluTest, ex) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xfffe0001, MSH2->regs.MACL );
 

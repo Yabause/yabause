@@ -41,7 +41,7 @@ MappedMemoryWriteWord(0x06002E4E, 0x0009);
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
 EXPECT_EQ( 0x06003096, MSH2->regs.PC );
   EXPECT_EQ( 0x06002E50, MSH2->regs.PR );
@@ -57,7 +57,7 @@ MappedMemoryWriteWord(0x06002E4E, 0x0009);
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
 EXPECT_EQ( 0x06002E4C - 4022, MSH2->regs.PC );
   EXPECT_EQ( 0x06002E50, MSH2->regs.PR );
@@ -76,7 +76,7 @@ TEST_F(BsrTest, bsrf) {
 
   MSH2->regs.PC = ( 0x06002E00 );
   MSH2->regs.SR.all = ( 0x000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06009324, MSH2->regs.PC );
   EXPECT_EQ( 0x06002E04, MSH2->regs.PR );

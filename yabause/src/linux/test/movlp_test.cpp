@@ -46,7 +46,7 @@ TEST_F(MovlpTest, normal) {
   MappedMemoryWriteWord( 0x06000250, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06000310, MSH2->regs.R[0] );
   EXPECT_EQ( 0x00000004, MSH2->regs.R[6] );
@@ -64,7 +64,7 @@ TEST_F(MovlpTest, samereg) {
     MappedMemoryWriteWord( 0x06000250, 0x0009 );  // nop
 
     MSH2->regs.PC =( 0x0600024c );
-    SH2Exec(MSH2, 1);
+    SH2TestExec(MSH2, 1);
 
     EXPECT_EQ( 0x0000004, MSH2->regs.R[0] );
 }

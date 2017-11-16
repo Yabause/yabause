@@ -41,7 +41,7 @@ TEST_F(DmuluTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x9999999a, MSH2->regs.MACL  );
   EXPECT_EQ( 0x00000001, MSH2->regs.MACH );

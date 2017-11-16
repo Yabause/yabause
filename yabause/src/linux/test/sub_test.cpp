@@ -41,7 +41,7 @@ TEST_F(SubTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00FF0000, MSH2->regs.R[1] );
   EXPECT_EQ( 0x000000FF, MSH2->regs.R[2] );
@@ -58,7 +58,7 @@ TEST_F(SubTest, negative) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xFFFFFF10, MSH2->regs.R[1] );
   EXPECT_EQ( 0x00000100, MSH2->regs.R[2] );

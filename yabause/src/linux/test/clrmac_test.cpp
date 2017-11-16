@@ -41,7 +41,7 @@ TEST_F(ClrmacTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00000000, MSH2->regs.MACH );
   EXPECT_EQ( 0x00000000, MSH2->regs.MACL );

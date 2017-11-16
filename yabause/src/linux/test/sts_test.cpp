@@ -46,7 +46,7 @@ TEST_F(StsTest, normal) {
   MappedMemoryWriteLong( 0x06000260, 0xDEADDEAD );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06000260, MSH2->regs.R[3] );
   EXPECT_EQ( 0xCAFECAFE, MappedMemoryReadLong(0x06000260) );
@@ -65,7 +65,7 @@ TEST_F(StsTest, stsmach) {
   MappedMemoryWriteLong( 0x06000260, 0xDEADDEAD );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xCAFECAFE, MSH2->regs.R[3] );
 
@@ -82,7 +82,7 @@ TEST_F(StsTest, stsmmach) {
   MappedMemoryWriteLong( 0x06000260, 0xDEADDEAD );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06000260, MSH2->regs.R[3] );
   EXPECT_EQ( 0xCAFECAFE, MappedMemoryReadLong(0x06000260) );
@@ -100,7 +100,7 @@ TEST_F(StsTest, stsmacl) {
   MappedMemoryWriteLong( 0x06000260, 0xDEADDEAD );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xCAFECAFE, MSH2->regs.R[3] );
 
@@ -117,7 +117,7 @@ TEST_F(StsTest, stsmmacl) {
   MappedMemoryWriteLong( 0x06000260, 0xDEADDEAD );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06000260, MSH2->regs.R[3] );
   EXPECT_EQ( 0xCAFECAFE, MappedMemoryReadLong(0x06000260) );
@@ -135,7 +135,7 @@ TEST_F(StsTest, stspr) {
   MappedMemoryWriteLong( 0x06000260, 0xDEADDEAD );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xCAFECAFE, MSH2->regs.R[3] );
 
@@ -152,7 +152,7 @@ TEST_F(StsTest, stsmpr) {
   MappedMemoryWriteLong( 0x06000260, 0xDEADDEAD );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06000260, MSH2->regs.R[3] );
   EXPECT_EQ( 0xCAFECAFE, MappedMemoryReadLong(0x06000260) );

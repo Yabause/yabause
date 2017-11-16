@@ -50,7 +50,7 @@ TEST_F(SubvTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00000002, MSH2->regs.R[0] );
   EXPECT_EQ( 0x7FFFFFFF, MSH2->regs.R[1] );
@@ -67,7 +67,7 @@ TEST_F(SubvTest, normal) {
 
   MSH2->regs.PC =( 0x06000000 );
 
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xFFFFFFFE, MSH2->regs.R[2] );
   EXPECT_EQ( 0x80000000, MSH2->regs.R[3] );

@@ -76,6 +76,7 @@ SH2Interface_struct SH2Interpreter = {
    SH2InterpreterDeInit,
    SH2InterpreterReset,
    SH2InterpreterExec,
+   SH2InterpreterTestExec,
 
    SH2InterpreterGetRegisters,
    SH2InterpreterGetGPR,
@@ -111,6 +112,7 @@ SH2Interface_struct SH2DebugInterpreter = {
    SH2DebugInterpreterInit,
    SH2InterpreterDeInit,
    SH2InterpreterReset,
+   SH2DebugInterpreterExec,
    SH2DebugInterpreterExec,
 
    SH2InterpreterGetRegisters,
@@ -3045,6 +3047,23 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
       // Execute it
       opcodes[context->instruction](context);
    }
+}
+
+FASTCALL void SH2InterpreterTestExec(SH2_struct *context, u32 cycles)
+{
+  u32 target_cycle = context->cycles + cycles;
+#if 0
+#ifndef EXEC_FROM_CACHE
+   if (context->isIdle)
+     SH2idleParse(context, target_cycle);
+   else
+     SH2idleCheck(context, target_cycle);
+#endif
+#endif
+      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
+
+      // Execute it
+      opcodes[context->instruction](context);
 }
 
 //////////////////////////////////////////////////////////////////////////////

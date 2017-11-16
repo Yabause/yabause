@@ -41,7 +41,7 @@ TEST_F(TestTest, normal) {
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0xE1 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00, (MSH2->regs.SR.all&0x01) );
 }
@@ -58,7 +58,7 @@ TEST_F(TestTest, zero) {
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0xE0 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x01, (MSH2->regs.SR.all&0x01) );
 }
@@ -74,7 +74,7 @@ TEST_F(TestTest, same) {
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00, (MSH2->regs.SR.all&0x01) );
 }
@@ -90,7 +90,7 @@ TEST_F(TestTest, samezero) {
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0xE1 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x01, (MSH2->regs.SR.all&0x01) );
 }

@@ -46,7 +46,7 @@ TEST_F(OrbTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x0e, MappedMemoryReadByte( 0x60FFCBC) );
 
@@ -67,7 +67,7 @@ TEST_F(OrbTest, max) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xff, MappedMemoryReadByte( 0x060ffcbc) );
 

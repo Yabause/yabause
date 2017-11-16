@@ -44,7 +44,7 @@ TEST_F(TestbTest, normal) {
   MSH2->regs.SR.all =( 0x000000 );
   MSH2->regs.GBR =( 0x00003000 );
 
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x01, (MSH2->regs.SR.all&0x01) );
 }

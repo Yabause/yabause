@@ -60,7 +60,7 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xFFFFFFFF, MSH2->regs.R[1] );
   EXPECT_EQ( 0xE1, MSH2->regs.SR.all );
@@ -74,7 +74,7 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
 
   MSH2->regs.PC =( 0x06000000 );
 
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xFFFFFFFF, MSH2->regs.R[0] );
   EXPECT_EQ( 0xE1, MSH2->regs.SR.all );
@@ -89,7 +89,7 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
 
   MSH2->regs.PC =( 0x06000000 );
 
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0xFFFFFFFF, MSH2->regs.R[1] );
   EXPECT_EQ( 0x1, MSH2->regs.R[0] );
@@ -103,7 +103,7 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
   EXPECT_EQ( 0xFFFFFFFF, MSH2->regs.R[1] );
   EXPECT_EQ( 0x0, MSH2->regs.R[0] );
   EXPECT_EQ( 0xE1, MSH2->regs.SR.all );
@@ -115,7 +115,7 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
   EXPECT_EQ( 0xFFFFFFFF, MSH2->regs.R[2] );
 
 }

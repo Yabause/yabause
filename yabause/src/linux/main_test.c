@@ -54,78 +54,31 @@
 #include "../cdbase.h"
 #include "../peripheral.h"
 
-#define AR (4.0f/3.0f)
-#define WINDOW_WIDTH 1200
-#define WINDOW_HEIGHT ((int)((float)WINDOW_WIDTH/AR))
-
-#define  WINDOW_WIDTH_LOW 600
-#define WINDOW_HEIGHT_LOW ((int)((float)WINDOW_WIDTH_LOW/AR))
-
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
-#ifdef HAVE_MUSASHI
-&M68KMusashi,
-#endif
-#ifdef HAVE_C68K
-&M68KC68K,
-#endif
-#ifdef HAVE_Q68
-&M68KQ68,
-#endif
 NULL
 };
 
 SH2Interface_struct *SH2CoreList[] = {
 &SH2Interpreter,
-&SH2DebugInterpreter,
-#ifdef TEST_PSP_SH2
-&SH2PSP,
-#endif
-#ifdef SH2_DYNAREC
-&SH2Dynarec,
-#endif
-#ifdef DYNAREC_DEVMIYAX
-&SH2Dyn,
-#endif
 NULL
 };
 
 PerInterface_struct *PERCoreList[] = {
 &PERDummy,
-#ifdef ARCH_IS_LINUX
-&PERLinuxJoy,
-#endif
-NULL
 };
 
 CDInterface *CDCoreList[] = {
 &DummyCD,
-&ISOCD,
-#ifndef UNKNOWN_ARCH
-&ArchCD,
-#endif
-NULL
 };
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
-#ifdef HAVE_LIBSDL
-&SNDSDL,
-#endif
-#ifdef HAVE_LIBAL
-&SNDAL,
-#endif
-NULL
 };
 
 VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
-#ifdef HAVE_LIBGL
-&VIDOGL,
-#endif
-&VIDSoft,
-NULL
 };
 
 #ifdef YAB_PORT_OSD
@@ -138,6 +91,8 @@ NULL
 
 static int fullscreen = 0;
 static int lowres_mode = 0;
+
+static int initDone = 0;
 
 static char biospath[256] = "\0";
 static char cdpath[256] = "\0";
@@ -159,40 +114,33 @@ void YuiSwapBuffers(void) {
 }
 
 void YuiInit() {
-	yinit.m68kcoretype = M68KCORE_MUSASHI;
-	yinit.percoretype = PERCORE_LINUXJOY;
+	yinit.m68kcoretype = 0;
+	yinit.percoretype = 0;
 	yinit.sh2coretype = 0;
-#ifdef FORCE_CORE_SOFT
-  yinit.vidcoretype = VIDCORE_SOFT;
-#else
-	yinit.vidcoretype = VIDCORE_OGL; //VIDCORE_SOFT  
-#endif
-#ifdef HAVE_LIBSDL
-	yinit.sndcoretype = SNDCORE_SDL;
-#else
+        yinit.vidcoretype = VIDCORE_SOFT;
 	yinit.sndcoretype = 0;
-#endif
 	yinit.cdcoretype = CDCORE_DEFAULT;
-	yinit.carttype = CART_DRAM32MBIT;
+	yinit.carttype = 0;
 	yinit.regionid = REGION_EUROPE;
 	yinit.biospath = NULL;
 	yinit.cdpath = NULL;
 	yinit.buppath = NULL;
 	yinit.mpegpath = NULL;
-	yinit.cartpath = "./backup32Mb.ram";
+	yinit.cartpath = NULL;
   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
 	yinit.skip_load = 0;
-
-	yinit.usethreads = 1;
-	yinit.numthreads = 4;
+	yinit.usethreads = 0;
 }
 
 void initEmulation() {
+   if (initDone == 0) {
    YuiInit();
    if (YabauseSh2Init(&yinit) != 0) {
     printf("YabauseSh2Init error \n\r");
     return;
+  }
+  initDone = 1;
   }
 }
 

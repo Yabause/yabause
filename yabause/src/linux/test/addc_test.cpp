@@ -45,7 +45,7 @@ TEST_F(AddcTest, normal) {
   MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = 0x06000000;
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   for (int i = 0; i<2; i++)
     EXPECT_EQ( 0xFFFFFFFF, MSH2->regs.R[i] );

@@ -37,7 +37,7 @@ TEST_F(BraTest, normal) {
   MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x0600304A, MSH2->regs.PC );
 
@@ -46,7 +46,7 @@ TEST_F(BraTest, normal) {
   MappedMemoryWriteWord( 0x06000222, 0x277A );  // nop
 
   MSH2->regs.PC = ( 0x06000220 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x0600024E, MSH2->regs.PC );
 
@@ -58,7 +58,7 @@ TEST_F(BraTest, negative) {
   MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06002DEE, MSH2->regs.PC );
 }
@@ -71,7 +71,7 @@ TEST_F(BraTest, braf) {
   MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06109324, MSH2->regs.PC );
 }
@@ -84,7 +84,7 @@ TEST_F(BraTest, braf_negative) {
   MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x06002E00, MSH2->regs.PC );
 }

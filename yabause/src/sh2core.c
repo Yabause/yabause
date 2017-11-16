@@ -191,6 +191,13 @@ void SH2PowerOn(SH2_struct *context) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles)
+{
+   CurrentSH2 = context;
+
+   SH2Core->TestExec(context, cycles);
+}
+
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
    CurrentSH2 = context;

@@ -43,7 +43,7 @@ TEST_F(DtTest, normal) {
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
  EXPECT_EQ( 0x1, MSH2->regs.R[2] );
  EXPECT_EQ( 0x0, MSH2->regs.SR.all );
@@ -57,7 +57,7 @@ TEST_F(DtTest, normal) {
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x1 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
  EXPECT_EQ( 0x1, MSH2->regs.R[2] );
  EXPECT_EQ( 0x0, MSH2->regs.SR.all );
@@ -71,7 +71,7 @@ TEST_F(DtTest, normal) {
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
  EXPECT_EQ( 0x0, MSH2->regs.R[2] );
  EXPECT_EQ( 0x1, MSH2->regs.SR.all );
@@ -88,7 +88,7 @@ TEST_F(DtTest, negative) {
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
  EXPECT_EQ( -257, MSH2->regs.R[2] );
  EXPECT_EQ( 0x0, MSH2->regs.SR.all );
@@ -104,7 +104,7 @@ TEST_F(DtTest, overflow) {
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
  EXPECT_EQ( 0x7fffffff, MSH2->regs.R[2] );
  EXPECT_EQ( 0x0, MSH2->regs.SR.all );

@@ -43,7 +43,7 @@ TEST_F(RotlTest, normal) {
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00, (MSH2->regs.SR.all&0x01) );
   EXPECT_EQ( 0x7fe00000, MSH2->regs.R[4] );
@@ -63,7 +63,7 @@ TEST_F(RotlTest, carry) {
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x01, (MSH2->regs.SR.all&0x01) );
   EXPECT_EQ( 0x00000001, MSH2->regs.R[4] );
@@ -80,7 +80,7 @@ TEST_F(RotlTest, from_carry) {
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x00, (MSH2->regs.SR.all&0x01) );
   EXPECT_EQ( 0x00, MSH2->regs.R[4] );

@@ -41,7 +41,7 @@ TEST_F(TrappaTest, normal) {
   // trapa
   MappedMemoryWriteWord( 0x06014026, 0xc330 );
   
-  SH2Exec(MSH2, 1);
+  SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x060041d8, MSH2->regs.PC );
   EXPECT_EQ( MSH2->regs.SR.all, MappedMemoryReadLong(0x060ffffC) );
