@@ -35,9 +35,9 @@ TEST_F(ClrtTest, normal) {
 
   MSH2->regs.SR.all = (0x00003F3);
 
-  MappedMemoryWriteWord( 0x06000000, 0x0008 );  // clrt
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x0008 );  // clrt
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);

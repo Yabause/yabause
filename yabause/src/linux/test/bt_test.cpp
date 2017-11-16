@@ -34,7 +34,7 @@ virtual void TearDown() {
 
 TEST_F(BtTest, normal) {
 
-  MappedMemoryWriteWord( 0x06000246, 0x8902 ); 
+  SH2MappedMemoryWriteWord( 0x06000246, 0x8902 ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
@@ -43,7 +43,7 @@ TEST_F(BtTest, normal) {
  EXPECT_EQ( 0x06000248, MSH2->regs.PC );
  EXPECT_EQ( 0x0, MSH2->regs.SR.all );
 
-  MappedMemoryWriteWord( 0x06000246, 0x8902 ); 
+  SH2MappedMemoryWriteWord( 0x06000246, 0x8902 ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x1 );
@@ -52,7 +52,7 @@ TEST_F(BtTest, normal) {
  EXPECT_EQ( 0x0600024E, MSH2->regs.PC );
  EXPECT_EQ( 0x1, MSH2->regs.SR.all );
 
-  MappedMemoryWriteWord( 0x06000246, 0x8982 ); 
+  SH2MappedMemoryWriteWord( 0x06000246, 0x8982 ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
@@ -61,7 +61,7 @@ TEST_F(BtTest, normal) {
  EXPECT_EQ( 0x06000248, MSH2->regs.PC );
  EXPECT_EQ( 0x0, MSH2->regs.SR.all );
 
-  MappedMemoryWriteWord( 0x06000246, 0x8982 ); 
+  SH2MappedMemoryWriteWord( 0x06000246, 0x8982 ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x1 );
@@ -74,8 +74,8 @@ TEST_F(BtTest, normal) {
 
 TEST_F(BtTest, bts) {
 
-  MappedMemoryWriteWord(0x06002E4C,0x8D0B);
-  MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(0x06002E4C,0x8D0B);
+  SH2MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000001);
@@ -83,8 +83,8 @@ TEST_F(BtTest, bts) {
 
   EXPECT_EQ( 0x06002E4C+4+(0xB<<1), MSH2->regs.PC );
 
-  MappedMemoryWriteWord(0x06002E4C,0x8D0B);
-  MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(0x06002E4C,0x8D0B);
+  SH2MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000);
@@ -94,9 +94,9 @@ TEST_F(BtTest, bts) {
 
   MSH2->regs.R[3]=0x2;
 
-  MappedMemoryWriteWord(0x06002E4C,0x8D8B);
-  MappedMemoryWriteWord( 0x06002E4E, 0x7304 );  // add #4, r3
-  MappedMemoryWriteWord( 0x06002E50, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(0x06002E4C,0x8D8B);
+  SH2MappedMemoryWriteWord( 0x06002E4E, 0x7304 );  // add #4, r3
+  SH2MappedMemoryWriteWord( 0x06002E50, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000001);
@@ -105,8 +105,8 @@ TEST_F(BtTest, bts) {
   EXPECT_EQ( 0x6, MSH2->regs.R[3] );
   EXPECT_EQ( 0x06002E4C+4+(0xFFFFFF8B<<1), MSH2->regs.PC );
 
-  MappedMemoryWriteWord(0x06002E4C,0x8D8B);
-  MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(0x06002E4C,0x8D8B);
+  SH2MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000);

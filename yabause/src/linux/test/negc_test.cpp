@@ -55,9 +55,9 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   MSH2->regs.R[1]=0x00000001;
   MSH2->regs.SR.all =(0xE0);
 
-  MappedMemoryWriteWord( 0x06000000, 0x611A );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x611A );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -68,9 +68,9 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   MSH2->regs.R[0]=0x00000000;
   MSH2->regs.SR.all =(0xE1);
 
-  MappedMemoryWriteWord( 0x06000000, 0x600A );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x600A );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
 
@@ -82,10 +82,10 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   MSH2->regs.R[1]=0xFFFFFFFF;
   MSH2->regs.SR.all =(0xE0);
 
-  MappedMemoryWriteWord( 0x06000000, 0x601A );
+  SH2MappedMemoryWriteWord( 0x06000000, 0x601A );
 
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
 
@@ -98,9 +98,9 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
   MSH2->regs.R[1]=0xFFFFFFFF;
   MSH2->regs.SR.all =(0xE1);
 
-  MappedMemoryWriteWord( 0x06000000, 0x601A );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x601A );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -110,9 +110,9 @@ negc   r1,r0    ! r0 = 0 - (-1) - T
 
   MSH2->regs.R[1]=0x1;
 
-  MappedMemoryWriteWord( 0x06000000, 0x621B );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x621B );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);

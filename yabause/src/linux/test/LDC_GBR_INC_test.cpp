@@ -36,13 +36,13 @@ TEST_F(LDC_GBR_INCTest, normal) {
 
 
   MSH2->regs.R[15]=0x06001F3C;
-  MappedMemoryWriteLong( 0x06001F3C, 0x25D00000 );
+  SH2MappedMemoryWriteLong( 0x06001F3C, 0x25D00000 );
   MSH2->regs.SR.all = (0);
 
   // ldc.l @r15+, gbr
-  MappedMemoryWriteWord( 0x06000000, 0x4F17 );
-  MappedMemoryWriteWord( 0x06000002, 0x000B );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x4F17 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000B );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -60,13 +60,13 @@ TEST_F(LDC_GBR_INCTest, normal_zero) {
 
 
   MSH2->regs.R[15]=0x06001F3C;
-  MappedMemoryWriteLong( 0x06001F3C, 0x25D00000 );
+  SH2MappedMemoryWriteLong( 0x06001F3C, 0x25D00000 );
   MSH2->regs.SR.all = (0);
 
   // ldc.l @r15+, gbr
-  MappedMemoryWriteWord( 0x06000000, 0x4F17 );
-  MappedMemoryWriteWord( 0x06000002, 0x000B );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x4F17 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000B );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);

@@ -36,9 +36,9 @@ TEST_F(MuluTest, normal) {
   MSH2->regs.R[2]=0x00000018;
 
   // mulu r9, r3
-  MappedMemoryWriteWord( 0x06000000, 0x232e );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x232e );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -54,9 +54,9 @@ TEST_F(MuluTest, middle) {
   MSH2->regs.R[2]=0x00008000;
 
   // mulu r9, r3
-  MappedMemoryWriteWord( 0x06000000, 0x232e );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x232e );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -71,9 +71,9 @@ TEST_F(MuluTest, max) {
   MSH2->regs.R[2]=0x0000FFFF;
 
   // mulu r9, r3
-  MappedMemoryWriteWord( 0x06000000, 0x232e );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x232e );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -88,9 +88,9 @@ TEST_F(MuluTest, ex) {
   MSH2->regs.R[2]=0xFFFFFFFF;
 
   // mulu r9, r3
-  MappedMemoryWriteWord( 0x06000000, 0x232e );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x232e );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);

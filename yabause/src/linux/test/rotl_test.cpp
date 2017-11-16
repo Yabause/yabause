@@ -37,9 +37,9 @@ TEST_F(RotlTest, normal) {
   MSH2->regs.R[4]=0x3ff00000;
 
   // rotl R[4]
-  MappedMemoryWriteWord( 0x06000000, 0x4404 );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x4404 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );
@@ -57,9 +57,9 @@ TEST_F(RotlTest, carry) {
   MSH2->regs.R[4]=0x80000000;
 
   // rotl R[4]
-  MappedMemoryWriteWord( 0x06000000, 0x4404 );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x4404 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );
@@ -74,9 +74,9 @@ TEST_F(RotlTest, from_carry) {
   MSH2->regs.R[4]=0x00000000;
 
   // rotl R[4]
-  MappedMemoryWriteWord( 0x06000000, 0x4404 );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x4404 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );

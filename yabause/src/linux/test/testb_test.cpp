@@ -33,12 +33,12 @@ TEST_F(TestbTest, normal) {
 
   MSH2->regs.R[0]=0x000000F0;
 
-  MappedMemoryWriteWord( 0x000030F0, 0x00FB );  // nop
+  SH2MappedMemoryWriteWord( 0x000030F0, 0x00FB );  // nop
 
   // tst R[0]x, 0xFA
-  MappedMemoryWriteWord( 0x06000000, 0xCC04 );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0xCC04 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x000000 );

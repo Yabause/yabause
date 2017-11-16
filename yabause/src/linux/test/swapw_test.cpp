@@ -41,9 +41,9 @@ TEST_F(SwapwTest, normal) {
   MSH2->regs.R[4]=0x00120000;
 
   // swap.w r2,r4
-  MappedMemoryWriteWord( 0x06000000, 0x6249 );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x6249 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -61,9 +61,9 @@ TEST_F(SwapwTest, normal2) {
   MSH2->regs.R[3]=0xAABBCCDD;
 
   // swap.w r2,r3
-  MappedMemoryWriteWord( 0x06000000, 0x6239 );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x6239 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);

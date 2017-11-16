@@ -38,12 +38,12 @@ TEST_F(MovlpTest, normal) {
   MSH2->regs.R[0]=0x0600030c;
   MSH2->regs.R[6]=0xe0000000;
 
-  MappedMemoryWriteLong(0x0600030c,0x04);
+  SH2MappedMemoryWriteLong(0x0600030c,0x04);
 
   // mova
-  MappedMemoryWriteWord( 0x0600024c, 0x6606 );
-  MappedMemoryWriteWord( 0x0600024e, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000250, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x0600024c, 0x6606 );
+  SH2MappedMemoryWriteWord( 0x0600024e, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000250, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x0600024c );
   SH2TestExec(MSH2, 1);
@@ -56,12 +56,12 @@ TEST_F(MovlpTest, samereg) {
 
     MSH2->regs.R[0]=0x0600030c;
 
-    MappedMemoryWriteLong(0x0600030c,0x04);
+    SH2MappedMemoryWriteLong(0x0600030c,0x04);
 
     // mova
-    MappedMemoryWriteWord( 0x0600024c, 0x6006 );
-    MappedMemoryWriteWord( 0x0600024e, 0x000b );  // rts
-    MappedMemoryWriteWord( 0x06000250, 0x0009 );  // nop
+    SH2MappedMemoryWriteWord( 0x0600024c, 0x6006 );
+    SH2MappedMemoryWriteWord( 0x0600024e, 0x000b );  // rts
+    SH2MappedMemoryWriteWord( 0x06000250, 0x0009 );  // nop
 
     MSH2->regs.PC =( 0x0600024c );
     SH2TestExec(MSH2, 1);

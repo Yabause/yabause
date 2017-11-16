@@ -34,8 +34,8 @@ TEST_F(JsrTest, jsr) {
 
   MSH2->regs.R[1]=0x03216721;
 
-  MappedMemoryWriteWord( 0x06000000, 0x410B );
-  MappedMemoryWriteWord( 0x06000002, 0x0009 );
+  SH2MappedMemoryWriteWord( 0x06000000, 0x410B );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x0009 );
 
   MSH2->regs.PC = ( 0x06000000 );
   MSH2->regs.SR.all = ( 0x00000000 );

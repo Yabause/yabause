@@ -36,9 +36,9 @@ TEST_F(MulsTest, normal) {
   MSH2->regs.R[0x0b]=0x000001f4;
 
   // macl r1, r3
-  MappedMemoryWriteWord( 0x06000000, 0x29bf );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x29bf );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);

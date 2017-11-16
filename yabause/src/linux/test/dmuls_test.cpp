@@ -36,9 +36,9 @@ TEST_F(DmulsTest, normal) {
   MSH2->regs.R[3]=0xFFFF90D9;
 
   // macl r1, r3
-  MappedMemoryWriteWord( 0x06000000, 0x313D );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x313D );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -54,9 +54,9 @@ TEST_F(DmulsTest, normal_) {
     MSH2->regs.R[4]=0x008D2F00;
 
     // dmul r1, r3
-    MappedMemoryWriteWord( 0x06000000, 0x324D );
-    MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-    MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+    SH2MappedMemoryWriteWord( 0x06000000, 0x324D );
+    SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+    SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
     MSH2->regs.PC = ( 0x06000000 );
     SH2TestExec(MSH2, 1);
@@ -73,9 +73,9 @@ TEST_F(DmulsTest, normal_s) {
     MSH2->regs.R[5]=0x0000056D;
 
     // dmul r4, r5
-    MappedMemoryWriteWord( 0x06000000, 0x345D );
-    MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-    MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+    SH2MappedMemoryWriteWord( 0x06000000, 0x345D );
+    SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+    SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
     MSH2->regs.PC = ( 0x06000000 );
     SH2TestExec(MSH2, 1);

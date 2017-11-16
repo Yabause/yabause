@@ -40,17 +40,17 @@ TEST_F(TasTest, normal) {
   MSH2->regs.R[3]=0x060fffb8;
   MSH2->regs.SR.all = (0x00000000);
 
-  MappedMemoryWriteByte( 0x060fffb8, 0 );
+  SH2MappedMemoryWriteByte( 0x060fffb8, 0 );
 
   // tas.b R[3]
-  MappedMemoryWriteWord( 0x06000000, 0x431b );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x431b );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);
 
-  EXPECT_EQ( 0x80, MappedMemoryReadByte( 0x060fffb8) );
+  EXPECT_EQ( 0x80, SH2MappedMemoryReadByte( 0x060fffb8) );
   EXPECT_EQ( 0x00000001, MSH2->regs.SR.all );
 
 }

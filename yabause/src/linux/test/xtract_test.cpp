@@ -38,9 +38,9 @@ TEST_F(XtractTest, normal) {
   MSH2->regs.R[1]=0x00000001;
 
   // xtract r1,r0
-  MappedMemoryWriteWord( 0x06000000, 0x201D );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x201D );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -55,9 +55,9 @@ TEST_F(XtractTest, normal2) {
   MSH2->regs.R[0]=0x6631C000;
 
   // xtract r3,r0
-  MappedMemoryWriteWord( 0x06000000, 0x203D );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x203D );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);

@@ -36,9 +36,9 @@ TEST_F(MovtTest, normal) {
   MSH2->regs.R[0]=0xFFFFFFFF; // m
   MSH2->regs.SR.all =(0x00000E1);
 
-  MappedMemoryWriteWord( 0x06000000, 0x0029 );  // cmppl R[1]
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x0029 );  // cmppl R[1]
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -50,9 +50,9 @@ TEST_F(MovtTest, Zero) {
   MSH2->regs.R[0]=0xFFFFFFFF; // m
   MSH2->regs.SR.all =(0x00000E0);
 
-  MappedMemoryWriteWord( 0x06000000, 0x0029 );  // cmppl R[1]
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x0029 );  // cmppl R[1]
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);

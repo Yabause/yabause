@@ -36,8 +36,8 @@ TEST_F(BsrTest, normal) {
 
   // rtcl R[0]
 
-MappedMemoryWriteWord(0x06002E4C,0xB123);
-MappedMemoryWriteWord(0x06002E4E, 0x0009);
+SH2MappedMemoryWriteWord(0x06002E4C,0xB123);
+SH2MappedMemoryWriteWord(0x06002E4E, 0x0009);
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000 );
@@ -52,8 +52,8 @@ TEST_F(BsrTest, negatif) {
 
   // rtcl R[0]
 
-MappedMemoryWriteWord(0x06002E4C,0xB823);
-MappedMemoryWriteWord(0x06002E4E, 0x0009);
+SH2MappedMemoryWriteWord(0x06002E4C,0xB823);
+SH2MappedMemoryWriteWord(0x06002E4E, 0x0009);
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000 );
@@ -69,8 +69,8 @@ TEST_F(BsrTest, bsrf) {
 
   MSH2->regs.R[1]=0x00006520; //source
 
-  MappedMemoryWriteWord(0x06002E00,0x0103);
-  MappedMemoryWriteWord(0x06002E02, 0x0009);
+  SH2MappedMemoryWriteWord(0x06002E00,0x0103);
+  SH2MappedMemoryWriteWord(0x06002E02, 0x0009);
 
 
 

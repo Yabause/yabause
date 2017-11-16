@@ -38,9 +38,9 @@ TEST_F(MullTest, normal) {
   MSH2->regs.MACH =(0xFFFFFFFF);
 
   // macl r1, r3
-  MappedMemoryWriteWord( 0x06000000, 0x0127 );
-  MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord( 0x06000000, 0x0127 );
+  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
