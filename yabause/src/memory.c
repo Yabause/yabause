@@ -281,7 +281,7 @@ void DummyDeInit(UNUSED Dummy * d)
 
 static u8 FASTCALL UnhandledMemoryReadByte(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   LOG("Unhandled byte read %08X\n", (unsigned int)addr);
+   printf("Unhandled byte read %08X\n", (unsigned int)addr);
    return 0;
 }
 
@@ -289,7 +289,7 @@ static u8 FASTCALL UnhandledMemoryReadByte(UNUSED u8* memory, USED_IF_DEBUG u32 
 
 static u16 FASTCALL UnhandledMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   LOG("Unhandled word read %08X\n", (unsigned int)addr);
+   printf("Unhandled word read %08X\n", (unsigned int)addr);
    return 0;
 }
 
@@ -297,7 +297,7 @@ static u16 FASTCALL UnhandledMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32
 
 static u32 FASTCALL UnhandledMemoryReadLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   LOG("Unhandled long read %08X\n", (unsigned int)addr);
+   printf("Unhandled long read %08X\n", (unsigned int)addr);
    return 0;
 }
 
@@ -305,21 +305,21 @@ static u32 FASTCALL UnhandledMemoryReadLong(UNUSED u8* memory, USED_IF_DEBUG u32
 
 static void FASTCALL UnhandledMemoryWriteByte(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u8 val)
 {
-   LOG("Unhandled byte write %08X\n", (unsigned int)addr);
+   printf("Unhandled byte write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL UnhandledMemoryWriteWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
-   LOG("Unhandled word write %08X\n", (unsigned int)addr);
+   printf("Unhandled word write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL UnhandledMemoryWriteLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
-   LOG("Unhandled long write %08X\n", (unsigned int)addr);
+   printf("Unhandled long write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -954,6 +954,7 @@ u32 FASTCALL SH2MappedMemoryReadLong(u32 addr)
          return CacheReadLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
+printf("Unhandled SH2 Memory Long %d\n", (addr >> 29));
          return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x3:
       {

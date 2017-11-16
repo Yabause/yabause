@@ -1447,10 +1447,10 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
 			 InvalidateCache();
 		 }
 		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
-                         enableCache(CurrentSH2);
+                         enableCache();
 		 }
 		 else{
-                         disableCache(CurrentSH2);  
+                         disableCache();  
 		 }
          return;
       case 0x0E0:
@@ -1556,10 +1556,10 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
 			 InvalidateCache();
 		 }
 		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
-                         enableCache(CurrentSH2);
+                         enableCache();
 		 }
 		 else{
-                         disableCache(CurrentSH2);  
+                         disableCache();  
 		 }
          return;
       case 0x0E0:
@@ -1903,6 +1903,8 @@ void CacheWriteLong(u8* mem, u32 addr, u32 val){
 }
 
 void InvalidateCache() {
+  for (int line = 0; line < 64; line++)
+    CurrentSH2->cacheLRU[line] = 0;
   memset(CurrentSH2->tagWay, 0x4, 64*0x80000);
   memset(CurrentSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
 }
@@ -1912,7 +1914,7 @@ void enableCache() {
   if (CurrentSH2->cacheOn == 0) {
     CurrentSH2->cacheOn = 1;
     CurrentSH2->nbCacheWay = 4;
-    for (i=0x0; i < 0x1000; i++)
+    for (i=0x10; i < 0x1000; i++)
     {
        CacheReadByteList[i] = CacheReadByte;
        CacheReadWordList[i] = CacheReadWord;
@@ -1921,7 +1923,6 @@ void enableCache() {
        CacheWriteWordList[i] = CacheWriteWord;
        CacheWriteLongList[i] = CacheWriteLong;
     }
-  printf("EnableCache...\n");
   }
 }
 
@@ -1929,7 +1930,7 @@ void disableCache() {
   int i;
   if (CurrentSH2->cacheOn == 1) {
     CurrentSH2->cacheOn = 0;
-    for (i=0; i < 0x1000; i++)
+    for (i=0x10; i < 0x1000; i++)
     {
       CacheReadByteList[i] = ReadByteList[i];
       CacheReadWordList[i] = ReadWordList[i];
@@ -1938,7 +1939,6 @@ void disableCache() {
       CacheWriteWordList[i] = WriteWordList[i];
       CacheWriteLongList[i] = WriteLongList[i];
     }
-printf("DisableCache...\n");
     InvalidateCache();
   }
 }
