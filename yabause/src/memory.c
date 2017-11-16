@@ -281,7 +281,7 @@ void DummyDeInit(UNUSED Dummy * d)
 
 static u8 FASTCALL UnhandledMemoryReadByte(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   printf("Unhandled byte read %08X\n", (unsigned int)addr);
+   LOG("Unhandled byte read %08X\n", (unsigned int)addr);
    return 0;
 }
 
@@ -289,7 +289,7 @@ static u8 FASTCALL UnhandledMemoryReadByte(UNUSED u8* memory, USED_IF_DEBUG u32 
 
 static u16 FASTCALL UnhandledMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   printf("Unhandled word read %08X\n", (unsigned int)addr);
+   LOG("Unhandled word read %08X\n", (unsigned int)addr);
    return 0;
 }
 
@@ -297,7 +297,7 @@ static u16 FASTCALL UnhandledMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32
 
 static u32 FASTCALL UnhandledMemoryReadLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
-   printf("Unhandled long read %08X\n", (unsigned int)addr);
+   LOG("Unhandled long read %08X\n", (unsigned int)addr);
    return 0;
 }
 
@@ -305,21 +305,21 @@ static u32 FASTCALL UnhandledMemoryReadLong(UNUSED u8* memory, USED_IF_DEBUG u32
 
 static void FASTCALL UnhandledMemoryWriteByte(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u8 val)
 {
-   printf("Unhandled byte write %08X\n", (unsigned int)addr);
+   LOG("Unhandled byte write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL UnhandledMemoryWriteWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
-   printf("Unhandled word write %08X\n", (unsigned int)addr);
+   LOG("Unhandled word write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL UnhandledMemoryWriteLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
-   printf("Unhandled long write %08X\n", (unsigned int)addr);
+   LOG("Unhandled long write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -763,7 +763,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
       }
       default:
       {
-printf("Hunandled Byte R %x\n", addr);
+LOG("Hunandled Byte R %x\n", addr);
          return UnhandledMemoryReadByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -787,7 +787,7 @@ CACHE_LOG("rb %x %x\n", addr, addr >> 29);
       //case 0x4:
       case 0x6:
          // Data Array
-       printf("DAta Byte R %x\n", addr);
+       LOG("DAta Byte R %x\n", addr);
          return DataArrayReadByte(addr);
       case 0x7:
       {
@@ -809,7 +809,7 @@ CACHE_LOG("rb %x %x\n", addr, addr >> 29);
       }
       default:
       {
-printf("Hunandled Byte R %x\n", addr);
+LOG("Hunandled Byte R %x\n", addr);
          return UnhandledMemoryReadByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -850,7 +850,7 @@ if (CurrentSH2->cacheOn == 1) CACHE_LOG("rw %x %x\n", addr, addr >> 29);
       }
       default:
       {
-printf("Hunandled Word R %x\n", addr);
+LOG("Hunandled Word R %x\n", addr);
          return UnhandledMemoryReadWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -896,7 +896,7 @@ u16 FASTCALL SH2MappedMemoryReadWord(u32 addr)
       }
       default:
       {
-printf("Hunandled Word R %x\n", addr);
+LOG("Hunandled Word R %x\n", addr);
          return UnhandledMemoryReadWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -934,7 +934,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
       }
       default:
       {
-printf("Hunandled Long R %x %d 0x%x\n", addr, (addr >> 29), (addr >> 16) & 0xFFF);
+LOG("Hunandled Long R %x %d 0x%x\n", addr, (addr >> 29), (addr >> 16) & 0xFFF);
          return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -954,7 +954,7 @@ u32 FASTCALL SH2MappedMemoryReadLong(u32 addr)
          return CacheReadLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
-printf("Unhandled SH2 Memory Long %d\n", (addr >> 29));
+LOG("Unhandled SH2 Memory Long %d\n", (addr >> 29));
          return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x3:
       {
@@ -986,7 +986,7 @@ printf("Unhandled SH2 Memory Long %d\n", (addr >> 29));
       }
       default:
       {
-printf("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
+LOG("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
          return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
@@ -1025,7 +1025,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
       }
       default:
       {
-printf("Hunandled Byte W %x\n", addr);
+LOG("Hunandled Byte W %x\n", addr);
          UnhandledMemoryWriteByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
@@ -1081,7 +1081,7 @@ CACHE_LOG("wb %x %x\n", addr, addr >> 29);
       }
       default:
       {
-printf("Hunandled Byte W %x\n", addr);
+LOG("Hunandled Byte W %x\n", addr);
          UnhandledMemoryWriteByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
@@ -1120,7 +1120,7 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
       }
       default:
       {
-printf("Hunandled Word W %x\n", addr);
+LOG("Hunandled Word W %x\n", addr);
          UnhandledMemoryWriteWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
@@ -1179,7 +1179,7 @@ CACHE_LOG("ww %x %x\n", addr, addr >> 29);
       }
       default:
       {
-printf("Hunandled Word W %x\n", addr);
+LOG("Hunandled Word W %x\n", addr);
          UnhandledMemoryWriteWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
@@ -1218,7 +1218,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
       }
       default:
       {
-printf("Hunandled Long W %x\n", addr);
+LOG("Hunandled Long W %x\n", addr);
          UnhandledMemoryWriteLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
@@ -1281,7 +1281,7 @@ CACHE_LOG("wl %x %x\n", addr, addr >> 29);
       }
       default:
       {
-printf("Hunandled Long W %x\n", addr);
+LOG("Hunandled Long W %x\n", addr);
          UnhandledMemoryWriteLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
