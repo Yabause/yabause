@@ -578,7 +578,7 @@ void FASTCALL SH2idleCheck(SH2_struct *context, u32 cycles) {
       if ( loopEnd > loopBegin ) { offset = loopBegin; end = loopEnd; }
       else { offset = loopEnd; end = loopBegin; }
       for ( ; offset <= end ; offset+=2 ) {
-        SH2Disasm(offset, MappedMemoryReadWord(offset), 0, lineBuf);
+        SH2Disasm(offset, SH2MappedMemoryReadWord(offset), 0, lineBuf);
         printf( "%s\n", lineBuf );
       }
       oldLoopBegin[context==MSH2][1] = oldLoopBegin[context==MSH2][0];
