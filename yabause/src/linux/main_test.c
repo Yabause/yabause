@@ -140,6 +140,8 @@ void initEmulation() {
     printf("YabauseSh2Init error \n\r");
     return;
   }
+  CurrentSH2 = MSH2;
+  enableCache();
   initDone = 1;
   }
 }
