@@ -1911,6 +1911,7 @@ void InvalidateCache() {
 
 void enableCache() {
   int i;
+  if (yabsys.usecache == 0) return;
   if (CurrentSH2->cacheOn == 0) {
     CurrentSH2->cacheOn = 1;
     CurrentSH2->nbCacheWay = 4;
