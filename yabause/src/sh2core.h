@@ -412,13 +412,14 @@ typedef struct
 
    void * ext; 
 
+#ifdef USE_CACHE
    u8 cacheOn;
    u8 nbCacheWay;
    u8 cacheLRU[64];
    u8 cacheData[64][4][16];
    u8 tagWay[64][0x80000];
    u32 cacheTagArray[64][4];
-
+#endif
 } SH2_struct;
 
 typedef struct
@@ -498,13 +499,14 @@ void SH2DumpHistory(SH2_struct *context);
 
 void SH2HandleBreakpoints(SH2_struct *context);
 
-
+#ifdef USE_CACHE
 u8 CacheReadByte(u8* mem, u32 addr);
 u16 CacheReadWord(u8* mem, u32 addr);
 u32 CacheReadLong(u8* mem, u32 addr);
 void CacheWriteByte(u8* mem, u32 addr, u8 val);
 void CacheWriteShort(u8* mem, u32 addr, u16 val);
 void CacheWriteLong(u8* mem, u32 addr, u32 val);
+#endif
 
 static void SH2BreakNow(SH2_struct *context)
 {

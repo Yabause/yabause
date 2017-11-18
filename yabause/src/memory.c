@@ -820,7 +820,6 @@ LOG("Hunandled Byte R %x\n", addr);
 //////////////////////////////////////////////////////////////////////////////
 u16 FASTCALL MappedMemoryReadWord(u32 addr)
 {
-if (CurrentSH2->cacheOn == 1) CACHE_LOG("rw %x %x\n", addr, addr >> 29);
    switch (addr >> 29)
    {
       case 0x0:
@@ -1129,7 +1128,6 @@ LOG("Hunandled Word W %x\n", addr);
 
 void FASTCALL SH2MappedMemoryWriteWord(u32 addr, u16 val)
 {
-if (CurrentSH2->cacheOn == 1) CACHE_LOG("ww %x %x\n", addr, addr >> 29);
    switch (addr >> 29)
    {
       case 0x1:
@@ -1227,7 +1225,6 @@ LOG("Hunandled Long W %x\n", addr);
 
 void FASTCALL SH2MappedMemoryWriteLong(u32 addr, u32 val)
 {
-if (CurrentSH2->cacheOn == 1) CACHE_LOG("wl %x %x\n", addr, addr >> 29);
    switch (addr >> 29)
    {
       case 0x1:

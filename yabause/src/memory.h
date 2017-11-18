@@ -354,12 +354,6 @@ extern "C" {
   void FASTCALL SH2MappedMemoryWriteByte(u32 addr, u8 val);
   void FASTCALL SH2MappedMemoryWriteWord(u32 addr, u16 val);
   void FASTCALL SH2MappedMemoryWriteLong(u32 addr, u32 val);
-  u8 FASTCALL MappedMemoryReadByteNocache(u32 addr);
-  u16 FASTCALL MappedMemoryReadWordNocache(u32 addr);
-  u32 FASTCALL MappedMemoryReadLongNocache(u32 addr);
-  void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val);
-  void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val);
-  void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val);
 
   extern u8 *HighWram;
   extern u8 *LowWram;
@@ -375,8 +369,6 @@ extern "C" {
   typedef u16(FASTCALL *readwordfunc)(u8*, u32);
   typedef u32(FASTCALL *readlongfunc)(u8*, u32);
 
-  extern u8** MemoryBuffer[0x1000];
-
   extern writebytefunc WriteByteList[0x1000];
   extern writewordfunc WriteWordList[0x1000];
   extern writelongfunc WriteLongList[0x1000];
@@ -385,12 +377,15 @@ extern "C" {
   extern readwordfunc ReadWordList[0x1000];
   extern readlongfunc ReadLongList[0x1000];
 
+  extern u8** MemoryBuffer[0x1000];
+#ifdef USE_CACHE
   extern readbytefunc CacheReadByteList[0x1000];
   extern readwordfunc CacheReadWordList[0x1000];
   extern readlongfunc CacheReadLongList[0x1000];
   extern writebytefunc CacheWriteByteList[0x1000];
   extern writewordfunc CacheWriteWordList[0x1000];
   extern writelongfunc CacheWriteLongList[0x1000];
+#endif
 
   typedef struct {
     u32 addr;

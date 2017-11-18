@@ -2985,10 +2985,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 
       // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
-      else
-#endif
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       SH2HandleBackTrace(context);
@@ -3022,22 +3018,10 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
   SH2HandleInterrupts(context);
-#if 0
-#ifndef EXEC_FROM_CACHE
-   if (context->isIdle)
-     SH2idleParse(context, target_cycle);
-   else
-     SH2idleCheck(context, target_cycle);
-#endif
-#endif
    while (context->cycles < target_cycle)
    {
 
       // Fetch Instruction
-#ifdef EXEC_FROM_CACHE
-      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
-      else
-#endif
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it
@@ -3048,14 +3032,6 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 FASTCALL void SH2InterpreterTestExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-#if 0
-#ifndef EXEC_FROM_CACHE
-   if (context->isIdle)
-     SH2idleParse(context, target_cycle);
-   else
-     SH2idleCheck(context, target_cycle);
-#endif
-#endif
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it

@@ -74,7 +74,7 @@ int SH2Init(int coreid)
 
    SSH2->onchip.BCR1 = 0x8000;
    SSH2->isslave = 1;
-
+#ifdef USE_CACHE
    MSH2->cacheOn = 0;
    SSH2->cacheOn = 0;
 
@@ -82,7 +82,7 @@ int SH2Init(int coreid)
    memset(MSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
    memset(SSH2->tagWay, 0x4, 64*0x80000);
    memset(SSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
-
+#endif
    // So which core do we want?
    if (coreid == SH2CORE_DEFAULT)
       coreid = 0; // Assume we want the first one
@@ -1805,7 +1805,7 @@ void FASTCALL OnchipWriteLong(u32 addr, u32 val)  {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#ifdef USE_CACHE
 static void UpdateLRU(u8 line, u8 way) {
 //Table 8.3 SH7604_Hardware_Manual.pdf
   switch (way) {
@@ -1854,29 +1854,6 @@ static inline void CacheWriteThrough(u8* mem, u32 addr, u32 val, u8 size) {
     break;
   }
 }
-#if 0
-void CacheWriteHit(u8 line, u8 way, u32 val, u8 byte, u8 size) {
-  u32 res = 0;
-  UpdateLRU(line, way);
-  switch (size) {
-  case 1:
-    CurrentSH2->cacheData[line][way][byte] = val;
-    break;
-  case 2:
-    CurrentSH2->cacheData[line][way][byte] = (val >> 8) & 0xFF;
-    CurrentSH2->cacheData[line][way][byte+1] = val & 0xFF;
-    break;
-  case 4:
-    CurrentSH2->cacheData[line][way][byte] = (val >> 24) & 0xFF;
-    CurrentSH2->cacheData[line][way][byte+1] = (val >> 16) & 0xFF;
-    CurrentSH2->cacheData[line][way][byte+2] = (val >> 8) & 0xFF;
-    CurrentSH2->cacheData[line][way][byte+3] = (val >> 0) & 0xFF;
-    break;
-  default:
-    break;
-  }
-}
-#endif
 
 void CacheWrite(u8* mem, u32 addr, u32 val, u8 size) {
   u8 line = (addr>>4)&0x3F;
@@ -1901,15 +1878,19 @@ void CacheWriteWord(u8* mem, u32 addr, u16 val){
 void CacheWriteLong(u8* mem, u32 addr, u32 val){
   CacheWrite(mem, addr, val, 4);
 }
+#endif
 
 void InvalidateCache() {
+#ifdef USE_CACHE
   for (int line = 0; line < 64; line++)
     CurrentSH2->cacheLRU[line] = 0;
   memset(CurrentSH2->tagWay, 0x4, 64*0x80000);
   memset(CurrentSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
+#endif
 }
 
 void enableCache() {
+#ifdef USE_CACHE
   int i;
   if (yabsys.usecache == 0) return;
   if (CurrentSH2->cacheOn == 0) {
@@ -1925,9 +1906,13 @@ void enableCache() {
        CacheWriteLongList[i] = CacheWriteLong;
     }
   }
+#else
+  return;
+#endif
 }
 
 void disableCache() {
+#ifdef USE_CACHE
   int i;
   if (CurrentSH2->cacheOn == 1) {
     CurrentSH2->cacheOn = 0;
@@ -1942,8 +1927,12 @@ void disableCache() {
     }
     InvalidateCache();
   }
+#else
+  return;
+#endif
 }
 
+#ifdef USE_CACHE
 void CacheFetch(u8* memory, u8 line, u32 tag, u8 way) {
   u8 i;
   memcpy(CurrentSH2->cacheData[line][way], memory, 16);
@@ -1999,24 +1988,32 @@ u32 CacheReadLong(u8* memory, u32 addr) {
   u32 ret = ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
   return ret;
 }
+#endif
 
 void CacheInvalidate(u32 addr){
+#ifdef USE_CACHE
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
   u8 way = CurrentSH2->tagWay[line][tag];
   CurrentSH2->tagWay[line][tag] = 0x4;
   if (way <= 0x3) CurrentSH2->cacheTagArray[line][way] = 0x0;
+#endif
 }
 
 u32 FASTCALL AddressArrayReadLong(u32 addr) {
+#ifdef USE_CACHE
   u8 line = (addr>>4)&0x3F;
   u8 way = (CurrentSH2->onchip.CCR>>6)&0x3;
   return ((CurrentSH2->cacheLRU[line]&0x3F)<<4) | ((CurrentSH2->cacheTagArray[line][way]&0x7FFFF)<<10) | ((CurrentSH2->cacheTagArray[line][way]!= 0x0)<<1);
+#else
+  return 0;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
+#ifdef USE_CACHE
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
   u8 valid = (addr>>2)&0x1;
@@ -2025,33 +2022,46 @@ void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
   CurrentSH2->cacheTagArray[line][way] = tag;
   if (valid) CurrentSH2->tagWay[line][tag] = way;
   else CurrentSH2->tagWay[line][tag] = 0x4;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL DataArrayReadByte(u32 addr) {
+#ifdef USE_CACHE
   u8 line = (addr>>4)&0x3F;
   u8 byte = addr&0xF;
   u8 way = (addr >> 10) & 3;
   return ReadByteList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+#else
+  return 0;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL DataArrayReadWord(u32 addr) {
+#ifdef USE_CACHE
   u8 line = (addr>>4)&0x3F;
   u8 byte = addr&0xF;
   u8 way = (addr >> 10) & 3;
   return ReadWordList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+#else
+  return 0;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL DataArrayReadLong(u32 addr) {
+#ifdef USE_CACHE
   u8 line = (addr>>4)&0x3F;
   u8 byte = addr&0xF;
   u8 way = (addr >> 10) & 3;
   return ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
+#else
+  return 0;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
