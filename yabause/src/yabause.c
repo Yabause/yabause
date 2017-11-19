@@ -828,9 +828,6 @@ int YabauseEmulate(void) {
       PROFILE_STOP("68K");
 #endif
 
-      if ((yabsys.LineCount == 0) && (yabsys.DecilineCount == 1))
-            Vdp2VBlankOUT();
-
       if (!yabsys.DecilineMode || yabsys.DecilineCount == DECILINE_STEP)
       {
          // HBlankOUT
@@ -851,7 +848,6 @@ int YabauseEmulate(void) {
             // VBlankIN
             SmpcINTBACKEnd();
             Vdp2VBlankIN();
-            Vdp2VBlank();
             PROFILE_STOP("vblankin");
             CheatDoPatches();
          }
@@ -859,6 +855,7 @@ int YabauseEmulate(void) {
          {
             // VBlankOUT
             PROFILE_START("VDP1/VDP2");
+            Vdp2VBlankOUT();
             yabsys.LineCount = 0;
             oneframeexec = 1;
             PROFILE_STOP("VDP1/VDP2");

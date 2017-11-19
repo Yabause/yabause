@@ -60,16 +60,9 @@ u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
 int voutflg = 0;
-// Asyn rendering
-YabEventQueue * evqueue = NULL; // Event Queue for async rendring
-YabEventQueue * rcv_evqueue = NULL;
-YabEventQueue * vdp1_rcv_evqueue = NULL;
-YabEventQueue * vout_rcv_evqueue = NULL;
-static u64 syncticks = 0;       // CPU time sync for real time.
-void VdpProc( void *arg );      // rendering thread.
+
 static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
-static int vdp_proc_running = 0;
 
 int g_frame_count = 0;
 
@@ -227,26 +220,12 @@ int Vdp2Init(void) {
 
    Vdp2Reset();
 
-#if defined(YAB_ASYNC_RENDERING)
-   if (rcv_evqueue==NULL) rcv_evqueue = YabThreadCreateQueue(8);
-   if (vdp1_rcv_evqueue==NULL) vdp1_rcv_evqueue = YabThreadCreateQueue(8);
-   if (vout_rcv_evqueue==NULL) vout_rcv_evqueue = YabThreadCreateQueue(2);
-   yabsys.wait_line_count = -1;
-#endif
-
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2DeInit(void) {
-#if defined(YAB_ASYNC_RENDERING)
-   if (vdp_proc_running == 1) {
-   	YabAddEventQueue(evqueue,VDPEV_FINSH);
-   	//vdp_proc_running = 0;
-   	YabThreadWait(YAB_THREAD_VDP);
-   }
-#endif
    if (Vdp2Regs)
       free(Vdp2Regs);
    Vdp2Regs = NULL;
@@ -351,70 +330,6 @@ void Vdp2Reset(void) {
    Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
    Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
 
-#if defined(YAB_ASYNC_RENDERING)
-   if (rcv_evqueue != NULL){
-     YabThreadDestoryQueue(rcv_evqueue);
-     rcv_evqueue = YabThreadCreateQueue(8);
-   }
-   if (vdp1_rcv_evqueue != NULL){
-     YabThreadDestoryQueue(vdp1_rcv_evqueue);
-     vdp1_rcv_evqueue = YabThreadCreateQueue(8);
-   }
-   yabsys.wait_line_count = -1;
-#endif
-
-}
-
-static void vdp1DirectDraw(void) {
-  Vdp1Regs->EDSR >>= 1;
-  Vdp1Draw();
-  VIDCore->Vdp1DrawEnd();
-  Vdp1Regs->EDSR |= 2;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-void VdpProc( void *arg ){
-
-  int evcode;
-
-  if( YuiUseOGLOnThisThread() < 0 ){
-    LOG("VDP2 Fail to USE GL");
-    return;
-  }
-
-  while( vdp_proc_running ){
-    YabThreadSetCurrentThreadAffinityMask(0x01);
-    evcode = YabWaitEventQueue(evqueue);
-    switch(evcode){
-    case VDPEV_VBLANK_IN:
-      FrameProfileAdd("VIN start");
-      vdp2VBlankIN();
-      FrameProfileAdd("VIN end");
-      break;
-    case VDPEV_VBLANK_OUT:
-      FrameProfileAdd("VOUT start");
-      vdp2VBlankOUT();
-      FrameProfileAdd("VOUT end");
-      //YabAddEventQueue(vout_rcv_evqueue, 0);
-      break;
-    case VDPEV_DIRECT_DRAW:
-      FrameProfileAdd("DirectDraw start");
-      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
-      vdp1DirectDraw();
-      FrameProfileAdd("DirectDraw end");
-      YabAddEventQueue(vdp1_rcv_evqueue, 0);
-      break;
-    case VDPEV_MAKECURRENT:
-      YuiUseOGLOnThisThread();
-      break;
-    case VDPEV_REVOKE:
-      YuiRevokeOGLOnThisThread();
-      break;
-    case VDPEV_FINSH:
-      vdp_proc_running = 0;
-      break;
-    }
-  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -435,16 +350,16 @@ void vdp2VBlankIN(void) {
       SH2SendInterrupt(SSH2, 0x43, 0x6);
    FrameProfileAdd("VIN flag");
    FRAMELOG("**** VIN(T) *****\n");
-   YabAddEventQueue(rcv_evqueue, 0);
    VIDCore->Sync();
 
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void Vdp2VBlank(void) {
-}
-void Vdp2VBlank_sync(void) {
-#if !defined(YAB_ASYNC_RENDERING)
+
+void Vdp2VBlankIN(void) {
+  FRAMELOG("***** VIN *****");
+
+	FrameProfileAdd("VIN start");
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
 
@@ -455,33 +370,6 @@ void Vdp2VBlank_sync(void) {
 
    VIDCore->Vdp2DrawEnd();
    VIDCore->Sync();
-
-#endif
-}
-
-void Vdp2VBlankIN(void) {
-  FRAMELOG("***** VIN *****");
-
-#if defined(YAB_ASYNC_RENDERING)
-  if( vdp_proc_running == 0 ){
-    vdp_proc_running = 1;
-    YuiRevokeOGLOnThisThread();
-    evqueue = YabThreadCreateQueue(32);
-    YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-  }
-  FrameProfileAdd("VIN event");
-  YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
-
-   // sync
-  //do {
-    YabWaitEventQueue(rcv_evqueue);
-  //} while (YaGetQueueSize(rcv_evqueue) != 0);
-   FrameProfileAdd("VIN sync");
-
-#else
-Vdp2VBlank_sync();
-#endif
-
    Vdp2Regs->TVSTAT |= 0x0008;
 
    ScuSendVBlankIN();
@@ -504,11 +392,11 @@ void Vdp2HBlankIN(void) {
       SH2SendInterrupt(SSH2, 0x41, 0x2);
 }
 
-static void Vdp2HBlankOUT_displayed(int isDisplayed) {
+void Vdp2HBlankOUT(void) {
   int i;
   Vdp2Regs->TVSTAT &= ~0x0004;
 
-  if (isDisplayed)
+  if (yabsys.LineCount < yabsys.VBlankLineCount)
   {
     u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
     memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
@@ -561,57 +449,44 @@ static void Vdp2HBlankOUT_displayed(int isDisplayed) {
 
       *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
     }
-  }
-    if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_mode == yabsys.LineCount)) {
-        if (Vdp1External.plot_trigger_delay == 0) { 
-#if YAB_ASYNC_RENDERING
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW %d/%d", YaGetQueueSize(vdp1_rcv_evqueue), yabsys.LineCount);
-        if ( YaGetQueueSize(vdp1_rcv_evqueue) > 0){
-          yabsys.wait_line_count = -1;
-          do{
-            YabWaitEventQueue(vdp1_rcv_evqueue);
-          } while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
-        }
-        yabsys.wait_line_count = yabsys.LineCount + 50;
-        yabsys.wait_line_count %= yabsys.MaxLineCount;
-        FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
-        YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
-#else
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-	vdp1DirectDraw();
-#endif
-        } else {
-            Vdp1External.plot_trigger_delay--;
-        }
-     }
 
-  if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
-#if defined(YAB_ASYNC_RENDERING)
-    
-    FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
-    yabsys.wait_line_count = -1;
-    //do {
-      YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
-    //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
-      FRAMELOG("**WAIT END**");
-    FrameProfileAdd("DirectDraw sync");
-    
+  }
+
+   //if (yabsys.LineCount == 0){
+   //  vdp2VBlankOUT();
+   //}
+  if (yabsys.LineCount == 0){
+    FrameProfileAdd("VOUT event");
+    // Manual Change
+    if (Vdp1External.manualchange == 1){
+      Vdp1External.swap_frame_buffer = 1;
+      Vdp1External.manualchange = 0;
+    }
+
+    // One Cyclemode
+    if ((Vdp1Regs->FBCR & 0x03) == 0x00 || 
+      (Vdp1Regs->FBCR & 0x03) == 0x01) {  // 0x01 is treated as one cyscle mode in Sonic R.
+      Vdp1External.swap_frame_buffer = 1;
+    }
+
+    // Plot trigger mode = Draw when frame is changed
+    if (Vdp1Regs->PTMR == 2){
+      Vdp1External.frame_change_plot = 1;
+      FRAMELOG("frame_change_plot 1");
+    }
+    else{
+      Vdp1External.frame_change_plot = 0;
+      FRAMELOG("frame_change_plot 0");
+    }
+    vdp2VBlankOUT();
+  }
+  else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
     Vdp1Regs->EDSR |= 2;
     Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
     ScuSendDrawEnd();
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-#else
-    Vdp1Regs->EDSR |= 2;
-    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
-    ScuSendDrawEnd();
-    FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-#endif
+    VIDCore->Vdp1DrawEnd();
   }
-     
-}
-
-void Vdp2HBlankOUT() {
-   Vdp2HBlankOUT_displayed(yabsys.LineCount < yabsys.VBlankLineCount);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -703,8 +578,6 @@ void vdp2VBlankOUT(void) {
 
   FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
-    FrameProfileAdd("VOUT event");
-
   if (skipnextframe && (!saved))
   {
     saved = VIDCore;
@@ -735,21 +608,19 @@ void vdp2VBlankOUT(void) {
     VIDCore->Vdp1FrameChange();
     Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1External.swap_frame_buffer = 0;
-    //Vdp1Regs->EDSR >>= 1;
+    Vdp1Regs->EDSR >>= 1;
+
+    FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
+
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1){
-     Vdp1Draw();
+      FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
+      Vdp1Draw();
       isrender = 1;
     }
   }
 
-#if defined(YAB_ASYNC_RENDERING)
-  if (isrender){
-    YabAddEventQueue(vdp1_rcv_evqueue, 0);
-  }
-#else
   yabsys.wait_line_count = 30;
-#endif
 
   if (Vdp2Regs->TVMD & 0x8000) {
     VIDCore->Vdp2DrawScreens();
@@ -858,28 +729,6 @@ void Vdp2VBlankOUT(void) {
     Vdp1External.vbalnk_erase = 0;
   }
 
-    // Manual Change
-    if (Vdp1External.manualchange == 1){
-      Vdp1External.swap_frame_buffer = 1;
-      Vdp1External.manualchange = 0;
-    }
-
-    // One Cyclemode
-    if ((Vdp1Regs->FBCR & 0x03) == 0x00 || 
-      (Vdp1Regs->FBCR & 0x03) == 0x01) {  // 0x01 is treated as one cyscle mode in Sonic R.
-      Vdp1External.swap_frame_buffer = 1;
-    }
-
-    // Plot trigger mode = Draw when frame is changed
-    if ((Vdp1Regs->PTMR == 2) || ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_mode > yabsys.LineCount))){
-      Vdp1External.frame_change_plot = 1;
-      FRAMELOG("frame_change_plot 1");
-    }
-    else{
-      Vdp1External.frame_change_plot = 0;
-      FRAMELOG("frame_change_plot 0");
-    }
-
 #ifdef _VDP_PROFILE_
   FrameProfileShow();
   FrameProfileInit();
@@ -904,35 +753,7 @@ void Vdp2VBlankOUT(void) {
       if (SmpcRegs->EXLE & 0x1)
          Vdp2SendExternalLatch((PORTDATA1.data[3]<<8)|PORTDATA1.data[4], (PORTDATA1.data[5]<<8)|PORTDATA1.data[6]);
    }
-#if defined(YAB_ASYNC_RENDERING)
-    if (vdp_proc_running == 0){
-      YuiRevokeOGLOnThisThread();
-      evqueue = YabThreadCreateQueue(32);
-      vdp_proc_running = 1;
-      YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
-    }
-    voutflg = 1;
-    if (Vdp1External.swap_frame_buffer == 1)
-    {
-      Vdp1Regs->EDSR >>= 1;
-      if (Vdp1External.frame_change_plot == 1) {
-        yabsys.wait_line_count = 30;
-        FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
-      }
-    }
-    YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
-    YabThreadYield();
-#else
-   if (Vdp1External.swap_frame_buffer == 1)
-    {
-      Vdp1Regs->EDSR >>= 1;
-      if (Vdp1External.frame_change_plot == 1) {
-        yabsys.wait_line_count = 30;
-        FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
-      }
-    }
-   vdp2VBlankOUT();
-#endif
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1589,18 +1410,6 @@ int isAutoFrameSkip(void)
 void DisableAutoFrameSkip(void)
 {
    autoframeskipenab = 0;
-}
-
-void VdpResume( void ){
-#if defined(YAB_ASYNC_RENDERING)
-	YabAddEventQueue(evqueue,VDPEV_MAKECURRENT);
-#endif
-}
-
-void VdpRevoke( void ){
-#if defined(YAB_ASYNC_RENDERING)
-	YabAddEventQueue(evqueue,VDPEV_REVOKE);
-#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

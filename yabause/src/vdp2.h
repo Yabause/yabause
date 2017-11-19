@@ -416,22 +416,10 @@ void ToggleRBG0(void);
 void ToggleFullScreen(void);
 void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
-void VdpResume(void);
 
 Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 
 #include "threads.h"
-void VdpProc( void *arg );
-
-// Ansyc VDP
-#define VDPEV_VBLANK_IN 0x000
-#define VDPEV_VBLANK_OUT 0x100
-#define VDPEV_DIRECT_DRAW 0x200
-#define VDPEV_MAKECURRENT 0x300
-#define VDPEV_REVOKE 0x400
-#define VDPEV_FINSH 0xFF00
-
-extern YabEventQueue * evqueue;
 
 int VideoSetFilterType( int video_filter_type );
 

@@ -355,31 +355,12 @@ void FASTCALL Vdp1WriteWord(u8* mem, u32 addr, u16 val) {
       FRAMELOG("Write PTMR %X line = %d", val, yabsys.LineCount);
       Vdp1Regs->COPR = 0;
       Vdp1Regs->PTMR = val;
-      Vdp1External.plot_trigger_mode = yabsys.LineCount;
-      if (val == 1){
-          if (Vdp1External.plot_trigger_mode <= yabsys.VBlankLineCount) {
-#if YAB_ASYNC_RENDERING
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW %d/%d", YaGetQueueSize(vdp1_rcv_evqueue), yabsys.LineCount);
-        if ( YaGetQueueSize(vdp1_rcv_evqueue) > 0){
-          yabsys.wait_line_count = -1;
-          do{
-            YabWaitEventQueue(vdp1_rcv_evqueue);
-          } while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
-        }
-        Vdp1Regs->EDSR >>= 1;
-        yabsys.wait_line_count = yabsys.LineCount + 50;
-        yabsys.wait_line_count %= yabsys.MaxLineCount;
-        FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
-        YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
-#else
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
+    if (val == 1){
+      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1Regs->EDSR >>= 1;
         Vdp1Draw(); 
-#endif
         VIDCore->Vdp1DrawEnd();
-        Vdp1External.plot_trigger_delay = 1;
-        }
-     }
+    }
          break;
       case 0x6:
          Vdp1Regs->EWDR = val;

@@ -252,7 +252,6 @@ finishline:
 vblankin:
 	call	SmpcINTBACKEnd
 	call	Vdp2VBlankIN
-        call    Vdp2VBlank
 	call	CheatDoPatches
 	jmp	nextline
 nextframe:
