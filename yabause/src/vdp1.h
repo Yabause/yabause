@@ -126,8 +126,7 @@ typedef struct {
    int vbalnk_erase;
    int frame_change_plot;
    int swap_frame_buffer;
-   int plot_trigger_mode;
-   int plot_trigger_delay;
+   int plot_trigger_line;
    int current_frame;
 } Vdp1External_struct;
 
