@@ -375,6 +375,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  platform_SetKeyCallback(PERCore->onKeyEvent);
+
   nextFrameTime = getCurrentTimeUs(0) + delayUs;
 
   while (!platform_shouldClose())

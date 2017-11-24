@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "platform.h"
+#include "../peripheral.h"
 
 #if defined(_USEGLEW_)
 #include <GL/glew.h>
@@ -8,6 +10,9 @@
 
 static GLFWwindow* g_window = NULL;
 static GLFWwindow* g_offscreen_context;
+
+static k_callback k_call = NULL;
+static unsigned char inputMap[512];
 
 int platform_YuiRevokeOGLOnThisThread(){
 #if defined(YAB_ASYNC_RENDERING)
@@ -39,9 +44,26 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
     glfwSetWindowShouldClose(window, GL_TRUE);
+  if ((k_call != NULL) && (inputMap[key] != -1))  {
+    switch(action) {
+    case GLFW_RELEASE:
+      k_call(inputMap[key], 0);
+    break;
+    case GLFW_PRESS:
+      k_call(inputMap[key], 1);
+    break;
+    case GLFW_REPEAT:
+      k_call(inputMap[key], 0);
+      k_call(inputMap[key], 1); 
+    break;
+    default:
+    break;
+    }
+  }
 }
 
 int platform_SetupOpenGL(int w, int h) {
+  int i;
   if (!glfwInit())
     return 0;
 
@@ -71,6 +93,23 @@ int platform_SetupOpenGL(int w, int h) {
   glewExperimental=GL_TRUE;
 #endif
 
+  for (i=0; i< 512; i++)
+    inputMap[i] = -1;
+
+   inputMap[GLFW_KEY_UP] = PERPAD_UP;
+   inputMap[GLFW_KEY_RIGHT] = PERPAD_RIGHT;
+   inputMap[GLFW_KEY_DOWN] = PERPAD_DOWN;
+   inputMap[GLFW_KEY_LEFT] = PERPAD_LEFT;
+   inputMap[GLFW_KEY_R] = PERPAD_RIGHT_TRIGGER;
+   inputMap[GLFW_KEY_F] = PERPAD_LEFT_TRIGGER;
+   inputMap[GLFW_KEY_SPACE] = PERPAD_START;
+   inputMap[GLFW_KEY_Q] = PERPAD_A;
+   inputMap[GLFW_KEY_S] = PERPAD_B;
+   inputMap[GLFW_KEY_D] = PERPAD_C;
+   inputMap[GLFW_KEY_A] = PERPAD_X;
+   inputMap[GLFW_KEY_Z] = PERPAD_Y;
+   inputMap[GLFW_KEY_E] = PERPAD_Z;
+
   glfwSetKeyCallback(g_window, key_callback);
   return 1;
 }
@@ -91,5 +130,9 @@ int platform_Deinit(void) {
 
 void platform_HandleEvent(void) {
   glfwPollEvents();
+}
+
+void platform_SetKeyCallback(k_callback call) {
+  k_call = call;
 }
 

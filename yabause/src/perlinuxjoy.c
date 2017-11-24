@@ -32,6 +32,7 @@ int  PERLinuxJoyHandleEvents(void);
 u32  PERLinuxJoyScan(u32 flags);
 void PERLinuxJoyFlush(void);
 void PERLinuxKeyName(u32 key, char * name, int size);
+static void PERLinuxKeyPress(u32 key, u8 state);
 
 int getSupportedJoy(const char *name);
 
@@ -213,7 +214,8 @@ PERLinuxJoyHandleEvents,
 PERLinuxJoyScan,
 1,
 PERLinuxJoyFlush,
-PERLinuxKeyName
+PERLinuxKeyName,
+PERLinuxKeyPress
 };
 
 typedef struct
@@ -280,6 +282,20 @@ static int getPerPadKey(int state, int val, perlinuxjoy_struct * joystick) {
       }
    }
    return ret;
+}
+
+static void PERLinuxKeyPress(u32 key, u8 state)
+{
+  switch(state) {
+  case 0:
+    PerKeyUp(key);
+  break;
+  case 1:
+    PerKeyDown(key);
+  break;
+  default:
+  break;
+  }
 }
 
 static int LinuxJoyInit(perlinuxjoy_struct * joystick, const char * path, int id)

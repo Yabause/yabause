@@ -7,6 +7,8 @@
 #define PLATFORM_LINUX
 #endif
 
+typedef void (*k_callback)(unsigned int key, unsigned char state);
+
 extern int platform_SetupOpenGL(int w, int h);
 extern int platform_YuiRevokeOGLOnThisThread();
 extern int platform_YuiUseOGLOnThisThread();
@@ -15,5 +17,6 @@ extern int platform_shouldClose();
 extern void platform_Close();
 extern int platform_Deinit(void);
 extern void platform_HandleEvent();
+extern void platform_SetKeyCallback(k_callback call);
 
 #endif
