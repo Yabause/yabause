@@ -333,28 +333,6 @@ void Vdp2Reset(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void vdp2VBlankIN(void) {
-   /* this should be done after a frame change or a plot trigger */
-   Vdp1Regs->COPR = 0;
-   /* I'm not 100% sure about this, but it seems that when using manual change
-   we should swap framebuffers in the "next field" and thus, clear the CEF...
-   now we're lying a little here as we're not swapping the framebuffers. */
-   //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
-
-   VIDCore->Vdp2DrawEnd();
-   Vdp2Regs->TVSTAT |= 0x0008;
-
-   ScuSendVBlankIN();
-
-   if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x43, 0x6);
-   FrameProfileAdd("VIN flag");
-   FRAMELOG("**** VIN(T) *****\n");
-   VIDCore->Sync();
-
-}
-
-//////////////////////////////////////////////////////////////////////////////
 
 void Vdp2VBlankIN(void) {
   FRAMELOG("***** VIN *****");
