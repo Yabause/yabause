@@ -353,7 +353,7 @@ void Vdp2VBlankIN(void) {
    ScuSendVBlankIN();
 
    if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x40, 0x0F);
+      SH2SendInterrupt(SSH2, 0x43, 0x6);
 
    FrameProfileAdd("VIN end");
 }
