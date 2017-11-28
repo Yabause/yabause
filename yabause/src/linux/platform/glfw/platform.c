@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "platform.h"
 #include "../peripheral.h"
+#include "../sh2core.h"
 
 #if defined(_USEGLEW_)
 #include <GL/glew.h>
@@ -40,6 +41,78 @@ static void error_callback(int error, const char* description)
   fputs(description, stderr);
 }
 
+static void handleIntrospection(int key, int action) {
+  char buffer[128];
+  char command;
+  int addr;
+  int addr2;
+  int param;
+  int i;
+  char res[512];
+  int introspectionMode;
+  if ((key == GLFW_KEY_I) && (action == GLFW_PRESS)) {
+     introspectionMode = 1;
+     printf("Introspection Mode\n");
+     while (introspectionMode == 1){
+       command = 0;
+       printf("Command: ");
+       scanf("%c", &command);
+       switch(command) {
+          case 'i':
+            introspectionMode = 0;
+            printf("End of Introspection Mode\n");
+          break;
+          case 'd':
+            printf("Disassemble\n");
+            printf("Address? (0x.....): ");
+            scanf("%x", &addr);
+	    SH2Disasm(addr, MappedMemoryReadWord(addr), 0, &(CurrentSH2->regs), res);
+            printf("%s\n", res);
+          break;
+          case 'r':
+            printf("Read Size?(b,w,l): ");
+            scanf("%s", &param);
+            printf("Address? (0x.....): ");
+            scanf("%x", &addr);
+            if (param == 'b')
+              printf("0x%x\n", MappedMemoryReadByte(addr));
+            if (param == 'w')
+              printf("0x%x\n", MappedMemoryReadWord(addr));
+            if (param == 'l')
+              printf("0x%x\n", MappedMemoryReadLong(addr));
+          break;
+          case 'l':
+            printf("Dump Size?(b,w,l): ");
+            scanf("%s", &param);
+            printf("Start Address? (0x.....): ");
+            scanf("%x", &addr);
+            printf("End Address? (0x.....): ");
+            scanf("%x", &addr2);
+            if (param == 'b')
+              for(i=addr; i<= addr2; i++) printf("0x%x = 0x%x\n", i, MappedMemoryReadByte(i));
+            if (param == 'w')
+              for(i=(addr&0xFFFFFFFE); i<= addr2; i+=2) printf("0x%x = 0x%x\n", i, MappedMemoryReadWord(i));
+            if (param == 'l')
+              for(i=(addr&0xFFFFFFFC); i<= addr2; i+=4) printf("0x%x = 0x%x\n", i, MappedMemoryReadLong(i));
+          break;
+          case 's':
+            printf("Search Size?(b,w,l): ");
+            scanf("%s", &param);
+            printf("Value? (0x.....): ");
+            scanf("%x", &addr);
+            printf("Look for 0x%x\n", addr);
+            if (param == 'b')
+              for(i=0x0; i< 0x7000000; i++) if (addr == MappedMemoryReadByte(i)) printf("0x%x = 0x%x\n", i, addr);
+            if (param == 'w')
+              for(i=0x0; i< 0x7000000; i+=2) if (addr == MappedMemoryReadWord(i)) printf("0x%x = 0x%x\n", i, addr);
+            if (param == 'l')
+              for(i=0x0; i< 0x7000000; i+=4) if (addr == MappedMemoryReadLong(i)) printf("0x%x = 0x%x\n", i, addr);
+          break;
+       }
+     }
+  }
+}
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
@@ -60,6 +133,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     break;
     }
   }
+  handleIntrospection(key, action);
 }
 
 int platform_SetupOpenGL(int w, int h) {
