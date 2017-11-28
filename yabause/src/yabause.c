@@ -1338,7 +1338,7 @@ int YabauseQuickLoadGame(void)
       SH2GetRegisters(MSH2, &MSH2->regs);
       MSH2->onchip.VCRC = 0x64 << 8;
       MSH2->onchip.IPRB = 0x0F00;
-      MSH2->regs.PC = 0x06002E00;
+      MSH2->regs.PC = Cs2GetMasterExecutionAdress();
       MSH2->regs.R[15] = Cs2GetMasterStackAdress();
       SH2SetRegisters(MSH2, &MSH2->regs);
       //OnchipWriteByte(0x92, 0X1); //Enable cache support

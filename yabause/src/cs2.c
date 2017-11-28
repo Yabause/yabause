@@ -3864,6 +3864,8 @@ u8 Cs2GetIP(int autoregion) {
                                (buf[0xF2] << 8) | buf[0xF3];
          cdip->firstprogsize = (buf[0xF4] << 24) | (buf[0xF5] << 16) |
                                (buf[0xF6] << 8) | buf[0xF7];
+//Real bios is copying data at the firstprogaddr which correspond to the entry point (MSH2->PC) of the game.
+// ST-040-R4-051795.pdf is describing a bit the mechanism, look at 1st READ ADDRESS 
 
          if (cdip->msh2stack == 0 )
          {
@@ -4203,6 +4205,7 @@ int Cs2LoadState(FILE * fp, int version, int size) {
 
 u32 Cs2GetMasterStackAdress(){ if (cdip) return cdip->msh2stack; else return 0x6002000; }
 u32 Cs2GetSlaveStackAdress(){ if (cdip) return cdip->ssh2stack; else return 0x6001000; }
+u32 Cs2GetMasterExecutionAdress(){ if (cdip) return cdip->firstprogaddr; else return 0x06002E00; }
 u64 Cs2GetGameId(){ if (cdip) return cdip->gameid; else return 0x00; }
 
 //////////////////////////////////////////////////////////////////////////////
