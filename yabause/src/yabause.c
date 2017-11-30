@@ -346,7 +346,6 @@ int YabauseInit(yabauseinit_struct *init)
 
    YabauseSetVideoFormat(init->videoformattype);
    YabauseChangeTiming(CLKTYPE_26MHZ);
-   yabsys.DecilineMode = 1;
 
    if (init->frameskip)
       EnableAutoFrameSkip();
@@ -512,12 +511,6 @@ void YabauseDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YabauseSetDecilineMode(int on) {
-   yabsys.DecilineMode = (on != 0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 void YabauseResetNoLoad(void) {
    SH2Reset(MSH2);
    YabauseStopSlave();
@@ -641,10 +634,8 @@ int YabauseEmulate(void) {
    int oneframeexec = 0;
    yabsys.frame_count++;
 
-   const u32 cyclesinc =
-      yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop / DECILINE_STEP;
-   const u32 usecinc =
-      yabsys.DecilineMode ? yabsys.DecilineUsec : yabsys.DecilineUsec * DECILINE_STEP;
+   const u32 cyclesinc = yabsys.DecilineStop;
+   const u32 usecinc = yabsys.DecilineUsec;
 
 #ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
@@ -676,14 +667,14 @@ int YabauseEmulate(void) {
       if (yabsys.IsPal)
       {
          /* 11.2896MHz / 50Hz / 313 lines / 10 calls/line = 72.20 cycles/call */
-         m68kcycles = yabsys.DecilineMode ? (int)(722/DECILINE_STEP) : 722;
-         m68kcenticycles = yabsys.DecilineMode ? (int)(((722.0/DECILINE_STEP) - m68kcycles)*100)  : 0;
+         m68kcycles = (int)(722/DECILINE_STEP);
+         m68kcenticycles = (int)(((722.0/DECILINE_STEP) - m68kcycles)*100);
       }
       else
       {
          /* 11.2896MHz / 60Hz / 263 lines / 10 calls/line = 71.62 cycles/call */
-         m68kcycles = yabsys.DecilineMode ? (int)(716/DECILINE_STEP) : 716;
-         m68kcenticycles = yabsys.DecilineMode ? (int)(((716.2/DECILINE_STEP) - m68kcycles)*100)  : 20;
+         m68kcycles = (int)(716/DECILINE_STEP);
+         m68kcenticycles = (int)(((716.2/DECILINE_STEP) - m68kcycles)*100);
       }
    }
 #endif
@@ -706,8 +697,6 @@ int YabauseEmulate(void) {
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
-
-      if (yabsys.DecilineMode) {
 
          // Since we run the SCU with half the number of cycles we send
          // to SH2Exec(), we always compute an even number of cycles here
@@ -777,58 +766,13 @@ int YabauseEmulate(void) {
          ScuExec(msh2cycles / 2);
          PROFILE_STOP("SCU");
 
-      } else {  // !DecilineMode
-
-         const u32 decilinecycles = yabsys.DecilineStop >> YABSYS_TIMING_BITS;
-         u32 sh2cycles;
-         yabsys.SH2CycleFrac += cyclesinc;
-         sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
-         yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
-         if (!yabsys.playing_ssf)
-         {
-            PROFILE_START("MSH2");
-            SH2Exec(MSH2, sh2cycles - decilinecycles);
-            PROFILE_STOP("MSH2");
-            PROFILE_START("SSH2");
-            if (yabsys.IsSSH2Running)
-               SH2Exec(SSH2, sh2cycles - decilinecycles);
-            PROFILE_STOP("SSH2");
-         }
-
-         PROFILE_START("hblankin");
-         Vdp2HBlankIN();
-         PROFILE_STOP("hblankin");
-
-         if (!yabsys.playing_ssf)
-         {
-            PROFILE_START("MSH2");
-            SH2Exec(MSH2, decilinecycles);
-            PROFILE_STOP("MSH2");
-            PROFILE_START("SSH2");
-            if (yabsys.IsSSH2Running)
-               SH2Exec(SSH2, decilinecycles);
-            PROFILE_STOP("SSH2");
-         }
-
-#ifdef USE_SCSP2
-         PROFILE_START("SCSP");
-         ScspExec(10);
-         PROFILE_STOP("SCSP");
-#endif
-
-         PROFILE_START("SCU");
-         ScuExec(sh2cycles / 2);
-         PROFILE_STOP("SCU");
-
-      }  // if (yabsys.DecilineMode)
-
 #ifndef USE_SCSP2
       PROFILE_START("68K");
       M68KSync();  // Wait for the previous iteration to finish
       PROFILE_STOP("68K");
 #endif
 
-      if (!yabsys.DecilineMode || yabsys.DecilineCount == DECILINE_STEP)
+      if (yabsys.DecilineCount == DECILINE_STEP)
       {
          // HBlankOUT
          PROFILE_START("hblankout");
