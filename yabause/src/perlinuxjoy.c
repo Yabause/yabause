@@ -455,6 +455,9 @@ int PERLinuxJoyInit(void)
    joycount = j;
    globfree(&globbuf);
 
+   if (globbuf.gl_pathc <= 0) 
+     KeyInit();
+
    return 0;
 }
 
