@@ -153,7 +153,8 @@ void YabauseChangeTiming(int freqtype) {
    yabsys.LineCount = 0;
    yabsys.CurSH2FreqType = freqtype;
    yabsys.DecilineStop = (u32) (freq_shifted * deciline_time + 0.5);
-   yabsys.SH2CycleFrac = 0;
+   yabsys.MSH2CycleFrac = 0;
+   yabsys.SSH2CycleFrac = 0;
    yabsys.DecilineUsec = (u32) (usec_shifted * deciline_time + 0.5);
    yabsys.UsecFrac = 0;
 }
@@ -621,8 +622,10 @@ u32 YabauseGetCpuTime(){
 
 // cyclesinc
 
-int msh2cdiff = 0;
-int ssh2cdiff = 0;
+static int msh2cdiff = 0;
+static int MSH2CycleLost = 0;
+static int ssh2cdiff = 0;
+static int SSH2CycleLost = 0;
 
 u32 YabauseGetFrameCount() {
   return yabsys.frame_count;
@@ -702,20 +705,23 @@ int YabauseEmulate(void) {
          // to SH2Exec(), we always compute an even number of cycles here
          // and leave any odd remainder in SH2CycleFrac.
          u32 msh2cycles, ssh2cycles;
-         yabsys.SH2CycleFrac += cyclesinc;
-         if ((cyclesinc + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         yabsys.MSH2CycleFrac = cyclesinc+MSH2CycleLost;
+         yabsys.SSH2CycleFrac = cyclesinc+SSH2CycleLost;
+         MSH2CycleLost = yabsys.MSH2CycleFrac - ((yabsys.MSH2CycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
+         SSH2CycleLost = yabsys.SSH2CycleFrac - ((yabsys.SSH2CycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
+         if ((yabsys.MSH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
            msh2cycles = 0;
-	   MSH2->cycles += cyclesinc;
+	   MSH2->cycles += yabsys.MSH2CycleFrac>>YABSYS_TIMING_BITS;
          } else {
-           msh2cycles = ((yabsys.SH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+           msh2cycles = ((yabsys.MSH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
          }
-         if ((cyclesinc + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         if ((yabsys.SSH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
            ssh2cycles = 0;
-           SSH2->cycles += cyclesinc;
+           SSH2->cycles += yabsys.SSH2CycleFrac>>YABSYS_TIMING_BITS;
          } else {
-           ssh2cycles = ((yabsys.SH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+           ssh2cycles = ((yabsys.SSH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
          }
-         yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
+         //yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
 #ifdef YAB_STATICS
 		 u64 current_cpu_clock = YabauseGetTicks();
@@ -933,7 +939,6 @@ void YabauseStartSlave(void) {
      SH2GetRegisters(SSH2, &SSH2->regs);
      SSH2->regs.PC = 0x20000200;
      SH2SetRegisters(SSH2, &SSH2->regs);
-
    }
 
    yabsys.IsSSH2Running = 1;
