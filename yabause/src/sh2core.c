@@ -32,8 +32,9 @@
 #include "sh2_dynarec/sh2_dynarec.h"
 #endif
 
-SH2_struct *MSH2=NULL;
+SH2_struct *VSH2=NULL;
 SH2_struct *SSH2=NULL;
+SH2_struct *MSH2=NULL;
 SH2_struct *CurrentSH2;
 SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
@@ -54,6 +55,10 @@ void InvalidateCache();
 int SH2Init(int coreid)
 {
    int i;
+
+   // VSH2 Virtual SH2 for emulation check
+   if ((VSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
+      return -1;
 
    // MSH2
    if ((MSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
@@ -101,7 +106,8 @@ int SH2Init(int coreid)
    if ((SH2Core == NULL) || (SH2Core->Init() != 0)) {
       free(MSH2);
       free(SSH2);
-      MSH2 = SSH2 = NULL;
+      free(VSH2);
+      MSH2 = SSH2 = VSH2 = NULL;
       return -1;
    }
 
@@ -115,6 +121,12 @@ void SH2DeInit()
    if (SH2Core)
       SH2Core->DeInit();
    SH2Core = NULL;
+
+   if (VSH2)
+   {
+      free(VSH2);
+   }
+   VSH2 = NULL;
 
    if (MSH2)
    {
@@ -169,7 +181,6 @@ void SH2Reset(SH2_struct *context)
 
    // Reset Onchip modules
    OnchipReset(context);
-   CurrentSH2 = context;
    InvalidateCache();
 
    // Reset backtrace
@@ -184,9 +195,12 @@ void SH2Reset(SH2_struct *context)
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2PowerOn(SH2_struct *context) {
-	u32 VBR = SH2Core->GetVBR(context);
-   SH2Core->SetPC(context, MappedMemoryReadLong(VBR));
-   SH2Core->SetGPR(context, 15, MappedMemoryReadLong(VBR+4));
+   SH2_struct * oldSH2 = CurrentSH2;
+   CurrentSH2 = context;
+   u32 VBR = SH2Core->GetVBR(context);
+   SH2Core->SetPC(context, SH2MappedMemoryReadLong(VBR));
+   SH2Core->SetGPR(context, 15, SH2MappedMemoryReadLong(VBR+4));
+   CurrentSH2 = oldSH2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -196,6 +210,8 @@ void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles)
    CurrentSH2 = context;
 
    SH2Core->TestExec(context, cycles);
+
+   CurrentSH2 = VSH2;
 }
 
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
@@ -211,6 +227,7 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    //   context->cycles = 0;
    //else
    //   context->cycles -= cycles;
+   CurrentSH2 = VSH2;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1384,7 +1401,6 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          return;
       case 0x016:
          CurrentSH2->onchip.TCR = val & 0x83;
-
          switch (val & 3)
          {
             case 0:
@@ -2238,6 +2254,8 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
    u32 i, i2;
 
    //LOG("sh2 dma src=%08X,dst=%08X,%d\n", *SAR, *DAR, *TCR);
+   SH2_struct * oldSH2 = CurrentSH2;
+   CurrentSH2 = VSH2;
 
    if (!(*CHCR & 0x2)) { // TE is not set
       int srcInc;
@@ -2260,7 +2278,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
       switch (size = ((*CHCR & 0x0C00) >> 10)) {
          case 0:
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteByte(*DAR, MappedMemoryReadByte(*SAR));
+				DMAMappedMemoryWriteByte(*DAR, DMAMappedMemoryReadByte(*SAR));
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -2272,7 +2290,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
             srcInc *= 2;
 
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteWord(*DAR, MappedMemoryReadWord(*SAR));
+				DMAMappedMemoryWriteWord(*DAR, DMAMappedMemoryReadWord(*SAR));
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -2284,7 +2302,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
             srcInc *= 4;
 
             for (i = 0; i < *TCR; i++) {
-				MappedMemoryWriteLong(*DAR, MappedMemoryReadLong(*SAR));
+				DMAMappedMemoryWriteLong(*DAR, DMAMappedMemoryReadLong(*SAR));
                *DAR += destInc;
                *SAR += srcInc;
             }
@@ -2297,7 +2315,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 
             for (i = 0; i < *TCR; i+=4) {
                for(i2 = 0; i2 < 4; i2++) {
-				   MappedMemoryWriteLong(*DAR, MappedMemoryReadLong(*SAR));
+				   DMAMappedMemoryWriteLong(*DAR, DMAMappedMemoryReadLong(*SAR));
                   *DAR += destInc;
                   *SAR += srcInc;
                }
@@ -2314,6 +2332,8 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 
    // Set Transfer End bit
    *CHCR |= 0x2;
+
+   CurrentSH2 = oldSH2;
 }
 
 //////////////////////////////////////////////////////////////////////////////

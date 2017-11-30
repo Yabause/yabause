@@ -97,7 +97,8 @@ typedef struct
    int VBlankLineCount;
    int MaxLineCount;
    u32 DecilineStop;  // Fixed point
-   u32 SH2CycleFrac;  // Fixed point
+   u32 MSH2CycleFrac;  // Fixed point
+   u32 SSH2CycleFrac;  // Fixed point
    u32 DecilineUsec;  // Fixed point
    u32 UsecFrac;      // Fixed point
    int CurSH2FreqType;

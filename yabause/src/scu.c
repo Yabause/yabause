@@ -415,6 +415,9 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
 static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
    u8 ReadAdd, WriteAdd;
 
+   SH2_struct * oldSH2 = CurrentSH2;
+   CurrentSH2 = VSH2;
+
    if (dmainfo->AddValue & 0x100)
       ReadAdd = 4;
    else
@@ -509,6 +512,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
             break;
       }
    }
+   CurrentSH2 = oldSH2;
 }
 
 //////////////////////////////////////////////////////////////////////////////

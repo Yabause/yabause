@@ -899,6 +899,7 @@ int YabauseEmulate(void) {
 void YabauseStartSlave(void) {
    if (yabsys.emulatebios)
    {
+      SH2_struct * oldSh2 = CurrentSH2;
       CurrentSH2 = SSH2;
       MappedMemoryWriteLong(0xFFFFFFE0, 0xA55A03F1); // BCR1
       MappedMemoryWriteLong(0xFFFFFFE4, 0xA55A00FC); // BCR2
@@ -917,7 +918,7 @@ void YabauseStartSlave(void) {
       MappedMemoryWriteLong(0xFFFFFFA0, 0x0000006D); // VCRDMA0
       MappedMemoryWriteLong(0xFFFFFF0C, 0x0000006E); // VCRDIV
       MappedMemoryWriteLong(0xFFFFFE10, 0x00000081); // TIER
-      CurrentSH2 = MSH2;
+      CurrentSH2 = oldSh2;
 
       SH2GetRegisters(SSH2, &SSH2->regs);
       SSH2->regs.R[15] = Cs2GetSlaveStackAdress();

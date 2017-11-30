@@ -733,9 +733,18 @@ void MappedMemoryInit()
      }
 }
 
+u8 FASTCALL DMAMappedMemoryReadByte(u32 addr) {
+  u8 ret;
+  ret = MappedMemoryReadByte(addr);
+return ret;
+}
 //////////////////////////////////////////////////////////////////////////////
 u8 FASTCALL MappedMemoryReadByte(u32 addr)
 {
+   if (CurrentSH2 != VSH2) {
+     printf("Bad 0x%x %d\n", addr, __LINE__);
+     while(1);
+   }
    switch (addr >> 29)
    {
       case 0x0:
@@ -815,6 +824,11 @@ LOG("Hunandled Byte R %x\n", addr);
    }
 
    return 0;
+}
+
+
+u16 FASTCALL DMAMappedMemoryReadWord(u32 addr) {
+  return MappedMemoryReadWord(addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -903,6 +917,10 @@ LOG("Hunandled Word R %x\n", addr);
    return 0;
 }
 
+u32 FASTCALL DMAMappedMemoryReadLong(u32 addr)
+{
+  return MappedMemoryReadLong(addr);
+}
 //////////////////////////////////////////////////////////////////////////////
 u32 FASTCALL MappedMemoryReadLong(u32 addr)
 {
@@ -990,6 +1008,11 @@ LOG("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
       }
    }
    return 0;
+}
+
+void FASTCALL DMAMappedMemoryWriteByte(u32 addr, u8 val)
+{
+   MappedMemoryWriteByte(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1087,6 +1110,11 @@ LOG("Hunandled Byte W %x\n", addr);
    }
 }
 
+void FASTCALL DMAMappedMemoryWriteWord(u32 addr, u16 val)
+{
+   MappedMemoryWriteWord(addr, val);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
 {
@@ -1182,6 +1210,11 @@ LOG("Hunandled Word W %x\n", addr);
          return;
       }
    }
+}
+
+void FASTCALL DMAMappedMemoryWriteLong(u32 addr, u32 val)
+{
+   MappedMemoryWriteLong(addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////

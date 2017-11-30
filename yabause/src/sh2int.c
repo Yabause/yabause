@@ -1355,7 +1355,7 @@ static void FASTCALL SH2movbl(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s8)MappedMemoryReadByte(sh->regs.R[m]);
+   sh->regs.R[n] = (s32)(s8)SH2MappedMemoryReadByte(sh->regs.R[m]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1367,7 +1367,7 @@ static void FASTCALL SH2movbl0(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s8)MappedMemoryReadByte(sh->regs.R[m] + sh->regs.R[0]);
+   sh->regs.R[n] = (s32)(s8)SH2MappedMemoryReadByte(sh->regs.R[m] + sh->regs.R[0]);
    sh->regs.PC += 2;
    sh->cycles++;
 }
@@ -1379,7 +1379,7 @@ static void FASTCALL SH2movbl4(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 disp = INSTRUCTION_D(sh->instruction);
 
-   sh->regs.R[0] = (s32)(s8)MappedMemoryReadByte(sh->regs.R[m] + disp);
+   sh->regs.R[0] = (s32)(s8)SH2MappedMemoryReadByte(sh->regs.R[m] + disp);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1390,7 +1390,7 @@ static void FASTCALL SH2movblg(SH2_struct * sh)
 {
    s32 disp = INSTRUCTION_CD(sh->instruction);
   
-   sh->regs.R[0] = (s32)(s8)MappedMemoryReadByte(sh->regs.GBR + disp);
+   sh->regs.R[0] = (s32)(s8)SH2MappedMemoryReadByte(sh->regs.GBR + disp);
    sh->regs.PC+=2;
    sh->cycles++;
 }
@@ -1415,7 +1415,7 @@ static void FASTCALL SH2movbp(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
 
-   sh->regs.R[n] = (s32)(s8)MappedMemoryReadByte(sh->regs.R[m]);
+   sh->regs.R[n] = (s32)(s8)SH2MappedMemoryReadByte(sh->regs.R[m]);
    if (n != m)
      sh->regs.R[m] += 1;
    sh->regs.PC += 2;
