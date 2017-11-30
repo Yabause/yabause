@@ -573,7 +573,7 @@ option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 # SH2 dynamic recompiler
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
-option(SH2_DYNAREC "SH2 dynamic recompiler" ON)
+option(SH2_DYNAREC "SH2 dynamic recompiler" OFF)
 if (SH2_DYNAREC)
 	if( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
 		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")

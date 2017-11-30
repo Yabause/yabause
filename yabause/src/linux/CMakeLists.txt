@@ -42,7 +42,7 @@ install(TARGETS yabause-linux DESTINATION "bin")
 install(FILES "doc/yabause.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
 install(FILES "yabause.png" DESTINATION "share/pixmaps")
 
-option(INTERPRETER_TEST "Build the interpreter test suite" ON)
+option(INTERPRETER_TEST "Build the interpreter test suite" OFF)
 if (INTERPRETER_TEST)
 
 #--------------------------------------------------------------
