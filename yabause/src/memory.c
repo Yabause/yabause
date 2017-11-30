@@ -741,10 +741,6 @@ return ret;
 //////////////////////////////////////////////////////////////////////////////
 u8 FASTCALL MappedMemoryReadByte(u32 addr)
 {
-   if (CurrentSH2 != VSH2) {
-     printf("Bad 0x%x %d\n", addr, __LINE__);
-     while(1);
-   }
    switch (addr >> 29)
    {
       case 0x0:
