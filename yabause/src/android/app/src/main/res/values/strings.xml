@@ -158,7 +158,6 @@
     <string name="sound_legacy">Legacy(for low-end devices)</string>
 
     <string name="res_native">Native(native resolution of this android device)</string>
-    <string name="res_native">Native(native resolution of this android device)</string>
     <string name="res_4x">4x</string>
     <string name="res_2x">2x</string>
     <string name="res_original">Original</string>
