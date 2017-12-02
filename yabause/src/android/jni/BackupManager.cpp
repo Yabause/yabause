@@ -103,7 +103,8 @@ int BackupManager::getDevicelist( string & jsonstr ) {
 }
 
 int BackupManager::getFilelist( int deviceid, string & jsonstr ) {
-  
+  return 0;
+/*  
   Json::Value root; 
   Json::Value item;
   Json::Value status;
@@ -113,7 +114,7 @@ int BackupManager::getFilelist( int deviceid, string & jsonstr ) {
 
   if(saves_!=NULL){
     free(saves_);
-  }
+  }    
 
   if( BiosBUPStatusMem(deviceid,&devstatus) != 0 ){
     return -1;
@@ -152,6 +153,7 @@ int BackupManager::getFilelist( int deviceid, string & jsonstr ) {
   __android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
 
   return 0;
+*/  
 }
 
 int BackupManager::deletefile( int index ) {
@@ -172,7 +174,8 @@ int Base64toBin( const string & base64, char ** out  ){
   
 
 int BackupManager::getFile( int index, string & jsonstr ) {
-
+ return 0;
+ /*
   Json::Value root; 
   Json::Value header;
   Json::Value data;
@@ -210,6 +213,7 @@ int BackupManager::getFile( int index, string & jsonstr ) {
   __android_log_print(ANDROID_LOG_INFO,LOGTAG,jsonstr.c_str());
 
   return 0;
+*/  
 }
 
 
@@ -227,7 +231,8 @@ int BackupManager::putFile( const string & rootstr ) {
   if ( !parsingSuccessful ){
       return -1;
   }
-
+  return 0;
+/*  
   header = root["header"];
 
   string base64;
@@ -263,6 +268,7 @@ int BackupManager::putFile( const string & rootstr ) {
   }
 
   return 0;
+*/  
 }
 
 
