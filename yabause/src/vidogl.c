@@ -71,17 +71,7 @@ void OSDPushMessageDirect(char * msg) {
 //#define YGL_THREAD_DEBUG yprintf
 
 
-#if defined WORDS_BIGENDIAN
-#define SAT2YAB1(alpha,temp)      (alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
-#else
-#define SAT2YAB1(alpha,temp)      (alpha << 24 | (temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
-#endif
 
-#if defined WORDS_BIGENDIAN
-#define SAT2YAB2(alpha,dot1,dot2)       ((dot2 & 0xFF << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | alpha)
-#else
-#define SAT2YAB2(alpha,dot1,dot2)       (alpha << 24 | ((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF))
-#endif
 
 #define COLOR_ADDt(b)      (b>0xFF?0xFF:(b<0?0:b))
 #define COLOR_ADDb(b1,b2)   COLOR_ADDt((signed) (b1) + (b2))
@@ -3041,6 +3031,7 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int m
 static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, int cellw)
 {
   u32 dot;
+  u32 cramindex;
 
   switch (info->colornumber)
   {
@@ -3048,15 +3039,24 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
     dot = T1ReadByte(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) / 2) & 0x7FFFF));
     if (!(x & 0x1)) dot >>= 4;
     if (!(dot & 0xF) && info->transparencyenable) return 0x00000000;
-    else return Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)), info->alpha);
+    else {
+      cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+      return   (((cramindex >> 8) & 0xFF) << 0) | ((cramindex & 0xFF) << 8) | info->alpha<<24;
+    }
   case 1: // 8 BPP
     dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * cellw) + x) & 0x7FFFF));
     if (!(dot & 0xFF) && info->transparencyenable) return 0x00000000;
-    else return Vdp2ColorRamGetColor(info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF)), info->alpha);
+    else {
+      cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
+      return   cramindex | info->alpha<<24;
+    }
   case 2: // 16 BPP(palette)
     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
     if ((dot == 0) && info->transparencyenable) return 0x00000000;
-    else return Vdp2ColorRamGetColor(info->coloroffset + dot, info->alpha);
+    else {
+      cramindex = (info->coloroffset + dot);
+      return   (((cramindex >> 8) & 0xFF) << 0) | ((cramindex & 0xFF) << 8) | info->alpha<<24;
+    }
   case 3: // 16 BPP(RGB)
     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
     if (!(dot & 0x8000) && info->transparencyenable) return 0x00000000;
@@ -3207,7 +3207,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
 
     YglCache tmpc;
     rbg->vdp2_sync_flg = -1;
-    YglQuad(&rbg->info, &rbg->texture, &tmpc);
+    YglQuadRbg0(&rbg->info, &rbg->texture, &tmpc);
     info->cellw = cellw;
     info->cellh = cellh;
     Vdp2DrawRotation_in(rbg);
@@ -3252,7 +3252,7 @@ static void Vdp2DrawRotationSync() {
         curret_rbg->info.blendmode = VDP2_CC_NONE;
       }
       curret_rbg->info.flipfunction = 0;
-      YglCachedQuad(&curret_rbg->info, &curret_rbg->c);
+      YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c);
       curret_rbg->vdp2_sync_flg = RBG_IDLE;
       YGL_THREAD_DEBUG("Vdp2DrawRotationSync out %d\n", curret_rbg->vdp2_sync_flg);
     }
@@ -3669,6 +3669,8 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         // Fetch pixel
         color = Vdp2RotationFetchPixel(info, x, y, 8);
       }
+
+#if 0
       if (info->LineColorBase != 0 && VDP2_CC_NONE != info->blendmode) {
         u32 linecol;
         if ((color & 0xFF000000) == 0) {
@@ -3705,7 +3707,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         }
 
       }
-
+#endif
       *(texture->textdata++) = color;
     }
     texture->textdata += texture->w;
@@ -6577,7 +6579,6 @@ static void Vdp2DrawRBG0(void)
 
   Vdp2ReadRotationTable(0, &paraA, fixVdp2Regs, Vdp2Ram);
   Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
-  Vdp2ColorRamUpdated = 0;
   A0_Updated = 0;
   A1_Updated = 0;
   B0_Updated = 0;
@@ -6892,6 +6893,8 @@ void VIDOGLVdp2DrawScreens(void)
   memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
   fixVdp2Regs = &baseVdp2Regs;
 
+  YglUpdateColorRam();
+
   Vdp2GenerateWindowInfo();
 
   if (g_rgb0.async) {
@@ -6914,6 +6917,7 @@ void VIDOGLVdp2DrawScreens(void)
     Vdp2DrawRBG0();
     FrameProfileAdd("RBG0 end");
   }
+  Vdp2ColorRamUpdated = 0;
   Vdp2DrawRotationSync();
 }
 
