@@ -191,11 +191,14 @@ void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
 
 void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    addr &= 0xFFF;
-   if (Vdp2ColorRamUpdated == 0){
+   //if (Vdp2ColorRamUpdated == 0){
      if (val != T2ReadWord(Vdp2ColorRam, addr)){
        Vdp2ColorRamUpdated = 1;
+       T2WriteWord(Vdp2ColorRam, addr, val);
+       YglOnUpdateColorRamWord(addr);
+       return;
      }
-   }
+   //}
    T2WriteWord(Vdp2ColorRam, addr, val);
 //   if (Vdp2Internal.ColorMode == 0)
 //      T1WriteWord(Vdp2ColorRam, addr + 0x800, val);
@@ -205,12 +208,17 @@ void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
    addr &= 0xFFF;
-   if (Vdp2ColorRamUpdated == 0){
+   //if (Vdp2ColorRamUpdated == 0){
      if (val != T2ReadLong(Vdp2ColorRam, addr)){
        Vdp2ColorRamUpdated = 1;
+
+       T2WriteLong(Vdp2ColorRam, addr, val);
+       YglOnUpdateColorRamWord(addr);
+       YglOnUpdateColorRamWord(addr+2);
+
      }
-   }
-   T2WriteLong(Vdp2ColorRam, addr, val);
+   //}
+//   T2WriteLong(Vdp2ColorRam, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
