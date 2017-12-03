@@ -301,20 +301,6 @@ static int id_normal_cram_color_offset = -1;
 static int id_normal_cram_matrix = -1;
 
 
-void Ygl_setNormalCramshader(YglProgram * prg) {
-
-  glUseProgram(_prgid[PG_VDP2_NORMAL_CRAM]);
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glUniform1i(id_normal_cram_s_texture, 0);
-  glUniform1i(id_normal_cram_s_color, 1);
-  glUniform4fv(id_normal_cram_color_offset, 1, prg->color_offset_val);
-  glUniformMatrix4fv(id_normal_cram_matrix, 1, GL_FALSE, prg->matrix);
-  
-
-
-}
-
 int Ygl_uniformNormalCram(void * p)
 {
 
@@ -338,6 +324,90 @@ int Ygl_cleanupNormalCram(void * p)
   return 0;
 }
 
+
+
+const GLchar Yglprg_rgb_cram_line_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;\n"
+"in highp vec4 v_texcoord;\n"
+"uniform vec4 u_color_offset;\n"
+"uniform sampler2D s_texture;\n"
+"uniform sampler2D s_color;\n"
+"uniform int u_blendmode;\n"
+"out vec4 fragColor;\n"
+"void main()\n"
+"{\n"
+"  ivec2 addr; \n"
+"  addr.x = int(v_texcoord.x);\n"
+"  addr.y = int(v_texcoord.y);\n"
+"  vec4 txindex = texelFetch( s_texture, addr,0 );\n"
+"  if(txindex.a > 0.0) {\n"
+"    int tex_addr = (int(txindex.g*255.0)&0x7F)*256 + int(txindex.r*255.0);\n"
+"    vec4 txcol = texelFetch( s_color, ivec2( tex_addr , 0 ) , 0 );\n"
+"    txcol.a = txindex.a; \n"
+"    int need_line = int(txindex.g*255.0) & 0x80;\n"
+"    if(need_line != 0) {\n"
+"      int coef = int(txindex.b*255.0);\n"
+"      vec4 linecol;\n"
+"      vec4 lineindex = texelFetch( s_texture,  ivec2( int(v_texcoord.z),int(v_texcoord.w))  ,0 );\n"
+"      int lineparam = (int(lineindex.g*255.0) & 0x7F) * 256 + int(lineindex.r*255.0); \n"
+"      if( (coef & 0x80) != 0 ){\n"
+"        int caddr = (lineparam&0x780) | (coef&0x7F);\n "
+"        linecol = texelFetch( s_color, ivec2( caddr,0  ) , 0 );\n"
+"      }else{\n"
+"        linecol = texelFetch( s_color, ivec2( lineparam , 0 ) , 0 );\n"
+"      }\n"
+"      if( u_blendmode == 1 ) { \n"
+"        txcol = mix(txcol,  linecol , 1.0-txindex.a); txcol.a = 1.0;\n"
+"      }else if( u_blendmode == 2 ) {\n"
+"        txcol = clamp(txcol+linecol,vec4(0.0),vec4(1.0)); txcol.a = 1.0; \n"
+"      }\n"
+"    }\n"
+"    fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
+"  }else \n"
+"    discard;\n"
+"}\n";
+
+const GLchar * pYglprg_rbg_cram_line_f[] = { Yglprg_rgb_cram_line_f, NULL };
+static int id_rbg_cram_line_s_texture = -1;
+static int id_rbg_cram_line_s_color = -1;
+static int id_rbg_cram_line_color_offset = -1;
+static int id_rbg_cram_line_blendmode = -1;
+static int id_rbg_cram_line_matrix = -1;
+
+extern Vdp2 * fixVdp2Regs;
+
+int Ygl_uniformNormalCramLine(void * p)
+{
+
+  YglProgram * prg;
+  prg = p;
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glUniform1i(id_rbg_cram_line_s_texture, 0);
+  glUniform1i(id_rbg_cram_line_s_color, 1);
+  glUniform1i(id_rbg_cram_line_blendmode, prg->blendmode);
+  glUniform4fv(id_rbg_cram_line_color_offset, 1, prg->color_offset_val);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+
+  // Disable blend mode if extend Color calcuration  is not enabled
+  if ( (fixVdp2Regs->CCCTL & 0x400) == 0 ) {
+    prg->blendmode = 0;
+  }
+
+  return 0;
+}
+
+int Ygl_cleanupNormalCramLine(void * p)
+{
+  glActiveTexture(GL_TEXTURE0);
+  return 0;
+}
 
 int Ygl_useTmpBuffer(){
   // Create Screen size frame buffer
@@ -1961,6 +2031,16 @@ int YglProgramInit()
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
 
+  if (YglInitShader(PG_VDP2_RBG_CRAM_LINE, pYglprg_normal_v, pYglprg_rbg_cram_line_f, 1, NULL, NULL, NULL) != 0)
+    return -1;
+
+  id_rbg_cram_line_s_texture = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"s_texture");
+  id_rbg_cram_line_s_color = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"s_color");
+  id_rbg_cram_line_color_offset = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_color_offset");
+  id_rbg_cram_line_blendmode = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_blendmode");
+  id_rbg_cram_line_matrix = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_mvpMatrix");
+  
+
 
 #if 0
   YGLLOG("PG_VDP2_MOSAIC\n");
@@ -2319,10 +2399,21 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
      current->setupUniform = Ygl_uniformNormalCram;
      current->cleanupUniform = Ygl_cleanupNormalCram;
+
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
      current->color_offset = id_normal_cram_color_offset;
+
+   }
+   else if (prgid == PG_VDP2_RBG_CRAM_LINE)
+   {
+     current->setupUniform = Ygl_uniformNormalCramLine;
+     current->cleanupUniform = Ygl_cleanupNormalCramLine;
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     current->mtxModelView = id_rbg_cram_line_matrix;
+     current->color_offset = id_rbg_cram_line_color_offset;
 
    }
    else if (prgid == PG_VDP2_MOSAIC)

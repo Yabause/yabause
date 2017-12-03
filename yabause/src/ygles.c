@@ -2333,7 +2333,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 }
 
 
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c) {
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line ) {
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
@@ -2344,13 +2344,19 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c) {
     prg = PG_NORMAL;
   }
   else {
-    prg = PG_VDP2_NORMAL_CRAM;
-  }
 
+    if (line->x != -1 && VDP2_CC_NONE != input->blendmode ) {
+      prg = PG_VDP2_RBG_CRAM_LINE;
+    }
+    else {
+      prg = PG_VDP2_NORMAL_CRAM;
+    }
+  }
 
   program = YglGetProgram((YglSprite*)input, prg);
   if (program == NULL) return -1;
-
+  
+  program->blendmode = input->blendmode;
   program->bwin0 = input->bEnWin0;
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
@@ -2366,7 +2372,6 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c) {
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
   program->color_offset_val[3] = 0;
   //info->cor
-
   pos = program->quads + program->currentQuad;
   pos[0] = input->vertices[0];
   pos[1] = input->vertices[1];
@@ -2385,78 +2390,49 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c) {
   // memset(vtxa,0,sizeof(float)*24);
 
   tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
-
   program->currentQuad += 12;
+  x = c->x;
+  y = c->y;
 
-  if (output != NULL) {
-    YglTMAllocate(_Ygl->texture_manager, output, input->cellw, input->cellh, &x, &y);
+
+
+  /*
+  0 +---+ 1
+    |   |
+    +---+ 2
+  3 +---+
+    |   |
+  5 +---+ 4
+            */
+
+  tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+  tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
+  tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+  tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
+
+  if (line == NULL) {
+    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
+    tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
   }
   else {
-    x = c->x;
-    y = c->y;
+    tmp[0].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[0].q = (float)(line->y) + ATLAS_BIAS;
+
+    tmp[1].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[1].q = (float)(line->y+1) - ATLAS_BIAS;
+
+    tmp[2].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+    tmp[2].q = (float)(line->y+1) - ATLAS_BIAS;
+
+    tmp[3].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[3].q = (float)(line->y) + ATLAS_BIAS;
+
+    tmp[4].r = (float)(line->x +input->cellh ) - ATLAS_BIAS;
+    tmp[4].q = (float)(line->y + 1 ) - ATLAS_BIAS;
+
+    tmp[5].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+    tmp[5].q = (float)(line->y) + ATLAS_BIAS;
   }
-
-
-
-  tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0; // these can stay at 0
-
-                                                                       /*
-                                                                       0 +---+ 1
-                                                                       |   |
-                                                                       +---+ 2
-                                                                       3 +---+
-                                                                       |   |
-                                                                       5 +---+ 4
-                                                                       */
-
-  if (input->flipfunction & 0x1) {
-    tmp[0].s = tmp[3].s = tmp[5].s = (float)(x + input->cellw) - ATLAS_BIAS;
-    tmp[1].s = tmp[2].s = tmp[4].s = (float)(x)+ATLAS_BIAS;
-  }
-  else {
-    tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-    tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
-  }
-  if (input->flipfunction & 0x2) {
-    tmp[0].t = tmp[1].t = tmp[3].t = (float)(y + input->cellh) - ATLAS_BIAS;
-    tmp[2].t = tmp[4].t = tmp[5].t = (float)(y)+ATLAS_BIAS;
-  }
-  else {
-    tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
-    tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
-  }
-
-#if 0
-  if (c != NULL)
-  {
-    switch (input->flipfunction) {
-    case 0:
-      c->x = *(program->textcoords + ((program->currentQuad - 12) * 2));   // upper left coordinates(0)
-      c->y = *(program->textcoords + ((program->currentQuad - 12) * 2) + 1); // upper left coordinates(0)
-      break;
-    case 1:
-      c->x = *(program->textcoords + ((program->currentQuad - 10) * 2));   // upper left coordinates(0)
-      c->y = *(program->textcoords + ((program->currentQuad - 10) * 2) + 1); // upper left coordinates(0)
-      break;
-    case 2:
-      c->x = *(program->textcoords + ((program->currentQuad - 2) * 2));   // upper left coordinates(0)
-      c->y = *(program->textcoords + ((program->currentQuad - 2) * 2) + 1); // upper left coordinates(0)
-      break;
-    case 3:
-      c->x = *(program->textcoords + ((program->currentQuad - 4) * 2));   // upper left coordinates(0)
-      c->y = *(program->textcoords + ((program->currentQuad - 4) * 2) + 1); // upper left coordinates(0)
-      break;
-    }
-  }
-#endif
-
-  tmp[0].q = 1.0f;
-  tmp[1].q = 1.0f;
-  tmp[2].q = 1.0f;
-  tmp[3].q = 1.0f;
-  tmp[4].q = 1.0f;
-  tmp[5].q = 1.0f;
-
   return 0;
 }
 
@@ -3646,6 +3622,7 @@ u32 * YglGetColorRamPointer() {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 #endif
     _Ygl->cram_tex_buf = malloc(2048 * 4);
+    memset(_Ygl->cram_tex_buf, 0, 2048 * 4);
   }
 
   return _Ygl->cram_tex_buf;
@@ -3671,15 +3648,15 @@ void YglOnUpdateColorRamWord(u32 addr) {
   {
   case 0:
   {
-    u32 tmp;
-    tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
-    buf[((addr & 0xFFF) >> 1)] = SAT2YAB1(0xFF, tmp);
-    buf[((addr & 0xFFF) >> 1) + 1024] = SAT2YAB1(0xFF, tmp);
+    u16 tmp;
+    tmp = T2ReadWord(Vdp2ColorRam, addr & 0x7FF);
+    buf[((addr & 0x7FF) >> 1)] = SAT2YAB1(0xFF, tmp);
+    buf[((addr & 0x7FF) >> 1) + 1024] = SAT2YAB1(0xFF, tmp);
     break;
   }
   case 1:
   {
-    u32 tmp;
+    u16 tmp;
     tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
     buf[((addr & 0xFFF) >> 1)] = SAT2YAB1(0xFF, tmp);
     break;
