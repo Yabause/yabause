@@ -364,11 +364,8 @@ u32 FASTCALL Cs2ReadLong(UNUSED u8* memory, u32 addr) {
                            CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                            return 0;
                         }
-#ifdef WORDS_BIGENDIAN
-                        val = *((const u32 *) ptr);
-#else
-                        val = BSWAP32(*((const u32 *) ptr));
-#endif
+
+                        val = T1ReadLong(ptr, 0);
 
                         // increment datatransoffset/cdwnum
                         Cs2Area->cdwnum += 4;
@@ -442,11 +439,8 @@ void FASTCALL Cs2WriteLong(UNUSED u8* memory, UNUSED u32 addr, UNUSED u32 val) {
                   CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                   return;
                }
-#ifdef WORDS_BIGENDIAN
-               *((u32 *) ptr) = val;
-#else
-               *((u32 *) ptr) = BSWAP32(val);
-#endif
+
+               T1WriteLong(ptr, 0, val);
 
                // increment datatransoffset/cdwnum
                Cs2Area->cdwnum += 4;
