@@ -132,11 +132,11 @@ void FASTCALL Cs2WriteByte(UNUSED u8* memory, u32 addr, u8 val)
 
 u16 FASTCALL Cs2ReadWord(UNUSED u8* memory, u32 addr) {
   u16 val = 0;
-  addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+  addr &= 0x3F; // fix me(I should really have proper mapping)
 
   switch(addr) {
-    case 0x90008:
-    case 0x9000A:
+    case 0x08:
+    case 0x0A:
                   val = Cs2Area->reg.HIRQ;
 
                   //if (Cs2Area->isbufferfull)
@@ -158,20 +158,20 @@ u16 FASTCALL Cs2ReadWord(UNUSED u8* memory, u32 addr) {
 
 //                  CDLOG("cs2\t: Hirq read, Hirq mask = %x - ret: %x\n", Memory::getWord(0x9000C), val);
                   return val;
-    case 0x9000C: 
-    case 0x9000E: return Cs2Area->reg.HIRQMASK;
-    case 0x90018:
-    case 0x9001A: return Cs2Area->reg.CR1;
-    case 0x9001C:
-    case 0x9001E: return Cs2Area->reg.CR2;
-    case 0x90020:
-    case 0x90022: return Cs2Area->reg.CR3;
-    case 0x90024:
-    case 0x90026: Cs2Area->_command = 0;
+    case 0x0C: 
+    case 0x0E: return Cs2Area->reg.HIRQMASK;
+    case 0x18:
+    case 0x1A: return Cs2Area->reg.CR1;
+    case 0x1C:
+    case 0x1E: return Cs2Area->reg.CR2;
+    case 0x20:
+    case 0x22: return Cs2Area->reg.CR3;
+    case 0x24:
+    case 0x26: Cs2Area->_command = 0;
                   return Cs2Area->reg.CR4;
-    case 0x90028:
-    case 0x9002A: return Cs2Area->reg.MPEGRGB;
-    case 0x98000:
+    case 0x28:
+    case 0x2A: return Cs2Area->reg.MPEGRGB;
+    case 0x00:
                   // transfer info
                   switch (Cs2Area->infotranstype) {
                      case 0:
@@ -269,11 +269,12 @@ u16 FASTCALL Cs2ReadWord(UNUSED u8* memory, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Cs2WriteWord(UNUSED u8* memory, u32 addr, u16 val) {
-  addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+
+  addr &= 0x3F; // fix me(I should really have proper mapping)
 
   switch(addr) {
-    case 0x90008:
-    case 0x9000A:
+    case 0x08:
+    case 0x0A:
       Cs2Area->reg.HIRQ = Cs2Area->reg.HIRQ & val;
 				  //if (val != 0xFFFE){
 					//  CDLOG("write HIRQ %04X, %04X\n", Cs2Area->reg.HIRQ, val);
@@ -282,27 +283,27 @@ void FASTCALL Cs2WriteWord(UNUSED u8* memory, u32 addr, u16 val) {
         ScuSendExternalInterrupt00();
       }
                   return;
-    case 0x9000C: 
-    case 0x9000E: Cs2Area->reg.HIRQMASK = val;
+    case 0x0C: 
+    case 0x0E: Cs2Area->reg.HIRQMASK = val;
                   return;
-    case 0x90018: 
-    case 0x9001A: Cs2Area->status &= ~CDB_STAT_PERI;
+    case 0x18: 
+    case 0x1A: Cs2Area->status &= ~CDB_STAT_PERI;
                   Cs2Area->_command = 1;
                   Cs2Area->reg.CR1 = val;
                   //CDLOG("Start command %04X\n", Cs2Area->reg.CR1);
                   return;
-    case 0x9001C:
-    case 0x9001E: Cs2Area->reg.CR2 = val;
+    case 0x1C:
+    case 0x1E: Cs2Area->reg.CR2 = val;
                   return;
-    case 0x90020:
-    case 0x90022: Cs2Area->reg.CR3 = val;
+    case 0x20:
+    case 0x22: Cs2Area->reg.CR3 = val;
                   return;
-    case 0x90024:
-    case 0x90026: Cs2Area->reg.CR4 = val;
+    case 0x24:
+    case 0x26: Cs2Area->reg.CR4 = val;
                   Cs2SetCommandTiming(Cs2Area->reg.CR1 >> 8);
                   return;
-    case 0x90028:
-    case 0x9002A: Cs2Area->reg.MPEGRGB = val;
+    case 0x28:
+    case 0x2A: Cs2Area->reg.MPEGRGB = val;
                   return;
     default:
              LOG("cs2\t:Undocumented register write %08X\n", addr);
@@ -316,10 +317,10 @@ void FASTCALL Cs2WriteWord(UNUSED u8* memory, u32 addr, u16 val) {
 u32 FASTCALL Cs2ReadLong(UNUSED u8* memory, u32 addr) {
   s32 i;
   u32 val = 0;
-  addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+  addr &= 0x3F; // fix me(I should really have proper mapping)
 
   switch(addr) {
-    case 0x90008:
+    case 0x08:
                   val = Cs2Area->reg.HIRQ;
 
                   //if (Cs2Area->isbufferfull)
@@ -341,14 +342,14 @@ u32 FASTCALL Cs2ReadLong(UNUSED u8* memory, u32 addr) {
 
                   val |= (val << 16);
                   return val;
-    case 0x9000C: return ((Cs2Area->reg.HIRQMASK << 16) | Cs2Area->reg.HIRQMASK);
-    case 0x90018: return ((Cs2Area->reg.CR1 << 16) | Cs2Area->reg.CR1);
-    case 0x9001C: return ((Cs2Area->reg.CR2 << 16) | Cs2Area->reg.CR2);
-    case 0x90020: return ((Cs2Area->reg.CR3 << 16) | Cs2Area->reg.CR3);
-    case 0x90024: Cs2Area->_command = 0;
+    case 0x0C: return ((Cs2Area->reg.HIRQMASK << 16) | Cs2Area->reg.HIRQMASK);
+    case 0x18: return ((Cs2Area->reg.CR1 << 16) | Cs2Area->reg.CR1);
+    case 0x1C: return ((Cs2Area->reg.CR2 << 16) | Cs2Area->reg.CR2);
+    case 0x20: return ((Cs2Area->reg.CR3 << 16) | Cs2Area->reg.CR3);
+    case 0x24: Cs2Area->_command = 0;
                   return ((Cs2Area->reg.CR4 << 16) | Cs2Area->reg.CR4);
-    case 0x90028: return ((Cs2Area->reg.MPEGRGB << 16) | Cs2Area->reg.MPEGRGB);
-    case 0x18000:
+    case 0x28: return ((Cs2Area->reg.MPEGRGB << 16) | Cs2Area->reg.MPEGRGB);
+    case 0x00:
                   // transfer data
                   if (Cs2Area->datatranstype != CDB_DATATRANSTYPE_INVALID)
                   {
@@ -420,11 +421,11 @@ u32 FASTCALL Cs2ReadLong(UNUSED u8* memory, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Cs2WriteLong(UNUSED u8* memory, UNUSED u32 addr, UNUSED u32 val) {
-   addr &= 0xFFFFF; // fix me(I should really have proper mapping)
+   addr &= 0x3F; // fix me(I should really have proper mapping)
 
    switch (addr)
    {
-      case 0x18000:
+      case 0x00:
          // transfer data
          if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_PUTSECTOR)
          {
