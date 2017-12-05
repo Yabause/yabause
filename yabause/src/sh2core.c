@@ -48,7 +48,7 @@ void SCITransmitByte(u8);
 
 void enableCache();
 void disableCache();
-void InvalidateCache();
+void InvalidateCache(SH2_struct *ctx);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -181,7 +181,7 @@ void SH2Reset(SH2_struct *context)
 
    // Reset Onchip modules
    OnchipReset(context);
-   InvalidateCache();
+   InvalidateCache(context);
 
    // Reset backtrace
    context->bt.numbacktrace = 0;
@@ -1460,7 +1460,7 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
       case 0x092:
          CurrentSH2->onchip.CCR = val & 0xCF;
 		 if (val & 0x10){
-			 InvalidateCache();
+			 InvalidateCache(CurrentSH2);
 		 }
 		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
                          enableCache();
@@ -1569,7 +1569,7 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
       case 0x092:
          CurrentSH2->onchip.CCR = val & 0xCF;
 		 if (val & 0x10){
-			 InvalidateCache();
+			 InvalidateCache(CurrentSH2);
 		 }
 		 if ( (CurrentSH2->onchip.CCR & 0x01)  ){
                          enableCache();
@@ -1896,12 +1896,12 @@ void CacheWriteLong(u8* mem, u32 addr, u32 val){
 }
 #endif
 
-void InvalidateCache() {
+void InvalidateCache(SH2_struct *ctx) {
 #ifdef USE_CACHE
   for (int line = 0; line < 64; line++)
-    CurrentSH2->cacheLRU[line] = 0;
-  memset(CurrentSH2->tagWay, 0x4, 64*0x80000);
-  memset(CurrentSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
+    ctx->cacheLRU[line] = 0;
+  memset(ctx->tagWay, 0x4, 64*0x80000);
+  memset(ctx->cacheTagArray, 0x0, 64*4*sizeof(u32));
 #endif
 }
 
@@ -1941,7 +1941,7 @@ void disableCache() {
       CacheWriteWordList[i] = WriteWordList[i];
       CacheWriteLongList[i] = WriteLongList[i];
     }
-    InvalidateCache();
+    InvalidateCache(CurrentSH2);
   }
 #else
   return;
