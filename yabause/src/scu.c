@@ -31,13 +31,6 @@
 #include "yabause.h"
 #include <inttypes.h>
 
-#ifdef OPTIMIZED_DMA
-# include "cs2.h"
-# include "scsp.h"
-# include "vdp1.h"
-# include "vdp2.h"
-#endif
-
 Scu * ScuRegs;
 scudspregs_struct * ScuDsp;
 scubp_struct * ScuBP;
@@ -122,65 +115,6 @@ void ScuReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef OPTIMIZED_DMA
-
-// Table of memory types for DMA optimization, in 512k (1<<19 byte) units:
-//    0x00 = no special handling
-//    0x12 = VDP1/2 RAM (8-bit organized, 16-bit copy unit)
-//    0x22 = M68K RAM (16-bit organized, 16-bit copy unit)
-//    0x23 = VDP2 color RAM (16-bit organized, 16-bit copy unit)
-//    0x24 = SH-2 RAM (16-bit organized, 32-bit copy unit)
-static const u8 DMAMemoryType[0x20000000>>19] = {
-   [0x00200000>>19] = 0x24,
-   [0x00280000>>19] = 0x24,
-   [0x05A00000>>19] = 0x22,
-   [0x05A80000>>19] = 0x22,
-   [0x05C00000>>19] = 0x12,
-   [0x05C00000>>19] = 0x12,
-   [0x05E00000>>19] = 0x12,
-   [0x05E80000>>19] = 0x12,
-   [0x05F00000>>19] = 0x23,
-   [0x06000000>>19] = 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-                      0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24, 0x24,
-};
-
-// Function to return the native pointer for an optimized address
-#ifdef __GNUC__
-__attribute__((always_inline))  // Force it inline for better performance
-#endif
-static INLINE void *DMAMemoryPointer(u32 address) {
-   u32 page = (address & 0x1FF80000) >> 19;
-   switch (DMAMemoryType[page]) {
-      case 0x12:
-         switch (page) {
-            case 0x05C00000>>19: return &Vdp1Ram[address & 0x7FFFF];
-            case 0x05E00000>>19: // fall through
-            case 0x05E80000>>19: return &Vdp2Ram[address & 0x7FFFF];
-            default: return NULL;
-         }
-      case 0x22:
-         return &SoundRam[address & 0x7FFFF];
-      case 0x23:
-         return &Vdp2ColorRam[address & 0xFFF];
-      case 0x24:
-         if (page == 0x00200000>>19) {
-            return &LowWram[address & 0xFFFFF];
-         } else {
-            return &HighWram[address & 0xFFFFF];
-         }
-      default:
-         return NULL;
-   }
-}
-
-#endif  // OPTIMIZED_DMA
-
 static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
@@ -188,22 +122,6 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
   //LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
    if (ReadAdd == 0) {
       // DMA fill
-
-#ifdef OPTIMIZED_DMA
-      if (ReadAddress == 0x25818000 && WriteAdd == 4) {
-         // Reading from the CD buffer, so optimize if possible.
-         if ((WriteAddress & 0x1E000000) == 0x06000000) {
-            Cs2RapidCopyT2(&HighWram[WriteAddress & 0xFFFFF], TransferSize/4);
-            SH2WriteNotify(WriteAddress, TransferSize);
-            return;
-         }
-         else if ((WriteAddress & 0x1FF00000) == 0x00200000) {
-            Cs2RapidCopyT2(&LowWram[WriteAddress & 0xFFFFF], TransferSize/4);
-            SH2WriteNotify(WriteAddress, TransferSize);
-            return;
-         }
-      }
-#endif
 
       // Is it a constant source or a register whose value can change from
       // read to read?
@@ -276,93 +194,6 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
 
    else {
       // DMA copy
-
-#ifdef OPTIMIZED_DMA
-      int source_type = DMAMemoryType[(ReadAddress  & 0x1FF80000) >> 19];
-      int dest_type   = DMAMemoryType[(WriteAddress & 0x1FF80000) >> 19];
-      if (WriteAdd == ((dest_type & 0x2) ? 2 : 4)) {
-         // Writes don't skip any bytes, so use an optimized copy algorithm
-         // if possible.
-         const u8 *source_ptr = DMAMemoryPointer(ReadAddress);
-         u8 *dest_ptr = DMAMemoryPointer(WriteAddress);
-# ifdef WORDS_BIGENDIAN
-         if ((source_type & 0x30) && (dest_type & 0x30)) {
-            // Source and destination are both directly accessible.
-            memcpy(dest_ptr, source_ptr, TransferSize);
-            if (dest_type == 0x24) {
-               SH2WriteNotify(WriteAddress, TransferSize);
-            } else if (dest_type == 0x22) {
-               M68KWriteNotify(WriteAddress & 0x7FFFF, TransferSize);
-            }
-            return;
-         }
-# else  // !WORDS_BIGENDIAN
-         if (source_type & dest_type & 0x10) {
-            // Source and destination are both 8-bit organized.
-            memcpy(dest_ptr, source_ptr, TransferSize);
-            return;
-         }
-         else if (source_type & dest_type & 0x20) {
-            // Source and destination are both 16-bit organized.
-            memcpy(dest_ptr, source_ptr, TransferSize);
-            if (dest_type == 0x24) {
-               SH2WriteNotify(WriteAddress, TransferSize);
-            } else if (dest_type == 0x22) {
-               M68KWriteNotify(WriteAddress & 0x7FFFF, TransferSize);
-            }
-            return;
-         }
-         else if ((source_type | dest_type) >> 4 == 0x3) {
-            // Need to convert between 8-bit and 16-bit organization.
-            if ((ReadAddress | WriteAddress) & 2) {  // Avoid misaligned access
-               const u16 *source_16 = (u16 *)source_ptr;
-               u16 *dest_16 = (u16 *)dest_ptr;
-               u32 counter;
-               for (counter = 0; counter < TransferSize-6;
-                     counter += 8, source_16 += 4, dest_16 += 4) {
-                  // Use "unsigned int" rather than "u16" because some
-                  // compilers try too hard to keep the high bits zero,
-                  // thus wasting cycles on every iteration.
-                  unsigned int val0 = BSWAP16(source_16[0]);
-                  unsigned int val1 = BSWAP16(source_16[1]);
-                  unsigned int val2 = BSWAP16(source_16[2]);
-                  unsigned int val3 = BSWAP16(source_16[3]);
-                  dest_16[0] = val0;
-                  dest_16[1] = val1;
-                  dest_16[2] = val2;
-                  dest_16[3] = val3;
-               }
-               for (; counter < TransferSize;
-                     counter += 2, source_16++, dest_16++) {
-                  *dest_16 = BSWAP16(*source_16);
-               }
-            }
-            else {  // 32-bit aligned accesses possible
-               const u32 *source_32 = (u32 *)source_ptr;
-               u32 *dest_32 = (u32 *)dest_ptr;
-               u32 counter;
-               for (counter = 0; counter < TransferSize-12;
-                     counter += 16, source_32 += 4, dest_32 += 4) {
-                  u32 val0 = BSWAP16(source_32[0]);
-                  u32 val1 = BSWAP16(source_32[1]);
-                  u32 val2 = BSWAP16(source_32[2]);
-                  u32 val3 = BSWAP16(source_32[3]);
-                  dest_32[0] = val0;
-                  dest_32[1] = val1;
-                  dest_32[2] = val2;
-                  dest_32[3] = val3;
-               }
-               for (; counter < TransferSize;
-                     counter += 4, source_32++, dest_32++) {
-                  *dest_32 = BSWAP16(*source_32);
-               }
-            }
-            return;
-         }
-# endif  // WORDS_BIGENDIAN
-      }
-#endif  // OPTIMIZED_DMA
-
       if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
           && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
          // Copy in 16-bit units, avoiding misaligned accesses.

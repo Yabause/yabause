@@ -759,12 +759,6 @@ if (YAB_USE_CACHE)
 	add_definitions(-DUSE_CACHE=1)
 endif()
 
-# Optimized DMA
-option(YAB_OPTIMIZED_DMA "Use optimized DMA when possible" OFF)
-if (YAB_OPTIMIZED_DMA)
-	add_definitions(-DOPTIMIZED_DMA=1)
-endif()
-
 # SH2 Trace
 option(SH2_TRACE "Enable SH2 tracing" ON)
 if (SH2_TRACE)
