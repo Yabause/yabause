@@ -167,6 +167,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
+   yabsys.usecache = init->usecache;
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -209,6 +210,7 @@ int YabauseInit(yabauseinit_struct *init)
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
+   yabsys.usecache = init->usecache;
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)

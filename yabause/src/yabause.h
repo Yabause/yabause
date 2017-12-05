@@ -60,6 +60,7 @@ typedef struct
    int use_new_scsp;
    int resolution_mode;
    int extend_backup;
+   int usecache;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
