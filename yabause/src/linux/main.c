@@ -225,6 +225,7 @@ void YuiInit() {
 
 	yinit.usethreads = 1;
 	yinit.numthreads = 4;
+        yinit.usecache = 0;
 }
 
 static int SetupOpenGL() {
@@ -294,10 +295,12 @@ int main(int argc, char *argv[]) {
         strncpy(cdpath, argv[i + 1], 256);
         yinit.cdcoretype = 2;
         yinit.cdpath = cdpath;
-      } else if (strstr(argv[i], "--cdrom=")) {
-        strncpy(cdpath, argv[i] + strlen("--cdrom="), 256);
+      } else if (0 == strcmp(argv[i], "-c") && argv[i + 1]) {
+        strncpy(cdpath, argv[i + 1], 256);
         yinit.cdcoretype = 2;
         yinit.cdpath = cdpath;
+      } else if (strstr(argv[i], "--cache")) {
+        yinit.usecache = 1;
       }
       // Set sound
       else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0) {
