@@ -6926,7 +6926,6 @@ void VIDOGLVdp2DrawScreens(void)
     Vdp2DrawRBG0();
     FrameProfileAdd("RBG0 end");
   }
-  Vdp2ColorRamUpdated = 0;
   Vdp2DrawRotationSync();
 }
 
