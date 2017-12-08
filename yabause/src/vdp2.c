@@ -193,7 +193,6 @@ void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    addr &= 0xFFF;
    //if (Vdp2ColorRamUpdated == 0){
      if (val != T2ReadWord(Vdp2ColorRam, addr)){
-       Vdp2ColorRamUpdated = 1;
        T2WriteWord(Vdp2ColorRam, addr, val);
        YglOnUpdateColorRamWord(addr);
        return;
@@ -210,8 +209,6 @@ void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
    addr &= 0xFFF;
    //if (Vdp2ColorRamUpdated == 0){
      if (val != T2ReadLong(Vdp2ColorRam, addr)){
-       Vdp2ColorRamUpdated = 1;
-
        T2WriteLong(Vdp2ColorRam, addr, val);
        YglOnUpdateColorRamWord(addr);
        YglOnUpdateColorRamWord(addr+2);

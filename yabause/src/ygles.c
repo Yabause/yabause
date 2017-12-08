@@ -502,7 +502,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
   glGenTextures(1, &tm->textureID);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLDEBUG("Fail to init YglTM->textureID %04X", error);
@@ -607,7 +607,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
   glGenTextures(1, &new_textureID);
   glBindTexture(GL_TEXTURE_2D, new_textureID);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR){
     YGLDEBUG("Fail to init new_textureID %d, %04X(%d,%d)\n", new_textureID, error,width, height);
     abort();
@@ -1186,6 +1186,12 @@ int YglInit(int width, int height, unsigned int depth) {
   if( _Ygl->mutex == NULL){
     _Ygl->mutex = YabThreadCreateMutex();
   }
+
+  if (_Ygl->crammutex == NULL) {
+    _Ygl->crammutex = YabThreadCreateMutex();
+  }
+
+
 
 #if defined(_USEGLEW_)
   glewInit();
@@ -3629,10 +3635,13 @@ u32 * YglGetColorRamPointer() {
 }
 
 
+
 void YglOnUpdateColorRamWord(u32 addr) {
 
   if (_Ygl == NULL) return;
 
+  YabThreadLock(_Ygl->crammutex);
+  Vdp2ColorRamUpdated = 1;
   if (_Ygl->colupd_min_addr > addr)
     _Ygl->colupd_min_addr = addr; 
 
@@ -3641,6 +3650,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
 
   u32 * buf = _Ygl->cram_tex_buf;
   if (buf == NULL) {
+    YabThreadUnLock(_Ygl->crammutex);
     return;
   }
   
@@ -3671,13 +3681,16 @@ void YglOnUpdateColorRamWord(u32 addr) {
   default: 
     break;
   }
+  YabThreadUnLock(_Ygl->crammutex);
 }
 
 
 void YglUpdateColorRam() {
-
+  YabThreadLock(_Ygl->crammutex);
   if (Vdp2ColorRamUpdated) {
+    Vdp2ColorRamUpdated = 0;
     if (_Ygl->colupd_min_addr > _Ygl->colupd_max_addr) {
+      YabThreadUnLock(_Ygl->crammutex);
       return; // !? not initilized?
     }
 
@@ -3689,17 +3702,25 @@ void YglUpdateColorRam() {
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     
+#if 0
+    glTexSubImage2D(GL_TEXTURE_2D,
+      0,
+      0, 0,
+      2048, 1,
+      GL_RGBA, GL_UNSIGNED_BYTE,
+      buf);
+#else
     glTexSubImage2D(GL_TEXTURE_2D, 
       0, 
       (_Ygl->colupd_min_addr >> index_shft), 0, 
       ((_Ygl->colupd_max_addr - _Ygl->colupd_min_addr)>> index_shft) + 1, 1, 
       GL_RGBA, GL_UNSIGNED_BYTE, 
       &buf[(_Ygl->colupd_min_addr >> index_shft)] );
-
+#endif
     _Ygl->colupd_min_addr = 0xFFFFFFFF;
     _Ygl->colupd_max_addr = 0x00000000;
   }
-
+  YabThreadUnLock(_Ygl->crammutex);
   return;
 
 }
