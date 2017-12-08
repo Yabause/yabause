@@ -3109,10 +3109,17 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
 #define RBG_FINIESED 1
 #define RBG_TEXTURE_SYNCED 2
 
+#define RBG_PROFILE 0
+
 /*------------------------------------------------------------------------------
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
 void Vdp2DrawRotationThread(void * p) {
+
+  u64 before;
+  u64 now;
+  u32 difftime;
+  char str[64];
 
   while (Vdp2DrawRotationThread_running) {
     YabThreadSetCurrentThreadAffinityMask(0x02);
@@ -3122,7 +3129,21 @@ void Vdp2DrawRotationThread(void * p) {
     }
     FrameProfileAdd("Vdp2DrawRotationThread start");
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread in %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata);
+#if RBG_PROFILE
+    before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+#endif
     Vdp2DrawRotation_in(curret_rbg);
+#if RBG_PROFILE    
+    now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+    if (now > before) {
+      difftime = now - before;
+    }
+    else {
+      difftime = now + (ULLONG_MAX - before);
+    }
+    sprintf(str,"Vdp2DrawRotation_in = %d", difftime);
+    DisplayMessage(str);
+#endif
     FrameProfileAdd("Vdp2DrawRotation_in end");
     curret_rbg->vdp2_sync_flg = RBG_FINIESED;
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread end %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata);
@@ -3299,6 +3320,44 @@ static void Vdp2DrawRotationSync() {
   }
 }
 
+static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i) {
+  float kval;
+  int   kdata;
+  int h = parameter->KtablV + (parameter->deltaKAx * i);
+  if (parameter->coefdatasize == 2) {
+    if (parameter->k_mem_type == 0) { // vram
+      kdata = T1ReadWord(Vdp2Ram, (parameter->coeftbladdr + (h << 1)) & 0x7FFFF);
+    } else { // cram
+      kdata = T2ReadWord((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (h << 1)) & 0xFFF);
+    }
+    if (kdata & 0x8000) { return 0; }
+    kval = (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
+    switch (parameter->coefmode) {
+    case 0:  parameter->kx = kval; parameter->ky = kval; break;
+    case 1:  parameter->kx = kval; break;
+    case 2:  parameter->ky = kval; break;
+    case 3:  /*ToDo*/  break;
+    }
+  }
+  else {
+    if (parameter->k_mem_type == 0) { // vram
+      kdata = T1ReadLong(Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
+    } else { // cram
+      kdata = T2ReadLong((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (h << 2)) & 0xFFF);
+    }
+    if (kdata & 0x80000000) { return 0; }
+    kval = (float)(int)((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536.0f;
+    switch (parameter->coefmode) {
+    case 0:  parameter->kx = kval; parameter->ky = kval; break;
+    case 1:  parameter->kx = kval; break;
+    case 2:  parameter->ky = kval; break;
+    case 3:  /*ToDo*/  break;
+    }
+    parameter->lineaddr = (kdata >> 24) & 0x7F;
+  }
+  return 1;
+}
+
 static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 
   if (rbg == NULL) return;
@@ -3430,10 +3489,51 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     }
 
     //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
-
     for (i = 0; i < hres; i++)
     {
-      parameter = info->GetRParam(info, i, j);
+      switch (fixVdp2Regs->RPMD) {
+      case 0:
+        parameter = &paraA;
+        if (parameter->coefenab) {
+          if (vdp2rGetKValue(parameter, i) == 0) {
+            *(texture->textdata++) = 0x00000000;
+            continue;
+          }
+        }
+        break;
+      case 1:
+        parameter = &paraB;
+        if (vdp2rGetKValue(parameter, i) == 0) {
+          *(texture->textdata++) = 0x00000000;
+          continue;
+        }
+        break;
+      case 2:
+        if (!(paraA.coefenab)) {
+          parameter = &paraA;
+        } else {
+          if (paraB.coefenab) {
+            parameter = &paraA;
+            if (vdp2rGetKValue(parameter, i) == 0) {
+              parameter = &paraB;
+              if( vdp2rGetKValue(parameter, i) == 0) {
+                *(texture->textdata++) = 0x00000000;
+                continue;
+              }
+            }
+          }
+          else {
+            parameter = &paraA;
+            if (vdp2rGetKValue(parameter, i) == 0) {
+              parameter = &paraB;
+            }
+          }
+        }
+        break;
+      case 3:
+        parameter = info->GetRParam(info, i, j);
+        break;
+      }
       if (parameter == NULL)
       {
         *(texture->textdata++) = 0x00000000;
