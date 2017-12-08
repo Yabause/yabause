@@ -278,22 +278,22 @@ const GLchar Yglprg_normal_cram_f[] =
 #endif
 "precision highp float;\n"
 "precision highp int;\n"
-"in vec4 v_texcoord;                            \n"
-"uniform vec4 u_color_offset;    \n"
-"uniform highp sampler2D s_texture;                        \n"
-"uniform sampler2D s_color;                        \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
-"  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );         \n"
-"  if(txindex.a > 0.0) { \n"
-"    highp int lowindex = int(txindex.r*255.0);"
-"    ivec2 cindex = ivec2( int(txindex.g*65280.0) | lowindex,0 ); "
-"    vec4 txcol = texelFetch( s_color,  cindex , 0 );    \n"
+"in vec4 v_texcoord;\n"
+"uniform vec4 u_color_offset;\n"
+"uniform highp sampler2D s_texture;\n"
+"uniform sampler2D s_color;\n"
+"out vec4 fragColor;\n"
+"void main()\n"
+"{\n"
+"  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
+"  if(txindex.a > 0.0) {\n"
+"    vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*65280.0) | int(txindex.r*255.0)) ,0 )  , 0 );\n"
 "    fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
-"  }else \n                                            "
-"     discard;\n                                      "
-"}                                                   \n";
+"    fragColor.a = txindex.a;\n"
+"  }else {\n"
+"     discard;\n"
+"  }\n"
+"}\n";
 
 
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
