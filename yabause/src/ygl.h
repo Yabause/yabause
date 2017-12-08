@@ -513,6 +513,7 @@ typedef struct {
    u32 * cram_tex_buf;
    u32 colupd_min_addr;
    u32 colupd_max_addr;
+   YabMutex * crammutex;
 
 }  Ygl;
 
