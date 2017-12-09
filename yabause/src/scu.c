@@ -216,7 +216,7 @@ static void DoDMAFill(u32 ReadAddress,
          // Inform the SH-2 core in case it was a write to main RAM.
          SH2WriteNotify(start, WriteAddress - start);
       }
-  if(counter != TransferSize) printf("DMAFill failed\n");
+  if(counter != TransferSize) printf("DMAFill failed %x %x %x %x\n", counter, TransferSize, ReadAddress, WriteAddress);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -232,11 +232,12 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
    }
 
    else {
+      u32 counter = 0;
       // DMA copy
       if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
           && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
          // Copy in 16-bit units, avoiding misaligned accesses.
-         u32 counter = 0;
+
          if (ReadAddress & 2) {  // Avoid misaligned access
             u16 tmp = MappedMemoryReadWord(ReadAddress);
             MappedMemoryWriteWord(WriteAddress, tmp);
@@ -265,7 +266,6 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          }
       }
       else {
-         u32 counter = 0;
          u32 start = WriteAddress;
          while (counter < TransferSize) {
             MappedMemoryWriteLong(WriteAddress, MappedMemoryReadLong(ReadAddress));
@@ -276,7 +276,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          /* Inform the SH-2 core in case it was a write to main RAM */
          SH2WriteNotify(start, WriteAddress - start);
       }
-
+     if (counter != TransferSize) printf("DMACopy failed %x %x %x %x\n", counter, TransferSize, ReadAddress, WriteAddress);
    }  // Fill / copy
 }
 
