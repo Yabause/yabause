@@ -1197,9 +1197,9 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->default_fbo = 0;
   _Ygl->drawframe = 0;
   _Ygl->readframe = 1;
+  _Ygl->vdp1_hasMesh = 0;
 
   glGetIntegerv(GL_FRAMEBUFFER_BINDING,&_Ygl->default_fbo);
-  printf("GL_FRAMEBUFFER_BINDING = %d",_Ygl->default_fbo );
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -2395,6 +2395,7 @@ void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
+  _Ygl->vdp1_hasMesh = 0;
   _Ygl->readframe = current_drawframe;
   FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
@@ -2407,7 +2408,6 @@ void YglRenderVDP1(void) {
   int status;
   FrameProfileAdd("YglRenderVDP1 start");
   YabThreadLock(_Ygl->mutex);
-  _Ygl->vdp1_hasMesh = 0;
 
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
@@ -2805,7 +2805,6 @@ void YglRenderFrameBuffer(int from, int to) {
          }
        }
      }
-
      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 0 );
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
      glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);

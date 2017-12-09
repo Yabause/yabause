@@ -1239,7 +1239,6 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
    
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
-   
 
    if (blend != 0){
      glEnable(GL_BLEND);
