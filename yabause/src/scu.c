@@ -115,16 +115,13 @@ void ScuReset(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
+static void DoDMAFill(u32 ReadAddress,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
-  //LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
-   if (ReadAdd == 0) {
-      // DMA fill
-
       // Is it a constant source or a register whose value can change from
       // read to read?
+      u32 counter = 0;
       int constant_source = ((ReadAddress & 0x1FF00000) == 0x00200000)
                          || ((ReadAddress & 0x1E000000) == 0x06000000)
                          || ((ReadAddress & 0x1FF00000) == 0x05A00000)
@@ -136,7 +133,6 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          // avoid misaligned 32-bit accesses, because some hardware (e.g.
          // PSP) crashes on such accesses.
          if (constant_source) {
-            u32 counter = 0;
             u32 val;
             if (ReadAddress & 2) {  // Avoid misaligned access
                val = MappedMemoryReadWord(ReadAddress) << 16
@@ -144,23 +140,41 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             } else {
                val = MappedMemoryReadLong(ReadAddress);
             }
-            while (counter < TransferSize) {
+            while (counter < (TransferSize&~3)) {
                MappedMemoryWriteWord(WriteAddress, (u16)(val >> 16));
                WriteAddress += WriteAdd;
                MappedMemoryWriteWord(WriteAddress, (u16)val);
                WriteAddress += WriteAdd;
                counter += 4;
             }
+            int off=0;
+            while (counter < (TransferSize&1) ) {
+               if (off == 0) MappedMemoryWriteWord(WriteAddress, (u16)(val >> 16));
+               else MappedMemoryWriteWord(WriteAddress, (u16)val);
+               off = (off+1)%2;
+               WriteAddress += WriteAdd;
+               counter+=2;
+            }
          } else {
-            u32 counter = 0;
-            while (counter < TransferSize) {
+            while (counter < (TransferSize&~3)) {
                u32 tmp = MappedMemoryReadLong(ReadAddress);
                MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
                WriteAddress += WriteAdd;
                MappedMemoryWriteWord(WriteAddress, (u16)tmp);
                WriteAddress += WriteAdd;
-               ReadAddress += ReadAdd;
                counter += 4;
+            }
+            int off=0;
+            while (counter < (TransferSize&1) ) {
+               u32 tmp;
+               if (off == 0) {
+                 tmp = MappedMemoryReadLong(ReadAddress);
+                 MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+               }
+               else MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+               off = (off+1)%2;
+               WriteAddress += WriteAdd;
+               counter+=2;
             }
          }
       }
@@ -169,27 +183,52 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          u32 start = WriteAddress;
          if (constant_source) {
             u32 val = MappedMemoryReadLong(ReadAddress);
-            u32 counter = 0;
-            while (counter < TransferSize) {
+            while (counter < (TransferSize&~3)) {
                MappedMemoryWriteLong(WriteAddress, val);
-               ReadAddress += ReadAdd;
                WriteAddress += WriteAdd;
                counter += 4;
             }
+           int off=0;
+           while (counter < TransferSize ) {
+             u32 tmp;
+             MappedMemoryWriteByte(WriteAddress, (u16)(tmp >> ((4-off)*8)));
+             off = (off+1)%4;
+             counter++;
+           }
          } else {
-            u32 counter = 0;
-            while (counter < TransferSize) {
-               MappedMemoryWriteLong(WriteAddress,
+           while (counter < (TransferSize&~3)) {
+             MappedMemoryWriteLong(WriteAddress,
                                      MappedMemoryReadLong(ReadAddress));
-               ReadAddress += ReadAdd;
-               WriteAddress += WriteAdd;
-               counter += 4;
-            }
+             WriteAddress += WriteAdd;
+             counter += 4;
+           }
+           int off=0;
+           while (counter < TransferSize ) {
+             u32 tmp;
+             if (off == 0) {
+               tmp = MappedMemoryReadLong(ReadAddress);
+             }
+             MappedMemoryWriteByte(WriteAddress, (u16)(tmp >> ((4-off)*8)));
+             off = (off+1)%4;
+             counter++;
+           }
          }
          // Inform the SH-2 core in case it was a write to main RAM.
          SH2WriteNotify(start, WriteAddress - start);
       }
+  if(counter != TransferSize) printf("DMAFill failed\n");
+}
 
+//////////////////////////////////////////////////////////////////////////////
+
+static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
+                  u32 WriteAddress, unsigned int WriteAdd,
+                  u32 TransferSize)
+{
+  //LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
+   if (ReadAdd == 0) {
+      // DMA fill
+      DoDMAFill(ReadAddress, WriteAddress, WriteAdd, TransferSize);
    }
 
    else {
