@@ -119,13 +119,126 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
-  u32 start = WriteAddress;
-  u32 counter = 0;
-  for (counter = 0; counter < TransferSize; counter++) {
-    DMAMappedMemoryWriteByte(WriteAddress++, DMAMappedMemoryReadByte(ReadAddress++));
-  }
-  // Inform the SH-2 core in case it was a write to main RAM.
-  SH2WriteNotify(start, WriteAddress - start);
+  //LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
+   if (ReadAdd == 0) {
+      // DMA fill
+
+      // Is it a constant source or a register whose value can change from
+      // read to read?
+      int constant_source = ((ReadAddress & 0x1FF00000) == 0x00200000)
+                         || ((ReadAddress & 0x1E000000) == 0x06000000)
+                         || ((ReadAddress & 0x1FF00000) == 0x05A00000)
+                         || ((ReadAddress & 0x1DF00000) == 0x05C00000);
+
+      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
+            && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+         // Fill a 32-bit value in 16-bit units.  We have to be careful to
+         // avoid misaligned 32-bit accesses, because some hardware (e.g.
+         // PSP) crashes on such accesses.
+         if (constant_source) {
+            u32 counter = 0;
+            u32 val;
+            if (ReadAddress & 2) {  // Avoid misaligned access
+               val = MappedMemoryReadWord(ReadAddress) << 16
+                   | MappedMemoryReadWord(ReadAddress+2);
+            } else {
+               val = MappedMemoryReadLong(ReadAddress);
+            }
+            while (counter < TransferSize) {
+               MappedMemoryWriteWord(WriteAddress, (u16)(val >> 16));
+               WriteAddress += WriteAdd;
+               MappedMemoryWriteWord(WriteAddress, (u16)val);
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         } else {
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               u32 tmp = MappedMemoryReadLong(ReadAddress);
+               MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+               WriteAddress += WriteAdd;
+               MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+               WriteAddress += WriteAdd;
+               ReadAddress += ReadAdd;
+               counter += 4;
+            }
+         }
+      }
+      else {
+         // Fill in 32-bit units (always aligned).
+         u32 start = WriteAddress;
+         if (constant_source) {
+            u32 val = MappedMemoryReadLong(ReadAddress);
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               MappedMemoryWriteLong(WriteAddress, val);
+               ReadAddress += ReadAdd;
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         } else {
+            u32 counter = 0;
+            while (counter < TransferSize) {
+               MappedMemoryWriteLong(WriteAddress,
+                                     MappedMemoryReadLong(ReadAddress));
+               ReadAddress += ReadAdd;
+               WriteAddress += WriteAdd;
+               counter += 4;
+            }
+         }
+         // Inform the SH-2 core in case it was a write to main RAM.
+         SH2WriteNotify(start, WriteAddress - start);
+      }
+
+   }
+
+   else {
+      // DMA copy
+      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
+          && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+         // Copy in 16-bit units, avoiding misaligned accesses.
+         u32 counter = 0;
+         if (ReadAddress & 2) {  // Avoid misaligned access
+            u16 tmp = MappedMemoryReadWord(ReadAddress);
+            MappedMemoryWriteWord(WriteAddress, tmp);
+            WriteAddress += WriteAdd;
+            ReadAddress += 2;
+            counter += 2;
+         }
+         if (TransferSize >= 3)
+         {
+            while (counter < TransferSize-2) {
+               u32 tmp = MappedMemoryReadLong(ReadAddress);
+               MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+               WriteAddress += WriteAdd;
+               MappedMemoryWriteWord(WriteAddress, (u16)tmp);
+               WriteAddress += WriteAdd;
+               ReadAddress += 4;
+               counter += 4;
+            }
+         }
+         if (counter < TransferSize) {
+            u16 tmp = MappedMemoryReadWord(ReadAddress);
+            MappedMemoryWriteWord(WriteAddress, tmp);
+            WriteAddress += WriteAdd;
+            ReadAddress += 2;
+            counter += 2;
+         }
+      }
+      else {
+         u32 counter = 0;
+         u32 start = WriteAddress;
+         while (counter < TransferSize) {
+            MappedMemoryWriteLong(WriteAddress, MappedMemoryReadLong(ReadAddress));
+            ReadAddress += 4;
+            WriteAddress += WriteAdd;
+            counter += 4;
+         }
+         /* Inform the SH-2 core in case it was a write to main RAM */
+         SH2WriteNotify(start, WriteAddress - start);
+      }
+
+   }  // Fill / copy
 }
 
 //////////////////////////////////////
@@ -182,8 +295,6 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
          //LOG("SCU Indirect DMA: src %08x, dst %08x, size = %08x\n", ThisReadAddress, ThisWriteAddress, ThisTransferSize);
          DoDMA(ThisReadAddress & 0x7FFFFFFF, ReadAdd, ThisWriteAddress,
                WriteAdd, ThisTransferSize);
-         ThisReadAddress += ReadAdd;
-         ThisWriteAddress += WriteAdd;
 
          if (ThisReadAddress & 0x80000000)
             break;
@@ -219,8 +330,6 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
       DoDMA(dmainfo->ReadAddress, ReadAdd, dmainfo->WriteAddress, WriteAdd,
             dmainfo->TransferNumber);
-      dmainfo->ReadAddress += ReadAdd;
-      dmainfo->WriteAddress += WriteAdd;
 
       switch(dmainfo->mode) {
          case 0:
@@ -2107,7 +2216,6 @@ void FASTCALL ScuWriteWord(u8* mem, u32 addr, UNUSED u16 val) {
 
 void FASTCALL ScuWriteLong(u8* mem, u32 addr, u32 val) {
    addr &= 0xFF;
-
   //if (addr!= 0xA0)
   //LOG("scu: write %08X:%08X @ %08X", addr, val, CurrentSH2->regs.PC);
    switch(addr) {
