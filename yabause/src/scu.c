@@ -165,16 +165,16 @@ static void DoDMAFill(u32 ReadAddress,
                counter += 4;
             }
             int off=0;
-            while (counter < (TransferSize&~1) ) {
+            while (counter < TransferSize ) {
                u32 tmp;
                if (off == 0) {
                  tmp = MappedMemoryReadLong(ReadAddress);
-                 MappedMemoryWriteWord(WriteAddress, (u16)(tmp >> 16));
+                 
                }
-               else MappedMemoryWriteWord(WriteAddress, (u16)tmp);
-               off = (off+1)%2;
-               WriteAddress += WriteAdd;
-               counter+=2;
+               MappedMemoryWriteByte(WriteAddress, (u8)(tmp >> ((4-off)*8)));
+               off = (off+1)%4;
+               if ((off % 2) == 0)WriteAddress += WriteAdd;
+               counter++;
             }
          }
       }
