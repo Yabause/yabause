@@ -68,6 +68,7 @@ SH2Interface_struct SH2Dyn = {
   SH2DynDeInit,
   SH2DynReset,
   SH2DynExec,
+  SH2DynExec,
 
   SH2DynGetRegisters,
   SH2DynGetGPR,
@@ -102,6 +103,7 @@ SH2Interface_struct SH2DynDebug = {
   SH2DynInit,
   SH2DynDeInit,
   SH2DynDebugReset,
+  SH2DynExec,
   SH2DynExec,
 
   SH2DynGetRegisters,
