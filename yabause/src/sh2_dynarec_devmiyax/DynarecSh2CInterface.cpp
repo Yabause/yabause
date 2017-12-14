@@ -434,7 +434,7 @@ void memSetByte(u32 addr , u8 data )
       block->LookupTableC[ (addr&0x000FFFFF)>>1] = NULL;
     }
   }
-  MappedMemoryWriteByte(addr, data);
+  SH2MappedMemoryWriteByte(addr, data);
   dynaFree();
 }
 
@@ -467,7 +467,7 @@ void memSetWord(u32 addr, u16 data )
       block->LookupTableC[ (addr&0x000FFFFF) >> 1] = NULL;
     }
   }
-  MappedMemoryWriteWord(addr, data);
+  SH2MappedMemoryWriteWord(addr, data);
   dynaFree();
 }
 
@@ -504,7 +504,7 @@ void memSetLong(u32 addr , u32 data )
     }
   }
 
-  MappedMemoryWriteLong(addr, data);
+  SH2MappedMemoryWriteLong(addr, data);
   dynaFree();
 }
 
@@ -512,7 +512,7 @@ u8 memGetByte(u32 addr)
 {
   dynaLock();
   u8 val;
-  val = MappedMemoryReadByte(addr);
+  val = SH2MappedMemoryReadByte(addr);
   dynaFree();
   return val;
 }
@@ -521,7 +521,7 @@ u16 memGetWord(u32 addr)
 {
   dynaLock();
   u16 val;
-  val = MappedMemoryReadWord(addr);
+  val = SH2MappedMemoryReadWord(addr);
   dynaFree();
   return val;
 }
@@ -532,7 +532,7 @@ u32 memGetLong(u32 addr)
 {
   dynaLock();
   u32 val;
-  val = MappedMemoryReadLong(addr);
+  val = SH2MappedMemoryReadLong(addr);
   dynaFree();
   return val;
 }
