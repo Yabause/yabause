@@ -71,6 +71,7 @@ if (ANDROID)
 		)
 endif()
 
+
 if (IOS)
 add_definitions(-DIOS=1)
 add_definitions(-DHAVE_LIBGL)
@@ -99,7 +100,7 @@ option(WEB_INTERFACE "Access with http" OFF)
 if (WEB_INTERFACE)
   add_definitions(-DWEBINTERFACE)
   include_directories( webinterface/include )
-  add_subdirectory(webinterface)
+	add_subdirectory(webinterface)
 endif()
 
 
@@ -321,14 +322,11 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		endif()
 		string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
 		if( glfw )
-			if (WIN32)
-				set( GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
-			else()
-				find_package(PkgConfig REQUIRED)
-				pkg_search_module(GLFW REQUIRED glfw3)
-			endif()
-				include_directories( ${GLFW_INCLUDE_DIRS} )
-
+			include( ../CMake/Packages/external_curl.cmake )
+			set(yabause_SOURCES ${yabause_SOURCES}
+				test_framework.cpp
+				test_framework.h
+			)
 			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
