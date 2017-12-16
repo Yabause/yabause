@@ -2053,32 +2053,45 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 
   int vHeight;
 
-  if (input->mosaicxmask != 1 || input->mosaicymask != 1)
-  {
-    prg = PG_VDP2_MOSAIC;
-  }
-  //  ToDo Color Calcuration version for mosaic
-
-  //if ((input->blendmode & 0x03) == VDP2_CC_ADD)
-  //{
-  //	prg = PG_VDP2_ADDBLEND;
-  //}
-
-  if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
-  {
-    prg = PG_VDP2_BLUR;
-  }
-
-  if (input->linescreen == 1){
-    prg = PG_LINECOLOR_INSERT;
-    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
-      prg = PG_LINECOLOR_INSERT_DESTALPHA;
+  if (input->colornumber >= 3) {
+    prg = PG_NORMAL;
+    if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+      prg = PG_VDP2_MOSAIC;
     }
+    if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+      prg = PG_VDP2_BLUR;
+    }
+    if (input->linescreen == 1) {
+      prg = PG_LINECOLOR_INSERT;
+      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+        prg = PG_LINECOLOR_INSERT_DESTALPHA;
+      }
+    }
+    else if (input->linescreen == 2) { // per line operation by HBLANK
+      prg = PG_VDP2_PER_LINE_ALPHA;
+    }
+  }
+  else {
+    prg = PG_VDP2_NORMAL_CRAM;
+    if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+      prg = PG_VDP2_MOSAIC_CRAM;
+    }
+    if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+      prg = PG_VDP2_BLUR_CRAM;
+    }
+    if (input->linescreen == 1) {
+      prg = PG_LINECOLOR_INSERT_CRAM;
+      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+        prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
+      }
+    }
+    else if (input->linescreen == 2) { // per line operation by HBLANK
+      prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
+    }
+  }
 
-  }
-  else if (input->linescreen == 2){ // per line operation by HBLANK
-    prg = PG_VDP2_PER_LINE_ALPHA;
-  }
+
+
 
 
 
@@ -2194,39 +2207,41 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   float * pos;
   //float * vtxa;
 
-  if (input->mosaicxmask != 1 || input->mosaicymask != 1)
-  {
-    prg = PG_VDP2_MOSAIC;
-  }
-
-  //  ToDo Color Calcuration version for mosaic
-  if ((input->blendmode & 0x03) == VDP2_CC_ADD)
-  {
-    //     prg = PG_VDP2_ADDBLEND;
-  }
-  else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
-  {
-    prg = PG_VDP2_BLUR;
-  }
-  else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
-  {
-    prg = PG_VFP1_HALFTRANS;
-  }
-  else if (input->priority == 8)
-  {
-    prg = PG_VDP1_NORMAL;
-  }
-
-  if (input->linescreen == 1){
-    prg = PG_LINECOLOR_INSERT;
-    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
-      prg = PG_LINECOLOR_INSERT_DESTALPHA;
+  if (input->colornumber >= 3) {
+      prg = PG_NORMAL;
+      if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+        prg = PG_VDP2_MOSAIC;
+      }
+      if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+        prg = PG_VDP2_BLUR;
+      }
+      if (input->linescreen == 1) {
+        prg = PG_LINECOLOR_INSERT;
+        if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+          prg = PG_LINECOLOR_INSERT_DESTALPHA;
+        }
+      }
+      else if (input->linescreen == 2) { // per line operation by HBLANK
+        prg = PG_VDP2_PER_LINE_ALPHA;
+      }
+  } else {
+      prg = PG_VDP2_NORMAL_CRAM;
+      if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+        prg = PG_VDP2_MOSAIC_CRAM;
+      }
+      if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+        prg = PG_VDP2_BLUR_CRAM;
+      }
+      if (input->linescreen == 1) {
+        prg = PG_LINECOLOR_INSERT_CRAM;
+        if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+          prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
+        }
+      }
+      else if (input->linescreen == 2) { // per line operation by HBLANK
+        prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
     }
   }
-  else if (input->linescreen == 2){ // per line operation by HBLANK
-    prg = PG_VDP2_PER_LINE_ALPHA;
-  }
-
 
   program = YglGetProgram((YglSprite*)input, prg);
   if (program == NULL) return -1;
