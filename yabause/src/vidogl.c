@@ -788,23 +788,17 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         }
         else {
           temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
-          if (temp & 0x8000)
-          {
+          if (temp & 0x8000) {
             if (MSB_SHADOW) {
               *texture->textdata++ = (0x80) << 24;
-            }
-            else {
+            } else {
               *texture->textdata++ = SAT2YAB1(alpha, temp);
             }
-          }
-          else if (temp != 0x0000)
-          {
+          } else if (temp != 0x0000) {
             Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
-            if (shadow != 0)
-            {
+            if (shadow != 0) {
               *texture->textdata++ = (shadow_alpha << 24);
-          }
-            else {
+            }else {
 #ifdef WORDS_BIGENDIAN
               priority = ((u8 *)&fixVdp2Regs->PRISA)[priority ^ 1] & 0x7;
               colorcl = ((u8 *)&fixVdp2Regs->CCRSA)[colorcl ^ 1] & 0x1F;
@@ -852,11 +846,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                 }
               }
             }
-        }
-          else {
-            *texture->textdata++ = 0x0;
+          } else {
+            *texture->textdata++ = SAT2YAB1(priority, 0);
           }
-      }
+        }
 
         j += 1;
 
@@ -891,7 +884,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             if (shadow != 0)
             {
               *texture->textdata++ = (shadow_alpha << 24);
-          }
+            }
             else {
 #ifdef WORDS_BIGENDIAN
               priority = ((u8 *)&fixVdp2Regs->PRISA)[priority ^ 1] & 0x7;
@@ -940,19 +933,18 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                 }
               }
             }
+          }
+          else {
+            *texture->textdata++ = SAT2YAB1(priority, 0);
+          }
         }
-          else
-            *texture->textdata++ = 0x0;
-    }
-
         j += 1;
-
         charAddr += 1;
-  }
+      }
       texture->textdata += texture->w;
-  }
+    }
     break;
-}
+  }
   case 2:
   {
     // 8 bpp(64 color) Bank mode
