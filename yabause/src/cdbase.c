@@ -24,6 +24,8 @@
 */
 
 #include <string.h>
+#include <strings.h>
+#include <dirent.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <ctype.h>
@@ -373,15 +375,30 @@ static int iso_cd_status = 0;
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
 //////////////////////////////////////////////////////////////////////////////
+static FILE* fopenInPath(char* filename, char* path){
+  int nbFiles,i;
+  int l = strlen(filename);
+  struct dirent **fileListTemp;
+  nbFiles = scandir(path, &fileListTemp, NULL, alphasort);
+  for(i = 0; i < nbFiles; i++){
+    if (strncasecmp(filename, fileListTemp[i]->d_name, l) == 0) {
+      char* filepath = malloc((l+1+strlen(path))*sizeof(char));
+      snprintf(filepath,l+1+strlen(path),"%s%s",path,fileListTemp[i]->d_name);
+      return fopen(filepath,"rb");
+    }
+  }
+  return NULL;
+
+}
 
 static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
    long size;
-   char *temp_buffer, *temp_buffer2;
+   char *temp_buffer, *path;
    unsigned int track_num;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
-   char *p, *p2;
+   char *filename, *endofpath;
    track_info_struct trk[100];
    int file_size;
    int i;
@@ -495,48 +512,45 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
       // file from the same directory as the cue.
 
       // find the start of filename
-      p = temp_buffer;
+      filename = temp_buffer;
 
       for (;;)
       {
-         if (strcspn(p, "/\\") == strlen(p))
+         if (strcspn(filename, "/\\") == strlen(filename))
          break;
 
-         p += strcspn(p, "/\\") + 1;
+         filename += strcspn(filename, "/\\") + 1;
       }
 
       // append directory of cue file with bin filename
-      if ((temp_buffer2 = (char *)calloc(strlen(cuefilename) + strlen(p) + 1, 1)) == NULL)
-      {
-         free(temp_buffer);
-         return -1;
-      }
-
       // find end of path
-      p2 = (char *)cuefilename;
+      endofpath = (char *)cuefilename;
 
       for (;;)
       {
-         if (strcspn(p2, "/\\") == strlen(p2))
+         if (strcspn(endofpath, "/\\") == strlen(endofpath))
             break;
-         p2 += strcspn(p2, "/\\") + 1;
+         endofpath += strcspn(endofpath, "/\\") + 1;
       }
 
       // Make sure there was at least some kind of path, otherwise our
       // second check is pretty useless
-      if (cuefilename == p2 && temp_buffer == p)
+      if (cuefilename == endofpath && temp_buffer == filename)
       {
          free(temp_buffer);
-         free(temp_buffer2);
          return -1;
       }
 
-      strncpy(temp_buffer2, cuefilename, p2 - cuefilename);
-      strcat(temp_buffer2, p);
+      if ((path = (char *)calloc((endofpath - cuefilename)*sizeof(char), 1)) == NULL)
+      {
+         free(temp_buffer);
+         return -1;
+      }
+      strncpy(path, cuefilename, endofpath - cuefilename);
 
       // Let's give it another try
-      bin_file = fopen(temp_buffer2, "rb");
-      free(temp_buffer2);
+      bin_file = fopenInPath(filename, path);
+      free(path);
 
       if (bin_file == NULL)
       {
