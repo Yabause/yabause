@@ -372,6 +372,8 @@ static u32 isoTOC[102];
 static disc_info_struct disc;
 static int iso_cd_status = 0;
 
+static current_file_id = 0;
+
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
 //////////////////////////////////////////////////////////////////////////////
@@ -391,19 +393,76 @@ static FILE* fopenInPath(char* filename, char* path){
 
 }
 
+static FILE* OpenFile(char* buffer, char* cue) {
+   char *filename, *endofpath;
+   char *path;
+   FILE *ret_file = NULL;
+   // Now go and open up the image file, figure out its size, etc.
+   if ((ret_file = fopen(buffer, "rb")) == NULL)
+   {
+      // Ok, exact path didn't work. Let's trim the path and try opening the
+      // file from the same directory as the cue.
+
+      // find the start of filename
+      filename = buffer;
+
+      for (;;)
+      {
+         if (strcspn(filename, "/\\") == strlen(filename))
+         break;
+
+         filename += strcspn(filename, "/\\") + 1;
+      }
+
+      // append directory of cue file with bin filename
+      // find end of path
+      endofpath = (char *)cue;
+
+      for (;;)
+      {
+         if (strcspn(endofpath, "/\\") == strlen(endofpath))
+            break;
+         endofpath += strcspn(endofpath, "/\\") + 1;
+      }
+
+      // Make sure there was at least some kind of path, otherwise our
+      // second check is pretty useless
+      if (cue == endofpath && buffer == filename)
+      {
+         return NULL;
+      }
+
+      if ((path = (char *)calloc((endofpath - cue)*sizeof(char), 1)) == NULL)
+      {
+         return NULL;
+      }
+      strncpy(path, cue, endofpath - cue);
+
+      // Let's give it another try
+      ret_file = fopenInPath(filename, path);
+      free(path);
+
+      if (ret_file == NULL)
+      {
+         YabSetError(YAB_ERR_FILENOTFOUND, buffer);
+      }
+   }
+   return ret_file;
+}
+
 static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
    long size;
-   char *temp_buffer, *path;
+   char* temp_buffer;
    unsigned int track_num;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
-   char *filename, *endofpath;
    track_info_struct trk[100];
-   int file_size;
    int i;
-   FILE * bin_file;
    int matched = 0;
+   FILE *trackfp = NULL;
+   int trackfp_size = 0;
+   int fad = 0;
 
 	memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
@@ -429,13 +488,6 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    if ((temp_buffer = (char *)calloc(size, 1)) == NULL)
       return -1;
 
-   // Skip image filename
-   if (fscanf(iso_file, "FILE \"%*[^\"]\" %*s\r\n") == EOF)
-   {
-      free(temp_buffer);
-      return -1;
-   }
-
    // Time to generate TOC
    for (;;)
    {
@@ -443,12 +495,37 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
       if (fscanf(iso_file, "%s", temp_buffer) == EOF)
          break;
 
+      if (strncmp(temp_buffer, "FILE", 4) == 0)
+      {
+         matched = fscanf(iso_file, " \"%[^\"]\"", temp_buffer);
+         trackfp = OpenFile(temp_buffer, cuefilename);
+         if (trackfp == NULL) {
+           printf("Can not open file %s\n", temp_buffer);
+           free(temp_buffer);
+           return -1;
+         }
+         fseek(trackfp, 0, SEEK_END);
+         trackfp_size = ftell(trackfp);
+         fseek(trackfp, 0, SEEK_SET);
+         current_file_id++;
+         continue;
+      }
+
       // Figure out what it is
       if (strncmp(temp_buffer, "TRACK", 5) == 0)
       {
          // Handle accordingly
          if (fscanf(iso_file, "%d %[^\r\n]\r\n", &track_num, temp_buffer) == EOF)
             break;
+
+         trk[track_num-1].fp = trackfp;
+         trk[track_num-1].file_size = trackfp_size;
+         trk[track_num-1].file_id = current_file_id;
+
+         if (track_num > 1) {
+           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)
@@ -474,7 +551,8 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          if (indexnum == 1)
          {
             // Update toc entry
-            trk[track_num-1].fad_start = (MSF_TO_FAD(min, sec, frame) + pregap + 150);
+            fad += MSF_TO_FAD(min, sec, frame) + pregap + 150;
+            trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
          }
       }
@@ -490,89 +568,14 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          if (fscanf(iso_file, "%d:%d:%d\r\n", &min, &sec, &frame) == EOF)
             break;
       }
-      else if (strncmp(temp_buffer, "FILE", 4) == 0)
-      {
-         YabSetError(YAB_ERR_OTHER, "Unsupported cue format");
-         free(temp_buffer);
-         return -1;
-      }
    }
 
    trk[track_num].file_offset = 0;
    trk[track_num].fad_start = 0xFFFFFFFF;
 
-   // Go back, retrieve image filename
-   fseek(iso_file, 0, SEEK_SET);
-   matched = fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
+   trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
 
-   // Now go and open up the image file, figure out its size, etc.
-   if ((bin_file = fopen(temp_buffer, "rb")) == NULL)
-   {
-      // Ok, exact path didn't work. Let's trim the path and try opening the
-      // file from the same directory as the cue.
-
-      // find the start of filename
-      filename = temp_buffer;
-
-      for (;;)
-      {
-         if (strcspn(filename, "/\\") == strlen(filename))
-         break;
-
-         filename += strcspn(filename, "/\\") + 1;
-      }
-
-      // append directory of cue file with bin filename
-      // find end of path
-      endofpath = (char *)cuefilename;
-
-      for (;;)
-      {
-         if (strcspn(endofpath, "/\\") == strlen(endofpath))
-            break;
-         endofpath += strcspn(endofpath, "/\\") + 1;
-      }
-
-      // Make sure there was at least some kind of path, otherwise our
-      // second check is pretty useless
-      if (cuefilename == endofpath && temp_buffer == filename)
-      {
-         free(temp_buffer);
-         return -1;
-      }
-
-      if ((path = (char *)calloc((endofpath - cuefilename)*sizeof(char), 1)) == NULL)
-      {
-         free(temp_buffer);
-         return -1;
-      }
-      strncpy(path, cuefilename, endofpath - cuefilename);
-
-      // Let's give it another try
-      bin_file = fopenInPath(filename, path);
-      free(path);
-
-      if (bin_file == NULL)
-      {
-         YabSetError(YAB_ERR_FILENOTFOUND, temp_buffer);
-         free(temp_buffer);
-         return -1;
-      }
-   }
-
-   fseek(bin_file, 0, SEEK_END);
-   file_size = ftell(bin_file);
-   fseek(bin_file, 0, SEEK_SET);
-
-   for (i = 0; i < track_num; i++)
-   {
-      trk[i].fad_end = trk[i+1].fad_start-1;
-      trk[i].file_id = 0;
-      trk[i].fp = bin_file;
-      trk[i].file_size = file_size;
-   }
-
-   trk[track_num-1].fad_end = trk[track_num-1].fad_start+(file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
+   //for (int i =0; i<track_num; i++) printf("Track %d [%d - %d]\n", i+1, trk[i].fad_start, trk[i].fad_end);
 
    disc.session[0].fad_start = 150;
    disc.session[0].fad_end = trk[track_num-1].fad_end;
@@ -587,9 +590,6 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    }
 
    memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
-
-   // buffer is no longer needed
-   free(temp_buffer);
 
    fclose(iso_file);
    return 0;
@@ -1194,7 +1194,7 @@ static int ISOCDInit(const char * iso) {
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
-   if (stricmp(ext, ".CUE") == 0 && strncmp(header, "FILE \"", 6) == 0)
+   if (stricmp(ext, ".CUE") == 0)
    {
       // It's a BIN/CUE
       imgtype = IMG_BINCUE;
