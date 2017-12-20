@@ -24,8 +24,10 @@
 */
 
 #include <string.h>
+#ifndef WIN32
 #include <strings.h>
 #include <dirent.h>
+#endif
 #include <stdlib.h>
 #include <assert.h>
 #include <ctype.h>
@@ -377,6 +379,7 @@ static current_file_id = 0;
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
 //////////////////////////////////////////////////////////////////////////////
+#ifndef WIN32
 static FILE* fopenInPath(char* filename, char* path){
   int nbFiles,i;
   int l = strlen(filename);
@@ -392,6 +395,13 @@ static FILE* fopenInPath(char* filename, char* path){
   return NULL;
 
 }
+#else
+static FILE* fopenInPath(char* filename, char* path){
+  char* filepath = malloc((1+1+strlen(path))*sizeof(char));
+  snprintf(filepath,1+1+strlen(path),"%s%s",path,filename);
+  return fopen(filepath,"rb");
+}
+#endif
 
 static FILE* OpenFile(char* buffer, char* cue) {
    char *filename, *endofpath;
