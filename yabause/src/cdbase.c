@@ -397,8 +397,9 @@ static FILE* fopenInPath(char* filename, char* path){
 }
 #else
 static FILE* fopenInPath(char* filename, char* path){
-  char* filepath = malloc((1+1+strlen(path))*sizeof(char));
-  snprintf(filepath,1+1+strlen(path),"%s%s",path,filename);
+  int l = strlen(filename);
+  char* filepath = malloc((l+1+strlen(path))*sizeof(char));
+  snprintf(filepath,l+1+strlen(path),"%s%s",path,filename);
   return fopen(filepath,"rb");
 }
 #endif
