@@ -379,16 +379,39 @@ static current_file_id = 0;
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
 //////////////////////////////////////////////////////////////////////////////
+static int shallBeEscaped(char c) {
+  return ((c=='\\'));
+}
+
+static int charToEscape(char *buffer) {
+  int i;
+  int ret = 0;
+  for (i=0; i<strlen(buffer); i++) {
+    if(shallBeEscaped(buffer[i])) ret++;
+  }
+  return ret;
+}
+
 #ifndef WIN32
 static FILE* fopenInPath(char* filename, char* path){
-  int nbFiles,i;
-  int l = strlen(filename);
+  int nbFiles,i,k;
+  char* tmp;
+  int l = strlen(filename) + 1;
   struct dirent **fileListTemp;
   nbFiles = scandir(path, &fileListTemp, NULL, alphasort);
   for(i = 0; i < nbFiles; i++){
     if (strncasecmp(filename, fileListTemp[i]->d_name, l) == 0) {
-      char* filepath = malloc((l+1+strlen(path))*sizeof(char));
-      snprintf(filepath,l+1+strlen(path),"%s%s",path,fileListTemp[i]->d_name);
+      char* filepath = malloc((l + charToEscape(filename) + charToEscape(path)+strlen(path))*sizeof(char));
+      tmp = filepath;
+      for (k=0; k<strlen(path); k++) {
+        if (shallBeEscaped(path[k])) *tmp++='\\';
+           *tmp++ = path[k];
+      }
+      for (k=0; k<strlen(fileListTemp[i]->d_name); k++) {
+        if (shallBeEscaped(fileListTemp[i]->d_name[k])) *tmp++='\\';
+           *tmp++ = fileListTemp[i]->d_name[k];
+      }
+      *tmp++ = '\0';
       return fopen(filepath,"rb");
     }
   }
@@ -397,9 +420,20 @@ static FILE* fopenInPath(char* filename, char* path){
 }
 #else
 static FILE* fopenInPath(char* filename, char* path){
-  int l = strlen(filename);
-  char* filepath = malloc((l+1+strlen(path))*sizeof(char));
-  snprintf(filepath,l+1+strlen(path),"%s%s",path,filename);
+  int l = strlen(filename)+1;
+  int k;
+  char* filepath = malloc((l + charToEscape(filename) + charToEscape(path)+strlen(path))*sizeof(char));
+  char* tmp;
+  tmp = filepath;
+  for (k=0; k<strlen(path); k++) {
+    if (shallBeEscaped(path[k])) *tmp++='\\';
+    *tmp++ = path[k];
+  }
+  for (k=0; k<strlen(filename); k++) {
+    if (shallBeEscaped(filename[k])) *tmp++='\\';
+    *tmp++ = filename[k];
+  }
+  *tmp++ = '\0';
   return fopen(filepath,"rb");
 }
 #endif
@@ -407,6 +441,7 @@ static FILE* fopenInPath(char* filename, char* path){
 static FILE* OpenFile(char* buffer, char* cue) {
    char *filename, *endofpath;
    char *path;
+   int tmp;
    FILE *ret_file = NULL;
    // Now go and open up the image file, figure out its size, etc.
    if ((ret_file = fopen(buffer, "rb")) == NULL)
@@ -416,31 +451,19 @@ static FILE* OpenFile(char* buffer, char* cue) {
 
       // find the start of filename
       filename = buffer;
-
-      for (;;)
+      for (tmp=0; tmp < strlen(buffer); tmp++)
       {
-         if (strcspn(filename, "/\\") == strlen(filename))
-         break;
-
-         filename += strcspn(filename, "/\\") + 1;
+         if ((buffer[tmp] == '/') || (buffer[tmp] == '\\'))
+           filename = &buffer[tmp+1];
       }
 
       // append directory of cue file with bin filename
       // find end of path
-      endofpath = (char *)cue;
-
-      for (;;)
+      endofpath = cue;
+      for (tmp=0; tmp < strlen(cue); tmp++)
       {
-         if (strcspn(endofpath, "/\\") == strlen(endofpath))
-            break;
-         endofpath += strcspn(endofpath, "/\\") + 1;
-      }
-
-      // Make sure there was at least some kind of path, otherwise our
-      // second check is pretty useless
-      if (cue == endofpath && buffer == filename)
-      {
-         return NULL;
+         if ((cue[tmp] == '/') || (cue[tmp] == '\\'))
+           endofpath = &cue[tmp+1];
       }
 
       if ((path = (char *)calloc((endofpath - cue)*sizeof(char), 1)) == NULL)
@@ -452,7 +475,6 @@ static FILE* OpenFile(char* buffer, char* cue) {
       // Let's give it another try
       ret_file = fopenInPath(filename, path);
       free(path);
-
       if (ret_file == NULL)
       {
          YabSetError(YAB_ERR_FILENOTFOUND, buffer);
