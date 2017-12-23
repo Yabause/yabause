@@ -3323,17 +3323,14 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
 #define RBG_FINIESED 1
 #define RBG_TEXTURE_SYNCED 2
 
-#define RBG_PROFILE 0
+
 
 /*------------------------------------------------------------------------------
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
 void Vdp2DrawRotationThread(void * p) {
 
-  u64 before;
-  u64 now;
-  u32 difftime;
-  char str[64];
+
 
   while (Vdp2DrawRotationThread_running) {
     YabThreadSetCurrentThreadAffinityMask(0x02);
@@ -3343,21 +3340,7 @@ void Vdp2DrawRotationThread(void * p) {
     }
     FrameProfileAdd("Vdp2DrawRotationThread start");
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread in %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata);
-#if RBG_PROFILE
-    before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-#endif
     Vdp2DrawRotation_in(curret_rbg);
-#if RBG_PROFILE    
-    now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-    if (now > before) {
-      difftime = now - before;
-    }
-    else {
-      difftime = now + (ULLONG_MAX - before);
-    }
-    sprintf(str,"Vdp2DrawRotation_in = %d", difftime);
-    DisplayMessage(str);
-#endif
     FrameProfileAdd("Vdp2DrawRotation_in end");
     curret_rbg->vdp2_sync_flg = RBG_FINIESED;
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread end %d,%08X\n", curret_rbg->vdp2_sync_flg, curret_rbg->texture.textdata);
@@ -7219,9 +7202,18 @@ static void Vdp2DrawRBG0(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#define BG_PROFILE 0
 void VIDOGLVdp2DrawScreens(void)
 {
+  u64 before;
+  u64 now;
+  u32 difftime;
+  char str[64];
+
+#if BG_PROFILE
+  before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+#endif
+
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
   memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
@@ -7252,6 +7244,17 @@ void VIDOGLVdp2DrawScreens(void)
     FrameProfileAdd("RBG0 end");
   }
   Vdp2DrawRotationSync();
+#if BG_PROFILE    
+  now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+  if (now > before) {
+    difftime = now - before;
+  }
+  else {
+    difftime = now + (ULLONG_MAX - before);
+  }
+  sprintf(str, "VIDOGLVdp2DrawScreens = %d", difftime);
+  DisplayMessage(str);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
