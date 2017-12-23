@@ -383,7 +383,7 @@ const GLchar Yglprg_rgb_cram_line_f[] =
 "  if(txindex.a > 0.0) {\n"
 "    highp int highg = int(txindex.g*255.0);"
 "    vec4 txcol = texelFetch( s_color, ivec2( ((highg&0x7F)<<8) | int(txindex.r*255.0) , 0 ) , 0 );\n"
-"    txcol.a = txindex.a; \n"
+"    txcol.a = txindex.a;\n"
 "    if( (highg & 0x80)  != 0) {\n"
 "      int coef = int(txindex.b*255.0);\n"
 "      vec4 linecol;\n"
@@ -398,12 +398,13 @@ const GLchar Yglprg_rgb_cram_line_f[] =
 "      if( u_blendmode == 1 ) { \n"
 "        txcol = mix(txcol,  linecol , 1.0-txindex.a); txcol.a = 1.0;\n"
 "      }else if( u_blendmode == 2 ) {\n"
-"        txcol = clamp(txcol+linecol,vec4(0.0),vec4(1.0)); txcol.a = 1.0; \n"
+"        txcol = txcol+linecol; txcol.a = 1.0; \n"
 "      }\n"
 "    }\n"
-"    fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
-"  }else \n"
+"    fragColor = txcol+u_color_offset;\n"
+"  }else{ \n"
 "    discard;\n"
+"  }\n"
 "}\n";
 
 const GLchar * pYglprg_rbg_cram_line_f[] = { Yglprg_rgb_cram_line_f, NULL };
