@@ -611,11 +611,35 @@ int Ygl_uniformNormal_blur(void * p)
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
-  glEnableVertexAttribArray(prg->vertexp);
-  glEnableVertexAttribArray(prg->texcoordp);
-  glUniform1i(id_normal_s_texture, 0);
-  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  prg->blendmode = 0;
+
+  if (prg->prgid == PG_VDP2_BLUR_CRAM) {
+    glEnableVertexAttribArray(prg->vertexp);
+    glEnableVertexAttribArray(prg->texcoordp);
+    glUniform1i(id_normal_cram_s_texture, 0);
+    glUniform1i(id_normal_cram_s_color, 1);
+    glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+
+  }
+  else {
+    glEnableVertexAttribArray(prg->vertexp);
+    glEnableVertexAttribArray(prg->texcoordp);
+    glUniform1i(id_normal_s_texture, 0);
+    glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  }
+
+  //glEnableVertexAttribArray(prg->vertexp);
+  //glEnableVertexAttribArray(prg->texcoordp);
+  //glUniform1i(id_normal_s_texture, 0);
+  //glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  //glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   return 0;
 }
 
@@ -2553,6 +2577,15 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
+   }
+   else if (prgid == PG_VDP2_BLUR_CRAM)
+   {
+     current->setupUniform = Ygl_uniformNormal_blur;
+     current->cleanupUniform = Ygl_cleanupNormal_blur;
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     current->mtxModelView = id_normal_cram_matrix;
+     current->color_offset = id_normal_cram_color_offset;
    }
    else if (prgid == PG_VDP2_PER_LINE_ALPHA)
    {
