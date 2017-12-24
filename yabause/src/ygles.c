@@ -40,6 +40,7 @@ static int rebuild_frame_buffer = 0;
 static int YglIsNeedFrameBuffer();
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(void);;
+u32 * YglGetColorRamPointer();
 
 void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture);
 
@@ -501,7 +502,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
   glGenTextures(1, &tm->textureID);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLDEBUG("Fail to init YglTM->textureID %04X", error);
@@ -521,6 +522,8 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
     abort();
   }
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+  YglGetColorRamPointer();
 
   return tm;
 }
@@ -604,7 +607,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
   glGenTextures(1, &new_textureID);
   glBindTexture(GL_TEXTURE_2D, new_textureID);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR){
     YGLDEBUG("Fail to init new_textureID %d, %04X(%d,%d)\n", new_textureID, error,width, height);
     abort();
@@ -1183,6 +1186,12 @@ int YglInit(int width, int height, unsigned int depth) {
   if( _Ygl->mutex == NULL){
     _Ygl->mutex = YabThreadCreateMutex();
   }
+
+  if (_Ygl->crammutex == NULL) {
+    _Ygl->crammutex = YabThreadCreateMutex();
+  }
+
+
 
 #if defined(_USEGLEW_)
   glewInit();
@@ -2044,32 +2053,45 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 
   int vHeight;
 
-  if (input->mosaicxmask != 1 || input->mosaicymask != 1)
-  {
-    prg = PG_VDP2_MOSAIC;
-  }
-  //  ToDo Color Calcuration version for mosaic
-
-  //if ((input->blendmode & 0x03) == VDP2_CC_ADD)
-  //{
-  //	prg = PG_VDP2_ADDBLEND;
-  //}
-
-  if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
-  {
-    prg = PG_VDP2_BLUR;
-  }
-
-  if (input->linescreen == 1){
-    prg = PG_LINECOLOR_INSERT;
-    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
-      prg = PG_LINECOLOR_INSERT_DESTALPHA;
+  if (input->colornumber >= 3) {
+    prg = PG_NORMAL;
+    if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+      prg = PG_VDP2_MOSAIC;
     }
+    if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+      prg = PG_VDP2_BLUR;
+    }
+    if (input->linescreen == 1) {
+      prg = PG_LINECOLOR_INSERT;
+      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+        prg = PG_LINECOLOR_INSERT_DESTALPHA;
+      }
+    }
+    else if (input->linescreen == 2) { // per line operation by HBLANK
+      prg = PG_VDP2_PER_LINE_ALPHA;
+    }
+  }
+  else {
+    prg = PG_VDP2_NORMAL_CRAM;
+    if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+      prg = PG_VDP2_MOSAIC_CRAM;
+    }
+    if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+      prg = PG_VDP2_BLUR_CRAM;
+    }
+    if (input->linescreen == 1) {
+      prg = PG_LINECOLOR_INSERT_CRAM;
+      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+        prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
+      }
+    }
+    else if (input->linescreen == 2) { // per line operation by HBLANK
+      prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
+    }
+  }
 
-  }
-  else if (input->linescreen == 2){ // per line operation by HBLANK
-    prg = PG_VDP2_PER_LINE_ALPHA;
-  }
+
+
 
 
 
@@ -2185,39 +2207,41 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   float * pos;
   //float * vtxa;
 
-  if (input->mosaicxmask != 1 || input->mosaicymask != 1)
-  {
-    prg = PG_VDP2_MOSAIC;
-  }
-
-  //  ToDo Color Calcuration version for mosaic
-  if ((input->blendmode & 0x03) == VDP2_CC_ADD)
-  {
-    //     prg = PG_VDP2_ADDBLEND;
-  }
-  else if ((input->blendmode & 0x03) == VDP2_CC_BLUR)
-  {
-    prg = PG_VDP2_BLUR;
-  }
-  else if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
-  {
-    prg = PG_VFP1_HALFTRANS;
-  }
-  else if (input->priority == 8)
-  {
-    prg = PG_VDP1_NORMAL;
-  }
-
-  if (input->linescreen == 1){
-    prg = PG_LINECOLOR_INSERT;
-    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
-      prg = PG_LINECOLOR_INSERT_DESTALPHA;
+  if (input->colornumber >= 3) {
+      prg = PG_NORMAL;
+      if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+        prg = PG_VDP2_MOSAIC;
+      }
+      if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+        prg = PG_VDP2_BLUR;
+      }
+      if (input->linescreen == 1) {
+        prg = PG_LINECOLOR_INSERT;
+        if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+          prg = PG_LINECOLOR_INSERT_DESTALPHA;
+        }
+      }
+      else if (input->linescreen == 2) { // per line operation by HBLANK
+        prg = PG_VDP2_PER_LINE_ALPHA;
+      }
+  } else {
+      prg = PG_VDP2_NORMAL_CRAM;
+      if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+        prg = PG_VDP2_MOSAIC_CRAM;
+      }
+      if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+        prg = PG_VDP2_BLUR_CRAM;
+      }
+      if (input->linescreen == 1) {
+        prg = PG_LINECOLOR_INSERT_CRAM;
+        if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+          prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
+        }
+      }
+      else if (input->linescreen == 2) { // per line operation by HBLANK
+        prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
     }
   }
-  else if (input->linescreen == 2){ // per line operation by HBLANK
-    prg = PG_VDP2_PER_LINE_ALPHA;
-  }
-
 
   program = YglGetProgram((YglSprite*)input, prg);
   if (program == NULL) return -1;
@@ -2326,6 +2350,110 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   tmp[4].q = 1.0f;
   tmp[5].q = 1.0f;
 
+  return 0;
+}
+
+
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line ) {
+  unsigned int x, y;
+  YglProgram *program;
+  texturecoordinate_struct *tmp;
+  int prg = PG_NORMAL;
+  float * pos;
+
+  if(input->colornumber >= 3 ) {
+    prg = PG_NORMAL;
+  }
+  else {
+
+    if (line->x != -1 && VDP2_CC_NONE != input->blendmode ) {
+      prg = PG_VDP2_RBG_CRAM_LINE;
+    }
+    else {
+      prg = PG_VDP2_NORMAL_CRAM;
+    }
+  }
+
+  program = YglGetProgram((YglSprite*)input, prg);
+  if (program == NULL) return -1;
+  
+  program->blendmode = input->blendmode;
+  program->bwin0 = input->bEnWin0;
+  program->logwin0 = input->WindowArea0;
+  program->bwin1 = input->bEnWin1;
+  program->logwin1 = input->WindowArea1;
+  program->winmode = input->LogicWin;
+  program->lineTexture = input->lineTexture;
+
+  program->mosaic[0] = input->mosaicxmask;
+  program->mosaic[1] = input->mosaicymask;
+
+  program->color_offset_val[0] = (float)(input->cor) / 255.0f;
+  program->color_offset_val[1] = (float)(input->cog) / 255.0f;
+  program->color_offset_val[2] = (float)(input->cob) / 255.0f;
+  program->color_offset_val[3] = 0;
+  //info->cor
+  pos = program->quads + program->currentQuad;
+  pos[0] = input->vertices[0];
+  pos[1] = input->vertices[1];
+  pos[2] = input->vertices[2];
+  pos[3] = input->vertices[3];
+  pos[4] = input->vertices[4];
+  pos[5] = input->vertices[5];
+  pos[6] = input->vertices[0];
+  pos[7] = input->vertices[1];
+  pos[8] = input->vertices[4];
+  pos[9] = input->vertices[5];
+  pos[10] = input->vertices[6];
+  pos[11] = input->vertices[7];
+
+  // vtxa = (program->vertexAttribute + (program->currentQuad * 2));
+  // memset(vtxa,0,sizeof(float)*24);
+
+  tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+  program->currentQuad += 12;
+  x = c->x;
+  y = c->y;
+
+
+
+  /*
+  0 +---+ 1
+    |   |
+    +---+ 2
+  3 +---+
+    |   |
+  5 +---+ 4
+            */
+
+  tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+  tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
+  tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+  tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
+
+  if (line == NULL) {
+    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
+    tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
+  }
+  else {
+    tmp[0].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[0].q = (float)(line->y) + ATLAS_BIAS;
+
+    tmp[1].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[1].q = (float)(line->y+1) - ATLAS_BIAS;
+
+    tmp[2].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+    tmp[2].q = (float)(line->y+1) - ATLAS_BIAS;
+
+    tmp[3].r = (float)(line->x) + ATLAS_BIAS;
+    tmp[3].q = (float)(line->y) + ATLAS_BIAS;
+
+    tmp[4].r = (float)(line->x +input->cellh ) - ATLAS_BIAS;
+    tmp[4].q = (float)(line->y + 1 ) - ATLAS_BIAS;
+
+    tmp[5].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+    tmp[5].q = (float)(line->y) + ATLAS_BIAS;
+  }
   return 0;
 }
 
@@ -3474,6 +3602,146 @@ void YglShowTexture(void) {
    _Ygl->st = !_Ygl->st;
 }
 
+u32 * YglGetColorRamPointer() {
+  int error;
+  if (_Ygl->cram_tex == 0) {
+    glGetError();
+    glGenTextures(1, &_Ygl->cram_tex);
+#if 0
+    glGenBuffers(1, &_Ygl->cram_tex_pbo);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->cram_tex_pbo);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 2048 * 4, NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+#endif
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2048, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    if ((error = glGetError()) != GL_NO_ERROR)
+    {
+      YGLLOG("Fail to init cram_tex %04X", error);
+      return NULL;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    _Ygl->colupd_min_addr = 0xFFFFFFFF ;
+    _Ygl->colupd_max_addr = 0x00000000;
+  }
+
+  if (_Ygl->cram_tex_buf == NULL) {
+#if 0
+    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->cram_tex_pbo);
+    _Ygl->cram_tex_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 4, GL_MAP_WRITE_BIT /*| GL_MAP_INVALIDATE_BUFFER_BIT*/);
+    if ((error = glGetError()) != GL_NO_ERROR)
+    {
+      YGLLOG("Fail to init YglTM->lincolor_buf %04X", error);
+      return NULL;
+    }
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+#endif
+    _Ygl->cram_tex_buf = malloc(2048 * 4);
+    memset(_Ygl->cram_tex_buf, 0, 2048 * 4);
+  }
+
+  return _Ygl->cram_tex_buf;
+}
+
+
+
+void YglOnUpdateColorRamWord(u32 addr) {
+
+  if (_Ygl == NULL) return;
+
+  YabThreadLock(_Ygl->crammutex);
+  Vdp2ColorRamUpdated = 1;
+  if (_Ygl->colupd_min_addr > addr)
+    _Ygl->colupd_min_addr = addr; 
+
+  if (_Ygl->colupd_max_addr < addr)
+    _Ygl->colupd_max_addr = addr; 
+
+  u32 * buf = _Ygl->cram_tex_buf;
+  if (buf == NULL) {
+    YabThreadUnLock(_Ygl->crammutex);
+    return;
+  }
+  
+  switch (Vdp2Internal.ColorMode)
+  {
+  case 0:
+  {
+    u16 tmp;
+    tmp = T2ReadWord(Vdp2ColorRam, addr & 0x7FF);
+    buf[((addr & 0x7FF) >> 1)] = SAT2YAB1(0xFF, tmp);
+    buf[((addr & 0x7FF) >> 1) + 1024] = SAT2YAB1(0xFF, tmp);
+    break;
+  }
+  case 1:
+  {
+    u16 tmp;
+    tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
+    buf[((addr & 0xFFF) >> 1)] = SAT2YAB1(0xFF, tmp);
+    break;
+  }
+  case 2:
+  {
+    u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr) & 0xFFF);
+    u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr) & 0xFFF + 2);
+    buf[(addr & 0xFFF) >> 2] = SAT2YAB2(0xFF, tmp1, tmp2);
+    break;
+  }
+  default: 
+    break;
+  }
+  YabThreadUnLock(_Ygl->crammutex);
+}
+
+
+void YglUpdateColorRam() {
+  YabThreadLock(_Ygl->crammutex);
+  if (Vdp2ColorRamUpdated) {
+    Vdp2ColorRamUpdated = 0;
+    if (_Ygl->colupd_min_addr > _Ygl->colupd_max_addr) {
+      YabThreadUnLock(_Ygl->crammutex);
+      return; // !? not initilized?
+    }
+
+    u32 * buf = YglGetColorRamPointer();
+    int index_shft = 1;
+    if (Vdp2Internal.ColorMode == 2) {
+      index_shft = 2;
+    }
+    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    
+#if 0
+    glTexSubImage2D(GL_TEXTURE_2D,
+      0,
+      0, 0,
+      2048, 1,
+      GL_RGBA, GL_UNSIGNED_BYTE,
+      buf);
+#else
+    glTexSubImage2D(GL_TEXTURE_2D, 
+      0, 
+      (_Ygl->colupd_min_addr >> index_shft), 0, 
+      ((_Ygl->colupd_max_addr - _Ygl->colupd_min_addr)>> index_shft) + 1, 1, 
+      GL_RGBA, GL_UNSIGNED_BYTE, 
+      &buf[(_Ygl->colupd_min_addr >> index_shft)] );
+#endif
+    _Ygl->colupd_min_addr = 0xFFFFFFFF;
+    _Ygl->colupd_max_addr = 0x00000000;
+  }
+  YabThreadUnLock(_Ygl->crammutex);
+  return;
+
+}
+
+
+
 u32 * YglGetLineColorPointer(){
   int error;
   if (_Ygl->lincolor_tex == 0){
@@ -3496,7 +3764,6 @@ u32 * YglGetLineColorPointer(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
   }
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);

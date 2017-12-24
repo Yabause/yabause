@@ -1,15 +1,17 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
 
     defaultConfig {
         applicationId "org.uoyabause.android"
         minSdkVersion 19
         targetSdkVersion 25
-        versionCode 116
-        versionName '0.5.5'
+        multiDexEnabled true
+        versionCode 17
+        versionName '1.0.5'
+        multiDexEnabled true
 
 /*
         externalNativeBuild {
@@ -71,35 +73,49 @@ def renameAPK(variant, defaultConfig, buildType) {
     }
 }
 
-repositories {
-    mavenCentral()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-    maven { url 'http://fan-adn.github.io/nendSDK-Android-lib/library' }
+allprojects {
+    repositories {
+        maven {
+            url "https://maven.google.com"
+        }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url 'http://fan-adn.github.io/nendSDK-Android-lib/library' }
+        maven { url 'https://maven.fabric.io/public' }
+        jcenter()
+    }
 }
+
+//repositories {
+//    mavenCentral()
+//    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+//    maven { url 'http://fan-adn.github.io/nendSDK-Android-lib/library' }
+//    maven { url 'https://maven.fabric.io/public' }
+//}
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-
+    compile 'com.firebaseui:firebase-ui-auth:2.3.0'
     //compile 'com.android.support:recommendation:25.1.1'
-    compile 'com.google.firebase:firebase-core:10.2.0'
-    compile 'com.google.firebase:firebase-database:10.2.0'
-    compile 'com.google.firebase:firebase-crash:10.2.0'
-    compile 'com.google.firebase:firebase-ads:10.2.0'
-    compile 'com.google.firebase:firebase-messaging:10.2.0'
-    compile 'com.google.firebase:firebase-invites:10.2.0'
-    compile 'com.google.android.gms:play-services-analytics:10.2.0'
+    compile 'com.google.firebase:firebase-core:11.0.4'
+    compile 'com.google.firebase:firebase-database:11.0.4'
+    compile 'com.google.firebase:firebase-storage:11.0.4'
+    compile 'com.google.firebase:firebase-crash:11.0.4'
+    compile 'com.google.firebase:firebase-ads:11.0.4'
+    compile 'com.google.firebase:firebase-messaging:11.0.4'
+    compile 'com.google.firebase:firebase-invites:11.0.4'
+    compile 'com.google.firebase:firebase-config:11.0.4'
+    compile 'com.google.android.gms:play-services-analytics:11.0.4'
     compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
-    compile 'com.android.support:support-v4:25.1.1'
-    compile 'com.android.support:appcompat-v7:25.1.1'
-    compile 'com.android.support:recyclerview-v7:25.1.1'
-    compile 'com.android.support:cardview-v7:25.1.1'
-    compile 'com.android.support:leanback-v17:25.1.1'
+    compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:leanback-v17:25.3.1'
     compile 'com.github.bumptech.glide:glide:3.4.0'
     compile 'commons-io:commons-io:2.4'
     compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
-    compile 'com.google.firebase:firebase-config:10.2.0'
+    compile 'com.squareup.okhttp3:okhttp:3.8.1'
     compile 'com.android.support:support-v4:25.3.1'
     compile 'com.google.code.gson:gson:2.2.4'
+    compile 'com.android.support:multidex:1.0.0'
 }
 
 // ADD THIS AT THE BOTTOM

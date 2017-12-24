@@ -404,7 +404,7 @@ extern "C" {
 
   int MappedMemoryLoad(const char *filename, u32 addr);
   int MappedMemorySave(const char *filename, u32 addr, u32 size);
-  void MappedMemoryLoadExec(const char *filename, u32 pc);
+  int MappedMemoryLoadExec(const char *filename, u32 pc);
 
   int LoadBios(const char *filename);
   int LoadBackupRam(const char *filename);
