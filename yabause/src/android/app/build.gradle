@@ -5,12 +5,12 @@ android {
     buildToolsVersion "26.0.1"
 
     defaultConfig {
-        applicationId "org.uoyabause.android"
+        applicationId "org.uoyabause.uranus"
         minSdkVersion 19
         targetSdkVersion 25
         multiDexEnabled true
-        versionCode 17
-        versionName '1.0.5'
+        versionCode 23
+        versionName '1.2.2'
         multiDexEnabled true
 
 /*
