@@ -203,8 +203,13 @@ void FASTCALL Vdp2ColorRamWriteLong(u8* mem, u32 addr, u32 val) {
    //if (Vdp2ColorRamUpdated == 0){
      if (val != T2ReadLong(mem, addr)){
        T2WriteLong(Vdp2ColorRam, addr, val);
-       YglOnUpdateColorRamWord(addr+2);
-       YglOnUpdateColorRamWord(addr);
+       if (Vdp2Internal.ColorMode == 2) {
+         YglOnUpdateColorRamWord(addr);
+       }
+       else {
+         YglOnUpdateColorRamWord(addr + 2);
+         YglOnUpdateColorRamWord(addr);
+       }
      }
    //}
 //   T2WriteLong(Vdp2ColorRam, addr, val);
