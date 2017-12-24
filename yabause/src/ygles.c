@@ -3649,8 +3649,6 @@ u32 * YglGetColorRamPointer() {
   return _Ygl->cram_tex_buf;
 }
 
-
-
 void YglOnUpdateColorRamWord(u32 addr) {
 
   if (_Ygl == NULL) return;
@@ -3689,7 +3687,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
   case 2:
   {
     u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr) & 0xFFF);
-    u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr) & 0xFFF + 2);
+    u32 tmp2 = T2ReadWord(Vdp2ColorRam, ((addr + 2) & 0xFFF) );
     buf[(addr & 0xFFF) >> 2] = SAT2YAB2(0xFF, tmp1, tmp2);
     break;
   }

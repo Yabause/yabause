@@ -2755,8 +2755,8 @@ static void Vdp2PatternAddr(vdp2draw_struct *info)
     break;
   }
   case 2: {
-    u16 tmp1 = T1ReadWord(Vdp2Ram, info->addr);
-    u16 tmp2 = T1ReadWord(Vdp2Ram, info->addr + 2);
+    u16 tmp1 = T1ReadWord(Vdp2Ram, (info->addr&0x7FFFF));
+    u16 tmp2 = T1ReadWord(Vdp2Ram, (info->addr & 0x7FFFF)+ 2);
     info->addr += 4;
     info->charaddr = tmp2 & 0x7FFF;
     info->flipfunction = (tmp1 & 0xC000) >> 14;
@@ -3298,7 +3298,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   info->cob = 0x00;
 
   if (fixVdp2Regs->RPMD != 0) rbg->useb = 1;
-  if (rgb_type == 1) rbg->useb = 1;
+  if (rgb_type == 0x04) rbg->useb = 1;
 
   if (!info->isbitmap)
   {
@@ -3604,7 +3604,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
     for (i = 0; i < hres; i++)
     {
-      switch (fixVdp2Regs->RPMD) {
+      switch (fixVdp2Regs->RPMD | g_rgb1.rgb_type) {
       case 0:
         parameter = &paraA;
         if (parameter->coefenab) {
@@ -3643,7 +3643,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
           }
         }
         break;
-      case 3:
+      default:
         parameter = info->GetRParam(info, i, j);
         break;
       }
@@ -3940,7 +3940,7 @@ int VIDOGLInit(void)
   g_rgb0.rgb_type = 0;
   g_rgb0.vdp2_sync_flg = -1;
   g_rgb1.async = 0;
-  g_rgb1.rgb_type = 1;
+  g_rgb1.rgb_type = 0x04;
   g_rgb1.vdp2_sync_flg = -1;
   vdp1wratio = 1;
   vdp1hratio = 1;
