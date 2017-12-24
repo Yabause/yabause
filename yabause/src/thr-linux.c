@@ -365,17 +365,6 @@ int getCpuId() {
     }
 }
 
-#include <sys/syscall.h>
-//...
-int getCpuId() {
-
-    unsigned cpu;
-    if (syscall(__NR_getcpu, &cpu, NULL, NULL) < 0) {
-        return -1;
-    } else {
-        return (int) cpu;
-    }
-}
 
 int YabThreadGetCurrentThreadAffinityMask()
 {

@@ -998,6 +998,21 @@ int initEgl( ANativeWindow* window )
     YUI_LOG("%s",glGetString(GL_EXTENSIONS));
     YUI_LOG("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
 
+    GLint  range[2];
+    GLint  precision[2];
+    glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_LOW_FLOAT, range, precision);
+    YUI_LOG("GL_LOW_FLOAT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_MEDIUM_FLOAT, range, precision);
+    YUI_LOG("GL_MEDIUM_FLOAT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, range, precision);
+    YUI_LOG("GL_HIGH_FLOAT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_LOW_INT, range, precision);
+    YUI_LOG("GL_LOW_INT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_MEDIUM_INT, range, precision);
+    YUI_LOG("GL_MEDIUM_INT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+    glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_INT, range, precision);
+    YUI_LOG("GL_HIGH_INT [ %d - %d ][ %d - %d ]", range[0],range[1],precision[0],precision[1] );
+
 
     glViewport(0,0,width,height);
 

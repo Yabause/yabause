@@ -1138,7 +1138,7 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MappedMemoryLoadExec(const char *filename, u32 pc)
+int MappedMemoryLoadExec(const char *filename, u32 pc)
 {
    char *p;
    size_t i;
@@ -1150,15 +1150,15 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
          p[i] = toupper(p[i]);
       if (strcmp(p, ".COF") == 0 || strcmp(p, ".COFF") == 0)
       {
-         MappedMemoryLoadCoff(filename);
+         int rtn = MappedMemoryLoadCoff(filename);
          free(p);
-         return;
+         return rtn;
       }
       else if(strcmp(p, ".ELF") == 0)
       {
-         MappedMemoryLoadElf(filename);
+         int rtn = MappedMemoryLoadElf(filename);
          free(p);
-         return;
+         return rtn;
       }
 
       free(p);
@@ -1173,6 +1173,8 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    SH2GetRegisters(MSH2, &MSH2->regs);
    MSH2->regs.PC = pc;
    SH2SetRegisters(MSH2, &MSH2->regs);
+
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
