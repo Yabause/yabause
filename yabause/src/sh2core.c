@@ -2044,40 +2044,19 @@ void FASTCALL AddressArrayWriteLong(u32 addr, u32 val)  {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL DataArrayReadByte(u32 addr) {
-#ifdef USE_CACHE
-  u8 line = (addr>>4)&0x3F;
-  u8 byte = addr&0xF;
-  u8 way = (addr >> 10) & 3;
-  return ReadByteList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-#else
-  return 0;
-#endif
+  return T2ReadByte(CurrentSH2->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL DataArrayReadWord(u32 addr) {
-#ifdef USE_CACHE
-  u8 line = (addr>>4)&0x3F;
-  u8 byte = addr&0xF;
-  u8 way = (addr >> 10) & 3;
-  return ReadWordList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-#else
-  return 0;
-#endif
+  return T2ReadWord(CurrentSH2->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL DataArrayReadLong(u32 addr) {
-#ifdef USE_CACHE
-  u8 line = (addr>>4)&0x3F;
-  u8 byte = addr&0xF;
-  u8 way = (addr >> 10) & 3;
-  return ReadLongList[(addr >> 16) & 0xFFF](CurrentSH2->cacheData[line][way], byte);
-#else
-  return 0;
-#endif
+  return T2ReadLong(CurrentSH2->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
