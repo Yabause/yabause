@@ -1440,7 +1440,7 @@ int LoadBios(const char *filename)
 
 int LoadBackupRam(const char *filename)
 {
-   return T123Load(BupRam, 0x10000, 1, filename);
+   return T123Load(BupRam, 0x8000, 1, filename);
 }
 
 static u8 header[32] = {
@@ -1651,7 +1651,7 @@ int YabSaveStateStream(FILE *fp)
    offset = StateWriteHeader(fp, "OTHR", 1);
 
    // Other data
-   ywrite(&check, (void *)BupRam, 0x10000, 1, fp); // do we really want to save this?
+   ywrite(&check, (void *)BupRam, 0x8000, 1, fp); // do we really want to save this?
    ywrite(&check, (void *)HighWram, 0x100000, 1, fp);
    ywrite(&check, (void *)LowWram, 0x100000, 1, fp);
 
@@ -1913,7 +1913,7 @@ int YabLoadStateStream(FILE *fp)
       return -3;
    }
    // Other data
-   //yread(&check, (void *)BupRam, 0x10000, 1, fp);
+   //yread(&check, (void *)BupRam, 0x8000, 1, fp);
    fseek(fp, 0x10000, SEEK_CUR ); // skip this data
    yread(&check, (void *)HighWram, 0x100000, 1, fp);
    yread(&check, (void *)LowWram, 0x100000, 1, fp);

@@ -1927,7 +1927,7 @@ void BupFormat(u32 device)
           FormatBackupRam(BupRam, tweak_backup_file_size);
         }
         else {
-          FormatBackupRam(BupRam, 0x10000);
+          FormatBackupRam(BupRam, 0x8000);
         }
          break;
       case 1:

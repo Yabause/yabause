@@ -185,11 +185,11 @@ int YabauseSh2Init(yabauseinit_struct *init)
    if ((LowWram = T2MemoryInit(0x100000)) == NULL)
       return -1;
 
-   if ((BupRam = T1MemoryInit(0x10000)) == NULL)
+   if ((BupRam = T1MemoryInit(0x8000)) == NULL)
       return -1;
 
    if (LoadBackupRam(init->buppath) != 0)
-      FormatBackupRam(BupRam, 0x10000);
+      FormatBackupRam(BupRam, 0x8000);
 
    BupRamWritten = 0;
 
@@ -241,11 +241,11 @@ int YabauseInit(yabauseinit_struct *init)
 
    }
    else {
-     if ((BupRam = T1MemoryInit(0x10000)) == NULL)
+     if ((BupRam = T1MemoryInit(0x8000)) == NULL)
        return -1;
 
      if (LoadBackupRam(init->buppath) != 0)
-       FormatBackupRam(BupRam, 0x10000);
+       FormatBackupRam(BupRam, 0x8000);
      BupRamWritten = 0;
    }
    bupfilename = init->buppath;
@@ -443,7 +443,7 @@ void YabFlushBackups(void)
       T1MemoryDeInit(BupRam);
     }
     else {
-      if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+      if (T123Save(BupRam, 0x8000, 1, bupfilename) != 0)
         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
       T1MemoryDeInit(BupRam);
     }
@@ -480,7 +480,7 @@ void YabauseDeInit(void) {
        T1MemoryDeInit(BupRam);
      }
      else {
-       if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+       if (T123Save(BupRam, 0x8000, 1, bupfilename) != 0)
          YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
        T1MemoryDeInit(BupRam);
      }
