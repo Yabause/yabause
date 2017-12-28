@@ -231,33 +231,13 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.extend_backup = init->extend_backup;
 
    if (yabsys.extend_backup) {
-     FILE * pbackup;
-     bupfilename = init->buppath;
-     pbackup = fopen(bupfilename, "a+b");
-     if (pbackup == NULL) {
-       YabSetError(YAB_ERR_CANNOTINIT, _("InternalBackup"));
+
+     if ((BupRam = T1MemoryInit(tweak_backup_file_size)) == NULL)
        return -1;
-     }
 
-     fseek(pbackup, 0, SEEK_SET);
-     if (CheckBackupFile(pbackup) != 0) {
-       FormatBackupRamFile(pbackup, tweak_backup_file_size);
-     }
-     else {
-       ExtendBackupFile(pbackup, tweak_backup_file_size);
-     }
-     fclose(pbackup);
-     BupRam = YabMemMap(bupfilename, tweak_backup_file_size);
-     if (BupRam == NULL) {  // fall back to old version
-       if ((BupRam = T1MemoryInit(0x10000)) == NULL)
-         return -1;
-
-       if (LoadBackupRam(init->buppath) != 0)
-         FormatBackupRam(BupRam, 0x10000);
-
-       BupRamWritten = 0;
-       yabsys.extend_backup = 0;
-     }
+     if (LoadBackupRam(init->buppath) != 0)
+       FormatBackupRam(BupRam, tweak_backup_file_size);
+     BupRamWritten = 0;
 
    }
    else {
@@ -457,12 +437,14 @@ void YabFlushBackups(void)
   if (BupRam)
   {
     if (yabsys.extend_backup) {
-    //  YabFreeMap(BupRam);
+      if (T123Save(BupRam, tweak_backup_file_size, 1, bupfilename) != 0)
+        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+      T1MemoryDeInit(BupRam);
     }
     else {
       if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-      //T1MemoryDeInit(BupRam);
+      T1MemoryDeInit(BupRam);
     }
   }
   CartFlush();
@@ -492,7 +474,9 @@ void YabauseDeInit(void) {
    if (BupRam)
    {
      if (yabsys.extend_backup) {
-       YabFreeMap(BupRam);
+       if (T123Save(BupRam, tweak_backup_file_size, 1, bupfilename) != 0)
+        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+       T1MemoryDeInit(BupRam);
      }
      else {
        if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
