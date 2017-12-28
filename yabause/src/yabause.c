@@ -103,7 +103,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
-const char *bupfilename = NULL;
+static const char *bupfilename = NULL;
 u64 tickfreq;
 //todo this ought to be in scspdsp.c
 ScspDsp scsp_dsp = { 0 };
@@ -248,6 +248,7 @@ int YabauseInit(yabauseinit_struct *init)
        FormatBackupRam(BupRam, 0x10000);
      BupRamWritten = 0;
    }
+   bupfilename = init->buppath;
    
    // check if format is needed?
 
