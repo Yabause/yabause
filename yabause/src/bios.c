@@ -2037,7 +2037,7 @@ int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize )
 
   // Let's find and get the save game
   if ((block = FindSave2(device, savename, 2, size, addr, blocksize)) == 0) {
-     yprintf("%s is not found on this device(%d)", savename, device);
+     LOG("%s is not found on this device(%d)", savename, device);
      return -1;
   }
 
@@ -2045,19 +2045,19 @@ int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize )
   datasize = (MappedMemoryReadByte(tableaddr) << 24) | (MappedMemoryReadByte(tableaddr + 2) << 16) |
              (MappedMemoryReadByte(tableaddr+4) << 8) | MappedMemoryReadByte(tableaddr + 6);
 
-  yprintf("tableaddr=%08X, datasize = %d", tableaddr, datasize );
+  LOG("tableaddr=%08X, datasize = %d", tableaddr, datasize );
 
   // Read in Block Table
   if ((blocktbl = ReadBlockTable(addr, &tableaddr, block, blocksize, &numblocks, &blocksread)) == NULL)
   {
-    yprintf("ReadBlockTable failed", tableaddr, datasize );
+    LOG("ReadBlockTable failed", tableaddr, datasize );
     return -1;
   }
 
   LOG("BiosBUPExport from %08X size %08X", tableaddr, datasize);
   *buf = malloc(datasize);
   if( (*buf) ==NULL ){
-    yprintf("Failed to allocate *buf");
+    LOG("Failed to allocate *buf");
     return -1;
   }
   *bufsize = datasize;
@@ -2082,7 +2082,7 @@ int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize )
   }
   //fclose(fp);
   free(blocktbl);
-  yprintf("BiosBUPExport success!");
+  LOG("BiosBUPExport success!");
    return 0;
 }
 
