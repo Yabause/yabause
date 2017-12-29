@@ -379,6 +379,9 @@ if (YAB_WANT_SDL)
 		set(yabause_SOURCES ${yabause_SOURCES} persdljoy.c sndsdl.c)
 		set(yabause_HEADERS ${yabause_HEADERS} persdljoy.h sndsdl.h)
 	endif()
+
+	add_definitions(-DYAB_ASYNC_RENDERING)
+
 endif()
 
 # OpenAL
@@ -632,7 +635,7 @@ if (SH2_DYNAREC)
 endif (SH2_DYNAREC)
 
 # c68k
-option(YAB_WANT_C68K "enable c68k compilation" ON)
+option(YAB_WANT_C68K "enable c68k compilation" OFF)
 if (YAB_WANT_C68K)
 	include(ExternalProject)
 	ExternalProject_Add(c68kinc
