@@ -11,11 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Yabause Qt GUI</string>
+   <string notr="true">Yaba Sanshiro</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
-    <normaloff>:/icons/icons/yabause.png</normaloff>:/icons/icons/yabause.png</iconset>
+   <iconset>
+    <normaloff>../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png</normaloff>../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png</iconset>
   </property>
   <property name="iconSize">
    <size>
