@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>UIAbout</class>
- <widget class="QDialog" name="UIAbout" >
-  <property name="geometry" >
+ <widget class="QDialog" name="UIAbout">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,53 +10,37 @@
     <height>179</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>About...</string>
   </property>
-  <layout class="QVBoxLayout" >
+  <layout class="QVBoxLayout">
    <item>
-    <widget class="QLabel" name="lInformations" >
-     <property name="text" >
-      <string>Yabause Qt Gui&lt;br />Based on Yabause %1&lt;br />&lt;a href="http://yabause.org">http://yabause.org&lt;/a>&lt;br />The Yabause Team&lt;br />&lt;a href="mailto:pasnox@gmail.com">Filipe AZEVEDO&lt;/a></string>
+    <widget class="QLabel" name="lInformations">
+     <property name="text">
+      <string>Yaba Sanshiro ver.%1&lt;br /&gt;is developed by &lt;a href=&quot;http://www.uoyabause.org&quot;&gt;devMiyax&lt;/a&gt;&lt;br&gt; Based on &lt;a href=&quot;http://yabause.org&quot;&gt;Yabause&lt;/a&gt; &lt;br /&gt;&lt;br /&gt;&lt;br&gt; &lt;a href=&quot;https://www.paypal.com/cgi-bin/websc?cmd=_donations&amp;business=A4VRASF8P3222&quot;&gt;&lt;img src=&quot;btn_donate_LG.gif&quot;&gt;&lt;/a&gt;</string>
      </property>
-     <property name="textFormat" >
+     <property name="textFormat">
       <enum>Qt::RichText</enum>
      </property>
-     <property name="alignment" >
+     <property name="alignment">
       <set>Qt::AlignCenter</set>
      </property>
-     <property name="openExternalLinks" >
+     <property name="openExternalLinks">
       <bool>true</bool>
      </property>
-     <property name="textInteractionFlags" >
-      <set>Qt::LinksAccessibleByMouse|Qt::NoTextInteraction|Qt::TextSelectableByMouse</set>
+     <property name="textInteractionFlags">
+      <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="lMonkeyStudio" >
-     <property name="toolTip" >
-      <string>http://www.monkeystudio.org</string>
-     </property>
-     <property name="text" >
-      <string>&lt;a href="http://www.monkeystudio.org">&lt;img src=":/icons/icons/made.png">&lt;/a></string>
-     </property>
-     <property name="alignment" >
-      <set>Qt::AlignCenter</set>
-     </property>
-     <property name="openExternalLinks" >
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" >
+    <layout class="QHBoxLayout">
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
          <height>20</height>
@@ -64,24 +49,24 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="pbOk" >
-       <property name="sizePolicy" >
-        <sizepolicy vsizetype="Fixed" hsizetype="Fixed" >
+      <widget class="QPushButton" name="pbOk">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="text" >
+       <property name="text">
         <string>Ok</string>
        </property>
       </widget>
      </item>
      <item>
       <spacer>
-       <property name="orientation" >
+       <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0">
         <size>
          <width>40</width>
          <height>20</height>
@@ -94,7 +79,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="../resources/resources.qrc" />
+  <include location="../resources/resources.qrc"/>
  </resources>
  <connections>
   <connection>
@@ -103,11 +88,11 @@
    <receiver>UIAbout</receiver>
    <slot>accept()</slot>
    <hints>
-    <hint type="sourcelabel" >
+    <hint type="sourcelabel">
      <x>118</x>
      <y>98</y>
     </hint>
-    <hint type="destinationlabel" >
+    <hint type="destinationlabel">
      <x>112</x>
      <y>161</y>
     </hint>
