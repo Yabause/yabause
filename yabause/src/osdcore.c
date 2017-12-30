@@ -131,7 +131,7 @@ int OSDDisplayMessages(pixel_t * buffer, int w, int h)
 {
    int i = 0;
    int somethingnew = 0;
-
+ 
    if (OSD == NULL) return somethingnew;
 
    for(i = 0;i < OSDMSG_COUNT;i++)
@@ -147,6 +147,18 @@ int OSDDisplayMessages(pixel_t * buffer, int w, int h)
       }
 
    return somethingnew;
+}
+
+void  OSDAddFrameProfileData( char * label, u32 data ){
+   if (OSD && OSD->AddFrameProfileData){
+      OSD->AddFrameProfileData(label,data);
+   }
+}
+
+void  OSDAddLogString( char * log ){
+   if (OSD && OSD->AddLogString){
+      OSD->AddLogString(log);
+   }
 }
 
 void OSDToggle(int what)
@@ -212,6 +224,7 @@ OSD_struct OSDDummy = {
     OSDDummyReset,
     OSDDummyDisplayMessage,
     OSDDummyUseBuffer,
+	NULL,
 };
 
 int OSDDummyInit(void)
@@ -256,7 +269,9 @@ OSD_struct OSDGlut = {
     OSDGlutDeInit,
     OSDGlutReset,
     OSDGlutDisplayMessage,
-    OSDGlutUseBuffer
+    OSDGlutUseBuffer,
+    NULL,
+    NULL
 };
 
 int OSDGlutInit(void)
@@ -340,7 +355,9 @@ OSD_struct OSDSoft = {
     OSDSoftDeInit,
     OSDSoftReset,
     OSDSoftDisplayMessage,
-    OSDSoftUseBuffer
+    OSDSoftUseBuffer,
+	NULL,
+    NULL
 };
 
 int OSDSoftInit(void)

@@ -567,7 +567,7 @@ void alloc_arm_reg(struct regstat *cur,int i,signed char reg,char hr)
 }
 
 // Alloc cycle count into dedicated register
-alloc_cc(struct regstat *cur,int i)
+void alloc_cc(struct regstat *cur,int i)
 {
   alloc_arm_reg(cur,i,CCREG,HOST_CCREG);
 }
@@ -1831,24 +1831,24 @@ void emit_cmpstr(int s1, int s2, int sr, int temp)
 }
 void emit_negc(int rs, int rt, int sr)
 {
-assert(0);
-/*
-  assert(rs>=0&&rs<8);
+//assert(0);
+
+//  assert(rs>=0&&rs<8);
   if(rt<0) {
     emit_shrimm(sr,1,sr); // Get C flag
     emit_jc((int)out+10); // 6
     emit_neg(rs,rs); // 2
     emit_neg(rs,rs); // 2
-    emit_adc(sr,sr); // Save C flag
+    emit_adc(sr,sr,sr); // Save C flag
   }else{
     if(rs!=rt) emit_mov(rs,rt);
     emit_shrimm(sr,1,sr); // Get C flag
     emit_jc((int)out+9); // 6
     emit_addimm(rt,-1,rt); // 3
-    emit_adc(sr,sr); // Save C flag
+    emit_adc(sr,sr,sr); // Save C flag
     emit_not(rt,rt);
   }
-*/
+
 }
 
 void emit_readword_indexed(int offset, int rs, int rt)
@@ -2736,7 +2736,7 @@ void literal_pool_jumpover(int n)
   set_jump_target(jaddr,(int)out);
 }
 
-emit_extjump(pointer addr, int target)
+void emit_extjump(pointer addr, int target)
 {
   u8 *ptr=(u8 *)addr;
   assert((ptr[3]&0x0e)==0xa);
@@ -2756,7 +2756,7 @@ emit_extjump(pointer addr, int target)
   emit_jmp((pointer)dyna_linker);
 }
 
-do_readstub(int n)
+void do_readstub(int n)
 {
   assem_debug("do_readstub %x\n",start+stubs[n][3]*2);
   literal_pool(256);
@@ -2844,7 +2844,7 @@ do_readstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
   assem_debug("inline_readstub\n");
   //int rs=get_reg(regmap,target);
@@ -2881,7 +2881,7 @@ inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int
   restore_regs(reglist);
 }
 
-do_writestub(int n)
+void do_writestub(int n)
 {
   assem_debug("do_writestub %x\n",start+stubs[n][3]*2);
   literal_pool(256);
@@ -2936,7 +2936,7 @@ do_writestub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+void inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
   assem_debug("inline_writestub\n");
   //int rs=get_reg(regmap,-1);
@@ -2956,7 +2956,7 @@ inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, in
   restore_regs(reglist);
 }
 
-do_rmwstub(int n)
+void do_rmwstub(int n)
 {
   assem_debug("do_rmwstub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
@@ -3013,7 +3013,7 @@ do_rmwstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-do_unalignedwritestub(int n)
+void do_unalignedwritestub(int n)
 {
   set_jump_target(stubs[n][1],(int)out);
   output_w32(0xef000000);
@@ -3084,7 +3084,7 @@ int do_map_r_branch(int map, int c, u32 addr, int *jaddr)
   return map;
 }
 
-int gen_tlb_addr_r(int ar, int map) {
+void gen_tlb_addr_r(int ar, int map) {
   if(map>=0) {
     assem_debug("add %s,%s,%s lsl #2\n",regname[ar],regname[ar],regname[map]);
     output_w32(0xe0800100|rd_rn_rm(ar,ar,map));
@@ -3116,7 +3116,7 @@ int do_map_w(int s,int ar,int map,int cache,int x,int c,u32 addr)
   }
   return map;
 }
-int do_map_w_branch(int map, int c, u32 addr, int *jaddr)
+void do_map_w_branch(int map, int c, u32 addr, int *jaddr)
 {
   if(!c||can_direct_write(addr)) {
     emit_testimm(map,0x40000000);
@@ -3125,7 +3125,7 @@ int do_map_w_branch(int map, int c, u32 addr, int *jaddr)
   }
 }
 
-int gen_tlb_addr_w(int ar, int map) {
+void gen_tlb_addr_w(int ar, int map) {
   if(map>=0) {
     assem_debug("add %s,%s,%s lsl #2\n",regname[ar],regname[ar],regname[map]);
     output_w32(0xe0800100|rd_rn_rm(ar,ar,map));
@@ -3141,7 +3141,7 @@ int gen_orig_addr_w(int ar, int map) {
 }
 
 // Generate the address of the memory_map entry, relative to dynarec_local
-generate_map_const(u32 addr,int reg) {
+void generate_map_const(u32 addr,int reg) {
   //printf("generate_map_const(%x,%s)\n",addr,regname[reg]);
   emit_movimm((addr>>12)+(((u32)memory_map-(u32)&dynarec_local)>>2),reg);
 }

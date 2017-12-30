@@ -164,6 +164,7 @@ static void yui_settings_init(void) {
 	yinit.cartpath = cartpath;
         yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
+	yinit.skip_load = 0;
 }
 
 gchar * inifile;
@@ -306,7 +307,7 @@ static gboolean yui_settings_load(void) {
 	yinit.vidcoretype = g_key_file_get_integer(keyfile, "General", "VideoCore", 0);
 	if ((YUI_WINDOW(yui)->state & YUI_IS_INIT) && (tmp != yinit.vidcoretype)) {
 		VideoChangeCore(yinit.vidcoretype);
-		VIDCore->Resize(
+		VIDCore->Resize(0,0,
 			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.width,
 			GTK_WIDGET(YUI_WINDOW(yui)->area)->allocation.height,
 			FALSE);
@@ -330,10 +331,6 @@ static gboolean yui_settings_load(void) {
 
 	/* peripheral core */
 	yinit.percoretype = g_key_file_get_integer(keyfile, "General", "PerCore", 0);
-
-	/* audio sync */
-	tmp = g_key_file_get_boolean(keyfile, "General", "AudioSync", 0);
-	ScspSetFrameAccurate(tmp);
 
 	/* clock sync */
 	tmp = yinit.clocksync;
@@ -410,6 +407,8 @@ static gboolean yui_settings_load(void) {
         yinit.videoformattype = g_key_file_get_integer(keyfile, "General", "VideoFormat", 0);
 
 	yui_window_set_frameskip(YUI_WINDOW(yui), g_key_file_get_integer(keyfile, "General", "Frameskip", NULL));
+	
+	VIDSoftSetBilinear(g_key_file_get_integer(keyfile, "General", "Bilinear", 0));
 
 	return mustRestart;
 }
@@ -424,6 +423,7 @@ void YuiErrorMsg(const char * string) {
 int main(int argc, char *argv[]) {
 #ifndef NO_CLI
 	int i;
+	int autostart = 0;
 #endif
 	LogStart();
 	LogChangeOutput( DEBUG_STDERR, NULL );
@@ -514,11 +514,11 @@ int main(int argc, char *argv[]) {
 	 else if (strcmp(argv[i], "--autoload") == 0) {
             yui_window_start(YUI_WINDOW(yui));
             YuiLoadState();
-            yui_window_run(YUI_WINDOW(yui));
+            autostart = 1;
 	 }
 	 // Autostart
 	 else if (strcmp(argv[i], "-a") == 0 || strcmp(argv[i], "--autostart") == 0) {
-            yui_window_run(YUI_WINDOW(yui));
+            autostart = 1;
 	 }
 	 // Fullscreen
 	 else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
@@ -548,6 +548,8 @@ int main(int argc, char *argv[]) {
 	 }
       }
    }
+
+   if (autostart) yui_window_run(YUI_WINDOW(yui));
 #endif
 
 	gtk_main ();

@@ -38,6 +38,11 @@ static u32 SNDDummyGetAudioSpace(void);
 static void SNDDummyMuteAudio(void);
 static void SNDDummyUnMuteAudio(void);
 static void SNDDummySetVolume(int volume);
+#ifdef USE_SCSPMIDI
+int SNDDummyMidiChangePorts(int inport, int outport);
+u8 SNDDummyMidiIn(int *isdata);
+int SNDDummyMidiOut(u8 data);
+#endif
 
 SoundInterface_struct SNDDummy = {
 SNDCORE_DUMMY,
@@ -50,7 +55,12 @@ SNDDummyUpdateAudio,
 SNDDummyGetAudioSpace,
 SNDDummyMuteAudio,
 SNDDummyUnMuteAudio,
-SNDDummySetVolume
+SNDDummySetVolume,
+#ifdef USE_SCSPMIDI
+SNDDummyMidiChangePorts,
+SNDDummyMidiIn,
+SNDDummyMidiOut
+#endif
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -124,3 +134,30 @@ void SNDDummySetVolume(UNUSED int volume)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+#ifdef USE_SCSPMIDI
+int SNDDummyMidiChangePorts(int inport, int outport)
+{
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 SNDDummyMidiIn(int *isdata)
+{
+	*isdata = 0;
+	/* Called when SCSP wants more MIDI data. Set isdata to 1 if there's data to return */
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SNDDummyMidiOut(u8 data)
+{
+	/* Called when SCSP wants to send out MIDI data. num is the number of bytes in buffer. Return 1 if data used, or 0 if not */
+	return 1;
+}
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+

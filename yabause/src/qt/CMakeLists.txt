@@ -21,22 +21,40 @@ if(Qt5_FOUND)
 	if (WIN32)
         	find_package(Qt5Core)
 	endif()
+	find_package(Qt5Multimedia REQUIRED)
+	add_definitions(-DHAVE_QT_MULTIMEDIA=1)
+
+    # Since Qt5's cmake script doesn't set it, we will have to
+    SET(QT_BINARY_DIR "${_qt5Core_install_prefix}/bin")
+    if (MSYS2_BUILD)
+        SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/share/qt5/plugins")
+    else()
+        SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
+    endif()
+
 else() 
-	find_package(Qt4)
-
-	if (NOT QT4_FOUND)
-		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
-		return()
-	endif (NOT QT4_FOUND)
-
 	set( QT_USE_QTCORE TRUE )
 	set( QT_USE_QTGUI TRUE )
+	set ( QT_USE_QTMULTIMEDIA TRUE )
 	if( YAB_WANT_OPENGL )
 		set( QT_USE_QTOPENGL TRUE )
 	endif()
 	if (WIN32)
 		set( QT_USE_QTMAIN TRUE )
 	endif()
+	
+	find_package(Qt4)
+
+	if (NOT QT4_FOUND)
+		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
+		return ()
+	endif ()
+
+	message (WARNING "Qt4 is deprecated. Support will be removed in the future.")
+
+	if (QT_QTMULTIMEDIA_FOUND)
+		add_definitions(-DHAVE_QT_MULTIMEDIA=1)
+	endif ()
 
 	# dunno what it does exactly ... but seem required
 	include( ${QT_USE_FILE} )
@@ -69,15 +87,18 @@ set( yabause_qt_FORMS
 	ui/UICheatAR.ui
 	ui/UICheatRaw.ui
 	ui/UICheatSearch.ui
-	ui/UIWaitInput.ui
 	ui/UIBackupRam.ui
 	ui/UIPortManager.ui
 	ui/UIPadSetting.ui 
 	ui/UI3DControlPadSetting.ui 
+    ui/UIWheelSetting.ui 
+    ui/UIMissionStickSetting.ui 
+    ui/UIDoubleMissionStickSetting.ui 
 	ui/UIGunSetting.ui
 	ui/UIMouseSetting.ui 
     ui/UIDebugCPU.ui
     ui/UIDebugSCSP.ui
+    ui/UIDebugSCSPDSP.ui
     ui/UIDebugVDP1.ui
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
@@ -102,18 +123,22 @@ set( yabause_qt_MOC_HEADERS
 	ui/UICheatAR.h
 	ui/UICheatRaw.h
 	ui/UICheatSearch.h
-	ui/UIWaitInput.h
 	ui/UIBackupRam.h
 	ui/UIPortManager.h
 	ui/UIControllerSetting.h
 	ui/UIPadSetting.h
 	ui/UI3DControlPadSetting.h
+    ui/UIWheelSetting.h
+    ui/UIMissionStickSetting.h
+    ui/UIDoubleMissionStickSetting.h
 	ui/UIGunSetting.h
 	ui/UIMouseSetting.h
 	ui/UIShortcutManager.h
     ui/UIDebugCPU.h
     ui/UIDebugM68K.h
     ui/UIDebugSCSP.h
+    ui/UIDebugSCSPChan.h
+    ui/UIDebugSCSPDSP.h
     ui/UIDebugSCUDSP.h
     ui/UIDebugSH2.h
     ui/UIDebugVDP1.h
@@ -143,18 +168,22 @@ set( yabause_qt_SOURCES
 	ui/UICheatAR.cpp
 	ui/UICheatRaw.cpp
 	ui/UICheatSearch.cpp
-	ui/UIWaitInput.cpp
 	ui/UIBackupRam.cpp
 	ui/UIPortManager.cpp
 	ui/UIControllerSetting.cpp
 	ui/UIPadSetting.cpp
 	ui/UI3DControlPadSetting.cpp
+    ui/UIWheelSetting.cpp
+    ui/UIMissionStickSetting.cpp
+    ui/UIDoubleMissionStickSetting.cpp
 	ui/UIGunSetting.cpp
 	ui/UIMouseSetting.cpp
 	ui/UIShortcutManager.cpp
     ui/UIDebugCPU.cpp
     ui/UIDebugM68K.cpp
     ui/UIDebugSCSP.cpp
+    ui/UIDebugSCSPChan.cpp
+    ui/UIDebugSCSPDSP.cpp
     ui/UIDebugSCUDSP.cpp
     ui/UIDebugSH2.cpp
     ui/UIDebugVDP1.cpp
@@ -206,7 +235,8 @@ include_directories(
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}/ui
 	${Qt5Widgets_INCLUDE_DIRS}
-	${Qt5OpenGL_INCLUDE_DIRS} )
+	${Qt5OpenGL_INCLUDE_DIRS} 
+	${Qt5Multimedia_INCLUDE_DIRS} )
 else()
 include_directories(
 	.
@@ -234,7 +264,7 @@ target_link_libraries( yabause-qt ${PORT_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_windows_LIBRARIES} )
 target_link_libraries( yabause-qt ${yabause_qt_macosx_LIBRARIES} )
 if (Qt5_FOUND)
-	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Network_LIBRARIES} )
+	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Multimedia_LIBRARIES})
 else()
 	target_link_libraries( yabause-qt ${QT_LIBRARIES} )
 endif()
@@ -254,24 +284,48 @@ if (WIN32)
 			FILES_MATCHING PATTERN "SDL.dll")
 	endif ()
 	if (SDL2_FOUND)
-		get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
-		install(DIRECTORY ${SDL2_BINARY_DIR}/
-			DESTINATION "."
-			FILES_MATCHING PATTERN "SDL2.dll")
+		if (NOT MSYS2_BUILD)
+			get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
+			install(DIRECTORY ${SDL2_BINARY_DIR}/
+				DESTINATION "."
+				FILES_MATCHING PATTERN "SDL2.dll")
+		else ()
+			install(FILES ${QT_BINARY_DIR}/SDL2.dll DESTINATION ".")
+		endif ()
 	endif ()
 	if(Qt5_FOUND) 
 		install(FILES ${QT_BINARY_DIR}/Qt5Core.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/Qt5Gui.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/Qt5OpenGL.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/Qt5Widgets.dll DESTINATION ".")
-		install(FILES ${QT_BINARY_DIR}/icudt51.dll DESTINATION ".")
-		install(FILES ${QT_BINARY_DIR}/icuin51.dll DESTINATION ".")
-		install(FILES ${QT_BINARY_DIR}/icuuc51.dll DESTINATION ".")
-		install(FILES ${QT_BINARY_DIR}/../plugins/platforms/qwindows.dll DESTINATION "plugins/platforms")
+		install(FILES ${QT_BINARY_DIR}/Qt5Multimedia.dll DESTINATION ".")
+		install(FILES ${QT_BINARY_DIR}/Qt5Network.dll DESTINATION ".")
+		if (NOT MSYS2_BUILD)
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "icudt*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "icuin*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "icuuc*.dll")
+		else()
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libicudt*.dll" PATTERN "libicudtd*.dll" EXCLUDE)
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libicuin*.dll" PATTERN "libicuind*.dll" EXCLUDE)
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libicuuc*.dll" PATTERN "libicuucd*.dll" EXCLUDE)
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libbz2-*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libfreetype-*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libglib*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libgraphite2*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libharfbuzz-*.dll" PATTERN "libharfbuzz-gobject*.dll" EXCLUDE PATTERN "libharfbuzz-icu*.dll" EXCLUDE)
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libpcre16*.dll" PATTERN "libpcre-*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libiconv*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libintl*.dll")
+			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libpng*.dll")
+		endif()
+		install(FILES ${QT_PLUGINS_DIR}/platforms/qwindows.dll DESTINATION "platforms")
 	else()
 		install(FILES ${QT_BINARY_DIR}/QtCore4.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/QtGui4.dll DESTINATION ".")
 		install(FILES ${QT_BINARY_DIR}/QtOpenGL4.dll DESTINATION ".")
+		if (QT_QTMULTIMEDIA_FOUND)
+			install(FILES ${QT_BINARY_DIR}/QtMultimedia4.dll DESTINATION ".")        
+		endif()
 	endif()
 
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../AUTHORS    DESTINATION "." RENAME AUTHORS.txt)
@@ -292,6 +346,17 @@ if (WIN32)
 				FILES_MATCHING PATTERN "libgcc_s_*.dll" PATTERN "mingwm10.dll")
 		endif()
 	endif ()
+
+	if (YAB_USE_SSF AND ZLIB_FOUND)
+		if (NOT MSYS2_BUILD)
+			install(FILES ${ZLIB_INCLUDE_DIRS}/../zlib1.dll DESTINATION ".")
+		else()
+			install(FILES ${QT_BINARY_DIR}/zlib1.dll DESTINATION ".")
+		endif()
+  	endif()
+  if (MSVC)    
+    set (CMAKE_EXE_LINKER_FLAGS /SAFESEH:NO )
+  endif (MSVC)
 else ()
 	install(TARGETS yabause-qt DESTINATION "bin")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${YAB_PORT_NAME}.desktop DESTINATION "share/applications")

@@ -1,4 +1,4 @@
-/*  Copyright 2005 Guillaume Duhamel
+﻿/*  Copyright 2005 Guillaume Duhamel
     Copyright 2005-2006 Theo Berkau
 
     This file is part of Yabause.
@@ -47,9 +47,9 @@
 #include "yui.h"
 #include "movie.h"
 
-#ifdef HAVE_LIBGL
-#define USE_OPENGL
-#endif
+//#ifdef HAVE_LIBGL
+//#define USE_OPENGL
+//#endif
 
 #ifdef USE_OPENGL
 #include "ygl.h"
@@ -57,6 +57,16 @@
 
 #include "vidsoft.h"
 #include "vidogl.h"
+
+#if CACHE_ENABLE
+#else
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr); }
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr); }
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr); }
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val);  }
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val); }
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val); }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -73,10 +83,123 @@ u8 *LowWram;
 u8 *BiosRom;
 u8 *BupRam;
 
+extern int tweak_backup_file_size;
+extern u32 tweak_backup_file_addr;
+
 /* This flag is set to 1 on every write to backup RAM.  Ports can freely
  * check or clear this flag to determine when backup RAM has been written,
  * e.g. for implementing autosave of backup RAM. */
 u8 BupRamWritten;
+
+#if defined(__GNUC__)
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+
+static u32 mmapsize = 0;
+
+void * YabMemMap(char * filename, u32 size ) {
+
+  struct stat sb;
+  off_t len;
+  char *p;
+  int fd;
+
+  fd = open(filename, O_RDWR);
+  if (fd ==-1) {
+    LOG("YabMemMap: open failed");
+    return NULL;
+   }
+
+  if (fstat(fd, &sb) ==-1) {
+    LOG("YabMemMap: fstat failed");
+    return NULL;
+  }
+
+  //if (!S_ISREG(sb.st_mode)) {
+  //  yprintf("YabMemMap: %s is not a file\n", filename);
+  //  return NULL;
+  //}
+
+  p = mmap(0, sb.st_size, PROT_READ| PROT_WRITE, MAP_SHARED, fd, 0);
+  if (p == MAP_FAILED) {
+    LOG("YabMemMap: mmap failed");
+    return NULL;
+  }
+
+  if (close(fd) == -1) {
+    LOG("YabMemMap: close failed");
+    return NULL;
+  }
+
+  mmapsize = sb.st_size;
+  return p;
+}
+
+void YabFreeMap(void * p) {
+  munmap(p, mmapsize);
+}
+
+
+#elif defined(_WINDOWS)
+
+#include <windows.h>
+HANDLE hFMWrite = INVALID_HANDLE_VALUE;
+HANDLE hFile = INVALID_HANDLE_VALUE;
+void * YabMemMap(char * filename, u32 size ) {
+
+  struct stat sb;
+  off_t len;
+  char *p;
+  int fd;
+
+  hFile = CreateFileA(
+    filename, 
+    GENERIC_READ|GENERIC_WRITE, 
+    0, 
+    0, 
+    OPEN_EXISTING, 
+    FILE_ATTRIBUTE_NORMAL,
+    0);
+  if (INVALID_HANDLE_VALUE == hFile) {
+    DWORD errorMessageID = GetLastError();
+    LPSTR messageBuffer = NULL;
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+    LOG(messageBuffer);
+    return NULL;
+  }
+
+  hFMWrite = CreateFileMapping(
+    hFile,
+    NULL,
+    PAGE_READWRITE,
+    0,
+    size,
+    "BACKUP");
+  if (hFMWrite == INVALID_HANDLE_VALUE)
+    return NULL;
+
+  return MapViewOfFile(hFMWrite, FILE_MAP_ALL_ACCESS, 0, 0, size);
+}
+
+void YabFreeMap(void * p) {
+  UnmapViewOfFile(p);
+  CloseHandle(hFMWrite);
+  CloseHandle(hFile);
+  hFMWrite = NULL;
+}
+
+#else
+void * YabMemMap(char * filename) {
+  return NULL;
+}
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -122,7 +245,10 @@ T3Memory * T3MemoryInit(u32 size)
       return NULL;
 
    if ((mem->base_mem = (u8 *) calloc(size, sizeof(u8))) == NULL)
+   {
+      free(mem);
       return NULL;
+   }
 
    mem->mem = mem->base_mem + size;
 
@@ -325,7 +451,32 @@ static void FASTCALL BiosRomMemoryWriteLong(UNUSED u32 addr, UNUSED u32 val)
 
 static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
 {
-   return T1ReadByte(BupRam, addr & 0xFFFF);
+#if 0
+  // maped memory is better
+  if (BupRam == NULL) {
+    if ((addr&0x0FFFFFFF) >= tweak_backup_file_addr) {
+      addr = (addr & 0x0FFFFFFF) - tweak_backup_file_addr;
+      if (addr >= tweak_backup_file_size) {
+        return 0;
+      }
+    }
+    else {
+      addr = (addr & 0xFFFF);
+    }
+    fseek(pbackup, addr, 0);
+    return fgetc(pbackup);
+  }
+#endif
+  if (yabsys.extend_backup) {
+    addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
+    if (addr >= tweak_backup_file_size) {
+      return 0;
+    }
+  }
+  else {
+    addr = addr & 0x0000FFFF;
+  }
+  return T1ReadByte(BupRam, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -345,11 +496,36 @@ static u32 FASTCALL BupRamMemoryReadLong(USED_IF_DEBUG u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
 static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
 {
-   T1WriteByte(BupRam, (addr & 0xFFFF) | 0x1, val);
-   BupRamWritten = 1;
+#if 0
+  // maped memory is better
+  if (BupRam == NULL) {
+    if ((addr & 0x0FFFFFFF) >= tweak_backup_file_addr) {
+      addr = ((addr & 0x0FFFFFFF) - tweak_backup_file_addr)|0x01;
+    }else {
+      addr = (addr & 0xFFFF) | 0x1;
+    }
+    fseek(pbackup, addr, 0);
+    fputc(val, pbackup);
+    fflush(pbackup);
+  }
+  else {
+    T1WriteByte(BupRam, (addr & 0xFFFF) | 0x1, val);
+    BupRamWritten = 1;  
+  }
+#endif
+
+  if (yabsys.extend_backup) {
+    addr = (addr & 0x0FFFFFFF) - tweak_backup_file_addr;
+    if (addr >= tweak_backup_file_size) {
+      return;
+    }
+  }
+  else {
+    addr = addr & 0x0000FFFF;
+  }
+  T1WriteByte(BupRam, addr|0x1, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -507,22 +683,35 @@ void MappedMemoryInit()
                                 &ScuWriteByte,
                                 &ScuWriteWord,
                                 &ScuWriteLong);
-   FillMemoryArea(0x600, 0x7FF, &HighWramMemoryReadByte,
+   FillMemoryArea(0x600, 0x610, &HighWramMemoryReadByte,
                                 &HighWramMemoryReadWord,
                                 &HighWramMemoryReadLong,
                                 &HighWramMemoryWriteByte,
                                 &HighWramMemoryWriteWord,
                                 &HighWramMemoryWriteLong);
+   FillMemoryArea( ((tweak_backup_file_addr >> 16) & 0xFFF) , 0x7ff, &BupRamMemoryReadByte,
+     &BupRamMemoryReadWord,
+     &BupRamMemoryReadLong,
+     &BupRamMemoryWriteByte,
+     &BupRamMemoryWriteWord,
+     &BupRamMemoryWriteLong);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u8 FASTCALL MappedMemoryReadByte(u32 addr){
+	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr);
+}
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr)
+#else
 u8 FASTCALL MappedMemoryReadByte(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -535,7 +724,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
          break;
       }
 */
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          return DataArrayReadByte(addr);
@@ -567,13 +756,20 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u16 FASTCALL MappedMemoryReadWord(u32 addr){
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+}
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr)
+#else
 u16 FASTCALL MappedMemoryReadWord(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -586,7 +782,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
          break;
       }
 */
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          return DataArrayReadWord(addr);
@@ -618,13 +814,20 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+u32 FASTCALL MappedMemoryReadLong(u32 addr){
+	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr);
+}
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr)
+#else
 u32 FASTCALL MappedMemoryReadLong(u32 addr)
+#endif
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -642,7 +845,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
          // Address Array
          return AddressArrayReadLong(addr);
       }
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          return DataArrayReadLong(addr);
@@ -673,13 +876,21 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val){
+	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val);
+}
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val)
+#else
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
+#endif
 {
+
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -693,7 +904,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
          return;
       }
 */
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          DataArrayWriteByte(addr, val);
@@ -726,27 +937,34 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val){
+	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val);
+}
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val)
+#else
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
+#endif
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
          WriteWordList[(addr >> 16) & 0xFFF](addr, val);
          return;
       }
-/*
+
       case 0x2:
       {
          // Purge Area
          return;
       }
-*/
-      case 0x4:
+
+      //case 0x4:
       case 0x6:
          // Data Array
          DataArrayWriteWord(addr, val);
@@ -779,13 +997,20 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+#if CACHE_ENABLE
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val){
+	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val);
+}
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val)
+#else
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
+#endif
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
       case 0x5:
       {
          // Cache/Non-Cached
@@ -803,7 +1028,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
          AddressArrayWriteLong(addr, val);
          return;
       }
-      case 0x4:
+      //case 0x4:
       case 0x6:
          // Data Array
          DataArrayWriteLong(addr, val);
@@ -840,9 +1065,10 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
 int MappedMemoryLoad(const char *filename, u32 addr)
 {
    FILE *fp;
-   u32 filesize;
+   long filesize;
    u8 *buffer;
    u32 i;
+   size_t num_read = 0;
 
    if (!filename)
       return -1;
@@ -853,6 +1079,14 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    // Calculate file size
    fseek(fp, 0, SEEK_END);
    filesize = ftell(fp);
+
+   if (filesize <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      fclose(fp);
+      return -1;//error
+   }
+
    fseek(fp, 0, SEEK_SET);
 
    if ((buffer = (u8 *)malloc(filesize)) == NULL)
@@ -861,7 +1095,7 @@ int MappedMemoryLoad(const char *filename, u32 addr)
       return -2;
    }
 
-   fread((void *)buffer, 1, filesize, fp);
+   num_read = fread((void *)buffer, 1, filesize, fp);
    fclose(fp);
 
    for (i = 0; i < filesize; i++)
@@ -904,7 +1138,7 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MappedMemoryLoadExec(const char *filename, u32 pc)
+int MappedMemoryLoadExec(const char *filename, u32 pc)
 {
    char *p;
    size_t i;
@@ -916,15 +1150,15 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
          p[i] = toupper(p[i]);
       if (strcmp(p, ".COF") == 0 || strcmp(p, ".COFF") == 0)
       {
-         MappedMemoryLoadCoff(filename);
+         int rtn = MappedMemoryLoadCoff(filename);
          free(p);
-         return;
+         return rtn;
       }
       else if(strcmp(p, ".ELF") == 0)
       {
-         MappedMemoryLoadElf(filename);
+         int rtn = MappedMemoryLoadElf(filename);
          free(p);
-         return;
+         return rtn;
       }
 
       free(p);
@@ -939,6 +1173,8 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    SH2GetRegisters(MSH2, &MSH2->regs);
    MSH2->regs.PC = pc;
    SH2SetRegisters(MSH2, &MSH2->regs);
+
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -955,18 +1191,73 @@ int LoadBackupRam(const char *filename)
    return T123Load(BupRam, 0x10000, 1, filename);
 }
 
+static u8 header[32] = {
+  0xFF, 'B', 0xFF, 'a', 0xFF, 'c', 0xFF, 'k',
+  0xFF, 'U', 0xFF, 'p', 0xFF, 'R', 0xFF, 'a',
+  0xFF, 'm', 0xFF, ' ', 0xFF, 'F', 0xFF, 'o',
+  0xFF, 'r', 0xFF, 'm', 0xFF, 'a', 0xFF, 't'
+};
+
+int CheckBackupFile(FILE *fp) {
+  int i, i2;
+  u32 i3;
+
+  // Fill in header
+  for (i2 = 0; i2 < 4; i2++) {
+    for (i = 0; i < 32; i++) {
+      u8 val = fgetc(fp);
+      if ( val != header[i]) {
+        return -1;
+      }
+    }
+  }
+  return 0;
+}
+
+int ExtendBackupFile(FILE *fp, u32 size ) {
+
+  fseek(fp, 0, SEEK_END);
+  u32 acsize = ftell(fp);
+  if (acsize < size) {
+    // Clear the rest
+    u32 i;
+    for ( i = (acsize&0xFFFFFFFE) ; i < size; i += 2)
+    {
+      fputc(0xFF, fp);
+      fputc(0x00, fp);
+    }
+    fflush(fp);
+  }
+  fseek(fp, 0, SEEK_SET);
+
+  return 0;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
+void FormatBackupRamFile(FILE *fp, u32 size) {
+
+  int i, i2;
+  u32 i3;
+
+  // Fill in header
+  for (i2 = 0; i2 < 4; i2++)
+    for (i = 0; i < 32; i++)
+      fputc(header[i],fp);
+
+  // Clear the rest
+  for (i3 = 0x80; i3 < size; i3 += 2)
+  {
+    fputc(0xFF,fp);
+    fputc(0x00,fp);
+  }
+  fflush(fp);
+}
 
 void FormatBackupRam(void *mem, u32 size)
 {
    int i, i2;
    u32 i3;
-   u8 header[32] = {
-      0xFF, 'B', 0xFF, 'a', 0xFF, 'c', 0xFF, 'k',
-      0xFF, 'U', 0xFF, 'p', 0xFF, 'R', 0xFF, 'a',
-      0xFF, 'm', 0xFF, ' ', 0xFF, 'F', 0xFF, 'o',
-      0xFF, 'r', 0xFF, 'm', 0xFF, 'a', 0xFF, 't'
-   };
 
    // Fill in header
    for(i2 = 0; i2 < 4; i2++)
@@ -979,6 +1270,65 @@ void FormatBackupRam(void *mem, u32 size)
       T1WriteByte(mem, i3, 0xFF);
       T1WriteByte(mem, i3+1, 0x00);
    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YabSaveStateBuffer(void ** buffer, size_t * size)
+{
+   FILE * fp;
+   int status;
+   size_t num_read = 0;
+
+   if (buffer != NULL) *buffer = NULL;
+   *size = 0;
+
+   fp = tmpfile();
+
+   ScspLockThread();
+   status = YabSaveStateStream(fp);
+   ScspUnLockThread();
+
+   if (status != 0)
+   {
+      fclose(fp);
+      return status;
+   }
+
+   fseek(fp, 0, SEEK_END);
+   *size = ftell(fp);
+   fseek(fp, 0, SEEK_SET);
+
+   if (buffer != NULL)
+   {
+      *buffer = malloc(*size);
+      num_read = fread(*buffer, 1, *size, fp);
+   }
+
+   fclose(fp);
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YabSaveState(const char *filename)
+{
+   FILE *fp;
+   int status;
+
+   //use a second set of savestates for movies
+   filename = MakeMovieStateName(filename);
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "wb")) == NULL)
+      return -1;
+   ScspLockThread();
+   status = YabSaveStateStream(fp);
+   ScspUnLockThread();
+   fclose(fp);
+
+   return status;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -996,10 +1346,9 @@ void FormatBackupRam(void *mem, u32 size)
 //    [sh2core.c] frc.div changed to frc.shift
 //    [sh2core.c] wdt probably needs to be written as well
 
-int YabSaveState(const char *filename)
+int YabSaveStateStream(FILE *fp)
 {
    u32 i;
-   FILE *fp;
    int offset;
    IOCheck_struct check;
    u8 *buf;
@@ -1012,14 +1361,6 @@ int YabSaveState(const char *filename)
 
    check.done = 0;
    check.size = 0;
-
-   //use a second set of savestates for movies
-   filename = MakeMovieStateName(filename);
-   if (!filename)
-      return -1;
-
-   if ((fp = fopen(filename, "wb")) == NULL)
-      return -1;
 
    // Write signature
    fprintf(fp, "YSS");
@@ -1085,13 +1426,15 @@ int YabSaveState(const char *filename)
       return -2;
    }
 
-   YuiSwapBuffers();
+   //YuiSwapBuffers();
    #ifdef USE_OPENGL
    glPixelZoom(1,1);
    glReadBuffer(GL_BACK);
    glReadPixels(0, 0, outputwidth, outputheight, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+   #else
+   //memcpy(buf, dispbuffer, totalsize);
    #endif
-   YuiSwapBuffers();
+   //YuiSwapBuffers();
 
    ywrite(&check, (void *)&outputwidth, sizeof(outputwidth), 1, fp);
    ywrite(&check, (void *)&outputheight, sizeof(outputheight), 1, fp);
@@ -1111,11 +1454,30 @@ int YabSaveState(const char *filename)
    ywrite(&check, (void *)&movieposition, sizeof(movieposition), 1, fp);
 
    free(buf);
-   fclose(fp);
 
    OSDPushMessage(OSDMSG_STATUS, 150, "STATE SAVED");
-
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YabLoadStateBuffer(const void * buffer, size_t size)
+{
+   FILE * fp;
+   int status;
+
+   fp = tmpfile();
+   fwrite(buffer, 1, size, fp);
+
+   fseek(fp, 0, SEEK_SET);
+
+   ScspLockThread();
+   status = YabLoadStateStream(fp);
+   ScspUnLockThread();
+
+   fclose(fp);
+
+   return status;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1123,6 +1485,28 @@ int YabSaveState(const char *filename)
 int YabLoadState(const char *filename)
 {
    FILE *fp;
+   int status;
+
+   filename = MakeMovieStateName(filename);
+   if (!filename)
+      return -1;
+
+   if ((fp = fopen(filename, "rb")) == NULL)
+      return -1;
+
+   ScspLockThread();
+   status = YabLoadStateStream(fp);
+   ScspUnLockThread();
+
+   fclose(fp);
+
+   return status;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int YabLoadStateStream(FILE *fp)
+{
    char id[3];
    u8 endian;
    int headerversion, version, size, chunksize, headersize;
@@ -1136,22 +1520,18 @@ int YabLoadState(const char *filename)
    int movieposition;
    int temp;
    u32 temp32;
-
-   filename = MakeMovieStateName(filename);
-   if (!filename)
-      return -1;
-
-   if ((fp = fopen(filename, "rb")) == NULL)
-      return -1;
+	int test_endian;
 
    headersize = 0xC;
+   check.done = 0;
+   check.size = 0;
+
 
    // Read signature
    yread(&check, (void *)id, 1, 3, fp);
 
    if (strncmp(id, "YSS", 3) != 0)
    {
-      fclose(fp);
       return -2;
    }
 
@@ -1174,20 +1554,19 @@ int YabLoadState(const char *filename)
       default:
          /* we're trying to open a save state using a future version
           * of the YSS format, that won't work, sorry :) */
-         fclose(fp);
          return -3;
          break;
    }
 
 #ifdef WORDS_BIGENDIAN
-   if (endian == 1)
+   test_endian = endian == 1;
 #else
-   if (endian == 0)
+   test_endian = endian == 0;
 #endif
+   if (test_endian)
    {
       // should setup reading so it's byte-swapped
       YabSetError(YAB_ERR_OTHER, (void *)"Load State byteswapping not supported");
-      fclose(fp);
       return -3;
    }
 
@@ -1196,18 +1575,16 @@ int YabLoadState(const char *filename)
 
    if (size != (ftell(fp) - headersize))
    {
-      fclose(fp);
       return -2;
    }
    fseek(fp, headersize, SEEK_SET);
 
    // Verify version here
-
+ 
    ScspMuteAudio(SCSP_MUTE_SYSTEM);
    
    if (StateCheckRetrieveHeader(fp, "CART", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1216,7 +1593,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "CS2 ", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1225,7 +1601,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "MSH2", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1234,7 +1609,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "SSH2", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1243,7 +1617,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "SCSP", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1252,7 +1625,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "SCU ", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1261,7 +1633,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "SMPC", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1270,7 +1641,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "VDP1", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1279,7 +1649,6 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "VDP2", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
@@ -1288,13 +1657,13 @@ int YabLoadState(const char *filename)
 
    if (StateCheckRetrieveHeader(fp, "OTHR", &version, &chunksize) != 0)
    {
-      fclose(fp);
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
       return -3;
    }
    // Other data
-   yread(&check, (void *)BupRam, 0x10000, 1, fp);
+   //yread(&check, (void *)BupRam, 0x10000, 1, fp);
+   fseek(fp, 0x10000, SEEK_CUR ); // skip this data
    yread(&check, (void *)HighWram, 0x100000, 1, fp);
    yread(&check, (void *)LowWram, 0x100000, 1, fp);
 
@@ -1342,10 +1711,8 @@ int YabLoadState(const char *filename)
    free(buf);
 
    fseek(fp, movieposition, SEEK_SET);
-   MovieReadState(fp, filename);
+   MovieReadState(fp);
    }
-   
-   fclose(fp);
 
    ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 
@@ -1358,6 +1725,7 @@ int YabLoadState(const char *filename)
 
 int YabSaveStateSlot(const char *dirpath, u8 slot)
 {
+  int rtn;
    char filename[512];
 
    if (cdip == NULL)
@@ -1368,13 +1736,17 @@ int YabSaveStateSlot(const char *dirpath, u8 slot)
 #else
    sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
-   return YabSaveState(filename);
+   ScspMuteAudio(1);
+   rtn = YabSaveState(filename);
+   ScspUnMuteAudio(1);
+   return rtn;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int YabLoadStateSlot(const char *dirpath, u8 slot)
 {
+   int rtn;
    char filename[512];
 
    if (cdip == NULL)
@@ -1385,7 +1757,10 @@ int YabLoadStateSlot(const char *dirpath, u8 slot)
 #else
    sprintf(filename, "%s/%s_%03d.yss", dirpath, cdip->itemnum, slot);
 #endif
-   return YabLoadState(filename);
+   ScspMuteAudio(1);
+   rtn = YabLoadState(filename);
+   ScspUnMuteAudio(1);
+   return rtn;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1575,7 +1950,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
    u32 i=0;
    result_struct *results;
    u32 numresults=0;
-   unsigned long searchval;
+   unsigned long searchval = 0;
    int issigned=0;
    u32 addr;
 

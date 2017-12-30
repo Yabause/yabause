@@ -40,6 +40,9 @@ public:
 	bool emulationPaused();
 	inline int init() const { return mInit; }
 
+	void OpenTray();
+	void CloseTray();
+
 protected:
 	yabauseinit_struct mYabauseConf;
 	bool showFPS;
@@ -52,6 +55,7 @@ protected:
 	void deInitEmulation();
 	void resetYabauseConf();
 	void timerEvent( QTimerEvent* );
+
 
 public slots:
 	bool pauseEmulation( bool pause, bool reset );

@@ -392,7 +392,7 @@ void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy)
    if (negy) diffy = ~(mouse->mousebits[2]) & 0xFF;
    else diffy = mouse->mousebits[2];
 
-   if (dispx > 0)
+   if (dispx >= 0)
    {
       if (negx)
       {
@@ -419,7 +419,7 @@ void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy)
       }
    }
 
-   if (dispy > 0)
+   if (dispy >= 0)
    {
       if (negy)
       {
@@ -458,6 +458,41 @@ void PerMouseMove(PerMouse_struct * mouse, s32 dispx, s32 dispy)
 void PerAxis1Value(PerAnalog_struct * analog, u32 val)
 {
    analog->analogbits[2] = (u8)val;
+
+   //handle wheel left/right standard pad presses depending on wheel position
+   if (analog->perid == PERWHEEL)
+   {
+      int left_is_pressed = (analog->analogbits[0] & (1 << 6)) == 0;
+      int right_is_pressed = (analog->analogbits[0] & (1 << 7)) == 0;
+
+      if (val <= 0x67)
+         analog->analogbits[0] &= 0xBF;//press left
+      else if (left_is_pressed && val >= 0x6f)
+         analog->analogbits[0] |= ~0xBF;//release left
+
+      
+      if (val >= 0x97)
+         analog->analogbits[0] &= 0x7F;//press right
+      else if(right_is_pressed && val <= 0x8f)
+         analog->analogbits[0] |= ~0x7F;//release right
+   }
+   else if (analog->perid == PERMISSIONSTICK ||
+      analog->perid == PERTWINSTICKS)
+   {
+      int left_is_pressed = (analog->analogbits[0] & (1 << 6)) == 0;
+      int right_is_pressed = (analog->analogbits[0] & (1 << 7)) == 0;
+
+      if (val <= 0x56)
+         analog->analogbits[0] &= 0xBF;//press left
+      else if (left_is_pressed && val >= 0x6a)
+         analog->analogbits[0] |= ~0xBF;//release left
+
+
+      if (val >= 0xab)
+         analog->analogbits[0] &= 0x7F;//press right
+      else if (right_is_pressed && val <= 0x95)
+         analog->analogbits[0] |= ~0x7F;//release right
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -465,13 +500,34 @@ void PerAxis1Value(PerAnalog_struct * analog, u32 val)
 void PerAxis2Value(PerAnalog_struct * analog, u32 val)
 {
    analog->analogbits[3] = (u8)val;
+
+   if (analog->perid == PERMISSIONSTICK ||
+      analog->perid == PERTWINSTICKS)
+   {
+      int up_is_pressed = (analog->analogbits[0] & (1 << 4)) == 0;
+      int down_is_pressed = (analog->analogbits[0] & (1 << 5)) == 0;
+
+      if (val <= 0x65)
+         analog->analogbits[0] &= 0xEF;//press up
+      else if (up_is_pressed && val >= 0x6a)
+         analog->analogbits[0] |= ~0xEF;//release up
+
+
+      if (val >= 0xa9)
+         analog->analogbits[0] &= 0xDF;//press down
+      else if (down_is_pressed && val <= 0x94)
+         analog->analogbits[0] |= ~0xDF;//release down
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void PerAxis3Value(PerAnalog_struct * analog, u32 val)
 {
-   analog->analogbits[4] = (u8)val;
+   if (analog->perid != PERMISSIONSTICK)
+      analog->analogbits[4] = (u8)val;
+   else
+      analog->analogbits[4] = (u8)(-(s8)val);//axis inverted on mission stick
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -483,6 +539,7 @@ void PerAxis4Value(PerAnalog_struct * analog, u32 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+//left stick L/R
 void PerAxis5Value(PerAnalog_struct * analog, u32 val)
 {
    analog->analogbits[6] = (u8)val;
@@ -490,16 +547,21 @@ void PerAxis5Value(PerAnalog_struct * analog, u32 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+//left stick U/D
 void PerAxis6Value(PerAnalog_struct * analog, u32 val)
 {
-   analog->analogbits[7] = (u8)val;
+      analog->analogbits[7] = (u8)val;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
+//left stick throttle
 void PerAxis7Value(PerAnalog_struct * analog, u32 val)
 {
-   analog->analogbits[8] = (u8)val;
+   if (analog->perid != PERTWINSTICKS)
+      analog->analogbits[8] = (u8)val;
+   else
+      analog->analogbits[8] = (u8)(-(s8)val);//axis inverted on mission stick
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -535,7 +597,6 @@ void PerGunStartReleased(PerGun_struct * gun)
 void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy)
 {
    int x, y;
-   int x2, y2;
    x = (*(gun->gunbits+1) << 8) +  *(gun->gunbits+2) + (dispx / 4);
    y = (*(gun->gunbits+3) << 8) +  *(gun->gunbits+4) - (dispy / 4);
 
@@ -628,6 +689,27 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
          port->data[peroffset+1] = 0xFF;
          port->data[peroffset+2] = 0x7F;
          port->size = peroffset+(perid&0xF);
+         break;
+      case PERMISSIONSTICK:
+         port->data[peroffset] = 0xFF;
+         port->data[peroffset + 1] = 0xFF;
+         port->data[peroffset + 2] = 0x7F;
+         port->data[peroffset + 3] = 0x7F;
+         port->data[peroffset + 4] = 0x7F;
+         port->size = peroffset + (perid & 0xF);
+         break;
+      case PERTWINSTICKS://also double mission sticks
+         port->data[peroffset] = 0xFF;
+         port->data[peroffset + 1] = 0xFF;
+         //right stick
+         port->data[peroffset + 2] = 0x7F;
+         port->data[peroffset + 3] = 0x7F;
+         port->data[peroffset + 4] = 0x7F;
+         //left stick
+         port->data[peroffset + 5] = 0x7F;
+         port->data[peroffset + 6] = 0x7F;
+         port->data[peroffset + 7] = 0x7F;
+         port->size = peroffset + (perid & 0xF);
          break;
       case PER3DPAD:
          port->data[peroffset] = 0xFF;
@@ -731,7 +813,7 @@ void PerKeyDown(u32 key)
 	{
 		if (key == perkeyconfig[i].key)
 		{
-			perkeyconfig[i].base->Press(perkeyconfig[i].controller);
+			if (perkeyconfig[i].base->Press) perkeyconfig[i].base->Press(perkeyconfig[i].controller);
 		}
 		i++;
 	}
@@ -747,7 +829,7 @@ void PerKeyUp(u32 key)
 	{
 		if (key == perkeyconfig[i].key)
 		{
-			perkeyconfig[i].base->Release(perkeyconfig[i].controller);
+			if (perkeyconfig[i].base->Release) perkeyconfig[i].base->Release(perkeyconfig[i].controller);
 		}
 		i++;
 	}

@@ -84,7 +84,7 @@ namespace Arguments
 				{
 					choosenOptions[option->priority] = option;
 					if (option->parameter)
-						params[option->priority] = argument.mid(strlen(option->longname));
+						params[option->priority] = argument.mid((int)strlen(option->longname));
 				}
 				option++;
 			}
@@ -190,7 +190,7 @@ namespace Arguments
 	void nobios(const QString& param)
 	{
 		VolatileSettings * vs = QtYabause::volatileSettings();
-		vs->setValue("General/Bios", "");
+		vs->setValue("General/EnableEmulatedBios", true);
 	}
 
 	void nosound(const QString& param)

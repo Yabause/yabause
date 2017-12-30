@@ -26,6 +26,10 @@
 
 #include "sh2core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
    char filename[12];
@@ -37,6 +41,7 @@ typedef struct
    u8 hour;
    u8 minute;
    u8 week;
+   u32 date;
    u32 datasize;
    u16 blocksize;
 } saveinfo_struct;
@@ -46,6 +51,16 @@ typedef struct
    u8 id;
    char name[32];
 } deviceinfo_struct;
+
+typedef struct
+{
+ u32 totalsize;	
+ u32 totalblock;
+ u32 blocksize;
+ u32 freesize;
+ u32 freeblock;
+ u32 datanum;
+} devicestatus_struct;
 
 void BiosInit(void);
 int FASTCALL BiosHandleFunc(SH2_struct * sh);
@@ -58,5 +73,17 @@ void BupFormat(u32 device);
 int BupCopySave(u32 srcdevice, u32 dstdevice, const char *savename);
 int BupImportSave(u32 device, const char *filename);
 int BupExportSave(u32 device, const char *savename, const char *filename);
+
+void FASTCALL BiosBUPInit(SH2_struct * sh);
+
+int BiosBUPImport( u32 device, saveinfo_struct * saveinfo, const char * buf, int bufsize );
+int BiosBUPExport(u32 device, const char *savename, char ** buf, int * bufsize );
+int BiosBUPStatusMem( int device, devicestatus_struct * status );
+
+#ifdef __cplusplus
+}
 #endif
+
+
+#endif //  BIOS_H
 

@@ -1,153 +1,87 @@
-find_program(NDK_BUILD ndk-build)
+#----------------------------------------------------------------------------------------
+# Android build.
+#----------------------------------------------------------------------------------------
+# How to build on Windows host. 
+#  Requirements:
+#    1) android-ndk-r10d or above.
+#    2) ninja (https://github.com/martine/ninja)
+#    3) Visual C++ ( for c68k code generation )
+#  Build step:
+#    1) edit ANDROID_NDK PATH on "yabause/src/android/CMakeLists.txt"
+#    2) cmake -GNinja -DCMAKE_TOOLCHAIN_FILE=yabause/src/android/androidtoolchain.cmake
+#    3) edit settings listed below
+#         ANDROID_ABI               armeabi-v7a with NEON
+#         ANDROID_NATIVE_API_LEVEL  21 
+#         YAB_PORTS                 android
+#         YAB_WANT_ARM7             checked  
+#    4) "Configure" and "Generate"
+#    5) exec command prompt and exec "vcvarsall.bat x86" for building using cl.exe 
+#    6) exec eclipse and import "yabause/src/android"
+#----------------------------------------------------------------------------------------
 
-if(NOT NDK_BUILD)
-    message(FATAL_ERROR "ndk build not found, bye")
-endif()
+set(ENV{ANDROID_NDK} "C:/NVPACK/android-ndk-r10e")
 
-find_program(SDK_ANDROID android)
+project(yabause-android)
 
-if(NOT SDK_ANDROID)
-    message(FATAL_ERROR "sdk android tool not found, bye")
-endif()
+yab_port_start()
 
-find_program(ANT NAMES ant ant.bat)
+set( LIBRARY_NAME yabause_native )
 
-if(NOT ANT)
-    message(FATAL_ERROR "ant not found, bye")
-endif()
-
-if (NOT CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_CURRENT_BINARY_DIR)
-	set(yabause_android_SHADOW
-		build.xml
-		project.properties
-		jni/yui.c
-		jni/miniegl.h
-		jni/sndaudiotrack.c
-		jni/sndaudiotrack.h
-		src/org/yabause/android/Cartridge.java
-		src/org/yabause/android/GameList.java
-		src/org/yabause/android/GameListAdapter.java
-		src/org/yabause/android/Home.java
-		src/org/yabause/android/PadEvent.java
-		src/org/yabause/android/PadManager.java
-		src/org/yabause/android/PadManagerV8.java
-		src/org/yabause/android/PadManagerV16.java
-		src/org/yabause/android/Yabause.java
-		src/org/yabause/android/YabauseAudio.java
-		src/org/yabause/android/YabauseView.java
-		src/org/yabause/android/YabausePad.java
-		src/org/yabause/android/YabauseSettings.java
-		src/org/yabause/android/YabauseStorage.java
-		res/drawable-hdpi/icon.png
-		res/drawable-ldpi/icon.png
-		res/drawable-mdpi/icon.png
-		res/layout/game_item.xml
-		res/layout/home.xml
-		res/layout/main.xml
-		res/values/strings.xml
-		res/xml/preferences.xml
-	)
-
-	foreach(item IN LISTS yabause_android_SHADOW)
-		message(STATUS ${item})
-		add_custom_command(
-			OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${item}"
-			COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/${item}" "${CMAKE_CURRENT_BINARY_DIR}/${item}"
-			DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${item}"
-		)
-	endforeach()
-endif()
-
-set(YABAUSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
-configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/jni/Android.mk.in
-	${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk
-	@ONLY
+set( ImageLibrarySOURCES 
+	jni/libpng/png.c
+	jni/libpng/pngerror.c
+	jni/libpng/pngget.c
+	jni/libpng/pngmem.c
+	jni/libpng/pngpread.c
+	jni/libpng/pngread.c 
+	jni/libpng/pngrio.c 
+	jni/libpng/pngrtran.c 
+	jni/libpng/pngrutil.c 
+	jni/libpng/pngset.c 
+	jni/libpng/pngtest.c 
+	jni/libpng/pngtrans.c 
+	jni/libpng/pngwio.c
+	jni/libpng/pngwrite.c 
+	jni/libpng/pngwtran.c 
+	jni/libpng/pngwutil.c
 )
 
-configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/AndroidManifest.xml.in
-	${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml
-	@ONLY
+set( SOURCES 
+ ${ImageLibrarySOURCES}
+ jni/yui.c
+ jni/sndaudiotrack.c
+ jni/sndopensl.c
+ jni/BackupManager.cpp
+ jni/jsoncpp.cpp
 )
 
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/local.properties"
-	COMMAND ${SDK_ANDROID} update project -p "${CMAKE_CURRENT_BINARY_DIR}"
-	DEPENDS
-		"${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
-		"${CMAKE_CURRENT_BINARY_DIR}/build.xml"
-		"${CMAKE_CURRENT_BINARY_DIR}/project.properties"
-		"${CMAKE_CURRENT_BINARY_DIR}/jni/Android.mk"
+
+set (PORT_LIBRARIES
+ log
+ jnigraphics
+ OpenSLES
+ android
+ GLESv3
+ EGL
+ z
 )
 
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a"
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/../libyabause.a ${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a
-	DEPENDS yabause "${CMAKE_CURRENT_BINARY_DIR}/../config.h"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/local.properties"
-)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSONCPP_NO_LOCALE_SUPPORT -fexceptions " )
 
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
-	COMMAND "${NDK_BUILD}"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/libyabause.a"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/yui.c"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/miniegl.h"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndaudiotrack.c"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/jni/sndaudiotrack.h"
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
 
-set(yabause_android_RES
-	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-hdpi/icon.png"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-ldpi/icon.png"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/drawable-mdpi/icon.png"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/game_item.xml"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/home.xml"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/layout/main.xml"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/values/strings.xml"
-	"${CMAKE_CURRENT_BINARY_DIR}/res/xml/preferences.xml"
-)
-set(yabause_android_SRC
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Cartridge.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameList.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/GameListAdapter.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Home.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadEvent.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManager.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV8.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/PadManagerV16.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/Yabause.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseAudio.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseView.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabausePad.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseSettings.java"
-    "${CMAKE_CURRENT_BINARY_DIR}/src/org/yabause/android/YabauseStorage.java"
-)
+set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_NDK_ABI_NAME} )
+#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+#include(AndroidNdkGdb)
+#android_ndk_gdb_enable()
 
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-debug.apk"
-	COMMAND "${ANT}" ARGS "debug"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
-	DEPENDS ${yabause_android_SRC}
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
-	DEPENDS ${yabause_android_RES}
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
+#android_ndk_gdb_debuggable(${LIBRARY_NAME})
 
-add_custom_command(
-	OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-release-unsigned.apk"
-	COMMAND "${ANT}" ARGS "release"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/libs/armeabi/libyabause.so"
-	DEPENDS ${yabause_android_SRC}
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/AndroidManifest.xml"
-	DEPENDS ${yabause_android_RES}
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
+include_directories( ${YABAUSE_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/../ ${PROJECT_SOURCE_DIR}/../ )
+target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES} 
+	${PORT_LIBRARIES}
+#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
+   )
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-release-unsigned.apk")
-else()
-    add_custom_target(yabause-android ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/bin/Yabause-debug.apk")
-endif()
+
+

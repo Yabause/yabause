@@ -1253,7 +1253,7 @@ static void VIDDCDeInit(void)   {
     vid_set_mode(DM_640x480, PM_RGB565);
 }
 
-static void VIDDCResize(unsigned int w, unsigned int h, int unused) {
+static void VIDDCResize(int x, int y, unsigned int w, unsigned int h, int unused) {
 }
 
 static int VIDDCIsFullscreen(void)  {
@@ -2828,6 +2828,7 @@ VideoInterface_struct VIDDC = {
     VIDDCVdp1UserClipping,
     VIDDCVdp1SystemClipping,
     VIDDCVdp1LocalCoordinate,
+    NULL,
     VIDDCVdp2Reset,
     VIDDCVdp2DrawStart,
     VIDDCVdp2DrawEnd,

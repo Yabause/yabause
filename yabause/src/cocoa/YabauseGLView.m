@@ -33,7 +33,7 @@
 - (id)initWithFrame:(NSRect)frameRect
 {
     NSOpenGLPixelFormatAttribute attrs[] = {
-        NSOpenGLPFAWindow,
+        NSOpenGLPFAOpenGLProfile, (NSOpenGLPixelFormatAttribute)NSOpenGLProfileVersion3_2Core,
         NSOpenGLPFANoRecovery,
         NSOpenGLPFAColorSize, 32,
         NSOpenGLPFADepthSize, 32,
@@ -108,7 +108,7 @@
     }
 
     if(VIDCore)
-        VIDCore->Resize([self width], [self height], !_isFullscreen);
+        VIDCore->Resize(0,0,[self width], [self height], !_isFullscreen);
 
     _isFullscreen = !_isFullscreen;
 }
@@ -146,7 +146,7 @@
     CGLLockContext(cxt);
 
     if(VIDCore)
-        VIDCore->Resize([self width], [self height], !!_isFullscreen);
+        VIDCore->Resize(0,0,[self width], [self height], !!_isFullscreen);
 
     CGLUnlockContext(cxt);
 

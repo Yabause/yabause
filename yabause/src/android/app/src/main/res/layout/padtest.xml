@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <org.uoyabause.android.YabausePad
+        android:id="@+id/yabause_pad"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        />
+
+	<TextView
+        android:id="@+id/text_status"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="" >
+    </TextView>
+
+	<LinearLayout
+		android:layout_width="400dp"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center_horizontal"
+		android:orientation="vertical"
+		android:layout_margin="20dp">
+
+        <LinearLayout android:layout_height="wrap_content"
+            android:layout_width="300dp"
+            android:layout_margin="10dp"
+            android:layout_gravity="center_horizontal">
+
+            <TextView
+                android:id="@+id/editText1"
+                android:layout_height="wrap_content"
+                android:text="@string/scale"
+                android:layout_width="90dp">
+            </TextView>
+
+
+            <SeekBar
+                android:id="@+id/button_scale"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:progress="100"
+                android:clickable="false"
+                android:focusable="false"
+                android:layout_width="200dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_margin="10dp"
+            android:layout_width="300dp">
+
+            <TextView
+                android:id="@+id/editText_transparent"
+                android:layout_height="wrap_content"
+                android:text="@string/transparency"
+                android:layout_width="90dip">
+            </TextView>
+
+
+            <SeekBar
+                android:id="@+id/button_transparent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:max="100"
+                android:progress="100"
+                android:clickable="false"
+                android:focusable="false"
+                android:layout_width="200dp" />
+        </LinearLayout>
+	</LinearLayout>
+
+
+</FrameLayout>

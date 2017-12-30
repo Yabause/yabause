@@ -45,7 +45,7 @@ static int drivestatus=0;
 static DWORD thread_id;
 static struct 
 {
-	int enable_read_ahead;
+	volatile int enable_read_ahead;
 	u32 FAD;
 	unsigned char data[2352];
 	int num_sectors_read;
@@ -58,6 +58,7 @@ static s32 SPTICDReadTOC(u32 *);
 static int SPTICDGetStatus(void);
 static int SPTICDReadSectorFAD(u32, void *);
 static void SPTICDReadAheadFAD(u32);
+static void SPTICDSetStatus( int status );
 
 CDInterface ArchCD = {
 CDCORE_ARCH,
@@ -68,6 +69,7 @@ SPTICDGetStatus,
 SPTICDReadTOC,
 SPTICDReadSectorFAD,
 SPTICDReadAheadFAD,
+SPTICDSetStatus,
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -250,6 +252,10 @@ int SPTICDGetStatus() {
 	return status;
 }
 
+static void SPTICDSetStatus(int status){
+
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
@@ -316,7 +322,7 @@ int SPTICDReadSectorFAD(u32 FAD, void *buffer) {
 	for (;;)
 	{
 		EnterCriticalSection(&cd_cs);
-		if ((volatile)cd_buf.enable_read_ahead == 0)
+		if (cd_buf.enable_read_ahead == 0)
 		{
 			if (cd_buf.FAD == FAD)
 			{

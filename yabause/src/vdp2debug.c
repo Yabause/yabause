@@ -22,6 +22,7 @@
 */
 
 #include "vdp2.h"
+#include "vdp1.h"
 #include "ygl.h"
 #include "vdp2debug.h"
 #include "vidshared.h"
@@ -41,7 +42,7 @@ static INLINE void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
          *planew = 2;
          *planeh = 1;
          break;
-      case 2:
+      case 3:
          *planew = *planeh = 2;
          break;
       default:
@@ -141,7 +142,7 @@ static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
 static void CalcWindowCoordinates(int num, int *hstart, int *vstart, int *hend, int *vend)
 {
    clipping_struct clip;
-   ReadWindowCoordinates(num, &clip);
+   ReadWindowCoordinates(num, &clip, Vdp2Regs);
    *hstart = clip.xstart;
    *vstart = clip.ystart;
    *hend = clip.xend;
@@ -246,23 +247,7 @@ static INLINE char *AddMapInfo(char *outstring, int patternwh, u16 PNC, u8 PLSZ,
    else
       patterndatasize = 2;
 
-   switch(PLSZ)
-   {
-      case 0:
-         planew = planeh = 1;
-         break;
-      case 1:
-         planew = 2;
-         planeh = 1;
-         break;
-      case 2:
-         planew = planeh = 2;
-         break;
-      default: // Not sure what 0x3 does
-         planew = planeh = 1;
-         break;
-   }
-
+   Vdp2GetPlaneSize(PLSZ, &planew, &planeh);
    deca = planeh + planew - 2;
    multi = planeh * planew;
 
@@ -1663,6 +1648,7 @@ pixel_t *Vdp2DebugTexture(u32 screen, int * w, int * h)
    pixel_t * bitmap;
 
    TitanInit();
+   TitanSetBlendingMode(TITAN_BLEND_TOP);
    VIDSoftVdp2DrawScreen(screen);
 
    if ((bitmap = (pixel_t *)calloc(sizeof(pixel_t), 704 * 512)) == NULL)

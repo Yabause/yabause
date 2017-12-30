@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="org.uoyabause.android"
+>
+
+    <uses-permission-sdk-m android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission-sdk-m android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.MANAGE_DOCUMENTS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+    <uses-feature android:name="android.software.leanback" android:required="false" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.gamepad" />
+    <uses-feature android:glEsVersion="0x00030000" />
+    <uses-feature android:name="android.hardware.opengles.aep" android:required="false" />
+
+    <application
+        android:name=".YabauseApplication"
+        android:icon="@drawable/icon"
+        android:isGame="true"
+        android:label="@string/app_name"
+        android:logo="@drawable/banner"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <meta-data android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
+            android:value="@integer/google_play_services_version" />
+        <meta-data
+            android:name="AA_DB_NAME"
+            android:value="localgameinfo.db" />
+        <meta-data
+            android:name="AA_DB_VERSION"
+            android:value="2" />
+        <meta-data
+            android:name="AA_MODELS"
+            android:value="org.uoyabause.android.GameInfo, org.uoyabause.android.GameStatus, org.uoyabause.android.Cheat" />
+
+        <activity
+            android:name=".tv.GameSelectActivity"
+            android:banner="@drawable/banner"
+            android:icon="@drawable/icon"
+            android:label="@string/title_activity_game_select"
+            android:logo="@drawable/banner"
+            android:theme="@style/Theme.Gameselect.Leanback"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+<!--
+        <activity
+            android:name=".Home"
+            android:logo="@drawable/banner"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+                        android:process=":emulationmain"
+
+        </activity>
+-->
+        <activity
+            android:name=".YabauseGameSelectActivity"
+             />
+        <activity
+            android:name=".GameList"
+            android:screenOrientation="landscape" />
+        <activity android:name="DonateActivity"
+             />
+        <activity
+            android:name=".Yabause"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/app_name"
+            android:process=":emulationmain"
+            android:theme="@style/AppTheme.NoActionBar"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".YabauseSettings"
+             />
+        <activity
+            android:name=".PadTestActivity"
+            android:configChanges="orientation|keyboardHidden"
+             />
+
+        <uses-library
+            android:name="com.sec.android.app.multiwindow"
+            android:required="false" />
+
+        <meta-data
+            android:name="com.sec.android.support.multiwindow"
+            android:value="true" />
+
+        <activity android:name=".tv.BrowseErrorActivity" />
+
+        <activity android:name="com.google.android.gms.ads.AdActivity"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
+            android:theme="@android:style/Theme.Translucent" />
+
+        <service android:name=".Notification">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".NotificationIDService">
+            <intent-filter>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+            </intent-filter>
+        </service>
+
+        <receiver android:name=".tv.DownloadReceiver">
+            <intent-filter>
+                <action android:name="org.uoyabause.download.COMPLETE" />
+                <action android:name="org.uoyabause.download.FAILED" />
+             </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>

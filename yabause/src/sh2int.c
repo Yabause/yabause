@@ -33,10 +33,10 @@
 #include "bios.h"
 #include "yabause.h"
 
-// #define SH2_TRACE  // Uncomment to enable tracing
+
 
 #ifdef SH2_TRACE
-# include "sh2trace.h"
+#include "sh2trace.h"
 # define MappedMemoryWriteByte(a,v)  do { \
     uint32_t __a = (a), __v = (v);        \
     sh2_trace_writeb(__a, __v);           \
@@ -52,7 +52,18 @@
     sh2_trace_writel(__a, __v);           \
     MappedMemoryWriteLong(__a, __v);      \
 } while (0)
+
+void SetInsTracingToggle(int toggle)
+{
+	SH2SetInsTracing(toggle ? 1 : 0);
+}
+#else
+void SetInsTracingToggle(int toggle)
+{
+
+}
 #endif
+
 
 
 opcodefunc opcodes[0x10000];
@@ -133,36 +144,101 @@ fetchfunc fetchlist[0x100];
 
 //////////////////////////////////////////////////////////////////////////////
 
+static INLINE void SH2HandleInterrupts(SH2_struct *context)
+{
+  if (context->NumberOfInterrupts != 0)
+  {
+    if (context->interrupts[context->NumberOfInterrupts - 1].level > context->regs.SR.part.I)
+    {
+      u32 oldpc = context->regs.PC;
+      u32 persr = context->regs.SR.part.I;
+      context->regs.R[15] -= 4;
+      MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
+      context->regs.R[15] -= 4;
+      MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
+      context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
+      context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
+      //LOG("[%s] Exception %u, vecnum=%u, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
+      context->NumberOfInterrupts--;
+      context->isIdle = 0;
+      context->isSleeping = 0;
+    }
+}
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+
 static u32 FASTCALL FetchBios(u32 addr)
 {
+  if (yabsys.extend_backup) {
+    const u32 bupaddr = 0x0007d600;
+    if (addr == bupaddr) {
+      return 0;
+    }
+    else if (yabsys.extend_backup == 2 &&
+      addr >= 0x0380 &&
+      addr <= 0x03A8) {
+      return 0;
+    }
+  }
+
+#if CACHE_ENABLE
+   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
    return T2ReadWord(BiosRom, addr & 0x7FFFF);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchCs0(u32 addr)
 {
+#if CACHE_ENABLE
+   return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
    return CartridgeArea->Cs0ReadWord(addr);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchLWram(u32 addr)
 {
-   return T2ReadWord(LowWram, addr & 0xFFFFF);
+#if CACHE_ENABLE
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
+	return T2ReadWord(LowWram, addr & 0xFFFFF);
+#endif
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchHWram(u32 addr)
 {
-   return T2ReadWord(HighWram, addr & 0xFFFFF);
+#if CACHE_ENABLE
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+#else
+	return T2ReadWord(HighWram, addr & 0xFFFFF);
+#endif
 }
+
+extern u8 * Vdp1Ram;
+static u32 FASTCALL FetchVram(u32 addr)
+{
+  addr &= 0x07FFFF;
+  return T1ReadWord(Vdp1Ram, addr);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FetchInvalid(UNUSED u32 addr)
 {
+#ifdef DMPHISTORY
+  SH2DumpHistory(CurrentSH2);
+#endif
    return 0xFFFF;
 }
 
@@ -181,9 +257,16 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 #endif
    sh->instruction = fetchlist[(addr >> 20) & 0x0FF](addr);
 
+#ifdef DMPHISTORY
+   sh->pchistory_index++;
+   sh->pchistory[sh->pchistory_index & 0xFF] = addr;
+   sh->regshistory[sh->pchistory_index & 0xFF] = sh->regs;
+#endif
+
    // Execute it
-   opcodes[sh->instruction](sh);
    sh->regs.PC -= 2;
+   opcodes[sh->instruction](sh);
+   
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -192,7 +275,23 @@ static void FASTCALL SH2undecoded(SH2_struct * sh)
 {
    int vectnum;
 
-   if (yabsys.emulatebios)
+   if (yabsys.extend_backup) {
+       const u32 bupaddr = 0x0007d600; // MappedMemoryReadLong(0x06000358);
+       if (sh->regs.PC == bupaddr) {
+         LOG("BUP_Init");
+         BiosBUPInit(sh);
+         yabsys.extend_backup = 2;
+         return;
+       }
+       else if (yabsys.extend_backup == 2 &&
+         sh->regs.PC >= 0x0380 &&
+         sh->regs.PC <= 0x03A8) {
+         BiosHandleFunc(sh);
+         return;
+       }
+   }
+
+   if (yabsys.emulatebios )
    {
       if (BiosHandleFunc(sh))
          return;
@@ -736,7 +835,12 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
    s32 tempm,tempn,fnLmL;
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
-  
+
+   const u64 result = (s64)(s32)sh->regs.R[n] * (s32)sh->regs.R[m];
+
+   sh->regs.MACL = result >> 0;
+   sh->regs.MACH = result >> 32;
+#if 0  
    tempn = (s32)sh->regs.R[n];
    tempm = (s32)sh->regs.R[m];
    if (tempn < 0)
@@ -783,6 +887,7 @@ static void FASTCALL SH2dmuls(SH2_struct * sh)
    }
    sh->regs.MACH = Res2;
    sh->regs.MACL = Res0;
+#endif
    sh->regs.PC += 2;
    sh->cycles += 2;
 }
@@ -966,6 +1071,7 @@ static void FASTCALL SH2ldcsr(SH2_struct * sh)
    sh->regs.SR.all = sh->regs.R[INSTRUCTION_B(sh->instruction)]&0x000003F3;
    sh->regs.PC += 2;
    sh->cycles++;
+   SH2HandleInterrupts(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1043,98 +1149,155 @@ static void FASTCALL SH2ldspr(SH2_struct * sh)
 
 static void FASTCALL SH2macl(SH2_struct * sh)
 {
-   u32 RnL,RnH,RmL,RmH,Res0,Res1,Res2;
-   u32 temp0,temp1,temp2,temp3;
-   s32 tempm,tempn,fnLmL;
-   s32 m = INSTRUCTION_C(sh->instruction);
-   s32 n = INSTRUCTION_B(sh->instruction);
+  s32 m = INSTRUCTION_C(sh->instruction);
+  s32 n = INSTRUCTION_B(sh->instruction);
+  s32 m0, m1;
 
-   tempn = (s32) MappedMemoryReadLong(sh->regs.R[n]);
-   sh->regs.R[n] += 4;
-   tempm = (s32) MappedMemoryReadLong(sh->regs.R[m]);
-   sh->regs.R[m] += 4;
+  m1 = (s32)MappedMemoryReadLong(sh->regs.R[n]);
+  sh->regs.R[n] += 4;
+  m0 = (s32)MappedMemoryReadLong(sh->regs.R[m]);
+  sh->regs.R[m] += 4;
 
-   if ((s32) (tempn^tempm) < 0)
-      fnLmL = -1;
-   else
-      fnLmL = 0;
-   if (tempn < 0)
-      tempn = 0 - tempn;
-   if (tempm < 0)
-      tempm = 0 - tempm;
-
-   temp1 = (u32) tempn;
-   temp2 = (u32) tempm;
-
-   RnL = temp1 & 0x0000FFFF;
-   RnH = (temp1 >> 16) & 0x0000FFFF;
-   RmL = temp2 & 0x0000FFFF;
-   RmH = (temp2 >> 16) & 0x0000FFFF;
-
-   temp0 = RmL * RnL;
-   temp1 = RmH * RnL;
-   temp2 = RmL * RnH;
-   temp3 = RmH * RnH;
-
-   Res2 = 0;
-   Res1 = temp1 + temp2;
-   if (Res1 < temp1)
-      Res2 += 0x00010000;
-
-   temp1 = (Res1 << 16) & 0xFFFF0000;
-   Res0 = temp0 + temp1;
-   if (Res0 < temp0)
-      Res2++;
-
-   Res2=Res2+((Res1>>16)&0x0000FFFF)+temp3;
-
-   if(fnLmL < 0)
-   {
-      Res2=~Res2;
-      if (Res0==0)
-         Res2++;
+#if 1 // fast and better
+  u64 a, b, sum;
+  a = sh->regs.MACL | ((u64)sh->regs.MACH << 32);
+  b = (s64)m0 * m1;
+  sum = a + b;
+  if (sh->regs.SR.part.S == 1) {
+    if (sum > 0x00007FFFFFFFFFFFULL && sum < 0xFFFF800000000000ULL)
+    {
+      if ((s64)b < 0)
+        sum = 0xFFFF800000000000ULL;
       else
-         Res0=(~Res0)+1;
-   }
-   if(sh->regs.SR.part.S == 1)
-   {
-      Res0=sh->regs.MACL+Res0;
-      if (sh->regs.MACL>Res0)
-         Res2++;
-      if (sh->regs.MACH & 0x00008000);
-      else Res2 += sh->regs.MACH | 0xFFFF0000;
-      Res2+=(sh->regs.MACH&0x0000FFFF);
-      if(((s32)Res2<0)&&(Res2<0xFFFF8000))
-      {
-         Res2=0x00008000;
-         Res0=0x00000000;
-      }
-      if(((s32)Res2>0)&&(Res2>0x00007FFF))
-      {
-         Res2=0x00007FFF;
-         Res0=0xFFFFFFFF;
-      };
+        sum = 0x00007FFFFFFFFFFFULL;
+    }
+  }
+  sh->regs.MACL = sum;
+  sh->regs.MACH = sum >> 32;
+#else
+  if ((s32)(tempn^tempm) < 0)
+    fnLmL = -1;
+  else
+    fnLmL = 0;
+  if (tempn < 0)
+    tempn = 0 - tempn;
+  if (tempm < 0)
+    tempm = 0 - tempm;
 
-      sh->regs.MACH=Res2;
-      sh->regs.MACL=Res0;
-   }
-   else
-   {
-      Res0=sh->regs.MACL+Res0;
-      if (sh->regs.MACL>Res0)
-         Res2++;
-      Res2+=sh->regs.MACH;
+  temp1 = (u32)tempn;
+  temp2 = (u32)tempm;
 
-      sh->regs.MACH=Res2;
-      sh->regs.MACL=Res0;
-   }
+  RnL = temp1 & 0x0000FFFF;
+  RnH = (temp1 >> 16) & 0x0000FFFF;
+  RmL = temp2 & 0x0000FFFF;
+  RmH = (temp2 >> 16) & 0x0000FFFF;
 
-   sh->regs.PC+=2;
-   sh->cycles += 3;
+  temp0 = RmL * RnL;
+  temp1 = RmH * RnL;
+  temp2 = RmL * RnH;
+  temp3 = RmH * RnH;
+
+  Res2 = 0;
+  Res1 = temp1 + temp2;
+  if (Res1 < temp1)
+    Res2 += 0x00010000;
+
+  temp1 = (Res1 << 16) & 0xFFFF0000;
+  Res0 = temp0 + temp1;
+  if (Res0 < temp0)
+    Res2++;
+
+  Res2 = Res2 + ((Res1 >> 16) & 0x0000FFFF) + temp3;
+
+  if (fnLmL < 0)
+  {
+    Res2 = ~Res2;
+    if (Res0 == 0)
+      Res2++;
+    else
+      Res0 = (~Res0) + 1;
+  }
+  if (sh->regs.SR.part.S == 1)
+  {
+    Res0 = sh->regs.MACL + Res0;
+    if (sh->regs.MACL>Res0)
+      Res2++;
+    //if (sh->regs.MACH & 0x00008000);
+    //else Res2 += sh->regs.MACH | 0xFFFF0000;
+
+    if (sh->regs.MACH & 0x00008000) {
+      Res2 -= (sh->regs.MACH & 0x0000FFFF);
+    }
+    else {
+      Res2 += (sh->regs.MACH & 0x0000FFFF);
+    }
+    if (((s32)Res2<0) && (Res2<0xFFFF8000))
+    {
+      Res2 = 0x00008000;
+      Res0 = 0x00000000;
+    }
+    if (((s32)Res2>0) && (Res2>0x00007FFF))
+    {
+      Res2 = 0x00007FFF;
+      Res0 = 0xFFFFFFFF;
+    };
+
+    sh->regs.MACH = Res2;
+    sh->regs.MACL = Res0;
+  }
+  else
+  {
+    Res0 = sh->regs.MACL + Res0;
+    if (sh->regs.MACL>Res0)
+      Res2++;
+    Res2 += sh->regs.MACH;
+
+    sh->regs.MACH = Res2;
+    sh->regs.MACL = Res0;
+  }
+#endif
+  sh->regs.PC += 2;
+  sh->cycles += 3;
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#if 1
+static void FASTCALL SH2macw(SH2_struct * sh)
+{
+  s16 m0, m1;
+  u32 templ;
+  s32 m = INSTRUCTION_C(sh->instruction);
+  s32 n = INSTRUCTION_B(sh->instruction);
 
+  m0 = (s32)MappedMemoryReadWord(sh->regs.R[m]);
+  sh->regs.R[m] += 2;
+  m1 = (s32)MappedMemoryReadWord(sh->regs.R[n]);
+  sh->regs.R[n] += 2;
+
+  s32 b = (s32)m0 * m1;
+  u64 sum = (s64)(s32)sh->regs.MACL + b;
+
+  if (sh->regs.SR.part.S == 1) {
+    if (sum > 0x000000007FFFFFFFULL && sum < 0xFFFFFFFF80000000ULL)
+    {
+      sh->regs.MACH |= 1;
+
+      if (b < 0)
+        sum = 0x80000000ULL;
+      else
+        sum = 0x7FFFFFFFULL;
+    }
+    sh->regs.MACL = sum;
+  }
+  else {
+    sh->regs.MACL = sum;
+    sh->regs.MACH = sum >> 32;
+  }
+  sh->regs.PC += 2;
+  sh->cycles += 3;
+}
+
+#else
 static void FASTCALL SH2macw(SH2_struct * sh)
 {
    s32 tempm,tempn,dest,src,ans;
@@ -1189,6 +1352,7 @@ static void FASTCALL SH2macw(SH2_struct * sh)
    sh->regs.PC+=2;
    sh->cycles += 3;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2676,6 +2840,9 @@ int SH2InterpreterInit()
          case 0x020: // CS0
             fetchlist[i] = FetchCs0;
             break;
+         case 0x05c: // Fighting Viper
+            fetchlist[i] = FetchVram;
+            break;
          case 0x060: // High Work Ram
          case 0x061: 
          case 0x062: 
@@ -2757,46 +2924,46 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
    context->onchip.BRCR |= flag;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-static INLINE void SH2HandleInterrupts(SH2_struct *context)
+void SH2HandleBreakpoints(SH2_struct *context)
 {
-   if (context->NumberOfInterrupts != 0)
-   {
-      if (context->interrupts[context->NumberOfInterrupts-1].level > context->regs.SR.part.I)
-      {
-         context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context->regs.R[15], context->regs.SR.all);
-         context->regs.R[15] -= 4;
-         MappedMemoryWriteLong(context->regs.R[15], context->regs.PC);
-         context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts-1].level;
-         context->regs.PC = MappedMemoryReadLong(context->regs.VBR + (context->interrupts[context->NumberOfInterrupts-1].vector << 2));
-         context->NumberOfInterrupts--;
-         context->isIdle = 0;
-         context->isSleeping = 0;
-      }
-   }
+  int i;
+
+  for (i = 0; i < context->bp.numcodebreakpoints; i++) {
+
+    if ((context->regs.PC == context->bp.codebreakpoint[i].addr) && context->bp.inbreakpoint == 0) {
+      context->bp.inbreakpoint = 1;
+      SH2DumpHistory(context);
+      if (context->bp.BreakpointCallBack)
+        context->bp.BreakpointCallBack(context, context->bp.codebreakpoint[i].addr, context->bp.BreakpointUserData);
+      context->bp.inbreakpoint = 0;
+    }
+  }
+
+  if (context->bp.breaknow) {
+    context->bp.breaknow = 0;
+    context->bp.BreakpointCallBack(context, context->regs.PC, context->bp.BreakpointUserData);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
+  u32 target_cycle = context->cycles + cycles;
 #ifdef SH2_TRACE
    /* Avoid accumulating leftover cycles multiple times, since the trace
     * code automatically adds state->cycles to the cycle accumulator when
     * printing a trace line */
-   sh2_trace_add_cycles(-(context->cycles));
+   sh2_trace_add_cycles(-((s32)context->cycles));
 #endif
-
+   
    SH2HandleInterrupts(context);
 
-   while(context->cycles < cycles)
+   while (context->cycles < target_cycle)
    {
 #ifdef SH2_UBC   	   
       int ubcinterrupt=0, ubcflag=0;
 #endif
-	
       SH2HandleBreakpoints(context);
 
 #ifdef SH2_TRACE
@@ -2853,15 +3020,14 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
       SH2HandleStepOverOut(context);
       SH2HandleTrackInfLoop(context);
 
+#ifdef DMPHISTORY
+	  context->pchistory_index++;
+	  context->pchistory[context->pchistory_index & 0xFF] = context->regs.PC;
+	  context->regshistory[context->pchistory_index & 0xFF] = context->regs;
+#endif
+
       // Execute it
       opcodes[context->instruction](context);
-
-		//if (MappedMemoryReadLong(0x06000930) == 0x00000009)
-		if (context->regs.PC == 0x060273AA)
-		{
-			int test=0;
-			test = 1;
-		}
 
 #ifdef SH2_UBC
 	  if (ubcinterrupt)
@@ -2874,20 +3040,29 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 }
 
+
 //////////////////////////////////////////////////////////////////////////////
 
 FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 {
-   SH2HandleInterrupts(context);
+  u32 target_cycle = context->cycles + cycles;
+  SH2HandleInterrupts(context);
 
+#ifndef EXEC_FROM_CACHE
    if (context->isIdle)
-      SH2idleParse(context, cycles);
+     SH2idleParse(context, target_cycle);
    else
-      SH2idleCheck(context, cycles);
+     SH2idleCheck(context, target_cycle);
+#endif
 
-   while(context->cycles < cycles)
+   while (context->cycles < target_cycle)
    {
+
       // Fetch Instruction
+#ifdef EXEC_FROM_CACHE
+      if ((context->regs.PC & 0xC0000000) == 0xC0000000) context->instruction = DataArrayReadWord(context->regs.PC);
+      else
+#endif
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context->regs.PC);
 
       // Execute it
@@ -3033,6 +3208,11 @@ void SH2InterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
    {
       if (context->interrupts[i].vector == vector)
          return;
+   }
+
+   // Ignore Timer0 and Timer1 when masked
+   if ((vector == 67 || vector == 68) && level <= context->regs.SR.part.I){
+     return;
    }
 
    context->interrupts[context->NumberOfInterrupts].level = level;

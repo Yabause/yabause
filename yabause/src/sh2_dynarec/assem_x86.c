@@ -459,7 +459,7 @@ void alloc_x86_reg(struct regstat *cur,int i,signed char reg,char hr)
 }
 
 // Alloc cycle count into dedicated register
-alloc_cc(struct regstat *cur,int i)
+void alloc_cc(struct regstat *cur,int i)
 {
   alloc_x86_reg(cur,i,CCREG,ESI);
 }
@@ -2771,7 +2771,7 @@ void restore_regs(u32 reglist)
 
 /* Stubs/epilogue */
 
-emit_extjump(pointer addr, int target)
+void emit_extjump(pointer addr, int target)
 {
   u8 *ptr=(u8 *)addr;
   if(*ptr==0x0f)
@@ -2801,7 +2801,7 @@ emit_extjump(pointer addr, int target)
   emit_jmp((pointer)dyna_linker);
 }
 
-do_readstub(int n)
+void do_readstub(int n)
 {
   assem_debug("do_readstub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
@@ -2924,7 +2924,7 @@ do_readstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
   assem_debug("inline_readstub\n");
   //int rs=get_reg(regmap,target);
@@ -2960,7 +2960,7 @@ inline_readstub(int type, int i, u32 addr, signed char regmap[], int target, int
   restore_regs(reglist);
 }
 
-do_writestub(int n)
+void do_writestub(int n)
 {
   assem_debug("do_writestub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
@@ -3056,7 +3056,7 @@ do_writestub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
+void inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, int adj, u32 reglist)
 {
   assem_debug("inline_writestub\n");
   //int rs=get_reg(regmap,-1);
@@ -3076,7 +3076,7 @@ inline_writestub(int type, int i, u32 addr, signed char regmap[], int target, in
   restore_regs(reglist);
 }
 
-do_rmwstub(int n)
+void do_rmwstub(int n)
 {
   assem_debug("do_rmwstub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
@@ -3161,7 +3161,7 @@ do_rmwstub(int n)
   emit_jmp(stubs[n][2]); // return address
 }
 
-do_unalignedwritestub(int n)
+void do_unalignedwritestub(int n)
 {
   set_jump_target(stubs[n][1],(int)out);
   output_byte(0xCC);
@@ -3222,7 +3222,7 @@ int do_map_r_branch(int map, int c, u32 addr, int *jaddr)
   return map;
 }
 
-int gen_tlb_addr_r(int ar, int map) {
+void gen_tlb_addr_r(int ar, int map) {
   if(map>=0) {
     emit_leairrx4(0,ar,map,ar);
   }
@@ -3248,7 +3248,7 @@ int do_map_w(int s,int ar,int map,int cache,int x,int c,u32 addr)
   emit_shlimm(map,2,map);
   return map;
 }
-int do_map_w_branch(int map, int c, u32 addr, int *jaddr)
+void do_map_w_branch(int map, int c, u32 addr, int *jaddr)
 {
   if(!c||can_direct_write(addr)) {
     *jaddr=(int)out;
@@ -3256,14 +3256,14 @@ int do_map_w_branch(int map, int c, u32 addr, int *jaddr)
   }
 }
 
-int gen_tlb_addr_w(int ar, int map) {
+void gen_tlb_addr_w(int ar, int map) {
   if(map>=0) {
     emit_leairrx1(0,ar,map,ar);
   }
 }
 
 // We don't need this for x86
-generate_map_const(u32 addr,int reg) {
+void generate_map_const(u32 addr,int reg) {
   // void *mapaddr=memory_map+(addr>>12);
 }
 

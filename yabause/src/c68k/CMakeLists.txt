@@ -1,6 +1,13 @@
+
+if( CMAKE_GENERATOR MATCHES "Ninja" AND CMAKE_HOST_WIN32 )
+SET(CMAKE_C_COMPILER  "cl.exe"  )
+SET(CMAKE_RC_COMPILER  "cvtres.exe" )
+endif()
+
 project(gen68k)
 
 cmake_minimum_required(VERSION 2.6)
+
 
 include(CheckCSourceCompiles)
 
@@ -17,7 +24,10 @@ set(gen68k_SOURCES c68kexec.c c68k.c gen68k.c)
 add_definitions(-DC68K_GEN)
 if (MSVC)
 	add_definitions(-DC68K_NO_JUMP_TABLE)
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif (MSVC)
+
+
 
 add_executable(gen68k ${gen68k_SOURCES})
 

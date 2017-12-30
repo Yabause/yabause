@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/exit"
+        android:icon="@android:drawable/ic_lock_power_off"
+        android:title="@string/menu_exit" />
+
+    <item android:id="@+id/button_open_cd"
+        android:icon="@drawable/ic_menu_cd"
+        android:title="@string/open_cd_tray" />
+
+    <item android:id="@+id/reset"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="@string/menu_reset" />
+
+
+    <item
+        android:id="@+id/menu_item_cheat"
+        android:icon="@android:drawable/ic_lock_idle_lock"
+        android:title="@string/menu_cheat" />
+
+    <group
+        android:id="@+id/menu_other" >
+        <item
+            android:id="@+id/menu_item_backup"
+            android:icon="@android:drawable/ic_menu_save"
+            android:title="@string/memory_manager" />
+
+        <item android:id="@+id/save_state"
+            android:title="@string/menu_save_state" />
+
+        <item android:id="@+id/load_state"
+            android:title="@string/menu_load_state" />
+    </group>
+
+    <item android:id="@+id/report"
+        android:icon="@android:drawable/ic_menu_send"
+        android:title="@string/menu_report" />
+
+    <item android:id="@+id/pad_mode"
+        android:checkable="true"
+        android:icon="@drawable/marukon"
+        android:title="@string/menu_analog" />
+
+
+
+</menu>

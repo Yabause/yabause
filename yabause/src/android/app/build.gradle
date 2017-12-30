@@ -1,0 +1,122 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 26
+    buildToolsVersion "26.0.1"
+
+    defaultConfig {
+        applicationId "org.uoyabause.android"
+        minSdkVersion 19
+        targetSdkVersion 25
+        multiDexEnabled true
+        versionCode 17
+        versionName '1.0.5'
+        multiDexEnabled true
+
+/*
+        externalNativeBuild {
+
+            // For ndk-build, instead use ndkBuild {}
+            cmake {
+
+                //cd  Passes optional arguments to CMake.
+                arguments "-DANDROID_ABI=armeabi-v7a","-DANDROID_NATIVE_API_LEVEL=19","-DYAB_PORTS=android",
+                        "-DYAB_WANT_C68K=FALSE","-DYAB_WANT_ARM7=TRUE","-DYAB_WANT_DYNAREC_DEVMIYAX=TRUE",
+                        "-DANDROID_FORCE_ARM_BUILD=FALSE","-DCMAKE_BUILD_TYPE=Release"
+            }
+        }
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            abiFilters 'armeabi-v7a'
+        }
+*/
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                renameAPK(variant, defaultConfig, 'R')
+            }
+        }
+/*
+        debug {
+            applicationVariants.all { variant ->
+                renameAPK(variant, defaultConfig, 'T')
+            }
+        }
+*/
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+/*
+    externalNativeBuild {
+        cmake {
+            path '../../../CMakeLists.txt'
+        }
+    }
+*/
+}
+
+def renameAPK(variant, defaultConfig, buildType) {
+    variant.outputs.each { output ->
+        def formattedDate = new Date().format('yyMMdd')
+
+        def file = output.packageApplication.outputFile
+        def fileName = applicationName + "_V" + defaultConfig.versionCode + "_" + defaultConfig.versionName + "_" + formattedDate + "_" + buildType + ".apk"
+        output.packageApplication.outputFile = new File(file.parent, fileName)
+    }
+}
+
+allprojects {
+    repositories {
+        maven {
+            url "https://maven.google.com"
+        }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url 'http://fan-adn.github.io/nendSDK-Android-lib/library' }
+        maven { url 'https://maven.fabric.io/public' }
+        jcenter()
+    }
+}
+
+//repositories {
+//    mavenCentral()
+//    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+//    maven { url 'http://fan-adn.github.io/nendSDK-Android-lib/library' }
+//    maven { url 'https://maven.fabric.io/public' }
+//}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.firebaseui:firebase-ui-auth:2.3.0'
+    //compile 'com.android.support:recommendation:25.1.1'
+    compile 'com.google.firebase:firebase-core:11.0.4'
+    compile 'com.google.firebase:firebase-database:11.0.4'
+    compile 'com.google.firebase:firebase-storage:11.0.4'
+    compile 'com.google.firebase:firebase-crash:11.0.4'
+    compile 'com.google.firebase:firebase-ads:11.0.4'
+    compile 'com.google.firebase:firebase-messaging:11.0.4'
+    compile 'com.google.firebase:firebase-invites:11.0.4'
+    compile 'com.google.firebase:firebase-config:11.0.4'
+    compile 'com.google.android.gms:play-services-analytics:11.0.4'
+    compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
+    compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:leanback-v17:25.3.1'
+    compile 'com.github.bumptech.glide:glide:3.4.0'
+    compile 'commons-io:commons-io:2.4'
+    compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
+    compile 'com.squareup.okhttp3:okhttp:3.8.1'
+    compile 'com.android.support:support-v4:25.3.1'
+    compile 'com.google.code.gson:gson:2.2.4'
+    compile 'com.android.support:multidex:1.0.0'
+}
+
+// ADD THIS AT THE BOTTOM
+apply plugin: 'com.google.gms.google-services'
