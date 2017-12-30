@@ -86,7 +86,7 @@ after_build:
   - appveyor PushArtifact %yab_name%.zip
 
   # Upload build to yabause.org
-  - ps: ${env:yab_name_alt} = "yabause-latest-win64"
+  #- ps: ${env:yab_name_alt} = "yabause-latest-win64"
   #- ps: ${env:yab_name_alt2} = "yabause-${git_hash_date}-win64"
-  - if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] if not defined APPVEYOR_PULL_REQUEST_NUMBER curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt%.zip
+  #- if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] if not defined APPVEYOR_PULL_REQUEST_NUMBER curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt%.zip
   #- if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] curl --ftp-create-dirs -T %yab_name%.zip -u %YABUSR%:%YABPAS% ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/%yab_name_alt2%.zip
