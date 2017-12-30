@@ -380,6 +380,8 @@ if (YAB_WANT_SDL)
 		set(yabause_HEADERS ${yabause_HEADERS} persdljoy.h sndsdl.h)
 	endif()
 
+	add_definitions(-DYAB_ASYNC_RENDERING)
+
 endif()
 
 # OpenAL
