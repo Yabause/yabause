@@ -1,35 +1,25 @@
 environment:
   MINGW: C:\Qt\Tools\mingw492_32
+  DXSDK_DIR: "C:/Program Files (x86)/Microsoft DirectX SDK (June 2010)"
   CMAKE_BUILD_TYPE: Release
   # set to d if debug build
   qt_dll_suffix: ""
 
   matrix:
     # Visual Studio build
-    - generator: "Visual Studio 12 Win64"
-      CMAKE_PREFIX_PATH: C:\Qt\5.4\msvc2013_64_opengl
-      compiler_type: "vs12-x64"
+    - generator: "Visual Studio 12 2013"
+      CMAKE_PREFIX_PATH: C:\Qt\5.4\msvc2013_opengl
+      compiler_type: "vs12-x32"
       sdl_filename: SDL2-devel-2.0.3-VC.zip
-      sdl_arch: x64
-      cmake_args: "-DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON -DYAB_NETWORK=ON -DYAB_WANT_GDBSTUB=ON"
-
-    # MingGW x86 build
-    - generator: "MinGW Makefiles"
-      CMAKE_PREFIX_PATH: C:\Qt\5.5\mingw492_32
-      CMAKE_C_COMPILER: gcc
-      CMAKE_CXX_COMPILER: g++ 
-      CMAKE_MAKE_PROGRAM: mingw32-make.exe
-      compiler_type: "mingw32"
-
-    # filename on the sdl website
-      sdl_filename: SDL2-devel-2.0.3-mingw.tar.gz
       sdl_arch: x86
-
-    # included directx headers incompatible with mingw
-      cmake_args: "-DYAB_NETWORK=ON -DYAB_WANT_GDBSTUB=ON"
-
-    # MSYS2 x86_64 build
-    - compiler_type: "msys2-mingw-w64-x86_64"
+      cmake_args: >
+        -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE -DYAB_WANT_DIRECTINPUT=TRUE -DYAB_WANT_DIRECTSOUND=TRUE -DYAB_WANT_SDL=TRUE
+        -DDirectX_ERR_LIBRARY="%DXSDK_DIR%/Lib/x86/DxErr.lib"
+        -DDirectX_GUID_LIBRARY="%DXSDK_DIR%/Lib/x86/dxguid.lib"
+        -DDirectX_INPUT8_LIBRARY="%DXSDK_DIR%/Lib/x86/dinput8.lib"
+        -DDirectX_SOUND_LIBRARY="%DXSDK_DIR%/Lib/x86/dsound.lib"
+        -DDirectX_XINPUT_LIBRARY="%DXSDK_DIR%/Lib/x86/XInput.lib"
+        -DSH2_DYNAREC=FALSE
 
 shallow_clone: true
 
@@ -42,36 +32,22 @@ init:
   - set Path=%MINGW%\bin;%Path%
 
 before_build:
+  - dir "%DXSDK_DIR%/Lib/x86/"
   # fetch appropriate sdl lib for visual studio or mingw
   - cd c:\
-  - if NOT ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] appveyor DownloadFile https://www.libsdl.org/release/%sdl_filename%
+  - appveyor DownloadFile https://www.libsdl.org/release/%sdl_filename%
 
   # decompress it, shorten 7z output with FIND
-  - if NOT ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] 7z x %sdl_filename%  | FIND /V "ing  "
-
-  # mingw version is a tar.gz, decompress again
-  - if [%sdl_filename%]==[SDL2-devel-2.0.3-mingw.tar.gz] 7z x SDL2-devel-2.0.3-mingw.tar | FIND /V "ing  "
+  - 7z x %sdl_filename%  | FIND /V "ing  "
 
   # generate project files or makefiles
   - cd C:\projects\yabause\yabause
   - mkdir build
   - cd build
-  - if NOT ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] cmake -G "%generator%" %cmake_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
-
-  #MSYS2
-  - if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] set MSYSTEM=MINGW64
-  - if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] set PATH=C:\msys64\mingw64\bin;C:\msys64\usr\bin;C:\msys64;%PATH%
-  - if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] C:\msys64\usr\bin\bash -lc "pacman --noconfirm -Sy"
-  - if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw64/mingw-w64-x86_64-SDL2 mingw-w64-x86_64-binutils mingw64/mingw-w64-x86_64-qt5 mingw-w64-x86_64-crt-git mingw-w64-x86_64-headers-git mingw64/mingw-w64-x86_64-libwebp"
-  - if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] C:\msys64\usr\bin\bash -lc "cd C:/projects/yabause/yabause/build ; cmake -G\"MSYS Makefiles\" -DCMAKE_BUILD_TYPE=Release -DDirectX_INCLUDE_DIR=C:/msys64/mingw64/x86_64-w64-mingw32/include -DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON -DYAB_NETWORK=ON -DYAB_WANT_GDBSTUB=ON -DMSYS2_BUILD=ON -DCMAKE_PREFIX_PATH=\"C:/msys64/mingw64/bin;C:/msys64/mingw64/include;C:/msys64/mingw64/lib;C:/msys64/mingw64/x86_64-w64-mingw32/include;C:/msys64/mingw64/x86_64-w64-mingw32/lib\" -DSDL2_LIBRARY=C:/msys64/mingw64/lib/libSDL2.dll.a .."
+  - cmake -G "%generator%" %cmake_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
 
 build_script:
-  - if ["%compiler_type%"]==["mingw32"] cmake --build .
-
-  - if ["%compiler_type%"]==["msys2-mingw-w64-x86_64"] C:\msys64\usr\bin\bash -lc "cd C:/projects/yabause/yabause/build ; make "
-
-  # force a release build and only show errors to shorten output
-  - if ["%compiler_type%"]==["vs12-x64"] msbuild yabause.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild yabause.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 # make a distributable package of the build output
 after_build:
@@ -84,6 +60,8 @@ after_build:
   - ps: ${env:yab_name} = "yabause-${git_hash_date}-${env:compiler_type}"
   - cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
   - appveyor PushArtifact %yab_name%.zip
+
+  #- appveyor PushArtifact "C:/projects/yabause/yabause/build/src/qt/Debug/yabause.exe"
 
   # Upload build to yabause.org
   #- ps: ${env:yab_name_alt} = "yabause-latest-win64"
