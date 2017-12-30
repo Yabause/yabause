@@ -34,6 +34,10 @@
 #define CDCORE_ISO      1
 #define CDCORE_ARCH     2
 
+#define CDCORE_NORMAL 0
+#define CDCORE_NODISC 2
+#define CDCORE_OPEN   3
+
 typedef struct
 {
         int id;
@@ -44,6 +48,7 @@ typedef struct
         s32 (*ReadTOC)(u32 *TOC);
         int (*ReadSectorFAD)(u32 FAD, void *buffer);
         void (*ReadAheadFAD)(u32 FAD);
+		void(*SetStatus)(int status);
 } CDInterface;
 
 extern CDInterface DummyCD;

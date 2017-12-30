@@ -35,6 +35,7 @@ extern "C"
 	#include "../cs0.h"
 	#include "../cdbase.h"
 	#include "../scsp.h"
+	#include "../scspdsp.h"
 	#include "../scu.h"
 	#include "../sndal.h"
 #ifdef HAVE_DIRECTSOUND
@@ -46,6 +47,7 @@ extern "C"
 #endif
 	#include "../persdljoy.h"
 	#include "../permacjoy.h"
+	#include "../perlinuxjoy.h"
 	#include "../debug.h"
 	#include "../m68kcore.h"
 	#include "../m68kc68k.h"
@@ -67,6 +69,10 @@ extern "C"
 
 #ifdef ARCH_IS_MACOSX
     #include "../sndmac.h"
+#endif
+
+#ifdef SH2_TRACE
+	#include "../sh2trace.h"
 #endif
 }
 
@@ -116,6 +122,7 @@ namespace QtYabause
 	OSD_struct defaultOSDCore();
 	PerInterface_struct defaultPERCore();
 	SH2Interface_struct defaultSH2Core();
+   M68K_struct default68kCore();
 	
 	// padsbits
 	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );

@@ -38,7 +38,7 @@
 #define PERWHEEL			0x13
 #define PERMISSIONSTICK	0x15
 #define PER3DPAD			0x16
-#define PERTWINSTICKS	0x19
+#define PERTWINSTICKS	0x19//double mission sticks use same id
 #define PERGUN				0x25
 #define PERKEYBOARD		0x34
 #define PERMOUSE			0xE3

@@ -36,6 +36,8 @@ YabauseThread::YabauseThread( QObject* o )
 	mPause = true;
 	mTimerId = -1;
 	mInit = -1;
+	memset(&mYabauseConf, 0, sizeof(mYabauseConf));
+	showFPS = false;
 }
 
 YabauseThread::~YabauseThread()
@@ -166,8 +168,56 @@ void YabauseThread::reloadControllers()
 					break;
 				}
 				case PERWHEEL:
-					QtYabause::mainWindow()->appendLog( "Wheel controller type is not yet supported" );
-					break;
+            {
+               PerAnalog_struct* analogbits = PerWheelAdd(port == 1 ? &PORTDATA1 : &PORTDATA2);
+
+               settings->beginGroup(QString("Input/Port/%1/Id/%2/Controller/%3/Key").arg(port).arg(id).arg(type));
+               QStringList analogKeys = settings->childKeys();
+               settings->endGroup();
+
+               analogKeys.sort();
+               foreach(const QString& analogKey, analogKeys)
+               {
+                  const QString key = settings->value(QString(UIPortManager::mSettingsKey).arg(port).arg(id).arg(type).arg(analogKey)).toString();
+
+                  PerSetKey(key.toUInt(), analogKey.toUInt(), analogbits);
+               }
+               break;
+            }
+            case PERMISSIONSTICK:
+            {
+               PerAnalog_struct* analogbits = PerMissionStickAdd(port == 1 ? &PORTDATA1 : &PORTDATA2);
+
+               settings->beginGroup(QString("Input/Port/%1/Id/%2/Controller/%3/Key").arg(port).arg(id).arg(type));
+               QStringList analogKeys = settings->childKeys();
+               settings->endGroup();
+
+               analogKeys.sort();
+               foreach(const QString& analogKey, analogKeys)
+               {
+                  const QString key = settings->value(QString(UIPortManager::mSettingsKey).arg(port).arg(id).arg(type).arg(analogKey)).toString();
+
+                  PerSetKey(key.toUInt(), analogKey.toUInt(), analogbits);
+               }
+               break;
+            }
+            case PERTWINSTICKS:
+            {
+               PerAnalog_struct* analogbits = PerTwinSticksAdd(port == 1 ? &PORTDATA1 : &PORTDATA2);
+
+               settings->beginGroup(QString("Input/Port/%1/Id/%2/Controller/%3/Key").arg(port).arg(id).arg(type));
+               QStringList analogKeys = settings->childKeys();
+               settings->endGroup();
+
+               analogKeys.sort();
+               foreach(const QString& analogKey, analogKeys)
+               {
+                  const QString key = settings->value(QString(UIPortManager::mSettingsKey).arg(port).arg(id).arg(type).arg(analogKey)).toString();
+
+                  PerSetKey(key.toUInt(), analogKey.toUInt(), analogbits);
+               }
+               break;
+            }
 				case PER3DPAD:
 				{
 					PerAnalog_struct* analogbits = Per3DPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
@@ -284,7 +334,7 @@ void YabauseThread::reloadSettings()
 	resetYabauseConf();
 
 	// read & apply settings
-	mYabauseConf.m68kcoretype = vs->value( "Advanced/M68KCore", mYabauseConf.m68kcoretype ).toInt();
+   mYabauseConf.m68kcoretype = vs->value("Advanced/68kCore", mYabauseConf.m68kcoretype).toInt();
 	mYabauseConf.percoretype = vs->value( "Input/PerCore", mYabauseConf.percoretype ).toInt();
 	mYabauseConf.sh2coretype = vs->value( "Advanced/SH2Interpreter", mYabauseConf.sh2coretype ).toInt();
 	mYabauseConf.vidcoretype = vs->value( "Video/VideoCore", mYabauseConf.vidcoretype ).toInt();
@@ -309,14 +359,33 @@ void YabauseThread::reloadSettings()
 			case 'L': mYabauseConf.regionid = 0xD; break;
 		}
 	}
-	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
-	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() ); 
+	if (vs->value("General/EnableEmulatedBios", false).toBool())
+		mYabauseConf.biospath = strdup( "" );
+	else
+		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
+   mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
+   mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
+	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
+	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
 	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
+  if (vs->value("Memory/ExtendMemory", true).toBool()) {
+    mYabauseConf.extend_backup = 1;
+  }else {
+    mYabauseConf.extend_backup = 0;
+  }
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
+	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
+	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
+   mYabauseConf.use_new_scsp = (int)vs->value("Sound/NewScsp", mYabauseConf.use_new_scsp).toBool();
 	
+	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
+	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
+  mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
+
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
@@ -335,6 +404,19 @@ bool YabauseThread::emulationPaused()
 {
 	//QMutexLocker l( &mMutex );
 	return mPause;
+}
+
+void YabauseThread::OpenTray(){
+	Cs2ForceOpenTray();
+}
+
+void YabauseThread::CloseTray(){
+
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	mYabauseConf.cdcoretype = vs->value("General/CdRom", mYabauseConf.cdcoretype).toInt();
+	mYabauseConf.cdpath = strdup(vs->value("General/CdRomISO", mYabauseConf.cdpath).toString().toLatin1().constData());
+
+	Cs2ForceCloseTray(mYabauseConf.cdcoretype, mYabauseConf.cdpath);
 }
 
 void YabauseThread::resetYabauseConf()
@@ -356,6 +438,13 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.mpegpath = 0;
 	mYabauseConf.cartpath = 0;
 	mYabauseConf.videoformattype = VIDEOFORMATTYPE_NTSC;
+	mYabauseConf.skip_load = 0;
+	int numThreads = QThread::idealThreadCount();	
+	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;
+	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
+	mYabauseConf.video_filter_type = 0;
+	mYabauseConf.polygon_generation_mode = 0;
+  mYabauseConf.resolution_mode = 0;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

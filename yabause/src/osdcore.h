@@ -20,13 +20,20 @@
 #ifndef OSDCORE_H
 #define OSDCORE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core.h"
 
 #define OSDCORE_DUMMY    0
 #define OSDCORE_GLUT     1
 #define OSDCORE_SOFT     2
+#define OSDCORE_NANOVG   3
 
-#ifdef HAVE_LIBGLUT
+#if defined(HAVE_LIBGL)
+	#define OSDCORE_DEFAULT  OSDCORE_NANOVG
+#elif defined(HAVE_LIBGLUT)
   #define OSDCORE_DEFAULT  OSDCORE_GLUT
 #else
   #define OSDCORE_DEFAULT  OSDCORE_SOFT
@@ -55,6 +62,8 @@ typedef struct {
 
     void (*DisplayMessage)(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
     int (*UseBuffer)(void);
+	void (*AddFrameProfileData)( char * label, u32 data );
+  void (*AddLogString)( char * log );
 } OSD_struct;
 
 int OSDInit(int coreid);
@@ -78,5 +87,13 @@ void ToggleFPS(void);
 int  GetOSDToggle(void);
 void SetOSDToggle(int toggle);
 void DisplayMessage(const char* str);
+
+void OSDAddFrameProfileData( char * label, u32 data );
+
+void  OSDAddLogString( char * log );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

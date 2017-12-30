@@ -42,6 +42,9 @@ M68K_struct * M68KCoreList[] = {
 #ifdef HAVE_C68K
 &M68KC68K,
 #endif
+#ifdef HAVE_MUSASHI
+&M68KMusashi,
+#endif
 NULL
 };
 
@@ -50,6 +53,10 @@ SH2Interface_struct *SH2CoreList[] = {
 &SH2DebugInterpreter,
 #ifdef SH2_DYNAREC
 &SH2Dynarec,
+#endif
+#if DYNAREC_DEVMIYAX
+&SH2Dyn,
+&SH2DynDebug,
 #endif
 NULL
 };
@@ -65,6 +72,9 @@ PerInterface_struct *PERCoreList[] = {
 #endif
 #ifdef HAVE_DIRECTINPUT
 &PERDIRECTX,
+#endif
+#ifdef ARCH_IS_LINUX
+&PERLinuxJoy,
 #endif
 NULL
 };
@@ -105,12 +115,16 @@ NULL
 };
 
 #ifdef YAB_PORT_OSD
+#include "nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
 &OSDDummy,
 #ifdef HAVE_LIBGLUT
 &OSDGlut,
 #endif
 &OSDSoft,
+#ifdef HAVE_LIBGL
+&OSDNnovg,
+#endif
 NULL
 };
 #endif
@@ -190,7 +204,11 @@ QList <translation_struct> QtYabause::getTranslationList()
 		// Find the locale
 		QLocale locale = QLocale(localeStr);	
 		// Now we should be good for the language name
+#if QT_VERSION < 0x040800
+		trans.name = locale.name();
+#else
 		trans.name = locale.nativeLanguageName();
+#endif
 		translations.append(trans);
 	}
 #endif
@@ -442,9 +460,20 @@ PerInterface_struct QtYabause::defaultPERCore()
 #endif
 }
 
+M68K_struct QtYabause::default68kCore()
+{
+#ifdef HAVE_C68K
+   return M68KC68K;
+#elif HAVE_MUSASHI
+   return M68KMusashi;
+#else
+   return M68KDummy;
+#endif
+}
+
 SH2Interface_struct QtYabause::defaultSH2Core()
 {
-	return SH2Interpreter;
+   return SH2Interpreter;
 }
 
 QMap<uint, PerPad_struct*>* QtYabause::portPadsBits( uint portNumber )

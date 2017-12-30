@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <ctype.h>
 #include <wchar.h>
 #include "cdbase.h"
 #include "error.h"
@@ -58,10 +59,18 @@ static char * wcsdupstr(const wchar_t * path)
 static FILE * _wfopen(const wchar_t *wpath, const wchar_t *wmode)
 {
    FILE * fd;
-   char * path = wcsdupstr(wpath);
-   char * mode = wcsdupstr(wmode);
+   char * path;
+   char * mode;
 
-   if ((path == NULL) || (mode == NULL)) return NULL;
+   path = wcsdupstr(wpath);
+   if (path == NULL) return NULL;
+
+   mode = wcsdupstr(wmode);
+   if (mode == NULL)
+   {
+      free(path);
+      return NULL;
+   }
 
    fd = fopen(path, mode);
 
@@ -82,6 +91,7 @@ static int DummyCDGetStatus(void);
 static s32 DummyCDReadTOC(u32 *);
 static int DummyCDReadSectorFAD(u32, void *);
 static void DummyCDReadAheadFAD(u32);
+static void DummyCDSetStatus(int status );
 
 CDInterface DummyCD = {
 CDCORE_DUMMY,
@@ -92,6 +102,7 @@ DummyCDGetStatus,
 DummyCDReadTOC,
 DummyCDReadSectorFAD,
 DummyCDReadAheadFAD,
+DummyCDSetStatus,
 };
 
 static int ISOCDInit(const char *);
@@ -100,6 +111,7 @@ static int ISOCDGetStatus(void);
 static s32 ISOCDReadTOC(u32 *);
 static int ISOCDReadSectorFAD(u32, void *);
 static void ISOCDReadAheadFAD(u32);
+static void ISOCDSetStatus(int status);
 
 CDInterface ISOCD = {
 CDCORE_ISO,
@@ -110,6 +122,7 @@ ISOCDGetStatus,
 ISOCDReadTOC,
 ISOCDReadSectorFAD,
 ISOCDReadAheadFAD,
+ISOCDSetStatus,
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -150,6 +163,10 @@ static int DummyCDGetStatus(void)
 	// another disc.
 
 	return 0;
+}
+
+static void DummyCDSetStatus(int status){
+	return;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -245,6 +262,7 @@ typedef struct
    u32 file_offset;
    u32 sector_size;
    FILE *fp;
+	FILE *sub_fp;
    int file_size;
    int file_id;
    int interleaved_sub;
@@ -328,11 +346,29 @@ typedef struct
 
 #pragma pack(pop)
 
+#define CCD_MAX_SECTION 20
+#define CCD_MAX_NAME 30
+#define CCD_MAX_VALUE 20
+
+typedef struct
+{
+	char section[CCD_MAX_SECTION];
+	char name[CCD_MAX_NAME];
+	char value[CCD_MAX_VALUE];
+} ccd_dict_struct;
+
+typedef struct
+{
+	ccd_dict_struct *dict;
+	int num_dict;
+} ccd_struct;
+
 static const s8 syncHdr[12] = { 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00 };
 enum IMG_TYPE { IMG_NONE, IMG_ISO, IMG_BINCUE, IMG_MDS, IMG_CCD, IMG_NRG };
 enum IMG_TYPE imgtype = IMG_ISO;
 static u32 isoTOC[102];
 static disc_info_struct disc;
+static int iso_cd_status = 0;
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 
@@ -340,7 +376,7 @@ static disc_info_struct disc;
 
 static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
-   u32 size;
+   long size;
    char *temp_buffer, *temp_buffer2;
    unsigned int track_num;
    unsigned int indexnum, min, sec, frame;
@@ -350,7 +386,9 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    int file_size;
    int i;
    FILE * bin_file;
+   int matched = 0;
 
+	memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
    disc.session = malloc(sizeof(session_info_struct) * disc.session_num);
    if (disc.session == NULL)
@@ -361,6 +399,13 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
    fseek(iso_file, 0, SEEK_END);
    size = ftell(iso_file);
+
+   if(size <= 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, cuefilename);
+      return -1;
+   }
+
    fseek(iso_file, 0, SEEK_SET);
 
    // Allocate buffer with enough space for reading cue
@@ -441,7 +486,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
    // Go back, retrieve image filename
    fseek(iso_file, 0, SEEK_SET);
-   fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
+   matched = fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
 
    // Now go and open up the image file, figure out its size, etc.
    if ((bin_file = fopen(temp_buffer, "rb")) == NULL)
@@ -542,14 +587,15 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
 {
    int i;
    int track_num=0;
-   u32 fad_end;
+   u32 fad_end = 0;
 
-   session->track = malloc(sizeof(mds_track_struct) * mds_session->last_track);
+   session->track = malloc(sizeof(track_info_struct) * mds_session->last_track);
    if (session->track == NULL)
    {
       YabSetError(YAB_ERR_MEMORYALLOC, NULL);
       return -1;
    }
+	memset(session->track, 0, sizeof(track_info_struct) * mds_session->last_track);
 
    for (i = 0; i < mds_session->total_blocks; i++)
    {
@@ -643,6 +689,13 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
                if (strncmp(img_filename, "*.", 2) == 0)
                {
                   char *ext;
+                  size_t mds_filename_len = strlen(mds_filename);
+                  if (mds_filename_len >= 512)
+                  {
+                     YabSetError(YAB_ERR_FILEREAD, mds_filename);
+                     free(session->track);
+                     return -1;
+                  }
                   strcpy(filename, mds_filename);
                   ext = strrchr(filename, '.');
                   strcpy(ext, img_filename+1);
@@ -773,6 +826,8 @@ static int LoadISO(FILE *iso_file)
       return -1;
    }
 
+	memset(disc.session[0].track, 0, sizeof(track_info_struct) * disc.session[0].track_num);
+
    track = disc.session[0].track;
    track->ctl_addr = 0x41;
    track->fad_start = 150;
@@ -799,6 +854,287 @@ static int LoadISO(FILE *iso_file)
 
 //////////////////////////////////////////////////////////////////////////////
 
+char* StripPreSuffixWhitespace(char* string)
+{
+	char* p;
+	for (;;)
+	{
+		if (string[0] == 0 || !isspace(string[0]))
+			break;
+		string++;
+	}
+
+	if (strlen(string) == 0)
+		return string;
+
+	p = string+strlen(string)-1;
+	for (;;)
+	{
+		if (p <= string || !isspace(p[0]))
+		{
+			p[1] = '\0';
+			break;
+		}
+		p--;
+	}
+
+	return string;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int LoadParseCCD(FILE *ccd_fp, ccd_struct *ccd)
+{
+	char text[60], section[CCD_MAX_SECTION], old_name[CCD_MAX_NAME] = "";
+	char * start, *end, *name, *value;
+	int lineno = 0, error = 0, max_size = 100;
+
+	ccd->dict = (ccd_dict_struct *)malloc(sizeof(ccd_dict_struct)*max_size);
+	if (ccd->dict == NULL) 
+		return -1;
+
+	ccd->num_dict = 0;
+
+	// Read CCD file
+	while (fgets(text, sizeof(text), ccd_fp) != NULL) 
+	{
+		lineno++;
+
+		start = StripPreSuffixWhitespace(text);
+
+		if (start[0] == '[') 
+		{
+			// Section
+			end = strchr(start+1, ']');
+			if (end == NULL) 
+			{
+				// ] missing from section
+				error = lineno;
+			}
+			else
+			{
+				end[0] = '\0';
+				memset(section, 0, sizeof(section));
+				strncpy(section, start + 1, sizeof(section));
+				old_name[0] = '\0';
+			}
+		}
+		else if (start[0]) 
+		{
+			// Name/Value pair
+			end = strchr(start, '=');
+			if (end) 
+			{
+				end[0] = '\0';
+				name = StripPreSuffixWhitespace(start);
+				value = StripPreSuffixWhitespace(end + 1);
+
+				memset(old_name, 0, sizeof(old_name));
+				strncpy(old_name, name, sizeof(old_name));
+				if (ccd->num_dict+1 > max_size)
+				{
+					max_size *= 2;
+					ccd->dict = realloc(ccd->dict, sizeof(ccd_dict_struct)*max_size);
+					if (ccd->dict == NULL)
+					{
+						free(ccd->dict);
+						return -2;
+					}
+				}
+				strcpy(ccd->dict[ccd->num_dict].section, section);
+				strcpy(ccd->dict[ccd->num_dict].name, name);
+				strcpy(ccd->dict[ccd->num_dict].value, value);
+				ccd->num_dict++;
+			}
+			else
+				error = lineno;
+		}
+
+		if (error)
+			break;
+	}
+
+	if (error)
+	{
+		free(ccd->dict);
+		ccd->num_dict = 0;
+	}
+
+	return error;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static int GetIntCCD(ccd_struct *ccd, char *section, char *name)
+{
+	int i;
+	for (i = 0; i < ccd->num_dict; i++)
+	{
+#if (defined(IOS) || defined(ANDROID))
+        if (strcasecmp(ccd->dict[i].section, section) == 0 &&
+            strcasecmp(ccd->dict[i].name, name) == 0)
+#else
+		if (stricmp(ccd->dict[i].section, section) == 0 &&
+			 stricmp(ccd->dict[i].name, name) == 0)
+#endif
+			return strtol(ccd->dict[i].value, NULL, 0);
+        
+	}
+
+	return -1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static int LoadCCD(const char *ccd_filename, FILE *iso_file)
+{
+	int i;
+	ccd_struct ccd;
+	int num_toc;
+	char img_filename[512];
+	char *ext;
+	FILE *fp;
+   size_t ccd_filename_len = strlen(ccd_filename);
+
+   if (ccd_filename_len >= 512)
+   {
+      YabSetError(YAB_ERR_FILEREAD, ccd_filename);
+      return -1;
+   }
+
+	strcpy(img_filename, ccd_filename);
+	ext = strrchr(img_filename, '.');
+	strcpy(ext, ".img");
+	fp = fopen(img_filename, "rb");
+
+	if (fp == NULL)
+	{
+		ext = strrchr(img_filename, '.');
+		strcpy(ext, ".iso");
+		fp = fopen(img_filename, "rb");
+		if (fp == NULL){
+			YabSetError(YAB_ERR_FILEREAD, img_filename);
+			return -1;
+		}
+	}
+
+	fseek(iso_file, 0, SEEK_SET);
+
+	// Load CCD file as dictionary
+	if (LoadParseCCD(iso_file, &ccd))
+	{
+		fclose(fp);
+		YabSetError(YAB_ERR_FILEREAD, ccd_filename);
+		return -1;
+	}
+
+	num_toc = GetIntCCD(&ccd, "DISC", "TocEntries");
+	disc.session_num = GetIntCCD(&ccd, "DISC", "Sessions");
+	if (disc.session_num != 1)
+	{
+		fclose(fp);
+		YabSetError(YAB_ERR_OTHER, "Sessions more than 1 are unsupported");
+		return -1;
+	}
+
+	disc.session = malloc(sizeof(session_info_struct) * disc.session_num);
+	if (disc.session == NULL)
+	{
+		fclose(fp);
+		free(ccd.dict);
+		YabSetError(YAB_ERR_MEMORYALLOC, NULL);
+		return -1;
+	}
+
+	if (GetIntCCD(&ccd, "DISC", "DataTracksScrambled"))
+	{
+		fclose(fp);
+		free(ccd.dict);
+		free(disc.session);
+		YabSetError(YAB_ERR_OTHER, "CCD Scrambled Tracks not supported");
+		return -1;
+	}
+
+	// Find track number and allocate
+	for (i = 0; i < num_toc; i++)
+	{
+		char sect_name[64];
+		int point;
+
+		sprintf(sect_name, "Entry %d", i);
+		point = GetIntCCD(&ccd, sect_name, "Point");
+
+		if (point == 0xA1)
+		{
+			int ses = GetIntCCD(&ccd, sect_name, "Session");
+
+			disc.session[ses-1].fad_start = 150;
+			disc.session[ses-1].track_num=GetIntCCD(&ccd, sect_name, "PMin");;
+			disc.session[ses-1].track = (track_info_struct *)malloc(disc.session[ses-1].track_num * sizeof(track_info_struct));
+			if (disc.session[ses-1].track == NULL)
+			{
+				fclose(fp);
+				free(ccd.dict);
+				free(disc.session);
+				YabSetError(YAB_ERR_MEMORYALLOC, NULL);
+				return -1;
+			}
+			memset(disc.session[ses-1].track, 0, disc.session[ses-1].track_num * sizeof(track_info_struct));
+		}
+	}
+
+	// Load TOC
+	for (i = 0; i < num_toc; i++)
+	{
+		char sect_name[64];
+		int ses, point, adr, control, trackno, amin, asec, aframe;
+		int alba, zero, pmin, psec, pframe, plba;
+
+		sprintf(sect_name, "Entry %d", i);
+
+		ses = GetIntCCD(&ccd, sect_name, "Session");
+		point = GetIntCCD(&ccd, sect_name, "Point");
+		adr = GetIntCCD(&ccd, sect_name, "ADR");
+		control = GetIntCCD(&ccd, sect_name, "Control");
+		trackno = GetIntCCD(&ccd, sect_name, "TrackNo");
+		amin = GetIntCCD(&ccd, sect_name, "AMin");
+		asec = GetIntCCD(&ccd, sect_name, "ASec");
+		aframe = GetIntCCD(&ccd, sect_name, "AFrame");
+		alba = GetIntCCD(&ccd, sect_name, "ALBA");
+		zero = GetIntCCD(&ccd, sect_name, "Zero");
+		pmin = GetIntCCD(&ccd, sect_name, "PMin");
+		psec = GetIntCCD(&ccd, sect_name, "PSec");
+		pframe = GetIntCCD(&ccd, sect_name, "PFrame");
+		plba = GetIntCCD(&ccd, sect_name, "PLBA");
+
+		if(point >= 1 && point <= 99)
+		{
+			track_info_struct *track=&disc.session[ses-1].track[point-1];
+			track->ctl_addr = (control << 4) | adr;
+			track->fad_start = MSF_TO_FAD(pmin, psec, pframe);
+			if (point >= 2)
+			   disc.session[ses-1].track[point-2].fad_end = track->fad_start-1;
+			track->file_offset = plba*2352;
+			track->sector_size = 2352;
+			track->fp = fp;
+			track->file_size = (track->fad_end+1-track->fad_start)*2352;
+			track->file_id = 0;
+			track->interleaved_sub = 0;
+		}
+		else if (point == 0xA2)
+		{
+			disc.session[ses-1].fad_end = MSF_TO_FAD(pmin, psec, pframe);
+			disc.session[ses-1].track[disc.session[ses-1].track_num-1].fad_end = disc.session[ses-1].fad_end;
+		}
+	}
+
+	fclose(iso_file);
+
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void BuildTOC()
 {
    int i;
@@ -815,6 +1151,9 @@ void BuildTOC()
    isoTOC[101] = (isoTOC[session->track_num - 1] & 0xFF000000) | session->fad_end;
 }
 
+#if (defined(IOS) || defined(ANDROID))
+#define stricmp strcasecmp
+#endif
 //////////////////////////////////////////////////////////////////////////////
 
 static int ISOCDInit(const char * iso) {
@@ -822,9 +1161,11 @@ static int ISOCDInit(const char * iso) {
    char *ext;
    int ret;
    FILE *iso_file;
+   size_t num_read = 0;
 
    memset(isoTOC, 0xFF, 0xCC * 2);
    memset(&disc, 0, sizeof(disc));
+   iso_cd_status = 0;
 
    if (!iso)
       return -1;
@@ -835,7 +1176,7 @@ static int ISOCDInit(const char * iso) {
       return -1;
    }
 
-   fread((void *)header, 1, 6, iso_file);
+   num_read = fread((void *)header, 1, 6, iso_file);
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
@@ -851,6 +1192,12 @@ static int ISOCDInit(const char * iso) {
       imgtype = IMG_MDS;
       ret = LoadMDS(iso, iso_file);
    }
+	else if (stricmp(ext, ".CCD") == 0)
+	{
+		// It's a CCD
+		imgtype = IMG_CCD;
+		ret = LoadCCD(iso, iso_file);
+	}
    else
    {
       // Assume it's an ISO file
@@ -906,7 +1253,20 @@ static void ISOCDDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 static int ISOCDGetStatus(void) {
-   return disc.session_num > 0 ? 0 : 2;
+	if (iso_cd_status == 0){
+		return disc.session_num > 0 ? 0 : 2;
+	}
+
+	return iso_cd_status;
+}
+
+//#define CDCORE_NORMAL 0
+//#define CDCORE_NODISC 2
+//#define CDCORE_OPEN   3
+
+static void ISOCDSetStatus(int status){
+	iso_cd_status = status;
+	return;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -921,6 +1281,7 @@ static s32 ISOCDReadTOC(u32 * TOC) {
 
 static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    int i,j;
+   size_t num_read = 0;
    track_info_struct *track=NULL;
 
    assert(disc.session);
@@ -947,10 +1308,20 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    }
 
    fseek(track->fp, track->file_offset + (FAD-track->fad_start) * track->sector_size, SEEK_SET);
+	if (track->sub_fp)
+		fseek(track->sub_fp, track->file_offset + (FAD-track->fad_start) * 96, SEEK_SET);
    if (track->sector_size == 2448)
    {
       if (!track->interleaved_sub)
-         fread(buffer, 2448, 1, track->fp);
+		{
+			if (track->sub_fp)
+			{
+            num_read = fread(buffer, 2352, 1, track->fp);
+            num_read = fread((char *)buffer + 2352, 96, 1, track->sub_fp);
+			}
+			else
+            num_read = fread(buffer, 2448, 1, track->fp);
+		}
       else
       {
          const u16 deint_offsets[] = {
@@ -965,13 +1336,13 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
          };
          u8 subcode_buffer[96 * 3];
 
-         fread(buffer, 2352, 1, track->fp);
+         num_read = fread(buffer, 2352, 1, track->fp);
 
-         fread(subcode_buffer, 96, 1, track->fp);
+         num_read = fread(subcode_buffer, 96, 1, track->fp);
          fseek(track->fp, 2352, SEEK_CUR);
-         fread(subcode_buffer+96, 96, 1, track->fp);
+         num_read = fread(subcode_buffer + 96, 96, 1, track->fp);
          fseek(track->fp, 2352, SEEK_CUR);
-         fread(subcode_buffer+192, 96, 1, track->fp);
+         num_read = fread(subcode_buffer + 192, 96, 1, track->fp);
          for (i = 0; i < 96; i++)
             ((u8 *)buffer)[2352+i] = subcode_buffer[deint_offsets[i]];
       }
@@ -979,12 +1350,12 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    else if (track->sector_size == 2352)
    {
       // Generate subcodes here
-      fread(buffer, 2352, 1, track->fp);
+      num_read = fread(buffer, 2352, 1, track->fp);
    }
    else if (track->sector_size == 2048)
    {
       memcpy(buffer, syncHdr, 12);
-      fread((char *)buffer + 0x10, 2048, 1, track->fp);
+      num_read = fread((char *)buffer + 0x10, 2048, 1, track->fp);
    }
 	return 1;
 }
@@ -997,4 +1368,3 @@ static void ISOCDReadAheadFAD(UNUSED u32 FAD)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-

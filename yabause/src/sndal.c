@@ -19,7 +19,7 @@
 */
 
 #ifdef HAVE_LIBAL
-
+  
 #ifdef __APPLE__
 #include <OpenAL/al.h>
 #include <OpenAL/alc.h>
@@ -28,24 +28,24 @@
 #include <AL/alc.h>
 #endif
 
-#include <pthread.h>
-#include <unistd.h>
+#include "threads.h"
 #include <stdlib.h>
 #include <string.h>
+
 
 #include "error.h"
 #include "scsp.h"
 #include "sndal.h"
 #include "debug.h"
 
-int SNDALInit();
-void SNDALDeInit();
-int SNDALReset();
+int SNDALInit(void);
+void SNDALDeInit(void);
+int SNDALReset(void);
 int SNDALChangeVideoFormat(int vertfreq);
 void SNDALUpdateAudio(u32 *left, u32 *right, u32 samples);
-u32 SNDALGetAudioSpace();
-void SNDALMuteAudio();
-void SNDALUnMuteAudio();
+u32 SNDALGetAudioSpace(void);
+void SNDALMuteAudio(void);
+void SNDALUnMuteAudio(void);
 void SNDALSetVolume(int vol);
 
 SoundInterface_struct SNDAL =   {
@@ -62,7 +62,7 @@ SoundInterface_struct SNDAL =   {
     SNDALSetVolume
 };
 
-#define SOUND_BUFFERS   4
+#define SOUND_BUFFERS   12
 #define SOUND_FREQ      44100
 
 static ALCdevice *device = NULL;
@@ -74,63 +74,121 @@ static u16 *buffer;
 static u32 soundbufsize = 0;
 static u32 soundoffset;
 static volatile u32 soundpos;
-static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 static int thd_done = 0;
-static pthread_t thd;
+
 static int soundvolume = 1;
 static int soundlen;
+
+//#define AL_DEBUG
+#ifdef AL_DEBUG
+#define LOG printf
+#else
+#define LOG
+#endif
 
 static void *sound_update_thd(void *ptr __attribute__((unused)))    {
     ALint proc;
     ALuint buf;
+	
     u8 data[2048];
+	
     u8 *soundbuf = (u8 *)buffer;
     int i;
+    u32 alerror;
 
+    if( alcMakeContextCurrent(context) != AL_TRUE ){
+        printf("fail to makecurrent\n");
+        return NULL;
+    }
+#if 0
+    {
+        int i=0;
+        u16 * dst = (u16*)data;
+        int len = 1024;
+        int total_len=0;
+        for (i = 0; i < (len>>1); i++)   {
+
+            s16 wavedata;
+            if( (total_len % 600) < 300 ){
+                wavedata = 0x7FFF;
+            }else{
+                wavedata = -0x8000;
+            }
+            total_len++;
+            *dst = wavedata;
+            dst++;
+            *dst = wavedata;
+            dst++;
+        }
+    }    
+#endif
     while(!thd_done)    {
         /* See if the stream needs updating yet. */
+        LOG("AL_BUFFERS_PROCESSED in\n");
         alGetSourcei(source, AL_BUFFERS_PROCESSED, &proc);
+        LOG("AL_BUFFERS_PROCESSED out %d\n",proc);
 
-        if(alGetError() != AL_NO_ERROR) {
+        if( (alerror=alGetError()) != AL_NO_ERROR) {
+            LOG("AL_BUFFERS_PROCESSED alGetError %d\n", alerror);
             continue;
         }
-
-        pthread_mutex_lock(&mutex);
-
+		
         /* Go through each buffer that needs more data. */
         while(proc--)   {
             /* Unqueue the old buffer, so that it can be filled again. */
+            LOG("alSourceUnqueueBuffers in\n");
             alSourceUnqueueBuffers(source, 1, &buf);
-
-            if(alGetError() != AL_NO_ERROR) {
+            LOG("alSourceUnqueueBuffers out\n");
+            
+            if( (alerror=alGetError()) != AL_NO_ERROR) {
+                LOG("alGetError %d\n", alerror);
                 continue;
             }
-
+#if 1
             for(i = 0; i < 2048; ++i)   {
                 if(soundpos >= soundbufsize)
                     soundpos = 0;
 
                 data[i] = soundbuf[soundpos];
+                //if( data[i]!= 0 ){ printf("wav %d\n",data[i]); };
                 ++soundpos;
             }
+#endif            
+            LOG("sound_update_thd soundpos = %d\n",soundpos);
 
             alBufferData(buf, AL_FORMAT_STEREO16, data, 2048, SOUND_FREQ);
+            
+            LOG("alSourceQueueBuffers in\n");
             alSourceQueueBuffers(source, 1, &buf);
+            LOG("alSourceQueueBuffers out\n");
         }
 
-        pthread_mutex_unlock(&mutex);
-
-        /* Sleep for 5ms. */
-        usleep(5 * 1000);
+		YabThreadYield();
     }
 
-    return NULL;
+    //return NULL;
 }
+
+int total_len = 0;
 
 static void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len)    {
     u32 i;
 
     for (i = 0; i < len; i++)   {
+#if 0
+        s16 wavedata;
+        if( (total_len % 2400) < 1200 ){
+            wavedata = 0x7FFF;
+        }else{
+            wavedata = -0x8000;
+        }
+        total_len++;
+        *dst = wavedata;
+        dst++;
+        *dst = wavedata;
+        dst++;
+#else        
         // Left Channel
         *srcL = ( *srcL *soundvolume ) / 100;
         if (*srcL > 0x7FFF) *dst = 0x7FFF;
@@ -145,13 +203,12 @@ static void sdlConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len)    {
         else *dst = *srcR;
         srcR++;
         dst++;
+#endif        
     } 
 }
 
 void SNDALUpdateAudio(u32 *left, u32 *right, u32 num_samples)   {
     u32 copy1size = 0, copy2size = 0;
-
-    pthread_mutex_lock(&mutex);
 
     if((soundbufsize - soundoffset) < (num_samples * sizeof(s16) * 2))  {
         copy1size = (soundbufsize - soundoffset);
@@ -174,15 +231,14 @@ void SNDALUpdateAudio(u32 *left, u32 *right, u32 num_samples)   {
     soundoffset += copy1size + copy2size;   
     soundoffset %= soundbufsize;
 
-    pthread_mutex_unlock(&mutex);
 }
 
 int SNDALInit() {
     int rv = 0, i;
+    int alerror;
 
     /* Attempt to grab the preferred device from OpenAL. */
     device = alcOpenDevice(NULL);
-
     if(!device) {
         rv = -1;
         goto err1;
@@ -195,7 +251,10 @@ int SNDALInit() {
         goto err2;
     }
 
-    alcMakeContextCurrent(context);
+    if( alcMakeContextCurrent(context) != ALC_TRUE ){
+        rv = -2;
+        goto err2;       
+    }
 
     /* Clear any error states. */
     alGetError();
@@ -222,8 +281,15 @@ int SNDALInit() {
     alSource3f(source, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
     alSourcef(source, AL_ROLLOFF_FACTOR, 0.0f);
     alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE);
+    //alSourcef(source,AL_GAIN,1.0f);
+    //alListener3f(AL_POSITION, 0.0f, 0.0f, 0.0f);
 
-    soundlen = SOUND_FREQ / 60;
+	if((alerror = alGetError()) != AL_NO_ERROR) {
+		exit(1);
+	}
+
+    soundlen = 2048; //SOUND_FREQ / 60;
+
     soundbufsize = soundlen * SOUND_BUFFERS * 2 * 2;
     soundvolume = 100;
 
@@ -233,7 +299,29 @@ int SNDALInit() {
     }
 
     memset(buffer, 0, soundbufsize);
+#if 0
+    {
+        int i=0;
+        u16 * dst = (u16*)buffer;
+        int len = soundlen * SOUND_BUFFERS;
+        total_len=0;
+        for (i = 0; i < len; i++)   {
 
+            s16 wavedata;
+            if( (total_len % 2400) < 1200 ){
+                wavedata = 0x7FFF;
+            }else{
+                wavedata = -0x8000;
+            }
+            total_len++;
+            *dst = wavedata;
+            dst++;
+            *dst = wavedata;
+            dst++;
+        }
+        total_len = 0;
+    }
+#endif
     for(i = 0; i < SOUND_BUFFERS; ++i)  {
         /* Fill the buffer with empty sound. */
         alBufferData(bufs[i], AL_FORMAT_STEREO16, buffer + i * 2048, 2048,
@@ -243,10 +331,14 @@ int SNDALInit() {
 
     /* Start the sound playback. */
     alSourcePlay(source);
+    if( (alerror=alGetError()) != AL_NO_ERROR) {
+         LOG("alSourcePlay alGetError %d\n", alerror);
+    
+    }
 
+    alcMakeContextCurrent(NULL);
     /* Start the update thread. */
-    pthread_create(&thd, NULL, &sound_update_thd, NULL);
-
+	YabThreadStart(YAB_THREAD_OPENAL,sound_update_thd,(void *)buffer);
     return 0;
 
     /* Error conditions. Errors cause cascading deinitialization, so hence this
@@ -273,8 +365,8 @@ err1:
 void SNDALDeInit()  {
     /* Stop our update thread. */
     thd_done = 1;
-    pthread_join(thd, NULL);
-
+    //pthread_join(thd, NULL);
+	YabThreadWait(YAB_THREAD_OPENAL);
     /* Stop playback. */
     alSourceStop(source);
 
@@ -297,8 +389,6 @@ int SNDALReset()    {
 }
 
 int SNDALChangeVideoFormat(int vertfreq)    {
-    pthread_mutex_lock(&mutex);
-
     soundlen = SOUND_FREQ / vertfreq;
     soundbufsize = soundlen * SOUND_BUFFERS * 2 * 2;
 
@@ -310,32 +400,41 @@ int SNDALChangeVideoFormat(int vertfreq)    {
 
     memset(buffer, 0, soundbufsize);
 
-    pthread_mutex_unlock(&mutex);
-
     return 0;
 }
 
 u32 SNDALGetAudioSpace()    {
     u32 freespace=0;
-
     if(soundoffset > soundpos)
         freespace = soundbufsize - soundoffset + soundpos;
     else
         freespace = soundpos - soundoffset;
 
+    LOG("%d,%d,%d,%d\n",freespace,soundbufsize,soundoffset,soundpos);
+    
     return (freespace / sizeof(s16) / 2);
 }
 
+static int sound_pause = 0;
+
 void SNDALMuteAudio()   {
-    alSourcePause(source);
+    
+    if( sound_pause == 0){
+        alSourcePause(source);
+        alSourcef(source, AL_GAIN, 0.0f);
+        sound_pause = 1;
+    }
 }
 
 void SNDALUnMuteAudio() {
-    alSourcePlay(source);
+    if( sound_pause == 1){
+        alSourcePlay(source);
+        alSourcef(source, AL_GAIN, 1.0f);
+        sound_pause = 0;
+    }
 }
 
 void SNDALSetVolume(int vol)    {
-    soundvolume = (int)((128.0 / 100.0) * vol);
+    soundvolume = 100; //(int)((128.0 / 100.0) * vol);
 }
-
 #endif /* HAVE_LIBAL */

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources tools:ignore="MissingTranslation" xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">uoYabause</string>
+    <string name="menu_exit">Выход</string>
+    <string name="menu_reset">Сброс</string>
+    <string name="menu_save_state">Сохранение</string>
+    <string name="menu_load_state">Загрузка</string>
+    <string name="load_game">Загрузить игру</string>
+    <string name="setting">Настройки</string>
+    <string name="choose_bios">Выбор BIOS</string>
+    <string name="choose_cartridge">Выбор расширения</string>
+    <string name="choose_cpu_core">Выбор ядра CPU</string>
+    <string name="choose_video_core">Выбор видеорендера</string>
+    <string name="audio_output">Вывод звука</string>
+    <string name="fps">Показывать FPS</string>
+    <string name="lock_landscape">Сохранять альбомную ориентацию</string>
+    <string name="frameskip">Пропуск кадров</string>
+    <string name="keepaspectrate">Сохранять оригинальные пропорции</string>
+    <string name="choose_input_device">Выбор устройства ввода</string>
+    <string name="input_device_title">Устройство ввода Игрока 1</string>
+    <string name="input_device_title_player2">Устройство ввода Игрока 2</string>
+    <string name="input_device">Выбрать</string>
+    <string name="input_device_setting">Настроить кнопки геймпада</string>
+    <string name="onscrenn_pad_setting">Настроить экранный геймпад</string>
+    <string name="nopad">Нет</string>
+    <string name="bios">BIOS</string>
+    <string name="cartridge">Расширение</string>
+    <string name="cpu_core">Ядро CPU</string>
+    <string name="video_core">Видеорендер</string>
+    <string name="setting_sound">Звук</string>
+    <string name="setting_graphics">Графика</string>
+    <string name="setting_general">Общие</string>
+    <string name="msg_opengl_not_supported">Устройство не поддерживает OpenGL ES 3.0 или выше.\nOpenGL рендер недоступен.\n</string>
+    <string name="skip">Пропуск</string>
+    <string name="donation">Поддержать проект</string>
+    <string name="donate_message">
+        Поддержите разработку!\n\n
+	Вы можете помочь развитию uoYabause сделав пожертвование на официальном сайте http://yabause.org. 
+	Вы также можете оказать поддержку перечислив любую указанную сумму - это ускорит работу по повышению точности эмуляции, поддержке новых геймпадов и устройств.
+	Данное сообщение не отображается, если вы уже помогли проекту.
+    </string>
+    <string name="thank_you">Благодарим за Вашу поддержку!</string>
+    <string name="error_consume">Ошибка перечисления</string>
+    <string name="do_donation">Перечислить</string>
+    <string name="no_thank_you">Нет, спасибо</string>
+    <string name="donate_3doller">$3</string>
+    <string name="donate_5doller">$5</string>
+    <string name="donate_10doller">$10</string>
+    <string name="donate_30doller">$30</string>
+
+    <string name="input_the_key">Нажмите кнопку</string>
+    <string name="joystick_is_not_connected">Геймпад не подключен!</string>
+    <string name="this_key_has_already_been_set">Кнопка уже используется!</string>
+    <string name="up">Вверх</string>
+    <string name="down">Вниз</string>
+    <string name="left">Влево</string>
+    <string name="right">Вправо</string>
+    <string name="axis_x">Аналоговая ось X</string>
+    <string name="axis_y">Аналоговая ось Y</string>
+    <string name="axis_l">Аналоговый триггер L</string>
+    <string name="axis_r">Аналоговый триггер R</string>
+    <string name="l_trigger">Триггер L</string>
+    <string name="r_trigger">Триггер R</string>
+    <string name="start">Старт</string>
+    <string name="a_button">A</string>
+    <string name="b_button">B</string>
+    <string name="c_button">C</string>
+    <string name="x_button">X</string>
+    <string name="y_button">Y</string>
+    <string name="z_button">Z</string>
+
+    <string name="scale">Масштаб</string>
+    <string name="transparency">Прозрачность</string>
+    <string name="do_you_want_to_save_this_setting">Сохранить изменения?</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="exit">Выход</string>
+    <string name="ignore">Пропустить</string>
+
+    <string name="dynrec_cpu_interface">Рекомпилятор (быстрый, менее точный)</string>
+    <string name="software_cpu_interface">Интерпретатор (медленный, более точный)</string>
+
+    <string name="opengl_video_interface">OpenGL</string>
+    <string name="software_video_interface">Программный</string>
+    <string name="onscreen_pad">Экранный геймпад</string>
+    <string name="select_from_other_directory">Загрузить из другой папки</string>
+
+    <string name="menu_save_screenshot">Скриншот</string>
+    <string name="menu_report">Отчёт</string>
+
+    <string name="video_filter">Фильтрация</string>
+    <string name="choose_video_filter">Выбор видеофильтра</string>
+
+    <string name="video_filter_none">Нет</string>
+    <string name="video_filter_fxaa">FXAA</string>
+    <string name="video_filter_scanline">Scanline (эффект ЭЛТ)</string>
+    <string name="video_filter_bilinear">Билинейный (не работает с нативным разрешением рендеринга)</string>
+    <string name="browse_title"><![CDATA[Videos by Your Company]]></string>
+    <string name="related_movies">Похожие видео</string>
+    <string name="vertical_grid_title"><![CDATA[Vertical Video Grid]]></string>
+    <string name="delete_confirm">"Удалить данную запись?"</string>string>
+    <string name="error">Ошибка</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Отмена</string>
+    <string name="pause">Пауза</string>
+    <string name="play">Пуск</string>
+    <string name="stop">Стоп</string>
+    <string name="init_text">00:00</string>
+    <string name="play_pause_description">Пуск Пауза Кнопка</string>
+    <string name="loading">Загрузка&#8230;</string>
+    <string name="no_video_found">Видео не найдено</string>
+    <string name="about_app">О программе DemoCast Player</string>
+    <string name="version">Версия: %1$s</string>
+    <string name="popular_header">Популярные видео</string>
+    <string name="preferences">НАСТРОЙКИ</string>
+    <string name="grid_view">Вид сетки</string>
+    <string name="error_fragment">Ошибка фрагмента</string>
+    <string name="personal_settings">Персональные настройки</string>
+    <string name="refresh_db">Обновить список игр</string>
+    <string name="select_bk_image">Фоновое изображение меню</string>
+
+    <!-- Error messages -->
+    <string name="video_error_media_load_timeout">Время ожидания загрузки истекло</string>
+    <string name="video_error_server_inaccessible">Медиа-сервер недоступен</string>
+    <string name="video_error_unknown_error">Не удалось загрузить видео</string>
+    <string name="error_fragment_message">Произошла ошибка</string>
+    <string name="dismiss_error">Отклонить</string>
+    <string name="oops">Oops</string>
+
+    <string name="title_activity_game_select" translatable="false">uoYabause</string>
+    <string name="polygon_generation_type">Полигональная генерация</string>
+    <string name="choose_polygon_generation_type">Выбор метода полигональной генерации</string>
+    <string name="sound_engine">Звуковой движок</string>
+    <string name="choose_sound_engine">Выбор звукового движка</string>
+    <string name="video_resolution">Разрешение рендеринга</string>
+    <string name="choose_video_resolution">Выбор разрешения рендеринга</string>
+    <string name="open_cd_tray">Открыть лоток CD</string>
+    <string name="close_cd_tray">Закрыть лоток CD</string>
+    <string name="menu_analog">Вкл. аналоговый ввод</string>
+    <string name="menu_cheat">Чит-коды</string>
+    <string name="add_new_code">Добавить новый код</string>
+
+    <string name="enable">Вкл.</string>
+    <string name="disable">Откл.</string>
+    <string name="edit">Правка</string>
+    <string name="delete">Удалить</string>
+    <string name="select_game_directory">Папки загрузки игр</string>
+
+
+    <string name="sound_curent">Текущий (высокое качество для быстрых устройств)</string>
+    <string name="sound_legacy">Устаревший (для медленных устройств)</string>
+
+    <string name="res_native">Нативное (разрешение экрана устройства)</string>
+    <string name="res_4x">4x</string>
+    <string name="res_2x">2x</string>
+    <string name="res_original">Оригинальное</string>
+
+    <string name="poly_triangle">Триангуляция с коррекцией перспективы</string>
+    <string name="poly_cpu_tess">CPU тесселяция</string>
+    <string name="poly_gpu_tess">GPU тесселяция</string>
+
+    <string name="menu_load">Загрузить</string>
+    <string name="menu_delete">Удалить</string>
+
+</resources>

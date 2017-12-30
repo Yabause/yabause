@@ -51,6 +51,11 @@ static u32 SNDMacGetAudioSpace(void);
 static void SNDMacMuteAudio(void);
 static void SNDMacUnMuteAudio(void);
 static void SNDMacSetVolume(int volume);
+#ifdef USE_SCSPMIDI
+int SNDMacMidiChangePorts(int inport, int outport);
+u8 SNDMacMidiIn(int *isdata);
+int SNDMacMidiOut(u8 data);
+#endif
 
 SoundInterface_struct SNDMac = {
     SNDCORE_MAC,
@@ -63,7 +68,12 @@ SoundInterface_struct SNDMac = {
     &SNDMacGetAudioSpace,
     &SNDMacMuteAudio,
     &SNDMacUnMuteAudio,
-    &SNDMacSetVolume
+    &SNDMacSetVolume,
+#ifdef USE_SCSPMIDI
+    &SNDMacMidiChangePorts,
+    &SNDMacMidiIn,
+    &SNDMacMidiOut
+#endif
 };
 
 static AudioUnit outputAU;
@@ -335,3 +345,18 @@ static void SNDMacUnMuteAudio(void) {
 static void SNDMacSetVolume(int volume) {
     soundvolume = volume;
 }
+
+#ifdef USE_SCSPMIDI
+int SNDMacMidiChangePorts(int inport, int outport) {
+	return 0;
+}
+
+u8 SNDMacMidiIn(int *isdata) {
+	*isdata = 0;
+	return 0;
+}
+
+int SNDMacMidiOut(u8 data) {
+	return 1;
+}
+#endif

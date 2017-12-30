@@ -46,6 +46,8 @@
 Smpc * SmpcRegs;
 u8 * SmpcRegsT;
 SmpcInternal * SmpcInternalVars;
+int intback_wait_for_line = 0;
+u8 bustmp = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -508,6 +510,16 @@ static void SmpcRESDISA(void) {
 
 void SmpcExec(s32 t) {
    if (SmpcInternalVars->timing > 0) {
+
+      if (intback_wait_for_line)
+      {
+         if (yabsys.LineCount == 207)
+         {
+            SmpcInternalVars->timing = -1;
+            intback_wait_for_line = 0;
+         }
+      }
+
       SmpcInternalVars->timing -= t;
       if (SmpcInternalVars->timing <= 0) {
          switch(SmpcRegs->COMREG) {
@@ -581,7 +593,11 @@ void SmpcExec(s32 t) {
 
 u8 FASTCALL SmpcReadByte(u32 addr) {
    addr &= 0x7F;
-
+   if (addr == 0x063) {
+     bustmp &= ~0x01;
+     bustmp |= SmpcRegs->SF;
+     return bustmp;
+   }
    return SmpcRegsT[addr >> 1];
 }
 
@@ -623,21 +639,30 @@ static void SmpcSetTiming(void) {
          SmpcInternalVars->timing = 1; // this has to be tested on a real saturn
          return;
       case 0x10:
-         if (SmpcInternalVars->intback)
-            SmpcInternalVars->timing = 20; // this will need to be verified
+         if (SmpcInternalVars->intback)//continue was issued
+         {
+            SmpcInternalVars->timing = 16000;
+            intback_wait_for_line = 1;
+         }
          else {
             // Calculate timing based on what data is being retrieved
 
-            SmpcInternalVars->timing = 1;
-
-            // If retrieving non-peripheral data, add 0.2 milliseconds
-            if (SmpcRegs->IREG[0] == 0x01)
-               SmpcInternalVars->timing += 2;
-
-            // If retrieving peripheral data, add 15 milliseconds
-            if (SmpcRegs->IREG[1] & 0x8)
-               SmpcInternalVars->timing += 16000; // Strangely enough, this works better
-//               SmpcInternalVars->timing += 150;
+            if ((SmpcRegs->IREG[0] == 0x01) && (SmpcRegs->IREG[1] & 0x8))
+            {
+               //status followed by peripheral data
+               SmpcInternalVars->timing = 250;
+            }
+            else if ((SmpcRegs->IREG[0] == 0x01) && ((SmpcRegs->IREG[1] & 0x8) == 0))
+            {
+               //status only
+               SmpcInternalVars->timing = 250;
+            }
+            else if ((SmpcRegs->IREG[0] == 0) && (SmpcRegs->IREG[1] & 0x8))
+            {
+               //peripheral only
+               SmpcInternalVars->timing = 16000;
+               intback_wait_for_line = 1;
+            }
          }
          return;
       case 0x17:
@@ -665,8 +690,29 @@ static void SmpcSetTiming(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+//acquiring megadrive id
+//world heroes perfect wants to find a saturn pad
+//id = 0xb
+u8 do_th_mode(u8 val)
+{
+   switch (val & 0x40) {
+   case 0x40:
+      return 0x70 | ((PORTDATA1.data[3] & 0xF) & 0xc);
+      break;
+   case 0x00:
+      return 0x30 | ((PORTDATA1.data[2] >> 4) & 0xf);
+      break;
+   }
+
+   //should not happen
+   return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
    addr &= 0x7F;
+   bustmp = val;
    SmpcRegsT[addr >> 1] = val;
 
    switch(addr) {
@@ -691,20 +737,24 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
          SmpcSetTiming();
          return;
       case 0x63:
-         SmpcRegs->SF &= 0x1;
+         SmpcRegs->SF &= val;
          return;
       case 0x75: // PDR1
          // FIX ME (should support other peripherals)
-
          switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
             case 0x00:
                if (PORTDATA1.data[1] == PERGUN && (val & 0x7F) == 0x7F)
                   SmpcRegs->PDR[0] = PORTDATA1.data[2];
                break;
+            //th control mode (acquire id)
+            case 0x40:
+               SmpcRegs->PDR[0] = do_th_mode(val);
+               break;
+            //th tr control mode
             case 0x60:
                switch (val & 0x60) {
                   case 0x60: // 1st Data
-                     val = (val & 0x80) | 0x14 | (PORTDATA1.data[1] & 0x8);
+                     val = (val & 0x80) | 0x14 | (PORTDATA1.data[3] & 0x8);
                      break;
                   case 0x20: // 2nd Data
                      val = (val & 0x80) | 0x10 | ((PORTDATA1.data[2] >> 4) & 0xF);
@@ -713,7 +763,7 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                      val = (val & 0x80) | 0x10 | (PORTDATA1.data[2] & 0xF);
                      break;
                   case 0x00: // 4th Data
-                     val = (val & 0x80) | 0x10 | ((PORTDATA1.data[1] >> 4) & 0xF);
+                     val = (val & 0x80) | 0x10 | ((PORTDATA1.data[3] >> 4) & 0xF);
                      break;
                   default: break;
                }
@@ -725,7 +775,38 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
                break;
          }
 			break;
-      case 0x79: // DDR1
+	  case 0x77: // PDR1
+		  // FIX ME (should support other peripherals)
+		  switch (SmpcRegs->DDR[1] & 0x7F) { // Which Control Method do we use?
+		  case 0x00:
+			  if (PORTDATA2.data[1] == PERGUN && (val & 0x7F) == 0x7F)
+				  SmpcRegs->PDR[1] = PORTDATA2.data[2];
+			  break;
+		  case 0x60:
+			  switch (val & 0x60) {
+			  case 0x60: // 1st Data
+				  val = (val & 0x80) | 0x14 | (PORTDATA2.data[3] & 0x8);
+				  break;
+			  case 0x20: // 2nd Data
+				  val = (val & 0x80) | 0x10 | ((PORTDATA2.data[2] >> 4) & 0xF);
+				  break;
+			  case 0x40: // 3rd Data
+				  val = (val & 0x80) | 0x10 | (PORTDATA2.data[2] & 0xF);
+				  break;
+			  case 0x00: // 4th Data
+				  val = (val & 0x80) | 0x10 | ((PORTDATA2.data[3] >> 4) & 0xF);
+				  break;
+			  default: break;
+			  }
+
+			  SmpcRegs->PDR[1] = val;
+			  break;
+		  default:
+			  SMPCLOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
+			  break;
+		  }
+		  break;
+	  case 0x79: // DDR1
          switch (SmpcRegs->DDR[0] & 0x7F) { // Which Control Method do we use?
             case 0x00: // Low Nibble of Peripheral ID
             case 0x40: // High Nibble of Peripheral ID
@@ -772,6 +853,12 @@ void FASTCALL SmpcWriteByte(u32 addr, u8 val) {
             default: break;
          }
          break;
+	  case 0x7D: // IOSEL
+		  SmpcRegs->IOSEL = val;
+		  break;
+	  case 0x7F: // EXLE
+		  SmpcRegs->EXLE = val;
+		  break;
       default:
          return;
    }
@@ -796,7 +883,7 @@ void FASTCALL SmpcWriteLong(USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
 int SmpcSaveState(FILE *fp)
 {
    int offset;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    offset = StateWriteHeader(fp, "SMPC", 3);
 
@@ -823,7 +910,7 @@ int SmpcSaveState(FILE *fp)
 
 int SmpcLoadState(FILE *fp, int version, int size)
 {
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
    int internalsizev2 = sizeof(SmpcInternal) - 8;
 
    // Read registers

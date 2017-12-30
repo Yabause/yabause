@@ -36,6 +36,13 @@ void YuiErrorMsg(const char *string);
    up being moved to the Video Core. */
 void YuiSwapBuffers(void);
 
+/* need to call before glXXXXX call in a thread */
+int YuiUseOGLOnThisThread();
+
+/* Bfore rendering in a thread, it needs to revoke current rendering thread */
+int YuiRevokeOGLOnThisThread();
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Helper functions(you can use these in your own port)
 //////////////////////////////////////////////////////////////////////////////

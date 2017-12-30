@@ -263,12 +263,12 @@ static void pertype_changed(GtkWidget * widget, gpointer data) {
 	}
 }
 
-static void frameskip_toggled(GtkWidget * widget, gpointer data) {
-	g_key_file_set_integer(keyfile, "General", "Frameskip", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
+static void bilinear_toggled(GtkWidget * widget, gpointer data) {
+	g_key_file_set_integer(keyfile, "General", "Bilinear", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
-static void disable_enable_audio_sync(YuiCheckButton *audiosync) {
-	ScspSetFrameAccurate(yui_check_button_get_active(audiosync));
+static void frameskip_toggled(GtkWidget * widget, gpointer data) {
+	g_key_file_set_integer(keyfile, "General", "Frameskip", gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)));
 }
 
 static void disable_enable_fixed_base_time(YuiCheckButton *clocksync, YuiCheckButton *fixedbasetime) {
@@ -335,6 +335,15 @@ GtkWidget* create_dialog1(void) {
 
   box = yui_page_add(YUI_PAGE(video_sound), _("Video Core"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "VideoCore", vidcores));
+
+  box = yui_page_add(YUI_PAGE(video_sound), _("Bilinear Filtering"));
+  {
+    GtkWidget * bilinear = gtk_check_button_new_with_label("Enable Bilinear Filtering");
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(bilinear), g_key_file_get_integer(keyfile, "General", "Bilinear", NULL));
+    gtk_container_set_border_width(GTK_CONTAINER(bilinear), 10);
+    g_signal_connect(bilinear, "toggled", G_CALLBACK(bilinear_toggled), NULL);
+    gtk_container_add(GTK_CONTAINER(box), bilinear);
+  }
 
 #ifdef YAB_PORT_OSD
   box = yui_page_add(YUI_PAGE(video_sound), _("OSD Core"));
@@ -493,17 +502,6 @@ GtkWidget* create_dialog1(void) {
 
   box = yui_page_add(YUI_PAGE(advanced), _("M68k Interpreter"));
   gtk_container_add(GTK_CONTAINER(box), yui_range_new(keyfile, "General", "M68kInt", m68kinterpreters));
-
-  box = yui_page_add(YUI_PAGE(advanced), _("Audio Sync"));
-  {
-    GtkWidget *button = yui_check_button_new(
-        _("Synchronize audio output with emulation"),
-        keyfile, "General", "AudioSync"
-    );
-    gtk_container_add(GTK_CONTAINER(box), button);
-    g_signal_connect(button, "changed",
-                     G_CALLBACK(disable_enable_audio_sync), NULL);
-  }
 
   box = yui_page_add(YUI_PAGE(advanced), _("Clock Sync"));
   {

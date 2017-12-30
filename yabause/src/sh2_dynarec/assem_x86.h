@@ -11,8 +11,13 @@
 
 #define USE_MINI_HT 1
 
+#ifdef ANDROID
+#define BASE_ADDR 0x10000000 // Code generator target address
+#define TARGET_SIZE_2 24 // 2^24 = 16 megabytes
+#else
 #define BASE_ADDR 0x70000000 // Code generator target address
 #define TARGET_SIZE_2 25 // 2^25 = 32 megabytes
+#endif
 #define JUMP_TABLE_SIZE 0 // Not needed for 32-bit x86
 
 /* x86 calling convention:

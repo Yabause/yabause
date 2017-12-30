@@ -33,6 +33,7 @@ MemorySearch::MemorySearch(UIMemorySearch *memorySearch, QObject *parent)
    startAddress = memorySearch->leStartAddress->text().toUInt(&ok, 16);
    endAddress = memorySearch->leEndAddress->text().toUInt(&ok, 16);
    searchSize = 0x10000;
+	steps = 0;
 
    timer = new QTimer(this);
    connect(timer, SIGNAL(timeout()), this, SLOT(process()));
@@ -71,6 +72,7 @@ void MemorySearch::process()
 
       // We're done
       emit searchResult(true, false, results[0].addr);
+      free(results);
       return;
    }
 
@@ -108,7 +110,7 @@ UIMemoryEditor::UIMemoryEditor( YabauseThread *mYabauseThread, QWidget* p )
 	// set up dialog
 	setupUi( this );
 	if ( p && !p->isFullScreen() )
-		setWindowFlags( Qt::WindowMaximizeButtonHint | Qt::Sheet );
+		setWindowFlags( Qt::WindowMaximizeButtonHint | Qt::Sheet | Qt::WindowCloseButtonHint );
 
 
    gotoAddress = 0;

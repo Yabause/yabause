@@ -39,20 +39,27 @@
 #include "m68kcore.h"
 #include "peripheral.h"
 #include "scsp.h"
+#include "scspdsp.h"
 #include "scu.h"
 #include "sh2core.h"
 #include "smpc.h"
+#include "ygl.h"
+#include "vidsoft.h"
 #include "vdp2.h"
 #include "yui.h"
 #include "bios.h"
 #include "movie.h"
 #include "osdcore.h"
 #ifdef HAVE_LIBSDL
- #if defined(__APPLE__) || defined(GEKKO)
-  #include <SDL/SDL.h>
+#if defined(__APPLE__) || defined(GEKKO)
+ #ifdef HAVE_LIBSDL2
+  #include <SDL2/SDL.h>
  #else
-  #include "SDL.h"
+  #include <SDL/SDL.h>
  #endif
+#else
+ #include "SDL.h"
+#endif
 #endif
 #if defined(_MSC_VER) || !defined(HAVE_SYS_TIME_H)
 #include <time.h>
@@ -69,6 +76,7 @@
 #include "psp/common.h"
 #endif
 
+
 #ifdef SYS_PROFILE_H
  #include SYS_PROFILE_H
 #else
@@ -84,11 +92,24 @@
     #include "gdb/stub.h"
 #endif
 
+#ifdef YAB_WANT_SSF
+#include "aosdk/ssf.h"
+#endif
+
+#include <inttypes.h>
+
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
 const char *bupfilename = NULL;
 u64 tickfreq;
+//todo this ought to be in scspdsp.c
+ScspDsp scsp_dsp = { 0 };
+char ssf_track_name[256] = { 0 };
+char ssf_artist[256] = { 0 };
+
+u32 saved_scsp_cycles = 0;//fixed point
+u32 saved_m68k_cycles = 0;//fixed point
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -133,11 +154,13 @@ void YabauseChangeTiming(int freqtype) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+extern int tweak_backup_file_size;
 
 int YabauseInit(yabauseinit_struct *init)
 {
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
+   yabsys.NumThreads = init->numthreads;
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -155,15 +178,47 @@ int YabauseInit(yabauseinit_struct *init)
    if ((LowWram = T2MemoryInit(0x100000)) == NULL)
       return -1;
 
-   if ((BupRam = T1MemoryInit(0x10000)) == NULL)
-      return -1;
+   yabsys.extend_backup = init->extend_backup;
+   if (yabsys.extend_backup) {
+     FILE * pbackup;
+     bupfilename = init->buppath;
+     pbackup = fopen(bupfilename, "a+b");
+     if (pbackup == NULL) {
+       YabSetError(YAB_ERR_CANNOTINIT, _("InternalBackup"));
+       return -1;
+     }
 
-   if (LoadBackupRam(init->buppath) != 0)
-      FormatBackupRam(BupRam, 0x10000);
+     fseek(pbackup, 0, SEEK_SET);
+     if (CheckBackupFile(pbackup) != 0) {
+       FormatBackupRamFile(pbackup, tweak_backup_file_size);
+     }
+     else {
+       ExtendBackupFile(pbackup, tweak_backup_file_size);
+     }
+     fclose(pbackup);
+     BupRam = YabMemMap(bupfilename, tweak_backup_file_size);
+     if (BupRam == NULL) {  // fall back to old version
+       if ((BupRam = T1MemoryInit(0x10000)) == NULL)
+         return -1;
 
-   BupRamWritten = 0;
+       if (LoadBackupRam(init->buppath) != 0)
+         FormatBackupRam(BupRam, 0x10000);
 
-   bupfilename = init->buppath;
+       BupRamWritten = 0;
+       yabsys.extend_backup = 0;
+     }
+
+   }
+   else {
+     if ((BupRam = T1MemoryInit(0x10000)) == NULL)
+       return -1;
+
+     if (LoadBackupRam(init->buppath) != 0)
+       FormatBackupRam(BupRam, 0x10000);
+     BupRamWritten = 0;
+   }
+   
+   // check if format is needed?
 
    if (CartInit(init->cartpath, init->carttype) != 0)
    {
@@ -179,6 +234,13 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+   // Settings
+   VideoSetSetting(VDP_SETTING_FILTERMODE,init->video_filter_type);
+   VideoSetSetting(VDP_SETTING_POLYGON_MODE, init->polygon_generation_mode);
+   VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, init->resolution_mode);
+
+
+
    // Initialize input core
    if (PerInit(init->percoretype) != 0)
    {
@@ -186,7 +248,7 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->netlinksetting) != 0)
+   if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->modemip, init->modemport) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("CS2"));
       return -1;
@@ -269,6 +331,36 @@ int YabauseInit(yabauseinit_struct *init)
 
    YabauseResetNoLoad();
 
+#ifdef YAB_WANT_SSF
+
+   if (init->play_ssf && init->ssfpath != NULL && strlen(init->ssfpath))
+   {
+      if (!load_ssf((char*)init->ssfpath, init->m68kcoretype, init->sndcoretype))
+      {
+         YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->ssfpath);
+
+         yabsys.playing_ssf = 0;
+
+         return -2;
+      }
+
+      yabsys.playing_ssf = 1;
+
+      get_ssf_info(1, ssf_track_name);
+      get_ssf_info(3, ssf_artist);
+
+      return 0;
+   }
+   else
+      yabsys.playing_ssf = 0;
+
+#endif
+
+   if (init->skip_load)
+   {
+	   return 0;
+   }
+
    if (yabsys.usequickload || yabsys.emulatebios)
    {
       if (YabauseQuickLoadGame() != 0)
@@ -287,12 +379,52 @@ int YabauseInit(yabauseinit_struct *init)
    GdbStubInit(MSH2, 43434);
 #endif
 
+   if (yabsys.UseThreads)
+   {
+      int num = yabsys.NumThreads < 1 ? 1 : yabsys.NumThreads;
+      VIDSoftSetVdp1ThreadEnable(num == 1 ? 0 : 1);
+      VIDSoftSetNumLayerThreads(num);
+      VIDSoftSetNumPriorityThreads(num);
+   }
+   else
+   {
+      VIDSoftSetVdp1ThreadEnable(0);
+      VIDSoftSetNumLayerThreads(0);
+      VIDSoftSetNumPriorityThreads(0);
+   }
+
+   scsp_set_use_new(init->use_new_scsp);
+#ifdef WEBINTERFACE
+   YabStartHttpServer();
+#endif
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
+void YabFlushBackups(void)
+{
+  if (BupRam)
+  {
+    if (yabsys.extend_backup) {
+    //  YabFreeMap(BupRam);
+    }
+    else {
+      if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+      T1MemoryDeInit(BupRam);
+    }
+  }
+  CartFlush();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void YabauseDeInit(void) {
+   
+   Vdp2DeInit();
+   Vdp1DeInit();
+   
    SH2DeInit();
 
    if (BiosRom)
@@ -309,19 +441,21 @@ void YabauseDeInit(void) {
 
    if (BupRam)
    {
-      if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
+     if (yabsys.extend_backup) {
+       YabFreeMap(BupRam);
+     }
+     else {
+       if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
          YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-
-      T1MemoryDeInit(BupRam);
+       T1MemoryDeInit(BupRam);
+     }
    }
    BupRam = NULL;
-
+ 
    CartDeInit();
    Cs2DeInit();
    ScuDeInit();
    ScspDeInit();
-   Vdp1DeInit();
-   Vdp2DeInit();
    SmpcDeInit();
    PerDeInit();
    VideoDeInit();
@@ -357,6 +491,10 @@ void YabauseResetNoLoad(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseReset(void) {
+
+   if (yabsys.playing_ssf)
+      yabsys.playing_ssf = 0;
+
    YabauseResetNoLoad();
 
    if (yabsys.usequickload || yabsys.emulatebios)
@@ -416,8 +554,39 @@ int YabauseExec(void) {
 int saved_centicycles;
 #endif
 
+u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line)
+{
+   return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (lines * divisions_per_line);
+}
+
+#if defined(SH2_DYNAREC)
+int master_cc_dmy = 0;
+#endif
+
+u32 YabauseGetCpuTime(){
+
+#if defined(SH2_DYNAREC)
+  if (SH2Core->id == 2/*SH2CORE_DYNAREC*/){
+    master_cc_dmy += 256;
+    return (u32)master_cc_dmy; // ToDo
+  }
+  else{
+    return MSH2->cycles;
+  }
+#else
+  return MSH2->cycles;
+#endif
+}
+
+u32 YabauseGetFrameCount() {
+  return yabsys.frame_count;
+}
+
+//#define YAB_STATICS
+
 int YabauseEmulate(void) {
    int oneframeexec = 0;
+   yabsys.frame_count++;
 
    const u32 cyclesinc =
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;
@@ -426,18 +595,43 @@ int YabauseEmulate(void) {
 #ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
-   
-   if (yabsys.IsPal)
+
+   u32 m68k_cycles_per_deciline = 0;
+   u32 scsp_cycles_per_deciline = 0;
+
+   if(use_new_scsp)
    {
-      /* 11.2896MHz / 50Hz / 313 lines / 10 calls/line = 72.20 cycles/call */
-      m68kcycles = yabsys.DecilineMode ? 72 : 722;
-      m68kcenticycles = yabsys.DecilineMode ? 20 : 0;
+      int lines = 0;
+      int frames = 0;
+
+      if (yabsys.IsPal)
+      {
+         lines = 313;
+         frames = 50;
+      }
+      else
+      {
+         lines = 263; 
+         frames = 60;
+      }
+
+      scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, 10);
+      m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, 10);
    }
    else
    {
-      /* 11.2896MHz / 60Hz / 263 lines / 10 calls/line = 71.62 cycles/call */
-      m68kcycles = yabsys.DecilineMode ? 71 : 716;
-      m68kcenticycles = yabsys.DecilineMode ? 62 : 20;
+      if (yabsys.IsPal)
+      {
+         /* 11.2896MHz / 50Hz / 313 lines / 10 calls/line = 72.20 cycles/call */
+         m68kcycles = yabsys.DecilineMode ? 72 : 722;
+         m68kcenticycles = yabsys.DecilineMode ? 20 : 0;
+      }
+      else
+      {
+         /* 11.2896MHz / 60Hz / 263 lines / 10 calls/line = 71.62 cycles/call */
+         m68kcycles = yabsys.DecilineMode ? 71 : 716;
+         m68kcenticycles = yabsys.DecilineMode ? 62 : 20;
+      }
    }
 #endif
 
@@ -453,6 +647,9 @@ int YabauseEmulate(void) {
    }
    #endif
 
+   MSH2->cycles = 0;
+   SSH2->cycles = 0;
+   u64 cpu_emutime = 0;
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
@@ -467,14 +664,32 @@ int YabauseEmulate(void) {
          sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
          yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
-         PROFILE_START("MSH2");
-         SH2Exec(MSH2, sh2cycles);
-         PROFILE_STOP("MSH2");
+#ifdef YAB_STATICS
+		 u64 current_cpu_clock = YabauseGetTicks();
+#endif
+         if (!yabsys.playing_ssf)
+         {
+           u32 i;
+           const u32 div = 2;
+           const u32 step  = sh2cycles >> div;
+		       const u32 amari = sh2cycles - (step<< div);
+		   
+           if( amari != 0 ){
+		        SH2Exec(MSH2, amari);
+		        if (yabsys.IsSSH2Running)
+			        SH2Exec(SSH2, amari);
+           }
 
-         PROFILE_START("SSH2");
-         if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, sh2cycles);
-         PROFILE_STOP("SSH2");
+           for (i = amari; i < sh2cycles; i += step){ 
+             SH2Exec(MSH2, step);
+             if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, step);
+           }
+
+         }
+#ifdef YAB_STATICS
+		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
+#endif
 
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
@@ -502,26 +717,31 @@ int YabauseEmulate(void) {
          yabsys.SH2CycleFrac += cyclesinc;
          sh2cycles = (yabsys.SH2CycleFrac >> (YABSYS_TIMING_BITS + 1)) << 1;
          yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
-
-         PROFILE_START("MSH2");
-         SH2Exec(MSH2, sh2cycles - decilinecycles);
-         PROFILE_STOP("MSH2");
-         PROFILE_START("SSH2");
-         if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, sh2cycles - decilinecycles);
-         PROFILE_STOP("SSH2");
+         if (!yabsys.playing_ssf)
+         {
+            PROFILE_START("MSH2");
+            SH2Exec(MSH2, sh2cycles - decilinecycles);
+            PROFILE_STOP("MSH2");
+            PROFILE_START("SSH2");
+            if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, sh2cycles - decilinecycles);
+            PROFILE_STOP("SSH2");
+         }
 
          PROFILE_START("hblankin");
          Vdp2HBlankIN();
          PROFILE_STOP("hblankin");
 
-         PROFILE_START("MSH2");
-         SH2Exec(MSH2, decilinecycles);
-         PROFILE_STOP("MSH2");
-         PROFILE_START("SSH2");
-         if (yabsys.IsSSH2Running)
-            SH2Exec(SSH2, decilinecycles);
-         PROFILE_STOP("SSH2");
+         if (!yabsys.playing_ssf)
+         {
+            PROFILE_START("MSH2");
+            SH2Exec(MSH2, decilinecycles);
+            PROFILE_STOP("MSH2");
+            PROFILE_START("SSH2");
+            if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, decilinecycles);
+            PROFILE_STOP("SSH2");
+         }
 
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
@@ -582,20 +802,36 @@ int YabauseEmulate(void) {
       Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
       PROFILE_STOP("CDB");
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
-
+      
 #ifndef USE_SCSP2
+      if(!use_new_scsp)
       {
          int cycles;
 
          PROFILE_START("68K");
          cycles = m68kcycles;
-	 saved_centicycles += m68kcenticycles;
+		 saved_centicycles += m68kcenticycles;
          if (saved_centicycles >= 100) {
             cycles++;
             saved_centicycles -= 100;
          }
          M68KExec(cycles);
          PROFILE_STOP("68K");
+      }
+      else
+      {
+#if !defined(ASYNC_SCSP)
+         u32 m68k_integer_part = 0, scsp_integer_part = 0;
+         saved_m68k_cycles += m68k_cycles_per_deciline;
+         m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
+         M68KExec(m68k_integer_part);
+         saved_m68k_cycles -= m68k_integer_part << SCSP_FRACTIONAL_BITS;
+
+         saved_scsp_cycles += scsp_cycles_per_deciline;
+         scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
+         new_scsp_exec(scsp_integer_part);
+         saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
+#endif
       }
 #endif
 
@@ -604,6 +840,43 @@ int YabauseEmulate(void) {
 
 #ifndef USE_SCSP2
    M68KSync();
+#endif
+
+#ifdef YAB_WANT_SSF
+
+   if (yabsys.playing_ssf)
+   {
+      OSDPushMessage(OSDMSG_FPS, 1, "NAME %s", ssf_track_name);
+      OSDPushMessage(OSDMSG_STATUS, 1, "ARTIST %s", ssf_artist);
+   }
+
+#endif
+   
+#ifdef YAB_STATICS
+   DebugLog("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
+#if 0
+   if (yabsys.frame_count >= 4000 ) {
+     static FILE * pfm = NULL;
+     if (pfm == NULL) {
+#ifdef ANDROID
+       pfm = fopen("/mnt/sdcard/cpu.txt", "w");
+#else
+       pfm = fopen("cpu.txt", "w");
+#endif
+     }
+     if (pfm) {
+       fprintf(pfm, "%d\t%" PRId64 "\n", yabsys.frame_count, cpu_emutime);
+       fflush(pfm);
+     }
+     if( yabsys.frame_count >= 6100) {
+       fclose(pfm);
+       exit(0);
+     }
+   }
+#endif
+#endif
+#if DYNAREC_DEVMIYAX
+   if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
    return 0;
@@ -635,15 +908,20 @@ void YabauseStartSlave(void) {
       CurrentSH2 = MSH2;
 
       SH2GetRegisters(SSH2, &SSH2->regs);
-      SSH2->regs.R[15] = 0x06001000;
+      SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
       SSH2->regs.VBR = 0x06000400;
       SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
       if (MappedMemoryReadLong(0x060002AC) != 0)
          SSH2->regs.R[15] = MappedMemoryReadLong(0x060002AC);
       SH2SetRegisters(SSH2, &SSH2->regs);
    }
-   else
-      SH2PowerOn(SSH2);
+   else {
+     SH2PowerOn(SSH2);
+     SH2GetRegisters(SSH2, &SSH2->regs);
+     SSH2->regs.PC = 0x20000200;
+     SH2SetRegisters(SSH2, &SSH2->regs);
+
+   }
 
    yabsys.IsSSH2Running = 1;
 }
@@ -668,6 +946,10 @@ u64 YabauseGetTicks(void) {
    return gettime();
 #elif defined(PSP)
    return sceKernelGetSystemTimeWide();
+#elif defined(ANDROID)
+	struct timespec clock_time;
+	clock_gettime(CLOCK_REALTIME , &clock_time);
+	return (u64)clock_time.tv_sec * 1000000 + clock_time.tv_nsec/1000;
 #elif defined(HAVE_GETTIMEOFDAY)
    struct timeval tv;
    gettimeofday(&tv, NULL);
@@ -689,6 +971,8 @@ void YabauseSetVideoFormat(int type) {
 #elif defined(GEKKO)
    yabsys.tickfreq = secs_to_ticks(1);
 #elif defined(PSP)
+   yabsys.tickfreq = 1000000;
+#elif defined(ANDROID)
    yabsys.tickfreq = 1000000;
 #elif defined(HAVE_GETTIMEOFDAY)
    yabsys.tickfreq = 1000000;
@@ -984,7 +1268,10 @@ int YabauseQuickLoadGame(void)
 
       // Now setup SH2 registers to start executing at ip code
       SH2GetRegisters(MSH2, &MSH2->regs);
+      MSH2->onchip.VCRC = 0x64 << 8;
+      MSH2->onchip.IPRB = 0x0F00;
       MSH2->regs.PC = 0x06002E00;
+      MSH2->regs.R[15] = Cs2GetMasterStackAdress();
       SH2SetRegisters(MSH2, &MSH2->regs);
    }
    else

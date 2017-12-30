@@ -1,0 +1,111 @@
+language: cpp
+sudo: false
+cache:
+  apt: true
+env:
+  global:
+    - GLOBAL=1
+
+matrix:
+  include:
+    - os: linux
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-5
+            - g++-5
+            - libegl1-mesa-dev
+            - libgles2-mesa-dev  
+            - libsdl2-dev
+            - libcurl4-openssl-dev
+    
+      env:
+       - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+        
+    - os: linux
+      addons:
+        apt:
+          sources: 
+            - ubuntu-toolchain-r-test
+          packages:
+            - clang-3.8
+            - libc++-dev
+            - libegl1-mesa-dev
+            - libgles2-mesa-dev  
+            - libsdl2-dev
+            - libcurl4-openssl-dev
+      env: 
+        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang-3.8"
+
+    - language: android
+      env:
+        - ANDROID_NDK=$HOME/android-ndk-r13b
+      android:
+        components:
+          - tools
+          - platform-tools
+          - build-tools-26.0.1
+          - android-26
+          - extra-google-m2repository
+          - extra-android-m2repository
+      before_install:
+        - cd $HOME
+        - rm -fr $HOME/android-ndk-r16b
+        - curl -L http://dl.google.com/android/repository/android-ndk-r13b-linux-x86_64.zip -O
+        - unzip -oq android-ndk-r13b-linux-x86_64.zip
+        - rm android-ndk-r13b-linux-x86_64.zip
+      script:
+        - cd ${TRAVIS_BUILD_DIR}/yabause
+        - mkdir build
+        - cd build      
+        - cmake ../ -DCMAKE_TOOLCHAIN_FILE=../src/android/android.toolchain.cmake -DANDROID_ABI="armeabi-v7a with NEON" -DANDROID_NATIVE_API_LEVEL=19 -DYAB_PORTS=android -DYAB_WANT_ARM7=TRUE -DYAB_WANT_C68K=FALSE -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE
+        - make VERBOSE=1
+        - cd ../src/android
+        - chmod 755 ./gradlew
+        - ./gradlew assembleDebug
+          
+before_install:
+  - eval "${MATRIX_EVAL}"
+
+  
+install:
+  # Set the ${CXX} variable properly
+  #- export CXX=${COMPILER}
+  # - ${CXX} --version
+
+  # Dependencies required by the CI are installed in ${TRAVIS_BUILD_DIR}/deps/
+  - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+  - mkdir -p "${DEPS_DIR}"
+  - cd "${DEPS_DIR}"
+
+  # Travis machines have 2 cores
+  - JOBS=2
+
+  ############################################################################
+  # Install a recent CMake (unless already installed on OS X)
+  ############################################################################
+  - CMAKE_VERSION=3.9.6
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
+      CMAKE_URL="https://cmake.org/files/v${CMAKE_VERSION%.[0-9]}/cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz"
+      mkdir cmake && travis_retry wget --no-check-certificate -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
+      export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+    else
+      brew install cmake || brew upgrade cmake
+    fi
+  - cmake --version
+  
+script:
+  - cd ${TRAVIS_BUILD_DIR}/yabause
+  - mkdir build
+  - cd build
+  - export GIT_HASH=$(git rev-parse --short HEAD)
+  - cmake -DYAB_PORTS=glfw ..
+  - make VERBOSE=1
+
+notifications:
+  email: false
+
+  

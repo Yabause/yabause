@@ -43,6 +43,8 @@ public:
    bool saveSelected(QString filename);
    bool saveTab(QString filename);
 private:
+   u8 readByte(u32 addr);
+   void writeByte(u32 addr, u8 val);
    void keyPressCursor(QKeyEvent *event);
    void keyPressSelect(QKeyEvent *event);
    void keyPressEdit(QKeyEvent *event, u64 posBa);

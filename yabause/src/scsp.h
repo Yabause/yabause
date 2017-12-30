@@ -48,6 +48,11 @@ typedef struct
    void (*MuteAudio)(void);
    void (*UnMuteAudio)(void);
    void (*SetVolume)(int volume);
+#ifdef USE_SCSPMIDI
+	int (*MidiChangePorts)(int inport, int outport);
+	u8 (*MidiIn)(int *isdata);
+	int (*MidiOut)(u8 data);
+#endif
 } SoundInterface_struct;
 
 typedef struct
@@ -65,11 +70,14 @@ typedef struct
 
 #define MAX_BREAKPOINTS 10
 
+//#if defined(ARCH_IS_LINUX)
+#define ASYNC_SCSP
+//#endif
+
 typedef struct
 {
   u32 scsptiming1;
   u32 scsptiming2;  // 16.16 fixed point
-
   m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
   int numcodebreakpoints;
   void (*BreakpointCallBack)(u32);
@@ -79,6 +87,7 @@ typedef struct
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
+extern int use_new_scsp;
 
 u8 FASTCALL SoundRamReadByte(u32 addr);
 u16 FASTCALL SoundRamReadWord(u32 addr);
@@ -89,7 +98,6 @@ void FASTCALL SoundRamWriteLong(u32 addr, u32 val);
 
 int ScspInit(int coreid);
 int ScspChangeSoundCore(int coreid);
-void ScspSetFrameAccurate(int on);
 void ScspDeInit(void);
 void M68KStart(void);
 void M68KStop(void);
@@ -104,11 +112,14 @@ int SoundLoadState(FILE *fp, int version, int size);
 void ScspSlotDebugStats(u8 slotnum, char *outstring);
 void ScspCommonControlRegisterDebugStats(char *outstring);
 int ScspSlotDebugSaveRegisters(u8 slotnum, const char *filename);
+u32 ScspSlotDebugAudio (u32 *workbuf, s16 *buf, u32 len);
+void ScspSlotResetDebug(u8 slotnum);
 int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename);
 void ScspMuteAudio(int flags);
 void ScspUnMuteAudio(int flags);
 void ScspSetVolume(int volume);
-
+void ScspAsynMain(void * p);
+void ScspExecAsync();
 void FASTCALL scsp_w_b(u32, u8);
 void FASTCALL scsp_w_w(u32, u16);
 void FASTCALL scsp_w_d(u32, u32);
@@ -142,4 +153,13 @@ int M68KDelCodeBreakpoint(u32 addr);
 m68kcodebreakpoint_struct *M68KGetBreakpointList(void);
 void M68KClearCodeBreakpoints(void);
 
+void scsp_debug_instrument_get_data(int i, u32 * sa, int * is_muted);
+void scsp_debug_instrument_set_mute(u32 sa, int mute);
+void scsp_debug_instrument_clear();
+void scsp_debug_get_envelope(int chan, int * env, int * state);
+void scsp_debug_set_mode(int mode);
+void scsp_set_use_new(int which);
+void new_scsp_exec(s32 cycles);
+
+extern int use_new_scsp;
 #endif

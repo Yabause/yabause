@@ -2,11 +2,28 @@ project(yabause)
 
 cmake_minimum_required(VERSION 2.8)
 
+#-------------------------------------------------------------------------------
+#add local find scripts to CMAKE path
+LIST(APPEND CMAKE_MODULE_PATH
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMake/Utils
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMake/Packages
+)
+
+option(YAB_FORCE_GLES20 "force to use OpenGLES 2.0" ON)
+if (YAB_FORCE_GLES20)
+set(GLSystem "OpenGL ES 2.0")
+else(YAB_FORCE_GLES20)
+set(GLSystem "Desktop OpenGL")
+endif(YAB_FORCE_GLES20)
+
 set(YAB_PACKAGE yabause)
 set(YAB_VERSION_MAJOR 0)
-set(YAB_VERSION_MINOR 9)
-set(YAB_VERSION_PATCH 14)
+set(YAB_VERSION_MINOR 5)
+set(YAB_VERSION_PATCH 5)
 set(YAB_VERSION "${YAB_VERSION_MAJOR}.${YAB_VERSION_MINOR}.${YAB_VERSION_PATCH}")
+
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 
 set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_PACKAGE_VERSION_MAJOR ${YAB_VERSION_MAJOR})

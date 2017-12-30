@@ -21,7 +21,6 @@
 #include "UISettings.h"
 #include "../Settings.h"
 #include "../CommonDialogs.h"
-#include "UIWaitInput.h"
 #include "UIPortManager.h"
 
 #include <QDir>
@@ -40,13 +39,14 @@ extern OSD_struct* OSDCoreList[];
 
 struct Item
 {
-	Item( const QString& i, const QString& n, bool e=true, bool s=true)
-	{ id = i; Name = n; enableFlag = e; saveFlag = s; }
+	Item( const QString& i, const QString& n, bool e=true, bool s=true, bool z=false)
+	{ id = i; Name = n; enableFlag = e; saveFlag = s; ipFlag = z; }
 	
 	QString id;
 	QString Name;
 	bool enableFlag;
 	bool saveFlag;
+	bool ipFlag;
 };
 
 typedef QList<Item> Items;
@@ -71,13 +71,30 @@ const Items mCartridgeTypes = Items()
 	<< Item( "5", "32 Mbit Backup Ram", true, true )
 	<< Item( "6", "8 Mbit Dram", false, false )
 	<< Item( "7", "32 Mbit Dram", false, false )
-	<< Item( "8", "Netlink", false, false )
+	<< Item( "8", "Netlink", false, false, true )
 	<< Item( "9", "16 Mbit ROM", true, false )
-	<< Item( "10", "Japanese Modem", false, false );
+	<< Item( "10", "Japanese Modem", false, false, true );
 
 const Items mVideoFormats = Items()
 	<< Item( "0", "NTSC" )
 	<< Item( "1", "PAL" );
+
+const Items mVideoFilterMode = Items()
+	<< Item("0", "None")
+	<< Item("1", "FXAA")
+	<< Item("2", "Scanline filter")
+  << Item("3", "Bilinear");
+
+const Items mPolygonGenerationMode = Items()
+	<< Item("0", "Triangles using perspective correction")
+	<< Item("1", "CPU Tesselation")
+	<< Item("2", "GPU Tesselation");
+
+const Items mResolutionMode = Items()
+<< Item("0", "Native (native resolution of Window)")
+<< Item("1", "4x")
+<< Item("2", "2x")
+<< Item("3", "Original");
 
 UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
@@ -90,6 +107,10 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList
 	
 	leWinWidth->setValidator(new QIntValidator(0, maxWinRect.width(), leWinWidth));
 	leWinHeight->setValidator(new QIntValidator(0, maxWinRect.height(), leWinHeight));
+	
+	QString ipNum("(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])");
+	leCartridgeModemIP->setValidator(new QRegExpValidator(QRegExp("^" + ipNum + "\\." + ipNum + "\\." + ipNum + "\\." + ipNum + "$"), leCartridgeModemIP));
+	leCartridgeModemPort->setValidator(new QIntValidator(1, 65535, leCartridgeModemPort));
 
 	pmPort1->setPort( 1 );
 	pmPort1->loadSettings();
@@ -178,6 +199,7 @@ QStringList getCdDriveList()
 				list.append(drive_path);
 			}
 		}
+		fclose(f);
 	}
 #elif defined Q_OS_MAC
 #endif
@@ -189,6 +211,14 @@ void UISettings::setupCdDrives()
 	QStringList list=getCdDriveList();
 	foreach(QString string, list)
 		cbCdDrive->addItem(string);
+}
+
+void UISettings::on_leBios_textChanged(const QString & text)
+{
+	if (QFileInfo(text).exists())
+		cbEnableBiosEmulation->setEnabled(true);
+	else
+		cbEnableBiosEmulation->setEnabled(false);
 }
 
 void UISettings::tbBrowse_clicked()
@@ -206,7 +236,7 @@ void UISettings::tbBrowse_clicked()
 			return;
 		}
 		else if ( cbCdRom->currentText().contains( "iso", Qt::CaseInsensitive ) )
-			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds)" ) );
+			requestFile( QtYabause::translate( "Select your iso/cue/bin file" ), leCdRom, QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
 		else
 			requestFolder( QtYabause::translate( "Choose a cdrom drive/mount point" ), leCdRom );
 	}
@@ -272,6 +302,10 @@ void UISettings::on_cbCartridge_currentIndexChanged( int id )
 {
 	leCartridge->setVisible(mCartridgeTypes[id].enableFlag);
 	tbCartridge->setVisible(mCartridgeTypes[id].enableFlag);
+	lCartridgeModemIP->setVisible(mCartridgeTypes[id].ipFlag);
+	leCartridgeModemIP->setVisible(mCartridgeTypes[id].ipFlag);
+	lCartridgeModemPort->setVisible(mCartridgeTypes[id].ipFlag);
+	leCartridgeModemPort->setVisible(mCartridgeTypes[id].ipFlag);
 }
 
 void UISettings::loadCores()
@@ -296,7 +330,19 @@ void UISettings::loadCores()
 	// Video Formats
 	foreach ( const Item& it, mVideoFormats )
 		cbVideoFormat->addItem( QtYabause::translate( it.Name ), it.id );
-	
+
+	// Video FilterMode
+	foreach(const Item& it, mVideoFilterMode)
+		cbFilterMode->addItem(QtYabause::translate(it.Name), it.id);
+
+	// Polygon Generation
+	foreach(const Item& it, mPolygonGenerationMode)
+		cbPolygonGeneration->addItem(QtYabause::translate(it.Name), it.id);
+
+  // Resolution
+  foreach(const Item& it, mResolutionMode)
+    cbResolution->addItem(QtYabause::translate(it.Name), it.id);
+
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )
 		cbSoundCore->addItem( QtYabause::translate( SNDCoreList[i]->Name ), SNDCoreList[i]->id );
@@ -316,6 +362,14 @@ void UISettings::loadCores()
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
+
+   //68k cores
+   for (int i = 0; M68KCoreList[i] != NULL; i++)
+      cb68kCore->addItem(QtYabause::translate(M68KCoreList[i]->Name), M68KCoreList[i]->id);
+
+	cbAspectRatio->addItem( QtYabause::translate( "Fit to window" ), 0 );
+	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 4:3" ), 1 );
+	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 16:9" ), 2 );
 }
 
 void UISettings::loadSupportedResolutions()
@@ -395,6 +449,7 @@ void UISettings::loadSettings()
 
 	// general
 	leBios->setText( s->value( "General/Bios" ).toString() );
+	cbEnableBiosEmulation->setChecked( s->value( "General/EnableEmulatedBios" ).toBool() );
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	if (s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() == CDCORE_ARCH)
@@ -422,28 +477,45 @@ void UISettings::loadSettings()
 	else
 		dteBaseTime->setDateTime( QDateTime(QDate(1998, 1, 1), QTime(12, 0, 0)) );
 
+	int numThreads = QThread::idealThreadCount();	
+	cbEnableMultiThreading->setChecked(s->value( "General/EnableMultiThreading", numThreads <= 1 ? false : true ).toBool());
+	sbNumberOfThreads->setValue(s->value( "General/NumThreads", numThreads < 0 ? 1 : numThreads ).toInt());
+
 	// video
 	cbVideoCore->setCurrentIndex( cbVideoCore->findData( s->value( "Video/VideoCore", QtYabause::defaultVIDCore().id ).toInt() ) );
 #if YAB_PORT_OSD
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
 
+	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );
 	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
 	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
 	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 640 ) ).toString(),
 										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 480 ) ).toString());	
 	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
+	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
+	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
+	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
+  cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
+
+   cbEnableIntegerPixelScaling->setChecked(s->value("Video/EnableIntegerPixelScaling", false).toBool());
+   sbIntegerPixelScalingMultiplier->setValue(s->value("Video/IntegerPixelScalingMultiplier", 2).toInt());
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
+   cbNewScsp->setChecked(s->value("Sound/NewScsp", false).toBool());
 
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
 	leCartridge->setText( s->value( "Cartridge/Path" ).toString() );
+	leCartridgeModemIP->setText( s->value( "Cartridge/ModemIP", QString("127.0.0.1") ).toString() );
+	leCartridgeModemPort->setText( s->value( "Cartridge/ModemPort", QString("1337") ).toString() );
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
+  checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory").toBool());
+  
 	
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
@@ -452,6 +524,7 @@ void UISettings::loadSettings()
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
+   cb68kCore->setCurrentIndex(cb68kCore->findData(s->value("Advanced/68kCore", QtYabause::default68kCore().id).toInt()));
 
 	// view
 	bgShowMenubar->setId( rbMenubarNever, BD_NEVERHIDE );
@@ -477,6 +550,7 @@ void UISettings::saveSettings()
 
 	// general
 	s->setValue( "General/Bios", leBios->text() );
+	s->setValue( "General/EnableEmulatedBios", cbEnableBiosEmulation->isChecked() );
 	s->setValue( "General/CdRom", cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	CDInterface* core = QtYabause::getCDCore( cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	if ( core->id == CDCORE_ARCH )
@@ -503,6 +577,7 @@ void UISettings::saveSettings()
 	// Save new version of keys
 	s->setValue( "Video/WindowWidth", leWinWidth->text() );
 	s->setValue( "Video/WindowHeight", leWinHeight->text() );
+	s->setValue( "Video/AspectRatio", cbAspectRatio->currentIndex() );
 
 	if (supportedRes.count() > 0)
 	{
@@ -512,20 +587,33 @@ void UISettings::saveSettings()
 	}
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
+	s->setValue( "Video/Bilinear", cbBilinear->isChecked() );
 	s->setValue( "Video/VideoFormat", cbVideoFormat->itemData( cbVideoFormat->currentIndex() ).toInt() );
+	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
+	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
+  s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());
+   s->setValue("Video/EnableIntegerPixelScaling", cbEnableIntegerPixelScaling->isChecked());
+   s->setValue("Video/IntegerPixelScalingMultiplier", sbIntegerPixelScalingMultiplier->value());
 
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );
 	s->setValue( "General/FixedBaseTime", dteBaseTime->dateTime().toString(Qt::ISODate));
 
+	s->setValue( "General/EnableMultiThreading", cbEnableMultiThreading->isChecked() );
+	s->setValue( "General/NumThreads", sbNumberOfThreads->value());
+
 	// sound
 	s->setValue( "Sound/SoundCore", cbSoundCore->itemData( cbSoundCore->currentIndex() ).toInt() );
+   s->setValue( "Sound/NewScsp", cbNewScsp->isChecked());
 
 	// cartridge/memory
 	s->setValue( "Cartridge/Type", cbCartridge->itemData( cbCartridge->currentIndex() ).toInt() );
 	s->setValue( "Cartridge/Path", leCartridge->text() );
+	s->setValue( "Cartridge/ModemIP", leCartridgeModemIP->text() );
+	s->setValue( "Cartridge/ModemPort", leCartridgeModemPort->text() );
 	s->setValue( "Memory/Path", leMemory->text() );
 	s->setValue( "MpegROM/Path", leMpegROM->text() );
-	
+  s->setValue("Memory/ExtendMemory", checkBox_extended_internal_backup->isChecked());
+
 	// input
 	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );	
 	s->setValue( "Input/GunMouseSensitivity", sGunMouseSensitivity->value() );
@@ -533,6 +621,7 @@ void UISettings::saveSettings()
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
+   s->setValue("Advanced/68kCore", cb68kCore->itemData(cb68kCore->currentIndex()).toInt());
 
 	// view
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );

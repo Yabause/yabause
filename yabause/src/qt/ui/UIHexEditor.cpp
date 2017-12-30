@@ -166,27 +166,49 @@ void UIHexEditorWnd::goToAddress(u32 address, bool setCursor)
    viewport()->update();
 }
 
+u8 UIHexEditorWnd::readByte(u32 addr)
+{
+   if ((addr >= 0x05D00000 && addr < 0x05D80000) ||
+      (addr >= 0x05F80000 && addr < 0x05FC0000))
+      return MappedMemoryReadWord(addr & (~0x1)) >> ((1-(addr & 0x1))<<3);
+   else
+      return MappedMemoryReadByte(addr);
+}
+
+void UIHexEditorWnd::writeByte(u32 addr, u8 val)
+{
+   if ((addr >= 0x05D00000 && addr < 0x05D80000) ||
+      (addr >= 0x05F80000 && addr < 0x05FC0000))
+   {
+      u16 word = MappedMemoryReadWord(addr & (~0x1)) & (0xFF << ((addr & 0x1)<<3) );
+      word |= (val << ((1-(addr & 0x1))<<3));
+      MappedMemoryWriteWord(addr & (~0x1), word);
+   }
+   else
+      MappedMemoryWriteByte(addr, val);
+}
+
 void UIHexEditorWnd::clear(u32 index, int len)
 {
    for (int i=0; i < len; i++)
-      MappedMemoryWriteByte(index+i, 0);
+      writeByte(index+i, 0);
 }
 
 void UIHexEditorWnd::overwrite(s64 index, char ch)
 {
-   u8 data = MappedMemoryReadByte(index / 2);
+   u8 data = readByte(index / 2);
    char str[2] = { ch, '\0' };
    ch = strtol(str, NULL, 16);
    if (index % 2 == 0)
-      MappedMemoryWriteByte(index / 2, data & 0xF | (ch << 4));
+      writeByte(index / 2, data & 0xF | (ch << 4));
    else
-      MappedMemoryWriteByte(index / 2, data & 0xF0 | ch);
+      writeByte(index / 2, data & 0xF0 | ch);
    resetSelection();
 }
 
 void UIHexEditorWnd::overwrite(u32 addr, u8 data)
 {
-   MappedMemoryWriteByte(addr, data);
+   writeByte(addr, data);
    resetSelection();
 }
 
@@ -447,12 +469,12 @@ void UIHexEditorWnd::keyPressEdit(QKeyEvent *event, u64 posAddr)
       if (!textEdit)
       {
          for (u64 idx = getSelectionStart(); idx < getSelectionEnd(); idx++)
-            result.append(QString("%1").arg(MappedMemoryReadByte(idx), 2, 16, QChar('0')).toUpper());
+            result.append(QString("%1").arg(readByte(idx), 2, 16, QChar('0')).toUpper());
       }
       else
       {
          for (u64 idx = getSelectionStart(); idx < getSelectionEnd(); idx++)
-            result.append((char)MappedMemoryReadByte(idx));
+            result.append((char)readByte(idx));
       }
       QClipboard *clipboard = QApplication::clipboard();
       clipboard->setText(result);
@@ -725,7 +747,7 @@ void UIHexEditorWnd::drawHexArea(QPainter *painter, int firstLineIdx, u32 lastLi
             }
 
             // Paint hex value
-            text=QString("%1").arg(MappedMemoryReadByte(addr + lineIdx + colIdx - firstLineIdx), 2, 16, QChar('0')).toUpper();               
+            text=QString("%1").arg(readByte(addr + lineIdx + colIdx - firstLineIdx), 2, 16, QChar('0')).toUpper();               
             painter->drawText(xPos, yPos, text);
             xPos += text.length() * fontWidth;
          }
@@ -760,7 +782,7 @@ void UIHexEditorWnd::drawTextArea(QPainter *painter, int firstLineIdx, u32 lastL
                painter->setBackgroundMode(Qt::TransparentMode);
             }
 
-            QString text=QString((char)MappedMemoryReadByte(addr + lineIdx + colIdx));
+            QString text=QString((char)readByte(addr + lineIdx + colIdx));
 
             if (fontMetrics().width(text) == 0)
                text = QString('.');
@@ -1000,7 +1022,7 @@ bool UIHexEditorWnd::saveMemory(QString filename, u32 startAddress, u32 endAddre
 	}
 
 	for (u32 i = 0; i < size; i++)
-		buf[i] = MappedMemoryReadByte((startAddress)+i);
+		buf[i] = readByte((startAddress)+i);
 
 	if (fwrite((void *)buf, 1, size, fp) != size)
 	{

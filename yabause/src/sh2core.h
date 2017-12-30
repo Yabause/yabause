@@ -23,6 +23,12 @@
 
 #include "core.h"
 #include "memory.h"
+#include "sh2cache.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #define SH2CORE_DEFAULT     -1
 #define MAX_INTERRUPTS 50
@@ -30,6 +36,9 @@
 #ifdef MACH
 #undef MACH
 #endif
+
+//#define DMPHISTORY
+
 
 // UBC Flags
 #define BBR_CPA_NONE			(0 << 6)
@@ -268,6 +277,7 @@ typedef struct
    u32 DAR1;   // 0xFFFFFF94
    u32 TCR1;   // 0xFFFFFF98
    u32 CHCR1;  // 0xFFFFFF9C
+   u32 CHCR1M;
    u32 VCRDMA0;// 0xFFFFFFA0
    u32 VCRDMA1;// 0xFFFFFFA8
    u32 DMAOR;  // 0xFFFFFFB0
@@ -278,6 +288,7 @@ typedef struct
    u16 RTCSR;  // 0xFFFFFFF0
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
+   cache_enty cache;
 } Onchip_struct;
 
 typedef struct
@@ -395,6 +406,14 @@ typedef struct
       int maxNum;
    } trackInfLoop;
 
+#ifdef DMPHISTORY
+   u32 pchistory[0x100];
+   sh2regs_struct regshistory[0x100];
+   u32 pchistory_index;
+#endif
+
+   void * ext;  
+
 } SH2_struct;
 
 typedef struct
@@ -467,26 +486,10 @@ int SH2AddCodeBreakpoint(SH2_struct *context, u32 addr);
 int SH2DelCodeBreakpoint(SH2_struct *context, u32 addr);
 codebreakpoint_struct *SH2GetBreakpointList(SH2_struct *context);
 void SH2ClearCodeBreakpoints(SH2_struct *context);
+void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *r, char *string);
+void SH2DumpHistory(SH2_struct *context);
 
-static INLINE void SH2HandleBreakpoints(SH2_struct *context)
-{
-   int i;
-
-   for (i=0; i < context->bp.numcodebreakpoints; i++) {
-
-      if ((context->regs.PC == context->bp.codebreakpoint[i].addr) && context->bp.inbreakpoint == 0) {
-         context->bp.inbreakpoint = 1;
-         if (context->bp.BreakpointCallBack)
-             context->bp.BreakpointCallBack(context, context->bp.codebreakpoint[i].addr, context->bp.BreakpointUserData);
-         context->bp.inbreakpoint = 0;
-      }
-   }
-
-   if (context->bp.breaknow) {
-      context->bp.breaknow = 0;
-      context->bp.BreakpointCallBack(context, context->regs.PC, context->bp.BreakpointUserData);
-   }
-}
+void SH2HandleBreakpoints(SH2_struct *context);
 
 static void SH2BreakNow(SH2_struct *context)
 {
@@ -530,6 +533,13 @@ int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
 
 #if defined(SH2_DYNAREC)
 extern SH2Interface_struct SH2Dynarec;
+#endif
+
+extern SH2Interface_struct SH2Dyn;
+extern SH2Interface_struct SH2DynDebug;
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

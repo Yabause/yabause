@@ -34,6 +34,11 @@ static u32 SNDWavGetAudioSpace(void);
 static void SNDWavMuteAudio(void);
 static void SNDWavUnMuteAudio(void);
 static void SNDWavSetVolume(int volume);
+#ifdef USE_SCSPMIDI
+int SNDWavMidiChangePorts(int inport, int outport);
+u8 SNDWavMidiIn(int *isdata);
+int SNDWavMidiOut(u8 data);
+#endif
 
 SoundInterface_struct SNDWave = {
 SNDCORE_WAV,
@@ -46,7 +51,13 @@ SNDWavUpdateAudio,
 SNDWavGetAudioSpace,
 SNDWavMuteAudio,
 SNDWavUnMuteAudio,
-SNDWavSetVolume
+SNDWavSetVolume,
+#ifdef USE_SCSPMIDI
+SNDWavMidiChangePorts,
+SNDWavMidiIn,
+SNDWavMidiOut
+#endif
+	
 };
 
 char *wavefilename=NULL;
@@ -79,7 +90,7 @@ static int SNDWavInit(void)
    waveheader_struct waveheader;
    fmt_struct fmt;
    chunk_struct data;
-   IOCheck_struct check;
+   IOCheck_struct check = { 0, 0 };
 
    if (wavefilename)
    {
@@ -125,7 +136,7 @@ static void SNDWavDeInit(void)
    if (wavefp)
    {
       long length = ftell(wavefp);
-      IOCheck_struct check;
+      IOCheck_struct check = { 0, 0 };
 
       // Let's fix the riff chunk size and the data chunk size
       fseek(wavefp, sizeof(waveheader_struct)-0x8, SEEK_SET);
@@ -200,3 +211,27 @@ static void SNDWavSetVolume(UNUSED int volume)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+#ifdef USE_SCSPMIDI
+int SNDWavMidiChangePorts(int inport, int outport)
+{
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 SNDWavMidiIn(int *isdata)
+{
+	*isdata = 0;
+	/* Called when SCSP wants more MIDI data. Set isdata to 1 if there's data to return */
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SNDWavMidiOut(u8 data)
+{
+	/* Called when SCSP wants to send out MIDI data. num is the number of bytes in buffer. Return 1 if data used, or 0 if not */
+	return 1;
+}
+#endif

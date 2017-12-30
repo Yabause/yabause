@@ -26,7 +26,11 @@
 #include <stdlib.h>
 
 #if defined(__APPLE__) || defined(GEKKO)
- #include <SDL/SDL.h>
+ #ifdef HAVE_LIBSDL2
+  #include <SDL2/SDL.h>
+ #else
+  #include <SDL/SDL.h>
+ #endif
 #else
  #include "SDL.h"
 #endif
@@ -45,6 +49,11 @@ static u32 SNDSDLGetAudioSpace(void);
 static void SNDSDLMuteAudio(void);
 static void SNDSDLUnMuteAudio(void);
 static void SNDSDLSetVolume(int volume);
+#ifdef USE_SCSPMIDI
+int SNDSDLMidiChangePorts(int inport, int outport);
+u8 SNDSDLMidiIn(int *isdata);
+int SNDSDLMidiOut(u8 data);
+#endif
 
 SoundInterface_struct SNDSDL = {
 SNDCORE_SDL,
@@ -57,7 +66,12 @@ SNDSDLUpdateAudio,
 SNDSDLGetAudioSpace,
 SNDSDLMuteAudio,
 SNDSDLUnMuteAudio,
-SNDSDLSetVolume
+SNDSDLSetVolume,
+#ifdef USE_SCSPMIDI
+SNDSDLMidiChangePorts,
+SNDSDLMidiIn,
+SNDSDLMidiOut
+#endif
 };
 
 #define NUMSOUNDBLOCKS  4
@@ -260,4 +274,27 @@ static void SNDSDLSetVolume(int volume)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef USE_SCSPMIDI
+int SNDSDLMidiChangePorts(int inport, int outport)
+{
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 SNDSDLMidiIn(int *isdata)
+{
+	*isdata = 0;
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+int SNDSDLMidiOut(u8 data)
+{
+	return 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+#endif
 #endif

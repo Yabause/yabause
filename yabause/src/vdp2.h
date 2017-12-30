@@ -27,6 +27,11 @@
 
 extern u8 * Vdp2Ram;
 extern u8 * Vdp2ColorRam;
+extern u8 Vdp2ColorRamUpdated;
+extern u8 A0_Updated;
+extern u8 A1_Updated;
+extern u8 B0_Updated;
+extern u8 B1_Updated;
 
 u8 FASTCALL     Vdp2RamReadByte(u32);
 u16 FASTCALL    Vdp2RamReadWord(u32);
@@ -361,10 +366,23 @@ typedef struct {
 
 extern Vdp2Internal_struct Vdp2Internal;
 extern u64 lastticks;
+extern int vdp2_is_odd_frame;
+extern Vdp2 Vdp2Lines[270];
+
+struct CellScrollData
+{
+   u32 data[88];//(352/8) * 2 screens
+};
+
+extern struct CellScrollData cell_scroll_data[270];
 
 // struct for Vdp2 part that shouldn't be saved
 typedef struct {
    int disptoggle;
+   int * perline_alpha;
+   int * perline_alpha_draw;
+   int perline_alpha_a;
+   int perline_alpha_b;
 } Vdp2External_struct;
 
 extern Vdp2External_struct Vdp2External;
@@ -398,7 +416,23 @@ void ToggleRBG0(void);
 void ToggleFullScreen(void);
 void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
+void VdpResume(void);
 
-Vdp2 * Vdp2RestoreRegs(int line);
+Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
+
+#include "threads.h"
+void VdpProc( void *arg );
+
+// Ansyc VDP
+#define VDPEV_VBLANK_IN 0x000
+#define VDPEV_VBLANK_OUT 0x100
+#define VDPEV_DIRECT_DRAW 0x200
+#define VDPEV_MAKECURRENT 0x300
+#define VDPEV_REVOKE 0x400
+#define VDPEV_FINSH 0xFF00
+
+extern YabEventQueue * evqueue;
+
+int VideoSetFilterType( int video_filter_type );
 
 #endif

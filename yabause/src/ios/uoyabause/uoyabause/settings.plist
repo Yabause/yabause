@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>sound engine</key>
+	<integer>1</integer>
+	<key>frame skip</key>
+	<false/>
+	<key>keep aspect rate</key>
+	<true/>
+	<key>show fps</key>
+	<false/>
+	<key>cartridge</key>
+	<integer>0</integer>
+	<key>rendering resolution</key>
+	<integer>0</integer>
+	<key>builtin bios</key>
+	<true/>
+</dict>
+</plist>

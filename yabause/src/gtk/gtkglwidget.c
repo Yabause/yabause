@@ -107,7 +107,7 @@ static gboolean yui_gl_resize(GtkWidget *w,GdkEventConfigure *event, gpointer da
 		return FALSE;
 
 	glViewport(0, 0, event->width, event->height);
-        if ( YUI_GL(w)->is_init ) VIDCore->Resize(event->width, event->height, FALSE );
+        if ( YUI_GL(w)->is_init ) VIDCore->Resize(0,0,event->width, event->height, FALSE );
 #endif
 	return FALSE;
 }

@@ -21,6 +21,9 @@
 #ifndef THREADS_H
 #define THREADS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 ///////////////////////////////////////////////////////////////////////////
 // Thread constants
 ///////////////////////////////////////////////////////////////////////////
@@ -28,11 +31,25 @@
 // Thread IDs
 enum {
    YAB_THREAD_SCSP = 0,
+   YAB_THREAD_VDP,
    YAB_THREAD_GDBSTUBCLIENT,
    YAB_THREAD_GDBSTUBLISTENER,
    YAB_THREAD_NETLINKLISTENER,
    YAB_THREAD_NETLINKCONNECT,
    YAB_THREAD_NETLINKCLIENT,
+   YAB_THREAD_OPENAL,
+   YAB_THREAD_VIDSOFT_LAYER_NBG3,
+   YAB_THREAD_VIDSOFT_LAYER_NBG2,
+   YAB_THREAD_VIDSOFT_LAYER_NBG1,
+   YAB_THREAD_VIDSOFT_LAYER_NBG0,
+   YAB_THREAD_VIDSOFT_LAYER_RBG0,
+   YAB_THREAD_VIDSOFT_VDP1,
+   YAB_THREAD_VIDSOFT_PRIORITY_0,
+   YAB_THREAD_VIDSOFT_PRIORITY_1,
+   YAB_THREAD_VIDSOFT_PRIORITY_2,
+   YAB_THREAD_VIDSOFT_PRIORITY_3,
+   YAB_THREAD_VIDSOFT_PRIORITY_4,
+   YAB_THREAD_VIDSOFT_LAYER_SPRITE,
    YAB_NUM_THREADS      // Total number of subthreads
 };
 
@@ -65,6 +82,39 @@ void YabThreadRemoteSleep(unsigned int id);
 // YabThreadWake:  Wake up the given thread if it is asleep.
 void YabThreadWake(unsigned int id);
 
+// Event Queue
+typedef void * YabEventQueue;
+
+// YabThreadCreateQueue:
+YabEventQueue * YabThreadCreateQueue( int qsize );
+
+// YabThreadDestoryQueue:
+void YabThreadDestoryQueue( YabEventQueue * queue_t );
+
+// YabAddEventQueue: send event
+void YabAddEventQueue( YabEventQueue * queue_t, int evcode );
+
+// YabWaitEventQueue: recive event
+int YabWaitEventQueue( YabEventQueue * queue_t );
+ 
+int YaGetQueueSize(YabEventQueue * queue_t);
+
+typedef void * YabMutex;
+
+void YabThreadLock( YabMutex * mtx );
+void YabThreadUnLock( YabMutex * mtx );
+YabMutex * YabThreadCreateMutex();
+void YabThreadFreeMutex( YabMutex * mtx );
+
+void YabThreadSetCurrentThreadAffinityMask(int mask);
+int YabThreadGetCurrentThreadAffinityMask();
+
+void YabThreadUSleep( unsigned int stime );
+
 ///////////////////////////////////////////////////////////////////////////
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // THREADS_H

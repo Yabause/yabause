@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "osdcore.h"
+
 //////////////////////////////////////////////////////////////////////////////
 
 Debug * DebugInit(const char * n, DebugOutType t, char * s) {
@@ -117,7 +119,21 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 	}
 }
 
+#ifdef _WINDOWS
+#include <Windows.h>
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
+
+void DebugLog( const char * format, ... ) {
+  static char strtmp[512];
+  int i=0;
+  va_list l;
+  va_start(l, format);
+  i += vsprintf(strtmp + i, format, l);
+  OSDAddLogString(strtmp);
+  va_end(l);        
+}
 
 void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ...) {
   va_list l;
@@ -150,13 +166,37 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
     break;
   case DEBUG_CALLBACK:
     {
-      int i;
+      int i=0;
       int strnewhash = 0;
-      i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, (long)line);
+#ifdef _WINDOWS
+      static FILE * dfp = NULL;
+      if (dfp == NULL){
+        dfp = fopen("debug.txt", "w");
+      }
+#endif
+#ifdef ANDROID
+      static FILE * dfp = NULL;
+      if (dfp == NULL){
+        dfp = fopen("/mnt/sdcard/debug.txt", "w");
+      }
+#endif
+      //i = sprintf(strtmp, "%s (%s:%ld): ", d->name, file, (long)line);
       i += vsprintf(strtmp + i, format, l);
-      for ( ; i>0 ; i-- ) strnewhash += (int)(strtmp[i]);
-      if ( strnewhash != strhash ) d->output.callback( strtmp );
-      strhash = strnewhash;
+     // for ( ; i>0 ; i-- ) strnewhash += (int)(strtmp[i]);
+      //if (strnewhash != strhash) {
+        //OutputDebugString(strtmp);
+        //d->output.callback(strtmp);
+        OSDAddLogString(strtmp);
+#if defined(ANDROID) 
+        fprintf(dfp, "%s",strtmp);
+        fflush(dfp);
+#endif
+#if defined(_WINDOWS)
+        fprintf(dfp, "%s\n",strtmp);
+        fflush(dfp);
+#endif
+      //}
+      //strhash = strnewhash;
     }
     break;
   }

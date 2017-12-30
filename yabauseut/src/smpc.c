@@ -13,11 +13,10 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Lapetus; if not, write to the Free Software
+    along with YabauseUT; if not, write to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-//#include <lapetus.h>
 #include <stdio.h>
 #include <string.h>
 #include "tests.h"
@@ -50,6 +49,304 @@ void smpc_test()
 
 //////////////////////////////////////////////////////////////////////////////
 
+void disable_iapetus_handler()
+{
+   bios_change_scu_interrupt_mask(0xFFFFFFF, MASK_VBLANKOUT | MASK_SYSTEMMANAGER);
+   bios_set_scu_interrupt(0x41, NULL);
+   bios_set_scu_interrupt(0x47, NULL);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+volatile int hblank_timer = 0;
+volatile int issue_intback = 0;
+
+volatile int lines_since_vblank_out = 0;
+volatile int lines_since_vblank_in = 0;
+
+volatile int result_pos = 0;
+volatile int system_manager_occured = 0;
+
+volatile int frame_count = 0;
+volatile int stored_timer = 0;
+
+struct ResultType
+{
+   int type;
+   int since_vblank_out;
+   int since_vblank_in;
+   int free_timer;
+   int frame;
+   int total_time;
+};
+
+volatile struct ResultType results[64] = { { 0 } };
+
+char * result_types[] = 
+{
+   "bad       ",
+   "intb issue",
+   "sys interu",
+   "in no data",
+   "data remai"
+};
+
+#define RESULT_START 1
+#define RESULT_SYS_MAN 2
+#define RESULT_NO_DATA 3
+#define RESULT_DATA_REM 4
+
+#define TEST_STATUS_ONLY 1
+#define TEST_STATUS_PERIPHERAL 2
+#define TEST_PERIPHERAL_ONLY 3
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_test_vblank_out_handler()
+{
+   lines_since_vblank_out = 0;
+   frame_count++;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_test_hblank_in_handler()
+{
+   hblank_timer++;
+   lines_since_vblank_out++;
+   lines_since_vblank_in++;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_test_vblank_in_handler()
+{
+   lines_since_vblank_in = 0;
+   issue_intback = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void reset_result(int pos)
+{
+   volatile struct ResultType * r = &results[pos];
+   r->type = 0;
+   r->since_vblank_out = 0;
+   r->since_vblank_in = 0;
+   r->free_timer = 0;
+   r->frame = 0;
+   r->total_time = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+inline void set_result(int type)
+{
+   volatile struct ResultType * r = &results[result_pos];
+
+   r->type = type;
+   r->since_vblank_out = lines_since_vblank_out;
+   r->since_vblank_in = lines_since_vblank_in;
+   r->free_timer = hblank_timer;
+   r->frame = frame_count;
+   r->total_time = hblank_timer - stored_timer;
+   result_pos++;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_test_system_manager_handler()
+{
+   set_result(RESULT_SYS_MAN);
+
+   system_manager_occured = 1;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void intback_write_iregs(int status, int p2md, int p1md, int pen, int ope)
+{
+   SMPC_REG_IREG(0) = status;
+   SMPC_REG_IREG(1) = (p2md << 6) | (p1md << 4) | (pen << 3) | (ope << 0);
+   SMPC_REG_IREG(2) = 0xF0;
+   SMPC_REG_IREG(6) = 0xFE;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_intback_disable_interrupts()
+{
+   interrupt_set_level_mask(0xF);
+   bios_change_scu_interrupt_mask(0xFFFFFFFF, MASK_VBLANKOUT | MASK_HBLANKIN | MASK_VBLANKIN | MASK_SYSTEMMANAGER);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_intback_set_interrupts()
+{
+   bios_set_scu_interrupt(0x47, smpc_test_system_manager_handler);
+   bios_set_scu_interrupt(0x40, smpc_test_vblank_in_handler);
+   bios_set_scu_interrupt(0x41, smpc_test_vblank_out_handler);
+   bios_set_scu_interrupt(0x42, smpc_test_hblank_in_handler);
+   bios_change_scu_interrupt_mask(~(MASK_VBLANKOUT | MASK_HBLANKIN | MASK_VBLANKIN | MASK_SYSTEMMANAGER), 0);
+   interrupt_set_level_mask(0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void reset_test_vars()
+{
+   int i;
+   for (i = 0; i < 64; i++)
+      reset_result(i);
+
+   hblank_timer = 0;
+   issue_intback = 0;
+
+   lines_since_vblank_out = 0;
+   lines_since_vblank_in = 0;
+
+   result_pos = 0;
+   system_manager_occured = 0;
+
+   frame_count = 0;
+   stored_timer = 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_intback_issue_timing_test_main(int test_type, int vblank_line)
+{
+   smpc_intback_disable_interrupts();
+
+   reset_test_vars();
+
+   test_disp_font.transparent = 0;
+
+   smpc_intback_set_interrupts();
+
+   for (;;)
+   {
+      if (issue_intback && (lines_since_vblank_in == vblank_line))
+      {
+         issue_intback = 0;
+
+         if (test_type == TEST_STATUS_PERIPHERAL)
+            intback_write_iregs(1, 0, 0, 1, 0);
+         else if (test_type == TEST_PERIPHERAL_ONLY)
+            intback_write_iregs(0, 0, 0, 1, 0);
+         else if (test_type == TEST_STATUS_ONLY)
+            intback_write_iregs(1, 0, 0, 0, 0);
+
+         stored_timer = hblank_timer;
+
+         set_result(RESULT_START);
+
+         smpc_issue_command(SMPC_CMD_INTBACK);
+      }
+
+      if (system_manager_occured)
+      {
+         system_manager_occured = 0;
+
+         if (SMPC_REG_SR & (1 << 5))
+         {
+            set_result(RESULT_DATA_REM);
+            SMPC_REG_IREG(0) = 0x80;
+
+         }
+         else
+         {
+            set_result(RESULT_NO_DATA);
+         }
+      }
+
+      if (result_pos > 48)
+         break;
+   }
+
+   // Re-enable Peripheral Handler
+   per_init();
+
+   int i;
+   int j = 2;
+   int previous_frame = -1;
+
+   for (i = 0; i < 64; i++)
+   {
+      if (results[i].frame < 3)
+         continue;
+
+      if (results[i].frame != previous_frame)
+         j++;
+
+      previous_frame = results[i].frame;
+
+      vdp_printf(&test_disp_font, 0, 8 * j, 15,
+         "%s | %03d | %03d | %04d | %02d | %03d",
+         result_types[results[i].type],
+         results[i].since_vblank_out,
+         results[i].since_vblank_in,
+         results[i].free_timer,
+         results[i].frame,
+         results[i].total_time);
+
+      j++;
+
+      if (j > 27)
+         break;
+   }
+
+   for (;;)
+   {
+      vdp_vsync();
+
+      if (per[0].but_push_once & PAD_A)
+      {
+         break;
+      }
+
+      if (per[0].but_push_once & PAD_START)
+      {
+         reset_system();
+      }
+   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void smpc_intback_issue_timing_test()
+{
+   int line = 0;
+
+   vdp_printf(&test_disp_font, 0, 2 * 8, 15, "           | vbo | vbi | hbla | fr | lin", line);
+
+   int increment = 4;
+
+   for (line = 0; line < 41; line += increment)
+   {
+      vdp_printf(&test_disp_font, 0, 0, 15,"peripheral only, %d lines from vblank in    ", line);
+      smpc_intback_issue_timing_test_main(TEST_PERIPHERAL_ONLY, line);
+   }
+
+   for (line = 0; line < 41; line += increment)
+   {
+      vdp_printf(&test_disp_font, 0, 0, 15, "status before, %d lines from vblank in  ", line);
+      smpc_intback_issue_timing_test_main(TEST_STATUS_PERIPHERAL, line);
+   }
+
+   for (line = 0; line < 41; line += increment)
+   {
+      vdp_printf(&test_disp_font, 0, 0, 15, "status only, %d lines from vblank in  ", line);
+      smpc_intback_issue_timing_test_main(TEST_STATUS_ONLY, line);
+   }
+
+   test_disp_font.transparent = 1;
+   gui_clear_scr(&test_disp_font);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 void smpc_cmd_test()
 {
 	// Intback IREG test
@@ -71,7 +368,7 @@ void smpc_cmd_test()
    int i, j, k;
 
    // Disable Peripheral handler
-   bios_change_scu_interrupt_mask(0xFFFFFFF, MASK_VBLANKOUT | MASK_SYSTEMMANAGER);
+   disable_iapetus_handler();
    test_disp_font.transparent = 0;
    
    vdp_printf(&test_disp_font, 2 * 8, 2 * 16, 15, "Starting test in X second(s)");
@@ -111,8 +408,10 @@ void smpc_cmd_test()
    }
 
    // Re-enable Peripheral Handler
-   bios_change_scu_interrupt_mask(~(MASK_VBLANKOUT | MASK_SYSTEMMANAGER), 0);
+   per_init();
+
    test_disp_font.transparent = 1;
+   gui_clear_scr(&test_disp_font);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -228,6 +527,66 @@ u8 disp_pad_data(u8 oreg_counter, int x, int y, u8 id)
    return oreg_counter;
 }
 
+
+//at 0x67 standard left pad button is enabled
+//when releasing the wheel back to neutral, at 0x6f left goes back to unpressed
+
+//when pulling the wheel right, at 0x97 right pad is enabled
+//when releasing the wheel from right back to neutral, at 0x8f right pad is released
+
+//the left button on the back of the wheel is up
+//the right button on the back of the wheel is down
+
+//////////////////////////////////////////////////////////////////////////////
+
+u8 disp_wheel(u8 oreg_counter, int x, int y, u8 id)
+{
+   oreg_counter = disp_pad_data(oreg_counter, x, y, id);
+
+   u8 analog = get_oreg(&oreg_counter);
+
+   vdp_printf(&test_disp_font, 0*8, 26*8, 0xF, "Analog: %02X", analog);
+
+   return oreg_counter;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+//values seem to be less precise than wheel, may depend on individual stick
+
+//press left at axis 1 56
+//release left at axis 1 6A
+
+//press right at axis 1 ab
+//release right at axis 1 95
+
+//press up at axis 2 65
+//release up at axis 2 6A
+
+//press down at axis 2 a9
+//release down at axis 2 94
+
+//double stick mode:
+//sub stick trigger = x
+//sub stick left button (B) = Y
+//sub stick right button (C) = Z
+//analog inputs in same order, right after first 3
+//peripheral id 0x19
+u8 disp_mission(u8 oreg_counter, int x, int y, u8 id)
+{
+   oreg_counter = disp_pad_data(oreg_counter, x, y, id);
+
+   int pos = 17;
+   int i = 0;
+   for (i = 0; i < 7; i++)
+   {
+      u8 analog = get_oreg(&oreg_counter);
+      vdp_printf(&test_disp_font, 0 * 8, (pos + i) * 8, 0xF, "Analog %d: %02X", i, analog);
+   }
+
+   return oreg_counter;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8 disp_nothing(u8 oreg_counter, int x, int y, u8 id)
@@ -254,8 +613,10 @@ typedef struct
 per_info_struct per_info[] =
 {
    { 0x02, "Standard Pad", disp_pad_data },
-   { 0x13, "Racing Wheel", disp_nothing },
-   { 0x15, "Analog Pad", disp_nothing },
+   { 0x13, "Racing Wheel", disp_wheel },
+   { 0x15, "Mission Stick", disp_mission },
+   { 0x16, "Analog Pad", disp_nothing },
+   { 0x19, "Double Mission Stick", disp_mission },
    { 0x23, "Saturn Mouse", disp_nothing },
    { 0x25, "Gun", disp_nothing },
    { 0x34, "Keyboard", disp_nothing },

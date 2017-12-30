@@ -23,8 +23,40 @@
 
 #include "memory.h"
 
-#define VIDCORE_DEFAULT         -1
+#define VIDCORE_DEFAULT         -1  
 #define VIDCORE_DUMMY           0
+
+//#define YAB_ASYNC_RENDERING 1
+
+typedef struct {
+   u16 TVMR;
+   u16 FBCR;
+   u16 PTMR;
+   u16 EWDR;
+   u16 EWLR;
+   u16 EWRR;
+   u16 ENDR;
+   u16 EDSR;
+   u16 LOPR;
+   u16 COPR;
+   u16 MODR;
+
+   u32 addr;
+   int disptoggle_dont_use_me; // not used anymore, see Vdp1External_struct
+
+   s16 localX;
+   s16 localY;
+
+   u16 systemclipX1;
+   u16 systemclipY1;
+   u16 systemclipX2;
+   u16 systemclipY2;
+
+   u16 userclipX1;
+   u16 userclipY1;
+   u16 userclipX2;
+   u16 userclipY2;
+} Vdp1;
 
 typedef struct
 {
@@ -32,27 +64,35 @@ typedef struct
    const char *Name;
    int (*Init)(void);
    void (*DeInit)(void);
-   void (*Resize)(unsigned int, unsigned int, int);
+   void (*Resize)(int,int,unsigned int, unsigned int, int);
    int (*IsFullscreen)(void);
    // VDP1 specific
    int (*Vdp1Reset)(void);
    void (*Vdp1DrawStart)(void);
    void (*Vdp1DrawEnd)(void);
-   void (*Vdp1NormalSpriteDraw)(void);
-   void (*Vdp1ScaledSpriteDraw)(void);
-   void (*Vdp1DistortedSpriteDraw)(void);
-   void (*Vdp1PolygonDraw)(void);
-   void (*Vdp1PolylineDraw)(void);
-   void (*Vdp1LineDraw)(void);
-   void (*Vdp1UserClipping)(void);
-   void (*Vdp1SystemClipping)(void);
-   void (*Vdp1LocalCoordinate)(void);
+   void(*Vdp1NormalSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1ScaledSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolygonDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolylineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1LineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1UserClipping)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1SystemClipping)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
+   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
+   void(*Vdp1EraseWrite)(void);
+   void(*Vdp1FrameChange)(void);
    // VDP2 specific
    int (*Vdp2Reset)(void);
    void (*Vdp2DrawStart)(void);
    void (*Vdp2DrawEnd)(void);
    void (*Vdp2DrawScreens)(void);
    void (*GetGlSize)(int *width, int *height);
+   void (*SetSettingValue)(int type, int value);
+   void(*Sync)();
+   void (*GetNativeResolution)(int *width, int *height, int * interlace);
+   void(*Vdp2DispOff)(void);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
@@ -73,35 +113,8 @@ void FASTCALL Vdp1FrameBufferWriteByte(u32, u8);
 void FASTCALL Vdp1FrameBufferWriteWord(u32, u16);
 void FASTCALL Vdp1FrameBufferWriteLong(u32, u32);
 
-typedef struct {
-   u16 TVMR;
-   u16 FBCR;
-   u16 PTMR;
-   u16 EWDR;
-   u16 EWLR;
-   u16 EWRR;
-   u16 ENDR;
-   u16 EDSR;
-   u16 LOPR;
-   u16 COPR;
-   u16 MODR;
-
-   u32 addr;
-   int disptoggle_dont_use_me; // not used anymore, see Vdp1External_struct
-
-   u16 localX;
-   u16 localY;
-
-   u16 systemclipX1;
-   u16 systemclipY1;
-   u16 systemclipX2;
-   u16 systemclipY2;
-
-   u16 userclipX1;
-   u16 userclipY1;
-   u16 userclipX2;
-   u16 userclipY2;
-} Vdp1;
+void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
 
 extern Vdp1 * Vdp1Regs;
 
@@ -110,6 +123,10 @@ typedef struct {
    int disptoggle;
    int manualerase;
    int manualchange;
+   int vbalnk_erase;
+   int frame_change_plot;
+   int swap_frame_buffer;
+   int current_frame;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;
@@ -139,6 +156,7 @@ int VideoInit(int coreid);
 int VideoChangeCore(int coreid);
 void VideoDeInit(void);
 void Vdp1Reset(void);
+int VideoSetSetting(int type, int value);
 
 u8 FASTCALL	Vdp1ReadByte(u32);
 u16 FASTCALL	Vdp1ReadWord(u32);
@@ -149,7 +167,7 @@ void FASTCALL	Vdp1WriteLong(u32, u32);
 
 void Vdp1Draw(void);
 void Vdp1NoDraw(void);
-void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr);
+void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
 
 int Vdp1SaveState(FILE *fp);
 int Vdp1LoadState(FILE *fp, int version, int size);
@@ -158,5 +176,6 @@ char *Vdp1DebugGetCommandNumberName(u32 number);
 void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
 void ToggleVDP1(void);
+
 
 #endif

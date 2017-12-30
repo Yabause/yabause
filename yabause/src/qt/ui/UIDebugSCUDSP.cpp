@@ -129,16 +129,16 @@ void UIDebugSCUDSP::updateRegList()
    str.sprintf("CT = %02X:%02X:%02X:%02X", regs.CT[0], regs.CT[1], regs.CT[2], regs.CT[3]);
    lwRegisters->addItem(str);
 
-   str.sprintf("RA =   %08lX", regs.RA0);
+   str.sprintf("RA =   %08X", regs.RA0);
    lwRegisters->addItem(str);
 
-   str.sprintf("WA =   %08lX", regs.WA0);
+   str.sprintf("WA =   %08X", regs.WA0);
    lwRegisters->addItem(str);
 
-   str.sprintf("RX =   %08lX", regs.RX);
+   str.sprintf("RX =   %08X", regs.RX);
    lwRegisters->addItem(str);
 
-   str.sprintf("RY =   %08lX", regs.RX);
+   str.sprintf("RY =   %08X", regs.RX);
    lwRegisters->addItem(str);
 
    str.sprintf("PH =       %04X", regs.P.part.H & 0xFFFF);
@@ -183,11 +183,15 @@ void UIDebugSCUDSP::setRegister(int index, u32 value)
 
 bool UIDebugSCUDSP::addCodeBreakpoint(u32 addr)
 {
+	if (!ScuRegs)
+		return false;
    return ScuDspAddCodeBreakpoint(addr) == 0;     
 }
 
 bool UIDebugSCUDSP::delCodeBreakpoint(u32 addr)
 {
+	if (!ScuRegs)
+		return false;
    return ScuDspDelCodeBreakpoint(addr) == 0;
 }
 
@@ -200,6 +204,8 @@ void UIDebugSCUDSP::stepInto()
 void UIDebugSCUDSP::reserved1()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveProgram(s.toLatin1());
 }
@@ -207,6 +213,8 @@ void UIDebugSCUDSP::reserved1()
 void UIDebugSCUDSP::reserved2()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 0);
 }
@@ -214,6 +222,8 @@ void UIDebugSCUDSP::reserved2()
 void UIDebugSCUDSP::reserved3()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 1);
 }
@@ -221,6 +231,8 @@ void UIDebugSCUDSP::reserved3()
 void UIDebugSCUDSP::reserved4()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 2);
 }
@@ -228,6 +240,8 @@ void UIDebugSCUDSP::reserved4()
 void UIDebugSCUDSP::reserved5()
 {
    const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
+	if (!ScuRegs)
+		return;
    if ( !s.isNull() )
       ScuDspSaveMD(s.toLatin1(), 3);
 }
