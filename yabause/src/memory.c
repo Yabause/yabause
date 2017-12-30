@@ -111,12 +111,12 @@ void * YabMemMap(char * filename, u32 size ) {
 
   fd = open(filename, O_RDWR);
   if (fd ==-1) {
-    yprintf("YabMemMap: open failed");
+    LOG("YabMemMap: open failed");
     return NULL;
    }
 
   if (fstat(fd, &sb) ==-1) {
-    yprintf("YabMemMap: fstat failed");
+    LOG("YabMemMap: fstat failed");
     return NULL;
   }
 
@@ -127,12 +127,12 @@ void * YabMemMap(char * filename, u32 size ) {
 
   p = mmap(0, sb.st_size, PROT_READ| PROT_WRITE, MAP_SHARED, fd, 0);
   if (p == MAP_FAILED) {
-    yprintf("YabMemMap: mmap failed");
+    LOG("YabMemMap: mmap failed");
     return NULL;
   }
 
   if (close(fd) == -1) {
-    yprintf("YabMemMap: close failed");
+    LOG("YabMemMap: close failed");
     return NULL;
   }
 

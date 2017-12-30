@@ -19,7 +19,7 @@ using std::vector;
       {
         program_path:"./normal_scroll/window_controll/sl_coff.coff",
         start_address:"0x06004000",
-        check_frame_count:[ 32,64,128 ]
+        check_frame_count:[ 32,64,28 ]
       },
       {
         program_path:"./normal_scroll/window_controll/sl_coff.coff",
@@ -113,9 +113,9 @@ protected:
   string base_dir_;
   void onCheckPoint();
   void onFinidhed();
-  static size_t TestFramework::CurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmemb, std::string *s);
+  static size_t CurlWrite_CallbackFunc_StdString(void *contents, size_t size, size_t nmemb, std::string *s);
   int sendImageFile(const string & filename, int & id);
-  static size_t TestFramework::read_callback(void *dest, size_t size, size_t nmemb, void *userp);
+  static size_t read_callback(void *dest, size_t size, size_t nmemb, void *userp);
   int sendTestResult(const char * data);
   SAVE_SCREENSHOT save_screenshot = nullptr;
 };
