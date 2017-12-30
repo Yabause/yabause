@@ -32,7 +32,7 @@ set(yabause_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "sdl;qt" CACHE STRING "List of ports to build")
+set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
 
 		
 set(yabause_SOURCES
@@ -816,11 +816,19 @@ endif ()
 
 set(YAB_OPTIMIZATION "-O3" CACHE STRING "Override optimization level")
 
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+	set(CMAKE_TOOLCHAIN_PREFIX "llvm-")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -stdlib=libc++")
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -lc++")
+endif()
+
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION} -march=i686 -msse")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
