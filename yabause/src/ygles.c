@@ -3061,19 +3061,33 @@ void YglRender(void) {
      _Ygl->targetfbo = _Ygl->default_fbo;
    }
 
+
+   double dar = (double)GlWidth/(double)GlHeight;
+   double par = (double)_Ygl->rwidth/(double)_Ygl->rheight;
+
+   double wN = (dar>par)?(double)_Ygl->height*par:_Ygl->width;
+   double hN = (dar>par)?_Ygl->height:(double)_Ygl->width/par;
+   double xN = (_Ygl->width-wN)/2;
+   double yN = (_Ygl->height-hN)/2;
+
+   double w = (dar>par)?(double)_Ygl->width*(par/dar):_Ygl->width;
+   double h = (dar>par)?(double)_Ygl->height:(double)_Ygl->height/(par/dar);
+   double x = (_Ygl->width-w)/2;
+   double y = (_Ygl->height-h)/2;
+
    if (_Ygl->resolution_mode != RES_NATIVE ) {
-     glViewport(0, 0, _Ygl->width, _Ygl->height);
+     glViewport(x, y, w, h);
    }
    else{
-     glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
+     glViewport(_Ygl->originx+xN, _Ygl->originy+yN, wN, hN);
    }
 
    if (_Ygl->aamode == AA_FXAA){
-     glViewport(0, 0, _Ygl->width, _Ygl->height);
+     glViewport(xN, yN, wN, hN);
    }
 
    if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256){
-     glViewport(0, 0, _Ygl->width, _Ygl->height);
+     glViewport(xN, yN, wN, hN);
    }
 
 
