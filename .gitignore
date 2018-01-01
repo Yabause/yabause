@@ -5,6 +5,7 @@ yabause/src/android/res/values/security.xml
 *.iml
 build/
 /*build/
+**/*build/*
 *.a
 *.so
 *.swp
