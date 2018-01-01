@@ -61,6 +61,8 @@
 #define  WINDOW_WIDTH_LOW 600
 #define WINDOW_HEIGHT_LOW ((int)((float)WINDOW_WIDTH_LOW/AR))
 
+static int Wwidth;
+static int Wheight;
 
 M68K_struct * M68KCoreList[] = {
 &M68KDummy,
@@ -231,6 +233,8 @@ void YuiInit() {
 static int SetupOpenGL() {
   int w = (lowres_mode == 0)?WINDOW_WIDTH:WINDOW_WIDTH_LOW;
   int h = (lowres_mode == 0)?WINDOW_HEIGHT:WINDOW_HEIGHT_LOW;
+  Wwidth = w;
+  Wheight = h;
   if (!platform_SetupOpenGL(w,h))
     exit(EXIT_FAILURE);
 }
@@ -384,6 +388,14 @@ int main(int argc, char *argv[]) {
 
   while (!platform_shouldClose())
   {
+        int height;
+        int width;
+        platform_getFBSize(&width, &height);
+        if ((Wwidth != width) || (Wheight != height)) {
+          Wwidth = width;
+          Wheight = height;
+          VIDCore->Resize(0, 0, Wwidth, Wheight, 1);
+        }
         if (PERCore->HandleEvents() == -1) platform_Close();
         platform_HandleEvent();
   }

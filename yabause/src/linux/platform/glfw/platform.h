@@ -18,5 +18,6 @@ extern void platform_Close();
 extern int platform_Deinit(void);
 extern void platform_HandleEvent();
 extern void platform_SetKeyCallback(k_callback call);
+extern void platform_getFBSize(int *w, int*h);
 
 #endif

@@ -136,6 +136,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
   handleIntrospection(key, action);
 }
 
+void platform_getFBSize(int *w, int*h) {
+   glfwGetFramebufferSize(g_window, w, h);
+}
+
 int platform_SetupOpenGL(int w, int h) {
   int i;
   if (!glfwInit())
