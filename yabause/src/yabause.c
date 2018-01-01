@@ -103,7 +103,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 yabsys_struct yabsys;
-static const char *bupfilename = NULL;
 u64 tickfreq;
 //todo this ought to be in scspdsp.c
 ScspDsp scsp_dsp = { 0 };
@@ -185,15 +184,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    if ((LowWram = T2MemoryInit(0x100000)) == NULL)
       return -1;
 
-   if ((BupRam = T1MemoryInit(0x8000)) == NULL)
-      return -1;
-
-   if (LoadBackupRam(init->buppath) != 0)
-      FormatBackupRam(BupRam, 0x8000);
-
-   BupRamWritten = 0;
-
-   bupfilename = init->buppath;
+   BackupInit(init->buppath, init->extend_backup);
 
    if (CartInit(init->cartpath, init->carttype) != 0)
    {
@@ -228,28 +219,11 @@ int YabauseInit(yabauseinit_struct *init)
    if ((LowWram = T2MemoryInit(0x100000)) == NULL)
       return -1;
 
-   yabsys.extend_backup = init->extend_backup;
-
-   if (yabsys.extend_backup) {
-
-     if ((BupRam = T1MemoryInit(tweak_backup_file_size)) == NULL)
-       return -1;
-
-     if (LoadBackupRam(init->buppath) != 0)
-       FormatBackupRam(BupRam, tweak_backup_file_size);
-     BupRamWritten = 0;
-
+   if (BackupInit(init->buppath, init->extend_backup) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("Backup Ram"));
+      return -1;
    }
-   else {
-     if ((BupRam = T1MemoryInit(0x8000)) == NULL)
-       return -1;
-
-     if (LoadBackupRam(init->buppath) != 0)
-       FormatBackupRam(BupRam, 0x8000);
-     BupRamWritten = 0;
-   }
-   bupfilename = init->buppath;
-   
    // check if format is needed?
 
    if (CartInit(init->cartpath, init->carttype) != 0)
@@ -435,19 +409,7 @@ int YabauseInit(yabauseinit_struct *init)
 
 void YabFlushBackups(void)
 {
-  if (BupRam)
-  {
-    if (yabsys.extend_backup) {
-      if (T123Save(BupRam, tweak_backup_file_size, 1, bupfilename) != 0)
-        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-      T1MemoryDeInit(BupRam);
-    }
-    else {
-      if (T123Save(BupRam, 0x8000, 1, bupfilename) != 0)
-        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-      T1MemoryDeInit(BupRam);
-    }
-  }
+  BackupFlush();
   CartFlush();
 }
 
@@ -472,20 +434,7 @@ void YabauseDeInit(void) {
       T2MemoryDeInit(LowWram);
    LowWram = NULL;
 
-   if (BupRam)
-   {
-     if (yabsys.extend_backup) {
-       if (T123Save(BupRam, tweak_backup_file_size, 1, bupfilename) != 0)
-        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-       T1MemoryDeInit(BupRam);
-     }
-     else {
-       if (T123Save(BupRam, 0x8000, 1, bupfilename) != 0)
-         YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-       T1MemoryDeInit(BupRam);
-     }
-   }
-   BupRam = NULL;
+   BackupDeinit();
  
    CartDeInit();
    Cs2DeInit();

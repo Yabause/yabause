@@ -77,15 +77,18 @@ writebytefunc CacheWriteByteList[0x1000];
 writewordfunc CacheWriteWordList[0x1000];
 writelongfunc CacheWriteLongList[0x1000];
 
+#define EXTENDED_BACKUP_SIZE 0x00800000
+
+u32 backup_file_addr = 0x07000000;
+u32 backup_file_size = EXTENDED_BACKUP_SIZE;
+static const char *bupfilename = NULL;
+
 u8 *HighWram;
 u8 *LowWram;
 u8 *BiosRom;
 u8 *BupRam;
 
 u8* VoidMem = NULL;
-
-extern int tweak_backup_file_size;
-extern u32 tweak_backup_file_addr;
 
 /* This flag is set to 1 on every write to backup RAM.  Ports can freely
  * check or clear this flag to determine when backup RAM has been written,
@@ -469,15 +472,7 @@ static u8 FASTCALL BupRamMemoryReadByte(UNUSED u8* memory, u32 addr)
     return fgetc(pbackup);
   }
 #endif
-  if (yabsys.extend_backup) {
-    addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
-    if (addr >= tweak_backup_file_size) {
-      return 0;
-    }
-  }
-  else {
-    addr = addr & 0x0000FFFF;
-  }
+  addr = addr & (backup_file_size - 1);
   return T1ReadByte(memory, addr);
 }
 
@@ -518,15 +513,7 @@ static void FASTCALL BupRamMemoryWriteByte(UNUSED u8* memory, u32 addr, u8 val)
   }
 #endif
 
-  if (yabsys.extend_backup) {
-    addr = (addr & 0x0FFFFFFF) - tweak_backup_file_addr;
-    if (addr >= tweak_backup_file_size) {
-      return;
-    }
-  }
-  else {
-    addr = addr & 0x0000FFFF;
-  }
+  addr = addr & (backup_file_size - 1);
   T1WriteByte(memory, addr|0x1, val);
 }
 
@@ -600,15 +587,6 @@ void MappedMemoryInit()
                                 &SmpcWriteWord,
                                 &SmpcWriteLong,
                                 &VoidMem);
-   if (BupRam != NULL) {
-   FillMemoryArea(0x018, 0x01F, &BupRamMemoryReadByte,
-                                &BupRamMemoryReadWord,
-                                &BupRamMemoryReadLong,
-                                &BupRamMemoryWriteByte,
-                                &BupRamMemoryWriteWord,
-                                &BupRamMemoryWriteLong,
-                                &BupRam);
-   }
    FillMemoryArea(0x020, 0x02F, &LowWramMemoryReadByte,
                                 &LowWramMemoryReadWord,
                                 &LowWramMemoryReadLong,
@@ -722,15 +700,13 @@ void MappedMemoryInit()
                                 &HighWramMemoryWriteLong,
                                 &HighWram);
 
-      if (BupRam != NULL) {
-     FillMemoryArea( ((tweak_backup_file_addr >> 16) & 0xFFF) , 0x7ff, &BupRamMemoryReadByte,
+     FillMemoryArea( ((backup_file_addr >> 16) & 0xFFF) , (((backup_file_addr + backup_file_size) >> 16) & 0xFFF)-1, &BupRamMemoryReadByte,
      &BupRamMemoryReadWord,
      &BupRamMemoryReadLong,
      &BupRamMemoryWriteByte,
      &BupRamMemoryWriteWord,
      &BupRamMemoryWriteLong,
      &BupRam);
-     }
 }
 
 u8 FASTCALL DMAMappedMemoryReadByte(u32 addr) {
@@ -1429,6 +1405,81 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    SH2SetRegisters(MSH2, &MSH2->regs);
 }
 
+int BackupHandled(SH2_struct * sh, u32 addr) {
+   if (backup_file_addr != 0x00180000) {
+       const u32 bupaddr = 0x0007d600; // SH2MappedMemoryReadLong(0x06000358);
+       if (addr == bupaddr) {
+         if (sh == NULL) return 1; 
+         BiosBUPInit(sh);
+         return 1;
+       }
+       else if (addr >= 0x0358 && addr <= 0x03A8) {
+         if (sh == NULL) return 1;
+         return BiosHandleFunc(sh); //replace by NOP
+       }
+   }
+   return 0;
+}
+
+int BackupInit(char* path, int extended) {
+  int currentSaveSize = TSize(path);
+  int forceFormat = 0;
+  if (currentSaveSize != -1) {
+    int isNormalSize = (currentSaveSize == 0x8000);
+    int isExtendedSize = (currentSaveSize == EXTENDED_BACKUP_SIZE);
+    if (extended && isNormalSize) {
+      extended = 0; //Force to use small save format
+      printf("Internal backup file format is detected as standard save format - Force to use standard save format\n");
+    }
+    if (!extended && isExtendedSize) {
+      extended = 1; //Force to use large save format
+      printf("Internal backup file format is detected as extended save format - Force to use extended save format\n");
+    }
+    if (!((!extended && isNormalSize)||(extended && isExtendedSize))) {
+      printf("Internal backup file format is bad - Force format to %s save format\n", (extended?"extended":"standard") );
+      forceFormat =1; //Size is not the good one - Format
+    }
+  }
+  if (!extended) {
+    backup_file_addr = 0x00180000;
+    backup_file_size = 0x8000;
+  } else {
+    backup_file_addr = 0x07000000;
+    backup_file_size = EXTENDED_BACKUP_SIZE;
+  }
+
+  if ((BupRam = T1MemoryInit(backup_file_size)) == NULL)
+       return -1;
+
+  if ((LoadBackupRam(path) != 0) || (forceFormat))
+       FormatBackupRam(BupRam, backup_file_size);
+  BupRamWritten = 0;
+  bupfilename = path;
+  return 0;
+}
+
+void BackupFlush() {
+  if (BupRam)
+  {
+      if (T123Save(BupRam, backup_file_size, 1, bupfilename) != 0)
+        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+  }
+}
+
+void BackupExtended() {
+}
+
+void BackupDeinit() {
+   if (BupRam)
+   {
+       if (T123Save(BupRam, backup_file_size, 1, bupfilename) != 0)
+        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
+       T1MemoryDeInit(BupRam);
+   }
+   BupRam = NULL;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 
 int LoadBios(const char *filename)
@@ -1440,7 +1491,7 @@ int LoadBios(const char *filename)
 
 int LoadBackupRam(const char *filename)
 {
-   return T123Load(BupRam, 0x8000, 1, filename);
+   return T123Load(BupRam, backup_file_size, 1, filename);
 }
 
 static u8 header[32] = {

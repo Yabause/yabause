@@ -195,6 +195,28 @@ extern "C" {
 #endif
   }
 
+  static INLINE int TSize(const char *filename) {
+    FILE *fp;
+    u32 filesize, filesizecheck;
+    u8 *buffer;
+    u32 i;
+
+    if (!filename)
+      return -1;
+
+    if ((fp = fopen(filename, "rb")) == NULL) {
+      return -1;
+    }
+
+    // Calculate file size
+    fseek(fp, 0, SEEK_END);
+    filesize = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    fclose(fp);
+    return filesize;
+  }
+
   static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
   {
     FILE *fp;
@@ -311,7 +333,7 @@ extern "C" {
     }
     }
 
-    if ((fp = fopen(filename, "wb")) == NULL)
+    if ((fp = fopen(filename, "wb+")) == NULL)
     {
       free(buffer);
       return -1;

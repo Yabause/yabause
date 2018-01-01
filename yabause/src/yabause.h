@@ -114,7 +114,6 @@ typedef struct
    int wait_line_count;
    int playing_ssf;
    u32 frame_count;
-   int extend_backup;
    int usecache;
 } yabsys_struct;
 

@@ -173,17 +173,9 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
 
 static u32 FASTCALL FetchBios(u32 addr)
 {
-  if (yabsys.extend_backup) {
-    const u32 bupaddr = 0x0007d600;
-    if (addr == bupaddr) {
-      return 0;
-    }
-    else if (yabsys.extend_backup == 2 &&
-      addr >= 0x0380 &&
-      addr <= 0x03A8) {
-      return 0;
-    }
-  }
+   if (BackupHandled(NULL, addr) != 0) {
+     return 0;
+   }
 
    return SH2MappedMemoryReadWord(addr);
 }
@@ -247,20 +239,8 @@ static void FASTCALL SH2undecoded(SH2_struct * sh)
 {
    int vectnum;
 
-   if (yabsys.extend_backup) {
-       const u32 bupaddr = 0x0007d600; // SH2MappedMemoryReadLong(0x06000358);
-       if (sh->regs.PC == bupaddr) {
-         LOG("BUP_Init");
-         BiosBUPInit(sh);
-         yabsys.extend_backup = 2;
-         return;
-       }
-       else if (yabsys.extend_backup == 2 &&
-         sh->regs.PC >= 0x0380 &&
-         sh->regs.PC <= 0x03A8) {
-         BiosHandleFunc(sh);
-         return;
-       }
+   if (BackupHandled(sh, sh->regs.PC) != 0) {
+     return;
    }
 
    if (yabsys.emulatebios )
