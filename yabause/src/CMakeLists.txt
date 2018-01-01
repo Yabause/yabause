@@ -37,7 +37,6 @@ set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
 		
 set(yabause_SOURCES
 	bios.c
-  cpptest.cpp
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
 	error.c
@@ -380,8 +379,6 @@ if (YAB_WANT_SDL)
 		set(yabause_SOURCES ${yabause_SOURCES} persdljoy.c sndsdl.c)
 		set(yabause_HEADERS ${yabause_HEADERS} persdljoy.h sndsdl.h)
 	endif()
-
-	add_definitions(-DYAB_ASYNC_RENDERING)
 
 endif()
 

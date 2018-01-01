@@ -339,6 +339,19 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
 int Ygl_uniformVdp1CommonParam(void * p);
 int Ygl_cleanupVdp1CommonParam(void * p);
 
+// std140
+typedef struct  { 
+ float u_pri[8*4];  
+ float u_alpha[8*4];
+ float u_coloroffset[4];
+} UniformFrameBuffer;
+
+/*
+int isSpecialColorCal;   // (fixVdp2Regs->CCCTL >> 6) & 0x01);
+int SpecialColorCalMode; // (fixVdp2Regs->SPCTL >> 12) & 0x3;
+*/
+
+#define FRAME_BUFFER_UNIFORM_ID (5)
 
 typedef struct {
    int prgid;
@@ -521,6 +534,9 @@ typedef struct {
    u32 colupd_min_addr;
    u32 colupd_max_addr;
    YabMutex * crammutex;
+
+   UniformFrameBuffer fbu_;
+   GLuint framebuffer_uniform_id_;
 
 }  Ygl;
 

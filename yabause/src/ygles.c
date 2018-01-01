@@ -812,6 +812,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     return;
   }
 
+
   if (_Ygl->smallfbo == 0) {
     GLuint error;
     YabThreadLock( _Ygl->mutex );
@@ -2696,6 +2697,31 @@ void YglSetVdp2Window()
    return;
 }
 
+extern Vdp2 * fixVdp2Regs;
+void YglUpdateVdp2Reg() {
+  int i;
+  u8 *cclist  = (u8 *)&fixVdp2Regs->CCRSA;
+  u8 *prilist = (u8 *)&fixVdp2Regs->PRISA;
+
+  for (i = 0; i < 8; i++) {
+    _Ygl->fbu_.u_alpha[i*4] = (float)(0xFF - (((cclist[i] & 0x1F) << 3) & 0xF8)) / 255.0f;
+    _Ygl->fbu_.u_pri[i*4] = ((float)(prilist[i] & 0x7) / 10.0f) + 0.05f;
+  }
+
+  _Ygl->fbu_.u_coloroffset[0] = vdp1cor / 255.0f;
+  _Ygl->fbu_.u_coloroffset[1] = vdp1cog / 255.0f;
+  _Ygl->fbu_.u_coloroffset[2] = vdp1cob / 255.0f;
+  _Ygl->fbu_.u_coloroffset[3] = 0.0f;
+
+  if (_Ygl->framebuffer_uniform_id_ == 0) {
+    glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);
+  }
+  glBindBuffer(GL_UNIFORM_BUFFER, _Ygl->framebuffer_uniform_id_);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(UniformFrameBuffer), &_Ygl->fbu_, GL_STATIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+}
+
 void YglRenderFrameBuffer(int from, int to) {
 
   GLint   vertices[12];
@@ -2712,10 +2738,6 @@ void YglRenderFrameBuffer(int from, int to) {
 
   //YGLLOG("YglRenderFrameBuffer: %d to %d\n", from , to );
 
-  offsetcol[0] = vdp1cor / 255.0f;
-  offsetcol[1] = vdp1cog / 255.0f;
-  offsetcol[2] = vdp1cob / 255.0f;
-  offsetcol[3] = 0.0f;
 
   if ((Vdp2Regs->CCCTL & 0x340) == 0x140){ // Color calculation mode == ADD &&  Sprite Color calculation enable bit  == 1
     if (Vdp2Regs->LNCLEN & 0x20){
@@ -3084,6 +3106,8 @@ void YglRender(void) {
    if (_Ygl->texture_manager == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+   YglUpdateVdp2Reg();
 
   // Color Calcurate Window  
    ccwindow = ((Vdp2Regs->WCTLD >> 9) & 0x01);
