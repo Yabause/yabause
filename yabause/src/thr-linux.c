@@ -356,13 +356,14 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 #include <sys/syscall.h>
 //...
 int getCpuId() {
-
+#if 0
     unsigned cpu;
     if (syscall(__NR_getcpu, &cpu, NULL, NULL) < 0) {
         return -1;
     } else {
         return (int) cpu;
     }
+ #endif
 }
 
 
