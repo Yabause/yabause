@@ -282,47 +282,6 @@ const GLchar Yglprg_normal_cram_f[] =
 "  }\n"
 "}\n";
 
-const GLchar Yglprg_vdp2_drawfb_cram_f[] =
-#if defined(_OGLES3_)
-"#version 300 es \n"
-"precision highp sampler2D; \n"
-#else
-"#version 330 \n"
-#endif
-"precision highp float;\n"
-"in vec2 v_texcoord;\n"
-"uniform sampler2D s_vdp1FrameBuffer;\n"
-"uniform float u_from;\n"
-"uniform float u_to;\n"
-"uniform int u_color_index_offset;\n"
-"uniform vec4 u_coloroffset;\n"
-"out vec4 fragColor;\n"
-"void main()\n"
-"{\n"
-"  vec2 addr = v_texcoord;\n"
-"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
-"  highp float depth = (int(txindex.g*255.0) & 0x07)/10.0 + 0.05;\n"
-"  if( depth < u_from || depth > u_to ){\n"
-"    discard;\n"
-"  }else if( alpha > 0.0){\n"
-"     highp float alpha = fbColor.a\n"
-"     int colorindex = int(txindex.g*65280.0) | int(txindex.r*255.0);\n"
-"     vec4 txcol;\n"
-"     if(colorindex&0x8000) { \n"
-"       txcol.r = float(colorindex>>? &0x1F)/1111 ;\n"
-"       txcol.r = float(colorindex>>? &0x1F)/1111 ;\n"
-"       txcol.r = float(colorindex>>? &0x1F)/1111 ;\n"
-"     }else{\n"
-"       txcol = texelFetch( s_color,  ivec2( colorindex+u_color_index_offset ,0 )  , 0 );\n"
-"       fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
-"     }\n"
-"     fragColor.a = alpha;\n"
-"     gl_FragDepth = (depth+1.0)/2.0;\n"
-"  }else{ \n"
-"     discard;\n"
-"  }\n"
-"}\n";
-
 
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
 static int id_normal_cram_s_texture = -1;
@@ -1401,6 +1360,7 @@ int Ygl_cleanupEndUserClip(void * p ){return 0;}
  *  VDP2 Draw Frame buffer Operation
  * ----------------------------------------------------------------------------------*/
 static int idvdp1FrameBuffer;
+static int idcram;
 static int idfrom;
 static int idto;
 static int idcoloroffset;
@@ -1454,7 +1414,57 @@ const GLchar Yglprg_vdp2_drawfb_f[] =
 "  }\n"
 "}\n";
 
-const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
+/*
++-+-+-+-+-+-+-+-+
+|S|C|A|A|A|P|P|P|
++-+-+-+-+-+-+-+-+
+S show flag
+C index or direct color
+A alpha index
+P priority
+*/
+
+const GLchar Yglprg_vdp2_drawfb_cram_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+"precision highp sampler2D; \n"
+#else
+"#version 430 \n"
+#endif
+"precision highp float;\n"
+"layout(std140) uniform vdp2regs { \n"
+" float u_pri[8]; \n"
+" float u_alpha[8]; \n"
+" vec4 u_coloroffset;\n"
+"}; \n"
+" uniform highp sampler2D s_vdp1FrameBuffer;\n"
+" uniform sampler2D s_color; \n"
+"uniform float u_from;\n"
+"uniform float u_to;\n"
+"in vec2 v_texcoord;\n"
+"out vec4 fragColor;\n"
+"void main()\n"
+"{\n"
+"  vec2 addr = v_texcoord;\n"
+"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  int additional = int(fbColor.a * 255.0);\n"
+"  if( (additional & 0x80) == 0 ){ discard; return; } // show? \n"
+"  highp float depth = u_pri[ (additional&0x07) ];\n"
+"  if( depth < u_from || depth > u_to ){ discard; return; } \n"
+"  highp float alpha = u_alpha[((additional>>3)&0x07)]; \n"
+"  if( (additional & 0x40) != 0 ){  // index color? \n"
+"    vec4 txcol = texelFetch( s_color,  ivec2( ( int(fbColor.g*65280.0) | int(fbColor.r*255.0)) ,0 )  , 0 );\n"
+"    fragColor = txcol;\n"
+"  }else{ // direct color \n"
+"    fragColor = fbColor;\n"
+"  } \n"
+"  fragColor += u_coloroffset;  \n"
+"  fragColor.a = alpha;\n"
+"  gl_FragDepth = (depth+1.0)*0.5;\n"
+"}\n";
+
+//const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
+const GLchar * pYglprg_vdp2_drawfb_f[] = { Yglprg_vdp2_drawfb_cram_f, NULL };
 
 void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend)
 {
@@ -1462,11 +1472,15 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
    prg = p;
 
    glUseProgram(_prgid[PG_VDP2_DRAWFRAMEBUFF]);
-   glUniform1i(idvdp1FrameBuffer, 0);
-   glActiveTexture(GL_TEXTURE0);
+   
+   glUniform1i(idcram, 1);
+   glActiveTexture(GL_TEXTURE1);
+   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+
+   
    glUniform1f(idfrom,from);
    glUniform1f(idto,to);
-   glUniform4fv(idcoloroffset,1,offsetcol);
+   //glUniform4fv(idcoloroffset,1,offsetcol);
    
    glDisableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
@@ -1482,8 +1496,14 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
      glDisable(GL_BLEND);
    }
 
-   
+   //glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
+   glBindBufferRange(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_, 0, sizeof(UniformFrameBuffer));
+
    _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_mvpMatrix");
+
+   glUniform1i(idvdp1FrameBuffer, 0);
+   glActiveTexture(GL_TEXTURE0);
+
 }
 
 
@@ -2212,9 +2232,13 @@ int YglProgramInit()
    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_f, 1, NULL, NULL, NULL) != 0)
       return -1;
 
+   GLuint scene_block_index = glGetUniformBlockIndex(_prgid[PG_VDP2_DRAWFRAMEBUFF], "vdp2regs");
+   glUniformBlockBinding(_prgid[PG_VDP2_DRAWFRAMEBUFF], scene_block_index, FRAME_BUFFER_UNIFORM_ID);
+
    YGLLOG("PG_VDP2_DRAWFRAMEBUFF --END--\n");
 
    idvdp1FrameBuffer = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"s_vdp1FrameBuffer");
+   idcram = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"s_color");
    idfrom = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_from");
    idto   = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_to");
    idcoloroffset = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_coloroffset");
