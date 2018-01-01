@@ -3082,13 +3082,13 @@ void YglRender(void) {
      glViewport(_Ygl->originx+xN, _Ygl->originy+yN, wN, hN);
    }
 
-   if (_Ygl->aamode == AA_FXAA){
-     glViewport(xN, yN, wN, hN);
-   }
+   //if (_Ygl->aamode == AA_FXAA){
+   //  glViewport(xN, yN, wN, hN);
+   //}
 
-   if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256){
-     glViewport(xN, yN, wN, hN);
-   }
+   //if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256){
+   //  glViewport(xN, yN, wN, hN);
+   //}
 
 
    glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
