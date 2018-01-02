@@ -422,5 +422,7 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 #include "threads.h"
 
 int VideoSetFilterType( int video_filter_type );
+void vdp2ReqDump();
+void vdp2ReqRestore();
 
 #endif

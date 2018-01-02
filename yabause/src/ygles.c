@@ -2089,16 +2089,11 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
       prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
     }
   }
-
-
-
-
-
-
+  
   program = YglGetProgram((YglSprite*)input, prg);
   if (program == NULL) return;
 
-
+  program->colornumber = input->colornumber;
   program->bwin0 = input->bEnWin0;
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
@@ -2246,6 +2241,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   program = YglGetProgram((YglSprite*)input, prg);
   if (program == NULL) return -1;
 
+  program->colornumber = input->colornumber;
   program->bwin0 = input->bEnWin0;
   program->logwin0 = input->WindowArea0;
   program->bwin1 = input->bEnWin1;
@@ -2377,6 +2373,7 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   program = YglGetProgram((YglSprite*)input, prg);
   if (program == NULL) return -1;
   
+  program->colornumber = input->colornumber;
   program->blendmode = input->blendmode;
   program->bwin0 = input->bEnWin0;
   program->logwin0 = input->WindowArea0;
@@ -2706,11 +2703,17 @@ void YglUpdateVdp2Reg() {
     _Ygl->fbu_.u_alpha[i*4] = (float)(0xFF - (((cclist[i] & 0x1F) << 3) & 0xF8)) / 255.0f;
     _Ygl->fbu_.u_pri[i*4] = ((float)(prilist[i] & 0x7) / 10.0f) + 0.05f;
   }
+  _Ygl->fbu_.u_cctll = ((float)((fixVdp2Regs->SPCTL >> 8) & 0x07) / 10.0f) + 0.05f;
+
 
   _Ygl->fbu_.u_coloroffset[0] = vdp1cor / 255.0f;
   _Ygl->fbu_.u_coloroffset[1] = vdp1cog / 255.0f;
   _Ygl->fbu_.u_coloroffset[2] = vdp1cob / 255.0f;
   _Ygl->fbu_.u_coloroffset[3] = 0.0f;
+
+  // For Line Color insersion
+  _Ygl->fbu_.u_emu_height = (float)_Ygl->rheight / (float)_Ygl->height;
+  _Ygl->fbu_.u_vheight = (float)_Ygl->height;
 
   if (_Ygl->framebuffer_uniform_id_ == 0) {
     glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);
@@ -2740,17 +2743,19 @@ void YglRenderFrameBuffer(int from, int to) {
 
   if ((Vdp2Regs->CCCTL & 0x340) == 0x140){ // Color calculation mode == ADD &&  Sprite Color calculation enable bit  == 1
     if (Vdp2Regs->LNCLEN & 0x20){
-      Ygl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+      //gl_uniformVDP2DrawFramebuffer_linecolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1);
     }
     else{
-      Ygl_uniformVDP2DrawFramebuffer_addcolor(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1);
       is_addcolor = 1;
     }
   }
   else if ((Vdp2Regs->CCCTL & 0x340) == 0x240 && (Vdp2Regs->LNCLEN & 0x20)){
     // Color calculation ratio mode == Destination &&  Sprite Color calculation enable bit  == 1
     // Use blend value CRLB
-    Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+    //Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
+    Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1);
   }
   else{
 
@@ -2758,7 +2763,7 @@ void YglRenderFrameBuffer(int from, int to) {
       Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture);
     }
     else{
-      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, _Ygl->vdp1_hasMesh || (Vdp2Regs->CCCTL & 0x40) );
+      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1 );
     }
   }
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
@@ -3031,6 +3036,7 @@ void YglRenderFrameBuffer(int from, int to) {
    glVertexAttribPointer(_Ygl->renderfb.texcoordp,2,GL_FLOAT,GL_FALSE,0,(GLvoid *)texcord );
    glDrawArrays(GL_TRIANGLES, 0, 6);
 
+#if 0
    if (is_addcolor == 1){
      Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
@@ -3038,6 +3044,7 @@ void YglRenderFrameBuffer(int from, int to) {
      glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
      glDrawArrays(GL_TRIANGLES, 0, 6);
    }
+#endif
 
    if( bwin0 || bwin1 )
    {
@@ -3514,7 +3521,9 @@ void YglRenderDestinationAlpha(void) {
       if (level->prg[j].currentQuad != 0)
       {
         if (level->prg[j].prgid == PG_LINECOLOR_INSERT || 
+            level->prg[j].prgid == PG_LINECOLOR_INSERT_CRAM ||
             level->prg[j].prgid == PG_LINECOLOR_INSERT_DESTALPHA ||
+            level->prg[j].prgid == PG_LINECOLOR_INSERT_DESTALPHA_CRAM ||
             level->prg[j].prgid == PG_VDP2_PER_LINE_ALPHA ) {
               glDisable(GL_BLEND);
         }
@@ -3711,23 +3720,29 @@ void YglOnUpdateColorRamWord(u32 addr) {
   case 0:
   {
     u16 tmp;
+    u8 alpha = 0;
     tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
-    buf[((addr & 0x7FF) >> 1)] = SAT2YAB1(0xFF, tmp);
-    buf[((addr & 0x7FF) >> 1) + 1024] = SAT2YAB1(0xFF, tmp);
+    if (tmp & 0x8000) alpha = 0xFF;
+    buf[((addr & 0xFFF) >> 1)] = SAT2YAB1(alpha, tmp);
+    //buf[((addr & 0x7FF) >> 1) + 1024] = SAT2YAB1(alpha, tmp);
     break;
   }
   case 1:
   {
     u16 tmp;
+    u8 alpha = 0;
     tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
-    buf[((addr & 0xFFF) >> 1)] = SAT2YAB1(0xFF, tmp);
+    if (tmp & 0x8000) alpha = 0xFF;
+    buf[((addr & 0xFFF) >> 1)] = SAT2YAB1(alpha, tmp);
     break;
   }
   case 2:
   {
     u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC));
     u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC)+2);
-    buf[(addr & 0xFFF) >> 2] = SAT2YAB2(0xFF, tmp1, tmp2);
+    u8 alpha = 0;
+    if (tmp1 & 0x8000) alpha = 0xFF;
+    buf[(addr & 0xFFF) >> 2] = SAT2YAB2(alpha, tmp1, tmp2);
     break;
   }
   default: 
@@ -3740,11 +3755,11 @@ void YglOnUpdateColorRamWord(u32 addr) {
 void YglUpdateColorRam() {
   YabThreadLock(_Ygl->crammutex);
   if (Vdp2ColorRamUpdated) {
-    Vdp2ColorRamUpdated = 0;
-    if (_Ygl->colupd_min_addr > _Ygl->colupd_max_addr) {
-      YabThreadUnLock(_Ygl->crammutex);
-      return; // !? not initilized?
-    }
+    //Vdp2ColorRamUpdated = 0;
+    //if (_Ygl->colupd_min_addr > _Ygl->colupd_max_addr) {
+    //  YabThreadUnLock(_Ygl->crammutex);
+    //  return; // !? not initilized?
+    //}
 
     u32 * buf = YglGetColorRamPointer();
     int index_shft = 1;
@@ -3754,7 +3769,7 @@ void YglUpdateColorRam() {
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     
-#if 0
+#if 1
     glTexSubImage2D(GL_TEXTURE_2D,
       0,
       0, 0,
