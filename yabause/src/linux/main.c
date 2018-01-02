@@ -235,7 +235,7 @@ static int SetupOpenGL() {
   int h = (lowres_mode == 0)?WINDOW_HEIGHT:WINDOW_HEIGHT_LOW;
   Wwidth = w;
   Wheight = h;
-  if (!platform_SetupOpenGL(w,h))
+  if (!platform_SetupOpenGL(w,h,fullscreen))
     exit(EXIT_FAILURE);
 }
 

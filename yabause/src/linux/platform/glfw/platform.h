@@ -9,7 +9,7 @@
 
 typedef void (*k_callback)(unsigned int key, unsigned char state);
 
-extern int platform_SetupOpenGL(int w, int h);
+extern int platform_SetupOpenGL(int w, int h, int fullscreen);
 extern int platform_YuiRevokeOGLOnThisThread();
 extern int platform_YuiUseOGLOnThisThread();
 extern void platform_swapBuffers(void);

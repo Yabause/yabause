@@ -140,7 +140,7 @@ void platform_getFBSize(int *w, int*h) {
    glfwGetFramebufferSize(g_window, w, h);
 }
 
-int platform_SetupOpenGL(int w, int h) {
+int platform_SetupOpenGL(int w, int h, int fullscreen) {
   int i;
   if (!glfwInit())
     return 0;
@@ -154,7 +154,13 @@ int platform_SetupOpenGL(int w, int h) {
   glfwWindowHint(GLFW_GREEN_BITS,8);
   glfwWindowHint(GLFW_BLUE_BITS,8);
 
-  g_window = glfwCreateWindow(w, h, "Yabause", NULL, NULL);
+  if (!fullscreen) {
+    g_window = glfwCreateWindow(w, h, "Yabause", NULL, NULL);
+  }
+  else {
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    g_window = glfwCreateWindow(mode->width, mode->height, "Yabause", glfwGetPrimaryMonitor(), NULL);
+  }
 
   if (!g_window)
   {
