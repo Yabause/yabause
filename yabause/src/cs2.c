@@ -712,7 +712,7 @@ void Cs2Reset(void) {
 
 
 void Cs2ForceOpenTray(){
-	if (Cs2Area->cdi){
+	if (Cs2Area && Cs2Area->cdi){
 		Cs2Area->cdi->SetStatus(CDCORE_OPEN);
 		Cs2Reset();
 	}
