@@ -466,68 +466,28 @@ void UIYabause::fixAspectRatio( int width , int height )
 {
 	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio").toInt();
 
-	switch( aspectRatio )
-	{
-		case 0:
-			setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
-			setMinimumSize( 0,0 );
-			break;
-		case 1:
-		case 2:
-		{
       if (this->isFullScreen()) {
-
-        if (aspectRatio == 1) {
-          float specratio = (float)width / (float)height;
-          int saturnw = 4;
-          int saturnh = 3;
-
-          if (aspectRatio == 1){
-            saturnw = 4;
-            saturnh = 3;
-          }
-          else{
-            saturnw = 16;
-            saturnh = 9;
-          }
-          float saturnraito = (float)saturnw / (float)saturnh;
-          float revraito = (float)saturnh / (float)saturnw;
-
-          if (specratio > saturnraito){
-
-            mYabauseGL->viewport_width_ = height * saturnraito;
-            mYabauseGL->viewport_height_ = height;
-            mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
-            mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
-          }
-          else{
-            mYabauseGL->viewport_width_ = width;
-            mYabauseGL->viewport_height_ = height * revraito;
-            mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
-            mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
-          }
-        }
-
+        mYabauseGL->resize(width, height);
       }
       else{
         int heightOffset = toolBar->height()+menubar->height();
-        int height;
-
-        if ( aspectRatio == 1 )
-          height = 3 * ((float) width / 4);
-        else
-          height = 9 * ((float) width / 16);
-
+        switch(aspectRatio) {
+          case 1:
+            height = 3 * ((float) width / 4);
+            adjustHeight(height );
+            setFixedHeight(height);
+            break;
+          case 2:
+            height = 9 * ((float) width / 16);
+            adjustHeight(height );
+            setFixedHeight(height);
+            break;
+          default:
+            break;
+        }
         mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
-
-        adjustHeight(height );
         mYabauseGL->viewport_height_ = height - heightOffset;
-        setFixedHeight(height);
-
       }
-			break;
-		}
-	}
 }
 
 void UIYabause::getSupportedResolutions()
@@ -561,7 +521,7 @@ void UIYabause::getSupportedResolutions()
 
 	list = ScreenGetResolutions();
 
-	while(0 == ScreenNextResolution(list, &res))
+	if(0 == ScreenNextResolution(list, &res))
 		supportedResolutions.append(res);
 #endif
 }
@@ -597,43 +557,6 @@ int UIYabause::findBestVideoFreq( int width, int height, int bpp, int videoForma
 
 void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat )
 {
-	// Make sure setting is valid
-	if (f && isResolutionValid( width, height, -1, -1 ) < 0)
-		return;
-
-#if defined Q_OS_WIN
-	if (f)
-	{
-		DEVMODE dmScreenSettings;
-		memset (&dmScreenSettings, 0, sizeof (dmScreenSettings));
-
-		int freq = findBestVideoFreq( width, height, 32, videoFormat );
-
-		if (freq < 0)
-			return;
-
-		dmScreenSettings.dmSize = sizeof (dmScreenSettings);   
-		dmScreenSettings.dmPelsWidth = width;
-		dmScreenSettings.dmPelsHeight = height;    
-		dmScreenSettings.dmBitsPerPel = 32;
-		dmScreenSettings.dmDisplayFrequency = freq;
-		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
-		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
-	}
-	else
-		ChangeDisplaySettings(NULL, 0);
-
-#elif HAVE_LIBXRANDR
-	if (f)
-	{
-		int i = isResolutionValid(width, height, 32, -1);
-		ScreenChangeResolution(&supportedResolutions[i]);
-	}
-	else
-	{
-		ScreenRestoreResolution();
-	}
-#endif
 }
 
 void UIYabause::fullscreenRequested( bool f )
@@ -643,7 +566,6 @@ void UIYabause::fullscreenRequested( bool f )
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
 		setUnifiedTitleAndToolBarOnMac( true );
 #endif
-		toggleFullscreen(0, 0, false, -1 );
 		showNormal();
 
 		VolatileSettings* vs = QtYabause::volatileSettings();
@@ -670,9 +592,6 @@ void UIYabause::fullscreenRequested( bool f )
 		ps.setX(0);
 		ps.setY(0);
 		this->move(ps);
-
-		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
-						f, vs->value("Video/VideoFormat").toInt());
 
 		showFullScreen();
 

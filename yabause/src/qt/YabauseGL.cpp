@@ -56,9 +56,10 @@ void YabauseGL::resizeGL( int w, int h )
 void YabauseGL::updateView( const QSize& s )
 {
 	const QSize size = s.isValid() ? s : this->size();
-	glViewport( 0, 0, size.width(), size.height() );
-	if ( VIDCore )
-    VIDCore->Resize(viewport_origin_x_, viewport_origin_y_, viewport_width_, viewport_height_, 0);
+	//glViewport( 0, 0, viewport_width_, viewport_height_ );
+	if ( VIDCore ) {
+          VIDCore->Resize(0, 0, size.width(), size.height(), 0);
+        }
 }
 
 

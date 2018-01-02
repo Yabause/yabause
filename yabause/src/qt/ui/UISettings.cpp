@@ -101,12 +101,6 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList
 {
 	// setup dialog
 	setupUi( this );
-
-	QRect maxWinRect = QApplication::desktop()->availableGeometry();
-	
-	
-	leWinWidth->setValidator(new QIntValidator(0, maxWinRect.width(), leWinWidth));
-	leWinHeight->setValidator(new QIntValidator(0, maxWinRect.height(), leWinHeight));
 	
 	QString ipNum("(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])");
 	leCartridgeModemIP->setValidator(new QRegExpValidator(QRegExp("^" + ipNum + "\\." + ipNum + "\\." + ipNum + "\\." + ipNum + "$"), leCartridgeModemIP));
@@ -126,9 +120,6 @@ UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList
 
 	// load cores informations
 	loadCores();
-
-	supportedRes = *supportedResolutions;
-	loadSupportedResolutions();
 
 #ifdef HAVE_LIBMINI18N
 	trans = *translations;
@@ -372,26 +363,6 @@ void UISettings::loadCores()
 	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 16:9" ), 2 );
 }
 
-void UISettings::loadSupportedResolutions()
-{
-	if (supportedRes.count() == 0)
-	{
-		lFullScreenResolution->setVisible(false);
-		cbFullscreenResolution->setVisible(false);
-		return;
-	}
-
-	// Load supported screen resolutions
-	for (int i = 0; i < this->supportedRes.count(); i++)
-	{
-		QString text = QString("%1x%2").arg(QString::number(this->supportedRes[i].width), 
-			QString::number (this->supportedRes[i].height));
-		if (cbFullscreenResolution->findText(text) != -1)
-			continue;
-		cbFullscreenResolution->addItem(text, i);
-	}
-}
-
 void UISettings::loadTranslations()
 {
 	cbTranslation->addItem(QString::fromUtf8(_("Use System Locale")), "");
@@ -487,12 +458,7 @@ void UISettings::loadSettings()
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
 
-	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );
-	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
-	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
-	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 640 ) ).toString(),
-										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 480 ) ).toString());	
-	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
+	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );	
 	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
@@ -576,16 +542,7 @@ void UISettings::saveSettings()
 	s->remove("Video/Height");
 
 	// Save new version of keys
-	s->setValue( "Video/WindowWidth", leWinWidth->text() );
-	s->setValue( "Video/WindowHeight", leWinHeight->text() );
 	s->setValue( "Video/AspectRatio", cbAspectRatio->currentIndex() );
-
-	if (supportedRes.count() > 0)
-	{
-		supportedRes_struct res = supportedRes[cbFullscreenResolution->itemData(cbFullscreenResolution->currentIndex()).toInt()];
-		s->setValue( "Video/FullscreenWidth", res.width );
-		s->setValue( "Video/FullscreenHeight", res.height );
-	}
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/Bilinear", cbBilinear->isChecked() );

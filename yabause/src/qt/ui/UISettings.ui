@@ -220,13 +220,6 @@
        <string>Video</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout2">
-       <item row="8" column="0">
-        <widget class="QLabel" name="lWinHeight">
-         <property name="text">
-          <string>Height</string>
-         </property>
-        </widget>
-       </item>
        <item row="3" column="0" colspan="3">
         <widget class="QLabel" name="lOSDCore">
          <property name="font">
@@ -269,9 +262,6 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0" colspan="3">
-        <widget class="QComboBox" name="cbFullscreenResolution"/>
-       </item>
        <item row="1" column="0" colspan="3">
         <widget class="QComboBox" name="cbVideoCore"/>
        </item>
@@ -313,35 +303,6 @@
        </item>
        <item row="17" column="0" colspan="3">
         <widget class="QComboBox" name="cbVideoFormat"/>
-       </item>
-       <item row="9" column="0">
-        <widget class="QLabel" name="lFullScreenResolution">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Fullscreen Resolution</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="1">
-        <widget class="QLineEdit" name="leWinWidth"/>
-       </item>
-       <item row="8" column="1">
-        <widget class="QLineEdit" name="leWinHeight"/>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="lWinWidth">
-         <property name="text">
-          <string>Width</string>
-         </property>
-        </widget>
        </item>
        <item row="4" column="0" colspan="3">
         <widget class="QComboBox" name="cbOSDCore"/>
