@@ -269,6 +269,9 @@ s Shadow Flag
 
 */
 INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
+  if (shadow != 0) {
+    int a = 0;
+  }
   return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | color;
 }
 
@@ -300,57 +303,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   VDP1LOG("Making new sprite %08X\n", charAddr);
 
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
-  alpha = 0xF8;
-  talpha = 0xF8;
-  if (((fixVdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
-  {
-    switch (SPCCCS)
-    {
-    case 0:
-      if (priority <= ((fixVdp2Regs->SPCTL >> 8) & 0x07))
-        if ((fixVdp2Regs->CCCTL & 0x540) == 0x140) {  // Add Color calcuration mode 
-          alpha = 0x80;  // Key value for color calcuration
-        }
-        else {
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        }
-        break;
-    case 1:
-      if (priority == ((fixVdp2Regs->SPCTL >> 8) & 0x07))
-        if ((fixVdp2Regs->CCCTL & 0x540) == 0x140) {  // Add Color calcuration mode 
-          alpha = 0x80;  // Key value for color calcuration
-        }
-        else {
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        }
-        break;
-    case 2:
-      if (priority >= ((fixVdp2Regs->SPCTL >> 8) & 0x07))
-        if ((fixVdp2Regs->CCCTL & 0x540) == 0x140) {  // Add Color calcuration mode 
-          alpha = 0x80;  // Key value for color calcuration
-        }
-        else {
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        }
-        break;
-    case 3:
-      if ((fixVdp2Regs->CCCTL & 0x540) == 0x140) {  // Add Color calcuration mode 
-        talpha = 0x80;  // Key value for color calcuration
-      }
-      else {
-        talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-      }
-      break;
-    }
-
-    if (fixVdp2Regs->CCCTL & 0x200) { // Color calculation ratio mode bit ( Destination Alpha mode )
-      alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-    }
-  }
-
-  alpha |= priority;
-  talpha |= priority;
-  shadow_alpha |= priority;
 
   switch ((cmd->CMDPMOD >> 3) & 0x7)
   {
@@ -359,18 +311,13 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 4 bpp Bank mode
     u32 colorBank = cmd->CMDCOLR;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
-    if (colorBank == 0x0000) {
-      color = VDP1COLOR(0, 1, priority, 0, 0);
-    }
-    else if (MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
-    }
-    else {
+    if (MSB || colorBank == nromal_shadow) {
+      color = VDP1COLOR(1, 0, priority, 1, 0);
+    } else {
       const int colorindex = (colorBank)+colorOffset;
       if (colorindex & 0x8000) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-      }
-      else {
+      } else {
         color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
       }
     }
@@ -452,7 +399,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   }
   case 4: {
     // 8 bpp(256 color) Bank mode
-    u32 colorBank = cmd->CMDCOLR & 0xFF00;
+    u32 colorBank = cmd->CMDCOLR;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
 
     if ((colorBank == 0x0000) && (SPD == 0)) {
@@ -541,62 +488,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 
-  alpha = 0xF8;
-  talpha = 0xF8;
-  // Enable sprite color control? and top color?
-  if ((fixVdp2Regs->CCCTL & 0x040) == 0x040 || (fixVdp2Regs->CCCTL & 0x240) == 0x200)
-  {
-    switch (SPCCCS)
-    {
-    case 0:
-      if (priority <= ((fixVdp2Regs->SPCTL >> 8) & 0x07)) {
-        if (addcolor) {  // Add Color calcuration mode 
-          alpha = 0x80;  // Key value for color calcuration
-        }
-        else {
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        }
-      }
-      break;
-    case 1:
-      if (priority == ((fixVdp2Regs->SPCTL >> 8) & 0x07)) {
-        if (addcolor) {  // Add Color calcuration mode 
-          alpha = 0x80;  // Key value for color calcuration
-        }
-        else {
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        }
-      }
-      break;
-    case 2:
-      if (priority >= ((fixVdp2Regs->SPCTL >> 8) & 0x07)) {
-        if (addcolor) {  // Add Color calcuration mode 
-          alpha = 0x80;  // Key value for color calcuration
-        }
-        else {
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        }
-      }
-      break;
-    case 3:
-      if (addcolor) {  // Add Color calcuration mode 
-        talpha = 0x80;  // Key value for color calcuration
-      }
-      else {
-        talpha = 0xF8 - ((colorcl << 3) & 0xF8);
-      }
-      break;
-    }
-
-    if (fixVdp2Regs->CCCTL & 0x200) { // Color calculation ratio mode bit ( Destination Alpha mode )
-      alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-    }
-  }
-
-  alpha |= priority;
-  talpha |= priority;
-  shadow_alpha |= priority;
-
   switch ((cmd->CMDPMOD >> 3) & 0x7)
   {
   case 0:
@@ -622,20 +513,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
         }
         else {
-          // VDP2 Operation
           int colorindex = ((dot >> 4) | colorBank);
-
-          // hard/vdp1/hon/p02_11.htm 0 data is ignoerd
-          if (colorindex == 0) {
-            *texture->textdata++ = 0; // ToDo
-          }else {
-            colorindex  += colorOffset;
-            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+          colorindex  += colorOffset;
+          if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
               *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-            }
-            else {
+          }else {
               *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
-            }
           }
         }
         j += 1;
@@ -650,18 +533,13 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
         }
         else {
-          // VDP2 Operation
-          int colorindex = ((dot & 0xF) | colorBank);
-          // hard/vdp1/hon/p02_11.htm 0 data is ignoerd
-          if (colorindex == 0) {
-            *texture->textdata++ = 0; // ToDo
-          }else {
-            colorindex += colorOffset;
-            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-            } else {
-              *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
-            }
+          int colorindex = ((dot&0x0F) | colorBank);
+          colorindex += colorOffset;
+          if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+          }
+          else {
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
           }
         }
         j += 1;
@@ -920,16 +798,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         if (!(dot & 0x8000) && !SPD) {
           *texture->textdata++ = 0x00;
         }
-        else if (dot == 0x0000) {
-          *texture->textdata++ = VDP1COLOR(0, 0, priority, 0, 0);
-        }
         else if ((dot == 0x7FFF) && !END) {
           *texture->textdata++ = 0x0;
         }
-        else if (MSB_SHADOW) {
-          *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
-        }
-        else if (dot == nromal_shadow) {
+        else if (MSB_SHADOW || dot == nromal_shadow) {
           *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
         }
         else {
@@ -4736,6 +4608,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   int spd = ((CMDPMOD & 0x40) != 0);
 
+#if 0
   // Pallet mode
   if (IS_REPLACE(CMDPMOD) && color == 0)
   {
@@ -4769,6 +4642,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     }
   }
 
+#endif
 
   alpha = 0xF8;
   if (IS_REPLACE(CMDPMOD)) {
@@ -4805,6 +4679,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     YglQuadGrowShading(&sprite, &texture, NULL, NULL);
   }
 
+  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  *texture.textdata = Vdp1ReadPolygonColor(&cmd);
+
+#if 0
   if (fixVdp2Regs->SDCTL & 0x100) {
   }
 
@@ -4850,7 +4728,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   else {
     *texture.textdata = VDP1COLOR(1, colorcl, priority, 0, color);
   }
-    }
+#endif
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -5042,6 +4921,10 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     YglQuadGrowShading(&polygon, &texture, NULL, &c);
   }
 
+  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  *texture.textdata = Vdp1ReadPolygonColor(&cmd);
+
+/*
   if (color == 0)
   {
     alpha = 0;
@@ -5076,6 +4959,8 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
     *texture.textdata = Vdp1ReadPolygonColor(&cmd);
   }
+*/
+
 
   makeLinePolygon(&v[2], &v[4], line_poygon);
   polygon.vertices[0] = line_poygon[0] * vdp1wratio;
@@ -5290,6 +5175,9 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     YglQuadGrowShading(&polygon, &texture, NULL, NULL);
   }
 
+  *texture.textdata = Vdp1ReadPolygonColor(&cmd);
+
+#if 0
   if (color == 0)
   {
     alpha = 0;
@@ -5325,6 +5213,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
     *texture.textdata = Vdp1ReadPolygonColor(&cmd);
   }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
