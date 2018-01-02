@@ -4982,7 +4982,10 @@ ScspDeInit (void)
   thread_running = 0; 
 #if defined(ASYNC_SCSP)
   AVBarrier = NULL;
-  YabThreadWait(YAB_THREAD_SCSP);
+  if (thread_running == 1) {
+    thread_running = 0;
+    YabThreadWait(YAB_THREAD_SCSP);
+  }
 #endif
 
   if (scspchannel[0].data32)
