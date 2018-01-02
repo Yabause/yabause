@@ -3063,7 +3063,7 @@ void YglRender(void) {
 
 
    double dar = (double)GlWidth/(double)GlHeight;
-   double par = (double)_Ygl->rwidth/(double)_Ygl->rheight;
+   double par = 4.0/3.0; //(double)_Ygl->rwidth/(double)_Ygl->rheight * 384.0*4.0/576.0
 
    double wN = (dar>par)?(double)_Ygl->height*par:_Ygl->width;
    double hN = (dar>par)?_Ygl->height:(double)_Ygl->width/par;
