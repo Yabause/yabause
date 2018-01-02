@@ -135,7 +135,6 @@ protected slots:
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();
    void adjustHeight(int & height);
-   void resizeIntegerScaling();
 	// file menu
 	void on_aFileSettings_triggered();
 	void on_aFileOpenISO_triggered();

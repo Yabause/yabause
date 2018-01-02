@@ -307,13 +307,6 @@
        <item row="4" column="0" colspan="3">
         <widget class="QComboBox" name="cbOSDCore"/>
        </item>
-       <item row="18" column="0">
-        <widget class="QCheckBox" name="cbEnableIntegerPixelScaling">
-         <property name="text">
-          <string>Use integer pixel scaling</string>
-         </property>
-        </widget>
-       </item>
        <item row="0" column="0" colspan="3">
         <widget class="QLabel" name="lVideoCore">
          <property name="font">
@@ -335,25 +328,6 @@
        </item>
        <item row="20" column="1">
         <widget class="QComboBox" name="cbPolygonGeneration"/>
-       </item>
-       <item row="18" column="1">
-        <widget class="QSpinBox" name="sbIntegerPixelScalingMultiplier">
-         <property name="maximumSize">
-          <size>
-           <width>40</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="minimum">
-          <number>2</number>
-         </property>
-         <property name="maximum">
-          <number>4</number>
-         </property>
-         <property name="singleStep">
-          <number>2</number>
-         </property>
-        </widget>
        </item>
        <item row="21" column="1">
         <widget class="QComboBox" name="cbResolution"/>
