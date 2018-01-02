@@ -434,5 +434,7 @@ void VdpProc( void *arg );
 extern YabEventQueue * evqueue;
 
 int VideoSetFilterType( int video_filter_type );
+void vdp2ReqDump();
+void vdp2ReqRestore();
 
 #endif
