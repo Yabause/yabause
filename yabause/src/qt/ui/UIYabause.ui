@@ -841,7 +841,7 @@
      <normaloff>:/actions/icons/actions/iso.png</normaloff>:/actions/icons/actions/iso.png</iconset>
    </property>
    <property name="text">
-    <string>Open &amp;ISO...</string>
+    <string>Eject/Load ISO...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I</string>
@@ -969,14 +969,6 @@
   <action name="aFileOpenSSF">
    <property name="text">
     <string>Open SSF</string>
-   </property>
-  </action>
-  <action name="actionOpen_Tray">
-   <property name="text">
-    <string>Open&amp;Tray</string>
-   </property>
-   <property name="toolTip">
-    <string>Open Tray</string>
    </property>
   </action>
  </widget>

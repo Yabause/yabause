@@ -507,8 +507,9 @@ int Cs2ChangeCDCore(int coreid, const char *cdpath)
    int i;
 
    // Make sure the old core is freed
-   if (Cs2Area->cdi != NULL)
+   if ((Cs2Area != NULL) && (Cs2Area->cdi != NULL))
       Cs2Area->cdi->DeInit();
+   //else return -1;
 
    // So which core do we want?
    if (coreid == CDCORE_DEFAULT)
@@ -721,8 +722,8 @@ void Cs2ForceOpenTray(){
 int Cs2ForceCloseTray( int coreid, const char * cdpath ){
 
   int ret = 0;
-   if ((ret = Cs2ChangeCDCore(coreid, cdpath)) != 0)
-      return ret;
+   if (Cs2Area != NULL) Cs2ChangeCDCore(coreid, cdpath);
+   else return -1;
 
   Cs2Reset();
 

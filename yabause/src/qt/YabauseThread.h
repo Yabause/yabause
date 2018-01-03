@@ -41,7 +41,7 @@ public:
 	inline int init() const { return mInit; }
 
 	void OpenTray();
-	void CloseTray();
+	int CloseTray();
 
 protected:
 	yabauseinit_struct mYabauseConf;

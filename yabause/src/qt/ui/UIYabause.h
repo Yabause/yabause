@@ -140,7 +140,6 @@ protected slots:
 	void on_aFileOpenISO_triggered();
 	void on_aFileOpenCDRom_triggered();
    void on_aFileOpenSSF_triggered();
-   void on_actionOpen_Tray_triggered();
 	void on_mFileSaveState_triggered( QAction* );
 	void on_mFileLoadState_triggered( QAction* );
 	void on_aFileSaveStateAs_triggered();

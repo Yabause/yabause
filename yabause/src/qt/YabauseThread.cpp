@@ -410,13 +410,13 @@ void YabauseThread::OpenTray(){
 	Cs2ForceOpenTray();
 }
 
-void YabauseThread::CloseTray(){
+int YabauseThread::CloseTray(){
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	mYabauseConf.cdcoretype = vs->value("General/CdRom", mYabauseConf.cdcoretype).toInt();
 	mYabauseConf.cdpath = strdup(vs->value("General/CdRomISO", mYabauseConf.cdpath).toString().toLatin1().constData());
 
-	Cs2ForceCloseTray(mYabauseConf.cdcoretype, mYabauseConf.cdpath);
+	return Cs2ForceCloseTray(mYabauseConf.cdcoretype, mYabauseConf.cdpath);
 }
 
 void YabauseThread::resetYabauseConf()
