@@ -106,24 +106,21 @@ NULL
 };
 
 VideoInterface_struct *VIDCoreList[] = {
-&VIDDummy,
 #ifdef HAVE_LIBGL
 &VIDOGL,
+#else
+&VIDDummy,
 #endif
-&VIDSoft,
 NULL
 };
 
 #ifdef YAB_PORT_OSD
 #include "nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
-&OSDDummy,
-#ifdef HAVE_LIBGLUT
-&OSDGlut,
-#endif
-&OSDSoft,
 #ifdef HAVE_LIBGL
 &OSDNnovg,
+#else
+&OSDDummy,
 #endif
 NULL
 };
@@ -442,12 +439,12 @@ SoundInterface_struct QtYabause::defaultSNDCore()
 
 VideoInterface_struct QtYabause::defaultVIDCore()
 {
-	return VIDSoft;
+	return VIDOGL;
 }
 
 OSD_struct QtYabause::defaultOSDCore()
 {
-	return OSDSoft;
+	return OSDNnovg;
 }
 
 PerInterface_struct QtYabause::defaultPERCore()
