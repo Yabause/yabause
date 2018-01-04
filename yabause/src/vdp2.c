@@ -431,7 +431,10 @@ void Vdp2HBlankOUT(void) {
 
       *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
     }
+    if (Vdp2Lines[0].PRISA != Vdp2Lines[yabsys.LineCount].PRISA) {
 
+      *Vdp2External.perline_alpha |= 0x40;
+    }
   }
 
   if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount) && (Vdp1External.plot_trigger_line > yabsys.VBlankLineCount)) {
