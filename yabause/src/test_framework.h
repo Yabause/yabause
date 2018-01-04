@@ -63,9 +63,11 @@ class TestItem{
 public:
   string title_;
   string program_path_;
+  string state_path_;
   u32 start_address_;
   TestItem(){
     program_path_ = "";
+    state_path_ = "";
     start_address_ = 0x06004000;
   }
   vector<TestReultItem> results;
@@ -107,6 +109,9 @@ public:
   void setSaveScreenShotCallback(SAVE_SCREENSHOT callback ) {
     save_screenshot = callback;
   }
+
+  void setTarget(const string & target);
+
 protected:
   YabMutex * mtx_ = nullptr;
   bool is_check_point_ = false;
@@ -118,6 +123,7 @@ protected:
   static size_t read_callback(void *dest, size_t size, size_t nmemb, void *userp);
   int sendTestResult(const char * data);
   SAVE_SCREENSHOT save_screenshot = nullptr;
+  int target_test_id_ = -1;
 };
 
 

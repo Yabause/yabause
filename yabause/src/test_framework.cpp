@@ -32,15 +32,11 @@ TestFramework::TestFramework():
 int TestFramework::load( const string & title, const string & path){
 
   title_ = title;
+  target_test_id_ = -1;
   git_hash_ = GIT_SHA1;
 
-  //½½½Ý“ï¿½½½½½æ“¾½½½½
   time_t t = time(nullptr);
-
-  //½`½½½½ÏŠï¿½½½½½    
   const tm* lt = localtime(&t);
-
-  //s½É“ÆŽï¿½½t½H½[½}½b½g½É‚È‚ï¿½æ‚¤½É˜A½½½½½Ä‚ï¿½½½
   std::stringstream s;
   s << "20";
   s << lt->tm_year - 100;
@@ -65,8 +61,6 @@ int TestFramework::load( const string & title, const string & path){
   s << lt->tm_hour << "_" << lt->tm_min << "_" << lt->tm_sec;
   base_dir_ = s.str();
 
-
-  // ½t½@½C½½½I½[½v½½
   ifstream inputStream;
   string thisLine;
   inputStream.open(path.c_str());
@@ -109,6 +103,13 @@ int TestFramework::load( const string & title, const string & path){
       return -1;
     }
     
+    if (tmpObject["state"].is<string>()) {
+      tmpitem.state_path_ = tmpObject["state"].get<string>();
+    }
+    else {
+      tmpitem.state_path_ = "";
+    }
+
     string start_address;
     if (tmpObject["start_address"].is<string>() ) {
       start_address = tmpObject["start_address"].get<string>();
@@ -169,6 +170,15 @@ int TestFramework::load( const string & title, const string & path){
   return 0;
 }
 
+void TestFramework::setTarget(const string & target) {
+  for (int i = 0; i < test_items_.size(); i++) {
+    if (test_items_[i].title_ == target) {
+      target_test_id_ = i;
+      current_test_ = target_test_id_;
+    }
+  }
+}
+
 int TestFramework::step_in_main_thread( ) {
   
   YabThreadLock(mtx_);
@@ -177,12 +187,21 @@ int TestFramework::step_in_main_thread( ) {
     return 0;
   }
 
+  if (frame_count_ == 10 && test_items_[current_test_].state_path_ != "" ) {
+    YabLoadState(test_items_[current_test_].state_path_.c_str());
+  }
+
   if (FRAME_CAPTURED == state_) {
     state_ = WAIT_FOR_CAPTURE_FRAME;
     if (current_point_ >= test_items_[current_test_].results.size()) {
       current_point_ = 0;
       cout << "finished" << endl;
-      current_test_++;
+      if (target_test_id_ != -1) {
+        current_test_ = target_test_id_;
+      }
+      else {
+        current_test_++;
+      }
       if (current_test_ >= test_items_.size()) {
         onFinidhed();
         state_ = FINISHED;
@@ -211,6 +230,12 @@ int TestFramework::step_in_main_thread( ) {
 int TestFramework::step_in_draw_thread() {
   YabThreadLock(mtx_);
   if (CAPTURE_FRAME == state_) {
+    if (target_test_id_ != -1) {
+      current_point_++;
+      state_ = FRAME_CAPTURED;
+      YabThreadUnLock(mtx_);
+      return 0;
+    }
     glFinish();
     u64 now_time = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
     double difftime;
@@ -461,6 +486,7 @@ int TestFramework::sendImageFile(const string & filename, int & id ) {
     if (res != CURLE_OK) {
       fprintf(stderr, "curl_easy_perform() failed: %s\n",
         curl_easy_strerror(res));
+      return -1;
     }
 
     curl_easy_cleanup(curl);
