@@ -201,8 +201,7 @@ int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INT
     itr++;
     i++;
   }
-
-  return 0;
+  return i;
 }
 
 void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrupt_struct interrupts[MAX_INTERRUPTS]){
