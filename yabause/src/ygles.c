@@ -3724,11 +3724,11 @@ void YglOnUpdateColorRamWord(u32 addr) {
 void YglUpdateColorRam() {
   YabThreadLock(_Ygl->crammutex);
   if (Vdp2ColorRamUpdated) {
-    //Vdp2ColorRamUpdated = 0;
-    //if (_Ygl->colupd_min_addr > _Ygl->colupd_max_addr) {
-    //  YabThreadUnLock(_Ygl->crammutex);
-    //  return; // !? not initilized?
-    //}
+    Vdp2ColorRamUpdated = 0;
+    if (_Ygl->colupd_min_addr > _Ygl->colupd_max_addr) {
+      YabThreadUnLock(_Ygl->crammutex);
+      return; // !? not initilized?
+    }
 
     u32 * buf = YglGetColorRamPointer();
     int index_shft = 1;
