@@ -2470,7 +2470,7 @@ void YglEraseWriteVDP1(void) {
 
   u16 color;
   int priority;
-  u16 alpha;
+  u32 alpha;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
@@ -2498,18 +2498,19 @@ void YglEraseWriteVDP1(void) {
       }
     }
     else {
-      u8 *cclist = (u8 *)&Vdp2Regs->CCRSA;
-      cclist[0] &= 0x1F;
-      u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
+      //u8 *cclist = (u8 *)&Vdp2Regs->CCRSA;
+      //cclist[0] &= 0x1F;
+      //u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
+      alpha = VDP1COLOR(0, 0, 0, 0, 0);
+      alpha >>= 24;
     }
-
-    alpha = rgb_alpha;
-    priority = Vdp2Regs->PRISA & 0x7;
-
+    //alpha = rgb_alpha;
+    //priority = Vdp2Regs->PRISA & 0x7;
   }
   else{
     int shadow, normalshadow, colorcalc;
     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
+#if 0
     priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
     if (color == 0) {
       alpha = 0;
@@ -2518,8 +2519,12 @@ void YglEraseWriteVDP1(void) {
     else{
       alpha = 0xF8;
     }
+#endif
+    alpha = VDP1COLOR(1, colorcalc, priority, 0, 0);
+    alpha >>= 24;
   }
-  alpha |= priority;
+  //alpha |= priority;
+
   glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
