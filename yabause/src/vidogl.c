@@ -332,6 +332,12 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     u32 colorLut = cmd->CMDCOLR * 8;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
 
+    // RBG and pallet mode
+    if ( (cmd->CMDCOLR & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
+      color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(cmd->CMDCOLR));
+      return;
+    }
+
     temp = T1ReadWord(Vdp1Ram, colorLut & 0x7FFFF);
     if (temp & 0x8000) {
       if (MSB) color = VDP1COLOR(0, 1, priority, 1, 0);
@@ -356,7 +362,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       }
     }
     else {
-      color = 0x0;
+      color = VDP1COLOR(1, colorcl, priority, 0, 0);
     }
     break;
   }
