@@ -5246,7 +5246,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   else {
     YglQuadGrowShading(&polygon, &texture, NULL, NULL);
   }
-
+  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
 
 #if 0
