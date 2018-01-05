@@ -3042,6 +3042,72 @@ void YglRenderFrameBuffer(int from, int to) {
    glEnable(GL_BLEND);
 }
 
+
+void YglRenderFrameBufferShadow() {
+
+  GLint   vertices[12];
+  GLfloat texcord[12];
+  float offsetcol[4];
+  int bwin0, bwin1, logwin0, logwin1, winmode;
+  int is_addcolor = 0;
+
+  YglGenFrameBuffer();
+
+  Ygl_uniformVDP2DrawFrameBufferShadow(&_Ygl->renderfb);
+
+  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+  YglMatrix result;
+  if (Vdp1Regs->TVMR & 0x02) {
+    YglMatrix rotate;
+    YglLoadIdentity(&rotate);
+    rotate.m[0][0] = paraA.deltaX;
+    rotate.m[0][1] = paraA.deltaY;
+    rotate.m[1][0] = paraA.deltaXst;
+    rotate.m[1][1] = paraA.deltaYst;
+    YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
+    YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
+  }
+  else {
+    memcpy(&result, &_Ygl->mtxModelView, sizeof(result));
+  }
+
+  // render
+  vertices[0] = 0 - 0.5;
+  vertices[1] = 0 - 0.5;
+  vertices[2] = _Ygl->rwidth + 1 - 0.5;
+  vertices[3] = 0 - 0.5;
+  vertices[4] = _Ygl->rwidth + 1 - 0.5;
+  vertices[5] = _Ygl->rheight + 1 - 0.5;
+
+  vertices[6] = 0 - 0.5;
+  vertices[7] = 0 - 0.5;
+  vertices[8] = _Ygl->rwidth + 1 - 0.5;
+  vertices[9] = _Ygl->rheight + 1 - 0.5;
+  vertices[10] = 0 - 0.5;
+  vertices[11] = _Ygl->rheight + 1 - 0.5;
+
+  texcord[0] = 0.0f;
+  texcord[1] = 1.0f;
+  texcord[2] = 1.0f;
+  texcord[3] = 1.0f;
+  texcord[4] = 1.0f;
+  texcord[5] = 0.0f;
+
+  texcord[6] = 0.0f;
+  texcord[7] = 1.0f;
+  texcord[8] = 1.0f;
+  texcord[9] = 0.0f;
+  texcord[10] = 0.0f;
+  texcord[11] = 0.0f;
+  glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
+  glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);
+  glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
+  glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+
 void YglSetClearColor(float r, float g, float b){
   _Ygl->clear_r = r;
   _Ygl->clear_g = g;
@@ -3212,6 +3278,10 @@ void YglRender(void) {
     glBlendFunc(blendfunc_src, blendfunc_dst);
     if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
   }
+
+   if ((fixVdp2Regs->SDCTL & 0xFF) != 0) {
+     YglRenderFrameBufferShadow();
+   }
 
   if (_Ygl->aamode == AA_FXAA){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
