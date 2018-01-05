@@ -1478,7 +1478,7 @@ typedef struct  {
   int idline;
 } DrawFrameBufferUniform;
 
-#define MAX_FRAME_BUFFER_UNIFORM (32)
+#define MAX_FRAME_BUFFER_UNIFORM (48)
 
 DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
@@ -1788,6 +1788,41 @@ const GLchar * pYglprg_vdp2_drawfb_more_add_hblank_f[]  = { Yglprg_vdp2_drawfb_h
 const GLchar * pYglprg_vdp2_drawfb_msb_add_hblank_f[]  = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_msb_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 
 
+const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+"precision highp sampler2D; \n"
+#else
+"#version 430 \n"
+#endif
+"precision highp float;\n"
+"layout(std140) uniform vdp2regs { \n"
+" float u_pri[8]; \n"
+" float u_alpha[8]; \n"
+" vec4 u_coloroffset;\n"
+" float u_cctl; \n"
+" float u_emu_height; \n"
+" float u_vheight; \n"
+"}; \n"
+"uniform highp sampler2D s_vdp1FrameBuffer;\n"
+"in vec2 v_texcoord;\n"
+"out vec4 fragColor;\n"
+"void main()\n"
+"{\n"
+"  vec2 addr = v_texcoord;\n"
+"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  int additional = int(fbColor.a * 255.0);\n"
+"  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
+"  highp float depth = u_pri[ (additional&0x07) ];\n"
+"  if( (additional & 0x40) != 0 && fbColor.b != 0.0 ){  // index color and shadow? \n"
+"    fragColor = vec4(0.0,0.0,0.0,0.5);\n"
+"  }else{ // direct color \n"
+"    discard;;\n"
+"  } \n"
+"  gl_FragDepth = (depth+1.0)*0.5;\n"
+"}\n";
+
+const GLchar * pYglprg_vdp2_drawfb_shadow_f[] = { Yglprg_vdp2_drawfb_shadow_f,  NULL };
 
 void Ygl_initDrawFrameBuffershader(int id);
 
@@ -1902,6 +1937,11 @@ int YglInitDrawFrameBufferShaders() {
 
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK);
+
+  //------------------------------------------------------------------
+  // Shadow
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SHADOW, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_shadow_f, 1, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SHADOW);
 
   _Ygl->renderfb.prgid = _prgid[PG_VDP2_DRAWFRAMEBUFF];
   _Ygl->renderfb.setupUniform = Ygl_uniformNormal;
@@ -2038,6 +2078,24 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
   glActiveTexture(GL_TEXTURE0);
 }
 
+void Ygl_uniformVDP2DrawFrameBufferShadow(void * p) {
+  int pgid = PG_VDP2_DRAWFRAMEBUFF_SHADOW;
+  int arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
+  glUseProgram(_prgid[pgid]);
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+  glDisableVertexAttribArray(3);
+  _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[pgid], (const GLchar *)"u_mvpMatrix");
+  glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
+
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 0);
+  glActiveTexture(GL_TEXTURE0);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+}
 
 void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend)
 {
