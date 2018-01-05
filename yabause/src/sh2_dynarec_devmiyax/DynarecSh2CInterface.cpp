@@ -180,6 +180,7 @@ void SH2DynDebugReset(SH2_struct *context) {
 }
 
 void FASTCALL SH2DynExec(SH2_struct *context, u32 cycles){
+  if (cycles <= 0) return;
   DynarecSh2* pctx = ((DynarecSh2*)context->ext);
   pctx->SetCurrentContext();
   pctx->ExecuteCount(cycles);
