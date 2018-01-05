@@ -1126,6 +1126,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       }
       break;
     }
+    if(asm_list[i].checkint == 1) {
+      break;
+    }
   }
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);

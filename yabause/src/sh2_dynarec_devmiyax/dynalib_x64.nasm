@@ -322,8 +322,6 @@ END  seperator_normal
 
 START check_interrupt
 CALL_CHECK_INT
-POPAD
-ret
 END check_interrupt
 
 ;------------------------------------------------------
