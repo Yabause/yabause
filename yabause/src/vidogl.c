@@ -293,14 +293,21 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   u32 talpha = 0x00; // MSB Color calcuration mode
   u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
 
-  u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
-  u8 END = ((cmd->CMDPMOD & 0x80) != 0);
+  u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);    // see-through pixel disable(SPD) hard/vdp1/hon/p06_35.htm
+  u8 END = ((cmd->CMDPMOD & 0x80) != 0);    // end-code disable(ECD) hard/vdp1/hon/p06_34.htm
   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
   u32 alpha = 0xFF;
   u32 color = 0x00;
   int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
 
-  VDP1LOG("Making new sprite %08X\n", charAddr);
+  // Check if transparent sprite window
+  // hard/vdp2/hon/p08_12.htm#SPWINEN_
+  if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
+      (fixVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
+      ((fixVdp2Regs->SPCTL & 0xF)  >=2 && (fixVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
+  {
+    return 0;
+  }
 
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
 
@@ -311,7 +318,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 4 bpp Bank mode
     u32 colorBank = cmd->CMDCOLR;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
-    if (colorBank == 0) {
+    if (colorBank == 0 && SPD==0 ) {
       color = 0;
     }else if (MSB || colorBank == nromal_shadow) {
       color = VDP1COLOR(1, 0, priority, 1, 0);
@@ -370,7 +377,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 8 bpp(64 color) Bank mode
     u32 colorBank = cmd->CMDCOLR & 0xFFC0;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
-    if (colorBank == 0x0000) {
+    if (colorBank == 0 && SPD == 0) {
       color = 0;
     }
     else if ( MSB || colorBank == nromal_shadow) {
@@ -390,7 +397,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 8 bpp(128 color) Bank mode
     u32 colorBank = cmd->CMDCOLR & 0xFF80;
     u32 colorOffset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
-    if (colorBank == 0x0000) {
+    if (colorBank == 0 && SPD == 0) {
       color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
     } else if (MSB || colorBank == nromal_shadow) {
       color = VDP1COLOR(0, 1, priority, 1, 0);
@@ -4027,7 +4034,8 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   if (IS_REPLACE(CMDPMOD)) {
     if ((CMDPMOD & 0x8000))
-      sprite.blendmode = VDP1_COLOR_CL_MESH;
+      //sprite.blendmode = VDP1_COLOR_CL_MESH;
+      sprite.blendmode = VDP1_COLOR_CL_REPLACE;
     else {
       //if ( (CMDPMOD & 0x40) != 0) { 
       //   sprite.blendmode = VDP1_COLOR_SPD;
