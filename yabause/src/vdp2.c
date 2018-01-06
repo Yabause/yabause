@@ -59,8 +59,6 @@ static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
-int vbalnk_wait = 0;
-int voutflg = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 YabEventQueue * rcv_evqueue = NULL;
@@ -450,7 +448,7 @@ void Vdp2VBlankIN(void) {
     evqueue = YabThreadCreateQueue(32);
     YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
   }
-  vbalnk_wait = 0;
+
   FrameProfileAdd("VIN event");
   YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
@@ -591,7 +589,6 @@ void Vdp2HBlankOUT(void) {
       vdp_proc_running = 1;
       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
-    voutflg = 1;
     if (Vdp1External.swap_frame_buffer == 1 )
     {
       Vdp1Regs->EDSR >>= 1;
