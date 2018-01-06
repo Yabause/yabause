@@ -28,7 +28,7 @@
 #include "vidshared.h"
 #include "shaders/FXAA_DefaultES.h"
 
-#define YGLLOG yprintf
+#define YGLLOG
 
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);

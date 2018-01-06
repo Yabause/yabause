@@ -708,6 +708,24 @@ extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
 #endif // !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_)
 
+/*
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|S|C|A|A|A|P|P|P|s| | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+S show flag
+C index or direct color
+A alpha index
+P priority
+s Shadow Flag
+
+*/
+INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
+  if (shadow != 0) {
+    int a = 0;
+  }
+  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | color;
+}
+
 #if defined WORDS_BIGENDIAN
 #define SAT2YAB1(alpha,temp)      (alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
 #else
