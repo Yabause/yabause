@@ -2469,7 +2469,7 @@ void YglEraseWriteVDP1(void) {
 
   u16 color;
   int priority;
-  u32 alpha;
+  u32 alpha = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
