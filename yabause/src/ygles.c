@@ -2730,6 +2730,7 @@ void YglUpdateVdp2Reg() {
   // For Line Color insersion
   _Ygl->fbu_.u_emu_height = (float)_Ygl->rheight / (float)_Ygl->height;
   _Ygl->fbu_.u_vheight = (float)_Ygl->height;
+  _Ygl->fbu_.u_color_ram_offset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
 
   if (_Ygl->framebuffer_uniform_id_ == 0) {
     glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);

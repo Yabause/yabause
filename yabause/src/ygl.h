@@ -377,6 +377,7 @@ typedef struct  {
  float u_cctll;
  float u_emu_height;
  float u_vheight;
+ int u_color_ram_offset;
 } UniformFrameBuffer;
 
 /*
