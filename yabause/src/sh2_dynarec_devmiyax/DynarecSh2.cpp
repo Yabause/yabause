@@ -883,10 +883,6 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 delay_seperator_size;
   u8 delayslot_seperator_counter_offset;
 
-  if (0x06006094 == start_addr) {
-    int a = 0;
-  }
-
   if (debug_mode_) {
     nomal_seperator = (void*)seperator_d_normal;
     nomal_seperator_size = SEPERATORSIZE_DEBUG;
@@ -1203,10 +1199,6 @@ void DynarecSh2::ResetCPU(){
   memset((void*)m_pDynaSh2->CtrlReg, 0, sizeof(u32) * 3);
   memset((void*)m_pDynaSh2->SysReg, 0, sizeof(u32) * 6);
 
-  SET_SR(0x000000);  // SR
-  SET_VBR(0x000000); // VBR
-  SET_PC(memGetLong(GET_VBR()));
-  m_pDynaSh2->GenReg[15] = memGetLong(GET_VBR() + 4); //Stack Pointer
   SET_ICOUNT(0);
   pre_cnt_ = 0;
   pre_exe_count_ = 0;
@@ -1282,6 +1274,9 @@ int DynarecSh2::Execute(u32 * totalCycles){
     
   // ROM
   case BIOS_MEM:
+    if (BackupHandled(ctx_, GET_PC()) != 0) {
+       return IN_INFINITY_LOOP;
+    }
     if (yabsys.emulatebios) {
 #ifndef TEST_MODE
       BiosHandleFunc(ctx_);
@@ -1424,7 +1419,7 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   //printf("AddInterrupt v:%d l:%d\n", Vector, level );
 
   m_bIntruptSort = true;
-  m_pDynaSh2->SysReg[5] = m_IntruptTbl.begin()->level<<4;
+  SET_ICOUNT(m_IntruptTbl.begin()->level<<4);
   YabThreadUnLock(mtx_);
 }
 
@@ -1442,9 +1437,9 @@ int DynarecSh2::CheckInterupt(){
   if( InterruptRutine((*pos).Vector, (*pos).level ) != 0 ) {
     m_IntruptTbl.pop_front();
     if( m_IntruptTbl.size() != 0 ) {
-      m_pDynaSh2->SysReg[5] = m_IntruptTbl.begin()->level<<4;
+      SET_ICOUNT(m_IntruptTbl.begin()->level<<4);
     }else{
-      m_pDynaSh2->SysReg[5] = 0x0000;
+      SET_ICOUNT(0);
     }
     YabThreadUnLock(mtx_);
     return 1;
@@ -1530,8 +1525,9 @@ int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
   
   buf = compie_statics_;
   compie_statics_.clear();
-#endif
   return 0;
+#endif
+  return -1;
 }
 
 void DynarecSh2::ShowCompileInfo(){

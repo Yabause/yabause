@@ -32,6 +32,7 @@
 #include "vdp2.h"
 #include "vidsoft.h"
 #include "threads.h"
+#include "sh2core.h"
 
 u8 * Vdp1Ram;
 u8 * Vdp1FrameBuffer[2];

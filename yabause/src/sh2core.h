@@ -500,6 +500,8 @@ void SH2DumpHistory(SH2_struct *context);
 
 void SH2HandleBreakpoints(SH2_struct *context);
 
+int BackupHandled(SH2_struct * sh, u32 addr);
+
 #ifdef USE_CACHE
 u8 CacheReadByte(u8* mem, u32 addr);
 u16 CacheReadWord(u8* mem, u32 addr);

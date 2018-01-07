@@ -83,13 +83,16 @@ section .code
 %define GEN_REG r12
 %define CTRL_REG GEN_REG+16*4
 %define SYS_REG CTRL_REG+3*4
+%define MACH SYS_REG
+%define MACL SYS_REG+4
+%define PR SYS_REG+2*4
 %define PC SYS_REG+3*4
 %define R_0 GEN_REG
 %define R_15 GEN_REG+15*4
 %define GBR CTRL_REG+4
 
-
 %define SCRATCH1 rbp
+%define SCRATCH2 rbx
 
 %macro GET_R 1
 	mov %1, GEN_REG         
@@ -112,27 +115,27 @@ section .code
 %endmacro
 
 %macro SET_MACH 1
- 	mov dword [SYS_REG], %1
+ 	mov dword [MACH], %1
 %endmacro
 
 %macro SET_MACL 1
-	mov dword [SYS_REG+4], %1
+	mov dword [MACL], %1
 %endmacro
 
 %macro GET_MACH 1
-	mov %1, dword [SYS_REG]
+	mov %1, dword [MACH]
 %endmacro
 
 %macro GET_MACL 1
-	mov %1, dword [SYS_REG+4]
+	mov %1, dword [MACL]
 %endmacro
 
 %macro GET_PR 1
-	mov %1, dword [SYS_REG+8]
+	mov %1, dword [PR]
 %endmacro
 
 %macro SET_PR 1
-	mov dword [SYS_REG+8], %1
+	mov dword [PR], %1
 %endmacro
 
 %macro SET_VBR 1
@@ -266,15 +269,15 @@ section .code
 %endmacro
 
 %macro PUSHAD 0
-        push rbx           ;1
-        push rbp           ;1
-        push r12           ;1
+        push SCRATCH2           ;1
+        push SCRATCH1           ;1
+        push GEN_REG           ;1
 %endmacro
 
 %macro POPAD 0
-	pop r12           ;1
-	pop rbp           ;1
-	pop rbx           ;1
+	pop GEN_REG           ;1
+	pop SCRATCH1           ;1
+	pop SCRATCH2           ;1
 %endmacro
 
 %macro START 1
@@ -394,7 +397,7 @@ CLEAR_T
 opdesc CLRT,  0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc CLRMAC
-and qword [SYS_REG], 0   ;4
+and qword [MACH], 0   ;4
 opdesc CLRMAC,	0xFF,0xFF,0xFF,0xFF,0xFF
 
 opfunc NOP
@@ -504,7 +507,7 @@ add ebx,eax       ;3  rn = rm +rn (with carry)
 jnc ADDC_NO_CARRY   ;2
 SET_T
 ADDC_NO_CARRY:
-mov dword [rbp], ebx
+mov dword [SCRATCH1], ebx
 opdesc ADDC,	6,16,0xff,0xff,0xff
 
 
@@ -652,7 +655,7 @@ mov dword [SCRATCH1],eax       ;3
 opdesc MOVBL,	6,24,0xff,0xff,0xff
 
 opfunc MOVWL
-GET_R rbp
+GET_R SCRATCH1
 mov edi,dword [SCRATCH1]       ;3
 CALL_GETMEM_WORD
 GET_R SCRATCH1
@@ -674,12 +677,12 @@ mov edi,dword [SCRATCH1]       ;3
 CALL_GETMEM_BYTE
 cbw                 ;1
 cwde                ;1
-GET_R rbx
-cmp rbp,rbx
+GET_R SCRATCH2
+cmp SCRATCH1,SCRATCH2
 je continue_movbp
 inc dword [SCRATCH1]     ;3
 continue_movbp:
-mov dword [rbx],eax       ;3
+mov dword [SCRATCH2],eax       ;3
 opdesc MOVBP,	6,27,0xff,0xff,0xff
 
 
@@ -688,21 +691,21 @@ GET_R SCRATCH1
 mov edi,dword [SCRATCH1]       ;3
 CALL_GETMEM_WORD
 cwde                ;1
-GET_R rbx
-cmp rbp,rbx
+GET_R SCRATCH2
+cmp SCRATCH1,SCRATCH2
 je continue_movwp
 add dword [SCRATCH1],byte 2
 continue_movwp:
-mov dword [rbx],eax       ;3
+mov dword [SCRATCH2],eax       ;3
 opdesc MOVWP,	6,25,0xff,0xff,0xff
 
 opfunc MOVLP
 GET_R SCRATCH1
 mov edi, dword [SCRATCH1]       ;3
 CALL_GETMEM_LONG
-GET_R rbx
-mov dword [rbx],eax       ;3
-cmp rbx, rbp
+GET_R SCRATCH2
+mov dword [SCRATCH2],eax       ;3
+cmp SCRATCH2, SCRATCH1
 je end_movlp
 add dword [SCRATCH1],byte 4 ;4
 end_movlp:
@@ -1955,28 +1958,28 @@ TEST_IS_S
 jnc   MACW_NO_S_FLG                 ;2 if( S == 0 ) goto 'no sign proc'
 
 MACW_S_FLG:
-  add dword [SYS_REG+4],eax   ;3 MACL = ansL + MACL
+  add dword [MACL],eax   ;3 MACL = ansL + MACL
   jno NO_OVERFLO
   js  FU 
   SEI:
-    mov dword [SYS_REG+4],0x80000000 ; min value
-	or  dword [SYS_REG],1
+    mov dword [MACL],0x80000000 ; min value
+	or  dword [MACH],1
 	jmp END_MACW
 
   FU:
-    mov dword [SYS_REG+4],0x7FFFFFFF ; max value
-	or dword [SYS_REG],1
+    mov dword [MACL],0x7FFFFFFF ; max value
+	or dword [MACH],1
 	jmp END_MACW
 
   NO_OVERFLO:
   jmp END_MACW
 
 MACW_NO_S_FLG:
-  add dword [SYS_REG+4],eax         ;3 MACL = ansL + MACL
+  add dword [MACL],eax         ;3 MACL = ansL + MACL
   jnc MACW_NO_CARRY             ;2 Check Carry
   inc edx                       ;1
 MACW_NO_CARRY: 
-  add dword [SYS_REG],edx           ;2 MACH = ansH + MACH
+  add dword [MACH],edx           ;2 MACH = ansH + MACH
 
 END_MACW:
 opdesc MAC_W, 6,31,0xFF,0xFF,0xFF

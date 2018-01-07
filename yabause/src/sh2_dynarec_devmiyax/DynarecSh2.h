@@ -335,7 +335,7 @@ public:
   inline u32 GET_PR() { return m_pDynaSh2->SysReg[2]; }
   inline u32 GET_PC() { return m_pDynaSh2->SysReg[3]; }
   inline u32 GET_ICOUNT() { return m_pDynaSh2->SysReg[5]; } 
-  inline u32 GET_SR() { return m_pDynaSh2->CtrlReg[0]; }
+  inline u32 GET_SR() { return (m_pDynaSh2->CtrlReg[0] & 0x3F3); }
   inline u32 GET_GBR() { return m_pDynaSh2->CtrlReg[1]; }
   inline u32 GET_VBR() { return m_pDynaSh2->CtrlReg[2]; }
   inline void SET_MACH( u32 v ) { m_pDynaSh2->SysReg[0] = v; }
