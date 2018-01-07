@@ -1561,6 +1561,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 " float u_cctl; \n"
 " float u_emu_height; \n"
 " float u_vheight; \n"
+" int u_color_ram_offset; \n"
 "}; \n"
 "uniform highp sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_color; \n"
@@ -1582,6 +1583,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
 "    int colindex = ( int(fbColor.g*65280.0) | int(fbColor.r*255.0)); \n"
 "    if( colindex == 0 ) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
+"    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
 "    fragColor = txcol;\n"
 "  }else{ // direct color \n"
@@ -1647,7 +1649,7 @@ const GLchar Yglprg_vdp2_drawfb_line_blend_f[] =
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );\n"
-"  fragColor = (lncol*(1.0 - fragColor.a)) + fragColor*(fragColor.a); \n";
+"  fragColor = (fragColor*fragColor.a) + lncol*(1.0-fragColor.a); \n";
 
 const GLchar Yglprg_vdp2_drawfb_line_add_f[] =
 "  ivec2 linepos; \n "
@@ -1661,7 +1663,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f[] =
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth <= u_cctl ){ fragColor = (lncol*lncol.a) + fragColor*(1.0-lncol.a); } \n";
+"  if( depth <= u_cctl ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
@@ -1675,14 +1677,14 @@ const GLchar Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f[] =
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth >= u_cctl ){ fragColor = (lncol*lncol.a) + fragColor*(1.0-lncol.a); } \n";
+"  if( depth >= u_cctl ){ fragColor =(fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
 "  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( txcol.a != 0.0 ){ fragColor = (lncol*lncol.a) + fragColor*(1.0-lncol.a); } \n";
+"  if( txcol.a != 0.0 ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); }\n";
 
 
 
@@ -1709,6 +1711,7 @@ const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 " float u_cctl; \n"
 " float u_emu_height; \n"
 " float u_vheight; \n"
+" int u_color_ram_offset; \n"
 "}; \n"
 "uniform highp sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_color; \n"
@@ -1736,6 +1739,7 @@ const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 "    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
 "    int colindex = ( int(fbColor.g*65280.0) | int(fbColor.r*255.0)); \n"
 "    if( colindex == 0 ) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
+"    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
 "    fragColor = txcol;\n"
 "  }else{ // direct color \n"
