@@ -1933,7 +1933,8 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 {
   int i, j;
 
-  if (vdp2_interlace == 1) {
+  if ((vdp2_interlace == 1) && (vdp2height > 448)) {
+    // Weird... Partly fix True Pinball in case of interlace only but it is breaking Zen Nihon Pro Wres, so use the bad test of the height
     Vdp2DrawCellInterlace(info, texture);
     return;
   }
