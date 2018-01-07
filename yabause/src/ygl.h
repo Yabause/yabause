@@ -720,6 +720,29 @@ extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 #define SAT2YAB2(alpha,dot1,dot2)       (alpha << 24 | ((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF))
 #endif
 
+/*
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|S|C|A|A|A|P|P|P|s| | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+S show flag
+C index or direct color
+A alpha index
+P priority
+s Shadow Flag
+
+*/
+static INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
+  if (shadow != 0) {
+    int a = 0;
+  }
+  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | color;
+}
+
+static INLINE u32 VDP1COLOR16TO24(u16 temp) {
+  return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9);
+}
+
+
 #endif // YGL_H
 
 #endif // defined(HAVE_LIBGL) || defined(__ANDROID__)
