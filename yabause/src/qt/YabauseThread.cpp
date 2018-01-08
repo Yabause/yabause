@@ -389,6 +389,7 @@ void YabauseThread::reloadSettings()
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
+        mYabauseConf.useVdp1cache = vs->value( "Advanced/Vdp1Cache", false ).toBool();
 
 	reloadClock();
 	reloadControllers();
@@ -444,7 +445,8 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
 	mYabauseConf.video_filter_type = 0;
 	mYabauseConf.polygon_generation_mode = 0;
-  mYabauseConf.resolution_mode = 0;
+        mYabauseConf.resolution_mode = 0;
+        mYabauseConf.useVdp1cache = 0;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

@@ -61,6 +61,9 @@ typedef struct
    int resolution_mode;
    int extend_backup;
    int usecache;
+#ifdef SPRITE_CACHE
+   int useVdp1cache;
+#endif
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -115,6 +118,9 @@ typedef struct
    int playing_ssf;
    u32 frame_count;
    int usecache;
+#ifdef SPRITE_CACHE
+   int useVdp1cache;
+#endif
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

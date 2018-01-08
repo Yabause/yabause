@@ -676,6 +676,13 @@
         <widget class="QComboBox" name="cb68kCore"/>
        </item>
        <item>
+        <widget class="QCheckBox" name="cbVdp1Cache">
+         <property name="text">
+          <string>Use Vdp1 Cache</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>

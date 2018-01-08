@@ -228,6 +228,9 @@ void YuiInit() {
 	yinit.usethreads = 1;
 	yinit.numthreads = 4;
         yinit.usecache = 0;
+#ifdef SPRITE_CACHE
+        yinit.useVdp1cache = 0;
+#endif
 }
 
 static int SetupOpenGL() {
@@ -321,6 +324,11 @@ int main(int argc, char *argv[]) {
       else if (strcmp(argv[i], "-sc") == 0 || strcmp(argv[i], "--softcore") == 0) {
         yinit.vidcoretype = VIDCORE_SOFT;
       }
+#ifdef SPRITE_CACHE
+      else if (strcmp(argv[i], "-vc") == 0 || strcmp(argv[i], "--vdp1cache") == 0) {
+        yinit.useVdp1cache = 1;;
+      }
+#endif
       else if (strcmp(argv[i], "-ci") == 0 ) {
         yinit.sh2coretype = 1;
       }

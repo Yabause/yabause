@@ -461,6 +461,7 @@ void UISettings::loadSettings()
 	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );	
 	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
+        cbVdp1Cache->setChecked( s->value( "Advanced/Vdp1Cache", false ).toBool() );
 	cbVideoFormat->setCurrentIndex( cbVideoFormat->findData( s->value( "Video/VideoFormat", mVideoFormats.at( 0 ).id ).toInt() ) );
 	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
 	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
@@ -575,6 +576,7 @@ void UISettings::saveSettings()
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
    s->setValue("Advanced/68kCore", cb68kCore->itemData(cb68kCore->currentIndex()).toInt());
+        s->setValue( "Advanced/Vdp1Cache", cbVdp1Cache->isChecked() );
 
 	// view
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );

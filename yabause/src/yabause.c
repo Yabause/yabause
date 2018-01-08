@@ -167,6 +167,9 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+#ifdef SPRITE_CACHE
+   yabsys.useVdp1cache = init->useVdp1cache;
+#endif
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)

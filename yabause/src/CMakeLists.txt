@@ -366,6 +366,12 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		endif()
 	endif(OPENGL_FOUND)
 endif ()
+option(SPRITE_CACHE "Vdp1 sprite cache" ON)
+if (SPRITE_CACHE)
+    add_definitions(-DSPRITE_CACHE=1)
+    set(yabause_SOURCES ${yabause_SOURCES} patternManager.c )
+    set(yabause_HEADERS ${yabause_HEADERS} patternManager.h )
+endif ()
 
 # SDL
 option(YAB_WANT_SDL "use SDL cores if available" ON)
@@ -754,7 +760,7 @@ if (YAB_PORT_OSD)
 endif()
 
 # Exec from cache
-option(YAB_USE_CACHE "Allow external bus access to use cache" OFF)
+option(YAB_USE_CACHE "Allow external bus access to use cache" ON)
 if (YAB_USE_CACHE)
 	add_definitions(-DUSE_CACHE=1)
 endif()
