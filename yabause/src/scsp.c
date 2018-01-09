@@ -128,6 +128,14 @@
 # define FLUSH_SCSP()  /*nothing*/
 #endif
 
+#if defined(ARCH_IS_LINUX)
+#include "sys/resource.h"
+#include <errno.h>
+#include <pthread.h>
+pthread_cond_t  sync_cnd = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t sync_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 int use_new_scsp = 0;
 int new_scsp_outbuf_pos = 0;
 s32 new_scsp_outbuf_l[900] = { 0 };
@@ -4775,7 +4783,14 @@ int sh2_read_req = 0;
 
 void SyncSh2And68k(){
   if (IsM68KRunning) {
-    sh2_read_req++;
+#if defined(ARCH_IS_LINUX)
+    pthread_mutex_lock(&sync_mutex);
+    pthread_cond_signal(&sync_cnd);
+    pthread_mutex_unlock(&sync_mutex);
+#else
+   sh2_read_req++;
+#endif    
+ 
     YabThreadYield();
   }
 }
@@ -5322,20 +5337,25 @@ void ScspAsynMain( void * p ){
 
   u64 before;
   u64 now;
-  u32 difftime;
+  u64 difftime;
   const int samplecnt = 256; // 11289600/44100
   const int step = 16;
-  const int frame_div = 4;
+  const int frame_div = 1;
   const int framecnt = 188160 / frame_div; // 11289600/60
   int frame = 0;
   int frame_count = 0;
   int i;
 
+#if defined(ARCH_IS_LINUX)
+  struct timespec tm;
+  setpriority( PRIO_PROCESS, 0, -20);
+#endif
+
   const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
   
 
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
-  before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+  before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
   while (thread_running){
 
@@ -5367,20 +5387,44 @@ void ScspAsynMain( void * p ){
         frame_count = 0;
       }
       int sleeptime = 0;
+      int initsleeptime = 0;
+      u64 initnow = 0;
       u64 checktime = 0;
+      u64 sleepchecktime = 0;
       m68kcycle = 0;
       sh2_read_req = 0;
       do {
-        now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+        now = YabauseGetTicks() * 1000000000L / yabsys.tickfreq;
         if (now > before){
           difftime = now - before;
         }
         else{
           difftime = now + (ULLONG_MAX - before);
         }
-        sleeptime = ((16666 / frame_div) - difftime);
+        sleeptime = ((16666666L / frame_div) - difftime);
+        if(initsleeptime==0){initsleeptime = sleeptime; initnow = now; }
+        if( sleeptime < 0 ) break;
+#if defined(ARCH_IS_LINUX)
+        tm.tv_sec = 0;
+        tm.tv_nsec = sleeptime;
+        pthread_mutex_lock(&sync_mutex);
+        int rtn = pthread_cond_timedwait_relative_np(&sync_cnd,&sync_mutex,&tm);
+        if(rtn == 0){
+          for (i = 0; i < samplecnt; i += step) {
+            MM68KExec(step);
+            m68kcycle += base_clock;
+          }
+          frame += samplecnt;
+          if (use_new_scsp) {
+            new_scsp_exec((samplecnt << 1));
+          }
+          else {
+            scsp_update_timer(1);
+          }
+        }
+        pthread_mutex_unlock(&sync_mutex);
+#else
         if (sleeptime > 10000) YabThreadUSleep(0);
-
         if(sh2_read_req != 0) {
           for (i = 0; i < samplecnt; i += step) {
             MM68KExec(step);
@@ -5395,11 +5439,12 @@ void ScspAsynMain( void * p ){
           }
           sh2_read_req = 0;
         }
+#endif
 
       } while (sleeptime > 0);
 
-      checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-      //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
+      checktime = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
+      //yprintf("vsynctime = %d(%d) %d(%d)\n", (s32)(checktime - before),16666666/frame_div,(s32)(checktime - initnow),initsleeptime);
       before = checktime;
     }
     
