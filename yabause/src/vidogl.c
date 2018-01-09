@@ -844,9 +844,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    }
 #ifdef SPRITE_CACHE
   if (yabsys.useVdp1cache) {
-    if (pattern == NULL) {
-      addPattern(cmd, Vdp1Ram, pixBuf, texture->w);
-    }
+    addPattern(cmd, Vdp1Ram, pixBuf, texture->w);
   }
 #endif
 }
@@ -3618,6 +3616,12 @@ static void SetSaturnResolution(int width, int height)
 int VIDOGLInit(void)
 {
 
+#ifdef SPRITE_CACHE
+  if (yabsys.useVdp1cache) {
+    initPatternCache();
+  }
+#endif
+
   if (YglInit(2048, 1024, 8) != 0)
     return -1;
 
@@ -3647,6 +3651,11 @@ void VIDOGLDeInit(void)
     YabThreadUnLock(g_rotate_mtx);
     YabThreadWait(YAB_THREAD_VIDSOFT_LAYER_RBG0);
   }
+#ifdef SPRITE_CACHE
+  if (yabsys.useVdp1cache) {
+    deinitPatternCache();
+  }
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3691,6 +3700,11 @@ int VIDOGLIsFullscreen(void) {
 
 int VIDOGLVdp1Reset(void)
 {
+#ifdef SPRITE_CACHE
+  if (yabsys.useVdp1cache) {
+    resetPatternCache();
+  }
+#endif
   return 0;
 }
 
