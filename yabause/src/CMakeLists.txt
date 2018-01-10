@@ -579,69 +579,6 @@ option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 # SH2 dynamic recompiler
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
-option(SH2_DYNAREC "SH2 dynamic recompiler" OFF)
-if (SH2_DYNAREC)
-	if( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
-		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
-			enable_language(ASM-ATT)
-			set(yabause_SOURCES ${yabause_SOURCES}
-				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_x86.s)
-			set(yabause_HEADERS ${yabause_HEADERS}
-				sh2_dynarec/sh2_dynarec.h)
-			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
-			add_definitions(-DSH2_DYNAREC=1)
-		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
-		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-			enable_language(ASM-ATT)
-			set(yabause_SOURCES ${yabause_SOURCES}
-				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_x64.s)
-			set(yabause_HEADERS ${yabause_HEADERS}
-				sh2_dynarec/sh2_dynarec.h)
-			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
-			add_definitions(-DSH2_DYNAREC=1)
-		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
-			enable_language(ASM-ATT)
-			set(yabause_SOURCES ${yabause_SOURCES}
-				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s)
-			set(yabause_HEADERS ${yabause_HEADERS}
-				sh2_dynarec/sh2_dynarec.h)
-			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
-			add_definitions(-DSH2_DYNAREC=1)
-		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
-		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-			enable_language(ASM-ATT)
-			set(yabause_SOURCES ${yabause_SOURCES}
-				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s)
-			set(yabause_HEADERS ${yabause_HEADERS}
-				sh2_dynarec/sh2_dynarec.h)
-			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
-			add_definitions(-DSH2_DYNAREC=1 -DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
-		endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
-			enable_language(ASM-ATT)
-			set(yabause_SOURCES ${yabause_SOURCES}
-				sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm.s)
-			set(yabause_HEADERS ${yabause_HEADERS}
-				sh2_dynarec/sh2_dynarec.h)
-			set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
-			add_definitions(-DSH2_DYNAREC=1)
-			if (YAB_WANT_ARM7)
-				add_definitions(-DHAVE_ARMv6=1 -DHAVE_ARMv7=1)
-			endif()
-		endif ()
-		if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
-			add_definitions(-DSH2_DYNAREC=0)
-			#enable_language(ASM-ATT)
-			#set(yabause_SOURCES ${yabause_SOURCES}
-		#		sh2_dynarec/sh2_dynarec.c sh2_dynarec/linkage_arm64.s)
-		#	set(yabause_HEADERS ${yabause_HEADERS}
-		#		sh2_dynarec/sh2_dynarec.h)
-		#	set_source_files_properties(sh2_dynarec/sh2_dynarec.c PROPERTIES COMPILE_FLAGS "-Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
-		#	add_definitions(-DSH2_DYNAREC=1)			
-		endif()
-	endif( ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux") OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Android") )
-endif (SH2_DYNAREC)
 
 # c68k
 option(YAB_WANT_C68K "enable c68k compilation" OFF)

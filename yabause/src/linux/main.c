@@ -84,9 +84,6 @@ SH2Interface_struct *SH2CoreList[] = {
 #ifdef TEST_PSP_SH2
 &SH2PSP,
 #endif
-#ifdef SH2_DYNAREC
-&SH2Dynarec,
-#endif
 #ifdef DYNAREC_DEVMIYAX
 &SH2Dyn,
 #endif
@@ -336,9 +333,6 @@ int main(int argc, char *argv[]) {
       #if defined(DYNAREC_DEVMIYAX)
         printf("Use new dynarec core emulation\n");
         yinit.sh2coretype = 3;
-      #elif defined(SH2_DYNAREC)
-        printf("Use old dynarec core emulation\n");
-	yinit.sh2coretype = 2;
       #else
         printf("No dynarec core emulation: fallback on SW core emultaion\n");
         yinit.sh2coretype = 0;
@@ -349,11 +343,6 @@ int main(int argc, char *argv[]) {
       else if (strstr(argv[i], "--vsyncoff")) {
         frameskip = 0;
         EnableAutoFrameSkip();
-      }
-      else if (strcmp(argv[i], "-dr") == 0) {
-	#ifdef SH2_DYNAREC
-	yinit.sh2coretype = 2;
-	#endif
       }
       // Binary
       else if (strstr(argv[i], "--binary=")) {
