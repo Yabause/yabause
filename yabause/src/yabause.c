@@ -84,10 +84,6 @@
  #include "profile.h"
 #endif
 
-#if defined(SH2_DYNAREC)
-#include "sh2_dynarec/sh2_dynarec.h"
-#endif
-
 #if HAVE_GDBSTUB
     #include "gdb/stub.h"
 #endif
@@ -152,8 +148,8 @@ void YabauseChangeTiming(int freqtype) {
    yabsys.LineCount = 0;
    yabsys.CurSH2FreqType = freqtype;
    yabsys.DecilineStop = (u32) (freq_shifted * deciline_time + 0.5);
-   yabsys.MSH2CycleFrac = 0;
-   yabsys.SSH2CycleFrac = 0;
+   MSH2->cycleFrac = 0;
+   SSH2->cycleFrac = 0;
    yabsys.DecilineUsec = (u32) (usec_shifted * deciline_time + 0.5);
    yabsys.UsecFrac = 0;
 }
@@ -333,12 +329,6 @@ int YabauseInit(yabauseinit_struct *init)
       yabsys.emulatebios = 1;
 
    yabsys.usequickload = 0;
-
-   #if defined(SH2_DYNAREC)
-   if(SH2Core->id==2) {
-     sh2_dynarec_init();
-   }
-   #endif
 
    YabauseResetNoLoad();
 
@@ -543,23 +533,9 @@ u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions
    return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (lines * divisions_per_line);
 }
 
-#if defined(SH2_DYNAREC)
-int master_cc_dmy = 0;
-#endif
-
 u32 YabauseGetCpuTime(){
 
-#if defined(SH2_DYNAREC)
-  if (SH2Core->id == 2/*SH2CORE_DYNAREC*/){
-    master_cc_dmy += 256;
-    return (u32)master_cc_dmy; // ToDo
-  }
-  else{
-    return MSH2->cycles;
-  }
-#else
   return MSH2->cycles;
-#endif
 }
 
 // cyclesinc
@@ -626,16 +602,6 @@ int YabauseEmulate(void) {
 
    DoMovie();
 
-   #if defined(SH2_DYNAREC)
-   if(SH2Core->id==2) {
-     if (yabsys.IsPal)
-       YabauseDynarecOneFrameExec(722,0); // m68kcycles,m68kcenticycles
-     else
-       YabauseDynarecOneFrameExec(716,20);
-     return 0;
-   }
-   #endif
-
    MSH2->cycles = 0;
    SSH2->cycles = 0;
    u64 cpu_emutime = 0;
@@ -647,21 +613,21 @@ int YabauseEmulate(void) {
          // to SH2Exec(), we always compute an even number of cycles here
          // and leave any odd remainder in SH2CycleFrac.
          u32 msh2cycles, ssh2cycles;
-         yabsys.MSH2CycleFrac = cyclesinc+MSH2CycleLost;
-         yabsys.SSH2CycleFrac = cyclesinc+SSH2CycleLost;
-         MSH2CycleLost = yabsys.MSH2CycleFrac - ((yabsys.MSH2CycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
-         SSH2CycleLost = yabsys.SSH2CycleFrac - ((yabsys.SSH2CycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
-         if ((yabsys.MSH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         MSH2->cycleFrac = cyclesinc+MSH2CycleLost;
+         SSH2->cycleFrac = cyclesinc+SSH2CycleLost;
+         MSH2CycleLost = MSH2->cycleFrac - ((MSH2->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
+         SSH2CycleLost = SSH2->cycleFrac - ((SSH2->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
+         if ((MSH2->cycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
            msh2cycles = 0;
-	   MSH2->cycles += yabsys.MSH2CycleFrac>>YABSYS_TIMING_BITS;
+	   MSH2->cycles += MSH2->cycleFrac>>YABSYS_TIMING_BITS;
          } else {
-           msh2cycles = ((yabsys.MSH2CycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+           msh2cycles = ((MSH2->cycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
          }
-         if ((yabsys.SSH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         if ((SSH2->cycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
            ssh2cycles = 0;
-           SSH2->cycles += yabsys.SSH2CycleFrac>>YABSYS_TIMING_BITS;
+           SSH2->cycles += SSH2->cycleFrac>>YABSYS_TIMING_BITS;
          } else {
-           ssh2cycles = ((yabsys.SSH2CycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+           ssh2cycles = ((SSH2->cycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
          }
          //yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
 
@@ -741,7 +707,7 @@ int YabauseEmulate(void) {
             SmpcINTBACKEnd();
             Vdp2VBlankIN();
             PROFILE_STOP("vblankin");
-            CheatDoPatches();
+            CheatDoPatches(MSH2);
          }
          else if (yabsys.LineCount == yabsys.MaxLineCount)
          {
@@ -847,33 +813,30 @@ int YabauseEmulate(void) {
 void YabauseStartSlave(void) {
    if (yabsys.emulatebios)
    {
-      SH2_struct * oldSh2 = CurrentSH2;
-      CurrentSH2 = SSH2;
-      MappedMemoryWriteLong(0xFFFFFFE0, 0xA55A03F1); // BCR1
-      MappedMemoryWriteLong(0xFFFFFFE4, 0xA55A00FC); // BCR2
-      MappedMemoryWriteLong(0xFFFFFFE8, 0xA55A5555); // WCR
-      MappedMemoryWriteLong(0xFFFFFFEC, 0xA55A0070); // MCR
+      MappedMemoryWriteLong(SSH2, 0xFFFFFFE0, 0xA55A03F1); // BCR1
+      MappedMemoryWriteLong(SSH2, 0xFFFFFFE4, 0xA55A00FC); // BCR2
+      MappedMemoryWriteLong(SSH2, 0xFFFFFFE8, 0xA55A5555); // WCR
+      MappedMemoryWriteLong(SSH2, 0xFFFFFFEC, 0xA55A0070); // MCR
 
-      MappedMemoryWriteWord(0xFFFFFEE0, 0x0000); // ICR
-      MappedMemoryWriteWord(0xFFFFFEE2, 0x0000); // IPRA
-      MappedMemoryWriteWord(0xFFFFFE60, 0x0F00); // VCRWDT
-      MappedMemoryWriteWord(0xFFFFFE62, 0x6061); // VCRA
-      MappedMemoryWriteWord(0xFFFFFE64, 0x6263); // VCRB
-      MappedMemoryWriteWord(0xFFFFFE66, 0x6465); // VCRC
-      MappedMemoryWriteWord(0xFFFFFE68, 0x6600); // VCRD
-      MappedMemoryWriteWord(0xFFFFFEE4, 0x6869); // VCRWDT
-      MappedMemoryWriteLong(0xFFFFFFA8, 0x0000006C); // VCRDMA1
-      MappedMemoryWriteLong(0xFFFFFFA0, 0x0000006D); // VCRDMA0
-      MappedMemoryWriteLong(0xFFFFFF0C, 0x0000006E); // VCRDIV
-      MappedMemoryWriteLong(0xFFFFFE10, 0x00000081); // TIER
-      CurrentSH2 = oldSh2;
+      MappedMemoryWriteWord(SSH2, 0xFFFFFEE0, 0x0000); // ICR
+      MappedMemoryWriteWord(SSH2, 0xFFFFFEE2, 0x0000); // IPRA
+      MappedMemoryWriteWord(SSH2, 0xFFFFFE60, 0x0F00); // VCRWDT
+      MappedMemoryWriteWord(SSH2, 0xFFFFFE62, 0x6061); // VCRA
+      MappedMemoryWriteWord(SSH2, 0xFFFFFE64, 0x6263); // VCRB
+      MappedMemoryWriteWord(SSH2, 0xFFFFFE66, 0x6465); // VCRC
+      MappedMemoryWriteWord(SSH2, 0xFFFFFE68, 0x6600); // VCRD
+      MappedMemoryWriteWord(SSH2, 0xFFFFFEE4, 0x6869); // VCRWDT
+      MappedMemoryWriteLong(SSH2, 0xFFFFFFA8, 0x0000006C); // VCRDMA1
+      MappedMemoryWriteLong(SSH2, 0xFFFFFFA0, 0x0000006D); // VCRDMA0
+      MappedMemoryWriteLong(SSH2, 0xFFFFFF0C, 0x0000006E); // VCRDIV
+      MappedMemoryWriteLong(SSH2, 0xFFFFFE10, 0x00000081); // TIER
 
       SH2GetRegisters(SSH2, &SSH2->regs);
       SSH2->regs.R[15] = Cs2GetSlaveStackAdress();
       SSH2->regs.VBR = 0x06000400;
-      SSH2->regs.PC = SH2MappedMemoryReadLong(0x06000250);
-      if (SH2MappedMemoryReadLong(0x060002AC) != 0)
-         SSH2->regs.R[15] = SH2MappedMemoryReadLong(0x060002AC);
+      SSH2->regs.PC = SH2MappedMemoryReadLong(SSH2, 0x06000250);
+      if (SH2MappedMemoryReadLong(SSH2, 0x060002AC) != 0)
+         SSH2->regs.R[15] = SH2MappedMemoryReadLong(SSH2, 0x060002AC);
       SH2SetRegisters(SSH2, &SSH2->regs);
    }
    else {
@@ -955,52 +918,52 @@ void YabauseSpeedySetup(void)
    int i;
 
    if (yabsys.emulatebios)
-      BiosInit();
+      BiosInit(MSH2);
    else
    {
       // Setup the vector table area, etc.(all bioses have it at 0x00000600-0x00000810)
       for (i = 0; i < 0x210; i+=4)
       {
-         data = MappedMemoryReadLong(0x00000600+i);
-         MappedMemoryWriteLong(0x06000000+i, data);
+         data = MappedMemoryReadLong(MSH2, 0x00000600+i);
+         MappedMemoryWriteLong(MSH2, 0x06000000+i, data);
       }
 
       // Setup the bios function pointers, etc.(all bioses have it at 0x00000820-0x00001100)
       for (i = 0; i < 0x8E0; i+=4)
       {
-         data = MappedMemoryReadLong(0x00000820+i);
-         MappedMemoryWriteLong(0x06000220+i, data);
+         data = MappedMemoryReadLong(MSH2, 0x00000820+i);
+         MappedMemoryWriteLong(MSH2, 0x06000220+i, data);
       }
 
       // I'm not sure this is really needed
       for (i = 0; i < 0x700; i+=4)
       {
-         data = MappedMemoryReadLong(0x00001100+i);
-         MappedMemoryWriteLong(0x06001100+i, data);
+         data = MappedMemoryReadLong(MSH2, 0x00001100+i);
+         MappedMemoryWriteLong(MSH2, 0x06001100+i, data);
       }
 
       // Fix some spots in 0x06000210-0x0600032C area
-      MappedMemoryWriteLong(0x06000234, 0x000002AC);
-      MappedMemoryWriteLong(0x06000238, 0x000002BC);
-      MappedMemoryWriteLong(0x0600023C, 0x00000350);
-      MappedMemoryWriteLong(0x06000240, 0x32524459);
-      MappedMemoryWriteLong(0x0600024C, 0x00000000);
-      MappedMemoryWriteLong(0x06000268, MappedMemoryReadLong(0x00001344));
-      MappedMemoryWriteLong(0x0600026C, MappedMemoryReadLong(0x00001348));
-      MappedMemoryWriteLong(0x0600029C, MappedMemoryReadLong(0x00001354));
-      MappedMemoryWriteLong(0x060002C4, MappedMemoryReadLong(0x00001104));
-      MappedMemoryWriteLong(0x060002C8, MappedMemoryReadLong(0x00001108));
-      MappedMemoryWriteLong(0x060002CC, MappedMemoryReadLong(0x0000110C));
-      MappedMemoryWriteLong(0x060002D0, MappedMemoryReadLong(0x00001110));
-      MappedMemoryWriteLong(0x060002D4, MappedMemoryReadLong(0x00001114));
-      MappedMemoryWriteLong(0x060002D8, MappedMemoryReadLong(0x00001118));
-      MappedMemoryWriteLong(0x060002DC, MappedMemoryReadLong(0x0000111C));
-      MappedMemoryWriteLong(0x06000328, 0x000004C8);
-      MappedMemoryWriteLong(0x0600032C, 0x00001800);
+      MappedMemoryWriteLong(MSH2, 0x06000234, 0x000002AC);
+      MappedMemoryWriteLong(MSH2, 0x06000238, 0x000002BC);
+      MappedMemoryWriteLong(MSH2, 0x0600023C, 0x00000350);
+      MappedMemoryWriteLong(MSH2, 0x06000240, 0x32524459);
+      MappedMemoryWriteLong(MSH2, 0x0600024C, 0x00000000);
+      MappedMemoryWriteLong(MSH2, 0x06000268, MappedMemoryReadLong(MSH2, 0x00001344));
+      MappedMemoryWriteLong(MSH2, 0x0600026C, MappedMemoryReadLong(MSH2, 0x00001348));
+      MappedMemoryWriteLong(MSH2, 0x0600029C, MappedMemoryReadLong(MSH2, 0x00001354));
+      MappedMemoryWriteLong(MSH2, 0x060002C4, MappedMemoryReadLong(MSH2, 0x00001104));
+      MappedMemoryWriteLong(MSH2, 0x060002C8, MappedMemoryReadLong(MSH2, 0x00001108));
+      MappedMemoryWriteLong(MSH2, 0x060002CC, MappedMemoryReadLong(MSH2, 0x0000110C));
+      MappedMemoryWriteLong(MSH2, 0x060002D0, MappedMemoryReadLong(MSH2, 0x00001110));
+      MappedMemoryWriteLong(MSH2, 0x060002D4, MappedMemoryReadLong(MSH2, 0x00001114));
+      MappedMemoryWriteLong(MSH2, 0x060002D8, MappedMemoryReadLong(MSH2, 0x00001118));
+      MappedMemoryWriteLong(MSH2, 0x060002DC, MappedMemoryReadLong(MSH2, 0x0000111C));
+      MappedMemoryWriteLong(MSH2, 0x06000328, 0x000004C8);
+      MappedMemoryWriteLong(MSH2, 0x0600032C, 0x00001800);
 
       // Fix SCU interrupts
       for (i = 0; i < 0x80; i+=4)
-         MappedMemoryWriteLong(0x06000A00+i, 0x0600083C);
+         MappedMemoryWriteLong(MSH2, 0x06000A00+i, 0x0600083C);
    }
 
    // Set the cpu's, etc. to sane states
@@ -1135,12 +1098,12 @@ int YabauseQuickLoadGame(void)
          if (size >= 2048)
          {
             for (i2 = 0; i2 < 2048; i2++)
-               MappedMemoryWriteByte(0x06002000 + (i * 0x800) + i2, buffer[i2]);
+               MappedMemoryWriteByte(MSH2, 0x06002000 + (i * 0x800) + i2, buffer[i2]);
          }
          else
          {
             for (i2 = 0; i2 < size; i2++)
-               MappedMemoryWriteByte(0x06002000 + (i * 0x800) + i2, buffer[i2]);
+               MappedMemoryWriteByte(MSH2, 0x06002000 + (i * 0x800) + i2, buffer[i2]);
          }
 
          size -= 2048;
@@ -1152,7 +1115,7 @@ int YabauseQuickLoadGame(void)
          lgpartition->numblocks = 0;
       }
 
-      SH2WriteNotify(0x6002000, blocks<<11);
+      SH2WriteNotify(MSH2, 0x6002000, blocks<<11);
 
       // Ok, now that we've loaded the ip, now it's time to load the
       // First Program
@@ -1207,12 +1170,12 @@ int YabauseQuickLoadGame(void)
          if (size >= 2048)
          {
             for (i2 = 0; i2 < 2048; i2++)
-               MappedMemoryWriteByte(addr + (i * 0x800) + i2, buffer[i2]);
+               MappedMemoryWriteByte(MSH2, addr + (i * 0x800) + i2, buffer[i2]);
          }
          else
          {
             for (i2 = 0; i2 < size; i2++)
-               MappedMemoryWriteByte(addr + (i * 0x800) + i2, buffer[i2]);
+               MappedMemoryWriteByte(MSH2, addr + (i * 0x800) + i2, buffer[i2]);
          }
 
          size -= 2048;
@@ -1224,7 +1187,7 @@ int YabauseQuickLoadGame(void)
          lgpartition->numblocks = 0;
       }
 
-      SH2WriteNotify(addr, blocks<<11);
+      SH2WriteNotify(MSH2, addr, blocks<<11);
 
       // Now setup SH2 registers to start executing at ip code
       SH2GetRegisters(MSH2, &MSH2->regs);

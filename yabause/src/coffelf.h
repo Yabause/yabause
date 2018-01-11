@@ -20,8 +20,8 @@
 #ifndef COFFELF_H
 #define COFFELF_H
 
-int MappedMemoryLoadCoff(const char *filename);
-int MappedMemoryLoadElf(const char *filename);
+int MappedMemoryLoadCoff(SH2_struct *sh, const char *filename);
+int MappedMemoryLoadElf(SH2_struct *sh, const char *filename);
 
 #endif
 

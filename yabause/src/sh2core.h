@@ -22,7 +22,6 @@
 #define SH2CORE_H
 
 #include "core.h"
-#include "memory.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -295,51 +294,6 @@ typedef struct
    u8 level;
 } interrupt_struct;
 
-typedef struct
-{
-  u32 addr;
-} codebreakpoint_struct;
-
-typedef struct
-{
-  u32 addr;
-  u32 flags;
-  readbytefunc oldreadbyte;
-  readwordfunc oldreadword;
-  readlongfunc oldreadlong;
-  writebytefunc oldwritebyte;
-  writewordfunc oldwriteword;
-  writelongfunc oldwritelong;
-} memorybreakpoint_struct;
-
-#define MAX_BREAKPOINTS 10
-
-typedef struct
-{
-   codebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-   int numcodebreakpoints;
-   memorybreakpoint_struct memorybreakpoint[MAX_BREAKPOINTS];
-   int nummemorybreakpoints;
-   void (*BreakpointCallBack)(void *, u32, void *);
-   void *BreakpointUserData;
-   int inbreakpoint;
-   int breaknow;
-} breakpoint_struct;
-
-typedef struct
-{
-   u32 addr[256];
-   int numbacktrace;
-} backtrace_struct;
-
-
-#define BREAK_BYTEREAD  0x1
-#define BREAK_WORDREAD  0x2
-#define BREAK_LONGREAD  0x4
-#define BREAK_BYTEWRITE 0x8
-#define BREAK_WORDWRITE 0x10
-#define BREAK_LONGWRITE 0x20
-
 enum SH2STEPTYPE
 {
    SH2ST_STEPOVER,
@@ -352,7 +306,7 @@ typedef struct
    u64 count;
 } tilInfo_struct;
 
-typedef struct
+typedef struct SH2_struct_s
 {
    sh2regs_struct regs;
    Onchip_struct onchip;
@@ -378,13 +332,8 @@ typedef struct
    u32 delay;
    u32 cycles;
    u8 isslave;
-   u8 isIdle;
    u8 isSleeping;
    u16 instruction;
-   u8 breakpointEnabled;
-   breakpoint_struct bp;
-   u8 backtraceEnabled;
-   backtrace_struct bt;
    struct
    {
       u8 enabled;
@@ -420,6 +369,7 @@ typedef struct
    u8 tagWay[64][0x80000];
    u32 cacheTagArray[64][4];
 #endif
+   u32 cycleFrac;  
 } SH2_struct;
 
 typedef struct
@@ -465,7 +415,6 @@ typedef struct
 extern SH2_struct *VSH2;
 extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
-extern SH2_struct *CurrentSH2;
 extern SH2Interface_struct *SH2Core;
 
 int SH2Init(int coreid);
@@ -476,9 +425,6 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles);
 void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles);
 void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level);
 void SH2NMI(SH2_struct *context);
-void SH2Step(SH2_struct *context);
-int SH2StepOver(SH2_struct *context, void (*func)(void *, u32, void *));
-void SH2StepOut(SH2_struct *context, void (*func)(void *, u32, void *));
 
 int SH2TrackInfLoopInit(SH2_struct *context);
 void SH2TrackInfLoopDeInit(SH2_struct *context);
@@ -488,72 +434,51 @@ void SH2TrackInfLoopClear(SH2_struct *context);
 
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r);
-void SH2WriteNotify(u32 start, u32 length);
+void SH2WriteNotify(SH2_struct *context, u32 start, u32 length);
 
-void SH2SetBreakpointCallBack(SH2_struct *context, void (*func)(void *, u32, void *), void *userdata);
-int SH2AddCodeBreakpoint(SH2_struct *context, u32 addr);
-int SH2DelCodeBreakpoint(SH2_struct *context, u32 addr);
-codebreakpoint_struct *SH2GetBreakpointList(SH2_struct *context);
-void SH2ClearCodeBreakpoints(SH2_struct *context);
 void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *r, char *string);
 void SH2DumpHistory(SH2_struct *context);
 
-void SH2HandleBreakpoints(SH2_struct *context);
 
 int BackupHandled(SH2_struct * sh, u32 addr);
 
 #ifdef USE_CACHE
-u8 CacheReadByte(u8* mem, u32 addr);
-u16 CacheReadWord(u8* mem, u32 addr);
-u32 CacheReadLong(u8* mem, u32 addr);
-void CacheWriteByte(u8* mem, u32 addr, u8 val);
-void CacheWriteShort(u8* mem, u32 addr, u16 val);
-void CacheWriteLong(u8* mem, u32 addr, u32 val);
+u8 CacheReadByte(SH2_struct *context, u8* mem, u32 addr);
+u16 CacheReadWord(SH2_struct *context, u8* mem, u32 addr);
+u32 CacheReadLong(SH2_struct *context, u8* mem, u32 addr);
+void CacheWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val);
+void CacheWriteShort(SH2_struct *context, u8* mem, u32 addr, u16 val);
+void CacheWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val);
+void CacheInvalidate(SH2_struct *context,u32 addr);
 #endif
 
-static void SH2BreakNow(SH2_struct *context)
-{
-   context->bp.breaknow = 1;
-}
-
-int SH2AddMemoryBreakpoint(SH2_struct *context, u32 addr, u32 flags);
-int SH2DelMemoryBreakpoint(SH2_struct *context, u32 addr);
-memorybreakpoint_struct *SH2GetMemoryBreakpointList(SH2_struct *context);
-void SH2ClearMemoryBreakpoints(SH2_struct *context);
-void SH2HandleBackTrace(SH2_struct *context);
-u32 *SH2GetBacktraceList(SH2_struct *context, int *size);
-void SH2HandleStepOverOut(SH2_struct *context);
 void SH2HandleTrackInfLoop(SH2_struct *context);
 
-void DMAExec(void);
-void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);
+void DMAExec(SH2_struct *context);
+void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);
 
-u8 FASTCALL OnchipReadByte(u32 addr);
-u16 FASTCALL OnchipReadWord(u32 addr);
-u32 FASTCALL OnchipReadLong(u32 addr);
-void FASTCALL OnchipWriteByte(u32 addr, u8 val);
-void FASTCALL OnchipWriteWord(u32 addr, u16 val);
-void FASTCALL OnchipWriteLong(u32 addr, u32 val);
+u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr);
+u16 FASTCALL OnchipReadWord(SH2_struct *context, u32 addr);
+u32 FASTCALL OnchipReadLong(SH2_struct *context, u32 addr);
+void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val);
+void FASTCALL OnchipWriteWord(SH2_struct *context, u32 addr, u16 val);
+void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val);
 
-u32 FASTCALL AddressArrayReadLong(u32 addr);
-void FASTCALL AddressArrayWriteLong(u32 addr, u32 val);
+u32 FASTCALL AddressArrayReadLong(SH2_struct *context, u32 addr);
+void FASTCALL AddressArrayWriteLong(SH2_struct *context, u32 addr, u32 val);
 
-u8 FASTCALL DataArrayReadByte(u32 addr);
-u16 FASTCALL DataArrayReadWord(u32 addr);
-u32 FASTCALL DataArrayReadLong(u32 addr);
-void FASTCALL DataArrayWriteByte(u32 addr, u8 val);
-void FASTCALL DataArrayWriteWord(u32 addr, u16 val);
-void FASTCALL DataArrayWriteLong(u32 addr, u32 val);
+u8 FASTCALL DataArrayReadByte(SH2_struct *context, u32 addr);
+u16 FASTCALL DataArrayReadWord(SH2_struct *context, u32 addr);
+u32 FASTCALL DataArrayReadLong(SH2_struct *context, u32 addr);
+void FASTCALL DataArrayWriteByte(SH2_struct *context, u32 addr, u8 val);
+void FASTCALL DataArrayWriteWord(SH2_struct *context, u32 addr, u16 val);
+void FASTCALL DataArrayWriteLong(SH2_struct *context, u32 addr, u32 val);
 
-void FASTCALL MSH2InputCaptureWriteWord(UNUSED u8* mem, u32 addr, u16 data);
-void FASTCALL SSH2InputCaptureWriteWord(UNUSED u8* mem, u32 addr, u16 data);
+void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* mem, u32 addr, u16 data);
+void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* mem, u32 addr, u16 data);
 
 int SH2SaveState(SH2_struct *context, FILE *fp);
 int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
-
-#if defined(SH2_DYNAREC)
-extern SH2Interface_struct SH2Dynarec;
-#endif
 
 extern SH2Interface_struct SH2Dyn;
 extern SH2Interface_struct SH2DynDebug;

@@ -309,6 +309,7 @@ public:
   void SetCurrentContext(){ CurrentContext = this; }
   void SetSlave(bool is_slave) { is_slave_ = is_slave; }
   void SetContext(SH2_struct * ctx) { ctx_= ctx;}
+  SH2_struct *GetContext() { return ctx_;}
   bool IsSlave() { return is_slave_;  }
 
   dlstIntct m_IntruptTbl;

@@ -141,13 +141,13 @@ void UICheatSearch::listResults()
             switch(searchType & 0x3)
             {
             case SEARCHBYTE:
-               s.sprintf("%d", MappedMemoryReadByte(search[j].results[i].addr));
+               s.sprintf("%d", MappedMemoryReadByte(VSH2, search[j].results[i].addr));
                break;
             case SEARCHWORD:
-               s.sprintf("%d", MappedMemoryReadWord(search[j].results[i].addr));
+               s.sprintf("%d", MappedMemoryReadWord(VSH2, search[j].results[i].addr));
                break;
             case SEARCHLONG:
-               s.sprintf("%d", MappedMemoryReadLong(search[j].results[i].addr));
+               s.sprintf("%d", MappedMemoryReadLong(VSH2, search[j].results[i].addr));
                break;
             default: break;
             }
@@ -270,7 +270,7 @@ void UICheatSearch::on_pbSearch_clicked()
 
 		for (int i = 0; i < search.count(); i++)
 		{
-			search[i].results = MappedMemorySearch(search[i].startAddr, search[i].endAddr, searchType,
+			search[i].results = MappedMemorySearch(VSH2, search[i].startAddr, search[i].endAddr, searchType,
 				leSearchValue->text().toLatin1(), search[i].results, &search[i].numResults);
 		}
 

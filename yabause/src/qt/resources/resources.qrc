@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/actions">
-        <file>icons/actions/debug_cpu.png</file>
         <file>icons/actions/cheat_search.png</file>
         <file>icons/actions/about.png</file>
         <file>icons/actions/backup_ram.png</file>

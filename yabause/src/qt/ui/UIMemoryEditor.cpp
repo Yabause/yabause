@@ -62,7 +62,7 @@ void MemorySearch::process()
    else
       searchEnd = endAddress;
 
-   results = MappedMemorySearch(curAddress, searchEnd,
+   results = MappedMemorySearch(VSH2, curAddress, searchEnd,
       searchType | SEARCHEXACT,
       searchString.toLatin1().constData(),
       NULL, &numResults);

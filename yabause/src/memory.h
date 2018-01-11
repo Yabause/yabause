@@ -27,6 +27,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include "core.h"
+#include "sh2core.h"
 
   /* Type 1 Memory, faster for byte (8 bits) accesses */
 
@@ -348,34 +349,19 @@ extern "C" {
     return 0;
   }
 
-  /* Dummy memory, always returns 0 */
-
-  typedef void Dummy;
-
-  Dummy * DummyInit(u32);
-  void DummyDeInit(Dummy *);
-
-  static INLINE u8 DummyReadByte(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
-  static INLINE u16 DummyReadWord(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
-  static INLINE u32 DummyReadLong(Dummy UNUSED * d, u32 UNUSED a) { return 0; }
-
-  static INLINE void DummyWriteByte(Dummy UNUSED * d, u32 UNUSED a, u8 UNUSED v) {}
-  static INLINE void DummyWriteWord(Dummy UNUSED * d, u32 UNUSED a, u16 UNUSED v) {}
-  static INLINE void DummyWriteLong(Dummy UNUSED * d, u32 UNUSED a, u32 UNUSED v) {}
-
   void MappedMemoryInit(void);
-  u8 FASTCALL MappedMemoryReadByte(u32 addr);
-  u8 FASTCALL SH2MappedMemoryReadByte(u32 addr);
-  u16 FASTCALL MappedMemoryReadWord(u32 addr);
-  u16 FASTCALL SH2MappedMemoryReadWord(u32 addr);
-  u32 FASTCALL MappedMemoryReadLong(u32 addr);
-  u32 FASTCALL SH2MappedMemoryReadLong(u32 addr);
-  void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val);
-  void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val);
-  void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val);
-  void FASTCALL SH2MappedMemoryWriteByte(u32 addr, u8 val);
-  void FASTCALL SH2MappedMemoryWriteWord(u32 addr, u16 val);
-  void FASTCALL SH2MappedMemoryWriteLong(u32 addr, u32 val);
+  u8 FASTCALL MappedMemoryReadByte(SH2_struct *context, u32 addr);
+  u8 FASTCALL SH2MappedMemoryReadByte(SH2_struct *context, u32 addr);
+  u16 FASTCALL MappedMemoryReadWord(SH2_struct *context, u32 addr);
+  u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct *context, u32 addr);
+  u32 FASTCALL MappedMemoryReadLong(SH2_struct *context, u32 addr);
+  u32 FASTCALL SH2MappedMemoryReadLong(SH2_struct *context, u32 addr);
+  void FASTCALL MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val);
+  void FASTCALL MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val);
+  void FASTCALL MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val);
+  void FASTCALL SH2MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val);
+  void FASTCALL SH2MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val);
+  void FASTCALL SH2MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val);
 
   extern u8 *HighWram;
   extern u8 *LowWram;
@@ -383,13 +369,13 @@ extern "C" {
   extern u8 *BupRam;
   extern u8 BupRamWritten;
 
-  typedef void (FASTCALL *writebytefunc)(u8*, u32, u8);
-  typedef void (FASTCALL *writewordfunc)(u8*, u32, u16);
-  typedef void (FASTCALL *writelongfunc)(u8*, u32, u32);
+  typedef void (FASTCALL *writebytefunc)(SH2_struct *context, u8*, u32, u8);
+  typedef void (FASTCALL *writewordfunc)(SH2_struct *context, u8*, u32, u16);
+  typedef void (FASTCALL *writelongfunc)(SH2_struct *context, u8*, u32, u32);
 
-  typedef u8(FASTCALL *readbytefunc)(u8*, u32);
-  typedef u16(FASTCALL *readwordfunc)(u8*, u32);
-  typedef u32(FASTCALL *readlongfunc)(u8*, u32);
+  typedef u8(FASTCALL *readbytefunc)(SH2_struct *context, u8*, u32);
+  typedef u16(FASTCALL *readwordfunc)(SH2_struct *context, u8*, u32);
+  typedef u32(FASTCALL *readlongfunc)(SH2_struct *context, u8*, u32);
 
   extern writebytefunc WriteByteList[0x1000];
   extern writewordfunc WriteWordList[0x1000];
@@ -429,13 +415,13 @@ extern "C" {
 #define SEARCHREL8BIT           (6 << 4)
 #define SEARCHREL16BIT          (7 << 4)
 
-  result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
+  result_struct *MappedMemorySearch(SH2_struct *context,u32 startaddr, u32 endaddr, int searchtype,
     const char *searchstr,
     result_struct *prevresults, u32 *maxresults);
 
-  int MappedMemoryLoad(const char *filename, u32 addr);
-  int MappedMemorySave(const char *filename, u32 addr, u32 size);
-  void MappedMemoryLoadExec(const char *filename, u32 pc);
+  int MappedMemoryLoad(SH2_struct *context,const char *filename, u32 addr);
+  int MappedMemorySave(SH2_struct *context,const char *filename, u32 addr, u32 size);
+  void MappedMemoryLoadExec(SH2_struct *context,const char *filename, u32 pc);
 
   int LoadBios(const char *filename);
   int LoadBackupRam(const char *filename);

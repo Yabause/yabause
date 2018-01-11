@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <string.h>
 #include <malloc.h> 
 #include <stdint.h>
+#include "memory.h"
 #include "sh2core.h"
 #include "DynarecSh2.h"
 #include "debug.h"
@@ -434,7 +435,7 @@ void memSetByte(u32 addr , u8 data )
       block->LookupTableC[ (addr&0x000FFFFF)>>1] = NULL;
     }
   }
-  SH2MappedMemoryWriteByte(addr, data);
+  SH2MappedMemoryWriteByte(DynarecSh2::CurrentContext->GetContext(), addr, data);
   dynaFree();
 }
 
@@ -467,7 +468,7 @@ void memSetWord(u32 addr, u16 data )
       block->LookupTableC[ (addr&0x000FFFFF) >> 1] = NULL;
     }
   }
-  SH2MappedMemoryWriteWord(addr, data);
+  SH2MappedMemoryWriteWord(DynarecSh2::CurrentContext->GetContext(), addr, data);
   dynaFree();
 }
 
@@ -504,7 +505,7 @@ void memSetLong(u32 addr , u32 data )
     }
   }
 
-  SH2MappedMemoryWriteLong(addr, data);
+  SH2MappedMemoryWriteLong(DynarecSh2::CurrentContext->GetContext(), addr, data);
   dynaFree();
 }
 
@@ -512,7 +513,7 @@ u8 memGetByte(u32 addr)
 {
   dynaLock();
   u8 val;
-  val = SH2MappedMemoryReadByte(addr);
+  val = SH2MappedMemoryReadByte(DynarecSh2::CurrentContext->GetContext(), addr);
   dynaFree();
   return val;
 }
@@ -521,7 +522,7 @@ u16 memGetWord(u32 addr)
 {
   dynaLock();
   u16 val;
-  val = SH2MappedMemoryReadWord(addr);
+  val = SH2MappedMemoryReadWord(DynarecSh2::CurrentContext->GetContext(), addr);
   dynaFree();
   return val;
 }
@@ -532,7 +533,7 @@ u32 memGetLong(u32 addr)
 {
   dynaLock();
   u32 val;
-  val = SH2MappedMemoryReadLong(addr);
+  val = SH2MappedMemoryReadLong(DynarecSh2::CurrentContext->GetContext(), addr);
   dynaFree();
   return val;
 }
@@ -543,14 +544,6 @@ u32 memGetLong(u32 addr)
 //************************************************
 // Callbacks from DynarecCPU
 //************************************************
-extern "C" {
-  void SH2HandleBreakpoints(SH2_struct *context);
-}
-
-void DynaCheckBreakPoint(u32 pc) {
-  CurrentSH2->regs.PC = pc;
-  SH2HandleBreakpoints(CurrentSH2);
-}
 
 
 int DelayEachClock() {
@@ -558,9 +551,6 @@ int DelayEachClock() {
 }
 
 int DebugDelayClock() {
-  dynaLock();
-  DynaCheckBreakPoint(DynarecSh2::CurrentContext->GET_PC());
-  dynaFree();
   return 0;
 }
 
@@ -640,7 +630,6 @@ if( pc == 0x060133C8 ) {
   CurrentSH2->pchistory[CurrentSH2->pchistory_index & 0xFF] = DynarecSh2::CurrentContext->GET_PC();
   //CurrentSH2->regshistory[CurrentSH2->pchistory_index & 0xFF] = NULL;
 #endif
-  DynaCheckBreakPoint(DynarecSh2::CurrentContext->GET_PC());
 
   if (DynarecSh2::CurrentContext->CheckOneStep()){
     dynaFree();

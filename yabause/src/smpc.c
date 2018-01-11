@@ -591,7 +591,7 @@ void SmpcExec(s32 t) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL SmpcReadByte(u8* mem, u32 addr) {
+u8 FASTCALL SmpcReadByte(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x7F;
    if (addr == 0x063) {
      bustmp &= ~0x01;
@@ -603,7 +603,7 @@ u8 FASTCALL SmpcReadByte(u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL SmpcReadWord(UNUSED u8* mem, USED_IF_SMPC_DEBUG u32 addr) {
+u16 FASTCALL SmpcReadWord(SH2_struct *context, UNUSED u8* mem, USED_IF_SMPC_DEBUG u32 addr) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register read word - %08X\n", addr);
    return 0;
@@ -611,7 +611,7 @@ u16 FASTCALL SmpcReadWord(UNUSED u8* mem, USED_IF_SMPC_DEBUG u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL SmpcReadLong(u8* mem, USED_IF_SMPC_DEBUG u32 addr) {
+u32 FASTCALL SmpcReadLong(SH2_struct *context, u8* mem, USED_IF_SMPC_DEBUG u32 addr) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register read long - %08X\n", addr);
    return 0;
@@ -710,7 +710,7 @@ u8 do_th_mode(u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteByte(u8* mem, u32 addr, u8 val) {
+void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x7F;
    bustmp = val;
    SmpcRegsT[addr >> 1] = val;
@@ -866,14 +866,14 @@ void FASTCALL SmpcWriteByte(u8* mem, u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteWord(UNUSED u8* mem, USED_IF_SMPC_DEBUG u32 addr, UNUSED u16 val) {
+void FASTCALL SmpcWriteWord(SH2_struct *context, UNUSED u8* mem, USED_IF_SMPC_DEBUG u32 addr, UNUSED u16 val) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL SmpcWriteLong(UNUSED u8* mem, USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
+void FASTCALL SmpcWriteLong(SH2_struct *context, UNUSED u8* mem, USED_IF_SMPC_DEBUG u32 addr, UNUSED u32 val) {
    // byte access only
    SMPCLOG("smpc\t: SMPC register write long - %08X\n", addr);
 }

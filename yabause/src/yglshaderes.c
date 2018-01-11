@@ -3426,7 +3426,7 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
     GLint compiled, linked;
 
     const GLchar * fxaa_v[] = { Yglprg_fxaa_v, NULL };
-    GLchar * fxaa_f[2] = { Yglprg_fxaa_f_option_nv, Yglprg_fxaa_f };
+    const GLchar * fxaa_f[] = { Yglprg_fxaa_f_option_nv, Yglprg_fxaa_f };
 
     if (strstr(glGetString(GL_VENDOR), "NVIDIA") == NULL){
       fxaa_f[0] = Yglprg_fxaa_f_option_others;

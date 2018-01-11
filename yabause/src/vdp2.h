@@ -37,19 +37,19 @@ extern u8 A1_Updated;
 extern u8 B0_Updated;
 extern u8 B1_Updated;
 
-u8 FASTCALL     Vdp2RamReadByte(u8*, u32);
-u16 FASTCALL    Vdp2RamReadWord(u8*, u32);
-u32 FASTCALL    Vdp2RamReadLong(u8*, u32);
-void FASTCALL   Vdp2RamWriteByte(u8*, u32, u8);
-void FASTCALL   Vdp2RamWriteWord(u8*, u32, u16);
-void FASTCALL   Vdp2RamWriteLong(u8*, u32, u32);
+u8 FASTCALL     Vdp2RamReadByte(SH2_struct *context, u8*, u32);
+u16 FASTCALL    Vdp2RamReadWord(SH2_struct *context, u8*, u32);
+u32 FASTCALL    Vdp2RamReadLong(SH2_struct *context, u8*, u32);
+void FASTCALL   Vdp2RamWriteByte(SH2_struct *context, u8*, u32, u8);
+void FASTCALL   Vdp2RamWriteWord(SH2_struct *context, u8*, u32, u16);
+void FASTCALL   Vdp2RamWriteLong(SH2_struct *context, u8*, u32, u32);
 
-u8 FASTCALL     Vdp2ColorRamReadByte(u8*, u32);
-u16 FASTCALL    Vdp2ColorRamReadWord(u8*, u32);
-u32 FASTCALL    Vdp2ColorRamReadLong(u8*, u32);
-void FASTCALL   Vdp2ColorRamWriteByte(u8*, u32, u8);
-void FASTCALL   Vdp2ColorRamWriteWord(u8*, u32, u16);
-void FASTCALL   Vdp2ColorRamWriteLong(u8*, u32, u32);
+u8 FASTCALL     Vdp2ColorRamReadByte(SH2_struct *context, u8*, u32);
+u16 FASTCALL    Vdp2ColorRamReadWord(SH2_struct *context, u8*, u32);
+u32 FASTCALL    Vdp2ColorRamReadLong(SH2_struct *context, u8*, u32);
+void FASTCALL   Vdp2ColorRamWriteByte(SH2_struct *context, u8*, u32, u8);
+void FASTCALL   Vdp2ColorRamWriteWord(SH2_struct *context, u8*, u32, u16);
+void FASTCALL   Vdp2ColorRamWriteLong(SH2_struct *context, u8*, u32, u32);
 
 typedef struct {
    u16 TVMD;   // 0x25F80000
@@ -402,12 +402,12 @@ void Vdp2SendExternalLatch(int hcnt, int vcnt);
 void SpeedThrottleEnable(void);
 void SpeedThrottleDisable(void);
 
-u8 FASTCALL     Vdp2ReadByte(u8*, u32);
-u16 FASTCALL    Vdp2ReadWord(u8*, u32);
-u32 FASTCALL    Vdp2ReadLong(u8*, u32);
-void FASTCALL   Vdp2WriteByte(u8*, u32, u8);
-void FASTCALL   Vdp2WriteWord(u8*, u32, u16);
-void FASTCALL   Vdp2WriteLong(u8*, u32, u32);
+u8 FASTCALL     Vdp2ReadByte(SH2_struct *context, u8*, u32);
+u16 FASTCALL    Vdp2ReadWord(SH2_struct *context, u8*, u32);
+u32 FASTCALL    Vdp2ReadLong(SH2_struct *context, u8*, u32);
+void FASTCALL   Vdp2WriteByte(SH2_struct *context, u8*, u32, u8);
+void FASTCALL   Vdp2WriteWord(SH2_struct *context, u8*, u32, u16);
+void FASTCALL   Vdp2WriteLong(SH2_struct *context, u8*, u32, u32);
 
 int Vdp2SaveState(FILE *fp);
 int Vdp2LoadState(FILE *fp, int version, int size);

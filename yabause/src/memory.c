@@ -269,20 +269,7 @@ void T3MemoryDeInit(T3Memory * mem)
 
 //////////////////////////////////////////////////////////////////////////////
 
-Dummy * DummyInit(UNUSED u32 s)
-{
-   return NULL;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void DummyDeInit(UNUSED Dummy * d)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static u8 FASTCALL UnhandledMemoryReadByte(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
+static u8 FASTCALL UnhandledMemoryReadByte(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled byte read %08X\n", (unsigned int)addr);
    return 0;
@@ -290,7 +277,7 @@ static u8 FASTCALL UnhandledMemoryReadByte(UNUSED u8* memory, USED_IF_DEBUG u32 
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL UnhandledMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
+static u16 FASTCALL UnhandledMemoryReadWord(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled word read %08X\n", (unsigned int)addr);
    return 0;
@@ -298,7 +285,7 @@ static u16 FASTCALL UnhandledMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL UnhandledMemoryReadLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
+static u32 FASTCALL UnhandledMemoryReadLong(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
    LOG("Unhandled long read %08X\n", (unsigned int)addr);
    return 0;
@@ -306,35 +293,35 @@ static u32 FASTCALL UnhandledMemoryReadLong(UNUSED u8* memory, USED_IF_DEBUG u32
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL UnhandledMemoryWriteByte(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u8 val)
+static void FASTCALL UnhandledMemoryWriteByte(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u8 val)
 {
    LOG("Unhandled byte write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL UnhandledMemoryWriteWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u16 val)
+static void FASTCALL UnhandledMemoryWriteWord(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
    LOG("Unhandled word write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL UnhandledMemoryWriteLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u32 val)
+static void FASTCALL UnhandledMemoryWriteLong(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
    LOG("Unhandled long write %08X\n", (unsigned int)addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL HighWramMemoryReadByte(u8* mem, u32 addr)
+static u8 FASTCALL HighWramMemoryReadByte(SH2_struct *context, u8* mem, u32 addr)
 {
    return T2ReadByte(mem, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL HighWramMemoryReadWord(u8* mem, u32 addr)
+static u16 FASTCALL HighWramMemoryReadWord(SH2_struct *context, u8* mem, u32 addr)
 {
 //printf("hi rw %x\n", addr);
    return T2ReadWord(mem, addr & 0xFFFFF);
@@ -342,119 +329,119 @@ static u16 FASTCALL HighWramMemoryReadWord(u8* mem, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL HighWramMemoryReadLong(u8* mem, u32 addr)
+static u32 FASTCALL HighWramMemoryReadLong(SH2_struct *context, u8* mem, u32 addr)
 {
    return T2ReadLong(mem, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL HighWramMemoryWriteByte(u8* mem, u32 addr, u8 val)
+static void FASTCALL HighWramMemoryWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
    T2WriteByte(mem, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL HighWramMemoryWriteWord(u8* mem, u32 addr, u16 val)
+static void FASTCALL HighWramMemoryWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
    T2WriteWord(mem, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL HighWramMemoryWriteLong(u8* mem, u32 addr, u32 val)
+static void FASTCALL HighWramMemoryWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
    T2WriteLong(mem, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL LowWramMemoryReadByte(UNUSED u8* memory, u32 addr)
+static u8 FASTCALL LowWramMemoryReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
    return T2ReadByte(memory, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL LowWramMemoryReadWord(UNUSED u8* memory, u32 addr)
+static u16 FASTCALL LowWramMemoryReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
    return T2ReadWord(memory, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL LowWramMemoryReadLong(UNUSED u8* memory, u32 addr)
+static u32 FASTCALL LowWramMemoryReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
    return T2ReadLong(memory, addr & 0xFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL LowWramMemoryWriteByte(UNUSED u8* memory, u32 addr, u8 val)
+static void FASTCALL LowWramMemoryWriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
    T2WriteByte(memory, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL LowWramMemoryWriteWord(UNUSED u8* memory, u32 addr, u16 val)
+static void FASTCALL LowWramMemoryWriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
 {
    T2WriteWord(memory, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL LowWramMemoryWriteLong(UNUSED u8* memory, u32 addr, u32 val)
+static void FASTCALL LowWramMemoryWriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
    T2WriteLong(memory, addr & 0xFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BiosRomMemoryReadByte(UNUSED u8* memory,  u32 addr)
+static u8 FASTCALL BiosRomMemoryReadByte(SH2_struct *context, UNUSED u8* memory,  u32 addr)
 {
    return T2ReadByte(memory, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BiosRomMemoryReadWord(u8* memory, u32 addr)
+static u16 FASTCALL BiosRomMemoryReadWord(SH2_struct *context, u8* memory, u32 addr)
 {
    return T2ReadWord(memory, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BiosRomMemoryReadLong(u8* memory, u32 addr)
+static u32 FASTCALL BiosRomMemoryReadLong(SH2_struct *context, u8* memory, u32 addr)
 {
    return T2ReadLong(memory, addr & 0x7FFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BiosRomMemoryWriteByte(UNUSED u8* memory,UNUSED u32 addr, UNUSED u8 val)
+static void FASTCALL BiosRomMemoryWriteByte(SH2_struct *context, UNUSED u8* memory,UNUSED u32 addr, UNUSED u8 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BiosRomMemoryWriteWord(UNUSED u8* memory,UNUSED u32 addr, UNUSED u16 val)
+static void FASTCALL BiosRomMemoryWriteWord(SH2_struct *context, UNUSED u8* memory,UNUSED u32 addr, UNUSED u16 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BiosRomMemoryWriteLong(UNUSED u8* memory,UNUSED u32 addr, UNUSED u32 val)
+static void FASTCALL BiosRomMemoryWriteLong(SH2_struct *context, UNUSED u8* memory,UNUSED u32 addr, UNUSED u32 val)
 {
    // read-only
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u8 FASTCALL BupRamMemoryReadByte(UNUSED u8* memory, u32 addr)
+static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
 #if 0
   // maped memory is better
@@ -478,7 +465,7 @@ static u8 FASTCALL BupRamMemoryReadByte(UNUSED u8* memory, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u16 FASTCALL BupRamMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
+static u16 FASTCALL BupRamMemoryReadWord(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
    LOG("bup\t: BackupRam read word - %08X\n", addr);
    return 0;
@@ -486,14 +473,14 @@ static u16 FASTCALL BupRamMemoryReadWord(UNUSED u8* memory, USED_IF_DEBUG u32 ad
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL BupRamMemoryReadLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr)
+static u32 FASTCALL BupRamMemoryReadLong(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
    LOG("bup\t: BackupRam read long - %08X\n", addr);
    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
-static void FASTCALL BupRamMemoryWriteByte(UNUSED u8* memory, u32 addr, u8 val)
+static void FASTCALL BupRamMemoryWriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
 #if 0
   // maped memory is better
@@ -519,14 +506,14 @@ static void FASTCALL BupRamMemoryWriteByte(UNUSED u8* memory, u32 addr, u8 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BupRamMemoryWriteWord(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u16 val)
+static void FASTCALL BupRamMemoryWriteWord(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
    LOG("bup\t: BackupRam write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void FASTCALL BupRamMemoryWriteLong(UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u32 val)
+static void FASTCALL BupRamMemoryWriteLong(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
    LOG("bup\t: BackupRam write long - %08X\n", addr);
 }
@@ -709,20 +696,20 @@ void MappedMemoryInit()
      &BupRam);
 }
 
-u8 FASTCALL DMAMappedMemoryReadByte(u32 addr) {
+u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr) {
   u8 ret;
-  ret = MappedMemoryReadByte(addr);
+  ret = MappedMemoryReadByte(context, addr);
 return ret;
 }
 //////////////////////////////////////////////////////////////////////////////
-u8 FASTCALL MappedMemoryReadByte(u32 addr)
+u8 FASTCALL MappedMemoryReadByte(SH2_struct *context, u32 addr)
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
       {
-        return ReadByteList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+        return ReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x7:
       {
@@ -730,7 +717,7 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipReadByte(addr);
+            return OnchipReadByte(context, addr);
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -745,38 +732,38 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr)
       default:
       {
 LOG("Hunandled Byte R %x\n", addr);
-         return UnhandledMemoryReadByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadByte(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
 
    return 0;
 }
-u8 FASTCALL SH2MappedMemoryReadByte(u32 addr) {
+u8 FASTCALL SH2MappedMemoryReadByte(SH2_struct *context, u32 addr) {
 CACHE_LOG("rb %x %x\n", addr, addr >> 29);
    switch (addr >> 29)
    {
       case 0x1:
       {
-        return ReadByteList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+        return ReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x0:
       {
-         return CacheReadByteList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return CacheReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
-         return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       //case 0x4:
       case 0x6:
          // Data Array
        LOG("DAta Byte R %x\n", addr);
-         return DataArrayReadByte(addr);
+         return DataArrayReadByte(context, addr);
       case 0x7:
       {
          if (addr >= 0xFFFFFE00)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipReadByte(addr);
+            return OnchipReadByte(context, addr);
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -791,7 +778,7 @@ CACHE_LOG("rb %x %x\n", addr, addr >> 29);
       default:
       {
 LOG("Hunandled Byte R %x\n", addr);
-         return UnhandledMemoryReadByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadByte(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
 
@@ -799,29 +786,29 @@ LOG("Hunandled Byte R %x\n", addr);
 }
 
 
-u16 FASTCALL DMAMappedMemoryReadWord(u32 addr) {
-  return MappedMemoryReadWord(addr);
+u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr) {
+  return MappedMemoryReadWord(context, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-u16 FASTCALL MappedMemoryReadWord(u32 addr)
+u16 FASTCALL MappedMemoryReadWord(SH2_struct *context, u32 addr)
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
       {
-        return ReadWordList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+        return ReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
-         return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x7:
       {
          if (addr >= 0xFFFFFE00)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipReadWord(addr);
+            return OnchipReadWord(context, addr);
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -836,7 +823,7 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr)
       default:
       {
 LOG("Hunandled Word R %x\n", addr);
-         return UnhandledMemoryReadWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadWord(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
 
@@ -844,30 +831,30 @@ LOG("Hunandled Word R %x\n", addr);
 }
 
 
-u16 FASTCALL SH2MappedMemoryReadWord(u32 addr)
+u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct *context, u32 addr)
 {
    switch (addr >> 29)
    {
       case 0x1:
       {
-        return ReadWordList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+        return ReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x0: //0x0 cache
-           return CacheReadWordList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+           return CacheReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x2:
-         return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       //case 0x4:
       case 0x6:
          // Data Array
        CACHE_LOG("DAta Word R %x\n", addr);
-         return DataArrayReadWord(addr);
+         return DataArrayReadWord(context, addr);
       case 0x7:
       {
          if (addr >= 0xFFFFFE00)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipReadWord(addr);
+            return OnchipReadWord(context, addr);
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -882,26 +869,26 @@ u16 FASTCALL SH2MappedMemoryReadWord(u32 addr)
       default:
       {
 LOG("Hunandled Word R %x\n", addr);
-         return UnhandledMemoryReadWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadWord(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
 
    return 0;
 }
 
-u32 FASTCALL DMAMappedMemoryReadLong(u32 addr)
+u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr)
 {
-  return MappedMemoryReadLong(addr);
+  return MappedMemoryReadLong(context, addr);
 }
 //////////////////////////////////////////////////////////////////////////////
-u32 FASTCALL MappedMemoryReadLong(u32 addr)
+u32 FASTCALL MappedMemoryReadLong(SH2_struct *context, u32 addr)
 {
   switch (addr >> 29)
    {
       case 0x0:
       case 0x1: //0x0 no cache
       {
-        return ReadLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+        return ReadLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x7:
       {
@@ -909,7 +896,7 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipReadLong(addr);
+            return OnchipReadLong(context, addr);
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -924,44 +911,44 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr)
       default:
       {
 LOG("Hunandled Long R %x %d 0x%x\n", addr, (addr >> 29), (addr >> 16) & 0xFFF);
-         return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
    return 0;
 }
 
-u32 FASTCALL SH2MappedMemoryReadLong(u32 addr)
+u32 FASTCALL SH2MappedMemoryReadLong(SH2_struct *context, u32 addr)
 {
    switch (addr >> 29)
    {
       case 0x1: //0x0 no cache
       {
-        return ReadLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+        return ReadLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x0:
       {
-         return CacheReadLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return CacheReadLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x2:
 LOG("Unhandled SH2 Memory Long %d\n", (addr >> 29));
-         return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x3:
       {
          // Address Array
-         return AddressArrayReadLong(addr);
+         return AddressArrayReadLong(context, addr);
       }
       //case 0x4:
       case 0x6:
          // Data Array
        CACHE_LOG("Data Long R %x\n", addr);
-         return DataArrayReadLong(addr);
+         return DataArrayReadLong(context, addr);
       case 0x7:
       {
          if (addr >= 0xFFFFFE00)
          {
             // Onchip modules
             addr &= 0x1FF;
-            return OnchipReadLong(addr);
+            return OnchipReadLong(context, addr);
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
          {
@@ -976,26 +963,26 @@ LOG("Unhandled SH2 Memory Long %d\n", (addr >> 29));
       default:
       {
 LOG("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
-         return UnhandledMemoryReadLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
+         return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
    }
    return 0;
 }
 
-void FASTCALL DMAMappedMemoryWriteByte(u32 addr, u8 val)
+void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
 {
-   MappedMemoryWriteByte(addr, val);
+   MappedMemoryWriteByte(context, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
+void FASTCALL MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
       {
-        WriteByteList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+        WriteByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x7:
@@ -1004,7 +991,7 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
          {
             // Onchip modules
             addr &= 0x1FF;
-            OnchipWriteByte(addr, val);
+            OnchipWriteByte(context, addr, val);
             return; 
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
@@ -1020,39 +1007,39 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val)
       default:
       {
 LOG("Hunandled Byte W %x\n", addr);
-         UnhandledMemoryWriteByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         UnhandledMemoryWriteByte(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
 }
 
-void FASTCALL SH2MappedMemoryWriteByte(u32 addr, u8 val)
+void FASTCALL SH2MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
 {
    switch (addr >> 29)
    {
       case 0x1:
       {
-        WriteByteList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+        WriteByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x0:
       {
 CACHE_LOG("wb %x %x\n", addr, addr >> 29);
-         CacheWriteByteList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         CacheWriteByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
 
       case 0x2:
       {
          // Purge Area
-         CacheInvalidate(addr);
+         CacheInvalidate(context, addr);
          return;
       }
 
       //case 0x4:
       case 0x6:
          // Data Array
-         DataArrayWriteByte(addr, val);
+         DataArrayWriteByte(context, addr, val);
          return;
       case 0x7:
       {
@@ -1060,7 +1047,7 @@ CACHE_LOG("wb %x %x\n", addr, addr >> 29);
          {
             // Onchip modules
             addr &= 0x1FF;
-            OnchipWriteByte(addr, val);
+            OnchipWriteByte(context, addr, val);
             return; 
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
@@ -1076,26 +1063,26 @@ CACHE_LOG("wb %x %x\n", addr, addr >> 29);
       default:
       {
 LOG("Hunandled Byte W %x\n", addr);
-         UnhandledMemoryWriteByte(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         UnhandledMemoryWriteByte(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteWord(u32 addr, u16 val)
+void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
 {
-   MappedMemoryWriteWord(addr, val);
+   MappedMemoryWriteWord(context, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
+void FASTCALL MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
       {
-        WriteWordList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+        WriteWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x7:
@@ -1104,7 +1091,7 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
          {
             // Onchip modules
             addr &= 0x1FF;
-            OnchipWriteWord(addr, val);
+            OnchipWriteWord(context, addr, val);
             return;
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
@@ -1120,33 +1107,33 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val)
       default:
       {
 LOG("Hunandled Word W %x\n", addr);
-         UnhandledMemoryWriteWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         UnhandledMemoryWriteWord(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
 }
 
-void FASTCALL SH2MappedMemoryWriteWord(u32 addr, u16 val)
+void FASTCALL SH2MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
 {
    switch (addr >> 29)
    {
       case 0x1:
       {
-        WriteWordList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+        WriteWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x0:
       {
 CACHE_LOG("ww %x %x\n", addr, addr >> 29);
          // Cache/Non-Cached
-         CacheWriteWordList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         CacheWriteWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
 
       case 0x2:
       {
          // Purge Area
-         CacheInvalidate(addr);
+         CacheInvalidate(context, addr);
          return;
       }
 
@@ -1154,7 +1141,7 @@ CACHE_LOG("ww %x %x\n", addr, addr >> 29);
       case 0x6:
          // Data Array
 
-         DataArrayWriteWord(addr, val);
+         DataArrayWriteWord(context, addr, val);
          return;
       case 0x7:
       {
@@ -1162,7 +1149,7 @@ CACHE_LOG("ww %x %x\n", addr, addr >> 29);
          {
             // Onchip modules
             addr &= 0x1FF;
-            OnchipWriteWord(addr, val);
+            OnchipWriteWord(context, addr, val);
             return;
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
@@ -1178,26 +1165,26 @@ CACHE_LOG("ww %x %x\n", addr, addr >> 29);
       default:
       {
 LOG("Hunandled Word W %x\n", addr);
-         UnhandledMemoryWriteWord(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         UnhandledMemoryWriteWord(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteLong(u32 addr, u32 val)
+void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
 {
-   MappedMemoryWriteLong(addr, val);
+   MappedMemoryWriteLong(context, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
+void FASTCALL MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
 {
    switch (addr >> 29)
    {
       case 0x0:
       case 0x1:
       {
-        WriteLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+        WriteLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x7:
@@ -1206,7 +1193,7 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
          {
             // Onchip modules
             addr &= 0x1FF;
-            OnchipWriteLong(addr, val);
+            OnchipWriteLong(context, addr, val);
             return;
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
@@ -1222,45 +1209,45 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val)
       default:
       {
 LOG("Hunandled Long W %x\n", addr);
-         UnhandledMemoryWriteLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         UnhandledMemoryWriteLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
 }
 
-void FASTCALL SH2MappedMemoryWriteLong(u32 addr, u32 val)
+void FASTCALL SH2MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
 {
    switch (addr >> 29)
    {
       case 0x1:
       {
-        WriteLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+        WriteLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x0:
       {
 CACHE_LOG("wl %x %x\n", addr, addr >> 29);
          // Cache/Non-Cached
-         CacheWriteLongList[(addr >> 16) & 0xFFF](*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         CacheWriteLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
       case 0x2:
       {
          // Purge Area
-         CacheInvalidate(addr);
+         CacheInvalidate(context, addr);
          return;
       }
       case 0x3:
       {
          // Address Array
-         AddressArrayWriteLong(addr, val);
+         AddressArrayWriteLong(context, addr, val);
          return;
       }
       //case 0x4:
       case 0x6:
 
          // Data Array
-         DataArrayWriteLong(addr, val);
+         DataArrayWriteLong(context, addr, val);
          return;
       case 0x7:
       {
@@ -1268,7 +1255,7 @@ CACHE_LOG("wl %x %x\n", addr, addr >> 29);
          {
             // Onchip modules
             addr &= 0x1FF;
-            OnchipWriteLong(addr, val);
+            OnchipWriteLong(context, addr, val);
             return;
          }
          else if (addr >= 0xFFFF8000 && addr < 0xFFFFC000)
@@ -1284,7 +1271,7 @@ CACHE_LOG("wl %x %x\n", addr, addr >> 29);
       default:
       {
 LOG("Hunandled Long W %x\n", addr);
-         UnhandledMemoryWriteLong(*(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
+         UnhandledMemoryWriteLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
          return;
       }
    }
@@ -1292,7 +1279,7 @@ LOG("Hunandled Long W %x\n", addr);
 
 //////////////////////////////////////////////////////////////////////////////
 
-int MappedMemoryLoad(const char *filename, u32 addr)
+int MappedMemoryLoad(SH2_struct *sh, const char *filename, u32 addr)
 {
    FILE *fp;
    long filesize;
@@ -1329,7 +1316,7 @@ int MappedMemoryLoad(const char *filename, u32 addr)
    fclose(fp);
 
    for (i = 0; i < filesize; i++)
-      MappedMemoryWriteByte(addr+i, buffer[i]);
+      MappedMemoryWriteByte(sh, addr+i, buffer[i]);
 
    free(buffer);
 
@@ -1338,7 +1325,7 @@ int MappedMemoryLoad(const char *filename, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int MappedMemorySave(const char *filename, u32 addr, u32 size)
+int MappedMemorySave(SH2_struct *sh, const char *filename, u32 addr, u32 size)
 {
    FILE *fp;
    u8 *buffer;
@@ -1357,7 +1344,7 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
    }
 
    for (i = 0; i < size; i++)
-      buffer[i] = MappedMemoryReadByte(addr+i);
+      buffer[i] = MappedMemoryReadByte(sh, addr+i);
 
    fwrite((void *)buffer, 1, size, fp);
    fclose(fp);
@@ -1368,7 +1355,7 @@ int MappedMemorySave(const char *filename, u32 addr, u32 size)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void MappedMemoryLoadExec(const char *filename, u32 pc)
+void MappedMemoryLoadExec(SH2_struct *sh, const char *filename, u32 pc)
 {
    char *p;
    size_t i;
@@ -1380,13 +1367,13 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
          p[i] = toupper(p[i]);
       if (strcmp(p, ".COF") == 0 || strcmp(p, ".COFF") == 0)
       {
-         MappedMemoryLoadCoff(filename);
+         MappedMemoryLoadCoff(sh, filename);
          free(p);
          return;
       }
       else if(strcmp(p, ".ELF") == 0)
       {
-         MappedMemoryLoadElf(filename);
+         MappedMemoryLoadElf(sh, filename);
          free(p);
          return;
       }
@@ -1399,7 +1386,7 @@ void MappedMemoryLoadExec(const char *filename, u32 pc)
    // Setup the vector table area, etc.
    YabauseSpeedySetup();
 
-   MappedMemoryLoad(filename, pc);
+   MappedMemoryLoad(sh, filename, pc);
    SH2GetRegisters(MSH2, &MSH2->regs);
    MSH2->regs.PC = pc;
    SH2SetRegisters(MSH2, &MSH2->regs);
@@ -2067,7 +2054,7 @@ int YabLoadStateSlot(const char *dirpath, u8 slot)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static int MappedMemoryAddMatch(u32 addr, u32 val, int searchtype, result_struct *result, u32 *numresults)
+static int MappedMemoryAddMatch(SH2_struct *sh, u32 addr, u32 val, int searchtype, result_struct *result, u32 *numresults)
 {
    result[numresults[0]].addr = addr;
    result[numresults[0]].val = val;
@@ -2109,7 +2096,7 @@ static INLINE int SearchIncrementAndCheckBounds(result_struct *prevresults,
 
 //////////////////////////////////////////////////////////////////////////////
 
-static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
+static int SearchString(SH2_struct *sh, u32 startaddr, u32 endaddr, int searchtype,
                         const char *searchstr, result_struct *results,
                         u32 *maxresults)
 {
@@ -2162,14 +2149,14 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
       {
          case SEARCHSTRING:
          {
-            u8 val = MappedMemoryReadByte(addr);
+            u8 val = MappedMemoryReadByte(sh, addr);
             addr++;
 
             if (val == buf[counter])
             {
                counter++;
                if (counter == buflen)
-                  MappedMemoryAddMatch(addr-buflen, val, searchtype, results, &numresults);
+                  MappedMemoryAddMatch(sh, addr-buflen, val, searchtype, results, &numresults);
             }
             else
                counter = 0;
@@ -2180,12 +2167,12 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
             int diff;
             u32 j;
             u8 val2;
-            u8 val = MappedMemoryReadByte(addr);
+            u8 val = MappedMemoryReadByte(sh, addr);
 
             for (j = 1; j < buflen; j++)
             {
                // grab the next value
-               val2 = MappedMemoryReadByte(addr+j);
+               val2 = MappedMemoryReadByte(sh, addr+j);
 
                // figure out the diff
                diff = (int)val2 - (int)val;
@@ -2195,7 +2182,7 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
                   break;
 
                if (j == (buflen - 1))
-                  MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+                  MappedMemoryAddMatch(sh, addr, val, searchtype, results, &numresults);
 
                val = val2;
             }
@@ -2209,12 +2196,12 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
             int diff;
             u32 j;
             u16 val2;
-            u16 val = MappedMemoryReadWord(addr);
+            u16 val = MappedMemoryReadWord(sh, addr);
 
             for (j = 1; j < buflen; j++)
             {
                // grab the next value
-               val2 = MappedMemoryReadWord(addr+(j*2));
+               val2 = MappedMemoryReadWord(sh, addr+(j*2));
 
                // figure out the diff
                diff = (int)val2 - (int)val;
@@ -2224,7 +2211,7 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
                   break;
 
                if (j == (buflen - 1))
-                  MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+                  MappedMemoryAddMatch(sh, addr, val, searchtype, results, &numresults);
 
                val = val2;
             }
@@ -2245,7 +2232,7 @@ static int SearchString(u32 startaddr, u32 endaddr, int searchtype,
 
 //////////////////////////////////////////////////////////////////////////////
 
-result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
+result_struct *MappedMemorySearch(SH2_struct *sh, u32 startaddr, u32 endaddr, int searchtype,
                                   const char *searchstr,
                                   result_struct *prevresults, u32 *maxresults)
 {
@@ -2266,7 +2253,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
       case SEARCHREL16BIT:
       {
          // String/8-bit relative/16-bit relative search(not supported, yet)
-         if (SearchString(startaddr, endaddr,  searchtype, searchstr,
+         if (SearchString(sh, startaddr, endaddr,  searchtype, searchstr,
                           results, maxresults) == 0)
          {
             maxresults[0] = 0;
@@ -2307,7 +2294,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
        switch (searchtype & 0x3)
        {
           case SEARCHBYTE:
-             val = MappedMemoryReadByte(addr);
+             val = MappedMemoryReadByte(sh, addr);
              // sign extend if neccessary
              if (issigned)
                 val = (s8)val;
@@ -2316,7 +2303,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                 return results;
              break;
           case SEARCHWORD:
-             val = MappedMemoryReadWord(addr);
+             val = MappedMemoryReadWord(sh, addr);
              // sign extend if neccessary
              if (issigned)
                 val = (s16)val;
@@ -2325,7 +2312,7 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
                 return results;
              break;
           case SEARCHLONG:
-             val = MappedMemoryReadLong(addr);
+             val = MappedMemoryReadLong(sh, addr);
 
              if (SearchIncrementAndCheckBounds(prevresults, maxresults, numresults, &i, addr+4, &newaddr, endaddr))
                 return results;
@@ -2342,15 +2329,15 @@ result_struct *MappedMemorySearch(u32 startaddr, u32 endaddr, int searchtype,
        {
           case SEARCHEXACT:
              if (val == searchval)
-                MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+                MappedMemoryAddMatch(sh, addr, val, searchtype, results, &numresults);
              break;
           case SEARCHLESSTHAN:
              if ((!issigned && val < searchval) || (issigned && (signed)val < (signed)searchval))
-                MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+                MappedMemoryAddMatch(sh, addr, val, searchtype, results, &numresults);
              break;
           case SEARCHGREATERTHAN:
              if ((!issigned && val > searchval) || (issigned && (signed)val > (signed)searchval))
-                MappedMemoryAddMatch(addr, val, searchtype, results, &numresults);
+                MappedMemoryAddMatch(sh, addr, val, searchtype, results, &numresults);
              break;
           default:
              maxresults[0] = 0;

@@ -211,27 +211,6 @@
     <addaction name="aViewFullscreen"/>
     <addaction name="aViewLog"/>
    </widget>
-   <widget class="QMenu" name="mViewDebug">
-    <property name="enabled">
-     <bool>true</bool>
-    </property>
-    <property name="title">
-     <string>&amp;Debug</string>
-    </property>
-    <addaction name="aViewDebugMSH2"/>
-    <addaction name="aViewDebugSSH2"/>
-    <addaction name="aViewDebugVDP1"/>
-    <addaction name="aViewDebugVDP2"/>
-    <addaction name="aViewDebugM68K"/>
-    <addaction name="aViewDebugSCUDSP"/>
-    <addaction name="aViewDebugSCSP"/>
-    <addaction name="aViewDebugSCSPChan"/>
-    <addaction name="aViewDebugSCSPDSP"/>
-    <addaction name="separator"/>
-    <addaction name="aViewDebugMemoryEditor"/>
-    <addaction name="separator"/>
-    <addaction name="aTraceLogging"/>
-   </widget>
    <widget class="QMenu" name="mHelp">
     <property name="title">
      <string>&amp;Help</string>
@@ -263,7 +242,6 @@
    <addaction name="mEmulation"/>
    <addaction name="mTools"/>
    <addaction name="mView"/>
-   <addaction name="mViewDebug"/>
    <addaction name="mHelp"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
@@ -481,95 +459,6 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
-   </property>
-  </action>
-  <action name="aViewDebugMSH2">
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Master SH2</string>
-   </property>
-  </action>
-  <action name="aViewDebugSSH2">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Slave SH2</string>
-   </property>
-  </action>
-  <action name="aViewDebugVDP1">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>VDP&amp;1</string>
-   </property>
-  </action>
-  <action name="aViewDebugVDP2">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>VDP&amp;2</string>
-   </property>
-  </action>
-  <action name="aViewDebugM68K">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>M&amp;68K</string>
-   </property>
-  </action>
-  <action name="aViewDebugSCUDSP">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>SCU-&amp;DSP</string>
-   </property>
-  </action>
-  <action name="aViewDebugSCSP">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>S&amp;CSP</string>
-   </property>
-  </action>
-  <action name="aViewDebugMemoryTransfer">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Memory Transfer</string>
    </property>
   </action>
   <action name="aHelpAbout">
@@ -917,18 +806,6 @@
     <string>Alt+0</string>
    </property>
   </action>
-  <action name="aViewDebugMemoryEditor">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>Memory &amp;Editor</string>
-   </property>
-  </action>
   <action name="aToolsCheatSearch">
    <property name="icon">
     <iconset resource="../resources/resources.qrc">
@@ -941,15 +818,6 @@
     <string>Alt+S</string>
    </property>
   </action>
-  <action name="aViewDebugSCSPDSP">
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
-   </property>
-   <property name="text">
-    <string>SCSP DSP</string>
-   </property>
-  </action>
   <action name="aTraceLogging">
    <property name="checkable">
     <bool>true</bool>
@@ -959,11 +827,6 @@
    </property>
    <property name="text">
     <string>Trace Logging</string>
-   </property>
-  </action>
-  <action name="aViewDebugSCSPChan">
-   <property name="text">
-    <string>SCSP Channels</string>
    </property>
   </action>
   <action name="aFileOpenSSF">

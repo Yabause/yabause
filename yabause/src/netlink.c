@@ -88,7 +88,7 @@ static void NetlinkMSRChange(u8 set, u8 clear)
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL NetlinkReadByte(u32 addr)
+u8 FASTCALL NetlinkReadByte(SH2_struct *context, u8*  memory,u32 addr)
 {
    u8 ret;
 
@@ -227,7 +227,7 @@ void remove_all_chars(char* str, char c)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL NetlinkWriteByte(u32 addr, u8 val)
+void FASTCALL NetlinkWriteByte(SH2_struct *context, u8* memory, u32 addr, u8 val)
 {
    switch (addr & 0xFFFFF)
    {

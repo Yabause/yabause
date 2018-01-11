@@ -374,7 +374,7 @@ static u32 isoTOC[102];
 static disc_info_struct disc;
 static int iso_cd_status = 0;
 
-static current_file_id = 0;
+static int current_file_id = 0;
 
 #define MSF_TO_FAD(m,s,f) ((m * 4500) + (s * 75) + f)
 

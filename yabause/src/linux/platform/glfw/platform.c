@@ -66,7 +66,7 @@ static void handleIntrospection(int key, int action) {
             printf("Disassemble\n");
             printf("Address? (0x.....): ");
             scanf("%x", &addr);
-	    SH2Disasm(addr, MappedMemoryReadWord(addr), 0, &(CurrentSH2->regs), res);
+	    SH2Disasm(addr, MappedMemoryReadWord(MSH2, addr), 0, &(MSH2->regs), res);
             printf("%s\n", res);
           break;
           case 'r':
@@ -75,11 +75,11 @@ static void handleIntrospection(int key, int action) {
             printf("Address? (0x.....): ");
             scanf("%x", &addr);
             if (param == 'b')
-              printf("0x%x\n", MappedMemoryReadByte(addr));
+              printf("0x%x\n", MappedMemoryReadByte(MSH2, addr));
             if (param == 'w')
-              printf("0x%x\n", MappedMemoryReadWord(addr));
+              printf("0x%x\n", MappedMemoryReadWord(MSH2, addr));
             if (param == 'l')
-              printf("0x%x\n", MappedMemoryReadLong(addr));
+              printf("0x%x\n", MappedMemoryReadLong(MSH2, addr));
           break;
           case 'l':
             printf("Dump Size?(b,w,l): ");
@@ -89,11 +89,11 @@ static void handleIntrospection(int key, int action) {
             printf("End Address? (0x.....): ");
             scanf("%x", &addr2);
             if (param == 'b')
-              for(i=addr; i<= addr2; i++) printf("0x%x = 0x%x\n", i, MappedMemoryReadByte(i));
+              for(i=addr; i<= addr2; i++) printf("0x%x = 0x%x\n", i, MappedMemoryReadByte(MSH2, i));
             if (param == 'w')
-              for(i=(addr&0xFFFFFFFE); i<= addr2; i+=2) printf("0x%x = 0x%x\n", i, MappedMemoryReadWord(i));
+              for(i=(addr&0xFFFFFFFE); i<= addr2; i+=2) printf("0x%x = 0x%x\n", i, MappedMemoryReadWord(MSH2, i));
             if (param == 'l')
-              for(i=(addr&0xFFFFFFFC); i<= addr2; i+=4) printf("0x%x = 0x%x\n", i, MappedMemoryReadLong(i));
+              for(i=(addr&0xFFFFFFFC); i<= addr2; i+=4) printf("0x%x = 0x%x\n", i, MappedMemoryReadLong(MSH2, i));
           break;
           case 's':
             printf("Search Size?(b,w,l): ");
@@ -102,11 +102,11 @@ static void handleIntrospection(int key, int action) {
             scanf("%x", &addr);
             printf("Look for 0x%x\n", addr);
             if (param == 'b')
-              for(i=0x0; i< 0x7000000; i++) if (addr == MappedMemoryReadByte(i)) printf("0x%x = 0x%x\n", i, addr);
+              for(i=0x0; i< 0x7000000; i++) if (addr == MappedMemoryReadByte(MSH2, i)) printf("0x%x = 0x%x\n", i, addr);
             if (param == 'w')
-              for(i=0x0; i< 0x7000000; i+=2) if (addr == MappedMemoryReadWord(i)) printf("0x%x = 0x%x\n", i, addr);
+              for(i=0x0; i< 0x7000000; i+=2) if (addr == MappedMemoryReadWord(MSH2, i)) printf("0x%x = 0x%x\n", i, addr);
             if (param == 'l')
-              for(i=0x0; i< 0x7000000; i+=4) if (addr == MappedMemoryReadLong(i)) printf("0x%x = 0x%x\n", i, addr);
+              for(i=0x0; i< 0x7000000; i+=4) if (addr == MappedMemoryReadLong(MSH2, i)) printf("0x%x = 0x%x\n", i, addr);
           break;
        }
      }

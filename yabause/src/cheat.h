@@ -25,6 +25,7 @@
 #define CHEAT_H
 
 #include "core.h"
+#include "sh2core.h"
 
 enum
 {
@@ -56,7 +57,7 @@ int CheatRemoveARCode(const char *code);
 void CheatClearCodes(void);
 void CheatEnableCode(int index);
 void CheatDisableCode(int index);
-void CheatDoPatches(void);
+void CheatDoPatches(SH2_struct *context);
 cheatlist_struct *CheatGetList(int *cheatnum);
 int CheatSave(const char *filename);
 int CheatLoad(const char *filename);

@@ -87,7 +87,7 @@ static int soundlen;
 #define LOG
 #endif
 
-static void *sound_update_thd(void *ptr __attribute__((unused)))    {
+static void sound_update_thd(void *ptr __attribute__((unused)))    {
     ALint proc;
     ALuint buf;
 	

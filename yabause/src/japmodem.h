@@ -25,17 +25,17 @@ typedef struct
    unsigned char flash[0x20000];
 } JapModem;
 
-u8 FASTCALL JapModemCs0ReadByte(u32 addr);
-u16 FASTCALL JapModemCs0ReadWord(UNUSED u32 addr);
-u32 FASTCALL JapModemCs0ReadLong(UNUSED u32 addr);
-u8 FASTCALL JapModemCs1ReadByte(UNUSED u32 addr);
-u16 FASTCALL JapModemCs1ReadWord(UNUSED u32 addr);
-u32 FASTCALL JapModemCs1ReadLong(UNUSED u32 addr);
-void FASTCALL JapModemCs1WriteByte(u32 addr, u8 val);
-void FASTCALL JapModemCs1WriteWord(u32 addr, u16 val);
-void FASTCALL JapModemCs1WriteLong(u32 addr, u32 val);
-u8 FASTCALL JapModemCs2ReadByte(u32 addr);
-void FASTCALL JapModemCs2WriteByte(u32 addr, u8 val);
+u8 FASTCALL JapModemCs0ReadByte(SH2_struct *context, u8* mem, u32 addr);
+u16 FASTCALL JapModemCs0ReadWord(SH2_struct *context, u8* mem, UNUSED u32 addr);
+u32 FASTCALL JapModemCs0ReadLong(SH2_struct *context, u8* mem, UNUSED u32 addr);
+u8 FASTCALL JapModemCs1ReadByte(SH2_struct *context, u8* mem, UNUSED u32 addr);
+u16 FASTCALL JapModemCs1ReadWord(SH2_struct *context, u8* mem, UNUSED u32 addr);
+u32 FASTCALL JapModemCs1ReadLong(SH2_struct *context, u8* mem, UNUSED u32 addr);
+void FASTCALL JapModemCs1WriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val);
+void FASTCALL JapModemCs1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val);
+void FASTCALL JapModemCs1WriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val);
+u8 FASTCALL JapModemCs2ReadByte(SH2_struct *context, u8* mem, u32 addr);
+void FASTCALL JapModemCs2WriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val);
 int JapModemInit(const char *ip, const char *port);
 void JapModemDeInit(void);
 void JapModemExec(u32 timing);

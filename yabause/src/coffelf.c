@@ -21,8 +21,9 @@
 /*! \file coffelf.c
     \brief Coff/Elf loader function.
 */
-
+#include <stdlib.h>
 #include "core.h"
+#include "memory.h"
 #include "debug.h"
 #include "sh2core.h"
 #include "yabause.h"
@@ -110,7 +111,7 @@ typedef struct
 
 //////////////////////////////////////////////////////////////////////////////
 
-int MappedMemoryLoadCoff(const char *filename)
+int MappedMemoryLoadCoff(SH2_struct *sh, const char *filename)
 {
    coff_header_struct coff_header;
    aout_header_struct aout_header;
@@ -201,8 +202,8 @@ int MappedMemoryLoadCoff(const char *filename)
       num_read = fread((void *)buffer, 1, section_headers[i].sectionsize, fp);
 
       for (j = 0; j < section_headers[i].sectionsize; j++)
-         MappedMemoryWriteByte(section_headers[i].physaddr+j, buffer[j]);
-      SH2WriteNotify(section_headers[i].physaddr,
+         MappedMemoryWriteByte(sh, section_headers[i].physaddr+j, buffer[j]);
+      SH2WriteNotify(sh, section_headers[i].physaddr,
                      section_headers[i].sectionsize);
 
       free(buffer);
@@ -221,7 +222,7 @@ int MappedMemoryLoadCoff(const char *filename)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int MappedMemoryLoadElf(const char *filename)
+int MappedMemoryLoadElf(SH2_struct *sh, const char *filename)
 {
    elf_header_struct elf_hdr;
    elf_section_header_struct *sections = NULL;
@@ -352,7 +353,7 @@ int MappedMemoryLoadElf(const char *filename)
          {
             for(j = 0; j < sections[i].size; ++j)
             {
-               MappedMemoryWriteByte(sections[i].addr + j, 0);
+               MappedMemoryWriteByte(sh, sections[i].addr + j, 0);
             }
          }
          else
@@ -371,7 +372,7 @@ int MappedMemoryLoadElf(const char *filename)
 
             for(j = 0; j < sections[i].size; ++j)
             {
-               MappedMemoryWriteByte(sections[i].addr + j, buffer[j]);
+               MappedMemoryWriteByte(sh, sections[i].addr + j, buffer[j]);
             }
 
             free(buffer);

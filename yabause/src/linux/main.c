@@ -353,7 +353,7 @@ int main(int argc, char *argv[]) {
         bincount = sscanf(argv[i] + strlen("--binary="), "%[^:]:%x", binname, &binaddress);
         if (bincount > 0) {
           if (bincount < 2) binaddress = 0x06004000;
-          MappedMemoryLoadExec(binname, binaddress);
+          MappedMemoryLoadExec(MSH2, binname, binaddress);
         }
       }
     }

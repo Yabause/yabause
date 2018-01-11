@@ -32,7 +32,7 @@
 
 JapModem *JapModemArea = NULL;
 
-u8 FASTCALL JapModemCs0ReadByte(u32 addr)
+u8 FASTCALL JapModemCs0ReadByte(SH2_struct *context, u8* mem, u32 addr)
 {
    NETLINK_LOG("%08X Cs0 byte read. PC = %08X", addr, MSH2->regs.PC);
 	if (addr & 0x1)
@@ -41,61 +41,61 @@ u8 FASTCALL JapModemCs0ReadByte(u32 addr)
       return 0xFF;
 }
 
-u16 FASTCALL JapModemCs0ReadWord(UNUSED u32 addr)
+u16 FASTCALL JapModemCs0ReadWord(SH2_struct *context, u8* mem, UNUSED u32 addr)
 {
    NETLINK_LOG("%08X Cs0 word read. PC = %08X", addr, MSH2->regs.PC);
    return 0xFFA5;
 }
 
-u32 FASTCALL JapModemCs0ReadLong(UNUSED u32 addr)
+u32 FASTCALL JapModemCs0ReadLong(SH2_struct *context, u8* mem, UNUSED u32 addr)
 {
    NETLINK_LOG("%08X Cs0 long read. PC = %08X", addr, MSH2->regs.PC);
    return 0xFFA5FFA5;
 }
 
-u8 FASTCALL JapModemCs1ReadByte(UNUSED u32 addr)
+u8 FASTCALL JapModemCs1ReadByte(SH2_struct *context, u8* mem, UNUSED u32 addr)
 {   
    NETLINK_LOG("%08X Cs1 byte read. PC = %08X", addr, MSH2->regs.PC);
    return 0xFF;
 }
 
-u16 FASTCALL JapModemCs1ReadWord(UNUSED u32 addr)
+u16 FASTCALL JapModemCs1ReadWord(SH2_struct *context, u8* mem, UNUSED u32 addr)
 {
    NETLINK_LOG("%08X Cs1 word read. PC = %08X", addr, MSH2->regs.PC);
    return 0xFFFF;
 }
 
-u32 FASTCALL JapModemCs1ReadLong(UNUSED u32 addr)
+u32 FASTCALL JapModemCs1ReadLong(SH2_struct *context, u8* mem, UNUSED u32 addr)
 {
    NETLINK_LOG("%08X Cs1 long read. PC = %08X", addr, MSH2->regs.PC);
    return 0xFFFFFFFF;
 }
 
-void FASTCALL JapModemCs1WriteByte(u32 addr, u8 val)
+void FASTCALL JapModemCs1WriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
    NETLINK_LOG("%08X Cs1 byte write. PC = %08X", addr, MSH2->regs.PC);
    return;
 }
 
-void FASTCALL JapModemCs1WriteWord(u32 addr, u16 val)
+void FASTCALL JapModemCs1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
    NETLINK_LOG("%08X Cs1 word write. PC = %08X", addr, MSH2->regs.PC);
    return;
 }
 
-void FASTCALL JapModemCs1WriteLong(u32 addr, u32 val)
+void FASTCALL JapModemCs1WriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
    NETLINK_LOG("%08X Cs1 long write. PC = %08X", addr, MSH2->regs.PC);
    return;
 }
 
-u8 FASTCALL JapModemCs2ReadByte(u32 addr)
+u8 FASTCALL JapModemCs2ReadByte(SH2_struct *context, u8* mem, u32 addr)
 {
 	NETLINK_LOG("%08X Cs2 byte read. PC = %08X", addr, MSH2->regs.PC);
    return 0xFF;
 }
 
-void FASTCALL JapModemCs2WriteByte(u32 addr, u8 val)
+void FASTCALL JapModemCs2WriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
 	NETLINK_LOG("%08X Cs2 byte write. PC = %08X", addr, MSH2->regs.PC);
 }

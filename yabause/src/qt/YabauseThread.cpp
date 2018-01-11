@@ -100,7 +100,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 	if (vs->value("autostart").toBool())
 	{
 		if (vs->value("autostart/binary").toBool()) {
-			MappedMemoryLoadExec(
+			MappedMemoryLoadExec(MSH2,
 				vs->value("autostart/binary/filename").toString().toLocal8Bit().constData(),
 				vs->value("autostart/binary/address").toUInt());
 		}

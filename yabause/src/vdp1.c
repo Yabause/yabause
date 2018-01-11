@@ -46,49 +46,49 @@ Vdp1External_struct Vdp1External;
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Vdp1RamReadByte(u8* mem, u32 addr) {
+u8 FASTCALL Vdp1RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x7FFFF;
    return T1ReadByte(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Vdp1RamReadWord(u8* mem, u32 addr) {
+u16 FASTCALL Vdp1RamReadWord(SH2_struct *context, u8* mem, u32 addr) {
     addr &= 0x07FFFF;
     return T1ReadWord(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Vdp1RamReadLong(u8* mem, u32 addr) {
+u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x7FFFF;
    return T1ReadLong(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1RamWriteByte(u8* mem, u32 addr, u8 val) {
+void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x7FFFF;
    T1WriteByte(mem, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1RamWriteWord(u8* mem, u32 addr, u16 val) {
+void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x7FFFF;
    T1WriteWord(mem, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1RamWriteLong(u8* mem, u32 addr, u32 val) {
+void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0x7FFFF;
    T1WriteLong(mem, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Vdp1FrameBufferReadByte(u8* mem, u32 addr) {
+u8 FASTCALL Vdp1FrameBufferReadByte(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u8 val;
@@ -100,7 +100,7 @@ u8 FASTCALL Vdp1FrameBufferReadByte(u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Vdp1FrameBufferReadWord(u8* mem, u32 addr) {
+u16 FASTCALL Vdp1FrameBufferReadWord(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u16 val;
@@ -112,7 +112,7 @@ u16 FASTCALL Vdp1FrameBufferReadWord(u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Vdp1FrameBufferReadLong(u8* mem, u32 addr) {
+u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u32 val;
@@ -124,7 +124,7 @@ u32 FASTCALL Vdp1FrameBufferReadLong(u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1FrameBufferWriteByte(u8* mem, u32 addr, u8 val) {
+void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x3FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
@@ -138,7 +138,7 @@ void FASTCALL Vdp1FrameBufferWriteByte(u8* mem, u32 addr, u8 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1FrameBufferWriteWord(u8* mem, u32 addr, u16 val) {
+void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x3FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
@@ -152,7 +152,7 @@ void FASTCALL Vdp1FrameBufferWriteWord(u8* mem, u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1FrameBufferWriteLong(u8* mem, u32 addr, u32 val) {
+void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0x3FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
@@ -286,7 +286,7 @@ int VideoSetSetting( int type, int value )
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Vdp1ReadByte(u8* mem, u32 addr) {
+u8 FASTCALL Vdp1ReadByte(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0xFF;
    LOG("trying to byte-read a Vdp1 register\n");
    return 0;
@@ -294,7 +294,7 @@ u8 FASTCALL Vdp1ReadByte(u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Vdp1ReadWord(u8* mem, u32 addr) {
+u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
@@ -316,7 +316,7 @@ u16 FASTCALL Vdp1ReadWord(u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Vdp1ReadLong(u8* mem, u32 addr) {
+u32 FASTCALL Vdp1ReadLong(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0xFF;
    LOG("trying to long-read a Vdp1 register - %08X\n", addr);
    return 0;
@@ -324,7 +324,7 @@ u32 FASTCALL Vdp1ReadLong(u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteByte(u8* mem, u32 addr, UNUSED u8 val) {
+void FASTCALL Vdp1WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 val) {
    addr &= 0xFF;
    LOG("trying to byte-write a Vdp1 register - %08X\n", addr);
 }
@@ -333,7 +333,7 @@ extern YabEventQueue * vdp1_rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteWord(u8* mem, u32 addr, u16 val) {
+void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
   addr &= 0xFF;
   switch(addr) {
     case 0x0:
@@ -386,7 +386,7 @@ void FASTCALL Vdp1WriteWord(u8* mem, u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Vdp1WriteLong(u8* mem, u32 addr, UNUSED u32 val) {
+void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 val) {
    addr &= 0xFF;
    LOG("trying to long-write a Vdp1 register - %08X\n", addr);
 }
@@ -630,7 +630,7 @@ int Vdp1SaveState(FILE *fp)
 
 #ifdef IMPROVED_SAVESTATES
    for (i = 0; i < 0x40000; i++)
-      back_framebuffer[i] = Vdp1FrameBufferReadByte(NULL, i);
+      back_framebuffer[i] = Vdp1FrameBufferReadByte(NULL, NULL, i);
 
    ywrite(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 #endif
@@ -657,7 +657,7 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 
    for (i = 0; i < 0x40000; i++)
-      Vdp1FrameBufferWriteByte(NULL, i, back_framebuffer[i]);
+      Vdp1FrameBufferWriteByte(NULL, NULL, i, back_framebuffer[i]);
 #endif
    return size;
 }
@@ -1430,7 +1430,7 @@ void VIDDummyVdp2DrawScreens(void);
 void VIDDummyGetGlSize(int *width, int *height);
 void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
-void VIDDummSetFilterMode(int type){};
+void VIDDummSetFilterMode(int type, int value){};
 void VIDDummSync(){};
 void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
 void VIDDummyVdp2DispOff(void);

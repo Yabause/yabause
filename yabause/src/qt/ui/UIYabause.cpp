@@ -25,14 +25,6 @@
 #include "UIBackupRam.h"
 #include "UICheats.h"
 #include "UICheatSearch.h"
-#include "UIDebugSH2.h"
-#include "UIDebugVDP1.h"
-#include "UIDebugVDP2.h"
-#include "UIDebugM68K.h"
-#include "UIDebugSCUDSP.h"
-#include "UIDebugSCSP.h"
-#include "UIDebugSCSPChan.h"
-#include "UIDebugSCSPDSP.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
@@ -1003,105 +995,6 @@ void UIYabause::on_aViewLayerRBG0_triggered()
 void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
-}
-
-void UIYabause::breakpointHandlerMSH2(bool displayMessage)
-{
-	YabauseLocker locker( mYabauseThread );
-	if (displayMessage)
-		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2( true, mYabauseThread, this ).exec();
-}
-
-void UIYabause::breakpointHandlerSSH2(bool displayMessage)
-{
-	YabauseLocker locker( mYabauseThread );
-	if (displayMessage)
-		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSH2( false, mYabauseThread, this ).exec();
-}
-
-void UIYabause::breakpointHandlerM68K()
-{
-	YabauseLocker locker( mYabauseThread );
-	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugM68K( mYabauseThread, this ).exec();
-}
-
-void UIYabause::breakpointHandlerSCUDSP()
-{
-	YabauseLocker locker( mYabauseThread );
-	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSCUDSP( mYabauseThread, this ).exec();
-}
-
-void UIYabause::breakpointHandlerSCSPDSP()
-{
-	YabauseLocker locker( mYabauseThread );
-	CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
-	UIDebugSCSPDSP( mYabauseThread, this ).exec();
-}
-
-void UIYabause::on_aViewDebugMSH2_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( true, mYabauseThread, this ).exec();
-}
-
-void UIYabause::on_aViewDebugSSH2_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugSH2( false, mYabauseThread, this ).exec();
-}
-
-void UIYabause::on_aViewDebugVDP1_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugVDP1( this ).exec();
-}
-
-void UIYabause::on_aViewDebugVDP2_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugVDP2( this ).exec();
-}
-
-void UIYabause::on_aViewDebugM68K_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugM68K( mYabauseThread, this ).exec();
-}
-
-void UIYabause::on_aViewDebugSCUDSP_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugSCUDSP( mYabauseThread, this ).exec();
-}
-
-void UIYabause::on_aViewDebugSCSP_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugSCSP( this ).exec();
-}
-
-void UIYabause::on_aViewDebugSCSPChan_triggered()
-{
-   if (use_new_scsp)
-      UIDebugSCSPChan(this).exec();
-   else
-      CommonDialogs::information( QtYabause::translate( "Only available with new scsp code(USE_NEW_SCSP=1)" ) );
-}
-
-void UIYabause::on_aViewDebugSCSPDSP_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIDebugSCSPDSP( mYabauseThread, this ).exec();
-}
-
-void UIYabause::on_aViewDebugMemoryEditor_triggered()
-{
-	YabauseLocker locker( mYabauseThread );
-	UIMemoryEditor( mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aTraceLogging_triggered( bool toggled )

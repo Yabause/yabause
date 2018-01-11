@@ -4019,7 +4019,7 @@ scsp_midi_out_read (void)
 // Access
 
 void FASTCALL
-scsp_w_b (UNUSED u8* m, u32 a, u8 d)
+scsp_w_b (SH2_struct *context, UNUSED u8* m, u32 a, u8 d)
 {
   a &= 0xFFF;
 
@@ -4128,7 +4128,7 @@ scsp_w_b (UNUSED u8* m, u32 a, u8 d)
 ////////////////////////////////////////////////////////////////
 
 void FASTCALL
-scsp_w_w (UNUSED u8* m, u32 a, u16 d)
+scsp_w_w (SH2_struct *context, UNUSED u8* m, u32 a, u16 d)
 {
   if (a & 1)
     {
@@ -4212,7 +4212,7 @@ scsp_w_w (UNUSED u8* m, u32 a, u16 d)
 ////////////////////////////////////////////////////////////////
 
 void FASTCALL
-scsp_w_d (UNUSED u8* m, u32 a, u32 d)
+scsp_w_d (SH2_struct *context, UNUSED u8* m, u32 a, u32 d)
 {
   if (a & 3)
     {
@@ -4265,7 +4265,7 @@ scsp_w_d (UNUSED u8* m, u32 a, u32 d)
 ////////////////////////////////////////////////////////////////
 
 u8 FASTCALL
-scsp_r_b (UNUSED u8* m, u32 a)
+scsp_r_b (SH2_struct *context, UNUSED u8* m, u32 a)
 {
   a &= 0xFFF;
 
@@ -4297,7 +4297,7 @@ scsp_r_b (UNUSED u8* m, u32 a)
 ////////////////////////////////////////////////////////////////
 
 u16 FASTCALL
-scsp_r_w (UNUSED u8* m, u32 a)
+scsp_r_w (SH2_struct *context, UNUSED u8* m, u32 a)
 {
   if (a & 1)
     {
@@ -4389,7 +4389,7 @@ scsp_r_w (UNUSED u8* m, u32 a)
 ////////////////////////////////////////////////////////////////
 
 u32 FASTCALL
-scsp_r_d (UNUSED u8* m, u32 a)
+scsp_r_d (SH2_struct *context, UNUSED u8* m, u32 a)
 {
   if (a & 3)
     {
@@ -4668,7 +4668,7 @@ c68k_byte_read (const u32 adr)
   if (adr < 0x100000)
     rtn = T2ReadByte(SoundRam, adr & 0x7FFFF);
   else
-    rtn = scsp_r_b(NULL, adr);
+    rtn = scsp_r_b(NULL, NULL, adr);
   return rtn;
 }
 
@@ -4684,7 +4684,7 @@ c68k_byte_write (const u32 adr, u32 data)
     T2WriteByte(SoundRam, adr & 0x7FFFF, data);
   }
   else{
-    scsp_w_b(NULL, adr, data);
+    scsp_w_b(NULL, NULL, adr, data);
   }
 }
 
@@ -4698,7 +4698,7 @@ c68k_word_read (const u32 adr)
   if (adr < 0x100000)
     rtn = T2ReadWord(SoundRam, adr & 0x7FFFF);
   else
-    rtn = scsp_r_w(NULL, adr);
+    rtn = scsp_r_w(NULL, NULL, adr);
   return rtn;
 }
 
@@ -4714,7 +4714,7 @@ c68k_word_write (const u32 adr, u32 data)
     T2WriteWord(SoundRam, adr & 0x7FFFF, data);
   }
   else{
-    scsp_w_w(NULL, adr, data);
+    scsp_w_w(NULL, NULL, adr, data);
   }
 }
 
@@ -4739,7 +4739,7 @@ scu_interrupt_handler (void)
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL
-SoundRamReadByte (u8* mem, u32 addr)
+SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 {
   addr &= 0x7FFFF;
   u8 val = 0;
@@ -4756,7 +4756,7 @@ SoundRamReadByte (u8* mem, u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL
-SoundRamWriteByte (u8* mem, u32 addr, u8 val)
+SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
   addr &= 0x7FFFF;
 
@@ -4787,7 +4787,7 @@ void SyncSh2And68k(){
 }
 
 u16 FASTCALL
-SoundRamReadWord (u8* mem, u32 addr)
+SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
   addr &= 0x7FFFF;
   u16 val = 0;
@@ -4807,7 +4807,7 @@ SoundRamReadWord (u8* mem, u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL
-SoundRamWriteWord (u8* mem, u32 addr, u16 val)
+SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
   addr &= 0x7FFFF;
 
@@ -4823,7 +4823,7 @@ SoundRamWriteWord (u8* mem, u32 addr, u16 val)
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL
-SoundRamReadLong (u8* mem, u32 addr)
+SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 {
   addr &= 0x7FFFF;
   u32 val;
@@ -4845,7 +4845,7 @@ SoundRamReadLong (u8* mem, u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL
-SoundRamWriteLong (u8* mem, u32 addr, u32 val)
+SoundRamWriteLong (SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
   addr &= 0x7FFFF;
   //u32 pre_cycle = m68kcycle;
@@ -6088,7 +6088,7 @@ SoundLoadState (FILE *fp, int version, int size)
             //scsp_slot_set_w (i, 0x1E - i2, scsp_slot_get_w (i, 0x1E - i2));
             u32 addr = (i << 5) + 0x1E - i2;
             u16 val = *(u16 *)&scsp_isr[addr ^ 2];
-            scsp_w_w(NULL, addr, val);
+            scsp_w_w(NULL, NULL, addr, val);
           }
         }
 
@@ -6465,7 +6465,7 @@ ScspSlotDebugStats (u8 slotnum, char *outstring)
   if (scsp.slot[slotnum].krs != 0)
     AddString (outstring, "Key rate scaling = %ld\r\n", (unsigned long)scsp.slot[slotnum].krs);
 
-  AddString (outstring, "Decay Level = %d\r\n", (scsp_r_w(NULL, slotoffset + 0xA) >> 5) & 0x1F);
+  AddString (outstring, "Decay Level = %d\r\n", (scsp_r_w(NULL, NULL, slotoffset + 0xA) >> 5) & 0x1F);
   AddString (outstring, "Release Rate = %ld\r\n", (unsigned long)scsp.slot[slotnum].rr);
 
   if (scsp.slot[slotnum].swe)
@@ -6480,33 +6480,33 @@ ScspSlotDebugStats (u8 slotnum, char *outstring)
   AddString (outstring, "Modulation Input X = %d\r\n", scsp.slot[slotnum].mdx);
   AddString (outstring, "Modulation Input Y = %d\r\n", scsp.slot[slotnum].mdy);
 
-  AddString (outstring, "Octave = %d\r\n", (scsp_r_w(NULL, slotoffset + 0x10) >> 11) & 0xF);
-  AddString (outstring, "Frequency Number Switch = %d\r\n", scsp_r_w(NULL, slotoffset + 0x10) & 0x3FF);
+  AddString (outstring, "Octave = %d\r\n", (scsp_r_w(NULL, NULL, slotoffset + 0x10) >> 11) & 0xF);
+  AddString (outstring, "Frequency Number Switch = %d\r\n", scsp_r_w(NULL, NULL, slotoffset + 0x10) & 0x3FF);
 
-  AddString (outstring, "LFO Reset = %s\r\n", ((scsp_r_w(NULL, slotoffset + 0x12) >> 15) & 0x1) ? "TRUE" : "FALSE");
-  AddString (outstring, "LFO Frequency = %d\r\n", (scsp_r_w(NULL, slotoffset + 0x12) >> 10) & 0x1F);
+  AddString (outstring, "LFO Reset = %s\r\n", ((scsp_r_w(NULL, NULL, slotoffset + 0x12) >> 15) & 0x1) ? "TRUE" : "FALSE");
+  AddString (outstring, "LFO Frequency = %d\r\n", (scsp_r_w(NULL, NULL, slotoffset + 0x12) >> 10) & 0x1F);
   outstring = AddSoundLFO (outstring, "LFO Frequency modulation waveform = ",
-                           (scsp_r_w(NULL, slotoffset + 0x12) >> 5) & 0x7,
-                           (scsp_r_w(NULL, slotoffset + 0x12) >> 8) & 0x3);
-  AddString (outstring, "LFO Frequency modulation level = %d\r\n", (scsp_r_w(NULL, slotoffset + 0x12) >> 5) & 0x7);
+                           (scsp_r_w(NULL, NULL, slotoffset + 0x12) >> 5) & 0x7,
+                           (scsp_r_w(NULL, NULL, slotoffset + 0x12) >> 8) & 0x3);
+  AddString (outstring, "LFO Frequency modulation level = %d\r\n", (scsp_r_w(NULL, NULL, slotoffset + 0x12) >> 5) & 0x7);
   outstring = AddSoundLFO (outstring, "LFO Amplitude modulation waveform = ",
-                           scsp_r_w(NULL, slotoffset + 0x12) & 0x7,
-                           (scsp_r_w(NULL, slotoffset + 0x12) >> 3) & 0x3);
-  AddString (outstring, "LFO Amplitude modulation level = %d\r\n", scsp_r_w(NULL, slotoffset + 0x12) & 0x7);
+                           scsp_r_w(NULL, NULL, slotoffset + 0x12) & 0x7,
+                           (scsp_r_w(NULL, NULL, slotoffset + 0x12) >> 3) & 0x3);
+  AddString (outstring, "LFO Amplitude modulation level = %d\r\n", scsp_r_w(NULL, NULL, slotoffset + 0x12) & 0x7);
 
   AddString (outstring, "Input mix level = ");
-  outstring = AddSoundLevel (outstring, scsp_r_w(NULL, slotoffset + 0x14) & 0x7);
-  AddString (outstring, "Input Select = %d\r\n", (scsp_r_w(NULL, slotoffset + 0x14) >> 3) & 0x1F);
+  outstring = AddSoundLevel (outstring, scsp_r_w(NULL, NULL, slotoffset + 0x14) & 0x7);
+  AddString (outstring, "Input Select = %d\r\n", (scsp_r_w(NULL, NULL, slotoffset + 0x14) >> 3) & 0x1F);
 
   AddString (outstring, "Direct data send level = ");
-  outstring = AddSoundLevel (outstring, (scsp_r_w(NULL, slotoffset + 0x16) >> 13) & 0x7);
+  outstring = AddSoundLevel (outstring, (scsp_r_w(NULL, NULL, slotoffset + 0x16) >> 13) & 0x7);
   AddString (outstring, "Direct data panpot = ");
-  outstring = AddSoundPan (outstring, (scsp_r_w(NULL, slotoffset + 0x16) >> 8) & 0x1F);
+  outstring = AddSoundPan (outstring, (scsp_r_w(NULL, NULL, slotoffset + 0x16) >> 8) & 0x1F);
 
   AddString (outstring, "Effect data send level = ");
-  outstring = AddSoundLevel (outstring, (scsp_r_w(NULL, slotoffset + 0x16) >> 5) & 0x7);
+  outstring = AddSoundLevel (outstring, (scsp_r_w(NULL, NULL, slotoffset + 0x16) >> 5) & 0x7);
   AddString (outstring, "Effect data panpot = ");
-  outstring = AddSoundPan (outstring, scsp_r_w(NULL, slotoffset + 0x16) & 0x1F);
+  outstring = AddSoundPan (outstring, scsp_r_w(NULL, NULL, slotoffset + 0x16) & 0x1F);
 }
 
 //////////////////////////////////////////////////////////////////////////////

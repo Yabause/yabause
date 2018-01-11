@@ -59,14 +59,14 @@ void UIBackupRam::refreshSaveList()
 	lwSaveList->clear();
 
 	// get save list
-	saves = BupGetSaveList( id, &numsaves);
+	saves = BupGetSaveList( VSH2, id, &numsaves);
 
 	// add item to listwidget
 	for ( int i = 0; i < numsaves; i++ )
 		lwSaveList->addItem( saves[i].filename );
 	
 	// set infos about blocks
-	BupGetStats( id, &fs, &ms );
+	BupGetStats( VSH2, id, &fs, &ms );
 	lBlocks->setText( QtYabause::translate( "%1/%2 blocks free" ).arg( fs ).arg( ms ) );
 	
 	// enable/disable button delete according to available item
@@ -136,7 +136,7 @@ void UIBackupRam::on_pbDelete_clicked()
 		u32 id = cbDeviceList->itemData( cbDeviceList->currentIndex() ).toInt();
 		if ( CommonDialogs::question( QtYabause::translate( "Are you sure you want to delete '%1' ?" ).arg( it->text() ) ) )
 		{
-			BupDeleteSave( id, it->text().toLatin1().constData() );
+			BupDeleteSave( VSH2, id, it->text().toLatin1().constData() );
 			refreshSaveList();
 		}
 	}

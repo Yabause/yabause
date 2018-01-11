@@ -1221,7 +1221,7 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
     }
 //printf("%d on %d\n", total, targetcnt);
   }
-  CurrentSH2->cycles += total;
+  ctx_->cycles += total;
 }
 
 int DynarecSh2::CheckOneStep() {

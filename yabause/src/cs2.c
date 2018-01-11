@@ -116,21 +116,21 @@ static INLINE void Cs2SetIRQ(u32 irq){
 
 //////////////////////////////////////////////////////////////////////////////
 
-u8 FASTCALL Cs2ReadByte(UNUSED u8* memory, u32 addr)
+u8 FASTCALL Cs2ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return CartridgeArea->Cs2ReadByte(memory, addr);
+   return CartridgeArea->Cs2ReadByte(context, memory, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteByte(UNUSED u8* memory, u32 addr, u8 val)
+void FASTCALL Cs2WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
-   CartridgeArea->Cs2WriteByte(memory, addr, val);
+   CartridgeArea->Cs2WriteByte(context, memory, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 FASTCALL Cs2ReadWord(UNUSED u8* memory, u32 addr) {
+u16 FASTCALL Cs2ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr) {
   u16 val = 0;
   addr &= 0x3F; // fix me(I should really have proper mapping)
 
@@ -268,7 +268,7 @@ u16 FASTCALL Cs2ReadWord(UNUSED u8* memory, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteWord(UNUSED u8* memory, u32 addr, u16 val) {
+void FASTCALL Cs2WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val) {
 
   addr &= 0x3F; // fix me(I should really have proper mapping)
 
@@ -314,7 +314,7 @@ void FASTCALL Cs2WriteWord(UNUSED u8* memory, u32 addr, u16 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 FASTCALL Cs2ReadLong(UNUSED u8* memory, u32 addr) {
+u32 FASTCALL Cs2ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr) {
   s32 i;
   u32 val = 0;
   addr &= 0x3F; // fix me(I should really have proper mapping)
@@ -417,7 +417,7 @@ u32 FASTCALL Cs2ReadLong(UNUSED u8* memory, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FASTCALL Cs2WriteLong(UNUSED u8* memory, UNUSED u32 addr, UNUSED u32 val) {
+void FASTCALL Cs2WriteLong(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr, UNUSED u32 val) {
    addr &= 0x3F; // fix me(I should really have proper mapping)
 
    switch (addr)
