@@ -54,17 +54,11 @@ int SH2Init(int coreid)
    if ((MSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
       return -1;
 
-   if (SH2TrackInfLoopInit(MSH2) != 0)
-      return -1;
-
    MSH2->onchip.BCR1 = 0x0000;
    MSH2->isslave = 0;
 
    // SSH2
    if ((SSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
-      return -1;
-
-   if (SH2TrackInfLoopInit(SSH2) != 0)
       return -1;
 
    SSH2->onchip.BCR1 = 0x8000;
@@ -113,14 +107,12 @@ void SH2DeInit()
 
    if (MSH2)
    {
-      SH2TrackInfLoopDeInit(MSH2);
       free(MSH2);
    }
    MSH2 = NULL;
 
    if (SSH2)
    {
-      SH2TrackInfLoopDeInit(SSH2);
       free(SSH2);
    }
    SSH2 = NULL;
@@ -212,47 +204,6 @@ void SH2NMI(SH2_struct *context)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int SH2TrackInfLoopInit(SH2_struct *context)
-{
-   context->trackInfLoop.maxNum = 100;
-   if ((context->trackInfLoop.match = calloc(context->trackInfLoop.maxNum, sizeof(tilInfo_struct))) == NULL)
-      return -1;
-
-   return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SH2TrackInfLoopDeInit(SH2_struct *context)
-{
-   if (context->trackInfLoop.match)
-      free(context->trackInfLoop.match);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SH2TrackInfLoopStart(SH2_struct *context)
-{
-   context->trackInfLoop.enabled = 1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SH2TrackInfLoopStop(SH2_struct *context)
-{
-   context->trackInfLoop.enabled = 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SH2TrackInfLoopClear(SH2_struct *context)
-{
-   memset(context->trackInfLoop.match, 0, sizeof(tilInfo_struct) * context->trackInfLoop.maxNum);
-   context->trackInfLoop.num = 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r)
 {
    if (r != NULL) {
@@ -274,46 +225,6 @@ void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r)
 void SH2WriteNotify(SH2_struct *context, u32 start, u32 length) {
    if (SH2Core->WriteNotify)
       SH2Core->WriteNotify(start, length);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SH2HandleTrackInfLoop(SH2_struct *context)
-{
-   if (context->trackInfLoop.enabled)
-   {
-      // Look for specific bf/bt/bra instructions that branch to address < PC
-      if ((context->instruction & 0x8B80) == 0x8B80 || // bf
-          (context->instruction & 0x8F80) == 0x8F80 || // bf/s 
-          (context->instruction & 0x8980) == 0x8980 || // bt
-          (context->instruction & 0x8D80) == 0x8D80 || // bt/s 
-          (context->instruction & 0xA800) == 0xA800)   // bra
-      {
-         int i;
-
-         // See if it's already on match list
-         for (i = 0; i < context->trackInfLoop.num; i++)
-         {
-            if (context->regs.PC == context->trackInfLoop.match[i].addr)
-            {
-               context->trackInfLoop.match[i].count++;
-               return;
-            }
-         }
-
-         if (context->trackInfLoop.num >= context->trackInfLoop.maxNum)
-         {
-            context->trackInfLoop.match = realloc(context->trackInfLoop.match, sizeof(tilInfo_struct) * (context->trackInfLoop.maxNum * 2));
-            context->trackInfLoop.maxNum *= 2;
-         }
-
-         // Add new
-         i=context->trackInfLoop.num;
-         context->trackInfLoop.match[i].addr = context->regs.PC;
-         context->trackInfLoop.match[i].count = 1;
-         context->trackInfLoop.num++;
-      }
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////

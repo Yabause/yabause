@@ -2806,9 +2806,6 @@ void SH2InterpreterDeInit()
 
 void SH2InterpreterReset(UNUSED SH2_struct *context)
 {
-   // Reset any internal variables here
-   context->stepOverOut.enabled = 0;
-   context->stepOverOut.enabled = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2893,8 +2890,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
       // Fetch Instruction
       context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
-
-      SH2HandleTrackInfLoop(context);
 
 #ifdef DMPHISTORY
 	  context->pchistory_index++;

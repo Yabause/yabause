@@ -334,24 +334,6 @@ typedef struct SH2_struct_s
    u8 isslave;
    u8 isSleeping;
    u16 instruction;
-   struct
-   {
-      u8 enabled;
-      void (*callBack)(void *, u32, void *);
-      enum SH2STEPTYPE type;
-      union
-      {
-         s32 levels;
-         u32 address;
-      };
-   } stepOverOut;
-   struct 
-   {
-      u8 enabled;
-      tilInfo_struct *match;
-      int num;
-      int maxNum;
-   } trackInfLoop;
 
 #ifdef DMPHISTORY
    u32 pchistory[0x100];
@@ -425,12 +407,6 @@ void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles);
 void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level);
 void SH2NMI(SH2_struct *context);
 
-int SH2TrackInfLoopInit(SH2_struct *context);
-void SH2TrackInfLoopDeInit(SH2_struct *context);
-void SH2TrackInfLoopStart(SH2_struct *context);
-void SH2TrackInfLoopStop(SH2_struct *context);
-void SH2TrackInfLoopClear(SH2_struct *context);
-
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2WriteNotify(SH2_struct *context, u32 start, u32 length);
@@ -450,8 +426,6 @@ void CacheWriteShort(SH2_struct *context, u8* mem, u32 addr, u16 val);
 void CacheWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val);
 void CacheInvalidate(SH2_struct *context,u32 addr);
 #endif
-
-void SH2HandleTrackInfLoop(SH2_struct *context);
 
 void DMAExec(SH2_struct *context);
 void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);
