@@ -749,6 +749,11 @@ else ()
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
 endif ()
 
+if (CMAKE_COMPILER_IS_GNUCC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpmath=sse -m64 -flto -march=native -funroll-loops")
+        set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -mfpmath=sse -m64 -flto -march=native -funroll-loops")
+endif()
+
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-PIE -no-pie")
         set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -fno-PIE -no-pie")
