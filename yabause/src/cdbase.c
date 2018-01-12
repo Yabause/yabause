@@ -26,8 +26,8 @@
 #include <string.h>
 #ifndef WIN32
 #include <strings.h>
-#endif
 #include <dirent.h>
+#endif
 #include <stdlib.h>
 #include <assert.h>
 #include <ctype.h>
