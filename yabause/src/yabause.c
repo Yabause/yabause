@@ -161,9 +161,8 @@ void YabauseChangeTiming(int freqtype) {
 extern int tweak_backup_file_size;
 
 
-static void sh2ExecuteSync( SH2_struct* sh ) {
+static void sh2ExecuteSync( SH2_struct* sh, int req ) {
   int sh2cdiff = 0;
-    int req = sh->cycles_request;
     if (req != 0) {
 //printf("%s Request %d cycles\n", (sh == MSH2)?"MSH2":"SSH2", sh->cycles_request);
          u32 sh2cycles;
@@ -187,16 +186,18 @@ static void sh2ExecuteSync( SH2_struct* sh ) {
     }
 } 
 
+#ifdef SSH2_ASYNC
 static void sh2Execute( void * p ){
   SH2_struct* sh = (SH2_struct*)p;
   sh->thread_running = 1;
   while(sh->thread_running) {
     sem_wait(&sh->start);
-    sh2ExecuteSync(sh);
+    sh2ExecuteSync(sh, sh->cycles_request);
     sem_post(&sh->end);
   }
   sh->thread_running = 0;
 }
+#endif
 
 
 int YabauseSh2Init(yabauseinit_struct *init)
@@ -236,26 +237,28 @@ int YabauseSh2Init(yabauseinit_struct *init)
 
    MappedMemoryInit();
 
+#ifdef SSH2_ASYNC
    MSH2->thread_running = 0;
-   MSH2->order = YabThreadCreateMutex();
    sem_init(&MSH2->start, 0, 0);
    sem_init(&MSH2->end, 0, 1);
    MSH2->cycles_request = 0;
    MSH2->thread_id = YAB_THREAD_MSH2;
+#endif
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
-
+#ifdef SSH2_ASYNC
    SSH2->thread_running = 0;
-   SSH2->order = YabThreadCreateMutex();
    sem_init(&SSH2->start, 0, 0);
    sem_init(&SSH2->end, 0, 1);
    SSH2->cycles_request = 0;
    SSH2->thread_id = YAB_THREAD_SSH2;
+#endif
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
 
-   YabThreadStart(YAB_THREAD_MSH2, sh2Execute, MSH2);
+#ifdef SSH2_ASYNC
    YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
+#endif
    return 0;
 }
 
@@ -300,27 +303,28 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    MappedMemoryInit();
-
+#ifdef SSH2_ASYNC
    MSH2->thread_running = 0;
-   MSH2->order = YabThreadCreateMutex();
    sem_init(&MSH2->start, 0, 0);
    sem_init(&MSH2->end, 0, 1);
    MSH2->cycles_request = 0;
    MSH2->thread_id = YAB_THREAD_MSH2;
+#endif
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
-
+#ifdef SSH2_ASYNC
    SSH2->thread_running = 0;
-   SSH2->order = YabThreadCreateMutex();
    sem_init(&SSH2->start, 0, 0);
    sem_init(&SSH2->end, 0, 1);
    SSH2->cycles_request = 0;
    SSH2->thread_id = YAB_THREAD_SSH2;
+#endif
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
 
-   YabThreadStart(YAB_THREAD_MSH2, sh2Execute, MSH2);
+#ifdef SSH2_ASYNC
    YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
+#endif
 
    if (VideoInit(init->vidcoretype) != 0)
    {
@@ -694,20 +698,20 @@ int YabauseEmulate(void) {
 #endif
          if (!yabsys.playing_ssf)
          {
-             int slave_run = 0;
              THREAD_LOG("Unlock MSH2\n");
-             MSH2->cycles_request = yabsys.DecilineStop;
+#ifdef SSH2_ASYNC
              if (yabsys.IsSSH2Running) {
-                SSH2->cycles_request += yabsys.DecilineStop;
-                if (SSH2->cycles_request == (1 * yabsys.DecilineStop)) {
- 		  slave_run = 1;
-                  sem_post(&SSH2->start);
-                }
+                SSH2->cycles_request = yabsys.DecilineStop;
+                sem_post(&SSH2->start);
              }
-             sh2ExecuteSync(MSH2);
-             if (slave_run == 1) {
+#endif
+             sh2ExecuteSync(MSH2, yabsys.DecilineStop);
+             if (yabsys.IsSSH2Running) {
+#ifdef SSH2_ASYNC
                sem_wait(&SSH2->end);
-               SSH2->cycles_request = 0;
+#else
+               sh2ExecuteSync(SSH2, yabsys.DecilineStop);
+#endif
              }
          }
 #ifdef YAB_STATICS

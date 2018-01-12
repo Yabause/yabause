@@ -354,12 +354,13 @@ typedef struct SH2_struct_s
 #endif
    u32 cycleFrac;
    u32 cycleLost;
+#ifdef SSH2_ASYNC
    int cycles_request;
    int thread_running;
-   YabMutex *order;
    sem_t start;
    sem_t end;
    int thread_id;
+#endif
 } SH2_struct;
 
 typedef struct
