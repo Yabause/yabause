@@ -412,7 +412,6 @@ typedef struct
    void (*WriteNotify)(u32 start, u32 length);
 } SH2Interface_struct;
 
-extern SH2_struct *VSH2;
 extern SH2_struct *MSH2;
 extern SH2_struct *SSH2;
 extern SH2Interface_struct *SH2Core;

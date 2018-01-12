@@ -28,7 +28,6 @@
 #include "memory.h"
 #include "yabause.h"
 
-SH2_struct *VSH2=NULL;
 SH2_struct *SSH2=NULL;
 SH2_struct *MSH2=NULL;
 SH2Interface_struct *SH2Core=NULL;
@@ -50,10 +49,6 @@ void InvalidateCache(SH2_struct *ctx);
 int SH2Init(int coreid)
 {
    int i;
-
-   // VSH2 Virtual SH2 for emulation check
-   if ((VSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
-      return -1;
 
    // MSH2
    if ((MSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
@@ -101,8 +96,7 @@ int SH2Init(int coreid)
    if ((SH2Core == NULL) || (SH2Core->Init() != 0)) {
       free(MSH2);
       free(SSH2);
-      free(VSH2);
-      MSH2 = SSH2 = VSH2 = NULL;
+      MSH2 = SSH2 = NULL;
       return -1;
    }
 
@@ -116,12 +110,6 @@ void SH2DeInit()
    if (SH2Core)
       SH2Core->DeInit();
    SH2Core = NULL;
-
-   if (VSH2)
-   {
-      free(VSH2);
-   }
-   VSH2 = NULL;
 
    if (MSH2)
    {
@@ -1583,7 +1571,7 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
    }
 
    if (*CHCR & 0x4)
-      SH2SendInterrupt(context, *VCRDMA, (VSH2->onchip.IPRA & 0xF00) >> 8);
+      SH2SendInterrupt(context, *VCRDMA, (context->onchip.IPRA & 0xF00) >> 8);
 
    // Set Transfer End bit
    *CHCR |= 0x2;
