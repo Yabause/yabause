@@ -22,6 +22,7 @@
 #define SH2CORE_H
 
 #include "core.h"
+#include "threads.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -351,7 +352,11 @@ typedef struct SH2_struct_s
    u8 tagWay[64][0x80000];
    u32 cacheTagArray[64][4];
 #endif
-   u32 cycleFrac;  
+   u32 cycleFrac;
+   u32 cycleLost;
+   int thread_running;
+   YabEventQueue *evqueue;
+   int thread_id;
 } SH2_struct;
 
 typedef struct

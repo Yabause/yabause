@@ -31,6 +31,8 @@ extern "C" {
 // Thread IDs
 enum {
    YAB_THREAD_SCSP = 0,
+   YAB_THREAD_MSH2,
+   YAB_THREAD_SSH2,
    YAB_THREAD_VDP,
    YAB_THREAD_GDBSTUBCLIENT,
    YAB_THREAD_GDBSTUBLISTENER,
@@ -101,6 +103,8 @@ void YabAddEventQueue( YabEventQueue * queue_t, int evcode );
 int YabWaitEventQueue( YabEventQueue * queue_t );
  
 int YaGetQueueSize(YabEventQueue * queue_t);
+
+void YabWaitEmptyQueue( YabEventQueue * queue_t );
 
 typedef void * YabMutex;
 

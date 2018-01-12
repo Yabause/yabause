@@ -94,6 +94,8 @@
 
 #include <inttypes.h>
 
+#define DECILINE_STEP (10.0)
+
 //#define DEBUG_ACCURACY
 
 //////////////////////////////////////////////////////////////////////////////
@@ -131,8 +133,6 @@ void print_usage(const char *program_name) {
 //////////////////////////////////////////////////////////////////////////////
 
 
-#define DECILINE_STEP (10.0)
-
 void YabauseChangeTiming(int freqtype) {
    // Setup all the variables related to timing
 
@@ -157,12 +157,44 @@ void YabauseChangeTiming(int freqtype) {
 //////////////////////////////////////////////////////////////////////////////
 extern int tweak_backup_file_size;
 
+static void sh2Execute( void * p ){
+  SH2_struct* sh = (SH2_struct*)p;
+  int cycleLost = 0;
+  int sh2cdiff = 0;
+  int cycles_request = 0;
+  sh->thread_running = 1;
+  while(sh->thread_running) {
+    cycles_request = YabWaitEventQueue(sh->evqueue);
+    if (cycles_request != 0) {
+         u32 sh2cycles;
+         sh->cycleFrac = cycles_request+cycleLost;
+         cycleLost = sh->cycleFrac - ((sh->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
+         if ((sh->cycleFrac + (sh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+           cycles_request = 0;
+	   sh->cycles += sh->cycleFrac>>YABSYS_TIMING_BITS;
+         } else {
+           cycles_request = ((sh->cycleFrac + (sh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+         }
+         if (!yabsys.playing_ssf)
+         {
+           int i;
+	   int sh2start = sh->cycles;
+           SH2Exec(sh, cycles_request);
+	   sh2cdiff = cycles_request - (sh->cycles-sh2start);
+         }
+    }
+  }
+  sh->thread_running = 0;
+}
+
+
 int YabauseSh2Init(yabauseinit_struct *init)
 {
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+
 #ifdef SPRITE_CACHE
    yabsys.useVdp1cache = init->useVdp1cache;
 #endif
@@ -192,6 +224,19 @@ int YabauseSh2Init(yabauseinit_struct *init)
    }
 
    MappedMemoryInit();
+
+   MSH2->thread_running = 0;
+   MSH2->evqueue = YabThreadCreateQueue(1);
+   MSH2->thread_id = YAB_THREAD_MSH2;
+   MSH2->cycleFrac = 0;
+
+   SSH2->thread_running = 0;
+   SSH2->evqueue = YabThreadCreateQueue(1);
+   SSH2->thread_id = YAB_THREAD_SSH2;
+   SSH2->cycleFrac = 0;
+
+   YabThreadStart(YAB_THREAD_MSH2, sh2Execute, MSH2);
+   YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
    return 0;
 }
 
@@ -201,6 +246,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+
 #ifdef SPRITE_CACHE
    yabsys.useVdp1cache = init->useVdp1cache;
 #endif
@@ -235,6 +281,19 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    MappedMemoryInit();
+
+   MSH2->thread_running = 0;
+   MSH2->evqueue = YabThreadCreateQueue(1);
+   MSH2->thread_id = YAB_THREAD_MSH2;
+   MSH2->cycleFrac = 0;
+
+   SSH2->thread_running = 0;
+   SSH2->evqueue = YabThreadCreateQueue(1);
+   SSH2->thread_id = YAB_THREAD_SSH2;
+   SSH2->cycleFrac = 0;
+
+   YabThreadStart(YAB_THREAD_MSH2, sh2Execute, MSH2);
+   YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
 
    if (VideoInit(init->vidcoretype) != 0)
    {
@@ -540,11 +599,6 @@ u32 YabauseGetCpuTime(){
 
 // cyclesinc
 
-static int msh2cdiff = 0;
-static int MSH2CycleLost = 0;
-static int ssh2cdiff = 0;
-static int SSH2CycleLost = 0;
-
 u32 YabauseGetFrameCount() {
   return yabsys.frame_count;
 }
@@ -555,7 +609,6 @@ int YabauseEmulate(void) {
    int oneframeexec = 0;
    yabsys.frame_count++;
 
-   const u32 cyclesinc = yabsys.DecilineStop;
    const u32 usecinc = yabsys.DecilineUsec;
 
 #ifndef USE_SCSP2
@@ -609,58 +662,24 @@ int YabauseEmulate(void) {
    {
       PROFILE_START("Total Emulation");
 
-         // Since we run the SCU with half the number of cycles we send
-         // to SH2Exec(), we always compute an even number of cycles here
-         // and leave any odd remainder in SH2CycleFrac.
-         u32 msh2cycles, ssh2cycles;
-         MSH2->cycleFrac = cyclesinc+MSH2CycleLost;
-         SSH2->cycleFrac = cyclesinc+SSH2CycleLost;
-         MSH2CycleLost = MSH2->cycleFrac - ((MSH2->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
-         SSH2CycleLost = SSH2->cycleFrac - ((SSH2->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
-         if ((MSH2->cycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
-           msh2cycles = 0;
-	   MSH2->cycles += MSH2->cycleFrac>>YABSYS_TIMING_BITS;
-         } else {
-           msh2cycles = ((MSH2->cycleFrac + (msh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
-         }
-         if ((SSH2->cycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
-           ssh2cycles = 0;
-           SSH2->cycles += SSH2->cycleFrac>>YABSYS_TIMING_BITS;
-         } else {
-           ssh2cycles = ((SSH2->cycleFrac + (ssh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
-         }
-         //yabsys.SH2CycleFrac &= ((YABSYS_TIMING_MASK << 1) | 1);
-
 #ifdef YAB_STATICS
 		 u64 current_cpu_clock = YabauseGetTicks();
 #endif
          if (!yabsys.playing_ssf)
          {
-           int i;
-	   int msh2start = MSH2->cycles;
-	   int ssh2start = SSH2->cycles;
-             PROFILE_START("MSH2");
-             SH2Exec(MSH2, msh2cycles);
-	     msh2cdiff = msh2cycles - (MSH2->cycles-msh2start);
-#ifdef DEBUG_ACCURACY
-	     totalMSH2CyclesRequested += msh2cycles - msh2cdiff;
-#endif
-             PROFILE_STOP("MSH2");
-
-             PROFILE_START("SSH2");
+             YabAddEventQueue(MSH2->evqueue,yabsys.DecilineStop);
+             
              if (yabsys.IsSSH2Running) {
-               SH2Exec(SSH2, ssh2cycles);
-               ssh2cdiff = ssh2cycles - (SSH2->cycles-ssh2start);
-#ifdef DEBUG_ACCURACY
-	       totalSSH2CyclesRequested += ssh2cycles - ssh2cdiff;
-#endif
+                YabAddEventQueue(SSH2->evqueue,yabsys.DecilineStop);
              }
-             PROFILE_STOP("SSH2");
+             YabThreadYield();
+             //YabWaitEmptyQueue(MSH2->evqueue);
+             //YabWaitEmptyQueue(SSH2->evqueue);
          }
 #ifdef YAB_STATICS
 		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
 #endif
-
+         
 #ifdef USE_SCSP2
          PROFILE_START("SCSP");
          ScspExec(1);
@@ -677,7 +696,7 @@ int YabauseEmulate(void) {
          }
 
          PROFILE_START("SCU");
-         ScuExec(msh2cycles / 2);
+         ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
          PROFILE_STOP("SCU");
 
 #ifndef USE_SCSP2

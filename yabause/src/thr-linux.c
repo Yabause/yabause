@@ -198,6 +198,14 @@ void YabAddEventQueue( YabEventQueue * queue_t, int evcode ){
     pthread_cond_broadcast(&(queue->cond_empty));
 }
 
+void YabWaitEmptyQueue( YabEventQueue * queue_t ){
+    YabEventQueue_pthread * queue = (YabEventQueue_pthread*)queue_t;
+    pthread_mutex_lock(&(queue->mutex));
+    while (queue->size != 0)
+            pthread_cond_wait(&(queue->cond_full), &(queue->mutex));
+    pthread_mutex_unlock(&(queue->mutex));
+}
+
 
 int YabWaitEventQueue( YabEventQueue * queue_t ){
     int value;
