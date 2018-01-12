@@ -329,7 +329,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // RBG and pallet mode
     if ( (cmd->CMDCOLR & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
       color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(cmd->CMDCOLR));
-      return;
+      return color;
     }
 
     temp = T1ReadWord(Vdp1Ram, colorLut & 0x7FFFF);
@@ -1723,7 +1723,7 @@ void Vdp2GenLineinfo(vdp2draw_struct *info)
   }
 }
 
-INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
+static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
   u32 alpha = info->alpha;
   const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   if (CCMD == 0) {  // Calculate Rate mode
@@ -3066,7 +3066,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     info->cellw = cellw;
     info->cellh = cellh;
 
-    YglQuadRbg0(&rbg->info, &rbg->texture, &tmpc);
+    YglQuadRbg0(&rbg->info, &rbg->texture, &rbg->c, &rbg->cline);
     info->cellw = cellw;
     info->cellh = cellh;
     Vdp2DrawRotation_in(rbg);

@@ -595,6 +595,12 @@ void YglSetClearColor(float r, float g, float b);
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 
+void YglOnUpdateColorRamWord(u32 addr);
+void YglUpdateColorRam();
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line );
+void Ygl_uniformVDP2DrawFrameBufferShadow(void * p);
+int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
+
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache);
 

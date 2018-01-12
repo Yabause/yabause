@@ -37,6 +37,7 @@
 #include "osdcore.h"
 #include "threads.h"
 #include "yui.h"
+#include "ygl.h"
 #include "frameprofile.h"
 
 u8 * Vdp2Ram;

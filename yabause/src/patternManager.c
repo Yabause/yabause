@@ -122,7 +122,7 @@ void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset) {
     int characterHeight = cmd->CMDSIZE & 0xFF;
     int characterAddress = cmd->CMDSRCA << 3;
 
-    if(characterWidth*characterHeight <= 256) return NULL; //Cache impact is negligible here
+    if(characterWidth*characterHeight <= 256) return; //Cache impact is negligible here
 
     int param0 = cmd->CMDSRCA << 16 | cmd->CMDCOLR;
     int param1 = cmd->CMDPMOD << 16 | cmd->CMDCTRL;

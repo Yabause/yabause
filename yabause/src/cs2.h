@@ -384,6 +384,8 @@ u32 Cs2GetSlaveStackAdress(void);
 u64 Cs2GetGameId();
 char * Cs2GetCurrentGmaecode();
 
+u32 Cs2GetMasterExecutionAdress();
+
 // external CD drive command
 void Cs2ForceOpenTray();
 int Cs2ForceCloseTray( int coreid, const char * cdpath );

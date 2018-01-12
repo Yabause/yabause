@@ -1347,7 +1347,7 @@ static void ConvertMonthAndDay(SH2_struct *sh, u32 data, u32 monthaddr, u32 daya
    }
 }
 
-static void ConvertMonthAndDayMem(u32 data, u8 * monthaddr, u8 * dayaddr, int type)
+static void ConvertMonthAndDayMem(u32 data, u8* monthaddr, u8 * dayaddr, int type)
 {
    int i;
    u16 monthtbl[11] = { 31, 31+28, 31+28+31, 31+28+31+30, 31+28+31+30+31,
@@ -1857,7 +1857,7 @@ saveinfo_struct *BupGetSaveList(SH2_struct *sh, u32 device, int *numsaves)
         else
         {
            yearoffset = 0;
-           ConvertMonthAndDay(sh, 0, &save[savecount].month, &save[savecount].day, 1);
+           ConvertMonthAndDayMem(0, &save[savecount].month, &save[savecount].day, 1);
         }
         save[savecount].year = (u8)(((div / 0x5B5) * 4) + yearoffset);
 

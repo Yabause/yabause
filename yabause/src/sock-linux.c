@@ -21,6 +21,7 @@
 #include "sock.h"
 #include "debug.h"
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <errno.h>
@@ -45,7 +46,8 @@ int YabSockDeInit()
 
 int YabSockConnectSocket(const char *ip, int port, YabSock *sock)
 {
-   struct addrinfo *result = NULL, hints;
+   struct addrinfo *result = NULL;
+   struct addrinfo hints;
    char port_str[256];
 
    memset(&hints, 0, sizeof(hints));

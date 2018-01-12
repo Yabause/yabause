@@ -334,7 +334,7 @@ int main(int argc, char *argv[]) {
         printf("Use new dynarec core emulation\n");
         yinit.sh2coretype = 3;
       #else
-        printf("No dynarec core emulation: fallback on SW core emultaion\n");
+        printf("No dynarec core emulation: fallback on SW core emulation\n");
         yinit.sh2coretype = 0;
       #endif
       }

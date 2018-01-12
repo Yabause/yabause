@@ -162,5 +162,10 @@ void scsp_debug_set_mode(int mode);
 void scsp_set_use_new(int which);
 void new_scsp_exec(s32 cycles);
 
+void SyncScsp();
+
+extern void ScspLockThread();
+extern void ScspUnLockThread();
+
 extern int use_new_scsp;
 #endif

@@ -46,6 +46,7 @@
 #include "yabause.h"
 #include "yui.h"
 #include "movie.h"
+#include "bios.h"
 
 //#ifdef HAVE_LIBGL
 //#define USE_OPENGL

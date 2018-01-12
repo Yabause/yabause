@@ -17,6 +17,16 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#include "ygl.h"
+
+#include "nanovg.h"
+#if defined(_OGLES3_)
+#define NANOVG_GLES3_IMPLEMENTATION
+#else
+#define NANOVG_GL3_IMPLEMENTATION
+#endif
+#include "nanovg_gl.h"
+
 #include "osdcore.h"
 #include "nanovg_osdcore.h"
 #include "yabause.h"
@@ -34,20 +44,6 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#if defined(_OGLES3_)
-#include <GLES3/gl3.h>
-#include <GLES3/gl3ext.h>
-#else
-#include "ygl.h"
-#endif
-
-#include "nanovg.h"
-#if defined(_OGLES3_)
-#define NANOVG_GLES3_IMPLEMENTATION
-#else
-#define NANOVG_GL3_IMPLEMENTATION
-#endif
-#include "nanovg_gl.h"
 #include "Roboto-Bold.h"
 #include "Roboto-Regular.h"
 

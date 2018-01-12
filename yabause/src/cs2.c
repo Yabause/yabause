@@ -358,7 +358,7 @@ u32 FASTCALL Cs2ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr) {
                      // Make sure we still have sectors to transfer
                      if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
                      {
-						 const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+						 u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
 						 if (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans] == NULL)
                         {
                            CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
@@ -432,7 +432,7 @@ void FASTCALL Cs2WriteLong(SH2_struct *context, UNUSED u8* memory, UNUSED u32 ad
             if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
             {
                // Transfer Data
-               const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+               u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
 
                if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
                {

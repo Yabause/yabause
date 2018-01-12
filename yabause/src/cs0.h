@@ -64,8 +64,8 @@ typedef struct
    void FASTCALL (*Cs2WriteLong)(SH2_struct *context, u8* memory, u32 addr, u32 val);
 
    u8 *rom;
-   void *bupram;
-   void *dram;
+   u8 *bupram;
+   u8 *dram;
 } cartridge_struct;
 
 extern cartridge_struct *CartridgeArea;

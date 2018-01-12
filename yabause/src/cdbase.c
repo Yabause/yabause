@@ -22,12 +22,12 @@
 /*! \file cdbase.c
     \brief Dummy and ISO, BIN/CUE, MDS CD Interfaces
 */
-
+#define _GNU_SOURCE
 #include <string.h>
 #ifndef WIN32
 #include <strings.h>
-#include <dirent.h>
 #endif
+#include <dirent.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <ctype.h>
@@ -438,7 +438,7 @@ static FILE* fopenInPath(char* filename, char* path){
 }
 #endif
 
-static FILE* OpenFile(char* buffer, char* cue) {
+static FILE* OpenFile(char* buffer, const char* cue) {
    char *filename, *endofpath;
    char *path;
    int tmp;
@@ -459,11 +459,11 @@ static FILE* OpenFile(char* buffer, char* cue) {
 
       // append directory of cue file with bin filename
       // find end of path
-      endofpath = cue;
+      endofpath = (char*)cue;
       for (tmp=0; tmp < strlen(cue); tmp++)
       {
          if ((cue[tmp] == '/') || (cue[tmp] == '\\'))
-           endofpath = &cue[tmp+1];
+           endofpath = (char*)&cue[tmp+1];
       }
 
       if ((path = (char *)calloc((endofpath - cue)*sizeof(char), 1)) == NULL)

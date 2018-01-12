@@ -78,6 +78,7 @@ void print_usage(const char *program_name);
 
 void YabauseChangeTiming(int freqtype);
 int YabauseInit(yabauseinit_struct *init);
+int YabauseSh2Init(yabauseinit_struct *init);
 void YabFlushBackups(void);
 void YabauseDeInit(void);
 void YabauseResetNoLoad(void);

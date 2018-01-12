@@ -363,6 +363,13 @@ extern "C" {
   void FASTCALL SH2MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val);
   void FASTCALL SH2MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val);
 
+  u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr);
+  u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr);
+  u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr);
+  void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val);
+  void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val);
+  void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val);
+
   extern u8 *HighWram;
   extern u8 *LowWram;
   extern u8 *BiosRom;
@@ -435,6 +442,10 @@ extern "C" {
   int YabLoadStateStream(FILE *stream);
   int YabSaveStateBuffer(void **buffer, size_t *size);
   int YabLoadStateBuffer(const void *buffer, size_t size);
+
+  int BackupInit(char* path, int extended);
+  void BackupFlush();
+  void BackupDeinit();
 
 #ifdef __cplusplus
 }

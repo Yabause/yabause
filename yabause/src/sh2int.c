@@ -181,9 +181,6 @@ static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
 
 static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 {
-#ifdef SH2_TRACE
-   sh2_trace(sh, addr);
-#endif
 
    // Fetch Instruction
    sh->instruction = fetchlist[(addr >> 20) & 0x0FF](sh, addr);
@@ -2830,12 +2827,6 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
 FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-#ifdef SH2_TRACE
-   /* Avoid accumulating leftover cycles multiple times, since the trace
-    * code automatically adds state->cycles to the cycle accumulator when
-    * printing a trace line */
-   sh2_trace_add_cycles(-((s32)context->cycles));
-#endif
    
    SH2HandleInterrupts(context);
 
@@ -2843,10 +2834,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
    {
 #ifdef SH2_UBC   	   
       int ubcinterrupt=0, ubcflag=0;
-#endif
-
-#ifdef SH2_TRACE
-      sh2_trace(context, context->regs.PC);
 #endif
 
 #ifdef SH2_UBC
@@ -2906,9 +2893,6 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
    }
 
-#ifdef SH2_TRACE
-   sh2_trace_add_cycles(context->cycles);
-#endif
 }
 
 

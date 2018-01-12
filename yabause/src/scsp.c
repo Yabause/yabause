@@ -100,6 +100,7 @@
 #include "scsp.h"
 #include "scspdsp.h"
 #include "threads.h"
+#include "vdp2.h"
 
 #ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
