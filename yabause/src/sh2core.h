@@ -354,8 +354,11 @@ typedef struct SH2_struct_s
 #endif
    u32 cycleFrac;
    u32 cycleLost;
+   int cycles_request;
    int thread_running;
-   YabEventQueue *evqueue;
+   YabMutex *order;
+   sem_t start;
+   sem_t end;
    int thread_id;
 } SH2_struct;
 
