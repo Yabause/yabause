@@ -21,7 +21,7 @@ set(yabause_HEADERS
 	netlink.h
 	osdcore.h
 	peripheral.h profile.h
-	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2int.h sh2trace.h smpc.h sock.h
+	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2int.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h
@@ -46,7 +46,7 @@ set(yabause_SOURCES
 	osdcore.c
 	peripheral.c profile.c
 	frameprofile.cpp
-	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2int.c sh2trace.c smpc.c snddummy.c
+	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2int.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
@@ -700,12 +700,6 @@ endif()
 option(YAB_USE_CACHE "Allow external bus access to use cache" ON)
 if (YAB_USE_CACHE)
 	add_definitions(-DUSE_CACHE=1)
-endif()
-
-# SH2 Trace
-option(SH2_TRACE "Enable SH2 tracing" ON)
-if (SH2_TRACE)
-	add_definitions(-DSH2_TRACE=1)
 endif()
 
 # SH2 UBC
