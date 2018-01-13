@@ -560,7 +560,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
           }
           else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            if (SPCCCS == 0x03) {
+              u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, (checkcol& 0x8000)?0xFF:0x00));
+            } else {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, 0));
+            }
           }
         }
         j += 1;
@@ -675,9 +680,14 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
                 if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
                   *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
                 }
-                else {
-                  *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+              else {
+                if (SPCCCS == 0x03) {
+                  u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                  *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, (checkcol& 0x8000)?0xFF:0x00));
+                } else {
+                  *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, 0));
                 }
+               }
               }
             }
           }
@@ -720,7 +730,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
           }
           else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            if (SPCCCS == 0x03) {
+              u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, (checkcol& 0x8000)?0xFF:0x00));
+            } else {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, 0));
+            }
           }
         }
       }
@@ -756,7 +771,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
           }
           else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            if (SPCCCS == 0x03) {
+              u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, (checkcol& 0x8000)?0xFF:0x00));
+            } else {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, 0));
+            }
           }
         }
 
@@ -788,8 +808,14 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           const int colorindex = (dot | colorBank) + colorOffset;
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-          } else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+          }
+          else {
+            if (SPCCCS == 0x03) {
+              u16 checkcol = Vdp2ColorRamGetColorRaw(colorindex);
+                *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, (checkcol& 0x8000)?0xFF:0x00));
+            } else {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0,Vdp2ColorRamGetColor(colorindex, 0));
+            }
           }
         }
       }
