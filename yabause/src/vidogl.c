@@ -839,15 +839,14 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr += 2;
 
-        //if (!(dot & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) printf("mixed mode\n");
         if (!(dot & 0x8000) && !SPD) {
           *texture->textdata++ = 0x00;
         }
         else if ((dot == 0x7FFF) && !END) {
           *texture->textdata++ = 0x0;
         }
-        else if (MSB_SHADOW || dot == nromal_shadow) {
-           *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
+        else if (MSB_SHADOW || (nromal_shadow!=0 && dot == nromal_shadow) ) {
+          *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
         }
         else {
           if (dot & 0x8000) {
