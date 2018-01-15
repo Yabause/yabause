@@ -2187,6 +2187,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
              break;
            case 3:
              pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE;
+             disable_blend = 0;
              break;
            }
          }
