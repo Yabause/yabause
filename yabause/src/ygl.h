@@ -726,10 +726,14 @@ s Shadow Flag
 
 */
 INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
-  if (shadow != 0) {
-    int a = 0;
-  }
-  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | color;
+  if (C!=0)
+    return 0x80000000 | ((C&0x1) << 30) | ((A&0x7) << 27) | ((P&0x7) << 24) | ((shadow&0x1) << 23) | (color & 0xFFFF);
+  else
+    return 0x80000000 | ((C&0x1) << 30) | ((A&0x7) << 27) | ((P&0x7) << 24) | (color & 0xFFFFFF);
+}
+
+INLINE u32 VDP1COLORMSB(u32 MSB, u32 A, u32 P, u32 shadow, u32 color) {
+    return 0x80000000 | ((MSB&0x1) << 30) | ((A&0x7) << 27) | ((P&0x7) << 24) | (color & 0xFFFFFF);
 }
 
 #if defined WORDS_BIGENDIAN
