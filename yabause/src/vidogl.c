@@ -498,6 +498,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
   if (/*fixVdp2Regs->SDCTL != 0 &&*/ MSB != 0) {
     MSB_SHADOW = 1;
+    _Ygl->msb_shadow_count_[_Ygl->drawframe]++;
   }
 
   addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
@@ -604,7 +605,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
           if (temp & 0x8000) {
             if (MSB_SHADOW) {
-              *texture->textdata++ = 0; // ToDo MsbShadow
+              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
             } else {
               alpha = 0x80 | (colorcl << 3) | priority;
               *texture->textdata++ = SAT2YAB1(alpha, temp);
@@ -659,7 +660,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           if (temp & 0x8000)
           {
             if (MSB_SHADOW) {
-              *texture->textdata++ = (0x80) << 24;
+              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
             }
             else {
               *texture->textdata++ = SAT2YAB1(alpha, temp);
@@ -3891,6 +3892,8 @@ void VIDOGLVdp1DrawStart(void)
     else // color offset disable
       vdp1cor = vdp1cog = vdp1cob = 0;
   }
+
+  _Ygl->msb_shadow_count_[_Ygl->drawframe] = 0;
 
   Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
   FrameProfileAdd("Vdp1Command end ");
