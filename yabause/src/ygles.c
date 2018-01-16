@@ -3280,9 +3280,10 @@ void YglRender(void) {
     if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
   }
 
-   if ((fixVdp2Regs->SDCTL & 0xFF) != 0) {
+   if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || _Ygl->msb_shadow_count_[_Ygl->readframe] != 0 ) {
      YglRenderFrameBufferShadow();
    }
+
 
   if (_Ygl->aamode == AA_FXAA){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
