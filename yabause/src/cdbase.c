@@ -401,12 +401,14 @@ static FILE* fopenInPath(char* filename, char* path){
   nbFiles = scandir(path, &fileListTemp, NULL, alphasort);
   for(i = 0; i < nbFiles; i++){
     if (strncasecmp(filename, fileListTemp[i]->d_name, l) == 0) {
-      char* filepath = malloc((l + charToEscape(filename) + charToEscape(path)+strlen(path))*sizeof(char));
+      int p= (l + charToEscape(filename) + charToEscape(path)+strlen(path));
+      char* filepath = malloc(p*sizeof(char));
       tmp = filepath;
       for (k=0; k<strlen(path); k++) {
         if (shallBeEscaped(path[k])) *tmp++='\\';
            *tmp++ = path[k];
       }
+      *tmp++ = '/';
       for (k=0; k<strlen(fileListTemp[i]->d_name); k++) {
         if (shallBeEscaped(fileListTemp[i]->d_name[k])) *tmp++='\\';
            *tmp++ = fileListTemp[i]->d_name[k];
@@ -429,6 +431,7 @@ static FILE* fopenInPath(char* filename, char* path){
     if (shallBeEscaped(path[k])) *tmp++='\\';
     *tmp++ = path[k];
   }
+  *tmp++ = '\';
   for (k=0; k<strlen(filename); k++) {
     if (shallBeEscaped(filename[k])) *tmp++='\\';
     *tmp++ = filename[k];
@@ -463,7 +466,7 @@ static FILE* OpenFile(char* buffer, const char* cue) {
       for (tmp=0; tmp < strlen(cue); tmp++)
       {
          if ((cue[tmp] == '/') || (cue[tmp] == '\\'))
-           endofpath = (char*)&cue[tmp+1];
+           endofpath = (char*)&cue[tmp];
       }
 
       if ((path = (char *)calloc((endofpath - cue)*sizeof(char), 1)) == NULL)
