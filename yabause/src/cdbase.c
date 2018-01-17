@@ -431,7 +431,7 @@ static FILE* fopenInPath(char* filename, char* path){
     if (shallBeEscaped(path[k])) *tmp++='\\';
     *tmp++ = path[k];
   }
-  *tmp++ = '\';
+  *tmp++ = '\\';
   for (k=0; k<strlen(filename); k++) {
     if (shallBeEscaped(filename[k])) *tmp++='\\';
     *tmp++ = filename[k];
