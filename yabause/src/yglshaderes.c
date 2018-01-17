@@ -610,10 +610,10 @@ int Ygl_cleanupPerLineAlpha(void * p)
   // Restore Default Matrix
   glViewport(0, 0, _Ygl->width, _Ygl->height);
 
-  if (prg->blendmode == VDP2_CC_RATE ) {
+  if ( (prg->blendmode & 0x03) == VDP2_CC_RATE ) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  }else if (prg->blendmode == VDP2_CC_ADD) {
+  }else if ((prg->blendmode&0x03) == VDP2_CC_ADD) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE);
   }
@@ -639,8 +639,6 @@ int Ygl_uniformNormal_blur(void * p)
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-
-  prg->blendmode = 0;
 
   if (prg->prgid == PG_VDP2_BLUR_CRAM) {
     glEnableVertexAttribArray(prg->vertexp);
@@ -682,6 +680,15 @@ int Ygl_cleanupNormal_blur(void * p)
 
   // Restore Default Matrix
   glViewport(0, 0, _Ygl->width, _Ygl->height);
+
+  if ((prg->blendmode & 0x03) == VDP2_CC_RATE) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
+  else if ((prg->blendmode & 0x03) == VDP2_CC_ADD) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE);
+  }
 
   // call blit method
   YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);

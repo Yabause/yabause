@@ -2059,7 +2059,7 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC;
     }
-    if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+    if ((input->blendmode & VDP2_CC_BLUR) != 0) {
       prg = PG_VDP2_BLUR;
     }
     if (input->linescreen == 1) {
@@ -2074,7 +2074,7 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
   }
   else {
 
-    if(input->blendmode == VDP2_CC_ADD)
+    if( (input->blendmode&0x03) == VDP2_CC_ADD)
       prg = PG_VDP2_ADDCOLOR_CRAM;
     else
       prg = PG_VDP2_NORMAL_CRAM;
@@ -2083,7 +2083,7 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC_CRAM;
     }
-    if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+    if ((input->blendmode & VDP2_CC_BLUR) != 0) {
       prg = PG_VDP2_BLUR_CRAM;
     }
     if (input->linescreen == 1) {
@@ -2214,7 +2214,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
       if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
         prg = PG_VDP2_MOSAIC;
       }
-      if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+      if ((input->blendmode & VDP2_CC_BLUR) != 0) {
         prg = PG_VDP2_BLUR;
       }
       if (input->linescreen == 1) {
@@ -2227,7 +2227,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
         prg = PG_VDP2_PER_LINE_ALPHA;
       }
   } else {
-    if (input->blendmode == VDP2_CC_ADD)
+    if ( (input->blendmode&0x03) == VDP2_CC_ADD)
       prg = PG_VDP2_ADDCOLOR_CRAM;
     else
       prg = PG_VDP2_NORMAL_CRAM;
@@ -2235,7 +2235,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
       if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
         prg = PG_VDP2_MOSAIC_CRAM;
       }
-      if ((input->blendmode & 0x03) == VDP2_CC_BLUR) {
+      if (((input->blendmode & VDP2_CC_BLUR) != 0)) {
         prg = PG_VDP2_BLUR_CRAM;
       }
       if (input->linescreen == 1) {
@@ -2259,6 +2259,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   program->logwin1 = input->WindowArea1;
   program->winmode = input->LogicWin;
   program->lineTexture = input->lineTexture;
+  program->blendmode = input->blendmode;
 
   program->mosaic[0] = input->mosaicxmask;
   program->mosaic[1] = input->mosaicymask;
@@ -3231,17 +3232,19 @@ void YglRender(void) {
 
         if (level->prg[j].currentQuad != 0)
         {
-          if (level->prg[j].prgid == PG_LINECOLOR_INSERT || level->prg[j].prgid == PG_LINECOLOR_INSERT_CRAM){
+          if (level->prg[j].prgid == PG_LINECOLOR_INSERT ||
+              level->prg[j].prgid == PG_LINECOLOR_INSERT_CRAM || 
+             (level->prg[j].blendmode & VDP2_CC_BLUR) ){
             glDisable(GL_BLEND);
           }else{
-            if (level->prg[j].blendmode == VDP2_CC_NONE){
+            if ((level->prg[j].blendmode & 0x03) == VDP2_CC_NONE){
               glDisable(GL_BLEND);
             }
-            else if (level->prg[j].blendmode == VDP2_CC_RATE){
+            else if ((level->prg[j].blendmode & 0x03) == VDP2_CC_RATE){
               glEnable(GL_BLEND);
               glBlendFunc(blendfunc_src, blendfunc_dst);
             }
-            else if (level->prg[j].blendmode == VDP2_CC_ADD){
+            else if ( (level->prg[j].blendmode&0x03) == VDP2_CC_ADD){
               glEnable(GL_BLEND);
               glBlendFunc(GL_ONE, GL_SRC_ALPHA);
             }
