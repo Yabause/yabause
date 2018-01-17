@@ -6,9 +6,9 @@ environment:
 
   matrix:
     # Visual Studio build
-    - generator: "Visual Studio 12 Win64"
-      CMAKE_PREFIX_PATH: C:\Qt\5.4\msvc2013_64_opengl
-      compiler_type: "vs12-x64"
+    - generator: "Visual Studio 14 2015"
+      CMAKE_PREFIX_PATH: C:\Qt\5.6\msvc2015
+      compiler_type: "vs14-x32"
       sdl_filename: SDL2-devel-2.0.3-VC.zip
       sdl_arch: x64
       cmake_args: "-DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON -DYAB_NETWORK=ON -DYAB_WANT_GDBSTUB=ON"
