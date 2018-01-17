@@ -481,12 +481,12 @@ static int CalcSaveSize(SH2_struct *sh, u32 tableaddr, int blocksize)
    for(;;)
    {
        u16 block;
+       if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
+          tableaddr += 8;
        block = (sh->MappedMemoryReadByte(sh, tableaddr) << 8) | sh->MappedMemoryReadByte(sh, tableaddr + 2);
        if (block == 0)
          break;
        tableaddr += 4;
-       if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
-          tableaddr += 8;
        numblocks++;
    }
 
@@ -628,12 +628,12 @@ static u16 *GetFreeBlocks(SH2_struct *sh, u32 addr, u32 blocksize, u32 numblocks
          for(;;)
          {
             u16 block;
+            if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
+               tableaddr += 8;
             block = (sh->MappedMemoryReadByte(sh, tableaddr) << 8) | sh->MappedMemoryReadByte(sh, tableaddr + 2);
             if (block == 0)
                break;
             tableaddr += 4;
-            if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
-               tableaddr += 8;
             // block is used
             blocktbl[block] = 1;
          }
@@ -881,10 +881,24 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    }
 
    // Let's figure out how many blocks will be needed for the save
+   // Consider available size of a block as "blocksize - 6", 
+   // because 4 bytes at the beginning of each headers are
+   // reserved to save file system, and because each blocks
+   // require 2 bytes in allocation table.
+   // First block doesn't requires its entry in allocation
+   // table, but since allocation table ends with dummy zero
+   // block ID, we can consider that data available in first
+   // block is the same as in the other blocks.
+   // 
+   // Memo when used with internal memory :
+   //  - Block size is 64 bytes
+   //  - datasize=  1; -> savesize:  1 block
+   //  - datasize= 28; -> savesize:  1 block
+   //  - datasize= 29; -> savesize:  2 blocks
+   //  - datasize= 86; -> savesize:  2 blocks
+   //  - datasize= 87; -> savesize:  3 blocks
    datasize = sh->MappedMemoryReadLong(sh, sh->regs.R[5]+0x1C);
-   savesize = (datasize + 0x1D) / (blocksize - 6);
-   if ((datasize + 0x1D) % (blocksize - 6))
-      savesize++;
+   savesize = 1 + ((datasize + 0x1D) / (blocksize - 6));
 
    // Will it blend? Err... fit
    if (savesize > GetFreeSpace(sh, sh->regs.R[4], size, addr, blocksize))
@@ -974,17 +988,17 @@ static void FASTCALL BiosBUPWrite(SH2_struct * sh)
    // Lastly, write the actual save data
    while (datasize > 0)
    {
-      sh->MappedMemoryWriteByte(sh, workaddr, sh->MappedMemoryReadByte(sh, sh->regs.R[6]));
-      datasize--;
-      sh->regs.R[6]++;
-      workaddr+=2;
-
       if (((workaddr-1) & ((blocksize << 1) - 1)) == 0)
       {
          // Next block
          blockswritten++;
          workaddr = addr + (blocktbl[blockswritten] * blocksize * 2) + 9;
       }
+
+      sh->MappedMemoryWriteByte(sh, workaddr, sh->MappedMemoryReadByte(sh, sh->regs.R[6]));
+      datasize--;
+      sh->regs.R[6]++;
+      workaddr+=2;
    }
 
    free(blocktbl);
@@ -1053,17 +1067,17 @@ static void FASTCALL BiosBUPRead(SH2_struct * sh)
    // Now let's read in the data
    while (datasize > 0)
    {
-      sh->MappedMemoryWriteByte(sh, sh->regs.R[6], sh->MappedMemoryReadByte(sh, tableaddr));
-      datasize--;
-      sh->regs.R[6]++;
-      tableaddr+=2;
-
       if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
       {
          // Load up the next block
          tableaddr = addr + (blocktbl[blocksread] * blocksize * 2) + 9;
          blocksread++;
       }
+
+      sh->MappedMemoryWriteByte(sh, sh->regs.R[6], sh->MappedMemoryReadByte(sh, tableaddr));
+      datasize--;
+      sh->regs.R[6]++;
+      tableaddr+=2;
    }
 
    free(blocktbl);
@@ -1293,6 +1307,13 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
    // Now let's read in the data, and check to see if it matches 
    while (datasize > 0)
    {
+      if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
+      {
+         // Load up the next block
+         tableaddr = addr + (blocktbl[blocksread] * blocksize * 2) + 9;
+         blocksread++;
+      }
+
       if (sh->MappedMemoryReadByte(sh, sh->regs.R[6]) != sh->MappedMemoryReadByte(sh, tableaddr))
       {
          free(blocktbl);
@@ -1306,13 +1327,6 @@ static void FASTCALL BiosBUPVerify(SH2_struct * sh)
       datasize--;
       sh->regs.R[6]++;
       tableaddr+=2;
-
-      if (((tableaddr-1) & ((blocksize << 1) - 1)) == 0)
-      {
-         // Load up the next block
-         tableaddr = addr + (blocktbl[blocksread] * blocksize * 2) + 9;
-         blocksread++;
-      }
    }
 
    free(blocktbl);
