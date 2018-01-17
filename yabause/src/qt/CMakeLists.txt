@@ -66,7 +66,7 @@ set( yabause_qt_RESOURCES resources/resources.qrc )
 if ( WIN32 )
 	# Windows port libraries
 	set( yabause_qt_windows_LIBRARIES
-		vfw32 )
+		vfw32 legacy_stdio_definitions.lib )
 
 	# resources
 	set ( yabause_qt_windows_RESOURCES
