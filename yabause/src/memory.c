@@ -709,6 +709,8 @@ u8 FASTCALL MappedMemoryReadByte(SH2_struct *context, u32 addr)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
+      case 0x5:
       {
         return ReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
@@ -744,10 +746,12 @@ CACHE_LOG("rb %x %x\n", addr, addr >> 29);
    switch (addr >> 29)
    {
       case 0x1:
+      case 0x5:
       {
         return ReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x0:
+      case 0x4:
       {
          return CacheReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
@@ -798,6 +802,8 @@ u16 FASTCALL MappedMemoryReadWord(SH2_struct *context, u32 addr)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
+      case 0x5:
       {
         return ReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
@@ -837,10 +843,12 @@ u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct *context, u32 addr)
    switch (addr >> 29)
    {
       case 0x1:
+      case 0x5:
       {
         return ReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
-      case 0x0: //0x0 cache
+      case 0x0:
+      case 0x4: //0x0 cache
            return CacheReadWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x2:
          return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
@@ -888,6 +896,8 @@ u32 FASTCALL MappedMemoryReadLong(SH2_struct *context, u32 addr)
    {
       case 0x0:
       case 0x1: //0x0 no cache
+      case 0x4:
+      case 0x5:
       {
         return ReadLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
@@ -923,10 +933,12 @@ u32 FASTCALL SH2MappedMemoryReadLong(SH2_struct *context, u32 addr)
    switch (addr >> 29)
    {
       case 0x1: //0x0 no cache
+      case 0x5:
       {
         return ReadLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x0:
+      case 0x4:
       {
          return CacheReadLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
@@ -982,6 +994,8 @@ void FASTCALL MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
+      case 0x5:
       {
         WriteByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
@@ -1019,11 +1033,13 @@ void FASTCALL SH2MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
    switch (addr >> 29)
    {
       case 0x1:
+      case 0x5:
       {
         WriteByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x0:
+      case 0x4:
       {
 CACHE_LOG("wb %x %x\n", addr, addr >> 29);
          CacheWriteByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
@@ -1082,6 +1098,8 @@ void FASTCALL MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
+      case 0x5:
       {
         WriteWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
@@ -1119,11 +1137,13 @@ void FASTCALL SH2MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
    switch (addr >> 29)
    {
       case 0x1:
+      case 0x5:
       {
         WriteWordList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x0:
+      case 0x4:
       {
 CACHE_LOG("ww %x %x\n", addr, addr >> 29);
          // Cache/Non-Cached
@@ -1184,6 +1204,8 @@ void FASTCALL MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
    {
       case 0x0:
       case 0x1:
+      case 0x4:
+      case 0x5:
       {
         WriteLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
@@ -1221,11 +1243,13 @@ void FASTCALL SH2MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
    switch (addr >> 29)
    {
       case 0x1:
+      case 0x5:
       {
         WriteLongList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr, val);
         return;
       }
       case 0x0:
+      case 0x4:
       {
 CACHE_LOG("wl %x %x\n", addr, addr >> 29);
          // Cache/Non-Cached
