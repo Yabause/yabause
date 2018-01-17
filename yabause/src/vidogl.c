@@ -6629,7 +6629,7 @@ static void Vdp2DrawRBG0(void)
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0x9000) {
-    info->alpha = 0xFF;
+    info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
     info->blendmode = VDP2_CC_BLUR;
   }
   else {
