@@ -273,7 +273,7 @@ void YglCacheReset(YglTextureManager * tm);
 #define VDP2_CC_RATE 0x01
 #define VDP2_CC_ADD  0x02
 
-#define VDP2_CC_BLUR  0x03
+#define VDP2_CC_BLUR  0x04
 
 enum
 {
