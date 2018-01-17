@@ -3402,7 +3402,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         color = Vdp2RotationFetchPixel(info, x, y, 8);
       }
 
-      if (info->LineColorBase != 0 && VDP2_CC_NONE != info->blendmode) {
+      if (info->LineColorBase != 0 && VDP2_CC_NONE != (info->blendmode&0x03)) {
         u32 linecol = 0;
         if ((color & 0xFF000000) != 0) {
           if (parameter->lineaddr != 0xFFFFFFFF) {
@@ -5404,10 +5404,10 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
           if ((fixVdp2Regs->CCCTL>>8) & bit) { // Add Color
-            info->blendmode = VDP2_CC_ADD;
+            info->blendmode |= VDP2_CC_ADD;
           }
           else {
-            info->blendmode = VDP2_CC_RATE;
+            info->blendmode |= VDP2_CC_RATE;
           }
  
          switch            (id) {
@@ -5633,12 +5633,14 @@ static void Vdp2DrawNBG0(void)
   info.colornumber = (fixVdp2Regs->CHCTLA & 0x70) >> 4;
   int dest_alpha = ((fixVdp2Regs->CCCTL >> 9) & 0x01);
 
+  info.blendmode = 0;
+
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info.alpha = 0xFF;
-    info.blendmode = VDP2_CC_BLUR;
+    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+    info.blendmode |= VDP2_CC_BLUR;
   }
-  else {
+
 
     // Enable Color Calculation
     if (fixVdp2Regs->CCCTL & 0x1)
@@ -5648,15 +5650,15 @@ static void Vdp2DrawNBG0(void)
 
       // Color calculation mode bit
       if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
-        info.blendmode = VDP2_CC_ADD;
+        info.blendmode |= VDP2_CC_ADD;
         info.alpha = 0xFF;
       }
       else { // Use Color calculation ratio
         if (info.specialcolormode != 0 && dest_alpha) { // Just currently not supported
-          info.blendmode = VDP2_CC_NONE;
+          info.blendmode |= VDP2_CC_NONE;
         }
         else {
-          info.blendmode = VDP2_CC_RATE;
+          info.blendmode |= VDP2_CC_RATE;
         }
       }
       // Disable Color Calculation
@@ -5673,9 +5675,9 @@ static void Vdp2DrawNBG0(void)
       else {
         info.alpha = 0xFF;
       }
-      info.blendmode = VDP2_CC_NONE;
+      info.blendmode |= VDP2_CC_NONE;
     }
-  }
+
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG0);
   info.linescreen = 0;
@@ -5887,33 +5889,29 @@ static void Vdp2DrawNBG1(void)
 
   ReadMosaicData(&info, 0x2, fixVdp2Regs);
 
+
+  info.blendmode = 0;
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xC000) {
-    info.alpha = 0xFF;
-    info.blendmode = VDP2_CC_BLUR;
+    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+    info.blendmode |= VDP2_CC_BLUR;
   }
-  else {
-    if (fixVdp2Regs->CCCTL & 0x2)
-    {
+  
+  if (fixVdp2Regs->CCCTL & 0x2) {
+    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+    if (fixVdp2Regs->CCCTL & 0x100 ) {
+      info.blendmode |= VDP2_CC_ADD;
+    } else {
+      info.blendmode |= VDP2_CC_RATE;
+    }
+  } else {
+    // 12.14 CCRTMD
+    if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
       info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
-      if (fixVdp2Regs->CCCTL & 0x100 )
-      {
-        info.blendmode = VDP2_CC_ADD;
-      }
-      else {
-        info.blendmode = VDP2_CC_RATE;
-      }
+    } else {
+      info.alpha = 0xFF;
     }
-    else {
-      // 12.14 CCRTMD
-      if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-        info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
-      }
-      else {
-        info.alpha = 0xFF;
-      }
-      info.blendmode = VDP2_CC_NONE;
-    }
+    info.blendmode |= VDP2_CC_NONE;
   }
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1);
@@ -6137,22 +6135,24 @@ static void Vdp2DrawNBG2(void)
   else
     info.specialcode = fixVdp2Regs->SFCODE & 0xFF;
 
+  info.blendmode = 0;
+
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xD000) {
-    info.alpha = 0xFF;
-    info.blendmode = VDP2_CC_BLUR;
+    info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+    info.blendmode |= VDP2_CC_BLUR;
   }
-  else {
+
 
     if (fixVdp2Regs->CCCTL & 0x4)
     {
       info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
       if (fixVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/ )
       {
-        info.blendmode = VDP2_CC_ADD;
+        info.blendmode |= VDP2_CC_ADD;
       }
       else {
-        info.blendmode = VDP2_CC_RATE;
+        info.blendmode |= VDP2_CC_RATE;
       }
     }
     else {
@@ -6163,9 +6163,9 @@ static void Vdp2DrawNBG2(void)
       else {
         info.alpha = 0xFF;
       }
-      info.blendmode = VDP2_CC_NONE;
+      info.blendmode |= VDP2_CC_NONE;
     }
-  }
+
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG2);
   info.linescreen = 0;
@@ -6250,19 +6250,19 @@ static void Vdp2DrawNBG3(void)
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xE000) {
-    info.alpha = 0xFF;
-    info.blendmode = VDP2_CC_BLUR;
+    info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+    info.blendmode |= VDP2_CC_BLUR;
   }
-  else {
+
     if (fixVdp2Regs->CCCTL & 0x8)
     {
       info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
       if (fixVdp2Regs->CCCTL & 0x100 )
       {
-        info.blendmode = VDP2_CC_ADD;
+        info.blendmode |= VDP2_CC_ADD;
       }
       else {
-        info.blendmode = VDP2_CC_RATE;
+        info.blendmode |= VDP2_CC_RATE;
       }
     }
     else {
@@ -6274,9 +6274,9 @@ static void Vdp2DrawNBG3(void)
         info.alpha = 0xFF;
       }
 
-      info.blendmode = VDP2_CC_NONE;
+      info.blendmode |= VDP2_CC_NONE;
     }
-  }
+
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG3);
   info.linescreen = 0;
@@ -6627,39 +6627,29 @@ static void Vdp2DrawRBG0(void)
     paraB.lineaddr = 0xFFFFFFFF;
   }
 
+  info->blendmode = 0;
+
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0x9000) {
     info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
-    info->blendmode = VDP2_CC_BLUR;
+    info->blendmode |= VDP2_CC_BLUR;
   }
-  else {
-    if ((fixVdp2Regs->CCCTL & 0x010) == 0x10)
-    {
-      //if ((*Vdp2External.perline_alpha_draw & 0x10) != 0) {
-      //  info->alpha = 0xFF;
-      //}
-      //else {
-        info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
-      //}
 
-      if (fixVdp2Regs->CCCTL & 0x100 )
-      {
-        info->blendmode = VDP2_CC_ADD;
-      }
-      else {
-        info->blendmode = VDP2_CC_RATE;
-      }
+  if ((fixVdp2Regs->CCCTL & 0x010) == 0x10) {
+    info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+    if (fixVdp2Regs->CCCTL & 0x100 ){
+        info->blendmode |= VDP2_CC_ADD;
+    } else {
+        info->blendmode |= VDP2_CC_RATE;
     }
-    else {
-      // 12.14 CCRTMD
-      if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-        info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
-      }
-      else {
-        info->alpha = 0xFF;
-      }
-      info->blendmode = VDP2_CC_NONE;
+  } else {
+    // 12.14 CCRTMD
+    if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
+      info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+    } else {
+      info->alpha = 0xFF;
     }
+    info->blendmode |= VDP2_CC_NONE;
   }
 
   info->coloroffset = (fixVdp2Regs->CRAOFB & 0x7) << 8;
