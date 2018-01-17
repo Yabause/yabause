@@ -583,6 +583,7 @@ int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c);
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line);
 void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy);
 void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy);
 void YglCachedQuad(vdp2draw_struct *, YglCache *);

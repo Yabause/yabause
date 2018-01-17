@@ -324,6 +324,8 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     u16 temp;
     u32 colorLut = cmd->CMDCOLR * 8;
 
+    if (cmd->CMDCOLR == 0) return 0;
+
     // RBG and pallet mode
     if ( (cmd->CMDCOLR & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
       color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(cmd->CMDCOLR));
@@ -1880,7 +1882,7 @@ static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr) {
   u32 color;
   u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
   if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
-  else color = SAT2YAB1(0xFF, dot);
+  else color = SAT2YAB1(info->alpha, dot);
   return color;
 }
 
@@ -2928,7 +2930,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   case 3: // 16 BPP(RGB)
     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
     if (!(dot & 0x8000) && info->transparencyenable) return 0x00000000;
-    else return SAT2YAB1(0xFF, dot);
+    else return SAT2YAB1(alpha, dot);
   case 4: // 32 BPP
     dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
     if (!(dot & 0x80000000) && info->transparencyenable) return 0x00000000;
@@ -3082,11 +3084,9 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     YGL_THREAD_DEBUG("Vdp2DrawRotation out %d\n", curret_rbg->vdp2_sync_flg);
   }
   else {
+    u64 cacheaddr = 0x90000000BAD;
 
-    YglCache tmpc;
     rbg->vdp2_sync_flg = -1;
-
-    u64 cacheaddr = 0x80000000BAD;
     YglTMAllocate(_Ygl->texture_manager, &rbg->texture, info->cellw, info->cellh, &x, &y);
     rbg->c.x = x;
     rbg->c.y = y;
@@ -3094,10 +3094,12 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     info->cellw = cellw;
     info->cellh = cellh;
 
-    YglQuadRbg0(&rbg->info, &rbg->texture, &rbg->c, &rbg->cline);
-    info->cellw = cellw;
-    info->cellh = cellh;
     Vdp2DrawRotation_in(rbg);
+    
+    rbg->info.cellw = rbg->hres;
+    rbg->info.cellh = rbg->vres;
+    rbg->info.flipfunction = 0;
+    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline);
   }
 }
 
