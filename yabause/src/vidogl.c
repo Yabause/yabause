@@ -1833,6 +1833,7 @@ static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr) {
   u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
   if ((dot == 0) && info->transparencyenable) return 0x00000000;
   else {
+    cramindex = info->coloroffset + dot;
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     return   cramindex | alpha << 24;
   }
