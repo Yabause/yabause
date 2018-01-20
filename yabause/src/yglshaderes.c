@@ -170,8 +170,12 @@ int Ygl_uniformVdp1CommonParam(void * p){
 #if !defined(_OGLES3_)
     if (glTextureBarrierNV) glTextureBarrierNV();
 #else
-    if( glMemoryBarrier ) glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT);
-#endif
+    if( glMemoryBarrier ){
+      glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
+    }else{
+      //glFinish();
+    }
+#endif    
     glActiveTexture(GL_TEXTURE0); 
   }
 
