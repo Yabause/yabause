@@ -704,15 +704,19 @@ int YabauseEmulate(void) {
          {
              THREAD_LOG("Unlock MSH2\n");
 #ifdef SSH2_ASYNC
-             if (yabsys.IsSSH2Running) {
-                SSH2->cycles_request = yabsys.DecilineStop;
-                sem_post(&SSH2->start);
+               if (yabsys.IsSSH2Running) {
+                  if(yabsys.DecilineCount == 0) {
+                    SSH2->cycles_request = (DECILINE_STEP)*yabsys.DecilineStop;
+                    sem_post(&SSH2->start);
+               }
              }
 #endif
              sh2ExecuteSync(MSH2, yabsys.DecilineStop);
              if (yabsys.IsSSH2Running) {
 #ifdef SSH2_ASYNC
+             if(yabsys.DecilineCount == (DECILINE_STEP-1)) {
                sem_wait(&SSH2->end);
+             }
 #else
                sh2ExecuteSync(SSH2, yabsys.DecilineStop);
 #endif
