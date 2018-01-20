@@ -1078,6 +1078,7 @@ static void FASTCALL SH2macl(SH2_struct * sh)
    s32 m = INSTRUCTION_C(sh->instruction);
    s32 n = INSTRUCTION_B(sh->instruction);
    s32 m0, m1;
+   u64 a, b, sum;
 
    m1 = (s32) SH2MappedMemoryReadLong(sh, sh->regs.R[n]);
    sh->regs.R[n] += 4;
@@ -1085,7 +1086,6 @@ static void FASTCALL SH2macl(SH2_struct * sh)
    sh->regs.R[m] += 4;
 
 #if 1 // fast and better
-   u64 a, b, sum;
    a = sh->regs.MACL | ((u64)sh->regs.MACH << 32);
    b = (s64)m0 * m1;
    sum = a+b;
