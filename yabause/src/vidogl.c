@@ -2912,8 +2912,9 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
 void Vdp2DrawRotationThread(void * p) {
+#if RBG_PROFILE
 
-
+#endif
 
   while (Vdp2DrawRotationThread_running) {
     YabThreadSetCurrentThreadAffinityMask(0x02);
