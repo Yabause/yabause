@@ -359,6 +359,7 @@ typedef struct SH2_struct_s
    int thread_running;
    sem_t start;
    sem_t end;
+   sem_t lock;
    int thread_id;
 #endif
 } SH2_struct;

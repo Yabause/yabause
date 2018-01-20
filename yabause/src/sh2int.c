@@ -32,6 +32,14 @@
 #include "bios.h"
 #include "yabause.h"
 
+#ifdef SSH2_ASYNC
+#define LOCK(A) sem_wait(&A->lock)
+#define UNLOCK(A) sem_post(&A->lock)
+#else
+#define LOCK(A)
+#define UNLOCK(A)
+#endif
+
 opcodefunc opcodes[0x10000];
 
 SH2Interface_struct SH2Interpreter = {
@@ -114,6 +122,7 @@ fetchfunc fetchlist[0x100];
 
 static INLINE void SH2HandleInterrupts(SH2_struct *context)
 {
+  LOCK(context);
   if (context->NumberOfInterrupts != 0)
   {
     if (context->interrupts[context->NumberOfInterrupts - 1].level > context->regs.SR.part.I)
@@ -130,7 +139,8 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
       context->NumberOfInterrupts--;
       context->isSleeping = 0;
     }
-}
+  }
+  UNLOCK(context);
 }
 
 
@@ -3054,16 +3064,20 @@ void SH2InterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
 {
    u32 i, i2;
    interrupt_struct tmp;
+   LOCK(context);
 
    // Make sure interrupt doesn't already exist
    for (i = 0; i < context->NumberOfInterrupts; i++)
    {
-      if (context->interrupts[i].vector == vector)
+      if (context->interrupts[i].vector == vector) {
+         UNLOCK(context);
          return;
+      }
    }
 
    // Ignore Timer0 and Timer1 when masked
    if ((vector == 67 || vector == 68) && level <= context->regs.SR.part.I){
+     UNLOCK(context);
      return;
    }
 
@@ -3087,6 +3101,7 @@ void SH2InterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
          }
       }
    }
+   UNLOCK(context);
 }
 
 //////////////////////////////////////////////////////////////////////////////

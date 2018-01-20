@@ -240,6 +240,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
 #ifdef SSH2_ASYNC
    MSH2->thread_running = 0;
    sem_init(&MSH2->start, 0, 0);
+   sem_init(&MSH2->lock, 0, 1);
    sem_init(&MSH2->end, 0, 1);
    MSH2->cycles_request = 0;
    MSH2->thread_id = YAB_THREAD_MSH2;
@@ -249,6 +250,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
 #ifdef SSH2_ASYNC
    SSH2->thread_running = 0;
    sem_init(&SSH2->start, 0, 0);
+   sem_init(&SSH2->lock, 0, 1);
    sem_init(&SSH2->end, 0, 1);
    SSH2->cycles_request = 0;
    SSH2->thread_id = YAB_THREAD_SSH2;
@@ -306,6 +308,7 @@ int YabauseInit(yabauseinit_struct *init)
 #ifdef SSH2_ASYNC
    MSH2->thread_running = 0;
    sem_init(&MSH2->start, 0, 0);
+   sem_init(&MSH2->lock, 0, 1);
    sem_init(&MSH2->end, 0, 1);
    MSH2->cycles_request = 0;
    MSH2->thread_id = YAB_THREAD_MSH2;
@@ -315,6 +318,7 @@ int YabauseInit(yabauseinit_struct *init)
 #ifdef SSH2_ASYNC
    SSH2->thread_running = 0;
    sem_init(&SSH2->start, 0, 0);
+   sem_init(&SSH2->lock, 0, 1);
    sem_init(&SSH2->end, 0, 1);
    SSH2->cycles_request = 0;
    SSH2->thread_id = YAB_THREAD_SSH2;
