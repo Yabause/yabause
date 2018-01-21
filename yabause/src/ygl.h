@@ -273,7 +273,7 @@ void YglCacheReset(YglTextureManager * tm);
 #define VDP2_CC_RATE 0x01
 #define VDP2_CC_ADD  0x02
 
-#define VDP2_CC_BLUR  0x03
+#define VDP2_CC_BLUR  0x04
 
 enum
 {
@@ -289,33 +289,63 @@ enum
    PG_VFP1_HALF_LUMINANCE,
    PG_VFP1_MESH,
    PG_VDP2_ADDBLEND,
-   PG_VDP2_DRAWFRAMEBUFF,    
    PG_WINDOW,
    PG_LINECOLOR_INSERT,
    PG_LINECOLOR_INSERT_CRAM,
    PG_LINECOLOR_INSERT_DESTALPHA,
    PG_LINECOLOR_INSERT_DESTALPHA_CRAM,
-
-   PG_VDP2_DRAWFRAMEBUFF_LINECOLOR,
-   PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR,
-   PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW,
-   PG_VDP2_DRAWFRAMEBUFF_LINECOLOR_DESTINATION_ALPHA,
-   PG_VDP2_DRAWFRAMEBUFF_PERLINE,
    PG_VDP2_BLUR,
    PG_VDP2_MOSAIC,
    PG_VDP2_PER_LINE_ALPHA,
    PG_VDP2_NORMAL_CRAM,
+   PG_VDP2_ADDCOLOR_CRAM,
    PG_VDP2_BLUR_CRAM,
    PG_VDP2_MOSAIC_CRAM,
    PG_VDP2_PER_LINE_ALPHA_CRAM,
    PG_VDP2_RBG_CRAM_LINE,
-
    PG_VFP1_GOURAUDSAHDING_TESS,
    PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
    PG_VFP1_HALFTRANS_TESS,
    PG_VFP1_SHADOW_TESS,
    PG_VFP1_MESH_TESS,
    PG_VFP1_GOURAUDSAHDING_SPD_TESS,
+   PG_VDP2_DRAWFRAMEBUFF,
+   PG_VDP2_DRAWFRAMEBUFF_DESTALPHA,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL,
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL,
+   PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL,
+   PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_ADD,
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD,
+   PG_VDP2_DRAWFRAMEBUFF_MORE_ADD,
+   PG_VDP2_DRAWFRAMEBUFF_MSB_ADD,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE,
+   PG_VDP2_DRAWFRAMEBUFF_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK,
+   PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK,
+
+   PG_VDP2_DRAWFRAMEBUFF_SHADOW,
+
+   PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW,
+
    PG_MAX,
 };
 
@@ -339,6 +369,23 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
 int Ygl_uniformVdp1CommonParam(void * p);
 int Ygl_cleanupVdp1CommonParam(void * p);
 
+// std140
+typedef struct  { 
+ float u_pri[8*4];  
+ float u_alpha[8*4];
+ float u_coloroffset[4];
+ float u_cctll;
+ float u_emu_height;
+ float u_vheight;
+ int u_color_ram_offset;
+} UniformFrameBuffer;
+
+/*
+int isSpecialColorCal;   // (fixVdp2Regs->CCCTL >> 6) & 0x01);
+int SpecialColorCalMode; // (fixVdp2Regs->SPCTL >> 12) & 0x3;
+*/
+
+#define FRAME_BUFFER_UNIFORM_ID (5)
 
 typedef struct {
    int prgid;
@@ -369,6 +416,7 @@ typedef struct {
    int mosaic[2];
    u32 lineTexture;
    int id;
+   int colornumber;
 } YglProgram;
 
 typedef struct {
@@ -522,6 +570,10 @@ typedef struct {
    u32 colupd_max_addr;
    YabMutex * crammutex;
 
+   UniformFrameBuffer fbu_;
+   GLuint framebuffer_uniform_id_;
+   int msb_shadow_count_[2];
+
 }  Ygl;
 
 extern Ygl * _Ygl;
@@ -531,6 +583,7 @@ int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c);
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line);
 void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy);
 void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy);
 void YglCachedQuad(vdp2draw_struct *, YglCache *);
@@ -548,7 +601,8 @@ void YglEndWindow( vdp2draw_struct * info );
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache);
 
-u32 * YglGetPerlineBuf(YglPerLineInfo * perline);
+u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount,int depth );
+void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int depth);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add 
 int YglSetLevelBlendmode( int pri, int mode );
@@ -600,7 +654,6 @@ void Vdp2RgbTextureSync();
 int YglGenerateAABuffer();
 int YglSetupWindow(YglProgram * prg);
 int YglCleanUpWindow(YglProgram * prg);
-void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int size);
 
 void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
@@ -669,6 +722,29 @@ extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 #else
 #define SAT2YAB2(alpha,dot1,dot2)       (alpha << 24 | ((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF))
 #endif
+
+/*
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|S|C|A|A|A|P|P|P|s| | | | | | | |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+S show flag
+C index or direct color
+A alpha index
+P priority
+s Shadow Flag
+
+*/
+static INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
+  if (shadow != 0) {
+    int a = 0;
+  }
+  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | color;
+}
+
+static INLINE u32 VDP1COLOR16TO24(u16 temp) {
+  return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9);
+}
+
 
 #endif // YGL_H
 

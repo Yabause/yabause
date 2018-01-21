@@ -22,6 +22,7 @@ map< int , int > g_Keymap;
 extern "C" {
 #include "../config.h"
 #include "yabause.h"
+#include "vdp2.h"
 #include "scsp.h"
 #include "vidsoft.h"
 #include "vidogl.h"
@@ -191,6 +192,15 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
       LOG("LOAD SLOT 1");
     }
 
+    if (key == GLFW_KEY_F3) {
+      vdp2ReqDump();
+      LOG("Req dump");
+    }
+
+    if (key == GLFW_KEY_F4) {
+      vdp2ReqRestore();
+      LOG("ReqRestore");
+    }
   }
 }
 
@@ -336,18 +346,29 @@ int main( int argc, char * argcv[] )
   }
   VIDCore->Resize(0,0,width,height,0);
 
+  string test_path = "";
+  string test_target = "";
+
   for (int i = 0; i < argc; i++) {
     string sarg(argcv[i]);
     string::size_type pos;
     if ((pos = sarg.find("test=")) != string::npos) {
-      std::string test_path = sarg.substr(pos + 5);
-      test_fw_ = new TestFramework();
-      if (test_fw_->load("Yaba Sanshiro", test_path) != 0) {
-        printf("Fail to read %s\n", test_path.c_str());
-        exit(-1);
-      }
-      test_fw_->setSaveScreenShotCallback(saveScreenshot);
+      test_path = sarg.substr(pos + 5);
     }
+
+    if ((pos = sarg.find("test_target=")) != string::npos) {
+      test_target = sarg.substr(pos + 12);
+    }
+  }
+
+  if (test_path != "") {
+    test_fw_ = new TestFramework();
+    if (test_fw_->load("Yaba Sanshiro", test_path) != 0) {
+      printf("Fail to read %s\n", test_path.c_str());
+      exit(-1);
+    }
+    test_fw_->setSaveScreenShotCallback(saveScreenshot);
+    test_fw_->setTarget(test_target);
   }
 
   glfwSetTime(0);

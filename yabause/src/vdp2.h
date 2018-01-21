@@ -25,6 +25,10 @@
 /* This include is not *needed*, it's here to avoid breaking ports */
 #include "osdcore.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern u8 * Vdp2Ram;
 extern u8 * Vdp2ColorRam;
 extern u8 Vdp2ColorRamUpdated;
@@ -434,5 +438,11 @@ void VdpProc( void *arg );
 extern YabEventQueue * evqueue;
 
 int VideoSetFilterType( int video_filter_type );
+void vdp2ReqDump();
+void vdp2ReqRestore();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
