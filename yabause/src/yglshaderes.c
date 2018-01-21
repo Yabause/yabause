@@ -28,7 +28,11 @@
 #include "vidshared.h"
 #include "shaders/FXAA_DefaultES.h"
 
+#if defined(__ANDROID__) || defined(_WINDOWS)
 #define YGLLOG yprintf
+#else
+#define YGLLOG printf
+#endif
 
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
