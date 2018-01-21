@@ -59,8 +59,6 @@ static int throttlespeed=0;
 u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
-int vbalnk_wait = 0;
-int voutflg = 0;
 // Asyn rendering
 YabEventQueue * evqueue = NULL; // Event Queue for async rendring
 YabEventQueue * rcv_evqueue = NULL;
@@ -191,16 +189,11 @@ void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
 
 void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    addr &= 0xFFF;
-   //if (Vdp2ColorRamUpdated == 0){
-     if (val != T2ReadWord(Vdp2ColorRam, addr)){
-       T2WriteWord(Vdp2ColorRam, addr, val);
-       YglOnUpdateColorRamWord(addr);
-       return;
-     }
-   //}
-   T2WriteWord(Vdp2ColorRam, addr, val);
-//   if (Vdp2Internal.ColorMode == 0)
-//      T1WriteWord(Vdp2ColorRam, addr + 0x800, val);
+   if (val != T2ReadWord(Vdp2ColorRam, addr)){
+     T2WriteWord(Vdp2ColorRam, addr, val);
+     YglOnUpdateColorRamWord(addr);
+     return;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -455,7 +448,7 @@ void Vdp2VBlankIN(void) {
     evqueue = YabThreadCreateQueue(32);
     YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
   }
-  vbalnk_wait = 0;
+
   FrameProfileAdd("VIN event");
   YabAddEventQueue(evqueue,VDPEV_VBLANK_IN);
 
@@ -557,7 +550,10 @@ void Vdp2HBlankOUT(void) {
 
       *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
     }
+    if (Vdp2Lines[0].PRISA != Vdp2Lines[yabsys.LineCount].PRISA) {
 
+      *Vdp2External.perline_alpha |= 0x40;
+    }
   }
 
    //if (yabsys.LineCount == 0){
@@ -593,7 +589,6 @@ void Vdp2HBlankOUT(void) {
       vdp_proc_running = 1;
       YabThreadStart(YAB_THREAD_VDP, VdpProc, NULL);
     }
-    voutflg = 1;
     if (Vdp1External.swap_frame_buffer == 1 )
     {
       Vdp1Regs->EDSR >>= 1;
@@ -711,6 +706,44 @@ void SpeedThrottleDisable(void) {
   throttlespeed = 0;
 }
 
+void dumpvram() {
+  FILE * fp = fopen("vdp2vram.bin", "wb");
+  fwrite(Vdp2Regs, sizeof(Vdp2), 1, fp);
+  fwrite(Vdp2Ram, 0x80000, 1, fp);
+  fwrite(Vdp2ColorRam, 0x1000, 1, fp);
+  fwrite(&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
+  fwrite((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
+  fwrite((void *)Vdp1Ram, 0x80000, 1, fp);
+  fwrite(&Vdp1External, sizeof(Vdp1External_struct), 1, fp);
+  fclose(fp);
+}
+
+void restorevram() {
+  FILE * fp = fopen("vdp2vram.bin", "rb");
+  fread(Vdp2Regs, sizeof(Vdp2), 1, fp);
+  fread(Vdp2Ram, 0x80000, 1, fp);
+  fread(Vdp2ColorRam, 0x1000, 1, fp);
+  fread(&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
+  fread((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
+  fread((void *)Vdp1Ram, 0x80000, 1, fp);
+  fread(&Vdp1External, sizeof(Vdp1External_struct), 1, fp);
+  fclose(fp);
+
+  for (int i = 0; i < 0x1000; i += 2) {
+    YglOnUpdateColorRamWord(i);
+  }
+}
+
+int g_vdp_debug_dmp = 0;
+
+void vdp2ReqDump() {
+  g_vdp_debug_dmp = 2;
+}
+
+void vdp2ReqRestore() {
+  g_vdp_debug_dmp = 1;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankOUT(void) {
   static int framestoskip = 0;
@@ -724,6 +757,17 @@ void vdp2VBlankOUT(void) {
   int isrender = 0;
 
   FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
+
+  if (g_vdp_debug_dmp == 1) {
+    g_vdp_debug_dmp = 0;
+    restorevram();
+  }
+
+  if (g_vdp_debug_dmp == 2) {
+    g_vdp_debug_dmp = 0;
+    dumpvram();
+  }
+
 
   if (skipnextframe && (!saved))
   {
@@ -1493,6 +1537,9 @@ int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
 
    if(VIDCore) VIDCore->Resize(0,0,0,0,0);
 
+   for (int i = 0; i < 0x1000; i += 2) {
+     YglOnUpdateColorRamWord(i);
+   }
 
    return size;
 }
