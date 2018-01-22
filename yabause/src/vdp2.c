@@ -437,7 +437,7 @@ void Vdp2HBlankOUT(void) {
     }
   }
 
-  if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount) && (Vdp1External.plot_trigger_line > yabsys.VBlankLineCount)) {
+  if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount)) {
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
       Vdp1Regs->EDSR >>= 1;
       Vdp1Draw();
@@ -459,15 +459,6 @@ void Vdp2HBlankOUT(void) {
         Vdp1External.swap_frame_buffer = 1;
       }
 
-      // Plot trigger mode = Draw when frame is changed
-      if (Vdp1Regs->PTMR == 2){
-        Vdp1External.frame_change_plot = 1;
-        FRAMELOG("frame_change_plot 1");
-      }
-      else{
-        Vdp1External.frame_change_plot = 0;
-        FRAMELOG("frame_change_plot 0");
-      }
       vdp2VBlankOUT();
     }
     else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
@@ -609,7 +600,7 @@ void vdp2VBlankOUT(void) {
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
 
-  FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
+  FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer);
 
   if (g_vdp_debug_dmp == 1) {
     g_vdp_debug_dmp = 0;
@@ -657,8 +648,8 @@ void vdp2VBlankOUT(void) {
     FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
 
     // if Plot Trigger mode == 0x02 draw start
-    if (Vdp1External.frame_change_plot == 1){
-      FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
+    if (Vdp1Regs->PTMR == 0x2){
+      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly", Vdp1Regs->EDSR);
       Vdp1Draw();
       isrender = 1;
     }

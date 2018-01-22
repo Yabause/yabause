@@ -124,7 +124,6 @@ typedef struct {
    int manualerase;
    int manualchange;
    int vbalnk_erase;
-   int frame_change_plot;
    int swap_frame_buffer;
    int plot_trigger_line;
    int current_frame;
