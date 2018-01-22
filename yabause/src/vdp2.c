@@ -590,39 +590,9 @@ void vdp2ReqRestore() {
 
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankOUT(void) {
-  static int framestoskip = 0;
-  static int framesskipped = 0;
-  static int skipnextframe = 0;
-  static u64 curticks = 0;
-  static u64 diffticks = 0;
-  static u32 framecount = 0;
-  static u64 onesecondticks = 0;
-  static VideoInterface_struct * saved = NULL;
   int isrender = 0;
 
   FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer);
-
-  if (g_vdp_debug_dmp == 1) {
-    g_vdp_debug_dmp = 0;
-    restorevram();
-  }
-
-  if (g_vdp_debug_dmp == 2) {
-    g_vdp_debug_dmp = 0;
-    dumpvram();
-  }
-
-
-  if (skipnextframe && (!saved))
-  {
-    saved = VIDCore;
-    VIDCore = &VIDDummy;
-  }
-  else if (saved && (!skipnextframe))
-  {
-    VIDCore = saved;
-    saved = NULL;
-  }
 
   VIDCore->Vdp2DrawStart();
 
@@ -668,70 +638,6 @@ void vdp2VBlankOUT(void) {
    FPSDisplay();
    //if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
    //   Vdp1External.manualerase = 1;
-
-   if (!skipnextframe)
-   {
-      framesskipped = 0;
-
-      if (framestoskip > 0)
-         skipnextframe = 1;
-   }
-   else
-   {
-      framestoskip--;
-
-      if (framestoskip < 1)
-         skipnextframe = 0;
-      else
-         skipnextframe = 1;
-
-      framesskipped++;
-   }
-
-   // Do Frame Skip/Frame Limiting/Speed Throttling here
-   if (throttlespeed)
-   {
-      // Should really depend on how fast we're rendering the frames
-      if (framestoskip < 1)
-         framestoskip = 6;
-   }
-   //when in frame advance, disable frame skipping
-   else if (autoframeskipenab && FrameAdvanceVariable == 0)
-   {
-      framecount++;
-
-      if (framecount > (yabsys.IsPal ? 50 : 60))
-      {
-         framecount = 1;
-         onesecondticks = 0;
-      }
-
-      curticks = YabauseGetTicks();
-      diffticks = curticks-lastticks;
-
-      if ((onesecondticks+diffticks) > ((yabsys.OneFrameTime * (u64)framecount) + (yabsys.OneFrameTime / 2)) &&
-          framesskipped < 9)
-      {
-         // Skip the next frame
-         skipnextframe = 1;
-
-         // How many frames should we skip?
-         framestoskip = 1;
-      }else if ((onesecondticks+diffticks) < ((yabsys.OneFrameTime * (u64)framecount) - (yabsys.OneFrameTime / 2)) && (isAutoFrameSkip() == 0))
-      {
-         // Check to see if we need to limit speed at all
-         for (;;)
-         {
-            curticks = YabauseGetTicks();
-            diffticks = curticks-lastticks;
-            if ((onesecondticks+diffticks) >= (yabsys.OneFrameTime * (u64)framecount))
-               break;
-         }
-      }
-
-      onesecondticks += diffticks;
-      lastticks = curticks;
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
