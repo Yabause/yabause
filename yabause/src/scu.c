@@ -236,38 +236,20 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
       // DMA copy
       if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
           && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
-         // Copy in 16-bit units, avoiding misaligned accesses.
-
-         if (ReadAddress & 2) {  // Avoid misaligned access
-            u16 tmp = MappedMemoryReadWord(NULL, ReadAddress);
-            MappedMemoryWriteWord(NULL, WriteAddress, tmp);
+         while (counter < (TransferSize&(~0x1))) {
+            MappedMemoryWriteWord(NULL, WriteAddress, MappedMemoryReadWord(NULL, ReadAddress));
             WriteAddress += WriteAdd;
             ReadAddress += 2;
             counter += 2;
-         }
-         if (TransferSize >= 3)
-         {
-            while (counter < TransferSize-2) {
-               u32 tmp = MappedMemoryReadLong(NULL, ReadAddress);
-               MappedMemoryWriteWord(NULL, WriteAddress, (u16)(tmp >> 16));
-               WriteAddress += WriteAdd;
-               MappedMemoryWriteWord(NULL, WriteAddress, (u16)tmp);
-               WriteAddress += WriteAdd;
-               ReadAddress += 4;
-               counter += 4;
-            }
          }
          if (counter < TransferSize) {
-            u16 tmp = MappedMemoryReadWord(NULL, ReadAddress);
-            MappedMemoryWriteWord(NULL, WriteAddress, tmp);
-            WriteAddress += WriteAdd;
-            ReadAddress += 2;
-            counter += 2;
+            MappedMemoryWriteByte(NULL, WriteAddress, MappedMemoryReadByte(NULL, ReadAddress));
+            counter += 1;
          }
       }
       else {
          u32 start = WriteAddress;
-         while (counter < TransferSize) {
+         while (counter < (TransferSize&(~0x3))) {
             MappedMemoryWriteLong(NULL, WriteAddress, MappedMemoryReadLong(NULL, ReadAddress));
             ReadAddress += 4;
             WriteAddress += WriteAdd;
