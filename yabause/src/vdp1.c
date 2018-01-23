@@ -333,24 +333,32 @@ extern YabEventQueue * vdp1_rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
 
+void updateFBMode() {
+  Vdp1External.manualchange = 0;
+  Vdp1External.manualerase = 0;
+  Vdp1External.onecyclemode = 0;
+  Vdp1External.vblank_erase = 0;
+  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){
+    Vdp1External.vblank_erase = ((Vdp1Regs->FBCR & 3) == 3);
+  } else {
+    Vdp1External.onecyclemode = ((Vdp1Regs->FBCR & 3) == 0);
+    Vdp1External.manualerase = ((Vdp1Regs->FBCR & 3) == 2);
+    Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
+  }
+}
+
 void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
   addr &= 0xFF;
   switch(addr) {
     case 0x0:
       Vdp1Regs->TVMR = val;
+      updateFBMode();
       FRAMELOG("Write VBE=%d line = %d\n", (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
     break;
     case 0x2:
       FRAMELOG("Write FCM=%d FCT=%d VBE=%d line = %d\n", (val & 0x02) >> 1, (val & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
       Vdp1Regs->FBCR = val;
-      if ((Vdp1Regs->FBCR & 3) == 3) {
-        FRAMELOG("manual change\n");
-        Vdp1External.manualchange = 1;
-      }
-      else if ((Vdp1Regs->FBCR & 3) == 2) {
-        FRAMELOG("manual release\n");
-        Vdp1External.manualerase = 1;
-      }
+      updateFBMode();
       break;
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d", val, yabsys.LineCount);
