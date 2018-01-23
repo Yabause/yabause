@@ -466,10 +466,10 @@ static FILE* OpenFile(char* buffer, const char* cue) {
       for (tmp=0; tmp < strlen(cue); tmp++)
       {
          if ((cue[tmp] == '/') || (cue[tmp] == '\\'))
-           endofpath = (char*)&cue[tmp]+1;
+           endofpath = (char*)&cue[tmp];
       }
 
-      if ((path = (char *)calloc((endofpath - cue)*sizeof(char), 1)) == NULL)
+      if ((path = (char *)calloc((endofpath - cue +1)*sizeof(char), 1)) == NULL)
       {
          return NULL;
       }
