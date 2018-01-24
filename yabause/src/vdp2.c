@@ -591,7 +591,7 @@ void vdp2VBlankOUT(void) {
   Vdp1External.swap_frame_buffer |= (Vdp1External.onecyclemode == 1);
   Vdp1External.swap_frame_buffer |= (Vdp1External.vblank_erase == 1);
 
-  if ((Vdp1External.onecyclemode == 1) || (Vdp1External.vblank_erase) || (Vdp1External.manualchange == 1)) {
+  if ((Vdp1External.onecyclemode == 1) || (Vdp1External.vblank_erase)) {
        VIDCore->Vdp1EraseWrite();
   }
 
