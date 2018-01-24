@@ -341,7 +341,7 @@ void updateFBMode() {
   if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){
     Vdp1External.vblank_erase = ((Vdp1Regs->FBCR & 3) == 3);
   } else {
-    Vdp1External.onecyclemode = ((Vdp1Regs->FBCR & 3) == 0);
+    Vdp1External.onecyclemode = ((Vdp1Regs->FBCR & 3) == 0) || ((Vdp1Regs->FBCR & 3) == 1);
     Vdp1External.manualerase = ((Vdp1Regs->FBCR & 3) == 2);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   }
