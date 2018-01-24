@@ -2471,6 +2471,7 @@ void YglEraseWriteVDP1(void) {
   u16 color;
   int priority;
   u32 alpha = 0;
+  int status = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
@@ -2528,6 +2529,13 @@ void YglEraseWriteVDP1(void) {
   glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+  //Get back to drawframe
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
+  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if( status != GL_FRAMEBUFFER_COMPLETE ) {
+    YGLLOG("YglRenderVDP1: Framebuffer status = %08X\n", status );
+  }
+
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   
 }

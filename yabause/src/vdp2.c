@@ -587,16 +587,16 @@ void vdp2VBlankOUT(void) {
   VIDCore->Vdp2DrawStart();
 
   // Manual Change
-  Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange & 1);
-  Vdp1External.swap_frame_buffer |= (Vdp1External.onecyclemode & 1);
-  Vdp1External.swap_frame_buffer |= (Vdp1External.vblank_erase & 1);
+  Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange == 1);
+  Vdp1External.swap_frame_buffer |= (Vdp1External.onecyclemode == 1);
+  Vdp1External.swap_frame_buffer |= (Vdp1External.vblank_erase == 1);
 
   if ((Vdp1External.onecyclemode == 1) || (Vdp1External.vblank_erase) || (Vdp1External.manualchange == 1)) {
        VIDCore->Vdp1EraseWrite();
   }
 
   // Frame Change
-  if (Vdp1External.swap_frame_buffer&1 != 0)
+  if (Vdp1External.swap_frame_buffer == 1)
   {
     if (Vdp1External.manualerase == 1)
     {
@@ -612,13 +612,13 @@ void vdp2VBlankOUT(void) {
 
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1Regs->PTMR == 0x2){
-      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly", Vdp1Regs->EDSR);
+      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly");
       Vdp1Draw();
       yabsys.wait_line_count = 30;
     }
-  }
+    Vdp1External.swap_frame_buffer = 0;
 
-  Vdp1External.swap_frame_buffer = 0;
+  }
 
   if (Vdp2Regs->TVMD & 0x8000) {
     VIDCore->Vdp2DrawScreens();
