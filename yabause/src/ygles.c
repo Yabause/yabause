@@ -1207,7 +1207,6 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->default_fbo = 0;
   _Ygl->drawframe = 0;
   _Ygl->readframe = 1;
-  _Ygl->vdp1_hasMesh = 0;
 
   glGetIntegerv(GL_FRAMEBUFFER_BINDING,&_Ygl->default_fbo);
 
@@ -2533,7 +2532,7 @@ void YglEraseWriteVDP1(void) {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if( status != GL_FRAMEBUFFER_COMPLETE ) {
-    YGLLOG("YglRenderVDP1: Framebuffer status = %08X\n", status );
+    YGLLOG("YglEraseWriteVDP1xx: Framebuffer status = %08X\n", status );
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
@@ -2545,7 +2544,6 @@ void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
-  _Ygl->vdp1_hasMesh = 0;
   _Ygl->readframe = current_drawframe;
   FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
@@ -2617,10 +2615,6 @@ void YglRenderVDP1(void) {
       glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
       if( level->prg[j].vaid != 0 ) {
         glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, level->prg[j].vertexAttribute);
-      }
-
-      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING  && level->prg[j].prgid <= PG_VFP1_MESH ) {
-        _Ygl->vdp1_hasMesh = 1;
       }
 
       if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
