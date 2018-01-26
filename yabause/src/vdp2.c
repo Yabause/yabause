@@ -622,7 +622,7 @@ void vdp2VBlankOUT(void) {
     if (Vdp1Regs->PTMR == 0x2){
       FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly");
       Vdp1Draw();
-      yabsys.wait_line_count = 30;
+      yabsys.wait_line_count = 1;
     }
     Vdp1External.swap_frame_buffer = 0;
 
