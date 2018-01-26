@@ -438,12 +438,20 @@ void Vdp2HBlankOUT(void) {
   }
 
   if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount)) {
-      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-      Vdp1Regs->EDSR >>= 1;
-      Vdp1Draw();
+      if (Vdp1External.plot_trigger_done == 0) {
+        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
+        Vdp1Regs->EDSR >>= 1;
+        Vdp1Draw();
+        VIDCore->Vdp1DrawEnd();
+        Vdp1Regs->EDSR |= 2;
+      } else {
+        Vdp1External.plot_trigger_done = 0;
+      }
       ScuSendDrawEnd();
-      VIDCore->Vdp1DrawEnd();
-      Vdp1Regs->EDSR |= 2;
+      if (yabsys.LineCount == 0){
+        FrameProfileAdd("VOUT event");
+        vdp2VBlankOUT();
+      }
   } else {
     if (yabsys.LineCount == 0){
       FrameProfileAdd("VOUT event");
@@ -452,8 +460,8 @@ void Vdp2HBlankOUT(void) {
     else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
       Vdp1Regs->EDSR |= 2;
       Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
-      ScuSendDrawEnd();
       FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+      ScuSendDrawEnd();
       VIDCore->Vdp1DrawEnd();
     }
   }
