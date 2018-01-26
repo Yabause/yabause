@@ -2949,7 +2949,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   int linecl = 0xFF;
   Vdp2 * regs;
   if ((fixVdp2Regs->CCCTL >> 5) & 0x01) {
-    linecl = ((~fixVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
+    linecl = (~fixVdp2Regs->CCRLB & 0x1F)*255/31;
   }
 
 
@@ -3170,7 +3170,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
   vdp2rotationparameter_struct *parameter;
   Vdp2 * regs;
   if ((fixVdp2Regs->CCCTL >> 5) & 0x01) {
-    linecl = ((~fixVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
+    linecl = (~fixVdp2Regs->CCRLB & 0x1F)*255/31;
   }
 
   if (vdp2height >= 448) lineInc <<= 1;
@@ -5563,19 +5563,19 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
  
          switch            (id) {
           case NBG0:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) << 3) + 0x7) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F)*255/31) << 24;
             break;
           case NBG1:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 5) + 0x7) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255/31) << 24;
             break;
           case NBG2:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) << 3) + 0x7) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F)*255/31) << 24;
             break;
           case NBG3:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 5) + 0x7) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255/31) << 24;
             break;
           case RBG0:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) << 3) + 0x7) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRR & 0x1F)*255/31) << 24;
             break;
           }
 
@@ -5790,7 +5790,7 @@ static void Vdp2DrawNBG0(void)
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+    info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
     info.blendmode |= VDP2_CC_BLUR;
   }
 
@@ -5799,7 +5799,7 @@ static void Vdp2DrawNBG0(void)
     if (fixVdp2Regs->CCCTL & 0x1)
     {
       // Color calculation ratio
-      info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+      info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
 
       // Color calculation mode bit
       if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
@@ -5823,7 +5823,7 @@ static void Vdp2DrawNBG0(void)
 
         // Color calculation will not be operated.
         // But need to write alpha value
-        info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+        info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
       }
       else {
         info.alpha = 0xFF;
@@ -6046,12 +6046,12 @@ static void Vdp2DrawNBG1(void)
   info.blendmode = 0;
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xC000) {
-    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 8)*255/31;
     info.blendmode |= VDP2_CC_BLUR;
   }
   
   if (fixVdp2Regs->CCCTL & 0x2) {
-    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+    info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 8)*255/31;
     if (fixVdp2Regs->CCCTL & 0x100 ) {
       info.blendmode |= VDP2_CC_ADD;
     } else {
@@ -6060,7 +6060,7 @@ static void Vdp2DrawNBG1(void)
   } else {
     // 12.14 CCRTMD
     if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-      info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+      info.alpha = ((~fixVdp2Regs->CCRNA & 0x1F00) >> 8)*255/31;
     } else {
       info.alpha = 0xFF;
     }
@@ -6292,14 +6292,14 @@ static void Vdp2DrawNBG2(void)
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xD000) {
-    info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+    info.alpha = (~fixVdp2Regs->CCRNB & 0x1F)*255/31;
     info.blendmode |= VDP2_CC_BLUR;
   }
 
 
     if (fixVdp2Regs->CCCTL & 0x4)
     {
-      info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+      info.alpha = (~fixVdp2Regs->CCRNB & 0x1F)*255/31;
       if (fixVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/ )
       {
         info.blendmode |= VDP2_CC_ADD;
@@ -6311,7 +6311,7 @@ static void Vdp2DrawNBG2(void)
     else {
       // 12.14 CCRTMD
       if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-        info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+        info.alpha = (~fixVdp2Regs->CCRNB & 0x1F)*255/31;
       }
       else {
         info.alpha = 0xFF;
@@ -6403,13 +6403,13 @@ static void Vdp2DrawNBG3(void)
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xE000) {
-    info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+    info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 8)*255/31;
     info.blendmode |= VDP2_CC_BLUR;
   }
 
     if (fixVdp2Regs->CCCTL & 0x8)
     {
-      info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+      info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 8)*255/31;
       if (fixVdp2Regs->CCCTL & 0x100 )
       {
         info.blendmode |= VDP2_CC_ADD;
@@ -6421,7 +6421,7 @@ static void Vdp2DrawNBG3(void)
     else {
       // 12.14 CCRTMD
       if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-        info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+        info.alpha = ((~fixVdp2Regs->CCRNB & 0x1F00) >> 8)*255/31;
       }
       else {
         info.alpha = 0xFF;
@@ -6784,12 +6784,12 @@ static void Vdp2DrawRBG0(void)
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0x9000) {
-    info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+    info->alpha = (~fixVdp2Regs->CCRR & 0x1F)*255.0/31.0;
     info->blendmode |= VDP2_CC_BLUR;
   }
 
   if ((fixVdp2Regs->CCCTL & 0x010) == 0x10) {
-    info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+    info->alpha = (~fixVdp2Regs->CCRR & 0x1F)*255.0/31.0;
     if (fixVdp2Regs->CCCTL & 0x100 ){
         info->blendmode |= VDP2_CC_ADD;
     } else {
@@ -6798,7 +6798,7 @@ static void Vdp2DrawRBG0(void)
   } else {
     // 12.14 CCRTMD
     if (((fixVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-      info->alpha = ((~fixVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+      info->alpha = (~fixVdp2Regs->CCRR & 0x1F)*255.0/31.0;
     } else {
       info->alpha = 0xFF;
     }
