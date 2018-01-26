@@ -441,10 +441,10 @@ void Vdp2HBlankOUT(void) {
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
       Vdp1Regs->EDSR >>= 1;
       Vdp1Draw();
+      ScuSendDrawEnd();
       VIDCore->Vdp1DrawEnd();
       Vdp1Regs->EDSR |= 2;
   } else {
-
     if (yabsys.LineCount == 0){
       FrameProfileAdd("VOUT event");
       vdp2VBlankOUT();
