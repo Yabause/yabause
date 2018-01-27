@@ -621,7 +621,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
               }
             }
           } else {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0);
           }
         }
 
@@ -675,7 +675,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             }
           }
           else {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0);
           }
         }
         j += 1;
