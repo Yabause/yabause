@@ -40,6 +40,10 @@
 #define UNLOCK(A)
 #endif
 
+void SH2IOnFrame(SH2_struct *context) {
+
+}
+
 opcodefunc opcodes[0x10000];
 
 SH2Interface_struct SH2Interpreter = {
@@ -71,6 +75,7 @@ SH2Interface_struct SH2Interpreter = {
    SH2InterpreterSetMACL,
    SH2InterpreterSetPR,
    SH2InterpreterSetPC,
+   SH2IOnFrame,
 
    SH2InterpreterSendInterrupt,
    SH2InterpreterGetInterrupts,
