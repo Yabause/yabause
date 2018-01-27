@@ -336,8 +336,10 @@ extern YabEventQueue * vdp1_rcv_evqueue;
 void updateFBMode() {
   Vdp1External.manualchange = 0;
   Vdp1External.onecyclemode = 0;
+  Vdp1External.vblank_erase = 0;
   if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){
     Vdp1External.vblank_erase = ((Vdp1Regs->FBCR & 3) == 3);
+    Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   } else {
     //Manual erase shall not be reseted but need to save its current value
     // Only at frame change the order is executed.
