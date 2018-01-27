@@ -8400,6 +8400,10 @@ void SH2DynarecWriteNotify(u32 start, u32 length) {
   invalidate_blocks(start>>12,(start+length-1)>>12);
 }
 
+void SH2DynarecOnFrame(SH2_struct *context) {
+
+}
+
 SH2Interface_struct SH2Dynarec = {
    SH2CORE_DYNAREC,
    "SH2 Dynamic Recompiler",
@@ -8428,6 +8432,7 @@ SH2Interface_struct SH2Dynarec = {
    SH2DynarecSetMACL,
    SH2DynarecSetPR,
    SH2DynarecSetPC,
+   SH2DynarecOnFrame,
 
    SH2InterpreterSendInterrupt,
    SH2InterpreterGetInterrupts,

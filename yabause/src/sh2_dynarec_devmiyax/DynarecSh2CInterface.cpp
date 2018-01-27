@@ -55,6 +55,7 @@ void SH2DynSetMACH(SH2_struct *context, u32 value);
 void SH2DynSetMACL(SH2_struct *context, u32 value);
 void SH2DynSetPR(SH2_struct *context, u32 value);
 void SH2DynSetPC(SH2_struct *context, u32 value);
+void SH2DynOnFrame(SH2_struct *context);
 void SH2DynSendInterrupt(SH2_struct *context, u8 level, u8 vector);
 int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrupt_struct interrupts[MAX_INTERRUPTS]);
@@ -88,6 +89,7 @@ SH2Interface_struct SH2Dyn = {
   SH2DynSetMACL,
   SH2DynSetPR,
   SH2DynSetPC,
+  SH2DynOnFrame,
 
   SH2DynSendInterrupt,
   SH2DynGetInterrupts,
@@ -123,6 +125,7 @@ SH2Interface_struct SH2DynDebug = {
   SH2DynSetMACL,
   SH2DynSetPR,
   SH2DynSetPC,
+  SH2DynOnFrame,
 
   SH2DynSendInterrupt,
   SH2DynGetInterrupts,
@@ -489,7 +492,10 @@ u32 memGetLong(u32 addr)
   return val;
 }
 
-
+void SH2DynOnFrame(SH2_struct *context) {
+  DynarecSh2 *pctx = (DynarecSh2*)context->ext;
+  pctx->SET_COUNT(0);
+}
 
 
 //************************************************

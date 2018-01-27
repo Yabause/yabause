@@ -445,7 +445,7 @@ typedef struct
    void (*SetMACL)(SH2_struct *context, u32 value);
    void (*SetPR)(SH2_struct *context, u32 value);
    void (*SetPC)(SH2_struct *context, u32 value);
-
+   void (*OnFrame)(SH2_struct *context);
    void (*SendInterrupt)(SH2_struct *context, u8 vector, u8 level);
    int (*GetInterrupts)(SH2_struct *context,
                         interrupt_struct interrupts[MAX_INTERRUPTS]);

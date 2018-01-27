@@ -649,6 +649,8 @@ int YabauseEmulate(void) {
 
    MSH2->cycles = 0;
    SSH2->cycles = 0;
+   SH2OnFrame(MSH2);
+   SH2OnFrame(SSH2);
    u64 cpu_emutime = 0;
    while (!oneframeexec)
    {

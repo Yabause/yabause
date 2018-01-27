@@ -193,6 +193,9 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    //   context->cycles -= cycles;
 }
 
+void FASTCALL SH2OnFrame(SH2_struct *context) {
+  SH2Core->OnFrame(context);
+}
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level)
