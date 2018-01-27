@@ -31,7 +31,7 @@ android {
             abiFilters 'armeabi-v7a'
         }
 */
-    }
+     }
 
     buildTypes {
         release {
@@ -41,13 +41,11 @@ android {
                 renameAPK(variant, defaultConfig, 'R')
             }
         }
-/*
         debug {
-            applicationVariants.all { variant ->
-                renameAPK(variant, defaultConfig, 'T')
+           packagingOptions{
+                doNotStrip "**/*/*.so"
             }
         }
-*/
     }
 
     lintOptions {

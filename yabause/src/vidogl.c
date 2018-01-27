@@ -2994,33 +2994,12 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   regs = Vdp2RestoreRegs(3, Vdp2Lines);
   if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
-  rbg->line_texture.textdata = NULL;
-  if (info->LineColorBase != 0)
-  {
-    rbg->line_info.blendmode = 0;
-    rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
-
-    u64 cacheaddr = 0x80000000DAD;
-    YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, info->cellh, 1,  &x, &y);
-    rbg->cline.x = x;
-    rbg->cline.y = y;
-    YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
-
-  }
-  else {
-    rbg->LineColorRamAdress = 0x00;
-    rbg->cline.x = -1;
-    rbg->cline.y = -1;
-    rbg->line_texture.textdata = NULL;
-    rbg->line_texture.w = 0;
-  }
-
   if (info->lineTexture != 0) {
-    info->cor = 0;
-    info->cog = 0;
-    info->cob = 0;
-    info->linescreen = 2;
-  }
+     info->cor = 0;
+     info->cog = 0;
+     info->cob = 0;
+     info->linescreen = 2;
+   }
 
   if (rbg->async) {
 
@@ -3032,6 +3011,32 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     info->cellw = cellw;
     info->cellh = cellh;
     curret_rbg = rbg;
+
+
+
+   rbg->line_texture.textdata = NULL;
+   if (info->LineColorBase != 0)
+   {
+     rbg->line_info.blendmode = 0;
+     rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
+
+     u64 cacheaddr = 0xA0000000DAD;
+     YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, info->cellh, 1,  &x, &y);
+     rbg->cline.x = x;
+     rbg->cline.y = y;
+     YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
+
+   }
+   else {
+     rbg->LineColorRamAdress = 0x00;
+     rbg->cline.x = -1;
+     rbg->cline.y = -1;
+     rbg->line_texture.textdata = NULL;
+     rbg->line_texture.w = 0;
+   }
+
+
+
     if (Vdp2DrawRotationThread_running == 0) {
       Vdp2DrawRotationThread_running = 1;
       g_rotate_mtx = YabThreadCreateMutex();
@@ -3054,6 +3059,27 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->c);
     info->cellw = cellw;
     info->cellh = cellh;
+
+  rbg->line_texture.textdata = NULL;
+  if (info->LineColorBase != 0)
+  {
+    rbg->line_info.blendmode = 0;
+    rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
+
+    u64 cacheaddr = 0xA0000000DAD;
+    YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, info->cellh, 1,  &x, &y);
+    rbg->cline.x = x;
+    rbg->cline.y = y;
+    YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
+
+  }
+  else {
+    rbg->LineColorRamAdress = 0x00;
+    rbg->cline.x = -1;
+    rbg->cline.y = -1;
+    rbg->line_texture.textdata = NULL;
+    rbg->line_texture.w = 0;
+  }
 
     Vdp2DrawRotation_in(rbg);
     
