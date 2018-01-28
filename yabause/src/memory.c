@@ -680,7 +680,7 @@ void MappedMemoryInit()
                                 &ScuWriteWord,
                                 &ScuWriteLong,
                                 &VoidMem);
-   FillMemoryArea(0x600,  0x60F, &HighWramMemoryReadByte,
+   FillMemoryArea(0x600,  0x7FF, &HighWramMemoryReadByte,
                                 &HighWramMemoryReadWord,
                                 &HighWramMemoryReadLong,
                                 &HighWramMemoryWriteByte,
@@ -748,6 +748,7 @@ CACHE_LOG("rb %x %x\n", addr, addr >> 29);
         return ReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
       case 0x0:
+      case 0x4:
       {
          return CacheReadByteList[(addr >> 16) & 0xFFF](context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       }
