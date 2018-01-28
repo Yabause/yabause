@@ -2894,7 +2894,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
      rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
 
      u64 cacheaddr = 0xA0000000DAD;
-     YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, info->cellh, 1,  &x, &y);
+     YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, rbg->vres, 1,  &x, &y);
      rbg->cline.x = x;
      rbg->cline.y = y;
      YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
@@ -2940,7 +2940,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
 
     u64 cacheaddr = 0xA0000000DAD;
-    YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, info->cellh, 1,  &x, &y);
+    YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, rbg->vres, 1,  &x, &y);
     rbg->cline.x = x;
     rbg->cline.y = y;
     YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
