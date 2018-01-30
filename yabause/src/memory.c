@@ -79,8 +79,9 @@ writewordfunc CacheWriteWordList[0x1000];
 writelongfunc CacheWriteLongList[0x1000];
 
 #define EXTENDED_BACKUP_SIZE 0x00800000
+#define EXTENDED_BACKUP_ADDR 0x08000000
 
-u32 backup_file_addr = 0x07000000;
+u32 backup_file_addr = EXTENDED_BACKUP_ADDR;
 u32 backup_file_size = EXTENDED_BACKUP_SIZE;
 static const char *bupfilename = NULL;
 
@@ -1433,7 +1434,7 @@ int BackupInit(char* path, int extended) {
     backup_file_addr = 0x00180000;
     backup_file_size = 0x8000;
   } else {
-    backup_file_addr = 0x07000000;
+    backup_file_addr = EXTENDED_BACKUP_ADDR;
     backup_file_size = EXTENDED_BACKUP_SIZE;
   }
 
