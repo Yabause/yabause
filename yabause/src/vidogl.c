@@ -297,7 +297,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   }
 
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow);
-
   switch ((cmd->CMDPMOD >> 3) & 0x7)
   {
   case 0:
@@ -305,7 +304,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 4 bpp Bank mode
     u32 colorBank = cmd->CMDCOLR;
     if (colorBank == 0 && !SPD ) {
-      color = 0;
+      color = VDP1COLOR(1, 1, priority, 0, 0);
     }else if (MSB || colorBank == nromal_shadow) {
       color = VDP1COLOR(1, 0, priority, 1, 0);
     } else {
@@ -341,7 +340,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
       u32 colorBank = temp;
       if (colorBank == 0x0000 && !SPD ) {
-        color = VDP1COLOR(0, 1, priority, 0, 0);
+        color = VDP1COLOR(1, 1, priority, 0, 0);
       } else if (MSB || shadow) {
         color = VDP1COLOR(0, 1, priority, 1, 0);
       }
@@ -364,7 +363,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 8 bpp(64 color) Bank mode
     u32 colorBank = cmd->CMDCOLR & 0xFFC0;
     if (colorBank == 0 && !SPD) {
-      color = 0;
+      color = VDP1COLOR(1, 1, priority, 0, 0);
     }
     else if ( MSB || colorBank == nromal_shadow) {
       color = VDP1COLOR(0, 1, priority, 1, 0);
@@ -383,7 +382,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 8 bpp(128 color) Bank mode
     u32 colorBank = cmd->CMDCOLR & 0xFF80;
     if (colorBank == 0 && !SPD) {
-      color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
+      color = VDP1COLOR(1, 1, priority, 0, 0);
     } else if (MSB || colorBank == nromal_shadow) {
       color = VDP1COLOR(0, 1, priority, 1, 0);
     } else {
@@ -402,7 +401,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     u32 colorBank = cmd->CMDCOLR;
 
     if ((colorBank == 0x0000) && !SPD) {
-      color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
+      color = VDP1COLOR(1, 1, priority, 0, 0);
     }
     else if ( MSB || color == nromal_shadow) {
       color = VDP1COLOR(0, 1, priority, 1, 0);
@@ -423,13 +422,13 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     // 16 bpp Bank mode
     u16 dot = cmd->CMDCOLR;
     if (!(dot & 0x8000) && !SPD) {
-      color = 0x00;
+      color = VDP1COLOR(1, 1, priority, 0, 0);
     }
     else if (dot == 0x0000) {
-      color = 0x00;
+      color = 0;//VDP1COLOR(0, 1, priority, 0, 0);
     }
     else if ((dot == 0x7FFF) && !END) {
-      color = 0x0;
+      color = 0;//VDP1COLOR(0, 1, priority, 0, 0);
     }
     else if (MSB || dot == nromal_shadow) {
       color = VDP1COLOR(0, 1, priority, 1, 0);
