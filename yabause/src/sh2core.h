@@ -354,6 +354,7 @@ typedef struct SH2_struct_s
 #endif
    u32 cycleFrac;
    u32 cycleLost;
+   int cdiff;
 #ifdef SSH2_ASYNC
    int cycles_request;
    int thread_running;

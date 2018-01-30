@@ -162,17 +162,16 @@ extern int tweak_backup_file_size;
 
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
-  int sh2cdiff = 0;
     if (req != 0) {
 //printf("%s Request %d cycles\n", (sh == MSH2)?"MSH2":"SSH2", sh->cycles_request);
          u32 sh2cycles;
          sh->cycleFrac = req+sh->cycleLost;
          sh->cycleLost = sh->cycleFrac - ((sh->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
-         if ((sh->cycleFrac + (sh2cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         if ((sh->cycleFrac + (sh->cdiff<<YABSYS_TIMING_BITS)) < 0) {
            req = 0;
 	   sh->cycles += sh->cycleFrac>>YABSYS_TIMING_BITS;
          } else {
-           req = ((sh->cycleFrac + (sh2cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+           req = ((sh->cycleFrac + (sh->cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
          }
          if (!yabsys.playing_ssf)
          {
@@ -180,7 +179,7 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
 	   int sh2start = sh->cycles;
 //printf("%s Execute %d cycles\n", (sh == MSH2)?"MSH2":"SSH2", req);
            SH2Exec(sh, req);
-	   sh2cdiff = req - (sh->cycles-sh2start);
+	   sh->cdiff = req - (sh->cycles-sh2start);
          }
          req = 0;
     }
@@ -247,6 +246,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
 #endif
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
+   MSH2->cdiff = 0;
 #ifdef SSH2_ASYNC
    SSH2->thread_running = 0;
    sem_init(&SSH2->start, 0, 0);
@@ -257,7 +257,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
 #endif
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
-
+   SSH2->cdiff = 0;
 #ifdef SSH2_ASYNC
    YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
 #endif
@@ -315,6 +315,7 @@ int YabauseInit(yabauseinit_struct *init)
 #endif
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
+   MSH2->cdiff = 0;
 #ifdef SSH2_ASYNC
    SSH2->thread_running = 0;
    sem_init(&SSH2->start, 0, 0);
@@ -325,7 +326,7 @@ int YabauseInit(yabauseinit_struct *init)
 #endif
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
-
+   SSH2->cdiff = 0;
 #ifdef SSH2_ASYNC
    YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
 #endif
