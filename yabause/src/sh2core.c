@@ -1077,8 +1077,8 @@ void CacheWriteLong(SH2_struct *context,u8* mem, u32 addr, u32 val){
 
 void InvalidateCache(SH2_struct *ctx) {
 #ifdef USE_CACHE
-  for (int line = 0; line < 64; line++)
-    ctx->cacheLRU[line] = 0;
+  if (yabsys.usecache == 0) return;
+  memset(ctx->cacheLRU, 0, 64);
   memset(ctx->tagWay, 0x4, 64*0x80000);
   memset(ctx->cacheTagArray, 0x0, 64*4*sizeof(u32));
 #endif
@@ -1187,6 +1187,7 @@ u32 CacheReadLong(SH2_struct *context,u8* memory, u32 addr) {
 
 void CacheInvalidate(SH2_struct *context,u32 addr){
 #ifdef USE_CACHE
+  if (yabsys.usecache == 0) return;
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
   u8 way = context->tagWay[line][tag];
@@ -1197,6 +1198,7 @@ void CacheInvalidate(SH2_struct *context,u32 addr){
 
 u32 FASTCALL AddressArrayReadLong(SH2_struct *context,u32 addr) {
 #ifdef USE_CACHE
+  if (yabsys.usecache == 0) return 0;
   u8 line = (addr>>4)&0x3F;
   u8 way = (context->onchip.CCR>>6)&0x3;
   return ((context->cacheLRU[line]&0x3F)<<4) | ((context->cacheTagArray[line][way]&0x7FFFF)<<10) | ((context->cacheTagArray[line][way]!= 0x0)<<1);
@@ -1209,6 +1211,7 @@ u32 FASTCALL AddressArrayReadLong(SH2_struct *context,u32 addr) {
 
 void FASTCALL AddressArrayWriteLong(SH2_struct *context,u32 addr, u32 val)  {
 #ifdef USE_CACHE
+  if (yabsys.usecache == 0) return;
   u8 line = (addr>>4)&0x3F;
   u32 tag = (addr>>10)&0x7FFFF;
   u8 valid = (addr>>2)&0x1;
@@ -1223,40 +1226,43 @@ void FASTCALL AddressArrayWriteLong(SH2_struct *context,u32 addr, u32 val)  {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL DataArrayReadByte(SH2_struct *context,u32 addr) {
+  if (yabsys.usecache == 0) return 0;
   return T2ReadByte(context->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL DataArrayReadWord(SH2_struct *context,u32 addr) {
+  if (yabsys.usecache == 0) return 0;
   return T2ReadWord(context->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL DataArrayReadLong(SH2_struct *context,u32 addr) {
+  if (yabsys.usecache == 0) return 0;
   return T2ReadLong(context->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteByte(SH2_struct *context,u32 addr, u8 val)  {
-CACHE_LOG("Write Data byte %x\n", addr);
-   T2WriteByte(context->DataArray, addr & 0xFFF, val);
+  if (yabsys.usecache == 0) return;
+  T2WriteByte(context->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteWord(SH2_struct *context,u32 addr, u16 val)  {
-CACHE_LOG("Write Data word %x\n", addr);
-   T2WriteWord(context->DataArray, addr & 0xFFF, val);
+  if (yabsys.usecache == 0) return;
+  T2WriteWord(context->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteLong(SH2_struct *context,u32 addr, u32 val)  {
-CACHE_LOG("Write Data long %x\n", addr);
-   T2WriteLong(context->DataArray, addr & 0xFFF, val);
+  if (yabsys.usecache == 0) return;
+  T2WriteLong(context->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
