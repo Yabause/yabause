@@ -3237,9 +3237,10 @@ void YglRender(void) {
       for (j = 0; j < (level->prgcurrent + 1); j++)
       {
         YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
-
+        
         if (level->prg[j].prgid != cprg)
         {
+          if (level->prg[j].prgid == 0) continue;
           cprg = level->prg[j].prgid;
           glUseProgram(level->prg[j].prg);
         }
@@ -3574,6 +3575,7 @@ void YglRenderDestinationAlpha(void) {
     {
       if (level->prg[j].prgid != cprg)
       {
+        if (level->prg[j].prgid == 0) continue;
         cprg = level->prg[j].prgid;
         glUseProgram(level->prg[j].prg);
       }
