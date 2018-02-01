@@ -1020,7 +1020,6 @@ const GLchar Yglprg_vdp1_gouraudshading_f[] =
 "  addr.t = addr.t / (v_texcoord.q);                                      \n"
 "  vec4 spriteColor = texture(u_sprite,addr);                           \n"
 "  if( spriteColor.a == 0.0 ) discard;                                      \n"
-"  fragColor   = spriteColor;                                          \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
 "  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
@@ -1232,8 +1231,8 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "       discard;"
 "    } \n"
 "  } \n"
-"  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
-"  fragColor = spriteColor;\n"
+"  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
+"  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
 #else
 const GLchar Yglprg_vdp1_mesh_f[] =
