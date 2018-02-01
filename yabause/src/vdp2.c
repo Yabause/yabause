@@ -454,11 +454,10 @@ void Vdp2HBlankOUT(void) {
       startField();
     }
     else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
+      VIDCore->Vdp1DrawEnd();
       Vdp1Regs->EDSR |= 2;
-      Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
       FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
       ScuSendDrawEnd();
-      VIDCore->Vdp1DrawEnd();
     }
   }
 }
@@ -614,6 +613,7 @@ void startField(void) {
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1Regs->PTMR == 0x2){
       FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly");
+      Vdp1Regs->EDSR >>= 1;
       Vdp1Draw();
       yabsys.wait_line_count = 1;
     }
