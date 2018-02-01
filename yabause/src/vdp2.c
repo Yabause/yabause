@@ -438,15 +438,11 @@ void Vdp2HBlankOUT(void) {
   }
 
   if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount)) {
-      if (Vdp1External.plot_trigger_done == 0) {
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1Regs->EDSR >>= 1;
-        Vdp1Draw();
-        VIDCore->Vdp1DrawEnd();
-        Vdp1Regs->EDSR |= 2;
-      } else {
-        Vdp1External.plot_trigger_done = 0;
-      }
+      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW %d\n", Vdp1External.plot_trigger_line);
+      Vdp1Regs->EDSR >>= 1;
+      Vdp1Draw();
+      VIDCore->Vdp1DrawEnd();
+      Vdp1Regs->EDSR |= 2;
       ScuSendDrawEnd();
       if (yabsys.LineCount == 0){
         FrameProfileAdd("VOUT event");

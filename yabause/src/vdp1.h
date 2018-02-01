@@ -127,7 +127,6 @@ typedef struct {
    int onecyclemode;
    int swap_frame_buffer;
    int plot_trigger_line;
-   int plot_trigger_done;
    int current_frame;
 } Vdp1External_struct;
 

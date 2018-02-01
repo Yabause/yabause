@@ -369,14 +369,6 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       Vdp1Regs->COPR = 0;
       Vdp1Regs->PTMR = val;
       Vdp1External.plot_trigger_line = (yabsys.LineCount == 0)?1:yabsys.LineCount;
-      if ((val == 1) && (yabsys.LineCount != 0) ){
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1Regs->EDSR >>= 1;
-        Vdp1Draw();
-        VIDCore->Vdp1DrawEnd();
-        Vdp1Regs->EDSR |= 2;
-        Vdp1External.plot_trigger_done = 1;
-      }
       break;
       case 0x6:
          Vdp1Regs->EWDR = val;
