@@ -443,6 +443,7 @@ void Vdp2HBlankOUT(void) {
       Vdp1Draw();
       VIDCore->Vdp1DrawEnd();
       Vdp1Regs->EDSR |= 2;
+      ScuSendDrawEnd();
       if (yabsys.LineCount == 0){
         FrameProfileAdd("VOUT event");
         startField();
@@ -456,6 +457,7 @@ void Vdp2HBlankOUT(void) {
       Vdp1Regs->EDSR |= 2;
       Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
       FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+      ScuSendDrawEnd();
       VIDCore->Vdp1DrawEnd();
     }
   }
@@ -621,8 +623,6 @@ void startField(void) {
   if (Vdp2Regs->TVMD & 0x8000) {
     VIDCore->Vdp2DrawScreens();
   }
-
-  ScuSendDrawEnd();
 
   Vdp1External.manualchange = 0;
 
