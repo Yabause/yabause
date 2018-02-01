@@ -857,8 +857,13 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/UIYabause.ui" line="543"/>
+        <location filename="../ui/UIYabause.ui" line="551"/>
         <source>RBG0</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/UIYabause.ui" line="543"/>
+        <source>RBG1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

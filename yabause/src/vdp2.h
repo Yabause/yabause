@@ -417,6 +417,7 @@ void ToggleNBG1(void);
 void ToggleNBG2(void);
 void ToggleNBG3(void);
 void ToggleRBG0(void);
+void ToggleRBG1(void);
 void ToggleFullScreen(void);
 void EnableAutoFrameSkip(void);
 int isAutoFrameSkip(void);

@@ -205,6 +205,7 @@
      <addaction name="aViewLayerNBG2"/>
      <addaction name="aViewLayerNBG3"/>
      <addaction name="aViewLayerRBG0"/>
+     <addaction name="aViewLayerRBG1"/>
     </widget>
     <addaction name="aViewFPS"/>
     <addaction name="mViewLayer"/>
@@ -538,6 +539,20 @@
    </property>
    <property name="shortcut">
     <string>6</string>
+   </property>
+  </action>
+  <action name="aViewLayerRBG1">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>RBG1</string>
+   </property>
+   <property name="shortcut">
+    <string>7</string>
    </property>
   </action>
   <action name="aFileSaveState1">

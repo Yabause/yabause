@@ -159,6 +159,7 @@ protected slots:
 	void on_aViewLayerNBG2_triggered();
 	void on_aViewLayerNBG3_triggered();
 	void on_aViewLayerRBG0_triggered();
+	void on_aViewLayerRBG1_triggered();
 	void on_aViewFullscreen_triggered( bool b );
 	// debug menu
 	void on_aTraceLogging_triggered( bool toggled );

@@ -992,6 +992,9 @@ void UIYabause::on_aViewLayerNBG3_triggered()
 void UIYabause::on_aViewLayerRBG0_triggered()
 { ToggleRBG0(); }
 
+void UIYabause::on_aViewLayerRBG1_triggered()
+{ ToggleRBG1(); }
+
 void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
