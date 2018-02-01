@@ -12,8 +12,8 @@ static long long nbElem = 0;
 static long long nbColid = 0;
 #endif
 
-static Pattern* patternCache[0x10000];
-static u8 patternUse[0x10000];
+static Pattern** patternCache;
+static u8* patternUse;
 
 void deleteCachePattern(Pattern** pat) {
 	if ((*pat) == NULL) return;
@@ -159,6 +159,8 @@ void resetPatternCache(){
 }
 
 void initPatternCache(){
+    patternCache = malloc(0x10000 * sizeof(Pattern*));
+    patternUse = malloc(0x10000 * sizeof(u8));
     for (int i = 0; i<0x10000; i++) {
       patternCache[i] = NULL;
       patternUse[i] = 0;
@@ -166,6 +168,8 @@ void initPatternCache(){
 }
 
 void deinitPatternCache(){
+    free(patternCache);
+    free(patternUse);
 #ifdef VDP1_CACHE_STAT
     printf("VDP1 Cache Stat Elem(%lld), Collision(%lld), Reuse(%lld)\n", nbElem, nbColid, nbReuse);
 #endif
