@@ -5607,8 +5607,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-
-static void Vdp2DrawNBG0(void)
+static void Vdp2DrawRBG1(void)
 {
   vdp2draw_struct info = { 0 };
   YglTexture texture;
@@ -5628,10 +5627,7 @@ static void Vdp2DrawNBG0(void)
   info.cellh = 256 << vdp2_interlace;
   info.specialcolorfunction = 0;
 
-
-  if (fixVdp2Regs->BGON & 0x20)
-  {
-    // RBG1 mode
+// RBG1 mode
     info.enable = fixVdp2Regs->BGON & 0x20;
     if (!info.enable) return;
 
@@ -5703,73 +5699,6 @@ static void Vdp2DrawNBG0(void)
         info.GetKValueB = vdp2rGetKValue2Wm3;
       }
     }
-  }
-  else if ((fixVdp2Regs->BGON & 0x1) || info.enable)
-  {
-    // NBG0 mode
-    info.enable = fixVdp2Regs->BGON & 0x1;
-    if (!info.enable) return;
-
-    if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
-    {
-      // Bitmap Mode
-
-      ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 2, 0x3);
-      if (vdp2_interlace) info.cellh *= 2;
-
-      info.x = -((fixVdp2Regs->SCXIN0 & 0x7FF) % info.cellw);
-      info.y = -((fixVdp2Regs->SCYIN0 & 0x7FF) % info.cellh);
-
-      info.charaddr = (fixVdp2Regs->MPOFN & 0x7) * 0x20000;
-      info.paladdr = (fixVdp2Regs->BMPNA & 0x7) << 4;
-      info.flipfunction = 0;
-      info.specialcolorfunction = (fixVdp2Regs->BMPNA & 0x10) >> 4;
-      info.specialfunction = 0;
-    }
-    else
-    {
-      // Tile Mode
-      info.mapwh = 2;
-
-      ReadPlaneSize(&info, fixVdp2Regs->PLSZ);
-
-      info.x = -((fixVdp2Regs->SCXIN0 & 0x7FF) % (512 * info.planew));
-      info.y = -((fixVdp2Regs->SCYIN0 & 0x7FF) % (512 * info.planeh));
-      ReadPatternData(&info, fixVdp2Regs->PNCN0, fixVdp2Regs->CHCTLA & 0x1);
-    }
-
-    if ((fixVdp2Regs->ZMXN0.all & 0x7FF00) == 0)
-      info.coordincx = 1.0f;
-    else
-      info.coordincx = (float)65536 / (fixVdp2Regs->ZMXN0.all & 0x7FF00);
-
-    switch (fixVdp2Regs->ZMCTL & 0x03)
-    {
-    case 0:
-      info.maxzoom = 1.0f;
-      break;
-    case 1:
-      info.maxzoom = 0.5f;
-      //if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
-      break;
-    case 2:
-    case 3:
-      info.maxzoom = 0.25f;
-      //if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
-      break;
-    }
-
-    if ((fixVdp2Regs->ZMYN0.all & 0x7FF00) == 0)
-      info.coordincy = 1.0f;
-    else
-      info.coordincy = (float)65536 / (fixVdp2Regs->ZMYN0.all & 0x7FF00);
-
-    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
-  }
-  else {
-    return;
-  }
-
 
 
   ReadMosaicData(&info, 0x1, fixVdp2Regs);
@@ -5875,9 +5804,195 @@ static void Vdp2DrawNBG0(void)
   else
     info.isverticalscroll = 0;
 
-  if (info.enable == 1)
+    // RBG1 draw
+    memcpy(&g_rgb1.info, &info, sizeof(info));
+    Vdp2DrawRotation(&g_rgb1);
+}
+
+static void Vdp2DrawNBG0(void) {
+  vdp2draw_struct info = { 0 };
+  YglTexture texture;
+  YglCache tmpc;
+  info.dst = 0;
+  info.uclipmode = 0;
+  info.id = 0;
+  info.coordincx = 1.0f;
+  info.coordincy = 1.0f;
+
+  info.cor = 0;
+  info.cog = 0;
+  info.cob = 0;
+  int i;
+  info.enable = 0;
+
+  info.cellh = 256 << vdp2_interlace;
+  info.specialcolorfunction = 0;
+
+    // NBG0 mode
+    info.enable = fixVdp2Regs->BGON & 0x1;
+    if (!info.enable) return;
+
+    if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
+    {
+      // Bitmap Mode
+
+      ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 2, 0x3);
+      if (vdp2_interlace) info.cellh *= 2;
+
+      info.x = -((fixVdp2Regs->SCXIN0 & 0x7FF) % info.cellw);
+      info.y = -((fixVdp2Regs->SCYIN0 & 0x7FF) % info.cellh);
+
+      info.charaddr = (fixVdp2Regs->MPOFN & 0x7) * 0x20000;
+      info.paladdr = (fixVdp2Regs->BMPNA & 0x7) << 4;
+      info.flipfunction = 0;
+      info.specialcolorfunction = (fixVdp2Regs->BMPNA & 0x10) >> 4;
+      info.specialfunction = 0;
+    }
+    else
+    {
+      // Tile Mode
+      info.mapwh = 2;
+
+      ReadPlaneSize(&info, fixVdp2Regs->PLSZ);
+
+      info.x = -((fixVdp2Regs->SCXIN0 & 0x7FF) % (512 * info.planew));
+      info.y = -((fixVdp2Regs->SCYIN0 & 0x7FF) % (512 * info.planeh));
+      ReadPatternData(&info, fixVdp2Regs->PNCN0, fixVdp2Regs->CHCTLA & 0x1);
+    }
+
+    if ((fixVdp2Regs->ZMXN0.all & 0x7FF00) == 0)
+      info.coordincx = 1.0f;
+    else
+      info.coordincx = (float)65536 / (fixVdp2Regs->ZMXN0.all & 0x7FF00);
+
+    switch (fixVdp2Regs->ZMCTL & 0x03)
+    {
+    case 0:
+      info.maxzoom = 1.0f;
+      break;
+    case 1:
+      info.maxzoom = 0.5f;
+      //if( info.coordincx < 0.5f )  info.coordincx = 0.5f;
+      break;
+    case 2:
+    case 3:
+      info.maxzoom = 0.25f;
+      //if( info.coordincx < 0.25f )  info.coordincx = 0.25f;
+      break;
+    }
+
+    if ((fixVdp2Regs->ZMYN0.all & 0x7FF00) == 0)
+      info.coordincy = 1.0f;
+    else
+      info.coordincy = (float)65536 / (fixVdp2Regs->ZMYN0.all & 0x7FF00);
+
+    info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG0PlaneAddr;
+
+
+  ReadMosaicData(&info, 0x1, fixVdp2Regs);
+
+  info.transparencyenable = !(fixVdp2Regs->BGON & 0x100);
+  info.specialprimode = fixVdp2Regs->SFPRMD & 0x3;
+  info.specialcolormode = fixVdp2Regs->SFCCMD & 0x3;
+  if (fixVdp2Regs->SFSEL & 0x1)
+    info.specialcode = fixVdp2Regs->SFCODE >> 8;
+  else
+    info.specialcode = fixVdp2Regs->SFCODE & 0xFF;
+
+  info.colornumber = (fixVdp2Regs->CHCTLA & 0x70) >> 4;
+  int dest_alpha = ((fixVdp2Regs->CCCTL >> 9) & 0x01);
+
+  info.blendmode = 0;
+
+  // 12.13 blur
+  if ((fixVdp2Regs->CCCTL & 0xF000) == 0xA000) {
+    info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
+    info.blendmode |= VDP2_CC_BLUR;
+  }
+
+
+    // Enable Color Calculation
+    if (fixVdp2Regs->CCCTL & 0x1)
+    {
+      // Color calculation ratio
+      info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
+
+      // Color calculation mode bit
+      if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
+        info.blendmode |= VDP2_CC_ADD;
+        info.alpha = 0xFF;
+      }
+      else { // Use Color calculation ratio
+        if (info.specialcolormode != 0 && dest_alpha) { // Just currently not supported
+          info.blendmode |= VDP2_CC_NONE;
+        }
+        else {
+          info.blendmode |= VDP2_CC_RATE;
+        }
+      }
+      // Disable Color Calculation
+    }
+    else {
+
+      // Use Destination Alpha 12.14 CCRTMD
+      if (dest_alpha) {
+
+        // Color calculation will not be operated.
+        // But need to write alpha value
+        info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
+      }
+      else {
+        info.alpha = 0xFF;
+      }
+      info.blendmode |= VDP2_CC_NONE;
+    }
+
+
+  Vdp2GeneratePerLineColorCalcuration(&info, NBG0);
+  info.linescreen = 0;
+  if (fixVdp2Regs->LNCLEN & 0x1)
+    info.linescreen = 1;
+
+  info.coloroffset = (fixVdp2Regs->CRAOFA & 0x7) << 8;
+  ReadVdp2ColorOffset(fixVdp2Regs, &info, 0x1);
+  if (info.lineTexture != 0) {
+    info.cor = 0;
+    info.cog = 0;
+    info.cob = 0;
+    info.linescreen = 2;
+  }
+  info.linecheck_mask = 0x01;
+  info.priority = fixVdp2Regs->PRINA & 0x7;
+
+  if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
+    return;
+
+  // Window Mode
+  info.bEnWin0 = (fixVdp2Regs->WCTLA >> 1) & 0x01;
+  info.WindowArea0 = (fixVdp2Regs->WCTLA >> 0) & 0x01;
+  info.bEnWin1 = (fixVdp2Regs->WCTLA >> 3) & 0x01;
+  info.WindowArea1 = (fixVdp2Regs->WCTLA >> 2) & 0x01;
+  info.LogicWin = (fixVdp2Regs->WCTLA >> 7) & 0x01;
+
+
+  ReadLineScrollData(&info, fixVdp2Regs->SCRCTL & 0xFF, fixVdp2Regs->LSTA0.all);
+  info.lineinfo = lineNBG0;
+  Vdp2GenLineinfo(&info);
+  Vdp2SetGetColor(&info);
+
+  if (fixVdp2Regs->SCRCTL & 1)
   {
-    // NBG0 draw
+    info.isverticalscroll = 1;
+    info.verticalscrolltbl = (fixVdp2Regs->VCSTA.all & 0x7FFFE) << 1;
+    if (fixVdp2Regs->SCRCTL & 0x100)
+      info.verticalscrollinc = 8;
+    else
+      info.verticalscrollinc = 4;
+  }
+  else
+    info.isverticalscroll = 0;
+
+// NBG0 draw
     if (info.isbitmap)
     {
       if (info.coordincx != 1.0f || info.coordincy != 1.0f || VDPLINE_SZ(info.islinescroll)) {
@@ -5978,12 +6093,21 @@ static void Vdp2DrawNBG0(void)
         Vdp2DrawMapTest(&info, &texture);
       }
     }
-  }
-  else
+
+}
+
+static void Vdp2DrawNBG0RBG1(void)
+{
+  if (fixVdp2Regs->BGON & 0x20)
   {
-    // RBG1 draw
-    memcpy(&g_rgb1.info, &info, sizeof(info));
-    Vdp2DrawRotation(&g_rgb1);
+    Vdp2DrawRBG1();
+  }
+  else if (fixVdp2Regs->BGON & 0x1)
+  {
+    Vdp2DrawNBG0();
+  }
+  else {
+    return;
   }
 }
 
@@ -6858,7 +6982,7 @@ void VIDOGLVdp2DrawScreens(void)
   FrameProfileAdd("NBG2 end");
   Vdp2DrawNBG1();
   FrameProfileAdd("NBG1 end");
-  Vdp2DrawNBG0();
+  Vdp2DrawNBG0RBG1();
   FrameProfileAdd("NBG0 end");
   if (!g_rgb0.async) {
     Vdp2DrawRBG0();
