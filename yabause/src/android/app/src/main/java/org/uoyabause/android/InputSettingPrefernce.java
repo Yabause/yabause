@@ -26,6 +26,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,6 +41,7 @@ import android.content.DialogInterface.OnKeyListener;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -343,12 +346,30 @@ import android.view.LayoutInflater;
 		if( v.getId() == R.id.button_skip ){
 			setKeymap(-1);
 		}
-	}    
-    
+	}
+
+	int keystate_ = 0;
+	Handler h;
+
     boolean setKeymap(Integer padkey){
+
+		if( keystate_ != 0 ) return true;
+		keystate_ = 1;
+		h = new Handler();
+		new Thread(new Runnable() {
+			public void run() {
+				h.postDelayed(new Runnable() {
+					public void run() {
+						keystate_ = 0;
+					}
+				}, 300);
+			}
+		}).start();
     	Keymap.put(padkey,map.get(index));
     	Log.d("setKeymap","index =" + index +": pad = " + padkey );
     	index++;
+
+
 
     	if( index >= map.size() ){
     		saveSettings();
