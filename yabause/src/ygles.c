@@ -2603,7 +2603,6 @@ void YglRenderVDP1(void) {
   for( j=0;j<(level->prgcurrent+1); j++ ) {
     if( level->prg[j].prgid != cprg ) {
       cprg = level->prg[j].prgid;
-      if (cprg == 0) continue; //prgid 0 has no meaning
       glUseProgram(level->prg[j].prg);
     }
     
