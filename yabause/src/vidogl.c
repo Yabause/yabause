@@ -2138,7 +2138,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
       sv = v + info->sv;
 
     //sh &= (info->cellw - 1);
-    //sv &= (info->cellh - 1);
+    sv &= (info->cellh - 1);
 
     switch (info->colornumber) {
     case 0:
