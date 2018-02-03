@@ -3172,6 +3172,8 @@ void YglRender(void) {
      glViewport(_Ygl->originx+xN, _Ygl->originy+yN, wN, hN);
    }
 
+   glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
+
    //if (_Ygl->aamode == AA_FXAA){
    //  glViewport(xN, yN, wN, hN);
    //}

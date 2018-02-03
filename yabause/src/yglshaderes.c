@@ -554,7 +554,7 @@ int Ygl_cleanupMosaic(void * p)
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
   // Restore Default Matrix
-  glViewport(0, 0, _Ygl->width, _Ygl->height);
+  glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   // call blit method
   YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
@@ -612,7 +612,7 @@ int Ygl_cleanupPerLineAlpha(void * p)
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
   // Restore Default Matrix
-  glViewport(0, 0, _Ygl->width, _Ygl->height);
+  glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   if ( (prg->blendmode & 0x03) == VDP2_CC_RATE ) {
     glEnable(GL_BLEND);
@@ -683,7 +683,7 @@ int Ygl_cleanupNormal_blur(void * p)
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
   // Restore Default Matrix
-  glViewport(0, 0, _Ygl->width, _Ygl->height);
+  glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   if ((prg->blendmode & 0x03) == VDP2_CC_RATE) {
     glEnable(GL_BLEND);

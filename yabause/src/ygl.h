@@ -560,7 +560,7 @@ typedef struct {
    u32 targetfbo;
    int vpd1_running;
    int cpu_framebuffer_write;
-
+   GLint m_viewport[4];
 
    GLuint cram_tex;
    GLuint cram_tex_pbo;
