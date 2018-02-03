@@ -156,7 +156,7 @@ int VideoInit(int coreid);
 int VideoChangeCore(int coreid);
 void VideoDeInit(void);
 void Vdp1Reset(void);
-int VideoSetSetting(int type, int value);
+
 
 u8 FASTCALL	Vdp1ReadByte(u32);
 u16 FASTCALL	Vdp1ReadWord(u32);

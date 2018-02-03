@@ -390,6 +390,9 @@ void YabauseThread::reloadSettings()
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
 
+
+  mYabauseConf.rotate_screen = vs->value("Video/RotateScreen", false).toBool() ;
+
 	reloadClock();
 	reloadControllers();
 }
@@ -445,6 +448,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.video_filter_type = 0;
 	mYabauseConf.polygon_generation_mode = 0;
   mYabauseConf.resolution_mode = 0;
+  mYabauseConf.rotate_screen = 0;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

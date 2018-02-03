@@ -60,6 +60,7 @@ typedef struct
    int use_new_scsp;
    int resolution_mode;
    int extend_backup;
+   int rotate_screen;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -126,6 +127,15 @@ extern u32 saved_m68k_cycles;
 #define SCSP_FRACTIONAL_BITS 20
 u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
 u32 YabauseGetCpuTime();
+
+typedef enum {
+  VDP_SETTING_FILTERMODE = 0,
+  VDP_SETTING_POLYGON_MODE,
+  VDP_SETTING_RESOLUTION_MODE,
+  VDP_SETTING_ROTATE_SCREEN
+} enSettings;
+
+int VideoSetSetting(int type, int value);
 
 #ifdef __cplusplus
 }

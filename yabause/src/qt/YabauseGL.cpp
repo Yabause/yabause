@@ -20,6 +20,7 @@
 */
 #include "YabauseGL.h"
 #include "QtYabause.h"
+#include "VolatileSettings.h"
 
 YabauseGL::YabauseGL( QWidget* p )
   : QGLWidget(p)
@@ -54,6 +55,9 @@ void YabauseGL::resizeGL( int w, int h )
 
 void YabauseGL::updateView( const QSize& s )
 {
+  VolatileSettings* vs = QtYabause::volatileSettings();
+  VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, vs->value("Video/RotateScreen", false).toBool());
+
 	const QSize size = s.isValid() ? s : this->size();
 	glViewport( 0, 0, size.width(), size.height() );
 	if ( VIDCore )

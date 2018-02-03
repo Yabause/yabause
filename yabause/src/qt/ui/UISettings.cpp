@@ -502,6 +502,7 @@ void UISettings::loadSettings()
 
    cbEnableIntegerPixelScaling->setChecked(s->value("Video/EnableIntegerPixelScaling", false).toBool());
    sbIntegerPixelScalingMultiplier->setValue(s->value("Video/IntegerPixelScalingMultiplier", 2).toInt());
+   cbRotateScreen->setChecked(s->value("Video/RotateScreen").toBool());
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
@@ -565,6 +566,7 @@ void UISettings::saveSettings()
 	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );
 	s->setValue( "autostart", cbAutostart->isChecked() );
 
+
 	// video
 	s->setValue( "Video/VideoCore", cbVideoCore->itemData( cbVideoCore->currentIndex() ).toInt() );
 #if YAB_PORT_OSD
@@ -600,7 +602,7 @@ void UISettings::saveSettings()
 
 	s->setValue( "General/EnableMultiThreading", cbEnableMultiThreading->isChecked() );
 	s->setValue( "General/NumThreads", sbNumberOfThreads->value());
-
+  s->setValue("Video/RotateScreen", cbRotateScreen->isChecked());
 	// sound
 	s->setValue( "Sound/SoundCore", cbSoundCore->itemData( cbSoundCore->currentIndex() ).toInt() );
    s->setValue( "Sound/NewScsp", cbNewScsp->isChecked());

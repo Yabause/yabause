@@ -482,13 +482,26 @@ void UIYabause::fixAspectRatio( int width , int height )
           int saturnw = 4;
           int saturnh = 3;
 
-          if (aspectRatio == 1){
-            saturnw = 4;
-            saturnh = 3;
+          VolatileSettings* vs = QtYabause::volatileSettings();
+          if (vs->value("Video/RotateScreen").toBool()) {
+            if (aspectRatio == 1) {
+              saturnw = 3;
+              saturnh = 4;
+            }
+            else {
+              saturnw = 9;
+              saturnh = 16;
+            }
           }
-          else{
-            saturnw = 16;
-            saturnh = 9;
+          else {
+            if (aspectRatio == 1) {
+              saturnw = 4;
+              saturnh = 3;
+            }
+            else {
+              saturnw = 16;
+              saturnh = 9;
+            }
           }
           float saturnraito = (float)saturnw / (float)saturnh;
           float revraito = (float)saturnh / (float)saturnw;
@@ -513,10 +526,20 @@ void UIYabause::fixAspectRatio( int width , int height )
         int heightOffset = toolBar->height()+menubar->height();
         int height;
 
-        if ( aspectRatio == 1 )
-          height = 3 * ((float) width / 4);
-        else
-          height = 9 * ((float) width / 16);
+        VolatileSettings* vs = QtYabause::volatileSettings();
+        if (vs->value("Video/RotateScreen").toBool()) {
+          if (aspectRatio == 1)
+            height = 4 * ((float)width / 3);
+          else
+            height = 16 * ((float)width / 9);
+        }
+        else {
+
+          if (aspectRatio == 1)
+            height = 3 * ((float)width / 4);
+          else
+            height = 9 * ((float)width / 16);
+        }
 
         mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
 
@@ -620,9 +643,14 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
 		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
 	}
-	else
-		ChangeDisplaySettings(NULL, 0);
-
+  else {
+    ChangeDisplaySettings(NULL, 0);
+    HWND tempHwnd = 0;
+    tempHwnd = FindWindow(0, 0);
+    DWORD dwstyle = GetWindowLong(tempHwnd, GWL_STYLE);
+    dwstyle = dwstyle | WS_CAPTION;
+    SetWindowLong(tempHwnd, GWL_STYLE, dwstyle);
+  }
 #elif HAVE_LIBXRANDR
 	if (f)
 	{
@@ -676,9 +704,9 @@ void UIYabause::fullscreenRequested( bool f )
 
 		showFullScreen();
 
-		if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS )
+		//if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS ) // I don't know why this code is needed, so just comment out
 			menubar->hide();
-		if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS )
+		//if ( vs->value( "View/Toolbar" ).toInt() == BD_HIDEFS ) // I don't know why this code is needed, so just comment out
 			toolBar->hide();
 
 		hideMouseTimer->start(3 * 1000);

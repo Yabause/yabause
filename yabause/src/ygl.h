@@ -17,6 +17,11 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+#ifndef  _YGL_H_
+#define  _YGL_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
@@ -456,12 +461,6 @@ typedef enum
     RES_ORIGINAL
 } RESOLUTION_MODE;
 
-typedef enum {
-	VDP_SETTING_FILTERMODE = 0,
-	VDP_SETTING_POLYGON_MODE,
-    VDP_SETTING_RESOLUTION_MODE
-} enSettings;
-
 
 typedef enum {
 	NBG0 = 0,
@@ -573,6 +572,8 @@ typedef struct {
    UniformFrameBuffer fbu_;
    GLuint framebuffer_uniform_id_;
    int msb_shadow_count_[2];
+
+   int rotate_screen;
 
 }  Ygl;
 
@@ -749,3 +750,11 @@ static INLINE u32 VDP1COLOR16TO24(u16 temp) {
 #endif // YGL_H
 
 #endif // defined(HAVE_LIBGL) || defined(__ANDROID__)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // _YGL_H_
+
+

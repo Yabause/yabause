@@ -238,7 +238,7 @@ int YabauseInit(yabauseinit_struct *init)
    VideoSetSetting(VDP_SETTING_FILTERMODE,init->video_filter_type);
    VideoSetSetting(VDP_SETTING_POLYGON_MODE, init->polygon_generation_mode);
    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, init->resolution_mode);
-
+   VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, init->rotate_screen);
 
 
    // Initialize input core

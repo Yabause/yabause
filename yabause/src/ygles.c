@@ -2552,6 +2552,11 @@ void YglRenderVDP1(void) {
   YabThreadLock(_Ygl->mutex);
   _Ygl->vdp1_hasMesh = 0;
 
+  YglMatrix m;
+
+  YglLoadIdentity(&m);
+  YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
+
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
   if (_Ygl->pFrameBuffer != NULL) {
@@ -2605,7 +2610,7 @@ void YglRenderVDP1(void) {
       level->prg[j].setupUniform((void*)&level->prg[j]);
     }
     if( level->prg[j].currentQuad != 0 ) {
-      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
+      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&m.m[0][0]);
       glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
       glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
       if( level->prg[j].vaid != 0 ) {
@@ -3939,6 +3944,10 @@ void YglChangeResolution(int w, int h) {
       rebuild_frame_buffer = 1;
       break;
     }
+  }
+
+  if (_Ygl->rotate_screen) {
+    YglRotatef(&_Ygl->mtxModelView, 90.0, 0.0, 0.0, 1.0f);
   }
 
   _Ygl->rwidth = w;
