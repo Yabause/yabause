@@ -70,6 +70,11 @@
             android:title="@string/lock_landscape"
             android:defaultValue="false" />
 
+        <CheckBoxPreference
+            android:key="pref_rotate_screen"
+            android:title="@string/str_rotate_screen"
+            android:defaultValue="false" />
+
         <ListPreference
             android:key="pref_filter"
             android:title="@string/video_filter"

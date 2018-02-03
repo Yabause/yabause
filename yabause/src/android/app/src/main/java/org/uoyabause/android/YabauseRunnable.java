@@ -22,6 +22,7 @@ public class YabauseRunnable implements Runnable
     public static native int unlockGL();
     public static native void enableFPS(int enable);
     public static native void enableExtendedMemory(int enable);
+    public static native void enableRotateScreen(int enable);
     public static native void enableFrameskip(int enable);
     public static native void setCpu( int cpu );
     public static native void setFilter( int filter );

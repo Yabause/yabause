@@ -105,9 +105,14 @@ public class YabauseView extends SurfaceView implements Callback {
 	        int specw = MeasureSpec.getSize(widthMeasureSpec);
 	        int spech = MeasureSpec.getSize(heightMeasureSpec);
 	        float specratio = (float) specw / spech;
-	        int saturnw = 320;
-	        int saturnh = 224;
-	        float saturnratio = (float) saturnw / saturnh;
+            float saturnw = 4.0f;
+            float saturnh = 3.0f;
+
+            if( sharedPref.getBoolean("pref_rotate_screen", false) ){
+                saturnw = 3.0f;
+                saturnh = 4.0f;
+            }
+            float saturnratio = (float) saturnw / saturnh;
 	        float revratio = (float) saturnh / saturnw;
 	
 	        if (specratio > saturnratio) {

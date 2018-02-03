@@ -174,5 +174,7 @@
     <string name="this_func_not_yet">This function is not implemented yet.</string>
     <string name="memory_manager">Memory Manager</string>
 
+    <string name="str_rotate_screen">Rotate Screen</string>
+
 </resources>
 	

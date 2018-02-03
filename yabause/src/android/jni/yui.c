@@ -87,6 +87,7 @@ int g_PolygonGenerationMode = 0;
 static int g_SoundEngine = 0;
 static int g_resolution_mode = 0;
 static int g_extmemory = 1;
+static int g_rotate_screen = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -1054,6 +1055,7 @@ int initEgl( ANativeWindow* window )
 	yinit.use_new_scsp = g_SoundEngine;
     yinit.resolution_mode =g_resolution_mode;
     yinit.extend_backup = g_extmemory;
+    yinit.rotate_screen = g_rotate_screen;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1312,6 +1314,11 @@ Java_org_uoyabause_android_YabauseRunnable_enableExtendedMemory( JNIEnv* env, jo
     g_extmemory = enable;
 }
 
+void
+Java_org_uoyabause_android_YabauseRunnable_enableRotateScreen( JNIEnv* env, jobject obj, jint enable )
+{
+    g_rotate_screen = enable;
+}
 
 void
 Java_org_uoyabause_android_YabauseRunnable_setCpu( JNIEnv* env, jobject obj, jint cpu )

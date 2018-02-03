@@ -840,6 +840,8 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         YabauseRunnable.enableExtendedMemory(extmemory ? 1 : 0);
         Log.d(TAG,"enable Extended Memory " + extmemory);
 
+        YabauseRunnable.enableRotateScreen(sharedPref.getBoolean("pref_rotate_screen", false) ? 1 : 0);
+
         boolean fps = sharedPref.getBoolean("pref_fps", false);
         YabauseRunnable.enableFPS(fps ? 1 : 0);
         Log.d(TAG,"enable FPS " + fps);
