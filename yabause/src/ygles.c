@@ -793,8 +793,9 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   const int Line = (addr >> 10);
   const int Pix = ((addr & 0x3FF) >> 1);
+  int read_height = (Vdp1Regs->systemclipY2<_Ygl->rheight)?Vdp1Regs->systemclipY2:_Ygl->rheight;
   
-  if (_Ygl->cpu_framebuffer_write || (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2)){
+  if (_Ygl->cpu_framebuffer_write || (Pix > Vdp1Regs->systemclipX2 || Line > read_height)){
     switch (type)
     {
     case 0:
@@ -874,11 +875,11 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     FrameProfileAdd("ReadFrameBuffer unlock");
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    glReadPixels(0, _Ygl->rheight-Vdp1Regs->systemclipY2, _Ygl->rwidth, Vdp1Regs->systemclipY2, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  Vdp1Regs->systemclipY2 * 4, GL_MAP_READ_BIT);
+    glReadPixels(0, _Ygl->rheight-read_height, _Ygl->rwidth, read_height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth *  read_height * 4, GL_MAP_READ_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER,_Ygl->default_fbo);
 
-    if (_Ygl->pFrameBuffer==NULL){
+    if ((_Ygl->pFrameBuffer==NULL) || ((Vdp1Regs->systemclipY2-1-Line) > _Ygl->rheight)){
       switch (type) {
       case 1:
         *(u16*)out = 0x0000;
@@ -2566,11 +2567,11 @@ void YglRenderVDP1(void) {
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   }
-  YabThreadUnLock(_Ygl->mutex);
   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
   level = &(_Ygl->levels[_Ygl->depth]);
     if( level == NULL ) {
+        YabThreadUnLock(_Ygl->mutex);
         return;
     }
   cprg = -1;
@@ -2641,7 +2642,7 @@ void YglRenderVDP1(void) {
   }
 
   _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
-
+  YabThreadUnLock(_Ygl->mutex);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
