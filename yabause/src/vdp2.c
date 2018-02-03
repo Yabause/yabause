@@ -1238,7 +1238,7 @@ int Vdp2SaveState(FILE *fp)
    ywrite(&check, (void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
 
    // Write VDP2 ram
-   ywrite(&check, (void *)Vdp2Ram, 0x80000, 1, fp);
+   ywrite(&check, (void *)Vdp2Ram, 0x100000, 1, fp);
 
    // Write CRAM
    ywrite(&check, (void *)Vdp2ColorRam, 0x1000, 1, fp);
