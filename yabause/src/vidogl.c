@@ -1629,8 +1629,10 @@ static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area,
 }
 
 // 0 .. outside,1 .. inside 
-static int FASTCALL Vdp2CheckWindowDot(vdp2draw_struct *info, int x, int y)
+static INLINE int Vdp2CheckWindowDot(vdp2draw_struct *info, int x, int y)
 {
+  if (info->bEnWin0 == 0 && info->bEnWin1 == 0) return 1;
+
   if (info->bEnWin0 != 0 && info->bEnWin1 == 0)
   {
     if (m_vWindinfo0 == NULL) Vdp2GenerateWindowInfo();
