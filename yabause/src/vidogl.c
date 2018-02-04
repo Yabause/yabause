@@ -1225,6 +1225,7 @@ static void Vdp2GenerateWindowInfo(void)
     {
       int preHStart = -1;
       int preHEnd = -1;
+      int preshowline = 0;
 
       // start address
       LineWinAddr = (u32)((((fixVdp2Regs->LWTA0.part.U & 0x07) << 15) | (fixVdp2Regs->LWTA0.part.L >> 1)) << 2);
@@ -1265,40 +1266,62 @@ static void Vdp2GenerateWindowInfo(void)
 
           }
 
-          if (v == fixVdp2Regs->WPSY0)
-          {
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-            _Ygl->win0_vertexcnt++;
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-            _Ygl->win0_vertexcnt++;
-
-          }
-          else if ((HStart != preHStart || HEnd != preHEnd) || v == (fixVdp2Regs->WPEY0 - 1))
-          {
-            if ((v - 1) != _Ygl->win0v[(_Ygl->win0_vertexcnt - 1) * 2 + 1])
-            {
+          if (m_vWindinfo0[v].WinShowLine != preshowline ) {
+            // start vertex
+            if (m_vWindinfo0[v].WinShowLine) {
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart; // add terminator
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+            }
+            // finish vertex
+            else {
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
               _Ygl->win0_vertexcnt++;
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1;
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
               _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
             }
-
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-            _Ygl->win0_vertexcnt++;
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
-            _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
-            _Ygl->win0_vertexcnt++;
           }
+          else {
 
+            if (m_vWindinfo0[v].WinShowLine && (HStart != preHStart || HEnd != preHEnd) ) {
+
+              // close line 
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+
+              // start new line
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart; // add terminator
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+            }
+          }
           preHStart = HStart;
           preHEnd = HEnd;
-
-
+          preshowline = m_vWindinfo0[v].WinShowLine;
         }
       }
 
@@ -1404,6 +1427,7 @@ static void Vdp2GenerateWindowInfo(void)
     {
       int preHStart = -1;
       int preHEnd = -1;
+      int preshowline = 0;
 
       _Ygl->win1_vertexcnt = 0;
       // start address for Window table
@@ -1436,44 +1460,70 @@ static void Vdp2GenerateWindowInfo(void)
           }
           else {
             if (m_vWindinfo1[v].WinShowLine) m_b1WindowChg = 1;
+            m_vWindinfo1[v].WinHStart = 0;
+            m_vWindinfo1[v].WinHEnd = 0;
             m_vWindinfo1[v].WinShowLine = 0;
           }
 
-          if (v == fixVdp2Regs->WPSY1)
-          {
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart;
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
-            _Ygl->win1_vertexcnt++;
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
-            _Ygl->win1_vertexcnt++;
-
-          }
-          else if ((HStart != preHStart || HEnd != preHEnd) || v == (fixVdp2Regs->WPEY1 - 1))
-          {
-            if ((v - 1) != _Ygl->win1v[(_Ygl->win1_vertexcnt - 1) * 2 + 1])
-            {
+          if (m_vWindinfo1[v].WinShowLine != preshowline) {
+            // start vertex
+            if (m_vWindinfo1[v].WinShowLine) {
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart; // add terminator
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+            }
+            // finish vertex
+            else {
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHStart;
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
               _Ygl->win1_vertexcnt++;
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1;
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
               _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
             }
-
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart;
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
-            _Ygl->win1_vertexcnt++;
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
-            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
-            _Ygl->win1_vertexcnt++;
           }
+          else {
 
+            if (m_vWindinfo1[v].WinShowLine && (HStart != preHStart || HEnd != preHEnd)) {
+
+              // close line 
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHStart;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+
+              // start new line
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart; // add terminator
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+            }
+          }
           preHStart = HStart;
           preHEnd = HEnd;
-
+          preshowline = m_vWindinfo1[v].WinShowLine;
         }
       }
+
 
       // parameter mode
     }
@@ -1560,7 +1610,7 @@ static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area,
   if (area == 1)
   {
     if (vWindinfo[y].WinShowLine == 0) return 0;
-    if (x > vWindinfo[y].WinHStart && x < vWindinfo[y].WinHEnd)
+    if (x >= vWindinfo[y].WinHStart && x <= vWindinfo[y].WinHEnd)
     {
       return 1;
     }
@@ -3306,6 +3356,10 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
     for (i = 0; i < hres; i++)
     {
+      if (Vdp2CheckWindowDot( info, i, j) == 0) {
+        *(texture->textdata++) = 0x00000000;
+        continue; // may be faster than GPU
+      }
       switch (fixVdp2Regs->RPMD | g_rgb1.rgb_type) {
       case 0:
         parameter = &paraA;
