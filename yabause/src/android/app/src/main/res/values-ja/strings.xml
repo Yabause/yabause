@@ -119,5 +119,6 @@
     <string name="poly_triangle">パースペクティブコレクション</string>
     <string name="this_func_not_yet">この機能はまだ実装されていません</string>
     <string name="memory_manager">保存データー管理</string>
+    <string name="str_rotate_screen">90度回転させる</string>
 
 </resources>
