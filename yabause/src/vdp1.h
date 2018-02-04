@@ -42,7 +42,6 @@ typedef struct {
    u16 MODR;
 
    u32 addr;
-   int disptoggle_dont_use_me; // not used anymore, see Vdp1External_struct
 
    s16 localX;
    s16 localY;
