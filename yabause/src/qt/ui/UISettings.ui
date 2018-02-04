@@ -400,7 +400,7 @@
        <item row="26" column="0">
         <widget class="QCheckBox" name="cbRotateScreen">
          <property name="text">
-          <string>RoateScreen</string>
+          <string>Rotate 90 degree</string>
          </property>
         </widget>
        </item>

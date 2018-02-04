@@ -3393,11 +3393,23 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     aspectRatio, 1.0f,
     -aspectRatio, 1.0f };
 
-  float const textureCoord[] = {
+
+  float textureCoord[] = {
     1.0f, 0.0f,
     0.0f, 0.0f,
     1.0f, 1.0f,
     0.0f, 1.0f };
+
+  if (_Ygl->rotate_screen) {
+    textureCoord[0] = 0.0f;
+    textureCoord[1] = 0.0f;
+    textureCoord[2] = 0.0f;
+    textureCoord[3] = 1.0f;
+    textureCoord[4] = 1.0f;
+    textureCoord[5] = 0.0f;
+    textureCoord[6] = 1.0f;
+    textureCoord[7] = 1.0f;
+  }
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
@@ -3517,11 +3529,22 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h) {
     aspectRatio, 1.0f,
     -aspectRatio, 1.0f };
 
-  float const textureCoord[] = {
+  float  textureCoord[] = {
     1.0f, 0.0f,
     0.0f, 0.0f,
     1.0f, 1.0f,
     0.0f, 1.0f };
+
+  if (_Ygl->rotate_screen && _Ygl->resolution_mode != RES_NATIVE ) {
+    textureCoord[0] = 0.0f;
+    textureCoord[1] = 0.0f;
+    textureCoord[2] = 0.0f;
+    textureCoord[3] = 1.0f;
+    textureCoord[4] = 1.0f;
+    textureCoord[5] = 0.0f;
+    textureCoord[6] = 1.0f;
+    textureCoord[7] = 1.0f;
+  }
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);

@@ -1064,6 +1064,9 @@ int YglGenerateAABuffer(){
 
   YGLDEBUG("YglGenerateAABuffer: %d,%d", _Ygl->width, _Ygl->height);
 
+  int width = _Ygl->width;
+  int height = _Ygl->height;
+
   //--------------------------------------------------------------------------------
   // FXAA
   if (_Ygl->fxaa_fbotex != 0) {
@@ -1077,9 +1080,9 @@ int YglGenerateAABuffer(){
     abort();
   }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR) {
-    YGLDEBUG("Fail to YglGLInit at %d %04X %d %d", __LINE__, error, _Ygl->width, _Ygl->height);
+    YGLDEBUG("Fail to YglGLInit at %d %04X %d %d", __LINE__, error, width, height);
     abort();
   }
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -1092,7 +1095,7 @@ int YglGenerateAABuffer(){
     if (_Ygl->fxaa_depth != 0) glDeleteRenderbuffers(1, &_Ygl->fxaa_depth);
     glGenRenderbuffers(1, &_Ygl->fxaa_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->fxaa_depth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
     _Ygl->fxaa_stencil = _Ygl->fxaa_depth;
     if ((error = glGetError()) != GL_NO_ERROR)
     {
@@ -1103,12 +1106,12 @@ int YglGenerateAABuffer(){
     if (_Ygl->fxaa_depth != 0) glDeleteRenderbuffers(1, &_Ygl->fxaa_depth);
     glGenRenderbuffers(1, &_Ygl->fxaa_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->fxaa_depth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, _Ygl->width, _Ygl->height);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
 
     if (_Ygl->fxaa_stencil != 0) glDeleteRenderbuffers(1, &_Ygl->fxaa_stencil);
     glGenRenderbuffers(1, &_Ygl->fxaa_stencil);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->fxaa_stencil);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, _Ygl->width, _Ygl->height);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, width, height);
     if ((error = glGetError()) != GL_NO_ERROR)
     {
       YGLDEBUG("Fail to YglGLInit at %d %04X", __LINE__, error);
@@ -3950,7 +3953,7 @@ void YglChangeResolution(int w, int h) {
     }
   }
 
-  if (_Ygl->rotate_screen) {
+  if (_Ygl->rotate_screen && _Ygl->resolution_mode == RES_NATIVE) {
     YglRotatef(&_Ygl->mtxModelView, 90.0, 0.0, 0.0, 1.0f);
   }
 
