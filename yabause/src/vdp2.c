@@ -56,8 +56,6 @@ struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
-static int throttlespeed=0;
-u64 lastticks=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
 
@@ -533,56 +531,6 @@ static void FPSDisplay(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-void SpeedThrottleEnable(void) {
-  throttlespeed = 1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SpeedThrottleDisable(void) {
-  throttlespeed = 0;
-}
-
-void dumpvram() {
-  FILE * fp = fopen("vdp2vram.bin", "wb");
-  fwrite(Vdp2Regs, sizeof(Vdp2), 1, fp);
-  fwrite(Vdp2Ram, 0x80000, 1, fp);
-  fwrite(Vdp2ColorRam, 0x1000, 1, fp);
-  fwrite(&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
-  fwrite((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
-  fwrite((void *)Vdp1Ram, 0x80000, 1, fp);
-  fwrite(&Vdp1External, sizeof(Vdp1External_struct), 1, fp);
-  fclose(fp);
-}
-
-void restorevram() {
-  FILE * fp = fopen("vdp2vram.bin", "rb");
-  fread(Vdp2Regs, sizeof(Vdp2), 1, fp);
-  fread(Vdp2Ram, 0x80000, 1, fp);
-  fread(Vdp2ColorRam, 0x1000, 1, fp);
-  fread(&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
-  fread((void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
-  fread((void *)Vdp1Ram, 0x80000, 1, fp);
-  fread(&Vdp1External, sizeof(Vdp1External_struct), 1, fp);
-  fclose(fp);
-
-  for (int i = 0; i < 0x1000; i += 2) {
-    YglOnUpdateColorRamWord(i);
-  }
-}
-
-int g_vdp_debug_dmp = 0;
-
-void vdp2ReqDump() {
-  g_vdp_debug_dmp = 2;
-}
-
-void vdp2ReqRestore() {
-  g_vdp_debug_dmp = 1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
 void startField(void) {
   int isrender = 0;
 
@@ -630,8 +578,6 @@ void startField(void) {
   Vdp1External.manualchange = 0;
 
    FPSDisplay();
-   //if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
-   //   Vdp1External.manualerase = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1337,7 +1283,6 @@ void ToggleFullScreen(void)
 void EnableAutoFrameSkip(void)
 {
    autoframeskipenab = 1;
-   lastticks = YabauseGetTicks();
 }
 
 int isAutoFrameSkip(void)

@@ -973,7 +973,6 @@ void YabauseSetVideoFormat(int type) {
    Vdp2Regs->TVSTAT = Vdp2Regs->TVSTAT | (type & 0x1);
    ScspChangeVideoFormat(type);
    YabauseChangeTiming(yabsys.CurSH2FreqType);
-   lastticks = YabauseGetTicks();
 }
 
 //////////////////////////////////////////////////////////////////////////////
