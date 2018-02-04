@@ -3174,6 +3174,9 @@ void YglRender(void) {
 
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
 
+   glScissor(_Ygl->m_viewport[0],_Ygl->m_viewport[1],_Ygl->m_viewport[2],_Ygl->m_viewport[3]);
+   glEnable(GL_SCISSOR_TEST);
+
    //if (_Ygl->aamode == AA_FXAA){
    //  glViewport(xN, yN, wN, hN);
    //}
@@ -3308,6 +3311,8 @@ void YglRender(void) {
    if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || _Ygl->msb_shadow_count_[_Ygl->readframe] != 0 ) {
      YglRenderFrameBufferShadow();
    }
+
+   glDisable(GL_SCISSOR_TEST);
 
 
   if (_Ygl->aamode == AA_FXAA){
