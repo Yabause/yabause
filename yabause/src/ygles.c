@@ -3354,58 +3354,60 @@ int YglSetupWindow(YglProgram * prg){
   // win1      = 2
   // both		 = 3
 
-  // Color Clcuaraion Window
-  if (bwin_cc0 && !bwin_cc1)
-  {
-    // Win0
-    if (logwin_cc0)
+  if (prg->bwin0 == 0 && prg->bwin1 == 0) {
+    // Color Clcuaraion Window
+    if (bwin_cc0 && !bwin_cc1)
     {
-      glStencilFunc(GL_EQUAL, 0x01, 0x01);
+      // Win0
+      if (logwin_cc0)
+      {
+        glStencilFunc(GL_EQUAL, 0x01, 0x01);
+      }
+      else {
+        glStencilFunc(GL_NOTEQUAL, 0x01, 0x01);
+      }
+      return 0;
     }
-    else{
-      glStencilFunc(GL_NOTEQUAL, 0x01, 0x01);
-    }
-    return 0;
-  }
-  else if (!bwin_cc0 && bwin_cc1)
-  {
-    if (logwin_cc1)
+    else if (!bwin_cc0 && bwin_cc1)
     {
-      glStencilFunc(GL_EQUAL, 0x02, 0x02);
+      if (logwin_cc1)
+      {
+        glStencilFunc(GL_EQUAL, 0x02, 0x02);
+      }
+      else {
+        glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
+      }
+      return 0;
     }
-    else{
-      glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
-    }
-    return 0;
-  }
-  else if (bwin_cc0 && bwin_cc1) {
+    else if (bwin_cc0 && bwin_cc1) {
       // and
-    if (winmode_cc == 0x0)
-    {
-      if (logwin_cc0 == 1 && logwin_cc1 == 1){
-        glStencilFunc(GL_EQUAL, 0x03, 0x03);
+      if (winmode_cc == 0x0)
+      {
+        if (logwin_cc0 == 1 && logwin_cc1 == 1) {
+          glStencilFunc(GL_EQUAL, 0x03, 0x03);
+        }
+        else if (logwin_cc0 == 0 && logwin_cc1 == 0) {
+          glStencilFunc(GL_GREATER, 0x01, 0x03);
+        }
+        else {
+          glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        }
       }
-      else if (logwin_cc0 == 0 && logwin_cc1 == 0){
-        glStencilFunc(GL_GREATER, 0x01, 0x03);
+      // OR
+      else if (winmode_cc == 0x01)
+      {
+        if (logwin_cc0 == 1 && logwin_cc1 == 1) {
+          glStencilFunc(GL_LEQUAL, 0x01, 0x03);
+        }
+        else if (logwin_cc0 == 0 && logwin_cc1 == 0) {
+          glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
+        }
+        else {
+          glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        }
       }
-      else{
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-      }
+      return 0;
     }
-    // OR
-    else if (winmode_cc == 0x01)
-    {
-      if (logwin_cc0 == 1 && logwin_cc1 == 1){
-        glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-      }
-      else if (logwin_cc0 == 0 && logwin_cc1 == 0){
-        glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-      }
-      else{
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-      }
-    }
-    return 0;
   }
 
   // Transparent Window
@@ -3471,19 +3473,21 @@ int YglCleanUpWindow(YglProgram * prg){
   int logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
   int winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
 
-  if (bwin_cc0 || bwin_cc1) {
-    // Disable Color clacuration then draw outside of window
-    glDisable(GL_STENCIL_TEST);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_GREATER);
-    glDisable(GL_BLEND);
-    Ygl_setNormalshader(prg);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->quads);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->textcoords);
-    glDrawArrays(GL_TRIANGLES, 0, prg->currentQuad / 2);
-    glDepthFunc(GL_GEQUAL);
-    Ygl_cleanupNormal(prg);
-    glUseProgram(prg->prg);
+  if (prg->bwin0 == 0 && prg->bwin1 == 0) {
+    if (bwin_cc0 || bwin_cc1) {
+      // Disable Color clacuration then draw outside of window
+      glDisable(GL_STENCIL_TEST);
+      glEnable(GL_DEPTH_TEST);
+      glDepthFunc(GL_GREATER);
+      glDisable(GL_BLEND);
+      Ygl_setNormalshader(prg);
+      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->quads);
+      glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->textcoords);
+      glDrawArrays(GL_TRIANGLES, 0, prg->currentQuad / 2);
+      glDepthFunc(GL_GEQUAL);
+      Ygl_cleanupNormal(prg);
+      glUseProgram(prg->prg);
+    }
   }
 
   glEnable(GL_BLEND);
