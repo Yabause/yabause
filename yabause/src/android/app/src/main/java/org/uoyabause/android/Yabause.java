@@ -164,6 +164,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         mTracker = application.getDefaultTracker();
 
         setContentView(R.layout.main);
+        getWindow().setSustainedPerformanceMode(true);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON|WindowManager.LayoutParams.FLAG_FULLSCREEN);
         mDrawerLayout = (DrawerLayout)findViewById(R.id.drawer_layout);
         mDrawerLayout.setSystemUiVisibility(
