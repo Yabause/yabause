@@ -68,6 +68,15 @@ protected:
 	//bool mForceRun;
 };
 
+#if defined Q_OS_WIN
+struct SavedWinInfo {
+  DWORD style;
+  DWORD ex_style;
+  QPoint windowspos;
+  QSize windowsize;
+};
+#endif
+
 class UIYabause : public QMainWindow, public Ui::UIYabause
 {
 	Q_OBJECT
@@ -110,6 +119,11 @@ protected:
 	virtual void resizeEvent( QResizeEvent* event );
 
 	bool mIsCdIn;
+
+#if defined Q_OS_WIN
+  HWND hwnd_;
+  SavedWinInfo saved_window_info_;
+#endif
 
 public slots:
 	void appendLog( const char* msg );

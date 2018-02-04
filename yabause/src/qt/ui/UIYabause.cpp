@@ -335,12 +335,12 @@ void UIYabause::resizeEvent( QResizeEvent* event )
 
 void UIYabause::adjustHeight(int & height)
 {
-   // Compensate for menubar and toolbar
-   VolatileSettings* vs = QtYabause::volatileSettings();
-   if (vs->value("View/Menubar").toInt() != BD_ALWAYSHIDE)
-      height += menubar->height();
-   if (vs->value("View/Toolbar").toInt() != BD_ALWAYSHIDE)
-      height += toolBar->height();
+  // Compensate for menubar and toolbar
+  VolatileSettings* vs = QtYabause::volatileSettings();
+  if (vs->value("View/Menubar").toInt() != BD_ALWAYSHIDE)
+    height += menubar->height();
+  if (vs->value("View/Toolbar").toInt() != BD_ALWAYSHIDE)
+    height += toolBar->height();
 }
 
 void UIYabause::resizeIntegerScaling()
@@ -523,7 +523,8 @@ void UIYabause::fixAspectRatio( int width , int height )
 
       }
       else{
-        int heightOffset = toolBar->height()+menubar->height();
+        int heightOffset = toolBar->height();
+        heightOffset += menubar->height();
         int height;
 
         VolatileSettings* vs = QtYabause::volatileSettings();
@@ -635,6 +636,15 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
 		if (freq < 0)
 			return;
 
+    hwnd_ = (HWND)this->winId(); //FindWindow(0, 0);
+    saved_window_info_.style = GetWindowLong(hwnd_, GWL_STYLE);
+    saved_window_info_.ex_style = GetWindowLong(hwnd_, GWL_EXSTYLE);
+
+    saved_window_info_.windowsize = this->size();
+    saved_window_info_.windowspos = this->pos();
+
+    //GetWindowRect(hwnd_, &saved_window_info_.window_rect);
+
 		dmScreenSettings.dmSize = sizeof (dmScreenSettings);   
 		dmScreenSettings.dmPelsWidth = width;
 		dmScreenSettings.dmPelsHeight = height;    
@@ -642,14 +652,20 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
 		dmScreenSettings.dmDisplayFrequency = freq;
 		dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
 		ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN);
-	}
+	} 
   else {
     ChangeDisplaySettings(NULL, 0);
-    HWND tempHwnd = 0;
-    tempHwnd = FindWindow(0, 0);
-    DWORD dwstyle = GetWindowLong(tempHwnd, GWL_STYLE);
-    dwstyle = dwstyle | WS_CAPTION;
-    SetWindowLong(tempHwnd, GWL_STYLE, dwstyle);
+    toolBar->show();
+    menubar->show();
+
+    int title_height = (GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CXPADDEDBORDER));
+    int title_width = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+    SetWindowLong(hwnd_, GWL_STYLE, saved_window_info_.style);
+    SetWindowLong(hwnd_, GWL_EXSTYLE, saved_window_info_.ex_style);
+    saved_window_info_.windowspos.setX(saved_window_info_.windowspos.x() + title_width);
+    saved_window_info_.windowspos.setY(saved_window_info_.windowspos.y() + title_height);
+    this->move(saved_window_info_.windowspos);
+    sizeRequested(saved_window_info_.windowsize);
   }
 #elif HAVE_LIBXRANDR
 	if (f)
@@ -694,10 +710,10 @@ void UIYabause::fullscreenRequested( bool f )
 
 		setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
 		setMinimumSize( 0,0 );
-		QPoint ps;
-		ps.setX(0);
-		ps.setY(0);
-		this->move(ps);
+		//QPoint ps;
+		//ps.setX(0);
+		//ps.setY(0);
+		//this->move(ps);
 
 		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
 						f, vs->value("Video/VideoFormat").toInt());
