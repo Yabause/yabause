@@ -17,6 +17,11 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+#ifndef  _YGL_H_
+#define  _YGL_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
@@ -749,3 +754,9 @@ INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
 #endif // YGL_H
 
 #endif // defined(HAVE_LIBGL) || defined(__ANDROID__)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // _YGL_H_

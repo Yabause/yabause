@@ -622,8 +622,12 @@ int Ygl_cleanupPerLineAlpha(void * p)
     glBlendFunc(GL_ONE, GL_ONE);
   }
 
+  YglMatrix m;
+  YglLoadIdentity(&m);
+  YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
+
   // call blit method
-  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
+  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m, prg->lineTexture);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -694,8 +698,12 @@ int Ygl_cleanupNormal_blur(void * p)
     glBlendFunc(GL_ONE, GL_ONE);
   }
 
+  YglMatrix m;
+  YglLoadIdentity(&m);
+  YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
+
   // call blit method
-  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
+  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 

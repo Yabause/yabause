@@ -6471,6 +6471,7 @@ static void Vdp2DrawNBG2(void)
   info.cog = 0;
   info.cob = 0;
   info.specialcolorfunction = 0;
+  info.blendmode = 0;
 
   info.enable = fixVdp2Regs->BGON & 0x4;
   if (!info.enable) return;
@@ -6582,7 +6583,7 @@ static void Vdp2DrawNBG3(void)
   info.cog = 0;
   info.cob = 0;
   info.specialcolorfunction = 0;
-
+  info.blendmode = 0;
 
   info.enable = fixVdp2Regs->BGON & 0x8;
   if (!info.enable) return;
