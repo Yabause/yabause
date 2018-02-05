@@ -5624,8 +5624,6 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
       line_shift = 0;
     }
 
-    info->blendmode = VDP2_CC_NONE;
-
     linebuf = YglGetPerlineBuf(&_Ygl->bg[id], _Ygl->rheight, 1);
     for (line = 0; line < _Ygl->rheight; line++) {
       if ((Vdp2Lines[line >> line_shift].BGON & bit) == 0x00) {
@@ -6706,6 +6704,8 @@ static void Vdp2DrawRBG0(void)
     }
     return;
   }
+
+  info->blendmode = 0;
 
   Vdp2GeneratePerLineColorCalcuration(info, RBG0);
 
