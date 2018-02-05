@@ -385,6 +385,7 @@ void Vdp2HBlankOUT(void) {
       cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(NULL, Vdp2Ram, cell_scroll_table_start_addr + i * 4);
     }
 
+
     if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
       *Vdp2External.perline_alpha |= 0x1;
     }
@@ -596,14 +597,15 @@ void Vdp2VBlankOUT(void) {
   }
   Vdp1External.vblank_erase = 0;
   FRAMELOG("***** VOUT %d *****", g_frame_count);
-  *Vdp2External.perline_alpha = 0x0;
   if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;
     Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_a;
+    *Vdp2External.perline_alpha = 0;
   }
   else{
     Vdp2External.perline_alpha = &Vdp2External.perline_alpha_a;
     Vdp2External.perline_alpha_draw = &Vdp2External.perline_alpha_b;
+    *Vdp2External.perline_alpha = 0;
   }
 
 #ifdef _VDP_PROFILE_
