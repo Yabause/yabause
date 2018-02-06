@@ -3333,7 +3333,6 @@ void YglRender(void) {
     
   }
 render_finish:
-  glDisable(GL_SCISSOR_TEST);
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
   glUseProgram(0);
   glGetError();
