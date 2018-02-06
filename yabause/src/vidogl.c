@@ -5708,7 +5708,7 @@ static void Vdp2DrawRBG1(void)
   info->specialcolorfunction = 0;
 
 // RBG1 mode
-    info->enable = fixVdp2Regs->BGON & 0x20;
+    info->enable = (fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10); //When R0ON is 0, do not set R1ON at 1. vdp2 pdf, section 4.1 Screen Display Control
     if (!info->enable) return;
 
     // Read in Parameter B
@@ -5908,7 +5908,7 @@ static void Vdp2DrawNBG0(void) {
   info.specialcolorfunction = 0;
 
     // NBG0 mode
-    info.enable = fixVdp2Regs->BGON & 0x1;
+    info.enable = (fixVdp2Regs->BGON & 0x1) && !((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)); //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
     if (!info.enable) return;
 
     if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
@@ -6177,11 +6177,11 @@ static void Vdp2DrawNBG0(void) {
 
 static void Vdp2DrawNBG0RBG1(void)
 {
-  if (fixVdp2Regs->BGON & 0x20)
+  if ((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10))
   {
     Vdp2DrawRBG1();
   }
-  else if (fixVdp2Regs->BGON & 0x1)
+  else if ((fixVdp2Regs->BGON & 0x1) && !((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10))) //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
   {
     Vdp2DrawNBG0();
   }
@@ -6205,7 +6205,7 @@ static void Vdp2DrawNBG1(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
 
-  info.enable = fixVdp2Regs->BGON & 0x2;
+  info.enable = (fixVdp2Regs->BGON & 0x2) && !((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)); //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
   if (!info.enable) return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x200);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 2) & 0x3;
@@ -6470,7 +6470,7 @@ static void Vdp2DrawNBG2(void)
   info.specialcolorfunction = 0;
   info.blendmode = 0;
 
-  info.enable = fixVdp2Regs->BGON & 0x4;
+  info.enable = (fixVdp2Regs->BGON & 0x4) && !((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)); //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
   if (!info.enable) return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 4) & 0x3;
@@ -6490,8 +6490,6 @@ static void Vdp2DrawNBG2(void)
     info.specialcode = fixVdp2Regs->SFCODE >> 8;
   else
     info.specialcode = fixVdp2Regs->SFCODE & 0xFF;
-
-  info.blendmode = 0;
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xD000) {
@@ -6582,7 +6580,7 @@ static void Vdp2DrawNBG3(void)
   info.specialcolorfunction = 0;
   info.blendmode = 0;
 
-  info.enable = fixVdp2Regs->BGON & 0x8;
+  info.enable = (fixVdp2Regs->BGON & 0x8) && !((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)); //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
   if (!info.enable) return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
