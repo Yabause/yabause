@@ -349,6 +349,7 @@ void updateFBMode() {
     Vdp1External.manualerase |= ((Vdp1Regs->FBCR & 3) == 2);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   }
+  Vdp1External.manualerase |= Vdp1External.manualchange;
 }
 
 void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
