@@ -3139,9 +3139,10 @@ void YglRender(void) {
    YGLLOG("YglRender\n");
 
    FrameProfileAdd("YglRender start");
+   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
    if ((Vdp2Regs->TVMD & 0x8000) == 0){
-     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
      goto render_finish;
    }
 
