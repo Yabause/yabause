@@ -517,6 +517,7 @@ int Ygl_uniformMosaic(void * p)
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+  glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -555,6 +556,7 @@ int Ygl_cleanupMosaic(void * p)
 
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
+  glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   // call blit method
   YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
@@ -574,6 +576,7 @@ int Ygl_uniformPerLineAlpha(void * p)
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+  glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -613,6 +616,7 @@ int Ygl_cleanupPerLineAlpha(void * p)
 
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
+  glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   if ( (prg->blendmode & 0x03) == VDP2_CC_RATE ) {
     glEnable(GL_BLEND);
@@ -645,6 +649,7 @@ int Ygl_uniformNormal_blur(void * p)
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+  glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -688,6 +693,7 @@ int Ygl_cleanupNormal_blur(void * p)
 
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
+  glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   if ((prg->blendmode & 0x03) == VDP2_CC_RATE) {
     glEnable(GL_BLEND);

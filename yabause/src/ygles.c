@@ -3197,6 +3197,7 @@ void YglRender(void) {
    glDepthMask(GL_TRUE);
    glEnable(GL_DEPTH_TEST);
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
+
    if (_Ygl->texture_manager == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -3318,16 +3319,19 @@ void YglRender(void) {
   if (_Ygl->aamode == AA_FXAA){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
     _Ygl->targetfbo = 0;
     YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
   }
   else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
     YglBlitScanlineFilter(_Ygl->fxaa_fbotex, GlHeight, _Ygl->rheight);
   }
   else if (_Ygl->resolution_mode != RES_NATIVE ) {
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
     YglBlitFramebuffer(_Ygl->fxaa_fbotex, _Ygl->default_fbo, GlWidth, GlHeight);
   }
   else{
