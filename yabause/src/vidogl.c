@@ -5689,117 +5689,117 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
 static void Vdp2DrawRBG1(void)
 {
-  vdp2draw_struct info = { 0 };
+  vdp2draw_struct  * info = &g_rgb1.info;;
   YglTexture texture;
   YglCache tmpc;
-  info.dst = 0;
-  info.uclipmode = 0;
-  info.id = 0;
-  info.coordincx = 1.0f;
-  info.coordincy = 1.0f;
 
-  info.cor = 0;
-  info.cog = 0;
-  info.cob = 0;
+  info->dst = 0;
+  info->id = 4;
+  info->uclipmode = 0;
+  info->cor = 0;
+  info->cog = 0;
+  info->cob = 0;
+  info->specialcolorfunction = 0;
+
   int i;
-  info.enable = 0;
+  info->enable = 0;
 
-  info.cellh = 256 << vdp2_interlace;
-  info.specialcolorfunction = 0;
+  info->cellh = 256 << vdp2_interlace;
+  info->specialcolorfunction = 0;
 
 // RBG1 mode
-    info.enable = fixVdp2Regs->BGON & 0x20;
-    if (!info.enable) return;
+    info->enable = fixVdp2Regs->BGON & 0x20;
+    if (!info->enable) return;
 
     // Read in Parameter B
     Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
 
-    if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
+    if ((info->isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
     {
       // Bitmap Mode
 
-      ReadBitmapSize(&info, fixVdp2Regs->CHCTLA >> 2, 0x3);
-      if (vdp2_interlace) info.cellh *= 2;
+      ReadBitmapSize(info, fixVdp2Regs->CHCTLA >> 2, 0x3);
+      if (vdp2_interlace) info->cellh *= 2;
 
-      info.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
-      info.paladdr = (fixVdp2Regs->BMPNA & 0x7) << 4;
-      info.flipfunction = 0;
-      info.specialfunction = 0;
+      info->charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
+      info->paladdr = (fixVdp2Regs->BMPNA & 0x7) << 4;
+      info->flipfunction = 0;
+      info->specialfunction = 0;
     }
     else
     {
       // Tile Mode
-      info.mapwh = 4;
-      ReadPlaneSize(&info, fixVdp2Regs->PLSZ >> 12);
-      ReadPatternData(&info, fixVdp2Regs->PNCN0, fixVdp2Regs->CHCTLA & 0x1);
+      info->mapwh = 4;
+      ReadPlaneSize(info, fixVdp2Regs->PLSZ >> 12);
+      ReadPatternData(info, fixVdp2Regs->PNCN0, fixVdp2Regs->CHCTLA & 0x1);
 
-      paraB.ShiftPaneX = 8 + info.planew;
-      paraB.ShiftPaneY = 8 + info.planeh;
-      paraB.MskH = (8 * 64 * info.planew) - 1;
-      paraB.MskV = (8 * 64 * info.planeh) - 1;
-      paraB.MaxH = 8 * 64 * info.planew * 4;
-      paraB.MaxV = 8 * 64 * info.planeh * 4;
+      paraB.ShiftPaneX = 8 + info->planew;
+      paraB.ShiftPaneY = 8 + info->planeh;
+      paraB.MskH = (8 * 64 * info->planew) - 1;
+      paraB.MskV = (8 * 64 * info->planeh) - 1;
+      paraB.MaxH = 8 * 64 * info->planew * 4;
+      paraB.MaxV = 8 * 64 * info->planeh * 4;
 
     }
 
-    info.rotatenum = 1;
+    info->rotatenum = 1;
     paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
     paraB.coefenab = fixVdp2Regs->KTCTL & 0x100;
     paraB.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
     ReadPlaneSizeR(&paraB, fixVdp2Regs->PLSZ >> 12);
     for (i = 0; i < 16; i++)
     {
-      paraB.PlaneAddr(&info, i, fixVdp2Regs);
-      paraB.PlaneAddrv[i] = info.addr;
+      paraB.PlaneAddr(info, i, fixVdp2Regs);
+      paraB.PlaneAddrv[i] = info->addr;
     }
 
-    info.LineColorBase = 0x00;
+    info->LineColorBase = 0x00;
     if (paraB.coefenab)
-      info.GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01WithK;
+      info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01WithK;
     else
-      info.GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01NoK;
+      info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01NoK;
 
     if (paraB.coefdatasize == 2)
     {
       if (paraB.coefmode < 3)
       {
-        info.GetKValueB = vdp2rGetKValue1W;
+        info->GetKValueB = vdp2rGetKValue1W;
       }
       else {
-        info.GetKValueB = vdp2rGetKValue1Wm3;
+        info->GetKValueB = vdp2rGetKValue1Wm3;
       }
 
     }
     else {
       if (paraB.coefmode < 3)
       {
-        info.GetKValueB = vdp2rGetKValue2W;
+        info->GetKValueB = vdp2rGetKValue2W;
       }
       else {
-        info.GetKValueB = vdp2rGetKValue2Wm3;
+        info->GetKValueB = vdp2rGetKValue2Wm3;
       }
     }
 
 
-  ReadMosaicData(&info, 0x1, fixVdp2Regs);
+  ReadMosaicData(info, 0x1, fixVdp2Regs);
 
-  info.transparencyenable = !(fixVdp2Regs->BGON & 0x100);
-  info.specialprimode = fixVdp2Regs->SFPRMD & 0x3;
-  info.specialcolormode = fixVdp2Regs->SFCCMD & 0x3;
+  info->transparencyenable = !(fixVdp2Regs->BGON & 0x100);
+  info->specialprimode = fixVdp2Regs->SFPRMD & 0x3;
+  info->specialcolormode = fixVdp2Regs->SFCCMD & 0x3;
   if (fixVdp2Regs->SFSEL & 0x1)
-    info.specialcode = fixVdp2Regs->SFCODE >> 8;
+    info->specialcode = fixVdp2Regs->SFCODE >> 8;
   else
-    info.specialcode = fixVdp2Regs->SFCODE & 0xFF;
+    info->specialcode = fixVdp2Regs->SFCODE & 0xFF;
 
-  info.colornumber = (fixVdp2Regs->CHCTLA & 0x70) >> 4;
+  info->colornumber = (fixVdp2Regs->CHCTLA & 0x70) >> 4;
   int dest_alpha = ((fixVdp2Regs->CCCTL >> 9) & 0x01);
 
-  info.blendmode = 0;
+  info->blendmode = 0;
 
   // 12.13 blur
   if ((fixVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
-    info.blendmode |= VDP2_CC_BLUR;
+    info->alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
+    info->blendmode |= VDP2_CC_BLUR;
   }
 
 
@@ -5807,19 +5807,19 @@ static void Vdp2DrawRBG1(void)
     if (fixVdp2Regs->CCCTL & 0x1)
     {
       // Color calculation ratio
-      info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
+      info->alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
 
       // Color calculation mode bit
       if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
-        info.blendmode |= VDP2_CC_ADD;
-        info.alpha = 0xFF;
+        info->blendmode |= VDP2_CC_ADD;
+        info->alpha = 0xFF;
       }
       else { // Use Color calculation ratio
-        if (info.specialcolormode != 0 && dest_alpha) { // Just currently not supported
-          info.blendmode |= VDP2_CC_NONE;
+        if (info->specialcolormode != 0 && dest_alpha) { // Just currently not supported
+          info->blendmode |= VDP2_CC_NONE;
         }
         else {
-          info.blendmode |= VDP2_CC_RATE;
+          info->blendmode |= VDP2_CC_RATE;
         }
       }
       // Disable Color Calculation
@@ -5831,61 +5831,60 @@ static void Vdp2DrawRBG1(void)
 
         // Color calculation will not be operated.
         // But need to write alpha value
-        info.alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
+        info->alpha = (~fixVdp2Regs->CCRNA & 0x1F)*255/31;
       }
       else {
-        info.alpha = 0xFF;
+        info->alpha = 0xFF;
       }
-      info.blendmode |= VDP2_CC_NONE;
+      info->blendmode |= VDP2_CC_NONE;
     }
 
 
-  Vdp2GeneratePerLineColorCalcuration(&info, NBG0);
-  info.linescreen = 0;
+  Vdp2GeneratePerLineColorCalcuration(info, NBG0);
+  info->linescreen = 0;
   if (fixVdp2Regs->LNCLEN & 0x1)
-    info.linescreen = 1;
+    info->linescreen = 1;
 
-  info.coloroffset = (fixVdp2Regs->CRAOFA & 0x7) << 8;
-  ReadVdp2ColorOffset(fixVdp2Regs, &info, 0x1);
-  if (info.lineTexture != 0) {
-    info.cor = 0;
-    info.cog = 0;
-    info.cob = 0;
-    info.linescreen = 2;
+  info->coloroffset = (fixVdp2Regs->CRAOFA & 0x7) << 8;
+  ReadVdp2ColorOffset(fixVdp2Regs, info, 0x1);
+  if (info->lineTexture != 0) {
+    info->cor = 0;
+    info->cog = 0;
+    info->cob = 0;
+    info->linescreen = 2;
   }
-  info.linecheck_mask = 0x01;
-  info.priority = fixVdp2Regs->PRINA & 0x7;
+  info->linecheck_mask = 0x01;
+  info->priority = fixVdp2Regs->PRINA & 0x7;
 
-  if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
+  if (!(info->enable & Vdp2External.disptoggle) || (info->priority == 0))
     return;
 
   // Window Mode
-  info.bEnWin0 = (fixVdp2Regs->WCTLA >> 1) & 0x01;
-  info.WindowArea0 = (fixVdp2Regs->WCTLA >> 0) & 0x01;
-  info.bEnWin1 = (fixVdp2Regs->WCTLA >> 3) & 0x01;
-  info.WindowArea1 = (fixVdp2Regs->WCTLA >> 2) & 0x01;
-  info.LogicWin = (fixVdp2Regs->WCTLA >> 7) & 0x01;
+  info->bEnWin0 = (fixVdp2Regs->WCTLA >> 1) & 0x01;
+  info->WindowArea0 = (fixVdp2Regs->WCTLA >> 0) & 0x01;
+  info->bEnWin1 = (fixVdp2Regs->WCTLA >> 3) & 0x01;
+  info->WindowArea1 = (fixVdp2Regs->WCTLA >> 2) & 0x01;
+  info->LogicWin = (fixVdp2Regs->WCTLA >> 7) & 0x01;
 
 
-  ReadLineScrollData(&info, fixVdp2Regs->SCRCTL & 0xFF, fixVdp2Regs->LSTA0.all);
-  info.lineinfo = lineNBG0;
-  Vdp2GenLineinfo(&info);
-  Vdp2SetGetColor(&info);
+  ReadLineScrollData(info, fixVdp2Regs->SCRCTL & 0xFF, fixVdp2Regs->LSTA0.all);
+  info->lineinfo = lineNBG0;
+  Vdp2GenLineinfo(info);
+  Vdp2SetGetColor(info);
 
   if (fixVdp2Regs->SCRCTL & 1)
   {
-    info.isverticalscroll = 1;
-    info.verticalscrolltbl = (fixVdp2Regs->VCSTA.all & 0x7FFFE) << 1;
+    info->isverticalscroll = 1;
+    info->verticalscrolltbl = (fixVdp2Regs->VCSTA.all & 0x7FFFE) << 1;
     if (fixVdp2Regs->SCRCTL & 0x100)
-      info.verticalscrollinc = 8;
+      info->verticalscrollinc = 8;
     else
-      info.verticalscrollinc = 4;
+      info->verticalscrollinc = 4;
   }
   else
-    info.isverticalscroll = 0;
+    info->isverticalscroll = 0;
 
     // RBG1 draw
-    memcpy(&g_rgb1.info, &info, sizeof(info));
     Vdp2DrawRotation(&g_rgb1);
 }
 
