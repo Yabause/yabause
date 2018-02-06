@@ -3314,9 +3314,6 @@ void YglRender(void) {
      YglRenderFrameBufferShadow();
    }
 
-   glDisable(GL_SCISSOR_TEST);
-
-
   if (_Ygl->aamode == AA_FXAA){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
@@ -3336,6 +3333,7 @@ void YglRender(void) {
     
   }
 render_finish:
+  glDisable(GL_SCISSOR_TEST);
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
   glUseProgram(0);
   glGetError();
