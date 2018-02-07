@@ -1229,42 +1229,36 @@ void FASTCALL AddressArrayWriteLong(SH2_struct *context,u32 addr, u32 val)  {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL DataArrayReadByte(SH2_struct *context,u32 addr) {
-  if (yabsys.usecache == 0) return 0;
   return T2ReadByte(context->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL DataArrayReadWord(SH2_struct *context,u32 addr) {
-  if (yabsys.usecache == 0) return 0;
   return T2ReadWord(context->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL DataArrayReadLong(SH2_struct *context,u32 addr) {
-  if (yabsys.usecache == 0) return 0;
   return T2ReadLong(context->DataArray, addr & 0xFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteByte(SH2_struct *context,u32 addr, u8 val)  {
-  if (yabsys.usecache == 0) return;
   T2WriteByte(context->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteWord(SH2_struct *context,u32 addr, u16 val)  {
-  if (yabsys.usecache == 0) return;
   T2WriteWord(context->DataArray, addr & 0xFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL DataArrayWriteLong(SH2_struct *context,u32 addr, u32 val)  {
-  if (yabsys.usecache == 0) return;
   T2WriteLong(context->DataArray, addr & 0xFFF, val);
 }
 
