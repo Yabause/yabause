@@ -396,7 +396,7 @@ static int charToEscape(char *buffer) {
 static FILE* fopenInPath(char* filename, char* path){
   int nbFiles,i,k;
   char* tmp;
-  int l = strlen(filename) + 1;
+  int l = strlen(filename) + 2;
   struct dirent **fileListTemp;
   nbFiles = scandir(path, &fileListTemp, NULL, alphasort);
   for(i = 0; i < nbFiles; i++){
@@ -422,7 +422,7 @@ static FILE* fopenInPath(char* filename, char* path){
 }
 #else
 static FILE* fopenInPath(char* filename, char* path){
-  int l = strlen(filename)+1;
+  int l = strlen(filename)+2;
   int k;
   char* filepath = malloc((l + charToEscape(filename) + charToEscape(path)+strlen(path))*sizeof(char));
   char* tmp;
