@@ -495,10 +495,6 @@ typedef struct {
    unsigned int width;
    unsigned int height;
    unsigned int depth;
-
-   float clear_r;
-   float clear_g;
-   float clear_b;
    
    // VDP1 Info
    int vdp1_maxpri;
@@ -554,6 +550,10 @@ typedef struct {
    u32 lincolor_tex;
    u32 linecolor_pbo;
    u32 * lincolor_buf;
+
+   u32 back_tex;
+   u32 back_pbo;
+   u32 * backcolor_buf;
 
    AAMODE aamode;
    POLYGONMODE polygonmode;
@@ -649,6 +649,9 @@ int YglBlitFXAA(u32 sourceTexture, float w, float h);
 void YglRenderVDP1(void);
 u32 * YglGetLineColorPointer();
 void YglSetLineColor(u32 * pbuf, int size);
+
+u32* YglGetBackColorPointer();
+void YglSetBackColor(int size);
 
 int Ygl_uniformWindow(void * p );
 int YglProgramInit();

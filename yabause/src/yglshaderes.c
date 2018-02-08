@@ -3280,6 +3280,140 @@ int YglProgramChange( YglLevel * level, int prgid )
 }
 
 //----------------------------------------------------------------------------------------
+static int clear_prg = -1;
+
+static const char vclear_img[] =
+#if defined (_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+  "layout (location = 0) in vec2 aPosition;   \n"
+  "layout (location = 1) in vec2 aTexCoord;   \n"
+  "  \n"
+  " void main(void) \n"
+  " { \n"
+  " gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); \n"
+  " } \n";
+
+
+static const char fclear_img[] =
+#if defined (_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+  "precision highp float;       \n"
+  "uniform float u_emu_height; \n"
+  "uniform float u_vheight; \n"
+  "uniform sampler2D u_Clear;     \n"
+  "out vec4 fragColor;            \n"
+  "void main()                                         \n"
+  "{                                                   \n"
+"    ivec2 linepos; \n "
+"    linepos.y = 0; \n "
+"    linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
+  "  fragColor = texelFetch( u_Clear, linepos,0 ); \n"
+  "} \n";
+
+int YglDrawBackScreen(float w, float h) {
+
+  if (clear_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+
+    const GLchar * vclear_img_v[] = { vclear_img, NULL };
+    const GLchar * fclear_img_v[] = { fclear_img, NULL };
+
+    clear_prg = glCreateProgram();
+    if (clear_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, vclear_img_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      clear_prg = -1;
+      return -1;
+    }
+    glShaderSource(fshader, 1, fclear_img_v, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      clear_prg = -1;
+      return -1;
+    }
+
+    glAttachShader(clear_prg, vshader);
+    glAttachShader(clear_prg, fshader);
+    glLinkProgram(clear_prg);
+    glGetProgramiv(clear_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(clear_prg);
+      clear_prg = -1;
+      return -1;
+    }
+
+    glUseProgram(clear_prg);
+    glUniform1i(glGetUniformLocation(clear_prg, "u_Clear"), 0);
+  }
+  else{
+    glUseProgram(clear_prg);
+  }
+  glUniform1f(glGetUniformLocation(clear_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(clear_prg, "u_vheight"), (float)_Ygl->height);
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+
+  float const vertexPosition[] = {
+    1.0f, -1.0f,
+    -1.0f, -1.0f,
+    1.0f, 1.0f,
+    -1.0f, 1.0f };
+
+  float const textureCoord[] = {
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f };
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+
+  return 0;
+}
+
+//----------------------------------------------------------------------------------------
 static int blit_prg = -1;
 static int u_w = -1;
 static int u_h = -1;
@@ -3428,8 +3562,6 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   return 0;
 }
-
-
 
 //----------------------------------------------------------------------------------------
 static int fxaa_prg = -1;

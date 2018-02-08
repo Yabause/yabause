@@ -5494,7 +5494,6 @@ static void Vdp2DrawBackScreen(void)
   int dot;
   vdp2draw_struct info;
 
-  static unsigned char lineColors[512 * 3];
   static int line[512 * 4];
 
   if (fixVdp2Regs->VRSIZE & 0x8000)
@@ -5506,13 +5505,32 @@ static void Vdp2DrawBackScreen(void)
   ReadVdp2ColorOffset(fixVdp2Regs, &info, 0x20);
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
-  dot = T1ReadWord(Vdp2Ram, scrAddr);
-
-  YglSetClearColor(
-    (float)(((dot & 0x1F)<<3) +info.cor) / (float)(0xFF),
-    (float)((((dot & 0x3E0) >> 5) << 3) + info.cog) / (float)(0xFF),
-    (float)((((dot & 0x7C00) >> 10) << 3) + info.cob) / (float)(0xFF)
-  );
+  u32* back_pixel_data = YglGetBackColorPointer();
+  if (back_pixel_data == NULL) {
+    return;
+  }
+  if ((fixVdp2Regs->BKTAU & 0x8000) == 0) {
+    u8 r,g,b;
+    int i;
+    dot = T1ReadWord(Vdp2Ram, scrAddr);
+    r = ((dot & 0x1F)<<3) +info.cor;
+    g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
+    b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
+    for (i = 0; i < vdp2height; i++) {
+      *back_pixel_data++ = (0xFF<<24) | (b<<16) | (g<<8) | r; 
+    }
+  } else {
+    int i;
+    for (i = 0; i < vdp2height; i++) {
+      u8 r,g,b;
+      dot = T1ReadWord(Vdp2Ram, (scrAddr+2*i));
+      r = ((dot & 0x1F)<<3) +info.cor;
+      g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
+      b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
+      *back_pixel_data++ = (0xFF<<24) | (b<<16) | (g<<8) | r; 
+    }
+  }
+  YglSetBackColor(vdp2height);
 #else
   if (fixVdp2Regs->BKTAU & 0x8000)
   {
