@@ -45,7 +45,7 @@ int fount = 0;
 FILE *ppfp = NULL;
 #endif
 
-#ifdef _WINDOWS
+#ifndef ANDROID
 int yprintf(const char * fmt, ...)
 {
   static FILE * dbugfp = NULL;
@@ -61,7 +61,9 @@ int yprintf(const char * fmt, ...)
   }
   return 0;
 }
+#endif
 
+#ifdef _WINDOWS
 void OSDPushMessageDirect(char * msg) {
 }
 
