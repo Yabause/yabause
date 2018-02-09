@@ -6,4 +6,6 @@
 ## Want to support us?
 
 You can support us with a weekly tip via [Liberapay][liberapay.com].
-[![Support via Liberapay][liberapay_button]][liberapay_donate]
+
+<script src="https://liberapay.com/~32349/widgets/button.js"></script>
+<noscript><a href="https://liberapay.com/~32349/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg"></a></noscript>
