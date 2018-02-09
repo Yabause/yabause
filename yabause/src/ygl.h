@@ -537,7 +537,6 @@ typedef struct {
    int win1_vertexcnt;
 
    YglMatrix mtxModelView;
-   YglMatrix mtxTexture;
 
    YglProgram windowpg;
    YglProgram renderfb;

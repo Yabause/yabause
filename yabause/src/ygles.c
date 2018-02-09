@@ -1271,9 +1271,6 @@ int YglInit(int width, int height, unsigned int depth) {
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, 320.0f, 224.0f, 0.0f, 10.0f, 0.0f);
 
-  YglLoadIdentity(&_Ygl->mtxTexture);
-  YglOrtho(&_Ygl->mtxTexture, -width, width, -height, height, 1.0f, 0.0f);
-
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -2613,11 +2610,6 @@ void YglRenderVDP1(void) {
   FrameProfileAdd("YglRenderVDP1 start");
   YabThreadLock(_Ygl->mutex);
 
-  YglMatrix m;
-
-  YglLoadIdentity(&m);
-  YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
-
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
   if (_Ygl->pFrameBuffer != NULL) {
@@ -2672,7 +2664,7 @@ void YglRenderVDP1(void) {
       level->prg[j].setupUniform((void*)&level->prg[j]);
     }
     if( level->prg[j].currentQuad != 0 ) {
-      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&m.m[0][0]);
+      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
       glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
       glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
       if( level->prg[j].vaid != 0 ) {
