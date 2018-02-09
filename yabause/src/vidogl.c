@@ -1317,6 +1317,13 @@ static void Vdp2GenerateWindowInfo(void)
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
               _Ygl->win0_vertexcnt++;
+            } else if(v == (fixVdp2Regs->WPEY0 - 1)) {
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
             }
           }
           preHStart = HStart;
