@@ -5517,9 +5517,8 @@ static void Vdp2DrawBackScreen(void)
   if (back_pixel_data == NULL) {
     return;
   }
-  if (fixVdp2Regs->TVMD & 0x100) {
     if ((fixVdp2Regs->BKTAU & 0x8000) == 0) {
-      float r,g,b;
+      int r,g,b;
       int i;
       dot = T1ReadWord(Vdp2Ram, scrAddr);
       r = ((dot & 0x1F)<<3) + info.cor;
@@ -5534,7 +5533,7 @@ static void Vdp2DrawBackScreen(void)
     } else {
       int i;
       for (i = 0; i < vdp2height; i++) {
-        u8 r,g,b;
+        int r,g,b;
         dot = T1ReadWord(Vdp2Ram, (scrAddr+2*i));
         r = ((dot & 0x1F)<<3) + info.cor;
         g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
@@ -5545,13 +5544,7 @@ static void Vdp2DrawBackScreen(void)
         *back_pixel_data++ = (0xFF<<24) | (b<<16) | (g<<8) | r; 
       }
     }
-  }
-  else {
-    int i;
-    for (i = 0; i < vdp2height; i++) {
-      *back_pixel_data++ = 0; 
-    }
-  }
+ 
   YglSetBackColor(vdp2height);
 #else
   if (fixVdp2Regs->BKTAU & 0x8000)
