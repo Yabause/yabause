@@ -3179,6 +3179,9 @@ void YglRender(void) {
    YGLLOG("YglRender\n");
 
    FrameProfileAdd("YglRender start");
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+   glDisable(GL_SCISSOR_TEST);
+   glViewport(0, 0, GlWidth, GlHeight);
    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -3192,6 +3195,9 @@ void YglRender(void) {
      }
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
      _Ygl->targetfbo = _Ygl->fxaa_fbo;
+     glViewport(0, 0, GlWidth, GlHeight);
+     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
    } else {
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
      _Ygl->targetfbo = _Ygl->default_fbo;
