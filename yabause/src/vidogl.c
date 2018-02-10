@@ -5510,7 +5510,7 @@ static void Vdp2DrawBackScreen(void)
   else
     scrAddr = (((fixVdp2Regs->BKTAU & 0x3) << 16) | fixVdp2Regs->BKTAL) * 2;
 
-
+  ReadVdp2ColorOffset(fixVdp2Regs, &info, 0x20);
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
   u32* back_pixel_data = YglGetBackColorPointer();
