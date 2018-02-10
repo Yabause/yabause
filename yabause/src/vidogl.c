@@ -4563,6 +4563,9 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
+
+//The polygon calculation seems not so good. A good test game is break point. All the lines are blinking and none is really thin and straight.
+
   u16 color;
   u16 CMDPMOD;
   u8 alpha;
@@ -4763,6 +4766,35 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.vertices[5] = (sprite.vertices[5] + Vdp1Regs->localY) * vdp1hratio;
   sprite.vertices[6] = (sprite.vertices[6] + Vdp1Regs->localX) * vdp1wratio;
   sprite.vertices[7] = (sprite.vertices[7] + Vdp1Regs->localY) * vdp1hratio;
+
+for (i = 0; i < 2; i++) {
+
+//It is only taking care of horizontal lines. In fact, it should cover all polygons that are less than 1 pixel up, in any orientation...
+    float dx = sprite.vertices[(i*2+2)%8] - sprite.vertices[(i*2)%8];
+    float dy = sprite.vertices[(i*2+3)%8] - sprite.vertices[(i*2+1)%8];
+
+    float d2x = sprite.vertices[(i*2+6)%8] - sprite.vertices[(i*2+4)%8];
+    float d2y = sprite.vertices[(i*2+7)%8] - sprite.vertices[(i*2+5)%8];
+
+    if ((dx < 1.0f && dx > -1.0f) && (d2x < 1.0f && d2x > -1.0f)) {
+     float lx = sprite.vertices[(i*2+6)%8] - sprite.vertices[(i*2+2)%8];
+     if (lx <= 1.0f && lx >= -1.0f) {
+       sprite.vertices[(i*2)%8] -= 0.5;
+       sprite.vertices[(i*2+4)%8] -= 0.5;
+       sprite.vertices[((i*2)+2)%8] += 0.5;
+       sprite.vertices[((i*2)+6)%8] += 0.5;
+     }
+    }
+   if ((dy < 1.0f && dy > -1.0f) && (d2y < 1.0f && d2y > -1.0f)) {
+     float ly = sprite.vertices[(i*2+3)%8] - sprite.vertices[(i*2+7)%8];
+     if (ly <= 1.0f && ly >= -1.0f) {
+       sprite.vertices[(i*2+1)%8] -= 0.5;
+       sprite.vertices[(i*2+5)%8] -= 0.5;
+       sprite.vertices[((i*2)+3)%8] += 0.5;
+       sprite.vertices[((i*2)+7)%8] += 0.5;
+     }
+    }
+}
 
   color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
