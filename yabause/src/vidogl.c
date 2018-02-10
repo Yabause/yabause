@@ -40,6 +40,8 @@
 #include "patternManager.h"
 #endif
 
+#define CLAMP(A,LOW,HIGH) ((A)<(LOW)?(LOW):((A)>(HIGH))?(HIGH):(A))
+
 static Vdp2 baseVdp2Regs;
 Vdp2 * fixVdp2Regs = NULL;
 //#define PERFRAME_LOG
@@ -5509,32 +5511,45 @@ static void Vdp2DrawBackScreen(void)
     scrAddr = (((fixVdp2Regs->BKTAU & 0x3) << 16) | fixVdp2Regs->BKTAL) * 2;
 
 
-  ReadVdp2ColorOffset(fixVdp2Regs, &info, 0x20);
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
   u32* back_pixel_data = YglGetBackColorPointer();
   if (back_pixel_data == NULL) {
     return;
   }
-  if ((fixVdp2Regs->BKTAU & 0x8000) == 0) {
-    u8 r,g,b;
-    int i;
-    dot = T1ReadWord(Vdp2Ram, scrAddr);
-    r = ((dot & 0x1F)<<3) +info.cor;
-    g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
-    b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
-    for (i = 0; i < vdp2height; i++) {
-      *back_pixel_data++ = (0xFF<<24) | (b<<16) | (g<<8) | r; 
-    }
-  } else {
-    int i;
-    for (i = 0; i < vdp2height; i++) {
-      u8 r,g,b;
-      dot = T1ReadWord(Vdp2Ram, (scrAddr+2*i));
-      r = ((dot & 0x1F)<<3) +info.cor;
+  if (fixVdp2Regs->TVMD & 0x100) {
+    if ((fixVdp2Regs->BKTAU & 0x8000) == 0) {
+      float r,g,b;
+      int i;
+      dot = T1ReadWord(Vdp2Ram, scrAddr);
+      r = ((dot & 0x1F)<<3) + info.cor;
       g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
       b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
-      *back_pixel_data++ = (0xFF<<24) | (b<<16) | (g<<8) | r; 
+      r = CLAMP(r, 0x00, 0xFF);
+      g = CLAMP(g, 0x00, 0xFF);
+      b = CLAMP(b, 0x00, 0xFF);
+      for (i = 0; i < vdp2height; i++) {
+        *back_pixel_data++ = (0xFF<<24) | ((u8)b<<16) | ((u8)g<<8) | (u8)r; 
+      }
+    } else {
+      int i;
+      for (i = 0; i < vdp2height; i++) {
+        u8 r,g,b;
+        dot = T1ReadWord(Vdp2Ram, (scrAddr+2*i));
+        r = ((dot & 0x1F)<<3) + info.cor;
+        g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
+        b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
+        r = CLAMP(r, 0x00, 0xFF);
+        g = CLAMP(g, 0x00, 0xFF);
+        b = CLAMP(b, 0x00, 0xFF);
+        *back_pixel_data++ = (0xFF<<24) | (b<<16) | (g<<8) | r; 
+      }
+    }
+  }
+  else {
+    int i;
+    for (i = 0; i < vdp2height; i++) {
+      *back_pixel_data++ = 0; 
     }
   }
   YglSetBackColor(vdp2height);
