@@ -3183,6 +3183,9 @@ void YglRender(void) {
    glDisable(GL_SCISSOR_TEST);
    glViewport(0, 0, GlWidth, GlHeight);
    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+   glClearDepthf(0.0f);
+   glDepthMask(GL_TRUE);
+   glEnable(GL_DEPTH_TEST);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
    if ((Vdp2Regs->TVMD & 0x8000) == 0){
@@ -3197,6 +3200,9 @@ void YglRender(void) {
      _Ygl->targetfbo = _Ygl->fxaa_fbo;
      glViewport(0, 0, GlWidth, GlHeight);
      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+     glClearDepthf(0.0f);
+     glDepthMask(GL_TRUE);
+     glEnable(GL_DEPTH_TEST);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
    } else {
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
@@ -3238,11 +3244,6 @@ void YglRender(void) {
    //}
 
    YglDrawBackScreen(GlWidth, GlHeight);
-
-   glClearDepthf(0.0f);
-   glDepthMask(GL_TRUE);
-   glEnable(GL_DEPTH_TEST);
-   glClear(GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT); 
 
    if (_Ygl->texture_manager == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);

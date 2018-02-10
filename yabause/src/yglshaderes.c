@@ -3289,7 +3289,6 @@ static const char vclear_img[] =
       "#version 330 \n"
 #endif
   "layout (location = 0) in vec2 aPosition;   \n"
-  "layout (location = 1) in vec2 aTexCoord;   \n"
   "  \n"
   " void main(void) \n"
   " { \n"
@@ -3382,16 +3381,8 @@ int YglDrawBackScreen(float w, float h) {
     1.0f, 1.0f,
     -1.0f, 1.0f };
 
-  float const textureCoord[] = {
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f };
-
   glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
@@ -3403,12 +3394,9 @@ int YglDrawBackScreen(float w, float h) {
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  glActiveTexture(GL_TEXTURE0);
   glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
 
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
 
   return 0;
 }
