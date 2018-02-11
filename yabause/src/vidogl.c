@@ -4560,409 +4560,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 //////////////////////////////////////////////////////////////////////////////
 
 
-
-void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
-{
-
-//The polygon calculation seems not so good. A good test game is break point. All the lines are blinking and none is really thin and straight.
-
-  u16 color;
-  u16 CMDPMOD;
-  u8 alpha;
-  YglSprite sprite;
-  YglTexture texture;
-  u16 color2;
-  int i;
-  float col[4 * 4];
-  int gouraud = 0;
-  int priority = 0;
-  int isSquare = 0;
-  int shadow = 0;
-  int normalshadow = 0;
-  int colorcalc = 0;
-  vdp1cmd_struct cmd;
-
-  sprite.linescreen = 0;
-
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-
-  if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
-  if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
-  if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
-  if ((cmd.CMDYD & 0x400)) cmd.CMDYD |= 0xFC00; else cmd.CMDYD &= ~(0xFC00);
-
-  sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  sprite.dst = 0;
-
-
-  sprite.vertices[0] = (s16)cmd.CMDXA;
-  sprite.vertices[1] = (s16)cmd.CMDYA;
-  sprite.vertices[2] = (s16)cmd.CMDXB;
-  sprite.vertices[3] = (s16)cmd.CMDYB;
-  sprite.vertices[4] = (s16)cmd.CMDXC;
-  sprite.vertices[5] = (s16)cmd.CMDYC;
-  sprite.vertices[6] = (s16)cmd.CMDXD;
-  sprite.vertices[7] = (s16)cmd.CMDYD;
-
-#ifdef PERFRAME_LOG
-  if (ppfp != NULL) {
-    fprintf(ppfp, "BEFORE %d,%d,%d,%d,%d,%d,%d,%d\n",
-      (int)sprite.vertices[0], (int)sprite.vertices[1],
-      (int)sprite.vertices[2], (int)sprite.vertices[3],
-      (int)sprite.vertices[4], (int)sprite.vertices[5],
-      (int)sprite.vertices[6], (int)sprite.vertices[7]
-    );
-}
-#endif
-  isSquare = 1;
-
-  for (i = 0; i < 3; i++) {
-    float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
-    float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
-    float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
-    float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
-
-    float dot = dx*d2x + dy*d2y;
-    if (dot >= EPSILON || dot <= -EPSILON) {
-      isSquare = 0;
-      break;
-    }
-  }
-
-  // For gungiliffon big polygon
-  if (sprite.vertices[2] - sprite.vertices[0] > 350) {
-    isSquare = 1;
-  }
-
-  if (isSquare) {
-    // find upper left opsition
-    float minx = 65535.0f;
-    float miny = 65535.0f;
-    int lt_index = -1;
-
-    sprite.dst = 0;
-
-    for (i = 0; i < 4; i++) {
-      if (sprite.vertices[(i << 1) + 0] <= minx /*&& sprite.vertices[(i << 1) + 1] <= miny*/) {
-
-        if (minx == sprite.vertices[(i << 1) + 0]) {
-          if (sprite.vertices[(i << 1) + 1] < miny) {
-            minx = sprite.vertices[(i << 1) + 0];
-            miny = sprite.vertices[(i << 1) + 1];
-            lt_index = i;
-          }
-        }
-        else {
-          minx = sprite.vertices[(i << 1) + 0];
-          miny = sprite.vertices[(i << 1) + 1];
-          lt_index = i;
-        }
-      }
-    }
-
-    float adx = sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
-    float ady = sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
-    float bdx = sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
-    float bdy = sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
-    float cross = (adx * bdy) - (bdx * ady);
-
-    // clockwise
-    if (cross >= 0) {
-      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] += 1;
-      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] += 0;
-      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] += 1;
-      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] += 1;
-      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 0] += 0;
-      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 1] += 1;
-    }
-    // counter-clockwise
-    else {
-      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] += 0;
-      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] += 1;
-      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] += 1;
-      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] += 1;
-      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 0] += 1;
-      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 1] += 0;
-    }
-
-#if 0
-    for (i = 0; i < 4; i++) {
-      if (i != lt_index) {
-        // vectorize
-        float dx = sprite.vertices[(i << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
-        float dy = sprite.vertices[(i << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
-        float nx;
-        float ny;
-
-        if (sprite.vertices[(i << 1) + 1] == 78) {
-          int a = 0;
-        }
-
-        // normalize
-        float len = fabsf(sqrtf(dx*dx + dy*dy));
-        if (len <= EPSILON) {
-          continue;
-        }
-        nx = dx / len;
-        ny = dy / len;
-#if 0
-        if (nx >= EPSILON) { nx = 5.0f; }
-        else if (nx <= -EPSILON) { nx = -5.0f; }
-        else nx = 0.0f;
-
-        if (ny >= EPSILON) { ny = 5.0f; }
-        else if (ny <= -EPSILON) { ny = -5.0f; }
-        else ny = 0.0f;
-#endif
-
-        if (nx >= EPSILON &&  nx < 1.0) { nx = 1.0; }
-        else if (nx <= -EPSILON && nx > -1.0) { nx = -1.0; }
-        if (ny >= EPSILON &&  ny < 1.0) { ny = 1.0; }
-        else if (ny <= -EPSILON && ny > -1.0) { ny = -1.0; }
-
-        // expand vertex
-        sprite.vertices[(i << 1) + 0] += nx;
-        sprite.vertices[(i << 1) + 1] += ny;
-      }
-    }
-#endif
-  }
-
-#if 0
-  // Line Polygon
-  if ((sprite.vertices[1] == sprite.vertices[3]) && // Y1 == Y2
-    (sprite.vertices[3] == sprite.vertices[5]) && // Y2 == Y3
-    (sprite.vertices[5] == sprite.vertices[7]))   // Y3 == Y4
-  {
-    sprite.vertices[7] += 1;
-    sprite.vertices[5] += 1;
-  }
-
-  // Line Polygon
-  if ((sprite.vertices[0] == sprite.vertices[2]) &&
-    (sprite.vertices[2] == sprite.vertices[4]) &&
-    (sprite.vertices[4] == sprite.vertices[6])) {
-    sprite.vertices[4] += 1;
-    sprite.vertices[6] += 1;
-  }
-#endif
-
-#ifdef PERFRAME_LOG
-  if (ppfp != NULL) {
-    fprintf(ppfp, "AFTER %d,%d,%d,%d,%d,%d,%d,%d\n",
-      (int)sprite.vertices[0], (int)sprite.vertices[1],
-      (int)sprite.vertices[2], (int)sprite.vertices[3],
-      (int)sprite.vertices[4], (int)sprite.vertices[5],
-      (int)sprite.vertices[6], (int)sprite.vertices[7]
-    );
-  }
-#endif
-
-  sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
-  sprite.vertices[2] = (sprite.vertices[2] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[3] = (sprite.vertices[3] + Vdp1Regs->localY) * vdp1hratio;
-  sprite.vertices[4] = (sprite.vertices[4] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[5] = (sprite.vertices[5] + Vdp1Regs->localY) * vdp1hratio;
-  sprite.vertices[6] = (sprite.vertices[6] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[7] = (sprite.vertices[7] + Vdp1Regs->localY) * vdp1hratio;
-
-for (i = 0; i < 2; i++) {
-
-//It is only taking care of horizontal lines. In fact, it should cover all polygons that are less than 1 pixel up, in any orientation...
-    float dx = sprite.vertices[(i*2+2)%8] - sprite.vertices[(i*2)%8];
-    float dy = sprite.vertices[(i*2+3)%8] - sprite.vertices[(i*2+1)%8];
-
-    float d2x = sprite.vertices[(i*2+6)%8] - sprite.vertices[(i*2+4)%8];
-    float d2y = sprite.vertices[(i*2+7)%8] - sprite.vertices[(i*2+5)%8];
-
-    if ((dx < 1.0f && dx > -1.0f) && (d2x < 1.0f && d2x > -1.0f)) {
-     float lx = sprite.vertices[(i*2+6)%8] - sprite.vertices[(i*2+2)%8];
-     if (lx <= 1.0f && lx >= -1.0f) {
-       sprite.vertices[(i*2)%8] -= 0.5;
-       sprite.vertices[(i*2+4)%8] -= 0.5;
-       sprite.vertices[((i*2)+2)%8] += 0.5;
-       sprite.vertices[((i*2)+6)%8] += 0.5;
-     }
-    }
-   if ((dy < 1.0f && dy > -1.0f) && (d2y < 1.0f && d2y > -1.0f)) {
-     float ly = sprite.vertices[(i*2+3)%8] - sprite.vertices[(i*2+7)%8];
-     if (ly <= 1.0f && ly >= -1.0f) {
-       sprite.vertices[(i*2+1)%8] -= 0.5;
-       sprite.vertices[(i*2+5)%8] -= 0.5;
-       sprite.vertices[((i*2)+3)%8] += 0.5;
-       sprite.vertices[((i*2)+7)%8] += 0.5;
-     }
-    }
-}
-
-  color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
-  CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
-  sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
-
-  // Check if the Gouraud shading bit is set and the color mode is RGB
-  if ((CMDPMOD & 4))
-  {
-    for (i = 0; i < 4; i++)
-    {
-      color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
-      col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 3] = 1.0f;
-    }
-    gouraud = 1;
-  }
-
-  if (color & 0x8000)
-    priority = fixVdp2Regs->PRISA & 0x7;
-  else
-  {
-    Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
-#ifdef WORDS_BIGENDIAN
-    priority = ((u8 *)&fixVdp2Regs->PRISA)[priority ^ 1] & 0x7;
-#else
-    priority = ((u8 *)&fixVdp2Regs->PRISA)[priority] & 0x7;
-#endif
-  }
-
-
-  sprite.priority = 8;
-  sprite.w = 1;
-  sprite.h = 1;
-  sprite.flip = 0;
-  sprite.cor = 0x00;
-  sprite.cog = 0x00;
-  sprite.cob = 0x00;
-
-  int spd = ((CMDPMOD & 0x40) != 0);
-
-#if 0
-  // Pallet mode
-  if (IS_REPLACE(CMDPMOD) && color == 0)
-  {
-    if (spd) {
-      sprite.blendmode = VDP1_COLOR_SPD;
-    }
-
-    YglQuadGrowShading(&sprite, &texture, NULL, NULL);
-    alpha = 0x0;
-    alpha |= priority;
-    *texture.textdata = SAT2YAB1(alpha, color);
-    return;
-  }
-
-  // RGB mode
-  if (color & 0x8000) {
-
-    if (spd) {
-      sprite.blendmode = VDP1_COLOR_SPD;
-    }
-
-    int vdp1spritetype = fixVdp2Regs->SPCTL & 0xF;
-    if (color != 0x8000 || vdp1spritetype < 2 || (vdp1spritetype < 8 && !(fixVdp2Regs->SPCTL & 0x10))) {
-    }
-    else {
-      YglQuadGrowShading(&sprite, &texture, NULL, NULL);
-      alpha = 0;
-      alpha |= priority;
-      *texture.textdata = SAT2YAB1(alpha, color);
-      return;
-    }
-  }
-
-#endif
-
-  alpha = 0xF8;
-  if (IS_REPLACE(CMDPMOD)) {
-    if ((CMDPMOD & 0x40) != 0) {
-      sprite.blendmode = VDP1_COLOR_SPD;
-    }
-    else {
-      alpha = 0xF8;
-    }
-  }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
-    alpha = 0xF8;
-    sprite.blendmode = VDP1_COLOR_CL_SHADOW;
-  }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
-    alpha = 0xF8;
-    sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
-  }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    alpha = 0x80;
-    sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
-  }
-
-  if (IS_MESH(CMDPMOD)) {
-    alpha = 0x80;
-    sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
-  }
-
-  if (gouraud == 1)
-  {
-    YglQuadGrowShading(&sprite, &texture, col, NULL);
-  }
-  else {
-    YglQuadGrowShading(&sprite, &texture, NULL, NULL);
-  }
-
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  *texture.textdata = Vdp1ReadPolygonColor(&cmd);
-
-#if 0
-  if (fixVdp2Regs->SDCTL & 0x100) {
-  }
-
-  /*
-  if( (CMDPMOD & 0x100) || (CMDPMOD & 0x7) == 0x3)
-  {
-     alpha = 0x80;
-  }
-  */
-
-  int colorcl;
-  int nromal_shadow;
-  Vdp1ReadPriority(&cmd, &priority, &colorcl, &nromal_shadow);
-  if ((color & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-
-    int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
-    if (((fixVdp2Regs->CCCTL >> 6) & 0x01) == 0x01)
-    {
-      switch (SPCCCS)
-      {
-      case 0:
-        if (priority <= ((fixVdp2Regs->SPCTL >> 8) & 0x07))
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        break;
-      case 1:
-        if (priority == ((fixVdp2Regs->SPCTL >> 8) & 0x07))
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        break;
-      case 2:
-        if (priority >= ((fixVdp2Regs->SPCTL >> 8) & 0x07))
-          alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        break;
-      case 3:
-        alpha = 0xF8 - ((colorcl << 3) & 0xF8);
-        break;
-      }
-    }
-    alpha |= priority;
-    //*texture.textdata = SAT2YAB1(alpha, color);
-    *texture.textdata = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(color));
-
-  }
-  else {
-    *texture.textdata = VDP1COLOR(1, colorcl, priority, 0, color);
-  }
-#endif
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
   float dx;
   float dy;
@@ -5028,6 +4625,164 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
   outv[6] = v2[0] + ex - dx + offset;
   outv[7] = v2[1] + ey - dy + offset;
 
+
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+
+
+
+void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+{
+
+//The polygon calculation seems not so good. A good test game is break point. All the lines are blinking and none is really thin and straight.
+
+  u16 color;
+  u16 CMDPMOD;
+  u8 alpha;
+  YglSprite sprite;
+  YglTexture texture;
+  u16 color2;
+  int i;
+  float col[4 * 4];
+  int gouraud = 0;
+  int priority = 0;
+  int isSquare = 0;
+  int shadow = 0;
+  int normalshadow = 0;
+  int colorcalc = 0;
+  vdp1cmd_struct cmd;
+  s16 v[8];
+  float line_polygon[8];
+  YglCache c;
+
+  sprite.linescreen = 0;
+
+  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+
+  if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
+  if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
+  if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
+  if ((cmd.CMDYD & 0x400)) cmd.CMDYD |= 0xFC00; else cmd.CMDYD &= ~(0xFC00);
+
+  v[0] = (s16)cmd.CMDXA;
+  v[1] = (s16)cmd.CMDYA;
+  v[2] = (s16)cmd.CMDXB;
+  v[3] = (s16)cmd.CMDYB;
+  v[4] = (s16)cmd.CMDXC;
+  v[5] = (s16)cmd.CMDYC;
+  v[6] = (s16)cmd.CMDXD;
+  v[7] = (s16)cmd.CMDYD;
+
+  sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+  sprite.dst = 0;
+
+  sprite.vertices[0] = (v[0] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[1] = (v[1] + Vdp1Regs->localY) * vdp1hratio;
+  sprite.vertices[2] = (v[2] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[3] = (v[3] + Vdp1Regs->localY) * vdp1hratio;
+  sprite.vertices[4] = (v[4] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[5] = (v[5] + Vdp1Regs->localY) * vdp1hratio;
+  sprite.vertices[6] = (v[6] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[7] = (v[7] + Vdp1Regs->localY) * vdp1hratio;
+
+  color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
+  CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+  sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
+
+  // Check if the Gouraud shading bit is set and the color mode is RGB
+  if ((CMDPMOD & 4))
+  {
+    for (i = 0; i < 4; i++)
+    {
+      color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+      col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      col[(i << 2) + 3] = 1.0f;
+    }
+    gouraud = 1;
+  }
+
+  if (color & 0x8000)
+    priority = fixVdp2Regs->PRISA & 0x7;
+  else
+  {
+    Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
+#ifdef WORDS_BIGENDIAN
+    priority = ((u8 *)&fixVdp2Regs->PRISA)[priority ^ 1] & 0x7;
+#else
+    priority = ((u8 *)&fixVdp2Regs->PRISA)[priority] & 0x7;
+#endif
+  }
+
+
+  sprite.priority = 8;
+  sprite.w = 1;
+  sprite.h = 1;
+  sprite.flip = 0;
+  sprite.cor = 0x00;
+  sprite.cog = 0x00;
+  sprite.cob = 0x00;
+
+  int spd = ((CMDPMOD & 0x40) != 0);
+
+  alpha = 0xF8;
+  if (IS_REPLACE(CMDPMOD)) {
+    if ((CMDPMOD & 0x40) != 0) {
+      sprite.blendmode = VDP1_COLOR_SPD;
+    }
+    else {
+      alpha = 0xF8;
+    }
+  }
+  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
+    alpha = 0xF8;
+    sprite.blendmode = VDP1_COLOR_CL_SHADOW;
+  }
+  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
+    alpha = 0xF8;
+    sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
+  }
+  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
+    alpha = 0x80;
+    sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
+  }
+
+  if (IS_MESH(CMDPMOD)) {
+    alpha = 0x80;
+    sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
+  }
+
+  if (gouraud == 1)
+  {
+    YglQuadGrowShading(&sprite, &texture, col, &c);
+  }
+  else {
+    YglQuadGrowShading(&sprite, &texture, NULL, &c);
+  }
+
+  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  *texture.textdata = Vdp1ReadPolygonColor(&cmd);
+
+  for (i=0; i<4; i++) {
+    makeLinePolygon(&v[(2*i)%8],&v[(2*(i+1))%8],line_polygon);
+    sprite.vertices[0] = (line_polygon[0] + Vdp1Regs->localX) * vdp1wratio;
+    sprite.vertices[1] = (line_polygon[1] + Vdp1Regs->localY) * vdp1hratio;
+    sprite.vertices[2] = (line_polygon[2] + Vdp1Regs->localX) * vdp1wratio;
+    sprite.vertices[3] = (line_polygon[3] + Vdp1Regs->localY) * vdp1hratio;
+    sprite.vertices[4] = (line_polygon[4] + Vdp1Regs->localX) * vdp1wratio;
+    sprite.vertices[5] = (line_polygon[5] + Vdp1Regs->localY) * vdp1hratio;
+    sprite.vertices[6] = (line_polygon[6] + Vdp1Regs->localX) * vdp1wratio;
+    sprite.vertices[7] = (line_polygon[7] + Vdp1Regs->localY) * vdp1hratio;
+    if (gouraud) {
+      YglCacheQuadGrowShading(&sprite, col, &c);
+    }
+    else {
+      YglCacheQuadGrowShading(&sprite, NULL, &c);
+    }
+  }
 
 }
 
