@@ -158,6 +158,7 @@ Dummy OSD Interface|Interface OSD Factice
 Dummy Sound Interface|Interface Son Factice
 Dummy Video Interface|Interface Vidéo Factice
 Edit configuration|Editer la Configuration
+Eject/Load ISO...|Ejecter/Charger un ISO...
 ELF Program Files (*elf)|Fichiers Programme ELF (*.elf)
 End Address:|Adresse de Fin :
 English|Anglais
@@ -364,6 +365,7 @@ Unable to open file for saving|Ne peut pas ouvrir le fichier à sauvegarder
 Unable to remove code|Ne peux pas enlever le Code
 Unknown (%1)|Inconnu (%1)
 Use new scsp|Utiliser le nouveau SCSP
+Use Vdp1 Cache|Utiliser le Cache VDP1
 Value|Valeur
 Value:|Valeur :
 Value :|Valeur :
