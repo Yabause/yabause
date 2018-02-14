@@ -772,7 +772,7 @@
     <string>Bug report</string>
    </property>
    <property name="statusTip">
-    <string>https://github.com/devmiyax/yabause/issues</string>
+    <string>https://github.com/FCare/yabause/issues</string>
    </property>
   </action>
   <action name="aHelpCompatibilityList">
@@ -784,7 +784,7 @@
     <string>Compatibility List</string>
    </property>
    <property name="statusTip">
-    <string>http://www.uoyabause.org/games</string>
+    <string>http://tradu-france.com/tfwiki-1.28.2/index.php?title=Compatibility_list_of_uoYabause</string>
    </property>
   </action>
   <action name="aSound">
