@@ -2644,6 +2644,25 @@ void YglRenderVDP1(void) {
   //glClearColor(0,0,0,0);
   //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+#if 0 // ToDo: update frame buffer write from cpu for SEGA AGES title screen #503
+  if (_Ygl->cpu_framebuffer_write != 0) {
+
+    _Ygl->cpu_framebuffer_write = 0;
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    glTexSubImage2D(GL_TEXTURE_2D,
+      0, 0, 0, 
+      _Ygl->rwidth, _Ygl->rheight,
+      GL_RGBA, GL_UNSIGNED_BYTE,
+      &Vdp1FrameBuffer[_Ygl->drawframe]);
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    return;
+  }
+#endif
+
+
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
