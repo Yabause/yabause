@@ -550,6 +550,10 @@ typedef struct {
    u32 linecolor_pbo;
    u32 * lincolor_buf;
 
+   u32 back_tex;
+   u32 back_pbo;
+   u32 * backcolor_buf;
+
    AAMODE aamode;
    POLYGONMODE polygonmode;
    RESOLUTION_MODE resolution_mode;
@@ -638,8 +642,11 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
 int YglBlitFXAA(u32 sourceTexture, float w, float h);
 
 void YglRenderVDP1(void);
+
 u32 * YglGetLineColorPointer();
 void YglSetLineColor(u32 * pbuf, int size);
+u32* YglGetBackColorPointer();
+void YglSetBackColor(int size);
 
 int Ygl_uniformWindow(void * p );
 int YglProgramInit();

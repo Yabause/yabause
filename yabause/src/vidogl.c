@@ -5360,11 +5360,28 @@ static void Vdp2DrawBackScreen(void)
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
   dot = T1ReadWord(Vdp2Ram, scrAddr);
 
-  YglSetClearColor(
-    (float)(((dot & 0x1F)<<3) +info.cor) / (float)(0xFF),
-    (float)((((dot & 0x3E0) >> 5) << 3) + info.cog) / (float)(0xFF),
-    (float)((((dot & 0x7C00) >> 10) << 3) + info.cob) / (float)(0xFF)
-  );
+  if ((fixVdp2Regs->BKTAU & 0x8000) != 0 ) {
+    // per line background color
+    u32* back_pixel_data = YglGetBackColorPointer();
+    if (back_pixel_data != NULL) {
+      for (int i = 0; i < vdp2height; i++) {
+        u8 r, g, b;
+        dot = T1ReadWord(Vdp2Ram, (scrAddr + 2 * i));
+        r = ((dot & 0x1F) << 3) + info.cor;
+        g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
+        b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
+        *back_pixel_data++ = (0xFF << 24) | (b << 16) | (g << 8) | r;
+      }
+      YglSetBackColor(vdp2height);
+    }
+  }
+  else {
+    YglSetClearColor(
+      (float)(((dot & 0x1F) << 3) + info.cor) / (float)(0xFF),
+      (float)((((dot & 0x3E0) >> 5) << 3) + info.cog) / (float)(0xFF),
+      (float)((((dot & 0x7C00) >> 10) << 3) + info.cob) / (float)(0xFF)
+    );
+  }
 #else
   if (fixVdp2Regs->BKTAU & 0x8000)
   {
