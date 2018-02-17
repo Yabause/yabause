@@ -1716,11 +1716,7 @@ void Vdp2GenLineinfo(vdp2draw_struct *info)
     {
       val1 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound + index);
       val2 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound + index + 2);
-      //info->lineinfo[i].CoordinateIncH = (float)( (int)((val1) & 0x07) + (float)( (val2) >> 8) / 255.0f );
       info->lineinfo[lineindex].CoordinateIncH = (((int)((val1) & 0x07) << 8) | (int)((val2) >> 8));
-      if (info->lineinfo[lineindex].CoordinateIncH == 0) {
-        info->lineinfo[lineindex].CoordinateIncH = 0x0100;
-      }
       index += 4;
     }
     else {
@@ -2051,6 +2047,8 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
     v = (i*incv) >> 8;
     if (VDPLINE_SZ(info->islinescroll))
       inch = line->CoordinateIncH;
+
+    if (inch == 0) inch = 1;
 
     if (VDPLINE_SX(info->islinescroll))
       sh = info->sh + line->LineScrollValH;
@@ -2515,8 +2513,13 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
       targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
     }
 
-    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
-    info->coordincx = 1.0f / info->coordincx;
+    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 255.0f;
+    if (info->coordincx == 0) {
+      info->coordincx = vdp2width;
+    }
+    else {
+      info->coordincx = 1.0f / info->coordincx;
+    }
     if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
     info->draww = (int)((float)vdp2width / info->coordincx);
 
