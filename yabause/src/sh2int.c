@@ -135,6 +135,7 @@ SH2Interface_struct SH2DebugInterpreter = {
    SH2InterpreterSetMACL,
    SH2InterpreterSetPR,
    SH2InterpreterSetPC,
+   SH2IOnFrame,
 
    SH2InterpreterSendInterrupt,
    SH2InterpreterGetInterrupts,
