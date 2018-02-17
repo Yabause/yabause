@@ -3989,8 +3989,8 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   case 0x0: // Only two coordinates
     rw = cmd.CMDXC - x + Vdp1Regs->localX;
     rh = cmd.CMDYC - y + Vdp1Regs->localY;
-    if (cmd.CMDXA < cmd.CMDXC) rw += 1; else rw -= 1;
-    if (cmd.CMDYA < cmd.CMDYC) rh += 1; else rh -= 1;
+    if (rw > 0) { rw += 1; } else { x += 1; }
+    if (rh > 0) { rh += 1; } else { y += 1; }
     break;
   case 0x5: // Upper-left
     rw = cmd.CMDXB + 1;
