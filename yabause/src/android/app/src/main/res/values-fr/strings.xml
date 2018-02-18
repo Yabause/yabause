@@ -133,6 +133,13 @@
     <string name="choose_polygon_generation_type">Choisir un Type de Génération de Polygone</string>
     <string name="sound_engine">Moteur Son</string>
     <string name="choose_sound_engine">Choisir un Moteur Son</string>
+    <string name="invitation_title">Envoyer une Invitation pour l\'App uoYabause</string>
+    <string name="invitation_message">Jouer aux jeux SEGA Saturn en utilisant cette application !</string>
+    <string name="invitation_deep_link"  translatable="false" >https://b472u.app.goo.gl/YJ5F</string>
+    <string name="invitation_custom_image"  translatable="false" >https://lh3.googleusercontent.com/orp-j3lNGj24xvfVBEQvwWyaVhOQ_aTGc0nwIInDXBlNGUnSOdB_hb8sPGSmgmd0Jvkx=h310-rw</string>
+    <string name="invitation_cta">Installer !</string>
+    <string name="invite">Présentation</string>
+    <string name="invite_message">Aimeriez vous présenter cette app app ?</string>
     <string name="video_resolution">Résolution du Rendu</string>
     <string name="choose_video_resolution">Choisir la Résolution du Rendu</string>
     <string name="open_cd_tray">Ouvrir le Plateau du CD</string>
@@ -147,7 +154,6 @@
     <string name="delete">Effacer</string>
     <string name="select_game_directory">Choisir un Répertoire de Jeu</string>
 
-
     <string name="sound_curent">En cours (version Haute Qualité pour les périphériques puissants)</string>
     <string name="sound_legacy">Hérité (pour les périphériques moins puissants)</string>
 
@@ -159,10 +165,17 @@
     <string name="poly_triangle">Correction de Perspective en utilisant les Triangles</string>
     <string name="poly_cpu_tess">Tesselation CPU</string>
     <string name="poly_gpu_tess">Tessalation GPU</string>
-	
-	<string name="menu_load">Charger</string>
+    <string name="menu_load">Charger</string>
     <string name="menu_delete">Effacer</string>
+    <string name="extend_internal_memory">Etendre la Mémoire Interne à 8MByte</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="this_func_not_yet">Cette fonction n\a pas été encore implémentée.</string>
+    <string name="memory_manager">Gestionnaire de Mémoire</string>
+
+    <string name="str_rotate_screen">Rotation de l'Ecran</string>
+
+    <string name="str_rotate_screen">Rotation à 90 degrée</string>
 
 </resources>
-
-
