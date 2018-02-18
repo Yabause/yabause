@@ -303,7 +303,8 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
         FRAMELOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
          return Vdp1Regs->LOPR;
       case 0x14:
-        FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
+        //FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
+        printf("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
          return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
@@ -353,7 +354,8 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       break;
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d", val, yabsys.LineCount);
-      Vdp1Regs->COPR = 0;
+      //Vdp1Regs->COPR = 0;
+      //printf("COPR = 0 at %d\n", __LINE__);
       Vdp1Regs->PTMR = val;
 #if YAB_ASYNC_RENDERING
       if (val == 1){ 
@@ -413,6 +415,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u32 returnAddr = 0xffffffff;
 
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+      regs->COPR = regs->addr >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -578,8 +581,11 @@ void Vdp1Draw(void)
    //Vdp1Regs->EDSR >>= 1;
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
+   //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
 
    VIDCore->Vdp1DrawStart();
+
+   //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
 
    //VIDCore->Vdp1DrawEnd();
 
