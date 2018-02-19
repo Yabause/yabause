@@ -429,8 +429,6 @@ if (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI
 	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${MINI18N_LIBRARY})
 endif (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI18N_LIBRARY STREQUAL "MINI18N_LIBRARY-NOTFOUND")
 
-# xrandr
-if (NOT APPLE)
 	find_library(XRANDR_LIBRARY Xrandr)
 	if(XRANDR_LIBRARY)
 		add_definitions(-DHAVE_LIBXRANDR=1)
@@ -438,7 +436,6 @@ if (NOT APPLE)
 		set(kronos_HEADERS ${kronos_HEADERS} screen.h)
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} Xrandr X11)
 	endif()
-endif()
 
 if (MINI18N_FOUND)
 	if (UNIX)
@@ -447,20 +444,6 @@ if (MINI18N_FOUND)
 		add_definitions(-DYTSDIR=\"trans\")
 	endif()
 endif()
-
-# APPLE // not necessary mac os x, but i don't care ;)
-if (APPLE AND NOT IOS)
-	FIND_LIBRARY(COREFOUNDATION_LIBRARY NAMES CoreFoundation )
-	FIND_LIBRARY(IOKIT_LIBRARY NAMES IOKit )
-	set(kronos_SOURCES ${kronos_SOURCES} macjoy.c permacjoy.c cd-macosx.c sndmac.c)
-	set(kronos_HEADERS ${kronos_HEADERS} macjoy.h permacjoy.h sndmac.h)
-	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${COREFOUNDATION_LIBRARY} ${IOKIT_LIBRARY})
-
-	check_function_exists(glBindRenderbuffer HAVE_FBO)
-	if (HAVE_FBO)
-		add_definitions(-DHAVE_FBO=1)
-	endif()
-endif (APPLE AND NOT IOS)
 
 
 # Visual Studio
