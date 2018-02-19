@@ -117,7 +117,7 @@ if (YAB_WANT_SSH2_ASYNC)
   add_definitions(-DSSH2_ASYNC=1)
 endif()
 
-option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
+option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" ON)
 if (YAB_WANT_DYNAREC_DEVMIYAX)
 	add_definitions(-DDYNAREC_DEVMIYAX=1)
 	
