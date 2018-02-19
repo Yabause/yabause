@@ -357,6 +357,10 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+   Cs2GetRegionID();
+   if (cdip->region[0] == 'E') init->videoformattype = VIDEOFORMATTYPE_PAL;
+   else init->videoformattype = VIDEOFORMATTYPE_NTSC;
+
    if (ScuInit() != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SCU"));

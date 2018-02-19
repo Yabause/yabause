@@ -218,7 +218,7 @@ void YuiInit() {
         yinit.extend_backup = 1;
 	yinit.mpegpath = NULL;
 	yinit.cartpath = "./backup32Mb.ram";
-  yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
+        yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
 	yinit.skip_load = 0;
 
