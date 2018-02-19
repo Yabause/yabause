@@ -542,8 +542,7 @@ u32 memGetLong(u32 addr)
 }
 
 void SH2DynOnFrame(SH2_struct *context) {
-  DynarecSh2 *pctx = (DynarecSh2*)context->ext;
-  pctx->SET_COUNT(0);
+
 }
 
 
