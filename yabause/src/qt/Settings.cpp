@@ -68,10 +68,10 @@ QString getIniFile( const QString& s )
 	This code is trying to copy the content from the old location to the new.
 	In the future, we may drop support for the old location and rewrite the following to:
 
-	return QString( "%1/.config/yabause/qt/yabause.ini" ).arg( QDir::homePath() );
+	return QString( "%1/.config/yabause/qt/kronos.ini" ).arg( QDir::homePath() );
 	*/
 
-	QString xdginifile = QString( "%1/.config/yabause/qt/yabause.ini" ).arg( QDir::homePath() );
+	QString xdginifile = QString( "%1/.config/yabause/qt/kronos.ini" ).arg( QDir::homePath() );
 	QString oldinifile = QString( "%1/.%2/%2.ini" ).arg( QDir::homePath() ).arg( s );
 
 	if ( not QFile::exists( xdginifile ) )

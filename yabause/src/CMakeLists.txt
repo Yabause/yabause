@@ -1,6 +1,6 @@
-project(yabause)
+project(kronos)
 
-#to compile sdl port, use "cmake -DYAB_PORTS=sdl -DYAB_ASYNC_RENDERING ../yabause"
+#to compile sdl port, use "cmake -DYAB_PORTS=sdl -DYAB_ASYNC_RENDERING ../kronos"
 
 include (CheckCSourceCompiles)
 include(CheckFunctionExists)
@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
-set(yabause_HEADERS
+set(kronos_HEADERS
 	bios.h
 	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
 	debug.h
@@ -34,7 +34,7 @@ set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "linux;qt" CACHE STRING "List of ports to build")
 
 		
-set(yabause_SOURCES
+set(kronos_SOURCES
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
@@ -59,8 +59,8 @@ if (ANDROID)
 	add_definitions(-DYAB_ASYNC_RENDERING)
 	add_definitions(-DYAB_PORT_OSD)
 	include_directories(./ ./nanovg)		
-	set(yabause_SOURCES
-		${yabause_SOURCES}
+	set(kronos_SOURCES
+		${kronos_SOURCES}
 		yglcache.c
 		ygles.c
 		yglshaderes.c 
@@ -84,15 +84,15 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -isys
 IF (${SIMULATOR})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mios-simulator-version-min=6.0")
 ENDIF()
-set(yabause_SOURCES
-${yabause_SOURCES}
+set(kronos_SOURCES
+${kronos_SOURCES}
 yglcache.c
 ygles.c
 yglshaderes.c )
 endif (IOS)
 
 include_directories(nanovg)
-set(yabause_SOURCES ${yabause_SOURCES} nanovg/nanovg.c)
+set(kronos_SOURCES ${kronos_SOURCES} nanovg/nanovg.c)
 
 option(WEB_INTERFACE "Access with http" OFF)
 if (WEB_INTERFACE)
@@ -105,9 +105,9 @@ endif()
 
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
-	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
+	set(kronos_SOURCES ${kronos_SOURCES} yglcache.cpp)
 else()
-	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
+	set(kronos_SOURCES ${kronos_SOURCES} yglcache.c)
 endif()
 
 #-------------------------------------------------------
@@ -122,26 +122,26 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 	add_definitions(-DDYNAREC_DEVMIYAX=1)
 	
 
-  set(yabause_SOURCES
-    ${yabause_SOURCES}
+  set(kronos_SOURCES
+    ${kronos_SOURCES}
     sh2_dynarec_devmiyax/DynarecSh2CInterface.cpp  
 	  sh2_dynarec_devmiyax/DynarecSh2.cpp)
 
-	set(yabause_HEADERS
-		${yabause_HEADERS}
+	set(kronos_HEADERS
+		${kronos_HEADERS}
 	  sh2_dynarec_devmiyax/DynarecSh2.h
 	  sh2_dynarec_devmiyax/opcodes.h)
 
 		if (MSVC) # NASM
-	  	set(YABAUSE_LIBRARIES 
-			  ${YABAUSE_LIBRARIES} 
+	  	set(KRONOS_LIBRARIES 
+			  ${KRONOS_LIBRARIES} 
 			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_w32.obj )
                 add_definitions(-DDYNAREC_X64=1)
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)
-				set(yabause_SOURCES 
-				  ${yabause_SOURCES}
+				set(kronos_SOURCES 
+				  ${kronos_SOURCES}
 					sh2_dynarec_devmiyax/dynalib_arm.s)
                         else ()
  				add_definitions(-DARCH_IS_LINUX=1)
@@ -150,12 +150,12 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 				enable_language(ASM_NASM)
 				set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -O3 -l func.lst")
                         	if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
- 				  set(yabause_SOURCES 
- 				    ${yabause_SOURCES}
+ 				  set(kronos_SOURCES 
+ 				    ${kronos_SOURCES}
  				    sh2_dynarec_devmiyax/dynalib_x64.nasm)
                                 else ()
- 				  set(yabause_SOURCES 
- 				    ${yabause_SOURCES}
+ 				  set(kronos_SOURCES 
+ 				    ${kronos_SOURCES}
  				    sh2_dynarec_devmiyax/dynalib_i386.nasm)
 				endif ()
 			endif ()
@@ -170,14 +170,14 @@ if (YAB_USE_SSF)
   if (ZLIB_FOUND)
     add_definitions(-DYAB_WANT_SSF=1)
     include_directories(${ZLIB_INCLUDE_DIRS})
-    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${ZLIB_LIBRARIES})
+    set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${ZLIB_LIBRARIES})
 
-    set(yabause_SOURCES ${yabause_SOURCES} 
+    set(kronos_SOURCES ${kronos_SOURCES} 
       aosdk/corlett.c
       aosdk/eng_ssf.c
       aosdk/ssf.c)
 
-    set(yabause_HEADERS ${yabause_HEADERS} 
+    set(kronos_HEADERS ${kronos_HEADERS} 
       aosdk/ao.h
       aosdk/corlett.h
       aosdk/ssf.h)
@@ -188,10 +188,10 @@ endif()
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
 if (YAB_USE_SCSP2)
 	add_definitions(-DUSE_SCSP2=1)
-	set(yabause_SOURCES ${yabause_SOURCES} scsp2.c)
-	set(yabause_HEADERS ${yabause_HEADERS} scsp2.h)
+	set(kronos_SOURCES ${kronos_SOURCES} scsp2.c)
+	set(kronos_HEADERS ${kronos_HEADERS} scsp2.h)
 else()
-	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
+	set(kronos_SOURCES ${kronos_SOURCES} scsp.c)
 endif()
 
 # Enable SCSP MIDI hooks in sound interface
@@ -207,7 +207,7 @@ endif ()
 
 # math library
 if (UNIX)
-    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "m")
+    set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "m")
 endif()
 
 # Bigendian
@@ -293,7 +293,7 @@ if (STDINT_H_FOUND)
 endif()
 
 find_package(Threads)
-set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 # 16BPP
 set(YAB_RGB "" CACHE STRING "Bit configuration of pixels in the display buffer.")
@@ -309,10 +309,10 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 	include(FindOpenGL)
 	if (OPENGL_FOUND)
 		add_definitions(-DHAVE_LIBGL=1)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
+		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${OPENGL_LIBRARIES})
 
 		include_directories(./ ./nanovg)
-		set(yabause_SOURCES ${yabause_SOURCES} 
+		set(kronos_SOURCES ${kronos_SOURCES} 
 			nanovg/nanovg.c 
 			nanovg/nanovg_osdcore.h 
 			nanovg/nanovg_osdcore.c
@@ -324,7 +324,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
 			include_directories(${GLUT_INCLUDE_DIR})
 			add_definitions(-DHAVE_LIBGLUT=1)
-			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLUT_LIBRARIES})
+			set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${GLUT_LIBRARIES})
 		endif()
 
 		# glXGetProcAddress
@@ -348,7 +348,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		add_definitions(-D_OGL3_)
 		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 			add_definitions(-D_OGLES3_)
-			set(yabause_SOURCES ${yabause_SOURCES} 
+			set(kronos_SOURCES ${kronos_SOURCES} 
 				yglcache.c
 				ygles.c
 				yglshaderes.c
@@ -358,12 +358,12 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
         add_definitions(-D_USEGLEW_)
         if (GLEW_FOUND)
             include_directories( ${GLEW_INCLUDE_DIRS})
-            set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLEW_LIBRARIES})
+            set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${GLEW_LIBRARIES})
         else()
 		    add_definitions(-DGLEW_STATIC)
 		    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
-			set(yabause_SOURCES
-				${yabause_SOURCES}
+			set(kronos_SOURCES
+				${kronos_SOURCES}
 				gllibs/glew/glew.c
 				yglcache.c
 				ygles.c
@@ -374,8 +374,8 @@ endif ()
 option(SPRITE_CACHE "Vdp1 sprite cache" ON)
 if (SPRITE_CACHE)
     add_definitions(-DSPRITE_CACHE=1)
-    set(yabause_SOURCES ${yabause_SOURCES} patternManager.c )
-    set(yabause_HEADERS ${yabause_HEADERS} patternManager.h )
+    set(kronos_SOURCES ${kronos_SOURCES} patternManager.c )
+    set(kronos_HEADERS ${kronos_HEADERS} patternManager.h )
 endif ()
 
 # SDL
@@ -386,20 +386,20 @@ if (YAB_WANT_SDL)
 	if (SDL2_FOUND)
 		add_definitions(-DHAVE_LIBSDL2=1)
 		include_directories(${SDL2_INCLUDE_DIR})
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL2_LIBRARY})
+		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${SDL2_LIBRARY})
 	else()
 		include(FindSDL)
 		if (SDL_FOUND)
 			message (WARNING "Deprecated version of SDL found. Support will be removed in the future. ")
 			include_directories(${SDL_INCLUDE_DIR})
-			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${SDL_LIBRARY})
+			set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${SDL_LIBRARY})
 		endif()
 	endif()
 
 	if (SDL_FOUND OR SDL2_FOUND)
 		add_definitions(-DHAVE_LIBSDL=1)
-		set(yabause_SOURCES ${yabause_SOURCES} persdljoy.c sndsdl.c)
-		set(yabause_HEADERS ${yabause_HEADERS} persdljoy.h sndsdl.h)
+		set(kronos_SOURCES ${kronos_SOURCES} persdljoy.c sndsdl.c)
+		set(kronos_HEADERS ${kronos_HEADERS} persdljoy.h sndsdl.h)
 	endif()
 endif()
 
@@ -410,9 +410,9 @@ if (YAB_WANT_OPENAL)
 	if (OPENAL_FOUND)
 		add_definitions(-DHAVE_LIBAL=1)
 		include_directories(${OPENAL_INCLUDE_DIR})
-		set(yabause_SOURCES ${yabause_SOURCES} sndal.c)
-		set(yabause_HEADERS ${yabause_HEADERS} sndal.h)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENAL_LIBRARY})
+		set(kronos_SOURCES ${kronos_SOURCES} sndal.c)
+		set(kronos_HEADERS ${kronos_HEADERS} sndal.h)
+		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${OPENAL_LIBRARY})
 	endif (OPENAL_FOUND)
 endif (YAB_WANT_OPENAL)
 
@@ -426,7 +426,7 @@ if (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI
 	set(MINI18N_FOUND TRUE)
 	include_directories(${MINI18N_INCLUDE_DIR})
 	add_definitions(-DHAVE_LIBMINI18N=1)
-	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${MINI18N_LIBRARY})
+	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${MINI18N_LIBRARY})
 endif (NOT MINI18N_INCLUDE_DIR STREQUAL "MINI18N_INCLUDE_DIR-NOTFOUND" AND NOT MINI18N_LIBRARY STREQUAL "MINI18N_LIBRARY-NOTFOUND")
 
 # xrandr
@@ -434,9 +434,9 @@ if (NOT APPLE)
 	find_library(XRANDR_LIBRARY Xrandr)
 	if(XRANDR_LIBRARY)
 		add_definitions(-DHAVE_LIBXRANDR=1)
-		set(yabause_SOURCES ${yabause_SOURCES} scr-x.c)
-		set(yabause_HEADERS ${yabause_HEADERS} screen.h)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} Xrandr X11)
+		set(kronos_SOURCES ${kronos_SOURCES} scr-x.c)
+		set(kronos_HEADERS ${kronos_HEADERS} screen.h)
+		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} Xrandr X11)
 	endif()
 endif()
 
@@ -452,9 +452,9 @@ endif()
 if (APPLE AND NOT IOS)
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY NAMES CoreFoundation )
 	FIND_LIBRARY(IOKIT_LIBRARY NAMES IOKit )
-	set(yabause_SOURCES ${yabause_SOURCES} macjoy.c permacjoy.c cd-macosx.c sndmac.c)
-	set(yabause_HEADERS ${yabause_HEADERS} macjoy.h permacjoy.h sndmac.h)
-	set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${COREFOUNDATION_LIBRARY} ${IOKIT_LIBRARY})
+	set(kronos_SOURCES ${kronos_SOURCES} macjoy.c permacjoy.c cd-macosx.c sndmac.c)
+	set(kronos_HEADERS ${kronos_HEADERS} macjoy.h permacjoy.h sndmac.h)
+	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${COREFOUNDATION_LIBRARY} ${IOKIT_LIBRARY})
 
 	check_function_exists(glBindRenderbuffer HAVE_FBO)
 	if (HAVE_FBO)
@@ -501,7 +501,7 @@ if (WIN32)
 		endif (ntddcdrm_INCLUDE_DIR)
 	endif(YAB_WANT_DDK)
 
-	set(yabause_SOURCES ${yabause_SOURCES} cd-windows.c)
+	set(kronos_SOURCES ${kronos_SOURCES} cd-windows.c)
 
 	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available")
 	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available")
@@ -542,39 +542,39 @@ if (WIN32)
 
 		if (DirectX_INCLUDE_DIR AND DirectX_GUID_LIBRARY AND DirectX_ERR_LIBRARY)
 			include_directories(${DirectX_INCLUDE_DIR})
-			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${DirectX_GUID_LIBRARY} ${DirectX_ERR_LIBRARY})
+			set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${DirectX_GUID_LIBRARY} ${DirectX_ERR_LIBRARY})
 
 			if (YAB_WANT_DIRECTINPUT AND DirectX_INPUT8_LIBRARY)
 				add_definitions(-DHAVE_DIRECTINPUT)
-				set(yabause_SOURCES ${yabause_SOURCES} perdx.c)
-				set(yabause_HEADERS ${yabause_HEADERS} perdx.h)
-				set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${DirectX_INPUT8_LIBRARY})
+				set(kronos_SOURCES ${kronos_SOURCES} perdx.c)
+				set(kronos_HEADERS ${kronos_HEADERS} perdx.h)
+				set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${DirectX_INPUT8_LIBRARY})
 				if (DirectX_XINPUT_LIBRARY)
 					add_definitions(-DHAVE_XINPUT)
-					set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${DirectX_XINPUT_LIBRARY} wbemuuid)
+					set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${DirectX_XINPUT_LIBRARY} wbemuuid)
 				endif()
 			endif ()
         	if (YAB_WANT_DIRECTSOUND AND DirectX_SOUND_LIBRARY)
 				add_definitions(-DHAVE_DIRECTSOUND)
-				set(yabause_SOURCES ${yabause_SOURCES} snddx.c)
-				set(yabause_HEADERS ${yabause_HEADERS} snddx.h)
-				set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${DirectX_SOUND_LIBRARY})
+				set(kronos_SOURCES ${kronos_SOURCES} snddx.c)
+				set(kronos_HEADERS ${kronos_HEADERS} snddx.h)
+				set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${DirectX_SOUND_LIBRARY})
 			endif ()
 
 			if (DXERRH_IS_BROKEN)
 				add_definitions(-DDXERRH_IS_BROKEN)
 				message(STATUS "Using work-around for dxerr.h")
-				set(yabause_HEADERS ${yabause_HEADERS} dx.h)
+				set(kronos_HEADERS ${kronos_HEADERS} dx.h)
 			endif(DXERRH_IS_BROKEN)
 		endif (DirectX_INCLUDE_DIR AND DirectX_GUID_LIBRARY AND DirectX_ERR_LIBRARY)
 	endif (YAB_WANT_DIRECTSOUND OR YAB_WANT_DIRECTINPUT)
 	if (YAB_NETWORK OR YAB_WANT_GDBSTUB)
     	# Add Winsock if necessary
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "wsock32")
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "ws2_32")
+		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "wsock32")
+		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "ws2_32")
 	endif()
 	if (YAB_USE_SCSPMIDI)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} winmm)
+		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} winmm)
 	endif()
 
 endif (WIN32)
@@ -600,8 +600,8 @@ if (YAB_WANT_C68K)
 
 	add_definitions(-DHAVE_C68K=1)
 	include_directories(${CMAKE_CURRENT_BINARY_DIR}/c68k)
-	set(yabause_SOURCES ${yabause_SOURCES} c68k/c68kexec.c c68k/c68k.c m68kc68k.c)
-	set(yabause_HEADERS ${yabause_HEADERS} c68k/c68k.h m68kc68k.h)
+	set(kronos_SOURCES ${kronos_SOURCES} c68k/c68kexec.c c68k/c68k.c m68kc68k.c)
+	set(kronos_HEADERS ${kronos_HEADERS} c68k/c68k.h m68kc68k.h)
 	if (MSVC)
 		set_source_files_properties(c68k/c68kexec.c PROPERTIES COMPILE_FLAGS "/Od /wd4146")
 	else()
@@ -639,15 +639,15 @@ if (YAB_WANT_MUSASHI)
       ${CMAKE_CURRENT_SOURCE_DIR}/musashi
     )
 
-	set(yabause_SOURCES ${yabause_SOURCES} 
+	set(kronos_SOURCES ${kronos_SOURCES} 
       ${MUSASHI_GENERATED_SOURCES}
       musashi/m68kdasm.c
       musashi/m68kcpu.c
       m68kmusashi.c
       )
 
-	set(yabause_HEADERS 
-      ${yabause_HEADERS} 
+	set(kronos_HEADERS 
+      ${kronos_HEADERS} 
       musashi/m68k.h
       musashi/m68kcpu.h
       ${MUSASHI_GENERATED_HEADERS}
@@ -661,9 +661,9 @@ endif(YAB_WANT_MUSASHI)
 option(YAB_WANT_Q68 "enable q68 compilation" OFF)
 if (YAB_WANT_Q68)
 	add_definitions(-DHAVE_Q68=1)
-	set(yabause_SOURCES ${yabause_SOURCES}
+	set(kronos_SOURCES ${kronos_SOURCES}
 		m68kq68.c q68/q68.c q68/q68-core.c q68/q68-disasm.c)
-	set(yabause_HEADERS ${yabause_HEADERS}
+	set(kronos_HEADERS ${kronos_HEADERS}
 		q68/q68-const.h q68/q68.h q68/q68-internal.h q68/q68-jit.h q68/q68-jit-psp.h q68/q68-jit-x86.h)
 endif()
 
@@ -671,8 +671,8 @@ endif()
 option(YAB_WANT_GDBSTUB "enable gdb stub" OFF)
 if (YAB_WANT_GDBSTUB)
     add_definitions(-DHAVE_GDBSTUB=1)
-    set(yabause_SOURCES ${yabause_SOURCES} gdb/stub.c gdb/client.c gdb/packet.c)
-	set(yabause_HEADERS ${yabause_HEADERS} gdb/stub.h gdb/client.h gdb/packet.h)
+    set(kronos_SOURCES ${kronos_SOURCES} gdb/stub.c gdb/client.c gdb/packet.c)
+	set(kronos_HEADERS ${kronos_HEADERS} gdb/stub.h gdb/client.h gdb/packet.h)
 endif()
 
 # *DEBUG
@@ -716,20 +716,20 @@ endif()
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.c /*thr-dummy.c*/ )
+	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-linux.c /*thr-dummy.c*/ )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	add_definitions(-DARCH_IS_FREEBSD=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
+	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
 	add_definitions(-DARCH_IS_LINUX=1)
 	#add_definitions(-DYAB_ASYNC_RENDERING)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.c cd-linux.c)
+	set(kronos_SOURCES ${kronos_SOURCES} sock-linux.c thr-linux.c cd-linux.c)
 
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
 		check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
 		if (LINUX_HAS_JOYSTICK)
-			set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
-			set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
+			set(kronos_SOURCES ${kronos_SOURCES} perlinuxjoy.c)
+			set(kronos_HEADERS ${kronos_HEADERS} perlinuxjoy.h)
 		endif()
 
 		check_c_source_compiles("
@@ -742,16 +742,16 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "An
 	endif()
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
 	add_definitions(-DARCH_IS_NETBSD=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
+	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
 	add_definitions(-DARCH_IS_NETBSD=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
+	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	add_definitions(-DARCH_IS_WINDOWS=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-windows.c thr-windows.c)
+	set(kronos_SOURCES ${kronos_SOURCES} sock-windows.c thr-windows.c)
 else ()
 	add_definitions(-DUNKNOWN_ARCH=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-dummy.c)
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCC)
@@ -819,17 +819,17 @@ add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
 if( IOS )
-	add_library(yabause OBJECT ${yabause_SOURCES} ${yabause_HEADERS})
+	add_library(kronos OBJECT ${kronos_SOURCES} ${kronos_HEADERS})
 else()
-	add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
+	add_library(kronos ${kronos_SOURCES} ${kronos_HEADERS})
 endif()
 
 if (YAB_WANT_C68K)
-	add_dependencies(yabause c68kinc)
+	add_dependencies(kronos c68kinc)
 endif(YAB_WANT_C68K)
 
 if (YAB_WANT_MUSASHI)
-	add_dependencies(yabause m68kmake)
+	add_dependencies(kronos m68kmake)
 endif(YAB_WANT_MUSASHI)
 
 macro(yab_port_start)
@@ -844,8 +844,8 @@ endmacro(yab_port_stop)
 
 macro(yab_port_success YAB_TARGET)
 	if (NOT YAB_MULTIBUILD)
-		set_target_properties(${YAB_TARGET} PROPERTIES OUTPUT_NAME yabause)
-		set(YAB_PORT_NAME "yabause")
+		set_target_properties(${YAB_TARGET} PROPERTIES OUTPUT_NAME kronos)
+		set(YAB_PORT_NAME "kronos")
 	else ()
 		set(YAB_PORT_NAME ${YAB_TARGET})
 	endif ()
@@ -879,7 +879,7 @@ endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 if (YAB_NETWORK AND UNIX)
-    set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} "socket")
+    set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "socket")
 endif()
 
 option(YAB_TESTS "Build test programs for cores" OFF)

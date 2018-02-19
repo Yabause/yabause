@@ -32,7 +32,7 @@ int main( int argc, char** argv )
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( QString( "Yabause v%1" ).arg( VERSION ) );
+	app.setApplicationName( QString( "Kronos v%1" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
 #ifdef HAVE_LIBMINI18N

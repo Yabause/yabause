@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Yabause (Qt port)
+Name=Kronos (Qt port)
 Comment=Sega Saturn emulator
 TryExec=yabause
 Exec=@YAB_PORT_NAME@
-Icon=yabause
+Icon=kronos
 Categories=KDE;Qt;Game;

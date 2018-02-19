@@ -16,7 +16,7 @@
    <item>
     <widget class="QLabel" name="lInformations" >
      <property name="text" >
-      <string>Yabause Qt Gui&lt;br />Based on Yabause %1&lt;br />&lt;a href="http://yabause.org">http://yabause.org&lt;/a>&lt;br />The Yabause Team&lt;br />&lt;a href="mailto:pasnox@gmail.com">Filipe AZEVEDO&lt;/a></string>
+      <string>Kronos Qt Gui&lt;br />Based on UoYabause &lt;br />&lt;/a>&lt;br />The Kronos Team&lt;br />&lt;/a></string>
      </property>
      <property name="textFormat" >
       <enum>Qt::RichText</enum>

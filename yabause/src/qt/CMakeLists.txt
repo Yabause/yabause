@@ -1,4 +1,4 @@
-project( yabause-qt )
+project( kronos-qt )
 
 yab_port_start()
 
@@ -61,25 +61,25 @@ else()
 endif() 
 
 # qt resources file
-set( yabause_qt_RESOURCES resources/resources.qrc )
+set( kronos_qt_RESOURCES resources/resources.qrc )
 
 if ( WIN32 )
 	# Windows port libraries
-	set( yabause_qt_windows_LIBRARIES
+	set( kronos_qt_windows_LIBRARIES
 		vfw32 legacy_stdio_definitions.lib )
 
 	# resources
-	set ( yabause_qt_windows_RESOURCES
-		resources/icons/yabause.rc )
+	set ( kronos_qt_windows_RESOURCES
+		resources/icons/kronos.rc )
 endif ( WIN32 )
 
 if(APPLE)
     find_library(AUDIO_LIBRARY AudioUnit)
-    set(yabause_qt_macosx_LIBRARIES ${AUDIO_LIBRARY})
+    set(kronos_qt_macosx_LIBRARIES ${AUDIO_LIBRARY})
 endif()
 
 # qt forms
-set( yabause_qt_FORMS
+set( kronos_qt_FORMS
 	ui/UIYabause.ui
 	ui/UISettings.ui
 	ui/UIAbout.ui
@@ -102,14 +102,14 @@ set( yabause_qt_FORMS
     ui/UIMemorySearch.ui )
 
 # pure C headers
-set( yabause_qt_HEADERS
+set( kronos_qt_HEADERS
 	QtYabause.h
 	CommonDialogs.h
 	PerQt.h
 	Arguments.h )
 
 # C headers needing moc
-set( yabause_qt_MOC_HEADERS
+set( kronos_qt_MOC_HEADERS
 	ui/UIYabause.h
 	ui/UISettings.h
 	ui/UIAbout.h
@@ -140,7 +140,7 @@ set( yabause_qt_MOC_HEADERS
 	YabauseThread.h )
 
 # C sources
-set( yabause_qt_SOURCES
+set( kronos_qt_SOURCES
 	main.cpp
 	QtYabause.cpp
 	CommonDialogs.cpp
@@ -175,33 +175,33 @@ set( yabause_qt_SOURCES
 	Arguments.cpp )
 
 if( OPENGL_FOUND )
-	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseGL.cpp )
+	set( kronos_qt_SOURCES ${kronos_qt_SOURCES} YabauseGL.cpp )
 else()
-	set( yabause_qt_SOURCES ${yabause_qt_SOURCES} YabauseSoftGL.cpp )
+	set( kronos_qt_SOURCES ${kronos_qt_SOURCES} YabauseSoftGL.cpp )
 endif()
 
 if(Qt5_FOUND) 
-	QT5_ADD_RESOURCES( yabause_qt_RCC_RESOURCES ${yabause_qt_RESOURCES} )
-	QT5_WRAP_UI( yabause_qt_UI_FORMS ${yabause_qt_FORMS} )
-	QT5_WRAP_CPP( yabause_qt_MOC_SOURCES ${yabause_qt_MOC_HEADERS} )
+	QT5_ADD_RESOURCES( kronos_qt_RCC_RESOURCES ${kronos_qt_RESOURCES} )
+	QT5_WRAP_UI( kronos_qt_UI_FORMS ${kronos_qt_FORMS} )
+	QT5_WRAP_CPP( kronos_qt_MOC_SOURCES ${kronos_qt_MOC_HEADERS} )
 else() 
-	QT4_ADD_RESOURCES( yabause_qt_RCC_RESOURCES ${yabause_qt_RESOURCES} )
-	QT4_WRAP_UI( yabause_qt_UI_FORMS ${yabause_qt_FORMS} )
-	QT4_WRAP_CPP( yabause_qt_MOC_SOURCES ${yabause_qt_MOC_HEADERS} )
+	QT4_ADD_RESOURCES( kronos_qt_RCC_RESOURCES ${kronos_qt_RESOURCES} )
+	QT4_WRAP_UI( kronos_qt_UI_FORMS ${kronos_qt_FORMS} )
+	QT4_WRAP_CPP( kronos_qt_MOC_SOURCES ${kronos_qt_MOC_HEADERS} )
 endif() 
 
-set( yabause_qt_SOURCES ${yabause_qt_SOURCES} resources/icons/yabause.icns )
-set_source_files_properties( resources/icons/yabause.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
+set( kronos_qt_SOURCES ${kronos_qt_SOURCES} resources/icons/kronos.icns )
+set_source_files_properties( resources/icons/kronos.icns PROPERTIES MACOSX_PACKAGE_LOCATION Resources )
 
-add_executable( yabause-qt WIN32
-	${yabause_qt_windows_SOURCES}
-	${yabause_qt_windows_RESOURCES}
-	${yabause_qt_RCC_RESOURCES}
-	${yabause_qt_HEADERS}
-	${yabause_qt_MOC_HEADERS}
-	${yabause_qt_SOURCES}
-	${yabause_qt_UI_FORMS}
-	${yabause_qt_MOC_SOURCES} )
+add_executable( kronos-qt WIN32
+	${kronos_qt_windows_SOURCES}
+	${kronos_qt_windows_RESOURCES}
+	${kronos_qt_RCC_RESOURCES}
+	${kronos_qt_HEADERS}
+	${kronos_qt_MOC_HEADERS}
+	${kronos_qt_SOURCES}
+	${kronos_qt_UI_FORMS}
+	${kronos_qt_MOC_SOURCES} )
 
 if (Qt5_FOUND)
 include_directories(
@@ -224,30 +224,30 @@ endif()
 
 # APPLE // not necessary mac os x, but i don't care ;)
 if (APPLE)
-	set_target_properties( yabause-qt PROPERTIES MACOSX_BUNDLE true )
-	set_target_properties( yabause-qt PROPERTIES MACOSX_BUNDLE_ICON_FILE yabause.icns )
-	set_target_properties( yabause-qt PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "${YAB_VERSION}" )
-	set_target_properties( yabause-qt PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME Yabause )
-	set_target_properties( yabause-qt PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "${YAB_VERSION}" )
-	set_target_properties( yabause-qt PROPERTIES MACOSX_BUNDLE_COPYRIGHT "(c) Yabause Team" )
+	set_target_properties( kronos-qt PROPERTIES MACOSX_BUNDLE true )
+	set_target_properties( kronos-qt PROPERTIES MACOSX_BUNDLE_ICON_FILE kronos.icns )
+	set_target_properties( kronos-qt PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "${YAB_VERSION}" )
+	set_target_properties( kronos-qt PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME Kronos )
+	set_target_properties( kronos-qt PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "${YAB_VERSION}" )
+	set_target_properties( kronos-qt PROPERTIES MACOSX_BUNDLE_COPYRIGHT "(c) Kronos Team" )
 endif (APPLE)
 
-target_link_libraries( yabause-qt yabause )
-target_link_libraries( yabause-qt ${YABAUSE_LIBRARIES} )
-target_link_libraries( yabause-qt ${PORT_LIBRARIES} )
-target_link_libraries( yabause-qt ${yabause_qt_windows_LIBRARIES} )
-target_link_libraries( yabause-qt ${yabause_qt_macosx_LIBRARIES} )
+target_link_libraries( kronos-qt kronos )
+target_link_libraries( kronos-qt ${KRONOS_LIBRARIES} )
+target_link_libraries( kronos-qt ${PORT_LIBRARIES} )
+target_link_libraries( kronos-qt ${kronos_qt_windows_LIBRARIES} )
+target_link_libraries( kronos-qt ${kronos_qt_macosx_LIBRARIES} )
 if (Qt5_FOUND)
-	target_link_libraries( yabause-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Multimedia_LIBRARIES})
+	target_link_libraries( kronos-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Multimedia_LIBRARIES})
 else()
-	target_link_libraries( yabause-qt ${QT_LIBRARIES} )
+	target_link_libraries( kronos-qt ${QT_LIBRARIES} )
 endif()
 
-yab_port_success(yabause-qt)
-configure_file(yabause.desktop.in ${YAB_PORT_NAME}.desktop)
+yab_port_success(kronos-qt)
+configure_file(kronos.desktop.in ${YAB_PORT_NAME}.desktop)
 
 if (WIN32)
-	install(TARGETS yabause-qt DESTINATION ".")
+	install(TARGETS kronos-qt DESTINATION ".")
 	if (GLUT_FOUND)
 		install(FILES ${GLUT_INCLUDE_DIR}/../freeglut.dll DESTINATION ".")
 	endif ()
@@ -332,8 +332,8 @@ if (WIN32)
     set (CMAKE_EXE_LINKER_FLAGS /SAFESEH:NO )
   endif (MSVC)
 else ()
-	install(TARGETS yabause-qt DESTINATION "bin")
+	install(TARGETS kronos-qt DESTINATION "bin")
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${YAB_PORT_NAME}.desktop DESTINATION "share/applications")
-	install(FILES "doc/yabause.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
-	install(FILES "resources/icons/yabause.png" DESTINATION "share/pixmaps")
+	install(FILES "doc/kronos.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
+	install(FILES "resources/icons/kronos.png" DESTINATION "share/pixmaps")
 endif ()

@@ -1,4 +1,4 @@
-project(yabause-linux)
+project(kronos-linux)
 
 yab_port_start()
 
@@ -24,23 +24,23 @@ set(PORT_LIBRARIES ${PORT_LIBRARIES} ${OPENGLES2_LIBRARIES} )
 if (GLFW_FOUND)
 set(PORT_INCLUDE_DIRS ${GLFW_INCLUDE_DIRS})
 set(PORT_LIBRARIES ${GLFW_LIBRARIES})
-set(yabause_linux_SOURCES ${yabause_linux_SOURCES}
+set(kronos_linux_SOURCES ${kronos_linux_SOURCES}
 	platform/glfw/platform.c
 )
-set(yabause_linux_HEADERS ${yabause_linux_HEADERS}
+set(kronos_linux_HEADERS ${kronos_linux_HEADERS}
 	platform/glfw/platform.h
 )
 include_directories(platform/glfw)
 endif (GLFW_FOUND)
 
-add_executable(yabause-linux ${yabause_linux_SOURCES} ${yabause_linux_HEADERS} main.c )
-target_link_libraries(yabause-linux yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES})
+add_executable(kronos-linux ${kronos_linux_SOURCES} ${kronos_linux_HEADERS} main.c )
+target_link_libraries(kronos-linux kronos ${KRONOS_LIBRARIES} ${PORT_LIBRARIES})
 
-yab_port_success(yabause-linux)
+yab_port_success(kronos-linux)
 
-install(TARGETS yabause-linux DESTINATION "bin")
-install(FILES "doc/yabause.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
-install(FILES "yabause.png" DESTINATION "share/pixmaps")
+install(TARGETS kronos-linux DESTINATION "bin")
+install(FILES "doc/kronos.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
+install(FILES "kronos.png" DESTINATION "share/pixmaps")
 
 option(INTERPRETER_TEST "Build the interpreter test suite" OFF)
 if (INTERPRETER_TEST)
@@ -94,14 +94,14 @@ enable_testing()
 set(PROJECT_TEST_NAME Sh2IntCompatibility_test)
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 
-file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${yabause_linux_SOURCES} main_test.c)
+file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp ${kronos_linux_SOURCES} main_test.c)
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
 
 target_link_libraries(${PROJECT_TEST_NAME}
     ${GTEST_LIBS_DIR}/libgtest.a
    ${GTEST_LIBS_DIR}/libgtest_main.a
-   yabause ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES}
+   kronos ${KRONOS_LIBRARIES} ${PORT_LIBRARIES}
 )
         
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
