@@ -18,11 +18,6 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-// Quick hack so nobody else needs to know we're using a different header file
-#ifdef USE_SCSP2
-#include "scsp2.h"  // defines SCSP_H
-#endif
-
 #ifndef SCSP_H
 #define SCSP_H
 

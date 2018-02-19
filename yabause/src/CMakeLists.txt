@@ -108,7 +108,7 @@ if (YAB_WANT_SSH2_ASYNC)
   add_definitions(-DSSH2_ASYNC=1)
 endif()
 
-option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" ON)
+option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
 if (YAB_WANT_DYNAREC_DEVMIYAX)
 	add_definitions(-DDYNAREC_DEVMIYAX=1)
 	
@@ -174,16 +174,7 @@ if (YAB_USE_SSF)
       aosdk/ssf.h)
   endif()
 endif()
-
-# new SCSP
-option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
-if (YAB_USE_SCSP2)
-	add_definitions(-DUSE_SCSP2=1)
-	set(kronos_SOURCES ${kronos_SOURCES} scsp2.c)
-	set(kronos_HEADERS ${kronos_HEADERS} scsp2.h)
-else()
-	set(kronos_SOURCES ${kronos_SOURCES} scsp.c)
-endif()
+    set(kronos_SOURCES ${kronos_SOURCES} scsp.c)
 
 # Enable SCSP MIDI hooks in sound interface
 option(YAB_USE_SCSPMIDI "Enable SCSP Midi support")

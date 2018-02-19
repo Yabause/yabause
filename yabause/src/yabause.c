@@ -616,9 +616,7 @@ int YabauseExec(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-#ifndef USE_SCSP2
 int saved_centicycles;
-#endif
 
 u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line)
 {
@@ -644,7 +642,6 @@ int YabauseEmulate(void) {
 
    const u32 usecinc = yabsys.DecilineUsec;
 
-#ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
 
@@ -684,7 +681,6 @@ int YabauseEmulate(void) {
          m68kcenticycles = (int)(((716.2/DECILINE_STEP) - m68kcycles)*100);
       }
    }
-#endif
 
    DoMovie();
 
@@ -725,12 +721,6 @@ int YabauseEmulate(void) {
 #ifdef YAB_STATICS
 		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
 #endif
-         
-#ifdef USE_SCSP2
-         PROFILE_START("SCSP");
-         ScspExec(1);
-         PROFILE_STOP("SCSP");
-#endif
 
          yabsys.DecilineCount++;
          if(yabsys.DecilineCount == DECILINE_STEP-1)
@@ -745,11 +735,9 @@ int YabauseEmulate(void) {
          ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
          PROFILE_STOP("SCU");
 
-#ifndef USE_SCSP2
       PROFILE_START("68K");
       M68KSync();  // Wait for the previous iteration to finish
       PROFILE_STOP("68K");
-#endif
 
       if (yabsys.DecilineCount == DECILINE_STEP)
       {
@@ -758,11 +746,9 @@ int YabauseEmulate(void) {
          Vdp2HBlankOUT();
          SyncScsp();
          PROFILE_STOP("hblankout");
-#ifndef USE_SCSP2
          PROFILE_START("SCSP");
          ScspExec();
          PROFILE_STOP("SCSP");
-#endif
          yabsys.DecilineCount = 0;
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)
@@ -794,7 +780,6 @@ int YabauseEmulate(void) {
       PROFILE_STOP("CDB");
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
       
-#ifndef USE_SCSP2
       if(!use_new_scsp)
       {
          int cycles;
@@ -824,14 +809,11 @@ int YabauseEmulate(void) {
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
 #endif
       }
-#endif
 
       PROFILE_STOP("Total Emulation");
    }
 
-#ifndef USE_SCSP2
    M68KSync();
-#endif
 
 #ifdef YAB_WANT_SSF
 
