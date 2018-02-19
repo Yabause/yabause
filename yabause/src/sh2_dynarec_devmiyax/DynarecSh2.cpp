@@ -31,9 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "DynarecSh2.h"
 #include "opcodes.h"
-#if defined(WEBINTERFACE)
-#define DEBUG_CPU
-#endif
 //#define DEBUG_CPU
 //#define BUILD_INFO
 //#define LOG printf

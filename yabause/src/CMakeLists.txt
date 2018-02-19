@@ -94,15 +94,6 @@ endif (IOS)
 include_directories(nanovg)
 set(kronos_SOURCES ${kronos_SOURCES} nanovg/nanovg.c)
 
-option(WEB_INTERFACE "Access with http" OFF)
-if (WEB_INTERFACE)
-  add_definitions(-DWEBINTERFACE)
-  include_directories( webinterface/include )
-  add_subdirectory(webinterface)
-endif()
-
-
-
 option(YAB_USE_CXX "Allow C++ in the emulation core.")
 if (YAB_USE_CXX)
 	set(kronos_SOURCES ${kronos_SOURCES} yglcache.cpp)

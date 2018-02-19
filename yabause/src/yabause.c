@@ -490,9 +490,6 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    scsp_set_use_new(init->use_new_scsp);
-#ifdef WEBINTERFACE
-   YabStartHttpServer();
-#endif
    return 0;
 }
 
