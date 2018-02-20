@@ -918,7 +918,7 @@ void UIYabause::on_aToolsBackupManager_triggered()
 	YabauseLocker locker( mYabauseThread );
 	if ( mYabauseThread->init() < 0 )
 	{
-		CommonDialogs::information( QtYabause::translate( "Yabause is not initialized, can't manage backup ram." ) );
+		CommonDialogs::information( QtYabause::translate( "Kronos is not initialized, can't manage backup ram." ) );
 		return;
 	}
 	UIBackupRam( this ).exec();
