@@ -62,7 +62,8 @@ Add Raw Memory Code|Ajouter un Code Mémoire Brut
 Address|Adresse
 Address :|Adresse :
 Advanced|Avancé
-All Files|Tous les Fichiers
+All Files;|Tous les Fichiers
+All Files (*)|Tous les Fichiers (*)
 Always|Toujours
 An error occured while writing file.|Une erreur s'est produite pendant l'écriture du fichier.
 Are you sure you want to delete '%1' ?|Etes vous sûr de vouloir supprimer '%1' ?
@@ -82,7 +83,8 @@ Axis R Trigger|Axe Gâchette D
 Backup Ram Manager|Gestion des Sauvegardes
 Bilinear|Bilnéaire
 Bilinear Filtering (Restart required)|Filtrage Bilinéaire (Redémarrer l'émulateur)
-Binary Files (*.bin)|Fichiers Binaire (*.bin)
+Binary Files (*.bin) |Fichiers Binaire (*.bin)
+Binary Files (*.bin) |Fichiers Binaire (*.bin)
 Bios|Bios :
 Block Size :|Taille du Bloc :
 Bug report|Rapport de Bug
@@ -389,9 +391,9 @@ Word|Word
 Word Write|Ecrire un Word
 Word Write : %1 %2|Ecrire un Word : %1 %2
 Write|Ecrire
-Yabause Cheat Files (*.yct);;All Files (*)|Fichiers de Cheat Yabause (*ycf);;Tous les Fichiers (*)
-Yabause Qt GUI|Interface Graphique Qt pour Yabause
-Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Basé sur Yabause %1 :<br /><a href="http://yabause.org">http://yabause.org</a><br />L'équipe de Yabause :<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
-Yabause Save State (*.yss)|Sauvegarde d'État Yabause (*.yss)
-Yabause is not initialized, can't manage backup ram.|UoYabause n'est pas initialisé. Ne peut pas gérer la sauvegarde.
+Kronos Cheat Files (*.yct);;All Files (*)|Fichiers de Cheat Kronos (*ycf);;Tous les Fichiers (*)
+Kronos Qt GUI|Interface Graphique Qt pour Kronos
+Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Basé sur Yabause %1 :<br /><a href="http://yabause.org">http://yabause.org</a><br />L'équipe de Yabause :<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Kronos Save State (*.yss)|Sauvegarde d'État Kronos (*.yss)
+Kronos is not initialized, can't manage backup ram.|Kronos n'est pas initialisé. Ne peut pas gérer la sauvegarde.
 Yes|Oui
