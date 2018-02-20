@@ -1933,7 +1933,7 @@ scsp_dma (void)
       u32 to = scsp.drga;
       u32 cnt = scsp.dmlen>>1;
       for (int i = 0; i < cnt; i++) {
-        u16 val = scsp_r_w(from);
+        u16 val = scsp_r_w(NULL, NULL, from);
         //if (scsp.dmfl & 0x40) val = 0;
         T2WriteWord(SoundRam, to & 0x7FFFF, val);
         from += 2;
@@ -1952,7 +1952,7 @@ scsp_dma (void)
       for (int i = 0; i < cnt; i++) {
         u16 val = T2ReadWord(SoundRam, from & 0x7FFFF); 
         //if (scsp.dmfl & 0x40) val = 0;
-        scsp_w_w(to,val);
+        scsp_w_w(NULL, NULL, to,val);
         from += 2;
         to += 2;
       }
