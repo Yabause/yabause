@@ -30,6 +30,13 @@
 #include <QPointer>
 #include <QDir>
 
+#ifndef ARCH_IS_WINDOWS
+#include <sys/time.h>
+#include <unistd.h>
+#else
+#include <windows.h>
+#endif
+
 // cores
 
 #ifdef Q_OS_WIN
@@ -145,11 +152,81 @@ QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 
 extern "C" 
 {
+
+        static unsigned long nextFrameTime = 0;
+        static unsigned long delayUs_NTSC = 1000000/60;
+        static unsigned long delayUs_PAL = 1000000/50;
+
+#define delayUs ((yabsys.IsPal)?delayUs_PAL:delayUs_NTSC)
+
+#ifdef ARCH_IS_WINDOWS
+        static int gettimeofday(struct timeval* p, void* tz) {
+            ULARGE_INTEGER ul; // As specified on MSDN.
+            FILETIME ft;
+
+            // Returns a 64-bit value representing the number of
+            // 100-nanosecond intervals since January 1, 1601 (UTC).
+            GetSystemTimeAsFileTime(&ft);
+
+            // Fill ULARGE_INTEGER low and high parts.
+            ul.LowPart = ft.dwLowDateTime;
+            ul.HighPart = ft.dwHighDateTime;
+            // Convert to microseconds.
+            ul.QuadPart /= 10ULL;
+            // Modulo to retrieve the microseconds.
+            p->tv_usec = (long) (ul.QuadPart % 1000000LL);
+            // Divide to retrieve the seconds.
+            p->tv_sec = (long) (ul.QuadPart / 1000000LL);
+
+            return 0;
+        }
+
+        static void usleep(__int64 usec) 
+        { 
+            HANDLE timer; 
+            LARGE_INTEGER ft; 
+
+            ft.QuadPart = -(10*usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+            timer = CreateWaitableTimer(NULL, TRUE, NULL); 
+            SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0); 
+            WaitForSingleObject(timer, INFINITE); 
+            CloseHandle(timer); 
+        }
+#endif
+        static unsigned long getCurrentTimeUs(unsigned long offset) {
+            struct timeval s;
+
+            gettimeofday(&s, NULL);
+
+            return (s.tv_sec * 1000000 + s.tv_usec) - offset;
+        }
+
+        static unsigned long time_left(void)
+        {
+          unsigned long now;
+
+          now = getCurrentTimeUs(0);
+          if(nextFrameTime <= now)
+            return 0;
+          else
+            return nextFrameTime - now;
+        }
+
 	void YuiErrorMsg(const char *string)
 	{ QtYabause::mainWindow()->appendLog( string ); }
 	
 	void YuiSwapBuffers()
-	{ QtYabause::mainWindow()->swapBuffers(); }
+	{ 
+          if (nextFrameTime == 0) nextFrameTime = getCurrentTimeUs(0);
+          QtYabause::mainWindow()->swapBuffers();
+          if (isAutoFrameSkip() == 0) {
+            usleep(time_left());
+            nextFrameTime += delayUs;
+          } else {
+            nextFrameTime = getCurrentTimeUs(0);
+          }
+        }
 
 #if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)
    HWND DXGetWindow()
