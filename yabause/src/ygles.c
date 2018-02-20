@@ -1056,61 +1056,6 @@ int YglGLInit(int width, int height) {
    return 0;
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-u32* YglGetBackColorPointer() {
-  int status;
-  GLuint error;
-
-  YGLDEBUG("YglGetBackColorPointer: %d,%d", _Ygl->width, _Ygl->height);
-
-
-  if (_Ygl->back_tex == 0) { 
-    glGetError();
-    glGenTextures(1, &_Ygl->back_tex);
-
-    glGenBuffers(1, &_Ygl->back_pbo);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_STREAM_DRAW);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-    glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    if ((error = glGetError()) != GL_NO_ERROR)
-    {
-      YGLLOG("Fail to init back_tex %04X", error);
-      return NULL;
-    }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  }
-  glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
-  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-  if ((error = glGetError()) != GL_NO_ERROR)
-  {
-    YGLLOG("Fail to init YglTM->backcolor_buf %04X", error);
-    return NULL;
-  }
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-  return _Ygl->backcolor_buf;
-}
-
-void YglSetBackColor(int size){
-
-  glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
-  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  _Ygl->backcolor_buf = NULL;
-  glBindTexture(GL_TEXTURE_2D, 0 );
-  return;
-}
-
 //////////////////////////////////////////////////////////////////////////////
 int YglGenerateAABuffer(){
 
@@ -3185,6 +3130,13 @@ void YglRenderFrameBufferShadow() {
   glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+
+void YglSetClearColor(float r, float g, float b){
+  _Ygl->clear_r = r;
+  _Ygl->clear_g = g;
+  _Ygl->clear_b = b;
+}
+
 void YglRender(void) {
    YglLevel * level;
    GLuint cprg=0;
@@ -3262,7 +3214,13 @@ void YglRender(void) {
    //  glViewport(xN, yN, wN, hN);
    //}
 
-   YglDrawBackScreen(GlWidth, GlHeight);
+   if ((fixVdp2Regs->BKTAU & 0x8000) != 0) {
+     glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+     YglDrawBackScreen(GlWidth, GlHeight);
+   }else{
+     glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
+     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+   }
 
    if (_Ygl->texture_manager == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
@@ -3992,6 +3950,60 @@ void YglSetLineColor(u32 * pbuf, int size){
     _Ygl->lincolor_buf = NULL;
   //}
   glBindTexture(GL_TEXTURE_2D, 0 );
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+u32* YglGetBackColorPointer() {
+  int status;
+  GLuint error;
+
+  YGLDEBUG("YglGetBackColorPointer: %d,%d", _Ygl->width, _Ygl->height);
+
+
+  if (_Ygl->back_tex == 0) {
+    glGetError();
+    glGenTextures(1, &_Ygl->back_tex);
+
+    glGenBuffers(1, &_Ygl->back_pbo);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_STREAM_DRAW);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+    glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    if ((error = glGetError()) != GL_NO_ERROR)
+    {
+      YGLLOG("Fail to init back_tex %04X", error);
+      return NULL;
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }
+  glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
+  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+  if ((error = glGetError()) != GL_NO_ERROR)
+  {
+    YGLLOG("Fail to init YglTM->backcolor_buf %04X", error);
+    return NULL;
+  }
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+  return _Ygl->backcolor_buf;
+}
+
+void YglSetBackColor(int size) {
+
+  glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
+  glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  _Ygl->backcolor_buf = NULL;
+  glBindTexture(GL_TEXTURE_2D, 0);
   return;
 }
 

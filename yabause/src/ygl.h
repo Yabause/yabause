@@ -495,6 +495,10 @@ typedef struct {
    unsigned int width;
    unsigned int height;
    unsigned int depth;
+
+   float clear_r;
+   float clear_g;
+   float clear_b;
    
    // VDP1 Info
    int vdp1_maxpri;
