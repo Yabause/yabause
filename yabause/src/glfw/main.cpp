@@ -43,7 +43,7 @@ extern "C" {
   //static char biospath[256] = "G:/wkcvs/Emulation/Saturn/satourne v1.0.2p/roms/saturn_bios.bin";
   static char * biospath = NULL;
   //static char cdpath[256] = "C:/ext/osusume/SonycR.cue";
-  static char cdpath[256] = "C:/ext/osusume/079 Albert Odyssey (U).cue";
+  static char cdpath[256] = "C:/ext/osusume/AfterBuner2.cue";
   //static char cdpath[256] = "C:/ext/osusume/akumazyou/ws-dracula_x.bin";
   //static char cdpath[256] = "C:/ext/osusume/thunder_force_v[www.segasoluce.net]/thunder_force.iso";
   //static char cdpath[256] = "C:/ext/osusume/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn)/Slam & Jam '96 featuring Magic & Kareem (U)(Saturn).mds";
@@ -239,6 +239,7 @@ int yabauseinit()
   yinit.polygon_generation_mode = GPU_TESSERATION;
   yinit.use_new_scsp = 1;
   yinit.resolution_mode = 0;
+  yinit.rotate_screen = 0;
 
     res = YabauseInit(&yinit);
     if( res == -1)

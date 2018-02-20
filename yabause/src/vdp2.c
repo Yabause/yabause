@@ -398,6 +398,7 @@ void VdpProc( void *arg ){
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW(T)");
       Vdp1Draw();
       VIDCore->Vdp1DrawEnd();
+      Vdp1External.frame_change_plot = 0;
       FrameProfileAdd("DirectDraw end");
       YabAddEventQueue(vdp1_rcv_evqueue, 0);
       break;
@@ -417,7 +418,8 @@ void VdpProc( void *arg ){
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankIN(void) {
    /* this should be done after a frame change or a plot trigger */
-   Vdp1Regs->COPR = 0;
+   //Vdp1Regs->COPR = 0;
+   //printf("COPR = 0 at %d\n", __LINE__);
    /* I'm not 100% sure about this, but it seems that when using manual change
    we should swap framebuffers in the "next field" and thus, clear the CEF...
    now we're lying a little here as we're not swapping the framebuffers. */
@@ -461,7 +463,8 @@ void Vdp2VBlankIN(void) {
 #else
 	FrameProfileAdd("VIN start");
    /* this should be done after a frame change or a plot trigger */
-   Vdp1Regs->COPR = 0;
+   //Vdp1Regs->COPR = 0;
+   //printf("COPR = 0 at %d\n", __LINE__);
 
    /* I'm not 100% sure about this, but it seems that when using manual change
    we should swap framebuffers in the "next field" and thus, clear the CEF...
@@ -620,7 +623,8 @@ void Vdp2HBlankOUT(void) {
   }
   else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
     Vdp1Regs->EDSR |= 2;
-    Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+    //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
+    //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
     ScuSendDrawEnd();
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
     VIDCore->Vdp1DrawEnd();

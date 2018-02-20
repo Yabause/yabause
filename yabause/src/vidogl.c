@@ -1718,11 +1718,7 @@ void Vdp2GenLineinfo(vdp2draw_struct *info)
     {
       val1 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound + index);
       val2 = T1ReadWord(Vdp2Ram, info->linescrolltbl + (i / info->lineinc)*bound + index + 2);
-      //info->lineinfo[i].CoordinateIncH = (float)( (int)((val1) & 0x07) + (float)( (val2) >> 8) / 255.0f );
       info->lineinfo[lineindex].CoordinateIncH = (((int)((val1) & 0x07) << 8) | (int)((val2) >> 8));
-      if (info->lineinfo[lineindex].CoordinateIncH == 0) {
-        info->lineinfo[lineindex].CoordinateIncH = 0x0100;
-      }
       index += 4;
     }
     else {
@@ -2053,6 +2049,8 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
     v = (i*incv) >> 8;
     if (VDPLINE_SZ(info->islinescroll))
       inch = line->CoordinateIncH;
+
+    if (inch == 0) inch = 1;
 
     if (VDPLINE_SX(info->islinescroll))
       sh = info->sh + line->LineScrollValH;
@@ -2517,8 +2515,13 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
       targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
     }
 
-    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
-    info->coordincx = 1.0f / info->coordincx;
+    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 255.0f;
+    if (info->coordincx == 0) {
+      info->coordincx = vdp2width;
+    }
+    else {
+      info->coordincx = 1.0f / info->coordincx;
+    }
     if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
     info->draww = (int)((float)vdp2width / info->coordincx);
 
@@ -3991,8 +3994,8 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   case 0x0: // Only two coordinates
     rw = cmd.CMDXC - x + Vdp1Regs->localX;
     rh = cmd.CMDYC - y + Vdp1Regs->localY;
-    if (cmd.CMDXA < cmd.CMDXC) rw += 1; else rw -= 1;
-    if (cmd.CMDYA < cmd.CMDYC) rh += 1; else rh -= 1;
+    if (rw > 0) { rw += 1; } else { x += 1; }
+    if (rh > 0) { rh += 1; } else { y += 1; }
     break;
   case 0x5: // Upper-left
     rw = cmd.CMDXB + 1;
@@ -5362,11 +5365,28 @@ static void Vdp2DrawBackScreen(void)
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
   dot = T1ReadWord(Vdp2Ram, scrAddr);
 
-  YglSetClearColor(
-    (float)(((dot & 0x1F)<<3) +info.cor) / (float)(0xFF),
-    (float)((((dot & 0x3E0) >> 5) << 3) + info.cog) / (float)(0xFF),
-    (float)((((dot & 0x7C00) >> 10) << 3) + info.cob) / (float)(0xFF)
-  );
+  if ((fixVdp2Regs->BKTAU & 0x8000) != 0 ) {
+    // per line background color
+    u32* back_pixel_data = YglGetBackColorPointer();
+    if (back_pixel_data != NULL) {
+      for (int i = 0; i < vdp2height; i++) {
+        u8 r, g, b;
+        dot = T1ReadWord(Vdp2Ram, (scrAddr + 2 * i));
+        r = ((dot & 0x1F) << 3) + info.cor;
+        g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
+        b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
+        *back_pixel_data++ = (0xFF << 24) | (b << 16) | (g << 8) | r;
+      }
+      YglSetBackColor(vdp2height);
+    }
+  }
+  else {
+    YglSetClearColor(
+      (float)(((dot & 0x1F) << 3) + info.cor) / (float)(0xFF),
+      (float)((((dot & 0x3E0) >> 5) << 3) + info.cog) / (float)(0xFF),
+      (float)((((dot & 0x7C00) >> 10) << 3) + info.cob) / (float)(0xFF)
+    );
+  }
 #else
   if (fixVdp2Regs->BKTAU & 0x8000)
   {
