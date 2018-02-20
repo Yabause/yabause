@@ -161,7 +161,7 @@ static unsigned long nextFrameTime = 0;
 static unsigned long delayUs_NTSC = 1000000/60;
 static unsigned long delayUs_PAL = 1000000/50;
 
-#define delayUs ((yinit.videoformattype == VIDEOFORMATTYPE_PAL)?delayUs_PAL:delayUs_NTSC);
+#define delayUs ((yabsys.IsPal)?delayUs_PAL:delayUs_NTSC);
 
 static int frameskip = 1;
 
@@ -218,7 +218,6 @@ void YuiInit() {
         yinit.extend_backup = 1;
 	yinit.mpegpath = NULL;
 	yinit.cartpath = "./backup32Mb.ram";
-        yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
 	yinit.skip_load = 0;
 

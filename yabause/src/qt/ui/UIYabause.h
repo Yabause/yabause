@@ -125,7 +125,6 @@ protected slots:
 	void fixAspectRatio( int width, int height  );
 	void getSupportedResolutions();
 	int isResolutionValid( int width, int height, int bpp, int freq );
-	int findBestVideoFreq( int width, int height, int bpp, int videoFormat );
 	void toggleFullscreen( int width, int height, bool f, int videoFormat );
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();

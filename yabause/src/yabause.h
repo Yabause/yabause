@@ -46,7 +46,6 @@ typedef struct
    const char *cartpath;
    const char *modemip;
 	const char *modemport;
-   int videoformattype;
    int frameskip;
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)

@@ -379,7 +379,6 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
 	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
 	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
-	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
    mYabauseConf.use_new_scsp = (int)vs->value("Sound/NewScsp", mYabauseConf.use_new_scsp).toBool();
 	
 	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
@@ -438,7 +437,6 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.buppath = 0;
 	mYabauseConf.mpegpath = 0;
 	mYabauseConf.cartpath = 0;
-	mYabauseConf.videoformattype = VIDEOFORMATTYPE_NTSC;
 	mYabauseConf.skip_load = 0;
 	int numThreads = QThread::idealThreadCount();	
 	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;

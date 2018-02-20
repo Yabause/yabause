@@ -351,16 +351,6 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->modemip, init->modemport) != 0)
-   {
-      YabSetError(YAB_ERR_CANNOTINIT, _("CS2"));
-      return -1;
-   }
-
-   Cs2GetRegionID();
-   if (cdip->region[0] == 'E') init->videoformattype = VIDEOFORMATTYPE_PAL;
-   else init->videoformattype = VIDEOFORMATTYPE_NTSC;
-
    if (ScuInit() != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SCU"));
@@ -391,6 +381,12 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+   if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->modemip, init->modemport) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("CS2"));
+      return -1;
+   }
+
    if (SmpcInit(init->regionid, init->clocksync, init->basetime) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SMPC"));
@@ -403,7 +399,6 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   YabauseSetVideoFormat(init->videoformattype);
    YabauseChangeTiming(CLKTYPE_26MHZ);
 
    if (init->frameskip)
@@ -474,6 +469,9 @@ int YabauseInit(yabauseinit_struct *init)
             YabauseResetNoLoad();
       }
    }
+
+   if (Cs2GetRegionID() == 0xC) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
+   else YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
 
 #ifdef HAVE_GDBSTUB
    GdbStubInit(MSH2, 43434);
@@ -936,7 +934,8 @@ u64 YabauseGetTicks(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseSetVideoFormat(int type) {
-   yabsys.IsPal = type;
+   if (Vdp2Regs == NULL) return;
+   yabsys.IsPal = (type == VIDEOFORMATTYPE_PAL);
    yabsys.MaxLineCount = type ? 313 : 263;
 #ifdef WIN32
    QueryPerformanceFrequency((LARGE_INTEGER *)&yabsys.tickfreq);

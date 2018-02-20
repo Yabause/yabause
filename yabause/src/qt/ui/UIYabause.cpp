@@ -478,23 +478,6 @@ int UIYabause::isResolutionValid( int width, int height, int bpp, int freq )
 	return -1;
 }
 
-int UIYabause::findBestVideoFreq( int width, int height, int bpp, int videoFormat )
-{
-	// Try to use a frequency close to 60 hz for NTSC, 75 hz for PAL
-	if (videoFormat == VIDEOFORMATTYPE_PAL && isResolutionValid( width, height, bpp, 75 ) > 0)
-		return 75;
-	else if (videoFormat == VIDEOFORMATTYPE_NTSC && isResolutionValid( width, height, bpp, 60 ) > 0)
-		return 60;
-	else
-	{
-		// Since we can't use the frequency we want, use the first one available
-		int i=isResolutionValid( width, height, bpp, -1 );
-		if (i < 0)
-			return -1;
-		return supportedResolutions[i].freq;
-	}
-}
-
 void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat )
 {
 }
@@ -725,9 +708,6 @@ void UIYabause::on_aFileSettings_triggered()
 				fullscreenRequested( false );
 			fullscreenRequested( f );
 		}
-		
-		if (newhash["Video/VideoFormat"] != hash["Video/VideoFormat"])
-			YabauseSetVideoFormat(newhash["Video/VideoFormat"].toInt());
 
 		mYabauseThread->reloadControllers();
 		refreshStatesActions();
