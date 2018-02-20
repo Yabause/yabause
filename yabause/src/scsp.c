@@ -979,7 +979,7 @@ void keyonex(struct Scsp *s)
      if (s->slots[channel].regs.kb) {
 
        //if ( s->slots[channel].state.envelope == RELEASE) {
-       //  LOG("keyon %d", channel);
+       //LOG("keyon %d", channel);
        //}
        keyon(&s->slots[channel]);
      }
@@ -1815,21 +1815,80 @@ scsp_trigger_main_interrupt (u32 id)
   scsp.mintf ();
 }
 
+void scsp_check_interrupt() {
+  unsigned mask_test;
+  unsigned lvmasked[3];
+  unsigned level = 0;
+
+  mask_test = scsp.scipd & scsp.scieb;
+  if (mask_test &~0xFF)
+    mask_test = (mask_test & 0xFF) | 0x80;
+
+  lvmasked[0] = (scsp.scilv0 & mask_test) << 0;
+  lvmasked[1] = (scsp.scilv1 & mask_test) << 1;
+  lvmasked[2] = (scsp.scilv2 & mask_test) << 2;
+
+  for (unsigned i = 0; i < 8; i++)
+  {
+    unsigned l = (lvmasked[0] & 0x1) | (lvmasked[1] & 0x2) | (lvmasked[2] & 0x4);
+
+    if (l > level)
+      level = l;
+
+    lvmasked[0] >>= 1;
+    lvmasked[1] >>= 1;
+    lvmasked[2] >>= 1;
+  }
+  if (level != 0) {
+    SCSPLOG("SCSP LV0=%08X, LV1=%08X, LV2=%08X, SCIPD = %08X, SCIEB = %08X\n",
+      scsp.scilv0, scsp.scilv1, scsp.scilv2, scsp.scipd, scsp.scieb);
+    scsp.sintf(level);
+  }
+  
+}
+
 static INLINE void
 scsp_trigger_sound_interrupt (u32 id)
 {
    u32 level;
    level = 0;
    if (id > 0x80) id = 0x80;
-
    if (scsp.scilv0 & id) level |= 1;
    if (scsp.scilv1 & id) level |= 2;
    if (scsp.scilv2 & id) level |= 4;
+#if 0
+   unsigned mask_test;
+   unsigned lvmasked[3];
+   unsigned level = 0;
+
+   scsp.scipd |= id;
+
+   mask_test = scsp.scipd & scsp.scieb;
+   if (mask_test &~0xFF)
+     mask_test = (mask_test & 0xFF) | 0x80;
+
+   lvmasked[0] = (scsp.scilv0 & mask_test) << 0;
+   lvmasked[1] = (scsp.scilv1 & mask_test) << 1;
+   lvmasked[2] = (scsp.scilv2 & mask_test) << 2;
+
+   for (unsigned i = 0; i < 8; i++)
+   {
+     unsigned l = (lvmasked[0] & 0x1) | (lvmasked[1] & 0x2) | (lvmasked[2] & 0x4);
+
+     if (l > level)
+       level = l;
+
+     lvmasked[0] >>= 1;
+     lvmasked[1] >>= 1;
+     lvmasked[2] >>= 1;
+   }
+#endif
 
 #ifdef SCSP_DEBUG
    if (id == 0x8) SCSPLOG ("scsp sound interrupt accepted %.2X lev=%d\n", id, level);
 #endif
 
+   //if(level!=0)SCSPLOG("scsp sound interrupt accepted %.2X lev=%d\n", id, level);
    scsp.sintf (level);
 }
 
@@ -1861,7 +1920,9 @@ void scsp_sound_interrupt (u32 id)
 
 ////////////////////////////////////////////////////////////////
 // Direct Memory Access
-
+// 100412h	DMEA[15:1] -
+// 100414h	DMEA[19:16]	DRGA[11:1] -
+// 100416h - GA	DI	EX	DTLG[11:1]
 static void
 scsp_dma (void)
 {
@@ -1870,14 +1931,35 @@ scsp_dma (void)
       // dsp -> scsp_ram
       SCSPLOG ("scsp dma: scsp_ram(%08lx) <- reg(%08lx) * %08lx\n",
                scsp.dmea, scsp.drga, scsp.dmlen);
+      u32 from = scsp.dmea;
+      u32 to = scsp.drga;
+      u32 cnt = scsp.dmlen>>1;
+      for (int i = 0; i < cnt; i++) {
+        u16 val = scsp_r_w(from);
+        //if (scsp.dmfl & 0x40) val = 0;
+        T2WriteWord(SoundRam, to & 0x7FFFF, val);
+        from += 2;
+        to += 2;
+      }
+
     }
   else
     {
       // scsp_ram -> dsp
       SCSPLOG ("scsp dma: scsp_ram(%08lx) -> reg(%08lx) * %08lx\n",
                scsp.dmea, scsp.drga, scsp.dmlen);
+      u32 from = scsp.dmea;
+      u32 to = scsp.drga;
+      u32 cnt = scsp.dmlen>>1;
+      for (int i = 0; i < cnt; i++) {
+        u16 val = T2ReadWord(SoundRam, from & 0x7FFFF); 
+        //if (scsp.dmfl & 0x40) val = 0;
+        scsp_w_w(to,val);
+        from += 2;
+        to += 2;
+      }
     }
-
+  scsp.dmfl &= ~0x10;
   scsp_ccr[0x16 ^ 3] &= 0xE0;
 
   scsp_sound_interrupt (0x10);
@@ -2697,25 +2779,14 @@ scsp_set_b (u32 a, u8 d)
     {
       int i;
       scsp.scieb = (scsp.scieb & 0xFF) + (d << 8);
-
-      for (i = 0; i < 3; i++)
-        {
-          if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
-            scsp_trigger_sound_interrupt ((1 << (i+8)));
-        }
-
+      scsp_check_interrupt();
       return;
     }
     case 0x1F: // SCIEB(low byte)
     {
       int i;
       scsp.scieb = (scsp.scieb & 0x700) + d;
-
-      for (i = 0; i < 8; i++)
-        {
-          if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
-            scsp_trigger_sound_interrupt ((1 << i));
-        }
+      scsp_check_interrupt();
       return;
     }
     case 0x21: // SCIPD(low byte)
@@ -2724,22 +2795,27 @@ scsp_set_b (u32 a, u8 d)
 
     case 0x22: // SCIRE(high byte)
       scsp.scipd &= ~(d << 8);
+      scsp_check_interrupt();
       return;
 
     case 0x23: // SCIRE(low byte)
       scsp.scipd &= ~(u32)d;
+      scsp_check_interrupt();
       return;
 
     case 0x25: // SCILV0
       scsp.scilv0 = d;
+      scsp_check_interrupt();
       return;
 
     case 0x27: // SCILV1
       scsp.scilv1 = d;
+      scsp_check_interrupt();
       return;
 
     case 0x29: // SCILV2
       scsp.scilv2 = d;
+      scsp_check_interrupt();
       return;
 
     case 0x2A: // MCIEB(high byte)
@@ -2772,6 +2848,8 @@ scsp_set_w (u32 a, u16 d)
     {
       //SCSPLOG("scsp : reg w %.2X = %.4X\n", a & 0x3E, d);
     }
+
+  //SCSPLOG("SCSP REG WRITE WORD: addr=%08X, val = %04X\n",a,d);
 
   *(u16 *)&scsp_ccr[a ^ 2] = d;
 
@@ -2843,13 +2921,8 @@ scsp_set_w (u32 a, u16 d)
 
     case 0x1E: // SCIEB
     {
-      int i;
       scsp.scieb = d;
-      for (i = 0; i < 11; i++)
-        {
-          if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
-            scsp_trigger_sound_interrupt ((1 << i));
-        }
+      scsp_check_interrupt();
       return;
     }
     case 0x20: // SCIPD
@@ -2858,6 +2931,7 @@ scsp_set_w (u32 a, u16 d)
 
     case 0x22: // SCIRE
       scsp.scipd &= ~d;
+      scsp_check_interrupt();
       return;
 
     case 0x24: // SCILV0
@@ -2976,7 +3050,7 @@ scsp_get_w (u32 a)
 
     case 0x08: // CA/SGC/EG
       return (scsp.ca & 0x780) | (scsp.sgc << 5) | scsp.eg;
-
+     
     case 0x18: // TACTL
       return (scsp.timasd << 8);
 
@@ -2992,8 +3066,13 @@ scsp_get_w (u32 a)
     case 0x20: // SCIPD
       return scsp.scipd;
 
+    case 0x22:
+      return scsp.scipd;
+
     case 0x2C: // MCIPD
       return scsp.mcipd;
+    default:
+      SCSPLOG("SCSP: unasined read %08X\n",a );
     }
 
   return *(u16 *)&scsp_ccr[a ^ 2];
@@ -4667,9 +4746,12 @@ static s32 savedcycles;  // Cycles left over from the last M68KExec() call
 static u32 FASTCALL
 c68k_byte_read (const u32 adr)
 {
-  u32 rtn;
-  if (adr < 0x100000)
-    rtn = T2ReadByte(SoundRam, adr & 0x7FFFF);
+  u32 rtn = 0;
+  if (adr < 0x100000) {
+    if (adr < 0x80000) {
+      rtn = T2ReadByte(SoundRam, adr & 0x7FFFF);
+    }
+  }
   else
     rtn = scsp_r_b(adr);
   return rtn;
@@ -4684,7 +4766,9 @@ c68k_byte_write (const u32 adr, u32 data)
     //if ((adr & 0xFFF) == 0x790){
     //  SCSPLOG("c68k_word_write %08X:%02X\n", adr, data);
     //}
-    T2WriteByte(SoundRam, adr & 0x7FFFF, data);
+    if (adr < 0x80000) {
+      T2WriteByte(SoundRam, adr & 0x7FFFF, data);
+    }
   }
   else{
     scsp_w_b(adr, data);
@@ -4697,9 +4781,12 @@ c68k_byte_write (const u32 adr, u32 data)
 u32 FASTCALL
 c68k_word_read (const u32 adr)
 {
-  u32 rtn;
-  if (adr < 0x100000)
-    rtn = T2ReadWord(SoundRam, adr & 0x7FFFF);
+  u32 rtn = 0;
+  if (adr < 0x100000) {
+    if (adr < 0x80000) {
+      rtn = T2ReadWord(SoundRam, adr);
+    }
+  }
   else
     rtn = scsp_r_w(adr);
   return rtn;
@@ -4714,7 +4801,9 @@ c68k_word_write (const u32 adr, u32 data)
 //    if ((adr & 0x7FFF0) == 0x3c20){
 //      SCSPLOG("c68k_word_write %08X:%04X @ %d\n", adr, data, (m68kcycle >> CLOCK_SYNC_SHIFT) );
 //    }
-    T2WriteWord(SoundRam, adr & 0x7FFFF, data);
+    if (adr < 0x80000) {
+      T2WriteWord(SoundRam, adr, data);
+    }
   }
   else{
     scsp_w_w(adr, data);
@@ -4900,9 +4989,6 @@ SoundRamWriteLong (u32 addr, u32 val)
   //SCSPLOG("SoundRamWriteLong %08X:%08X", addr, val);
   T2WriteLong (SoundRam, addr, val);
   M68K->WriteNotify (addr, 4);
-
-  //if (IsM68KRunning)
-  //  while (pre_cycle == m68kcycle){ YabThreadYield(); };
 
 }
 
