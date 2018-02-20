@@ -367,7 +367,6 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       break;
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d\n", val, yabsys.LineCount);
-      Vdp1Regs->COPR = 0;
       Vdp1Regs->PTMR = val;
       Vdp1External.plot_trigger_line = (yabsys.LineCount == 0)?1:yabsys.LineCount;
       if ((val == 1) && (yabsys.LineCount != 0) ){
@@ -412,6 +411,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u32 returnAddr = 0xffffffff;
 
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+      regs->COPR = regs->addr >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {

@@ -59,7 +59,6 @@ static int autoframeskipenab=0;
 static int fps;
 int vdp2_is_odd_frame = 0;
 
-static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void startField(void);// VBLANK-OUT handler
 
 int g_frame_count = 0;
@@ -341,7 +340,6 @@ void Vdp2VBlankIN(void) {
 
 	FrameProfileAdd("VIN start");
    /* this should be done after a frame change or a plot trigger */
-   Vdp1Regs->COPR = 0;
 
    /* I'm not 100% sure about this, but it seems that when using manual change
    we should swap framebuffers in the "next field" and thus, clear the CEF...
