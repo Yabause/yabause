@@ -5490,7 +5490,7 @@ void ScspAsynMain( void * p ){
         sleeptime = ((16666666L / frame_div) - difftime);
         if(initsleeptime==0){initsleeptime = sleeptime; initnow = now; }
         if( sleeptime < 0 ) break;
-#if defined(ARCH_IS_LINUX)
+#if defined(ANDROID)
         tm.tv_sec = 0;
         tm.tv_nsec = sleeptime;
         pthread_mutex_lock(&sync_mutex);
