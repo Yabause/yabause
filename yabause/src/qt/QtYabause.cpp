@@ -221,7 +221,9 @@ extern "C"
           if (nextFrameTime == 0) nextFrameTime = getCurrentTimeUs(0);
           QtYabause::mainWindow()->swapBuffers();
           if (isAutoFrameSkip() == 0) {
-            usleep(time_left());
+            unsigned long delay = time_left();
+            if (delay > 0) usleep(delay);
+            else nextFrameTime = getCurrentTimeUs(0);
             nextFrameTime += delayUs;
           } else {
             nextFrameTime = getCurrentTimeUs(0);
