@@ -627,7 +627,7 @@ void Vdp2HBlankOUT(void) {
     //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
     ScuSendDrawEnd();
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-    VIDCore->Vdp1DrawEnd();
+    //VIDCore->Vdp1DrawEnd();
   }
      
 #endif
