@@ -2558,7 +2558,12 @@ void YglRenderVDP1(void) {
   YglMatrix m;
 
   YglLoadIdentity(&m);
-  YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
+  if (Vdp1Regs->TVMR & 0x02) {
+    YglOrtho(&m, 0.0f, (float)Vdp1Regs->systemclipX2, (float)Vdp1Regs->systemclipY2, 0.0f, 10.0f, 0.0f);
+  }
+  else {
+    YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
+  }
 
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
@@ -2776,6 +2781,8 @@ void YglRenderFrameBuffer(int from, int to) {
   float offsetcol[4];
   int bwin0, bwin1, logwin0, logwin1, winmode;
   int is_addcolor = 0;
+  int cwidth = 0;
+  int cheight = 0;
 
   YglGenFrameBuffer();
 
@@ -2806,9 +2813,13 @@ void YglRenderFrameBuffer(int from, int to) {
     rotate.m[1][1] = paraA.deltaYst;
     YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
     YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
+    cwidth = Vdp1Regs->systemclipX2;
+    cheight = Vdp1Regs->systemclipY2;
   }
   else{
     memcpy(&result, &_Ygl->mtxModelView, sizeof(result));
+    cwidth = _Ygl->rwidth;
+    cheight = _Ygl->rheight;
   }
 
 
@@ -2816,17 +2827,17 @@ void YglRenderFrameBuffer(int from, int to) {
    // render
    vertices[0] = 0 - 0.5;
    vertices[1] = 0 - 0.5;
-   vertices[2] = _Ygl->rwidth + 1 - 0.5;
+   vertices[2] = cwidth + 1 - 0.5;
    vertices[3] = 0 - 0.5;
-   vertices[4] = _Ygl->rwidth + 1 - 0.5;
-   vertices[5] = _Ygl->rheight + 1 - 0.5;
+   vertices[4] = cwidth + 1 - 0.5;
+   vertices[5] = cheight + 1 - 0.5;
 
    vertices[6] = 0 - 0.5;
    vertices[7] = 0 - 0.5;
-   vertices[8] = _Ygl->rwidth + 1 - 0.5;
-   vertices[9] = _Ygl->rheight + 1 - 0.5;
+   vertices[8] = cwidth + 1 - 0.5;
+   vertices[9] = cheight + 1 - 0.5;
    vertices[10] = 0 - 0.5;
-   vertices[11] = _Ygl->rheight + 1 - 0.5;
+   vertices[11] = cheight + 1 - 0.5;
 
    texcord[0] = 0.0f;
    texcord[1] = 1.0f;
