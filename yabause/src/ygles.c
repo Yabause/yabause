@@ -2554,6 +2554,16 @@ void YglRenderVDP1(void) {
   int status;
   FrameProfileAdd("YglRenderVDP1 start");
   YabThreadLock(_Ygl->mutex);
+  YglMatrix m, *mat;
+
+  YglLoadIdentity(&m);
+  if (Vdp1Regs->TVMR & 0x02) {
+    mat = &m;
+    YglOrtho(mat, 0.0f, (float)Vdp1Regs->systemclipX2, (float)Vdp1Regs->systemclipY2, 0.0f, 10.0f, 0.0f);
+  }
+  else {
+    mat = &_Ygl->mtxModelView;
+  }
 
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
@@ -2628,7 +2638,7 @@ void YglRenderVDP1(void) {
       level->prg[j].setupUniform((void*)&level->prg[j]);
     }
     if( level->prg[j].currentQuad != 0 ) {
-      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
+      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
       glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
       glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
       if( level->prg[j].vaid != 0 ) {
@@ -2768,6 +2778,8 @@ void YglRenderFrameBuffer(int from, int to) {
   float offsetcol[4];
   int bwin0, bwin1, logwin0, logwin1, winmode;
   int is_addcolor = 0;
+  int cwidth = 0;
+  int cheight = 0;
 
   YglGenFrameBuffer();
 
@@ -2798,9 +2810,13 @@ void YglRenderFrameBuffer(int from, int to) {
     rotate.m[1][1] = paraA.deltaYst;
     YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
     YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
+    cwidth = Vdp1Regs->systemclipX2;
+    cheight = Vdp1Regs->systemclipY2;
   }
   else{
     memcpy(&result, &_Ygl->mtxModelView, sizeof(result));
+    cwidth = _Ygl->rwidth;
+    cheight = _Ygl->rheight;
   }
 
 
@@ -2808,17 +2824,17 @@ void YglRenderFrameBuffer(int from, int to) {
    // render
    vertices[0] = 0 - 0.5;
    vertices[1] = 0 - 0.5;
-   vertices[2] = _Ygl->rwidth + 1 - 0.5;
+   vertices[2] = cwidth + 1 - 0.5;
    vertices[3] = 0 - 0.5;
-   vertices[4] = _Ygl->rwidth + 1 - 0.5;
-   vertices[5] = _Ygl->rheight + 1 - 0.5;
+   vertices[4] = cwidth + 1 - 0.5;
+   vertices[5] = cheight + 1 - 0.5;
 
    vertices[6] = 0 - 0.5;
    vertices[7] = 0 - 0.5;
-   vertices[8] = _Ygl->rwidth + 1 - 0.5;
-   vertices[9] = _Ygl->rheight + 1 - 0.5;
+   vertices[8] = cwidth + 1 - 0.5;
+   vertices[9] = cheight + 1 - 0.5;
    vertices[10] = 0 - 0.5;
-   vertices[11] = _Ygl->rheight + 1 - 0.5;
+   vertices[11] = cheight + 1 - 0.5;
 
    texcord[0] = 0.0f;
    texcord[1] = 1.0f;

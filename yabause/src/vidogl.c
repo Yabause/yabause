@@ -7206,7 +7206,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struc
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct * info, int h, int v)
 {
   if ((fixVdp2Regs->WCTLD & 0x04) == 0) {
-    return (&paraA);
+    return (&paraB);
   }
 
   if (info->WindwAreaMode == 0)
