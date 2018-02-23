@@ -70,8 +70,8 @@ protected:
 
 #if defined Q_OS_WIN
 struct SavedWinInfo {
-  DWORD style;
-  DWORD ex_style;
+  int style;
+  int ex_style;
   QPoint windowspos;
   QSize windowsize;
 };
