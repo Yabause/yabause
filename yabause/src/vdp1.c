@@ -91,7 +91,9 @@ u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u8 val;
+     VdpLockVram();
      VIDCore->Vdp1ReadFrameBuffer(0, addr, &val);
+     VdpUnLockVram();
      return val;
    }
    return T1ReadByte(Vdp1FrameBuffer[Vdp1External.current_frame], addr);
@@ -103,7 +105,9 @@ u16 FASTCALL Vdp1FrameBufferReadWord(u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u16 val;
+     VdpLockVram();
      VIDCore->Vdp1ReadFrameBuffer(1, addr, &val);
+     VdpUnLockVram();
      return val;
    } 
    return T1ReadWord(Vdp1FrameBuffer[Vdp1External.current_frame], addr);
@@ -115,7 +119,9 @@ u32 FASTCALL Vdp1FrameBufferReadLong(u32 addr) {
    addr &= 0x3FFFF;
    if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
      u32 val;
+     VdpLockVram();
      VIDCore->Vdp1ReadFrameBuffer(2, addr, &val);
+     VdpUnLockVram();
      return val;
    }
    return T1ReadLong(Vdp1FrameBuffer[Vdp1External.current_frame], addr);
@@ -128,7 +134,9 @@ void FASTCALL Vdp1FrameBufferWriteByte(u32 addr, u8 val) {
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
+      VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
+      VdpUnLockVram();
       return;
    }
 
@@ -142,7 +150,9 @@ void FASTCALL Vdp1FrameBufferWriteWord(u32 addr, u16 val) {
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
+      VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
+      VdpUnLockVram();
       return;
    }
 
@@ -156,7 +166,9 @@ void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
+      VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
+      VdpUnLockVram();
       return;
    }
 

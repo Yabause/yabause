@@ -69,10 +69,19 @@ void VdpProc( void *arg );      // rendering thread.
 static void vdp2VBlankIN(void); // VBLANK-IN handler
 static void vdp2VBlankOUT(void);// VBLANK-OUT handler
 static int vdp_proc_running = 0;
-
+YabMutex * vrammutex = NULL;
 int g_frame_count = 0;
 
 //#define LOG yprintf
+
+void VdpLockVram() {
+  YabThreadLock(vrammutex);
+}
+
+void VdpUnLockVram() {
+  YabThreadUnLock(vrammutex);
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -99,7 +108,6 @@ u32 FASTCALL Vdp2RamReadLong(u32 addr) {
 
 void FASTCALL Vdp2RamWriteByte(u32 addr, u8 val) {
    addr &= 0x7FFFF;
-
    if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
      A0_Updated = 1;
    }
@@ -140,7 +148,9 @@ void FASTCALL Vdp2RamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2RamWriteLong(u32 addr, u32 val) {
    addr &= 0x7FFFF;
-
+   if (0x00000 == addr && 0xD5C3D9C4 == val) {
+     LOG("%08X = %02X", addr, val);
+   }
    if (A0_Updated == 0 && addr >= 0 && addr < 0x20000){
      A0_Updated = 1;
    }
@@ -236,6 +246,8 @@ int Vdp2Init(void) {
    yabsys.wait_line_count = -1;
 #endif
 
+   vrammutex = YabThreadCreateMutex();
+
    return 0;
 }
 
@@ -261,6 +273,7 @@ void Vdp2DeInit(void) {
       T2MemoryDeInit(Vdp2ColorRam);
    Vdp2ColorRam = NULL;
 
+   YabThreadFreeMutex(vrammutex);
 
 }
 
@@ -602,6 +615,8 @@ void Vdp2HBlankOUT(void) {
     }
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
     YabThreadYield();
+    //YabThreadUSleep(10000);
+
   }
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
     
@@ -759,7 +774,7 @@ void vdp2VBlankOUT(void) {
   static u64 onesecondticks = 0;
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
-
+  VdpLockVram();
   FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
   if (g_vdp_debug_dmp == 1) {
@@ -900,6 +915,7 @@ void vdp2VBlankOUT(void) {
       onesecondticks += diffticks;
       lastticks = curticks;
    }
+   VdpUnLockVram();
 }
 
 //////////////////////////////////////////////////////////////////////////////
