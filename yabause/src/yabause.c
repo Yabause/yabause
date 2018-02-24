@@ -1275,6 +1275,15 @@ int YabauseQuickLoadGame(void)
       MSH2->regs.PC = 0x06002E00;
       MSH2->regs.R[15] = Cs2GetMasterStackAdress();
       SH2SetRegisters(MSH2, &MSH2->regs);
+
+      Cs2InitializeCDSystem();
+      Cs2Area->reg.CR1 = 0x48fc;
+      Cs2Area->reg.CR2 = 0x0;
+      Cs2Area->reg.CR3 = 0x0;
+      Cs2Area->reg.CR4 = 0x0;
+      Cs2ResetSelector();
+      Cs2GetToc();
+
    }
    else
    {
