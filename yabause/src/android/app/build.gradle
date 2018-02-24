@@ -42,8 +42,9 @@ android {
             }
         }
         debug {
+            debuggable true
            packagingOptions{
-                doNotStrip "**/*/*.so"
+               doNotStrip "**/*/*.so"
             }
         }
     }
