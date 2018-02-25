@@ -4564,6 +4564,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
+#define THICK 0.25f
   float dx;
   float dy;
   float len;
@@ -4608,15 +4609,15 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
   ny = dy / len;
 
   // turn
-  dx = ny  * 0.5f;
-  dy = -nx * 0.5f;
+  dx = ny  * THICK;
+  dy = -nx * THICK;
 
   // extend
-  ex = nx * 0.5f;
-  ey = ny * 0.5f;
+  ex = nx * THICK;
+  ey = ny * THICK;
 
   // offset
-  offset = 0.5f;
+  offset = 0.0f;
 
   // triangle
   outv[0] = v1[0] - ex - dx + offset;
@@ -4628,12 +4629,36 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
   outv[6] = v2[0] + ex - dx + offset;
   outv[7] = v2[1] + ey - dy + offset;
 
-
 }
 
 
 //////////////////////////////////////////////////////////////////////////////
 
+static int isLine(s16 *v) {
+  s16 dx[4];
+  s16 dy[4];
+
+  dx[0] = v[0] - v[2];
+  dy[0] = v[1] - v[3];   
+
+  dx[1] = v[0] - v[4];
+  dy[1] = v[1] - v[5];
+
+  dx[2] = v[2] - v[4];
+  dy[2] = v[3] - v[5];  
+
+  dx[3] = v[2] - v[6];
+  dy[3] = v[3] - v[7];  
+
+  if (dx[1]*dy[0] == dx[0]*dy[1] == dx[1]*dy[2] == dx[2]*dy[1] == dx[2]*dy[3] == dx[3]*dy[2]) {
+    if ((dx[0]== 0)&&(dy[0]== 0)&&(dy[1]== 0)&&(dy[1]== 0) && (dx[2] == 0) && (dy[2]== 0) && (dx[3]==0) && (dy[3]==0)) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+  return 0;
+}
 
 
 void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
@@ -4649,6 +4674,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   u16 color2;
   int i;
   float col[4 * 4];
+  float vcol[4 * 4];
   int gouraud = 0;
   int priority = 0;
   int isSquare = 0;
@@ -4657,6 +4683,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int colorcalc = 0;
   vdp1cmd_struct cmd;
   s16 v[8];
+  int isline;
   float line_polygon[8];
   YglCache c;
 
@@ -4678,6 +4705,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   v[6] = (s16)cmd.CMDXD;
   v[7] = (s16)cmd.CMDYD;
 
+  isline = isLine(&v[0]);
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   sprite.dst = 0;
 
@@ -4700,10 +4728,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     for (i = 0; i < 4; i++)
     {
       color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
-      col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
-      col[(i << 2) + 3] = 1.0f;
+      vcol[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      vcol[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      vcol[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      vcol[(i << 2) + 3] = 1.0f;
     }
     gouraud = 1;
   }
@@ -4758,6 +4786,35 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
   }
 
+  if (isLine == 0) {
+    for (i = 0; i < 4; i++)
+    {
+      col[(i << 2) + 0] = vcol[(i << 2) + 0];
+      col[(i << 2) + 1] = vcol[(i << 2) + 1];
+      col[(i << 2) + 2] = vcol[(i << 2) + 2];
+      col[(i << 2) + 3] = vcol[(i << 2) + 3];
+    }
+  } else {
+      col[(0 << 2) + 0] = vcol[(0 << 2) + 0];
+      col[(0 << 2) + 1] = vcol[(0 << 2) + 1];
+      col[(0 << 2) + 2] = vcol[(0 << 2) + 2];
+      col[(0 << 2) + 3] = vcol[(0 << 2) + 3];
+
+      col[(1 << 2) + 0] = vcol[(0 << 2) + 0];
+      col[(1 << 2) + 1] = vcol[(0 << 2) + 1];
+      col[(1 << 2) + 2] = vcol[(0 << 2) + 2];
+      col[(1 << 2) + 3] = vcol[(0 << 2) + 3];
+
+      col[(2 << 2) + 0] = vcol[(1 << 2) + 0];
+      col[(2 << 2) + 1] = vcol[(1 << 2) + 1];
+      col[(2 << 2) + 2] = vcol[(1 << 2) + 2];
+      col[(2 << 2) + 3] = vcol[(1 << 2) + 3];
+
+      col[(3 << 2) + 0] = vcol[(1 << 2) + 0];
+      col[(3 << 2) + 1] = vcol[(1 << 2) + 1];
+      col[(3 << 2) + 2] = vcol[(1 << 2) + 2];
+      col[(3 << 2) + 3] = vcol[(1 << 2) + 3];
+  }
   if (gouraud == 1)
   {
     YglQuadGrowShading(&sprite, &texture, col, &c);
@@ -4771,6 +4828,26 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   for (i=0; i<4; i++) {
     makeLinePolygon(&v[(2*i)%8],&v[(2*(i+1))%8],line_polygon);
+    col[(0 << 2) + 0] = vcol[(i << 2) + 0];
+    col[(0 << 2) + 1] = vcol[(i << 2) + 1];
+    col[(0 << 2) + 2] = vcol[(i << 2) + 2];
+    col[(0 << 2) + 3] = vcol[(i << 2) + 3];
+
+    col[(1 << 2) + 0] = vcol[(i << 2) + 0];
+    col[(1 << 2) + 1] = vcol[(i << 2) + 1];
+    col[(1 << 2) + 2] = vcol[(i << 2) + 2];
+    col[(1 << 2) + 3] = vcol[(i << 2) + 3];
+
+    col[(2 << 2) + 0] = vcol[((i+1)%4 << 2) + 0];
+    col[(2 << 2) + 1] = vcol[((i+1)%4 << 2) + 1];
+    col[(2 << 2) + 2] = vcol[((i+1)%4 << 2) + 2];
+    col[(2 << 2) + 3] = vcol[((i+1)%4 << 2) + 3];
+
+    col[(3 << 2) + 0] = vcol[((i+1)%4 << 2) + 0];
+    col[(3 << 2) + 1] = vcol[((i+1)%4 << 2) + 1];
+    col[(3 << 2) + 2] = vcol[((i+1)%4 << 2) + 2];
+    col[(3 << 2) + 3] = vcol[((i+1)%4 << 2) + 3]; 
+
     sprite.vertices[0] = (line_polygon[0] + Vdp1Regs->localX) * vdp1wratio;
     sprite.vertices[1] = (line_polygon[1] + Vdp1Regs->localY) * vdp1hratio;
     sprite.vertices[2] = (line_polygon[2] + Vdp1Regs->localX) * vdp1wratio;
@@ -4786,7 +4863,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       YglCacheQuadGrowShading(&sprite, NULL, &c);
     }
   }
-
 }
 
 void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
