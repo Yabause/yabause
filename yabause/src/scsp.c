@@ -137,6 +137,8 @@ int new_scsp_cycles = 0;
 int g_scsp_lock = 0;
 YabMutex * g_scsp_mtx = NULL;
 
+static volatile int fps = 60;
+
 
 #include "sh2core.h"
 
@@ -4991,7 +4993,7 @@ ScspInit (int coreid)
   m68kexecptr = M68K->Exec;
 
   // Allocate enough memory for each channel buffer(may have to change)
-  scspsoundlen = 44100 / 60; // assume it's NTSC timing
+  scspsoundlen = 44100 / fps;
   scsplines = 263;
   scspsoundbufs = 10; // should be enough to prevent skipping
   scspsoundbufsize = scspsoundlen * scspsoundbufs;
@@ -5131,6 +5133,7 @@ ScspReset (void)
 int
 ScspChangeVideoFormat (int type)
 {
+  fps = (type ? 50 : 60);
   scspsoundlen = 44100 / (type ? 50 : 60);
   scsplines = type ? 313 : 263;
   scspsoundbufsize = scspsoundlen * scspsoundbufs;
@@ -5359,7 +5362,7 @@ void new_scsp_update_samples(s32 *bufL, s32 *bufR, int scspsoundlen)
 
 void ScspLockThread() {
   g_scsp_lock = 1;
-  YabThreadUSleep(16666*2);
+  YabThreadUSleep((1000000/fps)*2);
 }
 
 void ScspUnLockThread() {
@@ -5406,7 +5409,7 @@ void ScspAsynMain( void * p ){
   const int samplecnt = 256; // 11289600/44100
   const int step = 256;
   const int frame_div = 1;
-  const int framecnt = 188160 / frame_div; // 11289600/60
+  int framecnt; // 11289600/60
   int frame = 0;
   int frame_count = 0;
   int i;
@@ -5418,6 +5421,8 @@ void ScspAsynMain( void * p ){
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
   while (thread_running){
+
+    framecnt = (11289600/fps) / frame_div;
 
     while (g_scsp_lock){ YabThreadUSleep(1);  }
 
@@ -5458,7 +5463,7 @@ void ScspAsynMain( void * p ){
         else{
           difftime = now + (ULLONG_MAX - before);
         }
-        sleeptime = (16666 - difftime);
+        sleeptime = ((1000000/fps) - difftime);
         if ((sleeptime > 0) && (isAutoFrameSkip()==0))   YabThreadUSleep(sleeptime);
 
         if(sh2_read_req != 0) {
@@ -5580,7 +5585,7 @@ void ScspExecAsync() {
 #endif
 
 #if defined(ASYNC_SCSP)
-  while (scsp_mute_flags){ YabThreadUSleep(16666); }
+  while (scsp_mute_flags){ YabThreadUSleep((1000000/fps)); }
 #endif
 }
 
