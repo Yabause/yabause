@@ -959,6 +959,7 @@ int initEgl( ANativeWindow* window )
     
     eglQuerySurface(display,surface,EGL_WIDTH,&width);
     eglQuerySurface(display,surface,EGL_HEIGHT,&height);
+    //eglSurfaceAttrib(display, surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_DESTOYED);
     YUI_LOG("eglCreateWindowSurface() ok size = %d,%d", width,height);  
 
     pbuffer_attribs[1] = ANativeWindow_getWidth(window);
