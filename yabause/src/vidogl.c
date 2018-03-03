@@ -651,6 +651,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
             }
             else {
+              alpha = 0x80 | (colorcl << 3) | priority;
               *texture->textdata++ = SAT2YAB1(alpha, temp);
             }
           }
