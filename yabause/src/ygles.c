@@ -2374,15 +2374,53 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
 
   if(input->colornumber >= 3 ) {
     prg = PG_NORMAL;
+    if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+      prg = PG_VDP2_MOSAIC;
+    }
+    if ((input->blendmode & VDP2_CC_BLUR) != 0) {
+      prg = PG_VDP2_BLUR;
+    }
+    if (input->linescreen == 1) {
+      prg = PG_LINECOLOR_INSERT;
+      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+        prg = PG_LINECOLOR_INSERT_DESTALPHA;
+      }
+    }
+    else if (input->linescreen == 2) { // per line operation by HBLANK
+      prg = PG_VDP2_PER_LINE_ALPHA;
+    }
   }
   else {
 
+    if (line->x != -1 && VDP2_CC_NONE != input->blendmode) {
+      prg = PG_VDP2_RBG_CRAM_LINE;
+    }
+    else if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+      prg = PG_VDP2_MOSAIC_CRAM;
+    }
+    else if ((input->blendmode & VDP2_CC_BLUR) != 0) {
+      prg = PG_VDP2_BLUR_CRAM;
+    }
+    else if (input->linescreen == 1) {
+      prg = PG_LINECOLOR_INSERT_CRAM;
+      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
+        prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
+      }
+    }
+    else if (input->linescreen == 2) { // per line operation by HBLANK
+      prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
+    }
+    else {
+      prg = PG_VDP2_NORMAL_CRAM;
+    }
+/*
     if (line->x != -1 && VDP2_CC_NONE != input->blendmode ) {
       prg = PG_VDP2_RBG_CRAM_LINE;
     }
     else {
       prg = PG_VDP2_NORMAL_CRAM;
     }
+*/
   }
 
   program = YglGetProgram((YglSprite*)input, prg);
@@ -3674,7 +3712,7 @@ void YglRenderDestinationAlpha(void) {
 
   }
 
-  for (i = from; i < 9; i++){
+  for (i = from; i < _Ygl->vdp1_maxpri+1 ; i++){
     if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01){
       switch ((Vdp2Regs->SPCTL >> 12) & 0x3){
       case 0:
@@ -3711,7 +3749,7 @@ void YglRenderDestinationAlpha(void) {
         break;
       }
     }
-    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i, i+1);
   }
 
   return;

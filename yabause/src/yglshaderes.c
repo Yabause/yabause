@@ -575,12 +575,14 @@ int Ygl_uniformPerLineAlpha(void * p)
 {
   YglProgram * prg;
   prg = p;
+  int preblend = 0;
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-
+  prg->preblendmode = prg->blendmode;
+  prg->blendmode = 0;
 
   if (prg->prgid == PG_VDP2_PER_LINE_ALPHA_CRAM) {
     glEnableVertexAttribArray(prg->vertexp);
@@ -611,6 +613,7 @@ int Ygl_cleanupPerLineAlpha(void * p)
 {
   YglProgram * prg;
   prg = p;
+  prg->blendmode = prg->preblendmode;
 
   // Bind Default frame buffer
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
