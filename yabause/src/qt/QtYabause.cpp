@@ -118,6 +118,7 @@ VideoInterface_struct *VIDCoreList[] = {
 #else
 &VIDDummy,
 #endif
+&VIDSoft,
 NULL
 };
 
@@ -129,6 +130,7 @@ OSD_struct *OSDCoreList[] = {
 #else
 &OSDDummy,
 #endif
+&OSDSoft,
 NULL
 };
 #endif
@@ -518,12 +520,12 @@ SoundInterface_struct QtYabause::defaultSNDCore()
 
 VideoInterface_struct QtYabause::defaultVIDCore()
 {
-	return VIDOGL;
+	return VIDSoft;
 }
 
 OSD_struct QtYabause::defaultOSDCore()
 {
-	return OSDNnovg;
+	return OSDSoft;
 }
 
 PerInterface_struct QtYabause::defaultPERCore()
