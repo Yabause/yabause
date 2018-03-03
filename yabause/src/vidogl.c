@@ -3202,7 +3202,7 @@ static void Vdp2DrawRotationSync() {
 static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i) {
   float kval;
   int   kdata;
-  int h = parameter->KtablV + (parameter->deltaKAx * i);
+  int h = ceilf(parameter->KtablV + (parameter->deltaKAx * i));
   if (parameter->coefdatasize == 2) {
     if (parameter->k_mem_type == 0) { // vram
       kdata = T1ReadWord(Vdp2Ram, (parameter->coeftbladdr + (h << 1)) & 0x7FFFF);
@@ -7110,7 +7110,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00NoK(vdp2draw_struct *
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00WithK(vdp2draw_struct * info, int h, int v)
 {
-  h = paraA.KtablV + (paraA.deltaKAx * h);
+  h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
   return info->GetKValueA(&paraA, h);
 }
 
@@ -7121,7 +7121,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01NoK(vdp2draw_struct *
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01WithK(vdp2draw_struct * info, int h, int v)
 {
-  h = (paraB.KtablV + (paraB.deltaKAx * h));
+  h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
   return info->GetKValueB(&paraB, h);
 }
 
@@ -7132,7 +7132,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK(vdp2draw_struct *
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struct * info, int h, int v)
 {
-  if (info->GetKValueA(&paraA, (paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
+  if (info->GetKValueA(&paraA, ceilf( paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
   {
     paraB.lineaddr = paraA.lineaddr;
     return &paraB;
@@ -7142,9 +7142,9 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struc
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct * info, int h, int v)
 {
-  if (info->GetKValueA(&paraA, (paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
+  if (info->GetKValueA(&paraA, ceilf(paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
   {
-    info->GetKValueB(&paraB, (paraB.KtablV + (paraB.deltaKAx * h)));
+    info->GetKValueB(&paraB, ceilf(paraB.KtablV + (paraB.deltaKAx * h)));
     return &paraB;
   }
   return &paraA;
@@ -7203,7 +7203,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struc
   {
     if (info->pWinInfo[v].WinShowLine == 0)
     {
-      h = (paraA.KtablV + (paraA.deltaKAx * h));
+      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
       return info->GetKValueA(&paraA, h);
     }
     else {
@@ -7212,7 +7212,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struc
         return (&paraB);
       }
       else {
-        h = (paraA.KtablV + (paraA.deltaKAx * h));
+        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
         return info->GetKValueA(&paraA, h);
       }
     }
@@ -7220,13 +7220,13 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struc
   else {
     if (info->pWinInfo[v].WinShowLine == 0)
     {
-      h = (paraA.KtablV + (paraA.deltaKAx * h));
+      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
       return info->GetKValueA(&paraA, h);
     }
     else {
       if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
       {
-        h = (paraA.KtablV + (paraA.deltaKAx * h));
+        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
         return info->GetKValueA(&paraA, h);
       }
       else {
@@ -7249,7 +7249,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struc
     else {
       if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
       {
-        h = (paraB.KtablV + (paraB.deltaKAx * h));
+        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
         return info->GetKValueB(&paraB, h);
       }
       else {
@@ -7261,7 +7261,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struc
     {
       if (info->pWinInfo[v].WinShowLine == 0)
       {
-        h = (paraB.KtablV + (paraB.deltaKAx * h));
+        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
         return info->GetKValueB(&paraB, h);
       }
       else {
@@ -7270,7 +7270,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struc
           return &paraA;
         }
         else {
-          h = (paraB.KtablV + (paraB.deltaKAx * h));
+          h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
           return info->GetKValueB(&paraB, h);
         }
       }
@@ -7286,10 +7286,10 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct
   // Final Fight Revenge
   if (info->WindwAreaMode == WA_INSIDE) {
     if (info->pWinInfo[v].WinShowLine == 0) {
-      h = (paraA.KtablV + (paraA.deltaKAx * h));
+      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
       p = info->GetKValueA(&paraA, h);
       if (p) return p;
-      h = (paraB.KtablV + (paraB.deltaKAx * h));
+      h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
       return info->GetKValueB(&paraB, h);
     }
     else {
@@ -7297,39 +7297,39 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct
         h = (paraA.KtablV + (paraA.deltaKAx * h));
         p = info->GetKValueA(&paraA, h);
         if (p) return p;
-        h = (paraB.KtablV + (paraB.deltaKAx * h));
+        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
         return info->GetKValueB(&paraB, h);
       }
       else {
         h = (paraB.KtablV + (paraB.deltaKAx * h));
         p = info->GetKValueB(&paraB, h);
         if (p) return p;
-        h = (paraA.KtablV + (paraA.deltaKAx * h));
+        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
         return info->GetKValueA(&paraA, h);
       }
     }
   }
   else {
     if (info->pWinInfo[v].WinShowLine == 0) {
-      h = (paraB.KtablV + (paraB.deltaKAx * h));
+      h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
       p = info->GetKValueB(&paraB, h);
       if (p) return p;
-      h = (paraA.KtablV + (paraA.deltaKAx * h));
+      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
       return info->GetKValueA(&paraA, h);
     }
     else {
       if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd) {
-        h = (paraB.KtablV + (paraB.deltaKAx * h));
+        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
         p = info->GetKValueB(&paraB, h);
         if (p) return p;
-        h = (paraA.KtablV + (paraA.deltaKAx * h));
+        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
         return info->GetKValueA(&paraA, h);
       }
       else {
-        h = (paraA.KtablV + (paraA.deltaKAx * h));
+        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
         p = info->GetKValueA(&paraA, h);
         if (p) return p;
-        h = (paraB.KtablV + (paraB.deltaKAx * h));
+        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
         return info->GetKValueB(&paraB, h);
       }
     }
