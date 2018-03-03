@@ -313,11 +313,10 @@ u16 FASTCALL Vdp1ReadWord(u32 addr) {
         return Vdp1Regs->EDSR;
       case 0x12:
         FRAMELOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
-         return Vdp1Regs->LOPR;
+        return Vdp1Regs->LOPR;
       case 0x14:
-        //FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
-        printf("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
-         return Vdp1Regs->COPR;
+        FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
+        return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
       default:
