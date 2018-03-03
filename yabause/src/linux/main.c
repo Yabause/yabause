@@ -368,6 +368,7 @@ int main(int argc, char *argv[]) {
 
   if (yinit.vidcoretype == VIDCORE_SOFT) {
     OSDChangeCore(OSDCORE_SOFT);
+    VIDSoftSetBilinear(1);
   }
 
   if (lowres_mode == 0){
