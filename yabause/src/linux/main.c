@@ -366,16 +366,22 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (yinit.vidcoretype == VIDCORE_OGL) {
-    if (lowres_mode == 0){
+  if (yinit.vidcoretype == VIDCORE_SOFT) {
+    OSDChangeCore(OSDCORE_SOFT);
+  }
+
+  if (lowres_mode == 0){
+    if (yinit.vidcoretype == VIDCORE_OGL) {
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_NATIVE);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_FXAA);
-      VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
-    } else {
+    }
+    VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
+  } else {
+    if (yinit.vidcoretype == VIDCORE_OGL) {
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_ORIGINAL);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_NONE);
-      VIDCore->Resize(0, 0, WINDOW_WIDTH_LOW, WINDOW_HEIGHT_LOW, 1);
     }
+    VIDCore->Resize(0, 0, WINDOW_WIDTH_LOW, WINDOW_HEIGHT_LOW, 1);
   }
 
   platform_SetKeyCallback(PERCore->onKeyEvent);
