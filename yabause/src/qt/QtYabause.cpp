@@ -127,10 +127,9 @@ NULL
 OSD_struct *OSDCoreList[] = {
 #ifdef HAVE_LIBGL
 &OSDNnovg,
-#else
-&OSDDummy,
 #endif
 &OSDSoft,
+&OSDDummy,
 NULL
 };
 #endif
@@ -525,7 +524,7 @@ VideoInterface_struct QtYabause::defaultVIDCore()
 
 OSD_struct QtYabause::defaultOSDCore()
 {
-	return OSDSoft;
+	return OSDDummy;
 }
 
 PerInterface_struct QtYabause::defaultPERCore()
