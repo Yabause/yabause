@@ -3090,6 +3090,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     } else { // cram
       kdata = T2ReadLong((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (h << 2)) & 0xFFF);
     }
+    parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) { return 0; }
     kval = (float)(int)((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536.0f;
     switch (parameter->coefmode) {
@@ -3098,7 +3099,6 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     case 2:  parameter->ky = kval; break;
     case 3:  /*ToDo*/  break;
     }
-    parameter->lineaddr = (kdata >> 24) & 0x7F;
   }
   return 1;
 }
@@ -3137,6 +3137,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 
   x = 0;
   y = 0;
+  u32 lineaddr = 0;
   if (rgb_type == 0)
   {
     paraA.dx = paraA.A * paraA.deltaX + paraA.B * paraA.deltaY;
@@ -3274,6 +3275,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
           else {
             parameter = &paraA;
             if (vdp2rGetKValue(parameter, i) == 0) {
+              paraB.lineaddr = paraA.lineaddr;
               parameter = &paraB;
             }
           }
@@ -3492,58 +3494,13 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       }
 
       if (info->LineColorBase != 0 && VDP2_CC_NONE != (info->blendmode&0x03)) {
-        u32 linecol = 0;
-        if ((color & 0xFF000000) != 0) {
+        if ((color & 0xFF000000) != 0 ) {
+          color |= 0x8000;
           if (parameter->lineaddr != 0xFFFFFFFF) {
-            color |= 0x8000;
-            if (parameter->use_coef_for_linecolor) {
-              color |= ((parameter->lineaddr & 0x7F) | 0x80) << 16;
-            }
-          }
-          else {
-
+            color |= ((parameter->lineaddr & 0x7F) | 0x80) << 16;
           }
         }
       }
-
-#if 0
-      if (info->LineColorBase != 0 && VDP2_CC_NONE != info->blendmode) {
-        u32 linecol;
-        if ((color & 0xFF000000) == 0) {
-
-        }
-        else {
-          if (parameter->lineaddr != 0xFFFFFFFF)
-          {
-            if (parameter->use_coef_for_linecolor)
-              linecol = Vdp2ColorRamGetColor((rbg->LineColorRamAdress & 0x780) | parameter->lineaddr, linecl);
-            else
-              linecol = Vdp2ColorRamGetColor(rbg->LineColorRamAdress, linecl);
-
-            if (info->blendmode == VDP2_CC_ADD) {
-              color = COLOR_ADD(color, (linecol >> 16 & 0XFF), (linecol >> 8 & 0XFF), (linecol >> 0 & 0XFF));
-            }
-            else {
-              int r, g, b, sr, sg, sb, dr, dg, db;
-              int level = info->alpha;
-              int invlevel = 256 - info->alpha;
-              sr = color & 0x00FF0000; dr = linecol & 0x00FF0000;
-              r = (sr*level + dr*invlevel) >> 8; r &= 0x00FF0000;
-              sg = color & 0x0000FF00; dg = linecol & 0x0000FF00;
-              g = (sg*level + dg*invlevel) >> 8; g &= 0x0000FF00;
-              sb = color & 0x000000FF; db = linecol & 0x000000FF;
-              b = (sb*level + db*invlevel) >> 8; b &= 0x000000FF;
-              color = r | g | b | 0xFF000000;
-            }
-          }
-          else {
-            linecol = 0x0 | (linecl << 24);
-          }
-
-        }
-
-      }
-#endif
       *(texture->textdata++) = color;
     }
     texture->textdata += texture->w;
@@ -6946,6 +6903,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
   else { // cram
     kdata = T2ReadLong((Vdp2ColorRam + 0x800), (param->coeftbladdr + (index << 2)) & 0xFFF);
   }
+  param->lineaddr = (kdata >> 24) & 0x7F;
 
   if (kdata & 0x80000000) return NULL;
 
@@ -6964,8 +6922,6 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
     param->ky = kval;
     break;
   }
-
-  param->lineaddr = (kdata >> 24) & 0x7F;
   return param;
 }
 
@@ -7044,6 +7000,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struc
 {
   if (info->GetKValueA(&paraA, (paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
   {
+    paraB.lineaddr = paraA.lineaddr;
     return &paraB;
   }
   return &paraA;
