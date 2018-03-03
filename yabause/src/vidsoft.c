@@ -2229,37 +2229,45 @@ void VIDSoftSetupGL(void)
 
    // Shader sources
    const GLchar* vshader_src =
-      "#version 330 core\n"
-      "in vec2 position;"
-      "in vec2 texcoord;"
-      "out vec2 outcoord;"
-      "void main() {"
-      "   outcoord = texcoord;"
-      "   gl_Position = vec4(position, 0.0, 1.0);"
-      "}";
+#if defined (_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+      "in  vec4 position;   \n"
+      "in vec2 texcoord;   \n"
+      "out vec2 outcoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      "   gl_Position = position; \n"
+      "   outcoord = texcoord;  \n"
+      "}                            \n";
 
    const GLchar* fshader_src =
-      "#version 330 core\n"
-      "in vec2 outcoord;"
-      "out vec4 fragcolor;"
-      "uniform sampler2D sattex;"
-      "void main() {"
-      "   fragcolor = texture(sattex, outcoord);"
-      "}";
+#if defined (_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+      "precision mediump float;       \n"
+      "in vec2 outcoord;                            \n"
+      "uniform sampler2D sattex;                        \n"
+      "out vec4 fragColor;\n"
+      "void main()                                         \n"
+      "{                                                   \n"
+      "  fragColor = texture2D( sattex, outcoord );\n"
+      "}                                                   \n";
 
-   const float vertices[16] = {
-      -1.0f, -1.0f, // Vertex 1 (X, Y)
-      -1.0f, 1.0f,  // Vertex 2 (X, Y)
-      1.0f, -1.0f,  // Vertex 3 (X, Y)
-      1.0f, 1.0f,   // Vertex 4 (X, Y)
-      0.0, 1.0,     // Texture 1 (X, Y)
-      0.0, 0.0,     // Texture 2 (X, Y)
-      1.0, 1.0,     // Texture 3 (X, Y)
-      1.0, 0.0      // Texture 4 (X, Y)
+   static float vertices [] = {
+      -1.0f, 1.0f, 
+      1.0f, 1.0f,
+      1.0f, -1.0f, 
+      -1.0f,-1.0f,
+      0.0, 0.0,
+      1.0, 0.0,
+      1.0, 1.0,
+      0.0, 1.0
    };
-
-   outputwidth = vdp2width;
-   outputheight = vdp2height;
 
    glewInit();
 
@@ -2275,14 +2283,14 @@ void VIDSoftSetupGL(void)
    glCompileShader(vshader);
 
    glGetShaderiv(vshader, GL_COMPILE_STATUS, &status);
-   if (status == GL_FALSE) { YGLLOG("Failed to compile vertex shader\n"); }
+   if (status == GL_FALSE) { printf("Failed to compile vertex shader\n"); }
 
    fshader = glCreateShader(GL_FRAGMENT_SHADER);
    glShaderSource(fshader, 1, &fshader_src, NULL);
    glCompileShader(fshader);
 
    glGetShaderiv(fshader, GL_COMPILE_STATUS, &status);
-   if (status == GL_FALSE) { YGLLOG("Failed to compile fragment shader\n"); }
+   if (status == GL_FALSE) { printf("Failed to compile fragment shader\n"); }
 	
    gl_shader_prog = glCreateProgram();
    glAttachShader(gl_shader_prog, vshader);
@@ -2292,7 +2300,7 @@ void VIDSoftSetupGL(void)
 
    glValidateProgram(gl_shader_prog);
    glGetProgramiv(gl_shader_prog, GL_LINK_STATUS, &status);
-   if (status == GL_FALSE) { YGLLOG("Failed to link shader program\n"); }
+   if (status == GL_FALSE) { printf("Failed to link shader program\n"); }
 
    glUseProgram(gl_shader_prog);
 	
@@ -2311,8 +2319,6 @@ void VIDSoftSetupGL(void)
    if (bilinear) { glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); }
    else { glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); }
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-   glViewport(0, 0, outputwidth, outputheight);
 
    glUniform1i(glGetUniformLocation(gl_shader_prog, "sattex"), 0);
 #endif
@@ -2356,7 +2362,10 @@ void VIDSoftResize(int x, int y, unsigned int w, unsigned int h, int on)
 #ifdef USE_OPENGL
    IsFullscreen = on;
    glClear(GL_COLOR_BUFFER_BIT);
-   glViewport(0, 0, w, h);
+   if ((w*3)>(h*4))
+     glViewport((w-(h*4/3))/2, 0, (h*4/3), h);
+   else
+     glViewport((h-(w*3/4))/2, 0, w, (w*3/4));
    outputwidth = w;
    outputheight = h;
 #endif
@@ -3875,12 +3884,15 @@ void VIDSoftVdp2DrawEnd(void)
    if (OSDUseBuffer())
       OSDDisplayMessages(dispbuffer, vdp2width, vdp2height);
 #if !defined(ANDROID)
-#ifdef USE_OPENGL	
+#ifdef USE_OPENGL
+   glUseProgram(gl_shader_prog);
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);	
+   glActiveTexture(GL_TEXTURE0);
+   glBindTexture(GL_TEXTURE_2D, gl_texture_id);
    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, vdp2width, vdp2height, 0, GL_RGBA, GL_UNSIGNED_BYTE, dispbuffer);
    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
    glClear(GL_COLOR_BUFFER_BIT);
-   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
+   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 #endif
 #endif
    if (! OSDUseBuffer())
@@ -4109,19 +4121,15 @@ void VIDSoftVdp2SetResolution(u16 TVMD)
 
 void VIDSoftVdp1SwapFrameBuffer(void)
 {
-   if (((Vdp1Regs->FBCR & 2) == 0) || Vdp1External.manualchange)
-   {
-		u8 *temp;
-      if (vidsoft_vdp1_thread_enabled)
-      {
-         VidsoftWaitForVdp1Thread();
-      }
+  u8 *temp;
+  if (vidsoft_vdp1_thread_enabled)
+  {
+    VidsoftWaitForVdp1Thread();
+  }
 
-      temp = vdp1frontframebuffer;
-      vdp1frontframebuffer = vdp1backframebuffer;
-      vdp1backframebuffer = temp;
-      Vdp1External.manualchange = 0;
-   }
+  temp = vdp1frontframebuffer;
+  vdp1frontframebuffer = vdp1backframebuffer;
+  vdp1backframebuffer = temp;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4131,8 +4139,6 @@ void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer)
    int i,i2;
    int w,h;
 
-   if (((regs->FBCR & 2) == 0) || Vdp1External.manualerase)
-   {
       h = (regs->EWRR & 0x1FF) + 1;
       if (h > vdp1height) h = vdp1height;
       w = ((regs->EWRR >> 6) & 0x3F8) + 8;
@@ -4162,8 +4168,6 @@ void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer)
             }
          }
       }
-      Vdp1External.manualerase = 0;
-   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
