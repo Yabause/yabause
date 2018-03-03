@@ -532,7 +532,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-  tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+  tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLDEBUG("Fail to init YglTM->texture %04X", error);
@@ -3960,14 +3960,23 @@ u32* YglGetBackColorPointer() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
+#if 0
+    if( _Ygl->backcolor_buf == NULL ){
+        _Ygl->backcolor_buf = malloc(512 * 4);
+    }
+#else
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
-  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+  if( _Ygl->backcolor_buf != NULL ){
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+  }
+  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLLOG("Fail to init YglTM->backcolor_buf %04X", error);
     return NULL;
   }
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+#endif
 
   return _Ygl->backcolor_buf;
 }
@@ -3975,11 +3984,15 @@ u32* YglGetBackColorPointer() {
 void YglSetBackColor(int size) {
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
+#if 0
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->backcolor_buf);
+#else
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
   glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size, 1, GL_RGBA, GL_UNSIGNED_BYTE, 0);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   _Ygl->backcolor_buf = NULL;
+#endif
   glBindTexture(GL_TEXTURE_2D, 0);
   return;
 }
