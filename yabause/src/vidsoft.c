@@ -91,8 +91,7 @@ void VIDSoftVdp1SystemClipping(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
-void VIDSoftVdp1EraseWrite(){};
-void VIDSoftVdp1FrameChange(){};
+void VIDSoftVdp1EraseWrite();
 int VIDSoftVdp2Reset(void);
 void VIDSoftVdp2DrawStart(void);
 void VIDSoftVdp2DrawEnd(void);
@@ -133,7 +132,7 @@ VIDSoftVdp1LocalCoordinate,
 VIDSoftVdp1ReadFrameBuffer,
 VIDSoftVdp1WriteFrameBuffer,
 VIDSoftVdp1EraseWrite,
-VIDSoftVdp1FrameChange,
+VIDSoftVdp1SwapFrameBuffer,
 VIDSoftVdp2Reset,
 VIDSoftVdp2DrawStart,
 VIDSoftVdp2DrawEnd,
@@ -2422,8 +2421,6 @@ void VIDSoftVdp1DrawStartBody(Vdp1* regs, u8 * back_framebuffer)
       vdp1pixelsize = 2;
    }
 
-   VIDSoftVdp1EraseFrameBuffer(regs, back_framebuffer);
-
    //night warriors doesn't set clipping most frames and uses
    //the last part of the vdp1 framebuffer as scratch ram
    //the previously set clipping values need to be reused
@@ -3879,7 +3876,7 @@ void VIDSoftVdp2DrawEnd(void)
 
    TitanRender(dispbuffer);
 
-   VIDSoftVdp1SwapFrameBuffer();
+   //VIDSoftVdp1SwapFrameBuffer();
 
    if (OSDUseBuffer())
       OSDDisplayMessages(dispbuffer, vdp2width, vdp2height);
@@ -4133,6 +4130,9 @@ void VIDSoftVdp1SwapFrameBuffer(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+void VIDSoftVdp1EraseWrite() {
+  VIDSoftVdp1EraseFrameBuffer(Vdp1Regs, vdp1frontframebuffer);
+};
 
 void VIDSoftVdp1EraseFrameBuffer(Vdp1* regs, u8 * back_framebuffer)
 {   
