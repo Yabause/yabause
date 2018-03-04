@@ -31,6 +31,7 @@
         <file alias="sound.png">icons/actions/sound.png</file>
         <file>icons/actions/transfert.png</file>
         <file>icons/actions/video.png</file>
+        <file>icons/actions/donate.png</file>
         <file alias="3dcontroller.png">icons/3dcontroller.png</file>
         <file alias="wheel.png">icons/wheel.png</file>
       <file alias="missionstick.png">icons/missionstick.png</file>

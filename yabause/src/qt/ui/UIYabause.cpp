@@ -172,7 +172,6 @@ UIYabause::UIYabause( QWidget* parent )
 
 	mIsCdIn = true;
 
-
 }
 
 UIYabause::~UIYabause()
@@ -1320,8 +1319,15 @@ void UIYabause::on_aHelpCompatibilityList_triggered()
 
 void UIYabause::on_aHelpAbout_triggered()
 {
-	YabauseLocker locker( mYabauseThread );
-	UIAbout( window() ).exec();
+  YabauseLocker locker(mYabauseThread);
+  UIAbout(window()).exec();
+}
+
+void UIYabause::on_actionDonate_triggered()
+{
+  QUrl url("https://liberapay.com/~32349/donate");
+  QDesktopServices::openUrl(url);
+
 }
 
 void UIYabause::on_aSound_triggered()

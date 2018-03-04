@@ -302,6 +302,7 @@
    <addaction name="separator"/>
    <addaction name="aFileQuit"/>
    <addaction name="aHelpAbout"/>
+   <addaction name="actionDonate"/>
   </widget>
   <action name="aFileQuit">
    <property name="icon">
@@ -977,6 +978,18 @@
    </property>
    <property name="toolTip">
     <string>Open Tray</string>
+   </property>
+  </action>
+  <action name="actionDonate">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/donate.png</normaloff>:/actions/icons/actions/donate.png</iconset>
+   </property>
+   <property name="text">
+    <string>donate</string>
+   </property>
+   <property name="toolTip">
+    <string>Donate</string>
    </property>
   </action>
  </widget>

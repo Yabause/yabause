@@ -197,6 +197,7 @@ protected slots:
 	void on_aHelpReport_triggered();
 	void on_aHelpCompatibilityList_triggered();
 	void on_aHelpAbout_triggered();
+  void on_actionDonate_triggered();
 	// toolbar
 	void on_aSound_triggered();
 	void on_aVideoDriver_triggered();

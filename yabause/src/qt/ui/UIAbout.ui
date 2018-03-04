@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="lInformations">
      <property name="text">
-      <string>Yaba Sanshiro ver.%1&lt;br /&gt;is developed by &lt;a href=&quot;http://www.uoyabause.org&quot;&gt;devMiyax&lt;/a&gt;&lt;br&gt; Based on &lt;a href=&quot;http://yabause.org&quot;&gt;Yabause&lt;/a&gt; &lt;br /&gt;&lt;br /&gt;&lt;br&gt; &lt;a href=&quot;https://www.paypal.com/cgi-bin/websc?cmd=_donations&amp;business=A4VRASF8P3222&quot;&gt;&lt;img src=&quot;btn_donate_LG.gif&quot;&gt;&lt;/a&gt;</string>
+      <string>Yaba Sanshiro ver.%1&lt;br /&gt;is developed by &lt;a href=&quot;http://www.uoyabause.org&quot;&gt;devMiyax&lt;/a&gt;&lt;br&gt; Based on &lt;a href=&quot;http://yabause.org&quot;&gt;Yabause&lt;/a&gt; &lt;br /&gt;&lt;br /&gt;&lt;br&gt; &lt;a href=&quot;https://liberapay.com/~32349/donate&quot;&gt;&lt;img src=&quot;donate.png&quot;&gt;&lt;/a&gt;</string>
      </property>
      <property name="textFormat">
       <enum>Qt::RichText</enum>
