@@ -629,12 +629,8 @@ int Ygl_cleanupPerLineAlpha(void * p)
     glBlendFunc(GL_ONE, GL_ONE);
   }
 
-  YglMatrix m;
-  YglLoadIdentity(&m);
-  YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
-
   // call blit method
-  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m, prg->lineTexture);
+  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -705,12 +701,8 @@ int Ygl_cleanupNormal_blur(void * p)
     glBlendFunc(GL_ONE, GL_ONE);
   }
 
-  YglMatrix m;
-  YglLoadIdentity(&m);
-  YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
-
-  // call blit method
-  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m);
+   // call blit method
+  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -1732,7 +1724,7 @@ const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
 "    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
 "    int colindex = ( int(fbColor.g*65280.0) | int(fbColor.r*255.0)); \n"
-"    if( colindex == 0 ) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
+"    if( colindex == 0 && (additional&0x07) == 0 ) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
 "    fragColor = txcol;\n"
@@ -2018,11 +2010,11 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
 
   if ( SPCCN ) {
     const int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (CCMD == 0) {  // Calculate Rate mode
       if (CCRTMD == 0) {  // Source Alpha Mode
         if (SPLCEN == 0) { // No Line Color Insertion
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
           switch (SPCCCS)
           {
           case 0:
