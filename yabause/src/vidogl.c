@@ -600,7 +600,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
             if (MSB_SHADOW) {
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
             } else {
-              alpha = 0x80 | (colorcl << 3) | priority;
+              alpha = 0x80 | (colorcl << 3) | 0;
               *texture->textdata++ = SAT2YAB1(alpha, temp);
             }
           } else if (temp != 0x0000) {
@@ -651,7 +651,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
             }
             else {
-              alpha = 0x80 | (colorcl << 3) | priority;
+              alpha = 0x80 | (colorcl << 3) | 0;
               *texture->textdata++ = SAT2YAB1(alpha, temp);
             }
           }
@@ -5334,12 +5334,18 @@ static void Vdp2DrawBackScreen(void)
     u32* back_pixel_data = YglGetBackColorPointer();
     if (back_pixel_data != NULL) {
       for (int i = 0; i < vdp2height; i++) {
-        u8 r, g, b;
+        u8 r, g, b, a;
         dot = T1ReadWord(Vdp2Ram, (scrAddr + 2 * i));
         r = ((dot & 0x1F) << 3) + info.cor;
         g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
         b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
-        *back_pixel_data++ = (0xFF << 24) | (b << 16) | (g << 8) | r;
+        if (fixVdp2Regs->CCCTL & 0x2) {
+          a = 0xFF;
+        }
+        else {
+          a = ((~fixVdp2Regs->CCRLB & 0x1F00) >> 5) + 0x7;
+        }
+        *back_pixel_data++ = (a << 24) | (b << 16) | (g << 8) | r;
       }
       YglSetBackColor(vdp2height);
     }
