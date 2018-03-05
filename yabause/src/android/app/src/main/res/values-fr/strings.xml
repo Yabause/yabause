@@ -173,7 +173,6 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="this_func_not_yet">Cette fonction n\a pas été encore implémentée.</string>
     <string name="memory_manager">Gestionnaire de Mémoire</string>
-
     <string name="str_rotate_screen">Rotation de l'Ecran</string>
 
     <string name="str_rotate_screen">Rotation à 90 degrée</string>
