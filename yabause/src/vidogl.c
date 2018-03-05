@@ -28,7 +28,7 @@
 #define EPSILON (1e-10 )
 
 
-#include "vidogl.h"
+#include "vidogl.h" 
 #include "vidshared.h"
 #include "debug.h"
 #include "vdp2.h"
@@ -3199,6 +3199,8 @@ static void Vdp2DrawRotationSync() {
     }
   }
 }
+
+#define ceilf(a) ((a)+0.99999f)
 
 static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i) {
   float kval;
