@@ -3750,24 +3750,14 @@ int _VIDOGLIsFullscreen;
 void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on)
 {
 
-  if (originx == 0 && originy == 0 && w == 0 && h == 0 && on == 0) {
-    YglGLInit(8, 8); // Just rebuild texture
-  }
-
   _VIDOGLIsFullscreen = on;
 
   GlWidth = w;
   GlHeight = h;
 
-  if (_Ygl->resolution_mode == RES_NATIVE && (_Ygl->width != GlWidth || _Ygl->height != GlHeight)) {
-    _Ygl->width = GlWidth;
-    _Ygl->height = GlHeight;
-  }
-
   _Ygl->originx = originx;
   _Ygl->originy = originy;
 
-  YglGLInit(2048, 1024);
   glViewport(originx, originy, GlWidth, GlHeight);
   YglNeedToUpdateWindow();
 
@@ -7400,6 +7390,8 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     break;
   case VDP_SETTING_RESOLUTION_MODE:
     _Ygl->resolution_mode = value;
+    SetSaturnResolution(0, 0);
+    SetSaturnResolution(vdp2width, vdp2height);
     break;
   case VDP_SETTING_POLYGON_MODE:
     if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {

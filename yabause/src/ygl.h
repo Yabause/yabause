@@ -441,9 +441,8 @@ typedef struct
 typedef enum
 {
   AA_NONE = 0,
-  AA_FXAA,
-  AA_SCANLINE_FILTER,
-  AA_BILNEAR_FILTER,
+  AA_BILINEAR_FILTER,
+  AA_BICUBIC_FILTER,
 } AAMODE;
 
 typedef enum
@@ -455,10 +454,14 @@ typedef enum
 
 typedef enum
 {
-	RES_NATIVE = 0,
-	RES_4x,
-	RES_2x,
-    RES_ORIGINAL
+	RES_ORIGINAL = 1,
+        RES_2x,
+        RES_3x,
+        RES_4x,
+        RES_5x,
+	RES_6x,
+	RES_7x,
+	RES_8x
 } RESOLUTION_MODE;
 
 typedef enum {
@@ -520,10 +523,10 @@ typedef struct {
    GLuint vdp1pixelBufferID;
    void * pFrameBuffer;
 
-   GLuint fxaa_fbo;
-   GLuint fxaa_fbotex;
-   GLuint fxaa_stencil;
-   GLuint fxaa_depth;
+   GLuint original_fbo;
+   GLuint original_fbotex;
+   GLuint original_stencil;
+   GLuint original_depth;
 
    GLuint tmpfbo;
    GLuint tmpfbotex;
@@ -585,8 +588,6 @@ typedef struct {
 
 extern Ygl * _Ygl;
 
-
-int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c);
@@ -647,7 +648,6 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
-int YglBlitFXAA(u32 sourceTexture, float w, float h);
 
 void YglRenderVDP1(void);
 u32 * YglGetLineColorPointer();
@@ -662,12 +662,10 @@ int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 void Ygl_setNormalshader(YglProgram * prg);
 int Ygl_cleanupNormal(void * p);
-int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v);
 
-int YglGenerateAABuffer();
+int YglGenerateOriginalBuffer();
 
 void Vdp2RgbTextureSync();
-int YglGenerateAABuffer();
 int YglSetupWindow(YglProgram * prg);
 int YglCleanUpWindow(YglProgram * prg);
 

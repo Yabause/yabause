@@ -77,9 +77,8 @@ const Items mCartridgeTypes = Items()
 
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
-	<< Item("1", "FXAA")
-	<< Item("2", "Scanline filter")
-  << Item("3", "Bilinear");
+        << Item("1", "Bilinear")
+	<< Item("2", "BiCubic");
 
 const Items mPolygonGenerationMode = Items()
 	<< Item("0", "Triangles using perspective correction")
@@ -87,10 +86,14 @@ const Items mPolygonGenerationMode = Items()
 	<< Item("2", "GPU Tesselation");
 
 const Items mResolutionMode = Items()
-<< Item("0", "Native (native resolution of Window)")
-<< Item("1", "4x")
+<< Item("1", "Original (original resolution of the Saturn)")
 << Item("2", "2x")
-<< Item("3", "Original");
+<< Item("3", "3x")
+<< Item("4", "4x")
+<< Item("5", "5x")
+<< Item("6", "6x")
+<< Item("7", "7x")
+<< Item("8", "8x");
 
 UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
@@ -451,7 +454,6 @@ void UISettings::loadSettings()
 #endif
 
 	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );	
-	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
         cbVdp1Cache->setChecked( s->value( "Advanced/Vdp1Cache", false ).toBool() );
 
@@ -535,7 +537,6 @@ void UISettings::saveSettings()
 	s->setValue( "Video/AspectRatio", cbAspectRatio->currentIndex() );
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
-	s->setValue( "Video/Bilinear", cbBilinear->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
 	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
   s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());

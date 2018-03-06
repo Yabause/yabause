@@ -25,7 +25,6 @@ set(kronos_HEADERS
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h
-	shaders/FXAA_DefaultES.h
 	frameprofile.h
 )
 

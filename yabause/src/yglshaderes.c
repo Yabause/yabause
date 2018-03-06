@@ -26,9 +26,9 @@
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
-#include "shaders/FXAA_DefaultES.h"
 
 #define YGLLOG
+//#define _USE_APPROX_BICUBIC_
 
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
@@ -631,7 +631,7 @@ int Ygl_cleanupPerLineAlpha(void * p)
   YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
 
   // call blit method
-  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m, prg->lineTexture);
+  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m.m[0][0], prg->lineTexture);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -709,7 +709,7 @@ int Ygl_cleanupNormal_blur(void * p)
   YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
 
   // call blit method
-  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m);
+  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, &m.m[0][0]);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -3423,20 +3423,149 @@ static const char vblit_img[] =
   " } \n";
 
 
-static const char fblit_img[] =
+static const char fblit_head[] =
 #if defined (_OGLES3_)
       "#version 300 es \n"
 #else
       "#version 330 \n"
 #endif
   "precision highp float;       \n"
+  "uniform float fWidth; \n"
+  "uniform float fHeight; \n"
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
-  "out vec4 fragColor;            \n"
+  "out vec4 fragColor;            \n";
+
+static const char fblit_img[] =
   "void main()                                         \n"
-  "{                                                   \n"
-  "  fragColor = texture( u_Src, vTexCoord ) ; \n"
+  "{   \n" 
+"	fragColor = Filter( u_Src, vTexCoord );                                               \n"
+//  "  fragColor = texture( u_Src, vTexCoord ) ; \n"
   "} \n";
+
+/////////////
+static const char fblitnear_img[] =
+  "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+  "{ \n"
+  "     return texture( textureSampler, TexCoord ) ; \n"
+  "} \n";
+
+static const char fblitbicubic_img[] =
+#ifndef _USE_APPROX_BICUBIC_
+  "//CatMullRom curve \n"
+  "float Curve( float x ) \n"
+  "{ \n"
+  "    float B = 0.0; \n"
+  "    float C = 0.5; \n"
+  "    float f = x; \n"
+  "    if( f < 0.0 ) \n"
+  "    { \n"
+  "        f = -f; \n"
+  "    } \n"
+  "    if( f < 1.0 ) \n"
+  "    { \n"
+  "        return ( ( 12.0 - 9.0 * B - 6.0 * C ) * ( f * f * f ) + \n"
+  "            ( -18.0f + 12.0f * B + 6.0f * C ) * ( f * f ) + \n"
+  "            ( 6.0f - 2.0f * B ) ) / 6.0f; \n"
+  "    } \n"
+  "    else if( f >= 1.0 && f < 2.0 ) \n"
+  "    { \n"
+  "        return ( ( -B - 6.0 * C ) * ( f * f * f ) \n"
+  "            + ( 6.0 * B + 30.0 * C ) * ( f *f ) + \n"
+  "            ( - ( 12.0 * B ) - 48.0 * C  ) * f + \n"
+  "            8.0 * B + 24.0 * C)/ 6.0; \n"
+  "    } \n"
+  "    else \n"
+  "    { \n"
+  "        return 0.0; \n"
+  "    } \n"
+  "} \n"
+  "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+  "{ \n"
+  "	float texelSizeX = 1.0 / fWidth; //size of one texel  \n"
+  "	float texelSizeY = 1.0 / fHeight; //size of one texel  \n"
+  "    vec4 nSum = vec4( 0.0, 0.0, 0.0, 0.0 ); \n"
+  "    vec4 nDenom = vec4( 0.0, 0.0, 0.0, 0.0 ); \n"
+  "    float a = fract( TexCoord.x * fWidth ); // get the decimal part \n"
+  "    float b = fract( TexCoord.y * fHeight ); // get the decimal part \n"
+  "	float nX = float(int(TexCoord.x * fWidth)) + 0.5; \n"
+  "	float nY = float(int(TexCoord.y * fHeight)) + 0.5; \n"
+  "	vec2 TexCoord1 = vec2( float(nX) / fWidth, float(nY) / fHeight ); \n"
+  "    for( int m = -1; m <=2; m++ ) \n"
+  "    { \n"
+  "	   float f  = Curve( float( m ) - a ); \n"
+  "	   vec4 vecCooef1 = vec4( f,f,f,f ); \n"
+  "        for( int n =-1; n<= 2; n++) \n"
+  "        { \n"
+  "	       float f1 = Curve( -( float( n ) - b ) ); \n"
+  "	       vec4 vecCoeef2 = vec4( f1, f1, f1, f1 ); \n"
+  "	       vec4 vecData = texture2D(textureSampler, TexCoord1 + vec2(texelSizeX * float( m ), texelSizeY * float( n ))); \n"
+  "            nSum = nSum + ( vecData * vecCoeef2 * vecCooef1  ); \n"
+  "            nDenom = nDenom + (( vecCoeef2 * vecCooef1 )); \n"
+  "        } \n"
+  "    } \n"
+  "    return nSum / nDenom; \n"
+  "} \n";
+#else
+" vec4 Curve(float v) \n"
+" { \n"
+"     vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v; \n"
+"     vec4 s = n * n * n; \n"
+"     float x = s.x; \n"
+"     float y = s.y - 4.0 * s.x; \n"
+"     float z = s.z - 4.0 * s.y + 6.0 * s.x; \n"
+"     float w = 6.0 - x - y - z; \n"
+"     return vec4(x, y, z, w); \n"
+" } \n"
+" vec4 Filter(sampler2D texture, vec2 itexcoord) \n"
+" { \n"
+"     vec2  texcoord = itexcoord * vec2(fWidth, fHeight); \n"
+"     float fx = fract(texcoord.x); \n"
+"     float fy = fract(texcoord.y); \n"
+"     texcoord.x -= fx; \n"
+"     texcoord.y -= fy; \n"
+"     vec4 xcubic = Curve(fx); \n"
+"     vec4 ycubic = Curve(fy); \n"
+"     vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5); \n"
+"     vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w); \n"
+"     vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) / s; \n"
+"     vec4 sample0 = texture2D(texture, vec2(offset.x, offset.z) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
+"     vec4 sample1 = texture2D(texture, vec2(offset.y, offset.z) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
+"     vec4 sample2 = texture2D(texture, vec2(offset.x, offset.w) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
+"     vec4 sample3 = texture2D(texture, vec2(offset.y, offset.w) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
+"     float sx = s.x / (s.x + s.y); \n"
+"     float sy = s.z / (s.z + s.w); \n"
+"     return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy); \n"
+" } \n";
+#endif
+////////////
+static const char fblitbilinear_img[] =
+  "// Function to get a texel data from a texture with GL_NEAREST property. \n"
+  "// Bi-Linear interpolation is implemented in this function with the  \n"
+  "// help of nearest four data. \n"
+  "vec4 Filter( sampler2D textureSampler_i, vec2 texCoord_i ) \n"
+  "{ \n"
+  "	float texelSizeX = 1.0 / fWidth; //size of one texel  \n"
+  "	float texelSizeY = 1.0 / fHeight; //size of one texel  \n"
+  "	int nX = int( texCoord_i.x * fWidth ); \n"
+  "	int nY = int( texCoord_i.y * fHeight ); \n"
+  "	vec2 texCoord_New = vec2( ( float( nX ) + 0.5 ) / fWidth, ( float( nY ) + 0.5 ) / fHeight ); \n"
+  "	// Take nearest two data in current row. \n"
+  "    vec4 p0q0 = texture2D(textureSampler_i, texCoord_New); \n"
+  "    vec4 p1q0 = texture2D(textureSampler_i, texCoord_New + vec2(texelSizeX, 0)); \n"
+  "	// Take nearest two data in bottom row. \n"
+  "    vec4 p0q1 = texture2D(textureSampler_i, texCoord_New + vec2(0, texelSizeY)); \n"
+  "    vec4 p1q1 = texture2D(textureSampler_i, texCoord_New + vec2(texelSizeX , texelSizeY)); \n"
+  "    float a = fract( texCoord_i.x * fWidth ); // Get Interpolation factor for X direction. \n"
+  "	// Fraction near to valid data. \n"
+  "	// Interpolation in X direction. \n"
+  "    vec4 pInterp_q0 = mix( p0q0, p1q0, a ); // Interpolates top row in X direction. \n"
+  "    vec4 pInterp_q1 = mix( p0q1, p1q1, a ); // Interpolates bottom row in X direction. \n"
+  "    float b = fract( texCoord_i.y * fHeight ); // Get Interpolation factor for Y direction. \n"
+  "    return mix( pInterp_q0, pInterp_q1, b ); // Interpolate in Y direction. \n"
+  "} \n";
+
+/////
 
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
@@ -3460,7 +3589,9 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     GLint compiled, linked;
 
     const GLchar * vblit_img_v[] = { vblit_img, NULL };
-    const GLchar * fblit_img_v[] = { fblit_img, NULL };
+    const GLchar * fblit_img_v[] = { fblit_head, fblitnear_img, fblit_img, NULL };
+    const GLchar * fblitbilinear_img_v[] = { fblit_head, fblitnear_img, fblit_img, NULL };
+    const GLchar * fblitbicubic_img_v[] = { fblit_head, fblitbicubic_img, fblit_img, NULL };
 
     blit_prg = glCreateProgram();
     if (blit_prg == 0){
@@ -3479,14 +3610,24 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
       blit_prg = -1;
       return -1;
     }
-    glShaderSource(fshader, 1, fblit_img_v, NULL);
+    switch(_Ygl->aamode) {
+      case AA_NONE:
+        glShaderSource(fshader, 3, fblit_img_v, NULL);
+        break;
+      case AA_BILINEAR_FILTER:
+        glShaderSource(fshader, 3, fblitbilinear_img_v, NULL);
+        break;
+      case AA_BICUBIC_FILTER:
+        glShaderSource(fshader, 3, fblitbicubic_img_v, NULL);
+        break;
+    }
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
       Ygl_printShaderError(fshader);
       blit_prg = -1;
-      return -1;
+      abort();
     }
 
     glAttachShader(blit_prg, vshader);
@@ -3497,11 +3638,13 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
       YGLLOG("Link error..\n");
       Ygl_printShaderError(blit_prg);
       blit_prg = -1;
-      return -1;
+      abort();
     }
 
     glUseProgram(blit_prg);
     glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
+    u_w = glGetUniformLocation(blit_prg, "fWidth");
+    u_h = glGetUniformLocation(blit_prg, "fHeight");
   }
   else{
     glUseProgram(blit_prg);
@@ -3528,13 +3671,19 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
 
+  glUniform1f(u_w, (float)_Ygl->width);
+  glUniform1f(u_h, (float)_Ygl->height);
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, srcTexture);
-  if (_Ygl->aamode == AA_BILNEAR_FILTER) {
+#ifdef _USE_APPROX_BICUBIC_
+  if (_Ygl->aamode != AA_NONE) {
+#else
+  if (_Ygl->aamode == AA_BILINEAR_FILTER) {
+#endif
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  }
-  else{
+  } else {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   }
@@ -3550,134 +3699,6 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   return 0;
 }
-
-//----------------------------------------------------------------------------------------
-static int fxaa_prg = -1;
-static int u_frame = 0;
-static int a_PosCoord = 0;
-static int a_TexCoord = 0;
-
-int YglBlitFXAA(u32 sourceTexture, float w, float h) {
-
-  float aspectRatio = 1.0;
-  float vb[] = { 0, 0,
-    2.0, 0.0,
-    2.0, 2.0,
-    0, 2.0, };
-
-  float tb[] = { 0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0 };
-
-  if (fxaa_prg == -1){
-    GLuint vshader;
-    GLuint fshader;
-    GLint compiled, linked;
-
-    const GLchar * fxaa_v[] = { Yglprg_fxaa_v, NULL };
-    const GLchar * fxaa_f[] = { Yglprg_fxaa_f_option_nv, Yglprg_fxaa_f };
-
-    if (strstr(glGetString(GL_VENDOR), "NVIDIA") == NULL){
-      fxaa_f[0] = Yglprg_fxaa_f_option_others;
-    }
-    else{
-      fxaa_f[0] = Yglprg_fxaa_f_option_nv;
-    }
-
-    fxaa_prg = glCreateProgram();
-    if (fxaa_prg == 0) return -1;
-
-    vshader = glCreateShader(GL_VERTEX_SHADER);
-    fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vshader, 1, fxaa_v, NULL);
-    glCompileShader(vshader);
-    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
-      fxaa_prg = -1;
-      return -1;
-    }
-
-    glShaderSource(fshader, 2, fxaa_f, NULL);
-    glCompileShader(fshader);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
-      fxaa_prg = -1;
-      return -1;
-    }
-
-    glAttachShader(fxaa_prg, vshader);
-    glAttachShader(fxaa_prg, fshader);
-    glLinkProgram(fxaa_prg);
-    glGetProgramiv(fxaa_prg, GL_LINK_STATUS, &linked);
-    if (linked == GL_FALSE) {
-      YGLLOG("Link error..\n");
-      Ygl_printShaderError(fxaa_prg);
-      fxaa_prg = -1;
-      return -1;
-    }
-    glUseProgram(fxaa_prg);
-    glUniform1i(glGetUniformLocation(fxaa_prg, "uSourceTex"), 0);
-    u_frame = glGetUniformLocation(fxaa_prg, "RCPFrame");
-    a_PosCoord = glGetAttribLocation(fxaa_prg,"aPosition");
-    a_TexCoord = glGetAttribLocation(fxaa_prg, "aTexCoord");
-
-  }
-  else{
-    glUseProgram(fxaa_prg);
-  }
-
-
-  float const vertexPosition[] = {
-    aspectRatio, -1.0f,
-    -aspectRatio, -1.0f,
-    aspectRatio, 1.0f,
-    -aspectRatio, 1.0f };
-
-  float const textureCoord[] = {
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f };
-
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, sourceTexture);
-
-  glUniform1i(glGetUniformLocation(fxaa_prg, "uSourceTex"), 0);
-  glUniform2f(u_frame, (float)(1.0 / (float)(w)), (float)(1.0 / (float)(h)));
-
-
-  glVertexAttribPointer(a_PosCoord, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
-  glVertexAttribPointer(a_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
-  glEnableVertexAttribArray(a_PosCoord);
-  glEnableVertexAttribArray(a_TexCoord);
-  glDisableVertexAttribArray(2);
-  glDisableVertexAttribArray(3);
-
-
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  glDisableVertexAttribArray(a_PosCoord);
-  glDisableVertexAttribArray(a_TexCoord);
-
-
-  // Clean up
-  glActiveTexture(GL_TEXTURE0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-
-  return 0;
-}
-
 
 /*
 hard/vdp2/hon/p12_13.htm
@@ -4182,171 +4203,4 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 
 
 
-/*
- Basic scanline filter
-*/
 
-const GLchar scanline_filter_v[] =
-#if defined(_OGLES3_)
-"#version 300 es \n"
-#else
-"#version 330 \n"
-#endif
-"layout (location = 0) in vec2 aPosition;   \n"
-"layout (location = 1) in vec2 aTexCoord;   \n"
-"out  highp vec2 vTexCoord;     \n"
-"  \n"
-" void main(void) \n"
-" { \n"
-" vTexCoord = aTexCoord;     \n"
-" gl_Position = vec4(aPosition.x, aPosition.y, 0.0, 1.0); \n"
-" } \n";
-
-const GLchar scanline_filter_f[] =
-#if defined(_OGLES3_)
-"#version 300 es \n"
-#else
-"#version 330 \n"
-#endif
-"precision highp float;       \n"
-"in highp vec2 vTexCoord;     \n"
-"uniform sampler2D u_Src;     \n"
-"uniform float u_th;  // 1080 \n"
-"uniform float u_oth; // 224  \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
-"  float y; \n"
-"  y = u_oth*vTexCoord.y;          \n"
-"  if ( (int(y)&0x01) == 0x00  ) { \n"
-"      fragColor = texture( u_Src, vTexCoord ) ; \n"
-"      return; \n "
-"  }\n"
-"  fragColor = vec4(0.0,0.0,0.0,1.0); \n"
-" } \n";
-
-
-static int scanline_prg = -1;
-static int a_scanline_PosCoord = -1;
-static int a_scanline_TexCoord = -1;
-static int u_scanline_th = -1;
-static int u_scanline_oth = -1;
-
-int YglBlitScanlineFilter(u32 sourceTexture, u32 draw_res_v, u32 staturn_res_v) {
-
-  float aspectRatio = 1.0;
-  float vb[] = { 0, 0,
-    2.0, 0.0,
-    2.0, 2.0,
-    0, 2.0, };
-
-  float tb[] = { 0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0 };
-
-  if (scanline_prg == -1){
-    GLuint vshader;
-    GLuint fshader;
-    GLint compiled, linked;
-
-    const GLchar * filter_v[] = { scanline_filter_v, NULL };
-    const GLchar * filter_f[] = { scanline_filter_f, NULL };
-
-    scanline_prg = glCreateProgram();
-    if (scanline_prg == 0) return -1;
-
-    glUseProgram(scanline_prg);
-    vshader = glCreateShader(GL_VERTEX_SHADER);
-    fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vshader, 1, filter_v, NULL);
-    glCompileShader(vshader);
-    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      printf("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
-      scanline_prg = -1;
-      return -1;
-    }
-
-    glShaderSource(fshader, 1, filter_f, NULL);
-    glCompileShader(fshader);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      printf("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
-      scanline_prg = -1;
-      return -1;
-    }
-
-    glAttachShader(scanline_prg, vshader);
-    glAttachShader(scanline_prg, fshader);
-    glLinkProgram(scanline_prg);
-    glGetProgramiv(scanline_prg, GL_LINK_STATUS, &linked);
-    if (linked == GL_FALSE) {
-      printf("Link error..\n");
-      Ygl_printShaderError(scanline_prg);
-      scanline_prg = -1;
-      return -1;
-    }
-
-    glUniform1i(glGetUniformLocation(scanline_prg, "u_Src"), 0);
-    a_scanline_PosCoord = glGetAttribLocation(scanline_prg, "aPosition");
-    a_scanline_TexCoord = glGetAttribLocation(scanline_prg, "aTexCoord");
-    u_scanline_th = glGetUniformLocation(scanline_prg, "u_th");
-    u_scanline_oth = glGetUniformLocation(scanline_prg, "u_oth");
-
-  }
-  else{
-    glUseProgram(scanline_prg);
-  }
-
-
-  float const vertexPosition[] = {
-    aspectRatio, -1.0f,
-    -aspectRatio, -1.0f,
-    aspectRatio, 1.0f,
-    -aspectRatio, 1.0f };
-
-  float const textureCoord[] = {
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f };
-
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, sourceTexture);
-
-  glUniform1i(glGetUniformLocation(scanline_prg, "u_Src"), 0);
-  glUniform1f(u_scanline_th, (float)draw_res_v);
-
-  float by = (float)(draw_res_v) / (int)(draw_res_v / (staturn_res_v*2));
-  glUniform1f(u_scanline_oth, by);
-
-
-  glVertexAttribPointer(a_scanline_PosCoord, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
-  glVertexAttribPointer(a_scanline_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
-  glEnableVertexAttribArray(a_scanline_PosCoord);
-  glEnableVertexAttribArray(a_scanline_TexCoord);
-  glDisableVertexAttribArray(2);
-  glDisableVertexAttribArray(3);
-
-
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  glDisableVertexAttribArray(a_scanline_PosCoord);
-  glDisableVertexAttribArray(a_scanline_TexCoord);
-
-
-  // Clean up
-  glActiveTexture(GL_TEXTURE0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-
-  return 0;
-}

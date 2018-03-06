@@ -159,8 +159,6 @@ UIYabause::UIYabause( QWidget* parent )
 	mouseSensitivity = vs->value( "Input/GunMouseSensitivity", 100 ).toInt();
 	showMenuBarHeight = menubar->height();
 	translations = QtYabause::getTranslationList();
-	
-	VIDSoftSetBilinear(QtYabause::settings()->value( "Video/Bilinear", false ).toBool());
 
 	mIsCdIn = false;
 
