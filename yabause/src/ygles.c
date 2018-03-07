@@ -979,7 +979,6 @@ int YglGenFrameBuffer() {
     if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
     glGenRenderbuffers(1, &_Ygl->rboid_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
-printf("%d %d\n",_Ygl->width, _Ygl->height);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
     _Ygl->rboid_stencil = _Ygl->rboid_depth;
     if ((error = glGetError()) != GL_NO_ERROR)
