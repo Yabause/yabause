@@ -80,8 +80,6 @@ UIYabause::UIYabause( QWidget* parent )
 	fVideoDriver->setParent( 0, Qt::Popup );
 	fSound->installEventFilter( this );
 	fVideoDriver->installEventFilter( this );
-	// Get Screen res list
-	getSupportedResolutions();
 	// fill combo driver
 	cbVideoDriver->blockSignals( true );
 	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
@@ -428,54 +426,6 @@ void UIYabause::fixAspectRatio( int width , int height )
       }
 }
 
-void UIYabause::getSupportedResolutions()
-{
-#if defined Q_OS_WIN
-	DEVMODE devMode;
-	BOOL result = TRUE;
-	DWORD currentSettings = 0;
-	devMode.dmSize = sizeof(DEVMODE);
-
-	supportedResolutions.clear();
-
-	while (result)
-	{
-		result = EnumDisplaySettings(NULL, currentSettings, &devMode);
-		if (result && devMode.dmBitsPerPel == 32)
-		{
-			supportedRes_struct res;
-			res.width = devMode.dmPelsWidth;
-			res.height = devMode.dmPelsHeight;
-			res.bpp = devMode.dmBitsPerPel;
-			res.freq = devMode.dmDisplayFrequency;
-
-			supportedResolutions.append(res);
-		}
-		currentSettings++;
-	}
-#elif HAVE_LIBXRANDR
-	ResolutionList list;
-	supportedRes_struct res;
-
-	list = ScreenGetResolutions();
-
-	if(0 == ScreenNextResolution(list, &res))
-		supportedResolutions.append(res);
-#endif
-}
-
-int UIYabause::isResolutionValid( int width, int height, int bpp, int freq )
-{
-	for (int i = 0; i < supportedResolutions.count(); i++)
-	{
-		if (supportedResolutions[i].width == width &&
-			supportedResolutions[i].height == height)
-			return i;
-	}
-
-	return -1;
-}
-
 void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat )
 {
 }
@@ -592,7 +542,7 @@ void UIYabause::on_aFileSettings_triggered()
 	}
 
 	YabauseLocker locker( mYabauseThread );
-	if ( UISettings( &supportedResolutions, &translations, window() ).exec() )
+	if ( UISettings(&translations, window() ).exec() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );

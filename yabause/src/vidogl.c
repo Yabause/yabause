@@ -3761,7 +3761,7 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   glViewport(originx, originy, GlWidth, GlHeight);
   YglNeedToUpdateWindow();
 
-  SetSaturnResolution(vdp2width, vdp2height);
+//  SetSaturnResolution(vdp2width, vdp2height);
 
 }
 
@@ -7036,7 +7036,7 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
     break;
   }
 
-  SetSaturnResolution(width, height);
+  if ((width != _Ygl->rwidth) || (height != _Ygl->rheight))SetSaturnResolution(width, height);
   Vdp1SetTextureRatio(wratio, hratio);
 }
 
@@ -7390,7 +7390,6 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     break;
   case VDP_SETTING_RESOLUTION_MODE:
     _Ygl->resolution_mode = value;
-    SetSaturnResolution(0, 0);
     SetSaturnResolution(vdp2width, vdp2height);
     break;
   case VDP_SETTING_POLYGON_MODE:

@@ -32,7 +32,7 @@ class UISettings : public QDialog, public Ui::UISettings
 	Q_OBJECT
 	
 public:
-	UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* parent = 0 );
+	UISettings(QList <translation_struct> *translations, QWidget* parent = 0 );
 
 protected:
 	QList <supportedRes_struct> supportedRes;
@@ -44,7 +44,6 @@ protected:
 	void requestFolder( const QString& caption, QLineEdit* edit );
 	void setupCdDrives();
 	void loadCores();
-	void loadSupportedResolutions();
 	void loadTranslations();
 	void loadShortcuts();
 	void applyShortcuts();
@@ -59,6 +58,8 @@ protected slots:
 	void on_cbClockSync_stateChanged( int state );
 	void on_cbCartridge_currentIndexChanged( int id );
 	void accept();
+        void changeResolution(int id);
+        void changeFilterMode(int id);
 };
 
 #endif // UISETTINGS_H

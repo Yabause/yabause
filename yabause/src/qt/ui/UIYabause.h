@@ -88,7 +88,6 @@ protected:
 	bool mInit;
 	QList <cheatsearch_struct> search;
 	int searchType;
-	QList <supportedRes_struct> supportedResolutions;
 	int oldMouseX, oldMouseY;
 	bool mouseCaptured;
 
@@ -123,8 +122,6 @@ protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
 	void fixAspectRatio( int width, int height  );
-	void getSupportedResolutions();
-	int isResolutionValid( int width, int height, int bpp, int freq );
 	void toggleFullscreen( int width, int height, bool f, int videoFormat );
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();

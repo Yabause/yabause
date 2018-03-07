@@ -28,6 +28,9 @@
 #include "debug.h"
 #include "frameprofile.h"
 
+
+//#define __USE_OPENGL_DEBUG__
+
 #define YGLDEBUG
 //#define YGLDEBUG printf
 //#define YGLDEBUG LOG
@@ -52,6 +55,21 @@ extern vdp2rotationparameter_struct  paraA;
 #if defined(__ANDROID__) || defined(IOS)
 PFNGLPATCHPARAMETERIPROC glPatchParameteri = NULL;
 PFNGLMEMORYBARRIERPROC glMemoryBarrier = NULL;
+#endif
+
+#if defined(__USE_OPENGL_DEBUG__)
+static void MessageCallback( GLenum source,
+                      GLenum type,
+                      GLuint id,
+                      GLenum severity,
+                      GLsizei length,
+                      const GLchar* message,
+                      const void* userParam )
+{
+  printf("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+           ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+            type, severity, message );
+}
 #endif
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz)
@@ -928,13 +946,13 @@ int YglGenFrameBuffer() {
   glGetError();
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
   if ((error = glGetError()) != GL_NO_ERROR) {
-    YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X %d %d", __LINE__, error, GlWidth, GlHeight);
+    YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X %d %d\n", __LINE__, error, GlWidth, GlHeight);
     abort();
   }
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR) {
-    YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X %d %d", __LINE__, error, GlWidth, GlHeight);
+    YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X %d %d\n", __LINE__, error, GlWidth, GlHeight);
     abort();
   }
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -945,7 +963,7 @@ int YglGenFrameBuffer() {
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR) {
-    YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X", __LINE__, error);
+    YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X\n", __LINE__, error);
     abort();
   }
 
@@ -961,11 +979,12 @@ int YglGenFrameBuffer() {
     if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
     glGenRenderbuffers(1, &_Ygl->rboid_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
+printf("%d %d\n",_Ygl->width, _Ygl->height);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
     _Ygl->rboid_stencil = _Ygl->rboid_depth;
     if ((error = glGetError()) != GL_NO_ERROR)
     {
-      YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X", __LINE__, error);
+      YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X\n", __LINE__, error);
       abort();
     }
   }
@@ -981,7 +1000,7 @@ int YglGenFrameBuffer() {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, _Ygl->width, _Ygl->height);
     if ((error = glGetError()) != GL_NO_ERROR)
     {
-      YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X", __LINE__, error);
+      YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X\n", __LINE__, error);
       abort();
     }
   }
@@ -996,7 +1015,7 @@ int YglGenFrameBuffer() {
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    YGLDEBUG("YglGenFrameBuffer:Framebuffer status = %08X\n", status);
+    YGLDEBUG("YglGenFrameBuffer:Framebuffer line %d status = %08X\n", __LINE__, status);
     abort();
   }
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1008,13 +1027,14 @@ int YglGenFrameBuffer() {
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    YGLDEBUG("YglGenFrameBuffer:Framebuffer status = %08X\n", status);
+    YGLDEBUG("YglGenFrameBuffer:Framebuffer line %d status = %08X\n", __LINE__, status);
     abort();
   }
   YglGenerateOriginalBuffer();
 
-  YGLDEBUG("YglGenFrameBuffer OK");
+  YGLDEBUG("YglGenFrameBuffer OK\n");
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindTexture(GL_TEXTURE_2D, 0);
   rebuild_frame_buffer = 0;
@@ -1027,7 +1047,7 @@ int YglGenerateOriginalBuffer(){
   int status;
   GLuint error;
 
-  YGLDEBUG("YglGenerateOriginalBuffer: %d,%d", _Ygl->width, _Ygl->height);
+  YGLDEBUG("YglGenerateOriginalBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
 
   if (_Ygl->original_fbotex != 0) {
     glDeleteTextures(1,&_Ygl->original_fbotex);
@@ -1159,6 +1179,12 @@ int YglInit(int width, int height, unsigned int depth) {
 
 #if defined(_USEGLEW_)
   glewInit();
+#endif
+
+#if defined(__USE_OPENGL_DEBUG__)
+  // During init, enable debug output
+  glEnable              ( GL_DEBUG_OUTPUT );
+  glDebugMessageCallback( (GLDEBUGPROC) MessageCallback, 0 );
 #endif
 
 #if defined(__ANDROID__)
@@ -3958,7 +3984,6 @@ void YglSetBackColor(int size) {
 void YglChangeResolution(int w, int h) {
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
-  if( _Ygl->rwidth != w || _Ygl->rheight != h ) {
        YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
          glDeleteFramebuffers(1, &_Ygl->smallfbo);
@@ -3980,7 +4005,6 @@ void YglChangeResolution(int w, int h) {
     _Ygl->width = w * _Ygl->resolution_mode;
     _Ygl->height = h * _Ygl->resolution_mode;
     rebuild_frame_buffer = 1;
-  }
 
   _Ygl->rwidth = w;
   _Ygl->rheight = h;

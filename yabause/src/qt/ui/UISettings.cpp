@@ -21,6 +21,7 @@
 #include "UISettings.h"
 #include "../Settings.h"
 #include "../CommonDialogs.h"
+#include "../ygl.h"
 #include "UIPortManager.h"
 
 #include <QDir>
@@ -95,7 +96,7 @@ const Items mResolutionMode = Items()
 << Item("7", "7x")
 << Item("8", "8x");
 
-UISettings::UISettings( QList <supportedRes_struct> *supportedResolutions, QList <translation_struct> *translations, QWidget* p )
+UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
 {
 	// setup dialog
@@ -288,6 +289,16 @@ void UISettings::on_cbClockSync_stateChanged( int state )
 	dteBaseTime->setVisible( state == Qt::Checked );
 }
 
+void UISettings::changeResolution(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, (mResolutionMode.at(id).id).toInt());
+}
+
+void UISettings::changeFilterMode(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, (mVideoFilterMode.at(id).id).toInt());
+}
+
 void UISettings::on_cbCartridge_currentIndexChanged( int id )
 {
 	leCartridge->setVisible(mCartridgeTypes[id].enableFlag);
@@ -321,6 +332,8 @@ void UISettings::loadCores()
 	foreach(const Item& it, mVideoFilterMode)
 		cbFilterMode->addItem(QtYabause::translate(it.Name), it.id);
 
+        connect(cbFilterMode, SIGNAL(currentIndexChanged(int)), this, SLOT(changeFilterMode(int)));
+
 	// Polygon Generation
 	foreach(const Item& it, mPolygonGenerationMode)
 		cbPolygonGeneration->addItem(QtYabause::translate(it.Name), it.id);
@@ -328,6 +341,9 @@ void UISettings::loadCores()
   // Resolution
   foreach(const Item& it, mResolutionMode)
     cbResolution->addItem(QtYabause::translate(it.Name), it.id);
+
+  connect(cbResolution, SIGNAL(currentIndexChanged(int)), this, SLOT(changeResolution(int)));
+
 
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )

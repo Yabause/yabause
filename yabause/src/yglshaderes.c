@@ -3403,6 +3403,7 @@ int YglDrawBackScreen(float w, float h) {
 
 //----------------------------------------------------------------------------------------
 static int blit_prg = -1;
+static int blit_mode = -1;
 static int u_w = -1;
 static int u_h = -1;
 
@@ -3583,7 +3584,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
 
-  if (blit_prg == -1){
+  if ((blit_prg == -1) || (blit_mode != _Ygl->aamode)){
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
@@ -3593,10 +3594,13 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     const GLchar * fblitbilinear_img_v[] = { fblit_head, fblitnear_img, fblit_img, NULL };
     const GLchar * fblitbicubic_img_v[] = { fblit_head, fblitbicubic_img, fblit_img, NULL };
 
+    if (blit_prg != -1) glDeleteProgram(blit_prg);
     blit_prg = glCreateProgram();
     if (blit_prg == 0){
       return -1;
     }
+
+    blit_mode = _Ygl->aamode;
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
