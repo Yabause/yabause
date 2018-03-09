@@ -79,7 +79,8 @@ const Items mCartridgeTypes = Items()
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
         << Item("1", "Bilinear")
-	<< Item("2", "BiCubic");
+	<< Item("2", "BiCubic")
+	<< Item("3", "HQ4x");
 
 const Items mPolygonGenerationMode = Items()
 	<< Item("0", "Triangles using perspective correction")
@@ -90,11 +91,7 @@ const Items mResolutionMode = Items()
 << Item("1", "Original (original resolution of the Saturn)")
 << Item("2", "2x")
 << Item("3", "3x")
-<< Item("4", "4x")
-<< Item("5", "5x")
-<< Item("6", "6x")
-<< Item("7", "7x")
-<< Item("8", "8x");
+<< Item("4", "4x");
 
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )

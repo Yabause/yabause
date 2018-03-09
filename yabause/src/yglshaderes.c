@@ -3570,17 +3570,6 @@ static const char fblitbilinear_img[] =
 
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
-  float aspectRatio = 1.0;
-  float vb[] = { 0, 0, 
-    2.0, 0.0, 
-    2.0, 2.0, 
-    0, 2.0, };
-
-  float tb[] = { 0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0 };
-
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
 
@@ -3659,10 +3648,10 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glDisable(GL_BLEND);
 
   float const vertexPosition[] = {
-    aspectRatio, -1.0f,
-    -aspectRatio, -1.0f,
-    aspectRatio, 1.0f,
-    -aspectRatio, 1.0f };
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f };
 
   float const textureCoord[] = {
     1.0f, 0.0f,

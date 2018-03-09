@@ -373,8 +373,8 @@ int main(int argc, char *argv[]) {
 
   if (lowres_mode == 0){
     if (yinit.vidcoretype == VIDCORE_OGL) {
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_3x);
-      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BICUBIC_FILTER);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, UP_HQ4X);
     }
     VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
   } else {

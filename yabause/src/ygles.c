@@ -879,7 +879,11 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       _Ygl->sync = 0;
     }
     glViewport(0, 0, _Ygl->width, _Ygl->height);
-    YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->width / (float)_Ygl->width, (float)_Ygl->height / (float)_Ygl->height);
+   if (_Ygl->aamode != UP_HQ4X)
+     YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->width / (float)_Ygl->width, (float)_Ygl->height / (float)_Ygl->height);
+   else
+     YglUpscaleFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, _Ygl->rwidth, _Ygl->rheight);
+
     YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
     FrameProfileAdd("ReadFrameBuffer unlock");
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
@@ -1064,8 +1068,8 @@ int YglGenerateOriginalBuffer(){
     YGLDEBUG("Fail to YglGenerateOriginalBuffer at %d %04X %d %d", __LINE__, error, _Ygl->width, _Ygl->height);
     abort();
   }
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -3179,17 +3183,17 @@ void YglRender(void) {
    double dar = (double)GlWidth/(double)GlHeight;
    double par = 4.0/3.0; //(double)_Ygl->rwidth/(double)_Ygl->rheight * 384.0*4.0/576.0
 
-   double wN = (dar>par)?(double)_Ygl->height*par:_Ygl->width;
-   double hN = (dar>par)?_Ygl->height:(double)_Ygl->width/par;
-   double xN = (_Ygl->width-wN)/2;
-   double yN = (_Ygl->height-hN)/2;
+   double wN = (dar>par)?(double)GlHeight*par:GlWidth;
+   double hN = (dar>par)?GlHeight:(double)GlWidth/par;
+   double xN = (GlWidth-wN)/2;
+   double yN = (GlHeight-hN)/2;
 
-   double w = (dar>par)?(double)_Ygl->width*(par/dar):_Ygl->width;
-   double h = (dar>par)?(double)_Ygl->height:(double)_Ygl->height/(par/dar);
-   double x = (_Ygl->width-w)/2;
-   double y = (_Ygl->height-h)/2;
+   double w = (dar>par)?(double)GlWidth*(par/dar):GlWidth;
+   double h = (dar>par)?(double)GlHeight:(double)GlHeight/(par/dar);
+   double x = (GlWidth-w)/2;
+   double y = (GlHeight-h)/2;
 
-   glViewport(x, y, w, h);
+   glViewport(0, 0, _Ygl->width, _Ygl->height);
 
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
 
@@ -3327,10 +3331,12 @@ void YglRender(void) {
    if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || _Ygl->msb_shadow_count_[_Ygl->readframe] != 0 ) {
      YglRenderFrameBufferShadow();
    }
-
-   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
-   glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
-   YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, GlWidth, GlHeight);
+   glViewport(x, y, w, h);
+   glScissor(x, y, w, h);
+   if (_Ygl->aamode != UP_HQ4X)
+     YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, GlWidth, GlHeight);
+   else
+     YglUpscaleFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->rwidth, _Ygl->rheight);
 
 render_finish:
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);

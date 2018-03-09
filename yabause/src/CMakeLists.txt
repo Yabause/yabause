@@ -50,45 +50,7 @@ set(kronos_SOURCES
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
 	)
-	add_definitions(-DIMPROVED_SAVESTATES)
-if (ANDROID)
-    add_definitions(-DANDROID=1)
-	add_definitions(-DYAB_PORT_OSD)
-	add_definitions(-D_OGLES3_)
-	add_definitions(-DYAB_ASYNC_RENDERING)
-	add_definitions(-DYAB_PORT_OSD)
-	include_directories(./ ./nanovg)		
-	set(kronos_SOURCES
-		${kronos_SOURCES}
-		yglcache.c
-		ygles.c
-		yglshaderes.c 
-		nanovg/nanovg.c 
-		nanovg/nanovg_osdcore.h 
-		nanovg/nanovg_osdcore.c
-		)
-endif()
-
-if (IOS)
-add_definitions(-DIOS=1)
-add_definitions(-DHAVE_LIBGL)
-add_definitions(-DYAB_PORT_OSD)
-add_definitions(-D_OGLES3_)
-add_definitions(-DYAB_ASYNC_RENDERING)
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
-IF (${SIMULATOR})
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mios-simulator-version-min=6.0")
-ENDIF()
-set(kronos_SOURCES
-${kronos_SOURCES}
-yglcache.c
-ygles.c
-yglshaderes.c )
-endif (IOS)
+add_definitions(-DIMPROVED_SAVESTATES)
 
 include_directories(nanovg)
 set(kronos_SOURCES ${kronos_SOURCES} nanovg/nanovg.c)
@@ -333,6 +295,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				yglcache.c
 				ygles.c
 				yglshaderes.c
+                                hqx_shader.c
 			)
 		endif()
         include(FindGLEW)
@@ -348,7 +311,8 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				gllibs/glew/glew.c
 				yglcache.c
 				ygles.c
-				yglshaderes.c )
+				yglshaderes.c
+                                hqx_shader.c )
 		endif()
 	endif(OPENGL_FOUND)
 endif ()

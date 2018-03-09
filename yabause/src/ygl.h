@@ -443,6 +443,7 @@ typedef enum
   AA_NONE = 0,
   AA_BILINEAR_FILTER,
   AA_BICUBIC_FILTER,
+  UP_HQ4X
 } AAMODE;
 
 typedef enum
@@ -458,10 +459,6 @@ typedef enum
         RES_2x,
         RES_3x,
         RES_4x,
-        RES_5x,
-	RES_6x,
-	RES_7x,
-	RES_8x
 } RESOLUTION_MODE;
 
 typedef enum {
@@ -648,6 +645,7 @@ int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
+int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
 
 void YglRenderVDP1(void);
 u32 * YglGetLineColorPointer();
