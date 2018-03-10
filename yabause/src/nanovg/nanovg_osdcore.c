@@ -305,6 +305,12 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
 
   nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
 
+  nvgBeginPath(vg);
+  nvgRect(vg, 0, 0, 320, 32);
+  nvgFillColor(vg, nvgRGBA(0, 0, 0, 128));
+  nvgFill(vg);
+
+
   nvgFontSize(vg, fontsize);
   nvgFontFace(vg, "sans");
   nvgFillColor(vg, nvgRGBA(255, 255, 255, 255));

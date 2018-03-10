@@ -188,7 +188,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
         //d->output.callback(strtmp);
         OSDAddLogString(strtmp);
 #if defined(ANDROID) 
-        fprintf(dfp, "%s",strtmp);
+        fprintf(dfp, "%s\n",strtmp);
         fflush(dfp);
 #endif
 #if defined(_WINDOWS)
