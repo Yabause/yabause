@@ -60,6 +60,7 @@ protected slots:
 	void accept();
         void changeResolution(int id);
         void changeFilterMode(int id);
+        void changeUpscaleMode(int id);
 };
 
 #endif // UISETTINGS_H

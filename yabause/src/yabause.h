@@ -54,6 +54,7 @@ typedef struct
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
    int video_filter_type;
+   int video_upscale_type;
    int polygon_generation_mode;
    int play_ssf;
    int use_new_scsp;

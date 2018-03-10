@@ -1,12 +1,15 @@
 #include "ygl.h"
 #include "hq4x_shader.h"
 #include "hq4x_lut.h"
+#include "4xbrz_shader.h"
 
 static const GLchar * fblithq4x_v[] = { Yglprg_blit_hq4x_v, NULL };
 static const GLchar * fblithq4x_f[] = { Yglprg_blit_hq4x_f, NULL };
+static const GLchar * fblit4xbrz_v[] = { Yglprg_blit_4xbrz_v, NULL };
+static const GLchar * fblit4xbrz_f[] = { Yglprg_blit_4xbrz_f, NULL };
 
 static int up_prg = -1;
-static int aa_mode = -1;
+static int up_mode = -1;
 static int u_size = -1;
 static int up_lut_tex = -1;
 
@@ -64,7 +67,7 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
 
-  if ((up_prg == -1) || (aa_mode != _Ygl->aamode)){
+  if ((up_prg == -1) || (up_mode != _Ygl->upmode)){
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
@@ -75,14 +78,17 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
       return -1;
     }
 
-    aa_mode = _Ygl->aamode;
+    up_mode = _Ygl->upmode;
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    switch(aa_mode) {
+    switch(up_mode) {
       case UP_HQ4X:
         glShaderSource(vshader, 1, fblithq4x_v, NULL);
+        break;
+      case UP_4XBRZ:
+        glShaderSource(vshader, 1, fblit4xbrz_v, NULL);
         break;
     }
     glCompileShader(vshader);
@@ -93,9 +99,12 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
       up_prg = -1;
       return -1;
     }
-    switch(aa_mode) {
+    switch(up_mode) {
       case UP_HQ4X:
         glShaderSource(fshader, 1, fblithq4x_f, NULL);
+        break;
+      case UP_4XBRZ:
+        glShaderSource(fshader, 1, fblit4xbrz_f, NULL);
         break;
     }
     glCompileShader(fshader);
@@ -120,7 +129,8 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
     glUseProgram(up_prg);
     glUniform1i(glGetUniformLocation(up_prg, "Texture"), 0);
-    glUniform1i(glGetUniformLocation(up_prg, "LUT"), 1);
+    if (up_mode == UP_HQ4X)
+      glUniform1i(glGetUniformLocation(up_prg, "LUT"), 1);
     u_size = glGetUniformLocation(up_prg, "TextureSize");
 
   }
@@ -155,10 +165,12 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glBindTexture(GL_TEXTURE_2D, srcTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, up_lut_tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  if (up_mode == UP_HQ4X) {
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, up_lut_tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 

@@ -373,14 +373,16 @@ int main(int argc, char *argv[]) {
 
   if (lowres_mode == 0){
     if (yinit.vidcoretype == VIDCORE_OGL) {
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
-      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, UP_HQ4X);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_4x);
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
+      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_4XBRZ);
     }
     VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
   } else {
     if (yinit.vidcoretype == VIDCORE_OGL) {
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
+      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_HQ4X);
     }
     VIDCore->Resize(0, 0, WINDOW_WIDTH_LOW, WINDOW_HEIGHT_LOW, 1);
   }

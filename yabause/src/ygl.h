@@ -443,9 +443,15 @@ typedef enum
 {
   AA_NONE = 0,
   AA_BILINEAR_FILTER,
-  AA_BICUBIC_FILTER,
-  UP_HQ4X
+  AA_BICUBIC_FILTER
 } AAMODE;
+
+typedef enum
+{
+  UP_NONE = 0,
+  UP_HQ4X,
+  UP_4XBRZ
+} UPMODE;
 
 typedef enum
 {
@@ -465,7 +471,8 @@ typedef enum
 typedef enum {
 	VDP_SETTING_FILTERMODE = 0,
 	VDP_SETTING_POLYGON_MODE,
-    VDP_SETTING_RESOLUTION_MODE
+        VDP_SETTING_RESOLUTION_MODE,
+        VDP_SETTING_UPSCALMODE
 } enSettings;
 
 
@@ -529,6 +536,9 @@ typedef struct {
    GLuint tmpfbo;
    GLuint tmpfbotex;
 
+   GLuint upfbo;
+   GLuint upfbotex;
+
    // Message Layer
    int msgwidth;
    int msgheight;
@@ -560,6 +570,7 @@ typedef struct {
    u32 * backcolor_buf;
 
    AAMODE aamode;
+   UPMODE upmode;
    POLYGONMODE polygonmode;
    RESOLUTION_MODE resolution_mode;
    YglTextureManager * texture_manager;

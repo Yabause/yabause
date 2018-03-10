@@ -507,6 +507,33 @@ int Ygl_useTmpBuffer(){
   return 0;
 }
 
+static int up_scale;
+
+int Ygl_useUpscaleBuffer(void){
+  // Create Screen size frame buffer
+  if (_Ygl->upfbo == 0) {
+    up_scale = 4;
+    GLuint error;
+    glGenTextures(1, &_Ygl->upfbotex);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->upfbotex);
+    glGetError();
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, up_scale*_Ygl->rwidth, up_scale*_Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glGenFramebuffers(1, &_Ygl->upfbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->upfbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->upfbotex, 0);
+  }
+  // bind Screen size frame buffer
+  else{
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->upfbo);
+  }
+  return up_scale;
+}
+
 /*------------------------------------------------------------------------------------
 *  Mosaic Draw
 * ----------------------------------------------------------------------------------*/
@@ -3564,6 +3591,22 @@ static const char fblitbilinear_img[] =
 /////
 
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
+  float width = w;
+  float height = h;
+  u32 tex = srcTexture;
+  if (_Ygl->upmode != UP_NONE) {
+    int scale = 1; 
+    scale = Ygl_useUpscaleBuffer();
+    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
+    glViewport(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
+    glScissor(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
+    YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight);
+    glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
+    glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
+    tex = _Ygl->upfbotex;
+    width = scale*_Ygl->rwidth;
+    height = scale*_Ygl->rheight;
+  }
 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
@@ -3659,11 +3702,11 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
 
-  glUniform1f(u_w, (float)_Ygl->width);
-  glUniform1f(u_h, (float)_Ygl->height);
+  glUniform1f(u_w, width);
+  glUniform1f(u_h, height);
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, srcTexture);
+  glBindTexture(GL_TEXTURE_2D, tex);
 #ifdef _USE_APPROX_BICUBIC_
   if (_Ygl->aamode != AA_NONE) {
 #else

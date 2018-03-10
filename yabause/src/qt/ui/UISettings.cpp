@@ -79,8 +79,13 @@ const Items mCartridgeTypes = Items()
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
         << Item("1", "Bilinear")
-	<< Item("2", "BiCubic")
-	<< Item("3", "HQ4x");
+	<< Item("2", "BiCubic");
+
+const Items mUpscaleFilterMode = Items()
+	<< Item("0", "None")
+	<< Item("1", "HQ4x")
+        << Item("2", "4xBRZ");
+
 
 const Items mPolygonGenerationMode = Items()
 	<< Item("0", "Triangles using perspective correction")
@@ -88,10 +93,10 @@ const Items mPolygonGenerationMode = Items()
 	<< Item("2", "GPU Tesselation");
 
 const Items mResolutionMode = Items()
-<< Item("1", "Original (original resolution of the Saturn)")
-<< Item("2", "2x")
-<< Item("3", "3x")
-<< Item("4", "4x");
+	<< Item("1", "Original (original resolution of the Saturn)")
+	<< Item("2", "2x")
+	<< Item("3", "3x")
+	<< Item("4", "4x");
 
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
@@ -296,6 +301,12 @@ void UISettings::changeFilterMode(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, (mVideoFilterMode.at(id).id).toInt());
 }
 
+void UISettings::changeUpscaleMode(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, (mUpscaleFilterMode.at(id).id).toInt());
+}
+
+
 void UISettings::on_cbCartridge_currentIndexChanged( int id )
 {
 	leCartridge->setVisible(mCartridgeTypes[id].enableFlag);
@@ -330,6 +341,12 @@ void UISettings::loadCores()
 		cbFilterMode->addItem(QtYabause::translate(it.Name), it.id);
 
         connect(cbFilterMode, SIGNAL(currentIndexChanged(int)), this, SLOT(changeFilterMode(int)));
+
+        //Upscale Mode
+        foreach(const Item& it, mUpscaleFilterMode)
+		cbUpscaleMode->addItem(QtYabause::translate(it.Name), it.id);
+
+        connect(cbUpscaleMode, SIGNAL(currentIndexChanged(int)), this, SLOT(changeUpscaleMode(int)));
 
 	// Polygon Generation
 	foreach(const Item& it, mPolygonGenerationMode)
@@ -471,6 +488,7 @@ void UISettings::loadSettings()
         cbVdp1Cache->setChecked( s->value( "Advanced/Vdp1Cache", false ).toBool() );
 
 	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
+        cbUpscaleMode->setCurrentIndex(cbUpscaleMode->findData(s->value("Video/upscale_type", mUpscaleFilterMode.at(0).id).toInt()));
 	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
   cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
 
@@ -551,6 +569,7 @@ void UISettings::saveSettings()
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
+	s->setValue( "Video/upscale_type", cbUpscaleMode->itemData(cbUpscaleMode->currentIndex()).toInt());
 	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
   s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());
 

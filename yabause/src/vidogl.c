@@ -7344,11 +7344,6 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct
   return NULL;
 }
 
-void VIDOGLSetFilterMode(int type) {
-  _Ygl->aamode = type;
-  return;
-}
-
 #endif
 
 void VIDOGLSetSettingValueMode(int type, int value) {
@@ -7356,6 +7351,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   switch (type) {
   case VDP_SETTING_FILTERMODE:
     _Ygl->aamode = value;
+    break;
+  case VDP_SETTING_UPSCALMODE:
+    _Ygl->upmode = value;
     break;
   case VDP_SETTING_RESOLUTION_MODE:
     _Ygl->resolution_mode = value;
@@ -7366,8 +7364,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
       YglTesserationProgramInit();
     }
     _Ygl->polygonmode = value;
-  }
-
+  break;
+  default:
   return;
+  }
 }
 

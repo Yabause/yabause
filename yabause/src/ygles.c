@@ -879,10 +879,8 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       _Ygl->sync = 0;
     }
     glViewport(0, 0, _Ygl->width, _Ygl->height);
-   if (_Ygl->aamode != UP_HQ4X)
-     YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->width / (float)_Ygl->width, (float)_Ygl->height / (float)_Ygl->height);
-   else
-     YglUpscaleFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, _Ygl->rwidth, _Ygl->rheight);
+    YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->width / (float)_Ygl->width, (float)_Ygl->height / (float)_Ygl->height);
+     
 
     YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
     FrameProfileAdd("ReadFrameBuffer unlock");
@@ -940,6 +938,14 @@ int YglGenFrameBuffer() {
   if (rebuild_frame_buffer == 0){
     return 0;
   }
+
+  if (_Ygl->upfbo != 0){
+    glDeleteFramebuffers(1, &_Ygl->upfbo);
+    _Ygl->upfbo = 0;
+    glDeleteTextures(1, &_Ygl->upfbotex);
+    _Ygl->upfbotex = 0;
+  }
+
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glFinish();
   glGetError();
@@ -1230,6 +1236,10 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->smallfbotex = 0;
   _Ygl->tmpfbo = 0;
   _Ygl->tmpfbotex = 0;
+  _Ygl->upfbo = 0;
+  _Ygl->upfbotex = 0;
+  _Ygl->upfbo = 0;
+  _Ygl->upfbotex = 0;
 
   if (YglProgramInit() != 0) {
     YGLDEBUG("Fail to YglProgramInit\n");
@@ -3371,10 +3381,7 @@ void YglRender(void) {
    }
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
-   if (_Ygl->aamode != UP_HQ4X)
-     YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, GlWidth, GlHeight);
-   else
-     YglUpscaleFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->rwidth, _Ygl->rheight);
+   YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->width, _Ygl->width);
 
 render_finish:
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
@@ -4058,9 +4065,16 @@ void YglChangeResolution(int w, int h) {
        _Ygl->tmpfbotex = 0;
      }
 
-    _Ygl->width = w * _Ygl->resolution_mode;
-    _Ygl->height = h * _Ygl->resolution_mode;
-    rebuild_frame_buffer = 1;
+     if (_Ygl->upfbo != 0){
+       glDeleteFramebuffers(1, &_Ygl->upfbo);
+       _Ygl->upfbo = 0;
+       glDeleteTextures(1, &_Ygl->upfbotex);
+       _Ygl->upfbotex = 0;
+     }
+
+  _Ygl->width = w * _Ygl->resolution_mode;
+  _Ygl->height = h * _Ygl->resolution_mode;
+  rebuild_frame_buffer = 1;
 
   _Ygl->rwidth = w;
   _Ygl->rheight = h;

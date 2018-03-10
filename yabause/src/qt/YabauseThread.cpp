@@ -382,6 +382,7 @@ void YabauseThread::reloadSettings()
    mYabauseConf.use_new_scsp = (int)vs->value("Sound/NewScsp", mYabauseConf.use_new_scsp).toBool();
 	
 	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
+        mYabauseConf.video_upscale_type = vs->value("Video/upscale_type", mYabauseConf.video_upscale_type).toInt();
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
   mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
 
@@ -442,6 +443,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;
 	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
 	mYabauseConf.video_filter_type = 0;
+	mYabauseConf.video_upscale_type = 0;
 	mYabauseConf.polygon_generation_mode = 0;
         mYabauseConf.resolution_mode = 0;
         mYabauseConf.useVdp1cache = 0;
