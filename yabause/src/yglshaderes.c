@@ -1267,7 +1267,7 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "	//memoryBarrier(); \n"
 "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
 "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
-"  if( fboColor.a > 0.028  )                                                               \n"
+"  if( fboColor.a > 0.0  )                                                               \n"
 "  {                                                                                          \n"
 "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
 "    fragColor.a = fboColor.a ;                         \n"
