@@ -239,6 +239,7 @@ nanovg OSD Interface|Interface Nanovg OSD
 Native (native resolution of Window)|Natif (Résolution Native de la Fenêtre)
 NBG0|NBG0
 NBG0/RBG1 Info|Info NBG0/RBG1
+
 NBG1|NBG1
 NBG1 Info|Info NBG1
 NBG2|NBG2
@@ -263,6 +264,7 @@ Open SSF|Ouvrir le Lecteur SSF
 Open&Tray|Ouvrir le Plateau
 OpenGL Video Interface|Interface Vidéo OpenGL
 Options|Options
+Original (original resolution of the Saturn)|Original (Résolution originale de la Saturn)
 OSD Core|Noyau OSD :
 Pad|Manette
 Pad Configuration|Configuration de la Manette
