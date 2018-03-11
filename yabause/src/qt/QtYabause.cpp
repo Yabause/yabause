@@ -519,12 +519,20 @@ SoundInterface_struct QtYabause::defaultSNDCore()
 
 VideoInterface_struct QtYabause::defaultVIDCore()
 {
+#ifdef HAVE_LIBGL
+        return VIDOGL;
+#else
 	return VIDSoft;
+#endif
 }
 
 OSD_struct QtYabause::defaultOSDCore()
 {
+#ifdef HAVE_LIBGL
+        return OSDNnovg;
+#else
 	return OSDDummy;
+#endif
 }
 
 PerInterface_struct QtYabause::defaultPERCore()
