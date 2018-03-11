@@ -26,9 +26,9 @@
 #include "ygl.h"
 #include "yui.h"
 #include "vidshared.h"
+#include "bicubic_shader.h"
 
 #define YGLLOG
-//#define _USE_APPROX_BICUBIC_
 
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
@@ -3473,95 +3473,6 @@ static const char fblitnear_img[] =
   "     return texture( textureSampler, TexCoord ) ; \n"
   "} \n";
 
-static const char fblitbicubic_img[] =
-#ifndef _USE_APPROX_BICUBIC_
-  "//CatMullRom curve \n"
-  "float Curve( float x ) \n"
-  "{ \n"
-  "    float B = 0.0; \n"
-  "    float C = 0.5; \n"
-  "    float f = x; \n"
-  "    if( f < 0.0 ) \n"
-  "    { \n"
-  "        f = -f; \n"
-  "    } \n"
-  "    if( f < 1.0 ) \n"
-  "    { \n"
-  "        return ( ( 12.0 - 9.0 * B - 6.0 * C ) * ( f * f * f ) + \n"
-  "            ( -18.0f + 12.0f * B + 6.0f * C ) * ( f * f ) + \n"
-  "            ( 6.0f - 2.0f * B ) ) / 6.0f; \n"
-  "    } \n"
-  "    else if( f >= 1.0 && f < 2.0 ) \n"
-  "    { \n"
-  "        return ( ( -B - 6.0 * C ) * ( f * f * f ) \n"
-  "            + ( 6.0 * B + 30.0 * C ) * ( f *f ) + \n"
-  "            ( - ( 12.0 * B ) - 48.0 * C  ) * f + \n"
-  "            8.0 * B + 24.0 * C)/ 6.0; \n"
-  "    } \n"
-  "    else \n"
-  "    { \n"
-  "        return 0.0; \n"
-  "    } \n"
-  "} \n"
-  "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
-  "{ \n"
-  "	float texelSizeX = 1.0 / fWidth; //size of one texel  \n"
-  "	float texelSizeY = 1.0 / fHeight; //size of one texel  \n"
-  "    vec4 nSum = vec4( 0.0, 0.0, 0.0, 0.0 ); \n"
-  "    vec4 nDenom = vec4( 0.0, 0.0, 0.0, 0.0 ); \n"
-  "    float a = fract( TexCoord.x * fWidth ); // get the decimal part \n"
-  "    float b = fract( TexCoord.y * fHeight ); // get the decimal part \n"
-  "	float nX = float(int(TexCoord.x * fWidth)) + 0.5; \n"
-  "	float nY = float(int(TexCoord.y * fHeight)) + 0.5; \n"
-  "	vec2 TexCoord1 = vec2( float(nX) / fWidth, float(nY) / fHeight ); \n"
-  "    for( int m = -1; m <=2; m++ ) \n"
-  "    { \n"
-  "	   float f  = Curve( float( m ) - a ); \n"
-  "	   vec4 vecCooef1 = vec4( f,f,f,f ); \n"
-  "        for( int n =-1; n<= 2; n++) \n"
-  "        { \n"
-  "	       float f1 = Curve( -( float( n ) - b ) ); \n"
-  "	       vec4 vecCoeef2 = vec4( f1, f1, f1, f1 ); \n"
-  "	       vec4 vecData = texture2D(textureSampler, TexCoord1 + vec2(texelSizeX * float( m ), texelSizeY * float( n ))); \n"
-  "            nSum = nSum + ( vecData * vecCoeef2 * vecCooef1  ); \n"
-  "            nDenom = nDenom + (( vecCoeef2 * vecCooef1 )); \n"
-  "        } \n"
-  "    } \n"
-  "    return nSum / nDenom; \n"
-  "} \n";
-#else
-" vec4 Curve(float v) \n"
-" { \n"
-"     vec4 n = vec4(1.0, 2.0, 3.0, 4.0) - v; \n"
-"     vec4 s = n * n * n; \n"
-"     float x = s.x; \n"
-"     float y = s.y - 4.0 * s.x; \n"
-"     float z = s.z - 4.0 * s.y + 6.0 * s.x; \n"
-"     float w = 6.0 - x - y - z; \n"
-"     return vec4(x, y, z, w); \n"
-" } \n"
-" vec4 Filter(sampler2D texture, vec2 itexcoord) \n"
-" { \n"
-"     vec2  texcoord = itexcoord * vec2(fWidth, fHeight); \n"
-"     float fx = fract(texcoord.x); \n"
-"     float fy = fract(texcoord.y); \n"
-"     texcoord.x -= fx; \n"
-"     texcoord.y -= fy; \n"
-"     vec4 xcubic = Curve(fx); \n"
-"     vec4 ycubic = Curve(fy); \n"
-"     vec4 c = vec4(texcoord.x - 0.5, texcoord.x + 1.5, texcoord.y - 0.5, texcoord.y + 1.5); \n"
-"     vec4 s = vec4(xcubic.x + xcubic.y, xcubic.z + xcubic.w, ycubic.x + ycubic.y, ycubic.z + ycubic.w); \n"
-"     vec4 offset = c + vec4(xcubic.y, xcubic.w, ycubic.y, ycubic.w) / s; \n"
-"     vec4 sample0 = texture2D(texture, vec2(offset.x, offset.z) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
-"     vec4 sample1 = texture2D(texture, vec2(offset.y, offset.z) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
-"     vec4 sample2 = texture2D(texture, vec2(offset.x, offset.w) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
-"     vec4 sample3 = texture2D(texture, vec2(offset.y, offset.w) * vec2(1.0/fWidth, 1.0/fHeight)); \n"
-"     float sx = s.x / (s.x + s.y); \n"
-"     float sy = s.z / (s.z + s.w); \n"
-"     return mix(mix(sample3, sample2, sx), mix(sample1, sample0, sx), sy); \n"
-" } \n";
-#endif
-////////////
 static const char fblitbilinear_img[] =
   "// Function to get a texel data from a texture with GL_NEAREST property. \n"
   "// Bi-Linear interpolation is implemented in this function with the  \n"
@@ -3707,11 +3618,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
-#ifdef _USE_APPROX_BICUBIC_
-  if (_Ygl->aamode != AA_NONE) {
-#else
   if (_Ygl->aamode == AA_BILINEAR_FILTER) {
-#endif
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   } else {

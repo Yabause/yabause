@@ -3381,7 +3381,7 @@ void YglRender(void) {
    }
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
-   YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->width, _Ygl->width);
+   YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->width, _Ygl->height);
 
 render_finish:
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
