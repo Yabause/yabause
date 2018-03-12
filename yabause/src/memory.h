@@ -198,9 +198,7 @@ extern "C" {
 
   static INLINE int TSize(const char *filename) {
     FILE *fp;
-    u32 filesize, filesizecheck;
-    u8 *buffer;
-    u32 i;
+    u32 filesize;
 
     if (!filename)
       return -1;
