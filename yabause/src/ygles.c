@@ -3199,6 +3199,10 @@ void YglRender(void) {
    YglMatrix dmtx;
    unsigned int i,j;
    int ccwindow = 0;
+   double w = 0;
+   double h = 0;
+   double x = 0;
+   double y = 0;
 
    YGLLOG("YglRender\n");
 
@@ -3228,18 +3232,20 @@ void YglRender(void) {
    glEnable(GL_DEPTH_TEST);
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-   double dar = (double)GlWidth/(double)GlHeight;
-   double par = 4.0/3.0; //(double)_Ygl->rwidth/(double)_Ygl->rheight * 384.0*4.0/576.0
+   if (_Ygl->stretch == 0) {
+     double dar = (double)GlWidth/(double)GlHeight;
+     double par = 4.0/3.0;
 
-   double wN = (dar>par)?(double)GlHeight*par:GlWidth;
-   double hN = (dar>par)?GlHeight:(double)GlWidth/par;
-   double xN = (GlWidth-wN)/2;
-   double yN = (GlHeight-hN)/2;
-
-   double w = (dar>par)?(double)GlWidth*(par/dar):GlWidth;
-   double h = (dar>par)?(double)GlHeight:(double)GlHeight/(par/dar);
-   double x = (GlWidth-w)/2;
-   double y = (GlHeight-h)/2;
+     w = (dar>par)?(double)GlWidth*(par/dar):GlWidth;
+     h = (dar>par)?(double)GlHeight:(double)GlHeight/(par/dar);
+     x = (GlWidth-w)/2;
+     y = (GlHeight-h)/2;
+   } else {
+     w = GlWidth;
+     h = GlHeight;
+     x = 0;
+     y = 0;
+   }
 
    glViewport(0, 0, _Ygl->width, _Ygl->height);
 

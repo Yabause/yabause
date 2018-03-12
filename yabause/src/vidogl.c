@@ -7365,6 +7365,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     }
     _Ygl->polygonmode = value;
   break;
+  case VDP_SETTING_ASPECT_RATIO:
+    _Ygl->stretch = value;
+  break;
   default:
   return;
   }

@@ -315,8 +315,8 @@ void UIYabause::resizeEvent( QResizeEvent* event )
   mYabauseGL->viewport_origin_x_ = 0;
   mYabauseGL->viewport_origin_y_ = 0;
 
-	if (event->oldSize().width() != event->size().width())
-    fixAspectRatio(event->size().width(), event->size().height());
+    //	if (event->oldSize().width() != event->size().width())
+    //fixAspectRatio(event->size().width(), event->size().height());
 
 	QMainWindow::resizeEvent( event );
 }
@@ -408,7 +408,7 @@ void UIYabause::fixAspectRatio( int width , int height )
       else{
         int heightOffset = toolBar->height()+menubar->height();
         switch(aspectRatio) {
-          case 1:
+          case 0:
             height = 3 * ((float) width / 4);
             adjustHeight(height );
             setFixedHeight(height);
@@ -645,7 +645,6 @@ void UIYabause::on_aFileSettings_triggered()
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
 			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
 			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
-    fixAspectRatio(rect().width(), rect().height());
 		
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||

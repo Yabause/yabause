@@ -468,11 +468,19 @@ typedef enum
         RES_4x,
 } RESOLUTION_MODE;
 
+typedef enum
+{
+	ORIGINAL_RATIO = 0,
+	STREETCH_RATIO
+} RATIOMODE;
+
+
 typedef enum {
 	VDP_SETTING_FILTERMODE = 0,
 	VDP_SETTING_POLYGON_MODE,
         VDP_SETTING_RESOLUTION_MODE,
-        VDP_SETTING_UPSCALMODE
+        VDP_SETTING_UPSCALMODE,
+        VDP_SETTING_ASPECT_RATIO
 } enSettings;
 
 
@@ -572,6 +580,7 @@ typedef struct {
    AAMODE aamode;
    UPMODE upmode;
    POLYGONMODE polygonmode;
+   RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
    YglTextureManager * texture_manager;
    GLsync sync;

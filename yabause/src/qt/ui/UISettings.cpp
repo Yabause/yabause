@@ -98,6 +98,10 @@ const Items mResolutionMode = Items()
 	<< Item("3", "3x")
 	<< Item("4", "4x");
 
+const Items mAspectRatio = Items()
+	<< Item("0", "Orginal aspect ratio")
+	<< Item("1", "Stretch to window");
+
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
 {
@@ -291,6 +295,11 @@ void UISettings::on_cbClockSync_stateChanged( int state )
 	dteBaseTime->setVisible( state == Qt::Checked );
 }
 
+void UISettings::changeAspectRatio(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_ASPECT_RATIO, (mAspectRatio.at(id).id).toInt());
+}
+
 void UISettings::changeResolution(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, (mResolutionMode.at(id).id).toInt());
@@ -358,6 +367,11 @@ void UISettings::loadCores()
 
   connect(cbResolution, SIGNAL(currentIndexChanged(int)), this, SLOT(changeResolution(int)));
 
+  foreach(const Item& it, mAspectRatio)
+    cbAspectRatio->addItem(QtYabause::translate(it.Name), it.id);
+
+  connect(cbAspectRatio, SIGNAL(currentIndexChanged(int)), this, SLOT(changeAspectRatio(int)));
+
 
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )
@@ -383,9 +397,6 @@ void UISettings::loadCores()
    for (int i = 0; M68KCoreList[i] != NULL; i++)
       cb68kCore->addItem(QtYabause::translate(M68KCoreList[i]->Name), M68KCoreList[i]->id);
 
-	cbAspectRatio->addItem( QtYabause::translate( "Fit to window" ), 0 );
-	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 4:3" ), 1 );
-	cbAspectRatio->addItem( QtYabause::translate( "Fixed aspect ratio: 16:9" ), 2 );
 }
 
 void UISettings::loadTranslations()
@@ -482,8 +493,6 @@ void UISettings::loadSettings()
 #if YAB_PORT_OSD
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
-
-	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );	
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
         cbVdp1Cache->setChecked( s->value( "Advanced/Vdp1Cache", false ).toBool() );
 
@@ -491,6 +500,7 @@ void UISettings::loadSettings()
         cbUpscaleMode->setCurrentIndex(cbUpscaleMode->findData(s->value("Video/upscale_type", mUpscaleFilterMode.at(0).id).toInt()));
 	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
   cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
+  cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
@@ -565,7 +575,7 @@ void UISettings::saveSettings()
 	s->remove("Video/Height");
 
 	// Save new version of keys
-	s->setValue( "Video/AspectRatio", cbAspectRatio->currentIndex() );
+        s->setValue("Video/AspectRatio", cbAspectRatio->itemData(cbAspectRatio->currentIndex()).toInt());
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());

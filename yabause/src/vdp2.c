@@ -1274,7 +1274,7 @@ void ToggleFullScreen(void)
    }
    else
    {
-      VIDCore->Resize(0,0,640, 480, 1);
+      VIDCore->Resize(0,0,320, 224, 1);
    }
 }
 
