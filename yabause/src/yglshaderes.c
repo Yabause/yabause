@@ -513,6 +513,7 @@ int Ygl_useUpscaleBuffer(void){
   // Create Screen size frame buffer
   if (_Ygl->upfbo == 0) {
     up_scale = 4;
+    if ((_Ygl->rwidth > 500) && (_Ygl->rheight > 400)) up_scale >>= 1;
     GLuint error;
     glGenTextures(1, &_Ygl->upfbotex);
     glBindTexture(GL_TEXTURE_2D, _Ygl->upfbotex);
