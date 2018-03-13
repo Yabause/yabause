@@ -3431,6 +3431,7 @@ static int blit_mode = -1;
 static int scanline = -1;
 static int u_w = -1;
 static int u_h = -1;
+static int u_l = -1;
 static int outputSize = -1;
 static int inputSize = -1;
 
@@ -3460,6 +3461,7 @@ static const char fblit_head[] =
   "precision highp float;       \n"
   "uniform float fWidth; \n"
   "uniform float fHeight; \n"
+  "uniform float lineNumber; \n"
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
   "out vec4 fragColor;            \n";
@@ -3609,6 +3611,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
     u_w = glGetUniformLocation(blit_prg, "fWidth");
     u_h = glGetUniformLocation(blit_prg, "fHeight");
+    u_l = glGetUniformLocation(blit_prg, "lineNumber");
   }
   else{
     glUseProgram(blit_prg);
@@ -3637,6 +3640,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glUniform1f(u_w, width);
   glUniform1f(u_h, height);
+  glUniform1f(u_l, yabsys.IsPal?525.0:625.0);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
