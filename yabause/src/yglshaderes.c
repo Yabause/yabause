@@ -3640,7 +3640,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glUniform1f(u_w, width);
   glUniform1f(u_h, height);
-  glUniform1f(u_l, yabsys.IsPal?525.0:625.0);
+  glUniform1f(u_l, yabsys.IsPal?625.0:525.0);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
