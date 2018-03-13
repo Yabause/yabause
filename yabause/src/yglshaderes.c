@@ -513,13 +513,14 @@ static int up_scale;
 int Ygl_useUpscaleBuffer(void){
   // Create Screen size frame buffer
   if (_Ygl->upfbo == 0) {
-    up_scale = 4;
-    if ((_Ygl->rwidth > 500) && (_Ygl->rheight > 400)) up_scale >>= 1;
+    up_scale = 1;
+    //if ((_Ygl->rwidth > 500) && (_Ygl->rheight > 400)) up_scale >>= 1;
     GLuint error;
     glGenTextures(1, &_Ygl->upfbotex);
     glBindTexture(GL_TEXTURE_2D, _Ygl->upfbotex);
     glGetError();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, up_scale*_Ygl->rwidth, up_scale*_Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, up_scale*_Ygl->width, up_scale*_Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+printf("Use %d %d\n", up_scale*_Ygl->width, up_scale*_Ygl->height);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -3517,14 +3518,14 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     int scale = 1; 
     scale = Ygl_useUpscaleBuffer();
     glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
-    glViewport(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
-    glScissor(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
+    glViewport(0, 0, scale*_Ygl->width, scale*_Ygl->height);
+    glScissor(0, 0, scale*_Ygl->width, scale*_Ygl->height);
     YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight);
     glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     tex = _Ygl->upfbotex;
-    width = scale*_Ygl->rwidth;
-    height = scale*_Ygl->rheight;
+    width = scale*_Ygl->width;
+    height = scale*_Ygl->height;
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
