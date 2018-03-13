@@ -99,7 +99,7 @@ const Items mResolutionMode = Items()
 	<< Item("4", "4x");
 
 const Items mAspectRatio = Items()
-	<< Item("0", "Orginal aspect ratio")
+	<< Item("0", "Original aspect ratio")
 	<< Item("1", "Stretch to window");
 
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
