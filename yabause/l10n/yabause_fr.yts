@@ -179,9 +179,6 @@ Exact|Identique
 File:|Fichier :
 File Name :|Nom du Fichier :
 Finished searching up to end of memory, continue from the beginning?|Fin de la recherche terminé, recommencez depuis le début du fichier ?
-Fit to window|Correspond à la Fenêtre
-Fixed aspect ratio: 4:3|Correction des Propotions : 4:3
-Fixed aspect ratio: 16:9|Correction des Propotions : 16:9
 French|Français
 From File...|A Partir d'un Fichier...
 General|Général
@@ -239,7 +236,6 @@ nanovg OSD Interface|Interface Nanovg OSD
 Native (native resolution of Window)|Natif (Résolution Native de la Fenêtre)
 NBG0|NBG0
 NBG0/RBG1 Info|Info NBG0/RBG1
-
 NBG1|NBG1
 NBG1 Info|Info NBG1
 NBG2|NBG2
@@ -264,7 +260,7 @@ Open SSF|Ouvrir le Lecteur SSF
 Open&Tray|Ouvrir le Plateau
 OpenGL Video Interface|Interface Vidéo OpenGL
 Options|Options
-Original (original resolution of the Saturn)|Original (Résolution originale de la Saturn)
+Original aspect ratio|Proportion d'origine
 OSD Core|Noyau OSD :
 Pad|Manette
 Pad Configuration|Configuration de la Manette
@@ -345,6 +341,7 @@ Step Into|Entrer Dans
 Step Out|Sortir
 Step Over|Sauter
 Stop|Arrêter
+Stretch to window|Etirer dans la Fenêtre
 Synchronize Saturn internal clock with set time|Synchroniser l'Horloge Interne de la Saturn avec l'Heure Locale
 Text|Texte
 Texture|Texture
