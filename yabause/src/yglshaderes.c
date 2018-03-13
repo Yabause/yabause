@@ -27,6 +27,7 @@
 #include "yui.h"
 #include "vidshared.h"
 #include "bicubic_shader.h"
+#include "scanline_shader.h"
 
 #define YGLLOG
 
@@ -3427,8 +3428,11 @@ int YglDrawBackScreen(float w, float h) {
 //----------------------------------------------------------------------------------------
 static int blit_prg = -1;
 static int blit_mode = -1;
+static int scanline = -1;
 static int u_w = -1;
 static int u_h = -1;
+static int outputSize = -1;
+static int inputSize = -1;
 
 static const char vblit_img[] =
 #if defined (_OGLES3_)
@@ -3463,8 +3467,9 @@ static const char fblit_head[] =
 static const char fblit_img[] =
   "void main()                                         \n"
   "{   \n" 
-"	fragColor = Filter( u_Src, vTexCoord );                                               \n"
-//  "  fragColor = texture( u_Src, vTexCoord ) ; \n"
+"	fragColor = Filter( u_Src, vTexCoord );                                               \n";
+
+static const char fblit_img_end[] =
   "} \n";
 
 /////////////
@@ -3522,17 +3527,18 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
+  const GLchar * fblit_img_v[] = { fblit_head, fblitnear_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblitbilinear_img_v[] = { fblit_head, fblitnear_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblitbicubic_img_v[] = { fblit_head, fblitbicubic_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblit_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+  const GLchar * fblitbilinear_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+  const GLchar * fblitbicubic_img_scanline_v[] = { fblit_head, fblitbicubic_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
 
-  if ((blit_prg == -1) || (blit_mode != _Ygl->aamode)){
+  if ((blit_prg == -1) || (blit_mode != _Ygl->aamode) || (scanline != _Ygl->scanline)){
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
-
     const GLchar * vblit_img_v[] = { vblit_img, NULL };
-    const GLchar * fblit_img_v[] = { fblit_head, fblitnear_img, fblit_img, NULL };
-    const GLchar * fblitbilinear_img_v[] = { fblit_head, fblitnear_img, fblit_img, NULL };
-    const GLchar * fblitbicubic_img_v[] = { fblit_head, fblitbicubic_img, fblit_img, NULL };
-
     if (blit_prg != -1) glDeleteProgram(blit_prg);
     blit_prg = glCreateProgram();
     if (blit_prg == 0){
@@ -3540,6 +3546,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     }
 
     blit_mode = _Ygl->aamode;
+    scanline = _Ygl->scanline;
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -3553,16 +3560,30 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
       blit_prg = -1;
       return -1;
     }
-    switch(_Ygl->aamode) {
-      case AA_NONE:
-        glShaderSource(fshader, 3, fblit_img_v, NULL);
-        break;
-      case AA_BILINEAR_FILTER:
-        glShaderSource(fshader, 3, fblitbilinear_img_v, NULL);
-        break;
-      case AA_BICUBIC_FILTER:
-        glShaderSource(fshader, 3, fblitbicubic_img_v, NULL);
-        break;
+    if (_Ygl->scanline == 0) {
+      switch(_Ygl->aamode) {
+        case AA_NONE:
+          glShaderSource(fshader, 4, fblit_img_v, NULL);
+          break;
+        case AA_BILINEAR_FILTER:
+          glShaderSource(fshader, 4, fblitbilinear_img_v, NULL);
+          break;
+        case AA_BICUBIC_FILTER:
+          glShaderSource(fshader, 4, fblitbicubic_img_v, NULL);
+          break;
+      }
+    } else {
+      switch(_Ygl->aamode) {
+        case AA_NONE:
+          glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
+          break;
+        case AA_BILINEAR_FILTER:
+          glShaderSource(fshader, 5, fblitbilinear_img_scanline_v, NULL);
+          break;
+        case AA_BICUBIC_FILTER:
+          glShaderSource(fshader, 5, fblitbicubic_img_scanline_v, NULL);
+          break;
+      }
     }
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);

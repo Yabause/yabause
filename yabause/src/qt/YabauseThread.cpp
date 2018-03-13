@@ -386,6 +386,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
   mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
   mYabauseConf.stretch = vs->value("Video/AspectRatio", mYabauseConf.stretch).toInt();
+  mYabauseConf.scanline = vs->value("Video/ScanLine", mYabauseConf.scanline).toInt();
 
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );

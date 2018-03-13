@@ -62,6 +62,7 @@ protected slots:
         void changeFilterMode(int id);
         void changeUpscaleMode(int id);
         void changeAspectRatio(int id);
+        void changeScanLine(int id);
 };
 
 #endif // UISETTINGS_H

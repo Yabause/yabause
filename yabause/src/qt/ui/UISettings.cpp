@@ -102,6 +102,10 @@ const Items mAspectRatio = Items()
 	<< Item("0", "Original aspect ratio")
 	<< Item("1", "Stretch to window");
 
+const Items mScanLine = Items()
+	<< Item("0", "Scanline off")
+	<< Item("1", "Scanline on");
+
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
 {
@@ -300,6 +304,11 @@ void UISettings::changeAspectRatio(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_ASPECT_RATIO, (mAspectRatio.at(id).id).toInt());
 }
 
+void UISettings::changeScanLine(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, (mScanLine.at(id).id).toInt());
+}
+
 void UISettings::changeResolution(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, (mResolutionMode.at(id).id).toInt());
@@ -371,6 +380,11 @@ void UISettings::loadCores()
     cbAspectRatio->addItem(QtYabause::translate(it.Name), it.id);
 
   connect(cbAspectRatio, SIGNAL(currentIndexChanged(int)), this, SLOT(changeAspectRatio(int)));
+
+  foreach(const Item& it, mScanLine)
+    cbScanlineFilter->addItem(QtYabause::translate(it.Name), it.id);
+
+  connect(cbScanlineFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeScanLine(int)));
 
 
 	// SND Drivers
@@ -501,6 +515,7 @@ void UISettings::loadSettings()
 	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
   cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
   cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
+  cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
@@ -576,6 +591,7 @@ void UISettings::saveSettings()
 
 	// Save new version of keys
         s->setValue("Video/AspectRatio", cbAspectRatio->itemData(cbAspectRatio->currentIndex()).toInt());
+        s->setValue("Video/ScanLine", cbScanlineFilter->itemData(cbScanlineFilter->currentIndex()).toInt());
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());

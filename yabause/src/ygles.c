@@ -1251,7 +1251,8 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->st = 0;
   _Ygl->msglength = 0;
   _Ygl->aamode = AA_NONE;
-
+  _Ygl->scanline = 0;
+  _Ygl->stretch = 0;
 
   return 0;
 }

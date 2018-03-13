@@ -7368,6 +7368,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   case VDP_SETTING_ASPECT_RATIO:
     _Ygl->stretch = value;
   break;
+  case VDP_SETTING_SCANLINE:
+    _Ygl->scanline = value;
+  break;
   default:
   return;
   }

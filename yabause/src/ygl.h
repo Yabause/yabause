@@ -480,7 +480,8 @@ typedef enum {
 	VDP_SETTING_POLYGON_MODE,
         VDP_SETTING_RESOLUTION_MODE,
         VDP_SETTING_UPSCALMODE,
-        VDP_SETTING_ASPECT_RATIO
+        VDP_SETTING_ASPECT_RATIO,
+        VDP_SETTING_SCANLINE
 } enSettings;
 
 
@@ -579,6 +580,7 @@ typedef struct {
 
    AAMODE aamode;
    UPMODE upmode;
+   int scanline;
    POLYGONMODE polygonmode;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
