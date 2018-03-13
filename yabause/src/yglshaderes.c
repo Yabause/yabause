@@ -520,7 +520,6 @@ int Ygl_useUpscaleBuffer(void){
     glBindTexture(GL_TEXTURE_2D, _Ygl->upfbotex);
     glGetError();
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, up_scale*_Ygl->width, up_scale*_Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-printf("Use %d %d\n", up_scale*_Ygl->width, up_scale*_Ygl->height);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
