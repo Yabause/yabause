@@ -3462,7 +3462,7 @@ static const char fblit_head[] =
   "precision highp float;       \n"
   "uniform float fWidth; \n"
   "uniform float fHeight; \n"
-  "uniform float lineNumber; \n"
+  "uniform vec2 lineNumber; \n"
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
   "out vec4 fragColor;            \n";
@@ -3641,7 +3641,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glUniform1f(u_w, width);
   glUniform1f(u_h, height);
-  glUniform1f(u_l, yabsys.IsPal?625.0:525.0);
+  glUniform2f(u_l, yabsys.IsPal?625.0:525.0, GlHeight);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
