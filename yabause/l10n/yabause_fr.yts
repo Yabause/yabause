@@ -83,8 +83,8 @@ Axis R Trigger|Axe Gâchette D
 Backup Ram Manager|Gestion des Sauvegardes
 Bilinear|Bilnéaire
 Bilinear Filtering (Restart required)|Filtrage Bilinéaire (Redémarrer l'émulateur)
-Binary Files (*.bin) |Fichiers Binaire (*.bin)
-Binary Files (*.bin) |Fichiers Binaire (*.bin)
+Binary Files (*.bin)|Fichiers Binaire (*.bin)
+Binary Files (*.bin)|Fichiers Binaire (*.bin)
 Bios|Bios :
 Block Size :|Taille du Bloc :
 Bug report|Rapport de Bug
@@ -94,6 +94,7 @@ Byte Write : %1 %2|Ecrire un Byte : %1 %2
 Cancel|Annuler
 Cannot initialize Windows SPTI Driver|Ne peut pas initialiser le pilote SPTI
 Can't plug in the new controller, cancelling.|Ne peut pas brancher dans le nouveau contrôleur, annuler.
+Can't initialize Yabause|Ne peut pas intialiser Yabause.
 Cart/Memory|Cartouche/Mémoire
 Cartridge|Cartouche :
 CD Images (*.iso *.cue *.bin *.mds *.ccd)|Images CD (*.iso *.cue *.bin *.mds *.ccd)
@@ -119,16 +120,18 @@ Choose a location for your screenshot|Choisir un Chemin pour votre Capture d'Ecr
 Choose a location for your wav file|Choisir le Chemin pour votre Fichier WAV
 Choose a memory file|Choisir un Fichier Mémoire
 Choose a mpeg rom|Choisir une Rom MPEG
+Clear|Vider
+Clear configuration|Vider la Configuration
+Close|Fermer
 Code Breakpoints|Interruptions du Code :
 COFF Program Files (*.cof *.coff)|Fichiers Programmes COFF (*.cof *.coff)
 Comment :|Commentaire :
 Common Control Registers|Registres de Contrôle Commun
 Compatibility List|Liste de Compatibilité
 Compare Type|Type de Comparaison
+Couldn't save state file|Ne peut pas sauvegarder un fichier d'état
+Couldn't load state file|Ne peut pas charger un fichier d'état
 CPU Tesselation|Tesselation CPU
-Clear|Vider
-Clear configuration|Vider la Configuration
-Close|Fermer
 Data Size|Taille Donnée
 Data Size :|Taille des Données :
 Data Type|Type Donnée
@@ -353,6 +356,7 @@ Text|Texte
 Texture|Texture
 The dummies cores don't need configuration|Les noyaux factices n'ont pas besoin d'être configurés.
 To File...|Vers un Fichier...
+toolBar|Barre d'Outils
 Trace Logging|Enregistreur de Trace
 Translation|Traduction :
 Triangles using perspective correction|Triangles utilisant la correction de perspective
