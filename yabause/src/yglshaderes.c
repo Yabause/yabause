@@ -3509,7 +3509,7 @@ static const char fblitbilinear_img[] =
 
 /////
 
-int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
+int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float dispw, float disph) {
   float width = w;
   float height = h;
   u32 tex = srcTexture;
@@ -3640,7 +3640,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glUniform1f(u_w, width);
   glUniform1f(u_h, height);
-  glUniform2f(u_l, yabsys.IsPal?625.0:525.0, GlHeight);
+  glUniform2f(u_l, yabsys.IsPal?625.0:525.0, disph);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);

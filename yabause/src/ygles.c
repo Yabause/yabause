@@ -879,7 +879,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       _Ygl->sync = 0;
     }
     glViewport(0, 0, _Ygl->width, _Ygl->height);
-    YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->width / (float)_Ygl->width, (float)_Ygl->height / (float)_Ygl->height);
+    YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->width / (float)_Ygl->width, (float)_Ygl->height / (float)_Ygl->height, _Ygl->width, _Ygl->height);
      
 
     YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
@@ -3388,7 +3388,7 @@ void YglRender(void) {
    }
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
-   YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->width, _Ygl->height);
+   YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->width, _Ygl->height, w, h);
 
 render_finish:
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
