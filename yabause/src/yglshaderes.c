@@ -3432,6 +3432,7 @@ static int scanline = -1;
 static int u_w = -1;
 static int u_h = -1;
 static int u_l = -1;
+static int u_d = -1;
 static int outputSize = -1;
 static int inputSize = -1;
 
@@ -3462,6 +3463,7 @@ static const char fblit_head[] =
   "uniform float fWidth; \n"
   "uniform float fHeight; \n"
   "uniform vec2 lineNumber; \n"
+  "uniform float decim; \n"
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
   "out vec4 fragColor;            \n";
@@ -3612,6 +3614,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     u_w = glGetUniformLocation(blit_prg, "fWidth");
     u_h = glGetUniformLocation(blit_prg, "fHeight");
     u_l = glGetUniformLocation(blit_prg, "lineNumber");
+    u_d = glGetUniformLocation(blit_prg, "decim");
   }
   else{
     glUseProgram(blit_prg);
@@ -3632,15 +3635,18 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     0.0f, 0.0f,
     1.0f, 1.0f,
     0.0f, 1.0f };
+  float nbLines = yabsys.IsPal?625.0:525.0;
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
-
   glUniform1f(u_w, width);
   glUniform1f(u_h, height);
-  glUniform2f(u_l, yabsys.IsPal?625.0:525.0, disph);
+  glUniform2f(u_l, nbLines, disph);
+  int decim = (disph + nbLines) / nbLines;
+  if (decim < 2) decim = 2;
+  glUniform1f(u_d, (float)decim);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
