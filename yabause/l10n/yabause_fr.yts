@@ -164,6 +164,7 @@ Eject/Load ISO...|Ejecter/Charger un ISO...
 ELF Program Files (*elf)|Fichiers Programme ELF (*.elf)
 End Address:|Adresse de Fin :
 English|Anglais
+Embellishment filter :|Filtre d'Embellissement
 Enable|Activer
 Enable Bios Emulation|Activer l'Emulation du Bios
 Enable Code : %1 %2|Activer le Code : %1 %2
@@ -258,9 +259,11 @@ Open &ISO...|Ouvrir un Fichier &ISO...
 Open CD Rom|Ouvrir un Lecteur CD ROM
 Open SSF|Ouvrir le Lecteur SSF
 Open&Tray|Ouvrir le Plateau
+OpenGL size :|Taille en OpenGL :
 OpenGL Video Interface|Interface Vidéo OpenGL
 Options|Options
-Original aspect ratio|Proportion d'origine
+Original (original resolution of the Saturn)|Original (Résolution original de la Saturn)
+Original aspect ratio|Proportions d'Origine
 OSD Core|Noyau OSD :
 Pad|Manette
 Pad Configuration|Configuration de la Manette
@@ -300,6 +303,8 @@ Screen Enabled|Ecran Activé
 Screen Select:|Choix de l'Ecran :
 Sc&reenshot|Copie d'Ec&ran
 Scanline filter|Filtre Scanline
+Scanline off|Scanline Off
+Scanline on|Scanline On
 SCSP|SCSP
 SCSP Channels|Canaux SCSP
 SDL Joystick Interface|Interface SDL du Joystick
@@ -343,6 +348,7 @@ Step Over|Sauter
 Stop|Arrêter
 Stretch to window|Etirer dans la Fenêtre
 Synchronize Saturn internal clock with set time|Synchroniser l'Horloge Interne de la Saturn avec l'Heure Locale
+Tesselation|Tesselation
 Text|Texte
 Texture|Texture
 The dummies cores don't need configuration|Les noyaux factices n'ont pas besoin d'être configurés.
@@ -351,6 +357,7 @@ Trace Logging|Enregistreur de Trace
 Translation|Traduction :
 Triangles using perspective correction|Triangles utilisant la correction de perspective
 Trigger|Gâchette
+TV effect :|Effet TV
 Type:|Type :
 Unable to add code|Ne peut pas ajouter un code
 Unable to change description|Ne peut pas changer la description
@@ -365,6 +372,7 @@ Unable to open file for loading|Ne peut pas ouvrir le fichier à charger
 Unable to open file for saving|Ne peut pas ouvrir le fichier à sauvegarder
 Unable to remove code|Ne peux pas enlever le Code
 Unknown (%1)|Inconnu (%1)
+Upscale Filter :|Filtre D'Interpollation :
 Use new scsp|Utiliser le nouveau SCSP
 Use Vdp1 Cache|Utiliser le Cache VDP1
 Value|Valeur
