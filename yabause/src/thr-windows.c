@@ -23,6 +23,7 @@
 */
 
 #include <windows.h>
+#include <WinDef.h>
 #include "core.h"
 #include "threads.h"
 
@@ -292,23 +293,77 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 }
 
 //////////////////////////////////////////////////////////////////////////////
+#if 0
+static int init = 0;
+
+typedef BOOL ( * EnterSynchronizationBarrier_fct)( LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags);
+EnterSynchronizationBarrier_fct enterSynchronizationBarrier = NULL;
+
+typedef BOOL ( * InitializeSynchronizationBarrier_fct)(  LPSYNCHRONIZATION_BARRIER lpBarrier, LONG lTotalThreads, LONG lSpinCount);
+InitializeSynchronizationBarrier_fct initializeSynchronizationBarrier = NULL;
+
+static void DoDynamicInit() {
+  HINSTANCE mon_module = LoadLibrary("kernel32.dll");
+  if(mon_module != NULL)
+  {
+   enterSynchronizationBarrier = (EnterSynchronizationBarrier_fct)GetProcAddress(mon_module, "EnterSynchronizationBarrier");
+   initializeSynchronizationBarrier = (InitializeSynchronizationBarrier_fct)GetProcAddress(mon_module, "InitializeSynchronizationBarrier");
+  }
+}
+#endif
 
 typedef struct YabBarrier_win32
 {
   SYNCHRONIZATION_BARRIER barrier;
+  CRITICAL_SECTION mutex;
+  HANDLE empty;
+  int capacity;
+  int current;
+  int reset;
 } YabBarrier_win32;
 
 void YabThreadBarrierWait(YabBarrier *bar){
+    int wait = 0;
     if (bar == NULL) return;
     YabBarrier_win32 * pctx;
     pctx = (YabBarrier_win32 *)bar;
-    EnterSynchronizationBarrier(&pctx->barrier, 0);
+    //if (enterSynchronizationBarrier != NULL) {
+    //  enterSynchronizationBarrier(&pctx->barrier, 0);
+    //} else {
+      EnterCriticalSection(&pctx->mutex);
+      if (pctx->reset == 1) pctx->current = pctx->capacity;
+      pctx->reset = 0;
+      pctx->current--;
+      wait = (pctx->current != 0);
+      if (!wait) {
+        pctx->reset = 1;
+      }
+      LeaveCriticalSection(&pctx->mutex);
+      SetEvent(pctx->empty);
+      if (wait) {
+        while (pctx->current != 0)
+          WaitForSingleObject(pctx->empty,INFINITE);
+      }
+    //}
 }
 
 YabBarrier * YabThreadCreateBarrier(int nbWorkers){
+    //if (init == 0) {
+    //  DoDynamicInit();
+    //  init = 1;
+    //}
     YabBarrier_win32 * mtx = (YabBarrier_win32 *)malloc(sizeof(YabBarrier_win32));
-    InitializeSynchronizationBarrier( &mtx->barrier, nbWorkers, -1 );
-    return (YabBarrier *)mtx;
+    //if (initializeSynchronizationBarrier != NULL) {
+    //  initializeSynchronizationBarrier( &mtx->barrier, nbWorkers, -1 );
+    //  return (YabBarrier *)mtx;
+    //} else {
+      InitializeCriticalSection(&mtx->mutex);
+      mtx->empty = CreateEvent(NULL, FALSE, FALSE, NULL);
+      mtx->capacity = nbWorkers;
+      mtx->current = nbWorkers;
+      mtx->reset = 0;
+      return (YabBarrier *)mtx;
+    //}
 }
 
 //////////////////////////////////////////////////////////////////////////////
