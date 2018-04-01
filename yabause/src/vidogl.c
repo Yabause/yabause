@@ -3244,7 +3244,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         *(texture->textdata++) = 0x00000000;
         continue; // may be faster than GPU
       }
-      switch (fixVdp2Regs->RPMD | g_rgb1.rgb_type) {
+      switch (fixVdp2Regs->RPMD | rgb_type ) {
       case 0:
         parameter = &paraA;
         if (parameter->coefenab) {
