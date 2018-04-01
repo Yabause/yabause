@@ -3499,7 +3499,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       if (info->LineColorBase != 0 && VDP2_CC_NONE != (info->blendmode&0x03)) {
         if ((color & 0xFF000000) != 0 ) {
           color |= 0x8000;
-          if (parameter->lineaddr != 0xFFFFFFFF) {
+          if (parameter->lineaddr != 0xFFFFFFFF && parameter->lineaddr != 0x000000 ) {
             color |= ((parameter->lineaddr & 0x7F) | 0x80) << 16;
           }
         }
