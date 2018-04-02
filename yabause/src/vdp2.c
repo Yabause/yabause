@@ -384,38 +384,24 @@ void Vdp2HBlankOUT(void) {
     }
 
 
-    if ((Vdp2Lines[0].BGON & 0x01) != (Vdp2Lines[yabsys.LineCount].BGON & 0x01)){
-      *Vdp2External.perline_alpha |= 0x1;
-    }
-    else if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
+    if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
+printf("perline_alpha CCRNA on %d %d %x\n", yabsys.LineCount, yabsys.VBlankLineCount, Vdp2Lines[yabsys.LineCount].CCCTL);
       *Vdp2External.perline_alpha |= 0x1;
     }
 
-    if ((Vdp2Lines[0].BGON & 0x02) != (Vdp2Lines[yabsys.LineCount].BGON & 0x02)){
-      *Vdp2External.perline_alpha |= 0x2;
-    }
-    else if ((Vdp2Lines[0].CCRNA & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0xFF00)){
+    if ((Vdp2Lines[0].CCRNA & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0xFF00)){
       *Vdp2External.perline_alpha |= 0x2;
     }
 
-    if ((Vdp2Lines[0].BGON & 0x04) != (Vdp2Lines[yabsys.LineCount].BGON & 0x04)){
-      *Vdp2External.perline_alpha |= 0x4;
-    }
-    else if ((Vdp2Lines[0].CCRNB & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0xFF00)){
+    if ((Vdp2Lines[0].CCRNB & 0xFF00) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0xFF00)){
       *Vdp2External.perline_alpha |= 0x4;
     }
 
-    if ((Vdp2Lines[0].BGON & 0x08) != (Vdp2Lines[yabsys.LineCount].BGON & 0x08)){
-      *Vdp2External.perline_alpha |= 0x8;
-    }
-    else if ((Vdp2Lines[0].CCRNB & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0x00FF)){
+    if ((Vdp2Lines[0].CCRNB & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNB & 0x00FF)){
       *Vdp2External.perline_alpha |= 0x8;
     }
 
-    if ((Vdp2Lines[0].BGON & 0x10) != (Vdp2Lines[yabsys.LineCount].BGON & 0x10)){
-      *Vdp2External.perline_alpha |= 0x10;
-    }
-    else if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
+    if (Vdp2Lines[0].CCRR != Vdp2Lines[yabsys.LineCount].CCRR){
       *Vdp2External.perline_alpha |= 0x10;
     }
 
@@ -424,6 +410,22 @@ void Vdp2HBlankOUT(void) {
       *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
     }
     if (Vdp2Lines[0].COAR != Vdp2Lines[yabsys.LineCount].COAR){
+
+      *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+    }
+    if (Vdp2Lines[0].COBG != Vdp2Lines[yabsys.LineCount].COBG){
+
+      *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+    }
+    if (Vdp2Lines[0].COAG != Vdp2Lines[yabsys.LineCount].COAG){
+
+      *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+    }
+    if (Vdp2Lines[0].COBB != Vdp2Lines[yabsys.LineCount].COBB){
+
+      *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
+    }
+    if (Vdp2Lines[0].COAB != Vdp2Lines[yabsys.LineCount].COAB){
 
       *Vdp2External.perline_alpha |= Vdp2Lines[yabsys.LineCount].CLOFEN;
     }
