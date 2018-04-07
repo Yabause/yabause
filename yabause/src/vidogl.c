@@ -1162,7 +1162,7 @@ static void Vdp2GenerateWindowInfo(void)
   int i;
   int HShift;
   int v = 0;
-  u32 LineWinAddr;
+  u32 LineWinAddr; 
 
   // Is there BG uses Window0?
   if ((fixVdp2Regs->WCTLA & 0X2) || (fixVdp2Regs->WCTLA & 0X200) || (fixVdp2Regs->WCTLB & 0X2) || (fixVdp2Regs->WCTLB & 0X200) ||
@@ -1207,7 +1207,17 @@ static void Vdp2GenerateWindowInfo(void)
         {
           if (m_vWindinfo0[v].WinShowLine) m_b0WindowChg = 1;
           m_vWindinfo0[v].WinShowLine = 0;
-
+          // finish vertex
+          if (m_vWindinfo0[v].WinShowLine != preshowline) {
+            _Ygl->win0v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+            _Ygl->win0_vertexcnt++;
+            _Ygl->win0v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1;
+            _Ygl->win0v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+            _Ygl->win0_vertexcnt++;
+            _Ygl->win0v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
+            _Ygl->win0v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+            _Ygl->win0_vertexcnt++;
+          }
         }
         else {
           short HStart = Vdp2RamReadWord(LineWinAddr + (v << 2));
@@ -1291,8 +1301,8 @@ static void Vdp2GenerateWindowInfo(void)
           }
           preHStart = HStart;
           preHEnd = HEnd;
-          preshowline = m_vWindinfo0[v].WinShowLine;
         }
+        preshowline = m_vWindinfo0[v].WinShowLine;
       }
 
       // Parameter Mode
@@ -1409,6 +1419,19 @@ static void Vdp2GenerateWindowInfo(void)
         {
           if (m_vWindinfo1[v].WinShowLine) m_b1WindowChg = 1;
           m_vWindinfo1[v].WinShowLine = 0;
+
+          // finish vertex
+          if (m_vWindinfo1[v].WinShowLine != preshowline) {
+            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+            _Ygl->win1_vertexcnt++;
+            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1;
+            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+            _Ygl->win1_vertexcnt++;
+            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHEnd + 1; // add terminator
+            _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+            _Ygl->win1_vertexcnt++;
+          }
+
         }
         else {
           short HStart = Vdp2RamReadWord(LineWinAddr + (v << 2));
@@ -1490,8 +1513,8 @@ static void Vdp2GenerateWindowInfo(void)
           }
           preHStart = HStart;
           preHEnd = HEnd;
-          preshowline = m_vWindinfo1[v].WinShowLine;
         }
+        preshowline = m_vWindinfo1[v].WinShowLine;
       }
 
 
