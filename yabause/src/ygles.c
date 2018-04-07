@@ -514,7 +514,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
   glGenBuffers(1, &tm->pixelBufferID);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-  glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_STREAM_DRAW);
+  glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
   glGenTextures(1, &tm->textureID);
@@ -532,7 +532,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-  tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLDEBUG("Fail to init YglTM->texture %04X", error);
@@ -593,7 +593,7 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-    tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_WRITE_BIT | flg );
+    tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
     if (tm->texture == NULL){
       abort();
     }
@@ -637,7 +637,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
 
   glGenBuffers(1, &new_pixelBufferID);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
-  glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_STREAM_DRAW);
+  glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_DYNAMIC_DRAW);
 
   int dh = tm->height;
   if (dh > height) dh = height;
@@ -655,7 +655,7 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
 
 
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
-  new_texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT );
+  new_texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   if ((error = glGetError()) != GL_NO_ERROR){
     YGLDEBUG("Fail to init new_texture %04X", error);
     abort();
@@ -3796,7 +3796,7 @@ u32 * YglGetColorRamPointer() {
 #if 0
     glGenBuffers(1, &_Ygl->cram_tex_pbo);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->cram_tex_pbo);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, 2048 * 4, NULL, GL_STREAM_DRAW);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 2048 * 4, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 #endif
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -3939,7 +3939,7 @@ u32 * YglGetLineColorPointer(){
 
     glGenBuffers(1, &_Ygl->linecolor_pbo);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_STREAM_DRAW);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
@@ -3957,7 +3957,7 @@ u32 * YglGetLineColorPointer(){
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->linecolor_pbo);
-  _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+  _Ygl->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLLOG("Fail to init YglTM->lincolor_buf %04X", error);
@@ -3996,7 +3996,7 @@ u32* YglGetBackColorPointer() {
 
     glGenBuffers(1, &_Ygl->back_pbo);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->back_pbo);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_STREAM_DRAW);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
@@ -4021,7 +4021,7 @@ u32* YglGetBackColorPointer() {
   if( _Ygl->backcolor_buf != NULL ){
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   }
-  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  _Ygl->backcolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 512 * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLLOG("Fail to init YglTM->backcolor_buf %04X", error);
@@ -4119,7 +4119,7 @@ u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount, int depth ){
 
     glGenBuffers(1, &perline->linecolor_pbo);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4 * depth, NULL, GL_STREAM_DRAW);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, 512 * 4 * depth, NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
@@ -4138,7 +4138,7 @@ u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount, int depth ){
 
   glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);
-  perline->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, linecount * 4 * depth, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+  perline->lincolor_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, linecount * 4 * depth, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
   if ((error = glGetError()) != GL_NO_ERROR)
   {
     YGLLOG("Fail to init YglTM->lincolor_buf %04X", error);
