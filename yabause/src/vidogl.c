@@ -1338,6 +1338,14 @@ static void Vdp2GenerateWindowInfo(void)
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
               _Ygl->win0_vertexcnt++;
             }
+            else if (v == (fixVdp2Regs->WPEY0 - 1)) {
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HStart;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = HEnd + 1;
+              _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
+              _Ygl->win0_vertexcnt++;
+            }
           }
           preHStart = HStart;
           preHEnd = HEnd;
@@ -1362,7 +1370,7 @@ static void Vdp2GenerateWindowInfo(void)
 
         m_vWindinfo0[v].WinHStart = fixVdp2Regs->WPSX0 >> HShift;
         m_vWindinfo0[v].WinHEnd = fixVdp2Regs->WPEX0 >> HShift;
-        if (v < fixVdp2Regs->WPSY0 || v >= fixVdp2Regs->WPEY0)
+        if (v < fixVdp2Regs->WPSY0 || v > fixVdp2Regs->WPEY0)
         {
           if (m_vWindinfo0[v].WinShowLine) m_b0WindowChg = 1;
           m_vWindinfo0[v].WinShowLine = 0;
@@ -1550,6 +1558,15 @@ static void Vdp2GenerateWindowInfo(void)
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
               _Ygl->win1_vertexcnt++;
             }
+            else if (v == (fixVdp2Regs->WPEY1 - 1)) {
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HStart;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = HEnd + 1;
+              _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
+              _Ygl->win1_vertexcnt++;
+            }
+
           }
           preHStart = HStart;
           preHEnd = HEnd;
