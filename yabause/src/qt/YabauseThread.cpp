@@ -142,6 +142,39 @@ void YabauseThread::reloadControllers()
 		settings->beginGroup( QString( "Input/Port/%1/Id" ).arg( port ) );
 		QStringList ids = settings->childGroups();
 		settings->endGroup();
+
+    if (port == 1 && ids.size() == 0) {
+      PerPad_struct* padbits = PerPadAdd(&PORTDATA1);
+      PerSetKey(Qt::Key_Up, PERPAD_UP, padbits);
+      PerSetKey(Qt::Key_Right, PERPAD_RIGHT, padbits);
+      PerSetKey(Qt::Key_Down, PERPAD_DOWN, padbits);
+      PerSetKey(Qt::Key_Left, PERPAD_LEFT, padbits);
+      PerSetKey(Qt::Key_E, PERPAD_RIGHT_TRIGGER, padbits);
+      PerSetKey(Qt::Key_Q, PERPAD_LEFT_TRIGGER, padbits);
+      PerSetKey(Qt::Key_Return, PERPAD_START, padbits);
+      PerSetKey(Qt::Key_Z, PERPAD_A, padbits);
+      PerSetKey(Qt::Key_X, PERPAD_B, padbits);
+      PerSetKey(Qt::Key_C, PERPAD_C, padbits);
+      PerSetKey(Qt::Key_A, PERPAD_X, padbits);
+      PerSetKey(Qt::Key_S, PERPAD_Y, padbits);
+      PerSetKey(Qt::Key_D, PERPAD_Z, padbits);
+      Settings* settings = QtYabause::settings();
+      settings->setValue("Input/Port/1/Id/1/Type", 2);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/0", Qt::Key_Up);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/1", Qt::Key_Right);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/2", Qt::Key_Down);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/3", Qt::Key_Left);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/4", Qt::Key_E);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/5", Qt::Key_Q);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/6", Qt::Key_Return);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/7", Qt::Key_Z);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/8", Qt::Key_X);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/9", Qt::Key_C);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/10", Qt::Key_A);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/11", Qt::Key_S);
+      settings->setValue("Input/Port/1/Id/1/Controller/2/Key/12", Qt::Key_D);
+      return;
+    }
 		
 		ids.sort();
 		foreach ( const QString& id, ids )
@@ -158,13 +191,11 @@ void YabauseThread::reloadControllers()
 					QStringList padKeys = settings->childKeys();
 					settings->endGroup();
 					
-					padKeys.sort();
-					foreach ( const QString& padKey, padKeys )
-					{
-						const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( padKey ) ).toString();
-						
-						PerSetKey( key.toUInt(), padKey.toUInt(), padbits );
-					}
+          padKeys.sort();
+          foreach(const QString& padKey, padKeys) {
+            const QString key = settings->value(QString(UIPortManager::mSettingsKey).arg(port).arg(id).arg(type).arg(padKey)).toString();
+            PerSetKey(key.toUInt(), padKey.toUInt(), padbits);
+          }
 					break;
 				}
 				case PERWHEEL:
@@ -427,9 +458,9 @@ void YabauseThread::resetYabauseConf()
 	// free structure
 	memset( &mYabauseConf, 0, sizeof( yabauseinit_struct ) );
 	// fill default structure
-	mYabauseConf.m68kcoretype = M68KCORE_C68K;
+  mYabauseConf.m68kcoretype = QtYabause::default68kCore().id;
 	mYabauseConf.percoretype = QtYabause::defaultPERCore().id;
-	mYabauseConf.sh2coretype = SH2CORE_DEFAULT;
+  mYabauseConf.sh2coretype = QtYabause::defaultCpuCore()->id;
 	mYabauseConf.vidcoretype = QtYabause::defaultVIDCore().id;
 	mYabauseConf.sndcoretype = QtYabause::defaultSNDCore().id;
 	mYabauseConf.cdcoretype = QtYabause::defaultCDCore().id;
@@ -437,7 +468,6 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.regionid = 0;
 	mYabauseConf.biospath = 0;
 	mYabauseConf.cdpath = 0;
-	mYabauseConf.buppath = 0;
 	mYabauseConf.mpegpath = 0;
 	mYabauseConf.cartpath = 0;
 	mYabauseConf.videoformattype = VIDEOFORMATTYPE_NTSC;
@@ -450,6 +480,8 @@ void YabauseThread::resetYabauseConf()
   mYabauseConf.resolution_mode = 0;
   mYabauseConf.rotate_screen = 0;
   mYabauseConf.scsp_sync_count_per_frame = 1;
+  mYabauseConf.use_new_scsp = 1;
+  mYabauseConf.buppath = strdup(getDataDirPath().append("/bkram.bin").toLatin1().constData());
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

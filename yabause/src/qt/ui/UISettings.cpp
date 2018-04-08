@@ -487,11 +487,11 @@ void UISettings::loadSettings()
 	cbOSDCore->setCurrentIndex( cbOSDCore->findData( s->value( "Video/OSDCore", QtYabause::defaultOSDCore().id ).toInt() ) );
 #endif
 
-	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 0 ).toInt() );
+	cbAspectRatio->setCurrentIndex( s->value( "Video/AspectRatio", 1 ).toInt() );
 	leWinWidth->setText( s->value( "Video/WindowWidth", s->value( "Video/Width", 640 ) ).toString() );
 	leWinHeight->setText( s->value( "Video/WindowHeight", s->value( "Video/Height", 480 ) ).toString() );
-	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 640 ) ).toString(),
-										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 480 ) ).toString());	
+	QString text = QString("%1x%2").arg(s->value( "Video/FullscreenWidth", s->value( "Video/Width", 1920 ) ).toString(),
+										s->value( "Video/FullscreenHeight", s->value( "Video/Height", 1080 ) ).toString());	
 	cbFullscreenResolution->setCurrentIndex(cbFullscreenResolution->findText(text));
 	cbBilinear->setChecked( s->value( "Video/Bilinear", false ).toBool() );
 	cbFullscreen->setChecked( s->value( "Video/Fullscreen", false ).toBool() );
@@ -506,7 +506,7 @@ void UISettings::loadSettings()
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
-   cbNewScsp->setChecked(s->value("Sound/NewScsp", false).toBool());
+   cbNewScsp->setChecked(s->value("Sound/NewScsp", true).toBool());
 
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
@@ -515,7 +515,7 @@ void UISettings::loadSettings()
 	leCartridgeModemPort->setText( s->value( "Cartridge/ModemPort", QString("1337") ).toString() );
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
-  checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory").toBool());
+  checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory", true).toBool());
 
   spinBox_scs_sync_count->setValue(s->value("Sound/ScspSync", 1).toInt());
   

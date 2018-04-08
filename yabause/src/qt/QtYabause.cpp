@@ -441,16 +441,27 @@ SoundInterface_struct QtYabause::defaultSNDCore()
 
 VideoInterface_struct QtYabause::defaultVIDCore()
 {
-	return VIDSoft;
+	return VIDOGL;
 }
 
 OSD_struct QtYabause::defaultOSDCore()
 {
-	return OSDSoft;
+	return OSDNnovg;
+}
+
+SH2Interface_struct * QtYabause::defaultCpuCore() {
+
+#if DYNAREC_DEVMIYAX
+  return &SH2Dyn;
+#else
+  return &SH2Interpreter;
+#endif
 }
 
 PerInterface_struct QtYabause::defaultPERCore()
 {
+  return PERQT;
+/*
 #ifdef HAVE_LIBSDL
 	return PERSDLJoy;
 #elif defined (HAVE_DIRECTINPUT)
@@ -458,6 +469,7 @@ PerInterface_struct QtYabause::defaultPERCore()
 #else
 	return PERQT;
 #endif
+*/
 }
 
 M68K_struct QtYabause::default68kCore()

@@ -463,7 +463,7 @@ void UIYabause::sizeRequested( const QSize& s )
 
 void UIYabause::fixAspectRatio( int width , int height )
 {
-	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio").toInt();
+	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio",1).toInt();
 
 	switch( aspectRatio )
 	{
@@ -638,7 +638,6 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
     hwnd_ = (HWND)this->winId(); //FindWindow(0, 0);
     saved_window_info_.style = GetWindowLong(hwnd_, GWL_STYLE);
     saved_window_info_.ex_style = GetWindowLong(hwnd_, GWL_EXSTYLE);
-
     saved_window_info_.windowsize = this->size();
     saved_window_info_.windowspos = this->pos();
 
@@ -714,7 +713,7 @@ void UIYabause::fullscreenRequested( bool f )
 		//ps.setY(0);
 		//this->move(ps);
 
-		toggleFullscreen(vs->value("Video/FullscreenWidth").toInt(), vs->value("Video/FullscreenHeight").toInt(), 
+		toggleFullscreen(vs->value("Video/FullscreenWidth","1920").toInt(), vs->value("Video/FullscreenHeight", "1080").toInt(),
 						f, vs->value("Video/VideoFormat").toInt());
 
 		showFullScreen();
@@ -960,11 +959,16 @@ void UIYabause::on_aFileOpenISO_triggered()
 		const QString currentCdRomISO = vs->value( "General/CdRomISO" ).toString();
 		
 		QtYabause::settings()->setValue( "Recents/ISOs", fn );
-		
+
+    // Save it permanently
+    QtYabause::settings()->setValue("General/CdRom", ISOCD.id);
+    QtYabause::settings()->setValue("General/CdRomISO", fn);
+    QtYabause::settings()->setValue("General/PlaySSF", false);
+
 		vs->setValue( "autostart", false );
 		vs->setValue( "General/CdRom", ISOCD.id );
 		vs->setValue( "General/CdRomISO", fn );
-      vs->setValue("General/PlaySSF", false);
+    vs->setValue("General/PlaySSF", false);
 		
 		mYabauseThread->pauseEmulation( false, true );
 		

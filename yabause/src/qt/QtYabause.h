@@ -122,7 +122,8 @@ namespace QtYabause
 	OSD_struct defaultOSDCore();
 	PerInterface_struct defaultPERCore();
 	SH2Interface_struct defaultSH2Core();
-   M68K_struct default68kCore();
+  M68K_struct default68kCore();
+  SH2Interface_struct * defaultCpuCore();
 	
 	// padsbits
 	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );
