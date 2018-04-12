@@ -53,6 +53,9 @@
 #include "../vdp2.h"
 #include "../cdbase.h"
 #include "../peripheral.h"
+#ifdef DYNAREC_KRONOS
+#include "../sh2_kronos/sh2int_kronos.h"
+#endif
 
 #define AR (4.0f/3.0f)
 #define WINDOW_WIDTH 1200
@@ -86,6 +89,9 @@ SH2Interface_struct *SH2CoreList[] = {
 #endif
 #ifdef DYNAREC_DEVMIYAX
 &SH2Dyn,
+#endif
+#ifdef DYNAREC_KRONOS
+&SH2KronosInterpreter,
 #endif
 NULL
 };
@@ -329,12 +335,17 @@ int main(int argc, char *argv[]) {
         yinit.sh2coretype = 1;
       }
       else if (strcmp(argv[i], "-cd") == 0 ) {
-      #if defined(DYNAREC_DEVMIYAX)
+      #if defined(DYNAREC_KRONOS)
         printf("Use new dynarec core emulation\n");
-        yinit.sh2coretype = 3;
+        yinit.sh2coretype = 8;
       #else
-        printf("No dynarec core emulation: fallback on SW core emulation\n");
-        yinit.sh2coretype = 0;
+        #if defined(DYNAREC_DEVMIYAX)
+          printf("Use new dynarec core emulation\n");
+          yinit.sh2coretype = 3;
+        #else
+          printf("No dynarec core emulation: fallback on SW core emulation\n");
+          yinit.sh2coretype = 0;
+        #endif
       #endif
       }
 
