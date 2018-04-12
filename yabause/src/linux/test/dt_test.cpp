@@ -3,6 +3,7 @@
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "memory.h"
 extern "C" {
 extern void initEmulation();
 }
@@ -36,10 +37,10 @@ TEST_F(DtTest, normal) {
 
   MSH2->regs.R[2]=0x2;
 
-  SH2MappedMemoryWriteWord( 0x06000246, 0x4210 ); 
-  SH2MappedMemoryWriteWord( 0x06000248, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x0600024A, 0x0009 );  // nop 
-  SH2MappedMemoryWriteLong( 0x0600024C, 0xDEADCAFE ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000246, 0x4210 ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000248, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x0600024A, 0x0009 );  // nop 
+  SH2MappedMemoryWriteLong(MSH2, 0x0600024C, 0xDEADCAFE ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
@@ -50,10 +51,10 @@ TEST_F(DtTest, normal) {
 
   MSH2->regs.R[2]=0x2;
 
-  SH2MappedMemoryWriteWord( 0x06000246, 0x4210 ); 
-  SH2MappedMemoryWriteWord( 0x06000248, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x0600024A, 0x0009 );  // nop 
-  SH2MappedMemoryWriteLong( 0x0600024C, 0xDEADCAFE ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000246, 0x4210 ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000248, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x0600024A, 0x0009 );  // nop 
+  SH2MappedMemoryWriteLong(MSH2, 0x0600024C, 0xDEADCAFE ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x1 );
@@ -64,10 +65,10 @@ TEST_F(DtTest, normal) {
 
   MSH2->regs.R[2]=0x1;
 
-  SH2MappedMemoryWriteWord( 0x06000246, 0x4210 ); 
-  SH2MappedMemoryWriteWord( 0x06000248, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x0600024A, 0x0009 );  // nop 
-  SH2MappedMemoryWriteLong( 0x0600024C, 0xDEADCAFE ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000246, 0x4210 ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000248, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x0600024A, 0x0009 );  // nop 
+  SH2MappedMemoryWriteLong(MSH2, 0x0600024C, 0xDEADCAFE ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
@@ -81,10 +82,10 @@ TEST_F(DtTest, normal) {
 TEST_F(DtTest, negative) {
   MSH2->regs.R[2]=-256;
 
-  SH2MappedMemoryWriteWord( 0x06000246, 0x4210 ); 
-  SH2MappedMemoryWriteWord( 0x06000248, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x0600024A, 0x0009 );  // nop 
-  SH2MappedMemoryWriteLong( 0x0600024C, 0xDEADCAFE ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000246, 0x4210 ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000248, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x0600024A, 0x0009 );  // nop 
+  SH2MappedMemoryWriteLong(MSH2, 0x0600024C, 0xDEADCAFE ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );
@@ -97,10 +98,10 @@ TEST_F(DtTest, negative) {
 TEST_F(DtTest, overflow) {
   MSH2->regs.R[2]=0x80000000;
 
-  SH2MappedMemoryWriteWord( 0x06000246, 0x4210 ); 
-  SH2MappedMemoryWriteWord( 0x06000248, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x0600024A, 0x0009 );  // nop 
-  SH2MappedMemoryWriteLong( 0x0600024C, 0xDEADCAFE ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000246, 0x4210 ); 
+  SH2MappedMemoryWriteWord(MSH2, 0x06000248, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x0600024A, 0x0009 );  // nop 
+  SH2MappedMemoryWriteLong(MSH2, 0x0600024C, 0xDEADCAFE ); 
 
   MSH2->regs.PC = ( 0x06000246 );
   MSH2->regs.SR.all = ( 0x0 );

@@ -18,7 +18,7 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-
+//#define TEST_KRONOS_INTERPRETER
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -31,6 +31,9 @@
 #include "../peripheral.h"
 #include "../sh2core.h"
 #include "../sh2int.h"
+#ifdef TEST_KRONOS_INTERPRETER
+#include "../sh2_kronos/sh2int_kronos.h"
+#endif
 #ifdef HAVE_LIBGL
 #include "../vidogl.h"
 #include "../ygl.h"
@@ -61,6 +64,9 @@ NULL
 };
 
 SH2Interface_struct *SH2CoreList[] = {
+#ifdef TEST_KRONOS_INTERPRETER
+&SH2KronosInterpreter,
+#endif
 &SH2Interpreter,
 NULL
 };
@@ -127,7 +133,6 @@ void YuiInit() {
 	yinit.buppath = NULL;
 	yinit.mpegpath = NULL;
 	yinit.cartpath = NULL;
-  yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
 	yinit.osdcoretype = OSDCORE_DEFAULT;
 	yinit.skip_load = 0;
 	yinit.usethreads = 0;
@@ -140,7 +145,6 @@ void initEmulation() {
     printf("YabauseSh2Init error \n\r");
     return;
   }
-  CurrentSH2 = MSH2;
   enableCache();
   initDone = 1;
   }

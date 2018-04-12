@@ -3,6 +3,7 @@
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "memory.h"
 extern "C" {
 extern void initEmulation();
 }
@@ -42,13 +43,13 @@ TEST_F(MaclTest, normal) {
   MSH2->regs.MACH =(0x00000003);
   MSH2->regs.MACL =(0x9792C400);
 
-  SH2MappedMemoryWriteLong( 0x06001F04, 0xFFFB60F6 );
-  SH2MappedMemoryWriteLong( 0x06030064, 0x00007421 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06001F04, 0xFFFB60F6 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06030064, 0x00007421 );
 
   // mac.l @r7+, @r6+
-  SH2MappedMemoryWriteWord( 0x06000000, 0x067F );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x067F );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -69,13 +70,13 @@ TEST_F(MaclTest, normal2) {
   MSH2->regs.MACH =(0);
   MSH2->regs.MACL =(0);
 
-  SH2MappedMemoryWriteLong( 0x06001F04, 0x00036420 );
-  SH2MappedMemoryWriteLong( 0x060300c0, 0xffff1cc5 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06001F04, 0x00036420 );
+  SH2MappedMemoryWriteLong(MSH2, 0x060300c0, 0xffff1cc5 );
 
   // mac.l @r7+, @r6+
-  SH2MappedMemoryWriteWord( 0x06000000, 0x067F );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x067F );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);

@@ -3,6 +3,7 @@
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "memory.h"
 extern "C" {
 extern void initEmulation();
 }
@@ -36,9 +37,9 @@ TEST_F(CmpPzTest, normal) {
   MSH2->regs.R[1]=0x0001; // m
   MSH2->regs.SR.all = (0x00000E0);
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x4111 );  // cmppl R[1]
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x4111 );  // cmppl R[1]
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -51,9 +52,9 @@ TEST_F(CmpPzTest, Zero) {
   MSH2->regs.R[1]=0x0; // m
   MSH2->regs.SR.all = (0x00000E0);
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x4111 );  // cmppz R[1]
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x4111 );  // cmppz R[1]
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);
@@ -66,9 +67,9 @@ TEST_F(CmpPzTest, min) {
   MSH2->regs.R[1]=0xFFFFFFFE; // m
   MSH2->regs.SR.all = (0x00000E1);
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x4111 );  // cmppz R[1]
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );  // rts
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x4111 );  // cmppz R[1]
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06000000 );
   SH2TestExec(MSH2, 1);

@@ -3,6 +3,7 @@
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "memory.h"
 extern "C" {
 extern void initEmulation();
 }
@@ -34,10 +35,10 @@ TEST_F(LdsTest, ldsmach) {
 
   MSH2->regs.R[1]=0x03216721;
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x410A );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );
-  SH2MappedMemoryWriteLong( 0x06000250, 0x03216721 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x410A );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06000250, 0x03216721 );
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x00000000 );
@@ -51,10 +52,10 @@ TEST_F(LdsTest, ldsmmach) {
 
   MSH2->regs.R[1]=0x06000250;
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x4106 );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );
-  SH2MappedMemoryWriteLong( 0x06000250, 0x03216721 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x4106 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06000250, 0x03216721 );
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x00000000 );
@@ -68,10 +69,10 @@ TEST_F(LdsTest, ldsmacl) {
 
   MSH2->regs.R[1]=0x03216721;
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x411A );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );
-  SH2MappedMemoryWriteLong( 0x06000250, 0x03216721 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x411A );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06000250, 0x03216721 );
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x00000000 );
@@ -85,10 +86,10 @@ TEST_F(LdsTest, ldsmmacl) {
 
   MSH2->regs.R[1]=0x06000250;
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x4116 );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );
-  SH2MappedMemoryWriteLong( 0x06000250, 0x03216721 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x4116 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06000250, 0x03216721 );
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x00000000 );
@@ -102,10 +103,10 @@ TEST_F(LdsTest, ldspr) {
 
   MSH2->regs.R[1]=0x03216721;
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x412A );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );
-  SH2MappedMemoryWriteLong( 0x06000250, 0x03216721 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x412A );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06000250, 0x03216721 );
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x00000000 );
@@ -119,10 +120,10 @@ TEST_F(LdsTest, ldsmpr) {
 
   MSH2->regs.R[1]=0x06000250;
 
-  SH2MappedMemoryWriteWord( 0x06000000, 0x4126 );
-  SH2MappedMemoryWriteWord( 0x06000002, 0x000b );
-  SH2MappedMemoryWriteWord( 0x06000004, 0x0009 );
-  SH2MappedMemoryWriteLong( 0x06000250, 0x03216721 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x4126 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06000250, 0x03216721 );
 
   MSH2->regs.PC =( 0x06000000 );
   MSH2->regs.SR.all =( 0x00000000 );

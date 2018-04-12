@@ -3,6 +3,7 @@
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "memory.h"
 extern "C" {
 extern void initEmulation();
 }
@@ -33,8 +34,8 @@ TEST_F(BraTest, normal) {
 
 
   // BRA
-  SH2MappedMemoryWriteWord( 0x06002E00, 0xA123 );
-  SH2MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E00, 0xA123 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
   SH2TestExec(MSH2, 1);
@@ -42,8 +43,8 @@ TEST_F(BraTest, normal) {
   EXPECT_EQ( 0x0600304A, MSH2->regs.PC );
 
   // BRA
-  SH2MappedMemoryWriteWord( 0x06000220, 0xA015 );
-  SH2MappedMemoryWriteWord( 0x06000222, 0x277A );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06000220, 0xA015 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000222, 0x277A );  // nop
 
   MSH2->regs.PC = ( 0x06000220 );
   SH2TestExec(MSH2, 1);
@@ -54,8 +55,8 @@ TEST_F(BraTest, normal) {
 
 TEST_F(BraTest, negative) {
   // BRA
-  SH2MappedMemoryWriteWord( 0x06002E00, 0xAFF5 );
-  SH2MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E00, 0xAFF5 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
   SH2TestExec(MSH2, 1);
@@ -67,8 +68,8 @@ TEST_F(BraTest, braf) {
   // BRAF
   MSH2->regs.R[1]=0x00106520; //source
 
-  SH2MappedMemoryWriteWord( 0x06002E00, 0x0123 );
-  SH2MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E00, 0x0123 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
   SH2TestExec(MSH2, 1);
@@ -80,8 +81,8 @@ TEST_F(BraTest, braf_negative) {
   // BRAF
   MSH2->regs.R[1]=0xFFFFFFFC; //source
 
-  SH2MappedMemoryWriteWord( 0x06002E00, 0x0123 );
-  SH2MappedMemoryWriteWord( 0x06002E02, 0x0009 );  // nop
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E00, 0x0123 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E02, 0x0009 );  // nop
 
   MSH2->regs.PC = ( 0x06002E00 );
   SH2TestExec(MSH2, 1);

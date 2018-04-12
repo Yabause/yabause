@@ -3,6 +3,7 @@
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "memory.h"
 extern "C" {
 extern void initEmulation();
 }
@@ -36,8 +37,8 @@ TEST_F(BsrTest, normal) {
 
   // rtcl R[0]
 
-SH2MappedMemoryWriteWord(0x06002E4C,0xB123);
-SH2MappedMemoryWriteWord(0x06002E4E, 0x0009);
+SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0xB123);
+SH2MappedMemoryWriteWord(MSH2,0x06002E4E, 0x0009);
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000 );
@@ -52,8 +53,8 @@ TEST_F(BsrTest, negatif) {
 
   // rtcl R[0]
 
-SH2MappedMemoryWriteWord(0x06002E4C,0xB823);
-SH2MappedMemoryWriteWord(0x06002E4E, 0x0009);
+SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0xB823);
+SH2MappedMemoryWriteWord(MSH2,0x06002E4E, 0x0009);
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000 );
@@ -69,8 +70,8 @@ TEST_F(BsrTest, bsrf) {
 
   MSH2->regs.R[1]=0x00006520; //source
 
-  SH2MappedMemoryWriteWord(0x06002E00,0x0103);
-  SH2MappedMemoryWriteWord(0x06002E02, 0x0009);
+  SH2MappedMemoryWriteWord(MSH2,0x06002E00,0x0103);
+  SH2MappedMemoryWriteWord(MSH2,0x06002E02, 0x0009);
 
 
 

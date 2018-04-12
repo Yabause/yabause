@@ -3,6 +3,7 @@
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
+#include "memory.h"
 extern "C" {
 extern void initEmulation();
 }
@@ -36,7 +37,7 @@ TEST_F(BfTest, normal) {
 
   // rtcl R[0]
 
-  SH2MappedMemoryWriteWord(0x06002E4C,0x8BFE);
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0x8BFE);
 
 
 
@@ -52,9 +53,9 @@ TEST_F(BfTest, normal2) {
 
   // rtcl R[0]
 
-  SH2MappedMemoryWriteWord(0x06002E4C,0x8BF0);
-  SH2MappedMemoryWriteWord(0x06002E4E, 0x0009 );
-  SH2MappedMemoryWriteWord(0x06002E30, 0x000b );
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0x8BF0);
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4E, 0x0009 );
+  SH2MappedMemoryWriteWord(MSH2,0x06002E30, 0x000b );
 
 
 
@@ -70,7 +71,7 @@ TEST_F(BfTest, carry) {
 
   // rtcl R[0]
 
-  SH2MappedMemoryWriteWord(0x06002E4C,0x8BFE);
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0x8BFE);
 
 
 
@@ -86,8 +87,8 @@ TEST_F(BfTest, bfs) {
 
   // rtcl R[0]
 
-  SH2MappedMemoryWriteWord(0x06002E4C,0x8F0B);
-  SH2MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0x8F0B);
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E4E, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000);
@@ -95,8 +96,8 @@ TEST_F(BfTest, bfs) {
 
   EXPECT_EQ( 0x06002E4C+4+(0xB<<1), MSH2->regs.PC );
 
-  SH2MappedMemoryWriteWord(0x06002E4C,0x8F0B);
-  SH2MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0x8F0B);
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E4E, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000001);
@@ -106,9 +107,9 @@ TEST_F(BfTest, bfs) {
 
   MSH2->regs.R[3]=0x2;
 
-  SH2MappedMemoryWriteWord(0x06002E4C,0x8F8B);
-  SH2MappedMemoryWriteWord( 0x06002E4E, 0x7304 );  // add #4, r3
-  SH2MappedMemoryWriteWord( 0x06002E50, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0x8F8B);
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E4E, 0x7304 );  // add #4, r3
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E50, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000000);
@@ -117,8 +118,8 @@ TEST_F(BfTest, bfs) {
   EXPECT_EQ( 0x6, MSH2->regs.R[3] );
   EXPECT_EQ( 0x06002E4C+4+(0xFFFFFF8B<<1), MSH2->regs.PC );
 
-  SH2MappedMemoryWriteWord(0x06002E4C,0x8F8B);
-  SH2MappedMemoryWriteWord( 0x06002E4E, 0x0009 );  // nop 
+  SH2MappedMemoryWriteWord(MSH2,0x06002E4C,0x8F8B);
+  SH2MappedMemoryWriteWord(MSH2, 0x06002E4E, 0x0009 );  // nop 
 
   MSH2->regs.PC = ( 0x06002E4C );
   MSH2->regs.SR.all = ( 0x000001);
