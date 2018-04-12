@@ -373,7 +373,7 @@ int main(int argc, char *argv[]) {
 
   if (lowres_mode == 0){
     if (yinit.vidcoretype == VIDCORE_OGL) {
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_4x);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_4XBRZ);
     }
