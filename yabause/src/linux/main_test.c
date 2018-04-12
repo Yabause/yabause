@@ -18,7 +18,7 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-//#define TEST_KRONOS_INTERPRETER
+#define TEST_KRONOS_INTERPRETER
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -123,6 +123,9 @@ void YuiInit() {
 	yinit.m68kcoretype = 0;
 	yinit.percoretype = 0;
 	yinit.sh2coretype = 0;
+#ifdef TEST_KRONOS_INTERPRETER
+	yinit.sh2coretype = 8;
+#endif
         yinit.vidcoretype = VIDCORE_SOFT;
 	yinit.sndcoretype = 0;
 	yinit.cdcoretype = CDCORE_DEFAULT;
