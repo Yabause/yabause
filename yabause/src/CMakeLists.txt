@@ -69,6 +69,16 @@ if (YAB_WANT_SSH2_ASYNC)
   add_definitions(-DSSH2_ASYNC=1)
 endif()
 
+option(YAB_WANT_DYNAREC_KRONOS "Enable Sh2 dynarec by Kronos" ON)
+if (YAB_WANT_DYNAREC_KRONOS)
+	add_definitions(-DDYNAREC_KRONOS=1)
+  set(kronos_SOURCES
+    ${kronos_SOURCES}
+    sh2_kronos/sh2int.c
+    sh2_kronos/sh2_opcodes.c
+  )
+endif()
+
 option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
 if (YAB_WANT_DYNAREC_DEVMIYAX)
 	add_definitions(-DDYNAREC_DEVMIYAX=1)
