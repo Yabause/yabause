@@ -4006,6 +4006,9 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   y = CMDYA + Vdp1Regs->localY;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
+  if (sprite.w == 0 || sprite.h == 0) {
+    return; //bad command
+  }
 
   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
@@ -4027,6 +4030,10 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.priority = 8;
 
   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
+  // damaged data
+  if (((cmd.CMDPMOD >> 3) & 0x7) > 5) {
+    return;
+  }
 
   sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
 
