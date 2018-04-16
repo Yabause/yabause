@@ -906,6 +906,8 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   //MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
   //while (ptr - startptr < MaxSize) {
   while (1) {
+    int isBUPHandled = (getMemArea(addr) == BIOS_MEM);
+    if (isBUPHandled) isBUPHandled = isBackupHandled(addr);
     // translate the opcode and insert code
     op = memGetWord(addr);
 #ifdef SET_DIRTY
@@ -1122,6 +1124,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     if(asm_list[i].checkint == 1) {
       break;
     }
+    if (isBUPHandled == 1) break;
   }
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);

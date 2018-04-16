@@ -1414,6 +1414,10 @@ int BackupHandled(SH2_struct * sh, u32 addr) {
    return 0;
 }
 
+int isBackupHandled(u32 addr) {
+   return( ((addr & 0xFFFFF) == 0x7d600) || (((addr & 0xFFFFF) >= 0x0384 && (addr & 0xFFFFF) <= 0x03A8) || ((addr & 0xFFFFF) == 0x358) ));
+}
+
 int BackupInit(char* path, int extended) {
   int currentSaveSize = TSize(path);
   int forceFormat = 0;

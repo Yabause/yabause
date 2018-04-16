@@ -427,6 +427,7 @@ void SH2DumpHistory(SH2_struct *context);
 
 
 int BackupHandled(SH2_struct * sh, u32 addr);
+int isBackupHandled(u32 addr);
 
 #ifdef USE_CACHE
 u8 CacheReadByte(SH2_struct *context, u8* mem, u32 addr);
