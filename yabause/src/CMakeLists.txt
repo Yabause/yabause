@@ -77,6 +77,9 @@ if (YAB_WANT_DYNAREC_KRONOS)
     sh2_kronos/sh2int.c
     sh2_kronos/sh2_opcodes.c
   )
+if (MSVC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
+endif(MSVC)
 endif()
 
 option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
