@@ -467,6 +467,10 @@ int SH2LoadState(SH2_struct *context, FILE *fp, int version, int size);
 extern SH2Interface_struct SH2Dyn;
 extern SH2Interface_struct SH2DynDebug;
 
+#if DYNAREC_KRONOS
+extern SH2Interface_struct SH2KronosInterpreter;
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -79,6 +79,7 @@ if (YAB_WANT_DYNAREC_KRONOS)
   )
 if (MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
+        set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} /bigobj")
 endif(MSVC)
 endif()
 

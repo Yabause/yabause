@@ -65,6 +65,9 @@ SH2Interface_struct *SH2CoreList[] = {
 &SH2Dyn,
 &SH2DynDebug,
 #endif
+#if DYNAREC_KRONOS
+&SH2KronosInterpreter,
+#endif
 NULL
 };
 
