@@ -980,6 +980,7 @@ void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
 {
+   SH2WriteNotify(context, addr, 1);
    switch (addr >> 29)
    {
       case 0x0:
@@ -1018,6 +1019,7 @@ LOG("Hunandled Byte W %x\n", addr);
 
 void FASTCALL SH2MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
 {
+   SH2WriteNotify(context, addr, 1);
    switch (addr >> 29)
    {
       case 0x1:
@@ -1080,6 +1082,7 @@ void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
 {
+   SH2WriteNotify(context, addr, 2);
    switch (addr >> 29)
    {
       case 0x0:
@@ -1118,6 +1121,7 @@ LOG("Hunandled Word W %x\n", addr);
 
 void FASTCALL SH2MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
 {
+   SH2WriteNotify(context, addr, 2);
    switch (addr >> 29)
    {
       case 0x1:
@@ -1182,6 +1186,7 @@ void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
 //////////////////////////////////////////////////////////////////////////////
 void FASTCALL MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
 {
+   SH2WriteNotify(context, addr, 4);
    switch (addr >> 29)
    {
       case 0x0:
@@ -1220,6 +1225,7 @@ LOG("Hunandled Long W %x\n", addr);
 
 void FASTCALL SH2MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
 {
+   SH2WriteNotify(context, addr, 4);
    switch (addr >> 29)
    {
       case 0x1:

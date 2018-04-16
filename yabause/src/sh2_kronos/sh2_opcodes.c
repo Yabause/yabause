@@ -46,7 +46,7 @@ static void SH2delay(SH2_struct * sh, u32 addr)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void SH2undecoded(SH2_struct * sh)
+void SH2undecoded(SH2_struct * sh)
 {
    int vectnum;
 

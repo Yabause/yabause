@@ -41,6 +41,8 @@
 #endif
 
 
+extern void SH2undecoded(SH2_struct * sh);
+
 void SH2KronosIOnFrame(SH2_struct *context) {
 }
 
@@ -99,7 +101,7 @@ static u16 FASTCALL FetchVram(u32 addr)
   return T1ReadWord(Vdp1Ram, addr);
 }
 
-
+opcode_func cacheCode[6][0x80000];
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
@@ -107,10 +109,32 @@ static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
    return 0xFFFF;
 }
 //////////////////////////////////////////////////////////////////////////////
+void decode(SH2_struct *context) {
+  int id = (context->regs.PC >> 20) & 0x0FF;
+  cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[fetchlist[id](context, context->regs.PC)];
+  cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF](context);
+}
+
+void biosDecode(SH2_struct *context) {
+  int isBUPHandled = BackupHandled(context, context->regs.PC);
+  if (isBUPHandled == 0) {
+    decode(context);
+  }
+}
+
 
 int SH2KronosInterpreterInit()
 {
-   int i;
+   int i,j;
+   for(i=1; i<5; i++)
+     for(j=0; j<0x80000; j++)
+       cacheCode[i][j] = decode;
+
+   for(j=0; j<0x80000; j++)
+     cacheCode[5][j] = SH2undecoded;
+   
+   for(j=0; j<0x80000; j++) //Special BAckupHandled case
+     cacheCode[0][j] = biosDecode;
 
    for (i = 0; i < 0x100; i++)
    {
@@ -118,15 +142,19 @@ int SH2KronosInterpreterInit()
       {
          case 0x000: // Bios              
             fetchlist[i] = FetchBios;
+            cacheId[i] = 0;
             break;
          case 0x002: // Low Work Ram
             fetchlist[i] = SH2MappedMemoryReadWord;
+            cacheId[i] = 1;
             break;
          case 0x020: // CS0
             fetchlist[i] = SH2MappedMemoryReadWord;
+            cacheId[i] = 2;
             break;
          case 0x05c: // Fighting Viper
             fetchlist[i] = SH2MappedMemoryReadWord;
+            cacheId[i] = 3;
             break;
          case 0x060: // High Work Ram
          case 0x061: 
@@ -145,9 +173,11 @@ int SH2KronosInterpreterInit()
          case 0x06E: 
          case 0x06F:
             fetchlist[i] = SH2MappedMemoryReadWord;
+            cacheId[i] = 4;
             break;
          default:
             fetchlist[i] = FetchInvalid;
+            cacheId[i] = 5;
             break;
       }
    }
@@ -193,23 +223,28 @@ FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
   SH2HandleInterrupts(context);
    while (context->cycles < target_cycle)
    {
+     cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+   }
+}
 
-      // Fetch Instruction
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
-
-      // Execute it
-//printf("Execute opcode 0x%x (call %p)\n", context->instruction,opcodeTable[context->instruction]);
-      opcodeTable[context->instruction](context);
+FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
+{
+  u32 target_cycle = context->cycles + cycles;
+  SH2HandleInterrupts(context);
+   while (context->cycles < target_cycle)
+   {
+     int id = (context->regs.PC >> 20) & 0x0FF;
+     if((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF]) != (opcodeTable[fetchlist[id](context, context->regs.PC)]))
+        if ((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode)) 
+        printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
+     cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
    }
 }
 
 FASTCALL void SH2KronosInterpreterTestExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
-
-      // Execute it
-      opcodeTable[context->instruction](context);
+  cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -402,6 +437,19 @@ void SH2KronosInterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
    context->NumberOfInterrupts = num_interrupts;
 }
 
+void SH2KronosWriteNotify(u32 start, u32 length){
+  int i;
+  for (i=0; i<length; i+=2) {
+    int id = ((start + i) >> 20) & 0x0FF;
+    int addr = (start + i) >> 1;
+    if (cacheId[id] == 0) {  //Special BAckupHandled case
+      cacheCode[cacheId[id]][addr & 0x7FFFF] = biosDecode;
+    }
+    else
+      cacheCode[cacheId[id]][(addr) & 0x7FFFF] = decode;
+  }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 SH2Interface_struct SH2KronosInterpreter = {
    SH2CORE_KRONOS_INTERPRETER,
@@ -411,6 +459,7 @@ SH2Interface_struct SH2KronosInterpreter = {
    SH2KronosInterpreterDeInit,
    SH2KronosInterpreterReset,
    SH2KronosInterpreterExec,
+//SH2KronosDebugInterpreterExec,
    SH2KronosInterpreterTestExec,
 
    SH2KronosInterpreterGetRegisters,
@@ -438,5 +487,5 @@ SH2Interface_struct SH2KronosInterpreter = {
    SH2KronosInterpreterGetInterrupts,
    SH2KronosInterpreterSetInterrupts,
 
-   NULL  // SH2WriteNotify not used
+   SH2KronosWriteNotify
 };

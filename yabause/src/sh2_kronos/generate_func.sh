@@ -3,7 +3,7 @@
 func_ABCD()
 {
 echo "#define init_"$2"_"$3"_"$4"_"$5>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$3"_"$4"_"$5"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$3"_"$4"_"$5"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh);" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -14,7 +14,7 @@ func_ACD()
 for b in {0..15}
 do
 echo "#define init_"$2"_"$b"_"$3"_"$4>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$b"_"$3"_"$4"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$b"_"$3"_"$4"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh,"$b");" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -28,7 +28,7 @@ do
 for c in {0..15}
 do
 echo "#define init_"$2"_"$b"_"$c"_"$3>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$b"_"$c"_"$3"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$b"_"$c"_"$3"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh,"$b","$c");" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -43,7 +43,7 @@ do
 for d in {0..15}
 do
 echo "#define init_"$2"_"$3"_"$c"_"$d>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$3"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$3"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh,("$c"<<4)+"$d");" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -58,7 +58,7 @@ do
 for d in {0..15}
 do
 echo "#define init_"$2"_"$3"_"$c"_"$d>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$3"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$3"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh,"$c","$d");" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -75,7 +75,7 @@ do
 for d in {0..15}
 do
 echo "#define init_"$2"_"$b"_"$c"_"$d>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh, "$b", ("$c"<<4)+"$d");" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -93,7 +93,7 @@ do
 for d in {0..15}
 do
 echo "#define init_"$2"_"$b"_"$c"_"$d>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh, "$b","$c", "$d");" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -111,7 +111,7 @@ do
 for d in {0..15}
 do
 echo "#define init_"$2"_"$b"_"$c"_"$d>> sh2_functions.inc
-echo "static void FASTCALL call_"$2"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$2"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  "$1"(sh, ("$b"<<8)+("$c"<<4)+"$d");" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
@@ -132,7 +132,7 @@ for d in {0..15}
 do
 echo "#ifndef init_"$a"_"$b"_"$c"_"$d>> sh2_functions.inc
 echo "#define init_"$a"_"$b"_"$c"_"$d>> sh2_functions.inc
-echo "static void FASTCALL call_"$a"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
+echo "void FASTCALL call_"$a"_"$b"_"$c"_"$d"(SH2_struct* sh)" >> sh2_functions.inc
 echo "{" >> sh2_functions.inc
 echo "  SH2undecoded(sh);" >> sh2_functions.inc
 echo "}" >> sh2_functions.inc
