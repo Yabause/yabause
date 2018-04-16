@@ -69,15 +69,12 @@ void SH2HandleInterrupts(SH2_struct *context)
 }
 
 fetchfunc fetchlist[0x100];
+u8 cacheId[0x100];
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL FetchBios(SH2_struct *context, u32 addr)
 {
-   if (BackupHandled(NULL, addr) != 0) {
-     return 0;
-   }
-
    return SH2MappedMemoryReadWord(context,addr);
 }
 

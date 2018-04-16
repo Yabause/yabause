@@ -1601,9 +1601,10 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
 int FASTCALL BiosHandleFunc(SH2_struct * sh)
 {
    SH2GetRegisters(sh, &sh->regs);
+   int addr = (sh->regs.PC & 0xFFFFF);
 
    // Let's see if it's a bios function
-   switch((sh->regs.PC - 0x200) >> 2)
+   switch((addr - 0x200) >> 2)
    {
       case 0x04: // 0x06000210
          BiosPowerOnMemoryClear(sh);
@@ -1717,7 +1718,7 @@ int FASTCALL BiosHandleFunc(SH2_struct * sh)
       case 0x9D:
       case 0x9E:
       case 0x9F:
-         BiosHandleScuInterrupt(sh, (sh->regs.PC - 0x300) >> 2);
+         BiosHandleScuInterrupt(sh, (addr - 0x300) >> 2);
          break;
       case 0xA0: // Interrupt Handler Return
          BiosHandleScuInterruptReturn(sh);
