@@ -204,7 +204,12 @@ void YuiSwapBuffers(void) {
 void YuiInit() {
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
 	yinit.percoretype = PERCORE_LINUXJOY;
-	yinit.sh2coretype = 0;
+        #if defined(DYNAREC_KRONOS)
+          printf("Use kronos specific core emulation\n");
+          yinit.sh2coretype = 8;
+        #else
+	  yinit.sh2coretype = 0;
+        #endif
 #ifdef FORCE_CORE_SOFT
   yinit.vidcoretype = VIDCORE_SOFT;
 #else
@@ -335,13 +340,13 @@ int main(int argc, char *argv[]) {
         yinit.sh2coretype = 1;
       }
       else if (strcmp(argv[i], "-cd") == 0 ) {
-      #if defined(DYNAREC_KRONOS)
-        printf("Use new dynarec core emulation\n");
-        yinit.sh2coretype = 8;
-      #else
-        #if defined(DYNAREC_DEVMIYAX)
+      #if defined(DYNAREC_DEVMIYAX)
           printf("Use new dynarec core emulation\n");
           yinit.sh2coretype = 3;
+      #else
+        #if defined(DYNAREC_KRONOS)
+          printf("Use kronos specific core emulation\n");
+          yinit.sh2coretype = 8;
         #else
           printf("No dynarec core emulation: fallback on SW core emulation\n");
           yinit.sh2coretype = 0;
