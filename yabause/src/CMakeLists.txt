@@ -710,6 +710,10 @@ endif()
 
 
 set(YAB_OPTIMIZATION "-O3" CACHE STRING "Override optimization level")
+if (MSVC)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ox")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
+endif ()
 
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION} -march=i686 -msse")
