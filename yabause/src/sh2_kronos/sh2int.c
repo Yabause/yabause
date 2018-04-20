@@ -32,6 +32,8 @@
 #include "yabause.h"
 #include "sh2int_kronos.h"
 
+#include "cs2.h"
+
 #ifdef SSH2_ASYNC
 #define LOCK(A) sem_wait(&A->lock)
 #define UNLOCK(A) sem_post(&A->lock)
@@ -111,8 +113,9 @@ static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
 //////////////////////////////////////////////////////////////////////////////
 void decode(SH2_struct *context) {
   int id = (context->regs.PC >> 20) & 0x0FF;
-  cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[fetchlist[id](context, context->regs.PC)];
-  cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF](context);
+  u16 opcode = fetchlist[id](context, context->regs.PC);
+  cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
+  opcodeTable[opcode](context);
 }
 
 void biosDecode(SH2_struct *context) {
@@ -217,6 +220,37 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
 
 //////////////////////////////////////////////////////////////////////////////
 
+static void showCPUState(SH2_struct *context)
+{
+  int i;
+
+  printf("=================== %s ===================\n", (context == MSH2)?"MSH2":"SSH2");
+  printf("PC = 0x%x\n", context->regs.PC);
+  printf("PR = 0x%x\n", context->regs.PR);
+  printf("SR = 0x%x\n", context->regs.SR);
+  printf("GBR = 0x%x\n", context->regs.GBR);
+  printf("VBR = 0x%x\n", context->regs.VBR);
+  printf("MACH = 0x%x\n", context->regs.MACH);
+  printf("MACL = 0x%x\n", context->regs.MACL);
+  for (int i = 0; i<16; i++)
+    printf("R[%d] = 0x%x\n", i, context->regs.R[i]);
+
+   printf("Cs2Area HIRQ = 0%x\n",  Cs2Area->reg.HIRQ); 
+   printf("Cs2Area Disc Changed = %d\n", Cs2Area->isdiskchanged);
+   printf("Cs2Area CR1 = 0x%x\n", Cs2Area->reg.CR1);
+   printf("Cs2Area CR2 = 0x%x\n", Cs2Area->reg.CR2);
+   printf("Cs2Area CR3 = 0x%x\n", Cs2Area->reg.CR3);
+   printf("Cs2Area CR4 = 0x%x\n", Cs2Area->reg.CR4);
+   printf("Cs2Area satauth = 0x%x\n", Cs2Area->satauth);
+
+   printf("============Prog=============\n");
+   for (i=0; i<0x100000; i+=4) {
+     u32 addr = 0x6000000 + i;
+     printf("@0x%x : 0x%x\n", addr, MappedMemoryReadLong(MSH2, addr));
+   }
+   printf("===========================================\n");
+}
+
 FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
@@ -227,16 +261,34 @@ FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
    }
 }
 
+static int enableTrace = 0;
+
 FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
   SH2HandleInterrupts(context);
+  char res[512];
    while (context->cycles < target_cycle)
    {
      int id = (context->regs.PC >> 20) & 0x0FF;
+
+#if 0
+     if ((context == MSH2) && (context->regs.PC & 0xFFFFFFF) == 0x60b0000) {
+       showCPUState(MSH2);
+       enableTrace = 1;
+     }
+#endif
      if((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF]) != (opcodeTable[fetchlist[id](context, context->regs.PC)]))
         if ((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode)) 
-        printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
+          printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
+
+     if (enableTrace) {
+       if (context == MSH2) {
+       SH2Disasm(context->regs.PC, fetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
+       printf("%s\n", res);
+       }
+     }
+
      cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
    }
 }
