@@ -9,8 +9,8 @@ android {
         minSdkVersion 19
         targetSdkVersion 25
         multiDexEnabled true
-        versionCode 37
-        versionName '1.6.4'
+        versionCode 42
+        versionName '1.7'
         multiDexEnabled true
 
 /*
