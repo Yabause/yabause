@@ -392,7 +392,7 @@ void YabauseThread::reloadSettings()
 
 
   mYabauseConf.rotate_screen = vs->value("Video/RotateScreen", false).toBool() ;
-
+  mYabauseConf.scsp_sync_count_per_frame = vs->value("Sound/ScspSync", 1).toInt();
 	reloadClock();
 	reloadControllers();
 }
@@ -449,6 +449,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.polygon_generation_mode = 0;
   mYabauseConf.resolution_mode = 0;
   mYabauseConf.rotate_screen = 0;
+  mYabauseConf.scsp_sync_count_per_frame = 1;
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )

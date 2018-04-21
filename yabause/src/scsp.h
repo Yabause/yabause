@@ -96,7 +96,7 @@ void FASTCALL SoundRamWriteByte(u32 addr, u8 val);
 void FASTCALL SoundRamWriteWord(u32 addr, u16 val);
 void FASTCALL SoundRamWriteLong(u32 addr, u32 val);
 
-int ScspInit(int coreid);
+int ScspInit(int coreid, int scsp_sync_count_per_frame);
 int ScspChangeSoundCore(int coreid);
 void ScspDeInit(void);
 void M68KStart(void);

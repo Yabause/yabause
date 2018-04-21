@@ -53,7 +53,6 @@ extern "C"{
   void LogStop(void);
   void LogChangeOutput(DebugOutType t, char * s);
 
-#define DEBUG 1
 #ifdef DEBUG
 #define LOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -73,7 +72,7 @@ extern "C"{
 #define NETLINK_LOG(...)
 #endif
 
-  //#define SCSP_DEBUG 1
+//#define SCSP_DEBUG 1
 #ifdef SCSP_DEBUG
 #define SCSPLOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else
@@ -111,7 +110,6 @@ extern "C"{
 #define YGLLOG(...)
 #endif
 
-#define FRAME_DEBUG 1
 #ifdef FRAME_DEBUG
 #define FRAMELOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else

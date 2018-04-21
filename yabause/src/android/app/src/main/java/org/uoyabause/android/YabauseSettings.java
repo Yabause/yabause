@@ -27,6 +27,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
@@ -218,6 +219,10 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
         }else{
             filter_setting.setEnabled(false);
         }
+
+        EditTextPreference scsp_setting = (EditTextPreference) getPreferenceManager().findPreference("pref_scsp_sync_per_frame");
+        scsp_setting.setSummary(scsp_setting.getText());
+
 
          /* Polygon Generation */
         ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
@@ -436,6 +441,22 @@ public class YabauseSettings extends PreferenceActivity implements SharedPrefere
                 pref.setSummary(pref.getEntry());
                 SyncInputDevice();
                 SyncInputDeviceForPlayer2();
+            }
+
+            if( key.equals("pref_scsp_sync_per_frame") ){
+                EditTextPreference ep = (EditTextPreference)findPreference(key);
+                String sval = ep.getText();
+                int val =  Integer.parseInt(sval);
+                if( val <= 0 ){
+                    val = 1;
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                    sp.edit().putString("pref_scsp_sync_per_frame", String.valueOf(val)).commit();
+                }else if( val > 255 ){
+                    val = 255;
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                    sp.edit().putString("pref_scsp_sync_per_frame", String.valueOf(val)).commit();
+                }
+                ep.setSummary( String.valueOf(val) );
             }
 
       }

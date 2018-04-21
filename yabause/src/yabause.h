@@ -61,6 +61,7 @@ typedef struct
    int resolution_mode;
    int extend_backup;
    int rotate_screen;
+   int scsp_sync_count_per_frame;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0

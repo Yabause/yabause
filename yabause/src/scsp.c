@@ -143,7 +143,7 @@ s32 new_scsp_outbuf_r[900] = { 0 };
 int new_scsp_cycles = 0;
 int g_scsp_lock = 0;
 YabMutex * g_scsp_mtx = NULL;
-
+static int g_scsp_sync_count_per_frame = 1;
 
 #include "sh2core.h"
 
@@ -4995,7 +4995,7 @@ SoundRamWriteLong (u32 addr, u32 val)
 //////////////////////////////////////////////////////////////////////////////
 
 int
-ScspInit (int coreid)
+ScspInit (int coreid, int scsp_sync_count_per_frame)
 {
   int i;
 
@@ -5045,7 +5045,14 @@ ScspInit (int coreid)
   scspsoundoutleft = 0;
 
   g_scsp_lock = 0;
-
+  
+  g_scsp_sync_count_per_frame = scsp_sync_count_per_frame;
+  if (g_scsp_sync_count_per_frame <= 0) {
+    g_scsp_sync_count_per_frame = 1;
+  }
+  if (g_scsp_sync_count_per_frame >= 256 ) {
+    g_scsp_sync_count_per_frame = 256;
+  }
   return ScspChangeSoundCore (coreid);
 }
 
@@ -5426,19 +5433,26 @@ void ScspAsynMain( void * p ){
   u64 difftime;
   const int samplecnt = 256; // 11289600/44100
   const int step = 16;
-  const int frame_div = 1;
-  const int framecnt = 188160 / frame_div; // 11289600/60
   int frame = 0;
   int frame_count = 0;
   int i;
+  int frame_div = g_scsp_sync_count_per_frame;
+  int framecnt = 188160 / frame_div; // 11289600/60
 
 #if defined(ARCH_IS_LINUX)
   struct timespec tm;
   setpriority( PRIO_PROCESS, 0, -20);
 #endif
 
+  // Special for Thunder Force V
+  char * pCurrentGame = Cs2GetCurrentGmaecode();
+  if (!strcmp(pCurrentGame, "T-1811G") && frame_div < 4) {
+    frame_div = 4;
+    framecnt = 188160 / frame_div;
+    LOG("Thunder Force V is detected. Force frame_div to 4");
+  }
+
   const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
-  
 
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
   before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;

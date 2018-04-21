@@ -516,8 +516,10 @@ void UISettings::loadSettings()
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
   checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory").toBool());
+
+  spinBox_scs_sync_count->setValue(s->value("Sound/ScspSync", 1).toInt());
   
-	
+
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
 	sGunMouseSensitivity->setValue(s->value( "Input/GunMouseSensitivity", 100).toInt() );
@@ -603,6 +605,9 @@ void UISettings::saveSettings()
 	s->setValue( "General/EnableMultiThreading", cbEnableMultiThreading->isChecked() );
 	s->setValue( "General/NumThreads", sbNumberOfThreads->value());
   s->setValue("Video/RotateScreen", cbRotateScreen->isChecked());
+
+  s->setValue("Sound/ScspSync", spinBox_scs_sync_count->value() );
+
 	// sound
 	s->setValue( "Sound/SoundCore", cbSoundCore->itemData( cbSoundCore->currentIndex() ).toInt() );
    s->setValue( "Sound/NewScsp", cbNewScsp->isChecked());

@@ -266,7 +266,7 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (ScspInit(init->sndcoretype) != 0)
+   if (ScspInit(init->sndcoretype, init->scsp_sync_count_per_frame ) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("SCSP/M68K"));
       return -1;
@@ -709,7 +709,7 @@ int YabauseEmulate(void) {
          }
 
          PROFILE_START("SCU");
-         ScuExec(sh2cycles / 2);
+         ScuExec(sh2cycles>>1);
          PROFILE_STOP("SCU");
 
       } else {  // !DecilineMode

@@ -981,6 +981,9 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         Integer resolution_setting =  new Integer(sharedPref.getString("pref_resolution","0"));
         YabauseRunnable.setResolutionMode(resolution_setting);
 
+        Integer scsp_sync =  new Integer(sharedPref.getString("pref_scsp_sync_per_frame","1"));
+        YabauseRunnable.setScspSyncPerFrame(scsp_sync);
+
     }
 
     public String getBiosPath() {

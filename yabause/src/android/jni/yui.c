@@ -88,6 +88,7 @@ static int g_SoundEngine = 0;
 static int g_resolution_mode = 0;
 static int g_extmemory = 1;
 static int g_rotate_screen = 0;
+static int g_scsp_sync_count = 1;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -1057,6 +1058,7 @@ int initEgl( ANativeWindow* window )
     yinit.resolution_mode =g_resolution_mode;
     yinit.extend_backup = g_extmemory;
     yinit.rotate_screen = g_rotate_screen;
+    yinit.scsp_sync_count_per_frame = g_scsp_sync_count;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1344,6 +1346,13 @@ Java_org_uoyabause_android_YabauseRunnable_setResolutionMode( JNIEnv* env, jobje
 {
     g_resolution_mode = resolution_mode;
 }
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setScspSyncPerFrame( JNIEnv* env, jobject obj, jint scsp_sync_count )
+{
+    g_scsp_sync_count = scsp_sync_count;
+}
+
 
 void
 Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv* env, jobject obj, jint pgm )

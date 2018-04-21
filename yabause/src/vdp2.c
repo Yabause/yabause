@@ -637,14 +637,15 @@ void Vdp2HBlankOUT(void) {
     vdp2VBlankOUT();
   }
   else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
-    Vdp1Regs->EDSR |= 2;
     //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
     //printf("COPR = %d at %d\n", Vdp1Regs->COPR, __LINE__);
     ScuSendDrawEnd();
     FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+    yabsys.wait_line_count = -1;
+    Vdp1Regs->EDSR |= 2;
     //VIDCore->Vdp1DrawEnd();
   }
-     
+  
 #endif
 }
 
@@ -841,7 +842,7 @@ void vdp2VBlankOUT(void) {
     YabAddEventQueue(vdp1_rcv_evqueue, 0);
   }
 #else
-  yabsys.wait_line_count = 30;
+  //yabsys.wait_line_count = 30;
 #endif
 
   if (Vdp2Regs->TVMD & 0x8000) {
@@ -850,6 +851,9 @@ void vdp2VBlankOUT(void) {
 
   if (isrender){
     VIDCore->Vdp1DrawEnd();
+#if !defined(YAB_ASYNC_RENDERING)
+    yabsys.wait_line_count = 30;
+#endif
   }
 
    FPSDisplay();

@@ -152,6 +152,13 @@
             android:entryValues="@array/entryvalues_sound_engine_list_preference"
             android:defaultValue="1" />
 
+        <EditTextPreference
+            android:key="pref_scsp_sync_per_frame"
+            android:inputType="number"
+            android:defaultValue="1"
+            android:summary=""
+            android:title="Scsp synchronization count per a frame(1 - 255)" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>523</height>
+    <height>533</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="twPages">
      <property name="currentIndex">
-      <number>1</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="wGeneral">
       <attribute name="title">
@@ -434,6 +434,23 @@
         <widget class="QCheckBox" name="cbNewScsp">
          <property name="text">
           <string>Use new scsp</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>SCSP Sync count per a frame ( 1 - 255 )</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinBox_scs_sync_count">
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>255</number>
          </property>
         </widget>
        </item>
@@ -1016,8 +1033,8 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowToolbar"/>
   <buttongroup name="bgShowMenubar"/>
-  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>
