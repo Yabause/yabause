@@ -655,13 +655,14 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+int vdp1_frame = 0;
+int show_vdp1_frame = 0;
 static void FPSDisplay(void)
 {
   static int fpsframecount = 0;
   static u64 fpsticks;
 #if 1 // FPS only
-   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS ", fps, yabsys.IsPal ? 50 : 60);
+   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS vdp1 = %02d", fps, yabsys.IsPal ? 50 : 60, show_vdp1_frame);
 #else
   FILE * fp = NULL;
   FILE * gup_fp = NULL;
@@ -709,6 +710,8 @@ static void FPSDisplay(void)
   {
     fps = fpsframecount;
     fpsframecount = 0;
+    show_vdp1_frame = vdp1_frame;
+    vdp1_frame = 0;
     fpsticks = YabauseGetTicks();
   }
 }
@@ -810,6 +813,7 @@ void vdp2VBlankOUT(void) {
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
+    vdp1_frame++;
     if (Vdp1External.manualerase){  // Manual Erace (FCM1 FCT0) Just before frame changing
       VIDCore->Vdp1EraseWrite();
       Vdp1External.manualerase = 0;
