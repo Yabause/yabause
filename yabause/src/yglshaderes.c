@@ -2415,26 +2415,25 @@ const GLchar Yglprg_linecol_f[] =
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );      \n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if(txcol.a > 0.002){\n";
-
+"  if(txcol.a > 0.0){\n";
 
 const GLchar Yglprg_linecol_main_f[] =
-"    fragColor.rgb = clamp(txcol.rgb + lncol.rgb + u_color_offset.rgb,vec3(0.0),vec3(1.0));\n"
+"    fragColor = txcol+u_color_offset+lncol;\n"
 "    fragColor.a = 1.0;\n";
 
 const GLchar Yglprg_linecol_destalpha_f[] =
-"    fragColor.rgb = clamp(txcol.rgb + lncol.rgb + u_color_offset.rgb,vec3(0.0),vec3(1.0));\n"
-"    fragColor.a = txcol.a;\n";
+"    fragColor = (txcol * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset;\n"
+"    fragColor.a =txcol.a;\n";
 
 const GLchar Yglprg_linecol_main_cram_f[] =
 "    vec4 txcolc = texelFetch( s_color,  ivec2( ( int(txcol.g*65280.0) | int(txcol.r*255.0)) ,0 )  , 0 );\n"
-"    fragColor.rgb = clamp(txcolc.rgb + lncol.rgb + u_color_offset.rgb,vec3(0.0),vec3(1.0));\n"
+"    fragColor = txcolc+u_color_offset+lncol;\n"
 "    fragColor.a = 1.0;\n";
 
 const GLchar Yglprg_linecol_destalpha_cram_f[] =
 "    vec4 txcolc = texelFetch( s_color,  ivec2( ( int(txcol.g*65280.0) | int(txcol.r*255.0)) ,0 )  , 0 );\n"
-"    fragColor.rgb = clamp(txcolc.rgb + lncol.rgb + u_color_offset.rgb,vec3(0.0),vec3(1.0));\n"
-"    fragColor.a = txcol.a;\n";
+"    fragColor = (txcolc * (1.0-lncol.a))+(lncol*lncol.a)+u_color_offset;\n"
+"    fragColor.a =txcol.a;\n";
 
 const GLchar Yglprg_linecol_finish_f[] =
 "  }else{ \n"
