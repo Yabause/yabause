@@ -317,6 +317,7 @@ Run|Lancer
 S&ave State|S&auvegarder un Etat
 SCSP|SCSP
 SCSP Channels|Canaux SCSP
+SCSP Sync count per a frame ( 1 - 255 )|Compteur de synchro SCSP par image (1-255).
 SCU-DSP|SCU-DSP
 SDL Joystick Interface|Interface SDL du Joystick
 SDL Sound Interface|Interface SDL du Son
