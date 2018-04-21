@@ -756,9 +756,6 @@ s Shadow Flag
 
 */
 INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
-  if (shadow != 0) {
-    int a = 0;
-  }
   return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | color;
 }
 

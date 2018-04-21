@@ -282,7 +282,9 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   u32 talpha = 0x00; // MSB Color calcuration mode
   u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
 
-  u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);    // see-through pixel disable(SPD) hard/vdp1/hon/p06_35.htm
+  // hard/vdp1/hon/p06_35.htm#6_35
+  // 透明ピクセル無効ビットはキャラクタパターンのあるスプライト描画にのみ有効です。ポリゴン、ポリライン、ラインでは、このビットは必ず1に設定してください。
+  u8 SPD = 1; // ((cmd->CMDPMOD & 0x40) != 0);    // see-through pixel disable(SPD) hard/vdp1/hon/p06_35.htm
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);    // end-code disable(ECD) hard/vdp1/hon/p06_34.htm
   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
   u32 alpha = 0xFF;
@@ -4758,12 +4760,14 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   alpha = 0xF8;
   if (IS_REPLACE(CMDPMOD)) {
-    if ((CMDPMOD & 0x40) != 0) {
+    // hard/vdp1/hon/p06_35.htm#6_35
+    // 透明ピクセル無効ビットはキャラクタパターンのあるスプライト描画にのみ有効です。ポリゴン、ポリライン、ラインでは、このビットは必ず1に設定してください。
+    //if ((CMDPMOD & 0x40) != 0) {
       sprite.blendmode = VDP1_COLOR_SPD;
-    }
-    else {
-      alpha = 0xF8;
-    }
+    //}
+    //else {
+    //  alpha = 0xF8;
+    //}
   }
   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
     alpha = 0xF8;
