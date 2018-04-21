@@ -471,12 +471,12 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+int vdp1_frame = 0;
+int show_vdp1_frame = 0;
 static void FPSDisplay(void)
 {
   static int fpsframecount = 0;
   static u64 fpsticks;
-
   FILE * fp = NULL;
   FILE * gup_fp = NULL;
   char fname[128];
@@ -527,6 +527,8 @@ static void FPSDisplay(void)
   {
     fps = fpsframecount;
     fpsframecount = 0;
+    show_vdp1_frame = vdp1_frame;
+    vdp1_frame = 0;
     fpsticks = YabauseGetTicks();
   }
 }
@@ -548,6 +550,7 @@ void startField(void) {
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
+    vdp1_frame++;
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
       VIDCore->Vdp1EraseWrite();
