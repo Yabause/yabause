@@ -192,6 +192,7 @@ u32 FASTCALL Vdp2ColorRamReadLong(u32 addr) {
 
 void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
    addr &= 0xFFF;
+   LOG("[VDP2] Update Coloram %08X:%04X", addr, val);
    T2WriteByte(Vdp2ColorRam, addr, val);
 }
 
@@ -199,6 +200,7 @@ void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
 
 void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    addr &= 0xFFF;
+   LOG("[VDP2] Update Coloram %08X:%04X", addr, val);
    if (val != T2ReadWord(Vdp2ColorRam, addr)){
      T2WriteWord(Vdp2ColorRam, addr, val);
      YglOnUpdateColorRamWord(addr);
@@ -210,6 +212,7 @@ void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
    addr &= 0xFFF;
+   LOG("[VDP2] Update Coloram %08X:%08X", addr, val);
    //if (Vdp2ColorRamUpdated == 0){
      if (val != T2ReadLong(Vdp2ColorRam, addr)){
        T2WriteLong(Vdp2ColorRam, addr, val);
@@ -1094,6 +1097,10 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
          return;
       case 0x00E:
          Vdp2Regs->RAMCTL = val;
+         if (Vdp2Internal.ColorMode != (val >> 12) & 0x3) {
+           // Clear Color ram
+           memset(Vdp2ColorRam, 0, 0x1000);
+         }
          Vdp2Internal.ColorMode = (val >> 12) & 0x3;
          return;
       case 0x010:
