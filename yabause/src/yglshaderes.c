@@ -3396,6 +3396,7 @@ int YglDrawBackScreen(float w, float h) {
   glUniform1f(glGetUniformLocation(clear_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(clear_prg, "u_vheight"), (float)_Ygl->height);
 
+  glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 
