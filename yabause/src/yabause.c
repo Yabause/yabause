@@ -1257,6 +1257,28 @@ int YabauseQuickLoadGame(void)
       Cs2Area->reg.CR4 = 0x0;
       Cs2ResetSelector();
       Cs2GetToc();
+
+      // LANGRISSER Dramatic Edition #531
+      // This game uses Color ram data written by BIOS
+      // So it need to write them before start game on no bios mode.
+      Vdp2WriteWord(MSH2, NULL, 0x0E,0); // set color mode to 0
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x0, 0x8000);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x2, 0x9908);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x4, 0xCA94);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x6, 0xF39C);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x8, 0xFBDE);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0xA, 0xFB16);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0xC, 0x9084);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0xE, 0xF20C);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x10, 0xF106);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x12, 0xF18A);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x14, 0xB9CE);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x16, 0xA14A);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x18, 0xE318);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x1A, 0xEB5A);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x1C, 0xF39C);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0x1E, 0xFBDE);
+      Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0xFF, 0x0000);
    }
    else
    {
