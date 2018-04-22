@@ -357,8 +357,8 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
                      // Make sure we still have sectors to transfer
                      if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
                      {
-						 const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
-						 if (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans] == NULL)
+                        const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+                        if (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans] == NULL)
                         {
                            CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                            return 0;
@@ -366,8 +366,9 @@ u32 FASTCALL Cs2ReadLong(u32 addr) {
 #ifdef WORDS_BIGENDIAN
                         val = *((const u32 *) ptr);
 #else
-                        val = BSWAP32(*((const u32 *) ptr));
+                        val = BSWAP32(*((const u32 *) ptr)); 
 #endif
+                        //LOG("[CS2] get addr = %d,val = %08X", Cs2Area->datatransoffset, val);
 
                         // increment datatransoffset/cdwnum
                         Cs2Area->cdwnum += 4;
@@ -429,23 +430,30 @@ void FASTCALL Cs2WriteLong(UNUSED u32 addr, UNUSED u32 val) {
          if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_PUTSECTOR)
          {
             // put sector
+           //LOG("[CS2] put addr=%d, val=%08X", Cs2Area->datatransoffset, val );
 
             // Make sure we still have sectors to transfer
             if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
             {
-               // Transfer Data
-               const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+              int size = (Cs2Area->putsectsize - Cs2Area->getsectsize) / 24;
 
-               if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
-               {
+              int offset = Cs2Area->datatransoffset - size;
+
+              if (offset >= 0) {
+                // Transfer Data
+                const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[offset];
+
+                if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
+                {
                   CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                   return;
-               }
+                }
 #ifdef WORDS_BIGENDIAN
-               *((u32 *) ptr) = val;
+                *((u32 *)ptr) = val;
 #else
-               *((u32 *) ptr) = BSWAP32(val);
+                *((u32 *)ptr) = BSWAP32(val);
 #endif
+              }
 
                // increment datatransoffset/cdwnum
                Cs2Area->cdwnum += 4;
@@ -456,8 +464,8 @@ void FASTCALL Cs2WriteLong(UNUSED u32 addr, UNUSED u32 val) {
                {
                   Cs2Area->datatransoffset = 0;
                   Cs2Area->datanumsecttrans++;
-						if (Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
-              Cs2SetIRQ(CDB_HIRQ_EHST);
+                  if (Cs2Area->datanumsecttrans >= Cs2Area->datasectstotrans)
+                      Cs2SetIRQ(CDB_HIRQ_EHST);
                }
             }
          }
@@ -2333,6 +2341,8 @@ void Cs2GetSectorData(void)
    gsdbufno = Cs2Area->reg.CR3 >> 8;
    gsdsectnum = Cs2Area->reg.CR4;
 
+   //LOG("[CS2] COMMAND_GET_SECDATA, pnum=%d, offs = %d, numsec = %d", gsdbufno, gsdsectoffset, gsdsectnum);
+
    if (gsdbufno >= MAX_SELECTORS)
    {
       doCDReport(CDB_STAT_REJECT);
@@ -2483,7 +2493,7 @@ void Cs2PutSectorData(void) {
          u32 i;
 
          putpartition->size = 0;
-
+         int startpos = putpartition->numblocks;
          for (i = 0; i < psdsectnum; i++)
          {
             putpartition->block[putpartition->numblocks] = Cs2AllocateBlock(&putpartition->blocknum[putpartition->numblocks], Cs2Area->putsectsize);
@@ -2498,9 +2508,9 @@ void Cs2PutSectorData(void) {
          Cs2Area->datatranspartition = Cs2Area->partition + psdbufno;
          Cs2Area->datatranspartitionnum = (u8)psdbufno;
          Cs2Area->datatransoffset = 0;
-         Cs2Area->datanumsecttrans = 0;
+         Cs2Area->datanumsecttrans = startpos; // startpos;
          Cs2Area->datatranssectpos = 0;
-         Cs2Area->datasectstotrans = (u16)psdsectnum;
+         Cs2Area->datasectstotrans = startpos+(u16)psdsectnum;
          Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_DRDY);
       }
    }
