@@ -3842,8 +3842,14 @@ void YglOnUpdateColorRamWord(u32 addr) {
   if (_Ygl->colupd_min_addr > addr)
     _Ygl->colupd_min_addr = addr; 
 
-  if (_Ygl->colupd_max_addr < addr)
-    _Ygl->colupd_max_addr = addr; 
+  if (Vdp2Internal.ColorMode == 0) {
+    if (_Ygl->colupd_max_addr < (addr+0x800) )
+      _Ygl->colupd_max_addr = (addr+0x800) ;
+  }
+  else {
+    if (_Ygl->colupd_max_addr < addr)
+      _Ygl->colupd_max_addr = addr;
+  }
 
   u32 * buf = _Ygl->cram_tex_buf;
   if (buf == NULL) {
@@ -3860,6 +3866,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
     tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
     if (tmp & 0x8000) alpha = 0xFF;
     buf[(addr >> 1) & 0xFFF] = SAT2YAB1(alpha, tmp);
+    buf[((addr >> 1) & 0xFFF) + 0x400 ] = SAT2YAB1(alpha, tmp);
     break;
   }
   case 1:
