@@ -5526,7 +5526,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
         info->enable = 1;
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
-          if ((fixVdp2Regs->CCCTL>>8) & bit) { // Add Color
+          if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
             info->blendmode |= VDP2_CC_ADD;
           }
           else {
