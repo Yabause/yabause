@@ -192,7 +192,7 @@ u32 FASTCALL Vdp2ColorRamReadLong(u32 addr) {
 
 void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
    addr &= 0xFFF;
-   LOG("[VDP2] Update Coloram Byte %08X:%02X", addr, val);
+   //LOG("[VDP2] Update Coloram Byte %08X:%02X", addr, val);
    T2WriteByte(Vdp2ColorRam, addr, val);
 }
 
@@ -200,7 +200,7 @@ void FASTCALL Vdp2ColorRamWriteByte(u32 addr, u8 val) {
 
 void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
    addr &= 0xFFF;
-   LOG("[VDP2] Update Coloram Word %08X:%04X", addr, val);
+   //LOG("[VDP2] Update Coloram Word %08X:%04X", addr, val);
    if (val != T2ReadWord(Vdp2ColorRam, addr)){
      T2WriteWord(Vdp2ColorRam, addr, val);
      YglOnUpdateColorRamWord(addr);
@@ -212,7 +212,7 @@ void FASTCALL Vdp2ColorRamWriteWord(u32 addr, u16 val) {
 
 void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
    addr &= 0xFFF;
-   LOG("[VDP2] Update Coloram Long %08X:%08X", addr, val);
+   //LOG("[VDP2] Update Coloram Long %08X:%08X", addr, val);
    //if (Vdp2ColorRamUpdated == 0){
      if (val != T2ReadLong(Vdp2ColorRam, addr)){
        T2WriteLong(Vdp2ColorRam, addr, val);
@@ -250,6 +250,10 @@ int Vdp2Init(void) {
 #endif
 
    vrammutex = YabThreadCreateMutex();
+
+
+   memset(Vdp2ColorRam, 0, 0x1000);
+   Vdp2ColorRamUpdated = 1;
 
    return 0;
 }
