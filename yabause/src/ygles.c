@@ -3854,6 +3854,9 @@ u32 * YglGetColorRamPointer() {
 
     _Ygl->colupd_min_addr = 0xFFFFFFFF ;
     _Ygl->colupd_max_addr = 0x00000000;
+
+
+
   }
 
   if (_Ygl->cram_tex_buf == NULL) {
@@ -3870,6 +3873,7 @@ u32 * YglGetColorRamPointer() {
 #endif
     _Ygl->cram_tex_buf = malloc(2048 * 4);
     memset(_Ygl->cram_tex_buf, 0, 2048 * 4);
+    glTexSubImage2D(GL_TEXTURE_2D,0,0,0,2048, 1,GL_RGBA, GL_UNSIGNED_BYTE,_Ygl->cram_tex_buf);
   }
 
   return _Ygl->cram_tex_buf;
