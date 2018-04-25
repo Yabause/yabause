@@ -2432,8 +2432,7 @@ const GLchar Yglprg_linecol_main_cram_f[] =
 
 const GLchar Yglprg_linecol_destalpha_cram_f[] =
 "    vec4 txcolc = texelFetch( s_color,  ivec2( ( int(txcol.g*65280.0) | int(txcol.r*255.0)) ,0 )  , 0 );\n"
-"    float alpha = lncol.a*txcol.a;\n"
-"    fragColor = (txcolc * (1.0-alpha))+(lncol*alpha)+u_color_offset;\n"
+"    fragColor = clamp((txcolc * lncol.a)+lncol+u_color_offset,vec4(0.0),vec4(1.0));\n"
 "    fragColor.a = txcol.a;\n";
 
 const GLchar Yglprg_linecol_finish_f[] =
