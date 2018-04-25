@@ -385,7 +385,6 @@ void Vdp2HBlankOUT(void) {
 
 
     if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
-printf("perline_alpha CCRNA on %d %d %x\n", yabsys.LineCount, yabsys.VBlankLineCount, Vdp2Lines[yabsys.LineCount].CCCTL);
       *Vdp2External.perline_alpha |= 0x1;
     }
 
