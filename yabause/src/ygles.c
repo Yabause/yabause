@@ -2778,6 +2778,45 @@ void YglSetVdp2Window()
 }
 
 extern Vdp2 * fixVdp2Regs;
+
+static updateColorOffset() {
+  if (fixVdp2Regs->CLOFEN & 0x40)
+  {
+    // color offset enable
+    if (fixVdp2Regs->CLOFSL & 0x40)
+    {
+      // color offset B
+      vdp1cor = fixVdp2Regs->COBR & 0xFF;
+      if (fixVdp2Regs->COBR & 0x100)
+        vdp1cor |= 0xFFFFFF00;
+      vdp1cog = fixVdp2Regs->COBG & 0xFF;
+      if (fixVdp2Regs->COBG & 0x100)
+        vdp1cog |= 0xFFFFFF00;
+
+      vdp1cob = fixVdp2Regs->COBB & 0xFF;
+      if (fixVdp2Regs->COBB & 0x100)
+        vdp1cob |= 0xFFFFFF00;
+    }
+    else
+    {
+      // color offset A
+      vdp1cor = fixVdp2Regs->COAR & 0xFF;
+      if (fixVdp2Regs->COAR & 0x100)
+        vdp1cor |= 0xFFFFFF00;
+
+      vdp1cog = fixVdp2Regs->COAG & 0xFF;
+      if (fixVdp2Regs->COAG & 0x100)
+        vdp1cog |= 0xFFFFFF00;
+
+      vdp1cob = fixVdp2Regs->COAB & 0xFF;
+      if (fixVdp2Regs->COAB & 0x100)
+        vdp1cob |= 0xFFFFFF00;
+    }
+  }
+  else // color offset disable
+    vdp1cor = vdp1cog = vdp1cob = 0;
+}
+
 void YglUpdateVdp2Reg() {
   int i;
   u8 *cclist  = (u8 *)&fixVdp2Regs->CCRSA;
@@ -2789,6 +2828,7 @@ void YglUpdateVdp2Reg() {
   }
   _Ygl->fbu_.u_cctll = ((float)((fixVdp2Regs->SPCTL >> 8) & 0x07) / 10.0f) + 0.05f;
 
+  updateColorOffset();
 
   _Ygl->fbu_.u_coloroffset[0] = vdp1cor / 255.0f;
   _Ygl->fbu_.u_coloroffset[1] = vdp1cog / 255.0f;

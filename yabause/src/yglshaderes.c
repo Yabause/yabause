@@ -1639,7 +1639,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  }else{ // direct color \n"
 "    fragColor = fbColor;\n"
 "  } \n"
-"  fragColor += u_coloroffset;  \n";
+"  fragColor = clamp(fragColor + u_coloroffset, vec4(0.0), vec4(1.0));  \n";
 
 /*
  Color calculation option 
