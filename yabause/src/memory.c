@@ -689,7 +689,7 @@ void MappedMemoryInit()
                                 &HighWramMemoryWriteLong,
                                 &HighWram);
 
-     FillMemoryArea( ((backup_file_addr >> 16) & 0xFFF) , (((backup_file_addr + backup_file_size) >> 16) & 0xFFF)-1, &BupRamMemoryReadByte,
+     FillMemoryArea( ((backup_file_addr >> 16) & 0xFFF) , (((backup_file_addr + backup_file_size) >> 16) & 0xFFF)+1, &BupRamMemoryReadByte,
      &BupRamMemoryReadWord,
      &BupRamMemoryReadLong,
      &BupRamMemoryWriteByte,
