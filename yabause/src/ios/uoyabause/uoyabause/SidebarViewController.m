@@ -19,6 +19,7 @@
 
 @implementation SidebarViewController {
     NSArray *menuItems;
+    int _ad_showing;
 }
 
 
@@ -29,6 +30,7 @@
     if (self) {
         // Custom initialization
     }
+    _ad_showing = 0;
     return self;
 }
 
@@ -77,7 +79,7 @@
     if ( revealViewController )
     {
         GameViewController * view = (GameViewController * )[revealViewController frontViewController];
-        if( view ){
+        if( view && !_ad_showing){
             [view setPaused:NO];
         }
     }
@@ -106,6 +108,7 @@
                 // addActionした順に左から右にボタンが配置されます
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                     if (self.interstitial.isReady) {
+                        _ad_showing = 1;
                         [self.interstitial presentFromRootViewController:self];
                     } else {
                         exit(0);
@@ -168,6 +171,21 @@
                 }
                 [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
                 break;
+            }
+            case 5:
+            {
+                GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
+                if ( revealViewController )
+                {
+                    [revealViewController revealToggleAnimated:YES];
+                    GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+                    if( view ){
+                        [view toggleControllerEditMode];
+                    }
+                }
+                [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
+                break;
+
             }
         }
         

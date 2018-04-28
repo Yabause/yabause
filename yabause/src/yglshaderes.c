@@ -38,6 +38,7 @@ int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
 int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, int * mosaic);
 int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 perline);
+int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 extern float vdp1wratio;
 extern float vdp1hratio;
@@ -104,7 +105,7 @@ int ShaderDrawTest()
 
   glEnableVertexAttribArray(vertexp);
   glEnableVertexAttribArray(texcoordp);
-
+  glDisableVertexAttribArray(2);
   glUniformMatrix4fv(mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView/*mtx*/.m[0][0]);
 
   glVertexAttribPointer(vertexp, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)vec);
@@ -141,7 +142,7 @@ int Ygl_uniformVdp1CommonParam(void * p){
 
   glEnableVertexAttribArray(prg->vertexp);
   glEnableVertexAttribArray(prg->texcoordp);
-  if (prg->vertexAttribute != NULL)
+  if ( prg->vertexAttribute != NULL )
   {
     glEnableVertexAttribArray(prg->vaid);
   }
@@ -250,6 +251,7 @@ int Ygl_uniformNormal(void * p)
   prg = p;
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glUniform1i(id_normal_s_texture, 0);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   return 0;
@@ -303,6 +305,7 @@ int Ygl_uniformNormalCram(void * p)
   prg = p;
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glUniform1i(id_normal_cram_s_texture, 0);
   glUniform1i(id_normal_cram_s_color, 1);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
@@ -355,6 +358,7 @@ int Ygl_uniformAddColCram(void * p)
   prg = p;
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glUniform1i(id_normal_cram_s_texture_addcol, 0);
   glUniform1i(id_normal_cram_s_color_addcol, 1);
   glUniform4fv(id_normal_cram_color_offset_addcol, 1, prg->color_offset_val);
@@ -381,6 +385,7 @@ void Ygl_setNormalshader(YglProgram * prg) {
     glUseProgram(_prgid[PG_NORMAL]);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(id_normal_color_offset, 1, prg->color_offset_val);
     glUniformMatrix4fv(id_normal_matrix, 1, GL_FALSE, prg->matrix);
@@ -389,6 +394,7 @@ void Ygl_setNormalshader(YglProgram * prg) {
     glUseProgram(_prgid[PG_VDP2_NORMAL_CRAM]);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_cram_s_texture, 0);
     glUniform1i(id_normal_cram_s_color, 1);
     glActiveTexture(GL_TEXTURE1);
@@ -460,6 +466,7 @@ int Ygl_uniformNormalCramLine(void * p)
   prg = p;
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glUniform1i(id_rbg_cram_line_s_texture, 0);
   glUniform1i(id_rbg_cram_line_s_color, 1);
   glUniform1i(id_rbg_cram_line_blendmode, prg->blendmode);
@@ -527,6 +534,7 @@ int Ygl_uniformMosaic(void * p)
   if (prg->prgid == PG_VDP2_MOSAIC_CRAM ) {
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_cram_s_texture, 0);
     glUniform1i(id_normal_cram_s_color, 1);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
@@ -541,6 +549,7 @@ int Ygl_uniformMosaic(void * p)
   else {
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
@@ -587,6 +596,7 @@ int Ygl_uniformPerLineAlpha(void * p)
   if (prg->prgid == PG_VDP2_PER_LINE_ALPHA_CRAM) {
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_cram_s_texture, 0);
     glUniform1i(id_normal_cram_s_color, 1);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
@@ -601,6 +611,7 @@ int Ygl_uniformPerLineAlpha(void * p)
   else {
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
@@ -654,6 +665,7 @@ int Ygl_uniformNormal_blur(void * p)
   if (prg->prgid == PG_VDP2_BLUR_CRAM) {
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_cram_s_texture, 0);
     glUniform1i(id_normal_cram_s_color, 1);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
@@ -668,6 +680,7 @@ int Ygl_uniformNormal_blur(void * p)
   else {
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
+    glDisableVertexAttribArray(2);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
@@ -841,6 +854,7 @@ int Ygl_uniformVdp1Normal(void * p )
    prg = p;
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
+   glDisableVertexAttribArray(2);
    glUniform1i(id_vdp1_normal_s_texture, 0);
    glUniform2f(id_vdp1_normal_s_texture_size, _Ygl->texture_manager->width, _Ygl->texture_manager->height);
    return 0;
@@ -1404,18 +1418,19 @@ int Ygl_uniformStartUserClip(void * p )
    YglProgram * prg;
    prg = p;
 
-   glEnableVertexAttribArray(0);
-   glDisableVertexAttribArray(1);
+  glEnableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
 
    if( prg->ux1 != -1 )
    {
 
       GLint vertices[12];
+      glEnable(GL_STENCIL_TEST);
       glColorMask( GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE );
       glStencilMask(0xffffffff);
       glClearStencil(0);
       glClear(GL_STENCIL_BUFFER_BIT);
-      glEnable(GL_STENCIL_TEST);
       glStencilFunc(GL_ALWAYS,0x1,0x01);
       glStencilOp(GL_REPLACE,GL_REPLACE,GL_REPLACE);
 
@@ -1456,10 +1471,6 @@ int Ygl_uniformStartUserClip(void * p )
    }else{
       glStencilFunc(GL_ALWAYS,0,0xFF);
    }
-
-   glEnableVertexAttribArray(0);
-   glEnableVertexAttribArray(1);
-
    //glDisable(GL_STENCIL_TEST);
 
    return 0;
@@ -2328,6 +2339,7 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float t
   glUniform4fv(idcoloroffset_addcolor_shadow, 1, offsetcol);
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_mvpMatrix");
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -2456,6 +2468,7 @@ int Ygl_uniformLinecolorInsert(void * p)
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glUniform1i(param->s_texture, 0);
   glUniform1i(param->s_line, 1);
   glUniform4fv(param->color_offset, 1, prg->color_offset_val);
@@ -3385,6 +3398,7 @@ int YglDrawBackScreen(float w, float h) {
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
 
@@ -3544,6 +3558,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
 
@@ -3858,6 +3873,7 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
   glUniformMatrix4fv(u_blur_mtxModelView, 1, GL_FALSE, matrix);
@@ -4014,6 +4030,7 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
   glUniformMatrix4fv(u_mosaic_mtxModelView, 1, GL_FALSE, matrix);
@@ -4186,6 +4203,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
   glUniformMatrix4fv(u_perlinealpha_mtxModelView, 1, GL_FALSE, matrix);

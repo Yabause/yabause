@@ -27,6 +27,19 @@ extern "C"{
     void UseOGLOnThisThread();
 }
 
+
+extern "C" {
+int yprintf( const char * fmt, ... )
+{
+    int result = 0;
+  // va_list ap;
+   //va_start(ap, fmt);
+   //result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
+   //va_end(ap);
+   return result;
+}
+}
+
 // Setting Infomation From
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
@@ -105,6 +118,7 @@ extern "C" {
     int GetUseNewScsp();
     int GetVideFilterType();
     int GetResolutionType();
+    int GetIsRotateScreen();
     
 int swapAglBuffer ();
     
@@ -166,6 +180,8 @@ int start_emulation( int originx, int originy, int width, int height ){
     yinit.use_new_scsp = GetUseNewScsp();
     yinit.video_filter_type = GetVideFilterType();
     yinit.resolution_mode = GetResolutionType();
+    yinit.rotate_screen = GetIsRotateScreen();
+    yinit.extend_backup = 1;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -233,6 +249,19 @@ int start_emulation( int originx, int originy, int width, int height ){
 
     return 0;
 }
+    void resize_screen( int x, int y, int width, int height ){
+        int i=0;
+        for (i = 0; VIDCoreList[i] != NULL; i++)
+        {
+            if (VIDCoreList[i]->id == s_vidcoretype)
+            {
+                VIDCoreList[i]->Resize(x,y,width,height,0);
+                break;
+            }
+        }
+    }
+
+
     void YuiErrorMsg(const char *string)
     {
         printf("%s",string);

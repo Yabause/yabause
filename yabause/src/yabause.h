@@ -138,6 +138,9 @@ typedef enum {
 
 int VideoSetSetting(int type, int value);
 
+int yprintf( const char * fmt, ... );
+
+
 #ifdef __cplusplus
 }
 #endif

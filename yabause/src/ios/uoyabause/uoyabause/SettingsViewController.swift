@@ -49,6 +49,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     @IBOutlet weak var _BultinBiosswitch: UISwitch!
     @IBOutlet weak var _showFrameSkip: UISwitch!
     @IBOutlet weak var _keepAspectRate: UISwitch!
+    @IBOutlet weak var _rotate_screen: UISwitch!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -71,6 +72,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         _showFpsSwitch.isOn = plist.value(forKey: "show fps") as! Bool
         _showFrameSkip.isOn = plist.value(forKey: "frame skip") as! Bool
         _keepAspectRate.isOn = plist.value(forKey: "keep aspect rate") as! Bool
+        _rotate_screen.isOn = plist.value(forKey: "rotate screen") as! Bool
         
         let cart_index = plist.value(forKey: "cartridge") as! Int
         
@@ -232,6 +234,12 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         
     }
     
+    @IBAction func RotateScreenChanged(_ sender: Any) {
+        let plist = getSettingPlist();
+        plist.setObject(_rotate_screen.isOn, forKey: "rotate screen" as NSCopying)
+        plist.write(toFile: getSettingFilname(), atomically: true)
+
+    }
     
     @IBAction func biosChanged(_ sender: AnyObject) {
         

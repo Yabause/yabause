@@ -18,6 +18,7 @@
 #import "SaturnControllerKeys.h"
 #import "KeyMapper.h"
 #import "SidebarViewController.h"
+#import "GLView.h"
 
 /** @defgroup pad Pad
  *
@@ -39,6 +40,7 @@
 void PerKeyDown(unsigned int key);
 void PerKeyUp(unsigned int key);
 int start_emulation( int originx, int originy, int width, int height );
+void resize_screen( int x, int y, int width, int height );
 int emulation_step( int command );
 int enterBackGround();
 int MuteSound();
@@ -56,9 +58,15 @@ BOOL _aspect_rate = NO;
 int _filter = 0;
 int _sound_engine = 0;
 int _rendering_resolution = 0;
+BOOL _rotate_screen = NO;
+float _controller_scale = 1.0;
+
+GLuint _renderBuffer = 0;
+NSObject* _objectForLock;
 
 @interface GameViewController () {
    int command;
+    int controller_edit_mode;
 }
 
 @property (strong, nonatomic) EAGLContext *context;
@@ -73,7 +81,9 @@ int _rendering_resolution = 0;
 @property (nonatomic) SaturnKey currentlyMappingKey;
 @property (nonatomic,strong) NSMutableArray *remapLabelViews;
 
-- (void)setupGL;
+@property (nonatomic) BOOL _isFirst;
+
+- (void)setup;
 - (void)tearDownGL;
 
 @end
@@ -84,8 +94,11 @@ static NSDictionary *saturnKeyToViewMappings;
 
 int swapAglBuffer ()
 {
-    EAGLContext* context = [EAGLContext currentContext];
-    [context presentRenderbuffer:GL_RENDERBUFFER];
+    @synchronized (_objectForLock){
+        EAGLContext* context = [EAGLContext currentContext];
+        glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
+        [context presentRenderbuffer:GL_RENDERBUFFER];
+    }
     return 0;
 }
 
@@ -213,6 +226,13 @@ int GetVideoInterface(){
 
 int GetEnableFPS(){
     if( _fps == YES )
+        return 1;
+    
+    return 0;
+}
+
+int GetIsRotateScreen() {
+    if( _rotate_screen == YES )
         return 1;
     
     return 0;
@@ -363,6 +383,14 @@ int GetPlayer2Device(){
     _filter = 0; //[0; //userDefaults boolForKey: @"filter"];
     _sound_engine = [[dic objectForKey: @"sound engine"] intValue];
     _rendering_resolution = [[dic objectForKey: @"rendering resolution"] intValue];
+    _rotate_screen = [[dic objectForKey: @"rotate screen"]boolValue];
+    //_controller_scale = [[dic objectForKey: @"controller scale"] floatValue];
+    
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    NSMutableDictionary *defaults = [NSMutableDictionary dictionary];
+    [defaults setObject:@"0.8" forKey:@"controller scale"];
+    [ud registerDefaults:defaults];
+    _controller_scale = [ud floatForKey:@"controller scale"];
     
     /*
     NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
@@ -383,258 +411,160 @@ int GetPlayer2Device(){
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-
-    if( [self hasControllerConnected ] ) return;
-    
-    int i=0;
-    NSSet *allTouches = [event allTouches];
-    for (UITouch *touch in allTouches)
+    //NSSet *allTouches = [event allTouches];
+    for (UITouch *touch in touches)
     {
-        CGPoint point = [touch locationInView:[self view]];
-        
-        if( CGRectContainsPoint([ [self left_view ]frame ], point) ){
-        
-            point = [touch locationInView:[self left_view]];
-            
-            if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
-                [self right_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyRight);
-            }
-            if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
-                [self left_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyLeft);
-            }
-            if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
-                [self up_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyUp);
-            }
-            if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
-                [self down_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyDown);
-            }
-            if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
-                [self left_trigger ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyLeftTrigger);
-            }
-
-            if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
-                [self start_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyStart);
+        for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
+            UIView * target = pad_buttons_[btnindex].target_;
+            CGPoint point = [touch locationInView:target];
+            if( CGRectContainsPoint( target.bounds , point) ) {
+                [pad_buttons_[btnindex] On:touch];
+ //               printf("PAD:%d on\n",btnindex);
+            }else{
+                //printf("%d: [%d,%d,%d,%d]-[%d,%d]\n", btnindex, (int)target.frame.origin.x, (int)target.frame.origin.y, (int)target.bounds.size.width, (int)target.bounds.size.height, (int)point.x, (int)point.y);
             }
         }
-        
-        if( CGRectContainsPoint([ [self right_view ]frame ], point) ){
-            
-            point = [touch locationInView:[self right_view]];
-            
-            if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
-                [self a_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyA);
-            }
-            if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
-                [self b_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyB);
-            }
-            if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
-                [self c_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyC);
-            }
-            if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
-                [self x_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyX);
-            }
-            if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
-                [self y_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyY);
-            }
-            if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
-                [self z_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyZ);
-            }
-            if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
-                [self right_trigger ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyRightTrigger);
-            }
-        }
-        
-        i++;
     }
     
-
-
+    if( [self hasControllerConnected ] ) return;
+    for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
+        if ([pad_buttons_[btnindex] isOn] ) {
+            PerKeyDown(btnindex);
+        } else {
+            PerKeyUp(btnindex);
+        }
+    }
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    if( [self hasControllerConnected ] ) return;
-    
-    int i=0;
-    NSSet *allTouches = [event allTouches];
-    for (UITouch *touch in allTouches)
+    //NSSet *allTouches = [event allTouches];
+    for (UITouch *touch in touches)
     {
-        CGPoint point = [touch locationInView:[self view]];
-        
-        if( CGRectContainsPoint([ [self left_view ]frame ], point) ){
-            
-            point = [touch locationInView:[self left_view]];
-        
-            if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
-                [self right_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyRight);
-            }else{
-                [self right_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyRight);
-            }
-            if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
-                [self left_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyLeft);
-            }else{
-                [self left_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyLeft);
-            }
-            if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
-                [self up_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyUp);
-            }else{
-                [self up_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyUp);
-            }
-            if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
-                [self down_button ].backgroundColor = [UIColor redColor];
-                PerKeyDown(SaturnKeyDown);
-            }else{
-                [self down_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyDown);
+        if( [pad_buttons_[BUTTON_DOWN] isOn] && pad_buttons_[BUTTON_DOWN].getPointId == touch ){
+
+            UIView * target = pad_buttons_[BUTTON_DOWN].target_;
+            CGPoint point = [touch locationInView:target];
+            if( point.y < 0 ){
+                [pad_buttons_[BUTTON_DOWN] Off ];
+                //printf("PAD:%d OFF\n",(int)BUTTON_DOWN );
             }
         }
+        if( [pad_buttons_[BUTTON_UP] isOn] && pad_buttons_[BUTTON_UP].getPointId == touch ){
+            
+            UIView * target = pad_buttons_[BUTTON_UP].target_;
+            CGPoint point = [touch locationInView:target];
+            //printf("PAD:%d MOVE %d\n",(int)BUTTON_UP,(int)point.y);
+            if( point.y > target.bounds.size.height){
+                [pad_buttons_[BUTTON_UP] Off ];
+                //printf("PAD:%d OFF\n",(int)BUTTON_UP );
+            }
+        }
+        
+        UIView * target = pad_buttons_[BUTTON_DOWN].target_;
+        CGPoint point = [touch locationInView:target];
+        if( CGRectContainsPoint( target.bounds , point) ) {
+            [pad_buttons_[BUTTON_DOWN] On:touch];
+            //printf("PAD:%d ON\n",(int)BUTTON_DOWN );
+        }
+        target = pad_buttons_[BUTTON_UP].target_;
+        point = [touch locationInView:target];
+        if( CGRectContainsPoint( target.bounds , point) ) {
+            [pad_buttons_[BUTTON_UP] On:touch];
+            //printf("PAD:%d ON\n",(int)BUTTON_UP );
+        }
 
-        i++;
+        if( [pad_buttons_[BUTTON_RIGHT] isOn] && pad_buttons_[BUTTON_RIGHT].getPointId == touch ){
+            
+            UIView * target = pad_buttons_[BUTTON_RIGHT].target_;
+            CGPoint point = [touch locationInView:target];
+            if( point.x < 0 ){
+                [pad_buttons_[BUTTON_RIGHT] Off ];
+                //printf("PAD:%d OFF\n",(int)BUTTON_RIGHT );
+            }
+        }
+        if( [pad_buttons_[BUTTON_LEFT] isOn] && pad_buttons_[BUTTON_LEFT].getPointId == touch ){
+            
+            UIView * target = pad_buttons_[BUTTON_LEFT].target_;
+            CGPoint point = [touch locationInView:target];
+            if( point.x > target.bounds.size.width){
+                [pad_buttons_[BUTTON_LEFT] Off ];
+                //printf("PAD:%d OFF\n",(int)BUTTON_LEFT );
+            }
+        }
+        
+        target = pad_buttons_[BUTTON_LEFT].target_;
+        point = [touch locationInView:target];
+        if( CGRectContainsPoint( target.bounds , point) ) {
+            [pad_buttons_[BUTTON_LEFT] On:touch];
+            //printf("PAD:%d ON\n",(int)BUTTON_LEFT );
+        }
+        target = pad_buttons_[BUTTON_RIGHT].target_;
+        point = [touch locationInView:target];
+        if( CGRectContainsPoint( target.bounds , point) ) {
+            [pad_buttons_[BUTTON_RIGHT] On:touch];
+            //printf("PAD:%d ON\n",(int)BUTTON_RIGHT );
+        }
+
+
+        for (int btnindex = BUTTON_RIGHT_TRIGGER; btnindex < BUTTON_LAST; btnindex++) {
+
+            UIView * target = pad_buttons_[btnindex].target_;
+            CGPoint point = [touch locationInView:target];
+
+            if( pad_buttons_[btnindex].getPointId == touch ) {
+                if( !CGRectContainsPoint( target.bounds , point) ) {
+                    [pad_buttons_[btnindex] Off];
+                    //printf("touchesMoved PAD:%d OFF\n",btnindex);
+                }
+            }else{
+                if( CGRectContainsPoint( target.bounds , point) ) {
+                    [pad_buttons_[btnindex] On:touch];
+                    //printf("touchesMoved PAD:%d MOVE\n",btnindex);
+                }else{
+                    //printf("%d: [%d,%d,%d,%d]-[%d,%d]\n", btnindex, (int)target.frame.origin.x, (int)target.frame.origin.y, (int)target.bounds.size.width, (int)target.bounds.size.height, (int)point.x, (int)point.y);
+                }
+            }
+        }
+    }
+    
+    if( [self hasControllerConnected ] ) return;
+    for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
+        if ([pad_buttons_[btnindex] isOn] ) {
+            PerKeyDown(btnindex);
+        } else {
+            PerKeyUp(btnindex);
+        }
     }
 
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    if( [self hasControllerConnected ] && !self.isKeyRemappingMode ) return;
-    
-    int i=0;
-    NSSet *allTouches = [event allTouches];
-    for (UITouch *touch in allTouches)
+
+    //NSSet *allTouches = [event allTouches];
+    for (UITouch *touch in touches)
     {
-        CGPoint point = [touch locationInView:[self view]];
-        
-        if( CGRectContainsPoint([ [self left_view ]frame ], point) ){
-            
-            point = [touch locationInView:[self left_view]];
-            
-            if( CGRectContainsPoint([ [self right_button ]frame ], point) ){
-                [self right_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyRight);
-            }
-            if( CGRectContainsPoint([ [self left_button ]frame ], point) ){
-                [self left_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyLeft);
-            }
-            if( CGRectContainsPoint([ [self up_button ]frame ], point) ){
-                [self up_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyUp);
-            }
-            if( CGRectContainsPoint([ [self down_button ]frame ], point) ){
-                [self down_button ].backgroundColor = [UIColor darkGrayColor];
-                PerKeyUp(SaturnKeyDown);
-            }
-            if( CGRectContainsPoint([ [self left_trigger ]frame ], point) ){
-                [self left_trigger ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyLeftTrigger];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyLeftTrigger);
-                }
-            }
-
-            if( CGRectContainsPoint([ [self start_button ]frame ], point) ){
-                [self start_button ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyStart];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyStart);
+        for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
+            if ( [pad_buttons_[btnindex] isOn] && [pad_buttons_[btnindex] getPointId] == touch)  {
+                [pad_buttons_[btnindex] Off ];
+                //printf("touchesEnded PAD:%d Up\n",btnindex);
+                if( self.isKeyRemappingMode ){
+                    [self showRemapControlAlertWithSaturnKey:btnindex];
                 }
             }
         }
-        
-        if( CGRectContainsPoint([ [self right_view ]frame ], point) ){
-            
-            point = [touch locationInView:[self right_view]];
-            
-            if( CGRectContainsPoint([ [self a_button ]frame ], point) ){
-                [self a_button ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyA];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyA);
-                }
-            }
-            if( CGRectContainsPoint([ [self b_button ]frame ], point) ){
-                [self b_button ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyB];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyB);
-                }
-            }
-            if( CGRectContainsPoint([ [self c_button ]frame ], point) ){
-                [self c_button ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyC];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyC);
-                }
-            }
-            if( CGRectContainsPoint([ [self x_button ]frame ], point) ){
-                [self x_button ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyX];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyX);
-                }
-            }
-            if( CGRectContainsPoint([ [self y_button ]frame ], point) ){
-                [self y_button ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyY];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyY);
-                }
-            }
-            if( CGRectContainsPoint([ [self z_button ]frame ], point) ){
-                [self z_button ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyZ];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyZ);
-                }
-            }
-            if( CGRectContainsPoint([ [self right_trigger ]frame ], point) ){
-                [self right_trigger ].backgroundColor = [UIColor darkGrayColor];
-                if ( self.isKeyRemappingMode ) {
-                    [self showRemapControlAlertWithSaturnKey:SaturnKeyRightTrigger];
-                    return;
-                } else {
-                    PerKeyUp(SaturnKeyRightTrigger);
-                }
-            }
-        }
-
-        i++;
     }
+    
+    if( [self hasControllerConnected ] ) return;
+    for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
+        if ([pad_buttons_[btnindex] isOn] ) {
+            PerKeyDown(btnindex);
+        } else {
+            PerKeyUp(btnindex);
+        }
+    }
+
 }
 
 #pragma mark AVAudioSession
@@ -703,13 +633,17 @@ int GetPlayer2Device(){
 
 - (void)controllerDidConnect:(NSNotification *)notification
 {
-    [self foundController];
+    @synchronized (_objectForLock){
+        [self foundController];
+    }
 }
 
 - (void)controllerDidDisconnect
 {
-    [self setControllerOverlayHidden:NO];
-    [self updateSideMenu];
+    @synchronized (_objectForLock){
+        [self setControllerOverlayHidden:NO];
+        [self updateSideMenu];
+    }
 }
 
 -(void)completionWirelessControllerDiscovery
@@ -844,13 +778,16 @@ int GetPlayer2Device(){
                                              selector:@selector(controllerDidDisconnect)
                                                  name:GCControllerDidDisconnectNotification
                                                object:nil];
+    @synchronized (_objectForLock){
     [self refreshViewsWithKeyRemaps];
     [self setControllerOverlayHidden:YES];
     [self completionWirelessControllerDiscovery];
     [self updateSideMenu];
+    }
 }
 
 -(void)setControllerOverlayHidden:(BOOL)hidden {
+    
     [self left_panel ].hidden = hidden;
     [self right_panel ].hidden = hidden;
     [self left_button ].hidden = hidden;
@@ -870,23 +807,29 @@ int GetPlayer2Device(){
     [self.remapLabelViews enumerateObjectsUsingBlock:^(UILabel *  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         obj.hidden = [self hasControllerConnected] && hidden == NO ? NO : hidden;
     }];
+     
 }
 
 -(void)setPaused:(BOOL)paused
 {
-    [super setPaused:paused];
+    GLView * gv = (GLView*) self.view;
     if( paused == YES ){
-        MuteSound();
+        [gv stopAnimation];
     }else{
-        UnMuteSound();
+        if( self->controller_edit_mode != 1 ){
+            [gv startAnimation];
+        }
     }
 }
 
 - (void)viewDidLoad
 {
-    sharedData_ = self;
     [super viewDidLoad];
-    
+ 
+    sharedData_ = self;
+    _objectForLock = [[NSObject alloc] init];
+    self._isFirst = YES;
+
     GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
     if ( revealViewController )
     {
@@ -915,35 +858,35 @@ int GetPlayer2Device(){
     [self left_trigger ].alpha = 0.0f;
     [self right_trigger ].alpha = 0.0f;
     [self start_button ].alpha = 0.0f;
+ 
+    pad_buttons_[BUTTON_UP] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_UP].target_ = self.up_button;
+    pad_buttons_[BUTTON_DOWN] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_DOWN].target_ = self.down_button;
+    pad_buttons_[BUTTON_LEFT] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_LEFT].target_ = self.left_button;
+    pad_buttons_[BUTTON_RIGHT] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_RIGHT].target_ = self.right_button;
+    pad_buttons_[BUTTON_A] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_A].target_ = self.a_button;
+    pad_buttons_[BUTTON_B] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_B].target_ = self.b_button;
+    pad_buttons_[BUTTON_C] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_C].target_ = self.c_button;
+    pad_buttons_[BUTTON_X] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_X].target_ = self.x_button;
+    pad_buttons_[BUTTON_Y] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_Y].target_ = self.y_button;
+    pad_buttons_[BUTTON_Z] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_Z].target_ = self.z_button;
+    pad_buttons_[BUTTON_LEFT_TRIGGER] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_LEFT_TRIGGER].target_ = self.left_trigger;
+    pad_buttons_[BUTTON_RIGHT_TRIGGER] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_RIGHT_TRIGGER].target_ = self.right_trigger;
+    pad_buttons_[BUTTON_START] = [[PadButton alloc] init];
+    pad_buttons_[BUTTON_START].target_ = self.start_button;
     
     [self loadSettings];
-
-    if( _aspect_rate ){
-        CGRect newFrame = self.view.frame;
-        int specw = self.view.frame.size.width;
-        int spech = self.view.frame.size.height;
-        float specratio = (float)specw / (float)spech;
-        int saturnw = 320;
-        int saturnh = 224;
-        float saturnraito = (float)saturnw/ (float)saturnh;
-        float revraito = (float) saturnh/ (float)saturnw;
-        
-        if( specratio > saturnraito ){
-            
-            newFrame.size.width = spech * saturnraito;
-            newFrame.size.height = spech;
-            newFrame.origin.x = (self.view.frame.size.width - newFrame.size.width)/2.0;
-            newFrame.origin.y = (self.view.frame.size.height - newFrame.size.height)/2.0;
-            self.view.frame = newFrame;
-        }else{
-            newFrame.size.width = specw * revraito;
-            newFrame.size.height = specw;
-            newFrame.origin.x = (self.view.frame.size.width - newFrame.size.width)/2.0;
-            newFrame.origin.y = (self.view.frame.size.height - newFrame.size.height)/2.0;
-            self.view.frame = newFrame;
-        }
-    }
-
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
@@ -959,11 +902,12 @@ int GetPlayer2Device(){
     g_share_context = self.share_context;
     g_context = self.context;
     
-    GLKView *view = (GLKView *)self.view;
-    view.context = self.context;
-    view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-    view.drawableStencilFormat = GLKViewDrawableStencilFormat8;
-
+    GLView * gview = (GLView*)self.view;
+    gview.context = g_context;
+    gview.controller = self;
+    
+    
+    //[self.view  addSubview:self.myGLKView];
     // Configure the audio session
     AVAudioSession *sessionInstance = [AVAudioSession sharedInstance];
     NSError *error;
@@ -996,7 +940,7 @@ int GetPlayer2Device(){
 
    
     
-    self.preferredFramesPerSecond =120;
+    //self.preferredFramesPerSecond =120;
     
     
     static dispatch_once_t onceToken;
@@ -1030,8 +974,60 @@ int GetPlayer2Device(){
     self.keyMapper = [[KeyMapper alloc] init];
     [self.keyMapper loadFromDefaults];
     self.remapLabelViews = [NSMutableArray array];
-    [self setupGL];
+    
+    self.scale_slider.hidden = YES;
+    self.scale_slider.minimumValue = 0.5;
+    self.scale_slider.maximumValue = 1.0;
+    self.scale_slider.value = _controller_scale;
+    [self.scale_slider addTarget:self action:@selector(didValueChanged:) forControlEvents:UIControlEventValueChanged];
+    controller_edit_mode = 0;
+    [self updateControllScale :_controller_scale];
+    
 }
+
+- (void)updateControllScale:( float ) scale{
+    
+    UIView * lfv = self.left_view;
+    CGAffineTransform tf = CGAffineTransformMakeScale(1.0,1.0);
+    tf = CGAffineTransformTranslate(tf, -(258.0/2.0), (340.0/2.0));
+    tf = CGAffineTransformScale(tf, scale, scale);
+    tf = CGAffineTransformTranslate(tf, (258.0/2.0), -(340.0/2.0));
+    lfv.transform = tf;
+    
+    UIView * rfv = self.right_view;
+    tf = CGAffineTransformMakeScale(1.0,1.0);
+    tf = CGAffineTransformTranslate(tf, (258.0/2.0), (340.0/2.0));
+    tf = CGAffineTransformScale(tf, scale, scale);
+    tf = CGAffineTransformTranslate(tf, -(258.0/2.0), -(340.0/2.0));
+    rfv.transform = tf;
+    
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    [ud setFloat:scale forKey:@"controller scale"];
+    [ud synchronize];
+
+}
+
+
+- (void)didValueChanged:( UISlider *)slider
+{
+    float scale_val = slider.value;
+    [self updateControllScale :scale_val ];
+}
+
+- (void)toggleControllerEditMode {
+    
+    GLView * gview = (GLView*)self.view;
+    if(controller_edit_mode==0){
+        self.scale_slider.hidden = NO;
+        controller_edit_mode = 1;
+        [gview stopAnimation];
+    }else{
+        self.scale_slider.hidden = YES;
+        controller_edit_mode = 0;
+        [gview startAnimation];
+    }
+}
+
 
 - (void)dealloc
 {    
@@ -1064,20 +1060,60 @@ int GetPlayer2Device(){
     return YES;
 }
 
-- (void)setupGL
+- (void)setup
 {
     [EAGLContext setCurrentContext:self.context];
-    GLKView *view = (GLKView *)self.view;
+    GLView *view = (GLView *)self.view;
     view.context = self.context;
     view.contentScaleFactor = [UIScreen mainScreen].scale;
-     [view bindDrawable ];
+    [view bindDrawable ];
+    
+    _renderBuffer = view._renderBuffer;
     
     CGFloat scale = [[UIScreen mainScreen] scale];
     printf("viewport(%f,%f)\n",[view frame].size.width,[view frame].size.height);
-    start_emulation([view frame].origin.x*scale, [view frame].origin.y*scale, [view frame].size.width*scale,[view frame].size.height*scale);
+
+    CGRect newFrame = self.view.frame;
+    if( _aspect_rate ){
+        int specw = self.view.frame.size.width;
+        int spech = self.view.frame.size.height;
+        float specratio = (float)specw / (float)spech;
+        int saturnw = 4;
+        int saturnh = 3;
+        if( _rotate_screen == YES ){
+            saturnw = 3;
+            saturnh = 4;
+        }
+        float saturnraito = (float)saturnw/ (float)saturnh;
+        float revraito = (float) saturnh/ (float)saturnw;
+        
+        if( specratio > saturnraito ){
+            
+            newFrame.size.width = spech * saturnraito;
+            newFrame.size.height = spech;
+            newFrame.origin.x = (self.view.frame.size.width - newFrame.size.width)/2.0;
+            newFrame.origin.y = 0;
+        }else{
+            newFrame.size.width = specw ;
+            newFrame.size.height = specw * revraito;
+            newFrame.origin.x = 0;
+            newFrame.origin.y = spech - newFrame.size.height;
+        }
+    }
+
     
+    if( self._isFirst == YES){
+        start_emulation(newFrame.origin.x*scale, newFrame.origin.y*scale, newFrame.size.width*scale,newFrame.size.height*scale);
+        self._isFirst = NO;
+        [view startAnimation];
+    }else{
+        resize_screen(newFrame.origin.x*scale, newFrame.origin.y*scale, newFrame.size.width*scale,newFrame.size.height*scale);
+    }
     self._return = YES;
     
+    //CADisplayLink *displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(update)];
+    //[displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+
     //start_emulation(1920,1080);
     
 }
@@ -1090,10 +1126,11 @@ int GetPlayer2Device(){
 
 #pragma mark - GLKView and GLKViewController delegate methods
 
-- (void)update
+- (void)emulate_one_frame
 {
+    
     if( self._return == YES ){
-        GLKView *view = (GLKView *)self.view;
+        GLView *view = (GLView *)self.view;
         GLint defaultFBO;
         [view bindDrawable];
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
@@ -1104,20 +1141,18 @@ int GetPlayer2Device(){
     
     emulation_step(self.command);
     self.command = 0;
+    //[self.myGLKView setNeedsDisplay];
+    
+
 }
 
-- (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
-{
-}
 
 - (void)didEnterBackground {
     
-    GLKView *view = (GLKView *)self.view;
+    GLView *view = (GLView *)self.view;
+    [view stopAnimation];
     enterBackGround();
     [self setPaused:true];
-    
-    //if (view.active)
-        [view resignFirstResponder];
 }
 
 - (void)didBecomeActive {
@@ -1125,10 +1160,10 @@ int GetPlayer2Device(){
     [self.view becomeFirstResponder];
     
     [self setPaused:false];
-    
-
-    
     self._return = YES;
+    
+    GLView *view = (GLView *)self.view;
+    [view startAnimation];
 }
 
 - (BOOL)canBecomeFirstResponder {

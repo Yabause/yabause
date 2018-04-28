@@ -419,6 +419,14 @@ extern "C" {
   int YabSaveStateBuffer(void **buffer, size_t *size);
   int YabLoadStateBuffer(const void *buffer, size_t size);
 
+// Mapped mewmory
+void * YabMemMap(char * filename, u32 size );
+void YabFreeMap(void * p);
+int ExtendBackupFile(FILE *fp, u32 size );
+void FormatBackupRamFile(FILE *fp, u32 size);
+void FormatBackupRam(void *mem, u32 size);
+int CheckBackupFile(FILE *fp);
+
 #ifdef __cplusplus
 }
 #endif

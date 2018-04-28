@@ -751,6 +751,9 @@ static INLINE u32 VDP1COLOR16TO24(u16 temp) {
   return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9);
 }
 
+void Ygl_uniformVDP2DrawFrameBufferShadow(void * p);
+void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend);
+int YglDrawBackScreen(float w, float h);
 
 #endif // YGL_H
 

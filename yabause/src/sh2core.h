@@ -538,6 +538,9 @@ extern SH2Interface_struct SH2Dynarec;
 extern SH2Interface_struct SH2Dyn;
 extern SH2Interface_struct SH2DynDebug;
 
+void FASTCALL SH2OnFrame(SH2_struct *context);
+
+
 #ifdef __cplusplus
 }
 #endif
