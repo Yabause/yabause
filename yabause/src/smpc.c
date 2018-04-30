@@ -125,6 +125,7 @@ void SmpcReset(void) {
 
    memset((void *)&SmpcInternalVars->port1, 0, sizeof(PortData_struct));
    memset((void *)&SmpcInternalVars->port2, 0, sizeof(PortData_struct));
+   SmpcRegs->OREG[31] = 0xD;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -151,6 +152,12 @@ static void SmpcSNDON(void) {
 static void SmpcSNDOFF(void) {
    M68KStop();
    SmpcRegs->OREG[31] = 0x7;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void SmpcSYSRES(void) {
+  SmpcRegs->OREG[31] = 0xD;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -519,12 +526,12 @@ void SmpcExec(s32 t) {
             intback_wait_for_line = 0;
          }
       }
-
       SmpcInternalVars->timing -= t;
       if (SmpcInternalVars->timing <= 0) {
          switch(SmpcRegs->COMREG) {
             case 0x0:
                SMPCLOG("smpc\t: MSHON not implemented\n");
+               SmpcRegs->OREG[31]=0x0;
                break;
             case 0x2:
                SMPCLOG("smpc\t: SSHON\n");
@@ -550,6 +557,7 @@ void SmpcExec(s32 t) {
                break;
             case 0xD:
                SMPCLOG("smpc\t: SYSRES not implemented\n");
+               SmpcSYSRES();
                break;
             case 0xE:
                SMPCLOG("smpc\t: CKCHG352\n");
@@ -598,6 +606,11 @@ u8 FASTCALL SmpcReadByte(SH2_struct *context, u8* mem, u32 addr) {
      bustmp |= SmpcRegs->SF;
      return bustmp;
    }
+
+   if (addr == 0x77) {
+     return (SmpcRegs->PDR[1] & ~0x19) | 0x18 | 1; //Shall use eeprom normally look at mame stv driver
+   }
+
    return SmpcRegsT[addr >> 1];
 }
 
@@ -770,12 +783,16 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
                SmpcRegs->PDR[0] = val;
                break;
+            case 0x3f:
+               val = (val & SmpcRegs->DDR[0] ) | (val & 0x80);
+               SmpcRegs->PDR[0] = val;
+               break;
             default:
-               SMPCLOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
+               SMPCLOG("smpc\t: PDR1 Peripheral Unknown Control Method not implemented 0x%x\n", SmpcRegs->DDR[0] & 0x7F);
                break;
          }
-			break;
-	  case 0x77: // PDR1
+	break;
+	  case 0x77: // PDR2
 		  // FIX ME (should support other peripherals)
 		  switch (SmpcRegs->DDR[1] & 0x7F) { // Which Control Method do we use?
 		  case 0x00:
@@ -801,8 +818,12 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
 			  SmpcRegs->PDR[1] = val;
 			  break;
+                  case 0x18:
+                          val = (val & SmpcRegs->DDR[1] ) | (val & 0x80);
+                          SmpcRegs->PDR[1] = val;
+                          break;
 		  default:
-			  SMPCLOG("smpc\t: Peripheral Unknown Control Method not implemented\n");
+			  SMPCLOG("smpc\t: PDR2 Peripheral Unknown Control Method not implemented 0x%x\n", SmpcRegs->DDR[1] & 0x7F);
 			  break;
 		  }
 		  break;
@@ -852,6 +873,9 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
                break;
             default: break;
          }
+         break;
+         case 0x7B: // DDR2
+            SmpcRegs->DDR[1] = (val & 0x7F);
          break;
 	  case 0x7D: // IOSEL
 		  SmpcRegs->IOSEL = val;
