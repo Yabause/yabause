@@ -145,13 +145,13 @@ int IOPortAdd(int key, ioPort port, u8 index) {
 }
 
 static void IOPortPressed(int key) {
-  if (IOkeys[key] != NULL){
-    (*IOkeys[key]->port) &= ~IOkeys[key]->mask;
+  if (IOkeys[(key & 0xFF)] != NULL){
+    (*IOkeys[(key & 0xFF)]->port) &= ~IOkeys[(key & 0xFF)]->mask;
   }
 }
 static void IOPortReleased(int key) {
-  if (IOkeys[key] != NULL){
-    (*IOkeys[key]->port) |= IOkeys[key]->mask;
+  if (IOkeys[(key & 0xFF)] != NULL){
+    (*IOkeys[(key & 0xFF)]->port) |= IOkeys[(key & 0xFF)]->mask;
   }
 }
 
