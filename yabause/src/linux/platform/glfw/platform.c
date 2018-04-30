@@ -203,6 +203,9 @@ int platform_SetupOpenGL(int w, int h, int fullscreen) {
    inputMap[GLFW_KEY_Z] = PERPAD_Y;
    inputMap[GLFW_KEY_E] = PERPAD_Z;
 
+   inputMap[GLFW_KEY_G] = PERJAMMA_SERVICE;
+   inputMap[GLFW_KEY_T] = PERJAMMA_TEST;
+
   glfwSetKeyCallback(g_window, key_callback);
   return 1;
 }
