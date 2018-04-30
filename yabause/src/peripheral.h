@@ -49,6 +49,12 @@
 extern PortData_struct PORTDATA1;
 extern PortData_struct PORTDATA2;
 
+extern u8 IOPORTP1;
+extern u8 IOPORTP2;
+extern u8 IOPORTP3;
+extern u8 IOPORTP4;
+extern u8 IOPORTSYS;
+
 #define PERSF_ALL       (0xFFFFFFFF)
 #define PERSF_KEY       (1 << 0)
 #define PERSF_BUTTON    (1 << 1)
@@ -77,6 +83,9 @@ typedef struct
 extern PerInterface_struct * PERCore;
 
 extern PerInterface_struct PERDummy;
+
+extern u8 FASTCALL IOPortReadByte(SH2_struct *context, UNUSED u8* memory,  u32 addr);
+extern void FASTCALL IOPortWriteByte(SH2_struct *context, UNUSED u8* memory,UNUSED u32 addr, UNUSED u8 val);
 
 /**
  * @brief Init a peripheral core
@@ -141,6 +150,20 @@ typedef struct
    u8 perid;
    u8 padbits[2];
 } PerPad_struct;
+
+typedef enum {
+	PORT_A = 0,
+	PORT_B,
+	PORT_C,
+	PORT_D,
+	PORT_E,
+        PORT_F,
+        PORT_G,
+	ioPortMAX
+} ioPort;
+
+
+int IOPortAdd(int key, ioPort port, u8 index);
 
 /** @brief Adds a pad to one of the controller ports.
  *
@@ -299,6 +322,15 @@ void PerGunStartPressed(PerGun_struct * gun);
 void PerGunStartReleased(PerGun_struct * gun);
 
 void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
+
+#define PERJAMMA_COIN1 29
+#define PERJAMMA_COIN2 30
+#define PERJAMMA_TEST 31
+#define PERJAMMA_SERVICE 32
+#define PERJAMMA_START1 33
+#define PERJAMMA_START2 34
+#define PERJAMMA_MULTICART 35
+#define PERJAMMA_PAUSE 36
 
 /** @} */
 

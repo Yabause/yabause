@@ -47,6 +47,7 @@
 #include "yui.h"
 #include "movie.h"
 #include "bios.h"
+#include "peripheral.h"
 
 //#ifdef HAVE_LIBGL
 //#define USE_OPENGL
@@ -583,6 +584,13 @@ void MappedMemoryInit()
                                 &LowWramMemoryWriteWord,
                                 &LowWramMemoryWriteLong,
                                 &LowWram);
+   FillMemoryArea(0x040, 0x041, &IOPortReadByte, 
+                                &UnhandledMemoryReadWord,
+                                &UnhandledMemoryReadLong,
+                                &IOPortWriteByte,
+                                &UnhandledMemoryWriteWord,
+                                &UnhandledMemoryWriteLong,
+                                &VoidMem);
    FillMemoryArea(0x100, 0x17F, &UnhandledMemoryReadByte,
                                 &UnhandledMemoryReadWord,
                                 &UnhandledMemoryReadLong,
