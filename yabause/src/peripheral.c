@@ -54,7 +54,7 @@ NULL
 
 PortData_struct PORTDATA1;
 PortData_struct PORTDATA2;
-static u8 IOPORT[ioPortMAX] = {};
+static u8 IOPORT[ioPortMAX];
 
 PerInterface_struct * PERCore = NULL;
 extern PerInterface_struct * PERCoreList[];
@@ -998,6 +998,8 @@ void PerPortReset(void)
 
         for (i=0; i<ioPortMAX; i++)
           IOPORT[i] = 0xFF; //IOPORT are in pull up mode.
+        for (i=0; i<256; i++)
+          IOkeys[i] = NULL;
 
 	perkeyconfigsize = 0;
         if (perkeyconfig)
