@@ -197,23 +197,24 @@ static void KeyInit() {
   PerSetKey(KEYPAD(PERPAD_Y, 1), PERPAD_Y, padbits);
   PerSetKey(KEYPAD(PERPAD_Z, 1), PERPAD_Z, padbits);
 
-  IOPortAdd(KEYPAD(PERPAD_UP, 0), PORT_A, 0x5);
-  IOPortAdd(KEYPAD(PERPAD_RIGHT, 0), PORT_A, 0x6);
-  IOPortAdd(KEYPAD(PERPAD_DOWN, 0), PORT_A, 0x4);
-  IOPortAdd(KEYPAD(PERPAD_LEFT, 0), PORT_A, 0x7);
-  IOPortAdd(KEYPAD(PERPAD_A, 0), PORT_A, 0x0);
-  IOPortAdd(KEYPAD(PERPAD_B, 0), PORT_A, 0x1);
-  IOPortAdd(KEYPAD(PERPAD_C, 0), PORT_A, 0x2);
-  IOPortAdd(KEYPAD(PERPAD_X, 0), PORT_A, 0x3);
+  padbits = PerCabAdd(NULL);
+  PerSetKey(PERPAD_UP, PERPAD_UP, padbits);
+  PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, padbits);
+  PerSetKey(PERPAD_DOWN, PERPAD_DOWN, padbits);
+  PerSetKey(PERPAD_LEFT, PERPAD_LEFT, padbits);
+  PerSetKey(PERPAD_A, PERPAD_A, padbits);
+  PerSetKey(PERPAD_B, PERPAD_B, padbits);
+  PerSetKey(PERPAD_C, PERPAD_C, padbits);
+  PerSetKey(PERPAD_X, PERPAD_X, padbits);
 
-  IOPortAdd(PERJAMMA_COIN1, PORT_C, 0x0 );
-  IOPortAdd(PERJAMMA_COIN2, PORT_C, 0x1 );
-  IOPortAdd(PERJAMMA_TEST, PORT_C, 0x2);
-  IOPortAdd(PERJAMMA_SERVICE, PORT_C, 0x3);
-  IOPortAdd(PERJAMMA_START1, PORT_C, 0x4);
-  IOPortAdd(PERJAMMA_START2, PORT_C, 0x5);
-  IOPortAdd(PERJAMMA_MULTICART, PORT_C, 0x6);
-  IOPortAdd(PERJAMMA_PAUSE, PORT_C, 0x7);
+  PerSetKey(PERJAMMA_COIN1, PERJAMMA_COIN1, padbits );
+  PerSetKey(PERJAMMA_COIN2, PERJAMMA_COIN2, padbits );
+  PerSetKey(PERJAMMA_TEST, PERJAMMA_TEST, padbits);
+  PerSetKey(PERJAMMA_SERVICE, PERJAMMA_SERVICE, padbits);
+  PerSetKey(PERJAMMA_START1, PERJAMMA_START1, padbits);
+  PerSetKey(PERJAMMA_START2, PERJAMMA_START2, padbits);
+  PerSetKey(PERJAMMA_MULTICART, PERJAMMA_MULTICART, padbits);
+  PerSetKey(PERJAMMA_PAUSE, PERJAMMA_PAUSE, padbits);
 
 }
 

@@ -1,0 +1,333 @@
+<ui version="4.0" >
+ <class>UISTVSetting</class>
+ <widget class="QDialog" name="UISTVSetting" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>549</width>
+    <height>275</height>
+   </rect>
+  </property>
+  <property name="focusPolicy" >
+   <enum>Qt::StrongFocus</enum>
+  </property>
+  <property name="windowTitle" >
+   <string>ST-V cabinet Configuration</string>
+  </property>
+  <widget class="QLabel" name="label" >
+   <property name="geometry" >
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>549</width>
+     <height>275</height>
+    </rect>
+   </property>
+   <property name="pixmap" >
+    <pixmap resource="../resources/resources.qrc" >:/actions/cabinet.png</pixmap>
+   </property>
+  </widget>
+   <widget class="QToolButton" name="tbService" >
+   <property name="geometry" >
+    <rect>
+     <x>284</x>
+     <y>24</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Service</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+ <widget class="QToolButton" name="tbTest" >
+   <property name="geometry" >
+    <rect>
+     <x>330</x>
+     <y>24</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Test</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbUp" >
+   <property name="geometry" >
+    <rect>
+     <x>60</x>
+     <y>124</y>
+     <width>14</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Up</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+<widget class="QToolButton" name="tbDown" >
+   <property name="geometry" >
+    <rect>
+     <x>60</x>
+     <y>191</y>
+     <width>14</width>
+     <height>18</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Down</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbRight" >
+   <property name="geometry" >
+    <rect>
+     <x>91</x>
+     <y>160</y>
+     <width>18</width>
+     <height>14</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Right</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbLeft" >
+   <property name="geometry" >
+    <rect>
+     <x>25</x>
+     <y>160</y>
+     <width>18</width>
+     <height>14</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Left</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbX" >
+   <property name="geometry" >
+    <rect>
+     <x>124</x>
+     <y>122</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>X</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbY" >
+   <property name="geometry" >
+    <rect>
+     <x>161</x>
+     <y>105</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Y</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbZ" >
+   <property name="geometry" >
+    <rect>
+     <x>204</x>
+     <y>110</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Z</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbC" >
+   <property name="geometry" >
+    <rect>
+     <x>195</x>
+     <y>154</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>C</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbB" >
+   <property name="geometry" >
+    <rect>
+     <x>153</x>
+     <y>149</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>B</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QToolButton" name="tbA" >
+   <property name="geometry" >
+    <rect>
+     <x>114</x>
+     <y>164</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>A</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lInfos" >
+   <property name="geometry" >
+    <rect>
+     <x>183</x>
+     <y>270</y>
+     <width>191</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="alignment" >
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QDialogButtonBox" name="stvButtons">
+   <property name="geometry" >
+    <rect>
+     <x>491</x>
+     <y>323</y>
+     <width>60</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Close</set>
+   </property>
+  </widget>
+ </widget>
+ <resources>
+  <include location="../resources/resources.qrc" />
+ </resources>
+ <connections>
+  <connection>
+   <sender>stvButtons</sender>
+   <signal>rejected()</signal>
+   <receiver>UISTVSetting</receiver>
+   <slot>reject()</slot>
+  </connection>
+ </connections>
+</ui>

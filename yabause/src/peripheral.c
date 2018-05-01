@@ -103,6 +103,21 @@ PerBaseConfig_struct perpadbaseconfig[] = {
 	{ PERPAD_Z, PERCB(PerPadZPressed), PERCB(PerPadZReleased), NULL, NULL },
 };
 
+PerBaseConfig_struct percabinetbaseconfig[] = {
+	{ PERPAD_UP, PERCB(PerCabUpPressed), PERCB(PerCabUpReleased), NULL, NULL },
+	{ PERPAD_RIGHT, PERCB(PerCabRightPressed), PERCB(PerCabRightReleased), NULL, NULL },
+	{ PERPAD_DOWN, PERCB(PerCabDownPressed), PERCB(PerCabDownReleased), NULL, NULL },
+	{ PERPAD_LEFT, PERCB(PerCabLeftPressed), PERCB(PerCabLeftReleased), NULL, NULL },
+	{ PERJAMMA_TEST, PERCB(PerCabTestPressed), PERCB(PerCabTestReleased), NULL, NULL },
+	{ PERJAMMA_SERVICE, PERCB(PerCabServicePressed), PERCB(PerCabServiceReleased), NULL, NULL },
+	{ PERPAD_A, PERCB(PerCabAPressed), PERCB(PerCabAReleased), NULL, NULL },
+	{ PERPAD_B, PERCB(PerCabBPressed), PERCB(PerCabBReleased), NULL, NULL },
+	{ PERPAD_C, PERCB(PerCabCPressed), PERCB(PerCabCReleased), NULL, NULL },
+	{ PERPAD_X, PERCB(PerCabXPressed), PERCB(PerCabXReleased), NULL, NULL },
+	{ PERPAD_Y, PERCB(PerCabYPressed), PERCB(PerCabYReleased), NULL, NULL },
+	{ PERPAD_Z, PERCB(PerCabZPressed), PERCB(PerCabZReleased), NULL, NULL },
+};
+
 PerBaseConfig_struct permousebaseconfig[] = {
 	{ PERMOUSE_LEFT, PERCB(PerMouseLeftPressed), PERCB(PerMouseLeftReleased), NULL, NULL },
 	{ PERMOUSE_MIDDLE, PERCB(PerMouseMiddlePressed), PERCB(PerMouseMiddleReleased), NULL, NULL },
@@ -154,6 +169,7 @@ static void IOPortReleased(int key) {
     (*IOkeys[(key & 0xFF)]->port) |= IOkeys[(key & 0xFF)]->mask;
   }
 }
+
 
 u8 FASTCALL IOPortReadByte(SH2_struct *context, UNUSED u8* memory,  u32 addr)
 {
@@ -427,6 +443,169 @@ void PerPadLTriggerReleased(PerPad_struct * pad) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+/*
+  IOPortAdd(KEYPAD(PERPAD_UP, 0), PORT_A, 0x5);
+  IOPortAdd(KEYPAD(PERPAD_RIGHT, 0), PORT_A, 0x6);
+  IOPortAdd(KEYPAD(PERPAD_DOWN, 0), PORT_A, 0x4);
+  IOPortAdd(KEYPAD(PERPAD_LEFT, 0), PORT_A, 0x7);
+  IOPortAdd(KEYPAD(PERPAD_A, 0), PORT_A, 0x0);
+  IOPortAdd(KEYPAD(PERPAD_B, 0), PORT_A, 0x1);
+  IOPortAdd(KEYPAD(PERPAD_C, 0), PORT_A, 0x2);
+  IOPortAdd(KEYPAD(PERPAD_X, 0), PORT_A, 0x3);
+
+  IOPortAdd(PERJAMMA_COIN1, PORT_C, 0x0 );
+  IOPortAdd(PERJAMMA_COIN2, PORT_C, 0x1 );
+  IOPortAdd(PERJAMMA_TEST, PORT_C, 0x2);
+  IOPortAdd(PERJAMMA_SERVICE, PORT_C, 0x3);
+  IOPortAdd(PERJAMMA_START1, PORT_C, 0x4);
+  IOPortAdd(PERJAMMA_START2, PORT_C, 0x5);
+  IOPortAdd(PERJAMMA_MULTICART, PORT_C, 0x6);
+  IOPortAdd(PERJAMMA_PAUSE, PORT_C, 0x7);
+*/
+
+void PerCabUpPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x5);
+}
+
+void PerCabUpReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x5);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabDownPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabDownReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabRightPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabRightReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabLeftPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x7);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabLeftReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x7);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabAPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabAReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabBPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabBReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabCPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabCReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabXPressed(PerCab_struct * pad) {
+   pad[PORT_A] &= ~(0x1 << 0x3);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabXReleased(PerCab_struct * pad) {
+   pad[PORT_A] |= (0x1 << 0x3);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabYPressed(PerCab_struct * pad) {
+//To be done
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabYReleased(PerCab_struct * pad) {
+//To be done
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabZPressed(PerCab_struct * pad) {
+//To be done
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabZReleased(PerCab_struct * pad) {
+//To be done
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabTestPressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabTestReleased(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabServicePressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x3);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabServiceReleased(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x3);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 
 void PerMouseLeftPressed(PerMouse_struct * mouse) {
    *(mouse->mousebits) |= 1;
@@ -916,7 +1095,6 @@ void PerKeyDown(u32 key)
 		}
 		i++;
 	}
-        IOPortPressed(key);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -933,7 +1111,6 @@ void PerKeyUp(u32 key)
 		}
 		i++;
 	}
-        IOPortReleased(key);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -941,7 +1118,6 @@ void PerKeyUp(u32 key)
 void PerSetKey(u32 key, u8 name, void * controller)
 {
 	unsigned int i = 0;
-
 	while(i < perkeyconfigsize)
 	{
 		if ((name == perkeyconfig[i].base->name) && (controller == perkeyconfig[i].controller))
@@ -1072,6 +1248,12 @@ PerAnalog_struct * PerTwinSticksAdd(PortData_struct * port)
 PerGun_struct * PerGunAdd(PortData_struct * port)
 {
    return PerAddPeripheral(port, PERGUN);
+}
+
+PerCab_struct * PerCabAdd(PortData_struct * port)
+{
+  PerUpdateConfig(percabinetbaseconfig, sizeof(percabinetbaseconfig)/sizeof(PerBaseConfig_struct), IOPORT);
+  return IOPORT;
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -127,6 +127,8 @@ namespace QtYabause
 	// padsbits
 	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );
 	void clearPadsBits();
+        QMap<uint, PerCab_struct*>* portIOBits( );
+	void clearIOBits();
 	QMap<uint, PerAnalog_struct*>* portAnalogBits( uint portNumber );
 	void clear3DAnalogBits();
 	QMap<uint, PerGun_struct*>* portGunBits( uint portNumber );

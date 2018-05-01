@@ -42,18 +42,13 @@
 #define PERGUN				0x25
 #define PERKEYBOARD		0x34
 #define PERMOUSE			0xE3
+#define PERCABINET	                0xFF
 
 #define PERCORE_DEFAULT -1
 #define PERCORE_DUMMY 0
 
 extern PortData_struct PORTDATA1;
 extern PortData_struct PORTDATA2;
-
-extern u8 IOPORTP1;
-extern u8 IOPORTP2;
-extern u8 IOPORTP3;
-extern u8 IOPORTP4;
-extern u8 IOPORTSYS;
 
 #define PERSF_ALL       (0xFFFFFFFF)
 #define PERSF_KEY       (1 << 0)
@@ -323,6 +318,7 @@ void PerGunStartReleased(PerGun_struct * gun);
 
 void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
 
+
 #define PERJAMMA_COIN1 29
 #define PERJAMMA_COIN2 30
 #define PERJAMMA_TEST 31
@@ -331,6 +327,46 @@ void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
 #define PERJAMMA_START2 34
 #define PERJAMMA_MULTICART 35
 #define PERJAMMA_PAUSE 36
+
+typedef u8 PerCab_struct;
+
+PerCab_struct * PerCabAdd(PortData_struct * port);
+
+void PerCabUpPressed(PerCab_struct * pad);
+void PerCabUpReleased(PerCab_struct * pad);
+
+void PerCabDownPressed(PerCab_struct * pad);
+void PerCabDownReleased(PerCab_struct * pad);
+
+void PerCabRightPressed(PerCab_struct * pad);
+void PerCabRightReleased(PerCab_struct * pad);
+
+void PerCabLeftPressed(PerCab_struct * pad);
+void PerCabLeftReleased(PerCab_struct * pad);
+
+void PerCabAPressed(PerCab_struct * pad);
+void PerCabAReleased(PerCab_struct * pad);
+
+void PerCabBPressed(PerCab_struct * pad);
+void PerCabBReleased(PerCab_struct * pad);
+
+void PerCabCPressed(PerCab_struct * pad);
+void PerCabCReleased(PerCab_struct * pad);
+
+void PerCabXPressed(PerCab_struct * pad);
+void PerCabXReleased(PerCab_struct * pad);
+
+void PerCabYPressed(PerCab_struct * pad);
+void PerCabYReleased(PerCab_struct * pad);
+
+void PerCabZPressed(PerCab_struct * pad);
+void PerCabZReleased(PerCab_struct * pad);
+
+void PerCabTestPressed(PerCab_struct * pad);
+void PerCabTestReleased(PerCab_struct * pad);
+
+void PerCabServicePressed(PerCab_struct * pad);
+void PerCabServiceReleased(PerCab_struct * pad);
 
 /** @} */
 

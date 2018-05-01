@@ -147,9 +147,22 @@ void YabauseThread::reloadControllers()
 		foreach ( const QString& id, ids )
 		{
 			uint type = settings->value( QString( UIPortManager::mSettingsType ).arg( port ).arg( id ) ).toUInt();
-			
 			switch ( type )
 			{
+                                case PERCABINET:
+                                {
+                                  PerCab_struct* padbits = PerCabAdd( NULL );
+                                  settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
+                                  QStringList padKeys = settings->childKeys();
+				  settings->endGroup();
+				  padKeys.sort();
+                                  foreach ( const QString& padKey, padKeys )
+				  {
+				    const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( padKey ) ).toString();
+				    PerSetKey( key.toUInt(), padKey.toUInt(), padbits );
+				  }
+                                  break;
+                                }
 				case PERPAD:
 				{
 					PerPad_struct* padbits = PerPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );

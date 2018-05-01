@@ -19,6 +19,7 @@
 */
 #include "UIPortManager.h"
 #include "UIPadSetting.h"
+#include "UISTVSetting.h"
 #include "UI3DControlPadSetting.h"
 #include "UIWheelSetting.h"
 #include "UIMissionStickSetting.h"
@@ -57,6 +58,7 @@ UIPortManager::UIPortManager( QWidget* parent )
       cb->addItem( QtYabause::translate( "Gun" ), PERGUN );
       //cb->addItem( QtYabause::translate( "Keyboard" ), PERKEYBOARD );
 		cb->addItem( QtYabause::translate( "Mouse" ), PERMOUSE );
+                cb->addItem( QtYabause::translate( "ST-V Cabinet" ), PERCABINET );
 
 		connect( cb, SIGNAL( currentIndexChanged( int ) ), this, SLOT( cbTypeController_currentIndexChanged( int ) ) );
 	}
@@ -154,6 +156,7 @@ void UIPortManager::cbTypeController_currentIndexChanged( int id )
 		case PERWHEEL:
 		case PER3DPAD:
 		case PERMOUSE:
+		case PERCABINET:
 			buttons.at( 0 )->setEnabled( true );
 			buttons.at( 1 )->setEnabled( true );
 			buttons.at( 2 )->setEnabled( true );
@@ -206,6 +209,29 @@ void UIPortManager::tbSetJoystick_clicked()
 			}
 
 			UIPadSetting ups( mCore, mPort, controllerId, type, this );
+			ups.exec();
+			break;
+		}
+		case PERCABINET:
+		{
+			QMap<uint, PerCab_struct*>& padsbits = *QtYabause::portIOBits( );
+
+			PerCab_struct* padBits = padsbits[ controllerId ];
+
+                        if ( !padBits )
+			{
+				padBits = PerCabAdd(NULL);
+
+				if ( !padBits )
+				{
+					CommonDialogs::warning( QtYabause::translate( "Can't plug in the new controller, cancelling." ) );
+					return;
+				}
+
+				padsbits[ controllerId ] = padBits;
+			}
+
+			UISTVSetting ups( mCore, mPort, controllerId, type, this );
 			ups.exec();
 			break;
 		}
