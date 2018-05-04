@@ -261,8 +261,10 @@ int Vdp2Init(void) {
 
    Vdp2Reset();
 
-   memset(Vdp2ColorRam, 0, 0x1000);
-   Vdp2ColorRamUpdated = 1;
+   memset(Vdp2ColorRam, 0xFF, 0x1000);
+   for (int i = 0; i < 0x1000; i += 2) {
+     YglOnUpdateColorRamWord(i);
+   }
 
    return 0;
 }
