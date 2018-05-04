@@ -3846,14 +3846,8 @@ void YglOnUpdateColorRamWord(u32 addr) {
   if (_Ygl->colupd_min_addr > addr)
     _Ygl->colupd_min_addr = addr; 
 
-  if (Vdp2Internal.ColorMode == 0) {
-    if (_Ygl->colupd_max_addr < (addr+0x800) )
-      _Ygl->colupd_max_addr = (addr+0x800) ;
-  }
-  else {
-    if (_Ygl->colupd_max_addr < addr)
+  if (_Ygl->colupd_max_addr < addr)
       _Ygl->colupd_max_addr = addr;
-  }
 
   u32 * buf = _Ygl->cram_tex_buf;
   if (buf == NULL) {
@@ -3923,6 +3917,14 @@ void YglUpdateColorRam() {
       GL_RGBA, GL_UNSIGNED_BYTE,
       buf);
 #else
+    if (Vdp2Internal.ColorMode == 0) {
+      glTexSubImage2D(GL_TEXTURE_2D,
+        0,
+        ((_Ygl->colupd_min_addr >> index_shft) + 0x400 ), 0,
+        (((_Ygl->colupd_max_addr - _Ygl->colupd_min_addr) >> index_shft) + 0x400 ) + 1, 1,
+        GL_RGBA, GL_UNSIGNED_BYTE,
+        &buf[(_Ygl->colupd_min_addr >> index_shft) + 0x400]);
+    }
     glTexSubImage2D(GL_TEXTURE_2D, 
       0, 
       (_Ygl->colupd_min_addr >> index_shft), 0, 
