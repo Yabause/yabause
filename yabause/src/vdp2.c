@@ -183,10 +183,24 @@ void FASTCALL Vdp2ColorRamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 v
 void FASTCALL Vdp2ColorRamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0xFFF;
    //LOG("[VDP2] Update Coloram Word %08X:%04X", addr, val);
-   if (val != T2ReadWord(mem, addr)){
-     T2WriteWord(mem, addr, val);
-     YglOnUpdateColorRamWord(addr);
-     return;
+   if (Vdp2Internal.ColorMode == 0 ) {
+     if (val != T2ReadWord(mem, addr)) {
+       T2WriteWord(mem, addr, val);
+       YglOnUpdateColorRamWord(addr);
+     }
+
+     if (addr < 0x800) {
+       if (val != T2ReadWord(mem, addr + 0x800)) {
+         T2WriteWord(mem, addr + 0x800, val);
+         YglOnUpdateColorRamWord(addr + 0x800);
+       }
+     }
+   }
+   else {
+     if (val != T2ReadWord(mem, addr)) {
+       T2WriteWord(mem, addr, val);
+       YglOnUpdateColorRamWord(addr);
+     }
    }
 }
 
@@ -195,19 +209,42 @@ void FASTCALL Vdp2ColorRamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 
 void FASTCALL Vdp2ColorRamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0xFFF;
    //LOG("[VDP2] Update Coloram Long %08X:%08X", addr, val);
-   //if (Vdp2ColorRamUpdated == 0){
-     if (val != T2ReadLong(mem, addr)){
-       T2WriteLong(Vdp2ColorRam, addr, val);
+   if (Vdp2Internal.ColorMode == 0) {
+
+     const u32 base_addr = addr;
+     T2WriteLong(mem, base_addr, val);
+     if (Vdp2Internal.ColorMode == 2) {
+       YglOnUpdateColorRamWord(base_addr);
+     }
+     else {
+       YglOnUpdateColorRamWord(base_addr + 2);
+       YglOnUpdateColorRamWord(base_addr);
+     }
+
+     if (addr < 0x800) {
+       const u32 mirror_addr = base_addr + 0x800;
+       T2WriteLong(mem, mirror_addr, val);
        if (Vdp2Internal.ColorMode == 2) {
-         YglOnUpdateColorRamWord(addr);
+         YglOnUpdateColorRamWord(mirror_addr);
        }
        else {
-         YglOnUpdateColorRamWord(addr + 2);
-         YglOnUpdateColorRamWord(addr);
+         YglOnUpdateColorRamWord(mirror_addr + 2);
+         YglOnUpdateColorRamWord(mirror_addr);
        }
      }
-   //}
-//   T2WriteLong(Vdp2ColorRam, addr, val);
+
+   }
+   else {
+     T2WriteLong(Vdp2ColorRam, addr, val);
+     if (Vdp2Internal.ColorMode == 2) {
+       YglOnUpdateColorRamWord(addr);
+     }
+     else {
+       YglOnUpdateColorRamWord(addr + 2);
+       YglOnUpdateColorRamWord(addr);
+     }
+   }
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -754,9 +791,10 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
          return;
       case 0x00E:
          Vdp2Regs->RAMCTL = val;
-         if (Vdp2Internal.ColorMode != (val >> 12) & 0x3) {
-           // Clear Color ram
-           memset(mem, 0, 0x1000);
+         if (Vdp2Internal.ColorMode != ((val >> 12) & 0x3) ) {
+           for (int i = 0; i < 0x1000; i += 2) {
+             YglOnUpdateColorRamWord(i);
+           }
          }
          Vdp2Internal.ColorMode = (val >> 12) & 0x3;
          return;
