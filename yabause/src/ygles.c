@@ -3843,11 +3843,11 @@ void YglOnUpdateColorRamWord(u32 addr) {
 
   YabThreadLock(_Ygl->crammutex);
   Vdp2ColorRamUpdated = 1;
-  if (_Ygl->colupd_min_addr > addr)
-    _Ygl->colupd_min_addr = addr; 
 
+  if (_Ygl->colupd_min_addr > addr)
+    _Ygl->colupd_min_addr = addr;
   if (_Ygl->colupd_max_addr < addr)
-      _Ygl->colupd_max_addr = addr;
+    _Ygl->colupd_max_addr = addr;
 
   u32 * buf = _Ygl->cram_tex_buf;
   if (buf == NULL) {
@@ -3861,10 +3861,10 @@ void YglOnUpdateColorRamWord(u32 addr) {
   {
     u16 tmp;
     u8 alpha = 0;
-    tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
+    tmp = T2ReadWord(Vdp2ColorRam, addr);
     if (tmp & 0x8000) alpha = 0xFF;
-    buf[(addr >> 1) & 0xFFF] = SAT2YAB1(alpha, tmp);
-    buf[((addr >> 1) & 0xFFF) + 0x400 ] = SAT2YAB1(alpha, tmp);
+    buf[(addr >> 1) & 0x3FF] = SAT2YAB1(alpha, tmp);
+    buf[((addr >> 1) & 0x3FF) + 0x400 ] = SAT2YAB1(alpha, tmp);
     break;
   }
   case 1:
@@ -3873,7 +3873,9 @@ void YglOnUpdateColorRamWord(u32 addr) {
     u8 alpha = 0;
     tmp = T2ReadWord(Vdp2ColorRam, addr & 0xFFF);
     if (tmp & 0x8000) alpha = 0xFF;
-    buf[(addr >> 1) & 0xFFF] = SAT2YAB1(alpha, tmp);
+    buf[(addr >> 1) & 0x7FF] = SAT2YAB1(alpha, tmp);
+
+
     break;
   }
   case 2:
@@ -3882,7 +3884,15 @@ void YglOnUpdateColorRamWord(u32 addr) {
     u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC)+2);
     u8 alpha = 0;
     if (tmp1 & 0x8000) alpha = 0xFF;
-    buf[(addr >> 2) & 0xFFF] = SAT2YAB2(alpha, tmp1, tmp2);
+    buf[(addr >> 2) & 0x7FF] = SAT2YAB2(alpha, tmp1, tmp2);
+
+    if (_Ygl->colupd_min_addr > addr)
+      _Ygl->colupd_min_addr = addr;
+
+    if (_Ygl->colupd_max_addr < addr)
+      _Ygl->colupd_max_addr = addr;
+
+
     break;
   }
   default: 
@@ -3918,12 +3928,18 @@ void YglUpdateColorRam() {
       buf);
 #else
     if (Vdp2Internal.ColorMode == 0) {
+      u32 minaddr = ((_Ygl->colupd_min_addr >> index_shft) + 0x400);
+      u32 maxaddr = ((_Ygl->colupd_max_addr >> index_shft) + 0x400);
+      if (minaddr > 0x800) minaddr = 0x800;
+      if (maxaddr > 0x800) maxaddr = 0x800;
+      u32 start = minaddr;
+      u32 end = maxaddr- minaddr + 1 ;
       glTexSubImage2D(GL_TEXTURE_2D,
         0,
-        ((_Ygl->colupd_min_addr >> index_shft) + 0x400 ), 0,
-        (((_Ygl->colupd_max_addr - _Ygl->colupd_min_addr) >> index_shft) + 0x400 ) + 1, 1,
+        start, 0,
+        end, 1,
         GL_RGBA, GL_UNSIGNED_BYTE,
-        &buf[(_Ygl->colupd_min_addr >> index_shft) + 0x400]);
+        &buf[start]);
     }
     glTexSubImage2D(GL_TEXTURE_2D, 
       0, 
