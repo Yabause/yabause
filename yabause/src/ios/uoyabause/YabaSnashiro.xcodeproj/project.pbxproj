@@ -98,7 +98,7 @@
 		64228EF61D8886AE00588323 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
 		64228EF81D88900F00588323 /* apikey.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = apikey.plist; sourceTree = "<group>"; };
 		64373A361D979E5F00B3C7BA /* settings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = settings.plist; sourceTree = "<group>"; };
-		644232A21C6580000050611E /* Yaba Snashiro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Yaba Snashiro.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		644232A21C6580000050611E /* YabaSnashiro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YabaSnashiro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232A61C6580000050611E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		644232A81C6580000050611E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		644232A91C6580000050611E /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -110,10 +110,10 @@
 		644232B51C6580000050611E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		644232B81C6580000050611E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		644232BA1C6580000050611E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		644232BF1C6580010050611E /* Yaba SnashiroTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yaba SnashiroTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		644232BF1C6580010050611E /* YabaSnashiroTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YabaSnashiroTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232C31C6580010050611E /* uoyabauseTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = uoyabauseTests.m; sourceTree = "<group>"; };
 		644232C51C6580010050611E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		644232CA1C6580010050611E /* Yaba SnashiroUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Yaba SnashiroUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		644232CA1C6580010050611E /* YabaSnashiroUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = YabaSnashiroUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232CE1C6580010050611E /* uoyabauseUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = uoyabauseUITests.m; sourceTree = "<group>"; };
 		644232D01C6580010050611E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		645EA6C11D95647200A7A5D8 /* libz.1.1.3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.1.1.3.tbd; path = usr/lib/libz.1.1.3.tbd; sourceTree = SDKROOT; };
@@ -227,9 +227,9 @@
 		644232A31C6580000050611E /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				644232A21C6580000050611E /* Yaba Snashiro.app */,
-				644232BF1C6580010050611E /* Yaba SnashiroTests.xctest */,
-				644232CA1C6580010050611E /* Yaba SnashiroUITests.xctest */,
+				644232A21C6580000050611E /* YabaSnashiro.app */,
+				644232BF1C6580010050611E /* YabaSnashiroTests.xctest */,
+				644232CA1C6580010050611E /* YabaSnashiroUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -335,9 +335,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		644232A11C6580000050611E /* Yaba Snashiro */ = {
+		644232A11C6580000050611E /* YabaSnashiro */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 644232D31C6580010050611E /* Build configuration list for PBXNativeTarget "Yaba Snashiro" */;
+			buildConfigurationList = 644232D31C6580010050611E /* Build configuration list for PBXNativeTarget "YabaSnashiro" */;
 			buildPhases = (
 				A87F9C65EEE5D1D0889ABB00 /* [CP] Check Pods Manifest.lock */,
 				6442329E1C6580000050611E /* Sources */,
@@ -349,14 +349,14 @@
 			);
 			dependencies = (
 			);
-			name = "Yaba Snashiro";
+			name = YabaSnashiro;
 			productName = uoyabause;
-			productReference = 644232A21C6580000050611E /* Yaba Snashiro.app */;
+			productReference = 644232A21C6580000050611E /* YabaSnashiro.app */;
 			productType = "com.apple.product-type.application";
 		};
-		644232BE1C6580010050611E /* Yaba SnashiroTests */ = {
+		644232BE1C6580010050611E /* YabaSnashiroTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 644232D61C6580010050611E /* Build configuration list for PBXNativeTarget "Yaba SnashiroTests" */;
+			buildConfigurationList = 644232D61C6580010050611E /* Build configuration list for PBXNativeTarget "YabaSnashiroTests" */;
 			buildPhases = (
 				CF916EED310F3E6742694472 /* [CP] Check Pods Manifest.lock */,
 				644232BB1C6580010050611E /* Sources */,
@@ -368,14 +368,14 @@
 			dependencies = (
 				644232C11C6580010050611E /* PBXTargetDependency */,
 			);
-			name = "Yaba SnashiroTests";
+			name = YabaSnashiroTests;
 			productName = uoyabauseTests;
-			productReference = 644232BF1C6580010050611E /* Yaba SnashiroTests.xctest */;
+			productReference = 644232BF1C6580010050611E /* YabaSnashiroTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		644232C91C6580010050611E /* Yaba SnashiroUITests */ = {
+		644232C91C6580010050611E /* YabaSnashiroUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 644232D91C6580010050611E /* Build configuration list for PBXNativeTarget "Yaba SnashiroUITests" */;
+			buildConfigurationList = 644232D91C6580010050611E /* Build configuration list for PBXNativeTarget "YabaSnashiroUITests" */;
 			buildPhases = (
 				DA4198C3D41464FF58C9A330 /* [CP] Check Pods Manifest.lock */,
 				644232C61C6580010050611E /* Sources */,
@@ -387,9 +387,9 @@
 			dependencies = (
 				644232CC1C6580010050611E /* PBXTargetDependency */,
 			);
-			name = "Yaba SnashiroUITests";
+			name = YabaSnashiroUITests;
 			productName = uoyabauseUITests;
-			productReference = 644232CA1C6580010050611E /* Yaba SnashiroUITests.xctest */;
+			productReference = 644232CA1C6580010050611E /* YabaSnashiroUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -417,7 +417,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 6442329D1C6580000050611E /* Build configuration list for PBXProject "Yaba Snashiro" */;
+			buildConfigurationList = 6442329D1C6580000050611E /* Build configuration list for PBXProject "YabaSnashiro" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -430,9 +430,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				644232A11C6580000050611E /* Yaba Snashiro */,
-				644232BE1C6580010050611E /* Yaba SnashiroTests */,
-				644232C91C6580010050611E /* Yaba SnashiroUITests */,
+				644232A11C6580000050611E /* YabaSnashiro */,
+				644232BE1C6580010050611E /* YabaSnashiroTests */,
+				644232C91C6580010050611E /* YabaSnashiroUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -587,12 +587,12 @@
 /* Begin PBXTargetDependency section */
 		644232C11C6580010050611E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 644232A11C6580000050611E /* Yaba Snashiro */;
+			target = 644232A11C6580000050611E /* YabaSnashiro */;
 			targetProxy = 644232C01C6580010050611E /* PBXContainerItemProxy */;
 		};
 		644232CC1C6580010050611E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 644232A11C6580000050611E /* Yaba Snashiro */;
+			target = 644232A11C6580000050611E /* YabaSnashiro */;
 			targetProxy = 644232CB1C6580010050611E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -981,7 +981,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.uoyabauseTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Yaba Snashiro.app/Yaba Snashiro";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YabaSnashiro.app/YabaSnashiro";
 			};
 			name = Debug;
 		};
@@ -994,7 +994,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = org.devMiyax.uoyabauseTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Yaba Snashiro.app/Yaba Snashiro";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/YabaSnashiro.app/YabaSnashiro";
 			};
 			name = Release;
 		};
@@ -1028,7 +1028,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		6442329D1C6580000050611E /* Build configuration list for PBXProject "Yaba Snashiro" */ = {
+		6442329D1C6580000050611E /* Build configuration list for PBXProject "YabaSnashiro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				644232D11C6580010050611E /* Debug */,
@@ -1037,7 +1037,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		644232D31C6580010050611E /* Build configuration list for PBXNativeTarget "Yaba Snashiro" */ = {
+		644232D31C6580010050611E /* Build configuration list for PBXNativeTarget "YabaSnashiro" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				644232D41C6580010050611E /* Debug */,
@@ -1046,7 +1046,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		644232D61C6580010050611E /* Build configuration list for PBXNativeTarget "Yaba SnashiroTests" */ = {
+		644232D61C6580010050611E /* Build configuration list for PBXNativeTarget "YabaSnashiroTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				644232D71C6580010050611E /* Debug */,
@@ -1055,7 +1055,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		644232D91C6580010050611E /* Build configuration list for PBXNativeTarget "Yaba SnashiroUITests" */ = {
+		644232D91C6580010050611E /* Build configuration list for PBXNativeTarget "YabaSnashiroUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				644232DA1C6580010050611E /* Debug */,
