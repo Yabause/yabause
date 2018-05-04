@@ -50,6 +50,13 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     @IBOutlet weak var _showFrameSkip: UISwitch!
     @IBOutlet weak var _keepAspectRate: UISwitch!
     @IBOutlet weak var _rotate_screen: UISwitch!
+    @IBOutlet weak var _landscape: UISwitch!
+    
+    @IBAction func onChangeLandscapeMode(_ sender: Any) {
+        let userDefaults = UserDefaults.standard
+        userDefaults.set(_landscape.isOn, forKey: "landscape")
+        userDefaults.synchronize()
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -64,6 +71,11 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         _resolution_picker.isHidden = !_SoundPickerIsShowing
         _resolution_picker.delegate = self
         _resolution_picker.dataSource = self
+        
+        let userDefaults = UserDefaults.standard
+        userDefaults.register(defaults: ["landscape": true])
+        //userDefaults.set(true, forKey: "landscape")
+        _landscape.isOn = userDefaults.bool(forKey: "landscape")
         
         //
         let plist = getSettingPlist()

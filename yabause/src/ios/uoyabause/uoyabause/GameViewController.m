@@ -67,6 +67,8 @@ NSObject* _objectForLock;
 @interface GameViewController () {
    int command;
     int controller_edit_mode;
+    BOOL canRotateToAllOrientations;
+    BOOL _landscape;
 }
 
 @property (strong, nonatomic) EAGLContext *context;
@@ -389,9 +391,12 @@ int GetPlayer2Device(){
     NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
     NSMutableDictionary *defaults = [NSMutableDictionary dictionary];
     [defaults setObject:@"0.8" forKey:@"controller scale"];
+    [defaults setObject:[NSNumber numberWithBool:YES] forKey:@"landscape"];
     [ud registerDefaults:defaults];
-    _controller_scale = [ud floatForKey:@"controller scale"];
     
+    _controller_scale = [ud floatForKey:@"controller scale"];
+    _landscape = [ud boolForKey:@"landscape"];
+
     /*
     NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
     _bios = [userDefaults boolForKey: @"bios"];
@@ -750,6 +755,7 @@ int GetPlayer2Device(){
 
 - (void)viewDidAppear:(BOOL)animated
 {
+    [super viewDidAppear:animated];
     
     if ([self hasControllerConnected]) {
         NSLog(@"Discovery finished on first pass");
@@ -758,6 +764,7 @@ int GetPlayer2Device(){
         NSLog(@"Discovery happening patiently");
         [self patientlyDiscoverController];
     }
+    canRotateToAllOrientations = YES;
 }
 
 - (void)patientlyDiscoverController {
@@ -825,7 +832,13 @@ int GetPlayer2Device(){
 - (void)viewDidLoad
 {
     [super viewDidLoad];
- 
+    [self loadSettings];
+    
+    if( _landscape == YES ){
+        [[UIDevice currentDevice] setValue:@(UIInterfaceOrientationLandscapeLeft) forKey:@"orientation"];
+        [UINavigationController attemptRotationToDeviceOrientation];
+    }
+    
     sharedData_ = self;
     _objectForLock = [[NSObject alloc] init];
     self._isFirst = YES;
@@ -886,7 +899,7 @@ int GetPlayer2Device(){
     pad_buttons_[BUTTON_START] = [[PadButton alloc] init];
     pad_buttons_[BUTTON_START].target_ = self.start_button;
     
-    [self loadSettings];
+    
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];

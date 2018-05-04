@@ -924,6 +924,7 @@ const int FrontViewPositionNone = 0xff;
     {
         _panGestureRecognizer = [[SWRevealViewControllerPanGestureRecognizer alloc] initWithTarget:self action:@selector(_handleRevealGesture:)];
         _panGestureRecognizer.delegate = self;
+        _panGestureRecognizer.minimumNumberOfTouches = 2;
         [_contentView.frontView addGestureRecognizer:_panGestureRecognizer];
     }
     return _panGestureRecognizer;
