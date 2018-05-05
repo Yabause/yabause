@@ -7,12 +7,20 @@
 		<key>Yabause.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>24</integer>
+			<integer>25</integer>
 		</dict>
 		<key>gen68k.xcscheme</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>23</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>2A7D3A54115BA3E700DE3BD1</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

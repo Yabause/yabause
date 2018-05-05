@@ -592,26 +592,23 @@ static INLINE u32 get_cycles_per_line_division(u32 clock, int frames, int lines,
 }
 
 int YabauseEmulate(void) {
-   int oneframeexec = 0;
-
-   const u32 cyclesinc =
+    int oneframeexec = 0;
+    const u32 cyclesinc =
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;
-   const u32 usecinc =
+    const u32 usecinc =
       yabsys.DecilineMode ? yabsys.DecilineUsec : yabsys.DecilineUsec * 10;
     u32 sh1_cycles_per_deciline,  cdd_cycles_per_deciline;
     int lines, frames = 0;
-    sh1_cycles_per_deciline = 0;
 #ifndef USE_SCSP2
-   unsigned int m68kcycles;       // Integral M68k cycles per call
-   unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
+    unsigned int m68kcycles;       // Integral M68k cycles per call
+    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
 	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline;
-	
-   m68k_cycles_per_deciline = 0;
-   scsp_cycles_per_deciline = 0;
+    m68k_cycles_per_deciline = 0;
+    scsp_cycles_per_deciline = 0;
 #endif
-   lines = 0;
-   frames = 0;
-
+    sh1_cycles_per_deciline = 0;
+    lines = 0;
+    frames = 0;
    if (yabsys.IsPal)
    {
       lines = 313;
