@@ -11,7 +11,7 @@ environment:
       compiler_type: "vs12-x64"
       sdl_filename: SDL2-devel-2.0.3-VC.zip
       sdl_arch: x64
-      cmake_args: "-DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON -DYAB_NETWORK=ON -DYAB_WANT_GDBSTUB=ON"
+      cmake_args: "-DYAB_WANT_DIRECTSOUND=ON -DYAB_WANT_DIRECTINPUT=ON -DYAB_NETWORK=ON -DYAB_WANT_GDBSTUB=ON -DYAB_WANT_GLUT=OFF"
 
     # MingGW x86 build
     - generator: "MinGW Makefiles"
