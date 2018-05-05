@@ -5383,16 +5383,16 @@ static void Vdp2DrawBackScreen(void)
       for (int i = 0; i < vdp2height; i++) {
         u8 r, g, b, a;
         dot = T1ReadWord(Vdp2Ram, (scrAddr + 2 * i));
-        r = ((dot & 0x1F) << 3) + info.cor;
-        g = (((dot & 0x3E0) >> 5) << 3) + info.cog;
-        b = (((dot & 0x7C00) >> 10) << 3) + info.cob;
+        r = max( ((dot & 0x1F) << 3) + info.cor, 0 );
+        g = max( (((dot & 0x3E0) >> 5) << 3) + info.cog , 0);
+        b = max( (((dot & 0x7C00) >> 10) << 3) + info.cob, 0 );
         if (fixVdp2Regs->CCCTL & 0x2) {
           a = 0xFF;
         }
         else {
           a = ((~fixVdp2Regs->CCRLB & 0x1F00) >> 5) + 0x7;
         }
-        *back_pixel_data++ = (a << 24) | (b << 16) | (g << 8) | r;
+        *back_pixel_data++ = (a << 24) | ((b&0xFF) << 16) | ( (g&0xFF) << 8) | (r&0xFF);
       }
       YglSetBackColor(vdp2height);
     }

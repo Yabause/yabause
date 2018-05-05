@@ -1148,11 +1148,12 @@ void FASTCALL Vdp2WriteWord(u32 addr, u16 val) {
       case 0x00E:
          Vdp2Regs->RAMCTL = val;
          if (Vdp2Internal.ColorMode != ((val >> 12) & 0x3) ) {
+           Vdp2Internal.ColorMode = (val >> 12) & 0x3;
            for (int i = 0; i < 0x1000; i += 2) {
              YglOnUpdateColorRamWord(i);
            }
          }
-         Vdp2Internal.ColorMode = (val >> 12) & 0x3;
+         
          return;
       case 0x010:
          Vdp2Regs->CYCA0L = val;
