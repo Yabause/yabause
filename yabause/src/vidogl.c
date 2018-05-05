@@ -37,6 +37,9 @@
 #include "yui.h"
 #include "frameprofile.h"
 
+#define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
+
 static Vdp2 baseVdp2Regs;
 Vdp2 * fixVdp2Regs = NULL;
 //#define PERFRAME_LOG
@@ -274,7 +277,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
 
   // hard/vdp1/hon/p06_35.htm#6_35
-  // 透明ピクセル無効ビットはキャラクタパターンのあるスプライト描画にのみ有効です。ポリゴン、ポリライン、ラインでは、このビットは必ず1に設定してください。
   u8 SPD = 1; // ((cmd->CMDPMOD & 0x40) != 0);    // see-through pixel disable(SPD) hard/vdp1/hon/p06_35.htm
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);    // end-code disable(ECD) hard/vdp1/hon/p06_34.htm
   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
@@ -4701,7 +4703,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   alpha = 0xF8;
   if (IS_REPLACE(CMDPMOD)) {
     // hard/vdp1/hon/p06_35.htm#6_35
-    // 透明ピクセル無効ビットはキャラクタパターンのあるスプライト描画にのみ有効です。ポリゴン、ポリライン、ラインでは、このビットは必ず1に設定してください。
     //if ((CMDPMOD & 0x40) != 0) {
       sprite.blendmode = VDP1_COLOR_SPD;
     //}
@@ -5383,9 +5384,9 @@ static void Vdp2DrawBackScreen(void)
       for (int i = 0; i < vdp2height; i++) {
         u8 r, g, b, a;
         dot = T1ReadWord(Vdp2Ram, (scrAddr + 2 * i));
-        r = max( ((dot & 0x1F) << 3) + info.cor, 0 );
-        g = max( (((dot & 0x3E0) >> 5) << 3) + info.cog , 0);
-        b = max( (((dot & 0x7C00) >> 10) << 3) + info.cob, 0 );
+        r = Y_MAX( ((dot & 0x1F) << 3) + info.cor, 0 );
+        g = Y_MAX( (((dot & 0x3E0) >> 5) << 3) + info.cog , 0);
+        b = Y_MAX( (((dot & 0x7C00) >> 10) << 3) + info.cob, 0 );
         if (fixVdp2Regs->CCCTL & 0x2) {
           a = 0xFF;
         }
