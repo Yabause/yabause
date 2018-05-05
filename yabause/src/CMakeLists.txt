@@ -202,7 +202,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		add_definitions(-DHAVE_LIBGL=1)
 		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
 
-		option(YAB_WANT_GLUT "use Glut for OSD" OFF)
+		option(YAB_WANT_GLUT "use Glut for OSD" ON)
 		if (YAB_WANT_GLUT)
 			include(FindGLUT)
 			if (GLUT_FOUND)
