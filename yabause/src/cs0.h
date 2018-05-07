@@ -35,6 +35,7 @@
 #define CART_ROM16MBIT          9
 #define CART_JAPMODEM          10
 #define CART_USBDEV            11
+#define CART_ROMSTV            12
 
 typedef struct
 {

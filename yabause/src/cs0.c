@@ -1021,6 +1021,52 @@ static void FASTCALL ROM16MBITCs0WriteLong(SH2_struct *context, UNUSED u8* memor
 }
 
 //////////////////////////////////////////////////////////////////////////////
+// 256 Mbit ST-V Rom
+//////////////////////////////////////////////////////////////////////////////
+
+static u8 FASTCALL ROMSTVCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+   return T1ReadByte(CartridgeArea->rom, addr & 0x1FFFFFF);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL ROMSTVCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+   u16 ret = T1ReadWord(CartridgeArea->rom, addr & 0x1FFFFFF);
+   return ret;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL ROMSTVCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+   u32 ret = T1ReadLong(CartridgeArea->rom, addr & 0x1FFFFFF);
+   return ret;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL ROMSTVCs0WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
+{
+   T1WriteByte(CartridgeArea->rom, addr & 0x1FFFFFF, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL ROMSTVCs0WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
+{
+   T1WriteWord(CartridgeArea->rom, addr & 0x1FFFFFF, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL ROMSTVCs0WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
+{
+   T1WriteLong(CartridgeArea->rom, addr & 0x1FFFFFF, val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // General Cart functions
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1222,6 +1268,25 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs0WriteByte = &ROM16MBITCs0WriteByte;
          CartridgeArea->Cs0WriteWord = &ROM16MBITCs0WriteWord;
          CartridgeArea->Cs0WriteLong = &ROM16MBITCs0WriteLong;
+         break;
+      }
+      case CART_ROMSTV: // 256 Mbit STV Rom Cart
+      {
+         if ((CartridgeArea->rom = T1MemoryInit(0x2000000)) == NULL)
+            return -1;
+
+         CartridgeArea->cartid = 0xFF; // I have no idea what the real id is
+         // Load Rom to memory
+         //The load is not exactly what is required... Needs to be debugged
+         if (T123Load(&(CartridgeArea->rom[0x200000]), 0x1E00000, 2, filename) != 0)
+            return -1;
+         // Setup Functions
+         CartridgeArea->Cs0ReadByte = &ROMSTVCs0ReadByte;
+         CartridgeArea->Cs0ReadWord = &ROMSTVCs0ReadWord;
+         CartridgeArea->Cs0ReadLong = &ROMSTVCs0ReadLong;
+         CartridgeArea->Cs0WriteByte = &ROMSTVCs0WriteByte;
+         CartridgeArea->Cs0WriteWord = &ROMSTVCs0WriteWord;
+         CartridgeArea->Cs0WriteLong = &ROMSTVCs0WriteLong;
          break;
       }
       case CART_JAPMODEM: // Sega Saturn Modem(Japanese)
