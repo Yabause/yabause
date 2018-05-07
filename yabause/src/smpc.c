@@ -35,6 +35,7 @@
 #include "vdp2.h"
 #include "yabause.h"
 #include "movie.h"
+#include "eeprom.h"
 
 #ifdef _arch_dreamcast
 # include "dreamcast/localtime.h"
@@ -608,7 +609,7 @@ u8 FASTCALL SmpcReadByte(SH2_struct *context, u8* mem, u32 addr) {
    }
 
    if (addr == 0x77) {
-     return (SmpcRegs->PDR[1] & ~0x19) | 0x18 | 1; //Shall use eeprom normally look at mame stv driver
+     return (SmpcRegs->PDR[1] & ~0x19) | 0x18 | (eeprom_do_read()<<0); //Shall use eeprom normally look at mame stv driver
    }
 
    return SmpcRegsT[addr >> 1];
@@ -784,7 +785,11 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
                SmpcRegs->PDR[0] = val;
                break;
             case 0x3f:
-               val = (val & SmpcRegs->DDR[0] ) | (val & 0x80);
+               val = (val & SmpcRegs->DDR[0] );
+	       eeprom_set_clk((val & 0x08) ? 1 : 0);
+	       eeprom_set_di((val >> 4) & 1);
+	       eeprom_set_cs((val & 0x04) ? 1 : 0);
+               val |= (val & 0x80);
                SmpcRegs->PDR[0] = val;
                break;
             default:

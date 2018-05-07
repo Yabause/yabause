@@ -26,6 +26,7 @@ set(kronos_HEADERS
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h
 	frameprofile.h
+        eeprom.h
 )
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
@@ -49,6 +50,7 @@ set(kronos_SOURCES
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
+        eeprom.c
 	)
 add_definitions(-DIMPROVED_SAVESTATES)
 
