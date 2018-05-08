@@ -608,8 +608,8 @@ u8 FASTCALL SmpcReadByte(SH2_struct *context, u8* mem, u32 addr) {
      return bustmp;
    }
 
-   if (addr == 0x77) {
-     return (SmpcRegs->PDR[1] & ~0x19) | 0x18 | (eeprom_do_read()<<0); //Shall use eeprom normally look at mame stv driver
+   if (addr == 0x77) { //PDR2
+     return (SmpcRegs->PDR[1] & ~0x1F) | 0x1E | (eeprom_do_read()<<0); //Shall use eeprom normally look at mame stv driver
    }
 
    return SmpcRegsT[addr >> 1];
