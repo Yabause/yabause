@@ -205,7 +205,7 @@ u8 FASTCALL IOPortReadByte(SH2_struct *context, UNUSED u8* memory,  u32 addr)
      case 0x0d: //PORT-G 
                 if (m_ioga_mode & 0x80) // PORT-G in counter mode
 		{
-		  val = IOPORT[PORT_G] >> (((m_ioga_portg & 1) ^ 1) * 8);
+		  val = IOPORT[PORT_G0+((m_ioga_portg >> 1) & 3)] >> (((m_ioga_portg & 1) ^ 1) * 8);
 		  m_ioga_portg = (m_ioga_portg & 0xf8) | ((m_ioga_portg + 1) & 7); // counter# is auto-incremented then read
 		 }
 		 else
@@ -226,6 +226,10 @@ void FASTCALL IOPortWriteByte(SH2_struct *context, UNUSED u8* memory,UNUSED u32 
     case 0x07:
       m_system_output = val;
       break;
+    case 0x09: IOPORT[PORT_F] = val; 
+               IOPORT[PORT_G] = val; 
+               break; // P3
+    case 0x0b: IOPORT[PORT_E] = val; break; // P4
     case 0x0d:
       //port-g
       m_ioga_portg = val;

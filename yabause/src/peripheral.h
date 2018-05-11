@@ -154,6 +154,10 @@ typedef enum {
 	PORT_E,
         PORT_F,
         PORT_G,
+        PORT_G0,
+        PORT_G1,
+        PORT_G2,
+        PORT_G3,
 	ioPortMAX
 } ioPort;
 
