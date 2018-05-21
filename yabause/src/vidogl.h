@@ -26,6 +26,10 @@
 
 #define VIDCORE_OGL   1
 
+void VIDOGLVdp2DrawStart(void);
+void VIDOGLVdp2DrawEnd(void);
+void VIDOGLVdp2DrawScreens(void);
+
 extern VideoInterface_struct VIDOGL;
 #endif
 
