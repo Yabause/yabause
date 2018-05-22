@@ -251,13 +251,17 @@ static void showCPUState(SH2_struct *context)
    printf("===========================================\n");
 }
 
+u8 execInterrupt = 0;
+
 FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
   SH2HandleInterrupts(context);
-   while (context->cycles < target_cycle)
+  execInterrupt = 0;
+   while (execInterrupt == 0)
    {
      cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+     execInterrupt |= (context->cycles >= target_cycle);
    }
 }
 
@@ -268,7 +272,8 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
   u32 target_cycle = context->cycles + cycles;
   SH2HandleInterrupts(context);
   char res[512];
-   while (context->cycles < target_cycle)
+  execInterrupt = 0;
+   while (execInterrupt == 0)
    {
      int id = (context->regs.PC >> 20) & 0x0FF;
 
@@ -283,13 +288,11 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
           printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
 
      if (enableTrace) {
-       if (context == MSH2) {
        SH2Disasm(context->regs.PC, fetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
-       printf("%s\n", res);
-       }
      }
 
      cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+     execInterrupt |= (context->cycles >= target_cycle);
    }
 }
 

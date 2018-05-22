@@ -1491,6 +1491,8 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
    *CHCR |= 0x2;
 }
 
+extern u8 execInterrupt;
+
 //////////////////////////////////////////////////////////////////////////////
 // Input Capture Specific
 //////////////////////////////////////////////////////////////////////////////
@@ -1504,8 +1506,10 @@ void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
    MSH2->onchip.FICR = MSH2->onchip.FRC.all;
 
    // Time for an Interrupt?
-   if (MSH2->onchip.TIER & 0x80)
+   if (MSH2->onchip.TIER & 0x80) {
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
+      execInterrupt = 1;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1519,8 +1523,10 @@ void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
    SSH2->onchip.FICR = SSH2->onchip.FRC.all;
 
    // Time for an Interrupt?
-   if (SSH2->onchip.TIER & 0x80)
+   if (SSH2->onchip.TIER & 0x80) {
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
+      execInterrupt = 1;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
