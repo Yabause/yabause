@@ -893,9 +893,6 @@ void YabauseStartSlave(void) {
    }
    else {
      SH2PowerOn(SSH2);
-     SH2GetRegisters(SSH2, &SSH2->regs);
-     SSH2->regs.PC = 0x20000200;
-     SH2SetRegisters(SSH2, &SSH2->regs);
    }
 
    yabsys.IsSSH2Running = 1;
