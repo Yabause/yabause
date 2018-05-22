@@ -48,7 +48,6 @@ typedef struct {
 } Smpc;
 
 extern Smpc * SmpcRegs;
-extern u8 * SmpcRegsT;
 
 typedef struct 
 {

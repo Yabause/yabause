@@ -45,10 +45,13 @@
 #endif
 
 Smpc * SmpcRegs;
-u8 * SmpcRegsT;
 SmpcInternal * SmpcInternalVars;
-int intback_wait_for_line = 0;
-u8 bustmp = 0;
+
+static u8 * SmpcRegsT;
+static int intback_wait_for_line = 0;
+static u8 bustmp = 0;
+
+#define SMPCLOG //printf
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -118,8 +121,6 @@ void SmpcReset(void) {
    SmpcInternalVars->ste = 0;
    SmpcInternalVars->resb = 0;
 
-   SmpcInternalVars->intback=0;
-   SmpcInternalVars->intbackIreg0=0;
    SmpcInternalVars->firstPeri=0;
 
    SmpcInternalVars->timing=0;
@@ -164,6 +165,11 @@ static void SmpcSYSRES(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcCKCHG352(void) {
+   // Set DOTSEL
+   SmpcInternalVars->dotsel = 1;
+
+   // Send NMI
+   SH2NMI(MSH2);
    // Reset VDP1, VDP2, SCU, and SCSP
    Vdp1Reset();  
    Vdp2Reset();  
@@ -176,17 +182,18 @@ void SmpcCKCHG352(void) {
 
    // change clock
    YabauseChangeTiming(CLKTYPE_28MHZ);
-
-   // Set DOTSEL
-   SmpcInternalVars->dotsel = 1;
-
-   // Send NMI
-   SH2NMI(MSH2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void SmpcCKCHG320(void) {
+
+   // Set DOTSEL
+   SmpcInternalVars->dotsel = 0;
+
+   // Send NMI
+   SH2NMI(MSH2);
+
    // Reset VDP1, VDP2, SCU, and SCSP
    Vdp1Reset();  
    Vdp2Reset();  
@@ -199,12 +206,6 @@ void SmpcCKCHG320(void) {
 
    // change clock
    YabauseChangeTiming(CLKTYPE_26MHZ);
-
-   // Set DOTSEL
-   SmpcInternalVars->dotsel = 0;
-
-   // Send NMI
-   SH2NMI(MSH2);
 }
 
 struct movietime {
@@ -327,16 +328,19 @@ static void SmpcINTBACKStatus(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+static u16 m_pmode = 0;
+
 static void SmpcINTBACKPeripheral(void) {
   int oregoffset;
   PortData_struct *port1, *port2;
 
-  if (SmpcInternalVars->firstPeri)
-    SmpcRegs->SR = 0xC0 | (SmpcRegs->IREG[1] >> 4);
-  else
-    SmpcRegs->SR = 0x80 | (SmpcRegs->IREG[1] >> 4);
-
-  SmpcInternalVars->firstPeri = 0;
+  if (SmpcInternalVars->firstPeri == 2) {
+    SmpcRegs->SR = 0x80 | m_pmode;
+    SmpcInternalVars->firstPeri = 0;
+  } else {
+    SmpcRegs->SR = 0xC0 | m_pmode;
+    SmpcInternalVars->firstPeri++;
+  }
 
   /* Port Status:
   0x04 - Sega-tap is connected
@@ -436,40 +440,37 @@ static void SmpcINTBACKPeripheral(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 static void SmpcINTBACK(void) {
-   SmpcRegs->SF = 1;
-
-   if (SmpcInternalVars->intback) {
+  if (SmpcInternalVars->firstPeri != 0) {
+     //in a continous mode.
       SmpcINTBACKPeripheral();
+      SmpcRegs->SF = 0;
+      SmpcRegs->OREG[31] = 0x10;
       ScuSendSystemManager();
       return;
-   }
-
-   //we think rayman sets 0x40 so that it breaks the intback command immediately when it blocks, 
-   //rather than having to set 0x40 in response to an interrupt
-   if ((SmpcInternalVars->intbackIreg0 = (SmpcRegs->IREG[0] & 1))) {
+  }
+  if (SmpcRegs->IREG[0] != 0x0) {
       // Return non-peripheral data
-      SmpcInternalVars->firstPeri = 1;
-      SmpcInternalVars->intback = (SmpcRegs->IREG[1] & 0x8) >> 3; // does the program want peripheral data too?
+      SmpcInternalVars->firstPeri = ((SmpcRegs->IREG[1] & 0x8) >> 3);
+      for(int i=0;i<31;i++) SmpcRegs->OREG[i] = 0xff;
+      m_pmode = (SmpcRegs->IREG[0]>>4);
       SmpcINTBACKStatus();
-      SmpcRegs->SR = 0x4F | (SmpcInternalVars->intback << 5); // the low nibble is undefined(or 0xF)
+      SmpcRegs->SR = 0x40 | (SmpcInternalVars->firstPeri << 5); // the low nibble is undefined(or 0xF)
+      SmpcRegs->SF = 0;
       ScuSendSystemManager();
       return;
-   }
-   if (SmpcRegs->IREG[1] & 0x8) {
-      SmpcInternalVars->firstPeri = 1;
-      SmpcInternalVars->intback = 1;
-      SmpcRegs->SR = 0x40;
+  }
+  if (SmpcRegs->IREG[1] & 0x8) {
+      SmpcInternalVars->firstPeri = ((SmpcRegs->IREG[1] & 0x8) >> 3);
       SmpcINTBACKPeripheral();
-      SmpcRegs->OREG[31] = 0x10; // may need to be changed
+      SmpcRegs->OREG[31] = 0x10;
       ScuSendSystemManager();
-      return;
-   }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void SmpcINTBACKEnd(void) {
-   SmpcInternalVars->intback = 0;
+      SmpcRegs->SF = 0;
+  }
+  else {
+    SMPCLOG("Nothing to do\n");
+    SmpcRegs->OREG[31] = 0x10;
+    SmpcRegs->SF = 0;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -529,44 +530,55 @@ void SmpcExec(s32 t) {
       }
       SmpcInternalVars->timing -= t;
       if (SmpcInternalVars->timing <= 0) {
+         intback_wait_for_line = 0;
          switch(SmpcRegs->COMREG) {
             case 0x0:
                SMPCLOG("smpc\t: MSHON not implemented\n");
                SmpcRegs->OREG[31]=0x0;
+               SmpcRegs->SF = 0;
                break;
             case 0x2:
                SMPCLOG("smpc\t: SSHON\n");
                SmpcSSHON();
+               SmpcRegs->SF = 0;
                break;
             case 0x3:
                SMPCLOG("smpc\t: SSHOFF\n");
                SmpcSSHOFF();
+               SmpcRegs->SF = 0;
                break;
             case 0x6:
                SMPCLOG("smpc\t: SNDON\n");
                SmpcSNDON();
+               SmpcRegs->SF = 0;
                break;
             case 0x7:
                SMPCLOG("smpc\t: SNDOFF\n");
                SmpcSNDOFF();
+               SmpcRegs->SF = 0;
                break;
             case 0x8:
                SMPCLOG("smpc\t: CDON not implemented\n");
+               SmpcRegs->SF = 0;
                break;
             case 0x9:
                SMPCLOG("smpc\t: CDOFF not implemented\n");
+               SmpcRegs->SF = 0;
                break;
             case 0xD:
                SMPCLOG("smpc\t: SYSRES not implemented\n");
                SmpcSYSRES();
+               SmpcRegs->SF = 0;
                break;
             case 0xE:
                SMPCLOG("smpc\t: CKCHG352\n");
                SmpcCKCHG352();
+               SmpcRegs->SF = 0;
                break;
             case 0xF:
                SMPCLOG("smpc\t: CKCHG320\n");
                SmpcCKCHG320();
+               SmpcRegs->SF = 0;
                break;
             case 0x10:
                SMPCLOG("smpc\t: INTBACK\n");
@@ -575,43 +587,62 @@ void SmpcExec(s32 t) {
             case 0x17:
                SMPCLOG("smpc\t: SETSMEM\n");
                SmpcSETSMEM();
+               SmpcRegs->SF = 0;
                break;
             case 0x18:
                SMPCLOG("smpc\t: NMIREQ\n");
                SmpcNMIREQ();
+               SmpcRegs->SF = 0;
                break;
             case 0x19:
                SMPCLOG("smpc\t: RESENAB\n");
                SmpcRESENAB();
+               SmpcRegs->SF = 0;
                break;
             case 0x1A:
                SMPCLOG("smpc\t: RESDISA\n");
                SmpcRESDISA();
+               SmpcRegs->SF = 0;
                break;
             default:
-               SMPCLOG("smpc\t: Command %02X not implemented\n", SmpcRegs->COMREG);
+               printf("smpc\t: Command %02X not implemented\n", SmpcRegs->COMREG);
                break;
          }
-  
-         SmpcRegs->SF = 0;
       }
    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
+
+
+void SmpcINTBACKEnd(void) {
+}
+
+//////////////////////////////////////////////////////////////////////////////
+static u8 m_pdr2_readback = 0;
+static u8 m_pdr1_readback = 0;
+
+
 u8 FASTCALL SmpcReadByte(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x7F;
    if (addr == 0x063) {
-     bustmp &= ~0x01;
+     bustmp = SmpcRegsT[addr >> 1] & 0xFE;
      bustmp |= SmpcRegs->SF;
+     SMPCLOG("Read SMPC[0x63] 0x%x\n", bustmp);
      return bustmp;
    }
 
-   if (addr == 0x77) { //PDR2
-     return (SmpcRegs->PDR[1] & ~0x1F) | 0x1E | (eeprom_do_read()<<0); //Shall use eeprom normally look at mame stv driver
+   if ((addr == 0x77) && ((SmpcRegs->DDR[1] & 0x7F) == 0x18)) { //PDR2 
+     u8 val = (((0x67 & ~0x19) | 0x18 | (eeprom_do_read()<<0)) & ~SmpcRegs->DDR[1]) | m_pdr2_readback;
+     return val; //Shall use eeprom normally look at mame stv driver 
+   }
+   if ((addr == 0x75) && ((SmpcRegs->DDR[0] & 0x7F) == 0x3f)) { //PDR1 
+     u8 val = (((0x40 & 0x40) | 0x3f) & ~SmpcRegs->DDR[0]) | m_pdr1_readback;
+     return val;
    }
 
+   SMPCLOG("Read SMPC[0x%x] = 0x%x\n",addr, SmpcRegsT[addr >> 1]); 
    return SmpcRegsT[addr >> 1];
 }
 
@@ -653,12 +684,10 @@ static void SmpcSetTiming(void) {
          SmpcInternalVars->timing = 1; // this has to be tested on a real saturn
          return;
       case 0x10:
-         if (SmpcInternalVars->intback)//continue was issued
-         {
+          if (SmpcInternalVars->firstPeri != 0) {
             SmpcInternalVars->timing = 16000;
             intback_wait_for_line = 1;
-         }
-         else {
+          } else {
             // Calculate timing based on what data is being retrieved
 
             if ((SmpcRegs->IREG[0] == 0x01) && (SmpcRegs->IREG[1] & 0x8))
@@ -677,6 +706,7 @@ static void SmpcSetTiming(void) {
                SmpcInternalVars->timing = 16000;
                intback_wait_for_line = 1;
             }
+            else SmpcInternalVars->timing = 1;
          }
          return;
       case 0x17:
@@ -725,25 +755,35 @@ u8 do_th_mode(u8 val)
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
+   u8 oldVal;
+   if(!(addr & 0x1)) return;
    addr &= 0x7F;
+   oldVal = SmpcRegsT[addr >> 1];
    bustmp = val;
-   SmpcRegsT[addr >> 1] = val;
+   if (addr == 0x1F) {
+      //COMREG 
+      SmpcRegsT[0xF] = val&0x1F;
+   } else
+     SmpcRegsT[addr >> 1] = val;
+
+      SMPCLOG("Write SMPC[0x%x] = 0x%x\n",addr, SmpcRegsT[addr >> 1]);
 
    switch(addr) {
       case 0x01: // Maybe an INTBACK continue/break request
-         if (SmpcInternalVars->intback)
+         if (SmpcInternalVars->firstPeri)
          {
             if (SmpcRegs->IREG[0] & 0x40) {
                // Break
-               SmpcInternalVars->intback = 0;
+               SMPCLOG("INTBACK Break\n");
+               SmpcInternalVars->firstPeri = 0;
                SmpcRegs->SR &= 0x0F;
+               SmpcRegs->SF = 0;
                break;
             }
             else if (SmpcRegs->IREG[0] & 0x80) {                    
                // Continue
-               SmpcRegs->COMREG = 0x10;
+               SMPCLOG("INTBACK Continue\n");
                SmpcSetTiming();
-               SmpcRegs->SF = 1;
             }
          }
          return;
@@ -785,12 +825,12 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
                SmpcRegs->PDR[0] = val;
                break;
             case 0x3f:
-               val = (val & SmpcRegs->DDR[0] );
+               m_pdr1_readback = (val & SmpcRegs->DDR[0]) & 0x7f;
 	       eeprom_set_clk((val & 0x08) ? 1 : 0);
 	       eeprom_set_di((val >> 4) & 1);
 	       eeprom_set_cs((val & 0x04) ? 1 : 0);
-               val |= (val & 0x80);
-               SmpcRegs->PDR[0] = val;
+               SmpcRegs->PDR[0] = m_pdr1_readback;
+               m_pdr1_readback |= (val & 0x80);
                break;
             default:
                SMPCLOG("smpc\t: PDR1 Peripheral Unknown Control Method not implemented 0x%x\n", SmpcRegs->DDR[0] & 0x7F);
@@ -824,8 +864,11 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 			  SmpcRegs->PDR[1] = val;
 			  break;
                   case 0x18:
-                          val = (val & SmpcRegs->DDR[1] ) | (val & 0x80);
-                          SmpcRegs->PDR[1] = val;
+                          m_pdr2_readback = ((val & SmpcRegs->DDR[1] ) & 0x7F);
+	                  if (m_pdr2_readback & 0x10) M68KStart();
+                          else M68KStop();
+                          SmpcRegs->PDR[1] = m_pdr2_readback;
+	                  m_pdr2_readback |= val & 0x80;
                           break;
 		  default:
 			  SMPCLOG("smpc\t: PDR2 Peripheral Unknown Control Method not implemented 0x%x\n", SmpcRegs->DDR[1] & 0x7F);
