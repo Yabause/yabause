@@ -4835,7 +4835,7 @@ SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 {
   addr &= 0x7FFFF;
   u8 val = 0;
-if (addr == 0x700) return 0x0;; //STV dedicated patch
+  if ((yabsys.isSTV) && (addr == 0x700)) return 0x0;; //STV dedicated patch
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
@@ -4883,7 +4883,7 @@ SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
   addr &= 0x7FFFF;
  
-  if (addr == 0x700) return 0x0; //STV dedicated patch
+  if ((yabsys.isSTV) && (addr == 0x700)) return 0x0; //STV dedicated patch
   u16 val = 0;
 
   if (scsp.mem4b == 0)
