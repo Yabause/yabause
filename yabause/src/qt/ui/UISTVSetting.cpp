@@ -47,6 +47,10 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mButtons[ tbZ ] = PERPAD_Z;
         mButtons[ tbService ] = PERJAMMA_SERVICE;
 	mButtons[ tbTest ] = PERJAMMA_TEST;
+        mButtons[ tbStart1 ] = PERJAMMA_START1;
+        mButtons[ tbStart2 ] = PERJAMMA_START2;
+        mButtons[ tbMultiCart ] = PERJAMMA_MULTICART;
+        mButtons[ tbPause ] = PERJAMMA_PAUSE;
 	
 	mNames[ PERPAD_UP ] = QtYabause::translate( "Up" );
 	mNames[ PERPAD_RIGHT ] = QtYabause::translate( "Right" );
@@ -60,6 +64,10 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
 	mNames[ PERPAD_Z ] = "Z";
         mNames[ PERJAMMA_SERVICE ] = "Service";
 	mNames[ PERJAMMA_TEST ] = "Test";
+        mNames[ PERJAMMA_START1 ] = "Start1";
+        mNames[ PERJAMMA_START2 ] = "Start2";
+        mNames[ PERJAMMA_MULTICART ] = "Multicart";
+        mNames[ PERJAMMA_PAUSE ] = "Pause";
 	
    mScanMasks[ PERPAD_UP ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
    mScanMasks[ PERPAD_RIGHT ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
@@ -73,6 +81,10 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
    mScanMasks[ PERPAD_Z ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
    mScanMasks[ PERJAMMA_SERVICE ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
    mScanMasks[ PERJAMMA_TEST ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERJAMMA_START1] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERJAMMA_START2 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERJAMMA_MULTICART ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERJAMMA_PAUSE ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 
 	loadPadSettings();
 	

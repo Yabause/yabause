@@ -28,6 +28,94 @@
     <pixmap resource="../resources/resources.qrc" >:/actions/cabinet.png</pixmap>
    </property>
   </widget>
+   <widget class="QToolButton" name="tbPause" >
+   <property name="geometry" >
+    <rect>
+     <x>280</x>
+     <y>215</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Service</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+   <widget class="QToolButton" name="tbMultiCart" >
+   <property name="geometry" >
+    <rect>
+     <x>214</x>
+     <y>216</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Service</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+   <widget class="QToolButton" name="tbStart1" >
+   <property name="geometry" >
+    <rect>
+     <x>30</x>
+     <y>24</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Service</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
+   <widget class="QToolButton" name="tbStart2" >
+   <property name="geometry" >
+    <rect>
+     <x>506</x>
+     <y>24</y>
+     <width>34</width>
+     <height>34</height>
+    </rect>
+   </property>
+   <property name="focusPolicy" >
+    <enum>Qt::NoFocus</enum>
+   </property>
+   <property name="toolTip" >
+    <string>Service</string>
+   </property>
+   <property name="checkable" >
+    <bool>true</bool>
+   </property>
+   <property name="autoRaise" >
+    <bool>true</bool>
+   </property>
+  </widget>
    <widget class="QToolButton" name="tbService" >
    <property name="geometry" >
     <rect>

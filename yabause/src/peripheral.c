@@ -110,6 +110,10 @@ PerBaseConfig_struct percabinetbaseconfig[] = {
 	{ PERPAD_LEFT, PERCB(PerCabLeftPressed), PERCB(PerCabLeftReleased), NULL, NULL },
 	{ PERJAMMA_TEST, PERCB(PerCabTestPressed), PERCB(PerCabTestReleased), NULL, NULL },
 	{ PERJAMMA_SERVICE, PERCB(PerCabServicePressed), PERCB(PerCabServiceReleased), NULL, NULL },
+	{ PERJAMMA_START1, PERCB(PerCabStart1Pressed), PERCB(PerCabStart1Released), NULL, NULL },
+	{ PERJAMMA_START2, PERCB(PerCabStart2Pressed), PERCB(PerCabStart2Released), NULL, NULL },
+	{ PERJAMMA_MULTICART, PERCB(PerCabMultiCartPressed), PERCB(PerCabMultiCartReleased), NULL, NULL },
+	{ PERJAMMA_PAUSE, PERCB(PerCabPausePressed), PERCB(PerCabPauseReleased), NULL, NULL },
 	{ PERPAD_A, PERCB(PerCabAPressed), PERCB(PerCabAReleased), NULL, NULL },
 	{ PERPAD_B, PERCB(PerCabBPressed), PERCB(PerCabBReleased), NULL, NULL },
 	{ PERPAD_C, PERCB(PerCabCPressed), PERCB(PerCabCReleased), NULL, NULL },
@@ -606,6 +610,54 @@ void PerCabServicePressed(PerCab_struct * pad) {
 
 void PerCabServiceReleased(PerCab_struct * pad) {
    pad[PORT_C] |= (0x1 << 0x3);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabStart1Released(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabStart1Pressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabStart2Released(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x5);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabStart2Pressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x5);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabMultiCartPressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabMultiCartReleased(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabPausePressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x7);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabPauseReleased(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x7);
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -372,6 +372,18 @@ void PerCabTestReleased(PerCab_struct * pad);
 void PerCabServicePressed(PerCab_struct * pad);
 void PerCabServiceReleased(PerCab_struct * pad);
 
+void PerCabStart1Pressed(PerCab_struct * pad);
+void PerCabStart1Released(PerCab_struct * pad);
+
+void PerCabStart2Pressed(PerCab_struct * pad);
+void PerCabStart2Released(PerCab_struct * pad);
+
+void PerCabMultiCartPressed(PerCab_struct * pad);
+void PerCabMultiCartReleased(PerCab_struct * pad);
+
+void PerCabPausePressed(PerCab_struct * pad);
+void PerCabPauseReleased(PerCab_struct * pad);
+
 /** @} */
 
 /** @} */
