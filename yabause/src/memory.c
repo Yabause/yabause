@@ -1,4 +1,4 @@
-﻿/*  Copyright 2005 Guillaume Duhamel
+/*  Copyright 2005 Guillaume Duhamel
     Copyright 2005-2006 Theo Berkau
 
     This file is part of Yabause.
@@ -98,7 +98,56 @@ u8* VoidMem = NULL;
  * e.g. for implementing autosave of backup RAM. */
 u8 BupRamWritten;
 
-#if defined(__GNUC__)
+#if defined(_WINDOWS)
+
+#include <windows.h>
+HANDLE hFMWrite = INVALID_HANDLE_VALUE;
+HANDLE hFile = INVALID_HANDLE_VALUE;
+void * YabMemMap(char * filename, u32 size ) {
+
+  struct stat sb;
+  off_t len;
+  char *p;
+  int fd;
+
+  hFile = CreateFileA(
+    filename, 
+    GENERIC_READ|GENERIC_WRITE, 
+    0, 
+    0, 
+    OPEN_EXISTING, 
+    FILE_ATTRIBUTE_NORMAL,
+    0);
+  if (INVALID_HANDLE_VALUE == hFile) {
+    DWORD errorMessageID = GetLastError();
+    LPSTR messageBuffer = NULL;
+    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+      NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+    LOG(messageBuffer);
+    return NULL;
+  }
+
+  hFMWrite = CreateFileMapping(
+    hFile,
+    NULL,
+    PAGE_READWRITE,
+    0,
+    size,
+    "BACKUP");
+  if (hFMWrite == INVALID_HANDLE_VALUE)
+    return NULL;
+
+  return MapViewOfFile(hFMWrite, FILE_MAP_ALL_ACCESS, 0, 0, size);
+}
+
+void YabFreeMap(void * p) {
+  UnmapViewOfFile(p);
+  CloseHandle(hFMWrite);
+  CloseHandle(hFile);
+  hFMWrite = NULL;
+}
+
+#elif defined(__GNUC__)
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -151,55 +200,6 @@ void YabFreeMap(void * p) {
   munmap(p, mmapsize);
 }
 
-
-#elif defined(_WINDOWS)
-
-#include <windows.h>
-HANDLE hFMWrite = INVALID_HANDLE_VALUE;
-HANDLE hFile = INVALID_HANDLE_VALUE;
-void * YabMemMap(char * filename, u32 size ) {
-
-  struct stat sb;
-  off_t len;
-  char *p;
-  int fd;
-
-  hFile = CreateFileA(
-    filename, 
-    GENERIC_READ|GENERIC_WRITE, 
-    0, 
-    0, 
-    OPEN_EXISTING, 
-    FILE_ATTRIBUTE_NORMAL,
-    0);
-  if (INVALID_HANDLE_VALUE == hFile) {
-    DWORD errorMessageID = GetLastError();
-    LPSTR messageBuffer = NULL;
-    size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-      NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
-    LOG(messageBuffer);
-    return NULL;
-  }
-
-  hFMWrite = CreateFileMapping(
-    hFile,
-    NULL,
-    PAGE_READWRITE,
-    0,
-    size,
-    "BACKUP");
-  if (hFMWrite == INVALID_HANDLE_VALUE)
-    return NULL;
-
-  return MapViewOfFile(hFMWrite, FILE_MAP_ALL_ACCESS, 0, 0, size);
-}
-
-void YabFreeMap(void * p) {
-  UnmapViewOfFile(p);
-  CloseHandle(hFMWrite);
-  CloseHandle(hFile);
-  hFMWrite = NULL;
-}
 
 #else
 void * YabMemMap(char * filename) {
@@ -1610,9 +1610,13 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
 
    fp = tmpfile();
 
+#ifndef __LIBRETRO__
    ScspLockThread();
+#endif
    status = YabSaveStateStream(fp);
+#ifndef __LIBRETRO__
    ScspUnLockThread();
+#endif
 
    if (status != 0)
    {
@@ -1780,7 +1784,9 @@ int YabSaveStateStream(FILE *fp)
 
    free(buf);
 
+#ifndef __LIBRETRO__
    OSDPushMessage(OSDMSG_STATUS, 150, "STATE SAVED");
+#endif
    return 0;
 }
 
@@ -1796,9 +1802,13 @@ int YabLoadStateBuffer(const void * buffer, size_t size)
 
    fseek(fp, 0, SEEK_SET);
 
+#ifndef __LIBRETRO__
    ScspLockThread();
+#endif
    status = YabLoadStateStream(fp);
+#ifndef __LIBRETRO__
    ScspUnLockThread();
+#endif
 
    fclose(fp);
 
@@ -2040,8 +2050,9 @@ int YabLoadStateStream(FILE *fp)
 
    ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 
+#ifndef __LIBRETRO__
    OSDPushMessage(OSDMSG_STATUS, 150, "STATE LOADED");
-
+#endif
    return 0;
 }
 
