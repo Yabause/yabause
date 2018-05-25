@@ -46,7 +46,7 @@ typedef struct {
    int code[PERGUN_AXIS+1+SERVICE_BUTTON_NUMBER];
 } joymapping_struct;
 
-#define MAPPING_NB 3
+#define MAPPING_NB 5
 
 joymapping_struct joyMapping[MAPPING_NB] = {
    {"SZMy-power LTD CO.  Dual Box WII", 
@@ -155,6 +155,78 @@ joymapping_struct joyMapping[MAPPING_NB] = {
          -1,                      //SERVICE_BUTTON_EXIT
          JS_EVENT_BUTTON<<8 | 9,  //SERVICE_BUTTON_TOGGLE
          JS_EVENT_BUTTON<<8 | 0,  //SERVICE_TOGGLE_EXIT
+      }
+   },
+   {"Thrustmaster Run'N' Drive", 
+      {
+         JS_EVENT_AXIS<<8 | 0x10000| 8, //PERPAD_UP
+         JS_EVENT_AXIS<<8 | 7, //PERPAD_RIGHT
+         JS_EVENT_AXIS<<8 | 8, //PERPAD_DOWN
+         JS_EVENT_AXIS<<8 | 0x10000| 7, //PERPAD_LEFT
+         JS_EVENT_AXIS<<8 | 5,  //PERPAD_RIGHT_TRIGGER
+         JS_EVENT_AXIS<<8 | 0x10000| 5,  //PERPAD_LEFT_TRIGGER
+         JS_EVENT_BUTTON<<8 | 9,  //PERPAD_START
+         JS_EVENT_BUTTON<<8 | 0,  //PERPAD_A
+         JS_EVENT_BUTTON<<8 | 3,  //PERPAD_B
+         JS_EVENT_BUTTON<<8 | 4,  //PERPAD_C
+         JS_EVENT_BUTTON<<8 | 1,  //PERPAD_X
+         JS_EVENT_BUTTON<<8 | 2,  //PERPAD_Y
+         JS_EVENT_BUTTON<<8 | 5,  //PERPAD_Z
+         -1,                      //PERMOUSE_LEFT
+         -1,                      //PERMOUSE_MIDDLE
+         -1,                      //PERMOUSE_RIGHT
+         -1,                      //PERMOUSE_START
+         -1,                      //PERMOUSE_AXIS
+         -1,                      //PERANALOG_AXIS1
+         -1,                      //PERANALOG_AXIS2
+         -1,                      //PERANALOG_AXIS3
+         -1,                      //PERANALOG_AXIS4
+         -1,                      //PERANALOG_AXIS5
+         -1,                      //PERANALOG_AXIS6
+         -1,                      //PERANALOG_AXIS7
+         -1,                      //PERGUN_TRIGGER
+         -1,
+         -1,                      //PERGUN_START
+         -1,                      //PERGUN_AXIS
+         -1,                      //SERVICE_BUTTON_EXIT
+         JS_EVENT_BUTTON<<8 | 8,  //SERVICE_BUTTON_TOGGLE
+         JS_EVENT_BUTTON<<8 | 9,  //SERVICE_TOGGLE_EXIT
+      }
+   },
+   {"HORI CO.,LTD. Fighting Commander 4",
+      {
+         JS_EVENT_AXIS<<8 | 0x10000 | 7, //PERPAD_UP
+         JS_EVENT_AXIS<<8 | 6, //PERPAD_RIGHT
+         JS_EVENT_AXIS<<8 | 7, //PERPAD_DOWN
+         JS_EVENT_AXIS<<8 | 0x10000 | 6, //PERPAD_LEFT
+         JS_EVENT_BUTTON<<8 | 4, //PERPAD_RIGHT_TRIGGER
+         JS_EVENT_BUTTON<<8 | 10, //PERPAD_LEFT_TRIGGER
+         JS_EVENT_BUTTON<<8 | 9, //PERPAD_START
+         JS_EVENT_BUTTON<<8 | 1, //PERPAD_A
+         JS_EVENT_BUTTON<<8 | 2, //PERPAD_B
+         JS_EVENT_BUTTON<<8 | 7, //PERPAD_C
+         JS_EVENT_BUTTON<<8 | 0, //PERPAD_X
+         JS_EVENT_BUTTON<<8 | 3, //PERPAD_Y
+         JS_EVENT_BUTTON<<8 | 5, //PERPAD_Z
+         -1, //PERMOUSE_LEFT
+         -1, //PERMOUSE_MIDDLE
+         -1, //PERMOUSE_RIGHT
+         -1, //PERMOUSE_START
+         -1, //PERMOUSE_AXIS
+         -1, //PERANALOG_AXIS1
+         -1, //PERANALOG_AXIS2
+         -1, //PERANALOG_AXIS3
+         -1, //PERANALOG_AXIS4
+         -1, //PERANALOG_AXIS5
+         -1, //PERANALOG_AXIS6
+         -1, //PERANALOG_AXIS7
+         -1, //PERGUN_TRIGGER
+         -1,
+         -1, //PERGUN_START
+         -1, //PERGUN_AXIS
+         -1, //SERVICE_BUTTON_EXIT
+         JS_EVENT_BUTTON<<8 | 12, //SERVICE_BUTTON_TOGGLE
+         JS_EVENT_BUTTON<<8 | 9, //SERVICE_TOGGLE_EXIT
       }
    },
 };
@@ -298,6 +370,7 @@ static int getPerPadKey(int state, int val, perlinuxjoy_struct * joystick) {
             default:
                ret=i;
          }
+         break;
       }
    }
    return ret;
@@ -382,27 +455,31 @@ static void LinuxJoyHandleEvents(perlinuxjoy_struct * joystick)
    {
       if (evt.type == JS_EVENT_AXIS)
       {
-         int initvalue;
          int disp;
          u8 axis = evt.number;
 
          if (axis >= joystick->axiscount) return;
 
-         initvalue = joystick->axis[axis];
-         disp = abs(initvalue - evt.value);
+         disp = abs(evt.value);
          if (disp < THRESHOLD) evt.value = 0;
-         else if (evt.value < initvalue) evt.value = -1;
+         else if (evt.value < 0) evt.value = -1;
          else evt.value = 1;
       }
       key = PACKEVENT(evt, joystick);
       if (evt.value != 0)
       {
-         if ((key & 0x1FFFF) != 0x1FFFF) PerKeyDown(key);
+         if ((key & 0x1FFFF) != 0x1FFFF) {
+           PerKeyDown(key);
+         }
       }
       else
       {
-         if ((key & 0x1FFFF) != 0x1FFFF) PerKeyUp(key);
-         if ((key & 0x1FFFF) != 0x1FFFF) PerKeyUp(0x10000 | key);
+         if ((key & 0x1FFFF) != 0x1FFFF) {
+            PerKeyUp(key);
+            evt.value = -1;
+            key = PACKEVENT(evt, joystick);
+             if ((key & 0x1FFFF) != 0x1FFFF) PerKeyUp(key);
+         }
       }
    }
 }
@@ -412,23 +489,19 @@ static int LinuxJoyScan(perlinuxjoy_struct * joystick)
    struct js_event evt;
    ssize_t num_read;
    int key;
-
    if (joystick->fd == -1) return 0;
 
    if ((num_read = read(joystick->fd, &evt, sizeof(struct js_event))) <= 0) return 0;
-
    if (evt.type == JS_EVENT_AXIS)
    {
-      int initvalue;
       int disp;
       u8 axis = evt.number;
 
       if (axis >= joystick->axiscount) return 0;
 
-      initvalue = joystick->axis[axis];
-      disp = abs(initvalue - evt.value);
+      disp = abs(evt.value);
       if (disp < THRESHOLD) return 0;
-      else if (evt.value < initvalue) evt.value = -1;
+      else if (evt.value < 0) evt.value = -1;
       else evt.value = 1;
    }
    key = PACKEVENT(evt, joystick);
