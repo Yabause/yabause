@@ -129,8 +129,8 @@ uint8 m68ki_exception_cycle_table[3][256] =
 		 34, /*  7: TRAPV                                              */
 		 34, /*  8: Privilege Violation                                */
 		 34, /*  9: Trace                                              */
-		  4, /* 10: 1010                                               */
-		  4, /* 11: 1111                                               */
+		 34, /* 10: 1010                                               */
+		 34, /* 11: 1111                                               */
 		  4, /* 12: RESERVED                                           */
 		  4, /* 13: Coprocessor Protocol Violation        (unemulated) */
 		  4, /* 14: Format Error                                       */
@@ -562,6 +562,7 @@ void m68k_set_instr_hook_callback(void  (*callback)(void))
 	CALLBACK_INSTR_HOOK = callback ? callback : default_instr_hook_callback;
 }
 
+#include <stdio.h>
 /* Set the CPU type. */
 void m68k_set_cpu_type(unsigned int cpu_type)
 {

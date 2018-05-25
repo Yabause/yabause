@@ -218,9 +218,9 @@ typedef struct
 /* Function Prototypes */
 void error_exit(char* fmt, ...);
 void perror_exit(char* fmt, ...);
-size_t check_strsncpy(char* dst, char* src, int maxlength);
-size_t check_atoi(char* str, int *result);
-size_t skip_spaces(char* str);
+int check_strsncpy(char* dst, char* src, int maxlength);
+int check_atoi(char* str, int *result);
+int skip_spaces(char* str);
 int num_bits(int value);
 int atoh(char* buff);
 int fgetline(char* buff, int nchars, FILE* file);
@@ -492,7 +492,7 @@ void perror_exit(char* fmt, ...)
 
 
 /* copy until 0 or space and exit with error if we read too far */
-size_t check_strsncpy(char* dst, char* src, int maxlength)
+int check_strsncpy(char* dst, char* src, int maxlength)
 {
 	char* p = dst;
 	while(*src && *src != ' ')
@@ -506,7 +506,7 @@ size_t check_strsncpy(char* dst, char* src, int maxlength)
 }
 
 /* copy until 0 or specified character and exit with error if we read too far */
-size_t check_strcncpy(char* dst, char* src, char delim, int maxlength)
+int check_strcncpy(char* dst, char* src, char delim, int maxlength)
 {
 	char* p = dst;
 	while(*src && *src != delim)
@@ -520,7 +520,7 @@ size_t check_strcncpy(char* dst, char* src, char delim, int maxlength)
 }
 
 /* convert ascii to integer and exit with error if we find invalid data */
-size_t check_atoi(char* str, int *result)
+int check_atoi(char* str, int *result)
 {
 	int accum = 0;
 	char* p = str;
@@ -536,7 +536,7 @@ size_t check_atoi(char* str, int *result)
 }
 
 /* Skip past spaces in a string */
-size_t skip_spaces(char* str)
+int skip_spaces(char* str)
 {
 	char* p = str;
 
@@ -588,7 +588,7 @@ int fgetline(char* buff, int nchars, FILE* file)
 	if(buff[0] == '\r')
 		memcpy(buff, buff + 1, nchars - 1);
 
-	length = (int)strlen(buff);
+	length = strlen(buff);
 	while(length && (buff[length-1] == '\r' || buff[length-1] == '\n'))
 		length--;
 	buff[length] = 0;
@@ -649,7 +649,7 @@ opcode_struct* find_opcode(char* name, int size, char* spec_proc, char* spec_ea)
 	opcode_struct* op;
 
 
-	for(op = g_opcode_input_table; strlen(op->name) != 0;op++)
+	for(op = g_opcode_input_table;op->name != NULL;op++)
 	{
 		if(	strcmp(name, op->name) == 0 &&
 			(size == op->size) &&
@@ -665,7 +665,7 @@ opcode_struct* find_illegal_opcode(void)
 {
 	opcode_struct* op;
 
-	for(op = g_opcode_input_table;strlen(op->name) != 0;op++)
+	for(op = g_opcode_input_table;op->name != NULL;op++)
 	{
 		if(strcmp(op->name, "illegal") == 0)
 			return op;
@@ -711,15 +711,6 @@ int extract_opcode_info(char* src, char* name, int* size, char* spec_proc, char*
 /* Add a search/replace pair to a replace structure */
 void add_replace_string(replace_struct* replace, char* search_str, char* replace_str)
 {
-	size_t search_str_len = strlen(search_str);
-	size_t replace_str_len = strlen(replace_str);
-
-	if(search_str_len >= 201)
-		error_exit("search_str was too long");
-
-	if (replace_str_len >= 201)
-		error_exit("replace_str was too long");
-
 	if(replace->length >= MAX_REPLACE_LENGTH)
 		error_exit("overflow in replace structure");
 
@@ -750,9 +741,6 @@ void write_body(FILE* filep, body_struct* body, replace_struct* replace)
 				ptr = strstr(output, replace->replace[j][0]);
 				if(ptr)
 				{
-					size_t replace_len = strlen(ptr + strlen(replace->replace[j][0]));
-					if(replace_len >= 201)
-						error_exit("write_body: replace_len was too long");
 					/* We found something to replace */
 					found = 1;
 					strcpy(temp_buff, ptr+strlen(replace->replace[j][0]));
@@ -796,12 +784,7 @@ void write_function_name(FILE* filep, char* base_name)
 void add_opcode_output_table_entry(opcode_struct* op, char* name)
 {
 	opcode_struct* ptr;
-	size_t name_len = strlen(name);
-
-	if(name_len >= 30)
-		error_exit("Opcode output name too long");
-
-	if(g_opcode_output_table_length >= MAX_OPCODE_OUTPUT_TABLE_LENGTH)
+	if(g_opcode_output_table_length > MAX_OPCODE_OUTPUT_TABLE_LENGTH)
 		error_exit("Opcode output table overflow");
 
 	ptr = g_opcode_output_table + g_opcode_output_table_length++;
@@ -1263,24 +1246,14 @@ int main(int argc, char **argv)
     if(argc > 1)
 	{
 		char *ptr;
-		size_t argv_len = strlen(argv[1]);
-
-		if(argv_len >= 1024)
-			perror_exit("Argument was too long (%s)\n", argv[1]);
-
 		strcpy(output_path, argv[1]);
 
 		for(ptr = strchr(output_path, '\\'); ptr; ptr = strchr(ptr, '\\'))
 			*ptr = '/';
         if(output_path[strlen(output_path)-1] != '/')
 			strcat(output_path, "/");
-        if (argc > 2)
-        {
-           if (strlen(argv[2]) >= 1024)
-              perror_exit("Argument 2 was too long (%s)\n", argv[2]);
-
-           strcpy(g_input_filename, argv[2]);
-        }
+		if(argc > 2)
+			strcpy(g_input_filename, argv[2]);
 	}
 
 
