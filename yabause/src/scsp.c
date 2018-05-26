@@ -4835,7 +4835,6 @@ SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 {
   addr &= 0x7FFFF;
   u8 val = 0;
-  if ((yabsys.isSTV) && (addr == 0x700)) return 0x0;; //STV dedicated patch
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
@@ -4883,7 +4882,6 @@ SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
   addr &= 0x7FFFF;
  
-  if ((yabsys.isSTV) && (addr == 0x700)) return 0x0; //STV dedicated patch
   u16 val = 0;
 
   if (scsp.mem4b == 0)
@@ -5103,10 +5101,13 @@ ScspDeInit (void)
 void
 M68KStart (void)
 {
-  M68K->Reset ();
-  //ScspReset();
-  savedcycles = 0;
-  IsM68KRunning = 1;
+  if (IsM68KRunning == 0) {
+    printf("M68KStart\n");
+    M68K->Reset ();
+    //ScspReset();
+    savedcycles = 0;
+    IsM68KRunning = 1;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5114,9 +5115,12 @@ M68KStart (void)
 void
 M68KStop (void)
 {
-  M68K->Reset();
-  //ScspReset();
-  IsM68KRunning = 0;
+  if (IsM68KRunning == 1) {
+    printf("M68KStop\n");
+    M68K->Reset();
+    //ScspReset();
+    IsM68KRunning = 0;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -865,8 +865,11 @@ void FASTCALL SmpcWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 			  break;
                   case 0x18:
                           m_pdr2_readback = ((val & SmpcRegs->DDR[1] ) & 0x7F);
-	                  if (m_pdr2_readback & 0x10) M68KStart();
-                          else M68KStop();
+	                  if (m_pdr2_readback & 0x10){
+                            M68KStop();
+                          } else {
+                            M68KStart();
+                          }
                           SmpcRegs->PDR[1] = m_pdr2_readback;
 	                  m_pdr2_readback |= val & 0x80;
                           break;
