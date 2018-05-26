@@ -5102,7 +5102,6 @@ void
 M68KStart (void)
 {
   if (IsM68KRunning == 0) {
-    printf("M68KStart\n");
     M68K->Reset ();
     //ScspReset();
     savedcycles = 0;
@@ -5116,7 +5115,6 @@ void
 M68KStop (void)
 {
   if (IsM68KRunning == 1) {
-    printf("M68KStop\n");
     M68K->Reset();
     //ScspReset();
     IsM68KRunning = 0;
