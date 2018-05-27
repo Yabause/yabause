@@ -51,6 +51,7 @@ set(kronos_SOURCES
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
         eeprom.c
+        decrypt.c
 	)
 add_definitions(-DIMPROVED_SAVESTATES)
 
