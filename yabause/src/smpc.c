@@ -145,14 +145,14 @@ static void SmpcSSHOFF(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 static void SmpcSNDON(void) {
-   M68KStart();
+   if (!yabsys.isSTV) M68KStart(); //C68k wire is controlled by pdr2 on STV
    SmpcRegs->OREG[31] = 0x6;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void SmpcSNDOFF(void) {
-   M68KStop();
+   if (!yabsys.isSTV) M68KStop(); //C68k wire is controlled by pdr2 on STV
    SmpcRegs->OREG[31] = 0x7;
 }
 
