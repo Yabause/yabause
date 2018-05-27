@@ -31,10 +31,6 @@
 u8 FASTCALL Cs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
    addr &= 0xFFFFFF;
-               
-   if (addr == 0xFFFFFF)
-      return CartridgeArea->cartid;
-
    return CartridgeArea->Cs1ReadByte(context, memory, addr);
 }
 
@@ -43,10 +39,6 @@ u8 FASTCALL Cs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 u16 FASTCALL Cs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
    addr &= 0xFFFFFF;
-
-   if (addr == 0xFFFFFE)
-      return (0xFF00 | CartridgeArea->cartid);
-
    return CartridgeArea->Cs1ReadWord(context, memory, addr);
 }
 
@@ -55,10 +47,6 @@ u16 FASTCALL Cs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 u32 FASTCALL Cs1ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
    addr &= 0xFFFFFF;
-
-   if (addr == 0xFFFFFC)
-      return (0xFF00FF00 | (CartridgeArea->cartid << 16) | CartridgeArea->cartid);
-
    return CartridgeArea->Cs1ReadLong(context, memory, addr);
 }
 

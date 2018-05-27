@@ -28,8 +28,13 @@
 #include "error.h"
 #include "japmodem.h"
 #include "netlink.h"
+#include "decrypt.h"
 
 cartridge_struct *CartridgeArea;
+
+static u8 decryptOn = 0;
+
+#define LOGSTV
 
 //////////////////////////////////////////////////////////////////////////////
 // Dummy/No Cart Functions
@@ -76,6 +81,8 @@ static void FASTCALL DummyCs0WriteLong(SH2_struct *context, UNUSED u8* memory, U
 
 static u8 FASTCALL DummyCs1ReadByte(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr)
 {
+   if (addr == 0xFFFFFF)
+      return CartridgeArea->cartid;
    return 0xFF;
 }
 
@@ -83,6 +90,8 @@ static u8 FASTCALL DummyCs1ReadByte(SH2_struct *context, UNUSED u8* memory, UNUS
 
 static u16 FASTCALL DummyCs1ReadWord(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr)
 {
+   if (addr == 0xFFFFFE)
+      return (0xFF00 | CartridgeArea->cartid);
    return 0xFFFF;
 }
 
@@ -90,6 +99,8 @@ static u16 FASTCALL DummyCs1ReadWord(SH2_struct *context, UNUSED u8* memory, UNU
 
 static u32 FASTCALL DummyCs1ReadLong(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr)
 {
+   if (addr == 0xFFFFFC)
+      return (0xFF00FF00 | (CartridgeArea->cartid << 16) | CartridgeArea->cartid);
    return 0xFFFFFFFF;
 }
 
@@ -1067,6 +1078,89 @@ static void FASTCALL ROMSTVCs0WriteLong(SH2_struct *context, UNUSED u8* memory, 
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+static u8 FASTCALL ROMSTVCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+printf("%s not expected %x\n", __FUNCTION__, addr);
+   return 0xFF;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u16 FASTCALL ROMSTVCs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+printf("%s not expected %x\n", __FUNCTION__, addr);
+   return 0xFFFF;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static u32 FASTCALL ROMSTVCs1ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
+{
+  LOGSTV("%s %x\n", __FUNCTION__, addr);
+  u8 decryptCmd = addr & 0xF;
+  if(decryptOn & 0x1)//protection calculation is activated
+  {
+    if(decryptCmd == 0xc)
+    {
+      u16 res = cryptoDecrypt();
+      u16 res2 = cryptoDecrypt();
+      res = ((res & 0xff00) >> 8) | ((res & 0x00ff) << 8);
+      res2 = ((res2 & 0xff00) >> 8) | ((res2 & 0x00ff) << 8);
+      return res2 | (res << 16);
+    }
+  }
+  LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr);
+  return 0xFFFFFFFF;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL ROMSTVCs1WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
+{
+  LOGSTV("%s %x=%x\n", __FUNCTION__, addr,val);
+  u8 decryptCmd = addr & 0xF;
+  if (decryptCmd == 0x1)
+  {
+    decryptOn = val&0x1;
+    return;
+  }
+  LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr,val);  
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL ROMSTVCs1WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
+{
+  LOGSTV("%s %x=%x\n", __FUNCTION__, addr, val);
+  u8 decryptCmd = addr & 0xF;
+  if (decryptCmd == 0x1)
+  {
+    decryptOn = val&0x1;
+  }
+  else if(decryptCmd == 0x8)
+  {
+    cyptoSetLowAddr(val);
+  }
+  else if(decryptCmd == 0xa)
+  {
+    cyptoSetHighAddr(val);
+  }
+  else if(decryptCmd == 0xc)
+  {
+    cyptoSetSubkey(val);
+  } else
+    LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr,val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL ROMSTVCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
+{
+  LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr,val);
+}
+
+//////////////////////////////////////////////////////////////////////////////
 // General Cart functions
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1099,6 +1193,8 @@ int CartInit(const char * filename, int type)
    CartridgeArea->Cs2WriteByte = &DummyCs2WriteByte;
    CartridgeArea->Cs2WriteWord = &DummyCs2WriteWord;
    CartridgeArea->Cs2WriteLong = &DummyCs2WriteLong;
+
+   decryptOn = 0;
 
    switch(type)
    {
@@ -1141,6 +1237,7 @@ int CartInit(const char * filename, int type)
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x100000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x100000);
+         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP4MBITCs1ReadByte;
@@ -1161,6 +1258,7 @@ int CartInit(const char * filename, int type)
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x200000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x200000);
+         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP8MBITCs1ReadByte;
@@ -1181,6 +1279,7 @@ int CartInit(const char * filename, int type)
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x400000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x400000);
+         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP16MBITCs1ReadByte;
@@ -1201,6 +1300,7 @@ int CartInit(const char * filename, int type)
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x800000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x800000);
+         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP32MBITCs1ReadByte;
@@ -1287,6 +1387,13 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs0WriteByte = &ROMSTVCs0WriteByte;
          CartridgeArea->Cs0WriteWord = &ROMSTVCs0WriteWord;
          CartridgeArea->Cs0WriteLong = &ROMSTVCs0WriteLong;
+
+         CartridgeArea->Cs1ReadByte = &ROMSTVCs1ReadByte;
+         CartridgeArea->Cs1ReadWord = &ROMSTVCs1ReadWord;
+         CartridgeArea->Cs1ReadLong = &ROMSTVCs1ReadLong;
+         CartridgeArea->Cs1WriteByte = &ROMSTVCs1WriteByte;
+         CartridgeArea->Cs1WriteWord = &ROMSTVCs1WriteWord;
+         CartridgeArea->Cs1WriteLong = &ROMSTVCs1WriteLong;
          break;
       }
       case CART_JAPMODEM: // Sega Saturn Modem(Japanese)
@@ -1296,13 +1403,6 @@ int CartInit(const char * filename, int type)
          CartridgeArea->Cs0ReadByte = &JapModemCs0ReadByte;
          CartridgeArea->Cs0ReadWord = &JapModemCs0ReadWord;
          CartridgeArea->Cs0ReadLong = &JapModemCs0ReadLong;
-
-         CartridgeArea->Cs1ReadByte = &JapModemCs1ReadByte;
-         CartridgeArea->Cs1ReadWord = &JapModemCs1ReadWord;
-         CartridgeArea->Cs1ReadLong = &JapModemCs1ReadLong;
-         CartridgeArea->Cs1WriteByte = &JapModemCs1WriteByte;
-         CartridgeArea->Cs1WriteWord = &JapModemCs1WriteWord;
-         CartridgeArea->Cs1WriteLong = &JapModemCs1WriteLong;
 
          CartridgeArea->Cs2ReadByte = &JapModemCs2ReadByte;
          CartridgeArea->Cs2WriteByte = &JapModemCs2WriteByte;
