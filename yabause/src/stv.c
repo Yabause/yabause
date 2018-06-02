@@ -1,10 +1,12 @@
 
-#include <dirent.h> 
 #include <stdio.h>
 #include <stdlib.h>
 
 #ifndef WIN32
-    #include <sys/types.h>
+#include <sys/types.h>
+#include <dirent.h> 
+#else
+#include <windows.h>
 #endif
 
 #include "stv.h"
@@ -331,6 +333,7 @@ int loadGame(int gameId){
   return -1;
 }
 
+#ifndef WIN32
 int STVGetRomList(const char* path, int force){
 //List number of files in directory
   DIR *d;
@@ -368,6 +371,40 @@ int STVGetRomList(const char* path, int force){
   }
   return nbGames;
 }
+#else
+int STVGetRomList(const char* path, int force){
+//List number of files in directory
+  FILE *fp;
+  int i, nbGames = 0;
+  char savefile[1024];
+  char pathfile[1024];
+  memset(availableGames, 0x0, sizeof(GameLink)*NB_STV_GAMES);
+  snprintf(savefile, 1024, "%s/gamelist.save", path);
+  snprintf(pathfile, 1024, "%s/*.zip", path);
+  if (force == 0) {
+    nbGames = loadGames(savefile);
+    if (nbGames != 0) return nbGames;
+  }
+  HANDLE hFind;
+  WIN32_FIND_DATA FindFileData;
+  if((hFind = FindFirstFile(pathfile, &FindFileData)) != INVALID_HANDLE_VALUE){
+    do{
+      unsigned int len = strlen(path)+strlen("/")+strlen(FindFileData.cFileName)+1;
+      unsigned char *file = malloc(len);
+      snprintf(file, len, "%s/%s",path, FindFileData.cFileName);
+      updateGameList(file, &nbGames);
+      free(file);
+    }while(FindNextFile(hFind, &FindFileData));
+    FindClose(hFind);
+    fp = fopen(savefile, "w");
+    for (i=0; i<nbGames; i++) {
+      fprintf(fp, "%s,%s\n", availableGames[i].entry->name, availableGames[i].path);
+    }
+    fclose(fp);
+  }
+  return nbGames;
+}
+#endif
 
 char* getSTVGameName(int id) {
   return availableGames[id].entry->name;
