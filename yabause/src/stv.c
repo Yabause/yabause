@@ -54,14 +54,16 @@ static const Game GameList[NB_STV_GAMES]={
         ALL_REGIONS_BIOS  
 
 	HEADER_BLOB, "epr20825.13",    0x0000001, 0x0100000,
-	GAME_BLOB, "mpr20827.2",     0x0400000, 0x0400000,
-	GAME_BLOB, "mpr20828.3",     0x0800000, 0x0400000,
-	GAME_BLOB, "mpr20829.4",     0x0c00000, 0x0400000,
-	GAME_BLOB, "mpr20830.5",     0x1000000, 0x0400000,
-	GAME_BLOB, "mpr20831.6",     0x1400000, 0x0400000,
-	GAME_BLOB, "mpr20826.1",     0x1800000, 0x0400000,
-	GAME_BLOB, "mpr20832.8",     0x1c00000, 0x0400000,
-	GAME_BLOB, "mpr20833.9",     0x2000000, 0x0400000,
+        GAME_BYTE_BLOB, "epr20825.13",    0x0200000, 0x0100000,
+        GAME_BYTE_BLOB, "epr20825.13",    0x0300000, 0x0100000,
+	GAME_WORD_BLOB, "mpr20827.2",     0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20828.3",     0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20829.4",     0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20830.5",     0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20831.6",     0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20826.1",     0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20832.8",     0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20833.9",     0x2000000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -70,14 +72,14 @@ static const Game GameList[NB_STV_GAMES]={
     {
 	ALL_REGIONS_BIOS
 
-	GAME_BLOB, "mpr20122.7",    0x0200000, 0x0200000,
-	GAME_BLOB, "mpr20117.2",    0x0400000, 0x0400000,
-	GAME_BLOB, "mpr20118.3",    0x0800000, 0x0400000,
-	GAME_BLOB, "mpr20119.4",    0x0c00000, 0x0400000,
-	GAME_BLOB, "mpr20120.5",    0x1000000, 0x0400000,
-	GAME_BLOB, "mpr20121.6",    0x1400000, 0x0400000,
-	GAME_BLOB, "mpr20116.1",    0x1800000, 0x0400000,
-	GAME_BLOB, "mpr20123.8",    0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20122.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr20117.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20118.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20119.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20120.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20121.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20116.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20123.8",    0x1c00000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -86,11 +88,11 @@ static const Game GameList[NB_STV_GAMES]={
     {
 	ALL_REGIONS_BIOS
 
-	GAME_BLOB, "mpr20958.7",   0x0200000, 0x0200000,
-	GAME_BLOB, "mpr20959.2",   0x0400000, 0x0400000,
-	GAME_BLOB, "mpr20960.3",   0x0800000, 0x0400000,
-	GAME_BLOB, "mpr20961.4",   0x0c00000, 0x0400000,
-	GAME_BLOB, "mpr20962.5",   0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20958.7",   0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr20959.2",   0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20960.3",   0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20961.4",   0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20962.5",   0x1000000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -99,13 +101,13 @@ static const Game GameList[NB_STV_GAMES]={
     {
 	ALL_REGIONS_BIOS
 
-	GAME_BLOB, "mpr21075.7",    0x0200000, 0x0200000,
-	GAME_BLOB, "mpr21070.2",    0x0400000, 0x0400000,
-	GAME_BLOB, "mpr21071.3",    0x0800000, 0x0400000,
-	GAME_BLOB, "mpr21072.4",    0x0c00000, 0x0400000,
-	GAME_BLOB, "mpr21073.5",    0x1000000, 0x0400000,
-	GAME_BLOB, "mpr21074.6",    0x1400000, 0x0400000,
-	GAME_BLOB, "mpr21069.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21075.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr21070.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21071.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21072.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21073.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21074.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21069.1",    0x1800000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -113,14 +115,14 @@ static const Game GameList[NB_STV_GAMES]={
     0x05226d41,
     {
 	ALL_REGIONS_BIOS
-	GAME_BLOB, "mpr21307.7",    0x0200000, 0x0200000,
-	GAME_BLOB, "mpr21301.2",    0x0400000, 0x0400000,
-	GAME_BLOB, "mpr21302.3",    0x0800000, 0x0400000,
-	GAME_BLOB, "mpr21303.4",    0x0c00000, 0x0400000,
-	GAME_BLOB, "mpr21304.5",    0x1000000, 0x0400000,
-	GAME_BLOB, "mpr21305.6",    0x1400000, 0x0400000,
-	GAME_BLOB, "mpr21306.1",    0x1800000, 0x0400000,
-	GAME_BLOB, "mpr21308.8",    0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21307.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr21301.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21302.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21303.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21304.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21305.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21306.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21308.8",    0x1c00000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -148,7 +150,6 @@ int processFile(JZFile *zip,void *input) {
         if (strncmp(GameList[i].blobs[j].filename, filename, 1024) == 0) {
           //Compatible file found
           fileFound[i][j] = 1;
-          break;
         }
         j++;
       }
@@ -161,7 +162,7 @@ int copyFile(JZFile *zip, void* id) {
     JZFileHeader header;
     char filename[1024];
     u8* data;
-    int i,j;
+    int i,j, dataAvailable;
     int gameId = *((int*)id);
     LOGSTV("copyFile %s\n", filename);
     if(jzReadLocalFileHeader(zip, &header, filename, sizeof(filename))) {
@@ -175,9 +176,13 @@ int copyFile(JZFile *zip, void* id) {
     }
 
     i=0;
+    dataAvailable = 0;
     while(availableGames[gameId].entry->blobs[i].type != GAME_END) {
       if (strncmp(availableGames[gameId].entry->blobs[i].filename, filename, 1024) == 0) {
-        if(jzReadData(zip, &header, data) == Z_OK) {
+        if (dataAvailable == 0) {
+          dataAvailable = (jzReadData(zip, &header, data) == Z_OK);
+        }
+        if(dataAvailable != 0) {
           fileFound[gameId][i] = 1;
           switch (availableGames[gameId].entry->blobs[i].type) {
             case BIOS_BLOB:
@@ -188,19 +193,23 @@ int copyFile(JZFile *zip, void* id) {
                 biosloaded = 1;
               }
               break;
-            case GAME_BLOB:
+            case GAME_WORD_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
                 T2WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
               }
               break;
             case HEADER_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
+                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+2*j, data[j]);
+              }
+              break;
+            case GAME_BYTE_BLOB:
+              for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
                 T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
               }
               break;
           }
         }
-        break;
       }
       i++;
     }

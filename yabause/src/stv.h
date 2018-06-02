@@ -18,7 +18,8 @@ int STVInit(int id, char* path);
 typedef enum{
   BIOS_BLOB,
   HEADER_BLOB,
-  GAME_BLOB,
+  GAME_BYTE_BLOB,
+  GAME_WORD_BLOB,
   GAME_END
 } blobType;
 
