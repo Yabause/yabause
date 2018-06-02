@@ -355,6 +355,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.sndcoretype = vs->value( "Sound/SoundCore", mYabauseConf.sndcoretype ).toInt();
 	mYabauseConf.cdcoretype = vs->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
 	mYabauseConf.carttype = vs->value( "Cartridge/Type", mYabauseConf.carttype ).toInt();
+        mYabauseConf.stvgame = vs->value( "Cartridge/STVGame", mYabauseConf.stvgame ).toInt();
 	const QString r = vs->value( "Advanced/Region", mYabauseConf.regionid ).toString();
 	if ( r.isEmpty() || r == "Auto" )
 		mYabauseConf.regionid = 0;
@@ -453,6 +454,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.buppath = 0;
 	mYabauseConf.mpegpath = 0;
 	mYabauseConf.cartpath = 0;
+        mYabauseConf.stvgame = -1;
 	mYabauseConf.skip_load = 0;
 	int numThreads = QThread::idealThreadCount();	
 	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;

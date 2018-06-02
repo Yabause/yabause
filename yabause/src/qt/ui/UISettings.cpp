@@ -22,6 +22,7 @@
 #include "../Settings.h"
 #include "../CommonDialogs.h"
 #include "../ygl.h"
+#include "../stv.h"
 #include "UIPortManager.h"
 
 #include <QDir>
@@ -40,14 +41,15 @@ extern OSD_struct* OSDCoreList[];
 
 struct Item
 {
-	Item( const QString& i, const QString& n, bool e=true, bool s=true, bool z=false)
-	{ id = i; Name = n; enableFlag = e; saveFlag = s; ipFlag = z; }
+	Item( const QString& i, const QString& n, bool e=true, bool s=true, bool z=false, bool p=false)
+	{ id = i; Name = n; enableFlag = e; saveFlag = s; ipFlag = z; pathFlag = p;}
 	
 	QString id;
 	QString Name;
 	bool enableFlag;
 	bool saveFlag;
 	bool ipFlag;
+        bool pathFlag;
 };
 
 typedef QList<Item> Items;
@@ -65,7 +67,7 @@ const Items mRegions = Items()
 
 const Items mCartridgeTypes = Items()
 	<< Item( "0", "None", false, false )
-	<< Item( "1", "Pro Action Replay", true, false )
+	<< Item( "1", "Pro Action Replay", true, false)
 	<< Item( "2", "4 Mbit Backup Ram", true, true )
 	<< Item( "3", "8 Mbit Backup Ram", true, true )
 	<< Item( "4", "16 Mbit Backup Ram", true, true )
@@ -75,7 +77,7 @@ const Items mCartridgeTypes = Items()
 	<< Item( "8", "Netlink", false, false, true )
 	<< Item( "9", "16 Mbit ROM", true, false )
 	<< Item( "10", "Japanese Modem", false, false, true )
-	<< Item( "12", "STV Rom game", true, false );
+	<< Item( "12", "STV Rom game", true, false, false, true );
 
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
@@ -169,9 +171,16 @@ void UISettings::requestNewFile( const QString& c, QLineEdit* e, const QString& 
 
 void UISettings::requestFolder( const QString& c, QLineEdit* e )
 {
+  int i;
 	const QString s = CommonDialogs::getExistingDirectory( e->text(), c );
-	if ( !s.isNull() )
+	if ( !s.isNull() ) {
 		e->setText( s );
+        }
+        int nbGames=STVGetRomList(s.toStdString().c_str(), 1);
+        cbSTVGame->clear();
+        for(i = 0; i< nbGames; i++){
+		cbSTVGame->addItem(getSTVGameName(i),i);
+        }
 }
 
 QStringList getCdDriveList()
@@ -244,10 +253,14 @@ void UISettings::tbBrowse_clicked()
 		requestFolder( QtYabause::translate( "Choose a folder to store save states" ), leSaveStates );
 	else if ( tb == tbCartridge )
 	{
-		if (mCartridgeTypes[cbCartridge->currentIndex()].saveFlag)
+		if (mCartridgeTypes[cbCartridge->currentIndex()].pathFlag) {
+                  requestFolder( QtYabause::translate( "Choose a cartridge folder" ), leCartridge );
+                } else {
+		  if (mCartridgeTypes[cbCartridge->currentIndex()].saveFlag)
 			requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
-		else
-			requestFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );		    
+		  else
+			requestFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
+                }		    
 	}
 	else if ( tb == tbMemory )
 		requestNewFile( QtYabause::translate( "Choose a memory file" ), leMemory );
@@ -332,6 +345,15 @@ void UISettings::on_cbCartridge_currentIndexChanged( int id )
 	leCartridgeModemIP->setVisible(mCartridgeTypes[id].ipFlag);
 	lCartridgeModemPort->setVisible(mCartridgeTypes[id].ipFlag);
 	leCartridgeModemPort->setVisible(mCartridgeTypes[id].ipFlag);
+        if (mCartridgeTypes[id].pathFlag) {
+          QString str = leCartridge->text();
+          int nbGames=STVGetRomList(str.toStdString().c_str(), 0);
+          cbSTVGame->clear();
+          for(int i = 0; i< nbGames; i++){
+		cbSTVGame->addItem(getSTVGameName(i),i);
+          }
+        }
+        cbSTVGame->setVisible(mCartridgeTypes[id].pathFlag);
 }
 
 void UISettings::loadCores()
@@ -521,10 +543,11 @@ void UISettings::loadSettings()
    cbNewScsp->setChecked(s->value("Sound/NewScsp", false).toBool());
 
 	// cartridge/memory
-	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
 	leCartridge->setText( s->value( "Cartridge/Path" ).toString() );
+	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
 	leCartridgeModemIP->setText( s->value( "Cartridge/ModemIP", QString("127.0.0.1") ).toString() );
 	leCartridgeModemPort->setText( s->value( "Cartridge/ModemPort", QString("1337") ).toString() );
+        cbSTVGame->setCurrentIndex( cbSTVGame->findData( s->value( "Cartridge/STVGame", -1 ).toInt() ) );
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
   checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory").toBool());
@@ -613,6 +636,7 @@ void UISettings::saveSettings()
 	s->setValue( "Cartridge/Path", leCartridge->text() );
 	s->setValue( "Cartridge/ModemIP", leCartridgeModemIP->text() );
 	s->setValue( "Cartridge/ModemPort", leCartridgeModemPort->text() );
+        s->setValue( "Cartridge/STVGame", cbSTVGame->itemData( cbSTVGame->currentIndex() ).toInt() );
 	s->setValue( "Memory/Path", leMemory->text() );
 	s->setValue( "MpegROM/Path", leMpegROM->text() );
   s->setValue("Memory/ExtendMemory", checkBox_extended_internal_backup->isChecked());

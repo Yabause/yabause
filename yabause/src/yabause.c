@@ -50,6 +50,7 @@
 #include "bios.h"
 #include "movie.h"
 #include "osdcore.h"
+#include "stv.h"
 
 #ifdef HAVE_LIBSDL
 #if defined(__APPLE__) || defined(GEKKO)
@@ -233,6 +234,11 @@ int YabauseSh2Init(yabauseinit_struct *init)
       YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
       return -1;
    }
+   if (STVInit(init->stvgame, init->cartpath) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
+      return -1;
+   }
 
    MappedMemoryInit();
 
@@ -301,6 +307,12 @@ int YabauseInit(yabauseinit_struct *init)
    if (CartInit(init->cartpath, init->carttype) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
+      return -1;
+   }
+
+   if (STVInit(init->stvgame, init->cartpath) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
       return -1;
    }
 

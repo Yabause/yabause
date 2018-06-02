@@ -1081,16 +1081,14 @@ static void FASTCALL ROMSTVCs0WriteLong(SH2_struct *context, UNUSED u8* memory, 
 
 static u8 FASTCALL ROMSTVCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-printf("%s not expected %x\n", __FUNCTION__, addr);
-   return 0xFF;
+   return T1ReadByte(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL ROMSTVCs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-printf("%s not expected %x\n", __FUNCTION__, addr);
-   return 0xFFFF;
+   return T1ReadWord(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1110,8 +1108,7 @@ static u32 FASTCALL ROMSTVCs1ReadLong(SH2_struct *context, UNUSED u8* memory, u3
       return res2 | (res << 16);
     }
   }
-  LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr);
-  return 0xFFFFFFFF;
+  return T1ReadLong(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1125,7 +1122,7 @@ static void FASTCALL ROMSTVCs1WriteByte(SH2_struct *context, UNUSED u8* memory, 
     decryptOn = val&0x1;
     return;
   }
-  LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr,val);  
+  T1WriteByte(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);  
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1150,14 +1147,14 @@ static void FASTCALL ROMSTVCs1WriteWord(SH2_struct *context, UNUSED u8* memory, 
   {
     cyptoSetSubkey(val);
   } else
-    LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr,val);
+    T1WriteWord(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);  
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL ROMSTVCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
-  LOGSTV("%s not expected %x=%x\n", __FUNCTION__, addr,val);
+  T1WriteLong(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);  
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1372,14 +1369,9 @@ int CartInit(const char * filename, int type)
       }
       case CART_ROMSTV: // 256 Mbit STV Rom Cart
       {
-         if ((CartridgeArea->rom = T1MemoryInit(0x2000000)) == NULL)
+         if ((CartridgeArea->rom = T1MemoryInit(0x3000000)) == NULL)
             return -1;
-
          CartridgeArea->cartid = 0xFF; // I have no idea what the real id is
-         // Load Rom to memory
-         //The load is not exactly what is required... Needs to be debugged
-         if (T123Load(&(CartridgeArea->rom[0x200000]), 0x1E00000, 2, filename) != 0)
-            return -1;
          // Setup Functions
          CartridgeArea->Cs0ReadByte = &ROMSTVCs0ReadByte;
          CartridgeArea->Cs0ReadWord = &ROMSTVCs0ReadWord;

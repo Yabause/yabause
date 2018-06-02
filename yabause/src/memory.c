@@ -1489,22 +1489,8 @@ void BackupDeinit() {
 
 int LoadBios(const char *filename)
 {
-  const char STVBios[4] = "STVB";
-  const char STVBios2[16] = "SEGA ST-V(TITAN)";
-  int ret = T123Load(BiosRom, 0x80000, 2, filename); //Saturn
-  if (strncmp(&BiosRom[0x800], "TB_R", 4) != 0) {
-    //Not a Saturn bios? Try ST-V one
-    if (strncmp(&BiosRom[0x800], STVBios, 4) != 0) {
-      if (strncmp(&BiosRom[0x500], STVBios2, 16) != 0) {
-        printf("Unknown Bios\n");
-        return -1; //Incompatible bios
-      }
-    }
-    ret = T123Load(BiosRom, 0x80000, 1, filename); //STV
-    yabsys.isSTV = 1;
-  } else {
-    yabsys.isSTV= 0;
-  }
+  int ret = 0;
+  if (yabsys.isSTV == 0) ret = T123Load(BiosRom, 0x80000, 2, filename); //Saturn
   if (yabsys.isSTV) printf("ST-V Emulation mode\n");
   else printf("Saturn Emulation mode\n");
   return ret;

@@ -52,8 +52,12 @@ set(kronos_SOURCES
 	yabause.c
         eeprom.c
         decrypt.c
+        stv.c
+        junzip.c
 	)
 add_definitions(-DIMPROVED_SAVESTATES)
+
+include_directories(zlib)
 
 include_directories(nanovg)
 set(kronos_SOURCES ${kronos_SOURCES} nanovg/nanovg.c)
@@ -825,6 +829,8 @@ endif()
 if (YAB_WANT_OPENSL)
     set(HAVE_OPENSL ON)
 endif()
+
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlib/libz.a)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 

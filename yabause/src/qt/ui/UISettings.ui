@@ -571,6 +571,9 @@
        <item row="1" column="0" colspan="4">
         <widget class="QComboBox" name="cbCartridge"/>
        </item>
+       <item row="2" column="0" colspan="4">
+        <widget class="QComboBox" name="cbSTVGame"/>
+       </item>
        <item row="2" column="0">
         <widget class="QLabel" name="lCartridgeModemIP">
          <property name="text">
