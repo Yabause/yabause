@@ -17,42 +17,44 @@
 
 #define LOGSTV
 
-#define NB_STV_GAMES 5
+#define NB_STV_GAMES 7
 
 static GameLink availableGames[NB_STV_GAMES];
 static int loadGames(char* path);
 int copyFile(JZFile *zip, void* data);
-
-#define ALL_REGIONS_BIOS \
-	BIOS_BLOB, "epr-20091.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr-19730.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr-17951a.ic8",  0x000000, 0x080000, \
-	BIOS_BLOB, "epr-17740a.ic8",  0x000000, 0x080000, \
-	BIOS_BLOB, "epr-17740.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr-17954a.ic8",  0x000000, 0x080000, \
-	BIOS_BLOB, "epr-17952a.ic8",  0x000000, 0x080000, \
-	BIOS_BLOB, "epr-19854.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr-17953a.ic8",  0x000000, 0x080000, \
-	BIOS_BLOB, "epr-17742a.ic8",  0x000000, 0x080000, \
-	BIOS_BLOB, "stv110.bin",      0x000000, 0x080000, \
-	BIOS_BLOB, "stv1061.bin",     0x000000, 0x080000, \
-	BIOS_BLOB, "epr20091.ic8",    0x000000, 0x080000, \
-	BIOS_BLOB, "epr19730.ic8",    0x000000, 0x080000, \
-	BIOS_BLOB, "epr17951a.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr17740a.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr17740.ic8",    0x000000, 0x080000, \
-	BIOS_BLOB, "epr17954a.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr17952a.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr19854.ic8",    0x000000, 0x080000, \
-	BIOS_BLOB, "epr17953a.ic8",   0x000000, 0x080000, \
-	BIOS_BLOB, "epr17742a.ic8",   0x000000, 0x080000,
-
+	
 static const Game GameList[NB_STV_GAMES]={
+  {"STV Bios",
+    0x0,
+    {
+        BIOS_BLOB, "epr-20091.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr-19730.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr-17951a.ic8",  0x000000, 0x080000,
+	BIOS_BLOB, "epr-17740a.ic8",  0x000000, 0x080000,
+	BIOS_BLOB, "epr-17740.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr-17954a.ic8",  0x000000, 0x080000,
+	BIOS_BLOB, "epr-17952a.ic8",  0x000000, 0x080000,
+	BIOS_BLOB, "epr-19854.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr-17953a.ic8",  0x000000, 0x080000,
+	BIOS_BLOB, "epr-17742a.ic8",  0x000000, 0x080000,
+	BIOS_BLOB, "stv110.bin",      0x000000, 0x080000,
+	BIOS_BLOB, "stv1061.bin",     0x000000, 0x080000,
+	BIOS_BLOB, "epr20091.ic8",    0x000000, 0x080000,
+	BIOS_BLOB, "epr19730.ic8",    0x000000, 0x080000,
+	BIOS_BLOB, "epr17951a.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr17740a.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr17740.ic8",    0x000000, 0x080000,
+	BIOS_BLOB, "epr17954a.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr17952a.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr19854.ic8",    0x000000, 0x080000,
+	BIOS_BLOB, "epr17953a.ic8",   0x000000, 0x080000,
+	BIOS_BLOB, "epr17742a.ic8",   0x000000, 0x080000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Astra SuperStars (J 980514 V1.002)",
     0x052e2901,
     {
-        ALL_REGIONS_BIOS  
-
 	HEADER_BLOB, "epr20825.13",    0x0000001, 0x0100000,
         GAME_BYTE_BLOB, "epr20825.13",    0x0200000, 0x0100000,
         GAME_BYTE_BLOB, "epr20825.13",    0x0300000, 0x0100000,
@@ -70,8 +72,6 @@ static const Game GameList[NB_STV_GAMES]={
   {"Cotton 2 (JUET 970902 V1.000)",
     0x0,
     {
-	ALL_REGIONS_BIOS
-
 	GAME_WORD_BLOB, "mpr20122.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20117.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20118.3",    0x0800000, 0x0400000,
@@ -86,8 +86,6 @@ static const Game GameList[NB_STV_GAMES]={
   {"Radiant Silvergun (JUET 980523 V1.000)",
     0x05272d01,
     {
-	ALL_REGIONS_BIOS
-
 	GAME_WORD_BLOB, "mpr20958.7",   0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20959.2",   0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20960.3",   0x0800000, 0x0400000,
@@ -99,8 +97,6 @@ static const Game GameList[NB_STV_GAMES]={
   {"Cotton Boomerang (JUET 980709 V1.000)",
     0x0,
     {
-	ALL_REGIONS_BIOS
-
 	GAME_WORD_BLOB, "mpr21075.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr21070.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21071.3",    0x0800000, 0x0400000,
@@ -114,7 +110,6 @@ static const Game GameList[NB_STV_GAMES]={
   {"Touryuu Densetsu Elan-Doree / Elan Doree - Legend of Dragoon (JUET 980922 V1.006)",
     0x05226d41,
     {
-	ALL_REGIONS_BIOS
 	GAME_WORD_BLOB, "mpr21307.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr21301.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21302.3",    0x0800000, 0x0400000,
@@ -126,8 +121,23 @@ static const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Baku Baku Animal (J 950407 V1.000)",
+    0,
+    {
+	HEADER_BLOB,    "fpr17969.13",   0x0000001, 0x0100000,
+	GAME_BYTE_BLOB, "fpr17969.13",   0x0200000, 0x0100000,
+	GAME_BYTE_BLOB, "fpr17969.13",   0x0300000, 0x0100000,
+	GAME_WORD_BLOB, "mpr17970.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr17971.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr17972.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr17973.5",    0x1000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
 };
 
+
+static u8 hasBios = 0;
 static u8 fileFound[NB_STV_GAMES][MAX_GAME_FILES];
 
 int processFile(JZFile *zip,void *input) {
@@ -275,7 +285,8 @@ static int updateGameList(const char* file, int *nbGames){
       }
       j++;
     }
-    isASTVGame = isBlobFound & isBiosFound;
+    if (i==0 && isBiosFound) hasBios = 1;
+    else isASTVGame = isBlobFound & (isBiosFound | hasBios);
     if (isASTVGame == 1) {
       //Add the filename as a Game
       int found = 0;
@@ -297,6 +308,41 @@ endClose:
     zip->close(zip);
 }
 
+static int loadBios(){
+  FILE *fp;
+  JZEndRecord endRecord;
+  JZFile *zip;
+  int i = 0;
+  u8 isBiosFound = 0;
+  int biosId = 0;
+
+  memset(fileFound, 0x0, NB_STV_GAMES*MAX_GAME_FILES);
+
+  if(!(fp = fopen(availableGames[0].path, "rb"))) {
+        LOGSTV("Couldn't open \"%s\"!", availableGames[0].path);
+        return 0;
+  }
+
+  zip = jzfile_from_stdio_file(fp);
+
+  if(jzReadEndRecord(zip, &endRecord)) {
+    LOGSTV("Couldn't read ZIP file end record.");
+  } else {
+    if(jzReadCentralDirectory(zip, &endRecord, recordCallback, &biosId)) {
+      LOGSTV("Couldn't read ZIP file central record.");
+    }
+  }
+  zip->close(zip);
+
+  while(availableGames[0].entry->blobs[i].type != GAME_END) {
+    if (availableGames[0].entry->blobs[i].type == BIOS_BLOB) {
+      isBiosFound |= fileFound[0][i];
+    } 
+    i++;
+  }
+  return isBiosFound;
+}
+
 int loadGame(int gameId){
   FILE *fp;
   JZEndRecord endRecord;
@@ -304,7 +350,9 @@ int loadGame(int gameId){
   int i = 0;
   u8 isBiosFound = 0;
   u8 isBlobFound = 1;
-  biosloaded = 0;
+  u8 hasBios = 0;
+
+  hasBios = loadBios();
 
   LOGSTV("Loading game[%d] %s from %s\n", gameId, availableGames[gameId].entry->name, availableGames[gameId].path);
 
@@ -334,7 +382,8 @@ int loadGame(int gameId){
     }
     i++;
   }
-  if (isBlobFound & isBiosFound) {
+
+  if (isBlobFound & (isBiosFound|hasBios)) {
     LOGSTV("%s has been sucessfully loaded\n", availableGames[gameId].entry->name);
     cyptoSetKey(availableGames[gameId].entry->key);
     return 0;
