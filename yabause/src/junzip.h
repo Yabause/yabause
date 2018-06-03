@@ -23,8 +23,7 @@ extern "C" {
      } ST;
 #elif defined _MSC_VER
  #define BEGIN_PACKET_STRUCT( ST ) \
-  #pragma pack(push)\
-  #pragma pack(1)\
+  #pragma pack(push, 1)\
   typedef struct {
  #define END_PACKED_STRUCT( ST )\
  } ST;\
