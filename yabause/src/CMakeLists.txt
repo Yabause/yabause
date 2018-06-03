@@ -31,7 +31,7 @@ set(kronos_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
-set(YAB_PORTS "linux;qt" CACHE STRING "List of ports to build")
+set(YAB_PORTS "qt;linux" CACHE STRING "List of ports to build")
 
 		
 set(kronos_SOURCES
@@ -58,6 +58,7 @@ set(kronos_SOURCES
 add_definitions(-DIMPROVED_SAVESTATES)
 
 add_subdirectory(zlib)
+include_directories(zlib)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} libz.a)
 
 include_directories(nanovg)
