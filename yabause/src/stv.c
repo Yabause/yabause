@@ -17,7 +17,7 @@
 
 #define LOGSTV
 
-#define NB_STV_GAMES 18
+#define NB_STV_GAMES 20
 
 static GameLink availableGames[NB_STV_GAMES];
 static int loadGames(char* path);
@@ -289,6 +289,33 @@ static const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr17771.5",    0x1000000, 0x0400000,
 	GAME_WORD_BLOB, "mpr17772.6",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr17767.1",    0x1800000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Guardian Force (JUET 980318 V0.105)",
+   0,
+   {
+	GAME_WORD_BLOB, "mpr20844.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr20839.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20840.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20841.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20842.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20843.6",    0x1400000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Groove on Fight - Gouketsuji Ichizoku 3 (J 970416 V1.001)",
+   0,
+   {
+	GAME_WORD_BLOB, "mpr19820.7",    0x0200000, 0x0100000,
+	GAME_WORD_BLOB, "mpr19815.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19816.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19817.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19818.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19819.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19814.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19821.8",    0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19822.9",    0x2000000, 0x0200000,
         GAME_END, "", 0, 0
     },
   },
