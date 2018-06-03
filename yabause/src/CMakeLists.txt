@@ -58,8 +58,7 @@ set(kronos_SOURCES
 add_definitions(-DIMPROVED_SAVESTATES)
 
 add_subdirectory(zlib)
-include_directories(zlib)
-set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} libz.a)
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
 
 include_directories(nanovg)
 set(kronos_SOURCES ${kronos_SOURCES} nanovg/nanovg.c)
@@ -139,7 +138,7 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 
 endif()
 
-option(YAB_USE_SSF "Include SSF player." ON)
+option(YAB_USE_SSF "Include SSF player." OFF)
 if (YAB_USE_SSF)
   add_definitions(-DYAB_WANT_SSF=1)
   set(kronos_SOURCES ${kronos_SOURCES} 
