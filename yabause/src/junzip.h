@@ -16,6 +16,23 @@ extern "C" {
 // typedef unsigned int uint32_t;
 // typedef unsigned short uint16_t;
 
+#if defined __GNUC__
+ #define BEGIN_PACKED_STRUCT( ST ) \
+   typedef struct  __attribute__ ((__packed__)){
+  #define END_PACKED_STRUCT( ST )\
+     } ST;
+#elif defined _MSC_VER
+ #define BEGIN_PACKET_STRUCT( ST ) \
+  #pragma pack(push)\
+  #pragma pack(1)\
+  typedef struct {
+ #define END_PACKED_STRUCT( ST )\
+ } ST;\
+ #pragma pack(pop)
+#else
+ #error "Unknown build environment"
+#endif
+
 typedef struct JZFile JZFile;
 
 struct JZFile {
@@ -29,7 +46,7 @@ struct JZFile {
 JZFile *
 jzfile_from_stdio_file(FILE *fp);
 
-typedef struct __attribute__ ((__packed__)) {
+BEGIN_PACKED_STRUCT(JZLocalFileHeader)
     uint32_t signature;
     uint16_t versionNeededToExtract; // unsupported
     uint16_t generalPurposeBitFlag; // unsupported
@@ -41,9 +58,9 @@ typedef struct __attribute__ ((__packed__)) {
     uint32_t uncompressedSize;
     uint16_t fileNameLength;
     uint16_t extraFieldLength; // unsupported
-} JZLocalFileHeader;
+END_PACKED_STRUCT(JZLocalFileHeader)
 
-typedef struct __attribute__ ((__packed__)) {
+BEGIN_PACKED_STRUCT(JZGlobalFileHeader)
     uint32_t signature;
     uint16_t versionMadeBy; // unsupported
     uint16_t versionNeededToExtract; // unsupported
@@ -61,9 +78,9 @@ typedef struct __attribute__ ((__packed__)) {
     uint16_t internalFileAttributes; // unsupported
     uint32_t externalFileAttributes; // unsupported
     uint32_t relativeOffsetOflocalHeader;
-} JZGlobalFileHeader;
+END_PACKED_STRUCT(JZGlobalFileHeader)
 
-typedef struct __attribute__ ((__packed__)) {
+BEGIN_PACKED_STRUCT(JZFileHeader)
     uint16_t compressionMethod;
     uint16_t lastModFileTime;
     uint16_t lastModFileDate;
@@ -71,9 +88,9 @@ typedef struct __attribute__ ((__packed__)) {
     uint32_t compressedSize;
     uint32_t uncompressedSize;
     uint32_t offset;
-} JZFileHeader;
+END_PACKED_STRUCT(JZFileHeader)
 
-typedef struct __attribute__ ((__packed__)) {
+BEGIN_PACKED_STRUCT(JZEndRecord)
     uint32_t signature; // 0x06054b50
     uint16_t diskNumber; // unsupported
     uint16_t centralDirectoryDiskNumber; // unsupported
@@ -83,7 +100,7 @@ typedef struct __attribute__ ((__packed__)) {
     uint32_t centralDirectoryOffset;
     uint16_t zipCommentLength;
     // Followed by .ZIP file comment (variable size)
-} JZEndRecord;
+END_PACKED_STRUCT(JZEndRecord)
 
 // Callback prototype for central and local file record reading functions
 typedef int (*JZRecordCallback)(JZFile *zip, int index, JZFileHeader *header,
