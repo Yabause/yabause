@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "zlib/zlib.h"
+#ifdef WIN32
+#include "zlib/include/zlib.h"
+#else
+#include <zlib.h>
+#endif
 
 #include "junzip.h"
 

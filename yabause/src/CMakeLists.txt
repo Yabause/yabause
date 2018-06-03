@@ -57,8 +57,9 @@ set(kronos_SOURCES
 	)
 add_definitions(-DIMPROVED_SAVESTATES)
 
-add_subdirectory(zlib)
-set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
+if (WIN32)
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlib/lib/zlib)
+endif()
 
 include_directories(nanovg)
 set(kronos_SOURCES ${kronos_SOURCES} nanovg/nanovg.c)
