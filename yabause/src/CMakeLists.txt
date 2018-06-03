@@ -57,7 +57,8 @@ set(kronos_SOURCES
 	)
 add_definitions(-DIMPROVED_SAVESTATES)
 
-include_directories(zlib)
+add_subdirectory(zlib)
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} libz.a)
 
 include_directories(nanovg)
 set(kronos_SOURCES ${kronos_SOURCES} nanovg/nanovg.c)
@@ -139,23 +140,16 @@ endif()
 
 option(YAB_USE_SSF "Include SSF player." ON)
 if (YAB_USE_SSF)
-  find_package(ZLIB)
-
-  if (ZLIB_FOUND)
-    add_definitions(-DYAB_WANT_SSF=1)
-    include_directories(${ZLIB_INCLUDE_DIRS})
-    set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${ZLIB_LIBRARIES})
-
-    set(kronos_SOURCES ${kronos_SOURCES} 
+  add_definitions(-DYAB_WANT_SSF=1)
+  set(kronos_SOURCES ${kronos_SOURCES} 
       aosdk/corlett.c
       aosdk/eng_ssf.c
       aosdk/ssf.c)
 
-    set(kronos_HEADERS ${kronos_HEADERS} 
+  set(kronos_HEADERS ${kronos_HEADERS} 
       aosdk/ao.h
       aosdk/corlett.h
       aosdk/ssf.h)
-  endif()
 endif()
     set(kronos_SOURCES ${kronos_SOURCES} scsp.c)
 
@@ -829,8 +823,6 @@ endif()
 if (YAB_WANT_OPENSL)
     set(HAVE_OPENSL ON)
 endif()
-
-set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlib/libz.a)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
