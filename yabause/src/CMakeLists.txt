@@ -58,7 +58,7 @@ set(kronos_SOURCES
 add_definitions(-DIMPROVED_SAVESTATES)
 
 if (WIN32)
-target_link_libraries(zlib/lib/zlib)
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlib/lib/zlib)
 endif()
 
 include_directories(nanovg)
