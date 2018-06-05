@@ -138,7 +138,7 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 
 endif()
 
-option(YAB_USE_SSF "Include SSF player." OFF)
+option(YAB_USE_SSF "Include SSF player." ON)
 if (YAB_USE_SSF)
   add_definitions(-DYAB_WANT_SSF=1)
   set(kronos_SOURCES ${kronos_SOURCES} 

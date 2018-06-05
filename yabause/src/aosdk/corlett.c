@@ -76,7 +76,7 @@ The following data is optional and may be omitted:
 #include "ao.h"
 #include "corlett.h"
 
-#include <zlib.h>
+#include "zlib/zlib.h"
 #include <stdlib.h>
 
 #define DECOMP_MAX_SIZE		((32 * 1024 * 1024) + 12)
