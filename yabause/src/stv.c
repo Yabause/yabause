@@ -13,12 +13,7 @@
 #include "cs0.h"
 #include "junzip.h"
 #include "yabause.h"
-
-#ifdef WIN32
-#include "zlib/include/zlib.h"
-#else
-#include <zlib.h>
-#endif
+#include "zlib/zlib.h"
 
 #define LOGSTV
 
