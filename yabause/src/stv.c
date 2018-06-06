@@ -15,7 +15,7 @@
 #include "yabause.h"
 #include "zlib/zlib.h"
 
-#define LOGSTV
+#define LOGSTV //YuiErrorMsg
 
 #define NB_STV_GAMES 20
 
@@ -325,13 +325,20 @@ static const Game GameList[NB_STV_GAMES]={
 static u8 hasBios = 0;
 static u8 fileFound[NB_STV_GAMES][MAX_GAME_FILES];
 
-int processFile(JZFile *zip,void *input) {
+typedef struct {
+    char* filename;
+    int gameId;
+} rominfo;
+
+int processBios(JZFile *zip,void *input) {
     JZFileHeader header;
     char filename[1024];
     unsigned char *data;
-    int i,j;
+    int j;
+    rominfo* info = (rominfo*) input;
 
-   if (input != NULL) return copyFile(zip, input);
+   if ((info != NULL) && (info->gameId != -1)) return copyFile(zip, input);
+
 
     if(jzReadLocalFileHeader(zip, &header, filename, sizeof(filename))) {
         LOGSTV("Couldn't read local file header!");
@@ -339,7 +346,35 @@ int processFile(JZFile *zip,void *input) {
     }
 
     //LOGSTV("%s, %d / %d bytes at offset %08X\n", filename, header.compressedSize, header.uncompressedSize, header.offset);
-    for (i=0; i<NB_STV_GAMES; i++) {
+    j=0;
+    while(GameList[0].blobs[j].type != GAME_END) {
+      if (strncmp(GameList[0].blobs[j].filename, filename, 1024) == 0) {
+        //Compatible file found
+        fileFound[0][j] = 1;
+      }
+      j++;
+    }
+
+    return 0;
+}
+
+int processFile(JZFile *zip,void *input) {
+    JZFileHeader header;
+    char filename[1024];
+    unsigned char *data;
+    int i,j;
+    rominfo* info = (rominfo*) input;
+
+    if (info != NULL)
+		if (info->gameId != -1)  return copyFile(zip, input);
+
+    if(jzReadLocalFileHeader(zip, &header, filename, sizeof(filename))) {
+        LOGSTV("Couldn't read local file header!");
+        return -1;
+    }
+
+    //LOGSTV("%s, %d / %d bytes at offset %08X\n", filename, header.compressedSize, header.uncompressedSize, header.offset);
+    for (i=1; i<NB_STV_GAMES; i++) {
       j=0;
       while(GameList[i].blobs[j].type != GAME_END) {
         if (strncmp(GameList[i].blobs[j].filename, filename, 1024) == 0) {
@@ -358,7 +393,9 @@ int copyFile(JZFile *zip, void* id) {
     char filename[1024];
     u8* data;
     int i,j, dataAvailable;
-    int gameId = *((int*)id);
+	rominfo* info = (rominfo*)id;
+	int gameId = -1;
+	if (info != NULL) gameId = info->gameId;
     LOGSTV("copyFile %s\n", filename);
     if(jzReadLocalFileHeader(zip, &header, filename, sizeof(filename))) {
         LOGSTV("Couldn't read local file header!");
@@ -416,7 +453,7 @@ int copyFile(JZFile *zip, void* id) {
 
 int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *user_data) {
     long offset;
-
+    rominfo* info = (rominfo*)user_data;
     offset = zip->tell(zip); // store current position
 
     if(zip->seek(zip, header->offset, SEEK_SET)) {
@@ -424,7 +461,17 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
         return 0; // abort
     }
 
-    processFile(zip, user_data); // alters file offset
+    LOGSTV(filename);
+    char *last = strrchr(info->filename, '/');
+    if (last != NULL) {
+      if (strcmp(last+1, "stvbios.zip") == 0) {
+        processBios(zip, user_data); // alters file offset
+      } else {
+        processFile(zip, user_data); // alters file offset
+      }
+    } else {
+      processFile(zip, user_data); // alters file offset
+    }
 
     zip->seek(zip, offset, SEEK_SET); // return to position
 
@@ -437,6 +484,9 @@ static int updateGameList(const char* file, int *nbGames){
   JZFile *zip;
   int i, j;
   u8 isASTVGame, isBiosFound, isBlobFound;
+  rominfo info;
+  info.filename = file;
+  info.gameId = -1;
 
   memset(fileFound, 0x0, NB_STV_GAMES*MAX_GAME_FILES);
 
@@ -452,7 +502,7 @@ static int updateGameList(const char* file, int *nbGames){
     goto endClose;
   }
 
-  if(jzReadCentralDirectory(zip, &endRecord, recordCallback, NULL)) {
+  if(jzReadCentralDirectory(zip, &endRecord, recordCallback, &info)) {
     LOGSTV("Couldn't read ZIP file central record.");
     goto endClose;
   }
@@ -484,7 +534,6 @@ static int updateGameList(const char* file, int *nbGames){
         availableGames[*nbGames].entry = &GameList[i];
         strncpy(availableGames[*nbGames].path, file, 1024);
         (*nbGames)++;
-        LOGSTV("Game %s has been detected\n", GameList[i].name);
       }
     }
   }
@@ -499,12 +548,13 @@ static int loadBios(){
   JZFile *zip;
   int i = 0;
   u8 isBiosFound = 0;
-  int biosId = 0;
+  rominfo info;
+  info.filename = availableGames[0].path;
+  info.gameId = 0;
 
   memset(fileFound, 0x0, NB_STV_GAMES*MAX_GAME_FILES);
-
   if(!(fp = fopen(availableGames[0].path, "rb"))) {
-        LOGSTV("Couldn't open \"%s\"!", availableGames[0].path);
+        LOGSTV("Couldn't open bios\"%s\"!", availableGames[0].path);
         return 0;
   }
 
@@ -513,12 +563,11 @@ static int loadBios(){
   if(jzReadEndRecord(zip, &endRecord)) {
     LOGSTV("Couldn't read ZIP file end record.");
   } else {
-    if(jzReadCentralDirectory(zip, &endRecord, recordCallback, &biosId)) {
+    if(jzReadCentralDirectory(zip, &endRecord, recordCallback, &info)) {
       LOGSTV("Couldn't read ZIP file central record.");
     }
   }
   zip->close(zip);
-
   while(availableGames[0].entry->blobs[i].type != GAME_END) {
     if (availableGames[0].entry->blobs[i].type == BIOS_BLOB) {
       isBiosFound |= fileFound[0][i];
@@ -536,18 +585,19 @@ int loadGame(int gameId){
   u8 isBiosFound = 0;
   u8 isBlobFound = 1;
   u8 hasBios = 0;
+  rominfo info;
 
-  hasBios = loadBios(gameId);
-
+  info.filename = availableGames[gameId].path;
+  info.gameId = gameId;
+  hasBios = loadBios();
   biosloaded = 0;
 
   LOGSTV("Loading game[%d] %s from %s\n", gameId, availableGames[gameId].entry->name, availableGames[gameId].path);
-
   memset(fileFound, 0x0, NB_STV_GAMES*MAX_GAME_FILES);
 
   if(!(fp = fopen(availableGames[gameId].path, "rb"))) {
         LOGSTV("Couldn't open \"%s\"!", availableGames[gameId].path);
-        return 0;
+        return -1;
   }
 
   zip = jzfile_from_stdio_file(fp);
@@ -555,7 +605,7 @@ int loadGame(int gameId){
   if(jzReadEndRecord(zip, &endRecord)) {
     LOGSTV("Couldn't read ZIP file end record.");
   } else {
-    if(jzReadCentralDirectory(zip, &endRecord, recordCallback, &gameId)) {
+    if(jzReadCentralDirectory(zip, &endRecord, recordCallback, &info)) {
       LOGSTV("Couldn't read ZIP file central record.");
     }
   }
@@ -569,7 +619,6 @@ int loadGame(int gameId){
     }
     i++;
   }
-
   if (isBlobFound & (isBiosFound|hasBios)) {
     LOGSTV("%s has been sucessfully loaded\n", availableGames[gameId].entry->name);
     cyptoSetKey(availableGames[gameId].entry->key);
@@ -632,14 +681,16 @@ int STVGetRomList(const char* path, int force){
   }
   HANDLE hFind;
   WIN32_FIND_DATA FindFileData;
-  if((hFind = FindFirstFile(pathfile, &FindFileData)) != INVALID_HANDLE_VALUE){
+  if((hFind = FindFirstFileA(pathfile, &FindFileData)) != INVALID_HANDLE_VALUE){
     do{
+      char curFile[1024];
+      size_t numChar;
       unsigned int len = strlen(path)+strlen("/")+strlen(FindFileData.cFileName)+1;
       unsigned char *file = malloc(len);
       snprintf(file, len, "%s/%s",path, FindFileData.cFileName);
       updateGameList(file, &nbGames);
       free(file);
-    }while(FindNextFile(hFind, &FindFileData));
+    }while(FindNextFileA(hFind, &FindFileData));
     FindClose(hFind);
     fp = fopen(savefile, "w");
     for (i=0; i<nbGames; i++) {
