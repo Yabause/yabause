@@ -357,8 +357,6 @@ int YabauseInit(yabauseinit_struct *init)
    VideoSetSetting(VDP_SETTING_ASPECT_RATIO, init->stretch);
    VideoSetSetting(VDP_SETTING_SCANLINE, init->scanline);
 
-
-
    // Initialize input core
    if (PerInit(init->percoretype) != 0)
    {
@@ -424,19 +422,19 @@ int YabauseInit(yabauseinit_struct *init)
 #else
    OSDChangeCore(OSDCORE_DEFAULT);
 #endif
-
-   if (init->biospath != NULL && strlen(init->biospath))
-   {
-      if (LoadBios(init->biospath) != 0)
-      {
-         YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->biospath);
-         return -2;
-      }
-      yabsys.emulatebios = 0;
+   if (yabsys.isSTV == 0) {
+	   if (init->biospath != NULL && strlen(init->biospath))
+	   {
+		   if (LoadBios(init->biospath) != 0)
+		   {
+			   YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->biospath);
+			   return -2;
+		   }
+		   yabsys.emulatebios = 0;
+	   }
+	   else
+		   yabsys.emulatebios = 1;
    }
-   else
-      yabsys.emulatebios = 1;
-
    yabsys.usequickload = 0;
 
    YabauseResetNoLoad();

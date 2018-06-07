@@ -15,7 +15,8 @@
 #include "yabause.h"
 #include "zlib/zlib.h"
 
-#define LOGSTV //YuiErrorMsg
+#define LOGSTV 
+//YuiErrorMsg
 
 #define NB_STV_GAMES 19
 
@@ -23,6 +24,7 @@ static GameLink availableGames[NB_STV_GAMES];
 static GameLink biosLink;
 static int loadGames(char* path);
 int copyFile(JZFile *zip, void* data);
+int copyBios(JZFile *zip, void* id);
 
 static const Game BiosList = 
 {"STV Bios",
@@ -338,7 +340,6 @@ typedef struct {
 int processBios(JZFile *zip,void *input) {
     JZFileHeader header;
     char filename[1024];
-    unsigned char *data;
     int j;
     rominfo* info = (rominfo*) input;
 
@@ -366,7 +367,6 @@ int processBios(JZFile *zip,void *input) {
 int processFile(JZFile *zip,void *input) {
     JZFileHeader header;
     char filename[1024];
-    unsigned char *data;
     int i,j;
     rominfo* info = (rominfo*) input;
 
@@ -398,7 +398,7 @@ int copyBios(JZFile *zip, void* id) {
     JZFileHeader header;
     char filename[1024];
     u8* data;
-    int i,j, dataAvailable;
+    unsigned int i,j, dataAvailable;
     rominfo* info = (rominfo*)id;
     int gameId = -1;
     if (info != NULL) gameId = info->gameId;
@@ -540,7 +540,7 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
     return 1; // continue
 }
 
-static int updateGameList(const char* file, int *nbGames){
+static void updateGameList(const char* file, int *nbGames){
   FILE *fp;
   JZEndRecord endRecord;
   JZFile *zip;
@@ -555,7 +555,7 @@ static int updateGameList(const char* file, int *nbGames){
 
   if(!(fp = fopen(file, "rb"))) {
         LOGSTV("Couldn't open \"%s\"!\n", file);
-        return 0;
+        return;
   }
 
   zip = jzfile_from_stdio_file(fp);
@@ -663,6 +663,7 @@ int loadGame(int gameId){
   u8 isBlobFound = 1;
   u8 hasBios = 0;
   rominfo info;
+  LOGSTV("loadGame");
 
   info.filename = availableGames[gameId].path;
   info.gameId = gameId;
@@ -767,19 +768,27 @@ int STVGetRomList(const char* path, int force){
     if (nbGames != 0) return nbGames;
   }
   HANDLE hFind;
-  WIN32_FIND_DATA FindFileData;
+  WIN32_FIND_DATAA FindFileData;
+  //Force a detection of the bios first
+  unsigned int len = strlen(path) + strlen("/") + strlen("stvbios.zip") + 1;
+  unsigned char *file = malloc(len);
+  snprintf(file, len, "%s/stvbios.zip", path);
+  updateGameList(file, &nbGames);
+  free(file);
   if((hFind = FindFirstFileA(pathfile, &FindFileData)) != INVALID_HANDLE_VALUE){
     do{
-      char curFile[1024];
-      size_t numChar;
       unsigned int len = strlen(path)+strlen("/")+strlen(FindFileData.cFileName)+1;
       unsigned char *file = malloc(len);
       snprintf(file, len, "%s/%s",path, FindFileData.cFileName);
+	  LOGSTV(file);
       updateGameList(file, &nbGames);
       free(file);
     }while(FindNextFileA(hFind, &FindFileData));
     FindClose(hFind);
     fp = fopen(savefile, "w");
+	if (biosLink.entry != NULL) {
+		fprintf(fp, "%s,%s\n", biosLink.entry->name, biosLink.path);
+	}
     for (i=0; i<nbGames; i++) {
       fprintf(fp, "%s,%s\n", availableGames[i].entry->name, availableGames[i].path);
     }
