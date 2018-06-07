@@ -18,7 +18,7 @@
 #define LOGSTV 
 //YuiErrorMsg
 
-#define NB_STV_GAMES 19
+#define NB_STV_GAMES 29
 
 static GameLink availableGames[NB_STV_GAMES];
 static GameLink biosLink;
@@ -302,6 +302,154 @@ static const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr21305.6",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21306.1",    0x1800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21308.8",    0x1c00000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Zenkoku Seifuku Bishoujo Grand Prix Find Love (J 971212 V1.000)",
+    0,
+    {
+	HEADER_BLOB,   "epr20424.13",    0x0000001, 0x0100000,
+	GAME_WORD_BLOB, "mpr20431.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr20426.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20427.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20428.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20429.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20430.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20425.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20432.8",    0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20433.9",    0x2000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20434.10",   0x2400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20435.11",   0x2800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20436.12",   0x2c00000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Karaoke Quiz Intro Don Don! (J 960213 V1.000)",
+   0,
+   {
+	HEADER_BLOB,    "epr18937.13", 0x0000001, 0x0080000,
+	HEADER_BLOB,    "epr18937.13", 0x0100001, 0x0080000,
+	GAME_WORD_BLOB, "mpr18944.7",  0x0200000, 0x0100000,
+	GAME_WORD_BLOB, "mpr18939.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18940.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18941.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18942.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18943.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18938.1",    0x1800000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Othello Shiyouyo (J 980423 V1.002)",
+   0,
+   {
+	GAME_WORD_BLOB, "mpr20967.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr20963.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20964.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20965.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20966.5",    0x1000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Pebble Beach - The Great Shot (JUE 950913 V0.990)",
+   0,
+   {
+	HEADER_BLOB,    "epr18852.13",   0x0000001, 0x0080000,
+	HEADER_BLOB,    "epr18852.13",   0x0100001, 0x0080000,
+	GAME_BYTE_BLOB, "epr18852.13",   0x0200000, 0x0080000,
+	GAME_BYTE_BLOB, "epr18852.13",   0x0300000, 0x0080000,
+	GAME_WORD_BLOB, "mpr18853.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18854.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18855.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18856.5",    0x1000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Princess Clara Daisakusen (J 960910 V1.000)",
+   0,
+   {
+	GAME_WORD_BLOB, "mpr19337.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr19333.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19334.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19335.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19336.5",    0x1000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Pro Mahjong Kiwame S (J 951020 V1.208)",
+   0,
+   {
+	HEADER_BLOB,   "epr18737.13",    0x0000001, 0x0080000,
+	HEADER_BLOB,   "epr18737.13",    0x0100001, 0x0080000,
+	GAME_WORD_BLOB, "mpr18738.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18739.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18740.4",    0x0c00000, 0x0200000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Puyo Puyo Sun (J 961115 V0.001)",
+   0,
+   {
+	HEADER_BLOB, "epr19531.13",    0x0000001, 0x0080000,
+	HEADER_BLOB, "epr19531.13",    0x0100001, 0x0080000,
+	GAME_BYTE_BLOB, "epr19531.13", 0x0200000, 0x0080000,
+	GAME_BYTE_BLOB, "epr19531.13", 0x0300000, 0x0080000,
+	GAME_WORD_BLOB, "mpr19533.2",  0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19534.3",  0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19535.4",  0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19536.5",  0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19537.6",  0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19532.1",  0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19538.8",  0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19539.9",  0x2000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Puzzle & Action: Sando-R (J 951114 V1.000)",
+   0,
+   {
+        HEADER_BLOB,    "sando-r.13",  0x0000001, 0x0100000,
+	GAME_BYTE_BLOB, "sando-r.13",  0x0200000, 0x0100000,
+	GAME_BYTE_BLOB, "sando-r.13",  0x0300000, 0x0100000,
+	GAME_WORD_BLOB, "mpr18635.8",  0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18635.8",  0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18636.9",  0x2000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18636.9",  0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18637.10", 0x2400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18637.10", 0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18638.11", 0x2800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18638.11", 0x1000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Sakura Taisen - Hanagumi Taisen Columns (J 971007 V1.010)",
+    0x05272d01,
+    {
+	GAME_WORD_BLOB, "mpr20143.7",    0x0200000, 0x0100000,
+	GAME_WORD_BLOB, "mpr20138.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20139.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20140.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20141.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20142.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20137.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20144.8",    0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20145.9",    0x2000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20146.10",   0x2400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20147.11",   0x2800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20148.12",   0x2c00000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)",
+    0x05226d41,
+    {
+	GAME_WORD_BLOB, "mpr21000.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr20995.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20996.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20997.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20998.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20999.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20994.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21001.8",    0x1c00000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -770,7 +918,7 @@ int STVGetRomList(const char* path, int force){
   HANDLE hFind;
   WIN32_FIND_DATAA FindFileData;
   //Force a detection of the bios first
-  unsigned int len = strlen(path) + strlen("/") + strlen("stvbios.zip") + 1;
+  unsigned int len = strlen(path) strlen("/") strlen("stvbios.zip") + 1;
   unsigned char *file = malloc(len);
   snprintf(file, len, "%s/stvbios.zip", path);
   updateGameList(file, &nbGames);
