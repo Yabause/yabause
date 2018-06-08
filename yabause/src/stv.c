@@ -918,7 +918,7 @@ int STVGetRomList(const char* path, int force){
   HANDLE hFind;
   WIN32_FIND_DATAA FindFileData;
   //Force a detection of the bios first
-  unsigned int len = strlen(path) strlen("/") strlen("stvbios.zip") + 1;
+  unsigned int len = strlen(path) + strlen("/") + strlen("stvbios.zip") + 1;
   unsigned char *file = malloc(len);
   snprintf(file, len, "%s/stvbios.zip", path);
   updateGameList(file, &nbGames);
