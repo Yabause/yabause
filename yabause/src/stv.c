@@ -527,7 +527,7 @@ int processFile(JZFile *zip,void *input) {
     }
 
     //LOGSTV("%s, %d / %d bytes at offset %08X\n", filename, header.compressedSize, header.uncompressedSize, header.offset);
-    for (i=1; i<NB_STV_GAMES; i++) {
+    for (i=0; i<NB_STV_GAMES; i++) {
       j=0;
       while(GameList[i].blobs[j].type != GAME_END) {
         if (strncmp(GameList[i].blobs[j].filename, filename, 1024) == 0) {
