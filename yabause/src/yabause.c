@@ -434,7 +434,8 @@ int YabauseInit(yabauseinit_struct *init)
 	   }
 	   else
 		   yabsys.emulatebios = 1;
-   }
+   } else yabsys.emulatebios = 0;
+
    yabsys.usequickload = 0;
 
    YabauseResetNoLoad();
