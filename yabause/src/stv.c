@@ -645,7 +645,7 @@ int copyFile(JZFile *zip, void* id) {
               break;
             case GAME_BYTE_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
-                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
+                T2WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
               }
 for (j=0; j<0x50;j++)
 LOGSTV("0x%x ", T2ReadWord(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j*2));
