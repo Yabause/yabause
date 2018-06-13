@@ -15,8 +15,7 @@
 #include "yabause.h"
 #include "zlib/zlib.h"
 
-#define LOGSTV 
-//YuiErrorMsg
+#define LOGSTV YuiMsg
 
 #define NB_STV_GAMES 29
 
@@ -642,7 +641,7 @@ int copyFile(JZFile *zip, void* id) {
               break;
             case HEADER_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
-                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+2*j, data[j]);
+                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j), data[j]);
               }
               break;
             case GAME_BYTE_BLOB:
@@ -651,7 +650,7 @@ int copyFile(JZFile *zip, void* id) {
               }
               break;
           }
-        }
+        } else LOGSTV("Error : No data read from %s\n", filename);
       }
       i++;
     }
