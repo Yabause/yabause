@@ -149,8 +149,16 @@ static char cdpath[256] = "\0";
 
 yabauseinit_struct yinit;
 
-void YuiErrorMsg(const char * string) {
-    fprintf(stderr, "%s\n\r", string);
+void YuiMsg(const char *format, ...) {
+  va_list arglist;
+  va_start( arglist, format );
+  vprintf( format, arglist );
+  va_end( arglist );
+}
+
+void YuiErrorMsg(const char *error_text)
+{
+   YuiMsg("\n\nError: %s\n", error_text);
 }
 
 int YuiRevokeOGLOnThisThread(){

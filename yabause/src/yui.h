@@ -29,6 +29,8 @@
 #include "vdp1.h"
 #include "yabause.h"
 
+void YuiMsg(const char *format, ...);
+
 /* If Yabause encounters any fatal errors, it sends the error text to this function */
 void YuiErrorMsg(const char *string);
 

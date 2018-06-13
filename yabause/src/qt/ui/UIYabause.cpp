@@ -48,7 +48,7 @@ extern VideoInterface_struct *VIDCoreList[];
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
 
-void qAppendLog( const char* s )
+void qAppendLog( const char* s)
 {
 	UIYabause* ui = QtYabause::mainWindow( false );
 	
@@ -339,6 +339,7 @@ void UIYabause::swapBuffers()
 
 void UIYabause::appendLog( const char* s )
 {
+
 	if (! mCanLog)
 	{
 		qWarning( "%s", s );
@@ -346,7 +347,8 @@ void UIYabause::appendLog( const char* s )
 	}
 
 	teLog->moveCursor( QTextCursor::End );
-	teLog->append( s );
+	teLog->insertPlainText( s );
+        teLog->moveCursor( QTextCursor::End );
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	if (( !mLogDock->isVisible( )) && ( vs->value( "View/LogWindow" ).toInt() == 1 )) {

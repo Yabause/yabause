@@ -117,10 +117,16 @@ void set_color(struct ConsoleColor color)
 static const char *bios = "";
 static int emulate_bios = 0;
 
+void YuiMsg(const char *format, ...) {
+  va_list arglist;
+  va_start( arglist, format );
+  vprintf( format, arglist );
+  va_end( arglist );
+}
+
 void YuiErrorMsg(const char *error_text)
 {
-   printf("\n\nError: %s\n", error_text);
-   printf("                                 ");
+   YuiMsg("\n\nError: %s\n", error_text);
 }
 
 void YuiSwapBuffers(void)

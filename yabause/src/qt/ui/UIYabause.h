@@ -107,11 +107,10 @@ protected:
 	virtual void mouseReleaseEvent( QMouseEvent* event );
 	virtual void mouseMoveEvent( QMouseEvent* event );
 	virtual void resizeEvent( QResizeEvent* event );
-
 	bool mIsCdIn;
 
 public slots:
-	void appendLog( const char* msg );
+        void appendLog( const char* msg);
 	void pause( bool paused );
 	void reset();
 	void hideMouse();

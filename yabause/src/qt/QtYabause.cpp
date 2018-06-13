@@ -218,8 +218,20 @@ extern "C"
             return nextFrameTime - now;
         }
 
-	void YuiErrorMsg(const char *string)
-	{ QtYabause::mainWindow()->appendLog( string ); }
+
+        void YuiMsg(const char *format, ...) {
+          va_list arglist;
+          va_start( arglist, format );
+          char *str=NULL;
+          vasprintf(&str, format, arglist);
+          QtYabause::mainWindow()->appendLog( str );
+          va_end( arglist );
+       }
+
+       void YuiErrorMsg(const char *error_text)
+       {
+         YuiMsg("\n\nError: %s\n", error_text);
+       }
 	
 	void YuiSwapBuffers()
 	{ 
