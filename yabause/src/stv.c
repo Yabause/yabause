@@ -422,7 +422,7 @@ static const Game GameList[NB_STV_GAMES]={
     },
   },
   {"Sakura Taisen - Hanagumi Taisen Columns (J 971007 V1.010)",
-    0x05272d01,
+    0,
     {
 	GAME_WORD_BLOB, "mpr20143.7",    0x0200000, 0x0100000,
 	GAME_WORD_BLOB, "mpr20138.2",    0x0400000, 0x0400000,
