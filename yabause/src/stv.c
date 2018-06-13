@@ -614,12 +614,11 @@ int copyFile(JZFile *zip, void* id) {
         return -1;
     }
 
-    LOGSTV("copyFile %s\n", filename);
-
     i=0;
     dataAvailable = 0;
     while(availableGames[gameId].entry->blobs[i].type != GAME_END) {
       if (strncmp(availableGames[gameId].entry->blobs[i].filename, filename, 1024) == 0) {
+        LOGSTV("copyFile %s\n", filename);
         if (dataAvailable == 0) {
           dataAvailable = (jzReadData(zip, &header, data) == Z_OK);
         }
@@ -648,6 +647,9 @@ int copyFile(JZFile *zip, void* id) {
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
                 T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
               }
+for (j=0; j<0x50;j++)
+LOGSTV("0x%x ", T2ReadWord(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j*2));
+LOGSTV("\n");
               break;
           }
         } else LOGSTV("Error : No data read from %s\n", filename);
