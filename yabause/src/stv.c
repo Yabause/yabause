@@ -15,17 +15,18 @@
 #include "yabause.h"
 #include "zlib/zlib.h"
 
-#define LOGSTV YuiMsg
+#define LOGSTV 
+//YuiMsg
 
 #define NB_STV_GAMES 29
 
-static GameLink availableGames[NB_STV_GAMES];
-static GameLink biosLink;
-static int loadGames(char* path);
+GameLink availableGames[NB_STV_GAMES];
+GameLink biosLink;
+int loadGames(char* path);
 int copyFile(JZFile *zip, void* data);
 int copyBios(JZFile *zip, void* id);
 
-static const Game BiosList = 
+const Game BiosList = 
 {"STV Bios",
     0x0,
     {
@@ -55,7 +56,7 @@ static const Game BiosList =
     },
 };
 	
-static const Game GameList[NB_STV_GAMES]={
+const Game GameList[NB_STV_GAMES]={
   {"Astra SuperStars (J 980514 V1.002)",
     0x052e2901,
     {
@@ -474,9 +475,9 @@ static const Game GameList[NB_STV_GAMES]={
 };
 
 
-static u8 hasBios = 0;
-static u8 fileFound[NB_STV_GAMES][MAX_GAME_FILES];
-static u8 biosFound[MAX_GAME_FILES];
+u8 hasBios = 0;
+u8 fileFound[NB_STV_GAMES][MAX_GAME_FILES];
+u8 biosFound[MAX_GAME_FILES];
 
 typedef struct {
     char* filename;
@@ -539,7 +540,7 @@ int processFile(JZFile *zip,void *input) {
 
     return 0;
 }
-static int biosloaded = 0;
+int biosloaded = 0;
 
 int copyBios(JZFile *zip, void* id) {
     JZFileHeader header;
@@ -645,11 +646,8 @@ int copyFile(JZFile *zip, void* id) {
               break;
             case GAME_BYTE_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
-                T2WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
+                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
               }
-for (j=0; j<0x50;j++)
-LOGSTV("0x%x ", T2ReadWord(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+j*2));
-LOGSTV("\n");
               break;
           }
         } else LOGSTV("Error : No data read from %s\n", filename);
@@ -689,7 +687,7 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
     return 1; // continue
 }
 
-static void updateGameList(const char* file, int *nbGames){
+void updateGameList(const char* file, int *nbGames){
   FILE *fp;
   JZEndRecord endRecord;
   JZFile *zip;
@@ -768,7 +766,7 @@ endClose:
 
 }
 
-static int loadBios(){
+int loadBios(){
   FILE *fp;
   JZEndRecord endRecord;
   JZFile *zip;
@@ -951,7 +949,7 @@ char* getSTVGameName(int id) {
   return availableGames[id].entry->name;
 }
 
-static int loadGames(char* path) {
+int loadGames(char* path) {
   int i, nbGames = 0;
   char* field;
   char gameName[1024];
