@@ -235,7 +235,13 @@ extern "C" {
     filesize = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    if (filesize > size)
+    if (filesize < size)
+    {
+      fclose(fp);
+      return -1;
+    }
+
+   if (filesize > size)
     {
       //fclose(fp);
       //return -1;

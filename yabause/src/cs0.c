@@ -1234,7 +1234,6 @@ int CartInit(const char * filename, int type)
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x100000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x100000);
-         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP4MBITCs1ReadByte;
@@ -1255,7 +1254,6 @@ int CartInit(const char * filename, int type)
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x200000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x200000);
-         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP8MBITCs1ReadByte;
@@ -1276,7 +1274,6 @@ int CartInit(const char * filename, int type)
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x400000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x400000);
-         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP16MBITCs1ReadByte;
@@ -1293,12 +1290,9 @@ int CartInit(const char * filename, int type)
             return -1;
 
          CartridgeArea->cartid = 0x24;
-
          // Load Backup Ram data from file
          if (T123Load(CartridgeArea->bupram, 0x800000, 1, filename) != 0)
             FormatBackupRam(CartridgeArea->bupram, 0x800000);
-         T1WriteByte(CartridgeArea->bupram, 0xFFFFFF, CartridgeArea->cartid);
-
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP32MBITCs1ReadByte;
          CartridgeArea->Cs1ReadWord = &BUP32MBITCs1ReadWord;
