@@ -602,8 +602,8 @@ int YabauseEmulate(void) {
     int lines, frames = 0;
     sh1_cycles_per_deciline = 0;
 #ifndef USE_SCSP2
-   unsigned int m68kcycles;       // Integral M68k cycles per call
-   unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
+   u32 m68kcycles;       // Integral M68k cycles per call
+   u32 m68kcenticycles;  // 1/100 M68k cycles per call
 	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline;
 	
    m68k_cycles_per_deciline = 0;
@@ -1100,7 +1100,7 @@ int YabauseQuickLoadGame(void)
    u32 addr;
    u32 size;
    u32 blocks;
-   unsigned int i, i2;
+   u32 i, i2;
    dirrec_struct dirrec;
 
    Cs2Area->outconcddev = Cs2Area->filter + 0;
