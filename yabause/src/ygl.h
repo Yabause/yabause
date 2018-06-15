@@ -39,10 +39,18 @@
   #endif
 
 #elif  defined(__APPLE__)
-    #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
-    #include <OpenGL/gl.h>
-    #include <OpenGL/gl3.h>
-
+    #import <TargetConditionals.h>
+    #if defined HAVE_LIBGLES
+        #include <OpenGLES/ES1/gl.h>
+        #include <OpenGLES/ES1/glext.h>
+    #elif defined HAVE_LIBGLES3
+        #include <OpenGLES/ES3/gl.h>
+        #include <OpenGLES/ES3/glext.h>
+    #else
+        #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+        #include <OpenGL/gl.h>
+        #include <OpenGL/gl3.h>
+    #endif
 #else // Linux?
     #if defined(_OGLES3_)||defined(_OGL3_)
         #define GL_GLEXT_PROTOTYPES 1

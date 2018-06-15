@@ -21,6 +21,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -28,13 +29,13 @@
 #include <sys/ioctl.h>
 #include <paths.h>
 #include <sys/param.h>
-#include <IOKit/IOKitLib.h>
-#include <IOKit/IOBSD.h>
-#include <IOKit/storage/IOMediaBSDClient.h>
-#include <IOKit/storage/IOMedia.h>
-#include <IOKit/storage/IOCDTypes.h>
-#include <IOKit/storage/IOCDMedia.h>
-#include <CoreFoundation/CoreFoundation.h>
+#import <IOKit/IOKitLib.h>
+#import <IOKit/IOBSD.h>
+#import <IOKit/storage/IOMediaBSDClient.h>
+#import <IOKit/storage/IOMedia.h>
+#import <IOKit/storage/IOCDTypes.h>
+#import <IOKit/storage/IOCDMedia.h>
+#import <CoreFoundation/CoreFoundation.h>
 #include <util.h>
 
 #include "cdbase.h"
@@ -43,6 +44,7 @@ static int MacOSXCDInit(const char *);
 static void MacOSXCDDeInit(void);
 static int MacOSXCDGetStatus(void);
 static s32 MacOSXCDReadTOC(u32 *);
+static s32 MacOSXCDReadTOC10(CDInterfaceToc10 *);
 static int MacOSXCDReadSectorFAD(u32, void *);
 static void MacOSXCDReadAheadFAD(u32);
 
@@ -53,6 +55,7 @@ MacOSXCDInit,
 MacOSXCDDeInit,
 MacOSXCDGetStatus,
 MacOSXCDReadTOC,
+MacOSXCDReadTOC10,
 MacOSXCDReadSectorFAD,
 MacOSXCDReadAheadFAD,
 };
@@ -172,6 +175,82 @@ static s32 MacOSXCDReadTOC(u32 *TOC)
 	//free(cdTOC); Looks like this is not need, will look into that.
 	return (0xCC * 2);
 }
+static s32 MacOSXCDReadTOC10(CDInterfaceToc10 *TOC) {
+    int add150 = 150, tracks = 0;
+    u_char track;
+    int i, fad = 0, num_toc = 0;
+    CDTOC *cdTOC = GetTOCFromCDPath();
+    CDTOCDescriptor *pTrackDescriptors;
+    pTrackDescriptors = cdTOC->descriptors;
+    
+    memset(TOC, 0xFF, 102 * sizeof(CDInterfaceToc10));
+    
+    for( i = 3; i < CDTOCGetDescriptorCount(cdTOC); i++ ) {
+        track = pTrackDescriptors[i].point;
+        fad = CDConvertMSFToLBA(pTrackDescriptors[i].p) + add150;
+        if ((track > 99) || (track < 1)) {
+            continue;
+            
+        } else {
+            num_toc = i - 3;
+        TOC[num_toc].ctrladr = (pTrackDescriptors[i].control << 4 | pTrackDescriptors[i].adr);
+        TOC[num_toc].tno = 0;
+        TOC[num_toc].point = track;
+        TOC[num_toc].min = num_toc + 150;
+        TOC[num_toc].sec = num_toc + 150;
+        TOC[num_toc].frame = num_toc + 150;
+        TOC[num_toc].zero = 0;
+        TOC[num_toc].pmin = pTrackDescriptors[i].address.minute;
+        TOC[num_toc].psec = pTrackDescriptors[i].address.second;
+        TOC[num_toc].pframe = pTrackDescriptors[i].address.frame;
+        }
+        tracks++;
+    }
+    // A0
+    TOC[num_toc].ctrladr = (pTrackDescriptors[num_toc + 3].control << 4 | pTrackDescriptors[num_toc + 3].adr);
+    TOC[num_toc].tno = 0;
+    TOC[num_toc].point = 0xA0;
+    TOC[num_toc].min = num_toc + 150;
+    TOC[num_toc].sec = num_toc + 150;
+    TOC[num_toc].frame = num_toc + 150;
+    TOC[num_toc].zero = 0;
+    TOC[num_toc].pmin = cdTOC->sessionFirst;
+    TOC[num_toc].psec = 0;
+    TOC[num_toc].pframe = 0;
+    
+    num_toc++;
+    
+    // A1
+    TOC[num_toc].ctrladr = (pTrackDescriptors[num_toc + 3].control << 4 | pTrackDescriptors[num_toc + 3].adr);
+    TOC[num_toc].tno = 0;
+    TOC[num_toc].point = 0xA1;
+    TOC[num_toc].min = num_toc + 150;
+    TOC[num_toc].sec = num_toc + 150;
+    TOC[num_toc].frame = num_toc + 150;
+    TOC[num_toc].zero = 0;
+    TOC[num_toc].pmin = cdTOC->sessionLast;
+    TOC[num_toc].psec = 0;
+    TOC[num_toc].pframe = 0;
+    
+    num_toc++;
+    
+    // A2
+    TOC[num_toc].ctrladr = (pTrackDescriptors[num_toc + 3].control << 4 | pTrackDescriptors[num_toc + 3].adr);
+    TOC[num_toc].tno = 0;
+    TOC[num_toc].point = 0xA2;
+    TOC[num_toc].min = num_toc + 150;
+    TOC[num_toc].sec = num_toc + 150;
+    TOC[num_toc].frame = num_toc + 150;
+    TOC[num_toc].zero = 0;
+    TOC[num_toc].pmin = pTrackDescriptors[num_toc + 3].address.minute;
+    TOC[num_toc].psec = pTrackDescriptors[num_toc + 3].address.second;
+    TOC[num_toc].pframe = pTrackDescriptors[num_toc + 3].address.frame;
+    
+    num_toc++;
+    
+    return num_toc;
+}
+
 
 static int MacOSXCDGetStatus(void) 
 {
@@ -185,7 +264,7 @@ static int MacOSXCDGetStatus(void)
 	return 0;
 }
 
-static int MacOSXCDReadSectorFAD(u32 FAD, void *buffer) 
+static int MacOSXCDReadSectorFAD(u32 FAD, void *buffer)
 {
 	const int blockSize = 2352;
 #ifdef CRAB_REWRITE

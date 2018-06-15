@@ -383,11 +383,11 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
    long size;
    char *temp_buffer, *temp_buffer2;
-   unsigned int track_num;
+   unsigned int track_num=100;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
    char *p, *p2;
-   track_info_struct trk[100];
+   track_info_struct trk[track_num];
    int file_size;
    int i;
    FILE * bin_file;

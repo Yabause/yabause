@@ -437,7 +437,7 @@ int Ygl_uniformGlowShadingHalfTrans(void * p )
    glUniform1i(id_fbowidth, GlWidth);
    glUniform1i(id_fboheight, GlHeight);
    glActiveTexture(GL_TEXTURE0);
-#if !defined(_OGLES3_)
+#if !defined(_OGLES3_) && !defined(HAVE_LIBGLES)  && !defined(HAVE_LIBGLES3)
    glTextureBarrierNV();
 #endif
    return 0;
@@ -528,7 +528,7 @@ int Ygl_uniformHalfTrans(void * p )
    glUniform1i(id_hf_fbowidth, GlWidth);
    glUniform1i(id_hf_fboheight, GlHeight);
    glActiveTexture(GL_TEXTURE0);
-#if !defined(_OGLES3_)
+#if !defined(_OGLES3_)  && !defined(HAVE_LIBGLES) && !defined(HAVE_LIBGLES3)
    glTextureBarrierNV();
 #endif
    return 0;

@@ -430,8 +430,9 @@ int YabauseInit(yabauseinit_struct *init)
 
    yabsys.use_scsp_dsp_jit = init->use_scsp_dsp_dynarec;
 
-   scsp_set_use_new(init->use_new_scsp);
-
+#ifndef USE_SCSP2
+    scsp_set_use_new(init->use_new_scsp);
+#endif
    return 0;
 }
 
@@ -597,16 +598,17 @@ int YabauseEmulate(void) {
       yabsys.DecilineMode ? yabsys.DecilineStop : yabsys.DecilineStop * 10;
    const u32 usecinc =
       yabsys.DecilineMode ? yabsys.DecilineUsec : yabsys.DecilineUsec * 10;
+    u32 sh1_cycles_per_deciline,  cdd_cycles_per_deciline;
+    int lines, frames = 0;
+    sh1_cycles_per_deciline = 0;
 #ifndef USE_SCSP2
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
-	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline, sh1_cycles_per_deciline, cdd_cycles_per_deciline;
-	int lines, frames = 0;
-
+	u32 m68k_cycles_per_deciline, scsp_cycles_per_deciline;
+	
    m68k_cycles_per_deciline = 0;
    scsp_cycles_per_deciline = 0;
-   sh1_cycles_per_deciline = 0;
-
+#endif
    lines = 0;
    frames = 0;
 
@@ -626,6 +628,7 @@ int YabauseEmulate(void) {
       sh1_cycles_per_deciline = get_cycles_per_line_division(20 * 1000000, frames, lines, 10);//20mhz
       cdd_cycles_per_deciline = get_cycles_per_line_division(1000000, frames, lines, 10);//timing is now in usec
    }
+#ifndef USE_SCSP2
    if(use_new_scsp)
    {
       scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, 10);
