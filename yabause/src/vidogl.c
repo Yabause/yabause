@@ -4351,7 +4351,7 @@ static void Vdp2DrawBackScreen(void)
    else
 	   scrAddr = (((Vdp2Regs->BKTAU & 0x3) << 16) | Vdp2Regs->BKTAL) * 2;
 
-#if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
+#if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_) || defined(HAVE_LIBGLES3)
    dot = T1ReadWord(Vdp2Ram, scrAddr);
    YglSetClearColor(
 	   (float)(dot & 0x1F) / (float)(0x1F), 

@@ -24,7 +24,7 @@ matrix:
       before_script:
         - export CC=gcc-6
         - export CXX=g++-6
-                  
+
     # linux clang
     - compiler: clang
       env: testenv="linux clang"
@@ -50,8 +50,8 @@ matrix:
       after_success:
         - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-mac
         #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-mac.zip
-        - curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-mac.zip
-    
+        #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-mac.zip
+
     # os x qt port
     - os: osx
       env: testenv="os x qt port"
@@ -60,7 +60,7 @@ matrix:
         - brew install qt5 sdl2
         - cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.3.2 -DYAB_PORTS=qt -DCMAKE_BUILD_TYPE=Release ..
         - make
-              
+
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
     - compiler: gcc
@@ -81,7 +81,7 @@ matrix:
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
         - make
       after_success:
-        #- cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-win64
+        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-win64
         #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-win64.zip
 
     # android port
@@ -107,8 +107,9 @@ matrix:
 
       after_success:
         #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-android.apk
-        - curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
-
+        #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
+        - export GIT_HASH=$(git rev-parse --short HEAD)
+        - git tag $TRAVIS_BRANCH-$TRAVIS_BUILD_ID
 addons:
   coverity_scan:
     project:
@@ -135,8 +136,24 @@ before_install:
   - cd yabause
   - mkdir build
   - cd build
-  - export GIT_HASH=$(git rev-parse --short HEAD)
 
 script:
   - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON ..
   - make
+
+before_deploy:
+  # Set up git user name and tag this commit
+  - git config --local user.name {$GIT_USER}
+  - git config --local user.email ${GIT_MAIL}
+
+deploy:
+  provider: releases
+  api_key: ${TRAVIS_KEY}
+  file:
+    - yabause-${GIT_HASH}-mac.zip
+    - yabause-${GIT_HASH}-win64.zip
+    - ./src/android/bin/Yabause-debug.apk
+  on:
+    repo: b23prodtm/yabause
+    tags: false
+  skip_cleanup: true

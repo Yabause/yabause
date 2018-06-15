@@ -21,13 +21,48 @@
 // Quick hack so nobody else needs to know we're using a different header file
 #ifdef USE_SCSP2
 #include "scsp2.h"  // defines SCSP_H
+#elif !defined m68kcbp_struct
+#define m68kcbp_struct
+#include "memory.h"
+typedef struct
+{
+    u32 addr;
+} m68kcodebreakpoint_struct;
+#endif
+
+#ifndef scsp_sh2
+#define scsp_sh2
+#define MAX_BREAKPOINTS 10
+typedef struct
+{
+    u32 scsptiming1;
+    u32 scsptiming2;  // 16.16 fixed point
+    
+    m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
+    int numcodebreakpoints;
+    void (*BreakpointCallBack)(u32);
+    int inbreakpoint;
+} ScspInternal;
+
+u8 FASTCALL Sh2SoundRamReadByte(SH2_struct *sh, u32 addr);
+u16 FASTCALL Sh2SoundRamReadWord(SH2_struct *sh, u32 addr);
+u32 FASTCALL Sh2SoundRamReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL Sh2SoundRamWriteByte(SH2_struct *sh, u32 addr, u8 val);
+void FASTCALL Sh2SoundRamWriteWord(SH2_struct *sh, u32 addr, u16 val);
+void FASTCALL Sh2SoundRamWriteLong(SH2_struct *sh, u32 addr, u32 val);
+
+u8 FASTCALL Sh2ScspReadByte(SH2_struct *sh, u32 addr);
+void FASTCALL Sh2ScspWriteByte(SH2_struct *sh, u32 addr, u8 val);
+u16 FASTCALL Sh2ScspReadWord(SH2_struct *sh, u32 addr);
+void FASTCALL Sh2ScspWriteWord(SH2_struct *sh, u32 addr, u16 val);
+u32 FASTCALL Sh2ScspReadLong(SH2_struct *sh, u32 addr);
+void FASTCALL Sh2ScspWriteLong(SH2_struct *sh, u32 addr, u32 val);
 #endif
 
 #ifndef SCSP_H
 #define SCSP_H
 
 #include "core.h"
-#include "memory.h"
 
 #define SNDCORE_DEFAULT -1
 #define SNDCORE_DUMMY   0
@@ -56,32 +91,6 @@ typedef struct
 #endif
 } SoundInterface_struct;
 
-typedef struct
-{
-   u32 D[8];
-   u32 A[8];
-   u32 SR;
-   u32 PC;
-} m68kregs_struct;
-
-typedef struct
-{
-  u32 addr;
-} m68kcodebreakpoint_struct;
-
-#define MAX_BREAKPOINTS 10
-
-typedef struct
-{
-  u32 scsptiming1;
-  u32 scsptiming2;  // 16.16 fixed point
-
-  m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-  int numcodebreakpoints;
-  void (*BreakpointCallBack)(u32);
-  int inbreakpoint;
-} ScspInternal;
-
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
@@ -93,13 +102,6 @@ u32 FASTCALL SoundRamReadLong(u32 addr);
 void FASTCALL SoundRamWriteByte(u32 addr, u8 val);
 void FASTCALL SoundRamWriteWord(u32 addr, u16 val);
 void FASTCALL SoundRamWriteLong(u32 addr, u32 val);
-
-u8 FASTCALL Sh2SoundRamReadByte(SH2_struct *sh, u32 addr);
-u16 FASTCALL Sh2SoundRamReadWord(SH2_struct *sh, u32 addr);
-u32 FASTCALL Sh2SoundRamReadLong(SH2_struct *sh, u32 addr);
-void FASTCALL Sh2SoundRamWriteByte(SH2_struct *sh, u32 addr, u8 val);
-void FASTCALL Sh2SoundRamWriteWord(SH2_struct *sh, u32 addr, u16 val);
-void FASTCALL Sh2SoundRamWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
 int ScspInit(int coreid);
 int ScspChangeSoundCore(int coreid);
@@ -133,12 +135,6 @@ void FASTCALL ScspWriteWord(u32 addr, u16 val);
 u32 FASTCALL ScspReadLong(u32 addr);
 void FASTCALL ScspWriteLong(u32 addr, u32 val);
 
-u8 FASTCALL Sh2ScspReadByte(SH2_struct *sh, u32 addr);
-void FASTCALL Sh2ScspWriteByte(SH2_struct *sh, u32 addr, u8 val);
-u16 FASTCALL Sh2ScspReadWord(SH2_struct *sh, u32 addr);
-void FASTCALL Sh2ScspWriteWord(SH2_struct *sh, u32 addr, u16 val);
-u32 FASTCALL Sh2ScspReadLong(SH2_struct *sh, u32 addr);
-void FASTCALL Sh2ScspWriteLong(SH2_struct *sh, u32 addr, u32 val);
 
 void scsp_init(u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void));
 void scsp_shutdown(void);
@@ -154,6 +150,14 @@ void scsp_update_timer(u32 len);
 
 u32 FASTCALL c68k_byte_read(const u32 adr);
 u32 FASTCALL c68k_word_read(const u32 adr);
+
+typedef struct
+{
+    u32 D[8];
+    u32 A[8];
+    u32 SR;
+    u32 PC;
+} m68kregs_struct;
 
 void M68KStep(void);
 void M68KSync(void);

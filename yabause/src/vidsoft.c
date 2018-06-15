@@ -2255,7 +2255,9 @@ int VIDSoftSetupGL(void)
    outputwidth = vdp2width;
    outputheight = vdp2height;
 
-   glewInit();
+#if !defined(HAVE_LIBGLES) && !defined(HAVE_LIBGLES3)
+    glewInit();
+#endif
 
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
