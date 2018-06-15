@@ -200,7 +200,7 @@ const u16 envelope_table[][8] =
    MAKE_TABLE(5)
    MAKE_TABLE(6)
    MAKE_TABLE(7)
-   MAKE_TABLE(8) 
+   MAKE_TABLE(8)
    MAKE_TABLE(9)
    MAKE_TABLE(10)
    MAKE_TABLE(11)
@@ -249,7 +249,7 @@ struct SlotRegs
    u8 isel;
    u8 imxl;
    u8 disdl;
-   u8 dipan; 
+   u8 dipan;
    u8 efsdl;
    u8 efpan;
 };
@@ -302,8 +302,8 @@ const int lfo_step_table[0x20] = {
    0x17c,//6
    0x13c,//7
    0x0fc,//8
-   0x0bc,//9 
-   0x0dc,//0xa 
+   0x0bc,//9
+   0x0dc,//0xa
    0x08c,//0xb
    0x07c,//0xc
    0x06c,//0xd
@@ -560,75 +560,6 @@ void op2(struct Slot * slot, struct Scsp * s)
       slot->state.address_pointer = (s32)slot->regs.sa + (slot->state.sample_offset + md_out);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-u32 FASTCALL
-c68k_byte_read (const u32 adr)
-{
-    if (adr < 0x100000)
-        return T2ReadByte(SoundRam, adr & 0x7FFFF);
-    else
-        return scsp_r_b(adr);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void FASTCALL
-c68k_byte_write (const u32 adr, u32 data)
-{
-    if (adr < 0x100000)
-        T2WriteByte(SoundRam, adr & 0x7FFFF, data);
-    else
-        scsp_w_b(adr, data);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/* exported to m68kd.c */
-u32 FASTCALL
-c68k_word_read (const u32 adr)
-{
-    if (adr < 0x100000)
-        return T2ReadWord(SoundRam, adr & 0x7FFFF);
-    else
-        return scsp_r_w(adr);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void FASTCALL
-c68k_word_write (const u32 adr, u32 data)
-{
-    if (adr < 0x100000)
-        T2WriteWord (SoundRam, adr & 0x7FFFF, data);
-    else
-        scsp_w_w (adr, data);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-static void
-c68k_interrupt_handler (u32 level)
-{
-    // send interrupt to 68k
-    M68K->SetIRQ ((s32)level);
-}
-
-//waveform dram read
-void op3(struct Slot * slot)
-{
-   u32 addr = (slot->state.address_pointer) & 0x7FFFF;
-
-   if (slot->state.attenuation > 0x3bf)
-      return;
-
-   if (!slot->regs.pcm8b)
-      slot->state.wave = c68k_word_read(addr);
-   else
-      slot->state.wave = c68k_byte_read(addr) << 8;
-
-   slot->state.output = slot->state.wave;
-}
 
 void change_envelope_state(struct Slot * slot, enum EnvelopeStates new_state)
 {
@@ -751,7 +682,7 @@ void op4(struct Slot * slot)
    {
       do_decay(slot,slot->regs.d1r);
 
-      if ((slot->state.attenuation >> 5) >= slot->regs.dl) 
+      if ((slot->state.attenuation >> 5) >= slot->regs.dl)
          change_envelope_state(slot, DECAY2);
    }
    else if (slot->state.envelope == DECAY2)
@@ -815,7 +746,7 @@ void op5(struct Slot * slot)
 //level 2
 void op6(struct Slot * slot)
 {
-   
+
 }
 
 //sound stack write
@@ -922,7 +853,7 @@ void scsp_debug_get_envelope(int chan, int * env, int * state)
    *state = new_scsp.slots[chan].state.envelope;
 }
 
-void keyon(struct Slot * slot) 
+void keyon(struct Slot * slot)
 {
    if (slot->state.envelope == RELEASE)
    {
@@ -969,7 +900,7 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
 
       if ((data >> 4) & 1)//keyonex
          keyonex(s);
- 
+
       slot->regs.sbctl = (data >> 1) & 3;
       slot->regs.ssctl = (slot->regs.ssctl & 1) | ((data & 1) << 1);
       break;
@@ -1370,83 +1301,6 @@ int get_sdl_shift(int sdl)
    else return (7 - sdl);
 }
 
-void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r, int mvol, s16 cd_in_l, s16 cd_in_r)
-{
-   int step_num = 0;
-   int i = 0;
-   int mvol_shift = 0;
-
-   //run 32 steps to generate 1 full sample (512 clock cycles at 22579200hz)
-   //7 operations happen simultaneously on different channels due to pipelining
-   for (step_num = 0; step_num < 32; step_num++)
-   {
-      int last_step = (step_num - 6) & 0x1f;
-      int debug_muted = 0;
-
-      op1(&s->slots[step_num]);//phase, pitch lfo
-      op2(&s->slots[(step_num - 1) & 0x1f],s);//address pointer, modulation data read
-      op3(&s->slots[(step_num - 2) & 0x1f]);//waveform dram read
-      op4(&s->slots[(step_num - 3) & 0x1f]);//interpolation, eg, amplitude lfo
-      op5(&s->slots[(step_num - 4) & 0x1f]);//level calc 1
-      op6(&s->slots[(step_num - 5) & 0x1f]);//level calc 2
-      op7(&s->slots[(step_num - 6) & 0x1f],s);//sound stack write
-
-      if (s->debug_mode)
-      {
-         if (scsp_debug_instrument_check_is_muted(s->slots[last_step].regs.sa))
-            debug_muted = 1;
-      }
-
-      if (!debug_muted)
-      {
-         int disdl = get_sdl_shift(s->slots[last_step].regs.disdl);
-
-         s16 disdl_applied = (s->slots[last_step].state.output >> disdl);
-
-         s16 mixs_input = s->slots[last_step].state.output >> 
-            get_sdl_shift(s->slots[last_step].regs.imxl);
-
-         int pan_val_l = 0, pan_val_r = 0;
-
-         get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
-
-         *out_l = *out_l + ((disdl_applied >> pan_val_l) >> 2);
-         *out_r = *out_r + ((disdl_applied >> pan_val_r) >> 2);
-
-         dsp_inf.set_mixs(s->slots[last_step].regs.isel, mixs_input);
-      }
-   }
-
-   dsp_inf.set_rbl_rbp(rbl, rbp);
-   dsp_inf.set_exts(cd_in_l, cd_in_r);
-
-   dsp_inf.exec();
-  
-   for (i = 0; i < 18; i++)//16,17 are exts0/1
-   {
-      int efsdl = get_sdl_shift(s->slots[i].regs.efsdl);
-      s16 efsdl_applied = 0;
-
-      int pan_val_l = 0, pan_val_r = 0;
-      s16 panned_l = 0, panned_r = 0;
-      
-      efsdl_applied = dsp_inf.get_effect_out(i) >> efsdl;
-
-      get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
-
-      panned_l = (efsdl_applied >> pan_val_l) >> 2;
-      panned_r = (efsdl_applied >> pan_val_r) >> 2;
-
-      *out_l = *out_l + panned_l;
-      *out_r = *out_r + panned_r;
-   }
-
-   mvol_shift = 0xf - mvol;
-
-   *out_l = *out_l >> mvol_shift;
-   *out_r = *out_r >> mvol_shift;
-}
-
 void new_scsp_reset(struct Scsp* s)
 {
    int slot_num;
@@ -1594,7 +1448,7 @@ typedef struct slot_t
   u8 fsft;      // frequency shift (used for freq lfo)
 
   u8 mdl;       // modulation level
-  u8 mdx;       // modulation source X 
+  u8 mdx;       // modulation source X
   u8 mdy;       // modulation source Y
 
   u8 imxl;      // input sound level
@@ -1747,7 +1601,7 @@ scsp_slot_keyon (slot_t *slot)
         SCSPLOG ("key on slot %d. 68K PC = %08X slot->sa = %08X slot->lsa = %08X "
                  "slot->lea = %08X\n", slot - &(scsp.slot[0]), M68K->GetPC(),
                  slot->sa, slot->lsa, slot->lea >> SCSP_FREQ_LB);
-        
+
         // set buffer, loop start/end address of the slot
         if (slot->pcm8b)
         {
@@ -1761,12 +1615,12 @@ scsp_slot_keyon (slot_t *slot)
             if ((slot->sa + (slot->lea >> (SCSP_FREQ_LB - 1))) > SCSP_RAM_MASK)
                 slot->lea = (SCSP_RAM_MASK - slot->sa) << (SCSP_FREQ_LB - 1);
         }
-        
+
         slot->fcnt = 0;                 // reset frequency counter
         slot->ecnt = SCSP_ENV_AS;       // reset envelope counter (probably wrong,
         // should convert decay to attack?)
         slot->env = 0;                  // reset envelope
-        
+
         slot->einc = &slot->einca;      // envelope counter step is attack step
         slot->ecurp = SCSP_ENV_ATTACK;  // current envelope phase is attack
         slot->ecmp = SCSP_ENV_AE;       // limit reach to next event (Attack End)
@@ -1781,7 +1635,7 @@ scsp_slot_keyoff (slot_t *slot)
     if (slot->ecurp != SCSP_ENV_RELEASE)
     {
         SCSPLOG ("key off slot %d\n", slot - &(scsp.slot[0]));
-        
+
         // if we still are in attack phase at release time, convert attack to decay
         if (slot->ecurp == SCSP_ENV_ATTACK)
             slot->ecnt = SCSP_ENV_DE - slot->ecnt;
@@ -1796,7 +1650,7 @@ static void
 scsp_slot_keyonoff (void)
 {
     slot_t *slot;
-    
+
     for(slot = &(scsp.slot[0]); slot < &(scsp.slot[32]); slot++)
     {
         if (slot->key)
@@ -1809,170 +1663,170 @@ scsp_slot_keyonoff (void)
 static void
 scsp_slot_set_b (u32 s, u32 a, u8 d)
 {
-    
+
     slot_t *slot = &(scsp.slot[s]);
-    
+
     SCSPLOG("slot %d : reg %.2X = %.2X\n", s, a & 0x1F, d);
-    
+
     scsp_isr[a ^ 3] = d;
-    
+
     switch (a & 0x1F)
     {
         case 0x00: // KX/KB/SBCTL/SSCTL(high bit)
             slot->key = (d >> 3) & 1;
             slot->sbctl = (d >> 1) & 3;
             slot->ssctl = (slot->ssctl & 1) + ((d & 1) << 1);
-            
+
             if (d & 0x10) scsp_slot_keyonoff ();
             return;
-            
+
         case 0x01: // SSCTL(low bit)/LPCTL/8B/SA(highest 4 bits)
             slot->ssctl = (slot->ssctl & 2) + ((d >> 7) & 1);
             slot->lpctl = (d >> 5) & 3;
-            
+
             slot->pcm8b = d & 0x10;
             slot->sa = (slot->sa & 0x0FFFF) + ((d & 0xF) << 16);
             slot->sa &= SCSP_RAM_MASK;
-            
+
             if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon (slot);
-            
+
             return;
-            
+
         case 0x02: // SA(next highest byte)
             slot->sa = (slot->sa & 0xF00FF) + (d << 8);
             slot->sa &= SCSP_RAM_MASK;
-            
+
             if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon (slot);
             return;
-            
+
         case 0x03: // SA(low byte)
             slot->sa = (slot->sa & 0xFFF00) + d;
             slot->sa &= SCSP_RAM_MASK;
-            
+
             if (slot->ecnt < SCSP_ENV_DE) scsp_slot_update_keyon (slot);
             return;
-            
+
         case 0x04: // LSA(high byte)
             slot->lsa = (slot->lsa & (0x00FF << SCSP_FREQ_LB)) +
             (d << (8 + SCSP_FREQ_LB));
             return;
-            
+
         case 0x05: // LSA(low byte)
             slot->lsa = (slot->lsa & (0xFF00 << SCSP_FREQ_LB)) +
             (d << SCSP_FREQ_LB);
             return;
-            
+
         case 0x06: // LEA(high byte)
             slot->lea = (slot->lea & (0x00FF << SCSP_FREQ_LB)) +
             (d << (8 + SCSP_FREQ_LB));
             return;
-            
+
         case 0x07: // LEA(low byte)
             slot->lea = (slot->lea & (0xFF00 << SCSP_FREQ_LB)) +
             (d << SCSP_FREQ_LB);
             return;
-            
+
         case 0x08: // D2R/D1R(highest 3 bits)
             slot->sr = (d >> 3) & 0x1F;
             slot->dr = (slot->dr & 0x03) + ((d & 7) << 2);
-            
+
             if (slot->sr)
                 slot->srp = &scsp_decay_rate[slot->sr << 1];
             else
                 slot->srp = &scsp_null_rate[0];
-            
+
             if (slot->dr)
                 slot->drp = &scsp_decay_rate[slot->dr << 1];
             else
                 slot->drp = &scsp_null_rate[0];
-            
+
             scsp_slot_refresh_einc (slot, 0x2 | 0x4);
             return;
-            
+
         case 0x09: // D1R(lowest 2 bits)/EGHOLD/AR
             slot->dr = (slot->dr & 0x1C) + ((d >> 6) & 3);
             slot->eghold = d & 0x20;
             slot->ar = d & 0x1F;
-            
+
             if (slot->dr)
                 slot->drp = &scsp_decay_rate[slot->dr << 1];
             else
                 slot->drp = &scsp_null_rate[0];
-            
+
             if (slot->ar)
                 slot->arp = &scsp_attack_rate[slot->ar << 1];
             else
                 slot->arp = &scsp_null_rate[0];
-            
+
             scsp_slot_refresh_einc (slot, 0x1 | 0x2);
             return;
-            
+
         case 0x0A: // LPSLNK/KRS/DL(highest 2 bits)
             slot->lslnk = d & 0x40;
             slot->krs = (d >> 2) & 0xF;
-            
+
             if (slot->krs == 0xF)
                 slot->krs = 4;
             else
                 slot->krs >>= 2;
-            
+
             slot->sl &= 0xE0 << SCSP_ENV_LB;
             slot->sl += (d & 3) << (8 + SCSP_ENV_LB);
             slot->sl += SCSP_ENV_DS; // adjusted for envelope compare (ecmp)
-            
+
             scsp_slot_refresh_einc (slot, 0xF);
             return;
-            
+
         case 0x0B: // DL(lowest 3 bits)/RR
             slot->sl &= 0x300 << SCSP_ENV_LB;
             slot->sl += (d & 0xE0) << SCSP_ENV_LB;
             slot->sl += SCSP_ENV_DS; // adjusted for envelope compare (ecmp)
             slot->rr = d & 0x1F;
-            
+
             if (slot->rr)
                 slot->rrp = &scsp_decay_rate[slot->rr << 1];
             else
                 slot->rrp = &scsp_null_rate[0];
-            
+
             scsp_slot_refresh_einc (slot, 0x8);
             return;
-            
+
         case 0x0C: // STWINH/SDIR
             slot->sdir = d & 2;
             slot->swe = d & 1;
             return;
-            
+
         case 0x0D: // TL
             slot->tl = scsp_tl_table[(d & 0xFF)];
             return;
-            
+
         case 0x0E: // MDL/MDXSL(highest 4 bits)
             slot->mdl = (d >> 4) & 0xF; // need to adjust for correct shift
             slot->mdx = (slot->mdx & 3) + ((d & 0xF) << 2);
             return;
-            
+
         case 0x0F: // MDXSL(lowest 2 bits)/MDYSL
             slot->mdx = (slot->mdx & 0x3C) + ((d >> 6) & 3);
             slot->mdy = d & 0x3F;
             return;
-            
+
         case 0x10: // OCT/FNS(highest 2 bits)
             if (d & 0x40)
                 slot->fsft = 23 - ((d >> 3) & 0xF);
             else
                 slot->fsft = ((d >> 3) & 7) ^ 7;
-            
+
             slot->finct = (slot->finct & 0x7F80) + ((d & 3) << (8 + 7));
             slot->finc = (0x20000 + slot->finct) >> slot->fsft;
-            
+
             scsp_slot_refresh_einc (slot, 0xF);
             return;
-            
+
         case 0x11: // FNS(low byte)
             slot->finct = (slot->finct & 0x18000) + (d << 7);
             slot->finc = (0x20000 + slot->finct) >> slot->fsft;
             return;
-            
+
         case 0x12: // LFORE/LFOF/PLFOWS
             if (d & 0x80)
             {
@@ -1983,65 +1837,65 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
             {
                 slot->lfocnt = 0;
             }
-            
+
             slot->lfoinc = scsp_lfo_step[(d >> 2) & 0x1F];
-            
+
             switch (d & 3)
         {
             case 0:
                 slot->lfofmw = scsp_lfo_sawt_f;
                 return;
-                
+
             case 1:
                 slot->lfofmw = scsp_lfo_squa_f;
                 return;
-                
+
             case 2:
                 slot->lfofmw = scsp_lfo_tri_f;
                 return;
-                
+
             case 3:
                 slot->lfofmw = scsp_lfo_noi_f;
                 return;
         }
-            
+
         case 0x13: // PLFOS/ALFOWS/ALFOS
             if ((d >> 5) & 7)
                 slot->lfofms = ((d >> 5) & 7) + 7;
             else
                 slot->lfofms = 31;
-            
+
             if (d & 7)
                 slot->lfoems = ((d & 7) ^ 7) + 4;
             else
                 slot->lfoems = 31;
-            
+
             switch ((d >> 3) & 3)
         {
             case 0:
                 slot->lfoemw = scsp_lfo_sawt_e;
                 return;
-                
+
             case 1:
                 slot->lfoemw = scsp_lfo_squa_e;
                 return;
-                
+
             case 2:
                 slot->lfoemw = scsp_lfo_tri_e;
                 return;
-                
+
             case 3:
                 slot->lfoemw = scsp_lfo_noi_e;
         }
             return;
-            
+
         case 0x15: // ISEL/OMXL
             if (d & 7)
                 slot->imxl = ((d & 7) ^ 7) + SCSP_ENV_HB;
             else
                 slot->imxl = 31;
             return;
-            
+
         case 0x16: // DISDL/DIPAN
             if (d & 0xE0)
             {
@@ -2070,7 +1924,7 @@ scsp_slot_set_b (u32 s, u32 a, u8 d)
                 slot->dislr = slot->disll = 31; // muted
             }
             return;
-            
+
         case 0x17: // EFSDL/EFPAN
             if (d & 0xE0)
             {
@@ -2104,11 +1958,11 @@ static void
 scsp_slot_set_w (u32 s, s32 a, u16 d)
 {
     slot_t *slot = &(scsp.slot[s]);
-    
+
     SCSPLOG ("slot %d : reg %.2X = %.4X\n", s, a & 0x1E, d);
-    
+
     *(u16 *)&scsp_isr[a ^ 2] = d;
-    
+
     switch (a & 0x1E)
     {
         case 0x00: // KYONEX/KYONB/SBCTL/SSCTL/LPCTL/PCM8B/SA(highest 4 bits)
@@ -2116,101 +1970,101 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
             slot->sbctl = (d >> 9) & 3;
             slot->ssctl = (d >> 7) & 3;
             slot->lpctl = (d >> 5) & 3;
-            
+
             slot->pcm8b = d & 0x10;
             slot->sa = (slot->sa & 0x0FFFF) | ((d & 0xF) << 16);
             slot->sa &= SCSP_RAM_MASK;
-            
+
             if (slot->ecnt < SCSP_ENV_DE)
                 scsp_slot_update_keyon(slot);
-            
+
             if (d & 0x1000)
                 scsp_slot_keyonoff();
             return;
-            
+
         case 0x02: // SA(low word)
             slot->sa = (slot->sa & 0xF0000) | d;
             slot->sa &= SCSP_RAM_MASK;
-            
+
             if (slot->ecnt < SCSP_ENV_DE)
                 scsp_slot_update_keyon(slot);
             return;
-            
+
         case 0x04: // LSA
             slot->lsa = d << SCSP_FREQ_LB;
             return;
-            
+
         case 0x06: // LEA
             slot->lea = d << SCSP_FREQ_LB;
             return;
-            
+
         case 0x08: // D2R/D1R/EGHOLD/AR
             slot->sr = (d >> 11) & 0x1F;
             slot->dr = (d >> 6) & 0x1F;
             slot->eghold = d & 0x20;
             slot->ar = d & 0x1F;
-            
+
             if (slot->sr)
                 slot->srp = &scsp_decay_rate[slot->sr << 1];
             else
                 slot->srp = &scsp_null_rate[0];
-            
+
             if (slot->dr)
                 slot->drp = &scsp_decay_rate[slot->dr << 1];
             else
                 slot->drp = &scsp_null_rate[0];
-            
+
             if (slot->ar)
                 slot->arp = &scsp_attack_rate[slot->ar << 1];
             else
                 slot->arp = &scsp_null_rate[0];
-            
+
             scsp_slot_refresh_einc (slot, 0x1 | 0x2 | 0x4);
             return;
-            
+
         case 0x0A: // LPSLNK/KRS/DL/RR
             slot->lslnk = (d >> 8) & 0x40;
             slot->krs = (d >> 10) & 0xF;
-            
+
             if (slot->krs == 0xF)
                 slot->krs = 4;
             else
                 slot->krs >>= 2;
-            
+
             slot->sl = ((d & 0x3E0) << SCSP_ENV_LB) + SCSP_ENV_DS; // adjusted for envelope compare (ecmp)
             slot->rr = d & 0x1F;
-            
+
             if (slot->rr)
                 slot->rrp = &scsp_decay_rate[slot->rr << 1];
             else
                 slot->rrp = &scsp_null_rate[0];
-            
+
             scsp_slot_refresh_einc (slot, 0xF);
             return;
-            
+
         case 0x0C: // STWINH/SDIR
             slot->sdir = (d >> 8) & 2;
             slot->swe = (d >> 8) & 1;
             slot->tl = scsp_tl_table[(d & 0xFF)];
             return;
-            
+
         case 0x0E: // MDL/MDXSL/MDYSL
             slot->mdl = (d >> 12) & 0xF; // need to adjust for correct shift
             slot->mdx = (d >> 6) & 0x3F;
             slot->mdy = d & 0x3F;
             return;
-            
+
         case 0x10: // OCT/FNS
             if (d & 0x4000)
                 slot->fsft = 23 - ((d >> 11) & 0xF);
             else
                 slot->fsft = (((d >> 11) & 7) ^ 7);
-            
+
             slot->finc = ((0x400 + (d & 0x3FF)) << 7) >> slot->fsft;
-            
+
             scsp_slot_refresh_einc (slot, 0xF);
             return;
-            
+
         case 0x12: // LFORE/LFOF/PLFOWS/PLFOS/ALFOWS/ALFOS
             if (d & 0x8000)
             {
@@ -2221,63 +2075,63 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
             {
                 slot->lfocnt = 0;
             }
-            
+
             slot->lfoinc = scsp_lfo_step[(d >> 10) & 0x1F];
             if ((d >> 5) & 7)
                 slot->lfofms = ((d >> 5) & 7) + 7;
             else
                 slot->lfofms = 31;
-            
+
             if (d & 7)
                 slot->lfoems = ((d & 7) ^ 7) + 4;
             else
                 slot->lfoems = 31;
-            
+
             switch ((d >> 8) & 3)
         {
             case 0:
                 slot->lfofmw = scsp_lfo_sawt_f;
                 break;
-                
+
             case 1:
                 slot->lfofmw = scsp_lfo_squa_f;
                 break;
-                
+
             case 2:
                 slot->lfofmw = scsp_lfo_tri_f;
                 break;
-                
+
             case 3:
                 slot->lfofmw = scsp_lfo_noi_f;
                 break;
         }
-            
+
             switch ((d >> 3) & 3)
         {
             case 0:
                 slot->lfoemw = scsp_lfo_sawt_e;
                 return;
-                
+
             case 1:
                 slot->lfoemw = scsp_lfo_squa_e;
                 return;
-                
+
             case 2:
                 slot->lfoemw = scsp_lfo_tri_e;
                 return;
-                
+
             case 3:
                 slot->lfoemw = scsp_lfo_noi_e;
         }
             return;
-            
+
         case 0x14: // ISEL/OMXL
             if (d & 7)
                 slot->imxl = ((d & 7) ^ 7) + SCSP_ENV_HB;
             else
                 slot->imxl = 31;
             return;
-            
+
         case 0x16: // DISDL/DIPAN/EFSDL/EFPAN
             if (d & 0xE000)
             {
@@ -2305,7 +2159,7 @@ scsp_slot_set_w (u32 s, s32 a, u16 d)
             {
                 slot->dislr = slot->disll = 31; // muted
             }
-            
+
             if (d & 0xE0)
             {
                 slot->efslr = slot->efsll = (((d >> 5) & 7) ^ 7) + SCSP_ENV_HB;
@@ -2338,23 +2192,23 @@ static u8
 scsp_slot_get_b (u32 s, u32 a)
 {
     u8 val = scsp_isr[a ^ 3];
-    
+
     // Mask out keyonx
     if ((a & 0x1F) == 0x00) val &= 0xEF;
-    
+
     SCSPLOG ("r_b slot %d (%.2X) : reg %.2X = %.2X\n", s, a, a & 0x1F, val);
-    
+
     return val;
 }
 
 static u16 scsp_slot_get_w(u32 s, u32 a)
 {
     u16 val = *(u16 *)&scsp_isr[a ^ 2];
-    
+
     if ((a & 0x1E) == 0x00) return val &= 0xEFFF;
-    
+
     SCSPLOG ("r_w slot %d (%.2X) : reg %.2X = %.4X\n", s, a, a & 0x1E, val);
-    
+
     return val;
 }
 
@@ -2384,15 +2238,15 @@ scsp_trigger_sound_interrupt (u32 id)
     u32 level;
     level = 0;
     if (id > 0x80) id = 0x80;
-    
+
     if (scsp.scilv0 & id) level |= 1;
     if (scsp.scilv1 & id) level |= 2;
     if (scsp.scilv2 & id) level |= 4;
-    
+
 #ifdef SCSP_DEBUG
     if (id == 0x8) SCSPLOG ("scsp sound interrupt accepted %.2X lev=%d\n", id, level);
 #endif
-    
+
     scsp.sintf (level);
 }
 
@@ -2401,10 +2255,10 @@ scsp_main_interrupt (u32 id)
 {
     //  if (scsp.mcipd & id) return;
     //  if (id != 0x400) SCSPLOG("scsp main interrupt %.4X\n", id);
-    
+
     scsp.mcipd |= id;
     WRITE_THROUGH (scsp.mcipd);
-    
+
     if (scsp.mcieb & id)
         scsp_trigger_main_interrupt (id);
 }
@@ -2413,12 +2267,12 @@ static void
 scsp_sound_interrupt (u32 id)
 {
     //  if (scsp.scipd & id) return;
-    
+
     //  SCSPLOG ("scsp sound interrupt %.4X\n", id);
-    
+
     scsp.scipd |= id;
     WRITE_THROUGH (scsp.scipd);
-    
+
     if (scsp.scieb & id)
         scsp_trigger_sound_interrupt (id);
 }
@@ -2441,9 +2295,9 @@ scsp_dma (void)
         SCSPLOG ("scsp dma: scsp_ram(%08lx) -> reg(%08lx) * %08lx\n",
                  scsp.dmea, scsp.drga, scsp.dmlen);
     }
-    
+
     scsp_ccr[0x16 ^ 3] &= 0xE0;
-    
+
     scsp_sound_interrupt (0x10);
     scsp_main_interrupt (0x10);
 }
@@ -2451,7 +2305,7 @@ scsp_dma (void)
 
 /*
  Envelope Events Handler
- 
+
  Max EG level = 0x3FF      /|\
  / | \
  /  |  \_____
@@ -2469,7 +2323,7 @@ static void
 scsp_release_next (slot_t *slot)
 {
     // end of release happened, update to process the next phase...
-    
+
     slot->ecnt = SCSP_ENV_DE;
     slot->einc = NULL;
     slot->ecmp = SCSP_ENV_DE + 1;
@@ -2480,7 +2334,7 @@ static void
 scsp_sustain_next (slot_t *slot)
 {
     // end of sustain happened, update to process the next phase...
-    
+
     slot->ecnt = SCSP_ENV_DE;
     slot->einc = NULL;
     slot->ecmp = SCSP_ENV_DE + 1;
@@ -2491,7 +2345,7 @@ static void
 scsp_decay_next (slot_t *slot)
 {
     // end of decay happened, update to process the next phase...
-    
+
     slot->ecnt = slot->sl;
     slot->einc = &slot->eincs;
     slot->ecmp = SCSP_ENV_DE;
@@ -2503,7 +2357,7 @@ static void
 scsp_attack_next (slot_t *slot)
 {
     // end of attack happened, update to process the next phase...
-    
+
     slot->ecnt = SCSP_ENV_DS;
     slot->einc = &slot->eincd;
     slot->ecmp = slot->sl;
@@ -2633,18 +2487,18 @@ scsp_slot_update_keyon (slot_t *slot)
     if (slot->pcm8b)
     {
         slot->buf8 = (s8*)&(scsp.scsp_ram[slot->sa]);
-        
+
         if ((slot->sa + (slot->lea >> SCSP_FREQ_LB)) > SCSP_RAM_MASK)
             slot->lea = (SCSP_RAM_MASK - slot->sa) << SCSP_FREQ_LB;
     }
     else
     {
         slot->buf16 = (s16*)&(scsp.scsp_ram[slot->sa & ~1]);
-        
+
         if ((slot->sa + (slot->lea >> (SCSP_FREQ_LB - 1))) > SCSP_RAM_MASK)
             slot->lea = (SCSP_RAM_MASK - slot->sa) << (SCSP_FREQ_LB - 1);
     }
-    
+
     SCSP_UPDATE_PHASE
 }
 
@@ -2656,7 +2510,7 @@ scsp_slot_update_null (slot_t *slot)
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_ENV
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
     }
@@ -2669,16 +2523,16 @@ static void
 scsp_slot_update_8B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         // env = [0..0x3FF] - slot->tl
         SCSP_GET_OUT_8B
         SCSP_GET_ENV
-        
+
         // don't waste time if no sound...
         SCSP_OUT_8B_L
-        
+
         // calculate new frequency (phase) counter and enveloppe counter
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
@@ -2689,14 +2543,14 @@ static void
 scsp_slot_update_8B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_8B_R
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
     }
@@ -2706,14 +2560,14 @@ static void
 scsp_slot_update_8B_LR(slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_8B_LR
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
     }
@@ -2726,14 +2580,14 @@ static void
 scsp_slot_update_E_8B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_8B_L
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2744,14 +2598,14 @@ static void
 scsp_slot_update_E_8B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_8B_R
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2762,14 +2616,14 @@ static void
 scsp_slot_update_E_8B_LR (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_8B_LR
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2783,14 +2637,14 @@ static void
 scsp_slot_update_F_8B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_8B_L
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2801,14 +2655,14 @@ static void
 scsp_slot_update_F_8B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_8B_R
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2819,14 +2673,14 @@ static void
 scsp_slot_update_F_8B_LR (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_8B_LR
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2840,14 +2694,14 @@ static void
 scsp_slot_update_F_E_8B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_8B_L
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2858,14 +2712,14 @@ static void
 scsp_slot_update_F_E_8B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_8B_R
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2875,14 +2729,14 @@ scsp_slot_update_F_E_8B_R (slot_t *slot)
 static void scsp_slot_update_F_E_8B_LR(slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_8B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_8B_LR
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2896,14 +2750,14 @@ static void
 scsp_slot_update_16B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_16B_L
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
     }
@@ -2913,14 +2767,14 @@ static void
 scsp_slot_update_16B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_16B_R
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
     }
@@ -2930,14 +2784,14 @@ static void
 scsp_slot_update_16B_LR (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_16B_LR
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
     }
@@ -2950,14 +2804,14 @@ static void
 scsp_slot_update_E_16B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_16B_L
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2968,14 +2822,14 @@ static void
 scsp_slot_update_E_16B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_16B_R
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -2986,14 +2840,14 @@ static void
 scsp_slot_update_E_16B_LR (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_16B_LR
-        
+
         SCSP_UPDATE_PHASE
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -3007,14 +2861,14 @@ static void
 scsp_slot_update_F_16B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_16B_L
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -3025,14 +2879,14 @@ static void
 scsp_slot_update_F_16B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_16B_R
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -3043,14 +2897,14 @@ static void
 scsp_slot_update_F_16B_LR (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV
-        
+
         SCSP_OUT_16B_LR
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -3064,14 +2918,14 @@ static void
 scsp_slot_update_F_E_16B_L (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_16B_L
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -3082,14 +2936,14 @@ static void
 scsp_slot_update_F_E_16B_R (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_16B_R
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -3100,14 +2954,14 @@ static void
 scsp_slot_update_F_E_16B_LR (slot_t *slot)
 {
     s32 out;
-    
+
     for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
     {
         SCSP_GET_OUT_16B
         SCSP_GET_ENV_LFO
-        
+
         SCSP_OUT_16B_LR
-        
+
         SCSP_UPDATE_PHASE_LFO
         SCSP_UPDATE_ENV
         SCSP_UPDATE_LFO
@@ -3125,17 +2979,17 @@ scsp_midi_in_send (u8 data)
         scsp_sound_interrupt(0x8);
         scsp_main_interrupt(0x8);
     }
-    
+
     scsp.midflag &= ~SCSP_MIDI_IN_EMP;
-    
+
     if (scsp.midincnt > 3)
     {
         scsp.midflag |= SCSP_MIDI_IN_OVF;
         return;
     }
-    
+
     scsp.midinbuf[scsp.midincnt++] = data;
-    
+
     if (scsp.midincnt > 3) scsp.midflag |= SCSP_MIDI_IN_FUL;
 }
 
@@ -3143,11 +2997,11 @@ void
 scsp_midi_out_send (u8 data)
 {
     scsp.midflag &= ~SCSP_MIDI_OUT_EMP;
-    
+
     if (scsp.midoutcnt > 3) return;
-    
+
     scsp.midoutbuf[scsp.midoutcnt++] = data;
-    
+
     if (scsp.midoutcnt > 3) scsp.midflag |= SCSP_MIDI_OUT_FUL;
 }
 
@@ -3155,9 +3009,9 @@ u8
 scsp_midi_in_read (void)
 {
     u8 data;
-    
+
     scsp.midflag &= ~(SCSP_MIDI_IN_OVF | SCSP_MIDI_IN_FUL);
-    
+
     if (scsp.midincnt > 0)
     {
         if (scsp.midincnt > 1)
@@ -3169,30 +3023,30 @@ scsp_midi_in_read (void)
         {
             scsp.midflag |= SCSP_MIDI_IN_EMP;
         }
-        
+
         data = scsp.midinbuf[0];
-        
+
         switch ((--scsp.midincnt) & 3)
         {
             case 1:
                 scsp.midinbuf[0] = scsp.midinbuf[1];
                 break;
-                
+
             case 2:
                 scsp.midinbuf[0] = scsp.midinbuf[1];
                 scsp.midinbuf[1] = scsp.midinbuf[2];
                 break;
-                
+
             case 3:
                 scsp.midinbuf[0] = scsp.midinbuf[1];
                 scsp.midinbuf[1] = scsp.midinbuf[2];
                 scsp.midinbuf[2] = scsp.midinbuf[3];
                 break;
         }
-        
+
         return data;
     }
-    
+
     return 0xFF;
 }
 
@@ -3200,9 +3054,9 @@ u8
 scsp_midi_out_read (void)
 {
     u8 data;
-    
+
     scsp.midflag &= ~SCSP_MIDI_OUT_FUL;
-    
+
     if (scsp.midoutcnt > 0)
     {
         if (scsp.midoutcnt == 1)
@@ -3211,30 +3065,30 @@ scsp_midi_out_read (void)
             scsp_sound_interrupt(0x200);
             scsp_main_interrupt(0x200);
         }
-        
+
         data = scsp.midoutbuf[0];
-        
+
         switch (--scsp.midoutcnt & 3)
         {
             case 1:
                 scsp.midoutbuf[0] = scsp.midoutbuf[1];
                 break;
-                
+
             case 2:
                 scsp.midoutbuf[0] = scsp.midoutbuf[1];
                 scsp.midoutbuf[1] = scsp.midoutbuf[2];
                 break;
-                
+
             case 3:
                 scsp.midoutbuf[0] = scsp.midoutbuf[1];
                 scsp.midoutbuf[1] = scsp.midoutbuf[2];
                 scsp.midoutbuf[2] = scsp.midoutbuf[3];
                 break;
         }
-        
+
         return data;
     }
-    
+
     return 0xFF;
 }
 
@@ -3247,7 +3101,7 @@ void FASTCALL
 scsp_w_b (u32 a, u8 d)
 {
     a &= 0xFFF;
-    
+
     if (a < 0x400)
     {
         if (use_new_scsp)
@@ -3268,7 +3122,7 @@ scsp_w_b (u32 a, u8 d)
     }
     else if (a < 0x700)
     {
-        
+
     }
     else if (a < 0xee4)
     {
@@ -3276,7 +3130,7 @@ scsp_w_b (u32 a, u8 d)
         scsp_dcr[a ^ 3] = d;
         return;
     }
-    
+
     SCSPLOG("WARNING: scsp w_b to %08lx w/ %02x\n", a, d);
 }
 
@@ -3289,9 +3143,9 @@ scsp_w_w (u32 a, u16 d)
     {
         SCSPLOG ("ERROR: scsp w_w misaligned : %.8X\n", a);
     }
-    
+
     a &= 0xFFE;
-    
+
     if (a < 0x400)
     {
         if (use_new_scsp)
@@ -3312,7 +3166,7 @@ scsp_w_w (u32 a, u16 d)
     }
     else if (a < 0x700)
     {
-        
+
     }
     else if (a >= 0x700 && a < 0x780)
     {
@@ -3336,7 +3190,7 @@ scsp_w_w (u32 a, u16 d)
 #ifdef HAVE_PLAY_JIT
         scsp_dsp_jit_need_recompile();
 #endif
-        
+
         switch (a & 0xf)
         {
             case 0:
@@ -3358,7 +3212,7 @@ scsp_w_w (u32 a, u16 d)
             default:
                 break;
         }
-        
+
         dsp_inf.set_mpro(current_val, address);
     }
     else if (a < 0xee4)
@@ -3367,7 +3221,7 @@ scsp_w_w (u32 a, u16 d)
         *(u16 *)&scsp_dcr[a ^ 2] = d;
         return;
     }
-    
+
     SCSPLOG ("WARNING: scsp w_w to %08lx w/ %04x\n", a, d);
 }
 
@@ -3380,9 +3234,9 @@ scsp_w_d (u32 a, u32 d)
     {
         SCSPLOG ("ERROR: scsp w_d misaligned : %.8X\n", a);
     }
-    
+
     a &= 0xFFC;
-    
+
     if (a < 0x400)
     {
         if (use_new_scsp)
@@ -3410,7 +3264,7 @@ scsp_w_d (u32 a, u32 d)
     }
     else if (a < 0x700)
     {
-        
+
     }
     else if (a < 0xee4)
     {
@@ -3418,7 +3272,7 @@ scsp_w_d (u32 a, u32 d)
         *(u32 *)&scsp_dcr[a] = d;
         return;
     }
-    
+
     SCSPLOG ("WARNING: scsp w_d to %08lx w/ %08lx\n", a, d);
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -3482,7 +3336,7 @@ u8 FASTCALL
 scsp_r_b (u32 a)
 {
     a &= 0xFFF;
-    
+
     if (a < 0x400)
     {
         if (use_new_scsp)
@@ -3496,15 +3350,15 @@ scsp_r_b (u32 a)
     }
     else if (a < 0x700)
     {
-        
+
     }
     else if (a < 0xee4)
     {
-        
+
     }
-    
+
     SCSPLOG("WARNING: scsp r_b to %08lx\n", a);
-    
+
     return 0;
 }
 
@@ -3517,9 +3371,9 @@ scsp_r_w (u32 a)
     {
         SCSPLOG ("ERROR: scsp r_w misaligned : %.8X\n", a);
     }
-    
+
     a &= 0xFFE;
-    
+
     if (a < 0x400)
     {
         if (use_new_scsp)
@@ -3593,11 +3447,11 @@ scsp_r_w (u32 a)
     }
     else if (a < 0xee4)
     {
-        
+
     }
-    
+
     SCSPLOG ("WARNING: scsp r_w to %08lx\n", a);
-    
+
     return 0;
 }
 
@@ -3610,9 +3464,9 @@ scsp_r_d (u32 a)
     {
         SCSPLOG ("ERROR: scsp r_d misaligned : %.8X\n", a);
     }
-    
+
     a &= 0xFFC;
-    
+
     if (a < 0x400)
     {
         if (use_new_scsp)
@@ -3626,16 +3480,86 @@ scsp_r_d (u32 a)
     }
     else if (a < 0x700)
     {
-        
+
     }
     else if (a < 0xee4)
     {
-        
+
     }
-    
+
     SCSPLOG("WARNING: scsp r_d to %08lx\n", a);
-    
+
     return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+u32 FASTCALL
+c68k_byte_read (const u32 adr)
+{
+    if (adr < 0x100000)
+        return T2ReadByte(SoundRam, adr & 0x7FFFF);
+    else
+        return scsp_r_b(adr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL
+c68k_byte_write (const u32 adr, u32 data)
+{
+    if (adr < 0x100000)
+        T2WriteByte(SoundRam, adr & 0x7FFFF, data);
+    else
+        scsp_w_b(adr, data);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+/* exported to m68kd.c */
+u32 FASTCALL
+c68k_word_read (const u32 adr)
+{
+    if (adr < 0x100000)
+        return T2ReadWord(SoundRam, adr & 0x7FFFF);
+    else
+        return scsp_r_w(adr);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void FASTCALL
+c68k_word_write (const u32 adr, u32 data)
+{
+    if (adr < 0x100000)
+        T2WriteWord (SoundRam, adr & 0x7FFFF, data);
+    else
+        scsp_w_w (adr, data);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+static void
+c68k_interrupt_handler (u32 level)
+{
+    // send interrupt to 68k
+    M68K->SetIRQ ((s32)level);
+}
+
+//waveform dram read
+void op3(struct Slot * slot)
+{
+   u32 addr = (slot->state.address_pointer) & 0x7FFFF;
+
+   if (slot->state.attenuation > 0x3bf)
+      return;
+
+   if (!slot->regs.pcm8b)
+      slot->state.wave = c68k_word_read(addr);
+   else
+      slot->state.wave = c68k_byte_read(addr) << 8;
+
+   slot->state.output = slot->state.wave;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3653,13 +3577,13 @@ u8 FASTCALL
 SoundRamReadByte (u32 addr)
 {
     addr &= 0xFFFFF;
-    
+
     // If mem4b is set, mirror ram every 256k
     if (scsp.mem4b == 0)
         addr &= 0x3FFFF;
     else if (addr > 0x7FFFF)
         return 0xFF;
-    
+
     return T2ReadByte (SoundRam, addr);
 }
 
@@ -3669,13 +3593,13 @@ void FASTCALL
 SoundRamWriteByte (u32 addr, u8 val)
 {
     addr &= 0xFFFFF;
-    
+
     // If mem4b is set, mirror ram every 256k
     if (scsp.mem4b == 0)
         addr &= 0x3FFFF;
     else if (addr > 0x7FFFF)
         return;
-    
+
     T2WriteByte (SoundRam, addr, val);
     M68K->WriteNotify (addr, 1);
 }
@@ -3686,12 +3610,12 @@ u16 FASTCALL
 SoundRamReadWord (u32 addr)
 {
     addr &= 0xFFFFF;
-    
+
     if (scsp.mem4b == 0)
         addr &= 0x3FFFF;
     else if (addr > 0x7FFFF)
         return 0xFFFF;
-    
+
     return T2ReadWord (SoundRam, addr);
 }
 
@@ -3701,13 +3625,13 @@ void FASTCALL
 SoundRamWriteWord (u32 addr, u16 val)
 {
     addr &= 0xFFFFF;
-    
+
     // If mem4b is set, mirror ram every 256k
     if (scsp.mem4b == 0)
         addr &= 0x3FFFF;
     else if (addr > 0x7FFFF)
         return;
-    
+
     T2WriteWord (SoundRam, addr, val);
     M68K->WriteNotify (addr, 2);
 }
@@ -3718,13 +3642,13 @@ u32 FASTCALL
 SoundRamReadLong (u32 addr)
 {
     addr &= 0xFFFFF;
-    
+
     // If mem4b is set, mirror ram every 256k
     if (scsp.mem4b == 0)
         addr &= 0x3FFFF;
     else if (addr > 0x7FFFF)
         return 0xFFFFFFFF;
-    
+
     return T2ReadLong (SoundRam, addr);
 }
 
@@ -3734,13 +3658,13 @@ void FASTCALL
 SoundRamWriteLong (u32 addr, u32 val)
 {
     addr &= 0xFFFFF;
-    
+
     // If mem4b is set, mirror ram every 256k
     if (scsp.mem4b == 0)
         addr &= 0x3FFFF;
     else if (addr > 0x7FFFF)
         return;
-    
+
     T2WriteLong (SoundRam, addr, val);
     M68K->WriteNotify (addr, 4);
 }
@@ -3979,21 +3903,21 @@ void
 scsp_update (s32 *bufL, s32 *bufR, u32 len)
 {
     slot_t *slot;
-    
+
     scsp_bufL = bufL;
     scsp_bufR = bufR;
-    
+
     for (slot = &(scsp.slot[0]); slot < &(scsp.slot[32]); slot++)
     {
         if (slot->ecnt >= SCSP_ENV_DE) continue; // enveloppe null...
-        
+
         if (slot->ssctl)
         {
             // Still not correct, but at least this fixes games
             // that rely on Call Address information
             scsp_buf_len = len;
             scsp_buf_pos = 0;
-            
+
             for (; scsp_buf_pos < scsp_buf_len; scsp_buf_pos++)
             {
                 if ((slot->fcnt += slot->finc) > slot->lea)
@@ -4006,66 +3930,66 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
                     }
                 }
             }
-            
+
             continue; // not yet supported!
         }
-        
+
         scsp_buf_len = len;
         scsp_buf_pos = 0;
-        
+
         // take effect sound volume if no direct sound volume...
         if ((slot->disll == 31) && (slot->dislr == 31))
         {
             slot->disll = slot->efsll;
             slot->dislr = slot->efslr;
         }
-        
+
         // SCSPLOG("update : VL=%d  VR=%d CNT=%.8X STEP=%.8X\n", slot->disll, slot->dislr, slot->fcnt, slot->finc);
-        
+
         scsp_slot_update_p[(slot->lfofms == 31) ? 0 : 1]
         [(slot->lfoems == 31) ? 0 : 1]
         [(slot->pcm8b == 0) ? 1 : 0]
         [(slot->disll == 31) ? 0 : 1]
         [(slot->dislr == 31) ? 0 : 1](slot);
     }
-    
+
     if (cdda_out_left > 0)
     {
         if (len > cdda_out_left / 4)
             scsp_buf_len = cdda_out_left / 4;
         else
             scsp_buf_len = len;
-        
+
         scsp_buf_pos = 0;
-        
+
         /* May need to wrap around the buffer, so use nested loops */
         while (scsp_buf_pos < scsp_buf_len)
         {
             s32 temp = cdda_next_in - cdda_out_left;
             s32 outpos = (temp < 0) ? temp + sizeof(cddabuf.data) : temp;
             u8 *buf = &cddabuf.data[outpos];
-            
+
             u32 scsp_buf_target;
             u32 this_len = scsp_buf_len - scsp_buf_pos;
             if (this_len > (sizeof(cddabuf.data) - outpos) / 4)
                 this_len = (sizeof(cddabuf.data) - outpos) / 4;
             scsp_buf_target = scsp_buf_pos + this_len;
-            
+
             for (; scsp_buf_pos < scsp_buf_target; scsp_buf_pos++, buf += 4)
             {
                 s32 out;
-                
+
                 out = (s32)(s16)((buf[1] << 8) | buf[0]);
-                
+
                 if (out)
                     scsp_bufL[scsp_buf_pos] += out;
-                
+
                 out = (s32)(s16)((buf[3] << 8) | buf[2]);
-                
+
                 if (out)
                     scsp_bufR[scsp_buf_pos] += out;
             }
-            
+
             cdda_out_left -= this_len * 4;
         }
     }
@@ -4102,7 +4026,7 @@ void
 scsp_update_timer (u32 len)
 {
     scsp.timacnt += len << (8 - scsp.timasd);
-    
+
     if (scsp.timacnt >= 0xFF00)
     {
         if (!(scsp.scipd & 0x40))
@@ -4111,9 +4035,9 @@ scsp_update_timer (u32 len)
             scsp_main_interrupt(0x40);
         scsp.timacnt -= 0xFF00;
     }
-    
+
     scsp.timbcnt += len << (8 - scsp.timbsd);
-    
+
     if (scsp.timbcnt >= 0xFF00)
     {
         if (!(scsp.scipd & 0x80))
@@ -4122,9 +4046,9 @@ scsp_update_timer (u32 len)
             scsp_main_interrupt(0x80);
         scsp.timbcnt -= 0xFF00;
     }
-    
+
     scsp.timccnt += len << (8 - scsp.timcsd);
-    
+
     if (scsp.timccnt >= 0xFF00)
     {
         if (!(scsp.scipd & 0x100))
@@ -4133,7 +4057,7 @@ scsp_update_timer (u32 len)
             scsp_main_interrupt(0x100);
         scsp.timccnt -= 0xFF00;
     }
-    
+
     // 1F interrupt can't be accurate here...
     if (len)
     {
@@ -4580,6 +4504,83 @@ M68KExec (s32 cycles)
     }
 }
 
+void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r, int mvol, s16 cd_in_l, s16 cd_in_r)
+{
+   int step_num = 0;
+   int i = 0;
+   int mvol_shift = 0;
+
+   //run 32 steps to generate 1 full sample (512 clock cycles at 22579200hz)
+   //7 operations happen simultaneously on different channels due to pipelining
+   for (step_num = 0; step_num < 32; step_num++)
+   {
+      int last_step = (step_num - 6) & 0x1f;
+      int debug_muted = 0;
+
+      op1(&s->slots[step_num]);//phase, pitch lfo
+      op2(&s->slots[(step_num - 1) & 0x1f],s);//address pointer, modulation data read
+      op3(&s->slots[(step_num - 2) & 0x1f]);//waveform dram read
+      op4(&s->slots[(step_num - 3) & 0x1f]);//interpolation, eg, amplitude lfo
+      op5(&s->slots[(step_num - 4) & 0x1f]);//level calc 1
+      op6(&s->slots[(step_num - 5) & 0x1f]);//level calc 2
+      op7(&s->slots[(step_num - 6) & 0x1f],s);//sound stack write
+
+      if (s->debug_mode)
+      {
+         if (scsp_debug_instrument_check_is_muted(s->slots[last_step].regs.sa))
+            debug_muted = 1;
+      }
+
+      if (!debug_muted)
+      {
+         int disdl = get_sdl_shift(s->slots[last_step].regs.disdl);
+
+         s16 disdl_applied = (s->slots[last_step].state.output >> disdl);
+
+         s16 mixs_input = s->slots[last_step].state.output >>
+            get_sdl_shift(s->slots[last_step].regs.imxl);
+
+         int pan_val_l = 0, pan_val_r = 0;
+
+         get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
+
+         *out_l = *out_l + ((disdl_applied >> pan_val_l) >> 2);
+         *out_r = *out_r + ((disdl_applied >> pan_val_r) >> 2);
+
+         dsp_inf.set_mixs(s->slots[last_step].regs.isel, mixs_input);
+      }
+   }
+
+   dsp_inf.set_rbl_rbp(rbl, rbp);
+   dsp_inf.set_exts(cd_in_l, cd_in_r);
+
+   dsp_inf.exec();
+
+   for (i = 0; i < 18; i++)//16,17 are exts0/1
+   {
+      int efsdl = get_sdl_shift(s->slots[i].regs.efsdl);
+      s16 efsdl_applied = 0;
+
+      int pan_val_l = 0, pan_val_r = 0;
+      s16 panned_l = 0, panned_r = 0;
+
+      efsdl_applied = dsp_inf.get_effect_out(i) >> efsdl;
+
+      get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
+
+      panned_l = (efsdl_applied >> pan_val_l) >> 2;
+      panned_r = (efsdl_applied >> pan_val_r) >> 2;
+
+      *out_l = *out_l + panned_l;
+      *out_r = *out_r + panned_r;
+   }
+
+   mvol_shift = 0xf - mvol;
+
+   *out_l = *out_l >> mvol_shift;
+   *out_r = *out_r >> mvol_shift;
+}
+
 void new_scsp_run_sample()
 {
    s32 temp = cdda_next_in - cdda_out_left;
@@ -4713,7 +4714,7 @@ ScspConvert32uto16s (s32 *srcL, s32 *srcR, s16 *dst, u32 len)
 
 void
 ScspReceiveCDDA (const u8 *sector)
-{	
+{
    // If buffer is half empty or less, boost timing for a bit until we've buffered a few sectors
    if (cdda_out_left < (sizeof(cddabuf.data) / 2))
    {
@@ -5813,7 +5814,7 @@ typedef struct
 
 //////////////////////////////////////////////////////////////////////////////
 
-void 
+void
 ScspSlotResetDebug(u8 slotnum)
 {
   memcpy (&debugslot, &scsp.slot[slotnum], sizeof(slot_t));
