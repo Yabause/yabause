@@ -3096,7 +3096,6 @@ scsp_midi_out_read (void)
 ///////////////////////////////////////////////////////////////
 // Access
 
-
 void FASTCALL
 scsp_w_b (u32 a, u8 d)
 {
@@ -3133,6 +3132,16 @@ scsp_w_b (u32 a, u8 d)
 
     SCSPLOG("WARNING: scsp w_b to %08lx w/ %02x\n", a, d);
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+#ifndef scsp_w_b
+void FASTCALL
+ScspWriteByte (u32 addr, u8 val)
+{
+    scsp_w_b(addr, val);
+}
+#endif
 
 ////////////////////////////////////////////////////////////////
 
@@ -3225,6 +3234,16 @@ scsp_w_w (u32 a, u16 d)
     SCSPLOG ("WARNING: scsp w_w to %08lx w/ %04x\n", a, d);
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
+#ifndef scsp_w_w
+void FASTCALL
+ScspWriteWord (u32 addr, u16 val)
+{
+    scsp_w_w(addr, val);
+}
+#endif
+
 ////////////////////////////////////////////////////////////////
 
 void FASTCALL
@@ -3275,33 +3294,7 @@ scsp_w_d (u32 a, u32 d)
 
     SCSPLOG ("WARNING: scsp w_d to %08lx w/ %08lx\n", a, d);
 }
-//////////////////////////////////////////////////////////////////////////////
 
-#ifndef scsp_w_b
-void FASTCALL
-ScspWriteByte (u32 addr, u8 val)
-{
-    scsp_w_b(addr, val);
-}
-#endif
-//////////////////////////////////////////////////////////////////////////////
-
-#ifndef scsp_w_w
-void FASTCALL
-ScspWriteWord (u32 addr, u16 val)
-{
-    scsp_w_w(addr, val);
-}
-#endif
-//////////////////////////////////////////////////////////////////////////////
-
-#ifndef scsp_r_d
-u32 FASTCALL
-ScspReadLong (u32 addr)
-{
-    return scsp_r_d(addr);
-}
-#endif
 //////////////////////////////////////////////////////////////////////////////
 
 #ifndef scsp_w_d
@@ -3309,24 +3302,6 @@ void FASTCALL
 ScspWriteLong (u32 addr, u32 val)
 {
     scsp_w_d(addr, val);
-}
-#endif
-//////////////////////////////////////////////////////////////////////////////
-
-#ifndef scsp_r_b
-u8 FASTCALL
-ScspReadByte (u32 addr)
-{
-    return scsp_r_b(addr);
-}
-#endif
-//////////////////////////////////////////////////////////////////////////////
-
-#ifndef scsp_r_w
-u16 FASTCALL
-ScspReadWord (u32 addr)
-{
-    return scsp_r_w(addr);
 }
 #endif
 
@@ -3361,6 +3336,16 @@ scsp_r_b (u32 a)
 
     return 0;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+#ifndef scsp_r_b
+u8 FASTCALL
+ScspReadByte (u32 addr)
+{
+    return scsp_r_b(addr);
+}
+#endif
 
 ////////////////////////////////////////////////////////////////
 
@@ -3455,6 +3440,16 @@ scsp_r_w (u32 a)
     return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////
+
+#ifndef scsp_r_w
+u16 FASTCALL
+ScspReadWord (u32 addr)
+{
+    return scsp_r_w(addr);
+}
+#endif
+
 ////////////////////////////////////////////////////////////////
 
 u32 FASTCALL
@@ -3491,6 +3486,16 @@ scsp_r_d (u32 a)
 
     return 0;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+#ifndef scsp_r_d
+u32 FASTCALL
+ScspReadLong (u32 addr)
+{
+    return scsp_r_d(addr);
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 
