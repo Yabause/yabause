@@ -3093,6 +3093,405 @@ scsp_midi_out_read (void)
 }
 
 
+////////////////////////////////////////////////////////////////
+// SCSP Access
+
+static void
+scsp_set_b (u32 a, u8 d)
+{
+  if ((a != 0x408) && (a != 0x41D))
+    {
+      SCSPLOG("scsp : reg %.2X = %.2X\n", a & 0x3F, d);
+    }
+
+  scsp_ccr[a ^ 3] = d;
+
+  switch (a & 0x3F)
+    {
+    case 0x00: // MEM4MB/DAC18B
+      scsp.mem4b = (d >> 1) & 0x1;
+      if (scsp.mem4b)
+        {
+          M68K->SetFetch(0x000000, 0x080000, (pointer)SoundRam);
+        }
+      else
+        {
+          M68K->SetFetch(0x000000, 0x040000, (pointer)SoundRam);
+          M68K->SetFetch(0x040000, 0x080000, (pointer)SoundRam);
+          M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
+          M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
+        }
+      return;
+
+    case 0x01: // VER/MVOL
+      scsp.mvol = d & 0xF;
+      return;
+
+    case 0x02: // RBL(high bit)
+      scsp.rbl = (scsp.rbl & 1) + ((d & 1) << 1);
+      return;
+
+    case 0x03: // RBL(low bit)/RBP
+      scsp.rbl = (scsp.rbl & 2) + ((d >> 7) & 1);
+      scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
+      return;
+
+    case 0x07: // MOBUF
+      scsp_midi_out_send(d);
+      return;
+
+    case 0x08: // MSLC
+      scsp.mslc = (d >> 3) & 0x1F;
+      scsp_update_monitor ();
+      return;
+
+    case 0x12: // DMEAL(high byte)
+      scsp.dmea = (scsp.dmea & 0x700FE) + (d << 8);
+      return;
+
+    case 0x13: // DMEAL(low byte)
+      scsp.dmea = (scsp.dmea & 0x7FF00) + (d & 0xFE);
+      return;
+
+    case 0x14: // DMEAH(high byte)
+      scsp.dmea = (scsp.dmea & 0xFFFE) + ((d & 0x70) << 12);
+      scsp.drga = (scsp.drga & 0xFE) + ((d & 0xF) << 8);
+      return;
+
+    case 0x15: // DMEAH(low byte)
+      scsp.drga = (scsp.drga & 0xF00) + (d & 0xFE);
+      return;
+
+    case 0x16: // DGATE/DDIR/DEXE/DTLG(upper 4 bits)
+      scsp.dmlen = (scsp.dmlen & 0xFE) + ((d & 0xF) << 8);
+      if ((scsp.dmfl = d & 0xF0) & 0x10) scsp_dma ();
+      return;
+
+    case 0x17: // DTLG(lower byte)
+      scsp.dmlen = (scsp.dmlen & 0xF00) + (d & 0xFE);
+      return;
+
+    case 0x18: // TACTL
+      scsp.timasd = d & 7;
+      return;
+
+    case 0x19: // TIMA
+      scsp.timacnt = d << 8;
+      return;
+
+    case 0x1A: // TBCTL
+      scsp.timbsd = d & 7;
+      return;
+
+    case 0x1B: // TIMB
+      scsp.timbcnt = d << 8;
+      return;
+
+    case 0x1C: // TCCTL
+      scsp.timcsd = d & 7;
+      return;
+
+    case 0x1D: // TIMC
+      scsp.timccnt = d << 8;
+      return;
+
+    case 0x1E: // SCIEB(high byte)
+    {
+      int i;
+      scsp.scieb = (scsp.scieb & 0xFF) + (d << 8);
+
+      for (i = 0; i < 3; i++)
+        {
+          if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
+            scsp_trigger_sound_interrupt ((1 << (i+8)));
+        }
+
+      return;
+    }
+    case 0x1F: // SCIEB(low byte)
+    {
+      int i;
+      scsp.scieb = (scsp.scieb & 0x700) + d;
+
+      for (i = 0; i < 8; i++)
+        {
+          if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
+            scsp_trigger_sound_interrupt ((1 << i));
+        }
+      return;
+    }
+    case 0x21: // SCIPD(low byte)
+      if (d & 0x20) scsp_sound_interrupt (0x20);
+      return;
+
+    case 0x22: // SCIRE(high byte)
+      scsp.scipd &= ~(d << 8);
+      return;
+
+    case 0x23: // SCIRE(low byte)
+      scsp.scipd &= ~(u32)d;
+      return;
+
+    case 0x25: // SCILV0
+      scsp.scilv0 = d;
+      return;
+
+    case 0x27: // SCILV1
+      scsp.scilv1 = d;
+      return;
+
+    case 0x29: // SCILV2
+      scsp.scilv2 = d;
+      return;
+
+    case 0x2A: // MCIEB(high byte)
+      scsp.mcieb = (scsp.mcieb & 0xFF) + (d << 8);
+      return;
+
+    case 0x2B: // MCIEB(low byte)
+      scsp.mcieb = (scsp.mcieb & 0x700) + d;
+      return;
+
+    case 0x2D: // MCIPD(low byte)
+      if (d & 0x20)
+        scsp_main_interrupt(0x20);
+      return;
+
+    case 0x2E: // MCIRE(high byte)
+      scsp.mcipd &= ~(d << 8);
+      return;
+
+    case 0x2F: // MCIRE(low byte)
+      scsp.mcipd &= ~(u32)d;
+      return;
+    }
+}
+
+static void
+scsp_set_w (u32 a, u16 d)
+{
+  if ((a != 0x418) && (a != 0x41A) && (a != 0x422))
+    {
+      SCSPLOG("scsp : reg %.2X = %.4X\n", a & 0x3E, d);
+    }
+
+  *(u16 *)&scsp_ccr[a ^ 2] = d;
+
+  switch (a & 0x3E)
+    {
+    case 0x00: // MEM4MB/DAC18B/VER/MVOL
+      scsp.mem4b = (d >> 9) & 0x1;
+      scsp.mvol = d & 0xF;
+      if (scsp.mem4b)
+        {
+          M68K->SetFetch(0x000000, 0x080000, (pointer)SoundRam);
+        }
+      else
+        {
+          M68K->SetFetch(0x000000, 0x040000, (pointer)SoundRam);
+          M68K->SetFetch(0x040000, 0x080000, (pointer)SoundRam);
+          M68K->SetFetch(0x080000, 0x0C0000, (pointer)SoundRam);
+          M68K->SetFetch(0x0C0000, 0x100000, (pointer)SoundRam);
+        }
+      return;
+
+    case 0x02: // RBL/RBP
+      scsp.rbl = (d >> 7) & 3;
+      scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
+      return;
+
+    case 0x06: // MOBUF
+      scsp_midi_out_send(d & 0xFF);
+      return;
+
+    case 0x08: // MSLC
+      scsp.mslc = (d >> 11) & 0x1F;
+      scsp_update_monitor();
+      return;
+
+    case 0x12: // DMEAL
+      scsp.dmea = (scsp.dmea & 0x70000) + (d & 0xFFFE);
+      return;
+
+    case 0x14: // DMEAH/DRGA
+      scsp.dmea = (scsp.dmea & 0xFFFE) + ((d & 0x7000) << 4);
+      scsp.drga = d & 0xFFE;
+      return;
+
+    case 0x16: // DGATE/DDIR/DEXE/DTLG
+      scsp.dmlen = d & 0xFFE;
+      if ((scsp.dmfl = ((d >> 8) & 0xF0)) & 0x10) scsp_dma ();
+      return;
+
+    case 0x18: // TACTL/TIMA
+      scsp.timasd = (d >> 8) & 7;
+      scsp.timacnt = (d & 0xFF) << 8;
+      return;
+
+    case 0x1A: // TBCTL/TIMB
+      scsp.timbsd = (d >> 8) & 7;
+      scsp.timbcnt = (d & 0xFF) << 8;
+      return;
+
+    case 0x1C: // TCCTL/TIMC
+      scsp.timcsd = (d >> 8) & 7;
+      scsp.timccnt = (d & 0xFF) << 8;
+      return;
+
+    case 0x1E: // SCIEB
+    {
+      int i;
+      scsp.scieb = d;
+      for (i = 0; i < 11; i++)
+        {
+          if (scsp.scieb & (1 << i) && scsp.scipd & (1 << i))
+            scsp_trigger_sound_interrupt ((1 << i));
+        }
+      return;
+    }
+    case 0x20: // SCIPD
+      if (d & 0x20) scsp_sound_interrupt (0x20);
+      return;
+
+    case 0x22: // SCIRE
+      scsp.scipd &= ~d;
+      return;
+
+    case 0x24: // SCILV0
+      scsp.scilv0 = d;
+      return;
+
+    case 0x26: // SCILV1
+      scsp.scilv1 = d;
+      return;
+
+    case 0x28: // SCILV2
+      scsp.scilv2 = d;
+      return;
+
+    case 0x2A: // MCIEB
+    {
+      int i;
+      scsp.mcieb = d;
+      for (i = 0; i < 11; i++)
+        {
+          if (scsp.mcieb & (1 << i) && scsp.mcipd & (1 << i))
+            scsp_trigger_main_interrupt ((1 << i));
+        }
+      return;
+    }
+
+    case 0x2C: // MCIPD
+      if (d & 0x20) scsp_main_interrupt (0x20);
+      return;
+
+    case 0x2E: // MCIRE
+      scsp.mcipd &= ~d;
+      return;
+    }
+}
+
+static u8
+scsp_get_b (u32 a)
+{
+  a &= 0x3F;
+
+  if ((a != 0x09) && (a != 0x21))
+    {
+      SCSPLOG("r_b scsp : reg %.2X\n", a);
+    }
+//  if (a == 0x09) SCSPLOG("r_b scsp 09 = %.2X\n", ((scsp.slot[scsp.mslc].fcnt >> (SCSP_FREQ_LB + 12)) & 0x1) << 7);
+
+  switch (a)
+    {
+    case 0x01: // VER/MVOL
+      scsp_ccr[a ^ 3] &= 0x0F;
+      break;
+
+    case 0x04: // Midi flags register
+      return scsp.midflag;
+
+    case 0x05: // MIBUF
+      return scsp_midi_in_read();
+
+    case 0x07: // MOBUF
+      return scsp_midi_out_read();
+
+    case 0x08: // CA(highest 3 bits)
+      return (scsp.ca >> 8);
+
+    case 0x09: // CA(lowest bit)/SGC/EG
+      return (scsp.ca & 0xE0) | (scsp.sgc << 5) | scsp.eg;
+
+    case 0x1E: // SCIEB(high byte)
+      return (scsp.scieb >> 8);
+
+    case 0x1F: // SCIEB(low byte)
+      return scsp.scieb;
+
+    case 0x20: // SCIPD(high byte)
+      return (scsp.scipd >> 8);
+
+    case 0x21: // SCIPD(low byte)
+      return scsp.scipd;
+
+    case 0x2C: // MCIPD(high byte)
+      return (scsp.mcipd >> 8);
+
+    case 0x2D: // MCIPD(low byte)
+      return scsp.mcipd;
+    }
+
+  return scsp_ccr[a ^ 3];
+}
+
+static u16
+scsp_get_w (u32 a)
+{
+  a &= 0x3E;
+
+  if ((a != 0x20) && (a != 0x08))
+    {
+      SCSPLOG("r_w scsp : reg %.2X\n", a * 2);
+    }
+
+  switch (a)
+    {
+    case 0x00: // MEM4MB/DAC18B/VER/MVOL
+      *(u16 *)&scsp_ccr[a ^ 2] &= 0xFF0F;
+      break;
+
+    case 0x04: // Midi flags/MIBUF
+      return (scsp.midflag << 8) | scsp_midi_in_read();
+
+    case 0x06: // MOBUF
+      return scsp_midi_out_read();
+
+    case 0x08: // CA/SGC/EG
+      return (scsp.ca & 0x780) | (scsp.sgc << 5) | scsp.eg;
+
+    case 0x18: // TACTL
+      return (scsp.timasd << 8);
+
+    case 0x1A: // TBCTL
+      return (scsp.timbsd << 8);
+
+    case 0x1C: // TCCTL
+      return (scsp.timcsd << 8);
+
+    case 0x1E: // SCIEB
+      return scsp.scieb;
+
+    case 0x20: // SCIPD
+      return scsp.scipd;
+
+    case 0x2C: // MCIPD
+      return scsp.mcipd;
+    }
+
+  return *(u16 *)&scsp_ccr[a ^ 2];
+}
+
 ///////////////////////////////////////////////////////////////
 // Access
 
