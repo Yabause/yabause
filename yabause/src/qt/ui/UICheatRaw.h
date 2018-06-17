@@ -20,6 +20,7 @@
 #define UICHEATRAW_H
 
 #include "ui_UICheatRaw.h"
+#include <QButtonGroup>
 
 class QButtonGroup;
 
