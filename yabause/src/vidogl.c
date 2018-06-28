@@ -5335,7 +5335,6 @@ void VIDOGLVdp2DrawStart(void)
   YglCacheReset(YglTM);
   _Ygl->texture_manager = YglTM;
 
-  YglUpdateVDP1FB();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5346,6 +5345,14 @@ void VIDOGLVdp2DrawEnd(void)
   FrameProfileAdd("Vdp2DrawRotationSync end");
 
   YglTmPush(YglTM);
+
+  if (_Ygl->sync != 0) {
+    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
+    glDeleteSync(_Ygl->sync);
+    _Ygl->sync = 0;
+  }
+
+  YglUpdateVDP1FB();
 
   YglRender();
 
@@ -6935,12 +6942,6 @@ void VIDOGLVdp2DrawScreens(void)
 #if BG_PROFILE
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
 #endif
-
-  if (_Ygl->sync != 0) {
-    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
-    glDeleteSync(_Ygl->sync);
-    _Ygl->sync = 0;
-  }
 
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;

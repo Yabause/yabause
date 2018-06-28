@@ -3306,22 +3306,22 @@ void YglSetClearColor(float r, float g, float b){
 }
 
 void YglUpdateVDP1FB(void) {
-  if (_Ygl->vdp1IsNotEmpty[_Ygl->drawframe] != 0) {
+  if (_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe], 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
     glViewport(0, 0, _Ygl->width, _Ygl->height);
-    if (_Ygl->vdp1fb_buf[_Ygl->drawframe] != NULL) {
+    if (_Ygl->vdp1fb_buf[_Ygl->readframe] != NULL) {
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[_Ygl->drawframe]);
-      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[_Ygl->drawframe]);
+      glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[_Ygl->readframe]);
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[_Ygl->readframe]);
       glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, 0);
       glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-      _Ygl->vdp1fb_buf[_Ygl->drawframe] = NULL;
+      _Ygl->vdp1fb_buf[_Ygl->readframe] = NULL;
     }
-    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->drawframe], (float)_Ygl->rwidth/512.0, (float)_Ygl->rheight/256.0, 0);
+    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], (float)_Ygl->rwidth/512.0, (float)_Ygl->rheight/256.0, 0);
     // clean up
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
