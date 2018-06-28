@@ -3426,6 +3426,136 @@ int YglDrawBackScreen(float w, float h) {
   return 0;
 }
 
+//--------------------------------------------------------------------------------------------------------------
+static int vdp1_prg = -1;
+static GLint vdp1MtxModelView = 0;
+
+static const char vdp1_v[] =
+#if defined(_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+      "layout (location = 0) in vec2 a_position;   \n"
+      "layout (location = 1) in vec2 a_texcoord;   \n"
+      "out  highp vec2 v_texcoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
+      "   v_texcoord  = a_texcoord; \n"
+      "} ";
+
+static const char vdp1_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                            \n"
+"in highp vec2 v_texcoord;                            \n"
+"uniform sampler2D s_texture;                        \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  fragColor = texture( s_texture, v_texcoord);         \n"
+"}                                                   \n";
+
+int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
+  const GLchar * fblit_vdp1_v[] = { vdp1_v, NULL };
+  const GLchar * fblit_vdp1_f[] = { vdp1_f, NULL };
+  if (vdp1_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (vdp1_prg != -1) glDeleteProgram(vdp1_prg);
+    vdp1_prg = glCreateProgram();
+    if (vdp1_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_vdp1_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      vdp1_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_vdp1_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      vdp1_prg = -1;
+      abort();
+    }
+
+    glAttachShader(vdp1_prg, vshader);
+    glAttachShader(vdp1_prg, fshader);
+    glLinkProgram(vdp1_prg);
+    glGetProgramiv(vdp1_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(vdp1_prg);
+      vdp1_prg = -1;
+      abort();
+    }
+
+    glUseProgram(vdp1_prg);
+    glUniform1i(glGetUniformLocation(vdp1_prg, "s_texture"), 0);
+  }
+  else{
+    glUseProgram(vdp1_prg);
+  }
+
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+
+  float const vertexPosition[] = {
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f };
+
+  float const textureCoord[] = {
+    w, h,
+    0.0f, h,
+    w, 0.0f,
+    0.0f, 0.0f
+  };
+  float const textureCoordFlip[] = {
+    w, 0.0f,
+    0.0f, 0.0f,
+    w, h,
+    0.0f, h
+  };
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+  if (flip == 1) glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoordFlip);
+  else glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, srcTexture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+
+  return 0;
+}
+
 //----------------------------------------------------------------------------------------
 static int blit_prg = -1;
 static int blit_mode = -1;

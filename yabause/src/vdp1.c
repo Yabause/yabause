@@ -35,7 +35,6 @@
 #include "sh2core.h"
 
 u8 * Vdp1Ram;
-u8 * Vdp1FrameBuffer[2];
 
 VideoInterface_struct *VIDCore=NULL;
 extern VideoInterface_struct *VIDCoreList[];
@@ -90,36 +89,36 @@ void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) 
 
 u8 FASTCALL Vdp1FrameBufferReadByte(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   if (VIDCore->Vdp1ReadFrameBuffer){
      u8 val;
      VIDCore->Vdp1ReadFrameBuffer(0, addr, &val);
      return val;
    }
-   return T1ReadByte(Vdp1FrameBuffer[Vdp1External.current_frame], addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp1FrameBufferReadWord(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   if (VIDCore->Vdp1ReadFrameBuffer){
      u16 val;
      VIDCore->Vdp1ReadFrameBuffer(1, addr, &val);
      return val;
    } 
-   return T1ReadWord(Vdp1FrameBuffer[Vdp1External.current_frame], addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   if (VIDCore->Vdp1ReadFrameBuffer){
      u32 val;
      VIDCore->Vdp1ReadFrameBuffer(2, addr, &val);
      return val;
    }
-   return T1ReadLong(Vdp1FrameBuffer[Vdp1External.current_frame], addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -132,8 +131,6 @@ void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8* mem, u32 addr, u
       VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
       return;
    }
-
-   T1WriteByte(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -146,8 +143,6 @@ void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8* mem, u32 addr, u
       VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
       return;
    }
-
-   T1WriteWord(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -160,8 +155,6 @@ void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8* mem, u32 addr, u
       VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
       return;
    }
-
-   T1WriteLong(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -174,13 +167,6 @@ int Vdp1Init(void) {
 
    if ((Vdp1Ram = T1MemoryInit(0x80000)) == NULL)
       return -1;
-
-   // Allocate enough memory for two frames
-   if ((Vdp1FrameBuffer[0] = T1MemoryInit(0x40000)) == NULL)
-      return -1;
-
-   if ((Vdp1FrameBuffer[1] = T1MemoryInit(0x40000)) == NULL)
-     return -1;
 
    Vdp1External.disptoggle = 1;
 
@@ -202,13 +188,6 @@ void Vdp1DeInit(void) {
       T1MemoryDeInit(Vdp1Ram);
    Vdp1Ram = NULL;
 
-   if (Vdp1FrameBuffer[0])
-      T1MemoryDeInit(Vdp1FrameBuffer[0]);
-   if (Vdp1FrameBuffer[1])
-     T1MemoryDeInit(Vdp1FrameBuffer[1]);
-
-   Vdp1FrameBuffer[0] = NULL;
-   Vdp1FrameBuffer[1] = NULL;
 }
 
 //////////////////////////////////////////////////////////////////////////////

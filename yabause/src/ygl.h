@@ -373,6 +373,7 @@ typedef struct {
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
 int Ygl_uniformVdp1CommonParam(void * p);
 int Ygl_cleanupVdp1CommonParam(void * p);
+void YglUpdateVDP1FB(void);
 
 // std140
 typedef struct  { 
@@ -534,7 +535,10 @@ typedef struct {
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
    void * pFrameBuffer;
-
+   GLuint vdp1AccessTex[2];
+   GLuint vdp1_pbo[2];
+   GLuint vdp1IsNotEmpty[2];
+   u32* vdp1fb_buf[2];
    GLuint original_fbo;
    GLuint original_fbotex;
    GLuint original_stencil;
@@ -588,7 +592,6 @@ typedef struct {
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;
    int vpd1_running;
-   int cpu_framebuffer_write;
    GLint m_viewport[4];
 
    GLuint cram_tex;
@@ -665,6 +668,7 @@ int YglUserVertexBuffer();
 int YglGetVertexBuffer( int size, void ** vpos, void **tcpos, void **vapos );
 int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos );
 intptr_t YglGetOffset( void* address );
+int YglBlitVDP1(u32 srcTexture, float w, float h, int flip);
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float dispw, float disph);
 int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
 
