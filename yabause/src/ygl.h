@@ -535,6 +535,7 @@ typedef struct {
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
    void * pFrameBuffer;
+   GLuint vdp1AccessFB;
    GLuint vdp1AccessTex[2];
    GLuint vdp1_pbo[2];
    GLuint vdp1IsNotEmpty[2];

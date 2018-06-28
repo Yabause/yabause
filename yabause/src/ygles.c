@@ -792,6 +792,13 @@ int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf 
 u32* getVdp1DrawingFBMem(int id) {
   u32* fbptr = NULL;
   GLuint error;
+
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
+  glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[id], 512.0/(float)_Ygl->rwidth, 256.0/(float)_Ygl->rheight, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[id]);
   fbptr = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 0x40000*2, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
@@ -849,12 +856,10 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
 }
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
-  const int Line = (addr >> 10);
-  const int Pix = ((addr & 0x3FF) >> 1);
-  int read_height = (Vdp1Regs->systemclipY2<_Ygl->rheight)?Vdp1Regs->systemclipY2:_Ygl->rheight;
-
-  if ((_Ygl->vdp1IsNotEmpty[_Ygl->drawframe] != 0) || (Pix > Vdp1Regs->systemclipX2 || Line > read_height)){
-    if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL) _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
+    if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL) {
+      printf("Update pointer\n");
+      _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
+    }
     switch (type)
     {
     case 0:
@@ -869,107 +874,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     default:
       break;
     }
-    return;
-  }
-
-
-  if (_Ygl->smallfbo == 0) {
-    GLuint error;
-    //YabThreadLock( _Ygl->mutex );
-    glGenTextures(1, &_Ygl->smallfbotex);
-    YGLDEBUG("glGenTextures %d\n",_Ygl->smallfbotex );
-    glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    glGetError();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    if ((error = glGetError()) != GL_NO_ERROR) {
-      YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->width, _Ygl->height);
-      //abort();
-    }
-    YGLDEBUG("glTexImage2D %d\n",_Ygl->smallfbotex );
-    glGenFramebuffers(1, &_Ygl->smallfbo);
-    YGLDEBUG("glGenFramebuffers %d\n", _Ygl->smallfbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
-
-    glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
-    if ((error = glGetError()) != GL_NO_ERROR) {
-      YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X", __LINE__, error);
-      abort();
-    }
-    YGLDEBUG("glGenBuffers %d\n",_Ygl->vdp1pixelBufferID);
-    if( _Ygl->vdp1pixelBufferID == 0 ){
-      YGLLOG("Fail to glGenBuffers %X",glGetError());
-      abort();
-    }
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->width*_Ygl->height * 4, NULL, GL_STATIC_READ);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-    //YabThreadUnLock( _Ygl->mutex );
-  }
-
-  while (_Ygl->vpd1_running){ YabThreadYield(); }
-
-  //YabThreadLock(_Ygl->mutex);
-  if (_Ygl->pFrameBuffer == NULL){
-    FrameProfileAdd("ReadFrameBuffer start");
-    FRAMELOG("READ FRAME");
-    if (_Ygl->sync != 0){
-      glWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
-      glDeleteSync( _Ygl->sync );
-      _Ygl->sync = 0;
-    }
-    glViewport(0, 0, _Ygl->width, _Ygl->height);
-    YglBlitFramebuffer(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->smallfbo, (float)_Ygl->width / (float)_Ygl->width, (float)_Ygl->height / (float)_Ygl->height, _Ygl->width, _Ygl->height);
-     
-
-    YGLLOG("VIDOGLVdp1ReadFrameBuffer %d %08X\n", _Ygl->drawframe, addr);
-    FrameProfileAdd("ReadFrameBuffer unlock");
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    glReadPixels(0, _Ygl->height-read_height, _Ygl->width, read_height, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->width *  read_height * 4, GL_MAP_READ_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER,_Ygl->default_fbo);
-
-    if ((_Ygl->pFrameBuffer==NULL) || ((Vdp1Regs->systemclipY2-1-Line) > _Ygl->rheight)){
-      switch (type) {
-      case 1:
-        *(u16*)out = 0x0000;
-        break;
-      case 2:
-        *(u32*)out = 0x00000000;
-        break;
-      }
-      //YabThreadUnLock(_Ygl->mutex);
-      return;
-    }
-    FrameProfileAdd("ReadFrameBuffer end");
-  }
-
-  int index = (Vdp1Regs->systemclipY2-1-Line) *(_Ygl->width * 4) + Pix * 4;
-  switch (type){
-    case 1:{
-      u8 r = *((u8*)(_Ygl->pFrameBuffer) + index);
-      u8 g = *((u8*)(_Ygl->pFrameBuffer) + index + 1);
-      u8 b = *((u8*)(_Ygl->pFrameBuffer) + index + 2);
-      *(u16*)out = ((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F)<<10) | 0x8000;
-    }
-    break;
-    case 2:{
-      u32 r = *((u8*)(_Ygl->pFrameBuffer) + index);
-      u32 g = *((u8*)(_Ygl->pFrameBuffer) + index + 1);
-      u32 b = *((u8*)(_Ygl->pFrameBuffer) + index + 2);
-      u32 r2 = *((u8*)(_Ygl->pFrameBuffer) + index+4);
-      u32 g2 = *((u8*)(_Ygl->pFrameBuffer) + index + 5);
-      u32 b2 = *((u8*)(_Ygl->pFrameBuffer) + index + 6);
-      /*  BBBBBGGGGGRRRRR */
-      *(u32*)out = (((r2 >> 3) & 0x1f) | (((g2 >> 3) & 0x1f) << 5) | (((b2 >> 3) & 0x1F)<<10) | 0x8000) |
-                   ((((r >> 3) & 0x1f) | (((g  >> 3) & 0x1f) << 5) | (((b  >> 3) & 0x1F)<<10) | 0x8000) << 16) ;
-    }
-    break;
-  }
-  //YabThreadUnLock(_Ygl->mutex);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1061,6 +965,8 @@ int YglGenFrameBuffer() {
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+   glGenFramebuffers(1, &_Ygl->vdp1AccessFB);
   }
 
    if(1) //strstr((const char*)glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
