@@ -792,7 +792,7 @@ int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf 
 u32* getVdp1DrawingFBMem(int id) {
   u32* fbptr = NULL;
   GLuint error;
-
+  YglGenFrameBuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
@@ -893,19 +893,21 @@ int YglGenFrameBuffer() {
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   glFinish();
   glGetError();
 
-  if (_Ygl->vdp1FrameBuff[0] == 0) {
-    glGenTextures(2, _Ygl->vdp1FrameBuff);
+  if (_Ygl->vdp1FrameBuff[0] != 0) {
+    glDeleteTextures(2,_Ygl->vdp1FrameBuff);
+    _Ygl->vdp1FrameBuff[0] = 0;
   }
+  glGenTextures(2, _Ygl->vdp1FrameBuff);
   glGetError();
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
   if ((error = glGetError()) != GL_NO_ERROR) {
     YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X %d %d\n", __LINE__, error, GlWidth, GlHeight);
     abort();
   }
-
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   if ((error = glGetError()) != GL_NO_ERROR) {
     YGLDEBUG("Fail to YglGenFrameBuffer at %d %04X %d %d\n", __LINE__, error, GlWidth, GlHeight);
