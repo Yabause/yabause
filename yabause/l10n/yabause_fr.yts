@@ -108,6 +108,7 @@ Cheat Type|Type de Cheat
 Choose a binary or program file|Choisir un fichier binaire ou un programme
 Choose a bios file|Choisir un Fichier Bios
 Choose a cartridge file|Choisir un Fichier Cartouche
+Choose a cartridge folder|Choisir un Dossier Cartouche
 Choose a cdrom drive/mount point|Choisir un Lecteur CD ou un Point de Montage
 Choose a cheat file to open|Choisir un fichier de Cheat à ouvrir
 Choose a cheat file to save to|Choisir un fichier de Cheat à enregistrer vers
@@ -341,6 +342,7 @@ Sound...|Son...
 Sound|Son
 Sound Core|Noyau Son :
 Spanish|Espagnol
+STV Rom game|Rom Jeu STV
 Start|Démarrer
 Start Address:|Adresse de Début :
 Start in Fullscreen|Lancer en Plein Ecran
