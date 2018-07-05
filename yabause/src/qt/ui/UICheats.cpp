@@ -21,6 +21,8 @@
 #include "UICheatRaw.h"
 #include "../CommonDialogs.h"
 
+#include <QButtonGroup>
+
 UICheats::UICheats( QWidget* p )
 	: QDialog( p )
 {
