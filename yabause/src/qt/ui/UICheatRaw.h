@@ -21,7 +21,7 @@
 
 #include "ui_UICheatRaw.h"
 
-class QButtonGroup;
+#include <QButtonGroup>
 
 class UICheatRaw : public QDialog, public Ui::UICheatRaw
 {
