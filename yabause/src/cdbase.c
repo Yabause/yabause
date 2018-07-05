@@ -273,8 +273,6 @@ typedef struct
    int interleaved_sub;
    int isZip;
    char* filename;
-   JZFile *zip;
-   JZEndRecord* endRecord;
    ZipEntry* tr;
 } track_info_struct;
 
@@ -289,6 +287,8 @@ typedef struct
 typedef struct
 {
    int session_num;
+   JZFile *zip;
+   JZEndRecord* endRecord;
    session_info_struct *session;
 } disc_info_struct;
 
@@ -741,10 +741,12 @@ int deflateFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void
 }
 
 static ZipEntry* getZipFileLocalInfo(JZFile *zip, JZEndRecord* endRecord, char* filename, int deflate) {
-   ZipEntry* entry = (ZipEntry*)malloc(sizeof(ZipEntry)); 
-   entry->filename = filename;
+   ZipEntry* entry = (ZipEntry*)malloc(sizeof(ZipEntry));
+   entry->filename = NULL;
    entry->zipBuffer = NULL;
    entry->size = 0;
+   if (filename != NULL) 
+     entry->filename = strdup(filename);
    if (deflate != 0) {
      if(jzReadCentralDirectory(zip, endRecord, deflateFile, entry)) {
       printf("Couldn't read ZIP file central record.\n");
@@ -796,6 +798,8 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
 
    memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
+   disc.zip = zip;
+   disc.endRecord = endRecord;
    disc.session = malloc(sizeof(session_info_struct) * disc.session_num);
    if (disc.session == NULL)
    {
@@ -847,8 +851,6 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
             break;
          index+= pos;
          trk[track_num-1].isZip = 1;
-         trk[track_num-1].zip = zip;
-         trk[track_num-1].endRecord = endRecord;
          trk[track_num-1].filename = trackfp;
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].tr = tracktr;
@@ -1506,7 +1508,6 @@ static int ISOCDInit(const char * iso) {
    int ret;
    FILE *iso_file;
    size_t num_read = 0;
-
    memset(isoTOC, 0xFF, 0xCC * 2);
    memset(&disc, 0, sizeof(disc));
    iso_cd_status = 0;
@@ -1583,6 +1584,22 @@ static void ISOCDDeInit(void) {
          {
             for (j = 0; j < disc.session[i].track_num; j++)
             {
+               if (disc.session[i].track[j].isZip == 1)
+               {
+                 if(disc.session[i].track[j].tr != NULL)
+                 {
+                   if (disc.session[i].track[j].tr->zipBuffer != NULL)
+                     free(disc.session[i].track[j].tr->zipBuffer);
+                   disc.session[i].track[j].tr->zipBuffer = NULL;  
+                   if (disc.session[i].track[j].tr->filename != NULL)
+                     free(disc.session[i].track[j].tr->filename);
+                   disc.session[i].track[j].tr->filename = NULL;
+                   free(disc.session[i].track[j].tr);
+                 }
+                 disc.session[i].track[j].tr = NULL;
+               } 
+
+
                if (disc.session[i].track[j].fp)
                {
                   fclose(disc.session[i].track[j].fp);
@@ -1599,6 +1616,11 @@ static void ISOCDDeInit(void) {
          }
       }
       free(disc.session);
+      if (disc.zip != NULL)
+        disc.zip->close(disc.zip);
+      disc.zip = NULL;
+      if (disc.endRecord != NULL)
+        disc.endRecord = NULL;
    }
 }
 
@@ -1656,9 +1678,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
               currentTrack = track;
               if (currentTrack->isZip == 1) {
                 if (currentTrack->tr == NULL) {
-                  //This should never happen, otherwise we might suffer some delay to deflation during game.
+                  //This should never happen, otherwise we might suffer some delay to deflation during game
                   printf("%s was not defalted!!!\n", currentTrack->filename);
-                  currentTrack->tr = getZipFileLocalInfo(currentTrack->zip, currentTrack->endRecord, currentTrack->filename, 1);
+                  currentTrack->tr = getZipFileLocalInfo(disc.zip, disc.endRecord, currentTrack->filename, 1);
                   if (currentTrack->tr == NULL) {
                     CDLOG("Warning: Track is not found in zip");
                     return 0;
