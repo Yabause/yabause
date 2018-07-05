@@ -653,7 +653,9 @@ int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *u
 
     if (entry->filename == NULL){
       //look for *.cue file
-       char *last = strcasestr(filename, ".cue");
+       char *last = strstr(filename, ".cue");
+       if (last == NULL) last = strstr(filename, ".Cue");
+       if (last == NULL) last = strstr(filename, ".CUE");
        if (last != NULL) {
         if(jzReadLocalFileHeader(zip, header, name, sizeof(name))) {
           printf("Couldn't read local file header!\n");
@@ -693,7 +695,9 @@ int deflateFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void
     }
     if (entry->filename == NULL){
       //look for *.cue file
-       char *last = strcasestr(filename, ".cue");
+       char *last = strstr(filename, ".cue");
+       if (last == NULL) last = strstr(filename, ".Cue");
+       if (last == NULL) last = strstr(filename, ".CUE");
        if (last != NULL) {
         if(jzReadLocalFileHeader(zip, header, name, sizeof(name))) {
           printf("Couldn't read local file header!\n");
@@ -837,7 +841,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
          if (f == NULL) return -1;
          trackfp_size = f->size;
          current_file_id++;
-         trackfp = strndup(temp_buffer,size);
+         trackfp = strdup(temp_buffer);
          tracktr = f;
          continue;
       }
