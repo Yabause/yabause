@@ -37,7 +37,7 @@ static void AllocAmendPrintString(const char *string1, const char *string2)
    if ((string = (char *)malloc(strlen(string1) + strlen(string2) + 2)) == NULL)
       return;
 
-   sprintf(string, "%s%s\n", string1, string2);
+   sprintf(string, "%s%s", string1, string2);
    YuiErrorMsg(string);
 
    free(string);
@@ -56,7 +56,7 @@ void YabSetError(int type, const void *extra)
          AllocAmendPrintString(_("File not found: "), extra);
          break;
       case YAB_ERR_MEMORYALLOC:
-         YuiErrorMsg(_("Error allocating memory\n"));
+         YuiErrorMsg(_("Error allocating memory"));
          break;
       case YAB_ERR_FILEREAD:
          AllocAmendPrintString(_("Error reading file: "), extra);
@@ -101,10 +101,10 @@ void YabSetError(int type, const void *extra)
          YuiErrorMsg(tempstr);
          break;
       case YAB_ERR_SH2READ:
-         YuiErrorMsg(_("SH2 read error\n")); // fix me
+         YuiErrorMsg(_("SH2 read error")); // fix me
          break;
       case YAB_ERR_SH2WRITE:
-         YuiErrorMsg(_("SH2 write error\n")); // fix me
+         YuiErrorMsg(_("SH2 write error")); // fix me
          break;
       case YAB_ERR_SDL:
          AllocAmendPrintString(_("SDL Error: "), extra);

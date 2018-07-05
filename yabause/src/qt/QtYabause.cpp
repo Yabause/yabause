@@ -256,7 +256,7 @@ extern "C"
 
        void YuiErrorMsg(const char *error_text)
        {
-         YuiMsg("\n\nError: %s\n", error_text);
+         YuiMsg("Error: %s\n", error_text);
        }
 	
 	void YuiSwapBuffers()
