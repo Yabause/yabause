@@ -672,7 +672,7 @@ void UIYabause::on_aFileOpenISO_triggered()
 		mIsCdIn = false;
 	}
 	else{
-		const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
+		const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin/zip file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd *.zip)" ) );
 	        if ( !fn.isEmpty() )
 	        {
 		  VolatileSettings* vs = QtYabause::volatileSettings();

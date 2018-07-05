@@ -51,6 +51,13 @@ typedef struct
 		void(*SetStatus)(int status);
 } CDInterface;
 
+typedef struct
+{
+  char* filename;
+  u8* zipBuffer;
+  u32 size;
+} ZipEntry;
+
 extern CDInterface DummyCD;
 
 extern CDInterface ISOCD;

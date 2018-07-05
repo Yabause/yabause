@@ -35,6 +35,8 @@
 #include "cdbase.h"
 #include "error.h"
 #include "debug.h"
+#include "junzip.h"
+#include "zlib/zlib.h"
 
 #ifndef HAVE_STRICMP
 #ifdef HAVE_STRCASECMP
@@ -266,10 +268,14 @@ typedef struct
    u32 file_offset;
    u32 sector_size;
    FILE *fp;
-	FILE *sub_fp;
    int file_size;
    int file_id;
    int interleaved_sub;
+   int isZip;
+   char* filename;
+   JZFile *zip;
+   JZEndRecord* endRecord;
+   ZipEntry* tr;
 } track_info_struct;
 
 typedef struct
@@ -628,6 +634,294 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
 
    fclose(iso_file);
+   return 0;
+}
+
+
+int infoFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *user_data) {
+    long offset;
+    char name[1024];
+    offset = zip->tell(zip); // store current position
+    ZipEntry *entry = (ZipEntry*)user_data;
+
+   if (entry == NULL) exit(-1);
+
+    if(zip->seek(zip, header->offset, SEEK_SET)) {
+        printf("Cannot seek in zip file!\n");
+        return 0; // abort
+    }
+
+    if (entry->filename == NULL){
+      //look for *.cue file
+       char *last = strcasestr(filename, ".cue");
+       if (last != NULL) {
+        if(jzReadLocalFileHeader(zip, header, name, sizeof(name))) {
+          printf("Couldn't read local file header!\n");
+          exit(-1);
+        }
+        entry->zipBuffer = NULL;
+        entry->size = header->uncompressedSize;
+        return 0;
+       }
+    } else {
+      char *last = strrchr(filename, '/');
+      if (last == NULL) last = filename;
+      else last = last+1;
+      char* fileToSearch = entry->filename;
+      if (strcmp(last, fileToSearch) == 0) {
+        //File found
+        entry->zipBuffer = NULL;
+        entry->size = header->uncompressedSize;
+        return 0;
+      }
+    }
+
+    zip->seek(zip, offset, SEEK_SET); // return to position
+
+    return 1; // continue
+}
+
+int deflateFile(JZFile *zip, int idx, JZFileHeader *header, char *filename, void *user_data) {
+    long offset;
+    char name[1024];
+    offset = zip->tell(zip); // store current position
+    ZipEntry *entry = (ZipEntry*)user_data;
+   if (entry == NULL) exit(-1);
+    if(zip->seek(zip, header->offset, SEEK_SET)) {
+        printf("Cannot seek in zip file!\n");
+        return 0; // abort
+    }
+    if (entry->filename == NULL){
+      //look for *.cue file
+       char *last = strcasestr(filename, ".cue");
+       if (last != NULL) {
+        if(jzReadLocalFileHeader(zip, header, name, sizeof(name))) {
+          printf("Couldn't read local file header!\n");
+          exit(-1);
+        }
+        if((entry->zipBuffer = (u8*)malloc(header->uncompressedSize)) == NULL) {
+          printf("Couldn't allocate memory!\n");
+          exit(-1);
+        }
+        if (jzReadData(zip, header, entry->zipBuffer) == Z_OK)
+          entry->size = header->uncompressedSize;
+        else {
+          free (entry->zipBuffer);
+          entry->zipBuffer = NULL;
+          entry->size = 0;
+        }
+        return 0;
+       }
+    } else {
+      char *last = strrchr(filename, '/');
+      if (last == NULL) last = filename;
+      else last = last+1;
+      char* fileToSearch = entry->filename;
+      if (strcmp(last, fileToSearch) == 0) {
+        if(jzReadLocalFileHeader(zip, header, name, sizeof(name))) {
+          printf("Couldn't read local file header!\n");
+          exit(-1);
+        }
+        if((entry->zipBuffer = (u8*)malloc(header->uncompressedSize)) == NULL) {
+          printf("Couldn't allocate memory!\n");
+          exit(-1);
+        }
+        if (jzReadData(zip, header, entry->zipBuffer) == Z_OK)
+          entry->size = header->uncompressedSize;
+        else {
+          free (entry->zipBuffer);
+          entry->zipBuffer = NULL;
+          entry->size = 0;
+        }
+        return 0;
+      }
+    }
+    zip->seek(zip, offset, SEEK_SET); // return to position
+    return 1; // continue
+}
+
+static ZipEntry* getZipFileLocalInfo(JZFile *zip, JZEndRecord* endRecord, char* filename, int deflate) {
+   ZipEntry* entry = (ZipEntry*)malloc(sizeof(ZipEntry)); 
+   entry->filename = filename;
+   entry->zipBuffer = NULL;
+   entry->size = 0;
+   if (deflate != 0) {
+     if(jzReadCentralDirectory(zip, endRecord, deflateFile, entry)) {
+      printf("Couldn't read ZIP file central record.\n");
+      return NULL;
+     }
+  } else {
+     if(jzReadCentralDirectory(zip, endRecord, infoFile, entry)) {
+      printf("Couldn't read ZIP file central record.\n");
+      return NULL;
+     }
+  }
+  return entry;
+}
+
+
+static int LoadBinCueInZip(const char *filename, FILE *fp)
+{
+   long size;
+   char* temp_buffer;
+   unsigned int track_num;
+   unsigned int indexnum, min, sec, frame;
+   unsigned int pregap=0;
+   track_info_struct trk[100];
+   int i;
+   int matched = 0;
+   char *trackfp = NULL;
+   int trackfp_size = 0;
+   int fad = 0;
+   int pos;
+  
+   JZEndRecord* endRecord = (JZEndRecord*)malloc(sizeof(JZEndRecord));
+   JZFileHeader header;
+   u8* data;
+   ZipEntry* tracktr;
+   JZFile *zip;
+   FILE *iso_file;
+   ZipEntry *cue;
+
+
+  zip = jzfile_from_stdio_file(fp);
+
+  if(jzReadEndRecord(zip, endRecord)) {
+    printf("Couldn't read ZIP file end record.\n");
+    return -1;
+  }
+
+  cue = getZipFileLocalInfo(zip, endRecord, NULL, 1);
+  if (cue == NULL) return -1;
+
+   memset(trk, 0, sizeof(trk));
+   disc.session_num = 1;
+   disc.session = malloc(sizeof(session_info_struct) * disc.session_num);
+   if (disc.session == NULL)
+   {
+      YabSetError(YAB_ERR_MEMORYALLOC, NULL);
+      return -1;
+   }
+
+   size = cue->size;
+
+   if(size == 0)
+   {
+      YabSetError(YAB_ERR_FILEREAD, filename);
+      return -1;
+   }
+
+   data = cue->zipBuffer;
+   // Allocate buffer with enough space for reading cue
+   if ((temp_buffer = (char *)calloc(size, 1)) == NULL)
+      return -1;
+   // Time to generate TOC
+   int index = 0;
+   for (;;)
+   {
+      // Retrieve a line in cue
+      if (sscanf(&data[index], "%s%n", temp_buffer, &pos) == EOF)
+         break;
+      index+= pos;
+
+      if (strncmp(temp_buffer, "FILE", 4) == 0)
+      {
+         ZipEntry *f;
+         matched = sscanf(&data[index], " \"%[^\"]\"%n", temp_buffer, &pos);
+         index+= pos;
+         f = getZipFileLocalInfo(zip, endRecord, temp_buffer, 1);
+         if (f == NULL) return -1;
+         trackfp_size = f->size;
+         current_file_id++;
+         trackfp = strndup(temp_buffer,size);
+         tracktr = f;
+         continue;
+      }
+
+
+      // Figure out what it is
+      if (strncmp(temp_buffer, "TRACK", 5) == 0)
+      {
+         // Handle accordingly
+         if (sscanf(&data[index], "%d %[^\r\n]\r\n%n", &track_num, temp_buffer, &pos) == EOF)
+            break;
+         index+= pos;
+         trk[track_num-1].isZip = 1;
+         trk[track_num-1].zip = zip;
+         trk[track_num-1].endRecord = endRecord;
+         trk[track_num-1].filename = trackfp;
+         trk[track_num-1].file_size = trackfp_size;
+         trk[track_num-1].tr = tracktr;
+         trk[track_num-1].file_id = current_file_id;
+         if (track_num > 1) {
+           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+         }
+
+         if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
+            strncmp(temp_buffer, "MODE2", 5) == 0)
+         {
+            // Figure out the track sector size
+            trk[track_num-1].sector_size = atoi(temp_buffer + 6);
+            trk[track_num-1].ctl_addr = 0x41;
+         }
+         else if (strncmp(temp_buffer, "AUDIO", 5) == 0)
+         {
+            // Update toc entry
+            trk[track_num-1].sector_size = 2352;
+            trk[track_num-1].ctl_addr = 0x01;
+         }
+      }
+      else if (strncmp(temp_buffer, "INDEX", 5) == 0)
+      {
+         // Handle accordingly
+
+         if (sscanf(&data[index], "%d %d:%d:%d\r\n%n", &indexnum, &min, &sec, &frame,&pos) == EOF)
+            break;
+         index+= pos;
+         if (indexnum == 1)
+         {
+            // Update toc entry
+            fad += MSF_TO_FAD(min, sec, frame) + pregap + 150;
+            trk[track_num-1].fad_start = fad;
+            trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
+         }
+      }
+      else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
+      {
+         if (sscanf(&data[index], "%d:%d:%d\r\n%n", &min, &sec, &frame, &pos) == EOF)
+            break;
+         index+= pos;
+         pregap += MSF_TO_FAD(min, sec, frame);
+      }
+      else if (strncmp(temp_buffer, "POSTGAP", 7) == 0)
+      {
+         if (sscanf(&data[index], "%d:%d:%d\r\n%n", &min, &sec, &frame, &pos) == EOF)
+            break;
+         index+= pos;
+      }
+   }
+
+   trk[track_num].file_offset = 0;
+   trk[track_num].fad_start = 0xFFFFFFFF;
+
+   trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
+
+   //for (int i =0; i<track_num; i++) printf("Track %d [%d - %d]\n", i+1, trk[i].fad_start, trk[i].fad_end);
+
+   disc.session[0].fad_start = 150;
+   disc.session[0].fad_end = trk[track_num-1].fad_end;
+   disc.session[0].track_num = track_num;
+   disc.session[0].track = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
+   if (disc.session[0].track == NULL)
+   {
+      YabSetError(YAB_ERR_MEMORYALLOC, NULL);
+      free(disc.session);
+      disc.session = NULL;
+      return -1;
+   }
+
+   memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
    return 0;
 }
 
@@ -1226,7 +1520,6 @@ static int ISOCDInit(const char * iso) {
       return -1;
    }
 
-   num_read = fread((void *)header, 1, 6, iso_file);
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
@@ -1236,18 +1529,27 @@ static int ISOCDInit(const char * iso) {
       imgtype = IMG_BINCUE;
       ret = LoadBinCue(iso, iso_file);
    }
-   else if (stricmp(ext, ".MDS") == 0 && strncmp(header, "MEDIA ", sizeof(header)) == 0)
+   else if (stricmp(ext, ".ZIP") == 0)
    {
-      // It's a MDS
-      imgtype = IMG_MDS;
-      ret = LoadMDS(iso, iso_file);
+      // It's a BIN/CUE
+      imgtype = IMG_BINCUE;
+      ret = LoadBinCueInZip(iso, iso_file);
    }
-	else if (stricmp(ext, ".CCD") == 0)
-	{
-		// It's a CCD
-		imgtype = IMG_CCD;
-		ret = LoadCCD(iso, iso_file);
-	}
+   else if (stricmp(ext, ".MDS") == 0) {
+     num_read = fread((void *)header, 1, 6, iso_file);
+     if (strncmp(header, "MEDIA ", sizeof(header)) == 0)
+     {
+        // It's a MDS
+        imgtype = IMG_MDS;
+        ret = LoadMDS(iso, iso_file);
+     }
+   }
+   else if (stricmp(ext, ".CCD") == 0)
+   {
+	// It's a CCD
+	imgtype = IMG_CCD;
+	ret = LoadCCD(iso, iso_file);
+   }
    else
    {
       // Assume it's an ISO file
@@ -1329,10 +1631,14 @@ static s32 ISOCDReadTOC(u32 * TOC) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+track_info_struct *currentTrack = NULL;
+
 static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    int i,j;
    size_t num_read = 0;
    track_info_struct *track=NULL;
+   ZipEntry *tr;
+   u8* zipBuffer;
 
    assert(disc.session);
 
@@ -1346,6 +1652,21 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
              FAD <= disc.session[i].track[j].fad_end)
          {             
             track = &disc.session[i].track[j];
+            if ((currentTrack != track) || (currentTrack == NULL)){
+              currentTrack = track;
+              if (currentTrack->isZip == 1) {
+                if (currentTrack->tr == NULL) {
+                  //This should never happen, otherwise we might suffer some delay to deflation during game.
+                  printf("%s was not defalted!!!\n", currentTrack->filename);
+                  currentTrack->tr = getZipFileLocalInfo(currentTrack->zip, currentTrack->endRecord, currentTrack->filename, 1);
+                  if (currentTrack->tr == NULL) {
+                    CDLOG("Warning: Track is not found in zip");
+                    return 0;
+                  }
+                }
+              }
+            }
+            tr = currentTrack->tr;
             break;
          }
       }
@@ -1356,22 +1677,23 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
       CDLOG("Warning: Sector not found in track list");
       return 0;
    }
+   if (track->isZip != 1) {
+     fseek(track->fp, track->file_offset + (FAD-track->fad_start) * track->sector_size, SEEK_SET);
+   } else {
+     zipBuffer = &tr->zipBuffer[track->file_offset + (FAD-track->fad_start) * track->sector_size];
+   }
 
-   fseek(track->fp, track->file_offset + (FAD-track->fad_start) * track->sector_size, SEEK_SET);
-	if (track->sub_fp)
-		fseek(track->sub_fp, track->file_offset + (FAD-track->fad_start) * 96, SEEK_SET);
    if (track->sector_size == 2448)
    {
       if (!track->interleaved_sub)
-		{
-			if (track->sub_fp)
-			{
-            num_read = fread(buffer, 2352, 1, track->fp);
-            num_read = fread((char *)buffer + 2352, 96, 1, track->sub_fp);
-			}
-			else
-            num_read = fread(buffer, 2448, 1, track->fp);
-		}
+      {
+         if (track->isZip != 1) {
+           num_read = fread(buffer, 2448, 1, track->fp);
+         } else {
+           memcpy(buffer, zipBuffer, 2448);
+           zipBuffer+=2448;
+         }
+      }
       else
       {
          const u16 deint_offsets[] = {
@@ -1385,27 +1707,45 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
             180, 205, 230, 255, 88, 113, 97, 163, 188, 213, 238, 147
          };
          u8 subcode_buffer[96 * 3];
+         if (track->isZip != 1) {
+           num_read = fread(buffer, 2352, 1, track->fp);
 
-         num_read = fread(buffer, 2352, 1, track->fp);
-
-         num_read = fread(subcode_buffer, 96, 1, track->fp);
-         fseek(track->fp, 2352, SEEK_CUR);
-         num_read = fread(subcode_buffer + 96, 96, 1, track->fp);
-         fseek(track->fp, 2352, SEEK_CUR);
-         num_read = fread(subcode_buffer + 192, 96, 1, track->fp);
-         for (i = 0; i < 96; i++)
-            ((u8 *)buffer)[2352+i] = subcode_buffer[deint_offsets[i]];
+           num_read = fread(subcode_buffer, 96, 1, track->fp);
+           fseek(track->fp, 2352, SEEK_CUR);
+           num_read = fread(subcode_buffer + 96, 96, 1, track->fp);
+           fseek(track->fp, 2352, SEEK_CUR);
+           num_read = fread(subcode_buffer + 192, 96, 1, track->fp);
+         } else {
+           memcpy(buffer, zipBuffer, 2352);
+           zipBuffer+=2352;
+           memcpy(&subcode_buffer[0], zipBuffer, 96);
+           memcpy(&subcode_buffer[96], zipBuffer, 96);
+           memcpy(&subcode_buffer[192], zipBuffer, 96);
+           zipBuffer+=96;
+         }
+           for (i = 0; i < 96; i++)
+              ((u8 *)buffer)[2352+i] = subcode_buffer[deint_offsets[i]];
       }
    }
    else if (track->sector_size == 2352)
    {
-      // Generate subcodes here
-      num_read = fread(buffer, 2352, 1, track->fp);
+      if (track->isZip != 1) {
+        // Generate subcodes here
+        num_read = fread(buffer, 2352, 1, track->fp);
+      } else {
+        memcpy(buffer, zipBuffer, 2352);
+        zipBuffer+=2352;
+      }
    }
    else if (track->sector_size == 2048)
    {
       memcpy(buffer, syncHdr, 12);
-      num_read = fread((char *)buffer + 0x10, 2048, 1, track->fp);
+      if (track->isZip != 1) {
+        num_read = fread((char *)buffer + 0x10, 2048, 1, track->fp);
+      } else {
+        memcpy((char *)buffer + 0x10, zipBuffer, 2048);
+        zipBuffer+=2048;
+      }
    }
 	return 1;
 }
