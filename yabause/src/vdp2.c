@@ -182,17 +182,17 @@ void FASTCALL Vdp2ColorRamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 v
 
 void FASTCALL Vdp2ColorRamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0xFFF;
-   //LOG("[VDP2] Update Coloram Word %08X:%04X", addr, val);
+   //LOG("[VDP2] Update Coloram Word %08X:%04X\n", addr, val);
    if (Vdp2Internal.ColorMode == 0 ) {
+     int up = ((addr & 0x800) != 0);
      if (val != T2ReadWord(mem, addr)) {
        T2WriteWord(mem, addr, val);
        YglOnUpdateColorRamWord(addr);
      }
-
-     if (addr < 0x800) {
-       if (val != T2ReadWord(mem, addr + 0x800)) {
-         T2WriteWord(mem, addr + 0x800, val);
-         YglOnUpdateColorRamWord(addr + 0x800);
+     if (up) {
+       if (val != T2ReadWord(mem, (addr & 0x7FF) + 0x800)) {
+         T2WriteWord(mem, (addr & 0x7FF) + 0x800, val);
+         YglOnUpdateColorRamWord((addr & 0x7FF) + 0x800);
        }
      }
    }
@@ -208,29 +208,18 @@ void FASTCALL Vdp2ColorRamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 
 
 void FASTCALL Vdp2ColorRamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0xFFF;
-   //LOG("[VDP2] Update Coloram Long %08X:%08X", addr, val);
+   //LOG("[VDP2] Update Coloram Long %08X:%08X\n", addr, val);
    if (Vdp2Internal.ColorMode == 0) {
 
-     const u32 base_addr = addr;
-     T2WriteLong(mem, base_addr, val);
-     if (Vdp2Internal.ColorMode == 2) {
-       YglOnUpdateColorRamWord(base_addr);
-     }
-     else {
-       YglOnUpdateColorRamWord(base_addr + 2);
-       YglOnUpdateColorRamWord(base_addr);
-     }
+     int up = ((addr & 0x800) != 0);
+     T2WriteLong(mem, addr, val);
+     YglOnUpdateColorRamWord(addr + 2);
+     YglOnUpdateColorRamWord(addr);
 
-     if (addr < 0x800) {
-       const u32 mirror_addr = base_addr + 0x800;
-       T2WriteLong(mem, mirror_addr, val);
-       if (Vdp2Internal.ColorMode == 2) {
-         YglOnUpdateColorRamWord(mirror_addr);
-       }
-       else {
-         YglOnUpdateColorRamWord(mirror_addr + 2);
-         YglOnUpdateColorRamWord(mirror_addr);
-       }
+     if (up) {
+       T2WriteLong(mem, (addr & 0x7FF) + 0x800, val);
+       YglOnUpdateColorRamWord((addr & 0x7FF) + 0x800 + 2);
+       YglOnUpdateColorRamWord((addr & 0x7FF) + 0x800);
      }
 
    }
