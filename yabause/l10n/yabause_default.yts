@@ -1,0 +1,412 @@
+%1 Images (*.%2)|
+%1/%2 blocks free|
+3D Control Pad Configuration|
+&About...|
+&Action Replay|
+&Backup Manager...|
+&Browse|
+&Cancel|
+&Capture Screen|
+&Cheat List|
+&Cheats|
+&Cheats List...|
+&Clear|
+&Close|
+&Debug|
+&Delete|
+&Emulation|
+&File|
+&Frame Skip/Limiter|
+&Fullscreen|
+&Help|
+&Layer|
+&Load From File|
+&Log|
+&Master SH2|
+&Memory Transfer|
+&OK|
+&Pause|
+&Quit|
+&Raw Memory Address|
+&Reset|
+&Save To File|
+&Settings...|
+&Slave SH2|
+&Tools|
+&Transfer|
+&View|
+16-bit|
+16-bit Relative value(s)|
+16 Mbit Backup Ram|
+16 Mbit ROM|
+32-bit|
+32 Mbit Backup Ram|
+32 Mbit Dram|
+3D Control Pad|
+4 Mbit Backup Ram|
+503/512 blocks free|
+510/512 blocks free|
+68000 Core|
+8 Mbit Backup Ram|
+8 Mbit Dram|
+8-bit|
+8-bit Relative value(s)|
+<font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|
+About...|
+Action Replay Code :|
+Add|
+Add Action Replay Code|
+Add Cheat|
+Add Codes...|
+Add Raw Memory Code|
+Address|
+Address :|
+Advanced|
+All Files;|
+All Files (*)|
+Always|
+An error occured while writing file.|
+Are you sure you want to delete '%1' ?|
+Are you sure you want to format '%1' ?|
+Asia (NTSC)|
+Asia (PAL)|
+Assembly code|
+Auto-detect|
+Awaiting input for|
+Autostart|
+Axis|
+Axis Throttle|
+Axis X|
+Axis Y|
+Axis L Trigger|
+Axis R Trigger|
+Backup Ram Manager|
+Bilinear|
+Bilinear Filtering (Restart required)|
+Binary Files (*.bin)|
+Binary Files (*.bin)|
+Bios|
+Block Size :|
+Bug report|
+Byte|
+Byte Write|
+Byte Write : %1 %2|
+Cancel|
+Cannot initialize Windows SPTI Driver|
+Can't plug in the new controller, cancelling.|
+Can't initialize Yabause|
+Cart/Memory|
+Cartridge|
+CD Images (*.iso *.cue *.bin *.mds *.ccd)|
+Cd-Rom|
+Central/South America (NTSC)|
+Central/South America (PAL)|
+Cheats File|
+Cheat &Search...|
+Cheat Search|
+Cheat Type|
+Choose a binary or program file|
+Choose a bios file|
+Choose a cartridge file|
+Choose a cartridge folder|
+Choose a cdrom drive/mount point|
+Choose a cheat file to open|
+Choose a cheat file to save to|
+Choose a file to save your state|
+Choose a folder to store save states|
+Choose a location for binary file|
+Choose a location for your binary file|
+Choose a location for your bitmap|
+Choose a location for your screenshot|
+Choose a location for your wav file|
+Choose a memory file|
+Choose a mpeg rom|
+Clear|
+Clear configuration|
+Close|
+Code Breakpoints|
+COFF Program Files (*.cof *.coff)|
+Comment :|
+Common Control Registers|
+Compatibility List|
+Compare Type|
+Couldn't save state file|
+Couldn't load state file|
+CPU Tesselation|
+Data Size|
+Data Size :|
+Data Type|
+Debug CPU|
+Debug M68K|
+Debug Master SH2|
+Debug SCSP|
+Debug SCU DSP|
+Debug Slave SH2|
+Debug VDP1|
+Debug VDP2Viewer|
+Default Dial IP|
+Del|
+Delete|
+Description|
+Device List|
+DirectX Input Interface|
+DirectX Sound Interface|
+Disassembled Code|
+Display on Hover|
+Down|
+Download|
+DSP Control Registers|
+DSP Registers|
+Dummy 68k Interface|
+Dummy CD Drive|
+Dummy Input Interface|
+Dummy OSD Interface|
+Dummy Sound Interface|
+Dummy Video Interface|
+Edit configuration|
+Eject/Load ISO...|
+ELF Program Files (*elf)|
+End Address:|
+English|
+Embellishment filter :|
+Enable|
+Enable Bios Emulation|
+Enable Code : %1 %2|
+Enable Frame Skip/Limiter|
+Enable Multithreading|
+Enabled|
+Enter new assembly code|
+Enter New Value|
+Error|
+Extend Internal backup memory to 8MB|
+Europe + others (PAL)|
+Exact|
+File:|
+File Name :|
+Finished searching up to end of memory, continue from the beginning?|
+French|
+From File...|
+General|
+General Info|
+German|
+Goto Address|
+GPU Tesselation|
+Greater then|
+Gun|
+Gun Configuration|
+Gun/Mouse Sensitivity|
+Hex value(s)|
+Hide Menubar|
+Hide Toolbar|
+Information...|
+Inline Assembly|
+Input|
+Internal Backup RAM|
+Invalid Address|
+Invalid Start/End Address Combination|
+Invalid Value|
+ISO-File Virtual Drive|
+Italian|
+Japan (NTSC)|
+Japanese|
+Japanese Modem|
+Korea (NTSC)|
+Language :|
+L&oad State|
+Left|
+Left Stick Axis X|
+Left Stick Axis Y|
+Left Stick Axis Throttle|
+Left trigger|
+Less than|
+Log|
+Long|
+Long Write|
+Long Write : %1 %2|
+Loop Track Clear|
+Loop Track Start|
+Loop Track Stop|
+Memory|
+Memory Breakpoints|
+Memory Editor|
+Memory &Editor|
+Memory Search|
+Memory Transfer
+Middle|
+Mpeg ROM|
+Mouse|
+Mouse Configuration|
+Musashi Interface|
+nanovg OSD Interface|
+Native (native resolution of Window)|
+NBG0|
+NBG0/RBG1 Info|
+NBG1|
+NBG1 Info|
+NBG2|
+NBG2 Info|
+NBG3|
+NBG3 Info|
+Netlink|
+Never|
+&No|
+No matches found.|
+None|
+None|
+Normal format not available, trying alternative|
+North America (NTSC)|
+Number of Threads|
+On fullscreen|
+On message|
+Open &CD Rom...|
+Open &ISO...|
+Open CD Rom|
+Open SSF|
+Open&Tray|
+OpenGL size :|
+OpenGL Video Interface|
+Options|
+Original (original resolution of the Saturn)|
+Original aspect ratio|
+OSD Core|
+Pad|
+Pad Configuration|
+Play Slot|
+Port|
+Press Esc key to cancel|
+Qt Keyboard Input Interface|
+&Question...|
+RBG0|
+RBG0 Info|
+Read|
+Region|
+Remove Peripheral|
+Restart|
+Right|
+Right Stick Axis X|
+Right Stick Axis Y|
+Right Stick Axis Throttle|
+Right trigger|
+R&un|
+Save As Bitmap|
+Save As WAV|
+Save Bitmap|
+Save Information|
+Save List|
+Save MD0|
+Save MD1|
+Save MD2|
+Save MD3|
+Save Selected|
+Save Program|
+S&ave State|
+Save States|
+Save Slot Registers|
+Save Tab|
+Screen Enabled|
+Screen Select:|
+Sc&reenshot|
+Scanline filter|
+Scanline off|
+Scanline on|
+SCSP|
+SCSP Channels|
+SDL Joystick Interface|
+SDL Sound Interface|
+Search|
+Search/Add Cheats|
+Search Criteria|
+Search Memory|
+Search Value:|
+Sega Saturn Sound Format files (*.ssf *.minissf)|
+Select a file to load your state|
+Select your iso/cue/bin/zip file|
+Select your ssf file|
+Set PC to Start Address|
+Settings|
+SH2 Debugger Interpreter|
+SH2 Interpreter|
+SH2 Registers|
+Shortcuts|
+Show FPS|
+Show Log Window|
+Signed|
+Signed 8-bit value|
+Signed 16-bit value|
+Signed 32-bit value|
+Slot Info|
+Slot Number:|
+Software OSD Interface|
+Software Video Interface|
+Sound...|
+Sound|
+Sound Core|
+Spanish|
+STV Rom game|
+Start|
+Start Address:|
+Start in Fullscreen|
+Status|
+Step Into|
+Step Out|
+Step Over|
+Stop|
+Stretch to window|
+Synchronize Saturn internal clock with set time|
+Tesselation|
+Text|
+Texture|
+The dummies cores don't need configuration|
+To File...|
+toolBar|
+Trace Logging|
+Translation|
+Triangles using perspective correction|
+Trigger|
+TV effect :|
+Type:|
+Unable to add code|
+Unable to change description|
+Unsigned|
+Unsigned 8-bit value|
+Unsigned 16-bit value|
+Unsigned 32-bit value|
+Up|
+Upload|
+Unable to add code|
+Unable to open file for loading|
+Unable to open file for saving|
+Unable to remove code|
+Unknown (%1)|
+Upscale Filter :|
+Use new scsp|
+Use Vdp1 Cache|
+Value|
+Value:|
+Value :|
+VDP1|
+VDP1 Command Info|
+VDP1 Command List|
+VDP2|
+VDP2Viewer Viewer|
+Video|
+Video Core|
+Video Driver|
+Video Format|
+View|
+Viewer|
+WAV Files (*.wav)|
+Wheel|
+Wheel Configuration|
+Window Resolution|
+Windows SPTI Driver|
+Word|
+Word Write|
+Word Write : %1 %2|
+Write|
+Kronos Cheat Files (*.yct);;All Files (*)|
+Kronos Qt GUI|
+Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|
+Kronos Save State (*.yss)|
+Kronos is not initialized, can't manage backup ram.|
+Yes|
