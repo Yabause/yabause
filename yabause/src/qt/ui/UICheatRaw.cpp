@@ -20,8 +20,6 @@
 #include "UIHexInput.h"
 #include "../QtYabause.h"
 
-#include <QButtonGroup>
-
 UICheatRaw::UICheatRaw( QWidget* p )
 	: QDialog( p )
 {
