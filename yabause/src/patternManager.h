@@ -5,13 +5,16 @@
 #include "vdp1.h"
 #include "vdp2.h"
 
+#define SAMPLE 24
+#define PIX_SIZE (SAMPLE+16)
+
 typedef struct sPattern {
 	u32 *pix;
 	int width;
 	int height;
         int offset;
 	int managed;
-        u8 pixSample[36];
+        u8 pixSample[PIX_SIZE];
 } Pattern;
 
 Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram, Vdp2 * regs);
