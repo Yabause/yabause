@@ -172,7 +172,7 @@ GtkWidget * yui_vdp1_new(YuiWindow * y) {
 
 void yui_vdp1_fill(YuiVdp1 * vdp1) {
 	gint j;
-	gchar * string;
+	gchar string[256];
 	gchar nameTemp[1024];
 	GtkTreeIter iter;
 
@@ -180,8 +180,8 @@ void yui_vdp1_fill(YuiVdp1 * vdp1) {
 
 	j = 0;
 
-	string = Vdp1DebugGetCommandNumberName(j);
-	while(string && (j < MAX_VDP1_COMMAND)) {
+	Vdp1DebugGetCommandNumberName(j, string);
+	while((string[0] != '\0') && (j < MAX_VDP1_COMMAND)) {
 		gtk_list_store_append(vdp1->store, &iter);
 		gtk_list_store_set(vdp1->store, &iter, 0, string, -1);
 
@@ -215,7 +215,7 @@ void yui_vdp1_fill(YuiVdp1 * vdp1) {
 		}
 
 		j++;
-		string = Vdp1DebugGetCommandNumberName(j);
+		Vdp1DebugGetCommandNumberName(j, string);
 	}
 
 	Vdp1DebugCommand(vdp1->cursor, nameTemp);
@@ -254,7 +254,12 @@ static void yui_vdp1_view_cursor_changed(GtkWidget * view, YuiVdp1 * vdp1) {
 
 void yui_vdp1_update(YuiVdp1 * vdp1) {
 	gint i;
-	for(i = 0 ; i < MAX_VDP1_COMMAND ; i++ ) if ( !Vdp1DebugGetCommandNumberName(i)) break;
+	gchar string[256];
+
+	for(i = 0 ; i < MAX_VDP1_COMMAND ; i++ ) {
+		Vdp1DebugGetCommandNumberName(i, string);
+		if ( string[0] == '\0') break;
+	}
 	vdp1->cursor = 0;
 	yui_vdp1_fill(vdp1);
 }
