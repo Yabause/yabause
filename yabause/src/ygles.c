@@ -857,7 +857,6 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL) {
-      printf("Update pointer\n");
       _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
     }
     switch (type)
