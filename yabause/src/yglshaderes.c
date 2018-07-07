@@ -148,7 +148,7 @@ int Ygl_uniformVdp1CommonParam(void * p){
 
   if (param == NULL) return 0;
 
-  glUniform2f(param->texsize, _Ygl->texture_manager->width, _Ygl->texture_manager->height);
+  glUniform2f(param->texsize, YglTM_vdp1->width, YglTM_vdp1->height);
 
   if (param->sprite != -1){
     glUniform1i(param->sprite, 0);
@@ -539,7 +539,7 @@ int Ygl_useUpscaleBuffer(void){
 /*------------------------------------------------------------------------------------
 *  Mosaic Draw
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformMosaic(void * p)
+int Ygl_uniformMosaic(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
@@ -561,7 +561,7 @@ int Ygl_uniformMosaic(void * p)
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
   }
   else {
@@ -569,7 +569,7 @@ int Ygl_uniformMosaic(void * p)
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
   }
 
   return 0;
@@ -590,7 +590,7 @@ int Ygl_cleanupMosaic(void * p)
   // call blit method
   YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
 
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
 
   return 0;
 }
@@ -598,7 +598,7 @@ int Ygl_cleanupMosaic(void * p)
 /*------------------------------------------------------------------------------------
 *  Per Line Alpha
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformPerLineAlpha(void * p)
+int Ygl_uniformPerLineAlpha(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
@@ -623,7 +623,7 @@ int Ygl_uniformPerLineAlpha(void * p)
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
   }
   else {
@@ -631,13 +631,13 @@ int Ygl_uniformPerLineAlpha(void * p)
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID);
   }
 
   return 0;
 }
 
-int Ygl_cleanupPerLineAlpha(void * p)
+int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
@@ -661,7 +661,7 @@ int Ygl_cleanupPerLineAlpha(void * p)
   // call blit method
   YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
   return 0;
 }
@@ -670,7 +670,7 @@ int Ygl_cleanupPerLineAlpha(void * p)
 /*------------------------------------------------------------------------------------
 *  Blur
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformNormal_blur(void * p)
+int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
@@ -692,7 +692,7 @@ int Ygl_uniformNormal_blur(void * p)
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
   }
   else {
@@ -700,18 +700,18 @@ int Ygl_uniformNormal_blur(void * p)
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID);
   }
 
   //glEnableVertexAttribArray(prg->vertexp);
   //glEnableVertexAttribArray(prg->texcoordp);
   //glUniform1i(id_normal_s_texture, 0);
   //glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-  //glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  //glBindTexture(GL_TEXTURE_2D, tm->textureID);
   return 0;
 }
 
-int Ygl_cleanupNormal_blur(void * p)
+int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
@@ -734,7 +734,7 @@ int Ygl_cleanupNormal_blur(void * p)
 
   YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
   return 0;
 }
@@ -872,7 +872,7 @@ int Ygl_uniformVdp1Normal(void * p )
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
    glUniform1i(id_vdp1_normal_s_texture, 0);
-   glUniform2f(id_vdp1_normal_s_texture_size, _Ygl->texture_manager->width, _Ygl->texture_manager->height);
+   glUniform2f(id_vdp1_normal_s_texture_size, YglTM_vdp1->width, YglTM_vdp1->height);
    return 0;
 }
 

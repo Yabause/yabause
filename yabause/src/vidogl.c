@@ -2398,14 +2398,14 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.cob = info->cob;
 
 
-  if (1 == YglIsCached(_Ygl->texture_manager, cacheaddr, &c))
+  if (1 == YglIsCached(YglTM_vdp2, cacheaddr, &c))
   {
-    YglCachedQuadOffset(&tile, &c, cx, cy, info->coordincx, info->coordincy);
+    YglCachedQuadOffset(&tile, &c, cx, cy, info->coordincx, info->coordincy, YglTM_vdp2);
     return;
   }
 
-  YglQuadOffset(&tile, texture, &c, cx, cy, info->coordincx, info->coordincy);
-  YglCacheAdd(_Ygl->texture_manager, cacheaddr, &c);
+  YglQuadOffset(&tile, texture, &c, cx, cy, info->coordincx, info->coordincy, YglTM_vdp2);
+  YglCacheAdd(YglTM_vdp2, cacheaddr, &c);
 
   switch (info->patternwh)
   {
@@ -3114,10 +3114,10 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   if (rbg->async) {
 
     u64 cacheaddr = 0x80000000BAD;
-    YglTMAllocate(_Ygl->texture_manager, &rbg->texture, info->cellw, info->cellh, &x, &y);
+    YglTMAllocate(YglTM_vdp2, &rbg->texture, info->cellw, info->cellh, &x, &y);
     rbg->c.x = x;
     rbg->c.y = y;
-    YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->c);
+    YglCacheAdd(YglTM_vdp2, cacheaddr, &rbg->c);
     info->cellw = cellw;
     info->cellh = cellh;
     curret_rbg = rbg;
@@ -3131,10 +3131,10 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
      rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
 
      u64 cacheaddr = 0xA0000000DAD;
-     YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, rbg->vres, 1,  &x, &y);
+     YglTMAllocate(YglTM_vdp2, &rbg->line_texture, rbg->vres, 1,  &x, &y);
      rbg->cline.x = x;
      rbg->cline.y = y;
-     YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
+     YglCacheAdd(YglTM_vdp2, cacheaddr, &rbg->cline);
 
    }
    else {
@@ -3163,10 +3163,10 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     u64 cacheaddr = 0x90000000BAD;
 
     rbg->vdp2_sync_flg = -1;
-    YglTMAllocate(_Ygl->texture_manager, &rbg->texture, info->cellw, info->cellh, &x, &y);
+    YglTMAllocate(YglTM_vdp2, &rbg->texture, info->cellw, info->cellh, &x, &y);
     rbg->c.x = x;
     rbg->c.y = y;
-    YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->c);
+    YglCacheAdd(YglTM_vdp2, cacheaddr, &rbg->c);
     info->cellw = cellw;
     info->cellh = cellh;
 
@@ -3177,10 +3177,10 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
 
     u64 cacheaddr = 0xA0000000DAD;
-    YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, rbg->vres, 1,  &x, &y);
+    YglTMAllocate(YglTM_vdp2, &rbg->line_texture, rbg->vres, 1,  &x, &y);
     rbg->cline.x = x;
     rbg->cline.y = y;
-    YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
+    YglCacheAdd(YglTM_vdp2, cacheaddr, &rbg->cline);
 
   }
   else {
@@ -3196,7 +3196,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     rbg->info.cellw = rbg->hres;
     rbg->info.cellh = rbg->vres;
     rbg->info.flipfunction = 0;
-    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline);
+    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
   }
 }
 
@@ -3238,7 +3238,7 @@ static void Vdp2DrawRotationSync() {
       //  curret_rbg->info.blendmode = VDP2_CC_NONE;
       //}
       curret_rbg->info.flipfunction = 0;
-      YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline);
+      YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline, YglTM_vdp2);
       curret_rbg->vdp2_sync_flg = RBG_IDLE;
       YGL_THREAD_DEBUG("Vdp2DrawRotationSync out %d\n", curret_rbg->vdp2_sync_flg);
     }
@@ -3820,12 +3820,9 @@ void VIDOGLVdp1DrawStart(void)
 
   FrameProfileAdd("Vdp1Command start");
 
-  if (_Ygl->texture_manager == NULL) {
-    _Ygl->texture_manager = YglTM;
-    YglTMReset(YglTM);
-    YglCacheReset(YglTM);
-  }
-  YglTmPull(YglTM, 0);
+  YglTMReset(YglTM_vdp1);
+  YglCacheReset(YglTM_vdp1);
+  YglTmPull(YglTM_vdp1, 0);
 
   maxpri = 0x00;
   minpri = 0x07;
@@ -3956,7 +3953,7 @@ void VIDOGLVdp1DrawStart(void)
 
 void VIDOGLVdp1DrawEnd(void)
 {
-  YglTmPush(YglTM);
+  YglTmPush(YglTM_vdp1);
   YglRenderVDP1();
 #ifdef SPRITE_CACHE
   if (yabsys.useVdp1cache) {
@@ -4078,14 +4075,14 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
     if (sprite.w > 0 && sprite.h > 0)
     {
-      if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
+      if (1 == YglIsCached(YglTM_vdp1, tmp, &cash))
       {
-        YglCacheQuadGrowShading(&sprite, col, &cash);
+        YglCacheQuadGrowShading(&sprite, col, &cash, YglTM_vdp1);
         return;
       }
 
-      YglQuadGrowShading(&sprite, &texture, col, &cash);
-      YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
+      YglQuadGrowShading(&sprite, &texture, col, &cash, YglTM_vdp1);
+      YglCacheAdd(YglTM_vdp1, tmp, &cash);
       Vdp1ReadTexture(&cmd, &sprite, &texture);
       return;
     }
@@ -4095,14 +4092,14 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   {
     if (sprite.w > 0 && sprite.h > 0)
     {
-      if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
+      if (1 == YglIsCached(YglTM_vdp1, tmp, &cash))
       {
-        YglCacheQuadGrowShading(&sprite, NULL, &cash);
+        YglCacheQuadGrowShading(&sprite, NULL, &cash, YglTM_vdp1);
         return;
       }
 
-      YglQuadGrowShading(&sprite, &texture, NULL, &cash);
-      YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
+      YglQuadGrowShading(&sprite, &texture, NULL, &cash, YglTM_vdp1);
+      YglCacheAdd(YglTM_vdp1, tmp, &cash);
 
       Vdp1ReadTexture(&cmd, &sprite, &texture);
     }
@@ -4290,14 +4287,14 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
     if (sprite.w > 0 && sprite.h > 0)
     {
-      if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
+      if (1 == YglIsCached(YglTM_vdp1, tmp, &cash))
       {
-        YglCacheQuadGrowShading(&sprite, col, &cash);
+        YglCacheQuadGrowShading(&sprite, col, &cash, YglTM_vdp1);
         return;
       }
 
-      YglQuadGrowShading(&sprite, &texture, col, &cash);
-      YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
+      YglQuadGrowShading(&sprite, &texture, col, &cash, YglTM_vdp1);
+      YglCacheAdd(YglTM_vdp1, tmp, &cash);
       Vdp1ReadTexture(&cmd, &sprite, &texture);
       return;
     }
@@ -4310,14 +4307,14 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     if (sprite.w > 0 && sprite.h > 0)
     {
 
-      if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
+      if (1 == YglIsCached(YglTM_vdp1, tmp, &cash))
       {
-        YglCacheQuadGrowShading(&sprite, NULL, &cash);
+        YglCacheQuadGrowShading(&sprite, NULL, &cash, YglTM_vdp1);
         return;
       }
 
-      YglQuadGrowShading(&sprite, &texture, NULL, &cash);
-      YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
+      YglQuadGrowShading(&sprite, &texture, NULL, &cash, YglTM_vdp1);
+      YglCacheAdd(YglTM_vdp1, tmp, &cash);
       Vdp1ReadTexture(&cmd, &sprite, &texture);
     }
 
@@ -4536,26 +4533,26 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       col[(i << 2) + 3] = 1.0f;
     }
 
-    if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
+    if (1 == YglIsCached(YglTM_vdp1, tmp, &cash))
     {
-      YglCacheQuadGrowShading(&sprite, col, &cash);
+      YglCacheQuadGrowShading(&sprite, col, &cash, YglTM_vdp1);
       return;
     }
 
-    YglQuadGrowShading(&sprite, &texture, col, &cash);
-    YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
+    YglQuadGrowShading(&sprite, &texture, col, &cash, YglTM_vdp1);
+    YglCacheAdd(YglTM_vdp1, tmp, &cash);
     Vdp1ReadTexture(&cmd, &sprite, &texture);
     return;
   }
   else // No Gouraud shading, use same color for all 4 vertices
   {
-    if (1 == YglIsCached(_Ygl->texture_manager, tmp, &cash))
+    if (1 == YglIsCached(YglTM_vdp1, tmp, &cash))
     {
-      YglCacheQuadGrowShading(&sprite, NULL, &cash);
+      YglCacheQuadGrowShading(&sprite, NULL, &cash, YglTM_vdp1);
       return;
     }
-    YglQuadGrowShading(&sprite, &texture, NULL, &cash);
-    YglCacheAdd(_Ygl->texture_manager, tmp, &cash);
+    YglQuadGrowShading(&sprite, &texture, NULL, &cash, YglTM_vdp1);
+    YglCacheAdd(YglTM_vdp1, tmp, &cash);
     Vdp1ReadTexture(&cmd, &sprite, &texture);
   }
 
@@ -4821,10 +4818,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
   if (gouraud == 1)
   {
-    YglQuadGrowShading(&sprite, &texture, col, &c);
+    YglQuadGrowShading(&sprite, &texture, col, &c, YglTM_vdp1);
   }
   else {
-    YglQuadGrowShading(&sprite, &texture, NULL, &c);
+    YglQuadGrowShading(&sprite, &texture, NULL, &c, YglTM_vdp1);
   }
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -4861,10 +4858,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.vertices[6] = (line_polygon[6] + Vdp1Regs->localX) * vdp1wratio;
     sprite.vertices[7] = (line_polygon[7] + Vdp1Regs->localY) * vdp1hratio;
     if (gouraud) {
-      YglCacheQuadGrowShading(&sprite, col, &c);
+      YglCacheQuadGrowShading(&sprite, col, &c, YglTM_vdp1);
     }
     else {
-      YglCacheQuadGrowShading(&sprite, NULL, &c);
+      YglCacheQuadGrowShading(&sprite, NULL, &c, YglTM_vdp1);
     }
   }
 }
@@ -4982,10 +4979,10 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     linecol[13] = col[(1 << 2) + 1];
     linecol[14] = col[(1 << 2) + 2];
     linecol[15] = col[(1 << 2) + 3];
-    YglQuadGrowShading(&polygon, &texture, linecol, &c);
+    YglQuadGrowShading(&polygon, &texture, linecol, &c, YglTM_vdp1);
   }
   else {
-    YglQuadGrowShading(&polygon, &texture, NULL, &c);
+    YglQuadGrowShading(&polygon, &texture, NULL, &c, YglTM_vdp1);
   }
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -5059,10 +5056,10 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     linecol[14] = col[(2 << 2) + 2];
     linecol[15] = col[(2 << 2) + 3];
 
-    YglCacheQuadGrowShading(&polygon, linecol, &c);
+    YglCacheQuadGrowShading(&polygon, linecol, &c, YglTM_vdp1);
   }
   else {
-    YglCacheQuadGrowShading(&polygon, NULL, &c);
+    YglCacheQuadGrowShading(&polygon, NULL, &c, YglTM_vdp1);
   }
 
   makeLinePolygon(&v[4], &v[6], line_poygon);
@@ -5091,10 +5088,10 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     linecol[13] = col[(3 << 2) + 1];
     linecol[14] = col[(3 << 2) + 2];
     linecol[15] = col[(3 << 2) + 3];
-    YglCacheQuadGrowShading(&polygon, linecol, &c);
+    YglCacheQuadGrowShading(&polygon, linecol, &c, YglTM_vdp1);
   }
   else {
-    YglCacheQuadGrowShading(&polygon, NULL, &c);
+    YglCacheQuadGrowShading(&polygon, NULL, &c, YglTM_vdp1);
   }
 
 
@@ -5125,10 +5122,10 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       linecol[13] = col[(0 << 2) + 1];
       linecol[14] = col[(0 << 2) + 2];
       linecol[15] = col[(0 << 2) + 3];
-      YglCacheQuadGrowShading(&polygon, linecol, &c);
+      YglCacheQuadGrowShading(&polygon, linecol, &c, YglTM_vdp1);
     }
     else {
-      YglCacheQuadGrowShading(&polygon, NULL, &c);
+      YglCacheQuadGrowShading(&polygon, NULL, &c, YglTM_vdp1);
     }
   }
 
@@ -5236,10 +5233,10 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   if (gouraud == 1) {
-    YglQuadGrowShading(&polygon, &texture, col, NULL);
+    YglQuadGrowShading(&polygon, &texture, col, NULL, YglTM_vdp1);
   }
   else {
-    YglQuadGrowShading(&polygon, &texture, NULL, NULL);
+    YglQuadGrowShading(&polygon, &texture, NULL, NULL, YglTM_vdp1);
   }
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
@@ -5326,18 +5323,16 @@ void VIDOGLVdp2DrawStart(void)
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
   VIDOGLVdp2SetResolution(fixVdp2Regs->TVMD);
 
-  if (_Ygl->rwidth > YglTM->width) {
+  if (_Ygl->rwidth > YglTM_vdp2->width) {
     int new_width = _Ygl->rwidth;
-    int new_height = YglTM->height;
-    YglTMDeInit(YglTM);
-    YglTM = YglTMInit(new_width, new_height);
+    int new_height = YglTM_vdp2->height;
+    YglTMDeInit(YglTM_vdp2);
+    YglTM_vdp2 = YglTMInit(new_width, new_height);
   }
   YglReset();
-  YglTmPull(YglTM, 0);
-  YglTMReset(YglTM);
-  YglCacheReset(YglTM);
-  _Ygl->texture_manager = YglTM;
-
+  YglTmPull(YglTM_vdp2, 0);
+  YglTMReset(YglTM_vdp2);
+  YglCacheReset(YglTM_vdp2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5347,7 +5342,7 @@ void VIDOGLVdp2DrawEnd(void)
   Vdp2DrawRotationSync();
   FrameProfileAdd("Vdp2DrawRotationSync end");
 
-  YglTmPush(YglTM);
+  YglTmPush(YglTM_vdp2);
 
   if (_Ygl->sync != 0) {
     glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
@@ -5997,7 +5992,7 @@ static void Vdp2DrawNBG0(void) {
           infotmp.cellh = (vdp2height >> 1) << vdp2_interlace;
         else
           infotmp.cellh = vdp2height << vdp2_interlace;
-        YglQuad(&infotmp, &texture, &tmpc);
+        YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
         Vdp2DrawBitmapCoordinateInc(&info, &texture);
       }
       else {
@@ -6022,7 +6017,7 @@ static void Vdp2DrawNBG0(void) {
           vdp2draw_struct infotmp = info;
           infotmp.cellw = vdp2width;
           infotmp.cellh = vdp2height << vdp2_interlace;
-          YglQuad(&infotmp, &texture, &tmpc);
+          YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
           Vdp2DrawBitmapLineScroll(&info, &texture, vdp2width, vdp2height);
 
         }
@@ -6044,7 +6039,7 @@ static void Vdp2DrawNBG0(void) {
 
               if (isCached == 0)
               {
-                YglQuad(&info, &texture, &tmpc);
+                YglQuad(&info, &texture, &tmpc, YglTM_vdp2);
                 if (info.islinescroll) {
                   Vdp2DrawBitmapLineScroll(&info, &texture, info.cellw, info.cellh);
                 }
@@ -6054,7 +6049,7 @@ static void Vdp2DrawNBG0(void) {
                 isCached = 1;
               }
               else {
-                YglCachedQuad(&info, &tmpc);
+                YglCachedQuad(&info, &tmpc, YglTM_vdp2);
               }
               xx += info.cellw;
             }
@@ -6278,7 +6273,7 @@ static void Vdp2DrawNBG1(void)
       else
         infotmp.cellh = vdp2height;
 
-      YglQuad(&infotmp, &texture, &tmpc);
+      YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
       Vdp2DrawBitmapCoordinateInc(&info, &texture);
     }
     else {
@@ -6303,7 +6298,7 @@ static void Vdp2DrawNBG1(void)
         vdp2draw_struct infotmp = info;
         infotmp.cellw = vdp2width;
         infotmp.cellh = vdp2height;
-        YglQuad(&infotmp, &texture, &tmpc);
+        YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
         Vdp2DrawBitmapLineScroll(&info, &texture, vdp2width, vdp2height);
 
       }
@@ -6325,7 +6320,7 @@ static void Vdp2DrawNBG1(void)
 
             if (isCached == 0)
             {
-              YglQuad(&info, &texture, &tmpc);
+              YglQuad(&info, &texture, &tmpc, YglTM_vdp2);
               if (info.islinescroll) {
                 Vdp2DrawBitmapLineScroll(&info, &texture, info.cellw, info.cellh);
               }
@@ -6335,7 +6330,7 @@ static void Vdp2DrawNBG1(void)
               isCached = 1;
             }
             else {
-              YglCachedQuad(&info, &tmpc);
+              YglCachedQuad(&info, &tmpc, YglTM_vdp2);
             }
             xx += info.cellw;
           }

@@ -247,8 +247,8 @@ typedef struct {
 	GLuint pixelBufferID;
 } YglTextureManager;
 
-extern YglTextureManager * YglTM;
-//extern YglTextureManager * YglTM_vdp1;
+extern YglTextureManager * YglTM_vdp1;
+extern YglTextureManager * YglTM_vdp2;
 
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(YglTextureManager * tm );
@@ -416,8 +416,8 @@ typedef struct {
    GLuint tex0;
    GLuint tex1;
    float color_offset_val[4];
-   int (*setupUniform)(void *);
-   int (*cleanupUniform)(void *);
+   int (*setupUniform)(void *, YglTextureManager *tm);
+   int (*cleanupUniform)(void *, YglTextureManager *tm);
    YglVdp1CommonParam * ids;
    float * matrix;
    int mosaic[2];
@@ -587,7 +587,6 @@ typedef struct {
    POLYGONMODE polygonmode;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
-   YglTextureManager * texture_manager;
    GLsync sync;
     GLuint default_fbo;
    YglPerLineInfo bg[enBGMAX];
@@ -612,30 +611,30 @@ extern Ygl * _Ygl;
 
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
-float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c);
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line);
-void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy);
-void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy);
-void YglCachedQuad(vdp2draw_struct *, YglCache *);
+float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c, YglTextureManager *tm);
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, YglTextureManager *tm);
+void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy, YglTextureManager *tm);
+void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy, YglTextureManager *tm);
+void YglCachedQuad(vdp2draw_struct *, YglCache *, YglTextureManager *tm);
 void YglRender(void);
 void YglReset(void);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
 void YglSetDensity(int d);
-void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache);
-int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c);
+void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
+int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors,YglCache * c, YglTextureManager *tm);
 void YglSetClearColor(float r, float g, float b);
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 
 void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line );
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, YglTextureManager *tm);
 void Ygl_uniformVDP2DrawFrameBufferShadow(void * p);
 int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
-int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c);
-void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache);
+int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
+void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
 
 u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount,int depth );
 void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int depth);
