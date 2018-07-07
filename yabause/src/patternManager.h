@@ -3,6 +3,7 @@
 
 #include "core.h"
 #include "vdp1.h"
+#include "vdp2.h"
 
 typedef struct sPattern {
 	u32 *pix;
@@ -10,12 +11,12 @@ typedef struct sPattern {
 	int height;
         int offset;
 	int managed;
-        u8 pixSample[32];
+        u8 pixSample[36];
 } Pattern;
 
-Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram);
+Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram, Vdp2 * regs);
 void releasePattern();
-void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset);
+void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset, Vdp2 * regs);
 void deinitPatternCache();
 void resetPatternCache();
 void initPatternCache();

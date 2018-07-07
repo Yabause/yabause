@@ -45,9 +45,9 @@ static u16 getHash(u8 *p, int len) {
 }
 
 static Pattern* popCachePattern(u8 *pixSample, int w, int h) {
-  int id = getHash(pixSample, 32);
+  int id = getHash(pixSample, 36);
   Pattern *pat = patternCache[id];
-  if ((pat!= NULL) && (memcmp(pat->pixSample, pixSample, 32) == 0) && (pat->width == w) && (pat->height == h)) {
+  if ((pat!= NULL) && (memcmp(pat->pixSample, pixSample, 36) == 0) && (pat->width == w) && (pat->height == h)) {
 #ifdef VDP1_CACHE_STAT
         nbReuse++;
 #endif
@@ -59,7 +59,7 @@ static Pattern* popCachePattern(u8 *pixSample, int w, int h) {
 }
 
 static int addCachePattern(Pattern* pat) {
-        int id = getHash(pat->pixSample, 32);
+        int id = getHash(pat->pixSample, 36);
 	Pattern *collider = patternCache[id];
 #ifdef VDP1_CACHE_STAT
         nbElem++;
@@ -84,7 +84,7 @@ static int addCachePattern(Pattern* pat) {
 
 static Pattern* createCachePattern(u8* pixSample, int w, int h, int offset) {
 	Pattern* new = malloc(sizeof(Pattern));
-        memcpy(new->pixSample, pixSample, 32);
+        memcpy(new->pixSample, pixSample, 36);
         new->width = w;
 	new->height = h;
         new->offset = offset;
@@ -93,7 +93,8 @@ static Pattern* createCachePattern(u8* pixSample, int w, int h, int offset) {
 	return new;
 }
 
-Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram) {
+Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram, Vdp2 * regs) {
+
     int characterWidth = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
     int characterHeight = cmd->CMDSIZE & 0xFF;
     int characterAddress = cmd->CMDSRCA << 3;
@@ -104,19 +105,21 @@ Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram) {
 
     int param0 = cmd->CMDSRCA << 16 | cmd->CMDCOLR;
     int param1 = cmd->CMDPMOD << 16 | cmd->CMDCTRL;
-    u8 pixSample[32];
+    int param2 = regs->SPCTL << 16;
+    u8 pixSample[36];
 
     for (int i =0; i<24; i++) {
       pixSample[i] =  T1ReadByte(ram, (characterAddress + characterHeight*characterWidth*i/24));
     }
     memcpy(&pixSample[24], &param0, 4);
     memcpy(&pixSample[28], &param1, 4);
+    memcpy(&pixSample[32], &param2, 4);
 
     Pattern* curPattern = popCachePattern(pixSample, characterWidth, characterHeight);
     return curPattern;
 }
 
-void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset) {
+void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset, Vdp2 * regs) {
     Pattern* curPattern;
     int characterWidth = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
     int characterHeight = cmd->CMDSIZE & 0xFF;
@@ -126,13 +129,15 @@ void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset) {
 
     int param0 = cmd->CMDSRCA << 16 | cmd->CMDCOLR;
     int param1 = cmd->CMDPMOD << 16 | cmd->CMDCTRL;
-    u8 pixSample[32];
+    int param2 = regs->SPCTL << 16;
+    u8 pixSample[36];
 
     for (int i =0; i<24; i++) {
       pixSample[i] =  T1ReadByte(ram, (characterAddress + characterHeight*characterWidth*i/24));
     }
     memcpy(&pixSample[24], &param0, 4);
     memcpy(&pixSample[28], &param1, 4);
+    memcpy(&pixSample[32], &param2, 4);
 
     curPattern = createCachePattern(pixSample, characterWidth, characterHeight, offset);
     if (addCachePattern(curPattern) != 0) deleteCachePattern(&curPattern);

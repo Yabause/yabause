@@ -490,7 +490,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 #ifdef SPRITE_CACHE 
   if (yabsys.useVdp1cache) { 
 
-    pattern = getPattern(cmd, Vdp1Ram);
+    pattern = getPattern(cmd, Vdp1Ram, fixVdp2Regs);
     if (pattern != NULL) {
       int characterWidth = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
       int characterHeight = cmd->CMDSIZE & 0xFF;
@@ -841,7 +841,7 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
    }
 #ifdef SPRITE_CACHE
   if (yabsys.useVdp1cache) {
-    addPattern(cmd, Vdp1Ram, pixBuf, texture->w);
+    addPattern(cmd, Vdp1Ram, pixBuf, texture->w, fixVdp2Regs);
   }
 #endif
 }
@@ -852,8 +852,6 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
 {
   u8 SPCLMD = fixVdp2Regs->SPCTL;
   int sprite_register;
-  u8 *sprprilist = (u8 *)&fixVdp2Regs->PRISA;
-  u8 *cclist = (u8 *)&fixVdp2Regs->CCRSA;
   u16 lutPri;
   u16 *reg_src = &cmd->CMDCOLR;
   int not_lut = 1;
