@@ -4147,9 +4147,6 @@ void YglOnScreenDebugMessage(char *string, ...) {
 }
 
 void VIDOGLSync(){
-  //YglTmPull(YglTM_vdp1);
-  YglTmPull(YglTM, GL_MAP_INVALIDATE_BUFFER_BIT);
-  _Ygl->texture_manager = NULL;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
