@@ -350,10 +350,7 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       Vdp1External.plot_trigger_line = (yabsys.LineCount == 0)?1:yabsys.LineCount;
       if ((val == 1) && (yabsys.LineCount != 0) ){
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1Regs->EDSR >>= 1;
         Vdp1Draw();
-        VIDCore->Vdp1DrawEnd();
-        Vdp1Regs->EDSR |= 2;
         Vdp1External.plot_trigger_done = 1;
       }
       break;
@@ -542,24 +539,26 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 void Vdp1Draw(void) 
 {
   FRAMELOG("Vdp1Draw");
+  Vdp1Regs->EDSR >>= 1;
    if (!Vdp1External.disptoggle)
    {
       Vdp1NoDraw();
-      return;
+   } else {
+     Vdp1Regs->addr = 0;
+
+     // beginning of a frame
+     // BEF <- CEF
+     // CEF <- 0
+     //Vdp1Regs->EDSR >>= 1;
+     /* this should be done after a frame change or a plot trigger */
+     Vdp1Regs->COPR = 0;
+
+     VIDCore->Vdp1Draw();
    }
 
-   Vdp1Regs->addr = 0;
-
-   // beginning of a frame
-   // BEF <- CEF
-   // CEF <- 0
-   //Vdp1Regs->EDSR >>= 1;
-   /* this should be done after a frame change or a plot trigger */
-   Vdp1Regs->COPR = 0;
-
-   VIDCore->Vdp1DrawStart();
-
    FRAMELOG("Vdp1Draw end at %d line", yabsys.LineCount);
+   Vdp1Regs->EDSR |= 2;
+   ScuSendDrawEnd();
 
 }
 
@@ -1403,8 +1402,7 @@ void VIDDummyDeInit(void);
 void VIDDummyResize(int, int, unsigned int, unsigned int, int);
 int VIDDummyIsFullscreen(void);
 int VIDDummyVdp1Reset(void);
-void VIDDummyVdp1DrawStart(void);
-void VIDDummyVdp1DrawEnd(void);
+void VIDDummyVdp1Draw(void);
 void VIDDummyVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -1434,8 +1432,7 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyResize,
 	VIDDummyIsFullscreen,
 	VIDDummyVdp1Reset,
-	VIDDummyVdp1DrawStart,
-	VIDDummyVdp1DrawEnd,
+	VIDDummyVdp1Draw,
 	VIDDummyVdp1NormalSpriteDraw,
 	VIDDummyVdp1ScaledSpriteDraw,
 	VIDDummyVdp1DistortedSpriteDraw,
@@ -1495,13 +1492,7 @@ int VIDDummyVdp1Reset(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1DrawStart(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp1DrawEnd(void)
+void VIDDummyVdp1Draw(void)
 {
 }
 

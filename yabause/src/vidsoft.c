@@ -78,8 +78,7 @@ void VIDSoftDeInit(void);
 void VIDSoftResize(int,int,unsigned int, unsigned int, int);
 int VIDSoftIsFullscreen(void);
 int VIDSoftVdp1Reset(void);
-void VIDSoftVdp1DrawStart(void);
-void VIDSoftVdp1DrawEnd(void);
+void VIDSoftVdp1Draw(void);
 void VIDSoftVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDSoftVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -114,8 +113,7 @@ VIDSoftDeInit,
 VIDSoftResize,
 VIDSoftIsFullscreen,
 VIDSoftVdp1Reset,
-VIDSoftVdp1DrawStart,
-VIDSoftVdp1DrawEnd,
+VIDSoftVdp1Draw,
 VIDSoftVdp1NormalSpriteDraw,
 VIDSoftVdp1ScaledSpriteDraw,
 VIDSoftVdp1DistortedSpriteDraw,
@@ -2427,7 +2425,7 @@ void VIDSoftVdp1DrawStartBody(Vdp1* regs, u8 * back_framebuffer)
 }
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp1DrawStart()
+void VIDSoftVdp1Draw()
 {
    if (vidsoft_vdp1_thread_enabled)
    {
@@ -2452,12 +2450,6 @@ void VIDSoftVdp1DrawStart()
       VIDSoftVdp1DrawStartBody(Vdp1Regs, vdp1backframebuffer);
       Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, vdp1backframebuffer);
    }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDSoftVdp1DrawEnd(void)
-{
 }
 
 //////////////////////////////////////////////////////////////////////////////

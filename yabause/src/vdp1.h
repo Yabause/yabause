@@ -67,8 +67,7 @@ typedef struct
    int (*IsFullscreen)(void);
    // VDP1 specific
    int (*Vdp1Reset)(void);
-   void (*Vdp1DrawStart)(void);
-   void (*Vdp1DrawEnd)(void);
+   void (*Vdp1Draw)(void);
    void(*Vdp1NormalSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1ScaledSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);

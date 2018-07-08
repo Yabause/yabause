@@ -103,8 +103,7 @@ void VIDOGLDeInit(void);
 void VIDOGLResize(int, int, unsigned int, unsigned int, int);
 int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
-void VIDOGLVdp1DrawStart(void);
-void VIDOGLVdp1DrawEnd(void);
+void VIDOGLVdp1Draw(void);
 void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -136,8 +135,7 @@ VIDOGLDeInit,
 VIDOGLResize,
 VIDOGLIsFullscreen,
 VIDOGLVdp1Reset,
-VIDOGLVdp1DrawStart,
-VIDOGLVdp1DrawEnd,
+VIDOGLVdp1Draw,
 VIDOGLVdp1NormalSpriteDraw,
 VIDOGLVdp1ScaledSpriteDraw,
 VIDOGLVdp1DistortedSpriteDraw,
@@ -3783,7 +3781,7 @@ int VIDOGLVdp1Reset(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void VIDOGLVdp1DrawStart(void)
+void VIDOGLVdp1Draw(void)
 {
   int i;
   int maxpri;
@@ -3941,12 +3939,6 @@ void VIDOGLVdp1DrawStart(void)
   Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
   FrameProfileAdd("Vdp1Command end ");
 
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDOGLVdp1DrawEnd(void)
-{
   YglTmPush(YglTM_vdp1);
   YglRenderVDP1();
 #ifdef SPRITE_CACHE
@@ -3955,7 +3947,10 @@ void VIDOGLVdp1DrawEnd(void)
   }
 #endif
   _Ygl->vpd1_running = 0;
+
 }
+
+//////////////////////////////////////////////////////////////////////////////
 
 #define IS_MESH(a) (a&0x100)
 #define IS_GLOWSHADING(a) (a&0x04)
