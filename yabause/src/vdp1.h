@@ -83,9 +83,7 @@ typedef struct
    void(*Vdp1FrameChange)(void);
    // VDP2 specific
    int (*Vdp2Reset)(void);
-   void (*Vdp2DrawStart)(void);
-   void (*Vdp2DrawEnd)(void);
-   void (*Vdp2DrawScreens)(void);
+   void (*Vdp2Draw)(void);
    void (*GetGlSize)(int *width, int *height);
    void (*SetSettingValue)(int type, int value);
    void(*Sync)();

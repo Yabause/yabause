@@ -380,7 +380,7 @@ void Vdp2VBlankIN(void) {
    now we're lying a little here as we're not swapping the framebuffers. */
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
-   VIDCore->Vdp2DrawEnd();
+   VIDCore->Vdp2Draw();
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
@@ -569,8 +569,6 @@ void startField(void) {
 
   FRAMELOG("***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, Vdp1External.vblank_erase);
 
-  VIDCore->Vdp2DrawStart();
-
   // Manual Change
   Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange == 1);
   Vdp1External.swap_frame_buffer |= (Vdp1External.onecyclemode == 1);
@@ -599,10 +597,6 @@ void startField(void) {
       yabsys.wait_line_count = 1;
     }
 
-  }
-
-  if (Vdp2Regs->TVMD & 0x8000) {
-    VIDCore->Vdp2DrawScreens();
   }
 
   Vdp1External.manualchange = 0;

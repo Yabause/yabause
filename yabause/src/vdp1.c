@@ -1413,9 +1413,7 @@ void VIDDummyVdp1UserClipping(u8 * ram, Vdp1 * regs);
 void VIDDummyVdp1SystemClipping(u8 * ram, Vdp1 * regs);
 void VIDDummyVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 int VIDDummyVdp2Reset(void);
-void VIDDummyVdp2DrawStart(void);
-void VIDDummyVdp2DrawEnd(void);
-void VIDDummyVdp2DrawScreens(void);
+void VIDDummyVdp2Draw(void);
 void VIDDummyGetGlSize(int *width, int *height);
 void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
@@ -1447,9 +1445,7 @@ VideoInterface_struct VIDDummy = {
   VIDDummSync,
   VIDDummSync,
 	VIDDummyVdp2Reset,
-	VIDDummyVdp2DrawStart,
-	VIDDummyVdp2DrawEnd,
-	VIDDummyVdp2DrawScreens,
+	VIDDummyVdp2Draw,
 	VIDDummyGetGlSize,
 	VIDDummSetFilterMode,
 	VIDDummSync,
@@ -1559,19 +1555,7 @@ int VIDDummyVdp2Reset(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp2DrawStart(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2DrawEnd(void)
-{
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDDummyVdp2DrawScreens(void)
+void VIDDummyVdp2Draw(void)
 {
 }
 

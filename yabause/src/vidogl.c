@@ -114,9 +114,8 @@ void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs);
 void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs);
 void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 int VIDOGLVdp2Reset(void);
-void VIDOGLVdp2DrawStart(void);
-void VIDOGLVdp2DrawEnd(void);
-void VIDOGLVdp2DrawScreens(void);
+void VIDOGLVdp2Draw(void);
+static void VIDOGLVdp2DrawScreens(void);
 void VIDOGLVdp2SetResolution(u16 TVMD);
 void YglGetGlSize(int *width, int *height);
 void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
@@ -150,9 +149,7 @@ VIDOGLVdp1WriteFrameBuffer,
 YglEraseWriteVDP1,
 YglFrameChangeVDP1,
 VIDOGLVdp2Reset,
-VIDOGLVdp2DrawStart,
-VIDOGLVdp2DrawEnd,
-VIDOGLVdp2DrawScreens,
+VIDOGLVdp2Draw,
 YglGetGlSize,
 VIDOGLSetSettingValueMode,
 VIDOGLSync,
@@ -5306,8 +5303,9 @@ int VIDOGLVdp2Reset(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDOGLVdp2DrawStart(void)
+void VIDOGLVdp2Draw(void)
 {
+
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
   VIDOGLVdp2SetResolution(fixVdp2Regs->TVMD);
@@ -5322,12 +5320,10 @@ void VIDOGLVdp2DrawStart(void)
   YglTmPull(YglTM_vdp2, 0);
   YglTMReset(YglTM_vdp2);
   YglCacheReset(YglTM_vdp2);
-}
 
-//////////////////////////////////////////////////////////////////////////////
-
-void VIDOGLVdp2DrawEnd(void)
-{
+  if (Vdp2Regs->TVMD & 0x8000) {
+    VIDOGLVdp2DrawScreens();
+  }
   Vdp2DrawRotationSync();
   FrameProfileAdd("Vdp2DrawRotationSync end");
 
@@ -6919,7 +6915,7 @@ static void Vdp2DrawRBG0(void)
 
 //////////////////////////////////////////////////////////////////////////////
 #define BG_PROFILE 0
-void VIDOGLVdp2DrawScreens(void)
+static void VIDOGLVdp2DrawScreens(void)
 {
   u64 before;
   u64 now;

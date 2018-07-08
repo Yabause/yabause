@@ -92,9 +92,9 @@ void VIDSoftVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDSoftVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDSoftVdp1EraseWrite();
 int VIDSoftVdp2Reset(void);
-void VIDSoftVdp2DrawStart(void);
-void VIDSoftVdp2DrawEnd(void);
-void VIDSoftVdp2DrawScreens(void);
+static void VIDSoftVdp2DrawStart(void);
+void VIDSoftVdp2Draw(void);
+static void VIDSoftVdp2DrawScreens(void);
 void VIDSoftVdp2SetResolution(u16 TVMD);
 void VIDSoftGetGlSize(int *width, int *height);
 void VIDSoftVdp1SwapFrameBuffer(void);
@@ -132,9 +132,7 @@ VIDSoftVdp1WriteFrameBuffer,
 VIDSoftVdp1EraseWrite,
 VIDSoftVdp1SwapFrameBuffer,
 VIDSoftVdp2Reset,
-VIDSoftVdp2DrawStart,
-VIDSoftVdp2DrawEnd,
-VIDSoftVdp2DrawScreens,
+VIDSoftVdp2Draw,
 VIDSoftGetGlSize,
 VIDSoftSetSettingValueMode,
 VIDSoftSync,
@@ -3506,7 +3504,7 @@ int VIDSoftVdp2Reset(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDSoftVdp2DrawStart(void)
+static void VIDSoftVdp2DrawStart(void)
 {
    int titanblendmode = TITAN_BLEND_TOP;
    if (Vdp2Regs->CCCTL & 0x100) titanblendmode = TITAN_BLEND_ADD;
@@ -3854,8 +3852,15 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
    }
 }
 
-void VIDSoftVdp2DrawEnd(void)
+void VIDSoftVdp2Draw(void)
 {
+
+   VIDSoftVdp2DrawStart();
+
+   if (Vdp2Regs->TVMD & 0x8000) {
+     VIDSoftVdp2DrawScreens();
+   }
+
    if (vidsoft_num_layer_threads > 0)
    {
       while (!vidsoft_thread_context.draw_finished[TITAN_NBG0]){}
@@ -3940,7 +3945,7 @@ int CanUseSpriteThread()
    return 1;
 }
 
-void VIDSoftVdp2DrawScreens(void)
+static void VIDSoftVdp2DrawScreens(void)
 {
    int draw_priority_0[6] = { 0 };
    int layer_priority[6] = { 0 };
