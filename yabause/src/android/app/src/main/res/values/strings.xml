@@ -173,9 +173,6 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="this_func_not_yet">This function is not implemented yet.</string>
     <string name="memory_manager">Memory Manager</string>
-
-    <string name="str_rotate_screen">Rotate Screen</string>
-
     <string name="str_rotate_screen">90 degree rotation</string>
 
 </resources>

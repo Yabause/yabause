@@ -7,9 +7,9 @@ environment:
 
   matrix:
     # Visual Studio build
-    - generator: "Visual Studio 12 2013"
-      CMAKE_PREFIX_PATH: C:\Qt\5.4\msvc2013_opengl
-      compiler_type: "vs12-x32"
+    - generator: "Visual Studio 14 2015"
+      CMAKE_PREFIX_PATH: C:\Qt\5.8\msvc2015
+      compiler_type: "vs14-x32"
       sdl_filename: SDL2-devel-2.0.3-VC.zip
       sdl_arch: x86
       cmake_args: >
@@ -47,7 +47,7 @@ before_build:
   - cmake -G "%generator%" %cmake_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
 
 build_script:
-  - msbuild yabause.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+  - msbuild YabaSanshiro.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 # make a distributable package of the build output
 after_build:
