@@ -5329,12 +5329,6 @@ void VIDOGLVdp2Draw(void)
 
   YglTmPush(YglTM_vdp2);
 
-  if (_Ygl->sync != 0) {
-    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
-    glDeleteSync(_Ygl->sync);
-    _Ygl->sync = 0;
-  }
-
   YglUpdateVDP1FB();
 
   YglRender();

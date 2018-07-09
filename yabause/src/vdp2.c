@@ -397,6 +397,7 @@ void Vdp2VBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2HBlankIN(void) {
+   YglCheckFBSwitch(0);
    Vdp2Regs->TVSTAT |= 0x0004;
    ScuSendHBlankIN();
 
@@ -607,7 +608,7 @@ void startField(void) {
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
-
+  YglCheckFBSwitch(1);
   //if (g_frame_count == 60){
   //  YabSaveStateSlot(".\\", 1);
   //}

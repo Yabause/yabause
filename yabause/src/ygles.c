@@ -2522,7 +2522,6 @@ void YglRenderVDP1(void) {
   else {
     mat = &_Ygl->mtxModelView;
   }
-
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
   if (_Ygl->pFrameBuffer != NULL) {
@@ -2603,12 +2602,6 @@ void YglRenderVDP1(void) {
   
   level->prgcurrent = 0;
 
-    if (_Ygl->sync != 0){
-      glDeleteSync( _Ygl->sync );
-      _Ygl->sync = 0;
-    }
-
-  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
   //YabThreadUnLock(_Ygl->mutex);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
@@ -3157,6 +3150,17 @@ void YglUpdateVDP1FB(void) {
   }
 }
 
+void YglCheckFBSwitch(int sync) {
+  GLenum ret = GL_WAIT_FAILED;
+  if (_Ygl->sync != 0)
+    ret = glClientWaitSync(_Ygl->sync, 0, (sync?20000000:0));
+  if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) {
+    glDeleteSync(_Ygl->sync);
+    _Ygl->sync = 0;
+    YuiSwapBuffers();
+  }
+}
+
 void YglRender(void) {
    YglLevel * level;
    GLuint cprg=0;
@@ -3172,6 +3176,8 @@ void YglRender(void) {
    double y = 0;
 
    YGLLOG("YglRender\n");
+
+   YglCheckFBSwitch(1);
 
    FrameProfileAdd("YglRender start");
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
@@ -3363,7 +3369,8 @@ render_finish:
   glDisable(GL_STENCIL_TEST);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   OSDDisplayMessages(NULL,0,0);
-  YuiSwapBuffers();
+
+  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
   FrameProfileAdd("YglRender end");
   return;
 }
