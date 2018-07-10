@@ -3797,6 +3797,98 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
   return 0;
 }
 
+
+const GLchar vclearb_img[] =
+#if defined(_OGLES3_)
+      "#version 300 es \n"
+#else
+      "#version 330 \n"
+#endif
+      "layout (location = 0) in vec4 a_position;   \n"
+      "void main()                  \n"
+      "{                            \n"
+      "   gl_Position = a_position; \n"
+      "} ";
+
+const GLchar fclearb_img[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;                            \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  fragColor = vec4(0.0,0.0,0.0,1.0);\n                         "
+"}                                                   \n";
+
+int YglClear() {
+  if (clear_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    const GLchar * vclearb_img_v[] = { vclearb_img, NULL };
+    const GLchar * fclearb_img_v[] = { fclearb_img, NULL };
+    clear_prg = glCreateProgram();
+    if (clear_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, vclearb_img_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      clear_prg = -1;
+      return -1;
+    }
+    glShaderSource(fshader, 1, fclearb_img_v, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      clear_prg = -1;
+      abort();
+    }
+
+    glAttachShader(clear_prg, vshader);
+    glAttachShader(clear_prg, fshader);
+    glLinkProgram(clear_prg);
+    glGetProgramiv(clear_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(clear_prg);
+      clear_prg = -1;
+      abort();
+    }
+
+    glUseProgram(clear_prg);
+  }
+  else{
+    glUseProgram(clear_prg);
+  }
+  float const vertexPosition[] = {
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f };
+
+
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glDisableVertexAttribArray(0);
+  return 0;
+}
+
 /*
 hard/vdp2/hon/p12_13.htm
 */

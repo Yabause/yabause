@@ -3167,34 +3167,6 @@ void YglRender(void) {
 
    YGLLOG("YglRender\n");
 
-   YglCheckFBSwitch(1);
-
-   FrameProfileAdd("YglRender start");
-   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-   glDisable(GL_SCISSOR_TEST);
-   glViewport(0, 0, GlWidth, GlHeight);
-   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-   glClearDepthf(0.0f);
-   glDepthMask(GL_TRUE);
-   glEnable(GL_DEPTH_TEST);
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-   if ((Vdp2Regs->TVMD & 0x8000) == 0){
-     goto render_finish;
-   }
-
-   if (_Ygl->original_fbotex == 0){
-     YglGenerateOriginalBuffer();
-   }
-   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
-   _Ygl->targetfbo = _Ygl->original_fbo;
-   glViewport(0, 0, GlWidth, GlHeight);
-   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-   glClearDepthf(0.0f);
-   glDepthMask(GL_TRUE);
-   glEnable(GL_DEPTH_TEST);
-   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
    if (_Ygl->stretch == 0) {
      double dar = (double)GlWidth/(double)GlHeight;
      double par = 4.0/3.0;
@@ -3209,6 +3181,44 @@ void YglRender(void) {
      x = 0;
      y = 0;
    }
+
+   YglCheckFBSwitch(1);
+
+   FrameProfileAdd("YglRender start");
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+   glEnable(GL_SCISSOR_TEST);
+   glViewport(0, 0, GlWidth, GlHeight);
+   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+   glDisable(GL_DEPTH_TEST);
+   if (w<GlWidth) {
+     glScissor(0, 0, x, h);
+     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+     glScissor(x+w, 0, w, h);
+     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+   } else {
+     glScissor(0, 0, x, h);
+     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+     glScissor(x+w, 0, w, h);
+     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+   }
+
+   if ((Vdp2Regs->TVMD & 0x8000) == 0){
+     glScissor(x, y, w, h);
+     glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+     goto render_finish;
+   }
+
+   if (_Ygl->original_fbotex == 0){
+     YglGenerateOriginalBuffer();
+   }
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
+   _Ygl->targetfbo = _Ygl->original_fbo;
+   glViewport(0, 0, GlWidth, GlHeight);
+   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+   glClearDepthf(0.0f);
+   glDepthMask(GL_TRUE);
+   glEnable(GL_DEPTH_TEST);
+   //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
    glViewport(0, 0, _Ygl->width, _Ygl->height);
 
