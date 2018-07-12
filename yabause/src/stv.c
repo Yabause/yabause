@@ -995,6 +995,7 @@ int loadGames(char* path) {
 }
 
 int STVInit(int id, char* path){
+  cryptoReset();
   if (CartridgeArea->carttype != CART_ROMSTV) return 0;
   int nbGames = STVGetRomList(path, 0);
   if (nbGames == 0) return -1;
