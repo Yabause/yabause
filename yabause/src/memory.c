@@ -815,7 +815,7 @@ u16 FASTCALL MappedMemoryReadWord(SH2_struct *context, u32 addr)
          return UnhandledMemoryReadLong(context, *(MemoryBuffer[(addr >> 16) & 0xFFF]), addr);
       case 0x7:
       {
-         if (addr >= 0xFFFFFE00)
+         if ((addr >= 0xFFFFFE00) && (context != NULL))
          {
             // Onchip modules
             addr &= 0x1FF;
@@ -861,7 +861,7 @@ u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct *context, u32 addr)
          return DataArrayReadWord(context, addr);
       case 0x7:
       {
-         if (addr >= 0xFFFFFE00)
+         if ((addr >= 0xFFFFFE00) && (context != NULL))
          {
             // Onchip modules
             addr &= 0x1FF;
@@ -1101,7 +1101,7 @@ void FASTCALL MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
       }
       case 0x7:
       {
-         if (addr >= 0xFFFFFE00)
+         if ((addr >= 0xFFFFFE00) && (context != NULL))
          {
             // Onchip modules
             addr &= 0x1FF;
@@ -1160,7 +1160,7 @@ CACHE_LOG("ww %x %x\n", addr, addr >> 29);
          return;
       case 0x7:
       {
-         if (addr >= 0xFFFFFE00)
+         if ((addr >= 0xFFFFFE00) && (context != NULL))
          {
             // Onchip modules
             addr &= 0x1FF;
