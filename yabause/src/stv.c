@@ -60,7 +60,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Astra SuperStars (J 980514 V1.002)",
     0x052e2901,
     {
-	HEADER_BLOB, "epr20825.13",    0x0000001, 0x0100000,
+	HEADER_BLOB, "epr20825.13",    0x0000000, 0x0100000,
     GAME_BYTE_BLOB, "epr20825.13",    0x0200000, 0x0100000,
     GAME_BYTE_BLOB, "epr20825.13",    0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr20827.2",     0x0400000, 0x0400000,
@@ -77,7 +77,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Baku Baku Animal (J 950407 V1.000)",
     0,
     {
-	HEADER_BLOB,    "fpr17969.13",   0x0000001, 0x0100000,
+	HEADER_BLOB,    "fpr17969.13",   0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr17969.13",   0x0200000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr17969.13",   0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr17970.2",    0x0400000, 0x0400000,
@@ -128,7 +128,7 @@ const Game GameList[NB_STV_GAMES]={
   {"DaeJeon! SanJeon SuJeon (AJTUE 990412 V1.000)",
     0,
     {
-	HEADER_BLOB, "ic11",  0x0000001, 0x0200000,
+	HEADER_BLOB, "ic11",  0x0000000, 0x0200000,
     GAME_WORD_BLOB, "ic13",    0x0400000, 0x0200000,
 	GAME_WORD_BLOB, "ic14",    0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic15",    0x0800000, 0x0200000,
@@ -173,7 +173,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     {
 	BIOS_BLOB, "mp17952a.s",   0x0000000, 0x0080000,
-	HEADER_BLOB, "fpr19119.13",    0x0000001, 0x0100000,
+	HEADER_BLOB, "fpr19119.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19119.13", 0x0200000, 0x0100000,
         GAME_BYTE_BLOB, "fpr19119.13", 0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr19115.2",  0x0400000, 0x0400000,
@@ -186,7 +186,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Dynamite Deka (J 960515 V1.000)",
     0,
     {
-	HEADER_BLOB,    "fpr19114.13", 0x0000001, 0x0100000,
+	HEADER_BLOB,    "fpr19114.13", 0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19114.13", 0x0200000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19114.13", 0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr19115.2",  0x0400000, 0x0400000,
@@ -199,7 +199,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Ejihon Tantei Jimusyo (J 950613 V1.000)",
     0,
     {
-	HEADER_BLOB,    "epr18137.13",  0x0000001, 0x0080000,
+	HEADER_BLOB,    "epr18137.13",  0x0000000, 0x0080000,
 	HEADER_BLOB,    "epr18137.13",  0x0100001, 0x0080000,
 	GAME_BYTE_BLOB, "epr18137.13",  0x0200000, 0x0080000,
 	GAME_BYTE_BLOB, "epr18137.13",  0x0300000, 0x0080000,
@@ -227,7 +227,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Final Fight Revenge (JUET 990930 V1.100)",
     0x0524ac01,
     {
-	HEADER_BLOB,    "ffr110.ic35",  0x0000001, 0x0100000,
+	HEADER_BLOB,    "ffr110.ic35",  0x0000000, 0x0100000,
 	GAME_WORD_BLOB, "opr21872.7",   0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr21873.2",   0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr21874.3",   0x0800000, 0x0400000,
@@ -241,7 +241,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Funky Head Boxers (JUETBKAL 951218 V1.000)",
     0x0524ac01,
     {
-	HEADER_BLOB,    "fr18541a.13",   0x0000001, 0x0100000,
+	HEADER_BLOB,    "fr18541a.13",   0x0000000, 0x0100000,
 	GAME_WORD_BLOB, "mpr18538.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr18533.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18534.3",    0x0800000, 0x0400000,
@@ -257,7 +257,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Golden Axe - The Duel (JUETL 950117 V1.000)",
    0,
    {
-	HEADER_BLOB,   "epr17766.13",    0x0000001, 0x0080000,
+	HEADER_BLOB,   "epr17766.13",    0x0000000, 0x0080000,
 	HEADER_BLOB,   "epr17766.13",    0x0100001, 0x0080000,
 	GAME_BYTE_BLOB,"epr17766.13",    0x0200000, 0x0080000,
 	GAME_BYTE_BLOB,"epr17766.13",    0x0300000, 0x0080000,
@@ -325,7 +325,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Karaoke Quiz Intro Don Don! (J 960213 V1.000)",
    0,
    {
-	HEADER_BLOB,    "epr18937.13", 0x0000001, 0x0080000,
+	HEADER_BLOB,    "epr18937.13", 0x0000000, 0x0080000,
 	HEADER_BLOB,    "epr18937.13", 0x0100001, 0x0080000,
 	GAME_WORD_BLOB, "mpr18944.7",  0x0200000, 0x0100000,
 	GAME_WORD_BLOB, "mpr18939.2",    0x0400000, 0x0400000,
@@ -351,7 +351,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Pebble Beach - The Great Shot (JUE 950913 V0.990)",
    0,
    {
-	HEADER_BLOB,    "epr18852.13",   0x0000001, 0x0080000,
+	HEADER_BLOB,    "epr18852.13",   0x0000000, 0x0080000,
 	HEADER_BLOB,    "epr18852.13",   0x0100001, 0x0080000,
 	GAME_BYTE_BLOB, "epr18852.13",   0x0200000, 0x0080000,
 	GAME_BYTE_BLOB, "epr18852.13",   0x0300000, 0x0080000,
@@ -376,7 +376,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Pro Mahjong Kiwame S (J 951020 V1.208)",
    0,
    {
-	HEADER_BLOB,   "epr18737.13",    0x0000001, 0x0080000,
+	HEADER_BLOB,   "epr18737.13",    0x0000000, 0x0080000,
 	HEADER_BLOB,   "epr18737.13",    0x0100001, 0x0080000,
 	GAME_WORD_BLOB, "mpr18738.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18739.3",    0x0800000, 0x0400000,
@@ -387,7 +387,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Puyo Puyo Sun (J 961115 V0.001)",
    0,
    {
-	HEADER_BLOB, "epr19531.13",    0x0000001, 0x0080000,
+	HEADER_BLOB, "epr19531.13",    0x0000000, 0x0080000,
 	HEADER_BLOB, "epr19531.13",    0x0100001, 0x0080000,
 	GAME_BYTE_BLOB, "epr19531.13", 0x0200000, 0x0080000,
 	GAME_BYTE_BLOB, "epr19531.13", 0x0300000, 0x0080000,
@@ -405,7 +405,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Puzzle & Action: Sando-R (J 951114 V1.000)",
    0,
    {
-        HEADER_BLOB,    "sando-r.13",  0x0000001, 0x0100000,
+        HEADER_BLOB,    "sando-r.13",  0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "sando-r.13",  0x0200000, 0x0100000,
 	GAME_BYTE_BLOB, "sando-r.13",  0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr18635.8",  0x1c00000, 0x0400000,
@@ -454,7 +454,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Zenkoku Seifuku Bishoujo Grand Prix Find Love (J 971212 V1.000)",
     0,
     {
-	HEADER_BLOB,   "epr20424.13",    0x0000001, 0x0100000,
+	HEADER_BLOB,   "epr20424.13",    0x0000000, 0x0100000,
 	GAME_WORD_BLOB, "mpr20431.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20426.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20427.3",    0x0800000, 0x0400000,
@@ -639,7 +639,8 @@ int copyFile(JZFile *zip, void* id) {
               break;
             case HEADER_BLOB:
               for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
-                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j), data[j]);
+                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j+1), data[j]);
+                T1WriteByte(CartridgeArea->rom, availableGames[gameId].entry->blobs[i].offset+(2*j), 0);
               }
               break;
             case GAME_BYTE_BLOB:
