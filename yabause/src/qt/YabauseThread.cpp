@@ -462,7 +462,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.video_filter_type = 0;
 	mYabauseConf.video_upscale_type = 0;
 	mYabauseConf.polygon_generation_mode = 0;
-        mYabauseConf.resolution_mode = 0;
+        mYabauseConf.resolution_mode = 1;
         mYabauseConf.stretch = 0;
         mYabauseConf.useVdp1cache = 0;
 }

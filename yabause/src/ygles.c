@@ -922,25 +922,28 @@ int YglGenFrameBuffer() {
 
    if(1) //strstr((const char*)glGetString(GL_EXTENSIONS),"packed_depth_stencil") != NULL )
   {
-    if (_Ygl->rboid_depth[0] != 0) glDeleteRenderbuffers(2, &_Ygl->rboid_depth);
-    glGenRenderbuffers(2, &_Ygl->rboid_depth);
+    if (_Ygl->rboid_depth[0] != 0) glDeleteRenderbuffers(2, _Ygl->rboid_depth);
+    glGenRenderbuffers(2, _Ygl->rboid_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth[0]);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
+    glBindRenderbuffer( GL_RENDERBUFFER, 0 );
     _Ygl->rboid_stencil[0] = _Ygl->rboid_depth[0];
+
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth[1]);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
     _Ygl->rboid_stencil[1] = _Ygl->rboid_depth[1];
+    glBindRenderbuffer( GL_RENDERBUFFER, 0 );
   }
   else{
-    if (_Ygl->rboid_depth[0] != 0) glDeleteRenderbuffers(2, &_Ygl->rboid_depth);
-    glGenRenderbuffers(2, &_Ygl->rboid_depth);
+    if (_Ygl->rboid_depth[0] != 0) glDeleteRenderbuffers(2, _Ygl->rboid_depth);
+    glGenRenderbuffers(2, _Ygl->rboid_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth[0]);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, _Ygl->width, _Ygl->height);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth[1]);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, _Ygl->width, _Ygl->height);
 
-    if (_Ygl->rboid_stencil[0] != 0) glDeleteRenderbuffers(2, &_Ygl->rboid_stencil);
-    glGenRenderbuffers(1, &_Ygl->rboid_stencil[0]);
+    if (_Ygl->rboid_stencil[0] != 0) glDeleteRenderbuffers(2, _Ygl->rboid_stencil);
+    glGenRenderbuffers(2, _Ygl->rboid_stencil);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_stencil[0]);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, _Ygl->width, _Ygl->height);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_stencil[1]);
@@ -948,16 +951,16 @@ int YglGenFrameBuffer() {
   }
 
   if (_Ygl->vdp1fbo[0] != 0)
-    glDeleteFramebuffers(2, &_Ygl->vdp1fbo);
+    glDeleteFramebuffers(2, _Ygl->vdp1fbo);
 
-  glGenFramebuffers(2, &_Ygl->vdp1fbo);
+  glGenFramebuffers(2, _Ygl->vdp1fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo[0]);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0], 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth[0]);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil[0]);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    YGLDEBUG("YglGenFrameBuffer:Framebuffer line %d status = %08X\n", __LINE__, status);
+    printf("YglGenFrameBuffer:Framebuffer line %d status = %08X\n", __LINE__, status);
     abort();
   }
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -971,7 +974,7 @@ int YglGenFrameBuffer() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
-    YGLDEBUG("YglGenFrameBuffer:Framebuffer line %d status = %08X\n", __LINE__, status);
+    printf("YglGenFrameBuffer:Framebuffer line %d status = %08X\n", __LINE__, status);
     abort();
   }
   YglGenerateOriginalBuffer();
@@ -1011,6 +1014,7 @@ int YglGenerateOriginalBuffer(){
     glGenRenderbuffers(1, &_Ygl->original_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_depth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
+    glBindRenderbuffer( GL_RENDERBUFFER, 0 );
     _Ygl->original_stencil = _Ygl->original_depth;
     
   }else{
@@ -1018,12 +1022,12 @@ int YglGenerateOriginalBuffer(){
     glGenRenderbuffers(1, &_Ygl->original_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_depth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, _Ygl->width, _Ygl->height);
-
+    glBindRenderbuffer( GL_RENDERBUFFER, 0 );
     if (_Ygl->original_stencil != 0) glDeleteRenderbuffers(1, &_Ygl->original_stencil);
     glGenRenderbuffers(1, &_Ygl->original_stencil);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_stencil);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_STENCIL_INDEX8, _Ygl->width, _Ygl->height);
-    
+    glBindRenderbuffer( GL_RENDERBUFFER, 0 );
   }
 
   if (_Ygl->original_fbo != 0){
@@ -1069,6 +1073,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->rwidth = 320;
   _Ygl->rheight = 240;
   _Ygl->density = 1;
+  _Ygl->resolution_mode = 1;
 
   if ((_Ygl->levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
     return -1;
@@ -3142,8 +3147,15 @@ void YglUpdateVDP1FB(void) {
 
 void YglCheckFBSwitch(int sync) {
   GLenum ret = GL_WAIT_FAILED;
-  if (_Ygl->sync != 0)
-    ret = glClientWaitSync(_Ygl->sync, 0, (sync?20000000:0));
+  if (_Ygl->sync == 0) return;
+  ret = glClientWaitSync(_Ygl->sync, 0, 0);
+  if (sync != 0) {
+    int end = 0;
+    while (end == 0) {
+     ret = glClientWaitSync(_Ygl->sync, 0, 20000000);
+     if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) end = 1;
+    }
+  }
   if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) {
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
