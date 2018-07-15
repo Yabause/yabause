@@ -846,6 +846,7 @@ int loadGame(int gameId){
   }
   if (isBlobFound & (isBiosFound|hasBios)) {
     LOGSTV("%s has been sucessfully loaded\n", availableGames[gameId].entry->name);
+    eeprom_start(NULL);
     cyptoSetKey(availableGames[gameId].entry->key);
     return 0;
   }
