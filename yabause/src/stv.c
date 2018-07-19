@@ -30,28 +30,28 @@ const Game BiosList =
 {"STV Bios",
     0x0,
     {
-	BIOS_BLOB, "epr-17952a.ic8",  0x000000, 0x080000,
-	BIOS_BLOB, "epr17952a.ic8",   0x000000, 0x080000,
-    BIOS_BLOB, "epr-20091.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr-19730.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr-17951a.ic8",  0x000000, 0x080000,
-	BIOS_BLOB, "epr-17740a.ic8",  0x000000, 0x080000,
-	BIOS_BLOB, "epr-17740.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr-17954a.ic8",  0x000000, 0x080000,
-	BIOS_BLOB, "epr-19854.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr-17953a.ic8",  0x000000, 0x080000,
-	BIOS_BLOB, "epr-17742a.ic8",  0x000000, 0x080000,
-	BIOS_BLOB, "stv110.bin",      0x000000, 0x080000,
-	BIOS_BLOB, "stv1061.bin",     0x000000, 0x080000,
-	BIOS_BLOB, "epr20091.ic8",    0x000000, 0x080000,
-	BIOS_BLOB, "epr19730.ic8",    0x000000, 0x080000,
-	BIOS_BLOB, "epr17951a.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr17740a.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr17740.ic8",    0x000000, 0x080000,
-	BIOS_BLOB, "epr17954a.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr19854.ic8",    0x000000, 0x080000,
-	BIOS_BLOB, "epr17953a.ic8",   0x000000, 0x080000,
-	BIOS_BLOB, "epr17742a.ic8",   0x000000, 0x080000,
+        BIOS_BLOB, "epr-20091.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr20091.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-19730.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr19730.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-17951a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr17951a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-17740a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr17740a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-17740.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr17740.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-17954a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr17954a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-17952a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr17952a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-19854.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr19854.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-17953a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr17953a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr-17742a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr17742a.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "stv110.bin", 0x000000, 0x080000,
+        BIOS_BLOB, "stv1061.bin", 0x000000, 0x080000,
         GAME_END, "", 0, 0
     },
 };
@@ -538,7 +538,7 @@ int processFile(JZFile *zip,void *input) {
 
     return 0;
 }
-int biosloaded = 0;
+int biosloaded = 0xFF;
 
 int copyBios(JZFile *zip, void* id) {
     JZFileHeader header;
@@ -576,11 +576,12 @@ int copyBios(JZFile *zip, void* id) {
           }
           switch (biosLink.entry->blobs[i].type) {
             case BIOS_BLOB:
-              if (biosloaded == 0) {
+              if (biosloaded > i) {
+                STVLOG("Load bios %s\n", filename);
                 for (j=0; j<biosLink.entry->blobs[i].length;j++) {
                   T1WriteByte(BiosRom, biosLink.entry->blobs[i].offset+j, data[j]);
                 }
-                biosloaded = 1;
+                biosloaded = i;
               }
               break;
           }
@@ -625,11 +626,12 @@ int copyFile(JZFile *zip, void* id) {
           fileFound[gameId][i] = 1;
           switch (availableGames[gameId].entry->blobs[i].type) {
             case BIOS_BLOB:
-              if (biosloaded == 0) {
+              if (biosloaded > i) {
+                STVLOG("Load bios %s\n", filename);
                 for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
                   T1WriteByte(BiosRom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
                 }
-                biosloaded = 1;
+                biosloaded = i;
               }
               break;
             case GAME_WORD_BLOB:
@@ -815,7 +817,7 @@ int loadGame(int gameId){
   info.gameId = gameId;
   info.bios = 0;
   hasBios = loadBios();
-  biosloaded = 0;
+  biosloaded = 0xFF;
 
   LOGSTV("Loading game[%d] %s from %s\n", gameId, availableGames[gameId].entry->name, availableGames[gameId].path);
   memset(fileFound, 0x0, NB_STV_GAMES*MAX_GAME_FILES);
