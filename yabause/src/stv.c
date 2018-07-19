@@ -577,7 +577,7 @@ int copyBios(JZFile *zip, void* id) {
           switch (biosLink.entry->blobs[i].type) {
             case BIOS_BLOB:
               if (biosloaded > i) {
-                STVLOG("Load bios %s\n", filename);
+                LOGSTV("Load bios %s\n", filename);
                 for (j=0; j<biosLink.entry->blobs[i].length;j++) {
                   T1WriteByte(BiosRom, biosLink.entry->blobs[i].offset+j, data[j]);
                 }
@@ -627,7 +627,7 @@ int copyFile(JZFile *zip, void* id) {
           switch (availableGames[gameId].entry->blobs[i].type) {
             case BIOS_BLOB:
               if (biosloaded > i) {
-                STVLOG("Load bios %s\n", filename);
+                LOGSTV("Load bios %s\n", filename);
                 for (j=0; j<availableGames[gameId].entry->blobs[i].length;j++) {
                   T1WriteByte(BiosRom, availableGames[gameId].entry->blobs[i].offset+j, data[j]);
                 }
