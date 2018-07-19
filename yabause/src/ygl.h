@@ -451,7 +451,8 @@ typedef enum
 {
   UP_NONE = 0,
   UP_HQ4X,
-  UP_4XBRZ
+  UP_4XBRZ,
+  UP_2XBRZ,
 } UPMODE;
 
 typedef enum

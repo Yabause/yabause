@@ -87,7 +87,8 @@ const Items mVideoFilterMode = Items()
 const Items mUpscaleFilterMode = Items()
 	<< Item("0", "None")
 	<< Item("1", "HQ4x")
-        << Item("2", "4xBRZ");
+        << Item("2", "4xBRZ")
+        << Item("3", "2xBRZ");
 
 
 const Items mPolygonGenerationMode = Items()
