@@ -1,4 +1,4 @@
 #!/bin/bash
 
-objdump -b binary -D -marm $1 > $1.txt
+objdump -b binary -D -maarch64 $1 > $1.txt
 

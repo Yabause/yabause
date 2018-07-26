@@ -34,17 +34,19 @@ virtual void TearDown() {
 
 TEST_F(ExtsbTest, normal) {
 
-  pctx_->GetGenRegPtr()[0]=0x00000020; //source
+  pctx_->GetGenRegPtr()[2]=0x00000020; //source
+  pctx_->GetGenRegPtr()[1]=0x00FF0036; //source
 
   // subc r1,r2
-  memSetWord( 0x06000000, 0x600e );
+  memSetWord( 0x06000000, 0x621e );
   memSetWord( 0x06000002, 0x000b );  // rts
   memSetWord( 0x06000004, 0x0009 );  // nop
 
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x00000020, pctx_->GetGenRegPtr()[0] );
+  EXPECT_EQ( 0x00000036, pctx_->GetGenRegPtr()[2] );
+  EXPECT_EQ( 0x00FF0036, pctx_->GetGenRegPtr()[1] );
 }
 
 TEST_F(ExtsbTest, normal_T1) {

@@ -528,6 +528,8 @@ int DebugEachClock() {
   #define INSTRUCTION_B(x) ((x & 0x0F00) >> 8)
   #define INSTRUCTION_C(x) ((x & 0x00F0) >> 4)
 
+  //printf("PC:%08X\n",DynarecSh2::CurrentContext->GET_PC());
+
 #if 0
   u32 pc = DynarecSh2::CurrentContext->GET_PC();
   u16 inst = memGetWord(pc);

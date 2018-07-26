@@ -145,6 +145,11 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 				set(yabause_SOURCES 
 				  ${yabause_SOURCES}
 					sh2_dynarec_devmiyax/dynalib_arm.s)
+			elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "aarch64")
+				enable_language(ASM-ATT)
+				set(yabause_SOURCES 
+				  ${yabause_SOURCES}
+					sh2_dynarec_devmiyax/dynalib_arm64.s)
 			endif ()
 		endif ()
 
@@ -840,8 +845,9 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7ve -std=c++11 -mcpu=cortex-a15 -mfpu=neon -ffast-math -fno-math-errno -fno-exceptions -fno-rtti")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -std=c++11  -ffast-math -fno-exceptions -fno-rtti  ")
+		add_definitions(-DAARCH64)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3 -std=c99 -march=armv8-a -ffast-math ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -march=armv8-a -std=c++11  -ffast-math -fno-exceptions -fno-rtti ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC

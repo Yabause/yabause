@@ -50,6 +50,8 @@ static void ScuTestInterruptMask(void);
 static FILE * slogp = NULL;
 #endif
 
+#define LOG
+
 //////////////////////////////////////////////////////////////////////////////
 
 int ScuInit(void) {

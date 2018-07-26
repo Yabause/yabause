@@ -243,7 +243,7 @@ void YabThreadFreeMutex( YabMutex * mtx ){
 #define _GNU_SOURCE
 #include <sched.h>
 
-#if !(defined ARCH_IS_LINUX) || (defined ANDROID)
+#if 0 // !(defined ARCH_IS_LINUX) || (defined ANDROID)
  
 extern int clone(int (*)(void*), void*, int, void*, ...);
 extern int unshare(int);

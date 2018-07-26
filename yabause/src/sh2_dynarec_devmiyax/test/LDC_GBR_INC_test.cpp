@@ -36,6 +36,10 @@ virtual void TearDown() {
 
 TEST_F(LDC_GBR_INCTest, normal) {
 
+  for (int i = 0; i<15; i++)
+    pctx_->GetGenRegPtr()[i]=0xFFFFFFFF;
+
+
   pctx_->GetGenRegPtr()[15]=0x06001F3C;
   memSetLong( 0x06001F3C, 0x25D00000 );
   pctx_->SET_SR(0);
@@ -50,7 +54,32 @@ TEST_F(LDC_GBR_INCTest, normal) {
 
   EXPECT_EQ( 0x25D00000, pctx_->GET_GBR() );
   EXPECT_EQ( 0x06001F40, pctx_->GetGenRegPtr()[15] );
+  for (int i = 0; i<15; i++)
+    EXPECT_EQ( 0xFFFFFFFF, pctx_->GetGenRegPtr()[i] );
+}
 
+TEST_F(LDC_GBR_INCTest, normal_zero) {
+
+  for (int i = 0; i<15; i++)
+    pctx_->GetGenRegPtr()[i]=0x00000000;
+
+
+  pctx_->GetGenRegPtr()[15]=0x06001F3C;
+  memSetLong( 0x06001F3C, 0x25D00000 );
+  pctx_->SET_SR(0);
+
+  // ldc.l @r15+, gbr
+  memSetWord( 0x06000000, 0x4F17 );
+  memSetWord( 0x06000002, 0x000B );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0x25D00000, pctx_->GET_GBR() );
+  EXPECT_EQ( 0x06001F40, pctx_->GetGenRegPtr()[15] );
+  for (int i = 0; i<15; i++)
+    EXPECT_EQ( 0x00000000, pctx_->GetGenRegPtr()[i] );
 }
 
 

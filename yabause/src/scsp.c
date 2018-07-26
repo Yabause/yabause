@@ -5505,10 +5505,19 @@ void ScspAsynMain( void * p ){
         if(initsleeptime==0){initsleeptime = sleeptime; initnow = now; }
         if( sleeptime < 0 ) break;
 #if defined(ANDROID)
-        tm.tv_sec = 0;
-        tm.tv_nsec = sleeptime;
+        //tm.tv_sec = 0;
+        //tm.tv_nsec = sleeptime;
+
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &tm);
+        ts.tv_nsec = tm.tv_nsec + sleeptime;
+        if( tm.tv_nsec > ts.tv_nsec ){
+          tm.tv_sec += 1;
+        }
+        tm.tv_nsec = ts.tv_nsec;
+
         pthread_mutex_lock(&sync_mutex);
-        int rtn = pthread_cond_timedwait_relative_np(&sync_cnd,&sync_mutex,&tm);
+        int rtn = pthread_cond_timedwait(&sync_cnd,&sync_mutex,&tm);
         if(rtn == 0){
           for (i = 0; i < samplecnt; i += step) {
             MM68KExec(step);

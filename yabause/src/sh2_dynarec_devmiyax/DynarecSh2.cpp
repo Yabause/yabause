@@ -41,9 +41,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 CompileBlocks * CompileBlocks::instance_ = NULL;
 DynarecSh2 * DynarecSh2::CurrentContext = NULL;
 
+
 #if defined(ARCH_IS_LINUX)
 #include <unistd.h> // chaceflush
 
+#if 1 //defiend(__aarch64__)
+
+#if defined(ANDROID)
+void cacheflush(uintptr_t begin, uintptr_t end, int flag ){
+  __builtin___clear_cache((void*)begin,(void*)end);
+}
+#endif
+//#define cacheflush __builtin___clear_cache
+
+#else
 #if !defined(ANDROID)
 void cacheflush(uintptr_t begin, uintptr_t end, int flag )
 { 
@@ -59,6 +70,7 @@ void cacheflush(uintptr_t begin, uintptr_t end, int flag )
      : "r0", "r1", "r7"
     );
 }
+#endif
 #endif
 
 #endif
@@ -213,36 +225,37 @@ i_desc opcode_list[] =
 
 void DumpInstX( int i, u32 pc, u16 op  )
 {
-   LOG( "%08X : ", pc );
+  char buf[256];
+  //sprintf( buf, "%08X : ", pc );
 
   if (opcode_list[i].format == ZERO_F)
-    LOG("%s", opcode_list[i].mnem);
+    sprintf( buf,"%s", opcode_list[i].mnem);
   else if (opcode_list[i].format == N_F)
-    LOG(opcode_list[i].mnem, (op >> 8) & 0xf);
+    sprintf( buf,opcode_list[i].mnem, (op >> 8) & 0xf);
   else if (opcode_list[i].format == M_F)
-    LOG(opcode_list[i].mnem, (op >> 8) & 0xf);
+    sprintf( buf,opcode_list[i].mnem, (op >> 8) & 0xf);
   else if (opcode_list[i].format == NM_F)
-    LOG(opcode_list[i].mnem, (op >> 4) & 0xf, (op >> 8) & 0xf);
+    sprintf( buf,opcode_list[i].mnem, (op >> 4) & 0xf, (op >> 8) & 0xf);
   else if (opcode_list[i].format == MD_F)
   {
     if (op & 0x100)
-      LOG(opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
     else
-      LOG(opcode_list[i].mnem, op & 0xf, (op >> 4) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, op & 0xf, (op >> 4) & 0xf);
   }
   else if (opcode_list[i].format == ND4_F)
   {
     if (op & 0x100)
-      LOG(opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, (op & 0xf) * 2, (op >> 4) & 0xf);
     else
-      LOG(opcode_list[i].mnem, (op & 0xf), (op >> 4) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, (op & 0xf), (op >> 4) & 0xf);
   }
   else if (opcode_list[i].format == NMD_F)
   {
     if ((op & 0xf000) == 0x1000)
-      LOG(opcode_list[i].mnem, (op >> 4) & 0xf, (op & 0xf) * 4, (op >> 8) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, (op >> 4) & 0xf, (op & 0xf) * 4, (op >> 8) & 0xf);
     else
-      LOG(opcode_list[i].mnem, (op & 0xf) * 4, (op >> 4) & 0xf, (op >> 8) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, (op & 0xf) * 4, (op >> 4) & 0xf, (op >> 8) & 0xf);
   }
   else if (opcode_list[i].format == D_F)
   {
@@ -250,61 +263,59 @@ void DumpInstX( int i, u32 pc, u16 op  )
     {
       if ((op & 0xff00) == 0xc700)
       {
-        LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4);
+        sprintf( buf,opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4);
 //				LOG("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + PC);
       }
       else
-        LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat);
+        sprintf( buf,opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat);
     }
     else
     {
       if (op & 0x80)  /* sign extend */
-        LOG(opcode_list[i].mnem, (((op & 0xff) + 0xffffff00) * 2) + pc + 4);
+        sprintf( buf,opcode_list[i].mnem, (((op & 0xff) + 0xffffff00) * 2) + pc + 4);
       else
-        LOG(opcode_list[i].mnem, ((op & 0xff) * 2) + pc + 4);
+        sprintf( buf,opcode_list[i].mnem, ((op & 0xff) * 2) + pc + 4);
     }        
   }
   else if (opcode_list[i].format == D12_F)
   {
     if (op & 0x800)         /* sign extend */
-      LOG(opcode_list[i].mnem, ((op & 0xfff) + 0xfffff000) * 2 + pc + 4);
+      sprintf( buf,opcode_list[i].mnem, ((op & 0xfff) + 0xfffff000) * 2 + pc + 4);
     else
-      LOG(opcode_list[i].mnem, (op & 0xfff) * 2 + pc + 4);
+      sprintf( buf,opcode_list[i].mnem, (op & 0xfff) * 2 + pc + 4);
   }
   else if (opcode_list[i].format == ND8_F)
   {
     if ((op & 0xf000) == 0x9000)    /* .W */
     {
-      LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
       //LOG("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + pc);
     }
     else  /* .L */
     {
-      LOG(opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
+      sprintf( buf,opcode_list[i].mnem, (op & 0xff) * opcode_list[i].dat + 4, (op >> 8) & 0xf);
       //LOG("  ; 0x%08X", (op & 0xff) * opcode_list[i].dat + 4 + ((pc) & 0xfffffffc));
     }
   }
   else if (opcode_list[i].format == I_F)
-    LOG(opcode_list[i].mnem, op & 0xff);
+    sprintf( buf,opcode_list[i].mnem, op & 0xff);
   else if (opcode_list[i].format == NI_F)
-    LOG(opcode_list[i].mnem, op & 0xff, (op >> 8) & 0xf);
+    sprintf( buf,opcode_list[i].mnem, op & 0xff, (op >> 8) & 0xf);
   else
   {
-    LOG("unrecognized\n");
+    sprintf( buf,"unrecognized\n");
     return;
   }
-
-  LOG( "\n");
+  LOG("%08X : %s\n", pc , buf );
   return;
 }
-
 
 
 #define opdesc(op, y, c, d)	x86op_desc(x86_##op, &op##_size, &op##_src, &op##_dest, &op##_off1, &op##_imm, &op##_off3, y, c, d)
 
 #define opNULL			x86op_desc(0,0,0,0,0,0,0,0,0,0)
 
-#if _WINDOWS
+#if defined(_WINDOWS)
 #define PROLOGSIZE		     27    
 #define EPILOGSIZE		      3
 #define SEPERATORSIZE	     10
@@ -313,12 +324,26 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define SEPERATORSIZE_DELAY  7
 #define SEPERATORSIZE_DELAY_SLOT  27
 #define SEPERATORSIZE_DELAY_AFTER  10 
-#define SEPERATORSIZE_DELAYD 34
+#define SEPERATORSIZE_DELAYD_DEBUG 34
 #define DELAYJUMPSIZE	     17
 #define DALAY_CLOCK_OFFSET 6
+#define DALAY_CLOCK_OFFSET_DEBUG 6
 #define NORMAL_CLOCK_OFFSET 6
 #define NORMAL_CLOCK_OFFSET_DEBUG 3
-#else
+#elif defined(AARCH64)
+#define PROLOGSIZE		     (8*4)    
+#define SEPERATORSIZE_NORMAL (2*4)
+#define NORMAL_CLOCK_OFFSET 4
+#define NORMAL_CLOCK_OFFSET_DEBUG 4
+#define SEPERATORSIZE_DEBUG  (17*4)
+#define SEPERATORSIZE_DELAY_SLOT  (13*4)
+#define SEPERATORSIZE_DELAY_AFTER  (10*4)
+#define DALAY_CLOCK_OFFSET (3*4)
+#define DALAY_CLOCK_OFFSET_DEBUG (10*4)
+#define SEPERATORSIZE_DELAYD_DEBUG (19*4)
+#define EPILOGSIZE		      (8*4)
+#define DELAYJUMPSIZE	     (17*4)
+#else // ARMv7
 #define PROLOGSIZE		     16    
 #define SEPERATORSIZE_NORMAL 8
 #define NORMAL_CLOCK_OFFSET 4
@@ -327,7 +352,8 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define SEPERATORSIZE_DELAY_SLOT  36
 #define SEPERATORSIZE_DELAY_AFTER  20
 #define DALAY_CLOCK_OFFSET 8
-#define SEPERATORSIZE_DELAYD 60
+#define DALAY_CLOCK_OFFSET_DEBUG 8
+#define SEPERATORSIZE_DELAYD_DEBUG 60
 #define EPILOGSIZE		      12
 #define DELAYJUMPSIZE	     32
 #endif
@@ -727,7 +753,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
         LookupTableC[ (g_CompleBlock[blockCount].b_addr & 0x000FFFFF)>>1   ] = NULL;
       }
       break;
-    }
+    } 
   }
 
   g_CompleBlock[blockCount].b_addr = pc;
@@ -747,7 +773,32 @@ void CompileBlocks::ShowStatics() {
 
 void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 {
+#if defined(AARCH64)
   // multiply source and dest regions by 4 (size of register) 
+
+  if (*(op->src) != 0xFF) // C
+  {
+    *(u32*)(ptr + *(op->src)) |= ((u32)((opcode >> 4) & 0xf) << (2+5));
+  }
+
+  if (*(op->dest) != 0xFF) // B
+  {
+    *(u32*)(ptr + *(op->dest)) |= ((u32)((opcode >> 8) & 0xf) << (2+5)) ;
+  }
+
+  if (*(op->off1) != 0xFF){
+    *(u32*)(ptr + *(op->off1)) |= ((u32)(opcode & 0xf) << 5) ;
+  }
+
+  if (*(op->imm) != 0xFF){
+    *(u32*)(ptr + *(op->imm)) |= ((u32)opcode & 0xff)<<5;
+  }
+
+  if (*(op->off3) != 0xFF) {
+    *(u32*)(ptr + *(op->off3)) |= ((u32)opcode & 0xfff) << 5;
+  }
+
+#else
 
   if (*(op->src) != 0xFF) // C
     *(ptr + *(op->src)) = (u8)(((opcode >> 4) & 0xf) << 2);
@@ -768,8 +819,10 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
   if (*(op->off3) != 0xFF) {
     *(ptr + *(op->off3)) = (u8)((opcode >> 8) & 0x0f);
     *(ptr + *(op->off3) + 4) = (u8)(opcode & 0xff);
-  }
+}
 #endif  
+
+#endif
 }
 
 
@@ -805,8 +858,8 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     nomal_seperator_size = SEPERATORSIZE_DEBUG;
     nomal_seperator_counter_offset = NORMAL_CLOCK_OFFSET_DEBUG;
     delay_seperator = (void*)seperator_d_delay;
-    delay_seperator_size = SEPERATORSIZE_DELAYD;
-    delayslot_seperator_counter_offset = DALAY_CLOCK_OFFSET;
+    delay_seperator_size = SEPERATORSIZE_DELAYD_DEBUG;
+    delayslot_seperator_counter_offset = DALAY_CLOCK_OFFSET_DEBUG;
   }
   else {
     nomal_seperator = (void*)seperator_normal;
@@ -869,9 +922,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       }
     }
 
-#ifdef BUILD_INFO  
-    LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
-#endif    
+//#ifdef BUILD_INFO  
+//    LOG("compiling %08X, 0x%04X @ 0x%08X\n", startptr, op, addr);
+//#endif    
 
     addr += 2;
 
@@ -889,8 +942,14 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
       instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size;
       opcodePass(&asm_list[i], op, ptr);
+#if defined(AARCH64)
+      u32 * counterpos = (u32*)(ptr + *(asm_list[i].size) + nomal_seperator_counter_offset);
+      *counterpos |= (asm_list[i].cycle<<10);
+#else
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
+#endif
+
       ptr += *(asm_list[i].size) + nomal_seperator_size;
     }
 
@@ -910,15 +969,20 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       memcpy((void*)(ptr + *(asm_list[i].size)+ nomal_seperator_size), (void*)PageFlip, DELAYJUMPSIZE);
       instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
       opcodePass(&asm_list[i], op, ptr);
+#if defined(AARCH64)
+      u32 * counterpos = (u32*)(ptr + *(asm_list[i].size) + nomal_seperator_counter_offset);
+      *counterpos |= (asm_list[i].cycle<<10) ;
+#else
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
+#endif
       ptr += *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
     }
 
     // Jmp With Delay Operation
     else { 
 
-      u8 cycle = asm_list[i].cycle;
+      u32 cycle = asm_list[i].cycle;
       memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)delay_seperator, delay_seperator_size);
       instrSize[blockCount][count++] = *(asm_list[i].size) + delay_seperator_size;
@@ -953,8 +1017,13 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       memcpy((void*)(ptr + *(asm_list[j].size)), (void*)seperator_delay_after, SEPERATORSIZE_DELAY_AFTER);
       instrSize[blockCount][count++] = *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
       opcodePass(&asm_list[j], temp, ptr);
+#if defined(AARCH64)
+      u32 * counterpos = (u32*)(ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset);
+      *counterpos |= (asm_list[i].cycle<<10) ;      
+#else
       u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
       *counterpos = cycle;
+#endif
       ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
     }
 
@@ -1016,7 +1085,8 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   }
 
 #ifdef BUILD_INFO 
-  LOG("*********** end block size = %08X *************\n", (ptr - startptr));
+  //LOG("*********** end block size = %08X *************\n", (ptr - startptr));
+  LOG("*********** end block *************\n");
 #endif 
 
 #if defined(ARCH_IS_LINUX)
@@ -1026,9 +1096,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 #if 0 // Dump code
   char fname[64];
 #if defined(ANDROID)
-  sLOG(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
+  sprintf(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
 #else
-  sLOG(fname,"%08X.bin",start_addr);
+  sprintf(fname,"%08X.bin",start_addr);
 #endif
    FILE * fp = fopen(fname, "wb");
   if(fp){
@@ -1049,7 +1119,7 @@ DynarecSh2::DynarecSh2() {
   m_pDynaSh2->setmemword = (uintptr_t)memSetWord;
   m_pDynaSh2->setmemlong = (uintptr_t)memSetLong;
   m_pDynaSh2->eachclock = (uintptr_t)DebugEachClock;
-  
+
   m_pCompiler = CompileBlocks::getInstance();
   m_ClockCounter = 0;
   m_IntruptTbl.clear();
@@ -1442,7 +1512,7 @@ int DynarecSh2::GetCurrentStatics(MapCompileStatics & buf){
 void DynarecSh2::ShowCompileInfo(){
   int i = 0;
   while (asm_list[i].func != NULL) {
-    LOG("%s: %d\n", opcode_list[i].mnem, asm_list[i].build_count);
+    printf("%s: %d\n", opcode_list[i].mnem, asm_list[i].build_count);
     i++;
   }
 }
@@ -1454,3 +1524,4 @@ void DynarecSh2::ResetCompileInfo() {
     i++;
   }
 }
+

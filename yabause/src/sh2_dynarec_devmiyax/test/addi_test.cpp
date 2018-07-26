@@ -65,7 +65,7 @@ TEST_F(AddiTest, normal_T1) {
 
 TEST_F(AddiTest, normal_T21) {
 
-   pctx_->GetGenRegPtr()[3]=0xFFFFFFFF;
+   pctx_->GetGenRegPtr()[3]=0xDEADCAFE;
 
    // subc r1,r2
    memSetWord( 0x06000000, 0x73FF );
@@ -75,6 +75,6 @@ TEST_F(AddiTest, normal_T21) {
    pctx_->SET_PC( 0x06000000 );
    pctx_->Execute();
 
-   EXPECT_EQ( 0xFFFFFFFE, pctx_->GetGenRegPtr()[3] );
+   EXPECT_EQ( 0xDEADCAFD, pctx_->GetGenRegPtr()[3] );
 }
 }  // namespacegPtr

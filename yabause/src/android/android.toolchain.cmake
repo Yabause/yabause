@@ -231,7 +231,7 @@ if( NOT DEFINED ANDROID_STANDALONE_TOOLCHAIN_SEARCH_PATH )
 endif()
 
 # known ABIs
-set( ANDROID_SUPPORTED_ABIS_arm "armeabi-v7a;armeabi;armeabi-v7a with NEON;armeabi-v7a with VFPV3;armeabi-v6 with VFP" )
+set( ANDROID_SUPPORTED_ABIS_arm "armeabi-v7a;armeabi;armeabi-v7a with NEON;armeabi-v7a with VFPV3;armeabi-v6 with VFP;arm64-v8a" )
 set( ANDROID_SUPPORTED_ABIS_arm64 "arm64-v8a" )
 set( ANDROID_SUPPORTED_ABIS_x86 "x86" )
 set( ANDROID_SUPPORTED_ABIS_x86_64 "x86_64" )
@@ -239,7 +239,7 @@ set( ANDROID_SUPPORTED_ABIS_mips "mips" )
 set( ANDROID_SUPPORTED_ABIS_mips64 "mips64" )
 
 # API level defaults
-set( ANDROID_DEFAULT_NDK_API_LEVEL 19 )
+set( ANDROID_DEFAULT_NDK_API_LEVEL 21 )
 set( ANDROID_DEFAULT_NDK_API_LEVEL_arm64 21 )
 set( ANDROID_DEFAULT_NDK_API_LEVEL_x86 9 )
 set( ANDROID_DEFAULT_NDK_API_LEVEL_x86_64 21 )
@@ -642,6 +642,8 @@ if( __androidAbiIdx EQUAL -1 )
 endif()
 unset( __androidAbiIdx )
 
+message( "Specified ANDROID_ABI = \"${ANDROID_ABI}\" " )
+
 # set target ABI options
 if( ANDROID_ABI STREQUAL "x86" )
  set( X86 true )
@@ -714,6 +716,7 @@ elseif( ANDROID_ABI STREQUAL "armeabi-v7a with NEON" )
 else()
  message( SEND_ERROR "Unknown ANDROID_ABI=\"${ANDROID_ABI}\" is specified." )
 endif()
+
 
 if( CMAKE_BINARY_DIR AND EXISTS "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeSystem.cmake" )
  # really dirty hack

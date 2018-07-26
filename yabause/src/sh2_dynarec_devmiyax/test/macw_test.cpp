@@ -42,6 +42,7 @@ TEST_F(MacwTest, normal) {
   pctx_->GetGenRegPtr()[15]=0x06000fc0;
   pctx_->SET_MACH(0xffffff1b);
   pctx_->SET_MACL(0xffff23fe);
+  pctx_->SET_SR(0x00000002);
 
   memSetWord( 0x06000fc0, 0xff3b );
   memSetWord( 0x06000fc2, 0x00ac );

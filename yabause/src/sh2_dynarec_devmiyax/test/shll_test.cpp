@@ -22,6 +22,7 @@ class ShllTest : public ::testing::Test {
   }
 
   virtual ~ShllTest() {
+    pctx_->ShowCompileInfo();
     delete pctx_;    
   }   
 
@@ -50,6 +51,53 @@ TEST_F(ShllTest, normal) {
   EXPECT_EQ( 0x00000002, pctx_->GetGenRegPtr()[2] );
   EXPECT_EQ( 0x000000E0, pctx_->GET_SR() );
 
+}
+
+TEST_F(ShllTest, shift2) {
+
+  pctx_->GetGenRegPtr()[2]=0xCAFEDEAD;
+
+  // shll2
+  memSetWord( 0x06000000, 0x4208 );
+  memSetWord( 0x06000002, 0x000b );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0xCAFEDEAD << 2, pctx_->GetGenRegPtr()[2] );
+}
+
+TEST_F(ShllTest, shift8) {
+
+  pctx_->GetGenRegPtr()[2]=0xCAFEDEAD;
+  pctx_->SET_SR(0x000000E0);
+
+  // shll16
+  memSetWord( 0x06000000, 0x4218 );
+  memSetWord( 0x06000002, 0x000b );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0xFEDEAD00, pctx_->GetGenRegPtr()[2] );
+}
+
+TEST_F(ShllTest, shift16) {
+
+  pctx_->GetGenRegPtr()[2]=0xCAFEDEAD;
+  pctx_->SET_SR(0x000000E0);
+
+  // shll16
+  memSetWord( 0x06000000, 0x4228 );
+  memSetWord( 0x06000002, 0x000b );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0xDEAD0000, pctx_->GetGenRegPtr()[2] );
 }
 
 TEST_F(ShllTest, tflg) {

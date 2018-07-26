@@ -40,10 +40,10 @@ virtual void TearDown() {
 TEST_F(OrbTest, normal) {
 
 
-  pctx_->GetGenRegPtr()[0]=0x00000001;
-  pctx_->SET_GBR(0x060ffcbb);
+  pctx_->GetGenRegPtr()[0]=0x00010001;
+  pctx_->SET_GBR(0x060efcbb);
 
-  memSetByte( 0x060ffcbc, 0x08 );
+  memSetByte( 0x60FFCBC, 0x08 );
 
   // or.b #6
   memSetWord( 0x06000000, 0xcf06 );
@@ -53,7 +53,7 @@ TEST_F(OrbTest, normal) {
   pctx_->SET_PC( 0x06000000 );
   pctx_->Execute();
 
-  EXPECT_EQ( 0x0e, memGetByte( 0x060ffcbc) );
+  EXPECT_EQ( 0x0e, memGetByte( 0x60FFCBC) );
 
 }
 
@@ -61,8 +61,8 @@ TEST_F(OrbTest, normal) {
 TEST_F(OrbTest, max) {
 
 
-  pctx_->GetGenRegPtr()[0]=0x00000001;
-  pctx_->SET_GBR(0x060ffcbb);
+  pctx_->GetGenRegPtr()[0]=0x00010001;
+  pctx_->SET_GBR(0x060efcbb);
 
   memSetByte( 0x060ffcbc, 0x08 );
 

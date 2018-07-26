@@ -56,8 +56,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 //#define ALLOCATE(x) mmap ((void*)0x6000000, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED | MAP_PRIVATE | MAP_ANONYMOUS ,-1, 0);
 #define FREEMEM(x,a) munmap(x,a);
 #else
-#define ALLOCATE(x)	malloc(x)
-#define FREEMEM(x,a)	if(x){ free(x); x = NULL;}
+#include <sys/mman.h>
+#define ALLOCATE(x) mmap (NULL, x, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_FILE|MAP_PRIVATE ,-1, 0);
+#define FREEMEM(x,a) munmap(x,a);
+//#define ALLOCATE(x)	malloc(x)
+//#define FREEMEM(x,a)	if(x){ free(x); x = NULL;}
 #endif
 
 const int MAX_INSTSIZE = 0xFFFF+1;
@@ -81,7 +84,8 @@ typedef map<u32, CompileStaticsNode> MapCompileStatics;
 //****************************************************
 
 const int NUMOFBLOCKS = 1024*4;
-const int MAXBLOCKSIZE = 3072-(4*4);
+//const int MAXBLOCKSIZE = 3072-(4*4);
+const int MAXBLOCKSIZE = 4096;
 #define MAINMEMORY_SIZE (0x100000);
 #define ROM_SIZE (0x80000);
 
@@ -315,6 +319,8 @@ public:
   void ShowCompileInfo();
   void ResetCompileInfo();
 
+  tagSH2 * getDynaSh(){ return m_pDynaSh2; }; 
+
   inline u32 * GetGenRegPtr() { return m_pDynaSh2->GenReg; }
   inline u32 GET_MACH() { return m_pDynaSh2->SysReg[0]; }
   inline u32 GET_MACL() { return m_pDynaSh2->SysReg[1]; }
@@ -337,7 +343,6 @@ public:
 
   int GetCurrentStatics(MapCompileStatics & buf);
   int Resume();
-
 };
 
 

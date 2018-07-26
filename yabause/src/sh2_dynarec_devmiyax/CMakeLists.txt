@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (dynalib_test)
+project (dynalib_test C CXX)
 
 set (COMMON_INCLUDES
   ../
@@ -14,6 +14,8 @@ set(SOURCES
 	DynarecSh2.cpp
 	DynarecSh2.h
 	DynarecSh2CInterface.cpp
+	dmy.c
+  ../sh2d.c
 )
 
 if (MSVC)    
@@ -23,14 +25,15 @@ if (MSVC)
   set (CMAKE_EXE_LINKER_FLAGS /SAFESEH:NO )
 else (MSVC)
   enable_language(ASM-ATT)
-  set(SOURCES ${SOURCES} dynalib_arm.s )
-  set(CMAKE_ASM-ATT_FLAGS  "${CMAKE_ASM-ATT_FLAGS} -march=armv7-a")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g -march=armv7-a -std=gnu++11")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -march=armv7-a -g")
+  add_definitions(-DAARCH64)
+  set(SOURCES ${SOURCES} dynalib_arm64.s )
+  set(CMAKE_ASM-ATT_FLAGS  "${CMAKE_ASM-ATT_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g --std=gnu++11 -DGTEST --coverage -fprofile-arcs -ftest-coverage")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g -DGTEST --coverage -fprofile-arcs -ftest-coverage")
 endif (MSVC)
 
 add_executable (dynalib_test main.cpp ${SOURCES})
-target_link_libraries(dynalib_test ${LIBRARIES} )
+target_link_libraries(dynalib_test ${LIBRARIES} pthread )
 
 #--------------------------------------------------------------
 # Google Unit Test Library
@@ -78,6 +81,7 @@ find_package( Threads )
 set(PROJECT_TEST_NAME ${PROJECT_NAME_STR}_test)
 include_directories(${GTEST_INCLUDE_DIRS} ${COMMON_INCLUDES})
 
+
 file(GLOB TEST_SRC_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
 add_executable(${PROJECT_TEST_NAME} ${TEST_SRC_FILES} ${SOURCES})
 add_dependencies(${PROJECT_TEST_NAME} googletest)
@@ -85,6 +89,9 @@ add_dependencies(${PROJECT_TEST_NAME} googletest)
 target_link_libraries(${PROJECT_TEST_NAME}
     ${GTEST_LIBS_DIR}/libgtest.a
    ${GTEST_LIBS_DIR}/libgtest_main.a
+   pthread
+   gcov
+   -fprofile-arcs -ftest-coverage 
 )
         
 target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})

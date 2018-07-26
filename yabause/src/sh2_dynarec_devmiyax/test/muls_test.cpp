@@ -49,6 +49,21 @@ TEST_F(MulsTest, normal) {
   pctx_->Execute();
 
   EXPECT_EQ( 0x01f4, pctx_->GET_MACL() );
+}
+
+TEST_F(MulsTest, negative) {
+  pctx_->GetGenRegPtr()[0]=0x0000FFFE;
+  pctx_->GetGenRegPtr()[1]=0x00005555;
+
+  // macl r1, r3
+  memSetWord( 0x06000000, 0x201f );
+  memSetWord( 0x06000002, 0x000b );  // rts
+  memSetWord( 0x06000004, 0x0009 );  // nop
+
+  pctx_->SET_PC( 0x06000000 );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0xFFFF5556, pctx_->GET_MACL() );
 
 }
 

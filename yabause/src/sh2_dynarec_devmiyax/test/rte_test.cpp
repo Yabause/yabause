@@ -54,8 +54,21 @@ TEST_F(RteTest, normal) {
 
 }
 
+TEST_F(RteTest, rts) {
 
+  pctx_->SET_PR(0x06001000);
 
+  pctx_->GetGenRegPtr()[7]=0xDEADDEAD;
 
+  // rts
+  memSetWord( 0x0600024c, 0x000b );
+  memSetWord( 0x0600024e, 0xE743 );  //MOVI
+
+  pctx_->SET_PC( 0x0600024c );
+  pctx_->Execute();
+
+  EXPECT_EQ( 0x00000043, pctx_->GetGenRegPtr()[7] );
+  EXPECT_EQ( 0x06001000, pctx_->GET_PC() );
+}
 
 }  // namespace
