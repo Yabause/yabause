@@ -281,7 +281,7 @@ const GLchar Yglprg_normal_cram_f[] =
 "{\n"
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*65280.0) | int(txindex.r*255.0)) ,0 )  , 0 );\n"
+"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
 "  fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
 "  fragColor.a = txindex.a;\n"
 "}\n";
@@ -333,7 +333,7 @@ const GLchar Yglprg_normal_cram_addcol_f[] =
 "{\n"
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*65280.0) | int(txindex.r*255.0)) ,0 )  , 0 );\n"
+"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
 "  fragColor = txcol+u_color_offset;\n"
 "  if( txindex.a > 0.5) { fragColor.a = 1.0;} else {fragColor.a = 0.0;}\n"
 "}\n";
@@ -1625,7 +1625,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
 "    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
-"    int colindex = ( int(fbColor.g*65280.0) | int(fbColor.r*255.0)); \n"
+"    int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
 "    if( colindex == 0 && prinumber == 0) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
@@ -1746,7 +1746,7 @@ const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
 "    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
-"    int colindex = ( int(fbColor.g*65280.0) | int(fbColor.r*255.0)); \n"
+"    int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
 "    if( colindex == 0 && (additional&0x07) == 0 ) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
@@ -2420,12 +2420,12 @@ const GLchar Yglprg_linecol_destalpha_f[] =
 "    fragColor.a =txcol.a;\n";
 
 const GLchar Yglprg_linecol_main_cram_f[] =
-"    vec4 txcolc = texelFetch( s_color,  ivec2( ( int(txcol.g*65280.0) | int(txcol.r*255.0)) ,0 )  , 0 );\n"
+"    vec4 txcolc = texelFetch( s_color,  ivec2( ( int(txcol.g*255.0)<<8 | int(txcol.r*255.0)) ,0 )  , 0 );\n"
 "    fragColor = txcolc+u_color_offset+lncol;\n"
 "    fragColor.a = 1.0;\n";
 
 const GLchar Yglprg_linecol_destalpha_cram_f[] =
-"    vec4 txcolc = texelFetch( s_color,  ivec2( ( int(txcol.g*65280.0) | int(txcol.r*255.0)) ,0 )  , 0 );\n"
+"    vec4 txcolc = texelFetch( s_color,  ivec2( ( int(txcol.g*255.0)<<8 | int(txcol.r*255.0)) ,0 )  , 0 );\n"
 "    fragColor = clamp((txcolc * lncol.a)+lncol+u_color_offset,vec4(0.0),vec4(1.0));\n"
 "    fragColor.a = txcol.a;\n";
 
