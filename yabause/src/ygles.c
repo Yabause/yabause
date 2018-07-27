@@ -782,11 +782,17 @@ u32* getVdp1DrawingFBMem(int id) {
 }
 
 u32 COLOR16TO24(u16 temp) {
-  return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9);
+  if ((temp>>15)&0x1 == 1)
+    return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9);
+  else
+    return (temp & 0x7FFF);
 }
 
 u16 COLOR24TO16(u32 temp) {
-  return (((u32)temp & (0x1F << 3))>>3 | ((u32)temp & (0x3E0<<6)) >> 6 | ((u32)temp & (0x7C00 << 9)) >> 9);
+  if (((temp >> 30)&0x1) == 0)
+    return 0x8000 | ((u32)(temp >> 3)& 0x1F) | ((u32)(temp >> 6)& 0x3E0) | ((u32)(temp >> 9)& 0x7C00);
+  else
+    return (temp & 0x7FFF);
 }
 
 void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
