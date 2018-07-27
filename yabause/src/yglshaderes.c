@@ -3453,7 +3453,11 @@ static const char vdp1_f[] =
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
-"  fragColor = texture( s_texture, v_texcoord);         \n"
+"  vec4 tex = texture( s_texture, v_texcoord);       \n"
+"  fragColor.r = tex.a;         \n"
+"  fragColor.g = tex.b;         \n"
+"  fragColor.b = tex.g;         \n"
+"  fragColor.a = tex.r;         \n"
 "}                                                   \n";
 
 int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {

@@ -781,43 +781,31 @@ u32* getVdp1DrawingFBMem(int id) {
   return fbptr;
 }
 
-u32 vdp1col16to24(u16 temp) {
+u32 COLOR16TO24(u16 temp) {
   return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9);
 }
 
-
-static u32 COLOR16TO24(u8 alpha, u16 temp) {
-  u8 r = ((u32)(temp >> 10) & 0x1F)<<3;
-  u8 g = ((u32)(temp >> 5) & 0x1F)<<3;
-  u8 b = ((u32)temp & 0x1F)<<3;
-  u8 v = ((temp>>15) & 0x1);
-  return (b<<24) | (g<<16) | (r<<8) | (alpha<<0) | (v<<3);
-}
-
-static u16 COLOR24TO16(u32 temp) {
-  u8 r = ((u32)(temp >> 8) & 0xFF)>>3;
-  u8 g = ((u32)(temp >> 16) & 0xFF)>>3;
-  u8 b = ((u32)(temp >> 24) & 0xFF)>>3;
-  u8 v = (temp >> 3)&0x1;
-  return (u16)((v<<15) | ((r<<10) | (g<<5) | (b<<0))&0x7FFF);
+u16 COLOR24TO16(u32 temp) {
+  return (((u32)temp & (0x1F << 3))>>3 | ((u32)temp & (0x3E0<<6)) >> 6 | ((u32)temp & (0x7C00 << 9)) >> 9);
 }
 
 void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL)
     _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
   u8 priority = Vdp2Regs->PRISA &0x7;
-  u8 alpha = 0x80 | priority;
+  int rgb = !((val>>15)&0x1);
   switch (type)
   {
   case 0:
     //T1WriteByte(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, val);
     break;
   case 1:
-    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, COLOR16TO24(alpha, (val&0xFFFF)));
+    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     break;
   case 2:
-    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, COLOR16TO24(alpha, (val&0xFFFF)));
-    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, COLOR16TO24(alpha, ((val>>16)&0xFFFF)));
+    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
+    int rgb = !(((val>>16)>>15)&0x1);
+    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
     break;
   default:
     break;
