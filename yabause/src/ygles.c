@@ -1056,6 +1056,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->rwidth = 320;
   _Ygl->rheight = 240;
   _Ygl->density = 1;
+  _Ygl->resolution_mode = 1;
 
   if ((_Ygl->levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
     return -1;
@@ -3144,8 +3145,15 @@ void YglUpdateVDP1FB(void) {
 
 void YglCheckFBSwitch(int sync) {
   GLenum ret = GL_WAIT_FAILED;
-  if (_Ygl->sync != 0)
-    ret = glClientWaitSync(_Ygl->sync, 0, (sync?20000000:0));
+  if (_Ygl->sync == 0) return;
+  ret = glClientWaitSync(_Ygl->sync, 0, 0);
+  if (sync != 0) {
+    int end = 0;
+    while (end == 0) {
+     ret = glClientWaitSync(_Ygl->sync, 0, 20000000);
+     if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) end = 1;
+    }
+  }
   if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) {
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
