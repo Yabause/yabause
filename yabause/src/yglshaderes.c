@@ -3756,17 +3756,17 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
   glDisable(GL_BLEND);
 
   float const vertexPosition[] = {
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f };
+    1.0f, -1.0f,
+    -1.0f, -1.0f,
+    1.0f, 1.0f,
+    -1.0f, 1.0f };
 
   float const textureCoord[] = {
     1.0f, 0.0f,
     0.0f, 0.0f,
     1.0f, 1.0f,
     0.0f, 1.0f };
-  float nbLines = yabsys.IsPal?625.0:525.0;
+  float nbLines = yabsys.IsPal?625.0f:525.0f;
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);

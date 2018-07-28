@@ -2744,13 +2744,13 @@ void YglUpdateVdp2Reg() {
 
 void YglRenderFrameBuffer(int from, int to) {
 
-  GLint   vertices[12];
+  GLfloat   vertices[12];
   GLfloat texcord[12];
   float offsetcol[4];
   int bwin0, bwin1, logwin0, logwin1, winmode;
   int is_addcolor = 0;
-  int cwidth = 0;
-  int cheight = 0;
+  float cwidth = 0.0f;
+  float cheight = 0.0f;
 
   YglGenFrameBuffer();
 
@@ -2790,22 +2790,20 @@ void YglRenderFrameBuffer(int from, int to) {
     cheight = _Ygl->rheight;
   }
 
-
-
    // render
-   vertices[0] = 0 - 0.5;
-   vertices[1] = 0 - 0.5;
-   vertices[2] = cwidth + 1 - 0.5;
-   vertices[3] = 0 - 0.5;
-   vertices[4] = cwidth + 1 - 0.5;
-   vertices[5] = cheight + 1 - 0.5;
+   vertices[0] = 0.0f;
+   vertices[1] = 0.0f;
+   vertices[2] = cwidth;
+   vertices[3] = 0.0f;
+   vertices[4] = cwidth;
+   vertices[5] = cheight;
 
-   vertices[6] = 0 - 0.5;
-   vertices[7] = 0 - 0.5;
-   vertices[8] = cwidth + 1 - 0.5;
-   vertices[9] = cheight + 1 - 0.5;
-   vertices[10] = 0 - 0.5;
-   vertices[11] = cheight + 1 - 0.5;
+   vertices[6] = 0.0f;
+   vertices[7] = 0.0f;
+   vertices[8] = cwidth;
+   vertices[9] = cheight;
+   vertices[10] = 0.0f;
+   vertices[11] = cheight;
 
    texcord[0] = 0.0f;
    texcord[1] = 1.0f;
@@ -2891,7 +2889,7 @@ void YglRenderFrameBuffer(int from, int to) {
      }
 
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
-     glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);
+     glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)vertices);
      glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
      glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -2960,7 +2958,7 @@ void YglRenderFrameBuffer(int from, int to) {
      }
      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 0 );
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
-     glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);
+     glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)vertices);
      glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
      glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -3030,7 +3028,7 @@ void YglRenderFrameBuffer(int from, int to) {
    }
 
    glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
-   glVertexAttribPointer(_Ygl->renderfb.vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)vertices );
+   glVertexAttribPointer(_Ygl->renderfb.vertexp,2,GL_FLOAT, GL_FALSE,0,(GLvoid *)vertices );
    glVertexAttribPointer(_Ygl->renderfb.texcoordp,2,GL_FLOAT,GL_FALSE,0,(GLvoid *)texcord );
    glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -3038,7 +3036,7 @@ void YglRenderFrameBuffer(int from, int to) {
    if (is_addcolor == 1){
      Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol);
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
-     glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);
+     glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)vertices);
      glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
      glDrawArrays(GL_TRIANGLES, 0, 6);
    }
