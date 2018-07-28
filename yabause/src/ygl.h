@@ -528,9 +528,9 @@ typedef struct {
    int density;
    int drawframe;
    int readframe;
-   GLuint rboid_depth[2];
-   GLuint rboid_stencil[2];
-   GLuint vdp1fbo[2];
+   GLuint rboid_depth;
+   GLuint rboid_stencil;
+   GLuint vdp1fbo;
    GLuint vdp1FrameBuff[2];
    GLuint smallfbo;
    GLuint smallfbotex;
