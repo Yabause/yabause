@@ -308,12 +308,6 @@ enum
    PG_VDP2_MOSAIC_CRAM,
    PG_VDP2_PER_LINE_ALPHA_CRAM,
    PG_VDP2_RBG_CRAM_LINE,
-   PG_VFP1_GOURAUDSAHDING_TESS,
-   PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
-   PG_VFP1_HALFTRANS_TESS,
-   PG_VFP1_SHADOW_TESS,
-   PG_VFP1_MESH_TESS,
-   PG_VFP1_GOURAUDSAHDING_SPD_TESS,
    PG_VDP2_DRAWFRAMEBUFF,
    PG_VDP2_DRAWFRAMEBUFF_DESTALPHA,
    PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL,
@@ -358,8 +352,6 @@ enum
 
 typedef struct {
 	GLint  sprite;
-	GLint  tessLevelInner;
-	GLint  tessLevelOuter;
 	GLint  fbo;
 	GLint  fbowidth;
 	GLint  fboheight;
@@ -369,7 +361,6 @@ typedef struct {
   GLuint tex0;
 } YglVdp1CommonParam;
 
-#define TESS_COUNT (8)
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
 int Ygl_uniformVdp1CommonParam(void * p);
 int Ygl_cleanupVdp1CommonParam(void * p);
@@ -457,13 +448,6 @@ typedef enum
 
 typedef enum
 {
-	PERSPECTIVE_CORRECTION = 0,
-	CPU_TESSERATION,
-	GPU_TESSERATION
-} POLYGONMODE;
-
-typedef enum
-{
 	RES_ORIGINAL = 1,
         RES_2x
 } RESOLUTION_MODE;
@@ -477,7 +461,6 @@ typedef enum
 
 typedef enum {
 	VDP_SETTING_FILTERMODE = 0,
-	VDP_SETTING_POLYGON_MODE,
         VDP_SETTING_RESOLUTION_MODE,
         VDP_SETTING_UPSCALMODE,
         VDP_SETTING_ASPECT_RATIO,
@@ -585,7 +568,6 @@ typedef struct {
    AAMODE aamode;
    UPMODE upmode;
    int scanline;
-   POLYGONMODE polygonmode;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
    GLsync sync;
@@ -632,7 +614,7 @@ void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
 int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, YglTextureManager *tm);
 void Ygl_uniformVDP2DrawFrameBufferShadow(void * p);
-int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
+int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount);
 
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
@@ -682,7 +664,6 @@ void YglSetBackColor(int size);
 
 int Ygl_uniformWindow(void * p );
 int YglProgramInit();
-int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 void Ygl_setNormalshader(YglProgram * prg);
 int Ygl_cleanupNormal(void * p);
