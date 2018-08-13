@@ -341,28 +341,6 @@
        <item row="20" column="1">
         <widget class="QComboBox" name="cbUpscaleMode"/>
        </item>
-		<item row="21" column="0">
-			<widget class="QLabel" name="Tesselation">
-				<property name="font">
-				<font>
-					<weight>75</weight>
-					<bold>true</bold>
-				</font>
-				</property>
-				<property name="text">
-					<string>Tesselation :</string>
-				</property>
-				<property name="textFormat">
-					<enum>Qt::PlainText</enum>
-				</property>
-				<property name="alignment" >
-					<set>Qt::AlignRight|Qt::AlignVCenter</set>
-				</property>
-			</widget>
-		</item>
-       <item row="21" column="1">
-        <widget class="QComboBox" name="cbPolygonGeneration"/>
-       </item>
 		<item row="22" column="0">
 			<widget class="QLabel" name="OpenGLSize">
 				<property name="font">

@@ -90,12 +90,6 @@ const Items mUpscaleFilterMode = Items()
         << Item("2", "4xBRZ")
         << Item("3", "2xBRZ");
 
-
-const Items mPolygonGenerationMode = Items()
-	<< Item("0", "Triangles using perspective correction")
-	<< Item("1", "CPU Tesselation")
-	<< Item("2", "GPU Tesselation");
-
 const Items mResolutionMode = Items()
 	<< Item("1", "Original (original resolution of the Saturn)")
 	<< Item("2", "2x");
@@ -388,10 +382,6 @@ void UISettings::loadCores()
 
         connect(cbUpscaleMode, SIGNAL(currentIndexChanged(int)), this, SLOT(changeUpscaleMode(int)));
 
-	// Polygon Generation
-	foreach(const Item& it, mPolygonGenerationMode)
-		cbPolygonGeneration->addItem(QtYabause::translate(it.Name), it.id);
-
   // Resolution
   foreach(const Item& it, mResolutionMode)
     cbResolution->addItem(QtYabause::translate(it.Name), it.id);
@@ -534,7 +524,6 @@ void UISettings::loadSettings()
 
 	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
         cbUpscaleMode->setCurrentIndex(cbUpscaleMode->findData(s->value("Video/upscale_type", mUpscaleFilterMode.at(0).id).toInt()));
-	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
   cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
   cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
   cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
@@ -619,7 +608,6 @@ void UISettings::saveSettings()
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
 	s->setValue( "Video/upscale_type", cbUpscaleMode->itemData(cbUpscaleMode->currentIndex()).toInt());
-	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
   s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());
 
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );
