@@ -450,7 +450,6 @@ int Ygl_uniformNormalCramLine(void * p)
   glEnableVertexAttribArray(1);
   glUniform1i(id_rbg_cram_line_s_texture, 0);
   glUniform1i(id_rbg_cram_line_s_color, 1);
-  glUniform1i(id_rbg_cram_line_blendmode, prg->blendmode);
   glUniform4fv(id_rbg_cram_line_color_offset, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
@@ -459,6 +458,7 @@ int Ygl_uniformNormalCramLine(void * p)
   if ( (fixVdp2Regs->CCCTL & 0x400) == 0 ) {
     prg->blendmode = 0;
   }
+  glUniform1i(id_rbg_cram_line_blendmode, prg->blendmode);
 
   return 0;
 }
