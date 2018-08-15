@@ -3169,22 +3169,22 @@ void YglRenderDestinationAlpha(void) {
     glDisable(GL_STENCIL_TEST);
     for (j = 0; j<(level->prgcurrent + 1); j++)
     {
-      if (level->prg[j].prgid != cprg)
-      {
-        if (level->prg[j].prgid == 0) continue;
-        cprg = level->prg[j].prgid;
-        glUseProgram(level->prg[j].prg);
-      }
-
-      if (level->prg[j].setupUniform)
-      {
-        level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2);
-      }
-
-      YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
-
       if (level->prg[j].currentQuad != 0)
       {
+        if (level->prg[j].prgid != cprg)
+        {
+          if (level->prg[j].prgid == 0) continue;
+          cprg = level->prg[j].prgid;
+          glUseProgram(level->prg[j].prg);
+        }
+
+        if (level->prg[j].setupUniform)
+        {
+          level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2);
+        }
+
+        YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
+
         if (level->prg[j].prgid == PG_LINECOLOR_INSERT || 
             level->prg[j].prgid == PG_LINECOLOR_INSERT_CRAM ||
             level->prg[j].prgid == PG_LINECOLOR_INSERT_DESTALPHA ||
@@ -3226,14 +3226,13 @@ void YglRenderDestinationAlpha(void) {
         }
 
         level->prg[j].currentQuad = 0;
-      }
 
-      if (level->prg[j].cleanupUniform)
-      {
-        level->prg[j].matrix = (GLfloat*)dmtx.m;
-        level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp2);
+        if (level->prg[j].cleanupUniform)
+        {
+          level->prg[j].matrix = (GLfloat*)dmtx.m;
+          level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp2);
+        }
       }
-
     }
     level->prgcurrent = 0;
 
