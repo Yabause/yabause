@@ -3630,7 +3630,6 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
     blur_prg = glCreateProgram();
     if (blur_prg == 0) return -1;
 
-    glUseProgram(blur_prg);
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -3664,7 +3663,7 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
       blur_prg = -1;
       return -1;
     }
-
+    glUseProgram(blur_prg);
     glUniform1i(glGetUniformLocation(blur_prg, "u_Src"), 0);
     u_blur_mtxModelView = glGetUniformLocation(blur_prg, (const GLchar *)"u_mvpMatrix");
     u_blur_tw = glGetUniformLocation(blur_prg, "u_tw");
