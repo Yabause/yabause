@@ -311,7 +311,9 @@ void FASTCALL Vdp1WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 va
 extern YabEventQueue * vdp1_rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
-
+int needVBlankErase() {
+  return (((Vdp1Regs->TVMR >> 3) & 0x01) == 1) && ((Vdp1Regs->FBCR & 3) == 3);
+}
 void updateFBMode() {
   Vdp1External.manualchange = 0;
   Vdp1External.onecyclemode = 0;

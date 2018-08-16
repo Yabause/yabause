@@ -616,7 +616,7 @@ void Vdp2VBlankOUT(void) {
   //if (g_frame_count >= 1){
   //  YabLoadStateSlot(".\\", 1);
   //}
-  if (Vdp1External.vblank_erase) {
+  if (needVBlankErase()) {
        VIDCore->Vdp1EraseWrite();
   }
   Vdp1External.vblank_erase = 0;
