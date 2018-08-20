@@ -18,7 +18,7 @@
 #define LOGSTV 
 //YuiMsg
 
-#define NB_STV_GAMES 29
+#define NB_STV_GAMES 30
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
@@ -154,6 +154,7 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+
   {"Danchi de Quiz: Okusan Yontaku Desuyo! (J 001128 V1.200)",
     0,
     {
@@ -170,13 +171,27 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Decathlete (JUET 960709 V1.001)",
+    0,
+    {
+	HEADER_BLOB, "epr18967a.13",    0x0000000, 0x0100000,
+	GAME_BYTE_BLOB, "epr18967a.13", 0x0200000, 0x0100000,
+    GAME_BYTE_BLOB, "epr18967a.13", 0x0300000, 0x0100000,
+    GAME_WORD_BLOB, "mpr18968.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18969.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18970.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18971.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18972.6",    0x1400000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Die Hard Arcade (UET 960515 V1.000)",
     0,
     {
 	BIOS_BLOB, "mp17952a.s",   0x0000000, 0x0080000,
 	HEADER_BLOB, "fpr19119.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19119.13", 0x0200000, 0x0100000,
-        GAME_BYTE_BLOB, "fpr19119.13", 0x0300000, 0x0100000,
+    GAME_BYTE_BLOB, "fpr19119.13", 0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr19115.2",  0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19116.3",  0x0800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19117.4",  0x0c00000, 0x0400000,
