@@ -18,7 +18,7 @@
 #define LOGSTV 
 //YuiMsg
 
-#define NB_STV_GAMES 51
+#define NB_STV_GAMES 54
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
@@ -101,6 +101,20 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "gfx4.u12",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "gfx5.u15",    0x0800000, 0x0400000,
 	GAME_WORD_BLOB, "gfx6.u18",    0x1c00000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Choro Q Hyper Racing 5 (J 981230 V1.000)",
+    0,
+    {
+	GAME_WORD_BLOB,    "ic22.bin",   0x0200000, 0x200000,
+	GAME_WORD_BLOB, "ic24.bin",   0x0400000, 0x200000,
+	GAME_WORD_BLOB, "ic26.bin",   0x0600000, 0x200000,
+	GAME_WORD_BLOB, "ic28.bin",    0x0800000, 0x200000,
+	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x200000,
+	GAME_WORD_BLOB, "ic32.bin",    0x0c00000, 0x200000,
+	GAME_WORD_BLOB, "ic34.bin",    0x0e00000, 0x200000,
+	GAME_WORD_BLOB, "ic36.bin",    0x1000000, 0x200000,
         GAME_END, "", 0, 0
     },
   },
@@ -378,12 +392,26 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Microman Battle Charge (J 990326 V1.000)",
+   0,
+   {
+	GAME_WORD_BLOB, "ic22", 0x0200000, 0x200000,
+	GAME_WORD_BLOB, "ic24", 0x0400000, 0x200000,
+	GAME_WORD_BLOB, "ic26", 0x0600000, 0x200000,
+	GAME_WORD_BLOB, "ic28", 0x0800000, 0x200000,
+	GAME_WORD_BLOB, "ic30", 0x0a00000, 0x200000,
+	GAME_WORD_BLOB, "ic32", 0x0c00000, 0x200000,
+	GAME_WORD_BLOB, "ic34", 0x0e00000, 0x200000,
+	GAME_WORD_BLOB, "ic36", 0x1200000, 0x200000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Name Club Ver.3 (J 970723 V1.000)",
    0,
    {
-	GAME_BYTE_BLOB, "ic22",  0x0200000, 0x0200000,
-	GAME_BYTE_BLOB, "ic24",  0x0400000, 0x0200000,
-	GAME_BYTE_BLOB, "ic26",  0x0600000, 0x0200000,
+	GAME_WORD_BLOB, "ic22",  0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "ic24",  0x0400000, 0x0200000,
+	GAME_WORD_BLOB, "ic26",  0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic28",  0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "ic30",  0x0a00000, 0x0200000,
 	GAME_WORD_BLOB, "ic32",  0x0c00000, 0x0200000,
@@ -430,11 +458,23 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Print Club Kome Kome Club (J 970203 V1.000)",
+   0,
+   {
+	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
+	GAME_WORD_BLOB, "pclub2_ic22",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "pclub2_ic24",    0x0400000, 0x0200000,
+	GAME_WORD_BLOB, "pclub2_ic26",    0x0600000, 0x0200000,
+	GAME_WORD_BLOB, "pclub2_ic28",    0x0800000, 0x0200000,
+	GAME_WORD_BLOB, "pclub2_ic30",    0x0a00000, 0x0200000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Pro Mahjong Kiwame S (J 951020 V1.208)",
    0,
    {
 	HEADER_BLOB,   "epr18737.13",    0x0000000, 0x0080000,
-	HEADER_BLOB,   "epr18737.13",    0x0100000, 0x0080000,
+	GAME_BYTE_BLOB,   "epr18737.13",    0x0100000, 0x0080000,
 	GAME_WORD_BLOB, "mpr18738.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18739.3",    0x0800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18740.4",    0x0c00000, 0x0200000,
