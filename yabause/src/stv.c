@@ -188,7 +188,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Die Hard Arcade (UET 960515 V1.000)",
     0,
     {
-	BIOS_BLOB, "mp17952a.s",   0x0000000, 0x0080000,
+	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	HEADER_BLOB, "fpr19119.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19119.13", 0x0200000, 0x0100000,
     GAME_BYTE_BLOB, "fpr19119.13", 0x0300000, 0x0100000,
@@ -313,31 +313,6 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
-  {"Radiant Silvergun (JUET 980523 V1.000)",
-    0x05272d01,
-    {
-	GAME_WORD_BLOB, "mpr20958.7",   0x0200000, 0x0200000,
-	GAME_WORD_BLOB, "mpr20959.2",   0x0400000, 0x0400000,
-	GAME_WORD_BLOB, "mpr20960.3",   0x0800000, 0x0400000,
-	GAME_WORD_BLOB, "mpr20961.4",   0x0c00000, 0x0400000,
-	GAME_WORD_BLOB, "mpr20962.5",   0x1000000, 0x0400000,
-        GAME_END, "", 0, 0
-    },
-  },
-  {"Touryuu Densetsu Elan-Doree / Elan Doree - Legend of Dragoon (JUET 980922 V1.006)",
-    0x05226d41,
-    {
-	GAME_WORD_BLOB, "mpr21307.7",    0x0200000, 0x0200000,
-	GAME_WORD_BLOB, "mpr21301.2",    0x0400000, 0x0400000,
-	GAME_WORD_BLOB, "mpr21302.3",    0x0800000, 0x0400000,
-	GAME_WORD_BLOB, "mpr21303.4",    0x0c00000, 0x0400000,
-	GAME_WORD_BLOB, "mpr21304.5",    0x1000000, 0x0400000,
-	GAME_WORD_BLOB, "mpr21305.6",    0x1400000, 0x0400000,
-	GAME_WORD_BLOB, "mpr21306.1",    0x1800000, 0x0400000,
-	GAME_WORD_BLOB, "mpr21308.8",    0x1c00000, 0x0400000,
-        GAME_END, "", 0, 0
-    },
-  },
   {"Karaoke Quiz Intro Don Don! (J 960213 V1.000)",
    0,
    {
@@ -435,6 +410,17 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Radiant Silvergun (JUET 980523 V1.000)",
+    0x05272d01,
+    {
+	GAME_WORD_BLOB, "mpr20958.7",   0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr20959.2",   0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20960.3",   0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20961.4",   0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr20962.5",   0x1000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Sakura Taisen - Hanagumi Taisen Columns (J 971007 V1.010)",
     0,
     {
@@ -450,6 +436,20 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr20146.10",   0x2400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20147.11",   0x2800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20148.12",   0x2c00000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Touryuu Densetsu Elan-Doree / Elan Doree - Legend of Dragoon (JUET 980922 V1.006)",
+    0x05226d41,
+    {
+	GAME_WORD_BLOB, "mpr21307.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr21301.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21302.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21303.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21304.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21305.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21306.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr21308.8",    0x1c00000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
