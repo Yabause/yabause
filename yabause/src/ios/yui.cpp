@@ -125,7 +125,7 @@ int swapAglBuffer ();
 int start_emulation( int originx, int originy, int width, int height ){
 	int i;
     int res;
-    yabauseinit_struct yinit;
+    yabauseinit_struct yinit ={};
     void * padbits;
 
     s_biospath = GetBiosPath();

@@ -38,6 +38,8 @@
 #include "threads.h"
 #include "yui.h"
 #include "frameprofile.h"
+#include "vidogl.h"
+#include "vidsoft.h"
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -54,6 +56,9 @@ u8 B1_Updated = 0;
 struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
+
+u32 skipped_frame = 0;
+u32 pre_swap_frame_buffer = 0;
 static int autoframeskipenab=0;
 static int throttlespeed=0;
 u64 lastticks=0;
@@ -232,26 +237,15 @@ void FASTCALL Vdp2ColorRamWriteLong(u32 addr, u32 val) {
 
      const u32 base_addr = addr;
      T2WriteLong(Vdp2ColorRam, base_addr, val);
-     if (Vdp2Internal.ColorMode == 2) {
-       YglOnUpdateColorRamWord(base_addr);
-     }
-     else {
-       YglOnUpdateColorRamWord(base_addr + 2);
-       YglOnUpdateColorRamWord(base_addr);
-     }
+     YglOnUpdateColorRamWord(base_addr + 2);
+     YglOnUpdateColorRamWord(base_addr);
 
      if (addr < 0x800) {
        const u32 mirror_addr = base_addr + 0x800;
        T2WriteLong(Vdp2ColorRam, mirror_addr, val);
-       if (Vdp2Internal.ColorMode == 2) {
-         YglOnUpdateColorRamWord(mirror_addr);
-       }
-       else {
-         YglOnUpdateColorRamWord(mirror_addr + 2);
-         YglOnUpdateColorRamWord(mirror_addr);
-       }
+       YglOnUpdateColorRamWord(mirror_addr + 2);
+       YglOnUpdateColorRamWord(mirror_addr);
      }
-
    }
    else {
      T2WriteLong(Vdp2ColorRam, addr, val);
@@ -656,7 +650,7 @@ void Vdp2HBlankOUT(void) {
     {
       Vdp1Regs->EDSR >>= 1;
       if (Vdp1External.frame_change_plot == 1) {
-        yabsys.wait_line_count = 30;
+        yabsys.wait_line_count = 45;
         FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
       }
     }
@@ -705,12 +699,13 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 //////////////////////////////////////////////////////////////////////////////
 int vdp1_frame = 0;
 int show_vdp1_frame = 0;
+u32 show_skipped_frame = 0;
 static void FPSDisplay(void)
 {
   static int fpsframecount = 0;
   static u64 fpsticks;
 #if 1 // FPS only
-   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS vdp1 = %02d", fps, yabsys.IsPal ? 50 : 60, show_vdp1_frame);
+   OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS skip=%d vdp1=%02d", fps, yabsys.IsPal ? 50 : 60, show_skipped_frame, show_vdp1_frame);
 #else
   FILE * fp = NULL;
   FILE * gup_fp = NULL;
@@ -760,6 +755,8 @@ static void FPSDisplay(void)
     fpsframecount = 0;
     show_vdp1_frame = vdp1_frame;
     vdp1_frame = 0;
+    show_skipped_frame = skipped_frame;
+    skipped_frame = 0;
     fpsticks = YabauseGetTicks();
   }
 }
@@ -814,6 +811,7 @@ void vdp2ReqRestore() {
   g_vdp_debug_dmp = 1;
 }
 
+
 //////////////////////////////////////////////////////////////////////////////
 void vdp2VBlankOUT(void) {
   static int framestoskip = 0;
@@ -838,9 +836,17 @@ void vdp2VBlankOUT(void) {
     dumpvram();
   }
 
+  if (pre_swap_frame_buffer == 0 && skipnextframe && Vdp1External.swap_frame_buffer ){
+    skipnextframe = 0;
+    framestoskip = 1;
+  }
+
+  pre_swap_frame_buffer = Vdp1External.swap_frame_buffer;
+
 
   if (skipnextframe && (!saved))
   {
+    skipped_frame++;
     saved = VIDCore;
     VIDCore = &VIDDummy;
   }
@@ -889,7 +895,7 @@ void vdp2VBlankOUT(void) {
     YabAddEventQueue(vdp1_rcv_evqueue, 0);
   }
 #else
-  //yabsys.wait_line_count = 30;
+  //yabsys.wait_line_count = 45;
 #endif
 
   if (Vdp2Regs->TVMD & 0x8000) {
@@ -899,7 +905,7 @@ void vdp2VBlankOUT(void) {
   if (isrender){
     VIDCore->Vdp1DrawEnd();
 #if !defined(YAB_ASYNC_RENDERING)
-    yabsys.wait_line_count = 30;
+    yabsys.wait_line_count = 45;
 #endif
   }
 

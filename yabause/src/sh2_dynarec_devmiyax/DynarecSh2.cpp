@@ -1,4 +1,4 @@
-/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
+﻿/*  Copyright 2017 devMiyax(smiyaxdev@gmail.com)
 
 This file is part of Yabause.
 
@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <malloc.h> 
 #include <stdint.h>
 #include <core.h>
+#include <unordered_map>
 
 #include "sh2core.h"
 #include "debug.h"
@@ -35,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define DEBUG_CPU
 #endif
 //#define DEBUG_CPU
+//#define EXECUTE_STAT
 //#define BUILD_INFO
 //#define LOG printf
 
@@ -306,7 +308,7 @@ void DumpInstX( int i, u32 pc, u16 op  )
     sprintf( buf,"unrecognized\n");
     return;
   }
-  LOG("%08X : %s\n", pc , buf );
+  LOG("%08X:%04X %s\n", pc , op, buf );
   return;
 }
 
@@ -331,18 +333,18 @@ void DumpInstX( int i, u32 pc, u16 op  )
 #define NORMAL_CLOCK_OFFSET 6
 #define NORMAL_CLOCK_OFFSET_DEBUG 3
 #elif defined(AARCH64)
-#define PROLOGSIZE		     (8*4)    
+#define PROLOGSIZE		     (11*4)    
 #define SEPERATORSIZE_NORMAL (2*4)
 #define NORMAL_CLOCK_OFFSET 4
 #define NORMAL_CLOCK_OFFSET_DEBUG 4
-#define SEPERATORSIZE_DEBUG  (17*4)
-#define SEPERATORSIZE_DELAY_SLOT  (13*4)
-#define SEPERATORSIZE_DELAY_AFTER  (10*4)
-#define DALAY_CLOCK_OFFSET (3*4)
+#define SEPERATORSIZE_DEBUG  (18*4)
+#define SEPERATORSIZE_DELAY_SLOT  (15*4)
+#define SEPERATORSIZE_DELAY_AFTER  (12*4)
+#define DALAY_CLOCK_OFFSET (2*4)
 #define DALAY_CLOCK_OFFSET_DEBUG (10*4)
-#define SEPERATORSIZE_DELAYD_DEBUG (19*4)
-#define EPILOGSIZE		      (8*4)
-#define DELAYJUMPSIZE	     (17*4)
+#define SEPERATORSIZE_DELAYD_DEBUG (20*4)
+#define EPILOGSIZE		      (10*4)
+#define DELAYJUMPSIZE	     (11*4)
 #else // ARMv7
 #define PROLOGSIZE		     16    
 #define SEPERATORSIZE_NORMAL 8
@@ -530,6 +532,18 @@ void seperator_d_delay(void);
 void PageJump(void); // jumps to a different page
 void PageFlip(void); // "flips" the page
 
+#if defined(AARCH64)
+void internal_jmp(void);
+void internal_delay_jmp(void);
+#else
+void internal_jmp(void){ printf("nope"); }
+void internal_delay_jmp(void){ printf("nope"); }
+#endif
+int internal_jmp_size = 18*4;
+int internal_delay_jmp_size = 15*4;
+const intptr_t internal_jmp_to_offset = 4*4;
+const intptr_t internal_delay_jmp_to_offset = 4*4;
+ 
 extern x86op_desc asm_list[];
 
 }
@@ -543,7 +557,7 @@ x86op_desc asm_list[] =
   opdesc(RTE,4,4,0),
   opdesc(RTS,4,2,0),
   opdesc(SETT,0,1,0),
-  opdesc(SLEEP,0,3,0),
+  opdesc(SLEEP,0,8,0),
   opdesc(CMP_PL,0,1,0),
   opdesc(CMP_PZ,0,1,0),
   opdesc(DT,0,1,1),
@@ -593,7 +607,7 @@ x86op_desc asm_list[] =
   opdesc(BSRF,4,2,0),
   opdesc(ADD,0,1,1),
   opdesc(ADDC,0,1,1),
-  opdesc(ADDV,0,1,0),  // 0x300F
+  opdesc(ADDV,0,1,1),  // 0x300F
   opdesc(AND,0,1,0),
   opdesc(CMP_EQ,0,1,0),
   opdesc(CMP_HS,0,1,0),
@@ -618,8 +632,8 @@ x86op_desc asm_list[] =
   opdesc(NOT,0,1,0),
   opdesc(OR,0,1,0),
   opdesc(SUB,0,1,0),
-  opdesc(SUBC,0,1,0),
-  opdesc(SUBV,0,1,0),  // 0x300B
+  opdesc(SUBC,0,1,1),
+  opdesc(SUBV,0,1,1),  // 0x300B
   opdesc(SWAP_B,0,1,0),
   opdesc(SWAP_W,0,1,0),
   opdesc(TST,0,1,0),
@@ -676,7 +690,7 @@ x86op_desc asm_list[] =
   opdesc(TSTI,0,1, 0),  // C800
   opdesc(XORI,0,1, 0),
   opdesc(TRAPA,5,8,1), // 0xc300
-  opdesc(ADDI,0,1, 0),
+  opdesc(ADDI,0,1, 1),
   opdesc(MOVI,0,1, 0),
   opNULL
 }; 
@@ -695,6 +709,9 @@ Block *CompileBlocks::Init(Block *dynaCode)
   LastMakeBlock = 0;
 
   g_CompleBlock = dynaCode;
+  for (int i = 0; i < NUMOFBLOCKS; i++ ) {
+    g_CompleBlock[i].id = i;
+  }
   return dynaCode;
 }
 
@@ -724,12 +741,16 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
 {
   compile_count_++;
 
-  LastMakeBlock++;
-  if (LastMakeBlock >= NUMOFBLOCKS) {
-    LastMakeBlock = 0;
+  auto block_index = self_modify_block.find(pc);
+  if( block_index != self_modify_block.end()  ){
+      blockCount = block_index->second ;
+      self_modify_block.erase(pc);
+      LOG( "hit! last_modified_block = %d, last_modified_pc = %08X",blockCount, pc );
+  }else{
+    blockCount = LastMakeBlock;
+    LastMakeBlock++;
+    LastMakeBlock &= (NUMOFBLOCKS-1);
   }
-
-  blockCount = LastMakeBlock;
   
   if (g_CompleBlock[blockCount].b_addr != 0x00) {
     switch (g_CompleBlock[blockCount].b_addr & 0x0FF00000) {
@@ -747,6 +768,7 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
     case 0x06000000:
       /*case 0x06100000:*/
       LookupTable[ (g_CompleBlock[blockCount].b_addr & 0x000FFFFF)>>1 ] = NULL;
+      //LOG("%d, %08X is removed due to overflow", blockCount, g_CompleBlock[blockCount].b_addr);
       break;
     default:
       if ((g_CompleBlock[blockCount].b_addr & 0xFF000000) == 0xC0000000) {
@@ -758,6 +780,8 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
 
   g_CompleBlock[blockCount].b_addr = pc;
 
+
+  //LOG("%d,%08X is compiled",blockCount,pc );
   if (EmmitCode(&g_CompleBlock[blockCount], ParentT) != 0) {
     return NULL;
   }
@@ -766,10 +790,15 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
 }
 
 void CompileBlocks::ShowStatics() {
-  LOG("Compile %d/%d\n", compile_count_, exec_count_);
+  LOG("Compile\t%d\t%d\t%d\n", compile_count_, exec_count_, remove_count_);
   compile_count_ = 0;
   exec_count_ = 0;
+  remove_count_ = 0;
 }
+
+// memo DirectMemoryAccess
+// MOVLI,MOVWI
+
 
 void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 {
@@ -825,6 +854,8 @@ void CompileBlocks::opcodePass(x86op_desc *op, u16 opcode, u8 *ptr)
 #endif
 }
 
+#define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
+#define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 {
@@ -836,8 +867,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   u32 instruction_counter = 0;
   u32 write_memory_counter = 0;
   u32 calsize;
+  std::unordered_map<u32, uintptr_t> addr_map;
 
   startptr = ptr = page->code;
+
   i = 0;
   j = 0;
   count = 0;  
@@ -873,9 +906,9 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
   page->flags = 0;
   
 #ifdef BUILD_INFO  
-  LOG("*********** start block *************\n");
+  if( show_code_ ) LOG("*********** start block %08X *************\n", addr );
 #endif
-
+  //LOG("Compile %08X\n", addr );
   //MaxSize = MAXBLOCKSIZE - MAXINSTRSIZE- delay_seperator_size - SEPERATORSIZE_DELAY_AFTER - nomal_seperator_size - EPILOGSIZE;
   //while (ptr - startptr < MaxSize) {
   while (1) {
@@ -889,13 +922,28 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }
 #endif
 
+    addr_map[addr] = (uintptr_t)ptr;
+
     i = dsh2_instructions[op];
     if (asm_list[i].func == 0) {
+      LOG("bad instruction code @ PC=%08X code=%04X\n", addr, op );
       return -1;  // bad instruction code
     }
 
     // CheckSize
     u8 delay = asm_list[i].delay;
+#if defined(AARCH64)
+    if ( delay == 0 || delay == 0xFF) {
+      calsize  = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + EPILOGSIZE;
+    }else if(delay == 1 || delay == 5) {
+      calsize = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + Y_MAX(internal_jmp_size,DELAYJUMPSIZE) + EPILOGSIZE;
+    } else {
+      u32 op2 = memGetWord(addr+2);
+      u32 delayop = dsh2_instructions[op2];
+      calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + 
+      delay_seperator_size + Y_MAX(internal_delay_jmp_size,SEPERATORSIZE_DELAY_AFTER) + EPILOGSIZE;
+    }
+#else    
     if ( delay == 0 || delay == 0xFF) {
       calsize  = (ptr - startptr) + *asm_list[i].size + nomal_seperator_size + EPILOGSIZE;
     }else if(delay == 1 || delay == 5) {
@@ -905,7 +953,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       u32 delayop = dsh2_instructions[op2];
       calsize = (ptr - startptr) + *asm_list[i].size + *asm_list[delayop].size + delay_seperator_size + SEPERATORSIZE_DELAY_AFTER + EPILOGSIZE;
     }
-
+#endif
     if (calsize >= MAXBLOCKSIZE) {
       break; // no space is available
     }
@@ -915,10 +963,13 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     }
 
     // Inifinity Loop Detection
-    if (count == 0 && (op & 0xF00F) == 0x6000) {
+    if (count == 0 && (op & 0xF00F) == 0x6000) { // mov ? R0
       u32 loopcheck = memGetLong(addr + 2);
       if ((loopcheck & 0xFF00FFFF) == 0xC80089FC) { // test, bf
         page->flags |= BLOCK_LOOP;
+      }
+      if( (loopcheck&0xF00FFFFF) == 0x20088DFC ){ // slave waits intrrupt capture
+          page->flags |= BLOCK_LOOP;
       }
     }
 
@@ -929,12 +980,36 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     addr += 2;
 
 #ifdef BUILD_INFO
-    DumpInstX( i, addr-2, op  );
+    if(show_code_) DumpInstX( i, addr-2, op  );
 #endif
 
     instruction_counter++;
     asm_list[i].build_count++;
     write_memory_counter += asm_list[i].write_count;
+
+    u32 jumppc = 0xFFFFFFFF;
+    uintptr_t jumpptr = 0xFFFFFFFF;
+    if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {
+      if (asm_list[i].delay == 1) {
+        jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
+      }
+      else if (asm_list[i].delay == 2) {
+        temp = (op & 0xfff) << 1;
+        if (temp & 0x1000)
+          temp |= 0xfffff000;
+        jumppc = addr + ((signed)(op & 0xfff) << 1) + 2;
+      }
+      else if (asm_list[i].delay == 3) {
+        jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
+      }
+#if defined(AARCH64)
+      if ( addr_map.count(jumppc) != 0 && write_memory_counter != 0 ) {
+        jumpptr = addr_map[jumppc];
+        //LOG("jumpptr = %lx\n", jumpptr );
+      }
+#endif      
+    }
+
 
     // Regular Opcode ( No Delay Branch )
     if (asm_list[i].delay == 0) { 
@@ -944,7 +1019,7 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       opcodePass(&asm_list[i], op, ptr);
 #if defined(AARCH64)
       u32 * counterpos = (u32*)(ptr + *(asm_list[i].size) + nomal_seperator_counter_offset);
-      *counterpos |= (asm_list[i].cycle<<10);
+      *counterpos |= ((asm_list[i].cycle)<<10);
 #else
       u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
       *counterpos = asm_list[i].cycle;
@@ -966,17 +1041,43 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
     else if (asm_list[i].delay == 1 || asm_list[i].delay == 5 ) { 
       memcpy((void*)ptr, (void*)(asm_list[i].func), *(asm_list[i].size));
       memcpy((void*)(ptr + *(asm_list[i].size)), (void*)nomal_seperator, nomal_seperator_size);
-      memcpy((void*)(ptr + *(asm_list[i].size)+ nomal_seperator_size), (void*)PageFlip, DELAYJUMPSIZE);
-      instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
-      opcodePass(&asm_list[i], op, ptr);
+      if (jumpptr != 0xFFFFFFFF ) {
+        intptr_t offset = *(asm_list[i].size) + nomal_seperator_size;
+        memcpy((void*)(ptr + offset), (void*)internal_jmp, internal_jmp_size);
+        instrSize[blockCount][count++] = offset + internal_jmp_size;
+        opcodePass(&asm_list[i], op, ptr);
+        intptr_t jump_offset = jumpptr - (intptr_t)(ptr + offset + internal_jmp_to_offset);
+
+        u32 * jumppos = (u32*)(ptr + offset + internal_jmp_to_offset);
+        LOG("nomal jump_offset = %08X- %08X = %08X\n", jumpptr, (intptr_t)(ptr + offset + internal_jmp_to_offset), jump_offset);
+        // cbnz w0,#imm(aarch64)
+        //*jumppos = 0x35000000 | ((((jump_offset)>>2)&0x7FFFF)<<5);
+        *jumppos = 0x14000000 | ((jump_offset>>2)&0x3FFFFFF);
+
 #if defined(AARCH64)
-      u32 * counterpos = (u32*)(ptr + *(asm_list[i].size) + nomal_seperator_counter_offset);
-      *counterpos |= (asm_list[i].cycle<<10) ;
+        u32 * counterpos = (u32*)(ptr + *(asm_list[i].size) + nomal_seperator_counter_offset);
+        *counterpos |= ((asm_list[i].cycle) << 10);
 #else
-      u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
-      *counterpos = asm_list[i].cycle;
+        u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
+        *counterpos = asm_list[i].cycle;
 #endif
-      ptr += *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
+        ptr += *(asm_list[i].size) + nomal_seperator_size + internal_jmp_size;
+        write_memory_counter = 0;
+        continue;
+      }
+      else {
+        memcpy((void*)(ptr + *(asm_list[i].size) + nomal_seperator_size), (void*)PageFlip, DELAYJUMPSIZE);
+        instrSize[blockCount][count++] = *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
+        opcodePass(&asm_list[i], op, ptr);
+#if defined(AARCH64)
+        u32 * counterpos = (u32*)(ptr + *(asm_list[i].size) + nomal_seperator_counter_offset);
+        *counterpos |= (asm_list[i].cycle << 10);
+#else
+        u8 * counterpos = ptr + *(asm_list[i].size) + nomal_seperator_counter_offset;
+        *counterpos = asm_list[i].cycle;
+#endif
+        ptr += *(asm_list[i].size) + nomal_seperator_size + DELAYJUMPSIZE;
+      }
     }
 
     // Jmp With Delay Operation
@@ -1000,8 +1101,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 #endif
       addr += 2;
       j = opcodeIndex(temp);
+      write_memory_counter += asm_list[j].write_count;
+
 #ifdef BUILD_INFO
-      DumpInstX( j, addr-2, temp  );
+      if(show_code_) DumpInstX( j, addr-2, temp  );
 #endif
       if (asm_list[j].func == 0) {
         LOG("Unimplemented Opcode (0x%4x) at 0x%8x\n", temp, addr-2);
@@ -1013,40 +1116,54 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       write_memory_counter += asm_list[j].write_count;
 
       cycle += asm_list[j].cycle;
+      
+      intptr_t offset = 0;
       memcpy((void*)ptr, (void*)(asm_list[j].func), *(asm_list[j].size));
-      memcpy((void*)(ptr + *(asm_list[j].size)), (void*)seperator_delay_after, SEPERATORSIZE_DELAY_AFTER);
-      instrSize[blockCount][count++] = *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
-      opcodePass(&asm_list[j], temp, ptr);
+      offset = *(asm_list[j].size);
+
+      // internal loop
+      if (jumpptr != 0xFFFFFFFF) {
+
+        u32 cpsize = internal_delay_jmp_size;
+        memcpy((void*)(ptr + offset), (void*)internal_delay_jmp, internal_delay_jmp_size);
+        instrSize[blockCount][count++] = offset + internal_delay_jmp_size;
+        opcodePass(&asm_list[j], temp, ptr);
+
+        intptr_t jump_offset = jumpptr - (intptr_t)(ptr + offset + internal_delay_jmp_to_offset);
+        u32 * jumppos = (u32*)(ptr + offset + internal_delay_jmp_to_offset);
+
+        LOG("delay jump_offset = %lX - %lX = %08X\n", jumpptr, (intptr_t)(ptr + offset + internal_jmp_to_offset), jump_offset);
+
+        *jumppos = 0x14000000 | ((jump_offset>>2)&0x3FFFFFF);
+        // cbnz w0,#imm(aarch64)
+        //*jumppos = 0x35000000 | (((jump_offset>>2)&0x7FFFF)<<5);
 #if defined(AARCH64)
-      u32 * counterpos = (u32*)(ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset);
-      *counterpos |= (asm_list[i].cycle<<10) ;      
+        u32 * counterpos = (u32*)(ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset);
+        *counterpos |= (asm_list[i].cycle << 10);
 #else
-      u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
-      *counterpos = cycle;
+        u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
+        *counterpos = cycle;
 #endif
-      ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
+        ptr += *(asm_list[j].size) + internal_delay_jmp_size;
+        write_memory_counter = 0;
+        continue;
+      }
+      else {
+        memcpy((void*)(ptr + offset), (void*)seperator_delay_after, SEPERATORSIZE_DELAY_AFTER);
+        instrSize[blockCount][count++] = offset + SEPERATORSIZE_DELAY_AFTER;
+        opcodePass(&asm_list[j], temp, ptr);
+#if defined(AARCH64)
+        u32 * counterpos = (u32*)(ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset);
+        *counterpos |= (asm_list[i].cycle << 10);
+#else
+        u8 * counterpos = ptr + *(asm_list[j].size) + delayslot_seperator_counter_offset;
+        *counterpos = cycle;
+#endif
+        ptr += *(asm_list[j].size) + SEPERATORSIZE_DELAY_AFTER;
+      }
     }
 
     if (asm_list[i].delay != 0xFF && asm_list[i].delay != 0x00) {
-      // Loop Detectator
-      u32 jumppc = 0xFFFFFFFF;
-      //immediate w/o delay branch
-      if (asm_list[i].delay == 1) {
-        jumppc = addr + ((signed char)(op & 0xff) << 1) + 2;
-
-      //offset3
-      }
-      else if (asm_list[i].delay == 2) {
-        temp = (op & 0xfff) << 1;
-        if (temp & 0x1000)
-          temp |= 0xfffff000;
-        jumppc = addr + ((signed)(op & 0xfff) << 1);
-
-      //immediate
-      }
-      else if (asm_list[i].delay == 3) {
-        jumppc = addr + ((signed char)(op & 0xff) << 1);
-      }
 
       // jump to inside and no write is happend
       if (jumppc >= start_addr &&  jumppc < addr ) {
@@ -1073,7 +1190,11 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
         }
 
       }
-      break;
+      write_memory_counter = 0;
+      //if( (op&0xFF00) == 0x8900) continue;  // BT
+      //if( (op&0xFF00) == 0x8B00) continue;  // BF
+          
+          break;
     }
   }
   page->e_addr = addr-2;
@@ -1086,14 +1207,17 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
 
 #ifdef BUILD_INFO 
   //LOG("*********** end block size = %08X *************\n", (ptr - startptr));
-  LOG("*********** end block *************\n");
+  if( show_code_ ) {
+      if( page->flags & BLOCK_LOOP ) LOG("Infinity loop");
+      LOG("*********** end block *************\n");
+  }
 #endif 
 
 #if defined(ARCH_IS_LINUX)
   cacheflush((uintptr_t)page->code,(uintptr_t)ptr,0);
 #endif
 
-#if 0 // Dump code
+#if 0 //defined(BUILD_INFO) // Dump code
   char fname[64];
 #if defined(ANDROID)
   sprintf(fname,"/mnt/sdcard/yabause/%08X.bin",start_addr);
@@ -1174,6 +1298,7 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
     m_pDynaSh2->SysReg[4] = 0;
   }
 
+  m_pDynaSh2->exitcount = targetcnt;
 
   if ((GET_SR() & 0xF0) < GET_ICOUNT()) {
     this->CheckInterupt();
@@ -1184,6 +1309,7 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
       SET_COUNT(targetcnt);
       loopskip_cnt_++;
     }
+    //printf("%d/%d\n",GET_COUNT(),targetcnt);
     CurrentSH2->cycles = GET_COUNT();
   }
 
@@ -1228,12 +1354,14 @@ void DynarecSh2::Undecoded(){
   return;
 }
 
-int DynarecSh2::Execute(){
+inline int DynarecSh2::Execute(){
 
   Block * pBlock = NULL;
 
   m_pCompiler->exec_count_++;
-
+#if defined(EXECUTE_STAT)
+  m_pCompiler->setShowCode( is_slave_ );
+#endif
   switch( GET_PC() & 0x0FF00000 )
   {
     
@@ -1341,9 +1469,9 @@ int DynarecSh2::Execute(){
  //   logenable_ = true;
   //}
   //if( logenable_ )
-  //  LOG("[%s] dynaExecute start %08X", (is_slave_ == false) ? "M" : "S", GET_PC());
-#if defined(DEBUG_CPU)
-  if (statics_trigger_ == COLLECTING) {
+  // LOG("[%s] dynaExecute start %08X %08X", (is_slave_ == false) ? "M" : "S", GET_PC(),GET_PR() );
+#if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
+  if (is_slave_) { //statics_trigger_ == COLLECTING) {
     u64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
     compie_statics_[prepc].count++;
@@ -1357,8 +1485,12 @@ int DynarecSh2::Execute(){
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
 #endif
 
-  if (!m_pCompiler->debug_mode_ && (pBlock->flags&BLOCK_LOOP)) {
-    return IN_INFINITY_LOOP;
+  if (!m_pCompiler->debug_mode_ && (pBlock->flags&BLOCK_LOOP) ){
+    if (m_pDynaSh2->SysReg[3] < pBlock->e_addr && m_pDynaSh2->SysReg[3] >= pBlock->b_addr) {
+      return IN_INFINITY_LOOP;
+    } else {
+      return 0;
+    }
   }
   return 0;
 }
@@ -1488,6 +1620,16 @@ void DynarecSh2::ShowStatics(){
   case FINISHED:
     break;
   }
+#elif defined(EXECUTE_STAT)
+  LOG("\nExec cnt %d loopskip_cnt_ = %d, interruput_chk_cnt_ = %d, interruput_cnt_ = %d\n", GET_COUNT() , loopskip_cnt_, interruput_chk_cnt_, interruput_cnt_ );
+  interruput_chk_cnt_ = 0;
+  interruput_cnt_ = 0;
+  loopskip_cnt_ = 0;
+
+for( auto i = compie_statics_.begin(); i != compie_statics_.end() ; ++i ) {
+    if(i->second.time>100) LOG("%08X\t%d\t%d",i->first,i->second.count, i->second.time);
+  }
+compie_statics_.clear();
 #endif
 }
 

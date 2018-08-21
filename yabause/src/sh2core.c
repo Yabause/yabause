@@ -2277,7 +2277,11 @@ void SH2DumpHistory(SH2_struct *context){
 
 #ifdef DMPHISTORY
 	FILE * history = NULL;
-	history = fopen("history.txt", "w");
+#if defined(ANDROID)
+	history = fopen("/mnt/sdcard/history.txt", "w");
+#else
+        history = fopen("history.txt", "w");
+#endif
 	if (history){
 		int i;
 		int index = context->pchistory_index;

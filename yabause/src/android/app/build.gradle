@@ -9,9 +9,10 @@ android {
         minSdkVersion 19
         targetSdkVersion 25
         multiDexEnabled true
-        versionCode 45
-        versionName '1.8.1'
+        versionCode 58
+        versionName '2.1.5'
         multiDexEnabled true
+        vectorDrawables.useSupportLibrary = true
 
 /*
         externalNativeBuild {
@@ -62,6 +63,13 @@ android {
 */
 }
 
+crashlytics {
+    enableNdk true
+    androidNdkOut 'src/main/jniLibs'
+    androidNdkLibsOut 'src/main/jniLibs'
+    manifestPath 'src/main/AndroidManifest.xml'
+}
+
 def renameAPK(variant, defaultConfig, buildType) {
     variant.outputs.all {
         def formattedDate = new Date().format('yyMMdd')
@@ -110,7 +118,6 @@ dependencies {
     compile 'org.jbundle.util.osgi.wrapped:org.jbundle.util.osgi.wrapped.org.apache.http.client:4.1.2'
     compile 'com.squareup.okhttp3:okhttp:3.8.1'
     compile 'com.android.support:support-v4:25.3.1'
-    compile 'com.google.code.gson:gson:2.2.4'
     compile 'com.android.support:multidex:1.0.0'
 }
 

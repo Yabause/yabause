@@ -23,7 +23,7 @@
 #include <android/native_window_jni.h> // requires ndk r5 or newer
 #include <android/bitmap.h>
 #include <android/log.h>
-
+#include "crashlytics.h"
 #include "config.h"
 #include "yabause.h"
 #include "scsp.h"
@@ -55,6 +55,7 @@
 
 JavaVM * yvm;
 static jobject yabause;
+
 
 static char mpegpath[256] = "\0";
 static char cartpath[256] = "\0";
@@ -89,6 +90,7 @@ static int g_resolution_mode = 0;
 static int g_extmemory = 1;
 static int g_rotate_screen = 0;
 static int g_scsp_sync_count = 1;
+static int g_cpu_sync_shift = 1;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -861,7 +863,7 @@ int initEgl( ANativeWindow* window )
 {
 	int i;
     int res;
-    yabauseinit_struct yinit;
+    yabauseinit_struct yinit ={};
     void * padbits;
 
      const EGLint attribs[] = {
@@ -1026,11 +1028,13 @@ int initEgl( ANativeWindow* window )
     //yinit.m68kcoretype = M68KCORE_C68K;
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
     yinit.percoretype = PERCORE_DUMMY;
-#ifdef SH2_DYNAREC
+#if defined(SH2_DYNAREC) | defined(DYNAREC_DEVMIYAX)
+    //g_CpuType = SH2CORE_DEBUGINTERPRETER;
     yinit.sh2coretype = g_CpuType;
 #else
     yinit.sh2coretype = SH2CORE_DEFAULT;
 #endif
+    //s_vidcoretype = VIDCORE_DUMMY;
     yinit.vidcoretype = s_vidcoretype;
 #ifdef HAVE_OPENSL
     yinit.sndcoretype = SNDCORE_OPENSL;
@@ -1059,6 +1063,7 @@ int initEgl( ANativeWindow* window )
     yinit.extend_backup = g_extmemory;
     yinit.rotate_screen = g_rotate_screen;
     yinit.scsp_sync_count_per_frame = g_scsp_sync_count;
+    yinit.sync_shift = g_cpu_sync_shift;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1353,6 +1358,31 @@ Java_org_uoyabause_android_YabauseRunnable_setScspSyncPerFrame( JNIEnv* env, job
     g_scsp_sync_count = scsp_sync_count;
 }
 
+void
+Java_org_uoyabause_android_YabauseRunnable_setCpuSyncPerLine( JNIEnv* env, jobject obj, jint count )
+{
+    switch(count){
+    case 1:
+        g_cpu_sync_shift = 0;
+        break;
+    case 2:
+        g_cpu_sync_shift = 1;
+        break;
+    case 4:
+        g_cpu_sync_shift = 2;
+        break;
+    case 8:
+        g_cpu_sync_shift = 3;
+        break;
+    default:
+        g_cpu_sync_shift = 0;
+        break;
+    }
+
+}
+
+
+
 
 void
 Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv* env, jobject obj, jint pgm )
@@ -1474,16 +1504,19 @@ void log_callback(char * message)
     __android_log_print(ANDROID_LOG_INFO, "yabause", "%s", message);
 }
 
+crashlytics_context_t* context = NULL;
+
 jint JNI_OnLoad(JavaVM * vm, void * reserved)
 {
     JNIEnv * env;
     if ((*vm)->GetEnv(vm, (void**) &env, JNI_VERSION_1_6) != JNI_OK)
         return -1;
-
     yvm = vm;
 
     LogStart();
     LogChangeOutput(DEBUG_CALLBACK, (char *) log_callback);
+
+    context = crashlytics_init();
 
     return JNI_VERSION_1_6;
 }
@@ -1495,7 +1528,6 @@ void renderLoop()
     int pause = 0;
 	
 	YabThreadSetCurrentThreadAffinityMask(0x00);
-
 
     while (renderingEnabled != 0) {
 
@@ -1608,6 +1640,9 @@ void renderLoop()
     }
     
     YUI_LOG("byebye");
+
+    if( context != NULL )
+        crashlytics_free(&context);
 
 }
 

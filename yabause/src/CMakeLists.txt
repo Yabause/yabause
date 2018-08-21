@@ -817,7 +817,7 @@ else ()
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
 endif ()
 
-set(YAB_OPTIMIZATION "-O3" CACHE STRING "Override optimization level")
+set(YAB_OPTIMIZATION "" CACHE STRING "Override optimization level")
 
 if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
 	set(CMAKE_TOOLCHAIN_PREFIX "llvm-")
@@ -846,8 +846,8 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		add_definitions(-DAARCH64)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O3 -std=c99 -march=armv8-a -ffast-math ")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -march=armv8-a -std=c++11  -ffast-math -fno-exceptions -fno-rtti ")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c99 -march=armv8-a -mtune=cortex-a57.cortex-a53 ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -march=armv8-a -mtune=cortex-a57.cortex-a53 -std=c++11 -fno-exceptions -fno-rtti ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC

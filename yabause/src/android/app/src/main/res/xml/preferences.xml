@@ -39,6 +39,15 @@
             android:entries="@array/entries_cpu_list_preference"
             android:entryValues="@array/entryvalues_cpu_list_preference"
             android:defaultValue="3" />
+<!--
+        <ListPreference
+            android:key="pref_cpu_sync_per_line"
+            android:title="@string/cpu_sync_per_line"
+            android:dialogTitle="@string/sel_cpu_sync_per_line"
+            android:entries="@array/entries_cpu_sync_per_line"
+            android:entryValues="@array/entryvalues_cpu_sync_per_line"
+            android:defaultValue="0" />
+-->
 	</PreferenceCategory>
 
 

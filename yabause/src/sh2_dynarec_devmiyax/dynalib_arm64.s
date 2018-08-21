@@ -149,6 +149,10 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
   blr x10
 .endm  
 
+.macro LDR_EXIT_COUNT reg
+  ldr \reg , [x19, #(16+3+7)*4+(7*8) ]  
+.endm  
+
 .macro LDR_MACH reg
   ldr \reg , [x19, #(16+3+0)*4 ]  
 .endm  
@@ -170,8 +174,15 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 .endm
 
 .macro LDR_SR reg
-   ldr \reg , [x19, #(16+0)*4 ] 
+  mov \reg, w26
+  //ldr   \reg , [x19, #(16+0)*4 ]  
 .endm
+
+.macro LDR_SR_REG reg
+  ldr   \reg , [x19, #(16+0)*4 ]  
+  //nop
+.endm
+
 
 .macro LDR_GBR reg
    ldr \reg , [x19, #(16+1)*4 ] 
@@ -202,8 +213,15 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 .endm
 
 .macro STR_SR reg
+   //str \reg , [x19, #(16+0)*4 ] 
+   mov w26, \reg 
+.endm
+
+.macro STR_SR_REG reg
+  //nop 
   str \reg , [x19, #(16+0)*4 ] 
 .endm
+
 
 .macro STR_GBR reg
   str \reg , [x19, #(16+1)*4 ] 
@@ -250,14 +268,17 @@ extern _EachClock, _DelayEachClock, _DebugEachClock, _DebugDelayClock
 .global prologue
 prologue:
 //push {w4-w10, lr}   // push regs
-sub  sp, sp, #64
+sub  sp, sp, #80
 stp  x19, x20, [sp]  
 stp  x21, x22, [sp,#16]
 stp  x23, x24, [sp,#32]
 stp  x29, x30, [sp,#48] 
+stp  x25, x26, [sp,#64]
 mov x19, x0      // GenReg( w0 has adress of m_pDynaSh2)
 LDR_PC w20       // PC
 LDR_COUNT w21    // ClockCounter
+LDR_EXIT_COUNT w25 // Target Count
+LDR_SR_REG w26
 .size	prologue, .-prologue // 8*4
 
 
@@ -273,18 +294,18 @@ add w21, w21, #1    // 4 Clock += 1
 // Delay slot part par instruction
 .global seperator_delay_slot
 seperator_delay_slot:
-//cmn w0, #1 // Check need to branch
-//bne continue  
 cbnz w0,continue
 add w20, w20, #2    // PC += 2
 STR_PC w20
 add w21, w21, #1    // Clock += 1  
 STR_COUNT w21
+STR_SR_REG w26
 ldp  x19, x20, [sp]  
 ldp  x21, x22, [sp,#16]
 ldp  x23, x24, [sp,#32]
 ldp  x29, x30, [sp,#48] 
-add  sp, sp, #64
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
 ret
 continue:
 mov w20, w0    // copy jump addr
@@ -300,28 +321,49 @@ add w20, w20, #2    // PC += 2
 STR_PC w20     // store to memory
 add w21, w21, #1    // Clock += 1  
 STR_COUNT w21  // store to memory
-//pop {w4-w10, pc} // pop regs and resturn
+STR_SR_REG w26
 ldp  x19, x20, [sp]  
 ldp  x21, x22, [sp,#16]
 ldp  x23, x24, [sp,#32]
 ldp  x29, x30, [sp,#48] 
-add  sp, sp, #64
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
 ret
 .size seperator_delay_after, .-seperator_delay_after // 20
 
-
+.global internal_delay_jmp
+internal_delay_jmp:
+add w20, w20, #2    // PC += 2
+cmp w21, w25
+add w21, w21, #1    // Clock += 1  
+b.hi internal_delay_jmp.finish
+b #0
+internal_delay_jmp.finish:
+STR_PC w20     // store to memory
+STR_COUNT w21  // store to memory
+STR_SR_REG w26
+ldp  x19, x20, [sp]  
+ldp  x21, x22, [sp,#16]
+ldp  x23, x24, [sp,#32]
+ldp  x29, x30, [sp,#48] 
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
+ret
+internal_delay_jmp.next:
+//internal_delay_jmp_size = .-internal_delay_jmp
 //-------------------------------------------------------
 // End of block
 .global epilogue
 epilogue:
 STR_PC w20     // store PC to memory
 STR_COUNT w21  // store COUNTER to memory
-//pop {w4-w10, pc}  // pop regs and resturn
+STR_SR_REG W26
 ldp  x19, x20, [sp]  
 ldp  x21, x22, [sp,#16]
 ldp  x23, x24, [sp,#32]
 ldp  x29, x30, [sp,#48] 
-add  sp, sp, #64
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
 ret
 .size	epilogue, .-epilogue // 12
 
@@ -331,25 +373,48 @@ ret
 PageFlip:
 //cmn w0, #1 // 7
 //bne PageFlip.jmp     // 2
-cbnz w0,PageFlip.jmp
-STR_PC w20     // store PC to memory
+cbz w0,PageFlip.next
+STR_PC w0     // store PC to memory
 STR_COUNT w21  // store COUNTER to memory
+STR_SR_REG w26
 ldp  x19, x20, [sp]  
 ldp  x21, x22, [sp,#16]
 ldp  x23, x24, [sp,#32]
 ldp  x29, x30, [sp,#48] 
-add  sp, sp, #64
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
 ret
-PageFlip.jmp:
-STR_PC w0
-STR_COUNT w21  // store COUNTER to memory
-ldp  x19, x20, [sp]  
-ldp  x21, x22, [sp,#16]
-ldp  x23, x24, [sp,#32]
-ldp  x29, x30, [sp,#48] 
-add  sp, sp, #64
-ret
+PageFlip.next:
 .size	PageFlip, .-PageFlip // 22
+
+.global internal_jmp
+internal_jmp:
+cmp w21,w25
+b.hi internal_jmp.finish
+cbz w0,internal_jmp.next
+mov w20, w0
+b #0
+internal_jmp.finish:
+cbnz w0,internal_jmp.jmp
+STR_PC w20     // store PC to memory
+b internal_jmp.finishfinish
+internal_jmp.jmp:
+STR_PC w0
+internal_jmp.finishfinish:
+STR_COUNT w21  // store COUNTER to memory
+STR_SR_REG w26
+ldp  x19, x20, [sp]  
+ldp  x21, x22, [sp,#16]
+ldp  x23, x24, [sp,#32]
+ldp  x29, x30, [sp,#48] 
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
+ret
+internal_jmp.next:
+
+
+
+
 
 //-------------------------------------------------------
 // normal part par instruction( for debug build )
@@ -359,6 +424,7 @@ add w20, w20, #2    // PC += 2
 add w21, w21, #1    // Clock += 1  
 STR_PC w20     // store to memory
 STR_COUNT w21  // store to memory
+STR_SR_REG w26
 mov w23,w0
 CALL_EACHCLOCK
 cmp w0, #1
@@ -367,7 +433,8 @@ ldp  x19, x20, [sp]
 ldp  x21, x22, [sp,#16]
 ldp  x23, x24, [sp,#32]
 ldp  x29, x30, [sp,#48] 
-add  sp, sp, #64
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
 ret
 seperator_d_normal.continue:
 mov w0,w23
@@ -379,6 +446,7 @@ seperator_d_delay:
 mov w22,w0
 STR_PC w20     // store to memory
 STR_COUNT w21  // store to memory
+STR_SR_REG w26
 CALL_EACHCLOCK
 cbnz w22,seperator_d_delay.continue
 add w20, w20, #2    // PC += 2
@@ -389,7 +457,8 @@ ldp  x19, x20, [sp]
 ldp  x21, x22, [sp,#16]
 ldp  x23, x24, [sp,#32]
 ldp  x29, x30, [sp,#48] 
-add  sp, sp, #64
+ldp  x25, x26, [sp,#64]
+add  sp, sp, #80
 ret
 seperator_d_delay.continue:
 mov w20, w22    // copy jump addr
@@ -397,11 +466,10 @@ sub w20, w20, #2    // PC -= 2
 .size seperator_delay_slot, .-seperator_delay_slot // 40
 
 
-opdesc CLRT, (3*4),0xff,0xff,0xff,0xff,0xff
+opdesc CLRT, (1*4),0xff,0xff,0xff,0xff,0xff
 opfunc CLRT
-LDR_SR w0
-bic    w0,w0, #1
-STR_SR w0
+bic    w26,w26, #1
+
 
 opdesc CLRMAC,24,0xff,0xff,0xff,0xff,0xff
 opfunc CLRMAC
@@ -416,11 +484,9 @@ opdesc NOP,		4,0xff,0xff,0xff,0xff,0xff
 opfunc NOP
 nop
 
-opdesc SETT,	12,0xff,0xff,0xff,0xff,0xff
+opdesc SETT,	(1*4),0xff,0xff,0xff,0xff,0xff
 opfunc SETT
-LDR_SR w0
-orr w0, w0 , #1
-STR_SR w0
+orr w26, w26 , #1
 
 opdesc SLEEP,	4,0xff,0xff,0xff,0xff,0xff
 opfunc SLEEP
@@ -453,36 +519,32 @@ str w3, [x19, x1]
 REV w3, w2
 str w3, [x19, x1]
 
-opdesc TST,	(11*4),0,4,0xff,0xff,0xff
+opdesc TST,	(9*4),0,4,0xff,0xff,0xff
 opfunc TST
 mov w0, #0 // m
 mov w1, #0 // n
-LDR_SR w2
 ldr     w1, [x19, x1]
 ldr     w3, [x19, x0]
 tst     w1, w3
 b.eq    TST_EQ
-bic     w2, w2, #0x1
+bic     w26, w26, #0x1
 b       TST_FINISH
 TST_EQ:
-orr     w2, w2, #0x1
+orr     w26, w26, #0x1
 TST_FINISH:
-STR_SR w2
 
 
 opdesc TSTI,	(9*4),0xff,0xff,0xff,0,0xff
 opfunc TSTI
 mov     w0, #0   // n
-LDR_SR  w1
 ldr     w3, [x19] // R[0]
 tst     w0, w3
 b.eq    TSTI_EQ
-bic     w0, w1, #0x1
+bic     w26, w26, #0x1
 b       TSTI_FINISH
 TSTI_EQ:
-orr     w0, w1, #0x1
+orr     w26, w26, #0x1
 TSTI_FINISH:
-STR_SR w0
 
 opdesc ANDI,	16,0xff,0xff,0xff,0,0xff
 opfunc ANDI
@@ -523,104 +585,79 @@ ldr w3, [x19, x0]
 add w3, w3, w1
 str w3, [x19, x0]
 
-opdesc ADDC,	(16*4),0,4,0xff,0xff,0xff
+opdesc ADDC,	(14*4),0,4,0xff,0xff,0xff
 opfunc ADDC
-mov w0, #0 // source
-mov w1, #0 // dest
-ldr w2, [x19, x0] // w2 = R[source]
-LDR_SR w0        // w0 = SR
-ldr w3, [x19, x1] // w3 = R[dest]
-adds w2, w2, w3       // w2+w3
-and w3, w0, #1   // w3 = w0 & 1
-b.cs ADDC_CARRY
-bic w4, w0, #1 // check not carry
-b ADDC_FINISH
-ADDC_CARRY:
-orr w4, w0, #1 // check carry
-ADDC_FINISH:
-adds w2, w2, w3
-b.cc ADDC_CARRY2
-orr w4, w0, #1 // check carry
-ADDC_CARRY2:
-STR_SR w4
-str w2, [x19, x1]
+mov w0, #0
+mov w1, #0
+mov w5, 1
+and     w4, w26, w5                                                      
+ldr     w6, [x19,x1]                                              
+ldr     w0, [x19,x0]                                              
+add     w0, w6, w0                                                      
+add     w4, w0, w4                                                      
+str     w4, [x19,x1]                                              
+cmp     w0, w4                                                          
+bhi     ADDC.L10                                                            
+cmp     w6, w0                                                          
+cset    w5, hi                                                          
+ADDC.L10:                                                                           
+bfi     w26, w5, 0, 1                                                    
 
-opdesc ADDV, (12*4),0,4,0xff,0xff,0xff
+opdesc ADDV, (14*4),0,4,0xff,0xff,0xff
 opfunc ADDV
 mov w0, #0 // source
 mov w1, #0 // dest
-ldr w2, [x19, x0] // w2 = R[source]
-LDR_SR w0        // w0 = SR
-ldr w3, [x19, x1] // w3 = R[dest]
-adds w2, w2, w3       // w2+w3
-b.vs ADDV_OVERFLOW
-bic w4, w0, #1 
-b ADDV_FINISH
-ADDV_OVERFLOW:
-orr w4, w0, #1 
-ADDV_FINISH:
-STR_SR w4
-str w2, [x19, x1]
+and     w2, w26, -2                                                      
+ldr     w3, [x19,x1]                                              
+ldr     w0, [x19,x0]                                              
+add     w5, w3, w0                                                      
+lsr     w3, w3, 31                                                      
+add     w0, w3, w0, lsr 31                                              
+str     w5, [x19,x1]                                              
+add     w3, w3, w5, lsr 31                                              
+cmp     w3, 1                                                           
+cset    w1, eq                                                          
+bic     w0, w1, w0                                                      
+orr     w26, w2, w0 
 
 
-opdesc SUBV, (12*4),0,4,0xff,0xff,0xff
+
+opdesc SUBV, (16*4),0,4,0xff,0xff,0xff
 opfunc SUBV
 mov w0, #0 // source
 mov w1, #0 // dest
-ldr w2, [x19, x0] // w2 = R[source]
-LDR_SR w0        // w0 = SR
-ldr w3, [x19, x1] // w3 = R[dest]
-subs w2, w2, w3       // w2+w3
-b.vs SUBV_OVERFLOW
-bic w4, w0, #1 
-b SUBV_FINISH
-SUBV_OVERFLOW:
-orr w4, w0, #1 
-SUBV_FINISH:
-STR_SR w4
-str w2, [x19, x1]
+and     w2, w26, -2                                                      
+ldr     w4, [x19,x0]                                              
+ldr     w0, [x19,x1]                                              
+sub     w5, w0, w4                                                      
+lsr     w0, w0, 31                                                      
+add     w4, w0, w4, lsr 31                                              
+str     w5, [x19,x1]                                              
+add     w0, w0, w5, lsr 31                                              
+cmp     w0, 1                                                           
+cset    w1, eq                                                          
+cmp     w4, 1                                                           
+cset    w0, eq                                                          
+and     w0, w1, w0                                                      
+orr     w26, w2, w0 
 
-
-opdesc SUBC,	(17*4),0,4,0xff,0xff,0xff
+opdesc SUBC,	(14*4),0,4,0xff,0xff,0xff
 opfunc SUBC
 mov w0, #0 // source
 mov w1, #0 // dest
-ldr w5, [x19, x1]
-LDR_SR w2 
-ldr w0, [x19, x0]
-and     w4, w2, 1
-orr     w6, w2, 1
-sub     w0, w5, w0
-and     w2, w2, -2
-cmp     w5, w0
-sub     w4, w0, w4
-csel    w2, w2, w6, cs
-cmp     w0, w4
-str     w4, [x19, x1]
-bcs     SUBC.L7
-orr     w2, w2, 1
-SUBC.L7:
-STR_SR w2
-
-
-ldr w2, [x19, x0] // w2 = R[source]  
-LDR_SR w0        // w0 = SR
-ldr w3, [x19, x1] // w3 = R[dest]
-subs w3, w3, w2       // w3-w2
-and w2, w0, #1   // w3 = w0 & 1
-b.cs SUBC_CARRY
-bic w4, w0, #1 // check not carry
-b SUBC_FINISH
-SUBC_CARRY:
-orr w4, w0, #1 // check carry
-SUBC_FINISH:
-subs w3, w3, w2
-b.cc SUBC_CARRY2
-orr w4, w0, #1 // check carry
-SUBC_CARRY2:
-STR_SR w4
-str w3, [x19, x1]
-
+mov     w5, 1                                                           
+and     w4, w26, w5                                                      
+ldr     w6, [x19,x1]                                              
+ldr     w0, [x19,x0]                                              
+sub     w0, w6, w0                                                      
+sub     w4, w0, w4                                                      
+str     w4, [x19,x1]                                              
+cmp     w0, w4                                                          
+bcc     SUBC.L3                                                             
+cmp     w6, w0                                                          
+cset    w5, cc                                                          
+SUBC.L3:                                                                            
+bfi     w26, w5, 0, 1 
 
 
 opdesc SUB,		24,0,4,0xff,0xff,0xff
@@ -649,25 +686,23 @@ ldr  w3, [x19,x0]
 neg  w3, w3
 str  w3, [x19,x1]
 
-opdesc NEGC,	(16*4),0,4,0xff,0xff,0xff
+opdesc NEGC,	(14*4),0,4,0xff,0xff,0xff
 opfunc NEGC
 mov w0, #0 // source
 mov w1, #0 // dest
-LDR_SR w3  // w0 = SR
 ldr	w2, [x19,x0]
-and	w4, w3, 1
-orr	w5, w3, 1
+and	w4, w26, 1
+orr	w5, w26, 1
 neg	w2, w2
-and	w3, w3, -2
+and	w26, w26, -2
 sub	w4, w2, w4
 cmp	w2, wzr
-csel	w3, w3, w5, eq
-str	w4, [x0,x1]
+csel	w26, w26, w5, eq
+str	w4, [x19,x1]
 cmp	w2, w4
 bcs	NEGC_END
-orr	w3, w3, 1
+orr	w26, w26, 1
 NEGC_END:
-STR_SR w3
 
 opdesc EXTUB,	(5*4),0,4,0xff,0xff,0xff
 opfunc EXTUB
@@ -704,7 +739,7 @@ str  w3, [x19, x1]
 //Store Register Opcodes
 //----------------------
 
-opdesc STC_SR_MEM,	28,0xff,0,0xff,0xff,0xff
+opdesc STC_SR_MEM,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc STC_SR_MEM
 mov w2, #0  // n
 ldr w0, [x19, x2] // R[n]
@@ -714,7 +749,7 @@ LDR_SR w1
 CALL_SETMEM_LONG
 
 
-opdesc STC_GBR_MEM,	28,0xff,0,0xff,0xff,0xff
+opdesc STC_GBR_MEM,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc STC_GBR_MEM
 mov w2, #0  // n
 ldr w0, [x19, x2] // R[n]
@@ -851,11 +886,10 @@ CALL_GETMEM_LONG
 str w0, [x19, x22]
 
 
-opdesc MOVT,	16,0xff,0x0,0xff,0xff,0xff 
+opdesc MOVT,	(3*4),0xff,0x0,0xff,0xff,0xff 
 opfunc MOVT
 mov w0,  #0  
-LDR_SR w1
-and w1, w1, #1
+and w1, w26, #1
 str w1, [x19, x0];
 
 opdesc MOVBS0,	(8*4),0x0,0x4,0xff,0xff,0xff
@@ -893,148 +927,129 @@ CALL_SETMEM_LONG
 //Verified Opcodes
 //===========================================================================
 
-opdesc DT,		(11*4),0xff,0,0xff,0xff,0xff
+opdesc DT,		(8*4),0xff,0,0xff,0xff,0xff
 opfunc DT
 mov     w0, #0            // n
 ldr	w2, [x19,x0]
 sub	w2, w2, #1
 str	w2, [x19,x0]
-LDR_SR  w0            // w1 = SR
 cbz	w2, DTZERO
-and	w0, w0, -2
-STR_SR  w0           // SR = w0
+and	w26, w26, -2
 b DTFINISH
 DTZERO:
-orr	w0, w0, 1
-STR_SR  w0           // SR = w0
+orr	w26, w26, 1
 DTFINISH:
 
 
-opdesc CMP_PZ,	(8*4),0xff,0,0xff,0xff,0xff
+opdesc CMP_PZ,	(6*4),0xff,0,0xff,0xff,0xff
 opfunc CMP_PZ
 mov     w0, #0
 ldr     w0, [x19, x0]
-LDR_SR  w1
 tbnz	w0, #31, CMP_PZ_TRUE
-orr	w0, w1, 1
+orr	w26, w26, 1
 b CMP_PZ_FINISH
 CMP_PZ_TRUE:
-and	w0, w1, -2
+and	w26, w26, -2
 CMP_PZ_FINISH:
-STR_SR  w0
 
-opdesc CMP_PL,	(9*4),0xff,0,0xff,0xff,0xff
+opdesc CMP_PL,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc CMP_PL
 mov     w0, #0
 ldr w0, [x19, x0]
 cmp	w0, wzr
-LDR_SR  w0
 ble	CMP_PL_TRUE
-orr	w0, w0, 1
+orr	w26, w26, 1
 b CMP_PL_FINISH
 CMP_PL_TRUE:
-and	w0, w0, -2
+and	w26, w26, -2
 CMP_PL_FINISH:
-STR_SR  w0
 
-opdesc CMP_EQ,	(11*4),0,4,0xff,0xff,0xff
+opdesc CMP_EQ,	(9*4),0,4,0xff,0xff,0xff
 opfunc CMP_EQ
 mov     w0, #0
 mov     w1, #0
 ldr w4, [x19, x1]
 ldr w0, [x19, x0]
 cmp	w4, w0
-LDR_SR  w0
 beq	CMP_EQ_TRUE
-and	w0, w0, -2
+and	w26, w26, -2
 b CMP_EQ_FINISH
 CMP_EQ_TRUE:
-orr	w0, w0, 1
+orr	w26, w26, 1
 CMP_EQ_FINISH:
-STR_SR  w0
 
-opdesc CMP_HS,	(11*4),0,4,0xff,0xff,0xff
+opdesc CMP_HS,	(9*4),0,4,0xff,0xff,0xff
 opfunc CMP_HS
 mov     w0, #0
 mov     w1, #0
 ldr     w4, [x19, x1]
 ldr     w0, [x19, x0]
 cmp	w4, w0
-LDR_SR  w0
 bcs	CMP_HS_TRUE
-and	w0, w0, -2
+and	w26, w26, -2
 b CMP_HS_FINISH
 CMP_HS_TRUE:
-orr	w0, w0, 1
+orr	w26, w26, 1
 CMP_HS_FINISH:
-STR_SR  w0
 
-opdesc CMP_HI,	(11*4),0,4,0xff,0xff,0xff
+opdesc CMP_HI,	(9*4),0,4,0xff,0xff,0xff
 opfunc CMP_HI
 mov     w0, #0
 mov     w1, #0
 ldr     w4, [x19, x1]
 ldr     w0, [x19, x0]
 cmp	w4, w0
-LDR_SR  w0
 bhi	CMP_HI_TRUE
-and	w0, w0, -2
+and	w26, w26, -2
 b CMP_HI_FINISH
 CMP_HI_TRUE:
-orr	w0, w0, 1
+orr	w26, w26, 1
 CMP_HI_FINISH:
-STR_SR  w0
 
-opdesc CMP_GE,	(11*4),0,4,0xff,0xff,0xff
+opdesc CMP_GE,	(9*4),0,4,0xff,0xff,0xff
 opfunc CMP_GE
 mov     w0, #0
 mov     w1, #0
 ldr     w4, [x19, x1]
 ldr     w0, [x19, x0]
 cmp	w4, w0
-LDR_SR  w0
 bge	CMP_GE_TRUE
-and	w0, w0, -2
+and	w26, w26, -2
 b CMP_GE_FINISH
 CMP_GE_TRUE:
-orr	w0, w0, 1
+orr	w26, w26, 1
 CMP_GE_FINISH:
-STR_SR  w0
 
 
-opdesc CMP_GT,	(11*4),0,4,0xff,0xff,0xff
+opdesc CMP_GT,	(9*4),0,4,0xff,0xff,0xff
 opfunc CMP_GT
 mov     w0, #0
 mov     w1, #0
 ldr     w4, [x19, x1]
 ldr     w0, [x19, x0]
 cmp	w4, w0
-LDR_SR  w0
 bgt	CMP_GT_TRUE
-and	w0, w0, -2
+and	w26, w26, -2
 b CMP_GT_FINISH
 CMP_GT_TRUE:
-orr	w0, w0, 1
+orr	w26, w26, 1
 CMP_GT_FINISH:
-STR_SR  w0
 
-opdesc CMP_EQ_IMM,	(9*4),0xff,0xff,0xff,0,0xff
+opdesc CMP_EQ_IMM,	(7*4),0xff,0xff,0xff,0,0xff
 opfunc CMP_EQ_IMM
 mov w0, #0 // imm
 ldr     w3, [x19]
 cmp     w3, w0,sxtb
-LDR_SR  w0
 beq	CMP_EQ_IMM_TRUE
-and	w0, w0, -2
+and	w26, w26, -2
 b CMP_EQ_IMM_FINISH
 CMP_EQ_IMM_TRUE:
-orr	w0, w0, 1
+orr	w26, w26, 1
 CMP_EQ_IMM_FINISH:
-STR_SR  w0
 
 
 // string cmp
-opdesc CMPSTR, (19*4),0,4,0xff,0xff,0xff
+opdesc CMPSTR, (16*4),0,4,0xff,0xff,0xff
 opfunc CMPSTR
 mov w0, #0 // m
 mov w1, #0 // n
@@ -1049,146 +1064,128 @@ ubfx	x1, x0, 8, 8
 cbz	w1, CMPSTR_TRUE
 and	w0, w0, 255
 cbz	w0, CMPSTR_TRUE
-LDR_SR W0
-and	w0, w0, -2
+and	w26, w26, -2
 b CMPSTR_FINISH
 CMPSTR_TRUE:
-LDR_SR W0
-orr	w0, w0, 1
+orr	w26, w26, 1
 CMPSTR_FINISH:
-STR_SR  w0
 
 
 //http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0489fj/CIHDDCIF.html
 
-opdesc ROTL,	(13*4),0xff,0,0xff,0xff,0xff
+opdesc ROTL,	(11*4),0xff,0,0xff,0xff,0xff
 opfunc ROTL
 mov w0, #0   // n
 ldr	w1, [x19,x0]
-LDR_SR w3    // w3 = SR
 tbnz	w1, #31, ROTL.TRUE
-and	w3, w3, -2
+and	w26, w26, -2
 ROTL.L2:
 lsl	w1, w1, 1
-STR_SR  w3
-tbz	x3, 0, ROTL.L6
+tbz	w26, 0, ROTL.L6
 orr	w1, w1, 1
 ROTL.L6:
 str	w1, [x19,x0]
 b ROTL.FINISH
 ROTL.TRUE:
-orr	w3, w3, 1
+orr	w26, w26, 1
 b	ROTL.L2
 ROTL.FINISH:
 
-opdesc ROTR,	(13*4),0xff,0,0xff,0xff,0xff
+opdesc ROTR,	(11*4),0xff,0,0xff,0xff,0xff
 opfunc ROTR
 mov w0, #0   // n
 ldr	w1, [x19,x0]
-LDR_SR w3    // w3 = SR
-tbnz	x1, 0, ROTR.L9
-and	w3, w3, -2
+tbnz	w1, 0, ROTR.L9
+and	w26, w26, -2
 ROTR.L10:
 lsr	w1, w1, 1
-STR_SR w3
-tbz	x3, 0, ROTR.L13
+tbz	w26, 0, ROTR.L13
 orr	w1, w1, -2147483648
 ROTR.L13:
 str	w1, [x19,x0]
 b ROTR.FINISH
 ROTR.L9:
-orr	w3, w3, 1
+orr	w26, w26, 1
 b	ROTR.L10
 ROTR.FINISH:
 
 
-opdesc ROTCL,	(13*4),0xff,0,0xff,0xff,0xff
+opdesc ROTCL,	(11*4),0xff,0,0xff,0xff,0xff
 opfunc ROTCL
 mov w0, #0   // n
 ldr	w5, [x19,x0]
-LDR_SR	w1
 lsl	w4, w5, 1
 str	w4, [x19,x0]
-tbz	x1, 0, ROTCL.TRUE
+tbz	w26, 0, ROTCL.TRUE
 orr	w4, w4, 1
 str	w4, [x19,x0]
 ROTCL.TRUE:
-orr	w0, w1, 1
+orr	w0, w26, 1
 cmp	w5, wzr
-and	w1, w1, -2
-csel	w1, w1, w0, ge
-STR_SR	w1
+and	w26, w26, -2
+csel	w26, w26, w0, ge
 
 
-opdesc ROTCR,	(14*4),0xff,0,0xff,0xff,0xff
+opdesc ROTCR,	(12*4),0xff,0,0xff,0xff,0xff
 opfunc ROTCR
 mov w0, #0   // n
 ldr	w3, [x19,x0]
-LDR_SR	w1
 lsr	w5, w3, 1
 str	w5, [x19,x0]
 and	w3, w3, 1
-tbz	x1, 0, ROTCR.TRUE
+tbz	w26, 0, ROTCR.TRUE
 orr	w5, w5, -2147483648
 str	w5, [x19,x0]
 ROTCR.TRUE:
-orr	w0, w1, 1
+orr	w0, w26, 1
 cmp	w3, wzr
-and	w1, w1, -2
-csel	w1, w1, w0, eq
-STR_SR w1 
+and	w26, w26, -2
+csel	w26, w26, w0, eq
 
 
-opdesc SHL,		(11*4),0xff,0,0xff,0xff,0xff
+opdesc SHL,		(9*4),0xff,0,0xff,0xff,0xff
 opfunc SHL
 mov w0, #0 
 ldr	w2, [x19,x0]
-LDR_SR w3
 tbnz	w2, #31, SHL.L29
-and	w3, w3, -2
+and	w26, w26, -2
 lsl	w2, w2, 1
 b SHL.FINISH
 SHL.L29:
-orr	w3, w3, 1
+orr	w26, w26, 1
 lsl	w2, w2, 1
 SHL.FINISH:
-STR_SR w3 
 str	w2, [x19,x0]
 
 
-opdesc SHLR,	(11*4),0xff,0,0xff,0xff,0xff
+opdesc SHLR,	(9*4),0xff,0,0xff,0xff,0xff
 opfunc SHLR
 mov w0, #0 
 ldr	w2, [x19,x0]
-LDR_SR w3
-tbz	x2, 0, SHLR.L34
-orr	w3, w3, 1
+tbz	w2, 0, SHLR.L34
+orr	w26, w26, 1
 lsr	w2, w2, 1
 b SHLR.FINISH
 SHLR.L34:
-and	w3, w3, -2
+and	w26, w26, -2
 lsr	w2, w2, 1
 SHLR.FINISH:
-STR_SR w3
 str	w2, [x19,x0]
 
 
-opdesc SHAR,	(16*4),0xff,0,0xff,0xff,0xff
+opdesc SHAR,	(13*4),0xff,0,0xff,0xff,0xff
 opfunc SHAR
 mov w0, #0 
 ldr	w1, [x19,x0]
-LDR_SR w3
-tbnz	x1, 0, SHAR.L36
-and	w3, w3, -2
-STR_SR w3
+tbnz	w1, 0, SHAR.L36
+and	w26, w26, -2
 tbnz	w1, #31, SHAR.L41
 SHAR.L38:
 lsr	w1, w1, 1
 str	w1, [x19,x0]
 b SHAR.FINISH
 SHAR.L36:
-orr	w3, w3, 1
-STR_SR w3
+orr	w26, w26, 1
 tbz	w1, #31, SHAR.L38
 SHAR.L41:
 lsr	w1, w1, 1
@@ -1316,24 +1313,21 @@ add     w0, w5, w6  // GBR+w0
 CALL_SETMEM_BYTE
 
 
-opdesc TST_B,	(14*4),0xff,0xff,0xff,20,0xff
+opdesc TST_B,	(12*4),0xff,0xff,0xff,(6*4),0xff
 opfunc TST_B
 ldr     w22, [x19]
 LDR_GBR w0
 add	w0, w22, w0
 CALL_GETMEM_BYTE
 uxtb	w0, w0
-tst	w0, w22
-LDR_GBR w0
-beq	TST_B.L5
-and	w0, w0, -2
-STR_SR w0
+mov   w1, #0
+and   w0,w0,w1
+cbz	w0, TST_B.T1
+and	w26, w26, -2
 b TST_B.FINISH
-TST_B.L5:
-orr	w0, w0, 1
-STR_SR w0
+TST_B.T1:
+orr	w26, w26, 1
 TST_B.FINISH:
-
 
 // Jump Opcodes
 //------------
@@ -1430,15 +1424,14 @@ add w0, w0, w1, lsl #2 // PC = MappedMemoryReadLong(VBR+(imm<<2));
 CALL_GETMEM_LONG
 
 
-opdesc BT,		(11*4),0xff,0xff,0xff,0,0xff
+opdesc BT,		(10*4),0xff,0xff,0xff,0,0xff
 opfunc BT
 movz w0, #0 // disp
 uxth	w0, w0
-LDR_SR w3
-and	w2, w3, 1
+and	w2, w26, 1
 mov  w4,w0
 movz w0, #0 // clear
-tbz	x3, 0, BT.FINISH
+tbz	w26, 0, BT.FINISH
 mov w2, w20 // PC
 sbfiz	w4, w4, 1, 8
 add	w2, w2, 4
@@ -1446,15 +1439,14 @@ add	w0, w2, w4
 BT.FINISH:
 
 
-opdesc BF,		(11*4),0xff,0xff,0xff,0,0xff
+opdesc BF,		(10*4),0xff,0xff,0xff,0,0xff
 opfunc BF
 movz w0, #0 // disp
 uxth	w0, w0
-LDR_SR w3
-and	w2, w3, 1
+and	w2, w26, 1
 mov  w4,w0
 movz w0, #0 // clear
-tbnz	x3, 0, BF.FINISH
+tbnz	w26, 0, BF.FINISH
 mov w2, w20 // PC
 sbfiz	w4, w4, 1, 8
 add	w2, w2, 4
@@ -1462,15 +1454,14 @@ add	w0, w2, w4
 BF.FINISH:
 
 
-opdesc BF_S,		(11*4),0xFF,0xFF,0xFF,0,0xFF
+opdesc BF_S,		(10*4),0xFF,0xFF,0xFF,0,0xFF
 opfunc BF_S
 movz w0, #0 // disp
 uxth	w0, w0
-LDR_SR w3
-and	w2, w3, 1
+and	w2, w26, 1
 mov  w4,w0
 movz w0, #0 // clear
-tbnz	x3, 0, BF_S.FINISH
+tbnz	w26, 0, BF_S.FINISH
 mov w2, w20 // PC
 sbfiz	w4, w4, 1, 8
 add	w2, w2, 4
@@ -1530,7 +1521,7 @@ str w0, [x19, x2]
 LDR_MACL w1
 CALL_SETMEM_LONG
 
-opdesc LDC_SR,	24,0xff,0,0xff,0xff,0xff
+opdesc LDC_SR,	(6*4),0xff,0,0xff,0xff,0xff
 opfunc LDC_SR
 mov     w1, #0  // m
 ldr     w0, [x19, x1] // w5 = R[m] 
@@ -1593,7 +1584,7 @@ mov w0, #0
 LDR_PR  w1 
 str     w1, [x19, x0]
 
-opdesc STSMPR,	28,0xff,0,0xff,0xff,0xff
+opdesc STSMPR,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc STSMPR
 mov w4, #0
 ldr w0, [x19, x4]
@@ -1602,13 +1593,13 @@ str w0, [x19, x4]
 LDR_PR w1
 CALL_SETMEM_LONG
 
-opdesc LDS_PR,		12,0xff,0,0xff,0xff,0xff
+opdesc LDS_PR,		(3*4),0xff,0,0xff,0xff,0xff
 opfunc LDS_PR
 mov w0, #0 // b
 ldr w0, [x19, x0]
 STR_PR w0
 
-opdesc LDS_PR_INC,	28,0xff,0,0xff,0xff,0xff
+opdesc LDS_PR_INC,	(7*4),0xff,0,0xff,0xff,0xff
 opfunc LDS_PR_INC
 mov w2, #0 // m
 ldr w0, [x19, x2]
@@ -1859,34 +1850,30 @@ sub  w0, w0, #4
 str  w0, [x19, x3] // R[n] -= 4
 CALL_SETMEM_LONG // 2cyclte
 
-opdesc TAS,  (17*4),0xff,0,0xff,0xff,0xff
+opdesc TAS,  (15*4),0xff,0,0xff,0xff,0xff
 opfunc TAS
-mov     w0, #0 // n
-mov     w20, w0
-ldr     w0, [x19, x0]
+mov     w22, #0
+ldr     w0, [x19, x22]
 CALL_GETMEM_BYTE
 uxtb	w0, w0
 LDR_SR w3
-cbz	w0, TAS.L21
+cbz	w0, TAS.ZERO
 and	w3, w3, -2
-STR_SR  w3
 b TAS.FINISH
-TAS.L21:
-orr	w3, w3, 1
+TAS.ZERO:
+orr	w3, w3, 1 
 TAS.FINISH:
 STR_SR  w3
 orr	w1, w0, 128
-ldr	w0, [x19,x20]
+ldr	w0, [x19,x22]
 CALL_SETMEM_BYTE
       
 
-opdesc DIV0U,	16,0xff,0xff,0xff,0xff,0xff
+opdesc DIV0U,	(2*4),0xff,0xff,0xff,0xff,0xff
 opfunc DIV0U
-LDR_SR w0
 //and w0,0xfffffcfe
-bic     w0, w0, #768
-bic     w0, w0, #1
-STR_SR w0
+bic     w26, w26, #768
+bic     w26, w26, #1
 
 opdesc DIV0S, (23*4),0,4,0xff,0xff,0xff
 opfunc DIV0S
@@ -1896,7 +1883,7 @@ ldr  w2, [x19, x0 ] // m
 ldr  w1, [x19, x1 ] // n
 tbnz w1, #31, DIV0S.L2
 LDR_SR w1
-and	w1, w1, -257
+and      w1, w1, -257
 DIV0S.L3:
 and	w3, w1, -513
 orr	w1, w1, 512
@@ -1918,98 +1905,74 @@ b	DIV0S.L3
 DIV0S.FINISH:
 
 
-opdesc DIV1, (82*4),0,4,0xff,0xff,0xff
+opdesc DIV1, (62*4),0,4,0xff,0xff,0xff
 opfunc DIV1
 mov w0, #0 // m
 mov w1, #0 // n
-ldr     w4, [x19, x1]
-ldrb    w6, [x19, 65]
-ldrb    w7, [x19, 64]
-mov     w8, w6
-and     w9, w6, 1
-lsr     w3, w4, 31
-and     w7, w7, 1
-bfi     w8, w3, 0, 1
-orr     w4, w7, w4, lsl 1
-strb    w8, [x19, 65]
-str     w4, [x19, x1]
-tbz     x6, 0, DIV1.L3
-cbnz    w9, DIV1.L4
-ldrb    w6, [x19, 65]
-ubfx    x6, x6, 1, 1
-ldrb    w0, [x19, 64]
-cmp     w6, w3
-cset    w1, eq
-bfi     w0, w1, 0, 1
-strb    w0, [x19, 64]
-b DIV1.FINISH        
-DIV1.L4:
-  ldrb    w7, [x19, 65]
-  ldr     w0, [x19, x0]
-  ubfx    x6, x7, 1, 1
-  cbz     w6, DIV1.L21
-  sub     w0, w4, w0
-  str     w0, [x19, x1]
-  cmp     w4, w0
-  cbz     w3, DIV1.L19
-DIV1.L17:
-  cset    w3, cc
-  bfi     w7, w3, 0, 1
-  cmp     w6, w3
-  strb    w7, [x19, 65]
-  cset    w1, eq
-  ldrb    w0, [x19, 64]
-  bfi     w0, w1, 0, 1
-  strb    w0, [x19, 64]
-  b DIV1.FINISH        
+and     w8, w26, 1
+ubfx    x6, x26, 8, 1
+ubfx    x7, x26, 9, 1
+ldr     w3, [x19,x1]
+lsr     w5, w3, 31
+orr     w3, w8, w3, lsl 1
+str     w3, [x19,x1]
+cbz     w6, DIV1.L3
+cbz     w6, DIV1.L2
+ldr     w0, [x19,x0]
+cbz     w7, DIV1.L18
+sub     w0, w3, w0
+str     w0, [x19,x1]
+cmp     w3, w0
+cset    w0, cc
+cmp     w5, wzr
+eor     w5, w0, 1
+csel    w5, w5, w0, eq
+DIV1.L2:
+   cmp     w5, w7
+   cset    w0, eq
+   bfi     w26, w0, 0, 1
+   bfi     w26, w5, 8, 1
+   b DIV1.FINISH
 DIV1.L3:
-  ldrb    w7, [x19, 65]
-  ldr     w0, [x19, x0]
-  ubfx    x6, x7, 1, 1
-  cbz     w6, DIV1.L22
-  add     w0, w4, w0
-  str     w0, [x19, x1]
-  cmp     w4, w0
-  cbz     w3, DIV1.L15
-DIV1.L18:
-  cset    w3, hi
-  bfi     w7, w3, 0, 1
-  cmp     w6, w3
-  strb    w7, [x19, 65]
-  cset    w1, eq
-  ldrb    w0, [x19, 64]
-  bfi     w0, w1, 0, 1
-  strb    w0, [x19, 64]
-  b DIV1.FINISH 
-DIV1.L22:
-  sub     w0, w4, w0
-  str     w0, [x19, x1]
-  cmp     w4, w0
-  cbz     w3, DIV1.L17
+   ldr     w0, [x19,x0]
+   cbz     w7, DIV1.L19
+   add     w0, w3, w0
+   str     w0, [x19,x1]
+   cmp     w3, w0
+   cset    w0, hi
+   cmp     w5, wzr
+   eor     w5, w0, 1
+   csel    w5, w5, w0, eq
+   cmp     w5, w7
+   cset    w0, eq
+   bfi     w26, w0, 0, 1
+   bfi     w26, w5, 8, 1
+   b DIV1.FINISH
 DIV1.L19:
-  cset    w3, cs
-  bfi     w7, w3, 0, 1
-  cmp     w6, w3
-  strb    w7, [x19, 65]
-  cset    w1, eq
-  ldrb    w0, [x19, 64]
-  bfi     w0, w1, 0, 1
-  strb    w0, [x19, 64]
-  b DIV1.FINISH
-DIV1.L21:
-  add     w0, w4, w0
-  str     w0, [x19, x1]
-  cmp     w4, w0
-  cbz     w3, DIV1.L18
-DIV1.L15:
-  cset    w3, ls
-  bfi     w7, w3, 0, 1
-  cmp     w6, w3
-  strb    w7, [x19, 65]
-  cset    w1, eq
-  ldrb    w0, [x19, 64]
-  bfi     w0, w1, 0, 1
-  strb    w0, [x19, 64]
+   sub     w0, w3, w0
+   str     w0, [x19,x1]
+   cmp     w3, w0
+   cset    w0, cc
+   cmp     w5, wzr
+   eor     w5, w0, 1
+   csel    w5, w5, w0, ne
+   cmp     w5, w7
+   cset    w0, eq
+   bfi     w26, w0, 0, 1
+   bfi     w26, w5, 8, 1
+   b DIV1.FINISH
+DIV1.L18:
+   add     w0, w3, w0
+   str     w0, [x19,x1]
+   cmp     w3, w0
+   cset    w0, hi
+   cmp     w5, wzr
+   eor     w5, w0, 1
+   csel    w5, w5, w0, ne
+   cmp     w5, w7
+   cset    w0, eq
+   bfi     w26, w0, 0, 1
+   bfi     w26, w5, 8, 1
 DIV1.FINISH:
 
 //------------------------------------------------------------

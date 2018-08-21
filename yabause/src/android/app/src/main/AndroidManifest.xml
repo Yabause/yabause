@@ -41,6 +41,8 @@
             android:name="AA_MODELS"
             android:value="org.uoyabause.android.GameInfo, org.uoyabause.android.GameStatus, org.uoyabause.android.Cheat" />
 
+        <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="false" />
+
         <activity
             android:name=".tv.GameSelectActivity"
             android:banner="@drawable/banner"

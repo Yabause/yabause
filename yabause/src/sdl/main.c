@@ -149,7 +149,7 @@ static char cdpath[256] = "\0";
 GLFWwindow* g_window = NULL;
 GLFWwindow* g_offscreen_context;
 
-yabauseinit_struct yinit;
+yabauseinit_struct yinit ={};
 
 void YuiErrorMsg(const char * string) {
     fprintf(stderr, "%s\n\r", string);

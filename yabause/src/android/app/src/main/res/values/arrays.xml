@@ -55,4 +55,14 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="entries_cpu_sync_per_line">
+        <item>@string/speed</item>
+        <item>@string/accuracy</item>
+    </string-array>
+
+    <string-array name="entryvalues_cpu_sync_per_line" translatable="false" >
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
 </resources>

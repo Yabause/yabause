@@ -4,11 +4,7 @@ typedef signed short s16;
 typedef unsigned short u16;
 typedef unsigned int u32;
 typedef signed int s32;
-
-typedef struct
-{
-   u32 R[16];
-  union {
+typedef   union {
     struct {
       u32 T:1;
       u32 S:1;
@@ -19,7 +15,12 @@ typedef struct
       u32 reserved1:22;
     } part;
     u32 all;
-  } SR; 
+  } uSR; 
+ 
+typedef struct
+{
+   u32 R[16];
+   uSR SRR; 
    u32 GBR;
    u32 VBR;
    u32 MACH;
@@ -40,32 +41,32 @@ u32 MappedMemoryReadLong(u32 addr);
 //s32 n = INSTRUCTION_B(sh->instruction);
 
 
-void SH2div1(s32 m,s32 n)
+uSR SH2div1(s32 m,s32 n, uSR SR )
 {
    u32 tmp0;
    u8 old_q, tmp1;
   
-   old_q = regs.SR.part.Q;
-   regs.SR.part.Q = (u8)((0x80000000 & regs.R[n])!=0);
+   old_q = SR.part.Q;
+   SR.part.Q = (u8)((0x80000000 & regs.R[n])!=0);
    regs.R[n] <<= 1;
-   regs.R[n]|=(u32)regs.SR.part.T;
+   regs.R[n]|=(u32)SR.part.T;
 
    switch(old_q)
    {
       case 0:
-         switch(regs.SR.part.M)
+         switch(SR.part.M)
          {
             case 0:
                tmp0 = regs.R[n];
                regs.R[n] -= regs.R[m];
                tmp1 = (regs.R[n] > tmp0);
-               switch(regs.SR.part.Q)
+               switch(SR.part.Q)
                {
                   case 0:
-                     regs.SR.part.Q = tmp1;
+                     SR.part.Q = tmp1;
                      break;
                   case 1:
-                     regs.SR.part.Q = (u8) (tmp1 == 0);
+                     SR.part.Q = (u8) (tmp1 == 0);
                      break;
                }
                break;
@@ -73,32 +74,32 @@ void SH2div1(s32 m,s32 n)
                tmp0 = regs.R[n];
                regs.R[n] += regs.R[m];
                tmp1 = (regs.R[n] < tmp0);
-               switch(regs.SR.part.Q)
+               switch(SR.part.Q)
                {
                   case 0:
-                     regs.SR.part.Q = (u8) (tmp1 == 0);
+                     SR.part.Q = (u8) (tmp1 == 0);
                      break;
                   case 1:
-                     regs.SR.part.Q = tmp1;
+                     SR.part.Q = tmp1;
                      break;
                }
                break;
          }
          break;
       case 1:
-         switch(regs.SR.part.M)
+         switch(SR.part.M)
          {
             case 0:
                tmp0 = regs.R[n];
                regs.R[n] += regs.R[m];
                tmp1 = (regs.R[n] < tmp0);
-               switch(regs.SR.part.Q)
+               switch(SR.part.Q)
                {
                   case 0:
-                     regs.SR.part.Q = tmp1;
+                     SR.part.Q = tmp1;
                      break;
                   case 1:
-                     regs.SR.part.Q = (u8) (tmp1 == 0);
+                     SR.part.Q = (u8) (tmp1 == 0);
                      break;
                }
                break;
@@ -106,20 +107,21 @@ void SH2div1(s32 m,s32 n)
                tmp0 = regs.R[n];
                regs.R[n] -= regs.R[m];
                tmp1 = (regs.R[n] > tmp0);
-               switch(regs.SR.part.Q)
+               switch(SR.part.Q)
                {
                   case 0:
-                     regs.SR.part.Q = (u8) (tmp1 == 0);
+                     SR.part.Q = (u8) (tmp1 == 0);
                      break;
                   case 1:
-                     regs.SR.part.Q = tmp1;
+                     SR.part.Q = tmp1;
                      break;
                }
                break;
          }
          break;
    }
-   regs.SR.part.T = (regs.SR.part.Q == regs.SR.part.M);
+   SR.part.T = (SR.part.Q == SR.part.M);
+   return SR;
 }
 
 

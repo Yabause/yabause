@@ -62,6 +62,7 @@ typedef struct
    int extend_backup;
    int rotate_screen;
    int scsp_sync_count_per_frame;
+   u32 sync_shift;
 } yabauseinit_struct;
 
 #define CLKTYPE_26MHZ           0
@@ -117,6 +118,7 @@ typedef struct
    int playing_ssf;
    u32 frame_count;
    int extend_backup;
+   u32 sync_shift;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

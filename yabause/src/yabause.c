@@ -158,6 +158,8 @@ extern int tweak_backup_file_size;
 
 int YabauseInit(yabauseinit_struct *init)
 {
+   yabsys.sync_shift = init->sync_shift;
+
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
@@ -599,6 +601,8 @@ int YabauseEmulate(void) {
    u32 m68k_cycles_per_deciline = 0;
    u32 scsp_cycles_per_deciline = 0;
 
+   const u32 sync_shift = yabsys.sync_shift;
+
    if(use_new_scsp)
    {
       int lines = 0;
@@ -669,10 +673,11 @@ int YabauseEmulate(void) {
 #ifdef YAB_STATICS
 		 u64 current_cpu_clock = YabauseGetTicks();
 #endif
+#if 0
          if (!yabsys.playing_ssf)
          {
            u32 i;
-           const u32 div = 2;
+           const u32 div = sync_shift;
            const u32 step  = sh2cycles >> div;
 		       const u32 amari = sh2cycles - (step<< div);
 		   
@@ -689,6 +694,30 @@ int YabauseEmulate(void) {
            }
 
          }
+#endif
+        if( sync_shift != 0 ){
+           u32 i;
+           const u32 div = sync_shift;
+           const u32 step  = sh2cycles >> div;
+		       const u32 amari = sh2cycles - (step<< div);
+		   
+           if( amari != 0 ){
+		        SH2Exec(MSH2, amari);
+		        if (yabsys.IsSSH2Running)
+			        SH2Exec(SSH2, amari);
+           }
+
+           for (i = amari; i < sh2cycles; i += step){ 
+             SH2Exec(MSH2, step);
+             if (yabsys.IsSSH2Running)
+               SH2Exec(SSH2, step);
+           }
+        }else{
+          SH2Exec(MSH2, sh2cycles);
+          if (yabsys.IsSSH2Running)
+                SH2Exec(SSH2, sh2cycles);
+        }
+
 #ifdef YAB_STATICS
 		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
 #endif
@@ -856,7 +885,7 @@ int YabauseEmulate(void) {
    
 #ifdef YAB_STATICS
    DebugLog("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
-#if 0
+#if 1
    if (yabsys.frame_count >= 4000 ) {
      static FILE * pfm = NULL;
      if (pfm == NULL) {

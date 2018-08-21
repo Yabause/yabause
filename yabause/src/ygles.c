@@ -2714,6 +2714,7 @@ void YglRenderVDP1(void) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
+  glFlush();  
   FrameProfileAdd("YglRenderVDP1 end");
 }
 
@@ -3241,6 +3242,7 @@ void YglRender(void) {
    glClearDepthf(0.0f);
    glDepthMask(GL_TRUE);
    glEnable(GL_DEPTH_TEST);
+
 
    if ((fixVdp2Regs->BKTAU & 0x8000) != 0) {
      glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

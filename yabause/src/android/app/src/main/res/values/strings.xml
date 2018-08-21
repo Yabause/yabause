@@ -175,5 +175,10 @@
     <string name="memory_manager">Memory Manager</string>
     <string name="str_rotate_screen">90 degree rotation</string>
 
+    <string name="cpu_sync_per_line">Emulation Priority</string>
+    <string name="sel_cpu_sync_per_line"></string>
+    <string name="speed">Speed</string>
+    <string name="accuracy">Accuracy</string>
+
 </resources>
 	

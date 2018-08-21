@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">uoYabause</string>
+    <string name="app_name">Yaba Sanshiro</string>
     <string name="menu_exit">終了</string>
     <string name="menu_save_state">状態保存</string>
     <string name="menu_load_state">状態読込</string>
@@ -120,5 +120,9 @@
     <string name="this_func_not_yet">この機能はまだ実装されていません</string>
     <string name="memory_manager">保存データー管理</string>
     <string name="str_rotate_screen">90度回転させる</string>
+    <string name="cpu_sync_per_line">エミュレーションの優先事項</string>
+    <string name="sel_cpu_sync_per_line"></string>
+    <string name="speed">スピード</string>
+    <string name="accuracy">正確さ</string>
 
 </resources>

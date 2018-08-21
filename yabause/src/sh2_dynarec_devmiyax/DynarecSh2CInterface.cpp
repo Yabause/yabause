@@ -336,7 +336,11 @@ void SH2DynWriteNotify(u32 start, u32 length){
     // High Memory
   case 0x06000000:
     for( u32 addr = start; addr< start+length; addr+=2 )
-      block->setDirty(addr);
+#if defined(SET_DIRTY)
+    block->setDirty(addr);
+#else
+    block->LookupTable[ (addr&0x000FFFFF)>>1 ] = NULL;
+#endif
     break;
 
     // Cache
@@ -367,21 +371,28 @@ void memSetByte(u32 addr , u8 data )
 {
   dynaLock();
   //LOG("memSetWord %08X, %08X\n", addr, data);
-
   CompileBlocks * block = CompileBlocks::getInstance();
   switch (addr & 0x0FF00000)
   {
   // Low Memory
   case 0x00200000:
+  case 0x20200000:
     block->LookupTableLow[  (addr&0x000FFFFF)>>1 ] = NULL;
+    T2WriteByte(LowWram, addr & 0xFFFFF, data);
+    dynaFree();
+    return;
     break;
   // High Memory
   case 0x06000000:
+  case 0x26000000:
 #if defined(SET_DIRTY)
     block->setDirty(addr);
 #else
     block->LookupTable[ (addr&0x000FFFFF)>>1 ] = NULL;
 #endif
+    T2WriteByte(HighWram, addr & 0xFFFFF, data);
+    dynaFree();
+    return;
     break;
 
   // Cache
@@ -401,20 +412,27 @@ void memSetWord(u32 addr, u16 data )
   //LOG("memSetWord %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
-  switch (addr & 0x0FF00000)
+  switch (addr & 0xFFF00000)
   {
   // Low Memory
    case 0x00200000:
+   case 0x20200000:
     block->LookupTableLow[ (addr&0x000FFFFF)>>1 ] = NULL;
+    T2WriteWord(LowWram, addr & 0xFFFFF, data);
+    dynaFree();
+    return;
     break;
   // High Memory
-   case 0x06000000: {
+   case 0x06000000: 
+   case 0x26000000: {
 #if defined(SET_DIRTY)
      block->setDirty(addr);
 #else
      block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
 #endif
-    
+    T2WriteWord(HighWram, addr & 0xFFFFF, data);
+    dynaFree();
+    return;
    }
     break;
   // Cache
@@ -434,15 +452,20 @@ void memSetLong(u32 addr , u32 data )
   //LOG("memSetLong %08X, %08X\n", addr, data);
 
   CompileBlocks * block = CompileBlocks::getInstance();
-  switch (addr & 0x0FF00000)
+  switch (addr & 0xFFF00000)
   {  
     // Low Memory
   case 0x00200000:
+  case 0x20200000:
     block->LookupTableLow[ (addr & 0x000FFFFF)>>1  ] = NULL;
     block->LookupTableLow[ ((addr & 0x000FFFFF)>>1) + 1 ] = NULL;
+    T2WriteLong(LowWram, addr & 0xFFFFF, data);
+    dynaFree();
+    return;
     break;
   // High Memory
   case 0x06000000:
+  case 0x26000000:
 #if defined(SET_DIRTY)
     block->setDirty(addr);
     block->setDirty(addr+2);
@@ -450,6 +473,9 @@ void memSetLong(u32 addr , u32 data )
     block->LookupTable[(addr & 0x000FFFFF) >> 1] = NULL;
     block->LookupTable[((addr & 0x000FFFFF) >> 1) + 1] = NULL;
 #endif
+    T2WriteLong(HighWram, addr & 0xFFFFF, data);
+    dynaFree();
+    return;
     break;
 
   // Cache
@@ -467,7 +493,20 @@ u8 memGetByte(u32 addr)
 {
   dynaLock();
   u8 val;
-  val = MappedMemoryReadByte(addr);
+  switch (addr & 0xFFF00000)
+  {  
+  case 0x00200000: // Low Memory
+  case 0x20200000: // Low Memory
+    val = T2ReadByte(LowWram, addr & 0xFFFFF);
+    break;
+  case 0x06000000: // High Memory
+  case 0x26000000: // Low Memory
+    val = T2ReadByte(HighWram, addr & 0xFFFFF);
+    break;
+  default:
+    val = MappedMemoryReadByte(addr);
+    break;
+  }
   dynaFree();
   return val;
 }
@@ -476,7 +515,22 @@ u16 memGetWord(u32 addr)
 {
   dynaLock();
   u16 val;
-  val = MappedMemoryReadWord(addr);
+  switch (addr & 0xFFF00000)
+  {  
+    // Low Memory
+  case 0x00200000:
+  case 0x20200000: // Low Memory
+    val = T2ReadWord(LowWram, addr & 0xFFFFF);
+    break;
+  // High Memory
+  case 0x06000000:
+  case 0x26000000:
+    val = T2ReadWord(HighWram, addr & 0xFFFFF);
+    break;
+  default:
+    val = MappedMemoryReadWord(addr);
+    break;
+  }
   dynaFree();
   return val;
 }
@@ -487,7 +541,23 @@ u32 memGetLong(u32 addr)
 {
   dynaLock();
   u32 val;
-  val = MappedMemoryReadLong(addr);
+
+  switch (addr & 0xFFF00000)
+  {  
+    // Low Memory
+  case 0x00200000:
+  case 0x20200000:
+    val = T2ReadLong(LowWram, addr & 0xFFFFF);
+    break;
+  // High Memory
+  case 0x06000000:
+  case 0x26000000:
+    val = T2ReadLong(HighWram, addr & 0xFFFFF);
+    break;
+  default:
+    val = MappedMemoryReadLong(addr);
+    break;
+  }
   dynaFree();
   return val;
 }
@@ -495,6 +565,7 @@ u32 memGetLong(u32 addr)
 void SH2DynOnFrame(SH2_struct *context) {
   DynarecSh2 *pctx = (DynarecSh2*)context->ext;
   pctx->SET_COUNT(0);
+  pctx->onFrame();
 }
 
 

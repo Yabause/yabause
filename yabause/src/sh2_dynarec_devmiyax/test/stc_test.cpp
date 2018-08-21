@@ -35,7 +35,7 @@ virtual void TearDown() {
 TEST_F(StcTest, stcsr) {
 
   pctx_->GetGenRegPtr()[1]=0xDEADCAFE;
-  pctx_->SET_SR(0x03216721);
+  pctx_->SET_SR(0x0321);
 
   memSetWord( 0x06000000, 0x0102 );
   memSetWord( 0x06000002, 0x000b );
