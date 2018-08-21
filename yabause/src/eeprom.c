@@ -13,7 +13,7 @@ static u8 clk = 0;
 static u8 di = 0;
 static u8 d_o = 0;
 
-static u8 reg[64*2];
+static u8 reg[64*2*2];
 static u32 input; 
 static u8 di_index = 0;
 
@@ -22,8 +22,10 @@ static u8 cmd = -1;
 static u16 ext_data;
 
 #define EEPROM_LOG
+#define EEPROM_CMD_LOG
 
 static void executeCmd() {
+int i,j;
   d_o = 1;
   EEPROM_LOG("Cmd = %d\n", cmd);
   if (di_index == 22) {
@@ -44,29 +46,39 @@ EEPROM_LOG("Reset Cmd = %x\n", cmd);
         }
         break;
     }
+EEPROM_LOG("NEw Cmd = %x\n", cmd);
   }
   if ((di_index == 0) && (cmd == 1)) {
-    u8 addr = ((input>>16)&0x1F);
+    u8 addr = ((input>>16)&0x3F);
     u16 data = (input & 0xFFFF);
     //WRITE
-    reg[addr*2] = (data & 0xFF);
-    reg[addr*2+1] = (data>>8)&0xFF;
+    reg[addr*2+1] = (data & 0xFF);
+    reg[addr*2] = (data>>8)&0xFF;
+    EEPROM_CMD_LOG("WRITE 0x%04x@%d 0x%04x@%d\n", reg[addr*2], addr*2, reg[addr*2+1], addr*2+1);
+    for (i =0; i< 0x8; i++) {
+      for (j =0; j< 16; j++) {
+        EEPROM_CMD_LOG("0x%02x,",reg[i*16+j]);
+      }
+      EEPROM_CMD_LOG("\n");
+    }
   }
   if ((di_index == 16) && (cmd == 2)) {
-    u8 addr = ((input>>16)&0x1F);
+    u8 addr = ((input>>16)&0x3F);
     //READ
     ext_data = reg[addr*2+1] | (reg[addr*2]<<8);
-    EEPROM_LOG("ext_data=%x\n", ext_data);
+    EEPROM_CMD_LOG("READ ext_data=0x%04x@%d\n", ext_data, addr*2);
   }
   if ((di_index < 16) && (cmd == 2)) {
     //READ
-    EEPROM_LOG("do = ext_data[%d]\n", di_index);
     d_o = (ext_data >> di_index) & 0x1;
+    EEPROM_LOG("READ do = ext_data[%d] = %x\n", di_index, d_o);
   }
   if ((di_index == 16) && (cmd == 3)) {
-    u8 addr = ((input>>16)&0x1F);
+    u8 addr = ((input>>16)&0x3F);
     //ERASE
-    reg[addr] = 0;
+    reg[addr*2] = 0;
+    reg[addr*2+1] = 0;
+    EEPROM_CMD_LOG("ERASE @%d @%d\n", addr*2, addr*2+1);
   }
 }
 
@@ -81,7 +93,7 @@ void eeprom_set_clk(u8 state){
                u32 mask = ~(1<<di_index);
                input &= mask;
                input |= (di<<di_index);
-               EEPROM_LOG("Exec data[%d] = %d\n", di_index, di);
+               EEPROM_LOG("Exec data[%d] = %d, addr=%x\n", di_index, di, input);
                executeCmd();
                di_index -= 1;
              }
@@ -121,6 +133,7 @@ void eeprom_init(const char* filename)
 }
 
 void eeprom_start(u8* table) {
+int i,j;
  u8 init[128] = {0x53,0x45,0x47,0x41,0xff,0xff,0xff,0xff,0x75,0x92,0xff,0xff,0x00,0x00,0x00,0x02,
 		 0x01,0x00,0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x08,0x08,0xdd,0xff,0xff,0xff,0xff,
 		 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
@@ -129,5 +142,15 @@ void eeprom_start(u8* table) {
 		 0x00,0x00,0x00,0x00,0x00,0x08,0x08,0xdd,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 		 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 		 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
- memcpy((u8*)reg, init, 0x80);
+ if (table == NULL) {
+  memcpy((u8*)reg, init, 0x80);
+ } else {
+  memcpy((u8*)reg, table, 0x80);
+ }
+  for (i =0; i< 0x8; i++) {
+    for (j =0; j< 16; j++) {
+      EEPROM_CMD_LOG("0x%02x,",reg[i*16+j]);
+    }
+    EEPROM_CMD_LOG("\n");
+  }
 }
