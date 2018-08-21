@@ -206,6 +206,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+   yabsys.isRotated = 0;
 
 #ifdef SPRITE_CACHE
    yabsys.useVdp1cache = init->useVdp1cache;
@@ -276,6 +277,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+   yabsys.isRotated = 0;
 
 #ifdef SPRITE_CACHE
    yabsys.useVdp1cache = init->useVdp1cache;

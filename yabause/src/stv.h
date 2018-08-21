@@ -33,6 +33,7 @@ typedef struct FileEntry_s{
 typedef struct Game_s{
  char* name;
  u32 key;
+ u8 rotated;
  u8* eeprom;
  FileEntry blobs[MAX_GAME_FILES];
 } Game;

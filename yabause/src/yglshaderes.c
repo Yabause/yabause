@@ -3411,17 +3411,23 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     1.0f, 1.0f,
     -1.0f, 1.0f };
 
-  float const textureCoord[] = {
+
+  float const textureCoord[16] = {
     1.0f, 0.0f,
     0.0f, 0.0f,
     1.0f, 1.0f,
-    0.0f, 1.0f };
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+    0.0f, 1.0f,
+    1.0f, 0.0f,
+    1.0f, 1.0f };
+
   float nbLines = yabsys.IsPal?625.0f:525.0f;
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, &textureCoord[yabsys.isRotated * 8]);
   glUniform1f(u_w, width);
   glUniform1f(u_h, height);
   glUniform2f(u_l, nbLines, disph);

@@ -109,6 +109,7 @@ typedef struct
    u32 UsecFrac;      // Fixed point
    int CurSH2FreqType;
    int IsPal;
+   int isRotated;
    u8 isSTV;
    u8 UseThreads;
    int NumThreads;
