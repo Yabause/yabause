@@ -176,6 +176,7 @@ void UISettings::requestFolder( const QString& c, QLineEdit* e )
         for(i = 0; i< nbGames; i++){
 		cbSTVGame->addItem(getSTVGameName(i),i);
         }
+        cbSTVGame->model()->sort(0);
 }
 
 QStringList getCdDriveList()
@@ -347,6 +348,7 @@ void UISettings::on_cbCartridge_currentIndexChanged( int id )
           for(int i = 0; i< nbGames; i++){
 		cbSTVGame->addItem(getSTVGameName(i),i);
           }
+          cbSTVGame->model()->sort(0);
         }
         cbSTVGame->setVisible(mCartridgeTypes[id].pathFlag);
 }
