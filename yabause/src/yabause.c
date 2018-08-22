@@ -178,7 +178,6 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
          {
            int i;
 	   int sh2start = sh->cycles;
-//printf("%s Execute %d cycles\n", (sh == MSH2)?"MSH2":"SSH2", req);
            SH2Exec(sh, req);
 	   sh->cdiff = req - (sh->cycles-sh2start);
          }
@@ -843,8 +842,8 @@ int YabauseEmulate(void) {
 #endif
    
 #ifdef YAB_STATICS
-   DebugLog("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
-#if 0
+   printf("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
+#if 1
    if (yabsys.frame_count >= 4000 ) {
      static FILE * pfm = NULL;
      if (pfm == NULL) {

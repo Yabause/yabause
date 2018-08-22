@@ -281,7 +281,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
   u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
 
   // hard/vdp1/hon/p06_35.htm#6_35
-  // “§–¾ƒsƒNƒZƒ‹–³Œøƒrƒbƒg‚ÍƒLƒƒƒ‰ƒNƒ^ƒpƒ^[ƒ“‚Ì‚ ‚éƒXƒvƒ‰ƒCƒg•`‰æ‚É‚Ì‚Ý—LŒø‚Å‚·Bƒ|ƒŠƒSƒ“Aƒ|ƒŠƒ‰ƒCƒ“Aƒ‰ƒCƒ“‚Å‚ÍA‚±‚Ìƒrƒbƒg‚Í•K‚¸1‚ÉÝ’è‚µ‚Ä‚­‚¾‚³‚¢B
+  // \93\A7\96\BE\83s\83N\83Z\83\8B\96\B3\8C\F8\83r\83b\83g\82ÍƒL\83\83\83\89\83N\83^\83p\83^\81[\83\93\82Ì‚\A0\82\E9\83X\83v\83\89\83C\83g\95`\89\E6\82É‚Ì‚Ý—L\8C\F8\82Å‚\B7\81B\83|\83\8A\83S\83\93\81A\83|\83\8A\83\89\83C\83\93\81A\83\89\83C\83\93\82Å‚ÍA\82\B1\82Ìƒr\83b\83g\82Í•K\82\B81\82ÉÝ’è‚µ\82Ä‚\AD\82\BE\82\B3\82\A2\81B
   u8 SPD = 1; // ((cmd->CMDPMOD & 0x40) != 0);    // see-through pixel disable(SPD) hard/vdp1/hon/p06_35.htm
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);    // end-code disable(ECD) hard/vdp1/hon/p06_34.htm
   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
@@ -1931,6 +1931,8 @@ static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr) {
 static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr) {
   u32 color;
   u16 dot = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
+//if (info->patternwh == 2) printf("%x\n", dot);
+//Ca deconne ici
   if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
   else color = SAT2YAB1(info->alpha, dot);
   return color;
@@ -2045,7 +2047,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
     Vdp2DrawCellInterlace(info, texture);
     return;
   }
-
+//if (info->patternwh == 2) printf("%d\n", info->colornumber);
   switch (info->colornumber)
   {
   case 0: // 4 BPP
@@ -2400,6 +2402,8 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
     Vdp2DrawCell(info, texture);
     break;
   case 2:
+//printf("%d\n", __LINE__);
+//L'appel vient de la
     texture->w += 8;
     Vdp2DrawCell(info, texture);
     texture->textdata -= (texture->w + 8) * 8 - 8;
@@ -4745,7 +4749,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   alpha = 0xF8;
   if (IS_REPLACE(CMDPMOD)) {
     // hard/vdp1/hon/p06_35.htm#6_35
-    // “§–¾ƒsƒNƒZƒ‹–³Œøƒrƒbƒg‚ÍƒLƒƒƒ‰ƒNƒ^ƒpƒ^[ƒ“‚Ì‚ ‚éƒXƒvƒ‰ƒCƒg•`‰æ‚É‚Ì‚Ý—LŒø‚Å‚·Bƒ|ƒŠƒSƒ“Aƒ|ƒŠƒ‰ƒCƒ“Aƒ‰ƒCƒ“‚Å‚ÍA‚±‚Ìƒrƒbƒg‚Í•K‚¸1‚ÉÝ’è‚µ‚Ä‚­‚¾‚³‚¢B
+    // \93\A7\96\BE\83s\83N\83Z\83\8B\96\B3\8C\F8\83r\83b\83g\82ÍƒL\83\83\83\89\83N\83^\83p\83^\81[\83\93\82Ì‚\A0\82\E9\83X\83v\83\89\83C\83g\95`\89\E6\82É‚Ì‚Ý—L\8C\F8\82Å‚\B7\81B\83|\83\8A\83S\83\93\81A\83|\83\8A\83\89\83C\83\93\81A\83\89\83C\83\93\82Å‚ÍA\82\B1\82Ìƒr\83b\83g\82Í•K\82\B81\82ÉÝ’è‚µ\82Ä‚\AD\82\BE\82\B3\82\A2\81B
     //if ((CMDPMOD & 0x40) != 0) {
       sprite.blendmode = VDP1_COLOR_SPD;
     //}

@@ -48,10 +48,29 @@ const u8 ShienryuNV[0x80]={
     0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 
 
+static u8 bitswap8(u8 in, const u8* vec)
+{
+  u8 ret = 0;
+  for (int i = 0; i<8; i++) {
+    ret |= ((in >> vec[i])&0x1)<<(7-i);
+  }
+  return ret;
+}
+
+void sanjeon_init(void) {
+  const u8 vec1[8] = {6,0,5,7,  1,3,4,2};
+  for (int x = 0; x < 0x3000000; x++)
+  {
+    T1WriteByte(CartridgeArea->rom, x, bitswap8(T1ReadByte(CartridgeArea->rom, x)^0xff,vec1));
+  }
+}
+
+
 const Game BiosList = 
 {"STV Bios",
     0x0,
     0,
+    NULL,
     NULL,
     {
         BIOS_BLOB, "epr-20091.ic8", 0x000000, 0x080000,
@@ -85,6 +104,7 @@ const Game GameList[NB_STV_GAMES]={
     0x052e2901,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB, "epr20825.13",    0x0000000, 0x0100000,
     GAME_BYTE_BLOB, "epr20825.13",    0x0200000, 0x0100000,
@@ -104,6 +124,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB,    "fpr17969.13",   0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr17969.13",   0x0200000, 0x0100000,
@@ -118,6 +139,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Batman Forever (JUE 960507 V1.000)",
     0,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB, "350-mpa1.u19",    0x0000000, 0x0100000,
@@ -137,6 +159,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Choro Q Hyper Racing 5 (J 981230 V1.000)",
     0,
     0,
+    NULL,
     NV_1P,
     {
 	GAME_WORD_BLOB,    "ic22.bin",   0x0200000, 0x200000,
@@ -154,6 +177,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB,    "fpr19553.13",  0x000000, 0x100000,
 	GAME_BYTE_BLOB, "fpr19553.13",  0x200000, 0x100000,
@@ -166,6 +190,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Cotton 2 (JUET 970902 V1.000)",
     0x0,
     0,
+    NULL,
     NULL,
     {
 	GAME_WORD_BLOB, "mpr20122.7",    0x0200000, 0x0200000,
@@ -183,6 +208,7 @@ const Game GameList[NB_STV_GAMES]={
     0x0,
     0,
     NULL,
+    NULL,
     {
 	GAME_WORD_BLOB, "mpr21075.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr21070.2",    0x0400000, 0x0400000,
@@ -197,7 +223,8 @@ const Game GameList[NB_STV_GAMES]={
   {"DaeJeon! SanJeon SuJeon (AJTUE 990412 V1.000)",
     0,
     0,
-    NULL,
+    sanjeon_init,
+    NV_1P,
     {
 	HEADER_BLOB, "ic11",  0x0000000, 0x0200000,
 	GAME_WORD_BLOB, "ic13",    0x0400000, 0x0200000,
@@ -218,6 +245,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	GAME_WORD_BLOB, "mpr21974.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr21970.2",    0x0400000, 0x0400000,
@@ -231,6 +259,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Danchi de Quiz: Okusan Yontaku Desuyo! (J 001128 V1.200)",
     0,
     0,
+    NULL,
     NULL,
     {
     GAME_WORD_BLOB, "ic22",    0x0200000, 0x0200000,
@@ -250,6 +279,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB, "epr18967a.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "epr18967a.13", 0x0200000, 0x0100000,
@@ -265,6 +295,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Die Hard Arcade (UET 960515 V1.000)",
     0,
     0,
+    NULL,
     NULL,
     {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
@@ -282,6 +313,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB,    "fpr19114.13", 0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19114.13", 0x0200000, 0x0100000,
@@ -296,6 +328,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Ejihon Tantei Jimusyo (J 950613 V1.000)",
     0,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB,    "epr18137.13",  0x0000000, 0x0080000,
@@ -314,6 +347,7 @@ const Game GameList[NB_STV_GAMES]={
     0x0524ac01,
     0,
     NULL,
+    NULL,
     {
 	GAME_WORD_BLOB, "opr21872.7",   0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr21873.2",   0x0400000, 0x0400000,
@@ -328,6 +362,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Final Fight Revenge (JUET 990930 V1.100)",
     0x0524ac01,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB,    "ffr110.ic35",  0x0000000, 0x0100000,
@@ -344,6 +379,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Funky Head Boxers (JUETBKAL 951218 V1.000)",
     0x0524ac01,
     0,
+    NULL,
     NV_1P,
     {
 	HEADER_BLOB,    "fr18541a.13",   0x0000000, 0x0100000,
@@ -363,6 +399,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	HEADER_BLOB,   "epr17766.13",    0x0000000, 0x0080000,
 	HEADER_BLOB,   "epr17766.13",    0x0100000, 0x0080000,
@@ -381,6 +418,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	GAME_WORD_BLOB, "mpr20844.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20839.2",    0x0400000, 0x0400000,
@@ -394,6 +432,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Groove on Fight - Gouketsuji Ichizoku 3 (J 970416 V1.001)",
    0,
    0,
+   NULL,
    NULL,
    {
 	GAME_WORD_BLOB, "mpr19820.7",    0x0200000, 0x0100000,
@@ -412,6 +451,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	HEADER_BLOB,    "epr18937.13", 0x0000000, 0x0080000,
 	HEADER_BLOB,    "epr18937.13", 0x0100000, 0x0080000,
@@ -428,6 +468,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Maru-Chan de Goo! (J 971216 V1.000)",
    0,
    0,
+   NULL,
    NULL,
    {
 	HEADER_BLOB,    "epr20416.13", 0x0000000, 0x0100000,
@@ -448,6 +489,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	HEADER_BLOB,    "ic13.bin", 0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "ic13.bin",  0x0200000, 0x0100000,
@@ -465,6 +507,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Microman Battle Charge (J 990326 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22", 0x0200000, 0x200000,
@@ -482,6 +525,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	GAME_WORD_BLOB, "ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",  0x0600000, 0x0200000,
@@ -494,6 +538,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	GAME_WORD_BLOB, "nclubv2.ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "nclubv2.ic24",  0x0600000, 0x0200000,
@@ -505,6 +550,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Name Club Ver.3 (J 970723 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22",  0x0200000, 0x0200000,
@@ -524,6 +570,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	GAME_WORD_BLOB, "mpr20967.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20963.2",    0x0400000, 0x0400000,
@@ -536,6 +583,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Pebble Beach - The Great Shot (JUE 950913 V0.990)",
    0,
    0,
+   NULL,
    NULL,
    {
 	HEADER_BLOB,    "epr18852.13",   0x0000000, 0x0080000,
@@ -553,6 +601,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
 	GAME_WORD_BLOB, "mpr19337.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr19333.2",    0x0400000, 0x0400000,
@@ -565,6 +614,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 (U 970921 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
@@ -579,6 +629,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 3 (U 990310 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
@@ -593,6 +644,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 6 Winter (J 961210 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclbvol6w_ic22",    0x0200000, 0x0200000,
@@ -606,6 +658,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 6 Winter (J 970121 V1.200)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
@@ -619,6 +672,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 7 Spring (J 970313 V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclub2v7.ic22",    0x0200000, 0x0200000,
@@ -632,6 +686,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 8 Summer (J 970616 V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "u22.bin",    0x0200000, 0x0200000,
@@ -648,6 +703,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 9 Autumn (J V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
@@ -664,6 +720,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '97 Winter Ver (J 971017 V1.100, set 1)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "prc297wi_ic22",    0x0200000, 0x0200000,
@@ -683,6 +740,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '97 Winter Ver (J 971017 V1.100, set 2)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclb297w_ic22_alt",    0x0200000, 0x0200000,
@@ -702,6 +760,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '98 Spring Ver (J 971017 V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "prc298sp_ic22",    0x0200000, 0x0200000,
@@ -718,6 +777,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '98 Autumn Ver (J 980827 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "prc298au_ic22",    0x0200000, 0x0200000,
@@ -734,6 +794,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '98 Summer Ver (J 980603 V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclb298s_ic22",    0x0200000, 0x0200000,
@@ -747,6 +808,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 2000 Summer (J 000509 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
@@ -760,6 +822,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Earth Limited Kobe (Print Club Custom) (J 970808 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
@@ -776,6 +839,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Felix The Cat (Rev. A) (J 970415 V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclub2fc_ic22",    0x0200000, 0x0200000,
@@ -789,6 +853,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 (U 970921 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclub2kc_ic22",    0x0200000, 0x0200000,
@@ -802,6 +867,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club LoveLove (J 970421 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclblove.ic22",    0x0200000, 0x0200000,
@@ -816,6 +882,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club LoveLove Ver 2 (J 970825 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22",    0x0200000, 0x0200000,
@@ -830,6 +897,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Olive (J 980717 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclubol_ic22",    0x0200000, 0x0200000,
@@ -846,6 +914,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Pepsiman (J 970618 V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclb2psi_ic22",    0x0200000, 0x0200000,
@@ -859,6 +928,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club Pokemon B (U 991126 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
@@ -873,6 +943,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Puffy (J V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclb2puf.ic22",    0x0200000, 0x0200000,
@@ -886,6 +957,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club 2 Warner Bros (J 970228 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclb2wb_ic22",    0x0200000, 0x0200000,
@@ -899,6 +971,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Winnie-the-Pooh Vol. 2 (J 971218 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
@@ -912,6 +985,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Winnie-the-Pooh Vol. 3 (J 980406 V1.000)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
@@ -925,6 +999,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Yoshimoto V2 (J 970422 V1.100)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclbyov2.ic22",    0x0200000, 0x0200000,
@@ -938,6 +1013,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Pro Mahjong Kiwame S (J 951020 V1.208)",
    0,
    0,
+   NULL,
    NV_1P,
    {
 	HEADER_BLOB,   "epr18737.13",    0x0000000, 0x0080000,
@@ -951,6 +1027,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Puyo Puyo Sun (J 961115 V0.001)",
    0,
    0,
+   NULL,
    NULL,
    {
 	HEADER_BLOB, "epr19531.13",    0x0000000, 0x0080000,
@@ -972,6 +1049,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
+   NULL,
    {
     HEADER_BLOB,    "sando-r.13",  0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "sando-r.13",  0x0200000, 0x0100000,
@@ -991,6 +1069,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB, "th-ic7_2.stv",    0x0200000, 0x0080000,
 	HEADER_BLOB, "th-ic7_1.stv",    0x0200001, 0x0080000,
@@ -1005,6 +1084,7 @@ const Game GameList[NB_STV_GAMES]={
     0x05272d01,
     0,
     NULL,
+    NULL,
     {
 	GAME_WORD_BLOB, "mpr20958.7",   0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20959.2",   0x0400000, 0x0400000,
@@ -1017,6 +1097,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Sakura Taisen - Hanagumi Taisen Columns (J 971007 V1.010)",
     0,
     0,
+    NULL,
     NULL,
     {
 	GAME_WORD_BLOB, "mpr20143.7",    0x0200000, 0x0100000,
@@ -1037,6 +1118,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Sea Bass Fishing (JUET 971110 V0.001)",
     0,
     0,
+    NULL,
     NV_1P,
     {
 	HEADER_BLOB, "seabassf.13",    0x0000000, 0x0100000,
@@ -1058,6 +1140,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	GAME_WORD_BLOB, "mpr18341.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr18341.7",    0x0400000, 0x0200000,
@@ -1067,6 +1150,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Shienryu (JUET 961226 V1.000)",
     0,
     ROTATED,
+    NULL,
     ShienryuNV,
     {
 	GAME_WORD_BLOB, "mpr19631.7",    0x0200000, 0x0200000,
@@ -1078,6 +1162,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Soukyugurentai / Terra Diver (JUET 960821 V1.000)",
     0,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB,    "fpr19188.13",  0x0100000, 0x0100000,
@@ -1093,6 +1178,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Steep Slope Sliders (JUET 981110 V1.000)",
     0x052b6901,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB,    "epr21488.13",  0x0000000, 0x0080000,
@@ -1110,6 +1196,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Stress Busters (J 981020 V1.000)",
     0,
     0,
+    NULL,
     NV_1P,
     {
 	HEADER_BLOB,    "epr-21300a.ic13",  0x0000000, 0x0100000,
@@ -1132,6 +1219,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB,    "fpr17834.13",  0x0100000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr17834.13",  0x0200000, 0x0100000,
@@ -1151,6 +1239,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	HEADER_BLOB,    "epr18777.13",  0x0000000, 0x0080000,
@@ -1169,6 +1258,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB, "epr20542.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "epr20542.13",   0x0200000, 0x0100000,
@@ -1185,6 +1275,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Technical Bowling (J 971212 V1.000)",
     0x05200913,
     0,
+    NULL,
     NV_1P,
     {
 	GAME_WORD_BLOB, "ic22",   0x0200000, 0x0200000,
@@ -1198,6 +1289,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Tecmo World Cup '98 (JUET 980410 V1.000)",
     0x05200913,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB, "epr20819.24",    0x0000000, 0x0100000,
@@ -1214,6 +1306,7 @@ const Game GameList[NB_STV_GAMES]={
     0x05200913,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB, "epr-20820.ic24",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "epr-20820.ic24",   0x0200000, 0x0100000,
@@ -1228,6 +1321,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Touryuu Densetsu Elan-Doree / Elan Doree - Legend of Dragoon (JUET 980922 V1.006)",
     0x05226d41,
     0,
+    NULL,
     NULL,
     {
 	GAME_WORD_BLOB, "mpr21307.7",    0x0200000, 0x0200000,
@@ -1244,6 +1338,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Virtua Fighter Kids (JUET 960319 V0.000)",
     0,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB, "fpr18914.13",    0x0000000, 0x0100000,
@@ -1265,6 +1360,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
+    NULL,
     {
 	HEADER_BLOB, "epr17944.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "epr17944.13",    0x0200000, 0x0100000,
@@ -1281,6 +1377,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)",
     0x05226d41,
     0,
+    NULL,
     NV_1P,
     {
 	GAME_WORD_BLOB, "mpr21000.7",    0x0200000, 0x0200000,
@@ -1297,6 +1394,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Winter Heat (JUET 971012 V1.000)",
     0x05226d41,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB, "fpr20108.13",    0x0000000, 0x0100000,
@@ -1315,6 +1413,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)",
     0,
     0,
+    NULL,
     NULL,
     {
 	HEADER_BLOB,   "epr20398.13",    0x0000000, 0x0100000,
@@ -1335,6 +1434,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Zenkoku Seifuku Bishoujo Grand Prix Find Love (J 971212 V1.000)",
     0,
     0,
+    NULL,
     NV_1P,
     {
 	HEADER_BLOB,   "epr20424.13",    0x0000000, 0x0100000,
@@ -1734,6 +1834,7 @@ int loadGame(int gameId){
     eeprom_start(availableGames[gameId].entry->eeprom);
     cyptoSetKey(availableGames[gameId].entry->key);
     yabsys.isRotated = availableGames[gameId].entry->rotated;
+    if (availableGames[gameId].entry->init != NULL) availableGames[gameId].entry->init();
     return 0;
   }
   return -1;
