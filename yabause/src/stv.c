@@ -19,7 +19,7 @@
 //YuiMsg
 #define ROTATED 1
 
-#define NB_STV_GAMES 95
+#define NB_STV_GAMES 81
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
@@ -27,7 +27,7 @@ int loadGames(char* path);
 int copyFile(JZFile *zip, void* data);
 int copyBios(JZFile *zip, void* id);
 
-const u8 fhBoxerNV[0x80]={
+const u8 NV_1P[0x80]={
     0x53,0x45,0x47,0x41,0xff,0xff,0xff,0xff,0x68,0x5c,0xff,0xff,0x00,0x00,0x00,0x02,
     0x01,0x00,0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x08,0x08,0xfc,0x00,0xca,0x01,0x56,
     0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
@@ -46,6 +46,7 @@ const u8 ShienryuNV[0x80]={
     0x00,0x00,0x00,0x00,0x00,0x08,0x18,0xfd,0x18,0x01,0x00,0x00,0x00,0x00,0x00,0x00,
     0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
     0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+
 
 const Game BiosList = 
 {"STV Bios",
@@ -136,7 +137,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Choro Q Hyper Racing 5 (J 981230 V1.000)",
     0,
     0,
-    NULL,
+    NV_1P,
     {
 	GAME_WORD_BLOB,    "ic22.bin",   0x0200000, 0x200000,
 	GAME_WORD_BLOB, "ic24.bin",   0x0400000, 0x200000,
@@ -343,7 +344,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Funky Head Boxers (JUETBKAL 951218 V1.000)",
     0x0524ac01,
     0,
-    fhBoxerNV,
+    NV_1P,
     {
 	HEADER_BLOB,    "fr18541a.13",   0x0000000, 0x0100000,
 	GAME_WORD_BLOB, "mpr18538.7",    0x0200000, 0x0200000,
@@ -464,7 +465,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Microman Battle Charge (J 990326 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22", 0x0200000, 0x200000,
 	GAME_WORD_BLOB, "ic24", 0x0400000, 0x200000,
@@ -504,7 +505,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Name Club Ver.3 (J 970723 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",  0x0400000, 0x0200000,
@@ -564,7 +565,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 (U 970921 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	GAME_WORD_BLOB, "pclub2_ic22",    0x0200000, 0x0200000,
@@ -578,7 +579,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 3 (U 990310 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	GAME_WORD_BLOB, "pclub2v3_ic22",    0x0200000, 0x0200000,
@@ -592,7 +593,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 6 Winter (J 961210 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclbvol6w_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclbvol6w_ic24",    0x0400000, 0x0200000,
@@ -605,7 +606,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 6 Winter (J 970121 V1.200)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0600000, 0x0200000,
@@ -618,7 +619,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 7 Spring (J 970313 V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclub2v7.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2v7.ic24",    0x0400000, 0x0200000,
@@ -631,7 +632,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 8 Summer (J 970616 V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "u22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "u24.bin",    0x0400000, 0x0200000,
@@ -647,7 +648,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Vol. 9 Autumn (J V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
@@ -663,7 +664,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '97 Winter Ver (J 971017 V1.100, set 1)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "prc297wi_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "prc297wi_ic24",    0x0400000, 0x0200000,
@@ -682,7 +683,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '97 Winter Ver (J 971017 V1.100, set 2)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclb297w_ic22_alt",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "prc297wi_ic24",    0x0400000, 0x0200000,
@@ -701,7 +702,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '98 Spring Ver (J 971017 V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "prc298sp_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "prc298sp_ic24",    0x0400000, 0x0200000,
@@ -717,7 +718,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '98 Autumn Ver (J 980827 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "prc298au_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "prc298au_ic24",    0x0400000, 0x0200000,
@@ -733,7 +734,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 '98 Summer Ver (J 980603 V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclb298s_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclb298s_ic24",    0x0400000, 0x0200000,
@@ -746,7 +747,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 2000 Summer (J 000509 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
@@ -759,7 +760,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Earth Limited Kobe (Print Club Custom) (J 970808 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
@@ -775,7 +776,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Felix The Cat (Rev. A) (J 970415 V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclub2fc_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2fc_ic24",    0x0400000, 0x0200000,
@@ -788,7 +789,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 (U 970921 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclub2kc_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclub2kc_ic24",    0x0400000, 0x0200000,
@@ -801,7 +802,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club LoveLove (J 970421 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclblove.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclblove.ic24",    0x0400000, 0x0200000,
@@ -815,7 +816,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club LoveLove Ver 2 (J 970825 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",    0x0400000, 0x0200000,
@@ -829,7 +830,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Olive (J 980717 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclubol_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclubol_ic24",    0x0400000, 0x0200000,
@@ -845,7 +846,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Pepsiman (J 970618 V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclb2psi_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2psi_ic24",    0x0400000, 0x0200000,
@@ -858,7 +859,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club Pokemon B (U 991126 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	BIOS_BLOB, "epr-17952a.ic8",   0x0000000, 0x0080000,
 	GAME_WORD_BLOB, "pclubpok_ic22",    0x0200000, 0x0200000,
@@ -872,7 +873,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Print Club 2 Puffy (J V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclb2puf.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2puf.ic24",    0x0400000, 0x0200000,
@@ -885,7 +886,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club 2 Warner Bros (J 970228 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclb2wb_ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclb2wb_ic24",    0x0400000, 0x0200000,
@@ -898,7 +899,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Winnie-the-Pooh Vol. 2 (J 971218 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
@@ -911,7 +912,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Winnie-the-Pooh Vol. 3 (J 980406 V1.000)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
@@ -924,7 +925,7 @@ const Game GameList[NB_STV_GAMES]={
    {"Print Club Yoshimoto V2 (J 970422 V1.100)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "pclbyov2.ic22",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "pclbyov2.ic24",    0x0400000, 0x0200000,
@@ -934,216 +935,10 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
-  {"Print Club 2 Vol. 6 Winter (J 961210 V1.000)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "pclbvol6w_ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "pclbvol6w_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "pclbvol6w_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "pclbvol6w_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "pclbvol6w_ic30",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 Vol. 6 Winter (J 970121 V1.200)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "ic24.bin",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "ic28.bin",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 Vol. 7 Spring (J 970313 V1.100)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "pclub2v7.ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2v7.ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2v7.ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2v7.ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2v7.ic30",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 Vol. 8 Summer (J 970616 V1.100)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "u22.bin",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "u24.bin",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "u26.bin",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "u28.bin",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "u30.bin",    0x0a00000, 0x0200000,
- 	GAME_WORD_BLOB, "u32.bin",    0x0c00000, 0x0200000,
- 	GAME_WORD_BLOB, "u34.bin",    0x0e00000, 0x0200000,
- 	GAME_WORD_BLOB, "u36.bin",    0x1000000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 Vol. 9 Autumn (J V1.100)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "ic28.bin",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x0200000,
- 	GAME_WORD_BLOB, "ic32.bin",    0x0c00000, 0x0200000,
- 	GAME_WORD_BLOB, "ic34.bin",    0x0e00000, 0x0200000,
- 	GAME_WORD_BLOB, "ic36.bin",    0x1000000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 '97 Winter Ver (J 971017 V1.100, set 1)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "prc297wi_ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic30",    0x0a00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic32",    0x0c00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic34",    0x0e00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic36",    0x1000000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic23",    0x1200000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic25",    0x1400000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic27",    0x1600000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 '97 Winter Ver (J 971017 V1.100, set 2)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "pclb297w_ic22_alt",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic30",    0x0a00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic32",    0x0c00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic34",    0x0e00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic36",    0x1000000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic23",    0x1200000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic25",    0x1400000, 0x0200000,
- 	GAME_WORD_BLOB, "prc297wi_ic27",    0x1600000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 '98 Spring Ver (J 971017 V1.100)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "prc298sp_ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298sp_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298sp_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298sp_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298sp_ic30",    0x0a00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298sp_ic32",    0x0c00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298sp_ic34",    0x0e00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298sp_ic36",    0x1000000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 '98 Autumn Ver (J 980827 V1.000)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "prc298au_ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298au_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298au_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298au_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298au_ic30",    0x0a00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298au_ic32",    0x0c00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298au_ic34",    0x0e00000, 0x0200000,
- 	GAME_WORD_BLOB, "prc298au_ic36",    0x1000000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 '98 Summer Ver (J 980603 V1.100)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "pclb298s_ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb298s_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb298s_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb298s_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb298s_ic30",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 2000 Summer (J 000509 V1.000)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "ic28.bin",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club Kome Kome Club (J 970203 V1.000)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "pclub2kc_ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2kc_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2kc_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2kc_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2kc_ic30",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 Felix The Cat (Rev. A) (J 970415 V1.100)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "pclub2fc_ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2fc_ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2fc_ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2fc_ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "pclub2fc_ic30",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
-   {"Print Club 2 Puffy (J V1.100)",
-    0,
-    0,
-    NULL,
-    {
- 	GAME_WORD_BLOB, "pclb2puf.ic22",    0x0200000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb2puf.ic24",    0x0400000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb2puf.ic26",    0x0600000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb2puf.ic28",    0x0800000, 0x0200000,
- 	GAME_WORD_BLOB, "pclb2puf.ic30",    0x0a00000, 0x0200000,
-         GAME_END, "", 0, 0
-     },
-   },
   {"Pro Mahjong Kiwame S (J 951020 V1.208)",
    0,
    0,
-   NULL,
+   NV_1P,
    {
 	HEADER_BLOB,   "epr18737.13",    0x0000000, 0x0080000,
 	GAME_BYTE_BLOB, "epr18737.13",    0x0100000, 0x0080000,
@@ -1178,7 +973,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    NULL,
    {
-        HEADER_BLOB,    "sando-r.13",  0x0000000, 0x0100000,
+    HEADER_BLOB,    "sando-r.13",  0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "sando-r.13",  0x0200000, 0x0100000,
 	GAME_BYTE_BLOB, "sando-r.13",  0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr18635.8",  0x1c00000, 0x0400000,
@@ -1242,7 +1037,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Sea Bass Fishing (JUET 971110 V0.001)",
     0,
     0,
-    NULL,
+    NV_1P,
     {
 	HEADER_BLOB, "seabassf.13",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "seabassf.13",    0x0200000, 0x0100000,
@@ -1315,7 +1110,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Stress Busters (J 981020 V1.000)",
     0,
     0,
-    NULL,
+    NV_1P,
     {
 	HEADER_BLOB,    "epr-21300a.ic13",  0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "epr-21300a.ic13",  0x0200000, 0x0100000,
@@ -1390,7 +1185,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Technical Bowling (J 971212 V1.000)",
     0x05200913,
     0,
-    NULL,
+    NV_1P,
     {
 	GAME_WORD_BLOB, "ic22",   0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",   0x0300000, 0x0200000,
@@ -1486,7 +1281,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)",
     0x05226d41,
     0,
-    NULL,
+    NV_1P,
     {
 	GAME_WORD_BLOB, "mpr21000.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr20995.2",    0x0400000, 0x0400000,
@@ -1540,7 +1335,7 @@ const Game GameList[NB_STV_GAMES]={
   {"Zenkoku Seifuku Bishoujo Grand Prix Find Love (J 971212 V1.000)",
     0,
     0,
-    NULL,
+    NV_1P,
     {
 	HEADER_BLOB,   "epr20424.13",    0x0000000, 0x0100000,
 	GAME_WORD_BLOB, "mpr20431.7",    0x0200000, 0x0200000,
