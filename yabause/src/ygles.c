@@ -2732,8 +2732,8 @@ void YglRender(void) {
 
      if (yabsys.isRotated) par = 1.0/par;
 
-     w = (dar>par)?(double)GlWidth*(par/dar):GlWidth;
-     h = (dar>par)?(double)GlHeight:(double)GlHeight/(par/dar);
+     w = (dar>par)?(double)GlHeight*par:GlWidth;
+     h = (dar>par)?(double)GlHeight:(double)GlWidth/par;
      x = (GlWidth-w)/2;
      y = (GlHeight-h)/2;
    } else {
