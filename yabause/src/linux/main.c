@@ -171,42 +171,10 @@ int YuiUseOGLOnThisThread(){
   return 0;
 }
 
-static unsigned long nextFrameTime = 0;
-static unsigned long delayUs_NTSC = 1000000/60;
-static unsigned long delayUs_PAL = 1000000/50;
-
-#define delayUs ((yabsys.IsPal)?delayUs_PAL:delayUs_NTSC);
-
-static int frameskip = 1;
-
-static unsigned long getCurrentTimeUs(unsigned long offset) {
-    struct timeval s;
-
-    gettimeofday(&s, NULL);
-
-    return (s.tv_sec * 1000000 + s.tv_usec) - offset;
-}
-
-static unsigned long time_left(void)
-{
-    unsigned long now;
-
-    now = getCurrentTimeUs(0);
-    if(nextFrameTime <= now)
-        return 0;
-    else
-        return nextFrameTime - now;
-}
-
 void YuiSwapBuffers(void) {
 
    platform_swapBuffers();
    SetOSDToggle(1);
-
-  if (frameskip == 1)
-    usleep(time_left());
-
-  nextFrameTime += delayUs;
 }
 
 void YuiInit() {
@@ -412,8 +380,6 @@ int main(int argc, char *argv[]) {
   }
 
   platform_SetKeyCallback(PERCore->onKeyEvent);
-
-  nextFrameTime = getCurrentTimeUs(0) + delayUs;
 
   while (!platform_shouldClose())
   {

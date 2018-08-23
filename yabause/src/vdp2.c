@@ -540,15 +540,12 @@ static void FPSDisplay(void)
     }
   }
 
-#ifdef __linux__
-  OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS , gpu = %d, cpu0 = %d, cpu1 = %d, cpu2 = %d, cpu3 = %d, cpu4 = %d, cpu5 = %d, cpu6 = %d, cpu7 = %d"
-    , fps, yabsys.IsPal ? 50 : 60, gpu_f / 1000000,
-    cpu_f[0] / 1000, cpu_f[1] / 1000, cpu_f[2] / 1000, cpu_f[3] / 1000,
-    cpu_f[4] / 1000, cpu_f[5] / 1000, cpu_f[6] / 1000, cpu_f[7] / 1000);
-#else
-  OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS"
-    , fps, yabsys.IsPal ? 50 : 60);
-#endif
+
+  if (isAutoFrameSkip() == 0) {
+    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+  } else {
+    OSDPushMessage(OSDMSG_FPS, 1, "%02d FPS", fps);
+  }
 
   OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
   fpsframecount++;
@@ -1314,6 +1311,7 @@ void ToggleFullScreen(void)
 void EnableAutoFrameSkip(void)
 {
    autoframeskipenab = 1;
+   YabauseSetVideoFormat((yabsys.IsPal==1)?VIDEOFORMATTYPE_PAL:VIDEOFORMATTYPE_NTSC);
 }
 
 int isAutoFrameSkip(void)
@@ -1327,6 +1325,7 @@ int isAutoFrameSkip(void)
 void DisableAutoFrameSkip(void)
 {
    autoframeskipenab = 0;
+   YabauseSetVideoFormat((yabsys.IsPal==1)?VIDEOFORMATTYPE_PAL:VIDEOFORMATTYPE_NTSC);
 }
 
 //////////////////////////////////////////////////////////////////////////////
