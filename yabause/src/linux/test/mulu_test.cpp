@@ -100,5 +100,22 @@ TEST_F(MuluTest, ex) {
 
 }
 
+TEST_F(MuluTest, neg) {
+
+  MSH2->regs.R[3]=0x00000002;
+  MSH2->regs.R[2]=0xFFFFAAAA;
+
+  // mulu r9, r3
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x232e );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
+
+  MSH2->regs.PC =( 0x06000000 );
+  SH2TestExec(MSH2, 1);
+
+  EXPECT_EQ( 0x00015554, MSH2->regs.MACL );
+
+}
+
 
 }  // namespace

@@ -64,13 +64,13 @@ TEST_F(MaclTest, normal2) {
 // 0602e3c2: macli 0x067f R[6]=0x00036420@0x06001EC4 R[7]=0xffff1cc5@0x060300c0  MACL 0x00000000 MACH 0x00000000
 // 0602e3c2: maclo 0x067f MACL 0xfd6f8ca0 MACH 0xfffffffc
 
-  MSH2->regs.R[6]=0x06001F04;
+  MSH2->regs.R[6]=0x06001EC4;
   MSH2->regs.R[7]=0x060300c0;
   MSH2->regs.SR.all =( 0xFFFFFFFF );
   MSH2->regs.MACH =(0);
   MSH2->regs.MACL =(0);
 
-  SH2MappedMemoryWriteLong(MSH2, 0x06001F04, 0x00036420 );
+  SH2MappedMemoryWriteLong(MSH2, 0x06001EC4, 0x00036420 );
   SH2MappedMemoryWriteLong(MSH2, 0x060300c0, 0xffff1cc5 );
 
   // mac.l @r7+, @r6+

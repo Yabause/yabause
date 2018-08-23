@@ -48,6 +48,22 @@ TEST_F(MullTest, normal) {
 
   EXPECT_EQ( 0x10D6000, MSH2->regs.MACL );
   EXPECT_EQ( 0xFFFFFFFF, MSH2->regs.MACH );
+
+  MSH2->regs.R[1]=0xFFFFFFFE;
+  MSH2->regs.R[2]=0x00005555;
+  MSH2->regs.MACL =(0xDEADCAFE);
+  MSH2->regs.MACH =(0xDEADCAFE);
+
+  // macl r1, r3
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x0127 );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
+
+  MSH2->regs.PC =( 0x06000000 );
+  SH2TestExec(MSH2, 1);
+
+  EXPECT_EQ( 0xFFFF5556, MSH2->regs.MACL );
+  EXPECT_EQ( 0xDEADCAFE, MSH2->regs.MACH );
 }
 
 

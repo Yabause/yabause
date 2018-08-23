@@ -48,6 +48,22 @@ TEST_F(MulsTest, normal) {
 
 }
 
+TEST_F(MulsTest, negative) {
+  MSH2->regs.R[0]=0x0000FFFE;
+  MSH2->regs.R[1]=0x00005555;
+
+  // macl r1, r3
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x201f );
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
+
+  MSH2->regs.PC =( 0x06000000 );
+  SH2TestExec(MSH2, 1);
+
+  EXPECT_EQ( 0xFFFF5556, MSH2->regs.MACL );
+
+}
+
 
 
 

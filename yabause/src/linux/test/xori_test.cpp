@@ -53,7 +53,7 @@ TEST_F(XoriTest, normal) {
 TEST_F(XoriTest, max) {
 
 
-  MSH2->regs.R[0]=0xFFFFFFFF;
+  MSH2->regs.R[0]=0xDEADCAFF;
 
   // xori
   SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0xca01 );
@@ -63,7 +63,7 @@ TEST_F(XoriTest, max) {
   MSH2->regs.PC =( 0x06000000 );
   SH2TestExec(MSH2, 1);
 
-  EXPECT_EQ( 0xfffffffe, MSH2->regs.R[0]  );
+  EXPECT_EQ( 0xDEADCAfe, MSH2->regs.R[0]  );
 
 }
 

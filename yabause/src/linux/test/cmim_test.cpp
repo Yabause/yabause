@@ -45,6 +45,30 @@ TEST_F(CmpimTest, normal) {
   SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x000000E1, MSH2->regs.SR.all );
+
+  MSH2->regs.R[0]=0x000000FF; // m
+  MSH2->regs.SR.all = (0x00000E1);
+
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x88ff );  // cmppl R[1]
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
+
+  MSH2->regs.PC = ( 0x06000000 );
+  SH2TestExec(MSH2, 1);
+
+  EXPECT_EQ( 0x000000E0, MSH2->regs.SR.all );
+
+  MSH2->regs.R[0]=0x0000007F; // m
+  MSH2->regs.SR.all = (0x00000E0);
+
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x887f );  // cmppl R[1]
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
+
+  MSH2->regs.PC = ( 0x06000000 );
+  SH2TestExec(MSH2, 1);
+
+  EXPECT_EQ( 0x000000E1, MSH2->regs.SR.all );
 }
 
 TEST_F(CmpimTest, Zero) {
@@ -60,6 +84,18 @@ TEST_F(CmpimTest, Zero) {
   SH2TestExec(MSH2, 1);
 
   EXPECT_EQ( 0x000000E0, MSH2->regs.SR.all );
+
+  MSH2->regs.R[0]=0x0; // m
+  MSH2->regs.SR.all = (0x00000E1);
+
+  SH2MappedMemoryWriteWord(MSH2, 0x06000000, 0x8800 );  // shar
+  SH2MappedMemoryWriteWord(MSH2, 0x06000002, 0x000b );  // rts
+  SH2MappedMemoryWriteWord(MSH2, 0x06000004, 0x0009 );  // nop
+
+  MSH2->regs.PC = ( 0x06000000 );
+  SH2TestExec(MSH2, 1);
+
+  EXPECT_EQ( 0x000000E1, MSH2->regs.SR.all );
 }
 
 
