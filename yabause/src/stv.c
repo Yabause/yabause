@@ -19,7 +19,7 @@
 //YuiMsg
 #define ROTATED 1
 
-#define NB_STV_GAMES 81
+#define NB_STV_GAMES 88
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
@@ -85,6 +85,7 @@ const Game BiosList =
     NULL,
     {
         BIOS_BLOB, "epr-20091.ic8", 0x000000, 0x080000,
+        BIOS_BLOB, "epr18343.bin", 0x000000, 0x080000,
         BIOS_BLOB, "epr20091.ic8", 0x000000, 0x080000,
         BIOS_BLOB, "epr-19730.ic8", 0x000000, 0x080000,
         BIOS_BLOB, "epr19730.ic8", 0x000000, 0x080000,
@@ -231,6 +232,22 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Critter Crusher (EA 951204 V1.000)",
+    0x0,
+    0,
+    NULL,
+    NV_1P,
+    {
+	BIOS_BLOB, "mp17954a.s",   0x0000000, 0x0080000,
+	HEADER_BLOB, "epr-18821.ic13",    0x0000000, 0x0080000,
+	HEADER_BLOB, "epr-18821.ic13",    0x0100000, 0x0080000,
+	GAME_BYTE_BLOB, "epr-18821.ic13",    0x0200000, 0x0080000,
+	GAME_BYTE_BLOB, "epr-18821.ic13",    0x0300000, 0x0080000,
+	GAME_WORD_BLOB, "mpr-18789.ic8",    0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-18788.ic9",    0x2000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"DaeJeon! SanJeon SuJeon (AJTUE 990412 V1.000)",
     0,
     0,
@@ -354,6 +371,26 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Final Arch (J 950714 V1.001)",
+    0x0524ac01,
+    0,
+    NULL,
+    NULL,
+    {
+	HEADER_BLOB, "finlarch.13",   0x0000000, 0x0100000,
+	GAME_BYTE_BLOB, "finlarch.13",   0x0200000, 0x0100000,
+	GAME_BYTE_BLOB, "finlarch.13",   0x0300000, 0x0100000,
+	GAME_WORD_BLOB, "mpr18257.2",   0x0400000, 0x0400000,
+	HEADER_BLOB, "mpr18257.2",   0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18258.3",   0x0800000, 0x0400000,
+	HEADER_BLOB, "mpr18258.3",   0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18259.4",   0x0c00000, 0x0400000,
+	HEADER_BLOB, "mpr18259.4",   0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr18260.5",   0x1000000, 0x0400000,
+	HEADER_BLOB, "mpr18260.5",   0x2000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Final Fight Revenge (JUET 990714 V1.000)",
     0x0524ac01,
     0,
@@ -455,6 +492,20 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr19814.1",    0x1800000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19821.8",    0x1c00000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19822.9",    0x2000000, 0x0200000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Hashire Patrol Car (J 990326 V1.000)",
+   0,
+   0,
+   NULL,
+   NV_1P,
+   {
+	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x200000,
+	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x200000,
+	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x200000,
+	GAME_WORD_BLOB, "ic28.bin",    0x0800000, 0x200000,
+	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x200000,
         GAME_END, "", 0, 0
     },
   },
@@ -755,16 +806,6 @@ const Game GameList[NB_STV_GAMES]={
    NV_1P,
    {
 	GAME_WORD_BLOB, "pclb297w_ic22_alt",    0x0200000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic24",    0x0400000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic26",    0x0600000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic28",    0x0800000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic30",    0x0a00000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic32",    0x0c00000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic34",    0x0e00000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic36",    0x1000000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic23",    0x1200000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic25",    0x1400000, 0x0200000,
-	GAME_WORD_BLOB, "prc297wi_ic27",    0x1600000, 0x0200000,
         GAME_END, "", 0, 0
     },
   },
@@ -861,7 +902,7 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
-  {"Print Club 2 (U 970921 V1.000)",
+  {"Print Club Kome Kome Club (J 970203 V1.000)",
    0,
    0,
    NULL,
@@ -1056,6 +1097,25 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Puzzle & Action: BoMulEul Chajara (JUET 970125 V2.00K)",
+   0,
+   0,
+   NULL,
+   NULL,
+   {
+	HEADER_BLOB, "2.ic13_2",    0x0200000, 0x0080000,
+	HEADER_BLOB, "1.ic13_1",    0x0200001, 0x0080000,
+	HEADER_BLOB, "bom210-10.ic2",    0x1c00000, 0x0400000,
+	GAME_BYTE_BLOB, "bom210-10.ic2",    0x0400000, 0x0400000,
+	HEADER_BLOB, "bom210-11.ic3",    0x2000000, 0x0400000,
+	GAME_BYTE_BLOB, "bom210-11.ic3",    0x0800000, 0x0400000,
+	HEADER_BLOB, "bom210-12.ic4",    0x2400000, 0x0400000,
+	GAME_BYTE_BLOB, "bom210-12.ic4",    0x0c00000, 0x0400000,
+	HEADER_BLOB, "bom210-13.ic5",    0x2800000, 0x0400000,
+	GAME_BYTE_BLOB, "bom210-13.ic5",    0x1000000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Puzzle & Action: Sando-R (J 951114 V1.000)",
    0,
    0,
@@ -1186,6 +1246,37 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Sport Fishing 2 (UET 951106 V1.10e)",
+    0,
+    0,
+    NULL,
+    NULL,
+    {
+	BIOS_BLOB, "epr18343.bin",   0x0000000, 0x0080000,
+	HEADER_BLOB, "epr-18427.ic13",  0x0000000, 0x0100000,
+	GAME_BYTE_BLOB, "epr-18427.ic13",  0x0200000, 0x0100000,
+	GAME_BYTE_BLOB, "epr-18427.ic13",   0x0300000, 0x0100000,
+	GAME_WORD_BLOB, "mpr-18273.ic2",   0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-18274.ic3",   0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-18275.ic4",   0x0c00000, 0x0200000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Sport Fishing 2 (J 951201 V1.100)",
+    0,
+    0,
+    NULL,
+    NULL,
+    {
+	BIOS_BLOB, "epr18343.bin",   0x0000000, 0x0080000,
+	HEADER_BLOB, "epr18344.a",   0x0000000, 0x0100000,
+	GAME_BYTE_BLOB, "epr18344.a",  0x0200000, 0x0100000,
+	GAME_BYTE_BLOB, "epr18344.a",   0x0300000, 0x0100000,
+	GAME_WORD_BLOB, "mpr-18273.ic2",   0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-18274.ic3",   0x0800000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Steep Slope Sliders (JUET 981110 V1.000)",
     0x052b6901,
     0,
@@ -1280,6 +1371,22 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr20547.5",    0x1000000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20548.6",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr20543.1",    0x1800000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Tatacot (JA 951128 V1.000)",
+    0x0,
+    0,
+    NULL,
+    NV_1P,
+    {
+	BIOS_BLOB, "epr19730.ic8",   0x0000000, 0x0080000,
+	HEADER_BLOB, "epr-18790.ic13",    0x0000000, 0x0080000,
+	HEADER_BLOB, "epr-18790.ic13",    0x0100000, 0x0080000,
+	GAME_BYTE_BLOB, "epr-18790.ic13",    0x0200000, 0x0080000,
+	GAME_BYTE_BLOB, "epr-18790.ic13",    0x0300000, 0x0080000,
+	GAME_WORD_BLOB, "mpr-18789.ic8",    0x1c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-18788.ic9",    0x2000000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
