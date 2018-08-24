@@ -19,7 +19,7 @@
 //YuiMsg
 #define ROTATED 1
 
-#define NB_STV_GAMES 88
+#define NB_STV_GAMES 93
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
@@ -303,7 +303,17 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
-  {"Decathlete (JUET 960709 V1.001)",
+  {"Decathlete (JUET 960424 V1.000)",
+    0,
+    0,
+    NULL,
+    NULL,
+    {
+	HEADER_BLOB, "epr18967.13",    0x0000000, 0x0100000,
+        GAME_END, "", 0, 0
+    },
+  },
+   {"Decathlete (JUET 960709 V1.001)",
     0,
     0,
     NULL,
@@ -524,6 +534,24 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr18942.5",    0x1000000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18943.6",    0x1400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr18938.1",    0x1800000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Magical Zunou Power (J 961031 V1.000)",
+   0,
+   0,
+   NULL,
+   NV_1P,
+   {
+	HEADER_BLOB,    "flash.ic13", 0x0000000, 0x0100000,
+	GAME_BYTE_BLOB, "flash.ic13",  0x0200000, 0x0100000,
+	GAME_BYTE_BLOB, "flash.ic13",  0x0300000, 0x0100000,
+	GAME_WORD_BLOB, "mpr-19354.ic2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-19355.ic3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-19356.ic4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-19357.ic5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-19358.ic6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr-19359.ic1",    0x1800000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -902,6 +930,40 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Print Club Goukakenran (J 991104 V1.000)",
+   0,
+   0,
+   NULL,
+   NV_1P,
+   {
+	GAME_WORD_BLOB, "pclubor_ic22",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "pclubor_ic24",    0x0400000, 0x0200000,
+	GAME_WORD_BLOB, "pclubor_ic26",    0x0600000, 0x0200000,
+	GAME_WORD_BLOB, "pclubor_ic28",    0x0800000, 0x0200000,
+	GAME_WORD_BLOB, "pclubor_ic30",    0x0a00000, 0x0200000,
+	GAME_WORD_BLOB, "pclubor_ic32",    0x0c00000, 0x0200000,
+	GAME_WORD_BLOB, "pclubor_ic34",    0x0e00000, 0x0200000,
+	GAME_WORD_BLOB, "pclubor_ic36",    0x1000000, 0x0200000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Print Club 2 Kobe Luminaire '99 (Print Club Custom 3) (J 991203 V1.000)",
+   0,
+   0,
+   NULL,
+   NV_1P,
+   {
+	GAME_WORD_BLOB, "ic22.bin",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "ic24.bin",    0x0400000, 0x0200000,
+	GAME_WORD_BLOB, "ic26.bin",    0x0600000, 0x0200000,
+	GAME_WORD_BLOB, "ic28.bin",    0x0800000, 0x0200000,
+	GAME_WORD_BLOB, "ic30.bin",    0x0a00000, 0x0200000,
+	GAME_WORD_BLOB, "ic32.bin",    0x0c00000, 0x0200000,
+	GAME_WORD_BLOB, "ic34.bin",    0x0e00000, 0x0200000,
+	GAME_WORD_BLOB, "ic36.bin",    0x1000000, 0x0200000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Print Club Kome Kome Club (J 970203 V1.000)",
    0,
    0,
@@ -1227,6 +1289,24 @@ const Game GameList[NB_STV_GAMES]={
 	GAME_WORD_BLOB, "mpr19631.7",    0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "mpr19632.2",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "mpr19633.3",    0x0800000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
+  {"Soreyuke Anpanman Crayon Kids (J 001026 V1.000)",
+    0,
+    0,
+    NULL,
+    NULL,
+    {
+	HEADER_BLOB, "epr-20091.ic8",  0x0000000, 0x200000,
+	GAME_WORD_BLOB, "ic22.bin",   0x0200000, 0x200000,
+	GAME_WORD_BLOB, "ic24.bin",   0x0400000, 0x200000,
+	GAME_WORD_BLOB, "ic26.bin",   0x0600000, 0x0400000,
+	GAME_WORD_BLOB, "ic28.bin",   0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "ic30.bin",   0x0a00000, 0x0400000,
+	GAME_WORD_BLOB, "ic32.bin",   0x0c00000, 0x0200000,
+	GAME_WORD_BLOB, "ic34.bin",   0x0e00000, 0x0400000,
+	GAME_WORD_BLOB, "ic36.bin",   0x1000000, 0x0200000,
         GAME_END, "", 0, 0
     },
   },
