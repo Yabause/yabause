@@ -584,6 +584,7 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     glBindTexture(GL_TEXTURE_2D, tm->textureID);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
     tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
+    memset(tm->texture, 0x0, tm->width * tm->height * 4);
     if (tm->texture == NULL){
       abort();
     }

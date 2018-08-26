@@ -1841,9 +1841,9 @@ static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
 static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *texture) {
 
   u32 cramindex;
-  u16 dotw = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
+  u16 dotw = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
   u8 dot;
-  u32 alpha = 0xFF;
+  u32 alpha = info->alpha;
 
   dot = (dotw & 0xF000) >> 12;
   if (!(dot & 0xF) && info->transparencyenable) {
@@ -2362,16 +2362,16 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.vertices[1] = y;
   tile.vertices[2] = (x + tile.cellw);
   tile.vertices[3] = y;
-  tile.vertices[4] = (x + tile.cellh);
+  tile.vertices[4] = (x + tile.cellw);
   tile.vertices[5] = (y + (float)info->lineinc);
   tile.vertices[6] = x;
   tile.vertices[7] = (y + (float)info->lineinc);
 
   // Screen culling
-  //if (tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] < 0 || tile.vertices[5] < 0)
-  //{
-  //	return;
-  //}
+  if (tile.vertices[0] >= vdp2width || tile.vertices[1] >= vdp2height || tile.vertices[2] <= 0 || tile.vertices[5] <= 0)
+  {
+  	return;
+  }
 
   if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincx == 1.0f && info->coordincy == 1.0f)
   {                                                 // coordinate inc is not supported yet.
@@ -6425,7 +6425,7 @@ static void Vdp2DrawNBG2(void)
   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
 
   if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
-    (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
+    ((fixVdp2Regs->BGON & 0x1) && (fixVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
     return;
 
   // Window Mode
