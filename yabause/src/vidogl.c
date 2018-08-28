@@ -794,11 +794,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
         }
         else {
-          if (dot & 0x8000) {
+          if (dot & 0x8000 && (fixVdp2Regs->SPCTL & 0x20) ) {
             *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
           }
           else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, dot);
+            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &shadow, &normalshadow, &priority, &colorcl);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, dot );
           }
         }
       }
@@ -5696,7 +5697,7 @@ static void Vdp2DrawNBG0(void)
       info.paladdr = (fixVdp2Regs->BMPNA & 0x7) << 4;
       info.flipfunction = 0;
       info.specialcolorfunction = (fixVdp2Regs->BMPNA & 0x10) >> 4;
-      info.specialfunction = 0;
+      info.specialfunction = (fixVdp2Regs->BMPNA >> 5) & 0x01;
     }
     else
     {
