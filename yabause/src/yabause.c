@@ -705,6 +705,8 @@ int YabauseEmulate(void) {
    DoMovie();
 
    MSH2->cycles = 0;
+   MSH2->depth = 0;
+   SSH2->depth = 0;
    SSH2->cycles = 0;
 //   SH2OnFrame(MSH2);
 //   SH2OnFrame(SSH2);

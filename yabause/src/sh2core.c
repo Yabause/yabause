@@ -1505,10 +1505,23 @@ void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
    // Copy FRC register to FICR
    MSH2->onchip.FICR = MSH2->onchip.FRC.all;
 
+   LOG("MSH2InputCapture\n");
+
    // Time for an Interrupt?
    if (MSH2->onchip.TIER & 0x80) {
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
       execInterrupt = 1;
+   }
+
+   if (context->depth < 4) {
+     context->depth++;
+     if (context == SSH2) {
+       SH2Exec(MSH2, 32);
+     }
+     else {
+       SH2Exec(SSH2, 32);
+     }
+     CurrentSH2->depth--;
    }
 }
 
@@ -1522,10 +1535,23 @@ void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
    // Copy FRC register to FICR
    SSH2->onchip.FICR = SSH2->onchip.FRC.all;
 
+   LOG("SSH2InputCapture\n");
+
    // Time for an Interrupt?
    if (SSH2->onchip.TIER & 0x80) {
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
       execInterrupt = 1;
+   }
+
+   if (context->depth < 4) {
+     context->depth++;
+     if (context == SSH2) {
+       SH2Exec(MSH2, 32);
+     }
+     else {
+       SH2Exec(SSH2, 32);
+     }
+     CurrentSH2->depth--;
    }
 }
 
