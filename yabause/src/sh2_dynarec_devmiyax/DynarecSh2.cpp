@@ -1362,95 +1362,99 @@ inline int DynarecSh2::Execute(){
 #if defined(EXECUTE_STAT)
   m_pCompiler->setShowCode( is_slave_ );
 #endif
-  switch( GET_PC() & 0x0FF00000 )
+//#endif
+
+  if ((GET_PC() & 0xFF000000) == 0xC0000000)
   {
-    
-  // ROM
-  case 0x00000000:
-    if (yabsys.extend_backup) {
-      const u32 bupaddr = 0x0007d600; // MappedMemoryReadLong(0x06000358);
-      if (GET_PC() == bupaddr) {
-        LOG("BUP_Init");
-        BiosBUPInit(ctx_);
-        yabsys.extend_backup = 2;
+    pBlock = m_pCompiler->LookupTableC[(GET_PC() & 0x000FFFFF) >> 1];
+    if (pBlock == NULL)
+    {
+      pBlock = m_pCompiler->CompileBlock(GET_PC());
+      m_pCompiler->LookupTableC[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
+      if (pBlock == NULL) {
+        Undecoded();
         return IN_INFINITY_LOOP;
       }
-      else if (yabsys.extend_backup == 2 &&
-        GET_PC() >= 0x0380 &&
-        GET_PC() <= 0x03A8) {
+    }
+  }
+  else {
+
+    switch (GET_PC() & 0x0FF00000)
+    {
+
+      // ROM
+    case 0x00000000:
+      if (yabsys.extend_backup) {
+        const u32 bupaddr = 0x0007d600; // MappedMemoryReadLong(0x06000358);
+        if (GET_PC() == bupaddr) {
+          LOG("BUP_Init");
+          BiosBUPInit(ctx_);
+          yabsys.extend_backup = 2;
+          return IN_INFINITY_LOOP;
+        }
+        else if (yabsys.extend_backup == 2 &&
+          GET_PC() >= 0x0380 &&
+          GET_PC() <= 0x03A8) {
+          BiosHandleFunc(ctx_);
+          return IN_INFINITY_LOOP;
+        }
+      }
+      if (yabsys.emulatebios) {
         BiosHandleFunc(ctx_);
         return IN_INFINITY_LOOP;
       }
-    }
-    if (yabsys.emulatebios){
-      BiosHandleFunc(ctx_);
-      return IN_INFINITY_LOOP;
-    }
-    pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
-    if( pBlock == NULL )
-    {
-      pBlock = m_pCompiler->CompileBlock(GET_PC());
-      if (pBlock == NULL) {
-        Undecoded();
-        return IN_INFINITY_LOOP;
-      }
-      m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
-    }
-    break;
-
-  // Low Memory
-  case 0x00200000:
-    pBlock = m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1];
-    if( pBlock == NULL )
-    {
-      pBlock = m_pCompiler->CompileBlock(GET_PC());
-      if (pBlock == NULL) {
-        Undecoded();
-        return IN_INFINITY_LOOP;
-      }
-      m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
-    }
-    break;
-
-  // High Memory
-  case 0x06000000:
-  /*case 0x06100000:*/
-
-    pBlock = m_pCompiler->LookupTable[ (GET_PC() & 0x000FFFFF)>>1 ];
-    if( pBlock == NULL )
-    {
-      pBlock = m_pCompiler->CompileBlock(GET_PC(), m_pCompiler->LookupParentTable);
-      if (pBlock == NULL) {
-        Undecoded();
-        return IN_INFINITY_LOOP;
-      }
-      m_pCompiler->LookupTable[ (GET_PC() & 0x000FFFFF)>>1 ] = pBlock;
-    } 
-    break;
-
-  // Cache
-  default:
-    if( (GET_PC() & 0xFF000000) == 0xC0000000 )
-    {
-      pBlock = m_pCompiler->LookupTableC[ (GET_PC() & 0x000FFFFF)>>1 ];
-      if( pBlock == NULL )
+      pBlock = m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1];
+      if (pBlock == NULL)
       {
         pBlock = m_pCompiler->CompileBlock(GET_PC());
-        m_pCompiler->LookupTableC[ (GET_PC()&0x000FFFFF)>>1 ] = pBlock;
         if (pBlock == NULL) {
-           Undecoded();
-           return IN_INFINITY_LOOP;
+          Undecoded();
+          return IN_INFINITY_LOOP;
         }
-      } 
-    }else{
+        m_pCompiler->LookupTableRom[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
+      }
+      break;
+
+      // Low Memory
+    case 0x00200000:
+      pBlock = m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1];
+      if (pBlock == NULL)
+      {
+        pBlock = m_pCompiler->CompileBlock(GET_PC());
+        if (pBlock == NULL) {
+          Undecoded();
+          return IN_INFINITY_LOOP;
+        }
+        m_pCompiler->LookupTableLow[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
+      }
+      break;
+
+      // High Memory
+    case 0x06000000:
+      /*case 0x06100000:*/
+
+      pBlock = m_pCompiler->LookupTable[(GET_PC() & 0x000FFFFF) >> 1];
+      if (pBlock == NULL)
+      {
+        pBlock = m_pCompiler->CompileBlock(GET_PC(), m_pCompiler->LookupParentTable);
+        if (pBlock == NULL) {
+          Undecoded();
+          return IN_INFINITY_LOOP;
+        }
+        m_pCompiler->LookupTable[(GET_PC() & 0x000FFFFF) >> 1] = pBlock;
+      }
+      break;
+
+      // Cache
+    default:
       pBlock = m_pCompiler->CompileBlock(GET_PC());
       if (pBlock == NULL) {
         Undecoded();
         return IN_INFINITY_LOOP;
       }
+      break;
     }
-    break;  
-   }
+  }
     
 #if 0
     static FILE * fp = NULL;

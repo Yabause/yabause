@@ -383,6 +383,7 @@ typedef struct
    u8 isIdle;
    u8 isSleeping;
    u16 instruction;
+   int depth;
    u8 breakpointEnabled;
    breakpoint_struct bp;
    u8 backtraceEnabled;

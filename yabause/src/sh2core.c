@@ -1112,6 +1112,7 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
       case 0x010:
          return CurrentSH2->onchip.TIER;
       case 0x011:
+        if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80"); }
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
          return CurrentSH2->onchip.FRC.part.H;
@@ -1346,6 +1347,23 @@ void FASTCALL OnchipWriteByte(u32 addr, u8 val) {
          return;
       case 0x011:
          CurrentSH2->onchip.FTCSR = (CurrentSH2->onchip.FTCSR & (val & 0xFE)) | (val & 0x1);
+/*
+         if( (CurrentSH2->onchip.FTCSR & 0x80) == 0x00 ){
+           if (CurrentSH2->depth < 4) {
+             CurrentSH2->depth++;
+             SH2_struct * tmpCurrentSH2 = CurrentSH2;
+             if (CurrentSH2->isslave) {
+               //SH2Exec(MSH2, 1);
+             }
+             else {
+               //SH2Exec(SSH2, 1);
+             }
+             CurrentSH2 = tmpCurrentSH2;
+             CurrentSH2->depth--;
+           }
+         }
+*/         
+         LOG("Write FTCSR = %X\n", CurrentSH2->onchip.FTCSR);
          return;
       case 0x012:
          CurrentSH2->onchip.FRC.part.H = val;
@@ -2139,9 +2157,24 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Copy FRC register to FICR
    MSH2->onchip.FICR = MSH2->onchip.FRC.all;
 
+   LOG("MSH2InputCapture\n");
+
    // Time for an Interrupt?
    if (MSH2->onchip.TIER & 0x80)
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
+
+   if (CurrentSH2->depth < 4) {
+     CurrentSH2->depth++;
+     SH2_struct * tmpCurrentSH2 = CurrentSH2;
+     if (CurrentSH2->isslave) {
+       SH2Exec(MSH2, 32);
+     }
+     else {
+       SH2Exec(SSH2, 32);
+     }
+     CurrentSH2 = tmpCurrentSH2;
+     CurrentSH2->depth--;
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2154,9 +2187,25 @@ void FASTCALL SSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Copy FRC register to FICR
    SSH2->onchip.FICR = SSH2->onchip.FRC.all;
 
+   LOG("SSH2InputCapture\n");
+
    // Time for an Interrupt?
    if (SSH2->onchip.TIER & 0x80)
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
+
+   if (CurrentSH2->depth < 4) {
+     CurrentSH2->depth++;
+     SH2_struct * tmpCurrentSH2 = CurrentSH2;
+     if (CurrentSH2->isslave) {
+       SH2Exec(MSH2, 32);
+     }
+     else {
+       SH2Exec(SSH2, 32);
+     }
+     CurrentSH2 = tmpCurrentSH2;
+     CurrentSH2->depth--;
+   }
+
 }
 
 //////////////////////////////////////////////////////////////////////////////

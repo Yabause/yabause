@@ -33,7 +33,7 @@
 #include "bios.h"
 #include "yabause.h"
 
-
+#define EXEC_FROM_CACHE
 
 #ifdef SH2_TRACE
 #include "sh2trace.h"
