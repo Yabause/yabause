@@ -874,6 +874,7 @@ int YabauseEmulate(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseStartSlave(void) {
+   if (yabsys.IsSSH2Running == 1) return;
    if (yabsys.emulatebios)
    {
       MappedMemoryWriteLong(SSH2, 0xFFFFFFE0, 0xA55A03F1); // BCR1
@@ -912,6 +913,7 @@ void YabauseStartSlave(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseStopSlave(void) {
+   if (yabsys.IsSSH2Running == 0) return;
    SH2Reset(SSH2);
    yabsys.IsSSH2Running = 0;
 }
