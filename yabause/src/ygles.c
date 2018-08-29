@@ -2079,9 +2079,14 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 
     if( (input->blendmode&0x03) == VDP2_CC_ADD)
       prg = PG_VDP2_ADDCOLOR_CRAM;
-    else
-      prg = PG_VDP2_NORMAL_CRAM;
-
+    else {
+      if (input->specialprimode == 2) {
+        prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY;
+      }
+      else {
+        prg = PG_VDP2_NORMAL_CRAM;
+      }
+    }
 
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC_CRAM;
@@ -2230,10 +2235,16 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
         prg = PG_VDP2_PER_LINE_ALPHA;
       }
   } else {
-    if ( (input->blendmode&0x03) == VDP2_CC_ADD)
+    if ((input->blendmode & 0x03) == VDP2_CC_ADD)
       prg = PG_VDP2_ADDCOLOR_CRAM;
-    else
-      prg = PG_VDP2_NORMAL_CRAM;
+    else {
+      if (input->specialprimode == 2) {
+        prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY;
+      }
+      else {
+        prg = PG_VDP2_NORMAL_CRAM;
+      }
+    }
 
       if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
         prg = PG_VDP2_MOSAIC_CRAM;
@@ -2411,7 +2422,11 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
       prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
     }
     else {
-      prg = PG_VDP2_NORMAL_CRAM;
+      if (input->specialprimode == 2) {
+        prg = PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY;
+      }else {
+        prg = PG_VDP2_NORMAL_CRAM;
+      }
     }
 /*
     if (line->x != -1 && VDP2_CC_NONE != input->blendmode ) {

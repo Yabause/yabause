@@ -291,11 +291,41 @@ const GLchar Yglprg_normal_cram_f[] =
 "  fragColor.a = txindex.a;\n"
 "}\n";
 
+const GLchar Yglprg_normal_cram_special_priority_f[] =
+#if defined(_OGLES3_)
+"#version 300 es \n"
+#else
+"#version 330 \n"
+#endif
+"precision highp float;\n"
+"precision highp int;\n"
+"in vec4 v_texcoord;\n"
+"uniform vec4 u_color_offset;\n"
+"uniform highp sampler2D s_texture;\n"
+"uniform sampler2D s_color;\n"
+"out vec4 fragColor;\n"
+"void main()\n"
+"{\n"
+"  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
+"  if(txindex.a == 0.0) { discard; }\n"
+"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*65280.0) | int(txindex.r*255.0)) ,0 )  , 0 );\n"
+"  fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
+"  fragColor.a = txindex.a;\n"
+"  gl_FragDepth = ((txindex.b*255.0/10.0) +1.0)/2.0 ; \n"
+"}\n";
+
+
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
 static int id_normal_cram_s_texture = -1;
 static int id_normal_cram_s_color = -1;
 static int id_normal_cram_color_offset = -1;
 static int id_normal_cram_matrix = -1;
+
+const GLchar * pYglprg_normal_cram_special_priority_f[] = { Yglprg_normal_cram_special_priority_f, NULL };
+static int id_normal_cram_sp_s_texture = -1;
+static int id_normal_cram_sp_s_color = -1;
+static int id_normal_cram_sp_color_offset = -1;
+static int id_normal_cram_sp_matrix = -1;
 
 
 int Ygl_uniformNormalCram(void * p)
@@ -321,6 +351,24 @@ int Ygl_cleanupNormalCram(void * p)
   prg = p;
   return 0;
 }
+
+int Ygl_uniformNormalCramSpecialPriority(void * p)
+{
+
+  YglProgram * prg;
+  prg = p;
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+  glUniform1i(id_normal_cram_sp_s_texture, 0);
+  glUniform1i(id_normal_cram_sp_s_color, 1);
+  glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+  return 0;
+}
+
+
 
 const GLchar Yglprg_normal_cram_addcol_f[] =
 #if defined(_OGLES3_)
@@ -2624,6 +2672,15 @@ int YglProgramInit()
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
 
+  if (YglInitShader(PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY, pYglprg_normal_v, pYglprg_normal_cram_special_priority_f, 1, NULL, NULL, NULL) != 0)
+    return -1;
+
+  id_normal_cram_sp_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"s_texture");
+  id_normal_cram_sp_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"s_color");
+  id_normal_cram_sp_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_color_offset");
+  id_normal_cram_sp_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_mvpMatrix");
+
+
   if (YglInitShader(PG_VDP2_ADDCOLOR_CRAM, pYglprg_normal_v, pYglprg_normal_cram_addcol_f, 1, NULL, NULL, NULL) != 0)
     return -1;
 
@@ -2971,6 +3028,17 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
      current->color_offset = id_normal_cram_color_offset;
+
+   }
+   else if (prgid == PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY)
+   {
+     current->setupUniform = Ygl_uniformNormalCramSpecialPriority;
+     current->cleanupUniform = Ygl_cleanupNormalCram;
+
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     current->mtxModelView = id_normal_cram_sp_matrix;
+     current->color_offset = id_normal_cram_sp_color_offset;
 
    }
    else if (prgid == PG_VDP2_ADDCOLOR_CRAM)
