@@ -1803,7 +1803,21 @@ void Vdp2GenLineinfo(vdp2draw_struct *info)
   }
 }
 
-static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
+INLINE void Vdp2SetSpecialPriority(vdp2draw_struct *info, u8 dot, u32 * cramindex ) {
+  int priority;
+  if (info->specialprimode == 2) {
+    priority = info->priority & 0xE;
+    if (info->specialfunction & 1) {
+      if (PixelIsSpecialPriority(info->specialcode, dot))
+      {
+        priority |= 1;
+      }
+    }
+    (*cramindex) |= priority << 16;
+  }
+}
+
+INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex) {
   u32 alpha = info->alpha;
   const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   if (CCMD == 0) {  // Calculate Rate mode
@@ -1851,6 +1865,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
     *texture->textdata++ = 0x00000000;
   } else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+    Vdp2SetSpecialPriority(info, dot, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     *texture->textdata++ = cramindex | alpha << 24;
   }
@@ -1862,6 +1877,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   }
   else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+    Vdp2SetSpecialPriority(info, dot, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     *texture->textdata++ = cramindex | alpha << 24;
   }
@@ -1873,6 +1889,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   }
   else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+    Vdp2SetSpecialPriority(info, dot, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     *texture->textdata++ = cramindex | alpha << 24;
   }
@@ -1884,6 +1901,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   }
   else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
+    Vdp2SetSpecialPriority(info, dot, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     *texture->textdata++ = cramindex | alpha << 24;
   }
@@ -1902,6 +1920,7 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
   else {
     cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
+    Vdp2SetSpecialPriority(info, dot, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     *texture->textdata++ = cramindex | alpha << 24;
   }
@@ -1910,6 +1929,7 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
   else {
     cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
+    Vdp2SetSpecialPriority(info, dot, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     *texture->textdata++ = cramindex | alpha << 24;
   }
@@ -1924,6 +1944,7 @@ static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr) {
   if ((dot == 0) && info->transparencyenable) return 0x00000000;
   else {
     cramindex = info->coloroffset + dot;
+    Vdp2SetSpecialPriority(info, dot, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex);
     return   cramindex | alpha << 24;
   }
