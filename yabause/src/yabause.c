@@ -760,8 +760,8 @@ int YabauseEmulate(void) {
       {
          // HBlankOUT
          PROFILE_START("hblankout");
-         Vdp1HBlankOUT();
          Vdp2HBlankOUT();
+         Vdp1HBlankOUT();
          SyncScsp();
          PROFILE_STOP("hblankout");
          PROFILE_START("SCSP");
