@@ -56,7 +56,6 @@ struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
 static int autoframeskipenab=0;
-static int fps;
 int vdp2_is_odd_frame = 0;
 
 static void startField(void);// VBLANK-OUT handler
@@ -468,29 +467,6 @@ void Vdp2HBlankOUT(void) {
       *Vdp2External.perline_alpha |= 0x40;
     }
   }
-
-  if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount)) {
-      if (Vdp1External.plot_trigger_done == 0) {
-        FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1Draw();
-      } else {
-        Vdp1External.plot_trigger_done = 0;
-      }  
-      if (yabsys.LineCount == 0){
-        FrameProfileAdd("VOUT event");
-        startField();
-      }
-  } else {
-    if (yabsys.LineCount == 0){
-      FrameProfileAdd("VOUT event");
-      startField();
-    }
-    else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
-      
-      Vdp1Draw();
-      FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
-    }
-  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -500,123 +476,9 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-int vdp1_frame = 0;
-int show_vdp1_frame = 0;
-static void FPSDisplay(void)
-{
-  static int fpsframecount = 0;
-  static u64 fpsticks;
-  FILE * fp = NULL;
-  FILE * gup_fp = NULL;
-  char fname[128];
-  char buf[64];
-  int i;
-  int cpu_f[8];
-  int gpu_f;
-
-  if (gup_fp == NULL){
-    gup_fp = fopen("/sys/class/kgsl/kgsl-3d0/devfreq/cur_freq", "r");
-  }
-
-  if (gup_fp != NULL){
-    fread(buf, 1, 64, gup_fp);
-    gpu_f = atoi(buf);
-    fclose(gup_fp);
-  }
-  else{
-    gpu_f = 0;
-  }
-
-  for (i = 0; i < 8; i++){
-    sprintf(fname, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
-    fp = fopen(fname, "r");
-    if (fp){
-      fread(buf, 1, 64, fp);
-      cpu_f[i] = atoi(buf);
-      fclose(fp);
-    }
-    else{
-      cpu_f[i] = 0;
-    }
-  }
-
-
-  if (isAutoFrameSkip() == 0) {
-    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
-  } else {
-    OSDPushMessage(OSDMSG_FPS, 1, "%02d FPS", fps);
-  }
-
-  OSDPushMessage(OSDMSG_DEBUG, 1, "%d %d %s %s", framecounter, lagframecounter, MovieStatus, InputDisplayString);
-  fpsframecount++;
-  if (YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
-  {
-    fps = fpsframecount;
-    fpsframecount = 0;
-    show_vdp1_frame = vdp1_frame;
-    vdp1_frame = 0;
-    fpsticks = YabauseGetTicks();
-  }
-}
-
-//////////////////////////////////////////////////////////////////////////////
-void startField(void) {
-  int isrender = 0;
-
-  yabsys.wait_line_count = -1;
-
-  FRAMELOG("***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, Vdp1External.vblank_erase);
-
-  // Manual Change
-  Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange == 1);
-  Vdp1External.swap_frame_buffer |= (Vdp1External.onecyclemode == 1);
-
-  // Frame Change
-  if (Vdp1External.swap_frame_buffer == 1)
-  {
-    vdp1_frame++;
-    if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
-    {
-      VIDCore->Vdp1EraseWrite();
-      Vdp1External.manualerase = 0;
-    }
-
-    VIDCore->Vdp1FrameChange();
-    Vdp1External.current_frame = !Vdp1External.current_frame;
-    Vdp1Regs->EDSR >>= 1;
-
-    FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
-
-    Vdp1External.swap_frame_buffer = 0;
-
-    // if Plot Trigger mode == 0x02 draw start
-    if (Vdp1Regs->PTMR == 0x2){
-      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly");
-      yabsys.wait_line_count = 1;
-    }
-
-  }
-
-  Vdp1External.manualchange = 0;
-
-   FPSDisplay();
-}
-
-//////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
   YglCheckFBSwitch(1);
-  //if (g_frame_count == 60){
-  //  YabSaveStateSlot(".\\", 1);
-  //}
-
-  //if (g_frame_count >= 1){
-  //  YabLoadStateSlot(".\\", 1);
-  //}
-  if (needVBlankErase()) {
-       VIDCore->Vdp1EraseWrite();
-  }
-  Vdp1External.vblank_erase = 0;
   FRAMELOG("***** VOUT %d *****", g_frame_count);
   if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;

@@ -743,6 +743,7 @@ int YabauseEmulate(void) {
          {
             // HBlankIN
             PROFILE_START("hblankin");
+            Vdp1HBlankIN();
             Vdp2HBlankIN();
             PROFILE_STOP("hblankin");
          }
@@ -759,6 +760,7 @@ int YabauseEmulate(void) {
       {
          // HBlankOUT
          PROFILE_START("hblankout");
+         Vdp1HBlankOUT();
          Vdp2HBlankOUT();
          SyncScsp();
          PROFILE_STOP("hblankout");
@@ -772,6 +774,7 @@ int YabauseEmulate(void) {
             PROFILE_START("vblankin");
             // VBlankIN
             SmpcINTBACKEnd();
+            Vdp1VBlankIN();
             Vdp2VBlankIN();
             PROFILE_STOP("vblankin");
             CheatDoPatches(MSH2);
@@ -780,6 +783,7 @@ int YabauseEmulate(void) {
          {
             // VBlankOUT
             PROFILE_START("VDP1/VDP2");
+            Vdp1VBlankOUT();
             Vdp2VBlankOUT();
             yabsys.LineCount = 0;
             oneframeexec = 1;

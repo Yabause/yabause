@@ -311,7 +311,7 @@ void FASTCALL Vdp1WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 va
 extern YabEventQueue * vdp1_rcv_evqueue;
 
 //////////////////////////////////////////////////////////////////////////////
-int needVBlankErase() {
+static int needVBlankErase() {
   return (((Vdp1Regs->TVMR >> 3) & 0x01) == 1) && ((Vdp1Regs->FBCR & 3) == 3);
 }
 void updateFBMode() {
@@ -1595,3 +1595,119 @@ void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
 void VIDDummyVdp2DispOff(void)
 {
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp1HBlankIN(void)
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////////
+static int fpsframecount = 0;
+static u64 fpsticks = 0;
+static int fps = 0;
+static void FPSDisplay(void)
+{
+  fpsframecount++;
+  if (YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
+  {
+    fps = fpsframecount;
+    fpsframecount = 0;
+    fpsticks = YabauseGetTicks();
+  }
+  if (isAutoFrameSkip() == 0) {
+    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+  } else {
+    OSDPushMessage(OSDMSG_FPS, 1, "%02d FPS", fps);
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+static void startField(void) {
+  int isrender = 0;
+
+  yabsys.wait_line_count = -1;
+
+  FRAMELOG("***** VOUT(T) %d FCM=%d FCT=%d VBE=%d PTMR=%d (%d, %d, %d, %d)*****\n", Vdp1External.swap_frame_buffer, (Vdp1Regs->FBCR & 0x02) >> 1, (Vdp1Regs->FBCR & 0x01), (Vdp1Regs->TVMR >> 3) & 0x01, Vdp1Regs->PTMR, Vdp1External.onecyclemode, Vdp1External.manualchange, Vdp1External.manualerase, Vdp1External.vblank_erase);
+
+  // Manual Change
+  Vdp1External.swap_frame_buffer |= (Vdp1External.manualchange == 1);
+  Vdp1External.swap_frame_buffer |= (Vdp1External.onecyclemode == 1);
+
+  // Frame Change
+  if (Vdp1External.swap_frame_buffer == 1)
+  {
+    if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
+    {
+      VIDCore->Vdp1EraseWrite();
+      Vdp1External.manualerase = 0;
+    }
+
+    VIDCore->Vdp1FrameChange();
+    Vdp1External.current_frame = !Vdp1External.current_frame;
+    Vdp1Regs->EDSR >>= 1;
+
+    FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
+
+    Vdp1External.swap_frame_buffer = 0;
+
+    // if Plot Trigger mode == 0x02 draw start
+    if (Vdp1Regs->PTMR == 0x2){
+      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly");
+      yabsys.wait_line_count = 1;
+    }
+
+  }
+
+  Vdp1External.manualchange = 0;
+
+   FPSDisplay();
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp1HBlankOUT(void)
+{
+  if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount)) {
+    if (Vdp1External.plot_trigger_done == 0) {
+      FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
+      Vdp1Draw();
+    } else {
+      Vdp1External.plot_trigger_done = 0;
+    }  
+    if (yabsys.LineCount == 0){
+      startField();
+    }
+  } else {
+    if (yabsys.LineCount == 0){
+      startField();
+    }
+    else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
+      
+      Vdp1Draw();
+      FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+    }
+  }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp1VBlankIN(void)
+{
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void Vdp1VBlankOUT(void)
+{
+  if (needVBlankErase()) {
+       VIDCore->Vdp1EraseWrite();
+  }
+  Vdp1External.vblank_erase = 0;
+}
+
+
+
+
+
