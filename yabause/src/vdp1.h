@@ -175,5 +175,10 @@ void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
 void ToggleVDP1(void);
 
+void Vdp1HBlankIN(void);
+void Vdp1HBlankOUT(void);
+void Vdp1VBlankIN(void);
+void Vdp1VBlankOUT(void);
+
 
 #endif
