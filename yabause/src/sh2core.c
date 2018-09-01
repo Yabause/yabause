@@ -1517,7 +1517,7 @@ void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
       execInterrupt = 1;
    }
-
+/*
    if (context->depth < 4) {
      context->depth++;
      if (context == SSH2) {
@@ -1528,6 +1528,7 @@ void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
      }
      context->depth--;
    }
+*/
 }
 
 //////////////////////////////////////////////////////////////////////////////

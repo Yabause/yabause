@@ -1128,11 +1128,11 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       break;
     }
 
-    if ((op & 0xF0FF) == 0x400e || (op & 0xF0FF) == 0x4007) // sh2_LDC_SR
-    {
-      page->flags |= BLOCK_LOOP;
-      break;
-    }
+    //if ((op & 0xF0FF) == 0x400e || (op & 0xF0FF) == 0x4007) // sh2_LDC_SR
+    //{
+    //  page->flags |= BLOCK_LOOP;
+    //  break;
+    //}
 
   }
   page->e_addr = addr-2;
