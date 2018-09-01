@@ -1119,12 +1119,21 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
         }
 
       }
+      write_memory_counter = 0;
+      //if( (op&0xFF00) == 0x8900) continue;  // BT
+      //if( (op&0xFF00) == 0x8B00) continue;  // BF
       break;
     }
     if(asm_list[i].checkint == 1) {
       break;
     }
-    if (isBUPHandled == 1) break;
+
+    if ((op & 0xF0FF) == 0x400e || (op & 0xF0FF) == 0x4007) // sh2_LDC_SR
+    {
+      page->flags |= BLOCK_LOOP;
+      break;
+    }
+
   }
   page->e_addr = addr-2;
   memcpy((void*)ptr, (void*)epilogue, EPILOGSIZE);
@@ -1398,12 +1407,28 @@ bool operator == (const dIntcTbl & data1 , const dIntcTbl & data2 )
   return ( data1.Vector == data2.Vector );
 }
 
+void DynarecSh2::RemoveInterrupt(u8 Vector, u8 level) {
+  YabThreadLock(mtx_);
+  m_IntruptTbl.remove_if([&](const dIntcTbl & n) { 
+    return n.Vector == Vector; 
+  });
+  if (m_IntruptTbl.size() != 0) {
+    m_IntruptTbl.sort();
+    m_pDynaSh2->SysReg[5] = m_IntruptTbl.begin()->level << 4;
+  }
+  else {
+    m_pDynaSh2->SysReg[5] = 0x0000;
+  }
+  YabThreadUnLock(mtx_);
+}
+
 void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
 {
   // Ignore Timer0 and Timer1 when masked
-  if ((Vector == 67 || Vector == 68) && level <= ((m_pDynaSh2->CtrlReg[0] >> 4) & 0x0F)){
-    return;
-  }
+  //if ((Vector == 67 /*|| Vector == 68*/) && level <= ((m_pDynaSh2->CtrlReg[0] >> 4) & 0x0F)){
+  //  LOG("Vector %d is skiped\n", Vector);
+  //  return;
+  //}
 
   dIntcTbl tmp;
   tmp.Vector = Vector;
@@ -1412,6 +1437,7 @@ void DynarecSh2::AddInterrupt( u8 Vector, u8 level )
   YabThreadLock(mtx_);
   m_bIntruptSort = false;
   m_IntruptTbl.push_back(tmp);
+  m_IntruptTbl.unique(); 
   if( m_IntruptTbl.size() > 1 ) {
     m_IntruptTbl.sort();
     m_IntruptTbl.unique(); 

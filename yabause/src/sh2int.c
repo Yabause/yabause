@@ -78,6 +78,7 @@ SH2Interface_struct SH2Interpreter = {
    SH2IOnFrame,
 
    SH2InterpreterSendInterrupt,
+   SH2InterpreterRemoveInterrupt,
    SH2InterpreterGetInterrupts,
    SH2InterpreterSetInterrupts,
 
@@ -116,6 +117,7 @@ SH2Interface_struct SH2DebugInterpreter = {
    SH2IOnFrame,
 
    SH2InterpreterSendInterrupt,
+   SH2InterpreterRemoveInterrupt,
    SH2InterpreterGetInterrupts,
    SH2InterpreterSetInterrupts,
 
@@ -203,8 +205,8 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 
 #ifdef DMPHISTORY
    sh->pchistory_index++;
-   sh->pchistory[sh->pchistory_index & 0xFF] = addr;
-   sh->regshistory[sh->pchistory_index & 0xFF] = sh->regs;
+   sh->pchistory[sh->pchistory_index & (MAX_DMPHISTORY - 1) ] = addr;
+   sh->regshistory[sh->pchistory_index & (MAX_DMPHISTORY - 1) ] = sh->regs;
 #endif
    // Execute it
    sh->regs.PC -= 2;
@@ -2896,8 +2898,8 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 
 #ifdef DMPHISTORY
 	  context->pchistory_index++;
-	  context->pchistory[context->pchistory_index & 0xFF] = context->regs.PC;
-	  context->regshistory[context->pchistory_index & 0xFF] = context->regs;
+	  context->pchistory[context->pchistory_index & (MAX_DMPHISTORY - 1)] = context->regs.PC;
+	  context->regshistory[context->pchistory_index & (MAX_DMPHISTORY - 1)] = context->regs;
 #endif
 
       // Execute it
@@ -3082,10 +3084,10 @@ void SH2InterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
    }
 
    // Ignore Timer0 and Timer1 when masked
-   if ((vector == 67 || vector == 68) && level <= context->regs.SR.part.I){
-     UNLOCK(context);
-     return;
-   }
+   //if ((vector == 67 || vector == 68) && level <= context->regs.SR.part.I){
+   //  UNLOCK(context);
+   //  return;
+   //}
 
    context->interrupts[context->NumberOfInterrupts].level = level;
    context->interrupts[context->NumberOfInterrupts].vector = vector;
@@ -3108,6 +3110,33 @@ void SH2InterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
       }
    }
    UNLOCK(context);
+}
+
+void SH2InterpreterRemoveInterrupt(SH2_struct *context, u8 vector, u8 level) {
+  u32 i, i2;
+  interrupt_struct tmp;
+  int hit = -1;
+
+  for (i = 0; i < context->NumberOfInterrupts; i++) {
+    if (context->interrupts[i].vector == vector) {
+      context->interrupts[i].level = 0;
+      context->interrupts[i].vector = 0;
+      hit = i;
+      break;
+    }
+  }
+
+  if (hit != -1) {
+    i2 = 0;
+    for (i = 0; i < context->NumberOfInterrupts; i++) {
+      if (i != hit) {
+        context->interrupts[i2].level = context->interrupts[i].level;
+        context->interrupts[i2].vector = context->interrupts[i].vector;
+        i2++;
+      }
+    }
+    context->NumberOfInterrupts--;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

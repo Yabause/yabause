@@ -849,7 +849,19 @@ void dsp_dma08(scudspregs_struct *sc, u32 inst)
 void ScuExec(u32 timing) {
    int i;
 
-   timing = timing ;
+   if ( ScuRegs->T1MD & 0x1 ){
+     if (ScuRegs->timer1_counter > 0) {
+       ScuRegs->timer1_counter = (ScuRegs->timer1_counter - (timing >> 1));
+       if (ScuRegs->timer1_counter <= 0) {
+         ScuRegs->timer1_set = 1;
+         if ((ScuRegs->T1MD & 0x80) == 0) {
+             ScuSendTimer1();
+         }else if (ScuRegs->timer0_set == 1) {
+             ScuSendTimer1();
+         }
+       }
+     }
+   }
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
 
@@ -2379,6 +2391,8 @@ void FASTCALL ScuWriteLong(SH2_struct *sh, u8* mem, u32 addr, u32 val) {
          break;
       case 0x94:
          ScuRegs->T1S = val;
+         ScuRegs->timer1_set = 1;
+         ScuRegs->timer1_preset = val;
          break;
       case 0x98:
          ScuRegs->T1MD = val;
@@ -2551,40 +2565,75 @@ static INLINE void ScuChekIntrruptDMA(int id){
   }
 }
 
+void ScuRemoveVBlankOut();
+void ScuRemoveHBlankIN();
+void ScuRemoveVBlankIN();
+void ScuRemoveTimer0();
+void ScuRemoveTimer1();
+
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
+   ScuRemoveVBlankOut();
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
    ScuChekIntrruptDMA(0);
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-
-void ScuSendVBlankOUT(void) {
-   SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
-   ScuRegs->timer0 = 0;
-   if (ScuRegs->T1MD & 0x1)
-   {
-      if (ScuRegs->timer0 == ScuRegs->T0C)
-         ScuSendTimer0();
-   }
-   ScuChekIntrruptDMA(1);
+void ScuRemoveVBlankIN() {
+  SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
+void ScuSendVBlankOUT(void) {
+   ScuRemoveVBlankIN();
+   SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
+   ScuRegs->timer0 = 0;
+   if (ScuRegs->T1MD & 0x1)
+   {
+     if (ScuRegs->timer0 == ScuRegs->T0C) {
+       ScuRegs->timer0_set = 1;
+       ScuSendTimer0();
+     }
+     else {
+       ScuRegs->timer0_set = 0;
+       ScuRemoveTimer0();
+     }
+   }
+   ScuChekIntrruptDMA(1);
+}
+
+void ScuRemoveVBlankOut() {
+  SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void ScuRemoveHBlankIN() {
+  SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
+}
+
+
 void ScuSendHBlankIN(void) {
    SendInterrupt(0x42, 0xD, 0x0004, 0x0004);
-
    ScuRegs->timer0++;
    if (ScuRegs->T1MD & 0x1)
    {
       // if timer0 equals timer 0 compare register, do an interrupt
-      if (ScuRegs->timer0 == ScuRegs->T0C)
-         ScuSendTimer0();
+     if (ScuRegs->timer0 == ScuRegs->T0C) {
+        ScuSendTimer0();
+        ScuRegs->timer0_set = 1;
+     }
+     else {
+       ScuRegs->timer0_set = 0;
+       ScuRemoveTimer0();
+     }
 
-      // FIX ME - Should handle timer 1 as well
+     if (ScuRegs->timer1_set == 1) {
+        ScuRegs->timer1_set = 0;
+        ScuRegs->timer1_counter = ScuRegs->timer1_preset;
+        ScuRemoveTimer1();
+      }
    }
    ScuChekIntrruptDMA(2);
 }
@@ -2601,6 +2650,15 @@ void ScuSendTimer0(void) {
 void ScuSendTimer1(void) {
    SendInterrupt(0x44, 0xB, 0x0010, 0x00000010);
    ScuChekIntrruptDMA(4);
+}
+
+void ScuRemoveTimer0(void) {
+  SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
+}
+
+
+void ScuRemoveTimer1(void) {
+  SH2RemoveInterrupt(MSH2, 0x44, 0xB);
 }
 
 //////////////////////////////////////////////////////////////////////////////

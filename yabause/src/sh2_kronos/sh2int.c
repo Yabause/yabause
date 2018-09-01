@@ -446,10 +446,10 @@ void SH2KronosInterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
    }
 
    // Ignore Timer0 and Timer1 when masked
-   if ((vector == 67 || vector == 68) && level <= context->regs.SR.part.I){
-     UNLOCK(context);
-     return;
-   }
+   //if ((vector == 67 || vector == 68) && level <= context->regs.SR.part.I){
+   //  UNLOCK(context);
+   //  return;
+   //}
 
    context->interrupts[context->NumberOfInterrupts].level = level;
    context->interrupts[context->NumberOfInterrupts].vector = vector;
@@ -472,6 +472,33 @@ void SH2KronosInterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
       }
    }
    UNLOCK(context);
+}
+
+void SH2KronosInterpreterRemoveInterrupt(SH2_struct *context, u8 vector, u8 level) {
+  u32 i, i2;
+  interrupt_struct tmp;
+  int hit = -1;
+
+  for (i = 0; i < context->NumberOfInterrupts; i++) {
+    if (context->interrupts[i].vector == vector) {
+      context->interrupts[i].level = 0;
+      context->interrupts[i].vector = 0;
+      hit = i;
+      break;
+    }
+  }
+
+  if (hit != -1) {
+    i2 = 0;
+    for (i = 0; i < context->NumberOfInterrupts; i++) {
+      if (i != hit) {
+        context->interrupts[i2].level = context->interrupts[i].level;
+        context->interrupts[i2].vector = context->interrupts[i].vector;
+        i2++;
+      }
+    }
+    context->NumberOfInterrupts--;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -539,6 +566,7 @@ SH2Interface_struct SH2KronosInterpreter = {
    SH2KronosIOnFrame,
 
    SH2KronosInterpreterSendInterrupt,
+   SH2KronosInterpreterRemoveInterrupt,
    SH2KronosInterpreterGetInterrupts,
    SH2KronosInterpreterSetInterrupts,
 
