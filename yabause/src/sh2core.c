@@ -203,6 +203,11 @@ void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level)
    SH2Core->SendInterrupt(context, vector, level);
 }
 
+void SH2RemoveInterrupt(SH2_struct *context, u8 vector, u8 level)
+{
+  SH2Core->RemoveInterrupt(context, vector, level);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2NMI(SH2_struct *context)
@@ -2334,9 +2339,9 @@ void SH2DumpHistory(SH2_struct *context){
 	if (history){
 		int i;
 		int index = context->pchistory_index;
-		for (i = 0; i < 0xFF; i++){
+		for (i = 0; i < (MAX_DMPHISTORY - 1); i++){
 		  char lineBuf[128];
-		  SH2Disasm(context->pchistory[(index & 0xFF)], MappedMemoryReadWord(context->pchistory[(index & 0xFF)]), 0, NULL /*&context->regshistory[index & 0xFF]*/, lineBuf);
+		  SH2Disasm(context->pchistory[(index & (MAX_DMPHISTORY - 1))], MappedMemoryReadWord(context->pchistory[(index & (MAX_DMPHISTORY - 1))]), 0, NULL /*&context->regshistory[index & 0xFF]*/, lineBuf);
 		  fprintf(history,lineBuf);
 		  fprintf(history, "\n");
 		  index--;

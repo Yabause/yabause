@@ -57,6 +57,7 @@ void SH2DynSetPR(SH2_struct *context, u32 value);
 void SH2DynSetPC(SH2_struct *context, u32 value);
 void SH2DynOnFrame(SH2_struct *context);
 void SH2DynSendInterrupt(SH2_struct *context, u8 level, u8 vector);
+void SH2DynRemoveInterrupt(SH2_struct *context, u8 level, u8 vector);
 int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2DynWriteNotify(u32 start, u32 length);
@@ -92,6 +93,7 @@ SH2Interface_struct SH2Dyn = {
   SH2DynOnFrame,
 
   SH2DynSendInterrupt,
+  SH2DynRemoveInterrupt,
   SH2DynGetInterrupts,
   SH2DynSetInterrupts,
   SH2DynWriteNotify
@@ -128,6 +130,7 @@ SH2Interface_struct SH2DynDebug = {
   SH2DynOnFrame,
 
   SH2DynSendInterrupt,
+  SH2DynRemoveInterrupt,
   SH2DynGetInterrupts,
   SH2DynSetInterrupts,
   SH2DynWriteNotify
@@ -190,6 +193,12 @@ void SH2DynSendInterrupt(SH2_struct *context, u8 vector, u8 level){
   DynarecSh2 *pctx = (DynarecSh2*)context->ext;
   pctx->AddInterrupt(vector, level);
 }
+
+void SH2DynRemoveInterrupt(SH2_struct *context, u8 vector, u8 level) {
+  DynarecSh2 *pctx = (DynarecSh2*)context->ext;
+  pctx->RemoveInterrupt(vector, level);
+}
+
 
 int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INTERRUPTS]){
   DynarecSh2 *pctx = (DynarecSh2*)context->ext;
@@ -668,7 +677,7 @@ if( pc == 0x060133C8 ) {
 
 #ifdef DMPHISTORY
   CurrentSH2->pchistory_index++;
-  CurrentSH2->pchistory[CurrentSH2->pchistory_index & 0xFF] = DynarecSh2::CurrentContext->GET_PC();
+  CurrentSH2->pchistory[CurrentSH2->pchistory_index & (MAX_DMPHISTORY-1) ] = DynarecSh2::CurrentContext->GET_PC();
   //CurrentSH2->regshistory[CurrentSH2->pchistory_index & 0xFF] = NULL;
 #endif
   DynaCheckBreakPoint(DynarecSh2::CurrentContext->GET_PC());

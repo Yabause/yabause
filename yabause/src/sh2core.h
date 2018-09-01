@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 //#define DMPHISTORY
-
+#define MAX_DMPHISTORY (512)
 
 // UBC Flags
 #define BBR_CPA_NONE			(0 << 6)
@@ -408,8 +408,8 @@ typedef struct
    } trackInfLoop;
 
 #ifdef DMPHISTORY
-   u32 pchistory[0x100];
-   sh2regs_struct regshistory[0x100];
+   u32 pchistory[MAX_DMPHISTORY];
+   sh2regs_struct regshistory[MAX_DMPHISTORY];
    u32 pchistory_index;
 #endif
 
@@ -448,6 +448,7 @@ typedef struct
    void (*SetPC)(SH2_struct *context, u32 value);
    void (*OnFrame)(SH2_struct *context);
    void (*SendInterrupt)(SH2_struct *context, u8 vector, u8 level);
+   void (*RemoveInterrupt)(SH2_struct *context, u8 vector, u8 level);
    int (*GetInterrupts)(SH2_struct *context,
                         interrupt_struct interrupts[MAX_INTERRUPTS]);
    void (*SetInterrupts)(SH2_struct *context, int num_interrupts,

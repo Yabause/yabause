@@ -56,6 +56,7 @@ void SH2InterpreterSetMACL(SH2_struct *context, u32 value);
 void SH2InterpreterSetPR(SH2_struct *context, u32 value);
 void SH2InterpreterSetPC(SH2_struct *context, u32 value);
 void SH2InterpreterSendInterrupt(SH2_struct *context, u8 level, u8 vector);
+void SH2InterpreterRemoveInterrupt(SH2_struct *context, u8 level, u8 vector);
 int SH2InterpreterGetInterrupts(SH2_struct *context,
                                 interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2InterpreterSetInterrupts(SH2_struct *context, int num_interrupts,

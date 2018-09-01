@@ -386,6 +386,7 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         Vdp1Regs->EDSR >>= 1;
         yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
+        if (yabsys.wait_line_count == 0) { yabsys.wait_line_count = 1; }
         FRAMELOG("SET DIRECT WAIT %d", yabsys.wait_line_count);
         YabAddEventQueue(evqueue,VDPEV_DIRECT_DRAW); 
         YabThreadYield();
@@ -396,8 +397,10 @@ void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
         Vdp1Regs->EDSR >>= 1;
         Vdp1Draw(); 
         VIDCore->Vdp1DrawEnd();
-        yabsys.wait_line_count = yabsys.LineCount + 20;
+        yabsys.wait_line_count = yabsys.LineCount + 50;
         yabsys.wait_line_count %= yabsys.MaxLineCount;
+        if (yabsys.wait_line_count == 0) { yabsys.wait_line_count = 1; }
+        FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
     }
 #endif
          break;
