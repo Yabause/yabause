@@ -2167,7 +2167,7 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
    // Time for an Interrupt?
    if (MSH2->onchip.TIER & 0x80)
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
-
+/*
    if (CurrentSH2->depth < 4) {
      CurrentSH2->depth++;
      SH2_struct * tmpCurrentSH2 = CurrentSH2;
@@ -2180,6 +2180,7 @@ void FASTCALL MSH2InputCaptureWriteWord(UNUSED u32 addr, UNUSED u16 data)
      CurrentSH2 = tmpCurrentSH2;
      CurrentSH2->depth--;
    }
+*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
