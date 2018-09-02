@@ -2045,6 +2045,14 @@ void YglEraseWriteVDP1(void) {
   
 }
 
+static void renderVDP1() {
+printf("renderVDP1 %d\n", _Ygl->needVdp1Render);
+ if (_Ygl->needVdp1Render == 0) return;
+  YglTmPush(YglTM_vdp1);
+  YglRenderVDP1();
+  _Ygl->needVdp1Render = 0;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
@@ -2727,6 +2735,8 @@ void YglRender(void) {
 
    YGLLOG("YglRender\n");
 
+   renderVDP1();
+
    if (_Ygl->stretch == 0) {
      double dar = (double)GlWidth/(double)GlHeight;
      double par = 4.0/3.0;
@@ -2919,6 +2929,8 @@ void YglRender(void) {
    YglBlitFramebuffer(_Ygl->original_fbotex, _Ygl->default_fbo, _Ygl->width, _Ygl->height, w, h);
 
 render_finish:
+
+  YglReset();
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
   glUseProgram(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -3307,6 +3319,7 @@ void YglReset(void) {
      }
    }
    _Ygl->msglength = 0;
+   _Ygl->needVdp1Render = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -3707,6 +3707,7 @@ int VIDOGLInit(void)
     return -1;
 
   SetSaturnResolution(320, 224);
+  YglReset();
 
   g_rgb0.async = 1;
   g_rgb0.rgb_type = 0;
@@ -3811,9 +3812,12 @@ void VIDOGLVdp1Draw(void)
 
   FrameProfileAdd("Vdp1Command start");
 
-  YglTMReset(YglTM_vdp1);
-  YglCacheReset(YglTM_vdp1);
-  YglTmPull(YglTM_vdp1, 0);
+  if (_Ygl->needVdp1Render == 0) {
+    YglTMReset(YglTM_vdp1);
+    YglCacheReset(YglTM_vdp1);
+    YglTmPull(YglTM_vdp1, 0);
+  }
+  _Ygl->needVdp1Render = 1;
 
   maxpri = 0x00;
   minpri = 0x07;
@@ -3938,8 +3942,6 @@ void VIDOGLVdp1Draw(void)
   Vdp1DrawCommands(Vdp1Ram, Vdp1Regs, NULL);
   FrameProfileAdd("Vdp1Command end ");
 
-  YglTmPush(YglTM_vdp1);
-  YglRenderVDP1();
 #ifdef SPRITE_CACHE
   if (yabsys.useVdp1cache) {
     releasePattern();
@@ -5311,14 +5313,12 @@ void VIDOGLVdp2Draw(void)
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
   VIDOGLVdp2SetResolution(fixVdp2Regs->TVMD);
-
   if (_Ygl->rwidth > YglTM_vdp2->width) {
     int new_width = _Ygl->rwidth;
     int new_height = YglTM_vdp2->height;
     YglTMDeInit(YglTM_vdp2);
     YglTM_vdp2 = YglTMInit(new_width, new_height);
   }
-  YglReset();
   YglTmPull(YglTM_vdp2, 0);
   YglTMReset(YglTM_vdp2);
   YglCacheReset(YglTM_vdp2);
@@ -5327,9 +5327,10 @@ void VIDOGLVdp2Draw(void)
     VIDOGLVdp2DrawScreens();
   }
   Vdp2DrawRotationSync();
-  FrameProfileAdd("Vdp2DrawRotationSync end");
 
   YglTmPush(YglTM_vdp2);
+
+  FrameProfileAdd("Vdp2DrawRotationSync end");
 
   YglUpdateVDP1FB();
 
