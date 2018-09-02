@@ -1220,7 +1220,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm )
     level->ux2 != Vdp1Regs->userclipX2 || level->uy2 != Vdp1Regs->userclipY2) )
      )
    {
-      if( input->uclipmode == 0x02 || input->uclipmode == 0x03 )
+      if( input->uclipmode == 0x02 || input->uclipmode == 0x03 ) //2 inside - 3 outside
       {
          YglProgramChange(level,PG_VFP1_STARTUSERCLIP);
          program = &level->prg[level->prgcurrent];
