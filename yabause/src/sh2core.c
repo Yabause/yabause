@@ -1471,20 +1471,24 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
 
             *TCR = 0;
             break;
-         case 3:
-            destInc *= 4;
-            srcInc *= 4;
-
-            for (i = 0; i < *TCR; i+=4) {
-               for(i2 = 0; i2 < 4; i2++) {
-				   DMAMappedMemoryWriteLong(context, *DAR, DMAMappedMemoryReadLong(context, *SAR));
-                  *DAR += destInc;
-                  *SAR += srcInc;
-               }
-            }
-
-            *TCR = 0;
-            break;
+         case 3: {
+           u32 buffer[4];
+           u32 show = 0;
+           destInc *= 4;
+           srcInc *= 4;
+           for (i = 0; i < *TCR; i += 4) {
+             for (i2 = 0; i2 < 4; i2++) {
+               buffer[i2] = MappedMemoryReadLong(context,(*SAR + (i2 << 2) & 0x07FFFFFC));
+             }
+             *SAR += 0x10;
+             for (i2 = 0; i2 < 4; i2++) {
+               MappedMemoryWriteLong(context,*DAR & 0x07FFFFFC, buffer[i2]);
+             }
+              *DAR += destInc;
+           }
+           *TCR = 0;
+         }
+         break;
       }
       SH2WriteNotify(context, destInc<0?*DAR:*DAR-i*destInc,i*abs(destInc));
    }
