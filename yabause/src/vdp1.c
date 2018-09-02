@@ -380,15 +380,98 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
    LOG("trying to long-write a Vdp1 register - %08X\n", addr);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+
+
+void debugCommand() {
+   u32 addr = 0;
+   u32 returnAddr[128];
+   u8 ptr = 0;
+   u32 commandCounter = 0;
+   u16 command;
+
+   command = T1ReadWord(Vdp1Ram, addr);
+
+   while (!(command & 0x8000)) { // Command in doom are at more than 40k...
+      // First, process the command
+      printf("@0x%x CMD (%x): ", addr, command);
+      if (!(command & 0x4000)) { // if (!skip)
+         switch (command & 0x000F) {
+         case 0: // normal sprite draw
+            printf("Normal sprite");
+            break;
+         case 1: // scaled sprite draw
+            printf("Scaled sprite");
+            break;
+         case 2: // distorted sprite draw
+         case 3: /* this one should be invalid, but some games
+                 (Hardcore 4x4 for instance) use it instead of 2 */
+            printf("Distorted sprite");
+            break;
+         case 4: // polygon draw
+            printf("Polygon");
+            break;
+         case 5: // polyline draw
+         case 7: // undocumented mirror
+            printf("Polyline");
+            break;
+         case 6: // line draw
+            printf("Line");
+            break;
+         case 8: // user clipping coordinates
+         case 11: // undocumented mirror
+            printf("User clipping");
+            break;
+         case 9: // system clipping coordinates
+            printf("System clipping");
+            break;
+         case 10: // local coordinate
+            printf("Local coordinates");
+            break;
+         default: // Abort
+            printf("Bad command");
+            break;
+         }
+      }
+      else printf("Skip");
+      printf(" => ");   
+
+      // Next, determine where to go next
+      switch ((command & 0x3000) >> 12) {
+      case 0: // NEXT, jump to following table
+         printf("NEXT %x\n", addr+0x20);
+         addr = addr+0x20;
+         break;
+      case 1: // ASSIGN, jump to CMDLINK
+         printf("SET %x\n", T1ReadWord(Vdp1Ram, addr + 2) * 8);
+         addr = T1ReadWord(Vdp1Ram, addr + 2) * 8;
+         break;
+      case 2: // CALL, call a subroutine
+         returnAddr[ptr++] = addr + 0x20;
+         printf("CALL %x\n", T1ReadWord(Vdp1Ram, addr + 2) * 8);
+         addr = T1ReadWord(Vdp1Ram, addr + 2) * 8;
+         break;
+      case 3: // RETURN, return from subroutine
+         if ((ptr == 0) || (ptr >=128)) printf("Call stack exception\n");
+            addr = returnAddr[--ptr];
+         printf("RETURN %x\n", addr);
+         break;
+      }
+      if(addr>0x7FFFF) command = 0x8000;
+      else command = T1ReadWord(Vdp1Ram, addr);
+      commandCounter++;
+   }
+   printf("END COMMAND\n");
+}
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   u16 command = T1ReadWord(ram, regs->addr);
+   u16 command = T1ReadWord(ram, (regs->addr&0x7FFFF));
    u32 commandCounter = 0;
-   u32 returnAddr = 0xffffffff;
+   u32 returnAddr[128];
+   u8 ptr = 0;
 
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   while (!(command & 0x8000)) { // Command in doom are at more than 40k...
       regs->COPR = regs->addr >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
@@ -449,22 +532,17 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
          break;
       case 2: // CALL, call a subroutine
-         if (returnAddr == 0xFFFFFFFF)
-            returnAddr = regs->addr + 0x20;
-
+         returnAddr[ptr++] = regs->addr + 0x20;
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
          break;
       case 3: // RETURN, return from subroutine
-         if (returnAddr != 0xFFFFFFFF) {
-            regs->addr = returnAddr;
-            returnAddr = 0xFFFFFFFF;
-         }
-         else
-            regs->addr += 0x20;
+         if ((ptr == 0) || (ptr >=128)) printf("Call stack exception\n");
+            regs->addr = returnAddr[--ptr];
+         
          break;
       }
-
-      command = T1ReadWord(ram, regs->addr);
+      if(regs->addr>0x7FFFF) command = 0x8000;
+      else command = T1ReadWord(ram, regs->addr);
       commandCounter++;
    }
 }
