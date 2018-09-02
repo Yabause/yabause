@@ -718,7 +718,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
       //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
       sc->CT[sel]++;
       sc->CT[sel] &= 0x3F;
-      sc->RA0 += (add>>1);
+      sc->RA0 += (add>>2);
     }
   }
 

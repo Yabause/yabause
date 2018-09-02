@@ -1196,11 +1196,10 @@ int CompileBlocks::EmmitCode(Block *page, addrs * ParentT )
       break;
     }
 
-    //if ((op & 0xF0FF) == 0x400e || (op & 0xF0FF) == 0x4007) // sh2_LDC_SR
-    //{
-    //  page->flags |= BLOCK_LOOP;
-    //  break;
-    //}
+    if ((op & 0xF0FF) == 0x400e || (op & 0xF0FF) == 0x4007) // sh2_LDC_SR
+    {
+      break;
+    }
 
   }
   page->e_addr = addr-2;
@@ -1494,6 +1493,10 @@ inline int DynarecSh2::Execute(){
 #else
   ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
 #endif
+  
+  if ((GET_SR() & 0xF0) < GET_ICOUNT()) {
+    this->CheckInterupt();
+  }
 
   if (!m_pCompiler->debug_mode_ && (pBlock->flags&BLOCK_LOOP) ){
     if (m_pDynaSh2->SysReg[3] < pBlock->e_addr && m_pDynaSh2->SysReg[3] >= pBlock->b_addr) {

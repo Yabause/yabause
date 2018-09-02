@@ -2071,7 +2071,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
    int size;
    u32 i, i2;
 
-   //LOG("sh2 dma src=%08X,dst=%08X,%d\n", *SAR, *DAR, *TCR);
+   LOG("sh2 dma src=%08X,dst=%08X,%d\n", *SAR, *DAR, *TCR);
 
    if (!(*CHCR & 0x2)) { // TE is not set
       int srcInc;
@@ -2125,20 +2125,39 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
 
             *TCR = 0;
             break;
-         case 3:
-            destInc *= 4;
-            srcInc *= 4;
-
-            for (i = 0; i < *TCR; i+=4) {
-               for(i2 = 0; i2 < 4; i2++) {
-				   MappedMemoryWriteLongNocache(*DAR, MappedMemoryReadLongNocache(*SAR));
-                  *DAR += destInc;
-                  *SAR += srcInc;
+         case 3: {
+           u32 buffer[4];
+           u32 show = 0;
+           if (*DAR == 0x260A90F8) {
+             show = 1;
+           }
+           destInc *= 4;
+           srcInc *= 4;
+           for (i = 0; i < *TCR; i += 4) {
+             for (i2 = 0; i2 < 4; i2++) {
+               buffer[i2] = MappedMemoryReadLongNocache((*SAR + (i2 << 2) & 0x07FFFFFC));
+             }
+             *SAR += 0x10;
+             for (i2 = 0; i2 < 4; i2++) {
+               MappedMemoryWriteLongNocache(*DAR & 0x07FFFFFC, buffer[i2]);
+               if (show) {
+                 LOG("mov %08X @%08X", buffer[i2], *DAR);
                }
-            }
-
-            *TCR = 0;
-            break;
+               *DAR += destInc;
+             }
+           }
+/*
+           for (i = 0; i < *TCR; i += 4) {
+             for (i2 = 0; i2 < 4; i2++) {
+               MappedMemoryWriteLongNocache(*DAR, MappedMemoryReadLongNocache(*SAR));
+               *DAR += destInc;
+               *SAR += srcInc;
+             }
+           }
+*/
+           *TCR = 0;
+         }
+         break;
       }
       SH2WriteNotify(destInc<0?*DAR:*DAR-i*destInc,i*abs(destInc));
    }
