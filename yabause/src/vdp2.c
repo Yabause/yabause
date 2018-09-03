@@ -478,7 +478,7 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
-  YglCheckFBSwitch(1);
+  YglCheckFBSwitch(0);
   FRAMELOG("***** VOUT %d *****", g_frame_count);
   if (Vdp2External.perline_alpha == &Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = &Vdp2External.perline_alpha_b;

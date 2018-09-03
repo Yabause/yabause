@@ -3707,7 +3707,8 @@ int VIDOGLInit(void)
     return -1;
 
   SetSaturnResolution(320, 224);
-  YglReset();
+  YglReset(_Ygl->vdp1levels);
+  YglReset(_Ygl->vdp2levels);
 
   g_rgb0.async = 1;
   g_rgb0.rgb_type = 0;
@@ -3812,12 +3813,8 @@ void VIDOGLVdp1Draw(void)
 
   FrameProfileAdd("Vdp1Command start");
 
-  if (_Ygl->needVdp1Render == 0) {
-    YglTMReset(YglTM_vdp1);
-    YglCacheReset(YglTM_vdp1);
-    YglTmPull(YglTM_vdp1, 0);
-  }
   _Ygl->needVdp1Render = 1;
+  YglTmPull(YglTM_vdp1, 0);
 
   maxpri = 0x00;
   minpri = 0x07;

@@ -552,7 +552,8 @@ typedef struct {
    YglProgram windowpg;
    YglProgram renderfb;
 
-   YglLevel * levels;
+   YglLevel * vdp1levels;
+   YglLevel * vdp2levels;
 
    // Thread
    YabMutex * mutex;
@@ -601,7 +602,7 @@ void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, i
 void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuad(vdp2draw_struct *, YglCache *, YglTextureManager *tm);
 void YglRender(void);
-void YglReset(void);
+void YglReset(YglLevel * levels);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
 void YglSetDensity(int d);

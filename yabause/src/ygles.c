@@ -1043,6 +1043,56 @@ void YuiSetVideoAttribute(int type, int val){
   return;
 }
 
+
+void deinitLevels(YglLevel * levels) {
+  int i, j;
+  int depth = _Ygl->depth;
+  for (i = 0; i < (_Ygl->depth+1); i++)
+  {
+    for (j = 0; j < levels[i].prgcount; j++)
+    {
+      if (levels[i].prg[j].quads)
+        free(levels[i].prg[j].quads);
+      if (levels[i].prg[j].textcoords)
+        free(levels[i].prg[j].textcoords);
+      if (levels[i].prg[j].vertexAttribute)
+        free(levels[i].prg[j].vertexAttribute);
+    }
+    free(levels[i].prg);
+  }
+  free(levels);
+}
+
+void initLevels(YglLevel** levels) {
+  int i, j;
+  int depth = _Ygl->depth;
+
+  if ((*levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
+    return -1;
+  }
+
+  memset(*levels,0,sizeof(YglLevel) * (depth+1) );
+  for(i = 0;i < (depth+1) ;i++) {
+    YglLevel* level = *levels;
+    level[i].prgcurrent = 0;
+    level[i].uclipcurrent = 0;
+    level[i].prgcount = 1;
+    level[i].prg = (YglProgram*)malloc(sizeof(YglProgram)*level[i].prgcount);
+    memset(  level[i].prg,0,sizeof(YglProgram)*level[i].prgcount);
+    if (level[i].prg == NULL){ 
+      return -1; 
+    }
+    for(j = 0;j < level[i].prgcount; j++) {
+      level[i].prg[j].prg=0;
+      level[i].prg[j].currentQuad = 0;
+      level[i].prg[j].maxQuad = 12 * 2000;
+      if ((level[i].prg[j].quads = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float))) == NULL){ return -1; }
+      if ((level[i].prg[j].textcoords = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return -1; }
+      if ((level[i].prg[j].vertexAttribute = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return -1; }
+    }
+  }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 int YglInit(int width, int height, unsigned int depth) {
   unsigned int i,j;
@@ -1061,29 +1111,8 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->density = 1;
   _Ygl->resolution_mode = 1;
 
-  if ((_Ygl->levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
-    return -1;
-  }
-
-  memset(_Ygl->levels,0,sizeof(YglLevel) * (depth+1) );
-  for(i = 0;i < (depth+1) ;i++) {
-    _Ygl->levels[i].prgcurrent = 0;
-    _Ygl->levels[i].uclipcurrent = 0;
-    _Ygl->levels[i].prgcount = 1;
-    _Ygl->levels[i].prg = (YglProgram*)malloc(sizeof(YglProgram)*_Ygl->levels[i].prgcount);
-    memset(  _Ygl->levels[i].prg,0,sizeof(YglProgram)*_Ygl->levels[i].prgcount);
-    if (_Ygl->levels[i].prg == NULL){ 
-      return -1; 
-    }
-    for(j = 0;j < _Ygl->levels[i].prgcount; j++) {
-      _Ygl->levels[i].prg[j].prg=0;
-      _Ygl->levels[i].prg[j].currentQuad = 0;
-      _Ygl->levels[i].prg[j].maxQuad = 12 * 2000;
-      if ((_Ygl->levels[i].prg[j].quads = (float *)malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float))) == NULL){ return -1; }
-      if ((_Ygl->levels[i].prg[j].textcoords = (float *)malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return -1; }
-      if ((_Ygl->levels[i].prg[j].vertexAttribute = (float *)malloc(_Ygl->levels[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return -1; }
-    }
-  }
+  initLevels(&_Ygl->vdp2levels);
+  initLevels(&_Ygl->vdp1levels);
 
   if( _Ygl->mutex == NULL){
     _Ygl->mutex = YabThreadCreateMutex();
@@ -1174,23 +1203,10 @@ void YglDeInit(void) {
    {
       if(_Ygl->mutex) YabThreadFreeMutex(_Ygl->mutex );
       
-      if (_Ygl->levels)
-      {
-         for (i = 0; i < (_Ygl->depth+1); i++)
-         {
-         for (j = 0; j < _Ygl->levels[i].prgcount; j++)
-         {
-            if (_Ygl->levels[i].prg[j].quads)
-            free(_Ygl->levels[i].prg[j].quads);
-            if (_Ygl->levels[i].prg[j].textcoords)
-            free(_Ygl->levels[i].prg[j].textcoords);
-            if (_Ygl->levels[i].prg[j].vertexAttribute)
-            free(_Ygl->levels[i].prg[j].vertexAttribute);
-         }
-         free(_Ygl->levels[i].prg);
-         }
-         free(_Ygl->levels);
-      }
+      if (_Ygl->vdp2levels)
+      deinitLevels(_Ygl->vdp2levels);
+      if (_Ygl->vdp1levels)
+      deinitLevels(_Ygl->vdp1levels);
 
       free(_Ygl);
    }
@@ -1200,7 +1216,7 @@ void YglDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm )
+YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm)
 {
    YglLevel   *level;
    YglProgram *program;
@@ -1211,7 +1227,11 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm )
       return NULL;
    }
 
-   level = &_Ygl->levels[input->priority];
+   if(tm == YglTM_vdp1){
+     level = &_Ygl->vdp1levels[input->priority];
+   } else {
+     level = &_Ygl->vdp2levels[input->priority];
+   }
 
    level->blendmode |= (input->blendmode&0x03);
    if( input->uclipmode != level->uclipcurrent ||
@@ -2046,10 +2066,13 @@ void YglEraseWriteVDP1(void) {
 }
 
 static void renderVDP1() {
-printf("renderVDP1 %d\n", _Ygl->needVdp1Render);
  if (_Ygl->needVdp1Render == 0) return;
   YglTmPush(YglTM_vdp1);
   YglRenderVDP1();
+  YglReset(_Ygl->vdp1levels);
+  YglTMReset(YglTM_vdp1);
+  YglCacheReset(YglTM_vdp1);
+  YglTmPull(YglTM_vdp1, 0);
   _Ygl->needVdp1Render = 0;
 }
 
@@ -2057,9 +2080,12 @@ printf("renderVDP1 %d\n", _Ygl->needVdp1Render);
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
 
+   renderVDP1();
+
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
   _Ygl->readframe = current_drawframe;
+
   FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -2091,7 +2117,7 @@ void YglRenderVDP1(void) {
 
   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
-  level = &(_Ygl->levels[_Ygl->depth]);
+  level = &(_Ygl->vdp1levels[_Ygl->depth]);
     if( level == NULL ) {
         //YabThreadUnLock(_Ygl->mutex);
         return;
@@ -2160,6 +2186,7 @@ void YglRenderVDP1(void) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
+  glFinish();
   FrameProfileAdd("YglRenderVDP1 end");
 }
 
@@ -2735,8 +2762,6 @@ void YglRender(void) {
 
    YGLLOG("YglRender\n");
 
-   renderVDP1();
-
    if (_Ygl->stretch == 0) {
      double dar = (double)GlWidth/(double)GlHeight;
      double par = 4.0/3.0;
@@ -2836,7 +2861,7 @@ void YglRender(void) {
     YglTranslatef(&mtx, 0.0f, 0.0f, -1.0f);
     for (i = 0; i < _Ygl->depth; i++)
     {
-      level = _Ygl->levels + i;
+      level = _Ygl->vdp2levels + i;
 
       if (level->blendmode != 0x00)
       {
@@ -2930,7 +2955,7 @@ void YglRender(void) {
 
 render_finish:
 
-  YglReset();
+  YglReset(_Ygl->vdp2levels);
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
   glUseProgram(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -3144,7 +3169,7 @@ void YglRenderDestinationAlpha(void) {
   // ToDo: this operation need to be per pixel!
   for (i = 0; i < _Ygl->depth; i++)
   {
-    level = _Ygl->levels + i;
+    level = _Ygl->vdp2levels + i;
     if (level->prgcurrent != 0 ){
 
       for (j = 0; j < (level->prgcurrent + 1); j++){
@@ -3159,7 +3184,7 @@ void YglRenderDestinationAlpha(void) {
   YglTranslatef(&mtx, 0.0f, 0.0f, -1.0f);
   for (i = 0; i < _Ygl->depth; i++)
   {
-    level = _Ygl->levels + i;
+    level = _Ygl->vdp2levels + i;
     if (level->blendmode != 0)
     {
       to = i;
@@ -3299,13 +3324,13 @@ void YglRenderDestinationAlpha(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void YglReset(void) {
-   YglLevel * level;
+void YglReset(YglLevel * levels) {
    unsigned int i,j;
-
+   YglLevel *level;
+   if(levels == NULL) return;
 
    for(i = 0;i < (_Ygl->depth+1) ;i++) {
-     level = _Ygl->levels + i;
+     level = levels + i;
      level->blendmode  = 0;
      level->prgcurrent = 0;
      level->uclipcurrent = 0;
@@ -3315,11 +3340,10 @@ void YglReset(void) {
      level->uy2 = 0;
      for( j=0; j< level->prgcount; j++ )
      {
-         _Ygl->levels[i].prg[j].currentQuad = 0;
+         levels[i].prg[j].currentQuad = 0;
      }
    }
    _Ygl->msglength = 0;
-   _Ygl->needVdp1Render = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
