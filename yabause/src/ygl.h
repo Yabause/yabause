@@ -247,7 +247,7 @@ typedef struct {
 	GLuint pixelBufferID;
 } YglTextureManager;
 
-extern YglTextureManager * YglTM_vdp1;
+extern YglTextureManager * YglTM_vdp1[2];
 extern YglTextureManager * YglTM_vdp2;
 
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
@@ -552,7 +552,7 @@ typedef struct {
    YglProgram windowpg;
    YglProgram renderfb;
 
-   YglLevel * vdp1levels;
+   YglLevel * vdp1levels[2];
    YglLevel * vdp2levels;
 
    // Thread
@@ -572,6 +572,7 @@ typedef struct {
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
    GLsync sync;
+   GLsync syncVdp1[2];
     GLuint default_fbo;
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;

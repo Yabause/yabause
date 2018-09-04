@@ -146,7 +146,7 @@ int Ygl_uniformVdp1CommonParam(void * p){
 
   if (param == NULL) return 0;
 
-  glUniform2f(param->texsize, YglTM_vdp1->width, YglTM_vdp1->height);
+  glUniform2f(param->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
 
   if (param->sprite != -1){
     glUniform1i(param->sprite, 0);
@@ -857,7 +857,7 @@ int Ygl_uniformVdp1Normal(void * p )
    glEnableVertexAttribArray(prg->vertexp);
    glEnableVertexAttribArray(prg->texcoordp);
    glUniform1i(id_vdp1_normal_s_texture, 0);
-   glUniform2f(id_vdp1_normal_s_texture_size, YglTM_vdp1->width, YglTM_vdp1->height);
+   glUniform2f(id_vdp1_normal_s_texture_size, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
    return 0;
 }
 
