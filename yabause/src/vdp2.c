@@ -543,19 +543,20 @@ void Vdp2VBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2HBlankIN(void) {
-   Vdp2Regs->TVSTAT |= 0x0004;
-   ScuSendHBlankIN();
 
-   if (yabsys.IsSSH2Running)
+  if (yabsys.LineCount < yabsys.VBlankLineCount) {
+    Vdp2Regs->TVSTAT |= 0x0004;
+    ScuSendHBlankIN();
+    if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x41, 0x2);
+  }
 }
 
 void Vdp2HBlankOUT(void) {
   int i;
-  Vdp2Regs->TVSTAT &= ~0x0004;
-
   if (yabsys.LineCount < yabsys.VBlankLineCount)
   {
+    Vdp2Regs->TVSTAT &= ~0x0004;
     u32 cell_scroll_table_start_addr = (Vdp2Regs->VCSTA.all & 0x7FFFE) << 1;
     memcpy(Vdp2Lines + yabsys.LineCount, Vdp2Regs, sizeof(Vdp2));
     for (i = 0; i < 88; i++)

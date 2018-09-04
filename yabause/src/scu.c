@@ -118,6 +118,11 @@ void ScuReset(void) {
    ScuRegs->timer0 = 0;
    ScuRegs->timer1 = 0;
 
+   ScuRegs->dma0_time = 0;
+   ScuRegs->dma1_time = 0;
+   ScuRegs->dma2_time = 0;
+
+
    memset((void *)ScuRegs->interrupts, 0, sizeof(scuinterrupt_struct) * 30);
    ScuRegs->NumberOfInterrupts = 0;
 }
@@ -416,6 +421,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
 
 static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
    u8 ReadAdd, WriteAdd;
+   u32 trans_size = 0;
 
    if (dmainfo->AddValue & 0x100)
       ReadAdd = 4;
@@ -468,17 +474,21 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
             break;
 
          dmainfo->WriteAddress+= 0xC;
+         trans_size += ThisTransferSize;
       }
 
       switch(dmainfo->mode) {
          case 0:
-            ScuSendLevel0DMAEnd();
+            //ScuSendLevel0DMAEnd();
+           ScuRegs->dma0_time = trans_size;
             break;
          case 1:
-            ScuSendLevel1DMAEnd();
+            ScuRegs->dma1_time = trans_size;
+            //ScuSendLevel1DMAEnd();
             break;
          case 2:
-            ScuSendLevel2DMAEnd();
+            ScuRegs->dma2_time = trans_size;
+            //ScuSendLevel2DMAEnd();
             break;
       }
    }
@@ -501,13 +511,16 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
       switch(dmainfo->mode) {
          case 0:
-            ScuSendLevel0DMAEnd();
+            //ScuSendLevel0DMAEnd();
+           ScuRegs->dma0_time = dmainfo->TransferNumber;
             break;
          case 1:
-            ScuSendLevel1DMAEnd();
+            ScuRegs->dma1_time = dmainfo->TransferNumber;
+            //ScuSendLevel1DMAEnd();
             break;
          case 2:
-            ScuSendLevel2DMAEnd();
+            ScuRegs->dma2_time = dmainfo->TransferNumber;
+            //ScuSendLevel2DMAEnd();
             break;
       }
    }
@@ -994,7 +1007,6 @@ void dsp_dma08(scudspregs_struct *sc, u32 inst)
     sc->WA0 = saveWa0;
 }
 
-
 //////////////////////////////////////////////////////////////////////////////
 void ScuExec(u32 timing) {
    int i;
@@ -1012,6 +1024,32 @@ void ScuExec(u32 timing) {
        }
      }
    }
+
+   if (ScuRegs->dma0_time > 0) {
+     //ScuRegs->dma0_time -= (timing << 4); // ToDo: memory clock
+     //if (ScuRegs->dma0_time < 0) {
+       ScuSendLevel0DMAEnd();
+       ScuRegs->dma0_time = 0;
+     //}
+   }
+
+   if (ScuRegs->dma1_time > 0) {
+     //ScuRegs->dma1_time -= (timing << 4); // ToDo: memory clock
+     //if (ScuRegs->dma1_time < 0) {
+     ScuSendLevel1DMAEnd();
+     ScuRegs->dma1_time = 0;
+     //}
+   }
+
+   if (ScuRegs->dma2_time > 0) {
+     //ScuRegs->dma0_time -= (timing << 4); // ToDo: memory clock
+     //if (ScuRegs->dma0_time < 0) {
+     ScuSendLevel2DMAEnd();
+     ScuRegs->dma2_time = 0;
+     //}
+   }
+
+
    // is dsp executing?
    if (ScuDsp->ProgControlPort.part.EX) {
 
@@ -2549,7 +2587,7 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0xA0:
          ScuRegs->IMS = val;
-     //LOG("scu\t: IMS = %02X\n", val);
+         //LOG("scu\t: IMS = %X", val);
          ScuTestInterruptMask();
          break;
       case 0xA4:
@@ -2620,6 +2658,33 @@ void ScuTestInterruptMask()
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+void ScuRemoveInterrupt(u8 vector, u8 level) {
+  u32 i, i2;
+  interrupt_struct tmp;
+  int hit = -1;
+
+  for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
+    if (ScuRegs->interrupts[i].vector == vector) {
+      ScuRegs->interrupts[i].level = 0;
+      ScuRegs->interrupts[i].vector = 0;
+      hit = i;
+      break;
+    }
+  }
+
+  if (hit != -1) {
+    i2 = 0;
+    for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
+      if (i != hit) {
+        ScuRegs->interrupts[i2].level = ScuRegs->interrupts[i].level;
+        ScuRegs->interrupts[i2].vector = ScuRegs->interrupts[i].vector;
+        i2++;
+      }
+    }
+    ScuRegs->NumberOfInterrupts--;
+  }
+}
 
 static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 {
@@ -2730,6 +2795,7 @@ void ScuSendVBlankIN(void) {
 }
 
 void ScuRemoveVBlankIN() {
+  ScuRemoveInterrupt(0x40, 0x0F);
   SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
 }
 
@@ -2754,12 +2820,14 @@ void ScuSendVBlankOUT(void) {
 }
 
 void ScuRemoveVBlankOut() {
+  ScuRemoveInterrupt(0x41, 0x0E);
   SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuRemoveHBlankIN() {
+  ScuRemoveInterrupt(0x42, 0x0D);
   SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
 }
 
@@ -2803,11 +2871,13 @@ void ScuSendTimer1(void) {
 }
 
 void ScuRemoveTimer0(void) {
+  ScuRemoveInterrupt(0x43, 0x0C);
   SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
 }
 
 
 void ScuRemoveTimer1(void) {
+  ScuRemoveInterrupt(0x44, 0x0B);
   SH2RemoveInterrupt(MSH2, 0x44, 0xB);
 }
 
