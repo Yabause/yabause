@@ -531,7 +531,11 @@ M68K_struct QtYabause::default68kCore()
 
 SH2Interface_struct QtYabause::defaultSH2Core()
 {
+#if DYNAREC_KRONOS
+   return SH2KronosInterpreter;
+#else
    return SH2Interpreter;
+#endif
 }
 
 QMap<uint, PerPad_struct*>* QtYabause::portPadsBits( uint portNumber )

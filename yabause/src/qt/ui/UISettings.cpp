@@ -536,7 +536,7 @@ void UISettings::loadSettings()
 
 	// cartridge/memory
 	leCartridge->setText( s->value( "Cartridge/Path" ).toString() );
-	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
+	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 7 ).id ).toInt() ) );
 	leCartridgeModemIP->setText( s->value( "Cartridge/ModemIP", QString("127.0.0.1") ).toString() );
 	leCartridgeModemPort->setText( s->value( "Cartridge/ModemPort", QString("1337") ).toString() );
         cbSTVGame->setCurrentIndex( cbSTVGame->findData( s->value( "Cartridge/STVGame", -1 ).toInt() ) );
