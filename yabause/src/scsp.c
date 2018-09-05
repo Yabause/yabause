@@ -5137,7 +5137,7 @@ ScspReset (void)
 int
 ScspChangeVideoFormat (int type)
 {
-  fps = (isAutoFrameSkip() == 0)?(type ? 50.0 : 60.0):500.0;
+  fps = type ? 50.0 : 60.0;
   scspsoundlen = 44100 / (type ? 50 : 60);
   scsplines = type ? 313 : 263;
   scspsoundbufsize = scspsoundlen * scspsoundbufs;
@@ -5391,18 +5391,18 @@ void ScspExec(){
 
 void SyncScsp() {
     if ((thread_running == 1) && (yabsys.LineCount == yabsys.MaxLineCount-1)) {
-        YabThreadBarrierWait(AVBarrier);
+        if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
     }
 }
 
 void SyncScspDynarec() {
     if ((thread_running == 1) && (yabsys.LineCount == (yabsys.MaxLineCount-1))) {
-        YabThreadBarrierWait(AVBarrier);
+        if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
     }
 }
  
 void syncWithSH2() {
-    YabThreadBarrierWait(AVBarrier);
+    if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
 }
 
 void ScspAsynMain( void * p ){
@@ -5468,7 +5468,7 @@ void ScspAsynMain( void * p ){
           difftime = now + (ULLONG_MAX - before);
         }
         sleeptime = ((1000000/fps) - difftime);
-        if (sleeptime > 0) YabThreadUSleep(sleeptime);
+        if ((sleeptime > 0) && (isAutoFrameSkip()==0)) YabThreadUSleep(sleeptime);
 
         if(sh2_read_req != 0) {
           for (i = 0; i < samplecnt; i += step) {
@@ -5484,7 +5484,7 @@ void ScspAsynMain( void * p ){
           }
           sh2_read_req = 0;
         }
-      } while (sleeptime > 0);
+      } while ((sleeptime > 0) && (isAutoFrameSkip()==0));
       checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
       //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
       before = checktime;
