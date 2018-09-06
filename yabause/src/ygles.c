@@ -2166,18 +2166,16 @@ void YglRenderVDP1(void) {
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[_Ygl->drawframe]->textureID);
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
+    if( level->prg[j].prgid != cprg ) {
+      cprg = level->prg[j].prgid;
+      if (cprg == 0) continue; //prgid 0 has no meaning
+      glUseProgram(level->prg[j].prg);
+    }
+  
+    if(level->prg[j].setupUniform) {
+      level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
+    }
     if( level->prg[j].currentQuad != 0 ) {
-      if( level->prg[j].prgid != cprg ) {
-        cprg = level->prg[j].prgid;
-        if (cprg == 0) continue; //prgid 0 has no meaning
-
-        glUseProgram(level->prg[j].prg);
-      }
-   
-      if(level->prg[j].setupUniform) {
-        level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
-      }
-
       glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
       glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)level->prg[j].quads);
       glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,(GLvoid *)level->prg[j].textcoords );
@@ -2186,10 +2184,9 @@ void YglRenderVDP1(void) {
       }
       glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
       level->prg[j].currentQuad = 0;
-
-      if( level->prg[j].cleanupUniform ){
-        level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
-      }
+    }
+    if( level->prg[j].cleanupUniform ){
+      level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
     }
   }
   
