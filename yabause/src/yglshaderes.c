@@ -1317,26 +1317,29 @@ int Ygl_uniformStartUserClip(void * p )
       glVertexAttribPointer(prg->vertexp,2, GL_INT,GL_FALSE, 0, (GLvoid*)vertices );
 
       glDrawArrays(GL_TRIANGLES, 0, 6);
-      glColorMask( GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE );
+
+      glColorMask( GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE );
+      glStencilFunc(GL_ALWAYS,0,0x0);
+      glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
+      glDisable(GL_STENCIL_TEST);
    }
 
-
+   glEnable(GL_STENCIL_TEST);
    glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
    if( prg->uClipMode == 0x02 )
    {
-      glEnable(GL_STENCIL_TEST);
       glStencilFunc(GL_EQUAL,0x1,0xFF);
    }else if( prg->uClipMode == 0x03 )
    {
-      glEnable(GL_STENCIL_TEST);
       glStencilFunc(GL_EQUAL,0x0,0xFF);
    }else{
       glStencilFunc(GL_ALWAYS,0,0xFF);
-      glDisable(GL_STENCIL_TEST);
    }
 
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
+
+   //glDisable(GL_STENCIL_TEST);
 
    return 0;
 }
@@ -1348,10 +1351,6 @@ int Ygl_uniformEndUserClip(void * p )
 
    YglProgram * prg;
    prg = p;
-   prg->ux1 != -1;
-   glStencilMask(0xffffffff);
-   glClearStencil(0);
-   glClear(GL_STENCIL_BUFFER_BIT);
    glDisable(GL_STENCIL_TEST);
    glStencilFunc(GL_ALWAYS,0,0xFF);
 
