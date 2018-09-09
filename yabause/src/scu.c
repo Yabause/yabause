@@ -329,16 +329,28 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
       switch(dmainfo->mode) {
          case 0:
-            //ScuSendLevel0DMAEnd();
-           ScuRegs->dma0_time = trans_size;
-            break;
+           if (trans_size > 0) {
+             ScuRegs->dma0_time = trans_size;
+           }
+           else {
+             ScuSendLevel0DMAEnd();
+           }
+           break;
          case 1:
-            ScuRegs->dma1_time = trans_size;
-            //ScuSendLevel1DMAEnd();
+          if (trans_size > 0) {
+             ScuRegs->dma1_time = trans_size;
+           }
+           else {
+             ScuSendLevel1DMAEnd();
+           }
             break;
          case 2:
-            ScuRegs->dma2_time = trans_size;
-            //ScuSendLevel2DMAEnd();
+           if (trans_size > 0) {
+             ScuRegs->dma2_time = trans_size;
+           }
+           else {
+             ScuSendLevel2DMAEnd();
+           }
             break;
       }
    }
@@ -361,16 +373,29 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
       switch(dmainfo->mode) {
          case 0:
-            //ScuSendLevel0DMAEnd();
-           ScuRegs->dma0_time = dmainfo->TransferNumber;
+           
+           if (dmainfo->TransferNumber > 0) {
+             ScuRegs->dma0_time = dmainfo->TransferNumber;
+           }
+           else {
+             ScuSendLevel0DMAEnd();
+           }
             break;
          case 1:
-            ScuRegs->dma1_time = dmainfo->TransferNumber;
-            //ScuSendLevel1DMAEnd();
+           if (dmainfo->TransferNumber > 0) {
+             ScuRegs->dma1_time = dmainfo->TransferNumber;
+           }
+           else {
+             ScuSendLevel1DMAEnd();
+           }
             break;
          case 2:
-            ScuRegs->dma2_time = dmainfo->TransferNumber;
-            //ScuSendLevel2DMAEnd();
+           if (dmainfo->TransferNumber > 0) {
+             ScuRegs->dma2_time = dmainfo->TransferNumber;
+           }
+           else {
+             ScuSendLevel2DMAEnd();
+           }
             break;
       }
    }
@@ -883,7 +908,7 @@ void ScuExec(u32 timing) {
      //}
    }
 
-   if (ScuRegs->dma1_time > 0) {
+   else if (ScuRegs->dma1_time > 0) {
      //ScuRegs->dma1_time -= (timing << 4); // ToDo: memory clock
      //if (ScuRegs->dma1_time < 0) {
      ScuSendLevel1DMAEnd();
@@ -891,7 +916,7 @@ void ScuExec(u32 timing) {
      //}
    }
 
-   if (ScuRegs->dma2_time > 0) {
+   else if (ScuRegs->dma2_time > 0) {
      //ScuRegs->dma0_time -= (timing << 4); // ToDo: memory clock
      //if (ScuRegs->dma0_time < 0) {
      ScuSendLevel2DMAEnd();
