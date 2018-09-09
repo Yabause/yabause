@@ -600,6 +600,449 @@ void FASTCALL Vdp2WriteByte(SH2_struct *context, u8* mem, u32 addr, UNUSED u8 va
 
 //////////////////////////////////////////////////////////////////////////////
 
+void Vdp2ReadReg(int addr) {
+  u16 val = 0;
+  addr &= 0x1FF;
+ switch (addr)
+   {
+      case 0x000:
+         val = Vdp2Regs->TVMD;
+         break;
+      case 0x002:
+         val = Vdp2Regs->EXTEN;
+         break;
+      case 0x004:
+         val = Vdp2Regs->TVSTAT;
+         break;
+      case 0x006:
+         val = Vdp2Regs->VRSIZE;
+         break;
+      case 0x008:
+         val = Vdp2Regs->HCNT;
+         break;
+      case 0x00A:
+         val = Vdp2Regs->VCNT;
+         break;
+      case 0x00C:
+         break;
+      case 0x00E:
+         val = Vdp2Regs->RAMCTL;
+         break;
+      case 0x010:
+         val = Vdp2Regs->CYCA0L;
+         break;
+      case 0x012:
+         val = Vdp2Regs->CYCA0U;
+         break;
+      case 0x014:
+         val = Vdp2Regs->CYCA1L;
+         break;
+      case 0x016:
+         val = Vdp2Regs->CYCA1U;
+         break;
+      case 0x018:
+         val = Vdp2Regs->CYCB0L;
+         break;
+      case 0x01A:
+         val = Vdp2Regs->CYCB0U;
+         break;
+      case 0x01C:
+         val = Vdp2Regs->CYCB1L;
+         break;
+      case 0x01E:
+         val = Vdp2Regs->CYCB1U;
+         break;
+      case 0x020:
+         val = Vdp2Regs->BGON;
+         break;
+      case 0x022:
+         val = Vdp2Regs->MZCTL;
+         break;
+      case 0x024:
+         val = Vdp2Regs->SFSEL;
+         break;
+      case 0x026:
+         val = Vdp2Regs->SFCODE;
+         break;
+      case 0x028:
+         val = Vdp2Regs->CHCTLA;
+         break;
+      case 0x02A:
+         val = Vdp2Regs->CHCTLB;
+         break;
+      case 0x02C:
+         val = Vdp2Regs->BMPNA;
+         break;
+      case 0x02E:
+         val = Vdp2Regs->BMPNB;
+         break;
+      case 0x030:
+         val = Vdp2Regs->PNCN0;
+         break;
+      case 0x032:
+         val = Vdp2Regs->PNCN1;
+         break;
+      case 0x034:
+         val = Vdp2Regs->PNCN2;
+         break;
+      case 0x036:
+         val = Vdp2Regs->PNCN3;
+         break;
+      case 0x038:
+         val = Vdp2Regs->PNCR;
+         break;
+      case 0x03A:
+         val = Vdp2Regs->PLSZ;
+         break;
+      case 0x03C:
+         val = Vdp2Regs->MPOFN;
+         break;
+      case 0x03E:
+         val = Vdp2Regs->MPOFR;
+         break;
+      case 0x040:
+         val = Vdp2Regs->MPABN0;
+         break;
+      case 0x042:
+         val = Vdp2Regs->MPCDN0;
+         break;
+      case 0x044:
+         val = Vdp2Regs->MPABN1;
+         break;
+      case 0x046:
+         val = Vdp2Regs->MPCDN1;
+         break;
+      case 0x048:
+         val = Vdp2Regs->MPABN2;
+         break;
+      case 0x04A:
+         val = Vdp2Regs->MPCDN2;
+         break;
+      case 0x04C:
+         val = Vdp2Regs->MPABN3;
+         break;
+      case 0x04E:
+         val = Vdp2Regs->MPCDN3;
+         break;
+      case 0x050:
+         val = Vdp2Regs->MPABRA;
+         break;
+      case 0x052:
+         val = Vdp2Regs->MPCDRA;
+         break;
+      case 0x054:
+         val = Vdp2Regs->MPEFRA;
+         break;
+      case 0x056:
+         val = Vdp2Regs->MPGHRA;
+         break;
+      case 0x058:
+         val = Vdp2Regs->MPIJRA;
+         break;
+      case 0x05A:
+         val = Vdp2Regs->MPKLRA;
+         break;
+      case 0x05C:
+         val = Vdp2Regs->MPMNRA;
+         break;
+      case 0x05E:
+         val = Vdp2Regs->MPOPRA;
+         break;
+      case 0x060:
+         val = Vdp2Regs->MPABRB;
+         break;
+      case 0x062:
+         val = Vdp2Regs->MPCDRB;
+         break;
+      case 0x064:
+         val = Vdp2Regs->MPEFRB;
+         break;
+      case 0x066:
+         val = Vdp2Regs->MPGHRB;
+         break;
+      case 0x068:
+         val = Vdp2Regs->MPIJRB;
+         break;
+      case 0x06A:
+         val = Vdp2Regs->MPKLRB;
+         break;
+      case 0x06C:
+         val = Vdp2Regs->MPMNRB;
+         break;
+      case 0x06E:
+         val = Vdp2Regs->MPOPRB;
+         break;
+      case 0x070:
+         val = Vdp2Regs->SCXIN0;
+         break;
+      case 0x072:
+         val = Vdp2Regs->SCXDN0;
+         break;
+      case 0x074:
+         val = Vdp2Regs->SCYIN0;
+         break;
+      case 0x076:
+         val = Vdp2Regs->SCYDN0;
+         break;
+      case 0x078:
+         val = Vdp2Regs->ZMXN0.part.I;
+         break;
+      case 0x07A:
+         val = Vdp2Regs->ZMXN0.part.D;
+         break;
+      case 0x07C:
+         val = Vdp2Regs->ZMYN0.part.I;
+         break;
+      case 0x07E:
+         val = Vdp2Regs->ZMYN0.part.D;
+         break;
+      case 0x080:
+         val = Vdp2Regs->SCXIN1;
+         break;
+      case 0x082:
+         val = Vdp2Regs->SCXDN1;
+         break;
+      case 0x084:
+         val = Vdp2Regs->SCYIN1;
+         break;
+      case 0x086:
+         val = Vdp2Regs->SCYDN1;
+         break;
+      case 0x088:
+         val = Vdp2Regs->ZMXN1.part.I;
+         break;
+      case 0x08A:
+         val = Vdp2Regs->ZMXN1.part.D;
+         break;
+      case 0x08C:
+         val = Vdp2Regs->ZMYN1.part.I;
+         break;
+      case 0x08E:
+         val = Vdp2Regs->ZMYN1.part.D;
+         break;
+      case 0x090:
+         val = Vdp2Regs->SCXN2;
+         break;
+      case 0x092:
+         val = Vdp2Regs->SCYN2;
+         break;
+      case 0x094:
+         val = Vdp2Regs->SCXN3;
+         break;
+      case 0x096:
+         val = Vdp2Regs->SCYN3;
+         break;
+      case 0x098:
+         val = Vdp2Regs->ZMCTL;
+         break;
+      case 0x09A:
+         val = Vdp2Regs->SCRCTL;
+         break;
+      case 0x09C:
+         val = Vdp2Regs->VCSTA.part.U;
+         break;
+      case 0x09E:
+         val = Vdp2Regs->VCSTA.part.L;
+         break;
+      case 0x0A0:
+         val = Vdp2Regs->LSTA0.part.U;
+         break;
+      case 0x0A2:
+         val = Vdp2Regs->LSTA0.part.L;
+         break;
+      case 0x0A4:
+         val = Vdp2Regs->LSTA1.part.U;
+         break;
+      case 0x0A6:
+         val = Vdp2Regs->LSTA1.part.L;
+         break;
+      case 0x0A8:
+         val = Vdp2Regs->LCTA.part.U;
+         break;
+      case 0x0AA:
+         val = Vdp2Regs->LCTA.part.L;
+         break;
+      case 0x0AC:
+         val = Vdp2Regs->BKTAU;
+         break;
+      case 0x0AE:
+         val = Vdp2Regs->BKTAL;
+         break;
+      case 0x0B0:
+         val = Vdp2Regs->RPMD;
+         break;
+      case 0x0B2:
+         val = Vdp2Regs->RPRCTL;
+         break;
+      case 0x0B4:
+         val = Vdp2Regs->KTCTL;
+         break;
+      case 0x0B6:
+         val = Vdp2Regs->KTAOF;
+         break;
+      case 0x0B8:
+         val = Vdp2Regs->OVPNRA;
+         break;
+      case 0x0BA:
+         val = Vdp2Regs->OVPNRB;
+         break;
+      case 0x0BC:
+         val = Vdp2Regs->RPTA.part.U;
+         break;
+      case 0x0BE:
+         val = Vdp2Regs->RPTA.part.L;
+         break;
+      case 0x0C0:
+         val = Vdp2Regs->WPSX0;
+         break;
+      case 0x0C2:
+         val = Vdp2Regs->WPSY0;
+         break;
+      case 0x0C4:
+         val = Vdp2Regs->WPEX0;
+         break;
+      case 0x0C6:
+         val = Vdp2Regs->WPEY0;
+         break;
+      case 0x0C8:
+         val = Vdp2Regs->WPSX1;
+         break;
+      case 0x0CA:
+         val = Vdp2Regs->WPSY1;
+         break;
+      case 0x0CC:
+         val = Vdp2Regs->WPEX1;
+         break;
+      case 0x0CE:
+         val = Vdp2Regs->WPEY1;
+         break;
+      case 0x0D0:
+         val = Vdp2Regs->WCTLA;
+         break;
+      case 0x0D2:
+         val = Vdp2Regs->WCTLB;
+         break;
+      case 0x0D4:
+         val = Vdp2Regs->WCTLC;
+         break;
+      case 0x0D6:
+         val = Vdp2Regs->WCTLD;
+         break;
+      case 0x0D8:
+         val = Vdp2Regs->LWTA0.part.U;
+         break;
+      case 0x0DA:
+         val = Vdp2Regs->LWTA0.part.L;
+         break;
+      case 0x0DC:
+         val = Vdp2Regs->LWTA1.part.U;
+         break;
+      case 0x0DE:
+         val = Vdp2Regs->LWTA1.part.L;
+         break;
+      case 0x0E0:
+         val = Vdp2Regs->SPCTL;
+         break;
+      case 0x0E2:
+         val = Vdp2Regs->SDCTL;
+         break;
+      case 0x0E4:
+         val = Vdp2Regs->CRAOFA;
+         break;
+      case 0x0E6:
+         val = Vdp2Regs->CRAOFB;
+         break;     
+      case 0x0E8:
+         val = Vdp2Regs->LNCLEN;
+         break;
+      case 0x0EA:
+         val = Vdp2Regs->SFPRMD;
+         break;
+      case 0x0EC:
+         val = Vdp2Regs->CCCTL;
+         break;     
+      case 0x0EE:
+         val = Vdp2Regs->SFCCMD;
+         break;
+      case 0x0F0:
+         val = Vdp2Regs->PRISA;
+         break;
+      case 0x0F2:
+         val = Vdp2Regs->PRISB;
+         break;
+      case 0x0F4:
+         val = Vdp2Regs->PRISC;
+         break;
+      case 0x0F6:
+         val = Vdp2Regs->PRISD;
+         break;
+      case 0x0F8:
+         val = Vdp2Regs->PRINA;
+         break;
+      case 0x0FA:
+         val = Vdp2Regs->PRINB;
+         break;
+      case 0x0FC:
+         val = Vdp2Regs->PRIR;
+         break;
+      case 0x0FE:
+         break;
+      case 0x100:
+         val = Vdp2Regs->CCRSA;
+         break;
+      case 0x102:
+         val = Vdp2Regs->CCRSB;
+         break;
+      case 0x104:
+         val = Vdp2Regs->CCRSC;
+         break;
+      case 0x106:
+         val = Vdp2Regs->CCRSD;
+         break;
+      case 0x108:
+         val = Vdp2Regs->CCRNA;
+         break;
+      case 0x10A:
+         val = Vdp2Regs->CCRNB;
+         break;
+      case 0x10C:
+         val = Vdp2Regs->CCRR;
+         break;
+      case 0x10E:
+         val = Vdp2Regs->CCRLB;
+         break;
+      case 0x110:
+         val = Vdp2Regs->CLOFEN;
+         break;
+      case 0x112:
+         val = Vdp2Regs->CLOFSL;
+         break;
+      case 0x114:
+         val = Vdp2Regs->COAR;
+         break;
+      case 0x116:
+         val = Vdp2Regs->COAG;
+         break;
+      case 0x118:
+         val = Vdp2Regs->COAB;
+         break;
+      case 0x11A:
+         val = Vdp2Regs->COBR;
+         break;
+      case 0x11C:
+         val = Vdp2Regs->COBG;
+         break;
+      case 0x11E:
+         val = Vdp2Regs->COBB;
+         break;
+      default:
+      {
+         break;
+      }
+   }
+   printf("0x%x = 0x%x\n", addr, val);
+}
+
 void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x1FF;
 
