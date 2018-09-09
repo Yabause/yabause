@@ -703,3 +703,33 @@ int EachClock() {
 
 
 }
+
+
+#include <atomic>
+using std::atomic;
+
+atomic<u64> m68k_counter = 0;
+
+extern "C" {
+  void setM68kCounter(u64 counter) {
+    m68k_counter = counter;
+  }
+
+  u64 getM68KCounter() {
+    return m68k_counter;
+  }
+}
+
+atomic<int> frame_sync = 0;
+
+extern "C" {
+  void setFrameSync() {
+    frame_sync = 1;
+  }
+  int getFrameSync() {
+    return frame_sync;
+  }
+  void clearFrameSync() {
+    frame_sync = 0;
+  }
+}
