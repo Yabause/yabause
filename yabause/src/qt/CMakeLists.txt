@@ -4,25 +4,30 @@ yab_port_start()
 
 option(YAB_USE_QT5 "Use Qt 5 if available." ON)
 
-if(YAB_USE_QT5) 
-	find_package(Qt5 COMPONENTS Widgets QUIET)
+option(YAB_USE_QT5_SPECIFIC "Use dedicated QT setup" OFF)
+
+if(YAB_USE_QT5)
+  SET(OLD_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
+  if(YAB_USE_QT5_SPECIFIC)
+    SET(CMAKE_PREFIX_PATH /opt/Qt/5.11.1/gcc_64)
+  endif()
+  find_package(Qt5 COMPONENTS Widgets QUIET)
+  find_package(Qt5Multimedia REQUIRED)
+  if (WIN32)
+    find_package(Qt5Core)
+  endif()
+  if( YAB_WANT_OPENGL )
+    find_package(Qt5OpenGL)
+  endif()
+  include_directories(${Qt5Widgets_INCLUDE_DIRS})
+  add_definitions(${Qt5Widgets_DEFINITIONS})
+  SET(CMAKE_PREFIX_PATH ${OLD_CMAKE_PREFIX_PATH})
 endif()
 
 if(Qt5_FOUND) 
-	message(STATUS "Qt5 Found")
+    message(STATUS "Qt5 Found")
 
-	if( YAB_WANT_OPENGL )
-        	find_package(Qt5OpenGL)
-	endif()
-
-	include_directories(${Qt5Widgets_INCLUDE_DIRS})
-	add_definitions(${Qt5Widgets_DEFINITIONS}) 
-
-	if (WIN32)
-        	find_package(Qt5Core)
-	endif()
-	find_package(Qt5Multimedia REQUIRED)
-	add_definitions(-DHAVE_QT_MULTIMEDIA=1)
+    add_definitions(-DHAVE_QT_MULTIMEDIA=1)
 
     # Since Qt5's cmake script doesn't set it, we will have to
     SET(QT_BINARY_DIR "${_qt5Core_install_prefix}/bin")
