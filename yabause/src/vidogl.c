@@ -2402,8 +2402,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
     Vdp2DrawCell(info, texture);
     break;
   case 2:
-//printf("%d\n", __LINE__);
-//L'appel vient de la
     texture->w += 8;
     Vdp2DrawCell(info, texture);
     texture->textdata -= (texture->w + 8) * 8 - 8;
@@ -5491,7 +5489,15 @@ static void Vdp2DrawLineColorScreen(void)
 void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
   int bit = 1 << id;
   int line = 0;
-  if (*Vdp2External.perline_alpha_draw & bit) {
+  int i;
+  int displayedbyLine = 0;
+  u8 first = info->display[0];
+  for(i = 0; i<yabsys.VBlankLineCount; i++)
+     if (first != info->display[i]) {
+       displayedbyLine = 1;
+       break;
+     }
+  if ((*Vdp2External.perline_alpha_draw & bit) || displayedbyLine) {
     u32 * linebuf;
     int line_shift = 0;
     if (_Ygl->rheight > 256) {
@@ -5503,11 +5509,10 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
     linebuf = YglGetPerlineBuf(&_Ygl->bg[id], _Ygl->rheight, 1);
     for (line = 0; line < _Ygl->rheight; line++) {
-      if ((Vdp2Lines[line >> line_shift].BGON & bit) == 0x00) {
+      if (info->display[line >> line_shift] == 0x0) {
         linebuf[line] = 0x00;
       }
       else {
-        info->enable = 1;
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
           if (fixVdp2Regs->CCCTL & 0x100) { // Add Color
@@ -5585,9 +5590,12 @@ static void Vdp2DrawRBG1(void)
   info->specialcolorfunction = 0;
 
 // RBG1 mode
-    info->enable = (fixVdp2Regs->BGON & 0x20);
-    if (!(fixVdp2Regs->BGON & 0x10)) info->enable = 0; //When R0ON is 0, do not set R1ON at 1. vdp2 pdf, section 4.1 Screen Display Control
-    if (!info->enable) return;
+  for (int i=0; i<yabsys.VBlankLineCount; i++) {
+    info->display[i] = ((Vdp2Lines[i].BGON & 0x20)!=0);
+    if (!(fixVdp2Regs->BGON & 0x10)) info->display[i] = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+    info->enable |= info->display[i];
+  }
+  if (!info->enable) return;
 
     // Read in Parameter B
     Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
@@ -5786,8 +5794,11 @@ static void Vdp2DrawNBG0(void) {
   info.specialcolorfunction = 0;
 
     // NBG0 mode
-    info.enable = (fixVdp2Regs->BGON & 0x1);
-    if ((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)) info.enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+  for (i=0; i<yabsys.VBlankLineCount; i++) {
+    info.display[i] = ((Vdp2Lines[i].BGON & 0x1)!=0);
+    if ((Vdp2Lines[i].BGON & 0x20) && (Vdp2Lines[i].BGON & 0x10)) info.display[i] = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+    info.enable |= info.display[i];
+  }
     if (!info.enable) return;
 
     if ((info.isbitmap = fixVdp2Regs->CHCTLA & 0x2) != 0)
@@ -6056,17 +6067,8 @@ static void Vdp2DrawNBG0(void) {
 
 static void Vdp2DrawNBG0RBG1(void)
 {
-  if ((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10))
-  {
-    Vdp2DrawRBG1();
-  }
-  else if ((fixVdp2Regs->BGON & 0x1) && !((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10))) //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
-  {
-    Vdp2DrawNBG0();
-  }
-  else {
-    return;
-  }
+  Vdp2DrawRBG1();
+  Vdp2DrawNBG0();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6083,9 +6085,13 @@ static void Vdp2DrawNBG1(void)
   info.cog = 0;
   info.cob = 0;
   info.specialcolorfunction = 0;
+  info.enable = 0;
 
-  info.enable = (fixVdp2Regs->BGON & 0x2);
-  if ((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)) info.enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+  for (int i=0; i<yabsys.VBlankLineCount; i++) {
+    info.display[i] = ((Vdp2Lines[i].BGON & 0x2)!=0);
+    if ((Vdp2Lines[i].BGON & 0x20) && (Vdp2Lines[i].BGON & 0x10)) info.display[i] = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+    info.enable |= info.display[i];
+  }
   if (!info.enable) return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x200);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 2) & 0x3;
@@ -6349,10 +6355,15 @@ static void Vdp2DrawNBG2(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
+  info.enable = 0;
 
-  info.enable = (fixVdp2Regs->BGON & 0x4);
-  if ((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)) info.enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+  for (int i=0; i<yabsys.VBlankLineCount; i++) {
+    info.display[i] = ((Vdp2Lines[i].BGON & 0x4)!=0);
+    if ((Vdp2Lines[i].BGON & 0x20) && (Vdp2Lines[i].BGON & 0x10)) info.display[i] = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+    info.enable |= info.display[i];
+  }
   if (!info.enable) return;
+
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 4) & 0x3;
 
@@ -6460,9 +6471,13 @@ static void Vdp2DrawNBG3(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.blendmode = 0;
+  info.enable = 0;
 
-  info.enable = (fixVdp2Regs->BGON & 0x8);
-  if ((fixVdp2Regs->BGON & 0x20) && (fixVdp2Regs->BGON & 0x10)) info.enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+  for (int i=0; i<yabsys.VBlankLineCount; i++) {
+    info.display[i] = ((Vdp2Lines[i].BGON & 0x8)!=0);
+    if ((Vdp2Lines[i].BGON & 0x20) && (Vdp2Lines[i].BGON & 0x10)) info.display[i] = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+    info.enable |= info.display[i];
+  }
   if (!info.enable) return;
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
@@ -6573,8 +6588,14 @@ static void Vdp2DrawRBG0(void)
   info->cog = 0;
   info->cob = 0;
   info->specialcolorfunction = 0;
-  info->enable = fixVdp2Regs->BGON & 0x10;
+  info->enable = 0;
+
+  for (int i=0; i<yabsys.VBlankLineCount; i++) {
+    info->display[i] = ((Vdp2Lines[i].BGON & 0x10)!=0);
+    info->enable |= info->display[i];
+  }
   if (!info->enable) return;
+
   info->priority = fixVdp2Regs->PRIR & 0x7;
   if (!(info->enable & Vdp2External.disptoggle) || (info->priority == 0)) {
 

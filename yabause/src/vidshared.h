@@ -142,6 +142,7 @@ typedef struct
    u16 supplementdata;
    int auxmode;
    int enable;
+   u8 display[270];
    int x, y;
    int sh,sv;
    int alpha;
