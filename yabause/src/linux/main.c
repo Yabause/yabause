@@ -142,6 +142,7 @@ NULL
 #endif
 
 static int fullscreen = 0;
+static int scanline = 0;
 static int lowres_mode = 0;
 
 static char biospath[256] = "\0";
@@ -300,6 +301,9 @@ int main(int argc, char *argv[]) {
       else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
         fullscreen = 1;
       }
+      else if (strcmp(argv[i], "-sl") == 0 || strcmp(argv[i], "--scanline") == 0) {
+        scanline = 1;
+      }
       // Low resolution mode
       else if (strcmp(argv[i], "-lr") == 0 || strcmp(argv[i], "--lowres") == 0) {
         lowres_mode = 1;
@@ -367,13 +371,15 @@ int main(int argc, char *argv[]) {
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_4XBRZ);
+      VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanline);
     }
     VIDCore->Resize(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, 1);
   } else {
     if (yinit.vidcoretype == VIDCORE_OGL) {
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_ORIGINAL);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
-      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_HQ4X);
+      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_2XBRZ);
+      VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanline);
     }
     VIDCore->Resize(0, 0, WINDOW_WIDTH_LOW, WINDOW_HEIGHT_LOW, 1);
   }
