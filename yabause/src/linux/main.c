@@ -332,7 +332,6 @@ int main(int argc, char *argv[]) {
 
       // Auto frame skip
       else if (strstr(argv[i], "--vsyncoff")) {
-        frameskip = 0;
         EnableAutoFrameSkip();
       }
       // Binary
