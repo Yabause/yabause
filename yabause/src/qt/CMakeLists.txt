@@ -37,32 +37,9 @@ if(Qt5_FOUND)
         SET(QT_PLUGINS_DIR "${_qt5Core_install_prefix}/plugins")
     endif()
 
-else() 
-	set( QT_USE_QTCORE TRUE )
-	set( QT_USE_QTGUI TRUE )
-	set ( QT_USE_QTMULTIMEDIA TRUE )
-	if( YAB_WANT_OPENGL )
-		set( QT_USE_QTOPENGL TRUE )
-	endif()
-	if (WIN32)
-		set( QT_USE_QTMAIN TRUE )
-	endif()
-	
-	find_package(Qt4)
-
-	if (NOT QT4_FOUND)
-		message(STATUS "NO QT4_FOUND OR Qt5_FOUND")
-		return ()
-	endif ()
-
-	message (WARNING "Qt4 is deprecated. Support will be removed in the future.")
-
-	if (QT_QTMULTIMEDIA_FOUND)
-		add_definitions(-DHAVE_QT_MULTIMEDIA=1)
-	endif ()
-
-	# dunno what it does exactly ... but seem required
-	include( ${QT_USE_FILE} )
+else()
+	message(STATUS "NO Qt5_FOUND")
+	return ()
 endif() 
 
 # qt resources file
@@ -192,10 +169,6 @@ if(Qt5_FOUND)
 	QT5_ADD_RESOURCES( kronos_qt_RCC_RESOURCES ${kronos_qt_RESOURCES} )
 	QT5_WRAP_UI( kronos_qt_UI_FORMS ${kronos_qt_FORMS} )
 	QT5_WRAP_CPP( kronos_qt_MOC_SOURCES ${kronos_qt_MOC_HEADERS} )
-else() 
-	QT4_ADD_RESOURCES( kronos_qt_RCC_RESOURCES ${kronos_qt_RESOURCES} )
-	QT4_WRAP_UI( kronos_qt_UI_FORMS ${kronos_qt_FORMS} )
-	QT4_WRAP_CPP( kronos_qt_MOC_SOURCES ${kronos_qt_MOC_HEADERS} )
 endif() 
 
 set( kronos_qt_SOURCES ${kronos_qt_SOURCES} resources/icons/kronos.icns )
@@ -219,15 +192,6 @@ include_directories(
 	${Qt5Widgets_INCLUDE_DIRS}
 	${Qt5OpenGL_INCLUDE_DIRS} 
 	${Qt5Multimedia_INCLUDE_DIRS} )
-else()
-include_directories(
-	.
-	${CMAKE_CURRENT_BINARY_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}/ui
-	${QT_INCLUDE_DIR}
-	${QT_QTCORE_INCLUDE_DIR}
-	${QT_QTGUI_INCLUDE_DIR}
-	${QT_QTOPENGL_INCLUDE_DIR} )
 endif()
 
 # APPLE // not necessary mac os x, but i don't care ;)
@@ -247,8 +211,6 @@ target_link_libraries( kronos-qt ${kronos_qt_windows_LIBRARIES} )
 target_link_libraries( kronos-qt ${kronos_qt_macosx_LIBRARIES} )
 if (Qt5_FOUND)
 	target_link_libraries( kronos-qt ${Qt5Widgets_LIBRARIES} ${Qt5OpenGL_LIBRARIES} ${Qt5Core_QTMAIN_LIBRARIES} ${Qt5Multimedia_LIBRARIES})
-else()
-	target_link_libraries( kronos-qt ${QT_LIBRARIES} )
 endif()
 
 yab_port_success(kronos-qt)
@@ -301,13 +263,6 @@ if (WIN32)
 			install(DIRECTORY ${QT_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "libpng*.dll")
 		endif()
 		install(FILES ${QT_PLUGINS_DIR}/platforms/qwindows.dll DESTINATION "platforms")
-	else()
-		install(FILES ${QT_BINARY_DIR}/QtCore4.dll DESTINATION ".")
-		install(FILES ${QT_BINARY_DIR}/QtGui4.dll DESTINATION ".")
-		install(FILES ${QT_BINARY_DIR}/QtOpenGL4.dll DESTINATION ".")
-		if (QT_QTMULTIMEDIA_FOUND)
-			install(FILES ${QT_BINARY_DIR}/QtMultimedia4.dll DESTINATION ".")        
-		endif()
 	endif()
 
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../AUTHORS    DESTINATION "." RENAME AUTHORS.txt)
