@@ -86,9 +86,13 @@ UIYabause::UIYabause( QWidget* parent )
 		cbVideoDriver->addItem( VIDCoreList[i]->Name, VIDCoreList[i]->id );
 	cbVideoDriver->blockSignals( false );
 	// create glcontext
-	mYabauseGL = new YabauseGL( this );
+	mYabauseGL = new YabauseGL( );
 	// and set it as central application widget
-	setCentralWidget( mYabauseGL );
+        QWidget *container = QWidget::createWindowContainer(mYabauseGL);
+        container->setFocusPolicy( Qt::StrongFocus );
+        setFocusPolicy( Qt::StrongFocus );
+        container->setFocusProxy( this );
+	setCentralWidget( container );
 	// create log widget
 	teLog = new QTextEdit( this );
 	teLog->setReadOnly( true );
@@ -150,7 +154,7 @@ UIYabause::UIYabause( QWidget* parent )
 	}
 
 	restoreGeometry( vs->value("General/Geometry" ).toByteArray() );
-	mYabauseGL->setMouseTracking(true);
+	container->setMouseTracking(true);
 	setMouseTracking(true);
 	mouseXRatio = mouseYRatio = 1.0;
 	emulateMouse = false;
@@ -310,10 +314,6 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 
 void UIYabause::resizeEvent( QResizeEvent* event )
 {
-  mYabauseGL->viewport_width_ = event->size().width();
-  mYabauseGL->viewport_height_ = event->size().height();
-  mYabauseGL->viewport_origin_x_ = 0;
-  mYabauseGL->viewport_origin_y_ = 0;
 
     //	if (event->oldSize().width() != event->size().width())
     //fixAspectRatio(event->size().width(), event->size().height());
@@ -333,8 +333,7 @@ void UIYabause::adjustHeight(int & height)
 
 void UIYabause::swapBuffers()
 { 
-	mYabauseGL->swapBuffers(); 
-	mYabauseGL->makeCurrent();
+	mYabauseGL->swapBuffers();
 }
 
 void UIYabause::appendLog( const char* s )
@@ -424,7 +423,6 @@ void UIYabause::fixAspectRatio( int width , int height )
             break;
         }
         mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
-        mYabauseGL->viewport_height_ = height - heightOffset;
       }
 }
 
@@ -806,7 +804,7 @@ void UIYabause::on_aFileScreenshot_triggered()
 #endif
 
 	// take screenshot of gl view
-	QImage screenshot = mYabauseGL->grabFrameBuffer();
+	QImage screenshot = mYabauseGL->grabFramebuffer();
 	
 	// request a file to save to to user
 	QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );

@@ -22,12 +22,14 @@
 #define YABAUSEGL_H
 
 #ifdef HAVE_LIBGL
-#include <QGLWidget>
+#include <QOpenGLWindow>
+#include <QOpenGLFunctions>
 
-class YabauseGL : public QGLWidget
+class YabauseGL : public QOpenGLWindow, protected QOpenGLFunctions
 #else
 #include <QWidget>
 #include <QImage>
+
 
 class YabauseGL : public QWidget
 #endif
@@ -35,24 +37,21 @@ class YabauseGL : public QWidget
 	Q_OBJECT
 	
 public:
-	YabauseGL( QWidget* parent = 0 );
+	YabauseGL( );
 	
 	void updateView( const QSize& size = QSize() );
+	void swapBuffers();
 #ifndef HAVE_LIBGL
-	virtual void swapBuffers();
-	QImage grabFrameBuffer(bool withAlpha = false);
+        QImage grabFrameBuffer();
 	virtual void paintEvent( QPaintEvent * event );
 	void makeCurrent();
 #endif
 
-  int viewport_width_;
-  int viewport_height_;
-  int viewport_origin_x_;
-  int viewport_origin_y_;
-
 protected:
-	virtual void showEvent( QShowEvent* event );
-	virtual void resizeGL( int w, int h );
+        void initializeGL() override;
+        void resizeGL(int width, int height) override;
+        void keyPressEvent( QKeyEvent* e ) override;
+        void keyReleaseEvent( QKeyEvent* e ) override;
 };
 
 #endif // YABAUSEGL_H

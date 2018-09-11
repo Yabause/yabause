@@ -20,34 +20,29 @@
 */
 #include "YabauseGL.h"
 #include "QtYabause.h"
+#include <QKeyEvent>
 
-YabauseGL::YabauseGL( QWidget* p )
-  : QGLWidget(p)
+YabauseGL::YabauseGL( ) : QOpenGLWindow()
 {
-	setFocusPolicy( Qt::StrongFocus );
-
-  QGLFormat fmt;
-  fmt.setProfile(QGLFormat::CompatibilityProfile);
-  fmt.setSwapInterval(0);
-  setFormat(fmt);
-
-	if ( p ) {
-		p->setFocusPolicy( Qt::StrongFocus );
-		setFocusProxy( p );
-	}
-  viewport_width_ = 0;
-  viewport_height_ = 0;
-  viewport_origin_x_ = 0;
-  viewport_origin_y_ = 0;
+        QSurfaceFormat format;
+        format.setDepthBufferSize(24);
+        format.setStencilBufferSize(8);
+        format.setSwapInterval(0);
+        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+        format.setProfile(QSurfaceFormat::CompatibilityProfile);
+        setFormat(format);
 }
 
-void YabauseGL::showEvent( QShowEvent* e )
+void YabauseGL::initializeGL()
 {
-	// hack for clearing the the gl context
-	QGLWidget::showEvent( e );
-	QSize s = size();
-	resize( 0, 0 );
-	resize( s );
+  initializeOpenGLFunctions();
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void YabauseGL::swapBuffers()
+{
+  context()->swapBuffers(context()->surface());
 }
 
 void YabauseGL::resizeGL( int w, int h )
@@ -56,10 +51,19 @@ void YabauseGL::resizeGL( int w, int h )
 void YabauseGL::updateView( const QSize& s )
 {
 	const QSize size = s.isValid() ? s : this->size();
-	//glViewport( 0, 0, viewport_width_, viewport_height_ );
 	if ( VIDCore ) {
           VIDCore->Resize(0, 0, size.width(), size.height(), 0);
         }
+}
+
+void YabauseGL::keyPressEvent( QKeyEvent* e )
+{ 
+  PerKeyDown( e->key() ); 
+}
+
+void YabauseGL::keyReleaseEvent( QKeyEvent* e )
+{ 
+  PerKeyUp( e->key() );
 }
 
 
