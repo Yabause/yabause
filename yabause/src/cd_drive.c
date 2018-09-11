@@ -236,20 +236,20 @@ void update_status_info()
    }
 }
 
-static u8 ror(u8 in) 
+static u8 ror(u8 in)
 {
    return (in>>1) | (in<<(7));
 }
 
-static void make_ring_data(u8 *buf) 
+static void make_ring_data(u8 *buf)
 {
    u32 i,j;
    u16 lfsr = 1;
    u8 a;
-   for (i=12; i<2352; i++) 
+   for (i=12; i<2352; i++)
    {
       a = (i & 1) ? 0x59 : 0xa8;
-      for (j=0; j<8; j++) 
+      for (j=0; j<8; j++)
       {
          u32 x = a;
          u32 var2 = lfsr & 1;
@@ -272,10 +272,10 @@ void do_dataread()
    struct Dmac *dmac=&sh1_cxt.onchip.dmac;
 #if 1
 
-   if ((dmac->channel[0].chcr & 1) && 
-      !(dmac->channel[0].chcr & 2)) 
+   if ((dmac->channel[0].chcr & 1) &&
+      !(dmac->channel[0].chcr & 2))
    {
-      u8 buf[2448];		
+      u8 buf[2448];
       u32 dest;
       int i;
 
@@ -313,11 +313,11 @@ void do_dataread()
           printf(" %02X", buf[i]);
       printf("\n");
 
-      if (dmac->channel[0].dar >> 24 != 9) 
+      if (dmac->channel[0].dar >> 24 != 9)
       {
          CDLOG("DMA0 error: dest is not DRAM\n");
       }
-      if (dmac->channel[0].tcr*2 > 2340) 
+      if (dmac->channel[0].tcr*2 > 2340)
       {
          CDLOG("DMA0 error: count too big\n");
       }
@@ -326,7 +326,7 @@ void do_dataread()
       for (i = 0; i < dmac->channel[0].tcr*2; i+=2)
          T2WriteWord(SH1Dram, dest+i, (buf[12+i] << 8) | buf[13+i]);
 
-      dmac->channel[0].chcr |= 2;		
+      dmac->channel[0].chcr |= 2;
       if (dmac->channel[0].chcr & 4)
          SH2SendInterrupt(SH1, 72, (sh1_cxt.onchip.intc.iprc >> 12) & 0xf);
    }
@@ -375,7 +375,7 @@ int continue_command()
    {
       comm_state = NoTransfer;
       cdd_cxt.disc_fad++;
-      
+
       //drive head moves back when fad is too high
       if (cdd_cxt.disc_fad > cdd_cxt.target_fad + 5)
          cdd_cxt.disc_fad = cdd_cxt.target_fad;
@@ -402,7 +402,7 @@ int continue_command()
 
       if (is_audio)
       {
-         u8 buf[2448];		
+         u8 buf[2448];
          Cs2Area->cdi->ReadSectorFAD(cdd_cxt.disc_fad, buf);
          ScspReceiveCDDA(buf);
          cdd_cxt.disc_fad++;
@@ -430,10 +430,10 @@ int continue_command()
       do_toc();
       return TIME_READING;
    }
-   else if (cdd_cxt.state.current_operation == Seeking || 
+   else if (cdd_cxt.state.current_operation == Seeking ||
       cdd_cxt.state.current_operation == SeekSecurityRing2)
    {
-      
+
       cdd_cxt.seek_time++;
       update_seek_status();
 
@@ -564,7 +564,7 @@ int do_command()
          memcpy(&cdd_cxt.toc[i*3+2], entry, sizeof(*entry));
          cdd_cxt.toc[i*3+2].frame = num2bcd(i*3+2);
 
-         if (entry->point <= 0x99) 
+         if (entry->point <= 0x99)
          {
             track_num = bcd2num(entry->point);
             if (track_num > max_track)
@@ -735,7 +735,7 @@ int cd_command_exec()
       return TIME_POWER_ON + TIME_WAITING;
    }
    else if (
-      comm_state == SendingFirstByte || 
+      comm_state == SendingFirstByte ||
       comm_state == SendingByte)
    {
       return TIME_BYTE;
@@ -779,7 +779,7 @@ int cd_command_exec()
 
       if (cdd_cxt.received_data[11] != 0xff && cdd_cxt.received_data[0])
       {
-         char str[1024] = { 0 }; 
+         char str[1024] = { 0 };
          int i;
 
          for (i = 0; i < 13; i++)
@@ -808,13 +808,9 @@ int cd_command_exec()
 
       //handle the command
       return do_command();
+   } else {
+      return 1;
    }
-
-   assert(0);
-
-   return 1;
-
-   cdd_cxt.num_execs++;
 }
 
 void cd_drive_exec(struct CdDriveContext * drive, s32 cycles)
@@ -888,7 +884,7 @@ void make_status_data(struct CdState *state, u8* data)
    data[9] = state->absolute_seconds;
    data[10] = state->absolute_frame;
 
-   set_checksum(data); 
+   set_checksum(data);
 
    if (data[0] && data[0] != 0x46) {
          RXTRACE("STA: ");

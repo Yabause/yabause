@@ -18,63 +18,8 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.          *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-u64 memory_map[1048576];
-ALIGNED(8) u32 mini_ht_master[32][2];
-ALIGNED(8) u32 mini_ht_slave[32][2];
-ALIGNED(4) u8 restore_candidate[512];
-int rccount;
-int master_reg[22];
-int master_cc; // Cycle count
-int master_pc; // Virtual PC
-void * master_ip; // Translated PC
-int slave_reg[22];
-int slave_cc; // Cycle count
-int slave_pc; // Virtual PC
-void * slave_ip; // Translated PC
-
-void FASTCALL WriteInvalidateLong(u32 addr, u32 val);
-void FASTCALL WriteInvalidateWord(u32 addr, u32 val);
-void FASTCALL WriteInvalidateByte(u32 addr, u32 val);
-void FASTCALL WriteInvalidateByteSwapped(u32 addr, u32 val);
-
-void jump_vaddr_eax_master();
-void jump_vaddr_ecx_master();
-void jump_vaddr_edx_master();
-void jump_vaddr_ebx_master();
-void jump_vaddr_ebp_master();
-void jump_vaddr_edi_master();
-void jump_vaddr_eax_slave();
-void jump_vaddr_ecx_slave();
-void jump_vaddr_edx_slave();
-void jump_vaddr_ebx_slave();
-void jump_vaddr_ebp_slave();
-void jump_vaddr_edi_slave();
-
-const pointer jump_vaddr_reg[2][8] = {
-  {
-    (pointer)jump_vaddr_eax_master,
-    (pointer)jump_vaddr_ecx_master,
-    (pointer)jump_vaddr_edx_master,
-    (pointer)jump_vaddr_ebx_master,
-    0,
-    (pointer)jump_vaddr_ebp_master,
-    0,
-    (pointer)jump_vaddr_edi_master
-  },{
-    (pointer)jump_vaddr_eax_slave,
-    (pointer)jump_vaddr_ecx_slave,
-    (pointer)jump_vaddr_edx_slave,
-    (pointer)jump_vaddr_ebx_slave,
-    0,
-    (pointer)jump_vaddr_ebp_slave,
-    0,
-    (pointer)jump_vaddr_edi_slave
-  }
-};
-
-// We need these for cmovcc instructions on x86
-u32 const_zero=0;
-u32 const_one=1;
+#include "assert.h"
+#include "assem_x64.h"
 
 /* Linker */
 
@@ -207,7 +152,7 @@ void get_bounds(pointer addr,u32 *start,u32 *end)
 
 // Note: registers are allocated clean (unmodified state)
 // if you intend to modify the register, you must call dirty_reg().
-void alloc_reg(struct regstat *cur,int i,signed char reg)
+void alloc_reg(regstat *cur,int i,signed char reg)
 {
   int r,hr;
   int preferred_reg = (reg&3)+(reg>21)*4+(reg==24)+(reg==28)+(reg==32);
@@ -373,7 +318,7 @@ void alloc_reg(struct regstat *cur,int i,signed char reg)
 // Allocate a temporary register.  This is done without regard to
 // dirty status or whether the register we request is on the unneeded list
 // Note: This will only allocate one register, even if called multiple times
-void alloc_reg_temp(struct regstat *cur,int i,signed char reg)
+void alloc_reg_temp(regstat *cur,int i,signed char reg)
 {
   int r,hr;
   int preferred_reg = -1;
@@ -481,7 +426,7 @@ void alloc_reg_temp(struct regstat *cur,int i,signed char reg)
   printf("This shouldn't happen");exit(1);
 }
 // Allocate a specific x86 register.
-void alloc_x86_reg(struct regstat *cur,int i,signed char reg,char hr)
+void alloc_x86_reg(regstat *cur,int i,signed char reg,char hr)
 {
   int n;
   u32 dirty=0;
@@ -502,7 +447,7 @@ void alloc_x86_reg(struct regstat *cur,int i,signed char reg,char hr)
 }
 
 // Alloc cycle count into dedicated register
-void alloc_cc(struct regstat *cur,int i)
+void alloc_cc(regstat *cur,int i)
 {
   alloc_x86_reg(cur,i,CCREG,ESI);
 }
@@ -3048,14 +2993,14 @@ void do_readstub(int n)
 {
   int type = 0, i = 0, rs = 0, addr = 0, rt = 0;
   signed char *i_regmap = NULL;
-  struct regstat *i_regs = NULL;
+  regstat *i_regs = NULL;
   u32 reglist = 0;
   assem_debug("do_readstub %x\n",start+stubs[n][3]*2);
   set_jump_target(stubs[n][1],(int)out);
   type=stubs[n][0];
   i=stubs[n][3];
   rs=stubs[n][4];
-  i_regs=(struct regstat *)stubs[n][5];
+  i_regs=(regstat *)stubs[n][5];
   reglist=stubs[n][7];
   i_regmap=i_regs->regmap;
   addr=get_reg(i_regmap,AGEN1+(i&1));
@@ -3187,7 +3132,7 @@ void inline_readstub(int type, int i, u32 addr, signed char regmap[], int target
 void do_writestub(int n)
 {
   int type = 0, i = 0, rs = 0, addr = 0, rt = 0;
-  struct regstat *i_regs = NULL;
+  regstat *i_regs = NULL;
   signed char *i_regmap = NULL;
   u32 reglist = 0;
   assem_debug("do_writestub %x\n",start+stubs[n][3]*2);
@@ -3195,7 +3140,7 @@ void do_writestub(int n)
   type=stubs[n][0];
   i=stubs[n][3];
   rs=stubs[n][4];
-  i_regs=(struct regstat *)stubs[n][5];
+  i_regs=(regstat *)stubs[n][5];
   reglist=stubs[n][7];
   i_regmap=i_regs->regmap;
   addr=get_reg(i_regmap,AGEN1+(i&1));
@@ -3278,7 +3223,7 @@ void inline_writestub(int type, int i, u32 addr, signed char regmap[], int targe
 void do_rmwstub(int n)
 {
   int type = 0, i = 0, rs = 0, addr = 0;
-  struct regstat *i_regs = NULL;
+  regstat *i_regs = NULL;
   u32 reglist = 0;
   signed char *i_regmap = NULL;
   assem_debug("do_rmwstub %x\n",start+stubs[n][3]*2);
@@ -3286,7 +3231,7 @@ void do_rmwstub(int n)
   type=stubs[n][0];
   i=stubs[n][3];
   rs=stubs[n][4];
-  i_regs=(struct regstat *)stubs[n][5];
+  i_regs=(regstat *)stubs[n][5];
   reglist=stubs[n][7];
   i_regmap=i_regs->regmap;
   addr=get_reg(i_regmap,AGEN1+(i&1));

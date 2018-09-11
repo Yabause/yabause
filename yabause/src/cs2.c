@@ -2407,7 +2407,7 @@ void Cs2SetSectorLength(void) {
  * Calculate Sector Number for commands that fetch and delete sector data
  * @param[in]      bufno      Buffer Number
  * @param[in]      sectoffset Sector Offset
- * @param[in/out]  sectnum    Sector Number
+ * @param[in,out]  sectnum    Sector Number
  */
 static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectnum)
 {

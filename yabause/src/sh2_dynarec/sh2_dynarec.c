@@ -31,118 +31,8 @@
 #include "../yabause.h"
 #include "sh2_dynarec.h"
 
-#ifdef __i386__
-#include "assem_x86.h"
-#endif
-#ifdef __x86_64__
-#include "assem_x64.h"
-#endif
-#ifdef __arm__
-#include "assem_arm.h"
-#endif
-
-#define MAXBLOCK 4096
-#define MAX_OUTPUT_BLOCK_SIZE 262144
-#define CLOCK_DIVIDER 1
-#define SH2_REGS 23
-
-struct regstat
-{
-  signed char regmap_entry[HOST_REGS];
-  signed char regmap[HOST_REGS];
-  u32 wasdirty;
-  u32 dirty;
-  u64 u;
-  u32 wasdoingcp;
-  u32 isdoingcp;
-  u32 cpmap[HOST_REGS];
-  u32 isconst;
-  u32 constmap[SH2_REGS];
-};
-
-struct ll_entry
-{
-  u32 vaddr;
-  u32 reg32;
-  void *addr;
-  struct ll_entry *next;
-};
-
-  u32 start;
-  u16 *source;
-  void *alignedsource;
-  u32 pagelimit;
-  char insn[MAXBLOCK][10];
-  unsigned char itype[MAXBLOCK];
-  unsigned char opcode[MAXBLOCK];
-  unsigned char opcode2[MAXBLOCK];
-  unsigned char opcode3[MAXBLOCK];
-  unsigned char addrmode[MAXBLOCK];
-  unsigned char bt[MAXBLOCK];
-  signed char rs1[MAXBLOCK];
-  signed char rs2[MAXBLOCK];
-  signed char rs3[MAXBLOCK];
-  signed char rt1[MAXBLOCK];
-  signed char rt2[MAXBLOCK];
-  unsigned char us1[MAXBLOCK];
-  unsigned char us2[MAXBLOCK];
-  unsigned char dep1[MAXBLOCK];
-  unsigned char dep2[MAXBLOCK];
-  signed char lt1[MAXBLOCK];
-  int imm[MAXBLOCK];
-  u32 ba[MAXBLOCK];
-  char is_ds[MAXBLOCK];
-  char ooo[MAXBLOCK];
-  u64 unneeded_reg[MAXBLOCK];
-  u64 branch_unneeded_reg[MAXBLOCK];
-  signed char regmap_pre[MAXBLOCK][HOST_REGS];
-  u32 cpmap[MAXBLOCK][HOST_REGS];
-  struct regstat regs[MAXBLOCK];
-  struct regstat branch_regs[MAXBLOCK];
-  signed char minimum_free_regs[MAXBLOCK];
-  u32 needed_reg[MAXBLOCK];
-  u32 wont_dirty[MAXBLOCK];
-  u32 will_dirty[MAXBLOCK];
-  int cycles[MAXBLOCK];
-  int ccadj[MAXBLOCK];
-  int slen;
-  pointer instr_addr[MAXBLOCK];
-  u32 link_addr[MAXBLOCK][3];
-  int linkcount;
-  u32 stubs[MAXBLOCK*3][8];
-  int stubcount;
-  pointer ccstub_return[MAXBLOCK];
-  u32 literals[1024][2];
-  int literalcount;
-  int is_delayslot;
-  u8 *out;
-  struct ll_entry *jump_in[2048];
-  struct ll_entry *jump_out[2048];
-  struct ll_entry *jump_dirty[2048];
-  ALIGNED(16) u32 hash_table[65536][4];
-  ALIGNED(16) char shadow[2097152];
-  char *copy;
-  int expirep;
-  unsigned int stop_after_jal;
-  //char invalid_code[0x100000];
-  char cached_code[0x20000];
-  char cached_code_words[2048*128];
-  u32 recent_writes[8];
-  u32 recent_write_index=0;
-  unsigned int slave;
-  u32 invalidate_count;
-  extern int master_reg[22];
-  extern int master_cc;
-  extern int master_pc; // Virtual PC
-  extern void * master_ip; // Translated PC
-  extern int slave_reg[22];
-  extern int slave_cc;
-  extern int slave_pc; // Virtual PC
-  extern void * slave_ip; // Translated PC
-  extern u8 restore_candidate[512];
-
-  /* registers that may be allocated */
-  /* 0-15 gpr */
+/* registers that may be allocated */
+/* 0-15 gpr */
 #define SR   16 // Status register, including T bit
 #define GBR  17 // Global base register
 #define VBR  18 // Vector base register
@@ -165,13 +55,13 @@ struct ll_entry
 #define MGEN1 32 // Maptable address generation temporary register
 #define MGEN2 33 // Maptable address generation temporary register
 
-  /* instruction types */
+/* instruction types */
 #define NOP 0     // No operation
 #define LOAD 1    // Load
 #define STORE 2   // Store
 #define RMW 3     // Read-Modify-Write
 #define PCREL 4   // PC-relative Load
-#define MOV 5     // Move 
+#define MOV 5     // Move
 #define ALU 6     // Arithmetic/logic
 #define MULTDIV 7 // Multiply/divide
 #define SHIFTIMM 8// Shift by immediate
@@ -189,7 +79,7 @@ struct ll_entry
 #define DATA 20   // Constant pool data not decoded as instructions
 #define BIOS 21   // Emulate BIOS function
 
-  /* addressing modes */
+/* addressing modes */
 #define REGIND 1  // @Rn
 #define POSTINC 2 // @Rn+
 #define PREDEC 3  // @-Rm
@@ -198,7 +88,7 @@ struct ll_entry
 #define GBRDISP 6 // @(disp,GBR)
 #define REGDISP 7 // @(disp,Rn)
 
-  /* stubs */
+/* stubs */
 #define CC_STUB 1
 #define FP_STUB 2
 #define LOADB_STUB 3
@@ -213,37 +103,10 @@ struct ll_entry
 #define RMWX_STUB 12
 #define RMWO_STUB 13
 
-  /* branch codes */
+/* branch codes */
 #define TAKEN 1
 #define NOTTAKEN 2
 #define NODS 3
-
-// asm linkage
-int sh2_recompile_block(int addr);
-void *get_addr_ht(u32 vaddr);
-void get_bounds(pointer addr,u32 *start,u32 *end);
-void invalidate_addr(u32 addr);
-void remove_hash(int vaddr);
-void dyna_linker();
-void verify_code();
-void cc_interrupt();
-void cc_interrupt_master();
-void slave_entry();
-void div1();
-void macl();
-void macw();
-void master_handle_bios();
-void slave_handle_bios();
-
-// Needed by assembler
-void wb_register(signed char r,signed char regmap[],u32 dirty);
-void wb_dirtys(signed char i_regmap[],u32 i_dirty);
-void wb_needed_dirtys(signed char i_regmap[],u32 i_dirty,int addr);
-void load_regs(signed char entry[],signed char regmap[],int rs1,int rs2,int rs3);
-void load_all_regs(signed char i_regmap[]);
-void load_needed_regs(signed char i_regmap[],signed char next_regmap[]);
-void load_regs_entry(int t);
-void load_all_consts(signed char regmap[],u32 dirty,int i);
 
 int tracedebug=0;
 
@@ -394,7 +257,7 @@ int count_free_regs(signed char regmap[])
   return count;
 }
 
-void dirty_reg(struct regstat *cur,signed char reg)
+void dirty_reg(regstat *cur,signed char reg)
 {
   int hr;
   if(reg<0) return;
@@ -405,7 +268,7 @@ void dirty_reg(struct regstat *cur,signed char reg)
   }
 }
 
-void set_const(struct regstat *cur,signed char reg,u64 value)
+void set_const(regstat *cur,signed char reg,u64 value)
 {
   int hr;
   if(reg<0) return;
@@ -421,7 +284,7 @@ void set_const(struct regstat *cur,signed char reg,u64 value)
   }
 }
 
-void clear_const(struct regstat *cur,signed char reg)
+void clear_const(regstat *cur,signed char reg)
 {
   int hr;
   if(reg<0) return;
@@ -432,7 +295,7 @@ void clear_const(struct regstat *cur,signed char reg)
   }
 }
 
-int is_const(struct regstat *cur,signed char reg)
+int is_const(regstat *cur,signed char reg)
 {
   int hr;
   if(reg<0) return 0;
@@ -443,7 +306,7 @@ int is_const(struct regstat *cur,signed char reg)
   }
   return 0;
 }
-u64 get_const(struct regstat *cur,signed char reg)
+u64 get_const(regstat *cur,signed char reg)
 {
   int hr;
   if(reg<0) return 0;
@@ -670,7 +533,7 @@ int loop_reg(int i, int r, int hr)
 
 
 // Allocate every register, preserving source/target regs
-void alloc_all(struct regstat *cur,int i)
+void alloc_all(regstat *cur,int i)
 {
   int hr;
   
@@ -709,14 +572,15 @@ static pointer map_address(u32 address)
   return (pointer)BiosRom+(address&0x8FFFF);
 }
 
-#ifdef __i386__
+#if defined(TARGET_CPU_X86) || defined(__i386__)
 #include "assem_x86.c"
-#endif
-#ifdef __x86_64__
+#elif defined(TARGET_CPU_X86_64) || defined(__x86_64__)
 #include "assem_x64.c"
-#endif
-#ifdef __arm__
+// assem_arm64 isn't available, but will build on AMR64 this way
+#elif defined(TARGET_CPU_ARM) || defined(TARGET_CPU_ARM64) || defined (__arm__)
 #include "assem_arm.c"
+//#elif defined(TARGET_CPU_ARM64) || defined (__arm64__)
+//#include "assem_arm64.c"
 #endif
 
 // Add virtual address mapping to linked list
@@ -1230,7 +1094,7 @@ void do_consts(int i,u32 *isconst,u32 *constmap)
   }
 }
 
-void mov_alloc(struct regstat *current,int i)
+void mov_alloc(regstat *current,int i)
 {
   // Note: Don't need to actually alloc the source registers
   // TODO: Constant propagation
@@ -1241,7 +1105,7 @@ void mov_alloc(struct regstat *current,int i)
   dirty_reg(current,rt1[i]);
 }
 
-void shiftimm_alloc(struct regstat *current,int i)
+void shiftimm_alloc(regstat *current,int i)
 {
   clear_const(current,rs1[i]);
   clear_const(current,rt1[i]);
@@ -1269,7 +1133,7 @@ void shiftimm_alloc(struct regstat *current,int i)
   }
 }
 
-void alu_alloc(struct regstat *current,int i)
+void alu_alloc(regstat *current,int i)
 {
   if(opcode[i]==2) {
     alloc_reg(current,i,rs1[i]);
@@ -1346,7 +1210,7 @@ void alu_alloc(struct regstat *current,int i)
   dirty_reg(current,rt1[i]);
 }
 
-void imm8_alloc(struct regstat *current,int i)
+void imm8_alloc(regstat *current,int i)
 {
   //if(rs1[i]>=0&&needed_again(rs1[i],i)) alloc_reg(current,i,rs1[i]);
   //else lt1[i]=rs1[i];
@@ -1388,7 +1252,7 @@ void imm8_alloc(struct regstat *current,int i)
   if(rt1[i]>=0&&rt1[i]!=TBIT) dirty_reg(current,rt1[i]);
 }
 
-void ext_alloc(struct regstat *current,int i)
+void ext_alloc(regstat *current,int i)
 {
   // Note: Don't need to actually alloc the source registers
   // FIXME: Constant propagation
@@ -1399,7 +1263,7 @@ void ext_alloc(struct regstat *current,int i)
   dirty_reg(current,rt1[i]);
 }
 
-void flags_alloc(struct regstat *current,int i)
+void flags_alloc(regstat *current,int i)
 {
   if(opcode2[i]==8) { // CLRT/SETT
     alloc_reg(current,i,SR);
@@ -1413,7 +1277,7 @@ void flags_alloc(struct regstat *current,int i)
   }
 }
 
-void load_alloc(struct regstat *current,int i)
+void load_alloc(regstat *current,int i)
 {
   int hr;
   clear_const(current,rt1[i]);
@@ -1461,7 +1325,7 @@ void load_alloc(struct regstat *current,int i)
   minimum_free_regs[i]++;
 }
 
-void store_alloc(struct regstat *current,int i)
+void store_alloc(regstat *current,int i)
 {
   int hr;
   //printf("%x: eax=%d ecx=%d edx=%d ebx=%d ebp=%d esi=%d edi=%d\n",start+i*2,current->regmap[0],current->regmap[1],current->regmap[2],current->regmap[3],current->regmap[5],current->regmap[6],current->regmap[7]);
@@ -1502,7 +1366,7 @@ void store_alloc(struct regstat *current,int i)
   minimum_free_regs[i]++;
 }
 
-void rmw_alloc(struct regstat *current,int i)
+void rmw_alloc(regstat *current,int i)
 {
   //printf("%x: eax=%d ecx=%d edx=%d ebx=%d ebp=%d esi=%d edi=%d\n",start+i*2,current->regmap[0],current->regmap[1],current->regmap[2],current->regmap[3],current->regmap[5],current->regmap[6],current->regmap[7]);
   if(addrmode[i]==GBRIND) {
@@ -1530,7 +1394,7 @@ void rmw_alloc(struct regstat *current,int i)
   minimum_free_regs[i]=1;
 }
 
-void pcrel_alloc(struct regstat *current,int i)
+void pcrel_alloc(regstat *current,int i)
 {
   u32 addr;
   alloc_reg(current,i,rt1[i]);
@@ -1554,7 +1418,7 @@ void pcrel_alloc(struct regstat *current,int i)
 }
 
 #ifndef multdiv_alloc
-void multdiv_alloc(struct regstat *current,int i)
+void multdiv_alloc(regstat *current,int i)
 {
   //printf("%x: eax=%d ecx=%d edx=%d ebx=%d ebp=%d esi=%d edi=%d\n",start+i*2,current->regmap[0],current->regmap[1],current->regmap[2],current->regmap[3],current->regmap[5],current->regmap[6],current->regmap[7]);
   if(opcode[i]==0) {
@@ -1639,7 +1503,7 @@ void multdiv_alloc(struct regstat *current,int i)
 }
 #endif
 
-void complex_alloc(struct regstat *current,int i)
+void complex_alloc(regstat *current,int i)
 {
   if(opcode[i]==3&&opcode2[i]==4) { // DIV1
     #if defined(__i386__) || defined(__x86_64__)
@@ -1722,7 +1586,7 @@ void complex_alloc(struct regstat *current,int i)
   minimum_free_regs[i]=HOST_REGS;
 }
 
-void system_alloc(struct regstat *current,int i)
+void system_alloc(regstat *current,int i)
 {
   alloc_cc(current,i);
   dirty_reg(current,CCREG);
@@ -1738,7 +1602,7 @@ void system_alloc(struct regstat *current,int i)
   current->isdoingcp=0;
 }
 
-void delayslot_alloc(struct regstat *current,int i)
+void delayslot_alloc(regstat *current,int i)
 {
   switch(itype[i]) {
     case UJUMP:
@@ -1893,7 +1757,7 @@ void memdebug(int i)
 }
 #endif
 
-void alu_assemble(int i,struct regstat *i_regs)
+void alu_assemble(int i,regstat *i_regs)
 {
   if(opcode[i]==2) {
     if(opcode2[i]>=9&&opcode2[i]<=11) { // AND/XOR/OR
@@ -2005,7 +1869,7 @@ void alu_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void imm8_assemble(int i,struct regstat *i_regs)
+void imm8_assemble(int i,regstat *i_regs)
 {
   if(opcode[i]==0x7) { // ADD
     signed char s,t;
@@ -2105,7 +1969,7 @@ void imm8_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void shiftimm_assemble(int i,struct regstat *i_regs)
+void shiftimm_assemble(int i,regstat *i_regs)
 {
   if(opcode[i]==4) // SHL/SHR
   {
@@ -2184,7 +2048,7 @@ void shiftimm_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void load_assemble(int i,struct regstat *i_regs)
+void load_assemble(int i,regstat *i_regs)
 {
   int dummy;
   int s,o,t,addr,map=-1,cache=-1;
@@ -2374,7 +2238,7 @@ void load_assemble(int i,struct regstat *i_regs)
   }*/
 }
 
-void store_assemble(int i,struct regstat *i_regs)
+void store_assemble(int i,regstat *i_regs)
 {
   int s,t,o,map=-1,cache=-1;
   int addr,temp;
@@ -2521,7 +2385,7 @@ void store_assemble(int i,struct regstat *i_regs)
   }*/
 }
 
-void rmw_assemble(int i,struct regstat *i_regs)
+void rmw_assemble(int i,regstat *i_regs)
 {
   int s,o,t,addr,map=-1,cache=-1;
   int jaddr=0;
@@ -2586,7 +2450,7 @@ void rmw_assemble(int i,struct regstat *i_regs)
     add_stub(type,jaddr,(int)out,i,addr,(int)i_regs,ccadj[i],reglist);
 }
 
-void pcrel_assemble(int i,struct regstat *i_regs)
+void pcrel_assemble(int i,regstat *i_regs)
 {
   int t,addr,map=-1,cache=-1;
   int offset;
@@ -2647,7 +2511,7 @@ void pcrel_assemble(int i,struct regstat *i_regs)
 
 //extern void debug_multiplication(int m,int n,int h,int l);
 #ifndef multdiv_assemble
-void multdiv_assemble(int i,struct regstat *i_regs)
+void multdiv_assemble(int i,regstat *i_regs)
 {
   if(opcode[i]==0) {
     if(opcode2[i]==7) // MUL.L
@@ -2751,7 +2615,7 @@ void multdiv_assemble(int i,struct regstat *i_regs)
 }
 #endif
 
-void mov_assemble(int i,struct regstat *i_regs)
+void mov_assemble(int i,regstat *i_regs)
 {
   signed char s,t;
   t=get_reg(i_regs->regmap,rt1[i]);
@@ -2763,7 +2627,7 @@ void mov_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void ext_assemble(int i,struct regstat *i_regs)
+void ext_assemble(int i,regstat *i_regs)
 {
   signed char s,t;
   t=get_reg(i_regs->regmap,rt1[i]);
@@ -2787,7 +2651,7 @@ void ext_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void flags_assemble(int i,struct regstat *i_regs)
+void flags_assemble(int i,regstat *i_regs)
 {
   signed char sr,t;
   sr=get_reg(i_regs->regmap,SR);
@@ -2802,7 +2666,7 @@ void flags_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void complex_assemble(int i,struct regstat *i_regs)
+void complex_assemble(int i,regstat *i_regs)
 {
   if(opcode[i]==3&&opcode2[i]==4) { // DIV1
     emit_call((pointer)div1);
@@ -2861,7 +2725,7 @@ void complex_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void ds_assemble(int i,struct regstat *i_regs)
+void ds_assemble(int i,regstat *i_regs)
 {
   is_delayslot=1;
   switch(itype[i]) {
@@ -3017,7 +2881,7 @@ static void loop_preload(signed char pre[],signed char entry[])
 }
 
 // Generate address for load/store instruction
-void address_generation(int i,struct regstat *i_regs,signed char entry[])
+void address_generation(int i,regstat *i_regs,signed char entry[])
 {
   if(itype[i]==LOAD||itype[i]==STORE||itype[i]==RMW) {
     int rs,ri;
@@ -3711,13 +3575,13 @@ void do_ccstub(int n)
 
 void add_to_linker(int addr,int target,int ext)
 {
-  link_addr[linkcount][0]=addr;
-  link_addr[linkcount][1]=target|slave;
-  link_addr[linkcount][2]=ext;  
+  yab_link_addr[linkcount][0]=addr;
+  yab_link_addr[linkcount][1]=target|slave;
+  yab_link_addr[linkcount][2]=ext;  
   linkcount++;
 }
 
-void ujump_assemble(int i,struct regstat *i_regs)
+void ujump_assemble(int i,regstat *i_regs)
 {
   u64 bc_unneeded;
   int cc,adj;
@@ -3821,7 +3685,7 @@ void ujump_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void rjump_assemble(int i,struct regstat *i_regs)
+void rjump_assemble(int i,regstat *i_regs)
 {
   signed char *i_regmap=i_regs->regmap;
   int temp;
@@ -4047,7 +3911,7 @@ void rjump_assemble(int i,struct regstat *i_regs)
   #endif
 }
 
-void cjump_assemble(int i,struct regstat *i_regs)
+void cjump_assemble(int i,regstat *i_regs)
 {
   signed char *i_regmap=i_regs->regmap;
   int cc;
@@ -4165,7 +4029,7 @@ void cjump_assemble(int i,struct regstat *i_regs)
   } // (!unconditional)
 }
 
-void sjump_assemble(int i,struct regstat *i_regs)
+void sjump_assemble(int i,regstat *i_regs)
 {
   signed char *i_regmap=i_regs->regmap;
   int cc;
@@ -4387,7 +4251,7 @@ void sjump_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void system_assemble(int i,struct regstat *i_regs)
+void system_assemble(int i,regstat *i_regs)
 {
   signed char ccreg=get_reg(i_regs->regmap,CCREG);
   assert(ccreg==HOST_CCREG);
@@ -4468,7 +4332,7 @@ void system_assemble(int i,struct regstat *i_regs)
   }
 }
 
-void bios_assemble(int i,struct regstat *i_regs)
+void bios_assemble(int i,regstat *i_regs)
 {
   signed char ccreg=get_reg(i_regs->regmap,CCREG);
   assert(ccreg==HOST_CCREG);
@@ -5251,7 +5115,7 @@ void sh2_dynarec_init()
   memset(mini_ht_master,-1,sizeof(mini_ht_master));
   memset(mini_ht_slave,-1,sizeof(mini_ht_slave));
   memset(restore_candidate,0,sizeof(restore_candidate));
-  copy=shadow;
+  copy=dyn_shadow;
   expirep=16384; // Expiry pointer, +2 blocks
   literalcount=0;
   stop_after_jal=0;
@@ -6171,7 +6035,7 @@ int sh2_recompile_block(int addr)
   /* Pass 3 - Register allocation */
 
   {
-  struct regstat current; // Current register allocations/status
+  regstat current; // Current register allocations/status
   int cc=0;
   current.dirty=0;
   current.u=unneeded_reg[0];
@@ -6232,7 +6096,7 @@ int sh2_recompile_block(int addr)
     }
     is_ds[i]=ds;
     if(ds) {
-      struct regstat temp;
+      regstat temp;
       ds=0; // Skip delay slot, already allocated as part of branch
       // ...but we need to alloc it in case something jumps here
       if(i+1<slen) {
@@ -8007,34 +7871,34 @@ int sh2_recompile_block(int addr)
   u32 index;
   for(i=0;i<linkcount;i++)
   {
-    assem_debug("%8x -> %8x\n",link_addr[i][0],link_addr[i][1]);
+    assem_debug("%8x -> %8x\n",yab_link_addr[i][0],yab_link_addr[i][1]);
     literal_pool(64);
-    if(!link_addr[i][2])
+    if(!yab_link_addr[i][2])
     {
       void *stub=out;
-      void *addr=check_addr(link_addr[i][1]);
-      emit_extjump(link_addr[i][0],link_addr[i][1]);
+      void *addr=check_addr(yab_link_addr[i][1]);
+      emit_extjump(yab_link_addr[i][0],yab_link_addr[i][1]);
       if(addr) {
-        set_jump_target(link_addr[i][0],(int)addr);
-        add_link(link_addr[i][1],stub);
+        set_jump_target(yab_link_addr[i][0],(int)addr);
+        add_link(yab_link_addr[i][1],stub);
       }
-      else set_jump_target(link_addr[i][0],(int)stub);
+      else set_jump_target(yab_link_addr[i][0],(int)stub);
     }
     else
     {
       // Internal branch
-      int target=(link_addr[i][1]-start)>>1;
+      int target=(yab_link_addr[i][1]-start)>>1;
       assert(target>=0&&target<slen);
       assert(instr_addr[target]);
       //#ifdef CORTEX_A8_BRANCH_PREDICTION_HACK
-      //set_jump_target_fillslot(link_addr[i][0],instr_addr[target],link_addr[i][2]>>1);
+      //set_jump_target_fillslot(yab_link_addr[i][0],instr_addr[target],yab_link_addr[i][2]>>1);
       //#else
-      set_jump_target(link_addr[i][0],instr_addr[target]);
+      set_jump_target(yab_link_addr[i][0],instr_addr[target]);
       //#endif
     }
   }
   // External Branch Targets (jump_in)
-  if(copy+slen*2+4>shadow+sizeof(shadow)) copy=shadow;
+  if(copy+slen*2+4>dyn_shadow+sizeof(dyn_shadow)) copy=dyn_shadow;
   for(i=0;i<slen;i++)
   {
     if(bt[i]||i==0)
@@ -8074,7 +7938,7 @@ int sh2_recompile_block(int addr)
   if(((u32)out)&7) emit_addnop(13);
   #endif
   assert((pointer)out-beginning<MAX_OUTPUT_BLOCK_SIZE);
-  //printf("shadow buffer: %x-%x\n",(int)copy,(int)copy+slen*4);
+  //printf("dyn_shadow buffer: %x-%x\n",(int)copy,(int)copy+slen*4);
   alignedlen=((((u32)source)+slen*2+2)&~2)-(u32)alignedsource;
   memcpy(copy,alignedsource,alignedlen);
   copy+=alignedlen;

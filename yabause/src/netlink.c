@@ -748,7 +748,6 @@ void NetlinkDeInit(void)
 /*!
  * Netlink execution cycle
  * @param[in]  timing usec to execute
- * \return 0
  */
 void NetlinkExec(u32 timing)
 {

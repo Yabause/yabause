@@ -18,82 +18,8 @@
  *   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.          *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-extern void *dynarec_local;
-extern u32 memory_map[1048576];
-ALIGNED(8) extern u32 mini_ht_master[32][2];
-ALIGNED(8) extern u32 mini_ht_slave[32][2];
-ALIGNED(4) extern u8 restore_candidate[512];
-
-void FASTCALL WriteInvalidateLong(u32 addr, u32 val);
-void FASTCALL WriteInvalidateWord(u32 addr, u32 val);
-void FASTCALL WriteInvalidateByte(u32 addr, u32 val);
-void FASTCALL WriteInvalidateByteSwapped(u32 addr, u32 val);
-
-void jump_vaddr_r0_master();
-void jump_vaddr_r1_master();
-void jump_vaddr_r2_master();
-void jump_vaddr_r3_master();
-void jump_vaddr_r4_master();
-void jump_vaddr_r5_master();
-void jump_vaddr_r6_master();
-void jump_vaddr_r7_master();
-void jump_vaddr_r8_master();
-void jump_vaddr_r9_master();
-void jump_vaddr_r12_master();
-void jump_vaddr_r0_slave();
-void jump_vaddr_r1_slave();
-void jump_vaddr_r2_slave();
-void jump_vaddr_r3_slave();
-void jump_vaddr_r4_slave();
-void jump_vaddr_r5_slave();
-void jump_vaddr_r6_slave();
-void jump_vaddr_r7_slave();
-void jump_vaddr_r8_slave();
-void jump_vaddr_r9_slave();
-void jump_vaddr_r12_slave();
-
-const pointer jump_vaddr_reg[2][16] = {
-  {
-    (pointer)jump_vaddr_r0_master,
-    (pointer)jump_vaddr_r1_master,
-    (pointer)jump_vaddr_r2_master,
-    (pointer)jump_vaddr_r3_master,
-    (pointer)jump_vaddr_r4_master,
-    (pointer)jump_vaddr_r5_master,
-    (pointer)jump_vaddr_r6_master,
-    (pointer)jump_vaddr_r7_master,
-    (pointer)jump_vaddr_r8_master,
-    (pointer)jump_vaddr_r9_master,
-    0,
-    0,
-    (pointer)jump_vaddr_r12_master,
-    0,
-    0,
-    0
-  },{
-    (pointer)jump_vaddr_r0_slave,
-    (pointer)jump_vaddr_r1_slave,
-    (pointer)jump_vaddr_r2_slave,
-    (pointer)jump_vaddr_r3_slave,
-    (pointer)jump_vaddr_r4_slave,
-    (pointer)jump_vaddr_r5_slave,
-    (pointer)jump_vaddr_r6_slave,
-    (pointer)jump_vaddr_r7_slave,
-    (pointer)jump_vaddr_r8_slave,
-    (pointer)jump_vaddr_r9_slave,
-    0,
-    0,
-    (pointer)jump_vaddr_r12_slave,
-    0,
-    0,
-    0
-  }
-};
-
-u32 needs_clear_cache[1<<(TARGET_SIZE_2-17)];
-
-//#define JUMP_TABLE_SIZE (sizeof(jump_table_symbols)*2)
-#define JUMP_TABLE_SIZE 0
+#include "assert.h"
+#include "assem_arm.h"
 
 /* Linker */
 
@@ -162,11 +88,12 @@ void set_jump_target_fillslot(int addr,u32 target,int copy)
 }
 
 /* Literal pool */
-add_literal(int addr,int val)
+int add_literal(int addr,int val)
 {
   literals[literalcount][0]=addr;
   literals[literalcount][1]=val;
-  literalcount++; 
+  literalcount++;
+  return literalcount;
 } 
 
 void *kill_pointer(void *stub)
@@ -282,7 +209,7 @@ void get_bounds(pointer addr,u32 *start,u32 *end)
 
 // Note: registers are allocated clean (unmodified state)
 // if you intend to modify the register, you must call dirty_reg().
-void alloc_reg(struct regstat *cur,int i,signed char reg)
+void alloc_reg(regstat *cur,int i,signed char reg)
 {
   int r,hr;
   int preferred_reg = (reg&7);
@@ -439,7 +366,7 @@ void alloc_reg(struct regstat *cur,int i,signed char reg)
 // Allocate a temporary register.  This is done without regard to
 // dirty status or whether the register we request is on the unneeded list
 // Note: This will only allocate one register, even if called multiple times
-void alloc_reg_temp(struct regstat *cur,int i,signed char reg)
+void alloc_reg_temp(regstat *cur,int i,signed char reg)
 {
   int r,hr;
   int preferred_reg = -1;
@@ -546,7 +473,7 @@ void alloc_reg_temp(struct regstat *cur,int i,signed char reg)
   printf("This shouldn't happen");exit(1);
 }
 // Allocate a specific ARM register.
-void alloc_arm_reg(struct regstat *cur,int i,signed char reg,char hr)
+void alloc_arm_reg(regstat *cur,int i,signed char reg,char hr)
 {
   int n;
   u32 dirty=0;
@@ -567,7 +494,7 @@ void alloc_arm_reg(struct regstat *cur,int i,signed char reg,char hr)
 }
 
 // Alloc cycle count into dedicated register
-void alloc_cc(struct regstat *cur,int i)
+void alloc_cc(regstat *cur,int i)
 {
   alloc_arm_reg(cur,i,CCREG,HOST_CCREG);
 }
@@ -2764,7 +2691,7 @@ void do_readstub(int n)
   int type=stubs[n][0];
   int i=stubs[n][3];
   int rs=stubs[n][4];
-  struct regstat *i_regs=(struct regstat *)stubs[n][5];
+  regstat *i_regs=(regstat *)stubs[n][5];
   u32 reglist=stubs[n][7];
   signed char *i_regmap=i_regs->regmap;
   int addr=get_reg(i_regmap,AGEN1+(i&1));
@@ -2889,7 +2816,7 @@ void do_writestub(int n)
   int type=stubs[n][0];
   int i=stubs[n][3];
   int rs=stubs[n][4];
-  struct regstat *i_regs=(struct regstat *)stubs[n][5];
+  regstat *i_regs=(regstat *)stubs[n][5];
   u32 reglist=stubs[n][7];
   signed char *i_regmap=i_regs->regmap;
   int addr=get_reg(i_regmap,AGEN1+(i&1));
@@ -2963,7 +2890,7 @@ void do_rmwstub(int n)
   int type=stubs[n][0];
   int i=stubs[n][3];
   int rs=stubs[n][4];
-  struct regstat *i_regs=(struct regstat *)stubs[n][5];
+  regstat *i_regs=(regstat *)stubs[n][5];
   u32 reglist=stubs[n][7];
   signed char *i_regmap=i_regs->regmap;
   int addr=get_reg(i_regmap,AGEN1+(i&1));
@@ -3138,6 +3065,7 @@ int gen_orig_addr_w(int ar, int map) {
     assem_debug("sub %s,%s,%s lsl #2\n",regname[ar],regname[ar],regname[map]);
     output_w32(0xe0400100|rd_rn_rm(ar,ar,map));
   }
+  return map;
 }
 
 // Generate the address of the memory_map entry, relative to dynarec_local

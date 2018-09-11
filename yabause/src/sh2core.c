@@ -280,9 +280,9 @@ void SH2Reset(SH2_struct *context)
 
 void SH2PowerOn(SH2_struct *context) {
    SH2Interface_struct *core=context->core;
-   u32 VBR = core->GetVBR(context);
-   core->SetPC(context, context->MappedMemoryReadLong(context, VBR));
-   core->SetGPR(context, 15, context->MappedMemoryReadLong(context, VBR+4));
+   u32 mVBR = core->GetVBR(context);
+   core->SetPC(context, context->MappedMemoryReadLong(context, mVBR));
+   core->SetGPR(context, 15, context->MappedMemoryReadLong(context, mVBR+4));
 }
 
 //////////////////////////////////////////////////////////////////////////////

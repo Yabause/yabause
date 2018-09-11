@@ -1,11 +1,7 @@
 matrix:
   include:
-
-    # linux gcc
     - compiler: gcc
       env: testenv="linux gcc"
-
-    # linux gcc 6
     - compiler: gcc
       sudo: true
       dist: trusty
@@ -24,20 +20,14 @@ matrix:
       before_script:
         - export CC=gcc-6
         - export CXX=g++-6
-
-    # linux clang
     - compiler: clang
       env: testenv="linux clang"
-
-    # os x cocoa port
     - language: objective-c
       env: testenv="os x cocoa port"
       os: osx
       compiler: clang
       before_script:
         - cd ../src
-
-        # enable cmake to find x11 and xrandr
         - echo 'INCLUDE_DIRECTORIES("/opt/X11/include")' > temp.txt
         - echo 'LINK_DIRECTORIES("/opt/X11/lib")' >> temp.txt
         - cat temp.txt CMakeLists.txt > temp2.txt
@@ -48,11 +38,7 @@ matrix:
         - cmake -DCMAKE_BUILD_TYPE=Release ..
         - make
       after_success:
-        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-mac
-        #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-mac.zip
-        #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-mac.zip
-
-    # os x qt port
+        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-v${GIT_RELEASE_VERSION}.${TRAVIS_BUILD_NUMBER}-mac
     - os: osx
       env: testenv="os x qt port"
       compiler: clang
@@ -60,20 +46,16 @@ matrix:
         - brew install qt5 sdl2
         - cmake -DCMAKE_PREFIX_PATH=/usr/local/Cellar/qt5/5.3.2 -DYAB_PORTS=qt -DCMAKE_BUILD_TYPE=Release ..
         - make
-
-    # mingw-w64 windows cross compile, libyabause only
-    # needs qt and other deps built
     - compiler: gcc
       env: testenv="mingw-w64 windows cross compile, libyabause only"
       addons:
         apt:
           packages:
-            - gcc-mingw-w64-x86-64
-            - g++-mingw-w64-x86-64
-            - binutils-mingw-w64-x86-64
-            - mingw-w64-x86-64-dev
+          - gcc-mingw-w64-x86-64
+          - g++-mingw-w64-x86-64
+          - binutils-mingw-w64-x86-64
+          - mingw-w64-x86-64-dev
       script:
-        # create toolchain file so we can cross compile
         - echo 'SET(CMAKE_SYSTEM_NAME Windows)' > toolchain.cmake
         - echo 'SET(CMAKE_C_COMPILER   x86_64-w64-mingw32-gcc)' >> toolchain.cmake
         - echo 'SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' >> toolchain.cmake
@@ -81,10 +63,7 @@ matrix:
         - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
         - make
       after_success:
-        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-win64
-        #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-win64.zip
-
-    # android port
+        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-v${GIT_RELEASE_VERSION}.${TRAVIS_BUILD_NUMBER}-win64
     - compiler: gcc
       env: testenv="android port"
       jdk: oraclejdk8
@@ -99,61 +78,42 @@ matrix:
       script:
         - wget http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip
         - unzip -q android-ndk-r11c-linux-x86_64.zip
-
         - export ANDROID_NDK_HOME=$(pwd)/android-ndk-r11c/
-
         - cmake -DCMAKE_BUILD_TYPE=Release -DSH2_DYNAREC=OFF -DCMAKE_TOOLCHAIN_FILE=../src/android/armeabi.cmake -DYAB_PORTS=android ..
         - make
-
-      after_success:
-        #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-android.apk
-        #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
-        - export GIT_HASH=$(git rev-parse --short HEAD)
-        - git tag $TRAVIS_BRANCH-$TRAVIS_BUILD_ID
+env:
+ - global:
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    # via the "travis encrypt" command using the project repo's public key
 addons:
   coverity_scan:
     project:
-      name: "Yabause/yabause"
-      description: "Build submitted via Travis CI"
+      name: Yabause/yabause
+      description: Build submitted via Travis CI
     notification_email: guillaume.duhamel@gmail.com
-    build_command_prepend: "cmake ..;"
-    build_command: "make"
+    build_command_prepend: cmake ..;
+    build_command: make
     branch_pattern: coverity_scan
-
-env:
-  global:
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    # via the "travis encrypt" command using the project repo's public key
-    - secure: "sopS90ts/MzipWazyLIeLtDkSWZyV9HeMfR8mIglxWuo76T/mOCT0m4fFPRQeJ1OHO3hWMbpYzKt357B/gwcpbq1/MTm6l+mhkxTKGBmrLpT9bz3GfQcQG3UgtOBp5bgUFc0xB2geN5BYrNCiKExmuMqTFByMKvIjiRWzwiCJflc74iNHTzS4j3y/wfRypnhJ8HIyU9YSwB43QzvtvmwgHRNcQ8Z7Hsto4qs4anEM4fnKWD5yyD+sFFnZIaCtDLXcKAi8HY0ILf2jxO5SLxzv0R9tyBkbXLaaSVfHWR3NOFMJtT4vq1v+XzcD2p1c9PxsxmIsOK2TLpYEx7sCmddO5zSs884turwu1ZDT/1pUQODSaxVpCRlE+NVDoUl6tqa3DGW1rIxzp/NjRzo4WEP2+fAvPVQSKG8l7GuHhgY1m8D0lHesaNXFr6D6hiKDEmMc1/nVKW8ohMPQxC1/g7tfM61zCkDcwc5CEtB6lNxEr3Db1M1u7X0pOCbPTgt0mNJcpGlNNDRnjh4gb+gXmFMAsJKTSy4/i4ExhMvTQqUp9LA7Bu0SdCT74rH5wS2oPw65aiijFDdaItk1ZapASphwzVV4IoKMQ7/6ZWEHccLZQ63a4hSSFD0upn5qcAhGlZwdUc4wYRFayUo5pzxYbui9Zlv/XxYEC5K8vI4EunmcBw="
-
 language: cpp
-
 sudo: false
-
 before_install:
-  # only build the first port if running a coverity scan. otherwise coverity will attempt to analyze all the builds
-  - if ([[ "${TRAVIS_JOB_NUMBER##*.}" != "1" ]] && [[ "${TRAVIS_BRANCH}" == "coverity_scan" ]]); then false ; fi
-  - cd yabause
-  - mkdir build
-  - cd build
-
+- if ([[ "${TRAVIS_JOB_NUMBER##*.}" != "1" ]] && [[ "${TRAVIS_BRANCH}" == "coverity_scan" ]]); then false ; fi
+- cd yabause
+- mkdir build
+- cd build
 script:
-  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON ..
-  - make
-
+- cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON ..
+- make
 before_deploy:
-  # Set up git user name and tag this commit
-  - git config --local user.name {$GIT_USER}
-  - git config --local user.email ${GIT_MAIL}
-
+- git config --local user.name ${GIT_USER}
+- git config --local user.email ${GIT_MAIL}
+- git tag "v${GIT_RELEASE_VERSION}.${TRAVIS_BUILD_NUMBER}"
 deploy:
   provider: releases
-  api_key: ${TRAVIS_KEY}
-  file:
-    - yabause-${GIT_HASH}-mac.zip
-    - yabause-${GIT_HASH}-win64.zip
-    - ./src/android/bin/Yabause-debug.apk
+  api_key:
+    secure: oYQp54i5P9hs27pWaBuhgvVQGnLi7bVxoErINkP1Iu0PPv6jfq9YVS+MvbWi8+VWBrV7F1l+6xe9jeA41P+9y9+KnIgoO9+57H28Apgr9+yrbt/JqtM2o56Yrrpl9PJPaG82aBT5kRMxvPBHpWP0p3aCOcTt9oNM3AEipbyiS1bcA02l7CEqPtVh19gO79jqxXTainkdmFChRVYhlnbIIuSleGuBrtbnnUfwiZ94anqj4hOz+A9EyWIa/FtC2J3s4dV6USXoiiuGuw2ekvXI6YfQyTOdtmWLqmp+LAHdOvnSKMP10JBKy1Vi4EJ8RHt0X160wBLPXsN0mngx1OmPAWwfrBgZ5eu187w1GKQHMHk4/l4exVqNhW3t8mSNMwdCBu80mF3HL/qWfkdKiA1Ryeq/t18usMLNCKRcKgeQ3OsigZSTvDZMg7xLSNOkcZ/XpURR0RABvhUMkRLdsrsnKs8DdLo++dTHWPr01hWXucq+cp3LYtuRLMmJrzzTZbNC7vUC1gnEtypZQ98B92B5hn9hO/+BpY+k1csYPtgPJMofOqliWs79YNe6HsctH4WnEJKXaPWRPse16PzPTT4ENjHZRV407erqvjx56i79BbE44caXHZA0kwQkhxD9WTfvvS+3Bm71BuNs73pV2D+NHNGEy5uJmMeQCrBXo4dghFc=
+  file_glob: true
+  file: 'yabause-v${GIT_RELEASE_VERSION}.${TRAVIS_BUILD_NUMBER}*'
   on:
     repo: b23prodtm/yabause
-    tags: false
-  skip_cleanup: true
+    branch: feature/*

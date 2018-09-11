@@ -4255,16 +4255,6 @@ void memory_map_write_byte(struct Sh1* sh1, u32 addr, u8 data)
 //      update_cr_response_values(addr);
 //      update_transfer_buffer();
       return;
-
-      if (a27)
-      {
-         sh1->ram[addr & 0xFFF] = data;
-      }
-      else
-      {
-         //onchip peripherals
-      }
-      break;
    }
 
    assert(0);
@@ -4289,18 +4279,6 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
       //ignore a27 in area 0
       CDTRACE("rbrom: %08X %02X\n", addr);
       return T2ReadByte(SH1Rom, addr & 0xffff);
-
-  //    if (mode_pins == 2)//010
-  //       return sh1->rom[addr & 0xffff];
-  //    else
-      {
-         //mode 000 or 001
-
-         //external memory space
-
-         addr &= 0x3FFFFF;
-      }
-      break;
    case 1:
       if (!sh1->onchip.bsc.bcr)
       {
@@ -4352,15 +4330,6 @@ u8 memory_map_read_byte(struct Sh1* sh1, u32 addr)
    case 7:
       CDTRACE("rbram: %08X %02X\n", addr);
       return T2ReadByte(sh1->ram, addr & 0x1fff);
-
-      //onchip ram
-      if (a27)
-         return sh1->ram[addr & 0xFFF];
-      else
-      {
-         //onchip peripherals
-      }
-      break;
    }
 
    assert(0);
@@ -4387,18 +4356,6 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
 
       CDTRACE("rwrom: %08X %04X\n", addr);
       return T2ReadWord(SH1Rom, addr & 0xffff);
-
-    //  if (mode_pins == 2)//010
-    //     return sh1->rom[addr & 0xffff];
-    //  else
-   //   {
-         //mode 000 or 001
-
-         //external memory space
-
-         addr &= 0x3FFFFF;
- //     }
-      break;
    case 1:
       if (!sh1->onchip.bsc.bcr)
       {
@@ -4452,14 +4409,6 @@ u16 memory_map_read_word(struct Sh1* sh1, u32 addr)
 
       CDTRACE("rwram: %08X %04X\n", addr);
       return T2ReadWord(sh1->ram, addr & 0x1fff);
-
-      if(a27)
-         return sh1->ram[addr & 0xFFF];
-      else
-      {
-         //onchip peripherals
-      }
-      break;
    }
 
    assert(0);
@@ -4568,16 +4517,6 @@ void memory_map_write_word(struct Sh1* sh1, u32 addr, u16 data)
       //update_cr_response_values(addr);
 
       return;
-
-      if (a27)
-      {
-       //  return sh1->ram[addr & 0xFFF];
-      }
-      else
-      {
-         //onchip peripherals
-      }
-      break;
    }
 
    assert(0);
@@ -4599,18 +4538,6 @@ u32 memory_map_read_long(struct Sh1* sh1, u32 addr)
       //ignore a27 in area 0
 
       return T2ReadLong(SH1Rom, addr & 0xffff);
-
-      //if (mode_pins == 2)//010
-     //    return sh1->rom[addr & 0xffff];
-     // else
-     // {
-         //mode 000 or 001
-
-         //external memory space
-
-         addr &= 0x3FFFFF;
-    //  }
-      break;
    case 1:
       if (!sh1->onchip.bsc.bcr)
       {
@@ -4768,15 +4695,6 @@ void memory_map_write_long(struct Sh1* sh1, u32 addr, u32 data)
       T2WriteLong(sh1->ram, addr & 0x1fff, data);
       //update_cr_response_values(addr);
       return;
-      if (a27)
-      {
-         //  return sh1->ram[addr & 0xFFF];
-      }
-      else
-      {
-         //onchip peripherals
-      }
-      break;
    }
 //triggered by yabauseut
  //  assert(0);

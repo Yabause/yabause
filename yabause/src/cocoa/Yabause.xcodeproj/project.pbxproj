@@ -122,6 +122,23 @@
 		335BC4A720D2CAD10095F719 /* m68kc68k.h in Headers */ = {isa = PBXBuildFile; fileRef = 2A7D399C115BA16100DE3BD1 /* m68kc68k.h */; };
 		335BC4A920D2CB490095F719 /* c68k.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A7D3A41115BA3AF00DE3BD1 /* c68k.c */; };
 		335BC4AA20D2CB490095F719 /* c68kexec.c in Sources */ = {isa = PBXBuildFile; fileRef = 2A7D3A43115BA3AF00DE3BD1 /* c68kexec.c */; settings = {COMPILER_FLAGS = "-O0"; }; };
+		3380FB7920F2887F002ECF59 /* c68k_opD.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6720F2887A002ECF59 /* c68k_opD.inc */; };
+		3380FB7A20F2887F002ECF59 /* c68k_op9.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6820F2887B002ECF59 /* c68k_op9.inc */; };
+		3380FB7B20F2887F002ECF59 /* c68k_opE.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6920F2887B002ECF59 /* c68k_opE.inc */; };
+		3380FB7C20F2887F002ECF59 /* c68k_ini.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6A20F2887B002ECF59 /* c68k_ini.inc */; };
+		3380FB7D20F2887F002ECF59 /* c68k_op5.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6B20F2887B002ECF59 /* c68k_op5.inc */; };
+		3380FB7E20F2887F002ECF59 /* c68k_opA.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6C20F2887C002ECF59 /* c68k_opA.inc */; };
+		3380FB7F20F2887F002ECF59 /* c68k_op3.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6D20F2887C002ECF59 /* c68k_op3.inc */; };
+		3380FB8020F2887F002ECF59 /* c68k_op2.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6E20F2887C002ECF59 /* c68k_op2.inc */; };
+		3380FB8120F2887F002ECF59 /* c68k_op4.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB6F20F2887D002ECF59 /* c68k_op4.inc */; };
+		3380FB8220F2887F002ECF59 /* c68k_opC.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7120F2887D002ECF59 /* c68k_opC.inc */; };
+		3380FB8320F2887F002ECF59 /* c68k_op0.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7220F2887D002ECF59 /* c68k_op0.inc */; };
+		3380FB8420F2887F002ECF59 /* c68k_op6.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7320F2887E002ECF59 /* c68k_op6.inc */; };
+		3380FB8520F2887F002ECF59 /* c68k_op7.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7420F2887E002ECF59 /* c68k_op7.inc */; };
+		3380FB8620F2887F002ECF59 /* c68k_op1.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7520F2887E002ECF59 /* c68k_op1.inc */; };
+		3380FB8720F2887F002ECF59 /* c68k_op8.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7620F2887F002ECF59 /* c68k_op8.inc */; };
+		3380FB8820F2887F002ECF59 /* c68k_opF.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7720F2887F002ECF59 /* c68k_opF.inc */; };
+		3380FB8920F2887F002ECF59 /* c68k_opB.inc in Sources */ = {isa = PBXBuildFile; fileRef = 3380FB7820F2887F002ECF59 /* c68k_opB.inc */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -301,6 +318,24 @@
 		335BC48F20D2C6C60095F719 /* yui.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = yui.h; path = ../yui.h; sourceTree = "<group>"; };
 		335BC49020D2C6C60095F719 /* cd_drive.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = cd_drive.h; path = ../cd_drive.h; sourceTree = "<group>"; };
 		335BC4A820D2CB3C0095F719 /* m68kc68k.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = m68kc68k.c; path = ../m68kc68k.c; sourceTree = "<group>"; };
+		3380FB6720F2887A002ECF59 /* c68k_opD.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_opD.inc; path = ../c68k/c68k_opD.inc; sourceTree = "<group>"; };
+		3380FB6820F2887B002ECF59 /* c68k_op9.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op9.inc; path = ../c68k/c68k_op9.inc; sourceTree = "<group>"; };
+		3380FB6920F2887B002ECF59 /* c68k_opE.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_opE.inc; path = ../c68k/c68k_opE.inc; sourceTree = "<group>"; };
+		3380FB6A20F2887B002ECF59 /* c68k_ini.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_ini.inc; path = ../c68k/c68k_ini.inc; sourceTree = "<group>"; };
+		3380FB6B20F2887B002ECF59 /* c68k_op5.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op5.inc; path = ../c68k/c68k_op5.inc; sourceTree = "<group>"; };
+		3380FB6C20F2887C002ECF59 /* c68k_opA.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_opA.inc; path = ../c68k/c68k_opA.inc; sourceTree = "<group>"; };
+		3380FB6D20F2887C002ECF59 /* c68k_op3.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op3.inc; path = ../c68k/c68k_op3.inc; sourceTree = "<group>"; };
+		3380FB6E20F2887C002ECF59 /* c68k_op2.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op2.inc; path = ../c68k/c68k_op2.inc; sourceTree = "<group>"; };
+		3380FB6F20F2887D002ECF59 /* c68k_op4.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op4.inc; path = ../c68k/c68k_op4.inc; sourceTree = "<group>"; };
+		3380FB7020F2887D002ECF59 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = ../c68k/CMakeLists.txt; sourceTree = "<group>"; };
+		3380FB7120F2887D002ECF59 /* c68k_opC.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_opC.inc; path = ../c68k/c68k_opC.inc; sourceTree = "<group>"; };
+		3380FB7220F2887D002ECF59 /* c68k_op0.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op0.inc; path = ../c68k/c68k_op0.inc; sourceTree = "<group>"; };
+		3380FB7320F2887E002ECF59 /* c68k_op6.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op6.inc; path = ../c68k/c68k_op6.inc; sourceTree = "<group>"; };
+		3380FB7420F2887E002ECF59 /* c68k_op7.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op7.inc; path = ../c68k/c68k_op7.inc; sourceTree = "<group>"; };
+		3380FB7520F2887E002ECF59 /* c68k_op1.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op1.inc; path = ../c68k/c68k_op1.inc; sourceTree = "<group>"; };
+		3380FB7620F2887F002ECF59 /* c68k_op8.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_op8.inc; path = ../c68k/c68k_op8.inc; sourceTree = "<group>"; };
+		3380FB7720F2887F002ECF59 /* c68k_opF.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_opF.inc; path = ../c68k/c68k_opF.inc; sourceTree = "<group>"; };
+		3380FB7820F2887F002ECF59 /* c68k_opB.inc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.pascal; name = c68k_opB.inc; path = ../c68k/c68k_opB.inc; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Yabause-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Yabause-Info.plist"; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* Yabause.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Yabause.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F07E62CA15054DCC00DF8A4E /* titan.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = titan.c; path = ../titan/titan.c; sourceTree = SOURCE_ROOT; };
@@ -569,6 +604,24 @@
 		2A7D3A3E115BA38900DE3BD1 /* C68K */ = {
 			isa = PBXGroup;
 			children = (
+				3380FB6A20F2887B002ECF59 /* c68k_ini.inc */,
+				3380FB7220F2887D002ECF59 /* c68k_op0.inc */,
+				3380FB7520F2887E002ECF59 /* c68k_op1.inc */,
+				3380FB6E20F2887C002ECF59 /* c68k_op2.inc */,
+				3380FB6D20F2887C002ECF59 /* c68k_op3.inc */,
+				3380FB6F20F2887D002ECF59 /* c68k_op4.inc */,
+				3380FB6B20F2887B002ECF59 /* c68k_op5.inc */,
+				3380FB7320F2887E002ECF59 /* c68k_op6.inc */,
+				3380FB7420F2887E002ECF59 /* c68k_op7.inc */,
+				3380FB7620F2887F002ECF59 /* c68k_op8.inc */,
+				3380FB6820F2887B002ECF59 /* c68k_op9.inc */,
+				3380FB6C20F2887C002ECF59 /* c68k_opA.inc */,
+				3380FB7820F2887F002ECF59 /* c68k_opB.inc */,
+				3380FB7120F2887D002ECF59 /* c68k_opC.inc */,
+				3380FB6720F2887A002ECF59 /* c68k_opD.inc */,
+				3380FB6920F2887B002ECF59 /* c68k_opE.inc */,
+				3380FB7720F2887F002ECF59 /* c68k_opF.inc */,
+				3380FB7020F2887D002ECF59 /* CMakeLists.txt */,
 				2A7D3A41115BA3AF00DE3BD1 /* c68k.c */,
 				2A7D3A42115BA3AF00DE3BD1 /* c68k.h */,
 				2A7D3A43115BA3AF00DE3BD1 /* c68kexec.c */,
@@ -771,7 +824,24 @@
 			files = (
 				335BC4A120D2C7860095F719 /* c68k.c in Sources */,
 				335BC4A220D2C7860095F719 /* c68kexec.c in Sources */,
+				3380FB8420F2887F002ECF59 /* c68k_op6.inc in Sources */,
+				3380FB8120F2887F002ECF59 /* c68k_op4.inc in Sources */,
+				3380FB7A20F2887F002ECF59 /* c68k_op9.inc in Sources */,
+				3380FB8520F2887F002ECF59 /* c68k_op7.inc in Sources */,
+				3380FB8320F2887F002ECF59 /* c68k_op0.inc in Sources */,
+				3380FB7D20F2887F002ECF59 /* c68k_op5.inc in Sources */,
+				3380FB7C20F2887F002ECF59 /* c68k_ini.inc in Sources */,
+				3380FB7E20F2887F002ECF59 /* c68k_opA.inc in Sources */,
+				3380FB7920F2887F002ECF59 /* c68k_opD.inc in Sources */,
+				3380FB7F20F2887F002ECF59 /* c68k_op3.inc in Sources */,
+				3380FB8920F2887F002ECF59 /* c68k_opB.inc in Sources */,
+				3380FB8020F2887F002ECF59 /* c68k_op2.inc in Sources */,
+				3380FB8220F2887F002ECF59 /* c68k_opC.inc in Sources */,
+				3380FB8820F2887F002ECF59 /* c68k_opF.inc in Sources */,
+				3380FB8720F2887F002ECF59 /* c68k_op8.inc in Sources */,
 				2A7D3A5A115BA41200DE3BD1 /* gen68k.c in Sources */,
+				3380FB8620F2887F002ECF59 /* c68k_op1.inc in Sources */,
+				3380FB7B20F2887F002ECF59 /* c68k_opE.inc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
