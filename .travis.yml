@@ -2,11 +2,11 @@ matrix:
   include:
 
     # linux gcc
-     - os: linux
-       dist: bionic
-       compiler: gcc
-       env:
-        - QT_BASE=511
+    - os: linux
+      dist: bionic
+      compiler: gcc
+      env:
+       - QT_BASE=511
      
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
