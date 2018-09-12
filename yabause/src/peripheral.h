@@ -372,6 +372,12 @@ void PerCabTestReleased(PerCab_struct * pad);
 void PerCabServicePressed(PerCab_struct * pad);
 void PerCabServiceReleased(PerCab_struct * pad);
 
+void PerCabCoin1Pressed(PerCab_struct * pad);
+void PerCabCoin1Released(PerCab_struct * pad);
+
+void PerCabCoin2Pressed(PerCab_struct * pad);
+void PerCabCoin2Released(PerCab_struct * pad);
+
 void PerCabStart1Pressed(PerCab_struct * pad);
 void PerCabStart1Released(PerCab_struct * pad);
 

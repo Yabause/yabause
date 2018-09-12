@@ -278,6 +278,8 @@ static void KeyInit() {
   PerSetKey(PERPAD_B, PERPAD_B, padbits);
   PerSetKey(PERPAD_C, PERPAD_C, padbits);
   PerSetKey(PERPAD_X, PERPAD_X, padbits);
+  PerSetKey(PERPAD_Y, PERPAD_Y, padbits);
+  PerSetKey(PERPAD_Z, PERPAD_Z, padbits);
 
   PerSetKey(PERJAMMA_COIN1, PERJAMMA_COIN1, padbits );
   PerSetKey(PERJAMMA_COIN2, PERJAMMA_COIN2, padbits );

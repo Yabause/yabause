@@ -304,11 +304,15 @@ int main(int argc, char *argv[]) {
       else if (strstr(argv[i], "--stvbios=")) {
         strncpy(biospath, argv[i] + strlen("--stvbios="), 256);
         yinit.stvbiospath = biospath;
+        yinit.extend_backup = 0;
+        yinit.buppath = "./bupstv.ram";
       }
       else if (strstr(argv[i], "--stvgame=")) {
         strncpy(stvgamepath, argv[i] + strlen("--stvgame="), 256);
         yinit.carttype = CART_ROMSTV;
         yinit.stvgamepath = stvgamepath;
+        yinit.extend_backup = 0;
+        yinit.buppath = "./bupstv.ram";
       }
       // Set sound
       else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {

@@ -112,6 +112,8 @@ PerBaseConfig_struct percabinetbaseconfig[] = {
 	{ PERJAMMA_SERVICE, PERCB(PerCabServicePressed), PERCB(PerCabServiceReleased), NULL, NULL },
 	{ PERJAMMA_START1, PERCB(PerCabStart1Pressed), PERCB(PerCabStart1Released), NULL, NULL },
 	{ PERJAMMA_START2, PERCB(PerCabStart2Pressed), PERCB(PerCabStart2Released), NULL, NULL },
+	{ PERJAMMA_COIN1, PERCB(PerCabCoin1Pressed), PERCB(PerCabCoin1Released), NULL, NULL },
+	{ PERJAMMA_COIN2, PERCB(PerCabCoin2Pressed), PERCB(PerCabCoin2Released), NULL, NULL },
 	{ PERJAMMA_MULTICART, PERCB(PerCabMultiCartPressed), PERCB(PerCabMultiCartReleased), NULL, NULL },
 	{ PERJAMMA_PAUSE, PERCB(PerCabPausePressed), PERCB(PerCabPauseReleased), NULL, NULL },
 	{ PERPAD_A, PERCB(PerCabAPressed), PERCB(PerCabAReleased), NULL, NULL },
@@ -586,6 +588,30 @@ void PerCabZPressed(PerCab_struct * pad) {
 
 void PerCabZReleased(PerCab_struct * pad) {
 //To be done
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabCoin1Released(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabCoin1Pressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabCoin2Released(PerCab_struct * pad) {
+   pad[PORT_C] |= (0x1 << 0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabCoin2Pressed(PerCab_struct * pad) {
+   pad[PORT_C] &= ~(0x1 << 0x1);
 }
 
 //////////////////////////////////////////////////////////////////////////////

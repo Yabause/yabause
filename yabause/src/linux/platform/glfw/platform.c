@@ -205,6 +205,12 @@ int platform_SetupOpenGL(int w, int h, int fullscreen) {
 
    inputMap[GLFW_KEY_G] = PERJAMMA_SERVICE;
    inputMap[GLFW_KEY_T] = PERJAMMA_TEST;
+   inputMap[GLFW_KEY_Y] = PERJAMMA_COIN1;
+   inputMap[GLFW_KEY_H] = PERJAMMA_COIN2;
+   inputMap[GLFW_KEY_C] = PERJAMMA_START1;
+   inputMap[GLFW_KEY_V] = PERJAMMA_START2;
+   inputMap[GLFW_KEY_P] = PERJAMMA_PAUSE;
+   inputMap[GLFW_KEY_M] = PERJAMMA_MULTICART;
 
   glfwSetKeyCallback(g_window, key_callback);
   return 1;
