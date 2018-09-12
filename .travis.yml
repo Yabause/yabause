@@ -4,9 +4,15 @@ matrix:
     # linux gcc
     - os: linux
       dist: bionic
+      sudo: required
       compiler: gcc
       env:
        - QT_BASE=511
+      addons:
+       apt:
+         packages:
+            - cmake
+            - libqt5multimedia
      
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
