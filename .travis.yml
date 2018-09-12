@@ -2,36 +2,12 @@ matrix:
   include:
 
     # linux gcc
-    - compiler: gcc
-      env: testenv="linux gcc"
-      
-    # linux clang
-    - compiler: clang
-      env: testenv="linux clang"
-
-    # os x cocoa port
-    - language: objective-c
-      env: testenv="os x cocoa port"
-      os: osx
-      compiler: clang
-      before_script:
-        - cd ../src
-
-        # enable cmake to find x11 and xrandr
-        - echo 'INCLUDE_DIRECTORIES("/opt/X11/include")' > temp.txt
-        - echo 'LINK_DIRECTORIES("/opt/X11/lib")' >> temp.txt
-        - cat temp.txt CMakeLists.txt > temp2.txt
-        - rm CMakeLists.txt
-        - mv temp2.txt CMakeLists.txt
-        - cd ../build
-      script:
-        - cmake -DCMAKE_BUILD_TYPE=Release ..
-        - make
-      after_success:
-        - cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-mac
-        #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-mac.zip
-        - curl --ftp-create-dirs -T yabause-${GIT_HASH}-mac.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-mac.zip
-
+     - os: linux
+       dist: bionic
+       compiler: gcc
+       env:
+        - QT_BASE=511
+     
     # mingw-w64 windows cross compile, libyabause only
     # needs qt and other deps built
     - compiler: gcc
@@ -54,40 +30,6 @@ matrix:
       after_success:
         #- cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-win64
         #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-win64.zip
-
-    # android port
-    - compiler: gcc
-      env: testenv="android port"
-      language: android
-      android:
-        components:
-          - platform-tools
-          - tools
-      script:
-        - wget http://dl.google.com/android/repository/android-ndk-r11c-linux-x86_64.zip
-        - unzip -q android-ndk-r11c-linux-x86_64.zip
-
-        - export PATH=${PATH}:$(pwd)/android-ndk-r11c/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin/
-        - export NDK=$(pwd)/android-ndk-r11c/
-        - export SYSROOT=$NDK/platforms/android-24/arch-arm
-
-        - echo 'SET(CMAKE_SYSTEM_NAME Linux)' > toolchain.cmake
-        - echo 'SET(CMAKE_SYSTEM_VERSION 1)' >> toolchain.cmake
-        - echo 'SET(CMAKE_C_COMPILER   arm-linux-androideabi-gcc)' >> toolchain.cmake
-        - echo 'SET(CMAKE_CXX_COMPILER arm-linux-androideabi-g++)' >> toolchain.cmake
-        - echo 'SET(CMAKE_ASM-ATT_COMPILER arm-linux-androideabi-as)' >> toolchain.cmake
-        - echo 'set(CMAKE_C_FLAGS "--sysroot=$ENV{SYSROOT}/usr/" CACHE STRING "GCC flags" FORCE)' >> toolchain.cmake
-        - echo 'set(CMAKE_CXX_FLAGS "--sysroot=$ENV{SYSROOT}/usr/" CACHE STRING "G++ flags" FORCE)' >> toolchain.cmake
-        - echo 'SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)' >> toolchain.cmake
-        - echo 'SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)' >> toolchain.cmake
-        - echo 'SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)' >> toolchain.cmake
-        - echo 'SET(ANDROID ON)' >> toolchain.cmake
-        - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_ROOT_PATH=$SYSROOT/usr/ -DNDK_BUILD=$NDK/build/ndk-build -DSDK_ANDROID=$ANDROID_HOME/tools/android -DSH2_DYNAREC=OFF -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS=android ..
-        - make
-
-      after_success:
-        #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-android.apk
-        #- curl --ftp-create-dirs -T ./src/android/bin/Yabause-debug.apk -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-latest-android.apk
 
 #addons:
 #  coverity_scan:
@@ -118,5 +60,5 @@ before_install:
   - export GIT_HASH=$(git rev-parse --short HEAD)
 
 script:
-  - cmake -DYAB_WERROR=ON -DYAB_FORCE_SECURE_STRINGS=ON cmake -DYAB_WANT_DYNAREC_DEVMIYAX=ON ..
+  - cmake  ..
   - make
