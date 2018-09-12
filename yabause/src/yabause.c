@@ -234,10 +234,12 @@ int YabauseSh2Init(yabauseinit_struct *init)
       YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
       return -1;
    }
-   if (STVInit(init->stvgame, init->cartpath) != 0)
-   {
-      YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
-      return -1;
+   if (STVSingleInit(init->stvgamepath, init->stvbiospath) != 0) {
+     if (STVInit(init->stvgame, init->cartpath) != 0)
+     {
+       YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
+       return -1;
+     }
    }
 
    MappedMemoryInit();
@@ -311,10 +313,12 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
-   if (STVInit(init->stvgame, init->cartpath) != 0)
-   {
-      YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
-      return -1;
+   if (STVSingleInit(init->stvgamepath, init->stvbiospath) != 0) {
+     if (STVInit(init->stvgame, init->cartpath) != 0)
+     {
+       YabSetError(YAB_ERR_CANNOTINIT, _("STV emulation"));
+       return -1;
+     }
    }
 
    MappedMemoryInit();

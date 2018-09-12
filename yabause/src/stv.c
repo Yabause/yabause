@@ -15,7 +15,7 @@
 #include "yabause.h"
 #include "zlib/zlib.h"
 
-#define LOGSTV 
+#define LOGSTV
 //YuiMsg
 #define ROTATED 1
 
@@ -1869,10 +1869,11 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
     return 1; // continue
 }
 
-void updateGameList(const char* file, int *nbGames){
+int updateGameList(const char* file, int *nbGames){
   FILE *fp;
   JZEndRecord endRecord;
   JZFile *zip;
+  int gameid = -1;
   int i, j;
   u8 isASTVGame, isBiosFound, isBlobFound;
   rominfo info;
@@ -1884,7 +1885,7 @@ void updateGameList(const char* file, int *nbGames){
 
   if(!(fp = fopen(file, "rb"))) {
         LOGSTV("Couldn't open \"%s\"!\n", file);
-        return;
+        return -1;
   }
 
   zip = jzfile_from_stdio_file(fp);
@@ -1937,6 +1938,7 @@ void updateGameList(const char* file, int *nbGames){
       if (found == 0) {
         availableGames[*nbGames].entry = &GameList[i];
         strncpy(availableGames[*nbGames].path, file, 1024);
+        gameid = i;
         (*nbGames)++;
         break;
       }
@@ -1945,7 +1947,7 @@ void updateGameList(const char* file, int *nbGames){
 
 endClose:
     zip->close(zip);
-
+    return gameid;
 }
 
 int loadBios(){
@@ -1992,7 +1994,7 @@ int loadGame(int gameId){
   u8 isBlobFound = 1;
   u8 hasBios = 0;
   rominfo info;
-  LOGSTV("loadGame");
+  LOGSTV("loadGame %d path = %s\n", gameId, availableGames[gameId].path);
 
   info.filename = availableGames[gameId].path;
   info.gameId = gameId;
@@ -2179,6 +2181,31 @@ int loadGames(char* path) {
   }
   fclose(fp);
   return nbGames;
+}
+
+int STVGetSingle(const char* pathfile, const char* biospath, int* id){
+//List number of files in directory
+  DIR *d;
+  FILE *fp;
+  int i, nbGames = 0;
+  memset(availableGames, 0x0, sizeof(GameLink)*NB_STV_GAMES);
+  struct dirent *dir;
+  //Force a detection of the bios first
+  updateGameList(biospath, &nbGames);
+  *id = updateGameList(pathfile, &nbGames);
+  return nbGames;
+}
+
+int STVSingleInit(char *gamepath, char *biospath) {
+  int nbGame = 0;
+  int id = -1;
+  if ((gamepath == NULL) || (biospath == NULL)) return 0;
+  nbGame = STVGetSingle(gamepath, biospath, &id);
+  if (loadGame(0) == 0) {
+    yabsys.isSTV = 1;
+    return 0;
+  }
+  return -1;
 }
 
 int STVInit(int id, char* path){

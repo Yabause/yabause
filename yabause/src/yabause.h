@@ -45,6 +45,8 @@ typedef struct
    const char *buppath;
    const char *mpegpath;
    const char *cartpath;
+   const char *stvbiospath;
+   const char *stvgamepath;
    const char *modemip;
 	const char *modemport;
    int frameskip;

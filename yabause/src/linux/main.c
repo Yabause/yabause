@@ -147,6 +147,8 @@ static int lowres_mode = 0;
 
 static char biospath[256] = "\0";
 static char cdpath[256] = "\0";
+static char stvgamepath[256] = "\0";
+static char stvbiospath[256] = "\0";
 
 yabauseinit_struct yinit;
 
@@ -253,6 +255,8 @@ int main(int argc, char *argv[]) {
 
 	YuiInit();
 
+        yinit.stvbiospath = NULL;
+        yinit.stvgamepath = NULL;
 //handle command line arguments
   for (i = 1; i < argc; ++i) {
     if (argv[i]) {
@@ -297,6 +301,15 @@ int main(int argc, char *argv[]) {
       else if (strcmp(argv[i], "-ns") == 0 || strcmp(argv[i], "--nosound") == 0) {
         yinit.sndcoretype = 0;
       }
+      else if (strstr(argv[i], "--stvbios=")) {
+        strncpy(biospath, argv[i] + strlen("--stvbios="), 256);
+        yinit.stvbiospath = biospath;
+      }
+      else if (strstr(argv[i], "--stvgame=")) {
+        strncpy(stvgamepath, argv[i] + strlen("--stvgame="), 256);
+        yinit.carttype = CART_ROMSTV;
+        yinit.stvgamepath = stvgamepath;
+      }
       // Set sound
       else if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--fullscreen") == 0) {
         fullscreen = 1;
@@ -337,18 +350,6 @@ int main(int argc, char *argv[]) {
       // Auto frame skip
       else if (strstr(argv[i], "--vsyncoff")) {
         EnableAutoFrameSkip();
-      }
-      // Binary
-      else if (strstr(argv[i], "--binary=")) {
-        char binname[1024];
-        unsigned int binaddress;
-        int bincount;
-
-        bincount = sscanf(argv[i] + strlen("--binary="), "%[^:]:%x", binname, &binaddress);
-        if (bincount > 0) {
-          if (bincount < 2) binaddress = 0x06004000;
-          MappedMemoryLoadExec(MSH2, binname, binaddress);
-        }
       }
     }
   }

@@ -8,6 +8,7 @@ extern "C" {
 #endif
 int STVGetRomList(const char* dir, int force);
 char* getSTVGameName(int id);
+int STVSingleInit(char *gamepath, char *biospath);
 int STVInit(int id, char* path);
 #ifdef __cplusplus
 }
