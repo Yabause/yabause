@@ -405,7 +405,9 @@ void YabauseThread::reloadSettings()
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
+#ifdef SPRITE_CACHE
         mYabauseConf.useVdp1cache = vs->value( "Advanced/Vdp1Cache", false ).toBool();
+#endif
 
 	reloadClock();
 	reloadControllers();
@@ -464,7 +466,9 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.polygon_generation_mode = 0;
         mYabauseConf.resolution_mode = 1;
         mYabauseConf.stretch = 0;
+#ifdef SPRITE_CACHE
         mYabauseConf.useVdp1cache = 0;
+#endif
 }
 
 void YabauseThread::timerEvent( QTimerEvent* )
