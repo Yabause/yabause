@@ -507,6 +507,8 @@ void UISettings::loadSettings()
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
    cbNewScsp->setChecked(s->value("Sound/NewScsp", true).toBool());
+   spinBox_scs_sync_count->setValue(s->value("Sound/ScspSync", 1).toInt());
+   cbTimeMode->setCurrentIndex(s->value("Sound/ScspMainMode", 1).toInt());
 
 	// cartridge/memory
 	cbCartridge->setCurrentIndex( cbCartridge->findData( s->value( "Cartridge/Type", mCartridgeTypes.at( 0 ).id ).toInt() ) );
@@ -517,7 +519,7 @@ void UISettings::loadSettings()
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
   checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory", true).toBool());
 
-  spinBox_scs_sync_count->setValue(s->value("Sound/ScspSync", 1).toInt());
+  
   
 
 	// input
@@ -607,6 +609,7 @@ void UISettings::saveSettings()
   s->setValue("Video/RotateScreen", cbRotateScreen->isChecked());
 
   s->setValue("Sound/ScspSync", spinBox_scs_sync_count->value() );
+  s->setValue("Sound/ScspMainMode", cbTimeMode->currentIndex() );
 
 	// sound
 	s->setValue( "Sound/SoundCore", cbSoundCore->itemData( cbSoundCore->currentIndex() ).toInt() );

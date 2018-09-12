@@ -424,6 +424,7 @@ void YabauseThread::reloadSettings()
 
   mYabauseConf.rotate_screen = vs->value("Video/RotateScreen", false).toBool() ;
   mYabauseConf.scsp_sync_count_per_frame = vs->value("Sound/ScspSync", 1).toInt();
+  mYabauseConf.scsp_main_mode = vs->value("Sound/ScspMainMode", 1).toInt();
 	reloadClock();
 	reloadControllers();
 }
@@ -480,6 +481,7 @@ void YabauseThread::resetYabauseConf()
   mYabauseConf.resolution_mode = 0;
   mYabauseConf.rotate_screen = 0;
   mYabauseConf.scsp_sync_count_per_frame = 1;
+  mYabauseConf.scsp_main_mode = 1;
   mYabauseConf.use_new_scsp = 1;
   mYabauseConf.buppath = strdup(getDataDirPath().append("/bkram.bin").toLatin1().constData());
 }

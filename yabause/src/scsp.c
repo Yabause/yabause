@@ -144,6 +144,7 @@ int new_scsp_cycles = 0;
 int g_scsp_lock = 0;
 YabMutex * g_scsp_mtx = NULL;
 static int g_scsp_sync_count_per_frame = 1;
+static int g_scsp_main_mode = 0;
 
 #include "sh2core.h"
 
@@ -5022,7 +5023,7 @@ SoundRamWriteLong (u32 addr, u32 val)
 //////////////////////////////////////////////////////////////////////////////
 
 int
-ScspInit (int coreid, int scsp_sync_count_per_frame)
+ScspInit (int coreid, int scsp_sync_count_per_frame, int scsp_main_mode )
 {
   int i;
 
@@ -5080,6 +5081,8 @@ ScspInit (int coreid, int scsp_sync_count_per_frame)
   if (g_scsp_sync_count_per_frame >= 256 ) {
     g_scsp_sync_count_per_frame = 256;
   }
+
+  g_scsp_main_mode = scsp_main_mode;
   return ScspChangeSoundCore (coreid);
 }
 
@@ -5454,7 +5457,7 @@ void ScspExec(){
   ScspInternalVars->scsptiming1++;
 #else
 
-void ScspAsynMain( void * p ){
+void ScspAsynMainCpuTime( void * p ){
 
   u64 before;
   u64 now;
@@ -5472,32 +5475,19 @@ void ScspAsynMain( void * p ){
   struct timespec tm;
   setpriority( PRIO_PROCESS, 0, -20);
 #endif
-
-  // Special for Thunder Force V
-  char * pCurrentGame = Cs2GetCurrentGmaecode();
-  if (!strcmp(pCurrentGame, "T-1811G") && frame_div < 4) {
-    frame_div = 4;
-    framecnt = 188160 / frame_div;
-    LOG("Thunder Force V is detected. Force frame_div to 4");
-  }
-
-  const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
-
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
   before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
-
   u64 pre_m68k_cycle = 0;
   u64 m68k_inc = 0;
   
-  framecnt = 188160; // 0x2de00; // 188160; // 11289600/60
+  framecnt = 188160; // 11289600/60
 
   //YabWaitEventQueue(q_scsp_frame_start);
   now = 0;
   before = 0;
   while (thread_running){
     while (g_scsp_lock) { YabThreadUSleep(1); }
-#if 1
     u64 m68k_done_counter = 0;
     u64 m68k_integer_part = 0;
     u64 m68k_cycle = 0;
@@ -5506,7 +5496,6 @@ void ScspAsynMain( void * p ){
       m68k_cycle = m68k_integer_part - pre_m68k_cycle;
       if (thread_running == 0) break;
     } while (m68k_cycle == 0);
-
 
     m68k_inc += m68k_cycle;
     pre_m68k_cycle = m68k_integer_part;
@@ -5543,30 +5532,70 @@ void ScspAsynMain( void * p ){
         break;
       }
     }
-
     setM68kDoneCounter(pre_m68k_cycle);
+  }
+  YabThreadWake(YAB_THREAD_SCSP);
+}
 
-#else
+
+void ScspAsynMainRealtime(void * p) {
+
+  u64 before;
+  u64 now;
+  u64 difftime;
+  const int samplecnt = 256; // 11289600/44100
+  const int step = 16;
+  int frame = 0;
+  int frame_count = 0;
+  int i;
+  int frame_div = g_scsp_sync_count_per_frame;
+  int framecnt = 188160 / frame_div; // 11289600/60
+  int hzcheck = 0;
+
+#if defined(ARCH_IS_LINUX)
+  struct timespec tm;
+  setpriority(PRIO_PROCESS, 0, -20);
+#endif
+
+  // Special for Thunder Force V
+  char * pCurrentGame = Cs2GetCurrentGmaecode();
+  if (!strcmp(pCurrentGame, "T-1811G") && frame_div < 4) {
+    frame_div = 4;
+    framecnt = 188160 / frame_div;
+    LOG("Thunder Force V is detected. Force frame_div to 4");
+  }
+
+  const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
+
+  YabThreadSetCurrentThreadAffinityMask(0x03);
+  before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
+  u32 wait_clock = 0;
+
+  now = 0;
+  before = 0;
+  while (thread_running) {
+    while (g_scsp_lock) { YabThreadUSleep(1); }
     // Run 1 sample(44100Hz)
-    for (i = 0; i < samplecnt; i += step){
+    for (i = 0; i < samplecnt; i += step) {
       MM68KExec(step);
       m68kcycle += base_clock;
     }
-    
+
     wait_clock = 0;
 
     if (use_new_scsp) {
       new_scsp_exec((samplecnt << 1));
-    }else{
+    }
+    else {
       scsp_update_timer(1);
     }
 
     // Sync 1/4 Frame(60Hz)
     frame += samplecnt;
-    if (frame >= framecnt){
+    if (frame >= framecnt) {
       frame = frame - framecnt;
       frame_count++;
-      if (frame_count >= frame_div){
+      if (frame_count >= frame_div) {
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
         ScspExecAsync();
@@ -5581,15 +5610,15 @@ void ScspAsynMain( void * p ){
       sh2_read_req = 0;
       do {
         now = YabauseGetTicks() * 1000000000L / yabsys.tickfreq;
-        if (now > before){
+        if (now > before) {
           difftime = now - before;
         }
-        else{
+        else {
           difftime = now + (ULLONG_MAX - before);
         }
         sleeptime = ((16666666L / frame_div) - difftime);
-        if(initsleeptime==0){initsleeptime = sleeptime; initnow = now; }
-        if( sleeptime < 0 ) break;
+        if (initsleeptime == 0) { initsleeptime = sleeptime; initnow = now; }
+        if (sleeptime < 0) break;
 #if 0 //defined(ANDROID)
         //tm.tv_sec = 0;
         //tm.tv_nsec = sleeptime;
@@ -5597,14 +5626,14 @@ void ScspAsynMain( void * p ){
         struct timespec ts;
         clock_gettime(CLOCK_REALTIME, &tm);
         ts.tv_nsec = tm.tv_nsec + sleeptime;
-        if( tm.tv_nsec > ts.tv_nsec ){
+        if (tm.tv_nsec > ts.tv_nsec) {
           tm.tv_sec += 1;
         }
         tm.tv_nsec = ts.tv_nsec;
 
         pthread_mutex_lock(&sync_mutex);
-        int rtn = pthread_cond_timedwait(&sync_cnd,&sync_mutex,&tm);
-        if(rtn == 0){
+        int rtn = pthread_cond_timedwait(&sync_cnd, &sync_mutex, &tm);
+        if (rtn == 0) {
           for (i = 0; i < samplecnt; i += step) {
             MM68KExec(step);
             m68kcycle += base_clock;
@@ -5620,7 +5649,7 @@ void ScspAsynMain( void * p ){
         pthread_mutex_unlock(&sync_mutex);
 #else
         if (sleeptime > 10000) YabThreadUSleep(0);
-        if(sh2_read_req != 0) {
+        if (sh2_read_req != 0) {
           for (i = 0; i < samplecnt; i += step) {
             MM68KExec(step);
             m68kcycle += base_clock;
@@ -5635,25 +5664,28 @@ void ScspAsynMain( void * p ){
           sh2_read_req = 0;
         }
 #endif
-
       } while (sleeptime > 0);
 
       checktime = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
       //yprintf("vsynctime = %d(%d) %d(%d)\n", (s32)(checktime - before),16666666/frame_div,(s32)(checktime - initnow),initsleeptime);
       before = checktime;
     }
-#endif
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }
 
-void ScspExec(){
 
-	if (thread_running == 0){
-		thread_running = 1;
-		YabThreadStart(YAB_THREAD_SCSP, ScspAsynMain, NULL);
+void ScspExec(){
+  if (thread_running == 0){
+    thread_running = 1;
+    if (g_scsp_main_mode == 0) {
+      YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpuTime, NULL);
+    }
+    else {
+      YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainRealtime, NULL);
+    }
     YabThreadUSleep(100000);
-	}
+  }
 }
 void ScspExecAsync() {
   u32 audiosize;

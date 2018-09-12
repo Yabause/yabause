@@ -17,7 +17,7 @@
    <item>
     <widget class="QTabWidget" name="twPages">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="wGeneral">
       <attribute name="title">
@@ -452,6 +452,27 @@
          <property name="maximum">
           <number>255</number>
          </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Time Synchronization Mode</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="cbTimeMode">
+         <item>
+          <property name="text">
+           <string>Synchronize to CPU</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Synchronize to the real time</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>
@@ -1033,8 +1054,8 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="bgShowToolbar"/>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowLogWindow"/>
-  <buttongroup name="bgShowToolbar"/>
  </buttongroups>
 </ui>

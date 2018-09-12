@@ -62,6 +62,7 @@ typedef struct
    int extend_backup;
    int rotate_screen;
    int scsp_sync_count_per_frame;
+   int scsp_main_mode;
    u32 sync_shift;
 } yabauseinit_struct;
 
