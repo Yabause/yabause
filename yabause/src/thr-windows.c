@@ -217,6 +217,16 @@ void YabAddEventQueue(YabEventQueue * queue_t, int evcode){
 #endif
 }
 
+int YabClearEventQueue(YabEventQueue * queue_t) {
+  YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
+  EnterCriticalSection(&(queue->mutex));
+  while (queue->size > 0) {
+    --queue->size;
+    ++queue->out;
+    queue->out %= queue->capacity;
+  }
+  LeaveCriticalSection(&(queue->mutex));
+}
 
 int YabWaitEventQueue(YabEventQueue * queue_t){
 #if 1

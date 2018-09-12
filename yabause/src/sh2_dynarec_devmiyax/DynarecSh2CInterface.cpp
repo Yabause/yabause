@@ -61,6 +61,7 @@ void SH2DynRemoveInterrupt(SH2_struct *context, u8 level, u8 vector);
 int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2DynWriteNotify(u32 start, u32 length);
+void SH2DynAddCycle(SH2_struct *context, u32 value);
 
 SH2Interface_struct SH2Dyn = {
   SH2CORE_DYNAMIC,
@@ -96,7 +97,8 @@ SH2Interface_struct SH2Dyn = {
   SH2DynRemoveInterrupt,
   SH2DynGetInterrupts,
   SH2DynSetInterrupts,
-  SH2DynWriteNotify
+  SH2DynWriteNotify,
+  SH2DynAddCycle
 };
 
 SH2Interface_struct SH2DynDebug = {
@@ -133,7 +135,8 @@ SH2Interface_struct SH2DynDebug = {
   SH2DynRemoveInterrupt,
   SH2DynGetInterrupts,
   SH2DynSetInterrupts,
-  SH2DynWriteNotify
+  SH2DynWriteNotify,
+  SH2DynAddCycle
 };
 
 int SH2DynInit(void) {
@@ -327,6 +330,12 @@ void SH2DynSetPC(SH2_struct *context, u32 value){
   DynarecSh2 *pctx = (DynarecSh2*)context->ext;
   pctx->SET_PC(value);
 }
+
+void SH2DynAddCycle(SH2_struct *context, u32 value) {
+  DynarecSh2 *pctx = (DynarecSh2*)context->ext;
+  pctx->AddCycle(value);
+}
+
 
 void SH2DynWriteNotify(u32 start, u32 length){
   CompileBlocks * block = CompileBlocks::getInstance();
@@ -708,28 +717,41 @@ int EachClock() {
 #include <atomic>
 using std::atomic;
 
-atomic<u64> m68k_counter = 0;
+atomic<u64> m68k_counter(0);
+atomic<u64> m68k_counter_done(0);
+
+const u64 MAX_SCSP_COUNTER = (u64)(44100 * 256 / 60) << SCSP_FRACTIONAL_BITS;
 
 extern "C" {
+  void SyncCPUtoSCSP();
+  extern u64 g_m68K_dec_cycle;
+
   void setM68kCounter(u64 counter) {
     m68k_counter = counter;
+  }
+
+  void setM68kDoneCounter(u64 counter) {
+    m68k_counter_done = counter;
   }
 
   u64 getM68KCounter() {
     return m68k_counter;
   }
+
+  void syncM68K() {
+    int timeout = 0;
+/*
+    m68k_counter += (2 << SCSP_FRACTIONAL_BITS);
+    g_m68K_dec_cycle += (2 << SCSP_FRACTIONAL_BITS);
+    if (m68k_counter >= MAX_SCSP_COUNTER) {
+      SyncCPUtoSCSP();
+    }
+*/
+    u64 a = (m68k_counter >> SCSP_FRACTIONAL_BITS);
+    u64 b = m68k_counter_done;
+    //LOG("[CPU] INC m68k_counter %lld/%lld", a, b);
+    while ( (m68k_counter >> SCSP_FRACTIONAL_BITS) > m68k_counter_done) { timeout++; };
+  }
+
 }
 
-atomic<int> frame_sync = 0;
-
-extern "C" {
-  void setFrameSync() {
-    frame_sync = 1;
-  }
-  int getFrameSync() {
-    return frame_sync;
-  }
-  void clearFrameSync() {
-    frame_sync = 0;
-  }
-}

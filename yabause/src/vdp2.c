@@ -652,8 +652,12 @@ void Vdp2HBlankOUT(void) {
       Vdp1Regs->EDSR >>= 1;
       if (Vdp1External.frame_change_plot == 1) {
         yabsys.wait_line_count = 45;
-        FRAMELOG("SET Vdp1 end wait at ", yabsys.wait_line_count);
+        FRAMELOG("SET Vdp1 end wait at %d", yabsys.wait_line_count);
       }
+    }
+    //YabClearEventQueue(vdp1_rcv_evqueue);
+    if (YaGetQueueSize(vdp1_rcv_evqueue) != 0) {
+      FRAMELOG("YaGetQueueSizeYaGetQueueSize !=0  %d", YaGetQueueSize(vdp1_rcv_evqueue));
     }
     YabAddEventQueue(evqueue, VDPEV_VBLANK_OUT);
     YabThreadYield();
@@ -661,12 +665,13 @@ void Vdp2HBlankOUT(void) {
 
   }
   if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count){
-    
+
     FRAMELOG("**WAIT START %d %d**", yabsys.wait_line_count, YaGetQueueSize(vdp1_rcv_evqueue));
     yabsys.wait_line_count = -1;
     //do {
       YabWaitEventQueue(vdp1_rcv_evqueue); // sync VOUT
     //} while (YaGetQueueSize(vdp1_rcv_evqueue) != 0);
+      YabClearEventQueue(vdp1_rcv_evqueue);
       FRAMELOG("**WAIT END**");
     FrameProfileAdd("DirectDraw sync");
     
@@ -825,7 +830,7 @@ void vdp2VBlankOUT(void) {
   static VideoInterface_struct * saved = NULL;
   int isrender = 0;
   VdpLockVram();
-  FRAMELOG("***** VOUT(T) %d,%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
+  FRAMELOG("***** VOUT(T) swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
 
   if (g_vdp_debug_dmp == 1) {
     g_vdp_debug_dmp = 0;
@@ -874,6 +879,7 @@ void vdp2VBlankOUT(void) {
       Vdp1External.manualerase = 0;
     }
 
+    FRAMELOG("Vdp1FrameChange swap=%d,plot=%d*****", Vdp1External.swap_frame_buffer, Vdp1External.frame_change_plot);
     VIDCore->Vdp1FrameChange();
     Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1External.swap_frame_buffer = 0;

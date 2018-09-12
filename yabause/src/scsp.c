@@ -4877,22 +4877,34 @@ SoundRamWriteByte (u32 addr, u8 val)
 
 // From CPU
 int sh2_read_req = 0;
-
+static int mem_access_counter = 0;
 void SyncSh2And68k(){
   if (IsM68KRunning) {
-/*
-#if defined(ARCH_IS_LINUX)
+    /*
+    #if defined(ARCH_IS_LINUX)
     pthread_mutex_lock(&sync_mutex);
     pthread_cond_signal(&sync_cnd);
     pthread_mutex_unlock(&sync_mutex);
+    #else
+    sh2_read_req++;
+    #endif
+    */
+    // Memory Access cycle = 128 times per 44.1Khz
+    // 28437500 / 4410 / 128 = 50
+    SH2Core->AddCycle(MSH2, 50);
+    SH2Core->AddCycle(SSH2, 50);
+
+    if (mem_access_counter++ >= 128) {
+#if defined(ARCH_IS_LINUX)
+      pthread_mutex_lock(&sync_mutex);
+      pthread_cond_signal(&sync_cnd);
+      pthread_mutex_unlock(&sync_mutex);
 #else
-   sh2_read_req++;
-#endif    
-*/
-    u64 ck = getM68KCounter();
-    ck += (256 << SCSP_FRACTIONAL_BITS);
-    setM68kCounter(ck);
-    YabThreadYield();
+      sh2_read_req++;
+      YabThreadYield();
+#endif  
+      mem_access_counter = 0;
+    }
   }
 }
 
@@ -4907,11 +4919,12 @@ SoundRamReadWord (u32 addr)
   else if (addr > 0x7FFFF)
     return 0xFFFF;
 
-  //SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
+  
   SyncSh2And68k();
 
   val = T2ReadWord (SoundRam, addr);
 
+  //LOG("SoundRamReadWord %08X:%08X time=%d", addr, val, MSH2->cycles);
   return val;
 
 }
@@ -4928,9 +4941,10 @@ SoundRamWriteWord (u32 addr, u16 val)
     addr &= 0x3FFFF;
   else if (addr > 0x7FFFF)
     return;
-  //SCSPLOG("SoundRamWriteWord %08X:%04X", addr, val);
+  //LOG("SoundRamWriteWord %08X:%04X", addr, val);
   T2WriteWord (SoundRam, addr, val);
   M68K->WriteNotify (addr, 2);
+  //SyncSh2And68k();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4948,10 +4962,10 @@ SoundRamReadLong (u32 addr)
   else if (addr > 0x7FFFF)
     val = 0xFFFFFFFF;
 
-  //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
   SyncSh2And68k();
 
   val = T2ReadLong(SoundRam, addr);
+  //LOG("SoundRamReadLong %08X:%08X time=%d PC=%08X R7=%08X", addr, val, MSH2->cycles, MSH2->regs.PC, MSH2->regs.R[7]);
 #if 0 // This is the workround
   if (addr == 0x500) {
 
@@ -4998,9 +5012,10 @@ SoundRamWriteLong (u32 addr, u32 val)
   else if (addr > 0x7FFFF)
     return;
 
-  //SCSPLOG("SoundRamWriteLong %08X:%08X", addr, val);
+  //LOG("SoundRamWriteLong %08X:%08X", addr, val);
   T2WriteLong (SoundRam, addr, val);
   M68K->WriteNotify (addr, 4);
+  //SyncSh2And68k();
 
 }
 
@@ -5483,6 +5498,7 @@ void ScspAsynMain( void * p ){
   while (thread_running){
     while (g_scsp_lock) { YabThreadUSleep(1); }
 #if 1
+    u64 m68k_done_counter = 0;
     u64 m68k_integer_part = 0;
     u64 m68k_cycle = 0;
     do {
@@ -5498,7 +5514,7 @@ void ScspAsynMain( void * p ){
     // Sync 44100KHz
     while (m68k_inc >= samplecnt) {
       m68k_inc = m68k_inc - samplecnt;
-
+      //LOG("[SCSP] MM68KExec %d", samplecnt);
       MM68KExec(samplecnt);
       if (use_new_scsp) {
         new_scsp_exec((samplecnt << 1));
@@ -5518,14 +5534,17 @@ void ScspAsynMain( void * p ){
         YabAddEventQueue( q_scsp_finish , 0);
         pre_m68k_cycle = 0;
         m68k_inc = 0;
+        //LOG("[SCSP] WAIT SH2");
         YabWaitEventQueue(q_scsp_frame_start);
         now = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
-        LOG(" SCSPTIME = %d/16666666 %d/735", (s32)(now - before), hzcheck);
+        //LOG(" SCSPTIME = %d/16666666 %d/735", (s32)(now - before), hzcheck);
         hzcheck = 0;
         before = now;
         break;
       }
     }
+
+    setM68kDoneCounter(pre_m68k_cycle);
 
 #else
     // Run 1 sample(44100Hz)

@@ -592,7 +592,10 @@ u32 YabauseGetFrameCount() {
 }
 
 //#define YAB_STATICS
+void SyncCPUtoSCSP();
+u64 getM68KCounter();
 
+u64 g_m68K_dec_cycle = 0;
 
 int YabauseEmulate(void) {
    int oneframeexec = 0;
@@ -791,7 +794,7 @@ int YabauseEmulate(void) {
 #endif
 
          PROFILE_START("SCU");
-         ScuExec(sh2cycles / 2);
+         ScuExec(sh2cycles >> 1);
          PROFILE_STOP("SCU");
 
       }  // if (yabsys.DecilineMode)
@@ -817,9 +820,7 @@ int YabauseEmulate(void) {
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
-           
             setM68kCounter((u64)(44100 * 256 / 60) << SCSP_FRACTIONAL_BITS);
-            
 
             PROFILE_START("vblankin");
             // VBlankIN
@@ -827,10 +828,7 @@ int YabauseEmulate(void) {
             Vdp2VBlankIN();
 
 #if defined(ASYNC_SCSP)
-            YabWaitEventQueue(q_scsp_finish);
-            saved_m68k_cycles = 0;
-            setM68kCounter(saved_m68k_cycles);
-            YabAddEventQueue(q_scsp_frame_start, 0);
+            SyncCPUtoSCSP();
 #endif
             PROFILE_STOP("vblankin");
             CheatDoPatches();
@@ -889,7 +887,11 @@ int YabauseEmulate(void) {
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
 #else
       {
-        saved_m68k_cycles   += m68k_cycles_per_deciline;
+        saved_m68k_cycles  += m68k_cycles_per_deciline;
+        //if (g_m68K_dec_cycle != 0) {
+        //  saved_m68k_cycles -= g_m68K_dec_cycle;
+        //  g_m68K_dec_cycle = 0;
+        //}
         setM68kCounter(saved_m68k_cycles);
         //g_m68k_integer_part  = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
         //saved_m68k_cycles   -= g_m68k_integer_part << SCSP_FRACTIONAL_BITS;
@@ -946,6 +948,16 @@ int YabauseEmulate(void) {
 #endif
 
    return 0;
+}
+
+
+void SyncCPUtoSCSP() {
+  //LOG("[SH2] WAIT SCSP");
+  YabWaitEventQueue(q_scsp_finish);
+  saved_m68k_cycles = 0;
+  setM68kCounter(saved_m68k_cycles);
+  YabAddEventQueue(q_scsp_frame_start, 0);
+  //LOG("[SH2] START SCSP");
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -192,7 +192,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
-  LOG("DoDMA src=%08X,dst=%08X,size=%d\n", ReadAddress, WriteAddress, TransferSize);
+  LOG("DoDMA src=%08X,dst=%08X,size=%d, line=%d\n", ReadAddress, WriteAddress, TransferSize, yabsys.LineCount );
    if (ReadAdd == 0) {
       // DMA fill
 
@@ -479,7 +479,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
 
       switch(dmainfo->mode) {
          case 0:
-           if (trans_size > 0) {
+           if (trans_size > 1024) {
              ScuRegs->dma0_time = trans_size;
            }
            else {
@@ -487,7 +487,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
            }
            break;
          case 1:
-          if (trans_size > 0) {
+          if (trans_size > 1024) {
              ScuRegs->dma1_time = trans_size;
            }
            else {
@@ -495,7 +495,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
            }
             break;
          case 2:
-           if (trans_size > 0) {
+           if (trans_size > 1024) {
              ScuRegs->dma2_time = trans_size;
            }
            else {
@@ -524,7 +524,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
       switch(dmainfo->mode) {
          case 0:
            
-           if (dmainfo->TransferNumber > 0) {
+           if (dmainfo->TransferNumber > 1024) {
              ScuRegs->dma0_time = dmainfo->TransferNumber;
            }
            else {
@@ -532,7 +532,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
            }
             break;
          case 1:
-           if (dmainfo->TransferNumber > 0) {
+           if (dmainfo->TransferNumber > 1024) {
              ScuRegs->dma1_time = dmainfo->TransferNumber;
            }
            else {
@@ -540,7 +540,7 @@ static void FASTCALL ScuDMA(scudmainfo_struct *dmainfo) {
            }
             break;
          case 2:
-           if (dmainfo->TransferNumber > 0) {
+           if (dmainfo->TransferNumber > 1024) {
              ScuRegs->dma2_time = dmainfo->TransferNumber;
            }
            else {
@@ -715,38 +715,24 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
 {
     u32 imm = ((inst & 0xFF));
     u8  sel = ((inst >> 8) & 0x03);
-    u8  add;
     u8  addr = sc->CT[sel];
     u32 i;
 
-    switch (((inst >> 15) & 0x07))
-    {
-    case 0: add = 0; break;
-    case 1: add = 1; break;
-    case 2: add = 2; break;
-    case 3: add = 4; break;
-    case 4: add = 8; break;
-    case 5: add = 16; break;
-    case 6: add = 32; break;
-    case 7: add = 64; break;
-    }
+    const u32 mode = (inst >> 15) & 0x7;
+    const u32 add = (1 << (mode & 0x2)) &~1;
 
   //LOG("DSP DMA01 read addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), imm, add );
 
   // is A-Bus?
   u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
   if (abus_check >= 0x02000000 && abus_check < 0x05900000){
-    if (add > 1){
-      add = 1;
-    }
     for (i = 0; i < imm; i++)
     {
       sc->MD[sel][sc->CT[sel] & 0x3F] = MappedMemoryReadLong((sc->RA0 << 2));
       //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F] );
       sc->CT[sel]++;
       sc->CT[sel] &= 0x3F;
-      sc->RA0 += add;
-      
+      sc->RA0 += (add >> 2);
     }
   }
   else{
@@ -756,7 +742,7 @@ void dsp_dma01(scudspregs_struct *sc, u32 inst)
       //LOG("read from %08X to [%d][%d] val %08X", (sc->RA0 << 2), sel, sc->CT[sel] & 0x3F, sc->MD[sel][sc->CT[sel] & 0x3F]);
       sc->CT[sel]++;
       sc->CT[sel] &= 0x3F;
-      sc->RA0 += (add>>2);
+      sc->RA0 += (add >>2);
     }
   }
 
@@ -861,45 +847,32 @@ void dsp_dma02(scudspregs_struct *sc, u32 inst)
 
 void dsp_dma03(scudspregs_struct *sc, u32 inst)
 {
-    u32 Counter = 0;
-    u32 i;
-  int add;
+  u32 Counter = 0;
+  u32 i;
   int sel;
 
-    switch ((inst & 0x7))
-    {
-    case 0x00: Counter = sc->MD[0][sc->CT[0] & 0x3F]; break;
-    case 0x01: Counter = sc->MD[1][sc->CT[1] & 0x3F]; break;
-    case 0x02: Counter = sc->MD[2][sc->CT[2] & 0x3F]; break;
-    case 0x03: Counter = sc->MD[3][sc->CT[3] & 0x3F]; break;
-    case 0x04: Counter = sc->MD[0][sc->CT[0] & 0x3F]; ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3F; break;
-    case 0x05: Counter = sc->MD[1][sc->CT[1] & 0x3F]; ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3F; break;
-    case 0x06: Counter = sc->MD[2][sc->CT[2] & 0x3F]; ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3F; break;
-    case 0x07: Counter = sc->MD[3][sc->CT[3] & 0x3F]; ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3F; break;
-    }
-
-  switch (((inst >> 15) & 0x07))
+  switch ((inst & 0x7))
   {
-  case 0: add = 0; break;
-  case 1: add = 1; break;
-  case 2: add = 2; break;
-  case 3: add = 4; break;
-  case 4: add = 8; break;
-  case 5: add = 16; break;
-  case 6: add = 32; break;
-  case 7: add = 64; break;
+  case 0x00: Counter = sc->MD[0][sc->CT[0] & 0x3F]; break;
+  case 0x01: Counter = sc->MD[1][sc->CT[1] & 0x3F]; break;
+  case 0x02: Counter = sc->MD[2][sc->CT[2] & 0x3F]; break;
+  case 0x03: Counter = sc->MD[3][sc->CT[3] & 0x3F]; break;
+  case 0x04: Counter = sc->MD[0][sc->CT[0] & 0x3F]; ScuDsp->CT[0]++; ScuDsp->CT[0] &= 0x3F; break;
+  case 0x05: Counter = sc->MD[1][sc->CT[1] & 0x3F]; ScuDsp->CT[1]++; ScuDsp->CT[1] &= 0x3F; break;
+  case 0x06: Counter = sc->MD[2][sc->CT[2] & 0x3F]; ScuDsp->CT[2]++; ScuDsp->CT[2] &= 0x3F; break;
+  case 0x07: Counter = sc->MD[3][sc->CT[3] & 0x3F]; ScuDsp->CT[3]++; ScuDsp->CT[3] &= 0x3F; break;
   }
-  
+
   sel = (inst >> 8) & 0x7;
   int index = 0;
+
+  const u32 mode = (inst >> 15) & 0x7;
+  const u32 add = (1 << (mode & 0x2)) &~1;
 
   //LOG("DSP DMA03 read addr=%08X cnt= %d add = %d\n", (sc->RA0 << 2), Counter, add);
 
   u32 abus_check = ((sc->RA0 << 2) & 0x0FF00000);
   if (abus_check >= 0x02000000 && abus_check < 0x05900000){
-    if (add > 1){
-      add = 1;
-    }
     for (i = 0; i < Counter; i++)
     {
       if (sel == 0x04){
@@ -913,7 +886,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
       }
-      sc->RA0 += add;
+      sc->RA0 += (add >> 2);
 
     }
   }
@@ -931,7 +904,7 @@ void dsp_dma03(scudspregs_struct *sc, u32 inst)
         sc->CT[sel]++;
         sc->CT[sel] &= 0x3F;
       }
-      sc->RA0 += (add >> 1);
+      sc->RA0 += (add >> 2);
     }
   }
 

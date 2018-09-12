@@ -1315,6 +1315,10 @@ void DynarecSh2::ExecuteCount( u32 Count ) {
       loopskip_cnt_++;
     }
     //printf("%d/%d\n",GET_COUNT(),targetcnt);
+
+    if (addcycle_ != 0) {
+      m_pDynaSh2->SysReg[4] += addcycle_; addcycle_ = 0;
+    }
     CurrentSH2->cycles = GET_COUNT();
   }
 

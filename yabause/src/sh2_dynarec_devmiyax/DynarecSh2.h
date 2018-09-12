@@ -329,6 +329,12 @@ public:
   int Execute();
   void Undecoded();
 
+  void AddCycle(u32 cycle) {
+    addcycle_ += cycle;
+  }
+
+  u32 addcycle_ = 0;
+
   void ShowStatics();
   void ShowCompileInfo();
   void ResetCompileInfo();
