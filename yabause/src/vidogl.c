@@ -5742,7 +5742,7 @@ static void Vdp2DrawRBG1(void)
   info->linecheck_mask = 0x01;
   info->priority = fixVdp2Regs->PRINA & 0x7;
 
-  if (!(info->enable & Vdp2External.disptoggle) || (info->priority == 0))
+  if (((Vdp2External.disptoggle & 0x20)==0) || (info->priority == 0))
     return;
 
   // Window Mode
@@ -5933,7 +5933,7 @@ static void Vdp2DrawNBG0(void) {
   info.linecheck_mask = 0x01;
   info.priority = fixVdp2Regs->PRINA & 0x7;
 
-  if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0))
+  if (((Vdp2External.disptoggle & 0x1)==0) || (info.priority == 0))
     return;
 
   // Window Mode
@@ -6201,7 +6201,7 @@ static void Vdp2DrawNBG1(void)
   info.priority = (fixVdp2Regs->PRINA >> 8) & 0x7;
   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
 
-  if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
+  if (((Vdp2External.disptoggle & 0x2)==0) || (info.priority == 0) ||
     (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
     return;
 
@@ -6434,7 +6434,7 @@ static void Vdp2DrawNBG2(void)
   info.priority = fixVdp2Regs->PRINB & 0x7;
   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG2PlaneAddr;
 
-  if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
+  if (((Vdp2External.disptoggle & 0x4)==0) || (info.priority == 0) ||
     (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
     return;
 
@@ -6550,7 +6550,7 @@ static void Vdp2DrawNBG3(void)
   info.priority = (fixVdp2Regs->PRINB >> 8) & 0x7;
   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG3PlaneAddr;
 
-  if (!(info.enable & Vdp2External.disptoggle) || (info.priority == 0) ||
+  if (((Vdp2External.disptoggle & 0x8)==0) || (info.priority == 0) ||
     (fixVdp2Regs->BGON & 0x1 && (fixVdp2Regs->CHCTLA & 0x70) >> 4 == 4) || // If NBG0 16M mode is enabled, don't draw
     (fixVdp2Regs->BGON & 0x2 && (fixVdp2Regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
     return;
@@ -6595,9 +6595,8 @@ static void Vdp2DrawRBG0(void)
     info->enable |= info->display[i];
   }
   if (!info->enable) return;
-
   info->priority = fixVdp2Regs->PRIR & 0x7;
-  if (!(info->enable & Vdp2External.disptoggle) || (info->priority == 0)) {
+  if (((Vdp2External.disptoggle & 0x10)==0) || (info->priority == 0)) {
 
     if (Vdp1Regs->TVMR & 0x02) {
       Vdp2ReadRotationTable(0, &paraA, fixVdp2Regs, Vdp2Ram);
