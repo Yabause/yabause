@@ -1,6 +1,9 @@
 project(yabause-xu4)
 
+add_definitions( -D__RETORO_ARENA__ )
+
 yab_port_start()
+
 
 find_package(SDL2 COMPONENTS sdl)
 find_package(SDL2 REQUIRED)

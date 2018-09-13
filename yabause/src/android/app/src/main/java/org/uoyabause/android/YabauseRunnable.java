@@ -43,6 +43,8 @@ public class YabauseRunnable implements Runnable
     public static native void switch_padmode( int mode );
     public static native void updateCheat( String[] cheat_code );
     public static native void setScspSyncPerFrame( int scsp_sync_count );
+    public static native void setCpuSyncPerLine( int cpu_sync_count );
+    public static native void setScspSyncTimeMode( int mode );
 
     public static native String getDevicelist( );
     public static native String getFilelist( int deviceid  );

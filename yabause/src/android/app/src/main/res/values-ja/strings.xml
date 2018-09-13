@@ -125,4 +125,8 @@
     <string name="speed">スピード</string>
     <string name="accuracy">正確さ</string>
 
+    <string name="time_synchronization_mode">サウンド同期モード</string>
+    <string name="choose_time_synchronization_mode">サウンド同期モード</string>
+    <string name="cpu_time">CPU time (仮想CPUの時間に同期します。あなたのデバイスが十分早い場合、正確なサウンドが得られます。)</string>
+    <string name="real_time">Real time (実世界の時間に同期します。あなたのデバイスが遅くても、音が途切れることはありません。)</string>
 </resources>

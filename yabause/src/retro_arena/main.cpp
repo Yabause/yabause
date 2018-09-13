@@ -194,12 +194,11 @@ int yabauseinit()
 
   yinit.m68kcoretype = M68KCORE_MUSASHI;
   yinit.percoretype = PERCORE_DUMMY;
-#ifdef SH2_DYNAREC
-    yinit.sh2coretype = 2;
+#if defined(__PC__)
+  yinit.sh2coretype = 0;
 #else
-  //yinit.sh2coretype = 0;
-#endif
   yinit.sh2coretype = 3;
+#endif  
   //yinit.vidcoretype = VIDCORE_SOFT;
   yinit.vidcoretype = 1;
   yinit.sndcoretype = SNDCORE_SDL;
@@ -236,8 +235,10 @@ int yabauseinit()
   }
 
   padmode = inputmng->getCurrentPadMode( 0 );
+#if !defined(__PC__)  
   OSDInit(0);
   OSDChangeCore(OSDCORE_NANOVG);
+#endif
   LogStart();
   LogChangeOutput(DEBUG_CALLBACK, NULL);
   return 0;
@@ -321,7 +322,12 @@ int main(int argc, char** argv)
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
-
+#if defined(__PC__)
+  int width = 1280;
+  int height = 720;
+  wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+#else
   int width = dsp.w;
   int height = dsp.h;
   wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -330,7 +336,7 @@ int main(int argc, char** argv)
     printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError() );
     return -1;
   }
-
+#endif
   dsp.refresh_rate = 60;
   SDL_SetWindowDisplayMode(wnd,&dsp);
   SDL_GetWindowSize(wnd,&width,&height);

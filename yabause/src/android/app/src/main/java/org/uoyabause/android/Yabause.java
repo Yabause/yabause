@@ -841,6 +841,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         YabauseRunnable.enableExtendedMemory(extmemory ? 1 : 0);
         Log.d(TAG,"enable Extended Memory " + extmemory);
 
+
         YabauseRunnable.enableRotateScreen(sharedPref.getBoolean("pref_rotate_screen", false) ? 1 : 0);
 
         boolean fps = sharedPref.getBoolean("pref_fps", false);
@@ -983,6 +984,12 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
 
         Integer scsp_sync =  new Integer(sharedPref.getString("pref_scsp_sync_per_frame","1"));
         YabauseRunnable.setScspSyncPerFrame(scsp_sync);
+
+        Integer cpu_sync =  new Integer(sharedPref.getString("pref_cpu_sync_per_line","1"));
+        YabauseRunnable.setCpuSyncPerLine(cpu_sync);
+
+        Integer scsp_time_sync =  new Integer(sharedPref.getString("scsp_time_sync_mode","1"));
+        YabauseRunnable.setScspSyncTimeMode(scsp_time_sync);
 
     }
 

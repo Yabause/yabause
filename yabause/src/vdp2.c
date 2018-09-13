@@ -865,24 +865,11 @@ void vdp2VBlankOUT(void) {
   {
     skipped_frame++;
     saved = VIDCore;
-<<<<<<< HEAD
-    VIDCore = &VIDDummy;
-||||||| parent of eab1ae7d... All changes for Retro Arena
     //VIDCore = &VIDDummy;
     VIDCore->Vdp2DrawStart = VIDDummy.Vdp2DrawStart;
     VIDCore->Vdp2DrawEnd   = VIDDummy.Vdp2DrawEnd;
     VIDCore->Vdp2DrawScreens = VIDDummy.Vdp2DrawScreens;
 
-=======
-    //VIDCore = &VIDDummy;
-    VIDCore->Vdp2DrawStart = VIDDummy.Vdp2DrawStart;
-    VIDCore->Vdp2DrawEnd   = VIDDummy.Vdp2DrawEnd;
-    VIDCore->Vdp2DrawScreens = VIDDummy.Vdp2DrawScreens;
-
-    VIDCore->Vdp2DrawEnd   = VIDDummy.Vdp2DrawEnd;
-    VIDCore->Vdp2DrawScreens = VIDDummy.Vdp2DrawScreens;
-
->>>>>>> eab1ae7d... All changes for Retro Arena
   }
   else if (saved && (!skipnextframe))
   {

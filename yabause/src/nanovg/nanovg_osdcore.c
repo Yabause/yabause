@@ -96,7 +96,7 @@ NVGcontext * getGlobalNanoVGContext();
 int OSDNanovgInit(void)
 {
 #if defined(__RETORO_ARENA__)
-  vg = vg = nvgCreateGLES3(NVG_ANTIALIAS | NVG_STENCIL_STROKES | NVG_DEBUG); //getGlobalNanoVGContext();
+  vg =getGlobalNanoVGContext();
 #else
 #if defined(_OGLES3_)
   vg = nvgCreateGLES3(NVG_ANTIALIAS);

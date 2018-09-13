@@ -369,20 +369,22 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			)
 		endif()
 
- 		include(FindGLEW)
-    add_definitions(-D_USEGLEW_)
-    if (GLEW_FOUND)
-        include_directories( ${GLEW_INCLUDE_DIRS})
-        set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLEW_LIBRARIES})
-    else()
-	     add_definitions(-DGLEW_STATIC)
-		    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
-			set(yabause_SOURCES
-				${yabause_SOURCES}
-				gllibs/glew/glew.c
-				yglcache.c
-				ygles.c
-				yglshaderes.c )
+		if( !USE_EGL )
+			include(FindGLEW)
+			add_definitions(-D_USEGLEW_)
+			if (GLEW_FOUND)
+					include_directories( ${GLEW_INCLUDE_DIRS})
+					set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLEW_LIBRARIES})
+			else()
+				add_definitions(-DGLEW_STATIC)
+					include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+				set(yabause_SOURCES
+					${yabause_SOURCES}
+					gllibs/glew/glew.c
+					yglcache.c
+					ygles.c
+					yglshaderes.c )
+			endif()
 		endif()
 
 	endif(OPENGL_FOUND)
