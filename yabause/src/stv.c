@@ -2184,9 +2184,6 @@ int loadGames(char* path) {
 }
 
 int STVGetSingle(const char* pathfile, const char* biospath, int* id){
-//List number of files in directory
-  DIR *d;
-  FILE *fp;
   int i, nbGames = 0;
   memset(availableGames, 0x0, sizeof(GameLink)*NB_STV_GAMES);
   struct dirent *dir;
