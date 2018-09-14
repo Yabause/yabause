@@ -753,29 +753,32 @@ Block * CompileBlocks::CompileBlock(u32 pc, addrs * ParentT = NULL)
   }
   
   if (g_CompleBlock[blockCount].b_addr != 0x00) {
-    switch (g_CompleBlock[blockCount].b_addr & 0x0FF00000) {
-    case 0x00000000:
-      if (yabsys.emulatebios) {
-        return NULL;
+    
+    if ((g_CompleBlock[blockCount].b_addr & 0xFF000000) == 0xC0000000) {
+      LookupTableC[(g_CompleBlock[blockCount].b_addr & 0x000FFFFF) >> 1] = NULL;
+    }
+    else {
+      switch (g_CompleBlock[blockCount].b_addr & 0x0FF00000) {
+      case 0x00000000:
+        if (yabsys.emulatebios) {
+          //return NULL; do nothing
+        }
+        else {
+          LookupTableRom[(g_CompleBlock[blockCount].b_addr & 0x000FFFFF) >> 1] = NULL;
+        }
+        break;
+      case 0x00200000:
+        LookupTableLow[(g_CompleBlock[blockCount].b_addr & 0x000FFFFF) >> 1] = NULL;
+        break;
+      case 0x06000000:
+        /*case 0x06100000:*/
+        LookupTable[(g_CompleBlock[blockCount].b_addr & 0x000FFFFF) >> 1] = NULL;
+        //LOG("%d, %08X is removed due to overflow", blockCount, g_CompleBlock[blockCount].b_addr);
+        break;
+      default:
+        break;
       }
-      else {
-        LookupTableRom[ (g_CompleBlock[blockCount].b_addr&0x000FFFFF)>>1  ] = NULL;
-      }
-      break;
-    case 0x00200000:
-      LookupTableLow[ (g_CompleBlock[blockCount].b_addr&0x000FFFFF)>>1 ] = NULL;
-      break;
-    case 0x06000000:
-      /*case 0x06100000:*/
-      LookupTable[ (g_CompleBlock[blockCount].b_addr & 0x000FFFFF)>>1 ] = NULL;
-      //LOG("%d, %08X is removed due to overflow", blockCount, g_CompleBlock[blockCount].b_addr);
-      break;
-    default:
-      if ((g_CompleBlock[blockCount].b_addr & 0xFF000000) == 0xC0000000) {
-        LookupTableC[ (g_CompleBlock[blockCount].b_addr & 0x000FFFFF)>>1   ] = NULL;
-      }
-      break;
-    } 
+    }
   }
 
   g_CompleBlock[blockCount].b_addr = pc;
@@ -1342,7 +1345,7 @@ int DynarecSh2::CheckOneStep() {
 
 void DynarecSh2::Undecoded(){
 
-//  LOG("Undecoded %08X", GET_PC());
+  LOG("Undecoded %08X", GET_PC());
   // Save regs.SR on stack
   GetGenRegPtr()[15] -= 4;
   memSetLong(GetGenRegPtr()[15], GET_SR());
