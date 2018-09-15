@@ -1521,7 +1521,7 @@ void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
      else {
        SH2Exec(SSH2, 32);
      }
-     CurrentSH2->depth--;
+     context->depth--;
    }
 }
 
@@ -1551,7 +1551,7 @@ void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
      else {
        SH2Exec(SSH2, 32);
      }
-     CurrentSH2->depth--;
+     context->depth--;
    }
 }
 
