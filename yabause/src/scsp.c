@@ -4833,11 +4833,14 @@ scu_interrupt_handler (void)
 u8 FASTCALL
 SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
   u8 val = 0;
+
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
+  else if (addr > 0x7FFFF)
+    val = 0xFF;
 
   val = T2ReadByte(mem, addr);
   //SCSPLOG("SoundRamReadByte %08X:%02X",addr,val);
@@ -4849,11 +4852,13 @@ SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
+  else if (addr > 0x7FFFF)
+    return;
 
   //SCSPLOG("SoundRamWriteByte %08X:%02X", addr, val);
   T2WriteByte (mem, addr, val);
@@ -4880,12 +4885,13 @@ void SyncSh2And68k(){
 u16 FASTCALL
 SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0x7FFFF;
- 
+  addr &= 0xFFFFF;
   u16 val = 0;
 
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
+  else if (addr > 0x7FFFF)
+    return 0xFFFF;
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
   SyncSh2And68k();
@@ -4901,11 +4907,13 @@ SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
+  else if (addr > 0x7FFFF)
+    return;
 
   //SCSPLOG("SoundRamWriteWord %08X:%04X", addr, val);
   T2WriteWord (mem, addr, val);
@@ -4917,13 +4925,15 @@ SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 u32 FASTCALL
 SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
   u32 val;
   u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
+  else if (addr > 0x7FFFF)
+    val = 0xFFFFFFFF;
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
   SyncSh2And68k();
@@ -4939,12 +4949,14 @@ SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteLong (SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
-  addr &= 0x7FFFF;
+  addr &= 0xFFFFF;
   //u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
+  else if (addr > 0x7FFFF)
+    return;
 
   //SCSPLOG("SoundRamWriteLong %08X:%08X", addr, val);
   T2WriteLong (mem, addr, val);
