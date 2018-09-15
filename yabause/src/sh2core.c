@@ -1483,8 +1483,8 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
              *SAR += 0x10;
              for (i2 = 0; i2 < 4; i2++) {
                MappedMemoryWriteLong(context,*DAR & 0x07FFFFFC, buffer[i2]);
-             }
               *DAR += destInc;
+             }
            }
            *TCR = 0;
          }
