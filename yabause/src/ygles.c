@@ -3638,12 +3638,11 @@ void YglChangeResolution(int w, int h) {
        glDeleteTextures(1, &_Ygl->upfbotex);
        _Ygl->upfbotex = 0;
      }
-  if (w * h < 100000) {
-    _Ygl->width = w * _Ygl->resolution_mode;
-    _Ygl->height = h * _Ygl->resolution_mode;
-  } else {
-    _Ygl->width = w;
-    _Ygl->height = h;
+  _Ygl->width = w * _Ygl->resolution_mode;
+  _Ygl->height = h * _Ygl->resolution_mode;
+  if ((w * h < 100000) && ( _Ygl->resolution_mode != 1))  {
+    _Ygl->width /= 2;
+    _Ygl->height /= 2;
   }
   rebuild_frame_buffer = 1;
 

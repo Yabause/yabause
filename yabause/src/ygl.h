@@ -449,7 +449,8 @@ typedef enum
 typedef enum
 {
 	RES_ORIGINAL = 1,
-        RES_2x
+        RES_2x = 2,
+        RES_4x = 4,
 } RESOLUTION_MODE;
 
 typedef enum
