@@ -2196,7 +2196,7 @@ int STVGetSingle(const char* pathfile, const char* biospath, int* id){
 int STVSingleInit(char *gamepath, char *biospath) {
   int nbGame = 0;
   int id = -1;
-  if ((gamepath == NULL) || (biospath == NULL)) return 0;
+  if ((gamepath == NULL) || (biospath == NULL)) return -1;
   nbGame = STVGetSingle(gamepath, biospath, &id);
   if (loadGame(0) == 0) {
     yabsys.isSTV = 1;
