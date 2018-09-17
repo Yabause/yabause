@@ -7429,6 +7429,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     break;
   case VDP_SETTING_UPSCALMODE:
     _Ygl->upmode = value;
+    int maxWidth = (GlWidth*3 > GlHeight*4)?GlHeight*4/3:GlWidth;
+    int maxHeight = (GlWidth*3 > GlHeight*4)?GlHeight:GlWidth*3/4;
+    if ((_Ygl->width >= maxWidth) || (_Ygl->height >= maxHeight)) _Ygl->upmode = UP_NONE;
     break;
   case VDP_SETTING_RESOLUTION_MODE:
     _Ygl->resolution_mode = value;
