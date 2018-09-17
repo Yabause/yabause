@@ -19,7 +19,7 @@
 //YuiMsg
 #define ROTATED 1
 
-#define NB_STV_GAMES 93
+#define NB_STV_GAMES 94
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
@@ -156,14 +156,14 @@ const Game GameList[NB_STV_GAMES]={
     {
 	HEADER_BLOB, "350-mpa1.u19",    0x0000000, 0x0100000,
     GAME_BYTE_BLOB, "350-mpa1.u19", 0x0200000, 0x0100000,	
-	HEADER_BLOB, "350-mpa1.u16", 0x0000000, 0x0100000,
-    GAME_BYTE_BLOB, "350-mpa1.u16", 0x0200000, 0x0100000,
+	HEADER_BLOB, "350-mpa1.u16", 0x0000001, 0x0100000,
+    GAME_BYTE_BLOB, "350-mpa1.u16", 0x0200001, 0x0100000,
     GAME_WORD_BLOB, "gfx0.u1",    0x0400000, 0x0400000,
 	GAME_WORD_BLOB, "gfx1.u3",    0x0800000, 0x0400000,
 	GAME_WORD_BLOB, "gfx2.u5",    0x0c00000, 0x0400000,
 	GAME_WORD_BLOB, "gfx3.u8",    0x1000000, 0x0400000,
 	GAME_WORD_BLOB, "gfx4.u12",    0x1400000, 0x0400000,
-	GAME_WORD_BLOB, "gfx5.u15",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "gfx5.u15",    0x1800000, 0x0400000,
 	GAME_WORD_BLOB, "gfx6.u18",    0x1c00000, 0x0400000,
         GAME_END, "", 0, 0
     },
@@ -615,7 +615,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "ic24",  0x0600000, 0x0200000,
@@ -628,7 +628,7 @@ const Game GameList[NB_STV_GAMES]={
    0,
    0,
    NULL,
-   NULL,
+   NV_1P,
    {
 	GAME_WORD_BLOB, "nclubv2.ic22",  0x0200000, 0x0200000,
 	GAME_WORD_BLOB, "nclubv2.ic24",  0x0600000, 0x0200000,
@@ -1169,11 +1169,11 @@ const Game GameList[NB_STV_GAMES]={
 	HEADER_BLOB, "1.ic13_1",    0x0200001, 0x0080000,
 	HEADER_BLOB, "bom210-10.ic2",    0x1c00000, 0x0400000,
 	GAME_WORD_BLOB, "bom210-10.ic2",    0x0400000, 0x0400000,
-	HEADER_BLOB, "bom210-11.ic3",    0x2000000, 0x0400000,
+	GAME_WORD_BLOB, "bom210-11.ic3",    0x2000000, 0x0400000,
 	GAME_WORD_BLOB, "bom210-11.ic3",    0x0800000, 0x0400000,
-	HEADER_BLOB, "bom210-12.ic4",    0x2400000, 0x0400000,
+	GAME_WORD_BLOB, "bom210-12.ic4",    0x2400000, 0x0400000,
 	GAME_WORD_BLOB, "bom210-12.ic4",    0x0c00000, 0x0400000,
-	HEADER_BLOB, "bom210-13.ic5",    0x2800000, 0x0400000,
+	GAME_WORD_BLOB, "bom210-13.ic5",    0x2800000, 0x0400000,
 	GAME_WORD_BLOB, "bom210-13.ic5",    0x1000000, 0x0400000,
         GAME_END, "", 0, 0
     },
@@ -1316,7 +1316,7 @@ const Game GameList[NB_STV_GAMES]={
     NULL,
     NULL,
     {
-	HEADER_BLOB,    "fpr19188.13",  0x0100000, 0x0100000,
+	HEADER_BLOB,    "fpr19188.13",  0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19188.13",  0x0200000, 0x0100000,
 	GAME_BYTE_BLOB, "fpr19188.13",   0x0300000, 0x0100000,
 	GAME_WORD_BLOB, "mpr19189.2",   0x0400000, 0x0400000,
@@ -1361,7 +1361,7 @@ const Game GameList[NB_STV_GAMES]={
     0x052b6901,
     0,
     NULL,
-    NULL,
+    NV_1P,
     {
 	HEADER_BLOB,    "epr21488.13",  0x0000000, 0x0080000,
 	HEADER_BLOB,    "epr21488.13",  0x0100000, 0x0080000,
@@ -1379,7 +1379,7 @@ const Game GameList[NB_STV_GAMES]={
     0,
     0,
     NULL,
-    NV_1P,
+    NV_2P,
     {
 	HEADER_BLOB,    "epr-21300a.ic13",  0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "epr-21300a.ic13",  0x0200000, 0x0100000,
@@ -1477,8 +1477,8 @@ const Game GameList[NB_STV_GAMES]={
     NV_1P,
     {
 	GAME_WORD_BLOB, "ic22",   0x0200000, 0x0200000,
-	GAME_WORD_BLOB, "ic24",   0x0300000, 0x0200000,
-	GAME_WORD_BLOB, "ic26",   0x0400000, 0x0200000,
+	GAME_WORD_BLOB, "ic24",   0x0400000, 0x0200000,
+	GAME_WORD_BLOB, "ic26",   0x0600000, 0x0200000,
 	GAME_WORD_BLOB, "ic28",   0x0800000, 0x0200000,
 	GAME_WORD_BLOB, "ic30",   0x0a00000, 0x0200000,
         GAME_END, "", 0, 0
@@ -1509,10 +1509,6 @@ const Game GameList[NB_STV_GAMES]={
 	HEADER_BLOB, "epr-20820.ic24",    0x0000000, 0x0100000,
 	GAME_BYTE_BLOB, "epr-20820.ic24",   0x0200000, 0x0100000,
 	GAME_BYTE_BLOB, "epr-20820.ic24",   0x0300000, 0x0100000,
-	GAME_WORD_BLOB, "mpr20821.12",    0x0400000, 0x0400000,
-	GAME_WORD_BLOB, "mpr20822.13",    0x0800000, 0x0400000,
-	GAME_WORD_BLOB, "mpr20823.14",    0x0c00000, 0x0400000,
-	GAME_WORD_BLOB, "mpr20824.15",    0x1000000, 0x0400000,
         GAME_END, "", 0, 0
     },
   },
@@ -1572,8 +1568,25 @@ const Game GameList[NB_STV_GAMES]={
         GAME_END, "", 0, 0
     },
   },
+  {"Virtual Mahjong (J 961214 V1.000)",
+    0x0,
+    0,
+    NULL,
+    NV_1P,
+    {
+	GAME_WORD_BLOB, "mpr19620.7",    0x0200000, 0x0200000,
+	GAME_WORD_BLOB, "mpr19615.2",    0x0400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19616.3",    0x0800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19617.4",    0x0c00000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19618.5",    0x1000000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19619.6",    0x1400000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19614.1",    0x1800000, 0x0400000,
+	GAME_WORD_BLOB, "mpr19621.8",    0x1c00000, 0x0400000,
+        GAME_END, "", 0, 0
+    },
+  },
   {"Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)",
-    0x05226d41,
+    0x0,
     0,
     NULL,
     NV_1P,
@@ -1590,7 +1603,7 @@ const Game GameList[NB_STV_GAMES]={
     },
   },
   {"Winter Heat (JUET 971012 V1.000)",
-    0x05226d41,
+    0x0,
     0,
     NULL,
     NULL,
