@@ -382,10 +382,10 @@ extern struct CellScrollData cell_scroll_data[270];
 // struct for Vdp2 part that shouldn't be saved
 typedef struct {
    int disptoggle;
-   int * perline_alpha;
-   int * perline_alpha_draw;
-   int perline_alpha_a;
-   int perline_alpha_b;
+   int *perline_alpha;
+   int *perline_alpha_draw;
+   int perline_alpha_a[270];
+   int perline_alpha_b[270];
 } Vdp2External_struct;
 
 extern Vdp2External_struct Vdp2External;

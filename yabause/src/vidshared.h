@@ -125,7 +125,8 @@ typedef struct
 
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
-
+ 
+   int celly;
    int cellw_bits, cellh_bits;
    int mapwh;
    int planew, planew_bits, planeh, planeh_bits;
@@ -176,6 +177,8 @@ typedef struct
    int isverticalscroll;
    u32 verticalscrolltbl;
    int verticalscrollinc;
+   int startLine;
+   int endLine;
    
    // WindowMode
    u8  LogicWin;    // Window Logic AND OR

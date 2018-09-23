@@ -45,6 +45,8 @@
 
 #define CLAMP(A,LOW,HIGH) ((A)<(LOW)?(LOW):((A)>(HIGH))?(HIGH):(A))
 
+#define LOG_AREA
+
 static Vdp2 baseVdp2Regs;
 Vdp2 * fixVdp2Regs = NULL;
 //#define PERFRAME_LOG
@@ -3077,13 +3079,13 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   if (vdp2height >= 448) rbg->vres = (vdp2height >> 1); else rbg->vres = vdp2height;
   if (vdp2width >= 640) rbg->hres = (vdp2width >> 1); else rbg->hres = vdp2width;
   info->vertices[0] = 0;
-  info->vertices[1] = 0;
+  info->vertices[1] = (vdp2height * info->startLine)/yabsys.VBlankLineCount;
   info->vertices[2] = vdp2width;
-  info->vertices[3] = 0;
+  info->vertices[3] = (vdp2height * info->startLine)/yabsys.VBlankLineCount;
   info->vertices[4] = vdp2width;
-  info->vertices[5] = vdp2height;
+  info->vertices[5] = (vdp2height * info->endLine)/yabsys.VBlankLineCount;
   info->vertices[6] = 0;
-  info->vertices[7] = vdp2height;
+  info->vertices[7] = (vdp2height * info->endLine)/yabsys.VBlankLineCount;
   cellw = info->cellw;
   cellh = info->cellh;
   info->cellw = rbg->hres;
@@ -3112,7 +3114,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     rbg->patternshift = 0;
   }
 
-  regs = Vdp2RestoreRegs(3, Vdp2Lines);
+  regs = Vdp2RestoreRegs(info->startLine, Vdp2Lines);
   if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
 
   if (info->lineTexture != 0) {
@@ -3205,8 +3207,12 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     Vdp2DrawRotation_in(rbg);
     
     rbg->info.cellw = rbg->hres;
-    rbg->info.cellh = rbg->vres;
+    rbg->info.cellh = (rbg->vres * (info->endLine - info->startLine))/yabsys.VBlankLineCount;
+    rbg->info.celly = (rbg->vres * info->startLine)/yabsys.VBlankLineCount;
     rbg->info.flipfunction = 0;
+
+    LOG_AREA("%d %d %d\n", rbg->info.cellw, rbg->info.cellh, rbg->info.celly);
+
     YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
   }
 }
@@ -3310,7 +3316,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
   int cellw, cellh;
   int oldcellx = -1, oldcelly = -1;
   u32 color;
-  int vres, hres;
+  int vres, hres, vstart;
   int h;
   int v;
   int lineInc = fixVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
@@ -3322,7 +3328,8 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
   }
 
   if (vdp2height >= 448) lineInc <<= 1;
-  vres = rbg->vres;
+  vres = rbg->vres * (rbg->info.endLine - rbg->info.startLine)/yabsys.VBlankLineCount;
+  vstart = rbg->vres * rbg->info.startLine/yabsys.VBlankLineCount;
   hres = rbg->hres;
   cellw = rbg->info.cellw;
   cellh = rbg->info.cellh;
@@ -3356,7 +3363,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
   paraA.over_pattern_name = fixVdp2Regs->OVPNRA;
   paraB.over_pattern_name = fixVdp2Regs->OVPNRB;
 
-  for (j = 0; j < vres; j++)
+  for (j = vstart; j < vstart+vres; j++)
   {
 #if 0 // PERLINE
     Vdp2 * regs = Vdp2RestoreRegs(j, Vdp2Lines);
@@ -3731,7 +3738,7 @@ int VIDOGLInit(void)
   YglReset(_Ygl->vdp1levels[1]);
   YglReset(_Ygl->vdp2levels);
 
-  g_rgb0.async = 1;
+  g_rgb0.async = 0;
   g_rgb0.rgb_type = 0;
   g_rgb0.vdp2_sync_flg = -1;
   g_rgb1.async = 0;
@@ -3847,7 +3854,16 @@ void VIDOGLVdp1Draw(void)
   _Ygl->vdp1_maxpri = maxpri;
   _Ygl->vdp1_minpri = minpri;
 
-  if (*Vdp2External.perline_alpha_draw & 0x40) {
+  int firstalpha = (Vdp2External.perline_alpha_draw[0] & 0x40);
+  int prioChanged = 0;
+  int max = (yabsys.VBlankLineCount<270)?yabsys.VBlankLineCount:270;
+  for(i = 0; i<max; i++) {
+     if ((Vdp2External.perline_alpha_draw[i] & 0x40) != firstalpha) {
+       prioChanged = 1;
+       break;
+     }
+  }
+  if (prioChanged == 1) {
     u32 * linebuf;
     int line_shift = 0;
     if (_Ygl->rheight > 256) {
@@ -5513,13 +5529,19 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
   int line = 0;
   int i;
   int displayedbyLine = 0;
-  u8 first = info->display[0];
-  for(i = 0; i<yabsys.VBlankLineCount; i++)
+  u8 first = info->display[info->startLine];
+  int firstalpha = (Vdp2External.perline_alpha_draw[info->startLine] & bit);
+  for(i = info->startLine; i<info->endLine; i++) {
      if (first != info->display[i]) {
        displayedbyLine = 1;
        break;
      }
-  if ((*Vdp2External.perline_alpha_draw & bit) || displayedbyLine) {
+     if ((Vdp2External.perline_alpha_draw[i] & bit) != firstalpha) {
+       displayedbyLine = 1;
+       break;
+     }
+  }
+  if (displayedbyLine) {
     u32 * linebuf;
     int line_shift = 0;
     if (_Ygl->rheight > 256) {
@@ -5530,9 +5552,9 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
     }
 
     linebuf = YglGetPerlineBuf(&_Ygl->bg[id], _Ygl->rheight, 1);
-    for (line = 0; line < _Ygl->rheight; line++) {
+    for (line = info->startLine, i=0; line < info->endLine; line++, i++) {
       if (info->display[line >> line_shift] == 0x0) {
-        linebuf[line] = 0x00;
+        linebuf[i] = 0x00;
       }
       else {
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
@@ -5546,35 +5568,35 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
  
          switch            (id) {
           case NBG0:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
+            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
             break;
           case NBG1:
-            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[i] = ((((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255) /31) << 24;
             break;
           case NBG2:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) *255) /31) << 24;
+            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) *255) /31) << 24;
             break;
           case NBG3:
-            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[i] = ((((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255) /31) << 24;
             break;
           case RBG0:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) *255) /31) << 24;
+            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) *255) /31) << 24;
             break;
           }
 
         }
         else {
-          linebuf[line] = 0xFF000000;
+          linebuf[i] = 0xFF000000;
         }
 
         if (Vdp2Lines[line >> line_shift].CLOFEN  & bit) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
-          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
-          linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
-          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
+          linebuf[i] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
+          linebuf[i] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
+          linebuf[i] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
         }
         else {
-          linebuf[line] |= 0x00808080;
+          linebuf[i] |= 0x00808080;
         }
 
       }
@@ -5591,9 +5613,8 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawRBG1(void)
+static void Vdp2DrawRBG1_part(vdp2draw_struct  * info)
 {
-  vdp2draw_struct  * info = &g_rgb1.info;;
   YglTexture texture;
   YglCache tmpc;
 
@@ -5612,12 +5633,13 @@ static void Vdp2DrawRBG1(void)
   info->specialcolorfunction = 0;
 
 // RBG1 mode
-  for (int i=0; i<yabsys.VBlankLineCount; i++) {
-    info->display[i] = ((Vdp2Lines[i].BGON & 0x20)!=0);
-    if (!(fixVdp2Regs->BGON & 0x10)) info->display[i] = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
-    info->enable |= info->display[i];
+  info->enable = ((fixVdp2Regs->BGON & 0x20)!=0);
+  if (!(fixVdp2Regs->BGON & 0x10)) info->enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+
+  if (!info->enable) {
+   LOG_AREA("RGB1 disabled! %x\n", fixVdp2Regs->BGON);
+   return;
   }
-  if (!info->enable) return;
 
     // Read in Parameter B
     Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
@@ -5749,6 +5771,7 @@ static void Vdp2DrawRBG1(void)
 
 
   Vdp2GeneratePerLineColorCalcuration(info, NBG0);
+  //info->lineTexture = 0;
   info->linescreen = 0;
   if (fixVdp2Regs->LNCLEN & 0x1)
     info->linescreen = 1;
@@ -5796,6 +5819,115 @@ static void Vdp2DrawRBG1(void)
     Vdp2DrawRotation(&g_rgb1);
 }
 
+int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
+{
+  if ((a->BGON & 0x1010) != (b->BGON & 0x1010)) return 0;
+  if ((a->PRIR & 0x7) != (b->PRIR & 0x7)) return 0;
+  if ((a->CCCTL & 0xFF10) != (b->CCCTL & 0xFF10)) return 0;
+  if ((a->SFPRMD & 0x300) != (b->SFPRMD & 0x300)) return 0;
+  if ((a->CHCTLB & 0x7700) != (b->CHCTLB & 0x7700)) return 0;
+  if ((a->WCTLC & 0xFF) != (b->WCTLC & 0xFF)) return 0;
+  if ((a->RPTA.all) != (b->RPTA.all)) return 0;
+  if ((a->VRSIZE & 0x8000) != (b->VRSIZE & 0x8000)) return 0;
+  if ((a->RAMCTL & 0x80FF) != (b->RAMCTL & 0x80FF)) return 0;
+  if ((a->KTCTL & 0xFFFF) != (b->KTCTL & 0xFFFF)) return 0;
+  if ((a->PLSZ & 0xFF00) != (b->PLSZ & 0xFF00)) return 0;
+  if ((a->KTAOF & 0x707) != (b->KTAOF & 0x707)) return 0;
+  if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;
+  if ((a->RPMD & 0x3) != (b->RPMD & 0x3)) return 0;
+  if ((a->WCTLD & 0xF) != (b->WCTLD & 0xF)) return 0;
+  if ((a->BMPNB & 0x7) != (b->BMPNB & 0x7)) return 0;
+  if ((a->PNCR & 0xFFFF) != (b->PNCR & 0xFFFF)) return 0;
+  if ((a->MZCTL & 0xFF10) != (b->MZCTL & 0xFF10)) return 0;
+  if ((a->SFCCMD &0x300) != (b->SFCCMD &0x300)) return 0;
+  if ((a->SFSEL & 0x10) != (b->SFSEL & 0x10)) return 0;
+  if ((a->SFCODE & 0xFFFF) != (b->SFCODE & 0xFFFF)) return 0;
+  if ((a->LNCLEN & 0x10) != (b->LNCLEN & 0x10)) return 0;
+  if ((a->LCTA.all) != (b->LCTA.all)) return 0;
+  if ((a->CRAOFB & 0x7) != (b->CRAOFB & 0x7)) return 0;
+  if ((a->CLOFSL & 0x10) != (b->CLOFSL & 0x10)) return 0;
+  if ((a->COBR & 0x1FF) != (b->COBR & 0x1FF)) return 0;
+  if ((a->COBG & 0x1FF) != (b->COBG & 0x1FF)) return 0;
+  if ((a->COBB & 0x1FF) != (b->COBB & 0x1FF)) return 0;
+  if ((a->COAR & 0x1FF) != (b->COAR & 0x1FF)) return 0;
+  if ((a->COAG & 0x1FF) != (b->COAG & 0x1FF)) return 0;
+  if ((a->COAB & 0x1FF) != (b->COAB & 0x1FF)) return 0;
+  return 1;
+}
+
+int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
+{
+
+  if ((a->BGON & 0x130) != (b->BGON & 0x130)) return 0;
+  if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
+  if ((a->CCCTL & 0xFF01) != (b->CCCTL & 0xFF01)) return 0;
+  if ((a->BMPNA & 0x7) != (b->BMPNA & 0x7)) return 0;
+  if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;
+  if ((a->VRSIZE & 0x8000) != (b->VRSIZE & 0x8000)) return 0;
+  if ((a->RAMCTL & 0x80FF) != (b->RAMCTL & 0x80FF)) return 0;
+  if ((a->KTCTL & 0xFFFF) != (b->KTCTL & 0xFFFF)) return 0;
+  if ((a->PLSZ & 0xFF00) != (b->PLSZ & 0xFF00)) return 0;
+  if ((a->SFPRMD & 0x3) != (b->SFPRMD & 0x3)) return 0;
+  if ((a->CHCTLA & 0x7F) != (b->CHCTLA & 0x7F)) return 0;
+  if ((a->MZCTL & 0xFF01) != (b->MZCTL & 0xFF01)) return 0;
+  if ((a->SFCCMD &0x3) != (b->SFCCMD &0x3)) return 0;
+  if ((a->SFSEL & 0x1) != (b->SFSEL & 0x1)) return 0;
+  if ((a->SFCODE & 0xFFFF) != (b->SFCODE & 0xFFFF)) return 0;
+  if ((a->LNCLEN & 0x1) != (b->LNCLEN & 0x1)) return 0;
+  if ((a->CRAOFA & 0x7) != (b->CRAOFA & 0x7)) return 0;
+  if ((a->CLOFSL & 0x1) != (b->CLOFSL & 0x1)) return 0;
+  if ((a->WCTLA & 0xFF) != (b->WCTLA & 0xFF)) return 0;
+  if ((a->PNCN0 & 0xFFFF) != (b->PNCN0 & 0xFFFF)) return 0;
+  if ((a->SCRCTL & 0x3F) != (b->SCRCTL & 0x3F)) return 0;
+  if ((a->LSTA0.all) != (b->LSTA0.all)) return 0;
+  if ((a->VCSTA.all) != (b->VCSTA.all)) return 0;
+  if ((a->RPTA.all) != (b->RPTA.all)) return 0;
+  if ((a->WCTLD & 0xF) != (b->WCTLD & 0xF)) return 0;
+  if ((a->LCTA.all) != (b->LCTA.all)) return 0;
+  if ((a->COBR & 0x1FF) != (b->COBR & 0x1FF)) return 0;
+  if ((a->COBG & 0x1FF) != (b->COBG & 0x1FF)) return 0;
+  if ((a->COBB & 0x1FF) != (b->COBB & 0x1FF)) return 0;
+  if ((a->COAR & 0x1FF) != (b->COAR & 0x1FF)) return 0;
+  if ((a->COAG & 0x1FF) != (b->COAG & 0x1FF)) return 0;
+  if ((a->COAB & 0x1FF) != (b->COAB & 0x1FF)) return 0;
+  return 1;
+}
+
+int sameVDP2Reg(int id, Vdp2 *a, Vdp2 *b)
+{
+  switch (id) {
+    case RBG0: return sameVDP2RegRBG0(a, b);
+    case RBG1: return sameVDP2RegRBG1(a, b);
+    default:
+    break;
+  }
+  return 1;
+}
+
+static void Vdp2DrawRBG1(void)
+{
+  int nbZone = 1;
+  int lastLine = 0;
+  int line;
+  int max = (yabsys.VBlankLineCount >= 270)?270:yabsys.VBlankLineCount;
+  for (line = 2; line<max; line++) {
+    if (!sameVDP2Reg(RBG1, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
+      fixVdp2Regs = &Vdp2Lines[line-1];
+      g_rgb1.info.startLine = lastLine;
+      g_rgb1.info.endLine = line;
+      lastLine = line;
+      LOG_AREA("RBG1 Draw from %d to %d %x\n", g_rgb1.info.startLine, g_rgb1.info.endLine, fixVdp2Regs->BGON);
+      Vdp2DrawRBG1_part(&g_rgb1.info);
+    }
+  }
+  fixVdp2Regs = &Vdp2Lines[line-1];
+  g_rgb1.info.startLine = lastLine;
+  g_rgb1.info.endLine = line;
+  LOG_AREA("RBG1 Draw from %d to %d %x\n", g_rgb1.info.startLine, g_rgb1.info.endLine, fixVdp2Regs->BGON);
+  Vdp2DrawRBG1_part(&g_rgb1.info);
+
+}
+
 static void Vdp2DrawNBG0(void) {
   vdp2draw_struct info = { 0 };
   YglTexture texture;
@@ -5811,6 +5943,8 @@ static void Vdp2DrawNBG0(void) {
   info.cob = 0;
   int i;
   info.enable = 0;
+  info.startLine = 0;
+  info.endLine = (yabsys.VBlankLineCount < 270)?yabsys.VBlankLineCount:270;
 
   info.cellh = 256 << vdp2_interlace;
   info.specialcolorfunction = 0;
@@ -6108,6 +6242,8 @@ static void Vdp2DrawNBG1(void)
   info.cob = 0;
   info.specialcolorfunction = 0;
   info.enable = 0;
+  info.startLine = 0;
+  info.endLine = (yabsys.VBlankLineCount < 270)?yabsys.VBlankLineCount:270;
 
   for (int i=0; i<yabsys.VBlankLineCount; i++) {
     info.display[i] = ((Vdp2Lines[i].BGON & 0x2)!=0);
@@ -6378,6 +6514,8 @@ static void Vdp2DrawNBG2(void)
   info.specialcolorfunction = 0;
   info.blendmode = 0;
   info.enable = 0;
+  info.startLine = 0;
+  info.endLine = (yabsys.VBlankLineCount < 270)?yabsys.VBlankLineCount:270;
 
   for (int i=0; i<yabsys.VBlankLineCount; i++) {
     info.display[i] = ((Vdp2Lines[i].BGON & 0x4)!=0);
@@ -6494,6 +6632,8 @@ static void Vdp2DrawNBG3(void)
   info.specialcolorfunction = 0;
   info.blendmode = 0;
   info.enable = 0;
+  info.startLine = 0;
+  info.endLine = (yabsys.VBlankLineCount < 270)?yabsys.VBlankLineCount:270;
 
   for (int i=0; i<yabsys.VBlankLineCount; i++) {
     info.display[i] = ((Vdp2Lines[i].BGON & 0x8)!=0);
@@ -6598,9 +6738,8 @@ static void Vdp2DrawNBG3(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawRBG0(void)
+static void Vdp2DrawRBG0_part( vdp2draw_struct  *info)
 {
-  vdp2draw_struct  * info = &g_rgb0.info;
   g_rgb0.rgb_type = 0;
 
   info->dst = 0;
@@ -6612,10 +6751,7 @@ static void Vdp2DrawRBG0(void)
   info->specialcolorfunction = 0;
   info->enable = 0;
 
-  for (int i=0; i<yabsys.VBlankLineCount; i++) {
-    info->display[i] = ((Vdp2Lines[i].BGON & 0x10)!=0);
-    info->enable |= info->display[i];
-  }
+  info->enable = ((fixVdp2Regs->BGON & 0x10)!=0);
   if (!info->enable) return;
   info->priority = fixVdp2Regs->PRIR & 0x7;
   if (((Vdp2External.disptoggle & 0x10)==0) || (info->priority == 0)) {
@@ -6629,6 +6765,7 @@ static void Vdp2DrawRBG0(void)
   info->blendmode = 0;
 
   Vdp2GeneratePerLineColorCalcuration(info, RBG0);
+  //info->lineTexture = 0;
 
   info->transparencyenable = !(fixVdp2Regs->BGON & 0x1000);
   info->specialprimode = (fixVdp2Regs->SFPRMD >> 8) & 0x3;
@@ -6946,7 +7083,31 @@ static void Vdp2DrawRBG0(void)
   info->LogicWin = (fixVdp2Regs->WCTLC >> 7) & 0x01;
 
   Vdp2SetGetColor(info);
+
   Vdp2DrawRotation(&g_rgb0);
+}
+
+static void Vdp2DrawRBG0(void)
+{
+  int nbZone = 1;
+  int lastLine = 0;
+  int line;
+  int max = (yabsys.VBlankLineCount >= 270)?270:yabsys.VBlankLineCount;
+  for (line = 2; line<max; line++) {
+    if (!sameVDP2Reg(RBG0, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
+      fixVdp2Regs = &Vdp2Lines[line-1];
+      g_rgb0.info.startLine = lastLine;
+      g_rgb0.info.endLine = line;
+      lastLine = line;
+      LOG_AREA("RBG0 Draw from %d to %d\n", g_rgb0.info.startLine, g_rgb0.info.endLine );
+      Vdp2DrawRBG0_part(&g_rgb0.info);
+    }
+  }
+  fixVdp2Regs = &Vdp2Lines[line-1];
+  g_rgb0.info.startLine = lastLine;
+  g_rgb0.info.endLine = line;
+  LOG_AREA("RBG0 Draw from %d to %d\n", g_rgb0.info.startLine, g_rgb0.info.endLine );
+  Vdp2DrawRBG0_part(&g_rgb0.info);
 
 }
 

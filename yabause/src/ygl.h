@@ -476,6 +476,7 @@ typedef enum {
 	NBG3,
 	RBG0,
 	SPRITE,
+	RBG1,
 	enBGMAX
 } enBG;
 
