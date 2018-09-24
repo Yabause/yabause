@@ -417,7 +417,7 @@ void Vdp2HBlankOUT(void) {
     {
       cell_scroll_data[yabsys.LineCount].data[i] = Vdp2RamReadLong(NULL, Vdp2Ram, cell_scroll_table_start_addr + i * 4);
     }
-
+    if (yabsys.LineCount == 0) return;
 
     if ((Vdp2Lines[0].CCRNA & 0x00FF) != (Vdp2Lines[yabsys.LineCount].CCRNA & 0x00FF)){
       Vdp2External.perline_alpha[yabsys.LineCount] |= 0x1;
