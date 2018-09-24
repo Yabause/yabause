@@ -4701,7 +4701,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   u16 color2;
   int i;
   float col[4 * 4];
-  float vcol[4 * 4];
   int gouraud = 0;
   int priority = 0;
   int isSquare = 0;
@@ -4709,10 +4708,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int normalshadow = 0;
   int colorcalc = 0;
   vdp1cmd_struct cmd;
-  s16 v[8];
-  int isline;
   float line_polygon[8];
-  YglCache c;
 
   sprite.linescreen = 0;
 
@@ -4723,27 +4719,98 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
   if ((cmd.CMDYD & 0x400)) cmd.CMDYD |= 0xFC00; else cmd.CMDYD &= ~(0xFC00);
 
-  v[0] = (s16)cmd.CMDXA;
-  v[1] = (s16)cmd.CMDYA;
-  v[2] = (s16)cmd.CMDXB;
-  v[3] = (s16)cmd.CMDYB;
-  v[4] = (s16)cmd.CMDXC;
-  v[5] = (s16)cmd.CMDYC;
-  v[6] = (s16)cmd.CMDXD;
-  v[7] = (s16)cmd.CMDYD;
-
-  isline = isLine(&v[0]);
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   sprite.dst = 0;
 
-  sprite.vertices[0] = (v[0] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[1] = (v[1] + Vdp1Regs->localY) * vdp1hratio;
-  sprite.vertices[2] = (v[2] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[3] = (v[3] + Vdp1Regs->localY) * vdp1hratio;
-  sprite.vertices[4] = (v[4] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[5] = (v[5] + Vdp1Regs->localY) * vdp1hratio;
-  sprite.vertices[6] = (v[6] + Vdp1Regs->localX) * vdp1wratio;
-  sprite.vertices[7] = (v[7] + Vdp1Regs->localY) * vdp1hratio;
+  sprite.vertices[0] = (s16)cmd.CMDXA;
+  sprite.vertices[1] = (s16)cmd.CMDYA;
+  sprite.vertices[2] = (s16)cmd.CMDXB;
+  sprite.vertices[3] = (s16)cmd.CMDYB;
+  sprite.vertices[4] = (s16)cmd.CMDXC;
+  sprite.vertices[5] = (s16)cmd.CMDYC;
+  sprite.vertices[6] = (s16)cmd.CMDXD;
+  sprite.vertices[7] = (s16)cmd.CMDYD;
+
+  isSquare = 1;
+
+  for (i = 0; i < 3; i++) {
+    float dx = sprite.vertices[((i + 1) << 1) + 0] - sprite.vertices[((i + 0) << 1) + 0];
+    float dy = sprite.vertices[((i + 1) << 1) + 1] - sprite.vertices[((i + 0) << 1) + 1];
+    float d2x = sprite.vertices[(((i + 2) & 0x3) << 1) + 0] - sprite.vertices[((i + 1) << 1) + 0];
+    float d2y = sprite.vertices[(((i + 2) & 0x3) << 1) + 1] - sprite.vertices[((i + 1) << 1) + 1];
+
+    float dot = dx*d2x + dy*d2y;
+    if (dot >= EPSILON || dot <= -EPSILON) {
+      isSquare = 0;
+      break;
+    }
+  }
+
+  // For gungiliffon big polygon
+  if (sprite.vertices[2] - sprite.vertices[0] > 350) {
+    isSquare = 1;
+  }
+
+  if (isSquare) {
+    // find upper left opsition
+    float minx = 65535.0f;
+    float miny = 65535.0f;
+    int lt_index = -1;
+
+    sprite.dst = 0;
+
+    for (i = 0; i < 4; i++) {
+      if (sprite.vertices[(i << 1) + 0] <= minx /*&& sprite.vertices[(i << 1) + 1] <= miny*/) {
+
+        if (minx == sprite.vertices[(i << 1) + 0]) {
+          if (sprite.vertices[(i << 1) + 1] < miny) {
+            minx = sprite.vertices[(i << 1) + 0];
+            miny = sprite.vertices[(i << 1) + 1];
+            lt_index = i;
+          }
+        }
+        else {
+          minx = sprite.vertices[(i << 1) + 0];
+          miny = sprite.vertices[(i << 1) + 1];
+          lt_index = i;
+        }
+      }
+    }
+
+    float adx = sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
+    float ady = sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+    float bdx = sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] - sprite.vertices[((lt_index) << 1) + 0];
+    float bdy = sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] - sprite.vertices[((lt_index) << 1) + 1];
+    float cross = (adx * bdy) - (bdx * ady);
+
+    // clockwise
+    if (cross >= 0) {
+      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] += 1;
+      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] += 0;
+      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] += 1;
+      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] += 1;
+      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 0] += 0;
+      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 1] += 1;
+    }
+    // counter-clockwise
+    else {
+      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 0] += 0;
+      sprite.vertices[(((lt_index + 1) & 0x03) << 1) + 1] += 1;
+      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 0] += 1;
+      sprite.vertices[(((lt_index + 2) & 0x03) << 1) + 1] += 1;
+      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 0] += 1;
+      sprite.vertices[(((lt_index + 3) & 0x03) << 1) + 1] += 0;
+    }
+  }
+
+  sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
+  sprite.vertices[2] = (sprite.vertices[2] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[3] = (sprite.vertices[3] + Vdp1Regs->localY) * vdp1hratio;
+  sprite.vertices[4] = (sprite.vertices[4] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[5] = (sprite.vertices[5] + Vdp1Regs->localY) * vdp1hratio;
+  sprite.vertices[6] = (sprite.vertices[6] + Vdp1Regs->localX) * vdp1wratio;
+  sprite.vertices[7] = (sprite.vertices[7] + Vdp1Regs->localY) * vdp1hratio;
 
   color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
@@ -4755,10 +4822,10 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     for (i = 0; i < 4; i++)
     {
       color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
-      vcol[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-      vcol[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-      vcol[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
-      vcol[(i << 2) + 3] = 1.0f;
+      col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      col[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      col[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+      col[(i << 2) + 3] = 1.0f;
     }
     gouraud = 1;
   }
@@ -4789,7 +4856,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   alpha = 0xF8;
   if (IS_REPLACE(CMDPMOD)) {
     // hard/vdp1/hon/p06_35.htm#6_35
-    // \93\A7\96\BE\83s\83N\83Z\83\8B\96\B3\8C\F8\83r\83b\83g\82̓L\83\83\83\89\83N\83^\83p\83^\81[\83\93\82̂\A0\82\E9\83X\83v\83\89\83C\83g\95`\89\E6\82ɂ̂ݗL\8C\F8\82ł\B7\81B\83|\83\8A\83S\83\93\81A\83|\83\8A\83\89\83C\83\93\81A\83\89\83C\83\93\82ł́A\82\B1\82̃r\83b\83g\82͕K\82\B81\82ɐݒ肵\82Ă\AD\82\BE\82\B3\82\A2\81B
     //if ((CMDPMOD & 0x40) != 0) {
       sprite.blendmode = VDP1_COLOR_SPD;
     //}
@@ -4815,83 +4881,16 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
   }
 
-  if (isLine == 0) {
-    for (i = 0; i < 4; i++)
-    {
-      col[(i << 2) + 0] = vcol[(i << 2) + 0];
-      col[(i << 2) + 1] = vcol[(i << 2) + 1];
-      col[(i << 2) + 2] = vcol[(i << 2) + 2];
-      col[(i << 2) + 3] = vcol[(i << 2) + 3];
-    }
-  } else {
-      col[(0 << 2) + 0] = vcol[(0 << 2) + 0];
-      col[(0 << 2) + 1] = vcol[(0 << 2) + 1];
-      col[(0 << 2) + 2] = vcol[(0 << 2) + 2];
-      col[(0 << 2) + 3] = vcol[(0 << 2) + 3];
-
-      col[(1 << 2) + 0] = vcol[(0 << 2) + 0];
-      col[(1 << 2) + 1] = vcol[(0 << 2) + 1];
-      col[(1 << 2) + 2] = vcol[(0 << 2) + 2];
-      col[(1 << 2) + 3] = vcol[(0 << 2) + 3];
-
-      col[(2 << 2) + 0] = vcol[(1 << 2) + 0];
-      col[(2 << 2) + 1] = vcol[(1 << 2) + 1];
-      col[(2 << 2) + 2] = vcol[(1 << 2) + 2];
-      col[(2 << 2) + 3] = vcol[(1 << 2) + 3];
-
-      col[(3 << 2) + 0] = vcol[(1 << 2) + 0];
-      col[(3 << 2) + 1] = vcol[(1 << 2) + 1];
-      col[(3 << 2) + 2] = vcol[(1 << 2) + 2];
-      col[(3 << 2) + 3] = vcol[(1 << 2) + 3];
-  }
   if (gouraud == 1)
   {
-    YglQuadGrowShading(&sprite, &texture, col, &c, YglTM_vdp1[_Ygl->drawframe]);
+    YglQuadGrowShading(&sprite, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
   }
   else {
-    YglQuadGrowShading(&sprite, &texture, NULL, &c, YglTM_vdp1[_Ygl->drawframe]);
+    YglQuadGrowShading(&sprite, &texture, NULL, NULL, YglTM_vdp1[_Ygl->drawframe]);
   }
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   *texture.textdata = Vdp1ReadPolygonColor(&cmd);
-
-  for (i=0; i<4; i++) {
-    makeLinePolygon(&v[(2*i)%8],&v[(2*(i+1))%8],line_polygon);
-    col[(0 << 2) + 0] = vcol[(i << 2) + 0];
-    col[(0 << 2) + 1] = vcol[(i << 2) + 1];
-    col[(0 << 2) + 2] = vcol[(i << 2) + 2];
-    col[(0 << 2) + 3] = vcol[(i << 2) + 3];
-
-    col[(1 << 2) + 0] = vcol[(i << 2) + 0];
-    col[(1 << 2) + 1] = vcol[(i << 2) + 1];
-    col[(1 << 2) + 2] = vcol[(i << 2) + 2];
-    col[(1 << 2) + 3] = vcol[(i << 2) + 3];
-
-    col[(2 << 2) + 0] = vcol[((i+1)%4 << 2) + 0];
-    col[(2 << 2) + 1] = vcol[((i+1)%4 << 2) + 1];
-    col[(2 << 2) + 2] = vcol[((i+1)%4 << 2) + 2];
-    col[(2 << 2) + 3] = vcol[((i+1)%4 << 2) + 3];
-
-    col[(3 << 2) + 0] = vcol[((i+1)%4 << 2) + 0];
-    col[(3 << 2) + 1] = vcol[((i+1)%4 << 2) + 1];
-    col[(3 << 2) + 2] = vcol[((i+1)%4 << 2) + 2];
-    col[(3 << 2) + 3] = vcol[((i+1)%4 << 2) + 3]; 
-
-    sprite.vertices[0] = (line_polygon[0] + Vdp1Regs->localX) * vdp1wratio;
-    sprite.vertices[1] = (line_polygon[1] + Vdp1Regs->localY) * vdp1hratio;
-    sprite.vertices[2] = (line_polygon[2] + Vdp1Regs->localX) * vdp1wratio;
-    sprite.vertices[3] = (line_polygon[3] + Vdp1Regs->localY) * vdp1hratio;
-    sprite.vertices[4] = (line_polygon[4] + Vdp1Regs->localX) * vdp1wratio;
-    sprite.vertices[5] = (line_polygon[5] + Vdp1Regs->localY) * vdp1hratio;
-    sprite.vertices[6] = (line_polygon[6] + Vdp1Regs->localX) * vdp1wratio;
-    sprite.vertices[7] = (line_polygon[7] + Vdp1Regs->localY) * vdp1hratio;
-    if (gouraud) {
-      YglCacheQuadGrowShading(&sprite, col, &c, YglTM_vdp1[_Ygl->drawframe]);
-    }
-    else {
-      YglCacheQuadGrowShading(&sprite, NULL, &c, YglTM_vdp1[_Ygl->drawframe]);
-    }
-  }
 }
 
 void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
