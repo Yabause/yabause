@@ -3925,6 +3925,8 @@ void YglChangeResolution(int w, int h) {
   if ((_Ygl->width == maxWidth) || (_Ygl->height == maxHeight)) _Ygl->upmode = UP_NONE;
   rebuild_frame_buffer = 1;
 
+  _Ygl->width &= ~1;
+  _Ygl->height &= ~1;
   _Ygl->rwidth = w;
   _Ygl->rheight = h;
 }
