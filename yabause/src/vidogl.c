@@ -5534,13 +5534,13 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id) {
   int i;
   int displayedbyLine = 0;
   u8 first = info->display[info->startLine];
-  int firstalpha = (Vdp2External.perline_alpha_draw[info->startLine] & bit);
+  int firstalpha = (Vdp2External.perline_alpha[info->startLine] & bit);
   for(i = info->startLine; i<info->endLine; i++) {
      if (first != info->display[i]) {
        displayedbyLine = 1;
        break;
      }
-     if ((Vdp2External.perline_alpha_draw[i] & bit) != firstalpha) {
+     if ((Vdp2External.perline_alpha[i] & bit) != firstalpha) {
        displayedbyLine = 1;
        break;
      }
@@ -5641,9 +5641,9 @@ static void Vdp2DrawRBG1_part(vdp2draw_struct  * info)
   if (!(fixVdp2Regs->BGON & 0x10)) info->enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
 
   if (!info->enable) {
-   LOG_AREA("RGB1 disabled! %x\n", fixVdp2Regs->BGON);
    return;
   }
+  for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
 
     // Read in Parameter B
     Vdp2ReadRotationTable(1, &paraB, fixVdp2Regs, Vdp2Ram);
@@ -6757,6 +6757,9 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info)
 
   info->enable = ((fixVdp2Regs->BGON & 0x10)!=0);
   if (!info->enable) return;
+
+  for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
+
   info->priority = fixVdp2Regs->PRIR & 0x7;
   if (((Vdp2External.disptoggle & 0x10)==0) || (info->priority == 0)) {
 
