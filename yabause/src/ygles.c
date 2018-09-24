@@ -2804,8 +2804,6 @@ void YglRender(void) {
      y = 0;
    }
 
-   YglCheckFBSwitch(1);
-
    FrameProfileAdd("YglRender start");
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    glEnable(GL_SCISSOR_TEST);

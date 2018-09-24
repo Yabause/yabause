@@ -5347,7 +5347,7 @@ int VIDOGLVdp2Reset(void)
 
 void VIDOGLVdp2Draw(void)
 {
-
+  YglCheckFBSwitch(1);
   fixVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
   VIDOGLVdp2SetResolution(fixVdp2Regs->TVMD);
