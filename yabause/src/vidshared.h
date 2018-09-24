@@ -105,7 +105,7 @@ typedef struct
     int WinHEnd;
 } vdp2WindowInfo;
 
-typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int, u8);
+typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int, u8, Vdp2 *varVdp2Regs);
 typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, int, int);
 
 typedef struct 
@@ -158,7 +158,7 @@ typedef struct
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
-   u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int, u8 );
+   u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int, u8 , Vdp2*);
    u32 FASTCALL (*PostPixelFetchCalc)(void *, u32);
    int patternpixelwh;
    int draww;
@@ -281,6 +281,8 @@ void FASTCALL Vdp2ParameterAPlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
 void FASTCALL Vdp2ParameterBPlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs);
 float Vdp2ReadCoefficientMode0_2(vdp2rotationparameter_struct *parameter, u32 addr, u8* ram);
 fixed32 Vdp2ReadCoefficientMode0_2FP(vdp2rotationparameterfp_struct *parameter, u32 addr, u8* ram);
+
+int PixelIsSpecialPriority(int specialcode, int dot);
 
 //////////////////////////////////////////////////////////////////////////////
 

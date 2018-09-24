@@ -266,6 +266,8 @@ int YglIsCached(YglTextureManager * tm, u64, YglCache *);
 void YglCacheAdd(YglTextureManager * tm, u64, YglCache *);
 void YglCacheReset(YglTextureManager * tm);
 
+void YglCheckFBSwitch(int sync);
+
 #define VDP1_COLOR_CL_REPLACE 0x00
 #define VDP1_COLOR_CL_SHADOW 0x10
 #define VDP1_COLOR_CL_HALF_LUMINANCE 0x20
@@ -362,7 +364,7 @@ typedef struct {
 } YglVdp1CommonParam;
 
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
-int Ygl_uniformVdp1CommonParam(void * p);
+int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs);
 int Ygl_cleanupVdp1CommonParam(void * p);
 void YglUpdateVDP1FB(void);
 
@@ -407,7 +409,7 @@ typedef struct {
    GLuint tex0;
    GLuint tex1;
    float color_offset_val[4];
-   int (*setupUniform)(void *, YglTextureManager *tm);
+   int (*setupUniform)(void *, YglTextureManager *tm, Vdp2* regs);
    int (*cleanupUniform)(void *, YglTextureManager *tm);
    YglVdp1CommonParam * ids;
    float * matrix;
@@ -604,7 +606,7 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
 void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuad(vdp2draw_struct *, YglCache *, YglTextureManager *tm);
-void YglRender(void);
+void YglRender(Vdp2 *varVdp2Regs);
 void YglReset(YglLevel * levels);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
@@ -634,7 +636,7 @@ void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, fl
 int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, float * offsetcol);
 int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float to, float * offsetcol);
 void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float from, float to, float * offsetcol);
-void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol, int blend );
+void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , float * offsetcol, int blend, Vdp2* varVdp2Regs);
 
 void YglNeedToUpdateWindow();
 
@@ -675,7 +677,6 @@ int Ygl_cleanupNormal(void * p);
 
 int YglGenerateOriginalBuffer();
 
-void Vdp2RgbTextureSync();
 int YglSetupWindow(YglProgram * prg);
 int YglCleanUpWindow(YglProgram * prg);
 

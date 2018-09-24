@@ -29,7 +29,7 @@
 #include "frameprofile.h"
 
 
-//#define __USE_OPENGL_DEBUG__
+#define __USE_OPENGL_DEBUG__
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -41,10 +41,10 @@ extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
 
 static int YglCalcTextureQ( float   *pnts,float *q);
-static void YglRenderDestinationAlpha(void);;
+static void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs);
 u32 * YglGetColorRamPointer();
 
-void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture);
+void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture, Vdp2 *varVdp2Regs);
 
 #define PI 3.1415926535897932384626433832795f
 
@@ -597,8 +597,6 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
   GLuint new_pixelBufferID;
   unsigned int * new_texture;
   GLuint error;
-
-  Vdp2RgbTextureSync();
 
   if (tm->texture != NULL) {
     glActiveTexture(GL_TEXTURE0);
@@ -2403,6 +2401,7 @@ void YglRenderVDP1(void) {
   GLuint cprg=0;
   int i,j;
   int status;
+  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
   FrameProfileAdd("YglRenderVDP1 start");
   //YabThreadLock(_Ygl->mutex);
   YglMatrix m, *mat;
@@ -2468,7 +2467,7 @@ void YglRenderVDP1(void) {
     }
   
     if(level->prg[j].setupUniform) {
-      level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
+      level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe], varVdp2Regs);
     }
     if( level->prg[j].currentQuad != 0 ) {
       glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
@@ -2558,39 +2557,38 @@ void YglSetVdp2Window()
    return;
 }
 
-extern Vdp2 * fixVdp2Regs;
 
-static updateColorOffset() {
-  if (fixVdp2Regs->CLOFEN & 0x40)
+static updateColorOffset(Vdp2 *varVdp2Regs) {
+  if (varVdp2Regs->CLOFEN & 0x40)
   {
     // color offset enable
-    if (fixVdp2Regs->CLOFSL & 0x40)
+    if (varVdp2Regs->CLOFSL & 0x40)
     {
       // color offset B
-      vdp1cor = fixVdp2Regs->COBR & 0xFF;
-      if (fixVdp2Regs->COBR & 0x100)
+      vdp1cor = varVdp2Regs->COBR & 0xFF;
+      if (varVdp2Regs->COBR & 0x100)
         vdp1cor |= 0xFFFFFF00;
-      vdp1cog = fixVdp2Regs->COBG & 0xFF;
-      if (fixVdp2Regs->COBG & 0x100)
+      vdp1cog = varVdp2Regs->COBG & 0xFF;
+      if (varVdp2Regs->COBG & 0x100)
         vdp1cog |= 0xFFFFFF00;
 
-      vdp1cob = fixVdp2Regs->COBB & 0xFF;
-      if (fixVdp2Regs->COBB & 0x100)
+      vdp1cob = varVdp2Regs->COBB & 0xFF;
+      if (varVdp2Regs->COBB & 0x100)
         vdp1cob |= 0xFFFFFF00;
     }
     else
     {
       // color offset A
-      vdp1cor = fixVdp2Regs->COAR & 0xFF;
-      if (fixVdp2Regs->COAR & 0x100)
+      vdp1cor = varVdp2Regs->COAR & 0xFF;
+      if (varVdp2Regs->COAR & 0x100)
         vdp1cor |= 0xFFFFFF00;
 
-      vdp1cog = fixVdp2Regs->COAG & 0xFF;
-      if (fixVdp2Regs->COAG & 0x100)
+      vdp1cog = varVdp2Regs->COAG & 0xFF;
+      if (varVdp2Regs->COAG & 0x100)
         vdp1cog |= 0xFFFFFF00;
 
-      vdp1cob = fixVdp2Regs->COAB & 0xFF;
-      if (fixVdp2Regs->COAB & 0x100)
+      vdp1cob = varVdp2Regs->COAB & 0xFF;
+      if (varVdp2Regs->COAB & 0x100)
         vdp1cob |= 0xFFFFFF00;
     }
   }
@@ -2598,18 +2596,18 @@ static updateColorOffset() {
     vdp1cor = vdp1cog = vdp1cob = 0;
 }
 
-void YglUpdateVdp2Reg() {
+void YglUpdateVdp2Reg(Vdp2 *varVdp2Regs) {
   int i;
-  u8 *cclist  = (u8 *)&fixVdp2Regs->CCRSA;
-  u8 *prilist = (u8 *)&fixVdp2Regs->PRISA;
+  u8 *cclist  = (u8 *)&varVdp2Regs->CCRSA;
+  u8 *prilist = (u8 *)&varVdp2Regs->PRISA;
 
   for (i = 0; i < 8; i++) {
     _Ygl->fbu_.u_alpha[i*4] = (float)(0x1F - (((cclist[i] & 0x1F)) & 0x1F)) / 31.0f;
     _Ygl->fbu_.u_pri[i*4] = ((float)(prilist[i] & 0x7) / 10.0f) + 0.05f;
   }
-  _Ygl->fbu_.u_cctll = ((float)((fixVdp2Regs->SPCTL >> 8) & 0x07) / 10.0f) + 0.05f;
+  _Ygl->fbu_.u_cctll = ((float)((varVdp2Regs->SPCTL >> 8) & 0x07) / 10.0f) + 0.05f;
 
-  updateColorOffset();
+  updateColorOffset(varVdp2Regs);
 
   _Ygl->fbu_.u_coloroffset[0] = vdp1cor / 255.0f;
   _Ygl->fbu_.u_coloroffset[1] = vdp1cog / 255.0f;
@@ -2619,7 +2617,7 @@ void YglUpdateVdp2Reg() {
   // For Line Color insersion
   _Ygl->fbu_.u_emu_height = (float)_Ygl->rheight / (float)_Ygl->height;
   _Ygl->fbu_.u_vheight = (float)_Ygl->height;
-  _Ygl->fbu_.u_color_ram_offset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
+  _Ygl->fbu_.u_color_ram_offset = (varVdp2Regs->CRAOFB & 0x70) << 4;
 
   if (_Ygl->framebuffer_uniform_id_ == 0) {
     glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);
@@ -2630,7 +2628,7 @@ void YglUpdateVdp2Reg() {
 
 }
 
-void YglRenderFrameBuffer(int from, int to) {
+void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
 
   GLfloat   vertices[12];
   GLfloat texcord[12];
@@ -2647,9 +2645,9 @@ void YglRenderFrameBuffer(int from, int to) {
   if (_Ygl->vdp1_minpri > to) return;
 
   if (_Ygl->vdp1_lineTexture != 0){ // hbalnk-in function
-    Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture);
+    Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture, varVdp2Regs);
   }else{
-   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1 );
+   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1, varVdp2Regs );
   }
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
@@ -2844,7 +2842,7 @@ void YglRenderFrameBuffer(int from, int to) {
          }
        }
      }
-     Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 0 );
+     Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 0, varVdp2Regs );
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
      glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)vertices);
      glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
@@ -3051,7 +3049,7 @@ void YglCheckFBSwitch(int sync) {
   }
 }
 
-void YglRender(void) {
+void YglRender(Vdp2 *varVdp2Regs) {
    YglLevel * level;
    GLuint cprg=0;
    int from = 0;
@@ -3127,7 +3125,7 @@ void YglRender(void) {
    glScissor(_Ygl->m_viewport[0],_Ygl->m_viewport[1],_Ygl->m_viewport[2],_Ygl->m_viewport[3]);
    glEnable(GL_SCISSOR_TEST);
 
-   if ((fixVdp2Regs->BKTAU & 0x8000) != 0) {
+   if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
      glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
      YglDrawBackScreen(GlWidth, GlHeight);
    }else{
@@ -3139,7 +3137,7 @@ void YglRender(void) {
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-   YglUpdateVdp2Reg();
+   YglUpdateVdp2Reg(varVdp2Regs);
 
   // Color Calcurate Window  
    ccwindow = ((Vdp2Regs->WCTLD >> 9) & 0x01);
@@ -3151,7 +3149,7 @@ void YglRender(void) {
 
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
   if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
-    YglRenderDestinationAlpha();
+    YglRenderDestinationAlpha(varVdp2Regs);
   }
   else
   {
@@ -3172,7 +3170,7 @@ void YglRender(void) {
 
         glEnable(GL_BLEND);
         glBlendFunc(blendfunc_src, blendfunc_dst);
-        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to);
+        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
         from = to;
 
         // clean up
@@ -3196,7 +3194,7 @@ void YglRender(void) {
           }
           if (level->prg[j].setupUniform)
           {
-            level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2);
+            level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2, varVdp2Regs);
           }
 
           if (level->prg[j].prgid == PG_LINECOLOR_INSERT ||
@@ -3246,10 +3244,10 @@ void YglRender(void) {
     }
     glEnable(GL_BLEND);
     glBlendFunc(blendfunc_src, blendfunc_dst);
-    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8);
+    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, 8, varVdp2Regs);
   }
 
-   if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || _Ygl->msb_shadow_count_[_Ygl->readframe] != 0 ) {
+   if ((varVdp2Regs->SDCTL & 0xFF) != 0 || _Ygl->msb_shadow_count_[_Ygl->readframe] != 0 ) {
      YglRenderFrameBufferShadow();
    }
    glViewport(x, y, w, h);
@@ -3444,7 +3442,7 @@ int YglCleanUpWindow(YglProgram * prg){
   return 0;
 }
 
-void YglRenderDestinationAlpha(void) {
+void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs) {
   YglLevel * level;
   GLuint cprg = 0;
   int from = 0;
@@ -3498,7 +3496,7 @@ void YglRenderDestinationAlpha(void) {
       }else{
         glDisable(GL_BLEND);
       }
-      if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to);
+      if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
       from = to;
 
       // clean up
@@ -3521,7 +3519,7 @@ void YglRenderDestinationAlpha(void) {
 
         if (level->prg[j].setupUniform)
         {
-          level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2);
+          level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2, varVdp2Regs);
         }
 
         YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
@@ -3618,7 +3616,7 @@ void YglRenderDestinationAlpha(void) {
         break;
       }
     }
-    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i, i+1);
+    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i, i+1, varVdp2Regs);
   }
 
   return;

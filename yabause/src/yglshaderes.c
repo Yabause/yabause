@@ -126,7 +126,7 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
 }
 
-int Ygl_uniformVdp1CommonParam(void * p){
+int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs){
 
   YglProgram * prg;
   YglVdp1CommonParam * param;
@@ -231,7 +231,7 @@ static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
 
 
-int Ygl_uniformNormal(void * p)
+int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
 
   YglProgram * prg;
@@ -314,7 +314,7 @@ static int id_normal_cram_sp_color_offset = -1;
 static int id_normal_cram_sp_matrix = -1;
 
 
-int Ygl_uniformNormalCram(void * p)
+int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
 
   YglProgram * prg;
@@ -337,7 +337,7 @@ int Ygl_cleanupNormalCram(void * p)
   return 0;
 }
 
-int Ygl_uniformNormalCramSpecialPriority(void * p)
+int Ygl_uniformNormalCramSpecialPriority(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
 
   YglProgram * prg;
@@ -384,7 +384,7 @@ static int id_normal_cram_color_offset_addcol = -1;
 static int id_normal_cram_matrix_addcol = -1;
 
 
-int Ygl_uniformAddColCram(void * p)
+int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
 
   YglProgram * prg;
@@ -487,9 +487,9 @@ static int id_rbg_cram_line_color_offset = -1;
 static int id_rbg_cram_line_blendmode = -1;
 static int id_rbg_cram_line_matrix = -1;
 
-extern Vdp2 * fixVdp2Regs;
+extern Vdp2 * varVdp2Regs;
 
-int Ygl_uniformNormalCramLine(void * p)
+int Ygl_uniformNormalCramLine(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
 
   YglProgram * prg;
@@ -503,7 +503,7 @@ int Ygl_uniformNormalCramLine(void * p)
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
   // Disable blend mode if extend Color calcuration  is not enabled
-  if ( (fixVdp2Regs->CCCTL & 0x400) == 0 ) {
+  if ( (varVdp2Regs->CCCTL & 0x400) == 0 ) {
     prg->blendmode = 0;
   }
   glUniform1i(id_rbg_cram_line_blendmode, prg->blendmode);
@@ -572,7 +572,7 @@ int Ygl_useUpscaleBuffer(void){
 /*------------------------------------------------------------------------------------
 *  Mosaic Draw
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformMosaic(void * p, YglTextureManager *tm)
+int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
   YglProgram * prg;
   prg = p;
@@ -631,7 +631,7 @@ int Ygl_cleanupMosaic(void * p)
 /*------------------------------------------------------------------------------------
 *  Per Line Alpha
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformPerLineAlpha(void * p, YglTextureManager *tm)
+int Ygl_uniformPerLineAlpha(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
   YglProgram * prg;
   prg = p;
@@ -703,7 +703,7 @@ int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
 /*------------------------------------------------------------------------------------
 *  Blur
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm)
+int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
   YglProgram * prg;
   prg = p;
@@ -898,7 +898,7 @@ const GLchar * pYglprg_vdp1_normal_f[] = {Yglprg_vpd1_normal_f, NULL};
 static int id_vdp1_normal_s_texture_size = -1;
 static int id_vdp1_normal_s_texture = -1;
 
-int Ygl_uniformVdp1Normal(void * p )
+int Ygl_uniformVdp1Normal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
 {
    YglProgram * prg;
    prg = p;
@@ -1326,7 +1326,7 @@ static YglVdp1CommonParam shadow = { 0 };
 /*------------------------------------------------------------------------------------
  *  VDP1 UserClip Operation
  * ----------------------------------------------------------------------------------*/
-int Ygl_uniformStartUserClip(void * p )
+int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
 {
    YglProgram * prg;
    prg = p;
@@ -1394,7 +1394,7 @@ int Ygl_uniformStartUserClip(void * p )
 
 int Ygl_cleanupStartUserClip(void * p ){return 0;}
 
-int Ygl_uniformEndUserClip(void * p )
+int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
 {
 
    YglProgram * prg;
@@ -1923,20 +1923,20 @@ void Ygl_initDrawFrameBuffershader(int id) {
 }
 
 
-void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture)
+void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture, Vdp2 *varVdp2Regs)
 {
   YglProgram * prg;
   prg = p;
 
   int pgid = PG_VDP2_DRAWFRAMEBUFF_HBLANK;
 
-  const int SPCCN = ((fixVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
-  const int CCRTMD = ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
-  const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
-  const int SPLCEN = (fixVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
+  const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
+  const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
+  const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
+  const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
 
   if ( SPCCN ) {
-    const int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
+    const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
     if (CCMD == 0) {  // Calculate Rate mode
       if (CCRTMD == 0) {  // Source Alpha Mode
         if (SPLCEN == 0) { // No Line Color Insertion
@@ -2049,20 +2049,20 @@ void Ygl_uniformVDP2DrawFrameBufferShadow(void * p) {
 
 }
 
-void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend)
+void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend, Vdp2 *varVdp2Regs)
 {
    YglProgram * prg;
    prg = p;
 
    int pgid = PG_VDP2_DRAWFRAMEBUFF;
 
-   const int SPCCN = ((fixVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
-   const int CCRTMD = ((fixVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
-   const int CCMD = ((fixVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
-   const int SPLCEN = (fixVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
+   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
+   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
+   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
+   const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
 
    if ( blend && SPCCN ) {
-     const int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
+     const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
      if (CCMD == 0) {  // Calculate Rate mode
        if (CCRTMD == 0) {  // Source Alpha Mode
          if (SPLCEN == 0) { // No Line Color Insertion
@@ -2270,7 +2270,7 @@ int Ygl_cleanupVDP2DrawFramebuffer_addcolor_shadow(void * p){
 /*------------------------------------------------------------------------------------
  *  VDP2 Add Blend operaiotn
  * ----------------------------------------------------------------------------------*/
-int Ygl_uniformAddBlend(void * p )
+int Ygl_uniformAddBlend(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
 {
    glBlendFunc(GL_ONE,GL_ONE);
    return 0;
@@ -2360,7 +2360,7 @@ LinecolUniform linecol_cram = { 0 };
 LinecolUniform linecol_destalpha = { 0 };
 LinecolUniform linecol_destalpha_cram = { 0 };
 
-int Ygl_uniformLinecolorInsert(void * p)
+int Ygl_uniformLinecolorInsert(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
   YglProgram * prg;
   LinecolUniform * param = &linecol;
