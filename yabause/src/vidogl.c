@@ -1711,6 +1711,7 @@ static int FASTCALL Vdp2CheckWindowRange(vdp2draw_struct *info, int x, int y, in
 
   if (info->bEnWin0 != 0 && info->bEnWin1 == 0)
   {
+    if (m_vWindinfo0 == NULL) Vdp2GenerateWindowInfo();
     rtn += Vdp2CheckWindow(info, x, y, info->WindowArea0, m_vWindinfo0);
     rtn += Vdp2CheckWindow(info, x + w, y, info->WindowArea0, m_vWindinfo0);
     rtn += Vdp2CheckWindow(info, x + w, y + h, info->WindowArea0, m_vWindinfo0);
@@ -1719,6 +1720,7 @@ static int FASTCALL Vdp2CheckWindowRange(vdp2draw_struct *info, int x, int y, in
   }
   else if (info->bEnWin0 == 0 && info->bEnWin1 != 0)
   {
+    if (m_vWindinfo1 == NULL) Vdp2GenerateWindowInfo();
     rtn += Vdp2CheckWindow(info, x, y, info->WindowArea1, m_vWindinfo1);
     rtn += Vdp2CheckWindow(info, x + w, y, info->WindowArea1, m_vWindinfo1);
     rtn += Vdp2CheckWindow(info, x + w, y + h, info->WindowArea1, m_vWindinfo1);
@@ -1727,6 +1729,8 @@ static int FASTCALL Vdp2CheckWindowRange(vdp2draw_struct *info, int x, int y, in
   }
   else if (info->bEnWin0 != 0 && info->bEnWin1 != 0)
   {
+    if (m_vWindinfo0 == NULL) Vdp2GenerateWindowInfo();
+    if (m_vWindinfo1 == NULL) Vdp2GenerateWindowInfo();
     if (info->LogicWin == 0)
     {
       rtn += (Vdp2CheckWindow(info, x, y, info->WindowArea0, m_vWindinfo0) &

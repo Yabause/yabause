@@ -1040,7 +1040,6 @@ void Vdp2ReadReg(int addr) {
          break;
       }
    }
-   printf("0x%x = 0x%x\n", addr, val);
 }
 
 void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
