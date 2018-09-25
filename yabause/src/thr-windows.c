@@ -140,7 +140,7 @@ void YabThreadWake(unsigned int id)
 
 typedef struct YabEventQueue_win32
 {
-	int *buffer;
+	void** buffer;
 	int capacity;
 	int size;
 	int in;
@@ -153,7 +153,7 @@ typedef struct YabEventQueue_win32
 
 YabEventQueue * YabThreadCreateQueue(int qsize){
 	YabEventQueue_win32 * p = (YabEventQueue_win32*)malloc(sizeof(YabEventQueue_win32));
-	p->buffer = (int*)malloc(sizeof(int)* qsize);
+	p->buffer = (void**)malloc(sizeof(void*)* qsize);
 	p->capacity = qsize;
 	p->size = 0;
 	p->in = 0;
@@ -191,7 +191,7 @@ void YabThreadDestoryQueue(YabEventQueue * queue_t){
 
 
 
-void YabAddEventQueue(YabEventQueue * queue_t, int evcode){
+void YabAddEventQueue(YabEventQueue * queue_t, void* evcode){
 #if 1
   YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
   while (queue->size == queue->capacity)
@@ -219,9 +219,9 @@ void YabAddEventQueue(YabEventQueue * queue_t, int evcode){
 }
 
 
-int YabWaitEventQueue(YabEventQueue * queue_t){
+void* YabWaitEventQueue(YabEventQueue * queue_t){
 #if 1
-  int value;
+  void* value;
   YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
   while (queue->size == 0)
     WaitForSingleObject(queue->cond_empty, INFINITE);

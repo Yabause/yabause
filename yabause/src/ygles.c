@@ -29,7 +29,7 @@
 #include "frameprofile.h"
 
 
-#define __USE_OPENGL_DEBUG__
+//#define __USE_OPENGL_DEBUG__
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -48,7 +48,7 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
 
 #define PI 3.1415926535897932384626433832795f
 
-extern vdp2rotationparameter_struct  paraA;
+extern vdp2rotationparameter_struct  Vdp1ParaA;
 
 #define ATLAS_BIAS (0.025f)
 
@@ -497,8 +497,6 @@ int YglCalcTextureQ(
    return 0;
 }
 
-
-
 //////////////////////////////////////////////////////////////////////////////
 
 YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
@@ -509,8 +507,11 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   memset(tm, 0, sizeof(YglTextureManager));
   tm->width = w;
   tm->height = h;
+  tm->mtx =  YabThreadCreateMutex();
 
-  YglTMReset(tm);
+  tm->currentX = 0;
+  tm->currentY = 0;
+  tm->yMax = 0;
 
   glGenBuffers(1, &tm->pixelBufferID);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
@@ -546,9 +547,11 @@ void YglTMDeInit(YglTextureManager * tm) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglTMReset(YglTextureManager * tm  ) {
+  YabThreadLock(tm->mtx);
   tm->currentX = 0;
   tm->currentY = 0;
   tm->yMax = 0;
+  YabThreadUnLock(tm->mtx);
 }
 
 #if 0
@@ -565,8 +568,8 @@ void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
   }
 }
 #endif
-
 void YglTmPush(YglTextureManager * tm){
+  YabThreadLock(tm->mtx);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
   if (tm->texture != NULL ) {
@@ -576,9 +579,11 @@ void YglTmPush(YglTextureManager * tm){
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     tm->texture = NULL;
   }
+  YabThreadUnLock(tm->mtx);
 }
 
 void YglTmPull(YglTextureManager * tm, u32 flg){
+  YabThreadLock(tm->mtx);
   if (tm->texture == NULL) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID);
@@ -588,11 +593,11 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
       abort();
     }
   }
+  YabThreadUnLock(tm->mtx);
 }
 
 
-void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
-
+static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
   GLuint new_textureID;
   GLuint new_pixelBufferID;
   unsigned int * new_texture;
@@ -644,22 +649,21 @@ void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int heigh
   tm->texture = new_texture;
   tm->textureID = new_textureID;
   tm->pixelBufferID = new_pixelBufferID;
-
   return;
 
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
+void YglTMAllocate_in(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
   if( tm->width < w ){
     YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
     YglTMRealloc( tm, w, tm->height);
-    YglTMAllocate(tm, output, w, h, x, y);
+    YglTMAllocate_in(tm, output, w, h, x, y);
   }
   if ((tm->height - tm->currentY) < h) {
     YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
     YglTMRealloc( tm, tm->width, tm->height+(h*2));
-    YglTMAllocate(tm, output, w, h, x, y);
+    YglTMAllocate_in(tm, output, w, h, x, y);
     return;
   }
 
@@ -676,8 +680,25 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
    } else {
      tm->currentX = 0;
      tm->currentY = tm->yMax;
-     YglTMAllocate(tm, output, w, h, x, y);
+     YglTMAllocate_in(tm, output, w, h, x, y);
    }
+   
+}
+
+void getCurrentOpenGLContext() {
+  YabThreadLock(_Ygl->mutex);
+  YuiUseOGLOnThisThread();
+}
+
+void releaseCurrentOpenGLContext() {
+  YuiRevokeOGLOnThisThread();
+  YabThreadUnLock(_Ygl->mutex);
+}
+
+void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
+  YabThreadLock(tm->mtx);
+  YglTMAllocate_in(tm, output, w, h, x, y);
+  YabThreadUnLock(tm->mtx);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2661,11 +2682,11 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
   if (Vdp1Regs->TVMR & 0x02){
     YglMatrix rotate;
     YglLoadIdentity(&rotate);
-    rotate.m[0][0] = paraA.deltaX;
-    rotate.m[0][1] = paraA.deltaY;
-    rotate.m[1][0] = paraA.deltaXst;
-    rotate.m[1][1] = paraA.deltaYst;
-    YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
+    rotate.m[0][0] = Vdp1ParaA.deltaX;
+    rotate.m[0][1] = Vdp1ParaA.deltaY;
+    rotate.m[1][0] = Vdp1ParaA.deltaXst;
+    rotate.m[1][1] = Vdp1ParaA.deltaYst;
+    YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
     YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
     cwidth = Vdp1Regs->systemclipX2;
     cheight = Vdp1Regs->systemclipY2;
@@ -2956,11 +2977,11 @@ void YglRenderFrameBufferShadow() {
   if (Vdp1Regs->TVMR & 0x02) {
     YglMatrix rotate;
     YglLoadIdentity(&rotate);
-    rotate.m[0][0] = paraA.deltaX;
-    rotate.m[0][1] = paraA.deltaY;
-    rotate.m[1][0] = paraA.deltaXst;
-    rotate.m[1][1] = paraA.deltaYst;
-    YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
+    rotate.m[0][0] = Vdp1ParaA.deltaX;
+    rotate.m[0][1] = Vdp1ParaA.deltaY;
+    rotate.m[1][0] = Vdp1ParaA.deltaXst;
+    rotate.m[1][1] = Vdp1ParaA.deltaYst;
+    YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
     YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
   }
   else {

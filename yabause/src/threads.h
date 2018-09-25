@@ -56,6 +56,14 @@ enum {
    YAB_THREAD_VIDSOFT_PRIORITY_3,
    YAB_THREAD_VIDSOFT_PRIORITY_4,
    YAB_THREAD_VIDSOFT_LAYER_SPRITE,
+   YAB_THREAD_VDP2_BACK,
+   YAB_THREAD_VDP2_LINE,
+   YAB_THREAD_VDP2_NBG3,
+   YAB_THREAD_VDP2_NBG2,
+   YAB_THREAD_VDP2_NBG1,
+   YAB_THREAD_VDP2_NBG0,
+   YAB_THREAD_VDP2_RBG0,
+   YAB_THREAD_VDP2_RBG1,
    YAB_NUM_THREADS      // Total number of subthreads
 };
 
@@ -101,10 +109,10 @@ YabEventQueue * YabThreadCreateQueue( int qsize );
 void YabThreadDestoryQueue( YabEventQueue * queue_t );
 
 // YabAddEventQueue: send event
-void YabAddEventQueue( YabEventQueue * queue_t, int evcode );
+void YabAddEventQueue( YabEventQueue * queue_t, void* evcode );
 
 // YabWaitEventQueue: recive event
-int YabWaitEventQueue( YabEventQueue * queue_t );
+void* YabWaitEventQueue( YabEventQueue * queue_t );
  
 int YaGetQueueSize(YabEventQueue * queue_t);
 

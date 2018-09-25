@@ -396,13 +396,14 @@ void Vdp2VBlankIN(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2HBlankIN(void) {
-   YglCheckFBSwitch(0);
 
   if (yabsys.LineCount < yabsys.VBlankLineCount) {
     Vdp2Regs->TVSTAT |= 0x0004;
     ScuSendHBlankIN();
     if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x41, 0x2);
+  } else {
+     waitVdp2DrawScreensEnd(0);
   }
 }
 
@@ -479,7 +480,7 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
-  YglCheckFBSwitch(0);
+  waitVdp2DrawScreensEnd(1);
   FRAMELOG("***** VOUT %d *****", g_frame_count);
   if (Vdp2External.perline_alpha == Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = Vdp2External.perline_alpha_b;

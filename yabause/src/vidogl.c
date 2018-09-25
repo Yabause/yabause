@@ -47,6 +47,7 @@
 
 #define LOG_AREA
 
+
 static Vdp2 baseVdp2Regs;
 //#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
@@ -70,6 +71,7 @@ int yprintf(const char * fmt, ...)
   }
   return 0;
 }
+
 
 void OSDPushMessageDirect(char * msg) {
 }
@@ -178,6 +180,8 @@ static int nbg2priority = 0;
 static int nbg3priority = 0;
 static int rbg0priority = 0;
 
+static int vdp2busy = 0;
+
 // Rotate Screen
 
 typedef struct {
@@ -196,10 +200,20 @@ typedef struct {
   int hres;
   int async;
   volatile int vdp2_sync_flg;
+  vdp2rotationparameter_struct  paraA;
+  vdp2rotationparameter_struct  paraB;
 } RBGDrawInfo;
 
-RBGDrawInfo g_rgb0;
-RBGDrawInfo g_rgb1;
+vdp2rotationparameter_struct  Vdp1ParaA;
+
+typedef struct {
+  RBGDrawInfo *rbg;
+  Vdp2 *varVdp2Regs;
+} rotationTask;
+
+static YabEventQueue *rotq;
+static YabEventQueue *rotq_end;
+static int rotation_run = 0;
 
 static void Vdp2DrawRBG0(Vdp2* varVdp2Regs);
 
@@ -210,6 +224,7 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int m
 static INLINE u16 Vdp2ColorRamGetColorRaw(u32 colorindex);
 static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs);
 static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs);
+static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs);
 
 // Window Parameter
 static vdp2WindowInfo * m_vWindinfo0 = NULL;
@@ -224,27 +239,22 @@ static vdp2Lineinfo lineNBG1[512];
 
 
 
-vdp2rotationparameter_struct  paraA = { 0 };
-vdp2rotationparameter_struct  paraB = { 0 };
-
-
-
 vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_struct * param, int index);
 vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_struct * param, int index);
 vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2Wm3(vdp2rotationparameter_struct * param, int index);
 vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1Wm3(vdp2rotationparameter_struct * param, int index);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00WithK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01WithK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00WithK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01WithK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs);
 
 
 static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl, int * normal_shadow, Vdp2 *varVdp2Regs);
@@ -3131,16 +3141,9 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
     rbg->line_texture.w = 0;
   }
 
-    Vdp2DrawRotation_in(rbg, varVdp2Regs);
-    
-    rbg->info.cellw = rbg->hres;
-    rbg->info.cellh = (rbg->vres * (info->endLine - info->startLine))/yabsys.VBlankLineCount;
-    rbg->info.celly = (rbg->vres * info->startLine)/yabsys.VBlankLineCount;
-    rbg->info.flipfunction = 0;
-
-    LOG_AREA("%d %d %d\n", rbg->info.cellw, rbg->info.cellh, rbg->info.celly);
-
-    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
+  if (rgb_type == 0x0) Vdp2DrawRotation_in(rbg, varVdp2Regs);
+  else 
+    Vdp2DrawRotation_in_sync(rbg, varVdp2Regs);
 }
 
 #define ceilf(a) ((a)+0.99999f)
@@ -3183,7 +3186,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
   return 1;
 }
 
-static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
+static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
   if (rbg == NULL) return;
 
@@ -3221,28 +3224,28 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   u32 lineaddr = 0;
   if (rgb_type == 0)
   {
-    paraA.dx = paraA.A * paraA.deltaX + paraA.B * paraA.deltaY;
-    paraA.dy = paraA.D * paraA.deltaX + paraA.E * paraA.deltaY;
-    paraA.Xp = paraA.A * (paraA.Px - paraA.Cx) +
-      paraA.B * (paraA.Py - paraA.Cy) +
-      paraA.C * (paraA.Pz - paraA.Cz) + paraA.Cx + paraA.Mx;
-    paraA.Yp = paraA.D * (paraA.Px - paraA.Cx) +
-      paraA.E * (paraA.Py - paraA.Cy) +
-      paraA.F * (paraA.Pz - paraA.Cz) + paraA.Cy + paraA.My;
+    rbg->paraA.dx = rbg->paraA.A * rbg->paraA.deltaX + rbg->paraA.B * rbg->paraA.deltaY;
+    rbg->paraA.dy = rbg->paraA.D * rbg->paraA.deltaX + rbg->paraA.E * rbg->paraA.deltaY;
+    rbg->paraA.Xp = rbg->paraA.A * (rbg->paraA.Px - rbg->paraA.Cx) +
+      rbg->paraA.B * (rbg->paraA.Py - rbg->paraA.Cy) +
+      rbg->paraA.C * (rbg->paraA.Pz - rbg->paraA.Cz) + rbg->paraA.Cx + rbg->paraA.Mx;
+    rbg->paraA.Yp = rbg->paraA.D * (rbg->paraA.Px - rbg->paraA.Cx) +
+      rbg->paraA.E * (rbg->paraA.Py - rbg->paraA.Cy) +
+      rbg->paraA.F * (rbg->paraA.Pz - rbg->paraA.Cz) + rbg->paraA.Cy + rbg->paraA.My;
   }
 
   if (rbg->useb)
   {
-    paraB.dx = paraB.A * paraB.deltaX + paraB.B * paraB.deltaY;
-    paraB.dy = paraB.D * paraB.deltaX + paraB.E * paraB.deltaY;
-    paraB.Xp = paraB.A * (paraB.Px - paraB.Cx) + paraB.B * (paraB.Py - paraB.Cy)
-      + paraB.C * (paraB.Pz - paraB.Cz) + paraB.Cx + paraB.Mx;
-    paraB.Yp = paraB.D * (paraB.Px - paraB.Cx) + paraB.E * (paraB.Py - paraB.Cy)
-      + paraB.F * (paraB.Pz - paraB.Cz) + paraB.Cy + paraB.My;
+    rbg->paraB.dx = rbg->paraB.A * rbg->paraB.deltaX + rbg->paraB.B * rbg->paraB.deltaY;
+    rbg->paraB.dy = rbg->paraB.D * rbg->paraB.deltaX + rbg->paraB.E * rbg->paraB.deltaY;
+    rbg->paraB.Xp = rbg->paraB.A * (rbg->paraB.Px - rbg->paraB.Cx) + rbg->paraB.B * (rbg->paraB.Py - rbg->paraB.Cy)
+      + rbg->paraB.C * (rbg->paraB.Pz - rbg->paraB.Cz) + rbg->paraB.Cx + rbg->paraB.Mx;
+    rbg->paraB.Yp = rbg->paraB.D * (rbg->paraB.Px - rbg->paraB.Cx) + rbg->paraB.E * (rbg->paraB.Py - rbg->paraB.Cy)
+      + rbg->paraB.F * (rbg->paraB.Pz - rbg->paraB.Cz) + rbg->paraB.Cy + rbg->paraB.My;
   }
 
-  paraA.over_pattern_name = varVdp2Regs->OVPNRA;
-  paraB.over_pattern_name = varVdp2Regs->OVPNRB;
+  rbg->paraA.over_pattern_name = varVdp2Regs->OVPNRA;
+  rbg->paraB.over_pattern_name = varVdp2Regs->OVPNRB;
 
   for (j = vstart; j < vstart+vres; j++)
   {
@@ -3252,53 +3255,53 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
     if (rgb_type == 0) {
 #if 0 // PERLINE
-      paraA.charaddr = (regs->MPOFR & 0x7) * 0x20000;
-      ReadPlaneSizeR(&paraA, regs->PLSZ >> 8);
+      rbg->paraA.charaddr = (regs->MPOFR & 0x7) * 0x20000;
+      ReadPlaneSizeR(&rbg->paraA, regs->PLSZ >> 8);
       for (i = 0; i < 16; i++) {
-        paraA.PlaneAddr(info, i, regs);
-        paraA.PlaneAddrv[i] = info->addr;
+        rbg->paraA.PlaneAddr(info, i, regs);
+        rbg->paraA.PlaneAddrv[i] = info->addr;
       }
 #endif
-      paraA.Xsp = paraA.A * ((paraA.Xst + paraA.deltaXst * j) - paraA.Px) +
-        paraA.B * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-        paraA.C * (paraA.Zst - paraA.Pz);
+      rbg->paraA.Xsp = rbg->paraA.A * ((rbg->paraA.Xst + rbg->paraA.deltaXst * j) - rbg->paraA.Px) +
+        rbg->paraA.B * ((rbg->paraA.Yst + rbg->paraA.deltaYst * j) - rbg->paraA.Py) +
+        rbg->paraA.C * (rbg->paraA.Zst - rbg->paraA.Pz);
 
-      paraA.Ysp = paraA.D * ((paraA.Xst + paraA.deltaXst *j) - paraA.Px) +
-        paraA.E * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-        paraA.F * (paraA.Zst - paraA.Pz);
+      rbg->paraA.Ysp = rbg->paraA.D * ((rbg->paraA.Xst + rbg->paraA.deltaXst *j) - rbg->paraA.Px) +
+        rbg->paraA.E * ((rbg->paraA.Yst + rbg->paraA.deltaYst * j) - rbg->paraA.Py) +
+        rbg->paraA.F * (rbg->paraA.Zst - rbg->paraA.Pz);
 
-      paraA.KtablV = paraA.deltaKAst* j;
+      rbg->paraA.KtablV = rbg->paraA.deltaKAst* j;
     }
     if (rbg->useb)
     {
 #if 0 // PERLINE
-      Vdp2ReadRotationTable(1, &paraB, regs, Vdp2Ram);
-      paraB.dx = paraB.A * paraB.deltaX + paraB.B * paraB.deltaY;
-      paraB.dy = paraB.D * paraB.deltaX + paraB.E * paraB.deltaY;
-      paraB.Xp = paraB.A * (paraB.Px - paraB.Cx) + paraB.B * (paraB.Py - paraB.Cy)
-        + paraB.C * (paraB.Pz - paraB.Cz) + paraB.Cx + paraB.Mx;
-      paraB.Yp = paraB.D * (paraB.Px - paraB.Cx) + paraB.E * (paraB.Py - paraB.Cy)
-        + paraB.F * (paraB.Pz - paraB.Cz) + paraB.Cy + paraB.My;
+      Vdp2ReadRotationTable(1, &rbg->paraB, regs, Vdp2Ram);
+      rbg->paraB.dx = rbg->paraB.A * rbg->paraB.deltaX + rbg->paraB.B * rbg->paraB.deltaY;
+      rbg->paraB.dy = rbg->paraB.D * rbg->paraB.deltaX + rbg->paraB.E * rbg->paraB.deltaY;
+      rbg->paraB.Xp = rbg->paraB.A * (rbg->paraB.Px - rbg->paraB.Cx) + rbg->paraB.B * (rbg->paraB.Py - rbg->paraB.Cy)
+        + rbg->paraB.C * (rbg->paraB.Pz - rbg->paraB.Cz) + rbg->paraB.Cx + rbg->paraB.Mx;
+      rbg->paraB.Yp = rbg->paraB.D * (rbg->paraB.Px - rbg->paraB.Cx) + rbg->paraB.E * (rbg->paraB.Py - rbg->paraB.Cy)
+        + rbg->paraB.F * (rbg->paraB.Pz - rbg->paraB.Cz) + rbg->paraB.Cy + rbg->paraB.My;
 
       ReadPlaneSize(info, regs->PLSZ >> 12);
       ReadPatternData(info, regs->PNCN0, regs->CHCTLA & 0x1);
 
-      paraB.charaddr = (regs->MPOFR & 0x70) * 0x2000;
-      ReadPlaneSizeR(&paraB, regs->PLSZ >> 12);
+      rbg->paraB.charaddr = (regs->MPOFR & 0x70) * 0x2000;
+      ReadPlaneSizeR(&rbg->paraB, regs->PLSZ >> 12);
       for (i = 0; i < 16; i++) {
-        paraB.PlaneAddr(info, i, regs);
-        paraB.PlaneAddrv[i] = info->addr;
+        rbg->paraB.PlaneAddr(info, i, regs);
+        rbg->paraB.PlaneAddrv[i] = info->addr;
       }
 #endif
-      paraB.Xsp = paraB.A * ((paraB.Xst + paraB.deltaXst * j) - paraB.Px) +
-        paraB.B * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) +
-        paraB.C * (paraB.Zst - paraB.Pz);
+      rbg->paraB.Xsp = rbg->paraB.A * ((rbg->paraB.Xst + rbg->paraB.deltaXst * j) - rbg->paraB.Px) +
+        rbg->paraB.B * ((rbg->paraB.Yst + rbg->paraB.deltaYst * j) - rbg->paraB.Py) +
+        rbg->paraB.C * (rbg->paraB.Zst - rbg->paraB.Pz);
 
-      paraB.Ysp = paraB.D * ((paraB.Xst + paraB.deltaXst * j) - paraB.Px) +
-        paraB.E * ((paraB.Yst + paraB.deltaYst * j) - paraB.Py) +
-        paraB.F * (paraB.Zst - paraB.Pz);
+      rbg->paraB.Ysp = rbg->paraB.D * ((rbg->paraB.Xst + rbg->paraB.deltaXst * j) - rbg->paraB.Px) +
+        rbg->paraB.E * ((rbg->paraB.Yst + rbg->paraB.deltaYst * j) - rbg->paraB.Py) +
+        rbg->paraB.F * (rbg->paraB.Zst - rbg->paraB.Pz);
 
-      paraB.KtablV = paraB.deltaKAst * j;
+      rbg->paraB.KtablV = rbg->paraB.deltaKAst * j;
   }
 
     if (info->LineColorBase != 0)
@@ -3324,7 +3327,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
       }
       switch (varVdp2Regs->RPMD | rgb_type ) {
       case 0:
-        parameter = &paraA;
+        parameter = &rbg->paraA;
         if (parameter->coefenab) {
           if (vdp2rGetKValue(parameter, i) == 0) {
             *(texture->textdata++) = 0x00000000;
@@ -3333,20 +3336,20 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
         break;
       case 1:
-        parameter = &paraB;
+        parameter = &rbg->paraB;
         if (vdp2rGetKValue(parameter, i) == 0) {
           *(texture->textdata++) = 0x00000000;
           continue;
         }
         break;
       case 2:
-        if (!(paraA.coefenab)) {
-          parameter = &paraA;
+        if (!(rbg->paraA.coefenab)) {
+          parameter = &rbg->paraA;
         } else {
-          if (paraB.coefenab) {
-            parameter = &paraA;
+          if (rbg->paraB.coefenab) {
+            parameter = &rbg->paraA;
             if (vdp2rGetKValue(parameter, i) == 0) {
-              parameter = &paraB;
+              parameter = &rbg->paraB;
               if( vdp2rGetKValue(parameter, i) == 0) {
                 *(texture->textdata++) = 0x00000000;
                 continue;
@@ -3354,16 +3357,16 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
             }
           }
           else {
-            parameter = &paraA;
+            parameter = &rbg->paraA;
             if (vdp2rGetKValue(parameter, i) == 0) {
-              paraB.lineaddr = paraA.lineaddr;
-              parameter = &paraB;
+              rbg->paraB.lineaddr = rbg->paraA.lineaddr;
+              parameter = &rbg->paraB;
             }
           }
         }
         break;
       default:
-        parameter = info->GetRParam(info, i, j);
+        parameter = info->GetRParam(rbg, i, j);
         break;
       }
       if (parameter == NULL)
@@ -3587,7 +3590,39 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     texture->textdata += texture->w;
     }
 
+    rbg->info.cellw = rbg->hres;
+    rbg->info.cellh = (rbg->vres * (info->endLine - info->startLine))/yabsys.VBlankLineCount;
+    rbg->info.celly = (rbg->vres * info->startLine)/yabsys.VBlankLineCount;
+    rbg->info.flipfunction = 0;
+
+    LOG_AREA("%d %d %d\n", rbg->info.cellw, rbg->info.cellh, rbg->info.celly);
+
+    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
+    free(rbg);
   }
+
+static void Vdp2DrawRotation_in_async(void *p)
+{
+   while(rotation_run != 0){
+     rotationTask *task = (rotationTask *)YabWaitEventQueue(rotq);
+     Vdp2DrawRotation_in_sync(task->rbg, task->varVdp2Regs);
+     free(task);
+     YabWaitEventQueue(rotq_end);
+   }
+} 
+
+static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
+   rotationTask *task = malloc(sizeof(rotationTask));
+   task->rbg = rbg;
+   task->varVdp2Regs = varVdp2Regs;
+   if (rotation_run == 0) {
+     rotation_run = 1;
+     YabThreadStart(YAB_THREAD_VDP2_RBG1, Vdp2DrawRotation_in_async, 0);
+   }
+   YabAddEventQueue(rotq_end, NULL);
+   YabAddEventQueue(rotq, task);
+   YabThreadYield();
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3619,15 +3654,11 @@ int VIDOGLInit(void)
   YglReset(_Ygl->vdp1levels[1]);
   YglReset(_Ygl->vdp2levels);
 
-  g_rgb0.async = 0;
-  g_rgb0.rgb_type = 0;
-  g_rgb0.vdp2_sync_flg = -1;
-  g_rgb1.async = 0;
-  g_rgb1.rgb_type = 0x04;
-  g_rgb1.vdp2_sync_flg = -1;
   vdp1wratio = 1;
   vdp1hratio = 1;
 
+     rotq = YabThreadCreateQueue(32);
+     rotq_end = YabThreadCreateQueue(32);
 
   return 0;
 }
@@ -5243,10 +5274,6 @@ void VIDOGLVdp2Draw(void)
 
   FrameProfileAdd("Vdp2Draw end");
 
-  YglUpdateVDP1FB();
-
-  YglRender(&Vdp2Lines[0]);
-
 
   /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
   function that would be called here and during a manual change */
@@ -5490,10 +5517,11 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawRBG1_part(vdp2draw_struct  * info, Vdp2* varVdp2Regs)
+static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 {
   YglTexture texture;
   YglCache tmpc;
+  vdp2draw_struct* info = &rgb->info;
 
   info->dst = 0;
   info->id = 4;
@@ -5519,7 +5547,7 @@ static void Vdp2DrawRBG1_part(vdp2draw_struct  * info, Vdp2* varVdp2Regs)
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
 
     // Read in Parameter B
-    Vdp2ReadRotationTable(1, &paraB, varVdp2Regs, Vdp2Ram);
+    Vdp2ReadRotationTable(1, &rgb->paraB, varVdp2Regs, Vdp2Ram);
 
     if ((info->isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
@@ -5540,35 +5568,35 @@ static void Vdp2DrawRBG1_part(vdp2draw_struct  * info, Vdp2* varVdp2Regs)
       ReadPlaneSize(info, varVdp2Regs->PLSZ >> 12);
       ReadPatternData(info, varVdp2Regs->PNCN0, varVdp2Regs->CHCTLA & 0x1);
 
-      paraB.ShiftPaneX = 8 + info->planew;
-      paraB.ShiftPaneY = 8 + info->planeh;
-      paraB.MskH = (8 * 64 * info->planew) - 1;
-      paraB.MskV = (8 * 64 * info->planeh) - 1;
-      paraB.MaxH = 8 * 64 * info->planew * 4;
-      paraB.MaxV = 8 * 64 * info->planeh * 4;
+      rgb->paraB.ShiftPaneX = 8 + info->planew;
+      rgb->paraB.ShiftPaneY = 8 + info->planeh;
+      rgb->paraB.MskH = (8 * 64 * info->planew) - 1;
+      rgb->paraB.MskV = (8 * 64 * info->planeh) - 1;
+      rgb->paraB.MaxH = 8 * 64 * info->planew * 4;
+      rgb->paraB.MaxV = 8 * 64 * info->planeh * 4;
 
     }
 
     info->rotatenum = 1;
-    paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
-    paraB.coefenab = varVdp2Regs->KTCTL & 0x100;
-    paraB.charaddr = (varVdp2Regs->MPOFR & 0x70) * 0x2000;
-    ReadPlaneSizeR(&paraB, varVdp2Regs->PLSZ >> 12);
+    rgb->paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
+    rgb->paraB.coefenab = varVdp2Regs->KTCTL & 0x100;
+    rgb->paraB.charaddr = (varVdp2Regs->MPOFR & 0x70) * 0x2000;
+    ReadPlaneSizeR(&rgb->paraB, varVdp2Regs->PLSZ >> 12);
     for (i = 0; i < 16; i++)
     {
-      paraB.PlaneAddr(info, i, varVdp2Regs);
-      paraB.PlaneAddrv[i] = info->addr;
+      rgb->paraB.PlaneAddr(info, i, varVdp2Regs);
+      rgb->paraB.PlaneAddrv[i] = info->addr;
     }
 
     info->LineColorBase = 0x00;
-    if (paraB.coefenab)
+    if (rgb->paraB.coefenab)
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01WithK;
     else
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01NoK;
 
-    if (paraB.coefdatasize == 2)
+    if (rgb->paraB.coefdatasize == 2)
     {
-      if (paraB.coefmode < 3)
+      if (rgb->paraB.coefmode < 3)
       {
         info->GetKValueB = vdp2rGetKValue1W;
       }
@@ -5578,7 +5606,7 @@ static void Vdp2DrawRBG1_part(vdp2draw_struct  * info, Vdp2* varVdp2Regs)
 
     }
     else {
-      if (paraB.coefmode < 3)
+      if (rgb->paraB.coefmode < 3)
       {
         info->GetKValueB = vdp2rGetKValue2W;
       }
@@ -5693,7 +5721,7 @@ static void Vdp2DrawRBG1_part(vdp2draw_struct  * info, Vdp2* varVdp2Regs)
     info->isverticalscroll = 0;
 
     // RBG1 draw
-    Vdp2DrawRotation(&g_rgb1, varVdp2Regs);
+    Vdp2DrawRotation(rgb, varVdp2Regs);
 }
 
 int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
@@ -5787,19 +5815,24 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
   int lastLine = 0;
   int line;
   int max = (yabsys.VBlankLineCount >= 270)?270:yabsys.VBlankLineCount;
+  RBGDrawInfo *rgb;
   for (line = 2; line<max; line++) {
     if (!sameVDP2Reg(RBG1, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
-      g_rgb1.info.startLine = lastLine;
-      g_rgb1.info.endLine = line;
+      rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+      rgb->rgb_type = 0x04;
+      rgb->info.startLine = lastLine;
+      rgb->info.endLine = line;
       lastLine = line;
-      LOG_AREA("RBG1 Draw from %d to %d %x\n", g_rgb1.info.startLine, g_rgb1.info.endLine, varVdp2Regs->BGON);
-      Vdp2DrawRBG1_part(&g_rgb1.info, &Vdp2Lines[line-1]);
+      LOG_AREA("RBG1 Draw from %d to %d %x\n", rgb->info.startLine, rgb->info.endLine, varVdp2Regs->BGON);
+      Vdp2DrawRBG1_part(rgb, &Vdp2Lines[line-1]);
     }
   }
-  g_rgb1.info.startLine = lastLine;
-  g_rgb1.info.endLine = line;
-  LOG_AREA("RBG1 Draw from %d to %d %x\n", g_rgb1.info.startLine, g_rgb1.info.endLine, varVdp2Regs->BGON);
-  Vdp2DrawRBG1_part(&g_rgb1.info, &Vdp2Lines[line-1]);
+  rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+  rgb->rgb_type = 0x04;
+  rgb->info.startLine = lastLine;
+  rgb->info.endLine = line;
+  LOG_AREA("RBG1 Draw from %d to %d %x\n", rgb->info.startLine, rgb->info.endLine, varVdp2Regs->BGON);
+  Vdp2DrawRBG1_part(rgb, &Vdp2Lines[line-1]);
 
 }
 
@@ -6613,9 +6646,9 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
+static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 {
-  g_rgb0.rgb_type = 0;
+  vdp2draw_struct* info = &rgb->info;
 
   info->dst = 0;
   info->id = 4;
@@ -6635,7 +6668,7 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
   if (((Vdp2External.disptoggle & 0x10)==0) || (info->priority == 0)) {
 
     if (Vdp1Regs->TVMR & 0x02) {
-      Vdp2ReadRotationTable(0, &paraA, varVdp2Regs, Vdp2Ram);
+      Vdp2ReadRotationTable(0, &Vdp1ParaA, varVdp2Regs, Vdp2Ram);
     }
     return;
   }
@@ -6662,25 +6695,25 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
   info->linescrolltbl = 0;
   info->lineinc = 0;
 
-  Vdp2ReadRotationTable(0, &paraA, varVdp2Regs, Vdp2Ram);
-  Vdp2ReadRotationTable(1, &paraB, varVdp2Regs, Vdp2Ram);
+  Vdp2ReadRotationTable(0, &rgb->paraA, varVdp2Regs, Vdp2Ram);
+  Vdp2ReadRotationTable(1, &rgb->paraB, varVdp2Regs, Vdp2Ram);
   A0_Updated = 0;
   A1_Updated = 0;
   B0_Updated = 0;
   B1_Updated = 0;
 
-  paraA.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
-  paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
-  paraA.charaddr = (varVdp2Regs->MPOFR & 0x7) * 0x20000;
-  paraB.charaddr = (varVdp2Regs->MPOFR & 0x70) * 0x2000;
-  ReadPlaneSizeR(&paraA, varVdp2Regs->PLSZ >> 8);
-  ReadPlaneSizeR(&paraB, varVdp2Regs->PLSZ >> 12);
+  rgb->paraA.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
+  rgb->paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
+  rgb->paraA.charaddr = (varVdp2Regs->MPOFR & 0x7) * 0x20000;
+  rgb->paraB.charaddr = (varVdp2Regs->MPOFR & 0x70) * 0x2000;
+  ReadPlaneSizeR(&rgb->paraA, varVdp2Regs->PLSZ >> 8);
+  ReadPlaneSizeR(&rgb->paraB, varVdp2Regs->PLSZ >> 12);
 
 
 
-  if (paraA.coefdatasize == 2)
+  if (rgb->paraA.coefdatasize == 2)
   {
-    if (paraA.coefmode < 3)
+    if (rgb->paraA.coefmode < 3)
     {
       info->GetKValueA = vdp2rGetKValue1W;
     }
@@ -6690,7 +6723,7 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
 
   }
   else {
-    if (paraA.coefmode < 3)
+    if (rgb->paraA.coefmode < 3)
     {
       info->GetKValueA = vdp2rGetKValue2W;
     }
@@ -6699,9 +6732,9 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
     }
   }
 
-  if (paraB.coefdatasize == 2)
+  if (rgb->paraB.coefdatasize == 2)
   {
-    if (paraB.coefmode < 3)
+    if (rgb->paraB.coefmode < 3)
     {
       info->GetKValueB = vdp2rGetKValue1W;
     }
@@ -6711,7 +6744,7 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
 
   }
   else {
-    if (paraB.coefmode < 3)
+    if (rgb->paraB.coefmode < 3)
     {
       info->GetKValueB = vdp2rGetKValue2W;
     }
@@ -6722,7 +6755,7 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
 
   if (varVdp2Regs->RPMD == 0x00)
   {
-    if (!(paraA.coefenab))
+    if (!(rgb->paraA.coefenab))
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode00NoK;
     }
@@ -6733,7 +6766,7 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
   }
   else if (varVdp2Regs->RPMD == 0x01)
   {
-    if (!(paraB.coefenab))
+    if (!(rgb->paraB.coefenab))
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01NoK;
     }
@@ -6744,12 +6777,12 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
   }
   else if (varVdp2Regs->RPMD == 0x02)
   {
-    if (!(paraA.coefenab))
+    if (!(rgb->paraA.coefenab))
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02NoK;
     }
     else {
-      if (paraB.coefenab)
+      if (rgb->paraB.coefenab)
         info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02WithKAWithKB;
       else
         info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02WithKA;
@@ -6778,27 +6811,27 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
       info->WindwAreaMode = (varVdp2Regs->WCTLD & 0x01);
     }
 
-    if (paraA.coefenab == 0 && paraB.coefenab == 0)
+    if (rgb->paraA.coefenab == 0 && rgb->paraB.coefenab == 0)
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03NoK;
     }
-    else if (paraA.coefenab && paraB.coefenab == 0)
+    else if (rgb->paraA.coefenab && rgb->paraB.coefenab == 0)
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03WithKA;
     }
-    else if (paraA.coefenab == 0 && paraB.coefenab)
+    else if (rgb->paraA.coefenab == 0 && rgb->paraB.coefenab)
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03WithKB;
     }
-    else if (paraA.coefenab && paraB.coefenab)
+    else if (rgb->paraA.coefenab && rgb->paraB.coefenab)
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode03WithK;
     }
   }
 
 
-  paraA.screenover = (varVdp2Regs->PLSZ >> 10) & 0x03;
-  paraB.screenover = (varVdp2Regs->PLSZ >> 14) & 0x03;
+  rgb->paraA.screenover = (varVdp2Regs->PLSZ >> 10) & 0x03;
+  rgb->paraB.screenover = (varVdp2Regs->PLSZ >> 14) & 0x03;
 
 
 
@@ -6863,39 +6896,39 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
 
     ReadPatternData(info, varVdp2Regs->PNCR, varVdp2Regs->CHCTLB & 0x100);
 
-    paraA.ShiftPaneX = 8 + paraA.planew;
-    paraA.ShiftPaneY = 8 + paraA.planeh;
-    paraB.ShiftPaneX = 8 + paraB.planew;
-    paraB.ShiftPaneY = 8 + paraB.planeh;
+    rgb->paraA.ShiftPaneX = 8 + rgb->paraA.planew;
+    rgb->paraA.ShiftPaneY = 8 + rgb->paraA.planeh;
+    rgb->paraB.ShiftPaneX = 8 + rgb->paraB.planew;
+    rgb->paraB.ShiftPaneY = 8 + rgb->paraB.planeh;
 
-    paraA.MskH = (8 * 64 * paraA.planew) - 1;
-    paraA.MskV = (8 * 64 * paraA.planeh) - 1;
-    paraB.MskH = (8 * 64 * paraB.planew) - 1;
-    paraB.MskV = (8 * 64 * paraB.planeh) - 1;
+    rgb->paraA.MskH = (8 * 64 * rgb->paraA.planew) - 1;
+    rgb->paraA.MskV = (8 * 64 * rgb->paraA.planeh) - 1;
+    rgb->paraB.MskH = (8 * 64 * rgb->paraB.planew) - 1;
+    rgb->paraB.MskV = (8 * 64 * rgb->paraB.planeh) - 1;
 
-    paraA.MaxH = 8 * 64 * paraA.planew * 4;
-    paraA.MaxV = 8 * 64 * paraA.planeh * 4;
-    paraB.MaxH = 8 * 64 * paraB.planew * 4;
-    paraB.MaxV = 8 * 64 * paraB.planeh * 4;
+    rgb->paraA.MaxH = 8 * 64 * rgb->paraA.planew * 4;
+    rgb->paraA.MaxV = 8 * 64 * rgb->paraA.planeh * 4;
+    rgb->paraB.MaxH = 8 * 64 * rgb->paraB.planew * 4;
+    rgb->paraB.MaxV = 8 * 64 * rgb->paraB.planeh * 4;
 
-    if (paraA.screenover == OVERMODE_512)
+    if (rgb->paraA.screenover == OVERMODE_512)
     {
-      paraA.MaxH = 512;
-      paraA.MaxV = 512;
+      rgb->paraA.MaxH = 512;
+      rgb->paraA.MaxV = 512;
     }
 
-    if (paraB.screenover == OVERMODE_512)
+    if (rgb->paraB.screenover == OVERMODE_512)
     {
-      paraB.MaxH = 512;
-      paraB.MaxV = 512;
+      rgb->paraB.MaxH = 512;
+      rgb->paraB.MaxV = 512;
     }
 
     for (i = 0; i < 16; i++)
     {
-      paraA.PlaneAddr(info, i, varVdp2Regs);
-      paraA.PlaneAddrv[i] = info->addr;
-      paraB.PlaneAddr(info, i, varVdp2Regs);
-      paraB.PlaneAddrv[i] = info->addr;
+      rgb->paraA.PlaneAddr(info, i, varVdp2Regs);
+      rgb->paraA.PlaneAddrv[i] = info->addr;
+      rgb->paraB.PlaneAddr(info, i, varVdp2Regs);
+      rgb->paraB.PlaneAddrv[i] = info->addr;
     }
   }
 
@@ -6911,15 +6944,15 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
   if ((varVdp2Regs->LNCLEN & 0x10) == 0x00)
   {
     info->LineColorBase = 0x00;
-    paraA.lineaddr = 0xFFFFFFFF;
-    paraB.lineaddr = 0xFFFFFFFF;
+    rgb->paraA.lineaddr = 0xFFFFFFFF;
+    rgb->paraB.lineaddr = 0xFFFFFFFF;
   }
   else {
     //      info->alpha = 0xFF;
     info->LineColorBase = ((varVdp2Regs->LCTA.all) & 0x7FFFF) << 1;
     if (info->LineColorBase >= 0x80000) info->LineColorBase = 0x00;
-    paraA.lineaddr = 0xFFFFFFFF;
-    paraB.lineaddr = 0xFFFFFFFF;
+    rgb->paraA.lineaddr = 0xFFFFFFFF;
+    rgb->paraB.lineaddr = 0xFFFFFFFF;
   }
 
   info->blendmode = 0;
@@ -6962,8 +6995,9 @@ static void Vdp2DrawRBG0_part( vdp2draw_struct  *info, Vdp2* varVdp2Regs)
 
   Vdp2SetGetColor(info);
 
-  Vdp2DrawRotation(&g_rgb0, varVdp2Regs);
+  Vdp2DrawRotation(rgb, varVdp2Regs);
 }
+
 
 static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
 {
@@ -6971,19 +7005,24 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
   int lastLine = 0;
   int line;
   int max = (yabsys.VBlankLineCount >= 270)?270:yabsys.VBlankLineCount;
+  RBGDrawInfo *rgb;
   for (line = 2; line<max; line++) {
     if (!sameVDP2Reg(RBG0, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
-      g_rgb0.info.startLine = lastLine;
-      g_rgb0.info.endLine = line;
+      rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+      rgb->rgb_type = 0x0;
+      rgb->info.startLine = lastLine;
+      rgb->info.endLine = line;
       lastLine = line;
-      LOG_AREA("RBG0 Draw from %d to %d\n", g_rgb0.info.startLine, g_rgb0.info.endLine );
-      Vdp2DrawRBG0_part(&g_rgb0.info, &Vdp2Lines[line-1]);
+      LOG_AREA("RBG0 Draw from %d to %d %x\n", rgb->info.startLine, rgb->info.endLine, varVdp2Regs->BGON);
+      Vdp2DrawRBG0_part(rgb, &Vdp2Lines[line-1]);
     }
   }
-  g_rgb0.info.startLine = lastLine;
-  g_rgb0.info.endLine = line;
-  LOG_AREA("RBG0 Draw from %d to %d\n", g_rgb0.info.startLine, g_rgb0.info.endLine );
-  Vdp2DrawRBG0_part(&g_rgb0.info, &Vdp2Lines[line-1]);
+  rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+  rgb->rgb_type = 0x0;
+  rgb->info.startLine = lastLine;
+  rgb->info.endLine = line;
+  LOG_AREA("RBG0 Draw from %d to %d %x\n", rgb->info.startLine, rgb->info.endLine, varVdp2Regs->BGON);
+  Vdp2DrawRBG0_part(rgb, &Vdp2Lines[line-1]);
 
 }
 
@@ -7004,8 +7043,12 @@ static void VIDOGLVdp2DrawScreens(void)
 
   Vdp2GenerateWindowInfo(&Vdp2Lines[0]);
 
+
   Vdp2DrawBackScreen(&Vdp2Lines[0]);
   Vdp2DrawLineColorScreen(&Vdp2Lines[0]);
+
+  Vdp2DrawRBG0(&Vdp2Lines[0]);
+  FrameProfileAdd("RBG0 end");
 
   Vdp2DrawNBG3(&Vdp2Lines[0]);
   FrameProfileAdd("NBG3 end");
@@ -7013,12 +7056,12 @@ static void VIDOGLVdp2DrawScreens(void)
   FrameProfileAdd("NBG2 end");
   Vdp2DrawNBG1(&Vdp2Lines[0]);
   FrameProfileAdd("NBG1 end");
-  Vdp2DrawNBG0RBG1(&Vdp2Lines[0]);
+  Vdp2DrawNBG0(&Vdp2Lines[0]);
   FrameProfileAdd("NBG0 end");
-  if (!g_rgb0.async) {
-    Vdp2DrawRBG0(&Vdp2Lines[0]);
-    FrameProfileAdd("RBG0 end");
-  }
+  Vdp2DrawRBG1(&Vdp2Lines[0]);
+  FrameProfileAdd("RBG1 end");
+
+  vdp2busy = 1;
 
 #if BG_PROFILE    
   now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
@@ -7031,6 +7074,23 @@ static void VIDOGLVdp2DrawScreens(void)
   sprintf(str, "VIDOGLVdp2DrawScreens = %d", difftime);
   DisplayMessage(str);
 #endif
+}
+
+void waitVdp2DrawScreensEnd(int sync) {
+  if (vdp2busy == 1) {
+    int empty = 1;
+    while (((empty = YaGetQueueSize(rotq_end))!=0) && (sync == 1))
+    {
+      YabThreadYield();
+    }
+    if (empty == 0) {
+      YglUpdateVDP1FB();
+      YglRender(&Vdp2Lines[0]);
+      vdp2busy = 0;
+    }
+  } else {
+    YglCheckFBSwitch(0);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -7212,134 +7272,134 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1Wm3(vdp2rotationparameter
 }
 
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  return &paraA;
+  return &rgb->paraA;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00WithK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode00WithK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-  return info->GetKValueA(&paraA, h);
+  h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+  return rgb->info.GetKValueA(&rgb->paraA, h);
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  return &paraB;
+  return &rgb->paraB;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01WithK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode01WithK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-  return info->GetKValueB(&paraB, h);
+  h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+  return rgb->info.GetKValueB(&rgb->paraB, h);
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  return &paraA;
+  return &rgb->paraA;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKA(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  if (info->GetKValueA(&paraA, ceilf( paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
+  if (rgb->info.GetKValueA(&rgb->paraA, ceilf( rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h))) == NULL)
   {
-    paraB.lineaddr = paraA.lineaddr;
-    return &paraB;
+    rgb->paraB.lineaddr = rgb->paraA.lineaddr;
+    return &rgb->paraB;
   }
-  return &paraA;
+  return &rgb->paraA;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  if (info->GetKValueA(&paraA, ceilf(paraA.KtablV + (paraA.deltaKAx * h))) == NULL)
+  if (rgb->info.GetKValueA(&rgb->paraA, ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h))) == NULL)
   {
-    info->GetKValueB(&paraB, ceilf(paraB.KtablV + (paraB.deltaKAx * h)));
-    return &paraB;
+    rgb->info.GetKValueB(&rgb->paraB, ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h)));
+    return &rgb->paraB;
   }
-  return &paraA;
+  return &rgb->paraA;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  return &paraA;
+  return &rgb->paraA;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   if ((varVdp2Regs->WCTLD & 0x04) == 0) {
-    return (&paraB);
+    return (&rgb->paraB);
   }
 
-  if (info->WindwAreaMode == 0)
+  if (rgb->info.WindwAreaMode == 0)
   {
-    if (info->pWinInfo[v].WinShowLine == 0)
+    if (rgb->info.pWinInfo[v].WinShowLine == 0)
     {
-      return (&paraA);
+      return (&rgb->paraA);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
       {
-        return (&paraB);
+        return (&rgb->paraB);
       }
       else {
-        return (&paraA);
+        return (&rgb->paraA);
       }
     }
   }
   else
   {
-    if (info->pWinInfo[v].WinShowLine == 0)
+    if (rgb->info.pWinInfo[v].WinShowLine == 0)
     {
-      return (&paraB);
+      return (&rgb->paraB);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
       {
-        return (&paraA);
+        return (&rgb->paraA);
       }
       else {
-        return (&paraB);
+        return (&rgb->paraB);
       }
     }
   }
   return NULL;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   // Virtua Fighter2
-  if (info->WindwAreaMode == 0)
+  if (rgb->info.WindwAreaMode == 0)
   {
-    if (info->pWinInfo[v].WinShowLine == 0)
+    if (rgb->info.pWinInfo[v].WinShowLine == 0)
     {
-      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-      return info->GetKValueA(&paraA, h);
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      return rgb->info.GetKValueA(&rgb->paraA, h);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
       {
-        return (&paraB);
+        return (&rgb->paraB);
       }
       else {
-        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-        return info->GetKValueA(&paraA, h);
+        h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+        return rgb->info.GetKValueA(&rgb->paraA, h);
       }
     }
   }
   else {
-    if (info->pWinInfo[v].WinShowLine == 0)
+    if (rgb->info.pWinInfo[v].WinShowLine == 0)
     {
-      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-      return info->GetKValueA(&paraA, h);
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      return rgb->info.GetKValueA(&rgb->paraA, h);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
       {
-        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-        return info->GetKValueA(&paraA, h);
+        h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+        return rgb->info.GetKValueA(&rgb->paraA, h);
       }
       else {
-        return (&paraB);
+        return (&rgb->paraB);
       }
     }
   }
@@ -7347,40 +7407,40 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struc
 
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  if (info->WindwAreaMode == 0)
+  if (rgb->info.WindwAreaMode == 0)
   {
-    if (info->pWinInfo[v].WinShowLine == 0)
+    if (rgb->info.pWinInfo[v].WinShowLine == 0)
     {
-      return &paraA;
+      return &rgb->paraA;
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
       {
-        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-        return info->GetKValueB(&paraB, h);
+        h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+        return rgb->info.GetKValueB(&rgb->paraB, h);
       }
       else {
-        return &paraA;
+        return &rgb->paraA;
       }
     }
   }
   else {
     {
-      if (info->pWinInfo[v].WinShowLine == 0)
+      if (rgb->info.pWinInfo[v].WinShowLine == 0)
       {
-        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-        return info->GetKValueB(&paraB, h);
+        h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+        return rgb->info.GetKValueB(&rgb->paraB, h);
       }
       else {
-        if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+        if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
         {
-          return &paraA;
+          return &rgb->paraA;
         }
         else {
-          h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-          return info->GetKValueB(&paraB, h);
+          h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+          return rgb->info.GetKValueB(&rgb->paraB, h);
         }
       }
     }
@@ -7388,58 +7448,58 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struc
   return NULL;
 }
 
-vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct * info, int h, int v, Vdp2* varVdp2Regs)
+vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   vdp2rotationparameter_struct * p;
 
   // Final Fight Revenge
-  if (info->WindwAreaMode == WA_INSIDE) {
-    if (info->pWinInfo[v].WinShowLine == 0) {
-      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-      p = info->GetKValueA(&paraA, h);
+  if (rgb->info.WindwAreaMode == WA_INSIDE) {
+    if (rgb->info.pWinInfo[v].WinShowLine == 0) {
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      p = rgb->info.GetKValueA(&rgb->paraA, h);
       if (p) return p;
-      h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-      return info->GetKValueB(&paraB, h);
+      h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+      return rgb->info.GetKValueB(&rgb->paraB, h);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd) {
-        h = (paraA.KtablV + (paraA.deltaKAx * h));
-        p = info->GetKValueA(&paraA, h);
+      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd) {
+        h = (rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+        p = rgb->info.GetKValueA(&rgb->paraA, h);
         if (p) return p;
-        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-        return info->GetKValueB(&paraB, h);
+        h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+        return rgb->info.GetKValueB(&rgb->paraB, h);
       }
       else {
-        h = (paraB.KtablV + (paraB.deltaKAx * h));
-        p = info->GetKValueB(&paraB, h);
+        h = (rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+        p = rgb->info.GetKValueB(&rgb->paraB, h);
         if (p) return p;
-        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-        return info->GetKValueA(&paraA, h);
+        h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+        return rgb->info.GetKValueA(&rgb->paraA, h);
       }
     }
   }
   else {
-    if (info->pWinInfo[v].WinShowLine == 0) {
-      h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-      p = info->GetKValueB(&paraB, h);
+    if (rgb->info.pWinInfo[v].WinShowLine == 0) {
+      h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+      p = rgb->info.GetKValueB(&rgb->paraB, h);
       if (p) return p;
-      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-      return info->GetKValueA(&paraA, h);
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      return rgb->info.GetKValueA(&rgb->paraA, h);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd) {
-        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-        p = info->GetKValueB(&paraB, h);
+      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd) {
+        h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+        p = rgb->info.GetKValueB(&rgb->paraB, h);
         if (p) return p;
-        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-        return info->GetKValueA(&paraA, h);
+        h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+        return rgb->info.GetKValueA(&rgb->paraA, h);
       }
       else {
-        h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-        p = info->GetKValueA(&paraA, h);
+        h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+        p = rgb->info.GetKValueA(&rgb->paraA, h);
         if (p) return p;
-        h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
-        return info->GetKValueB(&paraB, h);
+        h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+        return rgb->info.GetKValueB(&rgb->paraB, h);
       }
     }
   }

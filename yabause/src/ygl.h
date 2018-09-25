@@ -240,6 +240,7 @@ typedef struct {
 	unsigned int * texture;
 	unsigned int width;
 	unsigned int height;
+        YabMutex *mtx;
 	YglCacheHash *HashTable[HASHSIZE];
 	YglCacheHash CashLink[HASHSIZE * 2];
 	u32 CashLink_index;
@@ -253,7 +254,6 @@ extern YglTextureManager * YglTM_vdp2;
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(YglTextureManager * tm );
 void YglTMReset( YglTextureManager * tm );
-void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height);
 void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h);
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 void YglTmPush(YglTextureManager * tm);

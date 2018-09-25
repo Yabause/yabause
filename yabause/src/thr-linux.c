@@ -145,7 +145,7 @@ void YabThreadWake(unsigned int id)
 
 typedef struct YabEventQueue_pthread
 {
-        int *buffer;
+        void** buffer;
         int capacity;
         int size;
         int in;
@@ -158,7 +158,7 @@ typedef struct YabEventQueue_pthread
 
 YabEventQueue * YabThreadCreateQueue( int qsize ){
     YabEventQueue_pthread * p = (YabEventQueue_pthread*)malloc(sizeof(YabEventQueue_pthread));
-    p->buffer = (int*)malloc( sizeof(int)* qsize);
+    p->buffer = (void**)malloc( sizeof(void*)* qsize);
     p->capacity = qsize;
     p->size = 0;
     p->in = 0;
@@ -185,7 +185,7 @@ void YabThreadDestoryQueue( YabEventQueue * queue_t ){
 
 
 
-void YabAddEventQueue( YabEventQueue * queue_t, int evcode ){
+void YabAddEventQueue( YabEventQueue * queue_t, void* evcode ){
     YabEventQueue_pthread * queue = (YabEventQueue_pthread*)queue_t;
     pthread_mutex_lock(&(queue->mutex));
     while (queue->size == queue->capacity)
@@ -207,8 +207,8 @@ void YabWaitEmptyQueue( YabEventQueue * queue_t ){
 }
 
 
-int YabWaitEventQueue( YabEventQueue * queue_t ){
-    int value;
+void* YabWaitEventQueue( YabEventQueue * queue_t ){
+    void* value;
     YabEventQueue_pthread * queue = (YabEventQueue_pthread*)queue_t;
     pthread_mutex_lock(&(queue->mutex));
     while (queue->size == 0)
