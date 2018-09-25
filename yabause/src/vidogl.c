@@ -7037,7 +7037,7 @@ static void VIDOGLVdp2DrawScreens(void)
 
 void VIDOGLVdp2SetResolution(u16 TVMD)
 {
-  int width = 0, height = 0;
+  int width = 1, height = 1;
   int wratio = 1, hratio = 1;
 
   // Horizontal Resolution

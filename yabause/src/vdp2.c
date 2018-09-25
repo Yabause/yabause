@@ -1050,6 +1050,7 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       case 0x000:
          Vdp2Regs->TVMD = val;
          yabsys.VBlankLineCount = 225+(val & 0x30);
+         if (yabsys.VBlankLineCount > 256) yabsys.VBlankLineCount = 256;
          return;
       case 0x002:
          Vdp2Regs->EXTEN = val;
