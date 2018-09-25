@@ -42,6 +42,12 @@ extern int GlHeight;
 extern int GlWidth;
 static GLuint _prgid[PG_MAX] = { 0 };
 
+#ifdef DEBUG_PROG
+#define GLUSEPROG(A) printf("use prog %s (%d) @ %d\n", #A, A, __LINE__);glUseProgram(A)
+#else
+#define GLUSEPROG(A) glUseProgram(A)
+#endif
+
 
 static void Ygl_printShaderError( GLuint shader )
 {
@@ -96,7 +102,7 @@ int ShaderDrawTest()
 
   YglOrtho(&mtx, 0.0f, 100.0f, 100.0f, 0.0f, 1.0f, 0.0f);
 
-  glUseProgram(_prgid[PG_NORMAL]);
+  GLUSEPROG(_prgid[PG_NORMAL]);
   glUniform1i(id, 0);
 
   glEnableVertexAttribArray(vertexp);
@@ -414,7 +420,7 @@ int Ygl_cleanupAddColCram(void * p)
 //
 void Ygl_setNormalshader(YglProgram * prg) {
   if (prg->colornumber >= 3) {
-    glUseProgram(_prgid[PG_NORMAL]);
+    GLUSEPROG(_prgid[PG_NORMAL]);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glUniform1i(id_normal_s_texture, 0);
@@ -422,7 +428,7 @@ void Ygl_setNormalshader(YglProgram * prg) {
     glUniformMatrix4fv(id_normal_matrix, 1, GL_FALSE, prg->matrix);
   }
   else {
-    glUseProgram(_prgid[PG_VDP2_NORMAL_CRAM]);
+    GLUSEPROG(_prgid[PG_VDP2_NORMAL_CRAM]);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
     glUniform1i(id_normal_cram_s_texture, 0);
@@ -838,7 +844,7 @@ int Ygl_uniformWindow(void * p )
 {
    YglProgram * prg;
    prg = p;
-   glUseProgram(prg->prgid );
+   GLUSEPROG(prg->prgid );
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
    glDisableVertexAttribArray(2);
@@ -2004,7 +2010,7 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
 
 
   int arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
-  glUseProgram(_prgid[pgid]);
+  GLUSEPROG(_prgid[pgid]);
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
@@ -2033,7 +2039,7 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
 void Ygl_uniformVDP2DrawFrameBufferShadow(void * p) {
   int pgid = PG_VDP2_DRAWFRAMEBUFF_SHADOW;
   int arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
-  glUseProgram(_prgid[pgid]);
+  GLUSEPROG(_prgid[pgid]);
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
@@ -2164,7 +2170,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
    }
 
    int arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
-   glUseProgram(_prgid[pgid]);
+   GLUSEPROG(_prgid[pgid]);
 
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
@@ -2248,7 +2254,7 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float t
   YglProgram * prg;
   prg = p;
 
-  glUseProgram(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW]);
+  GLUSEPROG(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW]);
   glUniform1i(idvdp1FrameBuffer_addcolor_shadow, 0);
   glActiveTexture(GL_TEXTURE0);
   glUniform1f(idfrom_addcolor_shadow, from);
@@ -3098,11 +3104,11 @@ int YglDrawBackScreen(float w, float h) {
       return -1;
     }
 
-    glUseProgram(clear_prg);
+    GLUSEPROG(clear_prg);
     glUniform1i(glGetUniformLocation(clear_prg, "u_Clear"), 0);
   }
   else{
-    glUseProgram(clear_prg);
+    GLUSEPROG(clear_prg);
   }
   glUniform1f(glGetUniformLocation(clear_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(clear_prg, "u_vheight"), (float)_Ygl->height);
@@ -3225,11 +3231,11 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
       abort();
     }
 
-    glUseProgram(vdp1_prg);
+    GLUSEPROG(vdp1_prg);
     glUniform1i(glGetUniformLocation(vdp1_prg, "s_texture"), 0);
   }
   else{
-    glUseProgram(vdp1_prg);
+    GLUSEPROG(vdp1_prg);
   }
 
 
@@ -3458,7 +3464,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
       abort();
     }
 
-    glUseProgram(blit_prg);
+    GLUSEPROG(blit_prg);
     glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
     u_w = glGetUniformLocation(blit_prg, "fWidth");
     u_h = glGetUniformLocation(blit_prg, "fHeight");
@@ -3466,7 +3472,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     u_d = glGetUniformLocation(blit_prg, "decim");
   }
   else{
-    glUseProgram(blit_prg);
+    GLUSEPROG(blit_prg);
   }
 
 
@@ -3596,10 +3602,10 @@ int YglClear() {
       abort();
     }
 
-    glUseProgram(clear_prg);
+    GLUSEPROG(clear_prg);
   }
   else{
-    glUseProgram(clear_prg);
+    GLUSEPROG(clear_prg);
   }
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3737,7 +3743,7 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
       blur_prg = -1;
       return -1;
     }
-    glUseProgram(blur_prg);
+    GLUSEPROG(blur_prg);
     glUniform1i(glGetUniformLocation(blur_prg, "u_Src"), 0);
     u_blur_mtxModelView = glGetUniformLocation(blur_prg, (const GLchar *)"u_mvpMatrix");
     u_blur_tw = glGetUniformLocation(blur_prg, "u_tw");
@@ -3745,7 +3751,7 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix)
 
   }
   else{
-    glUseProgram(blur_prg);
+    GLUSEPROG(blur_prg);
   }
 
   glEnableVertexAttribArray(0);
@@ -3858,7 +3864,6 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
     mosaic_prg = glCreateProgram();
     if (mosaic_prg == 0) return -1;
 
-    glUseProgram(mosaic_prg);
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -3901,7 +3906,7 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matri
 
   }
   else{
-    glUseProgram(mosaic_prg);
+    GLUSEPROG(mosaic_prg);
   }
 
   glEnableVertexAttribArray(0);
@@ -4061,7 +4066,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
       perlinealpha_prg = -1;
       return -1;
     }
-    glUseProgram(perlinealpha_prg);
+    GLUSEPROG(perlinealpha_prg);
     int id_src = glGetUniformLocation(perlinealpha_prg, "u_Src");
     glUniform1i(id_src, 0);
     int id_line = glGetUniformLocation(perlinealpha_prg, "u_Line");
@@ -4073,7 +4078,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
 
   }
   else{
-    glUseProgram(perlinealpha_prg);
+    GLUSEPROG(perlinealpha_prg);
   }
 
   glEnableVertexAttribArray(0);
@@ -4099,7 +4104,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float *
   glActiveTexture(GL_TEXTURE0);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
-  glUseProgram(programid);
+  GLUSEPROG(programid);
 
   return 0;
 }
