@@ -211,9 +211,75 @@ typedef struct {
   Vdp2 *varVdp2Regs;
 } rotationTask;
 
+typedef struct {
+  vdp2draw_struct *info;
+  YglTexture *texture;
+  Vdp2 *varVdp2Regs;
+  int order;
+} drawCellTask;
+
 static YabEventQueue *rotq;
 static YabEventQueue *rotq_end;
+static YabEventQueue *nbg_end;
 static int rotation_run = 0;
+
+static YabEventQueue *cellq;
+static int drawcell_run = 0;
+
+int nbLoop = 0;
+int nbClear = 0;
+#define NB_CELL 128
+YglTexture *textureTable[NB_CELL];
+vdp2draw_struct *infoTable[NB_CELL];
+Vdp2* vdp2RegsTable[NB_CELL];
+int orderTable[NB_CELL];
+
+#define CELL_SINGLE 0x1
+#define CELL_QUAD   0x2
+
+#define LOG_ASYN
+
+static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs, int async);
+
+
+static void executeDrawCell() {
+  while (nbLoop != 0) {
+    nbLoop--;
+    Vdp2DrawCell(infoTable[nbLoop], textureTable[nbLoop], vdp2RegsTable[nbLoop], orderTable[nbLoop]);
+    free(infoTable[nbLoop]);
+    free(textureTable[nbLoop]);
+    free(vdp2RegsTable[nbLoop]);
+  }
+}
+
+static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs, int order) {
+  textureTable[nbLoop] = malloc(sizeof(YglTexture));
+  memcpy(textureTable[nbLoop], texture, sizeof(YglTexture));
+  infoTable[nbLoop] = malloc(sizeof(vdp2draw_struct));
+  memcpy(infoTable[nbLoop], info, sizeof(vdp2draw_struct));
+  vdp2RegsTable[nbLoop] = malloc(sizeof(Vdp2));
+  memcpy(vdp2RegsTable[nbLoop], varVdp2Regs, sizeof(Vdp2));
+  orderTable[nbLoop] = order;
+  nbLoop++;
+  if (nbLoop >= NB_CELL) {
+    LOG_ASYN("Too much drawCell request!\n");
+    executeDrawCell();
+  }
+}
+
+static void requestDrawCell(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs) {
+   requestDrawCellOrder(info, texture, varVdp2Regs, CELL_SINGLE);
+}
+
+static void requestDrawCellQuad(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs) {
+   requestDrawCellOrder(info, texture, varVdp2Regs, CELL_QUAD);
+} 
+
+static waitforDrawCell() {
+    while (YaGetQueueSize(nbg_end)!=0) YabThreadYield();
+}
+
+
 
 static void Vdp2DrawRBG0(Vdp2* varVdp2Regs);
 
@@ -2072,7 +2138,7 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
   }
 }
 
-static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs)
+static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs)
 {
   int i, j;
 
@@ -2140,6 +2206,58 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vd
     }
     break;
   }
+}
+
+static void Vdp2DrawCell_in_async(void *p)
+{
+   while(drawcell_run != 0){
+     drawCellTask *task = (drawCellTask *)YabWaitEventQueue(cellq);
+     if (task != NULL) {
+       if (task->order == CELL_SINGLE) {
+         Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
+       } else {
+         Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
+         task->texture->textdata -= (task->texture->w + 8) * 8 - 8;
+         Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
+         task->texture->textdata -= 8;
+         Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
+         task->texture->textdata -= (task->texture->w + 8) * 8 - 8;
+         Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
+       }
+       free(task->texture);
+       free(task->info);
+       free(task->varVdp2Regs);
+       free(task);
+     }
+     YabWaitEventQueue(nbg_end);
+   }
+} 
+
+static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs, int order) {
+   drawCellTask *task = malloc(sizeof(drawCellTask));
+
+   task->texture = malloc(sizeof(YglTexture));
+   memcpy(task->texture, texture, sizeof(YglTexture));
+
+   task->info = malloc(sizeof(vdp2draw_struct));
+   memcpy(task->info, info, sizeof(vdp2draw_struct));
+
+   task->varVdp2Regs = malloc(sizeof(Vdp2));
+   memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
+
+   task->order = order;
+
+
+   if (drawcell_run == 0) {
+     drawcell_run = 1;
+     YabThreadStart(YAB_THREAD_VDP2_NBG0, Vdp2DrawCell_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP2_NBG1, Vdp2DrawCell_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP2_NBG2, Vdp2DrawCell_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP2_NBG3, Vdp2DrawCell_in_async, 0);
+   }
+   YabAddEventQueue(nbg_end, NULL);
+   YabAddEventQueue(cellq, task);
+   YabThreadYield();
 }
 
 static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture *texture, int width, int height,  Vdp2 *varVdp2Regs)
@@ -2367,7 +2485,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
     ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
 
   YglCache c;
-  vdp2draw_struct tile;
+  vdp2draw_struct tile = *info;
   int winmode = 0;
   tile.dst = 0;
   tile.uclipmode = 0;
@@ -2433,17 +2551,11 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   switch (info->patternwh)
   {
   case 1:
-    Vdp2DrawCell(info, texture, varVdp2Regs);
+    requestDrawCell(info, texture, varVdp2Regs);
     break;
   case 2:
     texture->w += 8;
-    Vdp2DrawCell(info, texture, varVdp2Regs);
-    texture->textdata -= (texture->w + 8) * 8 - 8;
-    Vdp2DrawCell(info, texture, varVdp2Regs);
-    texture->textdata -= 8;
-    Vdp2DrawCell(info, texture, varVdp2Regs);
-    texture->textdata -= (texture->w + 8) * 8 - 8;
-    Vdp2DrawCell(info, texture, varVdp2Regs);
+    requestDrawCellQuad(info, texture, varVdp2Regs);
     break;
   }
 }
@@ -3605,8 +3717,10 @@ static void Vdp2DrawRotation_in_async(void *p)
 {
    while(rotation_run != 0){
      rotationTask *task = (rotationTask *)YabWaitEventQueue(rotq);
-     Vdp2DrawRotation_in_sync(task->rbg, task->varVdp2Regs);
-     free(task);
+     if (task != NULL) {
+       Vdp2DrawRotation_in_sync(task->rbg, task->varVdp2Regs);
+       free(task);
+     }
      YabWaitEventQueue(rotq_end);
    }
 } 
@@ -3658,7 +3772,9 @@ int VIDOGLInit(void)
   vdp1hratio = 1;
 
      rotq = YabThreadCreateQueue(32);
+     cellq = YabThreadCreateQueue(NB_CELL);
      rotq_end = YabThreadCreateQueue(32);
+     nbg_end = YabThreadCreateQueue(NB_CELL);
 
   return 0;
 }
@@ -3667,6 +3783,24 @@ int VIDOGLInit(void)
 
 void VIDOGLDeInit(void)
 {
+
+  if (drawcell_run == 1) {
+    drawcell_run = 0;
+    for (int i=0; i<4; i++) {
+      YabAddEventQueue(nbg_end, NULL);
+      YabAddEventQueue(cellq, NULL);
+    }
+    YabThreadWait(YAB_THREAD_VDP2_NBG0);
+    YabThreadWait(YAB_THREAD_VDP2_NBG1);
+    YabThreadWait(YAB_THREAD_VDP2_NBG2);
+    YabThreadWait(YAB_THREAD_VDP2_NBG3);
+  }
+  if (rotation_run == 1) {
+    rotation_run = 0;
+    YabAddEventQueue(rotq_end, NULL);
+    YabAddEventQueue(rotq, NULL);
+    YabThreadWait(YAB_THREAD_VDP2_RBG1);
+  }
   YglDeInit();
 
 #ifdef SPRITE_CACHE
@@ -5270,8 +5404,6 @@ void VIDOGLVdp2Draw(void)
     VIDOGLVdp2DrawScreens();
   }
 
-  YglTmPush(YglTM_vdp2);
-
   FrameProfileAdd("Vdp2Draw end");
 
 
@@ -5837,7 +5969,7 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
 }
 
 static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
-  vdp2draw_struct info = { 0 };
+  vdp2draw_struct info = {0};
   YglTexture texture;
   YglCache tmpc;
   info.dst = 0;
@@ -6097,9 +6229,8 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
                 YglQuad(&info, &texture, &tmpc, YglTM_vdp2);
                 if (info.islinescroll) {
                   Vdp2DrawBitmapLineScroll(&info, &texture, info.cellw, info.cellh, varVdp2Regs);
-                }
-                else {
-                  Vdp2DrawCell(&info, &texture, varVdp2Regs);
+                } else {
+                  requestDrawCell(&info, &texture, varVdp2Regs);
                 }
                 isCached = 1;
               }
@@ -6126,7 +6257,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
         Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
       }
     }
-
+  executeDrawCell();
 }
 
 static void Vdp2DrawNBG0RBG1(Vdp2* varVdp2Regs)
@@ -6377,7 +6508,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
                 Vdp2DrawBitmapLineScroll(&info, &texture, info.cellw, info.cellh, varVdp2Regs);
               }
               else {
-                Vdp2DrawCell(&info, &texture, varVdp2Regs);
+                requestDrawCell(&info, &texture, varVdp2Regs);
               }
               isCached = 1;
             }
@@ -6404,7 +6535,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
       Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
     }
   }
-
+  executeDrawCell();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6522,6 +6653,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   info.x = varVdp2Regs->SCXN2 & 0x7FF;
   info.y = varVdp2Regs->SCYN2 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
+  executeDrawCell();
 
 }
 
@@ -6641,7 +6773,7 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
   info.x = varVdp2Regs->SCXN3 & 0x7FF;
   info.y = varVdp2Regs->SCYN3 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
-
+  executeDrawCell();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -7043,25 +7175,27 @@ static void VIDOGLVdp2DrawScreens(void)
 
   Vdp2GenerateWindowInfo(&Vdp2Lines[0]);
 
-
+LOG_ASYN("===================================\n");
   Vdp2DrawBackScreen(&Vdp2Lines[0]);
   Vdp2DrawLineColorScreen(&Vdp2Lines[0]);
 
   Vdp2DrawRBG0(&Vdp2Lines[0]);
   FrameProfileAdd("RBG0 end");
-
-  Vdp2DrawNBG3(&Vdp2Lines[0]);
-  FrameProfileAdd("NBG3 end");
-  Vdp2DrawNBG2(&Vdp2Lines[0]);
-  FrameProfileAdd("NBG2 end");
-  Vdp2DrawNBG1(&Vdp2Lines[0]);
-  FrameProfileAdd("NBG1 end");
   Vdp2DrawNBG0(&Vdp2Lines[0]);
   FrameProfileAdd("NBG0 end");
+  Vdp2DrawNBG1(&Vdp2Lines[0]);
+  FrameProfileAdd("NBG1 end");
+  Vdp2DrawNBG2(&Vdp2Lines[0]);
+  FrameProfileAdd("NBG2 end");
+  Vdp2DrawNBG3(&Vdp2Lines[0]);
+  FrameProfileAdd("NBG3 end");
   Vdp2DrawRBG1(&Vdp2Lines[0]);
   FrameProfileAdd("RBG1 end");
 
+LOG_ASYN("*********************************\n");
   vdp2busy = 1;
+
+
 
 #if BG_PROFILE    
   now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
@@ -7077,19 +7211,24 @@ static void VIDOGLVdp2DrawScreens(void)
 }
 
 void waitVdp2DrawScreensEnd(int sync) {
-  if (vdp2busy == 1) {
+  YglCheckFBSwitch(0);
+  if ((vdp2busy == 1)) {
     int empty = 1;
     while (((empty = YaGetQueueSize(rotq_end))!=0) && (sync == 1))
     {
       YabThreadYield();
     }
+    if (empty != 0) return;
+    while (((empty = YaGetQueueSize(nbg_end))!=0) && (sync == 1))
+    {
+      YabThreadYield();
+    }
     if (empty == 0) {
+      YglTmPush(YglTM_vdp2);
       YglUpdateVDP1FB();
       YglRender(&Vdp2Lines[0]);
       vdp2busy = 0;
     }
-  } else {
-    YglCheckFBSwitch(0);
   }
 }
 
