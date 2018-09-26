@@ -49,6 +49,7 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
 #define PI 3.1415926535897932384626433832795f
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
+extern int waitVdp1Textures( int sync);
 
 #define ATLAS_BIAS (0.025f)
 

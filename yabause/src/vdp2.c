@@ -59,6 +59,7 @@ static int autoframeskipenab=0;
 int vdp2_is_odd_frame = 0;
 
 static void startField(void);// VBLANK-OUT handler
+extern void waitVdp2DrawScreensEnd(int sync);
 
 int g_frame_count = 0;
 
