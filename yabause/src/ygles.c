@@ -2400,7 +2400,8 @@ static void waitVdp1End(int id) {
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
 
- if (_Ygl->needVdp1Render != 0){;
+ if (_Ygl->needVdp1Render != 0){
+    waitVdp1Textures(1);
     YglTmPush(YglTM_vdp1[_Ygl->drawframe]);
     YglRenderVDP1();
     waitVdp1End(_Ygl->readframe);

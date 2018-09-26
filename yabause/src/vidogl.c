@@ -218,9 +218,22 @@ typedef struct {
   int order;
 } drawCellTask;
 
+
+typedef struct {
+  vdp1cmd_struct *cmd;
+  YglTexture *texture;
+  Vdp2 *varVdp2Regs;
+  int w,h;
+} vdp1TextureTask;
+
 static YabEventQueue *rotq;
 static YabEventQueue *rotq_end;
 static YabEventQueue *nbg_end;
+
+static YabEventQueue *vdp1q;
+static YabEventQueue *vdp1q_end;
+static int vdp1text_run = 0;
+
 static int rotation_run = 0;
 
 static YabEventQueue *cellq;
@@ -530,7 +543,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
 
 
 
-static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs)
+static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, int spriteh, YglTexture *texture, Vdp2 *varVdp2Regs)
 {
   int shadow = 0;
   int normalshadow = 0;
@@ -585,10 +598,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     u32 colorBank = cmd->CMDCOLR&0xFFF0;
     u16 i;
 
-    for (i = 0; i < sprite->h; i++) {
+    for (i = 0; i < spriteh; i++) {
       u16 j;
       j = 0;
-      while (j < sprite->w) {
+      while (j < spritew) {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
         // Pixel 1
@@ -642,12 +655,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     u32 colorLut = cmd->CMDCOLR * 8;
     u16 i;
 
-    for (i = 0; i < sprite->h; i++)
+    for (i = 0; i < spriteh; i++)
     {
       u16 j;
       j = 0;
       endcnt = 0;
-      while (j < sprite->w)
+      while (j < spritew)
       {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
@@ -762,9 +775,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
     u16 i, j;
 
-    for (i = 0; i < sprite->h; i++)
+    for (i = 0; i < spriteh; i++)
     {
-      for (j = 0; j < sprite->w; j++)
+      for (j = 0; j < spritew; j++)
       {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
@@ -796,9 +809,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     u32 colorBank = cmd->CMDCOLR & 0xFF80;
     u16 i, j;
 
-    for (i = 0; i < sprite->h; i++)
+    for (i = 0; i < spriteh; i++)
     {
-      for (j = 0; j < sprite->w; j++)
+      for (j = 0; j < spritew; j++)
       {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
@@ -832,8 +845,8 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     u32 colorBank = cmd->CMDCOLR & 0xFF00;
     u16 i, j;
 
-    for (i = 0; i < sprite->h; i++) {
-      for (j = 0; j < sprite->w; j++) {
+    for (i = 0; i < spriteh; i++) {
+      for (j = 0; j < spritew; j++) {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
         if ((dot == 0) && !SPD) {
@@ -869,9 +882,9 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
     rgb_alpha |= priority;
 
-    for (i = 0; i < sprite->h; i++)
+    for (i = 0; i < spriteh; i++)
     {
-      for (j = 0; j < sprite->w; j++)
+      for (j = 0; j < spritew; j++)
       {
         temp = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr += 2;
@@ -908,6 +921,56 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     addPattern(cmd, Vdp1Ram, pixBuf, texture->w, varVdp2Regs);
   }
 #endif
+}
+
+static void Vdp1ReadTexture_in_async(void *p)
+{
+   while(vdp1text_run != 0){
+     vdp1TextureTask *task = (vdp1TextureTask *)YabWaitEventQueue(vdp1q);
+     if (task != NULL) {
+       Vdp1ReadTexture_in_sync(task->cmd, task->w, task->h, task->texture, task->varVdp2Regs);
+       free(task->cmd);
+       free(task->texture);
+       free(task->varVdp2Regs);
+       free(task);
+     }
+     YabWaitEventQueue(vdp1q_end);
+   }
+} 
+
+static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs) {
+   vdp1TextureTask *task = malloc(sizeof(vdp1TextureTask));
+
+   task->cmd = malloc(sizeof(vdp1cmd_struct));
+   task->texture = malloc(sizeof(YglTexture)); 
+   task->varVdp2Regs = malloc(sizeof(Vdp2));
+
+   memcpy(task->cmd, cmd, sizeof(vdp1cmd_struct));
+   memcpy(task->texture, texture, sizeof(YglTexture)); 
+   memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
+
+   task->w = sprite->w;
+   task->h = sprite->h;
+
+   if (vdp1text_run == 0) {
+     vdp1text_run = 1;
+     YabThreadStart(YAB_THREAD_VDP1_0, Vdp1ReadTexture_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP1_1, Vdp1ReadTexture_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP1_2, Vdp1ReadTexture_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP1_3, Vdp1ReadTexture_in_async, 0);
+   }
+   YabAddEventQueue(vdp1q_end, NULL);
+   YabAddEventQueue(vdp1q, task);
+   YabThreadYield();
+}
+
+int waitVdp1Textures( int sync) {
+    int empty = 1;
+    while (((empty = YaGetQueueSize(vdp1q_end))!=0) && (sync == 1))
+    {
+      YabThreadYield();
+    }
+    return (empty == 1);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3773,8 +3836,10 @@ int VIDOGLInit(void)
 
      rotq = YabThreadCreateQueue(32);
      cellq = YabThreadCreateQueue(NB_CELL);
+     vdp1q = YabThreadCreateQueue(NB_CELL);
      rotq_end = YabThreadCreateQueue(32);
      nbg_end = YabThreadCreateQueue(NB_CELL);
+     vdp1q_end = YabThreadCreateQueue(NB_CELL);
 
   return 0;
 }
