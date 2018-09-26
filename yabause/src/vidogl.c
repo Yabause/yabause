@@ -250,7 +250,7 @@ int orderTable[NB_CELL];
 #define CELL_SINGLE 0x1
 #define CELL_QUAD   0x2
 
-#define LOG_ASYN
+#define LOG_ASYN YuiMsg
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs, int async);
 
