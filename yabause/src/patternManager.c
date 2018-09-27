@@ -15,7 +15,9 @@ static long long nbColid = 0;
 static Pattern** patternCache;
 static u8* patternUse;
 
-void deleteCachePattern(Pattern** pat) {
+static YabMutex *cacheMutex;
+
+static void deleteCachePattern(Pattern** pat) {
 	if ((*pat) == NULL) return;
 	(*pat)->managed = 0;
 	if ((*pat)->pix != NULL) free((*pat)->pix);
@@ -94,7 +96,6 @@ static Pattern* createCachePattern(u8* pixSample, int w, int h, int offset) {
 }
 
 Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram, Vdp2 * regs) {
-
     int characterWidth = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
     int characterHeight = cmd->CMDSIZE & 0xFF;
     int characterAddress = (cmd->CMDSRCA << 3) & 0x7FFFF;
@@ -102,8 +103,11 @@ Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram, Vdp2 * regs) {
 
     if(characterWidth*characterHeight <= 256) return NULL; //Cache impact is negligible here
 
-    if ((characterWidth == 0) || (characterHeight == 0)) return NULL;
+    if ((characterWidth == 0) || (characterHeight == 0)) {
+      return NULL;
+    }
 
+    YabThreadLock(cacheMutex);
     int param0 = cmd->CMDSRCA << 16 | cmd->CMDCOLR;
     int param1 = cmd->CMDPMOD << 16 | cmd->CMDCTRL;
     int param2 = regs->SPCTL << 16 | lutPri;
@@ -119,6 +123,7 @@ Pattern* getPattern(vdp1cmd_struct *cmd, u8* ram, Vdp2 * regs) {
     memcpy(&pixSample[SAMPLE+12], &param3, 4);
 
     Pattern* curPattern = popCachePattern(pixSample, characterWidth, characterHeight);
+    YabThreadUnLock(cacheMutex);
     return curPattern;
 }
 
@@ -129,8 +134,10 @@ void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset, Vdp2 * regs)
     int characterAddress = (cmd->CMDSRCA << 3) & 0x7FFFF;
     int lutPri = T1ReadWord(ram, (T1ReadByte(ram, characterAddress) >> 4) * 2 + (cmd->CMDCOLR * 8));
 
-    if(characterWidth*characterHeight <= 256) return; //Cache impact is negligible here
-
+    if(characterWidth*characterHeight <= 256) {
+      return; //Cache impact is negligible here
+    }
+     YabThreadLock(cacheMutex);
     int param0 = cmd->CMDSRCA << 16 | cmd->CMDCOLR;
     int param1 = cmd->CMDPMOD << 16 | cmd->CMDCTRL;
     int param2 = regs->SPCTL << 16 | lutPri;
@@ -152,6 +159,7 @@ void addPattern(vdp1cmd_struct *cmd, u8* ram, u32 *pix, int offset, Vdp2 * regs)
     	memcpy(&curPattern->pix[i*characterWidth], &pix[i*(characterWidth+offset)], characterWidth*sizeof(u32));
       }
     }
+    YabThreadUnLock(cacheMutex);
 }
 
 void releasePattern() {
@@ -170,6 +178,7 @@ void resetPatternCache(){
 }
 
 void initPatternCache(){
+    cacheMutex = YabThreadCreateMutex();
     patternCache = malloc(0x10000 * sizeof(Pattern*));
     patternUse = malloc(0x10000 * sizeof(u8));
     for (int i = 0; i<0x10000; i++) {
@@ -179,6 +188,7 @@ void initPatternCache(){
 }
 
 void deinitPatternCache(){
+    YabThreadFreeMutex(cacheMutex);
     free(patternCache);
     free(patternUse);
 #ifdef VDP1_CACHE_STAT
