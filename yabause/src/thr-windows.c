@@ -169,10 +169,13 @@ void YabThreadDestoryQueue(YabEventQueue * queue_t){
   CRITICAL_SECTION mutex;
   YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
   mutex = queue->mutex;
-  while (queue->size == queue->capacity)
-    WaitForSingleObject(queue->cond_full,INFINITE);
-
   EnterCriticalSection(&mutex);
+  while (queue->size == queue->capacity) {
+    LeaveCriticalSection(&(queue->mutex));
+    WaitForSingleObject(queue->cond_full, INFINITE);
+    EnterCriticalSection(&(queue->mutex));
+  }
+
   free(queue->buffer);
   free(queue);
   LeaveCriticalSection(&mutex);
@@ -194,10 +197,13 @@ void YabThreadDestoryQueue(YabEventQueue * queue_t){
 void YabAddEventQueue(YabEventQueue * queue_t, void* evcode){
 #if 1
   YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
-  while (queue->size == queue->capacity)
-    WaitForSingleObject(queue->cond_full, INFINITE);
-
   EnterCriticalSection(&(queue->mutex));
+  while (queue->size == queue->capacity){
+    LeaveCriticalSection(&(queue->mutex));
+    WaitForSingleObject(queue->cond_full, INFINITE);
+    EnterCriticalSection(&(queue->mutex));
+  }
+
   queue->buffer[queue->in] = evcode;
   ++queue->size;
   ++queue->in;
@@ -223,10 +229,13 @@ void* YabWaitEventQueue(YabEventQueue * queue_t){
 #if 1
   void* value;
   YabEventQueue_win32 * queue = (YabEventQueue_win32*)queue_t;
-  while (queue->size == 0)
-    WaitForSingleObject(queue->cond_empty, INFINITE);
-
   EnterCriticalSection(&(queue->mutex));
+  while (queue->size == 0){
+    LeaveCriticalSection(&(queue->mutex));
+    WaitForSingleObject(queue->cond_empty, INFINITE);
+    EnterCriticalSection(&(queue->mutex));
+  }
+
   value = queue->buffer[queue->out];
   --queue->size;
   ++queue->out;
