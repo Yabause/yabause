@@ -1048,11 +1048,12 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
 int waitVdp1Textures( int sync) {
     int empty = 1;
+    if (vdp1q_end == NULL) return 1;
     while (((empty = YaGetQueueSize(vdp1q_end))!=0) && (sync == 1))
     {
       YabThreadYield();
     }
-    return (empty == 1);
+    return (empty == 0);
 }
 #else
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs) {
@@ -7317,16 +7318,18 @@ void waitVdp2DrawScreensEnd(int sync) {
   if ((vdp2busy == 1)) {
     int empty = 0;
 #ifdef RGB_ASYNC
-    empty = 1;
-    while (((empty = YaGetQueueSize(rotq_end))!=0) && (sync == 1))
-    {
-      YabThreadYield();
+    if (rotq_end != NULL) {
+      empty = 1;
+      while (((empty = YaGetQueueSize(rotq_end))!=0) && (sync == 1))
+      {
+        YabThreadYield();
+      }
+      if (empty != 0) return;
     }
-    if (empty != 0) return;
 #endif
 #ifdef CELL_ASYNC
-    empty = 1;
     if (cellq_end != NULL) {
+      empty = 1;
       while (((empty = YaGetQueueSize(cellq_end))!=0) && (sync == 1))
       {
         YabThreadYield();
