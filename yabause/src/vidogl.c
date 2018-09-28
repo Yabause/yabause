@@ -262,7 +262,7 @@ int orderTable[NB_MSG];
 #define CELL_SINGLE 0x1
 #define CELL_QUAD   0x2
 
-static void Vdp2DrawCell_in_async(void *p)
+void Vdp2DrawCell_in_async(void *p)
 {
    while(drawcell_run != 0){
      drawCellTask *task = (drawCellTask *)YabWaitEventQueue(cellq);
@@ -618,10 +618,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
   }
   return color;
 }
-
-
-
-
 
 static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, int spriteh, YglTexture *texture, Vdp2 *varVdp2Regs)
 {
@@ -1003,7 +999,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 #endif
 }
 
-static void Vdp1ReadTexture_in_async(void *p)
+void Vdp1ReadTexture_in_async(void *p)
 {
    while(vdp1text_run != 0){
      vdp1TextureTask *task = (vdp1TextureTask *)YabWaitEventQueue(vdp1q);
@@ -3805,7 +3801,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     free(rbg);
   }
 
-static void Vdp2DrawRotation_in_async(void *p)
+void Vdp2DrawRotation_in_async(void *p)
 {
    while(rotation_run != 0){
      rotationTask *task = (rotationTask *)YabWaitEventQueue(rotq);
