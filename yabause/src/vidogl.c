@@ -7335,19 +7335,22 @@ int WaitVdp2Async(int sync) {
       }
     }
 #endif
+    if (empty == 0) vdp2busy = 0;
   }
   return empty;
 }
 
 void waitVdp2DrawScreensEnd(int sync) {
   YglCheckFBSwitch(0);
+  if ((vdp2busy == 1)) {
     int empty = WaitVdp2Async(sync);
     if (empty == 0) {
+      //Vdp2 has been evaluated we can render
       YglTmPush(YglTM_vdp2);
       YglUpdateVDP1FB();
       YglRender(&Vdp2Lines[0]);
-      vdp2busy = 0;
     }
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

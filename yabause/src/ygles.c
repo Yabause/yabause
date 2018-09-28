@@ -574,6 +574,11 @@ void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
 }
 #endif
 void YglTmPush(YglTextureManager * tm){
+#ifdef VDP1_TEXTURE_ASYNC
+  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
+    waitVdp1Textures(1);
+  else WaitVdp2Async(1);
+#endif
   YabThreadLock(tm->mtx);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
@@ -588,6 +593,11 @@ void YglTmPush(YglTextureManager * tm){
 }
 
 void YglTmPull(YglTextureManager * tm, u32 flg){
+#ifdef VDP1_TEXTURE_ASYNC
+  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
+    waitVdp1Textures(1);
+  else WaitVdp2Async(1);
+#endif
   YabThreadLock(tm->mtx);
   if (tm->texture == NULL) {
     glActiveTexture(GL_TEXTURE0);
@@ -665,7 +675,7 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void YglTMAllocate_in(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
+static void YglTMAllocate_in(YglTextureManager * tm, YglTexture * output, unsigned int w, unsigned int h, unsigned int * x, unsigned int * y) {
   if( tm->width < w ){
     YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
     YglTMRealloc( tm, w, tm->height);
