@@ -7313,10 +7313,9 @@ LOG_ASYN("*********************************\n");
 #endif
 }
 
-void waitVdp2DrawScreensEnd(int sync) {
-  YglCheckFBSwitch(0);
+int WaitVdp2Async(int sync) {
+  int empty = 0;  
   if ((vdp2busy == 1)) {
-    int empty = 0;
 #ifdef RGB_ASYNC
     if (rotq_end != NULL) {
       empty = 1;
@@ -7336,13 +7335,19 @@ void waitVdp2DrawScreensEnd(int sync) {
       }
     }
 #endif
+  }
+  return empty;
+}
+
+void waitVdp2DrawScreensEnd(int sync) {
+  YglCheckFBSwitch(0);
+    int empty = WaitVdp2Async(sync);
     if (empty == 0) {
       YglTmPush(YglTM_vdp2);
       YglUpdateVDP1FB();
       YglRender(&Vdp2Lines[0]);
       vdp2busy = 0;
     }
-  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

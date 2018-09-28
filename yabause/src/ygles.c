@@ -40,6 +40,8 @@
 extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
 
+extern int WaitVdp2Async(int sync);
+
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs);
 u32 * YglGetColorRamPointer();
@@ -605,6 +607,12 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
   GLuint new_pixelBufferID;
   unsigned int * new_texture;
   GLuint error;
+
+#ifdef VDP1_TEXTURE_ASYNC
+  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
+    waitVdp1Textures(1);
+  else WaitVdp2Async(1);
+#endif
 
   if (tm->texture != NULL) {
     glActiveTexture(GL_TEXTURE0);
