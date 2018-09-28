@@ -15,7 +15,7 @@ static long long nbColid = 0;
 static Pattern** patternCache;
 static u8* patternUse;
 
-static YabMutex *cacheMutex;
+YabMutex *cacheMutex;
 
 static void deleteCachePattern(Pattern** pat) {
 	if ((*pat) == NULL) return;

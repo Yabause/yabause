@@ -220,11 +220,11 @@ typedef struct {
   int w,h;
 } vdp1TextureTask;
 
-static YabEventQueue *rotq = NULL;
-static YabEventQueue *rotq_end = NULL;
+YabEventQueue *rotq = NULL;
+YabEventQueue *rotq_end = NULL;
 
-static YabEventQueue *vdp1q;
-static YabEventQueue *vdp1q_end;
+YabEventQueue *vdp1q;
+YabEventQueue *vdp1q_end;
 static int vdp1text_run = 0;
 
 static int rotation_run = 0;
@@ -240,8 +240,8 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
 
 static void executeDrawCell();
 
-static YabEventQueue *cellq = NULL;
-static YabEventQueue *cellq_end = NULL;
+YabEventQueue *cellq = NULL;
+YabEventQueue *cellq_end = NULL;
 static int drawcell_run = 0;
 
 typedef struct {
