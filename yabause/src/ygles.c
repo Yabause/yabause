@@ -49,7 +49,9 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
 #define PI 3.1415926535897932384626433832795f
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
+#ifdef VDP1_TEXTURE_ASYNC
 extern int waitVdp1Textures( int sync);
+#endif
 
 #define ATLAS_BIAS (0.025f)
 
@@ -2402,7 +2404,9 @@ void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
 
  if (_Ygl->needVdp1Render != 0){
+#ifdef VDP1_TEXTURE_ASYNC
     waitVdp1Textures(1);
+#endif
     YglTmPush(YglTM_vdp1[_Ygl->drawframe]);
     YglRenderVDP1();
     waitVdp1End(_Ygl->readframe);

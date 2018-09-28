@@ -223,13 +223,14 @@ typedef struct {
 #ifdef RGB_ASYNC
 YabEventQueue *rotq = NULL;
 YabEventQueue *rotq_end = NULL;
+static int rotation_run = 0;
 #endif
 
+#ifdef VDP1_TEXTURE_ASYNC
 YabEventQueue *vdp1q;
 YabEventQueue *vdp1q_end;
 static int vdp1text_run = 0;
-
-static int rotation_run = 0;
+#endif
 
 
 #define LOG_ASYN YuiMsg
@@ -1001,6 +1002,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 #endif
 }
 
+#ifdef VDP1_TEXTURE_ASYNC
 void Vdp1ReadTexture_in_async(void *p)
 {
    while(vdp1text_run != 0){
@@ -1032,6 +1034,8 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
    if (vdp1text_run == 0) {
      vdp1text_run = 1;
+     vdp1q = YabThreadCreateQueue(NB_MSG);
+     vdp1q_end = YabThreadCreateQueue(NB_MSG);
      YabThreadStart(YAB_THREAD_VDP1_0, Vdp1ReadTexture_in_async, 0);
      YabThreadStart(YAB_THREAD_VDP1_1, Vdp1ReadTexture_in_async, 0);
      YabThreadStart(YAB_THREAD_VDP1_2, Vdp1ReadTexture_in_async, 0);
@@ -1050,6 +1054,11 @@ int waitVdp1Textures( int sync) {
     }
     return (empty == 1);
 }
+#else
+static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs) {
+   Vdp1ReadTexture_in_sync(cmd, sprite->w, sprite->h, texture, varVdp2Regs);
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3865,9 +3874,6 @@ int VIDOGLInit(void)
 
   vdp1wratio = 1;
   vdp1hratio = 1;
-
-     vdp1q = YabThreadCreateQueue(NB_MSG);
-     vdp1q_end = YabThreadCreateQueue(NB_MSG);
 
   return 0;
 }
