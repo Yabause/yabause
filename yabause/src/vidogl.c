@@ -220,8 +220,10 @@ typedef struct {
   int w,h;
 } vdp1TextureTask;
 
+#ifdef RGB_ASYNC
 YabEventQueue *rotq = NULL;
 YabEventQueue *rotq_end = NULL;
+#endif
 
 YabEventQueue *vdp1q;
 YabEventQueue *vdp1q_end;
@@ -3340,9 +3342,10 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
     rbg->line_texture.textdata = NULL;
     rbg->line_texture.w = 0;
   }
-
+#ifdef RGB_ASYNC
   if (rgb_type == 0x0) Vdp2DrawRotation_in(rbg, varVdp2Regs);
   else 
+#endif
     Vdp2DrawRotation_in_sync(rbg, varVdp2Regs);
 }
 
@@ -3801,6 +3804,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     free(rbg);
   }
 
+#ifdef RGB_ASYNC
 void Vdp2DrawRotation_in_async(void *p)
 {
    while(rotation_run != 0){
@@ -3819,12 +3823,15 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
    task->varVdp2Regs = varVdp2Regs;
    if (rotation_run == 0) {
      rotation_run = 1;
+     rotq = YabThreadCreateQueue(32);
+     rotq_end = YabThreadCreateQueue(32);
      YabThreadStart(YAB_THREAD_VDP2_RBG1, Vdp2DrawRotation_in_async, 0);
    }
    YabAddEventQueue(rotq_end, NULL);
    YabAddEventQueue(rotq, task);
    YabThreadYield();
 }
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3859,9 +3866,7 @@ int VIDOGLInit(void)
   vdp1wratio = 1;
   vdp1hratio = 1;
 
-     rotq = YabThreadCreateQueue(32);
      vdp1q = YabThreadCreateQueue(NB_MSG);
-     rotq_end = YabThreadCreateQueue(32);
      vdp1q_end = YabThreadCreateQueue(NB_MSG);
 
   return 0;
@@ -3884,12 +3889,14 @@ void VIDOGLDeInit(void)
     YabThreadWait(YAB_THREAD_VDP2_NBG3);
   }
 #endif
+#ifdef RGB_ASYNC
   if (rotation_run == 1) {
     rotation_run = 0;
     YabAddEventQueue(rotq_end, NULL);
     YabAddEventQueue(rotq, NULL);
     YabThreadWait(YAB_THREAD_VDP2_RBG1);
   }
+#endif
   YglDeInit();
 
 #ifdef SPRITE_CACHE
@@ -7302,13 +7309,17 @@ LOG_ASYN("*********************************\n");
 void waitVdp2DrawScreensEnd(int sync) {
   YglCheckFBSwitch(0);
   if ((vdp2busy == 1)) {
-    int empty = 1;
+    int empty = 0;
+#ifdef RGB_ASYNC
+    empty = 1;
     while (((empty = YaGetQueueSize(rotq_end))!=0) && (sync == 1))
     {
       YabThreadYield();
     }
     if (empty != 0) return;
+#endif
 #ifdef CELL_ASYNC
+    empty = 1;
     if (cellq_end != NULL) {
       while (((empty = YaGetQueueSize(cellq_end))!=0) && (sync == 1))
       {
