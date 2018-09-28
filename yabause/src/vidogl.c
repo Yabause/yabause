@@ -233,7 +233,7 @@ static int vdp1text_run = 0;
 #endif
 
 
-#define LOG_ASYN YuiMsg
+#define LOG_ASYN
 
 static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs);
 
