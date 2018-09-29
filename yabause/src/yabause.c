@@ -112,7 +112,7 @@ char ssf_track_name[256] = { 0 };
 char ssf_artist[256] = { 0 };
 
 u32 saved_scsp_cycles = 0;//fixed point
-u32 saved_m68k_cycles = 0;//fixed point
+volatile u64 saved_m68k_cycles = 0;//fixed point
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -160,6 +160,8 @@ void YabauseChangeTiming(int freqtype) {
 
 //////////////////////////////////////////////////////////////////////////////
 extern int tweak_backup_file_size;
+YabEventQueue * q_scsp_frame_start;
+YabEventQueue * q_scsp_finish;
 
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
@@ -279,6 +281,11 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
    yabsys.isRotated = 0;
+
+  setM68kCounter(0);
+
+  q_scsp_frame_start = YabThreadCreateQueue(1);
+  q_scsp_finish = YabThreadCreateQueue(1);
 
 #ifdef SPRITE_CACHE
    yabsys.useVdp1cache = init->useVdp1cache;
@@ -655,6 +662,10 @@ u32 YabauseGetFrameCount() {
 }
 
 //#define YAB_STATICS
+void SyncCPUtoSCSP();
+u64 getM68KCounter();
+u64 g_m68K_dec_cycle = 0;
+
 
 int YabauseEmulate(void) {
    int oneframeexec = 0;
@@ -754,21 +765,13 @@ int YabauseEmulate(void) {
             PROFILE_STOP("hblankin");
          }
 
-         PROFILE_START("SCU");
-         ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
-         PROFILE_STOP("SCU");
-
-      PROFILE_START("68K");
-      M68KSync();  // Wait for the previous iteration to finish
-      PROFILE_STOP("68K");
-
       if (yabsys.DecilineCount == DECILINE_STEP)
       {
          // HBlankOUT
          PROFILE_START("hblankout");
          Vdp2HBlankOUT();
          Vdp1HBlankOUT();
-         SyncScsp();
+        // SyncScsp();
          PROFILE_STOP("hblankout");
          PROFILE_START("SCSP");
          ScspExec();
@@ -777,11 +780,17 @@ int YabauseEmulate(void) {
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
+#if defined(ASYNC_SCSP)
+            setM68kCounter((u64)(44100 * 256 / 60));
+#endif
             PROFILE_START("vblankin");
             // VBlankIN
             SmpcINTBACKEnd();
             Vdp1VBlankIN();
             Vdp2VBlankIN();
+#if defined(ASYNC_SCSP)
+            SyncCPUtoSCSP();
+#endif
             PROFILE_STOP("vblankin");
             CheatDoPatches(MSH2);
          }
@@ -796,6 +805,12 @@ int YabauseEmulate(void) {
             PROFILE_STOP("VDP1/VDP2");
          }
       }
+      PROFILE_START("SCU");
+      ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
+      PROFILE_STOP("SCU");
+      PROFILE_START("68K");
+      M68KSync();  // Wait for the previous iteration to finish
+      PROFILE_STOP("68K");
 
       yabsys.UsecFrac += usecinc;
       PROFILE_START("SMPC");
@@ -806,13 +821,14 @@ int YabauseEmulate(void) {
       PROFILE_STOP("CDB");
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
       
+#if !defined(ASYNC_SCSP)
       if(!use_new_scsp)
       {
          int cycles;
 
          PROFILE_START("68K");
          cycles = m68kcycles;
-		 saved_centicycles += m68kcenticycles;
+         saved_centicycles += m68kcenticycles;
          if (saved_centicycles >= 100) {
             cycles++;
             saved_centicycles -= 100;
@@ -822,7 +838,7 @@ int YabauseEmulate(void) {
       }
       else
       {
-#if !defined(ASYNC_SCSP)
+
          u32 m68k_integer_part = 0, scsp_integer_part = 0;
          saved_m68k_cycles += m68k_cycles_per_deciline;
          m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
@@ -833,12 +849,14 @@ int YabauseEmulate(void) {
          scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
          new_scsp_exec(scsp_integer_part);
          saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
+#else
+      {
+        saved_m68k_cycles  += m68k_cycles_per_deciline;
+        setM68kCounter(saved_m68k_cycles);
 #endif
       }
-
       PROFILE_STOP("Total Emulation");
    }
-
    M68KSync();
 
 #ifdef YAB_WANT_SSF
@@ -879,6 +897,16 @@ int YabauseEmulate(void) {
 #endif
 
    return 0;
+}
+
+
+void SyncCPUtoSCSP() {
+  //LOG("[SH2] WAIT SCSP");
+    YabWaitEventQueue(q_scsp_finish);
+    saved_m68k_cycles = 0;
+    setM68kCounter(saved_m68k_cycles);
+    YabAddEventQueue(q_scsp_frame_start, 0);
+  //LOG("[SH2] START SCSP");
 }
 
 //////////////////////////////////////////////////////////////////////////////

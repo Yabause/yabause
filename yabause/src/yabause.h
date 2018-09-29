@@ -134,7 +134,6 @@ extern yabsys_struct yabsys;
 int YabauseEmulate(void);
 
 extern u32 saved_scsp_cycles;
-extern u32 saved_m68k_cycles;
 #define SCSP_FRACTIONAL_BITS 20
 u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
 u32 YabauseGetCpuTime();
