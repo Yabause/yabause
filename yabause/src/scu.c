@@ -864,7 +864,7 @@ void ScuExec(u32 timing) {
        ScuRegs->timer1_counter = (ScuRegs->timer1_counter - (timing >> 1));
        if (ScuRegs->timer1_counter <= 0) {
          ScuRegs->timer1_set = 1;
-         if ((ScuRegs->T1MD & 0x80) == 0) {
+         if ((ScuRegs->T1MD & 0x100) == 0) {
              ScuSendTimer1();
          }else if (ScuRegs->timer0_set == 1) {
              ScuSendTimer1();
