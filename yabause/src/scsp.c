@@ -388,7 +388,6 @@ struct AlfoTables
 
 #if defined(ASYNC_SCSP)
 //global variables
-static YabBarrier *AVBarrier;
 #endif
 struct AlfoTables alfo;
 
@@ -5436,8 +5435,6 @@ void ScspUnLockThread() {
 
 //////////////////////////////////////////////////////////////////////////////
 #if !defined(ASYNC_SCSP)
-void SyncScsp() {}
-void SyncScspDynarec() {}
 void ScspExec(){
   u32 audiosize;
 
@@ -5529,23 +5526,6 @@ void ScspAsynMainCpu( void * p ){
   YabThreadWake(YAB_THREAD_SCSP);
 }
 
-
-void SyncScsp() {
-    if ((thread_running == 1) && (yabsys.LineCount == yabsys.MaxLineCount-1)) {
-        if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
-    }
-}
-
-void SyncScspDynarec() {
-    if ((thread_running == 1) && (yabsys.LineCount == (yabsys.MaxLineCount-1))) {
-        if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
-    }
-}
- 
-void syncWithSH2() {
-    if (isAutoFrameSkip() == 0) YabThreadBarrierWait(AVBarrier);
-}
-
 void ScspAsynMainRT( void * p ){
 
   u64 before;
@@ -5629,7 +5609,6 @@ void ScspAsynMainRT( void * p ){
       checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
       //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
       before = checktime;
-      syncWithSH2();
     }
   }
   YabThreadWake(YAB_THREAD_SCSP);
@@ -5637,10 +5616,8 @@ void ScspAsynMainRT( void * p ){
 
 void ScspExec(){
 	if (thread_running == 0){
-		thread_running = 1;
-                AVBarrier = YabThreadCreateBarrier(2);
-		YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
-    YabThreadUSleep(100000);
+	  thread_running = 1;
+	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
 	}
 }
 void ScspExecAsync() {

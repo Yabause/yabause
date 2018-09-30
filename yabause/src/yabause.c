@@ -137,6 +137,28 @@ void print_usage(const char *program_name) {
 //////////////////////////////////////////////////////////////////////////////
 
 
+static unsigned long nextFrameTime = 0;
+static unsigned long delayUs_NTSC = 1000000/60;
+static unsigned long delayUs_PAL = 1000000/50;
+
+#define delayUs ((yabsys.IsPal)?delayUs_PAL:delayUs_NTSC);
+
+static unsigned long time_left(void)
+{
+    unsigned long now;
+    now = YabauseGetTicks();
+    if(nextFrameTime <= now)
+        return 0;
+    else
+        return nextFrameTime - now;
+}
+
+static void syncVideoMode(void) {
+  unsigned long sleep = time_left();
+  usleep(time_left());
+  nextFrameTime += delayUs;
+}
+
 void YabauseChangeTiming(int freqtype) {
    // Setup all the variables related to timing
 
@@ -517,6 +539,8 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    scsp_set_use_new(init->use_new_scsp);
+
+   nextFrameTime = YabauseGetTicks();
    return 0;
 }
 
@@ -858,6 +882,8 @@ int YabauseEmulate(void) {
       PROFILE_STOP("Total Emulation");
    }
    M68KSync();
+
+   if (isAutoFrameSkip() == 0) syncVideoMode();
 
 #ifdef YAB_WANT_SSF
 
