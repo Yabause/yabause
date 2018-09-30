@@ -302,6 +302,11 @@ FASTCALL void SH2KronosInterpreterTestExec(SH2_struct *context, u32 cycles)
   cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
 }
 
+
+FASTCALL void SH2KronosInterpreterAddCycles(SH2_struct *context, u32 value)
+{
+  context->cycles += value;
+}
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2KronosInterpreterGetRegisters(SH2_struct *context, sh2regs_struct *regs)
@@ -570,5 +575,6 @@ SH2Interface_struct SH2KronosInterpreter = {
    SH2KronosInterpreterGetInterrupts,
    SH2KronosInterpreterSetInterrupts,
 
-   SH2KronosWriteNotify
+   SH2KronosWriteNotify,
+   SH2KronosInterpreterAddCycles
 };

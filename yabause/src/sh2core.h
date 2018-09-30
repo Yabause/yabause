@@ -405,6 +405,7 @@ typedef struct
                          const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
    void (*WriteNotify)(u32 start, u32 length);
+   void(*AddCycle)(SH2_struct *context, u32 value);
 } SH2Interface_struct;
 
 extern SH2_struct *MSH2;

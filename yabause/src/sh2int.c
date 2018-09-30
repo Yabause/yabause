@@ -46,6 +46,8 @@ void SH2IOnFrame(SH2_struct *context) {
 
 opcodefunc opcodes[0x10000];
 
+void SH2InterpreterAddCycle(SH2_struct *context, u32 value);
+
 SH2Interface_struct SH2Interpreter = {
    SH2CORE_INTERPRETER,
    "SH2 Interpreter",
@@ -82,7 +84,9 @@ SH2Interface_struct SH2Interpreter = {
    SH2InterpreterGetInterrupts,
    SH2InterpreterSetInterrupts,
 
-   NULL  // SH2WriteNotify not used
+   NULL,  // SH2WriteNotify not used
+
+   SH2InterpreterAddCycle
 };
 
 SH2Interface_struct SH2DebugInterpreter = {
@@ -121,7 +125,9 @@ SH2Interface_struct SH2DebugInterpreter = {
    SH2InterpreterGetInterrupts,
    SH2InterpreterSetInterrupts,
 
-   NULL  // SH2WriteNotify not used
+   NULL,  // SH2WriteNotify not used
+
+   SH2InterpreterAddCycle
 };
 
 fetchfunc fetchlist[0x100];
@@ -3064,6 +3070,10 @@ void SH2InterpreterSetPR(SH2_struct *context, u32 value)
 void SH2InterpreterSetPC(SH2_struct *context, u32 value)
 {
     context->regs.PC = value;
+}
+
+void SH2InterpreterAddCycle(SH2_struct *context, u32 value) {
+  context->cycles += value;
 }
 
 //////////////////////////////////////////////////////////////////////////////
