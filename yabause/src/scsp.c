@@ -390,7 +390,7 @@ struct AlfoTables
 #endif
 struct AlfoTables alfo;
 
-static sem_t m68counterCond;
+static YabSem *m68counterCond;
 
 void scsp_main_interrupt (u32 id);
 void scsp_sound_interrupt (u32 id);
@@ -4953,7 +4953,8 @@ ScspInit (int coreid)
   if (M68K->Init () != 0)
     return -1;
 
-  sem_init(&m68counterCond, 0, 0);
+  m68counterCond = YabThreadCreateSem(0);
+  setM68kCounter(0);
 
   M68K->SetReadB ((C68K_READ *)c68k_byte_read);
   M68K->SetReadW ((C68K_READ *)c68k_word_read);
@@ -5149,7 +5150,7 @@ ScspChangeVideoFormat (int type)
 
   void setM68kCounter(u64 counter) {
     m68k_counter = counter;
-    sem_post(&m68counterCond);
+    YabSemPost(m68counterCond);
   }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5425,7 +5426,7 @@ void ScspAsynMainCpu( void * p ){
       m68k_integer_part = getM68KCounter();
       m68k_cycle = m68k_integer_part - pre_m68k_cycle;
       if (thread_running == 0) break;
-      if (m68k_cycle == 0) sem_wait(&m68counterCond);
+      if (m68k_cycle == 0) YabSemWait(m68counterCond);
     } while (m68k_cycle == 0);
     m68k_inc += m68k_cycle;
     pre_m68k_cycle = m68k_integer_part;

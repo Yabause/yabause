@@ -218,6 +218,39 @@ int YaGetQueueSize(YabEventQueue * queue_t){
   return size;
 }
 
+typedef struct YabSem_win32
+{
+  HANDLE sem;
+} YabSem_win32;
+
+void YabSemPost( YabSem * mtx ){
+    YabSem_win32 * pmtx;
+    pmtx = (YabSem_win32 *)mtx;
+    ReleaseSemaphore(pmtx->sem, 1, NULL);
+}
+
+void YabSemWait( YabSem * mtx ){
+    YabSem_win32 * pmtx;
+    pmtx = (YabSem_win32 *)mtx;
+    WaitForSingleObject(pmtx->sem, 0L);
+}
+
+YabSem * YabThreadCreateSem(int val){
+    YabSem_win32 * mtx = (YabSem_win32 *)malloc(sizeof(YabSem_win32));
+    mtx->sem = CreateSemaphore( NULL, val, val, NULL);
+    return (YabMutex *)mtx;
+}
+
+void YabThreadFreeSem( YabSem * mtx ){
+    if( mtx != NULL ){
+        YabSem_win32 * pmtx;
+        pmtx = (YabSem_win32 *)mtx;        
+        CloseHandle(pmtx->sem);
+        free(pmtx);
+    }
+}
+
+
 typedef struct YabMutex_win32
 {
 	CRITICAL_SECTION mutex;

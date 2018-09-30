@@ -21,7 +21,9 @@
 #ifndef THREADS_H
 #define THREADS_H
 
+#ifdef SSH2_ASYNC
 #include <semaphore.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -121,6 +123,14 @@ void* YabWaitEventQueue( YabEventQueue * queue_t );
 int YaGetQueueSize(YabEventQueue * queue_t);
 
 void YabWaitEmptyQueue( YabEventQueue * queue_t );
+
+
+typedef void * YabSem;
+
+void YabSemPost( YabSem * mtx );
+void YabSemWait( YabSem * mtx );
+YabSem * YabThreadCreateSem(int val);
+void YabThreadFreeMutex( YabSem * mtx);
 
 typedef void * YabMutex;
 

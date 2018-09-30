@@ -304,8 +304,6 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.usecache = init->usecache;
    yabsys.isRotated = 0;
 
-  setM68kCounter(0);
-
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
 

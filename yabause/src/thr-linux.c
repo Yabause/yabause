@@ -33,6 +33,8 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+#include <semaphore.h>
+
 #ifdef ARCH_IS_MACOSX
 pid_t gettid(void)
 {
@@ -231,6 +233,37 @@ int YaGetQueueSize(YabEventQueue * queue_t){
   return size;
 }
 
+typedef struct YabSem_pthread
+{
+  sem_t sem;
+} YabSem_pthread;
+
+void YabSemPost( YabSem * mtx ){
+    YabSem_pthread * pmtx;
+    pmtx = (YabSem_pthread *)mtx;
+    sem_post(&pmtx->sem);
+}
+
+void YabSemWait( YabSem * mtx ){
+    YabSem_pthread * pmtx;
+    pmtx = (YabSem_pthread *)mtx;
+    sem_wait(&pmtx->sem);
+}
+
+YabSem * YabThreadCreateSem(int val){
+    YabSem_pthread * mtx = (YabSem_pthread *)malloc(sizeof(YabSem_pthread));
+    sem_init( &mtx->sem,0,val);
+    return (YabMutex *)mtx;
+}
+
+void YabThreadFreeSem( YabSem * mtx ){
+    if( mtx != NULL ){
+        YabSem_pthread * pmtx;
+        pmtx = (YabSem_pthread *)mtx;        
+        sem_destroy(&pmtx->sem);
+        free(pmtx);
+    }
+}
 
 typedef struct YabMutex_pthread
 {
