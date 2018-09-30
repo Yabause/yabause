@@ -5411,7 +5411,7 @@ void ScspAsynMainCpu( void * p ){
   u64 pre_m68k_cycle = 0;
   u64 m68k_inc = 0;
   
-  framecnt = 188160; // 11289600/60
+  framecnt = (11289600/((yabsys.IsPal)?50:60)); // 11289600/60
 
   //YabWaitEventQueue(q_scsp_frame_start);
   now = 0;
