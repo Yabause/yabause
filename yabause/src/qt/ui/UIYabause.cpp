@@ -638,9 +638,6 @@ void UIYabause::on_aFileSettings_triggered()
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
 
-      if (newhash["Sound/NewScsp"].toBool() != hash["Sound/NewScsp"])
-         scsp_set_use_new(newhash["Sound/NewScsp"].toInt());
-
 		if (newhash["Video/WindowWidth"] != hash["Video/WindowWidth"] || newhash["Video/WindowHeight"] != hash["Video/WindowHeight"] ||
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
 			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])

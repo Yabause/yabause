@@ -62,7 +62,6 @@ typedef struct
    int stretch;
    int scanline;
    int play_ssf;
-   int use_new_scsp;
    int resolution_mode;
    int extend_backup;
    int usecache;

@@ -83,7 +83,6 @@ typedef struct
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
-extern int use_new_scsp;
 
 u8 FASTCALL SoundRamReadByte(SH2_struct *context, u8* mem,u32 addr);
 u16 FASTCALL SoundRamReadWord(SH2_struct *context, u8* mem,u32 addr);
@@ -154,7 +153,6 @@ void scsp_debug_instrument_set_mute(u32 sa, int mute);
 void scsp_debug_instrument_clear();
 void scsp_debug_get_envelope(int chan, int * env, int * state);
 void scsp_debug_set_mode(int mode);
-void scsp_set_use_new(int which);
 void new_scsp_exec(s32 cycles);
 
 void SyncScsp();
@@ -162,5 +160,4 @@ void SyncScsp();
 extern void ScspLockThread();
 extern void ScspUnLockThread();
 
-extern int use_new_scsp;
 #endif

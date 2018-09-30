@@ -137,7 +137,6 @@ pthread_cond_t  sync_cnd = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t sync_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-int use_new_scsp = 0;
 int new_scsp_outbuf_pos = 0;
 s32 new_scsp_outbuf_l[900] = { 0 };
 s32 new_scsp_outbuf_r[900] = { 0 };
@@ -1559,14 +1558,6 @@ void new_scsp_reset(struct Scsp* s)
    new_scsp_cycles = 0;
 }
 
-void scsp_set_use_new(int which)
-{
-   if (which && !use_new_scsp)
-      new_scsp_reset(&new_scsp);
-
-   use_new_scsp = which;
-}
-
 ////////////////////////////////////////////////////////////////
 
 #ifndef PI
@@ -2722,10 +2713,7 @@ scsp_set_b (u32 a, u8 d)
 
     case 0x03: // RBL(low bit)/RBP
       scsp.rbl = (scsp.rbl & 2) + ((d >> 7) & 1);
-      if (use_new_scsp)
-         scsp.rbp = (d & 0x7F);
-      else
-         scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
+      scsp.rbp = (d & 0x7F);
       return;
 
     case 0x07: // MOBUF
@@ -2885,11 +2873,7 @@ scsp_set_w (u32 a, u16 d)
 
     case 0x02: // RBL/RBP
       scsp.rbl = (d >> 7) & 3;
-
-      if (use_new_scsp)
-         scsp.rbp = (d & 0x7F);
-      else
-         scsp.rbp = (d & 0x7F) * (4 * 1024 * 2);
+      scsp.rbp = (d & 0x7F);
 
       return;
 
@@ -3926,19 +3910,9 @@ scsp_update (s32 *bufL, s32 *bufR, u32 len)
 void
 scsp_update_monitor(void)
 {
-   if (use_new_scsp)
-   {
-      scsp.ca = new_scsp.slots[scsp.mslc].state.sample_offset >> 5;
-      scsp.sgc = new_scsp.slots[scsp.mslc].state.envelope;
-      scsp.eg = new_scsp.slots[scsp.mslc].state.attenuation >> 5;
-   }
-   else
-   {
-      slot_t *slot = &scsp.slot[scsp.mslc];
-      scsp.ca = ((slot->fcnt >> (SCSP_FREQ_LB + 12)) & 0xF) << 7;
-      scsp.sgc = slot->ecurp;
-      scsp.eg = 0x1f - (slot->env >> (SCSP_ENV_HB - 5));
-   }
+   scsp.ca = new_scsp.slots[scsp.mslc].state.sample_offset >> 5;
+   scsp.sgc = new_scsp.slots[scsp.mslc].state.envelope;
+   scsp.eg = new_scsp.slots[scsp.mslc].state.attenuation >> 5;
 #ifdef PSP
    WRITE_THROUGH(scsp.ca);
    WRITE_THROUGH(scsp.sgc);
@@ -4119,13 +4093,8 @@ scsp_w_b (SH2_struct *context, UNUSED u8* m, u32 a, u8 d)
 
   if (a < 0x400)
     {
-      if (use_new_scsp){
-        scsp_isr[a ^ 3] = d;
-        scsp_slot_write_byte(&new_scsp, a, d);
-      }
-      else{
-        scsp_slot_set_b(a >> 5, a, d);
-      }
+      scsp_isr[a ^ 3] = d;
+      scsp_slot_write_byte(&new_scsp, a, d);
       FLUSH_SCSP ();
       return;
     }
@@ -4233,13 +4202,8 @@ scsp_w_w (SH2_struct *context, UNUSED u8* m, u32 a, u16 d)
 
   if (a < 0x400)
     {
-      if (use_new_scsp){
-        *(u16 *)&scsp_isr[a ^ 2] = d;
-        scsp_slot_write_word(&new_scsp, a, d);
-      }
-      else{
-        scsp_slot_set_w(a >> 5, a, d);
-      }
+      *(u16 *)&scsp_isr[a ^ 2] = d;
+      scsp_slot_write_word(&new_scsp, a, d);
       FLUSH_SCSP ();
       return;
     }
@@ -4317,18 +4281,10 @@ scsp_w_d (SH2_struct *context, UNUSED u8* m, u32 a, u32 d)
 
   if (a < 0x400)
     {
-       if (use_new_scsp)
-       {
-         *(u16 *)&scsp_isr[a ^ 2] = d >> 16;
-          scsp_slot_write_word(&new_scsp, a + 0, d >> 16);
-          *(u16 *)&scsp_isr[(a + 2) ^ 2] = d & 0xffff;
-          scsp_slot_write_word(&new_scsp, a + 2, d & 0xffff);
-       }
-       else
-       {
-          scsp_slot_set_w(a >> 5, a + 0, d >> 16);
-          scsp_slot_set_w(a >> 5, a + 2, d & 0xFFFF);
-       }
+      *(u16 *)&scsp_isr[a ^ 2] = d >> 16;
+      scsp_slot_write_word(&new_scsp, a + 0, d >> 16);
+      *(u16 *)&scsp_isr[(a + 2) ^ 2] = d & 0xffff;
+      scsp_slot_write_word(&new_scsp, a + 2, d & 0xffff);
       FLUSH_SCSP ();
       return;
     }
@@ -4365,10 +4321,7 @@ scsp_r_b (SH2_struct *context, UNUSED u8* m, u32 a)
 
   if (a < 0x400)
     {
-       if (use_new_scsp)
-          return scsp_slot_read_byte(&new_scsp, a);
-       else
-         return scsp_slot_get_b(a >> 5, a);
+      return scsp_slot_read_byte(&new_scsp, a);
     }
   else if (a < 0x600)
     {
@@ -4402,10 +4355,7 @@ scsp_r_w (SH2_struct *context, UNUSED u8* m, u32 a)
 
   if (a < 0x400)
     {
-       if (use_new_scsp)
-          return scsp_slot_read_word(&new_scsp, a);
-       else
-          return scsp_slot_get_w(a >> 5, a);
+      return scsp_slot_read_word(&new_scsp, a);
     }
   else if (a < 0x600)
     {
@@ -4413,11 +4363,8 @@ scsp_r_w (SH2_struct *context, UNUSED u8* m, u32 a)
     }
   else if (a < 0x700)
     {
-       if (use_new_scsp)
-       {
-          u32 addr = a - 0x600;
-          return new_scsp.sound_stack[(addr / 2) & 0x3f];
-       }
+      u32 addr = a - 0x600;
+      return new_scsp.sound_stack[(addr / 2) & 0x3f];
     }
   else if (a >= 0x700 && a < 0x780)
   {
@@ -4494,10 +4441,7 @@ scsp_r_d (SH2_struct *context, UNUSED u8* m, u32 a)
 
   if (a < 0x400)
     {
-       if (use_new_scsp)
-          return (scsp_slot_read_word(&new_scsp, a + 0) << 16) | scsp_slot_read_word(&new_scsp, a + 2);
-       else
-          return (scsp_slot_get_w(a >> 5, a + 0) << 16) | scsp_slot_get_w(a >> 5, a + 2);
+      return (scsp_slot_read_word(&new_scsp, a + 0) << 16) | scsp_slot_read_word(&new_scsp, a + 2);
     }
   else if (a < 0x600)
     {
@@ -4578,8 +4522,7 @@ scsp_reset (void)
 		slot->lfoemw = scsp_lfo_sawt_e;
     }
 
-  if (use_new_scsp)
-     new_scsp_reset(&new_scsp);
+    new_scsp_reset(&new_scsp);
 }
 
 void
@@ -5440,8 +5383,6 @@ void ScspExec(){
 
   ScspInternalVars->scsptiming2 +=
 	  ((scspsoundlen << 16) + scsplines / 2) / scsplines;
-  if (!use_new_scsp)
-	  scsp_update_timer(ScspInternalVars->scsptiming2 >> 16); // Pass integer part
   ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
   ScspInternalVars->scsptiming1++;
 #else
@@ -5494,12 +5435,7 @@ void ScspAsynMainCpu( void * p ){
       m68k_inc = m68k_inc - samplecnt;
       //LOG("[SCSP] MM68KExec %d", samplecnt);
       MM68KExec(samplecnt);
-      if (use_new_scsp) {
-        new_scsp_exec((samplecnt << 1));
-      }
-      else {
-        scsp_update_timer(1);
-      }
+      new_scsp_exec((samplecnt << 1));
       hzcheck++;
 
       frame += samplecnt;
@@ -5559,11 +5495,7 @@ void ScspAsynMainRT( void * p ){
     
     wait_clock = 0;
 
-    if (use_new_scsp) {
-      new_scsp_exec((samplecnt << 1));
-    }else{
-      scsp_update_timer(1);
-    }
+    new_scsp_exec((samplecnt << 1));
 
     // Sync 1/4 Frame(60Hz)
     frame += samplecnt;
@@ -5597,12 +5529,7 @@ void ScspAsynMainRT( void * p ){
             m68kcycle += base_clock;
           }
           frame += samplecnt;
-          if (use_new_scsp) {
-            new_scsp_exec((samplecnt << 1));
-          }
-          else {
-            scsp_update_timer(1);
-          }
+          new_scsp_exec((samplecnt << 1));
           sh2_read_req = 0;
         }
       } while ((sleeptime > 0) && (isAutoFrameSkip()==0));
@@ -5650,10 +5577,7 @@ void ScspExecAsync() {
      bufR = (s32 *)&scspchannel[1].data32[scspsoundgenpos];
      memset(bufL, 0, sizeof(u32) * scspsoundlen);
      memset(bufR, 0, sizeof(u32) * scspsoundlen);
-     if (use_new_scsp)
-        new_scsp_update_samples(bufL, bufR, scspsoundlen);
-     else
-        scsp_update(bufL, bufR, scspsoundlen);
+     new_scsp_update_samples(bufL, bufR, scspsoundlen);
      scspsoundgenpos += scspsoundlen;
      scspsoundoutleft += scspsoundlen;
   }
@@ -5681,9 +5605,6 @@ void ScspExecAsync() {
      DRV_AviSoundUpdate(stereodata16, audiosize);
 #endif
   }
-
-  if (!use_new_scsp)
-     scsp_update_monitor();
 
 #ifdef USE_SCSPMIDI
   // Process Midi ports
@@ -5929,7 +5850,6 @@ SoundSaveState (FILE *fp)
   ywrite (&check, (void *)&temp, 4, 1, fp);
 #endif
 
-  ywrite(&check, (void *)&use_new_scsp, 1, sizeof(int), fp);
   ywrite(&check, (void *)&new_scsp_cycles, 1, sizeof(u32), fp);
   ywrite (&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
   for (i = 0; i < 32; i++) {
@@ -6220,7 +6140,6 @@ SoundLoadState (FILE *fp, int version, int size)
   M68K->SetPC (temp);
 #endif
 
-  yread(&check, (void *)&use_new_scsp, 1, sizeof(int), fp);
   yread(&check, (void *)&new_scsp_cycles, 1, sizeof(u32), fp);
   yread(&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
   for (i = 0; i < 32; i++) {

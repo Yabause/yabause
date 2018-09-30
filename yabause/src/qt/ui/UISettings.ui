@@ -412,13 +412,6 @@
         <widget class="QComboBox" name="cbSoundCore"/>
        </item>
        <item>
-        <widget class="QCheckBox" name="cbNewScsp">
-         <property name="text">
-          <string>Use new scsp</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
