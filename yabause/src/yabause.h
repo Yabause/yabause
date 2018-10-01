@@ -96,6 +96,10 @@ void YabauseSetVideoFormat(int type);
 void YabauseSpeedySetup(void);
 int YabauseQuickLoadGame(void);
 
+void EnableAutoFrameSkip(void);
+int isAutoFrameSkip(void);
+void DisableAutoFrameSkip(void);
+
 #define YABSYS_TIMING_BITS  20
 #define YABSYS_TIMING_MASK  ((1 << YABSYS_TIMING_BITS) - 1)
 

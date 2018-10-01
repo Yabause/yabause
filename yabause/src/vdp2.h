@@ -418,9 +418,6 @@ void ToggleNBG3(void);
 void ToggleRBG0(void);
 void ToggleRBG1(void);
 void ToggleFullScreen(void);
-void EnableAutoFrameSkip(void);
-int isAutoFrameSkip(void);
-void DisableAutoFrameSkip(void);
 
 Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 

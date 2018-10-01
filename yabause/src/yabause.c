@@ -137,6 +137,7 @@ void print_usage(const char *program_name) {
 
 
 unsigned long nextFrameTime = 0;
+static int autoframeskipenab=0;
 
 static void syncVideoMode(void) {
   unsigned long sleep = 0;
@@ -1320,6 +1321,32 @@ int YabauseQuickLoadGame(void)
    }
 
    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+
+void EnableAutoFrameSkip(void)
+{
+   autoframeskipenab = 1;
+   nextFrameTime = 0;
+   YabauseSetVideoFormat((yabsys.IsPal==1)?VIDEOFORMATTYPE_PAL:VIDEOFORMATTYPE_NTSC);
+}
+
+int isAutoFrameSkip(void)
+{
+   return autoframeskipenab;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+
+void DisableAutoFrameSkip(void)
+{
+   autoframeskipenab = 0;
+   nextFrameTime = 0;
+   YabauseSetVideoFormat((yabsys.IsPal==1)?VIDEOFORMATTYPE_PAL:VIDEOFORMATTYPE_NTSC);
 }
 
 //////////////////////////////////////////////////////////////////////////////

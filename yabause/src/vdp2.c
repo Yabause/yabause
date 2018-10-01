@@ -55,7 +55,6 @@ u8 B1_Updated = 0;
 struct CellScrollData cell_scroll_data[270];
 Vdp2 Vdp2Lines[270];
 
-static int autoframeskipenab=0;
 int vdp2_is_odd_frame = 0;
 
 static void startField(void);// VBLANK-OUT handler
@@ -1611,29 +1610,5 @@ void ToggleFullScreen(void)
       VIDCore->Resize(0,0,320, 224, 1);
    }
 }
-
-//////////////////////////////////////////////////////////////////////////////
-
-void EnableAutoFrameSkip(void)
-{
-   autoframeskipenab = 1;
-   YabauseSetVideoFormat((yabsys.IsPal==1)?VIDEOFORMATTYPE_PAL:VIDEOFORMATTYPE_NTSC);
-}
-
-int isAutoFrameSkip(void)
-{
-   return autoframeskipenab;
-}
-
-
-//////////////////////////////////////////////////////////////////////////////
-
-void DisableAutoFrameSkip(void)
-{
-   autoframeskipenab = 0;
-   YabauseSetVideoFormat((yabsys.IsPal==1)?VIDEOFORMATTYPE_PAL:VIDEOFORMATTYPE_NTSC);
-}
-
-//////////////////////////////////////////////////////////////////////////////
 
 
