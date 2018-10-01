@@ -156,7 +156,6 @@ static unsigned long time_left(void)
 static void syncVideoMode(void) {
   unsigned long sleep = time_left();
   YabThreadUSleep(sleep);
-  nextFrameTime = YabauseGetTicks() + delayUs;
 }
 
 void YabauseChangeTiming(int freqtype) {
@@ -535,8 +534,6 @@ int YabauseInit(yabauseinit_struct *init)
       VIDSoftSetNumLayerThreads(0);
       VIDSoftSetNumPriorityThreads(0);
    }
-
-   nextFrameTime = YabauseGetTicks();
    return 0;
 }
 
@@ -724,6 +721,8 @@ int YabauseEmulate(void) {
 //   SH2OnFrame(MSH2);
 //   SH2OnFrame(SSH2);
    u64 cpu_emutime = 0;
+   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks(); 
+   nextFrameTime += delayUs;
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
