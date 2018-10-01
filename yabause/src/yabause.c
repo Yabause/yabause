@@ -103,7 +103,6 @@
 #define THREAD_LOG //printf
 
 //////////////////////////////////////////////////////////////////////////////
-
 yabsys_struct yabsys;
 u64 tickfreq;
 //todo this ought to be in scspdsp.c
@@ -138,25 +137,17 @@ void print_usage(const char *program_name) {
 
 
 unsigned long nextFrameTime = 0;
-unsigned long delayUs_NTSC = 1000000/60;
-unsigned long delayUs_PAL = 1000000/50;
-
-#define delayUs ((yabsys.IsPal)?delayUs_PAL:delayUs_NTSC);
-
-static unsigned long time_left(void)
-{
-    unsigned long now;
-    now = YabauseGetTicks();
-    if(nextFrameTime <= now)
-        return 0;
-    else
-        return nextFrameTime - now;
-}
 
 static void syncVideoMode(void) {
-  unsigned long sleep = time_left();
-	YuiMsg("Sync %ld %ld %ld\n", YabauseGetTicks(), nextFrameTime, sleep);
-  YabThreadUSleep(sleep);
+  unsigned long sleep = 0;
+  unsigned long now = YabauseGetTicks();
+  if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks(); 
+  if(nextFrameTime > now)
+    sleep = ((nextFrameTime - now)*1000000.0)/yabsys.tickfreq;
+  else
+    nextFrameTime = now;
+  if (isAutoFrameSkip() == 0) YabThreadUSleep(sleep);
+  nextFrameTime  += yabsys.OneFrameTime;
 }
 
 void YabauseChangeTiming(int freqtype) {
@@ -724,8 +715,6 @@ int YabauseEmulate(void) {
 //   SH2OnFrame(MSH2);
 //   SH2OnFrame(SSH2);
    u64 cpu_emutime = 0;
-   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks(); 
-   nextFrameTime += delayUs;
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
@@ -846,7 +835,7 @@ int YabauseEmulate(void) {
    }
    M68KSync();
 
-   if (isAutoFrameSkip() == 0) syncVideoMode();
+   syncVideoMode();
 
 #ifdef YAB_WANT_SSF
 
