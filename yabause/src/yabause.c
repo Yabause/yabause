@@ -155,6 +155,7 @@ static unsigned long time_left(void)
 
 static void syncVideoMode(void) {
   unsigned long sleep = time_left();
+	YuiMsg("Sync %ld %ld %ld\n", YabauseGetTicks(), nextFrameTime, sleep);
   YabThreadUSleep(sleep);
 }
 
