@@ -137,9 +137,9 @@ void print_usage(const char *program_name) {
 //////////////////////////////////////////////////////////////////////////////
 
 
-static unsigned long nextFrameTime = 0;
-static unsigned long delayUs_NTSC = 1000000/60;
-static unsigned long delayUs_PAL = 1000000/50;
+unsigned long nextFrameTime = 0;
+unsigned long delayUs_NTSC = 1000000/60;
+unsigned long delayUs_PAL = 1000000/50;
 
 #define delayUs ((yabsys.IsPal)?delayUs_PAL:delayUs_NTSC);
 
@@ -230,6 +230,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
    yabsys.isRotated = 0;
+   nextFrameTime = 0;
 
 #ifdef SPRITE_CACHE
    yabsys.useVdp1cache = init->useVdp1cache;
@@ -303,6 +304,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
    yabsys.isRotated = 0;
+   nextFrameTime = 0;
 
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
