@@ -155,8 +155,8 @@ static unsigned long time_left(void)
 
 static void syncVideoMode(void) {
   unsigned long sleep = time_left();
-  YabThreadUSleep(time_left());
-  nextFrameTime += delayUs;
+  YabThreadUSleep(sleep);
+  nextFrameTime = YabauseGetTicks() + delayUs;
 }
 
 void YabauseChangeTiming(int freqtype) {
