@@ -145,8 +145,8 @@ static void syncVideoMode(void) {
   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks(); 
   if(nextFrameTime > now)
     sleep = ((nextFrameTime - now)*1000000.0)/yabsys.tickfreq;
-  else
-    nextFrameTime = now;
+  //else
+  //  nextFrameTime = now;
   if (isAutoFrameSkip() == 0) YabThreadUSleep(sleep);
   nextFrameTime  += yabsys.OneFrameTime;
 }
