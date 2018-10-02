@@ -33,14 +33,18 @@
 #include "sh2int_kronos.h"
 #include "opcode_functions_define.h"
 
-extern void SH2HandleInterrupts(SH2_struct *context);
-
 //////////////////////////////////////////////////////////////////////////////
 
 static void SH2delay(SH2_struct * sh, u32 addr)
 {
    sh->instruction = fetchlist[(addr >> 20) & 0x0FF](sh, addr);
    sh->regs.PC -= 2;
+   opcodeTable[sh->instruction](sh);
+}
+
+static void SH2next(SH2_struct * sh)
+{
+   sh->instruction = fetchlist[(sh->regs.PC >> 20) & 0x0FF](sh, sh->regs.PC);
    opcodeTable[sh->instruction](sh);
 }
 
@@ -743,6 +747,7 @@ static void SH2ldcgbr(SH2_struct * sh, u32 m)
    sh->regs.GBR = sh->regs.R[m];
    sh->regs.PC += 2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 
@@ -754,6 +759,7 @@ static void SH2ldcmgbr(SH2_struct * sh, u32 m)
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles += 3;
+   SH2next(sh);
 }
 
 
@@ -765,6 +771,7 @@ static void SH2ldcmsr(SH2_struct * sh, u32 m)
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles += 3;
+   SH2next(sh);
 }
 
 
@@ -776,6 +783,7 @@ static void SH2ldcmvbr(SH2_struct * sh, u32 m)
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles += 3;
+   SH2next(sh);
 }
 
 
@@ -786,7 +794,7 @@ static void SH2ldcsr(SH2_struct * sh, u32 m)
    sh->regs.SR.all = sh->regs.R[m]&0x000003F3;
    sh->regs.PC += 2;
    sh->cycles++;
-   SH2HandleInterrupts(sh);
+   SH2next(sh);
 }
 
 
@@ -807,6 +815,7 @@ static void SH2ldsmach(SH2_struct * sh, u32 m)
    sh->regs.MACH = sh->regs.R[m];
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 
@@ -817,6 +826,7 @@ static void SH2ldsmacl(SH2_struct * sh, u32 m)
    sh->regs.MACL = sh->regs.R[m];
    sh->regs.PC += 2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 
@@ -828,6 +838,7 @@ static void SH2ldsmmach(SH2_struct * sh, u32 m)
    sh->regs.R[m] += 4;
    sh->regs.PC += 2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 
@@ -1783,6 +1794,7 @@ static void SH2stcgbr(SH2_struct * sh, u32 n)
    sh->regs.R[n]=sh->regs.GBR;
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1793,6 +1805,7 @@ static void SH2stcmgbr(SH2_struct * sh, u32 n)
    SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.GBR);
    sh->regs.PC+=2;
    sh->cycles += 2;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1803,6 +1816,7 @@ static void SH2stcmsr(SH2_struct * sh, u32 n)
    SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.SR.all);
    sh->regs.PC+=2;
    sh->cycles += 2;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1813,6 +1827,7 @@ static void SH2stcmvbr(SH2_struct * sh, u32 n)
    SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.VBR);
    sh->regs.PC+=2;
    sh->cycles += 2;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1822,6 +1837,7 @@ static void SH2stcsr(SH2_struct * sh, u32 n)
    sh->regs.R[n] = sh->regs.SR.all & 0x3F3;
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1831,6 +1847,7 @@ static void SH2stcvbr(SH2_struct * sh, u32 n)
    sh->regs.R[n]=sh->regs.VBR;
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1840,6 +1857,7 @@ static void SH2stsmach(SH2_struct * sh, u32 n)
    sh->regs.R[n]=sh->regs.MACH;
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1849,6 +1867,7 @@ static void SH2stsmacl(SH2_struct * sh, u32 n)
    sh->regs.R[n]=sh->regs.MACL;
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1859,6 +1878,7 @@ static void SH2stsmmach(SH2_struct * sh, u32 n)
    SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACH); 
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1869,6 +1889,7 @@ static void SH2stsmmacl(SH2_struct * sh, u32 n)
    SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.MACL);
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1879,6 +1900,7 @@ static void SH2stsmpr(SH2_struct * sh, u32 n)
    SH2MappedMemoryWriteLong(sh, sh->regs.R[n],sh->regs.PR);
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1888,6 +1910,7 @@ static void SH2stspr(SH2_struct * sh, u32 n)
    sh->regs.R[n] = sh->regs.PR;
    sh->regs.PC+=2;
    sh->cycles++;
+   SH2next(sh);
 }
 
 //////////////////////////////////////////////////////////////////////////////
