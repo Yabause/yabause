@@ -296,6 +296,7 @@ void OnchipReset(SH2_struct *context) {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
+   u8 val;
    switch(addr)
    {
       case 0x000:
@@ -333,7 +334,9 @@ u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
       case 0x010:
          return context->onchip.TIER;
       case 0x011:
-         return context->onchip.FTCSR;
+         val = context->onchip.FTCSR;
+         context->onchip.FTCSR = context->onchip.FTCSR&0x01;
+         return val;
       case 0x012:         
          return context->onchip.FRC.part.H;
       case 0x013:
