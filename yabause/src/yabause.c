@@ -96,7 +96,7 @@
 
 #include <inttypes.h>
 
-#define DECILINE_STEP (10.0)
+#define DECILINE_STEP (20.0)
 
 //#define DEBUG_ACCURACY
 
