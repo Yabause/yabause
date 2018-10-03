@@ -441,6 +441,7 @@ void SH2KronosInterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
    interrupt_struct tmp;
    LOCK(context);
 
+   if ((context == SSH2) && (yabsys.IsSSH2Running == 0)) return 0; 
    // Make sure interrupt doesn't already exist
    for (i = 0; i < context->NumberOfInterrupts; i++)
    {
