@@ -144,7 +144,7 @@ void TsunamiUpdateTimelineToRealtime(const char *timeline_name);
    This sets the current value of a named entry in the timeline.  The entry will have this
    value only for the current time step and will be reset to 0 afterwards.  This is useful
    to indicate that a value exists only the current time step, i.e. perhaps a boolean
-   value indicating that an event occured on that particular timestep.
+   value indicating that an event occurred on that particular timestep.
    
    TsunamiSetRange():
    This creates a single value in the VCD file with value "_range_".  It is useful as a presentation

@@ -283,7 +283,7 @@
     window.
   - Fixed a bug when adding raw cheat codes.
   - Fixed bugs in vdp1 debugger.
-  - Fixed a bug where saving/loading a save state and an error occured would
+  - Fixed a bug where saving/loading a save state and an error occurred would
     cause sound looping.
   - Scroll bar in memory editor now works properly when you move the thumb
     control.
@@ -584,7 +584,7 @@
  bsd port:
   - Added support for OpenBSD
  linux port:
-  - Fixed the segfault that occured when opening the preferences dialog.
+  - Fixed the segfault that occurred when opening the preferences dialog.
   - Added texture display in vdp1 debug dialog
   - Other GUI improvements
  macos port:

@@ -197,7 +197,7 @@ void UIDebugSCSP::on_pbSaveAsWav_clicked ()
 	// write image if ok
 	if ( !s.isEmpty() )
 		if (ScspSlotDebugAudioSaveWav(sbSlotNumber->value(), s.toLatin1()) != 0)
-			CommonDialogs::information( QtYabause::translate( "An error occured while writing file." ) );                  
+			CommonDialogs::information( QtYabause::translate( "An error occurred while writing file." ) );                  
 }
 
 void UIDebugSCSP::on_pbSaveSlotRegisters_clicked ()
@@ -205,5 +205,5 @@ void UIDebugSCSP::on_pbSaveSlotRegisters_clicked ()
 	const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your binary file" ), QtYabause::translate( "Binary Files (*.bin)" ) );
 	if ( !s.isEmpty() )
       if (ScspSlotDebugSaveRegisters(sbSlotNumber->value(), s.toLatin1()) != 0)
-			CommonDialogs::information( QtYabause::translate( "An error occured while writing file." ) );
+			CommonDialogs::information( QtYabause::translate( "An error occurred while writing file." ) );
 }

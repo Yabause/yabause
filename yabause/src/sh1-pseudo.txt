@@ -599,7 +599,7 @@ void loc_be7c()
       r0 += 2;
    }
 
-   //no dma should have occured thus far
+   //no dma should have occurred thus far
    if (CHCR3 & 2)
       goto fail;
 
@@ -651,7 +651,7 @@ void loc_bcc4()
    [0x00000008]	0x00000000
    */
    
-   //no dma must have occured
+   //no dma must have occurred
    if (CHCR2 & 2)
       goto fail;
 
