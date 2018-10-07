@@ -56,11 +56,13 @@ int SH2Init(int coreid)
 
    MSH2->onchip.BCR1 = 0x0000;
    MSH2->isslave = 0;
+MSH2->trace = 0;
 
    // SSH2
    if ((SSH2 = (SH2_struct *)calloc(1, sizeof(SH2_struct))) == NULL)
       return -1;
 
+SSH2->trace = 0;
    SSH2->onchip.BCR1 = 0x8000;
    SSH2->isslave = 1;
 #ifdef USE_CACHE
@@ -1524,18 +1526,6 @@ void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
       SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
       execInterrupt = 1;
    }
-/*
-   if (context->depth < 4) {
-     context->depth++;
-     if (context == SSH2) {
-       SH2Exec(MSH2, 32);
-     }
-     else {
-       SH2Exec(SSH2, 32);
-     }
-     context->depth--;
-   }
-*/
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1554,17 +1544,6 @@ void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
    if (SSH2->onchip.TIER & 0x80) {
       SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
       execInterrupt = 1;
-   }
-
-   if (context->depth < 4) {
-     context->depth++;
-     if (context == SSH2) {
-       SH2Exec(MSH2, 32);
-     }
-     else {
-       SH2Exec(SSH2, 32);
-     }
-     context->depth--;
    }
 }
 

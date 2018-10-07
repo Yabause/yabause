@@ -37,14 +37,14 @@
 
 static void SH2delay(SH2_struct * sh, u32 addr)
 {
-   sh->instruction = fetchlist[(addr >> 20) & 0x0FF](sh, addr);
+   sh->instruction = krfetchlist[(addr >> 20) & 0xFFF](sh, addr);
    sh->regs.PC -= 2;
    opcodeTable[sh->instruction](sh);
 }
 
 static void SH2next(SH2_struct * sh)
 {
-   sh->instruction = fetchlist[(sh->regs.PC >> 20) & 0x0FF](sh, sh->regs.PC);
+   sh->instruction = krfetchlist[(sh->regs.PC >> 20) & 0xFFF](sh, sh->regs.PC);
    opcodeTable[sh->instruction](sh);
 }
 

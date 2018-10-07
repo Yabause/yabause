@@ -71,9 +71,9 @@ void SH2HandleInterrupts(SH2_struct *context)
   }
   UNLOCK(context);
 }
-
-fetchfunc fetchlist[0x100];
-u8 cacheId[0x100];
+fetchfunc krfetchlist[0x1000];
+static u8 cacheId[0x1000];
+//static opcode_func kropcodes[0x10000];
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -112,8 +112,8 @@ static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
 }
 //////////////////////////////////////////////////////////////////////////////
 void decode(SH2_struct *context) {
-  int id = (context->regs.PC >> 20) & 0x0FF;
-  u16 opcode = fetchlist[id](context, context->regs.PC);
+  int id = (context->regs.PC >> 20) & 0xFFF;
+  u16 opcode = krfetchlist[id](context, context->regs.PC);
   cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
   opcodeTable[opcode](context);
 }
@@ -139,52 +139,59 @@ int SH2KronosInterpreterInit()
    for(j=0; j<0x80000; j++) //Special BAckupHandled case
      cacheCode[0][j] = biosDecode;
 
-   for (i = 0; i < 0x100; i++)
+   for (i = 0; i < 0x1000; i++)
    {
-      switch (i)
-      {
-         case 0x000: // Bios              
-            fetchlist[i] = FetchBios;
+      krfetchlist[i] = FetchInvalid;
+      cacheId[i] = 5;
+      if (((i>>8) == 0x0) || ((i>>8) == 0x2)) {
+        switch (i&0xFF)
+        {
+          case 0x000: // Bios              
+            krfetchlist[i] = FetchBios;
             cacheId[i] = 0;
             break;
-         case 0x002: // Low Work Ram
-            fetchlist[i] = SH2MappedMemoryReadWord;
+          case 0x002: // Low Work Ram
+            krfetchlist[i] = SH2MappedMemoryReadWord;
             cacheId[i] = 1;
             break;
-         case 0x020: // CS0
-            fetchlist[i] = SH2MappedMemoryReadWord;
+          case 0x020: // CS0
+            krfetchlist[i] = SH2MappedMemoryReadWord;
             cacheId[i] = 2;
             break;
-         case 0x05c: // Fighting Viper
-            fetchlist[i] = SH2MappedMemoryReadWord;
+          case 0x05c: // Fighting Viper
+            krfetchlist[i] = SH2MappedMemoryReadWord;
             cacheId[i] = 3;
             break;
-         case 0x060: // High Work Ram
-         case 0x061: 
-         case 0x062: 
-         case 0x063: 
-         case 0x064: 
-         case 0x065: 
-         case 0x066: 
-         case 0x067: 
-         case 0x068: 
-         case 0x069: 
-         case 0x06A: 
-         case 0x06B: 
-         case 0x06C: 
-         case 0x06D: 
-         case 0x06E: 
-         case 0x06F:
-            fetchlist[i] = SH2MappedMemoryReadWord;
+          case 0x060: // High Work Ram
+          case 0x061: 
+          case 0x062: 
+          case 0x063: 
+          case 0x064: 
+          case 0x065: 
+          case 0x066: 
+          case 0x067: 
+          case 0x068: 
+          case 0x069: 
+          case 0x06A: 
+          case 0x06B: 
+          case 0x06C: 
+          case 0x06D: 
+          case 0x06E: 
+          case 0x06F:
+            krfetchlist[i] = SH2MappedMemoryReadWord;
             cacheId[i] = 4;
             break;
-         default:
-            fetchlist[i] = FetchInvalid;
+          default:
+            krfetchlist[i] = FetchInvalid;
             cacheId[i] = 5;
             break;
-      }
+        }
+     }
+     if ((i>>8) == 0xC) {
+       krfetchlist[i] = SH2MappedMemoryReadWord;
+       cacheId[i] = 1;
+     }
    }
-   
    return 0;
 }
 
@@ -257,10 +264,11 @@ FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
   SH2HandleInterrupts(context);
+ char res[512];
   execInterrupt = 0;
    while (execInterrupt == 0)
    {
-     cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+     cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
      execInterrupt |= (context->cycles >= target_cycle);
    }
 }
@@ -275,7 +283,7 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
   execInterrupt = 0;
    while (execInterrupt == 0)
    {
-     int id = (context->regs.PC >> 20) & 0x0FF;
+     int id = (context->regs.PC >> 20) & 0xFFF;
 
 #if 0
      if ((context == MSH2) && (context->regs.PC & 0xFFFFFFF) == 0x60b0000) {
@@ -283,15 +291,15 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
        enableTrace = 1;
      }
 #endif
-     if((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF]) != (opcodeTable[fetchlist[id](context, context->regs.PC)]))
+     if((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF]) != (opcodeTable[krfetchlist[id](context, context->regs.PC)]))
         if ((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode)) 
           printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
 
      if (enableTrace) {
-       SH2Disasm(context->regs.PC, fetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
+       SH2Disasm(context->regs.PC, krfetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
      }
 
-     cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+     cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
      execInterrupt |= (context->cycles >= target_cycle);
    }
 }
@@ -299,7 +307,7 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
 FASTCALL void SH2KronosInterpreterTestExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-  cacheCode[cacheId[(context->regs.PC >> 20) & 0x0FF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+  cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
 }
 
 
@@ -441,7 +449,7 @@ void SH2KronosInterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
    interrupt_struct tmp;
    LOCK(context);
 
-   if ((context == SSH2) && (yabsys.IsSSH2Running == 0)) return 0; 
+   if ((context == SSH2) && (yabsys.IsSSH2Running == 0)) return; 
    // Make sure interrupt doesn't already exist
    for (i = 0; i < context->NumberOfInterrupts; i++)
    {
@@ -528,7 +536,7 @@ void SH2KronosInterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
 void SH2KronosWriteNotify(u32 start, u32 length){
   int i;
   for (i=0; i<length; i+=2) {
-    int id = ((start + i) >> 20) & 0x0FF;
+    int id = ((start + i) >> 20) & 0xFFF;
     int addr = (start + i) >> 1;
     if (cacheId[id] == 0) {  //Special BAckupHandled case
       cacheCode[cacheId[id]][addr & 0x7FFFF] = biosDecode;

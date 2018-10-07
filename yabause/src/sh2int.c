@@ -44,7 +44,7 @@ void SH2IOnFrame(SH2_struct *context) {
 
 }
 
-opcodefunc opcodes[0x10000];
+static opcodefunc opcodes[0x10000];
 
 void SH2InterpreterAddCycle(SH2_struct *context, u32 value);
 
@@ -130,7 +130,7 @@ SH2Interface_struct SH2DebugInterpreter = {
    SH2InterpreterAddCycle
 };
 
-fetchfunc fetchlist[0x100];
+static fetchfunc fetchlist[0x100];
 
 //////////////////////////////////////////////////////////////////////////////
 
