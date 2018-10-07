@@ -1,0 +1,133 @@
+SOURCE_DIR := $(CORE_DIR)/../yabause/src
+LIBRETRO_COMM_DIR := $(CORE_DIR)/../libretro-common
+
+INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(SOURCE_DIR)/tools -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/sh2_kronos
+
+OBJECTS_S :=
+
+SOURCES_C := $(SOURCE_DIR)/osdcore.c \
+	$(SOURCE_DIR)/bios.c \
+	$(SOURCE_DIR)/c68k/c68k.c \
+	$(SOURCE_DIR)/cdbase.c \
+	$(SOURCE_DIR)/cheat.c \
+	$(SOURCE_DIR)/coffelf.c \
+	$(SOURCE_DIR)/cs0.c \
+	$(SOURCE_DIR)/cs1.c \
+	$(SOURCE_DIR)/cs2.c \
+	$(SOURCE_DIR)/debug.c \
+	$(SOURCE_DIR)/decrypt.c \
+	$(SOURCE_DIR)/eeprom.c \
+	$(SOURCE_DIR)/error.c \
+	$(SOURCE_DIR)/gameinfo.c \
+	$(SOURCE_DIR)/japmodem.c \
+	$(SOURCE_DIR)/junzip.c \
+	$(SOURCE_DIR)/m68kc68k.c \
+	$(SOURCE_DIR)/m68kcore.c \
+	$(SOURCE_DIR)/m68kd.c \
+	$(SOURCE_DIR)/memory.c \
+	$(SOURCE_DIR)/movie.c \
+	$(SOURCE_DIR)/netlink.c \
+	$(SOURCE_DIR)/peripheral.c \
+	$(SOURCE_DIR)/profile.c \
+	$(SOURCE_DIR)/scspdsp.c \
+	$(SOURCE_DIR)/scu.c \
+	$(SOURCE_DIR)/scsp.c \
+	$(SOURCE_DIR)/sh2core.c \
+	$(SOURCE_DIR)/sh2d.c \
+	$(SOURCE_DIR)/sh2iasm.c \
+	$(SOURCE_DIR)/sh2int.c \
+	$(SOURCE_DIR)/smpc.c \
+	$(SOURCE_DIR)/stv.c \
+	$(SOURCE_DIR)/musashi/m68kcpu.c \
+	$(SOURCE_DIR)/musashi/m68kops.c \
+	$(SOURCE_DIR)/musashi/m68kopnz.c \
+	$(SOURCE_DIR)/musashi/m68kopac.c \
+	$(SOURCE_DIR)/musashi/m68kopdm.c \
+	$(SOURCE_DIR)/m68kmusashi.c \
+	$(SOURCE_DIR)/sh2_kronos/sh2int.c \
+	$(SOURCE_DIR)/sh2_kronos/sh2_opcodes.c \
+	$(SOURCE_DIR)/zlib/adler32.c \
+	$(SOURCE_DIR)/zlib/crc32.c \
+	$(SOURCE_DIR)/zlib/inffast.c \
+	$(SOURCE_DIR)/zlib/inflate.c \
+	$(SOURCE_DIR)/zlib/inftrees.c \
+	$(SOURCE_DIR)/zlib/zutil.c
+
+ifeq ($(HAVE_GRIFFIN), 1)
+	SOURCES_C += $(LIBRETRO_DIR)/yabause_griffin.c
+else
+	SOURCES_C +=  $(SOURCE_DIR)/snddummy.c \
+	$(SOURCE_DIR)/vdp1.c \
+	$(SOURCE_DIR)/vdp2.c \
+	$(SOURCE_DIR)/vidshared.c \
+	$(SOURCE_DIR)/vidsoft.c \
+	$(SOURCE_DIR)/titan/titan.c \
+	$(SOURCE_DIR)/yabause.c
+endif
+
+ifneq ($(HAVE_GRIFFIN), 1)
+ifeq ($(HAVE_PTHREADS),1)
+	HAVE_THREADS = 1
+	SOURCES_C += thr-unix.c
+else
+	SOURCES_C += $(SOURCE_DIR)/thr-dummy.c
+endif
+endif
+
+ifeq ($(HAVE_GL),1)
+SOURCES_C += \
+	$(SOURCE_DIR)/ygles.c \
+	$(SOURCE_DIR)/vidogl.c \
+	$(SOURCE_DIR)/yglshaderes.c
+endif
+
+ifneq ($(HAVE_GRIFFIN), 1)
+SOURCES_C += $(CORE_DIR)/libretro.c
+endif
+
+M68KMAKE_EXE = m68kmake$(EXE_EXT)
+GEN68K_EXE = gen68k$(EXE_EXT)
+
+GEN68K_INC_SOURCES := $(SOURCE_DIR)/c68k/c68k_ini.inc \
+	$(SOURCE_DIR)/c68k/c68k_op0.inc \
+	$(SOURCE_DIR)/c68k/c68k_op1.inc \
+	$(SOURCE_DIR)/c68k/c68k_op2.inc \
+	$(SOURCE_DIR)/c68k/c68k_op3.inc \
+	$(SOURCE_DIR)/c68k/c68k_op4.inc \
+	$(SOURCE_DIR)/c68k/c68k_op5.inc \
+	$(SOURCE_DIR)/c68k/c68k_op6.inc \
+	$(SOURCE_DIR)/c68k/c68k_op7.inc \
+	$(SOURCE_DIR)/c68k/c68k_op8.inc \
+	$(SOURCE_DIR)/c68k/c68k_op9.inc \
+	$(SOURCE_DIR)/c68k/c68k_opA.inc \
+	$(SOURCE_DIR)/c68k/c68k_opB.inc \
+	$(SOURCE_DIR)/c68k/c68k_opC.inc \
+	$(SOURCE_DIR)/c68k/c68k_opD.inc \
+	$(SOURCE_DIR)/c68k/c68k_opE.inc \
+	$(SOURCE_DIR)/c68k/c68k_opF.inc
+
+M68KMAKE_INC_SOURCES := $(SOURCE_DIR)/musashi/m68kops.h \
+	$(SOURCE_DIR)/musashi/m68kopac.c \
+	$(SOURCE_DIR)/musashi/m68kopdm.c \
+	$(SOURCE_DIR)/musashi/m68kopnz.c \
+	$(SOURCE_DIR)/musashi/m68kops.c
+
+C68KEXEC_SOURCE := $(SOURCE_DIR)/c68k/c68kexec.c
+C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.o)
+
+ifneq ($(STATIC_LINKING), 1)
+SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+	 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
+	 $(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
+	 $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+	 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+	 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c
+endif
+
+ifeq ($(HAVE_THREADS),1)
+FLAGS += -DHAVE_THREADS=1
+endif
+
+ifeq ($(HAVE_SSE),1)
+FLAGS += -mfpmath=sse
+endif

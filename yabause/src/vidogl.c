@@ -7766,8 +7766,6 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * r
   return NULL;
 }
 
-#endif
-
 void VIDOGLSetSettingValueMode(int type, int value) {
 
   switch (type) {
@@ -7794,4 +7792,6 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   return;
   }
 }
+
+#endif
 

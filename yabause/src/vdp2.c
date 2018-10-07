@@ -403,7 +403,10 @@ void Vdp2HBlankIN(void) {
     if (yabsys.IsSSH2Running)
       SH2SendInterrupt(SSH2, 0x41, 0x2);
   } else {
+// Fix : Function doesn't exist without those defines
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
      waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount);
+#endif
   }
 }
 

@@ -375,12 +375,15 @@ int YabauseInit(yabauseinit_struct *init)
       return -1;
    }
 
+// Fix : Enum doesn't exist without those defines
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
    // Settings
    VideoSetSetting(VDP_SETTING_FILTERMODE,init->video_filter_type);
    VideoSetSetting(VDP_SETTING_UPSCALMODE,init->video_upscale_type);
    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, init->resolution_mode);
    VideoSetSetting(VDP_SETTING_ASPECT_RATIO, init->stretch);
    VideoSetSetting(VDP_SETTING_SCANLINE, init->scanline);
+#endif
 
    // Initialize input core
    if (PerInit(init->percoretype) != 0)
