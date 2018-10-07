@@ -575,10 +575,6 @@ void Vdp1NoDraw(void) {
    Vdp1Regs->COPR = 0;
 
    Vdp1FakeDrawCommands(Vdp1Ram, Vdp1Regs);
-
-   // we set two bits to 1
-   Vdp1Regs->EDSR |= 2;
-   ScuSendDrawEnd();
 }
 
 //////////////////////////////////////////////////////////////////////////////
