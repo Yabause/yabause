@@ -130,7 +130,7 @@ SH2Interface_struct SH2DebugInterpreter = {
    SH2InterpreterAddCycle
 };
 
-static fetchfunc fetchlist[0x100];
+static fetchfunc fetchlist[0x1000];
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -207,7 +207,7 @@ static void FASTCALL SH2delay(SH2_struct * sh, u32 addr)
 {
 
    // Fetch Instruction
-   sh->instruction = fetchlist[(addr >> 20) & 0x0FF](sh, addr);
+   sh->instruction = fetchlist[(addr >> 20) & 0xFFF](sh, addr);
 
 #ifdef DMPHISTORY
    sh->pchistory_index++;
@@ -2767,43 +2767,49 @@ int SH2InterpreterInit()
    for(i = 0;i < 0x10000;i++)
       opcodes[i] = decode(i);
 
-   for (i = 0; i < 0x100; i++)
+   for (i = 0; i < 0x1000; i++)
    {
-      switch (i)
-      {
-         case 0x000: // Bios              
+      fetchlist[i] = FetchInvalid;
+      if (((i>>8) == 0x0) || ((i>>8) == 0x2)) {
+        switch (i & 0xFF)
+        {
+          case 0x000: // Bios              
             fetchlist[i] = FetchBios;
             break;
-         case 0x002: // Low Work Ram
+          case 0x002: // Low Work Ram
             fetchlist[i] = SH2MappedMemoryReadWord;
             break;
-         case 0x020: // CS0
+          case 0x020: // CS0
             fetchlist[i] = SH2MappedMemoryReadWord;
             break;
-         case 0x05c: // Fighting Viper
+          case 0x05c: // Fighting Viper
             fetchlist[i] = SH2MappedMemoryReadWord;
             break;
-         case 0x060: // High Work Ram
-         case 0x061: 
-         case 0x062: 
-         case 0x063: 
-         case 0x064: 
-         case 0x065: 
-         case 0x066: 
-         case 0x067: 
-         case 0x068: 
-         case 0x069: 
-         case 0x06A: 
-         case 0x06B: 
-         case 0x06C: 
-         case 0x06D: 
-         case 0x06E: 
-         case 0x06F:
+          case 0x060: // High Work Ram
+          case 0x061: 
+          case 0x062: 
+          case 0x063: 
+          case 0x064: 
+          case 0x065: 
+          case 0x066: 
+          case 0x067: 
+          case 0x068: 
+          case 0x069: 
+          case 0x06A: 
+          case 0x06B: 
+          case 0x06C: 
+          case 0x06D: 
+          case 0x06E: 
+          case 0x06F:
             fetchlist[i] = SH2MappedMemoryReadWord;
             break;
-         default:
+          default:
             fetchlist[i] = FetchInvalid;
             break;
+        }
+      }
+      if ((i>>8) == 0xC) {
+        fetchlist[i] = SH2MappedMemoryReadWord;
       }
    }
    
@@ -2900,7 +2906,7 @@ FASTCALL void SH2DebugInterpreterExec(SH2_struct *context, u32 cycles)
 #endif
 
       // Fetch Instruction
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      context->instruction = fetchlist[(context->regs.PC >> 20) & 0xFFF](context, context->regs.PC);
 
 #ifdef DMPHISTORY
 	  context->pchistory_index++;
@@ -2930,7 +2936,7 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
    {
 
       // Fetch Instruction
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      context->instruction = fetchlist[(context->regs.PC >> 20) & 0xFFF](context, context->regs.PC);
 
       // Execute it
       opcodes[context->instruction](context);
@@ -2940,7 +2946,7 @@ FASTCALL void SH2InterpreterExec(SH2_struct *context, u32 cycles)
 FASTCALL void SH2InterpreterTestExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-      context->instruction = fetchlist[(context->regs.PC >> 20) & 0x0FF](context, context->regs.PC);
+      context->instruction = fetchlist[(context->regs.PC >> 20) & 0xFFF](context, context->regs.PC);
 
       // Execute it
       opcodes[context->instruction](context);
