@@ -5149,7 +5149,7 @@ int check_gr_range(u16 gr, u16 old_tcnt, u16 new_tcnt)
 {
    if (new_tcnt < old_tcnt)
    {
-      //overflow occured
+      //overflow occurred
 
       if (gr >= old_tcnt || gr <= new_tcnt)
       {

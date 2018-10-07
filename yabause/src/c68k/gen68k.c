@@ -1851,7 +1851,7 @@ static void GenDIVU()
         
         wf_op("\t\tif (q & 0xFFFF0000)\n");
         wf_op("\t\t{\n");
-            // overflow occured
+            // overflow occurred
             wf_op("\t\t\tCPU->flag_V = C68K_SR_V;\n");
             quick_terminate_op(70);
         wf_op("\t\t}\n");
@@ -1926,7 +1926,7 @@ static void GenDIVS()
 
         wf_op("\t\tif ((q > 0x7FFF) || (q < -0x8000))\n");
         wf_op("\t\t{\n");
-            // overflow occured
+            // overflow occurred
             wf_op("\t\t\tCPU->flag_V = C68K_SR_V;\n");
             quick_terminate_op(80);
         wf_op("\t\t}\n");

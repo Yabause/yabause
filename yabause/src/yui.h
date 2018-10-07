@@ -43,7 +43,7 @@ void YuiSwapBuffers(void);
 /* int MappedMemoryLoad(const char *filename, u32 addr);
 
    Loads the specified file(filename) to specified address(addr). Returns zero
-   on success, less than zero if an error has occured.
+   on success, less than zero if an error has occurred.
    Note: Some areas in memory are read-only and won't acknowledge any writes.
 */
 
@@ -51,7 +51,7 @@ void YuiSwapBuffers(void);
 
    Saves data from specified address(addr) by specified amount of bytes(size)
    to specified file(filename). Returns zero on success, less than zero if
-   an error has occured.
+   an error has occurred.
    Note: Some areas in memory are write-only and will only return zero on
    reads.
 */
@@ -103,7 +103,7 @@ void YuiSwapBuffers(void);
 
    For the specified SH2 context(context), it adds a code breakpoint for
    specified address(addr). context should be either MSH2 or SSH2. Returns
-   zero on success, or less than zero if an error has occured(such as the
+   zero on success, or less than zero if an error has occurred(such as the
    breakpoint list being full)
 */
 
@@ -111,7 +111,7 @@ void YuiSwapBuffers(void);
 
    For the specified SH2 context(context), it deletes a code breakpoint for
    specified address(addr). context should be either MSH2 or SSH2. Returns
-   zero on success, or less than zero if an error has occured.
+   zero on success, or less than zero if an error has occurred.
 */
 
 /* codebreakpoint_struct *SH2GetBreakpointList(SH2_struct *context);
@@ -157,14 +157,14 @@ void YuiSwapBuffers(void);
 /* int M68KAddCodeBreakpoint(u32 addr);
 
    It adds a 68K code breakpoint for specified address(addr). Returns zero on
-   success, or less than zero if an error has occured(such as the breakpoint
+   success, or less than zero if an error has occurred(such as the breakpoint
    list being full)
 */
 
 /* int M68KDelCodeBreakpoint(u32 addr);
 
    It deletes a 68k code breakpoint for specified address(addr). Returns zero
-   on success, or less than zero if an error has occured.
+   on success, or less than zero if an error has occurred.
 */
 
 /* m68kcodebreakpoint_struct *M68KGetBreakpointList();
@@ -206,14 +206,14 @@ void YuiSwapBuffers(void);
 /* int ScuDspAddCodeBreakpoint(u32 addr);
 
    It adds a SCU DSP code breakpoint for specified address(addr). Returns zero
-   on success, or less than zero if an error has occured(such as the
+   on success, or less than zero if an error has occurred(such as the
    breakpoint list being full)
 */
 
 /* int ScuDspDelCodeBreakpoint(u32 addr);
 
    It deletes a SCU DSP code breakpoint for specified address(addr). Returns
-   zero on success, or less than zero if an error has occured.
+   zero on success, or less than zero if an error has occurred.
 */
 
 /* scucodebreakpoint_struct *ScuDspGetBreakpointList();

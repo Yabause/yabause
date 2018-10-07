@@ -107,5 +107,5 @@ void UIDebugVDP1::on_pbSaveBitmap_clicked ()
 	// write image if ok
 	if ( !s.isEmpty() )
 		if ( !img.save( s ) )
-			CommonDialogs::information( QtYabause::translate( "An error occured while writing file." ) );
+			CommonDialogs::information( QtYabause::translate( "An error occurred while writing file." ) );
 }

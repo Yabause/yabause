@@ -65,7 +65,7 @@ volatile int lines_since_vblank_out = 0;
 volatile int lines_since_vblank_in = 0;
 
 volatile int result_pos = 0;
-volatile int system_manager_occured = 0;
+volatile int system_manager_occurred = 0;
 
 volatile int frame_count = 0;
 volatile int stored_timer = 0;
@@ -159,7 +159,7 @@ void smpc_test_system_manager_handler()
 {
    set_result(RESULT_SYS_MAN);
 
-   system_manager_occured = 1;
+   system_manager_occurred = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -207,7 +207,7 @@ void reset_test_vars()
    lines_since_vblank_in = 0;
 
    result_pos = 0;
-   system_manager_occured = 0;
+   system_manager_occurred = 0;
 
    frame_count = 0;
    stored_timer = 0;
@@ -245,9 +245,9 @@ void smpc_intback_issue_timing_test_main(int test_type, int vblank_line)
          smpc_issue_command(SMPC_CMD_INTBACK);
       }
 
-      if (system_manager_occured)
+      if (system_manager_occurred)
       {
-         system_manager_occured = 0;
+         system_manager_occurred = 0;
 
          if (SMPC_REG_SR & (1 << 5))
          {
