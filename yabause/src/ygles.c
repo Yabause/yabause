@@ -612,6 +612,13 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
 }
 
 
+void YglTMCheck()
+{
+  YglTextureManager * tm = YglTM_vdp1[_Ygl->drawframe];
+  if ((tm->width > 2048) || (tm->height > 2048)) 
+    executeTMVDP1();
+}
+
 static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
   GLuint new_textureID;
   GLuint new_pixelBufferID;
@@ -680,10 +687,11 @@ static void YglTMAllocate_in(YglTextureManager * tm, YglTexture * output, unsign
     YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
     YglTMRealloc( tm, w, tm->height);
     YglTMAllocate_in(tm, output, w, h, x, y);
+    return;
   }
   if ((tm->height - tm->currentY) < h) {
     YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
-    YglTMRealloc( tm, tm->width, tm->height+(h*2));
+    YglTMRealloc( tm, tm->width, tm->height+512);
     YglTMAllocate_in(tm, output, w, h, x, y);
     return;
   }
@@ -1204,9 +1212,9 @@ int YglInit(int width, int height, unsigned int depth) {
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  YglTM_vdp1[0] = YglTMInit(512, 512);
-  YglTM_vdp1[1] = YglTMInit(512, 512);
-  YglTM_vdp2 = YglTMInit(512, 512);
+  YglTM_vdp1[0] = YglTMInit(2048, 512);
+  YglTM_vdp1[1] = YglTMInit(2048, 512);
+  YglTM_vdp2 = YglTMInit(2048, 512);
 
   _Ygl->smallfbo = 0;
   _Ygl->smallfbotex = 0;
@@ -2417,10 +2425,7 @@ static void waitVdp1End(int id) {
   }
 }
 
-//////////////////////////////////////////////////////////////////////////////
-void YglFrameChangeVDP1(){
-  u32 current_drawframe = 0;
-
+void executeTMVDP1() {
  if (_Ygl->needVdp1Render != 0){
 #ifdef VDP1_TEXTURE_ASYNC
     waitVdp1Textures(1);
@@ -2434,6 +2439,13 @@ void YglFrameChangeVDP1(){
     YglTmPull(YglTM_vdp1[_Ygl->readframe], 0);
     _Ygl->needVdp1Render = 0;
   }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void YglFrameChangeVDP1(){
+  u32 current_drawframe = 0;
+  executeTMVDP1();
+  _Ygl->syncVdp1[_Ygl->drawframe] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
   _Ygl->readframe = current_drawframe;
@@ -2532,7 +2544,6 @@ void YglRenderVDP1(void) {
   level->prgcurrent = 0;
 
   //YabThreadUnLock(_Ygl->mutex);
-  _Ygl->syncVdp1[_Ygl->drawframe] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
