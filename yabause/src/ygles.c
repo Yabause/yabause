@@ -45,7 +45,7 @@ extern int WaitVdp2Async(int sync);
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs);
 
-static void executeTMVDP1();
+static void executeTMVDP1(int in, int out);
 
 u32 * YglGetColorRamPointer();
 
@@ -618,8 +618,9 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
 void YglTMCheck()
 {
   YglTextureManager * tm = YglTM_vdp1[_Ygl->drawframe];
-  if ((tm->width > 2048) || (tm->height > 2048)) 
-    executeTMVDP1();
+  if ((tm->width > 2048) || (tm->height > 2048)) {
+    executeTMVDP1(_Ygl->drawframe,_Ygl->drawframe);
+  }
 }
 
 static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
@@ -2428,27 +2429,34 @@ static void waitVdp1End(int id) {
   }
 }
 
-static void executeTMVDP1() {
+static void executeTMVDP1(int in, int out) {
  if (_Ygl->needVdp1Render != 0){
 #ifdef VDP1_TEXTURE_ASYNC
     waitVdp1Textures(1);
 #endif
-    YglTmPush(YglTM_vdp1[_Ygl->drawframe]);
+    YglTmPush(YglTM_vdp1[in]);
     YglRenderVDP1();
-    waitVdp1End(_Ygl->readframe);
-    YglReset(_Ygl->vdp1levels[_Ygl->readframe]);
-    YglTMReset(YglTM_vdp1[_Ygl->readframe]);
-    YglCacheReset(YglTM_vdp1[_Ygl->readframe]);
-    YglTmPull(YglTM_vdp1[_Ygl->readframe], 0);
+    _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+    waitVdp1End(out);
+    YglReset(_Ygl->vdp1levels[out]);
+    YglTMReset(YglTM_vdp1[out]);
+    YglCacheReset(YglTM_vdp1[out]);
+    YglTmPull(YglTM_vdp1[out], 0);
     _Ygl->needVdp1Render = 0;
+  } else
+  if (in != out) {
+    waitVdp1End(out);
+    YglReset(_Ygl->vdp1levels[out]);
+    YglTMReset(YglTM_vdp1[out]);
+    YglCacheReset(YglTM_vdp1[out]);
+    YglTmPull(YglTM_vdp1[out], 0);
   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
-  executeTMVDP1();
-  _Ygl->syncVdp1[_Ygl->drawframe] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+  executeTMVDP1(_Ygl->drawframe, _Ygl->readframe);
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
   _Ygl->readframe = current_drawframe;
