@@ -2499,7 +2499,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
         else {
           u8 dot = T1ReadByte(Vdp2Ram, addr);
           u32 alpha = info->alpha;
-          if (!(h & 0x01)) dot >> 4;
+          if (!(h & 0x01)) dot = dot >> 4;
           if (!(dot & 0xF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
           else {
             color = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
