@@ -493,8 +493,6 @@ static int id_rbg_cram_line_color_offset = -1;
 static int id_rbg_cram_line_blendmode = -1;
 static int id_rbg_cram_line_matrix = -1;
 
-extern Vdp2 * varVdp2Regs;
-
 int Ygl_uniformNormalCramLine(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
 {
 
