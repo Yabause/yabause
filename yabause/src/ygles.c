@@ -44,6 +44,9 @@ extern int WaitVdp2Async(int sync);
 
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs);
+
+static void executeTMVDP1();
+
 u32 * YglGetColorRamPointer();
 
 void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture, Vdp2 *varVdp2Regs);
@@ -2425,7 +2428,7 @@ static void waitVdp1End(int id) {
   }
 }
 
-void executeTMVDP1() {
+static void executeTMVDP1() {
  if (_Ygl->needVdp1Render != 0){
 #ifdef VDP1_TEXTURE_ASYNC
     waitVdp1Textures(1);
