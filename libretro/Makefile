@@ -295,6 +295,7 @@ clean:
 	rm -f $(TARGET) $(OBJECTS)
 	rm -f $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(M68KMAKE_INC_SOURCES)
 	rm -f $(SOURCE_DIR)/c68k/$(GEN68K_EXE) $(GEN68K_INC_SOURCES)
+	rm -f $(SOURCE_DIR)/zlib/zconf.h
 
 .PHONY: clean
 endif
