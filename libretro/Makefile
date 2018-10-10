@@ -260,13 +260,14 @@ $(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
 ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C) $(SOURCE_DIR)/c68k/c68kexec.c
 include $(THEOS_MAKE_PATH)/library.mk
 else
-all: generate-files $(TARGET)
+all: $(TARGET)
 
 generate-files:
 	$(CC) -o $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/musashi/m68kmake.c
 	$(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/musashi/ $(SOURCE_DIR)/musashi/m68k_in.c
 	$(CC) -DC68K_GEN -o $(SOURCE_DIR)/c68k/$(GEN68K_EXE) $(SOURCE_DIR)/c68k/c68kexec.c $(SOURCE_DIR)/c68k/c68k.c $(SOURCE_DIR)/c68k/gen68k.c
 	cd $(SOURCE_DIR)/c68k/; ./$(GEN68K_EXE)
+	cp $(SOURCE_DIR)/zlib/zconf.h.in $(SOURCE_DIR)/zlib/zconf.h
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
