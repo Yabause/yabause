@@ -68,7 +68,11 @@ endif
 ifneq ($(HAVE_GRIFFIN), 1)
 ifeq ($(HAVE_PTHREADS),1)
 	HAVE_THREADS = 1
-	SOURCES_C += thr-unix.c
+ifneq (,$(findstring unix,$(platform)))
+	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+else ifneq (,$(findstring win,$(platform)))
+	SOURCES_C += $(SOURCE_DIR)/thr-win.c
+endif
 else
 	SOURCES_C += $(SOURCE_DIR)/thr-dummy.c
 endif

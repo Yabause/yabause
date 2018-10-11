@@ -47,6 +47,7 @@ ifneq (,$(findstring unix,$(platform)))
 	#DYNAREC = 2
 	LDFLAGS += -lpthread
 	HAVE_PTHREADS = 1
+	FLAGS += -DARCH_IS_LINUX=1
 
 else ifneq (,$(findstring linux-portable,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
@@ -54,6 +55,7 @@ else ifneq (,$(findstring linux-portable,$(platform)))
 	SHARED := -shared -Wl,--version-script=link.T
 	#DYNAREC = 2
 	HAVE_PTHREADS = 1
+	FLAGS += -DARCH_IS_LINUX=1
 
 # OS X
 else ifneq (,$(findstring osx,$(platform)))
@@ -177,6 +179,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -lpthread
 	HAVE_PTHREADS = 1
+	FLAGS += -DARCH_IS_LINUX=1
 	ifneq (,$(findstring cortexa8,$(platform)))
 		FLAGS += -marm -mcpu=cortex-a8
 	else ifneq (,$(findstring cortexa9,$(platform)))
