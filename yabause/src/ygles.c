@@ -29,7 +29,7 @@
 #include "frameprofile.h"
 
 
-#define __USE_OPENGL_DEBUG__
+//#define __USE_OPENGL_DEBUG__
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -74,9 +74,11 @@ static void MessageCallback( GLenum source,
                       const GLchar* message,
                       const void* userParam )
 {
+#ifndef __WIN32__
   YuiMsg("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
            ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
             type, severity, message );
+#endif
 }
 #endif
 
