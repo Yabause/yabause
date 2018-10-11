@@ -74,6 +74,8 @@ int (__cdecl *bprintf) (int nStatus, char* szFormat, ...) = libretro_bprintf;
 #define RETRO_DEVICE_MTAP_PAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 #define RETRO_DEVICE_MTAP_3D  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_ANALOG, 0)
 
+#define RETRO_GAME_TYPE_STV 1
+
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
@@ -114,10 +116,20 @@ void retro_set_environment(retro_environment_t cb)
       { 0 },
    };
 
+   // Subsystem (needs to be called now, or it won't work on command line)
+   static const struct retro_subsystem_rom_info subsystem_rom[] = {
+      { "Rom", "zip", true, true, true, NULL, 0 },
+   };
+   static const struct retro_subsystem_info subsystems[] = {
+      { "ST-V", "stv", subsystem_rom, 1, RETRO_GAME_TYPE_STV },
+      { NULL },
+   };
+
    environ_cb = cb;
 
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
    environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+   environ_cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void*)subsystems);
 }
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
 void retro_set_audio_sample(retro_audio_sample_t cb) { (void)cb; }
@@ -562,6 +574,7 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 
 static char full_path[256];
 static char bios_path[256];
+static char stv_bios_path[256];
 
 static void check_variables(void)
 {
@@ -668,6 +681,7 @@ void retro_init(void)
       char slash = '/';
 #endif
       snprintf(bios_path, sizeof(bios_path), "%s%c%s", dir, slash, "saturn_bios.bin");
+      snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%c%s", dir, slash, "stvbios.zip");
    }
 
    if(PERCore)
@@ -921,10 +935,89 @@ bool retro_load_game(const struct retro_game_info *info)
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
 {
-   (void)game_type;
-   (void)info;
-   (void)num_info;
-   return false;
+   if(game_type != RETRO_GAME_TYPE_STV)
+      return false;
+
+   int ret;
+   struct retro_input_descriptor desc[] = {
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
+      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+      { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
+      { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+
+      { 0 },
+   };
+
+   if (!info)
+      return false;
+
+   check_variables();
+
+   snprintf(full_path, sizeof(full_path), "%s", info->path);
+
+   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+
+   // Store the game "id", seems necessary (?)
+   int stvgame = -1;
+   STVGetSingle(full_path, stv_bios_path, &stvgame);
+
+   yinit.stvgamepath     = full_path;
+   yinit.stvgame         = stvgame;
+   yinit.cartpath        = NULL;
+   /* Emulate BIOS */
+   yinit.stvbiospath     = stv_bios_path;
+   yinit.percoretype     = PERCORE_LIBRETRO;
+   yinit.sh2coretype     = 8;
+   yinit.vidcoretype     = VIDCORE_SOFT;
+   yinit.sndcoretype     = SNDCORE_LIBRETRO;
+   yinit.m68kcoretype    = M68KCORE_MUSASHI;
+   yinit.regionid        = REGION_AUTODETECT;
+   yinit.buppath         = NULL;
+   //yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
+   yinit.frameskip       = frameskip_enable;
+   yinit.clocksync       = 0;
+   yinit.basetime        = 0;
+#ifdef HAVE_THREADS
+   yinit.usethreads      = 1;
+   yinit.numthreads      = numthreads;
+#else
+   yinit.usethreads      = 0;
+#endif
+   yinit.useVdp1cache    = 0;
+   yinit.usecache        = 0;
+
+   ret = YabauseInit(&yinit);
+   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+   VIDSoftSetBilinear(1);
+
+   return !ret;
 }
 
 void retro_unload_game(void)

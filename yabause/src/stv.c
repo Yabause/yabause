@@ -16,14 +16,13 @@
 #include "zlib/zlib.h"
 
 #define LOGSTV
+#ifdef __LIBRETRO__
+#define LOGSTV printf
+#endif
 //YuiMsg
 #define ROTATED 1
 
 #define NB_STV_GAMES 95
-
-#ifdef __LIBRETRO__
-#include "streams/file_stream_transforms.h"
-#endif
 
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
