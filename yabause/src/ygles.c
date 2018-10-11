@@ -268,8 +268,8 @@ void YglLoadIdentity(YglMatrix *result)
 }
 
 
-YglTextureManager * YglTM_vdp2;
-YglTextureManager * YglTM_vdp1[2];
+YglTextureManager * YglTM_vdp2 = NULL;
+YglTextureManager * YglTM_vdp1[2] = { NULL, NULL };
 Ygl * _Ygl;
 
 typedef struct
@@ -1251,9 +1251,11 @@ int YglInit(int width, int height, unsigned int depth) {
 void YglDeInit(void) {
    unsigned int i,j;
 
-   YglTMDeInit(YglTM_vdp1[0]);
-   YglTMDeInit(YglTM_vdp1[1]);
-   YglTMDeInit(YglTM_vdp2);
+   if (YglTM_vdp1[0] != NULL) YglTMDeInit(YglTM_vdp1[0]);
+   if (YglTM_vdp1[1] != NULL) YglTMDeInit(YglTM_vdp1[1]);
+   if (YglTM_vdp2 != NULL)    YglTMDeInit(YglTM_vdp2);
+
+
 
    if (_Ygl)
    {
