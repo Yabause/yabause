@@ -21,6 +21,10 @@
 
 #define NB_STV_GAMES 95
 
+#ifdef __LIBRETRO__
+#include "streams/file_stream_transforms.h"
+#endif
+
 GameLink availableGames[NB_STV_GAMES];
 GameLink biosLink;
 int loadGames(char* path);

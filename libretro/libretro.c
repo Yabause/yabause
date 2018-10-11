@@ -23,7 +23,6 @@
 #include "yui.h"
 #include "cheat.h"
 
-//#include "m68kc68k.h"
 #include "cs0.h"
 #include "cs2.h"
 
@@ -380,7 +379,6 @@ SoundInterface_struct SNDLIBRETRO = {
 M68K_struct *M68KCoreList[] = {
     &M68KDummy,
     &M68KMusashi,
-    &M68KC68K,
     NULL
 };
 
