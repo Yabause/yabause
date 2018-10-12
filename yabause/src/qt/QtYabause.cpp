@@ -190,6 +190,7 @@ extern "C"
           char *str=NULL;
           if (vasprintf(&str, format, arglist) > 0) {
             QtYabause::mainWindow()->appendLog( str );
+	    free(str);
 	  }
           va_end( arglist );
        }
