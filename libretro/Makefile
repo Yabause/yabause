@@ -61,7 +61,12 @@ else ifneq (,$(findstring linux-portable,$(platform)))
 else ifneq (,$(findstring osx,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.dylib
 	fpic := -fPIC
+OSXVER = $(shell sw_vers -productVersion | cut -d. -f 2)
+	OSX_GT_MOJAVE = $(shell (( $(OSXVER) >= 14)) && echo "YES")
+ifneq ($(OSX_GT_MOJAVE),YES)
+	#this breaks compiling on Mac OS Mojave
 	fpic += -mmacosx-version-min=10.1
+endif
 	SHARED := -dynamiclib
 ifeq ($(arch),ppc)
 	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
