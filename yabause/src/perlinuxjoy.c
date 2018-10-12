@@ -290,6 +290,15 @@ static void KeyInit() {
   PerSetKey(PERJAMMA_MULTICART, PERJAMMA_MULTICART, padbits);
   PerSetKey(PERJAMMA_PAUSE, PERJAMMA_PAUSE, padbits);
 
+  PerSetKey(KEYPAD(PERPAD_UP, 1), PERJAMMA_P2_UP, padbits );
+  PerSetKey(KEYPAD(PERPAD_RIGHT, 1), PERJAMMA_P2_RIGHT, padbits );
+  PerSetKey(KEYPAD(PERPAD_DOWN, 1), PERJAMMA_P2_DOWN, padbits );
+  PerSetKey(KEYPAD(PERPAD_LEFT, 1), PERJAMMA_P2_LEFT, padbits );
+  PerSetKey(KEYPAD(PERPAD_A, 1), PERJAMMA_P2_BUTTON1, padbits );
+  PerSetKey(KEYPAD(PERPAD_B, 1), PERJAMMA_P2_BUTTON2, padbits );
+  PerSetKey(KEYPAD(PERPAD_C, 1), PERJAMMA_P2_BUTTON3, padbits );
+  PerSetKey(KEYPAD(PERPAD_X, 1), PERJAMMA_P2_BUTTON4, padbits );
+
 }
 
 int requestExit = 0;

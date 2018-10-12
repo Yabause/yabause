@@ -331,6 +331,14 @@ void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
 #define PERJAMMA_START2 34
 #define PERJAMMA_MULTICART 35
 #define PERJAMMA_PAUSE 36
+#define PERJAMMA_P2_UP 37
+#define PERJAMMA_P2_RIGHT 38
+#define PERJAMMA_P2_DOWN 39
+#define PERJAMMA_P2_LEFT 40
+#define PERJAMMA_P2_BUTTON1 41
+#define PERJAMMA_P2_BUTTON2 42
+#define PERJAMMA_P2_BUTTON3 43
+#define PERJAMMA_P2_BUTTON4 44
 
 typedef u8 PerCab_struct;
 
@@ -389,6 +397,30 @@ void PerCabMultiCartReleased(PerCab_struct * pad);
 
 void PerCabPausePressed(PerCab_struct * pad);
 void PerCabPauseReleased(PerCab_struct * pad);
+
+void PerCabP2UpPressed(PerCab_struct * pad);
+void PerCabP2UpReleased(PerCab_struct * pad);
+
+void PerCabP2RightPressed(PerCab_struct * pad);
+void PerCabP2RightReleased(PerCab_struct * pad);
+
+void PerCabP2DownPressed(PerCab_struct * pad);
+void PerCabP2DownReleased(PerCab_struct * pad);
+
+void PerCabP2LeftPressed(PerCab_struct * pad);
+void PerCabP2LeftReleased(PerCab_struct * pad);
+
+void PerCabP2Button1Pressed(PerCab_struct * pad);
+void PerCabP2Button1Released(PerCab_struct * pad);
+
+void PerCabP2Button2Pressed(PerCab_struct * pad);
+void PerCabP2Button2Released(PerCab_struct * pad);
+
+void PerCabP2Button3Pressed(PerCab_struct * pad);
+void PerCabP2Button3Released(PerCab_struct * pad);
+
+void PerCabP2Button4Pressed(PerCab_struct * pad);
+void PerCabP2Button4Released(PerCab_struct * pad);
 
 /** @} */
 

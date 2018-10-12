@@ -23,7 +23,6 @@
 #include "yui.h"
 #include "cheat.h"
 
-//#include "m68kc68k.h"
 #include "cs0.h"
 #include "cs2.h"
 
@@ -41,6 +40,7 @@ static bool hle_bios_force = false;
 static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
 static int numthreads = 1;
+static bool stv_mode = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -75,13 +75,15 @@ int (__cdecl *bprintf) (int nStatus, char* szFormat, ...) = libretro_bprintf;
 #define RETRO_DEVICE_MTAP_PAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
 #define RETRO_DEVICE_MTAP_3D  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_ANALOG, 0)
 
+#define RETRO_GAME_TYPE_STV 1
+
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-      { "yabause_frameskip", "Frameskip; disabled|enabled" },
-      { "yabause_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
-      { "yabause_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
-      { "yabause_numthreads", "Number of Threads (restart); 1|2|4|8|16|32" },
+      { "kronos_frameskip", "Frameskip; disabled|enabled" },
+      { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
+      { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
+      { "kronos_numthreads", "Number of Threads (restart); 1|2|4|8|16|32" },
       { NULL, NULL },
    };
 
@@ -115,10 +117,20 @@ void retro_set_environment(retro_environment_t cb)
       { 0 },
    };
 
+   // Subsystem (needs to be called now, or it won't work on command line)
+   static const struct retro_subsystem_rom_info subsystem_rom[] = {
+      { "Rom", "zip", true, true, true, NULL, 0 },
+   };
+   static const struct retro_subsystem_info subsystems[] = {
+      { "ST-V", "stv", subsystem_rom, 1, RETRO_GAME_TYPE_STV },
+      { NULL },
+   };
+
    environ_cb = cb;
 
    cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
    environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
+   environ_cb(RETRO_ENVIRONMENT_SET_SUBSYSTEM_INFO, (void*)subsystems);
 }
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
 void retro_set_audio_sample(retro_audio_sample_t cb) { (void)cb; }
@@ -136,6 +148,40 @@ static bool multitap[2] = {0,0};
 int PERLIBRETROInit(void)
 {
    void *controller;
+
+   // ST-V
+   if(stv_mode) {
+      PerPortReset();
+      controller = (void*)PerCabAdd(NULL);
+      PerSetKey(PERPAD_UP, PERPAD_UP, controller);
+      PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, controller);
+      PerSetKey(PERPAD_DOWN, PERPAD_DOWN, controller);
+      PerSetKey(PERPAD_LEFT, PERPAD_LEFT, controller);
+      PerSetKey(PERPAD_A, PERPAD_A, controller);
+      PerSetKey(PERPAD_B, PERPAD_B, controller);
+      PerSetKey(PERPAD_C, PERPAD_C, controller);
+      PerSetKey(PERPAD_X, PERPAD_X, controller);
+      PerSetKey(PERPAD_Y, PERPAD_Y, controller);
+      PerSetKey(PERPAD_Z, PERPAD_Z, controller);
+      PerSetKey(PERJAMMA_COIN1, PERJAMMA_COIN1, controller );
+      PerSetKey(PERJAMMA_COIN2, PERJAMMA_COIN2, controller );
+      PerSetKey(PERJAMMA_TEST, PERJAMMA_TEST, controller);
+      PerSetKey(PERJAMMA_SERVICE, PERJAMMA_SERVICE, controller);
+      PerSetKey(PERJAMMA_START1, PERJAMMA_START1, controller);
+      PerSetKey(PERJAMMA_START2, PERJAMMA_START2, controller);
+      PerSetKey(PERJAMMA_MULTICART, PERJAMMA_MULTICART, controller);
+      PerSetKey(PERJAMMA_PAUSE, PERJAMMA_PAUSE, controller);
+      PerSetKey(PERJAMMA_P2_UP, PERJAMMA_P2_UP, controller );
+      PerSetKey(PERJAMMA_P2_RIGHT, PERJAMMA_P2_RIGHT, controller );
+      PerSetKey(PERJAMMA_P2_DOWN, PERJAMMA_P2_DOWN, controller );
+      PerSetKey(PERJAMMA_P2_LEFT, PERJAMMA_P2_LEFT, controller );
+      PerSetKey(PERJAMMA_P2_BUTTON1, PERJAMMA_P2_BUTTON1, controller );
+      PerSetKey(PERJAMMA_P2_BUTTON2, PERJAMMA_P2_BUTTON2, controller );
+      PerSetKey(PERJAMMA_P2_BUTTON3, PERJAMMA_P2_BUTTON3, controller );
+      PerSetKey(PERJAMMA_P2_BUTTON4, PERJAMMA_P2_BUTTON4, controller );
+      return 0;
+   }
+
    uint32_t i, j;
    PortData_struct* portdata = NULL;
 
@@ -177,6 +223,7 @@ int PERLIBRETROInit(void)
             break;
       }
    }
+
    return 0;
 }
 
@@ -186,88 +233,221 @@ static int PERLIBRETROHandleEvents(void)
 
    for(i = 0; i < players; i++)
    {
-      int analog_left_x = 0;
-      int analog_left_y = 0;
-
-      switch(pad_type[i])
-      {
-         case RETRO_DEVICE_ANALOG:
-            analog_left_x = input_state_cb(i, RETRO_DEVICE_ANALOG,
-                  RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
-
-            PerAxisValue((i << 8) + PERANALOG_AXIS1, (u8)((analog_left_x + 0x8000) >> 8));
-
-            analog_left_y = input_state_cb(i, RETRO_DEVICE_ANALOG,
-                  RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
-
-            PerAxisValue((i << 8) + PERANALOG_AXIS2, (u8)((analog_left_y + 0x8000) >> 8));
-         case RETRO_DEVICE_JOYPAD:
-
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
-               PerKeyDown((i << 8) + PERPAD_UP);
+      if(stv_mode) {
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT)) {
+            if(i == 0)
+               PerKeyDown(PERJAMMA_COIN1);
             else
-               PerKeyUp((i << 8) + PERPAD_UP);
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
-               PerKeyDown((i << 8) + PERPAD_DOWN);
+               PerKeyDown(PERJAMMA_COIN2);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERJAMMA_COIN1);
             else
-               PerKeyUp((i << 8) + PERPAD_DOWN);
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
-               PerKeyDown((i << 8) + PERPAD_LEFT);
-            else
-               PerKeyUp((i << 8) + PERPAD_LEFT);
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
-               PerKeyDown((i << 8) + PERPAD_RIGHT);
-            else
-               PerKeyUp((i << 8) + PERPAD_RIGHT);
+               PerKeyUp(PERJAMMA_COIN2);
+         }
 
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
-               PerKeyDown((i << 8) + PERPAD_X);
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START)) {
+            if(i == 0)
+               PerKeyDown(PERJAMMA_START1);
             else
-               PerKeyUp((i << 8) + PERPAD_X);
-
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-               PerKeyDown((i << 8) + PERPAD_A);
+               PerKeyDown(PERJAMMA_START2);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERJAMMA_START1);
             else
-               PerKeyUp((i << 8) + PERPAD_A);
+               PerKeyUp(PERJAMMA_START2);
+         }
 
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
-               PerKeyDown((i << 8) + PERPAD_B);
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_UP);
             else
-               PerKeyUp((i << 8) + PERPAD_B);
-
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
-               PerKeyDown((i << 8) + PERPAD_Y);
+               PerKeyDown(PERJAMMA_P2_UP);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_UP);
             else
-               PerKeyUp((i << 8) + PERPAD_Y);
+               PerKeyUp(PERJAMMA_P2_UP);
+         }
 
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
-               PerKeyDown((i << 8) + PERPAD_C);
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_RIGHT);
             else
-               PerKeyUp((i << 8) + PERPAD_C);
-
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
-               PerKeyDown((i << 8) + PERPAD_Z);
+               PerKeyDown(PERJAMMA_P2_RIGHT);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_RIGHT);
             else
-               PerKeyUp((i << 8) + PERPAD_Z);
+               PerKeyUp(PERJAMMA_P2_RIGHT);
+         }
 
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
-               PerKeyDown((i << 8) + PERPAD_START);
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_DOWN);
             else
-               PerKeyUp((i << 8) + PERPAD_START);
-
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
-               PerKeyDown((i << 8) + PERPAD_LEFT_TRIGGER);
+               PerKeyDown(PERJAMMA_P2_DOWN);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_DOWN);
             else
-               PerKeyUp((i << 8) + PERPAD_LEFT_TRIGGER);
+               PerKeyUp(PERJAMMA_P2_DOWN);
+         }
 
-            if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
-               PerKeyDown((i << 8) + PERPAD_RIGHT_TRIGGER);
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_LEFT);
             else
-               PerKeyUp((i << 8) + PERPAD_RIGHT_TRIGGER);
-            break;
+               PerKeyDown(PERJAMMA_P2_LEFT);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_LEFT);
+            else
+               PerKeyUp(PERJAMMA_P2_LEFT);
+         }
 
-         default:
-            break;
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_A);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON1);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_A);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON1);
+         }
+
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_B);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON2);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_B);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON2);
+         }
+
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_C);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON3);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_C);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON3);
+         }
+
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X)) {
+            if(i == 0)
+               PerKeyDown(PERPAD_X);
+            else
+               PerKeyDown(PERJAMMA_P2_BUTTON4);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERPAD_X);
+            else
+               PerKeyUp(PERJAMMA_P2_BUTTON4);
+         }
+      } else {
+
+         int analog_left_x = 0;
+         int analog_left_y = 0;
+
+         switch(pad_type[i])
+         {
+            case RETRO_DEVICE_ANALOG:
+               analog_left_x = input_state_cb(i, RETRO_DEVICE_ANALOG,
+                     RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X);
+
+               PerAxisValue((i << 8) + PERANALOG_AXIS1, (u8)((analog_left_x + 0x8000) >> 8));
+
+               analog_left_y = input_state_cb(i, RETRO_DEVICE_ANALOG,
+                     RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
+
+               PerAxisValue((i << 8) + PERANALOG_AXIS2, (u8)((analog_left_y + 0x8000) >> 8));
+            case RETRO_DEVICE_JOYPAD:
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
+                  PerKeyDown((i << 8) + PERPAD_UP);
+               else
+                  PerKeyUp((i << 8) + PERPAD_UP);
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN))
+                  PerKeyDown((i << 8) + PERPAD_DOWN);
+               else
+                  PerKeyUp((i << 8) + PERPAD_DOWN);
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT))
+                  PerKeyDown((i << 8) + PERPAD_LEFT);
+               else
+                  PerKeyUp((i << 8) + PERPAD_LEFT);
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT))
+                  PerKeyDown((i << 8) + PERPAD_RIGHT);
+               else
+                  PerKeyUp((i << 8) + PERPAD_RIGHT);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
+                  PerKeyDown((i << 8) + PERPAD_X);
+               else
+                  PerKeyUp((i << 8) + PERPAD_X);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
+                  PerKeyDown((i << 8) + PERPAD_A);
+               else
+                  PerKeyUp((i << 8) + PERPAD_A);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
+                  PerKeyDown((i << 8) + PERPAD_B);
+               else
+                  PerKeyUp((i << 8) + PERPAD_B);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
+                  PerKeyDown((i << 8) + PERPAD_Y);
+               else
+                  PerKeyUp((i << 8) + PERPAD_Y);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L))
+                  PerKeyDown((i << 8) + PERPAD_C);
+               else
+                  PerKeyUp((i << 8) + PERPAD_C);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R))
+                  PerKeyDown((i << 8) + PERPAD_Z);
+               else
+                  PerKeyUp((i << 8) + PERPAD_Z);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START))
+                  PerKeyDown((i << 8) + PERPAD_START);
+               else
+                  PerKeyUp((i << 8) + PERPAD_START);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
+                  PerKeyDown((i << 8) + PERPAD_LEFT_TRIGGER);
+               else
+                  PerKeyUp((i << 8) + PERPAD_LEFT_TRIGGER);
+
+               if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
+                  PerKeyDown((i << 8) + PERPAD_RIGHT_TRIGGER);
+               else
+                  PerKeyUp((i << 8) + PERPAD_RIGHT_TRIGGER);
+               break;
+
+            default:
+               break;
+         }
       }
    }
 
@@ -564,11 +744,13 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 
 static char full_path[256];
 static char bios_path[256];
+static char stv_bios_path[256];
+static char stv_bup_path[256];
 
 static void check_variables(void)
 {
    struct retro_variable var;
-   var.key = "yabause_frameskip";
+   var.key = "kronos_frameskip";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -585,7 +767,7 @@ static void check_variables(void)
       }
    }
 
-   var.key = "yabause_force_hle_bios";
+   var.key = "kronos_force_hle_bios";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -596,7 +778,7 @@ static void check_variables(void)
          hle_bios_force = true;
    }
 
-   var.key = "yabause_addon_cart";
+   var.key = "kronos_addon_cart";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -608,7 +790,7 @@ static void check_variables(void)
          addon_cart_type = CART_DRAM32MBIT;
    }
 
-   var.key = "yabause_numthreads";
+   var.key = "kronos_numthreads";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -669,7 +851,9 @@ void retro_init(void)
 #else
       char slash = '/';
 #endif
-      snprintf(bios_path, sizeof(bios_path), "%s%c%s", dir, slash, "saturn_bios.bin");
+      snprintf(bios_path, sizeof(bios_path), "%s%ckronos%c%s", dir, slash, slash, "saturn_bios.bin");
+      snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%ckronos%c%s", dir, slash, slash, "stvbios.zip");
+      snprintf(stv_bup_path, sizeof(stv_bup_path), "%s%ckronos%c%s", dir, slash, slash, "bupstv.ram");
    }
 
    if(PERCore)
@@ -896,7 +1080,13 @@ bool retro_load_game(const struct retro_game_info *info)
    yinit.sh2coretype     = 8;
    yinit.vidcoretype     = VIDCORE_SOFT;
    yinit.sndcoretype     = SNDCORE_LIBRETRO;
+   // It seems Musashi is the recommended m68k core only for x86_64
+   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
+#if defined(__x86_64__)
    yinit.m68kcoretype    = M68KCORE_MUSASHI;
+#else
+   yinit.m68kcoretype    = M68KCORE_C68K;
+#endif
    yinit.carttype        = addon_cart_type;
    yinit.regionid        = REGION_AUTODETECT;
    yinit.buppath         = NULL;
@@ -923,10 +1113,98 @@ bool retro_load_game(const struct retro_game_info *info)
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
 {
-   (void)game_type;
-   (void)info;
-   (void)num_info;
-   return false;
+   if(game_type != RETRO_GAME_TYPE_STV)
+      return false;
+
+   stv_mode = true;
+
+   int ret;
+   struct retro_input_descriptor desc[] = {
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin 1" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
+
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin 2" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+
+      { 0 },
+   };
+
+   if (!info)
+      return false;
+
+   check_variables();
+
+   snprintf(full_path, sizeof(full_path), "%s", info->path);
+
+   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+
+   // Store the game "id", seems necessary (?)
+   int stvgame = -1;
+   STVGetSingle(full_path, stv_bios_path, &stvgame);
+
+   yinit.stvgamepath     = full_path;
+   yinit.stvgame         = stvgame;
+   yinit.cartpath        = NULL;
+   yinit.carttype        = CART_ROMSTV;
+   /* Emulate BIOS */
+   yinit.stvbiospath     = stv_bios_path;
+   yinit.extend_backup   = 0;
+   yinit.buppath         = stv_bup_path;
+   yinit.percoretype     = PERCORE_LIBRETRO;
+   yinit.sh2coretype     = 8;
+   yinit.vidcoretype     = VIDCORE_SOFT;
+   yinit.sndcoretype     = SNDCORE_LIBRETRO;
+   // It seems Musashi is the recommended m68k core only for x86_64
+   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
+#if defined(__x86_64__)
+   yinit.m68kcoretype    = M68KCORE_MUSASHI;
+#else
+   yinit.m68kcoretype    = M68KCORE_C68K;
+#endif
+   yinit.regionid        = REGION_AUTODETECT;
+   yinit.buppath         = NULL;
+   //yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
+   yinit.frameskip       = frameskip_enable;
+   yinit.clocksync       = 0;
+   yinit.basetime        = 0;
+#ifdef HAVE_THREADS
+   yinit.usethreads      = 1;
+   yinit.numthreads      = numthreads;
+#else
+   yinit.usethreads      = 0;
+#endif
+   yinit.useVdp1cache    = 0;
+   yinit.usecache        = 0;
+
+   ret = YabauseInit(&yinit);
+   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+   VIDSoftSetBilinear(1);
+
+   return !ret;
 }
 
 void retro_unload_game(void)

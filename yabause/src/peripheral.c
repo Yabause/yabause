@@ -122,6 +122,14 @@ PerBaseConfig_struct percabinetbaseconfig[] = {
 	{ PERPAD_X, PERCB(PerCabXPressed), PERCB(PerCabXReleased), NULL, NULL },
 	{ PERPAD_Y, PERCB(PerCabYPressed), PERCB(PerCabYReleased), NULL, NULL },
 	{ PERPAD_Z, PERCB(PerCabZPressed), PERCB(PerCabZReleased), NULL, NULL },
+	{ PERJAMMA_P2_UP, PERCB(PerCabP2UpPressed), PERCB(PerCabP2UpReleased), NULL, NULL },
+	{ PERJAMMA_P2_RIGHT, PERCB(PerCabP2RightPressed), PERCB(PerCabP2RightReleased), NULL, NULL },
+	{ PERJAMMA_P2_DOWN, PERCB(PerCabP2DownPressed), PERCB(PerCabP2DownReleased), NULL, NULL },
+	{ PERJAMMA_P2_LEFT, PERCB(PerCabP2LeftPressed), PERCB(PerCabP2LeftReleased), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON1, PERCB(PerCabP2Button1Pressed), PERCB(PerCabP2Button1Released), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON2, PERCB(PerCabP2Button2Pressed), PERCB(PerCabP2Button2Released), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON2, PERCB(PerCabP2Button3Pressed), PERCB(PerCabP2Button3Released), NULL, NULL },
+	{ PERJAMMA_P2_BUTTON2, PERCB(PerCabP2Button4Pressed), PERCB(PerCabP2Button4Released), NULL, NULL },
 };
 
 PerBaseConfig_struct permousebaseconfig[] = {
@@ -474,6 +482,8 @@ void PerPadLTriggerReleased(PerPad_struct * pad) {
   IOPortAdd(PERJAMMA_PAUSE, PORT_C, 0x7);
 */
 
+/* P1 inputs */
+
 void PerCabUpPressed(PerCab_struct * pad) {
    pad[PORT_A] &= ~(0x1 << 0x5);
 }
@@ -590,7 +600,101 @@ void PerCabZReleased(PerCab_struct * pad) {
 //To be done
 }
 
+/* P2 Inputs */
+
+void PerCabP2UpPressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x5);
+}
+
+void PerCabP2UpReleased(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x5);
+}
+
 //////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2DownPressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2DownReleased(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x4);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2RightPressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2RightReleased(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x6);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2LeftPressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x7);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2LeftReleased(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x7);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button1Pressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button1Released(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button2Pressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button2Released(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x1);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button3Pressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button3Released(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x2);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button4Pressed(PerCab_struct * pad) {
+   pad[PORT_B] &= ~(0x1 << 0x3);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+void PerCabP2Button4Released(PerCab_struct * pad) {
+   pad[PORT_B] |= (0x1 << 0x3);
+}
+
+/* System Inputs*/
 
 void PerCabCoin1Released(PerCab_struct * pad) {
    pad[PORT_C] |= (0x1 << 0x0);

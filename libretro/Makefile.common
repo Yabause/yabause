@@ -7,7 +7,6 @@ OBJECTS_S :=
 
 SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/bios.c \
-	$(SOURCE_DIR)/c68k/c68k.c \
 	$(SOURCE_DIR)/cdbase.c \
 	$(SOURCE_DIR)/cheat.c \
 	$(SOURCE_DIR)/coffelf.c \
@@ -21,7 +20,6 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/gameinfo.c \
 	$(SOURCE_DIR)/japmodem.c \
 	$(SOURCE_DIR)/junzip.c \
-	$(SOURCE_DIR)/m68kc68k.c \
 	$(SOURCE_DIR)/m68kcore.c \
 	$(SOURCE_DIR)/m68kd.c \
 	$(SOURCE_DIR)/memory.c \
@@ -51,7 +49,10 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/zlib/inffast.c \
 	$(SOURCE_DIR)/zlib/inflate.c \
 	$(SOURCE_DIR)/zlib/inftrees.c \
-	$(SOURCE_DIR)/zlib/zutil.c
+	$(SOURCE_DIR)/zlib/zutil.c \
+	$(SOURCE_DIR)/c68k/c68k.c \
+	$(SOURCE_DIR)/m68kc68k.c \
+	$(SOURCE_DIR)/c68k/c68kexec.c
 
 ifeq ($(HAVE_GRIFFIN), 1)
 	SOURCES_C += $(LIBRETRO_DIR)/yabause_griffin.c
@@ -91,8 +92,7 @@ endif
 
 M68KMAKE_EXE = m68kmake$(EXE_EXT)
 GEN68K_EXE = gen68k$(EXE_EXT)
-
-GEN68K_INC_SOURCES := $(SOURCE_DIR)/c68k/c68k_ini.inc \
+ GEN68K_INC_SOURCES := $(SOURCE_DIR)/c68k/c68k_ini.inc \
 	$(SOURCE_DIR)/c68k/c68k_op0.inc \
 	$(SOURCE_DIR)/c68k/c68k_op1.inc \
 	$(SOURCE_DIR)/c68k/c68k_op2.inc \
@@ -116,16 +116,14 @@ M68KMAKE_INC_SOURCES := $(SOURCE_DIR)/musashi/m68kops.h \
 	$(SOURCE_DIR)/musashi/m68kopnz.c \
 	$(SOURCE_DIR)/musashi/m68kops.c
 
-C68KEXEC_SOURCE := $(SOURCE_DIR)/c68k/c68kexec.c
-C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.o)
-
 ifneq ($(STATIC_LINKING), 1)
 SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 	 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	 $(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
 	 $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 	 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
-	 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c
+	 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
+	 $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c
 endif
 
 ifeq ($(HAVE_THREADS),1)
