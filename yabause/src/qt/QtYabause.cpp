@@ -185,14 +185,16 @@ extern "C"
 #endif // vasprintf
 #endif
         void YuiMsg(const char *format, ...) {
+          int r;
+	  char *str=NULL;
           va_list arglist;
           va_start( arglist, format );
-          char *str=NULL;
-          if (vasprintf(&str, format, arglist) > 0) {
+          r = vasprintf(&str, format, arglist);
+	  va_end( arglist );	
+	  if (r > 0) {
             QtYabause::mainWindow()->appendLog( str );
 	    free(str);
 	  }
-          va_end( arglist );
        }
 
        void YuiErrorMsg(const char *error_text)
