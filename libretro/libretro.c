@@ -322,7 +322,7 @@ static int PERLIBRETROHandleEvents(void)
             if(i == 0)
                PerKeyUp(PERPAD_A);
             else
-               PerKeyUp(PERJAMMA_P2_BUTTON2);
+               PerKeyUp(PERJAMMA_P2_BUTTON1);
          }
 
          if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A)) {
