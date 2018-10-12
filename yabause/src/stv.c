@@ -16,9 +16,6 @@
 #include "zlib/zlib.h"
 
 #define LOGSTV
-#ifdef __LIBRETRO__
-#define LOGSTV printf
-#endif
 //YuiMsg
 #define ROTATED 1
 
