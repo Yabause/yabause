@@ -40,6 +40,7 @@ static bool hle_bios_force = false;
 static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
 static int numthreads = 1;
+static bool stv_mode = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -147,6 +148,32 @@ static bool multitap[2] = {0,0};
 int PERLIBRETROInit(void)
 {
    void *controller;
+
+   // ST-V
+   if(stv_mode) {
+      PerPortReset();
+      controller = (void*)PerCabAdd(NULL);
+      PerSetKey(PERPAD_UP, PERPAD_UP, controller);
+      PerSetKey(PERPAD_RIGHT, PERPAD_RIGHT, controller);
+      PerSetKey(PERPAD_DOWN, PERPAD_DOWN, controller);
+      PerSetKey(PERPAD_LEFT, PERPAD_LEFT, controller);
+      PerSetKey(PERPAD_A, PERPAD_A, controller);
+      PerSetKey(PERPAD_B, PERPAD_B, controller);
+      PerSetKey(PERPAD_C, PERPAD_C, controller);
+      PerSetKey(PERPAD_X, PERPAD_X, controller);
+      PerSetKey(PERPAD_Y, PERPAD_Y, controller);
+      PerSetKey(PERPAD_Z, PERPAD_Z, controller);
+      PerSetKey(PERJAMMA_COIN1, PERJAMMA_COIN1, controller );
+      PerSetKey(PERJAMMA_COIN2, PERJAMMA_COIN2, controller );
+      PerSetKey(PERJAMMA_TEST, PERJAMMA_TEST, controller);
+      PerSetKey(PERJAMMA_SERVICE, PERJAMMA_SERVICE, controller);
+      PerSetKey(PERJAMMA_START1, PERJAMMA_START1, controller);
+      PerSetKey(PERJAMMA_START2, PERJAMMA_START2, controller);
+      PerSetKey(PERJAMMA_MULTICART, PERJAMMA_MULTICART, controller);
+      PerSetKey(PERJAMMA_PAUSE, PERJAMMA_PAUSE, controller);
+      return 0;
+   }
+
    uint32_t i, j;
    PortData_struct* portdata = NULL;
 
@@ -188,6 +215,7 @@ int PERLIBRETROInit(void)
             break;
       }
    }
+
    return 0;
 }
 
@@ -197,6 +225,34 @@ static int PERLIBRETROHandleEvents(void)
 
    for(i = 0; i < players; i++)
    {
+      if(stv_mode) {
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT)) {
+            if(i == 0)
+               PerKeyDown(PERJAMMA_COIN1);
+            else
+               PerKeyDown(PERJAMMA_COIN2);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERJAMMA_COIN1);
+            else
+               PerKeyUp(PERJAMMA_COIN2);
+         }
+
+         if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START)) {
+            if(i == 0)
+               PerKeyDown(PERJAMMA_START1);
+            else
+               PerKeyDown(PERJAMMA_START2);
+         }
+         else {
+            if(i == 0)
+               PerKeyUp(PERJAMMA_START1);
+            else
+               PerKeyUp(PERJAMMA_START2);
+         }
+      }
+
       int analog_left_x = 0;
       int analog_left_y = 0;
 
@@ -947,6 +1003,8 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
    if(game_type != RETRO_GAME_TYPE_STV)
       return false;
 
+   stv_mode = true;
+
    int ret;
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
@@ -961,9 +1019,8 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
-      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
-      { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin 1" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
 
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -977,9 +1034,8 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin 2" },
       { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
-      { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
-      { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
 
       { 0 },
    };
