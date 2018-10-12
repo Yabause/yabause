@@ -79,10 +79,10 @@ int (__cdecl *bprintf) (int nStatus, char* szFormat, ...) = libretro_bprintf;
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-      { "yabause_frameskip", "Frameskip; disabled|enabled" },
-      { "yabause_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
-      { "yabause_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
-      { "yabause_numthreads", "Number of Threads (restart); 1|2|4|8|16|32" },
+      { "kronos_frameskip", "Frameskip; disabled|enabled" },
+      { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
+      { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
+      { "kronos_numthreads", "Number of Threads (restart); 1|2|4|8|16|32" },
       { NULL, NULL },
    };
 
@@ -391,6 +391,7 @@ SoundInterface_struct SNDLIBRETRO = {
 M68K_struct *M68KCoreList[] = {
     &M68KDummy,
     &M68KMusashi,
+    &M68KC68K,
     NULL
 };
 
@@ -575,11 +576,12 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
 static char full_path[256];
 static char bios_path[256];
 static char stv_bios_path[256];
+static char stv_bup_path[256];
 
 static void check_variables(void)
 {
    struct retro_variable var;
-   var.key = "yabause_frameskip";
+   var.key = "kronos_frameskip";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -596,7 +598,7 @@ static void check_variables(void)
       }
    }
 
-   var.key = "yabause_force_hle_bios";
+   var.key = "kronos_force_hle_bios";
    var.value = NULL;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -607,7 +609,7 @@ static void check_variables(void)
          hle_bios_force = true;
    }
 
-   var.key = "yabause_addon_cart";
+   var.key = "kronos_addon_cart";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -619,7 +621,7 @@ static void check_variables(void)
          addon_cart_type = CART_DRAM32MBIT;
    }
 
-   var.key = "yabause_numthreads";
+   var.key = "kronos_numthreads";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
@@ -680,8 +682,9 @@ void retro_init(void)
 #else
       char slash = '/';
 #endif
-      snprintf(bios_path, sizeof(bios_path), "%s%c%s", dir, slash, "saturn_bios.bin");
-      snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%c%s", dir, slash, "stvbios.zip");
+      snprintf(bios_path, sizeof(bios_path), "%s%ckronos%c%s", dir, slash, slash, "saturn_bios.bin");
+      snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%ckronos%c%s", dir, slash, slash, "stvbios.zip");
+      snprintf(stv_bup_path, sizeof(stv_bup_path), "%s%ckronos%c%s", dir, slash, slash, "bupstv.ram");
    }
 
    if(PERCore)
@@ -908,7 +911,13 @@ bool retro_load_game(const struct retro_game_info *info)
    yinit.sh2coretype     = 8;
    yinit.vidcoretype     = VIDCORE_SOFT;
    yinit.sndcoretype     = SNDCORE_LIBRETRO;
+   // It seems Musashi is the recommended m68k core only for x86_64
+   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
+#if defined(__x86_64__)
    yinit.m68kcoretype    = M68KCORE_MUSASHI;
+#else
+   yinit.m68kcoretype    = M68KCORE_C68K;
+#endif
    yinit.carttype        = addon_cart_type;
    yinit.regionid        = REGION_AUTODETECT;
    yinit.buppath         = NULL;
@@ -991,13 +1000,22 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
    yinit.stvgamepath     = full_path;
    yinit.stvgame         = stvgame;
    yinit.cartpath        = NULL;
+   yinit.carttype        = CART_ROMSTV;
    /* Emulate BIOS */
    yinit.stvbiospath     = stv_bios_path;
+   yinit.extend_backup   = 0;
+   yinit.buppath         = stv_bup_path;
    yinit.percoretype     = PERCORE_LIBRETRO;
    yinit.sh2coretype     = 8;
    yinit.vidcoretype     = VIDCORE_SOFT;
    yinit.sndcoretype     = SNDCORE_LIBRETRO;
+   // It seems Musashi is the recommended m68k core only for x86_64
+   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
+#if defined(__x86_64__)
    yinit.m68kcoretype    = M68KCORE_MUSASHI;
+#else
+   yinit.m68kcoretype    = M68KCORE_C68K;
+#endif
    yinit.regionid        = REGION_AUTODETECT;
    yinit.buppath         = NULL;
    //yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
