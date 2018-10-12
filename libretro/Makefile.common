@@ -1,7 +1,7 @@
 SOURCE_DIR := $(CORE_DIR)/../yabause/src
 LIBRETRO_COMM_DIR := $(CORE_DIR)/../libretro-common
 
-INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(SOURCE_DIR)/tools -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/sh2_kronos
+INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(SOURCE_DIR)/tools -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/sh2_kronos -I$(SOURCE_DIR)/musashi
 
 OBJECTS_S :=
 
