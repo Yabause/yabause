@@ -51,8 +51,7 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/zlib/inftrees.c \
 	$(SOURCE_DIR)/zlib/zutil.c \
 	$(SOURCE_DIR)/c68k/c68k.c \
-	$(SOURCE_DIR)/m68kc68k.c \
-	$(SOURCE_DIR)/c68k/c68kexec.c
+	$(SOURCE_DIR)/m68kc68k.c
 
 ifeq ($(HAVE_GRIFFIN), 1)
 	SOURCES_C += $(LIBRETRO_DIR)/yabause_griffin.c
@@ -114,6 +113,9 @@ M68KMAKE_INC_SOURCES := $(SOURCE_DIR)/musashi/m68kops.h \
 	$(SOURCE_DIR)/musashi/m68kopdm.c \
 	$(SOURCE_DIR)/musashi/m68kopnz.c \
 	$(SOURCE_DIR)/musashi/m68kops.c
+
+C68KEXEC_SOURCE := $(SOURCE_DIR)/c68k/c68kexec.c
+C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.o)
 
 ifneq ($(STATIC_LINKING), 1)
 SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
