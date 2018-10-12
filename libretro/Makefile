@@ -230,7 +230,7 @@ endif
 
 include Makefile.common
 
-OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
+OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o) $(C68KEXEC_OBJECT)
 
 ifeq ($(DEBUG), 1)
 FLAGS += -O0 -g
@@ -260,10 +260,10 @@ ifeq ($(platform), theos_ios)
 COMMON_FLAGS := -DIOS $(COMMON_DEFINES) $(INCFLAGS) -I$(THEOS_INCLUDE_PATH) -Wno-error
 $(LIBRARY_NAME)_CFLAGS += $(CFLAGS) $(COMMON_FLAGS)
 $(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
-${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C)
+${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C) $(SOURCE_DIR)/c68k/c68kexec.c
 include $(THEOS_MAKE_PATH)/library.mk
 else
-all: $(TARGET)
+all: generate-files $(TARGET)
 
 generate-files:
 	$(CC) -o $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/musashi/m68kmake.c
@@ -290,6 +290,9 @@ endif
 
 %.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
+
+$(C68KEXEC_OBJECT): $(C68KEXEC_SOURCE)
+	$(CC) -c -o $@ $< $(CFLAGS) -O0
 
 clean:
 	rm -f $(TARGET) $(OBJECTS)
