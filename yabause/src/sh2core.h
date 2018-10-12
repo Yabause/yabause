@@ -360,8 +360,8 @@ typedef struct SH2_struct_s
 #ifdef SSH2_ASYNC
    int cycles_request;
    int thread_running;
-   sem_t start;
-   sem_t end;
+   YabEventQueue *start;
+   YabEventQueue *end;
    sem_t lock;
    int thread_id;
 #endif
