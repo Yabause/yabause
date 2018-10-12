@@ -188,8 +188,9 @@ extern "C"
           va_list arglist;
           va_start( arglist, format );
           char *str=NULL;
-          vasprintf(&str, format, arglist);
-          QtYabause::mainWindow()->appendLog( str );
+          if (vasprintf(&str, format, arglist) > 0) {
+            QtYabause::mainWindow()->appendLog( str );
+	  }
           va_end( arglist );
        }
 
