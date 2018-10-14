@@ -1193,7 +1193,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glMemoryBarrier = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glMemoryBarrier");
 #endif
 
-  _Ygl->default_fbo = 0;
+  _Ygl->default_fbo = YuiGetFB();
   _Ygl->drawframe = 0;
   _Ygl->readframe = 1;
 
