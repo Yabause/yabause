@@ -1179,7 +1179,8 @@ int YglInit(int width, int height, unsigned int depth) {
 
 
 #if defined(_USEGLEW_)
-  glewInit();
+  glewExperimental=GL_TRUE;
+  if (glewInit() != 0) YabSetError(YAB_ERR_CANNOTINIT, _("Glew"));;
 #endif
 
 #if defined(__USE_OPENGL_DEBUG__)
