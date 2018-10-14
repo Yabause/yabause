@@ -27,6 +27,7 @@
 #include "vidshared.h"
 #include "debug.h"
 #include "frameprofile.h"
+#include "error.h"
 
 
 //#define __USE_OPENGL_DEBUG__
