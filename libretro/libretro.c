@@ -13,7 +13,9 @@
 #include <sys/stat.h>
 
 #include <libretro.h>
+#ifdef HAVE_GL
 #include <glsm/glsm.h>
+#endif
 
 #include "vdp1.h"
 #include "vdp2.h"
@@ -53,7 +55,9 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 
+#ifdef HAVE_GL
 static struct retro_hw_render_callback hw_render;
+#endif
 
 #define BPRINTF_BUFFER_SIZE 512
 #define __cdecl
@@ -597,7 +601,9 @@ SoundInterface_struct *SNDCoreList[] = {
 
 VideoInterface_struct *VIDCoreList[] = {
     //&VIDDummy,
+#ifdef HAVE_GL
     &VIDOGL,
+#endif
     &VIDSoft,
     NULL
 };
