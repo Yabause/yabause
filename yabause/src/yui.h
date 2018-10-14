@@ -34,6 +34,8 @@ void YuiMsg(const char *format, ...);
 /* If Yabause encounters any fatal errors, it sends the error text to this function */
 void YuiErrorMsg(const char *string);
 
+/* profide the framebuffer id to render into */
+int YuiGetFB(void);
 /* Tells the yui to exchange front and back video buffers. This may end
    up being moved to the Video Core. */
 void YuiSwapBuffers(void);

@@ -1,7 +1,7 @@
 SOURCE_DIR := $(CORE_DIR)/../yabause/src
 LIBRETRO_COMM_DIR := $(CORE_DIR)/../libretro-common
 
-INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(SOURCE_DIR)/tools -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/sh2_kronos -I$(SOURCE_DIR)/musashi
+INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(SOURCE_DIR)/tools -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/sh2_kronos -I$(SOURCE_DIR)/musashi -I$(SOURCE_DIR)/gllibs/include
 
 OBJECTS_S :=
 
@@ -79,9 +79,18 @@ endif
 
 ifeq ($(HAVE_GL),1)
 SOURCES_C += \
-	$(SOURCE_DIR)/ygles.c \
 	$(SOURCE_DIR)/vidogl.c \
-	$(SOURCE_DIR)/yglshaderes.c
+	$(SOURCE_DIR)/ygles.c \
+	$(SOURCE_DIR)/gllibs/glew/glew.c \
+	$(SOURCE_DIR)/yglcache.c \
+	$(SOURCE_DIR)/yglshaderes.c \
+	$(SOURCE_DIR)/patternManager.c \
+	$(SOURCE_DIR)/upscale_shader.c
+
+INCFLAGS += -I$(SOURCE_DIR)/gllibs/include
+
+LDFLAGS += -lGL -lGLESv2
+FLAGS += -DHAVE_LIBGL -D_OGLES3_ -DGLEW_STATIC -D_USEGLEW_
 endif
 
 ifneq ($(HAVE_GRIFFIN), 1)
@@ -125,6 +134,11 @@ SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 	 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
 	 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
 	 $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c
+ifeq ($(HAVE_GL),1)
+SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
+         $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+	 $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
+endif
 endif
 
 ifeq ($(HAVE_THREADS),1)

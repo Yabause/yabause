@@ -27,6 +27,7 @@
 #include "vidshared.h"
 #include "debug.h"
 #include "frameprofile.h"
+#include "error.h"
 
 
 //#define __USE_OPENGL_DEBUG__
@@ -1091,12 +1092,6 @@ int YglScreenInit(int r, int g, int b, int d) {
   return 0;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-void YuiSetVideoAttribute(int type, int val){
-  return;
-}
-
-
 void deinitLevels(YglLevel * levels) {
   int i, j;
   int depth = _Ygl->depth;
@@ -1179,7 +1174,11 @@ int YglInit(int width, int height, unsigned int depth) {
 
 
 #if defined(_USEGLEW_)
-  glewInit();
+  glewExperimental=GL_TRUE;
+  if (glewInit() != 0) YabSetError(YAB_ERR_CANNOTINIT, _("Glew"));;
+#endif
+#if defined (__LIBRETRO__)
+   // do something to get GL context from retroarch (?)
 #endif
 
 #if defined(__USE_OPENGL_DEBUG__)
@@ -1193,7 +1192,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glMemoryBarrier = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glMemoryBarrier");
 #endif
 
-  _Ygl->default_fbo = 0;
+  _Ygl->default_fbo = YuiGetFB();
   _Ygl->drawframe = 0;
   _Ygl->readframe = 1;
 

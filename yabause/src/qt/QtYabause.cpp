@@ -207,6 +207,11 @@ extern "C"
           QtYabause::mainWindow()->swapBuffers();
         }
 
+	int YuiGetFB()
+	{ 
+          return 0;
+        }
+
 #if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)
    HWND DXGetWindow()
    {
