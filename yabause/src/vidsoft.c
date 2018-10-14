@@ -2214,7 +2214,12 @@ void VIDSoftSetupGL(void)
       0.0, 1.0
    };
 
+#if defined (_USEGLEW_)
    glewInit();
+#endif
+#if defined (__LIBRETRO__)
+   // do something to get GL context from retroarch (?)
+#endif
 
    glGenVertexArrays(1, &vao);
    glBindVertexArray(vao);
