@@ -3,6 +3,7 @@ DYNAREC = 0
 HAVE_THREADS = 1
 HAVE_GRIFFIN = 0
 HAVE_SSE = 0
+HAVE_GL = 1
 
 ifeq ($(platform),)
 	platform = unix

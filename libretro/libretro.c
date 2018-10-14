@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 
 #include <libretro.h>
+#include <glsm/glsm.h>
 
 #include "vdp1.h"
 #include "vdp2.h"
@@ -51,6 +52,8 @@ static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
+
+static struct retro_hw_render_callback hw_render;
 
 #define BPRINTF_BUFFER_SIZE 512
 #define __cdecl
@@ -230,6 +233,8 @@ int PERLIBRETROInit(void)
 static int PERLIBRETROHandleEvents(void)
 {
    unsigned i = 0;
+
+  input_poll_cb();
 
    for(i = 0; i < players; i++)
    {
@@ -451,8 +456,9 @@ static int PERLIBRETROHandleEvents(void)
       }
    }
 
-   if ( YabauseExec() != 0 )
+   if ( YabauseExec() != 0 ) {
       return -1;
+   }
    return 0;
 }
 
@@ -591,6 +597,7 @@ SoundInterface_struct *SNDCoreList[] = {
 
 VideoInterface_struct *VIDCoreList[] = {
     //&VIDDummy,
+    &VIDOGL,
     &VIDSoft,
     NULL
 };

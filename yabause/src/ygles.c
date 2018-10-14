@@ -1092,12 +1092,6 @@ int YglScreenInit(int r, int g, int b, int d) {
   return 0;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-void YuiSetVideoAttribute(int type, int val){
-  return;
-}
-
-
 void deinitLevels(YglLevel * levels) {
   int i, j;
   int depth = _Ygl->depth;
