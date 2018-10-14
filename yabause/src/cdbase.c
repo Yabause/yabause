@@ -39,7 +39,8 @@
 #include "zlib/zlib.h"
 
 #ifdef __LIBRETRO__
-#include "streams/file_stream_transforms.h"
+// Remove this for now, execution on windows fails because of it
+// #include "streams/file_stream_transforms.h"
 #include "compat/posix_string.h"
 #undef stricmp
 #define stricmp strcasecmp
