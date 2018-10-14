@@ -133,10 +133,12 @@ SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 	 $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 	 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
 	 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
-	 $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
-	 $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
+	 $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c
+ifeq ($(HAVE_GL),1)
+SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
          $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 	 $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
+endif
 endif
 
 ifeq ($(HAVE_THREADS),1)
