@@ -269,7 +269,7 @@ $(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
 ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C) $(SOURCE_DIR)/c68k/c68kexec.c
 include $(THEOS_MAKE_PATH)/library.mk
 else
-all: generate-files $(TARGET)
+all: $(TARGET)
 
 generate-files:
 	cp $(SOURCE_DIR)/zlib/zconf.h.in $(SOURCE_DIR)/zlib/zconf.h;\
