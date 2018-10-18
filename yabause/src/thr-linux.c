@@ -36,6 +36,8 @@
 #include <semaphore.h>
 
 #ifdef ARCH_IS_MACOSX
+#include <pthread_barrier.h>
+
 pid_t gettid(void)
 {
     return syscall(SYS_gettid);
