@@ -70,7 +70,9 @@ ifeq ($(HAVE_THREADS),1)
 ifneq (,$(findstring unix,$(platform)))
 	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
 else ifneq (,$(findstring osx,$(platform)))
-	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+	SOURCES_C += $(SOURCE_DIR)/thr-linux.c \
+					 $(CORE_DIR)/pthread_barrier.c
+	INCFLAGS += -I$(CORE_DIR)/libretro 
 else ifneq (,$(findstring win,$(platform)))
 	SOURCES_C += $(SOURCE_DIR)/thr-windows.c
 endif
