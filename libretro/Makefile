@@ -68,6 +68,7 @@ ifneq ($(OSX_GT_MOJAVE),YES)
 	#this breaks compiling on Mac OS Mojave
 	fpic += -mmacosx-version-min=10.1
 endif
+	FLAGS += -DARCH_IS_MACOSX=1
 	SHARED := -dynamiclib
 ifeq ($(arch),ppc)
 	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
