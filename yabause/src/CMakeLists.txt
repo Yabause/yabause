@@ -51,6 +51,7 @@ set(yabause_SOURCES
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
+        Counter.cpp
 	sh2cache.c )
 	add_definitions(-DIMPROVED_SAVESTATES)
 if (ANDROID)
