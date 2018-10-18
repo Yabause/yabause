@@ -473,6 +473,7 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 }
 
 #include <sys/syscall.h>
+#ifndef ARCH_IS_MACOSX
 //...
 int getCpuId() {
 
@@ -483,6 +484,7 @@ int getCpuId() {
         return (int) cpu;
     }
 }
+#endif
 
 int YabThreadGetCurrentThreadAffinityMask()
 {
