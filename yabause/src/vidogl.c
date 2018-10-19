@@ -5698,7 +5698,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
       else {
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
-          if (varVdp2Regs->CCCTL & 0x100) { // Add Color
+          if ((varVdp2Regs->CCCTL>>8) & bit) { // Add Color
             info->blendmode |= VDP2_CC_ADD;
           }
           else {
@@ -5707,35 +5707,35 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
  
          switch            (id) {
           case NBG0:
-            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
             break;
           case NBG1:
-            linebuf[i] = ((((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255) /31) << 24;
             break;
           case NBG2:
-            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) *255) /31) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) *255) /31) << 24;
             break;
           case NBG3:
-            linebuf[i] = ((((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255) /31) << 24;
             break;
           case RBG0:
-            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) *255) /31) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) *255) /31) << 24;
             break;
           }
 
         }
         else {
-          linebuf[i] = 0xFF000000;
+          linebuf[line] = 0xFF000000;
         }
 
         if (Vdp2Lines[line >> line_shift].CLOFEN  & bit) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
-          linebuf[i] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
-          linebuf[i] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
-          linebuf[i] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
+          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
+          linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
+          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
         }
         else {
-          linebuf[i] |= 0x00808080;
+          linebuf[line] |= 0x00808080;
         }
 
       }
