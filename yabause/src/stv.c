@@ -13,6 +13,7 @@
 #include "cs0.h"
 #include "junzip.h"
 #include "yabause.h"
+#include "eeprom.h"
 #include "zlib/zlib.h"
 
 #define LOGSTV
