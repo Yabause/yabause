@@ -69,6 +69,7 @@ ifneq ($(OSX_GT_MOJAVE),YES)
 	fpic += -mmacosx-version-min=10.1
 endif
 	SHARED := -dynamiclib
+	FLAGS += -DARCH_IS_MACOSX=1
 ifeq ($(arch),ppc)
 	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
 endif

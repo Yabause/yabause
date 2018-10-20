@@ -36,6 +36,7 @@
 #include <semaphore.h>
 
 #ifdef ARCH_IS_MACOSX
+#include "pthread_barrier.h"
 pid_t gettid(void)
 {
     return syscall(SYS_gettid);
@@ -471,6 +472,7 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
 }
 
 #include <sys/syscall.h>
+#ifndef ARCH_IS_MACOSX
 //...
 int getCpuId() {
 
@@ -481,6 +483,7 @@ int getCpuId() {
         return (int) cpu;
     }
 }
+#endif
 
 int YabThreadGetCurrentThreadAffinityMask()
 {
