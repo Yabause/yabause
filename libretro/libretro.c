@@ -43,7 +43,7 @@ int game_height;
 static bool hle_bios_force = false;
 static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
-static int numthreads = 1;
+static int numthreads = 4;
 static bool stv_mode = false;
 
 struct retro_perf_callback perf_cb;
@@ -91,7 +91,6 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
-      { "kronos_numthreads", "Number of Threads (restart); 1|2|4|8|16|32" },
       { NULL, NULL },
    };
 
@@ -239,7 +238,7 @@ static int PERLIBRETROHandleEvents(void)
 {
    unsigned i = 0;
 
-  input_poll_cb();
+   input_poll_cb();
 
    for(i = 0; i < players; i++)
    {
@@ -617,19 +616,6 @@ void YuiErrorMsg(const char *string)
       log_cb(RETRO_LOG_ERROR, "Yabause: %s\n", string);
 }
 
-void YuiSetVideoAttribute(int type, int val)
-{
-   if (log_cb)
-      log_cb(RETRO_LOG_INFO, "Yabause called back to YuSetVideoAttribute.\n");
-}
-
-int YuiSetVideoMode(int width, int height, int bpp, int fullscreen)
-{
-   if (log_cb)
-      log_cb(RETRO_LOG_INFO, "Yabause called, it wants to set width of %d and height of %d.\n", width, height);
-    return 0;
-}
-
 void YuiSwapBuffers(void)
 {
    int current_width  = 320;
@@ -644,9 +630,9 @@ void YuiSwapBuffers(void)
 
    game_width  = current_width;
    game_height = current_height;
-}
 
-void YglOnUpdateColorRamWord(u32 addr) {}
+   video_cb(dispbuffer, game_width, game_height, game_width * 2);
+}
 
 /************************************
  * libretro implementation
@@ -802,24 +788,6 @@ static void check_variables(void)
          addon_cart_type = CART_DRAM8MBIT;
       else if (strcmp(var.value, "4M_ram") == 0 && addon_cart_type != CART_DRAM32MBIT)
          addon_cart_type = CART_DRAM32MBIT;
-   }
-
-   var.key = "kronos_numthreads";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "1") == 0 && numthreads != 1)
-         numthreads = 1;
-      else if (strcmp(var.value, "2") == 0 && numthreads != 2)
-         numthreads = 2;
-      else if (strcmp(var.value, "4") == 0 && numthreads != 4)
-         numthreads = 4;
-      else if (strcmp(var.value, "8") == 0 && numthreads != 8)
-         numthreads = 8;
-      else if (strcmp(var.value, "16") == 0 && numthreads != 16)
-         numthreads = 16;
-      else if (strcmp(var.value, "32") == 0 && numthreads != 32)
-         numthreads = 32;
    }
 
 }
@@ -1134,35 +1102,27 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
    int ret;
    struct retro_input_descriptor desc[] = {
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin 1" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Down" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Right" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "Button 1" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "Button 2" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Button 3" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Button 4" },
+      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
 
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,  "D-Pad Down" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT, "D-Pad Right" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,     "B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,     "C" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,     "X" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,     "A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,     "Y" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,     "Z" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,    "L" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,    "R" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin 2" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "Button 1" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "Button 2" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Button 3" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Button 4" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin" },
+      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
 
       { 0 },
    };
@@ -1282,13 +1242,9 @@ void retro_run(void)
 
    audio_size = SAMPLEFRAME;
 
-   input_poll_cb();
-
    //YabauseExec(); runs from handle events
    if(PERCore)
       PERCore->HandleEvents();
-
-	video_cb(dispbuffer, game_width, game_height, game_width * 2);
 }
 
 #ifdef ANDROID
