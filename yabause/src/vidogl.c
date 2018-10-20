@@ -347,7 +347,7 @@ static void executeDrawCell() {
 #endif
 }
 
-static waitforDrawCell() {
+static void waitforDrawCell() {
 #ifdef CELL_ASYNC
     while (YaGetQueueSize(cellq_end)!=0) YabThreadYield();
 #endif
@@ -7324,7 +7324,7 @@ int WaitVdp2Async(int sync) {
       {
         YabThreadYield();
       }
-      if (empty != 0) return;
+      if (empty != 0) return empty;
     }
 #endif
 #ifdef CELL_ASYNC

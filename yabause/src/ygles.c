@@ -1116,7 +1116,7 @@ void initLevels(YglLevel** levels) {
   int depth = _Ygl->depth;
 
   if ((*levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
-    return -1;
+    return;
   }
 
   memset(*levels,0,sizeof(YglLevel) * (depth+1) );
@@ -1128,7 +1128,7 @@ void initLevels(YglLevel** levels) {
     level[i].prg = (YglProgram*)malloc(sizeof(YglProgram)*level[i].prgcount);
     memset(  level[i].prg,0,sizeof(YglProgram)*level[i].prgcount);
     if (level[i].prg == NULL){ 
-      return -1; 
+      return; 
     }
     for(j = 0;j < level[i].prgcount; j++) {
       level[i].prg[j].prg=0;
@@ -2632,7 +2632,7 @@ void YglSetVdp2Window()
 }
 
 
-static updateColorOffset(Vdp2 *varVdp2Regs) {
+static void updateColorOffset(Vdp2 *varVdp2Regs) {
   if (varVdp2Regs->CLOFEN & 0x40)
   {
     // color offset enable
