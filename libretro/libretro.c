@@ -22,6 +22,7 @@
 //#include "scsp.h"
 #include "peripheral.h"
 #include "cdbase.h"
+#include "stv.h"
 #include "yabause.h"
 #include "yui.h"
 #include "cheat.h"
