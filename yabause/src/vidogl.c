@@ -5777,6 +5777,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   if (!(varVdp2Regs->BGON & 0x10)) info->enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
 
   if (!info->enable) {
+   free(rgb);
    return;
   }
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
@@ -5927,8 +5928,10 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->linecheck_mask = 0x01;
   info->priority = varVdp2Regs->PRINA & 0x7;
 
-  if (((Vdp2External.disptoggle & 0x20)==0) || (info->priority == 0))
+  if (((Vdp2External.disptoggle & 0x20)==0) || (info->priority == 0)) {
+    free(rgb);
     return;
+  }
 
   // Window Mode
   info->bEnWin0 = (varVdp2Regs->WCTLA >> 1) & 0x01;
@@ -6053,7 +6056,7 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
   RBGDrawInfo *rgb;
   for (line = 2; line<max; line++) {
     if (!sameVDP2Reg(RBG1, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
-      rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+      rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
       rgb->rgb_type = 0x04;
       rgb->info.startLine = lastLine;
       rgb->info.endLine = line;
@@ -6062,7 +6065,7 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
       Vdp2DrawRBG1_part(rgb, &Vdp2Lines[line-1]);
     }
   }
-  rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+  rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
   rgb->rgb_type = 0x04;
   rgb->info.startLine = lastLine;
   rgb->info.endLine = line;
@@ -6894,7 +6897,10 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->enable = 0;
 
   info->enable = ((varVdp2Regs->BGON & 0x10)!=0);
-  if (!info->enable) return;
+  if (!info->enable) {
+    free(rgb);
+    return;
+  }
 
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
 
@@ -6904,6 +6910,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     if (Vdp1Regs->TVMR & 0x02) {
       Vdp2ReadRotationTable(0, &Vdp1ParaA, varVdp2Regs, Vdp2Ram);
     }
+    free(rgb);
     return;
   }
 
@@ -7242,7 +7249,7 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
   RBGDrawInfo *rgb;
   for (line = 2; line<max; line++) {
     if (!sameVDP2Reg(RBG0, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
-      rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+      rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
       rgb->rgb_type = 0x0;
       rgb->info.startLine = lastLine;
       rgb->info.endLine = line;
@@ -7251,7 +7258,7 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
       Vdp2DrawRBG0_part(rgb, &Vdp2Lines[line-1]);
     }
   }
-  rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+  rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
   rgb->rgb_type = 0x0;
   rgb->info.startLine = lastLine;
   rgb->info.endLine = line;
