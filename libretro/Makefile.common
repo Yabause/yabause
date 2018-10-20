@@ -69,6 +69,9 @@ ifneq ($(HAVE_GRIFFIN), 1)
 ifeq ($(HAVE_THREADS),1)
 ifneq (,$(findstring unix,$(platform)))
 	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+else ifneq (,$(findstring osx,$(platform)))
+	SOURCES_C += $(SOURCE_DIR)/thr-linux.c \
+	$(SOURCE_DIR)/pthread_barrier.c
 else ifneq (,$(findstring win,$(platform)))
 	SOURCES_C += $(SOURCE_DIR)/thr-windows.c
 endif
@@ -89,8 +92,12 @@ SOURCES_C += \
 
 INCFLAGS += -I$(SOURCE_DIR)/gllibs/include
 
-LDFLAGS += -lGL -lGLESv2
-FLAGS += -DHAVE_LIBGL -D_OGLES3_ -DGLEW_STATIC -D_USEGLEW_
+ifneq (,$(findstring unix,$(platform)))
+	LDFLAGS += -lGL -lGLESv2
+else ifneq (,$(findstring win,$(platform)))
+	LDFLAGS += -lopengl32
+endif
+FLAGS += -DHAVE_LIBGL -D_OGLES3_ -DGLEW_STATIC -D_USEGLEW_ -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1
 endif
 
 ifneq ($(HAVE_GRIFFIN), 1)
@@ -127,18 +134,7 @@ C68KEXEC_SOURCE := $(SOURCE_DIR)/c68k/c68kexec.c
 C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.o)
 
 ifneq ($(STATIC_LINKING), 1)
-SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
-	 $(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
-	 $(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
-	 $(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
-	 $(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
-	 $(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
-	 $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c
-ifeq ($(HAVE_GL),1)
-SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
-         $(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
-	 $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
-endif
+SOURCES_C += $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c
 endif
 
 ifeq ($(HAVE_THREADS),1)

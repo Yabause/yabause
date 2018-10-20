@@ -159,8 +159,6 @@ u32 m68kcycle = 0;
 extern YabEventQueue * q_scsp_frame_start;
 extern YabEventQueue * q_scsp_finish;
 
-void setM68kCounter(u64 counter);
-
 #define CLOCK_SYNC_SHIFT (4)
 
 enum EnvelopeStates
