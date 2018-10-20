@@ -42,6 +42,7 @@ extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
 
 extern int WaitVdp2Async(int sync);
+extern int YglDrawBackScreen(float w, float h);
 
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs);
@@ -49,6 +50,8 @@ static void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs);
 static void executeTMVDP1(int in, int out);
 
 u32 * YglGetColorRamPointer();
+
+int YglGenFrameBuffer();
 
 void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture, Vdp2 *varVdp2Regs);
 
@@ -631,6 +634,7 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
   GLuint new_pixelBufferID;
   unsigned int * new_texture;
   GLuint error;
+  int dh;
 
 #ifdef VDP1_TEXTURE_ASYNC
   if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
@@ -660,7 +664,7 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
   glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_DYNAMIC_DRAW);
 
-  int dh = tm->height;
+  dh = tm->height;
   if (dh > height) dh = height;
 
   glBindBuffer(GL_COPY_READ_BUFFER, tm->pixelBufferID);
@@ -861,12 +865,12 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     //T1WriteByte(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, val);
     break;
   case 1:
-    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     break;
   case 2:
-    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     int rgb = !(((val>>16)>>15)&0x1);
-    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
     break;
   default:
     break;
@@ -884,10 +888,10 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       *(u8*)out = 0x0;
       break;
     case 1:
-      *(u16*)out = COLOR24TO16(T1ReadLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2));
+      *(u16*)out = COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2));
       break;
     case 2:
-      *(u32*)out = (COLOR24TO16(T1ReadLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2))<<16)|(COLOR24TO16(T1ReadLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4)));
+      *(u32*)out = (COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2))<<16)|(COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4)));
       break;
     default:
       break;
@@ -1134,9 +1138,9 @@ void initLevels(YglLevel** levels) {
       level[i].prg[j].prg=0;
       level[i].prg[j].currentQuad = 0;
       level[i].prg[j].maxQuad = 12 * 2000;
-      if ((level[i].prg[j].quads = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float))) == NULL){ return -1; }
-      if ((level[i].prg[j].textcoords = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return -1; }
-      if ((level[i].prg[j].vertexAttribute = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return -1; }
+      if ((level[i].prg[j].quads = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float))) == NULL){ return; }
+      if ((level[i].prg[j].textcoords = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return; }
+      if ((level[i].prg[j].vertexAttribute = (float *)malloc(level[i].prg[j].maxQuad * sizeof(float) * 2)) == NULL){ return; }
     }
   }
 }
@@ -3301,7 +3305,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
           if (level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow) ){
             level->prg[j].matrix = (GLfloat*)dmtx.m;
-            YglCleanUpWindow(&level->prg[j]);
+            YglCleanUpWindow(&level->prg[j], YglTM_vdp2);
           }
 
           level->prg[j].currentQuad = 0;
@@ -3484,7 +3488,7 @@ int YglSetupWindow(YglProgram * prg){
   return 0;
 }
 
-int YglCleanUpWindow(YglProgram * prg){
+int YglCleanUpWindow(YglProgram * prg, YglTextureManager *tm){
 
   int bwin_cc0 = (Vdp2Regs->WCTLD >> 9) & 0x01;
   int logwin_cc0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
@@ -3504,7 +3508,7 @@ int YglCleanUpWindow(YglProgram * prg){
       glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *)prg->textcoords);
       glDrawArrays(GL_TRIANGLES, 0, prg->currentQuad / 2);
       glDepthFunc(GL_GEQUAL);
-      Ygl_cleanupNormal(prg);
+      Ygl_cleanupNormal(prg, tm);
       glUseProgram(prg->prg);
     }
   }
@@ -3635,7 +3639,7 @@ void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs) {
         
         if (level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
           level->prg[j].matrix = (GLfloat*)dmtx.m;
-          YglCleanUpWindow(&level->prg[j]);
+          YglCleanUpWindow(&level->prg[j], YglTM_vdp2);
         }
 
         level->prg[j].currentQuad = 0;

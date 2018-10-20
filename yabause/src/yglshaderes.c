@@ -180,7 +180,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   return 0;
 }
 
-int Ygl_cleanupVdp1CommonParam(void * p){
+int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
   YglProgram * prg;
   prg = p;
   glDisableVertexAttribArray(prg->vaid);
@@ -249,7 +249,7 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   return 0;
 }
 
-int Ygl_cleanupNormal(void * p)
+int Ygl_cleanupNormal(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
@@ -335,7 +335,7 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   return 0;
 }
 
-int Ygl_cleanupNormalCram(void * p)
+int Ygl_cleanupNormalCram(void * p, YglTextureManager *tm)
 {
   glActiveTexture(GL_TEXTURE0);
   YglProgram * prg;
@@ -407,7 +407,7 @@ int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   return 0;
 }
 
-int Ygl_cleanupAddColCram(void * p)
+int Ygl_cleanupAddColCram(void * p, YglTextureManager *tm)
 {
   glActiveTexture(GL_TEXTURE0);
   YglProgram * prg;
@@ -515,7 +515,7 @@ int Ygl_uniformNormalCramLine(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs
   return 0;
 }
 
-int Ygl_cleanupNormalCramLine(void * p)
+int Ygl_cleanupNormalCramLine(void * p, YglTextureManager *tm)
 {
   glActiveTexture(GL_TEXTURE0);
   return 0;
@@ -612,7 +612,7 @@ int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   return 0;
 }
 
-int Ygl_cleanupMosaic(void * p)
+int Ygl_cleanupMosaic(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
@@ -627,7 +627,7 @@ int Ygl_cleanupMosaic(void * p)
   // call blit method
   YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
 
-  glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
+  glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
   return 0;
 }
@@ -849,7 +849,7 @@ int Ygl_uniformWindow(void * p )
    return 0;
 }
 
-int Ygl_cleanupWindow(void * p )
+int Ygl_cleanupWindow(void * p, YglTextureManager *tm )
 {
    YglProgram * prg;
    prg = p;
@@ -913,7 +913,7 @@ int Ygl_uniformVdp1Normal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
    return 0;
 }
 
-int Ygl_cleanupVdp1Normal(void * p )
+int Ygl_cleanupVdp1Normal(void * p, YglTextureManager *tm )
 {
    YglProgram * prg;
    prg = p;
@@ -1396,7 +1396,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs 
    return 0;
 }
 
-int Ygl_cleanupStartUserClip(void * p ){return 0;}
+int Ygl_cleanupStartUserClip(void * p, YglTextureManager *tm ){return 0;}
 
 int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
 {
@@ -1409,7 +1409,7 @@ int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
    return 0;
 }
 
-int Ygl_cleanupEndUserClip(void * p ){return 0;}
+int Ygl_cleanupEndUserClip(void * p, YglTextureManager *tm ){return 0;}
 
 
 
@@ -2266,7 +2266,7 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float t
   return 0;
 }
 
-int Ygl_cleanupVDP2DrawFramebuffer_addcolor_shadow(void * p){
+int Ygl_cleanupVDP2DrawFramebuffer_addcolor_shadow(void * p, YglTextureManager *tm){
   
   return 0;
 }
@@ -2280,7 +2280,7 @@ int Ygl_uniformAddBlend(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
    return 0;
 }
 
-int Ygl_cleanupAddBlend(void * p )
+int Ygl_cleanupAddBlend(void * p, YglTextureManager *tm)
 {
    glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
    return 0;
@@ -2401,7 +2401,7 @@ int Ygl_uniformLinecolorInsert(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   return 0;
 }
 
-int Ygl_cleanupLinecolorInsert(void * p)
+int Ygl_cleanupLinecolorInsert(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
