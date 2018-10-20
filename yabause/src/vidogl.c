@@ -6665,7 +6665,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
     info.enable |= info.display[i];
   }
   if (!info.enable) return;
-
   info.transparencyenable = !(varVdp2Regs->BGON & 0x400);
   info.specialprimode = (varVdp2Regs->SFPRMD >> 4) & 0x3;
 

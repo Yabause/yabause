@@ -3955,6 +3955,9 @@ void YglSetBackColor(int size) {
 void YglChangeResolution(int w, int h) {
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
+
+  if (( h > 256) &&  (_Ygl->resolution_mode == 4)) _Ygl->resolution_mode = 2;; //Do not use 4x rendering when original res is already 2x
+
        YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
          glDeleteFramebuffers(1, &_Ygl->smallfbo);
@@ -3984,17 +3987,12 @@ void YglChangeResolution(int w, int h) {
        glDeleteTextures(1, &_Ygl->upfbotex);
        _Ygl->upfbotex = 0;
      }
+
   _Ygl->width = w * _Ygl->resolution_mode;
   _Ygl->height = h * _Ygl->resolution_mode;
-  int maxWidth = (GlWidth*3 > GlHeight*4)?GlHeight*4/3:GlWidth;
-  int maxHeight = (GlWidth*3 > GlHeight*4)?GlHeight:GlWidth*3/4;
-  if (_Ygl->width > maxWidth) _Ygl->width = maxWidth;
-  if (_Ygl->height > maxHeight) _Ygl->height = maxHeight;
-  if ((_Ygl->width == maxWidth) || (_Ygl->height == maxHeight)) _Ygl->upmode = UP_NONE;
+
   rebuild_frame_buffer = 1;
 
-  _Ygl->width &= ~1;
-  _Ygl->height &= ~1;
   _Ygl->rwidth = w;
   _Ygl->rheight = h;
 }
