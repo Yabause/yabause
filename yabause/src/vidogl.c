@@ -7262,6 +7262,8 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
 
 //////////////////////////////////////////////////////////////////////////////
 #define BG_PROFILE 0
+
+#define VDP2_DRAW_LINE 0
 static void VIDOGLVdp2DrawScreens(void)
 {
   u64 before;
@@ -7275,23 +7277,23 @@ static void VIDOGLVdp2DrawScreens(void)
 
   YglUpdateColorRam();
 
-  Vdp2GenerateWindowInfo(&Vdp2Lines[0]);
+  Vdp2GenerateWindowInfo(&Vdp2Lines[VDP2_DRAW_LINE]);
 
 LOG_ASYN("===================================\n");
-  Vdp2DrawBackScreen(&Vdp2Lines[0]);
-  Vdp2DrawLineColorScreen(&Vdp2Lines[0]);
+  Vdp2DrawBackScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
+  Vdp2DrawLineColorScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
 
-  Vdp2DrawRBG0(&Vdp2Lines[0]);
+  Vdp2DrawRBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("RBG0 end");
-  Vdp2DrawNBG0(&Vdp2Lines[0]);
+  Vdp2DrawNBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG0 end");
-  Vdp2DrawNBG1(&Vdp2Lines[0]);
+  Vdp2DrawNBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG1 end");
-  Vdp2DrawNBG2(&Vdp2Lines[0]);
+  Vdp2DrawNBG2(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG2 end");
-  Vdp2DrawNBG3(&Vdp2Lines[0]);
+  Vdp2DrawNBG3(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG3 end");
-  Vdp2DrawRBG1(&Vdp2Lines[0]);
+  Vdp2DrawRBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("RBG1 end");
 
 LOG_ASYN("*********************************\n");
