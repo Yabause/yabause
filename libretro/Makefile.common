@@ -134,7 +134,9 @@ C68KEXEC_SOURCE := $(SOURCE_DIR)/c68k/c68kexec.c
 C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.o)
 
 ifneq ($(STATIC_LINKING), 1)
-SOURCES_C += $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c
+SOURCES_C += $(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
+	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c
 endif
 
 ifeq ($(HAVE_THREADS),1)

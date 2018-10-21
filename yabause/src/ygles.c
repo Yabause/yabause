@@ -1177,16 +1177,13 @@ int YglInit(int width, int height, unsigned int depth) {
 
 
 
-#if defined(_USEGLEW_)
+#if defined(_USEGLEW_) && !defined(__LIBRETRO__)
   glewExperimental=GL_TRUE;
   if (glewInit() != 0) {
     printf("Glew can not init\n");
     YabSetError(YAB_ERR_CANNOTINIT, _("Glew"));
     exit(-1);
   }
-#endif
-#if defined (__LIBRETRO__)
-   // do something to get GL context from retroarch (?)
 #endif
 
 #if defined(__USE_OPENGL_DEBUG__)

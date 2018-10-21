@@ -68,6 +68,7 @@ ifneq ($(OSX_GT_MOJAVE),YES)
 	#this breaks compiling on Mac OS Mojave
 	fpic += -mmacosx-version-min=10.1
 endif
+	FLAGS += -DARCH_IS_MACOSX=1
 	SHARED := -dynamiclib
 	FLAGS += -DARCH_IS_MACOSX=1
 ifeq ($(arch),ppc)
@@ -270,7 +271,7 @@ $(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
 ${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C) $(SOURCE_DIR)/c68k/c68kexec.c
 include $(THEOS_MAKE_PATH)/library.mk
 else
-all: generate-files $(TARGET)
+all: $(TARGET)
 
 generate-files:
 	cp $(SOURCE_DIR)/zlib/zconf.h.in $(SOURCE_DIR)/zlib/zconf.h;\
@@ -303,9 +304,6 @@ $(C68KEXEC_OBJECT): $(C68KEXEC_SOURCE)
 
 clean:
 	rm -f $(TARGET) $(OBJECTS)
-	rm -f $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(M68KMAKE_INC_SOURCES)
-	rm -f $(SOURCE_DIR)/c68k/$(GEN68K_EXE) $(GEN68K_INC_SOURCES)
-	rm -f $(SOURCE_DIR)/zlib/zconf.h
 
 .PHONY: clean
 endif
