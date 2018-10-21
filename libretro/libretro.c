@@ -647,7 +647,12 @@ static void context_reset(void)
          log_cb(RETRO_LOG_INFO, "Context reset!\n");
    
       first_ctx_reset = 0;
+      glewExperimental=GL_TRUE;
+      if (glewInit() != 0)
+        log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
+      log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
+      log_cb(RETRO_LOG_INFO, "Kronos init done\n");
       YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
       VIDSoftSetBilinear(1);
    }
@@ -659,7 +664,9 @@ static void context_destroy(void)
 
 static bool retro_init_hw_context(void)
 {
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+   hw_render.version_major = 3;
+   hw_render.version_minor = 3;
    hw_render.context_reset = context_reset;
    hw_render.context_destroy = context_destroy;
    hw_render.depth = true;
@@ -686,6 +693,7 @@ void YuiSwapBuffers(void)
    game_height = current_height;
 
 #ifdef HAVE_LIBGL
+   log_cb(RETRO_LOG_INFO, "Kronos swap\n");
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
 #else
    video_cb(dispbuffer, game_width, game_height, game_width * 2);
@@ -1114,8 +1122,6 @@ bool retro_load_game(const struct retro_game_info *info)
    } else {
       if (retro_init_hw_context())
       {
-         if (glewInit() != 0)
-            log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
          yinit.vidcoretype  = VIDCORE_OGL;
       }
    }
