@@ -365,7 +365,7 @@ typedef struct {
 
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
 int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs);
-int Ygl_cleanupVdp1CommonParam(void * p);
+int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm);
 void YglUpdateVDP1FB(void);
 
 // std140
@@ -673,12 +673,12 @@ int Ygl_uniformWindow(void * p );
 int YglProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 void Ygl_setNormalshader(YglProgram * prg);
-int Ygl_cleanupNormal(void * p);
+int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
 
 int YglGenerateOriginalBuffer();
 
 int YglSetupWindow(YglProgram * prg);
-int YglCleanUpWindow(YglProgram * prg);
+int YglCleanUpWindow(YglProgram * prg, YglTextureManager *tm);
 
 void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();

@@ -420,6 +420,7 @@ void SH2PowerOn(SH2_struct *context);
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles);
 void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles);
 void SH2SendInterrupt(SH2_struct *context, u8 vector, u8 level);
+void SH2RemoveInterrupt(SH2_struct *context, u8 vector, u8 level);
 void SH2NMI(SH2_struct *context);
 
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
@@ -440,8 +441,8 @@ u32 CacheReadLong(SH2_struct *context, u8* mem, u32 addr);
 void CacheWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val);
 void CacheWriteShort(SH2_struct *context, u8* mem, u32 addr, u16 val);
 void CacheWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val);
-void CacheInvalidate(SH2_struct *context,u32 addr);
 #endif
+void CacheInvalidate(SH2_struct *context,u32 addr);
 
 void DMAExec(SH2_struct *context);
 void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);

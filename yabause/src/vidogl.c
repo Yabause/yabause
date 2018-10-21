@@ -347,7 +347,7 @@ static void executeDrawCell() {
 #endif
 }
 
-static waitforDrawCell() {
+static void waitforDrawCell() {
 #ifdef CELL_ASYNC
     while (YaGetQueueSize(cellq_end)!=0) YabThreadYield();
 #endif
@@ -5698,7 +5698,7 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
       else {
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
-          if (varVdp2Regs->CCCTL & 0x100) { // Add Color
+          if ((varVdp2Regs->CCCTL>>8) & bit) { // Add Color
             info->blendmode |= VDP2_CC_ADD;
           }
           else {
@@ -5707,35 +5707,35 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
  
          switch            (id) {
           case NBG0:
-            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
             break;
           case NBG1:
-            linebuf[i] = ((((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255) /31) << 24;
             break;
           case NBG2:
-            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) *255) /31) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) *255) /31) << 24;
             break;
           case NBG3:
-            linebuf[i] = ((((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255) /31) << 24;
             break;
           case RBG0:
-            linebuf[i] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) *255) /31) << 24;
+            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) *255) /31) << 24;
             break;
           }
 
         }
         else {
-          linebuf[i] = 0xFF000000;
+          linebuf[line] = 0xFF000000;
         }
 
         if (Vdp2Lines[line >> line_shift].CLOFEN  & bit) {
           ReadVdp2ColorOffset(&Vdp2Lines[line >> line_shift], info, bit);
-          linebuf[i] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
-          linebuf[i] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
-          linebuf[i] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
+          linebuf[line] |= ((int)(128.0f + (info->cor / 2.0)) & 0xFF) << 16;
+          linebuf[line] |= ((int)(128.0f + (info->cog / 2.0)) & 0xFF) << 8;
+          linebuf[line] |= ((int)(128.0f + (info->cob / 2.0)) & 0xFF) << 0;
         }
         else {
-          linebuf[i] |= 0x00808080;
+          linebuf[line] |= 0x00808080;
         }
 
       }
@@ -5777,6 +5777,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   if (!(varVdp2Regs->BGON & 0x10)) info->enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
 
   if (!info->enable) {
+   free(rgb);
    return;
   }
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
@@ -5927,8 +5928,10 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->linecheck_mask = 0x01;
   info->priority = varVdp2Regs->PRINA & 0x7;
 
-  if (((Vdp2External.disptoggle & 0x20)==0) || (info->priority == 0))
+  if (((Vdp2External.disptoggle & 0x20)==0) || (info->priority == 0)) {
+    free(rgb);
     return;
+  }
 
   // Window Mode
   info->bEnWin0 = (varVdp2Regs->WCTLA >> 1) & 0x01;
@@ -6053,7 +6056,7 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
   RBGDrawInfo *rgb;
   for (line = 2; line<max; line++) {
     if (!sameVDP2Reg(RBG1, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
-      rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+      rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
       rgb->rgb_type = 0x04;
       rgb->info.startLine = lastLine;
       rgb->info.endLine = line;
@@ -6062,7 +6065,7 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
       Vdp2DrawRBG1_part(rgb, &Vdp2Lines[line-1]);
     }
   }
-  rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+  rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
   rgb->rgb_type = 0x04;
   rgb->info.startLine = lastLine;
   rgb->info.endLine = line;
@@ -6665,7 +6668,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
     info.enable |= info.display[i];
   }
   if (!info.enable) return;
-
   info.transparencyenable = !(varVdp2Regs->BGON & 0x400);
   info.specialprimode = (varVdp2Regs->SFPRMD >> 4) & 0x3;
 
@@ -6895,7 +6897,10 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->enable = 0;
 
   info->enable = ((varVdp2Regs->BGON & 0x10)!=0);
-  if (!info->enable) return;
+  if (!info->enable) {
+    free(rgb);
+    return;
+  }
 
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
 
@@ -6905,6 +6910,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     if (Vdp1Regs->TVMR & 0x02) {
       Vdp2ReadRotationTable(0, &Vdp1ParaA, varVdp2Regs, Vdp2Ram);
     }
+    free(rgb);
     return;
   }
 
@@ -7243,7 +7249,7 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
   RBGDrawInfo *rgb;
   for (line = 2; line<max; line++) {
     if (!sameVDP2Reg(RBG0, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
-      rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+      rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
       rgb->rgb_type = 0x0;
       rgb->info.startLine = lastLine;
       rgb->info.endLine = line;
@@ -7252,7 +7258,7 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
       Vdp2DrawRBG0_part(rgb, &Vdp2Lines[line-1]);
     }
   }
-  rgb = (RBGDrawInfo *)malloc(sizeof(RBGDrawInfo));
+  rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
   rgb->rgb_type = 0x0;
   rgb->info.startLine = lastLine;
   rgb->info.endLine = line;
@@ -7263,6 +7269,8 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
 
 //////////////////////////////////////////////////////////////////////////////
 #define BG_PROFILE 0
+
+#define VDP2_DRAW_LINE 0
 static void VIDOGLVdp2DrawScreens(void)
 {
   u64 before;
@@ -7276,23 +7284,23 @@ static void VIDOGLVdp2DrawScreens(void)
 
   YglUpdateColorRam();
 
-  Vdp2GenerateWindowInfo(&Vdp2Lines[0]);
+  Vdp2GenerateWindowInfo(&Vdp2Lines[VDP2_DRAW_LINE]);
 
 LOG_ASYN("===================================\n");
-  Vdp2DrawBackScreen(&Vdp2Lines[0]);
-  Vdp2DrawLineColorScreen(&Vdp2Lines[0]);
+  Vdp2DrawBackScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
+  Vdp2DrawLineColorScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
 
-  Vdp2DrawRBG0(&Vdp2Lines[0]);
+  Vdp2DrawRBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("RBG0 end");
-  Vdp2DrawNBG0(&Vdp2Lines[0]);
+  Vdp2DrawNBG3(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG0 end");
-  Vdp2DrawNBG1(&Vdp2Lines[0]);
+  Vdp2DrawNBG2(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG1 end");
-  Vdp2DrawNBG2(&Vdp2Lines[0]);
+  Vdp2DrawNBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG2 end");
-  Vdp2DrawNBG3(&Vdp2Lines[0]);
+  Vdp2DrawNBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("NBG3 end");
-  Vdp2DrawRBG1(&Vdp2Lines[0]);
+  Vdp2DrawRBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
   FrameProfileAdd("RBG1 end");
 
 LOG_ASYN("*********************************\n");
@@ -7323,7 +7331,7 @@ int WaitVdp2Async(int sync) {
       {
         YabThreadYield();
       }
-      if (empty != 0) return;
+      if (empty != 0) return empty;
     }
 #endif
 #ifdef CELL_ASYNC

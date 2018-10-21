@@ -103,7 +103,7 @@ static u16 FASTCALL FetchVram(u32 addr)
   return T1ReadWord(Vdp1Ram, addr);
 }
 
-opcode_func cacheCode[6][0x80000];
+opcode_func cacheCode[7][0x80000];
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
@@ -129,12 +129,12 @@ void biosDecode(SH2_struct *context) {
 int SH2KronosInterpreterInit()
 {
    int i,j;
-   for(i=1; i<5; i++)
+   for(i=1; i<6; i++)
      for(j=0; j<0x80000; j++)
        cacheCode[i][j] = decode;
 
    for(j=0; j<0x80000; j++)
-     cacheCode[5][j] = SH2undecoded;
+     cacheCode[6][j] = SH2undecoded;
    
    for(j=0; j<0x80000; j++) //Special BAckupHandled case
      cacheCode[0][j] = biosDecode;
@@ -142,7 +142,7 @@ int SH2KronosInterpreterInit()
    for (i = 0; i < 0x1000; i++)
    {
       krfetchlist[i] = FetchInvalid;
-      cacheId[i] = 5;
+      cacheId[i] = 6;
       if (((i>>8) == 0x0) || ((i>>8) == 0x2)) {
         switch (i&0xFF)
         {
@@ -183,13 +183,13 @@ int SH2KronosInterpreterInit()
             break;
           default:
             krfetchlist[i] = FetchInvalid;
-            cacheId[i] = 5;
+            cacheId[i] = 6;
             break;
         }
      }
      if ((i>>8) == 0xC) {
        krfetchlist[i] = SH2MappedMemoryReadWord;
-       cacheId[i] = 1;
+       cacheId[i] = 5;
      }
    }
    return 0;
