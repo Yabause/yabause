@@ -29,6 +29,7 @@
 #include "m68kcore.h"
 #include "vidogl.h"
 #include "vidsoft.h"
+#include "ygl.h"
 #include "sh2int_kronos.h"
 
 yabauseinit_struct yinit;
@@ -1113,6 +1114,8 @@ bool retro_load_game(const struct retro_game_info *info)
    } else {
       if (retro_init_hw_context())
       {
+         if (glewInit() != 0)
+            log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
          yinit.vidcoretype  = VIDCORE_OGL;
       }
    }
@@ -1218,6 +1221,8 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
    } else {
       if (retro_init_hw_context())
       {
+         if (glewInit() != 0)
+            log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
          yinit.vidcoretype  = VIDCORE_OGL;
       }
    }
