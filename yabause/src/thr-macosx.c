@@ -122,10 +122,12 @@ void YabThreadSleep(void) {
     pthread_cond_wait(&thd->cond, &thd->mutex);
 }
 
+#if 0
 void YabThreadSleep(unsigned int id) {
    /* Wait on the condvar... */
    pthread_cond_wait(&thread_handle[id].cond, &thread_handle[id].mutex);
 }
+#endif
 
 void YabThreadWake(unsigned int id) {
     if(!thread_handle[id].running)
