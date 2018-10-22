@@ -652,6 +652,10 @@ static void context_reset(void)
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
       YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
       VIDSoftSetBilinear(1);
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
+      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_4XBRZ);
+      VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, 0); //This is not working
    }
 }
 
@@ -1121,8 +1125,10 @@ bool retro_load_game(const struct retro_game_info *info)
       if (retro_init_hw_context())
       {
          is_gl_enabled = true;
+if (log_cb)
+         log_cb(RETRO_LOG_INFO, "GL Enabled!\n");
+   
          yinit.vidcoretype  = VIDCORE_OGL;
-         yinit.resolution_mode = 1;
       }
    }
    if (!is_gl_enabled)
@@ -1223,7 +1229,6 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
       {
          is_gl_enabled = true;
          yinit.vidcoretype  = VIDCORE_OGL;
-         yinit.resolution_mode = 1;
       }
    }
    if (!is_gl_enabled)
