@@ -43,6 +43,7 @@ static int addon_cart_type = CART_NONE;
 static int numthreads = 4;
 static bool stv_mode = false;
 static bool is_swapped = false;
+static bool is_gl_enabled = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -54,9 +55,7 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 
-#ifdef HAVE_LIBGL
 static struct retro_hw_render_callback hw_render;
-#endif
 
 #define BPRINTF_BUFFER_SIZE 512
 #define __cdecl
@@ -599,9 +598,7 @@ SoundInterface_struct *SNDCoreList[] = {
 
 VideoInterface_struct *VIDCoreList[] = {
     //&VIDDummy,
-#ifdef HAVE_LIBGL
     &VIDOGL,
-#endif
     &VIDSoft,
     NULL
 };
@@ -622,9 +619,8 @@ void YuiErrorMsg(const char *string)
       log_cb(RETRO_LOG_ERROR, "Yabause: %s\n", string);
 }
 
-static int first_ctx_reset = 0;
+static int first_ctx_reset = 1;
 
-#ifdef HAVE_LIBGL
 int YuiUseOGLOnThisThread()
 {
   return 0;
@@ -665,9 +661,17 @@ static void context_destroy(void)
 
 static bool retro_init_hw_context(void)
 {
+#ifdef _OGLES3_
    hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
    hw_render.version_major = 3;
    hw_render.version_minor = 0;
+#else
+   // Return false for now
+   return false;
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+   hw_render.version_major = 3;
+   hw_render.version_minor = 3;
+#endif
    hw_render.context_reset = context_reset;
    hw_render.context_destroy = context_destroy;
    hw_render.depth = true;
@@ -676,7 +680,6 @@ static bool retro_init_hw_context(void)
       return false;
    return true;
 }
-#endif
 
 void YuiSwapBuffers(void)
 {
@@ -694,13 +697,11 @@ void YuiSwapBuffers(void)
    game_height = current_height;
 
    is_swapped = true;
-   log_cb(RETRO_LOG_INFO, "Kronos swap\n");
 
-#ifdef HAVE_LIBGL
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
-#else
-   video_cb(dispbuffer, game_width, game_height, game_width * 2);
-#endif
+   if(is_gl_enabled)
+      video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
+   else
+      video_cb(dispbuffer, game_width, game_height, game_width * 2);
 }
 
 /************************************
@@ -1117,24 +1118,22 @@ bool retro_load_game(const struct retro_game_info *info)
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-#ifdef HAVE_LIBGL
    enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+   if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
    {
-      yinit.vidcoretype  = VIDCORE_SOFT;
-   } else {
       if (retro_init_hw_context())
       {
+         is_gl_enabled = true;
          yinit.vidcoretype  = VIDCORE_OGL;
+         yinit.resolution_mode = 1;
       }
    }
-#else
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-   environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
-   yinit.vidcoretype     = VIDCORE_SOFT;
-#endif
-
-   first_ctx_reset = 1;
+   if (!is_gl_enabled)
+   {
+      enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
+      environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
+      yinit.vidcoretype     = VIDCORE_SOFT;
+   }
 
    yinit.cdcoretype      = CDCORE_ISO;
    yinit.cdpath          = full_path;
@@ -1166,15 +1165,13 @@ bool retro_load_game(const struct retro_game_info *info)
 #endif
    yinit.useVdp1cache    = 0;
    yinit.usecache        = 0;
-#ifdef HAVE_LIBGL
-   yinit.resolution_mode = 1;
-#endif
 
-#ifndef HAVE_LIBGL
-   ret = YabauseInit(&yinit);
-   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
-   VIDSoftSetBilinear(1);
-#endif
+   if (!is_gl_enabled)
+   {
+      ret = YabauseInit(&yinit);
+      YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+      VIDSoftSetBilinear(1);
+   }
 
    return (ret == 0);
 }
@@ -1222,26 +1219,22 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-#ifdef HAVE_LIBGL
    enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+   if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
    {
-      yinit.vidcoretype  = VIDCORE_SOFT;
-   } else {
       if (retro_init_hw_context())
       {
-         if (glewInit() != 0)
-            log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
+         is_gl_enabled = true;
          yinit.vidcoretype  = VIDCORE_OGL;
+         yinit.resolution_mode = 1;
       }
    }
-#else
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-   environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
-   yinit.vidcoretype     = VIDCORE_SOFT;
-#endif
-
-   first_ctx_reset = 1;
+   if (!is_gl_enabled)
+   {
+      enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
+      environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
+      yinit.vidcoretype     = VIDCORE_SOFT;
+   }
 
    // Store the game "id", seems necessary (?)
    int stvgame = -1;
@@ -1279,15 +1272,13 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 #endif
    yinit.useVdp1cache    = 0;
    yinit.usecache        = 0;
-#ifdef HAVE_LIBGL
-   yinit.resolution_mode = 1;
-#endif
 
-#ifndef HAVE_LIBGL
-   ret = YabauseInit(&yinit);
-   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
-   VIDSoftSetBilinear(1);
-#endif
+   if (!is_gl_enabled)
+   {
+      ret = YabauseInit(&yinit);
+      YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+      VIDSoftSetBilinear(1);
+   }
 
    return (ret == 0);
 }
@@ -1299,11 +1290,7 @@ void retro_unload_game(void)
 
 unsigned retro_get_region(void)
 {
-#ifdef HAVE_LIBGL
    return RETRO_REGION_NTSC;
-#else
-   return Cs2GetRegionID() > 6 ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
-#endif
 }
 
 unsigned retro_api_version(void)
@@ -1360,13 +1347,12 @@ void retro_run(void)
    if(PERCore)
       PERCore->HandleEvents();
 
-#ifdef HAVE_LIBGL
-   if(!is_swapped)
+   if(!is_swapped && is_gl_enabled)
       video_cb(0, game_width, game_height, 0);
-#else
-   if(!is_swapped)
+
+   if(!is_swapped && !is_gl_enabled)
       video_cb(0, game_width, game_height, game_width * 2);
-#endif
+
    is_swapped = false;
 }
 

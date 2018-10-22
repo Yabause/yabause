@@ -4,7 +4,7 @@ HAVE_THREADS = 1
 HAVE_GRIFFIN = 0
 HAVE_SSE = 0
 HAVE_GL = 1
-HAVE_GL_DEBUG = 1
+HAVE_GL_DEBUG = 0
 
 ifeq ($(platform),)
 	platform = unix

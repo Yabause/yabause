@@ -31,7 +31,7 @@
 #include "vdp2.h"
 #include "titan/titan.h"
 
-#ifdef HAVE_LIBGL
+#if defined(HAVE_LIBGL) && !defined(__LIBRETRO__) 
 #define USE_OPENGL
 #endif
 
