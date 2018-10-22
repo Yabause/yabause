@@ -661,23 +661,20 @@ static void context_destroy(void)
 
 static bool retro_init_hw_context(void)
 {
-#ifdef _OGLES3_
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 0;
-#else
-   // Return false for now
-   return false;
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 3;
-#endif
    hw_render.context_reset = context_reset;
    hw_render.context_destroy = context_destroy;
    hw_render.depth = true;
    hw_render.bottom_left_origin = true;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
-      return false;
+   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
+   hw_render.version_major = 3;
+   hw_render.version_minor = 0;
+   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render)) {
+     hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+     hw_render.version_major = 3;
+     hw_render.version_minor = 3;
+     if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
+       return false;
+   }
    return true;
 }
 

@@ -577,7 +577,8 @@ typedef struct {
    RESOLUTION_MODE resolution_mode;
    GLsync sync;
    GLsync syncVdp1[2];
-    GLuint default_fbo;
+   GLuint default_fbo;
+   GLuint vao;
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;
    int vpd1_running;
