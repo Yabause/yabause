@@ -659,7 +659,6 @@ static void context_reset(void)
       YabauseInit(&yinit);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
       retro_reinit_av_info();
-      VIDSoftSetBilinear(1);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_4XBRZ);
