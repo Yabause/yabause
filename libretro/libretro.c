@@ -41,6 +41,7 @@ static bool hle_bios_force = false;
 static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
 static int numthreads = 4;
+static int retro_region = RETRO_REGION_NTSC;
 static bool stv_mode = false;
 static bool is_gl_enabled = false;
 
@@ -635,6 +636,14 @@ int YuiGetFB(void)
   return hw_render.get_current_framebuffer();
 }
 
+void retro_reinit_av_info(void)
+{
+    if (Cs2GetRegionID() == 0xC) retro_region = RETRO_REGION_PAL;
+    struct retro_system_av_info av_info;
+    retro_get_system_av_info(&av_info);
+    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
+}
+
 static void context_reset(void)
 {
    if (first_ctx_reset == 1)
@@ -649,7 +658,7 @@ static void context_reset(void)
       log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
-      YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+      retro_reinit_av_info();
       VIDSoftSetBilinear(1);
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
@@ -719,7 +728,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
    info->library_version  = "v1.4.5" GIT_VERSION;
    info->need_fullpath    = true;
-   info->valid_extensions = "bin|cue|iso";
+   info->valid_extensions = "bin|wav|cue|iso";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -727,7 +736,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    memset(info, 0, sizeof(*info));
 
    info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60.0f : 50.0f;
-   info->timing.sample_rate    = 44100;
+   info->timing.sample_rate    = SAMPLERATE;
    info->geometry.base_width   = game_width;
    info->geometry.base_height  = game_height;
    info->geometry.max_width    = 704;
@@ -1171,7 +1180,7 @@ if (log_cb)
    if (!is_gl_enabled)
    {
       ret = YabauseInit(&yinit);
-      YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+      retro_reinit_av_info();
       VIDSoftSetBilinear(1);
    }
 
@@ -1277,7 +1286,7 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
    if (!is_gl_enabled)
    {
       ret = YabauseInit(&yinit);
-      YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
+      retro_reinit_av_info();
       VIDSoftSetBilinear(1);
    }
 
@@ -1291,7 +1300,7 @@ void retro_unload_game(void)
 
 unsigned retro_get_region(void)
 {
-   return RETRO_REGION_NTSC;
+   return retro_region;
 }
 
 unsigned retro_api_version(void)
