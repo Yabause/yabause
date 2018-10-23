@@ -40,6 +40,9 @@ int game_height;
 static bool hle_bios_force = false;
 static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
+static int filter_mode = AA_NONE;
+static int upscale_mode = UP_NONE;
+static int resolution_mode = RES_ORIGINAL;
 static int numthreads = 4;
 static int retro_region = RETRO_REGION_NTSC;
 static bool stv_mode = false;
@@ -88,6 +91,9 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
+      { "kronos_filter_mode", "Filter Mode (restart); none|bilinear|bicubic" },
+      { "kronos_upscale_mode", "Upscale Mode (restart); none|hq4x|4xbrz|2xbrz" },
+      { "kronos_resolution_mode", "Resolution Mode (restart); original|2x|4x" },
       { NULL, NULL },
    };
 
@@ -646,22 +652,21 @@ void retro_reinit_av_info(void)
 
 static void context_reset(void)
 {
+   if (log_cb)
+      log_cb(RETRO_LOG_INFO, "Context reset!\n");
    if (first_ctx_reset == 1)
    {
-      if (log_cb)
-         log_cb(RETRO_LOG_INFO, "Context reset!\n");
-   
       first_ctx_reset = 0;
       glewExperimental=GL_TRUE;
       if (glewInit() != 0)
-        log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
+        log_cb(RETRO_LOG_ERROR, "Glew can not init\n"); // Actually, glewInit fail in gles context, however it is rendering properly (???)
       log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
       retro_reinit_av_info();
-      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, AA_BILINEAR_FILTER);
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, RES_2x);
-      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, UP_4XBRZ);
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, 0); //This is not working
    }
 }
@@ -866,6 +871,44 @@ static void check_variables(void)
          addon_cart_type = CART_DRAM8MBIT;
       else if (strcmp(var.value, "4M_ram") == 0 && addon_cart_type != CART_DRAM32MBIT)
          addon_cart_type = CART_DRAM32MBIT;
+   }
+
+   var.key = "kronos_filter_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "none") == 0 && filter_mode != AA_NONE)
+         filter_mode = AA_NONE;
+      else if (strcmp(var.value, "bilinear") == 0 && filter_mode != AA_BILINEAR_FILTER)
+         filter_mode = AA_BILINEAR_FILTER;
+      else if (strcmp(var.value, "bicubic") == 0 && filter_mode != AA_BICUBIC_FILTER)
+         filter_mode = AA_BICUBIC_FILTER;
+   }
+
+   var.key = "kronos_upscale_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "none") == 0 && upscale_mode != UP_NONE)
+         upscale_mode = UP_NONE;
+      else if (strcmp(var.value, "hq4x") == 0 && upscale_mode != UP_HQ4X)
+         upscale_mode = UP_HQ4X;
+      else if (strcmp(var.value, "4xbrz") == 0 && upscale_mode != UP_4XBRZ)
+         upscale_mode = UP_4XBRZ;
+      else if (strcmp(var.value, "2xbrz") == 0 && upscale_mode != UP_2XBRZ)
+         upscale_mode = UP_2XBRZ;
+   }
+
+   var.key = "kronos_resolution_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "original") == 0 && resolution_mode != RES_ORIGINAL)
+         resolution_mode = RES_ORIGINAL;
+      else if (strcmp(var.value, "2x") == 0 && resolution_mode != RES_2x)
+         resolution_mode = RES_2x;
+      else if (strcmp(var.value, "4x") == 0 && resolution_mode != RES_4x)
+         resolution_mode = RES_4x;
    }
 
 }
@@ -1348,7 +1391,12 @@ void retro_run(void)
    bool updated  = false;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+   {
       check_variables();
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
+   }
 
    audio_size = SAMPLEFRAME;
 
