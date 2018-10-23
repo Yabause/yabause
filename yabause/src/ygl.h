@@ -599,6 +599,7 @@ typedef struct {
 }  Ygl;
 
 extern Ygl * _Ygl;
+extern int opengl_mode; // 0 => gles3 , 1 => gl3.3
 
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
