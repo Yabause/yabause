@@ -675,7 +675,7 @@ endif()
 # Yabause Arch
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	add_definitions(-DARCH_IS_MACOSX=1)
-	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-linux.c /*thr-dummy.c*/ )
+	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-linux.c pthread_barrier.c )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	add_definitions(-DARCH_IS_FREEBSD=1)
 	set(kronos_SOURCES ${kronos_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)

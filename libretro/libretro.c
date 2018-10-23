@@ -42,7 +42,6 @@ static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
 static int numthreads = 4;
 static bool stv_mode = false;
-static bool is_swapped = false;
 static bool is_gl_enabled = false;
 
 struct retro_perf_callback perf_cb;
@@ -665,6 +664,7 @@ static void context_destroy(void)
 
 static bool retro_init_hw_context(void)
 {
+   opengl_mode = 0;
    hw_render.context_reset = context_reset;
    hw_render.context_destroy = context_destroy;
    hw_render.depth = true;
@@ -673,6 +673,7 @@ static bool retro_init_hw_context(void)
    hw_render.version_major = 3;
    hw_render.version_minor = 0;
    if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render)) {
+     opengl_mode = 1;
      hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
      hw_render.version_major = 3;
      hw_render.version_minor = 3;
@@ -696,8 +697,6 @@ void YuiSwapBuffers(void)
 
    game_width  = current_width;
    game_height = current_height;
-
-   is_swapped = true;
 
    if(is_gl_enabled)
       video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
@@ -1348,14 +1347,6 @@ void retro_run(void)
    //YabauseExec(); runs from handle events
    if(PERCore)
       PERCore->HandleEvents();
-
-   if(!is_swapped && is_gl_enabled)
-      video_cb(0, game_width, game_height, 0);
-
-   if(!is_swapped && !is_gl_enabled)
-      video_cb(0, game_width, game_height, game_width * 2);
-
-   is_swapped = false;
 }
 
 #ifdef ANDROID
