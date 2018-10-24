@@ -40,6 +40,7 @@
 
 extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
+int opengl_mode = 1;
 
 extern int WaitVdp2Async(int sync);
 extern int YglDrawBackScreen(float w, float h);
@@ -1201,7 +1202,15 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->drawframe = 0;
   _Ygl->readframe = 1;
 
+  if(opengl_mode == 1) {
+    glGenVertexArrays(1, &_Ygl->vao);
+    glEnableVertexAttribArray(_Ygl->vao);
+  }
+
+#if !defined(__LIBRETRO__)
+  // This line is causing a black screen on the libretro port
   glGetIntegerv(GL_FRAMEBUFFER_BINDING,&_Ygl->default_fbo);
+#endif
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -2482,6 +2491,9 @@ void YglRenderVDP1(void) {
   //YabThreadLock(_Ygl->mutex);
   YglMatrix m, *mat;
   YglLoadIdentity(&m);
+  if(opengl_mode == 1) {
+    glBindVertexArray(_Ygl->vao);
+  }
   if (Vdp1Regs->TVMR & 0x02) {
     mat = &m;
     YglOrtho(mat, 0.0f, (float)Vdp1Regs->systemclipX2, (float)Vdp1Regs->systemclipY2, 0.0f, 10.0f, 0.0f);
@@ -3159,6 +3171,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
    FrameProfileAdd("YglRender start");
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+   if(opengl_mode == 1) {
+     glBindVertexArray(_Ygl->vao);
+   }
    glEnable(GL_SCISSOR_TEST);
    glViewport(0, 0, GlWidth, GlHeight);
    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);

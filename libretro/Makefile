@@ -1,9 +1,6 @@
 DEBUG = 0
-DYNAREC = 0
-HAVE_THREADS = 1
-HAVE_GRIFFIN = 0
 HAVE_SSE = 0
-HAVE_GL = 0
+HAVE_GL_DEBUG = 0
 
 ifeq ($(platform),)
 	platform = unix
@@ -17,18 +14,23 @@ ifeq ($(platform),)
 endif
 
 # system platform
-system_platform = unix
-ifeq ($(shell uname -a),)
-	EXE_EXT = .exe
-	system_platform = win
-else ifneq ($(findstring Darwin,$(shell uname -a)),)
-	system_platform = osx
-	arch = intel
-	ifeq ($(shell uname -p),powerpc)
-		arch = ppc
-	endif
-else ifneq ($(findstring MINGW,$(shell uname -a)),)
-	system_platform = win
+ifeq ($(platform),)
+   platform = unix
+   ifeq ($(shell uname -a),)
+      platform = win
+      EXE_EXT=.exe
+   else ifneq ($(findstring Darwin,$(shell uname -a)),)
+      platform = osx
+      arch = intel
+      ifeq ($(shell uname -p),powerpc)
+         arch = ppc
+      endif
+   else ifneq ($(findstring MINGW,$(shell uname -a)),)
+      platform = win
+      EXE_EXT=.exe
+   endif
+else ifneq (,$(findstring armv,$(platform)))
+   override platform += unix
 endif
 
 CORE_DIR := .
@@ -45,18 +47,27 @@ ifneq (,$(findstring unix,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	#DYNAREC = 2
-	LDFLAGS += -lpthread
-	HAVE_PTHREADS = 1
+	LDFLAGS += -lpthread -lGL -lGLESv2
 	FLAGS += -DARCH_IS_LINUX=1
-
-else ifneq (,$(findstring linux-portable,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
-	fpic := -fPIC -nostdlib
-	SHARED := -shared -Wl,--version-script=link.T
-	#DYNAREC = 2
-	HAVE_PTHREADS = 1
-	FLAGS += -DARCH_IS_LINUX=1
+	# ARM
+	ifneq (,$(findstring armv,$(platform)))
+		ifneq (,$(findstring cortexa8,$(platform)))
+			FLAGS += -marm -mcpu=cortex-a8
+		else ifneq (,$(findstring cortexa9,$(platform)))
+			FLAGS += -marm -mcpu=cortex-a9
+		endif
+		FLAGS += -marm
+		ifneq (,$(findstring neon,$(platform)))
+			FLAGS += -mfpu=neon
+			HAVE_NEON = 1
+		endif
+		ifneq (,$(findstring softfloat,$(platform)))
+			FLAGS += -mfloat-abi=softfp
+		else ifneq (,$(findstring hardfloat,$(platform)))
+			FLAGS += -mfloat-abi=hard
+		endif
+		FLAGS += -DARM
+	endif
 
 # OS X
 else ifneq (,$(findstring osx,$(platform)))
@@ -74,20 +85,7 @@ endif
 ifeq ($(arch),ppc)
 	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
 endif
-	#DYNAREC = 2
-	LDFLAGS += -lpthread
-	HAVE_PTHREADS = 1
-
-else ifneq (,$(findstring theos_ios,$(platform)))
-	# Theos iOS
-	DEPLOYMENT_IOSVERSION = 5.0
-	TARGET = iphone:latest:$(DEPLOYMENT_IOSVERSION)
-	ARCHS = armv7 armv7s
-	TARGET_IPHONEOS_DEPLOYMENT_VERSION=$(DEPLOYMENT_IOSVERSION)
-	THEOS_BUILD_DIR := objs
-	include $(THEOS)/makefiles/common.mk
-
-LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
+	LDFLAGS += -lpthread -lGL -lGLESv2
 
 else ifneq (,$(findstring ios,$(platform)))
 	# iOS
@@ -97,26 +95,6 @@ else ifneq (,$(findstring ios,$(platform)))
 	CC = clang -arch armv7 -isysroot $(IOSSDK)
 	CC_AS =  perl ./libretro/gas-preprocessor.pl $(CC)
 	CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
-
-# QNX
-else ifneq (,$(findstring qnx,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro_$(platform).so
-	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=link.T
-	CC = qcc -Vgcc_ntoarmv7le
-	CC_AS = $(CC)
-	CXX = QCC -Vgcc_ntoarmv7le
-	AR = qcc -Vgcc_ntoarmv7le
-	ENDIANNESS_DEFINES += -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp -fms-extensions
-
-# PS3
-else ifneq (,$(findstring ps3,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro_$(platform).a
-	CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-	CXX = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-g++.exe
-	AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-	ENDIANNESS_DEFINES = -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
-	STATIC_LINKING = 1
 
 # sncps3
 else ifneq (,$(findstring sncps3,$(platform)))
@@ -136,16 +114,6 @@ else ifneq (,$(findstring psl1ght,$(platform)))
 	ENDIANNESS_DEFINES = -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
 	STATIC_LINKING = 1
 
-# PSP
-else ifneq (,$(findstring psp1,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro_$(platform).a
-	CC = psp-gcc$(EXE_EXT)
-	CC_AS = $(CC)
-	CXX = psp-g++$(EXE_EXT)
-	AR = psp-ar$(EXE_EXT)
-	ENDIANNESS_DEFINES += -DPSP -G0 
-	STATIC_LINKING = 1
-
 # Vita
 else ifneq (,$(findstring vita,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
@@ -154,56 +122,12 @@ else ifneq (,$(findstring vita,$(platform)))
 	CC_AS = arm-vita-eabi-gcc$(EXE_EXT)
 	AR = arm-vita-eabi-ar$(EXE_EXT)
 	ENDIANNESS_DEFINES += -DVITA
-	#DYNAREC = 2
-	STATIC_LINKING = 1
-
-# Nintendo Game Cube
-else ifneq (,$(findstring ngc,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro_$(platform).a
-	CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
-	CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
-	AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-	ENDIANNESS_DEFINES = -DWORDS_BIGENDIAN -DMSB_FIRST -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -D__ppc__
-	STATIC_LINKING = 1
-
-# Nintendo Wii
-else ifneq (,$(findstring wii,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro_$(platform).a
-	CC = $(DEVKITPPC)/bin/powerpc-eabi-gcc$(EXE_EXT)
-	CXX = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
-	AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-	ENDIANNESS_DEFINES = -DWORDS_BIGENDIAN -DMSB_FIRST -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -D__ppc__
 	STATIC_LINKING = 1
 
 else ifeq ($(platform), switch)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
 	include $(LIBTRANSISTOR_HOME)/libtransistor.mk
 	STATIC_LINKING=1
-
-# ARM
-else ifneq (,$(findstring armv,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
-	fpic := -fPIC
-	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread
-	HAVE_PTHREADS = 1
-	FLAGS += -DARCH_IS_LINUX=1
-	ifneq (,$(findstring cortexa8,$(platform)))
-		FLAGS += -marm -mcpu=cortex-a8
-	else ifneq (,$(findstring cortexa9,$(platform)))
-		FLAGS += -marm -mcpu=cortex-a9
-	endif
-	FLAGS += -marm
-	ifneq (,$(findstring neon,$(platform)))
-		FLAGS += -mfpu=neon
-		HAVE_NEON = 1
-	endif
-	ifneq (,$(findstring softfloat,$(platform)))
-		FLAGS += -mfloat-abi=softfp
-	else ifneq (,$(findstring hardfloat,$(platform)))
-		FLAGS += -mfloat-abi=hard
-	endif
-	FLAGS += -DARM
 
 # Emscripten
 else ifeq ($(platform), emscripten)
@@ -217,7 +141,6 @@ else ifeq ($(platform), gcw0)
 	CXX = /opt/gcw0-toolchain/usr/bin/mipsel-linux-g++
 	AR = /opt/gcw0-toolchain/usr/bin/mipsel-linux-ar
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	#HAVE_PTHREADS = 1
 	LDFLAGS += $(PTHREAD_FLAGS) -lrt
 	FLAGS += $(PTHREAD_FLAGS) -DHAVE_MKDIR
 	FLAGS += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float
@@ -230,13 +153,20 @@ else
 	CC = gcc
 	CXX = g++
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm
+	LDFLAGS += -static-libgcc -static-libstdc++ -lwinmm -lopengl32
 	FLAGS += -DHAVE_WFOPEN -D_WINDOWS
-	#DYNAREC = 2
 
 endif
 
 include Makefile.common
+
+ifeq ($(HAVE_GL_DEBUG),1)
+FLAGS += -D__USE_OPENGL_DEBUG__
+endif
+
+ifeq ($(HAVE_SSE),1)
+FLAGS += -mfpmath=sse
+endif
 
 OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o) $(C68KEXEC_OBJECT)
 
@@ -253,24 +183,14 @@ WARNINGS :=
 FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DUSE_16BPP=1 -DUSE_RGB_565=1 \
 	-DNO_CLI -DDYNAREC_KRONOS=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 \
 	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_MUSASHI=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
-	-DPACKAGE=\"kronos\" -DSPRITE_CACHE=1 -DVERSION=\"1.4.5\"
+	-DPACKAGE=\"Kronos\" -DSPRITE_CACHE=1 -DHAVE_LIBGL -D_OGLES3_ -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 \
+	-DVERSION=\"1.4.5\"
 
 CXXFLAGS += $(FLAGS)
 
 CFLAGS += $(FLAGS)
-ifeq ($(platform),qnx)
-CFLAGS += -Wc,-std=c99
-else
 CFLAGS += -std=gnu99
-endif
 
-ifeq ($(platform), theos_ios)
-COMMON_FLAGS := -DIOS $(COMMON_DEFINES) $(INCFLAGS) -I$(THEOS_INCLUDE_PATH) -Wno-error
-$(LIBRARY_NAME)_CFLAGS += $(CFLAGS) $(COMMON_FLAGS)
-$(LIBRARY_NAME)_CXXFLAGS += $(CXXFLAGS) $(COMMON_FLAGS)
-${LIBRARY_NAME}_FILES = $(SOURCES_CXX) $(SOURCES_C) $(SOURCE_DIR)/c68k/c68kexec.c
-include $(THEOS_MAKE_PATH)/library.mk
-else
 all: $(TARGET)
 
 generate-files:
@@ -306,4 +226,3 @@ clean:
 	rm -f $(TARGET) $(OBJECTS)
 
 .PHONY: clean
-endif

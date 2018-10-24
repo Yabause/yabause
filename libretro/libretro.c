@@ -40,7 +40,11 @@ int game_height;
 static bool hle_bios_force = false;
 static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
+static int filter_mode = AA_NONE;
+static int upscale_mode = UP_NONE;
+static int resolution_mode = RES_ORIGINAL;
 static int numthreads = 4;
+static int retro_region = RETRO_REGION_PAL;
 static bool stv_mode = false;
 
 struct retro_perf_callback perf_cb;
@@ -53,9 +57,7 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 
-#ifdef HAVE_LIBGL
-static struct retro_hw_render_callback hw_render;
-#endif
+extern struct retro_hw_render_callback hw_render;
 
 #define BPRINTF_BUFFER_SIZE 512
 #define __cdecl
@@ -88,6 +90,9 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
+      { "kronos_filter_mode", "Filter Mode (restart); none|bilinear|bicubic" },
+      { "kronos_upscale_mode", "Upscale Mode (restart); none|hq4x|4xbrz|2xbrz" },
+      { "kronos_resolution_mode", "Resolution Mode (restart); original|2x|4x" },
       { NULL, NULL },
    };
 
@@ -598,9 +603,7 @@ SoundInterface_struct *SNDCoreList[] = {
 
 VideoInterface_struct *VIDCoreList[] = {
     //&VIDDummy,
-#ifdef HAVE_LIBGL
     &VIDOGL,
-#endif
     &VIDSoft,
     NULL
 };
@@ -621,9 +624,8 @@ void YuiErrorMsg(const char *string)
       log_cb(RETRO_LOG_ERROR, "Yabause: %s\n", string);
 }
 
-static int first_ctx_reset = 0;
+static int first_ctx_reset = 1;
 
-#ifdef HAVE_LIBGL
 int YuiUseOGLOnThisThread()
 {
   return 0;
@@ -639,36 +641,56 @@ int YuiGetFB(void)
   return hw_render.get_current_framebuffer();
 }
 
+void retro_reinit_av_info(void)
+{
+    if (Cs2GetRegionID() != 0xC) retro_region = RETRO_REGION_NTSC;
+    struct retro_system_av_info av_info;
+    retro_get_system_av_info(&av_info);
+    environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
+}
+
 static void context_reset(void)
 {
+   glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
+   glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
    if (first_ctx_reset == 1)
    {
-      if (log_cb)
-         log_cb(RETRO_LOG_INFO, "Context reset!\n");
-   
       first_ctx_reset = 0;
+      log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
-      YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
-      VIDSoftSetBilinear(1);
+      OSDChangeCore(OSDCORE_DUMMY);
+      log_cb(RETRO_LOG_INFO, "Kronos init done\n");
+      retro_reinit_av_info();
    }
 }
 
 static void context_destroy(void)
 {
+   glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
 }
 
 static bool retro_init_hw_context(void)
 {
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
-   hw_render.context_reset = context_reset;
-   hw_render.context_destroy = context_destroy;
-   hw_render.depth = true;
-   hw_render.bottom_left_origin = true;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
-      return false;
+   opengl_mode = 0;
+   glsm_ctx_params_t params = {0};
+   params.major = 3;
+   params.minor = 0;
+   params.context_type = RETRO_HW_CONTEXT_OPENGLES3;
+   params.context_reset = context_reset;
+   params.context_destroy = context_destroy;
+   params.environ_cb = environ_cb;
+   params.stencil = true;
+   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params)) {
+      // OpenGL 3.1 doesn't seem to need the vao stuff
+      // opengl_mode = 1;
+      params.context_type = RETRO_HW_CONTEXT_OPENGL;
+      params.major = 3;
+      params.minor = 1;
+      if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+         return false;
+   }
    return true;
 }
-#endif
 
 void YuiSwapBuffers(void)
 {
@@ -685,11 +707,7 @@ void YuiSwapBuffers(void)
    game_width  = current_width;
    game_height = current_height;
 
-#ifdef HAVE_LIBGL
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
-#else
-   video_cb(dispbuffer, game_width, game_height, game_width * 2);
-#endif
 }
 
 /************************************
@@ -707,7 +725,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
    info->library_version  = "v1.4.5" GIT_VERSION;
    info->need_fullpath    = true;
-   info->valid_extensions = "bin|cue|iso";
+   info->valid_extensions = "bin|cue|iso|mds|ccd|nrg|zip";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -715,7 +733,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    memset(info, 0, sizeof(*info));
 
    info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60.0f : 50.0f;
-   info->timing.sample_rate    = 44100;
+   info->timing.sample_rate    = SAMPLERATE;
    info->geometry.base_width   = game_width;
    info->geometry.base_height  = game_height;
    info->geometry.max_width    = 704;
@@ -848,6 +866,44 @@ static void check_variables(void)
          addon_cart_type = CART_DRAM32MBIT;
    }
 
+   var.key = "kronos_filter_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "none") == 0 && filter_mode != AA_NONE)
+         filter_mode = AA_NONE;
+      else if (strcmp(var.value, "bilinear") == 0 && filter_mode != AA_BILINEAR_FILTER)
+         filter_mode = AA_BILINEAR_FILTER;
+      else if (strcmp(var.value, "bicubic") == 0 && filter_mode != AA_BICUBIC_FILTER)
+         filter_mode = AA_BICUBIC_FILTER;
+   }
+
+   var.key = "kronos_upscale_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "none") == 0 && upscale_mode != UP_NONE)
+         upscale_mode = UP_NONE;
+      else if (strcmp(var.value, "hq4x") == 0 && upscale_mode != UP_HQ4X)
+         upscale_mode = UP_HQ4X;
+      else if (strcmp(var.value, "4xbrz") == 0 && upscale_mode != UP_4XBRZ)
+         upscale_mode = UP_4XBRZ;
+      else if (strcmp(var.value, "2xbrz") == 0 && upscale_mode != UP_2XBRZ)
+         upscale_mode = UP_2XBRZ;
+   }
+
+   var.key = "kronos_resolution_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "original") == 0 && resolution_mode != RES_ORIGINAL)
+         resolution_mode = RES_ORIGINAL;
+      else if (strcmp(var.value, "2x") == 0 && resolution_mode != RES_2x)
+         resolution_mode = RES_2x;
+      else if (strcmp(var.value, "4x") == 0 && resolution_mode != RES_4x)
+         resolution_mode = RES_4x;
+   }
+
 }
 
 static int does_file_exist(const char *filename)
@@ -898,9 +954,47 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
 }
 
+bool retro_load_game_common()
+{
+   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+      return false;
+   if (!retro_init_hw_context())
+      return false;
+
+   yinit.vidcoretype        = VIDCORE_OGL;
+   yinit.percoretype        = PERCORE_LIBRETRO;
+   yinit.sh2coretype        = 8;
+   yinit.sndcoretype        = SNDCORE_LIBRETRO;
+   // It seems Musashi is the recommended m68k core only for x86_64
+   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
+#if defined(__x86_64__)
+   yinit.m68kcoretype       = M68KCORE_MUSASHI;
+#else
+   yinit.m68kcoretype       = M68KCORE_C68K;
+#endif
+   yinit.regionid           = REGION_EUROPE;
+   yinit.mpegpath           = NULL;
+   yinit.frameskip          = frameskip_enable;
+   //yinit.clocksync          = 0;
+   //yinit.basetime           = 0;
+   yinit.usethreads         = 1;
+   yinit.numthreads         = numthreads;
+#ifdef SPRITE_CACHE
+   yinit.useVdp1cache       = 0;
+#endif
+   yinit.usecache           = 0;
+   yinit.skip_load          = 0;
+   yinit.video_filter_type  = filter_mode;
+   yinit.video_upscale_type = upscale_mode;
+   yinit.resolution_mode    = resolution_mode;
+   yinit.scanline           = 0; //This is not working
+
+   return true;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
-   int ret = 0;
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1106,68 +1200,14 @@ bool retro_load_game(const struct retro_game_info *info)
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-#ifdef HAVE_LIBGL
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-   {
-      yinit.vidcoretype  = VIDCORE_SOFT;
-   } else {
-      if (retro_init_hw_context())
-      {
-         if (glewInit() != 0)
-            log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
-         yinit.vidcoretype  = VIDCORE_OGL;
-      }
-   }
-#else
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-   environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
-   yinit.vidcoretype     = VIDCORE_SOFT;
-#endif
-
-   first_ctx_reset = 1;
-
    yinit.cdcoretype      = CDCORE_ISO;
    yinit.cdpath          = full_path;
-   /* Emulate BIOS */
    yinit.biospath        = (bios_path[0] != '\0' && does_file_exist(bios_path) && !hle_bios_force) ? bios_path : NULL;
-   yinit.percoretype     = PERCORE_LIBRETRO;
-   yinit.sh2coretype     = 8;
-   yinit.sndcoretype     = SNDCORE_LIBRETRO;
-   // It seems Musashi is the recommended m68k core only for x86_64
-   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
-#if defined(__x86_64__)
-   yinit.m68kcoretype    = M68KCORE_MUSASHI;
-#else
-   yinit.m68kcoretype    = M68KCORE_C68K;
-#endif
    yinit.carttype        = addon_cart_type;
-   yinit.regionid        = REGION_AUTODETECT;
+   yinit.extend_backup   = 1;
    yinit.buppath         = NULL;
-   yinit.mpegpath        = NULL;
-   //yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
-   yinit.frameskip       = frameskip_enable;
-   yinit.clocksync       = 0;
-   yinit.basetime        = 0;
-#ifdef HAVE_THREADS
-   yinit.usethreads      = 1;
-   yinit.numthreads      = numthreads;
-#else
-   yinit.usethreads      = 0;
-#endif
-   yinit.useVdp1cache    = 0;
-   yinit.usecache        = 0;
-#ifdef HAVE_LIBGL
-   yinit.resolution_mode = 1;
-#endif
 
-#ifndef HAVE_LIBGL
-   ret = YabauseInit(&yinit);
-   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
-   VIDSoftSetBilinear(1);
-#endif
-
-   return (ret == 0);
+   return retro_load_game_common();
 }
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
@@ -1177,7 +1217,6 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
    stv_mode = true;
 
-   int ret = 0;
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },
@@ -1213,27 +1252,6 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-#ifdef HAVE_LIBGL
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-   {
-      yinit.vidcoretype  = VIDCORE_SOFT;
-   } else {
-      if (retro_init_hw_context())
-      {
-         if (glewInit() != 0)
-            log_cb(RETRO_LOG_ERROR, "Glew can not init\n");
-         yinit.vidcoretype  = VIDCORE_OGL;
-      }
-   }
-#else
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-   environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
-   yinit.vidcoretype     = VIDCORE_SOFT;
-#endif
-
-   first_ctx_reset = 1;
-
    // Store the game "id", seems necessary (?)
    int stvgame = -1;
    STVGetSingle(full_path, stv_bios_path, &stvgame);
@@ -1242,59 +1260,21 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
    yinit.stvgame         = stvgame;
    yinit.cartpath        = NULL;
    yinit.carttype        = CART_ROMSTV;
-   /* Emulate BIOS */
    yinit.stvbiospath     = stv_bios_path;
    yinit.extend_backup   = 0;
    yinit.buppath         = stv_bup_path;
-   yinit.percoretype     = PERCORE_LIBRETRO;
-   yinit.sh2coretype     = 8;
-   yinit.sndcoretype     = SNDCORE_LIBRETRO;
-   // It seems Musashi is the recommended m68k core only for x86_64
-   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
-#if defined(__x86_64__)
-   yinit.m68kcoretype    = M68KCORE_MUSASHI;
-#else
-   yinit.m68kcoretype    = M68KCORE_C68K;
-#endif
-   yinit.regionid        = REGION_AUTODETECT;
-   yinit.buppath         = NULL;
-   //yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
-   yinit.frameskip       = frameskip_enable;
-   yinit.clocksync       = 0;
-   yinit.basetime        = 0;
-#ifdef HAVE_THREADS
-   yinit.usethreads      = 1;
-   yinit.numthreads      = numthreads;
-#else
-   yinit.usethreads      = 0;
-#endif
-   yinit.useVdp1cache    = 0;
-   yinit.usecache        = 0;
-#ifdef HAVE_LIBGL
-   yinit.resolution_mode = 1;
-#endif
 
-#ifndef HAVE_LIBGL
-   ret = YabauseInit(&yinit);
-   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
-   VIDSoftSetBilinear(1);
-#endif
-
-   return (ret == 0);
+   return retro_load_game_common();
 }
 
 void retro_unload_game(void)
 {
-	YabauseDeInit();
+   YabauseDeInit();
 }
 
 unsigned retro_get_region(void)
 {
-#ifdef HAVE_LIBGL
-   return RETRO_REGION_NTSC;
-#else
-   return Cs2GetRegionID() > 6 ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
-#endif
+   return retro_region;
 }
 
 unsigned retro_api_version(void)
@@ -1334,7 +1314,9 @@ void retro_deinit(void)
 
 void retro_reset(void)
 {
-   YabauseResetButton();
+   YabauseResetNoLoad();
+   // The following function crashes the core when you use "restart"
+   //YabauseResetButton();
 }
 
 void retro_run(void)
@@ -1343,7 +1325,12 @@ void retro_run(void)
    bool updated  = false;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
+   {
       check_variables();
+      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
+   }
 
    audio_size = SAMPLEFRAME;
 
