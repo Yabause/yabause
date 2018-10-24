@@ -785,6 +785,21 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
 
 //////////////////////////////////////////////////////////////////////////////
 
+Vdp1CommandType Vdp1DebugGetCommandType(u32 number) 
+{
+   u32 addr;
+   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) != 0xFFFFFFFF)
+   {
+      const u16 command = T1ReadWord(Vdp1Ram, addr);
+      if (command & 0x8000)
+        return VDPCT_DRAW_END;
+      else if ((command & 0x000F) < VDPCT_INVALID)
+        return (Vdp1CommandType) (command & 0x000F);
+   }
+        
+   return VDPCT_INVALID;
+}
+
 void Vdp1DebugGetCommandNumberName(u32 number, char *outstring)
 {
    u32 addr;
