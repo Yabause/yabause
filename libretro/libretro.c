@@ -673,8 +673,6 @@ static bool retro_init_hw_context(void)
 {
    opengl_mode = 0;
    glsm_ctx_params_t params = {0};
-   params.major = 3;
-   params.minor = 0;
    params.context_type = RETRO_HW_CONTEXT_OPENGLES3;
    params.context_reset = context_reset;
    params.context_destroy = context_destroy;
@@ -684,8 +682,6 @@ static bool retro_init_hw_context(void)
       // OpenGL 3.1 doesn't seem to need the vao stuff
       // opengl_mode = 1;
       params.context_type = RETRO_HW_CONTEXT_OPENGL;
-      params.major = 3;
-      params.minor = 1;
       if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
          return false;
    }
