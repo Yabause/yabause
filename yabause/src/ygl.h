@@ -25,7 +25,10 @@ extern "C" {
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
-#if defined(__ANDROID__)
+#if defined(__LIBRETRO__)
+    #include <glsym/glsym.h>
+    #include <glsm/glsm.h>
+#elif defined(__ANDROID__)
     #include <GLES3/gl3.h>
     #include <GLES3/gl3ext.h>
     #include <EGL/egl.h>

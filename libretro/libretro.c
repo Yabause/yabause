@@ -44,9 +44,8 @@ static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int resolution_mode = RES_ORIGINAL;
 static int numthreads = 4;
-static int retro_region = RETRO_REGION_NTSC;
+static int retro_region = RETRO_REGION_PAL;
 static bool stv_mode = false;
-static bool is_gl_enabled = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -58,7 +57,7 @@ static retro_input_state_t input_state_cb;
 static retro_environment_t environ_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 
-static struct retro_hw_render_callback hw_render;
+extern struct retro_hw_render_callback hw_render;
 
 #define BPRINTF_BUFFER_SIZE 512
 #define __cdecl
@@ -644,7 +643,7 @@ int YuiGetFB(void)
 
 void retro_reinit_av_info(void)
 {
-    if (Cs2GetRegionID() == 0xC) retro_region = RETRO_REGION_PAL;
+    if (Cs2GetRegionID() != 0xC) retro_region = RETRO_REGION_NTSC;
     struct retro_system_av_info av_info;
     retro_get_system_av_info(&av_info);
     environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
@@ -652,46 +651,42 @@ void retro_reinit_av_info(void)
 
 static void context_reset(void)
 {
-   if (log_cb)
-      log_cb(RETRO_LOG_INFO, "Context reset!\n");
+   glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
+   glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
    if (first_ctx_reset == 1)
    {
       first_ctx_reset = 0;
-      glewExperimental=GL_TRUE;
-      if (glewInit() != 0)
-        log_cb(RETRO_LOG_ERROR, "Glew can not init\n"); // Actually, glewInit fail in gles context, however it is rendering properly (???)
       log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
+      OSDChangeCore(OSDCORE_DUMMY);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
       retro_reinit_av_info();
-      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
-      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
-      VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, 0); //This is not working
    }
 }
 
 static void context_destroy(void)
 {
+   glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
 }
 
 static bool retro_init_hw_context(void)
 {
    opengl_mode = 0;
-   hw_render.context_reset = context_reset;
-   hw_render.context_destroy = context_destroy;
-   hw_render.depth = true;
-   hw_render.bottom_left_origin = true;
-   hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES3;
-   hw_render.version_major = 3;
-   hw_render.version_minor = 0;
-   if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render)) {
-     opengl_mode = 1;
-     hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-     hw_render.version_major = 3;
-     hw_render.version_minor = 3;
-     if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
-       return false;
+   glsm_ctx_params_t params = {0};
+   params.major = 3;
+   params.minor = 0;
+   params.context_type = RETRO_HW_CONTEXT_OPENGLES3;
+   params.context_reset = context_reset;
+   params.context_destroy = context_destroy;
+   params.environ_cb = environ_cb;
+   params.stencil = true;
+   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params)) {
+      opengl_mode = 1;
+      params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+      params.major = 3;
+      params.minor = 3;
+      if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+         return false;
    }
    return true;
 }
@@ -711,10 +706,7 @@ void YuiSwapBuffers(void)
    game_width  = current_width;
    game_height = current_height;
 
-   if(is_gl_enabled)
-      video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
-   else
-      video_cb(dispbuffer, game_width, game_height, game_width * 2);
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
 }
 
 /************************************
@@ -732,7 +724,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
    info->library_version  = "v1.4.5" GIT_VERSION;
    info->need_fullpath    = true;
-   info->valid_extensions = "bin|wav|cue|iso";
+   info->valid_extensions = "bin|cue|iso";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -961,9 +953,47 @@ void retro_init(void)
    environ_cb(RETRO_ENVIRONMENT_SET_SERIALIZATION_QUIRKS, &serialization_quirks);
 }
 
+bool retro_load_game_common()
+{
+   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
+   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
+      return false;
+   if (!retro_init_hw_context())
+      return false;
+
+   yinit.vidcoretype        = VIDCORE_OGL;
+   yinit.percoretype        = PERCORE_LIBRETRO;
+   yinit.sh2coretype        = 8;
+   yinit.sndcoretype        = SNDCORE_LIBRETRO;
+   // It seems Musashi is the recommended m68k core only for x86_64
+   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
+#if defined(__x86_64__)
+   yinit.m68kcoretype       = M68KCORE_MUSASHI;
+#else
+   yinit.m68kcoretype       = M68KCORE_C68K;
+#endif
+   yinit.regionid           = REGION_EUROPE;
+   yinit.mpegpath           = NULL;
+   yinit.frameskip          = frameskip_enable;
+   //yinit.clocksync          = 0;
+   //yinit.basetime           = 0;
+   yinit.usethreads         = 1;
+   yinit.numthreads         = numthreads;
+#ifdef SPRITE_CACHE
+   yinit.useVdp1cache       = 0;
+#endif
+   yinit.usecache           = 0;
+   yinit.skip_load          = 0;
+   yinit.video_filter_type  = filter_mode;
+   yinit.video_upscale_type = upscale_mode;
+   yinit.resolution_mode    = resolution_mode;
+   yinit.scanline           = 0; //This is not working
+
+   return true;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
-   int ret = 0;
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1169,64 +1199,14 @@ bool retro_load_game(const struct retro_game_info *info)
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-   if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-   {
-      if (retro_init_hw_context())
-      {
-         is_gl_enabled = true;
-if (log_cb)
-         log_cb(RETRO_LOG_INFO, "GL Enabled!\n");
-   
-         yinit.vidcoretype  = VIDCORE_OGL;
-      }
-   }
-   if (!is_gl_enabled)
-   {
-      enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-      environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
-      yinit.vidcoretype     = VIDCORE_SOFT;
-   }
-
    yinit.cdcoretype      = CDCORE_ISO;
    yinit.cdpath          = full_path;
-   /* Emulate BIOS */
    yinit.biospath        = (bios_path[0] != '\0' && does_file_exist(bios_path) && !hle_bios_force) ? bios_path : NULL;
-   yinit.percoretype     = PERCORE_LIBRETRO;
-   yinit.sh2coretype     = 8;
-   yinit.sndcoretype     = SNDCORE_LIBRETRO;
-   // It seems Musashi is the recommended m68k core only for x86_64
-   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
-#if defined(__x86_64__)
-   yinit.m68kcoretype    = M68KCORE_MUSASHI;
-#else
-   yinit.m68kcoretype    = M68KCORE_C68K;
-#endif
    yinit.carttype        = addon_cart_type;
-   yinit.regionid        = REGION_AUTODETECT;
+   yinit.extend_backup   = 1;
    yinit.buppath         = NULL;
-   yinit.mpegpath        = NULL;
-   //yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
-   yinit.frameskip       = frameskip_enable;
-   yinit.clocksync       = 0;
-   yinit.basetime        = 0;
-#ifdef HAVE_THREADS
-   yinit.usethreads      = 1;
-   yinit.numthreads      = numthreads;
-#else
-   yinit.usethreads      = 0;
-#endif
-   yinit.useVdp1cache    = 0;
-   yinit.usecache        = 0;
 
-   if (!is_gl_enabled)
-   {
-      ret = YabauseInit(&yinit);
-      retro_reinit_av_info();
-      VIDSoftSetBilinear(1);
-   }
-
-   return (ret == 0);
+   return retro_load_game_common();
 }
 
 bool retro_load_game_special(unsigned game_type, const struct retro_game_info *info, size_t num_info)
@@ -1236,7 +1216,6 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
    stv_mode = true;
 
-   int ret = 0;
    struct retro_input_descriptor desc[] = {
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
       { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },
@@ -1272,22 +1251,6 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-   enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_XRGB8888;
-   if (environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
-   {
-      if (retro_init_hw_context())
-      {
-         is_gl_enabled = true;
-         yinit.vidcoretype  = VIDCORE_OGL;
-      }
-   }
-   if (!is_gl_enabled)
-   {
-      enum retro_pixel_format fmt = RETRO_PIXEL_FORMAT_RGB565;
-      environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt);
-      yinit.vidcoretype     = VIDCORE_SOFT;
-   }
-
    // Store the game "id", seems necessary (?)
    int stvgame = -1;
    STVGetSingle(full_path, stv_bios_path, &stvgame);
@@ -1296,48 +1259,16 @@ bool retro_load_game_special(unsigned game_type, const struct retro_game_info *i
    yinit.stvgame         = stvgame;
    yinit.cartpath        = NULL;
    yinit.carttype        = CART_ROMSTV;
-   /* Emulate BIOS */
    yinit.stvbiospath     = stv_bios_path;
    yinit.extend_backup   = 0;
    yinit.buppath         = stv_bup_path;
-   yinit.percoretype     = PERCORE_LIBRETRO;
-   yinit.sh2coretype     = 8;
-   yinit.sndcoretype     = SNDCORE_LIBRETRO;
-   // It seems Musashi is the recommended m68k core only for x86_64
-   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
-#if defined(__x86_64__)
-   yinit.m68kcoretype    = M68KCORE_MUSASHI;
-#else
-   yinit.m68kcoretype    = M68KCORE_C68K;
-#endif
-   yinit.regionid        = REGION_AUTODETECT;
-   yinit.buppath         = NULL;
-   //yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
-   yinit.frameskip       = frameskip_enable;
-   yinit.clocksync       = 0;
-   yinit.basetime        = 0;
-#ifdef HAVE_THREADS
-   yinit.usethreads      = 1;
-   yinit.numthreads      = numthreads;
-#else
-   yinit.usethreads      = 0;
-#endif
-   yinit.useVdp1cache    = 0;
-   yinit.usecache        = 0;
 
-   if (!is_gl_enabled)
-   {
-      ret = YabauseInit(&yinit);
-      retro_reinit_av_info();
-      VIDSoftSetBilinear(1);
-   }
-
-   return (ret == 0);
+   return retro_load_game_common();
 }
 
 void retro_unload_game(void)
 {
-	YabauseDeInit();
+   YabauseDeInit();
 }
 
 unsigned retro_get_region(void)
@@ -1382,7 +1313,9 @@ void retro_deinit(void)
 
 void retro_reset(void)
 {
-   YabauseResetButton();
+   YabauseResetNoLoad();
+   // The following function crashes the core when you use "restart"
+   //YabauseResetButton();
 }
 
 void retro_run(void)
