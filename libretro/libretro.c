@@ -44,7 +44,7 @@ static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int resolution_mode = RES_ORIGINAL;
 static int numthreads = 4;
-static int retro_region = RETRO_REGION_PAL;
+static int retro_region = RETRO_REGION_NTSC;
 static bool stv_mode = false;
 
 struct retro_perf_callback perf_cb;
@@ -643,7 +643,7 @@ int YuiGetFB(void)
 
 void retro_reinit_av_info(void)
 {
-    if (Cs2GetRegionID() != 0xC) retro_region = RETRO_REGION_NTSC;
+    if (Cs2GetRegionID() == 0xC) retro_region = RETRO_REGION_PAL;
     struct retro_system_av_info av_info;
     retro_get_system_av_info(&av_info);
     environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
@@ -969,7 +969,7 @@ bool retro_load_game_common()
 #else
    yinit.m68kcoretype       = M68KCORE_C68K;
 #endif
-   yinit.regionid           = REGION_EUROPE;
+   yinit.regionid           = REGION_AUTODETECT;
    yinit.mpegpath           = NULL;
    yinit.frameskip          = frameskip_enable;
    //yinit.clocksync          = 0;
