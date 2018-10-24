@@ -681,10 +681,11 @@ static bool retro_init_hw_context(void)
    params.environ_cb = environ_cb;
    params.stencil = true;
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params)) {
-      opengl_mode = 1;
-      params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+      // OpenGL 3.1 doesn't seem to need the vao stuff
+      // opengl_mode = 1;
+      params.context_type = RETRO_HW_CONTEXT_OPENGL;
       params.major = 3;
-      params.minor = 3;
+      params.minor = 1;
       if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
          return false;
    }
