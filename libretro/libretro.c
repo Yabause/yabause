@@ -643,7 +643,9 @@ int YuiGetFB(void)
 
 void retro_reinit_av_info(void)
 {
-    if (Cs2GetRegionID() == 0xC) retro_region = RETRO_REGION_PAL;
+    retro_region = RETRO_REGION_NTSC;
+    if (yabsys.IsPal) retro_region = RETRO_REGION_PAL;
+    log_cb(RETRO_LOG_INFO, "Switch to %s\n", (retro_region == RETRO_REGION_PAL)?"PAL":"NTSC");
     struct retro_system_av_info av_info;
     retro_get_system_av_info(&av_info);
     environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
@@ -721,6 +723,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
    info->library_version  = "v1.4.5" GIT_VERSION;
    info->need_fullpath    = true;
+   info->block_extract    = true;
    info->valid_extensions = "bin|cue|iso|mds|ccd|nrg|zip";
 }
 
@@ -969,7 +972,7 @@ bool retro_load_game_common()
 #else
    yinit.m68kcoretype       = M68KCORE_C68K;
 #endif
-   yinit.regionid           = REGION_AUTODETECT;
+   yinit.regionid           = REGION_EUROPE;
    yinit.mpegpath           = NULL;
    yinit.frameskip          = frameskip_enable;
    //yinit.clocksync          = 0;
@@ -1196,6 +1199,8 @@ bool retro_load_game(const struct retro_game_info *info)
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
+    log_cb(RETRO_LOG_INFO, "Load %s\n", full_path);
+
    yinit.cdcoretype      = CDCORE_ISO;
    yinit.cdpath          = full_path;
    yinit.biospath        = (bios_path[0] != '\0' && does_file_exist(bios_path) && !hle_bios_force) ? bios_path : NULL;
@@ -1327,6 +1332,8 @@ void retro_run(void)
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
    }
+
+   if ((yabsys.IsPal && (retro_region == RETRO_REGION_NTSC)) || (!yabsys.IsPal && (retro_region != RETRO_REGION_NTSC))) retro_reinit_av_info();
 
    audio_size = SAMPLEFRAME;
 
