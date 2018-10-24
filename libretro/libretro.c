@@ -724,7 +724,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
    info->library_version  = "v1.4.5" GIT_VERSION;
    info->need_fullpath    = true;
-   info->valid_extensions = "bin|cue|iso";
+   info->valid_extensions = "bin|cue|iso|mds|ccd|nrg|zip";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
