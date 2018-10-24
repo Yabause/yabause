@@ -70,7 +70,7 @@ std::string buildInfoLabel(Vdp1CommandsCount& cmdCount)
   std::stringstream infoLabel;
 
   if (cmdCount.distortedSprites > 0) {
-    infoLabel << "DistortedSprites: " << cmdCount.distortedSprites;
+    infoLabel << "Distorted Sprites: " << cmdCount.distortedSprites;
     previous = true;
   }
 
