@@ -42,6 +42,7 @@ static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
+static int scanlines = 0;
 static int resolution_mode = RES_ORIGINAL;
 static int numthreads = 4;
 static int retro_region = RETRO_REGION_NTSC;
@@ -90,9 +91,10 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
-      { "kronos_filter_mode", "Filter Mode (restart); none|bilinear|bicubic" },
-      { "kronos_upscale_mode", "Upscale Mode (restart); none|hq4x|4xbrz|2xbrz" },
-      { "kronos_resolution_mode", "Resolution Mode (restart); original|2x|4x" },
+      { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
+      { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
+      { "kronos_resolution_mode", "Resolution Mode; original|2x|4x" },
+      { "kronos_scanlines", "Scanlines; disabled|enabled" },
       { NULL, NULL },
    };
 
@@ -496,6 +498,7 @@ PerInterface_struct PERLIBRETROJoy = {
 
 static uint32_t video_freq;
 static uint32_t audio_size;
+static uint32_t sample_frame = SAMPLEFRAME;
 
 static int SNDLIBRETROInit(void) { return 0; }
 
@@ -505,8 +508,7 @@ static int SNDLIBRETROReset(void) { return 0; }
 
 static int SNDLIBRETROChangeVideoFormat(int vertfreq)
 {
-	//video_freq = vertfreq;
-	//audio_size = 44100 / vertfreq;
+    sample_frame = SAMPLERATE / vertfreq;
     return 0;
 }
 
@@ -660,6 +662,8 @@ static void context_reset(void)
       first_ctx_reset = 0;
       log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
+      if (VIDCore && VIDCore->id)
+         VIDCore->Resize(0, 0, 1408, 960, 0);
       OSDChangeCore(OSDCORE_DUMMY);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
       retro_reinit_av_info();
@@ -735,8 +739,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->timing.sample_rate    = SAMPLERATE;
    info->geometry.base_width   = game_width;
    info->geometry.base_height  = game_height;
-   info->geometry.max_width    = 704;
-   info->geometry.max_height   = 512;
+   info->geometry.max_width    = 1408;
+   info->geometry.max_height   = 960;
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 
@@ -903,6 +907,16 @@ static void check_variables(void)
          resolution_mode = RES_4x;
    }
 
+   var.key = "kronos_scanlines";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0 && scanlines != 0)
+         scanlines = 0;
+      else if (strcmp(var.value, "enabled") == 0 && scanlines != 1)
+         scanlines = 1;
+   }
+
 }
 
 static int does_file_exist(const char *filename)
@@ -972,7 +986,7 @@ bool retro_load_game_common()
 #else
    yinit.m68kcoretype       = M68KCORE_C68K;
 #endif
-   yinit.regionid           = REGION_EUROPE;
+   yinit.regionid           = REGION_AUTODETECT;
    yinit.mpegpath           = NULL;
    yinit.frameskip          = frameskip_enable;
    //yinit.clocksync          = 0;
@@ -987,7 +1001,7 @@ bool retro_load_game_common()
    yinit.video_filter_type  = filter_mode;
    yinit.video_upscale_type = upscale_mode;
    yinit.resolution_mode    = resolution_mode;
-   yinit.scanline           = 0; //This is not working
+   yinit.scanline           = scanlines; //This is not working
 
    return true;
 }
@@ -1331,11 +1345,12 @@ void retro_run(void)
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
       VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanlines);
    }
 
    if ((yabsys.IsPal && (retro_region == RETRO_REGION_NTSC)) || (!yabsys.IsPal && (retro_region != RETRO_REGION_NTSC))) retro_reinit_av_info();
 
-   audio_size = SAMPLEFRAME;
+   audio_size = sample_frame;
 
    //YabauseExec(); runs from handle events
    if(PERCore)
