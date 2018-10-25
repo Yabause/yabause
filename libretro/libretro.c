@@ -663,7 +663,7 @@ static void context_reset(void)
       log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
       if (VIDCore && VIDCore->id)
-         VIDCore->Resize(0, 0, 1920, 1440, 0);
+         VIDCore->Resize(0, 0, 1408, 960, 0);
       OSDChangeCore(OSDCORE_DUMMY);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
       retro_reinit_av_info();
@@ -739,8 +739,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->timing.sample_rate    = SAMPLERATE;
    info->geometry.base_width   = game_width;
    info->geometry.base_height  = game_height;
-   info->geometry.max_width    = 1920;
-   info->geometry.max_height   = 1440;
+   info->geometry.max_width    = 1408;
+   info->geometry.max_height   = 960;
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 
