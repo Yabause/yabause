@@ -972,7 +972,7 @@ bool retro_load_game_common()
 #else
    yinit.m68kcoretype       = M68KCORE_C68K;
 #endif
-   yinit.regionid           = REGION_EUROPE;
+   yinit.regionid           = REGION_AUTODETECT;
    yinit.mpegpath           = NULL;
    yinit.frameskip          = frameskip_enable;
    //yinit.clocksync          = 0;
