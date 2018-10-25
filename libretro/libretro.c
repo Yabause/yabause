@@ -496,6 +496,7 @@ PerInterface_struct PERLIBRETROJoy = {
 
 static uint32_t video_freq;
 static uint32_t audio_size;
+static uint32_t sample_frame = SAMPLEFRAME;
 
 static int SNDLIBRETROInit(void) { return 0; }
 
@@ -505,8 +506,7 @@ static int SNDLIBRETROReset(void) { return 0; }
 
 static int SNDLIBRETROChangeVideoFormat(int vertfreq)
 {
-	//video_freq = vertfreq;
-	//audio_size = 44100 / vertfreq;
+    sample_frame = SAMPLERATE / vertfreq;
     return 0;
 }
 
@@ -1335,7 +1335,7 @@ void retro_run(void)
 
    if ((yabsys.IsPal && (retro_region == RETRO_REGION_NTSC)) || (!yabsys.IsPal && (retro_region != RETRO_REGION_NTSC))) retro_reinit_av_info();
 
-   audio_size = SAMPLEFRAME;
+   audio_size = sample_frame;
 
    //YabauseExec(); runs from handle events
    if(PERCore)
