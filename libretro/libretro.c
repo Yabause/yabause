@@ -709,6 +709,8 @@ void YuiSwapBuffers(void)
    game_width  = current_width;
    game_height = current_height;
 
+   audio_size = sample_frame;
+
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
 }
 
@@ -1349,8 +1351,6 @@ void retro_run(void)
    }
 
    if ((yabsys.IsPal && (retro_region == RETRO_REGION_NTSC)) || (!yabsys.IsPal && (retro_region != RETRO_REGION_NTSC))) retro_reinit_av_info();
-
-   audio_size = sample_frame;
 
    //YabauseExec(); runs from handle events
    if(PERCore)
