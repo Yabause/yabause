@@ -1149,8 +1149,13 @@ void initLevels(YglLevel** levels) {
 //////////////////////////////////////////////////////////////////////////////
 int YglInit(int width, int height, unsigned int depth) {
   unsigned int i,j;
+  int maj, min;
   void * dataPointer=NULL;
   YGLLOG("YglInit(%d,%d,%d);",width,height,depth );
+
+  glGetIntegerv(GL_MAJOR_VERSION, &maj);
+  glGetIntegerv(GL_MINOR_VERSION, &min);
+  YuiMsg("Using OpenGL %d.%d\n", maj, min);
 
   if ((_Ygl = (Ygl *)malloc(sizeof(Ygl))) == NULL) {
     return -1;
@@ -1175,7 +1180,6 @@ int YglInit(int width, int height, unsigned int depth) {
   if (_Ygl->crammutex == NULL) {
     _Ygl->crammutex = YabThreadCreateMutex();
   }
-
 
 
 #if defined(_USEGLEW_) && !defined(__LIBRETRO__)

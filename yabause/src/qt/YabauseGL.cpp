@@ -30,6 +30,7 @@ YabauseGL::YabauseGL( ) : QOpenGLWindow()
         format.setSwapInterval(0);
         format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
         format.setProfile(QSurfaceFormat::CompatibilityProfile);
+        format.setVersion(4, 2);
         setFormat(format);
 }
 
