@@ -337,13 +337,15 @@ static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vd
 
 static void executeDrawCell() {
 #ifdef CELL_ASYNC
-  while (nbLoop != 0) {
-    nbLoop--;
-    Vdp2DrawCell(infoTable[nbLoop], textureTable[nbLoop], vdp2RegsTable[nbLoop], orderTable[nbLoop]);
-    free(infoTable[nbLoop]);
-    free(textureTable[nbLoop]);
-    free(vdp2RegsTable[nbLoop]);
+  int i = 0;
+  while (i < nbLoop) {
+    Vdp2DrawCell(infoTable[i], textureTable[i], vdp2RegsTable[i], orderTable[i]);
+    free(infoTable[i]);
+    free(textureTable[i]);
+    free(vdp2RegsTable[i]);
+    i++;
   }
+  nbLoop = 0;
 #endif
 }
 
