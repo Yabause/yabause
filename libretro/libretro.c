@@ -651,8 +651,8 @@ void retro_reinit_av_info(void)
 void retro_set_resolution()
 {
    // Let's use maximum available size in the glViewport call, while keeping ratio
-   current_width = game_width * (game_height > 256 && resolution_mode == 4 ? 2 : resolution_mode);
-   current_height = game_height * (game_height > 256 && resolution_mode == 4 ? 2 : resolution_mode);
+   current_width = game_width * resolution_mode;
+   current_height = game_height * resolution_mode;
    VIDCore->Resize(0, 0, current_width, current_height, 0);
    retro_reinit_av_info();
    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
@@ -905,6 +905,10 @@ static void check_variables(void)
          resolution_mode = 2;
       else if (strcmp(var.value, "4x") == 0)
          resolution_mode = 4;
+      else if (strcmp(var.value, "8x") == 0)
+         resolution_mode = 8;
+      else if (strcmp(var.value, "16x") == 0)
+         resolution_mode = 16;
    }
 
    var.key = "kronos_scanlines";
