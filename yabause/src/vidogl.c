@@ -47,7 +47,7 @@
 
 #define LOG_AREA
 
-
+static bool vidogl_renderer_started = false;
 static Vdp2 baseVdp2Regs;
 //#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
@@ -3858,6 +3858,8 @@ static void SetSaturnResolution(int width, int height)
 
 int VIDOGLInit(void)
 {
+  if(vidogl_renderer_started)
+    return -1;
 
 #ifdef SPRITE_CACHE
   if (yabsys.useVdp1cache) {
@@ -3876,6 +3878,8 @@ int VIDOGLInit(void)
   vdp1wratio = 1;
   vdp1hratio = 1;
 
+  vidogl_renderer_started = true;
+
   return 0;
 }
 
@@ -3883,6 +3887,9 @@ int VIDOGLInit(void)
 
 void VIDOGLDeInit(void)
 {
+  if(!vidogl_renderer_started)
+    return;
+
 #ifdef CELL_ASYNC
   if (drawcell_run == 1) {
     drawcell_run = 0;
@@ -3911,6 +3918,7 @@ void VIDOGLDeInit(void)
     deinitPatternCache();
   }
 #endif
+  vidogl_renderer_started = false;
 }
 
 //////////////////////////////////////////////////////////////////////////////
