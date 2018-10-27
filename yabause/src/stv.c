@@ -1889,7 +1889,11 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
     }
 
     LOGSTV("%s\n", filename);
+#if defined(_WIN32)
+    char *last = strrchr(info->filename, '\\');
+#else
     char *last = strrchr(info->filename, '/');
+#endif
     if (last != NULL) {
       if (strcmp(last+1, "stvbios.zip") == 0) {
         processBios(zip, user_data); // alters file offset
