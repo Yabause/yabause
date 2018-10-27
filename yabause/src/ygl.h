@@ -415,7 +415,7 @@ typedef struct {
    int (*setupUniform)(void *, YglTextureManager *tm, Vdp2* regs);
    int (*cleanupUniform)(void *, YglTextureManager *tm);
    YglVdp1CommonParam * ids;
-   float * matrix;
+   GLfloat* matrix;
    int mosaic[2];
    u32 lineTexture;
    int id;

@@ -93,7 +93,9 @@ const Items mUpscaleFilterMode = Items()
 const Items mResolutionMode = Items()
 	<< Item("1", "Original (original resolution of the Saturn)")
 	<< Item("2", "2x")
-	<< Item("4", "4x");
+	<< Item("4", "4x")
+	<< Item("8", "8x")
+	<< Item("16", "16x");
 
 const Items mAspectRatio = Items()
 	<< Item("0", "Original aspect ratio")

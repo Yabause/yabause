@@ -742,88 +742,6 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
   YabThreadUnLock(tm->mtx);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf ){
-
-  FILE * fp = fopen(filename, "wb");
-  int bsize = width*height * 3;
-  char * pBitmap = malloc(bsize);
-  int i, j;
-
-  for (i = 0; i < height; i++){
-    for (j = 0; j < width; j++){
-      pBitmap[j * 3 + i*width * 3 + 0] = buf[j * 4 + i*width * 4 + 0];
-      pBitmap[j * 3 + i*width * 3 + 1] = buf[j * 4 + i*width * 4 + 1];
-      pBitmap[j * 3 + i*width * 3 + 2] = buf[j * 4 + i*width * 4 + 2];
-    }
-  }
-
-  //-----------------------------------------
-  //  File Header
-  //------------------------------------------
-
-  long offset = 14 + 40;
-  char s[2];
-  s[0] = 'B';
-  s[1] = 'M';
-  fwrite(s, sizeof(char), 2, fp);
-  long filesize = bsize + offset;
-  fwrite(&filesize, sizeof(long), 1, fp);
-  short reserved = 0;
-  fwrite(&reserved, sizeof(short), 1, fp);
-  fwrite(&reserved, sizeof(short), 1, fp);
-  fwrite(&offset, sizeof(long), 1, fp);
-
-
-  //------------------------------------------
-  // Bitmap Header
-  //------------------------------------------
-  long var_long;
-  short var_short;
-
-  var_long = 40;
-  fwrite(&var_long, sizeof(long), 1, fp);
-  var_long = width;
-
-  fwrite(&var_long, sizeof(long), 1, fp);
-  var_long = -height;
-
-  fwrite(&var_long, sizeof(long), 1, fp);
-
-  var_short = 1;
-  fwrite(&var_short, sizeof(short), 1, fp);
-
-  var_short = 24;
-  fwrite(&var_short, sizeof(short), 1, fp);
-
-  var_long = 0;
-  fwrite(&var_long, sizeof(long), 1, fp);
-
-  var_long = bsize;
-  fwrite(&var_long, sizeof(long), 1, fp);
-
-
-  var_long = 3780;
-  fwrite(&var_long, sizeof(long), 1, fp);
-
-
-  var_long = 3780;
-  fwrite(&var_long, sizeof(long), 1, fp);
-  var_long = 0;
-
-  fwrite(&var_long, sizeof(long), 1, fp);
-  var_long = 0;
-  fwrite(&var_long, sizeof(long), 1, fp);
-
-  //
-  fwrite(pBitmap, sizeof(char), bsize, fp);
-
-  fclose(fp);
-  free(pBitmap);
-
-  return 0;
-}
-
 u32* getVdp1DrawingFBMem(int id) {
   u32* fbptr = NULL;
   GLuint error;
@@ -856,10 +774,10 @@ u16 COLOR24TO16(u32 temp) {
 }
 
 void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
-  if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL)
-    _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
   u8 priority = Vdp2Regs->PRISA &0x7;
   int rgb = !((val>>15)&0x1);
+  if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL)
+    _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
   switch (type)
   {
   case 0:
@@ -870,7 +788,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     break;
   case 2:
     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
-    int rgb = !(((val>>16)>>15)&0x1);
+    rgb = !(((val>>16)>>15)&0x1);
     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
     break;
   default:
@@ -1418,6 +1336,9 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   int prg = PG_VFP1_GOURAUDSAHDING;
   float * pos;
   int u, v;
+  float *colv;
+  texturecoordinate_struct texv[6];
+  texturecoordinate_struct * tpos;
 
   // Select Program
   if ((input->blendmode & 0x03) == VDP2_CC_ADD)
@@ -1463,9 +1384,8 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
 
 
   pos = program->quads + program->currentQuad;
-  float * colv = (program->vertexAttribute + (program->currentQuad * 2));
-  texturecoordinate_struct texv[6];
-  texturecoordinate_struct * tpos = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+  colv = (program->vertexAttribute + (program->currentQuad * 2));
+  tpos = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
 
   if (output != NULL){
     YglTMAllocate(tm, output, input->w, input->h, &x, &y);
@@ -1517,6 +1437,7 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
     }
   }
 
+  {
   int tess_count = YGL_TESS_COUNT;
   float s_step = (float)(texv[2].s-texv[0].s)/(float)tess_count;
   float t_step = (float)(texv[2].t-texv[0].t)/(float)tess_count;
@@ -1664,6 +1585,7 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
     }
   }
   program->currentQuad = program->currentQuad + (12*tess_count*tess_count);
+  }
   return 0;
 }
 
@@ -2486,9 +2408,10 @@ void YglRenderVDP1(void) {
   int i,j;
   int status;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-  FrameProfileAdd("YglRenderVDP1 start");
   //YabThreadLock(_Ygl->mutex);
   YglMatrix m, *mat;
+
+  FrameProfileAdd("YglRenderVDP1 start");
   YglLoadIdentity(&m);
 
   if (Vdp1Regs->TVMR & 0x02) {
@@ -2721,6 +2644,12 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
   int is_addcolor = 0;
   float cwidth = 0.0f;
   float cheight = 0.0f;
+  YglMatrix result;
+  int bwin_cc0;
+  int logwin_cc0;
+  int bwin_cc1;
+  int logwin_cc1;
+  int winmode_cc;
 
   YglGenFrameBuffer();
 
@@ -2741,7 +2670,6 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
 
   //
 
-  YglMatrix result;
   if (Vdp1Regs->TVMR & 0x02){
     YglMatrix rotate;
     YglLoadIdentity(&rotate);
@@ -2796,11 +2724,11 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
    logwin1 = (Vdp2Regs->WCTLC >> 10) & 0x01;
    winmode    = (Vdp2Regs->WCTLC >> 15 ) & 0x01;
 
-   int bwin_cc0 = (Vdp2Regs->WCTLD >> 9) & 0x01;
-   int logwin_cc0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
-   int bwin_cc1 = (Vdp2Regs->WCTLD >> 11) & 0x01;
-   int logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
-   int winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
+   bwin_cc0 = (Vdp2Regs->WCTLD >> 9) & 0x01;
+   logwin_cc0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
+   bwin_cc1 = (Vdp2Regs->WCTLD >> 11) & 0x01;
+   logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
+   winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
 
    if (bwin_cc0 || bwin_cc1){
 
@@ -2858,7 +2786,7 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
        }
      }
 
-     glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
+     glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&result.m[0][0]);
      glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)vertices);
      glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
      glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -2927,7 +2855,7 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
        }
      }
      Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 0, varVdp2Regs );
-     glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
+     glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&result.m[0][0]);
      glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)vertices);
      glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
      glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -2997,7 +2925,7 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
      }
    }
 
-   glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
+   glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&result.m[0][0]);
    glVertexAttribPointer(_Ygl->renderfb.vertexp,2,GL_FLOAT, GL_FALSE,0,(GLvoid *)vertices );
    glVertexAttribPointer(_Ygl->renderfb.texcoordp,2,GL_FLOAT,GL_FALSE,0,(GLvoid *)texcord );
    glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -3028,6 +2956,7 @@ void YglRenderFrameBufferShadow() {
   float offsetcol[4];
   int bwin0, bwin1, logwin0, logwin1, winmode;
   int is_addcolor = 0;
+  YglMatrix result;
 
   YglGenFrameBuffer();
 
@@ -3036,7 +2965,6 @@ void YglRenderFrameBufferShadow() {
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
-  YglMatrix result;
   if (Vdp1Regs->TVMR & 0x02) {
     YglMatrix rotate;
     YglLoadIdentity(&rotate);
@@ -3079,7 +3007,7 @@ void YglRenderFrameBufferShadow() {
   texcord[9] = 0.0f;
   texcord[10] = 0.0f;
   texcord[11] = 0.0f;
-  glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
+  glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&result.m[0][0]);
   glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_INT, GL_FALSE, 0, (GLvoid *)vertices);
   glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)texcord);
   glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -3238,9 +3166,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
   }
   else
   {
-    glEnable(GL_BLEND);
     int blendfunc_src = GL_SRC_ALPHA;
     int blendfunc_dst = GL_ONE_MINUS_SRC_ALPHA;
+    glEnable(GL_BLEND);
 
     YglLoadIdentity(&mtx);
     cprg = -1;
@@ -3537,15 +3465,14 @@ void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs) {
   unsigned int i, j;
   int highpri = 8;
   int ccwindow;
+  int blendfunc_src = GL_DST_ALPHA;
+  int blendfunc_dst = GL_ONE_MINUS_DST_ALPHA;
 
   glEnable(GL_BLEND);
 
   YglLoadIdentity(&mtx);
 
   cprg = -1;
-
-  int blendfunc_src = GL_DST_ALPHA;
-  int blendfunc_dst = GL_ONE_MINUS_DST_ALPHA;
 
   // Color Calcurate Window  
   ccwindow = ((Vdp2Regs->WCTLD >> 9) & 0x01);
@@ -3780,6 +3707,7 @@ u32 * YglGetColorRamPointer() {
 
 void YglOnUpdateColorRamWord(u32 addr) {
 
+  u32 * buf;
   if (_Ygl == NULL) return;
 
   //YabThreadLock(_Ygl->crammutex);
@@ -3790,7 +3718,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
   if (_Ygl->colupd_max_addr < addr)
     _Ygl->colupd_max_addr = addr;
 
-  u32 * buf = _Ygl->cram_tex_buf;
+  buf = _Ygl->cram_tex_buf;
   if (buf == NULL) {
     //YabThreadUnLock(_Ygl->crammutex);
     return;
@@ -3825,6 +3753,9 @@ void YglOnUpdateColorRamWord(u32 addr) {
 
 
 void YglUpdateColorRam() {
+  u32 * buf;
+  int index_shft  = 1;
+  u32 start_addr,size;
   //YabThreadLock(_Ygl->crammutex);
   if (Vdp2ColorRamUpdated) {
     Vdp2ColorRamUpdated = 0;
@@ -3833,8 +3764,7 @@ void YglUpdateColorRam() {
       return; // !? not initilized?
     }
 
-    u32 * buf = YglGetColorRamPointer();
-    int index_shft = 1;
+    buf = YglGetColorRamPointer();
     if (Vdp2Internal.ColorMode == 2) {
       index_shft = 2;
     }
@@ -3842,8 +3772,8 @@ void YglUpdateColorRam() {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     _Ygl->colupd_min_addr &= 0xFFF;
     _Ygl->colupd_max_addr &= 0xFFF;
-    const u32 start_addr = (_Ygl->colupd_min_addr >> index_shft);
-    const u32 size = ((_Ygl->colupd_max_addr - _Ygl->colupd_min_addr) >> index_shft) + 1;
+    start_addr = (_Ygl->colupd_min_addr >> index_shft);
+    size = ((_Ygl->colupd_max_addr - _Ygl->colupd_min_addr) >> index_shft) + 1;
 #if 0
     glTexSubImage2D(GL_TEXTURE_2D,
       0,
