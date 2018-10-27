@@ -34,8 +34,15 @@
 
 yabauseinit_struct yinit;
 
-int game_width;
-int game_height;
+static int game_width  = 320;
+static int game_height = 240;
+static int game_interlace;
+
+#define KRONOS_CORE_GEOMETRY_MAX_W 1408; // 704*2
+#define KRONOS_CORE_GEOMETRY_MAX_H 1024; // 512*2
+
+static int current_width  = KRONOS_CORE_GEOMETRY_MAX_W;
+static int current_height = KRONOS_CORE_GEOMETRY_MAX_H;
 
 static bool hle_bios_force = false;
 static bool frameskip_enable = false;
@@ -43,7 +50,7 @@ static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int scanlines = 0;
-static int resolution_mode = RES_ORIGINAL;
+static int resolution_mode = 1;
 static int numthreads = 4;
 static int retro_region = RETRO_REGION_NTSC;
 static bool stv_mode = false;
@@ -641,6 +648,16 @@ void retro_reinit_av_info(void)
     environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
 }
 
+void retro_set_resolution()
+{
+   // Let's use maximum available size in the glViewport call, while keeping ratio
+   current_width = game_width * (game_height > 256 ? 2 : 4);
+   current_height = game_height * (game_height > 256 ? 2 : 4);
+   VIDCore->Resize(0, 0, current_width, current_height, 0);
+   retro_reinit_av_info();
+   VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
+}
+
 static void context_reset(void)
 {
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
@@ -650,11 +667,9 @@ static void context_reset(void)
       first_ctx_reset = 0;
       log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
-      if (VIDCore && VIDCore->id)
-         VIDCore->Resize(0, 0, 1408, 960, 0);
+      retro_set_resolution();
       OSDChangeCore(OSDCORE_DUMMY);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
-      retro_reinit_av_info();
    }
 }
 
@@ -665,16 +680,14 @@ static void context_destroy(void)
 
 static bool retro_init_hw_context(void)
 {
-   opengl_mode = 0;
    glsm_ctx_params_t params = {0};
    params.context_type = RETRO_HW_CONTEXT_OPENGLES3;
    params.context_reset = context_reset;
    params.context_destroy = context_destroy;
    params.environ_cb = environ_cb;
    params.stencil = true;
-   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params)) {
-      // OpenGL 3.1 doesn't seem to need the vao stuff
-      // opengl_mode = 1;
+   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+   {
       params.context_type = RETRO_HW_CONTEXT_OPENGL;
       if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
          return false;
@@ -684,22 +697,13 @@ static bool retro_init_hw_context(void)
 
 void YuiSwapBuffers(void)
 {
-   int current_width  = 320;
-   int current_height = 240;
-
-   /* Test if VIDCore valid AND NOT the
-    * Dummy Interface (or at least VIDCore->id != 0).
-    * Avoid calling GetGlSize if Dummy/ID = 0 is selected
-    */
-   if (VIDCore && VIDCore->id)
-      VIDCore->GetGlSize(&current_width, &current_height);
-
-   game_width  = current_width;
-   game_height = current_height;
-
+   int prev_game_width = game_width;
+   int prev_game_height = game_height;
+   VIDCore->GetNativeResolution(&game_width, &game_height, &game_interlace);
+   if ((prev_game_width != game_width) || (prev_game_height != game_height))
+      retro_set_resolution();
    audio_size = sample_frame;
-
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, game_width, game_height, 0);
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, current_width, current_height, 0);
 }
 
 /************************************
@@ -729,8 +733,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->timing.sample_rate    = SAMPLERATE;
    info->geometry.base_width   = game_width;
    info->geometry.base_height  = game_height;
-   info->geometry.max_width    = 1408;
-   info->geometry.max_height   = 960;
+   info->geometry.max_width    = KRONOS_CORE_GEOMETRY_MAX_W;
+   info->geometry.max_height   = KRONOS_CORE_GEOMETRY_MAX_H;
    info->geometry.aspect_ratio = 4.0 / 3.0;
 }
 
@@ -889,12 +893,12 @@ static void check_variables(void)
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "original") == 0 && resolution_mode != RES_ORIGINAL)
-         resolution_mode = RES_ORIGINAL;
-      else if (strcmp(var.value, "2x") == 0 && resolution_mode != RES_2x)
-         resolution_mode = RES_2x;
-      else if (strcmp(var.value, "4x") == 0 && resolution_mode != RES_4x)
-         resolution_mode = RES_4x;
+      if (strcmp(var.value, "original") == 0)
+         resolution_mode = 1;
+      else if (strcmp(var.value, "2x") == 0)
+         resolution_mode = 2;
+      else if (strcmp(var.value, "4x") == 0)
+         resolution_mode = 4;
    }
 
    var.key = "kronos_scanlines";
@@ -923,8 +927,6 @@ void retro_init(void)
 
    log_cb                   = NULL;
    perf_get_cpu_features_cb = NULL;
-   game_width               = 320;
-   game_height              = 240;
    uint64_t serialization_quirks = RETRO_SERIALIZATION_QUIRK_SINGLE_SESSION;
    /* Performance level for interpreter CPU core is 16 */
    unsigned level           = 16;
@@ -990,7 +992,7 @@ bool retro_load_game_common()
    yinit.skip_load          = 0;
    yinit.video_filter_type  = filter_mode;
    yinit.video_upscale_type = upscale_mode;
-   yinit.resolution_mode    = resolution_mode;
+   //yinit.resolution_mode    = resolution_mode;
    yinit.scanline           = scanlines; //This is not working
 
    return true;
@@ -1326,9 +1328,11 @@ void retro_run(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
    {
+      int prev_resolution_mode = resolution_mode;
       check_variables();
+      if(prev_resolution_mode != resolution_mode)
+         retro_set_resolution();
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
-      VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanlines);
    }
