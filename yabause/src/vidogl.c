@@ -47,7 +47,7 @@
 
 #define LOG_AREA
 
-static bool vidogl_renderer_started = false;
+static int vidogl_renderer_started = 0;
 static Vdp2 baseVdp2Regs;
 //#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
@@ -3878,7 +3878,7 @@ int VIDOGLInit(void)
   vdp1wratio = 1;
   vdp1hratio = 1;
 
-  vidogl_renderer_started = true;
+  vidogl_renderer_started = 1;
 
   return 0;
 }
@@ -3918,7 +3918,7 @@ void VIDOGLDeInit(void)
     deinitPatternCache();
   }
 #endif
-  vidogl_renderer_started = false;
+  vidogl_renderer_started = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

@@ -3966,9 +3966,9 @@ void YglSetBackColor(int size) {
 void YglChangeResolution(int w, int h) {
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
-
-  if (( h > 256) &&  (_Ygl->resolution_mode == 4)) _Ygl->resolution_mode = 2;; //Do not use 4x rendering when original res is already 2x
-
+#ifndef __LIBRETRO__
+  if (( h > 256) &&  (_Ygl->resolution_mode >= 4)) _Ygl->resolution_mode = _Ygl->resolution_mode>>1; //Do not use 4x rendering when original res is already 2x
+#endif
        YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
          glDeleteFramebuffers(1, &_Ygl->smallfbo);
