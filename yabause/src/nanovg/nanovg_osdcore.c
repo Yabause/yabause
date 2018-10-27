@@ -20,11 +20,7 @@
 #include "ygl.h"
 
 #include "nanovg.h"
-#if defined(_OGLES3_)
 #define NANOVG_GLES3_IMPLEMENTATION
-#else
-#define NANOVG_GL3_IMPLEMENTATION
-#endif
 #include "nanovg_gl.h"
 
 #include "osdcore.h"
@@ -86,11 +82,7 @@ static int profile_index = 0;
 
 int OSDNanovgInit(void)
 {
-#if defined(_OGLES3_)
     vg = nvgCreateGLES3(NVG_ANTIALIAS);
-#else
-	vg = nvgCreateGL3(NVG_ANTIALIAS);
-#endif	
     if (vg == NULL) {
         printf("Could not init nanovg.\n");
         return -1;

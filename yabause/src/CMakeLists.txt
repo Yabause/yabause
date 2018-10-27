@@ -321,7 +321,6 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		endif()
 		add_definitions(-D_OGL3_)
 		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-			add_definitions(-D_OGLES3_)
 			set(kronos_SOURCES ${kronos_SOURCES} 
 				yglcache.c
 				ygles.c
