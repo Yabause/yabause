@@ -651,8 +651,8 @@ void retro_reinit_av_info(void)
 void retro_set_resolution()
 {
    // Let's use maximum available size in the glViewport call, while keeping ratio
-   current_width = game_width * (game_height > 256 ? 2 : 4);
-   current_height = game_height * (game_height > 256 ? 2 : 4);
+   current_width = game_width * (game_height > 256 && resolution_mode == 4 ? 2 : resolution_mode);
+   current_height = game_height * (game_height > 256 && resolution_mode == 4 ? 2 : resolution_mode);
    VIDCore->Resize(0, 0, current_width, current_height, 0);
    retro_reinit_av_info();
    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
@@ -671,10 +671,16 @@ static void context_reset(void)
       OSDChangeCore(OSDCORE_DUMMY);
       log_cb(RETRO_LOG_INFO, "Kronos init done\n");
    }
+   else
+   {
+      VIDCore->Init();
+      retro_set_resolution();
+   }
 }
 
 static void context_destroy(void)
 {
+   VIDCore->DeInit();
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
 }
 
@@ -735,7 +741,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.base_height  = game_height;
    info->geometry.max_width    = KRONOS_CORE_GEOMETRY_MAX_W;
    info->geometry.max_height   = KRONOS_CORE_GEOMETRY_MAX_H;
-   info->geometry.aspect_ratio = 4.0 / 3.0;
+   info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
@@ -993,7 +999,8 @@ bool retro_load_game_common()
    yinit.video_filter_type  = filter_mode;
    yinit.video_upscale_type = upscale_mode;
    //yinit.resolution_mode    = resolution_mode;
-   yinit.scanline           = scanlines; //This is not working
+   yinit.scanline           = scanlines;
+   yinit.stretch            = 1;
 
    return true;
 }
