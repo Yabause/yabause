@@ -14,6 +14,8 @@
 
 #include <libretro.h>
 
+#include <file/file_path.h>
+
 #include "vdp1.h"
 #include "vdp2.h"
 #include "peripheral.h"
@@ -33,6 +35,9 @@
 #include "sh2int_kronos.h"
 
 yabauseinit_struct yinit;
+
+static char g_save_dir[PATH_MAX];
+static char g_system_dir[PATH_MAX];
 
 static int game_width  = 320;
 static int game_height = 240;
@@ -959,18 +964,14 @@ void retro_init(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_PERF_INTERFACE, &perf_cb))
       perf_get_cpu_features_cb = perf_cb.get_cpu_features;
 
-   environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir);
-
-   if (dir)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &dir) && dir)
    {
-#ifdef _WIN32
-      char slash = '\\';
-#else
-      char slash = '/';
-#endif
-      snprintf(bios_path, sizeof(bios_path), "%s%ckronos%c%s", dir, slash, slash, "saturn_bios.bin");
-      snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%ckronos%c%s", dir, slash, slash, "stvbios.zip");
-      snprintf(stv_bup_path, sizeof(stv_bup_path), "%s%ckronos%c%s", dir, slash, slash, "bupstv.ram");
+      strncpy(g_system_dir, dir, sizeof(g_system_dir));
+   }
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_SAVE_DIRECTORY, &dir) && dir)
+   {
+      strncpy(g_save_dir, dir, sizeof(g_save_dir));
    }
 
    if(PERCore)
@@ -1030,6 +1031,46 @@ bool retro_load_game(const struct retro_game_info *info)
 
    snprintf(full_path, sizeof(full_path), "%s", info->path);
 
+#ifdef _WIN32
+   char slash = '\\';
+#else
+   char slash = '/';
+#endif
+
+   snprintf(stv_bup_path, sizeof(stv_bup_path), "%s%ckronos%cbupstv.ram", g_save_dir, slash, slash);
+
+   snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%ckronos%cstvbios.zip", g_system_dir, slash, slash);
+   if (does_file_exist(stv_bios_path) != 1)
+   {
+      log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", stv_bios_path);
+      snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%cstvbios.zip", g_system_dir, slash);
+      if (does_file_exist(stv_bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", stv_bios_path);
+      }
+   }
+
+   snprintf(bios_path, sizeof(bios_path), "%s%ckronos%csaturn_bios.bin", g_system_dir, slash, slash);
+   if (does_file_exist(bios_path) != 1)
+   {
+      log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
+      snprintf(bios_path, sizeof(bios_path), "%s%csaturn_bios.bin", g_system_dir, slash);
+      if (does_file_exist(bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
+         snprintf(bios_path, sizeof(bios_path), "%s%csega_101.bin", g_system_dir, slash);
+         if (does_file_exist(bios_path) != 1)
+         {
+            log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
+            snprintf(bios_path, sizeof(bios_path), "%s%cmpr-17933.bin", g_system_dir, slash);
+            if (does_file_exist(bios_path) != 1)
+            {
+               log_cb(RETRO_LOG_WARN, "%s NOT FOUND\n", bios_path);
+            }
+         }
+      }
+   }
+
    // Check if the path lead to a ST-V game
    // Store the game "id", if no game id found then this is most likely not a ST-V game
    int stvgame = -1;
@@ -1071,7 +1112,7 @@ bool retro_load_game(const struct retro_game_info *info)
       // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
       if (does_file_exist(stv_bios_path) != 1)
       {
-         log_cb(RETRO_LOG_ERROR, "%s is MISSING\n", stv_bios_path);
+         log_cb(RETRO_LOG_ERROR, "This is a ST-V game but we are missing the bios, ABORTING\n");
          return false;
       }
 
@@ -1286,7 +1327,7 @@ bool retro_load_game(const struct retro_game_info *info)
       // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
       if (does_file_exist(bios_path) != 1)
       {
-         log_cb(RETRO_LOG_ERROR, "%s is MISSING\n", bios_path);
+         log_cb(RETRO_LOG_ERROR, "This is a Saturn game but we are missing the bios, ABORTING\n");
          return false;
       }
 
