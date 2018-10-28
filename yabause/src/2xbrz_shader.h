@@ -1,11 +1,7 @@
 #ifndef __2xBRZ_INCLUDE_H__
 #define __2xBRZ_INCLUDE_H__
 static const GLchar Yglprg_blit_2xbrz_v[] =
-#if defined (_OGLES3_)
-      "#version 300 es \n"
-#else
-      "#version 330 \n"
-#endif
+"#version 310 es \n"
 " layout (location = 0) in vec2 VertexCoord;\n"
 " layout (location = 1) in vec2 TexCoord;\n"
 " uniform vec2 TextureSize;\n"
@@ -44,11 +40,7 @@ static const GLchar Yglprg_blit_2xbrz_v[] =
 "}\n";
 
 static const GLchar Yglprg_blit_2xbrz_f[] =
-#if defined (_OGLES3_)
-      "#version 300 es \n"
-#else
-      "#version 330 \n"
-#endif
+"#version 310 es \n"
 
 "\n"
 "#ifdef GL_ES\n"
