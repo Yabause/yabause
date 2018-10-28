@@ -1889,7 +1889,7 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
     }
 
     LOGSTV("%s\n", filename);
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(__LIBRETRO__)
     char *last = strrchr(info->filename, '\\');
 #else
     char *last = strrchr(info->filename, '/');
