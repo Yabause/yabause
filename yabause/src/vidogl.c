@@ -223,6 +223,7 @@ typedef struct {
 #ifdef RGB_ASYNC
 YabEventQueue *rotq = NULL;
 YabEventQueue *rotq_end = NULL;
+YabEventQueue *rotq_end_task = NULL;
 static int rotation_run = 0;
 #endif
 
@@ -3358,9 +3359,22 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   if (rgb_type == 0x0) Vdp2DrawRotation_in(rbg, varVdp2Regs);
   else 
 #endif
+  {
     Vdp2DrawRotation_in_sync(rbg, varVdp2Regs);
-  YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
+    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
+  }
 }
+
+#ifdef RGB_ASYNC
+static void finishRbgQueue() {
+  while (YaGetQueueSize(rotq_end_task)!=0)
+  {
+    RBGDrawInfo *rbg = (RBGDrawInfo *) YabWaitEventQueue(rotq_end_task);
+    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
+    free(rbg);
+  }
+}
+#endif
 
 #define ceilf(a) ((a)+0.99999f)
 
@@ -3821,7 +3835,7 @@ void Vdp2DrawRotation_in_async(void *p)
      rotationTask *task = (rotationTask *)YabWaitEventQueue(rotq);
      if (task != NULL) {
        Vdp2DrawRotation_in_sync(task->rbg, task->varVdp2Regs);
-       free(task->rbg);
+       YabAddEventQueue(rotq_end_task, task->rbg);
        free(task->varVdp2Regs);
        free(task);
      }
@@ -3842,6 +3856,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
      rotation_run = 1;
      rotq = YabThreadCreateQueue(32);
      rotq_end = YabThreadCreateQueue(32);
+     rotq_end_task = YabThreadCreateQueue(32);
      YabThreadStart(YAB_THREAD_VDP2_RBG1, Vdp2DrawRotation_in_async, 0);
    }
    YabAddEventQueue(rotq_end, NULL);
@@ -7351,6 +7366,7 @@ int WaitVdp2Async(int sync) {
       {
         YabThreadYield();
       }
+      finishRbgQueue();
       if (empty != 0) return empty;
     }
 #endif
