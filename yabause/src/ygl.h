@@ -586,7 +586,6 @@ typedef struct {
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;
    int vpd1_running;
-   int needVdp1Render;
    GLint m_viewport[4];
 
    GLuint cram_tex;

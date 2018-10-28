@@ -4016,7 +4016,6 @@ void VIDOGLVdp1Draw()
 
   FrameProfileAdd("Vdp1Command start");
 
-  _Ygl->needVdp1Render = 1;
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
 
   maxpri = 0x00;
@@ -5533,8 +5532,6 @@ void VIDOGLVdp2Draw(void)
     YglTM_vdp2 = YglTMInit(new_width, new_height);
   }
   YglTmPull(YglTM_vdp2, 0);
-  YglTMReset(YglTM_vdp2);
-  YglCacheReset(YglTM_vdp2);
 
   if (Vdp2Regs->TVMD & 0x8000) {
     VIDOGLVdp2DrawScreens();

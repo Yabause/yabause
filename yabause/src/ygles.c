@@ -600,6 +600,8 @@ void YglTmPush(YglTextureManager * tm){
     tm->texture = NULL;
   }
   YabThreadUnLock(tm->mtx);
+  YglTMReset(tm);
+  YglCacheReset(tm);
 }
 
 void YglTmPull(YglTextureManager * tm, u32 flg){
@@ -2368,27 +2370,12 @@ static void waitVdp1End(int id) {
 }
 
 static void executeTMVDP1(int in, int out) {
- if (_Ygl->needVdp1Render != 0){
-#ifdef VDP1_TEXTURE_ASYNC
-    waitVdp1Textures(1);
-#endif
-    YglTmPush(YglTM_vdp1[in]);
-    YglRenderVDP1();
-    _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
-    waitVdp1End(out);
-    YglReset(_Ygl->vdp1levels[out]);
-    YglTMReset(YglTM_vdp1[out]);
-    YglCacheReset(YglTM_vdp1[out]);
-    YglTmPull(YglTM_vdp1[out], 0);
-    _Ygl->needVdp1Render = 0;
-  } else
-  if (in != out) {
-    waitVdp1End(out);
-    YglReset(_Ygl->vdp1levels[out]);
-    YglTMReset(YglTM_vdp1[out]);
-    YglCacheReset(YglTM_vdp1[out]);
-    YglTmPull(YglTM_vdp1[out], 0);
-  }
+  YglTmPush(YglTM_vdp1[in]);
+  YglRenderVDP1();
+  _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+  waitVdp1End(out);
+  YglReset(_Ygl->vdp1levels[out]);
+  YglTmPull(YglTM_vdp1[out], 0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
