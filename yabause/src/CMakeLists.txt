@@ -106,6 +106,17 @@ if (YAB_WANT_ASYNC_VDP1_TEXTURE)
 	add_definitions(-DVDP1_TEXTURE_ASYNC=1)
 endif()
 
+option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
+if (YAB_WANT_ASAN_DEBUG)
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lasan -fsanitize=address")
+   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} "-lasan -fsanitize=address")
+endif()
+
+option(YAB_WANT_UBSAN_DEBUG "Enable UBSAN compilation sanitizer" OFF)
+if (YAB_WANT_UBSAN_DEBUG)
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lubsan -fsanitize=undefined")
+   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} "-lubsan -fsanitize=undefined")
+endif()
 
 option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
 if (YAB_WANT_DYNAREC_DEVMIYAX)
