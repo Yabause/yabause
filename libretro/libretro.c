@@ -38,11 +38,8 @@ static int game_width  = 320;
 static int game_height = 240;
 static int game_interlace;
 
-#define KRONOS_CORE_GEOMETRY_MAX_W 1408; // 704*2
-#define KRONOS_CORE_GEOMETRY_MAX_H 1024; // 512*2
-
-static int current_width  = KRONOS_CORE_GEOMETRY_MAX_W;
-static int current_height = KRONOS_CORE_GEOMETRY_MAX_H;
+static int current_width;
+static int current_height;
 
 static bool hle_bios_force = false;
 static bool frameskip_enable = false;
@@ -51,6 +48,7 @@ static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int scanlines = 0;
 static int resolution_mode = 1;
+static int initial_resolution_mode = 0;
 static int numthreads = 4;
 static int retro_region = RETRO_REGION_NTSC;
 static bool stv_mode = false;
@@ -98,7 +96,7 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
-      { "kronos_resolution_mode", "Resolution Mode; original|2x|4x" },
+      { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
       { "kronos_scanlines", "Scanlines; disabled|enabled" },
       { NULL, NULL },
    };
@@ -650,9 +648,11 @@ void retro_reinit_av_info(void)
 
 void retro_set_resolution()
 {
-   // Let's use maximum available size in the glViewport call, while keeping ratio
-   current_width = game_width * resolution_mode;
-   current_height = game_height * resolution_mode;
+   // If resolution_mode > initial_resolution_mode, we'll need a restart to reallocate the max size for buffer
+   if (resolution_mode > initial_resolution_mode)
+      resolution_mode = initial_resolution_mode;
+   current_width = game_width * (game_height > 256 && resolution_mode == 16 ? 8 : resolution_mode);
+   current_height = game_height * (game_height > 256 && resolution_mode == 16 ? 8 : resolution_mode);
    VIDCore->Resize(0, 0, current_width, current_height, 0);
    retro_reinit_av_info();
    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
@@ -731,102 +731,7 @@ void retro_get_system_info(struct retro_system_info *info)
    info->valid_extensions = "bin|cue|iso|mds|ccd|nrg|zip";
 }
 
-void retro_get_system_av_info(struct retro_system_av_info *info)
-{
-   memset(info, 0, sizeof(*info));
-
-   info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60.0f : 50.0f;
-   info->timing.sample_rate    = SAMPLERATE;
-   info->geometry.base_width   = game_width;
-   info->geometry.base_height  = game_height;
-   info->geometry.max_width    = KRONOS_CORE_GEOMETRY_MAX_W;
-   info->geometry.max_height   = KRONOS_CORE_GEOMETRY_MAX_H;
-   info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
-}
-
-void retro_set_controller_port_device(unsigned port, unsigned device)
-{
-   switch(device)
-   {
-      case RETRO_DEVICE_JOYPAD:
-      case RETRO_DEVICE_ANALOG:
-         pad_type[port] = device;
-         if(port < 2)
-            multitap[port] = false;
-         break;
-         /* Assumes only ports 1 and 2 can report as multitap */
-      case RETRO_DEVICE_MTAP_PAD:
-         pad_type[port] = RETRO_DEVICE_JOYPAD;
-         if(port < 2)
-            multitap[port] = true;
-         break;
-      case RETRO_DEVICE_MTAP_3D:
-         pad_type[port] = RETRO_DEVICE_ANALOG;
-         if(port < 2)
-            multitap[port] = true;
-         break;
-   }
-
-   if(PERCore)
-      PERCore->Init();
-}
-
-size_t retro_serialize_size(void)
-{
-   void *buffer;
-   size_t size;
-
-   ScspMuteAudio(SCSP_MUTE_SYSTEM);
-   YabSaveStateBuffer (&buffer, &size);
-   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
-
-   free(buffer);
-
-   return size;
-}
-
-bool retro_serialize(void *data, size_t size)
-{
-   void *buffer;
-   size_t out_size;
-
-   int error = YabSaveStateBuffer (&buffer, &out_size);
-
-   memcpy(data, buffer, size);
-
-   free(buffer);
-
-   return !error;
-}
-
-bool retro_unserialize(const void *data, size_t size)
-{
-   int error = YabLoadStateBuffer(data, size);
-
-   return !error;
-}
-
-void retro_cheat_reset(void)
-{
-   CheatClearCodes();
-}
-
-void retro_cheat_set(unsigned index, bool enabled, const char *code)
-{
-   (void)index;
-   (void)enabled;
-   (void)code;
-
-   if (CheatAddARCode(code) == 0)
-      return;
-}
-
-static char full_path[256];
-static char bios_path[256];
-static char stv_bios_path[256];
-static char stv_bup_path[256];
-
-static void check_variables(void)
+void check_variables(void)
 {
    struct retro_variable var;
    var.key = "kronos_frameskip";
@@ -922,6 +827,110 @@ static void check_variables(void)
    }
 
 }
+
+void retro_get_system_av_info(struct retro_system_av_info *info)
+{
+   memset(info, 0, sizeof(*info));
+
+   if(initial_resolution_mode == 0)
+   {
+      // Get the initial resolution mode at start
+      // It will be the resolution_mode limit until the core is restarted
+      check_variables();
+      initial_resolution_mode = resolution_mode;
+   }
+
+   info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60.0f : 50.0f;
+   info->timing.sample_rate    = SAMPLERATE;
+   info->geometry.base_width   = game_width;
+   info->geometry.base_height  = game_height;
+   // No need to go above 8x what is needed by Hi-Res games, we disallow 16x for Hi-Res games
+   info->geometry.max_width    = 704 * (initial_resolution_mode == 16 ? 8 : initial_resolution_mode);
+   info->geometry.max_height   = 512 * (initial_resolution_mode == 16 ? 8 : initial_resolution_mode);
+   info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
+}
+
+void retro_set_controller_port_device(unsigned port, unsigned device)
+{
+   switch(device)
+   {
+      case RETRO_DEVICE_JOYPAD:
+      case RETRO_DEVICE_ANALOG:
+         pad_type[port] = device;
+         if(port < 2)
+            multitap[port] = false;
+         break;
+         /* Assumes only ports 1 and 2 can report as multitap */
+      case RETRO_DEVICE_MTAP_PAD:
+         pad_type[port] = RETRO_DEVICE_JOYPAD;
+         if(port < 2)
+            multitap[port] = true;
+         break;
+      case RETRO_DEVICE_MTAP_3D:
+         pad_type[port] = RETRO_DEVICE_ANALOG;
+         if(port < 2)
+            multitap[port] = true;
+         break;
+   }
+
+   if(PERCore)
+      PERCore->Init();
+}
+
+size_t retro_serialize_size(void)
+{
+   void *buffer;
+   size_t size;
+
+   ScspMuteAudio(SCSP_MUTE_SYSTEM);
+   YabSaveStateBuffer (&buffer, &size);
+   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+
+   free(buffer);
+
+   return size;
+}
+
+bool retro_serialize(void *data, size_t size)
+{
+   void *buffer;
+   size_t out_size;
+
+   int error = YabSaveStateBuffer (&buffer, &out_size);
+
+   memcpy(data, buffer, size);
+
+   free(buffer);
+
+   return !error;
+}
+
+bool retro_unserialize(const void *data, size_t size)
+{
+   int error = YabLoadStateBuffer(data, size);
+
+   return !error;
+}
+
+void retro_cheat_reset(void)
+{
+   CheatClearCodes();
+}
+
+void retro_cheat_set(unsigned index, bool enabled, const char *code)
+{
+   (void)index;
+   (void)enabled;
+   (void)code;
+
+   if (CheatAddARCode(code) == 0)
+      return;
+}
+
+static char full_path[256];
+static char bios_path[256];
+static char stv_bios_path[256];
+static char stv_bup_path[256];
 
 static int does_file_exist(const char *filename)
 {
