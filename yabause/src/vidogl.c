@@ -1032,6 +1032,8 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
      vdp1q_end = YabThreadCreateQueue(NB_MSG);
      YabThreadStart(YAB_THREAD_VDP1_0, Vdp1ReadTexture_in_async, 0);
      YabThreadStart(YAB_THREAD_VDP1_1, Vdp1ReadTexture_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP1_2, Vdp1ReadTexture_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP1_3, Vdp1ReadTexture_in_async, 0);
    }
    YabAddEventQueue(vdp1q_end, NULL);
    YabAddEventQueue(vdp1q, task);
