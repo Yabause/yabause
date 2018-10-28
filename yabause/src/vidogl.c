@@ -3359,7 +3359,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   else 
 #endif
     Vdp2DrawRotation_in_sync(rbg, varVdp2Regs);
-   
+  YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
 }
 
 #define ceilf(a) ((a)+0.99999f)
@@ -3812,8 +3812,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     rbg->info.flipfunction = 0;
 
     LOG_AREA("%d %d %d\n", rbg->info.cellw, rbg->info.cellh, rbg->info.celly);
-
-    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
   }
 
 #ifdef RGB_ASYNC
