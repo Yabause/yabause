@@ -3581,7 +3581,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
         break;
       default:
-        parameter = info->GetRParam(rbg, i, j);
+        parameter = info->GetRParam(rbg, i, j, varVdp2Regs);
         break;
       }
       if (parameter == NULL)

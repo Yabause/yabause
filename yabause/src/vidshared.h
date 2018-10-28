@@ -106,7 +106,7 @@ typedef struct
 } vdp2WindowInfo;
 
 typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int, u8, Vdp2 *varVdp2Regs);
-typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, int, int);
+typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, int, int, Vdp2*);
 
 typedef struct 
 {
@@ -192,7 +192,7 @@ typedef struct
    int WindwAreaMode;
    vdp2rotationparameter_struct * FASTCALL (*GetKValueA)(vdp2rotationparameter_struct*,int);
    vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);   
-   vdp2rotationparameter_struct * FASTCALL (*GetRParam)(void *, int h,int v);
+   Vdp2GetRParam_func GetRParam;
    u32 LineColorBase;
    
    void (*LoadLineParams)(void *, void *, int line, Vdp2* lines);
