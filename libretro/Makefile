@@ -1,4 +1,6 @@
 DEBUG = 0
+DEBUG_ASAN = 0
+DEBUG_UBSAN = 0
 HAVE_SSE = 0
 HAVE_GL_DEBUG = 0
 
@@ -169,6 +171,19 @@ FLAGS += -mfpmath=sse
 endif
 
 OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o) $(C68KEXEC_OBJECT)
+
+ifeq ($(DEBUG_ASAN), 1)
+   DEBUG = 1
+   DEBUG_UBSAN = 0
+   FLAGS += -lasan -fsanitize=address
+   LDFLAGS += -lasan -fsanitize=address
+endif
+
+ifeq ($(DEBUG_UBSAN), 1)
+   DEBUG = 1
+   FLAGS += -lubsan -fsanitize=undefined
+   LDFLAGS += -lubsan -fsanitize=undefined
+endif
 
 ifeq ($(DEBUG), 1)
 FLAGS += -O0 -g
