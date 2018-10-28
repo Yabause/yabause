@@ -184,11 +184,11 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
          u32 sh2cycles;
          sh->cycleFrac = req+sh->cycleLost;
          sh->cycleLost = sh->cycleFrac - ((sh->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
-         if ((sh->cycleFrac + (sh->cdiff<<YABSYS_TIMING_BITS)) < 0) {
+         if ((sh->cycleFrac + (sh->cdiff * (1<<YABSYS_TIMING_BITS))) < 0) {
            req = 0;
 	   sh->cycles += sh->cycleFrac>>YABSYS_TIMING_BITS;
          } else {
-           req = ((sh->cycleFrac + (sh->cdiff<<YABSYS_TIMING_BITS)) >> (YABSYS_TIMING_BITS + 1)) << 1;
+           req = ((sh->cycleFrac + (sh->cdiff* (1<<YABSYS_TIMING_BITS))) / (1 << (YABSYS_TIMING_BITS + 1))) * 2;
          }
          if (!yabsys.playing_ssf)
          {

@@ -208,7 +208,7 @@ static void SH2bf(SH2_struct * sh, u32 d)
    {
       s32 disp = (s32)(s8)d;
 
-      sh->regs.PC = sh->regs.PC+(disp<<1)+4;
+      sh->regs.PC = sh->regs.PC+(disp * 2)+4;
       sh->cycles += 3;
    }
    else
@@ -227,7 +227,7 @@ static void SH2bfs(SH2_struct * sh, u32 d)
    {
       s32 disp = (s32)(s8)d;
 
-      sh->regs.PC = sh->regs.PC + (disp << 1) + 4;
+      sh->regs.PC = sh->regs.PC + (disp * 2) + 4;
 
       sh->cycles += 2;
       SH2delay(sh, temp + 2);
@@ -307,7 +307,7 @@ static void SH2bt(SH2_struct * sh, u32 d)
    {
       s32 disp = (s32)(s8)d;
 
-      sh->regs.PC = sh->regs.PC+(disp<<1)+4;
+      sh->regs.PC = sh->regs.PC+(disp * 2)+4;
       sh->cycles += 3;
    }
    else
@@ -327,7 +327,7 @@ static void SH2bts(SH2_struct * sh, u32 d)
    {
       s32 disp = (s32)(s8)d;
 
-      sh->regs.PC += (disp << 1) + 4;
+      sh->regs.PC += (disp * 2) + 4;
       sh->cycles += 2;
       SH2delay(sh, temp + 2);
    }

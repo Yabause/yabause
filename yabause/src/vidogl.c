@@ -3359,6 +3359,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   else 
 #endif
     Vdp2DrawRotation_in_sync(rbg, varVdp2Regs);
+   
 }
 
 #define ceilf(a) ((a)+0.99999f)
@@ -3813,7 +3814,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     LOG_AREA("%d %d %d\n", rbg->info.cellw, rbg->info.cellh, rbg->info.celly);
 
     YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, YglTM_vdp2);
-    free(rbg);
   }
 
 #ifdef RGB_ASYNC
@@ -3823,6 +3823,8 @@ void Vdp2DrawRotation_in_async(void *p)
      rotationTask *task = (rotationTask *)YabWaitEventQueue(rotq);
      if (task != NULL) {
        Vdp2DrawRotation_in_sync(task->rbg, task->varVdp2Regs);
+       free(task->rbg);
+       free(task->varVdp2Regs);
        free(task);
      }
      YabWaitEventQueue(rotq_end);
@@ -3831,8 +3833,13 @@ void Vdp2DrawRotation_in_async(void *p)
 
 static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
    rotationTask *task = malloc(sizeof(rotationTask));
-   task->rbg = rbg;
-   task->varVdp2Regs = varVdp2Regs;
+
+   task->rbg = malloc(sizeof(RBGDrawInfo));
+   memcpy(task->rbg, rbg, sizeof(RBGDrawInfo));
+
+   task->varVdp2Regs = malloc(sizeof(Vdp2));
+   memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
+
    if (rotation_run == 0) {
      rotation_run = 1;
      rotq = YabThreadCreateQueue(32);
@@ -5971,8 +5978,9 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   else
     info->isverticalscroll = 0;
 
-    // RBG1 draw
-    Vdp2DrawRotation(rgb, varVdp2Regs);
+  // RBG1 draw
+  Vdp2DrawRotation(rgb, varVdp2Regs);
+  free(rgb);
 }
 
 int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
@@ -7250,6 +7258,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   Vdp2SetGetColor(info);
 
   Vdp2DrawRotation(rgb, varVdp2Regs);
+  free(rgb);
 }
 
 
