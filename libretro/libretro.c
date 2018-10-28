@@ -41,7 +41,12 @@ static int game_interlace;
 static int current_width;
 static int current_height;
 
+// Disable frameskip stuff for now, it's not working as expected
+#define FRAMESKIP_ENABLED 0
+
+#ifdef FRAMESKIP_ENABLED
 static bool frameskip_enable = false;
+#endif
 static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
@@ -90,7 +95,9 @@ int (__cdecl *bprintf) (int nStatus, char* szFormat, ...) = libretro_bprintf;
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
+#ifdef FRAMESKIP_ENABLED
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
+#endif
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
@@ -648,9 +655,18 @@ void retro_set_resolution()
 {
    // If resolution_mode > initial_resolution_mode, we'll need a restart to reallocate the max size for buffer
    if (resolution_mode > initial_resolution_mode)
+   {
+      log_cb(RETRO_LOG_INFO, "Restart the core for x%d resolution\n", resolution_mode);
       resolution_mode = initial_resolution_mode;
-   current_width = game_width * (game_height > 256 && resolution_mode == 16 ? 8 : resolution_mode);
-   current_height = game_height * (game_height > 256 && resolution_mode == 16 ? 8 : resolution_mode);
+   }
+   // Downscale x16 resolution_mode for Hi-Res games
+   if (game_height > 256 && resolution_mode > 8)
+   {
+      log_cb(RETRO_LOG_INFO, "Hi-Res games limited to x8\n", resolution_mode);
+      resolution_mode = 8;
+   }
+   current_width = game_width * resolution_mode;
+   current_height = game_height * resolution_mode;
    VIDCore->Resize(0, 0, current_width, current_height, 0);
    retro_reinit_av_info();
    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
@@ -663,11 +679,9 @@ static void context_reset(void)
    if (first_ctx_reset == 1)
    {
       first_ctx_reset = 0;
-      log_cb(RETRO_LOG_INFO, "Kronos init start\n");
       YabauseInit(&yinit);
       retro_set_resolution();
       OSDChangeCore(OSDCORE_DUMMY);
-      log_cb(RETRO_LOG_INFO, "Kronos init done\n");
    }
    else
    {
@@ -732,6 +746,7 @@ void retro_get_system_info(struct retro_system_info *info)
 void check_variables(void)
 {
    struct retro_variable var;
+#ifdef FRAMESKIP_ENABLED
    var.key = "kronos_frameskip";
    var.value = NULL;
 
@@ -748,6 +763,7 @@ void check_variables(void)
          frameskip_enable = true;
       }
    }
+#endif
 
    var.key = "kronos_addon_cart";
    var.value = NULL;
@@ -986,7 +1002,9 @@ bool retro_load_game_common()
 #endif
    yinit.regionid           = REGION_AUTODETECT;
    yinit.mpegpath           = NULL;
+#ifdef FRAMESKIP_ENABLED
    yinit.frameskip          = frameskip_enable;
+#endif
    //yinit.clocksync          = 0;
    //yinit.basetime           = 0;
    yinit.usethreads         = 1;
@@ -1052,7 +1070,10 @@ bool retro_load_game(const struct retro_game_info *info)
 
       // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
       if (does_file_exist(stv_bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_ERROR, "%s is MISSING\n", stv_bios_path);
          return false;
+      }
 
       yinit.stvgamepath     = full_path;
       yinit.stvgame         = stvgame;
@@ -1264,7 +1285,10 @@ bool retro_load_game(const struct retro_game_info *info)
 
       // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
       if (does_file_exist(bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_ERROR, "%s is MISSING\n", bios_path);
          return false;
+      }
 
       yinit.cdcoretype      = CDCORE_ISO;
       yinit.cdpath          = full_path;
