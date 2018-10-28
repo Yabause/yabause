@@ -41,7 +41,6 @@ static int game_interlace;
 static int current_width;
 static int current_height;
 
-static bool hle_bios_force = false;
 static bool frameskip_enable = false;
 static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
@@ -92,7 +91,6 @@ void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
-      { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
@@ -751,17 +749,6 @@ void check_variables(void)
       }
    }
 
-   var.key = "kronos_force_hle_bios";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0 && hle_bios_force)
-         hle_bios_force = false;
-      else if (strcmp(var.value, "enabled") == 0 && !hle_bios_force)
-         hle_bios_force = true;
-   }
-
    var.key = "kronos_addon_cart";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1063,6 +1050,10 @@ bool retro_load_game(const struct retro_game_info *info)
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
+      // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
+      if (does_file_exist(stv_bios_path) != 1)
+         return false;
+
       yinit.stvgamepath     = full_path;
       yinit.stvgame         = stvgame;
       yinit.cartpath        = NULL;
@@ -1271,9 +1262,13 @@ bool retro_load_game(const struct retro_game_info *info)
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
+      // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
+      if (does_file_exist(bios_path) != 1)
+         return false;
+
       yinit.cdcoretype      = CDCORE_ISO;
       yinit.cdpath          = full_path;
-      yinit.biospath        = (bios_path[0] != '\0' && does_file_exist(bios_path) && !hle_bios_force) ? bios_path : NULL;
+      yinit.biospath        = bios_path;
       yinit.carttype        = addon_cart_type;
       yinit.extend_backup   = 1;
       yinit.buppath         = NULL;
