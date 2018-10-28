@@ -5486,6 +5486,9 @@ void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
 {
   Vdp1Regs->localX = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xC);
   Vdp1Regs->localY = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0xE);
+
+  if ((Vdp1Regs->localX & 0x400)) Vdp1Regs->localX |= 0xFC00; else Vdp1Regs->localX &= ~(0xFC00);
+  if ((Vdp1Regs->localY & 0x400)) Vdp1Regs->localY |= 0xFC00; else Vdp1Regs->localY &= ~(0xFC00);
 }
 
 //////////////////////////////////////////////////////////////////////////////
