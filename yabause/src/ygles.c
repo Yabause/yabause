@@ -748,6 +748,7 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
 u32* getVdp1DrawingFBMem(int id) {
   u32* fbptr = NULL;
   GLuint error;
+  executeTMVDP1(id, id);
   YglGenFrameBuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
