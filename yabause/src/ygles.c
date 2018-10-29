@@ -2372,12 +2372,15 @@ static void waitVdp1End(int id) {
 }
 
 static void executeTMVDP1(int in, int out) {
-  YglTmPush(YglTM_vdp1[in]);
-  YglRenderVDP1();
-  _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
-  waitVdp1End(out);
-  YglReset(_Ygl->vdp1levels[out]);
-  YglTmPull(YglTM_vdp1[out], 0);
+  if (_Ygl->needVdp1Render != 0){
+    YglTmPush(YglTM_vdp1[in]);
+    YglRenderVDP1();
+    _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+    waitVdp1End(out);
+    YglReset(_Ygl->vdp1levels[out]);
+    YglTmPull(YglTM_vdp1[out], 0);
+    _Ygl->needVdp1Render = 0;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

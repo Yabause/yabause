@@ -4007,6 +4007,8 @@ void VIDOGLVdp1Draw()
 
   FrameProfileAdd("Vdp1Command start");
 
+  _Ygl->needVdp1Render = 1;
+
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
 
   maxpri = 0x00;
