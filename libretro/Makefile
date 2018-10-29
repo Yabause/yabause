@@ -71,6 +71,8 @@ ifneq (,$(findstring unix,$(platform)))
 		else ifneq (,$(findstring hardfloat,$(platform)))
 			FLAGS += -mfloat-abi=hard
 		endif
+		HAVE_GLES = 1
+		HAVE_SSE = 0
 		FLAGS += -DARM
 	endif
 	ifeq ($(HAVE_GLES), 1)
