@@ -3227,6 +3227,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
   const GLchar * fblit_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
   const GLchar * fblitbilinear_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
   const GLchar * fblitbicubic_img_scanline_v[] = { fblit_head, fblitbicubic_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+  int aamode = _Ygl->aamode;
 
   float const vertexPosition[] = {
     1.0f, -1.0f,
@@ -3262,7 +3263,9 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
-  if ((blit_prg == -1) || (blit_mode != _Ygl->aamode) || (scanline != _Ygl->scanline)){
+  if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
+
+  if ((blit_prg == -1) || (blit_mode != aamode) || (scanline != _Ygl->scanline)){
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
@@ -3273,7 +3276,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
       return -1;
     }
 
-    blit_mode = _Ygl->aamode;
+    blit_mode = aamode;
     scanline = _Ygl->scanline;
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
@@ -3289,7 +3292,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
       return -1;
     }
     if (_Ygl->scanline == 0) {
-      switch(_Ygl->aamode) {
+      switch(aamode) {
         case AA_NONE:
           glShaderSource(fshader, 4, fblit_img_v, NULL);
           break;
@@ -3301,7 +3304,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
           break;
       }
     } else {
-      switch(_Ygl->aamode) {
+      switch(aamode) {
         case AA_NONE:
           glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
           break;
@@ -3360,7 +3363,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);
-  if (_Ygl->aamode == AA_BILINEAR_FILTER) {
+  if (aamode == AA_BILINEAR_FILTER) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   } else {
