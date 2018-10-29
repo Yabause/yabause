@@ -46,8 +46,8 @@ static int game_interlace;
 static int current_width;
 static int current_height;
 
-// Disable frameskip stuff for now, it's not working as expected
-//#define FRAMESKIP_ENABLED
+// Somehow it seems frameskip and fast forward are acting weird if vsync is disabled in retroarch options
+#define FRAMESKIP_ENABLED
 
 // Disable cart addon selection for now, original hardware had freeze without it
 //#define CART_ADDON_SELECTION_ENABLED
