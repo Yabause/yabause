@@ -52,6 +52,7 @@ static int current_height;
 #ifdef FRAMESKIP_ENABLED
 static bool frameskip_enable = false;
 #endif
+static bool hle_bios_force = false;
 static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
@@ -103,6 +104,7 @@ void retro_set_environment(retro_environment_t cb)
 #ifdef FRAMESKIP_ENABLED
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
 #endif
+      { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
@@ -770,6 +772,16 @@ void check_variables(void)
    }
 #endif
 
+   var.key = "kronos_force_hle_bios";
+   var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0 && hle_bios_force)
+         hle_bios_force = false;
+      else if (strcmp(var.value, "enabled") == 0 && !hle_bios_force)
+         hle_bios_force = true;
+   }
+
    var.key = "kronos_addon_cart";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1081,6 +1093,12 @@ bool retro_load_game(const struct retro_game_info *info)
 
    if(stv_mode)
    {
+      if (does_file_exist(stv_bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_ERROR, "This is a ST-V game but we are missing the bios, ABORTING\n");
+         return false;
+      }
+
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },
@@ -1109,13 +1127,6 @@ bool retro_load_game(const struct retro_game_info *info)
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-      // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
-      if (does_file_exist(stv_bios_path) != 1)
-      {
-         log_cb(RETRO_LOG_ERROR, "This is a ST-V game but we are missing the bios, ABORTING\n");
-         return false;
-      }
-
       yinit.stvgamepath     = full_path;
       yinit.stvgame         = stvgame;
       yinit.cartpath        = NULL;
@@ -1126,6 +1137,19 @@ bool retro_load_game(const struct retro_game_info *info)
    }
    else
    {
+      // Real bios is REQUIRED, even we support HLE bios
+      // HLE bios is deprecated and causing more issues than it solves
+      // No "autoselect HLE when bios is missing" ever again !
+      if (does_file_exist(bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_ERROR, "This is a Saturn game but we are missing the bios, ABORTING\n");
+         return false;
+      }
+      if (hle_bios_force)
+      {
+         log_cb(RETRO_LOG_WARN, "HLE bios is enabled, this is for debugging purpose only, expect lots of issues\n");
+      }
+
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1324,16 +1348,9 @@ bool retro_load_game(const struct retro_game_info *info)
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-      // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
-      if (does_file_exist(bios_path) != 1)
-      {
-         log_cb(RETRO_LOG_ERROR, "This is a Saturn game but we are missing the bios, ABORTING\n");
-         return false;
-      }
-
       yinit.cdcoretype      = CDCORE_ISO;
       yinit.cdpath          = full_path;
-      yinit.biospath        = bios_path;
+      yinit.biospath        = (hle_bios_force ? NULL : bios_path);
       yinit.carttype        = addon_cart_type;
       yinit.extend_backup   = 1;
       yinit.buppath         = NULL;
