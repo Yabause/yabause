@@ -68,6 +68,8 @@
 #define CDB_PLAYTYPE_SECTOR     0x01
 #define CDB_PLAYTYPE_FILE       0x02
 
+extern void resetSyncVideo(void);
+
 enum CDB_DATATRANSTYPE
 {
    CDB_DATATRANSTYPE_INVALID=-1,
@@ -586,6 +588,8 @@ void Cs2DeInit(void) {
 void Cs2Reset(void) {
   u32 i, i2;
 
+
+  resetSyncVideo();
   switch (Cs2Area->cdi->GetStatus())
   {
      case 0:   

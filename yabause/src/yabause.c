@@ -140,15 +140,18 @@ unsigned long nextFrameTime = 0;
 static int autoframeskipenab=0;
 
 static void syncVideoMode(void) {
-  unsigned long sleep = 0;
-  unsigned long now = YabauseGetTicks();
-  if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks(); 
-  if(nextFrameTime > now)
-    sleep = ((nextFrameTime - now)*1000000.0)/yabsys.tickfreq;
-  else
-    nextFrameTime = now;
-  if (isAutoFrameSkip() == 0) YabThreadUSleep(sleep);
-  nextFrameTime  += yabsys.OneFrameTime;
+  unsigned long now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+  if (nextFrameTime == 0) nextFrameTime = now; 
+  if (isAutoFrameSkip() == 0) {
+    if (now < nextFrameTime)  {
+      YabThreadUSleep(nextFrameTime - now);    
+    }
+    nextFrameTime += yabsys.OneFrameTime;
+  }
+}
+
+void resetSyncVideo(void) {
+  nextFrameTime = 0;
 }
 
 void YabauseChangeTiming(int freqtype) {
@@ -594,6 +597,8 @@ void YabauseResetNoLoad(void) {
    Vdp1Reset();
    Vdp2Reset();
    SmpcReset();
+
+   nextFrameTime = 0;
 
    SH2PowerOn(MSH2);
 }
