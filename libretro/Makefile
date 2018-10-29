@@ -1,10 +1,11 @@
 DEBUG = 0
 DEBUG_ASAN = 0
 DEBUG_UBSAN = 0
-HAVE_SSE = 0
+HAVE_SSE = 1
 __USE_OPENGL_DEBUG__ = 0
 # AFAIK, musashi should be disabled for 32bits
 HAVE_MUSASHI = 1
+HAVE_GLES = 0
 
 ifeq ($(platform),)
 	platform = unix
@@ -51,7 +52,7 @@ ifneq (,$(findstring unix,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread -lGL -lGLESv2
+	LDFLAGS += -lpthread
 	FLAGS += -DARCH_IS_LINUX=1
 	# ARM
 	ifneq (,$(findstring armv,$(platform)))
@@ -71,6 +72,11 @@ ifneq (,$(findstring unix,$(platform)))
 			FLAGS += -mfloat-abi=hard
 		endif
 		FLAGS += -DARM
+	endif
+	ifeq ($(HAVE_GLES), 1)
+		LDFLAGS += -lGL -lGLESv2
+	else
+		LDFLAGS += -lGL
 	endif
 
 # OS X
@@ -172,7 +178,9 @@ ifeq ($(HAVE_SSE),1)
 	FLAGS += -mfpmath=sse
 endif
 
-OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
+ifeq ($(shell expr `gcc -dumpversion | cut -f1` \>= 6.0), 1)
+	FLAGS += -fno-PIE -no-pie
+endif
 
 ifeq ($(DEBUG_ASAN), 1)
 	DEBUG = 1
@@ -199,6 +207,8 @@ else
 	OBJECTS += $(C68KEXEC_OBJECT)
 endif
 
+OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
+
 LDFLAGS += $(fpic) $(SHARED)
 FLAGS += $(fpic)
 
@@ -212,7 +222,7 @@ FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WA
 CXXFLAGS += $(FLAGS)
 
 CFLAGS += $(FLAGS)
-CFLAGS += -std=gnu99
+CFLAGS += -std=gnu99 -funroll-loops
 
 all: $(TARGET)
 

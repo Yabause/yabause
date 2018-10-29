@@ -47,10 +47,10 @@ static int current_width;
 static int current_height;
 
 // Disable frameskip stuff for now, it's not working as expected
-#define FRAMESKIP_ENABLED 0
+//#define FRAMESKIP_ENABLED
 
 // Disable cart addon selection for now, original hardware had freeze without it
-#define CART_ADDON_SELECTION_ENABLED 0
+//#define CART_ADDON_SELECTION_ENABLED
 
 #ifdef FRAMESKIP_ENABLED
 static bool frameskip_enable = false;
