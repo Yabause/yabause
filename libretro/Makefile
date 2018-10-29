@@ -2,7 +2,9 @@ DEBUG = 0
 DEBUG_ASAN = 0
 DEBUG_UBSAN = 0
 HAVE_SSE = 0
-HAVE_GL_DEBUG = 0
+__USE_OPENGL_DEBUG__ = 0
+# AFAIK, musashi should be disabled for 32bits
+HAVE_MUSASHI = 1
 
 ifeq ($(platform),)
 	platform = unix
@@ -17,22 +19,22 @@ endif
 
 # system platform
 ifeq ($(platform),)
-   platform = unix
-   ifeq ($(shell uname -a),)
-      platform = win
-      EXE_EXT=.exe
-   else ifneq ($(findstring Darwin,$(shell uname -a)),)
-      platform = osx
-      arch = intel
-      ifeq ($(shell uname -p),powerpc)
-         arch = ppc
-      endif
-   else ifneq ($(findstring MINGW,$(shell uname -a)),)
-      platform = win
-      EXE_EXT=.exe
-   endif
+	platform = unix
+	ifeq ($(shell uname -a),)
+		platform = win
+		EXE_EXT=.exe
+	else ifneq ($(findstring Darwin,$(shell uname -a)),)
+		platform = osx
+		arch = intel
+		ifeq ($(shell uname -p),powerpc)
+			arch = ppc
+		endif
+	else ifneq ($(findstring MINGW,$(shell uname -a)),)
+		platform = win
+		EXE_EXT=.exe
+	endif
 else ifneq (,$(findstring armv,$(platform)))
-   override platform += unix
+	override platform += unix
 endif
 
 CORE_DIR := .
@@ -162,33 +164,39 @@ endif
 
 include Makefile.common
 
-ifeq ($(HAVE_GL_DEBUG),1)
-FLAGS += -D__USE_OPENGL_DEBUG__
+ifeq ($(__USE_OPENGL_DEBUG__),1)
+	FLAGS += -D__USE_OPENGL_DEBUG__
 endif
 
 ifeq ($(HAVE_SSE),1)
-FLAGS += -mfpmath=sse
+	FLAGS += -mfpmath=sse
 endif
 
-OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o) $(C68KEXEC_OBJECT)
+OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 ifeq ($(DEBUG_ASAN), 1)
-   DEBUG = 1
-   DEBUG_UBSAN = 0
-   FLAGS += -lasan -fsanitize=address
-   LDFLAGS += -lasan -fsanitize=address
+	DEBUG = 1
+	DEBUG_UBSAN = 0
+	FLAGS += -lasan -fsanitize=address
+	LDFLAGS += -lasan -fsanitize=address
 endif
 
 ifeq ($(DEBUG_UBSAN), 1)
-   DEBUG = 1
-   FLAGS += -lubsan -fsanitize=undefined
-   LDFLAGS += -lubsan -fsanitize=undefined
+	DEBUG = 1
+	FLAGS += -lubsan -fsanitize=undefined
+	LDFLAGS += -lubsan -fsanitize=undefined
 endif
 
 ifeq ($(DEBUG), 1)
-FLAGS += -O0 -g
+	FLAGS += -O0 -g
 else
-FLAGS += -O3 -DNDEBUG
+	FLAGS += -O3 -DNDEBUG
+endif
+
+ifeq ($(HAVE_MUSASHI), 1)
+	FLAGS += -DHAVE_MUSASHI=1
+else
+	OBJECTS += $(C68KEXEC_OBJECT)
 endif
 
 LDFLAGS += $(fpic) $(SHARED)
@@ -197,7 +205,7 @@ FLAGS += $(fpic)
 WARNINGS :=
 FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DUSE_16BPP=1 -DUSE_RGB_565=1 \
 	-DNO_CLI -DDYNAREC_KRONOS=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 \
-	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_MUSASHI=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
+	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
 	-DPACKAGE=\"Kronos\" -DSPRITE_CACHE=1 -DHAVE_LIBGL -D_OGLES3_ -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 \
 	-DVERSION=\"1.5.0\"
 

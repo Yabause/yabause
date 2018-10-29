@@ -587,8 +587,11 @@ SoundInterface_struct SNDLIBRETRO = {
 
 M68K_struct *M68KCoreList[] = {
     &M68KDummy,
+#ifdef HAVE_MUSASHI
     &M68KMusashi,
+#else
     &M68KC68K,
+#endif
     NULL
 };
 
@@ -1017,9 +1020,7 @@ bool retro_load_game_common()
    yinit.percoretype        = PERCORE_LIBRETRO;
    yinit.sh2coretype        = 8;
    yinit.sndcoretype        = SNDCORE_LIBRETRO;
-   // It seems Musashi is the recommended m68k core only for x86_64
-   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
-#if defined(__x86_64__)
+#ifdef HAVE_MUSASHI
    yinit.m68kcoretype       = M68KCORE_MUSASHI;
 #else
    yinit.m68kcoretype       = M68KCORE_C68K;
@@ -1029,8 +1030,8 @@ bool retro_load_game_common()
 #ifdef FRAMESKIP_ENABLED
    yinit.frameskip          = frameskip_enable;
 #endif
-   //yinit.clocksync          = 0;
-   //yinit.basetime           = 0;
+   yinit.clocksync          = 0;
+   yinit.basetime           = 0;
    yinit.usethreads         = 1;
    yinit.numthreads         = numthreads;
 #ifdef SPRITE_CACHE
