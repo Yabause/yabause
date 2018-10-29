@@ -49,11 +49,18 @@ static int current_height;
 // Disable frameskip stuff for now, it's not working as expected
 #define FRAMESKIP_ENABLED 0
 
+// Disable cart addon selection for now, original hardware had freeze without it
+#define CART_ADDON_SELECTION_ENABLED 0
+
 #ifdef FRAMESKIP_ENABLED
 static bool frameskip_enable = false;
 #endif
 static bool hle_bios_force = false;
+#ifdef CART_ADDON_SELECTION_ENABLED
 static int addon_cart_type = CART_NONE;
+#else
+static int addon_cart_type = CART_DRAM32MBIT;
+#endif
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int scanlines = 0;
@@ -105,7 +112,9 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
 #endif
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
+#ifdef CART_ADDON_SELECTION_ENABLED
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
+#endif
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
@@ -782,6 +791,7 @@ void check_variables(void)
          hle_bios_force = true;
    }
 
+#ifdef CART_ADDON_SELECTION_ENABLED
    var.key = "kronos_addon_cart";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -793,6 +803,7 @@ void check_variables(void)
       else if (strcmp(var.value, "4M_ram") == 0 && addon_cart_type != CART_DRAM32MBIT)
          addon_cart_type = CART_DRAM32MBIT;
    }
+#endif
 
    var.key = "kronos_filter_mode";
    var.value = NULL;
