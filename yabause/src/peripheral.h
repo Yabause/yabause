@@ -137,6 +137,14 @@ void PerAxisMove(u32 key, s32 dispx, s32 dispy);
 #define PERPAD_X	10
 #define PERPAD_Y	11
 #define PERPAD_Z	12
+#define PERPAD_P2_A	13
+#define PERPAD_P2_B	14
+#define PERPAD_P2_C	15
+#define PERPAD_P2_X	16
+#define PERPAD_P2_UP	17
+#define PERPAD_P2_RIGHT	18
+#define PERPAD_P2_DOWN	19
+#define PERPAD_P2_LEFT	20
 
 extern const char * PerPadNames[14];
 
@@ -209,6 +217,32 @@ void PerPadRTriggerReleased(PerPad_struct * pad);
 
 void PerPadLTriggerPressed(PerPad_struct * pad);
 void PerPadLTriggerReleased(PerPad_struct * pad);
+
+void PerCabAP2Pressed(PerPad_struct * pad);
+void PerCabAP2Released(PerPad_struct * pad);
+
+void PerCabBP2Pressed(PerPad_struct * pad);
+void PerCabBP2Released(PerPad_struct * pad);
+
+void PerCabCP2Pressed(PerPad_struct * pad);
+void PerCabCP2Released(PerPad_struct * pad);
+
+void PerCabXP2Pressed(PerPad_struct * pad);
+void PerCabXP2Released(PerPad_struct * pad);
+
+void PerCabUPP2Pressed(PerPad_struct * pad);
+void PerCabUPP2Released(PerPad_struct * pad);
+
+void PerCabRIGHTP2Pressed(PerPad_struct * pad);
+void PerCabRIGHTP2Released(PerPad_struct * pad);
+
+void PerCabDOWNP2Pressed(PerPad_struct * pad);
+void PerCabDOWNP2Released(PerPad_struct * pad);
+
+void PerCabLEFTP2Pressed(PerPad_struct * pad);
+void PerCabLEFTP2Released(PerPad_struct * pad);
+
+
 /** @} */
 
 /** @defgroup mouse Mouse
