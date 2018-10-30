@@ -53,6 +53,15 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
     mButtons[ tbStart2 ] = PERJAMMA_START2;
     mButtons[ tbMultiCart ] = PERJAMMA_MULTICART;
     mButtons[ tbPause ] = PERJAMMA_PAUSE;
+	mButtons[ tbA_P2 ] = PERPAD_P2_A;
+	mButtons[ tbB_P2 ] = PERPAD_P2_B;
+	mButtons[ tbC_P2 ] = PERPAD_P2_C;
+	mButtons[ tbX_P2 ] = PERPAD_P2_X;
+	mButtons[ tbUP_P2 ] = PERPAD_P2_UP;
+	mButtons[ tbRIGHT_P2 ] = PERPAD_P2_RIGHT;
+	mButtons[ tbDOWN_P2 ] = PERPAD_P2_DOWN;
+	mButtons[ tbLEFT_P2 ] = PERPAD_P2_LEFT;
+	
 	
 	mNames[ PERPAD_UP ] = QtYabause::translate( "Up" );
 	mNames[ PERPAD_RIGHT ] = QtYabause::translate( "Right" );
@@ -71,7 +80,16 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
     mNames[ PERJAMMA_START1 ] = "Start1";
     mNames[ PERJAMMA_START2 ] = "Start2";
     mNames[ PERJAMMA_MULTICART ] = "Multicart";
-    mNames[ PERJAMMA_PAUSE ] = "Pause";
+	mNames[ PERJAMMA_PAUSE ] = "Pause"; 
+	mNames[ PERPAD_P2_A ] = "A";
+	mNames[ PERPAD_P2_B ] = "B";
+	mNames[ PERPAD_P2_C ] = "C";
+	mNames[ PERPAD_P2_X ] = "X";
+	mNames[ PERPAD_P2_UP ] = "Up";
+	mNames[ PERPAD_P2_RIGHT ] = "Right";
+	mNames[ PERPAD_P2_DOWN ] = "Down";
+	mNames[ PERPAD_P2_LEFT ] = "Left";
+
 	
    mScanMasks[ PERPAD_UP ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
    mScanMasks[ PERPAD_RIGHT ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
@@ -91,7 +109,16 @@ UISTVSetting::UISTVSetting( PerInterface_struct* core, uint port, uint pad, uint
    mScanMasks[ PERJAMMA_START2 ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
    mScanMasks[ PERJAMMA_MULTICART ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
    mScanMasks[ PERJAMMA_PAUSE ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
-
+   mScanMasks[ PERPAD_P2_A ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERPAD_P2_B ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERPAD_P2_C ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERPAD_P2_X ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERPAD_P2_UP ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERPAD_P2_RIGHT ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
+   mScanMasks[ PERPAD_P2_DOWN ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT; 
+   mScanMasks[ PERPAD_P2_LEFT ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;  
+   
+   
 	loadPadSettings();
 	
 	foreach ( QToolButton* tb, findChildren<QToolButton*>() )
