@@ -140,14 +140,16 @@ unsigned long nextFrameTime = 0;
 static int autoframeskipenab=0;
 
 static void syncVideoMode(void) {
-  unsigned long now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+  unsigned long now = YabauseGetTicks();
   if (nextFrameTime == 0) nextFrameTime = now; 
   if (isAutoFrameSkip() == 0) {
     if (now < nextFrameTime)  {
-      YabThreadUSleep(nextFrameTime - now);    
+      YabThreadUSleep((nextFrameTime - now) * 1000000.0 / yabsys.tickfreq);
     }
     nextFrameTime += yabsys.OneFrameTime;
   }
+
+
 }
 
 void resetSyncVideo(void) {
