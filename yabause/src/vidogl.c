@@ -4164,11 +4164,96 @@ void VIDOGLVdp1Draw()
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void expandVertices(float* in, float* out)
+#if 0
+static int expandVertices(float* in, float* out)
+{
+  int isSquare =1;
+  int i;
+  int dst = 1;
+
+  for (i = 0; i<8; i++) {
+    out[0] = in[0];
+    out[1] = in[1];
+    out[2] = in[0];
+    out[3] = in[1];
+    out[4] = in[0];
+    out[5] = in[1];
+    out[6] = in[0];
+    out[7] = in[1];
+  }
+
+  for (i = 0; i < 3; i++) {
+    float dx = in[((i + 1) << 1) + 0] - in[((i + 0) << 1) + 0];
+    float dy = in[((i + 1) << 1) + 1] - in[((i + 0) << 1) + 1];
+    if ((dx <= 1.0f && dx >= -1.0f) && (dy <= 1.0f && dy >= -1.0f)) {
+      isSquare = 0;
+      break;
+    }
+
+    float d2x = in[(((i + 2) & 0x3) << 1) + 0] - in[((i + 1) << 1) + 0];
+    float d2y = in[(((i + 2) & 0x3) << 1) + 1] - in[((i + 1) << 1) + 1];
+    if ((d2x <= 1.0f && d2x >= -1.0f) && (d2y <= 1.0f && d2y >= -1.0f)) {
+      isSquare = 0;
+      break;
+    }
+
+    float dot = dx*d2x + dy*d2y;
+    if (dot > EPSILON || dot < -EPSILON) {
+      isSquare = 0;
+      break;
+    }
+  }
+  if (isSquare) {
+    float minx;
+    float miny;
+    int lt_index;
+
+    dst = 0;
+
+    // find upper left opsition
+    minx = 65535.0f;
+    miny = 65535.0f;
+    lt_index = -1;
+    for (i = 0; i < 4; i++) {
+      if (in[(i << 1) + 0] <= minx && in[(i << 1) + 1] <= miny) {
+        minx = in[(i << 1) + 0];
+        miny = in[(i << 1) + 1];
+        lt_index = i;
+      }
+    }
+    for (i = 0; i < 4; i++) {
+      if (i != lt_index) {
+        float nx;
+        float ny;
+        // vectorize
+        float dx = in[(i << 1) + 0] - in[((lt_index) << 1) + 0];
+        float dy = in[(i << 1) + 1] - in[((lt_index) << 1) + 1];
+
+        // normalize
+        float len = fabsf(sqrtf(dx*dx + dy*dy));
+        if (len <= EPSILON) {
+          continue;
+        }
+        nx = dx / len;
+        ny = dy / len;
+        if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
+        if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
+
+        // expand vertex
+        out[(i << 1) + 0] += nx;
+        out[(i << 1) + 1] += ny;
+      }
+    }
+  }
+  return dst;
+}
+#else
+static int expandVertices(float* in, float* out)
 {
 //Need to find lines
 //Test on breakpoint
   int i, j;
+  int dst = 0;
   int isTriangle = 0;
   int isPoint = 1;
   int isQuad = 1;
@@ -4216,6 +4301,7 @@ static void expandVertices(float* in, float* out)
   }
 
   if (isQuad || isTriangle) {
+    if (isQuad) dst = 1;
 //For triangle, we have to replace with quad
     int disp = 0;
     for (i = 0; i<4; i++) {
@@ -4256,18 +4342,19 @@ static void expandVertices(float* in, float* out)
 #endif
   } else {
     for (i = 0; i<8; i++) {
-      out[0] = in[0] - 0.5f;
-      out[1] = in[1] - 0.5f;
-      out[2] = in[0] + 0.5f;
-      out[3] = in[1] - 0.5f;
-      out[4] = in[0] + 0.5f;
-      out[5] = in[1] + 0.5f;
-      out[6] = in[0] - 0.5f;
-      out[7] = in[1] + 0.5f;
+      out[0] = in[0];
+      out[1] = in[1];
+      out[2] = in[0];
+      out[3] = in[1];
+      out[4] = in[0];
+      out[5] = in[1];
+      out[6] = in[0];
+      out[7] = in[1];
     }
   }
+  return dst;
 }
-
+#endif
 //////////////////////////////////////////////////////////////////////////////
 
 void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
@@ -4673,7 +4760,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   sprite.linescreen = 0;
-  sprite.dst = 1;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
   sprite.cor = 0;
@@ -4707,7 +4793,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
 
-  expandVertices(vert, sprite.vertices);
+  sprite.dst = expandVertices(vert, sprite.vertices);
 
   sprite.vertices[0] = (sprite.vertices[0] + Vdp1Regs->localX) * vdp1wratio;
   sprite.vertices[1] = (sprite.vertices[1] + Vdp1Regs->localY) * vdp1hratio;
