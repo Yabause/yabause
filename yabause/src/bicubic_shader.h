@@ -1,5 +1,5 @@
-#ifndef __4xBRZ_INCLUDE_H__
-#define __4xBRZ_INCLUDE_H__
+#ifndef __BICUBIC_INCLUDE_H__
+#define __BICUBIC_INCLUDE_H__
 static const char fblitbicubic_img[] =
  "float weight(float x)\n"
  "{\n"
@@ -42,7 +42,7 @@ static const char fblitbicubic_img[] =
  "\n"
  "vec3 pixel(float xpos, float ypos, sampler2D tex)\n"
  "{\n"
- "	return texture2D(tex, vec2(xpos, ypos)).rgb;\n"
+ "	return texture(tex, vec2(xpos, ypos)).rgb;\n"
  "}\n"
  "\n"
  "vec3 line_run(float ypos, vec4 xpos, vec4 linetaps, sampler2D tex)\n"

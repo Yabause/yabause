@@ -62,7 +62,7 @@ static void Ygl_printShaderError( GLuint shader )
     if (infoLog != NULL) {
       GLsizei length;
       glGetShaderInfoLog(shader, bufSize, &length, infoLog);
-      YGLLOG("Shaderlog:\n%s\n", infoLog);
+      YuiMsg("Shaderlog:\n%s\n", infoLog);
       free(infoLog);
     }
   }
@@ -3547,11 +3547,11 @@ static const char fblitbilinear_img[] =
   "	int nY = int( texCoord_i.y * fHeight ); \n"
   "	vec2 texCoord_New = vec2( ( float( nX ) + 0.5 ) / fWidth, ( float( nY ) + 0.5 ) / fHeight ); \n"
   "	// Take nearest two data in current row. \n"
-  "    vec4 p0q0 = texture2D(textureSampler_i, texCoord_New); \n"
-  "    vec4 p1q0 = texture2D(textureSampler_i, texCoord_New + vec2(texelSizeX, 0)); \n"
+  "    vec4 p0q0 = texture(textureSampler_i, texCoord_New); \n"
+  "    vec4 p1q0 = texture(textureSampler_i, texCoord_New + vec2(texelSizeX, 0)); \n"
   "	// Take nearest two data in bottom row. \n"
-  "    vec4 p0q1 = texture2D(textureSampler_i, texCoord_New + vec2(0, texelSizeY)); \n"
-  "    vec4 p1q1 = texture2D(textureSampler_i, texCoord_New + vec2(texelSizeX , texelSizeY)); \n"
+  "    vec4 p0q1 = texture(textureSampler_i, texCoord_New + vec2(0, texelSizeY)); \n"
+  "    vec4 p1q1 = texture(textureSampler_i, texCoord_New + vec2(texelSizeX , texelSizeY)); \n"
   "    float a = fract( texCoord_i.x * fWidth ); // Get Interpolation factor for X direction. \n"
   "	// Fraction near to valid data. \n"
   "	// Interpolation in X direction. \n"
@@ -3666,10 +3666,10 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in fragment shader.\n");
+      YuiMsg("Compile error in fragment shader.\n");
       Ygl_printShaderError(fshader);
       blit_prg = -1;
-      abort();
+	  return -1;
     }
 
     glAttachShader(blit_prg, vshader);
@@ -3677,10 +3677,10 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     glLinkProgram(blit_prg);
     glGetProgramiv(blit_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
-      YGLLOG("Link error..\n");
+		YuiMsg("Link error..\n");
       Ygl_printShaderError(blit_prg);
       blit_prg = -1;
-      abort();
+	  return -1;
     }
 
     GLUSEPROG(blit_prg);
