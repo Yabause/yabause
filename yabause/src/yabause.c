@@ -387,6 +387,7 @@ int YabauseInit(yabauseinit_struct *init)
    // Settings
    VideoSetSetting(VDP_SETTING_FILTERMODE,init->video_filter_type);
    VideoSetSetting(VDP_SETTING_UPSCALMODE,init->video_upscale_type);
+   VideoSetSetting(VDP_SETTING_POLYGON_MODE, init->polygon_generation_mode);
    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, init->resolution_mode);
    VideoSetSetting(VDP_SETTING_ASPECT_RATIO, init->stretch);
    VideoSetSetting(VDP_SETTING_SCANLINE, init->scanline);
