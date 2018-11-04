@@ -887,7 +887,12 @@ int Ygl_cleanupVdp1Normal(void * p, YglTextureManager *tm )
 *  VDP1 GlowShading Operation with tessellation
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_tess_v[] =
+#if defined(_OGLES3_)
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+#else
 "#version 400 \n"
+#endif
 "layout (location = 0) in vec3 a_position; \n"
 "layout (location = 1) in vec4 a_texcoord; \n"
 "layout (location = 2) in vec4 a_grcolor;  \n"
@@ -905,7 +910,12 @@ const GLchar Yglprg_vdp1_gouraudshading_tess_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_tess_v[] = { Yglprg_vdp1_gouraudshading_tess_v, NULL };
 
 const GLchar Yglprg_tess_c[] =
+#if defined(_OGLES3_)
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+#else
 "#version 400 \n"
+#endif
 "layout(vertices = 4) out; //<???? what does it means? \n"
 "in vec3 v_position[];  \n"
 "in vec4 v_texcoord[]; \n"
@@ -936,7 +946,12 @@ const GLchar Yglprg_tess_c[] =
 const GLchar * pYglprg_vdp1_gouraudshading_tess_c[] = { Yglprg_tess_c, NULL };
 
 const GLchar Yglprg_tess_e[] =
+#if defined(_OGLES3_)
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+#else
 "#version 400 \n"
+#endif
 "layout(quads, equal_spacing, ccw) in; \n"
 "in vec3 tcPosition[]; \n"
 "in vec4 tcTexCoord[]; \n"
@@ -963,7 +978,12 @@ const GLchar Yglprg_tess_e[] =
 const GLchar * pYglprg_vdp1_gouraudshading_tess_e[] = { Yglprg_tess_e, NULL };
 
 const GLchar Yglprg_tess_g[] =
+#if defined(_OGLES3_)
+"#version 310 es \n"
+"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+#else
 "#version 400 \n"
+#endif
 "uniform mat4 Modelview; \n"
 "uniform mat3 NormalMatrix; \n"
 "layout(triangles) in; \n"
