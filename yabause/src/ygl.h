@@ -350,22 +350,33 @@ enum
 
    PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW=60,
    PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY=61,
+
+   PG_VFP1_GOURAUDSAHDING_TESS=62,
+   PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS=63,
+   PG_VFP1_MESH_TESS=64,
+   PG_VFP1_SHADOW_TESS=65,
+   PG_VFP1_GOURAUDSAHDING_SPD_TESS=66,
+   PG_VFP1_HALFTRANS_TESS=67,
+
    PG_MAX,
 };
 
 
 
 typedef struct {
-	GLint  sprite;
-	GLint  fbo;
-	GLint  fbowidth;
-	GLint  fboheight;
-	GLint  texsize;
-  GLuint mtxModelView;
-  GLuint mtxTexture;
-  GLuint tex0;
+    GLint  sprite;
+    GLint  tessLevelInner;
+    GLint  tessLevelOuter;
+    GLint  fbo;
+    GLint  fbowidth;
+    GLint  fboheight;
+    GLint  texsize;
+    GLuint mtxModelView;
+    GLuint mtxTexture;
+    GLuint tex0;
 } YglVdp1CommonParam;
 
+#define TESS_COUNT (8)
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
 int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs);
 int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm);
@@ -453,11 +464,18 @@ typedef enum
 
 typedef enum
 {
-	RES_ORIGINAL = 1,
-        RES_2x = 2,
-        RES_4x = 4,
-        RES_8x = 8,
-        RES_16x = 16,
+    PERSPECTIVE_CORRECTION = 0,
+    CPU_TESSERATION,
+    GPU_TESSERATION
+} POLYGONMODE;
+
+typedef enum
+{
+    RES_ORIGINAL = 1,
+    RES_2x = 2,
+    RES_4x = 4,
+    RES_8x = 8,
+    RES_16x = 16,
 } RESOLUTION_MODE;
 
 typedef enum
@@ -468,11 +486,12 @@ typedef enum
 
 
 typedef enum {
-	VDP_SETTING_FILTERMODE = 0,
-        VDP_SETTING_RESOLUTION_MODE,
-        VDP_SETTING_UPSCALMODE,
-        VDP_SETTING_ASPECT_RATIO,
-        VDP_SETTING_SCANLINE
+    VDP_SETTING_FILTERMODE = 0,
+    VDP_SETTING_POLYGON_MODE,
+    VDP_SETTING_RESOLUTION_MODE,
+    VDP_SETTING_UPSCALMODE,
+    VDP_SETTING_ASPECT_RATIO,
+    VDP_SETTING_SCANLINE
 } enSettings;
 
 
@@ -577,6 +596,7 @@ typedef struct {
 
    AAMODE aamode;
    UPMODE upmode;
+   POLYGONMODE polygonmode;
    int scanline;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
@@ -677,6 +697,7 @@ void YglSetBackColor(int size);
 
 int Ygl_uniformWindow(void * p );
 int YglProgramInit();
+int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 void Ygl_setNormalshader(YglProgram * prg);
 int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
