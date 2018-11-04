@@ -46,13 +46,21 @@ static int game_interlace;
 static int current_width;
 static int current_height;
 
-// Disable frameskip stuff for now, it's not working as expected
-#define FRAMESKIP_ENABLED 0
+// Somehow it seems frameskip and fast forward are acting weird if vsync is disabled in retroarch options
+#define FRAMESKIP_ENABLED
+
+// Disable cart addon selection for now, original hardware had freeze without it
+//#define CART_ADDON_SELECTION_ENABLED
 
 #ifdef FRAMESKIP_ENABLED
 static bool frameskip_enable = false;
 #endif
+static bool hle_bios_force = false;
+#ifdef CART_ADDON_SELECTION_ENABLED
 static int addon_cart_type = CART_NONE;
+#else
+static int addon_cart_type = CART_DRAM32MBIT;
+#endif
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int scanlines = 0;
@@ -103,7 +111,10 @@ void retro_set_environment(retro_environment_t cb)
 #ifdef FRAMESKIP_ENABLED
       { "kronos_frameskip", "Frameskip; disabled|enabled" },
 #endif
+      { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
+#ifdef CART_ADDON_SELECTION_ENABLED
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
+#endif
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
@@ -383,6 +394,9 @@ static int PERLIBRETROHandleEvents(void)
 
          int analog_left_x = 0;
          int analog_left_y = 0;
+         int analog_right_x = 0;
+         int analog_right_y = 0;
+         uint16_t l_trigger, r_trigger;
 
          switch(pad_type[i])
          {
@@ -396,6 +410,20 @@ static int PERLIBRETROHandleEvents(void)
                      RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y);
 
                PerAxisValue((i << 8) + PERANALOG_AXIS2, (u8)((analog_left_y + 0x8000) >> 8));
+
+               // analog triggers
+               l_trigger = input_state_cb( i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_L2 );
+               r_trigger = input_state_cb( i, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_BUTTON, RETRO_DEVICE_ID_JOYPAD_R2 );
+
+               // if no analog trigger support, use digital
+               if (l_trigger == 0)
+                  l_trigger = input_state_cb( i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2 ) ? 0x7FFF : 0;
+               if (r_trigger == 0)
+                  r_trigger = input_state_cb( i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2 ) ? 0x7FFF : 0;
+
+               PerAxisValue((i << 8) + PERANALOG_AXIS3, (u8)((r_trigger > 0 ? r_trigger + 0x8000 : 0) >> 8));
+               PerAxisValue((i << 8) + PERANALOG_AXIS4, (u8)((l_trigger > 0 ? l_trigger + 0x8000 : 0) >> 8));
+
             case RETRO_DEVICE_JOYPAD:
 
                if (input_state_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP))
@@ -576,8 +604,11 @@ SoundInterface_struct SNDLIBRETRO = {
 
 M68K_struct *M68KCoreList[] = {
     &M68KDummy,
+#ifdef HAVE_MUSASHI
     &M68KMusashi,
+#else
     &M68KC68K,
+#endif
     NULL
 };
 
@@ -742,7 +773,7 @@ void retro_get_system_info(struct retro_system_info *info)
 #ifndef GIT_VERSION
 #define GIT_VERSION ""
 #endif
-   info->library_version  = "v1.4.5" GIT_VERSION;
+   info->library_version  = "v" VERSION GIT_VERSION;
    info->need_fullpath    = true;
    info->block_extract    = true;
    info->valid_extensions = "bin|cue|iso|mds|ccd|nrg|zip";
@@ -770,6 +801,17 @@ void check_variables(void)
    }
 #endif
 
+   var.key = "kronos_force_hle_bios";
+   var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0 && hle_bios_force)
+         hle_bios_force = false;
+      else if (strcmp(var.value, "enabled") == 0 && !hle_bios_force)
+         hle_bios_force = true;
+   }
+
+#ifdef CART_ADDON_SELECTION_ENABLED
    var.key = "kronos_addon_cart";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -781,6 +823,7 @@ void check_variables(void)
       else if (strcmp(var.value, "4M_ram") == 0 && addon_cart_type != CART_DRAM32MBIT)
          addon_cart_type = CART_DRAM32MBIT;
    }
+#endif
 
    var.key = "kronos_filter_mode";
    var.value = NULL;
@@ -994,9 +1037,7 @@ bool retro_load_game_common()
    yinit.percoretype        = PERCORE_LIBRETRO;
    yinit.sh2coretype        = 8;
    yinit.sndcoretype        = SNDCORE_LIBRETRO;
-   // It seems Musashi is the recommended m68k core only for x86_64
-   // TODO : check on win64 and arm64 ? Perhaps rework this as a core option ?
-#if defined(__x86_64__)
+#ifdef HAVE_MUSASHI
    yinit.m68kcoretype       = M68KCORE_MUSASHI;
 #else
    yinit.m68kcoretype       = M68KCORE_C68K;
@@ -1006,8 +1047,8 @@ bool retro_load_game_common()
 #ifdef FRAMESKIP_ENABLED
    yinit.frameskip          = frameskip_enable;
 #endif
-   //yinit.clocksync          = 0;
-   //yinit.basetime           = 0;
+   yinit.clocksync          = 0;
+   yinit.basetime           = 0;
    yinit.usethreads         = 1;
    yinit.numthreads         = numthreads;
 #ifdef SPRITE_CACHE
@@ -1081,6 +1122,12 @@ bool retro_load_game(const struct retro_game_info *info)
 
    if(stv_mode)
    {
+      if (does_file_exist(stv_bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_ERROR, "This is a ST-V game but we are missing the bios, ABORTING\n");
+         return false;
+      }
+
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },
@@ -1109,13 +1156,6 @@ bool retro_load_game(const struct retro_game_info *info)
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-      // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
-      if (does_file_exist(stv_bios_path) != 1)
-      {
-         log_cb(RETRO_LOG_ERROR, "This is a ST-V game but we are missing the bios, ABORTING\n");
-         return false;
-      }
-
       yinit.stvgamepath     = full_path;
       yinit.stvgame         = stvgame;
       yinit.cartpath        = NULL;
@@ -1126,6 +1166,19 @@ bool retro_load_game(const struct retro_game_info *info)
    }
    else
    {
+      // Real bios is REQUIRED, even we support HLE bios
+      // HLE bios is deprecated and causing more issues than it solves
+      // No "autoselect HLE when bios is missing" ever again !
+      if (does_file_exist(bios_path) != 1)
+      {
+         log_cb(RETRO_LOG_ERROR, "This is a Saturn game but we are missing the bios, ABORTING\n");
+         return false;
+      }
+      if (hle_bios_force)
+      {
+         log_cb(RETRO_LOG_WARN, "HLE bios is enabled, this is for debugging purpose only, expect lots of issues\n");
+      }
+
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1142,6 +1195,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1158,6 +1213,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 1, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1174,6 +1231,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 2, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 2, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 2, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 2, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1190,6 +1249,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 3, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 3, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 3, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 3, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1206,6 +1267,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 4, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 4, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 4, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 4, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 4, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1222,6 +1285,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 5, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 5, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 5, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 5, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 5, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1238,6 +1303,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 6, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 6, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 6, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 6, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 6, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1254,6 +1321,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 7, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 7, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 7, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 7, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 7, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1270,6 +1339,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 8, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 8, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 8, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 8, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 8, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1286,6 +1357,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 9, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 9, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 9, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 9, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 9, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1302,6 +1375,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 10, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 10, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 10, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 10, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 10, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
          { 11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,    "D-Pad Up" },
@@ -1318,22 +1393,17 @@ bool retro_load_game(const struct retro_game_info *info)
          { 11, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START, "Start" },
          { 11, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_X, "Analog X" },
          { 11, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_LEFT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y" },
+         { 11, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X, "Analog X (Right)" },
+         { 11, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y, "Analog Y (Right)" }, 
 
          { 0 },
       };
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-      // Bios is needed, we don't support HLE mode anymore, it causes more issues than it solves
-      if (does_file_exist(bios_path) != 1)
-      {
-         log_cb(RETRO_LOG_ERROR, "This is a Saturn game but we are missing the bios, ABORTING\n");
-         return false;
-      }
-
       yinit.cdcoretype      = CDCORE_ISO;
       yinit.cdpath          = full_path;
-      yinit.biospath        = bios_path;
+      yinit.biospath        = (hle_bios_force ? NULL : bios_path);
       yinit.carttype        = addon_cart_type;
       yinit.extend_backup   = 1;
       yinit.buppath         = NULL;
