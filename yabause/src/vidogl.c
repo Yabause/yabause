@@ -7884,8 +7884,11 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   case VDP_SETTING_POLYGON_MODE:
     if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {
       YglTesserationProgramInit();
+      if (glPatchParameteri) _Ygl->polygonmode = value;
+      else _Ygl->polygonmode = 0;
+    } else {
+      _Ygl->polygonmode = value;
     }
-    _Ygl->polygonmode = value;
   break;
   case VDP_SETTING_ASPECT_RATIO:
     _Ygl->stretch = value;
