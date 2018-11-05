@@ -7883,11 +7883,21 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     break;
   case VDP_SETTING_POLYGON_MODE:
     if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {
-      YglTesserationProgramInit();
-      if (glPatchParameteri) _Ygl->polygonmode = value;
-      else _Ygl->polygonmode = 0;
+      int maj, min;
+      glGetIntegerv(GL_MAJOR_VERSION, &maj);
+      glGetIntegerv(GL_MINOR_VERSION, &min);
+      if ((maj >=4) && (min >=2)) {
+        if (glPatchParameteri) {
+          YglTesserationProgramInit();
+          _Ygl->polygonmode = value;
+        } else _Ygl->polygonmode = 0;
+      } else {
+        YuiMsg("GPU tesselation i not possible - fallback on CPU tesselation\n");
+        _Ygl->polygonmode = CPU_TESSERATION;
+      }
     } else {
-      _Ygl->polygonmode = value;
+      YuiMsg("GPU tesselation i not possible - fallback on CPU tesselation\n");
+      _Ygl->polygonmode = CPU_TESSERATION;
     }
   break;
   case VDP_SETTING_ASPECT_RATIO:
