@@ -3610,7 +3610,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
-  if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
+  //if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
 
   if ((blit_prg == -1) || (blit_mode != aamode) || (scanline != _Ygl->scanline)){
     GLuint vshader;
