@@ -65,6 +65,7 @@ static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int scanlines = 0;
 static int resolution_mode = 1;
+static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
 static int numthreads = 4;
 static int retro_region = RETRO_REGION_NTSC;
@@ -118,6 +119,7 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
+      { "kronos_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
       { "kronos_scanlines", "Scanlines; disabled|enabled" },
       { NULL, NULL },
    };
@@ -524,22 +526,37 @@ PerInterface_struct PERLIBRETROJoy = {
 // SNDLIBRETRO
 #define SNDCORE_LIBRETRO   11
 #define SAMPLERATE         44100
-#define SAMPLEFRAME        735
-#define BUFFER_LEN         65536
 
-static uint32_t video_freq;
-static uint32_t audio_size;
-static uint32_t sample_frame = SAMPLEFRAME;
+static u32 audio_size;
+static u32 soundlen;
+static u32 soundbufsize;
+static s16 *sound_buf;
 
-static int SNDLIBRETROInit(void) { return 0; }
+static int SNDLIBRETROInit(void) {
+    soundlen = SAMPLERATE / 60;
+    soundbufsize = soundlen * 16;
+    if ((sound_buf = (s16 *)malloc(soundbufsize)) == NULL)
+        return -1;
+    memset(sound_buf, 0, soundbufsize);
+    return 0;
+}
 
-static void SNDLIBRETRODeInit(void) {}
+static void SNDLIBRETRODeInit(void) {
+   if (sound_buf)
+      free(sound_buf);
+}
 
 static int SNDLIBRETROReset(void) { return 0; }
 
 static int SNDLIBRETROChangeVideoFormat(int vertfreq)
 {
-    sample_frame = SAMPLERATE / vertfreq;
+    soundlen = SAMPLERATE / vertfreq;
+    soundbufsize = soundlen * 16;
+    if (sound_buf)
+        free(sound_buf);
+    if ((sound_buf = (s16 *)malloc(soundbufsize)) == NULL)
+        return -1;
+    memset(sound_buf, 0, soundbufsize);
     return 0;
 }
 
@@ -573,7 +590,6 @@ static void sdlConvert32uto16s(int32_t *srcL, int32_t *srcR, int16_t *dst, size_
 
 static void SNDLIBRETROUpdateAudio(u32 *leftchanbuffer, u32 *rightchanbuffer, u32 num_samples)
 {
-   s16 sound_buf[4096];
    sdlConvert32uto16s((int32_t*)leftchanbuffer, (int32_t*)rightchanbuffer, sound_buf, num_samples);
    audio_batch_cb(sound_buf, num_samples);
 
@@ -756,7 +772,7 @@ void YuiSwapBuffers(void)
    VIDCore->GetNativeResolution(&game_width, &game_height, &game_interlace);
    if ((prev_game_width != game_width) || (prev_game_height != game_height))
       retro_set_resolution();
-   audio_size = sample_frame;
+   audio_size = soundlen;
    video_cb(RETRO_HW_FRAME_BUFFER_VALID, current_width, current_height, 0);
 }
 
@@ -865,6 +881,18 @@ void check_variables(void)
          resolution_mode = 8;
       else if (strcmp(var.value, "16x") == 0)
          resolution_mode = 16;
+   }
+
+   var.key = "kronos_polygon_mode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "perspective_correction") == 0)
+         polygon_mode = PERSPECTIVE_CORRECTION;
+      else if (strcmp(var.value, "gpu_tesselation") == 0)
+         polygon_mode = GPU_TESSERATION;
+      else if (strcmp(var.value, "cpu_tesselation") == 0)
+         polygon_mode = CPU_TESSERATION;
    }
 
    var.key = "kronos_scanlines";
@@ -1033,34 +1061,34 @@ bool retro_load_game_common()
    if (!retro_init_hw_context())
       return false;
 
-   yinit.vidcoretype        = VIDCORE_OGL;
-   yinit.percoretype        = PERCORE_LIBRETRO;
-   yinit.sh2coretype        = 8;
-   yinit.sndcoretype        = SNDCORE_LIBRETRO;
+   yinit.vidcoretype             = VIDCORE_OGL;
+   yinit.percoretype             = PERCORE_LIBRETRO;
+   yinit.sh2coretype             = 8;
+   yinit.sndcoretype             = SNDCORE_LIBRETRO;
 #ifdef HAVE_MUSASHI
-   yinit.m68kcoretype       = M68KCORE_MUSASHI;
+   yinit.m68kcoretype            = M68KCORE_MUSASHI;
 #else
-   yinit.m68kcoretype       = M68KCORE_C68K;
+   yinit.m68kcoretype            = M68KCORE_C68K;
 #endif
-   yinit.regionid           = REGION_AUTODETECT;
-   yinit.mpegpath           = NULL;
+   yinit.regionid                = REGION_AUTODETECT;
+   yinit.mpegpath                = NULL;
 #ifdef FRAMESKIP_ENABLED
-   yinit.frameskip          = frameskip_enable;
+   yinit.frameskip               = frameskip_enable;
 #endif
-   yinit.clocksync          = 0;
-   yinit.basetime           = 0;
-   yinit.usethreads         = 1;
-   yinit.numthreads         = numthreads;
+   yinit.clocksync               = 0;
+   yinit.basetime                = 0;
+   yinit.usethreads              = 1;
+   yinit.numthreads              = numthreads;
 #ifdef SPRITE_CACHE
-   yinit.useVdp1cache       = 0;
+   yinit.useVdp1cache            = 0;
 #endif
-   yinit.usecache           = 0;
-   yinit.skip_load          = 0;
-   yinit.video_filter_type  = filter_mode;
-   yinit.video_upscale_type = upscale_mode;
-   //yinit.resolution_mode    = resolution_mode;
-   yinit.scanline           = scanlines;
-   yinit.stretch            = 1;
+   yinit.usecache                = 0;
+   yinit.skip_load               = 0;
+   yinit.video_filter_type       = filter_mode;
+   yinit.video_upscale_type      = upscale_mode;
+   yinit.polygon_generation_mode = polygon_mode;
+   yinit.scanline                = scanlines;
+   yinit.stretch                 = 1;
 
    return true;
 }
@@ -1069,6 +1097,8 @@ bool retro_load_game(const struct retro_game_info *info)
 {
    if (!info)
       return false;
+
+   check_variables();
 
    snprintf(full_path, sizeof(full_path), "%s", info->path);
 
@@ -1409,8 +1439,6 @@ bool retro_load_game(const struct retro_game_info *info)
       yinit.buppath         = NULL;
    }
 
-   check_variables();
-
    return retro_load_game_common();
 }
 
@@ -1483,6 +1511,7 @@ void retro_run(void)
       if(prev_resolution_mode != resolution_mode)
          retro_set_resolution();
       VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, polygon_mode);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanlines);
    }
