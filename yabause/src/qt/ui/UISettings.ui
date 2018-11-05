@@ -385,6 +385,9 @@
        <item row="23" column="1">
         <widget class="QComboBox" name="cbScanlineFilter"/>
        </item>
+       <item row="24" column="1">
+        <widget class="QComboBox" name="cbPolygonGeneration"/>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="wSound">
