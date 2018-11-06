@@ -532,6 +532,17 @@ int Ygl_useTmpBuffer(){
 int Ygl_useUpscaleBuffer(void){
   // Create Screen size frame buffer
   int up_scale = 1;
+  switch (_Ygl->upmode) {
+    case UP_HQ4X:
+    case UP_4XBRZ:
+      up_scale = 1;
+      break;
+    case UP_2XBRZ:
+      up_scale = 1;
+      break;
+    default:
+      up_scale = 1;
+  } 
   if (_Ygl->upfbo == 0) {
     GLuint error;
     glGenTextures(1, &_Ygl->upfbotex);
@@ -3560,6 +3571,8 @@ static const char fblitbilinear_img[] =
 
 /////
 
+static int last_upmode = 0;
+
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float dispw, float disph) {
   float width = w;
   float height = h;
@@ -3593,6 +3606,13 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
   if (_Ygl->upmode != UP_NONE) {
     int scale = 1; 
+    if (last_upmode != _Ygl->upmode) {
+      if (_Ygl->upfbotex != 0) glDeleteTextures(1, &_Ygl->upfbotex);
+      if (_Ygl->upfbo != 0) glDeleteFramebuffers(1, &_Ygl->upfbo);
+      _Ygl->upfbo = 0;
+      _Ygl->upfbotex = 0;
+      last_upmode = _Ygl->upmode; 
+    }
     scale = Ygl_useUpscaleBuffer();
     glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
     glViewport(0, 0, scale*_Ygl->width, scale*_Ygl->height);
