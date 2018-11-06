@@ -13,7 +13,8 @@ static const GLchar * fblit2xbrz_f[] = { Yglprg_blit_2xbrz_f, NULL };
 
 static int up_prg = -1;
 static int up_mode = -1;
-static int u_size = -1;
+static int d_size = -1;
+static int t_size = -1;
 static int up_lut_tex = -1;
 
 static void Ygl_printShaderError( GLuint shader )
@@ -56,7 +57,7 @@ static void Ygl_printProgError( GLuint prog )
   glDeleteProgram(prog);
 }
 
-int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
+int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float texw, float texh) {
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
   if (up_lut_tex == -1) {
@@ -94,7 +95,7 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
         glShaderSource(vshader, 1, fblit4xbrz_v, NULL);
         break;
       case UP_2XBRZ:
-        glShaderSource(vshader, 1, fblit2xbrz_v, NULL);
+        glShaderSource(vshader, 1, fblit4xbrz_v, NULL);
         break;
     }
     glCompileShader(vshader);
@@ -113,7 +114,7 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
         glShaderSource(fshader, 1, fblit4xbrz_f, NULL);
         break;
       case UP_2XBRZ:
-        glShaderSource(fshader, 1, fblit2xbrz_f, NULL);
+        glShaderSource(fshader, 1, fblit4xbrz_f, NULL);
         break;
     }
     glCompileShader(fshader);
@@ -140,7 +141,8 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
     glUniform1i(glGetUniformLocation(up_prg, "Texture"), 0);
     if (up_mode == UP_HQ4X)
       glUniform1i(glGetUniformLocation(up_prg, "LUT"), 1);
-    u_size = glGetUniformLocation(up_prg, "TextureSize");
+    d_size = glGetUniformLocation(up_prg, "DrawingSize");
+    t_size = glGetUniformLocation(up_prg, "TextureSize");
 
   }
   else{
@@ -168,7 +170,8 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
 
-  glUniform2f(u_size, (float)w, (float)h);
+  glUniform2f(d_size, (float)w, (float)h);
+  glUniform2f(t_size, (float)texw, (float)texh);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, srcTexture);

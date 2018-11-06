@@ -535,10 +535,10 @@ int Ygl_useUpscaleBuffer(void){
   switch (_Ygl->upmode) {
     case UP_HQ4X:
     case UP_4XBRZ:
-      up_scale = 1;
+      up_scale = 4;
       break;
     case UP_2XBRZ:
-      up_scale = 1;
+      up_scale = 2;
       break;
     default:
       up_scale = 1;
@@ -547,7 +547,7 @@ int Ygl_useUpscaleBuffer(void){
     GLuint error;
     glGenTextures(1, &_Ygl->upfbotex);
     glBindTexture(GL_TEXTURE_2D, _Ygl->upfbotex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, up_scale*_Ygl->width, up_scale*_Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, up_scale*_Ygl->rwidth, up_scale*_Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -3615,14 +3615,14 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     }
     scale = Ygl_useUpscaleBuffer();
     glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
-    glViewport(0, 0, scale*_Ygl->width, scale*_Ygl->height);
-    glScissor(0, 0, scale*_Ygl->width, scale*_Ygl->height);
-    YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight);
+    glViewport(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
+    glScissor(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
+    YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight, _Ygl->width, _Ygl->height);
     glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     tex = _Ygl->upfbotex;
-    width = scale*_Ygl->width;
-    height = scale*_Ygl->height;
+    width = scale*_Ygl->rwidth;
+    height = scale*_Ygl->rheight;
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
@@ -3738,6 +3738,8 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
   // Clean up
   glActiveTexture(GL_TEXTURE0);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);

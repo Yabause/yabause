@@ -686,7 +686,7 @@ int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos
 intptr_t YglGetOffset( void* address );
 int YglBlitVDP1(u32 srcTexture, float w, float h, int flip);
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float dispw, float disph);
-int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
+int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float texw, float texh);
 
 void YglRenderVDP1(void);
 u32 * YglGetLineColorPointer();

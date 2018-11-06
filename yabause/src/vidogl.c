@@ -3862,9 +3862,6 @@ static void SetSaturnResolution(int width, int height)
 {
   YglChangeResolution(width, height);
   YglSetDensity((vdp2_interlace == 0) ? 1 : 2);
-
-  vdp2width = width;
-  vdp2height = height;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -7525,7 +7522,8 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
     vdp2_interlace = 0;
     break;
   }
-
+  vdp2width = width;
+  vdp2height = height;
   if ((width != _Ygl->rwidth) || (height != _Ygl->rheight))SetSaturnResolution(width, height);
   Vdp1SetTextureRatio(wratio, hratio);
 }
