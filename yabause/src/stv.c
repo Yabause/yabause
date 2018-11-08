@@ -1789,6 +1789,7 @@ int biosloaded = 0xFF;
 int copyBios(JZFile *zip, void* id) {
     JZFileHeader header;
     char filename[1024];
+    char* biosname = NULL;
     u8* data;
     unsigned int i,j, dataAvailable;
     rominfo* info = (rominfo*)id;
@@ -1808,6 +1809,16 @@ int copyBios(JZFile *zip, void* id) {
     LOGSTV("copyBios %s\n", filename);
 
     i=0;
+    while(availableGames[gameId].entry->blobs[i].type != GAME_END) {
+      if (availableGames[gameId].entry->blobs[i].type == BIOS_BLOB) {
+        // We need a specific bios
+        biosname = malloc(strlen(availableGames[gameId].entry->blobs[i].filename) + 1);
+        strcpy(biosname, availableGames[gameId].entry->blobs[i].filename);
+      }
+      i++;
+    }
+
+    i=0;
     dataAvailable = 0;
     while(biosLink.entry->blobs[i].type != GAME_END) {
       if (strncmp(biosLink.entry->blobs[i].filename, filename, 1024) == 0) {
@@ -1822,12 +1833,23 @@ int copyBios(JZFile *zip, void* id) {
           }
           switch (biosLink.entry->blobs[i].type) {
             case BIOS_BLOB:
-              if (biosloaded > i) {
-                LOGSTV("Load bios %s\n", filename);
-                for (j=0; j<biosLink.entry->blobs[i].length;j++) {
-                  T1WriteByte(BiosRom, biosLink.entry->blobs[i].offset+j, data[j]);
+              if(biosname != NULL) {
+                // Load the specific bios
+                if (strcmp(biosname,filename) == 0) {
+                  LOGSTV("Load bios %s\n", filename);
+                  for (j=0; j<biosLink.entry->blobs[i].length;j++) {
+                    T1WriteByte(BiosRom, biosLink.entry->blobs[i].offset+j, data[j]);
+                  }
                 }
-                biosloaded = i;
+              } else {
+                // Load the "normal" bios (actually i don't understand this part)
+                if (biosloaded > i) {
+                  LOGSTV("Load bios %s\n", filename);
+                  for (j=0; j<biosLink.entry->blobs[i].length;j++) {
+                    T1WriteByte(BiosRom, biosLink.entry->blobs[i].offset+j, data[j]);
+                  }
+                  biosloaded = i;
+                }
               }
               break;
           }
