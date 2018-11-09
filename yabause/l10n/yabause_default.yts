@@ -84,7 +84,6 @@ Backup Ram Manager|
 Bilinear|
 Bilinear Filtering (Restart required)|
 Binary Files (*.bin)|
-Binary Files (*.bin)|
 Bios|
 Block Size :|
 Bug report|
@@ -94,7 +93,7 @@ Byte Write : %1 %2|
 Cancel|
 Cannot initialize Windows SPTI Driver|
 Can't plug in the new controller, cancelling.|
-Can't initialize Yabause|
+Can't initialize Kronos|
 Cart/Memory|
 Cartridge|
 CD Images (*.iso *.cue *.bin *.mds *.ccd)|
@@ -153,6 +152,7 @@ DirectX Input Interface|
 DirectX Sound Interface|
 Disassembled Code|
 Display on Hover|
+Double Mission Stick|
 Down|
 Download|
 DSP Control Registers|
@@ -233,9 +233,10 @@ Memory &Editor|
 Memory Search|
 Memory Transfer
 Middle|
-Mpeg ROM|
+Mission Stick|Mission Stick
 Mouse|
 Mouse Configuration|
+Mpeg ROM|
 Musashi Interface|
 nanovg OSD Interface|
 Native (native resolution of Window)|
@@ -326,6 +327,7 @@ Set PC to Start Address|
 Settings|
 SH2 Debugger Interpreter|
 SH2 Interpreter|
+SH2 Kronos Interpreter|
 SH2 Registers|
 Shortcuts|
 Show FPS|
@@ -342,6 +344,8 @@ Sound...|
 Sound|
 Sound Core|
 Spanish|
+ST-V cabinet Configuration|
+ST-V Cabinet|
 STV Rom game|
 Start|
 Start Address:|
@@ -350,6 +354,11 @@ Status|
 Step Into|
 Step Out|
 Step Over|
+Stick Down|
+Stick left button: same as A|
+Stick Left|
+Stick Right|
+Stick Up|
 Stop|
 Stretch to window|
 Synchronize Saturn internal clock with set time|
@@ -357,6 +366,8 @@ Tesselation|
 Text|
 Texture|
 The dummies cores don't need configuration|
+Throttle Down|
+Throttle Up|
 To File...|
 toolBar|
 Trace Logging|
