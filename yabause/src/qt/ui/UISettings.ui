@@ -317,7 +317,7 @@
 			</widget>
 		</item>
 		<item row="19" column="1">
-			<widget class="QComboBox" name="cbFilterMode"/>
+			<widget class="QComboBox" name="cbUpscaleMode"/>
 		</item>
 		<item row="20" column="0">
 			<widget class="QLabel" name="Embellishmentfilter">
@@ -338,10 +338,10 @@
 				</property>
 			</widget>
 		</item>
-       <item row="20" column="1">
-        <widget class="QComboBox" name="cbUpscaleMode"/>
-       </item>
-		<item row="22" column="0">
+		<item row="20" column="1">
+		<widget class="QComboBox" name="cbFilterMode"/>
+		</item>
+		<item row="21" column="0">
 			<widget class="QLabel" name="OpenGLSize">
 				<property name="font">
 				<font>
@@ -360,8 +360,30 @@
 				</property>
 			</widget>
 		</item>
-       <item row="22" column="1">
+       <item row="21" column="1">
         <widget class="QComboBox" name="cbResolution"/>
+       </item>
+		<item row="22" column="0">
+			<widget class="QLabel" name="Tesselation">
+				<property name="font">
+				<font>
+					<weight>75</weight>
+					<bold>true</bold>
+				</font>
+				</property>
+				<property name="text">
+					<string>Tesselation :</string>
+				</property>
+				<property name="textFormat">
+					<enum>Qt::PlainText</enum>
+				</property>
+				<property name="alignment" >
+					<set>Qt::AlignRight|Qt::AlignVCenter</set>
+				</property>
+			</widget>
+		</item>
+       <item row="22" column="1">
+        <widget class="QComboBox" name="cbPolygonGeneration"/>
        </item>
 		<item row="23" column="0">
 			<widget class="QLabel" name="TVEffect">
@@ -384,9 +406,6 @@
 		</item>
        <item row="23" column="1">
         <widget class="QComboBox" name="cbScanlineFilter"/>
-       </item>
-       <item row="24" column="1">
-        <widget class="QComboBox" name="cbPolygonGeneration"/>
        </item>
       </layout>
      </widget>
