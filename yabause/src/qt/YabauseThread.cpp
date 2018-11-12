@@ -25,6 +25,7 @@
 #include "ui/UIYabause.h"
 
 #include "../peripheral.h"
+#include "../stv.h"
 
 #include <QDateTime>
 #include <QStringList>
@@ -346,16 +347,51 @@ void YabauseThread::reloadSettings()
 	// reset yabause conf
 	resetYabauseConf();
 
+	// Check if "General/CdRomISO" setting leads to a ST-V game
+	// Store the game "id", if no game id found then this is most likely not a ST-V game
+	int stvgame = -1;
+	STVGetSingle(strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() ), strdup( vs->value( "General/Bios", mYabauseConf.stvbiospath ).toString().toLatin1().constData() ), &stvgame);
+
+	if (stvgame != -1)
+	{
+		mYabauseConf.stvgamepath       = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
+		mYabauseConf.stvgame           = stvgame;
+		mYabauseConf.stvbiospath       = strdup( vs->value( "General/Bios", mYabauseConf.stvbiospath ).toString().toLatin1().constData() );
+		mYabauseConf.buppath           = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
+		// the 3 following values are mandatory for ST-V (?)
+		mYabauseConf.cartpath          = NULL;
+		mYabauseConf.carttype          = CART_ROMSTV;
+		mYabauseConf.extend_backup     = 0;
+	}
+	else
+	{
+		mYabauseConf.cdpath            = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
+		mYabauseConf.cdcoretype        = vs->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
+		if (vs->value("General/EnableEmulatedBios", false).toBool())
+			mYabauseConf.biospath      = strdup( "" );
+		else
+			mYabauseConf.biospath      = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+		mYabauseConf.buppath           = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
+		mYabauseConf.cartpath          = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
+		mYabauseConf.carttype          = vs->value( "Cartridge/Type", mYabauseConf.carttype ).toInt();
+		if (vs->value("Memory/ExtendMemory", true).toBool()) {
+			mYabauseConf.extend_backup = 1;
+		} else {
+			mYabauseConf.extend_backup = 0;
+		}
+	}
+
 	// read & apply settings
-   mYabauseConf.m68kcoretype = vs->value("Advanced/68kCore", mYabauseConf.m68kcoretype).toInt();
+	mYabauseConf.m68kcoretype = vs->value("Advanced/68kCore", mYabauseConf.m68kcoretype).toInt();
 	mYabauseConf.percoretype = vs->value( "Input/PerCore", mYabauseConf.percoretype ).toInt();
 	mYabauseConf.sh2coretype = vs->value( "Advanced/SH2Interpreter", mYabauseConf.sh2coretype ).toInt();
 	mYabauseConf.vidcoretype = vs->value( "Video/VideoCore", mYabauseConf.vidcoretype ).toInt();
 	mYabauseConf.osdcoretype = vs->value( "Video/OSDCore", mYabauseConf.osdcoretype ).toInt();
 	mYabauseConf.sndcoretype = vs->value( "Sound/SoundCore", mYabauseConf.sndcoretype ).toInt();
-	mYabauseConf.cdcoretype = vs->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
-	mYabauseConf.carttype = vs->value( "Cartridge/Type", mYabauseConf.carttype ).toInt();
-        mYabauseConf.stvgame = vs->value( "Cartridge/STVGame", mYabauseConf.stvgame ).toInt();
+	//mYabauseConf.cdcoretype = vs->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
+	//mYabauseConf.carttype = vs->value( "Cartridge/Type", mYabauseConf.carttype ).toInt();
+	//mYabauseConf.stvgame = vs->value( "Cartridge/STVGame", mYabauseConf.stvgame ).toInt();
+	/*
 	const QString r = vs->value( "Advanced/Region", mYabauseConf.regionid ).toString();
 	if ( r.isEmpty() || r == "Auto" )
 		mYabauseConf.regionid = 0;
@@ -373,39 +409,40 @@ void YabauseThread::reloadSettings()
 			case 'L': mYabauseConf.regionid = 0xD; break;
 		}
 	}
-	if (vs->value("General/EnableEmulatedBios", false).toBool())
-		mYabauseConf.biospath = strdup( "" );
-	else
-		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
-	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
-   mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
-   mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
-   showFPS = vs->value( "General/ShowFPS", false ).toBool();
+	*/
+	//if (vs->value("General/EnableEmulatedBios", false).toBool())
+	//	mYabauseConf.biospath = strdup( "" );
+	//else
+	//	mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+	//mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
+	//mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
+	//mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
+	showFPS = vs->value( "General/ShowFPS", false ).toBool();
 	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
 	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
-	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
-	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
-  if (vs->value("Memory/ExtendMemory", true).toBool()) {
-    mYabauseConf.extend_backup = 1;
-  }else {
-    mYabauseConf.extend_backup = 0;
-  }
-	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
-	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
-	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
-	
+	//mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
+	//mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
+	//if (vs->value("Memory/ExtendMemory", true).toBool()) {
+	//	mYabauseConf.extend_backup = 1;
+	//}else {
+	//	mYabauseConf.extend_backup = 0;
+	//}
+	//mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
+	//mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
+	//mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
+
 	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
-        mYabauseConf.video_upscale_type = vs->value("Video/upscale_type", mYabauseConf.video_upscale_type).toInt();
+	mYabauseConf.video_upscale_type = vs->value("Video/upscale_type", mYabauseConf.video_upscale_type).toInt();
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
-  mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
-  mYabauseConf.stretch = vs->value("Video/AspectRatio", mYabauseConf.stretch).toInt();
-  mYabauseConf.scanline = vs->value("Video/ScanLine", mYabauseConf.scanline).toInt();
+	mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
+	mYabauseConf.stretch = vs->value("Video/AspectRatio", mYabauseConf.stretch).toInt();
+	mYabauseConf.scanline = vs->value("Video/ScanLine", mYabauseConf.scanline).toInt();
 
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
 	emit requestVolumeChange( vs->value( "Sound/Volume", 100 ).toInt() );
 #ifdef SPRITE_CACHE
-        mYabauseConf.useVdp1cache = vs->value( "Advanced/Vdp1Cache", false ).toBool();
+	mYabauseConf.useVdp1cache = vs->value( "Advanced/Vdp1Cache", false ).toBool();
 #endif
 
 	reloadClock();
