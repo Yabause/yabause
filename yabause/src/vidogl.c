@@ -4165,15 +4165,14 @@ static void expandVertices(float* in, float* out)
 {
 //Need to find lines
 //Test on breakpoint
-  int i, j;
+  int i;
   int isTriangle = 0;
   int isPoint = 1;
   int isQuad = 1;
   for (i = 0; i<4; i++) {
     if (in[(((i+0)%4) << 1) + 0] != in[(((i+1)%4) << 1) + 0]) isPoint = 0;
     if (in[(((i+0)%4) << 1) + 1] != in[(((i+1)%4) << 1) + 1]) isPoint = 0;
-    for (j=0; j<4; j++)
-      if ((in[(((i+0)%4) << 1) + 0] == in[(((i+j)%4) << 1) + 0]) && (in[(((i+0)%4) << 1) + 1] == in[(((i+j)%4) << 1) + 1])) isTriangle = 1;
+    if ((in[(((i+0)%4) << 1) + 0] == in[(((i+1)%4) << 1) + 0]) && (in[(((i+0)%4) << 1) + 1] == in[(((i+1)%4) << 1) + 1])) isTriangle = 1;
     if (isPoint == 0) break;
   }
   if (isPoint) isTriangle = 0;
@@ -4196,26 +4195,6 @@ static void expandVertices(float* in, float* out)
 
       out[(((i+0)%4) << 1)] = in[(((i+0)%4) << 1)] + nx;
       out[(((i+0)%4) << 1) + 1] = in[(((i+0)%4) << 1) + 1] + ny;
-    }
-
-    if (isQuad) {
-      int concav = 0;
-      float dx1 = in[0] - in[6] + in[0] - in[2];
-      float dy1 = in[1] - in[7] + in[1] - in[3];
-      float dx2 = in[4] - in[2] + in[4] - in[6];
-      float dy2 = in[5] - in[3] + in[5] - in[7];
- 
-      concav |= ((dx1*dx2 + dy1*dy2) > 0);
-
-      dx1 = in[2] - in[0] + in[2] - in[4];
-      dy1 = in[3] - in[1] + in[3] - in[5];
-      dx2 = in[6] - in[4] + in[6] - in[0];
-      dy2 = in[7] - in[5] + in[7] - in[1];
-
-      concav |= ((dx1*dx2 + dy1*dy2) > 0);
-
-    if (concav == 1)
-      printf("Contact developer: Concav quad detected (%f, %f)(%f, %f)(%f, %f)(%f, %f)\n",in[0],in[1],in[2],in[3],in[4],in[5],in[6],in[7] );
     }
   } else {
     for (i = 0; i<8; i++) {
