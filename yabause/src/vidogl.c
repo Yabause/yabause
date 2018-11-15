@@ -4212,7 +4212,7 @@ static void expandVertices(float* in, float* out)
     }
   }
 
-  if (isQuad || isTriangle) {
+  if (isQuad) {
 //For triangle, we have to replace with quad
     int disp = 0;
     for (i = 0; i<4; i++) {
