@@ -4169,50 +4169,17 @@ static void expandVertices(float* in, float* out)
   int isTriangle = 0;
   int isPoint = 1;
   int isQuad = 1;
-  int isLine = 0;
   for (i = 0; i<4; i++) {
     if (in[(((i+0)%4) << 1) + 0] != in[(((i+1)%4) << 1) + 0]) isPoint = 0;
     if (in[(((i+0)%4) << 1) + 1] != in[(((i+1)%4) << 1) + 1]) isPoint = 0;
-    for (j=i+1; j<4; j++) {
-      if ((in[i*2] == in[j*2]) && (in[i*2+1] == in[j*2+1])) {
-        if (isTriangle) isLine = 1;
-        isTriangle = 1;
-      }
-    }
+    for (j=0; j<4; j++)
+      if ((in[(((i+0)%4) << 1) + 0] == in[(((i+j)%4) << 1) + 0]) && (in[(((i+0)%4) << 1) + 1] == in[(((i+j)%4) << 1) + 1])) isTriangle = 1;
+    if (isPoint == 0) break;
   }
-  if (isPoint) {
-    isTriangle = 0;
-    isLine = 0;
-    isQuad = 0;
-  }
-  if (isLine) {
-    isTriangle = 0;
-    isQuad = 0;
-  }
-  if(isTriangle) {
-    isQuad = 0;
-  }
+  if (isPoint) isTriangle = 0;
+  if (isTriangle) isQuad = 0;
 
-  if (isTriangle) {
-    float vert[6];
-    int i,j, idx = 1;
-    vert[0] = in[0];
-    vert[1] = in[1];
-    for (i = 1; i<4; i++) {
-      if (idx < 3) {
-        for (j = 0; j<idx; j++) {
-          if((vert[j*2] != in[i*2]) || (vert[j*2+1] != in[i*2+1])) {
-            vert[idx*2] = in[i*2];
-            vert[idx*2+1] = in[i*2+1];
-            idx++;
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  if (isQuad) {
+  if (isQuad || isTriangle) {
 //For triangle, we have to replace with quad
     int disp = 0;
     for (i = 0; i<4; i++) {
@@ -4230,7 +4197,7 @@ static void expandVertices(float* in, float* out)
       out[(((i+0)%4) << 1)] = in[(((i+0)%4) << 1)] + nx;
       out[(((i+0)%4) << 1) + 1] = in[(((i+0)%4) << 1) + 1] + ny;
     }
-#if 0
+
     if (isQuad) {
       int concav = 0;
       float dx1 = in[0] - in[6] + in[0] - in[2];
@@ -4250,7 +4217,6 @@ static void expandVertices(float* in, float* out)
     if (concav == 1)
       printf("Contact developer: Concav quad detected (%f, %f)(%f, %f)(%f, %f)(%f, %f)\n",in[0],in[1],in[2],in[3],in[4],in[5],in[6],in[7] );
     }
-#endif
   } else {
     for (i = 0; i<8; i++) {
       out[0] = in[0] - 0.5f;
