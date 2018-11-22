@@ -462,8 +462,11 @@ static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *context, UNUSED u8* memory, 
     return fgetc(pbackup);
   }
 #endif
-  addr = addr & (backup_file_size - 1);
-  return T1ReadByte(memory, addr);
+  addr = addr & ((backup_file_size<<1) - 1);
+  if (addr & 0x1)
+    return T1ReadByte(memory, addr>>1);
+  else 
+    return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -502,9 +505,8 @@ static void FASTCALL BupRamMemoryWriteByte(SH2_struct *context, UNUSED u8* memor
     BupRamWritten = 1;  
   }
 #endif
-
-  addr = addr & (backup_file_size - 1);
-  T1WriteByte(memory, addr|0x1, val);
+  addr = addr & ((backup_file_size<<1) - 1);
+  T1WriteByte(memory, addr>>1|0x1, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -697,7 +699,7 @@ void MappedMemoryInit()
                                 &HighWramMemoryWriteLong,
                                 &HighWram);
 
-     FillMemoryArea( ((backup_file_addr >> 16) & 0xFFF) , (((backup_file_addr + backup_file_size) >> 16) & 0xFFF)+1, &BupRamMemoryReadByte,
+     FillMemoryArea( ((backup_file_addr >> 16) & 0xFFF) , (((backup_file_addr + (backup_file_size<<1)) >> 16) & 0xFFF)+1, &BupRamMemoryReadByte,
      &BupRamMemoryReadWord,
      &BupRamMemoryReadLong,
      &BupRamMemoryWriteByte,
