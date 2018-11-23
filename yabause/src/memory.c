@@ -463,9 +463,9 @@ static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *context, UNUSED u8* memory, 
   }
 #endif
   addr = addr & ((backup_file_size<<1) - 1);
-  if (addr & 0x1)
+  if (addr & 0x1) {
     return T1ReadByte(memory, addr>>1);
-  else 
+  } else 
     return 0xFF;
 }
 
@@ -506,7 +506,9 @@ static void FASTCALL BupRamMemoryWriteByte(SH2_struct *context, UNUSED u8* memor
   }
 #endif
   addr = addr & ((backup_file_size<<1) - 1);
-  T1WriteByte(memory, addr>>1|0x1, val);
+  if (addr & 0x1) {
+    T1WriteByte(memory, addr>>1, val);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1505,11 +1507,11 @@ int LoadBackupRam(const char *filename)
    return T123Load(BupRam, backup_file_size, 1, filename);
 }
 
-static u8 header[32] = {
-  0xFF, 'B', 0xFF, 'a', 0xFF, 'c', 0xFF, 'k',
-  0xFF, 'U', 0xFF, 'p', 0xFF, 'R', 0xFF, 'a',
-  0xFF, 'm', 0xFF, ' ', 0xFF, 'F', 0xFF, 'o',
-  0xFF, 'r', 0xFF, 'm', 0xFF, 'a', 0xFF, 't'
+static u8 header[16] = {
+  'B', 'a', 'c', 'k',
+  'U', 'p', 'R', 'a',
+  'm', ' ', 'F', 'o',
+  'r', 'm', 'a', 't'
 };
 
 int CheckBackupFile(FILE *fp) {
@@ -1518,7 +1520,7 @@ int CheckBackupFile(FILE *fp) {
 
   // Fill in header
   for (i2 = 0; i2 < 4; i2++) {
-    for (i = 0; i < 32; i++) {
+    for (i = 0; i < 16; i++) {
       u8 val = fgetc(fp);
       if ( val != header[i]) {
         return -1;
@@ -1534,9 +1536,8 @@ int ExtendBackupFile(FILE *fp, u32 size ) {
   u32 acsize = ftell(fp);
   if (acsize < size) {
     // Clear the rest
-    for ( u32 i = (acsize&0xFFFFFFFE) ; i < size; i += 2)
+    for ( u32 i = (acsize&0xFFFFFFFE) ; i < size; i++)
     {
-      fputc(0xFF, fp);
       fputc(0x00, fp);
     }
     fflush(fp);
@@ -1555,13 +1556,12 @@ void FormatBackupRamFile(FILE *fp, u32 size) {
 
   // Fill in header
   for (i2 = 0; i2 < 4; i2++)
-    for (i = 0; i < 32; i++)
+    for (i = 0; i < 16; i++)
       fputc(header[i],fp);
 
   // Clear the rest
-  for (i3 = 0x80; i3 < size; i3 += 2)
+  for (i3 = 0x80; i3 < size; i3 ++)
   {
-    fputc(0xFF,fp);
     fputc(0x00,fp);
   }
   fflush(fp);
@@ -1574,14 +1574,13 @@ void FormatBackupRam(void *mem, u32 size)
 
    // Fill in header
    for(i2 = 0; i2 < 4; i2++)
-      for(i = 0; i < 32; i++)
-         T1WriteByte(mem, (i2 * 32) + i, header[i]);
+      for(i = 0; i < 16; i++)
+         T1WriteByte(mem, (i2 * 16) + i, header[i]);
 
    // Clear the rest
-   for(i3 = 0x80; i3 < size; i3+=2)
+   for(i3 = 0x80; i3 < size; i3++)
    {
-      T1WriteByte(mem, i3, 0xFF);
-      T1WriteByte(mem, i3+1, 0x00);
+      T1WriteByte(mem, i3, 0x00);
    }
 }
 
