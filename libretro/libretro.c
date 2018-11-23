@@ -765,7 +765,9 @@ static bool retro_init_hw_context(void)
    params.stencil = true;
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
    {
-      params.context_type = RETRO_HW_CONTEXT_OPENGL;
+      params.major = 4;
+      params.minor = 2;
+      params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
       if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
          return false;
    }

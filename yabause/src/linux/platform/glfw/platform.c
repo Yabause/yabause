@@ -154,6 +154,7 @@ int platform_SetupOpenGL(int w, int h, int fullscreen) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);  
 #endif
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_RED_BITS,8);
@@ -185,6 +186,12 @@ int platform_SetupOpenGL(int w, int h, int fullscreen) {
 #if defined(_USEGLEW_)
   glewExperimental=GL_TRUE;
 #endif
+
+   int maj, min;
+   glGetIntegerv(GL_MAJOR_VERSION, &maj);
+   glGetIntegerv(GL_MINOR_VERSION, &min);
+   
+  printf("OpenGL version is %d.%d (%s, %s)\n", maj, min, glGetString(GL_VENDOR), glGetString(GL_RENDERER));
 
   for (i=0; i< 512; i++)
     inputMap[i] = -1;

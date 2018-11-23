@@ -42,6 +42,20 @@ install(TARGETS kronos-linux DESTINATION "bin")
 install(FILES "doc/kronos.1" DESTINATION "${YAB_MAN_DIR}/man1" RENAME "${YAB_PORT_NAME}.1")
 install(FILES "kronos.png" DESTINATION "share/pixmaps")
 
+option(OPENGLCORE_TEST "Build the openGL core test application" ON)
+if (OPENGLCORE_TEST)
+set(PROJECT_TEST_NAME glcore_test)
+
+file(GLOB TEST_GL_SRC_FILES ${PROJECT_SOURCE_DIR}/gltest/*.cpp ${kronos_linux_SOURCES} main_gl_test.c platform/glfw/platform.c)
+add_executable(${PROJECT_TEST_NAME} ${TEST_GL_SRC_FILES})
+
+target_link_libraries(${PROJECT_TEST_NAME}
+   kronos ${KRONOS_LIBRARIES} ${PORT_LIBRARIES}
+)
+        
+target_link_libraries(${PROJECT_TEST_NAME} ${CMAKE_THREAD_LIBS_INIT})
+endif()
+
 option(INTERPRETER_TEST "Build the interpreter test suite" OFF)
 if (INTERPRETER_TEST)
 

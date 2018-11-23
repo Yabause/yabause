@@ -180,6 +180,10 @@ void YuiSwapBuffers(void) {
    SetOSDToggle(1);
 }
 
+int YuiGetFB(void) {
+  return 0;
+}
+
 void YuiInit() {
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
 	yinit.percoretype = PERCORE_LINUXJOY;

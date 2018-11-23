@@ -113,6 +113,7 @@ int ShaderDrawTest()
   glVertexAttribPointer(vertexp, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)vec);
   glVertexAttribPointer(texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)tex);
 
+
   glDrawArrays(GL_TRIANGLES, 0, 6);
 
   return 0;
@@ -202,7 +203,7 @@ int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
  *  Normal Draw
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_normal_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
@@ -215,7 +216,7 @@ const GLchar Yglprg_normal_v[] =
 const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
 const GLchar Yglprg_normal_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                            \n"
 "in highp vec4 v_texcoord;                            \n"
 "uniform vec4 u_color_offset;    \n"
@@ -264,7 +265,7 @@ int Ygl_cleanupNormal(void * p, YglTextureManager *tm)
 //---------------------------------------------------------
 
 const GLchar Yglprg_normal_cram_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;\n"
 "precision highp int;\n"
 "in vec4 v_texcoord;\n"
@@ -282,7 +283,7 @@ const GLchar Yglprg_normal_cram_f[] =
 "}\n";
 
 const GLchar Yglprg_normal_cram_special_priority_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;\n"
 "precision highp int;\n"
 "in vec4 v_texcoord;\n"
@@ -356,7 +357,7 @@ int Ygl_uniformNormalCramSpecialPriority(void * p, YglTextureManager *tm, Vdp2 *
 
 
 const GLchar Yglprg_normal_cram_addcol_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;\n"
 "precision highp int;\n"
 "in vec4 v_texcoord;\n"
@@ -430,7 +431,7 @@ void Ygl_setNormalshader(YglProgram * prg) {
 
 
 const GLchar Yglprg_rgb_cram_line_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;\n"
 "precision highp int;\n"
 "in vec4 v_texcoord;\n"
@@ -770,7 +771,7 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
 
 
 const GLchar Yglprg_DestinationAlpha_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                                  \n"
 "in highp vec4 v_texcoord;                               \n"
 "uniform vec4 u_color_offset;                            \n"
@@ -798,7 +799,7 @@ const GLchar Yglprg_DestinationAlpha_f[] =
  *  Window Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_window_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;               \n"
       "void main()                  \n"
@@ -808,7 +809,7 @@ const GLchar Yglprg_window_v[] =
 const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
 const GLchar Yglprg_window_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "precision highp float;                            \n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
@@ -839,7 +840,7 @@ int Ygl_cleanupWindow(void * p, YglTextureManager *tm )
  *  VDP1 Normal Draw
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_normal_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "uniform mat4 u_mvpMatrix;    \n"
     "uniform vec2 u_texsize;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
@@ -855,7 +856,7 @@ const GLchar Yglprg_vdp1_normal_v[] =
 const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 
 const GLchar Yglprg_vpd1_normal_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "precision highp float;                            \n"
       "in vec4 v_texcoord;                            \n"
       "uniform sampler2D s_texture;                        \n"
@@ -896,8 +897,7 @@ int Ygl_cleanupVdp1Normal(void * p, YglTextureManager *tm )
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_tess_v[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
-"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+"#version 420 core \n"
 #else
 "#version 400 \n"
 #endif
@@ -919,8 +919,7 @@ const GLchar * pYglprg_vdp1_gouraudshading_tess_v[] = { Yglprg_vdp1_gouraudshadi
 
 const GLchar Yglprg_tess_c[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
-"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+"#version 420 core \n"
 #else
 "#version 400 \n"
 #endif
@@ -955,8 +954,7 @@ const GLchar * pYglprg_vdp1_gouraudshading_tess_c[] = { Yglprg_tess_c, NULL };
 
 const GLchar Yglprg_tess_e[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
-"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+"#version 420 core \n"
 #else
 "#version 400 \n"
 #endif
@@ -987,8 +985,7 @@ const GLchar * pYglprg_vdp1_gouraudshading_tess_e[] = { Yglprg_tess_e, NULL };
 
 const GLchar Yglprg_tess_g[] =
 #if defined(_OGLES3_)
-"#version 310 es \n"
-"#extension GL_ANDROID_extension_pack_es31a : enable \n"
+"#version 420 core \n"
 #else
 "#version 400 \n"
 #endif
@@ -1026,7 +1023,7 @@ static YglVdp1CommonParam id_gt = { 0 };
  *  VDP1 GlowShading Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "uniform mat4 u_mvpMatrix;                \n"
 "uniform vec2 u_texsize;    \n"
 "layout (location = 0) in vec4 a_position;               \n"
@@ -1044,7 +1041,7 @@ const GLchar Yglprg_vdp1_gouraudshading_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                                                 \n"
 "uniform sampler2D u_sprite;                                              \n"
 "in vec4 v_texcoord;                                                 \n"
@@ -1062,7 +1059,7 @@ const GLchar Yglprg_vdp1_gouraudshading_f[] =
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                                                 \n"
 "uniform sampler2D u_sprite;                                              \n"
 "in vec4 v_texcoord;                                                 \n"
@@ -1086,7 +1083,7 @@ static YglVdp1CommonParam id_spd_g = { 0 };
  *  VDP1 GlowShading and Half Trans Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "uniform mat4 u_mvpMatrix;                \n"
     "uniform vec2 u_texsize;    \n"
       "layout (location = 0) in vec4 a_position;               \n"
@@ -1104,7 +1101,7 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "precision highp float;                                                                     \n"
       "uniform highp sampler2D u_sprite;                                                                  \n"
       "uniform highp sampler2D u_fbo;                                                                     \n"
@@ -1142,7 +1139,7 @@ static YglVdp1CommonParam id_ght_tess = { 0 };
  *  VDP1 Half Trans Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_halftrans_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
         "uniform mat4 u_mvpMatrix;                \n"
     "uniform vec2 u_texsize;    \n"
         "layout (location = 0) in vec4 a_position;               \n"
@@ -1161,7 +1158,7 @@ const GLchar Yglprg_vdp1_halftrans_v[] =
 const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
 
 const GLchar Yglprg_vdp1_halftrans_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "precision highp float;                                                                     \n"
       "uniform highp sampler2D u_sprite;                                                           \n"
       "uniform highp sampler2D u_fbo;                                                               \n"
@@ -1195,7 +1192,7 @@ static YglVdp1CommonParam hf_tess = {0};
 *  VDP1 Mesh Operaion
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_mesh_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "uniform mat4 u_mvpMatrix;                \n"
 "uniform vec2 u_texsize;    \n"
 "layout (location = 0) in vec4 a_position;               \n"
@@ -1214,7 +1211,7 @@ const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
 
 #if 1
 const GLchar Yglprg_vdp1_mesh_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                                                                     \n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
@@ -1243,7 +1240,7 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 "}\n";
 #else
 const GLchar Yglprg_vdp1_mesh_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                                                                     \n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
@@ -1285,7 +1282,7 @@ static YglVdp1CommonParam mesh_tess = { 0 };
 *  VDP1 Half luminance Operaion
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_half_luminance_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "uniform mat4 u_mvpMatrix;    \n"
     "uniform vec2 u_texsize;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
@@ -1301,7 +1298,7 @@ const GLchar Yglprg_vdp1_half_luminance_v[] =
 const GLchar * pYglprg_vdp1_half_luminance_v[] = {Yglprg_vdp1_half_luminance_v, NULL};
 
 const GLchar Yglprg_vpd1_half_luminance_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "precision highp float;                            \n"
       "in vec4 v_texcoord;                            \n"
       "uniform sampler2D s_texture;                        \n"
@@ -1327,7 +1324,7 @@ static YglVdp1CommonParam half_luminance = { 0 };
 *    hard/vdp1/hon/p06_37.htm
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_shadow_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "uniform mat4 u_mvpMatrix;                \n"
 "uniform vec2 u_texsize;    \n"
 "layout (location = 0) in vec4 a_position;               \n"
@@ -1346,7 +1343,7 @@ const GLchar Yglprg_vdp1_shadow_v[] =
 const GLchar * pYglprg_vdp1_shadow_v[] = { Yglprg_vdp1_shadow_v, NULL };
 
 const GLchar Yglprg_vdp1_shadow_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;\n"
 "uniform sampler2D u_sprite;\n"
 "uniform highp sampler2D u_fbo;\n"
@@ -1414,7 +1411,10 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs 
       vertices[11] = (int)((float)(prg->uy2+1) * vdp1hratio);
 
       glUniformMatrix4fv( prg->mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0]  );
-      glVertexAttribPointer(prg->vertexp,2, GL_INT,GL_FALSE, 0, (GLvoid*)vertices );
+      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertices_buf);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
+      glVertexAttribPointer(prg->vertexp,2, GL_INT,GL_FALSE, 0, 0 );
+      glEnableVertexAttribArray(prg->vertexp);
 
       glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -1482,7 +1482,7 @@ typedef struct  {
 DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
 const GLchar Yglprg_vdp1_drawfb_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "uniform mat4 u_mvpMatrix;                \n"
       "layout (location = 0) in vec4 a_position;               \n"
       "layout (location = 1) in vec2 a_texcoord;               \n"
@@ -1494,7 +1494,7 @@ const GLchar Yglprg_vdp1_drawfb_v[] =
 const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 
 const GLchar Yglprg_vdp2_drawfb_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 "in vec2 v_texcoord;\n"
@@ -1538,7 +1538,7 @@ refrence:
 */
 
 const GLchar Yglprg_vdp2_drawfb_cram_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 "layout(std140) uniform vdp2regs { \n"
@@ -1650,7 +1650,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
 *  Chaos Seed
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 "layout(std140) uniform vdp2regs { \n"
@@ -1777,7 +1777,7 @@ const GLchar * pYglprg_vdp2_drawfb_msb_add_hblank_f[]  = { Yglprg_vdp2_drawfb_hb
 
 
 const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 "layout(std140) uniform vdp2regs { \n"
@@ -2240,7 +2240,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
 * ----------------------------------------------------------------------------------*/
 
 const GLchar Yglprg_vdp2_drawfb_addcolor_shadow_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
 "in vec2 v_texcoord;\n"
@@ -2322,7 +2322,7 @@ int Ygl_cleanupAddBlend(void * p, YglTextureManager *tm)
 const GLchar * pYglprg_linecol_v[] = { Yglprg_normal_v, NULL };
 
 const GLchar Yglprg_linecol_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;\n"
 "in highp vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
@@ -3251,7 +3251,7 @@ int YglProgramChange( YglLevel * level, int prgid )
 static int clear_prg = -1;
 
 static const char vclear_img[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
   "layout (location = 0) in vec2 aPosition;   \n"
   "  \n"
   " void main(void) \n"
@@ -3261,7 +3261,7 @@ static const char vclear_img[] =
 
 
 static const char fclear_img[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
   "precision highp float;       \n"
   "uniform float u_emu_height; \n"
   "uniform float u_vheight; \n"
@@ -3343,7 +3343,10 @@ int YglDrawBackScreen(float w, float h) {
   glDisable(GL_BLEND);
 
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
@@ -3367,7 +3370,7 @@ static int vdp1_prg = -1;
 static GLint vdp1MtxModelView = 0;
 
 static const char vdp1_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "layout (location = 0) in vec2 a_position;   \n"
       "layout (location = 1) in vec2 a_texcoord;   \n"
       "out  highp vec2 v_texcoord;     \n"
@@ -3378,7 +3381,7 @@ static const char vdp1_v[] =
       "} ";
 
 static const char vdp1_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                            \n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D s_texture;                        \n"
@@ -3475,9 +3478,22 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
-  if (flip == 1) glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoordFlip);
-  else glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  if (flip == 1){
+     glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoordFlip_buf);
+     glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoordFlip), textureCoordFlip, GL_STREAM_DRAW);
+     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+     glEnableVertexAttribArray(1);
+  }
+  else{
+     glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
+     glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
+     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+     glEnableVertexAttribArray(1);
+  }
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, srcTexture);
@@ -3505,7 +3521,7 @@ static int outputSize = -1;
 static int inputSize = -1;
 
 static const char vblit_img[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
   "layout (location = 0) in vec2 aPosition;   \n"
   "layout (location = 1) in vec2 aTexCoord;   \n"
   "out  highp vec2 vTexCoord;     \n"
@@ -3518,7 +3534,7 @@ static const char vblit_img[] =
 
 
 static const char fblit_head[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
   "precision highp float;       \n"
   "uniform float fWidth; \n"
   "uniform float fHeight; \n"
@@ -3570,6 +3586,8 @@ static const char fblitbilinear_img[] =
   "} \n";
 
 /////
+
+GLuint textureCoord_buf[2] = {0,0};
 
 static int last_upmode = 0;
 
@@ -3716,8 +3734,16 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, &textureCoord[yabsys.isRotated * 8]);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  if (textureCoord_buf[yabsys.isRotated] == 0)
+     glGenBuffers(1, &textureCoord_buf[yabsys.isRotated]);
+  glBindBuffer(GL_ARRAY_BUFFER, textureCoord_buf[yabsys.isRotated]);
+  glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), &textureCoord[yabsys.isRotated * 8], GL_STREAM_DRAW);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
   glUniform1f(u_w, width);
   glUniform1f(u_h, height);
   glUniform2f(u_l, nbLines, disph);
@@ -3751,7 +3777,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
 
 const GLchar vclearb_img[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
       "layout (location = 0) in vec4 a_position;   \n"
       "void main()                  \n"
       "{                            \n"
@@ -3759,7 +3785,7 @@ const GLchar vclearb_img[] =
       "} ";
 
 const GLchar fclearb_img[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                            \n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
@@ -3825,7 +3851,10 @@ int YglClear() {
   }
 
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
@@ -3838,7 +3867,7 @@ hard/vdp2/hon/p12_13.htm
 */
 
 const GLchar blur_blit_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "uniform mat4 u_mvpMatrix;    \n"
 "layout (location = 0) in vec4 a_position;   \n"
 "layout (location = 1) in vec2 a_texcoord;   \n"
@@ -3850,7 +3879,7 @@ const GLchar blur_blit_v[] =
 "} ";
 
 const GLchar blur_blit_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                            \n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
@@ -3958,8 +3987,14 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matrix
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vb_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vb), vb, GL_STREAM_DRAW);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->tb_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(tb), tb, GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+  glEnableVertexAttribArray(1);
   glUniformMatrix4fv(u_blur_mtxModelView, 1, GL_FALSE, matrix);
   glUniform1f(u_blur_tw, w);
   glUniform1f(u_blur_th, h);
@@ -3983,7 +4018,7 @@ hard/vdp2/hon/p12_13.htm
 */
 
 const GLchar mosaic_blit_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "uniform mat4 u_mvpMatrix;    \n"
 "layout (location = 0) in vec4 a_position;   \n"
 "layout (location = 1) in vec2 a_texcoord;   \n"
@@ -3995,7 +4030,7 @@ const GLchar mosaic_blit_v[] =
 "} ";
 
 const GLchar mosaic_blit_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                            \n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
@@ -4105,8 +4140,14 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matr
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vb_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vb), vb, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->tb_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(tb), tb, GL_STREAM_DRAW);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
   glUniformMatrix4fv(u_mosaic_mtxModelView, 1, GL_FALSE, matrix);
   glUniform1f(u_mosaic_tw, w);
   glUniform1f(u_mosaic_th, h);
@@ -4132,7 +4173,7 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matr
 */
 
 const GLchar perlinealpha_blit_v[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "uniform mat4 u_mvpMatrix;    \n"
 "layout (location = 0) in vec4 a_position;   \n"
 "layout (location = 1) in vec2 a_texcoord;   \n"
@@ -4144,7 +4185,7 @@ const GLchar perlinealpha_blit_v[] =
 "} ";
 
 const GLchar perlinealpha_blit_f[] =
-  "#version 310 es \n"
+  "#version 330 core \n"
 "precision highp float;                            \n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
@@ -4270,8 +4311,14 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vb_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vb), vb, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->tb_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(tb), tb, GL_STREAM_DRAW);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
   glUniformMatrix4fv(u_perlinealpha_mtxModelView, 1, GL_FALSE, matrix);
   glUniform1f(u_perlinealpha_tw, w);
   glUniform1f(u_perlinealpha_th, h);
