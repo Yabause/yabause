@@ -4168,38 +4168,107 @@ void VIDOGLVdp1Draw()
 #define CW (1)
 #define CCW (-1)
 
-//#define TEST 4
+//#define TEST
 
 static int test = 0;
 
 static int expandVertices(float* in, float* out, int distorted)
 {
-//Need to find lines
-//Test on breakpoint
+
   int i, j;
   int dst = 0;
   int isTriangle = 0;
   int isPoint = 1;
   int isQuad = 1;
   int isLine = 0;
+  float nx[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  float ny[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+  float vx[4];
+  float vy[4]; 
+  float dot;
+
+#ifdef TEST
+#include "testquad.inc"
+#endif
+
   for (i = 0; i<4; i++) {
     if (in[(((i+0)%4) << 1) + 0] != in[(((i+1)%4) << 1) + 0]) isPoint = 0;
     if (in[(((i+0)%4) << 1) + 1] != in[(((i+1)%4) << 1) + 1]) isPoint = 0;
     for (j=i+1; j<4; j++) {
       if ((in[i*2] == in[j*2]) && (in[i*2+1] == in[j*2+1])) {
-        if (isTriangle) isLine = 1;
         isTriangle = 1;
       }
     }
   }
+  vx[0] = in[0] - in[4];
+  vx[1] = in[2] - in[6];
+  vx[2] = in[0] - in[6];
+  vx[3] = in[4] - in[2];
+  vy[0] = in[1] - in[5];
+  vy[1] = in[3] - in[7];
+  vy[2] = in[1] - in[7];
+  vy[3] = in[5] - in[3];
+
+  dot = vx[0]*vy[1] - vy[0]*vx[1];
+  if (IS_ZERO(dot)) {
+    dot = vx[2]*vy[3] - vy[2]*vx[3];
+    if (IS_ZERO(dot)) {
+      isLine = 1;
+    }
+  }
+
+  nx[0] = in[0];
+  ny[0] = in[1];
+  nx[1] = in[2];
+  ny[1] = in[3];
+  nx[2] = in[4];
+  ny[2] = in[5];
+  nx[3] = in[6];
+  ny[3] = in[7];
+
   if (isPoint) {
     isTriangle = 0;
     isLine = 0;
     isQuad = 0;
+    nx[0] -= BORDER;
+    ny[0] -= BORDER;
+    nx[1] += BORDER;
+    ny[1] -= BORDER;
+    nx[2] += BORDER;
+    ny[2] += BORDER;
+    nx[3] -= BORDER;
+    ny[3] += BORDER;
   }
   if (isLine) {
+    float max[2] = {nx[0], ny[0]};
+    float min[2] = {nx[0], ny[0]};
+    float dx, dy, l;
     isTriangle = 0;
     isQuad = 0;
+    for (i = 1; i<4; i++) {
+      if ((nx[i] > max[0]) || (ny[i] > max[1])){
+        max[0] = nx[i];
+        max[1] = ny[i];
+      }
+      if ((nx[i] < max[0]) || (ny[i] < max[1])){
+        min[0] = nx[i];
+        min[1] = ny[i];
+      };
+    }
+    dx = max[0] - min[0];
+    dy = max[1] - min[1];
+    l = sqrtf(dx*dx+dy*dy);
+    if (IS_ZERO(l)) l = 1.0f;
+    dx /= l;
+    dy /= l;
+    nx[0] = min[0] - dy * BORDER;
+    ny[0] = min[1] + dx * BORDER;
+    nx[1] = max[0] - dy * BORDER;
+    ny[1] = max[1] + dx * BORDER;
+    nx[2] = max[0] + dy * BORDER;
+    ny[2] = max[1] - dx * BORDER;
+    nx[3] = min[0] + dy * BORDER;
+    ny[3] = min[1] - dx * BORDER;
   }
   if(isTriangle) {
     isQuad = 0;
@@ -4226,79 +4295,12 @@ static int expandVertices(float* in, float* out, int distorted)
 
   if (isQuad) dst == 1;
   if (isQuad && distorted) {
-//For triangle, we have to replace with quad
     int disp = 0;
 
     float dx[4];
     float dy[4];
-    float nx[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-    float ny[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float entrant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-    float vx[2];
-    float vy[2]; 
     float angle[4];   
-
-#ifdef TEST
-  if (test == 0)
-  {
-    in[0] = -100.0f;
-    in[1] = -50.0f;
-    in[2] = -50.0f;
-    in[3] = -60.0f;
-    in[4] = -50.0f;
-    in[5] = -2.0f;
-    in[6] = -100.0f;
-    in[7] = -0.0f;
-  }
-
-  if (test == 1)
-  {
-    in[0] = 30.0f;
-    in[1] = 50.0f;
-    in[2] = 30.0f;
-    in[3] = 0.0f;
-    in[4] = -20.0f;
-    in[5] = 2.0f;
-    in[6] = -20.0f;
-    in[7] = 60.0f;
-  }
-  if (test == 2)
-  {
-    in[0] = 100.0f;
-    in[1] = 20.0f;
-    in[2] = 130.0f;
-    in[3] = 60.0f;
-    in[4] = 110.0f;
-    in[5] = 80.0f;
-    in[6] = 80.0f;
-    in[7] = 40.0f;
-  }
-
-  if (test == 2)
-  {
-    in[0] = 100.0f;
-    in[1] = 20.0f;
-    in[2] = 130.0f;
-    in[3] = 60.0f;
-    in[4] = 110.0f;
-    in[5] = 80.0f;
-    in[6] = 80.0f;
-    in[7] = 40.0f;
-  }
-
-  if (test == 3)
-  {
-    in[0] = 40.0f;
-    in[1] = -20.0f;
-    in[2] = 20.0f;
-    in[3] = -40.0f;
-    in[4] = 10.0f;
-    in[5] = -20.0f;
-    in[6] = 30.0f;
-    in[7] = -30.0f;
-  }
-  test = (test+1)%TEST;
-#endif
 
     dx[0] = in[0] - in[2];
     dx[1] = in[2] - in[4];
@@ -4315,12 +4317,6 @@ static int expandVertices(float* in, float* out, int distorted)
       dx[i] /= l;
       dy[i] /= l;
     }
-
-    vx[0] = in[0] - in[4];
-    vx[1] = in[2] - in[6];
-
-    vy[0] = in[1] - in[5];
-    vy[1] = in[3] - in[7];
 
     int rot = ((vx[0]*vy[1] - vy[0]*vx[1])>=0)?CW:CCW;
 //Detect entrant vertex
@@ -4359,24 +4355,15 @@ static int expandVertices(float* in, float* out, int distorted)
 printf("(%f %f) (%f %f) (%f %f) (%f %f)\n", in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7]);
 printf("[(%f %f)]%f [(%f %f)]%f [(%f %f)]%f [(%f %f)]%f\n", nx[0], ny[0], entrant[0], nx[1], ny[1], entrant[1], nx[2], ny[2], entrant[2], nx[3], ny[3], entrant[3]);
 #endif
-    out[0] = nx[0];
-    out[1] = ny[0];
-    out[2] = nx[1];
-    out[3] = ny[1];
-    out[4] = nx[2];
-    out[5] = ny[2];
-    out[6] = nx[3];
-    out[7] = ny[3];
-  } else {
-    out[0] = in[0];
-    out[1] = in[1];
-    out[2] = in[2];
-    out[3] = in[3];
-    out[4] = in[4];
-    out[5] = in[5];
-    out[6] = in[6];
-    out[7] = in[7];
-  }
+  } 
+  out[0] = nx[0];
+  out[1] = ny[0];
+  out[2] = nx[1];
+  out[3] = ny[1];
+  out[4] = nx[2];
+  out[5] = ny[2];
+  out[6] = nx[3];
+  out[7] = ny[3];
   return dst;
 }
 
@@ -4773,7 +4760,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   sprite.linescreen = 0;
-  sprite.dst = 1;
+  sprite.dst = 0;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
   sprite.cor = 0;
