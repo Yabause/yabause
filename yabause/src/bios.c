@@ -1932,16 +1932,16 @@ void BupFormat(u32 device)
             switch (CartridgeArea->cartid & 0xF)
             {
                case 1:
-                  FormatBackupRam(CartridgeArea->bupram, 0x100000);
+                  FormatBackupRam(CartridgeArea->bupram, CART_BUP4MBIT_SIZE);
                   break;
                case 2:
-                  FormatBackupRam(CartridgeArea->bupram, 0x200000);
+                  FormatBackupRam(CartridgeArea->bupram, CART_BUP8MBIT_SIZE);
                   break;
                case 3:
-                  FormatBackupRam(CartridgeArea->bupram, 0x400000);
+                  FormatBackupRam(CartridgeArea->bupram, CART_BUP16MBIT_SIZE);
                   break;
                case 4:
-                  FormatBackupRam(CartridgeArea->bupram, 0x800000);
+                  FormatBackupRam(CartridgeArea->bupram, CART_BUP32MBIT_SIZE);
                   break;
                default: break;
             }

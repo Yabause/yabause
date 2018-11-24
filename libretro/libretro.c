@@ -36,8 +36,18 @@
 
 yabauseinit_struct yinit;
 
+static char slash = path_default_slash_c();
+
 static char g_save_dir[PATH_MAX];
 static char g_system_dir[PATH_MAX];
+static char full_path[PATH_MAX];
+static char bios_path[PATH_MAX];
+static char stv_bios_path[PATH_MAX];
+static char bup_path[PATH_MAX];
+static char addon_cart_path[PATH_MAX];
+
+static char game_basename[128];
+static char *saturn_game_code;
 
 static int game_width  = 320;
 static int game_height = 240;
@@ -50,14 +60,14 @@ static int current_height;
 #define FRAMESKIP_ENABLED
 
 // Disable cart addon selection for now, original hardware had freeze without it
-//#define CART_ADDON_SELECTION_ENABLED
+#define CART_ADDON_SELECTION_ENABLED
 
 #ifdef FRAMESKIP_ENABLED
 static bool frameskip_enable = false;
 #endif
 static bool hle_bios_force = false;
 #ifdef CART_ADDON_SELECTION_ENABLED
-static int addon_cart_type = CART_NONE;
+static int addon_cart_type = -1;
 #else
 static int addon_cart_type = CART_DRAM32MBIT;
 #endif
@@ -69,7 +79,9 @@ static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
 static int numthreads = 4;
 static int retro_region = RETRO_REGION_NTSC;
+static bool service_enabled = false;
 static bool stv_mode = false;
+static bool pergame_internal_ram = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -114,13 +126,15 @@ void retro_set_environment(retro_environment_t cb)
 #endif
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
 #ifdef CART_ADDON_SELECTION_ENABLED
-      { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_ram|4M_ram" },
+      { "kronos_addon_cart", "Addon Cartridge (restart); auto|none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
 #endif
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
       { "kronos_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
       { "kronos_scanlines", "Scanlines; disabled|enabled" },
+      { "kronos_service_enabled", "ST-V Service/Test Buttons; disabled|enabled" },
+      { "kronos_internal_backup_ram", "Internal backup RAM (restart); shared|per_game" },
       { NULL, NULL },
    };
 
@@ -259,6 +273,19 @@ static int PERLIBRETROHandleEvents(void)
    unsigned i = 0;
 
    input_poll_cb();
+
+   if (stv_mode && service_enabled)
+   {
+      if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
+         PerKeyDown(PERJAMMA_TEST);
+      else
+         PerKeyUp(PERJAMMA_TEST);
+
+      if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
+         PerKeyDown(PERJAMMA_SERVICE);
+      else
+         PerKeyUp(PERJAMMA_SERVICE);
+   }
 
    for(i = 0; i < players; i++)
    {
@@ -832,12 +859,22 @@ void check_variables(void)
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "none") == 0 && addon_cart_type != CART_NONE)
+      if (strcmp(var.value, "auto") == 0 && addon_cart_type != -1)
+         addon_cart_type = -1;
+      else if (strcmp(var.value, "none") == 0 && addon_cart_type != CART_NONE)
          addon_cart_type = CART_NONE;
-      else if (strcmp(var.value, "1M_ram") == 0 && addon_cart_type != CART_DRAM8MBIT)
+      else if (strcmp(var.value, "1M_extended_ram") == 0 && addon_cart_type != CART_DRAM8MBIT)
          addon_cart_type = CART_DRAM8MBIT;
-      else if (strcmp(var.value, "4M_ram") == 0 && addon_cart_type != CART_DRAM32MBIT)
+      else if (strcmp(var.value, "4M_extended_ram") == 0 && addon_cart_type != CART_DRAM32MBIT)
          addon_cart_type = CART_DRAM32MBIT;
+      else if (strcmp(var.value, "512K_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM4MBIT)
+         addon_cart_type = CART_BACKUPRAM4MBIT;
+      else if (strcmp(var.value, "1M_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM8MBIT)
+         addon_cart_type = CART_BACKUPRAM8MBIT;
+      else if (strcmp(var.value, "2M_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM16MBIT)
+         addon_cart_type = CART_BACKUPRAM16MBIT;
+      else if (strcmp(var.value, "4M_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM32MBIT)
+         addon_cart_type = CART_BACKUPRAM32MBIT;
    }
 #endif
 
@@ -905,6 +942,25 @@ void check_variables(void)
          scanlines = 1;
    }
 
+   var.key = "kronos_service_enabled";
+   var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "enabled") == 0)
+         service_enabled = true;
+      else
+         service_enabled = false;
+   }
+
+   var.key = "kronos_internal_backup_ram";
+   var.value = NULL;
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "per_game") == 0)
+         pergame_internal_ram = true;
+      else
+         pergame_internal_ram = false;
+   }
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -980,13 +1036,13 @@ bool retro_serialize(void *data, size_t size)
    memcpy(data, buffer, size);
 
    free(buffer);
-
    return !error;
 }
 
 bool retro_unserialize(const void *data, size_t size)
 {
    int error = YabLoadStateBuffer(data, size);
+   retro_set_resolution();
 
    return !error;
 }
@@ -1006,16 +1062,131 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
       return;
 }
 
-static char full_path[256];
-static char bios_path[256];
-static char stv_bios_path[256];
-static char stv_bup_path[256];
-
 static int does_file_exist(const char *filename)
 {
    struct stat st;
    int result = stat(filename, &st);
    return result == 0;
+}
+
+static void extract_basename(char *buf, const char *path, size_t size)
+{
+   strncpy(buf, path_basename(path), size - 1);
+   buf[size - 1] = '\0';
+
+   char *ext = strrchr(buf, '.');
+   if (ext)
+      *ext = '\0';
+}
+
+void configure_saturn_addon_cart()
+{
+   log_cb(RETRO_LOG_INFO, "Game Code is %s\n", saturn_game_code);
+
+   if (addon_cart_type == -1)
+   {
+      // Use 4MB backup cartridge as default
+      addon_cart_type = CART_BACKUPRAM4MBIT;
+
+      // The following games need the 1MB Extended RAM Cartridge
+      if (strcmp(saturn_game_code, "T-3105G") == 0           // Real Bout Garou Densetsu
+       || strcmp(saturn_game_code, "T-3119G") == 0           // Real Bout Garou Densetsu Special
+       || strcmp(saturn_game_code, "T-3116G") == 0           // Samurai Spirits - Amakusa Kourin
+       || strcmp(saturn_game_code, "T-3104G") == 0           // Samurai Spirits - Zankurou Musouken
+       || strcmp(saturn_game_code, "T-3108G") == 0           // The King of Fighters '96
+       || strcmp(saturn_game_code, "T-3121G") == 0           // The King of Fighters '97
+       || strcmp(saturn_game_code, "T-1515G") == 0           // Waku Waku 7
+      )
+      {
+         log_cb(RETRO_LOG_INFO, "Loading 1MB Extended RAM Cartridge\n");
+         addon_cart_type = CART_DRAM8MBIT;
+      }
+
+      // The following games need the 4MB Extended RAM Cartridge
+      if (strcmp(saturn_game_code, "T-1521G") == 0           // Astra Superstars
+       || strcmp(saturn_game_code, "T-9904G") == 0           // Magical Night Dreams - Cotton 2
+       || strcmp(saturn_game_code, "T-1217G") == 0           // Cyberbots - Fullmetal Madness
+       || strcmp(saturn_game_code, "T-1245G") == 0           // Dungeons & Dragons Collection - Shadow over Mystara
+       || strcmp(saturn_game_code, "GS-9107") == 0           // Fighter's History Dynamite
+       || strcmp(saturn_game_code, "T-1248G") == 0           // Final Fight Revenge
+       || strcmp(saturn_game_code, "T-20109G") == 0          // Friends: Seishun no Kagayaki
+       || strcmp(saturn_game_code, "T-14411G") == 0          // Groove On Fight: Gouketsuji Ichizoku 3
+       || strcmp(saturn_game_code, "T-7032H-50VV1.000") == 0 // Marvel Super Heroes
+       || strcmp(saturn_game_code, "T-1215G") == 0           // Marvel Super Heroes
+       || strcmp(saturn_game_code, "T-1214H") == 0           // Marvel Super Heroes
+       || strcmp(saturn_game_code, "T-1238G") == 0           // Marvel Super Heroes vs. Street Fighter
+       || strcmp(saturn_game_code, "T-3111G") == 0           // Metal Slug
+       || strcmp(saturn_game_code, "T-22205G") == 0          // Noël 3
+       || strcmp(saturn_game_code, "T-20114G") == 0          // Pia Carrot e Youkoso!! 2
+       || strcmp(saturn_game_code, "T-1230G") == 0           // Pocket Fighter
+       || strcmp(saturn_game_code, "T-1246G") == 0           // Street Fighter Alpha 3
+       || strcmp(saturn_game_code, "T-16510G") == 0          // Super Real Mahjong P7
+       || strcmp(saturn_game_code, "T-1229G") == 0           // Vampire Savior
+       || strcmp(saturn_game_code, "T-1226G") == 0           // X-Men vs. Street Fighter
+      )
+      {
+         log_cb(RETRO_LOG_INFO, "Loading 4MB Extended RAM Cartridge\n");
+         addon_cart_type = CART_DRAM32MBIT;
+      }
+
+      // The King of Fighters '95 ROM Cartridge
+      if (strcmp(saturn_game_code, "MK-81088") == 0
+       || strcmp(saturn_game_code, "T-3101G") == 0
+      )
+      {
+         // Using same path as beetle-saturn, no reason for having a different rom
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%cmpr-18811-mx.ic1", g_system_dir, slash);
+         if (does_file_exist(addon_cart_path))
+         {
+            log_cb(RETRO_LOG_INFO, "Loading The King of Fighters '95 ROM Cartridge\n");
+            addon_cart_type = CART_ROM16MBIT;
+         }
+         else
+         {
+            log_cb(RETRO_LOG_ERROR, "Couldn't find The King of Fighters '95 ROM Cartridge at %s\n", addon_cart_path);
+            addon_cart_type = CART_NONE;
+            addon_cart_path[0] = '\0';
+         }
+      }
+
+      // Ultraman: Hikari no Kyojin Densetsu ROM Cartridge
+      if (strcmp(saturn_game_code, "T-13308G") == 0)
+      {
+         // Using same path as beetle-saturn, no reason for having a different rom
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%cmpr-19367-mx.ic1", g_system_dir, slash);
+         if (does_file_exist(addon_cart_path))
+         {
+            log_cb(RETRO_LOG_INFO, "Loading Ultraman: Hikari no Kyojin Densetsu ROM Cartridge\n");
+            addon_cart_type = CART_ROM16MBIT;
+         }
+         else
+         {
+            log_cb(RETRO_LOG_ERROR, "Couldn't find Ultraman: Hikari no Kyojin Densetsu ROM Cartridge at %s\n", addon_cart_path);
+            addon_cart_type = CART_NONE;
+            addon_cart_path[0] = '\0';
+         }
+      }
+   }
+
+   if (addon_cart_type == CART_BACKUPRAM4MBIT)
+   {
+      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext512K.ram", g_save_dir, slash, slash, slash, game_basename);
+   }
+
+   if (addon_cart_type == CART_BACKUPRAM8MBIT)
+   {
+      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext1M.ram", g_save_dir, slash, slash, slash, game_basename);
+   }
+
+   if (addon_cart_type == CART_BACKUPRAM16MBIT)
+   {
+      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext2M.ram", g_save_dir, slash, slash, slash, game_basename);
+   }
+
+   if (addon_cart_type == CART_BACKUPRAM32MBIT)
+   {
+      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext4M.ram", g_save_dir, slash, slash, slash, game_basename);
+   }
 }
 
 void retro_init(void)
@@ -1044,6 +1215,12 @@ void retro_init(void)
    {
       strncpy(g_save_dir, dir, sizeof(g_save_dir));
    }
+
+   char save_dir[PATH_MAX];
+   snprintf(save_dir, sizeof(save_dir), "%s%ckronos%cstv%c", g_save_dir, slash, slash, slash);
+   path_mkdir(save_dir);
+   snprintf(save_dir, sizeof(save_dir), "%s%ckronos%csaturn%c", g_save_dir, slash, slash, slash);
+   path_mkdir(save_dir);
 
    if(PERCore)
       PERCore->Init();
@@ -1089,6 +1266,8 @@ bool retro_load_game_common()
    yinit.polygon_generation_mode = polygon_mode;
    yinit.scanline                = scanlines;
    yinit.stretch                 = 1;
+   yinit.extend_backup           = 0;
+   yinit.buppath                 = bup_path;
 
    return true;
 }
@@ -1101,14 +1280,6 @@ bool retro_load_game(const struct retro_game_info *info)
    check_variables();
 
    snprintf(full_path, sizeof(full_path), "%s", info->path);
-
-#ifdef _WIN32
-   char slash = '\\';
-#else
-   char slash = '/';
-#endif
-
-   snprintf(stv_bup_path, sizeof(stv_bup_path), "%s%ckronos%cbupstv.ram", g_save_dir, slash, slash);
 
    snprintf(stv_bios_path, sizeof(stv_bios_path), "%s%ckronos%cstvbios.zip", g_system_dir, slash, slash);
    if (does_file_exist(stv_bios_path) != 1)
@@ -1142,6 +1313,11 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
+   char bup_basename[128] = "shared_bup";
+
+   if (pergame_internal_ram)
+      extract_basename(bup_basename, info->path, sizeof(bup_basename));
+
    // Check if the path lead to a ST-V game
    // Store the game "id", if no game id found then this is most likely not a ST-V game
    int stvgame = -1;
@@ -1158,6 +1334,9 @@ bool retro_load_game(const struct retro_game_info *info)
          return false;
       }
 
+      // TODO : add some core option to enable a per-game BUP behavior
+      snprintf(bup_path, sizeof(bup_path), "%s%ckronos%cstv%c%s.ram", g_save_dir, slash, slash, slash, bup_basename);
+
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "Up" },
@@ -1169,6 +1348,8 @@ bool retro_load_game(const struct retro_game_info *info)
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Button 4" },
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Coin" },
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
+         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "Test" },
+         { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "Service" },
 
          { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
          { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
@@ -1191,8 +1372,6 @@ bool retro_load_game(const struct retro_game_info *info)
       yinit.cartpath        = NULL;
       yinit.carttype        = CART_ROMSTV;
       yinit.stvbiospath     = stv_bios_path;
-      yinit.extend_backup   = 0;
-      yinit.buppath         = stv_bup_path;
    }
    else
    {
@@ -1208,6 +1387,9 @@ bool retro_load_game(const struct retro_game_info *info)
       {
          log_cb(RETRO_LOG_WARN, "HLE bios is enabled, this is for debugging purpose only, expect lots of issues\n");
       }
+
+      // TODO : add some core option to enable a per-game BUP behavior
+      snprintf(bup_path, sizeof(bup_path), "%s%ckronos%csaturn%c%s.ram", g_save_dir, slash, slash, slash, bup_basename);
 
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
@@ -1431,12 +1613,22 @@ bool retro_load_game(const struct retro_game_info *info)
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
+      // Fetch saturn game code
+      Cs2Init(CART_NONE, CDCORE_ISO, full_path, NULL, NULL, NULL);
+      Cs2GetIP(1);
+      saturn_game_code = malloc(strlen(Cs2GetCurrentGmaecode()) + 1);
+      strcpy(saturn_game_code, Cs2GetCurrentGmaecode());
+      Cs2DeInit();
+
+      // Configure addon cart settings
+      extract_basename(game_basename, info->path, sizeof(game_basename));
+      configure_saturn_addon_cart();
+
       yinit.cdcoretype      = CDCORE_ISO;
       yinit.cdpath          = full_path;
       yinit.biospath        = (hle_bios_force ? NULL : bios_path);
       yinit.carttype        = addon_cart_type;
-      yinit.extend_backup   = 1;
-      yinit.buppath         = NULL;
+      yinit.cartpath        = addon_cart_path;
    }
 
    return retro_load_game_common();
@@ -1464,27 +1656,11 @@ unsigned retro_api_version(void)
 
 void *retro_get_memory_data(unsigned id)
 {
-   switch (id)
-   {
-      case RETRO_MEMORY_SAVE_RAM:
-         return BupRam;
-      default:
-         break;
-   }
-
    return NULL;
 }
 
 size_t retro_get_memory_size(unsigned id)
 {
-   switch (id)
-   {
-      case RETRO_MEMORY_SAVE_RAM:
-         return 0x10000;
-      default:
-         break;
-   }
-
    return 0;
 }
 

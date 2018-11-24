@@ -817,42 +817,52 @@ static void FASTCALL DRAM32MBITCs0WriteLong(SH2_struct *context, UNUSED u8* memo
 
 static u8 FASTCALL BUP4MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadByte(CartridgeArea->bupram, addr & 0xFFFFF);
+   addr = addr & ((CART_BUP4MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      return T1ReadByte(CartridgeArea->bupram, addr>>1);
+   }
+   else 
+      return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL BUP4MBITCs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadWord(CartridgeArea->bupram, addr & 0xFFFFF);
+   printf("bup\t: BUP4MBIT read word - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL BUP4MBITCs1ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadLong(CartridgeArea->bupram, addr & 0xFFFFF);
+   printf("bup\t: BUP4MBIT read long - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP4MBITCs1WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
-   T1WriteByte(CartridgeArea->bupram, addr & 0xFFFFF, val);
+   addr = addr & ((CART_BUP4MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      T1WriteByte(CartridgeArea->bupram, addr>>1, val);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP4MBITCs1WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
 {
-   T1WriteWord(CartridgeArea->bupram, addr & 0xFFFFF, val);
+   printf("bup\t: BUP4MBIT write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP4MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
-   T1WriteLong(CartridgeArea->bupram, addr & 0xFFFFF, val);
+   printf("bup\t: BUP4MBIT write long - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -861,42 +871,52 @@ static void FASTCALL BUP4MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memory
 
 static u8 FASTCALL BUP8MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadByte(CartridgeArea->bupram, addr & 0x1FFFFF);
+   addr = addr & ((CART_BUP8MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      return T1ReadByte(CartridgeArea->bupram, addr>>1);
+   }
+   else 
+      return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL BUP8MBITCs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadWord(CartridgeArea->bupram, addr & 0x1FFFFF);
+   printf("bup\t: BUP8MBIT read word - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL BUP8MBITCs1ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadLong(CartridgeArea->bupram, addr & 0x1FFFFF);
+   printf("bup\t: BUP8MBIT read long - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP8MBITCs1WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
-   T1WriteByte(CartridgeArea->bupram, addr & 0x1FFFFF, val);
+   addr = addr & ((CART_BUP8MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      T1WriteByte(CartridgeArea->bupram, addr>>1, val);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP8MBITCs1WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
 {
-   T1WriteWord(CartridgeArea->bupram, addr & 0x1FFFFF, val);
+   printf("bup\t: BUP8MBIT write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP8MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
-   T1WriteLong(CartridgeArea->bupram, addr & 0x1FFFFF, val);
+   printf("bup\t: BUP8MBIT write long - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -905,42 +925,52 @@ static void FASTCALL BUP8MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memory
 
 static u8 FASTCALL BUP16MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadByte(CartridgeArea->bupram, addr & 0x3FFFFF);
+   addr = addr & ((CART_BUP16MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      return T1ReadByte(CartridgeArea->bupram, addr>>1);
+   }
+   else 
+      return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL BUP16MBITCs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadWord(CartridgeArea->bupram, addr & 0x3FFFFF);
+   printf("bup\t: BUP16MBIT read word - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL BUP16MBITCs1ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadLong(CartridgeArea->bupram, addr & 0x3FFFFF);
+   printf("bup\t: BUP16MBIT read long - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP16MBITCs1WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
-   T1WriteByte(CartridgeArea->bupram, addr & 0x3FFFFF, val);
+   addr = addr & ((CART_BUP16MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      T1WriteByte(CartridgeArea->bupram, addr>>1, val);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP16MBITCs1WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
 {
-   T1WriteWord(CartridgeArea->bupram, addr & 0x3FFFFF, val);
+   printf("bup\t: BUP16MBIT write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP16MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
-   T1WriteLong(CartridgeArea->bupram, addr & 0x3FFFFF, val);
+   printf("bup\t: BUP16MBIT write long - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -949,42 +979,52 @@ static void FASTCALL BUP16MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memor
 
 static u8 FASTCALL BUP32MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadByte(CartridgeArea->bupram, addr & 0x7FFFFF);
+   addr = addr & ((CART_BUP32MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      return T1ReadByte(CartridgeArea->bupram, addr>>1);
+   }
+   else 
+      return 0xFF;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL BUP32MBITCs1ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadWord(CartridgeArea->bupram, addr & 0x7FFFFF);
+   printf("bup\t: BUP32MBIT read word - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL BUP32MBITCs1ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-   return T1ReadLong(CartridgeArea->bupram, addr & 0x7FFFFF);
+   printf("bup\t: BUP32MBIT read long - %08X\n", addr);
+   return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP32MBITCs1WriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
-   T1WriteByte(CartridgeArea->bupram, addr & 0x7FFFFF, val);
+   addr = addr & ((CART_BUP32MBIT_SIZE<<1) - 1);
+   if (addr & 0x1) {
+      T1WriteByte(CartridgeArea->bupram, addr>>1, val);
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP32MBITCs1WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
 {
-   T1WriteWord(CartridgeArea->bupram, addr & 0x7FFFFF, val);
+   printf("bup\t: BUP32MBIT write word - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL BUP32MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
-   T1WriteLong(CartridgeArea->bupram, addr & 0x7FFFFF, val);
+   printf("bup\t: BUP32MBIT write long - %08X\n", addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1226,14 +1266,14 @@ int CartInit(const char * filename, int type)
       }
       case CART_BACKUPRAM4MBIT: // 4 Mbit Backup Ram
       {
-         if ((CartridgeArea->bupram = T1MemoryInit(0x100000)) == NULL)
+         if ((CartridgeArea->bupram = T1MemoryInit(CART_BUP4MBIT_SIZE)) == NULL)
             return -1;
 
          CartridgeArea->cartid = 0x21;
 
          // Load Backup Ram data from file
-         if (T123Load(CartridgeArea->bupram, 0x100000, 1, filename) != 0)
-            FormatBackupRam(CartridgeArea->bupram, 0x100000);
+         if (T123Load(CartridgeArea->bupram, CART_BUP4MBIT_SIZE, 1, filename) != 0)
+            FormatBackupRam(CartridgeArea->bupram, CART_BUP4MBIT_SIZE);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP4MBITCs1ReadByte;
@@ -1246,14 +1286,14 @@ int CartInit(const char * filename, int type)
       }
       case CART_BACKUPRAM8MBIT: // 8 Mbit Backup Ram
       {
-         if ((CartridgeArea->bupram = T1MemoryInit(0x200000)) == NULL)
+         if ((CartridgeArea->bupram = T1MemoryInit(CART_BUP8MBIT_SIZE)) == NULL)
             return -1;
 
          CartridgeArea->cartid = 0x22;
 
          // Load Backup Ram data from file
-         if (T123Load(CartridgeArea->bupram, 0x200000, 1, filename) != 0)
-            FormatBackupRam(CartridgeArea->bupram, 0x200000);
+         if (T123Load(CartridgeArea->bupram, CART_BUP8MBIT_SIZE, 1, filename) != 0)
+            FormatBackupRam(CartridgeArea->bupram, CART_BUP8MBIT_SIZE);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP8MBITCs1ReadByte;
@@ -1266,14 +1306,14 @@ int CartInit(const char * filename, int type)
       }
       case CART_BACKUPRAM16MBIT: // 16 Mbit Backup Ram
       {
-         if ((CartridgeArea->bupram = T1MemoryInit(0x400000)) == NULL)
+         if ((CartridgeArea->bupram = T1MemoryInit(CART_BUP16MBIT_SIZE)) == NULL)
             return -1;
 
          CartridgeArea->cartid = 0x23;
 
          // Load Backup Ram data from file
-         if (T123Load(CartridgeArea->bupram, 0x400000, 1, filename) != 0)
-            FormatBackupRam(CartridgeArea->bupram, 0x400000);
+         if (T123Load(CartridgeArea->bupram, CART_BUP16MBIT_SIZE, 1, filename) != 0)
+            FormatBackupRam(CartridgeArea->bupram, CART_BUP16MBIT_SIZE);
 
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP16MBITCs1ReadByte;
@@ -1286,13 +1326,13 @@ int CartInit(const char * filename, int type)
       }
       case CART_BACKUPRAM32MBIT: // 32 Mbit Backup Ram
       {
-         if ((CartridgeArea->bupram = T1MemoryInit(0x800000)) == NULL)
+         if ((CartridgeArea->bupram = T1MemoryInit(CART_BUP32MBIT_SIZE)) == NULL)
             return -1;
 
          CartridgeArea->cartid = 0x24;
          // Load Backup Ram data from file
-         if (T123Load(CartridgeArea->bupram, 0x800000, 1, filename) != 0)
-            FormatBackupRam(CartridgeArea->bupram, 0x800000);
+         if (T123Load(CartridgeArea->bupram, CART_BUP32MBIT_SIZE, 1, filename) != 0)
+            FormatBackupRam(CartridgeArea->bupram, CART_BUP32MBIT_SIZE);
          // Setup Functions
          CartridgeArea->Cs1ReadByte = &BUP32MBITCs1ReadByte;
          CartridgeArea->Cs1ReadWord = &BUP32MBITCs1ReadWord;
@@ -1458,22 +1498,22 @@ void CartFlush(void){
          {
             case CART_BACKUPRAM4MBIT: // 4 Mbit Backup Ram
             {
-               size = 0x100000;
+               size = CART_BUP4MBIT_SIZE;
                break;
             }
             case CART_BACKUPRAM8MBIT: // 8 Mbit Backup Ram
             {
-               size = 0x200000;
+               size = CART_BUP8MBIT_SIZE;
                break;
             }
             case CART_BACKUPRAM16MBIT: // 16 Mbit Backup Ram
             {
-               size = 0x400000;
+               size = CART_BUP16MBIT_SIZE;
                break;
             }
             case CART_BACKUPRAM32MBIT: // 32 Mbit Backup Ram
             {
-               size = 0x800000;
+               size = CART_BUP32MBIT_SIZE;
                break;
             }
          }
@@ -1516,22 +1556,22 @@ void CartDeInit(void)
          {
             case CART_BACKUPRAM4MBIT: // 4 Mbit Backup Ram
             {
-               size = 0x100000;
+               size = CART_BUP4MBIT_SIZE;
                break;
             }
             case CART_BACKUPRAM8MBIT: // 8 Mbit Backup Ram
             {
-               size = 0x200000;
+               size = CART_BUP8MBIT_SIZE;
                break;
             }
             case CART_BACKUPRAM16MBIT: // 16 Mbit Backup Ram
             {
-               size = 0x400000;
+               size = CART_BUP16MBIT_SIZE;
                break;
             }
             case CART_BACKUPRAM32MBIT: // 32 Mbit Backup Ram
             {
-               size = 0x800000;
+               size = CART_BUP32MBIT_SIZE;
                break;
             }
          }
