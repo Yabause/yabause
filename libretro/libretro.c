@@ -56,15 +56,8 @@ static int game_interlace;
 static int current_width;
 static int current_height;
 
-// Somehow it seems frameskip and fast forward are acting weird if vsync is disabled in retroarch options
-#define FRAMESKIP_ENABLED
-
-// Disable cart addon selection for now, original hardware had freeze without it
 #define CART_ADDON_SELECTION_ENABLED
 
-#ifdef FRAMESKIP_ENABLED
-static bool frameskip_enable = false;
-#endif
 static bool hle_bios_force = false;
 #ifdef CART_ADDON_SELECTION_ENABLED
 static int addon_cart_type = -1;
@@ -121,9 +114,6 @@ int (__cdecl *bprintf) (int nStatus, char* szFormat, ...) = libretro_bprintf;
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-#ifdef FRAMESKIP_ENABLED
-      { "kronos_frameskip", "Frameskip; disabled|enabled" },
-#endif
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
 #ifdef CART_ADDON_SELECTION_ENABLED
       { "kronos_addon_cart", "Addon Cartridge (restart); auto|none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
@@ -560,8 +550,9 @@ static u32 soundbufsize;
 static s16 *sound_buf;
 
 static int SNDLIBRETROInit(void) {
-    soundlen = SAMPLERATE / 60;
-    soundbufsize = soundlen * 16;
+    int vertfreq = (isPal ? 50 : 60);
+    soundlen = (SAMPLERATE * 100 + (vertfreq >> 1)) / vertfreq;
+    soundbufsize = (soundlen<<2 * sizeof(s16));
     if ((sound_buf = (s16 *)malloc(soundbufsize)) == NULL)
         return -1;
     memset(sound_buf, 0, soundbufsize);
@@ -577,8 +568,8 @@ static int SNDLIBRETROReset(void) { return 0; }
 
 static int SNDLIBRETROChangeVideoFormat(int vertfreq)
 {
-    soundlen = SAMPLERATE / vertfreq;
-    soundbufsize = soundlen * 16;
+    soundlen = (SAMPLERATE * 100 + (vertfreq >> 1)) / vertfreq;
+    soundbufsize = (soundlen<<2 * sizeof(s16));
     if (sound_buf)
         free(sound_buf);
     if ((sound_buf = (s16 *)malloc(soundbufsize)) == NULL)
@@ -822,24 +813,6 @@ void retro_get_system_info(struct retro_system_info *info)
 void check_variables(void)
 {
    struct retro_variable var;
-#ifdef FRAMESKIP_ENABLED
-   var.key = "kronos_frameskip";
-   var.value = NULL;
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "disabled") == 0 && frameskip_enable)
-      {
-         DisableAutoFrameSkip();
-         frameskip_enable = false;
-      }
-      else if (strcmp(var.value, "enabled") == 0 && !frameskip_enable)
-      {
-         EnableAutoFrameSkip();
-         frameskip_enable = true;
-      }
-   }
-#endif
 
    var.key = "kronos_force_hle_bios";
    var.value = NULL;
@@ -1246,9 +1219,8 @@ bool retro_load_game_common()
 #endif
    yinit.regionid                = REGION_AUTODETECT;
    yinit.mpegpath                = NULL;
-#ifdef FRAMESKIP_ENABLED
-   yinit.frameskip               = frameskip_enable;
-#endif
+   // There was some misunderstanding about frameskip, disabling frameskip is actually just enabling a limiter, which is bad in the libretro ecosystem
+   yinit.frameskip               = 1;
    yinit.clocksync               = 0;
    yinit.basetime                = 0;
    yinit.usethreads              = 1;
