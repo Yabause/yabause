@@ -4191,6 +4191,9 @@ static int expandVertices(float* in, float* out, int distorted)
 #include "testquad.inc"
 #endif
 
+//les quads concaves ne sont pas decoupés de la bonne facon parfois. Voir celui dans testquad.inc
+// reste le triangle associé a une ligne
+
   for (i = 0; i<4; i++) {
     if (in[(((i+0)%4) << 1) + 0] != in[(((i+1)%4) << 1) + 0]) isPoint = 0;
     if (in[(((i+0)%4) << 1) + 1] != in[(((i+1)%4) << 1) + 1]) isPoint = 0;
@@ -4275,26 +4278,78 @@ static int expandVertices(float* in, float* out, int distorted)
   }
 
   if (isTriangle) {
-    float vert[6];
-    int i,j, idx = 1;
-    vert[0] = in[0];
-    vert[1] = in[1];
-    for (i = 1; i<4; i++) {
-      if (idx < 3) {
-        for (j = 0; j<idx; j++) {
-          if((vert[j*2] != in[i*2]) || (vert[j*2+1] != in[i*2+1])) {
-            vert[idx*2] = in[i*2];
-            vert[idx*2+1] = in[i*2+1];
-            idx++;
-            break;
-          }
+    int i,j;
+    float dx[4];
+    float dy[4];
+
+    int c1, c2 = -1;
+ 
+    for (int i = 0; i < 4; i++) {
+      for (int j = i+1; j < 4; j++) {
+        if (IS_ZERO(in[2*i]-in[2*j]) && IS_ZERO(in[2*i+1]-in[2*j+1])) {
+          c1 = i;
+          c2 = j;
+          break;
         }
       }
     }
+
+    dx[0] = in[0] - in[2];
+    dx[1] = in[2] - in[4];
+    dx[2] = in[4] - in[6];
+    dx[3] = in[6] - in[0];
+
+    dy[0] = in[1] - in[3];
+    dy[1] = in[3] - in[5];
+    dy[2] = in[5] - in[7];
+    dy[3] = in[7] - in[1];
+
+    for (int i = 0; i < 4; i++) {
+      float l;
+      float cx = (dx[i] - dx[(i+3)%4]);
+      float cy = (dy[i] - dy[(i+3)%4]);
+      if ((i == c1) && (c2 == c1+1)) {
+        cx = (dx[i]+dx[(i+1)%4] - dx[(i+3)%4]);
+        cy = (dy[i]+dy[(i+1)%4] - dy[(i+3)%4]);
+      }
+      if ((i == (c1+1)%4) && (c2 != c1+1)) {
+        cx = dx[i] + dx[(i+1)%4] - dx[(i+3)%4];
+        cy = dy[i] + dy[(i+1)%4] - dy[(i+3)%4];
+      }
+      if ((i == (c1+3)%4) && (c2 != c1+1)) {
+        cx = dx[i] - dx[(i+2)%4] - dx[(i+3)%4];
+        cy = dy[i] - dy[(i+2)%4] - dy[(i+3)%4];
+      }
+      l = sqrtf(cx*cx+cy*cy);
+      if (!IS_ZERO(l)) {
+        cx /= l;
+        cy /= l;
+      }
+
+      if (!IS_ZERO(cx)) {
+        if (IS_LESS(cx, -EPSILON)) cx = -BORDER;
+        if (IS_MORE(cx, EPSILON)) cx = BORDER;
+      }
+      if (!IS_ZERO(cy)) {
+        if (IS_LESS(cy, -EPSILON)) cy = -BORDER;
+        if (IS_MORE(cy, EPSILON)) cy = BORDER;
+      } 
+      nx[i] = in[i*2] + cx;
+      ny[i] = in[i*2+1] + cy;
+      if (i == c2) {
+        nx[i] = nx[c1];
+        ny[i] = ny[c1];
+      }
+    }
+#if 0
+printf("%d %d\n", c1, c2);
+printf("(%f %f) (%f %f) (%f %f) (%f %f)\n", in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7]);
+printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], nx[2], ny[2], nx[3], ny[3]);
+#endif
   }
 
   if (isQuad) dst == 1;
-  if (isQuad && distorted) {
+  if ((isQuad || isTriangle) && distorted) {
     int disp = 0;
 
     float dx[4];
@@ -4314,8 +4369,10 @@ static int expandVertices(float* in, float* out, int distorted)
 
     for (int i = 0; i<4; i++) {
       float l = sqrtf(dx[i]*dx[i]+dy[i]*dy[i]); 
-      dx[i] /= l;
-      dy[i] /= l;
+      if (!IS_ZERO(l)) {
+        dx[i] /= l;
+        dy[i] /= l;
+      }
     }
 
     int rot = ((vx[0]*vy[1] - vy[0]*vx[1])>=0)?CW:CCW;
