@@ -792,8 +792,6 @@ int YabauseEmulate(void) {
 #endif
             PROFILE_START("vblankin");
             // VBlankIN
-            if(PERCore)
-              ret = PERCore->HandleEvents();
             SmpcINTBACKEnd();
             Vdp1VBlankIN();
             Vdp2VBlankIN();

@@ -333,7 +333,8 @@ static u16 m_pmode = 0;
 static void SmpcINTBACKPeripheral(void) {
   int oregoffset;
   PortData_struct *port1, *port2;
-
+  if(PERCore)
+       PERCore->HandleEvents();
   if (SmpcInternalVars->firstPeri == 2) {
     SmpcRegs->SR = 0x80 | m_pmode;
     SmpcInternalVars->firstPeri = 0;
