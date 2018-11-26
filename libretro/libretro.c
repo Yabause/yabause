@@ -78,10 +78,10 @@ static int resolution_mode = 1;
 static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
 static int numthreads = 4;
-static int retro_region = RETRO_REGION_NTSC;
 static bool service_enabled = false;
 static bool stv_mode = false;
 static bool pergame_internal_ram = false;
+static bool isPal = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -722,9 +722,6 @@ int YuiGetFB(void)
 
 void retro_reinit_av_info(void)
 {
-    retro_region = RETRO_REGION_NTSC;
-    if (yabsys.IsPal) retro_region = RETRO_REGION_PAL;
-    log_cb(RETRO_LOG_INFO, "Switch to %s\n", (retro_region == RETRO_REGION_PAL)?"PAL":"NTSC");
     struct retro_system_av_info av_info;
     retro_get_system_av_info(&av_info);
     environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &av_info);
@@ -1618,6 +1615,8 @@ bool retro_load_game(const struct retro_game_info *info)
       Cs2GetIP(1);
       saturn_game_code = malloc(strlen(Cs2GetCurrentGmaecode()) + 1);
       strcpy(saturn_game_code, Cs2GetCurrentGmaecode());
+      if (Cs2GetRegionID() == 0xC)
+         isPal = true;
       Cs2DeInit();
 
       // Configure addon cart settings
@@ -1646,7 +1645,7 @@ void retro_unload_game(void)
 
 unsigned retro_get_region(void)
 {
-   return retro_region;
+   return isPal ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
 }
 
 unsigned retro_api_version(void)
@@ -1691,8 +1690,6 @@ void retro_run(void)
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanlines);
    }
-
-   if ((yabsys.IsPal && (retro_region == RETRO_REGION_NTSC)) || (!yabsys.IsPal && (retro_region != RETRO_REGION_NTSC))) retro_reinit_av_info();
 
    //YabauseExec(); runs from handle events
    if(PERCore)
