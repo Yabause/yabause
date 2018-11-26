@@ -349,9 +349,10 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
     case 0x4:
       FRAMELOG("Write PTMR %X line = %d\n", val, yabsys.LineCount);
       Vdp1Regs->PTMR = val;
-      Vdp1External.plot_trigger_line = (yabsys.LineCount == 0)?1:yabsys.LineCount;
+      Vdp1External.plot_trigger_line = 0;
       if ((val == 1) && (yabsys.LineCount != 0) ){
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
+        Vdp1External.plot_trigger_line = yabsys.LineCount;
         Vdp1Draw();
         Vdp1External.plot_trigger_done = 1;
       }
@@ -1667,7 +1668,7 @@ static void startField(void) {
 
 void Vdp1HBlankOUT(void)
 {
-  if ((Vdp1Regs->PTMR == 1) && (Vdp1External.plot_trigger_line == yabsys.LineCount)) {
+  if ((Vdp1Regs->PTMR == 1) && ((Vdp1External.plot_trigger_line + 1) == yabsys.LineCount)) {
     if (Vdp1External.plot_trigger_done == 0) {
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
       Vdp1Draw();

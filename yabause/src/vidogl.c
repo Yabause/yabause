@@ -3978,7 +3978,7 @@ void VIDOGLVdp1Draw()
   int maxpri;
   int minpri;
   int line = 0;
-  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
+  Vdp2 *varVdp2Regs = &Vdp2Lines[Vdp1External.plot_trigger_line];
   _Ygl->vpd1_running = 1;
 
 

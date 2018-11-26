@@ -2551,7 +2551,7 @@ void YglRenderVDP1(void) {
   GLuint cprg=0;
   int i,j;
   int status;
-  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
+  Vdp2 *varVdp2Regs = &Vdp2Lines[Vdp1External.plot_trigger_line];
   //YabThreadLock(_Ygl->mutex);
   YglMatrix m, *mat;
 
