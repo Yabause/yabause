@@ -169,10 +169,6 @@ int PERMacJoyHandleEvents(void) {
         }
     }
 
-    if(YabauseExec() != 0)  {
-        return -1;
-    }
-
     return 0;
 }
 

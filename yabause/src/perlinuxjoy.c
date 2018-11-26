@@ -586,11 +586,6 @@ int PERLinuxJoyHandleEvents(void)
       LinuxJoyHandleEvents(joysticks + i);
 
    if (requestExit) return -1;
-   // execute yabause
-   if ( YabauseExec() != 0 )
-   {
-      return -1;
-   }
    
    // return success
    return 0;

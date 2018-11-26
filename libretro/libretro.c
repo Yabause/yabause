@@ -1664,8 +1664,7 @@ void retro_run(void)
    }
 
    //YabauseExec(); runs from handle events
-   if(PERCore)
-      PERCore->HandleEvents();
+   YabauseExec();
 }
 
 #ifdef ANDROID

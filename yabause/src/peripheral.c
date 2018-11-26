@@ -1481,8 +1481,6 @@ void PERDummyDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int PERDummyHandleEvents(void) {
-   if (YabauseExec() != 0)
-      return -1;
 
    return 0;
 }

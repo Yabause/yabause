@@ -401,7 +401,7 @@ int main(int argc, char *argv[]) {
           Wheight = height;
           VIDCore->Resize(0, 0, Wwidth, Wheight, 1);
         }
-        if (PERCore->HandleEvents() == -1) platform_Close();
+        if (YabauseExec() == -1) platform_Close();
         platform_HandleEvent();
   }
 

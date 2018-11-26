@@ -691,6 +691,7 @@ u64 g_m68K_dec_cycle = 0;
 
 
 int YabauseEmulate(void) {
+   int ret = 0;
    int oneframeexec = 0;
    yabsys.frame_count++;
 
@@ -791,6 +792,8 @@ int YabauseEmulate(void) {
 #endif
             PROFILE_START("vblankin");
             // VBlankIN
+            if(PERCore)
+              ret = PERCore->HandleEvents();
             SmpcINTBACKEnd();
             Vdp1VBlankIN();
             Vdp2VBlankIN();
@@ -887,7 +890,7 @@ int YabauseEmulate(void) {
    if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
-   return 0;
+   return ret;
 }
 
 
