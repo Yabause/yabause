@@ -3414,6 +3414,7 @@ render_finish:
   OSDDisplayMessages(NULL,0,0);
 
   _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+  glFlush();
   FrameProfileAdd("YglRender end");
   return;
 }
