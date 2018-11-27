@@ -583,6 +583,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     break;
   }
   case 5:
+  case 6:
   {
     // 16 bpp Bank mode
     u16 dot = cmd->CMDCOLR;
