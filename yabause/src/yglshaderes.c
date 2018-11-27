@@ -673,7 +673,7 @@ int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
 
   // Bind Default frame buffer
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
-
+  glDisable(GL_BLEND);
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
@@ -750,7 +750,7 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
-
+  glDisable(GL_BLEND);
   if ((prg->blendmode & 0x03) == VDP2_CC_RATE) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1970,6 +1970,8 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
 
   prg = p;
 
+  glDisable(GL_BLEND);
+
   if ( SPCCN ) {
     const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
     if (CCMD == 0) {  // Calculate Rate mode
@@ -2032,10 +2034,7 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
       }
     }
   }
-  else { // No Color Calculation
-    glDisable(GL_BLEND);
-    pgid = PG_VDP2_DRAWFRAMEBUFF_HBLANK;
-  }
+
 
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
@@ -2097,6 +2096,9 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
    const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
 
    prg = p;
+
+   glDisable(GL_BLEND);
+   pgid = PG_VDP2_DRAWFRAMEBUFF;
 
    if ( blend && SPCCN ) {
      const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
@@ -2195,10 +2197,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
          }
        }
      }
-   } else { // No Color Calculation
-     glDisable(GL_BLEND);
-     pgid = PG_VDP2_DRAWFRAMEBUFF;
-   }
+   } 
 
    arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
    GLUSEPROG(_prgid[pgid]);
@@ -2434,7 +2433,7 @@ int Ygl_cleanupLinecolorInsert(void * p, YglTextureManager *tm)
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE0);
-  glEnable(GL_BLEND);
+  glDisable(GL_BLEND);
 
   return 0;
 }
@@ -3744,7 +3743,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
   glDisableVertexAttribArray(1);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
+  glDisable(GL_BLEND);
 
   return 0;
 }
