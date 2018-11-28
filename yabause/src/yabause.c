@@ -680,6 +680,26 @@ u32 YabauseGetCpuTime(){
 
 // cyclesinc
 
+//////////////////////////////////////////////////////////////////////////////
+static int fpsframecount = 0;
+static u64 fpsticks = 0;
+static int fps = 0;
+static void FPSDisplay(void)
+{
+  fpsframecount++;
+  if (YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
+  {
+    fps = fpsframecount;
+    fpsframecount = 0;
+    fpsticks = YabauseGetTicks();
+  }
+  if (isAutoFrameSkip() == 0) {
+    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+  } else {
+    OSDPushMessage(OSDMSG_FPS, 1, "%02d FPS", fps);
+  }
+}
+
 u32 YabauseGetFrameCount() {
   return yabsys.frame_count;
 }
@@ -850,6 +870,7 @@ int YabauseEmulate(void) {
    M68KSync();
 
    syncVideoMode();
+   FPSDisplay();
 
 #ifdef YAB_WANT_SSF
 
