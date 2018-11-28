@@ -606,11 +606,10 @@ void YglTmPush(YglTextureManager * tm){
 }
 
 void YglTmPull(YglTextureManager * tm, u32 flg){
-#ifdef VDP1_TEXTURE_ASYNC
-  if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
-    waitVdp1Textures(1);
-  else WaitVdp2Async(1);
-#endif
+  if (tm == YglTM_vdp1[0])
+    waitVdp1End(0);
+  if (tm == YglTM_vdp1[1])
+    waitVdp1End(1);
   YabThreadLock(tm->mtx);
   if (tm->texture == NULL) {
     glActiveTexture(GL_TEXTURE0);
@@ -2528,7 +2527,6 @@ static void executeTMVDP1(int in, int out) {
     YglTmPush(YglTM_vdp1[in]);
     YglRenderVDP1();
     _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
-    waitVdp1End(out);
     YglReset(_Ygl->vdp1levels[out]);
     YglTmPull(YglTM_vdp1[out], 0);
     _Ygl->needVdp1Render = 0;
@@ -3151,6 +3149,7 @@ void YglSetClearColor(float r, float g, float b){
 }
 
 void YglUpdateVDP1FB(void) {
+  waitVdp1End(_Ygl->readframe);
   if (_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe], 0);
