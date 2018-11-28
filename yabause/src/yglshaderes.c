@@ -2102,6 +2102,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
 
    if ( blend && SPCCN ) {
      const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
+     glEnable(GL_BLEND);
      if (CCMD == 0) {  // Calculate Rate mode
        if (CCRTMD == 0) {  // Source Alpha Mode
          if (SPLCEN == 0) { // No Line Color Insertion
