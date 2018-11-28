@@ -638,7 +638,7 @@ void YabauseResetButton(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseExec(void) {
-
+#if 0
 	//automatically advance lag frames, this should be optional later
 	if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){ 
 		FrameAdvanceVariable = NeedAdvance; //advance a frame
@@ -662,6 +662,10 @@ int YabauseExec(void) {
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);	
 		YabauseEmulate();
 	}
+#else
+  ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+  YabauseEmulate();
+#endif
 	return 0;
 }
 
