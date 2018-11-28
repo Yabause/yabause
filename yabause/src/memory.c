@@ -1438,14 +1438,14 @@ int BackupInit(char* path, int extended) {
     int isExtendedSize = (currentSaveSize == EXTENDED_BACKUP_SIZE);
     if (extended && isNormalSize) {
       extended = 0; //Force to use small save format
-      printf("Internal backup file format is detected as standard save format - Force to use standard save format\n");
+      YuiMsg("Internal backup file format is detected as standard save format - Force to use standard save format\n");
     }
     if (!extended && isExtendedSize) {
       extended = 1; //Force to use large save format
-      printf("Internal backup file format is detected as extended save format - Force to use extended save format\n");
+      YuiMsg("Internal backup file format is detected as extended save format - Force to use extended save format\n");
     }
     if (!((!extended && isNormalSize)||(extended && isExtendedSize))) {
-      printf("Internal backup file format is bad - Force format to %s save format\n", (extended?"extended":"standard") );
+      YuiMsg("Internal backup file format is bad - Force format to %s save format\n", (extended?"extended":"standard") );
       forceFormat =1; //Size is not the good one - Format
     }
   }
@@ -1495,8 +1495,8 @@ int LoadBios(const char *filename)
 {
   int ret = 0;
   if (yabsys.isSTV == 0) ret = T123Load(BiosRom, 0x80000, 2, filename); //Saturn
-  if (yabsys.isSTV) printf("ST-V Emulation mode\n");
-  else printf("Saturn Emulation mode\n");
+  if (yabsys.isSTV) YuiMsg("ST-V Emulation mode\n");
+  else YuiMsg("Saturn Emulation mode\n");
   return ret;
 }
 

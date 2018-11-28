@@ -71,9 +71,9 @@ static int resolution_mode = 1;
 static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
 static int numthreads = 4;
+static int use_beetle_saves = 0;
 static bool service_enabled = false;
 static bool stv_mode = false;
-static bool pergame_internal_ram = false;
 static bool isPal = false;
 
 struct retro_perf_callback perf_cb;
@@ -115,6 +115,7 @@ void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
+      { "kronos_use_beetle_saves", "Share saves with beetle (restart); disabled|enabled" },
 #ifdef CART_ADDON_SELECTION_ENABLED
       { "kronos_addon_cart", "Addon Cartridge (restart); auto|none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
 #endif
@@ -124,7 +125,6 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
       { "kronos_scanlines", "Scanlines; disabled|enabled" },
       { "kronos_service_enabled", "ST-V Service/Test Buttons; disabled|enabled" },
-      { "kronos_internal_backup_ram", "Internal backup RAM (restart); shared|per_game" },
       { NULL, NULL },
    };
 
@@ -679,10 +679,12 @@ VideoInterface_struct *VIDCoreList[] = {
 
 void YuiMsg(const char *format, ...)
 {
+  char buf[512]; 
   va_list arglist;
   va_start( arglist, format );
-  vprintf( format, arglist );
+  int rc = vsnprintf(buf, 512, format, arglist);
   va_end( arglist );
+  log_cb(RETRO_LOG_INFO, buf);
 }
 
 void YuiErrorMsg(const char *string)
@@ -813,12 +815,22 @@ void check_variables(void)
 
    var.key = "kronos_force_hle_bios";
    var.value = NULL;
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "disabled") == 0 && hle_bios_force)
          hle_bios_force = false;
       else if (strcmp(var.value, "enabled") == 0 && !hle_bios_force)
          hle_bios_force = true;
+   }
+
+   var.key = "kronos_use_beetle_saves";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         use_beetle_saves = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         use_beetle_saves = 1;
    }
 
 #ifdef CART_ADDON_SELECTION_ENABLED
@@ -911,22 +923,12 @@ void check_variables(void)
 
    var.key = "kronos_service_enabled";
    var.value = NULL;
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "enabled") == 0)
          service_enabled = true;
       else
          service_enabled = false;
-   }
-
-   var.key = "kronos_internal_backup_ram";
-   var.value = NULL;
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "per_game") == 0)
-         pergame_internal_ram = true;
-      else
-         pergame_internal_ram = false;
    }
 }
 
@@ -1135,9 +1137,15 @@ void configure_saturn_addon_cart()
       }
    }
 
+   if (use_beetle_saves == 1 && (addon_cart_type == CART_BACKUPRAM8MBIT || addon_cart_type == CART_BACKUPRAM16MBIT || addon_cart_type == CART_BACKUPRAM32MBIT))
+      addon_cart_type = CART_BACKUPRAM4MBIT;
+
    if (addon_cart_type == CART_BACKUPRAM4MBIT)
    {
-      snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext512K.ram", g_save_dir, slash, slash, slash, game_basename);
+      if (use_beetle_saves == 1)
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s.bcr", g_save_dir, slash, game_basename);
+      else
+         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%ckronos%csaturn%c%s-ext512K.ram", g_save_dir, slash, slash, slash, game_basename);
    }
 
    if (addon_cart_type == CART_BACKUPRAM8MBIT)
@@ -1279,10 +1287,7 @@ bool retro_load_game(const struct retro_game_info *info)
       }
    }
 
-   char bup_basename[128] = "shared_bup";
-
-   if (pergame_internal_ram)
-      extract_basename(bup_basename, info->path, sizeof(bup_basename));
+   extract_basename(game_basename, info->path, sizeof(game_basename));
 
    // Check if the path lead to a ST-V game
    // Store the game "id", if no game id found then this is most likely not a ST-V game
@@ -1300,8 +1305,7 @@ bool retro_load_game(const struct retro_game_info *info)
          return false;
       }
 
-      // TODO : add some core option to enable a per-game BUP behavior
-      snprintf(bup_path, sizeof(bup_path), "%s%ckronos%cstv%c%s.ram", g_save_dir, slash, slash, slash, bup_basename);
+      snprintf(bup_path, sizeof(bup_path), "%s%ckronos%cstv%c%s.ram", g_save_dir, slash, slash, slash, game_basename);
 
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left" },
@@ -1341,7 +1345,7 @@ bool retro_load_game(const struct retro_game_info *info)
    }
    else
    {
-      // Real bios is REQUIRED, even we support HLE bios
+      // Real bios is REQUIRED, even if we support HLE bios
       // HLE bios is deprecated and causing more issues than it solves
       // No "autoselect HLE when bios is missing" ever again !
       if (does_file_exist(bios_path) != 1)
@@ -1354,8 +1358,10 @@ bool retro_load_game(const struct retro_game_info *info)
          log_cb(RETRO_LOG_WARN, "HLE bios is enabled, this is for debugging purpose only, expect lots of issues\n");
       }
 
-      // TODO : add some core option to enable a per-game BUP behavior
-      snprintf(bup_path, sizeof(bup_path), "%s%ckronos%csaturn%c%s.ram", g_save_dir, slash, slash, slash, bup_basename);
+      if (use_beetle_saves == 1)
+         snprintf(bup_path, sizeof(bup_path), "%s%c%s.bkr", g_save_dir, slash, game_basename);
+      else
+         snprintf(bup_path, sizeof(bup_path), "%s%ckronos%csaturn%c%s.ram", g_save_dir, slash, slash, slash, game_basename);
 
       struct retro_input_descriptor desc[] = {
          { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,  "D-Pad Left" },
@@ -1589,7 +1595,6 @@ bool retro_load_game(const struct retro_game_info *info)
       Cs2DeInit();
 
       // Configure addon cart settings
-      extract_basename(game_basename, info->path, sizeof(game_basename));
       configure_saturn_addon_cart();
 
       yinit.cdcoretype      = CDCORE_ISO;
