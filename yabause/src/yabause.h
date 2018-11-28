@@ -135,6 +135,7 @@ typedef struct
 extern yabsys_struct yabsys;
 
 int YabauseEmulate(void);
+extern void resetSyncVideo(void);
 
 extern u32 saved_scsp_cycles;
 #define SCSP_FRACTIONAL_BITS 20

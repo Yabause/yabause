@@ -91,6 +91,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 		mTimerId = -1;
 	}
 	else {
+                resetSyncVideo();
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 		mTimerId = startTimer( 0 );
 	}
