@@ -278,7 +278,7 @@ const GLchar Yglprg_normal_cram_f[] =
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
 "  fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
-"  fragColor.a = 1.0;\n"
+"  fragColor.a = txindex.a;\n"
 "}\n";
 
 const GLchar Yglprg_normal_cram_special_priority_f[] =
@@ -2101,7 +2101,6 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
    pgid = PG_VDP2_DRAWFRAMEBUFF;
 
    if ( blend && SPCCN ) {
-     glEnable(GL_BLEND);
      const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
      if (CCMD == 0) {  // Calculate Rate mode
        if (CCRTMD == 0) {  // Source Alpha Mode
