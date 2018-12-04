@@ -1724,7 +1724,7 @@ u8 fileFound[NB_STV_GAMES][MAX_GAME_FILES];
 u8 biosFound[MAX_GAME_FILES];
 
 typedef struct {
-    char* filename;
+    const char* filename;
     int gameId;
     int bios;
 } rominfo;
@@ -2284,7 +2284,7 @@ int STVGetSingle(const char* pathfile, const char* biospath, int* id){
   return nbGames;
 }
 
-int STVSingleInit(char *gamepath, char *biospath) {
+int STVSingleInit(const char *gamepath, const char *biospath) {
   int nbGame = 0;
   int id = -1;
   if ((gamepath == NULL) || (biospath == NULL)) return -1;
@@ -2296,7 +2296,7 @@ int STVSingleInit(char *gamepath, char *biospath) {
   return -1;
 }
 
-int STVInit(int id, char* path){
+int STVInit(int id, const char* path){
   cryptoReset();
   if (CartridgeArea->carttype != CART_ROMSTV) return 0;
   int nbGames = STVGetRomList(path, 0);

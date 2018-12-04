@@ -47,8 +47,9 @@ typedef struct
    const char *cartpath;
    const char *stvbiospath;
    const char *stvgamepath;
+   const char *supportdir;
    const char *modemip;
-	const char *modemport;
+   const char *modemport;
    int frameskip;
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
@@ -56,6 +57,7 @@ typedef struct
    int numthreads;
    int osdcoretype;
    int skip_load;//skip loading in YabauseInit so tests can be run without a bios
+   int auto_cart_select;
    int video_filter_type;
    int video_upscale_type;
    int polygon_generation_mode;
