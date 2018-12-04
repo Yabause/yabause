@@ -9,8 +9,8 @@ extern "C" {
 int STVGetRomList(const char* dir, int force);
 char* getSTVGameName(int id);
 int STVGetSingle(const char* pathfile, const char* biospath, int* id);
-int STVSingleInit(char *gamepath, char *biospath);
-int STVInit(int id, char* path);
+int STVSingleInit(const char *gamepath, const char *biospath);
+int STVInit(int id, const char* path);
 #ifdef __cplusplus
 }
 #endif
@@ -37,12 +37,12 @@ typedef struct Game_s{
  u32 key;
  u8 rotated;
  void (*init)(void);
- u8* eeprom;
+ const u8* eeprom;
  FileEntry blobs[MAX_GAME_FILES];
 } Game;
 
 typedef struct GameLink_s{
-  Game* entry;
+  const Game* entry;
   char path[1024];
 } GameLink;
 

@@ -30,7 +30,7 @@ int GameInfoFromPath(const char * filename, GameInfo * info)
 {
    if (cdip != NULL) return 0;
 
-   Cs2Init(0, CDCORE_ISO, filename, NULL, NULL, NULL);
+   Cs2Init(CDCORE_ISO, filename, NULL);
    Cs2GetIP(1);
 
    memcpy(info, cdip, sizeof(GameInfo));

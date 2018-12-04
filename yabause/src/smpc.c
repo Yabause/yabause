@@ -51,7 +51,7 @@ static u8 * SmpcRegsT;
 static int intback_wait_for_line = 0;
 static u8 bustmp = 0;
 
-#define SMPCLOG //printf
+//#define SMPCLOG printf
 
 //////////////////////////////////////////////////////////////////////////////
 

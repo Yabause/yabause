@@ -33,6 +33,7 @@
 #include "vidsoft.h"
 #include "threads.h"
 #include "sh2core.h"
+#include "ygl.h"
 
 u8 * Vdp1Ram;
 

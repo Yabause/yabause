@@ -56,14 +56,8 @@ static int game_interlace;
 static int current_width;
 static int current_height;
 
-#define CART_ADDON_SELECTION_ENABLED
-
 static bool hle_bios_force = false;
-#ifdef CART_ADDON_SELECTION_ENABLED
-static int addon_cart_type = -1;
-#else
-static int addon_cart_type = CART_DRAM32MBIT;
-#endif
+static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int scanlines = 0;
@@ -72,9 +66,9 @@ static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
 static int numthreads = 4;
 static int use_beetle_saves = 0;
+static int auto_select_cart = 1;
 static bool service_enabled = false;
 static bool stv_mode = false;
-static bool isPal = false;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
@@ -116,9 +110,8 @@ void retro_set_environment(retro_environment_t cb)
    static const struct retro_variable vars[] = {
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_use_beetle_saves", "Share saves with beetle (restart); disabled|enabled" },
-#ifdef CART_ADDON_SELECTION_ENABLED
-      { "kronos_addon_cart", "Addon Cartridge (restart); auto|none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
-#endif
+      { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
+      { "kronos_auto_select_cart", "Automatic Addon Cartridge (restart); enabled|disabled" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
@@ -547,7 +540,7 @@ static u32 soundbufsize;
 static s16 *sound_buf;
 
 static int SNDLIBRETROInit(void) {
-    int vertfreq = (isPal ? 50 : 60);
+    int vertfreq = (yabsys.IsPal == 1 ? 50 : 60);
     soundlen = (SAMPLERATE * 100 + (vertfreq >> 1)) / vertfreq;
     soundbufsize = (soundlen<<2 * sizeof(s16));
     if ((sound_buf = (s16 *)malloc(soundbufsize)) == NULL)
@@ -833,7 +826,6 @@ void check_variables(void)
          use_beetle_saves = 1;
    }
 
-#ifdef CART_ADDON_SELECTION_ENABLED
    var.key = "kronos_addon_cart";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -855,7 +847,16 @@ void check_variables(void)
       else if (strcmp(var.value, "4M_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM32MBIT)
          addon_cart_type = CART_BACKUPRAM32MBIT;
    }
-#endif
+
+   var.key = "kronos_auto_select_cart";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "enabled") == 0)
+         auto_select_cart = 1;
+      else if (strcmp(var.value, "disabled") == 0)
+         auto_select_cart = 0;
+   }
 
    var.key = "kronos_filter_mode";
    var.value = NULL;
@@ -1050,97 +1051,10 @@ static void extract_basename(char *buf, const char *path, size_t size)
 
 void configure_saturn_addon_cart()
 {
-   log_cb(RETRO_LOG_INFO, "Game Code is %s\n", saturn_game_code);
-
-   if (addon_cart_type == -1)
-   {
-      // Use 4MB backup cartridge as default
-      addon_cart_type = CART_BACKUPRAM4MBIT;
-
-      // The following games need the 1MB Extended RAM Cartridge
-      if (strcmp(saturn_game_code, "T-3105G") == 0           // Real Bout Garou Densetsu
-       || strcmp(saturn_game_code, "T-3119G") == 0           // Real Bout Garou Densetsu Special
-       || strcmp(saturn_game_code, "T-3116G") == 0           // Samurai Spirits - Amakusa Kourin
-       || strcmp(saturn_game_code, "T-3104G") == 0           // Samurai Spirits - Zankurou Musouken
-       || strcmp(saturn_game_code, "T-3108G") == 0           // The King of Fighters '96
-       || strcmp(saturn_game_code, "T-3121G") == 0           // The King of Fighters '97
-       || strcmp(saturn_game_code, "T-1515G") == 0           // Waku Waku 7
-      )
-      {
-         log_cb(RETRO_LOG_INFO, "Loading 1MB Extended RAM Cartridge\n");
-         addon_cart_type = CART_DRAM8MBIT;
-      }
-
-      // The following games need the 4MB Extended RAM Cartridge
-      if (strcmp(saturn_game_code, "T-1521G") == 0           // Astra Superstars
-       || strcmp(saturn_game_code, "T-9904G") == 0           // Magical Night Dreams - Cotton 2
-       || strcmp(saturn_game_code, "T-1217G") == 0           // Cyberbots - Fullmetal Madness
-       || strcmp(saturn_game_code, "T-1245G") == 0           // Dungeons & Dragons Collection - Shadow over Mystara
-       || strcmp(saturn_game_code, "GS-9107") == 0           // Fighter's History Dynamite
-       || strcmp(saturn_game_code, "T-1248G") == 0           // Final Fight Revenge
-       || strcmp(saturn_game_code, "T-20109G") == 0          // Friends: Seishun no Kagayaki
-       || strcmp(saturn_game_code, "T-14411G") == 0          // Groove On Fight: Gouketsuji Ichizoku 3
-       || strcmp(saturn_game_code, "T-7032H-50VV1.000") == 0 // Marvel Super Heroes
-       || strcmp(saturn_game_code, "T-1215G") == 0           // Marvel Super Heroes
-       || strcmp(saturn_game_code, "T-1214H") == 0           // Marvel Super Heroes
-       || strcmp(saturn_game_code, "T-1238G") == 0           // Marvel Super Heroes vs. Street Fighter
-       || strcmp(saturn_game_code, "T-3111G") == 0           // Metal Slug
-       || strcmp(saturn_game_code, "T-22205G") == 0          // Noël 3
-       || strcmp(saturn_game_code, "T-20114G") == 0          // Pia Carrot e Youkoso!! 2
-       || strcmp(saturn_game_code, "T-1230G") == 0           // Pocket Fighter
-       || strcmp(saturn_game_code, "T-1246G") == 0           // Street Fighter Alpha 3
-       || strcmp(saturn_game_code, "T-16510G") == 0          // Super Real Mahjong P7
-       || strcmp(saturn_game_code, "T-1229G") == 0           // Vampire Savior
-       || strcmp(saturn_game_code, "T-1226G") == 0           // X-Men vs. Street Fighter
-      )
-      {
-         log_cb(RETRO_LOG_INFO, "Loading 4MB Extended RAM Cartridge\n");
-         addon_cart_type = CART_DRAM32MBIT;
-      }
-
-      // The King of Fighters '95 ROM Cartridge
-      if (strcmp(saturn_game_code, "MK-81088") == 0
-       || strcmp(saturn_game_code, "T-3101G") == 0
-      )
-      {
-         // Using same path as beetle-saturn, no reason for having a different rom
-         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%cmpr-18811-mx.ic1", g_system_dir, slash);
-         if (does_file_exist(addon_cart_path))
-         {
-            log_cb(RETRO_LOG_INFO, "Loading The King of Fighters '95 ROM Cartridge\n");
-            addon_cart_type = CART_ROM16MBIT;
-         }
-         else
-         {
-            log_cb(RETRO_LOG_ERROR, "Couldn't find The King of Fighters '95 ROM Cartridge at %s\n", addon_cart_path);
-            addon_cart_type = CART_NONE;
-            addon_cart_path[0] = '\0';
-         }
-      }
-
-      // Ultraman: Hikari no Kyojin Densetsu ROM Cartridge
-      if (strcmp(saturn_game_code, "T-13308G") == 0)
-      {
-         // Using same path as beetle-saturn, no reason for having a different rom
-         snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%cmpr-19367-mx.ic1", g_system_dir, slash);
-         if (does_file_exist(addon_cart_path))
-         {
-            log_cb(RETRO_LOG_INFO, "Loading Ultraman: Hikari no Kyojin Densetsu ROM Cartridge\n");
-            addon_cart_type = CART_ROM16MBIT;
-         }
-         else
-         {
-            log_cb(RETRO_LOG_ERROR, "Couldn't find Ultraman: Hikari no Kyojin Densetsu ROM Cartridge at %s\n", addon_cart_path);
-            addon_cart_type = CART_NONE;
-            addon_cart_path[0] = '\0';
-         }
-      }
-   }
-
    if (use_beetle_saves == 1 && (addon_cart_type == CART_BACKUPRAM8MBIT || addon_cart_type == CART_BACKUPRAM16MBIT || addon_cart_type == CART_BACKUPRAM32MBIT))
       addon_cart_type = CART_BACKUPRAM4MBIT;
 
-   if (addon_cart_type == CART_BACKUPRAM4MBIT)
+   if (addon_cart_type == CART_BACKUPRAM4MBIT || auto_select_cart == 1)
    {
       if (use_beetle_saves == 1)
          snprintf(addon_cart_path, sizeof(addon_cart_path), "%s%c%s.bcr", g_save_dir, slash, game_basename);
@@ -1585,23 +1499,16 @@ bool retro_load_game(const struct retro_game_info *info)
 
       environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-      // Fetch saturn game code
-      Cs2Init(CART_NONE, CDCORE_ISO, full_path, NULL, NULL, NULL);
-      Cs2GetIP(1);
-      saturn_game_code = malloc(strlen(Cs2GetCurrentGmaecode()) + 1);
-      strcpy(saturn_game_code, Cs2GetCurrentGmaecode());
-      if (Cs2GetRegionID() == 0xC)
-         isPal = true;
-      Cs2DeInit();
-
       // Configure addon cart settings
       configure_saturn_addon_cart();
 
-      yinit.cdcoretype      = CDCORE_ISO;
-      yinit.cdpath          = full_path;
-      yinit.biospath        = (hle_bios_force ? NULL : bios_path);
-      yinit.carttype        = addon_cart_type;
-      yinit.cartpath        = addon_cart_path;
+      yinit.cdcoretype       = CDCORE_ISO;
+      yinit.cdpath           = full_path;
+      yinit.biospath         = (hle_bios_force ? NULL : bios_path);
+      yinit.carttype         = addon_cart_type;
+      yinit.cartpath         = addon_cart_path;
+      yinit.supportdir       = g_system_dir;
+      yinit.auto_cart_select = auto_select_cart;
    }
 
    return retro_load_game_common();
@@ -1619,7 +1526,7 @@ void retro_unload_game(void)
 
 unsigned retro_get_region(void)
 {
-   return isPal ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
+   return yabsys.IsPal == 1 ? RETRO_REGION_PAL : RETRO_REGION_NTSC;
 }
 
 unsigned retro_api_version(void)
