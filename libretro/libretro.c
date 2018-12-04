@@ -111,7 +111,7 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
       { "kronos_use_beetle_saves", "Share saves with beetle (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
-      { "kronos_auto_select_cart", "Automatic Addon Cartridge (restart); ebabled|disabled" },
+      { "kronos_auto_select_cart", "Automatic Addon Cartridge (restart); enabled|disabled" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
