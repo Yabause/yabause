@@ -769,7 +769,12 @@ static bool retro_init_hw_context(void)
       params.minor = 2;
       params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
       if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-         return false;
+      {
+         params.major = 3;
+         params.minor = 3;
+         if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+            return false;
+      }
    }
    return true;
 }
