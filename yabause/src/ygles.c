@@ -2542,13 +2542,9 @@ static void waitVdp1End(int id) {
 static void executeTMVDP1(int in, int out) {
   if (_Ygl->needVdp1Render != 0){
     YglTmPush(YglTM_vdp1[in]);
-#ifdef __LIBRETRO__
-    glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-#endif
+    YuiUseOGLOnThisThread();
     YglRenderVDP1();
-#ifdef __LIBRETRO__
-    glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-#endif
+    YuiRevokeOGLOnThisThread();
     _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
     YglReset(_Ygl->vdp1levels[out]);
     YglTmPull(YglTM_vdp1[out], 0);
