@@ -1773,7 +1773,13 @@ void Cs2PlayDisc(void) {
   Cs2SetTiming(1);
 
   Cs2Area->_periodiccycles = 0;
-  Cs2Area->_periodictiming = SEEK_TIME; // seektime
+  // Calculate Seek time
+  int length = abs((int)Cs2Area->playendFAD - (int)Cs2Area->FAD);
+  CDLOG("cs2\t:Seek length = %d", length);
+  Cs2Area->_periodictiming = length * 2000; // seektime
+  if (Cs2Area->_periodictiming > SEEK_TIME) {
+    Cs2Area->_periodictiming = SEEK_TIME;
+  }
 
   Cs2Area->status = CDB_STAT_SEEK;      // need to be seek
   Cs2Area->options = 0;
