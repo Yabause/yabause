@@ -7498,7 +7498,9 @@ void waitVdp2DrawScreensEnd(int sync) {
     if (empty == 0) {
       //Vdp2 has been evaluated we can render
       YglTmPush(YglTM_vdp2);
+      YuiUseOGLOnThisThread();
       YglUpdateVDP1FB();
+      YuiRevokeOGLOnThisThread();
       YglRender(&Vdp2Lines[0]);
     }
   }

@@ -690,12 +690,12 @@ static int first_ctx_reset = 1;
 
 int YuiUseOGLOnThisThread()
 {
-  return 0;
+  return glsm_ctl(GLSM_CTL_STATE_BIND, NULL);;
 }
 
 int YuiRevokeOGLOnThisThread()
 {
-  return 0;
+  return glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
 }
 
 int YuiGetFB(void)
@@ -769,7 +769,12 @@ static bool retro_init_hw_context(void)
       params.minor = 2;
       params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
       if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-         return false;
+      {
+         params.major = 3;
+         params.minor = 3;
+         if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+            return false;
+      }
    }
    return true;
 }
