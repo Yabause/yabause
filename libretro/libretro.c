@@ -690,12 +690,12 @@ static int first_ctx_reset = 1;
 
 int YuiUseOGLOnThisThread()
 {
-  return 0;
+  return glsm_ctl(GLSM_CTL_STATE_BIND, NULL);;
 }
 
 int YuiRevokeOGLOnThisThread()
 {
-  return 0;
+  return glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
 }
 
 int YuiGetFB(void)
