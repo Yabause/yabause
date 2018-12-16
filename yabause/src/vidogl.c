@@ -7106,18 +7106,18 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struc
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct * info, int h, int v)
 {
-  if ((fixVdp2Regs->WCTLD & 0x04) == 0) {
-    return (&paraB);
+  if ( (fixVdp2Regs->WCTLD&0x0F) == 0) {
+    return (&paraA);
   }
 
   if (info->WindwAreaMode == 0)
   {
     if (info->pWinInfo[v].WinShowLine == 0)
     {
-      return (&paraA);
+        return (&paraA);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+      if (h >= info->pWinInfo[v].WinHStart && h <= info->pWinInfo[v].WinHEnd)
       {
         return (&paraB);
       }
@@ -7133,7 +7133,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct *
       return (&paraB);
     }
     else {
-      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
+      if (h >= info->pWinInfo[v].WinHStart && h <= info->pWinInfo[v].WinHEnd)
       {
         return (&paraA);
       }
