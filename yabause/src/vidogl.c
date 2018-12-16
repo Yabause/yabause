@@ -7106,39 +7106,47 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(vdp2draw_struc
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct * info, int h, int v)
 {
-  if ( (fixVdp2Regs->WCTLD&0x0F) == 0) {
+  // Disbaled Window always return A
+  if ((fixVdp2Regs->WCTLD & 0xA) == 0) {
     return (&paraA);
   }
 
-  if (info->WindwAreaMode == 0)
+  if (info->WindwAreaMode == WA_INSIDE)  // Inside is B, Outside is A
   {
+    // Outside is A
     if (info->pWinInfo[v].WinShowLine == 0)
     {
         return (&paraA);
     }
     else {
-      if (h >= info->pWinInfo[v].WinHStart && h <= info->pWinInfo[v].WinHEnd)
+
+      // Outsize is A 
+      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
       {
-        return (&paraB);
-      }
-      else {
         return (&paraA);
+      }
+      // Inside is B
+      else {
+        return (&paraB);
       }
     }
   }
-  else
+  else // Inside is A, Outside is B
   {
+    // Outside is B
     if (info->pWinInfo[v].WinShowLine == 0)
     {
       return (&paraB);
     }
     else {
-      if (h >= info->pWinInfo[v].WinHStart && h <= info->pWinInfo[v].WinHEnd)
+      // Outsize is B
+      if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
       {
-        return (&paraA);
-      }
-      else {
         return (&paraB);
+      }
+      // Insize is A
+      else {
+        return (&paraA);
       }
     }
   }
@@ -7147,39 +7155,54 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct *
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struct * info, int h, int v)
 {
-  // Virtua Fighter2
-  if (info->WindwAreaMode == 0)
+  vdp2rotationparameter_struct * p;
+
+  // Virtua Fighter2( Disbaled Window always return A )
+  if ( (fixVdp2Regs->WCTLD & 0xA) == 0) {
+    h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
+    return info->GetKValueA(&paraA, h);
+  }
+
+  if (info->WindwAreaMode == WA_INSIDE)  // Inside is B, Outside is A
   {
+    // Outside A
     if (info->pWinInfo[v].WinShowLine == 0)
     {
       h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
       return info->GetKValueA(&paraA, h);
     }
     else {
+
+      // Outsize is A 
       if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
       {
-        return (&paraB);
-      }
-      else {
         h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
         return info->GetKValueA(&paraA, h);
+
+      // Inside is B
+      } else {
+        return (&paraB);
       }
     }
   }
-  else {
+  else { // Inside is A, Outside is B
+
+    // Outside is B
     if (info->pWinInfo[v].WinShowLine == 0)
     {
-      h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
-      return info->GetKValueA(&paraA, h);
+      return (&paraB);
     }
     else {
+
+      // Outsize is B
       if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
       {
+        return (&paraB);
+      }
+      // Insize is A
+      else {
         h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
         return info->GetKValueA(&paraA, h);
-      }
-      else {
-        return (&paraB);
       }
     }
   }
@@ -7189,38 +7212,51 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struc
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struct * info, int h, int v)
 {
-  if (info->WindwAreaMode == 0)
+  // Disbaled Window always return A
+  if ((fixVdp2Regs->WCTLD & 0xA) == 0) {
+    return &paraA;
+  }
+
+  if (info->WindwAreaMode == WA_INSIDE)  // Inside is B, Outside is A
   {
+    // Outside A
     if (info->pWinInfo[v].WinShowLine == 0)
     {
       return &paraA;
     }
     else {
+
+      // Outsize is A 
       if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
       {
+        return &paraA;
+      }
+      // Inside is B
+      else {
         h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
         return info->GetKValueB(&paraB, h);
       }
-      else {
-        return &paraA;
-      }
     }
   }
-  else {
-    {
+  else { // Inside is A, Outside is B
+  {
+      // Outside is B
       if (info->pWinInfo[v].WinShowLine == 0)
       {
         h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
         return info->GetKValueB(&paraB, h);
       }
       else {
+
+        // Outsize is B
         if (h < info->pWinInfo[v].WinHStart || h >= info->pWinInfo[v].WinHEnd)
         {
-          return &paraA;
-        }
-        else {
           h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
           return info->GetKValueB(&paraB, h);
+        }
+        // Insize is A
+        else {
+          return &paraA;
         }
       }
     }
@@ -7231,6 +7267,15 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struc
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct * info, int h, int v)
 {
   vdp2rotationparameter_struct * p;
+
+  // Disbaled Window always return A
+  if ((fixVdp2Regs->WCTLD & 0xA) == 0) {
+    h = ceilf(paraA.KtablV + (paraA.deltaKAx * h));
+    p = info->GetKValueA(&paraA, h);
+    if (p) return p;
+    h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
+    return info->GetKValueB(&paraB, h);
+  }
 
   // Final Fight Revenge
   if (info->WindwAreaMode == WA_INSIDE) {
