@@ -7498,13 +7498,9 @@ void waitVdp2DrawScreensEnd(int sync) {
     if (empty == 0) {
       //Vdp2 has been evaluated we can render
       YglTmPush(YglTM_vdp2);
-#ifdef __LIBRETRO__
-      glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
-#endif
+      YuiUseOGLOnThisThread();
       YglUpdateVDP1FB();
-#ifdef __LIBRETRO__
-      glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
-#endif
+      YuiRevokeOGLOnThisThread();
       YglRender(&Vdp2Lines[0]);
     }
   }
