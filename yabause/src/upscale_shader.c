@@ -179,7 +179,7 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 8*sizeof(float));
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)(8*sizeof(float)));
 
   glUniform2f(d_size, (float)w, (float)h);
   glUniform2f(t_size, (float)texw, (float)texh);
