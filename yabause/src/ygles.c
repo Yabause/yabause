@@ -2643,16 +2643,16 @@ void YglRenderVDP1(void) {
     if( level->prg[j].currentQuad != 0 ) {
       glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
-      glBufferData(GL_ARRAY_BUFFER, level[i].prg[j].currentQuad * sizeof(float), level->prg[j].quads, GL_STREAM_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float), level->prg[j].quads, GL_STREAM_DRAW);
       glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0);
       glEnableVertexAttribArray(level->prg[j].vertexp);
       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textcoords_buf);
-      glBufferData(GL_ARRAY_BUFFER, level[i].prg[j].currentQuad * sizeof(float) * 2, level->prg[j].textcoords, GL_STREAM_DRAW);
+      glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].textcoords, GL_STREAM_DRAW);
       glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,0);
       glEnableVertexAttribArray(level->prg[j].texcoordp);
       if( level->prg[j].vaid != 0 ) {
         glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
-        glBufferData(GL_ARRAY_BUFFER, level[i].prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
         glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(level->prg[j].vaid);
       }
@@ -3448,7 +3448,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
           glEnableVertexAttribArray(level->prg[j].texcoordp);
           if (level->prg[j].vaid != 0) {
              glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
-             glBufferData(GL_ARRAY_BUFFER, level[i].prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
+             glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
              glVertexAttribPointer(level->prg[j].vaid, 4, GL_FLOAT, GL_FALSE, 0, 0);
              glEnableVertexAttribArray(level->prg[j].vaid);
           }
@@ -3804,7 +3804,7 @@ void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs) {
         glEnableVertexAttribArray(level->prg[j].texcoordp);
         if (level->prg[j].vaid != 0) {
            glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
-           glBufferData(GL_ARRAY_BUFFER, level[i].prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
+           glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
            glVertexAttribPointer(level->prg[j].vaid, 4, GL_FLOAT, GL_FALSE, 0, 0);
            glEnableVertexAttribArray(level->prg[j].vaid);
         }
