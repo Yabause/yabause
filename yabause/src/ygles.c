@@ -36,7 +36,7 @@
 //#define YGLDEBUG printf
 //#define YGLDEBUG LOG
 //#define YGLDEBUG yprintf
-#define YGLLOG
+//#define YGLLOG
 
 extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
@@ -1077,11 +1077,13 @@ int YglInit(int width, int height, unsigned int depth) {
   glGetIntegerv(GL_MAJOR_VERSION, &maj);
   glGetIntegerv(GL_MINOR_VERSION, &min);
 
+#ifndef __LIBRETRO__
   if (maj*10+min < 42) {
    YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL context"));
    YuiMsg("Using OpenGL %d.%d\n", maj, min);
    return -1;
-  } 
+  }
+#endif
 
   if ((_Ygl = (Ygl *)malloc(sizeof(Ygl))) == NULL) {
     return -1;
