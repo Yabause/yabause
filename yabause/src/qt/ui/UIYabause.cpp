@@ -345,9 +345,7 @@ void UIYabause::appendLog( const char* s )
 		return;
 	}
 
-	teLog->moveCursor( QTextCursor::End );
 	teLog->insertPlainText( s );
-        teLog->moveCursor( QTextCursor::End );
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	if (( !mLogDock->isVisible( )) && ( vs->value( "View/LogWindow" ).toInt() == 1 )) {
