@@ -7947,11 +7947,11 @@ void VIDOGLSetSettingValueMode(int type, int value) {
           YglTesserationProgramInit();
           _Ygl->polygonmode = value;
         } else {
-          YuiMsg("GPU tesselation i not possible - fallback on CPU tesselation\n");
+          YuiMsg("GPU tesselation is not possible - fallback on CPU tesselation\n");
           _Ygl->polygonmode = CPU_TESSERATION;
         }
       } else {
-        YuiMsg("GPU tesselation i not possible - fallback on CPU tesselation\n");
+        YuiMsg("GPU tesselation is not possible - fallback on CPU tesselation\n");
         _Ygl->polygonmode = CPU_TESSERATION;
       }
     } else {

@@ -1076,11 +1076,6 @@ int YglInit(int width, int height, unsigned int depth) {
 
   glGetIntegerv(GL_MAJOR_VERSION, &maj);
   glGetIntegerv(GL_MINOR_VERSION, &min);
-#ifdef HAVE_GLES
-  YuiMsg("Using OpenGL ES %d.%d\n", maj, min);
-#else
-  YuiMsg("Using OpenGL %d.%d\n", maj, min);
-#endif
 
 #ifndef __LIBRETRO__
   if (maj*10+min < 42) {
