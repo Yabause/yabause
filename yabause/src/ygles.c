@@ -1076,7 +1076,6 @@ int YglInit(int width, int height, unsigned int depth) {
 
   glGetIntegerv(GL_MAJOR_VERSION, &maj);
   glGetIntegerv(GL_MINOR_VERSION, &min);
-  YuiMsg("Using OpenGL %d.%d\n", maj, min);
 
   if (maj*10+min < 42) {
    YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL context"));
