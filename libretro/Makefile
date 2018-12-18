@@ -209,6 +209,10 @@ else
 	OBJECTS += $(C68KEXEC_OBJECT)
 endif
 
+ifeq ($(HAVE_GLES), 1)
+	FLAGS += -DHAVE_GLES
+endif
+
 OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 LDFLAGS += $(fpic) $(SHARED)

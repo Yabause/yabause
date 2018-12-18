@@ -758,24 +758,28 @@ static void context_destroy(void)
 static bool retro_init_hw_context(void)
 {
    glsm_ctx_params_t params = {0};
-   params.context_type = RETRO_HW_CONTEXT_OPENGLES3;
    params.context_reset = context_reset;
    params.context_destroy = context_destroy;
    params.environ_cb = environ_cb;
    params.stencil = true;
+#ifdef HAVE_GLES
+   params.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
+   params.major = 3;
+   params.minor = 1;
+   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+      return false;
+#else
+   params.major = 4;
+   params.minor = 2;
+   params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
    {
-      params.major = 4;
-      params.minor = 2;
-      params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+      params.major = 3;
+      params.minor = 3;
       if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-      {
-         params.major = 3;
-         params.minor = 3;
-         if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-            return false;
-      }
+         return false;
    }
+#endif
    return true;
 }
 

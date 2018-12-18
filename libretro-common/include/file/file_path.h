@@ -442,7 +442,7 @@ void path_basedir_wrapper(char *path);
  *
  * Returns: default slash separator.
  */
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_XBOX)
 #define path_default_slash() "\\"
 #define path_default_slash_c() '\\'
 #else
