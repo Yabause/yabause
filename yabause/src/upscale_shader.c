@@ -57,7 +57,24 @@ static void Ygl_printProgError( GLuint prog )
   glDeleteProgram(prog);
 }
 
+
+static int upscale_vbo = 0;
+
 int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float texw, float texh) {
+
+  float const vertexPosition[] = {
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f,
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f
+ };
+
+
+
   glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
   if (up_lut_tex == -1) {
@@ -143,6 +160,11 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float
       glUniform1i(glGetUniformLocation(up_prg, "LUT"), 1);
     d_size = glGetUniformLocation(up_prg, "DrawingSize");
     t_size = glGetUniformLocation(up_prg, "TextureSize");
+    if (upscale_vbo == 0) {
+      glGenBuffers(1, &upscale_vbo);
+      glBindBuffer(GL_ARRAY_BUFFER, upscale_vbo);
+      glBufferData(GL_ARRAY_BUFFER, 16*sizeof(float), vertexPosition, GL_STREAM_DRAW);
+    }
 
   }
   else{
@@ -153,22 +175,11 @@ int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
 
-  float const vertexPosition[] = {
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f };
-
-  float const textureCoord[] = {
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f };
-
+  glBindBuffer(GL_ARRAY_BUFFER, upscale_vbo);
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)(8*sizeof(float)));
 
   glUniform2f(d_size, (float)w, (float)h);
   glUniform2f(t_size, (float)texw, (float)texh);

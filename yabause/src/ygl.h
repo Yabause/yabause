@@ -261,7 +261,7 @@ void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h);
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
 void YglTmPush(YglTextureManager * tm);
 void YglTmPull(YglTextureManager * tm, u32 flg);
-
+void YglTMCheck();
 
 void YglCacheInit(YglTextureManager * tm);
 void YglCacheDeInit(YglTextureManager * tm);
@@ -619,6 +619,20 @@ typedef struct {
    UniformFrameBuffer fbu_;
    GLuint framebuffer_uniform_id_;
    int msb_shadow_count_[2];
+   GLuint vao;
+   GLuint vertices_buf;
+   GLuint texcord_buf;
+   GLuint win0v_buf;
+   GLuint win1v_buf;
+   GLuint vertexPosition_buf;
+   GLuint textureCoordFlip_buf;
+   GLuint textureCoord_buf;
+   GLuint vb_buf;
+   GLuint tb_buf;
+
+   GLuint quads_buf;
+   GLuint textcoords_buf;
+   GLuint vertexAttribute_buf;
 
 }  Ygl;
 

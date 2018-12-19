@@ -293,6 +293,86 @@ int YabauseSh2Init(yabauseinit_struct *init)
    return 0;
 }
 
+int CartInitAutoDetect(const char * supportdir, const char * cartpath)
+{
+#ifdef _WIN32
+   char slash = '\\';
+#else
+   char slash = '/';
+#endif
+
+   int carttype;
+   char rompath[128];
+
+   Cs2GetIP(1);
+   char *saturn_game_code = Cs2GetCurrentGmaecode();
+
+   carttype = CART_BACKUPRAM4MBIT;
+
+   // The following games need the 1MB Extended RAM Cartridge
+   if (strcmp(saturn_game_code, "T-3105G") == 0           // Real Bout Garou Densetsu
+    || strcmp(saturn_game_code, "T-3119G") == 0           // Real Bout Garou Densetsu Special
+    || strcmp(saturn_game_code, "T-3116G") == 0           // Samurai Spirits - Amakusa Kourin
+    || strcmp(saturn_game_code, "T-3104G") == 0           // Samurai Spirits - Zankurou Musouken
+    || strcmp(saturn_game_code, "T-3108G") == 0           // The King of Fighters '96
+    || strcmp(saturn_game_code, "T-3121G") == 0           // The King of Fighters '97
+    || strcmp(saturn_game_code, "T-1515G") == 0           // Waku Waku 7
+   )
+   {
+      YuiMsg("Loading 1MB Extended RAM Cartridge\n");
+      carttype = CART_DRAM8MBIT;
+   }
+
+   // The following games need the 4MB Extended RAM Cartridge
+   if (strcmp(saturn_game_code, "T-1521G") == 0           // Astra Superstars
+    || strcmp(saturn_game_code, "T-9904G") == 0           // Magical Night Dreams - Cotton 2
+    || strcmp(saturn_game_code, "T-1217G") == 0           // Cyberbots - Fullmetal Madness
+    || strcmp(saturn_game_code, "T-1245G") == 0           // Dungeons & Dragons Collection - Shadow over Mystara
+    || strcmp(saturn_game_code, "GS-9107") == 0           // Fighter's History Dynamite
+    || strcmp(saturn_game_code, "T-1248G") == 0           // Final Fight Revenge
+    || strcmp(saturn_game_code, "T-20109G") == 0          // Friends: Seishun no Kagayaki
+    || strcmp(saturn_game_code, "T-14411G") == 0          // Groove On Fight: Gouketsuji Ichizoku 3
+    || strcmp(saturn_game_code, "T-7032H-50VV1.000") == 0 // Marvel Super Heroes
+    || strcmp(saturn_game_code, "T-1215G") == 0           // Marvel Super Heroes
+    || strcmp(saturn_game_code, "T-1214H") == 0           // Marvel Super Heroes
+    || strcmp(saturn_game_code, "T-1238G") == 0           // Marvel Super Heroes vs. Street Fighter
+    || strcmp(saturn_game_code, "T-3111G") == 0           // Metal Slug
+    || strcmp(saturn_game_code, "T-22205G") == 0          // Noël 3
+    || strcmp(saturn_game_code, "T-20114G") == 0          // Pia Carrot e Youkoso!! 2
+    || strcmp(saturn_game_code, "T-1230G") == 0           // Pocket Fighter
+    || strcmp(saturn_game_code, "T-1246G") == 0           // Street Fighter Alpha 3
+    || strcmp(saturn_game_code, "T-16510G") == 0          // Super Real Mahjong P7
+    || strcmp(saturn_game_code, "T-1229G") == 0           // Vampire Savior
+    || strcmp(saturn_game_code, "T-1226G") == 0           // X-Men vs. Street Fighter
+   )
+   {
+      YuiMsg("Loading 4MB Extended RAM Cartridge\n");
+      carttype = CART_DRAM32MBIT;
+   }
+
+   // The King of Fighters '95 ROM Cartridge
+   if (strcmp(saturn_game_code, "MK-81088") == 0
+    || strcmp(saturn_game_code, "T-3101G") == 0
+   )
+   {
+      // Using same rom name as beetle-saturn and MESS
+      snprintf(rompath, sizeof(rompath), "%s%cmpr-18811-mx.ic1", supportdir, slash);
+      carttype = CART_ROM16MBIT;
+      YuiMsg("Using '%s' as The King of Fighters '95 ROM Cartridge\n", rompath);
+   }
+
+      // Using same rom name as beetle-saturn and MESS
+   if (strcmp(saturn_game_code, "T-13308G") == 0)
+   {
+      // Using same path as beetle-saturn, no reason for having a different rom
+      snprintf(rompath, sizeof(rompath), "%s%cmpr-19367-mx.ic1", supportdir, slash);
+      carttype = CART_ROM16MBIT;
+      YuiMsg("Using '%s' as Ultraman: Hikari no Kyojin Densetsu ROM Cartridge\n", rompath);
+   }
+
+   return CartInit((carttype == CART_ROM16MBIT ? rompath : cartpath), carttype);
+}
+
 int YabauseInit(yabauseinit_struct *init)
 {
    // Need to set this first, so init routines see it
@@ -332,7 +412,21 @@ int YabauseInit(yabauseinit_struct *init)
    }
    // check if format is needed?
 
-   if (CartInit(init->cartpath, init->carttype) != 0)
+   if (Cs2Init(init->cdcoretype, init->cdpath, init->mpegpath) != 0)
+   {
+      YabSetError(YAB_ERR_CANNOTINIT, _("CS2"));
+      return -1;
+   }
+
+   if (init->auto_cart_select == 1)
+   {
+      if (CartInitAutoDetect(init->supportdir, init->cartpath) != 0)
+      {
+         YabSetError(YAB_ERR_CANNOTINIT, _("AUTOCART"));
+         return -1;
+      }
+   }
+   else if (CartInit(init->cartpath, init->carttype) != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("Cartridge"));
       return -1;
@@ -424,12 +518,6 @@ int YabauseInit(yabauseinit_struct *init)
    if (Vdp2Init() != 0)
    {
       YabSetError(YAB_ERR_CANNOTINIT, _("VDP2"));
-      return -1;
-   }
-
-   if (Cs2Init(init->carttype, init->cdcoretype, init->cdpath, init->mpegpath, init->modemip, init->modemport) != 0)
-   {
-      YabSetError(YAB_ERR_CANNOTINIT, _("CS2"));
       return -1;
    }
 

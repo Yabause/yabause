@@ -263,7 +263,7 @@ typedef struct {
 extern Cs2 * Cs2Area;
 extern ip_struct * cdip;
 
-int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *modemip, const char *modemport);
+int Cs2Init(int coreid, const char *cdpath, const char *mpegpath);
 int Cs2ChangeCDCore(int coreid, const char *cdpath);
 void Cs2DeInit(void);
 

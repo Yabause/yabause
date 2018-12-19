@@ -227,6 +227,7 @@ static INLINE void SH2UBCInterrupt(SH2_struct *context, u32 flag)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if 0
 static void showCPUState(SH2_struct *context)
 {
   int i;
@@ -257,6 +258,7 @@ static void showCPUState(SH2_struct *context)
    }
    printf("===========================================\n");
 }
+#endif
 
 u8 execInterrupt = 0;
 

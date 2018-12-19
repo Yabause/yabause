@@ -2043,7 +2043,7 @@ INLINE void Vdp2SetSpecialPriority(vdp2draw_struct *info, u8 dot, u32 * craminde
   }
 }
 
-INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp2 *varVdp2Regs) {
+static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp2 *varVdp2Regs) {
   u32 alpha = info->alpha;
   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   if (CCMD == 0) {  // Calculate Rate mode
@@ -7498,7 +7498,9 @@ void waitVdp2DrawScreensEnd(int sync) {
     if (empty == 0) {
       //Vdp2 has been evaluated we can render
       YglTmPush(YglTM_vdp2);
+      YuiUseOGLOnThisThread();
       YglUpdateVDP1FB();
+      YuiRevokeOGLOnThisThread();
       YglRender(&Vdp2Lines[0]);
     }
   }
@@ -7936,16 +7938,20 @@ void VIDOGLSetSettingValueMode(int type, int value) {
       int maj, min;
       glGetIntegerv(GL_MAJOR_VERSION, &maj);
       glGetIntegerv(GL_MINOR_VERSION, &min);
+#ifdef HAVE_GLES
+      if ((maj >=3) && (min >=1)) {
+#else
       if ((maj >=4) && (min >=2)) {
+#endif
         if (glPatchParameteri) {
           YglTesserationProgramInit();
           _Ygl->polygonmode = value;
         } else {
-          YuiMsg("GPU tesselation i not possible - fallback on CPU tesselation\n");
+          YuiMsg("GPU tesselation is not possible - fallback on CPU tesselation\n");
           _Ygl->polygonmode = CPU_TESSERATION;
         }
       } else {
-        YuiMsg("GPU tesselation i not possible - fallback on CPU tesselation\n");
+        YuiMsg("GPU tesselation is not possible - fallback on CPU tesselation\n");
         _Ygl->polygonmode = CPU_TESSERATION;
       }
     } else {

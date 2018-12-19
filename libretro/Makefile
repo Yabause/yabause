@@ -209,6 +209,10 @@ else
 	OBJECTS += $(C68KEXEC_OBJECT)
 endif
 
+ifeq ($(HAVE_GLES), 1)
+	FLAGS += -DHAVE_GLES
+endif
+
 OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
 
 LDFLAGS += $(fpic) $(SHARED)
@@ -234,6 +238,9 @@ generate-files:
 	$(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/musashi/ $(SOURCE_DIR)/musashi/m68k_in.c;\
 	$(CC) -DC68K_GEN -o $(SOURCE_DIR)/c68k/$(GEN68K_EXE) $(SOURCE_DIR)/c68k/c68kexec.c $(SOURCE_DIR)/c68k/c68k.c $(SOURCE_DIR)/c68k/gen68k.c;\
 	cd $(SOURCE_DIR)/c68k/; ./$(GEN68K_EXE)
+
+generate-files-clean:
+	rm -f $(SOURCE_DIR)/zlib/zconf.h $(GEN68K_INC_SOURCES) $(M68KMAKE_INC_SOURCES) $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/c68k/$(GEN68K_EXE)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)

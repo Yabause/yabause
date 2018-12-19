@@ -441,7 +441,7 @@ void FASTCALL Cs2WriteLong(SH2_struct *context, UNUSED u8* memory, UNUSED u32 ad
 
               if (offset >= 0) {
                 // Transfer Data
-                const u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[offset];
+                u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans]->data[offset];
 
                 if (Cs2Area->datatranspartition->block[Cs2Area->datanumsecttrans] == NULL)
                 {
@@ -474,15 +474,13 @@ void FASTCALL Cs2WriteLong(SH2_struct *context, UNUSED u8* memory, UNUSED u32 ad
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, const char *modemip, const char *modemport) {
+int Cs2Init(int coreid, const char *cdpath, const char *mpegpath) {
    int ret;
 
    if ((Cs2Area = (Cs2 *) malloc(sizeof(Cs2))) == NULL)
       return -1;
    memset(Cs2Area, 0, sizeof(*Cs2Area));
 
-   Cs2Area->carttype = carttype;
    Cs2Area->mpegpath = mpegpath;
    Cs2Area->cdi=NULL;
 
@@ -491,6 +489,8 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
 
    Cs2Reset();
 
+#if 0
+   // This stuff need to go elsewhere
    // If Modem is connected, set the registers
    if(Cs2Area->carttype == CART_NETLINK)
    {
@@ -502,6 +502,7 @@ int Cs2Init(int carttype, int coreid, const char *cdpath, const char *mpegpath, 
       if ((ret = JapModemInit(modemip, modemport)) != 0)
          return ret;
    }
+#endif
 
    if ((cdip = (ip_struct *) calloc(sizeof(ip_struct), 1)) == NULL)
       return -1;
@@ -569,10 +570,13 @@ void Cs2DeInit(void) {
          Cs2Area->cdi->DeInit();
       }
 
+#if 0
+      // This stuff need to go elsewhere
       if(Cs2Area->carttype == CART_NETLINK)
          NetlinkDeInit();
       else if (Cs2Area->carttype == CART_JAPMODEM)
          JapModemDeInit();
+#endif
 
       free(Cs2Area);
    }
@@ -931,10 +935,13 @@ void Cs2Exec(u32 timing) {
       Cs2SetIRQ(CDB_HIRQ_SCDQ);
    }
 
+#if 0
+   // This stuff need to go elsewhere
    if(Cs2Area->carttype == CART_NETLINK)
       NetlinkExec(timing);
    else if (Cs2Area->carttype == CART_JAPMODEM)
       JapModemExec(timing);
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3875,9 +3882,6 @@ int Cs2SaveState(FILE * fp) {
 
    offset = StateWriteHeader(fp, "CS2 ", 2);
 
-   // Write cart type
-   ywrite(&check, (void *) &Cs2Area->carttype, 4, 1, fp);
-
    // Write cd block registers
    ywrite(&check, (void *) &Cs2Area->reg, sizeof(blockregs_struct), 1, fp);
 
@@ -3989,9 +3993,6 @@ int Cs2LoadState(FILE * fp, int version, int size) {
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
    CDLOG("************* Cs2LoadState *********************");
-
-   // Read cart type
-   yread(&check, (void *)&Cs2Area->carttype, 4, 1, fp);
 
    // Read cd block registers
    yread(&check, (void *)&Cs2Area->reg, sizeof(blockregs_struct), 1, fp);

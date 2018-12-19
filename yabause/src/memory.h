@@ -447,7 +447,7 @@ extern "C" {
   int YabSaveStateBuffer(void **buffer, size_t *size);
   int YabLoadStateBuffer(const void *buffer, size_t size);
 
-  int BackupInit(char* path, int extended);
+  int BackupInit(const char* path, int extended);
   void BackupFlush();
   void BackupDeinit();
 

@@ -27,9 +27,15 @@ YabauseGL::YabauseGL( ) : QOpenGLWindow()
         QSurfaceFormat format;
         format.setDepthBufferSize(24);
         format.setStencilBufferSize(8);
+		format.setRedBufferSize(8);
+		format.setGreenBufferSize(8);
+		format.setBlueBufferSize(8);
+		format.setAlphaBufferSize(8);
         format.setSwapInterval(0);
-        format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-        format.setProfile(QSurfaceFormat::CompatibilityProfile);
+        format.setMajorVersion(4);
+        format.setMinorVersion(2);
+		format.setRenderableType(QSurfaceFormat::OpenGL);
+        format.setProfile(QSurfaceFormat::CoreProfile);
         setFormat(format);
 }
 

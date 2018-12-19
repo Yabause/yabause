@@ -1639,11 +1639,11 @@ int CartLoadState(FILE * fp, UNUSED int version, int size)
       // Read the areas associated with the cart type here
       switch(CartridgeArea->carttype){
             case CART_DRAM8MBIT: {
-               fread((void *)CartridgeArea->dram , 1, 0x100000, fp);
+               size_t nb = fread((void *)CartridgeArea->dram , 1, 0x100000, fp);
                break;
             }
             case CART_DRAM32MBIT: {
-               fread((void *)CartridgeArea->dram , 1, 0x400000, fp);
+               size_t nb = fread((void *)CartridgeArea->dram , 1, 0x400000, fp);
                break;      
             }
       }
