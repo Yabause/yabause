@@ -161,7 +161,7 @@ extern "C"
 #ifdef WIN32
 #ifndef vasprintf
 		int vasprintf(char **strp, const char *fmt, va_list ap) {
-			int len = 512
+			int len = 512;
 			char *str = (char*)malloc((size_t)len);
 			int r = vsnprintf_s(str, len, _TRUNCATE, fmt, ap); /* "secure" version of vsprintf */
 			if (r == -1) return free(str), -1;
