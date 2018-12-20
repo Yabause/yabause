@@ -212,6 +212,15 @@
     <addaction name="aViewFullscreen"/>
     <addaction name="aViewLog"/>
    </widget>
+   <widget class="QMenu" name="mViewDebug">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="title">
+     <string>&amp;Debug</string>
+    </property>
+    <addaction name="aViewDebugVDP1"/>
+   </widget>
    <widget class="QMenu" name="mHelp">
     <property name="title">
      <string>&amp;Help</string>
@@ -243,6 +252,7 @@
    <addaction name="mEmulation"/>
    <addaction name="mTools"/>
    <addaction name="mView"/>
+   <addaction name="mViewDebug"/>
    <addaction name="mHelp"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
@@ -460,6 +470,18 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="aViewDebugVDP1">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>VDP&amp;1</string>
    </property>
   </action>
   <action name="aHelpAbout">
