@@ -45,11 +45,13 @@ static const GLchar Yglprg_blit_4xbrz_f[] =
 "#version 310 es \n"
 
 "\n"
+"#ifdef GL_ES\n"
 "#ifdef GL_FRAGMENT_PRECISION_HIGH\n"
 "precision highp float;\n"
 "#else\n"
 "precision mediump float;\n"
 "#endif\n"
+"#endif"
 "#define BLEND_NONE 0\n"
 "#define BLEND_NORMAL 1\n"
 "#define BLEND_DOMINANT 2\n"
