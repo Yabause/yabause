@@ -30,8 +30,13 @@
 #include "scanline_shader.h"
 
 // Keep a way to switch to gles shaders for embedded devices
-#define SHADER_VERSION "#ifdef GL_ES\n#version 310 es \nprecision highp float;\nprecision highp int;\n#else\n#version 330 core \n#endif"
-#define SHADER_VERSION_TESS "#ifdef GL_ES#version 310 es \n#extension GL_ANDROID_extension_pack_es31a : enable \nprecision highp float;\nprecision highp int;\n#else\n#version 420 core \n#endif"
+#ifdef HAVE_GLES
+#define SHADER_VERSION "#version 310 es \nprecision highp float;\nprecision highp int;\n"
+#define SHADER_VERSION_TESS "#version 310 es \n#extension GL_ANDROID_extension_pack_es31a : enable \nprecision highp float;\nprecision highp int;\n"
+#else
+#define SHADER_VERSION "#version 330 core \n"
+#define SHADER_VERSION_TESS "#version 420 core \n"
+#endif
 
 //#define YGLLOG
 
