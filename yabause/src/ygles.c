@@ -797,7 +797,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   default:
     break;
   }
-  _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 1;
+  if (val != 0) _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 1;
 }
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
