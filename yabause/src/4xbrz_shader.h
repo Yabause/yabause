@@ -51,7 +51,7 @@ static const GLchar Yglprg_blit_4xbrz_f[] =
 "#else\n"
 "precision mediump float;\n"
 "#endif\n"
-"#endif"
+"#endif\n"
 "#define BLEND_NONE 0\n"
 "#define BLEND_NORMAL 1\n"
 "#define BLEND_DOMINANT 2\n"
