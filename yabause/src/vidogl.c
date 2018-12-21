@@ -7741,7 +7741,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(RBGDrawInfo * 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   if ((varVdp2Regs->WCTLD & 0x04) == 0) {
-    return (&rgb->paraB);
+    return (&rgb->paraA);
   }
 
   if (rgb->info.WindwAreaMode == 0)
