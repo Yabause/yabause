@@ -779,6 +779,7 @@ u16 COLOR24TO16(u32 temp) {
 void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   u8 priority = Vdp2Regs->PRISA &0x7;
   int rgb = !((val>>15)&0x1);
+  if (val == 0) return;
   if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL)
     _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
   switch (type)
@@ -797,7 +798,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   default:
     break;
   }
-  if (val != 0) _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 1;
+  _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 1;
 }
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
