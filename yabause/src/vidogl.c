@@ -548,7 +548,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     u16 temp;
     u32 colorLut = cmd->CMDCOLR * 8;
     u16 i;
-
     for (i = 0; i < sprite->h; i++)
     {
       u16 j;
@@ -3389,6 +3388,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
           }
         }
         // Fetch Pixel
+        info->charaddr = parameter->charaddr;
         color = Vdp2RotationFetchPixel(info, h, v, cellw);
       }
       else
@@ -4471,7 +4471,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   sprite.dst = 0;
-
 
   sprite.vertices[0] = (s16)cmd.CMDXA;
   sprite.vertices[1] = (s16)cmd.CMDYA;

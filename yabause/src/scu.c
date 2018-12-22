@@ -370,8 +370,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
       }
 #endif  // OPTIMIZED_DMA
 
-      if ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000
-          && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) {
+      // Access to B-BUS?
+      if ( ((WriteAddress & 0x1FFFFFFF) >= 0x5A00000  && (WriteAddress & 0x1FFFFFFF) < 0x5FF0000) ) {
          // Copy in 16-bit units, avoiding misaligned accesses.
          u32 counter = 0;
          if (ReadAddress & 2) {  // Avoid misaligned access
@@ -400,6 +400,16 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             ReadAddress += 2;
             counter += 2;
          }
+      }
+      else if (((ReadAddress & 0x1FFFFFFF) >= 0x5A00000 && (ReadAddress & 0x1FFFFFFF) < 0x5FF0000)) {
+        u32 counter = 0;
+        while (counter < TransferSize) {
+          u16 tmp = MappedMemoryReadWord(ReadAddress);
+          MappedMemoryWriteWord(WriteAddress, tmp);
+          WriteAddress += (WriteAdd>>1);
+          ReadAddress += 2;
+          counter += 2;
+        }
       }
       else {
          u32 counter = 0;

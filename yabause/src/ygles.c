@@ -791,10 +791,15 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
 }
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
-  const int Line = (addr >> 10);
-  const int Pix = ((addr & 0x3FF) >> 1);
-  
-  if (_Ygl->cpu_framebuffer_write || (Pix > Vdp1Regs->systemclipX2 || Line > Vdp1Regs->systemclipY2)){
+  int Line = (addr >> 10);
+  int Pix = ((addr & 0x3FF) >> 1);
+
+  // 8bit 512x512
+  if ((Vdp1Regs->TVMR & 0x7) == 0x03) {
+    Line = (addr >> 9);
+    Pix = (addr & 0x1FF);
+  }
+  if (_Ygl->cpu_framebuffer_write || (Pix > Vdp1Regs->systemclipX2 || Line >= Vdp1Regs->systemclipY2)){
     switch (type)
     {
     case 0:
@@ -813,42 +818,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   }
 
 
-  if (_Ygl->smallfbo == 0) {
-    GLuint error;
-    YabThreadLock( _Ygl->mutex );
-    glGenTextures(1, &_Ygl->smallfbotex);
-    YGLDEBUG("glGenTextures %d\n",_Ygl->smallfbotex );
-    glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    glGetError();
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    if ((error = glGetError()) != GL_NO_ERROR) {
-      YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
-      //abort();
-    }
-    YGLDEBUG("glTexImage2D %d\n",_Ygl->smallfbotex );
-    glGenFramebuffers(1, &_Ygl->smallfbo);
-    YGLDEBUG("glGenFramebuffers %d\n", _Ygl->smallfbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
-
-    glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
-    if ((error = glGetError()) != GL_NO_ERROR) {
-      YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X", __LINE__, error);
-      abort();
-    }
-    YGLDEBUG("glGenBuffers %d\n",_Ygl->vdp1pixelBufferID);
-    if( _Ygl->vdp1pixelBufferID == 0 ){
-      YGLLOG("Fail to glGenBuffers %X",glGetError());
-      abort();
-    }
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
-    glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_STATIC_READ);
-    glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-    YabThreadUnLock( _Ygl->mutex );
-  }
-
   while (_Ygl->vpd1_running){ YabThreadYield(); }
 
   YabThreadLock(_Ygl->mutex);
@@ -860,6 +829,53 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       glDeleteSync( _Ygl->sync );
       _Ygl->sync = 0;
     }
+
+    if (_Ygl->smallfbo == 0) {
+      GLuint error;
+      YabThreadLock(_Ygl->mutex);
+      glGenTextures(1, &_Ygl->smallfbotex);
+      YGLDEBUG("glGenTextures %d\n", _Ygl->smallfbotex);
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
+      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+      glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+      glGetError();
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      if ((error = glGetError()) != GL_NO_ERROR) {
+        YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
+        abort();
+      }
+      YGLDEBUG("glTexImage2D %d\n", _Ygl->smallfbotex);
+      glGenFramebuffers(1, &_Ygl->smallfbo);
+      YGLDEBUG("glGenFramebuffers %d\n", _Ygl->smallfbo);
+      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
+      glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->smallfbotex, 0);
+      int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+      if (status != GL_FRAMEBUFFER_COMPLETE) {
+        YGLLOG("YglRenderVDP1: Framebuffer status = %08X\n", status);
+        abort();
+      }
+      else {
+        //YGLLOG("Framebuffer status OK = %08X\n", status );
+      }
+
+      glGenBuffers(1, &_Ygl->vdp1pixelBufferID);
+      if ((error = glGetError()) != GL_NO_ERROR) {
+        YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X", __LINE__, error);
+        abort();
+      }
+      YGLDEBUG("glGenBuffers %d\n", _Ygl->vdp1pixelBufferID);
+      if (_Ygl->vdp1pixelBufferID == 0) {
+        YGLLOG("Fail to glGenBuffers %X", glGetError());
+        abort();
+      }
+      glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
+      glBufferData(GL_PIXEL_PACK_BUFFER, _Ygl->rwidth*_Ygl->rheight * 4, NULL, GL_STATIC_READ);
+      glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+      YabThreadUnLock(_Ygl->mutex);
+    }
+
 #if 0
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
@@ -894,26 +910,43 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   }
 
   int index = (Vdp1Regs->systemclipY2-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;
-  switch (type){
-    case 1:{
+  if (Vdp2Regs->SPCTL & 0x20) {
+    switch (type) {
+    case 1: {
       u8 r = *((u8*)(_Ygl->pFrameBuffer) + index);
       u8 g = *((u8*)(_Ygl->pFrameBuffer) + index + 1);
       u8 b = *((u8*)(_Ygl->pFrameBuffer) + index + 2);
-      *(u16*)out = ((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F)<<10) | 0x8000;
+      *(u16*)out = ((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F) << 10) | 0x8000;
     }
-    break;
-    case 2:{
+            break;
+    case 2: {
       u32 r = *((u8*)(_Ygl->pFrameBuffer) + index);
       u32 g = *((u8*)(_Ygl->pFrameBuffer) + index + 1);
       u32 b = *((u8*)(_Ygl->pFrameBuffer) + index + 2);
-      u32 r2 = *((u8*)(_Ygl->pFrameBuffer) + index+4);
+      u32 r2 = *((u8*)(_Ygl->pFrameBuffer) + index + 4);
       u32 g2 = *((u8*)(_Ygl->pFrameBuffer) + index + 5);
       u32 b2 = *((u8*)(_Ygl->pFrameBuffer) + index + 6);
       /*  BBBBBGGGGGRRRRR */
-      *(u32*)out = (((r2 >> 3) & 0x1f) | (((g2 >> 3) & 0x1f) << 5) | (((b2 >> 3) & 0x1F)<<10) | 0x8000) |
-                   ((((r >> 3) & 0x1f) | (((g  >> 3) & 0x1f) << 5) | (((b  >> 3) & 0x1F)<<10) | 0x8000) << 16) ;
+      *(u32*)out = (((r2 >> 3) & 0x1f) | (((g2 >> 3) & 0x1f) << 5) | (((b2 >> 3) & 0x1F) << 10) | 0x8000) |
+        ((((r >> 3) & 0x1f) | (((g >> 3) & 0x1f) << 5) | (((b >> 3) & 0x1F) << 10) | 0x8000) << 16);
     }
-    break;
+            break;
+    }
+  }
+  // Pallet mode
+  else {
+    
+    switch (Vdp2Regs->SPCTL & 0xF) {
+    case 0x0F: {
+      u16 r = *((u8*)(_Ygl->pFrameBuffer) + index);
+      u16 r2 = *((u8*)(_Ygl->pFrameBuffer) + index + 4);
+      *(u16*)out = (r<<8) | (r2<<0);
+    }
+      break;
+    default:
+      *(u16*)out = 0x0000;
+      break;
+    }
   }
   YabThreadUnLock(_Ygl->mutex);
 }
