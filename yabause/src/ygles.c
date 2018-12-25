@@ -2559,16 +2559,6 @@ static void executeTMVDP1(int in, int out) {
   }
 }
 
-static int currentVDP1Draw = -1;
-
-void Vdp1SyncVout(void)
-{
-#ifdef __LIBRETRO__
-  if (currentVDP1Draw != -1)  waitVdp1End(currentVDP1Draw);
-  currentVDP1Draw = -1;
-#endif
-}
-
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
@@ -2590,8 +2580,6 @@ void YglRenderVDP1(void) {
   YglMatrix m, *mat;
 
   FrameProfileAdd("YglRenderVDP1 start");
-
-  currentVDP1Draw = _Ygl->drawframe;
 
   glBindVertexArray(_Ygl->vao);
   YglLoadIdentity(&m);
