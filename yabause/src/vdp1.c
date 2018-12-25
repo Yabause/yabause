@@ -1682,6 +1682,7 @@ void Vdp1VBlankOUT(void)
   if (needVBlankErase()) {
        VIDCore->Vdp1EraseWrite();
   }
+  Vdp1SyncVout();
   Vdp1External.vblank_erase = 0;
 }
 
