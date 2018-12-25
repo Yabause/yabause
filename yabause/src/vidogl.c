@@ -455,13 +455,11 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
   // Check if transparent sprite window
   // hard/vdp2/hon/p08_12.htm#SPWINEN_
   if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
-      ((varVdp2Regs->SPCTL & 0x20)==0) && // Sprite color mode
       (varVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
       ((varVdp2Regs->SPCTL & 0xF)  >=2 && (varVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
   {
     return 0;
   }
-
 
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow, varVdp2Regs);
   switch ((cmd->CMDPMOD >> 3) & 0x7)
