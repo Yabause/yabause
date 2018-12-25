@@ -109,18 +109,18 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    static const struct retro_controller_info ports[] = {
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
-      { peripherals, 5 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
+      { peripherals, 3 },
       { 0 },
    };
 
