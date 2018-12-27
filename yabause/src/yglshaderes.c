@@ -4036,11 +4036,11 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matrix
   glEnableVertexAttribArray(1);
   glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vb_buf);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vb), vb, GL_STREAM_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, _Ygl->tb_buf);
   glBufferData(GL_ARRAY_BUFFER, sizeof(tb), tb, GL_STREAM_DRAW);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
   glUniformMatrix4fv(u_blur_mtxModelView, 1, GL_FALSE, matrix);
   glUniform1f(u_blur_tw, w);
