@@ -788,12 +788,12 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "An
 	add_definitions(-DARCH_IS_LINUX=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.c cd-linux.c)
 
-	if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
-		check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
-		if (LINUX_HAS_JOYSTICK)
-			set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
-			set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
-		endif()
+        if (!ANDROID)
+          check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
+          	if (LINUX_HAS_JOYSTICK)
+          		set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
+          		set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
+          	endif()
 
 		check_c_source_compiles("
 			#include <linux/cdrom.h>
