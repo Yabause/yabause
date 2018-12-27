@@ -565,8 +565,11 @@ typedef struct {
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;
    int vpd1_running;
-   int cpu_framebuffer_write;
-
+   int cpu_framebuffer_write[2];
+   int min_fb_x;
+   int max_fb_x;
+   int min_fb_y;
+   int max_fb_y;
 
    GLuint cram_tex;
    GLuint cram_tex_pbo;
