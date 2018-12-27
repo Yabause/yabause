@@ -2458,19 +2458,6 @@ void YglEraseWriteVDP1(void) {
   int status = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
-  if(_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
-    glActiveTexture(GL_TEXTURE0);
-    if (_Ygl->vdp1fb_buf[_Ygl->readframe] == NULL) _Ygl->vdp1fb_buf[_Ygl->readframe] =  getVdp1DrawingFBMem(_Ygl->readframe);
-    memset(_Ygl->vdp1fb_buf[_Ygl->readframe], 0x0, 0x40000*2);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[_Ygl->readframe]);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[_Ygl->readframe]);
-    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    _Ygl->vdp1IsNotEmpty[_Ygl->readframe] = 0;
-    _Ygl->vdp1fb_buf[_Ygl->readframe] = NULL;
-  }
-
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe], 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
@@ -2480,54 +2467,34 @@ void YglEraseWriteVDP1(void) {
   priority = 0;
 
   if ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
-
-    u8 rgb_alpha = 0xF8;
-    int tp = 0;
-    u8 spmode = Vdp2Regs->SPCTL & 0x0f;
-    if (spmode & 0x8){
-      if (!(color & 0xFF)) {
-        rgb_alpha = 0;
-      }
-    }
-    // vdp2/hon/p08_12.htm#no8_15
-    else if (Vdp2Regs->SPCTL & 0x10) { // Enable Sprite Window
-      if (spmode >= 0x2 && spmode <= 0x7) {
-        rgb_alpha = 0;
-      }
-    }
-    else {
-      //u8 *cclist = (u8 *)&Vdp2Regs->CCRSA;
-      //cclist[0] &= 0x1F;
-      //u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
-      alpha = VDP1COLOR(0, 0, 0, 0, 0);
-      alpha >>= 24;
-    }
-    //alpha = rgb_alpha;
-    //priority = Vdp2Regs->PRISA & 0x7;
+    alpha = VDP1COLOR(0, 0, 0, 0, 0);
+    alpha >>= 24;
   }
   else{
     int shadow, normalshadow, colorcalc;
     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
-#if 0
-    priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
-    if (color == 0) {
-      alpha = 0;
-      priority = 0;
-    }
-    else{
-      alpha = 0xF8;
-    }
-#endif
     alpha = VDP1COLOR(1, colorcalc, priority, 0, 0);
     alpha >>= 24;
   }
-  //alpha |= priority;
 
   glClearColor((color & 0x1F) / 31.0f, ((color >> 5) & 0x1F) / 31.0f, ((color >> 10) & 0x1F) / 31.0f, alpha / 255.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
   //Get back to drawframe
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
+
+  if(_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
+    glActiveTexture(GL_TEXTURE0);
+    if (_Ygl->vdp1fb_buf[_Ygl->readframe] == NULL) _Ygl->vdp1fb_buf[_Ygl->readframe] =  getVdp1DrawingFBMem(_Ygl->readframe);
+    for (int i = 0; i< 0x20000;i++) _Ygl->vdp1fb_buf[_Ygl->readframe][i] = COLOR16TO24(color)<<8 | 0x80;
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[_Ygl->readframe]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[_Ygl->readframe]);
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    _Ygl->vdp1IsNotEmpty[_Ygl->readframe] = 0;
+    _Ygl->vdp1fb_buf[_Ygl->readframe] = NULL;
+  }
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   
