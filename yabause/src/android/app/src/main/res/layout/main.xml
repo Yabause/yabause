@@ -8,6 +8,7 @@
     android:fitsSystemWindows="false"
     android:background="#000000"
     tools:openDrawer="start"
+    android:theme="@style/GameScreenTheme"
     >
         <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -28,6 +29,7 @@
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
             android:layout_gravity="top|center_horizontal"
+
             />
 
         <org.uoyabause.android.YabausePad
@@ -53,7 +55,9 @@
         app:insetForeground="#0000"
         android:background="#80101010"
         app:headerLayout="@layout/nav_header_main"
-        app:menu="@menu/game_menu" />
+        app:menu="@menu/game_menu"
+        android:theme="@style/AppTheme"
+        />
 
 </android.support.v4.widget.DrawerLayout>
 
