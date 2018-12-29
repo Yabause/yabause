@@ -54,6 +54,8 @@ class GameFilter implements FilenameFilter {
     	if (filename.endsWith(".IMG")) return true;
         if (filename.endsWith(".bin")) return true;
         if (filename.endsWith(".cue")) return true;
+        if (filename.endsWith(".CCD")) return true;
+        if (filename.endsWith(".ccd")) return true;
         if (filename.endsWith(".iso")) return true;
         if (filename.endsWith(".mds")) return true;
         if (filename.endsWith(".BIN")) return true;
@@ -269,7 +271,7 @@ public class YabauseStorage {
     }
 
     void generateGameListFromDirectory( String dir ){
-        String[] extensions = new String[] {"img", "bin", "cue","mds","iso","IMG","BIN", "CUE","MDS","ISO" };
+        String[] extensions = new String[] {"img", "bin", "ccd","CCD", "cue","mds","iso","IMG","BIN", "CUE","MDS","ISO" };
         IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
         boolean recursive = true;
 
