@@ -177,13 +177,13 @@ int Ygl_uniformVdp1CommonParam(void * p){
 #else
     if( glMemoryBarrier ){
       glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
+      glFlush();
     }else{
       //glFinish();
     }
 #endif    
     glActiveTexture(GL_TEXTURE0); 
   }
-
 
   return 0;
 }
