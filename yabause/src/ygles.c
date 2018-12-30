@@ -4267,6 +4267,16 @@ void YglChangeResolution(int w, int h) {
       _Ygl->height = h;
       rebuild_frame_buffer = 1;
       break;
+     case RES_720P:
+      _Ygl->width = 1280;
+      _Ygl->height = 720;
+      rebuild_frame_buffer = 1;
+      break;
+      case RES_1080P:
+      _Ygl->width = 1920;
+      _Ygl->height = 1080;
+      rebuild_frame_buffer = 1;
+      break;
     }
   }
 

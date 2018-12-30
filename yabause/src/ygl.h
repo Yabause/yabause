@@ -460,7 +460,9 @@ typedef enum
 	RES_NATIVE = 0,
 	RES_4x,
 	RES_2x,
-    RES_ORIGINAL
+    RES_ORIGINAL,
+    RES_720P,
+    RES_1080P
 } RESOLUTION_MODE;
 
 
