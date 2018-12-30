@@ -135,6 +135,7 @@ CPU Tesselation|Teselado CPU
 Data Size|Tamaño de datos
 Data Size :|Tamaño de datos :
 Data Type|Tipo de Datos
+Debug|Depurar
 Debug CPU|Depurar CPU
 Debug M68K|Depurar M68K
 Debug Master SH2|Depurar SH2 Maestro
@@ -362,7 +363,6 @@ Stick Up|Stick Arriba
 Stop|Detener
 Stretch to window|Ajustar a la ventana
 Synchronize Saturn internal clock with set time|Sincronizar reloj interno de la Saturn con hora local
-Tesselation|Teselado
 Text|Texto
 Texture|Textura
 The dummies cores don't need configuration|Los núcleos dummy no necesitan configuración
