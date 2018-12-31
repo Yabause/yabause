@@ -44,12 +44,16 @@
 
     <string-array name="entries_video_resolution_list_preference" translatable="false" >
         <item>@string/res_native</item>
+        <item>@string/res_1080p</item>
+        <item>@string/res_720p</item>
         <item>@string/res_4x</item>
         <item>@string/res_2x</item>
         <item>@string/res_original</item>
     </string-array>
     <string-array name="entryvalues_video_resolution_list_preference" translatable="false">
         <item>0</item>
+        <item>5</item>
+        <item>4</item>
         <item>1</item>
         <item>2</item>
         <item>3</item>
