@@ -3179,6 +3179,7 @@ static void releaseVDP1FB(int i) {
 void YglUpdateVDP1FB(void) {
   waitVdp1End(_Ygl->readframe);
   if (_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
+    YglGenFrameBuffer();
     releaseVDP1FB(_Ygl->readframe);
     YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], (float)_Ygl->rwidth, (float)_Ygl->rheight, 0);
     // clean up
@@ -4084,6 +4085,8 @@ void YglChangeResolution(int w, int h) {
 #ifndef __LIBRETRO__
   if (( h > 256) &&  (_Ygl->resolution_mode >= 4)) _Ygl->resolution_mode = _Ygl->resolution_mode>>1; //Do not use 4x rendering when original res is already 2x
 #endif
+  releaseVDP1FB(0);
+  releaseVDP1FB(1);
        YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
          glDeleteFramebuffers(1, &_Ygl->smallfbo);
