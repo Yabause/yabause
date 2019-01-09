@@ -2447,6 +2447,9 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   int linestart = 0;
 
   int height = vdp2height;
+
+  // Is double-interlace enabled?
+/*
   if ((vdp1_interlace != 0) || (height >= 448)) {
     lineinc = 2;
   }
@@ -2454,6 +2457,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   if (vdp1_interlace != 0) {
     linestart = vdp1_interlace - 1;
   }
+*/
 
   for (i = linestart; i < lineinc*height; i += lineinc)
   {
