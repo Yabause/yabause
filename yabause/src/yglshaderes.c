@@ -38,7 +38,7 @@
 #define SHADER_VERSION_TESS "#version 420 core \n"
 #endif
 
-#define YGLLOG printf
+#define YGLLOG
 
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
