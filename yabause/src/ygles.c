@@ -30,7 +30,7 @@
 #include "error.h"
 
 
-//#define __USE_OPENGL_DEBUG__
+#define __USE_OPENGL_DEBUG__
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -788,12 +788,12 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     //T1WriteByte(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, val);
     break;
   case 1:
-    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF), 0));
     break;
   case 2:
-    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF), 0));
     rgb = !(((val>>16)>>15)&0x1);
-    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF), 0));
     break;
   default:
     break;
@@ -2441,14 +2441,14 @@ void YglEraseWriteVDP1(void) {
   priority = 0;
 
   if ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
-    alpha = VDP1COLOR(0, 0, 0, 0, 0);
+    alpha = VDP1COLOR(0, 0, 0, 0, 0, 0);
     alpha >>= 24;
   }
   else{
     int rgb = ((color&0x8000) == 0);
     int shadow, normalshadow, colorcalc;
     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
-    alpha = VDP1COLOR(rgb, colorcalc, priority, 0, 0);
+    alpha = VDP1COLOR(rgb, colorcalc, priority, 0, 0, 0);
     alpha >>= 24;
   }
   col[0] = (color & 0x1F) / 31.0f;

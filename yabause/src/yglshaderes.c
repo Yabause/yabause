@@ -38,7 +38,7 @@
 #define SHADER_VERSION_TESS "#version 420 core \n"
 #endif
 
-//#define YGLLOG
+#define YGLLOG printf
 
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
@@ -1565,13 +1565,17 @@ SHADER_VERSION
 "  vec2 addr = v_texcoord;\n"
 "  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
+"  int opaque = int(fbColor.b * 255.0) & 0x01;\n"
+"  int shadow = int(fbColor.b * 255.0) & 0x80;\n"
 "  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
 "  int prinumber = (additional&0x07); "
+"  float alpha = u_alpha[((additional>>3)&0x07)]; \n"
+"  if (opaque != 0) alpha = 1.0; \n"
 "  highp float depth = u_pri[ prinumber ];\n"
 "  if( depth < u_from || depth > u_to ){ discard; } \n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
-"    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
+"    if( shadow != 0 ) {discard;} // draw shadow last path \n"
 "    int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
 "    if( colindex == 0 && prinumber == 0) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "    colindex = colindex + u_color_ram_offset; \n"
@@ -1588,12 +1592,12 @@ SHADER_VERSION
 */
 const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fragColor.a = 1.0; \n";
 
-const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_f[] = " fragColor.a = u_alpha[((additional>>3)&0x07)]; \n";
+const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_f[] = " fragColor.a = alpha; \n";
 
-const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth <= u_cctl ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth == u_cctl ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth >= u_cctl ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a != 0.0 ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth <= u_cctl ){ fragColor.a = alpha; }else{ fragColor.a = 1.0; } \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth == u_cctl ){ fragColor.a = alpha; }else{ fragColor.a = 1.0; } \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth >= u_cctl ){ fragColor.a = alpha; }else{ fragColor.a = 1.0; } \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a != 0.0 ){ fragColor.a = alpha; }else{ fragColor.a = 1.0; } \n ";
 
 const GLchar Yglprg_vdp2_drawfb_cram_less_color_add_f[]  = " if( depth <= u_cctl ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
 const GLchar Yglprg_vdp2_drawfb_cram_equal_color_add_f[] = " if( depth == u_cctl ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
@@ -1690,7 +1694,8 @@ SHADER_VERSION
 "  if( depth < u_from || depth > u_to ){ discard; } \n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
-"    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
+"    int shadow = int(fbColor.b * 255.0) & 0x80;\n"
+"    if( shadow!= 0 ) {discard;} // draw shadow last path \n"
 "    int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
 "    if( colindex == 0 && (additional&0x07) == 0 ) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "    colindex = colindex + u_color_ram_offset; \n"
@@ -1805,7 +1810,8 @@ SHADER_VERSION
 "  int additional = int(fbColor.a * 255.0);\n"
 "  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
 "  highp float depth = u_pri[ (additional&0x07) ];\n"
-"  if( (additional & 0x40) != 0 && fbColor.b != 0.0 ){  // index color and shadow? \n"
+"  int shadow = int(fbColor.b * 255.0) & 0x80;\n"
+"  if( (additional & 0x40) != 0 && (shadow != 0) ){  // index color and shadow? \n"
 "    fragColor = vec4(0.0,0.0,0.0,0.5);\n"
 "  }else{ // direct color \n"
 "    discard;;\n"
