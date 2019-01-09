@@ -4358,6 +4358,7 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
   if (isQuad) dst == 1;
   if ((isQuad || isTriangle) && distorted) {
     int disp = 0;
+    int isSquare = 1;
 
     float dx[4];
     float dy[4];
@@ -4395,14 +4396,16 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
     for (int i = 0; i < 4; i++) {
       float cx = (dx[i] - dx[(i+3)%4]);
       float cy = (dy[i] - dy[(i+3)%4]);
+      float dx = cx;
+      float dy = cy;
 
       if (!IS_ZERO(cx)) {
-        if (IS_LESS(cx, -EPSILON)) cx = -BORDER;
-        if (IS_MORE(cx, EPSILON)) cx = BORDER;
-      }
+        if (IS_LESS(cx, -EPSILON)) dx = -BORDER;
+        if (IS_MORE(cx, EPSILON)) dx = BORDER;
+      } else 
       if (!IS_ZERO(cy)) {
-        if (IS_LESS(cy, -EPSILON)) cy = -BORDER;
-        if (IS_MORE(cy, EPSILON)) cy = BORDER;
+        if (IS_LESS(cy, -EPSILON)) dy = -BORDER;
+        if (IS_MORE(cy, EPSILON)) dy = BORDER;
       } 
 #if 0
       if (IS_ZERO(dx[i]) && IS_ZERO(dy[(i+3)%4])) {
@@ -4412,13 +4415,79 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
         cx = cy = 0.0f;
       }
 #endif
-      nx[i] = in[i*2] + entrant[i] * cx;
-      ny[i] = in[i*2+1] + entrant[i] * cy;
+      nx[i] = in[i*2] + entrant[i] * dx;
+      ny[i] = in[i*2+1] + entrant[i] * dy;
     }
 #if 0
 printf("(%f %f) (%f %f) (%f %f) (%f %f)\n", in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7]);
 printf("[(%f %f)]%f [(%f %f)]%f [(%f %f)]%f [(%f %f)]%f\n", nx[0], ny[0], entrant[0], nx[1], ny[1], entrant[1], nx[2], ny[2], entrant[2], nx[3], ny[3], entrant[3]);
 #endif
+
+#if 1
+  for (i = 0; i < 3; i++) {
+    float dx = nx[(i + 1) & 0x3] - nx[i];
+    float dy = ny[(i + 1) & 0x3] - ny[i];
+    float d2x = nx[(i + 2) & 0x3] - nx[(i + 1) & 0x3];
+    float d2y = ny[(i + 2) &  0x3] - ny[(i + 1) & 0x3];
+
+    float dot = dx*d2x + dy*d2y;
+    if (dot >= EPSILON || dot <= -EPSILON) {
+      isSquare = 0;
+      break;
+    }
+  }
+
+  if (isSquare) {
+    // find upper left opsition
+    float minx = 65535.0f;
+    float miny = 65535.0f;
+    int lt_index = -1;
+
+    for (i = 0; i < 4; i++) {
+      if (nx[i] <= minx /*&& sprite.vertices[(i << 1) + 1] <= miny*/) {
+
+        if (minx == nx[i]) {
+          if (ny[i] < miny) {
+            minx = nx[i];
+            miny = ny[i];
+            lt_index = i;
+          }
+        }
+        else {
+          minx = nx[i];
+          miny = ny[i];
+          lt_index = i;
+        }
+      }
+    }
+
+    float adx = nx[(lt_index + 1) & 0x03] - nx[lt_index];
+    float ady = ny[(lt_index + 1) & 0x03] - ny[lt_index];
+    float bdx = nx[(lt_index + 2) & 0x03] - nx[lt_index];
+    float bdy = ny[(lt_index + 2) & 0x03] - ny[lt_index];
+    float cross = (adx * bdy) - (bdx * ady);
+
+    // clockwise
+    if (cross >= 0) {
+      nx[(lt_index + 1) & 0x03] += 1;
+      ny[(lt_index + 1) & 0x03] += 0;
+      nx[(lt_index + 2) & 0x03] += 1;
+      ny[(lt_index + 2) & 0x03] += 1;
+      nx[(lt_index + 3) & 0x03] += 0;
+      ny[(lt_index + 3) & 0x03] += 1;
+    }
+    // counter-clockwise
+    else {
+      nx[(lt_index + 1) & 0x03] += 0;
+      ny[(lt_index + 1) & 0x03] += 1;
+      nx[(lt_index + 2) & 0x03] += 1;
+      ny[(lt_index + 2) & 0x03] += 1;
+      nx[(lt_index + 3) & 0x03] += 1;
+      ny[(lt_index + 3) & 0x03] += 0;
+    }
+  }
+#endif
+
   } 
   out[0] = nx[0];
   out[1] = ny[0];
