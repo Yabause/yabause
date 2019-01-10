@@ -2441,8 +2441,7 @@ void YglEraseWriteVDP1(void) {
   priority = 0;
 
   if ((color & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
-    alpha = VDP1COLOR(0, 0, 0, 0, 0, 0);
-    alpha >>= 24;
+    alpha = 0;
   }
   else{
     int rgb = ((color&0x8000) == 0);
