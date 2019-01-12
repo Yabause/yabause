@@ -847,7 +847,7 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         YabauseRunnable.enableFPS(fps ? 1 : 0);
         Log.d(TAG,"enable FPS " + fps);
 
-        boolean frameskip = sharedPref.getBoolean("pref_frameskip", false);
+        boolean frameskip = sharedPref.getBoolean("pref_frameskip", true);
         YabauseRunnable.enableFrameskip(frameskip ? 1 : 0);
         Log.d(TAG, "enable enableFrameskip " + frameskip);
 

@@ -67,7 +67,7 @@
         <CheckBoxPreference
             android:key="pref_frameskip"
             android:title="@string/frameskip"
-            android:defaultValue="false" />
+            android:defaultValue="true" />
         
         <CheckBoxPreference
             android:key="pref_keepaspectrate"
