@@ -556,7 +556,7 @@ typedef struct {
    GLuint vdp1IsNotEmpty[2];
    u32* vdp1fb_buf[2];
    GLuint original_fbo;
-   GLuint original_fbotex;
+   GLuint original_fbotex[4];
    GLuint original_depth;
 
    GLuint tmpfbo;
@@ -635,6 +635,8 @@ typedef struct {
    GLuint quads_buf;
    GLuint textcoords_buf;
    GLuint vertexAttribute_buf;
+
+   int screen[enBGMAX];
 
 }  Ygl;
 

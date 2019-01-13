@@ -6146,6 +6146,8 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     return;
   }
 
+  _Ygl->screen[RBG1] = info->priority;
+
   // Window Mode
   info->bEnWin0 = (varVdp2Regs->WCTLA >> 1) & 0x01;
   info->WindowArea0 = (varVdp2Regs->WCTLA >> 0) & 0x01;
@@ -6716,11 +6718,14 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
 
   info.priority = (varVdp2Regs->PRINA >> 8) & 0x7;
+
   info.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2NBG1PlaneAddr;
 
   if (((Vdp2External.disptoggle & 0x2)==0) || (info.priority == 0) ||
     (varVdp2Regs->BGON & 0x1 && (varVdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
     return;
+
+  _Ygl->screen[NBG1] = info.priority;
 
   // Window Mode
   info.bEnWin0 = (varVdp2Regs->WCTLA >> 9) & 0x01;
@@ -6956,6 +6961,8 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
     (varVdp2Regs->BGON & 0x1 && (varVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
     return;
 
+  _Ygl->screen[NBG2] = info.priority;
+
   // Window Mode
   info.bEnWin0 = (varVdp2Regs->WCTLB >> 1) & 0x01;
   info.WindowArea0 = (varVdp2Regs->WCTLB >> 0) & 0x01;
@@ -7076,6 +7083,8 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
     (varVdp2Regs->BGON & 0x2 && (varVdp2Regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
     return;
 
+  _Ygl->screen[NBG3] = info.priority;
+
   // Window Mode
   info.bEnWin0 = (varVdp2Regs->WCTLB >> 9) & 0x01;
   info.WindowArea0 = (varVdp2Regs->WCTLB >> 8) & 0x01;
@@ -7127,6 +7136,8 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     free(rgb);
     return;
   }
+
+  _Ygl->screen[RBG0] = info->priority;
 
   info->blendmode = 0;
 
@@ -7496,6 +7507,13 @@ static void VIDOGLVdp2DrawScreens(void)
 #if BG_PROFILE
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
 #endif
+
+  _Ygl->screen[NBG0] = 0;
+  _Ygl->screen[NBG1] = 0;
+  _Ygl->screen[NBG2] = 0;
+  _Ygl->screen[NBG3] = 0;
+  _Ygl->screen[RBG0] = 0;
+  _Ygl->screen[RBG1] = 0;
 
   YglUpdateColorRam();
 
