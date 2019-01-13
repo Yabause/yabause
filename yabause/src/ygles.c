@@ -2614,7 +2614,7 @@ void YglRenderVDP1(void) {
 
   //YabThreadUnLock(_Ygl->mutex);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-  glEnable(GL_DEPTH_TEST);
+  //glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   FrameProfileAdd("YglRenderVDP1 end");
 }
@@ -2675,7 +2675,7 @@ void YglSetVdp2Window()
 
       glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
       glDepthMask(GL_TRUE);
-      glEnable(GL_DEPTH_TEST);
+      //glEnable(GL_DEPTH_TEST);
       glDisable(GL_STENCIL_TEST);
       glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
       glStencilFunc(GL_ALWAYS,0,0xFF);
@@ -3086,7 +3086,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    _Ygl->targetfbo = _Ygl->original_fbo;
    glViewport(0, 0, GlWidth, GlHeight);
    glDepthMask(GL_TRUE);
-   glEnable(GL_DEPTH_TEST);
+   //glEnable(GL_DEPTH_TEST);
 
    glViewport(0, 0, _Ygl->width, _Ygl->height);
 
@@ -3137,13 +3137,13 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
     // Find three most highest priority
     // Could be better for perf to not even calculte the other layers...
-//    printf("%d %d %d %d %d %d\n", _Ygl->screen[0], _Ygl->screen[1], _Ygl->screen[2], _Ygl->screen[3], _Ygl->screen[4], _Ygl->screen[6]);
+    printf("%d %d %d %d %d %d\n", _Ygl->screen[0], _Ygl->screen[1], _Ygl->screen[2], _Ygl->screen[3], _Ygl->screen[4], _Ygl->screen[6]);
     int prio[3] = {8};
     for (int j=0; j<3; j++) {
-      prio[j] = 0;
+      prio[j] = -1;
       for (i = 0; i<enBGMAX ; i++) {
         if (i == SPRITE) continue;
-        if ((_Ygl->screen[i] > _Ygl->screen[prio[j]])) {
+        if ((_Ygl->screen[i] > _Ygl->screen[prio[j]]) || (prio[j] == -1)) {
           int valid = 1;
           for (int k = 0; k<j; k++) {
             if (prio[k] == i) {
@@ -3155,10 +3155,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
         }
       }
     }
+printf("%d %d %d\n", prio[0], prio[1], prio[2]);
     int min = 8;
 
     //Draw first screen
-    if (prio[0] > 0) {
+    if (_Ygl->screen[prio[0]] > 0) {
 //printf("Print First\n");
       glDrawBuffers(1, &DrawBuffers[1]);
       level = &_Ygl->vdp2levels[_Ygl->screen[prio[0]]];
@@ -3168,7 +3169,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
     }
 
     //Draw second screen
-    if (prio[1] > 0) {
+    if (_Ygl->screen[prio[1]] > 0) {
 //printf("Print Second\n");
       glDrawBuffers(1, &DrawBuffers[2]);
       level = &_Ygl->vdp2levels[_Ygl->screen[prio[1]]];
@@ -3177,7 +3178,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
       img[1] = _Ygl->original_fbotex[2];
     }
 
-    if (prio[2] > 0) {
+    if (_Ygl->screen[prio[2]] > 0) {
 //printf("Print Third\n");
       //Draw third screen
       glDrawBuffers(1, &DrawBuffers[3]); // "1" is the size of DrawBuffers
@@ -3473,7 +3474,7 @@ int YglCleanUpWindow(YglProgram * prg, YglTextureManager *tm){
     if (bwin_cc0 || bwin_cc1) {
       // Disable Color clacuration then draw outside of window
       glDisable(GL_STENCIL_TEST);
-      glEnable(GL_DEPTH_TEST);
+      //glEnable(GL_DEPTH_TEST);
       glDepthFunc(GL_GREATER);
       glDisable(GL_BLEND);
       Ygl_setNormalshader(prg);

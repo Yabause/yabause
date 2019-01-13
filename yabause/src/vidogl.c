@@ -6454,6 +6454,8 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   if (((Vdp2External.disptoggle & 0x1)==0) || (info.priority == 0))
     return;
 
+  _Ygl->screen[NBG0] = info.priority;
+
   // Window Mode
   info.bEnWin0 = (varVdp2Regs->WCTLA >> 1) & 0x01;
   info.WindowArea0 = (varVdp2Regs->WCTLA >> 0) & 0x01;
