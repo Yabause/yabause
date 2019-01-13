@@ -313,7 +313,7 @@ SHADER_VERSION
 "  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*65280.0) | int(txindex.r*255.0)) ,0 )  , 0 );\n"
 "  fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
 "  fragColor.a = txindex.a;\n"
-"  gl_FragDepth = ((txindex.b*255.0/10.0) +1.0)/2.0 ; \n"
+//"  gl_FragDepth = ((txindex.b*255.0/10.0) +1.0)/2.0 ; \n"
 "}\n";
 
 
@@ -1517,7 +1517,7 @@ SHADER_VERSION
 "     fragColor = fbColor;\n"
 "     fragColor += u_coloroffset;  \n"
 "     fragColor.a = alpha + 7.0/255.0;\n"
-"     gl_FragDepth = (depth+1.0)/2.0;\n"
+//"     gl_FragDepth = (depth+1.0)/2.0;\n"
 "  }else{ \n"
 "     discard;\n"
 "  }\n"
@@ -1566,7 +1566,7 @@ SHADER_VERSION
 "  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
 "  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
-"  int prinumber = (additional&0x07); "
+"  int prinumber = (additional&0x07); \n"
 "  highp float depth = u_pri[ prinumber ];\n"
 "  if( depth < u_from || depth > u_to ){ discard; } \n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
@@ -1577,7 +1577,7 @@ SHADER_VERSION
 "    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
 "    fragColor = txcol;\n"
-"  }else{ // direct color \n"
+"  }else{ // direct color \n" 
 "    fragColor = fbColor;\n"
 "  } \n"
 "  fragColor = clamp(fragColor + u_coloroffset, vec4(0.0), vec4(1.0));  \n";
@@ -1645,7 +1645,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f[] =
 
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
-"  gl_FragDepth = (depth+1.0)*0.5;\n"
+//"  gl_FragDepth = (depth+1.0)*0.5;\n"
 "}\n";
 
 /*------------------------------------------------------------------------------------
@@ -1810,7 +1810,7 @@ SHADER_VERSION
 "  }else{ // direct color \n"
 "    discard;;\n"
 "  } \n"
-"  gl_FragDepth = (depth+1.0)*0.5;\n"
+//"  gl_FragDepth = (depth+1.0)*0.5;\n"
 "}\n";
 
 const GLchar * pYglprg_vdp2_drawfb_shadow_f[] = { Yglprg_vdp2_drawfb_shadow_f,  NULL };
@@ -2279,7 +2279,7 @@ SHADER_VERSION
 "  }else if( alpha < 0.75 && fbColor.r == 0.0 && fbColor.g == 0.0 && fbColor.b == 0.0 ){\n"
 "     fragColor = fbColor;\n"
 "     fragColor.a = alpha;\n"
-"     gl_FragDepth =  (depth+1.0)/2.0;\n"
+//"     gl_FragDepth =  (depth+1.0)/2.0;\n"
 "  }else{\n"
 "     discard;\n"
 "  }\n "
