@@ -3882,6 +3882,9 @@ int Cs2SaveState(FILE * fp) {
 
    offset = StateWriteHeader(fp, "CS2 ", 2);
 
+   // Write cart type
+   ywrite(&check, (void *) &Cs2Area->carttype, 4, 1, fp);
+
    // Write cd block registers
    ywrite(&check, (void *) &Cs2Area->reg, sizeof(blockregs_struct), 1, fp);
 
@@ -3993,6 +3996,9 @@ int Cs2LoadState(FILE * fp, int version, int size) {
 
    // This is mostly kludge, but it will have to do until I have time to rewrite it all
    CDLOG("************* Cs2LoadState *********************");
+
+   // Read cart type
+   yread(&check, (void *)&Cs2Area->carttype, 4, 1, fp);
 
    // Read cd block registers
    yread(&check, (void *)&Cs2Area->reg, sizeof(blockregs_struct), 1, fp);

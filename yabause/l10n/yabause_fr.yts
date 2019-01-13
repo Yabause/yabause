@@ -135,6 +135,7 @@ CPU Tesselation|Tesselation CPU
 Data Size|Taille Donnée
 Data Size :|Taille des Données :
 Data Type|Type Donnée
+Debug|Débug
 Debug CPU|Débug CPU
 Debug M68K|Débug M68K
 Debug Master SH2|Débug Master SH2

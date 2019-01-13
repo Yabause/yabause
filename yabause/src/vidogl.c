@@ -455,13 +455,12 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
   // Check if transparent sprite window
   // hard/vdp2/hon/p08_12.htm#SPWINEN_
   if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
-      ((varVdp2Regs->SPCTL & 0x20)==0) && // Sprite color mode
       (varVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
+      !(cmd->CMDPMOD & 4) &&
       ((varVdp2Regs->SPCTL & 0xF)  >=2 && (varVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
   {
     return 0;
   }
-
 
   Vdp1ReadPriority(cmd, &priority, &colorcl, &nromal_shadow, varVdp2Regs);
   switch ((cmd->CMDPMOD >> 3) & 0x7)
@@ -2447,6 +2446,9 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   int linestart = 0;
 
   int height = vdp2height;
+
+  // Is double-interlace enabled?
+/*
   if ((vdp1_interlace != 0) || (height >= 448)) {
     lineinc = 2;
   }
@@ -2454,6 +2456,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   if (vdp1_interlace != 0) {
     linestart = vdp1_interlace - 1;
   }
+*/
 
   for (i = linestart; i < lineinc*height; i += lineinc)
   {
@@ -4354,6 +4357,7 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
   if (isQuad) dst == 1;
   if ((isQuad || isTriangle) && distorted) {
     int disp = 0;
+    int isSquare = 1;
 
     float dx[4];
     float dy[4];
@@ -4391,14 +4395,16 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
     for (int i = 0; i < 4; i++) {
       float cx = (dx[i] - dx[(i+3)%4]);
       float cy = (dy[i] - dy[(i+3)%4]);
+      float dx = cx;
+      float dy = cy;
 
       if (!IS_ZERO(cx)) {
-        if (IS_LESS(cx, -EPSILON)) cx = -BORDER;
-        if (IS_MORE(cx, EPSILON)) cx = BORDER;
-      }
+        if (IS_LESS(cx, -EPSILON)) dx = -BORDER;
+        if (IS_MORE(cx, EPSILON)) dx = BORDER;
+      } else 
       if (!IS_ZERO(cy)) {
-        if (IS_LESS(cy, -EPSILON)) cy = -BORDER;
-        if (IS_MORE(cy, EPSILON)) cy = BORDER;
+        if (IS_LESS(cy, -EPSILON)) dy = -BORDER;
+        if (IS_MORE(cy, EPSILON)) dy = BORDER;
       } 
 #if 0
       if (IS_ZERO(dx[i]) && IS_ZERO(dy[(i+3)%4])) {
@@ -4408,13 +4414,79 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
         cx = cy = 0.0f;
       }
 #endif
-      nx[i] = in[i*2] + entrant[i] * cx;
-      ny[i] = in[i*2+1] + entrant[i] * cy;
+      nx[i] = in[i*2] + entrant[i] * dx;
+      ny[i] = in[i*2+1] + entrant[i] * dy;
     }
 #if 0
 printf("(%f %f) (%f %f) (%f %f) (%f %f)\n", in[0], in[1], in[2], in[3], in[4], in[5], in[6], in[7]);
 printf("[(%f %f)]%f [(%f %f)]%f [(%f %f)]%f [(%f %f)]%f\n", nx[0], ny[0], entrant[0], nx[1], ny[1], entrant[1], nx[2], ny[2], entrant[2], nx[3], ny[3], entrant[3]);
 #endif
+
+#if 1
+  for (i = 0; i < 3; i++) {
+    float dx = nx[(i + 1) & 0x3] - nx[i];
+    float dy = ny[(i + 1) & 0x3] - ny[i];
+    float d2x = nx[(i + 2) & 0x3] - nx[(i + 1) & 0x3];
+    float d2y = ny[(i + 2) &  0x3] - ny[(i + 1) & 0x3];
+
+    float dot = dx*d2x + dy*d2y;
+    if (dot >= EPSILON || dot <= -EPSILON) {
+      isSquare = 0;
+      break;
+    }
+  }
+
+  if (isSquare) {
+    // find upper left opsition
+    float minx = 65535.0f;
+    float miny = 65535.0f;
+    int lt_index = -1;
+
+    for (i = 0; i < 4; i++) {
+      if (nx[i] <= minx /*&& sprite.vertices[(i << 1) + 1] <= miny*/) {
+
+        if (minx == nx[i]) {
+          if (ny[i] < miny) {
+            minx = nx[i];
+            miny = ny[i];
+            lt_index = i;
+          }
+        }
+        else {
+          minx = nx[i];
+          miny = ny[i];
+          lt_index = i;
+        }
+      }
+    }
+
+    float adx = nx[(lt_index + 1) & 0x03] - nx[lt_index];
+    float ady = ny[(lt_index + 1) & 0x03] - ny[lt_index];
+    float bdx = nx[(lt_index + 2) & 0x03] - nx[lt_index];
+    float bdy = ny[(lt_index + 2) & 0x03] - ny[lt_index];
+    float cross = (adx * bdy) - (bdx * ady);
+
+    // clockwise
+    if (cross >= 0) {
+      nx[(lt_index + 1) & 0x03] += 1;
+      ny[(lt_index + 1) & 0x03] += 0;
+      nx[(lt_index + 2) & 0x03] += 1;
+      ny[(lt_index + 2) & 0x03] += 1;
+      nx[(lt_index + 3) & 0x03] += 0;
+      ny[(lt_index + 3) & 0x03] += 1;
+    }
+    // counter-clockwise
+    else {
+      nx[(lt_index + 1) & 0x03] += 0;
+      ny[(lt_index + 1) & 0x03] += 1;
+      nx[(lt_index + 2) & 0x03] += 1;
+      ny[(lt_index + 2) & 0x03] += 1;
+      nx[(lt_index + 3) & 0x03] += 1;
+      ny[(lt_index + 3) & 0x03] += 0;
+    }
+  }
+#endif
+
   } 
   out[0] = nx[0];
   out[1] = ny[0];
@@ -5914,7 +5986,8 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
 // RBG1 mode
   info->enable = ((varVdp2Regs->BGON & 0x20)!=0);
-  if (!(varVdp2Regs->BGON & 0x10)) info->enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
+  // RBG1 shall not work without RGB0 but it looks like the HW is able to... MechWarrior 2 - 31st Century Combat - Arcade Combat Edition is using this capability...
+  //if (!(varVdp2Regs->BGON & 0x10)) info->enable = 0; //When both R0ON and R1ON are 1, the normal scroll screen can no longer be displayed vdp2 pdf, section 4.1 Screen Display Control
 
   if (!info->enable) {
    free(rgb);
@@ -7498,9 +7571,9 @@ void waitVdp2DrawScreensEnd(int sync) {
     if (empty == 0) {
       //Vdp2 has been evaluated we can render
       YglTmPush(YglTM_vdp2);
-      YuiUseOGLOnThisThread();
+      //YuiUseOGLOnThisThread();
       YglUpdateVDP1FB();
-      YuiRevokeOGLOnThisThread();
+      //YuiRevokeOGLOnThisThread();
       YglRender(&Vdp2Lines[0]);
     }
   }
@@ -7741,7 +7814,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(RBGDrawInfo * 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   if ((varVdp2Regs->WCTLD & 0x04) == 0) {
-    return (&rgb->paraB);
+    return (&rgb->paraA);
   }
 
   if (rgb->info.WindwAreaMode == 0)

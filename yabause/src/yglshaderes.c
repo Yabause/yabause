@@ -226,7 +226,9 @@ const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 
 const GLchar Yglprg_normal_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                            \n"
+"#endif\n"
 "in highp vec4 v_texcoord;                            \n"
 "uniform vec4 u_color_offset;    \n"
 "uniform sampler2D s_texture;                        \n"
@@ -275,8 +277,10 @@ int Ygl_cleanupNormal(void * p, YglTextureManager *tm)
 
 const GLchar Yglprg_normal_cram_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;\n"
 "precision highp int;\n"
+"#endif\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -293,8 +297,10 @@ SHADER_VERSION
 
 const GLchar Yglprg_normal_cram_special_priority_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;\n"
 "precision highp int;\n"
+"#endif\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -367,8 +373,10 @@ int Ygl_uniformNormalCramSpecialPriority(void * p, YglTextureManager *tm, Vdp2 *
 
 const GLchar Yglprg_normal_cram_addcol_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;\n"
 "precision highp int;\n"
+"#endif\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -441,8 +449,10 @@ void Ygl_setNormalshader(YglProgram * prg) {
 
 const GLchar Yglprg_rgb_cram_line_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;\n"
 "precision highp int;\n"
+"#endif\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -585,8 +595,6 @@ int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
 
   if (prg->prgid == PG_VDP2_MOSAIC_CRAM ) {
     glEnableVertexAttribArray(prg->vertexp);
@@ -645,8 +653,6 @@ int Ygl_uniformPerLineAlpha(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
   prg->preblendmode = prg->blendmode;
   prg->blendmode = 0;
 
@@ -683,7 +689,7 @@ int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
 
   // Bind Default frame buffer
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
-  glDisable(GL_BLEND);
+
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
@@ -716,8 +722,6 @@ int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
-  glClearColor(0.0f,0.0f,0.0f,0.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
 
   if (prg->prgid == PG_VDP2_BLUR_CRAM) {
     glEnableVertexAttribArray(prg->vertexp);
@@ -760,7 +764,7 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
-  glDisable(GL_BLEND);
+
   if ((prg->blendmode & 0x03) == VDP2_CC_RATE) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -781,7 +785,9 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
 
 const GLchar Yglprg_DestinationAlpha_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                                  \n"
+"#endif\n"
 "in highp vec4 v_texcoord;                               \n"
 "uniform vec4 u_color_offset;                            \n"
 "uniform sampler2D s_texture;                            \n"
@@ -819,7 +825,9 @@ const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
 const GLchar Yglprg_window_f[] =
       SHADER_VERSION
+      "#ifdef GL_ES\n"
       "precision highp float;                            \n"
+      "#endif\n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
       "{                                                   \n"
@@ -866,7 +874,9 @@ const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 
 const GLchar Yglprg_vpd1_normal_f[] =
       SHADER_VERSION
+      "#ifdef GL_ES\n"
       "precision highp float;                            \n"
+      "#endif\n"
       "in vec4 v_texcoord;                            \n"
       "uniform sampler2D s_texture;                        \n"
       "out vec4 fragColor;            \n"
@@ -1035,16 +1045,16 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                                                 \n"
+"#endif\n"
 "uniform sampler2D u_sprite;                                              \n"
 "in vec4 v_texcoord;                                                 \n"
 "in vec4 v_vtxcolor;                                                 \n"
 "out vec4 fragColor;            \n"
 "void main() {                                                            \n"
-"  vec2 addr = v_texcoord.st;                                             \n"
-"  addr.s = addr.s / (v_texcoord.q);                                      \n"
-"  addr.t = addr.t / (v_texcoord.q);                                      \n"
-"  vec4 spriteColor = texture(u_sprite,addr);                           \n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
 "  if( spriteColor.a == 0.0 ) discard;                                      \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
 "  fragColor.a = spriteColor.a;                                        \n"
@@ -1053,16 +1063,16 @@ const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, 
 
 const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                                                 \n"
+"#endif\n"
 "uniform sampler2D u_sprite;                                              \n"
 "in vec4 v_texcoord;                                                 \n"
 "in vec4 v_vtxcolor;                                                 \n"
 "out vec4 fragColor;            \n"
 "void main() {                                                            \n"
-"  vec2 addr = v_texcoord.st;                                             \n"
-"  addr.s = addr.s / (v_texcoord.q);                                      \n"
-"  addr.t = addr.t / (v_texcoord.q);                                      \n"
-"  vec4 spriteColor = texture(u_sprite,addr);                           \n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
 "  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
@@ -1095,7 +1105,9 @@ const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
       SHADER_VERSION
+      "#ifdef GL_ES\n"
       "precision highp float;                                                                     \n"
+      "#endif\n"
       "uniform highp sampler2D u_sprite;                                                                  \n"
       "uniform highp sampler2D u_fbo;                                                                     \n"
       "uniform int u_fbowidth;                                                                      \n"
@@ -1104,13 +1116,10 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
       "in vec4 v_vtxcolor;                                                                     \n"
       "out vec4 fragColor; \n "
       "void main() {                                                                                \n"
-      "  vec2 addr = v_texcoord.st;                                                                 \n"
-      "  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));   \n"
-      "  addr.s = addr.s / (v_texcoord.q);                                                          \n"
-      "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
-      "  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
+      "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
       "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
-      "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
+      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
       "  int additional = int(fboColor.a * 255.0);\n"
       "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
       "  if( (additional & 0x40) == 0 ) \n"
@@ -1152,7 +1161,9 @@ const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
 
 const GLchar Yglprg_vdp1_halftrans_f[] =
       SHADER_VERSION
+      "#ifdef GL_ES\n"
       "precision highp float;                                                                     \n"
+      "#endif\n"
       "uniform highp sampler2D u_sprite;                                                           \n"
       "uniform highp sampler2D u_fbo;                                                               \n"
       "uniform int u_fbowidth;                                                                      \n"
@@ -1160,13 +1171,10 @@ const GLchar Yglprg_vdp1_halftrans_f[] =
       "in vec4 v_texcoord;                                                                     \n"
       "out vec4 fragColor; \n "
       "void main() {                                                                                \n"
-      "  vec2 addr = v_texcoord.st;                                                                 \n"
-      "  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));   \n"
-      "  addr.s = addr.s / (v_texcoord.q);                                                          \n"
-      "  addr.t = addr.t / (v_texcoord.q);                                                          \n"
-      "  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
+      "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
       "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
-      "  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
+      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
       "  int additional = int(fboColor.a * 255.0);\n"
       "  if( (additional & 0x40) == 0 ) \n"
       "  {                                                                                          \n"
@@ -1205,7 +1213,9 @@ const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
 #if 1
 const GLchar Yglprg_vdp1_mesh_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                                                                     \n"
+"#endif\n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
 "uniform int u_fbowidth;                                                                      \n"
@@ -1214,11 +1224,9 @@ SHADER_VERSION
 "in vec4 v_vtxcolor;                                                                     \n"
 "out highp vec4 fragColor; \n "
 "void main() {                                                                                \n"
-"  vec2 addr = v_texcoord.st;                                                                 \n"
-"  addr.s = addr.s / (v_texcoord.q);                                                          \n"
-"  addr.t = addr.t / (v_texcoord.q);                                                          \n"
-"  vec4 spriteColor = texture(u_sprite,addr);                                               \n"
-"  if( spriteColor.a == 0.0 ) discard;      \n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
+"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
 "  if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n"
 "    if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n"
 "       discard;"
@@ -1234,7 +1242,9 @@ SHADER_VERSION
 #else
 const GLchar Yglprg_vdp1_mesh_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                                                                     \n"
+"#endif\n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
 "uniform int u_fbowidth;                                                                      \n"
@@ -1243,14 +1253,10 @@ SHADER_VERSION
 "in vec4 v_vtxcolor;                                                                     \n"
 "out highp vec4 fragColor; \n "
 "void main() {                                                                                \n"
-"  vec2 addr = v_texcoord.st;                                                                 \n"
-"  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));   \n"
-"  addr.s = addr.s / (v_texcoord.q);                                                          \n"
-"  addr.t = addr.t / (v_texcoord.q);                                                          \n"
-"  highp vec4 spriteColor = texture(u_sprite,addr);                                               \n"
-"  if( spriteColor.a == 0.0 ) discard;      \n"
-"	//memoryBarrier(); \n"
-"  vec4 fboColor    = texture(u_fbo,faddr);                                                 \n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
+"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+ "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
 "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
 "  if( fboColor.a > 0.0  )                                                               \n"
 "  {                                                                                          \n"
@@ -1292,21 +1298,21 @@ const GLchar * pYglprg_vdp1_half_luminance_v[] = {Yglprg_vdp1_half_luminance_v, 
 
 const GLchar Yglprg_vpd1_half_luminance_f[] =
       SHADER_VERSION
+      "#ifdef GL_ES\n"
       "precision highp float;                            \n"
+      "#endif\n"
       "in vec4 v_texcoord;                            \n"
       "uniform sampler2D s_texture;                        \n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
       "{                                                   \n"
-      "  vec2 addr = v_texcoord.st;                        \n"
-      "  addr.s = addr.s / (v_texcoord.q);                 \n"
-      "  addr.t = addr.t / (v_texcoord.q);                 \n"
-      "  vec4 FragColor = texture( s_texture, addr );      \n"
-      "  if( FragColor.a == 0.0 ) discard;                \n"
-      "  fragColor.r = FragColor.r * 0.5;\n "
-      "  fragColor.g = FragColor.g * 0.5;\n "
-      "  fragColor.b = FragColor.b * 0.5;\n "
-      "  fragColor.a = FragColor.a;\n "
+      "  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st / v_texcoord.q); \n"
+      "  vec4 spriteColor = texelFetch(s_texture,addr,0);                           \n"
+      "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+      "  fragColor.r = spriteColor.r * 0.5;\n "
+      "  fragColor.g = spriteColor.g * 0.5;\n "
+      "  fragColor.b = spriteColor.b * 0.5;\n "
+      "  fragColor.a = spriteColor.a;\n "
       "}                                                   \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
 static YglVdp1CommonParam half_luminance = { 0 };
@@ -1337,7 +1343,9 @@ const GLchar * pYglprg_vdp1_shadow_v[] = { Yglprg_vdp1_shadow_v, NULL };
 
 const GLchar Yglprg_vdp1_shadow_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;\n"
+"#endif\n"
 "uniform sampler2D u_sprite;\n"
 "uniform highp sampler2D u_fbo;\n"
 "uniform int u_fbowidth;\n"
@@ -1345,13 +1353,10 @@ SHADER_VERSION
 "in vec4 v_texcoord;\n"
 "out vec4 fragColor; \n "
 "void main() { \n"
-"  vec2 addr = v_texcoord.st;\n"
-"  vec2 faddr = vec2( gl_FragCoord.x/float(u_fbowidth), gl_FragCoord.y/float(u_fbohegiht));\n"
-"  addr.s = addr.s / (v_texcoord.q);\n"
-"  addr.t = addr.t / (v_texcoord.q);\n"
-"  vec4 spriteColor = texture(u_sprite,addr);\n"
-"  if( spriteColor.a == 0.0 ) discard;\n"
-"  vec4 fboColor = texture(u_fbo,faddr);\n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
+"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
 "  int additional = int(fboColor.a * 255.0);\n"
 "  if( ((additional & 0xC0)==0x80) ) { \n"
 "    fragColor = vec4(fboColor.r*0.5,fboColor.g*0.5,fboColor.b*0.5,fboColor.a);\n"
@@ -1372,6 +1377,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs 
 {
    YglProgram * prg;
    prg = p;
+   int clear = 0;
 
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
@@ -1382,8 +1388,8 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs 
       GLint vertices[12];
       glColorMask( GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE );
       glStencilMask(0xffffffff);
-      glClearStencil(0);
-      glClear(GL_STENCIL_BUFFER_BIT);
+      glClearBufferiv(GL_STENCIL, 0, &clear);
+
       glEnable(GL_STENCIL_TEST);
       glStencilFunc(GL_ALWAYS,0x1,0x01);
       glStencilOp(GL_REPLACE,GL_REPLACE,GL_REPLACE);
@@ -1488,8 +1494,10 @@ const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 
 const GLchar Yglprg_vdp2_drawfb_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
+"#endif\n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -1532,8 +1540,10 @@ refrence:
 
 const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
+"#endif\n"
 "layout(std140) uniform vdp2regs { \n"
 " float u_pri[8]; \n"
 " float u_alpha[8]; \n"
@@ -1644,8 +1654,10 @@ const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
+"#endif\n"
 "layout(std140) uniform vdp2regs { \n"
 " float u_pri[8]; \n"
 " float u_alpha[8]; \n"
@@ -1771,8 +1783,10 @@ const GLchar * pYglprg_vdp2_drawfb_msb_add_hblank_f[]  = { Yglprg_vdp2_drawfb_hb
 
 const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
+"#endif\n"
 "layout(std140) uniform vdp2regs { \n"
 " float u_pri[8]; \n"
 " float u_alpha[8]; \n"
@@ -1805,35 +1819,36 @@ void Ygl_initDrawFrameBuffershader(int id);
 
 int YglInitDrawFrameBufferShaders() {
 
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DESTALPHA --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_destalpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL --START--\n");
   // color calcurate rate
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_ADD --START--\n");
   // color calcurate add
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_ADD --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_ADD --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD);
 
@@ -1841,82 +1856,88 @@ int YglInitDrawFrameBufferShaders() {
   //-------------------------------------------------------------------------------
   // Line color insertion
   //-------------------------------------------------------------------------------
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE);
 
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE);
 
   // color calcurate add
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE);
 
   //------------------------------------------------------------------
   // HBALNK per line register chnage operation
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_HBLANK, pYglprg_vdp2_drawfb_hblank_v, pYglprg_vdp2_drawfb_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
 
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_HBLANK);
 
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_hblank_destalpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK);
 
   // color calcurate rate
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_col_hbalnk_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_col_hbalnk_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_col_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_col_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK);
 
   // color calcurate add
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK);
-
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK);
 
   //------------------------------------------------------------------
   // Shadow
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SHADOW --START--\n");
   if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SHADOW, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_shadow_f, 1, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SHADOW);
 
@@ -1962,8 +1983,6 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
   const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
 
   prg = p;
-
-  glDisable(GL_BLEND);
 
   if ( SPCCN ) {
     const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
@@ -2027,7 +2046,10 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
       }
     }
   }
-
+  else { // No Color Calculation
+    glDisable(GL_BLEND);
+    pgid = PG_VDP2_DRAWFRAMEBUFF_HBLANK;
+  }
 
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
@@ -2090,12 +2112,8 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
 
    prg = p;
 
-   glDisable(GL_BLEND);
-   pgid = PG_VDP2_DRAWFRAMEBUFF;
-
    if ( blend && SPCCN ) {
      const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-     glEnable(GL_BLEND);
      if (CCMD == 0) {  // Calculate Rate mode
        if (CCRTMD == 0) {  // Source Alpha Mode
          if (SPLCEN == 0) { // No Line Color Insertion
@@ -2191,7 +2209,10 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
          }
        }
      }
-   } 
+   } else { // No Color Calculation
+     glDisable(GL_BLEND);
+     pgid = PG_VDP2_DRAWFRAMEBUFF;
+   }
 
    arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
    GLUSEPROG(_prgid[pgid]);
@@ -2234,8 +2255,10 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
 
 const GLchar Yglprg_vdp2_drawfb_addcolor_shadow_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp sampler2D; \n"
 "precision highp float;\n"
+"#endif\n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -2316,7 +2339,9 @@ const GLchar * pYglprg_linecol_v[] = { Yglprg_normal_v, NULL };
 
 const GLchar Yglprg_linecol_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;\n"
+"#endif\n"
 "in highp vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
@@ -2427,7 +2452,7 @@ int Ygl_cleanupLinecolorInsert(void * p, YglTextureManager *tm)
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE0);
-  glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
 
   return 0;
 }
@@ -2550,6 +2575,7 @@ int YglProgramInit()
   id_normal_color_offset = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_color_offset");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_mvpMatrix");
 
+   YGLLOG("PG_VDP2_NORMAL_CRAM\n");
 
   if (YglInitShader(PG_VDP2_NORMAL_CRAM, pYglprg_normal_v, pYglprg_normal_cram_f, 1, NULL, NULL, NULL) != 0)
     return -1;
@@ -2559,6 +2585,8 @@ int YglProgramInit()
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
 
+   YGLLOG("PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY\n");
+
   if (YglInitShader(PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY, pYglprg_normal_v, pYglprg_normal_cram_special_priority_f, 1, NULL, NULL, NULL) != 0)
     return -1;
 
@@ -2567,6 +2595,7 @@ int YglProgramInit()
   id_normal_cram_sp_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_color_offset");
   id_normal_cram_sp_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_mvpMatrix");
 
+   YGLLOG("PG_VDP2_ADDCOLOR_CRAM\n");
 
   if (YglInitShader(PG_VDP2_ADDCOLOR_CRAM, pYglprg_normal_v, pYglprg_normal_cram_addcol_f, 1, NULL, NULL, NULL) != 0)
     return -1;
@@ -2575,6 +2604,8 @@ int YglProgramInit()
   id_normal_cram_s_color_addcol = glGetUniformLocation(_prgid[PG_VDP2_ADDCOLOR_CRAM], (const GLchar *)"s_color");
   id_normal_cram_color_offset_addcol = glGetUniformLocation(_prgid[PG_VDP2_ADDCOLOR_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix_addcol = glGetUniformLocation(_prgid[PG_VDP2_ADDCOLOR_CRAM], (const GLchar *)"u_mvpMatrix");
+
+   YGLLOG("PG_VDP2_RBG_CRAM_LINE\n");
 
   if (YglInitShader(PG_VDP2_RBG_CRAM_LINE, pYglprg_normal_v, pYglprg_rbg_cram_line_f, 1, NULL, NULL, NULL) != 0)
     return -1;
@@ -2714,6 +2745,7 @@ int YglProgramInit()
    linecol.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_emu_height");
    linecol.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_vheight");
 
+   YGLLOG("PG_LINECOLOR_INSERT_DESTALPHA\n");
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_f, 3, NULL, NULL, NULL) != 0)
      return -1;
    
@@ -2723,6 +2755,7 @@ int YglProgramInit()
    linecol_destalpha.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_emu_height");
    linecol_destalpha.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_vheight");
 
+   YGLLOG("PG_LINECOLOR_INSERT_CRAM\n");
    if (YglInitShader(PG_LINECOLOR_INSERT_CRAM, pYglprg_linecol_v, pYglprg_linecol_cram_f, 3, NULL, NULL, NULL) != 0)
      return -1;
 
@@ -2733,6 +2766,7 @@ int YglProgramInit()
    linecol_cram.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_CRAM], (const GLchar *)"u_emu_height");
    linecol_cram.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_CRAM], (const GLchar *)"u_vheight");
 
+   YGLLOG("PG_LINECOLOR_INSERT_DESTALPHA_CRAM\n");
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA_CRAM, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_cram_f, 3, NULL, NULL, NULL) != 0)
      return -1;
 
@@ -2744,7 +2778,7 @@ int YglProgramInit()
    linecol_destalpha_cram.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA_CRAM], (const GLchar *)"u_vheight");
 
 
-   //
+   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW\n");
    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_addcolor_shadow_f, 1, NULL, NULL, NULL) != 0)
      return -1;
 
@@ -3255,7 +3289,9 @@ static const char vclear_img[] =
 
 static const char fclear_img[] =
   SHADER_VERSION
+  "#ifdef GL_ES\n"
   "precision highp float;       \n"
+  "#endif\n"
   "uniform float u_emu_height; \n"
   "uniform float u_vheight; \n"
   "uniform sampler2D u_Clear;     \n"
@@ -3375,7 +3411,9 @@ static const char vdp1_v[] =
 
 static const char vdp1_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                            \n"
+"#endif\n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D s_texture;                        \n"
 "out vec4 fragColor;            \n"
@@ -3385,6 +3423,7 @@ SHADER_VERSION
 "  addr.x = int( v_texcoord.x);          \n"
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
+"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n" 
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
 "  fragColor.b = tex.g;         \n"
@@ -3528,7 +3567,9 @@ static const char vblit_img[] =
 
 static const char fblit_head[] =
   SHADER_VERSION
+  "#ifdef GL_ES\n"
   "precision highp float;       \n"
+  "#endif\n"
   "uniform float fWidth; \n"
   "uniform float fHeight; \n"
   "uniform vec2 lineNumber; \n"
@@ -3763,7 +3804,7 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
   glDisableVertexAttribArray(1);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glEnable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
+  glEnable(GL_BLEND);
 
   return 0;
 }
@@ -3779,7 +3820,9 @@ const GLchar vclearb_img[] =
 
 const GLchar fclearb_img[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                            \n"
+"#endif\n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
@@ -3873,7 +3916,9 @@ SHADER_VERSION
 
 const GLchar blur_blit_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                            \n"
+"#endif\n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
 "uniform float u_tw; \n"
@@ -3982,11 +4027,11 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matrix
   glEnableVertexAttribArray(1);
   glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vb_buf);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vb), vb, GL_STREAM_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vb);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, _Ygl->tb_buf);
   glBufferData(GL_ARRAY_BUFFER, sizeof(tb), tb, GL_STREAM_DRAW);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, tb);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
   glUniformMatrix4fv(u_blur_mtxModelView, 1, GL_FALSE, matrix);
   glUniform1f(u_blur_tw, w);
@@ -4024,7 +4069,9 @@ SHADER_VERSION
 
 const GLchar mosaic_blit_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                            \n"
+"#endif\n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
 "uniform float u_tw; \n"
@@ -4179,7 +4226,9 @@ SHADER_VERSION
 
 const GLchar perlinealpha_blit_f[] =
 SHADER_VERSION
+"#ifdef GL_ES\n"
 "precision highp float;                            \n"
+"#endif\n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
 "uniform sampler2D u_Line;                        \n"
@@ -4335,7 +4384,3 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat
 
   return 0;
 }
-
-
-
-

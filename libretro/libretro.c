@@ -47,7 +47,6 @@ static char bup_path[PATH_MAX];
 static char addon_cart_path[PATH_MAX];
 
 static char game_basename[128];
-static char *saturn_game_code;
 
 static int game_width  = 320;
 static int game_height = 240;
@@ -69,11 +68,14 @@ static int use_beetle_saves = 0;
 static int auto_select_cart = 1;
 static bool service_enabled = false;
 static bool stv_mode = false;
+static int pad_type[12] = {1,1,1,1,1,1,1,1,1,1,1,1};
+static int multitap[2] = {0,0};
+static unsigned players = 7;
 
 struct retro_perf_callback perf_cb;
 retro_get_cpu_features_t perf_get_cpu_features_cb = NULL;
 
-retro_log_printf_t log_cb;
+static retro_log_printf_t log_cb;
 static retro_video_refresh_t video_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
@@ -82,36 +84,15 @@ static retro_audio_sample_batch_t audio_batch_cb;
 
 extern struct retro_hw_render_callback hw_render;
 
-#define BPRINTF_BUFFER_SIZE 512
-#define __cdecl
-char bprintf_buf[BPRINTF_BUFFER_SIZE];
-static int __cdecl libretro_bprintf(int nStatus, char* szFormat, ...)
-{
-   va_list vp;
-   va_start(vp, szFormat);
-   int rc = vsnprintf(bprintf_buf, BPRINTF_BUFFER_SIZE, szFormat, vp);
-   va_end(vp);
-
-   if (rc >= 0)
-   {
-      log_cb(RETRO_LOG_DEBUG, bprintf_buf);
-   }
-   
-   return rc;
-}
-
-int (__cdecl *bprintf) (int nStatus, char* szFormat, ...) = libretro_bprintf;
-
-#define RETRO_DEVICE_MTAP_PAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
-#define RETRO_DEVICE_MTAP_3D  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_ANALOG, 0)
-
 void retro_set_environment(retro_environment_t cb)
 {
    static const struct retro_variable vars[] = {
-      { "kronos_force_hle_bios", "Force HLE BIOS (restart); disabled|enabled" },
+      { "kronos_force_hle_bios", "Force HLE BIOS (restart, deprecated, debug only); disabled|enabled" },
       { "kronos_use_beetle_saves", "Share saves with beetle (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
       { "kronos_auto_select_cart", "Automatic Addon Cartridge (restart); enabled|disabled" },
+      { "kronos_multitap_port1", "6Player Adaptor on Port 1; disabled|enabled" },
+      { "kronos_multitap_port2", "6Player Adaptor on Port 2; disabled|enabled" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
@@ -127,17 +108,9 @@ void retro_set_environment(retro_environment_t cb)
        { "None", RETRO_DEVICE_NONE },
    };
 
-   static const struct retro_controller_description mtaps[] = {
-       { "Saturn Pad", RETRO_DEVICE_JOYPAD },
-       { "Saturn 3D Pad", RETRO_DEVICE_ANALOG },
-       { "Multitap + Pad", RETRO_DEVICE_MTAP_PAD },
-       { "Multitap + 3D Pad", RETRO_DEVICE_MTAP_3D },
-       { "None", RETRO_DEVICE_NONE },
-   };
-
    static const struct retro_controller_info ports[] = {
-      { mtaps, 5 },
-      { mtaps, 5 },
+      { peripherals, 3 },
+      { peripherals, 3 },
       { peripherals, 3 },
       { peripherals, 3 },
       { peripherals, 3 },
@@ -164,10 +137,6 @@ void retro_set_input_state(retro_input_state_t cb) { input_state_cb = cb; }
 
 // PERLIBRETRO
 #define PERCORE_LIBRETRO 2
-
-static int pad_type[12] = {1,1,1,1,1,1,1,1,1,1,1,1};
-static unsigned players = 2;
-static bool multitap[2] = {0,0};
 
 int PERLIBRETROInit(void)
 {
@@ -210,11 +179,9 @@ int PERLIBRETROInit(void)
    PortData_struct* portdata = NULL;
 
    //1 multitap + 1 peripherial
-   players = 7;
-
-   if(!multitap[0] && !multitap[1])
+   if(multitap[0] == 0 && multitap[1] == 0)
       players = 2;
-   else if(multitap[0] && multitap[1])
+   else if(multitap[0] == 1 && multitap[1] == 1)
       players = 12;
 
    PerPortReset();
@@ -869,6 +836,26 @@ void check_variables(void)
          auto_select_cart = 0;
    }
 
+   var.key = "kronos_multitap_port1";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         multitap[0] = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         multitap[0] = 1;
+   }
+
+   var.key = "kronos_multitap_port2";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         multitap[1] = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         multitap[1] = 1;
+   }
+
    var.key = "kronos_filter_mode";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -973,19 +960,6 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       case RETRO_DEVICE_JOYPAD:
       case RETRO_DEVICE_ANALOG:
          pad_type[port] = device;
-         if(port < 2)
-            multitap[port] = false;
-         break;
-         /* Assumes only ports 1 and 2 can report as multitap */
-      case RETRO_DEVICE_MTAP_PAD:
-         pad_type[port] = RETRO_DEVICE_JOYPAD;
-         if(port < 2)
-            multitap[port] = true;
-         break;
-      case RETRO_DEVICE_MTAP_3D:
-         pad_type[port] = RETRO_DEVICE_ANALOG;
-         if(port < 2)
-            multitap[port] = true;
          break;
    }
 

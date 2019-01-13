@@ -25,6 +25,8 @@
 #include "UIBackupRam.h"
 #include "UICheats.h"
 #include "UICheatSearch.h"
+#include "UIDebugVDP1.h"
+#include "UIDebugVDP2.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
@@ -920,6 +922,18 @@ void UIYabause::on_aViewLayerRBG1_triggered()
 void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
+}
+
+void UIYabause::on_aViewDebugVDP1_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugVDP1( this ).exec();
+}
+
+void UIYabause::on_aViewDebugVDP2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugVDP2( this ).exec();
 }
 
 void UIYabause::on_aTraceLogging_triggered( bool toggled )

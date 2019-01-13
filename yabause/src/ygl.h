@@ -524,9 +524,7 @@ typedef struct {
    unsigned int height;
    unsigned int depth;
 
-   float clear_r;
-   float clear_g;
-   float clear_b;
+   float clear[4];
    
    // VDP1 Info
    int vdp1_maxpri;
@@ -540,7 +538,6 @@ typedef struct {
    int drawframe;
    int readframe;
    GLuint rboid_depth;
-   GLuint rboid_stencil;
    GLuint vdp1fbo;
    GLuint vdp1FrameBuff[2];
    GLuint smallfbo;
@@ -554,7 +551,6 @@ typedef struct {
    u32* vdp1fb_buf[2];
    GLuint original_fbo;
    GLuint original_fbotex;
-   GLuint original_stencil;
    GLuint original_depth;
 
    GLuint tmpfbo;
