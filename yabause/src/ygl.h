@@ -556,7 +556,7 @@ typedef struct {
    GLuint vdp1IsNotEmpty[2];
    u32* vdp1fb_buf[2];
    GLuint original_fbo;
-   GLuint original_fbotex[4];
+   GLuint original_fbotex[7];
    GLuint original_depth;
 
    GLuint tmpfbo;

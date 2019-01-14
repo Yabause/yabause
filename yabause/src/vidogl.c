@@ -2294,7 +2294,7 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
     Vdp2DrawCellInterlace(info, texture, varVdp2Regs);
     return;
   }
-//if (info->patternwh == 2) printf("%d\n", info->colornumber);
+
   switch (info->colornumber)
   {
   case 0: // 4 BPP
@@ -7510,12 +7510,12 @@ static void VIDOGLVdp2DrawScreens(void)
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
 #endif
 
-  _Ygl->screen[NBG0] = -1;
-  _Ygl->screen[NBG1] = -1;
-  _Ygl->screen[NBG2] = -1;
-  _Ygl->screen[NBG3] = -1;
-  _Ygl->screen[RBG0] = -1;
-  _Ygl->screen[RBG1] = -1;
+  _Ygl->screen[NBG0] = 0;
+  _Ygl->screen[NBG1] = 0;
+  _Ygl->screen[NBG2] = 0;
+  _Ygl->screen[NBG3] = 0;
+  _Ygl->screen[RBG0] = 0;
+  _Ygl->screen[RBG1] = 0;
 
   YglUpdateColorRam();
 

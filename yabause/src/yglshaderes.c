@@ -3841,7 +3841,7 @@ SHADER_VERSION
 "}                                                   \n";
 
 
-int YglBlitImage(u32 topImage, u32 secondImage, u32 thirdImage, u32 targetFbo) {
+int YglBlitImage(u32* image, u32 targetFbo) {
   const GLchar * fblit_img_v[] = { img_v, NULL };
   const GLchar * fblit_img_f[] = { img_f, NULL };
 
@@ -3858,9 +3858,33 @@ int YglBlitImage(u32 topImage, u32 secondImage, u32 thirdImage, u32 targetFbo) {
     -1.0, -1.0f,
     1.0, 1.0f,
     -1.0, 1.0f,
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f,
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f,
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f,
   };
 
   float const textureCoord[] = {
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f,
     1.0f, 0.0f,
     0.0f, 0.0f,
     1.0f, 1.0f,
@@ -3944,19 +3968,12 @@ int YglBlitImage(u32 topImage, u32 secondImage, u32 thirdImage, u32 targetFbo) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-  if (thirdImage != 0) {
-    glBindTexture(GL_TEXTURE_2D, thirdImage);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  }
-
-  if (secondImage != 0) {
-    glBindTexture(GL_TEXTURE_2D, secondImage);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  }
-
-  if (topImage != 0) {
-    glBindTexture(GL_TEXTURE_2D, topImage);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  for (int i=0; i<6; i++) {
+    if (image[5-i] != 0) {
+printf("img %d\n", 5-i);
+      glBindTexture(GL_TEXTURE_2D, image[5-i]);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
   }
 
   // Clean up
