@@ -2992,6 +2992,24 @@ static void DrawVDP2Image(YglLevel * level, Vdp2 *varVdp2Regs, int from, int to)
       }
       glDisable(GL_BLEND);
 
+      if ((level->prg[j].prgid != PG_LINECOLOR_INSERT) &&
+         (level->prg[j].prgid != PG_LINECOLOR_INSERT_CRAM) && 
+         (level->prg[j].blendmode & VDP2_CC_BLUR)==0)
+      {
+        if ((level->prg[j].blendmode & 0x03) == VDP2_CC_RATE)
+        {
+printf("La\n");
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        else if ( (level->prg[j].blendmode&0x03) == VDP2_CC_ADD)
+        {
+printf("Ici\n");
+          glEnable(GL_BLEND);
+          glBlendFunc(GL_ONE, GL_SRC_ALPHA);
+        }
+      }
+
       glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
       glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float), level->prg[j].quads, GL_STREAM_DRAW);
@@ -3122,9 +3140,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
    FRAMELOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
 
   // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
- // if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
+  if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
  //   YglRenderDestinationAlpha(varVdp2Regs);
- // }
+printf("Need Alpha\n");
+  }
  // else
  // Second screen alpha to reintroduce
 

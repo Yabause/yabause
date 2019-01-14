@@ -2063,14 +2063,14 @@ static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp
     switch (info->specialcolormode)
     {
     case 1:
-      if (info->specialcolorfunction == 0) { alpha = 0x40; }
+      if (info->specialcolorfunction == 0) { alpha = 0xFF; }
       break;
     case 2:
-      if (info->specialcolorfunction == 0) { alpha = 0x40; }
-      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0x40; } }
+      if (info->specialcolorfunction == 0) { alpha = 0xFF; }
+      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
       break;
     case 3:
-      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0x40; }
+      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xFF; }
       break;
     }
   }
@@ -7510,12 +7510,12 @@ static void VIDOGLVdp2DrawScreens(void)
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
 #endif
 
-  _Ygl->screen[NBG0] = 0;
-  _Ygl->screen[NBG1] = 0;
-  _Ygl->screen[NBG2] = 0;
-  _Ygl->screen[NBG3] = 0;
-  _Ygl->screen[RBG0] = 0;
-  _Ygl->screen[RBG1] = 0;
+  _Ygl->screen[NBG0] = -1;
+  _Ygl->screen[NBG1] = -1;
+  _Ygl->screen[NBG2] = -1;
+  _Ygl->screen[NBG3] = -1;
+  _Ygl->screen[RBG0] = -1;
+  _Ygl->screen[RBG1] = -1;
 
   YglUpdateColorRam();
 

@@ -2236,15 +2236,17 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
    glActiveTexture(GL_TEXTURE0);
 
    // Setup Line color uniform
-#if 0
+
    if (SPLCEN != 0) {
+     printf("Need SPLCEN\n");
+#if 0
      glUniform1i(g_draw_framebuffer_uniforms[arrayid].idline, 2);
      glActiveTexture(GL_TEXTURE2);
      glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
      glActiveTexture(GL_TEXTURE0);
      glDisable(GL_BLEND);
-   }
 #endif
+   }
    return;
 }
 
