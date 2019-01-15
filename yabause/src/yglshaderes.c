@@ -410,8 +410,6 @@ int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   glUniform4fv(id_normal_cram_color_offset_addcol, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_ONE, GL_SRC_ALPHA);
   return 0;
 }
 

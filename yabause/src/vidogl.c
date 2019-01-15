@@ -2083,7 +2083,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   u32 cramindex;
   u16 dotw = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
   u8 dot;
-  u32 alpha = 0xFF;
+  u32 alpha = info->alpha;
 
   dot = (dotw & 0xF000) >> 12;
   if (!(dot & 0xF) && info->transparencyenable) {
@@ -2605,9 +2605,10 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.cellw = tile.cellh = info->patternpixelwh;
   tile.flipfunction = info->flipfunction;
 
-  if (info->specialprimode == 1)
+  if (info->specialprimode == 1) {
     tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
-  else
+    _Ygl->screen[info->id] = tile.priority;
+  } else
     tile.priority = info->priority;
 
   tile.vertices[0] = x;
