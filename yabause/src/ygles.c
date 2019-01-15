@@ -3193,7 +3193,7 @@ printf("%d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], prio[
 //printf("Print First\n");
         glDrawBuffers(1, &DrawBuffers[i+1]);
         level = &_Ygl->vdp2levels[_Ygl->screen[prio[i]]];
-        DrawVDP2Image(level, varVdp2Regs, prio[i], 8);
+        DrawVDP2Image(level, varVdp2Regs, _Ygl->screen[prio[i]], 8);
         min = _Ygl->screen[prio[i]];
         draw = 1;
         img[i] = _Ygl->original_fbotex[i+1]; 
