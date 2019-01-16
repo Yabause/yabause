@@ -6668,13 +6668,8 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
       info.blendmode |= VDP2_CC_RATE;
     }
   } else {
-    // 12.14 CCRTMD
-    if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-      info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
-    } else {
-      info.alpha = 0xFF;
-    }
-    info.blendmode |= VDP2_CC_NONE;
+    info.alpha = 0xFF;
+      info.blendmode |= VDP2_CC_NONE;
   }
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
@@ -6912,6 +6907,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xD000) {
     info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+printf("Blur %d\n", info.alpha);
     info.blendmode |= VDP2_CC_BLUR;
   }
 
@@ -6928,13 +6924,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
       }
     }
     else {
-      // 12.14 CCRTMD
-      if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-        info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
-      }
-      else {
-        info.alpha = 0xFF;
-      }
+      info.alpha = 0xFF;
       info.blendmode |= VDP2_CC_NONE;
     }
 
@@ -7048,14 +7038,7 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
       }
     }
     else {
-      // 12.14 CCRTMD
-      if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-        info.alpha = ((~varVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
-      }
-      else {
-        info.alpha = 0xFF;
-      }
-
+      info.alpha = 0xFF;
       info.blendmode |= VDP2_CC_NONE;
     }
 
@@ -7440,13 +7423,8 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
         info->blendmode |= VDP2_CC_RATE;
     }
   } else {
-    // 12.14 CCRTMD
-    if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01) {
-      info->alpha = ((~varVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
-    } else {
-      info->alpha = 0xFF;
-    }
-    info->blendmode |= VDP2_CC_NONE;
+    info->alpha = 0xFF;
+      info->blendmode |= VDP2_CC_NONE;
   }
 
   info->coloroffset = (varVdp2Regs->CRAOFB & 0x7) << 8;

@@ -692,14 +692,6 @@ int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
-  if ( (prg->blendmode & 0x03) == VDP2_CC_RATE ) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  }else if ((prg->blendmode&0x03) == VDP2_CC_ADD) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
-  }
-
   // call blit method
   YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
@@ -775,6 +767,7 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
   YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
+  glDisable(GL_BLEND);
 
   return 0;
 }
@@ -2010,7 +2003,8 @@ void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 
         }
       }
       else { // Destination Alpha Mode
-
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
         if (SPLCEN == 0) { // No Line Color Insertion
           pgid = PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK;
         }
@@ -2096,7 +2090,7 @@ void Ygl_uniformVDP2DrawFrameBufferShadow(void * p) {
 
 }
 
-void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, int blend, Vdp2 *varVdp2Regs)
+void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, Vdp2 *varVdp2Regs)
 {
    YglProgram * prg;
    int arrayid;
@@ -2110,7 +2104,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
 
    prg = p;
 
-   if ( blend && SPCCN ) {
+   if ( SPCCN ) {
      const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
      if (CCMD == 0) {  // Calculate Rate mode
        if (CCRTMD == 0) {  // Source Alpha Mode
@@ -2171,8 +2165,6 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
          }
        }
      } else { // Add Color Mode
-       glEnable(GL_BLEND);
-       glBlendFunc(GL_ONE, GL_SRC_ALPHA);
        if (SPLCEN == 0) { // No Line Color Insertion
          switch (SPCCCS)
          {
@@ -2208,7 +2200,6 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offs
        }
      }
    } else { // No Color Calculation
-     glDisable(GL_BLEND);
      pgid = PG_VDP2_DRAWFRAMEBUFF;
    }
 
@@ -2453,7 +2444,6 @@ int Ygl_cleanupLinecolorInsert(void * p, YglTextureManager *tm)
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE0);
-  glEnable(GL_BLEND);
 
   return 0;
 }
@@ -3390,8 +3380,6 @@ int YglDrawBackScreen(float w, float h) {
   // Clean up
   glDisableVertexAttribArray(0);
 
-  glEnable(GL_DEPTH_TEST);
-
   return 0;
 }
 
@@ -3804,8 +3792,6 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
 
   return 0;
 }
@@ -3978,6 +3964,7 @@ printf("img %d\n", 5-i);
   glActiveTexture(GL_TEXTURE0);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
+  glDisable(GL_BLEND);
 
   return 0;
 }

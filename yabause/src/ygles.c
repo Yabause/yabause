@@ -2782,12 +2782,20 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
   if (_Ygl->vdp1_maxpri < from) return;
   if (_Ygl->vdp1_minpri > to) return;
 
+
+  glDisable(GL_BLEND);
+//  if (varVdp2Regs->CCCTL & 0x40) {
+//printf("Enable blend\n");
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//  }
+
   glBindVertexArray(_Ygl->vao);
 
   //if (_Ygl->vdp1_lineTexture != 0){ // hbalnk-in function
   //  Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture, varVdp2Regs);
   //}else{
-   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 1, varVdp2Regs );
+   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, varVdp2Regs );
   //}
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
@@ -2835,7 +2843,6 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
    texcord[7] = 0.0f;
 
 
-     Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, 0, varVdp2Regs );
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&result.m[0][0]);
 
      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertices_buf);
@@ -2849,6 +2856,8 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
      glEnableVertexAttribArray(_Ygl->renderfb.texcoordp);
 
      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  glDisable(GL_BLEND);
 }
 
 
@@ -2972,6 +2981,24 @@ void YglCheckFBSwitch(int sync) {
   }
 }
 
+static void setupVdp2Blend(YglProgram *prg, Vdp2 *varVdp2Regs) {
+  glDisable(GL_BLEND);
+printf("Disable blend\n");
+  if (prg->blendmode != 0) {
+    if ((prg->blendmode & 0x3) == VDP2_CC_RATE) {
+      if ((varVdp2Regs->CCCTL >> 9) & 0x01) {
+printf("Dst alpha\n");
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+      } else {
+printf("Src alpha\n");
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      }
+    }
+  }
+}
+
 static void DrawVDP2Image(YglLevel * level, Vdp2 *varVdp2Regs, int from, int to) {
 
   int cprg = -1;
@@ -2993,25 +3020,8 @@ static void DrawVDP2Image(YglLevel * level, Vdp2 *varVdp2Regs, int from, int to)
       {
         level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2, varVdp2Regs);
       }
-      glDisable(GL_BLEND);
 
-      if ((level->prg[j].prgid != PG_LINECOLOR_INSERT) &&
-         (level->prg[j].prgid != PG_LINECOLOR_INSERT_CRAM) && 
-         (level->prg[j].blendmode & VDP2_CC_BLUR)==0)
-      {
-        if ((level->prg[j].blendmode & 0x03) == VDP2_CC_RATE)
-        {
-printf("La\n");
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
-        else if ( (level->prg[j].blendmode&0x03) == VDP2_CC_ADD)
-        {
-printf("Ici\n");
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-        }
-      }
+      setupVdp2Blend(&level->prg[j], varVdp2Regs);
 
       glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
@@ -3039,6 +3049,7 @@ printf("Ici\n");
         level->prg[j].matrix = (GLfloat*)&_Ygl->mtxModelView.m[0][0];
         level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp2);
       }
+      glDisable(GL_BLEND);
     }
   }
   level->prgcurrent = 0;
@@ -3147,14 +3158,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
   // Windo function to reintroduce
 
    FRAMELOG("YglRenderFrameBuffer: fb %d", _Ygl->readframe);
-
-  // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
-  if (((Vdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
- //   YglRenderDestinationAlpha(varVdp2Regs);
-printf("Need Alpha\n");
-  }
- // else
- // Second screen alpha to reintroduce
 
     cprg = -1;
 
