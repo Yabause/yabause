@@ -3821,11 +3821,13 @@ SHADER_VERSION
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
-"  fragColor = texture( s_texture, v_texcoord);         \n"
+"  vec4 color = texture( s_texture, v_texcoord); \n"
+"  if (color.a == 0.0) discard;\n"
+"  fragColor = color;         \n"
 "}                                                   \n";
 
 
-int YglBlitImage(u32* image, u32 targetFbo) {
+int YglBlitImage(u32* image, u32 targetFbo, Vdp2 *varVdp2Regs) {
   const GLchar * fblit_img_v[] = { img_v, NULL };
   const GLchar * fblit_img_f[] = { img_f, NULL };
 
@@ -3935,8 +3937,10 @@ int YglBlitImage(u32* image, u32 targetFbo) {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_STENCIL_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  if (varVdp2Regs->CCCTL & 0x8000) {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
 
   glActiveTexture(GL_TEXTURE0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
