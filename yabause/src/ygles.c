@@ -2999,9 +2999,13 @@ printf("Src alpha\n");
   }
 }
 
-static void DrawVDP2Image(YglLevel * level, Vdp2 *varVdp2Regs, int from, int to) {
-
+static int DrawVDP2Image(GLenum* attachment, int id, Vdp2 *varVdp2Regs, int from, int to) {
+  YglLevel * level;
   int cprg = -1;
+
+  level = &_Ygl->vdp2levels[from];
+
+  glDrawBuffers(1, &attachment[id]);
 
   for (int j = 0; j < (level->prgcurrent + 1); j++)
   {
@@ -3055,10 +3059,11 @@ static void DrawVDP2Image(YglLevel * level, Vdp2 *varVdp2Regs, int from, int to)
   level->prgcurrent = 0;
 
   if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
+
+  return (level->blendmode == VDP2_CC_NONE);
 }
 
 void YglRender(Vdp2 *varVdp2Regs) {
-   YglLevel * level;
    GLuint cprg=0;
    int from = 0;
    int to   = 0;
@@ -3072,6 +3077,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    double y = 0;
    float col[4] = {0.0f,0.0f,0.0f,0.0f};
    int img[6] = {0};
+   int opaque[6] = {0};
    GLenum DrawBuffers[7]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6};
 
    glBindVertexArray(_Ygl->vao);
@@ -3194,9 +3200,8 @@ printf("%d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], prio[
     for(int i = 0; i < 6; i++) {
       if (_Ygl->screen[prio[i]] > 0) {
 //printf("Print First\n");
-        glDrawBuffers(1, &DrawBuffers[i+1]);
-        level = &_Ygl->vdp2levels[_Ygl->screen[prio[i]]];
-        DrawVDP2Image(level, varVdp2Regs, _Ygl->screen[prio[i]], 8);
+printf("Draw screen %d\n", prio[i]);
+        opaque[i] = DrawVDP2Image(&DrawBuffers[1], i, varVdp2Regs, _Ygl->screen[prio[i]], 8);
         min = _Ygl->screen[prio[i]];
         draw = 1;
         img[i] = _Ygl->original_fbotex[i+1]; 
@@ -3205,7 +3210,9 @@ printf("%d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], prio[
 
     glDrawBuffers(1, &DrawBuffers[0]);
     if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(0, min, varVdp2Regs);
-    if (draw == 1) YglBlitImage(img, _Ygl->default_fbo);
+    if (draw == 1) {
+      YglBlitImage(img, opaque, _Ygl->default_fbo, varVdp2Regs);
+    }
 
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
