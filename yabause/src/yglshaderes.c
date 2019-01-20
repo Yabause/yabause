@@ -3818,21 +3818,18 @@ SHADER_VERSION
 "#endif\n"
 "in vec2 v_texcoord;                            \n"
 "uniform sampler2D s_texture;                        \n"
-"uniform int opaque;                        \n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
 "  vec4 color = texture( s_texture, v_texcoord); \n"
 "  if (color.a == 0.0) discard;\n"
 "  fragColor = color;         \n"
-"  if (opaque != 0) fragColor.a = 1.0;         \n"
 "}                                                   \n";
 
 
 int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
   const GLchar * fblit_img_v[] = { img_v, NULL };
   const GLchar * fblit_img_f[] = { img_f, NULL };
-  int opaque_id = 0;
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3940,8 +3937,9 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_STENCIL_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
+//  glEnable(GL_BLEND);
+//  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
   glActiveTexture(GL_TEXTURE0);
@@ -3957,13 +3955,10 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
   glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
   glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  opaque_id = glGetUniformLocation(blit_image_prg, "opaque");
 
-  for (int i=0; i<6; i++) {
-    if (image[5-i] != 0) {
-printf("img %d opaque %d\n", 5-i, opaque[5-i]);
-      glUniform1i(opaque_id, opaque[5-i]);
-      glBindTexture(GL_TEXTURE_2D, image[5-i]);
+  for (int i=5; i>=0; i--) {
+    if (image[i] != 0) {
+      glBindTexture(GL_TEXTURE_2D, image[i]);
       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
   }
