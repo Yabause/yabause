@@ -2691,7 +2691,7 @@ void YglDrawCpuFramebufferWrite( int target ){
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_stencil);
   _Ygl->cpu_framebuffer_write[0] = 0;
   _Ygl->cpu_framebuffer_write[1] = 0;
-  
+
   if (_Ygl->smallfbotex == 0) {
       GLuint error;
       glGenTextures(1, &_Ygl->smallfbotex);
@@ -2702,15 +2702,15 @@ void YglDrawCpuFramebufferWrite( int target ){
       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
       glGetError();
       if ((error = glGetError()) != GL_NO_ERROR) {
-        YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
+        YGLDEBUG("Fail on YglDrawCpuFramebufferWrite at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
         abort();
       }
   }
 
   if( _Ygl->smallfbotex != 0 ) {
-    const u32 width = _Ygl->max_fb_x + 1;
-    const u32 height = _Ygl->max_fb_y + 1; 
-    u32 * texbuf = malloc( width * height * 4 );
+    const u32 width = _Ygl->max_fb_x;
+    const u32 height = _Ygl->max_fb_y; 
+    u32 * texbuf = malloc( (width+1) * (height+1) * 4 );
     int tvmode = (Vdp1Regs->TVMR & 0x7);
     switch( tvmode ) {
       case 0: // 16bit 512x256
@@ -2721,12 +2721,12 @@ void YglDrawCpuFramebufferWrite( int target ){
           for( int u=0; u<width; u++ ){
             u16 val = T1ReadWord(Vdp1FrameBuffer[target],(v<<10)|((u&0x3FF)<<1));
             if( val &0x8000 ){
-              texbuf[ width*(height-v)+u ] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24(val)); 
+              texbuf[ width*(height-v-1)+u ] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24(val));
             }else{
               if( val != 0 ){
-                texbuf[ width*(height-v)+u ] = VDP1COLOR(1, 0, 0, 0, val);
+                texbuf[ width*(height-v-1) +u ] = VDP1COLOR(1, 0, 0, 0, val);
               }else{
-                texbuf[ width*(height-v)+u ] = 0;
+                texbuf[ width*(height-v-1) +u ] = 0;
               }
             }
           }
@@ -2738,9 +2738,9 @@ void YglDrawCpuFramebufferWrite( int target ){
           for( int u=0; u<width; u++ ){
             u8 val = T1ReadByte(Vdp1FrameBuffer[target],(v<<10)|(u&0x3FF));
             if(val != 0 ){
-              texbuf[ width*(height-v)+u ] = VDP1COLOR(1, 0, 0, 0, val);
+              texbuf[ width*(height - v - 1) +u ] = VDP1COLOR(1, 0, 0, 0, val);
             }else{
-              texbuf[ width*(height-v)+u ] = 0; 
+              texbuf[ width*(height - v - 1) +u ] = 0;
             }
           }
         }
@@ -2751,9 +2751,9 @@ void YglDrawCpuFramebufferWrite( int target ){
           for( int u=0; u<width; u++ ){
             u8 val = T1ReadByte(Vdp1FrameBuffer[target],(v<<9)|(u&0x1FF));
             if(val != 0 ){
-              texbuf[ width*(height-v)+u ] = VDP1COLOR(1, 0, 0, 0, val);
+              texbuf[ width*(height - v - 1) +u ] = VDP1COLOR(1, 0, 0, 0, val);
             }else{
-              texbuf[ width*(height-v)+u ] = 0; 
+              texbuf[ width*(height - v - 1) +u ] = 0;
             }
           }
         }
@@ -2814,7 +2814,8 @@ void YglRenderVDP1(void) {
   cprg = -1;
 
   YglGenFrameBuffer();
-  YglDrawCpuFramebufferWrite(_Ygl->drawframe);
+  if(level->prgcurrent != 0)
+    YglDrawCpuFramebufferWrite(_Ygl->drawframe);
       
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe], 0);
