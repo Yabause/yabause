@@ -2760,7 +2760,7 @@ void YglUpdateVdp2Reg(Vdp2 *varVdp2Regs) {
 
 }
 
-void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
+int YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
 
   GLfloat vertices[8];
   GLfloat texcord[8];
@@ -2776,17 +2776,18 @@ void YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
   int logwin_cc1;
   int winmode_cc;
 
+  int ret = 0;
+
 printf ("Render from %d to %d\n", from, to);
 
   YglGenFrameBuffer();
 
   // Out of range, do nothing
-  if (_Ygl->vdp1_maxpri < from) {printf("Max error %d %d\n", _Ygl->vdp1_maxpri, from); return;}
-  if (_Ygl->vdp1_minpri > to) {printf("Min error %d %d\n", _Ygl->vdp1_minpri, from); return;}
+  if (_Ygl->vdp1_maxpri < from) {printf("Max error %d < %d\n", _Ygl->vdp1_maxpri, from); return ret;}
+  if (_Ygl->vdp1_minpri > to) {printf("Min error %d > %d\n", _Ygl->vdp1_minpri, to); return ret;}
 
   glDisable(GL_BLEND);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-  glStencilFunc(GL_ALWAYS, 0x00, 0xFF);
 
   if (varVdp2Regs->CCCTL & 0x40) {
 printf("Enable blend\n");
@@ -2850,7 +2851,7 @@ printf("Enable blend\n");
    texcord[6] = 0.0f;
    texcord[7] = 0.0f;
 
-
+ret = 1;
      glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&result.m[0][0]);
 
      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertices_buf);
@@ -2866,6 +2867,8 @@ printf("Enable blend\n");
      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   glDisable(GL_BLEND);
+
+return ret;
 }
 
 
@@ -3199,17 +3202,18 @@ printf("top %d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], p
     glDrawBuffers(1, &DrawBuffers[1]);
     for(int i = 5; i >= 0; i--) {
       int priority = _Ygl->screen[prio[i]];
+printf("Prio[%d] = %d\n", i, priority);
       if (priority > 0) {
         from = priority;
+        to = (i==0)?8:_Ygl->screen[prio[i-1]]-1;
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
         glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-        glStencilFunc(GL_ALWAYS, 0x00, 0xFF);
         nbPass += DrawVDP2Screens(varVdp2Regs, priority);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
-        to = from;
+        img[0] = _Ygl->original_fbotex[1];
       }
     }
 printf("Top %d to %d %d\n", from, to, nbPass);
-    img[0] = _Ygl->original_fbotex[1];
 
     if (nbPass > 1) {
       //Draw second image
@@ -3217,18 +3221,18 @@ printf("Top %d to %d %d\n", from, to, nbPass);
 
       glDrawBuffers(1, &DrawBuffers[2]);
       for(int i = 5; i >= 1; i--) {
-        int priority = _Ygl->screen[prio[i]];
+        int priority = _Ygl->screen[prio[i]]-1;
         if (priority > 0) {
           from = priority;
+          to = (i==0)?8:_Ygl->screen[prio[i-1]];
           glStencilFunc(GL_LESS, 0x1, 0xFF);
           glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
           DrawVDP2Screens(varVdp2Regs, priority);
           if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
-          to = from;
+          img[1] = _Ygl->original_fbotex[2];
         }
       }
       printf("Second %d to %d\n", from, to);
-      img[1] = _Ygl->original_fbotex[2];
     }
     if (nbPass > 2) {
       //Draw third image
@@ -3238,27 +3242,25 @@ printf("Top %d to %d %d\n", from, to, nbPass);
         int priority = _Ygl->screen[prio[i]];
         if (priority > 0) {
           from = priority;
-          glStencilFunc(GL_LESS, 0x2, 0xFF); //ou 3?
+          to = (i==0)?8:_Ygl->screen[prio[i-1]]-1;
+          glStencilFunc(GL_LESS, 0x2, 0xFF);
           glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
           DrawVDP2Screens(varVdp2Regs, priority);
           if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
-          to = from;
+          img[2] = _Ygl->original_fbotex[3];
         }
       }
       printf("Third %d to %d\n", from, to);
-      img[2] = _Ygl->original_fbotex[3];
     }
 
     //Draw last screen
     glDisable(GL_STENCIL_TEST);
-    glDrawBuffers(1, &DrawBuffers[4]);
-    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(0, to, varVdp2Regs);
-    img[3] = _Ygl->original_fbotex[4];
-
     glDrawBuffers(1, &DrawBuffers[0]);
-printf("Last render 0 to %d\n", to);
-    //if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(0, to, varVdp2Regs);
-    YglBlitImage(img, 1, _Ygl->default_fbo, varVdp2Regs);
+    if(img[0] == img[1] == img[2] == 0) {
+      if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(0, 8, varVdp2Regs);
+    } else {
+      YglBlitImage(img, 1, _Ygl->default_fbo, varVdp2Regs);
+    }
 
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
