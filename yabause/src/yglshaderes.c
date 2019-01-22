@@ -3410,6 +3410,7 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
 "  fragColor = texelFetch( s_texture, addr,0 );         \n"
 "  if (fragColor.a == 0.0) discard;                        \n"
+"  fragColor.a = 1.0;                        \n"
 "}                                                   \n";
 
 int YglBlitPriority(int priority) {
@@ -3944,17 +3945,20 @@ SHADER_VERSION
 "precision highp float;                            \n"
 "#endif\n"
 "in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture;                        \n"
+"uniform sampler2D s_top;                        \n"
+"uniform sampler2D s_second;                        \n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
-"  vec4 color = texture( s_texture, v_texcoord); \n"
-"  if (color.a == 0.0) discard;\n"
-"  fragColor = color;         \n"
+"  vec4 top = texture( s_top, v_texcoord); \n"
+"  vec4 second = texture( s_second, v_texcoord); \n"
+"  if ((top.a == 0.0) && (second.a == 0.0)) discard;\n"
+"  fragColor.rgb = top.a * top.rgb + (1.0 - top.a) * second.rgb;         \n"
+"  fragColor.a = 1.0;         \n"
 "}                                                   \n";
 
 
-int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
+int YglBlitImage(u32* image, Vdp2 *varVdp2Regs) {
   const GLchar * fblit_img_v[] = { img_v, NULL };
   const GLchar * fblit_img_f[] = { img_f, NULL };
 
@@ -4056,7 +4060,8 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
       abort();
     }
     GLUSEPROG(blit_image_prg);
-    glUniform1i(glGetUniformLocation(blit_image_prg, "s_texture"), 0);
+    glUniform1i(glGetUniformLocation(blit_image_prg, "s_top"), 0);
+    glUniform1i(glGetUniformLocation(blit_image_prg, "s_second"), 1);
   }
   else{
     GLUSEPROG(blit_image_prg);
@@ -4064,15 +4069,10 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_STENCIL_TEST);
-  glEnable(GL_BLEND);
-  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-
-  // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
-  if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
-    glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ZERO, GL_ONE);
-  }
+  glDisable(GL_BLEND);
 
   glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, image[0]);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -4086,11 +4086,31 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-  for (int i=2; i>=0; i--) {
-    if (image[i] != 0) {
-      glBindTexture(GL_TEXTURE_2D, image[i]);
+#if 0
+  glEnable(GL_BLEND);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+
+  // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
+  if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
+    printf("Blend Alpha\n");
+    glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ZERO, GL_ONE);
+  }
+#endif
+
+  glEnable(GL_STENCIL_TEST);
+  glStencilFunc(GL_EQUAL, 0, 0xFF);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);  
+
+  glBindTexture(GL_TEXTURE_2D, image[0]);
+  glActiveTexture(GL_TEXTURE1);
+
+  if (image[1] != 0) {
+    for (int i=1; i<3; i++) {
+      if (image[i] != 0) {
+        glBindTexture(GL_TEXTURE_2D, image[i]);
 //printf("Draw img %d\n", i);
-      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      }
     }
   }
 
@@ -4099,6 +4119,7 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
   glDisable(GL_BLEND);
+  glDisable(GL_STENCIL_TEST);
 
   return 0;
 }

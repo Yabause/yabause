@@ -2294,7 +2294,6 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
     Vdp2DrawCellInterlace(info, texture, varVdp2Regs);
     return;
   }
-
   switch (info->colornumber)
   {
   case 0: // 4 BPP
@@ -3270,7 +3269,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   int linecl = 0xFF;
   Vdp2 * regs;
   if ((varVdp2Regs->CCCTL >> 5) & 0x01) {
-    linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
+    linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3);
   }
 
 
@@ -3436,7 +3435,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   vdp2rotationparameter_struct *parameter;
   Vdp2 * regs;
   if ((varVdp2Regs->CCCTL >> 5) & 0x01) {
-    linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
+    linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3);
   }
 
   if (vdp2height >= 448) lineInc <<= 1;
@@ -5764,7 +5763,7 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
           a = 0xFF;
         }
         else {
-          a = ((~varVdp2Regs->CCRLB & 0x1F00) >> 5) + 0x7;
+          a = ((~varVdp2Regs->CCRLB & 0x1F00) >> 5);
         }
         *back_pixel_data++ = (a << 24) | ((b&0xFF) << 16) | ((g&0xFF) << 8) | (r&0xFF);
       }
@@ -6394,7 +6393,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3);
     info.blendmode |= VDP2_CC_BLUR;
   }
 
@@ -6403,7 +6402,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     if (varVdp2Regs->CCCTL & 0x1)
     {
       // Color calculation ratio
-      info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+      info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3);
 
       // Color calculation mode bit
       if (varVdp2Regs->CCCTL & 0x100) { // Add Color
@@ -6427,7 +6426,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
         // Color calculation will not be operated.
         // But need to write alpha value
-        info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3) + 0x7;
+        info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3);
       }
       else {
         info.alpha = 0xFF;
@@ -6656,12 +6655,12 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   info.blendmode = 0;
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xC000) {
-    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
     info.blendmode |= VDP2_CC_BLUR;
   }
   
   if (varVdp2Regs->CCCTL & 0x2) {
-    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5) + 0x7;
+    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
     if (varVdp2Regs->CCCTL & 0x100 ) {
       info.blendmode |= VDP2_CC_ADD;
     } else {
@@ -6906,7 +6905,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xD000) {
-    info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+    info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3);
 printf("Blur %d\n", info.alpha);
     info.blendmode |= VDP2_CC_BLUR;
   }
@@ -6914,7 +6913,7 @@ printf("Blur %d\n", info.alpha);
 
     if (varVdp2Regs->CCCTL & 0x4)
     {
-      info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3) + 0x7;
+      info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3);
       if (varVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/ )
       {
         info.blendmode |= VDP2_CC_ADD;
@@ -7022,13 +7021,13 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xE000) {
-    info.alpha = ((~varVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+    info.alpha = ((~varVdp2Regs->CCRNB & 0x1F00) >> 5);
     info.blendmode |= VDP2_CC_BLUR;
   }
 
     if (varVdp2Regs->CCCTL & 0x8)
     {
-      info.alpha = ((~varVdp2Regs->CCRNB & 0x1F00) >> 5) + 0x7;
+      info.alpha = ((~varVdp2Regs->CCRNB & 0x1F00) >> 5);
       if (varVdp2Regs->CCCTL & 0x100 )
       {
         info.blendmode |= VDP2_CC_ADD;
@@ -7411,12 +7410,12 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0x9000) {
-    info->alpha = ((~varVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+    info->alpha = ((~varVdp2Regs->CCRR & 0x1F) << 3);
     info->blendmode |= VDP2_CC_BLUR;
   }
 
   if ((varVdp2Regs->CCCTL & 0x010) == 0x10) {
-    info->alpha = ((~varVdp2Regs->CCRR & 0x1F) << 3) + 0x7;
+    info->alpha = ((~varVdp2Regs->CCRR & 0x1F) << 3);
     if (varVdp2Regs->CCCTL & 0x100 ){
         info->blendmode |= VDP2_CC_ADD;
     } else {
