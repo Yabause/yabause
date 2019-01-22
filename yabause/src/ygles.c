@@ -2778,25 +2778,20 @@ int YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
 
   int ret = 0;
 
-printf ("Render from %d to %d\n", from, to);
+//printf ("Render from %d to %d\n", from, to);
 
   YglGenFrameBuffer();
 
   // Out of range, do nothing
-  if (_Ygl->vdp1_maxpri < from) {printf("Max error %d < %d\n", _Ygl->vdp1_maxpri, from); return ret;}
-  if (_Ygl->vdp1_minpri > to) {printf("Min error %d > %d\n", _Ygl->vdp1_minpri, to); return ret;}
+  //if (_Ygl->vdp1_maxpri < from) {printf("Max error %d < %d\n", _Ygl->vdp1_maxpri, from); return ret;}
+  //if (_Ygl->vdp1_minpri > to) {printf("Min error %d > %d\n", _Ygl->vdp1_minpri, to); return ret;}
 
   glDisable(GL_BLEND);
   glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
   if (varVdp2Regs->CCCTL & 0x40) {
-printf("Enable blend\n");
+//printf("Enable blend\n");
     glEnable(GL_BLEND);
-  if (((varVdp2Regs->CCCTL >> 9) & 0x01)){
-    glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
-  } else {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  }
   }
 
   glBindVertexArray(_Ygl->vao);
@@ -2994,15 +2989,15 @@ void YglCheckFBSwitch(int sync) {
 
 static void setupVdp2Blend(YglProgram *prg, Vdp2 *varVdp2Regs) {
   glDisable(GL_BLEND);
-printf("Disable blend\n");
+//printf("Disable blend\n");
   if (prg->blendmode != 0) {
     if ((prg->blendmode & 0x3) == VDP2_CC_RATE) {
       if ((varVdp2Regs->CCCTL >> 9) & 0x01) {
-printf("Dst alpha\n");
+//printf("Dst alpha\n");
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
       } else {
-printf("Src alpha\n");
+//printf("Src alpha\n");
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       }
@@ -3081,6 +3076,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    double x = 0;
    double y = 0;
    float col[4] = {0.0f,0.0f,0.0f,0.0f};
+   float colopaque[4] = {0.0f,0.0f,0.0f,1.0f};
    int img[6] = {0};
    GLenum DrawBuffers[7]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6};
 
@@ -3114,19 +3110,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    }
 
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
-
    glDrawBuffers(7, &DrawBuffers[0]);
-   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-   glClearBufferfv(GL_COLOR, 0, col);
-   glClearBufferfv(GL_COLOR, 1, col);
-   glClearBufferfv(GL_COLOR, 2, col);
-   glClearBufferfv(GL_COLOR, 3, col);
-   glClearBufferfv(GL_COLOR, 4, col);
-   glClearBufferfv(GL_COLOR, 5, col);
-   glClearBufferfv(GL_COLOR, 6, col);
-
    if ((Vdp2Regs->TVMD & 0x8000) == 0) goto render_finish;
-
 
    _Ygl->targetfbo = _Ygl->original_fbo;
    glViewport(0, 0, GlWidth, GlHeight);
@@ -3140,19 +3125,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glScissor(_Ygl->m_viewport[0],_Ygl->m_viewport[1],_Ygl->m_viewport[2],_Ygl->m_viewport[3]);
    glEnable(GL_SCISSOR_TEST);
 
-   if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
-     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-     YglDrawBackScreen(GlWidth, GlHeight);
-   }else{
-     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
-     glClearBufferfv(GL_COLOR, 1, _Ygl->clear);
-     glClearBufferfv(GL_COLOR, 2, _Ygl->clear);
-     glClearBufferfv(GL_COLOR, 3, _Ygl->clear);
-     glClearBufferfv(GL_COLOR, 4, _Ygl->clear);
-     glClearBufferfv(GL_COLOR, 5, _Ygl->clear);
-     glClearBufferfv(GL_COLOR, 6, _Ygl->clear);
-     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-   }
+   glClearBufferfv(GL_COLOR, 0, colopaque);
+   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+
 
    if (YglTM_vdp2 == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
@@ -3175,7 +3150,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
     glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
 
     // Could be better for perf to not even calculte the other layers...
-    printf("%d %d %d %d %d %d\n", _Ygl->screen[0], _Ygl->screen[1], _Ygl->screen[2], _Ygl->screen[3], _Ygl->screen[4], _Ygl->screen[6]);
+    //printf("%d %d %d %d %d %d\n", _Ygl->screen[0], _Ygl->screen[1], _Ygl->screen[2], _Ygl->screen[3], _Ygl->screen[4], _Ygl->screen[6]);
     int prio[6] = {8};
     for (int j=0; j<6; j++) {
       prio[j] = -1;
@@ -3193,16 +3168,20 @@ void YglRender(Vdp2 *varVdp2Regs) {
         }
       }
     }
-printf("top %d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], prio[5]);
+//printf("top %d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], prio[5]);
     int min = 8;
     glEnable(GL_STENCIL_TEST);
 
     //Draw top image
-
     glDrawBuffers(1, &DrawBuffers[1]);
+    if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
+      YglDrawBackScreen(GlWidth, GlHeight);
+    }else{
+        glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
+    }
     for(int i = 5; i >= 0; i--) {
       int priority = _Ygl->screen[prio[i]];
-printf("Prio[%d] = %d\n", i, priority);
+//printf("Prio[%d] = %d\n", i, priority);
       if (priority > 0) {
         from = priority;
         to = (i==0)?8:_Ygl->screen[prio[i-1]]-1;
@@ -3213,13 +3192,18 @@ printf("Prio[%d] = %d\n", i, priority);
         img[0] = _Ygl->original_fbotex[1];
       }
     }
-printf("Top %d to %d %d\n", from, to, nbPass);
+//printf("Top %d to %d %d\n", from, to, nbPass);
 
     if (nbPass > 1) {
       //Draw second image
-
-
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
+      glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
       glDrawBuffers(1, &DrawBuffers[2]);
+      if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
+        YglDrawBackScreen(GlWidth, GlHeight);
+      }else{
+        glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
+      }
       for(int i = 5; i >= 1; i--) {
         int priority = _Ygl->screen[prio[i]]-1;
         if (priority > 0) {
@@ -3232,12 +3216,18 @@ printf("Top %d to %d %d\n", from, to, nbPass);
           img[1] = _Ygl->original_fbotex[2];
         }
       }
-      printf("Second %d to %d\n", from, to);
+      //printf("Second %d to %d\n", from, to);
     }
     if (nbPass > 2) {
       //Draw third image
-
+      glStencilFunc(GL_ALWAYS, 0, 0xFF);
+      glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
       glDrawBuffers(1, &DrawBuffers[3]);
+      if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
+        YglDrawBackScreen(GlWidth, GlHeight);
+      }else{
+        glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
+      }
       for(int i = 5; i >= 2; i--) {
         int priority = _Ygl->screen[prio[i]];
         if (priority > 0) {
@@ -3250,15 +3240,19 @@ printf("Top %d to %d %d\n", from, to, nbPass);
           img[2] = _Ygl->original_fbotex[3];
         }
       }
-      printf("Third %d to %d\n", from, to);
+      //printf("Third %d to %d\n", from, to);
     }
 
     //Draw last screen
     glDisable(GL_STENCIL_TEST);
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(1, &DrawBuffers[0]);
-    if(img[0] == img[1] == img[2] == 0) {
+//printf("IMG are %d %d %d\n", img[0], img[1], img[2]);
+    if((img[0] == 0) && (img[1] == 0) && (img[2] == 0)) { // Break doom...
+//printf("Render FB!!!!\n");
       if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(0, 8, varVdp2Regs);
     } else {
+//printf("Blit FB!!!!\n");
       YglBlitImage(img, 1, _Ygl->default_fbo, varVdp2Regs);
     }
 

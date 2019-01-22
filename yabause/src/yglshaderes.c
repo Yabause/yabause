@@ -3937,10 +3937,13 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_STENCIL_TEST);
-  glDisable(GL_BLEND);
-//  glEnable(GL_BLEND);
-//  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
+  // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
+  if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
+    glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ZERO, GL_ONE);
+  }
 
   glActiveTexture(GL_TEXTURE0);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -3956,9 +3959,10 @@ int YglBlitImage(u32* image, u32* opaque, u32 targetFbo, Vdp2 *varVdp2Regs) {
   glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-  for (int i=5; i>=0; i--) {
+  for (int i=2; i>=0; i--) {
     if (image[i] != 0) {
       glBindTexture(GL_TEXTURE_2D, image[i]);
+//printf("Draw img %d\n", i);
       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
   }
