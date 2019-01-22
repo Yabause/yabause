@@ -3295,7 +3295,7 @@ static const char fclear_img[] =
   "  fragColor = texelFetch( u_Clear, linepos,0 ); \n"
   "} \n";
 
-int YglDrawBackScreen(float w, float h) {
+int YglDrawBackScreen() {
 
   float const vertexPosition[] = {
     1.0f, -1.0f,
@@ -3370,11 +3370,6 @@ int YglDrawBackScreen(float w, float h) {
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_tex);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
@@ -3498,8 +3493,6 @@ int YglBlitPriority(int priority) {
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[priority]);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
@@ -3646,8 +3639,6 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, srcTexture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
@@ -4071,10 +4062,11 @@ int YglBlitImage(u32* image, Vdp2 *varVdp2Regs) {
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_BLEND);
 
+//glEnable(GL_BLEND);
+//glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, image[0]);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
