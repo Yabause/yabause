@@ -3384,6 +3384,133 @@ int YglDrawBackScreen(float w, float h) {
 }
 
 //--------------------------------------------------------------------------------------------------------------
+static int vdp2prio_prg = -1;
+
+static const char vdp2prio_v[] =
+      SHADER_VERSION
+      "layout (location = 0) in vec2 a_position;   \n"
+      "layout (location = 1) in vec2 a_texcoord;   \n"
+      "out vec2 v_texcoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
+      " v_texcoord  = a_texcoord; \n"
+      "} ";
+
+static const char vdp2prio_f[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float;                            \n"
+"#endif\n"
+"in vec2 v_texcoord;                            \n"
+"uniform sampler2D s_texture;                        \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
+"  fragColor = texelFetch( s_texture, addr,0 );         \n"
+"  if (fragColor.a == 0.0) discard;                        \n"
+"}                                                   \n";
+
+int YglBlitPriority(int priority) {
+  const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
+  const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
+
+  float const vertexPosition[] = {
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f };
+
+  float const textureCoord[] = {
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f
+  };
+
+  if (vdp2prio_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (vdp2prio_prg != -1) glDeleteProgram(vdp2prio_prg);
+    vdp2prio_prg = glCreateProgram();
+    if (vdp2prio_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_vdp2prio_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      vdp2prio_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_vdp2prio_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      vdp2prio_prg = -1;
+      abort();
+    }
+
+    glAttachShader(vdp2prio_prg, vshader);
+    glAttachShader(vdp2prio_prg, fshader);
+    glLinkProgram(vdp2prio_prg);
+    glGetProgramiv(vdp2prio_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(vdp2prio_prg);
+      vdp2prio_prg = -1;
+      abort();
+    }
+
+    GLUSEPROG(vdp2prio_prg);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture"), 0);
+  }
+  else{
+    GLUSEPROG(vdp2prio_prg);
+  }
+
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[priority]);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+
+  return 0;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
 static int vdp1_prg = -1;
 static GLint vdp1MtxModelView = 0;
 

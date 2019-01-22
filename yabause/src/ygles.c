@@ -928,11 +928,59 @@ int YglGenFrameBuffer() {
     abort();
   }
   YglGenerateOriginalBuffer();
+  YglGenerateScreenBuffer();
 
   YGLDEBUG("YglGenFrameBuffer OK\n");
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindTexture(GL_TEXTURE_2D, 0);
   rebuild_frame_buffer = 0;
+  return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int YglGenerateScreenBuffer(){
+
+  int status;
+  GLuint error;
+  float col[4] = {0.0f,0.0f,0.0f,0.0f};
+
+  YGLDEBUG("YglGenerateScreenBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
+
+  if (_Ygl->screen_fbotex[0] != 0) {
+    glDeleteTextures(7,&_Ygl->screen_fbotex[0]);
+  }
+  glGenTextures(7, &_Ygl->screen_fbotex[0]);
+
+
+  for (int i=0; i<7; i++) {
+    glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[i]);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }
+    
+  if (_Ygl->screen_fbo != 0){
+    glDeleteFramebuffers(1, &_Ygl->screen_fbo);
+  }
+
+  glGenFramebuffers(1, &_Ygl->screen_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->screen_fbotex[0], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _Ygl->screen_fbotex[1], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _Ygl->screen_fbotex[2], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _Ygl->screen_fbotex[3], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _Ygl->screen_fbotex[4], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _Ygl->screen_fbotex[5], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT6, GL_TEXTURE_2D, _Ygl->screen_fbotex[6], 0);
+  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (status != GL_FRAMEBUFFER_COMPLETE) {
+    YGLDEBUG("YglGenerateOriginalBuffer:Framebuffer status = %08X\n", status);
+    abort();
+  }
   return 0;
 }
 
@@ -3005,7 +3053,7 @@ static void setupVdp2Blend(YglProgram *prg, Vdp2 *varVdp2Regs) {
   }
 }
 
-static int DrawVDP2Screens(Vdp2 *varVdp2Regs, int from) {
+static int DrawVDP2Priority(Vdp2 *varVdp2Regs, int from) {
   YglLevel * level;
   int cprg = -1;
 
@@ -3108,7 +3156,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
    if (_Ygl->original_fbotex[0] == 0){
      YglGenerateOriginalBuffer();
    }
-
+   if (_Ygl->screen_fbotex[0] == 0){
+     YglGenerateScreenBuffer();
+   }
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
    glDrawBuffers(7, &DrawBuffers[0]);
    if ((Vdp2Regs->TVMD & 0x8000) == 0) goto render_finish;
@@ -3170,6 +3220,26 @@ void YglRender(Vdp2 *varVdp2Regs) {
     }
 //printf("top %d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], prio[5]);
     int min = 8;
+
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
+  glDrawBuffers(7, &DrawBuffers[0]);
+  glClearBufferfv(GL_COLOR, 0, col);
+  glClearBufferfv(GL_COLOR, 1, col);
+  glClearBufferfv(GL_COLOR, 2, col);
+  glClearBufferfv(GL_COLOR, 3, col);
+  glClearBufferfv(GL_COLOR, 4, col);
+  glClearBufferfv(GL_COLOR, 5, col);
+  glClearBufferfv(GL_COLOR, 6, col);
+
+  for(int i = 0; i < 6; i++) {
+    int priority = _Ygl->screen[prio[i]];
+    if (priority > 0) {
+       glDrawBuffers(1, &DrawBuffers[priority-1]);
+       nbPass += DrawVDP2Priority(varVdp2Regs, priority);
+    }
+  }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glEnable(GL_STENCIL_TEST);
 
     //Draw top image
@@ -3187,7 +3257,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
         to = (i==0)?8:_Ygl->screen[prio[i-1]]-1;
         glStencilFunc(GL_ALWAYS, 0, 0xFF);
         glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-        nbPass += DrawVDP2Screens(varVdp2Regs, priority);
+        YglBlitPriority(priority-1);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
         img[0] = _Ygl->original_fbotex[1];
       }
@@ -3196,6 +3266,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
     if (nbPass > 1) {
       //Draw second image
+      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
       glStencilFunc(GL_ALWAYS, 0, 0xFF);
       glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
       glDrawBuffers(1, &DrawBuffers[2]);
@@ -3211,7 +3282,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
           to = (i==0)?8:_Ygl->screen[prio[i-1]];
           glStencilFunc(GL_LESS, 0x1, 0xFF);
           glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-          DrawVDP2Screens(varVdp2Regs, priority);
+          YglBlitPriority(priority-1);
           if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
           img[1] = _Ygl->original_fbotex[2];
         }
@@ -3220,6 +3291,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
     }
     if (nbPass > 2) {
       //Draw third image
+      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
       glStencilFunc(GL_ALWAYS, 0, 0xFF);
       glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
       glDrawBuffers(1, &DrawBuffers[3]);
@@ -3235,7 +3307,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
           to = (i==0)?8:_Ygl->screen[prio[i-1]]-1;
           glStencilFunc(GL_LESS, 0x2, 0xFF);
           glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-          DrawVDP2Screens(varVdp2Regs, priority);
+          YglBlitPriority(priority-1);
           if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
           img[2] = _Ygl->original_fbotex[3];
         }
