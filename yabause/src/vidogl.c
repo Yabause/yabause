@@ -3889,7 +3889,8 @@ int VIDOGLInit(void)
   SetSaturnResolution(320, 224);
   YglReset(_Ygl->vdp1levels[0]);
   YglReset(_Ygl->vdp1levels[1]);
-  YglReset(_Ygl->vdp2levels);
+  for (int i=0; i<enBGMAX; i++)
+    YglReset(_Ygl->vdp2levels[i]);
 
   vdp1wratio = 1;
   vdp1hratio = 1;

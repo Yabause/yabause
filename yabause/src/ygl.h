@@ -522,8 +522,6 @@ typedef struct {
    //GLuint texture;
    //GLuint pixelBufferID;
    int st;
-   char message[512];
-   int msglength;
    int originx;
    int originy;
    unsigned int width;
@@ -590,7 +588,7 @@ typedef struct {
    YglProgram windowpg;
    YglProgram renderfb;
 
-   YglLevel * vdp1levels[2];
+   YglLevel * vdp1levels;
    YglLevel * vdp2levels;
 
    // Thread
@@ -659,7 +657,7 @@ void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, i
 void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuad(vdp2draw_struct *, YglCache *, YglTextureManager *tm);
 void YglRender(Vdp2 *varVdp2Regs);
-void YglReset(YglLevel * levels);
+void YglReset(YglLevel level);
 void YglShowTexture(void);
 void YglChangeResolution(int, int);
 void YglSetDensity(int d);

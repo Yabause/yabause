@@ -46,7 +46,6 @@ extern int WaitVdp2Async(int sync);
 extern int YglDrawBackScreen();
 
 static int YglCalcTextureQ( float   *pnts,float *q);
-static void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs);
 
 static void waitVdp1End(int id);
 static void executeTMVDP1(int in, int out);
@@ -1104,10 +1103,9 @@ int YglScreenInit(int r, int g, int b, int d) {
   return 0;
 }
 
-void deinitLevels(YglLevel * levels) {
+void deinitLevels(YglLevel * levels, int size) {
   int i, j;
-  int depth = _Ygl->depth;
-  for (i = 0; i < (_Ygl->depth+1); i++)
+  for (i = 0; i < (size); i++)
   {
     for (j = 0; j < levels[i].prgcount; j++)
     {
@@ -1123,16 +1121,15 @@ void deinitLevels(YglLevel * levels) {
   free(levels);
 }
 
-void initLevels(YglLevel** levels) {
+void initLevels(YglLevel** levels, int size) {
   int i, j;
-  int depth = _Ygl->depth;
 
-  if ((*levels = (YglLevel *)malloc(sizeof(YglLevel) * (depth + 1))) == NULL){
+  if ((*levels = (YglLevel *)malloc(sizeof(YglLevel) * (size))) == NULL){
     return;
   }
 
-  memset(*levels,0,sizeof(YglLevel) * (depth+1) );
-  for(i = 0;i < (depth+1) ;i++) {
+  memset(*levels,0,sizeof(YglLevel) * size );
+  for(i = 0;i < size ;i++) {
     YglLevel* level = *levels;
     level[i].prgcurrent = 0;
     level[i].uclipcurrent = 0;
@@ -1184,9 +1181,8 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->density = 1;
   _Ygl->resolution_mode = 1;
 
-  initLevels(&_Ygl->vdp2levels);
-  initLevels(&_Ygl->vdp1levels[0]);
-  initLevels(&_Ygl->vdp1levels[1]);
+  initLevels(&_Ygl->vdp2levels, enBGMAX);
+  initLevels(&_Ygl->vdp1levels, 2);
 
   if( _Ygl->mutex == NULL){
     _Ygl->mutex = YabThreadCreateMutex();
@@ -1283,7 +1279,6 @@ int YglInit(int width, int height, unsigned int depth) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo );
   glBindTexture(GL_TEXTURE_2D, 0);
   _Ygl->st = 0;
-  _Ygl->msglength = 0;
   _Ygl->aamode = AA_NONE;
   _Ygl->scanline = 0;
   _Ygl->stretch = 0;
@@ -1306,11 +1301,9 @@ void YglDeInit(void) {
       if(_Ygl->mutex) YabThreadFreeMutex(_Ygl->mutex );
       
       if (_Ygl->vdp2levels)
-      deinitLevels(_Ygl->vdp2levels);
-      if (_Ygl->vdp1levels[0])
-      deinitLevels(_Ygl->vdp1levels[0]);
-      if (_Ygl->vdp1levels[1])
-      deinitLevels(_Ygl->vdp1levels[1]);
+      deinitLevels(_Ygl->vdp2levels, enBGMAX);
+      if (_Ygl->vdp1levels)
+      deinitLevels(_Ygl->vdp1levels, 2);
 
       free(_Ygl);
    }
@@ -1332,9 +1325,9 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm)
    }
 
    if(tm == YglTM_vdp1[_Ygl->drawframe]){
-     level = &_Ygl->vdp1levels[_Ygl->drawframe][input->priority];
+     level = &_Ygl->vdp1levels[_Ygl->drawframe];
    } else {
-     level = &_Ygl->vdp2levels[input->priority];
+     level = &_Ygl->vdp2levels[input->id];
    }
 
    level->blendmode |= (input->blendmode&0x03);
@@ -2652,7 +2645,7 @@ void YglRenderVDP1(void) {
 
   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
-  level = &(_Ygl->vdp1levels[_Ygl->drawframe][_Ygl->depth]);
+  level = &(_Ygl->vdp1levels[_Ygl->drawframe]);
     if( level == NULL ) {
         //YabThreadUnLock(_Ygl->mutex);
         return;
@@ -3187,7 +3180,7 @@ static int DrawVDP2Priority(Vdp2 *varVdp2Regs, int from, int id) {
 
   int nbPass = 0;
 
-  level = &_Ygl->vdp2levels[from];
+  level = &_Ygl->vdp2levels[id];
 
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
@@ -3273,6 +3266,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    GLenum DrawBuffers[7]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6};
 
    glBindVertexArray(_Ygl->vao);
+
+//NBG1
 
    if (_Ygl->stretch == 0) {
      double dar = (double)GlWidth/(double)GlHeight;
@@ -3401,7 +3396,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
     }
     for(int i = 5; i >= 0; i--) {
       int priority = _Ygl->screen[prio[i]];
-//printf("Prio[%d] = %d\n", i, priority);
       if (priority > 0) {
         glStencilFunc(GL_ALWAYS, 0, 0xFF);
         glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
@@ -3481,11 +3475,12 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
    YglBlitFramebuffer(srcTexture, _Ygl->default_fbo, _Ygl->width, _Ygl->height, w, h);
-
+//   YglBlitFramebuffer(_Ygl->screen_fbotex[3], _Ygl->default_fbo, _Ygl->width, _Ygl->height, w, h);
 
 render_finish:
 
-  YglReset(_Ygl->vdp2levels);
+  for (int i=0; i<enBGMAX; i++)
+    YglReset(_Ygl->vdp2levels[i]);
   glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
   glUseProgram(0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -3681,221 +3676,21 @@ int YglCleanUpWindow(YglProgram * prg, YglTextureManager *tm){
   return 0;
 }
 
-void YglRenderDestinationAlpha(Vdp2 *varVdp2Regs) {
-  YglLevel * level;
-  GLuint cprg = 0;
-  int from = 0;
-  int to = 0;
-  YglMatrix mtx;
-  YglMatrix dmtx;
-  unsigned int i, j;
-  int highpri = 8;
-  int ccwindow;
-  int blendfunc_src = GL_DST_ALPHA;
-  int blendfunc_dst = GL_ONE_MINUS_DST_ALPHA;
-
-  glEnable(GL_BLEND);
-
-  YglLoadIdentity(&mtx);
-
-  cprg = -1;
-
-  // Color Calcurate Window  
-  ccwindow = ((Vdp2Regs->WCTLD >> 9) & 0x01);
-  ccwindow |= ((Vdp2Regs->WCTLD >> 11) & 0x01);
-
-  // Find out top prooriy
-  // ToDo: this operation need to be per pixel!
-  for (i = 0; i < _Ygl->depth; i++)
-  {
-    level = _Ygl->vdp2levels + i;
-    if (level->prgcurrent != 0 ){
-
-      for (j = 0; j < (level->prgcurrent + 1); j++){
-        if (level->prg[j].blendmode == 1){
-          highpri = i;
-        }
-      }
-      
-    }
-  }
-
-  YglTranslatef(&mtx, 0.0f, 0.0f, -1.0f);
-  for (i = 0; i < _Ygl->depth; i++)
-  {
-    level = _Ygl->vdp2levels + i;
-    if (level->blendmode != 0)
-    {
-      to = i;
-
-      if (highpri == i){
-        glEnable(GL_BLEND);
-        glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-      }else{
-        glDisable(GL_BLEND);
-      }
-      if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, varVdp2Regs);
-      from = to;
-
-      // clean up
-      cprg = -1;
-      glUseProgram(0);
-      glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    }
-    glDisable(GL_STENCIL_TEST);
-    for (j = 0; j<(level->prgcurrent + 1); j++)
-    {
-      if (level->prg[j].currentQuad != 0)
-      {
-        if (level->prg[j].prgid != cprg)
-        {
-          if (level->prg[j].prgid == 0) continue;
-          cprg = level->prg[j].prgid;
-          glUseProgram(level->prg[j].prg);
-        }
-
-        if (level->prg[j].setupUniform)
-        {
-          level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2, varVdp2Regs);
-        }
-
-        YglMatrixMultiply(&dmtx, &mtx, &_Ygl->mtxModelView);
-
-        if (level->prg[j].prgid == PG_LINECOLOR_INSERT || 
-            level->prg[j].prgid == PG_LINECOLOR_INSERT_CRAM ||
-            level->prg[j].prgid == PG_LINECOLOR_INSERT_DESTALPHA ||
-            level->prg[j].prgid == PG_LINECOLOR_INSERT_DESTALPHA_CRAM ||
-            level->prg[j].prgid == PG_VDP2_PER_LINE_ALPHA ) {
-              glDisable(GL_BLEND);
-        }
-        else{
-          if (level->prg[j].blendmode == 0){
-            glDisable(GL_BLEND);
-          }
-          else if (level->prg[j].blendmode == 1){
-            glEnable(GL_BLEND);
-            glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-          }
-          else if (level->prg[j].blendmode == 2){
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_ONE, GL_ONE);
-          }
-        }
-
-        if (i != highpri){
-          glDisable(GL_BLEND);
-        }
-
-        if ((level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0) || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
-          YglSetupWindow(&level->prg[j]);
-        }
-
-        glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&dmtx.m[0][0]);
-
-        glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
-        glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float), level->prg[j].quads, GL_STREAM_DRAW);
-        glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(level->prg[j].vertexp);
-
-        glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textcoords_buf);
-        glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].textcoords, GL_STREAM_DRAW);
-        glVertexAttribPointer(level->prg[j].texcoordp, 4, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(level->prg[j].texcoordp);
-        if (level->prg[j].vaid != 0) {
-           glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
-           glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
-           glVertexAttribPointer(level->prg[j].vaid, 4, GL_FLOAT, GL_FALSE, 0, 0);
-           glEnableVertexAttribArray(level->prg[j].vaid);
-        }
-        glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
-        
-        if (level->prg[j].bwin0 != 0 || level->prg[j].bwin1 != 0 || (level->prg[j].blendmode != VDP2_CC_NONE && ccwindow)){
-          level->prg[j].matrix = (GLfloat*)dmtx.m;
-          YglCleanUpWindow(&level->prg[j], YglTM_vdp2);
-        }
-
-        level->prg[j].currentQuad = 0;
-
-        if (level->prg[j].cleanupUniform)
-        {
-          level->prg[j].matrix = (GLfloat*)dmtx.m;
-          level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp2);
-        }
-      }
-    }
-    level->prgcurrent = 0;
-
-    YglTranslatef(&mtx, 0.0f, 0.0f, 0.1f);
-
-  }
-
-  for (i = from; i < _Ygl->vdp1_maxpri+1 ; i++){
-    if (((Vdp2Regs->CCCTL >> 6) & 0x01) == 0x01){
-      switch ((Vdp2Regs->SPCTL >> 12) & 0x3){
-      case 0:
-        if (i <= ((Vdp2Regs->SPCTL >> 8) & 0x07)){
-          glEnable(GL_BLEND);
-          glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-        }
-        else{
-          glDisable(GL_BLEND);
-        }
-        break;
-      case 1:
-        if (i == ((Vdp2Regs->SPCTL >> 8) & 0x07)){
-          glEnable(GL_BLEND);
-          glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-        }
-        else{
-          glDisable(GL_BLEND);
-        }
-        break;
-      case 2:
-        if (i >= ((Vdp2Regs->SPCTL >> 8) & 0x07)){
-          glEnable(GL_BLEND);
-          glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-        }
-        else{
-          glDisable(GL_BLEND);
-        }
-        break;
-      case 3:
-        // ToDO: MSB color cacuration
-        glEnable(GL_BLEND);
-        glBlendFuncSeparate(blendfunc_src, blendfunc_dst, GL_ONE, GL_ZERO);
-        break;
-      }
-    }
-    if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i, i+1, varVdp2Regs);
-  }
-
-  return;
-}
-
-
 //////////////////////////////////////////////////////////////////////////////
 
-void YglReset(YglLevel * levels) {
-   unsigned int i,j;
-   YglLevel *level;
-   if(levels == NULL) return;
-
-   for(i = 0;i < (_Ygl->depth+1) ;i++) {
-     level = levels + i;
-     level->blendmode  = 0;
-     level->prgcurrent = 0;
-     level->uclipcurrent = 0;
-     level->ux1 = 0;
-     level->uy1 = 0;
-     level->ux2 = 0;
-     level->uy2 = 0;
-     for( j=0; j< level->prgcount; j++ )
-     {
-         levels[i].prg[j].currentQuad = 0;
-     }
-   }
-   _Ygl->msglength = 0;
+void YglReset(YglLevel level) {
+  unsigned int i,j;
+  level.blendmode  = 0;
+  level.prgcurrent = 0;
+  level.uclipcurrent = 0;
+  level.ux1 = 0;
+  level.uy1 = 0;
+  level.ux2 = 0;
+  level.uy2 = 0;
+  for( j=0; j< level.prgcount; j++ )
+  {
+    level.prg[j].currentQuad = 0;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4185,17 +3980,6 @@ void YglChangeResolution(int w, int h) {
 
 void YglSetDensity(int d) {
   _Ygl->density = d;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void YglOnScreenDebugMessage(char *string, ...) {
-   va_list arglist;
-
-   va_start(arglist, string);
-   vsprintf(_Ygl->message, string, arglist);
-   va_end(arglist);
-   _Ygl->msglength = (int)strlen(_Ygl->message);
 }
 
 void VIDOGLSync(){
