@@ -561,6 +561,11 @@ typedef struct {
 
    GLuint screen_fbo;
    GLuint screen_fbotex[7];
+   GLuint screen_depth;
+
+   GLuint window_fbo;
+   GLuint window_fbotex[enBGMAX];
+   GLuint window_depth;
 
    GLuint tmpfbo;
    GLuint tmpfbotex;
@@ -575,9 +580,9 @@ typedef struct {
    u32 * messagebuf;
 
    int bUpdateWindow;
-   int win0v[512*4];
+   float win0v[512*4];
    int win0_vertexcnt;
-   int win1v[512*4];
+   float win1v[512*4];
    int win1_vertexcnt;
 
    YglMatrix mtxModelView;

@@ -822,7 +822,7 @@ const GLchar Yglprg_window_f[] =
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
       "{                                                   \n"
-      "  fragColor = vec4( 1.0,1.0,1.0,1.0 );\n"
+      "  fragColor = vec4( 0.0, 0.0, 0.0, 0.0 );\n"
       "}                                                   \n";
 const GLchar * pYglprg_window_f[] = {Yglprg_window_f, NULL};
 
@@ -3408,7 +3408,7 @@ SHADER_VERSION
 "  fragColor.a = 1.0;                        \n"
 "}                                                   \n";
 
-int YglBlitPriority(int priority) {
+int YglBlitTexture(int texture) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
 
@@ -3492,7 +3492,7 @@ int YglBlitPriority(int priority) {
   glEnableVertexAttribArray(1);
 
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[priority]);
+  glBindTexture(GL_TEXTURE_2D, texture);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
