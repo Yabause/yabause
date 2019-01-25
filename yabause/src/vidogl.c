@@ -1313,7 +1313,7 @@ u32 FASTCALL Vdp2ColorRamGetColorCM01SC0(vdp2draw_struct * info, u32 colorindex,
 u32 FASTCALL Vdp2ColorRamGetColorCM01SC2(vdp2draw_struct * info, u32 colorindex, int alpha, u8 lowdot, Vdp2 *varVdp2Regs)
 {
   u32 tmp;
-  u16 code = ((varVdp2Regs->SFSEL & (1 << info->id)) == 0) ? (varVdp2Regs->SFCODE & 0xFF) : (varVdp2Regs->SFCODE & 0xFF00) >> 8;
+  u16 code = ((varVdp2Regs->SFSEL & (1 << info->idReg)) == 0) ? (varVdp2Regs->SFCODE & 0xFF) : (varVdp2Regs->SFCODE & 0xFF00) >> 8;
   tmp = T2ReadWord(Vdp2ColorRam, (colorindex << 1) & 0xFFF);
 
   if (info->specialcolorfunction == 0)
@@ -2599,14 +2599,14 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.WindowArea1 = info->WindowArea1;
   tile.LogicWin = info->LogicWin;
   tile.lineTexture = info->lineTexture;
-  tile.id = info->id;
+  tile.idScreen = info->idScreen;
 
   tile.cellw = tile.cellh = info->patternpixelwh;
   tile.flipfunction = info->flipfunction;
 
   if (info->specialprimode == 1) {
     tile.priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
-    _Ygl->screen[info->id] = tile.priority;
+    _Ygl->screen[info->idScreen] = tile.priority;
   } else
     tile.priority = info->priority;
 
@@ -5972,7 +5972,8 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   vdp2draw_struct* info = &rgb->info;
 
   info->dst = 0;
-  info->id = 4;
+  info->idScreen = RBG1;
+  info->idReg = 4;
   info->uclipmode = 0;
   info->cor = 0;
   info->cog = 0;
@@ -6297,7 +6298,8 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   YglCache tmpc;
   info.dst = 0;
   info.uclipmode = 0;
-  info.id = 0;
+  info.idScreen = NBG0;
+  info.idReg = 0;
   info.coordincx = 1.0f;
   info.coordincy = 1.0f;
 
@@ -6599,7 +6601,8 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   YglTexture texture;
   YglCache tmpc;
   info.dst = 0;
-  info.id = 1;
+  info.idScreen = NBG1;
+  info.idReg = 1;
   info.uclipmode = 0;
   info.cor = 0;
   info.cog = 0;
@@ -6868,7 +6871,8 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   vdp2draw_struct info;
   YglTexture texture;
   info.dst = 0;
-  info.id = 2;
+  info.idScreen = NBG2;
+  info.idReg = 2;
   info.uclipmode = 0;
   info.cor = 0;
   info.cog = 0;
@@ -6982,7 +6986,8 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 {
   vdp2draw_struct info;
   YglTexture texture;
-  info.id = 3;
+  info.idScreen = NBG3;
+  info.idReg = 3;
   info.dst = 0;
   info.uclipmode = 0;
   info.cor = 0;
@@ -7097,7 +7102,8 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   vdp2draw_struct* info = &rgb->info;
 
   info->dst = 0;
-  info->id = 4;
+  info->idScreen = RBG0;
+  info->idReg = 4;
   info->uclipmode = 0;
   info->cor = 0;
   info->cog = 0;

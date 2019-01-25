@@ -221,7 +221,8 @@ typedef struct {
     s32 cog;
     s32 cob;
     int linescreen;
-	int id;
+    int idScreen;
+    int idReg;
 } YglSprite;
 
 typedef struct {
@@ -507,8 +508,8 @@ typedef enum {
 	NBG2,
 	NBG3,
 	RBG0,
-	SPRITE,
 	RBG1,
+	SPRITE,
 	enBGMAX
 } enBG;
 
@@ -554,15 +555,15 @@ typedef struct {
    GLuint vdp1IsNotEmpty[2];
    u32* vdp1fb_buf[2];
    GLuint original_fbo;
-   GLuint original_fbotex[7];
+   GLuint original_fbotex[SPRITE];
    GLuint original_depth;
 
-   GLuint screen_fbo;
-   GLuint screen_fbotex[7];
-   GLuint screen_depth;
+   GLuint priority_fbo;
+   GLuint priority_fbotex[7];
+   GLuint priority_depth;
 
    GLuint window_fbo;
-   GLuint window_fbotex[enBGMAX];
+   GLuint window_fbotex[SPRITE];
    GLuint window_depth;
 
    GLuint tmpfbo;
@@ -642,7 +643,7 @@ typedef struct {
    GLuint textcoords_buf;
    GLuint vertexAttribute_buf;
 
-   int screen[enBGMAX];
+   int screen[SPRITE];
 
 }  Ygl;
 
