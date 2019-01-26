@@ -3387,8 +3387,8 @@ printf("top %d %d %d %d %d %d\n", prio[0], prio[1], prio[2], prio[3], prio[4], p
        prioDrawn[priority-1] = 1;
        for(int j = i; j >= 0; j--) {
         if (_Ygl->screen[prio[j]] == priority) {
-          printf("Draw %d prio %d\n", prio[i], priority);
-          nbPass += DrawVDP2Screen(varVdp2Regs, prio[i]);
+          printf("Draw %d prio %d\n", prio[j], priority);
+          nbPass += DrawVDP2Screen(varVdp2Regs, prio[j]);
         }
        }
        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(priority, 8, varVdp2Regs);
