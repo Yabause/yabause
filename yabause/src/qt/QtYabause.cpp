@@ -168,7 +168,6 @@ extern "C"
 			*strp = str;
 			return r;
 		}
-#endif // vasprintf
 #endif
         void YuiMsg(const char *format, ...) {
           int r;
@@ -178,10 +177,25 @@ extern "C"
           r = vasprintf(&str, format, arglist);
 	  va_end( arglist );	
 	  if (r > 0) {
-            QtYabause::mainWindow()->appendLog( str );
-	    free(str);
+            //QtYabause::mainWindow()->appendLog( str );
+		  wchar_t wtext[512];
+		  mbstowcs(wtext, str, strlen(str) + 1);//Plus null
+		  LPWSTR ptr = wtext;
+		    ::OutputDebugString(ptr);
+	      free(str);
 	  }
        }
+#else
+	void YuiMsg(const char *format, ...) {
+		char dest[512];
+		va_list argptr;
+		va_start(argptr, format);
+		vsprintf(dest, format, argptr);
+		va_end(argptr);
+		printf(dest);
+}
+
+#endif
 
        void YuiErrorMsg(const char *error_text)
        {
