@@ -2957,7 +2957,7 @@ void YglSetVdp2Window()
 
 extern Vdp2 * fixVdp2Regs;
 void YglUpdateVdp2Reg() {
-  int i;
+  int i,line;
   u8 *cclist  = (u8 *)&fixVdp2Regs->CCRSA;
   u8 *prilist = (u8 *)&fixVdp2Regs->PRISA;
 
@@ -2966,6 +2966,114 @@ void YglUpdateVdp2Reg() {
     _Ygl->fbu_.u_pri[i*4] = ((float)(prilist[i] & 0x7) / 10.0f) + 0.05f;
   }
   _Ygl->fbu_.u_cctll = ((float)((fixVdp2Regs->SPCTL >> 8) & 0x07) / 10.0f) + 0.05f;
+
+  if (*Vdp2External.perline_alpha_draw & 0x40) {
+    u32 * linebuf;
+    int line_shift = 0;
+    if (_Ygl->rheight > 256) {
+      line_shift = 1;
+    }
+    else {
+      line_shift = 0;
+    }
+
+    linebuf = YglGetPerlineBuf(&_Ygl->bg[SPRITE], _Ygl->rheight, 1 + 8 + 8);
+    for (line = 0; line < _Ygl->rheight; line++) {
+      linebuf[line] = 0xFF000000;
+      Vdp2 * lVdp2Regs = &Vdp2Lines[line >> line_shift];
+
+      u8 *cclist = (u8 *)&lVdp2Regs->CCRSA;
+      u8 *prilist = (u8 *)&lVdp2Regs->PRISA;
+      for (i = 0; i < 8; i++) {
+        linebuf[line + _Ygl->rheight * (1 + i)] = (prilist[i] & 0x7) << 24;
+        linebuf[line + _Ygl->rheight * (1 + 8 + i)] = (0xFF - (((cclist[i] & 0x1F) << 3) & 0xF8)) << 24;
+      }
+
+      if (lVdp2Regs->CLOFEN & 0x40) {
+
+        // color offset enable
+        if (lVdp2Regs->CLOFSL & 0x40)
+        {
+          // color offset B
+          vdp1cor = lVdp2Regs->COBR & 0xFF;
+          if (lVdp2Regs->COBR & 0x100)
+            vdp1cor |= 0xFFFFFF00;
+
+          vdp1cog = lVdp2Regs->COBG & 0xFF;
+          if (lVdp2Regs->COBG & 0x100)
+            vdp1cog |= 0xFFFFFF00;
+
+          vdp1cob = lVdp2Regs->COBB & 0xFF;
+          if (lVdp2Regs->COBB & 0x100)
+            vdp1cob |= 0xFFFFFF00;
+        }
+        else
+        {
+          // color offset A
+          vdp1cor = lVdp2Regs->COAR & 0xFF;
+          if (lVdp2Regs->COAR & 0x100)
+            vdp1cor |= 0xFFFFFF00;
+
+          vdp1cog = lVdp2Regs->COAG & 0xFF;
+          if (lVdp2Regs->COAG & 0x100)
+            vdp1cog |= 0xFFFFFF00;
+
+          vdp1cob = lVdp2Regs->COAB & 0xFF;
+          if (lVdp2Regs->COAB & 0x100)
+            vdp1cob |= 0xFFFFFF00;
+        }
+
+
+        linebuf[line] |= ((int)(128.0f + (vdp1cor / 2.0)) & 0xFF) << 16;
+        linebuf[line] |= ((int)(128.0f + (vdp1cog / 2.0)) & 0xFF) << 8;
+        linebuf[line] |= ((int)(128.0f + (vdp1cob / 2.0)) & 0xFF) << 0;
+      }
+      else {
+        linebuf[line] |= 0x00808080;
+      }
+    }
+    YglSetPerlineBuf(&_Ygl->bg[SPRITE], linebuf, _Ygl->rheight, 1 + 8 + 8);
+    _Ygl->vdp1_lineTexture = _Ygl->bg[SPRITE].lincolor_tex;
+  }
+  else {
+    _Ygl->vdp1_lineTexture = 0;
+    if (fixVdp2Regs->CLOFEN & 0x40)
+    {
+      // color offset enable
+      if (fixVdp2Regs->CLOFSL & 0x40)
+      {
+        // color offset B
+        vdp1cor = fixVdp2Regs->COBR & 0xFF;
+        if (fixVdp2Regs->COBR & 0x100)
+          vdp1cor |= 0xFFFFFF00;
+
+        vdp1cog = fixVdp2Regs->COBG & 0xFF;
+        if (fixVdp2Regs->COBG & 0x100)
+          vdp1cog |= 0xFFFFFF00;
+
+        vdp1cob = fixVdp2Regs->COBB & 0xFF;
+        if (fixVdp2Regs->COBB & 0x100)
+          vdp1cob |= 0xFFFFFF00;
+      }
+      else
+      {
+        // color offset A
+        vdp1cor = fixVdp2Regs->COAR & 0xFF;
+        if (fixVdp2Regs->COAR & 0x100)
+          vdp1cor |= 0xFFFFFF00;
+
+        vdp1cog = fixVdp2Regs->COAG & 0xFF;
+        if (fixVdp2Regs->COAG & 0x100)
+          vdp1cog |= 0xFFFFFF00;
+
+        vdp1cob = fixVdp2Regs->COAB & 0xFF;
+        if (fixVdp2Regs->COAB & 0x100)
+          vdp1cob |= 0xFFFFFF00;
+      }
+    }
+    else // color offset disable
+      vdp1cor = vdp1cog = vdp1cob = 0;
+  }
 
 
   _Ygl->fbu_.u_coloroffset[0] = vdp1cor / 255.0f;
