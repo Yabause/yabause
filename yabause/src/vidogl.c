@@ -3194,7 +3194,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
         break;
       }
-      return   cramindex | alpha <<24;
+      return   VDP2COLOR(alpha, info->priority, cramindex);
     }
   case 1: // 8 BPP
     dot = T1ReadByte(Vdp2Ram, ((info->charaddr + (y * cellw) + x) & 0x7FFFF));
@@ -3212,7 +3212,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
         break;
       }
-      return   cramindex | alpha <<24;
+      return   VDP2COLOR(alpha, info->priority, cramindex);
     }
   case 2: // 16 BPP(palette)
     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
@@ -3230,7 +3230,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
         break;
       }
-      return   cramindex | alpha <<24;
+      return   VDP2COLOR(alpha, info->priority, cramindex);
     }
   case 3: // 16 BPP(RGB)
     dot = T1ReadWord(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 2) & 0x7FFFF));
@@ -3239,7 +3239,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   case 4: // 32 BPP
     dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
     if (!(dot & 0x80000000) && info->transparencyenable) return 0x00000000;
-    else return SAT2YAB2(alpha, (dot >> 16), dot);
+    else return VDP2COLOR(info->alpha, info->priority, dot & 0xFFFFFF);
   default:
     return 0;
   }

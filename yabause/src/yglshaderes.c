@@ -1604,8 +1604,8 @@ const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
 "  fragColor.a = 1.0;\n"
 "}\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
+"  fragColor = fragColor + (1.0 - fragColor.a) * scrollColor;\n"
 "}\n";
-
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
 "  fragColor = fragColor.a * fragColor + (1.0 - fragColor.a) * scrollColor;\n"
 "  fragColor.a = 1.0;\n"
