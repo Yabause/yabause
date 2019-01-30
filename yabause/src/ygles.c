@@ -3421,8 +3421,13 @@ printf("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen
   
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
   glDrawBuffers(1, &DrawBuffers[0]);
-    glClearBufferfv(GL_COLOR, 0, col);
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+  glClearBufferfv(GL_COLOR, 0, col);
+  glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+  if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
+    YglDrawBackScreen();
+  }else{
+    glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
+  }
   for(int i = 0; i < 7; i++) {
     if ((allPrio & (1<<i)) != 0) {
       YglBlitTexture(_Ygl->priority_fbotex[i], 1);
