@@ -2390,7 +2390,7 @@ static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectn
    if (*sectoffset == 0xFFFF)
    {
       // Last sector 
-      CDLOG("FIXME - Sector offset of 0xFFFF not supported\n");
+      *sectoffset = Cs2Area->partition[bufno].numblocks - 1;
    }
    else if (*sectnum == 0xFFFF)
    {
@@ -2625,6 +2625,7 @@ void Cs2CopySectorData(void) {
     putpartition->size += 2352;
   }
 
+  
   doCDReport(Cs2Area->status);
   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ECPY);
 
@@ -2665,6 +2666,7 @@ void Cs2MoveSectorData(void) {
     putpartition->size += 2352;
   }
 
+  Cs2SortBlocks(&Cs2Area->partition[source]);
   doCDReport(Cs2Area->status);
   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ECPY);
 }
