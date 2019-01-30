@@ -2182,7 +2182,7 @@ static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr, Vdp2 *va
 //if (info->patternwh == 2) printf("%x\n", dot);
 //Ca deconne ici
   if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
-  else color = VDP2COLOR(info->alpha, info->priority, dot);
+  else color = VDP2COLOR(info->alpha, info->priority, RGB555_TO_RGB24(dot));
   return color;
 }
 

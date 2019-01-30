@@ -812,6 +812,8 @@ INLINE u32 VDP2COLOR(u32 alpha, u32 priority, u32 cramindex) {
   return (((alpha & 0xF8) | priority) << 24 | cramindex);
 }
 
+#define RGB555_TO_RGB24(temp)  ((temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
+
 #if defined WORDS_BIGENDIAN
 #define SAT2YAB1(alpha,temp)      (alpha | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27)
 #else

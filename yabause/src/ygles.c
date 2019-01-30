@@ -3367,7 +3367,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
      allPrio |= 1;
      if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, _Ygl->priority_fbotex[2], varVdp2Regs);
   }
-printf("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen[NBG2],drawScreen[NBG1],drawScreen[NBG0],drawScreen[RBG1],drawScreen[RBG0]);
+  YGLDEBUG("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen[NBG2],drawScreen[NBG1],drawScreen[NBG0],drawScreen[RBG1],drawScreen[RBG0]);
   for(int i = 0; i < 7; i++) {
 //Trouver un moyen de virer des priorités...
     if ((allPrio & (1<<i)) != 0) {
@@ -3381,37 +3381,37 @@ printf("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen
         }
       glDrawBuffers(1, &DrawBuffers[i]);
       if (drawScreen[NBG3] & (1<<i)) {
-        printf("NBG3 draw prio %d\n", i+1);
+        YGLDEBUG("NBG3 draw prio %d\n", i+1);
         setupBlend(varVdp2Regs, NBG3);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG3], varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG3], i+1);
       }
       if (drawScreen[NBG2] & (1<<i)) {
-        printf("NBG2 draw prio %d\n", i+1);
+        YGLDEBUG("NBG2 draw prio %d\n", i+1);
         setupBlend(varVdp2Regs, NBG2);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG2], varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG2], i+1);
       }
       if (drawScreen[NBG1] & (1<<i)) {
-        printf("NBG1 draw prio %d\n", i+1);
+        YGLDEBUG("NBG1 draw prio %d\n", i+1);
         setupBlend(varVdp2Regs, NBG1);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG1], varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG1], i+1);
       }
       if (drawScreen[NBG0] & (1<<i)) {
-        printf("NBG0 draw prio %d\n", i+1);
+        YGLDEBUG("NBG0 draw prio %d\n", i+1);
         setupBlend(varVdp2Regs, NBG0);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG0], varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG0], i+1);
       }
       if (drawScreen[RBG1] & (1<<i)) {
-        printf("RBG1 draw prio %d\n", i+1);
+        YGLDEBUG("RBG1 draw prio %d\n", i+1);
         setupBlend(varVdp2Regs, RBG1);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[RBG1], varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[RBG1], i+1);
       }
       if (drawScreen[RBG0] & (1<<i)) {
-        printf("RBG0 draw prio %d\n", i+1); 
+        YGLDEBUG("RBG0 draw prio %d\n", i+1); 
         setupBlend(varVdp2Regs, RBG0);
         if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[RBG0], varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[RBG0], i+1);
