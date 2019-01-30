@@ -3365,7 +3365,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   if (to != 0) {
      glDrawBuffers(1, &DrawBuffers[0]);
      allPrio |= 1;
-     if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to, _Ygl->priority_fbotex[2], varVdp2Regs);
+     if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to+1, _Ygl->priority_fbotex[2], varVdp2Regs);
   }
   YGLDEBUG("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen[NBG2],drawScreen[NBG1],drawScreen[NBG0],drawScreen[RBG1],drawScreen[RBG0]);
   for(int i = 0; i < 7; i++) {
