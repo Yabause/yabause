@@ -2969,7 +2969,7 @@ SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs) {
   return ret;
 }
 
-int YglRenderFrameBuffer(int from, int to, int texture, Vdp2* varVdp2Regs) {
+int YglRenderFrameBuffer(int from, int to, int texture, SpriteMode mode, Vdp2* varVdp2Regs) {
 
   GLfloat vertices[8];
   GLfloat texcord[8];
@@ -2992,7 +2992,7 @@ int YglRenderFrameBuffer(int from, int to, int texture, Vdp2* varVdp2Regs) {
   //if (_Ygl->vdp1_lineTexture != 0){ // hbalnk-in function
   //  Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture, varVdp2Regs);
   //}else{
-   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, texture, offsetcol, getSpriteRenderMode(varVdp2Regs), varVdp2Regs );
+   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, texture, offsetcol, getSpriteRenderMode(varVdp2Regs), mode, varVdp2Regs );
   //}
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe]);
   //glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -3193,12 +3193,15 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   return ret;
 }
 
-int setupBlend(Vdp2 *varVdp2Regs, int layer) {
+SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
+  SpriteMode ret = NONE;
   const int enableBit[SPRITE+1] = {0, 1, 2, 3, 4, 0, 6};
   glDisable(GL_BLEND);
   if (varVdp2Regs->CCCTL & (1<<enableBit[layer])) {
     if (varVdp2Regs->CCCTL>>8) {
       // Add as is???
+      ret = AS_IS;
+      YGLDEBUG("Layer %d as_is\n", layer);
       glEnable(GL_BLEND);
       glBlendColor(0.0f,0.0f,0.0f,1.0f);
       glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_CONSTANT_ALPHA, GL_ZERO); 
@@ -3206,16 +3209,22 @@ int setupBlend(Vdp2 *varVdp2Regs, int layer) {
       //Add as calculation rate
       glEnable(GL_BLEND);
       if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01 ) {
+        YGLDEBUG("Layer %d src_alpha\n", layer);
+        ret = SRC_ALPHA;
         glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA); 
       } else {
+        YGLDEBUG("Layer %d dst_alpha\n", layer);
+        ret = DST_ALPHA;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       }
     }
   } else {
+    YGLDEBUG("Layer %d none\n", layer);
     glEnable(GL_BLEND);
     glBlendColor(0.0f,0.0f,0.0f,1.0f);
     glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_CONSTANT_ALPHA, GL_ZERO); 
   }
+  return ret;
 }
 
 void YglRender(Vdp2 *varVdp2Regs) {
@@ -3234,6 +3243,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    float colopaque[4] = {0.0f,0.0f,0.0f,1.0f};
    int img[6] = {0};
    int drawScreen[SPRITE];
+   SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
 
    glBindVertexArray(_Ygl->vao);
@@ -3369,7 +3379,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
      if (( _Ygl->vdp1_maxpri >= from) && (_Ygl->vdp1_minpri <= to+1)) {
        if (Vdp1External.disptoggle & 0x01) {
          allPrio |= 1<<7;
-         YglRenderFrameBuffer(from, to+1, _Ygl->priority_fbotex[2], varVdp2Regs);
+         YglRenderFrameBuffer(from, to+1, _Ygl->priority_fbotex[2], AS_IS, varVdp2Regs);
        }
      }
   }
@@ -3388,38 +3398,38 @@ void YglRender(Vdp2 *varVdp2Regs) {
       glDrawBuffers(1, &DrawBuffers[i]);
       if (drawScreen[NBG3] & (1<<i)) {
         YGLDEBUG("NBG3 draw prio %d\n", i+1);
-        setupBlend(varVdp2Regs, NBG3);
-        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG3], varVdp2Regs);
+        mode = setupBlend(varVdp2Regs, NBG3);
+        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG3], mode, varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG3], i+1);
       }
       if (drawScreen[NBG2] & (1<<i)) {
         YGLDEBUG("NBG2 draw prio %d\n", i+1);
-        setupBlend(varVdp2Regs, NBG2);
-        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG2], varVdp2Regs);
+        mode = setupBlend(varVdp2Regs, NBG2);
+        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG2], mode, varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG2], i+1);
       }
       if (drawScreen[NBG1] & (1<<i)) {
         YGLDEBUG("NBG1 draw prio %d\n", i+1);
-        setupBlend(varVdp2Regs, NBG1);
-        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG1], varVdp2Regs);
+        mode = setupBlend(varVdp2Regs, NBG1);
+        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG1], mode, varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG1], i+1);
       }
       if (drawScreen[NBG0] & (1<<i)) {
         YGLDEBUG("NBG0 draw prio %d\n", i+1);
-        setupBlend(varVdp2Regs, NBG0);
-        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG0], varVdp2Regs);
+        mode = setupBlend(varVdp2Regs, NBG0);
+        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[NBG0], mode, varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[NBG0], i+1);
       }
       if (drawScreen[RBG1] & (1<<i)) {
         YGLDEBUG("RBG1 draw prio %d\n", i+1);
-        setupBlend(varVdp2Regs, RBG1);
-        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[RBG1], varVdp2Regs);
+        mode = setupBlend(varVdp2Regs, RBG1);
+        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[RBG1], mode, varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[RBG1], i+1);
       }
       if (drawScreen[RBG0] & (1<<i)) {
         YGLDEBUG("RBG0 draw prio %d\n", i+1); 
-        setupBlend(varVdp2Regs, RBG0);
-        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[RBG0], varVdp2Regs);
+        mode = setupBlend(varVdp2Regs, RBG0);
+        if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(i+1, nextPrio+2, _Ygl->screen_fbotex[RBG0], mode, varVdp2Regs);
         else YglBlitVdp2Priority(_Ygl->screen_fbotex[RBG0], i+1);
       }
     }

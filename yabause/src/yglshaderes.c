@@ -1474,6 +1474,7 @@ typedef struct  {
   int idto;
   int idline;
   int idscroll;
+  int idscrollmode;
 } DrawFrameBufferUniform;
 
 #define MAX_FRAME_BUFFER_UNIFORM (48)
@@ -1557,6 +1558,7 @@ SHADER_VERSION
 "uniform sampler2D s_color; \n"
 "uniform sampler2D s_line; \n"
 "uniform sampler2D s_scroll; \n"
+"uniform int u_scroll_mode;\n"
 "uniform float u_from;\n"
 "uniform float u_to;\n"
 "in vec2 v_texcoord;\n"
@@ -1613,14 +1615,15 @@ const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
 "}\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
 "  fragColor = fragColor + (1.0 - fragColor.a) * scrollColor;\n"
+"  if (u_scroll_mode != 0) fragColor.a = 1.0;\n"
 "}\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
 "  fragColor = fragColor.a * fragColor + (1.0 - fragColor.a) * scrollColor;\n"
-"  fragColor.a = 1.0;\n"
+"  if (u_scroll_mode != 0) fragColor.a = 1.0;\n"
 "}\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
 "  fragColor = scrollColor.a * fragColor + (1.0 - scrollColor.a) * scrollColor;\n"
-"  fragColor.a = 1.0;\n"
+"  if (u_scroll_mode != 0) fragColor.a = 1.0;\n"
 "}\n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
@@ -1874,6 +1877,7 @@ void Ygl_initDrawFrameBuffershader(int id) {
   g_draw_framebuffer_uniforms[arrayid].idto = glGetUniformLocation(_prgid[id], (const GLchar *)"u_to");
   g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
   g_draw_framebuffer_uniforms[arrayid].idscroll = glGetUniformLocation(_prgid[id], (const GLchar *)"s_scroll");
+  g_draw_framebuffer_uniforms[arrayid].idscrollmode = glGetUniformLocation(_prgid[id], (const GLchar *)"u_scroll_mode");
 }
 
 
@@ -1939,7 +1943,7 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float t
   return 0;
 }
 
-void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , int texture, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs)
+void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , int texture, float * offsetcol, SpriteMode mode, SpriteMode scrollmode, Vdp2* varVdp2Regs)
 {
    YglProgram * prg;
    int arrayid;
@@ -1986,6 +1990,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , int texture,
   glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
   glUniform1f(g_draw_framebuffer_uniforms[arrayid].idfrom, from);
   glUniform1f(g_draw_framebuffer_uniforms[arrayid].idto, to);
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idscrollmode, scrollmode);
 
   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idscroll, 2);
   glActiveTexture(GL_TEXTURE2);
