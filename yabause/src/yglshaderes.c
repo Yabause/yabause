@@ -38,7 +38,7 @@
 #define SHADER_VERSION_TESS "#version 420 core \n"
 #endif
 
-//#define YGLLOG
+#define YGLLOG printf
 
 int Ygl_useTmpBuffer();
 int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
@@ -388,7 +388,7 @@ SHADER_VERSION
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
 "  fragColor = txcol+u_color_offset;\n"
-"  if( txindex.a > 0.5) { fragColor.a = 1.0;} else {fragColor.a = 0.0;}\n"
+"  fragColor.a = txindex.a;\n"
 "}\n";
 
 const GLchar * pYglprg_normal_cram_addcol_f[] = { Yglprg_normal_cram_addcol_f, NULL };
@@ -1465,6 +1465,7 @@ typedef struct  {
   int idfrom;
   int idto;
   int idline;
+  int idscroll;
 } DrawFrameBufferUniform;
 
 #define MAX_FRAME_BUFFER_UNIFORM (48)
@@ -1544,9 +1545,10 @@ SHADER_VERSION
 " float u_vheight; \n"
 " int u_color_ram_offset; \n"
 "}; \n"
-"uniform highp sampler2D s_vdp1FrameBuffer;\n"
+"uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_color; \n"
 "uniform sampler2D s_line; \n"
+"uniform sampler2D s_scroll; \n"
 "uniform float u_from;\n"
 "uniform float u_to;\n"
 "in vec2 v_texcoord;\n"
@@ -1554,17 +1556,24 @@ SHADER_VERSION
 "void main()\n"
 "{\n"
 "  vec2 addr = v_texcoord;\n"
-"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  vec4 scrollColor = texture(s_scroll,addr);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
-"  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
+
+"  float priority = (int(scrollColor.a * 255.0)&0x7)/10.0;                        \n"
+"  float alpha = (int(scrollColor.a * 255.0)>>3)/31.0;                        \n"
+"  scrollColor.a = alpha;                        \n"
+"  if( priority < u_from || priority > u_to ) scrollColor = vec4(0.0);                        \n"
+"  else  scrollColor = vec4(scrollColor.rgb, alpha);                        \n"
+"  if( (additional & 0x80) == 0 ){ if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // show? \n"
 "  int prinumber = (additional&0x07); \n"
 "  highp float depth = u_pri[ prinumber ];\n"
-"  if( depth < u_from || depth > u_to ){ discard; } \n"
+"  if( depth < u_from || depth > u_to ){ if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } \n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
-"    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
+"    if( fbColor.b != 0.0 ) {if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // draw shadow last path \n"
 "    int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
-"    if( colindex == 0 && prinumber == 0) { discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
+"    if( colindex == 0 && prinumber == 0) { if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
 "    fragColor = txcol;\n"
@@ -1591,53 +1600,25 @@ const GLchar Yglprg_vdp2_drawfb_cram_equal_color_add_f[] = " if( depth == u_cctl
 const GLchar Yglprg_vdp2_drawfb_cram_more_color_add_f[]  = " if( depth >= u_cctl ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
 const GLchar Yglprg_vdp2_drawfb_cram_msb_color_add_f[]   = " if( txcol.a != 0.0 ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
 
-const GLchar Yglprg_vdp2_drawfb_line_blend_f[] =
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
-"  vec4 lncol = texelFetch( s_line, linepos,0 );\n"
-"  fragColor = (fragColor*fragColor.a) + lncol*(1.0-fragColor.a); \n";
+const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
+"  fragColor.a = 1.0;\n"
+"}\n";
+const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
+"}\n";
 
-const GLchar Yglprg_vdp2_drawfb_line_add_f[] =
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
-"  vec4 lncol = texelFetch( s_line, linepos,0 );\n"
-"  fragColor =  fragColor + lncol * fragColor.a ;  \n";
-
-const GLchar Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f[] =
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
-"  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth <= u_cctl ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
-
-const GLchar Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f[] =
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
-"  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth == u_cctl ){ fragColor = (lncol*lncol.a) + fragColor*(1.0-lncol.a); } \n";
-
-const GLchar Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f[] =
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
-"  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( depth >= u_cctl ){ fragColor =(fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
-
-const GLchar Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f[] =
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
-"  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
-"  if( txcol.a != 0.0 ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); }\n";
-
-
+const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
+"  fragColor = fragColor.a * fragColor + (1.0 - fragColor.a) * scrollColor;\n"
+"  fragColor.a = 1.0;\n"
+"}\n";
+const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
+"  fragColor = scrollColor.a * fragColor + (1.0 - scrollColor.a) * scrollColor;\n"
+"  fragColor.a = 1.0;\n"
+"}\n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
 //"  gl_FragDepth = (depth+1.0)*0.5;\n"
 "}\n";
+
 
 /*------------------------------------------------------------------------------------
 *  VDP2 Draw Frame buffer Operation( Perline color offset using hblankin )
@@ -1725,52 +1706,31 @@ const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_hblank_f[] =
 
 
 //const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
-const GLchar * pYglprg_vdp2_drawfb_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_destalpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_destalpha_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
 
 
-const GLchar * pYglprg_vdp2_drawfb_less_color_col_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_color_col_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_color_col_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_color_col_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
 
-const GLchar * pYglprg_vdp2_drawfb_less_color_add_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_color_add_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_color_add_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_color_add_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
 
-// per line operation using Line color insertion
-const GLchar * pYglprg_vdp2_drawfb_less_destalpha_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f, Yglprg_vdp2_drawfb_cram_destalpha_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_destalpha_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f, Yglprg_vdp2_drawfb_cram_destalpha_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_destalpha_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f, Yglprg_vdp2_drawfb_cram_destalpha_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_destalpha_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f, Yglprg_vdp2_drawfb_cram_destalpha_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
 
-const GLchar * pYglprg_vdp2_drawfb_less_color_col_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_line_blend_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_color_col_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_line_blend_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_color_col_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_line_blend_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_color_col_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_line_blend_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-
-const GLchar * pYglprg_vdp2_drawfb_less_color_add_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_add_f, Yglprg_vdp2_drawfb_line_add_f,Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_color_add_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_add_f, Yglprg_vdp2_drawfb_line_add_f,Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_color_add_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_add_f, Yglprg_vdp2_drawfb_line_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_color_add_line_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_add_f, Yglprg_vdp2_drawfb_line_add_f,Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-
-// per line operation using hbalnk inrerruption
-const GLchar * pYglprg_vdp2_drawfb_hblank_v[] = { Yglprg_vdp1_drawfb_v, NULL };
-
-const GLchar * pYglprg_vdp2_drawfb_hblank_f[] = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_hblank_destalpha_f[] = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_destalpha_col_hblank_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-
-const GLchar * pYglprg_vdp2_drawfb_less_col_hbalnk_f[] = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_less_color_col_hblank_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_col_hbalnk_f[] = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_equal_color_col_hblank_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_col_hblank_f[] = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_more_color_col_hblank_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_col_hblank_f[] = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_msb_color_col_hblank_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-
-const GLchar * pYglprg_vdp2_drawfb_less_add_hblank_f[]  = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_less_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_add_hblank_f[] = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_equal_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_add_hblank_f[]  = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_more_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_add_hblank_f[]  = { Yglprg_vdp2_drawfb_hblank_f, Yglprg_vdp2_drawfb_cram_msb_color_add_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
-
+const GLchar * pYglprg_vdp2_drawfb_msb_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_msb_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_msb_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_msb_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
 
 const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
 SHADER_VERSION
@@ -1810,134 +1770,81 @@ void Ygl_initDrawFrameBuffershader(int id);
 
 int YglInitDrawFrameBufferShaders() {
 
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DESTALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_destalpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL --START--\n");
-  // color calcurate rate
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_col_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_ADD --START--\n");
-  // color calcurate add
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_ADD --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_ADD --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_add_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_NONE);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_AS_IS --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_AS_IS);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA);
 
 
-  //-------------------------------------------------------------------------------
-  // Line color insertion
-  //-------------------------------------------------------------------------------
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_destalpha_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_NONE --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA);
 
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_col_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE);
 
-  // color calcurate add
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_color_add_line_f, 4, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA);
 
-  //------------------------------------------------------------------
-  // HBALNK per line register chnage operation
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_HBLANK, pYglprg_vdp2_drawfb_hblank_v, pYglprg_vdp2_drawfb_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
 
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_HBLANK);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_NONE --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA);
 
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_hblank_destalpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK);
 
-  // color calcurate rate
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_col_hbalnk_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_col_hbalnk_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_col_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_col_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_NONE --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA);
+YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA --START--\n");
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA);
 
-  // color calcurate add
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK);
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_add_hblank_f, 3, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK);
-
-  //------------------------------------------------------------------
-  // Shadow
-YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SHADOW --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SHADOW, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_shadow_f, 1, NULL, NULL, NULL) != 0) { return -1; }
-  Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SHADOW);
-
-  _Ygl->renderfb.prgid = _prgid[PG_VDP2_DRAWFRAMEBUFF];
+  _Ygl->renderfb.prgid = _prgid[PG_VDP2_DRAWFRAMEBUFF_NONE];
   _Ygl->renderfb.setupUniform = Ygl_uniformNormal;
   _Ygl->renderfb.cleanupUniform = Ygl_cleanupNormal;
-  _Ygl->renderfb.vertexp = glGetAttribLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"a_position");
-  _Ygl->renderfb.texcoordp = glGetAttribLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"a_texcoord");
-  _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF], (const GLchar *)"u_mvpMatrix");
+  _Ygl->renderfb.vertexp = glGetAttribLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_NONE], (const GLchar *)"a_position");
+  _Ygl->renderfb.texcoordp = glGetAttribLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_NONE], (const GLchar *)"a_texcoord");
+  _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_NONE], (const GLchar *)"u_mvpMatrix");
 
   return 0;
 }
@@ -1946,7 +1853,7 @@ YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SHADOW --START--\n");
 void Ygl_initDrawFrameBuffershader(int id) {
 
   GLuint scene_block_index;
-  int arrayid = id- PG_VDP2_DRAWFRAMEBUFF;
+  int arrayid = id- PG_VDP2_DRAWFRAMEBUFF_NONE;
   if ( arrayid < 0 || arrayid >= MAX_FRAME_BUFFER_UNIFORM) {
     abort();
   }
@@ -1958,287 +1865,8 @@ void Ygl_initDrawFrameBuffershader(int id) {
   g_draw_framebuffer_uniforms[arrayid].idfrom = glGetUniformLocation(_prgid[id], (const GLchar *)"u_from");
   g_draw_framebuffer_uniforms[arrayid].idto = glGetUniformLocation(_prgid[id], (const GLchar *)"u_to");
   g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
+  g_draw_framebuffer_uniforms[arrayid].idscroll = glGetUniformLocation(_prgid[id], (const GLchar *)"s_scroll");
 }
-
-
-void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture, Vdp2 *varVdp2Regs)
-{
-  YglProgram * prg;
-  int arrayid;
-
-  int pgid = PG_VDP2_DRAWFRAMEBUFF_HBLANK;
-
-  const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
-  const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
-  const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
-  const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
-
-  prg = p;
-
-  if ( SPCCN ) {
-    const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-    if (CCMD == 0) {  // Calculate Rate mode
-      if (CCRTMD == 0) {  // Source Alpha Mode
-        if (SPLCEN == 0) { // No Line Color Insertion
-          glEnable(GL_BLEND);
-          glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-          switch (SPCCCS)
-          {
-          case 0:
-            pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_HBLANK;
-            break;
-          case 1:
-            pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_HBLANK;
-            break;
-          case 2:
-            pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_HBLANK;
-            break;
-          case 3:
-            pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_HBLANK;
-            break;
-          }
-        }
-        else { // Line Color Insertion
-          // ToDo:
-        }
-      }
-      else { // Destination Alpha Mode
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
-        if (SPLCEN == 0) { // No Line Color Insertion
-          pgid = PG_VDP2_DRAWFRAMEBUFF_DESTALPHA_HBLANK;
-        }
-        else {
-          // ToDo:
-        }
-      }
-    }
-    else { // Add Color Mode
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_ONE, GL_SRC_ALPHA);
-      if (SPLCEN == 0) { // No Line Color Insertion
-        switch (SPCCCS)
-        {
-        case 0:
-          pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_HBLANK;
-          break;
-        case 1:
-          pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_HBLANK;
-          break;
-        case 2:
-          pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_HBLANK;
-          break;
-        case 3:
-          pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_HBLANK;
-          break;
-        }
-      }
-      else {
-        // ToDo:
-      }
-    }
-  }
-  else { // No Color Calculation
-    glDisable(GL_BLEND);
-    pgid = PG_VDP2_DRAWFRAMEBUFF_HBLANK;
-  }
-
-
-  arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
-  GLUSEPROG(_prgid[pgid]);
-
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glDisableVertexAttribArray(2);
-  glDisableVertexAttribArray(3);
-  _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[pgid], (const GLchar *)"u_mvpMatrix");
-
-  glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
-  glUniform1f(g_draw_framebuffer_uniforms[arrayid].idfrom, from);
-  glUniform1f(g_draw_framebuffer_uniforms[arrayid].idto, to);
-
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idcram, 1);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 0);
-  glActiveTexture(GL_TEXTURE0);
-
-  // Setup Line color uniform
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idline, 2);
-  glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, linetexture);
-  glActiveTexture(GL_TEXTURE0);
-}
-
-void Ygl_uniformVDP2DrawFrameBufferShadow(void * p) {
-  int pgid = PG_VDP2_DRAWFRAMEBUFF_SHADOW;
-  int arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
-  GLUSEPROG(_prgid[pgid]);
-
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glDisableVertexAttribArray(2);
-  glDisableVertexAttribArray(3);
-  _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[pgid], (const GLchar *)"u_mvpMatrix");
-  glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
-
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 0);
-  glActiveTexture(GL_TEXTURE0);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-}
-
-void Ygl_uniformVDP2DrawFramebuffer(void * p, float from, float to, float * offsetcol, Vdp2 *varVdp2Regs)
-{
-   YglProgram * prg;
-   int arrayid;
-
-   int pgid = PG_VDP2_DRAWFRAMEBUFF;
-
-   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
-   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
-   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
-   const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
-
-   prg = p;
-
-   if ( SPCCN ) {
-     const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-     if (CCMD == 0) {  // Calculate Rate mode
-       if (CCRTMD == 0) {  // Source Alpha Mode
-         if (SPLCEN == 0) { // No Line Color Insertion
-           switch (SPCCCS)
-           {
-           case 0:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL;
-             break;
-           case 1:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL;
-             break;
-           case 2:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL;
-             break;
-           case 3:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL;
-             break;
-           }
-         } else { // Line Color Insertion
-           switch (SPCCCS)
-           {
-           case 0:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE;
-             break;
-           case 1:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE;
-             break;
-           case 2:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE;
-             break;
-           case 3:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE;
-             break;
-           }
-         }
-       } else { // Destination Alpha Mode
-
-         if (SPLCEN == 0) { // No Line Color Insertion
-           pgid = PG_VDP2_DRAWFRAMEBUFF_DESTALPHA;
-         }
-         else {
-           switch (SPCCCS)
-           {
-           case 0:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE;
-             break;
-           case 1:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE;
-             break;
-           case 2:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE;
-             break;
-           case 3:
-             pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE;
-             break;
-           }
-         }
-       }
-     } else { // Add Color Mode
-       if (SPLCEN == 0) { // No Line Color Insertion
-         switch (SPCCCS)
-         {
-         case 0:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_ADD;
-           break;
-         case 1:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD;
-           break;
-         case 2:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_ADD;
-           break;
-         case 3:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_ADD;
-           break;
-         }
-       }else{
-         switch (SPCCCS)
-         {
-         case 0:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE;
-           break;
-         case 1:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE;
-           break;
-         case 2:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE;
-           break;
-         case 3:
-           pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE;
-           break;
-         }
-       }
-     }
-   } else { // No Color Calculation
-     pgid = PG_VDP2_DRAWFRAMEBUFF;
-   }
-
-   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF;
-   GLUSEPROG(_prgid[pgid]);
-
-   glEnableVertexAttribArray(0);
-   glEnableVertexAttribArray(1);
-   glDisableVertexAttribArray(2);
-   glDisableVertexAttribArray(3);
-
-   _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[pgid], (const GLchar *)"u_mvpMatrix");
-
-   glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
-   glUniform1f(g_draw_framebuffer_uniforms[arrayid].idfrom, from);
-   glUniform1f(g_draw_framebuffer_uniforms[arrayid].idto, to);
-
-   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idcram, 1);
-   glActiveTexture(GL_TEXTURE1);
-   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-
-   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 0);
-   glActiveTexture(GL_TEXTURE0);
-
-   // Setup Line color uniform
-
-   if (SPLCEN != 0) {
-     printf("Need SPLCEN\n");
-#if 0
-     glUniform1i(g_draw_framebuffer_uniforms[arrayid].idline, 2);
-     glActiveTexture(GL_TEXTURE2);
-     glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
-     glActiveTexture(GL_TEXTURE0);
-     glDisable(GL_BLEND);
-#endif
-   }
-   return;
-}
-
 
 
 /*------------------------------------------------------------------------------------
@@ -2302,6 +1930,79 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float t
 
   return 0;
 }
+
+void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , int texture, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs)
+{
+   YglProgram * prg;
+   int arrayid;
+
+   int pgid = PG_VDP2_DRAWFRAMEBUFF_NONE;
+
+   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
+   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
+   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
+   const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
+
+   prg = p;
+
+   if ( SPCCN ) {
+     const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
+     switch (SPCCCS)
+     {
+       case 0:
+         pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_NONE;
+         break;
+       case 1:
+         pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE;
+         break;
+       case 2:
+         pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_NONE;
+         break;
+       case 3:
+         pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_NONE;
+         break;
+    }
+  } 
+  pgid += mode;
+
+  arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
+  GLUSEPROG(_prgid[pgid]);
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+  glDisableVertexAttribArray(3);
+
+  _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[pgid], (const GLchar *)"u_mvpMatrix");
+
+  glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
+  glUniform1f(g_draw_framebuffer_uniforms[arrayid].idfrom, from);
+  glUniform1f(g_draw_framebuffer_uniforms[arrayid].idto, to);
+
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idscroll, 2);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idcram, 1);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 0);
+  glActiveTexture(GL_TEXTURE0);
+
+  // Setup Line color uniform
+  if (SPLCEN != 0) {
+     printf("Need SPLCEN\n");
+#if 0
+     glUniform1i(g_draw_framebuffer_uniforms[arrayid].idline, 2);
+     glActiveTexture(GL_TEXTURE2);
+     glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+     glActiveTexture(GL_TEXTURE0);
+     glDisable(GL_BLEND);
+#endif
+  }
+}
+
 
 int Ygl_cleanupVDP2DrawFramebuffer_addcolor_shadow(void * p, YglTextureManager *tm){
   
@@ -2575,16 +2276,6 @@ int YglProgramInit()
   id_normal_cram_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_color");
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
-
-   YGLLOG("PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY\n");
-
-  if (YglInitShader(PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY, pYglprg_normal_v, pYglprg_normal_cram_special_priority_f, 1, NULL, NULL, NULL) != 0)
-    return -1;
-
-  id_normal_cram_sp_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"s_texture");
-  id_normal_cram_sp_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"s_color");
-  id_normal_cram_sp_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_color_offset");
-  id_normal_cram_sp_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY], (const GLchar *)"u_mvpMatrix");
 
    YGLLOG("PG_VDP2_ADDCOLOR_CRAM\n");
 
@@ -2940,17 +2631,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
      current->color_offset = id_normal_cram_color_offset;
-
-   }
-   else if (prgid == PG_VDP2_NORMAL_CRAM_SPECIAL_PRIORITY)
-   {
-     current->setupUniform = Ygl_uniformNormalCramSpecialPriority;
-     current->cleanupUniform = Ygl_cleanupNormalCram;
-
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = id_normal_cram_sp_matrix;
-     current->color_offset = id_normal_cram_sp_color_offset;
 
    }
    else if (prgid == PG_VDP2_ADDCOLOR_CRAM)
@@ -3379,6 +3059,135 @@ int YglDrawBackScreen() {
 }
 
 //--------------------------------------------------------------------------------------------------------------
+static int vdp2priority_prg = -1;
+
+static const char vdp2priority_v[] =
+      SHADER_VERSION
+      "layout (location = 0) in vec2 a_position;   \n"
+      "layout (location = 1) in vec2 a_texcoord;   \n"
+      "out vec2 v_texcoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
+      " v_texcoord  = a_texcoord; \n"
+      "} ";
+
+static const char vdp2priority_f[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float;                            \n"
+"#endif\n"
+"in vec2 v_texcoord;                            \n"
+"uniform sampler2D s_texture;                        \n"
+"uniform int prio;                        \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
+"  vec4 color = texelFetch( s_texture, addr,0 );         \n"
+"  if(color.a == 0.0) discard;                       \n"
+"  int priority = int(color.a * 255.0)&0x7;                        \n"
+"  float alpha = (int(color.a * 255.0)>>3)/31.0;                        \n"
+"  if (priority == prio) fragColor = vec4(color.rgb, alpha);                        \n"
+"  else discard;                        \n"
+"}                                                   \n";
+
+int YglBlitVdp2Priority(int texture, int prio) {
+  const GLchar * fblit_vdp2prio_v[] = { vdp2priority_v, NULL };
+  const GLchar * fblit_vdp2prio_f[] = { vdp2priority_f, NULL };
+
+  float const vertexPosition[] = {
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f };
+
+  float const textureCoord[] = {
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f
+  };
+
+  if (vdp2priority_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (vdp2priority_prg != -1) glDeleteProgram(vdp2priority_prg);
+    vdp2priority_prg = glCreateProgram();
+    if (vdp2priority_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_vdp2prio_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      vdp2priority_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_vdp2prio_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      vdp2priority_prg = -1;
+      abort();
+    }
+
+    glAttachShader(vdp2priority_prg, vshader);
+    glAttachShader(vdp2priority_prg, fshader);
+    glLinkProgram(vdp2priority_prg);
+    glGetProgramiv(vdp2priority_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(vdp2priority_prg);
+      vdp2priority_prg = -1;
+      abort();
+    }
+
+    GLUSEPROG(vdp2priority_prg);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture"), 0);
+  }
+  else{
+    GLUSEPROG(vdp2priority_prg);
+  }
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "prio"), prio);
+
+  glDisable(GL_DEPTH_TEST);
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+
+  return 0;
+}
+
+
+//--------------------------------------------------------------------------------------------------------------
 static int vdp2prio_prg = -1;
 
 static const char vdp2prio_v[] =
@@ -3405,10 +3214,10 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
 "  fragColor = texelFetch( s_texture, addr,0 );         \n"
 "  if (fragColor.a == 0.0) discard;                        \n"
-"  fragColor.a = 1.0;                        \n"
+//  fragColor.a = 1.0;                        \n"
 "}                                                   \n";
 
-int YglBlitTexture(int texture) {
+int YglBlitTexture(int texture, int blend) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
 
@@ -3476,6 +3285,134 @@ int YglBlitTexture(int texture) {
     GLUSEPROG(vdp2prio_prg);
   }
 
+
+  glDisable(GL_DEPTH_TEST);
+  if (blend == 0) 
+    glDisable(GL_BLEND);
+  else 
+    glEnable(GL_BLEND);
+
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+
+  return 0;
+}
+
+static int opaque_prg = -1;
+
+static const char opaque_v[] =
+      SHADER_VERSION
+      "layout (location = 0) in vec2 a_position;   \n"
+      "layout (location = 1) in vec2 a_texcoord;   \n"
+      "out vec2 v_texcoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
+      " v_texcoord  = a_texcoord; \n"
+      "} ";
+
+static const char opaque_f[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float;                            \n"
+"#endif\n"
+"in vec2 v_texcoord;                            \n"
+"uniform sampler2D s_texture;                        \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
+"  fragColor = texelFetch( s_texture, addr,0 );         \n"
+"  if (fragColor.a == 0.0) discard;                        \n"
+"  fragColor.a = 1.0;                        \n"
+"}                                                   \n";
+
+int YglBlitOpaque(int texture) {
+  const GLchar * fblit_opaque_v[] = { opaque_v, NULL };
+  const GLchar * fblit_opaque_f[] = { opaque_f, NULL };
+
+  float const vertexPosition[] = {
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f };
+
+  float const textureCoord[] = {
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f
+  };
+
+  if (opaque_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (opaque_prg != -1) glDeleteProgram(opaque_prg);
+    opaque_prg = glCreateProgram();
+    if (opaque_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_opaque_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      opaque_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_opaque_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      opaque_prg = -1;
+      abort();
+    }
+
+    glAttachShader(opaque_prg, vshader);
+    glAttachShader(opaque_prg, fshader);
+    glLinkProgram(opaque_prg);
+    glGetProgramiv(opaque_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(opaque_prg);
+      opaque_prg = -1;
+      abort();
+    }
+
+    GLUSEPROG(opaque_prg);
+    glUniform1i(glGetUniformLocation(opaque_prg, "s_texture"), 0);
+  }
+  else{
+    GLUSEPROG(opaque_prg);
+  }
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -3613,7 +3550,6 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
   else{
     GLUSEPROG(vdp1_prg);
   }
-
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
