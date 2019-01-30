@@ -40,10 +40,12 @@
 
 #define YGLLOG printf
 
-int Ygl_useTmpBuffer();
-int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix);
-int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, int * mosaic);
-int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, float * matrix, u32 perline);
+static int saveFB;
+static void Ygl_useTmpBuffer();
+static void Ygl_releaseTmpBuffer(void);
+int YglBlitBlur(u32 srcTexture, float w, float h, float * matrix);
+int YglBlitMosaic(u32 srcTexture, float w, float h, float * matrix, int * mosaic);
+int YglBlitPerLineAlpha(u32 srcTexture, float w, float h, float * matrix, u32 perline);
 
 extern float vdp1wratio;
 extern float vdp1hratio;
@@ -522,8 +524,10 @@ int Ygl_cleanupNormalCramLine(void * p, YglTextureManager *tm)
   return 0;
 }
 
-int Ygl_useTmpBuffer(){
+static void Ygl_useTmpBuffer(){
+  float col[4] = {0.0f,0.0f,0.0f,0.0f};
   // Create Screen size frame buffer
+  glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &saveFB);
   if (_Ygl->tmpfbo == 0) {
 
     GLuint error;
@@ -543,8 +547,12 @@ int Ygl_useTmpBuffer(){
   // bind Screen size frame buffer
   else{
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->tmpfbo);
+    glClearBufferfv(GL_COLOR, 0, col);
   }
-  return 0;
+}
+
+static void Ygl_releaseTmpBuffer(void) {
+  glBindFramebuffer(GL_FRAMEBUFFER, saveFB);
 }
 
 int Ygl_useUpscaleBuffer(void){
@@ -625,14 +633,14 @@ int Ygl_cleanupMosaic(void * p, YglTextureManager *tm)
   prg = p;
 
   // Bind Default frame buffer
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
+  Ygl_releaseTmpBuffer();
 
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   // call blit method
-  YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
+  YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
 
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
@@ -686,14 +694,14 @@ int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
   prg->blendmode = prg->preblendmode;
 
   // Bind Default frame buffer
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
+   Ygl_releaseTmpBuffer();
 
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
   // call blit method
-  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
+  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
 
@@ -749,7 +757,7 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
   prg = p;
 
   // Bind Default frame buffer
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
+  Ygl_releaseTmpBuffer();
 
   // Restore Default Matrix
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
@@ -764,7 +772,7 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
     glBlendFunc(GL_ONE, GL_ONE);
   }
 
-  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
+  YglBlitBlur(_Ygl->tmpfbotex, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glDisable(GL_BLEND);
@@ -1563,12 +1571,12 @@ SHADER_VERSION
 "  float priority = (int(scrollColor.a * 255.0)&0x7)/10.0;                        \n"
 "  float alpha = (int(scrollColor.a * 255.0)>>3)/31.0;                        \n"
 "  scrollColor.a = alpha;                        \n"
-"  if( priority < u_from || priority > u_to ) scrollColor = vec4(0.0);                        \n"
+"  if( priority < (u_from - 0.01) || priority > (u_to + 0.01) ) scrollColor = vec4(0.0);                        \n"
 "  else  scrollColor = vec4(scrollColor.rgb, alpha);                        \n"
 "  if( (additional & 0x80) == 0 ){ if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // show? \n"
 "  int prinumber = (additional&0x07); \n"
 "  highp float depth = u_pri[ prinumber ];\n"
-"  if( depth < u_from || depth > u_to ){ if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } \n"
+"  if( depth < (u_from - 0.01) || depth > (u_to + 0.01) ){ if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } \n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
 "    if( fbColor.b != 0.0 ) {if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // draw shadow last path \n"
@@ -3669,7 +3677,7 @@ GLuint textureCoord_buf[2] = {0,0};
 
 static int last_upmode = 0;
 
-int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float dispw, float disph) {
+int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disph) {
   float width = w;
   float height = h;
   int decim;
@@ -3720,8 +3728,6 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
     width = scale*_Ygl->rwidth;
     height = scale*_Ygl->rheight;
   }
-
-  glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
   //if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
 
@@ -3850,209 +3856,6 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float di
 
   return 0;
 }
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
-static int blit_image_prg = -1;
-
-static const char img_v[] =
-      SHADER_VERSION
-      "layout (location = 0) in vec2 a_position;   \n"
-      "layout (location = 1) in vec2 a_texcoord;   \n"
-      "out vec2 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
-      " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
-      " v_texcoord  = a_texcoord; \n"
-      "} ";
-
-static const char img_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float;                            \n"
-"#endif\n"
-"in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_top;                        \n"
-"uniform sampler2D s_second;                        \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
-"  vec4 top = texture( s_top, v_texcoord); \n"
-"  vec4 second = texture( s_second, v_texcoord); \n"
-"  if ((top.a == 0.0) && (second.a == 0.0)) discard;\n"
-"  fragColor.rgb = top.a * top.rgb + (1.0 - top.a) * second.rgb;         \n"
-"  fragColor.a = 1.0;         \n"
-"}                                                   \n";
-
-
-int YglBlitImage(u32* image, Vdp2 *varVdp2Regs) {
-  const GLchar * fblit_img_v[] = { img_v, NULL };
-  const GLchar * fblit_img_f[] = { img_f, NULL };
-
-  float const vertexPosition[] = {
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f,
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f,
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f,
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f,
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f,
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f,
-  };
-
-  float const textureCoord[] = {
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f,
-  };
-
-  if (blit_image_prg == -1){
-    GLuint vshader;
-    GLuint fshader;
-    GLint compiled, linked;
-    if (blit_image_prg != -1) glDeleteProgram(blit_image_prg);
-    blit_image_prg = glCreateProgram();
-    if (blit_image_prg == 0){
-      return -1;
-    }
-
-    vshader = glCreateShader(GL_VERTEX_SHADER);
-    fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vshader, 1, fblit_img_v, NULL);
-    glCompileShader(vshader);
-    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
-      blit_image_prg = -1;
-      return -1;
-    }
-
-    glShaderSource(fshader, 1, fblit_img_f, NULL);
-    glCompileShader(fshader);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
-      blit_image_prg = -1;
-      abort();
-    }
-
-    glAttachShader(blit_image_prg, vshader);
-    glAttachShader(blit_image_prg, fshader);
-    glLinkProgram(blit_image_prg);
-    glGetProgramiv(blit_image_prg, GL_LINK_STATUS, &linked);
-    if (linked == GL_FALSE) {
-      YGLLOG("Link error..\n");
-      Ygl_printShaderError(blit_image_prg);
-      blit_image_prg = -1;
-      abort();
-    }
-    GLUSEPROG(blit_image_prg);
-    glUniform1i(glGetUniformLocation(blit_image_prg, "s_top"), 0);
-    glUniform1i(glGetUniformLocation(blit_image_prg, "s_second"), 1);
-  }
-  else{
-    GLUSEPROG(blit_image_prg);
-  }
-
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_STENCIL_TEST);
-  glDisable(GL_BLEND);
-
-//glEnable(GL_BLEND);
-//glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, image[0]);
-
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-
-#if 0
-  glEnable(GL_BLEND);
-  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-
-  // 12.14 CCRTMD                               // TODO: MSB perpxel transparent is not uported yet
-  if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01 /*&& ((Vdp2Regs->SPCTL >> 12) & 0x3 != 0x03)*/ ){
-    printf("Blend Alpha\n");
-    glBlendFuncSeparate(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ZERO, GL_ONE);
-  }
-#endif
-
-  glEnable(GL_STENCIL_TEST);
-  glStencilFunc(GL_EQUAL, 0, 0xFF);
-  glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);  
-
-  glBindTexture(GL_TEXTURE_2D, image[0]);
-  glActiveTexture(GL_TEXTURE1);
-
-  if (image[1] != 0) {
-    for (int i=1; i<3; i++) {
-      if (image[i] != 0) {
-        glBindTexture(GL_TEXTURE_2D, image[i]);
-//printf("Draw img %d\n", i);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-      }
-    }
-  }
-
-  // Clean up
-  glActiveTexture(GL_TEXTURE0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  glDisable(GL_BLEND);
-  glDisable(GL_STENCIL_TEST);
-
-  return 0;
-}
-
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4190,7 +3993,7 @@ static int u_blur_mtxModelView = -1;
 static int u_blur_tw = -1;
 static int u_blur_th = -1;
 
-int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matrix) {
+int YglBlitBlur(u32 srcTexture, float w, float h, GLfloat* matrix) {
 
   float vb[] = { 0, 0,
     2.0, 0.0,
@@ -4210,9 +4013,6 @@ int YglBlitBlur(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matrix
   vb[5] = h - 1.0;
   vb[6] = 0;
   vb[7] = h - 1.0;
-
-
-  glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
   if (blur_prg == -1){
     GLuint vshader;
@@ -4344,7 +4144,7 @@ static int u_mosaic_tw = -1;
 static int u_mosaic_th = -1;
 static int u_mosaic = -1;
 
-int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matrix, int * mosaic) {
+int YglBlitMosaic(u32 srcTexture, float w, float h, GLfloat* matrix, int * mosaic) {
 
   float vb[] = { 0, 0,
     2.0, 0.0,
@@ -4364,9 +4164,6 @@ int YglBlitMosaic(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matr
   vb[5] = h - 1.0;
   vb[6] = 0;
   vb[7] = h - 1.0;
-
-
-  glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
   if (mosaic_prg == -1){
     GLuint vshader;
@@ -4509,7 +4306,7 @@ static int u_perlinealpha_tw = -1;
 static int u_perlinealpha_th = -1;
 
 
-int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat* matrix, u32 lineTexture) {
+int YglBlitPerLineAlpha(u32 srcTexture, float w, float h, GLfloat* matrix, u32 lineTexture) {
 
   float vb[] = { 0, 0,
     2.0, 0.0,
@@ -4534,8 +4331,6 @@ int YglBlitPerLineAlpha(u32 srcTexture, u32 targetFbo, float w, float h, GLfloat
   vb[7] = h - 1.0;
 
   glGetIntegerv(GL_CURRENT_PROGRAM, &programid);
-
-  glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
 
   if (perlinealpha_prg == -1){
     GLuint vshader;

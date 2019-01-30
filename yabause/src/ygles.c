@@ -3187,6 +3187,7 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
         level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp2);
       }
     }
+    level->prg[j].currentQuad = 0;
   }
   glDisable(GL_STENCIL_TEST);
   return ret;
@@ -3337,6 +3338,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int minPrio = -1;
   int allPrio = 0;
   for (int i = 0; i < SPRITE; i++) {
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
     glDrawBuffers(1, &DrawBuffers[i]);
     drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
     allPrio |= drawScreen[i];
@@ -3364,8 +3366,12 @@ void YglRender(Vdp2 *varVdp2Regs) {
   } 
   if (to != 0) {
      glDrawBuffers(1, &DrawBuffers[0]);
-     allPrio |= 1;
-     if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(from, to+1, _Ygl->priority_fbotex[2], varVdp2Regs);
+     if (( _Ygl->vdp1_maxpri >= from) && (_Ygl->vdp1_minpri <= to+1)) {
+       if (Vdp1External.disptoggle & 0x01) {
+         allPrio |= 1<<7;
+         YglRenderFrameBuffer(from, to+1, _Ygl->priority_fbotex[2], varVdp2Regs);
+       }
+     }
   }
   YGLDEBUG("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen[NBG2],drawScreen[NBG1],drawScreen[NBG0],drawScreen[RBG1],drawScreen[RBG0]);
   for(int i = 0; i < 7; i++) {
@@ -3427,6 +3433,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
     YglDrawBackScreen();
   }else{
     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
+  }
+  if ((allPrio & (1<<7)) != 0) {
+      YglBlitTexture(_Ygl->priority_fbotex[0], 1);
   }
   for(int i = 0; i < 7; i++) {
     if ((allPrio & (1<<i)) != 0) {
@@ -3535,8 +3544,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
-   YglBlitFramebuffer(srcTexture, _Ygl->default_fbo, _Ygl->width, _Ygl->height, w, h);
-//   YglBlitFramebuffer(_Ygl->screen_fbotex[3], _Ygl->default_fbo, _Ygl->width, _Ygl->height, w, h);
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+   YglBlitFramebuffer(srcTexture, _Ygl->width, _Ygl->height, w, h);
 
 render_finish:
 
@@ -3559,141 +3568,6 @@ render_finish:
   glFlush();
   FrameProfileAdd("YglRender end");
   return;
-}
-
-
-int YglSetupWindow(YglProgram * prg){
-
-  int bwin_cc0 = (Vdp2Regs->WCTLD >> 9) & 0x01;
-  int logwin_cc0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
-  int bwin_cc1 = (Vdp2Regs->WCTLD >> 11) & 0x01;
-  int logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
-  int winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
-
-  /*
-    ToDo: 
-     When both Color Calculation window and Transparent Window is enabled,
-       Only 'AND' condition pixel need to be drawn in this function.
-  */
-
-  glEnable(GL_STENCIL_TEST);
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-
-  // Stencil Value
-  // no window = 0
-  // win0      = 1
-  // win1      = 2
-  // both		 = 3
-
-  if (prg->bwin0 == 0 && prg->bwin1 == 0) {
-    // Color Clcuaraion Window
-    if (bwin_cc0 && !bwin_cc1)
-    {
-      // Win0
-      if (logwin_cc0)
-      {
-        glStencilFunc(GL_EQUAL, 0x01, 0x01);
-      }
-      else {
-        glStencilFunc(GL_NOTEQUAL, 0x01, 0x01);
-      }
-      return 0;
-    }
-    else if (!bwin_cc0 && bwin_cc1)
-    {
-      if (logwin_cc1)
-      {
-        glStencilFunc(GL_EQUAL, 0x02, 0x02);
-      }
-      else {
-        glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
-      }
-      return 0;
-    }
-    else if (bwin_cc0 && bwin_cc1) {
-      // and
-      if (winmode_cc == 0x0)
-      {
-        if (logwin_cc0 == 1 && logwin_cc1 == 1) {
-          glStencilFunc(GL_EQUAL, 0x03, 0x03);
-        }
-        else if (logwin_cc0 == 0 && logwin_cc1 == 0) {
-          glStencilFunc(GL_GREATER, 0x01, 0x03);
-        }
-        else {
-          glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        }
-      }
-      // OR
-      else if (winmode_cc == 0x01)
-      {
-        if (logwin_cc0 == 1 && logwin_cc1 == 1) {
-          glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-        }
-        else if (logwin_cc0 == 0 && logwin_cc1 == 0) {
-          glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-        }
-        else {
-          glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        }
-      }
-      return 0;
-    }
-  }
-
-  // Transparent Window
-  if (prg->bwin0 && !prg->bwin1)
-  {
-    if (prg->logwin0)
-    {
-      glStencilFunc(GL_EQUAL, 0x01, 0x01);
-    }
-    else{
-      glStencilFunc(GL_NOTEQUAL, 0x01, 0x01);
-    }
-  }
-  else if (!prg->bwin0 && prg->bwin1) {
-
-    if (prg->logwin1)
-    {
-      glStencilFunc(GL_EQUAL, 0x02, 0x02);
-    }
-    else{
-      glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
-    }
-  }
-  else if (prg->bwin0 && prg->bwin1) {
-    // and
-    if (prg->winmode == 0x0)
-    {
-      if (prg->logwin0 == 1 && prg->logwin1 == 1){
-        glStencilFunc(GL_EQUAL, 0x03, 0x03);
-      }
-      else if (prg->logwin0 == 0 && prg->logwin1 == 0){
-        glStencilFunc(GL_GREATER, 0x01, 0x03);
-      }
-      else{
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-      }
-      
-    }
-    // OR
-    else if (prg->winmode == 0x01)
-    {
-      if (prg->logwin0 == 1 && prg->logwin1 == 1){
-        glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-      }
-      else if (prg->logwin0 == 0 && prg->logwin1 == 0){
-        glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-      }
-      else{
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-      }
-    }
-  }
-
-
-  return 0;
 }
 
 int YglCleanUpWindow(YglProgram * prg, YglTextureManager *tm){
