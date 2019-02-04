@@ -763,15 +763,6 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
   glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
   glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
 
-  if ((prg->blendmode & 0x03) == VDP2_CC_RATE) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  }
-  else if ((prg->blendmode & 0x03) == VDP2_CC_ADD) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE);
-  }
-
   YglBlitBlur(_Ygl->tmpfbotex, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
@@ -1473,8 +1464,6 @@ typedef struct  {
   int idfrom;
   int idto;
   int idline;
-  int idscroll;
-  int idscrollmode;
 } DrawFrameBufferUniform;
 
 #define MAX_FRAME_BUFFER_UNIFORM (48)
@@ -1546,10 +1535,10 @@ SHADER_VERSION
 "precision highp float;\n"
 "#endif\n"
 "layout(std140) uniform vdp2regs { \n"
-" float u_pri[8]; \n"
-" float u_alpha[8]; \n"
+" int u_pri[8]; \n"
+" int u_alpha[8]; \n"
 " vec4 u_coloroffset;\n"
-" float u_cctl; \n"
+" int u_cctl; \n"
 " float u_emu_height; \n"
 " float u_vheight; \n"
 " int u_color_ram_offset; \n"
@@ -1557,40 +1546,33 @@ SHADER_VERSION
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_color; \n"
 "uniform sampler2D s_line; \n"
-"uniform sampler2D s_scroll; \n"
-"uniform int u_scroll_mode;\n"
 "uniform float u_from;\n"
 "uniform float u_to;\n"
 "in vec2 v_texcoord;\n"
 "out vec4 fragColor;\n"
+"int mode = 1;\n"
 "void main()\n"
 "{\n"
 "  vec2 addr = v_texcoord;\n"
 "  vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
-"  vec4 scrollColor = texture(s_scroll,addr);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
 
-"  float priority = (int(scrollColor.a * 255.0)&0x7)/10.0;                        \n"
-"  float alpha = (int(scrollColor.a * 255.0)>>3)/31.0;                        \n"
-"  scrollColor.a = alpha;                        \n"
-"  if( priority < (u_from - 0.01) || priority > (u_to + 0.01) ) scrollColor = vec4(0.0);                        \n"
-"  else  scrollColor = vec4(scrollColor.rgb, alpha);                        \n"
-"  if( (additional & 0x80) == 0 ){ if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // show? \n"
+"  if( (additional & 0x80) == 0 ){ discard;} // show? \n"
 "  int prinumber = (additional&0x07); \n"
-"  highp float depth = u_pri[ prinumber ];\n"
-"  if( depth < (u_from - 0.01) || depth > (u_to + 0.01) ){ if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } \n"
+"  int depth = u_pri[ prinumber ];\n"
+"  int alpha = u_alpha[((additional>>3)&0x07)]<<3; \n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
-"    if( fbColor.b != 0.0 ) {if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // draw shadow last path \n"
+"    if( fbColor.b != 0.0 ) {discard;} // draw shadow last path \n"
 "    int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
-"    if( colindex == 0 && prinumber == 0) { if (scrollColor.a == 0.0) discard; else fragColor= scrollColor; return; } // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
+"    if( colindex == 0 && prinumber == 0) {discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "    colindex = colindex + u_color_ram_offset; \n"
 "    txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
 "    fragColor = txcol;\n"
 "  }else{ // direct color \n" 
 "    fragColor = fbColor;\n"
-"  } \n"
-"  fragColor = clamp(fragColor + u_coloroffset, vec4(0.0), vec4(1.0));  \n";
+"  } \n";
+//"  fragColor = clamp(fragColor + u_coloroffset, vec4(0.0), vec4(1.0));  \n" //A mettre dans le blit final
 
 /*
  Color calculation option 
@@ -1598,36 +1580,35 @@ SHADER_VERSION
 */
 const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fragColor.a = 1.0; \n";
 
-const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_f[] = " fragColor.a = u_alpha[((additional>>3)&0x07)]; \n";
+const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_f[] = " fragColor.a = alpha; \n";
 
-const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth <= u_cctl ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth == u_cctl ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth >= u_cctl ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a != 0.0 ){ fragColor.a = u_alpha[((additional>>3)&0x07)]; }else{ fragColor.a = 1.0; } \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ alpha = 0xF8; mode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ alpha = 0xF8; mode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ alpha = 0xF8; mode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a == 0.0 ){ alpha = 0xF8; mode = 0;} \n ";
 
-const GLchar Yglprg_vdp2_drawfb_cram_less_color_add_f[]  = " if( depth <= u_cctl ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_equal_color_add_f[] = " if( depth == u_cctl ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_more_color_add_f[]  = " if( depth >= u_cctl ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_msb_color_add_f[]   = " if( txcol.a != 0.0 ){ fragColor.a = 1.0; }else{ fragColor.a = 0.0; } \n ";
 
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
-"  fragColor.a = 1.0;\n"
+" fragColor.b = float(int(fragColor.b * 255.0)|1)/255.0; \n"
+" fragColor.a = float(alpha|depth)/255.0; \n"
 "}\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
-"  fragColor = fragColor + (1.0 - fragColor.a) * scrollColor;\n"
-"  if (u_scroll_mode != 0) fragColor.a = 1.0;\n"
+" if (mode == 1) fragColor.b = float(int(fragColor.b * 255.0)|2)/255.0; \n"
+" else fragColor.b = float(int(fragColor.b * 255.0)|1)/255.0; \n"
+" fragColor.a = float(alpha|depth)/255.0; \n"
 "}\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
-"  fragColor = fragColor.a * fragColor + (1.0 - fragColor.a) * scrollColor;\n"
-"  if (u_scroll_mode != 0) fragColor.a = 1.0;\n"
+" if (mode == 1) fragColor.b = float(int(fragColor.b * 255.0)|3)/255.0; \n"
+" else fragColor.b = float(int(fragColor.b * 255.0)|3)/255.0; \n"
+" fragColor.a = float(alpha|depth)/255.0; \n"
 "}\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
-"  fragColor = scrollColor.a * fragColor + (1.0 - scrollColor.a) * scrollColor;\n"
-"  if (u_scroll_mode != 0) fragColor.a = 1.0;\n"
+" if (mode == 1) fragColor.b = float(int(fragColor.b * 255.0)|4)/255.0; \n"
+" else fragColor.b = float(int(fragColor.b * 255.0)|3)/255.0; \n"
+" fragColor.a = float(alpha|depth)/255.0; \n"
 "}\n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
-//"  gl_FragDepth = (depth+1.0)*0.5;\n"
 "}\n";
 
 
@@ -1642,10 +1623,10 @@ SHADER_VERSION
 "precision highp float;\n"
 "#endif\n"
 "layout(std140) uniform vdp2regs { \n"
-" float u_pri[8]; \n"
-" float u_alpha[8]; \n"
+" int u_pri[8]; \n"
+" int u_alpha[8]; \n"
 " vec4 u_coloroffset;\n"
-" float u_cctl; \n"
+" int u_cctl; \n"
 " float u_emu_height; \n"
 " float u_vheight; \n"
 " int u_color_ram_offset; \n"
@@ -1750,10 +1731,10 @@ SHADER_VERSION
 "precision highp float;\n"
 "#endif\n"
 "layout(std140) uniform vdp2regs { \n"
-" float u_pri[8]; \n"
-" float u_alpha[8]; \n"
+" int u_pri[8]; \n"
+" int u_alpha[8]; \n"
 " vec4 u_coloroffset;\n"
-" float u_cctl; \n"
+" int u_cctl; \n"
 " float u_emu_height; \n"
 " float u_vheight; \n"
 "}; \n"
@@ -1876,8 +1857,6 @@ void Ygl_initDrawFrameBuffershader(int id) {
   g_draw_framebuffer_uniforms[arrayid].idfrom = glGetUniformLocation(_prgid[id], (const GLchar *)"u_from");
   g_draw_framebuffer_uniforms[arrayid].idto = glGetUniformLocation(_prgid[id], (const GLchar *)"u_to");
   g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
-  g_draw_framebuffer_uniforms[arrayid].idscroll = glGetUniformLocation(_prgid[id], (const GLchar *)"s_scroll");
-  g_draw_framebuffer_uniforms[arrayid].idscrollmode = glGetUniformLocation(_prgid[id], (const GLchar *)"u_scroll_mode");
 }
 
 
@@ -1943,7 +1922,7 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float t
   return 0;
 }
 
-void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , int texture, float * offsetcol, SpriteMode mode, SpriteMode scrollmode, Vdp2* varVdp2Regs)
+void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs)
 {
    YglProgram * prg;
    int arrayid;
@@ -1975,7 +1954,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , int texture,
          break;
     }
   } 
-  pgid += mode;
+  pgid += mode-1;
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
   GLUSEPROG(_prgid[pgid]);
@@ -1990,11 +1969,6 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , int texture,
   glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
   glUniform1f(g_draw_framebuffer_uniforms[arrayid].idfrom, from);
   glUniform1f(g_draw_framebuffer_uniforms[arrayid].idto, to);
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idscrollmode, scrollmode);
-
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idscroll, 2);
-  glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, texture);
 
   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idcram, 1);
   glActiveTexture(GL_TEXTURE1);
@@ -2290,16 +2264,6 @@ int YglProgramInit()
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
 
-   YGLLOG("PG_VDP2_ADDCOLOR_CRAM\n");
-
-  if (YglInitShader(PG_VDP2_ADDCOLOR_CRAM, pYglprg_normal_v, pYglprg_normal_cram_addcol_f, 1, NULL, NULL, NULL) != 0)
-    return -1;
-
-  id_normal_cram_s_texture_addcol = glGetUniformLocation(_prgid[PG_VDP2_ADDCOLOR_CRAM], (const GLchar *)"s_texture");
-  id_normal_cram_s_color_addcol = glGetUniformLocation(_prgid[PG_VDP2_ADDCOLOR_CRAM], (const GLchar *)"s_color");
-  id_normal_cram_color_offset_addcol = glGetUniformLocation(_prgid[PG_VDP2_ADDCOLOR_CRAM], (const GLchar *)"u_color_offset");
-  id_normal_cram_matrix_addcol = glGetUniformLocation(_prgid[PG_VDP2_ADDCOLOR_CRAM], (const GLchar *)"u_mvpMatrix");
-
    YGLLOG("PG_VDP2_RBG_CRAM_LINE\n");
 
   if (YglInitShader(PG_VDP2_RBG_CRAM_LINE, pYglprg_normal_v, pYglprg_rbg_cram_line_f, 1, NULL, NULL, NULL) != 0)
@@ -2353,6 +2317,7 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING], &id_g);
 
+   YGLLOG("PG_VFP1_GOURAUDSAHDING_SPD\n");
    if (YglInitShader(PG_VFP1_GOURAUDSAHDING_SPD, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_spd_f, 1, NULL, NULL, NULL) != 0)
      return -1;
 
@@ -2644,17 +2609,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
      current->color_offset = id_normal_cram_color_offset;
-
-   }
-   else if (prgid == PG_VDP2_ADDCOLOR_CRAM)
-   {
-     current->setupUniform = Ygl_uniformAddColCram;
-     current->cleanupUniform = Ygl_cleanupAddColCram;
-
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = id_normal_cram_matrix_addcol;
-     current->color_offset = id_normal_cram_color_offset_addcol;
 
    }
    else if (prgid == PG_VDP2_RBG_CRAM_LINE)
@@ -3009,6 +2963,8 @@ int YglDrawBackScreen() {
       return -1;
     }
 
+    YGLLOG("DRAW_BACK_SCREEN\n");
+
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -3091,23 +3047,110 @@ SHADER_VERSION
 "precision highp float;                            \n"
 "#endif\n"
 "in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture;                        \n"
+"uniform sampler2D s_texture0;                        \n"
+"uniform sampler2D s_texture1;                        \n"
+"uniform sampler2D s_texture2;                        \n"
+"uniform sampler2D s_texture3;                        \n"
+"uniform sampler2D s_texture4;                        \n"
+"uniform sampler2D s_texture5;                        \n"
+"uniform sampler2D fb_texture;                        \n"
 "uniform int prio;                        \n"
+"uniform int fbon;                        \n"
+"uniform int screen_nb;                        \n"
+"uniform int mode0;                        \n"
+"uniform int mode1;                        \n"
+"uniform int mode2;                        \n"
+"uniform int mode3;                        \n"
+"uniform int mode4;                        \n"
+"uniform int mode5;                        \n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
-"  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
-"  vec4 color = texelFetch( s_texture, addr,0 );         \n"
-"  if(color.a == 0.0) discard;                       \n"
-"  int priority = int(color.a * 255.0)&0x7;                        \n"
-"  float alpha = (int(color.a * 255.0)>>3)/31.0;                        \n"
-"  if (priority == prio) fragColor = vec4(color.rgb, alpha);                        \n"
-"  else discard;                        \n"
+"  ivec2 addr = ivec2(textureSize(fb_texture, 0) * v_texcoord.st); \n"
+"  vec4 fbColor; \n"
+"  int priority; \n"
+"  int alpha; \n"
+"  int mode; \n"
+"  if (fbon == 1) {\n"
+"    fbColor = texelFetch( fb_texture, addr,0 ); \n"
+"    priority = int(fbColor.a*255.0)&0x7; \n"
+"    if (priority == prio) {\n"
+"      fragColor = fbColor; \n"
+"      alpha = int(fragColor.a*255.0)&0xF8; \n"
+"      mode = int(fragColor.b*255.0)&0x7; \n"
+"      fragColor.b = float((int(fragColor.b*255.0)&0xF8)/255.0); \n"
+"      fragColor.a = float(alpha|mode)/255.0; \n"
+"      return;\n"
+"    }\n"
+"  }\n"
+"  if (screen_nb == 0) discard;\n"
+"  addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture0, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    fragColor = fbColor; \n"
+"    alpha = int(fragColor.a*255.0)&0xF8; \n"
+"    fragColor.a = float(alpha|mode0)/255.0; \n"
+"    return;\n"
+"  }\n"
+"  if (screen_nb == 1) discard;\n"
+"  addr = ivec2(textureSize(s_texture1, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture1, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    fragColor = fbColor; \n"
+"    alpha = int(fragColor.a*255.0)&0xF8; \n"
+"    fragColor.a = float(alpha|mode1)/255.0; \n"
+"    return;\n"
+"  }\n"
+"  if (screen_nb == 2) discard;\n"
+"  addr = ivec2(textureSize(s_texture2, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture2, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    fragColor = fbColor; \n"
+"    alpha = int(fragColor.a*255.0)&0xF8; \n"
+"    fragColor.a = float(alpha|mode2)/255.0; \n"
+"    return;\n"
+"  }\n"
+"  if (screen_nb == 3) discard;\n"
+"  addr = ivec2(textureSize(s_texture3, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture3, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    fragColor = fbColor; \n"
+"    alpha = int(fragColor.a*255.0)&0xF8; \n"
+"    fragColor.a = float(alpha|mode3)/255.0; \n"
+"    return;\n"
+"  }\n"
+"  if (screen_nb == 4) discard;\n"
+"  addr = ivec2(textureSize(s_texture4, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture4, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    fragColor = fbColor; \n"
+"    alpha = int(fragColor.a*255.0)&0xF8; \n"
+"    fragColor.a = float(alpha|mode4)/255.0; \n"
+"    return;\n"
+"  }\n"
+"  if (screen_nb == 5) discard;\n"
+"  addr = ivec2(textureSize(s_texture5, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture5, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    fragColor = fbColor; \n"
+"    alpha = int(fragColor.a*255.0)&0xF8; \n"
+"    fragColor.a = float(alpha|mode5)/255.0; \n"
+"    return;\n"
+"  }\n"
+"  discard;                        \n"
 "}                                                   \n";
 
-int YglBlitVdp2Priority(int texture, int prio) {
+
+int YglBlitVdp2Priority(int priority, int* prioscreens, int* modescreens, int nbScreen) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2priority_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2priority_f, NULL };
+  const int textures[6] = {GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6};
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3131,6 +3174,8 @@ int YglBlitVdp2Priority(int texture, int prio) {
     if (vdp2priority_prg == 0){
       return -1;
     }
+
+    YGLLOG("BLIT_VDP2_PRIORITY\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -3167,12 +3212,28 @@ int YglBlitVdp2Priority(int texture, int prio) {
     }
 
     GLUSEPROG(vdp2priority_prg);
-    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture"), 0);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture0"), 1);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture1"), 2);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture2"), 3);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture3"), 4);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture4"), 5);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture5"), 6);
+    glUniform1i(glGetUniformLocation(vdp2priority_prg, "fb_texture"), 0);
+
   }
   else{
     GLUSEPROG(vdp2priority_prg);
   }
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "prio"), prio);
+
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "prio"), priority);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "screen_nb"), nbScreen);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode0"), modescreens[0]);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode1"), modescreens[1]);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode2"), modescreens[2]);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode3"), modescreens[3]);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode4"), modescreens[4]);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode5"), modescreens[5]);
+  glUniform1i(glGetUniformLocation(vdp2priority_prg, "fbon"), Vdp1External.disptoggle & 0x01);
 
   glDisable(GL_DEPTH_TEST);
 
@@ -3187,8 +3248,15 @@ int YglBlitVdp2Priority(int texture, int prio) {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture);
+  if (Vdp1External.disptoggle & 0x01) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[SPRITE]);
+  }
+  for (int i=0; i<nbScreen; i++) {
+    glActiveTexture(textures[i]);
+    glBindTexture(GL_TEXTURE_2D, prioscreens[i]);
+  }
+
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
@@ -3220,17 +3288,132 @@ SHADER_VERSION
 "precision highp float;                            \n"
 "#endif\n"
 "in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture;                        \n"
-"out vec4 fragColor;            \n"
+"uniform sampler2D s_texture0;                        \n"
+"uniform sampler2D s_texture1;                        \n"
+"uniform sampler2D s_texture2;                        \n"
+"uniform sampler2D s_texture3;                        \n"
+"uniform sampler2D s_texture4;                        \n"
+"uniform sampler2D s_texture5;                        \n"
+"uniform sampler2D s_texture6;                        \n"
+"uniform sampler2D s_back;                        \n"
+"out vec4 finalColor;            \n"
+"out vec4 topColor;            \n"
+"out vec4 secondColor;            \n"
+"out vec4 thirdColor;            \n"
+"out vec4 fourthColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
-"  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
-"  fragColor = texelFetch( s_texture, addr,0 );         \n"
-"  if (fragColor.a == 0.0) discard;                        \n"
-//  fragColor.a = 1.0;                        \n"
-"}                                                   \n";
+"  vec4 colortop = vec4(0.0);  \n"
+"  vec4 colorsecond = vec4(0.0); \n"
+"  vec4 colorthird = vec4(0.0); \n"
+"  vec4 colorfourth = vec4(0.0); \n"
+"  vec4 colorback = vec4(0.0); \n"
+"  vec4 color[7]; \n"
+"  int alpha[7]; \n"
+"  int foundColor1 = 0; \n"
+"  int foundColor2 = 0; \n"
+"  int foundColor3 = 0; \n"
+"  int modetop = 0; \n"
+"  int modesecond = 0; \n"
+"  int modethird = 0; \n"
+"  float alphatop = 0.0; \n"
+"  float alphatoplast = 0.0; \n"
+"  float alphasecond = 0.0; \n"
+"  float alphasecondplast = 0.0; \n"
+"  float alphathird = 0.0; \n"
+"  float alphathirdlast = 0.0; \n"
+"  float alphafourth = 0.0; \n"
+"  float alphafourthlast = 0.0; \n"
+"  ivec2 addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
 
-int YglBlitTexture(int texture, int blend) {
+#if 0
+"  color[0] = texelFetch( s_texture6, addr,0 ); \n"
+"  color[1] = texelFetch( s_texture5, addr,0 ); \n"
+"  color[2] = texelFetch( s_texture4, addr,0 ); \n"
+"  color[3] = texelFetch( s_texture3, addr,0 ); \n"
+"  color[4] = texelFetch( s_texture2, addr,0 ); \n"
+"  color[5] = texelFetch( s_texture1, addr,0 ); \n"
+"  color[6] = texelFetch( s_texture0, addr,0 ); \n"
+"  colorback = vec4(0.0); \n"
+
+"  topColor = colorback; \n"
+
+
+"  for (int i = 0; i<7; i++) { \n"
+"    modetop = int(color[i].a * 255.0)&0x7; \n"
+"    alphatop = float(alpha[i])/255.0; \n"
+"    if (modetop == 1) topColor = vec4(color[i].rgb, 1.0); \n"
+"    if (modetop == 2) topColor = vec4(color[i].rgb, alphatop); \n"
+"    if (modetop == 3) topColor = vec4(alphatop*color[i].rgb + (1.0 - alphatop)*topColor.rgb, 1.0); \n"
+"    if (modetop == 4) topColor = vec4(topColor.a*color[i].rgb + (1.0 - topColor.a)*topColor.rgb, 1.0); \n"
+"  } \n"
+
+
+#else
+"  color[0] = texelFetch( s_texture0, addr,0 ); \n"
+"  color[1] = texelFetch( s_texture1, addr,0 ); \n"
+"  color[2] = texelFetch( s_texture2, addr,0 ); \n"
+"  color[3] = texelFetch( s_texture3, addr,0 ); \n"
+"  color[4] = texelFetch( s_texture4, addr,0 ); \n"
+"  color[5] = texelFetch( s_texture5, addr,0 ); \n"
+"  color[6] = texelFetch( s_texture6, addr,0 ); \n"
+"  colorback = texelFetch( s_back, addr,0 ); \n"
+
+"  colortop = colorback; \n"
+
+"  for (int i = 0; i<7; i++) { \n"
+"    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
+"      alpha[i] = (int(color[i].a * 255.0)&0xF8)>>3; \n"
+"      if (color[i].a != 0) { \n"
+"        if (foundColor1 == 0) { \n"
+"          colortop = color[i]; \n"
+"          alphatop = float(alpha[i])/31.0; \n"  
+"          colorsecond = colorback;\n"
+"          alphasecond = colorback.a;\n"
+"          foundColor1 = 1; \n"
+"        } else if (foundColor2 == 0) { \n"
+"          colorsecond = color[i]; \n"
+"          alphasecond = float(alpha[i])/31.0; \n"
+"          colorthird = colorback;\n"
+"          alphathird = colorback.a;\n"
+"          foundColor2 = 1; \n"
+"        } else if (foundColor3 == 0) { \n"
+"          colorthird = color[i]; \n"
+"          alphathird = float(alpha[i])/31.0; \n"
+"          colorfourth = colorback;\n"
+"          alphafourth = colorback.a;\n"
+"          foundColor3 = 1; \n"
+"        } \n"
+"      } \n"
+"    } \n"
+"  } \n"
+"  modetop = int(colortop.a * 255.0)&0x7; \n"
+"  modesecond = int(colorsecond.a * 255.0)&0x7; \n"
+"  modethird = int(colorthird.a * 255.0)&0x7; \n"
+
+"  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
+"  if (modetop == 2) topColor = vec4(colortop.rgb, alphatop); \n"
+"  if (modetop == 3) topColor = vec4(alphatop*colortop.rgb + (1.0 - alphatop)*colorsecond.rgb, 1.0); \n"
+"  if (modetop == 4) topColor = vec4(alphasecond*colortop.rgb + (1.0 - alphasecond)*colorsecond.rgb, 1.0); \n"
+
+"  if (modesecond == 1) secondColor = vec4(colorsecond.rgb, 1.0); \n"
+"  if (modesecond == 2) secondColor = vec4(colorsecond.rgb, alphasecond); \n"
+"  if (modesecond == 3) secondColor = vec4(alphasecond*colortop.rgb + (1.0 - alphasecond)*colorthird.rgb, 1.0); \n"
+"  if (modesecond == 4) secondColor = vec4(alphathird*colortop.rgb + (1.0 - alphathird)*colorthird.rgb, 1.0); \n"
+
+//"  if (modethird == 1) thirdColor = vec4(colorthird.rgb, 1.0); \n"
+//"  if (modethird == 2) thirdColor = vec4(colorthird.rgb, alphathird); \n"
+//"  if (modethird == 3) thirdColor = vec4(alphathird*colortop.rgb + (1.0 - alphathird)*colorfourth.rgb, 1.0); \n"
+//"  if (modethird == 4) thirdColor = vec4(alphafourth*colortop.rgb + (1.0 - alphafourth)*colorfourth.rgb, 1.0); \n"
+
+//"  fourthColor = vec4(colorfourth.rgb, 1.0); \n"
+
+"  finalColor = vec4(topColor.a * topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
+
+#endif
+"} \n";
+
+int YglBlitTexture(int *texture) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
 
@@ -3247,6 +3430,8 @@ int YglBlitTexture(int texture, int blend) {
     0.0f, 1.0f
   };
 
+  int gltext[8] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7};
+
   if (vdp2prio_prg == -1){
     GLuint vshader;
     GLuint fshader;
@@ -3256,6 +3441,8 @@ int YglBlitTexture(int texture, int blend) {
     if (vdp2prio_prg == 0){
       return -1;
     }
+
+    YGLLOG("BLIT_TEXTURE\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -3292,21 +3479,29 @@ int YglBlitTexture(int texture, int blend) {
     }
 
     GLUSEPROG(vdp2prio_prg);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture"), 0);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_back"), 7);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture0"), 6);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture1"), 5);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture2"), 4);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture3"), 3);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture4"), 2);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture5"), 1);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture6"), 0);
+
+    glBindFragDataLocation(vdp2prio_prg, 1, "topColor");
+    glBindFragDataLocation(vdp2prio_prg, 2, "secondColor");
+    glBindFragDataLocation(vdp2prio_prg, 3, "thirdColor");
+    glBindFragDataLocation(vdp2prio_prg, 4, "fourthColor");
+    glBindFragDataLocation(vdp2prio_prg, 0, "finalColor");
   }
   else{
     GLUSEPROG(vdp2prio_prg);
   }
 
 
-  glDisable(GL_DEPTH_TEST);
-  if (blend == 0) 
-    glDisable(GL_BLEND);
-  else 
-    glEnable(GL_BLEND);
-
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+  glDisable(GL_DEPTH_TEST); 
+  glDisable(GL_BLEND);
+  
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
@@ -3318,14 +3513,20 @@ int YglBlitTexture(int texture, int blend) {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture);
+  for (int i = 0; i<8; i++) {
+    glActiveTexture(gltext[i]);
+    glBindTexture(GL_TEXTURE_2D, texture[i]);
+  }
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  glActiveTexture(GL_TEXTURE0);
+  for (int i = 0; i<8; i++) {
+    glActiveTexture(gltext[i]);
+    glBindTexture(GL_TEXTURE_2D, 0);
+  }
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
+  glDisable(GL_BLEND);
 
   return 0;
 }
@@ -3385,6 +3586,8 @@ int YglBlitOpaque(int texture) {
     if (opaque_prg == 0){
       return -1;
     }
+
+    YGLLOG("BLIT_OPAQUE\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -3452,6 +3655,137 @@ int YglBlitOpaque(int texture) {
 
   return 0;
 }
+
+//--------------------------------------------------------------------------------------------------------------
+static int winprio_prg = -1;
+
+static const char winprio_v[] =
+      SHADER_VERSION
+      "layout (location = 0) in vec2 a_position;   \n"
+      "layout (location = 1) in vec2 a_texcoord;   \n"
+      "out vec2 v_texcoord;     \n"
+      "void main()                  \n"
+      "{                            \n"
+      " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
+      " v_texcoord  = a_texcoord; \n"
+      "} ";
+
+static const char winprio_f[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float;                            \n"
+"#endif\n"
+"in vec2 v_texcoord;                            \n"
+"uniform sampler2D s_texture;                        \n"
+"out vec4 fragColor;            \n"
+"void main()                                         \n"
+"{                                                   \n"
+"  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
+"  fragColor = texelFetch( s_texture, addr,0 );         \n"
+"  if (fragColor.a == 0.0) discard;                        \n"
+//"  fragColor.a = 1.0;                        \n"
+"}                                                   \n";
+
+int YglBlitSimple(int texture, int blend) {
+  const GLchar * fblit_winprio_v[] = { winprio_v, NULL };
+  const GLchar * fblit_winprio_f[] = { winprio_f, NULL };
+
+  float const vertexPosition[] = {
+    1.0, -1.0f,
+    -1.0, -1.0f,
+    1.0, 1.0f,
+    -1.0, 1.0f };
+
+  float const textureCoord[] = {
+    1.0f, 0.0f,
+    0.0f, 0.0f,
+    1.0f, 1.0f,
+    0.0f, 1.0f
+  };
+
+  if (winprio_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (winprio_prg != -1) glDeleteProgram(winprio_prg);
+    winprio_prg = glCreateProgram();
+    if (winprio_prg == 0){
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_winprio_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      winprio_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_winprio_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      winprio_prg = -1;
+      abort();
+    }
+
+    glAttachShader(winprio_prg, vshader);
+    glAttachShader(winprio_prg, fshader);
+    glLinkProgram(winprio_prg);
+    glGetProgramiv(winprio_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(winprio_prg);
+      winprio_prg = -1;
+      abort();
+    }
+
+    GLUSEPROG(winprio_prg);
+    glUniform1i(glGetUniformLocation(winprio_prg, "s_texture"), 0);
+  }
+  else{
+    GLUSEPROG(winprio_prg);
+  }
+
+
+  if (blend) {
+    glEnable(GL_BLEND);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  } else {
+    glDisable(GL_BLEND);
+  }
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+  glDisable(GL_BLEND);
+
+  return 0;
+}
+
 
 
 //--------------------------------------------------------------------------------------------------------------
@@ -3522,6 +3856,8 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
     if (vdp1_prg == 0){
       return -1;
     }
+
+    YGLLOG("BLIT_VDP1\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -3750,6 +4086,8 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     blit_mode = aamode;
     scanline = _Ygl->scanline;
 
+    YGLLOG("BLIT_FRAMEBUFFER\n");
+
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -3901,6 +4239,8 @@ int YglClear() {
       return -1;
     }
 
+    YGLLOG("CLEAR\n");
+
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -4029,6 +4369,8 @@ int YglBlitBlur(u32 srcTexture, float w, float h, GLfloat* matrix) {
 
     blur_prg = glCreateProgram();
     if (blur_prg == 0) return -1;
+
+    YGLLOG("BLIT_BLUR\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -4181,6 +4523,8 @@ int YglBlitMosaic(u32 srcTexture, float w, float h, GLfloat* matrix, int * mosai
     mosaic_prg = glCreateProgram();
     if (mosaic_prg == 0) return -1;
 
+    YGLLOG("BLIT_MOSAIC\n");
+
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -4289,7 +4633,7 @@ SHADER_VERSION
 "  addr.x = int(u_tw * v_texcoord.x);          \n"
 "  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
 "  vec4 txcol = texelFetch( u_Src, addr,0 ) ;      \n"
-"  if(txcol.a > 0.0){\n                                 "
+"  if(txcol.a > 0.0){\n"
 "    addr.x = int(u_th * v_texcoord.y);\n"
 "    addr.y = 0; \n"
 "    txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
@@ -4297,12 +4641,12 @@ SHADER_VERSION
 "    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;\n"
 "    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;\n"
 "    if( txcol.a > 0.0 ) \n"
-"       fragColor = txcol; \n                        "
+"       fragColor = txcol; \n"
 "    else \n"
-"       discard; \n                        "
+"       discard; \n"
 "  }else{ \n"
 "    discard; \n"
-"  }\n                                            "
+"  }\n"
 "}                                                   \n";
 
 static int perlinealpha_prg = -1;
@@ -4348,6 +4692,7 @@ int YglBlitPerLineAlpha(u32 srcTexture, float w, float h, GLfloat* matrix, u32 l
     perlinealpha_prg = glCreateProgram();
     if (perlinealpha_prg == 0) return -1;
 
+    YGLLOG("BLIT_PERLINE_ALPHA\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);

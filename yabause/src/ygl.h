@@ -287,9 +287,6 @@ void YglCheckFBSwitch(int sync);
 #define VDP1_COLOR_SPD 0xA0
 
 #define VDP2_CC_NONE 0x00
-#define VDP2_CC_RATE 0x01
-#define VDP2_CC_ADD  0x02
-
 #define VDP2_CC_BLUR  0x04
 
 enum
@@ -315,7 +312,6 @@ enum
    PG_VDP2_MOSAIC=19,
    PG_VDP2_PER_LINE_ALPHA=20,
    PG_VDP2_NORMAL_CRAM=21,
-   PG_VDP2_ADDCOLOR_CRAM=22,
    PG_VDP2_BLUR_CRAM=23,
    PG_VDP2_MOSAIC_CRAM=24,
    PG_VDP2_PER_LINE_ALPHA_CRAM=25,
@@ -381,10 +377,10 @@ void YglUpdateVDP1FB(void);
 
 // std140
 typedef struct  { 
- float u_pri[8*4];  
- float u_alpha[8*4];
+ int u_pri[8*4];  
+ int u_alpha[8*4];
  float u_coloroffset[4];
- float u_cctll;
+ int u_cctll;
  float u_emu_height;
  float u_vheight;
  int u_color_ram_offset;
@@ -505,7 +501,7 @@ typedef enum {
 } enBG;
 
 typedef enum {
-	NONE = 0,
+	NONE = 1,
 	AS_IS,
 	SRC_ALPHA,
 	DST_ALPHA
@@ -561,7 +557,7 @@ typedef struct {
    GLuint priority_depth;
 
    GLuint screen_fbo;
-   GLuint screen_fbotex[SPRITE];
+   GLuint screen_fbotex[enBGMAX];
    GLuint screen_depth;
 
    GLuint window_fbo;
@@ -689,7 +685,7 @@ void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, fl
 int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, float * offsetcol);
 int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float to, float * offsetcol);
 void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float from, float to, float * offsetcol);
-void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to , int texture, float * offsetcol, SpriteMode mode, SpriteMode vdp2mode, Vdp2* varVdp2Regs);
+void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
 
 void YglNeedToUpdateWindow();
 

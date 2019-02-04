@@ -448,7 +448,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
   u8 SPD = 1; // ((cmd->CMDPMOD & 0x40) != 0);    // see-through pixel disable(SPD) hard/vdp1/hon/p06_35.htm
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);    // end-code disable(ECD) hard/vdp1/hon/p06_34.htm
   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
-  u32 alpha = 0xFF;
+  u32 alpha = 0xF8;
   u32 color = 0x00;
   int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
 
@@ -638,7 +638,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);
   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
   u8 MSB_SHADOW = 0;
-  u32 alpha = 0xFF;
+  u32 alpha = 0xF8;
   int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
   VDP1LOG("Making new sprite %08X\n", charAddr);
  
@@ -2290,11 +2290,13 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
 {
   int i, j;
 
+
   if ((vdp2_interlace == 1) && (vdp2height > 448)) {
     // Weird... Partly fix True Pinball in case of interlace only but it is breaking Zen Nihon Pro Wres, so use the bad test of the height
     Vdp2DrawCellInterlace(info, texture, varVdp2Regs);
     return;
   }
+
   switch (info->colornumber)
   {
   case 0: // 4 BPP
@@ -2609,6 +2611,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
     info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
     _Ygl->screen[info->idScreen] = info->priority;
   }
+  tile.priority = info->priority;
 
   tile.vertices[0] = x;
   tile.vertices[1] = y;
@@ -3085,7 +3088,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
       Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs);
       Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, varVdp2Regs);
-
     }
 
     lineindex++;
@@ -3812,7 +3814,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
           }
         }
       }
-      *(texture->textdata++) = VDP2COLOR(info->alpha, info->priority, color);
+      *(texture->textdata++) = color; //Already in VDP2 format due to Vdp2RotationFetchPixel
     }
     texture->textdata += texture->w;
     }
@@ -5758,12 +5760,7 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
         r = Y_MAX(((dot & 0x1F) << 3) + info.cor, 0);
         g = Y_MAX((((dot & 0x3E0) >> 5) << 3) + info.cog, 0);
         b = Y_MAX((((dot & 0x7C00) >> 10) << 3) + info.cob, 0);
-        if (varVdp2Regs->CCCTL & 0x2) {
-          a = 0xFF;
-        }
-        else {
-          a = ((~varVdp2Regs->CCRLB & 0x1F00) >> 5);
-        }
+        a = ((~varVdp2Regs->CCRLB & 0x1F00) >> 5)|NONE;
         *back_pixel_data++ = (a << 24) | ((b&0xFF) << 16) | ((g&0xFF) << 8) | (r&0xFF);
       }
       YglSetBackColor(vdp2height);
@@ -5855,7 +5852,7 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
     inc = 0x00; // color per line
   }
 
-  u8 alpha = 0xFF;
+  u8 alpha = 0xF8;
   // Color calculation ratio mode Destination Alpha
   // Use blend value CRLB
   if ((varVdp2Regs->CCCTL & 0x0300) == 0x0200) {
@@ -5909,14 +5906,8 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
       else {
         if (Vdp2Lines[line >> line_shift].CCCTL & bit)
         {
-          if ((varVdp2Regs->CCCTL>>8) & bit) { // Add Color
-            info->blendmode |= VDP2_CC_ADD;
-          }
-          else {
-            info->blendmode |= VDP2_CC_RATE;
-          }
- 
-         switch            (id) {
+
+         switch (id) {
           case NBG0:
             linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
             break;
@@ -6082,47 +6073,11 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info->alpha = (~varVdp2Regs->CCRNA & 0x1F)*255/31;
     info->blendmode |= VDP2_CC_BLUR;
   }
 
-
-    // Enable Color Calculation
-    if (varVdp2Regs->CCCTL & 0x1)
-    {
-      // Color calculation ratio
-      info->alpha = (~varVdp2Regs->CCRNA & 0x1F)*255/31;
-
-      // Color calculation mode bit
-      if (varVdp2Regs->CCCTL & 0x100) { // Add Color
-        info->blendmode |= VDP2_CC_ADD;
-        info->alpha = 0xFF;
-      }
-      else { // Use Color calculation ratio
-        if (info->specialcolormode != 0 && dest_alpha) { // Just currently not supported
-          info->blendmode |= VDP2_CC_NONE;
-        }
-        else {
-          info->blendmode |= VDP2_CC_RATE;
-        }
-      }
-      // Disable Color Calculation
-    }
-    else {
-
-      // Use Destination Alpha 12.14 CCRTMD
-      if (dest_alpha) {
-
-        // Color calculation will not be operated.
-        // But need to write alpha value
-        info->alpha = (~varVdp2Regs->CCRNA & 0x1F)*255/31;
-      }
-      else {
-        info->alpha = 0xFF;
-      }
-      info->blendmode |= VDP2_CC_NONE;
-    }
-
+  // Color calculation ratio
+  info->alpha = (~varVdp2Regs->CCRNA & 0x1F)<<3;
 
   Vdp2GeneratePerLineColorCalcuration(info, NBG0, varVdp2Regs);
   //info->lineTexture = 0;
@@ -6396,46 +6351,10 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3);
     info.blendmode |= VDP2_CC_BLUR;
   }
 
-
-    // Enable Color Calculation
-    if (varVdp2Regs->CCCTL & 0x1)
-    {
-      // Color calculation ratio
-      info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3);
-
-      // Color calculation mode bit
-      if (varVdp2Regs->CCCTL & 0x100) { // Add Color
-        info.blendmode |= VDP2_CC_ADD;
-        //info.alpha = 0xFF;
-      }
-      else { // Use Color calculation ratio
-        if (info.specialcolormode != 0 && dest_alpha) { // Just currently not supported
-          info.blendmode |= VDP2_CC_NONE;
-        }
-        else {
-          info.blendmode |= VDP2_CC_RATE;
-        }
-      }
-      // Disable Color Calculation
-    }
-    else {
-      // Use Destination Alpha 12.14 CCRTMD
-      if (dest_alpha) {
-
-        // Color calculation will not be operated.
-        // But need to write alpha value
-        info.alpha = ((~varVdp2Regs->CCRNA & 0x1F) << 3);
-      }
-      else {
-        info.alpha = 0xFF;
-      }
-      info.blendmode |= VDP2_CC_NONE;
-    }
-
+  info.alpha = (~varVdp2Regs->CCRNA & 0x1F) << 3;
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG0, varVdp2Regs);
   info.linescreen = 0;
@@ -6623,6 +6542,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
   if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x200) != 0)
   {
+
     ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 10, 0x3);
 
     info.x = -((varVdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
@@ -6657,21 +6577,10 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   info.blendmode = 0;
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xC000) {
-    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
     info.blendmode |= VDP2_CC_BLUR;
   }
   
-  if (varVdp2Regs->CCCTL & 0x2) {
-    info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
-    if (varVdp2Regs->CCCTL & 0x100 ) {
-      info.blendmode |= VDP2_CC_ADD;
-    } else {
-      info.blendmode |= VDP2_CC_RATE;
-    }
-  } else {
-    info.alpha = 0xFF;
-      info.blendmode |= VDP2_CC_NONE;
-  }
+  info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
   info.linescreen = 0;
@@ -6779,6 +6688,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
         infotmp.cellh = (vdp2height >> 1);
       else
         infotmp.cellh = vdp2height;
+
       YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
       Vdp2DrawBitmapCoordinateInc(&info, &texture, varVdp2Regs);
     }
@@ -6804,6 +6714,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
         vdp2draw_struct infotmp = info;
         infotmp.cellw = vdp2width;
         infotmp.cellh = vdp2height;
+
         YglQuad(&infotmp, &texture, &tmpc, YglTM_vdp2);
         Vdp2DrawBitmapLineScroll(&info, &texture, vdp2width, vdp2height, varVdp2Regs);
 
@@ -6823,6 +6734,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
             info.vertices[5] = (yy + info.cellh);
             info.vertices[6] = xx;
             info.vertices[7] = (yy + info.cellh);
+
             if (isCached == 0)
             {
               YglQuad(&info, &texture, &tmpc, YglTM_vdp2);
@@ -6848,12 +6760,14 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
     if (info.islinescroll) {
       info.x = (varVdp2Regs->SCXIN1 & 0x7FF);
       info.y = (varVdp2Regs->SCYIN1 & 0x7FF);
+
       Vdp2DrawMapPerLine(&info, &texture, varVdp2Regs);
     }
     else {
       //Vdp2DrawMap(&info, &texture);
       info.x = varVdp2Regs->SCXIN1 & 0x7FF;
       info.y = varVdp2Regs->SCYIN1 & 0x7FF;
+
       Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
     }
   }
@@ -6907,27 +6821,10 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xD000) {
-    info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3);
     info.blendmode |= VDP2_CC_BLUR;
   }
 
-
-    if (varVdp2Regs->CCCTL & 0x4)
-    {
-      info.alpha = ((~varVdp2Regs->CCRNB & 0x1F) << 3);
-      if (varVdp2Regs->CCCTL & 0x100 /*&& info.specialcolormode == 0*/ )
-      {
-        info.blendmode |= VDP2_CC_ADD;
-      }
-      else {
-        info.blendmode |= VDP2_CC_RATE;
-      }
-    }
-    else {
-      info.alpha = 0xFF;
-      info.blendmode |= VDP2_CC_NONE;
-    }
-
+  info.alpha = (~varVdp2Regs->CCRNB & 0x1F) << 3;
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG2, varVdp2Regs);
   info.linescreen = 0;
@@ -7023,25 +6920,10 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xE000) {
-    info.alpha = ((~varVdp2Regs->CCRNB & 0x1F00) >> 5);
     info.blendmode |= VDP2_CC_BLUR;
   }
 
-    if (varVdp2Regs->CCCTL & 0x8)
-    {
-      info.alpha = ((~varVdp2Regs->CCRNB & 0x1F00) >> 5);
-      if (varVdp2Regs->CCCTL & 0x100 )
-      {
-        info.blendmode |= VDP2_CC_ADD;
-      }
-      else {
-        info.blendmode |= VDP2_CC_RATE;
-      }
-    }
-    else {
-      info.alpha = 0xFF;
-      info.blendmode |= VDP2_CC_NONE;
-    }
+  info.alpha = (~varVdp2Regs->CCRNB & 0x1F00) >> 5;
 
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG3, varVdp2Regs);
@@ -7133,6 +7015,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   //info->lineTexture = 0;
 
   info->transparencyenable = !(varVdp2Regs->BGON & 0x1000);
+
   info->specialprimode = (varVdp2Regs->SFPRMD >> 8) & 0x3;
 
   info->colornumber = (varVdp2Regs->CHCTLB & 0x7000) >> 12;
@@ -7283,11 +7166,8 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     }
   }
 
-
   rgb->paraA.screenover = (varVdp2Regs->PLSZ >> 10) & 0x03;
   rgb->paraB.screenover = (varVdp2Regs->PLSZ >> 14) & 0x03;
-
-
 
   // Figure out which Rotation Parameter we're uqrt
   switch (varVdp2Regs->RPMD & 0x3)
@@ -7413,21 +7293,10 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   // 12.13 blur
   if ((varVdp2Regs->CCCTL & 0xF000) == 0x9000) {
-    info->alpha = ((~varVdp2Regs->CCRR & 0x1F) << 3);
     info->blendmode |= VDP2_CC_BLUR;
   }
 
-  if ((varVdp2Regs->CCCTL & 0x010) == 0x10) {
-    info->alpha = ((~varVdp2Regs->CCRR & 0x1F) << 3);
-    if (varVdp2Regs->CCCTL & 0x100 ){
-        info->blendmode |= VDP2_CC_ADD;
-    } else {
-        info->blendmode |= VDP2_CC_RATE;
-    }
-  } else {
-    info->alpha = 0xFF;
-      info->blendmode |= VDP2_CC_NONE;
-  }
+  info->alpha = (~varVdp2Regs->CCRR & 0x1F) << 3;
 
   info->coloroffset = (varVdp2Regs->CRAOFB & 0x7) << 8;
 
