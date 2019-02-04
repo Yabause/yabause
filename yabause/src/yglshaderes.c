@@ -1561,10 +1561,12 @@ SHADER_VERSION
 "  int prinumber = (additional&0x07); \n"
 "  int depth = u_pri[ prinumber ];\n"
 "  int alpha = u_alpha[((additional>>3)&0x07)]<<3; \n"
+"  int opaque = 0xF8;\n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
 "    if( fbColor.b != 0.0 ) {\n"
-"      fragColor = vec4(0.0,0.0,0.0,0.5);\n"
+"      fragColor = vec4(0.0,0.0,0.0,1.0);\n"
+"      opaque = 0x78;\n"
 "    } else {\n"
 "      int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
 "      if( colindex == 0 && prinumber == 0) {discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
@@ -1581,14 +1583,12 @@ SHADER_VERSION
  Color calculation option 
   hard/vdp2/hon/p09_21.htm
 */
-const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fragColor.a = 1.0; \n";
+const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " alpha = opaque; \n";
 
-const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_f[] = " fragColor.a = alpha; \n";
-
-const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ alpha = 0xF8; mode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ alpha = 0xF8; mode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ alpha = 0xF8; mode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a == 0.0 ){ alpha = 0xF8; mode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ alpha = opaque; mode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ alpha = opaque; mode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ alpha = opaque; mode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a == 0.0 ){ alpha = opaque; mode = 0;} \n ";
 
 
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
