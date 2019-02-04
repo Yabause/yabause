@@ -3218,7 +3218,7 @@ SHADER_VERSION
 
 //"  fourthColor = vec4(colorfourth.rgb, 1.0); \n"
 
-"  finalColor = vec4(topColor.a * topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
+"  finalColor = vec4( topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
 
 #endif
 "} \n";

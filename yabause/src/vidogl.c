@@ -2139,7 +2139,7 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   u8 dot;
   u32 alpha = info->alpha;
   u32 priority = 0;
-  
+
   alpha = info->alpha;
   dot = (dotw & 0xFF00)>>8;
   if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
@@ -2296,7 +2296,6 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
     Vdp2DrawCellInterlace(info, texture, varVdp2Regs);
     return;
   }
-
   switch (info->colornumber)
   {
   case 0: // 4 BPP
