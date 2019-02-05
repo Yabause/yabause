@@ -1590,35 +1590,49 @@ SHADER_VERSION
 "uniform float u_from;\n"
 "uniform float u_to;\n"
 "in vec2 v_texcoord;\n"
-"out vec4 fragColor;\n"
+"out vec4 fragColor1;\n"
+"out vec4 fragColor2;\n"
+"out vec4 fragColor3;\n"
+"out vec4 fragColor4;\n"
+"out vec4 fragColor5;\n"
+"out vec4 fragColor6;\n"
+"out vec4 fragColor7;\n"
 "int mode = 1;\n"
+"int vdp1mode = 1;\n"
+"vec4 outColor;\n"
 "void main()\n"
 "{\n"
 "  vec2 addr = v_texcoord;\n"
 "  vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  fragColor1 = vec4(0.0);\n"
+"  fragColor2 = vec4(0.0);\n"
+"  fragColor3 = vec4(0.0);\n"
+"  fragColor4 = vec4(0.0);\n"
+"  fragColor5 = vec4(0.0);\n"
+"  fragColor6 = vec4(0.0);\n"
+"  fragColor7 = vec4(0.0);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
-
 "  if( (additional & 0x80) == 0 ){ discard;} // show? \n"
 "  int prinumber = (additional&0x07); \n"
-"  int depth = u_pri[ prinumber ];\n"
+"  int depth = u_pri[prinumber];\n"
 "  int alpha = u_alpha[((additional>>3)&0x07)]<<3; \n"
 "  int opaque = 0xF8;\n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( (additional & 0x40) != 0 ){  // index color? \n"
 "    if( fbColor.b != 0.0 ) {\n"
-"      fragColor = vec4(0.0,0.0,0.0,1.0);\n"
+"      outColor = vec4(0.0,0.0,0.0,1.0);\n"
 "      opaque = 0x78;\n"
 "    } else {\n"
 "      int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
 "      if( colindex == 0 && prinumber == 0) {discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
 "      colindex = colindex + u_color_ram_offset; \n"
 "      txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"      fragColor = txcol;\n"
+"      outColor = txcol;\n"
 "    }\n"
 "  }else{ // direct color \n" 
-"    fragColor = fbColor;\n"
+"    outColor = fbColor;\n"
 "  } \n";
-//"  fragColor = clamp(fragColor + u_coloroffset, vec4(0.0), vec4(1.0));  \n" //A mettre dans le blit final
+//"  outColor = clamp(outColor + u_coloroffset, vec4(0.0), vec4(1.0));  \n" //A mettre dans le blit final
 
 /*
  Color calculation option 
@@ -1633,127 +1647,139 @@ const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a == 0.0 
 
 
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
-" fragColor.b = float(int(fragColor.b * 255.0)|1)/255.0; \n"
-" fragColor.a = float(alpha|depth)/255.0; \n"
-"}\n";
+"\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
-" if (mode == 1) fragColor.b = float(int(fragColor.b * 255.0)|2)/255.0; \n"
-" else fragColor.b = float(int(fragColor.b * 255.0)|1)/255.0; \n"
-" fragColor.a = float(alpha|depth)/255.0; \n"
-"}\n";
+" if (mode == 1) vdp1mode = 2; \n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
-" if (mode == 1) fragColor.b = float(int(fragColor.b * 255.0)|3)/255.0; \n"
-" else fragColor.b = float(int(fragColor.b * 255.0)|3)/255.0; \n"
-" fragColor.a = float(alpha|depth)/255.0; \n"
-"}\n";
+" if (mode == 1) vdp1mode = 3; \n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
-" if (mode == 1) fragColor.b = float(int(fragColor.b * 255.0)|4)/255.0; \n"
-" else fragColor.b = float(int(fragColor.b * 255.0)|3)/255.0; \n"
-" fragColor.a = float(alpha|depth)/255.0; \n"
-"}\n";
+" if (mode == 1) vdp1mode = 4; \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
+" outColor.a = float(alpha|vdp1mode)/255.0; \n"
+" if (depth == 1) { \n"
+"   fragColor1 = outColor;\n"
+"   return;\n"
+" } else if (depth == 2) { \n"
+"   fragColor2 = outColor;\n"
+"   return;\n"
+" }else if (depth == 3) { \n"
+"   fragColor3 = outColor;\n"
+"   return;\n"
+" }else if (depth == 4) { \n"
+"   fragColor4 = outColor;\n"
+"   return;\n"
+" }else if (depth == 5) {\n" 
+"   fragColor5 = outColor;\n"
+"   return;\n"
+" }else if (depth == 6) {\n" 
+"   fragColor6 = outColor;\n"
+"   return;\n"
+" }else if (depth == 7) { \n"
+"   fragColor7 = outColor;\n"
+"   return;\n"
+" }else discard;\n"
 "}\n";
 
 
 //const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
-const GLchar * pYglprg_vdp2_drawfb_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 
 
-const GLchar * pYglprg_vdp2_drawfb_less_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_less_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_less_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_less_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_less_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 
-const GLchar * pYglprg_vdp2_drawfb_equal_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_equal_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_equal_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 
-const GLchar * pYglprg_vdp2_drawfb_more_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_more_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_more_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 
-const GLchar * pYglprg_vdp2_drawfb_msb_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, NULL };
-const GLchar * pYglprg_vdp2_drawfb_msb_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_msb_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_msb_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_msb_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
+const GLchar * pYglprg_vdp2_drawfb_msb_dst_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 
 void Ygl_initDrawFrameBuffershader(int id);
 
 int YglInitDrawFrameBufferShaders() {
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_none_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_as_is_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_src_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_dst_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_none_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_as_is_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_src_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_less_dst_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_none_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_as_is_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_src_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_equal_dst_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_none_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_as_is_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_src_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_more_dst_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_none_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_none_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_as_is_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_as_is_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_src_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_src_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_dst_alpha_f, 3, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_msb_dst_alpha_f, 4, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA);
 
   _Ygl->renderfb.prgid = _prgid[PG_VDP2_DRAWFRAMEBUFF_NONE];
@@ -1832,6 +1858,14 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offs
   glDisableVertexAttribArray(3);
 
   _Ygl->renderfb.mtxModelView = glGetUniformLocation(_prgid[pgid], (const GLchar *)"u_mvpMatrix");
+
+    glBindFragDataLocation(_prgid[pgid], 0, "fragColor1");
+    glBindFragDataLocation(_prgid[pgid], 1, "fragColor2");
+    glBindFragDataLocation(_prgid[pgid], 2, "fragColor3");
+    glBindFragDataLocation(_prgid[pgid], 3, "fragColor4");
+    glBindFragDataLocation(_prgid[pgid], 4, "fragColor5");
+    glBindFragDataLocation(_prgid[pgid], 5, "fragColor6");
+    glBindFragDataLocation(_prgid[pgid], 6, "fragColor7");
 
   glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
   glUniform1f(g_draw_framebuffer_uniforms[arrayid].idfrom, from);
@@ -2924,13 +2958,9 @@ SHADER_VERSION
 "  int mode; \n"
 "  if (fbon == 1) {\n"
 "    fbColor = texelFetch( fb_texture, addr,0 ); \n"
-"    priority = int(fbColor.a*255.0)&0x7; \n"
-"    if (priority == prio) {\n"
+"    mode = int(fbColor.a*255.0)&0x7; \n"
+"    if (mode != 0) {\n"
 "      fragColor = fbColor; \n"
-"      alpha = int(fragColor.a*255.0)&0xF8; \n"
-"      mode = int(fragColor.b*255.0)&0x7; \n"
-"      fragColor.b = float((int(fragColor.b*255.0)&0xF8)/255.0); \n"
-"      fragColor.a = float(alpha|mode)/255.0; \n"
 "      return;\n"
 "    }\n"
 "  }\n"
@@ -3070,7 +3100,6 @@ int YglBlitVdp2Priority(int priority, int* prioscreens, int* modescreens, int nb
     glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture4"), 5);
     glUniform1i(glGetUniformLocation(vdp2priority_prg, "s_texture5"), 6);
     glUniform1i(glGetUniformLocation(vdp2priority_prg, "fb_texture"), 0);
-
   }
   else{
     GLUSEPROG(vdp2priority_prg);
@@ -3101,7 +3130,7 @@ int YglBlitVdp2Priority(int priority, int* prioscreens, int* modescreens, int nb
 
   if (Vdp1External.disptoggle & 0x01) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[SPRITE]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1screen_fbotex[priority-1]);
   }
   for (int i=0; i<nbScreen; i++) {
     glActiveTexture(textures[i]);

@@ -554,6 +554,9 @@ typedef struct {
    GLuint priority_fbotex[8];
    GLuint priority_depth;
 
+   GLuint vdp1screen_fbo;
+   GLuint vdp1screen_fbotex[7];
+
    GLuint screen_fbo;
    GLuint screen_fbotex[enBGMAX];
    GLuint screen_depth;
