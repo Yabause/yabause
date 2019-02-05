@@ -2028,7 +2028,7 @@ void Vdp2GenLineinfo(vdp2draw_struct *info)
   }
 }
 
-INLINE void Vdp2SetSpecialPriority(vdp2draw_struct *info, u8 dot, u32 *prio ) {
+INLINE void Vdp2SetSpecialPriority(vdp2draw_struct *info, u8 dot, u32 *prio, u32 * cramindex ) {
   *prio = info->priority;
   if (info->specialprimode == 2) {
     *prio = info->priority & 0xE;
@@ -2037,7 +2037,8 @@ INLINE void Vdp2SetSpecialPriority(vdp2draw_struct *info, u8 dot, u32 *prio ) {
       {
         *prio |= 1;
       }
-    };
+    }
+    (*cramindex) |= *prio << 16;
   }
 }
 
@@ -2053,7 +2054,7 @@ static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp
       else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
       break;
     case 3:
-      if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xF8; }
+      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xF8; }
       break;
     }
   }
@@ -2089,7 +2090,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
     *texture->textdata++ = 0x00000000;
   } else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
-    Vdp2SetSpecialPriority(info, dot, &priority);
+    Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex, varVdp2Regs);
     *texture->textdata++ = VDP2COLOR(alpha, priority, cramindex);
   }
@@ -2101,7 +2102,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   }
   else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
-    Vdp2SetSpecialPriority(info, dot, &priority);
+    Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex, varVdp2Regs);
     *texture->textdata++ = VDP2COLOR(alpha, priority, cramindex);
   }
@@ -2113,7 +2114,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   }
   else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
-    Vdp2SetSpecialPriority(info, dot, &priority);
+    Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex, varVdp2Regs);
     *texture->textdata++ = VDP2COLOR(alpha, priority, cramindex);
   }
@@ -2125,7 +2126,7 @@ static INLINE u32 Vdp2GetPixel4bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   }
   else {
     cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
-    Vdp2SetSpecialPriority(info, dot, &priority);
+    Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex, varVdp2Regs);
     *texture->textdata++ = VDP2COLOR(alpha, priority, cramindex);
   }
@@ -2145,7 +2146,7 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
   else {
     cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
-    Vdp2SetSpecialPriority(info, dot, &priority);
+    Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex, varVdp2Regs);
     *texture->textdata++ = VDP2COLOR(alpha, priority, cramindex);
   }
@@ -2154,7 +2155,7 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
   else {
     cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
-    Vdp2SetSpecialPriority(info, dot, &priority);
+    Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex, varVdp2Regs);
     *texture->textdata++ = VDP2COLOR(alpha, priority, cramindex);
   }
@@ -2170,7 +2171,7 @@ static INLINE u32 Vdp2GetPixel16bpp(vdp2draw_struct *info, u32 addr, Vdp2* varVd
   if ((dot == 0) && info->transparencyenable) return 0x00000000;
   else {
     cramindex = info->coloroffset + dot;
-    Vdp2SetSpecialPriority(info, dot, &priority);
+    Vdp2SetSpecialPriority(info, dot, &priority, &cramindex);
     alpha = Vdp2GetAlpha(info, dot, cramindex, varVdp2Regs);
     return VDP2COLOR(alpha, priority, cramindex);
   }
