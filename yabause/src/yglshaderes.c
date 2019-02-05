@@ -1523,37 +1523,6 @@ const GLchar Yglprg_vdp1_drawfb_v[] =
       "}\n";
 const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
 
-const GLchar Yglprg_vdp2_drawfb_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp sampler2D; \n"
-"precision highp float;\n"
-"#endif\n"
-"in vec2 v_texcoord;\n"
-"uniform sampler2D s_vdp1FrameBuffer;\n"
-"uniform float u_from;\n"
-"uniform float u_to;\n"
-"uniform vec4 u_coloroffset;\n"
-"out vec4 fragColor;\n"
-"void main()\n"
-"{\n"
-"  vec2 addr = v_texcoord;\n"
-"  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
-"  int additional = int(fbColor.a * 255.0);\n"
-"  highp float alpha = float((additional/8)*8)/255.0;\n"
-"  highp float depth = (float(additional&0x07)/10.0) + 0.05;\n"
-"  if( depth < u_from || depth > u_to ){\n"
-"    discard;\n"
-"  }else if( alpha > 0.0){\n"
-"     fragColor = fbColor;\n"
-"     fragColor += u_coloroffset;  \n"
-"     fragColor.a = alpha + 7.0/255.0;\n"
-//"     gl_FragDepth = (depth+1.0)/2.0;\n"
-"  }else{ \n"
-"     discard;\n"
-"  }\n"
-"}\n";
-
 /*
 +-+-+-+-+-+-+-+-+
 |S|C|A|A|A|P|P|P|
@@ -1631,8 +1600,8 @@ SHADER_VERSION
 "    }\n"
 "  }else{ // direct color \n" 
 "    outColor = fbColor;\n"
-"  } \n";
-//"  outColor = clamp(outColor + u_coloroffset, vec4(0.0), vec4(1.0));  \n" //A mettre dans le blit final
+"  } \n"
+"  outColor.rgb = clamp(outColor.rgb + u_coloroffset.rgb, vec3(0.0), vec3(1.0));  \n"; 
 
 /*
  Color calculation option 
@@ -1681,8 +1650,6 @@ const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
 " }else discard;\n"
 "}\n";
 
-
-//const GLchar * pYglprg_vdp2_drawfb_f[] = {Yglprg_vdp2_drawfb_f, NULL};
 const GLchar * pYglprg_vdp2_drawfb_none_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 const GLchar * pYglprg_vdp2_drawfb_as_is_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
 const GLchar * pYglprg_vdp2_drawfb_src_alpha_f[] = { Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, NULL };
