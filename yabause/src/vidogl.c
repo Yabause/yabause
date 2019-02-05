@@ -2047,13 +2047,13 @@ static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp
   if (CCMD == 0) {  // Calculate Rate mode
     switch (info->specialcolormode)
     {
-    case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+    case 1: if (info->specialcolorfunction == 0) { alpha = 0xF8; } break;
     case 2:
-      if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+      if (info->specialcolorfunction == 0) { alpha = 0xF8; }
+      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
       break;
     case 3:
-      if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+      if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xF8; }
       break;
     }
   }
@@ -2061,14 +2061,14 @@ static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp
     switch (info->specialcolormode)
     {
     case 1:
-      if (info->specialcolorfunction == 0) { alpha = 0xFF; }
+      if (info->specialcolorfunction == 0) { alpha = 0xF8; }
       break;
     case 2:
-      if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+      if (info->specialcolorfunction == 0) { alpha = 0xF8; }
+      else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
       break;
     case 3:
-      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xFF; }
+      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xF8; }
       break;
     }
   }
@@ -2506,13 +2506,13 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
             color = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
             switch (info->specialcolormode)
             {
-            case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+            case 1: if (info->specialcolorfunction == 0) { alpha = 0xF8; } break;
             case 2:
-              if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-              else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+              if (info->specialcolorfunction == 0) { alpha = 0xF8; }
+              else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
               break;
             case 3:
-              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xF8; }
               break;
             }
             *texture->textdata++ = VDP2COLOR(alpha, info->priority, color);
@@ -2535,13 +2535,13 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
           color = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
           switch (info->specialcolormode)
           {
-          case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+          case 1: if (info->specialcolorfunction == 0) { alpha = 0xF8; } break;
           case 2:
-            if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-            else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+            if (info->specialcolorfunction == 0) { alpha = 0xF8; }
+            else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
             break;
           case 3:
-            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xF8; }
             break;
           }
         }
@@ -3186,13 +3186,13 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
       cramindex = (info->coloroffset + ((info->paladdr << 4) | (dot & 0xF)));
       switch (info->specialcolormode)
       {
-      case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+      case 1: if (info->specialcolorfunction == 0) { alpha = 0xF8; } break;
       case 2:
-        if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+        if (info->specialcolorfunction == 0) { alpha = 0xF8; }
+        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xF8; }
         break;
       }
       return   VDP2COLOR(alpha, info->priority, cramindex);
@@ -3204,13 +3204,13 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
       cramindex = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
       switch (info->specialcolormode)
       {
-      case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+      case 1: if (info->specialcolorfunction == 0) { alpha = 0xF8; } break;
       case 2:
-        if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+        if (info->specialcolorfunction == 0) { alpha = 0xF8; }
+        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xF8; }
         break;
       }
       return   VDP2COLOR(alpha, info->priority, cramindex);
@@ -3222,13 +3222,13 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
       cramindex = (info->coloroffset + dot);
       switch (info->specialcolormode)
       {
-      case 1: if (info->specialcolorfunction == 0) { alpha = 0xFF; } break;
+      case 1: if (info->specialcolorfunction == 0) { alpha = 0xF8; } break;
       case 2:
-        if (info->specialcolorfunction == 0) { alpha = 0xFF; }
-        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xFF; } }
+        if (info->specialcolorfunction == 0) { alpha = 0xF8; }
+        else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xFF; }
+        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { alpha = 0xF8; }
         break;
       }
       return   VDP2COLOR(alpha, info->priority, cramindex);
@@ -5226,12 +5226,12 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    alpha = 0x80;
+    alpha = 0X78;
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
 
   if (IS_MESH(CMDPMOD)) {
-    alpha = 0x80;
+    alpha = 0X78;
     sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
   }
 

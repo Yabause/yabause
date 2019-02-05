@@ -3611,7 +3611,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
     u16 tmp;
     u8 alpha = 0;
     tmp = T2ReadWord(Vdp2ColorRam, addr);
-    if (tmp & 0x8000) alpha = 0xFF;
+    if (tmp & 0x8000) alpha = 0xF8;
     buf[(addr >> 1) & 0x7FF] = SAT2YAB1(alpha, tmp);
     break;
   }
@@ -3620,7 +3620,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
     u32 tmp1 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC));
     u32 tmp2 = T2ReadWord(Vdp2ColorRam, (addr&0xFFC)+2);
     u8 alpha = 0;
-    if (tmp1 & 0x8000) alpha = 0xFF;
+    if (tmp1 & 0x8000) alpha = 0xF8;
     buf[(addr >> 2) & 0x7FF] = SAT2YAB2(alpha, tmp1, tmp2);
     break;
   }
