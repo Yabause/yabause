@@ -1043,10 +1043,14 @@ SHADER_VERSION
 "in vec4 v_vtxcolor;                                                 \n"
 "out vec4 fragColor;            \n"
 "void main() {                                                            \n"
+"  int mode;\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
 "  if( spriteColor.a == 0.0 ) discard;                                      \n"
+"  mode = int(spriteColor.b*255.0)&0x7; \n"
+"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
+"  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
 "  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
@@ -1061,9 +1065,13 @@ SHADER_VERSION
 "in vec4 v_vtxcolor;                                                 \n"
 "out vec4 fragColor;            \n"
 "void main() {                                                            \n"
+"  int mode;\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
+"  mode = int(spriteColor.b*255.0)&0x7; \n"
+"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
+"  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
 "  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshading_spd_f, NULL };
@@ -1106,11 +1114,18 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
       "in vec4 v_vtxcolor;                                                                     \n"
       "out vec4 fragColor; \n "
       "void main() {                                                                                \n"
+<<<<<<< HEAD
       "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+=======
+      "  int mode;\n"
+      "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+>>>>>>> ae4db824... Fix gouraud shading operation on vdp1
       "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
       "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
       "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
       "  int additional = int(fboColor.a * 255.0);\n"
+      "  mode = int(spriteColor.b*255.0)&0x7; \n"
+      "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
       "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
       "  if( (additional & 0x40) == 0 ) \n"
       "  { \n"
@@ -1119,6 +1134,7 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
       "  }else{                                                                                     \n"
       "    fragColor = spriteColor;                                                              \n"
       "  }                                                                                          \n"
+      "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
       "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_f[] = {Yglprg_vdp1_gouraudshading_hf_f, NULL};
 
@@ -1161,9 +1177,16 @@ const GLchar Yglprg_vdp1_halftrans_f[] =
       "in vec4 v_texcoord;                                                                     \n"
       "out vec4 fragColor; \n "
       "void main() {                                                                                \n"
+<<<<<<< HEAD
       "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+=======
+      "  int mode; \n"
+      "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+>>>>>>> ae4db824... Fix gouraud shading operation on vdp1
       "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
       "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+      "  mode = int(spriteColor.b*255.0)&0x7; \n"
+      "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
       "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
       "  int additional = int(fboColor.a * 255.0);\n"
       "  if( (additional & 0x40) == 0 ) \n"
@@ -1173,6 +1196,7 @@ const GLchar Yglprg_vdp1_halftrans_f[] =
       "  }else{                                                                                     \n"
       "    fragColor = spriteColor;                                                              \n"
       "  }                                                                                          \n"
+      "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
       "}\n";
 const GLchar * pYglprg_vdp1_halftrans_f[] = {Yglprg_vdp1_halftrans_f, NULL};
 
@@ -1214,8 +1238,16 @@ SHADER_VERSION
 "in vec4 v_vtxcolor;                                                                     \n"
 "out highp vec4 fragColor; \n "
 "void main() {                                                                                \n"
+<<<<<<< HEAD
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+=======
+"  int mode;\n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+>>>>>>> ae4db824... Fix gouraud shading operation on vdp1
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
+"  mode = int(spriteColor.b*255.0)&0x7; \n"
+"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
+"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
 "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
 "  if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n"
 "    if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n"
@@ -1227,6 +1259,7 @@ SHADER_VERSION
 "    } \n"
 "  } \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
+"  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
 "  fragColor.a = spriteColor.a;                                        \n"
 "}\n";
 #else
@@ -1343,13 +1376,21 @@ SHADER_VERSION
 "in vec4 v_texcoord;\n"
 "out vec4 fragColor; \n "
 "void main() { \n"
+<<<<<<< HEAD
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+=======
+"  int mode;\n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+>>>>>>> ae4db824... Fix gouraud shading operation on vdp1
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
 "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+"  mode = int(spriteColor.b*255.0)&0x7; \n"
+"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
 "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
 "  int additional = int(fboColor.a * 255.0);\n"
 "  if( ((additional & 0xC0)==0x80) ) { \n"
 "    fragColor = vec4(fboColor.r*0.5,fboColor.g*0.5,fboColor.b*0.5,fboColor.a);\n"
+"    fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
 "  }else{\n"
 "    discard;"
 "  }\n"
