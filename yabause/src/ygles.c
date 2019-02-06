@@ -3290,11 +3290,16 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
    glDrawBuffers(SPRITE, &DrawBuffers[0]);
+   glClearBufferfv(GL_COLOR, 0, col);
+   glClearBufferfv(GL_COLOR, 1, col);
+   glClearBufferfv(GL_COLOR, 2, col);
+   glClearBufferfv(GL_COLOR, 3, col);
+   glClearBufferfv(GL_COLOR, 4, col);
    if ((Vdp2Regs->TVMD & 0x8000) == 0) goto render_finish;
 
    _Ygl->targetfbo = _Ygl->original_fbo;
    glViewport(0, 0, GlWidth, GlHeight);
-   glDepthMask(GL_TRUE);
+   glDepthMask(GL_FALSE);
    //glEnable(GL_DEPTH_TEST);
 
    glViewport(0, 0, _Ygl->width, _Ygl->height);
@@ -3304,8 +3309,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glScissor(_Ygl->m_viewport[0],_Ygl->m_viewport[1],_Ygl->m_viewport[2],_Ygl->m_viewport[3]);
    glEnable(GL_SCISSOR_TEST);
 
-   glClearBufferfv(GL_COLOR, 0, colopaque);
-   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+   //glClearBufferfv(GL_COLOR, 0, colopaque);
+   //glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
    if (YglTM_vdp2 == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
@@ -3421,11 +3426,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
   glDrawBuffers(5, &DrawBuffers[0]);
-  glClearBufferfv(GL_COLOR, 0, col);
-  glClearBufferfv(GL_COLOR, 1, col);
-  glClearBufferfv(GL_COLOR, 2, col);
-  glClearBufferfv(GL_COLOR, 3, col);
-  glClearBufferfv(GL_COLOR, 4, col);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
   YglBlitTexture(_Ygl->priority_fbotex);

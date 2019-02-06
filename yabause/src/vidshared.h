@@ -159,7 +159,6 @@ typedef struct
 
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
-   u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int, u8 , Vdp2*);
    u32 FASTCALL (*PostPixelFetchCalc)(void *, u32);
    int patternpixelwh;
    int draww;
