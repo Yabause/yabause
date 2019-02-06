@@ -3409,11 +3409,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
     int priority = i+1;
     glDrawBuffers(1, &DrawBuffers[i]);
     for (int j=0; j<6; j++) {
-      if (drawScreen[vdp2screens[j]] & (1<<i)) {
+      //if (drawScreen[vdp2screens[j]] & (1<<i)) {
         prioscreens[nbScreens] = _Ygl->screen_fbotex[vdp2screens[j]];
         modescreens[nbScreens] =  setupBlend(varVdp2Regs, vdp2screens[j]);
         nbScreens++;
-      }
+      //}
     }
     YglBlitVdp2Priority(priority, prioscreens, modescreens, nbScreens);
   }
