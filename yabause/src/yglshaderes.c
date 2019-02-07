@@ -139,8 +139,6 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->tessLevelInner = glGetUniformLocation(pgid, (const GLchar *)"TessLevelInner");
   param->tessLevelOuter = glGetUniformLocation(pgid, (const GLchar *)"TessLevelOuter");
   param->fbo = glGetUniformLocation(pgid, (const GLchar *)"u_fbo");
-  param->fbowidth = glGetUniformLocation(pgid, (const GLchar *)"u_fbowidth");
-  param->fboheight = glGetUniformLocation(pgid, (const GLchar *)"u_fbohegiht");
   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
   param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
@@ -184,8 +182,6 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1i(param->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
-    glUniform1i(param->fbowidth, _Ygl->width);
-    glUniform1i(param->fboheight, _Ygl->height);
 #if !defined(_OGLES3_)
     if (glTextureBarrierNV) glTextureBarrierNV();
 #else
@@ -1063,8 +1059,6 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
       "#endif\n"
       "uniform highp sampler2D u_sprite;                                                                  \n"
       "uniform highp sampler2D u_fbo;                                                                     \n"
-      "uniform int u_fbowidth;                                                                      \n"
-      "uniform int u_fbohegiht;                                                                     \n"
       "in vec4 v_texcoord;                                                                     \n"
       "in vec4 v_vtxcolor;                                                                     \n"
       "out vec4 fragColor; \n "
@@ -1127,8 +1121,6 @@ const GLchar Yglprg_vdp1_halftrans_f[] =
       "#endif\n"
       "uniform highp sampler2D u_sprite;                                                           \n"
       "uniform highp sampler2D u_fbo;                                                               \n"
-      "uniform int u_fbowidth;                                                                      \n"
-      "uniform int u_fbohegiht;                                                                     \n"
       "in vec4 v_texcoord;                                                                     \n"
       "out vec4 fragColor; \n "
       "void main() {                                                                                \n"
@@ -1187,8 +1179,6 @@ SHADER_VERSION
 "#endif\n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
-"uniform int u_fbowidth;                                                                      \n"
-"uniform int u_fbohegiht;                                                                     \n"
 "in vec4 v_texcoord;                                                                     \n"
 "in vec4 v_vtxcolor;                                                                     \n"
 "out highp vec4 fragColor; \n "
@@ -1225,8 +1215,6 @@ SHADER_VERSION
 "#endif\n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
-"uniform int u_fbowidth;                                                                      \n"
-"uniform int u_fbohegiht;                                                                     \n"
 "in vec4 v_texcoord;                                                                     \n"
 "in vec4 v_vtxcolor;                                                                     \n"
 "out highp vec4 fragColor; \n "
@@ -1326,8 +1314,6 @@ SHADER_VERSION
 "#endif\n"
 "uniform sampler2D u_sprite;\n"
 "uniform highp sampler2D u_fbo;\n"
-"uniform int u_fbowidth;\n"
-"uniform int u_fbohegiht;\n"
 "in vec4 v_texcoord;\n"
 "out vec4 fragColor; \n "
 "void main() { \n"
@@ -2168,8 +2154,6 @@ int YglProgramInit()
 
    shadow.sprite = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_sprite");
    shadow.fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbo");
-   shadow.fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbowidth");
-   shadow.fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW], (const GLchar *)"u_fbohegiht");
 
 
    //-----------------------------------------------------------------------------------------------------------
@@ -2326,8 +2310,6 @@ int YglTesserationProgramInit()
     shadow_tess.tessLevelInner = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelInner");
     shadow_tess.tessLevelOuter = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelOuter");
     shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbo");
-    shadow_tess.fbowidth = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbowidth");
-    shadow_tess.fboheight = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbohegiht");
 
     //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VFP1_HALFTRANS_TESS");

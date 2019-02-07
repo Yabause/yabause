@@ -359,8 +359,6 @@ typedef struct {
     GLint  tessLevelInner;
     GLint  tessLevelOuter;
     GLint  fbo;
-    GLint  fbowidth;
-    GLint  fboheight;
     GLint  texsize;
     GLuint mtxModelView;
     GLuint mtxTexture;

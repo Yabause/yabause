@@ -898,10 +898,10 @@ int YglGenFrameBuffer() {
    glGenFramebuffers(1, &_Ygl->vdp1AccessFB);
   }
 
-    if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
-    glGenRenderbuffers(1, &_Ygl->rboid_depth);
-    glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
+  if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
+  glGenRenderbuffers(1, &_Ygl->rboid_depth);
+  glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
 
   if (_Ygl->vdp1fbo != 0)
     glDeleteFramebuffers(1, &_Ygl->vdp1fbo);
@@ -2678,11 +2678,51 @@ void YglFrameChangeVDP1(){
   FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 //////////////////////////////////////////////////////////////////////////////
+static void renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, Vdp2 *varVdp2Regs) {
+    if( level->prg[j].prgid != *cprg ) {
+      *cprg = level->prg[j].prgid;
+      if (*cprg == 0) return; //prgid 0 has no meaning
+printf("USe prg %d\n", *cprg);
+      glUseProgram(level->prg[j].prg);
+    }
+  
+    if(level->prg[j].setupUniform) {
+      level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe], varVdp2Regs);
+    }
+    if( level->prg[j].currentQuad != 0 ) {
+      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
+      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
+      glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float), level->prg[j].quads, GL_STREAM_DRAW);
+      glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0);
+      glEnableVertexAttribArray(level->prg[j].vertexp);
+      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textcoords_buf);
+      glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].textcoords, GL_STREAM_DRAW);
+      glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,0);
+      glEnableVertexAttribArray(level->prg[j].texcoordp);
+      if( level->prg[j].vaid != 0 ) {
+        glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
+        glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
+        glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, 0);
+        glEnableVertexAttribArray(level->prg[j].vaid);
+      }
+      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
+        if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
+        glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
+      }else{
+        glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
+      }
+    }
+    if( level->prg[j].cleanupUniform ){
+      level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
+    }
+}
+
 void YglRenderVDP1(void) {
   YglLevel * level;
   GLuint cprg=0;
   int i,j;
   int status;
+  int hasShadow = 0;
   Vdp2 *varVdp2Regs = &Vdp2Lines[Vdp1External.plot_trigger_line];
   GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
   //YabThreadLock(_Ygl->mutex);
@@ -2719,7 +2759,15 @@ void YglRenderVDP1(void) {
     }
   cprg = -1;
 
+  for( j=0;j<(level->prgcurrent+1); j++ ) {
+    if ((level->prg[j].prgid == PG_VFP1_SHADOW) || (level->prg[j].prgid == PG_VFP1_SHADOW_TESS)) {
+      hasShadow = 1;
+      break;
+    }
+  }
+
   YglGenFrameBuffer();
+
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
   glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
 
@@ -2733,45 +2781,14 @@ void YglRenderVDP1(void) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[_Ygl->drawframe]->textureID);
 
+
   for( j=0;j<(level->prgcurrent+1); j++ ) {
-    if( level->prg[j].prgid != cprg ) {
-      cprg = level->prg[j].prgid;
-      if (cprg == 0) continue; //prgid 0 has no meaning
-      glUseProgram(level->prg[j].prg);
-    }
-  
-    if(level->prg[j].setupUniform) {
-      level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe], varVdp2Regs);
-    }
-    if( level->prg[j].currentQuad != 0 ) {
-      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
-      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
-      glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float), level->prg[j].quads, GL_STREAM_DRAW);
-      glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0);
-      glEnableVertexAttribArray(level->prg[j].vertexp);
-      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textcoords_buf);
-      glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].textcoords, GL_STREAM_DRAW);
-      glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,0);
-      glEnableVertexAttribArray(level->prg[j].texcoordp);
-      if( level->prg[j].vaid != 0 ) {
-        glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
-        glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
-        glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, 0);
-        glEnableVertexAttribArray(level->prg[j].vaid);
-      }
-      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
-        if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
-        glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
-      }else{
-        glDrawArrays(GL_TRIANGLES, 0, level->prg[j].currentQuad / 2);
-      }
-      level->prg[j].currentQuad = 0;
-    }
-    if( level->prg[j].cleanupUniform ){
-      level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
-    }
+      renderVDP1Level(level, j, &cprg, mat, varVdp2Regs);
   }
-  
+  for( j=0;j<(level->prgcurrent+1); j++ ) {
+    level->prg[j].currentQuad = 0;
+  }
+      
   level->prgcurrent = 0;
 
   //YabThreadUnLock(_Ygl->mutex);
