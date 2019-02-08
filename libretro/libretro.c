@@ -736,15 +736,20 @@ static bool retro_init_hw_context(void)
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
 #else
-   params.major = 4;
-   params.minor = 2;
-   params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+   if (polygon_mode == GPU_TESSERATION)
+   {
+      params.major = 4;
+      params.minor = 2;
+   }
+   else
    {
       params.major = 3;
       params.minor = 3;
-      if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-         return false;
+   }
+   params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
+   if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+   {
+      return false;
    }
 #endif
    return true;
