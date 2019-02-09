@@ -1437,14 +1437,10 @@ int Ygl_cleanupEndUserClip(void * p, YglTextureManager *tm ){return 0;}
  * ----------------------------------------------------------------------------------*/
 static int idvdp1FrameBuffer;
 static int idcram;
-static int idfrom;
-static int idto;
 
 typedef struct  {
   int idvdp1FrameBuffer;
   int idcram;
-  int idfrom;
-  int idto;
   int idline;
 } DrawFrameBufferUniform;
 
@@ -1497,8 +1493,6 @@ SHADER_VERSION
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_color; \n"
 "uniform sampler2D s_line; \n"
-"uniform float u_from;\n"
-"uniform float u_to;\n"
 "in vec2 v_texcoord;\n"
 "out vec4 fragColor1;\n"
 "out vec4 fragColor2;\n"
@@ -1713,8 +1707,6 @@ void Ygl_initDrawFrameBuffershader(int id) {
   glUniformBlockBinding(_prgid[id], scene_block_index, FRAME_BUFFER_UNIFORM_ID);
   g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBuffer");
   g_draw_framebuffer_uniforms[arrayid].idcram = glGetUniformLocation(_prgid[id], (const GLchar *)"s_color");
-  g_draw_framebuffer_uniforms[arrayid].idfrom = glGetUniformLocation(_prgid[id], (const GLchar *)"u_from");
-  g_draw_framebuffer_uniforms[arrayid].idto = glGetUniformLocation(_prgid[id], (const GLchar *)"u_to");
   g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
 }
 
@@ -1776,9 +1768,6 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offs
     glBindFragDataLocation(_prgid[pgid], 6, "fragColor7");
 
   glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
-  glUniform1f(g_draw_framebuffer_uniforms[arrayid].idfrom, from);
-  glUniform1f(g_draw_framebuffer_uniforms[arrayid].idto, to);
-
   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idcram, 1);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
