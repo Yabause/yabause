@@ -102,7 +102,7 @@ int ShaderDrawTest()
   GLfloat tex[] = { 0.0f, 0.0f, 2048.0f, 0.0f, 2048.0f, 1024.0f, 0.0f, 0.0f, 2048.0f, 1024.0f, 0.0f, 1024.0f };
 
   //   GLfloat tex[]={ 0.0f,0.0f,1.0f,0.0f,1.0f,1.0f,
-  //                   0.0f,0.0f,1.0f,1.0f,0.0f,1.0f };
+  //        0.0f,0.0f,1.0f,1.0f,0.0f,1.0f };
 
   YglMatrix mtx;
   YglMatrix mtxt;
@@ -139,6 +139,7 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->tessLevelInner = glGetUniformLocation(pgid, (const GLchar *)"TessLevelInner");
   param->tessLevelOuter = glGetUniformLocation(pgid, (const GLchar *)"TessLevelOuter");
   param->fbo = glGetUniformLocation(pgid, (const GLchar *)"u_fbo");
+  param->fbo_attr = glGetUniformLocation(pgid, (const GLchar *)"u_fbo_attr");
   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
   param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
@@ -180,8 +181,11 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
 
   if (param->fbo != -1){
     glUniform1i(param->fbo, 1);
+    glUniform1i(param->fbo_attr, 2);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
 #if !defined(_OGLES3_)
     if (glTextureBarrierNV) glTextureBarrierNV();
 #else
@@ -215,8 +219,8 @@ const GLchar Yglprg_normal_v[] =
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
       "out  highp vec4 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord; \n"
       "} ";
@@ -225,24 +229,24 @@ const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 const GLchar Yglprg_normal_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in highp vec4 v_texcoord;                            \n"
+"in highp vec4 v_texcoord; \n"
 "uniform vec4 u_color_offset;    \n"
-"uniform sampler2D s_texture;                        \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"uniform sampler2D s_texture;  \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr; \n"
-"  addr.x = int(v_texcoord.x);                        \n"
-"  addr.y = int(v_texcoord.y);                        \n"
+"  addr.x = int(v_texcoord.x);  \n"
+"  addr.y = int(v_texcoord.y);  \n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  int additional = int(txcol.a * 255.0);\n"
-"  if((additional & 0x80)!=0)\n                                 "
-"     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n                         "
-"  else \n                                            "
-"     discard;\n                                      "
-"}                                                   \n";
+"  if((additional & 0x80)!=0)\n      "
+"     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n   "
+"  else \n      "
+"     discard;\n"
+"}  \n";
 const GLchar * pYglprg_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_color_offset = -1;
@@ -727,29 +731,29 @@ int Ygl_cleanupNormal_blur(void * p, YglTextureManager *tm)
 const GLchar Yglprg_DestinationAlpha_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                                  \n"
+"precision highp float;       \n"
 "#endif\n"
-"in highp vec4 v_texcoord;                               \n"
-"uniform vec4 u_color_offset;                            \n"
-"uniform sampler2D s_texture;                            \n"
-"uniform sampler2D s_depth;                              \n"
-"uniform sampler2D s_dest;                               \n"
-"out vec4 fragColor;                                     \n"
-"void main()                                             \n"
-"{                                                       \n"
-"  ivec2 addr;                                           \n"
-"  addr.x = int(v_texcoord.x);                           \n"
-"  addr.y = int(v_texcoord.y);                           \n"
+"in highp vec4 v_texcoord;    \n"
+"uniform vec4 u_color_offset; \n"
+"uniform sampler2D s_texture; \n"
+"uniform sampler2D s_depth;   \n"
+"uniform sampler2D s_dest;    \n"
+"out vec4 fragColor;          \n"
+"void main()       \n"
+"{      \n"
+"  ivec2 addr;     \n"
+"  addr.x = int(v_texcoord.x);\n"
+"  addr.y = int(v_texcoord.y);\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
-"  ivec2 screenpos = gl_FragCoord.xy;                    \n"
+"  ivec2 screenpos = gl_FragCoord.xy;         \n"
 "  float depth = texelFetch( s_depth, screenpos,0 ).x;   \n"
-"  if(txcol.a > 0.0 ){                                   \n"
+"  if(txcol.a > 0.0 ){        \n"
 "     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0)); \n"
-"     if( depth == gl_FragCoord.z )                                \n"
+"     if( depth == gl_FragCoord.z )     \n"
 "         fragColor.a = texelFetch( s_dest, screenpos,0 ).x        \n"
-"  }else \n                                            "
-"     discard;\n                                      "
-"}                                                   \n";
+"  }else \n      "
+"     discard;\n"
+"}  \n";
 
 /*------------------------------------------------------------------------------------
  *  Window Operation
@@ -757,9 +761,9 @@ SHADER_VERSION
 const GLchar Yglprg_window_v[] =
       SHADER_VERSION
       "uniform mat4 u_mvpMatrix;    \n"
-      "layout (location = 0) in vec4 a_position;               \n"
-      "void main()                  \n"
-      "{                            \n"
+      "layout (location = 0) in vec4 a_position;    \n"
+      "void main()       \n"
+      "{ \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "} ";
 const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
@@ -767,13 +771,13 @@ const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 const GLchar Yglprg_window_f[] =
       SHADER_VERSION
       "#ifdef GL_ES\n"
-      "precision highp float;                            \n"
+      "precision highp float; \n"
       "#endif\n"
-      "out vec4 fragColor;            \n"
-      "void main()                                         \n"
-      "{                                                   \n"
+      "out vec4 fragColor; \n"
+      "void main()   \n"
+      "{  \n"
       "  fragColor = vec4( 0.0, 0.0, 0.0, 0.0 );\n"
-      "}                                                   \n";
+      "}  \n";
 const GLchar * pYglprg_window_f[] = {Yglprg_window_f, NULL};
 
 int Ygl_uniformWindow(void * p )
@@ -804,8 +808,8 @@ const GLchar Yglprg_vdp1_normal_v[] =
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
       "out   vec4 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord; \n"
       "   v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
@@ -816,20 +820,20 @@ const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 const GLchar Yglprg_vpd1_normal_f[] =
       SHADER_VERSION
       "#ifdef GL_ES\n"
-      "precision highp float;                            \n"
+      "precision highp float; \n"
       "#endif\n"
-      "in vec4 v_texcoord;                            \n"
-      "uniform sampler2D s_texture;                        \n"
-      "out vec4 fragColor;            \n"
-      "void main()                                         \n"
-      "{                                                   \n"
-      "  vec2 addr = v_texcoord.st;                        \n"
-      "  addr.s = addr.s / (v_texcoord.q);                 \n"
-      "  addr.t = addr.t / (v_texcoord.q);                 \n"
+      "in vec4 v_texcoord; \n"
+      "uniform sampler2D s_texture;  \n"
+      "out vec4 fragColor; \n"
+      "void main()   \n"
+      "{  \n"
+      "  vec2 addr = v_texcoord.st;  \n"
+      "  addr.s = addr.s / (v_texcoord.q);      \n"
+      "  addr.t = addr.t / (v_texcoord.q);      \n"
       "  vec4 FragColor = texture( s_texture, addr );      \n"
-      "  /*if( FragColor.a == 0.0 ) discard;*/                \n"
+      "  /*if( FragColor.a == 0.0 ) discard;*/     \n"
       "  fragColor = FragColor;\n "
-      "}                                                   \n";
+      "}  \n";
 const GLchar * pYglprg_vdp1_normal_f[] = {Yglprg_vpd1_normal_f, NULL};
 static int id_vdp1_normal_s_texture_size = -1;
 static int id_vdp1_normal_s_texture = -1;
@@ -864,7 +868,7 @@ SHADER_VERSION_TESS
 "out vec3 v_position;  \n"
 "out vec4 v_texcoord; \n"
 "out vec4 v_vtxcolor; \n"
-"void main() {                \n"
+"void main() {     \n"
 "   v_position  = a_position; \n"
 "   v_vtxcolor  = a_grcolor;  \n"
 "   v_texcoord  = a_texcoord; \n"
@@ -968,15 +972,15 @@ static YglVdp1CommonParam id_gt = { 0 };
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_v[] =
 SHADER_VERSION
-"uniform mat4 u_mvpMatrix;                \n"
+"uniform mat4 u_mvpMatrix;     \n"
 "uniform vec2 u_texsize;    \n"
-"layout (location = 0) in vec4 a_position;               \n"
-"layout (location = 1) in vec4 a_texcoord;               \n"
-"layout (location = 2) in vec4 a_grcolor;                \n"
-"out  vec4 v_texcoord;               \n"
-"out  vec4 v_vtxcolor;               \n"
-"void main() {                            \n"
-"   v_vtxcolor  = a_grcolor;              \n"
+"layout (location = 0) in vec4 a_position;    \n"
+"layout (location = 1) in vec4 a_texcoord;    \n"
+"layout (location = 2) in vec4 a_grcolor;     \n"
+"out  vec4 v_texcoord;    \n"
+"out  vec4 v_vtxcolor;    \n"
+"void main() { \n"
+"   v_vtxcolor  = a_grcolor;   \n"
 "   v_texcoord  = a_texcoord; \n"
 "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
 "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
@@ -987,43 +991,49 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                                                 \n"
+"precision highp float;\n"
 "#endif\n"
-"uniform sampler2D u_sprite;                                              \n"
-"in vec4 v_texcoord;                                                 \n"
-"in vec4 v_vtxcolor;                                                 \n"
-"out vec4 fragColor;            \n"
-"void main() {                                                            \n"
+"uniform sampler2D u_sprite;\n"
+"uniform highp sampler2D u_fbo;\n"
+"uniform highp sampler2D u_fbo_attr;\n"
+"in vec4 v_texcoord;\n"
+"in vec4 v_vtxcolor;\n"
+"out vec4 fragColor; \n"
+"out vec4 fragColorAttr; \n"
+"void main() {\n"
 "  int mode;\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
-"  if( spriteColor.a == 0.0 ) discard;                                      \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+"  if( spriteColor.a == 0.0 ) discard;\n"
 "  mode = int(spriteColor.b*255.0)&0x7; \n"
 "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
 "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-"  fragColor.a = spriteColor.a;                                        \n"
+"  fragColor.a = spriteColor.a;  \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                                                 \n"
+"precision highp float;\n"
 "#endif\n"
-"uniform sampler2D u_sprite;                                              \n"
-"in vec4 v_texcoord;                                                 \n"
-"in vec4 v_vtxcolor;                                                 \n"
-"out vec4 fragColor;            \n"
-"void main() {                                                            \n"
+"uniform sampler2D u_sprite;\n"
+"uniform highp sampler2D u_fbo;\n"
+"uniform highp sampler2D u_fbo_attr;\n"
+"in vec4 v_texcoord;\n"
+"in vec4 v_vtxcolor;\n"
+"out vec4 fragColor; \n"
+"out vec4 fragColorAttr; \n"
+"void main() {\n"
 "  int mode;\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  mode = int(spriteColor.b*255.0)&0x7; \n"
 "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
 "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-"  fragColor.a = spriteColor.a;                                        \n"
+"  fragColor.a = spriteColor.a;  \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshading_spd_f, NULL };
 
@@ -1036,15 +1046,15 @@ static YglVdp1CommonParam id_spd_g = { 0 };
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
       SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;                \n"
+      "uniform mat4 u_mvpMatrix;     \n"
       "uniform vec2 u_texsize;    \n"
-      "layout (location = 0) in vec4 a_position;               \n"
-      "layout (location = 1) in vec4 a_texcoord;               \n"
-      "layout (location = 2) in vec4 a_grcolor;                \n"
-      "out  vec4 v_texcoord;               \n"
-      "out  vec4 v_vtxcolor;               \n"
-      "void main() {                            \n"
-      "   v_vtxcolor  = a_grcolor;              \n"
+      "layout (location = 0) in vec4 a_position;    \n"
+      "layout (location = 1) in vec4 a_texcoord;    \n"
+      "layout (location = 2) in vec4 a_grcolor;     \n"
+      "out  vec4 v_texcoord;    \n"
+      "out  vec4 v_vtxcolor;    \n"
+      "void main() { \n"
+      "   v_vtxcolor  = a_grcolor;   \n"
       "   v_texcoord  = a_texcoord; \n"
       "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
       "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
@@ -1055,34 +1065,30 @@ const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
       SHADER_VERSION
       "#ifdef GL_ES\n"
-      "precision highp float;                                                                     \n"
+      "precision highp float;         \n"
       "#endif\n"
-      "uniform highp sampler2D u_sprite;                                                                  \n"
-      "uniform highp sampler2D u_fbo;                                                                     \n"
-      "in vec4 v_texcoord;                                                                     \n"
-      "in vec4 v_vtxcolor;                                                                     \n"
+      "uniform highp sampler2D u_sprite;      \n"
+      "uniform highp sampler2D u_fbo;         \n"
+      "in vec4 v_texcoord;         \n"
+      "in vec4 v_vtxcolor;         \n"
       "out vec4 fragColor; \n "
-      "void main() {                                                                                \n"
-<<<<<<< HEAD
-      "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-=======
+      "void main() {    \n"
       "  int mode;\n"
-      "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
->>>>>>> ae4db824... Fix gouraud shading operation on vdp1
-      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
-      "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
-      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
+      "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+      "  if( spriteColor.a == 0.0 ) discard;         \n"
+      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
       "  int additional = int(fboColor.a * 255.0);\n"
       "  mode = int(spriteColor.b*255.0)&0x7; \n"
       "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
       "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
       "  if( (additional & 0x40) == 0 ) \n"
       "  { \n"
-      "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
-      "    fragColor.a = spriteColor.a;                                                             \n"
-      "  }else{                                                                                     \n"
-      "    fragColor = spriteColor;                                                              \n"
-      "  }                                                                                          \n"
+      "    fragColor = spriteColor*0.5 + fboColor*0.5;     \n"
+      "    fragColor.a = spriteColor.a; \n"
+      "  }else{         \n"
+      "    fragColor = spriteColor;  \n"
+      "  }   \n"
       "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
       "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_f[] = {Yglprg_vdp1_gouraudshading_hf_f, NULL};
@@ -1097,15 +1103,15 @@ static YglVdp1CommonParam id_ght_tess = { 0 };
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_halftrans_v[] =
         SHADER_VERSION
-        "uniform mat4 u_mvpMatrix;                \n"
+        "uniform mat4 u_mvpMatrix;     \n"
         "uniform vec2 u_texsize;    \n"
-        "layout (location = 0) in vec4 a_position;               \n"
-        "layout (location = 1) in vec4 a_texcoord;               \n"
-        "layout (location = 2) in vec4 a_grcolor;                \n"
-        "out  vec4 v_texcoord;               \n"
-        "out  vec4 v_vtxcolor;               \n"
-        "void main() {                            \n"
-        "   v_vtxcolor  = a_grcolor;              \n"
+        "layout (location = 0) in vec4 a_position;    \n"
+        "layout (location = 1) in vec4 a_texcoord;    \n"
+        "layout (location = 2) in vec4 a_grcolor;     \n"
+        "out  vec4 v_texcoord;    \n"
+        "out  vec4 v_vtxcolor;    \n"
+        "void main() { \n"
+        "   v_vtxcolor  = a_grcolor;   \n"
         "   v_texcoord  = a_texcoord; \n"
         "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
         "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
@@ -1117,32 +1123,28 @@ const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
 const GLchar Yglprg_vdp1_halftrans_f[] =
       SHADER_VERSION
       "#ifdef GL_ES\n"
-      "precision highp float;                                                                     \n"
+      "precision highp float;         \n"
       "#endif\n"
-      "uniform highp sampler2D u_sprite;                                                           \n"
-      "uniform highp sampler2D u_fbo;                                                               \n"
-      "in vec4 v_texcoord;                                                                     \n"
+      "uniform highp sampler2D u_sprite;          \n"
+      "uniform highp sampler2D u_fbo;   \n"
+      "in vec4 v_texcoord;         \n"
       "out vec4 fragColor; \n "
-      "void main() {                                                                                \n"
-<<<<<<< HEAD
-      "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-=======
+      "void main() {    \n"
       "  int mode; \n"
-      "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
->>>>>>> ae4db824... Fix gouraud shading operation on vdp1
-      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
-      "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+      "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+      "  if( spriteColor.a == 0.0 ) discard;         \n"
       "  mode = int(spriteColor.b*255.0)&0x7; \n"
       "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
+      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
       "  int additional = int(fboColor.a * 255.0);\n"
       "  if( (additional & 0x40) == 0 ) \n"
-      "  {                                                                                          \n"
-      "    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
-      "    fragColor.a = fboColor.a;                                                             \n"
-      "  }else{                                                                                     \n"
-      "    fragColor = spriteColor;                                                              \n"
-      "  }                                                                                          \n"
+      "  {   \n"
+      "    fragColor = spriteColor*0.5 + fboColor*0.5;     \n"
+      "    fragColor.a = fboColor.a; \n"
+      "  }else{         \n"
+      "    fragColor = spriteColor;  \n"
+      "  }   \n"
       "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
       "}\n";
 const GLchar * pYglprg_vdp1_halftrans_f[] = {Yglprg_vdp1_halftrans_f, NULL};
@@ -1155,15 +1157,15 @@ static YglVdp1CommonParam hf_tess = {0};
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_mesh_v[] =
 SHADER_VERSION
-"uniform mat4 u_mvpMatrix;                \n"
+"uniform mat4 u_mvpMatrix;     \n"
 "uniform vec2 u_texsize;    \n"
-"layout (location = 0) in vec4 a_position;               \n"
-"layout (location = 1) in vec4 a_texcoord;               \n"
-"layout (location = 2) in vec4 a_grcolor;                \n"
-"out  vec4 v_texcoord;               \n"
-"out  vec4 v_vtxcolor;               \n"
-"void main() {                            \n"
-"   v_vtxcolor  = a_grcolor;              \n"
+"layout (location = 0) in vec4 a_position;    \n"
+"layout (location = 1) in vec4 a_texcoord;    \n"
+"layout (location = 2) in vec4 a_grcolor;     \n"
+"out  vec4 v_texcoord;    \n"
+"out  vec4 v_vtxcolor;    \n"
+"void main() { \n"
+"   v_vtxcolor  = a_grcolor;   \n"
 "   v_texcoord  = a_texcoord; \n"
 "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
 "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
@@ -1175,25 +1177,21 @@ const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
 const GLchar Yglprg_vdp1_mesh_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                                                                     \n"
+"precision highp float;         \n"
 "#endif\n"
-"uniform sampler2D u_sprite;                                                                  \n"
-"uniform sampler2D u_fbo;                                                                     \n"
-"in vec4 v_texcoord;                                                                     \n"
-"in vec4 v_vtxcolor;                                                                     \n"
+"uniform sampler2D u_sprite;      \n"
+"uniform sampler2D u_fbo;         \n"
+"in vec4 v_texcoord;         \n"
+"in vec4 v_vtxcolor;         \n"
 "out highp vec4 fragColor; \n "
-"void main() {                                                                                \n"
-<<<<<<< HEAD
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-=======
+"void main() {    \n"
 "  int mode;\n"
-"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
->>>>>>> ae4db824... Fix gouraud shading operation on vdp1
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
+"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  mode = int(spriteColor.b*255.0)&0x7; \n"
 "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
-"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+"  if( spriteColor.a == 0.0 ) discard;         \n"
 "  if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n"
 "    if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n"
 "       discard;"
@@ -1205,35 +1203,35 @@ SHADER_VERSION
 "  } \n"
 "  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
 "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-"  fragColor.a = spriteColor.a;                                        \n"
+"  fragColor.a = spriteColor.a;  \n"
 "}\n";
 #else
 const GLchar Yglprg_vdp1_mesh_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                                                                     \n"
+"precision highp float;         \n"
 "#endif\n"
-"uniform sampler2D u_sprite;                                                                  \n"
-"uniform sampler2D u_fbo;                                                                     \n"
-"in vec4 v_texcoord;                                                                     \n"
-"in vec4 v_vtxcolor;                                                                     \n"
+"uniform sampler2D u_sprite;      \n"
+"uniform sampler2D u_fbo;         \n"
+"in vec4 v_texcoord;         \n"
+"in vec4 v_vtxcolor;         \n"
 "out highp vec4 fragColor; \n "
-"void main() {                                                                                \n"
+"void main() {    \n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
-"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
- "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
-"  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);                           \n"
-"  if( fboColor.a > 0.0  )                                                               \n"
-"  {                                                                                          \n"
-"    fragColor = spriteColor*0.5 + fboColor*0.5;                                           \n"
-"    fragColor.a = fboColor.a ;                         \n"
-"  }else{                                               \n"
-"    fragColor = spriteColor;                           \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+"  if( spriteColor.a == 0.0 ) discard;         \n"
+ "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+"  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
+"  if( fboColor.a > 0.0  )   \n"
+"  {   \n"
+"    fragColor = spriteColor*0.5 + fboColor*0.5;     \n"
+"    fragColor.a = fboColor.a ;   \n"
+"  }else{ \n"
+"    fragColor = spriteColor;\n"
 "    int additional = int(spriteColor.a * 255.0);       \n"
 "    highp float alpha = float((additional/8)*8)/255.0; \n"
-"    fragColor.a = spriteColor.a-alpha + 0.5;           \n"
-"  }                                                                                          \n"
+"    fragColor.a = spriteColor.a-alpha + 0.5;\n"
+"  }   \n"
 "}\n";
 #endif
 const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
@@ -1253,8 +1251,8 @@ const GLchar Yglprg_vdp1_half_luminance_v[] =
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
       "out   vec4 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord; \n"
       "   v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
@@ -1265,21 +1263,21 @@ const GLchar * pYglprg_vdp1_half_luminance_v[] = {Yglprg_vdp1_half_luminance_v, 
 const GLchar Yglprg_vpd1_half_luminance_f[] =
       SHADER_VERSION
       "#ifdef GL_ES\n"
-      "precision highp float;                            \n"
+      "precision highp float; \n"
       "#endif\n"
-      "in vec4 v_texcoord;                            \n"
-      "uniform sampler2D s_texture;                        \n"
-      "out vec4 fragColor;            \n"
-      "void main()                                         \n"
-      "{                                                   \n"
+      "in vec4 v_texcoord; \n"
+      "uniform sampler2D s_texture;  \n"
+      "out vec4 fragColor; \n"
+      "void main()   \n"
+      "{  \n"
       "  ivec2 addr = ivec2(vec2(textureSize(s_texture, 0)) * v_texcoord.st / v_texcoord.q); \n"
-      "  vec4 spriteColor = texelFetch(s_texture,addr,0);                           \n"
-      "  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+      "  vec4 spriteColor = texelFetch(s_texture,addr,0);\n"
+      "  if( spriteColor.a == 0.0 ) discard;         \n"
       "  fragColor.r = spriteColor.r * 0.5;\n "
       "  fragColor.g = spriteColor.g * 0.5;\n "
       "  fragColor.b = spriteColor.b * 0.5;\n "
       "  fragColor.a = spriteColor.a;\n "
-      "}                                                   \n";
+      "}  \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
 static YglVdp1CommonParam half_luminance = { 0 };
 
@@ -1290,15 +1288,15 @@ static YglVdp1CommonParam half_luminance = { 0 };
 * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_vdp1_shadow_v[] =
 SHADER_VERSION
-"uniform mat4 u_mvpMatrix;                \n"
+"uniform mat4 u_mvpMatrix;     \n"
 "uniform vec2 u_texsize;    \n"
-"layout (location = 0) in vec4 a_position;               \n"
-"layout (location = 1) in vec4 a_texcoord;               \n"
-"layout (location = 2) in vec4 a_grcolor;                \n"
-"out  vec4 v_texcoord;               \n"
-"out  vec4 v_vtxcolor;               \n"
-"void main() {                            \n"
-"   v_vtxcolor  = a_grcolor;              \n"
+"layout (location = 0) in vec4 a_position;    \n"
+"layout (location = 1) in vec4 a_texcoord;    \n"
+"layout (location = 2) in vec4 a_grcolor;     \n"
+"out  vec4 v_texcoord;    \n"
+"out  vec4 v_vtxcolor;    \n"
+"void main() { \n"
+"   v_vtxcolor  = a_grcolor;   \n"
 "   v_texcoord  = a_texcoord; \n"
 "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
 "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
@@ -1317,17 +1315,13 @@ SHADER_VERSION
 "in vec4 v_texcoord;\n"
 "out vec4 fragColor; \n "
 "void main() { \n"
-<<<<<<< HEAD
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-=======
 "  int mode;\n"
-"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
->>>>>>> ae4db824... Fix gouraud shading operation on vdp1
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);                           \n"
-"  if( spriteColor.a == 0.0 ) discard;                                                          \n"
+"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+"  if( spriteColor.a == 0.0 ) discard;         \n"
 "  mode = int(spriteColor.b*255.0)&0x7; \n"
 "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);                                                 \n"
+"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
 "  int additional = int(fboColor.a * 255.0);\n"
 "  if( ((additional & 0xC0)==0x80) ) { \n"
 "    fragColor = vec4(fboColor.r*0.5,fboColor.g*0.5,fboColor.b*0.5,fboColor.a);\n"
@@ -1450,12 +1444,12 @@ DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
 const GLchar Yglprg_vdp1_drawfb_v[] =
       SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;                \n"
-      "layout (location = 0) in vec4 a_position;               \n"
-      "layout (location = 1) in vec2 a_texcoord;               \n"
-      "out vec2 v_texcoord;                 \n"
-      "void main() {                            \n"
-      "   v_texcoord  = a_texcoord;             \n"
+      "uniform mat4 u_mvpMatrix;     \n"
+      "layout (location = 0) in vec4 a_position;    \n"
+      "layout (location = 1) in vec2 a_texcoord;    \n"
+      "out vec2 v_texcoord;      \n"
+      "void main() { \n"
+      "   v_texcoord  = a_texcoord;  \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "}\n";
 const GLchar * pYglprg_vdp2_drawfb_v[] = {Yglprg_vdp1_drawfb_v, NULL};
@@ -2299,6 +2293,7 @@ int YglTesserationProgramInit()
     shadow_tess.tessLevelInner = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelInner");
     shadow_tess.tessLevelOuter = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"TessLevelOuter");
     shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbo");
+    shadow_tess.fbo_attr = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbo_attr");
 
     //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VFP1_HALFTRANS_TESS");
@@ -2341,9 +2336,9 @@ int YglProgramChange( YglLevel * level, int prgid )
        level->prg[level->prgcurrent].maxQuad = 14692;
       maxsize = level->prg[level->prgcurrent].maxQuad;
       if( YglGetVertexBuffer(maxsize,
-                             (void**)&level->prg[level->prgcurrent].quads,
-                             (void**)&level->prg[level->prgcurrent].textcoords,
-                             (void**)&level->prg[level->prgcurrent].vertexAttribute  ) != 0 ) {
+  (void**)&level->prg[level->prgcurrent].quads,
+  (void**)&level->prg[level->prgcurrent].textcoords,
+  (void**)&level->prg[level->prgcurrent].vertexAttribute  ) != 0 ) {
           return -1;
       }
       if( level->prg[level->prgcurrent].quads == 0 )
@@ -2711,9 +2706,9 @@ static const char fclear_img[] =
   "uniform float u_emu_height; \n"
   "uniform float u_vheight; \n"
   "uniform sampler2D u_Clear;     \n"
-  "out vec4 fragColor;            \n"
-  "void main()                                         \n"
-  "{                                                   \n"
+  "out vec4 fragColor; \n"
+  "void main()   \n"
+  "{  \n"
 "    ivec2 linepos; \n "
 "    linepos.y = 0; \n "
 "    linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
@@ -2813,8 +2808,8 @@ static const char vdp2priority_v[] =
       "layout (location = 0) in vec2 a_position;   \n"
       "layout (location = 1) in vec2 a_texcoord;   \n"
       "out vec2 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
       " v_texcoord  = a_texcoord; \n"
       "} ";
@@ -2822,28 +2817,28 @@ static const char vdp2priority_v[] =
 static const char vdp2priority_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture0;                        \n"
-"uniform sampler2D s_texture1;                        \n"
-"uniform sampler2D s_texture2;                        \n"
-"uniform sampler2D s_texture3;                        \n"
-"uniform sampler2D s_texture4;                        \n"
-"uniform sampler2D s_texture5;                        \n"
-"uniform sampler2D fb_texture;                        \n"
-"uniform int prio;                        \n"
-"uniform int fbon;                        \n"
-"uniform int screen_nb;                        \n"
-"uniform int mode0;                        \n"
-"uniform int mode1;                        \n"
-"uniform int mode2;                        \n"
-"uniform int mode3;                        \n"
-"uniform int mode4;                        \n"
-"uniform int mode5;                        \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"in vec2 v_texcoord; \n"
+"uniform sampler2D s_texture0;  \n"
+"uniform sampler2D s_texture1;  \n"
+"uniform sampler2D s_texture2;  \n"
+"uniform sampler2D s_texture3;  \n"
+"uniform sampler2D s_texture4;  \n"
+"uniform sampler2D s_texture5;  \n"
+"uniform sampler2D fb_texture;  \n"
+"uniform int prio;  \n"
+"uniform int fbon;  \n"
+"uniform int screen_nb;  \n"
+"uniform int mode0;  \n"
+"uniform int mode1;  \n"
+"uniform int mode2;  \n"
+"uniform int mode3;  \n"
+"uniform int mode4;  \n"
+"uniform int mode5;  \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr = ivec2(textureSize(fb_texture, 0) * v_texcoord.st); \n"
 "  vec4 fbColor; \n"
 "  int priority; \n"
@@ -2917,8 +2912,8 @@ SHADER_VERSION
 "    fragColor.a = float(alpha|mode5)/255.0; \n"
 "    return;\n"
 "  }\n"
-"  discard;                        \n"
-"}                                                   \n";
+"  discard;  \n"
+"}  \n";
 
 
 int YglBlitVdp2Priority(int priority, int* prioscreens, int* modescreens, int nbScreen) {
@@ -3049,8 +3044,8 @@ static const char vdp2prio_v[] =
       "layout (location = 0) in vec2 a_position;   \n"
       "layout (location = 1) in vec2 a_texcoord;   \n"
       "out vec2 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
       " v_texcoord  = a_texcoord; \n"
       "} ";
@@ -3058,24 +3053,24 @@ static const char vdp2prio_v[] =
 static const char vdp2prio_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture0;                        \n"
-"uniform sampler2D s_texture1;                        \n"
-"uniform sampler2D s_texture2;                        \n"
-"uniform sampler2D s_texture3;                        \n"
-"uniform sampler2D s_texture4;                        \n"
-"uniform sampler2D s_texture5;                        \n"
-"uniform sampler2D s_texture6;                        \n"
-"uniform sampler2D s_back;                        \n"
-"out vec4 finalColor;            \n"
-"out vec4 topColor;            \n"
-"out vec4 secondColor;            \n"
-"out vec4 thirdColor;            \n"
-"out vec4 fourthColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"in vec2 v_texcoord; \n"
+"uniform sampler2D s_texture0;  \n"
+"uniform sampler2D s_texture1;  \n"
+"uniform sampler2D s_texture2;  \n"
+"uniform sampler2D s_texture3;  \n"
+"uniform sampler2D s_texture4;  \n"
+"uniform sampler2D s_texture5;  \n"
+"uniform sampler2D s_texture6;  \n"
+"uniform sampler2D s_back;  \n"
+"out vec4 finalColor; \n"
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+"void main()   \n"
+"{  \n"
 "  vec4 colortop = vec4(0.0);  \n"
 "  vec4 colorsecond = vec4(0.0); \n"
 "  vec4 colorthird = vec4(0.0); \n"
@@ -3311,8 +3306,8 @@ static const char opaque_v[] =
       "layout (location = 0) in vec2 a_position;   \n"
       "layout (location = 1) in vec2 a_texcoord;   \n"
       "out vec2 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
       " v_texcoord  = a_texcoord; \n"
       "} ";
@@ -3320,18 +3315,18 @@ static const char opaque_v[] =
 static const char opaque_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture;                        \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"in vec2 v_texcoord; \n"
+"uniform sampler2D s_texture;  \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
 "  fragColor = texelFetch( s_texture, addr,0 );         \n"
-"  if (fragColor.a == 0.0) discard;                        \n"
-"  fragColor.a = 1.0;                        \n"
-"}                                                   \n";
+"  if (fragColor.a == 0.0) discard;  \n"
+"  fragColor.a = 1.0;  \n"
+"}  \n";
 
 int YglBlitOpaque(int texture) {
   const GLchar * fblit_opaque_v[] = { opaque_v, NULL };
@@ -3437,8 +3432,8 @@ static const char winprio_v[] =
       "layout (location = 0) in vec2 a_position;   \n"
       "layout (location = 1) in vec2 a_texcoord;   \n"
       "out vec2 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
       " v_texcoord  = a_texcoord; \n"
       "} ";
@@ -3446,18 +3441,18 @@ static const char winprio_v[] =
 static const char winprio_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture;                        \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"in vec2 v_texcoord; \n"
+"uniform sampler2D s_texture;  \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
 "  fragColor = texelFetch( s_texture, addr,0 );         \n"
-"  if (fragColor.a == 0.0) discard;                        \n"
-//"  fragColor.a = 1.0;                        \n"
-"}                                                   \n";
+"  if (fragColor.a == 0.0) discard;  \n"
+//"  fragColor.a = 1.0;  \n"
+"}  \n";
 
 int YglBlitSimple(int texture, int blend) {
   const GLchar * fblit_winprio_v[] = { winprio_v, NULL };
@@ -3570,8 +3565,8 @@ static const char vdp1_v[] =
       "layout (location = 0) in vec2 a_position;   \n"
       "layout (location = 1) in vec2 a_texcoord;   \n"
       "out  highp vec2 v_texcoord;     \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
       "   v_texcoord  = a_texcoord; \n"
       "} ";
@@ -3579,13 +3574,13 @@ static const char vdp1_v[] =
 static const char vdp1_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in highp vec2 v_texcoord;                            \n"
-"uniform sampler2D s_texture;                        \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"in highp vec2 v_texcoord; \n"
+"uniform sampler2D s_texture;  \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr; \n"
 "  addr.x = int( v_texcoord.x);          \n"
 "  addr.y = int(v_texcoord.y);          \n"
@@ -3595,7 +3590,7 @@ SHADER_VERSION
 "  fragColor.g = tex.b;         \n"
 "  fragColor.b = tex.g;         \n"
 "  fragColor.a = tex.r;         \n"
-"}                                                   \n";
+"}  \n";
 
 int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
   const GLchar * fblit_vdp1_v[] = { vdp1_v, NULL };
@@ -3742,12 +3737,12 @@ static const char fblit_head[] =
   "uniform float decim; \n"
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
-  "out vec4 fragColor;            \n";
+  "out vec4 fragColor; \n";
 
 static const char fblit_img[] =
-  "void main()                                         \n"
+  "void main()   \n"
   "{   \n" 
-"	fragColor = Filter( u_Src, vTexCoord );                                               \n";
+"	fragColor = Filter( u_Src, vTexCoord ); \n";
 
 static const char fblit_img_end[] =
   "} \n";
@@ -3978,21 +3973,21 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
 const GLchar vclearb_img[] =
       SHADER_VERSION
       "layout (location = 0) in vec4 a_position;   \n"
-      "void main()                  \n"
-      "{                            \n"
+      "void main()       \n"
+      "{ \n"
       "   gl_Position = a_position; \n"
       "} ";
 
 const GLchar fclearb_img[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
-"  fragColor = vec4(0.0,0.0,0.0,1.0);\n                         "
-"}                                                   \n";
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
+"  fragColor = vec4(0.0,0.0,0.0,1.0);\n   "
+"}  \n";
 
 int YglClear() {
   float const vertexPosition[] = {
@@ -4075,8 +4070,8 @@ SHADER_VERSION
 "layout (location = 0) in vec4 a_position;   \n"
 "layout (location = 1) in vec2 a_texcoord;   \n"
 "out  highp vec2 v_texcoord;     \n"
-"void main()                  \n"
-"{                            \n"
+"void main()       \n"
+"{ \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "   v_texcoord  = a_texcoord; \n"
 "} ";
@@ -4084,15 +4079,15 @@ SHADER_VERSION
 const GLchar blur_blit_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in highp vec2 v_texcoord;                            \n"
-"uniform sampler2D u_Src;                        \n"
+"in highp vec2 v_texcoord; \n"
+"uniform sampler2D u_Src;  \n"
 "uniform float u_tw; \n"
 "uniform float u_th; \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr; \n"
 "  addr.x = int(u_tw * v_texcoord.x);          \n"
 "  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
@@ -4103,8 +4098,8 @@ SHADER_VERSION
 "  addr.x -= 1; \n"
 "  vec4 txcolll = texelFetch( u_Src, addr,0 );      \n"
 "  txcol.rgb = txcol.rgb/2.0 + txcoll.rgb/4.0 + txcolll.rgb/4.0; \n"
-"  fragColor = txcol; \n                        "
-"}                                                   \n";
+"  fragColor = txcol; \n  "
+"}  \n";
 
 static int blur_prg = -1;
 static int u_blur_mtxModelView = -1;
@@ -4227,8 +4222,8 @@ SHADER_VERSION
 "layout (location = 0) in vec4 a_position;   \n"
 "layout (location = 1) in vec2 a_texcoord;   \n"
 "out  highp vec2 v_texcoord;     \n"
-"void main()                  \n"
-"{                            \n"
+"void main()       \n"
+"{ \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "   v_texcoord  = a_texcoord; \n"
 "} ";
@@ -4236,27 +4231,27 @@ SHADER_VERSION
 const GLchar mosaic_blit_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in highp vec2 v_texcoord;                            \n"
-"uniform sampler2D u_Src;                        \n"
+"in highp vec2 v_texcoord; \n"
+"uniform sampler2D u_Src;  \n"
 "uniform float u_tw; \n"
 "uniform float u_th; \n"
 "uniform ivec2 u_mosaic;			 \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr; \n"
 "  addr.x = int(u_tw * v_texcoord.x);          \n"
 "  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
-"  addr.x = addr.x / u_mosaic.x * u_mosaic.x;               \n"
-"  addr.y = addr.y / u_mosaic.y * u_mosaic.y;               \n"
+"  addr.x = addr.x / u_mosaic.x * u_mosaic.x;    \n"
+"  addr.y = addr.y / u_mosaic.y * u_mosaic.y;    \n"
 "  vec4 txcol = texelFetch( u_Src, addr,0 ) ;      \n"
-"  if(txcol.a > 0.0)\n                                 "
-"     fragColor = txcol; \n                        "
-"  else \n                                            "
-"     discard;\n                                      "
-"}                                                   \n";
+"  if(txcol.a > 0.0)\n      "
+"     fragColor = txcol; \n  "
+"  else \n      "
+"     discard;\n"
+"}  \n";
 
 static int mosaic_prg = -1;
 static int u_mosaic_mtxModelView = -1;
@@ -4383,8 +4378,8 @@ SHADER_VERSION
 "layout (location = 0) in vec4 a_position;   \n"
 "layout (location = 1) in vec2 a_texcoord;   \n"
 "out  highp vec2 v_texcoord;     \n"
-"void main()                  \n"
-"{                            \n"
+"void main()       \n"
+"{ \n"
 "   gl_Position = a_position*u_mvpMatrix; \n"
 "   v_texcoord  = a_texcoord; \n"
 "} ";
@@ -4392,16 +4387,16 @@ SHADER_VERSION
 const GLchar perlinealpha_blit_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;                            \n"
+"precision highp float; \n"
 "#endif\n"
-"in highp vec2 v_texcoord;                            \n"
-"uniform sampler2D u_Src;                        \n"
-"uniform sampler2D u_Line;                        \n"
+"in highp vec2 v_texcoord; \n"
+"uniform sampler2D u_Src;  \n"
+"uniform sampler2D u_Line;  \n"
 "uniform float u_tw; \n"
 "uniform float u_th; \n"
-"out vec4 fragColor;            \n"
-"void main()                                         \n"
-"{                                                   \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
 "  ivec2 addr; \n"
 "  addr.x = int(u_tw * v_texcoord.x);          \n"
 "  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
@@ -4420,7 +4415,7 @@ SHADER_VERSION
 "  }else{ \n"
 "    discard; \n"
 "  }\n"
-"}                                                   \n";
+"}  \n";
 
 static int perlinealpha_prg = -1;
 static int u_perlinealpha_mtxModelView = -1;
