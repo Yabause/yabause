@@ -2030,22 +2030,27 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   YglProgram *program;
   texturecoordinate_struct *tmp;
   float * vtxa;
-  int prg = PG_VFP1_GOURAUDSAHDING_TESS;
+  int prg;
   float * pos;
 
-  if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
-  {
-    prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS;
-  }
-  else if (input->blendmode == VDP1_COLOR_CL_MESH)
-  {
-    prg = PG_VFP1_MESH_TESS;
-  }
-  else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
-    prg = PG_VFP1_SHADOW_TESS;
-  }
-  else if (input->blendmode == VDP1_COLOR_SPD){
-    prg = PG_VFP1_GOURAUDSAHDING_SPD_TESS;
+  switch (input->blendmode) {
+    case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
+      prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS;
+    break;
+    case VDP1_COLOR_CL_MESH:
+      prg = PG_VFP1_MESH_TESS;
+    break;
+    case VDP1_COLOR_CL_SHADOW:
+      prg = PG_VFP1_SHADOW_TESS;
+    break;
+    case VDP1_COLOR_SPD:
+      prg = PG_VFP1_GOURAUDSAHDING_SPD_TESS;
+    break;
+    case VDP1_COLOR_CL_MSB_SHADOW:
+      prg = PG_VFP1_MSB_SHADOW_TESS;
+      break;
+    default:
+      prg = PG_VFP1_GOURAUDSAHDING_TESS;
   }
 
   program = YglGetProgram(input, prg, tm,input->priority);

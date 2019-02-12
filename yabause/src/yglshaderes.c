@@ -79,59 +79,6 @@ static void Ygl_printShaderError( GLuint shader )
   }
 }
 
-int ShaderDrawTest()
-{
-
-  GLuint vertexp = glGetAttribLocation(_prgid[PG_NORMAL], (const GLchar *)"a_position");
-  GLuint texcoordp = glGetAttribLocation(_prgid[PG_NORMAL], (const GLchar *)"a_texcoord");
-  GLuint mtxModelView = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_mvpMatrix");
-  GLuint mtxTexture = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"u_texMatrix");
-
-  GLfloat vec[] = { 0.0f, 0.0f, -0.5f, 100.0f, 0.0f, -0.5f, 100.0f, 100.0f, -0.5f,
-    0.0f, 0.0f, -0.5f, 100.0f, 100.0f, -0.5f, 0.0f, 100.0f, -0.5f };
-
-  /*
-  GLfloat vec[]={ 0.0f,0.0f,-0.5f,
-  -1.0f,1.0f,-0.5f,
-  1.0f,1.0f,-0.5f,
-  0.0f,0.0f,-0.5f,
-  -1.0f,-1.0f,-0.5f,
-  1.0f,-1.0f,-0.5f,
-  };
-  */
-  GLfloat tex[] = { 0.0f, 0.0f, 2048.0f, 0.0f, 2048.0f, 1024.0f, 0.0f, 0.0f, 2048.0f, 1024.0f, 0.0f, 1024.0f };
-
-  //   GLfloat tex[]={ 0.0f,0.0f,1.0f,0.0f,1.0f,1.0f,
-  //        0.0f,0.0f,1.0f,1.0f,0.0f,1.0f };
-
-  YglMatrix mtx;
-  YglMatrix mtxt;
-  GLuint id = glGetUniformLocation(_prgid[PG_NORMAL], (const GLchar *)"s_texture");
-
-  YglLoadIdentity(&mtx);
-  YglLoadIdentity(&mtxt);
-
-  YglOrtho(&mtx, 0.0f, 100.0f, 100.0f, 0.0f, 1.0f, 0.0f);
-
-  GLUSEPROG(_prgid[PG_NORMAL]);
-  glUniform1i(id, 0);
-
-  glEnableVertexAttribArray(vertexp);
-  glEnableVertexAttribArray(texcoordp);
-
-  glUniformMatrix4fv(mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
-
-  glVertexAttribPointer(vertexp, 3, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)vec);
-  glVertexAttribPointer(texcoordp, 2, GL_FLOAT, GL_FALSE, 0, (const GLvoid*)tex);
-
-
-  glDrawArrays(GL_TRIANGLES, 0, 6);
-
-  return 0;
-
-}
-
-
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
 
   param->texsize = glGetUniformLocation(pgid, (const GLchar *)"u_texsize");
@@ -1340,6 +1287,7 @@ static YglVdp1CommonParam mesh = { 0 };
 static YglVdp1CommonParam grow_tess = { 0 };
 static YglVdp1CommonParam grow_spd_tess = { 0 };
 static YglVdp1CommonParam mesh_tess = { 0 };
+static YglVdp1CommonParam id_msb_tess = { 0 };
 
 /*------------------------------------------------------------------------------------
 *  VDP1 Half luminance Operaion
@@ -2359,7 +2307,7 @@ int YglProgramInit()
 int YglTesserationProgramInit()
 {
   //-----------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VFP1_GOURAUDSAHDING_TESS");
+    YGLLOG("PG_VFP1_GOURAUDSAHDING_TESS\n");
     if (YglInitShader(PG_VFP1_GOURAUDSAHDING_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
       pYglprg_vdp1_gouraudshading_f,
@@ -2371,7 +2319,7 @@ int YglTesserationProgramInit()
 
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_TESS], &grow_tess);
 
-    YGLLOG("PG_VFP1_GOURAUDSAHDING_SPD_TESS");
+    YGLLOG("PG_VFP1_GOURAUDSAHDING_SPD_TESS\n");
     if (YglInitShader(PG_VFP1_GOURAUDSAHDING_SPD_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
       pYglprg_vdp1_gouraudshading_spd_f,
@@ -2383,8 +2331,21 @@ int YglTesserationProgramInit()
 
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_SPD_TESS], &grow_spd_tess);
 
+  //-----------------------------------------------------------------------------------------------------------
+    YGLLOG("PG_VFP1_MSB_SHADOW_TESS\n");
+    if (YglInitShader(PG_VFP1_MSB_SHADOW_TESS,
+      pYglprg_vdp1_gouraudshading_tess_v,
+      pYglprg_vdp1_msb_shadow_f,
+      1,
+      pYglprg_vdp1_gouraudshading_tess_c,
+      pYglprg_vdp1_gouraudshading_tess_e,
+      pYglprg_vdp1_gouraudshading_tess_g) != 0)
+      return -1;
+
+    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MSB_SHADOW_TESS], &id_msb_tess);
+
     //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VFP1_MESH_TESS");
+    YGLLOG("PG_VFP1_MESH_TESS\n");
     if (YglInitShader(PG_VFP1_MESH_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
       pYglprg_vdp1_mesh_f,
@@ -2398,7 +2359,7 @@ int YglTesserationProgramInit()
 
 
     //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS");
+    YGLLOG("PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS\n");
     if (YglInitShader(PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
       pYglprg_vdp1_gouraudshading_hf_f,
@@ -2411,7 +2372,7 @@ int YglTesserationProgramInit()
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS], &id_ght_tess);
 
     //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VFP1_SHADOW_TESS");
+    YGLLOG("PG_VFP1_SHADOW_TESS\n");
     if (YglInitShader(PG_VFP1_SHADOW_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
       pYglprg_vdp1_shadow_f,
@@ -2428,7 +2389,7 @@ int YglTesserationProgramInit()
     shadow_tess.fbo_attr = glGetUniformLocation(_prgid[PG_VFP1_SHADOW_TESS], (const GLchar *)"u_fbo_attr");
 
     //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VFP1_HALFTRANS_TESS");
+    YGLLOG("PG_VFP1_HALFTRANS_TESS\n");
     if (YglInitShader(PG_VFP1_HALFTRANS_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
       pYglprg_vdp1_halftrans_f,
@@ -2631,6 +2592,17 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &grow_spd_tess;
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     level->prg[level->prgcurrent].vaid = 2;
+     current->mtxModelView = grow_tess.mtxModelView;
+     current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"u_texMatrix");
+     current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VFP1_GOURAUDSAHDING], (const GLchar *)"s_texture");
+   }
+   else if (prgid == PG_VFP1_MSB_SHADOW_TESS){
+     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1ShadowParam;
+     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1ShadowParam;
+     level->prg[level->prgcurrent].ids = &id_msb_tess;
      current->vertexp = 0;
      current->texcoordp = 1;
      level->prg[level->prgcurrent].vaid = 2;
