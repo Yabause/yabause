@@ -1577,24 +1577,30 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   texturecoordinate_struct texv[6];
   texturecoordinate_struct * tpos;
 
+//Ajouter un blend mode MSB_SHADOW et faire le rendu en deux passe de programme
+
   // Select Program
-  if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
-  {
-    prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
-  }
-  else if (input->blendmode == VDP1_COLOR_CL_HALF_LUMINANCE)
-  {
-    prg = PG_VFP1_HALF_LUMINANCE;
-  }
-  else if (input->blendmode == VDP1_COLOR_CL_MESH)
-  {
-    prg = PG_VFP1_MESH;
-  }
-  else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
-    prg = PG_VFP1_SHADOW;
-  }
-  else if (input->blendmode == VDP1_COLOR_SPD){
-    prg = PG_VFP1_GOURAUDSAHDING_SPD;
+  switch (input->blendmode) {
+    case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
+      prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+      break;
+    case VDP1_COLOR_CL_HALF_LUMINANCE:
+      prg = PG_VFP1_HALF_LUMINANCE;
+      break;
+    case VDP1_COLOR_CL_MESH:
+      prg = PG_VFP1_MESH;
+      break;
+    case VDP1_COLOR_CL_SHADOW:
+      prg = PG_VFP1_SHADOW;
+      break;
+    case VDP1_COLOR_SPD:
+      prg = PG_VFP1_GOURAUDSAHDING_SPD;
+      break;
+    case VDP1_COLOR_CL_MSB_SHADOW:
+      prg = PG_VFP1_MSB_SHADOW;
+      break;
+    default:
+      prg = PG_VFP1_GOURAUDSAHDING;
   }
 
   if (input->linescreen == 1){
@@ -1832,23 +1838,28 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    float * pos;
 
 
-   if (input->blendmode == VDP1_COLOR_CL_GROW_HALF_TRANSPARENT)
-   {
+  switch (input->blendmode) {
+    case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
       prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
-   }
-   else if (input->blendmode == VDP1_COLOR_CL_HALF_LUMINANCE) {
+      break;
+    case VDP1_COLOR_CL_HALF_LUMINANCE:
       prg = PG_VFP1_HALF_LUMINANCE;
-   }
-   else if (input->blendmode == VDP1_COLOR_CL_MESH)
-   {
-     prg = PG_VFP1_MESH;
-   }
-   else if (input->blendmode == VDP1_COLOR_CL_SHADOW){
-     prg = PG_VFP1_SHADOW;
-   }
-   else if (input->blendmode == VDP1_COLOR_SPD){
-     prg = PG_VFP1_GOURAUDSAHDING_SPD;
-   }
+      break;
+    case VDP1_COLOR_CL_MESH:
+      prg = PG_VFP1_MESH;
+      break;
+    case VDP1_COLOR_CL_SHADOW:
+      prg = PG_VFP1_SHADOW;
+      break;
+    case VDP1_COLOR_SPD:
+      prg = PG_VFP1_GOURAUDSAHDING_SPD;
+      break;
+    case VDP1_COLOR_CL_MSB_SHADOW:
+      prg = PG_VFP1_MSB_SHADOW;
+      break;
+    default:
+      prg = PG_VFP1_GOURAUDSAHDING;
+  }
 
    if (input->linescreen == 1){
      prg = PG_LINECOLOR_INSERT;
@@ -2616,6 +2627,7 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
 void YglEraseWriteVDP1(void) {
 
   float col[4];
+  float colclear[4] = {0.0f};
   u16 color;
   int priority;
   u32 alpha = 0;
@@ -2650,6 +2662,7 @@ void YglEraseWriteVDP1(void) {
   col[3] = alpha / 255.0f;
 
   glClearBufferfv(GL_COLOR, 0, col);
+  glClearBufferfv(GL_COLOR, 1, colclear);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
   //Get back to drawframe
@@ -3054,13 +3067,13 @@ int  YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
 
   glBindVertexArray(_Ygl->vao);
 
-  //if (_Ygl->vdp1_lineTexture != 0){ // hbalnk-in function
-  //  Ygl_uniformVDP2DrawFramebuffer_perline(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, _Ygl->vdp1_lineTexture, varVdp2Regs);
-  //}else{
-   Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, getSpriteRenderMode(varVdp2Regs), varVdp2Regs );
-  //}
+  Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb, (float)(from) / 10.0f, (float)(to) / 10.0f, offsetcol, getSpriteRenderMode(varVdp2Regs), varVdp2Regs );
+
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe*2]);
-  //glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe*2+1]);
   
   YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, _Ygl->readframe);
 

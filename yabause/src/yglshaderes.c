@@ -179,12 +179,65 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
   }
 
+  if (param->fbo_attr != -1){
+    glUniform1i(param->fbo_attr, 2);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
+  }
+
   if (param->fbo != -1){
     glUniform1i(param->fbo, 1);
-    glUniform1i(param->fbo_attr, 2);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
-    glActiveTexture(GL_TEXTURE2);
+  }
+
+  if ((param->fbo_attr != -1) || (param->fbo != -1)){
+#if !defined(_OGLES3_)
+    if (glTextureBarrierNV) glTextureBarrierNV();
+#else
+    if( glMemoryBarrier ){
+      glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
+    }else{
+      //glFinish();
+    }
+#endif    
+    glActiveTexture(GL_TEXTURE0); 
+  }
+
+
+  return 0;
+}
+
+int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs){
+
+  YglProgram * prg;
+  YglVdp1CommonParam * param;
+
+  prg = p;
+  param = prg->ids;
+
+  glEnableVertexAttribArray(prg->vertexp);
+  glEnableVertexAttribArray(prg->texcoordp);
+
+  if (param == NULL) return 0;
+
+  glUniform2f(param->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
+
+  if (param->sprite != -1){
+    glUniform1i(param->sprite, 0);
+  }
+
+  if (param->tessLevelInner != -1) {
+    glUniform1f(param->tessLevelInner, (float)TESS_COUNT);
+  }
+
+  if (param->tessLevelOuter != -1) {
+    glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
+  }
+
+  if (param->fbo_attr != -1){
+    glUniform1i(param->fbo_attr, 1);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
 #if !defined(_OGLES3_)
     if (glTextureBarrierNV) glTextureBarrierNV();
@@ -206,6 +259,10 @@ int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
   YglProgram * prg;
   prg = p;
   glDisableVertexAttribArray(prg->vaid);
+  return 0;
+}
+
+int Ygl_cleanupVdp1ShadowParam(void * p, YglTextureManager *tm){
   return 0;
 }
 
@@ -994,8 +1051,6 @@ SHADER_VERSION
 "precision highp float;\n"
 "#endif\n"
 "uniform sampler2D u_sprite;\n"
-"uniform highp sampler2D u_fbo;\n"
-"uniform highp sampler2D u_fbo_attr;\n"
 "in vec4 v_texcoord;\n"
 "in vec4 v_vtxcolor;\n"
 "out vec4 fragColor; \n"
@@ -1005,11 +1060,9 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  if( spriteColor.a == 0.0 ) discard;\n"
-"  mode = int(spriteColor.b*255.0)&0x7; \n"
-"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-"  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
-"  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-"  fragColor.a = spriteColor.a;  \n"
+"  fragColorAttr.a = 0.0;\n"
+"  fragColorAttr.rgb = v_vtxcolor.rgb;\n"
+"  fragColor = spriteColor;  \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
@@ -1039,6 +1092,53 @@ const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshadin
 
 static YglVdp1CommonParam id_g = { 0 };
 static YglVdp1CommonParam id_spd_g = { 0 };
+
+
+/*------------------------------------------------------------------------------------
+ *  VDP1 MSB shadow Operation
+ * ----------------------------------------------------------------------------------*/
+const GLchar Yglprg_vdp1_msb_shadow_v[] =
+SHADER_VERSION
+"uniform mat4 u_mvpMatrix;     \n"
+"uniform vec2 u_texsize;    \n"
+"layout (location = 0) in vec4 a_position;    \n"
+"layout (location = 1) in vec4 a_texcoord;    \n"
+"out  vec4 v_texcoord;    \n"
+"void main() { \n"
+"   v_texcoord  = a_texcoord; \n"
+"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
+"   gl_Position = a_position*u_mvpMatrix; \n"
+"}\n";
+const GLchar * pYglprg_vdp1_msb_shadow_v[] = {Yglprg_vdp1_msb_shadow_v, NULL};
+
+const GLchar Yglprg_vdp1_msb_shadow_f[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float;\n"
+"#endif\n"
+"uniform sampler2D u_sprite;\n"
+"uniform highp sampler2D u_fbo;\n"
+"uniform highp sampler2D u_fbo_attr;\n"
+"in  vec4 v_texcoord;    \n"
+"layout(location = 1) out vec4 fragColorAttr; \n"
+"void main() {\n"
+"  int mode;\n"
+"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+"  if( spriteColor.a == 0.0 ) discard;\n"
+"  int msb = 0;\n"
+"  fragColorAttr = texelFetch(u_fbo_attr,ivec2(gl_FragCoord.xy),0);\n"
+"  int oldmsb = (int(fragColorAttr.a * 255.0))>>7;\n"
+"  int prio = int(spriteColor.a * 255.0) & 0x7;\n"
+"  if ((int(spriteColor.a * 255.0) & 0xC0) == 0xC0) {\n"
+"    msb = (int(spriteColor.b*255.0)>>7);\n"
+"  }\n"
+"  fragColorAttr.a = float((msb | oldmsb)<<7 | prio)/255.0;\n"
+"}\n";
+const GLchar * pYglprg_vdp1_msb_shadow_f[] = {Yglprg_vdp1_msb_shadow_f, NULL};
+
+static YglVdp1CommonParam id_msb_s = { 0 };
 
 
 /*------------------------------------------------------------------------------------
@@ -1429,11 +1529,10 @@ int Ygl_cleanupEndUserClip(void * p, YglTextureManager *tm ){return 0;}
 /*------------------------------------------------------------------------------------
  *  VDP2 Draw Frame buffer Operation
  * ----------------------------------------------------------------------------------*/
-static int idvdp1FrameBuffer;
-static int idcram;
 
 typedef struct  {
   int idvdp1FrameBuffer;
+  int idvdp1FrameBufferAttr;
   int idcram;
   int idline;
 } DrawFrameBufferUniform;
@@ -1485,6 +1584,7 @@ SHADER_VERSION
 " int u_color_ram_offset; \n"
 "}; \n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
+"uniform sampler2D s_vdp1FrameBufferAttr;\n"
 "uniform sampler2D s_color; \n"
 "uniform sampler2D s_line; \n"
 "in vec2 v_texcoord;\n"
@@ -1502,6 +1602,7 @@ SHADER_VERSION
 "{\n"
 "  vec2 addr = v_texcoord;\n"
 "  vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
+"  vec4 fbColorAttr = texture(s_vdp1FrameBufferAttr,addr);\n"
 "  fragColor1 = vec4(0.0);\n"
 "  fragColor2 = vec4(0.0);\n"
 "  fragColor3 = vec4(0.0);\n"
@@ -1510,27 +1611,47 @@ SHADER_VERSION
 "  fragColor6 = vec4(0.0);\n"
 "  fragColor7 = vec4(0.0);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
-"  if( (additional & 0x80) == 0 ){ discard;} // show? \n"
+"  int additionalAttr = int(fbColorAttr.a * 255.0);\n"
+"  if( ((additional & 0x80) == 0) && ((additionalAttr & 0x80) == 0) ){ discard;} // show? \n"
 "  int prinumber = (additional&0x07); \n"
 "  int depth = u_pri[prinumber];\n"
 "  int alpha = u_alpha[((additional>>3)&0x07)]<<3; \n"
 "  int opaque = 0xF8;\n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
-"  if( (additional & 0x40) != 0 ){  // index color? \n"
-"    if( fbColor.b != 0.0 ) {\n"
-"      outColor = vec4(0.0,0.0,0.0,1.0);\n"
-"      opaque = 0x78;\n"
-"    } else {\n"
+"  if((additional & 0x80) != 0) {\n"
+"    if( (additional & 0x40) != 0 ){  // index color? \n"
 "      int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
-"      if( colindex == 0 && prinumber == 0) {discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
-"      colindex = colindex + u_color_ram_offset; \n"
-"      txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"      outColor = txcol;\n"
-"    }\n"
-"  }else{ // direct color \n" 
+"      if( colindex == 0 && prinumber == 0 && ((additionalAttr & 0x80) == 0)) {discard;} // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
+"      if( colindex != 0 || prinumber != 0) {\n"
+"        colindex = colindex + u_color_ram_offset; \n"
+"        txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
+"        outColor = txcol;\n"
+"      } else { \n"
+"        outColor = vec4(0.0);\n"
+"      }\n"
+"    }else{ // direct color \n" 
+"      outColor = fbColor;\n"
+"    } \n"
+"    outColor.rgb = clamp(outColor.rgb + u_coloroffset.rgb + fbColorAttr.rgb, vec3(0.0), vec3(1.0));  \n"
+"  } else { \n"
 "    outColor = fbColor;\n"
 "  } \n"
-"  outColor.rgb = clamp(outColor.rgb + u_coloroffset.rgb, vec3(0.0), vec3(1.0));  \n"; 
+"  if ((additionalAttr & 0x80) != 0) {\n"
+"    if (outColor.rgb == vec3(0.0)) {\n"
+"      outColor.rgb = vec3(0.0);\n"
+"      alpha = 0x78;\n"
+"      vdp1mode = 2;\n"
+"      mode = 0;\n"
+"    } else { \n"
+"      if (u_pri[(additionalAttr & 0x7)] >= depth) {\n"
+"        outColor.rgb = outColor.rgb * 0.5;\n"
+"        alpha = alpha>>1;\n"
+"        opaque = 0x78;\n"
+"        vdp1mode = 2;\n"
+"      }\n"
+"    }\n"
+"  }\n"
+"  if (mode != 0) {\n";
 
 /*
  Color calculation option 
@@ -1554,6 +1675,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
 " if (mode == 1) vdp1mode = 4; \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
+" }\n"
 " outColor.a = float(alpha|vdp1mode)/255.0; \n"
 " if (depth == 1) { \n"
 "   fragColor1 = outColor;\n"
@@ -1700,6 +1822,7 @@ void Ygl_initDrawFrameBuffershader(int id) {
   scene_block_index = glGetUniformBlockIndex(_prgid[id], "vdp2regs");
   glUniformBlockBinding(_prgid[id], scene_block_index, FRAME_BUFFER_UNIFORM_ID);
   g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBuffer");
+  g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBufferAttr = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBufferAttr");
   g_draw_framebuffer_uniforms[arrayid].idcram = glGetUniformLocation(_prgid[id], (const GLchar *)"s_color");
   g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
 }
@@ -1762,12 +1885,12 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offs
     glBindFragDataLocation(_prgid[pgid], 6, "fragColor7");
 
   glBindBufferBase(GL_UNIFORM_BUFFER, FRAME_BUFFER_UNIFORM_ID, _Ygl->framebuffer_uniform_id_);
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idcram, 1);
-  glActiveTexture(GL_TEXTURE1);
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idcram, 2);
+  glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
+  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBufferAttr, 1);
   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 0);
-  glActiveTexture(GL_TEXTURE0);
 
   // Setup Line color uniform
   if (SPLCEN != 0) {
@@ -2115,6 +2238,15 @@ int YglProgramInit()
    if (YglInitDrawFrameBufferShaders() != 0) {
      return -1;
    }
+
+   //-----------------------------------------------------------------------------------------------------------
+   YGLLOG("PG_VFP1_MSB_SHADOW\n");
+
+   //
+   if (YglInitShader(PG_VFP1_MSB_SHADOW, pYglprg_vdp1_msb_shadow_v, pYglprg_vdp1_msb_shadow_f, 1, NULL, NULL, NULL) != 0)
+      return -1;
+
+   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VFP1_MSB_SHADOW], &id_msb_s);
 
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VFP1_HALFTRANS\n");
@@ -2472,6 +2604,17 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->mtxModelView = id_spd_g.mtxModelView;
      current->mtxTexture = id_spd_g.mtxTexture;
      current->tex0 = id_spd_g.tex0;
+   }
+   else if (prgid == PG_VFP1_MSB_SHADOW)
+   {
+     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1ShadowParam;
+     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1ShadowParam;
+     level->prg[level->prgcurrent].ids = &id_msb_s;
+     current->vertexp = 0;
+     current->texcoordp = 1;
+     current->mtxModelView = id_msb_s.mtxModelView;
+     current->mtxTexture = id_msb_s.mtxTexture;
+     current->tex0 = id_msb_s.tex0;
    }
    else if (prgid == PG_VFP1_GOURAUDSAHDING_TESS ){
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;

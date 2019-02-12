@@ -4060,6 +4060,7 @@ void VIDOGLVdp1Draw()
 #define IS_DONOT_DRAW_OR_SHADOW(a) ((a&0x03)==0x01)
 #define IS_HALF_LUMINANCE(a)   ((a&0x03)==0x02)
 #define IS_REPLACE_OR_HALF_TRANSPARENT(a) ((a&0x03)==0x03)
+#define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
 
 #define IS_ZERO(A) (((A) < EPSILON)&&((A) > -EPSILON))
 
@@ -4495,6 +4496,9 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
   }
+  else if (IS_MSB_SHADOW(CMDPMOD)) {
+    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
+  }
 
   if ((CMDPMOD & 4))
   {
@@ -4713,6 +4717,9 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
   }
+  else if (IS_MSB_SHADOW(CMDPMOD)) {
+    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
+  }
 
 
 
@@ -4869,6 +4876,9 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   if (IS_MESH(CMDPMOD)) {
     tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
+  }
+  else if (IS_MSB_SHADOW(CMDPMOD)) {
+    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
   }
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
@@ -5129,6 +5139,9 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     alpha = 0X78;
     sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
   }
+  else if (IS_MSB_SHADOW(CMDPMOD)) {
+    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
+  }
 
   if (gouraud == 1)
   {
@@ -5236,6 +5249,9 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
   if (IS_MESH(CMDPMOD)) {
     polygon.blendmode = VDP1_COLOR_CL_MESH;
+  }
+  else if (IS_MSB_SHADOW(CMDPMOD)) {
+    polygon.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
   }
 
   if (gouraud) {
@@ -5506,6 +5522,9 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
   if (IS_MESH(CMDPMOD)) {
     polygon.blendmode = VDP1_COLOR_CL_MESH;
+  }
+  else if (IS_MSB_SHADOW(CMDPMOD)) {
+    polygon.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
   }
 
   if (gouraud == 1) {
