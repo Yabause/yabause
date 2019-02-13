@@ -599,6 +599,7 @@ typedef struct {
    u32 lincolor_tex;
    u32 linecolor_pbo;
    u32 * lincolor_buf;
+   int perLine[enBGMAX];
 
    u32 back_tex;
    u32 back_pbo;

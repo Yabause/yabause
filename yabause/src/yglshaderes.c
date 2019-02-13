@@ -3171,6 +3171,9 @@ SHADER_VERSION
 "precision highp float; \n"
 "#endif\n"
 "in vec2 v_texcoord; \n"
+"uniform int s_perline;\n"
+"uniform float u_emu_height;\n"
+"uniform float u_vheight; \n"
 "uniform sampler2D s_texture0;  \n"
 "uniform sampler2D s_texture1;  \n"
 "uniform sampler2D s_texture2;  \n"
@@ -3178,6 +3181,13 @@ SHADER_VERSION
 "uniform sampler2D s_texture4;  \n"
 "uniform sampler2D s_texture5;  \n"
 "uniform sampler2D s_texture6;  \n"
+"uniform sampler2D s_bg0;  \n"
+"uniform sampler2D s_bg1;  \n"
+"uniform sampler2D s_bg2;  \n"
+"uniform sampler2D s_bg3;  \n"
+"uniform sampler2D s_bg4;  \n"
+"uniform sampler2D s_bg5;  \n"
+"uniform sampler2D s_bg6;  \n"
 "uniform sampler2D s_back;  \n"
 "out vec4 finalColor; \n"
 "out vec4 topColor; \n"
@@ -3192,6 +3202,7 @@ SHADER_VERSION
 "  vec4 colorfourth = vec4(0.0); \n"
 "  vec4 colorback = vec4(0.0); \n"
 "  vec4 color[7]; \n"
+"  vec4 bg[7]; \n"
 "  int alpha[7]; \n"
 "  int foundColor1 = 0; \n"
 "  int foundColor2 = 0; \n"
@@ -3208,6 +3219,9 @@ SHADER_VERSION
 "  float alphafourth = 0.0; \n"
 "  float alphafourthlast = 0.0; \n"
 "  ivec2 addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
+"  ivec2 linepos; \n "
+"  linepos.y = 0; \n "
+"  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 
 #if 0
 "  color[0] = texelFetch( s_texture6, addr,0 ); \n"
@@ -3242,7 +3256,29 @@ SHADER_VERSION
 "  color[6] = texelFetch( s_texture6, addr,0 ); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
 
+"  if ((s_perline & (1 << 0))!=0) bg[0] = texelFetch( s_bg0, linepos,0 ); \n"
+"  else bg[0] = vec4(0.0);\n"
+"  if ((s_perline & (1 << 1))!=0) bg[1] = texelFetch( s_bg1, linepos,0 ); \n"
+"  else bg[1] = vec4(0.0);\n"
+"  if ((s_perline & (1 << 2))!=0) bg[2] = texelFetch( s_bg2, linepos,0 ); \n"
+"  else bg[2] = vec4(0.0);\n"
+"  if ((s_perline & (1 << 3))!=0) bg[3] = texelFetch( s_bg3, linepos,0 ); \n"
+"  else bg[3] = vec4(0.0);\n"
+"  if ((s_perline & (1 << 4))!=0) bg[4] = texelFetch( s_bg4, linepos,0 ); \n"
+"  else bg[4] = vec4(0.0);\n"
+"  if ((s_perline & (1 << 5))!=0) bg[5] = texelFetch( s_bg5, linepos,0 ); \n"
+"  else bg[5] = vec4(0.0);\n"
+"  if ((s_perline & (1 << 6))!=0) bg[6] = texelFetch( s_bg6, linepos,0 ); \n"
+"  else bg[6] = vec4(0.0);\n"
+
 "  colortop = colorback; \n"
+
+"  for (int i = 0; i<7; i++) { \n"
+"    if ((s_perline & (1 << i))!=0){ \n"
+"      if (bg[i] == vec4(0.0)) color[i] = vec4(0.0);\n"
+"      if (bg[i].a > 0.0) color[i].a = bg[i].a;\n"
+"    }\n"
+"  }\n"
 
 "  for (int i = 0; i<7; i++) { \n"
 "    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
@@ -3296,9 +3332,10 @@ SHADER_VERSION
 #endif
 "} \n";
 
-int YglBlitTexture(int *texture) {
+int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
+  int perLine = 0;
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3313,7 +3350,7 @@ int YglBlitTexture(int *texture) {
     0.0f, 1.0f
   };
 
-  int gltext[8] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7};
+  int gltext[15] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14};
 
   if (vdp2prio_prg == -1){
     GLuint vshader;
@@ -3371,6 +3408,14 @@ int YglBlitTexture(int *texture) {
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture5"), 1);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture6"), 0);
 
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg0"), 14);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg1"), 13);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg2"), 12);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg3"), 11);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg4"), 10);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg5"), 9);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg6"), 8);
+
     glBindFragDataLocation(vdp2prio_prg, 1, "topColor");
     glBindFragDataLocation(vdp2prio_prg, 2, "secondColor");
     glBindFragDataLocation(vdp2prio_prg, 3, "thirdColor");
@@ -3400,10 +3445,22 @@ int YglBlitTexture(int *texture) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, texture[i]);
   }
+  for (int i = 0; i<7; i++) {
+    if (_Ygl->perLine[i] != 0) {
+      glActiveTexture(gltext[i+8]);
+      glBindTexture(GL_TEXTURE_2D, _Ygl->perLine[i]);
+      perLine |= 1 << i;
+    }
+  }
+
+  glUniform1f(glGetUniformLocation(vdp2prio_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(vdp2prio_prg, "u_vheight"), (float)_Ygl->height);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_perline"), perLine);
+
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<8; i++) {
+  for (int i = 0; i<15; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }

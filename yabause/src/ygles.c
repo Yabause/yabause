@@ -1609,9 +1609,9 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
       prg = PG_LINECOLOR_INSERT_DESTALPHA;
     }
   }
-  else if (input->linescreen == 2){ // per line operation by HBLANK
-    prg = PG_VDP2_PER_LINE_ALPHA;
-  }
+  //else if (input->linescreen == 2){ // per line operation by HBLANK
+  //  prg = PG_VDP2_PER_LINE_ALPHA;
+  //}
 
   program = YglGetProgram(input, prg, tm, input->priority);
   if (program == NULL || program->quads == NULL) return -1;
@@ -1868,9 +1868,9 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
      }
 
    }
-   else if (input->linescreen == 2){ // per line operation by HBLANK
-     prg = PG_VDP2_PER_LINE_ALPHA;
-   }
+   //else if (input->linescreen == 2){ // per line operation by HBLANK
+   //  prg = PG_VDP2_PER_LINE_ALPHA;
+   //}
 
 
 
@@ -2199,9 +2199,9 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
         prg = PG_LINECOLOR_INSERT_DESTALPHA;
       }
     }
-    else if (input->linescreen == 2) { // per line operation by HBLANK
-      prg = PG_VDP2_PER_LINE_ALPHA;
-    }
+    //else if (input->linescreen == 2) { // per line operation by HBLANK
+    //  prg = PG_VDP2_PER_LINE_ALPHA;
+    //}
   }
   else {
 
@@ -2219,9 +2219,9 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
         prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
       }
     }
-    else if (input->linescreen == 2) { // per line operation by HBLANK
-      prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
-    }
+    //else if (input->linescreen == 2) { // per line operation by HBLANK
+    //  prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
+    //}
   }
   
   program = YglGetProgram((YglSprite*)input, prg,tm,input->priority);
@@ -2350,9 +2350,9 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
           prg = PG_LINECOLOR_INSERT_DESTALPHA;
         }
       }
-      else if (input->linescreen == 2) { // per line operation by HBLANK
-        prg = PG_VDP2_PER_LINE_ALPHA;
-      }
+      //else if (input->linescreen == 2) { // per line operation by HBLANK
+      //  prg = PG_VDP2_PER_LINE_ALPHA;
+      //}
   } else {
       prg = PG_VDP2_NORMAL_CRAM;
 
@@ -2368,9 +2368,9 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
           prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
         }
       }
-      else if (input->linescreen == 2) { // per line operation by HBLANK
-        prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
-    }
+      //else if (input->linescreen == 2) { // per line operation by HBLANK
+      //  prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
+    //}
   }
 
   program = YglGetProgram((YglSprite*)input, prg,tm,input->priority);
@@ -2507,9 +2507,9 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
         prg = PG_LINECOLOR_INSERT_DESTALPHA;
       }
     }
-    else if (input->linescreen == 2) { // per line operation by HBLANK
-      prg = PG_VDP2_PER_LINE_ALPHA;
-    }
+    //else if (input->linescreen == 2) { // per line operation by HBLANK
+    //  prg = PG_VDP2_PER_LINE_ALPHA;
+    //}
   }
   else {
 
@@ -2528,9 +2528,9 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
         prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
       }
     }
-    else if (input->linescreen == 2) { // per line operation by HBLANK
-      prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
-    }
+    //else if (input->linescreen == 2) { // per line operation by HBLANK
+    //  prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
+    //}
     else {
         prg = PG_VDP2_NORMAL_CRAM;
     }
@@ -3481,7 +3481,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glDrawBuffers(5, &DrawBuffers[0]);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
-  YglBlitTexture(_Ygl->priority_fbotex);
+  YglBlitTexture(_Ygl->priority_fbotex, _Ygl->bg);
 #if 0
   glDrawBuffers(1, &DrawBuffers[0]);
   glClearBufferfv(GL_COLOR, 0, colopaque);

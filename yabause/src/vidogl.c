@@ -5822,25 +5822,25 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
 
          switch (id) {
           case NBG0:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F) *255) /31) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F)<<3) << 24;
             break;
           case NBG1:
-            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 5) << 24;
             break;
           case NBG2:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F) *255) /31) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F)<<3) << 24;
             break;
           case NBG3:
-            linebuf[line] = ((((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 8)*255) /31) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 5) << 24;
             break;
           case RBG0:
-            linebuf[line] = (((~Vdp2Lines[line >> line_shift].CCRR & 0x1F) *255) /31) << 24;
+            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRR & 0x1F)<<3) << 24;
             break;
           }
 
         }
         else {
-          linebuf[line] = 0xFF000000;
+          linebuf[line] = 0xF8000000;
         }
 
         if (Vdp2Lines[line >> line_shift].CLOFEN  & bit) {
@@ -5993,6 +5993,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->alpha = (~varVdp2Regs->CCRNA & 0x1F)<<3;
 
   Vdp2GeneratePerLineColorCalcuration(info, NBG0, varVdp2Regs);
+  _Ygl->perLine[RBG1] = info->lineTexture;
   //info->lineTexture = 0;
   info->linescreen = 0;
   if (varVdp2Regs->LNCLEN & 0x1)
@@ -6268,6 +6269,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   info.alpha = (~varVdp2Regs->CCRNA & 0x1F) << 3;
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG0, varVdp2Regs);
+  _Ygl->perLine[NBG0] = info.lineTexture;
   info.linescreen = 0;
   if (varVdp2Regs->LNCLEN & 0x1)
     info.linescreen = 1;
@@ -6493,6 +6495,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
+  _Ygl->perLine[NBG1] = info.lineTexture;
   info.linescreen = 0;
   if (varVdp2Regs->LNCLEN & 0x2)
     info.linescreen = 1;
@@ -6725,6 +6728,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   info.alpha = (~varVdp2Regs->CCRNB & 0x1F) << 3;
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG2, varVdp2Regs);
+  _Ygl->perLine[NBG2] = info.lineTexture;
   info.linescreen = 0;
   if (varVdp2Regs->LNCLEN & 0x4)
     info.linescreen = 1;
@@ -6823,6 +6827,7 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG3, varVdp2Regs);
+  _Ygl->perLine[NBG3] = info.lineTexture;
   info.linescreen = 0;
   if (varVdp2Regs->LNCLEN & 0x8)
     info.linescreen = 1;
@@ -6906,6 +6911,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->blendmode = 0;
 
   Vdp2GeneratePerLineColorCalcuration(info, RBG0, varVdp2Regs);
+  _Ygl->perLine[NBG0] = info->lineTexture;
   //info->lineTexture = 0;
 
   info->transparencyenable = !(varVdp2Regs->BGON & 0x1000);
@@ -7258,6 +7264,13 @@ static void VIDOGLVdp2DrawScreens(void)
   _Ygl->screen[NBG3] = 0;
   _Ygl->screen[RBG0] = 0;
   _Ygl->screen[RBG1] = 0;
+
+  _Ygl->perLine[NBG0] = 0;
+  _Ygl->perLine[NBG1] = 0;
+  _Ygl->perLine[NBG2] = 0;
+  _Ygl->perLine[NBG3] = 0;
+  _Ygl->perLine[RBG0] = 0;
+  _Ygl->perLine[RBG1] = 0;
 
   YglUpdateColorRam();
 
