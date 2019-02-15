@@ -1013,7 +1013,7 @@ int YglGenerateScreenBuffer(){
   YGLDEBUG("YglGenerateScreenBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
 
   if (_Ygl->screen_fbotex[0] != 0) {
-    glDeleteTextures(SPRITE,&_Ygl->screen_fbotex[0]);
+    glDeleteTextures(enBGMAX,&_Ygl->screen_fbotex[0]);
   }
   glGenTextures(enBGMAX, &_Ygl->screen_fbotex[0]);
 
