@@ -2758,7 +2758,7 @@ void YglRenderVDP1(void) {
   GLuint cprg=0;
   int i,j;
   int status;
-  int hasShadow = 0;
+  int drawAttr = -1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[Vdp1External.plot_trigger_line];
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   //YabThreadLock(_Ygl->mutex);
@@ -2795,17 +2795,9 @@ void YglRenderVDP1(void) {
     }
   cprg = -1;
 
-  for( j=0;j<(level->prgcurrent+1); j++ ) {
-    if ((level->prg[j].prgid == PG_VFP1_SHADOW) || (level->prg[j].prgid == PG_VFP1_SHADOW_TESS)) {
-      hasShadow = 1;
-      break;
-    }
-  }
-
   YglGenFrameBuffer();
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
 
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);
@@ -2819,7 +2811,18 @@ void YglRenderVDP1(void) {
 
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
-      renderVDP1Level(level, j, &cprg, mat, varVdp2Regs);
+    if ((level->prg[j].prgid == PG_VFP1_MSB_SHADOW) || (level->prg[j].prgid == PG_VFP1_MSB_SHADOW_TESS)) {
+      if (drawAttr != 1) {
+        glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe*2+1]);
+        drawAttr = 1;
+      }
+    } else {
+      if (drawAttr != 0) {
+        glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
+        drawAttr = 0;
+      }
+    }
+    renderVDP1Level(level, j, &cprg, mat, varVdp2Regs);
   }
   for( j=0;j<(level->prgcurrent+1); j++ ) {
     level->prg[j].currentQuad = 0;
