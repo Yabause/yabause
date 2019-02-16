@@ -166,6 +166,11 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   glEnableVertexAttribArray(prg->vertexp);
   glEnableVertexAttribArray(prg->texcoordp);
 
+  glStencilFunc(GL_GREATER,1,0x01);
+  glStencilMask(0x01);
+  glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+  glEnable(GL_STENCIL_TEST);
+
   if (param == NULL) return 0;
 
   glUniform2f(param->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
@@ -210,6 +215,7 @@ int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
 }
 
 int Ygl_cleanupVdp1ShadowParam(void * p, YglTextureManager *tm){
+  glDisable(GL_STENCIL_TEST);
   return 0;
 }
 
@@ -1081,6 +1087,7 @@ SHADER_VERSION
 "  if ((int(spriteColor.a * 255.0) & 0xC0) == 0xC0) {\n"
 "    msb = (int(spriteColor.b*255.0)>>7);\n"
 "  }\n"
+"  if (msb == 0) discard;\n"
 "  fragColorAttr.a = float((msb | oldmsb)<<7 | prio)/255.0;\n"
 "}\n";
 const GLchar * pYglprg_vdp1_msb_shadow_f[] = {Yglprg_vdp1_msb_shadow_f, NULL};
