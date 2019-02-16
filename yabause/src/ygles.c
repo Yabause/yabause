@@ -18,7 +18,7 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
- 
+
 
 #include <stdlib.h>
 #include <math.h>
@@ -725,7 +725,7 @@ static void YglTMAllocate_in(YglTextureManager * tm, YglTexture * output, unsign
      tm->currentY = tm->yMax;
      YglTMAllocate_in(tm, output, w, h, x, y);
    }
-   
+
 }
 
 void getCurrentOpenGLContext() {
@@ -850,7 +850,7 @@ int YglGenFrameBuffer() {
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  
+
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -887,7 +887,7 @@ int YglGenFrameBuffer() {
     glGenTextures(2, _Ygl->vdp1AccessTex);
     glGenBuffers(2, _Ygl->vdp1_pbo);
     YGLDEBUG("glGenBuffers %d %d\n",_Ygl->vdp1_pbo[0], _Ygl->vdp1_pbo[1]);
-    
+
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[0]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
@@ -969,7 +969,7 @@ int YglGenerateWindowBuffer(){
     glBindTexture(GL_TEXTURE_2D, _Ygl->window_fbotex[i]);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -980,7 +980,7 @@ int YglGenerateWindowBuffer(){
   glGenRenderbuffers(1, &_Ygl->window_depth);
   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->window_depth);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
-    
+
   if (_Ygl->window_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->window_fbo);
   }
@@ -1022,7 +1022,7 @@ int YglGenerateScreenBuffer(){
     glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[i]);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1033,7 +1033,7 @@ int YglGenerateScreenBuffer(){
   glGenRenderbuffers(1, &_Ygl->screen_depth);
   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->screen_depth);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
-    
+
   if (_Ygl->screen_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->screen_fbo);
   }
@@ -1075,7 +1075,7 @@ int YglGenerateVDP1ScreenBuffer(){
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1screen_fbotex[i]);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1122,7 +1122,7 @@ int YglGeneratePriorityBuffer(){
     glBindTexture(GL_TEXTURE_2D, _Ygl->priority_fbotex[i]);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1133,7 +1133,7 @@ int YglGeneratePriorityBuffer(){
   glGenRenderbuffers(1, &_Ygl->priority_depth);
   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->priority_depth);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
-    
+
   if (_Ygl->priority_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->priority_fbo);
   }
@@ -1176,7 +1176,7 @@ int YglGenerateOriginalBuffer(){
     glBindTexture(GL_TEXTURE_2D, _Ygl->original_fbotex[i]);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  
+
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1187,7 +1187,7 @@ int YglGenerateOriginalBuffer(){
     glGenRenderbuffers(1, &_Ygl->original_depth);
     glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_depth);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
-    
+
   if (_Ygl->original_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->original_fbo);
   }
@@ -1249,8 +1249,8 @@ void initLevels(YglLevel** levels, int size) {
     level[i].prgcount = 1;
     level[i].prg = (YglProgram*)malloc(sizeof(YglProgram)*level[i].prgcount);
     memset(  level[i].prg,0,sizeof(YglProgram)*level[i].prgcount);
-    if (level[i].prg == NULL){ 
-      return; 
+    if (level[i].prg == NULL){
+      return;
     }
     for(j = 0;j < level[i].prgcount; j++) {
       level[i].prg[j].prg=0;
@@ -1388,7 +1388,7 @@ int YglInit(int width, int height, unsigned int depth) {
     YGLDEBUG("Fail to YglProgramInit\n");
     abort();
   }
-  
+
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo );
   glBindTexture(GL_TEXTURE_2D, 0);
   _Ygl->st = 0;
@@ -1412,7 +1412,7 @@ void YglDeInit(void) {
    if (_Ygl)
    {
       if(_Ygl->mutex) YabThreadFreeMutex(_Ygl->mutex );
-      
+
       if (_Ygl->vdp2levels)
       deinitLevels(_Ygl->vdp2levels, SPRITE);
       if (_Ygl->vdp1levels)
@@ -1445,7 +1445,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
    level->prio |= 1 << prio-1;
    level->blendmode |= (input->blendmode&0x03);
    if( input->uclipmode != level->uclipcurrent ||
-     (input->uclipmode !=0 && 
+     (input->uclipmode !=0 &&
     (level->ux1 != Vdp1Regs->userclipX1 || level->uy1 != Vdp1Regs->userclipY1 ||
     level->ux2 != Vdp1Regs->userclipX2 || level->uy2 != Vdp1Regs->userclipY2) )
      )
@@ -1653,7 +1653,7 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
     texv[0].t = texv[1].t = texv[3].t = (float)((y)+ATLAS_BIAS);
     texv[2].t = texv[4].t = texv[5].t = (float)((y + input->h) - ATLAS_BIAS);
   }
-  
+
   if (c != NULL && cash_flg == 1)
   {
     switch (input->flip) {
@@ -2223,7 +2223,7 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
     //  prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
     //}
   }
-  
+
   program = YglGetProgram((YglSprite*)input, prg,tm,input->priority);
   if (program == NULL) return;
 
@@ -2546,7 +2546,7 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
 
   program = YglGetProgram((YglSprite*)input, prg,tm,input->priority);
   if (program == NULL) return -1;
-  
+
   program->colornumber = input->colornumber;
   program->blendmode = input->blendmode;
   program->bwin0 = input->bEnWin0;
@@ -2674,7 +2674,7 @@ void YglEraseWriteVDP1(void) {
   glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-  
+
 }
 
 static void waitVdp1End(int id) {
@@ -2721,7 +2721,7 @@ static void renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat,
 //printf("USe prg %d\n", *cprg);
       glUseProgram(level->prg[j].prg);
     }
-  
+
     if(level->prg[j].setupUniform) {
       level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe], varVdp2Regs);
     }
@@ -2824,7 +2824,7 @@ void YglRenderVDP1(void) {
   for( j=0;j<(level->prgcurrent+1); j++ ) {
     level->prg[j].currentQuad = 0;
   }
-      
+
   level->prgcurrent = 0;
 
   //YabThreadUnLock(_Ygl->mutex);
@@ -3049,7 +3049,7 @@ SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs) {
         ret = DST_ALPHA;
       }
     }
-  } 
+  }
   return ret;
 }
 
@@ -3068,7 +3068,7 @@ int  YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
   int bwin_cc1;
   int logwin_cc1;
   int winmode_cc;
-  int ret = 0xFF; //Let's assume sprite use all prio. Needs to get the exact list with rendervdp1 
+  int ret = 0xFF; //Let's assume sprite use all prio. Needs to get the exact list with rendervdp1
 
   glBindVertexArray(_Ygl->vao);
 
@@ -3079,7 +3079,7 @@ int  YglRenderFrameBuffer(int from, int to, Vdp2* varVdp2Regs) {
 
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe*2+1]);
-  
+
   YGLLOG("YglRenderFrameBuffer: %d to %d: fb %d\n", from, to, _Ygl->readframe);
 
   //
@@ -3371,7 +3371,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
    YglUpdateVdp2Reg(varVdp2Regs);
 
-  // Color Calcurate Window  
+  // Color Calcurate Window
    ccwindow = ((Vdp2Regs->WCTLD >> 9) & 0x01);
    ccwindow |= ((Vdp2Regs->WCTLD >> 11) & 0x01);
 
@@ -3434,6 +3434,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
     }
     else {
       glDrawBuffers(1, &DrawBuffers[i]);
+      glClearBufferfv(GL_COLOR, 0, col);
       drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
     }
     allPrio |= drawScreen[i];
@@ -3449,7 +3450,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glClearBufferfv(GL_COLOR, 4, col);
   glClearBufferfv(GL_COLOR, 5, col);
   glClearBufferfv(GL_COLOR, 6, col);
- 
+
 
   const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
 
@@ -3655,7 +3656,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
     //YabThreadUnLock(_Ygl->crammutex);
     return;
   }
-  
+
   switch (Vdp2Internal.ColorMode)
   {
   case 0:
@@ -3677,7 +3678,7 @@ void YglOnUpdateColorRamWord(u32 addr) {
     buf[(addr >> 2) & 0x7FF] = SAT2YAB2(alpha, tmp1, tmp2);
     break;
   }
-  default: 
+  default:
     break;
   }
   //YabThreadUnLock(_Ygl->crammutex);
@@ -3714,11 +3715,11 @@ void YglUpdateColorRam() {
       GL_RGBA, GL_UNSIGNED_BYTE,
       buf);
 #else
-    glTexSubImage2D(GL_TEXTURE_2D, 
-      0, 
+    glTexSubImage2D(GL_TEXTURE_2D,
+      0,
       start_addr, 0,
       size, 1,
-      GL_RGBA, GL_UNSIGNED_BYTE, 
+      GL_RGBA, GL_UNSIGNED_BYTE,
       &buf[start_addr] );
 #endif
     _Ygl->colupd_min_addr = 0xFFFFFFFF;

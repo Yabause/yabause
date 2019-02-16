@@ -18,8 +18,8 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-   
- 
+
+
 //#ifdef __ANDROID__
 #include <stdlib.h>
 #include <math.h>
@@ -147,8 +147,8 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     }else{
       //glFinish();
     }
-#endif    
-    glActiveTexture(GL_TEXTURE0); 
+#endif
+    glActiveTexture(GL_TEXTURE0);
   }
 
 
@@ -194,8 +194,8 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     }else{
       //glFinish();
     }
-#endif    
-    glActiveTexture(GL_TEXTURE0); 
+#endif
+    glActiveTexture(GL_TEXTURE0);
   }
 
 
@@ -527,7 +527,7 @@ int Ygl_useUpscaleBuffer(void){
       break;
     default:
       up_scale = 1;
-  } 
+  }
   if (_Ygl->upfbo == 0) {
     GLuint error;
     glGenTextures(1, &_Ygl->upfbotex);
@@ -1577,7 +1577,7 @@ SHADER_VERSION
 "      } else { \n"
 "        outColor = vec4(0.0);\n"
 "      }\n"
-"    }else{ // direct color \n" 
+"    }else{ // direct color \n"
 "      outColor = fbColor;\n"
 "    } \n"
 "    outColor.rgb = clamp(outColor.rgb + u_coloroffset.rgb + fbColorAttr.rgb, vec3(0.0), vec3(1.0));  \n"
@@ -1602,7 +1602,7 @@ SHADER_VERSION
 "  if (mode != 0) {\n";
 
 /*
- Color calculation option 
+ Color calculation option
   hard/vdp2/hon/p09_21.htm
 */
 const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " alpha = opaque; \n";
@@ -1637,10 +1637,10 @@ const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
 " }else if (depth == 4) { \n"
 "   fragColor4 = outColor;\n"
 "   return;\n"
-" }else if (depth == 5) {\n" 
+" }else if (depth == 5) {\n"
 "   fragColor5 = outColor;\n"
 "   return;\n"
-" }else if (depth == 6) {\n" 
+" }else if (depth == 6) {\n"
 "   fragColor6 = outColor;\n"
 "   return;\n"
 " }else if (depth == 7) { \n"
@@ -1811,7 +1811,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offs
          pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_NONE;
          break;
     }
-  } 
+  }
   pgid += mode-1;
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
@@ -1972,7 +1972,7 @@ int Ygl_uniformLinecolorInsert(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   glUniform1i(param->s_line, 1);
   glUniform4fv(param->color_offset, 1, prg->color_offset_val);
   glUniform1f(param->emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
-  //glUniform1f(param->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));  
+  //glUniform1f(param->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));
   glUniform1f(param->vheight, (float)_Ygl->height);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
@@ -1985,7 +1985,7 @@ int Ygl_cleanupLinecolorInsert(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
   prg = p;
-  
+
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE0);
@@ -2131,7 +2131,7 @@ int YglProgramInit()
   id_rbg_cram_line_color_offset = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_color_offset");
   id_rbg_cram_line_blendmode = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_blendmode");
   id_rbg_cram_line_matrix = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_mvpMatrix");
-  
+
 
 
 #if 0
@@ -2272,7 +2272,7 @@ int YglProgramInit()
    YGLLOG("PG_LINECOLOR_INSERT_DESTALPHA\n");
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_f, 3, NULL, NULL, NULL) != 0)
      return -1;
-   
+
    linecol_destalpha.s_texture = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"s_texture");
    linecol_destalpha.s_line = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"s_line");
    linecol_destalpha.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_color_offset");
@@ -2463,7 +2463,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->cleanupUniform = Ygl_cleanupNormal;
      current->vertexp = 0;
      current->texcoordp = 1;
-     current->mtxModelView = id_normal_matrix; 
+     current->mtxModelView = id_normal_matrix;
      current->color_offset = id_normal_color_offset;
    }
    else if (prgid == PG_VDP2_NORMAL_CRAM)
@@ -2548,7 +2548,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &id_g;
      current->vertexp = 0;
-     current->texcoordp = 1; 
+     current->texcoordp = 1;
       level->prg[level->prgcurrent].vaid = 2;
       current->mtxModelView = id_g.mtxModelView;
       current->mtxTexture = id_g.mtxTexture;
@@ -2618,7 +2618,7 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->texcoordp       = -1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = -1; //glGetUniformLocation(_prgid[PG_NORMAL],(const GLchar *)"u_texMatrix");
-      
+
    }
    else if( prgid == PG_VFP1_ENDUSERCLIP )
    {
@@ -3286,7 +3286,7 @@ SHADER_VERSION
 "      if (color[i].a != 0) { \n"
 "        if (foundColor1 == 0) { \n"
 "          colortop = color[i]; \n"
-"          alphatop = float(alpha[i])/31.0; \n"  
+"          alphatop = float(alpha[i])/31.0; \n"
 "          colorsecond = colorback;\n"
 "          alphasecond = colorback.a;\n"
 "          foundColor1 = 1; \n"
@@ -3427,9 +3427,9 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
   }
 
 
-  glDisable(GL_DEPTH_TEST); 
+  glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
-  
+
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
@@ -3757,7 +3757,7 @@ SHADER_VERSION
 "  addr.x = int( v_texcoord.x);          \n"
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
-"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n" 
+"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
 "  fragColor.b = tex.g;         \n"
@@ -3913,7 +3913,7 @@ static const char fblit_head[] =
 
 static const char fblit_img[] =
   "void main()   \n"
-  "{   \n" 
+  "{   \n"
 "	fragColor = Filter( u_Src, vTexCoord ); \n";
 
 static const char fblit_img_end[] =
@@ -3990,13 +3990,13 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   float nbLines = yabsys.IsPal?625.0f:525.0f;
 
   if (_Ygl->upmode != UP_NONE) {
-    int scale = 1; 
+    int scale = 1;
     if (last_upmode != _Ygl->upmode) {
       if (_Ygl->upfbotex != 0) glDeleteTextures(1, &_Ygl->upfbotex);
       if (_Ygl->upfbo != 0) glDeleteFramebuffers(1, &_Ygl->upfbo);
       _Ygl->upfbo = 0;
       _Ygl->upfbotex = 0;
-      last_upmode = _Ygl->upmode; 
+      last_upmode = _Ygl->upmode;
     }
     scale = Ygl_useUpscaleBuffer();
     glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
