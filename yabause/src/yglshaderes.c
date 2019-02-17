@@ -1592,7 +1592,7 @@ SHADER_VERSION
 "    if (outColor.rgb == vec3(0.0)) {\n"
 "      outColor.rgb = vec3(0.0);\n"
 "      alpha = 0x78;\n"
-"      vdp1mode = 2;\n"
+"      vdp1mode = 3;\n"
 "      mode = 0;\n"
 "    } else { \n"
 "      if (u_pri[(additionalAttr & 0x7)] >= depth) {\n"
