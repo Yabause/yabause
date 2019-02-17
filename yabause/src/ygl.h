@@ -298,7 +298,7 @@ enum
    PG_VFP1_GOURAUDSAHDING_SPD=4,
    PG_VFP1_STARTUSERCLIP=5,
    PG_VFP1_ENDUSERCLIP=6,
-   PG_VFP1_HALFTRANS=7, 
+   PG_VFP1_HALFTRANS=7,
    PG_VFP1_SHADOW=8,
    PG_VFP1_MSB_SHADOW=9,
    PG_VFP1_GOURAUDSAHDING_HALFTRANS=10,
@@ -371,13 +371,13 @@ typedef struct {
 
 #define TESS_COUNT (8)
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
-int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs);
+int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id);
 int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm);
 void YglUpdateVDP1FB(void);
 
 // std140
-typedef struct  { 
- int u_pri[8*4];  
+typedef struct  {
+ int u_pri[8*4];
  int u_alpha[8*4];
  float u_coloroffset[4];
  int u_cctll;
@@ -416,7 +416,7 @@ typedef struct {
    GLuint tex0;
    GLuint tex1;
    float color_offset_val[4];
-   int (*setupUniform)(void *, YglTextureManager *tm, Vdp2* regs);
+   int (*setupUniform)(void *, YglTextureManager *tm, Vdp2* regs, int id);
    int (*cleanupUniform)(void *, YglTextureManager *tm);
    YglVdp1CommonParam * ids;
    GLfloat* matrix;
@@ -524,12 +524,12 @@ typedef struct {
    unsigned int depth;
 
    float clear[4];
-   
+
    // VDP1 Info
    int vdp1_maxpri;
    int vdp1_minpri;
    u32 vdp1_lineTexture;
-   
+
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
@@ -595,7 +595,7 @@ typedef struct {
 
    // Thread
    YabMutex * mutex;
-   
+
    u32 lincolor_tex;
    u32 linecolor_pbo;
    u32 * lincolor_buf;
@@ -682,7 +682,7 @@ void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * c
 u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount,int depth );
 void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int depth);
 
-// 0.. no belnd, 1.. Alpha, 2.. Add 
+// 0.. no belnd, 1.. Alpha, 2.. Add
 int YglSetLevelBlendmode( int pri, int mode );
 
 void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
@@ -732,7 +732,6 @@ int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
 int YglGenerateOriginalBuffer();
 
 int YglSetupWindow(YglProgram * prg);
-int YglCleanUpWindow(YglProgram * prg, YglTextureManager *tm);
 
 void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();

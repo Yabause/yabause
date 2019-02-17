@@ -28,7 +28,7 @@
 #define EPSILON (1e-10 )
 
 
-#include "vidogl.h" 
+#include "vidogl.h"
 #include "vidshared.h"
 #include "debug.h"
 #include "vdp2.h"
@@ -289,7 +289,7 @@ void Vdp2DrawCell_in_async(void *p)
      }
      YabWaitEventQueue(cellq_end);
    }
-} 
+}
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs, int order) {
    drawCellTask *task = malloc(sizeof(drawCellTask));
@@ -367,7 +367,7 @@ static void requestDrawCellQuad(vdp2draw_struct * info, YglTexture *texture, Vdp
    texture->textdata -= (texture->w + 8) * 8 - 8;
    Vdp2DrawCell_in_sync(info, texture, varVdp2Regs);
 #endif
-} 
+}
 
 
 
@@ -632,14 +632,14 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
   u32 alpha = 0xF8;
   int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
   VDP1LOG("Making new sprite %08X\n", charAddr);
- 
+
   if (/*varVdp2Regs->SDCTL != 0 &&*/ MSB != 0) {
     MSB_SHADOW = 1;
     _Ygl->msb_shadow_count_[_Ygl->drawframe]++;
   }
 
-#ifdef SPRITE_CACHE 
-  if (yabsys.useVdp1cache) { 
+#ifdef SPRITE_CACHE
+  if (yabsys.useVdp1cache) {
 
     pattern = getPattern(cmd, Vdp1Ram, varVdp2Regs);
     if (pattern != NULL) {
@@ -1003,17 +1003,17 @@ void Vdp1ReadTexture_in_async(void *p)
      }
      YabWaitEventQueue(vdp1q_end);
    }
-} 
+}
 
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs) {
    vdp1TextureTask *task = malloc(sizeof(vdp1TextureTask));
 
    task->cmd = malloc(sizeof(vdp1cmd_struct));
-   task->texture = malloc(sizeof(YglTexture)); 
+   task->texture = malloc(sizeof(YglTexture));
    task->varVdp2Regs = malloc(sizeof(Vdp2));
 
    memcpy(task->cmd, cmd, sizeof(vdp1cmd_struct));
-   memcpy(task->texture, texture, sizeof(YglTexture)); 
+   memcpy(task->texture, texture, sizeof(YglTexture));
    memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
 
    task->w = sprite->w;
@@ -1303,7 +1303,7 @@ static void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   int i;
   int HShift;
   int v = 0;
-  u32 LineWinAddr; 
+  u32 LineWinAddr;
 
   // Is there BG uses Window0?
   if ((varVdp2Regs->WCTLA & 0X2) || (varVdp2Regs->WCTLA & 0X200) || (varVdp2Regs->WCTLB & 0X2) || (varVdp2Regs->WCTLB & 0X200) ||
@@ -1417,7 +1417,7 @@ static void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
 
             if (m_vWindinfo0[v].WinShowLine && (HStart != preHStart || HEnd != preHEnd) ) {
 
-              // close line 
+              // close line
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 0] = preHStart;
               _Ygl->win0v[_Ygl->win0_vertexcnt * 2 + 1] = v;
               _Ygl->win0_vertexcnt++;
@@ -1644,7 +1644,7 @@ static void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
 
             if (m_vWindinfo1[v].WinShowLine && (HStart != preHStart || HEnd != preHEnd)) {
 
-              // close line 
+              // close line
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 0] = preHStart;
               _Ygl->win1v[_Ygl->win1_vertexcnt * 2 + 1] = v;
               _Ygl->win1_vertexcnt++;
@@ -1786,7 +1786,7 @@ static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area,
   return 0;
 }
 
-// 0 .. outside,1 .. inside 
+// 0 .. outside,1 .. inside
 static INLINE int Vdp2CheckWindowDot(vdp2draw_struct *info, int x, int y, Vdp2 *varVdp2Regs)
 {
   if (info->bEnWin0 == 0 && info->bEnWin1 == 0) return 1;
@@ -1817,7 +1817,7 @@ static INLINE int Vdp2CheckWindowDot(vdp2draw_struct *info, int x, int y, Vdp2 *
   return 0;
 }
 
-// 0 .. all outsize, 1~3 .. partly inside, 4.. all inside 
+// 0 .. all outsize, 1~3 .. partly inside, 4.. all inside
 static int FASTCALL Vdp2CheckWindowRange(vdp2draw_struct *info, int x, int y, int w, int h, Vdp2 *varVdp2Regs)
 {
   int rtn = 0;
@@ -2417,14 +2417,14 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
       break;
     case 1:
       baseaddr += sh + sv * info->cellw;
-      
+
       for (j = 0; j < vdp2width; j++)
       {
         int h = ((j*inch) >> 8);
         u32 alpha = info->alpha;
         u8 dot = T1ReadByte(Vdp2Ram, baseaddr + h);
-        if (!dot && info->transparencyenable) { 
-          *texture->textdata++ = 0; continue; 
+        if (!dot && info->transparencyenable) {
+          *texture->textdata++ = 0; continue;
         }
         else {
           color = info->coloroffset + ((info->paladdr << 4) | (dot & 0xFF));
@@ -2525,7 +2525,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   if ((info->bEnWin0 != 0 || info->bEnWin1 != 0) && info->coordincx == 1.0f && info->coordincy == 1.0f)
   {                                                 // coordinate inc is not supported yet.
     winmode = Vdp2CheckWindowRange(info, x - cx, y - cy, tile.cellw, info->lineinc, varVdp2Regs);
-    if (winmode == 0) // all outside, no need to draw 
+    if (winmode == 0) // all outside, no need to draw
     {
       return;
     }
@@ -3250,7 +3250,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   }
 #ifdef RGB_ASYNC
   if (rgb_type == 0x0) Vdp2DrawRotation_in(rbg, varVdp2Regs);
-  else 
+  else
 #endif
   {
     Vdp2DrawRotation_in_sync(rbg, varVdp2Regs);
@@ -3650,7 +3650,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
           if (info->flipfunction & 0x2)
             y = 8 - 1 - y;
 
-          // horizontal flip	
+          // horizontal flip
           if (info->flipfunction & 0x1)
             x = 8 - 1 - x;
         }
@@ -3734,7 +3734,7 @@ void Vdp2DrawRotation_in_async(void *p)
      }
      YabWaitEventQueue(rotq_end);
    }
-} 
+}
 
 static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
    rotationTask *task = malloc(sizeof(rotationTask));
@@ -4088,7 +4088,7 @@ static int expandVertices(float* in, float* out, int distorted)
   float nx[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   float ny[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   float vx[4];
-  float vy[4]; 
+  float vy[4];
   float dot;
 
 #ifdef TEST
@@ -4187,7 +4187,7 @@ static int expandVertices(float* in, float* out, int distorted)
     float dy[4];
 
     int c1, c2 = -1;
- 
+
     for (int i = 0; i < 4; i++) {
       for (int j = i+1; j < 4; j++) {
         if (IS_ZERO(in[2*i]-in[2*j]) && IS_ZERO(in[2*i+1]-in[2*j+1])) {
@@ -4237,7 +4237,7 @@ static int expandVertices(float* in, float* out, int distorted)
       if (!IS_ZERO(cy)) {
         if (IS_LESS(cy, -EPSILON)) cy = -BORDER;
         if (IS_MORE(cy, EPSILON)) cy = BORDER;
-      } 
+      }
       nx[i] = in[i*2] + cx;
       ny[i] = in[i*2+1] + cy;
       if (i == c2) {
@@ -4260,7 +4260,7 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
     float dx[4];
     float dy[4];
     float entrant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-    float angle[4];   
+    float angle[4];
 
     dx[0] = in[0] - in[2];
     dx[1] = in[2] - in[4];
@@ -4273,7 +4273,7 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
     dy[3] = in[7] - in[1];
 
     for (int i = 0; i<4; i++) {
-      float l = sqrtf(dx[i]*dx[i]+dy[i]*dy[i]); 
+      float l = sqrtf(dx[i]*dx[i]+dy[i]*dy[i]);
       if (!IS_ZERO(l)) {
         dx[i] /= l;
         dy[i] /= l;
@@ -4299,11 +4299,11 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
       if (!IS_ZERO(cx)) {
         if (IS_LESS(cx, -EPSILON)) dx = -BORDER;
         if (IS_MORE(cx, EPSILON)) dx = BORDER;
-      } else 
+      } else
       if (!IS_ZERO(cy)) {
         if (IS_LESS(cy, -EPSILON)) dy = -BORDER;
         if (IS_MORE(cy, EPSILON)) dy = BORDER;
-      } 
+      }
 #if 0
       if (IS_ZERO(dx[i]) && IS_ZERO(dy[(i+3)%4])) {
         cx = cy = 0.0f;
@@ -4385,7 +4385,7 @@ printf("[(%f %f)]%f [(%f %f)]%f [(%f %f)]%f [(%f %f)]%f\n", nx[0], ny[0], entran
   }
 #endif
 
-  } 
+  }
   out[0] = nx[0];
   out[1] = ny[0];
   out[2] = nx[1];
@@ -4696,7 +4696,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       //sprite.blendmode = VDP1_COLOR_CL_MESH;
       sprite.blendmode = VDP1_COLOR_CL_REPLACE;
     else {
-      //if ( (CMDPMOD & 0x40) != 0) { 
+      //if ( (CMDPMOD & 0x40) != 0) {
       //   sprite.blendmode = VDP1_COLOR_SPD;
       //} else{
       sprite.blendmode = VDP1_COLOR_CL_REPLACE;
@@ -4998,16 +4998,16 @@ static int isLine(s16 *v) {
   s16 dy[4];
 
   dx[0] = v[0] - v[2];
-  dy[0] = v[1] - v[3];   
+  dy[0] = v[1] - v[3];
 
   dx[1] = v[0] - v[4];
   dy[1] = v[1] - v[5];
 
   dx[2] = v[2] - v[4];
-  dy[2] = v[3] - v[5];  
+  dy[2] = v[3] - v[5];
 
   dx[3] = v[2] - v[6];
-  dy[3] = v[3] - v[7];  
+  dy[3] = v[3] - v[7];
 
   if (dx[1]*dy[0] == dx[0]*dy[1] == dx[1]*dy[2] == dx[2]*dy[1] == dx[2]*dy[3] == dx[3]*dy[2]) {
     if ((dx[0]== 0)&&(dy[0]== 0)&&(dy[1]== 0)&&(dy[1]== 0) && (dx[2] == 0) && (dy[2]== 0) && (dx[3]==0) && (dy[3]==0)) {
@@ -6491,7 +6491,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   if ((varVdp2Regs->CCCTL & 0xF000) == 0xC000) {
     info.blendmode |= VDP2_CC_BLUR;
   }
-  
+
   info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
@@ -7298,7 +7298,7 @@ LOG_ASYN("*********************************\n");
 
 
 
-#if BG_PROFILE    
+#if BG_PROFILE
   now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
   if (now > before) {
     difftime = now - before;
@@ -7312,7 +7312,7 @@ LOG_ASYN("*********************************\n");
 }
 
 int WaitVdp2Async(int sync) {
-  int empty = 0;  
+  int empty = 0;
   if ((vdp2busy == 1)) {
 #ifdef RGB_ASYNC
     if (rotq_end != NULL) {
@@ -7532,7 +7532,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2Wm3(vdp2rotationparameter
 
 vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1Wm3(vdp2rotationparameter_struct * param, int index)
 {
-  return param; // ToDo:   
+  return param; // ToDo:
 }
 
 
@@ -7822,4 +7822,3 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 }
 
 #endif
-

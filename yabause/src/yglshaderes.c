@@ -92,7 +92,7 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
 }
 
-int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs){
+int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id){
 
   YglProgram * prg;
   YglVdp1CommonParam * param;
@@ -155,7 +155,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   return 0;
 }
 
-int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs){
+int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id){
 
   YglProgram * prg;
   YglVdp1CommonParam * param;
@@ -263,7 +263,7 @@ static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
 
 
-int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
 
   YglProgram * prg;
@@ -295,27 +295,49 @@ SHADER_VERSION
 "#endif\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
+"uniform float u_emu_height;\n"
+"uniform float u_vheight; \n"
 "uniform highp sampler2D s_texture;\n"
+"uniform sampler2D s_perline;  \n"
+"uniform int is_perline; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()\n"
 "{\n"
+"  ivec2 linepos; \n "
+"  float alpha = 0.0; \n"
+"  vec4 color_offset = u_color_offset; \n"
+"  linepos.y = 0; \n "
+"  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
-"  fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n"
+"  vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
+"  if (is_perline == 1) {\n"
+"    if (perline == vec4(0.0)) discard;\n"
+"    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
+"    if (perline.a > 0.0) alpha = perline.a;\n"
+"  } else {\n"
+"    alpha = txcol.a; \n"
+"  } \n"
+"  txcol.a = alpha;\n"
+"  fragColor = clamp(txcol+color_offset,vec4(0.0),vec4(1.0));\n"
 "  fragColor.a = txindex.a;\n"
 "}\n";
 
 
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
 static int id_normal_cram_s_texture = -1;
+static int id_normal_cram_s_perline = -1;
+static int id_normal_cram_isperline = -1;
+static int id_normal_cram_emu_height = -1;
+static int id_normal_cram_vheight = -1;
 static int id_normal_cram_s_color = -1;
 static int id_normal_cram_color_offset = -1;
 static int id_normal_cram_matrix = -1;
 
 
-int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
 
   YglProgram * prg;
@@ -324,9 +346,17 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_cram_s_texture, 0);
   glUniform1i(id_normal_cram_s_color, 1);
+  glUniform1i(id_normal_cram_s_perline, 2);
+  glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
+  glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(id_normal_cram_vheight, (float)_Ygl->height);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->perLine[id]);
   return 0;
 }
 
@@ -365,7 +395,7 @@ static int id_normal_cram_color_offset_addcol = -1;
 static int id_normal_cram_matrix_addcol = -1;
 
 
-int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
 
   YglProgram * prg;
@@ -461,7 +491,7 @@ static int id_rbg_cram_line_color_offset = -1;
 static int id_rbg_cram_line_blendmode = -1;
 static int id_rbg_cram_line_matrix = -1;
 
-int Ygl_uniformNormalCramLine(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformNormalCramLine(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
 
   YglProgram * prg;
@@ -558,7 +588,7 @@ int Ygl_useUpscaleBuffer(void){
 /*------------------------------------------------------------------------------------
 *  Mosaic Draw
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
   YglProgram * prg;
   prg = p;
@@ -615,7 +645,7 @@ int Ygl_cleanupMosaic(void * p, YglTextureManager *tm)
 /*------------------------------------------------------------------------------------
 *  Per Line Alpha
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformPerLineAlpha(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformPerLineAlpha(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
   YglProgram * prg;
   int preblend = 0;
@@ -677,7 +707,7 @@ int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
 /*------------------------------------------------------------------------------------
 *  Blur
 * ----------------------------------------------------------------------------------*/
-int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
   YglProgram * prg;
   prg = p;
@@ -848,7 +878,7 @@ const GLchar * pYglprg_vdp1_normal_f[] = {Yglprg_vpd1_normal_f, NULL};
 static int id_vdp1_normal_s_texture_size = -1;
 static int id_vdp1_normal_s_texture = -1;
 
-int Ygl_uniformVdp1Normal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
+int Ygl_uniformVdp1Normal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
    YglProgram * prg;
    prg = p;
@@ -1391,7 +1421,7 @@ static YglVdp1CommonParam shadow_tess = { 0 };
 /*------------------------------------------------------------------------------------
  *  VDP1 UserClip Operation
  * ----------------------------------------------------------------------------------*/
-int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
+int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id )
 {
    YglProgram * prg;
    prg = p;
@@ -1463,7 +1493,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs 
 
 int Ygl_cleanupStartUserClip(void * p, YglTextureManager *tm ){return 0;}
 
-int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
+int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id )
 {
 
    YglProgram * prg;
@@ -1857,7 +1887,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offs
 /*------------------------------------------------------------------------------------
  *  VDP2 Add Blend operaiotn
  * ----------------------------------------------------------------------------------*/
-int Ygl_uniformAddBlend(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs )
+int Ygl_uniformAddBlend(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id )
 {
    glBlendFunc(GL_ONE,GL_ONE);
    return 0;
@@ -1945,7 +1975,7 @@ LinecolUniform linecol_cram = { 0 };
 LinecolUniform linecol_destalpha = { 0 };
 LinecolUniform linecol_destalpha_cram = { 0 };
 
-int Ygl_uniformLinecolorInsert(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs)
+int Ygl_uniformLinecolorInsert(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
   YglProgram * prg;
   LinecolUniform * param = &linecol;
@@ -2119,8 +2149,12 @@ int YglProgramInit()
 
   id_normal_cram_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_texture");
   id_normal_cram_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_color");
+  id_normal_cram_s_perline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_perline");
+  id_normal_cram_isperline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_perline");
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
+  id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");
+  id_normal_cram_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vheight");
 
    YGLLOG("PG_VDP2_RBG_CRAM_LINE\n");
 
@@ -3172,7 +3206,6 @@ SHADER_VERSION
 "precision highp float; \n"
 "#endif\n"
 "in vec2 v_texcoord; \n"
-"uniform int s_perline;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
 "uniform sampler2D s_texture0;  \n"
@@ -3182,13 +3215,6 @@ SHADER_VERSION
 "uniform sampler2D s_texture4;  \n"
 "uniform sampler2D s_texture5;  \n"
 "uniform sampler2D s_texture6;  \n"
-"uniform sampler2D s_bg0;  \n"
-"uniform sampler2D s_bg1;  \n"
-"uniform sampler2D s_bg2;  \n"
-"uniform sampler2D s_bg3;  \n"
-"uniform sampler2D s_bg4;  \n"
-"uniform sampler2D s_bg5;  \n"
-"uniform sampler2D s_bg6;  \n"
 "uniform sampler2D s_back;  \n"
 "out vec4 finalColor; \n"
 "out vec4 topColor; \n"
@@ -3203,7 +3229,6 @@ SHADER_VERSION
 "  vec4 colorfourth = vec4(0.0); \n"
 "  vec4 colorback = vec4(0.0); \n"
 "  vec4 color[7]; \n"
-"  vec4 bg[7]; \n"
 "  int alpha[7]; \n"
 "  int foundColor1 = 0; \n"
 "  int foundColor2 = 0; \n"
@@ -3257,29 +3282,7 @@ SHADER_VERSION
 "  color[6] = texelFetch( s_texture6, addr,0 ); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
 
-"  if ((s_perline & (1 << 0))!=0) bg[0] = texelFetch( s_bg0, linepos,0 ); \n"
-"  else bg[0] = vec4(0.0);\n"
-"  if ((s_perline & (1 << 1))!=0) bg[1] = texelFetch( s_bg1, linepos,0 ); \n"
-"  else bg[1] = vec4(0.0);\n"
-"  if ((s_perline & (1 << 2))!=0) bg[2] = texelFetch( s_bg2, linepos,0 ); \n"
-"  else bg[2] = vec4(0.0);\n"
-"  if ((s_perline & (1 << 3))!=0) bg[3] = texelFetch( s_bg3, linepos,0 ); \n"
-"  else bg[3] = vec4(0.0);\n"
-"  if ((s_perline & (1 << 4))!=0) bg[4] = texelFetch( s_bg4, linepos,0 ); \n"
-"  else bg[4] = vec4(0.0);\n"
-"  if ((s_perline & (1 << 5))!=0) bg[5] = texelFetch( s_bg5, linepos,0 ); \n"
-"  else bg[5] = vec4(0.0);\n"
-"  if ((s_perline & (1 << 6))!=0) bg[6] = texelFetch( s_bg6, linepos,0 ); \n"
-"  else bg[6] = vec4(0.0);\n"
-
 "  colortop = colorback; \n"
-
-"  for (int i = 0; i<7; i++) { \n"
-"    if ((s_perline & (1 << i))!=0){ \n"
-"      if (bg[i] == vec4(0.0)) color[i] = vec4(0.0);\n"
-"      if (bg[i].a > 0.0) color[i].a = bg[i].a;\n"
-"    }\n"
-"  }\n"
 
 "  for (int i = 0; i<7; i++) { \n"
 "    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
@@ -3409,14 +3412,6 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture5"), 1);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture6"), 0);
 
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg0"), 14);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg1"), 13);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg2"), 12);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg3"), 11);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg4"), 10);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg5"), 9);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_bg6"), 8);
-
     glBindFragDataLocation(vdp2prio_prg, 1, "topColor");
     glBindFragDataLocation(vdp2prio_prg, 2, "secondColor");
     glBindFragDataLocation(vdp2prio_prg, 3, "thirdColor");
@@ -3446,17 +3441,9 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, texture[i]);
   }
-  for (int i = 0; i<7; i++) {
-    if (_Ygl->perLine[i] != 0) {
-      glActiveTexture(gltext[i+8]);
-      glBindTexture(GL_TEXTURE_2D, _Ygl->perLine[i]);
-      perLine |= 1 << i;
-    }
-  }
 
   glUniform1f(glGetUniformLocation(vdp2prio_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2prio_prg, "u_vheight"), (float)_Ygl->height);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_perline"), perLine);
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

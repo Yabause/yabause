@@ -2723,7 +2723,7 @@ static void renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat,
     }
 
     if(level->prg[j].setupUniform) {
-      level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe], varVdp2Regs);
+      level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe], varVdp2Regs, SPRITE);
     }
     if( level->prg[j].currentQuad != 0 ) {
       glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
@@ -3227,6 +3227,7 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
 
+
   for (int j = 0; j < (level->prgcurrent + 1); j++)
   {
     if (level->prg[j].currentQuad != 0) {
@@ -3240,7 +3241,7 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
       }
       if (level->prg[j].setupUniform)
       {
-        level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2, varVdp2Regs);
+        level->prg[j].setupUniform((void*)&level->prg[j], YglTM_vdp2, varVdp2Regs, id);
       }
 
       glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&_Ygl->mtxModelView.m[0][0]);
@@ -3534,47 +3535,6 @@ render_finish:
   glFlush();
   FrameProfileAdd("YglRender end");
   return;
-}
-
-int YglCleanUpWindow(YglProgram * prg, YglTextureManager *tm){
-
-  int bwin_cc0 = (Vdp2Regs->WCTLD >> 9) & 0x01;
-  int logwin_cc0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
-  int bwin_cc1 = (Vdp2Regs->WCTLD >> 11) & 0x01;
-  int logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
-  int winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
-
-  if (prg->bwin0 == 0 && prg->bwin1 == 0) {
-    if (bwin_cc0 || bwin_cc1) {
-      // Disable Color clacuration then draw outside of window
-      glDisable(GL_STENCIL_TEST);
-      //glEnable(GL_DEPTH_TEST);
-      glDepthFunc(GL_GREATER);
-      glDisable(GL_BLEND);
-      Ygl_setNormalshader(prg);
-
-      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
-      glBufferData(GL_ARRAY_BUFFER, prg->currentQuad * sizeof(float), prg->quads, GL_STREAM_DRAW);
-      glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-      glEnableVertexAttribArray(0);
-
-      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textcoords_buf);
-      glBufferData(GL_ARRAY_BUFFER, prg->currentQuad * sizeof(float) * 2, prg->textcoords, GL_STREAM_DRAW);
-      glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
-      glEnableVertexAttribArray(1);
-
-      glDrawArrays(GL_TRIANGLES, 0, prg->currentQuad / 2);
-      glDepthFunc(GL_GEQUAL);
-      Ygl_cleanupNormal(prg, tm);
-      glUseProgram(prg->prg);
-    }
-  }
-
-  glEnable(GL_BLEND);
-  glDisable(GL_STENCIL_TEST);
-  glStencilFunc(GL_ALWAYS, 0, 0xFF);
-
-  return 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////
