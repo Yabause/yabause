@@ -3280,7 +3280,7 @@ SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
   SpriteMode ret = NONE;
   const int enableBit[enBGMAX] = {0, 1, 2, 3, 4, 0, 6};
   if (varVdp2Regs->CCCTL & (1<<enableBit[layer])) {
-    if (varVdp2Regs->CCCTL>>8) {
+    if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
       YGLDEBUG("Layer %d as_is\n", layer);
     } else {
