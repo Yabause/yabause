@@ -3143,7 +3143,7 @@ void YglSetClearColor(float r, float g, float b){
   _Ygl->clear[0] = r;
   _Ygl->clear[1] = g;
   _Ygl->clear[2] = b;
-  _Ygl->clear[3] = (float)NONE/255.0f;
+  _Ygl->clear[3] = (float)(0xF8|NONE)/255.0f;
 }
 
 static void releaseVDP1FB(int i) {
