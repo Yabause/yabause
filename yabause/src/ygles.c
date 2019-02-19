@@ -3487,14 +3487,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
   YglBlitTexture(_Ygl->priority_fbotex, _Ygl->bg);
-#if 0
-  glDrawBuffers(1, &DrawBuffers[0]);
-  glClearBufferfv(GL_COLOR, 0, colopaque);
-  //YglBlitSimple(_Ygl->original_fbotex[4], 1);
-  //YglBlitSimple(_Ygl->original_fbotex[3], 1);
-  YglBlitSimple(_Ygl->original_fbotex[2], 1);
-  YglBlitSimple(_Ygl->original_fbotex[1], 1);
-#endif
 
 
     //if((img[0] == 0) && (img[1] == 0) && (img[2] == 0)) { // Break doom...

@@ -318,7 +318,7 @@ SHADER_VERSION
 "    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
 "    if (perline.a > 0.0) alpha = perline.a;\n"
 "  } else {\n"
-"    alpha = txcol.a; \n"
+"    alpha = txindex.a; \n"
 "  } \n"
 "  txcol.a = alpha;\n"
 "  fragColor = clamp(txcol+color_offset,vec4(0.0),vec4(1.0));\n"
@@ -3249,30 +3249,6 @@ SHADER_VERSION
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 
-#if 0
-"  color[0] = texelFetch( s_texture6, addr,0 ); \n"
-"  color[1] = texelFetch( s_texture5, addr,0 ); \n"
-"  color[2] = texelFetch( s_texture4, addr,0 ); \n"
-"  color[3] = texelFetch( s_texture3, addr,0 ); \n"
-"  color[4] = texelFetch( s_texture2, addr,0 ); \n"
-"  color[5] = texelFetch( s_texture1, addr,0 ); \n"
-"  color[6] = texelFetch( s_texture0, addr,0 ); \n"
-"  colorback = vec4(0.0); \n"
-
-"  topColor = colorback; \n"
-
-
-"  for (int i = 0; i<7; i++) { \n"
-"    modetop = int(color[i].a * 255.0)&0x7; \n"
-"    alphatop = float(alpha[i])/255.0; \n"
-"    if (modetop == 1) topColor = vec4(color[i].rgb, 1.0); \n"
-"    if (modetop == 2) topColor = vec4(color[i].rgb, alphatop); \n"
-"    if (modetop == 3) topColor = vec4(alphatop*color[i].rgb + (1.0 - alphatop)*topColor.rgb, 1.0); \n"
-"    if (modetop == 4) topColor = vec4(topColor.a*color[i].rgb + (1.0 - topColor.a)*topColor.rgb, 1.0); \n"
-"  } \n"
-
-
-#else
 "  color[0] = texelFetch( s_texture0, addr,0 ); \n"
 "  color[1] = texelFetch( s_texture1, addr,0 ); \n"
 "  color[2] = texelFetch( s_texture2, addr,0 ); \n"
@@ -3313,7 +3289,7 @@ SHADER_VERSION
 "  modetop = int(colortop.a * 255.0)&0x7; \n"
 "  modesecond = int(colorsecond.a * 255.0)&0x7; \n"
 "  modethird = int(colorthird.a * 255.0)&0x7; \n"
-
+#if 1
 "  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
 "  if (modetop == 2) topColor = vec4(colortop.rgb, alphatop); \n"
 "  if (modetop == 3) topColor = vec4(alphatop*colortop.rgb + (1.0 - alphatop)*colorsecond.rgb, 1.0); \n"
@@ -3324,6 +3300,20 @@ SHADER_VERSION
 "  if (modesecond == 3) secondColor = vec4(alphasecond*colortop.rgb + (1.0 - alphasecond)*colorthird.rgb, 1.0); \n"
 "  if (modesecond == 4) secondColor = vec4(alphathird*colortop.rgb + (1.0 - alphathird)*colorthird.rgb, 1.0); \n"
 
+"  finalColor = vec4( topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
+#else
+"  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
+"  if (modetop == 2) topColor = vec4(colortop.rgb, 1.0); \n"
+"  if (modetop == 3) topColor = vec4(colortop.rgb, alphatop); \n"
+"  if (modetop == 4) topColor = vec4(colortop.rgb, alphasecond); \n"
+
+"  if (modesecond == 1) secondColor = vec4(colorsecond.rgb, 1.0); \n"
+"  if (modesecond == 2) secondColor = vec4(colorsecond.rgb, 1.0); \n"
+"  if (modesecond == 3) secondColor = vec4(colorsecond.rgb, alphasecond); \n"
+"  if (modesecond == 4) secondColor = vec4(colorsecond.rgb, alphathird); \n"
+
+"  finalColor = vec4( topColor.a * topColor.rgb + (1.0 - topColor.a) * (secondColor.a * secondColor.rgb + (1.0 - secondColor.a)*colorthird.rgb), 1.0); \n"
+#endif
 //"  if (modethird == 1) thirdColor = vec4(colorthird.rgb, 1.0); \n"
 //"  if (modethird == 2) thirdColor = vec4(colorthird.rgb, alphathird); \n"
 //"  if (modethird == 3) thirdColor = vec4(alphathird*colortop.rgb + (1.0 - alphathird)*colorfourth.rgb, 1.0); \n"
@@ -3331,9 +3321,7 @@ SHADER_VERSION
 
 //"  fourthColor = vec4(colorfourth.rgb, 1.0); \n"
 
-"  finalColor = vec4( topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
 
-#endif
 "} \n";
 
 int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
