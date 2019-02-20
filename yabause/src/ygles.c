@@ -3384,19 +3384,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int prioscreens[6];
   int modescreens[6];
   glDisable(GL_BLEND);
-  for(int i = 0; i < 7; i++) {
-    int nbScreens = 0;
-    int priority = i+1;
-    glDrawBuffers(1, &DrawBuffers[i]);
-    for (int j=0; j<6; j++) {
-      //if (drawScreen[vdp2screens[j]] & (1<<i)) {
-        prioscreens[nbScreens] = _Ygl->screen_fbotex[vdp2screens[j]];
-        modescreens[nbScreens] =  setupBlend(varVdp2Regs, vdp2screens[j]);
-        nbScreens++;
-      //}
-    }
-    YglBlitVdp2Priority(priority, prioscreens, modescreens, nbScreens);
+  for (int j=0; j<6; j++) {
+    prioscreens[j] = _Ygl->screen_fbotex[vdp2screens[j]];
+    modescreens[j] =  setupBlend(varVdp2Regs, vdp2screens[j]);
   }
+  //  YglBlitVdp2Priority(priority, prioscreens, modescreens, nbScreens);
   glDrawBuffers(1, &DrawBuffers[7]);
   if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
     YglDrawBackScreen();
@@ -3408,7 +3400,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glDrawBuffers(5, &DrawBuffers[0]);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
-  YglBlitTexture(_Ygl->priority_fbotex, _Ygl->bg);
+  YglBlitTexture(_Ygl->screen_fbotex, _Ygl->bg, prioscreens, modescreens);
 
 
     //if((img[0] == 0) && (img[1] == 0) && (img[2] == 0)) { // Break doom...

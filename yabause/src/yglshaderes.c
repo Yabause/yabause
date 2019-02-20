@@ -3144,36 +3144,6 @@ int YglBlitVdp2Priority(int priority, int* prioscreens, int* modescreens, int nb
   }
 
   glUniform1i(glGetUniformLocation(vdp2priority_prg, "prio"), priority);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "screen_nb"), nbScreen);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode0"), modescreens[0]);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode1"), modescreens[1]);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode2"), modescreens[2]);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode3"), modescreens[3]);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode4"), modescreens[4]);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "mode5"), modescreens[5]);
-  glUniform1i(glGetUniformLocation(vdp2priority_prg, "fbon"), Vdp1External.disptoggle & 0x01);
-
-  glDisable(GL_DEPTH_TEST);
-
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(1);
-
-  if (Vdp1External.disptoggle & 0x01) {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1screen_fbotex[priority-1]);
-  }
-  for (int i=0; i<nbScreen; i++) {
-    glActiveTexture(textures[i]);
-    glBindTexture(GL_TEXTURE_2D, prioscreens[i]);
-  }
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -3206,21 +3176,122 @@ SHADER_VERSION
 "precision highp float; \n"
 "#endif\n"
 "in vec2 v_texcoord; \n"
-"uniform float u_emu_height;\n"
-"uniform float u_vheight; \n"
+"uniform sampler2D s_back;  \n"
+"uniform sampler2D s_lncl;  \n"
+"uniform int u_lncl;  \n"
+"out vec4 finalColor; \n"
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+
+
 "uniform sampler2D s_texture0;  \n"
 "uniform sampler2D s_texture1;  \n"
 "uniform sampler2D s_texture2;  \n"
 "uniform sampler2D s_texture3;  \n"
 "uniform sampler2D s_texture4;  \n"
 "uniform sampler2D s_texture5;  \n"
-"uniform sampler2D s_texture6;  \n"
-"uniform sampler2D s_back;  \n"
-"out vec4 finalColor; \n"
-"out vec4 topColor; \n"
-"out vec4 secondColor; \n"
-"out vec4 thirdColor; \n"
-"out vec4 fourthColor; \n"
+"uniform sampler2D fb_texture0;  \n"
+"uniform sampler2D fb_texture1;  \n"
+"uniform sampler2D fb_texture2;  \n"
+"uniform sampler2D fb_texture3;  \n"
+"uniform sampler2D fb_texture4;  \n"
+"uniform sampler2D fb_texture5;  \n"
+"uniform sampler2D fb_texture6;  \n"
+"uniform int fbon;  \n"
+"uniform int screen_nb;  \n"
+"uniform int mode0;  \n"
+"uniform int mode1;  \n"
+"uniform int mode2;  \n"
+"uniform int mode3;  \n"
+"uniform int mode4;  \n"
+"uniform int mode5;  \n"
+
+"vec4 getPriorityColor(int prio)   \n"
+"{  \n"
+"  vec4 outColor = vec4(0.0);\n"
+"  ivec2 addr = ivec2(textureSize(fb_texture0, 0) * v_texcoord.st); \n"
+"  vec4 fbColor; \n"
+"  int priority; \n"
+"  int alpha; \n"
+"  int mode; \n"
+"  if (fbon == 1) {\n"
+"   if (prio == 1) fbColor = texelFetch( fb_texture0, addr,0 ); \n"
+"   if (prio == 2) fbColor = texelFetch( fb_texture1, addr,0 ); \n"
+"   if (prio == 3) fbColor = texelFetch( fb_texture2, addr,0 ); \n"
+"   if (prio == 4) fbColor = texelFetch( fb_texture3, addr,0 ); \n"
+"   if (prio == 5) fbColor = texelFetch( fb_texture4, addr,0 ); \n"
+"   if (prio == 6) fbColor = texelFetch( fb_texture5, addr,0 ); \n"
+"   if (prio == 7) fbColor = texelFetch( fb_texture6, addr,0 ); \n"
+"    mode = int(fbColor.a*255.0)&0x7; \n"
+"    if (mode != 0) {\n"
+"      return fbColor; \n"
+"    }\n"
+"  }\n"
+"  if (screen_nb == 0) return outColor;\n"
+"  addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture0, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    outColor = fbColor; \n"
+"    alpha = int(outColor.a*255.0)&0xF8; \n"
+"    outColor.a = float(alpha|mode0)/255.0; \n"
+"    return outColor;\n"
+"  }\n"
+"  if (screen_nb == 1) return outColor;\n"
+"  addr = ivec2(textureSize(s_texture1, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture1, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    outColor = fbColor; \n"
+"    alpha = int(outColor.a*255.0)&0xF8; \n"
+"    outColor.a = float(alpha|mode1)/255.0; \n"
+"    return outColor;\n"
+"  }\n"
+"  if (screen_nb == 2) return outColor;\n"
+"  addr = ivec2(textureSize(s_texture2, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture2, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    outColor = fbColor; \n"
+"    alpha = int(outColor.a*255.0)&0xF8; \n"
+"    outColor.a = float(alpha|mode2)/255.0; \n"
+"    return outColor;\n"
+"  }\n"
+"  if (screen_nb == 3) return outColor;\n"
+"  addr = ivec2(textureSize(s_texture3, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture3, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    outColor = fbColor; \n"
+"    alpha = int(outColor.a*255.0)&0xF8; \n"
+"    outColor.a = float(alpha|mode3)/255.0; \n"
+"    return outColor;\n"
+"  }\n"
+"  if (screen_nb == 4) return outColor;\n"
+"  addr = ivec2(textureSize(s_texture4, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture4, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    outColor = fbColor; \n"
+"    alpha = int(outColor.a*255.0)&0xF8; \n"
+"    outColor.a = float(alpha|mode4)/255.0; \n"
+"    return outColor;\n"
+"  }\n"
+"  if (screen_nb == 5) return outColor;\n"
+"  addr = ivec2(textureSize(s_texture5, 0) * v_texcoord.st); \n"
+"  fbColor = texelFetch( s_texture5, addr,0 ); \n"
+"  priority = int(fbColor.a*255.0)&0x7; \n"
+"  if (priority == prio) {\n"
+"    outColor = fbColor; \n"
+"    alpha = int(outColor.a*255.0)&0xF8; \n"
+"    outColor.a = float(alpha|mode5)/255.0; \n"
+"    return outColor;\n"
+"  }\n"
+"  return outColor;  \n"
+"}  \n"
+
 "void main()   \n"
 "{  \n"
 "  vec4 colortop = vec4(0.0);  \n"
@@ -3228,56 +3299,53 @@ SHADER_VERSION
 "  vec4 colorthird = vec4(0.0); \n"
 "  vec4 colorfourth = vec4(0.0); \n"
 "  vec4 colorback = vec4(0.0); \n"
-"  vec4 color[7]; \n"
-"  int alpha[7]; \n"
 "  int foundColor1 = 0; \n"
 "  int foundColor2 = 0; \n"
 "  int foundColor3 = 0; \n"
 "  int modetop = 0; \n"
 "  int modesecond = 0; \n"
 "  int modethird = 0; \n"
+"  int lncl = 0;\n"
 "  float alphatop = 0.0; \n"
 "  float alphasecond = 0.0; \n"
 "  float alphathird = 0.0; \n"
 "  float alphafourth = 0.0; \n"
 "  ivec2 addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
-"  ivec2 linepos; \n "
-"  linepos.y = 0; \n "
-"  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 
-"  color[0] = texelFetch( s_texture0, addr,0 ); \n"
-"  color[1] = texelFetch( s_texture1, addr,0 ); \n"
-"  color[2] = texelFetch( s_texture2, addr,0 ); \n"
-"  color[3] = texelFetch( s_texture3, addr,0 ); \n"
-"  color[4] = texelFetch( s_texture4, addr,0 ); \n"
-"  color[5] = texelFetch( s_texture5, addr,0 ); \n"
-"  color[6] = texelFetch( s_texture6, addr,0 ); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
 
 "  colortop = colorback; \n"
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
-
-"  for (int i = 0; i<7; i++) { \n"
+"  for (int i = 7; i>0; i--) { \n"
 "    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
-"      alpha[i] = (int(color[i].a * 255.0)&0xF8)>>3; \n"
-"      if (color[i].a != 0) { \n"
+"      vec4 color = getPriorityColor(i);\n"
+"      int alpha = (int(color.a * 255.0)&0xF8)>>3; \n"
+"      if (color.a != 0) { \n"
+//"        lncl |= u_lncl;\n"
 "        if (foundColor1 == 0) { \n"
-"          colorsecond = colortop;\n"
-"          alphasecond = alphatop;\n"
-"          colortop = color[i]; \n"
-"          alphatop = float(alpha[i])/31.0; \n"
+"          if (lncl == 0) { \n"
+"            colorsecond = colortop;\n"
+"            alphasecond = alphatop;\n"
+"          } else { \n"
+"            colorsecond = texelFetch( s_lncl, addr,0 );\n"
+"            alphasecond = float((int(colorsecond.a * 255.0)&0xF8)>>3)/31.0;\n"
+"            foundColor2 = 1;\n"
+"            foundColor3 = 1;\n"
+"          }\n"
+"          colortop = color; \n"
+"          alphatop = float(alpha)/31.0; \n"
 "          foundColor1 = 1; \n"
 "        } else if (foundColor2 == 0) { \n"
 "          colorthird = colorsecond;\n"
 "          alphathird = alphasecond;\n"
-"          colorsecond = color[i]; \n"
-"          alphasecond = float(alpha[i])/31.0; \n"
+"          colorsecond = color; \n"
+"          alphasecond = float(alpha)/31.0; \n"
 "          foundColor2 = 1; \n"
 "        } else if (foundColor3 == 0) { \n"
 "          colorfourth = colorthird;\n"
 "          alphafourth = alphathird;\n"
-"          colorthird = color[i]; \n"
-"          alphathird = float(alpha[i])/31.0; \n"
+"          colorthird = color; \n"
+"          alphathird = float(alpha)/31.0; \n"
 "          foundColor3 = 1; \n"
 "        } \n"
 "      } \n"
@@ -3298,13 +3366,16 @@ SHADER_VERSION
 "  if (modesecond == 4) secondColor = vec4(alphathird*colortop.rgb + (1.0 - alphathird)*colorthird.rgb, 1.0); \n"
 
 "  finalColor = vec4( topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
+"  thirdColor = colortop;\n"
+"  fourthColor = colorsecond;\n"
 
 "} \n";
 
-int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
+int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
   int perLine = 0;
+  int nbScreen = 6;
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3319,7 +3390,7 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
     0.0f, 1.0f
   };
 
-  int gltext[15] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14};
+  int gltext[16] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15};
 
   if (vdp2prio_prg == -1){
     GLuint vshader;
@@ -3368,14 +3439,24 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
     }
 
     GLUSEPROG(vdp2prio_prg);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_back"), 7);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture0"), 6);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture1"), 5);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture2"), 4);
+
+
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture0"), 0);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture1"), 1);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture2"), 2);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture3"), 3);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture4"), 2);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture5"), 1);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture6"), 0);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture4"), 4);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture5"), 5);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture6"), 6);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_back"), 7);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_lncl"), 8);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture0"), 9);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture1"), 10);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture2"), 11);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture3"), 12);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture4"), 13);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture5"), 14);
+    glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture6"), 15);
 
     glBindFragDataLocation(vdp2prio_prg, 1, "topColor");
     glBindFragDataLocation(vdp2prio_prg, 2, "secondColor");
@@ -3386,6 +3467,16 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
   else{
     GLUSEPROG(vdp2prio_prg);
   }
+
+
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "screen_nb"), nbScreen);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode0"), modescreens[0]);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode1"), modescreens[1]);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode2"), modescreens[2]);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode3"), modescreens[3]);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode4"), modescreens[4]);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode5"), modescreens[5]);
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "fbon"), Vdp1External.disptoggle & 0x01);
 
 
   glDisable(GL_DEPTH_TEST);
@@ -3402,18 +3493,30 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg) {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
 
-  for (int i = 0; i<8; i++) {
+  for (int i=0; i<nbScreen; i++) {
     glActiveTexture(gltext[i]);
-    glBindTexture(GL_TEXTURE_2D, texture[i]);
+    glBindTexture(GL_TEXTURE_2D, prioscreens[i]);
   }
 
-  glUniform1f(glGetUniformLocation(vdp2prio_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(glGetUniformLocation(vdp2prio_prg, "u_vheight"), (float)_Ygl->height);
+  glActiveTexture(gltext[7]);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->priority_fbotex[7]);
+
+  glActiveTexture(gltext[8]);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
+
+  if (Vdp1External.disptoggle & 0x01) {
+    for (int i=0; i<7; i++) {
+      glActiveTexture(gltext[i+9]);
+      glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1screen_fbotex[i]);
+    }
+  }
+
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "u_lncl"), 0); //_Ygl->prioVa
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<15; i++) {
+  for (int i = 0; i<16; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
