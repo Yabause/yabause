@@ -1843,7 +1843,7 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offs
          break;
     }
   }
-  pgid += mode-1;
+  pgid += mode-NONE;
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
   GLUSEPROG(_prgid[pgid]);
@@ -3286,7 +3286,7 @@ SHADER_VERSION
 "  modetop = int(colortop.a * 255.0)&0x7; \n"
 "  modesecond = int(colorsecond.a * 255.0)&0x7; \n"
 "  modethird = int(colorthird.a * 255.0)&0x7; \n"
-#if 1
+
 "  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
 "  if (modetop == 2) topColor = vec4(colortop.rgb, alphatop); \n"
 "  if (modetop == 3) topColor = vec4(alphatop*colortop.rgb + (1.0 - alphatop)*colorsecond.rgb, 1.0); \n"
@@ -3298,26 +3298,6 @@ SHADER_VERSION
 "  if (modesecond == 4) secondColor = vec4(alphathird*colortop.rgb + (1.0 - alphathird)*colorthird.rgb, 1.0); \n"
 
 "  finalColor = vec4( topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
-#else
-"  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topColor = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 3) topColor = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 4) topColor = vec4(colortop.rgb, alphasecond); \n"
-
-"  if (modesecond == 1) secondColor = vec4(colorsecond.rgb, 1.0); \n"
-"  if (modesecond == 2) secondColor = vec4(colorsecond.rgb, 1.0); \n"
-"  if (modesecond == 3) secondColor = vec4(colorsecond.rgb, alphasecond); \n"
-"  if (modesecond == 4) secondColor = vec4(colorsecond.rgb, alphathird); \n"
-
-"  finalColor = vec4( topColor.a * topColor.rgb + (1.0 - topColor.a) * (secondColor.a * secondColor.rgb + (1.0 - secondColor.a)*colorthird.rgb), 1.0); \n"
-#endif
-//"  if (modethird == 1) thirdColor = vec4(colorthird.rgb, 1.0); \n"
-//"  if (modethird == 2) thirdColor = vec4(colorthird.rgb, alphathird); \n"
-//"  if (modethird == 3) thirdColor = vec4(alphathird*colortop.rgb + (1.0 - alphathird)*colorfourth.rgb, 1.0); \n"
-//"  if (modethird == 4) thirdColor = vec4(alphafourth*colortop.rgb + (1.0 - alphafourth)*colorfourth.rgb, 1.0); \n"
-
-//"  fourthColor = vec4(colorfourth.rgb, 1.0); \n"
-
 
 "} \n";
 
