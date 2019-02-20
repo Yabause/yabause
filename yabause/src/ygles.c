@@ -1603,16 +1603,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
       prg = PG_VFP1_GOURAUDSAHDING;
   }
 
-  if (input->linescreen == 1){
-    prg = PG_LINECOLOR_INSERT;
-    if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
-      prg = PG_LINECOLOR_INSERT_DESTALPHA;
-    }
-  }
-  //else if (input->linescreen == 2){ // per line operation by HBLANK
-  //  prg = PG_VDP2_PER_LINE_ALPHA;
-  //}
-
   program = YglGetProgram(input, prg, tm, input->priority);
   if (program == NULL || program->quads == NULL) return -1;
 
@@ -1860,19 +1850,6 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
     default:
       prg = PG_VFP1_GOURAUDSAHDING;
   }
-
-   if (input->linescreen == 1){
-     prg = PG_LINECOLOR_INSERT;
-     if (((Vdp2Regs->CCCTL >> 9) & 0x01)){
-       prg = PG_LINECOLOR_INSERT_DESTALPHA;
-     }
-
-   }
-   //else if (input->linescreen == 2){ // per line operation by HBLANK
-   //  prg = PG_VDP2_PER_LINE_ALPHA;
-   //}
-
-
 
    program = YglGetProgram(input,prg,tm,input->priority);
    if( program == NULL ) return -1;
@@ -2193,15 +2170,6 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
     if ((input->blendmode & VDP2_CC_BLUR) != 0) {
       prg = PG_VDP2_BLUR;
     }
-    if (input->linescreen == 1) {
-      prg = PG_LINECOLOR_INSERT;
-      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
-        prg = PG_LINECOLOR_INSERT_DESTALPHA;
-      }
-    }
-    //else if (input->linescreen == 2) { // per line operation by HBLANK
-    //  prg = PG_VDP2_PER_LINE_ALPHA;
-    //}
   }
   else {
 
@@ -2213,15 +2181,6 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
     if ((input->blendmode & VDP2_CC_BLUR) != 0) {
       prg = PG_VDP2_BLUR_CRAM;
     }
-    if (input->linescreen == 1) {
-      prg = PG_LINECOLOR_INSERT_CRAM;
-      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
-        prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
-      }
-    }
-    //else if (input->linescreen == 2) { // per line operation by HBLANK
-    //  prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
-    //}
   }
 
   program = YglGetProgram((YglSprite*)input, prg,tm,input->priority);
@@ -2344,15 +2303,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
       if ((input->blendmode & VDP2_CC_BLUR) != 0) {
         prg = PG_VDP2_BLUR;
       }
-      if (input->linescreen == 1) {
-        prg = PG_LINECOLOR_INSERT;
-        if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
-          prg = PG_LINECOLOR_INSERT_DESTALPHA;
-        }
-      }
-      //else if (input->linescreen == 2) { // per line operation by HBLANK
-      //  prg = PG_VDP2_PER_LINE_ALPHA;
-      //}
   } else {
       prg = PG_VDP2_NORMAL_CRAM;
 
@@ -2362,15 +2312,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
       if (((input->blendmode & VDP2_CC_BLUR) != 0)) {
         prg = PG_VDP2_BLUR_CRAM;
       }
-      if (input->linescreen == 1) {
-        prg = PG_LINECOLOR_INSERT_CRAM;
-        if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
-          prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
-        }
-      }
-      //else if (input->linescreen == 2) { // per line operation by HBLANK
-      //  prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
-    //}
   }
 
   program = YglGetProgram((YglSprite*)input, prg,tm,input->priority);
@@ -2501,15 +2442,6 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
     if ((input->blendmode & VDP2_CC_BLUR) != 0) {
       prg = PG_VDP2_BLUR;
     }
-    if (input->linescreen == 1) {
-      prg = PG_LINECOLOR_INSERT;
-      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
-        prg = PG_LINECOLOR_INSERT_DESTALPHA;
-      }
-    }
-    //else if (input->linescreen == 2) { // per line operation by HBLANK
-    //  prg = PG_VDP2_PER_LINE_ALPHA;
-    //}
   }
   else {
 
@@ -2522,15 +2454,6 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
     else if ((input->blendmode & VDP2_CC_BLUR) != 0) {
       prg = PG_VDP2_BLUR_CRAM;
     }
-    else if (input->linescreen == 1) {
-      prg = PG_LINECOLOR_INSERT_CRAM;
-      if (((Vdp2Regs->CCCTL >> 9) & 0x01)) {
-        prg = PG_LINECOLOR_INSERT_DESTALPHA_CRAM;
-      }
-    }
-    //else if (input->linescreen == 2) { // per line operation by HBLANK
-    //  prg = PG_VDP2_PER_LINE_ALPHA_CRAM;
-    //}
     else {
         prg = PG_VDP2_NORMAL_CRAM;
     }

@@ -2487,7 +2487,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.uclipmode = 0;
   tile.colornumber = info->colornumber;
   tile.blendmode = info->blendmode;
-  tile.linescreen = info->linescreen;
   tile.mosaicxmask = info->mosaicxmask;
   tile.mosaicymask = info->mosaicymask;
   tile.bEnWin0 = info->bEnWin0;
@@ -3185,7 +3184,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   info->cellw = rbg->hres;
   info->cellh = rbg->vres;
   info->flipfunction = 0;
-  info->linescreen = 0;
   info->cor = 0x00;
   info->cog = 0x00;
   info->cob = 0x00;
@@ -3215,7 +3213,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
      info->cor = 0;
      info->cog = 0;
      info->cob = 0;
-     info->linescreen = 2;
    }
 
     u64 cacheaddr = 0x90000000BAD;
@@ -4424,7 +4421,6 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  sprite.linescreen = 0;
 
   CMDXA = cmd.CMDXA;
   CMDYA = cmd.CMDYA;
@@ -4569,7 +4565,6 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  sprite.linescreen = 0;
 
   if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
   if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
@@ -4794,7 +4789,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  sprite.linescreen = 0;
   sprite.dst = 0;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
@@ -5043,7 +5037,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vdp1cmd_struct cmd;
   float line_polygon[8];
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-  sprite.linescreen = 0;
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
@@ -5176,7 +5169,6 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int colorcalc = 0;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
-  polygon.linescreen = 0;
   polygon.dst = 0;
   v[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
   v[1] = Vdp1Regs->localY + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
@@ -5449,7 +5441,6 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   polygon.blendmode = VDP1_COLOR_CL_REPLACE;
-  polygon.linescreen = 0;
   polygon.dst = 0;
   v[0] = Vdp1Regs->localX + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0C));
   v[1] = Vdp1Regs->localY + (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x0E));
@@ -5765,12 +5756,7 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
     inc = 0x00; // color per line
   }
 
-  u8 alpha = 0xF8;
-  // Color calculation ratio mode Destination Alpha
-  // Use blend value CRLB
-  if ((varVdp2Regs->CCCTL & 0x0300) == 0x0200) {
-    alpha = (float)(varVdp2Regs->CCRLB & 0x1F) / 32.0f * 255.0f;
-  }
+  u8 alpha = (varVdp2Regs->CCRLB & 0x1F) << 3;
 
   addr = (varVdp2Regs->LCTA.all & 0x7FFFF) * 0x2;
   for (i = 0; i < line_cnt; i++) {
@@ -5994,10 +5980,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   Vdp2GeneratePerLineColorCalcuration(info, NBG0, varVdp2Regs);
   _Ygl->perLine[RBG1] = info->lineTexture;
-  //info->lineTexture = 0;
-  info->linescreen = 0;
-  if (varVdp2Regs->LNCLEN & 0x1)
-    info->linescreen = 1;
 
   info->coloroffset = (varVdp2Regs->CRAOFA & 0x7) << 8;
   ReadVdp2ColorOffset(varVdp2Regs, info, 0x1);
@@ -6005,7 +5987,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     info->cor = 0;
     info->cog = 0;
     info->cob = 0;
-    info->linescreen = 2;
   }
   info->linecheck_mask = 0x01;
   info->priority = varVdp2Regs->PRINA & 0x7;
@@ -6270,9 +6251,6 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG0, varVdp2Regs);
   _Ygl->perLine[NBG0] = info.lineTexture;
-  info.linescreen = 0;
-  if (varVdp2Regs->LNCLEN & 0x1)
-    info.linescreen = 1;
 
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x7) << 8;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x1);
@@ -6280,7 +6258,6 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     info.cor = 0;
     info.cog = 0;
     info.cob = 0;
-    info.linescreen = 2;
   }
   info.linecheck_mask = 0x01;
   info.priority = varVdp2Regs->PRINA & 0x7;
@@ -6496,16 +6473,13 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
   _Ygl->perLine[NBG1] = info.lineTexture;
-  info.linescreen = 0;
-  if (varVdp2Regs->LNCLEN & 0x2)
-    info.linescreen = 1;
+
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x70) << 4;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x2);
   if (info.lineTexture != 0) {
     info.cor = 0;
     info.cog = 0;
     info.cob = 0;
-    info.linescreen = 2;
   }
   info.linecheck_mask = 0x02;
 
@@ -6729,15 +6703,11 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG2, varVdp2Regs);
   _Ygl->perLine[NBG2] = info.lineTexture;
-  info.linescreen = 0;
-  if (varVdp2Regs->LNCLEN & 0x4)
-    info.linescreen = 1;
 
   info.coloroffset = varVdp2Regs->CRAOFA & 0x700;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x4);
 
   if (info.lineTexture != 0) {
-    info.linescreen = 2;
     info.cor = 0;
     info.cog = 0;
     info.cob = 0;
@@ -6828,10 +6798,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG3, varVdp2Regs);
   _Ygl->perLine[NBG3] = info.lineTexture;
-  info.linescreen = 0;
-  if (varVdp2Regs->LNCLEN & 0x8)
-    info.linescreen = 1;
-
 
   info.coloroffset = (varVdp2Regs->CRAOFA & 0x7000) >> 4;
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x8);
@@ -6839,7 +6805,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
     info.cor = 0;
     info.cog = 0;
     info.cob = 0;
-    info.linescreen = 2;
   }
 
   info.linecheck_mask = 0x08;

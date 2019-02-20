@@ -28,7 +28,7 @@
 #define YGL_TESS_COUNT (2)
 #define YGL_MAX_NEED_BUFFER (12*YGL_TESS_COUNT*YGL_TESS_COUNT)
 
-typedef struct 
+typedef struct
 {
    short LineScrollValH;
    short LineScrollValV;
@@ -74,31 +74,31 @@ typedef struct
    float dY;
    int screenover;
    int msb;
-   
+
    void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
    u32 charaddr;
    int planew, planew_bits, planeh, planeh_bits;
    int MaxH,MaxV;
 
    float Xsp;
-   float Ysp;   
+   float Ysp;
    float dx;
    float dy;
    float lkx;
-   float lky;   
+   float lky;
    int KtablV;
    int ShiftPaneX;
-   int ShiftPaneY;   
+   int ShiftPaneY;
    int MskH;
    int MskV;
    u32 lineaddr;
    u32 PlaneAddrv[16];
    u8 k_mem_type;
    u16 over_pattern_name;
-   
+
 } vdp2rotationparameter_struct;
 
-typedef struct 
+typedef struct
 {
    int  WinShowLine;
     int WinHStart;
@@ -108,7 +108,7 @@ typedef struct
 typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int, u8, Vdp2 *varVdp2Regs);
 typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, int, int, Vdp2*);
 
-typedef struct 
+typedef struct
 {
    float vertices[8];
    int cellw, cellh;
@@ -126,7 +126,7 @@ typedef struct
 
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
- 
+
    int celly;
    int cellw_bits, cellh_bits;
    int mapwh;
@@ -179,22 +179,22 @@ typedef struct
    int verticalscrollinc;
    int startLine;
    int endLine;
-   
+
    // WindowMode
    u8  LogicWin;    // Window Logic AND OR
    u8  bEnWin0;     // Enable Window0
    u8  bEnWin1;     // Enable Window1
    u8  WindowArea0; // Window Area Mode 0
    u8  WindowArea1; // Window Area Mode 1
-   
+
    // Rotate Screen
    vdp2WindowInfo * pWinInfo;
    int WindwAreaMode;
    vdp2rotationparameter_struct * FASTCALL (*GetKValueA)(vdp2rotationparameter_struct*,int);
-   vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);   
+   vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);
    Vdp2GetRParam_func GetRParam;
    u32 LineColorBase;
-   
+
    void (*LoadLineParams)(void *, void *, int line, Vdp2* lines);
 
    int bad_cycle_setting;
@@ -376,7 +376,7 @@ static INLINE void CalcPlaneAddr(vdp2draw_struct *info, u32 tmp)
 {
    int deca = info->planeh + info->planew - 2;
    int multi = info->planeh * info->planew;
-     
+
    //if (Vdp2Regs->VRSIZE & 0x8000)
    //{
       if (info->patterndatasize == 1)
@@ -457,7 +457,7 @@ static INLINE void ReadPlaneSizeR(vdp2rotationparameter_struct *info, u16 reg)
          info->planew_bits = info->planeh_bits = 0;
          break;
    }
-   
+
 
 }
 
@@ -525,7 +525,7 @@ static INLINE void ReadPatternData(vdp2draw_struct *info, u16 pnc, int chctlwh)
 static INLINE void ReadMosaicData(vdp2draw_struct *info, u16 mask, Vdp2* regs)
 {
    if (regs->MZCTL & mask)
-   {  
+   {
       info->mosaicxmask = ((regs->MZCTL >> 8) & 0xF) + 1;
       info->mosaicymask = (regs->MZCTL >> 12) + 1;
    }
@@ -534,7 +534,7 @@ static INLINE void ReadMosaicData(vdp2draw_struct *info, u16 mask, Vdp2* regs)
       info->mosaicxmask = 1;
       info->mosaicymask = 1;
    }
-} 
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
