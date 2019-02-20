@@ -2972,7 +2972,7 @@ SHADER_VERSION
 "in vec2 v_texcoord; \n"
 "uniform sampler2D s_back;  \n"
 "uniform sampler2D s_lncl;  \n"
-"uniform int u_lncl;  \n"
+"uniform int u_lncl[6];  \n"
 "out vec4 finalColor; \n"
 "out vec4 topColor; \n"
 "out vec4 secondColor; \n"
@@ -3002,9 +3002,17 @@ SHADER_VERSION
 "uniform int mode4;  \n"
 "uniform int mode5;  \n"
 
-"vec4 getPriorityColor(int prio)   \n"
+"struct Col \n"
+"{ \n"
+"  vec4 Color; \n"
+"  int lncl; \n"
+"}; \n"
+
+"Col getPriorityColor(int prio)   \n"
 "{  \n"
-"  vec4 outColor = vec4(0.0);\n"
+"  Col ret; \n"
+"  ret.Color = vec4(0.0);\n"
+"  ret.lncl = 0;\n"
 "  ivec2 addr = ivec2(textureSize(fb_texture0, 0) * v_texcoord.st); \n"
 "  vec4 fbColor; \n"
 "  int priority; \n"
@@ -3020,70 +3028,71 @@ SHADER_VERSION
 "   if (prio == 7) fbColor = texelFetch( fb_texture6, addr,0 ); \n"
 "    mode = int(fbColor.a*255.0)&0x7; \n"
 "    if (mode != 0) {\n"
-"      return fbColor; \n"
+"      ret.Color=fbColor; \n"
+"      return ret;\n"
 "    }\n"
 "  }\n"
-"  if (screen_nb == 0) return outColor;\n"
+"  if (screen_nb == 0) return ret;\n"
 "  addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
 "  fbColor = texelFetch( s_texture0, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
-"    outColor = fbColor; \n"
-"    alpha = int(outColor.a*255.0)&0xF8; \n"
-"    outColor.a = float(alpha|mode0)/255.0; \n"
-"    return outColor;\n"
+"    ret.Color = fbColor; \n"
+"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
+"    ret.Color.a = float(alpha|mode0)/255.0; \n"
+"    return ret;\n"
 "  }\n"
-"  if (screen_nb == 1) return outColor;\n"
+"  if (screen_nb == 1) return ret;\n"
 "  addr = ivec2(textureSize(s_texture1, 0) * v_texcoord.st); \n"
 "  fbColor = texelFetch( s_texture1, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
-"    outColor = fbColor; \n"
-"    alpha = int(outColor.a*255.0)&0xF8; \n"
-"    outColor.a = float(alpha|mode1)/255.0; \n"
-"    return outColor;\n"
+"    ret.Color = fbColor; \n"
+"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
+"    ret.Color.a = float(alpha|mode1)/255.0; \n"
+"    return ret;\n"
 "  }\n"
-"  if (screen_nb == 2) return outColor;\n"
+"  if (screen_nb == 2) return ret;\n"
 "  addr = ivec2(textureSize(s_texture2, 0) * v_texcoord.st); \n"
 "  fbColor = texelFetch( s_texture2, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
-"    outColor = fbColor; \n"
-"    alpha = int(outColor.a*255.0)&0xF8; \n"
-"    outColor.a = float(alpha|mode2)/255.0; \n"
-"    return outColor;\n"
+"    ret.Color = fbColor; \n"
+"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
+"    ret.Color.a = float(alpha|mode2)/255.0; \n"
+"    return ret;\n"
 "  }\n"
-"  if (screen_nb == 3) return outColor;\n"
+"  if (screen_nb == 3) return ret;\n"
 "  addr = ivec2(textureSize(s_texture3, 0) * v_texcoord.st); \n"
 "  fbColor = texelFetch( s_texture3, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
-"    outColor = fbColor; \n"
-"    alpha = int(outColor.a*255.0)&0xF8; \n"
-"    outColor.a = float(alpha|mode3)/255.0; \n"
-"    return outColor;\n"
+"    ret.Color = fbColor; \n"
+"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
+"    ret.Color.a = float(alpha|mode3)/255.0; \n"
+"    return ret;\n"
 "  }\n"
-"  if (screen_nb == 4) return outColor;\n"
+"  if (screen_nb == 4) return ret;\n"
 "  addr = ivec2(textureSize(s_texture4, 0) * v_texcoord.st); \n"
 "  fbColor = texelFetch( s_texture4, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
-"    outColor = fbColor; \n"
-"    alpha = int(outColor.a*255.0)&0xF8; \n"
-"    outColor.a = float(alpha|mode4)/255.0; \n"
-"    return outColor;\n"
+"    ret.Color = fbColor; \n"
+"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
+"    ret.Color.a = float(alpha|mode4)/255.0; \n"
+"    return ret;\n"
 "  }\n"
-"  if (screen_nb == 5) return outColor;\n"
+"  if (screen_nb == 5) return ret;\n"
 "  addr = ivec2(textureSize(s_texture5, 0) * v_texcoord.st); \n"
 "  fbColor = texelFetch( s_texture5, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
-"    outColor = fbColor; \n"
-"    alpha = int(outColor.a*255.0)&0xF8; \n"
-"    outColor.a = float(alpha|mode5)/255.0; \n"
-"    return outColor;\n"
+"    ret.Color = fbColor; \n"
+"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
+"    ret.Color.a = float(alpha|mode5)/255.0; \n"
+"    return ret;\n"
 "  }\n"
-"  return outColor;  \n"
+"  return ret;  \n"
 "}  \n"
 
 "void main()   \n"
@@ -3112,9 +3121,9 @@ SHADER_VERSION
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
 "  for (int i = 7; i>0; i--) { \n"
 "    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
-"      vec4 color = getPriorityColor(i);\n"
-"      int alpha = (int(color.a * 255.0)&0xF8)>>3; \n"
-"      if (color.a != 0) { \n"
+"      Col prio = getPriorityColor(i);\n"
+"      int alpha = (int(prio.Color.a * 255.0)&0xF8)>>3; \n"
+"      if (prio.Color.a != 0) { \n"
 //"        lncl |= u_lncl;\n"
 "        if (foundColor1 == 0) { \n"
 "          if (lncl == 0) { \n"
@@ -3126,19 +3135,19 @@ SHADER_VERSION
 "            foundColor2 = 1;\n"
 "            foundColor3 = 1;\n"
 "          }\n"
-"          colortop = color; \n"
+"          colortop = prio.Color; \n"
 "          alphatop = float(alpha)/31.0; \n"
 "          foundColor1 = 1; \n"
 "        } else if (foundColor2 == 0) { \n"
 "          colorthird = colorsecond;\n"
 "          alphathird = alphasecond;\n"
-"          colorsecond = color; \n"
+"          colorsecond = prio.Color; \n"
 "          alphasecond = float(alpha)/31.0; \n"
 "          foundColor2 = 1; \n"
 "        } else if (foundColor3 == 0) { \n"
 "          colorfourth = colorthird;\n"
 "          alphafourth = alphathird;\n"
-"          colorthird = color; \n"
+"          colorthird = prio.Color; \n"
 "          alphathird = float(alpha)/31.0; \n"
 "          foundColor3 = 1; \n"
 "        } \n"
@@ -3165,11 +3174,12 @@ SHADER_VERSION
 
 "} \n";
 
-int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens) {
+int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens, Vdp2 *varVdp2Regs) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
   int perLine = 0;
   int nbScreen = 6;
+  int lncl[6];
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3241,7 +3251,6 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture3"), 3);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture4"), 4);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture5"), 5);
-    glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_texture6"), 6);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_back"), 7);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "s_lncl"), 8);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture0"), 9);
@@ -3271,7 +3280,6 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode4"), modescreens[4]);
   glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode5"), modescreens[5]);
   glUniform1i(glGetUniformLocation(vdp2prio_prg, "fbon"), Vdp1External.disptoggle & 0x01);
-
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -3303,9 +3311,16 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
       glActiveTexture(gltext[i+9]);
       glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1screen_fbotex[i]);
     }
-  }
+  }  const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
 
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "u_lncl"), 0); //_Ygl->prioVa
+  lncl[0] = (varVdp2Regs->LNCLEN >> 4)&0x1;
+  lncl[1] = (varVdp2Regs->LNCLEN >> 0)&0x1;
+  lncl[2] = (varVdp2Regs->LNCLEN >> 0)&0x1;
+  lncl[3] = (varVdp2Regs->LNCLEN >> 1)&0x1;
+  lncl[4] = (varVdp2Regs->LNCLEN >> 2)&0x1;
+  lncl[5] = (varVdp2Regs->LNCLEN >> 3)&0x1;
+
+  glUniform1iv(glGetUniformLocation(vdp2prio_prg, "u_lncl"), 6, lncl); //_Ygl->prioVa
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

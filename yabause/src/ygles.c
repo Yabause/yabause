@@ -3378,7 +3378,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glDrawBuffers(5, &DrawBuffers[0]);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
-  YglBlitTexture(_Ygl->screen_fbotex, _Ygl->bg, prioscreens, modescreens);
+  YglBlitTexture(_Ygl->screen_fbotex, _Ygl->bg, prioscreens, modescreens, varVdp2Regs);
 
 
     //if((img[0] == 0) && (img[1] == 0) && (img[2] == 0)) { // Break doom...
