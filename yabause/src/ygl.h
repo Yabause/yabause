@@ -551,9 +551,8 @@ typedef struct {
    GLuint original_fbotex[SPRITE];
    GLuint original_depth;
 
-   GLuint priority_fbo;
-   GLuint priority_fbotex[8];
-   GLuint priority_depth;
+   GLuint back_fbo;
+   GLuint back_fbotex[2];
 
    GLuint vdp1screen_fbo;
    GLuint vdp1screen_fbotex[7];
