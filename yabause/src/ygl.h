@@ -646,6 +646,7 @@ typedef struct {
    GLuint vertexAttribute_buf;
 
    int screen[SPRITE];
+   int prioVal[enBGMAX];
 
 }  Ygl;
 
@@ -802,12 +803,14 @@ s Shadow Flag
 */
 INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
   u32 col = color;
+  _Ygl->prioVal[SPRITE] |= (1<<(P-1));
   if (C == 1) col &= 0x7FFF;
   else col &= 0xFFFFFF;
   return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | col;
 }
 
-INLINE u32 VDP2COLOR(u32 alpha, u32 priority, u32 cramindex) {
+INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cramindex) {
+  _Ygl->prioVal[id] |= (1<<(priority-1));
   return (((alpha & 0xF8) | priority) << 24 | cramindex);
 }
 

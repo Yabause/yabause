@@ -1442,7 +1442,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
    } else {
      level = &_Ygl->vdp2levels[input->idScreen];
    }
-   level->prio |= 1 << prio-1;
+   level->prio = prio;
    level->blendmode |= (input->blendmode&0x03);
    if( input->uclipmode != level->uclipcurrent ||
      (input->uclipmode !=0 &&
