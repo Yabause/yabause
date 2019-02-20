@@ -433,7 +433,6 @@ typedef struct {
    short ux1,uy1,ux2,uy2;
    int blendmode;
    YglProgram * prg;
-   int prio;
 } YglLevel;
 
 typedef struct

@@ -1442,7 +1442,6 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
    } else {
      level = &_Ygl->vdp2levels[input->idScreen];
    }
-   level->prio = prio;
    level->blendmode |= (input->blendmode&0x03);
    if( input->uclipmode != level->uclipcurrent ||
      (input->uclipmode !=0 &&
@@ -3155,7 +3154,7 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   {
     if (level->prg[j].currentQuad != 0) {
 
-      ret = level->prio;
+      ret = 1;
 
       if (level->prg[j].prgid != cprg)
       {
@@ -3463,7 +3462,6 @@ void YglReset(YglLevel level) {
   level.uy1 = 0;
   level.ux2 = 0;
   level.uy2 = 0;
-  level.prio = 0;
   for( j=0; j< level.prgcount; j++ )
   {
     level.prg[j].currentQuad = 0;
