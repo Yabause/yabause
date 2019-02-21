@@ -2972,7 +2972,7 @@ SHADER_VERSION
 "in vec2 v_texcoord; \n"
 "uniform sampler2D s_back;  \n"
 "uniform sampler2D s_lncl;  \n"
-"uniform int u_lncl[6];  \n"
+"uniform int u_lncl[7];  \n"
 "out vec4 finalColor; \n"
 "out vec4 topColor; \n"
 "out vec4 secondColor; \n"
@@ -3028,6 +3028,7 @@ SHADER_VERSION
 "   if (prio == 7) fbColor = texelFetch( fb_texture6, addr,0 ); \n"
 "    mode = int(fbColor.a*255.0)&0x7; \n"
 "    if (mode != 0) {\n"
+"      ret.lncl=u_lncl[6];\n"
 "      ret.Color=fbColor; \n"
 "      return ret;\n"
 "    }\n"
@@ -3037,6 +3038,7 @@ SHADER_VERSION
 "  fbColor = texelFetch( s_texture0, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
+"    ret.lncl=u_lncl[0];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha|mode0)/255.0; \n"
@@ -3047,6 +3049,7 @@ SHADER_VERSION
 "  fbColor = texelFetch( s_texture1, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
+"    ret.lncl=u_lncl[1];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha|mode1)/255.0; \n"
@@ -3057,6 +3060,7 @@ SHADER_VERSION
 "  fbColor = texelFetch( s_texture2, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
+"    ret.lncl=u_lncl[2];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha|mode2)/255.0; \n"
@@ -3067,6 +3071,7 @@ SHADER_VERSION
 "  fbColor = texelFetch( s_texture3, addr,0 ); \n"
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
+"    ret.lncl=u_lncl[3];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha|mode3)/255.0; \n"
@@ -3078,6 +3083,7 @@ SHADER_VERSION
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
 "    ret.Color = fbColor; \n"
+"    ret.lncl=u_lncl[4];\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha|mode4)/255.0; \n"
 "    return ret;\n"
@@ -3088,6 +3094,7 @@ SHADER_VERSION
 "  priority = int(fbColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
 "    ret.Color = fbColor; \n"
+"    ret.lncl=u_lncl[5];\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha|mode5)/255.0; \n"
 "    return ret;\n"
@@ -3108,7 +3115,6 @@ SHADER_VERSION
 "  int modetop = 0; \n"
 "  int modesecond = 0; \n"
 "  int modethird = 0; \n"
-"  int lncl = 0;\n"
 "  float alphatop = 0.0; \n"
 "  float alphasecond = 0.0; \n"
 "  float alphathird = 0.0; \n"
@@ -3126,7 +3132,7 @@ SHADER_VERSION
 "      if (prio.Color.a != 0) { \n"
 //"        lncl |= u_lncl;\n"
 "        if (foundColor1 == 0) { \n"
-"          if (lncl == 0) { \n"
+"          if (prio.lncl == 0) { \n"
 "            colorsecond = colortop;\n"
 "            alphasecond = alphatop;\n"
 "          } else { \n"
@@ -3179,7 +3185,7 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
   int perLine = 0;
   int nbScreen = 6;
-  int lncl[6];
+  int lncl[7];
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3319,8 +3325,9 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   lncl[3] = (varVdp2Regs->LNCLEN >> 1)&0x1;
   lncl[4] = (varVdp2Regs->LNCLEN >> 2)&0x1;
   lncl[5] = (varVdp2Regs->LNCLEN >> 3)&0x1;
+  lncl[6] = (varVdp2Regs->LNCLEN >> 5)&0x1;
 
-  glUniform1iv(glGetUniformLocation(vdp2prio_prg, "u_lncl"), 6, lncl); //_Ygl->prioVa
+  glUniform1iv(glGetUniformLocation(vdp2prio_prg, "u_lncl"), 7, lncl); //_Ygl->prioVa
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
