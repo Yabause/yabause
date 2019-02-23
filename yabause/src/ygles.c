@@ -3203,7 +3203,7 @@ SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
         ret = SRC_ALPHA;
       }
     }
-    if (varVdp2Regs->SFCCMD & (3<<(enableBit[layer]*2)) == 3) {
+    if ((varVdp2Regs->SFCCMD >> (enableBit[layer]*2) & 0x3) == 3) {
       ret |= CC_ON_MSB;
     }
   }
