@@ -501,9 +501,10 @@ typedef enum {
 
 typedef enum {
 	NONE = 1,
-	AS_IS,
-	SRC_ALPHA,
-	DST_ALPHA
+	AS_IS = 2,
+	SRC_ALPHA = 3,
+	DST_ALPHA = 4,
+  CC_ON_MSB = 8
 } SpriteMode;
 
 typedef struct {

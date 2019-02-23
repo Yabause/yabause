@@ -1937,6 +1937,7 @@ INLINE void Vdp2SetSpecialPriority(vdp2draw_struct *info, u8 dot, u32 *prio, u32
 
 static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp2 *varVdp2Regs) {
   u32 alpha = info->alpha;
+
   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   if (CCMD == 0) {  // Calculate Rate mode
     switch (info->specialcolormode)
@@ -1946,9 +1947,9 @@ static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp
       if (info->specialcolorfunction == 0) { alpha = 0xF8; }
       else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
       break;
-    case 3:
-      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xF8; }
-      break;
+//    case 3:
+//      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xF8; }
+//      break;
     }
   }
   else {  // Calculate Add mode
@@ -1961,9 +1962,9 @@ static INLINE u32 Vdp2GetAlpha(vdp2draw_struct *info, u8 dot, u32 cramindex, Vdp
       if (info->specialcolorfunction == 0) { alpha = 0xF8; }
       else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 0xF8; } }
       break;
-    case 3:
-      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xF8; }
-      break;
+//    case 3:
+//      if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { alpha = 0xF8; }
+//      break;
     }
   }
   return alpha;

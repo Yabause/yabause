@@ -3203,6 +3203,9 @@ SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
         ret = SRC_ALPHA;
       }
     }
+    if (varVdp2Regs->SFCCMD & (3<<(enableBit[layer]*2)) == 3) {
+      ret |= CC_ON_MSB;
+    }
   }
   return ret;
 }
@@ -3227,8 +3230,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
 
    glBindVertexArray(_Ygl->vao);
-
-//   printf("LNCLEN %x\n", varVdp2Regs->LNCLEN);
 
    if (_Ygl->stretch == 0) {
      double dar = (double)GlWidth/(double)GlHeight;
