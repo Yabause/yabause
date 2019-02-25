@@ -1439,7 +1439,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
    {
       if( input->uclipmode == 0x02 || input->uclipmode == 0x03 )
       {
-         YglProgramChange(level,PG_VFP1_STARTUSERCLIP);
+         YglProgramChange(level,PG_VDP1_STARTUSERCLIP);
          program = &level->prg[level->prgcurrent];
          program->uClipMode = input->uclipmode;
          program->ux1=Vdp1Regs->userclipX1;
@@ -1451,7 +1451,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
          level->ux2=Vdp1Regs->userclipX2;
          level->uy2=Vdp1Regs->userclipY2;
       }else{
-         YglProgramChange(level,PG_VFP1_ENDUSERCLIP);
+         YglProgramChange(level,PG_VDP1_ENDUSERCLIP);
          program = &level->prg[level->prgcurrent];
          program->uClipMode = input->uclipmode;
       }
@@ -1572,19 +1572,19 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
       prg = PG_VDP1_GOURAUDSHADING_HALFTRANS;
       break;
     case VDP1_COLOR_CL_HALF_LUMINANCE:
-      prg = PG_VFP1_HALF_LUMINANCE;
+      prg = PG_VDP1_HALF_LUMINANCE;
       break;
     case VDP1_COLOR_CL_MESH:
-      prg = PG_VFP1_MESH;
+      prg = PG_VDP1_MESH;
       break;
     case VDP1_COLOR_CL_SHADOW:
-      prg = PG_VFP1_SHADOW;
+      prg = PG_VDP1_SHADOW;
       break;
     case VDP1_COLOR_SPD:
       prg = PG_VDP1_GOURAUDSHADING_SPD;
       break;
     case VDP1_COLOR_CL_MSB_SHADOW:
-      prg = PG_VFP1_MSB_SHADOW;
+      prg = PG_VDP1_MSB_SHADOW;
       break;
     default:
       prg = PG_VDP1_GOURAUDSHADING;
@@ -1820,19 +1820,19 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
       prg = PG_VDP1_GOURAUDSHADING_HALFTRANS;
       break;
     case VDP1_COLOR_CL_HALF_LUMINANCE:
-      prg = PG_VFP1_HALF_LUMINANCE;
+      prg = PG_VDP1_HALF_LUMINANCE;
       break;
     case VDP1_COLOR_CL_MESH:
-      prg = PG_VFP1_MESH;
+      prg = PG_VDP1_MESH;
       break;
     case VDP1_COLOR_CL_SHADOW:
-      prg = PG_VFP1_SHADOW;
+      prg = PG_VDP1_SHADOW;
       break;
     case VDP1_COLOR_SPD:
       prg = PG_VDP1_GOURAUDSHADING_SPD;
       break;
     case VDP1_COLOR_CL_MSB_SHADOW:
-      prg = PG_VFP1_MSB_SHADOW;
+      prg = PG_VDP1_MSB_SHADOW;
       break;
     default:
       prg = PG_VDP1_GOURAUDSHADING;
@@ -2002,16 +2002,16 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
       prg = PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS;
     break;
     case VDP1_COLOR_CL_MESH:
-      prg = PG_VFP1_MESH_TESS;
+      prg = PG_VDP1_MESH_TESS;
     break;
     case VDP1_COLOR_CL_SHADOW:
-      prg = PG_VFP1_SHADOW_TESS;
+      prg = PG_VDP1_SHADOW_TESS;
     break;
     case VDP1_COLOR_SPD:
       prg = PG_VDP1_GOURAUDSHADING_SPD_TESS;
     break;
     case VDP1_COLOR_CL_MSB_SHADOW:
-      prg = PG_VFP1_MSB_SHADOW_TESS;
+      prg = PG_VDP1_MSB_SHADOW_TESS;
       break;
     default:
       prg = PG_VDP1_GOURAUDSHADING_TESS;
@@ -2721,7 +2721,7 @@ void YglRenderVDP1(void) {
 
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
-    if ((level->prg[j].prgid == PG_VFP1_MSB_SHADOW) || (level->prg[j].prgid == PG_VFP1_MSB_SHADOW_TESS)) {
+    if ((level->prg[j].prgid == PG_VDP1_MSB_SHADOW) || (level->prg[j].prgid == PG_VDP1_MSB_SHADOW_TESS)) {
       if (drawAttr != 1) {
         glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe*2+1]);
         drawAttr = 1;
