@@ -1482,7 +1482,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
      level->prg[level->prgcurrent].blendmode = input->blendmode;
    }
 // for polygon debug
-  //else if (prg == PG_VFP1_GOURAUDSAHDING ){
+  //else if (prg == PG_VDP1_GOURAUDSHADING ){
   //   YglProgramChange(level, prg);
   //}
    program = &level->prg[level->prgcurrent];
@@ -1557,7 +1557,7 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, Y
 int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg, YglTextureManager *tm ) {
   unsigned int x, y;
   YglProgram *program;
-  int prg = PG_VFP1_GOURAUDSAHDING;
+  int prg = PG_VDP1_GOURAUDSHADING;
   float * pos;
   int u, v;
   float *colv;
@@ -1569,7 +1569,7 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   // Select Program
   switch (input->blendmode) {
     case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
-      prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+      prg = PG_VDP1_GOURAUDSHADING_HALFTRANS;
       break;
     case VDP1_COLOR_CL_HALF_LUMINANCE:
       prg = PG_VFP1_HALF_LUMINANCE;
@@ -1581,13 +1581,13 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
       prg = PG_VFP1_SHADOW;
       break;
     case VDP1_COLOR_SPD:
-      prg = PG_VFP1_GOURAUDSAHDING_SPD;
+      prg = PG_VDP1_GOURAUDSHADING_SPD;
       break;
     case VDP1_COLOR_CL_MSB_SHADOW:
       prg = PG_VFP1_MSB_SHADOW;
       break;
     default:
-      prg = PG_VFP1_GOURAUDSAHDING;
+      prg = PG_VDP1_GOURAUDSHADING;
   }
 
   program = YglGetProgram(input, prg, tm, input->priority);
@@ -1811,13 +1811,13 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    texturecoordinate_struct *tmp;
    float * vtxa;
    float q[4];
-   int prg = PG_VFP1_GOURAUDSAHDING;
+   int prg = PG_VDP1_GOURAUDSHADING;
    float * pos;
 
 
   switch (input->blendmode) {
     case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
-      prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS;
+      prg = PG_VDP1_GOURAUDSHADING_HALFTRANS;
       break;
     case VDP1_COLOR_CL_HALF_LUMINANCE:
       prg = PG_VFP1_HALF_LUMINANCE;
@@ -1829,13 +1829,13 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
       prg = PG_VFP1_SHADOW;
       break;
     case VDP1_COLOR_SPD:
-      prg = PG_VFP1_GOURAUDSAHDING_SPD;
+      prg = PG_VDP1_GOURAUDSHADING_SPD;
       break;
     case VDP1_COLOR_CL_MSB_SHADOW:
       prg = PG_VFP1_MSB_SHADOW;
       break;
     default:
-      prg = PG_VFP1_GOURAUDSAHDING;
+      prg = PG_VDP1_GOURAUDSHADING;
   }
 
    program = YglGetProgram(input,prg,tm,input->priority);
@@ -1999,7 +1999,7 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
 
   switch (input->blendmode) {
     case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
-      prg = PG_VFP1_GOURAUDSAHDING_HALFTRANS_TESS;
+      prg = PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS;
     break;
     case VDP1_COLOR_CL_MESH:
       prg = PG_VFP1_MESH_TESS;
@@ -2008,13 +2008,13 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
       prg = PG_VFP1_SHADOW_TESS;
     break;
     case VDP1_COLOR_SPD:
-      prg = PG_VFP1_GOURAUDSAHDING_SPD_TESS;
+      prg = PG_VDP1_GOURAUDSHADING_SPD_TESS;
     break;
     case VDP1_COLOR_CL_MSB_SHADOW:
       prg = PG_VFP1_MSB_SHADOW_TESS;
       break;
     default:
-      prg = PG_VFP1_GOURAUDSAHDING_TESS;
+      prg = PG_VDP1_GOURAUDSHADING_TESS;
   }
 
   program = YglGetProgram(input, prg, tm,input->priority);
@@ -2143,14 +2143,14 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
-  int prg = PG_NORMAL;
+  int prg = PG_VDP2_NORMAL_CRAM;
   float * pos;
   //float * vtxa;
 
   int vHeight;
 
   if (input->colornumber >= 3) {
-    prg = PG_NORMAL;
+    prg = PG_VDP2_NORMAL_CRAM;
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC;
     }
@@ -2278,12 +2278,12 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
-  int prg = PG_NORMAL;
+  int prg;
   float * pos;
   //float * vtxa;
 
   if (input->colornumber >= 3) {
-      prg = PG_NORMAL;
+      prg = PG_VDP2_NORMAL;
       if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
         prg = PG_VDP2_MOSAIC;
       }
@@ -2418,11 +2418,11 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
-  int prg = PG_NORMAL;
+  int prg;
   float * pos;
 
   if(input->colornumber >= 3 ) {
-    prg = PG_NORMAL;
+    prg = PG_VDP2_NORMAL;
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC;
     }
@@ -2651,7 +2651,7 @@ static void renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat,
         glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(level->prg[j].vaid);
       }
-      if ( level->prg[j].prgid >= PG_VFP1_GOURAUDSAHDING_TESS ) {
+      if ( level->prg[j].prgid >= PG_VDP1_GOURAUDSHADING_TESS ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }else{
