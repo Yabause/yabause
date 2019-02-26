@@ -3134,7 +3134,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   case 4: // 32 BPP
     dot = T1ReadLong(Vdp2Ram, ((info->charaddr + ((y * cellw) + x) * 4) & 0x7FFFF));
     if (!(dot & 0x80000000) && info->transparencyenable) return 0x00000000;
-    else return VDP2COLOR(info->idScreen, info->alpha, info->priority, RGB555_TO_RGB24(dot & 0xFFFF));
+    else return VDP2COLOR(info->idScreen, info->alpha, info->priority, dot & 0xFFFFFF);
   default:
     return 0;
   }
