@@ -234,30 +234,44 @@ const GLchar Yglprg_normal_v[] =
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord; \n"
       "} ";
-const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
+const GLchar * pYglprg_vdp2_normal_v[] = {Yglprg_normal_v, NULL};
 
 const GLchar Yglprg_normal_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float; \n"
+"precision highp float;\n"
+"precision highp int;\n"
 "#endif\n"
-"in highp vec4 v_texcoord; \n"
-"uniform vec4 u_color_offset;    \n"
-"uniform sampler2D s_texture;  \n"
-"out vec4 fragColor; \n"
+"in vec4 v_texcoord;\n"
+"uniform vec4 u_color_offset;\n"
+"uniform float u_emu_height;\n"
+"uniform float u_vheight; \n"
+"uniform highp sampler2D s_texture;\n"
+"uniform sampler2D s_perline;  \n"
+"uniform int is_perline; \n"
+"uniform sampler2D s_color;\n"
+"out vec4 fragColor;\n"
 "void main()   \n"
 "{  \n"
 "  ivec2 addr; \n"
+"  ivec2 linepos; \n "
+"  vec4 color_offset = u_color_offset; \n"
+"  linepos.y = 0; \n "
+"  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
-"  int additional = int(txcol.a * 255.0);\n"
-"  if((additional & 0x80)!=0)\n      "
-"     fragColor = clamp(txcol+u_color_offset,vec4(0.0),vec4(1.0));\n   "
-"  else \n      "
-"     discard;\n"
+"  if(txcol.a == 0.0) { discard; }\n"
+"  vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
+"  if (is_perline == 1) {\n"
+"    if (perline == vec4(0.0)) discard;\n"
+"    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
+"    if (perline.a > 0.0) txcol.a = perline.a;\n"
+"  } \n"
+"  fragColor.rgb = clamp(txcol.rgb+color_offset.rgb,vec3(0.0),vec3(1.0));\n"
+"  fragColor.a = txcol.a;\n"
 "}  \n";
-const GLchar * pYglprg_normal_f[] = {Yglprg_normal_f, NULL};
+const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
@@ -312,7 +326,7 @@ SHADER_VERSION
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
-"  if (txcol.a != 0.0) txcol.b = float(int(txcol.b * 255.0)|0x1)/255.0;"
+//"  if (txcol.a != 0.0) txcol.b = float(int(txcol.b * 255.0)|0x1)/255.0;"
 "  vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
 "  if (is_perline == 1) {\n"
 "    if (perline == vec4(0.0)) discard;\n"
@@ -2135,7 +2149,7 @@ int YglProgramInit()
 {
    YGLLOG("PG_VDP2_NORMAL\n");
    //
-   if (YglInitShader(PG_VDP2_NORMAL, pYglprg_normal_v, pYglprg_normal_f, 1, NULL, NULL, NULL) != 0)
+   if (YglInitShader(PG_VDP2_NORMAL, pYglprg_vdp2_normal_v, pYglprg_vdp2_normal_f, 1, NULL, NULL, NULL) != 0)
       return -1;
 
   id_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_texture");
@@ -2145,7 +2159,7 @@ int YglProgramInit()
 
    YGLLOG("PG_VDP2_NORMAL_CRAM\n");
 
-  if (YglInitShader(PG_VDP2_NORMAL_CRAM, pYglprg_normal_v, pYglprg_normal_cram_f, 1, NULL, NULL, NULL) != 0)
+  if (YglInitShader(PG_VDP2_NORMAL_CRAM, pYglprg_vdp2_normal_v, pYglprg_normal_cram_f, 1, NULL, NULL, NULL) != 0)
     return -1;
 
   id_normal_cram_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_texture");
@@ -2159,7 +2173,7 @@ int YglProgramInit()
 
    YGLLOG("PG_VDP2_RBG_CRAM_LINE\n");
 
-  if (YglInitShader(PG_VDP2_RBG_CRAM_LINE, pYglprg_normal_v, pYglprg_rbg_cram_line_f, 1, NULL, NULL, NULL) != 0)
+  if (YglInitShader(PG_VDP2_RBG_CRAM_LINE, pYglprg_vdp2_normal_v, pYglprg_rbg_cram_line_f, 1, NULL, NULL, NULL) != 0)
     return -1;
 
   id_rbg_cram_line_s_texture = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"s_texture");
