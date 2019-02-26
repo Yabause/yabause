@@ -2143,14 +2143,14 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
-  int prg = PG_VDP2_NORMAL_CRAM;
+  int prg = PG_VDP2_NORMAL;
   float * pos;
   //float * vtxa;
 
   int vHeight;
 
   if (input->colornumber >= 3) {
-    prg = PG_VDP2_NORMAL_CRAM;
+    prg = PG_VDP2_NORMAL;
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC;
     }
