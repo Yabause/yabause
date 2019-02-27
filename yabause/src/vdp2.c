@@ -176,7 +176,31 @@ u32 FASTCALL Vdp2ColorRamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 void FASTCALL Vdp2ColorRamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0xFFF;
    //LOG("[VDP2] Update Coloram Byte %08X:%02X", addr, val);
-   T2WriteByte(mem, addr, val);
+   if (Vdp2Internal.ColorMode == 0 ) {
+     int up = ((addr & 0x800) != 0);
+     if (val != T2ReadByte(mem, addr)) {
+       T2WriteByte(mem, addr, val);
+  #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+       YglOnUpdateColorRamWord(addr);
+  #endif
+     }
+     if (up) {
+       if (val != T2ReadByte(mem, (addr & 0x7FF) + 0x800)) {
+         T2WriteByte(mem, (addr & 0x7FF) + 0x800, val);
+  #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+         YglOnUpdateColorRamWord((addr & 0x7FF) + 0x800);
+  #endif
+       }
+     }
+   }
+   else {
+     if (val != T2ReadByte(mem, addr)) {
+       T2WriteByte(mem, addr, val);
+  #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+       YglOnUpdateColorRamWord(addr);
+  #endif
+     }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
