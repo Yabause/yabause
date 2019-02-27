@@ -1057,9 +1057,9 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  if( spriteColor.a == 0.0 ) discard;\n"
-"  fragColorAttr.a = 0.0;\n"
-"  fragColorAttr.rgb = v_vtxcolor.rgb;\n"
-"  fragColor = spriteColor;  \n"
+"  fragColorAttr = vec4(0.0);\n"
+"  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
+"  fragColor.a = spriteColor.a;  \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
@@ -1078,10 +1078,8 @@ SHADER_VERSION
 "  int mode;\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  mode = int(spriteColor.b*255.0)&0x7; \n"
-"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-"  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
-"  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
+"  fragColorAttr = vec4(0.0);\n"
+"  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
 "  fragColor.a = spriteColor.a;  \n"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshading_spd_f, NULL };
@@ -1629,7 +1627,7 @@ SHADER_VERSION
 "    }else{ // direct color \n"
 "      outColor = fbColor;\n"
 "    } \n"
-"    outColor.rgb = clamp(outColor.rgb + u_coloroffset.rgb + fbColorAttr.rgb, vec3(0.0), vec3(1.0));  \n"
+"    outColor.rgb = clamp(outColor.rgb + u_coloroffset.rgb, vec3(0.0), vec3(1.0));  \n"
 "  } else { \n"
 "    outColor = fbColor;\n"
 "  } \n"
@@ -2655,7 +2653,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].ids = &id_msb_tess;
      current->vertexp = 0;
      current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
      current->mtxModelView = grow_tess.mtxModelView;
      current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"u_texMatrix");
      current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"s_texture");
@@ -2731,7 +2728,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].ids = &mesh;
      current->vertexp = 0;
      current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = -1;
    }else if( prgid == PG_VDP1_HALF_LUMINANCE )
@@ -2751,7 +2747,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].ids = &mesh_tess;
      current->vertexp = 0;
      current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH_TESS], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = -1;
    }
