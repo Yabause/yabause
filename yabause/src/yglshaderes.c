@@ -326,7 +326,7 @@ SHADER_VERSION
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
-//"  if (txcol.a != 0.0) txcol.b = float(int(txcol.b * 255.0)|0x1)/255.0;"
+"  if (txcol.a != 0.0) txcol.b = float(int(txcol.b * 255.0)|0x1)/255.0;" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
 "  vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
 "  if (is_perline == 1) {\n"
 "    if (perline == vec4(0.0)) discard;\n"

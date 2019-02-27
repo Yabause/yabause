@@ -824,7 +824,8 @@ INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cramindex) {
 #if defined WORDS_BIGENDIAN
 #define SAT2YAB2(alpha,dot1,dot2)       ((dot2 & 0xFF << 24) | ((dot2 & 0xFF00) << 8) | ((dot1 & 0xFF) << 8) | alpha)
 #else
-#define SAT2YAB2(alpha,dot1,dot2)       (alpha << 24 | ((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF))
+//Here FE is not accurate to get an extra bit for MSB shadow information...
+#define SAT2YAB2(alpha,dot1,dot2)       (alpha << 24 | ((dot1 & 0xFE) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF))
 #endif
 
 #endif // YGL_H
