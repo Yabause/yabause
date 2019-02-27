@@ -2858,7 +2858,7 @@ void YglSetVdp2Window()
            glDrawArrays(GL_TRIANGLE_STRIP,0,_Ygl->win1_vertexcnt);
            glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
            glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-           if (Win0_mode[i] == 0) glStencilFunc(GL_EQUAL,0x2,0xFF);
+           if (Win1_mode[i] == 0) glStencilFunc(GL_EQUAL,0x2,0xFF);
            else glStencilFunc(GL_EQUAL,0x0,0xFF);
            //Draw color///
            glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win1v_buf);
