@@ -560,7 +560,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     if ((colorBank == 0x0000) && !SPD) {
       color = VDP1COLOR(1, 1, priority, 0, 0);
     }
-    else if ( MSB || color == nromal_shadow) {
+    else if ( MSB || colorBank == nromal_shadow) {
       color = VDP1COLOR(0, 1, priority, 1, 0);
     }
     else {
