@@ -3188,7 +3188,7 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
 
 SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
   SpriteMode ret = NONE;
-  const int enableBit[enBGMAX] = {0, 1, 2, 3, 4, 0, 6};
+  const int enableBit[enBGMAX+1] = {0, 1, 2, 3, 4, 0, 6, 5};
   if (varVdp2Regs->CCCTL & (1<<enableBit[layer])) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
@@ -3203,8 +3203,10 @@ SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
         ret = SRC_ALPHA;
       }
     }
-    if ((varVdp2Regs->SFCCMD >> (enableBit[layer]*2) & 0x3) == 3) {
-      ret |= CC_ON_MSB;
+    if (layer < enBGMAX) {
+      if ((varVdp2Regs->SFCCMD >> (enableBit[layer]*2) & 0x3) == 3) {
+        ret |= CC_ON_MSB;
+      }
     }
   }
   return ret;
@@ -3359,12 +3361,13 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
   YGLDEBUG("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen[NBG2],drawScreen[NBG1],drawScreen[NBG0],drawScreen[RBG1],drawScreen[RBG0]);
   int prioscreens[6];
-  int modescreens[6];
+  int modescreens[7];
   glDisable(GL_BLEND);
   for (int j=0; j<6; j++) {
     prioscreens[j] = _Ygl->screen_fbotex[vdp2screens[j]];
     modescreens[j] =  setupBlend(varVdp2Regs, vdp2screens[j]);
   }
+  modescreens[6] =  setupBlend(varVdp2Regs, enBGMAX);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);
   glDrawBuffers(1, &DrawBuffers[0]);
   glClearBufferfv(GL_COLOR, 0, col);
