@@ -2478,7 +2478,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 {
   u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
     (info->paladdr << 20) | info->charaddr | info->transparencyenable |
-    ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32);
+    ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32) | (((u64)(info->idScreen) & 0x07) << 39);
   int priority = info->priority;
   YglCache c;
   vdp2draw_struct tile = *info;

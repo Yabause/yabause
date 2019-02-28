@@ -60,7 +60,7 @@ int YglIsCached(YglTextureManager * tm, u64 addr, YglCache * c) {
         c->y = at->y;
         return 1;
       }
-      at = at->next; 
+      at = at->next;
     }
     return 0;  /* Not found */
   }
@@ -87,13 +87,13 @@ void YglCacheAdd(YglTextureManager * tm, u64 addr, YglCache * c) {
   else{
 	  YglCacheHash *at = tm->HashTable[hashkey];
     while (at != NULL) {
-      if (at->addr == addr  ) { 
+      if (at->addr == addr  ) {
         at->addr = addr;
         at->x = c->x;
         at->y = c->y;
         return;
       }
-      at = at->next; 
+      at = at->next;
     }
 
 	add = YglgetNewCash(tm);
@@ -114,4 +114,3 @@ void YglCacheReset(YglTextureManager * tm) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
