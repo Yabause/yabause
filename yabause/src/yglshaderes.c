@@ -1301,12 +1301,8 @@ SHADER_VERSION
 "in vec4 v_vtxcolor;         \n"
 "out highp vec4 fragColor; \n "
 "void main() {    \n"
-"  int mode;\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  mode = int(spriteColor.b*255.0)&0x7; \n"
-"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
 "  if( spriteColor.a == 0.0 ) discard;         \n"
 "  if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n"
 "    if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n"
@@ -1317,11 +1313,11 @@ SHADER_VERSION
 "       discard;"
 "    } \n"
 "  } \n"
-"  fragColor  = clamp(spriteColor+v_vtxcolor,vec4(0.0),vec4(1.0));     \n"
-"  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
+"  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
 "  fragColor.a = spriteColor.a;  \n"
 "}\n";
 #else
+//utiliser un bit dans la caouche attribut pour ameliorer le blend et faire une couche a 50%
 const GLchar Yglprg_vdp1_mesh_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
@@ -1336,18 +1332,8 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  if( spriteColor.a == 0.0 ) discard;         \n"
- "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-"  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
-"  if( fboColor.a > 0.0  )   \n"
-"  {   \n"
-"    fragColor = spriteColor*0.5 + fboColor*0.5;     \n"
-"    fragColor.a = fboColor.a ;   \n"
-"  }else{ \n"
-"    fragColor = spriteColor;\n"
-"    int additional = int(spriteColor.a * 255.0);       \n"
-"    highp float alpha = float((additional/8)*8)/255.0; \n"
-"    fragColor.a = spriteColor.a-alpha + 0.5;\n"
-"  }   \n"
+"  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
+"  fragColor.a = spriteColor.a;  \n"
 "}\n";
 #endif
 const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
