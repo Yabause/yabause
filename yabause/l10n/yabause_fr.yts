@@ -157,6 +157,7 @@ Disabled|Désactivé
 Disassembled Code|Code Désassemblé :
 Display on Hover|Afficher en Passant le Curseur
 Double Mission Stick|Double Mission Stick
+Double Mission Stick Configuration|Configuration du Double Mission Stick
 Down|Bas
 Download|Télécharger
 DSP Control Registers|Registres de Contrôle DSP
@@ -170,7 +171,7 @@ Dummy Video Interface|Interface Vidéo Factice
 Edit configuration|Editer la Configuration
 Eject/Load ISO...|Ejecter/Charger un ISO...
 ELF Program Files (*elf)|Fichiers Programme ELF (*.elf)
-Embellishment filter :|Filtre d'Embellissement
+Embellishment filter :|Filtre d'Embellissement :
 Enable|Activer
 Enable Bios Emulation|Activer l'Emulation du Bios
 Enable Code : %1 %2|Activer le Code : %1 %2
@@ -223,9 +224,11 @@ Kronos Save State (*.yss)|Sauvegarde d'État Kronos (*.yss)
 Language :|Langue :
 L&oad State|&Charger un Etat
 Left|Gauche
+Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|Stick Gauche :\ Gâchette : X\nBouton Gauche : Y\nBouton Droite : Z
 Left Stick Axis X|Axe X du Stick Gauche
 Left Stick Axis Y|Axe Y du Stick Gauche
 Left Stick Axis Throttle|Accélèrer l'Axe du Stick Gauche
+Left Stick Throttle Down|Manette d'accélération du manche Gauche en Bas
 Left trigger|Gâchette Gauche
 Less than|Moins que
 Log|Journal
@@ -243,6 +246,7 @@ Memory Search|Rechercher dans la Mémoire
 Memory Transfer|Transfert de Mémoire
 Middle|Milieu
 Mission Stick|Mission Stick
+Mission Stick Configuration|Configuration du Mission Stick
 Mouse|Souris
 Mouse Configuration|Configuration de la Souris
 Mpeg ROM|ROM MPEG :
@@ -293,6 +297,7 @@ Region|Région :
 Remove Peripheral|Supprimer le Périphérique
 Restart|Redémarrer
 Right|Droite
+Right Stick:\nTrigger:      A\nLeft button:  B\nRight button: C|Stick Droit :\nGâchette : A\nBouton Gauche :  B\nBouton Droit: C
 Right Stick Axis X|Axe X du Stick Droit
 Right Stick Axis Y|Axe Y du Stick Droit
 Right Stick Axis Throttle|Accélèrer l'Axe X du Stick Droit
@@ -364,7 +369,7 @@ Step Into|Entrer Dans
 Step Out|Sortir
 Step Over|Sauter
 Stick Down|Stick Bas
-Stick left button: same as A  Stick right button: same as B  Stick trigger: same as C|Bouton Gauche du Stick : identique à A Bouton Droite du Stick : identique à B Gâchette du Stick : identique à C
+Stick left button: same as A \nStick right button: same as B \nStick trigger: same as C|Bouton Gauche du Stick : identique à A \nBouton Droite du Stick : identique à B \nGâchette du Stick : identique à C
 Stick Left|Stick Gauche
 Stick Right|Stick Droite
 Stick Up|Stick Haut
@@ -383,23 +388,23 @@ Trace Logging|Enregistreur de Trace
 Translation|Traduction :
 Triangles using perspective correction|Triangles utilisant la correction de perspective
 Trigger|Gâchette
-TV effect :|Effet TV
+TV effect :|Effet TV :
 Type:|Type :
-Unable to add code|Ne peut pas ajouter un code
+Unable to add code|Ne peut pas ajouter de Code
 Unable to change description|Ne peut pas changer la description
+Unable to open file for loading|Ne peut pas ouvrir le fichier à charger
+Unable to open file for saving|Ne peut pas ouvrir le fichier à sauvegarder
+Unable to remove code|Ne peux pas enlever le Code
+Unknown (%1)|Inconnu (%1)
 Unsigned|Non Signé
 Unsigned 8-bit value|Valeur Non Signé 8-bit
 Unsigned 16-bit value|Valeur Non Signé 16-bit
 Unsigned 32-bit value|Valeur Non Signé 32-bit
 Up|Haut
 Upload|Upload
-Unable to add code|Ne peut pas ajouter de Code
-Unable to open file for loading|Ne peut pas ouvrir le fichier à charger
-Unable to open file for saving|Ne peut pas ouvrir le fichier à sauvegarder
-Unable to remove code|Ne peux pas enlever le Code
-Unknown (%1)|Inconnu (%1)
-Upscale Filter :|Filtre D'Interpollation :
+Upscale Filter :|Filtre D'Interpolation :
 Use Vdp1 Cache|Utiliser le Cache VDP1
+Use System Locale|Utiliser les paramètres régionaux
 Value|Valeur
 Value:|Valeur :
 Value :|Valeur :
