@@ -62,6 +62,7 @@ Add Raw Memory Code|
 Address|
 Address :|
 Advanced|
+All Files|
 All Files;|
 All Files (*)|
 Always|
@@ -84,6 +85,7 @@ Backup Ram Manager|
 Bilinear|
 Bilinear Filtering (Restart required)|
 Binary Files (*.bin)|
+Binary Files (*.bin);;COFF Program Files (*.cof *.coff);;ELF Program Files (*.elf);;All Files (*)|
 Bios|
 Block Size :|
 Bug report|
@@ -96,7 +98,7 @@ Can't plug in the new controller, cancelling.|
 Can't initialize Kronos|
 Cart/Memory|
 Cartridge|
-CD Images (*.iso *.cue *.bin *.mds *.ccd)|
+CD Images (*.iso *.cue *.bin *.mds *.ccd *.zip)|
 Cd-Rom|
 Central/South America (NTSC)|
 Central/South America (PAL)|
@@ -150,6 +152,7 @@ Description|
 Device List|
 DirectX Input Interface|
 DirectX Sound Interface|
+Disabled|
 Disassembled Code|
 Display on Hover|
 Double Mission Stick|
@@ -211,6 +214,11 @@ Japan (NTSC)|
 Japanese|
 Japanese Modem|
 Korea (NTSC)|
+Kronos Cheat Files (*.yct);;All Files (*)|
+Kronos Qt GUI|
+Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|
+Kronos Save State (*.yss)|
+Kronos is not initialized, can't manage backup ram.|
 Language :|
 L&oad State|
 Left|
@@ -414,9 +422,4 @@ Word|
 Word Write|
 Word Write : %1 %2|
 Write|
-Kronos Cheat Files (*.yct);;All Files (*)|
-Kronos Qt GUI|
-Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|
-Kronos Save State (*.yss)|
-Kronos is not initialized, can't manage backup ram.|
 Yes|
