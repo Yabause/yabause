@@ -45,7 +45,7 @@ UIMissionStickSetting::UIMissionStickSetting( PerInterface_struct* core, uint po
 	mButtons[ tbAxis2Up ] = PERANALOG_AXIS2;
 	mButtons[ tbAxis2Down ] = PERANALOG_AXIS2;
 	mButtons[ tbAxis3Up] = PERANALOG_AXIS3;
-   mButtons[ tbAxis3Down] = PERANALOG_AXIS3;
+   	mButtons[ tbAxis3Down] = PERANALOG_AXIS3;
 
 	mNames[ PERPAD_RIGHT_TRIGGER ] = QtYabause::translate( "Right trigger" );;
 	mNames[ PERPAD_LEFT_TRIGGER ] = QtYabause::translate( "Left trigger" );;
@@ -58,7 +58,7 @@ UIMissionStickSetting::UIMissionStickSetting( PerInterface_struct* core, uint po
 	mNames[ PERPAD_Z ] = "Z";
 	mNames[ PERANALOG_AXIS1 ] = "Axis X";
 	mNames[ PERANALOG_AXIS2 ] = "Axis Y";
-   mNames[PERANALOG_AXIS3] = "Axis Throttle";
+   	mNames[PERANALOG_AXIS3] = "Axis Throttle";
 
 	mScanMasks[ PERPAD_RIGHT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
 	mScanMasks[ PERPAD_LEFT_TRIGGER ] = PERSF_KEY | PERSF_BUTTON | PERSF_HAT;
