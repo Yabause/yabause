@@ -249,9 +249,9 @@
   <widget class="QDialogButtonBox" name="padButtons">
    <property name="geometry">
     <rect>
-     <x>220</x>
-     <y>440</y>
-     <width>60</width>
+     <x>210</x>
+     <y>430</y>
+     <width>81</width>
      <height>30</height>
     </rect>
    </property>
@@ -394,9 +394,9 @@
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
-     <x>290</x>
+     <x>40</x>
      <y>410</y>
-     <width>111</width>
+     <width>141</width>
      <height>71</height>
     </rect>
    </property>
@@ -415,9 +415,9 @@ Right button: Z</string>
   <widget class="QLabel" name="label_3">
    <property name="geometry">
     <rect>
-     <x>420</x>
+     <x>410</x>
      <y>410</y>
-     <width>161</width>
+     <width>171</width>
      <height>71</height>
     </rect>
    </property>
