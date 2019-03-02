@@ -14,7 +14,7 @@
    <enum>Qt::StrongFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>3D Control Pad Configuration</string>
+   <string>Double Mission Stick Configuration</string>
   </property>
   <widget class="QLabel" name="label">
    <property name="geometry">
