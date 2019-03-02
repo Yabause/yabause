@@ -137,6 +137,7 @@ CPU Tesselation|
 Data Size|
 Data Size :|
 Data Type|
+Debug|
 Debug CPU|
 Debug M68K|
 Debug Master SH2|
@@ -156,6 +157,7 @@ Disabled|
 Disassembled Code|
 Display on Hover|
 Double Mission Stick|
+Double Mission Stick Configuration|
 Down|
 Download|
 DSP Control Registers|
@@ -222,9 +224,11 @@ Kronos is not initialized, can't manage backup ram.|
 Language :|
 L&oad State|
 Left|
+Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|
 Left Stick Axis X|
 Left Stick Axis Y|
 Left Stick Axis Throttle|
+Left Stick Throttle Down|
 Left trigger|
 Less than|
 Log|
@@ -242,6 +246,7 @@ Memory Search|
 Memory Transfer
 Middle|
 Mission Stick|Mission Stick
+Mission Stick Configuration|Configuration du Mission Stick
 Mouse|
 Mouse Configuration|
 Mpeg ROM|
@@ -292,6 +297,7 @@ Region|
 Remove Peripheral|
 Restart|
 Right|
+Right Stick:\nTrigger:      A\nLeft button:  B\nRight button: C|
 Right Stick Axis X|
 Right Stick Axis Y|
 Right Stick Axis Throttle|
@@ -363,7 +369,7 @@ Step Into|
 Step Out|
 Step Over|
 Stick Down|
-Stick left button: same as A|
+Stick left button: same as A \nStick right button: same as B \nStick trigger: same as C|
 Stick Left|
 Stick Right|
 Stick Up|
