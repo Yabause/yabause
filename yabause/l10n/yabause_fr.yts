@@ -62,6 +62,7 @@ Add Raw Memory Code|Ajouter un Code Mémoire Brut
 Address|Adresse
 Address :|Adresse :
 Advanced|Avancé
+All Files|Tous les Fichiers
 All Files;|Tous les Fichiers
 All Files (*)|Tous les Fichiers (*)
 Always|Toujours
@@ -84,6 +85,7 @@ Backup Ram Manager|Gestion des Sauvegardes
 Bilinear|Bilinéaire
 Bilinear Filtering (Restart required)|Filtrage Bilinéaire (Redémarrer l'émulateur)
 Binary Files (*.bin)|Fichiers Binaire (*.bin)
+Binary Files (*.bin);;COFF Program Files (*.cof *.coff);;ELF Program Files (*.elf);;All Files (*)|Fichiers Binaire (*.bin);;Fichiers Programme COFF (*.cof *.coff);;Fichiers Programme ELF (*.elf);;Tous les Fichiers (*)
 Bios|Bios :
 Block Size :|Taille du Bloc :
 Bug report|Rapport de Bug
@@ -96,7 +98,7 @@ Can't plug in the new controller, cancelling.|Ne peut pas brancher dans le nouve
 Can't initialize Kronos|Ne peut pas intialiser Kronos.
 Cart/Memory|Cartouche/Mémoire
 Cartridge|Cartouche :
-CD Images (*.iso *.cue *.bin *.mds *.ccd)|Images CD (*.iso *.cue *.bin *.mds *.ccd)
+CD Images (*.iso *.cue *.bin *.mds *.ccd *.zip)|Images CD (*.iso *.cue *.bin *.mds *.ccd *.zip)
 Cd-Rom|CD-Rom :
 Central/South America (NTSC)|Amérique du Sud/Centrale (NTSC)
 Central/South America (PAL)|Amérique du Sud/Centrale (PAL)
@@ -151,6 +153,7 @@ Description|Description
 Device List|Liste des Périphériques
 DirectX Input Interface|Interface Contrôleur DirectX
 DirectX Sound Interface|Interface DirectX Sound
+Disabled|Désactivé
 Disassembled Code|Code Désassemblé :
 Display on Hover|Afficher en Passant le Curseur
 Double Mission Stick|Double Mission Stick
@@ -212,6 +215,11 @@ Japan (NTSC)|Japon (NTSC)
 Japanese|Japonais
 Japanese Modem|Modem Japonais
 Korea (NTSC)|Corée (NTSC)
+Kronos Cheat Files (*.yct);;All Files (*)|Fichiers de Cheat Kronos (*ycf);;Tous les Fichiers (*)
+Kronos is not initialized, can't manage backup ram.|Kronos n'est pas initialisé. Ne peut pas gérer la sauvegarde.
+Kronos Qt GUI|Interface Graphique Qt pour Kronos
+Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Interface Graphique QT Kronos<br />Basé sur Yabause %1 :<br /><a href="http://yabause.org">http://yabause.org</a><br />L'équipe de Yabause :<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Kronos Save State (*.yss)|Sauvegarde d'État Kronos (*.yss)
 Language :|Langue :
 L&oad State|&Charger un Etat
 Left|Gauche
@@ -415,9 +423,4 @@ Word|Word
 Word Write|Ecrire un Word
 Word Write : %1 %2|Ecrire un Word : %1 %2
 Write|Ecrire
-Kronos Cheat Files (*.yct);;All Files (*)|Fichiers de Cheat Kronos (*ycf);;Tous les Fichiers (*)
-Kronos Qt GUI|Interface Graphique Qt pour Kronos
-Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Interface Graphique QT Kronos<br />Basé sur Yabause %1 :<br /><a href="http://yabause.org">http://yabause.org</a><br />L'équipe de Yabause :<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
-Kronos Save State (*.yss)|Sauvegarde d'État Kronos (*.yss)
-Kronos is not initialized, can't manage backup ram.|Kronos n'est pas initialisé. Ne peut pas gérer la sauvegarde.
 Yes|Oui
