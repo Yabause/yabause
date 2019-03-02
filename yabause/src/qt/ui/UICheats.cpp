@@ -199,7 +199,7 @@ void UICheats::on_pbRaw_clicked()
 
 void UICheats::on_pbSaveFile_clicked()
 {
-	const QString s = CommonDialogs::getSaveFileName( ".", QtYabause::translate( "Choose a cheat file to save to" ), QtYabause::translate( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
+	const QString s = CommonDialogs::getSaveFileName( ".", QtYabause::translate( "Choose a cheat file to save to" ), QtYabause::translate( "Kronos Cheat Files (*.yct);;All Files (*)" ) );
 	if ( !s.isEmpty() )
 		if ( CheatSave( s.toLatin1().constData() ) != 0 )
 			CommonDialogs::information( QtYabause::translate( "Unable to open file for loading" ) );
@@ -207,7 +207,7 @@ void UICheats::on_pbSaveFile_clicked()
 
 void UICheats::on_pbLoadFile_clicked()
 {
-	const QString s = CommonDialogs::getOpenFileName( ".", QtYabause::translate( "Choose a cheat file to open" ), QtYabause::translate( "Yabause Cheat Files (*.yct);;All Files (*)" ) );
+	const QString s = CommonDialogs::getOpenFileName( ".", QtYabause::translate( "Choose a cheat file to open" ), QtYabause::translate( "Kronos Cheat Files (*.yct);;All Files (*)" ) );
 	if ( !s.isEmpty() )
 	{
 		if ( CheatLoad( s.toLatin1().constData() ) == 0 )
