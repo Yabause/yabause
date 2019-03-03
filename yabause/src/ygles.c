@@ -976,11 +976,6 @@ int YglGenerateWindowBuffer(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
 
-  if (_Ygl->window_depth != 0) glDeleteRenderbuffers(1, &_Ygl->window_depth);
-  glGenRenderbuffers(1, &_Ygl->window_depth);
-  glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->window_depth);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
-
   if (_Ygl->window_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->window_fbo);
   }
@@ -993,13 +988,13 @@ int YglGenerateWindowBuffer(){
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _Ygl->window_fbotex[3], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _Ygl->window_fbotex[4], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _Ygl->window_fbotex[5], 0);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->window_depth);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     YGLDEBUG("YglGenerateOriginalBuffer:Framebuffer status = %08X\n", status);
     abort();
   }
-  _Ygl->bUpdateWindow = 1;
+
+  _Ygl->window_tex[0] = _Ygl->window_tex[1] = 0;
   return 0;
 }
 
@@ -1346,8 +1341,7 @@ int YglInit(int width, int height, unsigned int depth) {
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, 320.0f, 224.0f, 0.0f, 10.0f, 0.0f);
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDisable(GL_BLEND);
 
   glDisable(GL_DEPTH_TEST);
   glDepthFunc(GL_GEQUAL);
@@ -2756,125 +2750,106 @@ void YglNeedToUpdateWindow()
   _Ygl->bUpdateWindow = 1;
 }
 
-void YglSetVdp2Window()
+void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 {
-  float col[4] = {0.0f,0.0f,0.0f,1.0f};
+  float col[4] = {0.0f,0.0f,0.0f,0.0f};
   float const vertexPosition[] = {
-    _Ygl->rwidth, 0.0f,
-    0.0f, 0.0f,
-    _Ygl->rwidth, _Ygl->rheight,
-    0.0f, _Ygl->rheight };
+    1.0f, -1.0f,
+    -1.0f, -1.0f,
+    1.0f, 1.0f,
+    -1.0f, 1.0f };
 
   int Win0[enBGMAX];
   int Win0_mode[enBGMAX];
   int Win1[enBGMAX];
   int Win1_mode[enBGMAX];
-  u8* winsetup = (u8*)Vdp2Regs->WCTLA;
 
-  Win0[NBG0] = (Vdp2Regs->WCTLA >> 1) & 0x01;
-  Win1[NBG0] = (Vdp2Regs->WCTLA >> 3) & 0x01;
-  Win0[NBG1] = (Vdp2Regs->WCTLA >> 9) & 0x01;
-  Win1[NBG1] = (Vdp2Regs->WCTLA >> 11) & 0x01;
+  int Win_op[enBGMAX];
 
-  Win0[NBG2] = (Vdp2Regs->WCTLB >> 1) & 0x01;
-  Win1[NBG2] = (Vdp2Regs->WCTLB >> 3) & 0x01;
-  Win0[NBG3] = (Vdp2Regs->WCTLB >> 9) & 0x01;
-  Win1[NBG3] = (Vdp2Regs->WCTLB >> 11) & 0x01;
+// Missing color calculation window
+// Missing rotation parameter window
 
-  Win0[RBG0] = (Vdp2Regs->WCTLC >> 1) & 0x01;
-  Win1[RBG0] = (Vdp2Regs->WCTLC >> 3) & 0x01;
-  Win0[SPRITE] = (Vdp2Regs->WCTLC >> 9) & 0x01;
-  Win1[SPRITE] = (Vdp2Regs->WCTLC >> 11) & 0x01;
+  Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
+  Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
+  Win0[NBG1] = (varVdp2Regs->WCTLA >> 9) & 0x01;
+  Win1[NBG1] = (varVdp2Regs->WCTLA >> 11) & 0x01;
 
-  Win0_mode[NBG0] = (Vdp2Regs->WCTLA) & 0x01;
-  Win1_mode[NBG0] = (Vdp2Regs->WCTLA >> 2) & 0x01;
-  Win0_mode[NBG1] = (Vdp2Regs->WCTLA >> 8) & 0x01;
-  Win1_mode[NBG1] = (Vdp2Regs->WCTLA >> 10) & 0x01;
+  Win0[NBG2] = (varVdp2Regs->WCTLB >> 1) & 0x01;
+  Win1[NBG2] = (varVdp2Regs->WCTLB >> 3) & 0x01;
+  Win0[NBG3] = (varVdp2Regs->WCTLB >> 9) & 0x01;
+  Win1[NBG3] = (varVdp2Regs->WCTLB >> 11) & 0x01;
 
-  Win0_mode[NBG2] = (Vdp2Regs->WCTLB) & 0x01;
-  Win1_mode[NBG2] = (Vdp2Regs->WCTLB >> 2) & 0x01;
-  Win0_mode[NBG3] = (Vdp2Regs->WCTLB >> 8) & 0x01;
-  Win1_mode[NBG3] = (Vdp2Regs->WCTLB >> 10) & 0x01;
+  Win0[RBG0] = (varVdp2Regs->WCTLC >> 1) & 0x01;
+  Win1[RBG0] = (varVdp2Regs->WCTLC >> 3) & 0x01;
+  Win0[SPRITE] = (varVdp2Regs->WCTLC >> 9) & 0x01;
+  Win1[SPRITE] = (varVdp2Regs->WCTLC >> 11) & 0x01;
 
-  Win0_mode[RBG0] = (Vdp2Regs->WCTLC) & 0x01;
-  Win1_mode[RBG0] = (Vdp2Regs->WCTLC >> 2) & 0x01;
-  Win0_mode[SPRITE] = (Vdp2Regs->WCTLC >> 8) & 0x01;
-  Win1_mode[SPRITE] = (Vdp2Regs->WCTLC >> 10) & 0x01;
+  Win0_mode[NBG0] = (varVdp2Regs->WCTLA) & 0x01;
+  Win1_mode[NBG0] = (varVdp2Regs->WCTLA >> 2) & 0x01;
+  Win0_mode[NBG1] = (varVdp2Regs->WCTLA >> 8) & 0x01;
+  Win1_mode[NBG1] = (varVdp2Regs->WCTLA >> 10) & 0x01;
 
-  Win0[RBG1] = Win0[RBG0];
-  Win0_mode[RBG1] = Win0_mode[RBG0];
+  Win0_mode[NBG2] = (varVdp2Regs->WCTLB) & 0x01;
+  Win1_mode[NBG2] = (varVdp2Regs->WCTLB >> 2) & 0x01;
+  Win0_mode[NBG3] = (varVdp2Regs->WCTLB >> 8) & 0x01;
+  Win1_mode[NBG3] = (varVdp2Regs->WCTLB >> 10) & 0x01;
+
+  Win0_mode[RBG0] = (varVdp2Regs->WCTLC) & 0x01;
+  Win1_mode[RBG0] = (varVdp2Regs->WCTLC >> 2) & 0x01;
+  Win0_mode[SPRITE] = (varVdp2Regs->WCTLC >> 8) & 0x01;
+  Win1_mode[SPRITE] = (varVdp2Regs->WCTLC >> 10) & 0x01;
+
+  Win_op[NBG0] = (varVdp2Regs->WCTLA >> 7) & 0x01;
+  Win_op[NBG1] = (varVdp2Regs->WCTLA >> 15) & 0x01;
+  Win_op[NBG2] = (varVdp2Regs->WCTLB >> 7) & 0x01;
+  Win_op[NBG3] = (varVdp2Regs->WCTLB >> 15) & 0x01;
+  Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
+  Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
+
+  Win0[RBG1] = Win0[NBG0];
+  Win0_mode[RBG1] = Win0_mode[NBG0];
+  Win1[RBG1] = Win1[NBG0];
+  Win1_mode[RBG1] = Win1_mode[NBG0];
+  Win_op[RBG1] = Win_op[NBG0];
+
+  if (  Win0[NBG0] &&   Win1[NBG0] &&  !Win_op[NBG0]) printf("Window mode OR not supported yet on NBG0\n");
+  if (  Win0[NBG1] &&   Win1[NBG1] &&  !Win_op[NBG1]) printf("Window mode OR not supported yet on NBG1\n");
+  if (  Win0[NBG2] &&   Win1[NBG2] &&  !Win_op[NBG2]) printf("Window mode OR not supported yet on NBG2\n");
+  if (  Win0[NBG3] &&   Win1[NBG3] &&  !Win_op[NBG3]) printf("Window mode OR not supported yet on NBG3\n");
+  if (  Win0[RBG0] &&   Win1[RBG0] &&  !Win_op[RBG0]) printf("Window mode OR not supported yet on RBG0\n");
+  if (  Win0[SPRITE] &&   Win1[SPRITE] &&  !Win_op[SPRITE]) printf("Window mode OR not supported yet on SPRITE\n");
 
   if( _Ygl->bUpdateWindow ) {
      GLenum DrawBuffers[SPRITE]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5};
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_fbo);
      glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+     Vdp2GenerateWindowInfo(varVdp2Regs);
      for (int i = 0; i< SPRITE; i++) {
        glDrawBuffers(1, &DrawBuffers[i]);
        glClearBufferfv(GL_COLOR, 0, col);
-       if (_Ygl->win0_vertexcnt != 0 || _Ygl->win1_vertexcnt != 0 )
+       Ygl_uniformWindow(&_Ygl->windowpg);
+       _Ygl->use_win[i] = 0;
+
+       if(Win0[i] || Win1[i])
        {
-         Ygl_uniformWindow(&_Ygl->windowpg);
-         glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
-
-         //
-         glDepthMask(GL_FALSE);
-         glDisable(GL_DEPTH_TEST);
-         glEnable(GL_STENCIL_TEST);
-         glDisable(GL_BLEND);
-
-         if( (_Ygl->win0_vertexcnt != 0 ) && (Win0[i]))
-         {
-           glStencilOp(GL_REPLACE,GL_REPLACE,GL_REPLACE);
-           glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-           glStencilMask(0x01);
-           glStencilFunc(GL_ALWAYS,0x01,0x01);
-           glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
-           glBufferData(GL_ARRAY_BUFFER, _Ygl->win0_vertexcnt * 2 * sizeof(float), _Ygl->win0v, GL_STREAM_DRAW);
-           glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-           glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-           glDrawArrays(GL_TRIANGLE_STRIP,0,_Ygl->win0_vertexcnt);
-           glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-           glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-           if (Win0_mode[i] == 0) glStencilFunc(GL_EQUAL,0x1,0xFF);
-           else glStencilFunc(GL_EQUAL,0x0,0xFF);
-           //Draw color///
-           glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
-           glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), vertexPosition, GL_STREAM_DRAW);
-           glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-           glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-           glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-         }
-
-         if( ( _Ygl->win1_vertexcnt != 0 ) && (Win1[i]))
-         {
-           glStencilOp(GL_REPLACE,GL_REPLACE,GL_REPLACE);
-           glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-           glStencilMask(0x02);
-           glStencilFunc(GL_ALWAYS,0x02,0x02);
-           glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win1v_buf);
-           glBufferData(GL_ARRAY_BUFFER, _Ygl->win1_vertexcnt * 2 *sizeof(float), _Ygl->win1v, GL_STREAM_DRAW);
-           glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-           glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-           glDrawArrays(GL_TRIANGLE_STRIP,0,_Ygl->win1_vertexcnt);
-           glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-           glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-           if (Win1_mode[i] == 0) glStencilFunc(GL_EQUAL,0x2,0xFF);
-           else glStencilFunc(GL_EQUAL,0x0,0xFF);
-           //Draw color///
-           glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win1v_buf);
-           glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), vertexPosition, GL_STREAM_DRAW);
-           glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-           glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-           glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-         }
-         glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+         _Ygl->use_win[i] = 1;
+         //Draw color///
+         glActiveTexture(GL_TEXTURE0);
+         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+         glActiveTexture(GL_TEXTURE1);
+         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
+         glUniform1i(_Ygl->windowpg.var1, Win0[i]);
+         glUniform1i(_Ygl->windowpg.var2, Win0_mode[i]);
+         glUniform1i(_Ygl->windowpg.var3, Win1[i]);
+         glUniform1i(_Ygl->windowpg.var4, Win1_mode[i]);
+         glUniform1i(_Ygl->windowpg.var5, Win_op[i]);
+         glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
+         glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
+         glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+         glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
+         glDrawArrays(GL_TRIANGLE_STRIP,0,4);
        }
     }
-    //glDepthMask(GL_TRUE);
-    //glEnable(GL_DEPTH_TEST);
-    glDisable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS,0,0xFF);
-    glStencilMask(0xFFFFFFFF);
     _Ygl->bUpdateWindow = 0;
   }
   return;
@@ -3119,20 +3094,22 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
 
   if (level->prgcurrent == 0) return 0;
 
-  glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+  if (_Ygl->use_win[id] == 1) {
+    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
-  glEnable(GL_STENCIL_TEST);
-  glStencilFunc(GL_ALWAYS, 1, 0xFF);
-  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
-  glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 
-  YglBlitSimple(_Ygl->window_fbotex[id], 0);
+    YglBlitSimple(_Ygl->window_fbotex[id], 0);
 
-  glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
 
-  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-  glStencilFunc(GL_EQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glStencilFunc(GL_EQUAL, 1, 0xFF);
+  }
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
@@ -3231,6 +3208,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
 
+   glDepthMask(GL_FALSE);
+   glDisable(GL_DEPTH_TEST);
+   glDisable(GL_BLEND);
+
    glBindVertexArray(_Ygl->vao);
 
    if (_Ygl->stretch == 0) {
@@ -3289,10 +3270,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
    YglUpdateVdp2Reg(varVdp2Regs);
 
   // Color Calcurate Window
-   ccwindow = ((Vdp2Regs->WCTLD >> 9) & 0x01);
-   ccwindow |= ((Vdp2Regs->WCTLD >> 11) & 0x01);
+   ccwindow = ((varVdp2Regs->WCTLD >> 9) & 0x01);
+   ccwindow |= ((varVdp2Regs->WCTLD >> 11) & 0x01);
 
-  YglSetVdp2Window();
+  YglSetVdp2Window(varVdp2Regs);
   // Windo function to reintroduce
 
    cprg = -1;
@@ -3619,6 +3600,45 @@ void YglSetLineColor(u32 * pbuf, int size){
     _Ygl->lincolor_buf = NULL;
   //}
   glBindTexture(GL_TEXTURE_2D, 0 );
+  return;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+void YglGetWindowPointer(int id) {
+  int status;
+  GLuint error;
+
+  YGLDEBUG("YglGetWindowPointer: %d,%d", _Ygl->width, _Ygl->height);
+
+
+  if (_Ygl->window_tex[0] == 0) {
+    glGenTextures(2, &_Ygl->window_tex[0]);
+
+    glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  }
+  if( _Ygl->win[id] == NULL ){
+    glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[id]);
+    _Ygl->win[id] = malloc(512 * 4);
+  }
+}
+
+void YglSetWindow(int id) {
+  glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[id]);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 1, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->win[id] );
+
+  glBindTexture(GL_TEXTURE_2D, 0);
   return;
 }
 

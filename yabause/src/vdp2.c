@@ -1463,15 +1463,19 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
          return;
       case 0x0D8:
          Vdp2Regs->LWTA0.part.U = val;
+         YglNeedToUpdateWindow();
          return;
       case 0x0DA:
          Vdp2Regs->LWTA0.part.L = val;
+         YglNeedToUpdateWindow();
          return;
       case 0x0DC:
          Vdp2Regs->LWTA1.part.U = val;
+         YglNeedToUpdateWindow();
          return;
       case 0x0DE:
          Vdp2Regs->LWTA1.part.L = val;
+         YglNeedToUpdateWindow();
          return;
       case 0x0E0:
          Vdp2Regs->SPCTL = val;

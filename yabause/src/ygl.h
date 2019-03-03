@@ -416,6 +416,7 @@ typedef struct {
    GLuint tex0;
    GLuint tex1;
    float color_offset_val[4];
+   int var1, var2, var3, var4, var5;
    int (*setupUniform)(void *, YglTextureManager *tm, Vdp2* regs, int id);
    int (*cleanupUniform)(void *, YglTextureManager *tm);
    YglVdp1CommonParam * ids;
@@ -424,6 +425,10 @@ typedef struct {
    u32 lineTexture;
    int id;
    int colornumber;
+   float emu_height;
+   float vheight;
+   float emu_width;
+   float vwidth;
 } YglProgram;
 
 typedef struct {
@@ -579,10 +584,8 @@ typedef struct {
    u32 * messagebuf;
 
    int bUpdateWindow;
-   float win0v[512*4];
-   int win0_vertexcnt;
-   float win1v[512*4];
-   int win1_vertexcnt;
+   u32* win[2];
+   u32 window_tex[2];
 
    YglMatrix mtxModelView;
 
@@ -647,7 +650,9 @@ typedef struct {
    int screen[SPRITE];
    int prioVal[enBGMAX];
 
-}  Ygl;
+   int use_win[enBGMAX];
+
+} Ygl;
 
 extern Ygl * _Ygl;
 extern int opengl_mode; // 0 => gles3 , 1 => gl3.3
@@ -721,6 +726,9 @@ void YglSetLineColor(u32 * pbuf, int size);
 
 u32* YglGetBackColorPointer();
 void YglSetBackColor(int size);
+
+void YglGetWindowPointer(int id);
+void YglSetWindow(int id);
 
 int Ygl_uniformWindow(void * p );
 int YglProgramInit();

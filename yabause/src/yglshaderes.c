@@ -815,11 +815,10 @@ SHADER_VERSION
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_window_v[] =
       SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;    \n"
       "void main()       \n"
       "{ \n"
-      "   gl_Position = a_position*u_mvpMatrix; \n"
+      "   gl_Position = a_position; \n"
       "} ";
 const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
@@ -829,9 +828,54 @@ const GLchar Yglprg_window_f[] =
       "precision highp float; \n"
       "#endif\n"
       "out vec4 fragColor; \n"
+      "uniform sampler2D s_win0;  \n"
+      "uniform sampler2D s_win1;  \n"
+      "uniform float u_emu_height;\n"
+      "uniform float u_vheight; \n"
+      "uniform float u_emu_width;\n"
+      "uniform float u_vwidth; \n"
+      "uniform int win0; \n"
+      "uniform int win1; \n"
+      "uniform int winOp; \n"
+      "uniform int win0mode;  \n"
+      "uniform int win1mode;  \n"
       "void main()   \n"
       "{  \n"
-      "  fragColor = vec4( 0.0, 0.0, 0.0, 0.0 );\n"
+      "  ivec2 linepos; \n "
+      "  int validw0 = 1; \n"
+      "  int validw1 = 1; \n"
+      "  linepos.y = 0; \n "
+      "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
+      "  int pos = int( (gl_FragCoord.x) * u_emu_width);\n"
+      "  int valid = 0; \n"
+      "  if (winOp != 0) valid = 1;\n"
+      "  if (win0 != 0) {\n"
+      "    vec4 lineW0 = texelFetch(s_win0,linepos,0);\n"
+      "    int startW0 = int(lineW0.r*255.0) | (int(lineW0.g*255.0)<<8);\n"
+      "    int endW0 = int(lineW0.b*255.0) | (int(lineW0.a*255.0)<<8);\n"
+      "    if (win0mode != 0) { \n"
+      "      if ((startW0 <= endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
+      "    } else { \n"
+      "      if ((startW0 <= endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
+      "    }\n"
+      "  } else validw0 = valid;\n"
+      "  if (win1 != 0) {\n"
+      "    vec4 lineW1 = texelFetch(s_win1,linepos,0);\n"
+      "    int startW1 = int(lineW1.r*255.0) | (int(lineW1.g*255.0)<<8);\n"
+      "    int endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
+      "    if (win1mode != 0) { \n"
+      "      if ((startW1 <= endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
+      "    } else { \n"
+      "      if ((startW1 <= endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
+      "    }\n"
+      "  } else validw1 = valid;\n"
+      "  if (winOp != 0) { \n"
+      "    if ((validw0 == 1) && (validw1 == 1)) fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
+      "    else discard;\n"
+      "  } else { \n"
+      "    if ((validw0 == 1) || (validw1 == 1)) fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
+      "    else discard;\n"
+      "  }\n"
       "}  \n";
 const GLchar * pYglprg_window_f[] = {Yglprg_window_f, NULL};
 
@@ -840,6 +884,12 @@ int Ygl_uniformWindow(void * p )
    YglProgram * prg;
    prg = p;
    GLUSEPROG(prg->prgid );
+   glUniform1i(_Ygl->windowpg.tex0, 0);
+   glUniform1i(_Ygl->windowpg.tex1, 1);
+   glUniform1f(_Ygl->windowpg.emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
+   glUniform1f(_Ygl->windowpg.vheight, (float)_Ygl->height);
+   glUniform1f(_Ygl->windowpg.emu_width, (float)_Ygl->rwidth / (float)_Ygl->width);
+   glUniform1f(_Ygl->windowpg.vwidth, (float)_Ygl->width);
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
    glDisableVertexAttribArray(2);
@@ -2306,10 +2356,20 @@ int YglProgramInit()
       return -1;
 
    _Ygl->windowpg.prgid=_prgid[PG_WINDOW];
-   _Ygl->windowpg.setupUniform    = Ygl_uniformNormal;
-   _Ygl->windowpg.cleanupUniform  = Ygl_cleanupNormal;
+   _Ygl->windowpg.setupUniform    = Ygl_uniformWindow;
+   _Ygl->windowpg.cleanupUniform  = Ygl_cleanupWindow;
    _Ygl->windowpg.vertexp         = glGetAttribLocation(_prgid[PG_WINDOW],(const GLchar *)"a_position");
-   _Ygl->windowpg.mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
+   _Ygl->windowpg.emu_height    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_emu_height");
+   _Ygl->windowpg.vheight    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_vheight");
+   _Ygl->windowpg.emu_width    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_emu_width");
+   _Ygl->windowpg.vwidth   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_vwidth");
+   _Ygl->windowpg.var1   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0");
+   _Ygl->windowpg.var2   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0mode");
+   _Ygl->windowpg.var3   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win1");
+   _Ygl->windowpg.var4   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win1mode");
+   _Ygl->windowpg.var5   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"winOp");
+   _Ygl->windowpg.tex0 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win0");
+   _Ygl->windowpg.tex1 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win1");
 
    _prgid[PG_VDP1_STARTUSERCLIP] = _prgid[PG_WINDOW];
 
