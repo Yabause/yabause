@@ -1,6 +1,6 @@
 %1 Images (*.%2)|%1 Imágenes (*.%2)
 %1/%2 blocks free|%1/%2 bloques libres
-3D Control Pad Configuration|
+3D Control Pad Configuration|Configuración de Pad 3D
 &About...|&Acerca de...
 &Action Replay|&Action Replay
 &Backup Manager...|Gestor de memoria de &backup...
@@ -35,18 +35,18 @@
 &Tools|Herramien&tas
 &Transfer|&Transferir
 &View|&Ver
-16 Mbit Backup Ram|RAM de respaldo de 16 Mbit
-16 Mbit ROM|ROM de 16 Mbit
 16-bit|16-bit
 16-bit Relative value(s)|Valor(es) relativo(s) a 16-bit
-32 Mbit Backup Ram|RAM de respaldo de 32 Mbit
-32 Mbit Dram|Dram de 32 Mbit
+16 Mbit Backup Ram|RAM de respaldo de 16 Mbit
+16 Mbit ROM|ROM de 16 Mbit
 32-bit|32-bit
+32 Mbit Backup Ram|RAM de respaldo de 32 Mbit
+32 Mbit Dram|Dram de 32 Mbit		 
 3D Control Pad|Controlador Analógico 3D
 4 Mbit Backup Ram|RAM de respaldo de 4 Mbit
 503/512 blocks free|503/512 bloques libres
 510/512 blocks free|510/512 bloques libres
-68000 Core|
+68000 Core|Núcleo 68000
 8 Mbit Backup Ram|RAM de respaldo de 8 Mbit
 8 Mbit Dram|Dram de 8 Mbit
 8-bit|8-bit
@@ -62,7 +62,8 @@ Add Raw Memory Code|Añadir código dirección de memoria
 Address|Dirección
 Address :|Dirección :
 Advanced|Avanzado
-All Files;|Todos los ficheros
+All Files|Todos los ficheros
+All Files;|Todos los ficheros		   
 All Files (*)|Todos los ficheros (*)
 Always|Siempre
 An error occured while writing file.|Ha ocurrido un error mientras se escribía el archivo.
@@ -72,8 +73,8 @@ Asia (NTSC)|Asia (NTSC)
 Asia (PAL)|Asia (PAL)
 Assembly code|Código ensamblador
 Auto-detect|Auto-detectar
-Autostart|Autoiniciar
 Awaiting input for|Esperando entrada para
+Autostart|Autoiniciar		  
 Axis|Eje
 Axis Throttle|Acelerar Eje
 Axis X|Eje X
@@ -81,10 +82,11 @@ Axis Y|Eje Y
 Axis L Trigger|Eje gatillo izq
 Axis R Trigger|Eje gatillo der
 Backup Ram Manager|Gestor de RAM de backup
-Bilinear|
+Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Filtro bilinear (Requiere reinicio)
 Binary Files (*.bin)|Archivos binarios (*.bin)
-Bios|Bios
+Binary Files (*.bin);;COFF Program Files (*.cof *.coff);;ELF Program Files (*.elf);;All Files (*)|Archivos binarios (*.bin);;Archivos de programa COFF (*.cof *.coff);;Archivos de programa ELF (*.elf);;Todos los ficheros (*) 													
+Bios|Bios	 
 Block Size :|Tamaño de bloque:
 Bug report|Reportar bug
 Byte|Byte
@@ -104,7 +106,7 @@ Cheats File|Archivo de Trucos
 Cheat &Search...|Buscar &trucos...
 Cheat Search|Buscar Trucos
 Cheat Type|Tipo de truco
-Choose a binary file|Seleccione un archivo binario
+Choose a binary or program file|Seleccione un archivo binario o un archivo de programa
 Choose a bios file|Seleccione un archivo bios
 Choose a cartridge file|Seleccione un archivo de cartucho
 Choose a cartridge folder|Seleccione una carpeta de cartuchos
@@ -127,8 +129,8 @@ Code Breakpoints|Puntos de detención de código
 COFF Program Files (*.cof *.coff)|Archivos de programa COFF (*.cof *.coff)
 Comment :|Comentario :
 Common Control Registers|Registros comunes de control
-Compare Type|Comparar tipo
 Compatibility List|Listado de compatibilidad
+Compare Type|Comparar tipo			 
 Couldn't save state file|No se pudo guardar el archivo de estado
 Couldn't load state file|No se pudo cargar el archivo de estado
 CPU Tesselation|Teselado CPU
@@ -151,9 +153,11 @@ Description|Descripción
 Device List|Lista de Dispositivos
 DirectX Input Interface|Interfaz de entrada de DirectX
 DirectX Sound Interface|Interfaz de Sonido de DirectX
+Disabled|Deshabilitado		 
 Disassembled Code|Código desensamblado
 Display on Hover|Habilitar video al pasar por encima
 Double Mission Stick|Stick doble mando de avión
+Double Mission Stick Configuration|	Configuración de stick doble mando de avión							   
 Down|Abajo
 Download|Descargar
 DSP Control Registers|Registros de control del DSP
@@ -167,6 +171,8 @@ Dummy Video Interface|Interfaz de video falsa
 Edit configuration|Editar configuración
 Eject/Load ISO...|Ejecutar/Cargar ISO...
 ELF Program Files (*elf)|Archivos de programa ELF (*elf)
+End Address:|Dirección final:
+English|Inglés			 
 Embellishment filter :|Filtro de mejora visual
 Enable|Activar
 Enable Bios Emulation|Habilitar Emulación de Bios
@@ -174,11 +180,9 @@ Enable Code : %1 %2|Habilitar Código : %1 %2
 Enable Frame Skip/Limiter|Habilitar Limitador/Salto de frames
 Enable Multithreading|Habilitar multihilo
 Enabled|Activado
-End Address:|Dirección final:
-English|Inglés
 Enter new assembly code|Inserte el nuevo código ensamblador
 Enter New Value|Inserte el nuevo valor
-Error|
+Error|Error
 Extend Internal backup memory to 8MB|Expandir la memoria interna de backup a 8MB
 Europe + others (PAL)|Europa + otros (PAL)
 Exact|Exacto
@@ -200,7 +204,7 @@ Hex value(s)|Valor(es) Hexadecimal(es)
 Hide Menubar|Esconder barra de menú
 Hide Toolbar|Esconder barra de herramientas
 Information...|Información...
-Inline Assembly|
+Inline Assembly|Ensamblado en línea
 Input|Entrada
 Internal Backup RAM|Backup de RAM interna
 Invalid Address|Dirección inválida
@@ -212,18 +216,25 @@ Japan (NTSC)|Japón (NTSC)
 Japanese|Japonés
 Japanese Modem|Modem japonés
 Korea (NTSC)|Korea (NTSC)
+Kronos Cheat Files (*.yct);;All Files (*)|Archivos de trucos para Kronos (*.yct);;Todos los archivos (*)
+Kronos Qt GUI|Interfaz gráfica Qt
+Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Kronos Qt Gui<br />Basada en Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />El Equipo Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>										  
+Kronos Save State (*.yss)|Guardado de estado de Kronos (*.yss)
+Kronos is not initialized, can't manage backup ram.|Kronos no está inicializado. No se puede gestionar el editor de la memoria de backup.			  
+Language :|Idioma :																	
 L&oad State|Cargar Estad&o
-Language :|Idioma :
 Left|Izquierda
-Left Stick Axis X|Eje X Stick izq 
+Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|Stick izq:\nGatillo:      X\nBotón izq:  Y\nBotón der: Z
+Left Stick Axis X|Eje X Stick izq 		  
 Left Stick Axis Y|Eje Y Stick iqz
-Left Stick Axis Throttle|Acelerar Eje Stick izq
+Left Stick Axis Throttle|Acelerar Eje Stick izq						 
+Left Stick Throttle Down|Decelerar Eje Stick izq						 
 Left trigger|Gatillo izquierdo
 Less than|Menor a
 Log|Registro
 Long|Long
 Long Write|Escribir LONG
-Long Write : %1 %2|
+Long Write : %1 %2|Escribir LONG : %1 %2
 Loop Track Clear|Limpiar repetición de pista
 Loop Track Start|Comenzar repetición de pista
 Loop Track Stop|Detener repetición de pista
@@ -235,6 +246,7 @@ Memory Search|Búsqueda en memoria
 Memory Transfer|Transferir memoria
 Middle|Medio
 Mission Stick|Stick Mando de avión
+Mission Stick Configuration|Configuración mando de avión														
 Mouse|Ratón
 Mouse Configuration|Configuración del Ratón
 Mpeg ROM|ROM Mpeg
@@ -251,7 +263,7 @@ NBG3|NBG3
 NBG3 Info|Información de NBG3
 Netlink|Netlink
 Never|Nunca
-&No|
+&No|&No
 No matches found.|No se encontraron coincidencias
 None|Ninguno
 None|Ninguno
@@ -264,7 +276,7 @@ Open &CD Rom...|Abrir unidad de &CD Rom
 Open &ISO...|Abrir &ISO...
 Open CD Rom|Abrir CD Rom
 Open SSF|Abrir SSF
-Open&Tray|
+Open&Tray|Abrir&Bandeja
 OpenGL size :|Tamaño OpenGL
 OpenGL Video Interface|Interfaz de video OpenGL
 Options|Opciones
@@ -273,7 +285,7 @@ Original aspect ratio|Ratio de aspecto original
 OSD Core|Núcleo OSD
 Pad|Mando
 Pad Configuration|Configuración del mando
-Play Slot|
+Play Slot|Ejecutar Slot
 Port|Puerto
 Press Esc key to cancel|Presione la tecla ESC para cancelar
 Qt Keyboard Input Interface|Interfaz de entrada de teclado Qt
@@ -285,7 +297,8 @@ Region|Región
 Remove Peripheral|Quitar periférico
 Restart|Reiniciar
 Right|Derecha
-Right Stick Axis X|Eje X Stick der
+Right Stick:\nTrigger:      A\nLeft button:  B\nRight button: C|Stick der:\nGatillo:      A\nBotón izq:  B\nBotón der: C|
+Right Stick Axis X|Eje X Stick der			   
 Right Stick Axis Y|Eje Y Stick der
 Right Stick Axis Throttle|Acelerar Eje Stick der
 Right trigger|Gatillo derecho
@@ -300,18 +313,18 @@ Save MD1|Guardar MD1
 Save MD2|Guardar MD2
 Save MD3|Guardar MD3
 Save Selected|Guardado seleccionado
-Save Slot Registers|Guardar Registros de ranuras
 Save Program|Guardar programa
 S&ave State|Gu&ardar Estado
 Save States|Guardar Estados
-Save Tab|
+Save Slot Registers|Guardar Registros de ranuras					
+Save Tab|Guardar Tab
 Screen Enabled|Pantalla habilitada
 Screen Select:|Seleccionar pantalla
 Sc&reenshot|Captu&rar pantalla
 Scanline filter|Filtro de escaneo
 Scanline off|Escaneo off
 Scanline on|Escaneo on
-SCSP|
+SCSP|SCSP
 SCSP Channels|Canales SCSP
 SDL Joystick Interface|Interfaz Joystick SDL
 SDL Sound Interface|Interfaz de Sonido SDL
@@ -334,9 +347,9 @@ Shortcuts|Atajos
 Show FPS|Mostrar frames por segundo
 Show Log Window|Mostrar ventana de registro
 Signed|Con signo
+Signed 8-bit value|Valor de 8-bit con signo
 Signed 16-bit value|Valor de 16-bit con signo
 Signed 32-bit value|Valor de 32-bit con signo
-Signed 8-bit value|Valor de 8-bit con signo
 Slot Info|Información de ranura
 Slot Number:|Número de ranura:
 Software OSD Interface|Interfaz OSD software
@@ -363,6 +376,7 @@ Stick Up|Stick Arriba
 Stop|Detener
 Stretch to window|Ajustar a la ventana
 Synchronize Saturn internal clock with set time|Sincronizar reloj interno de la Saturn con hora local
+Tesselation|Teselado			
 Text|Texto
 Texture|Textura
 The dummies cores don't need configuration|Los núcleos dummy no necesitan configuración
@@ -378,22 +392,22 @@ TV effect :|Efecto TV
 Type:|Tipo:
 Unable to add code|Imposible añadir código
 Unable to change description|Imposible cambiar descripción
+Unsigned|Sin signo
+Unsigned 8-bit value|Valor de 8-bit sin signo
+Unsigned 16-bit value|Valor de 16-bit sin signo					  
+Unsigned 32-bit value|Valor de 32-bit sin signo
+Up|Arriba
+Upload|Subir
+Unable to add code|Imposible añadir código		 
 Unable to open file for loading|Imposible abrir archivo para cargar
 Unable to open file for saving|Imposible abrir archivo para guardar
 Unable to remove code|Imposible eliminar código
 Unknow (%1)|Desconocido (%1)
-Unsigned|Sin signo
-Unsigned 16-bit value|Valor de 16-bit sin signo
-Unsigned 32-bit value|Valor de 32-bit sin signo
-Unsigned 8-bit value|Valor de 8-bit sin signo
-Up|Arriba
-Upload|Subir
 Upscale Filter :|Filtro de escalado
-Use new scsp|Usar scsp nuevo
 Use Vdp1 Cache|Usar caché Vdp1
 Value|Valor
 Value :|Valor :
-Value:|Valor:
+Value :|Valor :
 VDP1|Vdp1
 VDP1 Command Info|Información de comandos del VDP1
 VDP1 Command List|Listado de comandos del VDP1
@@ -405,18 +419,13 @@ Video Driver|Driver de Vídeo
 Video Format|Formato de Vídeo
 View|Ver
 Viewer|Visor
-WAV Files (*.wav)|
+WAV Files (*.wav)|Archivos WAV (*.wav)
 Wheel|Volante
 Wheel Configuration|Configuración Volante
 Window Resolution|Resolución de ventana
 Windows SPTI Driver|Driver SPTI para Windows
 Word|Palabra(word)
 Word Write|Escribir WORD
-Word Write : %1 %2|
+Word Write : %1 %2|Escribir WORD : %1 %2 
 Write|Escribir
-Kronos Cheat Files (*.yct);;All Files (*)|Archivos de trucos para Kronos (*.yct);;Todos los archivos (*)
-Kronos Qt GUI|Interfaz gráfica Qt
-Kronos Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Kronos Qt Gui<br />Basada en Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />El Equipo Yabause<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
-Kronos Save State (*.yss)|Guardado de estado de Kronos (*.yss)
-Kronos is not initialized, can't manage backup ram.|Kronos no está inicializado. No se puede gestionar el editor de la memoria de backup.
 Yes|Si
