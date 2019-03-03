@@ -50,6 +50,12 @@
    <property name="toolTip">
     <string>B</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -71,6 +77,12 @@
    </property>
    <property name="toolTip">
     <string>Start</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -119,6 +131,12 @@
    </property>
    <property name="toolTip">
     <string>Axis</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
