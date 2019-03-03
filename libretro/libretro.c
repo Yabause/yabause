@@ -121,7 +121,7 @@ void retro_set_environment(retro_environment_t cb)
       { peripherals, 3 },
       { peripherals, 3 },
       { peripherals, 3 },
-      { 0 },
+      { NULL, 0 },
    };
 
    environ_cb = cb;
