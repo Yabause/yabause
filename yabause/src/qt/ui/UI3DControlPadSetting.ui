@@ -50,6 +50,12 @@
    <property name="toolTip">
     <string>Up</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -71,6 +77,12 @@
    </property>
    <property name="toolTip">
     <string>X</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -94,6 +106,12 @@
    <property name="toolTip">
     <string>Y</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -115,6 +133,12 @@
    </property>
    <property name="toolTip">
     <string>Z</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -138,6 +162,12 @@
    <property name="toolTip">
     <string>C</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -159,6 +189,12 @@
    </property>
    <property name="toolTip">
     <string>B</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -182,6 +218,12 @@
    <property name="toolTip">
     <string>A</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -203,6 +245,12 @@
    </property>
    <property name="toolTip">
     <string>Start</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -226,6 +274,12 @@
    <property name="toolTip">
     <string>Right trigger</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -247,6 +301,12 @@
    </property>
    <property name="toolTip">
     <string>Left trigger</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -270,6 +330,12 @@
    <property name="toolTip">
     <string>Down</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -292,6 +358,12 @@
    <property name="toolTip">
     <string>Right</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -313,6 +385,12 @@
    </property>
    <property name="toolTip">
     <string>Left</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -362,6 +440,12 @@
    <property name="toolTip">
     <string>Up</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -383,6 +467,12 @@
    </property>
    <property name="toolTip">
     <string>Left</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
@@ -406,6 +496,12 @@
    <property name="toolTip">
     <string>Down</string>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
+   </property>
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -427,6 +523,12 @@
    </property>
    <property name="toolTip">
     <string>Right</string>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton:hover,QToolButton:hover {
+  background-color: rgba(117, 190, 218, 0.5); 
+}
+</string>
    </property>
    <property name="checkable">
     <bool>true</bool>
