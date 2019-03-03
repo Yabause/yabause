@@ -1,6 +1,7 @@
 %1 Images (*.%2)|%1 Bilder (*.%2)
 %1/%2 blocks free|%1/%2 Blöcke frei
-&About...|&Über...
+3D Control Pad Configuration|3D Control Pad Konfiguration
+&About...|&Über...  
 &Action Replay|&Action Replay
 &Backup Manager...|&Speichermanager...
 &Browse|&Suchen
@@ -34,17 +35,18 @@
 &Tools|&Werkzeuge
 &Transfer|&Transferieren
 &View|&Ansicht
-16 Mbit Backup Ram|16 Mbit Backup Ram
-16 Mbit ROM|16 Mbit ROM
 16-bit|16-bit
 16-bit Relative value(s)|16-bit Relative value(s)
-32 Mbit Backup Ram|32 Mbit Backup Ram
+16 Mbit Backup Ram|16 Mbit Backup Ram
+16 Mbit ROM|16 Mbit ROM			
+32-bit|32-bit	
+32 Mbit Backup Ram|32 Mbit Backup Ram			   
 32 Mbit Dram|32 Mbit Dram
-32-bit|32-bit
 3D Control Pad|3D Control Pad
 4 Mbit Backup Ram|4 Mbit Backup Ram
 503/512 blocks free|503/512 Blöcke frei
 510/512 blocks free|510/512 Blöcke frei
+68000 Core|68000 Ader		   
 8 Mbit Backup Ram|8 Mbit Backup Ram
 8 Mbit Dram|8 Mbit Dram
 8-bit|8-bit
@@ -60,133 +62,167 @@ Add Raw Memory Code|Raw Speicher Code hinzufügen
 Address|Adresse
 Address :|Adresse :
 Advanced|Erweitert
+All Files|Alle dateien
+All Files;|Alle dateien;
+All Files (*)|Alle dateien (*)  
 Always|Immer
+An error occured while writing file.|Beim schreiben der datei ist ein fehler aufgetreten									 
 Are you sure you want to delete '%1' ?|Sind Sie sicher, dass Sie '%1' löschen möchten?
 Are you sure you want to format '%1' ?|Sind Sie sicher, dass Sie '%1' formatieren möchten?
 Asia (NTSC)|Asien (NTSC)
 Asia (PAL)|Asien (PAL)
+Assembly code|Montagecode			  
 Auto-detect|Automatische Erkennung
-Autostart|Autostart
 Awaiting input for|Erwarte Eingabe für
-Axis|Axis
-Backtrace|Backtrace
-Backup Ram Manager|Backup Ram Manager
-Binary Files (*.bin)|Binary Files (*.bin)
+Autostart|Autostart
+Axis|Achse
+Axis Throttle|Achsendrossel
+Axis X|Achse X
+Axis Y|Achse Y
+Axis L Trigger|Achse L Abzug
+Axis R Trigger|Achse R Abzug  
+Backup Ram Manager|Backup Ram Manager			  
+Bilinear|Bilinear
+Bilinear Filtering (Restart required)|Bilineare Filterung (Neustart erforderlich)	   
+Binary Files (*.bin)|Binary Files (*.bin)	   
+Binary Files (*.bin);;COFF Program Files (*.cof *.coff);;ELF Program Files (*.elf);;All Files (*)|
 Bios|Bios
 Block Size :|Blockgröße :
-Browse|Suchen
+Bug report|Fehlerbericht
 Byte|Byte
 Byte Write|Byte schreiben
-CD Images (*.iso *.cue *.bin)|CD Image (*.iso *.cue *.bin)
+Byte Write : %1 %2|Byte schreiben : %1 %2
 Cancel|Abbrechen
-Cannot initialize|Initialisierung fehlgeschlagen
 Cannot initialize Windows SPTI Driver|Windows SPTI Treiber kann nicht initialisiert werden
-Cart/Memory|Cartridge/Speicher
+Can't plug in the new controller, cancelling.|Der neue Controller kann nicht angeschlossen werden. Der Vorgang wird abgebrochen
+Can't initialize Kronos|Kronos Kann nicht initialisiert werden
+Cart/Memory|Wagen / Speicher			
 Cartridge|Cartridge
+CD Images (*.iso *.cue *.bin)|CD Image (*.iso *.cue *.bin)
 Cd-Rom|CD-Rom
 Central/South America (NTSC)|Zentral/Südamerika (NTSC)
 Central/South America (PAL)|Zentral/Südamerika (PAL)
+Cheats File|Cheatdatei			
 Cheat &Search...|Cheat &Suche
 Cheat Search|Cheat Suche
 Cheat Type|Cheattyp
-Cheats|Cheats
-Cheats File|Cheatdatei
 Choose a binary file|Wähle eine Binärdatei
+Choose a bios file|Wählen Sie eine Bios-Datei 
 Choose a cartridge file|Choose a cartridge file
+Choose a cartridge folder|Wählen Sie einen Kassettenordner						  
 Choose a cdrom drive/mount point|CD-Rom Laufwerk/Mount-Punkt auswählen
 Choose a cheat file to open|Cheatdatei zum Öffnen auswählen
 Choose a cheat file to save to|Cheatdatei zum Speichern auswählen
 Choose a file to save your state|Datei zum Speichern des Spielstandes auswählen
+Choose a folder to store save states|Wählen Sie einen Ordner zum Speichern der Sicherungszustände									 
 Choose a location for binary file|Wähle eine Position für die Binärdatei
+Choose a location for your binary file|Wählen Sie einen Ort für Ihre Binärdatei
+Choose a location for your bitmap|Wählen Sie einen Ort für Ihre Bitmap
 Choose a location for your screenshot|Speicherort für das Bildschirmfoto auswählen
+Choose a location for your wav file|Wählen Sie einen Ort für Ihre WAV-Datei
 Choose a memory file|Wähle eine Speicherdatei
 Choose a mpeg rom|Choose a mpeg rom
+Clear|Klar  
 Clear configuration|Konfiguration löschen
 Close|Schliessen
-Code|Code
 Code Breakpoints|Code Breakpoints
+COFF Program Files (*.cof *.coff)|COFF-Programmdateien (*.cof *.coff)
 Comment :|Kommentar :
 Common Control Registers|Common Control Registers
+Compatibility List|Kompatibilitätsliste			   
 Compare Type|Vergleiche Typen
-DSP Control Registers|DSP Control Registers
-DSP Registers|DSP Registers
+Couldn't save state file|Statusdatei konnte nicht gespeichert werden
+Couldn't load state file|Statusdatei konnte nicht geladen werden
+CPU Tesselation|CPU Tesselation
 Data Size|Datengrösse
 Data Size :|Datengrösse :
 Data Type|Dateityp
+Debug|Debuggen	  
 Debug CPU|Debug CPU
 Debug M68K|Debug M68K
 Debug Master SH2|Debug Master SH2
+Debug SCSP|Debuggen SCSP  
 Debug SCU DSP|Debug SCU DSP
 Debug Slave SH2|Debug Slave SH2
 Debug VDP1|Debug VDP1
 Debug VDP2Viewer|Debug VDP2Viewer
+Default Dial IP|Standardwahl-IP				
 Del|Del
 Delete|Löschen
 Description|Beschreibung
-Description :|Beschreibung :
 Device List|Geräteliste
 DirectX Input Interface|DirectX Input Interface
 DirectX Sound Interface|DirectX Sound Interface
 Disabled|Deaktiviert
 Disassembled Code|Disassembled Code
-Display Enabled|Display Enabled
 Display on Hover|Display on Hover
+Double Mission Stick|
+Double Mission Stick Configuration|								   
 Down|Runter
 Download|Herunterladen
-Draw End|Draw End
+DSP Control Registers|DSP Control Registers
+DSP Registers|DSP Registers
+Dummy 68k Interface|
 Dummy CD Drive|Dummy CD-Rom Laufwerk
 Dummy Input Interface|Dummy Eingabe Oberfläche
 Dummy OSD Interface|Dummy OSD Oberfläche
 Dummy Sound Interface|Dummy Audio Oberfläche
 Dummy Video Interface|Dummy Video Oberfläche
 Edit configuration|Einstellungen bearbeiten
-Emu-Compatibility|Emu-Kompatibilität
-Emulation|Emulation
-Enable|Aktivieren
-Enable Frame Skip/Limiter|Aktiviere Frame Überspringer/Limitierer
-Enabled|Aktiviert
-End Address:|Adressende:
+Eject/Load ISO...|ISO auswerfen / laden ...
+ELF Program Files (*elf)|ELF-Programmdateien (*elf)
+End Address:|Adresse beenden
 English|Englisch
+Embellishment filter :|Verschönerungsfilter
+Enable|Aktivieren
+Enable Bios Emulation|Aktivieren Sie die Bios-Emulation
+Enable Code : %1 %2|			
+Enable Frame Skip/Limiter|Aktiviere Frame Überspringer/Limitierer
+Enable Multithreading|			 
+Enabled|Aktiviert		
+Enter new assembly code|Neuen Montagecode eingeben
 Enter New Value|Neuen Wert eingeben
+Error|Error
+Extend Internal backup memory to 8MB|Erweitern Sie den internen Sicherungsspeicher auf 8 MB
 Europe + others (PAL)|Europe + andere (PAL)
 Exact|Entpacken
-FPS|BPS
-File|Datei
-File Name :|Dateiname :
-File transfer|Dateiübertragung
 File:|Datei:
-Format|Formatieren
-Frame Skip/Limiter|Frames Überspringen/Limitieren
+File Name :|Dateiname :
+Finished searching up to end of memory, continue from the beginning?|
 French|Französisch
-From|Von
-From File|Von Datei
 From File...|Von Datei...
-Fullscreen|Vollbild
-Fullscreen Resolution|Vollbildauflösung
 General|Allgemein
 General Info|General Info
 German|Deutsch
-Glut OSD Interface|Glut OSD Oberfläche
 Goto Address|Goto Address
+GPU Tesselation|			 
 Greater then|Größer als
-Hard Reset|Harter Neustart
-Height|Höhe
+Gun|Pistole
+Gun Configuration|Pistolen-Konfiguration
+Gun/Mouse Sensitivity|Empfindlichkeit der Pistole / Maus
 Hex value(s)|Hex value(s)
 Hide Menubar|Verstecke Menüleiste
 Hide Toolbar|Verstecke Werkzeugleiste
-ISO-File Virtual Drive|ISO-Datei Virtuelles Laufwerk
 Information...|Informationen...
+Inline Assembly|Inline-Montage
 Input|Eingabe
+Internal Backup RAM|Internes Backup-RAM
 Invalid Address|Ungültige Adresse
+Invalid Start/End Address Combination|Ungültige Kombination aus Start- und Endadresse
 Invalid Value|Ungültiger Wert
+ISO-File Virtual Drive|ISO-Datei Virtuelles Laufwerk
 Italian|Italienisch
 Japan (NTSC)|Japan (NTSC)
 Japanese|Japanisch
 Japanese Modem|Japanese Modem
 Korea (NTSC)|Korea (NTSC)
-L&oad State|L&ade Spielstand
+Kronos Cheat Files (*.yct);;All Files (*)|Kronos Cheat Dateien (*ycf);;Alle Dateien (*)
+Kronos Qt GUI|Kronos Qt Grafikoberfäche
+Kronos Qt Gui<br />Based on Kronos %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Kronos Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Kronos Qt Grafikoberfäche<br />Basierend auf Kronos %1<br /><a href="http://yabause.org">http://yabause.org</a><br />Das Kronos Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
+Kronos Save State (*.yss)|Kronos Speicherstände (*.yss)
+Kronos is not initialized, can't manage backup ram.|Kronos ist nicht initialisiert, Backup Ram kann nicht verwaltet werden.						  
 Language :|Sprache :
-Layer|Schicht
+L&oad State|L&ade Spielstand
 Left|Links
 Left trigger|Linke Schultertaste
 Less than|Weniger als
@@ -201,22 +237,23 @@ Long|Long
 Long Write|Langes Schreiben
 Loop Track Clear|Loop Track Clear
 Loop Track Start|Loop Track Start
-M68K|M68K
-M68K Registers|M68K Registers
-MSH2|MSH2
-Master SH2|Master SH2
+Loop Track Stop|Loop Track Stop
 Memory|Speicher
-Memory &Editor|Speicher&editierer
 Memory Breakpoints|Memory Breakpoints
-Memory Dump|Speicherabzug
+Memory Editor|
+Memory &Editor|Speicher&editierer
 Memory Editor|Speichereditierer
 Memory Search|Memory Search
 Memory Transfer|Speichertransfer
-Memory dump|Speicherabzug
 Middle|Middle
+Mission Stick|Mission Stick
+Mission Stick Configuration|Configuration du Mission Stick														  
 Mouse|Maus
 Mouse Configuration|Mouse Configuration
 Mpeg ROM|Mpeg ROM
+Musashi Interface|Musashi Schnittstelle
+nanovg OSD Interface|nanovg OSD Schnittstelle
+Native (native resolution of Window)|Nativ (native Auflösung von Window)
 NBG0|NBG0
 NBG0/RBG1 Info|NBG0/RBG1 Info
 NBG1|NBG1
@@ -227,48 +264,47 @@ NBG3|NBG3
 NBG3 Info|NBG3 Info
 Netlink|Netlink
 Never|Niemals
+&No|&Nein
+No matches found.|Keine Treffer gefunden
 None|Keine
-Normal Sprite|Normal Sprite
+None|Keine
+Normal format not available, trying alternative|										
 North America (NTSC)|Nordamerika (NTSC)
-OSD Core|OSD Kern
-Ok|OK
+Number of Threads|
 On fullscreen|Auf Vollbild
 On message|Auf Nachricht
 Open &CD Rom...|&CD-Rom öffnen...
 Open &ISO...|&ISO öffnen
 Open CD Rom|CD-Rom öffnen
-OpenGL Video Interface|OpenGL Video Oberfläche
+Open SSF|Öffnen Sie SSF
+Open&Tray|Schublade&öffnen
+OpenGL size :|OpenGL-Größe
+OpenGL Video Interface|OpenGL-Video-Schnittstelle
 Options|Options
-Other Debug|Other Debug
+Original (original resolution of the Saturn)|Original (ursprüngliche Auflösung des Saturn)
+Original aspect ratio|Ursprüngliches Seitenverhältnis
+OSD Core|OSD Kern					  
 Pad|Pad
 Pad Configuration|Pad Konfiguration
-Pause|Pause
+Play Slot|Slot spielen
+Port|Hafen
 Press Esc key to cancel|Klicke ESC um abzubrechen
-Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Qt Tastatureingabenoberfäche
-Quit|Schliessen
-R&un|S&tarten
+&Question...|&Frage...
 RBG0|RBG0
 RBG0 Info|RBG0 Info
 Read|Read
 Region|Region
-Registers|Registers
-Reset|Zurücksetzen
-Resolution|Auflösung
+Remove Peripheral|Peripheriegerät entfernen
+Restart|Neustart
 Right|Rechts
+Right Stick:\nTrigger:      A\nLeft button:  B\nRight button: C|
+Right Stick Axis X|Rechte Stielachse X
+Right Stick Axis Y|Rechte Stielachse Y
+Right Stick Axis Throttle|Steuerknüppel der rechten Achse
 Right trigger|Rechte Schultertaste
-Run|Starten
-S&ave State|Spielstand s&peichern
-SCSP|SCSP
-SCU-DSP|SCU-DSP
-SDL Joystick Interface|SDL Joystick Oberfläche
-SDL Sound Interface|SDL Geräusch Oberfläche
-SH2 Debugger Interpreter|SH2 Debugger Interpreter
-SH2 Dynamic Recompiler|SH2 Dynamischer Rekompilierer
-SH2 Interpreter|SH2 Interpreter
-SH2 Registers|SH2 Registers
-SSH2|SSH2
-Save|Speichern
+R&un|
+Save As Bitmap|Als Bitmap speichern
 Save As WAV|Als WAV speichern
 Save Bitmap|Als Bitmap speichern
 Save Information|Informationen speichern
@@ -276,99 +312,120 @@ Save List|Liste speichern
 Save MD0|Save MD0
 Save MD1|Save MD1
 Save MD2|Save MD2
-Save MD3|Save MD3
+Save Selected|Save Selected			 
 Save Program|Save Program
-Save Selected|Save Selected
+S&ave State|
+Save States|					
 Save Slot Registers|Save Slot Registers
-Save State|Spielstand speichern
-Save State As|Spielstand speichern als
-Save States|Spielstände
-Sc&reenshot|Bi&ldschirmfoto
+Save Tab|
 Screen Enabled|Bildschirm eingeschaltet
+Screen Select:|Bildschirm auswählen:
 Screenshot|Bildschirmfoto
+Scanline filter|
+Scanline off|
+Scanline on|
+SCSP|
+SCSP Channels|SCSP-Kanäle
+SDL Joystick Interface|SDL-Joystick-Schnittstelle
+SDL Sound Interface|SDL-Klingen-Schnittstelle
 Search|Suche
+Search/Add Cheats|				
 Search Criteria|Suchkriterien
 Search Memory|Speichersuche
 Search Value:|Suchwert:
-Search/Add Cheats|Suche/Cheats hinzufügen
+Sega Saturn Sound Format files (*.ssf *.minissf)|Sega Saturn Sound Format-Dateien (* .ssf * .minissf)
 Select a file to load your state|Wählen Sie eine Datei zum Laden des Spielstandes aus
 Select your iso/cue/bin file|Wählen Sie Ihre iso/cue/bin Datei
+Select your ssf file|						
 Set PC to Start Address|PC zur Startadresse setzen
 Settings|Einstellungen
+SH2 Debugger Interpreter|
+SH2 Interpreter|
+SH2 Kronos Interpreter|
+SH2 Registers|				
 Shortcuts|Shortcuts
 Show FPS|FPS anzeigen
 Show Log Window|Show Log Window
 Signed|Signiert
+Signed 8-bit value|Signed 8-bit value					
 Signed 16-bit value|Signed 16-bit value
 Signed 32-bit value|Signed 32-bit value
-Signed 8-bit value|Signed 8-bit value
-Slave SH2|Slave SH2
 Slot Info|Slot Info
 Slot Number:|Slot Number:
 Software OSD Interface|Software OSD Oberfläche
 Software Video Interface|Software Video Oberfläche
 Sound|Sound
+Sound|		   
 Sound Core|Sound Kern
 Spanish|Spanisch
+ST-V cabinet Configuration|
+ST-V Cabinet|
+STV Rom game|			 
 Start|Start
 Start Address:|Adressenanfang:
 Start in Fullscreen|Start in Fullscreen
 Status|Status
 Step Into|Step Into
-Step Out|Step Out
-Step Over|Step Over
-Store|Sichern
+Step Out|Schritt raus
+Step Over|Schritt über
+Stick Down|Bleib unten
+Stick left button: same as A \nStick right button: same as B \nStick trigger: same as C|
+Stick Left|Bleib links
+Stick Right|Bleib rechts
+Stick Up|Bleib auf
+Stop|
+Stretch to window|Zum Fenster strecken								
 Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
-System Clipping Coordinates|System Clipping Coordinates
+Tesselation|Tessellation
 Text|Text
 Texture|Texture
-To|Zu
+The dummies cores don't need configuration|Die Dummieskerne müssen nicht konfiguriert werden
+Throttle Down|
+Throttle Up|   
 To File...|Zur Datei...
-Tools|Werkzeuge
-Track Inf Loop Results|Track Inf Loop Results
-Transfer|Übertragen
+toolBar|Werkzeugleiste
+Trace Logging|Trace-Protokollierung
 Translation|Übersetzung
+Triangles using perspective correction|Dreiecke mit perspektivischer Korrektur
+Trigger|Auslösen
+TV effect :|TV-Effekt
 Type:|Type:
 Unable to add code|Code konnte nicht hinzugefügt werden
 Unable to change description|Beschreibung konnte nicht geändert werden
+Unsigned|Unsigniert
+Unsigned 8-bit value|Unsigned 8-bit value	
+Unsigned 16-bit value|Unsigned 16-bit value
+Unsigned 32-bit value|Unsigned 32-bit value					  
+Up|Hoch					  
+Upload|Hochladen					  
+Unable to add code|   
 Unable to open file for loading|Datei konnte nicht zum Laden geöffnet werden
 Unable to open file for saving|Datei konnte nicht zum Speichern geöffnet werden
 Unable to remove code|Code konnte nicht entfernt werden
 Unknow (%1)|Unbekannt (%1)
-Unsigned|Unsigniert
-Unsigned 16-bit value|Unsigned 16-bit value
-Unsigned 32-bit value|Unsigned 32-bit value
-Unsigned 8-bit value|Unsigned 8-bit value
-Up|Hoch
-Upload|Hochladen
-Use System Locale|Use System Locale
-VDP1|VDP1
+Upscale Filter :|
+Use Vdp1 Cache|Verwenden Sie den Vdp1-Cache
+Value|Wert
+Value:|Value:
+Value :|Wert :
+Vdp1|Vdp1
 VDP1 Command Info|VDP1 Command Info
 VDP1 Command List|VDP1 Command List
 VDP2|VDP2
-Value|Wert
-Value :|Wert :
-Value:|Value:
-Vdp1|Vdp1
-Vdp2|Vdp2
+VDP2Viewer Viewer|
 Video|Video
 Video Core|Video Kern
 Video Driver|Video Treiber
 Video Format|Videoformat
 View|Ansicht
 Viewer|Viewer
-Waiting Input...|Warte auf Eingabe...
-Width|Breite
+WAV Files (*.wav)|WAV-Dateien (* .wav)
+Wheel|Rad
+Wheel Configuration|		  
 Window Resolution|Bildschirmauflösung
 Windows SPTI Driver|Windows SPTI Treiber
 Word|Word
 Word Write|Word Schreiben
+Word Write : %1 %2|Wortschreiben:% 1% 2 
 Write|Schreiben
-Yabause Cheat Files (*.yct);;All Files (*)|Yabause Cheat Dateien (*ycf);;Alle Dateien (*)
-Yabause Qt GUI|Yabause Qt Grafikoberfäche
-Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Grafikoberfäche<br />Basierend auf Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />Das Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
-Yabause Save State (*.yss)|Yabause Speicherstände (*.yss)
-Yabause is not initialized, can't manage backup ram.|Yabause ist nicht initialisiert, Backup Ram kann nicht verwaltet werden.
-http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=de
-http://www.monkeystudio.org|http://www.monkeystudio.org
-toolBar|Werkzeugleiste
+Yes|Ja
