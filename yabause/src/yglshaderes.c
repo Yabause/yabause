@@ -815,10 +815,11 @@ SHADER_VERSION
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_window_v[] =
       SHADER_VERSION
+      "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;    \n"
       "void main()       \n"
       "{ \n"
-      "   gl_Position = a_position; \n"
+      "   gl_Position = a_position*u_mvpMatrix; \n"
       "} ";
 const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
@@ -854,9 +855,9 @@ const GLchar Yglprg_window_f[] =
       "    int startW0 = int(lineW0.r*255.0) | (int(lineW0.g*255.0)<<8);\n"
       "    int endW0 = int(lineW0.b*255.0) | (int(lineW0.a*255.0)<<8);\n"
       "    if (win0mode != 0) { \n"
-      "      if ((startW0 <= endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
+      "      if ((startW0 < endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
       "    } else { \n"
-      "      if ((startW0 <= endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
+      "      if ((startW0 < endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
       "    }\n"
       "  } else validw0 = valid;\n"
       "  if (win1 != 0) {\n"
@@ -864,9 +865,9 @@ const GLchar Yglprg_window_f[] =
       "    int startW1 = int(lineW1.r*255.0) | (int(lineW1.g*255.0)<<8);\n"
       "    int endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
       "    if (win1mode != 0) { \n"
-      "      if ((startW1 <= endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
+      "      if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
       "    } else { \n"
-      "      if ((startW1 <= endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
+      "      if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
       "    }\n"
       "  } else validw1 = valid;\n"
       "  if (winOp != 0) { \n"
@@ -2359,6 +2360,7 @@ int YglProgramInit()
    _Ygl->windowpg.setupUniform    = Ygl_uniformWindow;
    _Ygl->windowpg.cleanupUniform  = Ygl_cleanupWindow;
    _Ygl->windowpg.vertexp         = glGetAttribLocation(_prgid[PG_WINDOW],(const GLchar *)"a_position");
+   _Ygl->windowpg.mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
    _Ygl->windowpg.emu_height    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_emu_height");
    _Ygl->windowpg.vheight    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_vheight");
    _Ygl->windowpg.emu_width    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_emu_width");

@@ -2754,10 +2754,10 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 {
   float col[4] = {0.0f,0.0f,0.0f,0.0f};
   float const vertexPosition[] = {
-    1.0f, -1.0f,
-    -1.0f, -1.0f,
-    1.0f, 1.0f,
-    -1.0f, 1.0f };
+    _Ygl->rwidth, 0.0f,
+    0.0f, 0.0f,
+    _Ygl->rwidth, _Ygl->rheight,
+    0.0f, _Ygl->rheight };
 
   int Win0[enBGMAX];
   int Win0_mode[enBGMAX];
