@@ -811,6 +811,31 @@ SHADER_VERSION
 "}  \n";
 
 /*------------------------------------------------------------------------------------
+ *  UserClip Operation
+ * ----------------------------------------------------------------------------------*/
+const GLchar Yglprg_userclip_v[] =
+      SHADER_VERSION
+      "uniform mat4 u_mvpMatrix;    \n"
+      "layout (location = 0) in vec4 a_position;               \n"
+      "void main()                  \n"
+      "{                            \n"
+      "   gl_Position = a_position*u_mvpMatrix; \n"
+      "} ";
+const GLchar * pYglprg_userclip_v[] = {Yglprg_userclip_v, NULL};
+
+const GLchar Yglprg_userclip_f[] =
+      SHADER_VERSION
+      "#ifdef GL_ES\n"
+      "precision highp float;                            \n"
+      "#endif\n"
+      "out vec4 fragColor;            \n"
+      "void main()                                         \n"
+      "{                                                   \n"
+      "  fragColor = vec4( 1.0,1.0,1.0,1.0 );\n"
+      "}                                                   \n";
+const GLchar * pYglprg_userclip_f[] = {Yglprg_userclip_f, NULL};
+
+/*------------------------------------------------------------------------------------
  *  Window Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_window_v[] =
@@ -856,6 +881,7 @@ const GLchar Yglprg_window_f[] =
       "    int endW0 = int(lineW0.b*255.0) | (int(lineW0.a*255.0)<<8);\n"
       "    if (win0mode != 0) { \n"
       "      if ((startW0 < endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
+      "      if (startW0 == endW0) validw0 = 0;\n"
       "    } else { \n"
       "      if ((startW0 < endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
       "    }\n"
@@ -866,6 +892,7 @@ const GLchar Yglprg_window_f[] =
       "    int endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
       "    if (win1mode != 0) { \n"
       "      if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
+      "      if (startW1 == endW1) validw0 = 0;\n"
       "    } else { \n"
       "      if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
       "    }\n"
@@ -2373,7 +2400,10 @@ int YglProgramInit()
    _Ygl->windowpg.tex0 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win0");
    _Ygl->windowpg.tex1 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win1");
 
-   _prgid[PG_VDP1_STARTUSERCLIP] = _prgid[PG_WINDOW];
+   YGLLOG("PG_VDP1_STARTUSERCLIP\n");
+   //
+   if (YglInitShader(PG_VDP1_STARTUSERCLIP, pYglprg_userclip_v, pYglprg_userclip_f, 1, NULL, NULL, NULL) != 0)
+      return -1;
 
    YGLLOG("PG_LINECOLOR_INSERT\n");
    //
@@ -2732,7 +2762,7 @@ int YglProgramChange( YglLevel * level, int prgid )
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupStartUserClip;
       current->vertexp         = 0;
       current->texcoordp       = -1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
+      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_STARTUSERCLIP],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = -1; //glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
 
    }
