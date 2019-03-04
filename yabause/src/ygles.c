@@ -2828,6 +2828,7 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
        glDrawBuffers(1, &DrawBuffers[i]);
        glClearBufferfv(GL_COLOR, 0, col);
        Ygl_uniformWindow(&_Ygl->windowpg);
+       glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
        _Ygl->use_win[i] = 0;
 
        if(Win0[i] || Win1[i])
