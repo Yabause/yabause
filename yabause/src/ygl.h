@@ -583,7 +583,6 @@ typedef struct {
    GLuint msgtexture;
    u32 * messagebuf;
 
-   int bUpdateWindow;
    u32* win[2];
    u32 window_tex[2];
 
@@ -695,8 +694,6 @@ int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, floa
 int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float to, float * offsetcol);
 void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float from, float to, float * offsetcol);
 void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
-
-void YglNeedToUpdateWindow();
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
 void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);

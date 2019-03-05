@@ -892,7 +892,7 @@ const GLchar Yglprg_window_f[] =
       "    int endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
       "    if (win1mode != 0) { \n"
       "      if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
-      "      if (startW1 == endW1) validw0 = 0;\n"
+      "      if (startW1 == endW1) validw1 = 0;\n"
       "    } else { \n"
       "      if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
       "    }\n"

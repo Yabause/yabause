@@ -2745,10 +2745,6 @@ void YglDmyRenderVDP1(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void YglNeedToUpdateWindow()
-{
-  _Ygl->bUpdateWindow = 1;
-}
 
 void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 {
@@ -2812,46 +2808,36 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   Win1_mode[RBG1] = Win1_mode[NBG0];
   Win_op[RBG1] = Win_op[NBG0];
 
-  if (  Win0[NBG0] &&   Win1[NBG0] &&  !Win_op[NBG0]) printf("Window mode OR not supported yet on NBG0\n");
-  if (  Win0[NBG1] &&   Win1[NBG1] &&  !Win_op[NBG1]) printf("Window mode OR not supported yet on NBG1\n");
-  if (  Win0[NBG2] &&   Win1[NBG2] &&  !Win_op[NBG2]) printf("Window mode OR not supported yet on NBG2\n");
-  if (  Win0[NBG3] &&   Win1[NBG3] &&  !Win_op[NBG3]) printf("Window mode OR not supported yet on NBG3\n");
-  if (  Win0[RBG0] &&   Win1[RBG0] &&  !Win_op[RBG0]) printf("Window mode OR not supported yet on RBG0\n");
-  if (  Win0[SPRITE] &&   Win1[SPRITE] &&  !Win_op[SPRITE]) printf("Window mode OR not supported yet on SPRITE\n");
-
-  if( _Ygl->bUpdateWindow ) {
-     GLenum DrawBuffers[SPRITE]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5};
-     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_fbo);
-     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-     Vdp2GenerateWindowInfo(varVdp2Regs);
-     for (int i = 0; i< SPRITE; i++) {
+   GLenum DrawBuffers[SPRITE]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5};
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_fbo);
+   int needUpdate = 0;
+   for (int i = 0; i< SPRITE; i++) {
+     _Ygl->use_win[i] = 0;
+     if(Win0[i] || Win1[i])
+     {
+       if (needUpdate == 0) Vdp2GenerateWindowInfo(varVdp2Regs);
+       _Ygl->use_win[i] = 1;
        glDrawBuffers(1, &DrawBuffers[i]);
        glClearBufferfv(GL_COLOR, 0, col);
        Ygl_uniformWindow(&_Ygl->windowpg);
        glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
-       _Ygl->use_win[i] = 0;
 
-       if(Win0[i] || Win1[i])
-       {
-         _Ygl->use_win[i] = 1;
-         //Draw color///
-         glActiveTexture(GL_TEXTURE0);
-         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
-         glActiveTexture(GL_TEXTURE1);
-         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
-         glUniform1i(_Ygl->windowpg.var1, Win0[i]);
-         glUniform1i(_Ygl->windowpg.var2, Win0_mode[i]);
-         glUniform1i(_Ygl->windowpg.var3, Win1[i]);
-         glUniform1i(_Ygl->windowpg.var4, Win1_mode[i]);
-         glUniform1i(_Ygl->windowpg.var5, Win_op[i]);
-         glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
-         glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
-         glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-         glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-         glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-       }
-    }
-    _Ygl->bUpdateWindow = 0;
+       //Draw color///
+       glActiveTexture(GL_TEXTURE0);
+       glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+       glActiveTexture(GL_TEXTURE1);
+       glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
+       glUniform1i(_Ygl->windowpg.var1, Win0[i]);
+       glUniform1i(_Ygl->windowpg.var2, Win0_mode[i]);
+       glUniform1i(_Ygl->windowpg.var3, Win1[i]);
+       glUniform1i(_Ygl->windowpg.var4, Win1_mode[i]);
+       glUniform1i(_Ygl->windowpg.var5, Win_op[i]);
+       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
+       glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
+       glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+       glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
+       glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+     }
   }
   return;
 }

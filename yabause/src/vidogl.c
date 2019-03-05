@@ -3326,7 +3326,6 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   _Ygl->originy = originy;
 
   glViewport(originx, originy, GlWidth, GlHeight);
-  YglNeedToUpdateWindow();
 
 //  SetSaturnResolution(vdp2width, vdp2height);
 
