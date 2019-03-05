@@ -831,7 +831,7 @@ const GLchar Yglprg_userclip_f[] =
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
       "{                                                   \n"
-      "  fragColor = vec4( 1.0,1.0,1.0,1.0 );\n"
+      "  fragColor = vec4( 0.0 );\n"
       "}                                                   \n";
 const GLchar * pYglprg_userclip_f[] = {Yglprg_userclip_f, NULL};
 
@@ -1524,7 +1524,6 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
 {
    YglProgram * prg;
    prg = p;
-   int clear = 0;
 
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
@@ -1535,7 +1534,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
       GLint vertices[12];
       glColorMask( GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE );
       glStencilMask(0xffffffff);
-      glClearBufferiv(GL_STENCIL, 0, &clear);
+      glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
       glEnable(GL_STENCIL_TEST);
       glStencilFunc(GL_ALWAYS,0x1,0x01);
@@ -2286,8 +2285,6 @@ int YglProgramInit()
    _prgid[PG_VDP2_MOSAIC_CRAM] = _prgid[PG_VDP2_NORMAL_CRAM];
    _prgid[PG_VDP2_PER_LINE_ALPHA_CRAM] = _prgid[PG_VDP2_NORMAL_CRAM];
 
-   _prgid[PG_VDP1_ENDUSERCLIP] = _prgid[PG_VDP2_NORMAL];
-
    YGLLOG("PG_VDP1_NORMAL\n");
    //
    if (YglInitShader(PG_VDP1_NORMAL, pYglprg_vdp1_normal_v, pYglprg_vdp1_normal_f,1, NULL, NULL, NULL) != 0)
@@ -2404,6 +2401,9 @@ int YglProgramInit()
    //
    if (YglInitShader(PG_VDP1_STARTUSERCLIP, pYglprg_userclip_v, pYglprg_userclip_f, 1, NULL, NULL, NULL) != 0)
       return -1;
+
+  _prgid[PG_VDP1_ENDUSERCLIP] = _prgid[PG_VDP1_STARTUSERCLIP];
+
 
    YGLLOG("PG_LINECOLOR_INSERT\n");
    //
@@ -2770,11 +2770,10 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
       level->prg[level->prgcurrent].setupUniform = Ygl_uniformEndUserClip;
       level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupEndUserClip;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
-      current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
+      current->vertexp         = 0;
+      current->texcoordp       = -1;
+      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_ENDUSERCLIP],(const GLchar *)"u_mvpMatrix");
+      current->mtxTexture      = -1; //glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
    }
    else if( prgid == PG_VDP1_HALFTRANS )
    {

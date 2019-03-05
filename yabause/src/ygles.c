@@ -2713,6 +2713,9 @@ void YglRenderVDP1(void) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[_Ygl->drawframe]->textureID);
 
+  if (_Ygl->vdp1_stencil_mode) {
+    glEnable(GL_STENCIL_TEST);
+  }
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
     if ((level->prg[j].prgid == PG_VDP1_MSB_SHADOW) || (level->prg[j].prgid == PG_VDP1_MSB_SHADOW_TESS)) {
@@ -2733,6 +2736,9 @@ void YglRenderVDP1(void) {
   }
 
   level->prgcurrent = 0;
+
+  glGetIntegerv(GL_STENCIL_TEST, &_Ygl->vdp1_stencil_mode);
+  glDisable(GL_STENCIL_TEST);
 
   //YabThreadUnLock(_Ygl->mutex);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);

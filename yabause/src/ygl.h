@@ -650,6 +650,7 @@ typedef struct {
    int prioVal[enBGMAX];
 
    int use_win[enBGMAX];
+   int vdp1_stencil_mode;
 
 } Ygl;
 
