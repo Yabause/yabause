@@ -737,14 +737,17 @@ int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, i
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_cram_s_texture, 0);
     glUniform1i(id_normal_cram_s_color, 1);
+    glUniform1i(id_normal_cram_s_perline, 2);
+    glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
+    glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
+    glUniform1f(id_normal_cram_vheight, (float)_Ygl->height);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID);
-
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->perLine[id]);
   }
   else {
     glEnableVertexAttribArray(prg->vertexp);
