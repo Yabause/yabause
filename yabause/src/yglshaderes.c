@@ -261,7 +261,7 @@ SHADER_VERSION
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
-"  if(txcol.a == 0.0) { discard; }\n"
+"  if (txcol.a != 0.0) txcol.b = float(int(txcol.b * 255.0)|0x1)/255.0;" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
 "  vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
 "  if (is_perline == 1) {\n"
 "    if (perline == vec4(0.0)) discard;\n"
@@ -271,6 +271,7 @@ SHADER_VERSION
 "  fragColor.rgb = clamp(txcol.rgb+color_offset.rgb,vec3(0.0),vec3(1.0));\n"
 "  fragColor.a = txcol.a;\n"
 "}  \n";
+
 const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_color_offset = -1;
