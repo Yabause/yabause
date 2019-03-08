@@ -580,7 +580,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     // 16 bpp Bank mode
     u16 dot = cmd->CMDCOLR;
     if (!(dot & 0x8000) && !SPD) {
-      color = VDP1COLOR(1, 1, priority, 0, 0);
+      color = VDP1COLOR(1, 1, 0, 0, 0);
     }
     else if (dot == 0x0000) {
       color = 0;//VDP1COLOR(0, 1, priority, 0, 0);
@@ -589,14 +589,14 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
       color = 0;//VDP1COLOR(0, 1, priority, 0, 0);
     }
     else if (MSB || dot == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+      color = VDP1COLOR(0, 1, 0, 1, 0);
     }
     else {
       if (dot & 0x8000) {
-        color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
+        color = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(dot));
       }
       else {
-        color = VDP1COLOR(1, colorcl, priority, 0, dot);
+        color = VDP1COLOR(1, colorcl, 0, 0, dot);
       }
     }
   }
@@ -751,7 +751,8 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
               *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(temp));
             }
           } else if (temp != 0x0000) {
-            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
+            int tmp;
+            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &tmp, &colorcl);
             if (shadow != 0) {
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
             }
@@ -803,7 +804,8 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
           }
           else if (temp != 0x0000)
           {
-            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
+            int tmp;
+            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &tmp, &colorcl);
             if (shadow != 0)
             {
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
@@ -945,8 +947,6 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     // hard/vdp2/hon/p09_20.htm#no9_21
     u8 *cclist = (u8 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1F;
-    u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
-    rgb_alpha |= priority;
 
     for (i = 0; i < spriteh; i++)
     {
@@ -962,15 +962,16 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
           *texture->textdata++ = 0x0;
         }
         else if (MSB_SHADOW || (nromal_shadow!=0 && temp == nromal_shadow) ) {
-          *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, VDP1COLOR16TO24(0));
+          *texture->textdata++ = VDP1COLOR(0, 1, 0, 1, VDP1COLOR16TO24(0));
         }
         else {
           if (temp & 0x8000 && (varVdp2Regs->SPCTL & 0x20) ) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(temp));
+            *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(temp));
           }
           else {
-            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp );
+              int tmp;
+            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &tmp, &colorcl);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, 0, 0, temp );
           }
         }
       }
@@ -3938,7 +3939,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   tmp <<= 16;
   tmp |= cmd.CMDSIZE;
 
-  sprite.priority = 8;
+  sprite.priority = 0;
 
   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
   // damaged data
@@ -4156,7 +4157,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
   sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
 
-  sprite.priority = 8;
+  sprite.priority = 0;
 
   // MSB
   if ((CMDPMOD & 0x8000) != 0)
@@ -4317,7 +4318,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
 
-  sprite.priority = 8;
+  sprite.priority = 0;
 
   sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
 
@@ -4573,7 +4574,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
 
-  sprite.priority = 8;
+  sprite.priority = 0;
   sprite.w = 1;
   sprite.h = 1;
   sprite.flip = 0;
