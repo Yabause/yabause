@@ -261,7 +261,7 @@ SHADER_VERSION
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
-"  if (txcol.a != 0.0) txcol.b = float(int(txcol.b * 255.0)|0x1)/255.0;" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
+"  float msb = txcol.a;         \n"
 "  vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
 "  if (is_perline == 1) {\n"
 "    if (perline == vec4(0.0)) discard;\n"
@@ -269,6 +269,9 @@ SHADER_VERSION
 "    if (perline.a > 0.0) txcol.a = perline.a;\n"
 "  } \n"
 "  fragColor.rgb = clamp(txcol.rgb+color_offset.rgb,vec3(0.0),vec3(1.0));\n"
+"  int blue = int(fragColor.b * 255.0) & 0xFE;\n"
+"  if (msb != 0.0) fragColor.b = float(blue|0x1)/255.0;\n" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
+"  else fragColor.b = float(blue)/255.0;\n"
 "  fragColor.a = txcol.a;\n"
 "}  \n";
 
@@ -326,8 +329,8 @@ SHADER_VERSION
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( ( int(txindex.g*255.0)<<8 | int(txindex.r*255.0)) ,0 )  , 0 );\n"
-"  if (txcol.a != 0.0) txcol.b = float(int(txcol.b * 255.0)|0x1)/255.0;" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
+"  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) ,0 )  , 0 );\n"
+"  float msb = txcol.a; \n"
 "  vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
 "  if (is_perline == 1) {\n"
 "    if (perline == vec4(0.0)) discard;\n"
@@ -338,6 +341,9 @@ SHADER_VERSION
 "  } \n"
 "  txcol.a = alpha;\n"
 "  fragColor = clamp(txcol+color_offset,vec4(0.0),vec4(1.0));\n"
+"  int blue = int(fragColor.b * 255.0) & 0xFE;\n"
+"  if (msb != 0.0) fragColor.b = float(blue|0x1)/255.0;\n" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
+"  else fragColor.b = float(blue)/255.0;\n"
 "  fragColor.a = txindex.a;\n"
 "}\n";
 
