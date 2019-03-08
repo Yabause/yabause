@@ -448,6 +448,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
   if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
       (varVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
       !(cmd->CMDPMOD & 4) &&
+      (((cmd->CMDPMOD >> 3) & 0x7) < 5) && //Is palette
       ((varVdp2Regs->SPCTL & 0xF)  >=2 && (varVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
   {
     return 0;
