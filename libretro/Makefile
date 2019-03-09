@@ -6,6 +6,7 @@ __USE_OPENGL_DEBUG__ = 0
 # AFAIK, musashi should be disabled for 32bits
 HAVE_MUSASHI = 1
 HAVE_GLES = 0
+FASTMATH = 1
 
 ifeq ($(platform),)
 	platform = unix
@@ -74,6 +75,41 @@ ifneq (,$(findstring unix,$(platform)))
 		HAVE_GLES = 1
 		HAVE_SSE = 0
 		FLAGS += -DARM
+	endif
+	ifeq ($(HAVE_GLES), 1)
+		LDFLAGS += -lGL -lGLESv2
+	else
+		LDFLAGS += -lGL
+	endif
+
+# ODROIDs
+else ifneq (,$(findstring odroid,$(platform)))
+	override platform += unix
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+	LDFLAGS += -lpthread
+	FLAGS += -DARCH_IS_LINUX=1
+	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
+
+	ifneq (,$(findstring ODROID-XU3,$(BOARD)))
+		HAVE_SSE = 0
+		HAVE_GLES = 1
+		# ODROID-XU3 & -XU3 Lite
+		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+			FLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+		else
+			FLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a9 -mfpu=neon
+		endif
+	else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
+		HAVE_SSE = 0
+		HAVE_GLES = 1
+		# ODROID-XU4 on newer kernels now identify as ODROID-XU4
+		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
+			FLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
+		else
+			FLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a9 -mfpu=neon
+		endif
 	endif
 	ifeq ($(HAVE_GLES), 1)
 		LDFLAGS += -lGL -lGLESv2
@@ -211,6 +247,12 @@ endif
 
 ifeq ($(HAVE_GLES), 1)
 	FLAGS += -DHAVE_GLES
+endif
+
+ifeq ($(FASTMATH), 1)
+	ifeq (,$(findstring msvc,$(platform)))
+		FLAGS += -ffast-math
+	endif
 endif
 
 OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
