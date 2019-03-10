@@ -1387,7 +1387,8 @@ SHADER_VERSION
 "uniform sampler2D u_fbo;         \n"
 "in vec4 v_texcoord;         \n"
 "in vec4 v_vtxcolor;         \n"
-"out highp vec4 fragColor; \n "
+"out vec4 fragColor; \n "
+"out vec4 fragColorAttr; \n"
 "void main() {    \n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
@@ -1401,6 +1402,7 @@ SHADER_VERSION
 "       discard;"
 "    } \n"
 "  } \n"
+"  fragColorAttr = vec4(0.0);\n"
 "  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
 "  fragColor.a = spriteColor.a;  \n"
 "}\n";
@@ -2836,8 +2838,10 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].ids = &mesh;
      current->vertexp = 0;
      current->texcoordp = 1;
+     level->prg[level->prgcurrent].vaid = 2;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = -1;
+
    }else if( prgid == PG_VDP1_HALF_LUMINANCE )
    {
       current->setupUniform    = Ygl_uniformVdp1Normal;

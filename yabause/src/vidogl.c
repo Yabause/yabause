@@ -4601,7 +4601,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   if (IS_MESH(CMDPMOD)) {
-    alpha = 0X78;
+    //alpha = 0X78;
     sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
   }
   else if (IS_MSB_SHADOW(CMDPMOD)) {
