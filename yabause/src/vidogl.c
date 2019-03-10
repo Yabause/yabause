@@ -382,14 +382,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs);
 static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs);
 static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs);
 
-// Window Parameter
-static vdp2WindowInfo * m_vWindinfo0 = NULL;
-static int m_vWindinfo0_size = -1;
-static int m_b0WindowChg;
-static vdp2WindowInfo * m_vWindinfo1 = NULL;
-static int m_vWindinfo1_size = -1;
-static int m_b1WindowChg;
-
 static vdp2Lineinfo lineNBG0[512];
 static vdp2Lineinfo lineNBG1[512];
 
@@ -448,7 +440,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
   if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
       (varVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
       !(cmd->CMDPMOD & 4) &&
-      (((cmd->CMDPMOD >> 3) & 0x7) < 5) && //Is palette
+      (((cmd->CMDPMOD >> 3) & 0x7) < 5)  && //Is palette
       ((varVdp2Regs->SPCTL & 0xF)  >=2 && (varVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
   {
     return 0;
@@ -6430,6 +6422,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   if (varVdp2Regs->RPMD == 0x00)
   {
+    //printf("RPMD 0x0\n");
     if (!(rgb->paraA.coefenab))
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode00NoK;
@@ -6437,10 +6430,10 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     else {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode00WithK;
     }
-
   }
   else if (varVdp2Regs->RPMD == 0x01)
   {
+    //printf("RPMD 0x1\n");
     if (!(rgb->paraB.coefenab))
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01NoK;
@@ -6448,10 +6441,10 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     else {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode01WithK;
     }
-
   }
   else if (varVdp2Regs->RPMD == 0x02)
   {
+    //printf("RPMD 0x2\n");
     if (!(rgb->paraA.coefenab))
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02NoK;
@@ -6462,28 +6455,28 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
       else
         info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02WithKA;
     }
-
   }
   else if (varVdp2Regs->RPMD == 0x03)
   {
+    //printf("RPMD 0x3\n");
     // Enable Window0(RPW0E)?
     if (((varVdp2Regs->WCTLD >> 1) & 0x01) == 0x01)
     {
-      info->pWinInfo = m_vWindinfo0;
+      info->RotWin = _Ygl->win[0];
       // RPW0A( inside = 0, outside = 1 )
-      info->WindwAreaMode = (varVdp2Regs->WCTLD & 0x01);
+      info->RotWinMode = (varVdp2Regs->WCTLD & 0x01);
       // Enable Window1(RPW1E)?
     }
     else if (((varVdp2Regs->WCTLD >> 3) & 0x01) == 0x01)
     {
-      info->pWinInfo = m_vWindinfo1;
+      info->RotWin = _Ygl->win[1];
       // RPW1A( inside = 0, outside = 1 )
-      info->WindwAreaMode = ((varVdp2Regs->WCTLD >> 2) & 0x01);
+      info->RotWinMode = ((varVdp2Regs->WCTLD >> 2) & 0x01);
       // Bad Setting Both Window is disabled
     }
     else {
-      info->pWinInfo = m_vWindinfo0;
-      info->WindwAreaMode = (varVdp2Regs->WCTLD & 0x01);
+      info->RotWin = _Ygl->win[0];
+      info->RotWinMode = (varVdp2Regs->WCTLD & 0x01);
     }
 
     if (rgb->paraA.coefenab == 0 && rgb->paraB.coefenab == 0)
@@ -7021,6 +7014,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKAWithKB(RBGDrawI
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
+  printf("vdp2RGetParamMode02WithKB used!\n");
   return &rgb->paraA;
 }
 
@@ -7030,14 +7024,21 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb
     return (&rgb->paraA);
   }
 
-  if (rgb->info.WindwAreaMode == 0)
+  if (rgb->info.RotWin == NULL) {
+    return (&rgb->paraA);
+  }
+
+  short start = rgb->info.RotWin[v] & 0xFFFF;
+  short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
+
+  if (rgb->info.RotWinMode == 0)
   {
-    if (rgb->info.pWinInfo[v].WinShowLine == 0)
+    if (start == end)
     {
       return (&rgb->paraA);
     }
     else {
-      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
+      if (h < start || h >= end)
       {
         return (&rgb->paraB);
       }
@@ -7048,12 +7049,12 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb
   }
   else
   {
-    if (rgb->info.pWinInfo[v].WinShowLine == 0)
+    if (start == end)
     {
       return (&rgb->paraB);
     }
     else {
-      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
+      if (h < start || h >= end)
       {
         return (&rgb->paraA);
       }
@@ -7068,15 +7069,21 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   // Virtua Fighter2
-  if (rgb->info.WindwAreaMode == 0)
+  if (rgb->info.RotWin == NULL) {
+    printf("vdp2RGetParamMode03WithKA NULL!\n");
+    return (&rgb->paraA);
+  }
+  short start = rgb->info.RotWin[v] & 0xFFFF;
+  short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
+  if (rgb->info.RotWinMode == 0)
   {
-    if (rgb->info.pWinInfo[v].WinShowLine == 0)
+    if (start == end)
     {
       h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
       return rgb->info.GetKValueA(&rgb->paraA, h);
     }
     else {
-      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
+      if (h < start || h >= end)
       {
         return (&rgb->paraB);
       }
@@ -7087,13 +7094,13 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(RBGDrawInfo * 
     }
   }
   else {
-    if (rgb->info.pWinInfo[v].WinShowLine == 0)
+    if (start == end)
     {
       h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
       return rgb->info.GetKValueA(&rgb->paraA, h);
     }
     else {
-      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
+      if (h < start|| h >= end)
       {
         h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
         return rgb->info.GetKValueA(&rgb->paraA, h);
@@ -7104,19 +7111,24 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(RBGDrawInfo * 
     }
   }
   return NULL;
-
 }
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  if (rgb->info.WindwAreaMode == 0)
+  if (rgb->info.RotWin == NULL) {
+    printf("vdp2RGetParamMode03WithKB NULL!\n");
+    return (&rgb->paraA);
+  }
+  short start = rgb->info.RotWin[v] & 0xFFFF;
+  short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
+  if (rgb->info.RotWinMode == 0)
   {
-    if (rgb->info.pWinInfo[v].WinShowLine == 0)
+    if (start == end)
     {
       return &rgb->paraA;
     }
     else {
-      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
+      if (h < start || h >= end)
       {
         h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
         return rgb->info.GetKValueB(&rgb->paraB, h);
@@ -7128,13 +7140,13 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(RBGDrawInfo * 
   }
   else {
     {
-      if (rgb->info.pWinInfo[v].WinShowLine == 0)
+      if (start == end)
       {
         h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
         return rgb->info.GetKValueB(&rgb->paraB, h);
       }
       else {
-        if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd)
+        if (h < start || h >= end)
         {
           return &rgb->paraA;
         }
@@ -7151,10 +7163,16 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(RBGDrawInfo * 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   vdp2rotationparameter_struct * p;
+  if (rgb->info.RotWin == NULL) {
+    printf("vdp2RGetParamMode03WithK NULL\n");
+    return (&rgb->paraA);
+  }
+  short start = rgb->info.RotWin[v] & 0xFFFF;
+  short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
 
   // Final Fight Revenge
-  if (rgb->info.WindwAreaMode == WA_INSIDE) {
-    if (rgb->info.pWinInfo[v].WinShowLine == 0) {
+  if (rgb->info.RotWinMode == WA_INSIDE) {
+    if (start == end) {
       h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
       p = rgb->info.GetKValueA(&rgb->paraA, h);
       if (p) return p;
@@ -7162,7 +7180,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * r
       return rgb->info.GetKValueB(&rgb->paraB, h);
     }
     else {
-      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd) {
+      if (h < start || h >= end) {
         h = (rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
         p = rgb->info.GetKValueA(&rgb->paraA, h);
         if (p) return p;
@@ -7179,7 +7197,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * r
     }
   }
   else {
-    if (rgb->info.pWinInfo[v].WinShowLine == 0) {
+    if (start == end) {
       h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
       p = rgb->info.GetKValueB(&rgb->paraB, h);
       if (p) return p;
@@ -7187,7 +7205,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * r
       return rgb->info.GetKValueA(&rgb->paraA, h);
     }
     else {
-      if (h < rgb->info.pWinInfo[v].WinHStart || h >= rgb->info.pWinInfo[v].WinHEnd) {
+      if (h < start || h >= end) {
         h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
         p = rgb->info.GetKValueB(&rgb->paraB, h);
         if (p) return p;

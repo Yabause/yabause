@@ -98,12 +98,6 @@ typedef struct
 
 } vdp2rotationparameter_struct;
 
-typedef struct
-{
-   int  WinShowLine;
-    int WinHStart;
-    int WinHEnd;
-} vdp2WindowInfo;
 
 typedef u32 FASTCALL (*Vdp2ColorRamGetColor_func)(void *, u32 , int, u8, Vdp2 *varVdp2Regs);
 typedef vdp2rotationparameter_struct * FASTCALL (*Vdp2GetRParam_func)(void *, int, int, Vdp2*);
@@ -188,8 +182,8 @@ typedef struct
    u8  WindowArea1; // Window Area Mode 1
 
    // Rotate Screen
-   vdp2WindowInfo * pWinInfo;
-   int WindwAreaMode;
+   u32* RotWin;
+   int RotWinMode;
    vdp2rotationparameter_struct * FASTCALL (*GetKValueA)(vdp2rotationparameter_struct*,int);
    vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);
    Vdp2GetRParam_func GetRParam;
