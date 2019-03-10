@@ -3228,11 +3228,12 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_BLEND);
 
+#if 0
    if ( (varVdp2Regs->CCCTL & 0x400) == 0 ) {
      printf("Extended Color calculation!\n");
    }
    printf("Ram mode %d\n", Vdp2Internal.ColorMode);
-
+#endif
    glBindVertexArray(_Ygl->vao);
 
    if (_Ygl->stretch == 0) {
