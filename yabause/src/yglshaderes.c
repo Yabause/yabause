@@ -3418,14 +3418,15 @@ SHADER_VERSION
 "  } \n"
 
 "  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topColor = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 3) topColor = vec4(alphatop*colortop.rgb + (1.0 - alphatop)*secondColor.rgb, 1.0); \n"
-"  if (modetop == 4) topColor = vec4(alphasecond*colortop.rgb + (1.0 - alphasecond)*secondColor.rgb, 1.0); \n"
+"  if (modetop == 2) topColor = vec4(colortop.rgb, alphatop); \n"
+"  if (modetop == 3) topColor = vec4(colortop.rgb, alphatop); \n"
+"  if (modetop == 4) topColor = vec4(colortop.rgb, alphasecond); \n"
 
-"  finalColor = topColor; \n"
+"  finalColor = vec4( topColor.a * topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
+
 "  topColor = colortop;\n"
 "  thirdColor = colorsecond;\n"
-"  fourthColor = colorthird;\n"
+"  fourthColor = secondColor;\n"
 
 #else
 
