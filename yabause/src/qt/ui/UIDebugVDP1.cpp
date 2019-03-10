@@ -140,8 +140,11 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p )
    }
 
    vdp1texture = NULL;
+   vdp1RawTexture = NULL;
+   vdp1RawNumBytes = 0;
    vdp1texturew = vdp1textureh = 1;
    pbSaveBitmap->setEnabled(vdp1texture ? true : false);
+   pbSaveRawSprite->setEnabled(vdp1RawTexture ? true : false);
 
    QString infoLabelText(QString::fromStdString(buildInfoLabel(cmdCount)));
    lVDP1Info->setText(infoLabelText);
@@ -155,6 +158,9 @@ UIDebugVDP1::~UIDebugVDP1()
 {
    if (vdp1texture)
       free(vdp1texture);
+
+   if (vdp1RawTexture)
+      free(vdp1RawTexture);
 }
 
 void UIDebugVDP1::on_lwCommandList_itemSelectionChanged ()
@@ -170,8 +176,14 @@ void UIDebugVDP1::on_lwCommandList_itemSelectionChanged ()
    if (vdp1texture)
       free(vdp1texture);
 
+   if (vdp1RawTexture)
+      free(vdp1RawTexture);
+
    vdp1texture = Vdp1DebugTexture(cursel, &vdp1texturew, &vdp1textureh);
+   vdp1RawTexture = Vdp1DebugRawTexture(cursel, &vdp1texturew, &vdp1textureh, &vdp1RawNumBytes);
+
    pbSaveBitmap->setEnabled(vdp1texture ? true : false);
+   pbSaveRawSprite->setEnabled(vdp1RawTexture ? true : false);
 
    // Redraw texture
    QGraphicsScene *scene = gvTexture->scene();
@@ -204,4 +216,30 @@ void UIDebugVDP1::on_pbSaveBitmap_clicked ()
 	if ( !s.isEmpty() )
 		if ( !img.save( s ) )
 			CommonDialogs::information( QtYabause::translate( "An error occured while writing file." ) );
+}
+
+void UIDebugVDP1::on_pbSaveRawSprite_clicked ()
+{
+	QStringList filters( QString::fromUtf8( "*.bin" ) );
+	
+	// request a file to save to to user
+	const QString answer = CommonDialogs::getSaveFileName( QString(), 
+    QtYabause::translate( "Choose a location for your raw data" ), filters.join( ";;" ) );
+	
+	// write image if ok
+	if ( !answer.isEmpty() ) {
+    bool fileWritten = false;
+
+    QFile outputFile(answer);
+    if (outputFile.open(QIODevice::OpenModeFlag::WriteOnly | QIODevice::OpenModeFlag::Unbuffered))
+    {
+      if (outputFile.write(reinterpret_cast<const char*>(vdp1RawTexture), vdp1RawNumBytes) == vdp1RawNumBytes)
+        fileWritten = true; 
+
+      outputFile.close();
+    }
+
+		if (!fileWritten)
+			CommonDialogs::information( QtYabause::translate( "An error occured while writing file." ) );
+  }
 }

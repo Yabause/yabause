@@ -31,11 +31,14 @@ public:
 
 protected:
    u32 *vdp1texture;
+   u8 *vdp1RawTexture;
+   int vdp1RawNumBytes;
    int vdp1texturew, vdp1textureh;
 
 protected slots:
    void on_lwCommandList_itemSelectionChanged ();
    void on_pbSaveBitmap_clicked ();
+   void on_pbSaveRawSprite_clicked ();
 
 };
 

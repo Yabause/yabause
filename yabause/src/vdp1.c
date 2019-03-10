@@ -1496,6 +1496,105 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
    return texture;
 }
 
+u8 *Vdp1DebugRawTexture(u32 cmdNumber, int *width, int *height, int *numBytes)
+{
+   u16 cmdRaw;
+   vdp1cmd_struct cmd;
+   u32 cmdAddress;
+   u8 *texture = NULL;
+               
+   // Initial number of bytes written to texture
+   *numBytes = 0;
+
+   if ((cmdAddress = Vdp1DebugGetCommandNumberAddr(cmdNumber)) == 0xFFFFFFFF)
+      return NULL;
+
+   cmdRaw = T1ReadWord(Vdp1Ram, cmdAddress);
+
+   if (cmdRaw & 0x8000)
+      // Draw End
+      return NULL;
+
+   if (cmdRaw & 0x4000)
+      // Command Skipped
+      return NULL;
+
+   Vdp1ReadCommand(&cmd, cmdAddress, Vdp1Ram);
+
+   const int spriteCmdType = ((cmd.CMDPMOD >> 3) & 0x7);
+   switch (cmd.CMDCTRL & 0x000F)
+   {
+      case 0: // Normal Sprite
+      case 1: // Scaled Sprite
+      case 2: // Distorted Sprite
+      case 3: // Distorted Sprite *
+         width[0] = (cmd.CMDSIZE & 0x3F00) >> 5;
+         height[0] = cmd.CMDSIZE & 0xFF;
+   
+         switch (spriteCmdType) {
+            // 0: 4 bpp Bank mode
+            // 1: 4 bpp LUT mode
+            case 0:
+            case 1:
+               numBytes[0] = 0.5 * width[0] * height[0];
+               texture = (u8*) malloc(numBytes[0]);
+               break;
+            // 2: 8 bpp(64 color) Bank mode
+            // 3: 8 bpp(128 color) Bank mode
+            // 4: 8 bpp(256 color) Bank mode
+            case 2:
+            case 3:
+            case 4:
+               numBytes[0] = width[0] * height[0];
+               texture = (u8*) malloc(numBytes[0]);
+               break;
+            // 5: 16 bpp Bank mode
+            case 5:
+               numBytes[0] = 2 * width[0] * height[0];
+               texture = (u8*) malloc(numBytes[0]);
+               break;
+            default:
+               texture = NULL;
+               break;
+         }
+
+         if (texture == NULL)
+            return NULL;
+
+         break;
+      case 4: // Polygon
+      case 5: // Polyline
+      case 6: // Line
+      case 7: // Polyline *
+         // Do 1x1 pixel
+         width[0] = 1;
+         height[0] = 1;
+         texture = (u8*) malloc(sizeof(u16));
+
+         if (texture == NULL)
+            return NULL;
+
+         *numBytes = 2;
+         memcpy(texture, &cmd.CMDCOLR, sizeof(u16));
+         return texture;
+      case 8:  // User Clipping
+      case 9:  // System Clipping
+      case 10: // Local Coordinates
+      case 11: // User Clipping *
+         return NULL;
+      default: // Invalid command
+         return NULL;
+   }
+
+   // Read texture data directly from VRAM.
+   for (u32 i = 0; i < *numBytes; ++i) 
+   {
+     texture[ i ] = T1ReadByte(Vdp1Ram, ((cmd.CMDSRCA * 8) + i) & 0x7FFFF);
+   }
+
+   return texture;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 void ToggleVDP1(void)
