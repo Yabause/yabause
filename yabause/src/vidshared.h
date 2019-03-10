@@ -174,13 +174,6 @@ typedef struct
    int startLine;
    int endLine;
 
-   // WindowMode
-   u8  LogicWin;    // Window Logic AND OR
-   u8  bEnWin0;     // Enable Window0
-   u8  bEnWin1;     // Enable Window1
-   u8  WindowArea0; // Window Area Mode 0
-   u8  WindowArea1; // Window Area Mode 1
-
    // Rotate Screen
    u32* RotWin;
    int RotWinMode;

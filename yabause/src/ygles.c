@@ -2168,11 +2168,6 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
   if (program == NULL) return;
 
   program->colornumber = input->colornumber;
-  program->bwin0 = input->bEnWin0;
-  program->logwin0 = input->WindowArea0;
-  program->bwin1 = input->bEnWin1;
-  program->logwin1 = input->WindowArea1;
-  program->winmode = input->LogicWin;
   program->lineTexture = input->lineTexture;
 
   program->mosaic[0] = input->mosaicxmask;
@@ -2299,11 +2294,6 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
   if (program == NULL) return -1;
 
   program->colornumber = input->colornumber;
-  program->bwin0 = input->bEnWin0;
-  program->logwin0 = input->WindowArea0;
-  program->bwin1 = input->bEnWin1;
-  program->logwin1 = input->WindowArea1;
-  program->winmode = input->LogicWin;
   program->lineTexture = input->lineTexture;
   program->blendmode = input->blendmode;
 
@@ -2453,11 +2443,6 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
 
   program->colornumber = input->colornumber;
   program->blendmode = input->blendmode;
-  program->bwin0 = input->bEnWin0;
-  program->logwin0 = input->WindowArea0;
-  program->bwin1 = input->bEnWin1;
-  program->logwin1 = input->WindowArea1;
-  program->winmode = input->LogicWin;
   program->lineTexture = input->lineTexture;
 
   program->mosaic[0] = input->mosaicxmask;

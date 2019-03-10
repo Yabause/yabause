@@ -1976,11 +1976,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.blendmode = info->blendmode;
   tile.mosaicxmask = info->mosaicxmask;
   tile.mosaicymask = info->mosaicymask;
-  tile.bEnWin0 = info->bEnWin0;
-  tile.WindowArea0 = info->WindowArea0;
-  tile.bEnWin1 = info->bEnWin1;
-  tile.WindowArea1 = info->WindowArea1;
-  tile.LogicWin = info->LogicWin;
   tile.lineTexture = info->lineTexture;
   tile.idScreen = info->idScreen;
 
@@ -5471,14 +5466,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   _Ygl->screen[RBG1] = info->priority;
 
-  // Window Mode
-  info->bEnWin0 = (varVdp2Regs->WCTLA >> 1) & 0x01;
-  info->WindowArea0 = (varVdp2Regs->WCTLA >> 0) & 0x01;
-  info->bEnWin1 = (varVdp2Regs->WCTLA >> 3) & 0x01;
-  info->WindowArea1 = (varVdp2Regs->WCTLA >> 2) & 0x01;
-  info->LogicWin = (varVdp2Regs->WCTLA >> 7) & 0x01;
-
-
   ReadLineScrollData(info, varVdp2Regs->SCRCTL & 0xFF, varVdp2Regs->LSTA0.all);
   info->lineinfo = lineNBG0;
   Vdp2GenLineinfo(info);
@@ -5741,14 +5728,6 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
   _Ygl->screen[NBG0] = info.priority;
 
-  // Window Mode
-  info.bEnWin0 = (varVdp2Regs->WCTLA >> 1) & 0x01;
-  info.WindowArea0 = (varVdp2Regs->WCTLA >> 0) & 0x01;
-  info.bEnWin1 = (varVdp2Regs->WCTLA >> 3) & 0x01;
-  info.WindowArea1 = (varVdp2Regs->WCTLA >> 2) & 0x01;
-  info.LogicWin = (varVdp2Regs->WCTLA >> 7) & 0x01;
-
-
   ReadLineScrollData(&info, varVdp2Regs->SCRCTL & 0xFF, varVdp2Regs->LSTA0.all);
   info.lineinfo = lineNBG0;
   Vdp2GenLineinfo(&info);
@@ -5992,14 +5971,6 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
     return;
   _Ygl->screen[NBG1] = info.priority;
 
-  // Window Mode
-  info.bEnWin0 = (varVdp2Regs->WCTLA >> 9) & 0x01;
-  info.WindowArea0 = (varVdp2Regs->WCTLA >> 8) & 0x01;
-  info.bEnWin1 = (varVdp2Regs->WCTLA >> 11) & 0x01;
-  info.WindowArea1 = (varVdp2Regs->WCTLA >> 10) & 0x01;
-  info.LogicWin = (varVdp2Regs->WCTLA >> 15) & 0x01;
-
-
   ReadLineScrollData(&info, varVdp2Regs->SCRCTL >> 8, varVdp2Regs->LSTA1.all);
   info.lineinfo = lineNBG1;
   Vdp2GenLineinfo(&info);
@@ -6199,13 +6170,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
   _Ygl->screen[NBG2] = info.priority;
 
-  // Window Mode
-  info.bEnWin0 = (varVdp2Regs->WCTLB >> 1) & 0x01;
-  info.WindowArea0 = (varVdp2Regs->WCTLB >> 0) & 0x01;
-  info.bEnWin1 = (varVdp2Regs->WCTLB >> 3) & 0x01;
-  info.WindowArea1 = (varVdp2Regs->WCTLB >> 2) & 0x01;
-  info.LogicWin = (varVdp2Regs->WCTLB >> 7) & 0x01;
-
   info.islinescroll = 0;
   info.linescrolltbl = 0;
   info.lineinc = 0;
@@ -6293,13 +6257,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
     return;
 
   _Ygl->screen[NBG3] = info.priority;
-
-  // Window Mode
-  info.bEnWin0 = (varVdp2Regs->WCTLB >> 9) & 0x01;
-  info.WindowArea0 = (varVdp2Regs->WCTLB >> 8) & 0x01;
-  info.bEnWin1 = (varVdp2Regs->WCTLB >> 11) & 0x01;
-  info.WindowArea1 = (varVdp2Regs->WCTLB >> 10) & 0x01;
-  info.LogicWin = (varVdp2Regs->WCTLB >> 15) & 0x01;
 
   info.islinescroll = 0;
   info.linescrolltbl = 0;
@@ -6635,13 +6592,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   ReadVdp2ColorOffset(varVdp2Regs, info, 0x10);
   info->linecheck_mask = 0x10;
   info->coordincx = info->coordincy = 1;
-
-  // Window Mode
-  info->bEnWin0 = (varVdp2Regs->WCTLC >> 1) & 0x01;
-  info->WindowArea0 = (varVdp2Regs->WCTLC >> 0) & 0x01;
-  info->bEnWin1 = (varVdp2Regs->WCTLC >> 3) & 0x01;
-  info->WindowArea1 = (varVdp2Regs->WCTLC >> 2) & 0x01;
-  info->LogicWin = (varVdp2Regs->WCTLC >> 7) & 0x01;
 
   Vdp2DrawRotation(rgb, varVdp2Regs);
   free(rgb);
