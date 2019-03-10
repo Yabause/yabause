@@ -7071,8 +7071,15 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(RBGDrawInfo * 
 {
   // Virtua Fighter2
   if (rgb->info.RotWin == NULL) {
-    printf("vdp2RGetParamMode03WithKA NULL!\n");
-    return (&rgb->paraA);
+    if (rgb->info.RotWinMode == 0)
+    {
+      //printf("vdp2RGetParamMode03WithKA NULL!\n");
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      return rgb->info.GetKValueA(&rgb->paraA, h);
+    } else {
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      return rgb->info.GetKValueA(&rgb->paraA, h);
+    }
   }
   short start = rgb->info.RotWin[v] & 0xFFFF;
   short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
@@ -7117,8 +7124,13 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(RBGDrawInfo * 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
   if (rgb->info.RotWin == NULL) {
-    printf("vdp2RGetParamMode03WithKB NULL!\n");
-    return (&rgb->paraA);
+    //printf("vdp2RGetParamMode03WithKB NULL!\n");
+    if (rgb->info.RotWinMode == 0)
+     return (&rgb->paraA);
+   else {
+     h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+     return rgb->info.GetKValueB(&rgb->paraB, h);
+   }
   }
   short start = rgb->info.RotWin[v] & 0xFFFF;
   short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
@@ -7165,8 +7177,20 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * r
 {
   vdp2rotationparameter_struct * p;
   if (rgb->info.RotWin == NULL) {
-    printf("vdp2RGetParamMode03WithK NULL\n");
-    return (&rgb->paraA);
+    //printf("vdp2RGetParamMode03WithK NULL\n");
+    if (rgb->info.RotWinMode == WA_INSIDE) {
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      p = rgb->info.GetKValueA(&rgb->paraA, h);
+      if (p) return p;
+      h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+      return rgb->info.GetKValueB(&rgb->paraB, h);
+    } else {
+      h = ceilf(rgb->paraB.KtablV + (rgb->paraB.deltaKAx * h));
+      p = rgb->info.GetKValueB(&rgb->paraB, h);
+      if (p) return p;
+      h = ceilf(rgb->paraA.KtablV + (rgb->paraA.deltaKAx * h));
+      return rgb->info.GetKValueA(&rgb->paraA, h);
+    }
   }
   short start = rgb->info.RotWin[v] & 0xFFFF;
   short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
