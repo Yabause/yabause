@@ -5711,6 +5711,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     info.specialcode = varVdp2Regs->SFCODE & 0xFF;
 
   info.colornumber = (varVdp2Regs->CHCTLA & 0x70) >> 4;
+
   int dest_alpha = ((varVdp2Regs->CCCTL >> 9) & 0x01);
 
   info.blendmode = 0;

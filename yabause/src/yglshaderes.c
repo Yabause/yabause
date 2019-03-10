@@ -3114,13 +3114,8 @@ SHADER_VERSION
 "uniform sampler2D fb_texture6;  \n"
 "uniform int fbon;  \n"
 "uniform int screen_nb;  \n"
-"uniform int mode0;  \n"
-"uniform int mode1;  \n"
-"uniform int mode2;  \n"
-"uniform int mode3;  \n"
-"uniform int mode4;  \n"
-"uniform int mode5;  \n"
-"uniform int mode_lncl; \n"
+"uniform int mode[7];  \n"
+"uniform int isRGB[6]; \n"
 
 "struct Col \n"
 "{ \n"
@@ -3165,7 +3160,7 @@ SHADER_VERSION
 "    ret.lncl=u_lncl[0];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode0; \n"
+"    ret.mode = mode[0]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
@@ -3178,7 +3173,7 @@ SHADER_VERSION
 "    ret.lncl=u_lncl[1];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode1; \n"
+"    ret.mode = mode[1]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
@@ -3191,7 +3186,7 @@ SHADER_VERSION
 "    ret.lncl=u_lncl[2];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode2; \n"
+"    ret.mode = mode[2]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
@@ -3204,7 +3199,7 @@ SHADER_VERSION
 "    ret.lncl=u_lncl[3];\n"
 "    ret.Color = fbColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode3; \n"
+"    ret.mode = mode[3]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
@@ -3217,7 +3212,7 @@ SHADER_VERSION
 "    ret.Color = fbColor; \n"
 "    ret.lncl=u_lncl[4];\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode4; \n"
+"    ret.mode = mode[4]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
@@ -3230,7 +3225,7 @@ SHADER_VERSION
 "    ret.Color = fbColor; \n"
 "    ret.lncl=u_lncl[5];\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode5; \n"
+"    ret.mode = mode[5]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
@@ -3286,7 +3281,7 @@ SHADER_VERSION
 "              linepos.y = 0; \n "
 "              linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "              colorsecond = texelFetch( s_lncl, linepos ,0 );\n"
-"              modesecond = mode_lncl;\n"
+"              modesecond = mode[6];\n"
 "              alphasecond = float((int(colorsecond.a * 255.0)&0xF8)>>3)/31.0;\n"
 "              use_lncl = 1;\n"
 "            }\n"
@@ -3305,7 +3300,7 @@ SHADER_VERSION
 "                linepos.y = 0; \n "
 "                linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "                colorthird = texelFetch( s_lncl, linepos ,0 );\n"
-"                modethird = mode_lncl;\n"
+"                modethird = mode[6];\n"
 "                alphathird = float((int(colorthird.a * 255.0)&0xF8)>>3)/31.0;\n"
 "                use_lncl = 1;\n"
 "              }\n"
@@ -3346,21 +3341,27 @@ SHADER_VERSION
 "      }\n"
 "    } \n"
 "  } \n"
-#if 0
+#if 1
 //Take care  of the extended coloration mode
+"  if (modethird == 1) thirdColor = vec4(colorthird.rgb, 1.0); \n"
+"  if (modethird == 2) thirdColor = vec4(colorthird.rgb, 1.0); \n"
+"  if (modethird == 3) thirdColor = vec4(alphathird*colorthird.rgb + (1.0 - alphathird)*colorfourth.rgb, 1.0); \n"
+"  if (modethird == 4) thirdColor = vec4(alphafourth*colorthird.rgb + (1.0 - alphafourth)*colorfourth.rgb, 1.0); \n"
+
 "  if (modesecond == 1) secondColor = vec4(colorsecond.rgb, 1.0); \n"
 "  if (modesecond == 2) secondColor = vec4(colorsecond.rgb, 1.0); \n"
-"  if (modesecond == 3) secondColor = vec4(alphasecond*colorsecond.rgb + (1.0 - alphasecond)*colorthird.rgb, alphasecond); \n"
-"  if (modesecond == 4) secondColor = vec4(alphathird*colorsecond.rgb + (1.0 - alphathird)*colorthird.rgb, alphasecond); \n"
+"  if (modesecond == 3) secondColor = vec4(alphasecond*colorsecond.rgb + (1.0 - alphasecond)*thirdColor.rgb, 1.0); \n"
+"  if (modesecond == 4) secondColor = vec4(alphathird*colorsecond.rgb + (1.0 - alphathird)*thirdColor.rgb, 1.0); \n"
 
 "  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
 "  if (modetop == 2) topColor = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 3) topColor = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 4) topColor = vec4(colortop.rgb, alphasecond); \n"
+"  if (modetop == 3) topColor = vec4(alphatop*colortop.rgb + (1.0 - alphatop)*secondColor.rgb, 1.0); \n"
+"  if (modetop == 4) topColor = vec4(alphasecond*colortop.rgb + (1.0 - alphasecond)*secondColor.rgb, 1.0); \n"
 
-"  finalColor = vec4(colortop.a*colortop.rgb + (1.0 - colortop.a)*secondColor.rgb, 1.0); \n"
-"  thirdColor = colorthird;\n"
-"  fourthColor = colorfourth;\n"
+"  finalColor = topColor; \n"
+"  topColor = colortop;\n"
+"  thirdColor = colorsecond;\n"
+"  fourthColor = colorthird;\n"
 
 #else
 
@@ -3381,7 +3382,7 @@ SHADER_VERSION
 #endif
 "} \n";
 
-int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, Vdp2 *varVdp2Regs) {
   const GLchar * fblit_vdp2prio_v[] = { vdp2prio_v, NULL };
   const GLchar * fblit_vdp2prio_f[] = { vdp2prio_f, NULL };
   int perLine = 0;
@@ -3480,13 +3481,8 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
 
 
   glUniform1i(glGetUniformLocation(vdp2prio_prg, "screen_nb"), nbScreen);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode0"), modescreens[0]);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode1"), modescreens[1]);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode2"), modescreens[2]);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode3"), modescreens[3]);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode4"), modescreens[4]);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode5"), modescreens[5]);
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "mode_lncl"), modescreens[6]);
+  glUniform1iv(glGetUniformLocation(vdp2prio_prg, "mode"), 7, modescreens);
+  glUniform1iv(glGetUniformLocation(vdp2prio_prg, "isRGB"), 6, isRGB);
   glUniform1i(glGetUniformLocation(vdp2prio_prg, "fbon"), Vdp1External.disptoggle & 0x01);
 
   glUniform1f(glGetUniformLocation(vdp2prio_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);

@@ -3156,6 +3156,29 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   return ret;
 }
 
+int setupColorMode(Vdp2 *varVdp2Regs, int layer) {
+  //Return 1 if color format is RGB / 0 otherwise
+  switch (layer) {
+    case NBG0:
+    case RBG1:
+       return ((varVdp2Regs->CHCTLA >> 4)&0x7) > 2;
+    break;
+    case NBG1:
+       return ((varVdp2Regs->CHCTLA >> 12)&0x4) > 2;
+    break;
+    case NBG2:
+    case NBG3:
+       //Always in palette mode
+       return 0;
+    break;
+    case RBG0:
+       return ((varVdp2Regs->CHCTLB >> 12)&0x7) > 2;
+    default:
+       return 0;
+  }
+  return 0;
+}
+
 SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
   SpriteMode ret = NONE;
   const int enableBit[enBGMAX+1] = {0, 1, 2, 3, 4, 0, 6, 5};
@@ -3204,6 +3227,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glDepthMask(GL_FALSE);
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_BLEND);
+
+   if ( (varVdp2Regs->CCCTL & 0x400) == 0 ) {
+     printf("Extended Color calculation!\n");
+   }
+   printf("Ram mode %d\n", Vdp2Internal.ColorMode);
 
    glBindVertexArray(_Ygl->vao);
 
@@ -3336,10 +3364,12 @@ void YglRender(Vdp2 *varVdp2Regs) {
   YGLDEBUG("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen[NBG2],drawScreen[NBG1],drawScreen[NBG0],drawScreen[RBG1],drawScreen[RBG0]);
   int prioscreens[6];
   int modescreens[7];
+  int isRGB[6];
   glDisable(GL_BLEND);
   for (int j=0; j<6; j++) {
     prioscreens[j] = _Ygl->screen_fbotex[vdp2screens[j]];
     modescreens[j] =  setupBlend(varVdp2Regs, vdp2screens[j]);
+    isRGB[j] = setupColorMode(varVdp2Regs, vdp2screens[j]);
   }
   modescreens[6] =  setupBlend(varVdp2Regs, enBGMAX);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);
@@ -3356,7 +3386,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glDrawBuffers(5, &DrawBuffers[0]);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
-  YglBlitTexture(_Ygl->screen_fbotex, _Ygl->bg, prioscreens, modescreens, varVdp2Regs);
+  YglBlitTexture(_Ygl->screen_fbotex, _Ygl->bg, prioscreens, modescreens, isRGB, varVdp2Regs);
 
 
     //if((img[0] == 0) && (img[1] == 0) && (img[2] == 0)) { // Break doom...
