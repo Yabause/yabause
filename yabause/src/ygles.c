@@ -3214,7 +3214,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glDisable(GL_BLEND);
 
 #if 0
-   if ( (varVdp2Regs->CCCTL & 0x400) == 0 ) {
+   if ( (varVdp2Regs->CCCTL & 0x400) != 0 ) {
      printf("Extended Color calculation!\n");
    }
    printf("Ram mode %d\n", Vdp2Internal.ColorMode);
@@ -3279,6 +3279,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
   // Color Calcurate Window
    ccwindow = ((varVdp2Regs->WCTLD >> 9) & 0x01);
    ccwindow |= ((varVdp2Regs->WCTLD >> 11) & 0x01);
+
+   if (ccwindow) printf("Color calculation window!!!\n");
 
   YglSetVdp2Window(varVdp2Regs);
   // Windo function to reintroduce
