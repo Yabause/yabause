@@ -1987,8 +1987,8 @@ void Ygl_uniformVDP2DrawFramebuffer(void * p,float from, float to , float * offs
      glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
      glActiveTexture(GL_TEXTURE0);
      glDisable(GL_BLEND);
-#endif
   }
+#endif
 }
 
 /*------------------------------------------------------------------------------------
