@@ -962,9 +962,11 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
             *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(temp));
           }
           else {
-              int tmp;
-            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &tmp, &colorcl);
-            *texture->textdata++ = VDP1COLOR(1, colorcl, 0, 0, temp );
+            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
+            if (temp & 0x8000) {
+              *texture->textdata++ = VDP1COLOR(1, colorcl, 0, 0, VDP1COLOR16TO24(temp));
+            }
+            else *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp );
           }
         }
       }
