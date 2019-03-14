@@ -24,36 +24,45 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef LIBRETRO_DIRECT3D_H__
-#define LIBRETRO_DIRECT3D_H__
+#ifndef LIBRETRO_GSKIT_PS2_H_
+#define LIBRETRO_GSKIT_PS2_H_
 
 #include "libretro.h"
 
-#ifdef HAVE_D3D11
+#if defined(PS2)
 
-#include <d3d11.h>
-#include <d3dcompiler.h>
+#include <gsKit.h>
 
-#define RETRO_HW_RENDER_INTERFACE_D3D11_VERSION 1
+#define RETRO_HW_RENDER_INTERFACE_GSKIT_PS2_VERSION 1
 
-struct retro_hw_render_interface_d3d11
+struct retro_hw_ps2_insets
 {
-  /* Must be set to RETRO_HW_RENDER_INTERFACE_D3D11. */
+  float top;
+  float left;
+  float bottom;
+  float right;
+};
+
+#define empty_ps2_insets (struct retro_hw_ps2_insets){0.f, 0.f, 0.f, 0.f}
+
+struct retro_hw_render_interface_gskit_ps2
+{
+  /* Must be set to RETRO_HW_RENDER_INTERFACE_GSKIT_PS2. */
   enum retro_hw_render_interface_type interface_type;
-  /* Must be set to RETRO_HW_RENDER_INTERFACE_D3D11_VERSION. */
+  /* Must be set to RETRO_HW_RENDER_INTERFACE_GSKIT_PS2_VERSION. */
   unsigned interface_version;
 
-  /* Opaque handle to the d3d11 backend in the frontend
+  /* Opaque handle to the GSKit_PS2 backend in the frontend
    * which must be passed along to all function pointers
    * in this interface.
    */
-  void* handle;
-  ID3D11Device *device;
-  ID3D11DeviceContext *context;
-  D3D_FEATURE_LEVEL featureLevel;
-  pD3DCompile D3DCompile;
+   GSTEXTURE *coreTexture;
+   bool clearTexture;
+   bool updatedPalette;
+   struct retro_hw_ps2_insets padding;
 };
+typedef struct retro_hw_render_interface_gskit_ps2 RETRO_HW_RENDER_INTEFACE_GSKIT_PS2;
 
 #endif
 
-#endif /* LIBRETRO_DIRECT3D_H__ */
+#endif /* LIBRETRO_GSKIT_PS2_H_ */
