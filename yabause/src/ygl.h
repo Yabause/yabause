@@ -26,6 +26,12 @@ extern "C" {
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
 #if defined(__LIBRETRO__)
+    #if defined(__APPLE__)
+        #include <OpenGL/gl3.h>
+        #define GL_TEXTURE_FETCH_BARRIER_BIT      0x00000008
+        #define GL_TEXTURE_UPDATE_BARRIER_BIT     0x00000100
+        #define GL_FRAMEBUFFER_BARRIER_BIT        0x00000400
+    #endif
     #include <glsym/glsym.h>
     #include <glsm/glsm.h>
 #elif defined(__ANDROID__)

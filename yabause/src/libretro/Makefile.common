@@ -1,7 +1,7 @@
-SOURCE_DIR := $(CORE_DIR)/../yabause/src
-LIBRETRO_COMM_DIR := $(CORE_DIR)/../libretro-common
+SOURCE_DIR := $(CORE_DIR)/..
+LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
 
-INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(SOURCE_DIR)/tools -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/sh2_kronos -I$(SOURCE_DIR)/musashi
+INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/musashi -I$(SOURCE_DIR)/sh2_kronos
 
 OBJECTS_S :=
 
@@ -65,6 +65,7 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(LIBRETRO_COMM_DIR)/glsm/glsm.c \
 	$(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c \
 	$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	$(CORE_DIR)/libretro.c
 
 ifeq ($(HAVE_MUSASHI), 1)
