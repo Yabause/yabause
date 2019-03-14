@@ -1315,7 +1315,8 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
         u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        _Ygl->win[0][v] = temp;
+        if (HStart > HEnd) _Ygl->win[0][v] = 0x0;
+        else _Ygl->win[0][v] = temp;
       } else _Ygl->win[0][v] = 0x0;
     }
     // Parameter Mode
@@ -1324,7 +1325,8 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
     for (v = 0; v < vdp2height; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
         u32 temp = (varVdp2Regs->WPSX0 >>HShift) | ((varVdp2Regs->WPEX0>>HShift) << 16);
-        _Ygl->win[0][v] = temp;
+        if (varVdp2Regs->WPSX0 > varVdp2Regs->WPEX0) _Ygl->win[0][v] = 0x0;
+        else _Ygl->win[0][v] = temp;
       } else _Ygl->win[0][v] = 0x0;
     }
   }
@@ -1339,7 +1341,8 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
         u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        _Ygl->win[1][v] = temp;
+        if (HStart > HEnd) _Ygl->win[1][v] = 0x0;
+        else _Ygl->win[1][v] = temp;
       } else _Ygl->win[1][v] = 0x0;
     }
     // Parameter Mode
@@ -1348,7 +1351,8 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
     for (v = 0; v < vdp2height; v++) {
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
         u32 temp = (varVdp2Regs->WPSX1 >>HShift) | ((varVdp2Regs->WPEX1>>HShift) << 16);
-        _Ygl->win[1][v] = temp;
+        if (varVdp2Regs->WPSX1 > varVdp2Regs->WPEX1) _Ygl->win[1][v] = 0x0;
+        else _Ygl->win[1][v] = temp;
       } else _Ygl->win[1][v] = 0x0;
     }
   }
