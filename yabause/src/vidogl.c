@@ -4051,8 +4051,8 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   switch ((cmd.CMDCTRL & 0xF00) >> 8)
   {
   case 0x0: // Only two coordinates
-    rw = cmd.CMDXC - x + Vdp1Regs->localX;
-    rh = cmd.CMDYC - y + Vdp1Regs->localY;
+    rw = cmd.CMDXC - cmd.CMDXA;
+    rh = cmd.CMDYC - cmd.CMDYA;
     if (rw > 0) { rw += 1; } else { x += 1; }
     if (rh > 0) { rh += 1; } else { y += 1; }
     break;
@@ -4132,7 +4132,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)x;
   vert[7] = (float)(y + rh);
 
-  expandVertices(vert, sprite.vertices, 0);
+  expandVertices(vert, sprite.vertices, ((sprite.w!=rw)||(sprite.h!=rh)));
 
   for (int i =0; i<4; i++) {
     sprite.vertices[2*i] = (sprite.vertices[2*i]) * vdp1wratio;
