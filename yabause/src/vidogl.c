@@ -4491,7 +4491,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   u16 color;
   u16 CMDPMOD;
-  u8 alpha;
   YglSprite sprite;
   YglTexture texture;
   u16 color2;
@@ -4551,7 +4550,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     }
     gouraud = 1;
   }
-
+//Ca semble inutile ce bout de code
   if (color & 0x8000)
     priority = varVdp2Regs->PRISA & 0x7;
   else
@@ -4575,7 +4574,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   int spd = ((CMDPMOD & 0x40) != 0);
 
-  alpha = 0xF8;
   if (IS_REPLACE(CMDPMOD)) {
     // hard/vdp1/hon/p06_35.htm#6_35
     //if ((CMDPMOD & 0x40) != 0) {
@@ -4586,20 +4584,16 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     //}
   }
   else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
-    alpha = 0xF8;
     sprite.blendmode = VDP1_COLOR_CL_SHADOW;
   }
   else if (IS_HALF_LUMINANCE(CMDPMOD)) {
-    alpha = 0xF8;
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
   else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    alpha = 0X78;
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
 
   if (IS_MESH(CMDPMOD)) {
-    //alpha = 0X78;
     sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
   }
   else if (IS_MSB_SHADOW(CMDPMOD)) {
