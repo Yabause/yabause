@@ -589,7 +589,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
         color = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(dot));
       }
       else {
-        color = VDP1COLOR(1, colorcl, 0, 0, dot);
+        color = VDP1COLOR(1, colorcl, priority, 0, dot);
       }
     }
   }
