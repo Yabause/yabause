@@ -744,8 +744,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
               *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(temp));
             }
           } else if (temp != 0x0000) {
-            int tmp;
-            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &tmp, &colorcl);
+            Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
             if (shadow != 0) {
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
             }
@@ -1048,7 +1047,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
   u8 SPCLMD = varVdp2Regs->SPCTL;
   int sprite_register;
   u16 lutPri;
-  u16 *reg_src = &cmd->CMDCOLR;
+  u16 reg_src = cmd->CMDCOLR;
   int not_lut = 1;
 
   // is the sprite is RGB or LUT (in fact, LUT can use bank color, we just hope it won't...)
@@ -1071,7 +1070,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
     lutPri = T1ReadWord(Vdp1Ram, (dot >> 4) * 2 + colorLut);
     if (!(lutPri & 0x8000)) {
       not_lut = 0;
-      reg_src = &lutPri;
+      reg_src = lutPri;
     }
     else
       return;
@@ -1082,77 +1081,77 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
     switch (sprite_type)
     {
     case 0:
-      sprite_register = (*reg_src & 0xC000) >> 14;
+      sprite_register = (reg_src & 0xC000) >> 14;
       *priority = sprite_register;
       *colorcl = (cmd->CMDCOLR >> 11) & 0x07;
       *normal_shadow = 0x7FE;
       if (not_lut) cmd->CMDCOLR &= 0x7FF;
       break;
     case 1:
-      sprite_register = (*reg_src & 0xE000) >> 13;
+      sprite_register = (reg_src & 0xE000) >> 13;
       *priority = sprite_register;
       *colorcl = (cmd->CMDCOLR >> 11) & 0x03;
       *normal_shadow = 0x7FE;
       if (not_lut) cmd->CMDCOLR &= 0x7FF;
       break;
     case 2:
-      sprite_register = (*reg_src >> 14) & 0x1;
+      sprite_register = (reg_src >> 14) & 0x1;
       *priority = sprite_register;
       *colorcl = (cmd->CMDCOLR >> 11) & 0x07;
       *normal_shadow = 0x7FE;
       if (not_lut) cmd->CMDCOLR &= 0x7FF;
       break;
     case 3:
-      sprite_register = (*reg_src & 0x6000) >> 13;
+      sprite_register = (reg_src & 0x6000) >> 13;
       *priority = sprite_register;
       *colorcl = ((cmd->CMDCOLR >> 11) & 0x03);
       *normal_shadow = 0x7FE;
       if (not_lut) cmd->CMDCOLR &= 0x7FF;
       break;
     case 4:
-      sprite_register = (*reg_src & 0x6000) >> 13;
+      sprite_register = (reg_src & 0x6000) >> 13;
       *priority = sprite_register;
       *colorcl = (cmd->CMDCOLR >> 10) & 0x07;
       *normal_shadow = 0x3FE;
       if (not_lut) cmd->CMDCOLR &= 0x3FF;
       break;
     case 5:
-      sprite_register = (*reg_src & 0x7000) >> 12;
+      sprite_register = (reg_src & 0x7000) >> 12;
       *priority = sprite_register & 0x7;
       *colorcl = (cmd->CMDCOLR >> 11) & 0x01;
       *normal_shadow = 0x7FE;
       if (not_lut) cmd->CMDCOLR &= 0x7FF;
       break;
     case 6:
-      sprite_register = (*reg_src & 0x7000) >> 12;
+      sprite_register = (reg_src & 0x7000) >> 12;
       *priority = sprite_register;
       *colorcl = (cmd->CMDCOLR >> 10) & 0x03;
       *normal_shadow = 0x3FE;
       if (not_lut) cmd->CMDCOLR &= 0x3FF;
       break;
     case 7:
-      sprite_register = (*reg_src & 0x7000) >> 12;
+      sprite_register = (reg_src & 0x7000) >> 12;
       *priority = sprite_register;
       *colorcl  = (cmd->CMDCOLR >> 9) & 0x07;
       *normal_shadow = 0x1FE;
       if (not_lut) cmd->CMDCOLR &= 0x1FF;
       break;
     case 8:
-      sprite_register = (*reg_src & 0x80) >> 7;
+      sprite_register = (reg_src & 0x80) >> 7;
       *priority = sprite_register;
       *normal_shadow = 0x7E;
       *colorcl = 0;
       if (not_lut) cmd->CMDCOLR &= 0x7F;
       break;
     case 9:
-      sprite_register = (*reg_src & 0x80) >> 7;
+      sprite_register = (reg_src & 0x80) >> 7;
       *priority = sprite_register;;
       *colorcl = ((cmd->CMDCOLR >> 6) & 0x01);
       *normal_shadow = 0x3E;
       if (not_lut) cmd->CMDCOLR &= 0x3F;
       break;
     case 10:
-      sprite_register = (*reg_src & 0xC0) >> 6;
+      sprite_register = (reg_src & 0xC0) >> 6;
       *priority = sprite_register;
       *colorcl = 0;
       if (not_lut) cmd->CMDCOLR &= 0x3F;
@@ -1165,21 +1164,21 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
       if (not_lut) cmd->CMDCOLR &= 0x3F;
       break;
     case 12:
-      sprite_register = (*reg_src & 0x80) >> 7;
+      sprite_register = (reg_src & 0x80) >> 7;
       *priority = sprite_register;
       *colorcl = 0;
       *normal_shadow = 0xFE;
       if (not_lut) cmd->CMDCOLR &= 0xFF;
       break;
     case 13:
-      sprite_register = (*reg_src & 0x80) >> 7;
+      sprite_register = (reg_src & 0x80) >> 7;
       *priority = sprite_register;
       *colorcl = (cmd->CMDCOLR >> 6) & 0x01;
       *normal_shadow = 0xFE;
       if (not_lut) cmd->CMDCOLR &= 0xFF;
       break;
     case 14:
-      sprite_register = (*reg_src & 0xC0) >> 6;
+      sprite_register = (reg_src & 0xC0) >> 6;
       *priority = sprite_register;
       *colorcl = 0;
       *normal_shadow = 0xFE;
