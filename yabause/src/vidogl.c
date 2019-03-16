@@ -423,8 +423,6 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
 
   int endcnt = 0;
   int nromal_shadow = 0;
-  u32 talpha = 0x00; // MSB Color calcuration mode
-  u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
 
   // hard/vdp1/hon/p06_35.htm#6_35
   // \93\A7\96\BE\83s\83N\83Z\83\8B\96\B3\8C\F8\83r\83b\83g\82̓L\83\83\83\89\83N\83^\83p\83^\81[\83\93\82̂\A0\82\E9\83X\83v\83\89\83C\83g\95`\89\E6\82ɂ̂ݗL\8C\F8\82ł\B7\81B\83|\83\8A\83S\83\93\81A\83|\83\8A\83\89\83C\83\93\81A\83\89\83C\83\93\82ł́A\82\B1\82̃r\83b\83g\82͕K\82\B81\82ɐݒ肵\82Ă\AD\82\BE\82\B3\82\A2\81B
@@ -614,8 +612,6 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
 #endif
   int endcnt = 0;
   int nromal_shadow = 0;
-  u32 talpha = 0x00; // MSB Color calcuration mode
-  u32 shadow_alpha = (u8)0xF8 - (u8)0x80;
   u32 charAddr = cmd->CMDSRCA * 8;
   u32 dot;
   u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
