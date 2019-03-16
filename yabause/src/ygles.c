@@ -2807,6 +2807,7 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
      if(Win0[i] || Win1[i])
      {
        if (needUpdate == 0) Vdp2GenerateWindowInfo(varVdp2Regs);
+       needUpdate = 1;
        _Ygl->use_win[i] = 1;
        glDrawBuffers(1, &DrawBuffers[i]);
        glClearBufferfv(GL_COLOR, 0, col);
