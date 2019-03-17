@@ -1585,11 +1585,14 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
    glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
    if( prg->uClipMode == 0x02 )
    {
+      _Ygl->vdp1_stencil_mode = 1;
       glStencilFunc(GL_EQUAL,0x1,0xFF);
    }else if( prg->uClipMode == 0x03 )
    {
+      _Ygl->vdp1_stencil_mode = 2;
       glStencilFunc(GL_EQUAL,0x0,0xFF);
    }else{
+      _Ygl->vdp1_stencil_mode =3;
       glStencilFunc(GL_ALWAYS,0,0xFF);
    }
 
@@ -1609,6 +1612,7 @@ int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, i
    YglProgram * prg;
    prg = p;
    glDisable(GL_STENCIL_TEST);
+   _Ygl->vdp1_stencil_mode = 0;
    glStencilFunc(GL_ALWAYS,0,0xFF);
 
    return 0;

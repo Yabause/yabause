@@ -2537,6 +2537,8 @@ void YglEraseWriteVDP1(void) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
   glDrawBuffers(2, &DrawBuffers[_Ygl->readframe*2]);
 
+  _Ygl->vdp1_stencil_mode = 0;
+
   color = Vdp1Regs->EWDR;
   priority = 0;
 
@@ -2688,7 +2690,6 @@ void YglRenderVDP1(void) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
 
-  glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
   glCullFace(GL_FRONT_AND_BACK);
@@ -2698,9 +2699,21 @@ void YglRenderVDP1(void) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[_Ygl->drawframe]->textureID);
 
-  if (_Ygl->vdp1_stencil_mode) {
+  if (_Ygl->vdp1_stencil_mode != 0) {
     glEnable(GL_STENCIL_TEST);
+    glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
+    if( _Ygl->vdp1_stencil_mode == 1 )
+    {
+       glStencilFunc(GL_EQUAL,0x1,0xFF);
+    }else if( _Ygl->vdp1_stencil_mode == 2 )
+    {
+       glStencilFunc(GL_EQUAL,0x0,0xFF);
+    }else{
+       glStencilFunc(GL_ALWAYS,0,0xFF);
+    }
   }
+  else
+    glDisable(GL_STENCIL_TEST);
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
     if ((level->prg[j].prgid == PG_VDP1_MSB_SHADOW) || (level->prg[j].prgid == PG_VDP1_MSB_SHADOW_TESS)) {
@@ -2722,7 +2735,6 @@ void YglRenderVDP1(void) {
 
   level->prgcurrent = 0;
 
-  glGetIntegerv(GL_STENCIL_TEST, &_Ygl->vdp1_stencil_mode);
   glDisable(GL_STENCIL_TEST);
 
   //YabThreadUnLock(_Ygl->mutex);
