@@ -4485,7 +4485,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 //The polygon calculation seems not so good. A good test game is break point. All the lines are blinking and none is really thin and straight.
 
   u16 color;
-  u16 CMDPMOD;
   YglSprite sprite;
   YglTexture texture;
   u16 color2;
@@ -4528,12 +4527,11 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.vertices[2*i+1] = (sprite.vertices[2*i+1] + Vdp1Regs->localY) * vdp1hratio;
   }
 
-  color = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x6);
-  CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
-  sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
+  color = cmd.CMDCOLR;
+  sprite.uclipmode = (cmd.CMDPMOD >> 9) & 0x03;
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
-  if ((CMDPMOD & 4))
+  if ((cmd.CMDPMOD & 4))
   {
     for (i = 0; i < 4; i++)
     {
@@ -4567,9 +4565,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.cog = 0x00;
   sprite.cob = 0x00;
 
-  int spd = ((CMDPMOD & 0x40) != 0);
-
-  if (IS_REPLACE(CMDPMOD)) {
+  int spd = ((cmd.CMDPMOD & 0x40) != 0);
+  if (IS_REPLACE(cmd.CMDPMOD)) {
     // hard/vdp1/hon/p06_35.htm#6_35
     //if ((CMDPMOD & 0x40) != 0) {
       sprite.blendmode = VDP1_COLOR_SPD;
@@ -4578,20 +4575,20 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     //  alpha = 0xF8;
     //}
   }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
+  else if (IS_DONOT_DRAW_OR_SHADOW(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_SHADOW;
   }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
+  else if (IS_HALF_LUMINANCE(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
+  else if (IS_REPLACE_OR_HALF_TRANSPARENT(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
 
-  if (IS_MESH(CMDPMOD)) {
+  if (IS_MESH(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
   }
-  else if (IS_MSB_SHADOW(CMDPMOD)) {
+  else if (IS_MSB_SHADOW(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
   }
 
@@ -4603,7 +4600,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     YglQuadGrowShading(&sprite, &texture, NULL, NULL, YglTM_vdp1[_Ygl->drawframe]);
   }
 
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   *texture.textdata = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
 }
 
