@@ -2920,15 +2920,17 @@ void YglUpdateVdp2Reg(Vdp2 *varVdp2Regs) {
 SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs) {
   SpriteMode ret = NONE;
   if (varVdp2Regs->CCCTL & (1<<6)) {
-    if (varVdp2Regs->CCCTL>>8) {
+    if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
     } else {
-      ret = SRC_ALPHA;
       if (((varVdp2Regs->CCCTL >> 9) & 0x01) == 0x01 ) {
         ret = DST_ALPHA;
+      } else {
+        ret = SRC_ALPHA;
       }
     }
   }
+
   return ret;
 }
 
