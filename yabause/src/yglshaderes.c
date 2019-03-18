@@ -3277,6 +3277,7 @@ SHADER_VERSION
 "  colorback = texelFetch( s_back, addr,0 ); \n"
 
 "  colortop = colorback; \n"
+"  isRGBtop = 1; \n"
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
 "  for (int i = 7; i>0; i--) { \n"
 "    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"

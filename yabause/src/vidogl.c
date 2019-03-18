@@ -5108,8 +5108,6 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
   ReadVdp2ColorOffset(varVdp2Regs, &info, 0x20);
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
-  dot = Vdp2RamReadWord(NULL, Vdp2Ram, scrAddr);
-
   if ((varVdp2Regs->BKTAU & 0x8000) != 0 ) {
     // per line background color
     u32* back_pixel_data = YglGetBackColorPointer();
@@ -5127,6 +5125,7 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
     }
   }
   else {
+    dot = Vdp2RamReadWord(NULL, Vdp2Ram, scrAddr);
     YglSetClearColor(
       (float)(((dot & 0x1F) << 3) + info.cor) / (float)(0xFF),
       (float)((((dot & 0x3E0) >> 5) << 3) + info.cog) / (float)(0xFF),
