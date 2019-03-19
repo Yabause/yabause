@@ -460,19 +460,6 @@ void Vdp2VBlankIN(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static int checkFrameSkip(void) {
-  int ret = 0;
-  if (yabsys.skipframe == 0) return 0;
-  unsigned long now = YabauseGetTicks();
-  if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
-  if(nextFrameTime < now) ret = 1;
-  return ret;
-}
-
-void resetFrameSkip(void) {
-  nextFrameTime = 0;
-}
-
 void Vdp2HBlankIN(void) {
 
   if (yabsys.LineCount < yabsys.VBlankLineCount) {
@@ -483,9 +470,7 @@ void Vdp2HBlankIN(void) {
   } else {
 // Fix : Function doesn't exist without those defines
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-  if (checkFrameSkip() == 0) {
-    waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount);
-  }
+  waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, checkFrameSkip() );
 #endif
   }
 }
@@ -563,6 +548,9 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
+  if (checkFrameSkip() != 0) {
+    dropFrameDisplay();
+  }
   nextFrameTime  += yabsys.OneFrameTime;
   FRAMELOG("***** VOUT %d *****", g_frame_count);
   if (Vdp2External.perline_alpha == Vdp2External.perline_alpha_a){
