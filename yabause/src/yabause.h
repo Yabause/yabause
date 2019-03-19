@@ -50,7 +50,7 @@ typedef struct
    const char *supportdir;
    const char *modemip;
    const char *modemport;
-   int frameskip;
+   int frameskip; //This shall be renamed as out of sync
    int clocksync;  // 1 = sync internal clock to emulation, 0 = realtime clock
    u32 basetime;   // Initial time in clocksync mode (0 = start w/ system time)
    int usethreads;
@@ -67,6 +67,7 @@ typedef struct
    int resolution_mode;
    int extend_backup;
    int usecache;
+   int skipframe; //This should be used for real frame skip mechanism
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif
@@ -129,6 +130,7 @@ typedef struct
    int playing_ssf;
    u32 frame_count;
    int usecache;
+   int skipframe;
 #ifdef SPRITE_CACHE
    int useVdp1cache;
 #endif

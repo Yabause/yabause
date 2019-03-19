@@ -136,7 +136,7 @@ void print_usage(const char *program_name) {
 //////////////////////////////////////////////////////////////////////////////
 
 
-unsigned long nextFrameTime = 0;
+static unsigned long nextFrameTime = 0;
 static int autoframeskipenab=0;
 
 static void syncVideoMode(void) {
@@ -151,6 +151,7 @@ static void syncVideoMode(void) {
 
 void resetSyncVideo(void) {
   nextFrameTime = 0;
+  resetFrameSkip();
 }
 
 void YabauseChangeTiming(int freqtype) {
@@ -225,6 +226,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+   yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
