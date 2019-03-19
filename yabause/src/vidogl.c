@@ -7564,17 +7564,19 @@ int WaitVdp2Async(int sync) {
   return empty;
 }
 
-void waitVdp2DrawScreensEnd(int sync) {
-  YglCheckFBSwitch(0);
-  if ((vdp2busy == 1)) {
-    int empty = WaitVdp2Async(sync);
-    if (empty == 0) {
-      //Vdp2 has been evaluated we can render
-      YglTmPush(YglTM_vdp2);
-      //YuiUseOGLOnThisThread();
-      YglUpdateVDP1FB();
-      //YuiRevokeOGLOnThisThread();
-      YglRender(&Vdp2Lines[0]);
+void waitVdp2DrawScreensEnd(int sync, int abort) {
+  if (abort == 0){
+    YglCheckFBSwitch(0);
+    if ((vdp2busy == 1)) {
+      int empty = WaitVdp2Async(sync);
+      if (empty == 0) {
+        //Vdp2 has been evaluated we can render
+        YglTmPush(YglTM_vdp2);
+        //YuiUseOGLOnThisThread();
+        YglUpdateVDP1FB();
+        //YuiRevokeOGLOnThisThread();
+        YglRender(&Vdp2Lines[0]);
+      }
     }
   }
 }

@@ -381,6 +381,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+  yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
@@ -791,6 +792,11 @@ static void FPSDisplay(void)
   } else {
     OSDPushMessage(OSDMSG_FPS, 1, "%02d FPS", fps);
   }
+}
+
+void dropFrameDisplay() {
+  fpsframecount--;
+  if (fpsframecount < -1) fpsframecount = -1;
 }
 
 u32 YabauseGetFrameCount() {
