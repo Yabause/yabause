@@ -46,6 +46,8 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+int isSkipped = 0;
+
 u8 Vdp2ColorRamUpdated = 0;
 u8 A0_Updated = 0;
 u8 A1_Updated = 0;
@@ -410,7 +412,15 @@ void Vdp2VBlankIN(void) {
    now we're lying a little here as we're not swapping the framebuffers. */
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
-   VIDCore->Vdp2Draw();
+   if (checkFrameSkip() != 0) {
+     dropFrameDisplay();
+     isSkipped = 1;
+   } else {
+     VIDCore->Vdp2Draw();
+     isSkipped = 0;
+   }
+   nextFrameTime  += yabsys.OneFrameTime;
+
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
@@ -436,7 +446,7 @@ void Vdp2HBlankIN(void) {
   } else {
 // Fix : Function doesn't exist without those defines
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-  waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, checkFrameSkip() );
+  waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, isSkipped );
 #endif
   }
 }
@@ -514,10 +524,6 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
-  if (checkFrameSkip() != 0) {
-    dropFrameDisplay();
-  }
-  nextFrameTime  += yabsys.OneFrameTime;
   FRAMELOG("***** VOUT %d *****", g_frame_count);
   if (Vdp2External.perline_alpha == Vdp2External.perline_alpha_a){
     Vdp2External.perline_alpha = Vdp2External.perline_alpha_b;

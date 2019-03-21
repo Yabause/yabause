@@ -202,7 +202,7 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
          }
          req = 0;
     }
-} 
+}
 
 #ifdef SSH2_ASYNC
 static void sh2Execute( void * p ){
