@@ -3553,7 +3553,6 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
     GLUSEPROG(vdp2prio_prg);
   }
 
-  glUniform1i(glGetUniformLocation(vdp2prio_prg, "screen_nb"), nbScreen);
   glUniform1iv(glGetUniformLocation(vdp2prio_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2prio_prg, "isRGB"), 6, isRGB);
   glUniform1i(glGetUniformLocation(vdp2prio_prg, "fbon"), Vdp1External.disptoggle & 0x01);
@@ -3577,10 +3576,15 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
 
+  int id = 0;
   for (int i=0; i<nbScreen; i++) {
-    glActiveTexture(gltext[i]);
-    glBindTexture(GL_TEXTURE_2D, prioscreens[i]);
+    if (prioscreens[i] != 0) {
+      glActiveTexture(gltext[i]);
+      glBindTexture(GL_TEXTURE_2D, prioscreens[i]);
+      id++;
+    }
   }
+  glUniform1i(glGetUniformLocation(vdp2prio_prg, "screen_nb"), id);
 
   glActiveTexture(gltext[7]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);
@@ -3593,7 +3597,8 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
       glActiveTexture(gltext[i+9]);
       glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1screen_fbotex[i]);
     }
-  }  const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
+  }
+  const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
 
   lncl[0] = (varVdp2Regs->LNCLEN >> 4)&0x1;
   lncl[1] = (varVdp2Regs->LNCLEN >> 0)&0x1;

@@ -3359,20 +3359,23 @@ void YglRender(Vdp2 *varVdp2Regs) {
       glClearBufferfv(GL_COLOR, 0, col);
       drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
     }
-    allPrio |= drawScreen[i];
+  //  allPrio |= drawScreen[i];
   }
 
   const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
 
-  YGLDEBUG("Al prio = %x %x %x %x %x %x %x\n", allPrio, drawScreen[NBG3], drawScreen[NBG2],drawScreen[NBG1],drawScreen[NBG0],drawScreen[RBG1],drawScreen[RBG0]);
-  int prioscreens[6];
+  int prioscreens[6] = {0};
   int modescreens[7];
   int isRGB[6];
   glDisable(GL_BLEND);
+  int id = 0;
   for (int j=0; j<6; j++) {
-    prioscreens[j] = _Ygl->screen_fbotex[vdp2screens[j]];
-    modescreens[j] =  setupBlend(varVdp2Regs, vdp2screens[j]);
-    isRGB[j] = setupColorMode(varVdp2Regs, vdp2screens[j]);
+    if (drawScreen[vdp2screens[j]] != 0) {
+      prioscreens[id] = _Ygl->screen_fbotex[vdp2screens[j]];
+      modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
+      isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
+      id++;
+    }
   }
   modescreens[6] =  setupBlend(varVdp2Regs, enBGMAX);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);
