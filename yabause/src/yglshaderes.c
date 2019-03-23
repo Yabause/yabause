@@ -3100,10 +3100,13 @@ SHADER_VERSION
 "uniform sampler2D s_lncl;  \n"
 "uniform int u_lncl[7];  \n"
 "out vec4 finalColor; \n"
+
+# if DEBUG_BLIT
 "out vec4 topColor; \n"
 "out vec4 secondColor; \n"
 "out vec4 thirdColor; \n"
 "out vec4 fourthColor; \n"
+#endif
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
 
@@ -3252,6 +3255,8 @@ SHADER_VERSION
 
 "void main()   \n"
 "{  \n"
+"  vec4 topImage = vec4(0.0);; \n"
+"  vec4 secondImage = vec4(0.0);; \n"
 "  vec4 colortop = vec4(0.0);  \n"
 "  vec4 colorsecond = vec4(0.0); \n"
 "  vec4 colorthird = vec4(0.0); \n"
@@ -3375,84 +3380,67 @@ SHADER_VERSION
 "      }\n"
 "    } \n"
 "  } \n"
-#if 1
 //Take care  of the extended coloration mode
 "  if (extended_cc != 0) { \n"
 "    if (ram_mode == 0) { \n"
 "      if (use_lncl == 0) { \n"
 "        if (modesecond == 1) \n"
-"          secondColor.rgb = vec3(colorsecond.rgb); \n"
+"          secondImage.rgb = vec3(colorsecond.rgb); \n"
 "        else \n"
-"          secondColor.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
+"          secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
 "      } else {\n"
 "        if (modesecond == 1) \n"
-"          secondColor.rgb = vec3(colorsecond.rgb); \n"
+"          secondImage.rgb = vec3(colorsecond.rgb); \n"
 "        else {\n"
 "          if (modethird == 1) \n"
-"            secondColor.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
+"            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
 "          else \n"
-"            secondColor.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n"
+"            secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n"
 "        }\n"
 "      }\n"
 "    } else {\n"
 "      if (use_lncl == 0) { \n"
 "       if (isRGBthird == 0) { \n"
-"          secondColor.rgb = vec3(colorsecond.rgb); \n"
+"          secondImage.rgb = vec3(colorsecond.rgb); \n"
 "       } else { \n"
 "         if (modesecond == 1) { \n"
-"           secondColor.rgb = vec3(colorsecond.rgb); \n"
+"           secondImage.rgb = vec3(colorsecond.rgb); \n"
 "         } else {\n"
-"           secondColor.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
+"           secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
 "         } \n"
 "       }\n"
 "      } else {\n"
 "       if (isRGBthird == 0) { \n"
-"           secondColor.rgb = vec3(colorsecond.rgb); \n"
+"           secondImage.rgb = vec3(colorsecond.rgb); \n"
 "       } else { \n"
 "         if (isRGBfourth == 0) {\n"
-"           if (modesecond == 1) secondColor.rgb = vec3(colorsecond.rgb);\n"
-"           else secondColor.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
+"           if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
+"           else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
 "         } else { \n"
-"           if (modesecond == 1) secondColor.rgb = vec3(colorsecond.rgb);\n"
+"           if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
 "           else { \n"
-"             if (modethird == 1) secondColor.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
-"             else secondColor.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n"
+"             if (modethird == 1) secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
+"             else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n"
 "           }\n"
 "         }\n"
 "       }\n"
 "      }\n"
 "    } \n"
 "  } else { \n"
-"    secondColor.rgb = vec3(colorsecond.rgb); \n"
+"    secondImage.rgb = vec3(colorsecond.rgb); \n"
 "  } \n"
 
-"  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topColor = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 3) topColor = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 4) topColor = vec4(colortop.rgb, alphasecond); \n"
+"  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
+"  if (modetop == 2) topImage = vec4(colortop.rgb, alphatop); \n"
+"  if (modetop == 3) topImage = vec4(colortop.rgb, alphatop); \n"
+"  if (modetop == 4) topImage = vec4(colortop.rgb, alphasecond); \n"
 
-"  finalColor = vec4( topColor.a * topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
-
-"  topColor = colortop;\n"
-"  thirdColor = colorsecond;\n"
-"  fourthColor = secondColor;\n"
-
-#else
-
-"  if (modetop == 1) topColor = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topColor = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 3) topColor = vec4(alphatop*colortop.rgb + (1.0 - alphatop)*colorsecond.rgb, 1.0); \n"
-"  if (modetop == 4) topColor = vec4(alphasecond*colortop.rgb + (1.0 - alphasecond)*colorsecond.rgb, 1.0); \n"
-
-"  if (modesecond == 1) secondColor = vec4(colorsecond.rgb, 1.0); \n"
-"  if (modesecond == 2) secondColor = vec4(colorsecond.rgb, alphasecond); \n"
-"  if (modesecond == 3) secondColor = vec4(alphasecond*colorsecond.rgb + (1.0 - alphasecond)*colorthird.rgb, 1.0); \n"
-"  if (modesecond == 4) secondColor = vec4(alphathird*colorsecond.rgb + (1.0 - alphathird)*colorthird.rgb, 1.0); \n"
-
-"  finalColor = vec4( topColor.rgb + (1.0 - topColor.a) * secondColor.rgb, 1.0); \n"
-"  thirdColor = colorthird;\n"
-"  fourthColor = colorfourth;\n"
-
+"  finalColor = vec4( topImage.a * topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
+#if DEBUG_BLIT
+"  topColor = topImage;\n"
+"  secondColor = secondImage;\n"
+"  thirdColor = colortop;\n"
+"  fourthColor = colorsecond;\n"
 #endif
 "} \n";
 
@@ -3543,10 +3531,12 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture5"), 14);
     glUniform1i(glGetUniformLocation(vdp2prio_prg, "fb_texture6"), 15);
 
+# if DEBUG_BLIT
     glBindFragDataLocation(vdp2prio_prg, 1, "topColor");
     glBindFragDataLocation(vdp2prio_prg, 2, "secondColor");
     glBindFragDataLocation(vdp2prio_prg, 3, "thirdColor");
     glBindFragDataLocation(vdp2prio_prg, 4, "fourthColor");
+#endif
     glBindFragDataLocation(vdp2prio_prg, 0, "finalColor");
   }
   else{
