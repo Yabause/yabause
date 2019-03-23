@@ -38,7 +38,7 @@
 #define SHADER_VERSION_TESS "#version 420 core \n"
 #endif
 
-#define YGLLOG printf
+#define YGLLOG
 
 static int saveFB;
 static void Ygl_useTmpBuffer();
