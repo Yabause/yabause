@@ -139,15 +139,11 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   }
 
   if ((param->fbo_attr != -1) || (param->fbo != -1)){
-#if !defined(_OGLES3_)
-    if (glTextureBarrierNV) glTextureBarrierNV();
-#else
     if( glMemoryBarrier ){
       glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
     }else{
       //glFinish();
     }
-#endif
     glActiveTexture(GL_TEXTURE0);
   }
 
