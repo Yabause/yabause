@@ -208,6 +208,8 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "threads.h"
 #include "vidshared.h"
 
+//#define DEBUG_BLIT
+
 typedef struct {
 	float vertices[8];
 	int w;
@@ -541,6 +543,7 @@ typedef struct {
    int density;
    int drawframe;
    int readframe;
+   int vdp1On[2];
    GLuint rboid_depth;
    GLuint vdp1fbo;
    GLuint vdp1FrameBuff[4];
@@ -559,9 +562,6 @@ typedef struct {
 
    GLuint back_fbo;
    GLuint back_fbotex[2];
-
-   GLuint vdp1screen_fbo;
-   GLuint vdp1screen_fbotex[7];
 
    GLuint screen_fbo;
    GLuint screen_fbotex[enBGMAX];
@@ -678,7 +678,6 @@ void YglEndWindow( vdp2draw_struct * info );
 void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
 int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, YglTextureManager *tm);
-void Ygl_uniformVDP2DrawFrameBufferShadow(void * p);
 int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
@@ -690,11 +689,7 @@ void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int d
 // 0.. no belnd, 1.. Alpha, 2.. Add
 int YglSetLevelBlendmode( int pri, int mode );
 
-void Ygl_uniformVDP2DrawFramebuffer_linecolor(void * p, float from, float to, float * offsetcol);
-int Ygl_uniformVDP2DrawFramebuffer_addcolor(void * p, float from, float to, float * offsetcol);
-int Ygl_uniformVDP2DrawFramebuffer_addcolor_shadow(void * p, float from, float to, float * offsetcol);
-void Ygl_uniformVDP2DrawFramebuffer_linecolor_destination_alpha(void * p, float from, float to, float * offsetcol);
-void Ygl_uniformVDP2DrawFramebuffer( void * p,float from, float to, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
+int Ygl_uniformVDP2DrawFramebuffer( void * p, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
 void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);
