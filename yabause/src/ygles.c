@@ -1099,9 +1099,9 @@ int YglGenerateOriginalBuffer(){
   YGLDEBUG("YglGenerateOriginalBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
 
   if (_Ygl->original_fbotex != 0) {
-    glDeleteTextures(SPRITE,&_Ygl->original_fbotex);
+    glDeleteTextures(1,&_Ygl->original_fbotex);
   }
-  glGenTextures(SPRITE, &_Ygl->original_fbotex);
+  glGenTextures(1, &_Ygl->original_fbotex);
   glBindTexture(GL_TEXTURE_2D, _Ygl->original_fbotex);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
