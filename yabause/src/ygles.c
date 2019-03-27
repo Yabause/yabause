@@ -3118,12 +3118,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    YglGenFrameBuffer();
 
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
-   glDrawBuffers(SPRITE, &DrawBuffers[0]);
+   glDrawBuffers(1, &DrawBuffers[0]);
    glClearBufferfv(GL_COLOR, 0, col);
-   glClearBufferfv(GL_COLOR, 1, col);
-   glClearBufferfv(GL_COLOR, 2, col);
-   glClearBufferfv(GL_COLOR, 3, col);
-   glClearBufferfv(GL_COLOR, 4, col);
    if ((Vdp2Regs->TVMD & 0x8000) == 0) goto render_finish;
 
    _Ygl->targetfbo = _Ygl->original_fbo;
@@ -3163,23 +3159,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
 
-   // Could be better for perf to not even calculte the other layers...
-   int prio[SPRITE] = {8};
-   for (int j=0; j<SPRITE; j++) {
-     prio[j] = -1;
-     for (i = 0; i<SPRITE ; i++) {
-       if ((_Ygl->screen[i] > _Ygl->screen[prio[j]]) || (prio[j] == -1)) {
-         int valid = 1;
-         for (int k = 0; k<j; k++) {
-           if (prio[k] == i) {
-             valid = 0;
-             break;
-           }
-         }
-         if (valid) prio[j] = i;
-       }
-     }
-   }
   int min = 8;
   int oldPrio = 0;
 
@@ -3221,7 +3200,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);
   glDrawBuffers(1, &DrawBuffers[0]);
   glClearBufferfv(GL_COLOR, 0, col);
-  glClearBufferfv(GL_COLOR, 1, col);
   if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
     YglDrawBackScreen();
   }else{
