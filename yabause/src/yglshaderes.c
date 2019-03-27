@@ -1812,6 +1812,8 @@ static const char vdp2blit_end_f[] =
 "    ret.lncl = u_lncl[6];\n"
 "    ret.Color = framebuffColor; \n"
 "    remPrio = remPrio - 1;\n"
+"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
+"    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    ret.isRGB = 0;\n" //Shall not be the case always... Need to get RGB format per pixel
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
