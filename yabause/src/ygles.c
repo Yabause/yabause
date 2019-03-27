@@ -1098,27 +1098,22 @@ int YglGenerateOriginalBuffer(){
 
   YGLDEBUG("YglGenerateOriginalBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
 
-  if (_Ygl->original_fbotex[0] != 0) {
-    glDeleteTextures(SPRITE,&_Ygl->original_fbotex[0]);
+  if (_Ygl->original_fbotex != 0) {
+    glDeleteTextures(SPRITE,&_Ygl->original_fbotex);
   }
-  glGenTextures(SPRITE, &_Ygl->original_fbotex[0]);
+  glGenTextures(SPRITE, &_Ygl->original_fbotex);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->original_fbotex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  for (int i=0; i<SPRITE; i++) {
-    glBindTexture(GL_TEXTURE_2D, _Ygl->original_fbotex[i]);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  }
-
-    if (_Ygl->original_depth != 0) glDeleteRenderbuffers(1, &_Ygl->original_depth);
-    glGenRenderbuffers(1, &_Ygl->original_depth);
-    glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_depth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
+  if (_Ygl->original_depth != 0) glDeleteRenderbuffers(1, &_Ygl->original_depth);
+  glGenRenderbuffers(1, &_Ygl->original_depth);
+  glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_depth);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
 
   if (_Ygl->original_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->original_fbo);
@@ -1126,12 +1121,7 @@ int YglGenerateOriginalBuffer(){
 
   glGenFramebuffers(1, &_Ygl->original_fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->original_fbotex[0], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _Ygl->original_fbotex[1], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _Ygl->original_fbotex[2], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _Ygl->original_fbotex[3], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _Ygl->original_fbotex[4], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _Ygl->original_fbotex[5], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->original_fbotex, 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->original_depth);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -3252,13 +3242,13 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
     //if((img[0] == 0) && (img[1] == 0) && (img[2] == 0)) { // Break doom...
       //if (Vdp1External.disptoggle & 0x01) YglRenderFrameBuffer(0, 8, varVdp2Regs);
-      srcTexture = _Ygl->original_fbotex[0];
+      srcTexture = _Ygl->original_fbotex;
     //} else {
      // if (nbPass > 1) {
      //   YglBlitImage(img, varVdp2Regs);
-     //   srcTexture = _Ygl->original_fbotex[0];
+     //   srcTexture = _Ygl->original_fbotex;
      // } else {
-    //    srcTexture = _Ygl->original_fbotex[0];
+    //    srcTexture = _Ygl->original_fbotex;
      // }
     //}
 
