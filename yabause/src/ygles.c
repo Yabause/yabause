@@ -2855,10 +2855,6 @@ void YglUpdateVdp2Reg(Vdp2 *varVdp2Regs) {
   _Ygl->fbu_.u_coloroffset[1] = vdp1cog / 255.0f;
   _Ygl->fbu_.u_coloroffset[2] = vdp1cob / 255.0f;
   _Ygl->fbu_.u_coloroffset[3] = 0.0f;
-
-  // For Line Color insersion
-  _Ygl->fbu_.u_emu_height = (float)_Ygl->rheight / (float)_Ygl->height;
-  _Ygl->fbu_.u_vheight = (float)_Ygl->height;
   _Ygl->fbu_.u_color_ram_offset = (varVdp2Regs->CRAOFB & 0x70) << 4;
 
   if (_Ygl->framebuffer_uniform_id_ == 0) {

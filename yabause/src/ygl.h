@@ -383,8 +383,6 @@ typedef struct  {
  int u_alpha[8*4];
  float u_coloroffset[4];
  int u_cctll;
- float u_emu_height;
- float u_vheight;
  int u_color_ram_offset;
 } UniformFrameBuffer;
 
