@@ -208,7 +208,13 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "threads.h"
 #include "vidshared.h"
 
-//#define DEBUG_BLIT
+#define DEBUG_BLIT
+
+#ifdef DEBUG_BLIT
+#define NB_RENDER_LAYER 5
+#else
+#define NB_RENDER_LAYER 1
+#endif
 
 typedef struct {
 	float vertices[8];
@@ -555,7 +561,7 @@ typedef struct {
    GLuint vdp1IsNotEmpty[2];
    u32* vdp1fb_buf[2];
    GLuint original_fbo;
-   GLuint original_fbotex;
+   GLuint original_fbotex[NB_RENDER_LAYER];
    GLuint original_depth;
 
    GLuint back_fbo;

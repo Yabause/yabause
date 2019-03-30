@@ -1759,13 +1759,13 @@ SHADER_VERSION
 "int vdp1mode = 1;\n"
 
 "vec4 framebuffColor;\n"
-"vec4 vdp2col0;\n"
-"vec4 vdp2col1;\n"
-"vec4 vdp2col2;\n"
-"vec4 vdp2col3;\n"
-"vec4 vdp2col4;\n"
-"vec4 vdp2col5;\n"
-"int framebuffPrio;\n"
+"vec4 vdp2col0 = vec4(0.0);\n"
+"vec4 vdp2col1 = vec4(0.0);\n"
+"vec4 vdp2col2 = vec4(0.0);\n"
+"vec4 vdp2col3 = vec4(0.0);\n"
+"vec4 vdp2col4 = vec4(0.0);\n"
+"vec4 vdp2col5 = vec4(0.0);\n"
+"int framebuffPrio = 0;\n"
 
 #ifdef DEBUG_BLIT
 "out vec4 topColor; \n"
@@ -1810,6 +1810,7 @@ static const char vdp2blit_end_f[] =
 "  empty.Color = vec4(0.0);\n"
 "  empty.mode = 0;\n"
 "  empty.lncl = 0;\n"
+"  ret = empty;\n"
 "  int priority; \n"
 "  int alpha; \n"
 "  if ((fbon == 1) && (prio == framebuffPrio)) {\n"
@@ -3149,10 +3150,9 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* lncl, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
-  int lncl[7];
   int vdp2blit_prg;
 
   float const vertexPosition[] = {
@@ -3169,21 +3169,7 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   };
     float offsetcol[4];
     YglMatrix result;
-#if 0
-    GLfloat vertices[8];
-    GLfloat texcord[8];
 
-    int bwin0, bwin1, logwin0, logwin1, winmode;
-    int is_addcolor = 0;
-    float cwidth = 0.0f;
-    float cheight = 0.0f;
-    int bwin_cc0;
-    int logwin_cc0;
-    int bwin_cc1;
-    int logwin_cc1;
-    int winmode_cc;
-    int ret = 0xFF; //Let's assume sprite use all prio. Needs to get the exact list with rendervdp1
-#endif
     glBindVertexArray(_Ygl->vao);
 
     vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb,  offsetcol, getSpriteRenderMode(varVdp2Regs), varVdp2Regs );
@@ -3212,44 +3198,8 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
       //cwidth = _Ygl->rwidth;
       //cheight = _Ygl->rheight;
     }
-  #if 0
-     // render
-     vertices[0] = cwidth;
-     vertices[1] = 0.0f;
-     vertices[2] = 0.0f;
-     vertices[3] = 0.0f;
-     vertices[4] = cwidth;
-     vertices[5] = cheight;
-     vertices[6] = 0.0f;
-     vertices[7] = cheight;
 
-     texcord[0] = 1.0f;
-     texcord[1] = 1.0f;
-     texcord[2] = 0.0f;
-     texcord[3] = 1.0f;
-     texcord[4] = 1.0f;
-     texcord[5] = 0.0f;
-     texcord[6] = 0.0f;
-     texcord[7] = 0.0f;
-
-       glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)&result.m[0][0]);
-
-       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertices_buf);
-       glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STREAM_DRAW);
-       glVertexAttribPointer(_Ygl->renderfb.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0);
-       glEnableVertexAttribArray(_Ygl->renderfb.vertexp);
-
-       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->texcord_buf3491);
-       glBufferData(GL_ARRAY_BUFFER, sizeof(texcord), texcord, GL_STREAM_DRAW);
-       glVertexAttribPointer(_Ygl->renderfb.texcoordp, 2, GL_FLOAT, GL_FALSE, 0, 0);
-       glEnableVertexAttribArray(_Ygl->renderfb.texcoordp);
-
-       glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-#endif
-
-
-
-  int gltext[16] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15};
+  int gltext[9] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8};
 
 
 #ifdef DEBUG_BLIT
@@ -3308,22 +3258,12 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   glActiveTexture(gltext[8]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
 
-  const int vdp2screens[] = {RBG0, RBG1, NBG0, NBG1, NBG2, NBG3};
-
-  lncl[0] = (varVdp2Regs->LNCLEN >> 4)&0x1;
-  lncl[1] = (varVdp2Regs->LNCLEN >> 0)&0x1;
-  lncl[2] = (varVdp2Regs->LNCLEN >> 0)&0x1;
-  lncl[3] = (varVdp2Regs->LNCLEN >> 1)&0x1;
-  lncl[4] = (varVdp2Regs->LNCLEN >> 2)&0x1;
-  lncl[5] = (varVdp2Regs->LNCLEN >> 3)&0x1;
-  lncl[6] = (varVdp2Regs->LNCLEN >> 5)&0x1;
-
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "u_lncl"), 7, lncl); //_Ygl->prioVa
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<16; i++) {
+  for (int i = 0; i<9; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
