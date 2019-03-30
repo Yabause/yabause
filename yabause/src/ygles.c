@@ -3207,13 +3207,13 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glDisable(GL_BLEND);
   int id = 0;
 
-  lncl[0] = (varVdp2Regs->LNCLEN >> 4)&0x1;
-  lncl[1] = (varVdp2Regs->LNCLEN >> 0)&0x1;
-  lncl[2] = (varVdp2Regs->LNCLEN >> 0)&0x1;
-  lncl[3] = (varVdp2Regs->LNCLEN >> 1)&0x1;
-  lncl[4] = (varVdp2Regs->LNCLEN >> 2)&0x1;
-  lncl[5] = (varVdp2Regs->LNCLEN >> 3)&0x1;
-  lncl[6] = (varVdp2Regs->LNCLEN >> 5)&0x1;
+  lncl[0] = (varVdp2Regs->LNCLEN >> 0)&0x1; //NBG0
+  lncl[1] = (varVdp2Regs->LNCLEN >> 1)&0x1; //NBG1
+  lncl[2] = (varVdp2Regs->LNCLEN >> 2)&0x1; //NBG2
+  lncl[3] = (varVdp2Regs->LNCLEN >> 3)&0x1; //NBG3
+  lncl[4] = (varVdp2Regs->LNCLEN >> 4)&0x1; //RBG0
+  lncl[5] = (varVdp2Regs->LNCLEN >> 0)&0x1; //RBG1
+  lncl[6] = (varVdp2Regs->LNCLEN >> 5)&0x1; //SPRITE
 
   for (int j=0; j<6; j++) {
     if (drawScreen[vdp2screens[j]] != 0) {
