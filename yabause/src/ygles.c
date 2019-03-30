@@ -3175,7 +3175,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
    YglMatrix mtx;
    YglMatrix dmtx;
    unsigned int i,j;
-   int ccwindow = 0;
    double w = 0;
    double h = 0;
    double x = 0;
@@ -3257,10 +3256,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
    YglUpdateVdp2Reg(varVdp2Regs);
-
-  // Color Calcurate Window
-   ccwindow = ((varVdp2Regs->WCTLD >> 9) & 0x01);
-   ccwindow |= ((varVdp2Regs->WCTLD >> 11) & 0x01);
 
   YglSetVdp2Window(varVdp2Regs);
   YglSetCCWindow(varVdp2Regs);
