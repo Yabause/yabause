@@ -938,6 +938,7 @@ int YglGenFrameBuffer() {
   YglGenerateOriginalBuffer();
   YglGenerateBackBuffer();
   YglGenerateWindowBuffer();
+  YglGenerateWindowCCBuffer();
   YglGenerateScreenBuffer();
 
   YGLDEBUG("YglGenFrameBuffer OK\n");
@@ -991,6 +992,44 @@ int YglGenerateWindowBuffer(){
   }
 
   _Ygl->window_tex[0] = _Ygl->window_tex[1] = 0;
+  return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+int YglGenerateWindowCCBuffer(){
+
+  int status;
+  GLuint error;
+
+  YGLDEBUG("YglGenerateWindowCCBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
+
+  if (_Ygl->window_cc_fbotex != 0) {
+    glDeleteTextures(1,&_Ygl->window_cc_fbotex);
+  }
+  glGenTextures(1, &_Ygl->window_cc_fbotex);
+
+  glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  if (_Ygl->window_cc_fbo != 0){
+    glDeleteFramebuffers(1, &_Ygl->window_cc_fbo);
+  }
+
+  glGenFramebuffers(1, &_Ygl->window_cc_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_cc_fbo);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->window_cc_fbotex, 0);
+  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+  if (status != GL_FRAMEBUFFER_COMPLETE) {
+    YGLDEBUG("YglGenerateOriginalBuffer:Framebuffer status = %08X\n", status);
+    abort();
+  }
+
   return 0;
 }
 
@@ -2799,6 +2838,64 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   return;
 }
 
+void YglSetCCWindow(Vdp2 *varVdp2Regs)
+{
+  float col[4] = {0.0f,0.0f,0.0f,0.0f};
+  float const vertexPosition[] = {
+    _Ygl->rwidth, 0.0f,
+    0.0f, 0.0f,
+    _Ygl->rwidth, _Ygl->rheight,
+    0.0f, _Ygl->rheight };
+
+  int Win0;
+  int Win0_mode;
+  int Win1;
+  int Win1_mode;
+
+  int Win_op;
+
+  //Manque la sprite window
+
+  Win0 = (varVdp2Regs->WCTLD >> 9) & 0x01;
+  Win1 = (varVdp2Regs->WCTLD >> 11) & 0x01;
+
+  Win0_mode = ((varVdp2Regs->WCTLD >> 8) & 0x01 == 0);
+  Win1_mode = ((varVdp2Regs->WCTLD >> 10) & 0x01 == 0);
+
+  Win_op = (varVdp2Regs->WCTLD >> 15) & 0x01;
+
+   GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_cc_fbo);
+   _Ygl->use_cc_win = 0;
+   if(Win0 || Win1)
+   {
+      Vdp2GenerateWindowInfo(varVdp2Regs);
+      _Ygl->use_cc_win = 1;
+      glDrawBuffers(1, &DrawBuffers[0]);
+      glClearBufferfv(GL_COLOR, 0, col);
+      Ygl_uniformWindow(&_Ygl->windowpg);
+      glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
+
+      //Draw color///
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
+      glUniform1i(_Ygl->windowpg.var1, Win0);
+      glUniform1i(_Ygl->windowpg.var2, Win0_mode);
+      glUniform1i(_Ygl->windowpg.var3, Win1);
+      glUniform1i(_Ygl->windowpg.var4, Win1_mode);
+      glUniform1i(_Ygl->windowpg.var5, Win_op);
+      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
+      glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
+      glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+      glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
+      glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+    }
+  return;
+}
+
+
 
 static void updateColorOffset(Vdp2 *varVdp2Regs) {
   if (varVdp2Regs->CLOFEN & 0x40)
@@ -3165,14 +3262,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
    ccwindow = ((varVdp2Regs->WCTLD >> 9) & 0x01);
    ccwindow |= ((varVdp2Regs->WCTLD >> 11) & 0x01);
 
-   if (ccwindow) printf("Color calculation window!!!\n");
-
   YglSetVdp2Window(varVdp2Regs);
-  // Windo function to reintroduce
+  YglSetCCWindow(varVdp2Regs);
 
    cprg = -1;
-
-//ET merde, faut faire par priorité parce qu'un scroll peut avoir plusieurs priorités...
 
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);

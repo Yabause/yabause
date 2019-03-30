@@ -1304,7 +1304,6 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   {
     // start address
     LineWinAddr = (u32)((((varVdp2Regs->LWTA0.part.U & 0x07) << 15) | (varVdp2Regs->LWTA0.part.L >> 1)) << 2);
-
     for (v = 0; v < vdp2height; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
@@ -1330,7 +1329,6 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   {
     // start address
     LineWinAddr = (u32)((((varVdp2Regs->LWTA1.part.U & 0x07) << 15) | (varVdp2Regs->LWTA1.part.L >> 1)) << 2);
-
     for (v = 0; v < vdp2height; v++) {
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));

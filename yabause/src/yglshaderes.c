@@ -1742,6 +1742,7 @@ SHADER_VERSION
 "in vec2 v_texcoord; \n"
 "uniform sampler2D s_back;  \n"
 "uniform sampler2D s_lncl;  \n"
+"uniform sampler2D s_cc_win;  \n"
 "uniform int u_lncl[7];  \n"
 "out vec4 finalColor; \n"
 "layout(std140) uniform vdp2regs { \n"
@@ -1788,6 +1789,8 @@ SHADER_VERSION
 "uniform int isRGB[6]; \n"
 "uniform int ram_mode; \n"
 "uniform int extended_cc; \n"
+"uniform int use_cc_win; \n"
+"int cc_enabled; \n"
 
 "struct Col \n"
 "{ \n"
@@ -2038,6 +2041,13 @@ static const char vdp2blit_end_f[] =
 "    } \n"
 "  } \n"
 //Take care  of the extended coloration mode
+"  cc_enabled = use_cc_win;\n"
+"  if (use_cc_win != 0) {\n"
+"    ivec2 cc_addr = ivec2(textureSize(s_cc_win, 0) * v_texcoord.st); \n"
+"    vec4 tmp = texelFetch( s_cc_win, cc_addr ,0 ); \n"
+"    if (tmp.a == 0.0) cc_enabled = 0;\n"
+"  }\n"
+"  if (cc_enabled == 0) {\n"
 "  if (extended_cc != 0) { \n"
 "    if (ram_mode == 0) { \n"
 "      if (use_lncl == 0) { \n"
@@ -2093,6 +2103,9 @@ static const char vdp2blit_end_f[] =
 "  if (modetop == 4) topImage = vec4(colortop.rgb, alphasecond); \n"
 
 "  finalColor = vec4( topImage.a * topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
+"  } else {\n"
+"  finalColor = vec4(colortop.rgb, 1.0);\n"
+"  }\n"
 #ifdef DEBUG_BLIT
 "  topColor = topImage;\n"
 "  secondColor = secondImage;\n"
@@ -3218,12 +3231,14 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture5"), 5);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_back"), 7);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 12);
 
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_cc_win"), (_Ygl->use_cc_win != 0) );
 
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
@@ -3241,6 +3256,11 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
   glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
+
+  if (_Ygl->use_cc_win != 0) {
+    glActiveTexture(GL_TEXTURE12);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
+  }
 
   int id = 0;
   for (int i=0; i<nbScreen; i++) {

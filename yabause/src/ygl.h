@@ -573,7 +573,9 @@ typedef struct {
 
    GLuint window_fbo;
    GLuint window_fbotex[SPRITE];
-   GLuint window_depth;
+
+   GLuint window_cc_fbo;
+   GLuint window_cc_fbotex;
 
    GLuint tmpfbo;
    GLuint tmpfbotex;
@@ -654,6 +656,7 @@ typedef struct {
    int prioVal[enBGMAX];
 
    int use_win[enBGMAX];
+   int use_cc_win;
    int vdp1_stencil_mode;
 
 } Ygl;
