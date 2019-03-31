@@ -562,7 +562,6 @@ typedef struct {
    u32* vdp1fb_buf[2];
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
-   GLuint original_depth;
 
    GLuint back_fbo;
    GLuint back_fbotex[2];

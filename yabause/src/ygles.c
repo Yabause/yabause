@@ -1153,10 +1153,6 @@ int YglGenerateOriginalBuffer(){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   }
-  if (_Ygl->original_depth != 0) glDeleteRenderbuffers(1, &_Ygl->original_depth);
-  glGenRenderbuffers(1, &_Ygl->original_depth);
-  glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_depth);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
 
   if (_Ygl->original_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->original_fbo);
@@ -1171,14 +1167,12 @@ int YglGenerateOriginalBuffer(){
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _Ygl->original_fbotex[3], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _Ygl->original_fbotex[4], 0);
 #endif
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->original_depth);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     YGLDEBUG("YglGenerateOriginalBuffer:Framebuffer status = %08X\n", status);
     abort();
   }
   glClearBufferfv(GL_COLOR, 0, col);
-  glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   return 0;
 }
 
@@ -3051,11 +3045,11 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   if (level->prgcurrent == 0) return 0;
 
   if (_Ygl->use_win[id] == 1) {
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+    //glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    glStencilOp(GL_ZERO, GL_ZERO, GL_REPLACE);
 
     glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
 
@@ -3327,7 +3321,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
   glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
-  glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
   YglBlitTexture(_Ygl->screen_fbotex, _Ygl->bg, prioscreens, modescreens, isRGB, lncl_draw, varVdp2Regs);
 
