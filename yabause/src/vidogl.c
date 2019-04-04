@@ -1957,6 +1957,20 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   }
 }
 
+static int isOutOfBox(int x, int y, int w, int h, u32* win)
+{
+  //Pas bon => il faut verifier si la cell est au moins en partie dans la window
+  int upLx = win[y] & 0xFFFF;
+  int upRx = (win[y] >> 16) & 0xFFFF;
+  int downLx = win[y+h] & 0xFFFF;
+  int downRx = (win[y+h] >> 16) & 0xFFFF;
+  if ((x < upLx) && (x+w < upRx)) return 1;
+  if ((x > upLx) && (x+w > upRx)) return 1;
+  if ((x < downLx) && (x+w < downRx)) return 1;
+  if ((x > downLx) && (x+w > downRx)) return 1;
+  return 0;
+}
+
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, Vdp2 *varVdp2Regs)
 {
   u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
@@ -1965,7 +1979,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   int priority = info->priority;
   YglCache c;
   vdp2draw_struct tile = *info;
-  int winmode = 0;
   tile.dst = 0;
   tile.uclipmode = 0;
   tile.colornumber = info->colornumber;
@@ -1998,6 +2011,30 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   //{
   //	return;
   //}
+
+  if (((_Ygl->Win0[info->idScreen] != 0) || (_Ygl->Win1[info->idScreen] != 0)) && info->coordincx == 1.0f && info->coordincy == 1.0f)
+  {
+    int outsideW0 = 0;
+    int outsideW1 = 0;
+    if (_Ygl->Win0[info->idScreen] != 0) {
+      outsideW0 = isOutOfBox(x - cx, y - cy, tile.cellw, info->lineinc, _Ygl->win[0]);
+      if (_Ygl->Win0_mode[info->idScreen] != 0) outsideW0 = !outsideW0;
+    } else {
+      if (_Ygl->Win_op[info->idScreen] == 0) outsideW0 = 1;
+    }
+    if (_Ygl->Win1[info->idScreen] != 0) {
+      outsideW1 = isOutOfBox(x - cx, y - cy, tile.cellw, info->lineinc, _Ygl->win[1]);
+      if (_Ygl->Win1_mode[info->idScreen] == 0) outsideW1 = !outsideW1;
+    } else {
+      if (_Ygl->Win_op[info->idScreen] != 0) outsideW1 = 1;
+    }
+    if (_Ygl->Win_op[info->idScreen] == 0) // all outside, no need to draw
+    {
+      if (!(outsideW0 || outsideW1)) return;
+    } else {
+      if (!(outsideW0 && outsideW1)) return;
+    }
+  }
 
   tile.cor = info->cor;
   tile.cog = info->cog;
@@ -6648,6 +6685,8 @@ static void VIDOGLVdp2DrawScreens(void)
   _Ygl->perLine[RBG1] = 0;
 
   YglUpdateColorRam();
+  YglSetVdp2Window(&Vdp2Lines[VDP2_DRAW_LINE]);
+  YglSetCCWindow(&Vdp2Lines[VDP2_DRAW_LINE]);
 
 LOG_ASYN("===================================\n");
   Vdp2DrawBackScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
