@@ -1353,6 +1353,83 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   YglSetWindow(1);
 }
 
+// 0 .. outside,1 .. inside
+static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area, u32* win)
+{
+  int upLx = win[y] & 0xFFFF;
+  int upRx = (win[y] >> 16) & 0xFFFF;
+  if (y < 0) return 0;
+  if (y >= vdp2height) return 0;
+  // inside
+  if (area == 1)
+  {
+    if (x >= upLx && x <= upRx)
+    {
+      return 1;
+    }
+    else {
+      return 0;
+    }
+    // outside
+  }
+  else {
+    if (x < upLx) return 1;
+    if (x > upRx) return 1;
+    return 0;
+  }
+  return 0;
+}
+
+// 0 .. all outsize, 1~3 .. partly inside, 4.. all inside
+static int FASTCALL Vdp2CheckWindowRange(vdp2draw_struct *info, int x, int y, int w, int h, Vdp2 *varVdp2Regs)
+{
+  int rtn = 0;
+
+  if (_Ygl->Win0[info->idScreen]  != 0 && _Ygl->Win1[info->idScreen]  == 0)
+  {
+    rtn += Vdp2CheckWindow(info, x, y, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]);
+    rtn += Vdp2CheckWindow(info, x + w, y, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]);
+    rtn += Vdp2CheckWindow(info, x + w, y + h, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]);
+    rtn += Vdp2CheckWindow(info, x, y + h, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]);
+    return rtn;
+  }
+  else if (_Ygl->Win0[info->idScreen]  == 0 && _Ygl->Win1[info->idScreen]  != 0)
+  {
+    rtn += Vdp2CheckWindow(info, x, y, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]);
+    rtn += Vdp2CheckWindow(info, x + w, y, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]);
+    rtn += Vdp2CheckWindow(info, x + w, y + h, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]);
+    rtn += Vdp2CheckWindow(info, x, y + h, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]);
+    return rtn;
+  }
+  else if (_Ygl->Win0[info->idScreen]  != 0 && _Ygl->Win1[info->idScreen]  != 0)
+  {
+    if (_Ygl->Win_op[info->idScreen] == 0)
+    {
+      rtn += (Vdp2CheckWindow(info, x, y, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]) &
+        Vdp2CheckWindow(info, x, y, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      rtn += (Vdp2CheckWindow(info, x + w, y, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0])&
+        Vdp2CheckWindow(info, x + w, y, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      rtn += (Vdp2CheckWindow(info, x + w, y + h, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0])&
+        Vdp2CheckWindow(info, x + w, y + h, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      rtn += (Vdp2CheckWindow(info, x, y + h, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]) &
+        Vdp2CheckWindow(info, x, y + h, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      return rtn;
+    }
+    else {
+      rtn += (Vdp2CheckWindow(info, x, y, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]) |
+        Vdp2CheckWindow(info, x, y, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      rtn += (Vdp2CheckWindow(info, x + w, y, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]) |
+        Vdp2CheckWindow(info, x + w, y, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      rtn += (Vdp2CheckWindow(info, x + w, y + h, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]) |
+        Vdp2CheckWindow(info, x + w, y + h, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      rtn += (Vdp2CheckWindow(info, x, y + h, _Ygl->Win0_mode[info->idScreen], _Ygl->win[0]) |
+        Vdp2CheckWindow(info, x, y + h, _Ygl->Win1_mode[info->idScreen], _Ygl->win[1]));
+      return rtn;
+    }
+  }
+  return 0;
+}
+
 void Vdp2GenLineinfo(vdp2draw_struct *info)
 {
   int bound = 0;
@@ -1957,20 +2034,6 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   }
 }
 
-static int isOutOfBox(int x, int y, int w, int h, u32* win)
-{
-  //Pas bon => il faut verifier si la cell est au moins en partie dans la window
-  int upLx = win[y] & 0xFFFF;
-  int upRx = (win[y] >> 16) & 0xFFFF;
-  int downLx = win[y+h] & 0xFFFF;
-  int downRx = (win[y+h] >> 16) & 0xFFFF;
-  if ((x < upLx) && (x+w < upRx)) return 1;
-  if ((x > upLx) && (x+w > upRx)) return 1;
-  if ((x < downLx) && (x+w < downRx)) return 1;
-  if ((x > downLx) && (x+w > downRx)) return 1;
-  return 0;
-}
-
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, Vdp2 *varVdp2Regs)
 {
   u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
@@ -1979,6 +2042,7 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   int priority = info->priority;
   YglCache c;
   vdp2draw_struct tile = *info;
+  int winmode = 0;
   tile.dst = 0;
   tile.uclipmode = 0;
   tile.colornumber = info->colornumber;
@@ -2012,27 +2076,12 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   //	return;
   //}
 
-  if (((_Ygl->Win0[info->idScreen] != 0) || (_Ygl->Win1[info->idScreen] != 0)) && info->coordincx == 1.0f && info->coordincy == 1.0f)
-  {
-    int outsideW0 = 0;
-    int outsideW1 = 0;
-    if (_Ygl->Win0[info->idScreen] != 0) {
-      outsideW0 = isOutOfBox(x - cx, y - cy, tile.cellw, info->lineinc, _Ygl->win[0]);
-      if (_Ygl->Win0_mode[info->idScreen] != 0) outsideW0 = !outsideW0;
-    } else {
-      if (_Ygl->Win_op[info->idScreen] == 0) outsideW0 = 1;
-    }
-    if (_Ygl->Win1[info->idScreen] != 0) {
-      outsideW1 = isOutOfBox(x - cx, y - cy, tile.cellw, info->lineinc, _Ygl->win[1]);
-      if (_Ygl->Win1_mode[info->idScreen] == 0) outsideW1 = !outsideW1;
-    } else {
-      if (_Ygl->Win_op[info->idScreen] != 0) outsideW1 = 1;
-    }
-    if (_Ygl->Win_op[info->idScreen] == 0) // all outside, no need to draw
+  if ((_Ygl->Win0[info->idScreen] != 0 || _Ygl->Win1[info->idScreen] != 0) && info->coordincx == 1.0f && info->coordincy == 1.0f)
+  {                                                 // coordinate inc is not supported yet.
+    winmode = Vdp2CheckWindowRange(info, x - cx, y - cy, tile.cellw, info->lineinc, varVdp2Regs);
+    if (winmode == 0) // all outside, no need to draw
     {
-      if (!(outsideW0 || outsideW1)) return;
-    } else {
-      if (!(outsideW0 && outsideW1)) return;
+      return;
     }
   }
 
