@@ -82,7 +82,31 @@ ifneq (,$(findstring unix,$(platform)))
 		LDFLAGS += -lGL
 	endif
 
+# Jetson Nano
+else ifeq ($(platform), jetson-nano)
+	override platform += unix
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+	LDFLAGS += -lpthread
+	FLAGS += -DARCH_IS_LINUX=1
+	HAVE_SSE = 0
+	FLAGS += -march=armv8-a+crc -mtune=cortex-a57
+	LDFLAGS += -lGL
+
 # ODROIDs
+else ifeq ($(platform), odroid-n2)
+	override platform += unix
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+	LDFLAGS += -lpthread
+	FLAGS += -DARCH_IS_LINUX=1
+	HAVE_SSE = 0
+	HAVE_GLES = 1
+	FLAGS += -march=armv8-a+crc -mtune=cortex-a73.cortex-a53
+	LDFLAGS += -lGL -lGLESv2
+
 else ifneq (,$(findstring odroid,$(platform)))
 	override platform += unix
 	TARGET := $(TARGET_NAME)_libretro.so
@@ -216,10 +240,6 @@ ifeq ($(HAVE_SSE),1)
 	FLAGS += -mfpmath=sse
 endif
 
-ifeq ($(shell expr `gcc -dumpversion | cut -f1` \>= 6.0), 1)
-	FLAGS += -fno-PIE -no-pie
-endif
-
 ifeq ($(DEBUG_ASAN), 1)
 	DEBUG = 1
 	DEBUG_UBSAN = 0
@@ -236,7 +256,7 @@ endif
 ifeq ($(DEBUG), 1)
 	FLAGS += -O0 -g
 else
-	FLAGS += -O3 -DNDEBUG
+	FLAGS += -O3 -DNDEBUG -fomit-frame-pointer
 endif
 
 ifeq ($(HAVE_MUSASHI), 1)
@@ -261,7 +281,7 @@ LDFLAGS += $(fpic) $(SHARED)
 FLAGS += $(fpic)
 
 WARNINGS :=
-FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DUSE_16BPP=1 -DUSE_RGB_565=1 \
+FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) \
 	-DNO_CLI -DDYNAREC_KRONOS=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 \
 	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
 	-DPACKAGE=\"Kronos\" -DSPRITE_CACHE=1 -DHAVE_LIBGL -D_OGLES3_ -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 \
