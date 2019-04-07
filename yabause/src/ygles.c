@@ -2752,6 +2752,7 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 
 // Missing color calculation window
 // Missing rotation parameter window
+  int useRotWin = (varVdp2Regs->WCTLD & 0xA)!=0x0;
 
   _Ygl->Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
   _Ygl->Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
@@ -2801,31 +2802,34 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
    int needUpdate = 0;
    for (int i = 0; i< SPRITE; i++) {
      _Ygl->use_win[i] = 0;
-     if(_Ygl->Win0[i] || _Ygl->Win1[i])
+     if(_Ygl->Win0[i] || _Ygl->Win1[i] || useRotWin)
      {
        if (needUpdate == 0) Vdp2GenerateWindowInfo(varVdp2Regs);
        needUpdate = 1;
-       _Ygl->use_win[i] = 1;
-       glDrawBuffers(1, &DrawBuffers[i]);
-       glClearBufferfv(GL_COLOR, 0, col);
-       Ygl_uniformWindow(&_Ygl->windowpg);
-       glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
+       if(_Ygl->Win0[i] || _Ygl->Win1[i])
+       {
+         _Ygl->use_win[i] = 1;
+         glDrawBuffers(1, &DrawBuffers[i]);
+         glClearBufferfv(GL_COLOR, 0, col);
+         Ygl_uniformWindow(&_Ygl->windowpg);
+         glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
 
-       //Draw color///
-       glActiveTexture(GL_TEXTURE0);
-       glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
-       glActiveTexture(GL_TEXTURE1);
-       glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
-       glUniform1i(_Ygl->windowpg.var1, _Ygl->Win0[i]);
-       glUniform1i(_Ygl->windowpg.var2, _Ygl->Win0_mode[i]);
-       glUniform1i(_Ygl->windowpg.var3, _Ygl->Win1[i]);
-       glUniform1i(_Ygl->windowpg.var4, _Ygl->Win1_mode[i]);
-       glUniform1i(_Ygl->windowpg.var5, _Ygl->Win_op[i]);
-       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
-       glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
-       glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-       glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-       glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+         //Draw color///
+         glActiveTexture(GL_TEXTURE0);
+         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+         glActiveTexture(GL_TEXTURE1);
+         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
+         glUniform1i(_Ygl->windowpg.var1, _Ygl->Win0[i]);
+         glUniform1i(_Ygl->windowpg.var2, _Ygl->Win0_mode[i]);
+         glUniform1i(_Ygl->windowpg.var3, _Ygl->Win1[i]);
+         glUniform1i(_Ygl->windowpg.var4, _Ygl->Win1_mode[i]);
+         glUniform1i(_Ygl->windowpg.var5, _Ygl->Win_op[i]);
+         glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
+         glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
+         glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+         glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
+         glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+       }
      }
   }
   return;

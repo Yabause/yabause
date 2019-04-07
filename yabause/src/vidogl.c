@@ -6412,8 +6412,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   ReadPlaneSizeR(&rgb->paraA, varVdp2Regs->PLSZ >> 8);
   ReadPlaneSizeR(&rgb->paraB, varVdp2Regs->PLSZ >> 12);
 
-
-
   if (rgb->paraA.coefdatasize == 2)
   {
     if (rgb->paraA.coefmode < 3)
@@ -6455,7 +6453,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
       info->GetKValueB = vdp2rGetKValue2Wm3;
     }
   }
-
   if (varVdp2Regs->RPMD == 0x00)
   {
     //printf("RPMD 0x0\n");
@@ -7052,10 +7049,6 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode02WithKB(RBGDrawInfo * 
 
 vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb, int h, int v, Vdp2* varVdp2Regs)
 {
-  if ((varVdp2Regs->WCTLD & 0x04) == 0) {
-    return (&rgb->paraA);
-  }
-
   if (rgb->info.RotWin == NULL) {
     return (&rgb->paraA);
   }
@@ -7063,7 +7056,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb
   short start = rgb->info.RotWin[v] & 0xFFFF;
   short end = (rgb->info.RotWin[v] >> 16) & 0xFFFF;
 
-  if (rgb->info.RotWinMode == 0)
+  if (rgb->info.RotWinMode == 1)
   {
     if (start == end)
     {
