@@ -6385,7 +6385,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->blendmode = 0;
 
   Vdp2GeneratePerLineColorCalcuration(info, RBG0, varVdp2Regs);
-  _Ygl->perLine[NBG0] = info->lineTexture;
+  _Ygl->perLine[RBG0] = info->lineTexture;
   //info->lineTexture = 0;
 
   info->transparencyenable = !(varVdp2Regs->BGON & 0x1000);
