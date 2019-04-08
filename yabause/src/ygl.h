@@ -659,7 +659,6 @@ typedef struct {
    GLuint textcoords_buf;
    GLuint vertexAttribute_buf;
 
-   int screen[SPRITE];
    int prioVal[enBGMAX];
 
    int use_win[enBGMAX];

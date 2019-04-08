@@ -2057,7 +2057,6 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
 
   if (info->specialprimode == 1) {
     info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
-    _Ygl->screen[info->idScreen] = info->priority;
   }
   tile.priority = info->priority;
 
@@ -2891,7 +2890,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   hres = rbg->hres;
   cellw = rbg->info.cellw;
   cellh = rbg->info.cellh;
-  regs = Vdp2RestoreRegs(3, Vdp2Lines);
 
   x = 0;
   y = 0;
@@ -5536,8 +5534,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     return;
   }
 
-  _Ygl->screen[RBG1] = info->priority;
-
   ReadLineScrollData(info, varVdp2Regs->SCRCTL & 0xFF, varVdp2Regs->LSTA0.all);
   info->lineinfo = lineNBG0;
   Vdp2GenLineinfo(info);
@@ -5800,8 +5796,6 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   if (((Vdp2External.disptoggle & 0x1)==0) || (info.priority == 0))
     return;
 
-  _Ygl->screen[NBG0] = info.priority;
-
   ReadLineScrollData(&info, varVdp2Regs->SCRCTL & 0xFF, varVdp2Regs->LSTA0.all);
   info.lineinfo = lineNBG0;
   Vdp2GenLineinfo(&info);
@@ -6046,7 +6040,6 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   if (((Vdp2External.disptoggle & 0x2)==0) || (info.priority == 0) ||
     (varVdp2Regs->BGON & 0x1 && (varVdp2Regs->CHCTLA & 0x70) >> 4 == 4)) // If NBG0 16M mode is enabled, don't draw
     return;
-  _Ygl->screen[NBG1] = info.priority;
 
   ReadLineScrollData(&info, varVdp2Regs->SCRCTL >> 8, varVdp2Regs->LSTA1.all);
   info.lineinfo = lineNBG1;
@@ -6246,8 +6239,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
     (varVdp2Regs->BGON & 0x1 && (varVdp2Regs->CHCTLA & 0x70) >> 4 >= 2)) // If NBG0 2048/32786/16M mode is enabled, don't draw
     return;
 
-  _Ygl->screen[NBG2] = info.priority;
-
   info.islinescroll = 0;
   info.linescrolltbl = 0;
   info.lineinc = 0;
@@ -6334,8 +6325,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
     (varVdp2Regs->BGON & 0x2 && (varVdp2Regs->CHCTLA & 0x3000) >> 12 >= 2)) // If NBG1 2048/32786 is enabled, don't draw
     return;
 
-  _Ygl->screen[NBG3] = info.priority;
-
   info.islinescroll = 0;
   info.linescrolltbl = 0;
   info.lineinc = 0;
@@ -6379,8 +6368,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     free(rgb);
     return;
   }
-
-  _Ygl->screen[RBG0] = info->priority;
 
   info->blendmode = 0;
 
@@ -6715,13 +6702,6 @@ static void VIDOGLVdp2DrawScreens(void)
 #if BG_PROFILE
   before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
 #endif
-
-  _Ygl->screen[NBG0] = 0;
-  _Ygl->screen[NBG1] = 0;
-  _Ygl->screen[NBG2] = 0;
-  _Ygl->screen[NBG3] = 0;
-  _Ygl->screen[RBG0] = 0;
-  _Ygl->screen[RBG1] = 0;
 
   _Ygl->perLine[NBG0] = 0;
   _Ygl->perLine[NBG1] = 0;
