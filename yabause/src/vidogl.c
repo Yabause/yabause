@@ -6711,8 +6711,6 @@ static void VIDOGLVdp2DrawScreens(void)
   _Ygl->perLine[RBG1] = 0;
 
   YglUpdateColorRam();
-  YglSetVdp2Window(&Vdp2Lines[VDP2_DRAW_LINE]);
-  YglSetCCWindow(&Vdp2Lines[VDP2_DRAW_LINE]);
 
 LOG_ASYN("===================================\n");
   Vdp2DrawBackScreen(&Vdp2Lines[VDP2_DRAW_LINE]);

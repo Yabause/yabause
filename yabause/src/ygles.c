@@ -3266,7 +3266,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
    YglUpdateVdp2Reg(varVdp2Regs);
-
+   YglSetVdp2Window(varVdp2Regs);
+   YglSetCCWindow(varVdp2Regs);
    cprg = -1;
 
    glActiveTexture(GL_TEXTURE0);
