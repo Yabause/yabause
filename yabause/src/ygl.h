@@ -560,6 +560,7 @@ typedef struct {
    GLuint vdp1_pbo[2];
    GLuint vdp1IsNotEmpty[2];
    u32* vdp1fb_buf[2];
+   u8* vdp1fb_exactbuf[2];
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
    GLuint original_depth;

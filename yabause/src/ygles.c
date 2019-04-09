@@ -776,17 +776,24 @@ u16 COLOR24TO16(u32 temp) {
 void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   u8 priority = Vdp2Regs->PRISA &0x7;
   int rgb = !((val>>15)&0x1);
+  u16 full = 0;
   if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL)
     _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMem(_Ygl->drawframe);
+
   switch (type)
   {
   case 0:
-    //T1WriteByte(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, val);
+    T1WriteByte((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
+    full = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe],addr&(~0x1));
+    rgb = !((full>>15)&0x1);
+    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(full&0xFFFF)));
     break;
   case 1:
+    T1WriteWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     break;
   case 2:
+    T1WriteLong((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     rgb = !(((val>>16)>>15)&0x1);
     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
@@ -1344,6 +1351,9 @@ int YglInit(int width, int height, unsigned int depth) {
   YglTM_vdp1[0] = YglTMInit(2048, 2048);
   YglTM_vdp1[1] = YglTMInit(2048, 2048);
   YglTM_vdp2 = YglTMInit(2048, 2048);
+
+  _Ygl->vdp1fb_exactbuf[0] = (u8*)malloc(512*704*2);
+  _Ygl->vdp1fb_exactbuf[1] = (u8*)malloc(512*704*2);
 
   _Ygl->smallfbo = 0;
   _Ygl->smallfbotex = 0;
@@ -2517,6 +2527,8 @@ void YglEraseWriteVDP1(void) {
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   _Ygl->vdp1On[_Ygl->readframe] = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
+
+  memset(_Ygl->vdp1fb_exactbuf[_Ygl->readframe], 0x0, 512*704*2);
 
   if(_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
     releaseVDP1FB(_Ygl->readframe);
