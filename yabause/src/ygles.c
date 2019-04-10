@@ -2664,13 +2664,8 @@ void YglRenderVDP1(void) {
   glBindVertexArray(_Ygl->vao);
   YglLoadIdentity(&m);
 
-  if (Vdp1Regs->TVMR & 0x02) {
-    mat = &m;
-    YglOrtho(mat, 0.0f, (float)Vdp1Regs->systemclipX2, (float)Vdp1Regs->systemclipY2, 0.0f, 10.0f, 0.0f);
-  }
-  else {
-    mat = &_Ygl->mtxModelView;
-  }
+  mat = &_Ygl->mtxModelView;
+
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
   if (_Ygl->pFrameBuffer != NULL) {
@@ -2698,7 +2693,17 @@ void YglRenderVDP1(void) {
   glDisable(GL_BLEND);
   glCullFace(GL_FRONT_AND_BACK);
   glDisable(GL_CULL_FACE);
-  glViewport(0,0,_Ygl->width,_Ygl->height);
+
+  if (Vdp1Regs->TVMR & 0x02) {
+    int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
+    int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
+    glViewport(x/2,y/2,_Ygl->width+x,_Ygl->height-y);
+    glScissor(x/2,y/2,_Ygl->width+x,_Ygl->height-y);
+  } else {
+    glViewport(0, 0,_Ygl->width,_Ygl->height);
+    glScissor(0, 0,_Ygl->width,_Ygl->height);
+  }
+  glEnable(GL_SCISSOR_TEST);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[_Ygl->drawframe]->textureID);
@@ -2740,7 +2745,7 @@ void YglRenderVDP1(void) {
   level->prgcurrent = 0;
 
   glDisable(GL_STENCIL_TEST);
-
+  glDisable(GL_SCISSOR_TEST);
   //YabThreadUnLock(_Ygl->mutex);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   //glEnable(GL_DEPTH_TEST);
