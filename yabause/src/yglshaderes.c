@@ -3795,10 +3795,10 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   int aamode = _Ygl->aamode;
 
   float const vertexPosition[] = {
-    1.0f, -1.0f,
-    -1.0f, -1.0f,
-    1.0f, 1.0f,
-    -1.0f, 1.0f };
+    1.03f, -1.03f,
+    -1.03f, -1.03f,
+    1.03f, 1.03f,
+    -1.03f, 1.03f };
 
   float const textureCoord[16] = {
     1.0f, 0.0f,
