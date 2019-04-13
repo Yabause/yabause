@@ -16,11 +16,11 @@ include (ExternalProject)
 
 message(STATUS "libpng not found - will build from source")
 
-set(png_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/external/png_archive)
 set(png_URL https://storage.googleapis.com/libpng-public-archive/libpng-1.2.53.tar.gz)
 set(png_HASH SHA256=e05c9056d7f323088fd7824d8c6acc03a4a758c4b4916715924edc5dd3223a72)
 set(png_BUILD ${CMAKE_CURRENT_BINARY_DIR}/png/src/png)
 set(png_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/png/install)
+set(png_INCLUDE_DIR ${png_INSTALL}/include) 
 
 if(WIN32)
   set(png_STATIC_LIBRARIES 

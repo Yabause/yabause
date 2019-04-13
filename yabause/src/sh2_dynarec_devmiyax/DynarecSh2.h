@@ -285,7 +285,7 @@ protected:
   int       m_ClockCounter;
   bool      m_bIntruptSort;
   bool one_step_;
-  s32 pre_exe_count_;
+  u32 pre_exe_count_;
   bool is_slave_ = false;
   u32 pre_PC_;
   SH2_struct * ctx_;

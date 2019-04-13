@@ -48,7 +48,7 @@
 #include "vdp2.h"
 #include "yui.h"
 #include "bios.h"
-#include "movie.h"
+//#include "movie.h"
 #include "osdcore.h"
 #ifdef HAVE_LIBSDL
 #if defined(__APPLE__) || defined(GEKKO)
@@ -533,15 +533,14 @@ void YabauseResetButton(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseExec(void) {
-
 	//automatically advance lag frames, this should be optional later
-	if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){ 
-		FrameAdvanceVariable = NeedAdvance; //advance a frame
+	//if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){ 
+		//FrameAdvanceVariable = NeedAdvance; //advance a frame
 		YabauseEmulate();
-		FrameAdvanceVariable = Paused; //pause next time
+		//FrameAdvanceVariable = Paused; //pause next time
 		return(0);
-	}
-
+	//}
+/*
 	if (FrameAdvanceVariable == Paused){
 		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		return(0);
@@ -557,6 +556,7 @@ int YabauseExec(void) {
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);	
 		YabauseEmulate();
 	}
+*/
 	return 0;
 }
 
@@ -1294,5 +1294,20 @@ int YabauseQuickLoadGame(void)
 
    return 0;
 }
+
+// non standard function
+#include <malloc.h>
+char* strdup_ (const char* s)
+{
+  size_t slen = strlen(s);
+  char* result = (char*)malloc(slen + 1);
+  if(result == NULL)
+  {
+    return NULL;
+  }
+  memcpy(result, s, slen+1);
+  return result;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////

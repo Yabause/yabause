@@ -34,6 +34,7 @@ option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer")
 		
 set(yabause_SOURCES
 	bios.c
@@ -47,6 +48,7 @@ set(yabause_SOURCES
 	osdcore.c
 	peripheral.c profile.c
 	frameprofile.cpp
+        Counter.cpp
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
@@ -72,6 +74,22 @@ if (ANDROID)
 		)
 endif()
 
+if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
+add_definitions(-DYAB_PORT_OSD)
+add_definitions(-D_OGLES3_)
+#add_definitions(-DYAB_ASYNC_RENDERING)
+add_definitions(-DYAB_PORT_OSD)
+include_directories(./ ./nanovg)		
+set(yabause_SOURCES
+	${yabause_SOURCES}
+	yglcache.c
+	ygles.c
+	yglshaderes.c 
+	nanovg/nanovg.c 
+	nanovg/nanovg_osdcore.h 
+	nanovg/nanovg_osdcore.c
+	)
+endif ()
 
 if (IOS)
 add_definitions(-DIOS=1)
@@ -148,6 +166,7 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 					sh2_dynarec_devmiyax/dynalib_arm.s)
 			elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "aarch64")
 				enable_language(ASM-ATT)
+                                add_definitions(-DAARCH64) 
 				set(yabause_SOURCES 
 				  ${yabause_SOURCES}
 					sh2_dynarec_devmiyax/dynalib_arm64.s)
@@ -300,10 +319,16 @@ endif ()
 option(YAB_WANT_OPENGL "use OpenGL for video output (most ports require it)" ON)
 if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 	include(FindOpenGL)
-	if (OPENGL_FOUND)
+	if (OPENGL_FOUND )
 		add_definitions(-DHAVE_LIBGL=1)
-		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
-
+		if( USE_EGL )
+			add_definitions(-D_OGLES3_)
+			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} EGL GLESv2)
+			add_definitions(-DYAB_ASYNC_RENDERING)
+		else()
+			add_definitions(-D_OGL3_)
+			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
+		endif()
 		include_directories(./ ./nanovg)
 		set(yabause_SOURCES ${yabause_SOURCES} 
 			nanovg/nanovg.c 
@@ -321,21 +346,20 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		endif()
 
 		# glXGetProcAddress
-		set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${OPENGL_LIBRARIES})
-		check_function_exists(glXGetProcAddress GLXGETPROCADDRESS_OK)
-		if (GLXGETPROCADDRESS_OK)
-			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
-		endif()
+		#set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${OPENGL_LIBRARIES})
+		#check_function_exists(glXGetProcAddress GLXGETPROCADDRESS_OK)
+		#if (GLXGETPROCADDRESS_OK)
+		#	add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
+		#endif()
 		string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
 		if( glfw )
-			include( ../CMake/Packages/external_curl.cmake )
-			set(yabause_SOURCES ${yabause_SOURCES}
-				test_framework.cpp
-				test_framework.h
-			)
+			#include( ../CMake/Packages/external_curl.cmake )
+			#set(yabause_SOURCES ${yabause_SOURCES}
+			#	test_framework.cpp
+			#	test_framework.h
+			#)
 			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
-		add_definitions(-D_OGL3_)
 		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
 			add_definitions(-D_OGLES3_)
 			set(yabause_SOURCES ${yabause_SOURCES} 
@@ -344,13 +368,14 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				yglshaderes.c
 			)
 		endif()
-        include(FindGLEW)
-        add_definitions(-D_USEGLEW_)
-        if (GLEW_FOUND)
-            include_directories( ${GLEW_INCLUDE_DIRS})
-            set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLEW_LIBRARIES})
-        else()
-		    add_definitions(-DGLEW_STATIC)
+
+ 		include(FindGLEW)
+    add_definitions(-D_USEGLEW_)
+    if (GLEW_FOUND)
+        include_directories( ${GLEW_INCLUDE_DIRS})
+        set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLEW_LIBRARIES})
+    else()
+	     add_definitions(-DGLEW_STATIC)
 		    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
 			set(yabause_SOURCES
 				${yabause_SOURCES}
@@ -359,6 +384,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				ygles.c
 				yglshaderes.c )
 		endif()
+
 	endif(OPENGL_FOUND)
 endif ()
 
@@ -785,6 +811,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
 	add_definitions(-DARCH_IS_FREEBSD=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Switch")
+#	add_definitions(-DARCH_IS_FREEBSD=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-nx.c )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
 	add_definitions(-DARCH_IS_LINUX=1)
 	set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.c cd-linux.c)
@@ -838,8 +867,12 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
-    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
+    #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
+    #set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
+
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fomit-frame-pointer  -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4")
+    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -g -fomit-frame-pointer -mcpu=cortex-a15.cortex-a7 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4")
+
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -fno-math-errno -ffast-math")
@@ -848,7 +881,7 @@ endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
 		add_definitions(-DAARCH64)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -std=c99 -march=armv8-a -mtune=cortex-a57.cortex-a53 ")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -march=armv8-a -mtune=cortex-a57.cortex-a53 -std=c++11 -fno-exceptions -fno-rtti ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -march=armv8-a -mtune=cortex-a57.cortex-a53 -std=c++11 ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC

@@ -45,6 +45,8 @@ int YabSockDeInit()
 
 int YabSockConnectSocket(const char *ip, int port, YabSock *sock)
 {
+#if 1
+#else
    struct addrinfo *result = NULL, hints;
    char port_str[256];
 
@@ -80,6 +82,7 @@ int YabSockConnectSocket(const char *ip, int port, YabSock *sock)
    }
 
    freeaddrinfo(result);
+#endif
    return 0;
 }
 

@@ -17,14 +17,14 @@ along with Yabause; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <core.h>
+#include "../core.h"
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h> 
 #include <stdint.h>
-#include "sh2core.h"
+#include "../sh2core.h"
 #include "DynarecSh2.h"
-#include "debug.h"
+#include "../debug.h"
 #include "yabause.h"
 
 
@@ -712,5 +712,4 @@ int EachClock() {
 
 
 }
-
 

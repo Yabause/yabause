@@ -2198,7 +2198,7 @@ add     w2, w2, 2
 ldrsw   x1, [x19, 80]
 mul     w0, w24, w0
 str     w2, [x19, x23]
-add     x1, x1, x0, sxtw
+add     x1, x1, w0, sxtw
 tbz     x3, 1, MAC_W.L10
 mov     x2, -2147483648
 mov     x3, -4294967297

@@ -20,7 +20,7 @@
 #ifndef VIDOGL_H
 #define VIDOGL_H
 
-#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS) || defined(NX)
 
 #include "vdp1.h"
 

@@ -1,0 +1,139 @@
+SOURCE_DIR := $(CORE_DIR)/..
+LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
+
+INCLUDE_DIRS := $(CORE_DIR) \
+	$(SOURCE_DIR) \
+	$(LIBRETRO_COMM_DIR)/include \
+	$(SOURCE_DIR)/musashi
+
+SOURCES_S :=
+
+SOURCES_C := $(SOURCE_DIR)/osdcore.c \
+	$(SOURCE_DIR)/bios.c \
+	$(SOURCE_DIR)/cdbase.c \
+	$(SOURCE_DIR)/cheat.c \
+	$(SOURCE_DIR)/coffelf.c \
+	$(SOURCE_DIR)/cs0.c \
+	$(SOURCE_DIR)/cs1.c \
+	$(SOURCE_DIR)/cs2.c \
+	$(SOURCE_DIR)/debug.c \
+	$(SOURCE_DIR)/error.c \
+	$(SOURCE_DIR)/gameinfo.c \
+	$(SOURCE_DIR)/japmodem.c \
+	$(SOURCE_DIR)/memory.c \
+	$(SOURCE_DIR)/movie.c \
+	$(SOURCE_DIR)/netlink.c \
+	$(SOURCE_DIR)/peripheral.c \
+	$(SOURCE_DIR)/profile.c \
+	$(SOURCE_DIR)/scspdsp.c \
+	$(SOURCE_DIR)/scu.c \
+	$(SOURCE_DIR)/scsp.c \
+	$(SOURCE_DIR)/sh2cache.c \
+	$(SOURCE_DIR)/sh2core.c \
+	$(SOURCE_DIR)/sh2d.c \
+	$(SOURCE_DIR)/sh2iasm.c \
+	$(SOURCE_DIR)/sh2int.c \
+	$(SOURCE_DIR)/smpc.c \
+	$(SOURCE_DIR)/m68kcore.c \
+	$(SOURCE_DIR)/m68kd.c \
+	$(SOURCE_DIR)/vidogl.c \
+	$(SOURCE_DIR)/yglcache.c \
+	$(SOURCE_DIR)/ygles.c \
+	$(SOURCE_DIR)/yglshaderes.c \
+	$(SOURCE_DIR)/snddummy.c \
+	$(SOURCE_DIR)/vdp1.c \
+	$(SOURCE_DIR)/vdp2.c \
+	$(SOURCE_DIR)/vidshared.c \
+	$(SOURCE_DIR)/vidsoft.c \
+	$(SOURCE_DIR)/titan/titan.c \
+	$(SOURCE_DIR)/yabause.c \
+	$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
+	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
+	$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
+	$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
+	$(LIBRETRO_COMM_DIR)/file/file_path.c \
+	$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
+	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
+	$(CORE_DIR)/libretro.c
+
+ifeq ($(FORCE_GLEW), 1)
+	SOURCES_C += $(SOURCE_DIR)/gllibs/glew/glew.c
+	INCLUDE_DIRS += $(SOURCE_DIR)/gllibs/include
+else
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
+		$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+		$(CORE_DIR)/glsym_private.c
+	ifeq ($(HAVE_GLES), 1)
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
+	else
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
+	endif
+endif
+
+SOURCES_CXX := $(SOURCE_DIR)/Counter.cpp
+
+ifeq ($(HAVE_MUSASHI), 1)
+	SOURCES_C += $(SOURCE_DIR)/musashi/m68kcpu.c \
+	$(SOURCE_DIR)/musashi/m68kops.c \
+	$(SOURCE_DIR)/musashi/m68kopnz.c \
+	$(SOURCE_DIR)/musashi/m68kopac.c \
+	$(SOURCE_DIR)/musashi/m68kopdm.c \
+	$(SOURCE_DIR)/m68kmusashi.c
+else
+	SOURCES_C += $(SOURCE_DIR)/c68k/c68k.c \
+	$(SOURCE_DIR)/m68kc68k.c
+endif
+
+ifeq ($(DYNAREC_DEVMIYAX), 1)
+	ifeq ($(USE_ARM_DRC), 1)
+		SOURCES_S += $(SOURCE_DIR)/sh2_dynarec_devmiyax/dynalib_arm.s
+	else ifeq ($(USE_AARCH64_DRC), 1)
+		SOURCES_S += $(SOURCE_DIR)/sh2_dynarec_devmiyax/dynalib_arm64.s
+	else ifeq ($(USE_X86_DRC), 1)
+		$(OBJECTS_S) += $(SOURCE_DIR)/sh2_dynarec_devmiyax/dynalib.obj
+	endif
+	SOURCES_CXX += $(SOURCE_DIR)/sh2_dynarec_devmiyax/DynarecSh2CInterface.cpp \
+		$(SOURCE_DIR)/sh2_dynarec_devmiyax/DynarecSh2.cpp
+endif
+
+ifeq ($(ARCH_IS_LINUX), 1)
+	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+else ifeq ($(ARCH_IS_MACOSX), 1)
+	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+else
+	SOURCES_C += $(SOURCE_DIR)/thr-windows.c
+endif
+
+M68KMAKE_EXE = m68kmake$(EXE_EXT)
+GEN68K_EXE = gen68k$(EXE_EXT)
+GEN68K_INC_SOURCES := $(SOURCE_DIR)/c68k/c68k_ini.inc \
+	$(SOURCE_DIR)/c68k/c68k_op0.inc \
+	$(SOURCE_DIR)/c68k/c68k_op1.inc \
+	$(SOURCE_DIR)/c68k/c68k_op2.inc \
+	$(SOURCE_DIR)/c68k/c68k_op3.inc \
+	$(SOURCE_DIR)/c68k/c68k_op4.inc \
+	$(SOURCE_DIR)/c68k/c68k_op5.inc \
+	$(SOURCE_DIR)/c68k/c68k_op6.inc \
+	$(SOURCE_DIR)/c68k/c68k_op7.inc \
+	$(SOURCE_DIR)/c68k/c68k_op8.inc \
+	$(SOURCE_DIR)/c68k/c68k_op9.inc \
+	$(SOURCE_DIR)/c68k/c68k_opA.inc \
+	$(SOURCE_DIR)/c68k/c68k_opB.inc \
+	$(SOURCE_DIR)/c68k/c68k_opC.inc \
+	$(SOURCE_DIR)/c68k/c68k_opD.inc \
+	$(SOURCE_DIR)/c68k/c68k_opE.inc \
+	$(SOURCE_DIR)/c68k/c68k_opF.inc
+
+M68KMAKE_INC_SOURCES := $(SOURCE_DIR)/musashi/m68kops.h \
+	$(SOURCE_DIR)/musashi/m68kopac.c \
+	$(SOURCE_DIR)/musashi/m68kopdm.c \
+	$(SOURCE_DIR)/musashi/m68kopnz.c \
+	$(SOURCE_DIR)/musashi/m68kops.c
+
+C68KEXEC_SOURCE := $(SOURCE_DIR)/c68k/c68kexec.c
+C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.c.o)
+
+OBJECTS_C += $(SOURCES_C:.c=.c.o)
+OBJECTS_CXX += $(SOURCES_CXX:.cpp=.cpp.o)
+OBJECTS_S += $(SOURCES_S:.s=.s.o)
+

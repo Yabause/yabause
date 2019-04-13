@@ -17,6 +17,8 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+#define _GNU_SOURCE
+#include <sched.h>
 
 #include "core.h"
 #include "threads.h"
@@ -27,7 +29,6 @@
 #include <unistd.h>
 //#include <malloc.h>
 #include <stdlib.h>
-
 
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -249,12 +250,10 @@ void YabThreadFreeMutex( YabMutex * mtx ){
     }
 }
 
-
-
-#define _GNU_SOURCE
-#include <sched.h>
-
-#if defined(ANDROID)
+// The following definitions are useful for macosx (gl3 on macosx isn't supported by RA, so we don't really care)
+// and old android ndk (libretro buildbot already got those definitions, so it might be better to use them)
+#if !defined(__LIBRETRO__)
+#if !(defined ARCH_IS_LINUX) || (defined ANDROID)
  
 extern int clone(int (*)(void*), void*, int, void*, ...);
 extern int unshare(int);
@@ -349,12 +348,17 @@ extern void       __sched_cpufree(cpu_set_t* set);
 extern int __sched_cpucount(size_t setsize, cpu_set_t* set);
 
 #endif
+#endif
 
 void YabThreadSetCurrentThreadAffinityMask(int mask)
 {
-#if 0 // it needs more than android-21
+#if !defined(ANDROID) // it needs more than android-21
     int err, syscallres;
+#ifdef SYS_gettid
+    pid_t pid = syscall(SYS_gettid);
+#else
     pid_t pid = gettid();
+#endif    
     mask = 1 << mask;
     syscallres = syscall(__NR_sched_setaffinity, pid, sizeof(mask), &mask);
     if (syscallres)
@@ -363,11 +367,11 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
         //LOG("Error in the syscall setaffinity: mask=%d=0x%x err=%d=0x%x", mask, mask, err, err);
     }
 
-//	cpu_set_t my_set;        /* Define your cpu_set bit mask. */
-//	CPU_ZERO(&my_set);       /* Initialize it all to 0, i.e. no CPUs selected. */
-//	CPU_SET(mask, &my_set);
+//    cpu_set_t my_set;        /* Define your cpu_set bit mask. */
+//    CPU_ZERO(&my_set);       /* Initialize it all to 0, i.e. no CPUs selected. */
+//    CPU_SET(mask, &my_set);
 //	CPU_SET(mask+4, &my_set);
-//	sched_setaffinity(pid,sizeof(my_set), &my_set);
+//    sched_setaffinity(pid,sizeof(my_set), &my_set);
 #endif
 }
 
