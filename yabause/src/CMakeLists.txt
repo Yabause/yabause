@@ -124,13 +124,6 @@ endif()
 
 
 
-option(YAB_USE_CXX "Allow C++ in the emulation core.")
-if (YAB_USE_CXX)
-	set(yabause_SOURCES ${yabause_SOURCES} yglcache.cpp)
-else()
-	set(yabause_SOURCES ${yabause_SOURCES} yglcache.c)
-endif()
-
 option(YAB_WANT_SH2_CACHE "Enable Sh2 cache emulation" OFF)
 if (YAB_WANT_SH2_CACHE)
     add_definitions(-DCACHE_ENABLE=1)
@@ -369,7 +362,8 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			)
 		endif()
 
-		if( !USE_EGL )
+		if( USE_EGL )
+		else()
 			include(FindGLEW)
 			add_definitions(-D_USEGLEW_)
 			if (GLEW_FOUND)
@@ -380,12 +374,11 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 					include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
 				set(yabause_SOURCES
 					${yabause_SOURCES}
-					gllibs/glew/glew.c
-					yglcache.c
-					ygles.c
-					yglshaderes.c )
+					gllibs/glew/glew.c)
 			endif()
 		endif()
+
+		set(yabause_SOURCES ${yabause_SOURCES} yglcache.c ygles.c yglshaderes.c )
 
 	endif(OPENGL_FOUND)
 endif ()
