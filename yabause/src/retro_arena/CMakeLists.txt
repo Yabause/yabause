@@ -1,4 +1,4 @@
-project(yabause-xu4)
+project(yabause-retro-arena)
 
 add_definitions( -D__RETORO_ARENA__ )
 
@@ -55,7 +55,7 @@ set(PORT_LIBRARIES ${SDL2_LIBRARY} ${OPENGLES2_LIBRARIES} ${png_STATIC_LIBRARIES
 
 message("Nlohmann/json dir =" ${EXTERNAL_JSON_INCLUDE_DIR})
 
-set(yabause_xu4_SOURCES
+set(yabause_ra_SOURCES
 	main.cpp
 	InputManager.h
 	InputManager.cpp
@@ -66,13 +66,13 @@ set(yabause_xu4_SOURCES
 ) 
 
 include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" )
-add_executable(yabause-xu4 ${yabause_xu4_SOURCES})
-target_link_libraries(yabause-xu4 yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui )
-add_dependencies(yabause-xu4 Json png zlib)
-yab_port_success(yabause-xu4)
+add_executable(yabause-retro-arena ${yabause_ra_SOURCES})
+target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui )
+add_dependencies(yabause-retro-arena Json png zlib)
+yab_port_success(yabause-retro-arena)
 
-#install(TARGETS yabause-xu4 DESTINATION "/opt/retropie/emulators/yabasanshiro/")
-#install(FILES "README.md" DESTINATION "/opt/retropie/emulators/yabasanshiro/" )
+install(TARGETS yabause-retro-arena DESTINATION "/opt/retroarena/emulators/yabause/")
+install(FILES "README.md" DESTINATION "/opt/retroarena/emulators/yabause/" )
 
-install(TARGETS yabause-xu4 DESTINATION "bin")
-install(FILES "README.md" DESTINATION "." )
+#install(TARGETS yabause-retoro-arena DESTINATION "bin")
+#install(FILES "README.md" DESTINATION "." )
