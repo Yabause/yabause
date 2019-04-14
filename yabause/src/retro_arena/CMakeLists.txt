@@ -70,6 +70,8 @@ add_executable(yabause-retro-arena ${yabause_ra_SOURCES})
 target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui )
 add_dependencies(yabause-retro-arena Json png zlib)
 yab_port_success(yabause-retro-arena)
+set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)
+
 
 install(TARGETS yabause-retro-arena DESTINATION "/opt/retroarena/emulators/yabause/")
 install(FILES "README.md" DESTINATION "/opt/retroarena/emulators/yabause/" )
