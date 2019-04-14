@@ -22,7 +22,7 @@
 /*! \file vidogl.c
     \brief OpenGL video renderer
 */
-#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS) || defined(NX)
 
 #include <math.h>
 #define EPSILON (1e-10 )
@@ -2911,6 +2911,7 @@ void Vdp2DrawRotationThread(void * p) {
 
 #endif
 
+  printf("Vdp2DrawRotationThread\n");
   while (Vdp2DrawRotationThread_running) {
     YabThreadSetCurrentThreadAffinityMask(0x02);
     YabThreadLock(g_rotate_mtx);
@@ -5287,7 +5288,7 @@ static void Vdp2DrawBackScreen(void)
 
   ReadVdp2ColorOffset(fixVdp2Regs, &info, 0x20);
 
-#if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_)
+#if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGL3_) || defined(NX)
   dot = T1ReadWord(Vdp2Ram, scrAddr);
 
   if ((fixVdp2Regs->BKTAU & 0x8000) != 0 ) {
@@ -7227,7 +7228,6 @@ void VIDOGLSetFilterMode(int type) {
   return;
 }
 
-#endif
 
 void VIDOGLSetSettingValueMode(int type, int value) {
 
@@ -7249,4 +7249,6 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 
   return;
 }
+
+#endif
 

@@ -113,7 +113,7 @@ s32 ssf_start(u8 *buffer, u32 length, int m68k_core, int sndcore, char* filename
 	int i;
 
    M68KInit(m68k_core);
-   ScspInit(sndcore,1);
+   ScspInit(sndcore,1,0);
 
 	// clear Saturn work RAM before we start scribbling in it
 	memset((void *)SoundRam, 0, 0x80000);

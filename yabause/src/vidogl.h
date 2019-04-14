@@ -20,11 +20,15 @@
 #ifndef VIDOGL_H
 #define VIDOGL_H
 
-#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS) || defined(NX)
 
 #include "vdp1.h"
 
 #define VIDCORE_OGL   1
+
+void VIDOGLVdp2DrawStart(void);
+void VIDOGLVdp2DrawEnd(void);
+void VIDOGLVdp2DrawScreens(void);
 
 extern VideoInterface_struct VIDOGL;
 #endif

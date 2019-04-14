@@ -79,6 +79,8 @@ int g_frame_count = 0;
 
 //#define LOG yprintf
 
+YabEventQueue * command_ = NULL;;
+
 void VdpLockVram() {
   YabThreadLock(vrammutex);
 }
@@ -283,6 +285,8 @@ int Vdp2Init(void) {
 
    vrammutex = YabThreadCreateMutex();
 
+   command_ = YabThreadCreateQueue(1);
+
 
    memset(Vdp2ColorRam, 0xFF, 0x1000);
    for (int i = 0; i < 0x1000; i += 2) {
@@ -433,7 +437,11 @@ void VdpProc( void *arg ){
   }
 
   while( vdp_proc_running ){
-    YabThreadSetCurrentThreadAffinityMask(0x01);
+#if defined(__RP64__)	  
+    YabThreadSetCurrentThreadAffinityMask(0x5);
+#else
+    YabThreadSetCurrentThreadAffinityMask(0x1);
+#endif
     evcode = YabWaitEventQueue(evqueue);
     switch(evcode){
     case VDPEV_VBLANK_IN:
@@ -458,9 +466,11 @@ void VdpProc( void *arg ){
       break;
     case VDPEV_MAKECURRENT:
       YuiUseOGLOnThisThread();
+      YabAddEventQueue(command_,0);
       break;
     case VDPEV_REVOKE:
       YuiRevokeOGLOnThisThread();
+      YabAddEventQueue(command_,0);
       break;
     case VDPEV_FINSH:
       vdp_proc_running = 0;
@@ -712,6 +722,7 @@ static void FPSDisplay(void)
   static u64 fpsticks;
 #if 1 // FPS only
    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS skip=%d vdp1=%02d", fps, yabsys.IsPal ? 50 : 60, show_skipped_frame, show_vdp1_frame);
+   //printf("\033[%d;%dH %02d/%02d FPS skip=%d vdp1=%02d \n", 0, 0, fps, yabsys.IsPal ? 50 : 60, show_skipped_frame, show_vdp1_frame);
 #else
   FILE * fp = NULL;
   FILE * gup_fp = NULL;
@@ -854,11 +865,31 @@ void vdp2VBlankOUT(void) {
   {
     skipped_frame++;
     saved = VIDCore;
-    VIDCore = &VIDDummy;
+    //VIDCore = &VIDDummy;
+
+
+    
+    VIDCore->Vdp2DrawStart = VIDDummy.Vdp2DrawStart;
+    VIDCore->Vdp2DrawEnd   = VIDDummy.Vdp2DrawEnd;
+    VIDCore->Vdp2DrawScreens = VIDDummy.Vdp2DrawScreens;
+
   }
   else if (saved && (!skipnextframe))
   {
-    VIDCore = saved;
+    //VIDCore = saved;
+    if( saved != NULL ){
+
+      if (VIDCore->id == VIDCORE_OGL) {
+        VIDCore->Vdp2DrawStart = VIDOGLVdp2DrawStart;
+        VIDCore->Vdp2DrawEnd = VIDOGLVdp2DrawEnd;
+        VIDCore->Vdp2DrawScreens = VIDOGLVdp2DrawScreens;
+      }
+      else if (VIDCore->id == VIDCORE_SOFT ) {
+        VIDCore->Vdp2DrawStart = VIDSoftVdp2DrawStart;
+        VIDCore->Vdp2DrawEnd = VIDSoftVdp2DrawEnd;
+        VIDCore->Vdp2DrawScreens = VIDSoftVdp2DrawScreens;
+      }
+    }
     saved = NULL;
   }
 
@@ -906,10 +937,12 @@ void vdp2VBlankOUT(void) {
 #endif
 
   if (Vdp2Regs->TVMD & 0x8000) {
+     FRAMELOG("Vdp2DrawScreens");
     VIDCore->Vdp2DrawScreens();
   }
 
   if (isrender){
+     FRAMELOG("Vdp1DrawEnd");
     VIDCore->Vdp1DrawEnd();
 #if !defined(YAB_ASYNC_RENDERING)
     yabsys.wait_line_count = 45;
@@ -1702,15 +1735,19 @@ void DisableAutoFrameSkip(void)
    autoframeskipenab = 0;
 }
 
+
+
 void VdpResume( void ){
 #if defined(YAB_ASYNC_RENDERING)
 	YabAddEventQueue(evqueue,VDPEV_MAKECURRENT);
+  YabWaitEventQueue(command_);
 #endif
 }
 
 void VdpRevoke( void ){
 #if defined(YAB_ASYNC_RENDERING)
 	YabAddEventQueue(evqueue,VDPEV_REVOKE);
+  YabWaitEventQueue(command_);
 #endif
 }
 

@@ -23,9 +23,12 @@
 extern "C" {
 #endif
 
-#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS) || defined(NX)
 
-#if defined(__ANDROID__)
+#if defined(__LIBRETRO__) && !defined(_USEGLEW_)
+    #include <glsym/glsym.h>
+    #include <glsm/glsm.h>
+#elif defined(__ANDROID__)
     #include <GLES3/gl3.h>
     #include <GLES3/gl3ext.h>
     #include <EGL/egl.h>
@@ -179,11 +182,16 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
     #include <OpenGL/gl3.h>
 
 #else // Linux?
-    #if defined(_OGLES3_)||defined(_OGL3_)
+    #if defined(_OGL3_)
         #define GL_GLEXT_PROTOTYPES 1
         #define GLX_GLXEXT_PROTOTYPES 1
         #include <GL/glew.h>
         #include <GL/gl.h>
+    #elif defined(_OGLES3_)
+        #define GL_GLEXT_PROTOTYPES 1
+        #define GLX_GLXEXT_PROTOTYPES 1
+	#include <EGL/egl.h>
+	#include <GLES3/gl32.h>
     #else
         #include <GL/gl.h>
     #endif
@@ -674,7 +682,7 @@ void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
 
 
-#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
+#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_) && !defined(__LIBRETRO__) &&  !defined(NX)
 
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);

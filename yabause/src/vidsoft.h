@@ -42,4 +42,8 @@ void VIDSoftSetVdp1ThreadEnable(int b);
 
 void VidsoftWaitForVdp1Thread();
 
+void VIDSoftVdp2DrawStart(void);
+void VIDSoftVdp2DrawEnd(void);
+void VIDSoftVdp2DrawScreens(void);
+
 #endif

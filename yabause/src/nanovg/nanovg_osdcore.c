@@ -47,7 +47,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #else
 #define NANOVG_GL3_IMPLEMENTATION
 #endif
+#if !defined(__RETORO_ARENA__)
 #include "nanovg_gl.h"
+#endif
 #include "Roboto-Bold.h"
 #include "Roboto-Regular.h"
 
@@ -87,14 +89,21 @@ static FrameProfileInfo frameinfo_histroy[MAX_HISTORY];
 static int current_history_index = 0;
 static int profile_index = 0;
 
+#if defined(__RETORO_ARENA__)
+NVGcontext * getGlobalNanoVGContext();
+#endif
 
 int OSDNanovgInit(void)
 {
+#if defined(__RETORO_ARENA__)
+  vg =getGlobalNanoVGContext();
+#else
 #if defined(_OGLES3_)
   vg = nvgCreateGLES3(NVG_ANTIALIAS);
 #else
   vg = nvgCreateGL3(NVG_ANTIALIAS);
-#endif	
+#endif
+#endif  
   if (vg == NULL) {
     printf("Could not init nanovg.\n");
     return -1;
@@ -278,9 +287,9 @@ void ProfileDrawGraph() {
 
 void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h)
 {
-  int LeftX = 10;
+  int LeftX = 8;
   int Width = 500;
-  int TxtY = 22;
+  int TxtY = 12;
   int Height = 13;
   int msglength;
   int vidwidth, vidheight;
@@ -306,7 +315,7 @@ void OSDNanovgDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int 
   nvgBeginFrame(vg, vidwidth, vidheight, 1.0f);
 
   nvgBeginPath(vg);
-  nvgRect(vg, 0, 0, 320, 32);
+  nvgRect(vg, 0, 0, 320+8, 32);
   nvgFillColor(vg, nvgRGBA(0, 0, 0, 128));
   nvgFill(vg);
 

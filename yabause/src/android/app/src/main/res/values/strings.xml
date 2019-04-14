@@ -182,5 +182,10 @@
     <string name="speed">Speed</string>
     <string name="accuracy">Accuracy</string>
 
+    <string name="time_synchronization_mode">Sound time synchronization mode</string>
+    <string name="choose_time_synchronization_mode">Sound time synchronization mode</string>
+    <string name="cpu_time">CPU time (Synchronize to emulated cpu time. If your device is fast enough, Sound emulation is very accurate.)</string>
+    <string name="real_time">Real time (Synchronize to real world time. Although your device is not so fast, Sound is not corrupted.)</string>
+
 </resources>
 	

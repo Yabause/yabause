@@ -333,6 +333,9 @@ extern "C" {
 #define snprintf sprintf_s
 #endif
 
+char* strdup_ (const char* s);
+#define strdup strdup_
+
 #ifdef __cplusplus
 }
 #endif

@@ -20,8 +20,6 @@
 #include "scsp.h"
 #include "scspdsp.h"
 
-s32 float_to_int(u16 f_val);
-u16 int_to_float(u32 i_val);
 
 //saturate 24 bit signed integer
 static INLINE s32 saturate_24(s32 value)
@@ -62,6 +60,77 @@ static INLINE unsigned clz(u32 v)
   return(ret);
 #endif
 }
+
+//sign extended to 32 bits instead of 24
+static s32 INLINE float_to_int(u16 f_val)
+{
+   u32 sign = (f_val >> 15) & 1;
+   u32 sign_inverse = (!sign) & 1;
+   u32 exponent = (f_val >> 11) & 0xf;
+   u32 mantissa = f_val & 0x7FF;
+
+   s32 ret_val = sign << 31;
+
+   if (exponent > 11)
+   {
+      exponent = 11;
+      ret_val |= (sign << 30);
+   }
+   else
+      ret_val |= (sign_inverse << 30);
+
+   ret_val |= mantissa << 19;
+
+   ret_val = ret_val >> (exponent + (1 << 3));
+
+   return ret_val;
+}
+
+static u16 INLINE int_to_float(u32 i_val)
+{
+   u32 sign = (i_val >> 23) & 1;
+   u32 exponent = 0;
+
+   if (sign != 0)
+      i_val = (~i_val) & 0x7FFFFF;
+
+   if (i_val <= 0x1FFFF)
+   {
+      i_val *= 64;
+      exponent += 0x3000;
+   }
+
+   if (i_val <= 0xFFFFF)
+   {
+      i_val *= 8;
+      exponent += 0x1800;
+   }
+
+   if (i_val <= 0x3FFFFF)
+   {
+      i_val *= 2;
+      exponent += 0x800;
+   }
+
+   if (i_val <= 0x3FFFFF)
+   {
+      i_val *= 2;
+      exponent += 0x800;
+   }
+
+   if (i_val <= 0x3FFFFF)
+      exponent += 0x800;
+
+   i_val >>= 11;
+   i_val &= 0x7ff;
+   i_val |= exponent;
+
+   if (sign != 0)
+      i_val ^= (0x7ff | (1 << 15));
+
+   return i_val;
+}
+
 
 void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 {
@@ -200,76 +269,6 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
   }
 }
 
-
-//sign extended to 32 bits instead of 24
-s32 float_to_int(u16 f_val)
-{
-   u32 sign = (f_val >> 15) & 1;
-   u32 sign_inverse = (!sign) & 1;
-   u32 exponent = (f_val >> 11) & 0xf;
-   u32 mantissa = f_val & 0x7FF;
-
-   s32 ret_val = sign << 31;
-
-   if (exponent > 11)
-   {
-      exponent = 11;
-      ret_val |= (sign << 30);
-   }
-   else
-      ret_val |= (sign_inverse << 30);
-
-   ret_val |= mantissa << 19;
-
-   ret_val = ret_val >> (exponent + (1 << 3));
-
-   return ret_val;
-}
-
-u16 int_to_float(u32 i_val)
-{
-   u32 sign = (i_val >> 23) & 1;
-   u32 exponent = 0;
-
-   if (sign != 0)
-      i_val = (~i_val) & 0x7FFFFF;
-
-   if (i_val <= 0x1FFFF)
-   {
-      i_val *= 64;
-      exponent += 0x3000;
-   }
-
-   if (i_val <= 0xFFFFF)
-   {
-      i_val *= 8;
-      exponent += 0x1800;
-   }
-
-   if (i_val <= 0x3FFFFF)
-   {
-      i_val *= 2;
-      exponent += 0x800;
-   }
-
-   if (i_val <= 0x3FFFFF)
-   {
-      i_val *= 2;
-      exponent += 0x800;
-   }
-
-   if (i_val <= 0x3FFFFF)
-      exponent += 0x800;
-
-   i_val >>= 11;
-   i_val &= 0x7ff;
-   i_val |= exponent;
-
-   if (sign != 0)
-      i_val ^= (0x7ff | (1 << 15));
-
-   return i_val;
-}
 
 int ScspDspAssembleGetValue(char* instruction)
 {

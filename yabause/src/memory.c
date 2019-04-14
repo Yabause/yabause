@@ -91,7 +91,17 @@ extern u32 tweak_backup_file_addr;
  * e.g. for implementing autosave of backup RAM. */
 u8 BupRamWritten;
 
-#if defined(__GNUC__)
+#if defined(NX)
+
+void * YabMemMap(char * filename, u32 size ) {
+   return malloc(size);
+}
+
+void YabFreeMap(void * p) {
+  free(p);
+} 
+
+#elif defined(__GNUC__) && !defined(_WINDOWS)
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -476,6 +486,7 @@ static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
   else {
     addr = addr & 0x0000FFFF;
   }
+  printf("BupRamMemoryReadByte %08X\n",addr);
   return T1ReadByte(BupRam, addr);
 }
 
@@ -525,6 +536,7 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
   else {
     addr = addr & 0x0000FFFF;
   }
+  printf("BupRamMemoryWriteByte %08X\n",addr);
   T1WriteByte(BupRam, addr|0x1, val);
 }
 

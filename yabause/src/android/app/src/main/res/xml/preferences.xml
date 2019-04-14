@@ -161,6 +161,14 @@
             android:entryValues="@array/entryvalues_sound_engine_list_preference"
             android:defaultValue="1" />
 
+        <ListPreference
+            android:key="scsp_time_sync_mode"
+            android:title="@string/time_synchronization_mode"
+            android:dialogTitle="@string/choose_time_synchronization_mode"
+            android:entries="@array/entries_scsp_time_synchronization_mode"
+            android:entryValues="@array/entryvalues_scsp_time_synchronization_mode"
+            android:defaultValue="1" />
+
         <EditTextPreference
             android:key="pref_scsp_sync_per_frame"
             android:inputType="number"

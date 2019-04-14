@@ -91,6 +91,7 @@ static int g_extmemory = 1;
 static int g_rotate_screen = 0;
 static int g_scsp_sync_count = 1;
 static int g_cpu_sync_shift = 1;
+static int g_scsp_sync_time_mode = 1;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -1064,6 +1065,7 @@ int initEgl( ANativeWindow* window )
     yinit.rotate_screen = g_rotate_screen;
     yinit.scsp_sync_count_per_frame = g_scsp_sync_count;
     yinit.sync_shift = g_cpu_sync_shift;
+    yinit.scsp_main_mode = g_scsp_sync_time_mode;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1356,6 +1358,12 @@ void
 Java_org_uoyabause_android_YabauseRunnable_setScspSyncPerFrame( JNIEnv* env, jobject obj, jint scsp_sync_count )
 {
     g_scsp_sync_count = scsp_sync_count;
+}
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setScspSyncTimeMode( JNIEnv* env, jobject obj, jint mode )
+{
+    g_scsp_sync_time_mode = mode;
 }
 
 void

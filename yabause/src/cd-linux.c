@@ -29,7 +29,7 @@
 #ifdef LINUX_CDROM_H_IS_BROKEN
 #include <limits.h>
 #endif
-
+#include <limits.h>
 #include "cdbase.h"
 #include "debug.h"
 

@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+
 #ifndef YAB_PORT_OSD
 /*
 Heya fellow port developper :)
@@ -126,6 +127,7 @@ void OSDPushMessage(int msgtype, int ttl, const char * format, ...)
    osdmessages[msgtype].timetolive = ttl;
    osdmessages[msgtype].timeleft = ttl;
 }
+
 
 int OSDDisplayMessages(pixel_t * buffer, int w, int h)
 {

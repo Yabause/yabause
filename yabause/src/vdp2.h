@@ -446,6 +446,8 @@ void VdpUnLockVram();
 
 void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
+void VdpResume( void );
+void VdpRevoke( void );
 
 #ifdef __cplusplus
 }

@@ -6,8 +6,9 @@
 #if defined(_USEGLEW_)
 #include <GL/glew.h>
 #else
-#include <GLES3/gl3.h>
+#include <GLES3/gl32.h>
 #endif
+#define GLFW_INCLUDE_ES31
 #include <GLFW/glfw3.h>
 #include <map>
 #include <string>
@@ -15,7 +16,7 @@
 using std::map;
 using std::string;
 
-#include "test_framework.h"
+//#include "test_framework.h"
 
 map< int , int > g_Keymap;
 
@@ -54,8 +55,8 @@ extern "C" {
 #else
 //static char biospath[256] = "/dat2/project/src/bios.bin";
 static char * biospath = NULL;
-//static char cdpath[256] = "/dat2/iso/nights.img";
-static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
+static char cdpath[256] = "/home/odroid/nights.cue";
+//static char cdpath[256] = "/dat2/iso/dytona/Daytona USA.iso";
 //static char cdpath[256] = "/media/shinya/d-main1/gameiso/brtrck.bin";
 #endif
 
@@ -125,7 +126,7 @@ OSD_struct *OSDCoreList[] = {
 #endif
 
 GLFWwindow* g_window = NULL;
-TestFramework * test_fw_ = nullptr;
+//TestFramework * test_fw_ = nullptr;
 
 void DrawDebugInfo()
 {
@@ -149,6 +150,7 @@ void YuiSwapBuffers(void)
   t = glfwGetTime();
   dt = t - prevt;
   prevt = t;
+/*
   if (test_fw_ != nullptr) {
     if (test_fw_->step_in_draw_thread() == TestFramework::FINISHED) {
       printf("TestFramework::FINISHED\n");
@@ -158,9 +160,10 @@ void YuiSwapBuffers(void)
     test_fw_->onStartFrame();
   }
   else {
+*/
     glfwSwapBuffers(g_window);
-  }
-  SetOSDToggle(0);
+ // }
+  SetOSDToggle(1);
 }
 
 void error_callback(int error, const char* description)
@@ -217,7 +220,7 @@ int yabauseinit()
 #else
   //yinit.sh2coretype = 0;
 #endif
-  yinit.sh2coretype = 3;
+  yinit.sh2coretype = 0;
   //yinit.vidcoretype = VIDCORE_SOFT;
   yinit.vidcoretype = 1;
   yinit.sndcoretype = SNDCORE_SDL;
@@ -236,7 +239,7 @@ int yabauseinit()
   yinit.usethreads = 0;
   yinit.skip_load = 0;    
   yinit.video_filter_type = 0;
-  yinit.polygon_generation_mode = GPU_TESSERATION;
+  yinit.polygon_generation_mode = PERSPECTIVE_CORRECTION; ////GPU_TESSERATION;
   yinit.use_new_scsp = 1;
   yinit.resolution_mode = 0;
   yinit.rotate_screen = 0;
@@ -298,16 +301,17 @@ int main( int argc, char * argcv[] )
     exit(EXIT_FAILURE);
 
   glfwSetErrorCallback(error_callback);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+  //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
   glfwWindowHint(GLFW_RED_BITS,8);
   glfwWindowHint(GLFW_GREEN_BITS,8);
   glfwWindowHint(GLFW_BLUE_BITS,8);
   glfwWindowHint(GLFW_STENCIL_BITS,8);
 
-  //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
-  //glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+  glfwWindowHint(GLFW_CONTEXT_CREATION_API,GLFW_EGL_CONTEXT_API);
 
   g_window = glfwCreateWindow(width, height, "My Title", NULL, NULL);
   if (!g_window)
@@ -361,7 +365,7 @@ int main( int argc, char * argcv[] )
       test_target = sarg.substr(pos + 12);
     }
   }
-
+/*
   if (test_path != "") {
     test_fw_ = new TestFramework();
     if (test_fw_->load("Yaba Sanshiro", test_path) != 0) {
@@ -371,17 +375,17 @@ int main( int argc, char * argcv[] )
     test_fw_->setSaveScreenShotCallback(saveScreenshot);
     test_fw_->setTarget(test_target);
   }
-
+*/
   glfwSetTime(0);
   double prevt = glfwGetTime();
 
   while (!glfwWindowShouldClose(g_window)) {
-    if (test_fw_ != nullptr) {
-      if (test_fw_->step_in_main_thread() == TestFramework::FINISHED) {
-        printf("TestFramework::FINISHED\n");
-        exit(0);
-      }
-    }
+//    if (test_fw_ != nullptr) {
+//      if (test_fw_->step_in_main_thread() == TestFramework::FINISHED) {
+//       printf("TestFramework::FINISHED\n");
+//      exit(0);
+//   }
+//    }
     YabauseExec(); // exec one frame
     glfwPollEvents();
   }
