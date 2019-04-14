@@ -511,6 +511,35 @@ typedef enum {
 } enBG;
 
 typedef enum {
+  S0CCRT = 0, //Alpha
+  S1CCRT,
+  S2CCRT,
+  S3CCRT,
+  S4CCRT,
+  S5CCRT,
+  S6CCRT,
+  S7CCRT,
+  S0PRI, //Prio
+  S1PRI,
+  S2PRI,
+  S3PRI,
+  S4PRI,
+  S5PRI,
+  S6PRI,
+  S7PRI,
+  SPCC, //CC condition
+  VDP1COR, //Color offset
+  VDP1COG,
+  VDP1COB,
+  VDP1CORS, //Color offset sign
+  VDP1COGS,
+  VDP1COBS,
+  CRAOFB, //COLOR RAM OFFSET
+	NB_VDP2_REG
+} enVdp2;
+
+
+typedef enum {
 	NONE = 1,
 	AS_IS = 2,
 	SRC_ALPHA = 3,
@@ -616,6 +645,11 @@ typedef struct {
    u32 * lincolor_buf;
    int perLine[enBGMAX];
 
+   u32 vdp2reg_tex;
+   u32 vdp2reg_pbo;
+   u8 * vdp2reg_buf;
+   u8 * vdp2buf;
+
    u32 back_tex;
    u32 back_pbo;
    u32 * backcolor_buf;
@@ -642,8 +676,6 @@ typedef struct {
    u32 colupd_max_addr;
    YabMutex * crammutex;
 
-   UniformFrameBuffer fbu_;
-   GLuint framebuffer_uniform_id_;
    int msb_shadow_count_[2];
    GLuint vao;
    GLuint vertices_buf;
