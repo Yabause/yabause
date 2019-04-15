@@ -3021,7 +3021,7 @@ void YglUpdateVdp2Reg() {
     bufline[VDP1CORS] = (vdp1cor >> 8) & 0xFF;
     bufline[VDP1COGS] = (vdp1cog >> 8) & 0xFF;
     bufline[VDP1COBS] = (vdp1cob >> 8) & 0xFF;
-    bufline[CRAOFB] = (varVdp2Regs->CRAOFB & 0x7);
+    bufline[CRAOFB] = ((varVdp2Regs->CRAOFB>>4) & 0x7);
 
     if (memcmp(bufline, &_Ygl->vdp2buf[i*NB_VDP2_REG], NB_VDP2_REG) != 0){
       needupdate = 1;

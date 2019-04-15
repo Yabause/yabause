@@ -1673,7 +1673,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  if (u_coloroffset_sign.r != 0.0) u_coloroffset.r = 1.0-u_coloroffset.r;\n"
 "  if (u_coloroffset_sign.g != 0.0) u_coloroffset.g = 1.0-u_coloroffset.g;\n"
 "  if (u_coloroffset_sign.b != 0.0) u_coloroffset.b = 1.0-u_coloroffset.b;\n"
-"  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0);\n"
+"  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0)<<8;\n"
 "  int u_cctl = int(texelFetch(s_vdp2reg, ivec2(16+line,0), 0).r*255.0);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
 "  int additionalAttr = int(fbColorAttr.a * 255.0);\n"
