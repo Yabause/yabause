@@ -2993,7 +2993,7 @@ void YglSetVDP2Reg(u32 * pbuf, int start, int size){
 
 void YglUpdateVdp2Reg() {
   int needupdate = 0;
-  for (int i = 0; i<=yabsys.VBlankLineCount; i++) {
+  for (int i = 0; i<yabsys.VBlankLineCount; i++) {
     Vdp2 *varVdp2Regs = &Vdp2Lines[i];
     u8 bufline[NB_VDP2_REG] = {0};
     updateColorOffset(varVdp2Regs);
