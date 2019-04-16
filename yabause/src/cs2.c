@@ -2238,14 +2238,13 @@ static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectn
    if (*sectoffset == 0xFFFF)
    {
       // Last sector 
-      CDLOG("FIXME - Sector offset of 0xFFFF not supported\n");
+      *sectoffset = Cs2Area->partition[bufno].numblocks - 1;
    }
    else if (*sectnum == 0xFFFF)
    {
       // From sectoffset to last sector in partition
       *sectnum = Cs2Area->partition[bufno].numblocks - *sectoffset;
    }
-}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -2442,17 +2441,80 @@ void Cs2PutSectorData(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2CopySectorData(void) {
-   // finish me
-   doCDReport(Cs2Area->status);
-   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ECPY);
+ u32 source = Cs2Area->reg.CR3 >> 8;
+  u32 offset = Cs2Area->reg.CR2;
+  u32 dest = Cs2Area->reg.CR1 & 0xFF;
+  u32 count = Cs2Area->reg.CR4 & 0xFF;
+
+  if (source >= 0x18 || dest >= 0x18) {
+    Cs2Area->status = CDB_STAT_ERROR; // ToDo: check
+    doCDReport(Cs2Area->status);
+    Cs2SetIRQ(CDB_HIRQ_CMOK);
+    return;
+  }
+
+  partition_struct *putpartition = &Cs2Area->partition[dest];
+  partition_struct *srcpartition = &Cs2Area->partition[source];
+  if (offset == 0xFFFF) {
+    offset = srcpartition->numblocks - 1;
+  }
+
+  if (count == 0xFFFF) {
+    count = srcpartition->numblocks - offset;
+  }
+
+  for (int i = 0; i < count; i++) {
+    putpartition->block[putpartition->numblocks] = Cs2AllocateBlock(&putpartition->blocknum[putpartition->numblocks],2352);
+    u8 *dest_ptr =  putpartition->block[putpartition->numblocks]->data;
+    u8 *src_ptr = srcpartition->block[offset+i]->data;
+    memcpy(dest_ptr, src_ptr, sizeof(u8) * 2352);
+    putpartition->numblocks++;
+    putpartition->size += 2352;
+  }
+
+  
+  doCDReport(Cs2Area->status);
+  Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ECPY);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void Cs2MoveSectorData(void) {
-   // finish me
-   doCDReport(Cs2Area->status);
-   Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ECPY);
+
+  u32 source = Cs2Area->reg.CR3 >> 8;
+  u32 offset = Cs2Area->reg.CR2;
+  u32 dest = Cs2Area->reg.CR1 & 0xFF;
+  u32 count = Cs2Area->reg.CR4 & 0xFF;
+
+  if (source >= 0x18 || dest >= 0x18) {
+    Cs2Area->status = CDB_STAT_ERROR; // ToDo: check
+    doCDReport(Cs2Area->status);
+    Cs2SetIRQ(CDB_HIRQ_CMOK);
+    return;
+  }
+
+  partition_struct *putpartition = &Cs2Area->partition[dest];
+  partition_struct *srcpartition = &Cs2Area->partition[source];
+  if (offset == 0xFFFF) {
+    offset = srcpartition->numblocks - 1;
+  }
+
+  if (count == 0xFFFF) {
+    count = srcpartition->numblocks - offset;
+  }
+
+  for (int i = 0; i < count; i++) {
+    putpartition->block[putpartition->numblocks] = srcpartition->block[offset + i];
+    srcpartition->numblocks--;
+    srcpartition->size -= 2352;
+    srcpartition->block[offset + i] = NULL;
+    putpartition->numblocks++;
+    putpartition->size += 2352;
+  }
+
+  Cs2SortBlocks(&Cs2Area->partition[source]);
+  doCDReport(Cs2Area->status);
+  Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_ECPY);
 }
 
 //////////////////////////////////////////////////////////////////////////////
