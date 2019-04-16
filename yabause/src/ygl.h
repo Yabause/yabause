@@ -208,7 +208,7 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "threads.h"
 #include "vidshared.h"
 
-#define DEBUG_BLIT
+//#define DEBUG_BLIT
 
 #ifdef DEBUG_BLIT
 #define NB_RENDER_LAYER 5
