@@ -2245,6 +2245,7 @@ static INLINE void CalcSectorOffsetNumber(u32 bufno, u32 *sectoffset, u32 *sectn
       // From sectoffset to last sector in partition
       *sectnum = Cs2Area->partition[bufno].numblocks - *sectoffset;
    }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
