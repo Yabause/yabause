@@ -2993,8 +2993,9 @@ void YglSetVDP2Reg(u32 * pbuf, int start, int size){
 
 void YglUpdateVdp2Reg() {
   int needupdate = 0;
-  for (int i = 0; i<yabsys.VBlankLineCount; i++) {
-    Vdp2 *varVdp2Regs = &Vdp2Lines[i];
+  int step = ((Vdp2Lines[0].TVMD >> 6) & 0x3 == 3)?2:1;
+  for (int i = 0; i<_Ygl->rheight; i++) {
+    Vdp2 *varVdp2Regs = &Vdp2Lines[i/step];
     u8 bufline[NB_VDP2_REG] = {0};
     updateColorOffset(varVdp2Regs);
 
@@ -3030,8 +3031,8 @@ void YglUpdateVdp2Reg() {
   }
   if (needupdate) {
       u8 * pbuf = YglGetVDP2RegPointer();
-      memcpy(pbuf, _Ygl->vdp2buf, yabsys.VBlankLineCount*NB_VDP2_REG);
-      YglSetVDP2Reg(pbuf, 0, yabsys.VBlankLineCount);
+      memcpy(pbuf, _Ygl->vdp2buf, _Ygl->rheight*NB_VDP2_REG);
+      YglSetVDP2Reg(pbuf, 0, _Ygl->rheight);
       needupdate = 0;
   }
 }
