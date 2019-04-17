@@ -2058,6 +2058,9 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   if (info->specialprimode == 1) {
     info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
   }
+
+  cacheaddr |= ((u64)(info->priority) & 0x07) << 42;
+
   tile.priority = info->priority;
 
   tile.vertices[0] = x;
