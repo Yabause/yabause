@@ -6484,19 +6484,19 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     {
       info->RotWin = _Ygl->win[0];
       // RPW0A( inside = 0, outside = 1 )
-      info->RotWinMode = ((varVdp2Regs->WCTLD & 0x01) == 0);
+      info->RotWinMode = (varVdp2Regs->WCTLD & 0x01);
       // Enable Window1(RPW1E)?
     }
     else if (((varVdp2Regs->WCTLD >> 3) & 0x01) == 0x01)
     {
       info->RotWin = _Ygl->win[1];
       // RPW1A( inside = 0, outside = 1 )
-      info->RotWinMode = (((varVdp2Regs->WCTLD >> 2) & 0x01) == 0);
+      info->RotWinMode = ((varVdp2Regs->WCTLD >> 2) & 0x01);
       // Bad Setting Both Window is disabled
     }
     else {
       info->RotWin = _Ygl->win[0];
-      info->RotWinMode = ((varVdp2Regs->WCTLD & 0x01) == 0);
+      info->RotWinMode = (varVdp2Regs->WCTLD & 0x01);
     }
 
     if (rgb->paraA.coefenab == 0 && rgb->paraB.coefenab == 0)
@@ -7054,7 +7054,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(RBGDrawInfo * rgb
   {
     if (start == end)
     {
-      return (&rgb->paraB);
+      return (&rgb->paraA);
     }
     else {
       if (h < start || h >= end)
