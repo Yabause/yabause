@@ -2842,7 +2842,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
   }
   else {
     if (parameter->k_mem_type == 0) { // vram
-      kdata = T1ReadLong(Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
+      kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
     } else { // cram
       kdata = T2ReadLong((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (h << 2)) & 0xFFF);
     }

@@ -69,28 +69,40 @@ int g_frame_count = 0;
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp2RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
    return T1ReadByte(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp2RamReadWord(SH2_struct *context, u8* mem, u32 addr) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
    return T1ReadWord(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Vdp2RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
    return T1ReadLong(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
 
    if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
@@ -111,7 +123,10 @@ void FASTCALL Vdp2RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
 
    if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
@@ -132,7 +147,10 @@ void FASTCALL Vdp2RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
 
    if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
