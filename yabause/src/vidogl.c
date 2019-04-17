@@ -943,7 +943,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
         temp = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr += 2;
 
-        if (!(temp & 0x8000) && !SPD) {
+        if (!(temp & 0x7FFF) && !SPD) {
           *texture->textdata++ = 0x00;
         }
         else if ((temp == 0x7FFF) && !END) {
