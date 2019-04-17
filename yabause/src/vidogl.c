@@ -6849,7 +6849,8 @@ void VIDOGLVdp2SetResolution(u16 TVMD)
     break;
   case 2: height = 256;
     break;
-  default: break;
+  default: height = 256;
+    break;
   }
 
   hratio = 1;
