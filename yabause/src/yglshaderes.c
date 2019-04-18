@@ -3185,7 +3185,6 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
     0.0f, 1.0f
   };
     float offsetcol[4];
-    YglMatrix result;
 
     glBindVertexArray(_Ygl->vao);
 
@@ -3196,25 +3195,6 @@ int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* mode
 
     glActiveTexture(GL_TEXTURE10);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe*2+1]);
-
-    //
-    if (Vdp1Regs->TVMR & 0x02){
-      YglMatrix rotate;
-      YglLoadIdentity(&rotate);
-      rotate.m[0][0] = Vdp1ParaA.deltaX;
-      rotate.m[0][1] = Vdp1ParaA.deltaY;
-      rotate.m[1][0] = Vdp1ParaA.deltaXst;
-      rotate.m[1][1] = Vdp1ParaA.deltaYst;
-      YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
-      YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
-      //cwidth = Vdp1Regs->systemclipX2;
-      //cheight = Vdp1Regs->systemclipY2;
-    }
-    else{
-      memcpy(&result, &_Ygl->mtxModelView, sizeof(result));
-      //cwidth = _Ygl->rwidth;
-      //cheight = _Ygl->rheight;
-    }
 
   int gltext[9] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8};
 
