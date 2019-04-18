@@ -6364,10 +6364,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   info->priority = varVdp2Regs->PRIR & 0x7;
   if (((Vdp2External.disptoggle & 0x10)==0) || (info->priority == 0)) {
-
-    if (Vdp1Regs->TVMR & 0x02) {
-      Vdp2ReadRotationTable(0, &Vdp1ParaA, varVdp2Regs, Vdp2Ram);
-    }
     free(rgb);
     return;
   }
@@ -6716,6 +6712,9 @@ static void VIDOGLVdp2DrawScreens(void)
   YglUpdateColorRam();
 
 LOG_ASYN("===================================\n");
+  if (Vdp1Regs->TVMR & 0x02) {
+    Vdp2ReadRotationTable(0, &Vdp1ParaA, &Vdp2Lines[VDP2_DRAW_LINE], Vdp2Ram);
+  }
   Vdp2DrawBackScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
   Vdp2DrawLineColorScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
 

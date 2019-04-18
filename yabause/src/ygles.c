@@ -51,6 +51,8 @@ static void waitVdp1End(int id);
 static void executeTMVDP1(int in, int out);
 static void releaseVDP1FB(int i);
 
+extern vdp2rotationparameter_struct  Vdp1ParaA;
+
 u32 * YglGetColorRamPointer();
 
 int YglGenFrameBuffer();
@@ -2660,13 +2662,11 @@ void YglRenderVDP1(void) {
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   //YabThreadLock(_Ygl->mutex);
   YglMatrix m, *mat;
+  mat = &_Ygl->mtxModelView;
 
   FrameProfileAdd("YglRenderVDP1 start");
 
   glBindVertexArray(_Ygl->vao);
-  YglLoadIdentity(&m);
-
-  mat = &_Ygl->mtxModelView;
 
   FRAMELOG("YglRenderVDP1: drawframe =%d", _Ygl->drawframe);
 
@@ -2697,10 +2697,19 @@ void YglRenderVDP1(void) {
   glDisable(GL_CULL_FACE);
 
   if (Vdp1Regs->TVMR & 0x02) {
+    YglMatrix rotate;
     int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
     int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
+    YglLoadIdentity(&rotate);
+    rotate.m[0][0] = Vdp1ParaA.deltaX;
+    rotate.m[0][1] = Vdp1ParaA.deltaY;
+    rotate.m[1][0] = Vdp1ParaA.deltaXst;
+    rotate.m[1][1] = Vdp1ParaA.deltaYst;
+    YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
+    YglMatrixMultiply(&m, mat, &rotate);
     glViewport(x/2,y/2,_Ygl->width+x,_Ygl->height-y);
     glScissor(x/2,y/2,_Ygl->width+x,_Ygl->height-y);
+    mat = &m;
   } else {
     glViewport(0, 0,_Ygl->width,_Ygl->height);
     glScissor(0, 0,_Ygl->width,_Ygl->height);
