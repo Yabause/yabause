@@ -2697,7 +2697,7 @@ void YglRenderVDP1(void) {
   glDisable(GL_CULL_FACE);
 
   if (Vdp1Regs->TVMR & 0x02) {
-    YglMatrix rotate;
+    YglMatrix rotate, scale;
     int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
     int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
     YglLoadIdentity(&rotate);
@@ -2707,13 +2707,16 @@ void YglRenderVDP1(void) {
     rotate.m[1][1] = Vdp1ParaA.deltaYst;
     YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
     YglMatrixMultiply(&m, mat, &rotate);
-    glViewport(x/2,y/2,_Ygl->width+x,_Ygl->height-y);
-    glScissor(x/2,y/2,_Ygl->width+x,_Ygl->height-y);
+    YglLoadIdentity(&scale);
+    scale.m[0][0] = 1.0;
+    scale.m[1][1] = 0.5;
+    scale.m[1][3] = (float)(1.0)/2.0;
+    YglMatrixMultiply(&m, &scale, &m);
     mat = &m;
-  } else {
-    glViewport(0, 0,_Ygl->width,_Ygl->height);
-    glScissor(0, 0,_Ygl->width,_Ygl->height);
   }
+  glViewport(0, 0,_Ygl->width,_Ygl->height);
+  glScissor(0, 0,_Ygl->width,_Ygl->height);
+
   glEnable(GL_SCISSOR_TEST);
 
   glActiveTexture(GL_TEXTURE0);
