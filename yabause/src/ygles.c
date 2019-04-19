@@ -2709,8 +2709,9 @@ void YglRenderVDP1(void) {
     YglMatrixMultiply(&m, mat, &rotate);
     YglLoadIdentity(&scale);
     scale.m[0][0] = 1.0;
-    scale.m[1][1] = 0.5;
-    scale.m[1][3] = (float)(1.0)/2.0;
+    scale.m[1][1] = 1.0 / (1.0 + Vdp1ParaA.deltaY);
+    scale.m[0][3] = 0.0;
+    scale.m[1][3] = 1.0 - scale.m[1][1];
     YglMatrixMultiply(&m, &scale, &m);
     mat = &m;
   }
