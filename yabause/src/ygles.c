@@ -974,7 +974,7 @@ int YglGenerateWindowBuffer(){
   for (int i=0; i<SPRITE; i++) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->window_fbotex[i]);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1019,7 +1019,7 @@ int YglGenerateWindowCCBuffer(){
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1049,7 +1049,7 @@ int YglGenerateScreenBuffer(){
   GLuint error;
   float col[4] = {0.0f,0.0f,0.0f,0.0f};
 
-  YGLDEBUG("YglGenerateScreenBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
+  YGLDEBUG("YglGenerateScreenBuffer: %d,%d\n", _Ygl->rwidth, _Ygl->rheight);
 
   if (_Ygl->screen_fbotex[0] != 0) {
     glDeleteTextures(SPRITE,&_Ygl->screen_fbotex[0]);
@@ -1060,7 +1060,7 @@ int YglGenerateScreenBuffer(){
   for (int i=0; i<SPRITE; i++) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[i]);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1071,7 +1071,7 @@ int YglGenerateScreenBuffer(){
   if (_Ygl->screen_depth != 0) glDeleteRenderbuffers(1, &_Ygl->screen_depth);
   glGenRenderbuffers(1, &_Ygl->screen_depth);
   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->screen_depth);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->rwidth, _Ygl->rheight);
 
   if (_Ygl->screen_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->screen_fbo);
@@ -1112,7 +1112,7 @@ int YglGenerateBackBuffer(){
   for (int i=0; i<2; i++) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[i]);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -3328,11 +3328,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glDepthMask(GL_FALSE);
    //glEnable(GL_DEPTH_TEST);
 
-   glViewport(0, 0, _Ygl->width, _Ygl->height);
+   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
 
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
 
-   glScissor(_Ygl->m_viewport[0],_Ygl->m_viewport[1],_Ygl->m_viewport[2],_Ygl->m_viewport[3]);
+   glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
    glEnable(GL_SCISSOR_TEST);
 
    //glClearBufferfv(GL_COLOR, 0, colopaque);
@@ -3398,6 +3398,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
     }
   }
   lncl_draw[6] = lncl[6];
+
+  glViewport(0, 0, _Ygl->width, _Ygl->height);
+  glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
+  glScissor(0, 0, _Ygl->width, _Ygl->height);
 
   modescreens[6] =  setupBlend(varVdp2Regs, 6);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);

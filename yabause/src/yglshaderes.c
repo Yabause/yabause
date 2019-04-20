@@ -364,8 +364,8 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glUniform1i(id_normal_cram_s_color, 1);
   glUniform1i(id_normal_cram_s_perline, 2);
   glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
-  glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(id_normal_cram_vheight, (float)_Ygl->height);
+  glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->rheight);
+  glUniform1f(id_normal_cram_vheight, (float)_Ygl->rheight);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
@@ -739,8 +739,8 @@ int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, i
     glUniform1i(id_normal_cram_s_color, 1);
     glUniform1i(id_normal_cram_s_perline, 2);
     glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
-    glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
-    glUniform1f(id_normal_cram_vheight, (float)_Ygl->height);
+    glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->rheight);
+    glUniform1f(id_normal_cram_vheight, (float)_Ygl->rheight);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID);
@@ -918,8 +918,8 @@ int Ygl_uniformWindow(void * p )
    GLUSEPROG(prg->prgid );
    glUniform1i(_Ygl->windowpg.tex0, 0);
    glUniform1i(_Ygl->windowpg.tex1, 1);
-   glUniform1f(_Ygl->windowpg.emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
-   glUniform1f(_Ygl->windowpg.vheight, (float)_Ygl->height);
+   glUniform1f(_Ygl->windowpg.emu_height, (float)_Ygl->rheight / (float)_Ygl->rheight);
+   glUniform1f(_Ygl->windowpg.vheight, (float)_Ygl->rheight);
    glUniform1f(_Ygl->windowpg.emu_width, (float)_Ygl->rwidth / (float)_Ygl->width);
    glUniform1f(_Ygl->windowpg.vwidth, (float)_Ygl->width);
    glEnableVertexAttribArray(0);
@@ -3142,8 +3142,8 @@ int YglDrawBackScreen() {
   else{
     GLUSEPROG(clear_prg);
   }
-  glUniform1f(glGetUniformLocation(clear_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(glGetUniformLocation(clear_prg, "u_vheight"), (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(clear_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->rheight);
+  glUniform1f(glGetUniformLocation(clear_prg, "u_vheight"), (float)_Ygl->rheight);
 
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);
