@@ -1052,12 +1052,12 @@ int YglGenerateScreenBuffer(){
   YGLDEBUG("YglGenerateScreenBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
 
   if (_Ygl->screen_fbotex[0] != 0) {
-    glDeleteTextures(enBGMAX,&_Ygl->screen_fbotex[0]);
+    glDeleteTextures(SPRITE,&_Ygl->screen_fbotex[0]);
   }
-  glGenTextures(enBGMAX, &_Ygl->screen_fbotex[0]);
+  glGenTextures(SPRITE, &_Ygl->screen_fbotex[0]);
 
 
-  for (int i=0; i<enBGMAX; i++) {
+  for (int i=0; i<SPRITE; i++) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->screen_fbotex[i]);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -1085,7 +1085,6 @@ int YglGenerateScreenBuffer(){
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _Ygl->screen_fbotex[3], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _Ygl->screen_fbotex[4], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _Ygl->screen_fbotex[5], 0);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT6, GL_TEXTURE_2D, _Ygl->screen_fbotex[6], 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, _Ygl->screen_depth);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {

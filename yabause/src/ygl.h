@@ -598,7 +598,7 @@ typedef struct {
    GLuint back_fbotex[2];
 
    GLuint screen_fbo;
-   GLuint screen_fbotex[enBGMAX];
+   GLuint screen_fbotex[SPRITE];
    GLuint screen_depth;
 
    GLuint window_fbo;
