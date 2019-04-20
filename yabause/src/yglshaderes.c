@@ -1156,41 +1156,7 @@ SHADER_VERSION
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
-const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float;\n"
-"#endif\n"
-"uniform sampler2D u_sprite;\n"
-"uniform highp sampler2D u_fbo_attr;\n"
-"in vec4 v_texcoord;\n"
-"in vec4 v_vtxcolor;\n"
-"out vec4 fragColor; \n"
-"out vec4 fragColorAttr; \n"
-"void main() {\n"
-"  int mode;\n"
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  int shadow = 0;\n"
-"  int additionnal = int(spriteColor.a * 255.0)&0xF8;\n"
-"  if (additionnal == 0x88) {\n"
-"    if ((int(spriteColor.b * 255.0)==0x80) && (spriteColor.rg == vec2(0.0))) shadow = 1;\n"
-"  }\n"
-"  if (shadow != 0) {\n"
-"    fragColorAttr.rgb = vec3(0.0);\n"
-"    fragColorAttr.a = float(shadow)/255.0;\n"
-"    fragColor.rgb = vec3(0.0);\n"
-"  } else { \n"
-"    fragColorAttr = vec4(0.0);\n"
-"    fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
-"  }\n"
-"  fragColor.a = spriteColor.a;  \n"
-"}\n";
-const GLchar * pYglprg_vdp1_gouraudshading_spd_f[] = { Yglprg_vdp1_gouraudshading_spd_f, NULL };
-
 static YglVdp1CommonParam id_g = { 0 };
-static YglVdp1CommonParam id_spd_g = { 0 };
-
 
 /*------------------------------------------------------------------------------------
  *  VDP1 MSB shadow Operation
@@ -1424,7 +1390,6 @@ const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
 
 static YglVdp1CommonParam mesh = { 0 };
 static YglVdp1CommonParam grow_tess = { 0 };
-static YglVdp1CommonParam grow_spd_tess = { 0 };
 static YglVdp1CommonParam mesh_tess = { 0 };
 static YglVdp1CommonParam id_msb_tess = { 0 };
 
@@ -2498,13 +2463,6 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING], &id_g);
 
-   YGLLOG("PG_VDP1_GOURAUDSHADING_SPD\n");
-   if (YglInitShader(PG_VDP1_GOURAUDSHADING_SPD, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_spd_f, 1, NULL, NULL, NULL) != 0)
-     return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_SPD], &id_spd_g);
-
-
    YGLLOG("PG_VDP2_DRAWFRAMEBUFF --START--\n");
 
    if (YglInitDrawFrameBufferShaders() != 0) {
@@ -2615,18 +2573,6 @@ int YglTesserationProgramInit()
       return -1;
 
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_TESS], &grow_tess);
-
-    YGLLOG("PG_VDP1_GOURAUDSHADING_SPD_TESS\n");
-    if (YglInitShader(PG_VDP1_GOURAUDSHADING_SPD_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_gouraudshading_spd_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_SPD_TESS], &grow_spd_tess);
 
   //-----------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VDP1_MSB_SHADOW_TESS\n");
@@ -2851,18 +2797,6 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->mtxTexture = id_g.mtxTexture;
       current->tex0 = id_g.tex0;
    }
-   else if (prgid == PG_VDP1_GOURAUDSHADING_SPD)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &id_spd_g;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->mtxModelView = id_spd_g.mtxModelView;
-     current->mtxTexture = id_spd_g.mtxTexture;
-     current->tex0 = id_spd_g.tex0;
-   }
    else if (prgid == PG_VDP1_MSB_SHADOW)
    {
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1ShadowParam;
@@ -2878,17 +2812,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &grow_tess;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->mtxModelView = grow_tess.mtxModelView;
-     current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"u_texMatrix");
-     current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"s_texture");
-   }
-   else if (prgid == PG_VDP1_GOURAUDSHADING_SPD_TESS){
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &grow_spd_tess;
      current->vertexp = 0;
      current->texcoordp = 1;
      level->prg[level->prgcurrent].vaid = 2;

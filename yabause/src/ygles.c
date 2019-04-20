@@ -1575,9 +1575,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
     case VDP1_COLOR_CL_SHADOW:
       prg = PG_VDP1_SHADOW;
       break;
-    case VDP1_COLOR_SPD:
-      prg = PG_VDP1_GOURAUDSHADING_SPD;
-      break;
     case VDP1_COLOR_CL_MSB_SHADOW:
       prg = PG_VDP1_MSB_SHADOW;
       break;
@@ -1823,9 +1820,6 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
     case VDP1_COLOR_CL_SHADOW:
       prg = PG_VDP1_SHADOW;
       break;
-    case VDP1_COLOR_SPD:
-      prg = PG_VDP1_GOURAUDSHADING_SPD;
-      break;
     case VDP1_COLOR_CL_MSB_SHADOW:
       prg = PG_VDP1_MSB_SHADOW;
       break;
@@ -2001,9 +1995,6 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
     break;
     case VDP1_COLOR_CL_SHADOW:
       prg = PG_VDP1_SHADOW_TESS;
-    break;
-    case VDP1_COLOR_SPD:
-      prg = PG_VDP1_GOURAUDSHADING_SPD_TESS;
     break;
     case VDP1_COLOR_CL_MSB_SHADOW:
       prg = PG_VDP1_MSB_SHADOW_TESS;
