@@ -3167,7 +3167,7 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(int *texture, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* lncl, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* lncl, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
