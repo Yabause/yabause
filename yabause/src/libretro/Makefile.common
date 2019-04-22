@@ -1,9 +1,13 @@
 SOURCE_DIR := $(CORE_DIR)/..
 LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
 
-INCFLAGS := -I$(CORE_DIR) -I$(SOURCE_DIR) -I$(LIBRETRO_COMM_DIR)/include -I$(SOURCE_DIR)/musashi -I$(SOURCE_DIR)/sh2_kronos
+INCLUDE_DIRS := $(CORE_DIR) \
+	$(SOURCE_DIR) \
+	$(LIBRETRO_COMM_DIR)/include \
+	$(SOURCE_DIR)/musashi \
+	$(SOURCE_DIR)/sh2_kronos
 
-OBJECTS_S :=
+SOURCES_S :=
 
 SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/bios.c \
@@ -45,8 +49,8 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/zlib/inftrees.c \
 	$(SOURCE_DIR)/zlib/zutil.c \
 	$(SOURCE_DIR)/vidogl.c \
-	$(SOURCE_DIR)/ygles.c \
 	$(SOURCE_DIR)/yglcache.c \
+	$(SOURCE_DIR)/ygles.c \
 	$(SOURCE_DIR)/yglshaderes.c \
 	$(SOURCE_DIR)/patternManager.c \
 	$(SOURCE_DIR)/upscale_shader.c \
@@ -63,11 +67,22 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
 	$(LIBRETRO_COMM_DIR)/file/file_path.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
-	$(LIBRETRO_COMM_DIR)/glsm/glsm.c \
-	$(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c \
-	$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	$(CORE_DIR)/libretro.c
+
+ifeq ($(FORCE_GLEW), 1)
+	SOURCES_C += $(SOURCE_DIR)/gllibs/glew/glew.c
+	INCLUDE_DIRS += $(SOURCE_DIR)/gllibs/include
+else
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
+		$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
+		$(CORE_DIR)/glsym_private.c
+	ifeq ($(HAVE_GLES), 1)
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
+	else
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
+	endif
+endif
 
 ifeq ($(HAVE_MUSASHI), 1)
 	SOURCES_C += $(SOURCE_DIR)/musashi/m68kcpu.c \
@@ -81,12 +96,12 @@ else
 	$(SOURCE_DIR)/m68kc68k.c
 endif
 
-ifneq (,$(findstring unix,$(platform)))
+ifeq ($(ARCH_IS_LINUX), 1)
 	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
-else ifneq (,$(findstring osx,$(platform)))
+else ifeq ($(ARCH_IS_MACOSX), 1)
 	SOURCES_C += $(SOURCE_DIR)/thr-linux.c \
 	$(SOURCE_DIR)/pthread_barrier.c
-else ifneq (,$(findstring win,$(platform)))
+else
 	SOURCES_C += $(SOURCE_DIR)/thr-windows.c
 endif
 
@@ -117,5 +132,9 @@ M68KMAKE_INC_SOURCES := $(SOURCE_DIR)/musashi/m68kops.h \
 	$(SOURCE_DIR)/musashi/m68kops.c
 
 C68KEXEC_SOURCE := $(SOURCE_DIR)/c68k/c68kexec.c
-C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.o)
+C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.c.o)
+
+OBJECTS_C += $(SOURCES_C:.c=.c.o)
+OBJECTS_CXX += $(SOURCES_CXX:.cpp=.cpp.o)
+OBJECTS_S += $(SOURCES_S:.s=.s.o)
 

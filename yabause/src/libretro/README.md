@@ -1,7 +1,7 @@
 # Kronos libretro
 
 ## How to build
-From the root project directory, run `make -C libretro`.
+From the root project directory, run `make -C yabause/src/libretro`.
 
 Library will be built in the libretro subfolder.
 

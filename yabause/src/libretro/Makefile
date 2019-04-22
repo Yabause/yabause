@@ -1,12 +1,16 @@
 DEBUG = 0
 DEBUG_ASAN = 0
 DEBUG_UBSAN = 0
+DEBUG_TSAN = 0
 HAVE_SSE = 1
 __USE_OPENGL_DEBUG__ = 0
-# AFAIK, musashi should be disabled for 32bits
 HAVE_MUSASHI = 1
 HAVE_GLES = 0
 FASTMATH = 1
+UNROLL_LOOPS = 1
+ARCH_IS_LINUX = 0
+ARCH_IS_MACOSX = 0
+FORCE_GLEW = 0
 
 ifeq ($(platform),)
 	platform = unix
@@ -53,8 +57,8 @@ ifneq (,$(findstring unix,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread
-	FLAGS += -DARCH_IS_LINUX=1
+	LDFLAGS += -lpthread -lGL
+	ARCH_IS_LINUX = 1
 	# ARM
 	ifneq (,$(findstring armv,$(platform)))
 		ifneq (,$(findstring cortexa8,$(platform)))
@@ -76,11 +80,6 @@ ifneq (,$(findstring unix,$(platform)))
 		HAVE_SSE = 0
 		FLAGS += -DARM
 	endif
-	ifeq ($(HAVE_GLES), 1)
-		LDFLAGS += -lGL -lGLESv2
-	else
-		LDFLAGS += -lGL
-	endif
 
 # Jetson Nano
 else ifeq ($(platform), jetson-nano)
@@ -88,11 +87,22 @@ else ifeq ($(platform), jetson-nano)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread
-	FLAGS += -DARCH_IS_LINUX=1
+	LDFLAGS += -lpthread -lGL
+	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
 	FLAGS += -march=armv8-a+crc -mtune=cortex-a57
-	LDFLAGS += -lGL
+
+# RockPro64
+else ifneq (,$(findstring rockpro64,$(platform)))
+	override platform += unix
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+	LDFLAGS += -lpthread -lGL
+	ARCH_IS_LINUX = 1
+	HAVE_SSE = 0
+	HAVE_GLES = 1
+	FLAGS += -march=armv8-a+crc -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
 
 # ODROIDs
 else ifeq ($(platform), odroid-n2)
@@ -100,20 +110,24 @@ else ifeq ($(platform), odroid-n2)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread
-	FLAGS += -DARCH_IS_LINUX=1
+	LDFLAGS += -lpthread -lGL
+	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
 	HAVE_GLES = 1
-	FLAGS += -march=armv8-a+crc -mtune=cortex-a73.cortex-a53
-	LDFLAGS += -lGL -lGLESv2
+	# ODROID-N2
+	ifneq (, $(findstring clang,$(CC)))
+		FLAGS += -march=armv8-a+crc
+	else
+		FLAGS += -march=armv8-a+crc -mtune=cortex-a73.cortex-a53
+	endif
 
 else ifneq (,$(findstring odroid,$(platform)))
 	override platform += unix
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	LDFLAGS += -lpthread
-	FLAGS += -DARCH_IS_LINUX=1
+	LDFLAGS += -lpthread -lGL
+	ARCH_IS_LINUX = 1
 	BOARD := $(shell cat /proc/cpuinfo | grep -i odroid | awk '{print $$3}')
 
 	ifneq (,$(findstring ODROID-XU3,$(BOARD)))
@@ -135,28 +149,22 @@ else ifneq (,$(findstring odroid,$(platform)))
 			FLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a9 -mfpu=neon
 		endif
 	endif
-	ifeq ($(HAVE_GLES), 1)
-		LDFLAGS += -lGL -lGLESv2
-	else
-		LDFLAGS += -lGL
-	endif
 
 # OS X
 else ifneq (,$(findstring osx,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.dylib
 	fpic := -fPIC
-OSXVER = $(shell sw_vers -productVersion | cut -d. -f 2)
+	OSXVER = $(shell sw_vers -productVersion | cut -d. -f 2)
 	OSX_GT_MOJAVE = $(shell (( $(OSXVER) >= 14)) && echo "YES")
-ifneq ($(OSX_GT_MOJAVE),YES)
-	#this breaks compiling on Mac OS Mojave
-	fpic += -mmacosx-version-min=10.1
-endif
-	FLAGS += -DARCH_IS_MACOSX=1
+	ifneq ($(OSX_GT_MOJAVE),YES)
+		#this breaks compiling on Mac OS Mojave
+		fpic += -mmacosx-version-min=10.1
+	endif
+	ARCH_IS_MACOSX = 1
 	SHARED := -dynamiclib
-	FLAGS += -DARCH_IS_MACOSX=1
-ifeq ($(arch),ppc)
-	ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
-endif
+	ifeq ($(arch),ppc)
+		ENDIANNESS_DEFINES := -DWORDS_BIGENDIAN -DMSB_FIRST -D__ppc__
+	endif
 	LDFLAGS += -lpthread -framework OpenGL
 
 else ifneq (,$(findstring ios,$(platform)))
@@ -253,10 +261,16 @@ ifeq ($(DEBUG_UBSAN), 1)
 	LDFLAGS += -lubsan -fsanitize=undefined
 endif
 
+ifeq ($(DEBUG_TSAN), 1)
+	DEBUG = 1
+	FLAGS += -ltsan -fsanitize=thread
+	LDFLAGS += -ltsan -fsanitize=thread
+endif
+
 ifeq ($(DEBUG), 1)
 	FLAGS += -O0 -g
 else
-	FLAGS += -O3 -DNDEBUG -fomit-frame-pointer
+	FLAGS += -O3 -fomit-frame-pointer -DNDEBUG
 endif
 
 ifeq ($(HAVE_MUSASHI), 1)
@@ -267,6 +281,18 @@ endif
 
 ifeq ($(HAVE_GLES), 1)
 	FLAGS += -DHAVE_GLES
+	LDFLAGS += -lGLESv2
+	ifeq ($(FORCE_GLEW), 0)
+		FLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES3
+	endif
+endif
+
+ifeq ($(ARCH_IS_LINUX), 1)
+	FLAGS += -DARCH_IS_LINUX=1
+endif
+
+ifeq ($(ARCH_IS_MACOSX), 1)
+	FLAGS += -DARCH_IS_MACOSX=1
 endif
 
 ifeq ($(FASTMATH), 1)
@@ -275,22 +301,33 @@ ifeq ($(FASTMATH), 1)
 	endif
 endif
 
-OBJECTS += $(SOURCES_C:.c=.o) $(SOURCES_CXX:.cpp=.o)
+ifeq ($(UNROLL_LOOPS), 1)
+	ifeq (,$(findstring msvc,$(platform)))
+		FLAGS += -funroll-loops
+	endif
+endif
+
+ifeq ($(FORCE_GLEW), 1)
+	FLAGS += -DGLEW_STATIC -D_USEGLEW_ -DGLEW_NO_GLU
+else
+	FLAGS += -DHAVE_GLSYM_PRIVATE
+endif
+
+OBJECTS += $(OBJECTS_C) $(OBJECTS_CXX) $(OBJECTS_S)
 
 LDFLAGS += $(fpic) $(SHARED)
 FLAGS += $(fpic)
 
+INCFLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
+
 WARNINGS :=
-FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) \
+FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) -DVERSION=\"1.6.0\" \
 	-DNO_CLI -DDYNAREC_KRONOS=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 \
 	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
-	-DPACKAGE=\"Kronos\" -DSPRITE_CACHE=1 -DHAVE_LIBGL -D_OGLES3_ -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 \
-	-DVERSION=\"1.6.0\"
+	-DSPRITE_CACHE=1 -DHAVE_LIBGL -D_OGLES3_ -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1
 
-CXXFLAGS += $(FLAGS)
-
-CFLAGS += $(FLAGS)
-CFLAGS += -std=gnu99 -funroll-loops
+CFLAGS += $(FLAGS) -std=gnu99
+CXXFLAGS += $(FLAGS) -std=gnu++11
 
 all: $(TARGET)
 
@@ -306,11 +343,7 @@ else
 endif
 
 generate-files-clean:
-ifeq ($(HAVE_MUSASHI), 1)
-	rm -f $(SOURCE_DIR)/zlib/zconf.h $(M68KMAKE_INC_SOURCES) $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE)
-else
-	rm -f $(SOURCE_DIR)/zlib/zconf.h $(GEN68K_INC_SOURCES) $(SOURCE_DIR)/c68k/$(GEN68K_EXE)
-endif
+	rm -f $(SOURCE_DIR)/zlib/zconf.h $(M68KMAKE_INC_SOURCES) $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(GEN68K_INC_SOURCES) $(SOURCE_DIR)/c68k/$(GEN68K_EXE)
 
 $(TARGET): $(OBJECTS)
 ifeq ($(STATIC_LINKING), 1)
@@ -319,22 +352,22 @@ else
 	$(CXX) -o $@ $^ $(LDFLAGS)
 endif
 
-%.o: %.S
+%.S.o: %.S
 	$(CC_AS) $(CFLAGS) -c $^ -o $@
 
-%.o: %.s
+%.s.o: %.s
 	$(CC_AS) $(CFLAGS) -c $^ -o $@
 
-%.o: %.cpp
+%.cpp.o: %.cpp
 	$(CXX) -c -o $@ $< $(CXXFLAGS)
 
-%.o: %.c
+%.c.o: %.c
 	$(CC) -c -o $@ $< $(CFLAGS)
 
 $(C68KEXEC_OBJECT): $(C68KEXEC_SOURCE)
 	$(CC) -c -o $@ $< $(CFLAGS) -O0
 
 clean:
-	rm -f $(TARGET) $(OBJECTS)
+	rm -f $(TARGET) $(OBJECTS) $(SOURCE_DIR)/musashi/$(M68KMAKE_EXE) $(SOURCE_DIR)/c68k/$(GEN68K_EXE)
 
 .PHONY: clean
