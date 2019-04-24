@@ -3381,8 +3381,7 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   GlWidth = w;
   GlHeight = h;
 
-  maxWidth = (GlWidth < _Ygl->width)?GlWidth:_Ygl->width;
-  maxHeight = (GlHeight < _Ygl->height)?GlWidth:_Ygl->height;
+  setupMaxSize();
 
   _Ygl->originx = originx;
   _Ygl->originy = originy;

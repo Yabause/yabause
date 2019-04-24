@@ -857,7 +857,7 @@ int YglGenFrameBuffer() {
   glGenTextures(4, _Ygl->vdp1FrameBuff);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, maxWidth, maxHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -865,7 +865,7 @@ int YglGenFrameBuffer() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[1]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, maxWidth, maxHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -873,7 +873,7 @@ int YglGenFrameBuffer() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[2]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, maxWidth, maxHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -881,7 +881,7 @@ int YglGenFrameBuffer() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[3]);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, maxWidth, maxHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -925,7 +925,7 @@ int YglGenFrameBuffer() {
   if (_Ygl->rboid_depth != 0) glDeleteRenderbuffers(1, &_Ygl->rboid_depth);
   glGenRenderbuffers(1, &_Ygl->rboid_depth);
   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->rboid_depth);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, maxWidth, maxHeight);
 
   if (_Ygl->vdp1fbo != 0)
     glDeleteFramebuffers(1, &_Ygl->vdp1fbo);
@@ -2707,8 +2707,8 @@ void YglRenderVDP1(void) {
     YglMatrixMultiply(&m, &scale, &m);
     mat = &m;
   }
-  glViewport(0, 0,_Ygl->width,_Ygl->height);
-  glScissor(0, 0,_Ygl->width,_Ygl->height);
+  glViewport(0, 0, maxWidth, maxHeight);
+  glScissor(0, 0, maxWidth, maxHeight);
 
   glEnable(GL_SCISSOR_TEST);
 
@@ -3768,7 +3768,18 @@ void YglSetBackColor(int size) {
   glBindTexture(GL_TEXTURE_2D, 0);
   return;
 }
+void setupMaxSize() {
+  int oldWidth = maxWidth;
+  int oldHeight = maxHeight;
+  maxWidth = _Ygl->width;
+  maxHeight = _Ygl->height;
 
+  if ((_Ygl->rwidth != 0) && (maxWidth > GlWidth)) maxWidth = _Ygl->rwidth * (GlWidth/_Ygl->rwidth + 1);
+  if ((_Ygl->rheight != 0) && (maxHeight > GlHeight)) maxHeight = _Ygl->rheight * (GlHeight/_Ygl->rheight + 1);
+
+  if (oldWidth != maxWidth) rebuild_frame_buffer = 1;
+  if (oldHeight != maxHeight) rebuild_frame_buffer = 1;
+}
 //////////////////////////////////////////////////////////////////////////////
 
 void YglChangeResolution(int w, int h) {
@@ -3812,8 +3823,7 @@ void YglChangeResolution(int w, int h) {
   _Ygl->width = w * _Ygl->resolution_mode;
   _Ygl->height = h * _Ygl->resolution_mode;
 
-  maxWidth = (GlWidth < _Ygl->width)?GlWidth:_Ygl->width;
-  maxHeight = (GlHeight < _Ygl->height)?GlWidth:_Ygl->height;
+  setupMaxSize();
 
   rebuild_frame_buffer = 1;
 
