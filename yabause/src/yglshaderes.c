@@ -1379,11 +1379,14 @@ SHADER_VERSION
 "uniform sampler2D u_fbo;         \n"
 "in vec4 v_texcoord;         \n"
 "in vec4 v_vtxcolor;         \n"
-"out highp vec4 fragColor; \n "
+"out vec4 fragColor; \n "
+"out vec4 fragColorAttr; \n"
 "void main() {    \n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  if( spriteColor.a == 0.0 ) discard;         \n"
+"  fragColorAttr = vec4(0.0);\n"
+"  fragColorAttr.r = 1.0;\n"
 "  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
 "  fragColor.a = spriteColor.a;  \n"
 "}\n";
@@ -1644,6 +1647,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  int u_cctl = int(texelFetch(s_vdp2reg, ivec2(16+line,0), 0).r*255.0);\n"
 "  int additional = int(fbColor.a * 255.0);\n"
 "  int additionalAttr = int(fbColorAttr.a * 255.0);\n"
+"  int additionalAlpha = int(fbColorAttr.r * 255.0);\n"
 "  if( ((additional & 0x80) == 0) && ((additionalAttr & 0x80) == 0) ){ return;} // show? \n"
 "  int prinumber = (additional&0x07); \n"
 "  int depth = int(texelFetch(s_vdp2reg, ivec2(prinumber+8+line,0), 0).r*255.0);\n"
@@ -1702,6 +1706,10 @@ const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
 " if (fbmode == 1) vdp1mode = 4; \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
+" }\n"
+" if(additionalAlpha != 0) {\n"
+"   alpha = 0x78;\n"
+"   vdp1mode = 3;\n"
 " }\n"
 " tmpColor.a = float(alpha|vdp1mode)/255.0; \n"
 " framebuffColor = tmpColor;\n"
