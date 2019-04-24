@@ -2762,95 +2762,120 @@ void YglDmyRenderVDP1(void) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
+static int useRotWin = 0;
 void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 {
   float col[4] = {0.0f,0.0f,0.0f,0.0f};
+  GLenum DrawBuffers[SPRITE]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5};
   float const vertexPosition[] = {
     _Ygl->rwidth, 0.0f,
     0.0f, 0.0f,
     _Ygl->rwidth, _Ygl->rheight,
     0.0f, _Ygl->rheight };
 
-// Missing color calculation window
-// Missing rotation parameter window
-  int useRotWin = (varVdp2Regs->WCTLD & 0xA)!=0x0;
+  int Win0[enBGMAX];
+  int Win0_mode[enBGMAX];
+  int Win1[enBGMAX];
+  int Win1_mode[enBGMAX];
+  int Win_op[enBGMAX];
+  int needUpdate = 0;
 
-  _Ygl->Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
-  _Ygl->Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
-  _Ygl->Win0[NBG1] = (varVdp2Regs->WCTLA >> 9) & 0x01;
-  _Ygl->Win1[NBG1] = (varVdp2Regs->WCTLA >> 11) & 0x01;
+  if (((varVdp2Regs->WCTLD & 0xA)!=0x0) != useRotWin) {
+    useRotWin = ((varVdp2Regs->WCTLD & 0xA)!=0x0);
+    needUpdate |= 1;
+  }
 
-  _Ygl->Win0[NBG2] = (varVdp2Regs->WCTLB >> 1) & 0x01;
-  _Ygl->Win1[NBG2] = (varVdp2Regs->WCTLB >> 3) & 0x01;
-  _Ygl->Win0[NBG3] = (varVdp2Regs->WCTLB >> 9) & 0x01;
-  _Ygl->Win1[NBG3] = (varVdp2Regs->WCTLB >> 11) & 0x01;
 
-  _Ygl->Win0[RBG0] = (varVdp2Regs->WCTLC >> 1) & 0x01;
-  _Ygl->Win1[RBG0] = (varVdp2Regs->WCTLC >> 3) & 0x01;
-  _Ygl->Win0[SPRITE] = (varVdp2Regs->WCTLC >> 9) & 0x01;
-  _Ygl->Win1[SPRITE] = (varVdp2Regs->WCTLC >> 11) & 0x01;
+  Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
+  Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
+  Win0[NBG1] = (varVdp2Regs->WCTLA >> 9) & 0x01;
+  Win1[NBG1] = (varVdp2Regs->WCTLA >> 11) & 0x01;
 
-  _Ygl->Win0_mode[NBG0] = (varVdp2Regs->WCTLA) & 0x01;
-  _Ygl->Win1_mode[NBG0] = (varVdp2Regs->WCTLA >> 2) & 0x01;
-  _Ygl->Win0_mode[NBG1] = (varVdp2Regs->WCTLA >> 8) & 0x01;
-  _Ygl->Win1_mode[NBG1] = (varVdp2Regs->WCTLA >> 10) & 0x01;
+  Win0[NBG2] = (varVdp2Regs->WCTLB >> 1) & 0x01;
+  Win1[NBG2] = (varVdp2Regs->WCTLB >> 3) & 0x01;
+  Win0[NBG3] = (varVdp2Regs->WCTLB >> 9) & 0x01;
+  Win1[NBG3] = (varVdp2Regs->WCTLB >> 11) & 0x01;
 
-  _Ygl->Win0_mode[NBG2] = (varVdp2Regs->WCTLB) & 0x01;
-  _Ygl->Win1_mode[NBG2] = (varVdp2Regs->WCTLB >> 2) & 0x01;
-  _Ygl->Win0_mode[NBG3] = (varVdp2Regs->WCTLB >> 8) & 0x01;
-  _Ygl->Win1_mode[NBG3] = (varVdp2Regs->WCTLB >> 10) & 0x01;
+  Win0[RBG0] = (varVdp2Regs->WCTLC >> 1) & 0x01;
+  Win1[RBG0] = (varVdp2Regs->WCTLC >> 3) & 0x01;
+  Win0[SPRITE] = (varVdp2Regs->WCTLC >> 9) & 0x01;
+  Win1[SPRITE] = (varVdp2Regs->WCTLC >> 11) & 0x01;
 
-  _Ygl->Win0_mode[RBG0] = (varVdp2Regs->WCTLC) & 0x01;
-  _Ygl->Win1_mode[RBG0] = (varVdp2Regs->WCTLC >> 2) & 0x01;
-  _Ygl->Win0_mode[SPRITE] = (varVdp2Regs->WCTLC >> 8) & 0x01;
-  _Ygl->Win1_mode[SPRITE] = (varVdp2Regs->WCTLC >> 10) & 0x01;
+  Win0_mode[NBG0] = (varVdp2Regs->WCTLA) & 0x01;
+  Win1_mode[NBG0] = (varVdp2Regs->WCTLA >> 2) & 0x01;
+  Win0_mode[NBG1] = (varVdp2Regs->WCTLA >> 8) & 0x01;
+  Win1_mode[NBG1] = (varVdp2Regs->WCTLA >> 10) & 0x01;
 
-  _Ygl->Win_op[NBG0] = (varVdp2Regs->WCTLA >> 7) & 0x01;
-  _Ygl->Win_op[NBG1] = (varVdp2Regs->WCTLA >> 15) & 0x01;
-  _Ygl->Win_op[NBG2] = (varVdp2Regs->WCTLB >> 7) & 0x01;
-  _Ygl->Win_op[NBG3] = (varVdp2Regs->WCTLB >> 15) & 0x01;
-  _Ygl->Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
-  _Ygl->Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
+  Win0_mode[NBG2] = (varVdp2Regs->WCTLB) & 0x01;
+  Win1_mode[NBG2] = (varVdp2Regs->WCTLB >> 2) & 0x01;
+  Win0_mode[NBG3] = (varVdp2Regs->WCTLB >> 8) & 0x01;
+  Win1_mode[NBG3] = (varVdp2Regs->WCTLB >> 10) & 0x01;
 
-  _Ygl->Win0[RBG1] = _Ygl->Win0[NBG0];
-  _Ygl->Win0_mode[RBG1] = _Ygl->Win0_mode[NBG0];
-  _Ygl->Win1[RBG1] = _Ygl->Win1[NBG0];
-  _Ygl->Win1_mode[RBG1] = _Ygl->Win1_mode[NBG0];
-  _Ygl->Win_op[RBG1] = _Ygl->Win_op[NBG0];
+  Win0_mode[RBG0] = (varVdp2Regs->WCTLC) & 0x01;
+  Win1_mode[RBG0] = (varVdp2Regs->WCTLC >> 2) & 0x01;
+  Win0_mode[SPRITE] = (varVdp2Regs->WCTLC >> 8) & 0x01;
+  Win1_mode[SPRITE] = (varVdp2Regs->WCTLC >> 10) & 0x01;
 
-   GLenum DrawBuffers[SPRITE]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5};
-   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_fbo);
-   int needUpdate = 0;
-   for (int i = 0; i< SPRITE; i++) {
-     _Ygl->use_win[i] = 0;
-     if(_Ygl->Win0[i] || _Ygl->Win1[i] || useRotWin)
-     {
-       if (needUpdate == 0) Vdp2GenerateWindowInfo(varVdp2Regs);
-       needUpdate = 1;
-       if(_Ygl->Win0[i] || _Ygl->Win1[i])
+  Win_op[NBG0] = (varVdp2Regs->WCTLA >> 7) & 0x01;
+  Win_op[NBG1] = (varVdp2Regs->WCTLA >> 15) & 0x01;
+  Win_op[NBG2] = (varVdp2Regs->WCTLB >> 7) & 0x01;
+  Win_op[NBG3] = (varVdp2Regs->WCTLB >> 15) & 0x01;
+  Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
+  Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
+
+  Win0[RBG1] = Win0[NBG0];
+  Win0_mode[RBG1] = Win0_mode[NBG0];
+  Win1[RBG1] = Win1[NBG0];
+  Win1_mode[RBG1] = Win1_mode[NBG0];
+  Win_op[RBG1] = Win_op[NBG0];
+
+  for (int i=0; i<enBGMAX; i++) {
+    if (Win0[i] != _Ygl->Win0[i]) needUpdate |= 1;
+    if (Win1[i] != _Ygl->Win1[i]) needUpdate |= 1;
+    if (Win0_mode[i] != _Ygl->Win0_mode[i]) needUpdate |= 1;
+    if (Win1_mode[i] != _Ygl->Win1_mode[i]) needUpdate |= 1;
+    if (Win_op[i] != _Ygl->Win_op[i]) needUpdate |= 1;
+  }
+
+  //needUpdate |= 1;
+  Vdp2GenerateWindowInfo(varVdp2Regs);
+
+   if (needUpdate) {
+
+     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_fbo);
+     memcpy(&_Ygl->Win0[0], &Win0[0], enBGMAX*sizeof(int));
+     memcpy(&_Ygl->Win1[0], &Win1[0], enBGMAX*sizeof(int));
+     memcpy(&_Ygl->Win0_mode[0], &Win0_mode[0], enBGMAX*sizeof(int));
+     memcpy(&_Ygl->Win1_mode[0], &Win1_mode[0], enBGMAX*sizeof(int));
+     memcpy(&_Ygl->Win_op[0], &Win_op[0], enBGMAX*sizeof(int));
+     for (int i = 0; i< SPRITE; i++) {
+       _Ygl->use_win[i] = 0;
+       if(needUpdate && (_Ygl->Win0[i] || _Ygl->Win1[i] || useRotWin))
        {
-         _Ygl->use_win[i] = 1;
-         glDrawBuffers(1, &DrawBuffers[i]);
-         glClearBufferfv(GL_COLOR, 0, col);
-         Ygl_uniformWindow(&_Ygl->windowpg);
-         glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
+         if(_Ygl->Win0[i] || _Ygl->Win1[i])
+         {
+           _Ygl->use_win[i] = 1;
+           glDrawBuffers(1, &DrawBuffers[i]);
+           glClearBufferfv(GL_COLOR, 0, col);
+           Ygl_uniformWindow(&_Ygl->windowpg);
+           glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
 
-         //Draw color///
-         glActiveTexture(GL_TEXTURE0);
-         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
-         glActiveTexture(GL_TEXTURE1);
-         glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
-         glUniform1i(_Ygl->windowpg.var1, _Ygl->Win0[i]);
-         glUniform1i(_Ygl->windowpg.var2, _Ygl->Win0_mode[i]);
-         glUniform1i(_Ygl->windowpg.var3, _Ygl->Win1[i]);
-         glUniform1i(_Ygl->windowpg.var4, _Ygl->Win1_mode[i]);
-         glUniform1i(_Ygl->windowpg.var5, _Ygl->Win_op[i]);
-         glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
-         glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
-         glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-         glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-         glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+           //Draw color///
+           glActiveTexture(GL_TEXTURE0);
+           glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+           glActiveTexture(GL_TEXTURE1);
+           glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
+           glUniform1i(_Ygl->windowpg.var1, _Ygl->Win0[i]);
+           glUniform1i(_Ygl->windowpg.var2, _Ygl->Win0_mode[i]);
+           glUniform1i(_Ygl->windowpg.var3, _Ygl->Win1[i]);
+           glUniform1i(_Ygl->windowpg.var4, _Ygl->Win1_mode[i]);
+           glUniform1i(_Ygl->windowpg.var5, _Ygl->Win_op[i]);
+           glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
+           glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
+           glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
+           glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
+           glDrawArrays(GL_TRIANGLE_STRIP,0,4);
+         }
        }
      }
   }
