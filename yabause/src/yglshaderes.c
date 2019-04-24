@@ -53,14 +53,12 @@ extern int GlHeight;
 extern int GlWidth;
 static GLuint _prgid[PG_MAX] = { 0 };
 
-extern int maxWidth;
-extern int maxHeight;
-
 #ifdef DEBUG_PROG
 #define GLUSEPROG(A) printf("use prog %s (%d) @ %d\n", #A, A, __LINE__);glUseProgram(A)
 #else
 #define GLUSEPROG(A) glUseProgram(A)
 #endif
+
 
 static void Ygl_printShaderError( GLuint shader )
 {
@@ -3157,8 +3155,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_cc_win"), (_Ygl->use_cc_win != 0) );
 
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)maxHeight);
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)maxHeight);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);

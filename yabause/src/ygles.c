@@ -289,8 +289,6 @@ extern int vdp1cor;
 extern int vdp1cog;
 extern int vdp1cob;
 
-extern int maxWidth;
-extern int maxHeight;
 
 #define STD_Q2 (1.0f)
 #define EPS (1e-10)
@@ -1156,7 +1154,7 @@ int YglGenerateOriginalBuffer(){
   for (int i=0; i<NB_RENDER_LAYER; i++) {
     glBindTexture(GL_TEXTURE_2D, _Ygl->original_fbotex[i]);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, maxWidth, maxHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1166,7 +1164,7 @@ int YglGenerateOriginalBuffer(){
   if (_Ygl->original_depth != 0) glDeleteRenderbuffers(1, &_Ygl->original_depth);
   glGenRenderbuffers(1, &_Ygl->original_depth);
   glBindRenderbuffer(GL_RENDERBUFFER, _Ygl->original_depth);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, maxWidth, maxHeight);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, _Ygl->width, _Ygl->height);
 
   if (_Ygl->original_fbo != 0){
     glDeleteFramebuffers(1, &_Ygl->original_fbo);
@@ -3342,7 +3340,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
    if ((Vdp2Regs->TVMD & 0x8000) == 0) goto render_finish;
 
    _Ygl->targetfbo = _Ygl->original_fbo;
+   glViewport(0, 0, GlWidth, GlHeight);
    glDepthMask(GL_FALSE);
+   //glEnable(GL_DEPTH_TEST);
 
    glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
 
@@ -3415,9 +3415,9 @@ void YglRender(Vdp2 *varVdp2Regs) {
   }
   lncl_draw[6] = lncl[6];
 
-  glViewport(0, 0, maxWidth, maxHeight);
+  glViewport(0, 0, _Ygl->width, _Ygl->height);
   glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
-  glScissor(0, 0, maxWidth, maxHeight);
+  glScissor(0, 0, _Ygl->width, _Ygl->height);
 
   modescreens[6] =  setupBlend(varVdp2Regs, 6);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);
@@ -3452,7 +3452,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-   YglBlitFramebuffer(srcTexture, maxWidth, maxHeight, w, h);
+   YglBlitFramebuffer(srcTexture, _Ygl->width, _Ygl->height, w, h);
 
 render_finish:
 
@@ -3811,9 +3811,6 @@ void YglChangeResolution(int w, int h) {
 
   _Ygl->width = w * _Ygl->resolution_mode;
   _Ygl->height = h * _Ygl->resolution_mode;
-
-  maxWidth = (GlWidth < _Ygl->width)?GlWidth:_Ygl->width;
-  maxHeight = (GlHeight < _Ygl->height)?GlWidth:_Ygl->height;
 
   rebuild_frame_buffer = 1;
 
