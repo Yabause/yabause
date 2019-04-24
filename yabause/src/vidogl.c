@@ -558,10 +558,10 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     // 16 bpp Bank mode
     u16 dot = cmd->CMDCOLR;
     if (dot == 0x0000) {
-      color = VDP1COLOR(0, 0, 0, 0, 0);
+      color = VDP1COLOR(1, 0, 0, 0, 0);
     }
     else if ((dot == 0x7FFF) && !END) {
-      color = VDP1COLOR(0, 0, 0, 0, 0);
+      color = VDP1COLOR(1, 0, 0, 0, 0);
     }
     else if (MSB || dot == normal_shadow) {
       color = VDP1COLOR(0, 1, 0, 1, 0);
