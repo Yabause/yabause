@@ -810,9 +810,10 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   u8 priority = Vdp2Regs->PRISA &0x7;
   int rgb = !((val>>15)&0x1);
   u16 full = 0;
-  if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL)
+  if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL) {
+    releaseVDP1DrawingFBMemRead(_Ygl->drawframe);
     _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMemWrite(_Ygl->drawframe);
-
+  }
   switch (type)
   {
   case 0:
@@ -840,7 +841,13 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
 }
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
-    if (_Ygl->vdp1fb_buf_read[_Ygl->drawframe] == NULL) _Ygl->vdp1fb_buf_read[_Ygl->drawframe] =  getVdp1DrawingFBMemRead(_Ygl->drawframe);
+    if (_Ygl->vdp1fb_buf_read[_Ygl->drawframe] == NULL) {
+      if(_Ygl->vdp1fb_buf[_Ygl->drawframe] != NULL) {
+        releaseVDP1FB(_Ygl->drawframe);
+      }
+      _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 0;
+      _Ygl->vdp1fb_buf_read[_Ygl->drawframe] =  getVdp1DrawingFBMemRead(_Ygl->drawframe);
+    }
     switch (type)
     {
     case 0:
@@ -2555,7 +2562,7 @@ void YglEraseWriteVDP1(void) {
 
   releaseVDP1DrawingFBMemRead(_Ygl->readframe);
 
-  if(_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
+  if(_Ygl->vdp1fb_buf[_Ygl->readframe] != NULL) {
     releaseVDP1FB(_Ygl->readframe);
   }
   _Ygl->vdp1IsNotEmpty[_Ygl->readframe] = 0;
