@@ -59,6 +59,7 @@ typedef struct
    int play_ssf;
    int use_new_scsp;
    int resolution_mode;
+   int rbg_resolution_mode;
    int extend_backup;
    int rotate_screen;
    int scsp_sync_count_per_frame;
@@ -136,6 +137,7 @@ typedef enum {
   VDP_SETTING_FILTERMODE = 0,
   VDP_SETTING_POLYGON_MODE,
   VDP_SETTING_RESOLUTION_MODE,
+  VDP_SETTING_RBG_RESOLUTION_MODE,
   VDP_SETTING_ROTATE_SCREEN
 } enSettings;
 

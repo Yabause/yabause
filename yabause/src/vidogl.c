@@ -197,6 +197,8 @@ typedef struct {
   int hres;
   int async;
   volatile int vdp2_sync_flg;
+  float rotate_mval_h;
+  float rotate_mval_v;
 } RBGDrawInfo;
 
 RBGDrawInfo g_rgb0;
@@ -2952,6 +2954,44 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   if (vdp2height >= 448) lineInc <<= 1;
   if (vdp2height >= 448) rbg->vres = (vdp2height >> 1); else rbg->vres = vdp2height;
   if (vdp2width >= 640) rbg->hres = (vdp2width >> 1); else rbg->hres = vdp2width;
+  
+  switch (_Ygl->rbg_resolution_mode) {
+  case RBG_RES_ORIGINAL:
+    rbg->rotate_mval_h = 1.0f;
+    rbg->rotate_mval_v = 1.0f;
+    rbg->hres = rbg->hres * rbg->rotate_mval_h;
+    rbg->vres = rbg->vres * rbg->rotate_mval_v;
+    break;
+  case RBG_RES_2x:
+    rbg->rotate_mval_h = 2.0f;
+    rbg->rotate_mval_v = 2.0f;
+    rbg->hres = rbg->hres * rbg->rotate_mval_h;
+    rbg->vres = rbg->vres * rbg->rotate_mval_v;
+    break;
+  case RBG_RES_720P:
+    rbg->rotate_mval_h = 1280.0f / rbg->hres;
+    rbg->rotate_mval_v = 720.0f / rbg->vres;
+    rbg->hres = 1280;
+    rbg->vres = 720;
+    break;
+  case RBG_RES_1080P:
+    rbg->rotate_mval_h = 1920.0f / rbg->hres;
+    rbg->rotate_mval_v = 1080.0f / rbg->vres;
+    rbg->hres = 1920;
+    rbg->vres = 1080;
+    break;
+  case RBG_RES_FIT_TO_EMULATION:
+    rbg->rotate_mval_h = (float)GlWidth / rbg->hres;
+    rbg->rotate_mval_v = (float)GlHeight / rbg->vres;
+    rbg->hres = GlWidth;
+    rbg->vres = GlHeight;
+    break;
+  default:
+    rbg->rotate_mval_h = 1.0;
+    rbg->rotate_mval_v = 1.0;
+    break;
+  }
+
   info->vertices[0] = 0;
   info->vertices[1] = 0;
   info->vertices[2] = vdp2width;
@@ -3134,15 +3174,15 @@ static void Vdp2DrawRotationSync() {
 
 #define ceilf(a) ((a)+0.99999f)
 
-static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i) {
+static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, float i) {
   float kval;
   int   kdata;
   int h = ceilf(parameter->KtablV + (parameter->deltaKAx * i));
   if (parameter->coefdatasize == 2) {
     if (parameter->k_mem_type == 0) { // vram
-      kdata = T1ReadWord(Vdp2Ram, (parameter->coeftbladdr + (h << 1)) & 0x7FFFF);
+      kdata = T1ReadWord(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 1)) & 0x7FFFF);
     } else { // cram
-      kdata = T2ReadWord((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (h << 1)) & 0xFFF);
+      kdata = T2ReadWord((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (int)(h << 1)) & 0xFFF);
     }
     if (kdata & 0x8000) { return 0; }
     kval = (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
@@ -3155,9 +3195,9 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
   }
   else {
     if (parameter->k_mem_type == 0) { // vram
-      kdata = T1ReadLong(Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
+      kdata = T1ReadLong(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 2)) & 0x7FFFF);
     } else { // cram
-      kdata = T2ReadLong((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (h << 2)) & 0xFFF);
+      kdata = T2ReadLong((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (int)(h << 2)) & 0xFFF);
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) { return 0; }
@@ -3181,14 +3221,14 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
   YglTexture *texture = &rbg->texture;
   YglTexture *line_texture = &rbg->line_texture;
 
-  int i, j;
+  float i, j;
   int x, y;
   int cellw, cellh;
   int oldcellx = -1, oldcelly = -1;
   u32 color;
   int vres, hres;
-  int h;
-  int v;
+  int h,h2;
+  int v,v2;
   int lineInc = fixVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
   int linecl = 0xFF;
   vdp2rotationparameter_struct *parameter;
@@ -3198,8 +3238,8 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
   }
 
   if (vdp2height >= 448) lineInc <<= 1;
-  vres = rbg->vres;
-  hres = rbg->hres;
+  vres = rbg->vres/ rbg->rotate_mval_v;
+  hres = rbg->hres/ rbg->rotate_mval_h;
   cellw = rbg->info.cellw;
   cellh = rbg->info.cellh;
   regs = Vdp2RestoreRegs(3, Vdp2Lines);
@@ -3232,7 +3272,11 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
   paraA.over_pattern_name = fixVdp2Regs->OVPNRA;
   paraB.over_pattern_name = fixVdp2Regs->OVPNRB;
 
-  for (j = 0; j < vres; j++)
+  const float vstep = 1.0 / rbg->rotate_mval_v;
+  const float hstep = 1.0 / rbg->rotate_mval_h;
+  //for (j = 0; j < vres; j += vstep)
+  j = 0.0f;
+  for (int jj = 0; jj< rbg->vres; jj++)
   {
 #if 0 // PERLINE
     Vdp2 * regs = Vdp2RestoreRegs(j, Vdp2Lines);
@@ -3292,10 +3336,9 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     if (info->LineColorBase != 0)
     {
       if ((fixVdp2Regs->LCTA.part.U & 0x8000) != 0) {
-        rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase);
+        rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase  + lineInc*(int)(j) );
         *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
         line_texture->textdata++;
-        info->LineColorBase += lineInc;
       }
       else {
         *line_texture->textdata = rbg->LineColorRamAdress;
@@ -3304,12 +3347,16 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     }
 
     //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
-    for (i = 0; i < hres; i++)
+    //for (i = 0; i < hres; i += hstep)
+    i = 0.0;
+    for( int ii=0; ii< rbg->hres; ii++ )
     {
-      if (Vdp2CheckWindowDot( info, i, j) == 0) {
+
+      if (Vdp2CheckWindowDot( info, (int)i, (int)j) == 0) {
         *(texture->textdata++) = 0x00000000;
         continue; // may be faster than GPU
       }
+
       switch (fixVdp2Regs->RPMD | rgb_type ) {
       case 0:
         parameter = &paraA;
@@ -3351,7 +3398,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         }
         break;
       default:
-        parameter = info->GetRParam(info, i, j);
+        parameter = info->GetRParam(info, (int)i, (int)j);
         break;
       }
       if (parameter == NULL)
@@ -3360,8 +3407,14 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         continue;
       }
 
-      h = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
-      v = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
+      float fh = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
+      float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
+      h = fh;
+      v = fv;
+      //fh = fh-h;
+      //fv = fv-h;
+      //h2 = h + 1;
+      //v2 = v + 1;
 
       if (info->isbitmap)
       {
@@ -3572,11 +3625,12 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         }
       }
       *(texture->textdata++) = color;
+      i += hstep;
     }
     texture->textdata += texture->w;
-    }
-
+    j += vstep;
   }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3593,7 +3647,6 @@ static void SetSaturnResolution(int width, int height)
 
 int VIDOGLInit(void)
 {
-
   if (YglInit(2048, 1024, 8) != 0)
     return -1;
 
@@ -3602,9 +3655,13 @@ int VIDOGLInit(void)
   g_rgb0.async = 1;
   g_rgb0.rgb_type = 0;
   g_rgb0.vdp2_sync_flg = -1;
+  g_rgb0.rotate_mval_h = 1.0;
+  g_rgb0.rotate_mval_v = 1.0;
   g_rgb1.async = 0;
   g_rgb1.rgb_type = 0x04;
   g_rgb1.vdp2_sync_flg = -1;
+  g_rgb1.rotate_mval_h = 1.0;
+  g_rgb1.rotate_mval_v = 1.0;
   vdp1wratio = 1;
   vdp1hratio = 1;
 
@@ -7237,6 +7294,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     break;
   case VDP_SETTING_RESOLUTION_MODE:
     _Ygl->resolution_mode = value;
+    break;
+  case VDP_SETTING_RBG_RESOLUTION_MODE:
+    _Ygl->rbg_resolution_mode = value;
     break;
   case VDP_SETTING_POLYGON_MODE:
     if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {

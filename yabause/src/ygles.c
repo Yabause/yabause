@@ -1111,6 +1111,28 @@ int YglGenFrameBuffer() {
 	_Ygl->targetfbo = 0;
   glBindTexture(GL_TEXTURE_2D, 0);
   rebuild_frame_buffer = 0;
+
+  int base_texture_width = 512;
+  switch (_Ygl->rbg_resolution_mode) {
+  case RBG_RES_ORIGINAL:
+    base_texture_width = 512;
+    break;
+  case RBG_RES_2x:
+    base_texture_width = 1024;
+    break;
+  case RBG_RES_720P:
+    base_texture_width = 1280;
+    break;
+  case RBG_RES_1080P:
+    base_texture_width = 1920;
+    break;
+  case RBG_RES_FIT_TO_EMULATION:
+    base_texture_width = GlWidth;
+    break;
+  default:
+    break;
+  }
+
   return 0;
 }
 
@@ -4397,6 +4419,7 @@ void YglChangeResolution(int w, int h) {
       break;
     }
   }
+
 
   if (_Ygl->rotate_screen && _Ygl->resolution_mode == RES_NATIVE) {
     YglRotatef(&_Ygl->mtxModelView, 90.0, 0.0, 0.0, 1.0f);

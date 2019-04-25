@@ -465,13 +465,22 @@ typedef enum
 
 typedef enum
 {
-	RES_NATIVE = 0,
-	RES_4x,
-	RES_2x,
-    RES_ORIGINAL,
-    RES_720P,
-    RES_1080P
+  RES_NATIVE = 0,
+  RES_4x,
+  RES_2x,
+  RES_ORIGINAL,
+  RES_720P,
+  RES_1080P
 } RESOLUTION_MODE;
+
+typedef enum
+{
+  RBG_RES_ORIGINAL = 0,
+  RBG_RES_2x,
+  RBG_RES_720P,
+  RBG_RES_1080P,
+  RBG_RES_FIT_TO_EMULATION
+} RBG_RESOLUTION_MODE;
 
 
 typedef enum {
@@ -569,6 +578,7 @@ typedef struct {
    AAMODE aamode;
    POLYGONMODE polygonmode;
    RESOLUTION_MODE resolution_mode;
+   RBG_RESOLUTION_MODE rbg_resolution_mode;
    YglTextureManager * texture_manager;
    GLsync sync;
     GLuint default_fbo;
