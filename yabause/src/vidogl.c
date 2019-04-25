@@ -1273,12 +1273,14 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
 //////////////////////////////////////////////////////////////////////////////
 // Window
 
-void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
+int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
 {
   int HShift;
   int v = 0;
   u32 LineWinAddr;
   int upWindow = 0;
+  int update = 0;
+  u32 val = 0;
 
   YglGetWindowPointer(0);
   YglGetWindowPointer(1);
@@ -1296,9 +1298,13 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
         u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        if (HStart > HEnd) _Ygl->win[0][v] = 0x0;
-        else _Ygl->win[0][v] = temp;
-      } else _Ygl->win[0][v] = 0x0;
+        if (HStart > HEnd) val = 0x0;
+        else val = temp;
+      } else val = 0x0;
+      if (val != _Ygl->win[0][v]) {
+        _Ygl->win[0][v] = val;
+        update = 1;
+      }
     }
     // Parameter Mode
   }
@@ -1306,9 +1312,13 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
     for (v = 0; v < vdp2height; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
         u32 temp = (varVdp2Regs->WPSX0 >>HShift) | ((varVdp2Regs->WPEX0>>HShift) << 16);
-        if (varVdp2Regs->WPSX0 > varVdp2Regs->WPEX0) _Ygl->win[0][v] = 0x0;
-        else _Ygl->win[0][v] = temp;
-      } else _Ygl->win[0][v] = 0x0;
+        if (varVdp2Regs->WPSX0 > varVdp2Regs->WPEX0) val = 0x0;
+        else val = temp;
+      } else val = 0x0;
+      if (val != _Ygl->win[0][v]) {
+        _Ygl->win[0][v] = val;
+        update = 1;
+      }
     }
   }
   // Line Table mode
@@ -1321,9 +1331,13 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
         u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        if (HStart > HEnd) _Ygl->win[1][v] = 0x0;
-        else _Ygl->win[1][v] = temp;
-      } else _Ygl->win[1][v] = 0x0;
+        if (HStart > HEnd) val = 0x0;
+        else val = temp;
+      } else val = 0x0;
+      if (val != _Ygl->win[1][v]) {
+        _Ygl->win[1][v] = val;
+        update = 1;
+      }
     }
     // Parameter Mode
   }
@@ -1331,13 +1345,18 @@ void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
     for (v = 0; v < vdp2height; v++) {
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
         u32 temp = (varVdp2Regs->WPSX1 >>HShift) | ((varVdp2Regs->WPEX1>>HShift) << 16);
-        if (varVdp2Regs->WPSX1 > varVdp2Regs->WPEX1) _Ygl->win[1][v] = 0x0;
-        else _Ygl->win[1][v] = temp;
-      } else _Ygl->win[1][v] = 0x0;
+        if (varVdp2Regs->WPSX1 > varVdp2Regs->WPEX1) val = 0x0;
+        else val = temp;
+      } else val = 0x0;
+      if (val != _Ygl->win[1][v]) {
+        _Ygl->win[1][v] = val;
+        update = 1;
+      }
     }
   }
   YglSetWindow(0);
   YglSetWindow(1);
+  return update;
 }
 
 // 0 .. outside,1 .. inside

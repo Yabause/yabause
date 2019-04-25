@@ -2840,7 +2840,7 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   }
 
   //needUpdate |= 1;
-  Vdp2GenerateWindowInfo(varVdp2Regs);
+  needUpdate |= Vdp2GenerateWindowInfo(varVdp2Regs);
 
    if (needUpdate) {
 
