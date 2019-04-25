@@ -53,12 +53,14 @@ extern int GlHeight;
 extern int GlWidth;
 static GLuint _prgid[PG_MAX] = { 0 };
 
+extern int maxWidth;
+extern int maxHeight;
+
 #ifdef DEBUG_PROG
 #define GLUSEPROG(A) printf("use prog %s (%d) @ %d\n", #A, A, __LINE__);glUseProgram(A)
 #else
 #define GLUSEPROG(A) glUseProgram(A)
 #endif
-
 
 static void Ygl_printShaderError( GLuint shader )
 {
@@ -3155,8 +3157,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_cc_win"), (_Ygl->use_cc_win != 0) );
 
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)maxHeight);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)maxHeight);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -3740,7 +3742,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
     glViewport(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
     glScissor(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
-    YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight, _Ygl->width, _Ygl->height);
+    YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight, maxWidth, maxHeight);
     glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     tex = _Ygl->upfbotex;

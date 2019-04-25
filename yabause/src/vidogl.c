@@ -167,6 +167,9 @@ static int vdp1_interlace = 0;
 int GlWidth = 320;
 int GlHeight = 224;
 
+int maxWidth = 320;
+int maxHeight = 224;
+
 int vdp1cor = 0;
 int vdp1cog = 0;
 int vdp1cob = 0;
@@ -3377,6 +3380,8 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
 
   GlWidth = w;
   GlHeight = h;
+
+  setupMaxSize();
 
   _Ygl->originx = originx;
   _Ygl->originy = originy;
