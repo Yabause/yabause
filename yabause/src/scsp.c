@@ -4905,8 +4905,11 @@ SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
     addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF)
+  else if (addr > 0x7FFFF) {
     val = 0xFFFFFFFF;
+    SyncSh2And68k();
+    return val;
+  }
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
   SyncSh2And68k();
