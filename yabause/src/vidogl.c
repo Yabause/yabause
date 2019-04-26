@@ -471,7 +471,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     u16 temp;
     u32 colorLut = cmd->CMDCOLR * 8;
 
-    if (cmd->CMDCOLR == 0) return VDP1COLOR(0, 0, 0, 0, 0);
+    if (cmd->CMDCOLR == 0) return 0;
 
     // RBG and pallet mode
     if ( (cmd->CMDCOLR & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
