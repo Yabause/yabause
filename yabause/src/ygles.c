@@ -754,7 +754,7 @@ u32* getVdp1DrawingFBMemWrite(int id) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
-  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2], 512.0, 256.0, 0);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2],maxWidth, maxHeight, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
@@ -773,7 +773,7 @@ u32* getVdp1DrawingFBMemRead(int id) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
-  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2], _Ygl->rwidth, _Ygl->rheight, 0);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2], maxWidth, maxHeight, 0);
   //glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
   //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
@@ -3160,7 +3160,7 @@ void YglUpdateVDP1FB(void) {
 
     releaseVDP1FB(_Ygl->readframe);
     releaseVDP1DrawingFBMemRead(_Ygl->readframe);
-    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], (float)_Ygl->rwidth, (float)_Ygl->rheight, 0);
+    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], maxWidth, maxHeight, 0);
     // clean up
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   }
