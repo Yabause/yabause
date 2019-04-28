@@ -661,68 +661,6 @@ int Ygl_cleanupMosaic(void * p, YglTextureManager *tm)
 }
 
 /*------------------------------------------------------------------------------------
-*  Per Line Alpha
-* ----------------------------------------------------------------------------------*/
-int Ygl_uniformPerLineAlpha(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
-{
-  YglProgram * prg;
-  int preblend = 0;
-  prg = p;
-
-  Ygl_useTmpBuffer();
-  glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
-  glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
-  prg->preblendmode = prg->blendmode;
-  prg->blendmode = 0;
-
-  if (prg->prgid == PG_VDP2_PER_LINE_ALPHA_CRAM) {
-    glEnableVertexAttribArray(prg->vertexp);
-    glEnableVertexAttribArray(prg->texcoordp);
-    glUniform1i(id_normal_cram_s_texture, 0);
-    glUniform1i(id_normal_cram_s_color, 1);
-    glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tm->textureID);
-
-  }
-  else {
-    glEnableVertexAttribArray(prg->vertexp);
-    glEnableVertexAttribArray(prg->texcoordp);
-    glUniform1i(id_normal_s_texture, 0);
-    glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-    glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  }
-
-  return 0;
-}
-
-int Ygl_cleanupPerLineAlpha(void * p, YglTextureManager *tm)
-{
-  YglProgram * prg;
-  prg = p;
-  prg->blendmode = prg->preblendmode;
-
-  // Bind Default frame buffer
-   Ygl_releaseTmpBuffer();
-
-  // Restore Default Matrix
-  glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
-  glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
-
-  // call blit method
-  YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
-
-  glBindTexture(GL_TEXTURE_2D, tm->textureID);
-
-  return 0;
-}
-
-
-/*------------------------------------------------------------------------------------
 *  Blur
 * ----------------------------------------------------------------------------------*/
 int Ygl_uniformNormal_blur(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
@@ -2448,11 +2386,9 @@ int YglProgramInit()
 
    _prgid[PG_VDP2_BLUR] = _prgid[PG_VDP2_NORMAL];
    _prgid[PG_VDP2_MOSAIC] = _prgid[PG_VDP2_NORMAL];
-   _prgid[PG_VDP2_PER_LINE_ALPHA] = _prgid[PG_VDP2_NORMAL];
 
    _prgid[PG_VDP2_BLUR_CRAM] = _prgid[PG_VDP2_NORMAL_CRAM];
    _prgid[PG_VDP2_MOSAIC_CRAM] = _prgid[PG_VDP2_NORMAL_CRAM];
-   _prgid[PG_VDP2_PER_LINE_ALPHA_CRAM] = _prgid[PG_VDP2_NORMAL_CRAM];
 
    YGLLOG("PG_VDP1_NORMAL\n");
    //
@@ -2765,26 +2701,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
      current->color_offset = id_normal_cram_color_offset;
-   }
-   else if (prgid == PG_VDP2_PER_LINE_ALPHA)
-   {
-     current->setupUniform = Ygl_uniformPerLineAlpha;
-     current->cleanupUniform = Ygl_cleanupPerLineAlpha;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->color_offset = glGetUniformLocation(_prgid[PG_VDP2_PER_LINE_ALPHA], (const GLchar *)"u_color_offset");
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_PER_LINE_ALPHA], (const GLchar *)"u_mvpMatrix");
-
-   }
-   else if (prgid == PG_VDP2_PER_LINE_ALPHA_CRAM)
-   {
-     current->setupUniform = Ygl_uniformPerLineAlpha;
-     current->cleanupUniform = Ygl_cleanupPerLineAlpha;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->color_offset = glGetUniformLocation(_prgid[PG_VDP2_PER_LINE_ALPHA], (const GLchar *)"u_color_offset");
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP2_PER_LINE_ALPHA], (const GLchar *)"u_mvpMatrix");
-
    }else if( prgid == PG_VDP1_NORMAL )
    {
       current->setupUniform    = Ygl_uniformVdp1Normal;
@@ -4273,185 +4189,6 @@ int YglBlitMosaic(u32 srcTexture, float w, float h, GLfloat* matrix, int * mosai
   glActiveTexture(GL_TEXTURE0);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
-
-  return 0;
-}
-
-
-
-/*
-  Per line transparent
-  [Resident Evil] menu not displayed #35
-*/
-
-const GLchar perlinealpha_blit_v[] =
-SHADER_VERSION
-"uniform mat4 u_mvpMatrix;    \n"
-"layout (location = 0) in vec4 a_position;   \n"
-"layout (location = 1) in vec2 a_texcoord;   \n"
-"out  highp vec2 v_texcoord;     \n"
-"void main()       \n"
-"{ \n"
-"   gl_Position = a_position*u_mvpMatrix; \n"
-"   v_texcoord  = a_texcoord; \n"
-"} ";
-
-const GLchar perlinealpha_blit_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float; \n"
-"#endif\n"
-"in highp vec2 v_texcoord; \n"
-"uniform sampler2D u_Src;  \n"
-"uniform sampler2D u_Line;  \n"
-"uniform float u_tw; \n"
-"uniform float u_th; \n"
-"out vec4 fragColor; \n"
-"void main()   \n"
-"{  \n"
-"  ivec2 addr; \n"
-"  addr.x = int(u_tw * v_texcoord.x);          \n"
-"  addr.y = int(u_th) - int(u_th * v_texcoord.y);          \n"
-"  vec4 txcol = texelFetch( u_Src, addr,0 ) ;      \n"
-"  if(txcol.a > 0.0){\n"
-"    addr.x = int(u_th * v_texcoord.y);\n"
-"    addr.y = 0; \n"
-"    txcol.a = texelFetch( u_Line, addr,0 ).a;      \n"
-"    txcol.r += (texelFetch( u_Line, addr,0 ).r-0.5)*2.0;\n"
-"    txcol.g += (texelFetch( u_Line, addr,0 ).g-0.5)*2.0;\n"
-"    txcol.b += (texelFetch( u_Line, addr,0 ).b-0.5)*2.0;\n"
-"    if( txcol.a > 0.0 ) \n"
-"       fragColor = txcol; \n"
-"    else \n"
-"       discard; \n"
-"  }else{ \n"
-"    discard; \n"
-"  }\n"
-"}  \n";
-
-static int perlinealpha_prg = -1;
-static int u_perlinealpha_mtxModelView = -1;
-static int u_perlinealpha_tw = -1;
-static int u_perlinealpha_th = -1;
-
-
-int YglBlitPerLineAlpha(u32 srcTexture, float w, float h, GLfloat* matrix, u32 lineTexture) {
-
-  float vb[] = { 0, 0,
-    2.0, 0.0,
-    2.0, 2.0,
-    0, 2.0, };
-
-  float tb[] = { 0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0 };
-
-  GLint programid;
-  int id_src, id_line;
-
-  vb[0] = 0;
-  vb[1] = 0 - 1.0;
-  vb[2] = w;
-  vb[3] = 0 - 1.0;
-  vb[4] = w;
-  vb[5] = h - 1.0;
-  vb[6] = 0;
-  vb[7] = h - 1.0;
-
-  glGetIntegerv(GL_CURRENT_PROGRAM, &programid);
-
-  if (perlinealpha_prg == -1){
-    GLuint vshader;
-    GLuint fshader;
-    GLint compiled, linked;
-
-    const GLchar * vblit_img_v[] = { perlinealpha_blit_v, NULL };
-    const GLchar * fblit_img_v[] = { perlinealpha_blit_f, NULL };
-
-    perlinealpha_prg = glCreateProgram();
-    if (perlinealpha_prg == 0) return -1;
-
-    YGLLOG("BLIT_PERLINE_ALPHA\n");
-
-    vshader = glCreateShader(GL_VERTEX_SHADER);
-    fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vshader, 1, vblit_img_v, NULL);
-    glCompileShader(vshader);
-    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
-      perlinealpha_prg = -1;
-      return -1;
-    }
-
-    glShaderSource(fshader, 1, fblit_img_v, NULL);
-    glCompileShader(fshader);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
-      perlinealpha_prg = -1;
-      return -1;
-    }
-
-    glAttachShader(perlinealpha_prg, vshader);
-    glAttachShader(perlinealpha_prg, fshader);
-    glLinkProgram(perlinealpha_prg);
-    glGetProgramiv(perlinealpha_prg, GL_LINK_STATUS, &linked);
-    if (linked == GL_FALSE) {
-      YGLLOG("Link error..\n");
-      Ygl_printShaderError(perlinealpha_prg);
-      perlinealpha_prg = -1;
-      return -1;
-    }
-    GLUSEPROG(perlinealpha_prg);
-    id_src = glGetUniformLocation(perlinealpha_prg, "u_Src");
-    glUniform1i(id_src, 0);
-    id_line = glGetUniformLocation(perlinealpha_prg, "u_Line");
-    glUniform1i(id_line, 1);
-
-    u_perlinealpha_mtxModelView = glGetUniformLocation(perlinealpha_prg, (const GLchar *)"u_mvpMatrix");
-    u_perlinealpha_tw = glGetUniformLocation(perlinealpha_prg, "u_tw");
-    u_perlinealpha_th = glGetUniformLocation(perlinealpha_prg, "u_th");
-
-  }
-  else{
-    GLUSEPROG(perlinealpha_prg);
-  }
-
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vb_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vb), vb, GL_STREAM_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->tb_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(tb), tb, GL_STREAM_DRAW);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(1);
-  glUniformMatrix4fv(u_perlinealpha_mtxModelView, 1, GL_FALSE, matrix);
-  glUniform1f(u_perlinealpha_tw, w);
-  glUniform1f(u_perlinealpha_th, h);
-
-  id_src = glGetUniformLocation(perlinealpha_prg, "u_Src");
-  glUniform1i(id_src, 0);
-  id_line = glGetUniformLocation(perlinealpha_prg, "u_Line");
-  glUniform1i(id_line, 1);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, srcTexture);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_2D, lineTexture);
-  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-  // Clean up
-  glActiveTexture(GL_TEXTURE0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  GLUSEPROG(programid);
 
   return 0;
 }
