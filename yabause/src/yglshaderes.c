@@ -30,7 +30,7 @@
 #include "scanline_shader.h"
 
 // Keep a way to switch to gles shaders for embedded devices
-#ifdef HAVE_GLES
+#if defined(_OGLES3_)
 #define SHADER_VERSION "#version 310 es \n"
 #define SHADER_VERSION_TESS "#version 310 es \n#extension GL_ANDROID_extension_pack_es31a : enable \n"
 #else
@@ -187,15 +187,11 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1i(param->fbo_attr, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
-#if !defined(_OGLES3_)
-    if (glTextureBarrierNV) glTextureBarrierNV();
-#else
     if( glMemoryBarrier ){
       glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
     }else{
       //glFinish();
     }
-#endif
     glActiveTexture(GL_TEXTURE0);
   }
 

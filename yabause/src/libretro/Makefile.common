@@ -77,7 +77,7 @@ else
 	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
 		$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 		$(CORE_DIR)/glsym_private.c
-	ifeq ($(HAVE_GLES), 1)
+	ifeq ($(FORCE_GLES), 1)
 		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
 	else
 		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c

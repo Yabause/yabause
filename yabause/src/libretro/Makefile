@@ -5,7 +5,7 @@ DEBUG_TSAN = 0
 HAVE_SSE = 1
 __USE_OPENGL_DEBUG__ = 0
 HAVE_MUSASHI = 1
-HAVE_GLES = 0
+FORCE_GLES = 0
 FASTMATH = 1
 UNROLL_LOOPS = 1
 ARCH_IS_LINUX = 0
@@ -76,7 +76,7 @@ ifneq (,$(findstring unix,$(platform)))
 		else ifneq (,$(findstring hardfloat,$(platform)))
 			FLAGS += -mfloat-abi=hard
 		endif
-		HAVE_GLES = 1
+		FORCE_GLES = 1
 		HAVE_SSE = 0
 		FLAGS += -DARM
 	endif
@@ -101,7 +101,7 @@ else ifneq (,$(findstring rockpro64,$(platform)))
 	LDFLAGS += -lpthread -lGL
 	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
-	HAVE_GLES = 1
+	FORCE_GLES = 1
 	FLAGS += -march=armv8-a+crc -mcpu=cortex-a72 -mtune=cortex-a72.cortex-a53 -mfloat-abi=hard -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
 
 # ODROIDs
@@ -113,7 +113,7 @@ else ifeq ($(platform), odroid-n2)
 	LDFLAGS += -lpthread -lGL
 	ARCH_IS_LINUX = 1
 	HAVE_SSE = 0
-	HAVE_GLES = 1
+	FORCE_GLES = 1
 	# ODROID-N2
 	ifneq (, $(findstring clang,$(CC)))
 		FLAGS += -march=armv8-a+crc
@@ -132,7 +132,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 
 	ifneq (,$(findstring ODROID-XU3,$(BOARD)))
 		HAVE_SSE = 0
-		HAVE_GLES = 1
+		FORCE_GLES = 1
 		# ODROID-XU3 & -XU3 Lite
 		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
 			FLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
@@ -141,7 +141,7 @@ else ifneq (,$(findstring odroid,$(platform)))
 		endif
 	else ifneq (,$(findstring ODROID-XU4,$(BOARD)))
 		HAVE_SSE = 0
-		HAVE_GLES = 1
+		FORCE_GLES = 1
 		# ODROID-XU4 on newer kernels now identify as ODROID-XU4
 		ifeq "$(shell expr `gcc -dumpversion` \>= 4.9)" "1"
 			FLAGS += -marm -mfloat-abi=hard -mcpu=cortex-a15 -mtune=cortex-a15.cortex-a7 -mfpu=neon-vfpv4 -mvectorize-with-neon-quad
@@ -270,7 +270,7 @@ endif
 ifeq ($(DEBUG), 1)
 	FLAGS += -O0 -g
 else
-	FLAGS += -O3 -fomit-frame-pointer -DNDEBUG
+	FLAGS += -O3 -DNDEBUG
 endif
 
 ifeq ($(HAVE_MUSASHI), 1)
@@ -279,12 +279,14 @@ else
 	OBJECTS += $(C68KEXEC_OBJECT)
 endif
 
-ifeq ($(HAVE_GLES), 1)
-	FLAGS += -DHAVE_GLES
+ifeq ($(FORCE_GLES), 1)
+	FLAGS += -D_OGLES3_
 	LDFLAGS += -lGLESv2
 	ifeq ($(FORCE_GLEW), 0)
 		FLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES3
 	endif
+else
+	FLAGS += -D_OGL3_
 endif
 
 ifeq ($(ARCH_IS_LINUX), 1)
@@ -324,7 +326,7 @@ WARNINGS :=
 FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) -DVERSION=\"1.6.0\" \
 	-DNO_CLI -DDYNAREC_KRONOS=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 \
 	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
-	-DSPRITE_CACHE=1 -DHAVE_LIBGL -D_OGLES3_ -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1
+	-DSPRITE_CACHE=1 -DHAVE_LIBGL -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1
 
 CFLAGS += $(FLAGS) -std=gnu99
 CXXFLAGS += $(FLAGS) -std=gnu++11

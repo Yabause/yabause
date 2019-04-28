@@ -759,7 +759,7 @@ static bool retro_init_hw_context(void)
    hw_render.context_destroy = context_destroy;
    hw_render.depth = true;
    hw_render.bottom_left_origin = true;
-#ifdef HAVE_GLES
+#if defined(_OGLES3_)
    hw_render.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
    hw_render.version_major = 3;
    hw_render.version_minor = 1;
@@ -786,7 +786,7 @@ static bool retro_init_hw_context(void)
    params.context_destroy = context_destroy;
    params.environ_cb = environ_cb;
    params.stencil = true;
-#ifdef HAVE_GLES
+#if defined(_OGLES3_)
    params.context_type = RETRO_HW_CONTEXT_OPENGLES_VERSION;
    params.major = 3;
    params.minor = 1;

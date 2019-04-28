@@ -7265,7 +7265,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
       int maj, min;
       glGetIntegerv(GL_MAJOR_VERSION, &maj);
       glGetIntegerv(GL_MINOR_VERSION, &min);
-#ifdef HAVE_GLES
+#if defined(_OGLES3_)
       if ((maj >=3) && (min >=1)) {
 #else
       if ((maj >=4) && (min >=2)) {
