@@ -3157,10 +3157,10 @@ void YglUpdateVDP1FB(void) {
     YglGenFrameBuffer();
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glDrawBuffers(2, &DrawBuffers[_Ygl->readframe*2]);
-
     releaseVDP1FB(_Ygl->readframe);
     releaseVDP1DrawingFBMemRead(_Ygl->readframe);
-    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], maxWidth, maxHeight, 0);
+    glViewport(0,0,maxWidth,maxHeight);
+    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], _Ygl->rwidth, _Ygl->rheight, 0);
     // clean up
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   }
