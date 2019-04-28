@@ -141,11 +141,16 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   }
 
   if ((param->fbo_attr != -1) || (param->fbo != -1)){
-    if( glMemoryBarrier ){
-      glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-    }else{
-      //glFinish();
-    }
+    #if !defined(_OGLES3_)
+        if (glTextureBarrier) glTextureBarrier();
+        else if (glTextureBarrierNV) glTextureBarrierNV();
+    #else
+        if( glMemoryBarrier ){
+          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
+        }else{
+          //glFinish();
+        }
+    #endif
     glActiveTexture(GL_TEXTURE0);
   }
   return 0;
@@ -187,11 +192,16 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1i(param->fbo_attr, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
-    if( glMemoryBarrier ){
-      glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-    }else{
-      //glFinish();
-    }
+    #if !defined(_OGLES3_)
+        if (glTextureBarrier) glTextureBarrier();
+        else if (glTextureBarrierNV) glTextureBarrierNV();
+    #else
+        if( glMemoryBarrier ){
+          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
+        }else{
+          //glFinish();
+        }
+    #endif
     glActiveTexture(GL_TEXTURE0);
   }
 
