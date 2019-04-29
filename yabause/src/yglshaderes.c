@@ -3051,7 +3051,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     glActiveTexture(GL_TEXTURE10);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe*2+1]);
 
-  int gltext[9] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8};
+  int gltext[14] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13};
 
 
 #ifdef DEBUG_BLIT
@@ -3122,7 +3122,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<9; i++) {
+  for (int i = 0; i<14; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
