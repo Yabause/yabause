@@ -60,6 +60,9 @@ static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
 static int scanlines = 0;
+#if !defined(_OGLES3_)
+static int opengl_version = 330;
+#endif
 
 static int g_sh2coretype = 8;
 static int g_videoformattype = VIDEOFORMATTYPE_NTSC;
@@ -98,6 +101,9 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_force_hle_bios", "Force HLE BIOS (restart, deprecated, debug only); disabled|enabled" },
       { "kronos_videoformattype", "Video format; NTSC|PAL" },
       { "kronos_sh2coretype", "SH2 Core (restart); kronos|interpreter" },
+#if !defined(_OGLES3_)
+      { "kronos_opengl_version", "OpenGL version; 3.3|4.2|4.5" },
+#endif
       { "kronos_use_beetle_saves", "Share saves with beetle (restart); disabled|enabled" },
       { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
       { "kronos_auto_select_cart", "Automatic Addon Cartridge (restart); enabled|disabled" },
@@ -767,15 +773,20 @@ static bool retro_init_hw_context(void)
       return false;
 #else
    hw_render.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   if (polygon_mode == GPU_TESSERATION)
+   switch (opengl_version)
    {
-      hw_render.version_major = 4;
-      hw_render.version_minor = 2;
-   }
-   else
-   {
-      hw_render.version_major = 3;
-      hw_render.version_minor = 3;
+      case 330:
+         hw_render.version_major = 3;
+         hw_render.version_minor = 3;
+         break;
+      case 420:
+         hw_render.version_major = 4;
+         hw_render.version_minor = 2;
+         break;
+      case 450:
+         hw_render.version_major = 4;
+         hw_render.version_minor = 5;
+         break;
    }
    if (!environ_cb(RETRO_ENVIRONMENT_SET_HW_RENDER, &hw_render))
        return false;
@@ -794,15 +805,20 @@ static bool retro_init_hw_context(void)
       return false;
 #else
    params.context_type = RETRO_HW_CONTEXT_OPENGL_CORE;
-   if (polygon_mode == GPU_TESSERATION)
+   switch (opengl_version)
    {
-      params.major = 4;
-      params.minor = 2;
-   }
-   else
-   {
-      params.major = 3;
-      params.minor = 3;
+      case 330:
+         params.major = 3;
+         params.minor = 3;
+         break;
+      case 420:
+         params.major = 4;
+         params.minor = 2;
+         break;
+      case 450:
+         params.major = 4;
+         params.minor = 5;
+         break;
    }
    if (!glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
       return false;
@@ -863,6 +879,20 @@ void check_variables(void)
       else if (strcmp(var.value, "interpreter") == 0)
          g_sh2coretype = SH2CORE_INTERPRETER;
    }
+
+#if !defined(_OGLES3_)
+   var.key = "kronos_opengl_version";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "3.3") == 0)
+         opengl_version = 330;
+      else if (strcmp(var.value, "4.2") == 0)
+         opengl_version = 420;
+      else if (strcmp(var.value, "4.5") == 0)
+         opengl_version = 450;
+   }
+#endif
 
    var.key = "kronos_use_beetle_saves";
    var.value = NULL;

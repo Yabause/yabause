@@ -27,6 +27,15 @@ typedef void (GL_APIENTRYP RGLSYMGLPATCHPARAMETERIPROC) (GLenum pname, GLint val
 extern RGLSYMGLMEMORYBARRIERPROC __rglgen_glMemoryBarrier;
 extern RGLSYMGLBINDFRAGDATALOCATIONPROC __rglgen_glBindFragDataLocation;
 extern RGLSYMGLPATCHPARAMETERIPROC __rglgen_glPatchParameteri;
+#else
+typedef void (APIENTRYP RGLSYMGLTEXTUREBARRIERNVPROC) (void);
+typedef void (APIENTRYP RGLSYMGLTEXTUREBARRIERPROC) (void);
+
+#define glTextureBarrierNV __rglgen_glTextureBarrierNV
+#define glTextureBarrier __rglgen_glTextureBarrier
+
+extern RGLSYMGLTEXTUREBARRIERNVPROC __rglgen_glTextureBarrierNV;
+extern RGLSYMGLTEXTUREBARRIERPROC __rglgen_glTextureBarrier;
 #endif
 
 #ifdef __cplusplus

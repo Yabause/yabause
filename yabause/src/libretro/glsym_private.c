@@ -4,4 +4,7 @@
 RGLSYMGLMEMORYBARRIERPROC __rglgen_glMemoryBarrier;
 RGLSYMGLBINDFRAGDATALOCATIONPROC __rglgen_glBindFragDataLocation;
 RGLSYMGLPATCHPARAMETERIPROC __rglgen_glPatchParameteri;
+#else
+RGLSYMGLTEXTUREBARRIERNVPROC __rglgen_glTextureBarrierNV;
+RGLSYMGLTEXTUREBARRIERPROC __rglgen_glTextureBarrier;
 #endif
