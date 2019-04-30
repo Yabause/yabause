@@ -1631,7 +1631,7 @@ void Cs2PlayDisc(void) {
   // Calculate Seek time
   int length = abs((int)Cs2Area->playendFAD - (int)Cs2Area->FAD);
   CDLOG("cs2\t:Seek length = %d", length);
-  Cs2Area->_periodictiming = length * 2000; // seektime
+  Cs2Area->_periodictiming = length * 3000; // seektime 2856 is the minimum for athlete king
   if (Cs2Area->_periodictiming > SEEK_TIME) {
     Cs2Area->_periodictiming = SEEK_TIME;
   }
