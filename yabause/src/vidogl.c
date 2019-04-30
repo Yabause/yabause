@@ -3081,6 +3081,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
           }
         }
         // Fetch Pixel
+        info->charaddr = parameter->charaddr;
         color = Vdp2RotationFetchPixel(info, h, v, cellw);
       }
       else

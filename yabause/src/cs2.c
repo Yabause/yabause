@@ -741,8 +741,9 @@ void Cs2ForceOpenTray(){
 int Cs2ForceCloseTray( int coreid, const char * cdpath ){
 
   int ret = 0;
-   if (Cs2Area != NULL) Cs2ChangeCDCore(coreid, cdpath);
-   else return -1;
+   if (Cs2Area == NULL) return -1;
+   if ((ret = Cs2ChangeCDCore(coreid, cdpath)) != 0)
+      return ret;
 
   Cs2Reset();
 
@@ -1627,7 +1628,13 @@ void Cs2PlayDisc(void) {
   Cs2SetTiming(1);
 
   Cs2Area->_periodiccycles = 0;
-  Cs2Area->_periodictiming = SEEK_TIME; // seektime
+  // Calculate Seek time
+  int length = abs((int)Cs2Area->playendFAD - (int)Cs2Area->FAD);
+  CDLOG("cs2\t:Seek length = %d", length);
+  Cs2Area->_periodictiming = length * 2000; // seektime
+  if (Cs2Area->_periodictiming > SEEK_TIME) {
+    Cs2Area->_periodictiming = SEEK_TIME;
+  }
 
   Cs2Area->status = CDB_STAT_SEEK;      // need to be seek
   Cs2Area->options = 0;
