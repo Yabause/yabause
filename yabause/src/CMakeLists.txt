@@ -108,24 +108,24 @@ endif()
 
 option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
 if (YAB_WANT_ASAN_DEBUG)
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lasan -fsanitize=address")
-   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} "-lasan -fsanitize=address")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
+   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-lasan")
 endif()
 
 option(YAB_WANT_UBSAN_DEBUG "Enable UBSAN compilation sanitizer" OFF)
 if (YAB_WANT_UBSAN_DEBUG)
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -lubsan -fsanitize=undefined")
-   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} "-lubsan -fsanitize=undefined")
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-lubsan")
 endif()
 
 option(YAB_WANT_DYNAREC_DEVMIYAX "Enable Sh2 denyarec by devMiyax" OFF)
 if (YAB_WANT_DYNAREC_DEVMIYAX)
 	add_definitions(-DDYNAREC_DEVMIYAX=1)
-	
+
 
   set(kronos_SOURCES
     ${kronos_SOURCES}
-    sh2_dynarec_devmiyax/DynarecSh2CInterface.cpp  
+    sh2_dynarec_devmiyax/DynarecSh2CInterface.cpp
 	  sh2_dynarec_devmiyax/DynarecSh2.cpp)
 
 	set(kronos_HEADERS
