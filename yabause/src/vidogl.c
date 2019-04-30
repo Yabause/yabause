@@ -3963,12 +3963,8 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   YglCache cash;
   u64 tmp;
   s16 x, y;
-  u16 CMDPMOD;
   u16 color2;
   float col[4 * 4];
-  int i;
-  short CMDXA;
-  short CMDYA;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
   float vert[8];
 
@@ -3981,14 +3977,11 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
 
-  CMDXA = cmd.CMDXA;
-  CMDYA = cmd.CMDYA;
+  if ((cmd.CMDXA & 0x400)) cmd.CMDXA |= 0xFC00; else cmd.CMDXA &= ~(0xFC00);
+  if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
 
-  if ((CMDXA & 0x400)) CMDXA |= 0xFC00; else CMDXA &= ~(0xFC00);
-  if ((CMDYA & 0x400)) CMDYA |= 0xFC00; else CMDYA &= ~(0xFC00);
-
-  x = CMDXA;
-  y = CMDYA;
+  x = cmd.CMDXA;
+  y = cmd.CMDYA;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
   if (sprite.w == 0 || sprite.h == 0) {
@@ -4008,7 +4001,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   expandVertices(vert, sprite.vertices, 0);
 
-  for (int i =0; i<4; i++) {
+  for (int i = 0; i<4; i++) {
     sprite.vertices[2*i] = (sprite.vertices[2*i] + Vdp1Regs->localX) * vdp1wratio;
     sprite.vertices[2*i+1] = (sprite.vertices[2*i+1] + Vdp1Regs->localY) * vdp1hratio;
   }
@@ -4021,43 +4014,42 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.priority = 0;
 
-  CMDPMOD = T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x4);
   // damaged data
   if (((cmd.CMDPMOD >> 3) & 0x7) > 5) {
     return;
   }
 
-  sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
+  sprite.uclipmode = (cmd.CMDPMOD >> 9) & 0x03;
 
-  if ((CMDPMOD & 0x8000) != 0)
+  if ((cmd.CMDPMOD & 0x8000) != 0)
   {
     tmp |= 0x00020000;
   }
 
-  if (IS_REPLACE(CMDPMOD)) {
+  if (IS_REPLACE(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
+  else if (IS_DONOT_DRAW_OR_SHADOW(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_SHADOW;
   }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
+  else if (IS_HALF_LUMINANCE(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
+  else if (IS_REPLACE_OR_HALF_TRANSPARENT(cmd.CMDPMOD)) {
     tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
-  if (IS_MESH(CMDPMOD)) {
+  if (IS_MESH(cmd.CMDPMOD)) {
     tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
   }
-  else if (IS_MSB_SHADOW(CMDPMOD)) {
+  else if (IS_MSB_SHADOW(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
   }
 
-  if ((CMDPMOD & 4))
+  if ((cmd.CMDPMOD & 4))
   {
-    for (i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++)
     {
       color2 = T1ReadWord(Vdp1Ram, (T1ReadWord(Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
       col[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
