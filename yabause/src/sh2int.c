@@ -183,11 +183,9 @@ static u16 FASTCALL FetchHWram(SH2_struct *context, u32 addr)
 	return SH2MappedMemoryReadWord(context,addr);
 }
 
-extern u8 * Vdp1Ram;
-static u16 FASTCALL FetchVram(u32 addr)
+static u16 FASTCALL FetchVram(SH2_struct *context, u32 addr)
 {
-  addr &= 0x07FFFF;
-  return T1ReadWord(Vdp1Ram, addr);
+  return SH2MappedMemoryReadWord(context, addr);
 }
 
 
