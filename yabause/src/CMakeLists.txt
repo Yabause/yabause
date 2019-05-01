@@ -109,7 +109,7 @@ endif()
 option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
 if (YAB_WANT_ASAN_DEBUG)
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-lasan")
+   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-L/lib/x86_64-linux-gnu -lpthread -lasan")
 endif()
 
 option(YAB_WANT_UBSAN_DEBUG "Enable UBSAN compilation sanitizer" OFF)
