@@ -1,28 +1,41 @@
-# YabaSanshiro for ORDROID XU4
+# YabaSanshiro for RetroArena
 
 ## How to build:
 
+### Get Source Code
+
 ```
-$ git clone https://github.com/devmiyax/yabause.git -b minimum_linux
+$ git clone https://github.com/devmiyax/yabause.git
 $ cd yabause
 $ git submodule update --init --recursive
 $ mkdir build
 $ cd build
-$ cmake ../yabause -DYAB_PORTS=retoro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DYAB_WANT_ARM7=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/xu4.cmake
-$ make
 ```
 
-# for ODROID N2
+### Generate Makefile for ODROID XU4
 
 ```
-$ cmake ../yabause -DYAB_PORTS=retro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DYAB_WANT_ARM7=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/n2.cmake
+$ cmake ../yabause -DYAB_PORTS=retro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DYAB_WANT_ARM7=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/xu4.cmake
 ```
 
-# for RockPro64
+### Generate Makefile for ODROID N2
+
+```
+$ cmake ../yabause -DYAB_PORTS=retro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/n2.cmake
+```
+
+### Generate Makefile for RockPro64
 
 ```
 $ cmake ../yabause -DYAB_PORTS=retro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DYAB_WANT_ARM7=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/rp64.cmake
 ```
+
+### Build
+
+```
+make
+```
+Ater that you are ready to run ```./src/retro_arena/yabasanshiro``` .
 
 ## Commandline Usage:
 
