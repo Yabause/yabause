@@ -4461,7 +4461,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 
 static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
-#define THICK 0.25f
+#define THICK 0.5f
   float dx;
   float dy;
   float len;
