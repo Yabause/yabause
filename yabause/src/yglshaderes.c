@@ -2017,10 +2017,10 @@ static const char vdp2blit_end_f[] =
 
 "  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
 "  if (modetop == 2) topImage = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 3) topImage = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 4) topImage = vec4(colortop.rgb, alphasecond); \n"
+"  if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
+"  if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
 
-"  finalColor = vec4( topImage.a * topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
+"  finalColor = vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
 "  } else {\n"
 "  finalColor = vec4(colortop.rgb, 1.0);\n"
 "  }\n"
