@@ -454,7 +454,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     // 4 bpp Bank mode
     u32 colorBank = cmd->CMDCOLR;
     if (MSB || colorBank == normal_shadow) {
-      color = VDP1COLOR(1, 0, priority, 1, 0);
+      color = VDP1COLOR(0, 1, priority, 1, 0);
     } else {
       const int colorindex = (colorBank);
       if (colorindex & 0x8000) {
