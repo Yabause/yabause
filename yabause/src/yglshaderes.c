@@ -2016,7 +2016,7 @@ static const char vdp2blit_end_f[] =
 "  } \n"
 
 "  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topImage = vec4(colortop.rgb, alphatop); \n"
+"  if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n"
 "  if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
 "  if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
 
