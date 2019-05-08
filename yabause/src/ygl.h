@@ -567,8 +567,10 @@ typedef struct {
    int readframe;
    int vdp1On[2];
    GLuint rboid_depth;
+   GLuint rboid_depth_win;
    GLuint vdp1fbo;
-   GLuint vdp1FrameBuff[4];
+   GLuint vdp1fbowin;
+   GLuint vdp1FrameBuff[6];
    GLuint smallfbo;
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
@@ -592,7 +594,7 @@ typedef struct {
    GLuint screen_depth;
 
    GLuint window_fbo;
-   GLuint window_fbotex[SPRITE];
+   GLuint window_fbotex[enBGMAX];
 
    GLuint window_cc_fbo;
    GLuint window_cc_fbotex;
