@@ -2384,8 +2384,6 @@ int YglProgramInit()
   id_mosaic_color_offset = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_color_offset");
 #endif
 
-   _prgid[PG_VDP2_ADDBLEND] = _prgid[PG_VDP2_NORMAL];
-
    _prgid[PG_VDP2_BLUR] = _prgid[PG_VDP2_NORMAL];
    _prgid[PG_VDP2_MOSAIC] = _prgid[PG_VDP2_NORMAL];
 
@@ -2873,15 +2871,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS], (const GLchar *)"u_mvpMatrix");
      current->mtxTexture = -1;
 
-   }
-   else if( prgid == PG_VDP2_ADDBLEND )
-   {
-      level->prg[level->prgcurrent].setupUniform = Ygl_uniformAddBlend;
-      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupAddBlend;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP2_NORMAL],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP2_NORMAL],(const GLchar *)"u_texMatrix");
    }
    else if (prgid == PG_VDP2_BLUR)
    {
