@@ -842,8 +842,10 @@ INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
   return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | col;
 }
 
-INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cramindex) {
-  return (((alpha & 0xF8) | priority) << 24 | cramindex);
+INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cc_on, u32 cramindex) {
+  return (((alpha & 0xF8) | priority) << 24 | ((cc_on & 0x1)<<16) | (cramindex& 0xFEFFFF));
+  //In 32 bit rgb mode, the Blue LSB is always considered as 0.
+  //This small artifact allows to implement Special color calculation without the need of an extra texture.
 }
 
 #define RGB555_TO_RGB24(temp)  ((temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)
