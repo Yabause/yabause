@@ -4321,6 +4321,28 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 }
 
 //////////////////////////////////////////////////////////////////////////////
+int isSquare(float *vert) {
+  for (int i = 0; i < 3; i++)
+  {
+    float dx = vert[((i + 1) << 1) + 0] - vert[((i + 0) << 1) + 0];
+    float dy = vert[((i + 1) << 1) + 1] - vert[((i + 0) << 1) + 1];
+    if ((dx <= 1.0f && dx >= -1.0f) && (dy <= 1.0f && dy >= -1.0f)) {
+      return 0;
+    }
+
+    float d2x = vert[(((i + 2) & 0x3) << 1) + 0] - vert[((i + 1) << 1) + 0];
+    float d2y = vert[(((i + 2) & 0x3) << 1) + 1] - vert[((i + 1) << 1) + 1];
+    if ((d2x <= 1.0f && d2x >= -1.0f) && (d2y <= 1.0f && d2y >= -1.0f)) {
+      return 0;
+    }
+
+    float dot = dx*d2x + dy*d2y;
+    if (dot > EPSILON || dot < -EPSILON) {
+      return 0;
+    }
+  }
+  return 1;
+}
 
 void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
@@ -4334,7 +4356,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int i;
   float col[4 * 4];
   float vert[8];
-  int isSquare;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -4343,7 +4364,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  sprite.dst = 1;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
   sprite.cor = 0;
@@ -4376,6 +4396,8 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[5] = (float)(s16)cmd.CMDYC;
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
+
+  sprite.dst = isSquare(vert);
 
   expandVertices(vert, sprite.vertices, 1);
 
@@ -4577,7 +4599,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   float vert[8];
   int gouraud = 0;
   int priority = 0;
-  int isSquare = 0;
   int shadow = 0;
   int normalshadow = 0;
   int colorcalc = 0;
