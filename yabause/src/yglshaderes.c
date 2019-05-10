@@ -1591,6 +1591,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  int depth = int(texelFetch(s_vdp2reg, ivec2(prinumber+8+line,0), 0).r*255.0);\n"
 "  int alpha = int(texelFetch(s_vdp2reg, ivec2(((additional>>3)&0x07)+line,0), 0).r*255.0)<<3; \n"
 "  int opaque = 0xF8;\n"
+"  int msb = int(fbColor.b*255.0)&0x1;\n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if((additional & 0x80) != 0) {\n"
 "    if( (additional & 0x40) != 0 ){  // index color? \n"
@@ -1609,6 +1610,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "    tmpColor.rgb = clamp(tmpColor.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
 "  } else { \n"
 "    tmpColor = fbColor;\n"
+"    tmpColor.b = float(int(tmpColor.b * 255.0)&0xFE)/255.0;\n"
 "  } \n"
 "  if ((additionalAttr & 0x80) != 0) {\n"
 "    if (tmpColor.rgb == vec3(0.0)) {\n"
@@ -1631,7 +1633,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " alpha = opaque; \n"
 const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
 const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
 const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( txcol.a == 0.0 ){ alpha = opaque; fbmode = 0;} \n ";
+const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ alpha = opaque; fbmode = 0;} \n ";
 
 
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
