@@ -253,13 +253,16 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
          }
       }
       else if (((ReadAddress & 0x1FFFFFFF) >= 0x5A00000 && (ReadAddress & 0x1FFFFFFF) < 0x5FF0000)) {
-        u32 counter = 0;
-        while (counter < TransferSize) {
+        while (counter < (TransferSize&(~0x1))) {
           u16 tmp = MappedMemoryReadWord(NULL, ReadAddress);
           MappedMemoryWriteWord(NULL, WriteAddress, tmp);
           WriteAddress += (WriteAdd>>1);
           ReadAddress += 2;
           counter += 2;
+        }
+        if (counter < TransferSize) {
+           MappedMemoryWriteByte(NULL, WriteAddress, MappedMemoryReadByte(NULL, ReadAddress));
+           counter += 1;
         }
       }
       else {
