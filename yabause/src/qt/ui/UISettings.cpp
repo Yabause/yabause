@@ -516,7 +516,8 @@ void UISettings::loadSettings()
   cbRBGREsolution->setCurrentIndex(cbResolution->findData(s->value("Video/rbg_resolution_mode", mRbgResolutionMode.at(0).id).toInt()));
 //   cbEnableIntegerPixelScaling->setChecked(s->value("Video/EnableIntegerPixelScaling", false).toBool());
 //   sbIntegerPixelScalingMultiplier->setValue(s->value("Video/IntegerPixelScalingMultiplier", 2).toInt());
-//   cbRotateScreen->setChecked(s->value("Video/RotateScreen").toBool());
+   cbRotateScreen->setChecked(s->value("Video/RotateScreen").toBool());
+   cbUseComputeShader->setChecked(s->value("Video/UseComputeShader").toBool());
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
@@ -613,6 +614,7 @@ void UISettings::saveSettings()
 	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
   s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());
   s->setValue("Video/rbg_resolution_mode", cbResolution->itemData(cbRBGREsolution->currentIndex()).toInt());
+  s->setValue("Video/UseComputeShader", cbUseComputeShader->isChecked());
 //   s->setValue("Video/EnableIntegerPixelScaling", cbEnableIntegerPixelScaling->isChecked());
 //   s->setValue("Video/IntegerPixelScalingMultiplier", sbIntegerPixelScalingMultiplier->value());
 
@@ -622,6 +624,8 @@ void UISettings::saveSettings()
 	s->setValue( "General/EnableMultiThreading", cbEnableMultiThreading->isChecked() );
 	s->setValue( "General/NumThreads", sbNumberOfThreads->value());
   s->setValue("Video/RotateScreen", cbRotateScreen->isChecked());
+
+  
 
   s->setValue("Sound/ScspSync", spinBox_scs_sync_count->value() );
   s->setValue("Sound/ScspMainMode", cbTimeMode->currentIndex() );

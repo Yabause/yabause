@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>533</height>
+    <height>554</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -406,6 +406,13 @@
         <widget class="QLabel" name="label_8">
          <property name="text">
           <string>RBG Resolution</string>
+         </property>
+        </widget>
+       </item>
+       <item row="23" column="0">
+        <widget class="QCheckBox" name="cbUseComputeShader">
+         <property name="text">
+          <string>Use compute shader for RBG generation</string>
          </property>
         </widget>
        </item>
@@ -1059,8 +1066,8 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="bgShowLogWindow"/>
   <buttongroup name="bgShowMenubar"/>
   <buttongroup name="bgShowToolbar"/>
+  <buttongroup name="bgShowLogWindow"/>
  </buttongroups>
 </ui>

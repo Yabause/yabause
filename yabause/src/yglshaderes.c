@@ -256,6 +256,12 @@ int Ygl_uniformNormal(void * p)
   glDisableVertexAttribArray(2);
   glUniform1i(id_normal_s_texture, 0);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+
+  if (prg->interuput_texture != 0) {
+	  glActiveTexture(GL_TEXTURE0);
+	  glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture());
+  }
+
   return 0;
 }
 
@@ -263,6 +269,10 @@ int Ygl_cleanupNormal(void * p)
 {
   YglProgram * prg;
   prg = p;
+  if (prg->interuput_texture != 0) {
+	  glActiveTexture(GL_TEXTURE0);
+	  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  }
   return 0;
 }
 
@@ -343,14 +353,21 @@ int Ygl_uniformNormalCram(void * p)
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+  if (prg->interuput_texture != 0) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture());
+  }
   return 0;
 }
 
 int Ygl_cleanupNormalCram(void * p)
 {
-  glActiveTexture(GL_TEXTURE0);
   YglProgram * prg;
   prg = p;
+  glActiveTexture(GL_TEXTURE0);
+  if (prg->interuput_texture != 0) {
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  }
   return 0;
 }
 
@@ -468,6 +485,7 @@ const GLchar Yglprg_rgb_cram_line_f[] =
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_color;\n"
+"uniform highp sampler2D s_line_texture;\n"
 "uniform int u_blendmode;\n"
 "out vec4 fragColor;\n"
 "void main()\n"
@@ -480,7 +498,7 @@ const GLchar Yglprg_rgb_cram_line_f[] =
 "    if( (highg & 0x80)  != 0) {\n"
 "      int coef = int(txindex.b*255.0);\n"
 "      vec4 linecol;\n"
-"      vec4 lineindex = texelFetch( s_texture,  ivec2( int(v_texcoord.z),int(v_texcoord.w))  ,0 );\n"
+"      vec4 lineindex = texelFetch( s_line_texture,  ivec2( int(v_texcoord.z),int(v_texcoord.w))  ,0 );\n"
 "      int lineparam = ((int(lineindex.g*255.0) & 0x7F)<<8) | int(lineindex.r*255.0); \n"
 "      if( (coef & 0x80) != 0 ){\n"
 "        int caddr = (lineparam&0x780) | (coef&0x7F);\n "
@@ -503,6 +521,7 @@ const GLchar Yglprg_rgb_cram_line_f[] =
 const GLchar * pYglprg_rbg_cram_line_f[] = { Yglprg_rgb_cram_line_f, NULL };
 static int id_rbg_cram_line_s_texture = -1;
 static int id_rbg_cram_line_s_color = -1;
+static int id_rbg_cram_line_s_line_texture = -1;
 static int id_rbg_cram_line_color_offset = -1;
 static int id_rbg_cram_line_blendmode = -1;
 static int id_rbg_cram_line_matrix = -1;
@@ -519,10 +538,21 @@ int Ygl_uniformNormalCramLine(void * p)
   glDisableVertexAttribArray(2);
   glUniform1i(id_rbg_cram_line_s_texture, 0);
   glUniform1i(id_rbg_cram_line_s_color, 1);
+  glUniform1i(id_rbg_cram_line_s_line_texture, 2);
   glUniform1i(id_rbg_cram_line_blendmode, prg->blendmode);
   glUniform4fv(id_rbg_cram_line_color_offset, 1, prg->color_offset_val);
+
+  if (prg->interuput_texture != 0) {
+	  glActiveTexture(GL_TEXTURE0);
+	  glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture());
+  }
+
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+
 
   // Disable blend mode if extend Color calcuration  is not enabled
   if ( (fixVdp2Regs->CCCTL & 0x400) == 0 ) {
@@ -534,7 +564,11 @@ int Ygl_uniformNormalCramLine(void * p)
 
 int Ygl_cleanupNormalCramLine(void * p)
 {
+  YglProgram * prg = p;
   glActiveTexture(GL_TEXTURE0);
+  if (prg->interuput_texture != 0) {
+	  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  }
   return 0;
 }
 
@@ -2696,6 +2730,7 @@ int YglProgramInit()
 
   id_rbg_cram_line_s_texture = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"s_texture");
   id_rbg_cram_line_s_color = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"s_color");
+  id_rbg_cram_line_s_line_texture = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"s_line_texture");
   id_rbg_cram_line_color_offset = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_color_offset");
   id_rbg_cram_line_blendmode = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_blendmode");
   id_rbg_cram_line_matrix = glGetUniformLocation(_prgid[PG_VDP2_RBG_CRAM_LINE], (const GLchar *)"u_mvpMatrix");
@@ -2865,6 +2900,8 @@ int YglProgramInit()
    idfrom_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_from");
    idto_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_to");
    idcoloroffset_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_coloroffset");
+
+   RBGGenerator_init(640,480);
 
    return 0;
 }

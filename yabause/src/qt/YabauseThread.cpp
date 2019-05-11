@@ -417,6 +417,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
   mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
   mYabauseConf.rbg_resolution_mode = vs->value("Video/rbg_resolution_mode", mYabauseConf.rbg_resolution_mode).toInt();
+  mYabauseConf.rbg_use_compute_shader = vs->value("Video/UseComputeShader", mYabauseConf.rbg_use_compute_shader).toBool();
 
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
@@ -481,6 +482,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.polygon_generation_mode = 0;
   mYabauseConf.resolution_mode = 0;
   mYabauseConf.rbg_resolution_mode = 0;
+  mYabauseConf.rbg_use_compute_shader = 0;
   mYabauseConf.rotate_screen = 0;
   mYabauseConf.scsp_sync_count_per_frame = 1;
   mYabauseConf.scsp_main_mode = 1;

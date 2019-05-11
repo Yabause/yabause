@@ -903,6 +903,10 @@ void UIYabause::on_aFileSettings_triggered()
       VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, newhash["Video/rbg_resolution_mode"].toInt());
     }
 
+	if (newhash["Video/UseComputeShader"] != hash["Video/UseComputeShader"]) {
+		VideoSetSetting(VDP_SETTING_RBG_USE_COMPUTESHADER, newhash["Video/UseComputeShader"].toInt());
+	}
+
 
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||

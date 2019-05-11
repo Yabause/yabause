@@ -179,27 +179,7 @@ static int nbg2priority = 0;
 static int nbg3priority = 0;
 static int rbg0priority = 0;
 
-// Rotate Screen
 
-typedef struct {
-  int useb;
-  vdp2draw_struct info;
-  YglTexture texture;
-  int rgb_type;
-  int pagesize;
-  int patternshift;
-  u32 LineColorRamAdress;
-  vdp2draw_struct line_info;
-  YglTexture line_texture;
-  YglCache c;
-  YglCache cline;
-  int vres;
-  int hres;
-  int async;
-  volatile int vdp2_sync_flg;
-  float rotate_mval_h;
-  float rotate_mval_v;
-} RBGDrawInfo;
 
 RBGDrawInfo g_rgb0;
 RBGDrawInfo g_rgb1;
@@ -2955,6 +2935,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   if (vdp2height >= 448) rbg->vres = (vdp2height >> 1); else rbg->vres = vdp2height;
   if (vdp2width >= 640) rbg->hres = (vdp2width >> 1); else rbg->hres = vdp2width;
   
+
   switch (_Ygl->rbg_resolution_mode) {
   case RBG_RES_ORIGINAL:
     rbg->rotate_mval_h = 1.0f;
@@ -2990,6 +2971,10 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     rbg->rotate_mval_h = 1.0;
     rbg->rotate_mval_v = 1.0;
     break;
+  }
+
+  if (_Ygl->rbg_use_compute_shader) {
+	  RBGGenerator_resize(rbg->hres, rbg->vres);
   }
 
   info->vertices[0] = 0;
@@ -3252,11 +3237,11 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     paraA.dx = paraA.A * paraA.deltaX + paraA.B * paraA.deltaY;
     paraA.dy = paraA.D * paraA.deltaX + paraA.E * paraA.deltaY;
     paraA.Xp = paraA.A * (paraA.Px - paraA.Cx) +
-      paraA.B * (paraA.Py - paraA.Cy) +
-      paraA.C * (paraA.Pz - paraA.Cz) + paraA.Cx + paraA.Mx;
+    paraA.B * (paraA.Py - paraA.Cy) +
+    paraA.C * (paraA.Pz - paraA.Cz) + paraA.Cx + paraA.Mx;
     paraA.Yp = paraA.D * (paraA.Px - paraA.Cx) +
-      paraA.E * (paraA.Py - paraA.Cy) +
-      paraA.F * (paraA.Pz - paraA.Cz) + paraA.Cy + paraA.My;
+    paraA.E * (paraA.Py - paraA.Cy) +
+    paraA.F * (paraA.Pz - paraA.Cz) + paraA.Cy + paraA.My;
   }
 
   if (rbg->useb)
@@ -3271,6 +3256,29 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 
   paraA.over_pattern_name = fixVdp2Regs->OVPNRA;
   paraB.over_pattern_name = fixVdp2Regs->OVPNRB;
+
+  if (_Ygl->rbg_use_compute_shader) {
+	  RBGGenerator_update(rbg);
+	  
+	  if (info->LineColorBase != 0) {
+		  const float vstep = 1.0 / rbg->rotate_mval_v;
+		  j = 0.0f;
+		  for (int jj = 0; jj < rbg->vres; jj++) {
+			  if ((fixVdp2Regs->LCTA.part.U & 0x8000) != 0) {
+				  rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc*(int)(j));
+				  *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
+				  line_texture->textdata++;
+			  }
+			  else {
+				  *line_texture->textdata = rbg->LineColorRamAdress;
+				  line_texture->textdata++;
+			  }
+			  j += vstep;
+		  }
+	  }
+	
+	  return;
+  }
 
   const float vstep = 1.0 / rbg->rotate_mval_v;
   const float hstep = 1.0 / rbg->rotate_mval_h;
@@ -3292,12 +3300,12 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       }
 #endif
       paraA.Xsp = paraA.A * ((paraA.Xst + paraA.deltaXst * j) - paraA.Px) +
-        paraA.B * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-        paraA.C * (paraA.Zst - paraA.Pz);
+      paraA.B * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
+      paraA.C * (paraA.Zst - paraA.Pz);
 
       paraA.Ysp = paraA.D * ((paraA.Xst + paraA.deltaXst *j) - paraA.Px) +
-        paraA.E * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
-        paraA.F * (paraA.Zst - paraA.Pz);
+      paraA.E * ((paraA.Yst + paraA.deltaYst * j) - paraA.Py) +
+      paraA.F * (paraA.Zst - paraA.Pz);
 
       paraA.KtablV = paraA.deltaKAst* j;
     }
@@ -3393,7 +3401,10 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
             if (vdp2rGetKValue(parameter, i) == 0) {
               paraB.lineaddr = paraA.lineaddr;
               parameter = &paraB;
-            }
+			}
+			else {
+				int a = 0;
+			}
           }
         }
         break;
@@ -3613,7 +3624,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         }
 
         // Fetch pixel
-        color = Vdp2RotationFetchPixel(info, x, y, 8);
+		color =  Vdp2RotationFetchPixel(info, x, y, 8);
       }
 
       if (info->LineColorBase != 0 && VDP2_CC_NONE != (info->blendmode&0x03)) {
@@ -5611,13 +5622,13 @@ static void Vdp2DrawNBG0(void)
     }
 
     info.rotatenum = 1;
-    paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
+    //paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
     paraB.coefenab = fixVdp2Regs->KTCTL & 0x100;
     paraB.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
     ReadPlaneSizeR(&paraB, fixVdp2Regs->PLSZ >> 12);
     for (i = 0; i < 16; i++)
     {
-      paraB.PlaneAddr(&info, i, fixVdp2Regs);
+	  Vdp2ParameterBPlaneAddr(&info, i, fixVdp2Regs);
       paraB.PlaneAddrv[i] = info.addr;
     }
 
@@ -6470,8 +6481,8 @@ static void Vdp2DrawRBG0(void)
   B0_Updated = 0;
   B1_Updated = 0;
 
-  paraA.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
-  paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
+  //paraA.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
+  //paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
   paraA.charaddr = (fixVdp2Regs->MPOFR & 0x7) * 0x20000;
   paraB.charaddr = (fixVdp2Regs->MPOFR & 0x70) * 0x2000;
   ReadPlaneSizeR(&paraA, fixVdp2Regs->PLSZ >> 8);
@@ -6693,9 +6704,9 @@ static void Vdp2DrawRBG0(void)
 
     for (i = 0; i < 16; i++)
     {
-      paraA.PlaneAddr(info, i, fixVdp2Regs);
+	  Vdp2ParameterAPlaneAddr(info, i, fixVdp2Regs);
       paraA.PlaneAddrv[i] = info->addr;
-      paraB.PlaneAddr(info, i, fixVdp2Regs);
+	  Vdp2ParameterBPlaneAddr(info, i, fixVdp2Regs);
       paraB.PlaneAddrv[i] = info->addr;
     }
   }
@@ -6788,10 +6799,10 @@ void VIDOGLVdp2DrawScreens(void)
 
   Vdp2GenerateWindowInfo();
 
-  if (g_rgb0.async) {
-    Vdp2DrawRBG0();
-    FrameProfileAdd("RBG0 end");
-  }
+  
+  Vdp2DrawRBG0();
+  FrameProfileAdd("RBG0 end");
+  
 
   Vdp2DrawBackScreen();
   Vdp2DrawLineColorScreen();
@@ -6804,10 +6815,7 @@ void VIDOGLVdp2DrawScreens(void)
   FrameProfileAdd("NBG1 end");
   Vdp2DrawNBG0();
   FrameProfileAdd("NBG0 end");
-  if (!g_rgb0.async) {
-    Vdp2DrawRBG0();
-    FrameProfileAdd("RBG0 end");
-  }
+
   Vdp2DrawRotationSync();
 #if BG_PROFILE    
   now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
@@ -7298,6 +7306,17 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   case VDP_SETTING_RBG_RESOLUTION_MODE:
     _Ygl->rbg_resolution_mode = value;
     break;
+  
+  case VDP_SETTING_RBG_USE_COMPUTESHADER:
+	  _Ygl->rbg_use_compute_shader = value;
+	  if (_Ygl->rbg_use_compute_shader) {
+		  g_rgb0.async = 0;
+	  }
+	  else {
+		  g_rgb0.async = 1;
+	  }
+	  break;
+
   case VDP_SETTING_POLYGON_MODE:
     if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {
       YglTesserationProgramInit();

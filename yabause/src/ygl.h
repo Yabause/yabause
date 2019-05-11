@@ -29,7 +29,7 @@ extern "C" {
     #include <glsym/glsym.h>
     #include <glsm/glsm.h>
 #elif defined(__ANDROID__)
-    #include <GLES3/gl3.h>
+    #include <GLES3/gl31.h>
     #include <GLES3/gl3ext.h>
     #include <EGL/egl.h>
 
@@ -95,8 +95,8 @@ extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
 #define GL_ATOMIC_COUNTER_BARRIER_BIT     0x00001000
 #define GL_ALL_BARRIER_BITS               0xFFFFFFFF
 
-typedef void (* PFNGLMEMORYBARRIERPROC) (GLbitfield barriers);
-extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
+//typedef void (* PFNGLMEMORYBARRIERPROC) (GLbitfield barriers);
+//extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 
 #elif defined(_WIN32)
 
@@ -432,6 +432,7 @@ typedef struct {
    u32 lineTexture;
    int id;
    int colornumber;
+   GLuint interuput_texture;
 } YglProgram;
 
 typedef struct {
@@ -579,6 +580,7 @@ typedef struct {
    POLYGONMODE polygonmode;
    RESOLUTION_MODE resolution_mode;
    RBG_RESOLUTION_MODE rbg_resolution_mode;
+   int rbg_use_compute_shader;
    YglTextureManager * texture_manager;
    GLsync sync;
     GLuint default_fbo;
@@ -608,6 +610,27 @@ typedef struct {
 
 extern Ygl * _Ygl;
 
+// Rotate Screen
+
+typedef struct {
+  int useb;
+  vdp2draw_struct info;
+  YglTexture texture;
+  int rgb_type;
+  int pagesize;
+  int patternshift;
+  u32 LineColorRamAdress;
+  vdp2draw_struct line_info;
+  YglTexture line_texture;
+  YglCache c;
+  YglCache cline;
+  int vres;
+  int hres;
+  int async;
+  volatile int vdp2_sync_flg;
+  float rotate_mval_h;
+  float rotate_mval_v;
+} RBGDrawInfo;
 
 int YglGLInit(int, int);
 int YglInit(int, int, unsigned int);
