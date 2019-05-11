@@ -3075,45 +3075,51 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
     u64 cacheaddr = 0x90000000BAD;
 
     rbg->vdp2_sync_flg = -1;
-    YglTMAllocate(_Ygl->texture_manager, &rbg->texture, info->cellw, info->cellh, &x, &y);
-    rbg->c.x = x;
-    rbg->c.y = y;
-    YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->c);
+	if (!_Ygl->rbg_use_compute_shader) {
+		YglTMAllocate(_Ygl->texture_manager, &rbg->texture, info->cellw, info->cellh, &x, &y);
+		rbg->c.x = x;
+		rbg->c.y = y;
+		YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->c);
+	}
     info->cellw = cellw;
     info->cellh = cellh;
 
-  rbg->line_texture.textdata = NULL;
-  if (info->LineColorBase != 0)
-  {
-    rbg->line_info.blendmode = 0;
-    rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
+	rbg->line_texture.textdata = NULL;
+	if (info->LineColorBase != 0)
+	{
+		rbg->line_info.blendmode = 0;
+		rbg->LineColorRamAdress = (T1ReadWord(Vdp2Ram, info->LineColorBase) & 0x7FF);// +info->coloroffset;
 
-    u64 cacheaddr = 0xA0000000DAD;
-    YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, rbg->vres, 1,  &x, &y);
-    rbg->cline.x = x;
-    rbg->cline.y = y;
-    YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
+		u64 cacheaddr = 0xA0000000DAD;
+		YglTMAllocate(_Ygl->texture_manager, &rbg->line_texture, rbg->vres, 1, &x, &y);
+		rbg->cline.x = x;
+		rbg->cline.y = y;
+		YglCacheAdd(_Ygl->texture_manager, cacheaddr, &rbg->cline);
 
-  }
-  else {
-    rbg->LineColorRamAdress = 0x00;
-    rbg->cline.x = -1;
-    rbg->cline.y = -1;
-    rbg->line_texture.textdata = NULL;
-    rbg->line_texture.w = 0;
-  }
+	}
+	else {
+		rbg->LineColorRamAdress = 0x00;
+		rbg->cline.x = -1;
+		rbg->cline.y = -1;
+		rbg->line_texture.textdata = NULL;
+		rbg->line_texture.w = 0;
+	}
 
-    Vdp2DrawRotation_in(rbg);
+	Vdp2DrawRotation_in(rbg);
     
-    rbg->info.cellw = rbg->hres;
-    rbg->info.cellh = rbg->vres;
-    rbg->info.flipfunction = 0;
-    YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline);
+	if (!_Ygl->rbg_use_compute_shader) {
+		rbg->info.cellw = rbg->hres;
+		rbg->info.cellh = rbg->vres;
+		rbg->info.flipfunction = 0;
+		YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline);
+	}
+	else {
+		curret_rbg = rbg;
+	}
   }
 }
 
 void Vdp2RgbTextureSync() {
-
 
   if (g_rotate_mtx && curret_rbg) {
 
@@ -3137,6 +3143,14 @@ void Vdp2RgbTextureSync() {
 }
 
 static void Vdp2DrawRotationSync() {
+
+	if (_Ygl->rbg_use_compute_shader && curret_rbg) {
+		curret_rbg->info.cellw = curret_rbg->hres;
+		curret_rbg->info.cellh = curret_rbg->vres;
+		curret_rbg->info.flipfunction = 0;
+		YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline);
+		return;
+	}
 
   if (g_rotate_mtx && curret_rbg) {
 
@@ -6799,11 +6813,9 @@ void VIDOGLVdp2DrawScreens(void)
 
   Vdp2GenerateWindowInfo();
 
-  
   Vdp2DrawRBG0();
   FrameProfileAdd("RBG0 end");
   
-
   Vdp2DrawBackScreen();
   Vdp2DrawLineColorScreen();
 
