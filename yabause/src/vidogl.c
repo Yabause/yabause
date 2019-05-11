@@ -5531,11 +5531,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   // Color calculation ratio
   info->alpha = (~varVdp2Regs->CCRNA & 0x1F)<<3;
 
-  // 12.13 blur
-  if ((varVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info->blendmode |= VDP2_CC_BLUR;
-    info->alpha = 0xF8;
-  }
 
   Vdp2GeneratePerLineColorCalcuration(info, NBG0, varVdp2Regs);
   _Ygl->perLine[RBG1] = info->lineTexture;
@@ -5794,13 +5789,6 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
   info.alpha = (~varVdp2Regs->CCRNA & 0x1F) << 3;
 
-  // 12.13 blur
-  if ((varVdp2Regs->CCCTL & 0xF000) == 0xA000) {
-    info.blendmode |= VDP2_CC_BLUR;
-    info.alpha = 0xF8;
-  }
-
-
   Vdp2GeneratePerLineColorCalcuration(&info, NBG0, varVdp2Regs);
   _Ygl->perLine[NBG0] = info.lineTexture;
 
@@ -6009,12 +5997,6 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   info.blendmode = 0;
 
   info.alpha = ((~varVdp2Regs->CCRNA & 0x1F00) >> 5);
-
-  // 12.13 blur
-  if ((varVdp2Regs->CCCTL & 0xF000) == 0xC000) {
-    info.blendmode |= VDP2_CC_BLUR;
-    info.alpha = 0xF8;
-  }
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG1, varVdp2Regs);
   _Ygl->perLine[NBG1] = info.lineTexture;
@@ -6232,12 +6214,6 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
 
   info.alpha = (~varVdp2Regs->CCRNB & 0x1F) << 3;
 
-  // 12.13 blur
-  if ((varVdp2Regs->CCCTL & 0xF000) == 0xD000) {
-    info.blendmode |= VDP2_CC_BLUR;
-    info.alpha = 0xF8;
-  }
-
   Vdp2GeneratePerLineColorCalcuration(&info, NBG2, varVdp2Regs);
   _Ygl->perLine[NBG2] = info.lineTexture;
 
@@ -6317,12 +6293,6 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
     info.specialcode = varVdp2Regs->SFCODE & 0xFF;
 
   info.alpha = (~varVdp2Regs->CCRNB & 0x1F00) >> 5;
-
-  // 12.13 blur
-  if ((varVdp2Regs->CCCTL & 0xF000) == 0xE000) {
-    info.blendmode |= VDP2_CC_BLUR;
-    info.alpha = 0xF8;
-  }
 
   Vdp2GeneratePerLineColorCalcuration(&info, NBG3, varVdp2Regs);
   _Ygl->perLine[NBG3] = info.lineTexture;
@@ -6660,12 +6630,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->blendmode = 0;
 
   info->alpha = (~varVdp2Regs->CCRR & 0x1F) << 3;
-
-  // 12.13 blur
-  if ((varVdp2Regs->CCCTL & 0xF000) == 0x9000) {
-    info->blendmode |= VDP2_CC_BLUR;
-    info->alpha = 0xF8;
-  }
 
   info->coloroffset = (varVdp2Regs->CRAOFB & 0x7) << 8;
 

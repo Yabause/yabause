@@ -2214,9 +2214,6 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC;
     }
-    if ((input->blendmode & VDP2_CC_BLUR) != 0) {
-      prg = PG_VDP2_BLUR;
-    }
   }
   else {
 
@@ -2224,9 +2221,6 @@ void YglQuadOffset_in(vdp2draw_struct * input, YglTexture * output, YglCache * c
 
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC_CRAM;
-    }
-    if ((input->blendmode & VDP2_CC_BLUR) != 0) {
-      prg = PG_VDP2_BLUR_CRAM;
     }
   }
 
@@ -2342,17 +2336,11 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
       if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
         prg = PG_VDP2_MOSAIC;
       }
-      if ((input->blendmode & VDP2_CC_BLUR) != 0) {
-        prg = PG_VDP2_BLUR;
-      }
   } else {
       prg = PG_VDP2_NORMAL_CRAM;
 
       if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
         prg = PG_VDP2_MOSAIC_CRAM;
-      }
-      if (((input->blendmode & VDP2_CC_BLUR) != 0)) {
-        prg = PG_VDP2_BLUR_CRAM;
       }
   }
 
@@ -2476,9 +2464,6 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
     if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC;
     }
-    if ((input->blendmode & VDP2_CC_BLUR) != 0) {
-      prg = PG_VDP2_BLUR;
-    }
   }
   else {
 
@@ -2487,9 +2472,6 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
     }
     else if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC_CRAM;
-    }
-    else if ((input->blendmode & VDP2_CC_BLUR) != 0) {
-      prg = PG_VDP2_BLUR_CRAM;
     }
     else {
         prg = PG_VDP2_NORMAL_CRAM;
@@ -3301,6 +3283,36 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   glDisable(GL_STENCIL_TEST);
   return ret;
 }
+int setupBlur(Vdp2 *varVdp2Regs, int layer) {
+  int val = (varVdp2Regs->CCCTL & 0xF000) >> 12;
+  if ((val & 0x8) == 0) return 0;
+  switch (layer) {
+    case RBG0:
+      return ((val & 0x7) == 1);
+    break;
+    case RBG1:
+      return ((val & 0x7) == 2);
+    break;
+    case NBG0:
+      return ((val & 0x7) == 2);
+    break;
+    case NBG1:
+      return ((val & 0x7) == 4);
+    break;
+    case NBG2:
+      return ((val & 0x7) == 5);
+    break;
+    case NBG3:
+      return ((val & 0x7) == 6);
+    break;
+    case SPRITE:
+      return ((val & 0x7) == 0);
+    break;
+    default:
+      return 0;
+  }
+  return 0;
+}
 
 int setupColorMode(Vdp2 *varVdp2Regs, int layer) {
   //Return 1 if color format is RGB / 0 otherwise
@@ -3467,6 +3479,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int prioscreens[6] = {0};
   int modescreens[7];
   int isRGB[6];
+  int isBlur[7];
   glDisable(GL_BLEND);
   int id = 0;
 
@@ -3483,10 +3496,12 @@ void YglRender(Vdp2 *varVdp2Regs) {
       prioscreens[id] = _Ygl->screen_fbotex[vdp2screens[j]];
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
+      isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
       id++;
     }
   }
+  isBlur[6] = setupBlur(varVdp2Regs, SPRITE);
   lncl_draw[6] = lncl[6];
 
   glViewport(0, 0, maxWidth, maxHeight);
@@ -3537,7 +3552,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
 
-  YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, lncl_draw, VDP1fb, varVdp2Regs);
+  YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, lncl_draw, VDP1fb, varVdp2Regs);
 
 
     //if((img[0] == 0) && (img[1] == 0) && (img[2] == 0)) { // Break doom...
