@@ -4336,6 +4336,74 @@ int isSquare(float *vert) {
   return 0;
 }
 
+void fixVerticesSize(float *vert) {
+  int square = 1;
+
+  for (int i = 0; i < 3; i++) {
+    float dx = vert[((i + 1) << 1) + 0] - vert[((i + 0) << 1) + 0];
+    float dy = vert[((i + 1) << 1) + 1] - vert[((i + 0) << 1) + 1];
+    if ((dx <= 1.0f && dx >= -1.0f) && (dy <= 1.0f && dy >= -1.0f)) {
+      square = 0;
+      break;
+    }
+
+    float d2x = vert[(((i + 2) & 0x3) << 1) + 0] - vert[((i + 1) << 1) + 0];
+    float d2y = vert[(((i + 2) & 0x3) << 1) + 1] - vert[((i + 1) << 1) + 1];
+    if ((d2x <= 1.0f && d2x >= -1.0f) && (d2y <= 1.0f && d2y >= -1.0f)) {
+      square = 0;
+      break;
+    }
+
+    float dot = dx*d2x + dy*d2y;
+    if (dot > EPSILON || dot < -EPSILON) {
+      square = 0;
+      break;
+    }
+  }
+
+  if (square) {
+    float minx;
+    float miny;
+    int lt_index;
+
+    // find upper left opsition
+    minx = 65535.0f;
+    miny = 65535.0f;
+    lt_index = -1;
+    for (int i = 0; i < 4; i++) {
+      if (vert[(i << 1) + 0] <= minx && vert[(i << 1) + 1] <= miny) {
+        minx = vert[(i << 1) + 0];
+        miny = vert[(i << 1) + 1];
+        lt_index = i;
+      }
+    }
+
+    for (int i = 0; i < 4; i++) {
+      if (i != lt_index) {
+        float nx;
+        float ny;
+        // vectorize
+        float dx = vert[(i << 1) + 0] - vert[((lt_index) << 1) + 0];
+        float dy = vert[(i << 1) + 1] - vert[((lt_index) << 1) + 1];
+
+        // normalize
+        float len = fabsf(sqrtf(dx*dx + dy*dy));
+        if (len <= EPSILON) {
+          continue;
+        }
+        nx = dx / len;
+        ny = dy / len;
+        if (nx >= EPSILON) nx = 1.0f; else nx = 0.0f;
+        if (ny >= EPSILON) ny = 1.0f; else ny = 0.0f;
+
+        // expand vertex
+        vert[(i << 1) + 0] += nx;
+        vert[(i << 1) + 1] += ny;
+      }
+    }
+  }
+}
+
 void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   vdp1cmd_struct cmd;
@@ -4391,9 +4459,9 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.dst = !isSquare(vert);
 
-  CMDPMOD = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x4);
+  expandVertices(vert, sprite.vertices, ((cmd.CMDPMOD>>12)&0x1)==0);
 
-  expandVertices(vert, sprite.vertices, ((CMDPMOD>>12)&0x1)==0);
+  fixVerticesSize(sprite.vertices);
 
   for (int i = 0; i<4; i++) {
     sprite.vertices[2*i] = (sprite.vertices[2*i] + Vdp1Regs->localX) * vdp1wratio;
@@ -4408,37 +4476,37 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.priority = 0;
 
-  sprite.uclipmode = (CMDPMOD >> 9) & 0x03;
+  sprite.uclipmode = (cmd.CMDPMOD >> 9) & 0x03;
 
   // MSB
-  if ((CMDPMOD & 0x8000) != 0)
+  if ((cmd.CMDPMOD & 0x8000) != 0)
   {
     tmp |= 0x00020000;
   }
 
-  if (IS_REPLACE(CMDPMOD)) {
+  if (IS_REPLACE(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
+  else if (IS_DONOT_DRAW_OR_SHADOW(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_SHADOW;
   }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
+  else if (IS_HALF_LUMINANCE(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
   }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
+  else if (IS_REPLACE_OR_HALF_TRANSPARENT(cmd.CMDPMOD)) {
     tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
   }
-  if (IS_MESH(CMDPMOD)) {
+  if (IS_MESH(cmd.CMDPMOD)) {
     tmp |= 0x00010000;
     sprite.blendmode = VDP1_COLOR_CL_MESH;
   }
-  else if (IS_MSB_SHADOW(CMDPMOD)) {
+  else if (IS_MSB_SHADOW(cmd.CMDPMOD)) {
     sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
   }
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
-  if ((CMDPMOD & 4))
+  if ((cmd.CMDPMOD & 4))
   {
     for (i = 0; i < 4; i++)
     {
@@ -4616,7 +4684,9 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
 
-  expandVertices(vert, sprite.vertices, 1);
+  expandVertices(vert, sprite.vertices, ((cmd.CMDPMOD>>12)&0x1)==0);
+
+  fixVerticesSize(sprite.vertices);
 
   for (int i = 0; i<4; i++) {
     sprite.vertices[2*i] = (sprite.vertices[2*i] + Vdp1Regs->localX) * vdp1wratio;
