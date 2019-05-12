@@ -4229,7 +4229,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)x;
   vert[7] = (float)(y + rh);
 
-  expandVertices(vert, sprite.vertices, ((sprite.w!=rw)||(sprite.h!=rh)));
+  expandVertices(vert, sprite.vertices, 0);
 
   for (int i =0; i<4; i++) {
     sprite.vertices[2*i] = (sprite.vertices[2*i]) * vdp1wratio;
