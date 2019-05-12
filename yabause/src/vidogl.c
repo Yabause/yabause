@@ -4331,26 +4331,9 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 //////////////////////////////////////////////////////////////////////////////
 int isSquare(float *vert) {
-  for (int i = 0; i < 3; i++)
-  {
-    float dx = vert[((i + 1) << 1) + 0] - vert[((i + 0) << 1) + 0];
-    float dy = vert[((i + 1) << 1) + 1] - vert[((i + 0) << 1) + 1];
-    if ((dx <= 1.0f && dx >= -1.0f) && (dy <= 1.0f && dy >= -1.0f)) {
-      return 0;
-    }
-
-    float d2x = vert[(((i + 2) & 0x3) << 1) + 0] - vert[((i + 1) << 1) + 0];
-    float d2y = vert[(((i + 2) & 0x3) << 1) + 1] - vert[((i + 1) << 1) + 1];
-    if ((d2x <= 1.0f && d2x >= -1.0f) && (d2y <= 1.0f && d2y >= -1.0f)) {
-      return 0;
-    }
-
-    float dot = dx*d2x + dy*d2y;
-    if (dot > EPSILON || dot < -EPSILON) {
-      return 0;
-    }
-  }
-  return 1;
+  if ((vert[0] == vert[2]) && (vert[4] == vert[6]) && (vert[1] == vert[7]) && (vert[3] == vert[5])) return 1;
+  if ((vert[0] == vert[6]) && (vert[2] == vert[4]) && (vert[1] == vert[3]) && (vert[5] == vert[7])) return 1;
+  return 0;
 }
 
 void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
