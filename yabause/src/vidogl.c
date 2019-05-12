@@ -4408,7 +4408,9 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.dst = isSquare(vert);
 
-  expandVertices(vert, sprite.vertices, 1);
+  CMDPMOD = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x4);
+
+  expandVertices(vert, sprite.vertices, ((CMDPMOD>>12)&0x1)==0);
 
   for (int i = 0; i<4; i++) {
     sprite.vertices[2*i] = (sprite.vertices[2*i] + Vdp1Regs->localX) * vdp1wratio;
@@ -4420,9 +4422,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   tmp |= cmd.CMDCOLR;
   tmp <<= 16;
   tmp |= cmd.CMDSIZE;
-
-
-  CMDPMOD = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x4);
 
   sprite.priority = 0;
 
