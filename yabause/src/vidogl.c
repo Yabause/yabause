@@ -1647,18 +1647,23 @@ static INLINE u32 Vdp2GetPixel16bppbmp(vdp2draw_struct *info, u32 addr, Vdp2 *va
   u16 dot = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
 //if (info->patternwh == 2) printf("%x\n", dot);
 //Ca deconne ici
+  int cc = Vdp2GetCCOn(info, dot, 0, varVdp2Regs);
   if (!(dot & 0x8000) && info->transparencyenable) color = 0x00000000;
-  else color = VDP2COLOR(info->idScreen, info->alpha, info->priority, 1, RGB555_TO_RGB24(dot));
+  else color = VDP2COLOR(info->idScreen, info->alpha, info->priority, cc, RGB555_TO_RGB24(dot));
   return color;
 }
 
 static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr, Vdp2 *varVdp2Regs) {
   u32 color;
   u16 dot1, dot2;
+  int cc;
   dot1 = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
   dot2 = Vdp2RamReadWord(NULL, Vdp2Ram, addr+2);
+
+  cc = Vdp2GetCCOn(info, 0, 0, varVdp2Regs);
+
   if (!(dot1 & 0x8000) && info->transparencyenable) color = 0x00000000;
-  else color = VDP2COLOR(info->idScreen, info->alpha, info->priority, 1, (((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF)));
+  else color = VDP2COLOR(info->idScreen, info->alpha, info->priority, cc, (((dot1 & 0xFF) << 16) | (dot2 & 0xFF00) | (dot2 & 0xFF)));
   return color;
 }
 
