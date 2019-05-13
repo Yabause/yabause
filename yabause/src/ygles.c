@@ -624,15 +624,6 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
   YabThreadUnLock(tm->mtx);
 }
 
-
-void YglTMCheck()
-{
-  YglTextureManager * tm = YglTM_vdp1[_Ygl->drawframe];
-  if ((tm->width > 3072) || (tm->height > 3072)) {
-    executeTMVDP1(_Ygl->drawframe,_Ygl->drawframe);
-  }
-}
-
 static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
   GLuint new_textureID;
   GLuint new_pixelBufferID;
@@ -693,7 +684,15 @@ static void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned in
   tm->textureID = new_textureID;
   tm->pixelBufferID = new_pixelBufferID;
   return;
+}
 
+void YglTMCheck()
+{
+  YglTextureManager * tm = YglTM_vdp1[_Ygl->drawframe];
+  if ((tm->width > 2048) || (tm->height > 2048)) {
+    executeTMVDP1(_Ygl->drawframe,_Ygl->drawframe);
+    YglTMRealloc(tm, 1024, 1024);
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1412,9 +1411,9 @@ int YglInit(int width, int height, unsigned int depth) {
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  YglTM_vdp1[0] = YglTMInit(2048, 2048);
-  YglTM_vdp1[1] = YglTMInit(2048, 2048);
-  YglTM_vdp2 = YglTMInit(2048, 2048);
+  YglTM_vdp1[0] = YglTMInit(1024, 1024);
+  YglTM_vdp1[1] = YglTMInit(1024, 1024);
+  YglTM_vdp2 = YglTMInit(1024, 1024);
 
   _Ygl->vdp1fb_exactbuf[0] = (u8*)malloc(512*704*2);
   _Ygl->vdp1fb_exactbuf[1] = (u8*)malloc(512*704*2);
@@ -1581,6 +1580,7 @@ static int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float *
 static int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg, YglTextureManager *tm);
 
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm){
+    _Ygl->needVdp1Render = 1;
     if (_Ygl->polygonmode == GPU_TESSERATION) {
       YglQuadGrowShading_tesselation_in(input, NULL, colors, cache, 0, tm);
     }
@@ -1598,6 +1598,7 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache
 }
 
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm){
+  _Ygl->needVdp1Render = 1;
   if (_Ygl->polygonmode == GPU_TESSERATION) {
     return YglQuadGrowShading_tesselation_in(input, output, colors, c, 1, tm);
   }
