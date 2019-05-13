@@ -249,7 +249,9 @@ SHADER_VERSION
 "uniform float u_vheight; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
+"uniform sampler2D s_window;  \n"
 "uniform int is_perline; \n"
+"uniform int is_window; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()   \n"
@@ -261,6 +263,10 @@ SHADER_VERSION
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
+"  if (is_window !=0) {\n"
+"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy), 0 );\n"
+"    if (win.a == 0.0) discard;\n"
+"  }\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  int msb = int(txcol.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
@@ -279,6 +285,8 @@ const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
+static int id_normal_s_window = -1;
+static int id_normal_iswindow = -1;
 
 
 int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
@@ -289,6 +297,8 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
+  glUniform1i(id_normal_s_window, 3);
+  glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   return 0;
 }
@@ -317,7 +327,9 @@ SHADER_VERSION
 "uniform float u_vheight; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
+"uniform sampler2D s_window;  \n"
 "uniform int is_perline; \n"
+"uniform int is_window; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()\n"
@@ -326,7 +338,12 @@ SHADER_VERSION
 "  vec4 color_offset = u_color_offset; \n"
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
-"  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
+"  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
+"  if (is_window !=0) {\n"
+"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy),0 );\n"
+"    if (win.a == 0.0) discard;\n"
+"  }\n"
+"  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) ,0 )  , 0 );\n"
 "  int msb = int(txindex.b * 255.0)&0x1; \n"
@@ -346,7 +363,9 @@ SHADER_VERSION
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
 static int id_normal_cram_s_texture = -1;
 static int id_normal_cram_s_perline = -1;
+static int id_normal_cram_s_window = -1;
 static int id_normal_cram_isperline = -1;
+static int id_normal_cram_iswindow = -1;
 static int id_normal_cram_emu_height = -1;
 static int id_normal_cram_vheight = -1;
 static int id_normal_cram_s_color = -1;
@@ -364,12 +383,12 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glUniform1i(id_normal_cram_s_texture, 0);
   glUniform1i(id_normal_cram_s_color, 1);
   glUniform1i(id_normal_cram_s_perline, 2);
+  glUniform1i(id_normal_cram_s_window, 3);
+  glUniform1i(id_normal_cram_iswindow, _Ygl->use_win[id] != 0);
   glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
   glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->rheight);
   glUniform1f(id_normal_cram_vheight, (float)_Ygl->rheight);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
   glActiveTexture(GL_TEXTURE2);
@@ -380,7 +399,10 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
 int Ygl_cleanupNormalCram(void * p, YglTextureManager *tm)
 {
   YglProgram * prg;
-  glActiveTexture(GL_TEXTURE0);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, 0);
   prg = p;
   return 0;
 }
@@ -433,29 +455,6 @@ int Ygl_cleanupAddColCram(void * p, YglTextureManager *tm)
   glActiveTexture(GL_TEXTURE0);
   prg = p;
   return 0;
-}
-
-void Ygl_setNormalshader(YglProgram * prg) {
-  if (prg->colornumber >= 3) {
-    GLUSEPROG(_prgid[PG_VDP2_NORMAL]);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glUniform1i(id_normal_s_texture, 0);
-    glUniform4fv(id_normal_color_offset, 1, prg->color_offset_val);
-    glUniformMatrix4fv(id_normal_matrix, 1, GL_FALSE, prg->matrix);
-  }
-  else {
-    GLUSEPROG(_prgid[PG_VDP2_NORMAL_CRAM]);
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glUniform1i(id_normal_cram_s_texture, 0);
-    glUniform1i(id_normal_cram_s_color, 1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-    glActiveTexture(GL_TEXTURE0);
-    glUniform4fv(id_normal_color_offset, 1, prg->color_offset_val);
-    glUniformMatrix4fv(id_normal_cram_matrix, 1, GL_FALSE, prg->matrix);
-  }
 }
 
 static void Ygl_useTmpBuffer(){
@@ -554,6 +553,8 @@ int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_s_texture, 0);
+    glUniform1i(id_normal_s_window, 3);
+    glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
   }
@@ -2255,10 +2256,12 @@ int YglProgramInit()
    //
    if (YglInitShader(PG_VDP2_NORMAL, pYglprg_vdp2_normal_v, pYglprg_vdp2_normal_f, 1, NULL, NULL, NULL) != 0)
       return -1;
-
+//vdp2 normal looks not to be setup as it should
   id_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_texture");
   //id_normal_s_texture_size = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_texsize");
   id_normal_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_color_offset");
+  id_normal_s_window = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_window");
+  id_normal_iswindow = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"is_window");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_mvpMatrix");
 
    YGLLOG("PG_VDP2_NORMAL_CRAM\n");
@@ -2269,7 +2272,9 @@ int YglProgramInit()
   id_normal_cram_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_texture");
   id_normal_cram_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_color");
   id_normal_cram_s_perline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_perline");
+  id_normal_cram_s_window = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_window");
   id_normal_cram_isperline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_perline");
+  id_normal_cram_iswindow = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_window");
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
   id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");

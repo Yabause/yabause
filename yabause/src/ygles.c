@@ -3204,26 +3204,10 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
 
   if (level->prgcurrent == 0) return 0;
 
-  if (_Ygl->use_win[id] == 1) {
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-
-    YglBlitSimple(_Ygl->window_fbotex[id], 0);
-
-    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glStencilFunc(GL_EQUAL, 1, 0xFF);
-  }
-
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
-
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->window_fbotex[id]);
 
   for (int j = 0; j < (level->prgcurrent + 1); j++)
   {
@@ -3269,7 +3253,10 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
     }
     level->prg[j].currentQuad = 0;
   }
-  glDisable(GL_STENCIL_TEST);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_2D, 0);
   return ret;
 }
 int setupBlur(Vdp2 *varVdp2Regs, int layer) {
