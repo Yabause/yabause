@@ -2467,23 +2467,12 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   }
   else {
 
-    if (line->x != -1 && VDP2_CC_NONE != input->blendmode) {
-      prg = PG_VDP2_RBG_CRAM_LINE;
-    }
-    else if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
+    if (input->mosaicxmask != 1 || input->mosaicymask != 1) {
       prg = PG_VDP2_MOSAIC_CRAM;
     }
     else {
         prg = PG_VDP2_NORMAL_CRAM;
     }
-/*
-    if (line->x != -1 && VDP2_CC_NONE != input->blendmode ) {
-      prg = PG_VDP2_RBG_CRAM_LINE;
-    }
-    else {
-      prg = PG_VDP2_NORMAL_CRAM;
-    }
-*/
   }
 
   program = YglGetProgram((YglSprite*)input, prg,tm,input->priority);
