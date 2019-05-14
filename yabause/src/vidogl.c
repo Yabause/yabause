@@ -1375,6 +1375,7 @@ static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area,
   // inside
   if (area == 1)
   {
+    if (win[y] == 0) return 0;
     if (x >= upLx && x <= upRx)
     {
       return 1;
@@ -1385,6 +1386,7 @@ static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area,
     // outside
   }
   else {
+    if (win[y] == 0) return 1;
     if (x < upLx) return 1;
     if (x > upRx) return 1;
     return 0;
