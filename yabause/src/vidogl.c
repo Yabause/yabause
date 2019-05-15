@@ -7303,8 +7303,10 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     _Ygl->upmode = value;
     break;
   case VDP_SETTING_RESOLUTION_MODE:
-    _Ygl->resolution_mode = value;
-    SetSaturnResolution(vdp2width, vdp2height);
+    if (_Ygl->resolution_mode != value) {
+       _Ygl->resolution_mode = value;
+       SetSaturnResolution(vdp2width, vdp2height);
+    }
     break;
   case VDP_SETTING_POLYGON_MODE:
     if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {
