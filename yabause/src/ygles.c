@@ -40,6 +40,7 @@
 
 extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
+static int rebuild_windows = 0;
 int opengl_mode = 1;
 
 extern int WaitVdp2Async(int sync);
@@ -1026,6 +1027,7 @@ int YglGenFrameBuffer() {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindTexture(GL_TEXTURE_2D, 0);
   rebuild_frame_buffer = 0;
+  rebuild_windows = 1;
   return 0;
 }
 
@@ -2818,12 +2820,15 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   int Win1[enBGMAX];
   int Win1_mode[enBGMAX];
   int Win_op[enBGMAX];
-  int needUpdate = 0;
+  int needUpdate = rebuild_windows;
+
+  rebuild_windows = 0;
 
   if (((varVdp2Regs->WCTLD & 0xA)!=0x0) != useRotWin) {
     useRotWin = ((varVdp2Regs->WCTLD & 0xA)!=0x0);
     needUpdate |= 1;
   }
+
 
 
   Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
