@@ -3111,7 +3111,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
 		rbg->info.cellw = rbg->hres;
 		rbg->info.cellh = rbg->vres;
 		rbg->info.flipfunction = 0;
-		YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline);
+		YglQuadRbg0(&rbg->info, NULL, &rbg->c, &rbg->cline, rbg->rgb_type );
 	}
 	else {
 		curret_rbg = rbg;
@@ -3148,7 +3148,7 @@ static void Vdp2DrawRotationSync() {
 		curret_rbg->info.cellw = curret_rbg->hres;
 		curret_rbg->info.cellh = curret_rbg->vres;
 		curret_rbg->info.flipfunction = 0;
-		YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline);
+		YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline, curret_rbg->rgb_type);
 		return;
 	}
 
@@ -3164,7 +3164,7 @@ static void Vdp2DrawRotationSync() {
       //  curret_rbg->info.blendmode = VDP2_CC_NONE;
       //}
       curret_rbg->info.flipfunction = 0;
-      YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline);
+      YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline,curret_rbg->rgb_type);
       curret_rbg->vdp2_sync_flg = RBG_IDLE;
       YGL_THREAD_DEBUG("Vdp2DrawRotationSync out %d\n", curret_rbg->vdp2_sync_flg);
     }

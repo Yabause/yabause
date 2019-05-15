@@ -2487,7 +2487,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 }
 
 
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line ) {
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, int rbg_type) {
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
@@ -2590,7 +2590,10 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
 
   if (_Ygl->rbg_use_compute_shader) {
 	  
-	  program->interuput_texture = 1; // RBGGenerator_getTexture();
+	  if(rbg_type == 0 )
+		program->interuput_texture = 1;
+	  else
+		program->interuput_texture = 2;
 
 	  tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
 	  program->currentQuad += 12;

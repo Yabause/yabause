@@ -941,12 +941,13 @@ class RBGGenerator{
   GLuint prg_rbg_3_2w_p1_32bpp_line_ = 0;
   GLuint prg_rbg_3_2w_p2_32bpp_line_ = 0;
 
-  GLuint tex_surface_;
-  GLuint ssbo_vram_;
-  GLuint ssbo_window_;
-  GLuint ssbo_paraA_;
-  int tex_width_;
-  int tex_height_;
+  GLuint tex_surface_ = 0;
+  GLuint tex_surface_1 = 0;
+  GLuint ssbo_vram_ = 0;
+  GLuint ssbo_window_ = 0;
+  GLuint ssbo_paraA_ = 0;
+  int tex_width_ = 0;
+  int tex_height_ = 0;
   static RBGGenerator * instance_;
   GLuint scene_uniform = 0;
   RBGUniform uniform;
@@ -999,6 +1000,23 @@ public:
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	ErrorHandle("glTexParameteri");
+
+	if (tex_surface_1 != 0) {
+		glDeleteTextures(1, &tex_surface_1);
+		glGenTextures(1, &tex_surface_1);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, tex_surface_1);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		ErrorHandle("glBindTexture");
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		ErrorHandle("glTexImage2D");
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		ErrorHandle("glTexParameteri");
+	}
+
   }
 
   GLuint createProgram(int count, const GLchar** prg_strs) {
@@ -2122,8 +2140,28 @@ public:
 
 
     ErrorHandle("glUseProgram");
-    //glUniform1i(glGetUniformLocation(prg_,"outSurface"), 0);
-    glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	if (rbg->rgb_type == 0x04) {
+		if (tex_surface_1 == 0) {
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, tex_surface_1);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			ErrorHandle("glBindTexture");
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+			ErrorHandle("glTexImage2D");
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			ErrorHandle("glTexParameteri");
+		}
+		else {
+			glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+		}
+	}
+	else {
+		glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	}
+
     ErrorHandle("glBindImageTexture");
     
 
@@ -2171,9 +2209,12 @@ public:
   }
 
   //-----------------------------------------------
-  GLuint getTexture() { 
+  GLuint getTexture( int id ) { 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-    return tex_surface_; 
+	if (id == 1) {
+		return tex_surface_;
+	}
+	return tex_surface_1;
   }
 
 };
@@ -2193,9 +2234,9 @@ extern "C" {
     RBGGenerator * instance = RBGGenerator::getInstance();
     instance->update(rbg);
   }
-  GLuint RBGGenerator_getTexture() {
+  GLuint RBGGenerator_getTexture( int id ) {
     RBGGenerator * instance = RBGGenerator::getInstance();
-    return instance->getTexture();
+    return instance->getTexture( id );
   }
 }
 

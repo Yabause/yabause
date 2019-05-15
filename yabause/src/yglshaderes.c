@@ -259,7 +259,7 @@ int Ygl_uniformNormal(void * p)
 
   if (prg->interuput_texture != 0) {
 	  glActiveTexture(GL_TEXTURE0);
-	  glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture());
+	  glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(prg->interuput_texture));
   }
 
   return 0;
@@ -355,7 +355,7 @@ int Ygl_uniformNormalCram(void * p)
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
   if (prg->interuput_texture != 0) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture());
+	glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(prg->interuput_texture));
   }
   return 0;
 }
@@ -544,7 +544,7 @@ int Ygl_uniformNormalCramLine(void * p)
 
   if (prg->interuput_texture != 0) {
 	  glActiveTexture(GL_TEXTURE0);
-	  glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture());
+	  glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(prg->interuput_texture));
   }
 
   glActiveTexture(GL_TEXTURE1);
