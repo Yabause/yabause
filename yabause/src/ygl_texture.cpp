@@ -124,6 +124,7 @@ const char prg_generate_rbg[] =
 "  int specialcode;\n"
 "  int colornumber;\n"
 "  int window_area_mode;"
+"  float alpha_;"
 "};\n"
 
 " struct vdp2WindowInfo\n"
@@ -449,7 +450,7 @@ const char prg_rbg_get_charaddr[] =
 const char prg_rbg_getcolor_4bpp[] =
 "  uint dot = 0;\n"
 "  uint cramindex = 0;\n"
-"  float alpha = 1.0;\n"
+"  float alpha = alpha_;\n"
 "  uint dotaddr = ((charaddr + (((y * cellw) + x) >> 1)) & 0x7FFFF);\n"
 "  dot = vram[ dotaddr >> 2];\n"
 "  if( (dotaddr & 0x3) == 0 ) dot >>= 0;\n"
@@ -478,7 +479,7 @@ const char prg_rbg_getcolor_4bpp[] =
 const char prg_rbg_getcolor_8bpp[] =
 "  uint dot = 0;\n"
 "  uint cramindex = 0;\n"
-"  float alpha = 1.0;\n"
+"  float alpha = alpha_;\n"
 "  uint dotaddr = charaddr + ((y*cellw)+x);\n"
 "  dot = vram[ dotaddr >> 2];\n"
 "  if( (dotaddr & 0x3) == 0 ) dot >>= 0;\n"
@@ -496,7 +497,7 @@ const char prg_rbg_getcolor_8bpp[] =
 const char prg_rbg_getcolor_16bpp_palette[] =
 "  uint dot = 0;\n"
 "  uint cramindex = 0;\n"
-"  float alpha = 1.0;\n"
+"  float alpha = alpha_;\n"
 "  uint dotaddr = charaddr + ((y*cellw)+x) * 2;\n"
 "  dot = vram[dotaddr>>2]; \n" 
 "  if( (dotaddr & 0x02) != 0 ) { dot >>= 16; } \n"
@@ -511,7 +512,7 @@ const char prg_rbg_getcolor_16bpp_palette[] =
 const char prg_rbg_getcolor_16bpp_rbg[] =
 "  uint dot = 0;\n"
 "  uint cramindex = 0;\n"
-"  float alpha = 1.0;\n"
+"  float alpha = alpha_;\n"
 "  uint dotaddr = charaddr + ((y*cellw)+x) * 2;\n"
 "  dot = vram[dotaddr>>2]; \n"
 "  if( (dotaddr & 0x02) != 0 ) { dot >>= 16; } \n"
@@ -789,6 +790,7 @@ struct RBGUniform {
     specialcolorfunction=0;
     specialcode=0;
 	window_area_mode = 0;
+	alpha_ = 0.0;
   }
   float hres_scale;
   float vres_scale;
@@ -810,6 +812,7 @@ struct RBGUniform {
   int specialcode;
   int colornumber;
   int window_area_mode;
+  float alpha_;
 };
 
 class RBGGenerator{
@@ -2196,6 +2199,7 @@ public:
     uniform.specialcode = rbg->info.specialcode;
 	uniform.colornumber = rbg->info.colornumber;
 	uniform.window_area_mode = rbg->info.WindwAreaMode;
+	uniform.alpha_ = (float)rbg->info.alpha / 255.0f;
 
     glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(RBGDrawInfo), (void*)&uniform);
