@@ -125,6 +125,7 @@ const char prg_generate_rbg[] =
 "  int colornumber;\n"
 "  int window_area_mode;"
 "  float alpha_;"
+"  int cram_shift;"
 "};\n"
 
 " struct vdp2WindowInfo\n"
@@ -136,6 +137,7 @@ const char prg_generate_rbg[] =
 "layout(std430, binding = 4) readonly buffer windowinfo { \n"
 "  vdp2WindowInfo pWinInfo[];\n"
 "};\n"
+"layout(std430, binding = 5) readonly buffer VDP2C { uint cram[]; };\n"
 
 " int GetKValue( int paramid, float posx, float posy, out float ky, out uint lineaddr ){ \n"
 "  uint kdata;\n"
@@ -185,6 +187,14 @@ const char prg_generate_rbg[] =
 "		}\n"
 "	}\n"
 "	return true;\n"
+"}\n"
+
+"uint get_cram_msb(uint colorindex) { \n"
+"	uint colorval = 0; \n"
+"	colorindex = (colorindex << cram_shift) & 0xFFF; \n"
+"	colorval = cram[colorindex >> 2]; \n"
+"	if ((colorindex & 0x02) != 0) { colorval >>= 16; } \n"
+"	return (colorval & 0x8000); \n"
 "}\n"
 
 
@@ -471,6 +481,9 @@ const char prg_rbg_getcolor_4bpp[] =
 "      if (specialcolorfunction == 0) { alpha = 1.0; }\n"
 "      else { if ((specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 1.0; } } \n"
 "      break; \n"
+"    case 3:\n"
+"	   if (get_cram_msb(cramindex) == 0) { alpha = 1.0; }\n"
+"	   break;\n"
 "    }\n"
 "  }\n";
 
@@ -492,7 +505,20 @@ const char prg_rbg_getcolor_8bpp[] =
 "    alpha = 0.0;\n"
 "  } else {\n"
 "    cramindex = (coloroffset + ((paladdr << 4) | dot));\n"
+"    switch (specialcolormode)\n"
+"    {\n"
+"    case 1:\n"
+"      if (specialcolorfunction == 0) { alpha = 1.0; } break;\n"
+"    case 2:\n"
+"      if (specialcolorfunction == 0) { alpha = 1.0; }\n"
+"      else { if ((specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 1.0; } } \n"
+"      break; \n"
+"    case 3:\n"
+"	   if (get_cram_msb(cramindex) == 0) { alpha = 1.0; }\n"
+"	   break;\n"
+"    }\n"
 "  }\n";
+
 
 const char prg_rbg_getcolor_16bpp_palette[] =
 "  uint dot = 0;\n"
@@ -791,6 +817,7 @@ struct RBGUniform {
     specialcode=0;
 	window_area_mode = 0;
 	alpha_ = 0.0;
+	cram_shift = 1;
   }
   float hres_scale;
   float vres_scale;
@@ -813,6 +840,7 @@ struct RBGUniform {
   int colornumber;
   int window_area_mode;
   float alpha_;
+  int cram_shift;
 };
 
 class RBGGenerator{
@@ -947,6 +975,7 @@ class RBGGenerator{
   GLuint tex_surface_ = 0;
   GLuint tex_surface_1 = 0;
   GLuint ssbo_vram_ = 0;
+  GLuint ssbo_cram_ = 0;
   GLuint ssbo_window_ = 0;
   GLuint ssbo_paraA_ = 0;
   int tex_width_ = 0;
@@ -1213,6 +1242,7 @@ public:
     int work_groups_y = 1 + (tex_height_ - 1) / local_size_y;
 
     error = glGetError();
+
 
 	// Line color insersion
 	if (rbg->info.LineColorBase != 0 && VDP2_CC_NONE != (rbg->info.blendmode & 0x03)) {
@@ -2172,6 +2202,16 @@ public:
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
 	
+	if (rbg->info.specialcolormode == 3) {
+		if (ssbo_cram_ == 0) {
+			glGenBuffers(1, &ssbo_cram_);
+			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
+			glBufferData(GL_SHADER_STORAGE_BUFFER, 0x1000, NULL, GL_DYNAMIC_DRAW);
+		}
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x1000, (void*)Vdp2ColorRam);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cram_);
+	}
 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_paraA_);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2rotationparameter_struct), (void*)&paraA);
@@ -2200,6 +2240,12 @@ public:
 	uniform.colornumber = rbg->info.colornumber;
 	uniform.window_area_mode = rbg->info.WindwAreaMode;
 	uniform.alpha_ = (float)rbg->info.alpha / 255.0f;
+	if (Vdp2Internal.ColorMode < 2) {
+		uniform.cram_shift = 1;
+	}
+	else {
+		uniform.cram_shift = 2;
+	}
 
     glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(RBGDrawInfo), (void*)&uniform);
