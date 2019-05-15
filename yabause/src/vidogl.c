@@ -1368,10 +1368,10 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
 // 0 .. outside,1 .. inside
 static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area, u32* win)
 {
-  int upLx = win[y] & 0xFFFF;
-  int upRx = (win[y] >> 16) & 0xFFFF;
   if (y < 0) return 0;
   if (y >= vdp2height) return 0;
+  int upLx = win[y] & 0xFFFF;
+  int upRx = (win[y] >> 16) & 0xFFFF;
   // inside
   if (area == 1)
   {
