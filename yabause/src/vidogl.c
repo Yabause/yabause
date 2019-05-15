@@ -3144,7 +3144,7 @@ void Vdp2RgbTextureSync() {
 
 static void Vdp2DrawRotationSync() {
 
-	if (_Ygl->rbg_use_compute_shader && curret_rbg) {
+	if (_Ygl->rbg_use_compute_shader && curret_rbg && curret_rbg->info.enable ) {
 		curret_rbg->info.cellw = curret_rbg->hres;
 		curret_rbg->info.cellh = curret_rbg->vres;
 		curret_rbg->info.flipfunction = 0;
