@@ -52,9 +52,6 @@ extern int GlHeight;
 extern int GlWidth;
 static GLuint _prgid[PG_MAX] = { 0 };
 
-extern int maxWidth;
-extern int maxHeight;
-
 #ifdef DEBUG_PROG
 #define GLUSEPROG(A) printf("use prog %s (%d) @ %d\n", #A, A, __LINE__);glUseProgram(A)
 #else
@@ -616,7 +613,7 @@ const GLchar Yglprg_window_v[] =
       "layout (location = 0) in vec4 a_position;    \n"
       "void main()       \n"
       "{ \n"
-      "   gl_Position = a_position*u_mvpMatrix; \n"
+      "   gl_Position = a_position; \n"
       "} ";
 const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 
@@ -628,10 +625,7 @@ const GLchar Yglprg_window_f[] =
       "out vec4 fragColor; \n"
       "uniform sampler2D s_win0;  \n"
       "uniform sampler2D s_win1;  \n"
-      "uniform float u_emu_height;\n"
       "uniform float u_vheight; \n"
-      "uniform float u_emu_width;\n"
-      "uniform float u_vwidth; \n"
       "uniform int win0; \n"
       "uniform int win1; \n"
       "uniform int winOp; \n"
@@ -643,8 +637,8 @@ const GLchar Yglprg_window_f[] =
       "  int validw0 = 1; \n"
       "  int validw1 = 1; \n"
       "  linepos.y = 0; \n "
-      "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
-      "  int pos = int( (gl_FragCoord.x) * u_emu_width);\n"
+      "  linepos.x = int(u_vheight-gl_FragCoord.y);\n"
+      "  int pos = int(gl_FragCoord.x);\n"
       "  int valid = 0; \n"
       "  if (winOp != 0) valid = 1;\n"
       "  if (win0 != 0) {\n"
@@ -686,10 +680,7 @@ int Ygl_uniformWindow(void * p )
    GLUSEPROG(prg->prgid );
    glUniform1i(_Ygl->windowpg.tex0, 0);
    glUniform1i(_Ygl->windowpg.tex1, 1);
-   glUniform1f(_Ygl->windowpg.emu_height, (float)_Ygl->rheight / (float)_Ygl->rheight);
    glUniform1f(_Ygl->windowpg.vheight, (float)_Ygl->rheight);
-   glUniform1f(_Ygl->windowpg.emu_width, (float)_Ygl->rwidth / (float)_Ygl->width);
-   glUniform1f(_Ygl->windowpg.vwidth, (float)_Ygl->width);
    glEnableVertexAttribArray(0);
    glDisableVertexAttribArray(1);
    glDisableVertexAttribArray(2);
@@ -2387,10 +2378,7 @@ int YglProgramInit()
    _Ygl->windowpg.cleanupUniform  = Ygl_cleanupWindow;
    _Ygl->windowpg.vertexp         = glGetAttribLocation(_prgid[PG_WINDOW],(const GLchar *)"a_position");
    _Ygl->windowpg.mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
-   _Ygl->windowpg.emu_height    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_emu_height");
    _Ygl->windowpg.vheight    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_vheight");
-   _Ygl->windowpg.emu_width    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_emu_width");
-   _Ygl->windowpg.vwidth   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_vwidth");
    _Ygl->windowpg.var1   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0");
    _Ygl->windowpg.var2   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0mode");
    _Ygl->windowpg.var3   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win1");
@@ -2937,9 +2925,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_cc_win"), (_Ygl->use_cc_win != 0) );
-
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)maxHeight);
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)maxHeight);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -3523,7 +3510,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
     glViewport(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
     glScissor(0, 0, scale*_Ygl->rwidth, scale*_Ygl->rheight);
-    YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight, maxWidth, maxHeight);
+    YglUpscaleFramebuffer(srcTexture, _Ygl->upfbo, _Ygl->rwidth, _Ygl->rheight, _Ygl->width, _Ygl->height);
     glViewport(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     glScissor(_Ygl->m_viewport[0], _Ygl->m_viewport[1], _Ygl->m_viewport[2], _Ygl->m_viewport[3]);
     tex = _Ygl->upfbotex;
