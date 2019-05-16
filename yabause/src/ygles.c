@@ -1285,8 +1285,8 @@ void initLevels(YglLevel** levels, int size) {
   }
 
   memset(*levels,0,sizeof(YglLevel) * size );
+  YglLevel* level = *levels;
   for(i = 0;i < size ;i++) {
-    YglLevel* level = *levels;
     level[i].prgcurrent = 0;
     level[i].uclipcurrent = 0;
     level[i].prgcount = 1;
@@ -3249,6 +3249,7 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
     }
     level->prg[j].currentQuad = 0;
   }
+  level->prgcurrent = 0;
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE3);
