@@ -63,6 +63,7 @@ typedef struct
    int polygon_generation_mode;
    int stretch;
    int scanline;
+   int meshmode;
    int play_ssf;
    int resolution_mode;
    int extend_backup;

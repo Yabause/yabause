@@ -68,23 +68,23 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 	if ( mPause == pause && !reset ) {
 		return true;
 	}
-	
+
 	if ( mInit == 0 && reset ) {
 		deInitEmulation();
 	}
-	
+
 	if ( mInit < 0 ) {
 		initEmulation();
 	}
-	
+
 	if ( mInit < 0 )
 	{
 		emit error( QtYabause::translate( "Can't initialize Yabause" ), false );
 		return false;
 	}
-	
+
 	mPause = pause;
-	
+
 	if ( mPause ) {
 		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		killTimer( mTimerId );
@@ -95,7 +95,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 		mTimerId = startTimer( 0 );
 	}
-	
+
 	VolatileSettings * vs = QtYabause::volatileSettings();
 
 	if (vs->value("autostart").toBool())
@@ -112,7 +112,7 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 	}
 
 	emit this->pause( mPause );
-	
+
 	return true;
 }
 
@@ -121,9 +121,9 @@ bool YabauseThread::resetEmulation()
 	if ( mInit < 0 ) {
 		return false;
 	}
-	
+
 	YabauseReset();
-	
+
 	emit reset();
 
 	return true;
@@ -133,7 +133,7 @@ void YabauseThread::reloadControllers()
 {
 	PerPortReset();
 	QtYabause::clearPadsBits();
-	
+
 	Settings* settings = QtYabause::settings();
 
 	emit toggleEmulateMouse( false );
@@ -143,7 +143,7 @@ void YabauseThread::reloadControllers()
 		settings->beginGroup( QString( "Input/Port/%1/Id" ).arg( port ) );
 		QStringList ids = settings->childGroups();
 		settings->endGroup();
-		
+
 		ids.sort();
 		foreach ( const QString& id, ids )
 		{
@@ -167,16 +167,16 @@ void YabauseThread::reloadControllers()
 				case PERPAD:
 				{
 					PerPad_struct* padbits = PerPadAdd( port == 1 ? &PORTDATA1 : &PORTDATA2 );
-					
+
 					settings->beginGroup( QString( "Input/Port/%1/Id/%2/Controller/%3/Key" ).arg( port ).arg( id ).arg( type ) );
 					QStringList padKeys = settings->childKeys();
 					settings->endGroup();
-					
+
 					padKeys.sort();
 					foreach ( const QString& padKey, padKeys )
 					{
 						const QString key = settings->value( QString( UIPortManager::mSettingsKey ).arg( port ).arg( id ).arg( type ).arg( padKey ) ).toString();
-						
+
 						PerSetKey( key.toUInt(), padKey.toUInt(), padbits );
 					}
 					break;
@@ -328,10 +328,10 @@ void YabauseThread::reloadClock()
 	// Clock sync
 	mYabauseConf.clocksync = (int)s->value( "General/ClockSync", mYabauseConf.clocksync ).toBool();
 	tmp = s->value( "General/FixedBaseTime", tmp ).toString();
-	if (!tmp.isEmpty() && mYabauseConf.clocksync) 
+	if (!tmp.isEmpty() && mYabauseConf.clocksync)
 	{
 		QDateTime date = QDateTime::fromString(tmp, Qt::ISODate);
-		mYabauseConf.basetime = (long)date.toTime_t();	
+		mYabauseConf.basetime = (long)date.toTime_t();
 	}
 	else {
 		mYabauseConf.basetime = 0;
@@ -343,7 +343,7 @@ void YabauseThread::reloadSettings()
 	//QMutexLocker l( &mMutex );
 	// get settings pointer
 	VolatileSettings* vs = QtYabause::volatileSettings();
-	
+
 	// reset yabause conf
 	resetYabauseConf();
 
@@ -394,13 +394,14 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
 	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
 	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
-	
+
 	mYabauseConf.video_filter_type = vs->value("Video/filter_type", mYabauseConf.video_filter_type).toInt();
         mYabauseConf.video_upscale_type = vs->value("Video/upscale_type", mYabauseConf.video_upscale_type).toInt();
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
   mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
   mYabauseConf.stretch = vs->value("Video/AspectRatio", mYabauseConf.stretch).toInt();
   mYabauseConf.scanline = vs->value("Video/ScanLine", mYabauseConf.scanline).toInt();
+	mYabauseConf.meshmode = vs->value("Video/MeshMode", mYabauseConf.meshmode).toInt();
 
 	emit requestSize( QSize( vs->value( "Video/WinWidth", 0 ).toInt(), vs->value( "Video/WinHeight", 0 ).toInt() ) );
 	emit requestFullscreen( vs->value( "Video/Fullscreen", false ).toBool() );
@@ -458,7 +459,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.cartpath = 0;
         mYabauseConf.stvgame = -1;
 	mYabauseConf.skip_load = 0;
-	int numThreads = QThread::idealThreadCount();	
+	int numThreads = QThread::idealThreadCount();
 	mYabauseConf.usethreads = numThreads <= 1 ? 0 : 1;
 	mYabauseConf.numthreads = numThreads < 0 ? 1 : numThreads;
 	mYabauseConf.video_filter_type = 0;

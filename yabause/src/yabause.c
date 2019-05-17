@@ -485,6 +485,7 @@ int YabauseInit(yabauseinit_struct *init)
    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, init->resolution_mode);
    VideoSetSetting(VDP_SETTING_ASPECT_RATIO, init->stretch);
    VideoSetSetting(VDP_SETTING_SCANLINE, init->scanline);
+   VideoSetSetting(VDP_SETTING_MESH_MODE, init->meshmode);
 #endif
 
    // Initialize input core
@@ -642,10 +643,10 @@ void YabFlushBackups(void)
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseDeInit(void) {
-   
+
    Vdp2DeInit();
    Vdp1DeInit();
-   
+
    SH2DeInit();
 
    if (BiosRom)
@@ -661,7 +662,7 @@ void YabauseDeInit(void) {
    LowWram = NULL;
 
    BackupDeinit();
- 
+
    CartDeInit();
    Cs2DeInit();
    ScuDeInit();
@@ -730,7 +731,7 @@ void YabauseResetButton(void) {
 int YabauseExec(void) {
 #if 0
 	//automatically advance lag frames, this should be optional later
-	if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){ 
+	if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){
 		FrameAdvanceVariable = NeedAdvance; //advance a frame
 		YabauseEmulate();
 		FrameAdvanceVariable = Paused; //pause next time
@@ -741,15 +742,15 @@ int YabauseExec(void) {
 		ScspMuteAudio(SCSP_MUTE_SYSTEM);
 		return(0);
 	}
-  
+
 	if (FrameAdvanceVariable == NeedAdvance){  //advance a frame
 		FrameAdvanceVariable = Paused; //pause next time
 		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 		YabauseEmulate();
 	}
-	
+
 	if (FrameAdvanceVariable == RunNormal ) { //run normally
-		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);	
+		ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 		YabauseEmulate();
 	}
 #else
@@ -832,7 +833,7 @@ int YabauseEmulate(void) {
    }
    else
    {
-     lines = 263; 
+     lines = 263;
      frames = 60;
    }
    scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
@@ -907,7 +908,7 @@ int YabauseEmulate(void) {
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
 #if defined(ASYNC_SCSP)
-            setM68kCounter((u64)(44100 * 256 / ((yabsys.IsPal)?50:60))); 
+            setM68kCounter((u64)(44100 * 256 / ((yabsys.IsPal)?50:60)));
 #endif
             PROFILE_START("vblankin");
             // VBlankIN
@@ -946,7 +947,7 @@ int YabauseEmulate(void) {
       Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
       PROFILE_STOP("CDB");
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
-      
+
 #if !defined(ASYNC_SCSP)
       u32 m68k_integer_part = 0, scsp_integer_part = 0;
       saved_m68k_cycles += m68k_cycles_per_deciline;
@@ -980,7 +981,7 @@ int YabauseEmulate(void) {
    }
 
 #endif
-   
+
 #ifdef YAB_STATICS
    printf("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
 #if 1
@@ -1077,7 +1078,7 @@ u64 YabauseGetTicks(void) {
    return ticks;
 #elif defined(_arch_dreamcast)
    return (u64) timer_ms_gettime64();
-#elif defined(GEKKO)  
+#elif defined(GEKKO)
    return gettime();
 #elif defined(PSP)
    return sceKernelGetSystemTimeWide();
@@ -1186,7 +1187,7 @@ void YabauseSpeedySetup(void)
    Cs2Area->reg.CR1 = (Cs2Area->status << 8) | ((Cs2Area->options & 0xF) << 4) | (Cs2Area->repcnt & 0xF);
    Cs2Area->reg.CR2 = (Cs2Area->ctrladdr << 8) | Cs2Area->track;
    Cs2Area->reg.CR3 = (Cs2Area->index << 8) | ((Cs2Area->FAD >> 16) & 0xFF);
-   Cs2Area->reg.CR4 = (u16) Cs2Area->FAD; 
+   Cs2Area->reg.CR4 = (u16) Cs2Area->FAD;
    Cs2Area->satauth = 4;
 
    // Set Master SH2 registers accordingly
@@ -1283,7 +1284,7 @@ int YabauseQuickLoadGame(void)
              (buffer[0xE2] << 8) |
               buffer[0xE3];
       blocks = size >> 11;
-      if ((size % 2048) != 0) 
+      if ((size % 2048) != 0)
          blocks++;
 
 

@@ -1633,7 +1633,10 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
       prg = PG_VDP1_HALF_LUMINANCE;
       break;
     case VDP1_COLOR_CL_MESH:
-      prg = PG_VDP1_MESH;
+      if (_Ygl->meshmode == ORIGINAL_MESH)
+        prg = PG_VDP1_MESH;
+      else
+        prg = PG_VDP1_MESH_IMPROVE;
       break;
     case VDP1_COLOR_CL_SHADOW:
       prg = PG_VDP1_SHADOW;
@@ -1878,7 +1881,10 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
       prg = PG_VDP1_HALF_LUMINANCE;
       break;
     case VDP1_COLOR_CL_MESH:
-      prg = PG_VDP1_MESH;
+      if (_Ygl->meshmode == ORIGINAL_MESH)
+        prg = PG_VDP1_MESH;
+      else
+        prg = PG_VDP1_MESH_IMPROVE;
       break;
     case VDP1_COLOR_CL_SHADOW:
       prg = PG_VDP1_SHADOW;
@@ -2054,7 +2060,10 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
       prg = PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS;
     break;
     case VDP1_COLOR_CL_MESH:
-      prg = PG_VDP1_MESH_TESS;
+      if (_Ygl->meshmode == ORIGINAL_MESH)
+        prg = PG_VDP1_MESH_TESS;
+      else
+        prg = PG_VDP1_MESH_TESS_IMPROVE;
     break;
     case VDP1_COLOR_CL_SHADOW:
       prg = PG_VDP1_SHADOW_TESS;
