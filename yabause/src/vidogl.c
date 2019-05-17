@@ -4328,9 +4328,13 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 //////////////////////////////////////////////////////////////////////////////
 int isSquare(float *vert) {
-  if ((vert[0] == vert[2]) && (vert[4] == vert[6]) && (vert[1] == vert[7]) && (vert[3] == vert[5])) return 1;
-  if ((vert[0] == vert[6]) && (vert[2] == vert[4]) && (vert[1] == vert[3]) && (vert[5] == vert[7])) return 1;
-  return 0;
+  float vec1x = vert[2] - vert[0];
+  float vec1y = vert[3] - vert[1];
+  float vec2x = vert[4] - vert[6];
+  float vec2y = vert[5] - vert[7];
+  if ((vec1x != vec2x) || (vec1y != vec2y)) return 0;
+  if (((vec1x*vec1x)+(vec1y*vec1y)) == ((vec2x*vec2x)+(vec2y*vec2y))) return 0;
+  return 1;
 }
 
 void fixVerticesSize(float *vert) {
