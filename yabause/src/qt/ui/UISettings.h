@@ -64,6 +64,7 @@ protected slots:
         void changeAspectRatio(int id);
         void changeScanLine(int id);
 				void changeMeshMode(int id);
+				void changePolygonMode(int id);
 };
 
 #endif // UISETTINGS_H

@@ -349,6 +349,10 @@ void UISettings::changeUpscaleMode(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, (mUpscaleFilterMode.at(id).id).toInt());
 }
 
+void UISettings::changePolygonMode(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, (mPolygonGenerationMode.at(id).id).toInt());
+}
 
 void UISettings::on_cbCartridge_currentIndexChanged( int id )
 {
@@ -404,6 +408,8 @@ void UISettings::loadCores()
 	// Polygon Generation
 	foreach(const Item& it, mPolygonGenerationMode)
 		cbPolygonGeneration->addItem(QtYabause::translate(it.Name), it.id);
+
+		connect(cbPolygonGeneration, SIGNAL(currentIndexChanged(int)), this, SLOT(changePolygonMode(int)));
 
   // Resolution
   foreach(const Item& it, mResolutionMode)
