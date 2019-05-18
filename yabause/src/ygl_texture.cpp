@@ -141,7 +141,7 @@ const char prg_generate_rbg[] =
 "  uint kdata;\n"
 "  uint kindex = uint( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
 "  if (para[paramid].coefdatasize == 2) { \n"
-"    uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFFu); "
+"    const uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFFu); "
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
 "    }else{\n"
@@ -152,7 +152,12 @@ const char prg_generate_rbg[] =
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
 "	 if((kdata&0x4000u)!=0u) ky=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0; else ky=float(kdata&0x7FFFu)/1024.0;\n"
 "  }else{\n"
-"	 kdata = vram[ ((para[paramid].coeftbladdr + (kindex<<2))&0x7FFFFu)>>2 ]; \n"
+"    const uint addr = ((para[paramid].coeftbladdr + (kindex<<2))&0x7FFFFu);"
+"    if( para[paramid].k_mem_type == 0) { \n"
+"	     kdata = vram[ addr>>2 ]; \n"
+"    }else{\n"
+"        kdata = cram[ ((0x800u + addr)>>2) & 0xFFFu ]; \n"
+"    }\n"
 "    kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFF00u) | ((kdata) & 0xFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
 "	 lineaddr = (kdata >> 24) & 0x7Fu;\n"
 "	 if((kdata&0x80000000u)!=0u){ return -1;}\n"
@@ -1275,11 +1280,11 @@ public:
 			else {
 				if (rbg->info.patterndatasize == 1) {
 					switch (rbg->info.colornumber) {
-					case 0: {
+					case 0: { // Decathalete ToDo: Line Color Bug
 						glUseProgram(prg_rbg_0_2w_p1_4bpp_line_);
 						break;
 					}
-					case 1: {
+					case 1: { // Sakatuku 2 Ground, GUNDAM Side Story 2, SonicR ToDo: 2Player
 						glUseProgram(prg_rbg_0_2w_p1_8bpp_line_);
 						break;
 					}
@@ -1321,7 +1326,7 @@ public:
 						glUseProgram(prg_rbg_0_2w_p2_4bpp_line_);
 						break;
 					}
-					case 1: {
+					case 1: { // Thunder Force V
 						glUseProgram(prg_rbg_0_2w_p2_8bpp_line_);
 						break;
 					}
@@ -1461,7 +1466,7 @@ public:
 						glUseProgram(prg_rbg_2_2w_p1_4bpp_line_);
 						break;
 					}
-					case 1: {
+					case 1: { // Panzer Dragoon 1
 						glUseProgram(prg_rbg_2_2w_p1_8bpp_line_);
 						break;
 					}
@@ -1654,7 +1659,7 @@ public:
 					glUseProgram(prg_rbg_0_2w_bitmap_4bpp_);
 					break;
 				}
-				case 1: {
+				case 1: { // SF3S1( Initial )
 					glUseProgram(prg_rbg_0_2w_bitmap_8bpp_);
 					break;
 				}
@@ -1668,7 +1673,7 @@ public:
 					glUseProgram(prg_rbg_0_2w_bitmap_16bpp_p_);
 					break;
 				}
-				case 3: {
+				case 3: { // NHL 97 Title, GRANDIA Title
 					if (prg_rbg_0_2w_bitmap_16bpp_ == 0) {
 						prg_rbg_0_2w_bitmap_16bpp_ = compile_color_dot(
 							S(a_prg_rbg_0_2w_bitmap),
@@ -1693,11 +1698,11 @@ public:
 			else {
 				if (rbg->info.patterndatasize == 1) {
 					switch (rbg->info.colornumber) {
-						case 0: {
+						case 0: { // Dead or Alive, Rediant Silver Gun, Diehard
 							glUseProgram(prg_rbg_0_2w_p1_4bpp_);
 							break;
 						}
-						case 1: {
+						case 1: { // Sakatuku 2 ( Initial Setting ), Virtua Fighter 2, Virtual-on
 							glUseProgram(prg_rbg_0_2w_p1_8bpp_);
 							break;
 						}
@@ -1739,7 +1744,7 @@ public:
 						glUseProgram(prg_rbg_0_2w_p2_4bpp_);
 						break;
 					}
-					case 1: {
+					case 1: { // NHL97(In Game), BIOS 
 						glUseProgram(prg_rbg_0_2w_p2_8bpp_);
 						break;
 					}
@@ -1966,11 +1971,11 @@ public:
 			else {
 				if (rbg->info.patterndatasize == 1) {
 					switch (rbg->info.colornumber) {
-					case 0: {
+					case 0: { // BlukSlash
 						glUseProgram(prg_rbg_2_2w_p1_4bpp_);
 						break;
 					}
-					case 1: {
+					case 1: { // Panzer Dragoon Zwei, Toshiden(Title) ToDo: Sky bug
 						glUseProgram(prg_rbg_2_2w_p1_8bpp_);
 						break;
 					}
@@ -2108,7 +2113,7 @@ public:
 						glUseProgram(prg_rbg_3_2w_p1_4bpp_);
 						break;
 					}
-					case 1: {
+					case 1: { // Final Fight Revenge, Grandia main
 						glUseProgram(prg_rbg_3_2w_p1_8bpp_);
 						break;
 					}
@@ -2122,7 +2127,7 @@ public:
 						glUseProgram(prg_rbg_3_2w_p1_16bpp_p_);
 						break;
 					}
-					case 3: {
+					case 3: { // Power Drift
 						if (prg_rbg_3_2w_p1_16bpp_ == 0) {
 							prg_rbg_3_2w_p1_16bpp_ = compile_color_dot(
 								S(a_prg_rbg_3_2w_p1_4bpp),
