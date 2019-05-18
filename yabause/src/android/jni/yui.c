@@ -1066,6 +1066,8 @@ int initEgl( ANativeWindow* window )
     yinit.scsp_sync_count_per_frame = g_scsp_sync_count;
     yinit.sync_shift = g_cpu_sync_shift;
     yinit.scsp_main_mode = g_scsp_sync_time_mode;
+    yinit.rbg_resolution_mode = 0;
+    yinit.rbg_use_compute_shader = 1;
 
     res = YabauseInit(&yinit);
     if (res != 0) {

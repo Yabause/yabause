@@ -36,7 +36,7 @@ const char prg_generate_rbg[] =
 #else
 "#version 430 \n"
 #endif
-"#pragma optionNV(inline all)"
+"#pragma optionNV(inline all)\n"
 "precision highp float; \n"
 "precision highp int;\n"
 "precision highp image2D;\n"
@@ -97,7 +97,7 @@ const char prg_generate_rbg[] =
 " int MskH;\n"
 " int MskV;\n"
 " uint lineaddr;\n"
-" uint k_mem_type;\n"
+" int k_mem_type;\n"
 " uint over_pattern_name;\n"
 "};\n"
 "layout(std430, binding = 2) readonly buffer vdp2Param { \n"
@@ -106,28 +106,27 @@ const char prg_generate_rbg[] =
 "layout(std140, binding = 3) uniform  RBGDrawInfo { \n"
 "  float hres_scale; \n"
 "  float vres_scale; \n"
-"  int cellw_;"
-"  int cellh_;"
-"  int paladdr_;"
+"  int cellw_; \n"
+"  int cellh_; \n"
+"  uint paladdr_; \n"
 "  int pagesize; \n"
 "  int patternshift; \n"
 "  int planew; \n"
 "  int pagewh; \n"
 "  int patterndatasize; \n"
-"  int supplementdata; \n"
+"  uint supplementdata; \n"
 "  int auxmode; \n"
 "  int patternwh;\n"
-"  int coloroffset;\n"
+"  uint coloroffset;\n"
 "  int transparencyenable;\n"
 "  int specialcolormode;\n"
 "  int specialcolorfunction;\n"
-"  int specialcode;\n"
+"  uint specialcode;\n"
 "  int colornumber;\n"
 "  int window_area_mode;"
 "  float alpha_;"
 "  int cram_shift;"
 "};\n"
-
 " struct vdp2WindowInfo\n"
 "{\n"
 "  int WinShowLine;\n"
@@ -138,27 +137,26 @@ const char prg_generate_rbg[] =
 "  vdp2WindowInfo pWinInfo[];\n"
 "};\n"
 "layout(std430, binding = 5) readonly buffer VDP2C { uint cram[]; };\n"
-
 " int GetKValue( int paramid, float posx, float posy, out float ky, out uint lineaddr ){ \n"
 "  uint kdata;\n"
-"  int kindex = int( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
+"  uint kindex = uint( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
 "  if (para[paramid].coefdatasize == 2) { \n"
-"    uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFF); "
+"    uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFFu); "
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
 "    }else{\n"
-"        kdata = cram[ ((0x800 + addr)>>2) & 0xFFF ]; \n"
+"        kdata = cram[ ((0x800u + addr)>>2) & 0xFFFu ]; \n"
 "    }\n"
-"    if( (addr & 0x02) != 0 ) { kdata >>= 16; } \n"
-"    kdata = (((kdata) >> 8 & 0xFF) | ((kdata) & 0xFF) << 8);\n"
-"    if ( (kdata & 0x8000) != 0) { return -1; }\n"
-"	 if((kdata&0x4000)!=0) ky=float( int(kdata&0x7FFF)| int(0xFFFF8000) )/1024.0; else ky=float(kdata&0x7FFF)/1024.0;\n"
+"    if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
+"    kdata = (((kdata) >> 8 & 0xFFu) | ((kdata) & 0xFFu) << 8);\n"
+"    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
+"	 if((kdata&0x4000u)!=0u) ky=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0; else ky=float(kdata&0x7FFFu)/1024.0;\n"
 "  }else{\n"
-"	 kdata = vram[ ((para[paramid].coeftbladdr + (kindex<<2))&0x7FFFF)>>2 ]; \n"
-"    kdata = ((kdata&0xFF000000) >> 24 | ((kdata) >> 8 & 0xFF00) | ((kdata) & 0xFF00) << 8 | (kdata&0x000000FF) << 24);\n"
-"	 lineaddr = (kdata >> 24) & 0x7F;\n"
-"	 if((kdata&0x80000000)!=0){ return -1;}\n"
-"	 if((kdata&0x00800000)!=0) ky=float( int(kdata&0x00FFFFFF)| int(0xFF800000) )/65536.0; else ky=float(kdata&0x00FFFFFF)/65536.0;\n"
+"	 kdata = vram[ ((para[paramid].coeftbladdr + (kindex<<2))&0x7FFFFu)>>2 ]; \n"
+"    kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFF00u) | ((kdata) & 0xFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
+"	 lineaddr = (kdata >> 24) & 0x7Fu;\n"
+"	 if((kdata&0x80000000u)!=0u){ return -1;}\n"
+"	 if((kdata&0x00800000u)!=0u) ky=float( int(kdata&0x00FFFFFFu)| int(0xFF800000u) )/65536.0; else ky=float(kdata&0x00FFFFFFu)/65536.0;\n"
 "  }\n"
 "  return 0;"
 " }\n"
@@ -194,11 +192,11 @@ const char prg_generate_rbg[] =
 "}\n"
 
 "uint get_cram_msb(uint colorindex) { \n"
-"	uint colorval = 0; \n"
-"	colorindex = (colorindex << cram_shift) & 0xFFF; \n"
+"	uint colorval = 0u; \n"
+"	colorindex = (colorindex << cram_shift) & 0xFFFu; \n"
 "	colorval = cram[colorindex >> 2]; \n"
-"	if ((colorindex & 0x02) != 0) { colorval >>= 16; } \n"
-"	return (colorval & 0x8000); \n"
+"	if ((colorindex & 0x02u) != 0u) { colorval >>= 16; } \n"
+"	return (colorval & 0x8000u); \n"
 "}\n"
 
 
@@ -211,15 +209,15 @@ const char prg_generate_rbg[] =
 "  int cellw;\n"
 "  uint paladdr; \n"
 "  uint charaddr; \n"
-"  uint lineaddr = 0; \n"
+"  uint lineaddr = 0u; \n"
 "  float ky; \n"
 "  uint kdata;\n"
-"  uint patternname = 0xFFFFFFFF;\n"
+"  uint patternname = 0xFFFFFFFFu;\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.xy);\n"
 "  ivec2 size = imageSize(outSurface);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  float posx = texel.x * hres_scale;\n"
-"  float posy = texel.y * vres_scale;\n";
+"  float posx = float(texel.x) * hres_scale;\n"
+"  float posy = float(texel.y) * vres_scale;\n";
 
 const char prg_rbg_rpmd0_2w[] =
 "  paramid = 0; \n"
@@ -311,7 +309,7 @@ const char prg_rbg_get_bitmap[] =
 "    y = int(fv) & (cellh_-1);\n"
 "    break;\n"
 "  case 2: // OVERMODE_TRANSE \n"
-"    if ((fh < 0.0) || (fh > cellw_) || (fv < 0.0) || (fv > cellh_)) {\n"
+"    if ((fh < 0.0) || (fh > float(cellw_)) || (fv < 0.0) || (fv > float(cellh_)) ) {\n"
 "      imageStore(outSurface,texel,vec4(0.0));\n"
 "      return; \n"
 "    }\n"
@@ -335,14 +333,14 @@ const char prg_rbg_overmode_repeat[] =
 "    y = int(fv) & (para[paramid].MaxV-1);\n"
 "    break;\n"
 "  case 1: // OVERMODE_SELPATNAME \n"
-"    if ((fh < 0.0) || (fh > para[paramid].MaxH) || (fv < 0.0) || (fv > para[paramid].MaxV)) {\n"
+"    if ((fh < 0.0) || (fh > float(para[paramid].MaxH)) || (fv < 0.0) || (fv > float(para[paramid].MaxV)) ) {\n"
 "        patternname = para[paramid].over_pattern_name;\n"
 "    }"
 "    x = int(fh);\n"
 "    y = int(fv);\n"
 "    break;\n"
 "  case 2: // OVERMODE_TRANSE \n"
-"    if ((fh < 0.0) || (fh > para[paramid].MaxH) || (fv < 0.0) || (fv > para[paramid].MaxV)) {\n"
+"    if ((fh < 0.0) || (fh > float(para[paramid].MaxH) ) || (fv < 0.0) || (fv > float(para[paramid].MaxV)) ) {\n"
 "      imageStore(outSurface,texel,vec4(0.0));\n"
 "      return; \n"
 "    }\n"
@@ -361,78 +359,78 @@ const char prg_rbg_overmode_repeat[] =
 
 
 const char prg_rbg_get_patternaddr[] =
-"  uint planenum = (x >> para[paramid].ShiftPaneX) + ((y >> para[paramid].ShiftPaneY) << 2);\n"
+"  int planenum = (x >> para[paramid].ShiftPaneX) + ((y >> para[paramid].ShiftPaneY) << 2);\n"
 "  x &= (para[paramid].MskH);\n"
 "  y &= (para[paramid].MskV);\n"
 "  uint addr = para[paramid].PlaneAddrv[planenum];\n"
-"  addr += (((y >> 9) * pagesize * planew) + \n"
+"  addr += uint( (((y >> 9) * pagesize * planew) + \n"
 "  ((x >> 9) * pagesize) + \n"
 "  (((y & 511) >> patternshift) * pagewh) + \n"
-"  ((x & 511) >> patternshift)) << patterndatasize; \n"
-"  addr &= 0x7FFFF;";
+"  ((x & 511) >> patternshift)) << patterndatasize ); \n"
+"  addr &= 0x7FFFFu;\n";
 
 const char prg_rbg_get_pattern_data_1w[] =
-"  if( patternname == 0xFFFFFFFF){\n"
+"  if( patternname == 0xFFFFFFFFu){\n"
 "    patternname = vram[addr>>2]; \n" // WORD mode( patterndatasize == 1 )
-"    if( (addr & 0x02) != 0 ) { patternname >>= 16; } \n"
-"    patternname = (((patternname) >> 8 & 0xFF) | ((patternname) & 0xFF) << 8);\n"
+"    if( (addr & 0x02u) != 0u ) { patternname >>= 16; } \n"
+"    patternname = (((patternname >> 8) & 0xFFu) | ((patternname) & 0xFFu) << 8);\n"
 "  }\n"
-"  if(colornumber==0) paladdr = ((patternname & 0xF000) >> 12) | ((supplementdata & 0xE0) >> 1); else paladdr = (patternname & 0x7000) >> 8;" // not in 16 colors
-"  uint flipfunction;"
+"  if(colornumber==0) paladdr = ((patternname & 0xF000u) >> 12) | ((supplementdata & 0xE0u) >> 1); else paladdr = (patternname & 0x7000u) >> 8;\n" // not in 16 colors
+"  uint flipfunction;\n"
 "  switch (auxmode)\n"
 "  {\n"
 "  case 0: \n"
-"    flipfunction = (patternname & 0xC00) >> 10;\n"
+"    flipfunction = (patternname & 0xC00u) >> 10;\n"
 "    switch (patternwh)\n"
 "    {\n"
 "    case 1:\n"
-"      charaddr = (patternname & 0x3FF) | ((supplementdata & 0x1F) << 10);\n"
+"      charaddr = (patternname & 0x3FFu) | ((supplementdata & 0x1Fu) << 10);\n"
 "      break;\n"
 "    case 2:\n"
-"      charaddr = ((patternname & 0x3FF) << 2) | (supplementdata & 0x3) | ((supplementdata & 0x1C) << 10);\n"
+"      charaddr = ((patternname & 0x3FFu) << 2) | (supplementdata & 0x3u) | ((supplementdata & 0x1Cu) << 10);\n"
 "      break;\n"
 "    }\n"
 "    break;\n"
 "  case 1:\n"
-"    flipfunction = 0;\n"
+"    flipfunction = 0u;\n"
 "    switch (patternwh)\n"
 "    {\n"
 "    case 1:\n"
-"      charaddr = (patternname & 0xFFF) | ((supplementdata & 0x1C) << 10);\n"
+"      charaddr = (patternname & 0xFFFu) | ((supplementdata & 0x1Cu) << 10);\n"
 "      break;\n"
 "    case 2:\n"
-"      charaddr = ((patternname & 0xFFF) << 2) | (supplementdata & 0x3) | ((supplementdata & 0x10) << 10);\n"
+"      charaddr = ((patternname & 0xFFFu) << 2) | (supplementdata & 0x3u) | ((supplementdata & 0x10u) << 10);\n"
 "      break;\n"
 "    }\n"
 "    break;\n"
 "  }\n"
-"  charaddr &= 0x3FFF;\n"
-"  charaddr *= 0x20;\n";
+"  charaddr &= 0x3FFFu;\n"
+"  charaddr *= 0x20u;\n";
 
 const char prg_rbg_get_pattern_data_2w[] =
 "  patternname = vram[addr>>2]; \n" 
-"  uint tmp1 = patternname & 0x7FFF; \n"
+"  uint tmp1 = patternname & 0x7FFFu; \n"
 "  charaddr = patternname >> 16; \n"
-"  charaddr = (((charaddr) >> 8 & 0xFF) | ((charaddr) & 0xFF) << 8);\n"
-"  tmp1 = (((tmp1) >> 8 & 0xFF) | ((tmp1) & 0xFF) << 8);\n"
-"  uint flipfunction = (tmp1 & 0xC000) >> 14;\n"
-"  if(colornumber==0) paladdr = tmp1 & 0x7F; else paladdr = tmp1 & 0x70;\n" // not in 16 colors
-"  uint specialfunction_in = (tmp1 & 0x2000) >> 13;\n"
-"  uint specialcolorfunction_in = (tmp1 & 0x1000) >> 12;\n"
-"  charaddr &= 0x3FFF;\n"
-"  charaddr *= 0x20;\n";
+"  charaddr = (((charaddr >> 8) & 0xFFu) | ((charaddr) & 0xFFu) << 8);\n"
+"  tmp1 = (((tmp1 >> 8) & 0xFFu) | ((tmp1) & 0xFFu) << 8);\n"
+"  uint flipfunction = (tmp1 & 0xC000u) >> 14;\n"
+"  if(colornumber==0) paladdr = tmp1 & 0x7Fu; else paladdr = tmp1 & 0x70u;\n" // not in 16 colors
+"  uint specialfunction_in = (tmp1 & 0x2000u) >> 13;\n"
+"  uint specialcolorfunction_in = (tmp1 & 0x1000u) >> 12;\n"
+"  charaddr &= 0x3FFFu;\n"
+"  charaddr *= 0x20u;\n";
 
 const char prg_rbg_get_charaddr[] =
 "  cellw = 8; \n"
 "  if (patternwh == 1) { \n" // Figure out which pixel in the tile we want
 "    x &= 0x07;\n"
 "    y &= 0x07;\n"
-"    if ( (flipfunction & 0x2) != 0 ) y = 7 - y;\n"
-"    if ( (flipfunction & 0x1) != 0 ) x = 7 - x;\n"
+"    if ( (flipfunction & 0x2u) != 0u ) y = 7 - y;\n"
+"    if ( (flipfunction & 0x1u) != 0u ) x = 7 - x;\n"
 "  }else{\n"
-"    if (flipfunction != 0) { \n"
+"    if (flipfunction != 0u) { \n"
 "      y &= 16 - 1;\n"
-"      if ( (flipfunction & 0x2) != 0 ) {\n"
+"      if ( (flipfunction & 0x2u) != 0u ) {\n"
 "        if ( (y & 8) == 0 ) {\n"
 "          y = 8 - 1 - y + 16;\n"
 "        }else{ \n"
@@ -441,7 +439,7 @@ const char prg_rbg_get_charaddr[] =
 "      } else if ( (y & 8) != 0 ) { \n"
 "        y += 8; \n"
 "      }\n"
-"      if ((flipfunction & 0x1) != 0 ) {\n"
+"      if ((flipfunction & 0x1u) != 0u ) {\n"
 "        if ( (x & 8) == 0 ) y += 8;\n"
 "        x &= 8 - 1;\n"
 "        x = 8 - 1 - x;\n"
@@ -462,31 +460,31 @@ const char prg_rbg_get_charaddr[] =
 
 // 4 BPP
 const char prg_rbg_getcolor_4bpp[] =
-"  uint dot = 0;\n"
-"  uint cramindex = 0;\n"
+"  uint dot = 0u;\n"
+"  uint cramindex = 0u;\n"
 "  float alpha = alpha_;\n"
-"  uint dotaddr = ((charaddr + (((y * cellw) + x) >> 1)) & 0x7FFFF);\n"
+"  uint dotaddr = ((charaddr + uint(((y * cellw) + x) >> 1)) & 0x7FFFFu);\n"
 "  dot = vram[ dotaddr >> 2];\n"
-"  if( (dotaddr & 0x3) == 0 ) dot >>= 0;\n"
-"  else if( (dotaddr & 0x3) == 1 ) dot >>= 8;\n"
-"  else if( (dotaddr & 0x3) == 2 ) dot >>= 16;\n"
-"  else if( (dotaddr & 0x3) == 3 ) dot >>= 24;\n"
+"  if( (dotaddr & 0x3u) == 0u ) dot >>= 0;\n"
+"  else if( (dotaddr & 0x3u) == 1u ) dot >>= 8;\n"
+"  else if( (dotaddr & 0x3u) == 2u ) dot >>= 16;\n"
+"  else if( (dotaddr & 0x3u) == 3u ) dot >>= 24;\n"
 "  if ( (x & 0x1) == 0 ) dot >>= 4;\n"
-"  if ( (dot & 0xF) == 0 && transparencyenable != 0 ) { \n"
-"    cramindex = 0; \n"
+"  if ( (dot & 0xFu) == 0u && transparencyenable != 0 ) { \n"
+"    cramindex = 0u; \n"
 "    alpha = 0.0;\n"
 "  } else {\n"
-"    cramindex = (coloroffset + ((paladdr << 4) | (dot & 0xF)));\n"
+"    cramindex = (coloroffset + ((paladdr << 4) | (dot & 0xFu)));\n"
 "    switch (specialcolormode)\n"
 "    {\n"
 "    case 1:\n"
 "      if (specialcolorfunction == 0) { alpha = 1.0; } break;\n"
 "    case 2:\n"
 "      if (specialcolorfunction == 0) { alpha = 1.0; }\n"
-"      else { if ((specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 1.0; } } \n"
+"      else { if ((specialcode & (1u << ((dot & 0xFu) >> 1))) == 0u) { alpha = 1.0; } } \n"
 "      break; \n"
 "    case 3:\n"
-"	   if (get_cram_msb(cramindex) == 0) { alpha = 1.0; }\n"
+"	   if (get_cram_msb(cramindex) == 0u) { alpha = 1.0; }\n"
 "	   break;\n"
 "    }\n"
 "  }\n";
@@ -494,18 +492,18 @@ const char prg_rbg_getcolor_4bpp[] =
 
 // 8BPP
 const char prg_rbg_getcolor_8bpp[] =
-"  uint dot = 0;\n"
-"  uint cramindex = 0;\n"
+"  uint dot = 0u;\n"
+"  uint cramindex = 0u;\n"
 "  float alpha = alpha_;\n"
-"  uint dotaddr = charaddr + ((y*cellw)+x);\n"
+"  uint dotaddr = charaddr + uint((y*cellw)+x);\n"
 "  dot = vram[ dotaddr >> 2];\n"
-"  if( (dotaddr & 0x3) == 0 ) dot >>= 0;\n"
-"  else if( (dotaddr & 0x3) == 1 ) dot >>= 8;\n"
-"  else if( (dotaddr & 0x3) == 2 ) dot >>= 16;\n"
-"  else if( (dotaddr & 0x3) == 3 ) dot >>= 24;\n"
-"  dot = dot & 0xFF; \n"
-"  if ( dot == 0 && transparencyenable != 0 ) { \n"
-"    cramindex = 0; \n"
+"  if( (dotaddr & 0x3u) == 0u ) dot >>= 0;\n"
+"  else if( (dotaddr & 0x3u) == 1u ) dot >>= 8;\n"
+"  else if( (dotaddr & 0x3u) == 2u ) dot >>= 16;\n"
+"  else if( (dotaddr & 0x3u) == 3u ) dot >>= 24;\n"
+"  dot = dot & 0xFFu; \n"
+"  if ( dot == 0u && transparencyenable != 0 ) { \n"
+"    cramindex = 0u; \n"
 "    alpha = 0.0;\n"
 "  } else {\n"
 "    cramindex = (coloroffset + ((paladdr << 4) | dot));\n"
@@ -515,40 +513,40 @@ const char prg_rbg_getcolor_8bpp[] =
 "      if (specialcolorfunction == 0) { alpha = 1.0; } break;\n"
 "    case 2:\n"
 "      if (specialcolorfunction == 0) { alpha = 1.0; }\n"
-"      else { if ((specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { alpha = 1.0; } } \n"
+"      else { if ((specialcode & (1u << ((dot & 0xFu) >> 1))) == 0u) { alpha = 1.0; } } \n"
 "      break; \n"
 "    case 3:\n"
-"	   if (get_cram_msb(cramindex) == 0) { alpha = 1.0; }\n"
+"	   if (get_cram_msb(cramindex) == 0u) { alpha = 1.0; }\n"
 "	   break;\n"
 "    }\n"
 "  }\n";
 
 
 const char prg_rbg_getcolor_16bpp_palette[] =
-"  uint dot = 0;\n"
-"  uint cramindex = 0;\n"
+"  uint dot = 0u;\n"
+"  uint cramindex = 0u;\n"
 "  float alpha = alpha_;\n"
 "  uint dotaddr = charaddr + ((y*cellw)+x) * 2;\n"
 "  dot = vram[dotaddr>>2]; \n" 
 "  if( (dotaddr & 0x02) != 0 ) { dot >>= 16; } \n"
 "  dot = (((dot) >> 8 & 0xFF) | ((dot) & 0xFF) << 8);\n"
 "  if ( dot == 0 && transparencyenable != 0 ) { \n"
-"    cramindex = 0; \n"
+"    cramindex = 0u; \n"
 "    alpha = 0.0;\n"
 "  } else {\n"
 "    cramindex = (coloroffset + dot);\n"
 "  }\n";
 
 const char prg_rbg_getcolor_16bpp_rbg[] =
-"  uint dot = 0;\n"
-"  uint cramindex = 0;\n"
+"  uint dot = 0u;\n"
+"  uint cramindex = 0u;\n"
 "  float alpha = alpha_;\n"
 "  uint dotaddr = charaddr + ((y*cellw)+x) * 2;\n"
 "  dot = vram[dotaddr>>2]; \n"
 "  if( (dotaddr & 0x02) != 0 ) { dot >>= 16; } \n"
-"  dot = (((dot) >> 8 & 0xFF) | ((dot) & 0xFF) << 8);\n"
-"  if ( (dot&0x8000) == 0 && transparencyenable != 0 ) { \n"
-"    cramindex = 0; \n"
+"  dot = (((dot >> 8) & 0xFFu) | ((dot) & 0xFFu) << 8);\n"
+"  if ( (dot&0x8000u) == 0u && transparencyenable != 0 ) { \n"
+"    cramindex = 0u; \n"
 "    alpha = 0;\n"
 "  } else {\n"
 "    cramindex = (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;\n"
@@ -556,14 +554,14 @@ const char prg_rbg_getcolor_16bpp_rbg[] =
 
 
 const char prg_rbg_getcolor_32bpp_rbg[] =
-"  uint dot = 0;\n"
-"  uint cramindex = 0;\n"
-"  falot alpha = 1.0;\n"
-"  uint dotaddr = charaddr + ((y*cellw)+x) * 4;\n"
+"  uint dot = 0u;\n"
+"  uint cramindex = 0u;\n"
+"  float alpha = 1.0;\n"
+"  uint dotaddr = charaddr + uint((y*cellw)+x) * 4u;\n"
 "  dot = vram[dotaddr>>2]; \n"
-"  dot = ((dot&0xFF000000) >> 24 | ((dot) >> 8 & 0xFF00) | ((dot) & 0xFF00) << 8 | (dot&0x000000FF) << 24);\n"
-"  if ( (dot&0x80000000) == 0 && transparencyenable != 0 ) { \n"
-"    cramindex = 0; \n"
+"  dot = ((dot&0xFF000000u) >> 24 | ((dot >> 8) & 0xFF00u) | ((dot) & 0xFF00u) << 8 | (dot&0x000000FFu) << 24);\n"
+"  if ( (dot&0x80000000u) == 0u && transparencyenable != 0 ) { \n"
+"    cramindex = 0u; \n"
 "    alpha = 0;\n"
 "  } else {\n"
 "    cramindex = dot & 0x00FFFFFF;\n"
@@ -571,14 +569,14 @@ const char prg_rbg_getcolor_32bpp_rbg[] =
 
 
 const char prg_generate_rbg_end[] =
-"  imageStore(outSurface,texel,vec4( float(cramindex&0xFF)/255.0, float((cramindex>>8) &0xFF)/255.0, float((cramindex>>16) &0xFF)/255.0, alpha));\n"
+"  imageStore(outSurface,texel,vec4( float(cramindex&0xFFu)/255.0, float((cramindex>>8) &0xFFu)/255.0, float((cramindex>>16) &0xFFu)/255.0, alpha));\n"
 "}\n";
 
 const char prg_generate_rbg_line_end[] =
-"  cramindex |= 0x8000;"
-"  uint line_color = 0;"
-"  if( lineaddr != 0xFFFFFFFF && lineaddr != 0 ) line_color = ((lineaddr & 0x7F) | 0x80);"
-"  imageStore(outSurface,texel,vec4( float(cramindex&0xFF)/255.0, float((cramindex>>8)&0xFF)/255.0, float((line_color)&0xFF)/255.0, alpha));\n"
+"  cramindex |= 0x8000u;\n"
+"  uint line_color = 0u;\n"
+"  if( lineaddr != 0xFFFFFFFFu && lineaddr != 0u ) line_color = ((lineaddr & 0x7Fu) | 0x80u);"
+"  imageStore(outSurface,texel,vec4( float(cramindex&0xFFu)/255.0, float((cramindex>>8)&0xFFu)/255.0, float((line_color)&0xFFu)/255.0, alpha));\n"
 "}\n";
 
 
@@ -836,11 +834,11 @@ struct RBGUniform {
   int supplementdata;
   int auxmode;
   int patternwh;
-  int coloroffset;
+  unsigned int coloroffset;
   int transparencyenable;
   int specialcolormode;
   int specialcolorfunction;
-  int specialcode;
+  unsigned int specialcode;
   int colornumber;
   int window_area_mode;
   float alpha_;
@@ -1012,6 +1010,8 @@ public:
   void resize(int width, int height) {
 	if (tex_width_ == width && tex_height_ == height) return;
 
+	YGLDEBUG("resize %d, %d\n",width,height);
+
 	glGetError();
 
 	if (tex_surface_ != 0) {
@@ -1029,8 +1029,9 @@ public:
 	glBindTexture(GL_TEXTURE_2D, tex_surface_);
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	ErrorHandle("glBindTexture");
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	ErrorHandle("glTexImage2D");
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, tex_width_, tex_height_);
+	ErrorHandle("glTexStorage2D");
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1044,14 +1045,17 @@ public:
 		glBindTexture(GL_TEXTURE_2D, tex_surface_1);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 		ErrorHandle("glBindTexture");
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		ErrorHandle("glTexImage2D");
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, tex_width_, tex_height_);
+		ErrorHandle("glTexStorage2D");
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		ErrorHandle("glTexParameteri");
 	}
+
+	YGLDEBUG("resize tex_surface_=%d, tex_surface_1=%d\n",tex_surface_,tex_surface_1);
 
   }
 
@@ -1067,6 +1071,13 @@ public:
 		  GLchar *info = new GLchar[length];
 		  glGetShaderInfoLog(result, length, NULL, info);
 		  YGLDEBUG("[COMPILE] %s\n%s\n", prg_generate_rbg, info);
+		  FILE * fp = fopen("tmp.cpp", "w");
+			if( fp ) {
+				for (int i = 0; i < count; i++) {
+					fprintf(fp,"%s", prg_strs[i]);
+				}
+				fclose(fp);
+			}
 		  abort();
 		  delete[] info;
 	  }
@@ -1081,30 +1092,38 @@ public:
 		  GLchar *info = new GLchar[length];
 		  glGetProgramInfoLog(program, length, NULL, info);
 		  YGLDEBUG("[LINK] %s\n", info);
-		  delete[] info;
+		  FILE * fp = fopen("tmp.cpp", "w");
+			if( fp ) {
+				for (int i = 0; i < count; i++) {
+					fprintf(fp,"%s", prg_strs[i]);
+				}
+				fclose(fp);
+			}
+		  YabThreadUSleep(1000000);  
 		  abort();
+		  delete[] info;
 	  }
 	  return program;
   }
 
-  //-----------------------------------------------
+  //----------------------------------------------- 
   void init( int width, int height ) {
 
 	resize(width,height);
 	if (ssbo_vram_ != 0) return; // always inisialized!
 
-    glGenBuffers(1, &ssbo_vram_);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, 0x80000,(void*)Vdp2Ram,GL_DYNAMIC_DRAW);
+  glGenBuffers(1, &ssbo_vram_);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, 0x80000,(void*)Vdp2Ram,GL_DYNAMIC_DRAW);
 
-    glGenBuffers(1, &ssbo_paraA_);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_paraA_);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, struct_size_*2, NULL, GL_DYNAMIC_DRAW);
+  glGenBuffers(1, &ssbo_paraA_);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_paraA_);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, struct_size_*2, NULL, GL_DYNAMIC_DRAW);
 
-    glGenBuffers(1, &scene_uniform);
-    glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(RBGDrawInfo), &uniform, GL_STATIC_DRAW);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  glGenBuffers(1, &scene_uniform);
+  glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(RBGDrawInfo), &uniform, GL_STATIC_DRAW);
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	glGenBuffers(1, &ssbo_window_);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_window_);
@@ -1247,8 +1266,6 @@ public:
     int work_groups_y = 1 + (tex_height_ - 1) / local_size_y;
 
     error = glGetError();
-
-
 	// Line color insersion
 	if (rbg->info.LineColorBase != 0 && VDP2_CC_NONE != (rbg->info.blendmode & 0x03)) {
 		if (fixVdp2Regs->RPMD == 0 || (fixVdp2Regs->RPMD == 3 && (fixVdp2Regs->WCTLD & 0xA) == 0)) {
@@ -2177,37 +2194,14 @@ public:
 	}
 
 
-    ErrorHandle("glUseProgram");
-	if (rbg->rgb_type == 0x04 || paraA.k_mem_type != 0 || paraB.k_mem_type != 0 ) {
-		if (tex_surface_1 == 0) {
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, tex_surface_1);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-			ErrorHandle("glBindTexture");
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex_width_, tex_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-			ErrorHandle("glTexImage2D");
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			ErrorHandle("glTexParameteri");
-		}
-		else {
-			glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
-		}
-	}
-	else {
-		glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
-	}
+  ErrorHandle("glUseProgram");
 
-    ErrorHandle("glBindImageTexture");
-    
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
+	ErrorHandle("glBindBufferBase");
 	
-	if (rbg->info.specialcolormode == 3) {
+	if (rbg->info.specialcolormode == 3 || paraA.k_mem_type != 0 || paraB.k_mem_type != 0 ) {
 		if (ssbo_cram_ == 0) {
 			glGenBuffers(1, &ssbo_cram_);
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
@@ -2218,7 +2212,7 @@ public:
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cram_);
 	}
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_paraA_);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_paraA_);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2rotationparameter_struct), (void*)&paraA);
 	glBufferSubData(GL_SHADER_STORAGE_BUFFER, sizeof(vdp2rotationparameter_struct), sizeof(vdp2rotationparameter_struct), (void*)&paraB);
 	ErrorHandle("glBufferSubData");
@@ -2229,19 +2223,19 @@ public:
 	uniform.cellw = rbg->info.cellw;
 	uniform.cellh = rbg->info.cellh;
 	uniform.paladdr_ = rbg->info.paladdr;
-    uniform.pagesize = rbg->pagesize;
-    uniform.patternshift = rbg->patternshift;
-    uniform.planew = rbg->info.planew;
-    uniform.pagewh = rbg->info.pagewh;
-    uniform.patterndatasize = rbg->info.patterndatasize;
-    uniform.supplementdata = rbg->info.supplementdata;
-    uniform.auxmode = rbg->info.auxmode;
-    uniform.patternwh = rbg->info.patternwh;
-    uniform.coloroffset = rbg->info.coloroffset;
-    uniform.transparencyenable = rbg->info.transparencyenable;
-    uniform.specialcolormode = rbg->info.specialcolormode;
-    uniform.specialcolorfunction = rbg->info.specialcolorfunction;
-    uniform.specialcode = rbg->info.specialcode;
+  uniform.pagesize = rbg->pagesize;
+  uniform.patternshift = rbg->patternshift;
+  uniform.planew = rbg->info.planew;
+  uniform.pagewh = rbg->info.pagewh;
+  uniform.patterndatasize = rbg->info.patterndatasize;
+  uniform.supplementdata = rbg->info.supplementdata;
+  uniform.auxmode = rbg->info.auxmode;
+  uniform.patternwh = rbg->info.patternwh;
+  uniform.coloroffset = rbg->info.coloroffset;
+  uniform.transparencyenable = rbg->info.transparencyenable;
+  uniform.specialcolormode = rbg->info.specialcolormode;
+  uniform.specialcolorfunction = rbg->info.specialcolorfunction;
+  uniform.specialcode = rbg->info.specialcode;
 	uniform.colornumber = rbg->info.colornumber;
 	uniform.window_area_mode = rbg->info.WindwAreaMode;
 	uniform.alpha_ = (float)rbg->info.alpha / 255.0f;
@@ -2252,26 +2246,50 @@ public:
 		uniform.cram_shift = 2;
 	}
 
-    glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
+  glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(RBGDrawInfo), (void*)&uniform);
 	ErrorHandle("glBufferSubData");
-    glBindBufferBase(GL_UNIFORM_BUFFER, 3, scene_uniform);
+  glBindBufferBase(GL_UNIFORM_BUFFER, 3, scene_uniform);
 
-    glDispatchCompute(work_groups_x, work_groups_y, 1);
-    ErrorHandle("glDispatchCompute");
+	if (rbg->rgb_type == 0x04  ) {
+		if (tex_surface_1 == 0) {
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, tex_surface_1);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			ErrorHandle("glBindTexture");
+			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8, tex_width_, tex_height_);
+			ErrorHandle("glTexStorage2D");
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			ErrorHandle("glTexParameteri");
+		}
+		else {
+			glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+			ErrorHandle("glBindImageTexture 1");
+		}
+	}
+	else {
+		glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+		ErrorHandle("glBindImageTexture 0");
+	}
 
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  glDispatchCompute(work_groups_x, work_groups_y, 1);
+  ErrorHandle("glDispatchCompute");
+
+  glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }
 
   //-----------------------------------------------
   GLuint getTexture( int id ) { 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-	if (id == 1) {
-		return tex_surface_;
-	}
-	return tex_surface_1;
+		if (id == 1) {
+			return tex_surface_;
+		}
+		return tex_surface_1;
   }
-
+   
 };
 
 RBGGenerator * RBGGenerator::instance_ = nullptr;
