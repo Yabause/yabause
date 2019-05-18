@@ -203,6 +203,7 @@ Gun/Mouse Sensitivity|Empfindlichkeit der Pistole / Maus
 Hex value(s)|Hex value(s)
 Hide Menubar|Verstecke Menüleiste
 Hide Toolbar|Verstecke Werkzeugleiste
+Improved|Verbessert
 Information...|Informationen...
 Inline Assembly|Inline-Montage
 Input|Eingabe
@@ -245,6 +246,7 @@ Memory &Editor|Speicher&editierer
 Memory Editor|Speichereditierer
 Memory Search|Memory Search
 Memory Transfer|Speichertransfer
+Mesh Mode :|Meshmodus
 Middle|Middle
 Mission Stick|Mission Stick
 Mission Stick Configuration|Configuration du Mission Stick														  
@@ -281,6 +283,7 @@ Open&Tray|Schublade&öffnen
 OpenGL size :|OpenGL-Größe
 OpenGL Video Interface|OpenGL-Video-Schnittstelle
 Options|Options
+Original|Original
 Original (original resolution of the Saturn)|Original (ursprüngliche Auflösung des Saturn)
 Original aspect ratio|Ursprüngliches Seitenverhältnis
 OSD Core|OSD Kern					  
