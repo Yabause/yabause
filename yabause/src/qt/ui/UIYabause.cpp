@@ -157,7 +157,7 @@ void UIYabause::showEvent( QShowEvent* e )
 			toolBar->hide();
 		if ( vs->value( "autostart" ).toBool() )
 			aEmulationRun->trigger();
-		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
+		aEmulationVSync->setChecked( vs->value( "General/EnableVSync", 1 ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
 		mInit = true;
 	}
@@ -494,7 +494,7 @@ void UIYabause::on_aFileSettings_triggered()
 	if ( UISettings(&translations, window() ).exec() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();
-		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
+		aEmulationVSync->setChecked( vs->value( "General/EnableVSync", 1 ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
 		mouseSensitivity = vs->value( "Input/GunMouseSensitivity" ).toInt();
 
@@ -794,13 +794,13 @@ void UIYabause::on_aEmulationPause_triggered()
 void UIYabause::on_aEmulationReset_triggered()
 { mYabauseThread->resetEmulation(); }
 
-void UIYabause::on_aEmulationFrameSkipLimiter_toggled( bool toggled )
+void UIYabause::on_aEmulationVSync_toggled( bool toggled )
 {
 	Settings* vs = QtYabause::settings();
-	vs->setValue( "General/EnableFrameSkipLimiter", toggled );
+	vs->setValue( "General/EnableVSync", toggled );
 	vs->sync();
 
-	if ( toggled )
+	if ( !toggled )
 		EnableAutoFrameSkip();
 	else
 		DisableAutoFrameSkip();

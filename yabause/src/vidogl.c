@@ -3825,7 +3825,7 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
   if ((isQuad || isTriangle) && distorted) {
     int disp = 0;
     int isSquare = 1;
-
+//Quad tomb decone ici
     float dx[4];
     float dy[4];
     float entrant[4] = {1.0f, 1.0f, 1.0f, 1.0f};

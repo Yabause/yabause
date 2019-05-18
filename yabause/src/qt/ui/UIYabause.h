@@ -136,7 +136,7 @@ protected slots:
 	void on_aEmulationRun_triggered();
 	void on_aEmulationPause_triggered();
 	void on_aEmulationReset_triggered();
-	void on_aEmulationFrameSkipLimiter_toggled( bool toggled );
+	void on_aEmulationVSync_toggled( bool toggled );
 	// tools
 	void on_aToolsBackupManager_triggered();
 	void on_aToolsCheatsList_triggered();

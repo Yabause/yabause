@@ -246,7 +246,7 @@
     <addaction name="aEmulationPause"/>
     <addaction name="aEmulationReset"/>
     <addaction name="separator"/>
-    <addaction name="aEmulationFrameSkipLimiter"/>
+    <addaction name="aEmulationVSync"/>
    </widget>
    <addaction name="mFile"/>
    <addaction name="mEmulation"/>
@@ -281,7 +281,7 @@
    <addaction name="aFileSettings"/>
    <addaction name="aVideoDriver"/>
    <addaction name="aSound"/>
-   <addaction name="aEmulationFrameSkipLimiter"/>
+   <addaction name="aEmulationVSync"/>
    <addaction name="aViewFPS"/>
    <addaction name="aViewFullscreen"/>
    <addaction name="aFileScreenshot"/>
@@ -395,7 +395,7 @@
     <string>Ctrl+P</string>
    </property>
   </action>
-  <action name="aEmulationFrameSkipLimiter">
+  <action name="aEmulationVSync">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -404,7 +404,7 @@
      <normaloff>:/actions/icons/actions/frame_skipping.png</normaloff>:/actions/icons/actions/frame_skipping.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Frame Skip/Limiter</string>
+    <string>&amp;Vertical synchronization</string>
    </property>
    <property name="shortcut">
     <string>F4</string>

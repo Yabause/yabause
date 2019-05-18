@@ -763,8 +763,8 @@
     </message>
     <message>
         <location filename="../ui/UIYabause.ui" line="390"/>
-        <source>Frame Skip/Limiter</source>
-        <translation type="unfinished"></translation>
+        <source>Vertical synchronization</source>
+        <translation>Synchro Verticale</translation>
     </message>
     <message>
         <location filename="../ui/UIYabause.ui" line="393"/>

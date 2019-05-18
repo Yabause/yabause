@@ -839,8 +839,8 @@
     </message>
     <message>
         <location filename="../ui/UIYabause.ui" line="390"/>
-        <source>Frame Skip/Limiter</source>
-        <translation>Frame Skip/Limitador</translation>
+        <source>Vertical synchronization</source>
+        <translation>Sincronizaçao vertical</translation>
     </message>
     <message>
         <location filename="../ui/UIYabause.ui" line="393"/>

@@ -529,7 +529,7 @@ void UISettings::loadSettings()
 	else
 		cbTranslation->setCurrentIndex(0);
 #endif
-	cbEnableFrameSkipLimiter->setChecked( s->value( "General/EnableFrameSkipLimiter" ).toBool() );
+	cbEnableVSync->setChecked( s->value( "General/EnableVSync", 1 ).toBool() );
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
 	cbAutostart->setChecked( s->value( "autostart" ).toBool() );
 
@@ -622,7 +622,7 @@ void UISettings::saveSettings()
 #ifdef HAVE_LIBMINI18N
 	s->setValue( "General/Translation", cbTranslation->itemData(cbTranslation->currentIndex()).toString() );
 #endif
-	s->setValue( "General/EnableFrameSkipLimiter", cbEnableFrameSkipLimiter->isChecked() );
+	s->setValue( "General/EnableVSync", cbEnableVSync->isChecked() );
 	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );
 	s->setValue( "autostart", cbAutostart->isChecked() );
 
