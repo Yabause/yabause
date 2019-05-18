@@ -2974,7 +2974,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
   }
 
   if (_Ygl->rbg_use_compute_shader) {
-	  RBGGenerator_resize(rbg->hres, rbg->vres);
+	  RBGGenerator_init(rbg->hres, rbg->vres);
   }
 
   info->vertices[0] = 0;

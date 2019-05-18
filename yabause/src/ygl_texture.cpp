@@ -31,11 +31,11 @@ extern Vdp2 * fixVdp2Regs;
 #define YGLDEBUG printf
 
 const char prg_generate_rbg[] =
-#if defined(_OGLES3_)
+//#if defined(_OGLES3_)
 "#version 310 es \n"
-#else
-"#version 430 \n"
-#endif
+//#else
+//"#version 430 \n"
+//#endif
 "#pragma optionNV(inline all)\n"
 "precision highp float; \n"
 "precision highp int;\n"
@@ -141,7 +141,7 @@ const char prg_generate_rbg[] =
 "  uint kdata;\n"
 "  uint kindex = uint( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
 "  if (para[paramid].coefdatasize == 2) { \n"
-"    const uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFFu); "
+"    uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFFu); "
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
 "    }else{\n"
@@ -152,7 +152,7 @@ const char prg_generate_rbg[] =
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
 "	 if((kdata&0x4000u)!=0u) ky=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0; else ky=float(kdata&0x7FFFu)/1024.0;\n"
 "  }else{\n"
-"    const uint addr = ((para[paramid].coeftbladdr + (kindex<<2))&0x7FFFFu);"
+"    uint addr = ((para[paramid].coeftbladdr + (kindex<<2))&0x7FFFFu);"
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
 "    }else{\n"
@@ -531,9 +531,9 @@ const char prg_rbg_getcolor_16bpp_palette[] =
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
 "  float alpha = alpha_;\n"
-"  uint dotaddr = charaddr + ((y*cellw)+x) * 2;\n"
+"  uint dotaddr = charaddr + uint((y*cellw)+x) * 2u;\n"
 "  dot = vram[dotaddr>>2]; \n" 
-"  if( (dotaddr & 0x02) != 0 ) { dot >>= 16; } \n"
+"  if( (dotaddr & 0x02u) != 0u ) { dot >>= 16; } \n"
 "  dot = (((dot) >> 8 & 0xFF) | ((dot) & 0xFF) << 8);\n"
 "  if ( dot == 0 && transparencyenable != 0 ) { \n"
 "    cramindex = 0u; \n"
@@ -546,15 +546,15 @@ const char prg_rbg_getcolor_16bpp_rbg[] =
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
 "  float alpha = alpha_;\n"
-"  uint dotaddr = charaddr + ((y*cellw)+x) * 2;\n"
+"  uint dotaddr = charaddr + uint((y*cellw)+x) * 2u;\n"
 "  dot = vram[dotaddr>>2]; \n"
-"  if( (dotaddr & 0x02) != 0 ) { dot >>= 16; } \n"
+"  if( (dotaddr & 0x02u) != 0u ) { dot >>= 16; } \n"
 "  dot = (((dot >> 8) & 0xFFu) | ((dot) & 0xFFu) << 8);\n"
 "  if ( (dot&0x8000u) == 0u && transparencyenable != 0 ) { \n"
 "    cramindex = 0u; \n"
-"    alpha = 0;\n"
+"    alpha = 0.0;\n"
 "  } else {\n"
-"    cramindex = (dot & 0x1F) << 3 | (dot & 0x3E0) << 6 | (dot & 0x7C00) << 9;\n"
+"    cramindex = (dot & 0x1Fu) << 3 | (dot & 0x3E0u) << 6 | (dot & 0x7C00u) << 9;\n"
 "  }\n";
 
 
@@ -567,9 +567,9 @@ const char prg_rbg_getcolor_32bpp_rbg[] =
 "  dot = ((dot&0xFF000000u) >> 24 | ((dot >> 8) & 0xFF00u) | ((dot) & 0xFF00u) << 8 | (dot&0x000000FFu) << 24);\n"
 "  if ( (dot&0x80000000u) == 0u && transparencyenable != 0 ) { \n"
 "    cramindex = 0u; \n"
-"    alpha = 0;\n"
+"    alpha = 0.0;\n"
 "  } else {\n"
-"    cramindex = dot & 0x00FFFFFF;\n"
+"    cramindex = dot & 0x00FFFFFFu;\n"
 "  }\n";
 
 
@@ -1077,7 +1077,7 @@ public:
 		  glGetShaderiv(result, GL_INFO_LOG_LENGTH, &length);
 		  GLchar *info = new GLchar[length];
 		  glGetShaderInfoLog(result, length, NULL, info);
-		  YGLDEBUG("[COMPILE] %s\n%s\n", prg_generate_rbg, info);
+		  YGLDEBUG("[COMPILE] %s\n", info);
 		  FILE * fp = fopen("tmp.cpp", "w");
 			if( fp ) {
 				for (int i = 0; i < count; i++) {
@@ -1265,6 +1265,9 @@ public:
 
   //-----------------------------------------------
   void update( RBGDrawInfo * rbg) {
+
+    if (prg_rbg_0_2w_p1_4bpp_line_ == 0) return;
+
     GLuint error;
     int local_size_x = 4;
     int local_size_y = 4;
@@ -2303,7 +2306,7 @@ public:
 
   //-----------------------------------------------
   void onFinish() {
-    if (mapped_vram == nullptr) {
+    if ( ssbo_vram_ != 0 && mapped_vram == nullptr) {
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
       mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
       glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0 );
@@ -2316,22 +2319,32 @@ RBGGenerator * RBGGenerator::instance_ = nullptr;
 
 extern "C" {
   void RBGGenerator_init(int width, int height) {
+    if (_Ygl->rbg_use_compute_shader == 0) return;
+
     RBGGenerator * instance = RBGGenerator::getInstance();
     instance->init( width, height);
   }
   void RBGGenerator_resize(int width, int height) {
+    if (_Ygl->rbg_use_compute_shader == 0) return;
+
 	  RBGGenerator * instance = RBGGenerator::getInstance();
 	  instance->resize(width, height);
   }
   void RBGGenerator_update(RBGDrawInfo * rbg ) {
+    if (_Ygl->rbg_use_compute_shader == 0) return;
+
     RBGGenerator * instance = RBGGenerator::getInstance();
     instance->update(rbg);
   }
   GLuint RBGGenerator_getTexture( int id ) {
+    if (_Ygl->rbg_use_compute_shader == 0) return 0;
+
     RBGGenerator * instance = RBGGenerator::getInstance();
     return instance->getTexture( id );
   }
   void RBGGenerator_onFinish() {
+
+    if (_Ygl->rbg_use_compute_shader == 0) return;
     RBGGenerator * instance = RBGGenerator::getInstance();
     instance->onFinish();
   }

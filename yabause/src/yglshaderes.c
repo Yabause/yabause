@@ -2901,8 +2901,6 @@ int YglProgramInit()
    idto_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_to");
    idcoloroffset_addcolor_shadow = glGetUniformLocation(_prgid[PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW], (const GLchar *)"u_coloroffset");
 
-   RBGGenerator_init(640,480);
-
    return 0;
 }
 
