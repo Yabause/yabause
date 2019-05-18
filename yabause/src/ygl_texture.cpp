@@ -144,7 +144,11 @@ const char prg_generate_rbg[] =
 "  int kindex = int( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
 "  if (para[paramid].coefdatasize == 2) { \n"
 "    uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFF); "
-"	 kdata = vram[ addr>>2 ]; \n"
+"    if( para[paramid].k_mem_type == 0) { \n"
+"	     kdata = vram[ addr>>2 ]; \n"
+"    }else{\n"
+"        kdata = cram[ ((0x800 + addr)>>2) & 0xFFF ]; \n"
+"    }\n"
 "    if( (addr & 0x02) != 0 ) { kdata >>= 16; } \n"
 "    kdata = (((kdata) >> 8 & 0xFF) | ((kdata) & 0xFF) << 8);\n"
 "    if ( (kdata & 0x8000) != 0) { return -1; }\n"
@@ -1087,6 +1091,7 @@ public:
   void init( int width, int height ) {
 
 	resize(width,height);
+	if (ssbo_vram_ != 0) return; // always inisialized!
 
     glGenBuffers(1, &ssbo_vram_);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
@@ -2173,7 +2178,7 @@ public:
 
 
     ErrorHandle("glUseProgram");
-	if (rbg->rgb_type == 0x04) {
+	if (rbg->rgb_type == 0x04 || paraA.k_mem_type != 0 || paraB.k_mem_type != 0 ) {
 		if (tex_surface_1 == 0) {
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, tex_surface_1);
