@@ -84,7 +84,7 @@ class Settings;
 class VolatileSettings;
 class QWidget;
 
-typedef struct 
+typedef struct
 {
 	QString file;
 	QString name;
@@ -92,6 +92,7 @@ typedef struct
 
 namespace QtYabause
 {
+	void appendLog( const char* str );
 	UIYabause* mainWindow( bool create = true );
 	Settings* settings( bool create = true );
 	VolatileSettings* volatileSettings( bool create = true );
@@ -123,7 +124,7 @@ namespace QtYabause
 	PerInterface_struct defaultPERCore();
 	SH2Interface_struct defaultSH2Core();
    M68K_struct default68kCore();
-	
+
 	// padsbits
 	QMap<uint, PerPad_struct*>* portPadsBits( uint portNumber );
 	void clearPadsBits();

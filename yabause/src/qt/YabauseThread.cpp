@@ -266,7 +266,7 @@ void YabauseThread::reloadControllers()
 					break;
 				}
 				case PERKEYBOARD:
-					QtYabause::mainWindow()->appendLog( "Keyboard controller type is not yet supported" );
+					QtYabause::appendLog( "Keyboard controller type is not yet supported" );
 					break;
 				case PERMOUSE:
 				{
@@ -291,7 +291,7 @@ void YabauseThread::reloadControllers()
 					// Unconnected
 					break;
 				default:
-					QtYabause::mainWindow()->appendLog( "Invalid controller type" );
+					QtYabause::appendLog( "Invalid controller type" );
 					break;
 			}
 		}

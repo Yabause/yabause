@@ -155,7 +155,7 @@ QMap<uint, PerMouse_struct*> mPort2MouseBits;
 QMap<uint, PerAnalog_struct*> mPort1AnalogBits;
 QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 
-extern "C" 
+extern "C"
 {
 
 #ifdef WIN32
@@ -175,7 +175,7 @@ extern "C"
           va_list arglist;
           va_start( arglist, format );
           r = vasprintf(&str, format, arglist);
-	  va_end( arglist );	
+	  va_end( arglist );
 	  if (r > 0) {
             //QtYabause::mainWindow()->appendLog( str );
 		  wchar_t wtext[512];
@@ -201,14 +201,14 @@ extern "C"
        {
          YuiMsg("Error: %s\n", error_text);
        }
-	
+
 	void YuiSwapBuffers()
-	{ 
+	{
           QtYabause::mainWindow()->swapBuffers();
         }
 
 	int YuiGetFB()
-	{ 
+	{
           return 0;
         }
 
@@ -219,6 +219,19 @@ extern "C"
    }
 #endif
 }
+
+void QtYabause::appendLog( const char* str )
+{
+#ifdef _WIN32
+  wchar_t wtext[512];
+  mbstowcs(wtext, str, strlen(str) + 1);//Plus null
+  LPWSTR ptr = wtext;
+	::OutputDebugString(ptr);
+#else
+  printf("%s\n", str);
+#endif
+}
+
 
 UIYabause* QtYabause::mainWindow( bool create )
 {
@@ -246,7 +259,7 @@ QList <translation_struct> QtYabause::getTranslationList()
 {
 	QList <translation_struct> translations;
 #ifdef HAVE_LIBMINI18N
-	QDir transDir=QDir(YTSDIR, "*.yts");	
+	QDir transDir=QDir(YTSDIR, "*.yts");
 
 	foreach(QString file, transDir.entryList())
 	{
@@ -261,7 +274,7 @@ QList <translation_struct> QtYabause::getTranslationList()
 			string.removeFirst();
 		QString localeStr = string.join("_");
 		// Find the locale
-		QLocale locale = QLocale(localeStr);	
+		QLocale locale = QLocale(localeStr);
 		// Now we should be good for the language name
 #if QT_VERSION < 0x040800
 		trans.name = locale.name();

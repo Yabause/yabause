@@ -71,7 +71,7 @@ protected:
 class UIYabause : public QMainWindow, public Ui::UIYabause
 {
 	Q_OBJECT
-	
+
 public:
 	UIYabause( QWidget* parent = 0 );
 	~UIYabause();
@@ -82,9 +82,6 @@ public:
 protected:
 	YabauseGL* mYabauseGL;
 	YabauseThread* mYabauseThread;
-	QDockWidget* mLogDock;
-	QTextEdit* teLog;
-	bool mCanLog;
 	bool mInit;
 	QList <cheatsearch_struct> search;
 	int searchType;
@@ -110,7 +107,6 @@ protected:
 	bool mIsCdIn;
 
 public slots:
-        void appendLog( const char* msg);
 	void pause( bool paused );
 	void reset();
 	void hideMouse();
@@ -159,7 +155,6 @@ protected slots:
 	// debug menu
 	void on_aViewDebugVDP1_triggered();
 	void on_aViewDebugVDP2_triggered();
-	void on_aTraceLogging_triggered( bool toggled );
 	// help menu
 	void on_aHelpReport_triggered();
 	void on_aHelpCompatibilityList_triggered();

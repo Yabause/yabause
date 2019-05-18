@@ -50,18 +50,6 @@ extern VideoInterface_struct *VIDCoreList[];
 
 //#define USE_UNIFIED_TITLE_TOOLBAR
 
-void qAppendLog( const char* s)
-{
-	UIYabause* ui = QtYabause::mainWindow( false );
-	
-	if ( ui ) {
-		ui->appendLog( s );
-	}
-	else {
-		qWarning( "%s", s );
-	}
-}
-
 UIYabause::UIYabause( QWidget* parent )
 	: QMainWindow( parent )
 {
@@ -95,24 +83,8 @@ UIYabause::UIYabause( QWidget* parent )
         setFocusPolicy( Qt::StrongFocus );
         container->setFocusProxy( this );
 	setCentralWidget( container );
-	// create log widget
-	teLog = new QTextEdit( this );
-	teLog->setReadOnly( true );
-	teLog->setWordWrapMode( QTextOption::NoWrap );
-	teLog->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
-	teLog->setHorizontalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
-	mLogDock = new QDockWidget( this );
-	mLogDock->setWindowTitle( "Log" );
-	mLogDock->setWidget( teLog );
-	addDockWidget( Qt::BottomDockWidgetArea, mLogDock );
-	mLogDock->setVisible( false );
-	mCanLog = true;
 	oldMouseX = oldMouseY = 0;
 	mouseCaptured = false;
-
-#ifndef SH2_TRACE
-	aTraceLogging->setVisible(false);
-#endif
 
 	// create emulator thread
 	mYabauseThread = new YabauseThread( this );
@@ -124,8 +96,6 @@ UIYabause::UIYabause( QWidget* parent )
 	connect( mYabauseThread, SIGNAL( requestSize( const QSize& ) ), this, SLOT( sizeRequested( const QSize& ) ) );
 	connect( mYabauseThread, SIGNAL( requestFullscreen( bool ) ), this, SLOT( fullscreenRequested( bool ) ) );
 	connect( mYabauseThread, SIGNAL( requestVolumeChange( int ) ), this, SLOT( on_sVolume_valueChanged( int ) ) );
-	connect( aViewLog, SIGNAL( toggled( bool ) ), mLogDock, SLOT( setVisible( bool ) ) );
-	connect( mLogDock->toggleViewAction(), SIGNAL( toggled( bool ) ), aViewLog, SLOT( setChecked( bool ) ) );
 	connect( mYabauseThread, SIGNAL( error( const QString&, bool ) ), this, SLOT( errorReceived( const QString&, bool ) ) );
 	connect( mYabauseThread, SIGNAL( pause( bool ) ), this, SLOT( pause( bool ) ) );
 	connect( mYabauseThread, SIGNAL( reset() ), this, SLOT( reset() ) );
@@ -171,17 +141,14 @@ UIYabause::UIYabause( QWidget* parent )
 
 UIYabause::~UIYabause()
 {
-	mCanLog = false;
 }
 
 void UIYabause::showEvent( QShowEvent* e )
 {
 	QMainWindow::showEvent( e );
-	
+
 	if ( !mInit )
 	{
-		LogStart();
-		LogChangeOutput( DEBUG_CALLBACK, (char*)qAppendLog );
 		VolatileSettings* vs = QtYabause::volatileSettings();
 
 		if ( vs->value( "View/Menubar" ).toInt() == BD_ALWAYSHIDE )
@@ -199,7 +166,6 @@ void UIYabause::showEvent( QShowEvent* e )
 void UIYabause::closeEvent( QCloseEvent* e )
 {
 	aEmulationPause->trigger();
-	LogStop();
 
 	if (isFullScreen())
 		// Need to switch out of full screen or the geometry settings get saved
@@ -212,11 +178,11 @@ void UIYabause::closeEvent( QCloseEvent* e )
 }
 
 void UIYabause::keyPressEvent( QKeyEvent* e )
-{ 
+{
 	if (emulateMouse && mouseCaptured && e->key() == Qt::Key_Escape)
 		mouseCaptured = false;
 	else
-		PerKeyDown( e->key() ); 
+		PerKeyDown( e->key() );
 }
 
 void UIYabause::keyReleaseEvent( QKeyEvent* e )
@@ -236,7 +202,7 @@ void UIYabause::leaveEvent( QEvent* e )
 }
 
 void UIYabause::mousePressEvent( QMouseEvent* e )
-{ 
+{
 	if (emulateMouse && !mouseCaptured)
 	{
 		this->setCursor(Qt::BlankCursor);
@@ -247,7 +213,7 @@ void UIYabause::mousePressEvent( QMouseEvent* e )
 }
 
 void UIYabause::mouseReleaseEvent( QMouseEvent* e )
-{ 
+{
 	PerKeyUp( (1 << 31) | e->button() );
 }
 
@@ -264,7 +230,7 @@ void UIYabause::cursorRestore()
 }
 
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
-{ 
+{
 	int midX = geometry().x()+(width()/2); // widget global x
 	int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
 
@@ -272,7 +238,7 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 	int y = ((menubar->height()+toolBar->height()+(height()/2))-e->y())*mouseYRatio;
 	int minAdj = mouseSensitivity/100;
 
-	// If minimum movement is less than x, wait until next pass to apply	
+	// If minimum movement is less than x, wait until next pass to apply
 	if (abs(x) < minAdj) x = 0;
 	if (abs(y) < minAdj) y = 0;
 
@@ -334,25 +300,8 @@ void UIYabause::adjustHeight(int & height)
 }
 
 void UIYabause::swapBuffers()
-{ 
-	mYabauseGL->swapBuffers();
-}
-
-void UIYabause::appendLog( const char* s )
 {
-
-	if (! mCanLog)
-	{
-		qWarning( "%s", s );
-		return;
-	}
-
-	teLog->insertPlainText( s );
-
-	VolatileSettings* vs = QtYabause::volatileSettings();
-	if (( !mLogDock->isVisible( )) && ( vs->value( "View/LogWindow" ).toInt() == 1 )) {
-		mLogDock->setVisible( true );
-	}
+	mYabauseGL->swapBuffers();
 }
 
 bool UIYabause::eventFilter( QObject* o, QEvent* e )
@@ -365,7 +314,7 @@ bool UIYabause::eventFilter( QObject* o, QEvent* e )
 void UIYabause::errorReceived( const QString& error, bool internal )
 {
 	if ( internal ) {
-		appendLog( error.toLocal8Bit().constData() );
+		QtYabause::appendLog( error.toLocal8Bit().constData() );
 	}
 	else {
 		CommonDialogs::information( error );
@@ -396,7 +345,7 @@ void UIYabause::sizeRequested( const QSize& s )
 	if (vs->value( "View/Toolbar" ).toInt() != BD_ALWAYSHIDE)
 		height += toolBar->height();
 
-	resize( width, height ); 
+	resize( width, height );
 }
 
 void UIYabause::fixAspectRatio( int width , int height )
@@ -548,7 +497,7 @@ void UIYabause::on_aFileSettings_triggered()
 		aEmulationFrameSkipLimiter->setChecked( vs->value( "General/EnableFrameSkipLimiter" ).toBool() );
 		aViewFPS->setChecked( vs->value( "General/ShowFPS" ).toBool() );
 		mouseSensitivity = vs->value( "Input/GunMouseSensitivity" ).toInt();
-		
+
 		if(isFullScreen())
 		{
 			if ( vs->value( "View/Menubar" ).toInt() == BD_HIDEFS || vs->value( "View/Menubar" ).toInt() == BD_ALWAYSHIDE )
@@ -574,7 +523,7 @@ void UIYabause::on_aFileSettings_triggered()
 				toolBar->show();
 		}
 
-		
+
 		//only reset if bios, region, cart,  back up, mpeg, sh2, m68k are changed
 		Settings *ss = (QtYabause::settings());
 		QHash<QString, QVariant> newhash;
@@ -612,7 +561,7 @@ void UIYabause::on_aFileSettings_triggered()
 #endif
 		if(newhash["Video/VideoCore"] != hash["Video/VideoCore"])
 			on_cbVideoDriver_currentIndexChanged(newhash["Video/VideoCore"].toInt());
-		
+
 		if(newhash["General/ShowFPS"] != hash["General/ShowFPS"])
 			SetOSDToggle(newhash["General/ShowFPS"].toBool());
 
@@ -634,16 +583,16 @@ void UIYabause::on_aFileSettings_triggered()
 			}
 		}
 
-		
+
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
 
 		if (newhash["Video/WindowWidth"] != hash["Video/WindowWidth"] || newhash["Video/WindowHeight"] != hash["Video/WindowHeight"] ||
-          newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
+          newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] ||
 			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
 			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
-		
-		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
+
+		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] ||
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
 			newhash["Video/Fullscreen"] != hash["Video/Fullscreen"])
 		{
@@ -673,9 +622,9 @@ void UIYabause::on_aFileOpenISO_triggered()
 		  VolatileSettings* vs = QtYabause::volatileSettings();
 		  const int currentCDCore = vs->value( "General/CdRom" ).toInt();
 		  const QString currentCdRomISO = vs->value( "General/CdRomISO" ).toString();
-		
+
 		  QtYabause::settings()->setValue( "Recents/ISOs", fn );
-		
+
 		  vs->setValue( "autostart", false );
 		  vs->setValue( "General/CdRom", ISOCD.id );
 		  vs->setValue( "General/CdRomISO", fn );
@@ -685,7 +634,7 @@ void UIYabause::on_aFileOpenISO_triggered()
                     mYabauseThread->pauseEmulation( false, true );
                   }
 		  mIsCdIn = true;
-		
+
 		  refreshStatesActions();
 	        }
 	}
@@ -696,8 +645,8 @@ void UIYabause::on_aFileOpenSSF_triggered()
    YabauseLocker locker(mYabauseThread);
 
    const QString fn = CommonDialogs::getOpenFileName(
-      QtYabause::volatileSettings()->value("Recents/SSFs").toString(), 
-      QtYabause::translate("Select your ssf file"), 
+      QtYabause::volatileSettings()->value("Recents/SSFs").toString(),
+      QtYabause::translate("Select your ssf file"),
       QtYabause::translate("Sega Saturn Sound Format files (*.ssf *.minissf)"));
 
    if (!fn.isEmpty())
@@ -721,7 +670,7 @@ void UIYabause::on_aFileOpenCDRom_triggered()
 	YabauseLocker locker( mYabauseThread );
 	QStringList list = getCdDriveList();
 	int current = list.indexOf(QtYabause::volatileSettings()->value( "Recents/CDs").toString());
-	QString fn = QInputDialog::getItem(this, QtYabause::translate("Open CD Rom"), 
+	QString fn = QInputDialog::getItem(this, QtYabause::translate("Open CD Rom"),
 													QtYabause::translate("Choose a cdrom drive/mount point") + ":",
 													list, current, false);
 	if (!fn.isEmpty())
@@ -802,7 +751,7 @@ void UIYabause::on_aFileScreenshot_triggered()
 
 	// take screenshot of gl view
 	QImage screenshot = mYabauseGL->grabFramebuffer();
-	
+
 	// request a file to save to to user
 	QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
 
@@ -810,7 +759,7 @@ void UIYabause::on_aFileScreenshot_triggered()
 	QFileInfo qfi( s );
 	if ( qfi.suffix().isEmpty() )
 		s += ".png";
-	
+
 	// write image if ok
 	if ( !s.isEmpty() )
 	{
@@ -878,7 +827,7 @@ void UIYabause::on_aToolsCheatSearch_triggered()
 {
    YabauseLocker locker( mYabauseThread );
    UICheatSearch cs(this, &search, searchType);
-      
+
    cs.exec();
 
    search = *cs.getSearchVariables( &searchType);
@@ -936,14 +885,6 @@ void UIYabause::on_aViewDebugVDP2_triggered()
 	UIDebugVDP2( this ).exec();
 }
 
-void UIYabause::on_aTraceLogging_triggered( bool toggled )
-{
-#ifdef SH2_TRACE
-	SH2SetInsTracing(toggled? 1 : 0);
-#endif
-	return;
-}
-
 void UIYabause::on_aHelpReport_triggered()
 {
 	QDesktopServices::openUrl(QUrl(aHelpReport->statusTip()));
@@ -960,7 +901,7 @@ void UIYabause::on_aHelpAbout_triggered()
 
 void UIYabause::on_aSound_triggered()
 {
-	// show volume widget	
+	// show volume widget
 	sVolume->setValue(QtYabause::volatileSettings()->value( "Sound/Volume").toInt());
 	QWidget* ab = toolBar->widgetForAction( aSound );
 	fSound->move( ab->mapToGlobal( ab->rect().bottomLeft() ) );
@@ -999,8 +940,8 @@ void UIYabause::on_cbSound_toggled( bool toggled )
 }
 
 void UIYabause::on_sVolume_valueChanged( int value )
-{ 
-	ScspSetVolume( value ); 
+{
+	ScspSetVolume( value );
 	Settings* vs = QtYabause::settings();
 	vs->setValue("Sound/Volume", value );
 }
@@ -1018,7 +959,7 @@ void UIYabause::on_cbVideoDriver_currentIndexChanged( int id )
 void UIYabause::pause( bool paused )
 {
 	mYabauseGL->updateView();
-	
+
 	aEmulationRun->setEnabled( paused );
 	aEmulationPause->setEnabled( !paused );
 	aEmulationReset->setEnabled( !paused );

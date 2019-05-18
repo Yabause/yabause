@@ -210,7 +210,6 @@
     <addaction name="aViewFPS"/>
     <addaction name="mViewLayer"/>
     <addaction name="aViewFullscreen"/>
-    <addaction name="aViewLog"/>
    </widget>
    <widget class="QMenu" name="mViewDebug">
     <property name="enabled">
@@ -456,21 +455,6 @@
    </property>
    <property name="shortcut">
     <string>Alt+Return</string>
-   </property>
-  </action>
-  <action name="aViewLog">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/log.png</normaloff>:/actions/icons/actions/log.png</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Log</string>
-   </property>
-   <property name="shortcut">
-    <string>Ctrl+L</string>
    </property>
   </action>
   <action name="aViewDebugVDP1">
@@ -866,17 +850,6 @@
    </property>
    <property name="shortcut">
     <string>Alt+S</string>
-   </property>
-  </action>
-  <action name="aTraceLogging">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>Trace Logging</string>
    </property>
   </action>
   <action name="aFileOpenSSF">
