@@ -991,6 +991,8 @@ class RBGGenerator{
   GLuint scene_uniform = 0;
   RBGUniform uniform;
   int struct_size_;
+
+  void * mapped_vram = nullptr;
   
 protected:
   RBGGenerator() {
@@ -2202,9 +2204,13 @@ public:
   ErrorHandle("glUseProgram");
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
+  //glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
+  if(mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+  memcpy(mapped_vram, Vdp2Ram, 0x80000);
+  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  mapped_vram = nullptr;
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
-	ErrorHandle("glBindBufferBase");
+  ErrorHandle("glBindBufferBase");
 	
 	if (rbg->info.specialcolormode == 3 || paraA.k_mem_type != 0 || paraB.k_mem_type != 0 ) {
 		if (ssbo_cram_ == 0) {
@@ -2294,6 +2300,15 @@ public:
 		}
 		return tex_surface_1;
   }
+
+  //-----------------------------------------------
+  void onFinish() {
+    if (mapped_vram == nullptr) {
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
+      mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+      glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0 );
+    }
+  }
    
 };
 
@@ -2315,6 +2330,10 @@ extern "C" {
   GLuint RBGGenerator_getTexture( int id ) {
     RBGGenerator * instance = RBGGenerator::getInstance();
     return instance->getTexture( id );
+  }
+  void RBGGenerator_onFinish() {
+    RBGGenerator * instance = RBGGenerator::getInstance();
+    instance->onFinish();
   }
 }
 
