@@ -204,6 +204,7 @@ Hex value(s)|Valor(es) Hexadecimal(es)
 Hide Menubar|Esconder barra de menú
 Hide Toolbar|Esconder barra de herramientas
 Information...|Información...
+Improved|Mejorado
 Inline Assembly|Ensamblado en línea
 Input|Entrada
 Internal Backup RAM|Backup de RAM interna
@@ -244,6 +245,7 @@ Memory Editor|Editor de memoria
 Memory &Editor|&Editor de memoria
 Memory Search|Búsqueda en memoria
 Memory Transfer|Transferir memoria
+Mesh Mode :|Modo Mesh
 Middle|Medio
 Mission Stick|Stick Mando de avión
 Mission Stick Configuration|Configuración mando de avión														
@@ -280,6 +282,7 @@ Open&Tray|Abrir&Bandeja
 OpenGL size :|Tamaño OpenGL
 OpenGL Video Interface|Interfaz de video OpenGL
 Options|Opciones
+Original|Original
 Original (original resolution of the Saturn)|Original (resolución original de Saturn)
 Original aspect ratio|Ratio de aspecto original
 OSD Core|Núcleo OSD
