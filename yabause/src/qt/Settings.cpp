@@ -34,7 +34,7 @@ QString getDataDirPath()
 #if defined Q_OS_WIN
 	// Use some wizardry so we can get our data in AppData
    QString oldApplicationName = QCoreApplication::applicationName();   
-   QCoreApplication::setApplicationName("yabause");
+   QCoreApplication::setApplicationName("kronos");
 #if QT_VERSION >= 0x04FF00
    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
 #else
@@ -71,12 +71,12 @@ QString getIniFile( const QString& s )
 	return QString( "%1/.config/yabause/qt/kronos.ini" ).arg( QDir::homePath() );
 	*/
 
-	QString xdginifile = QString( "%1/.config/yabause/qt/kronos.ini" ).arg( QDir::homePath() );
+	QString xdginifile = QString( "%1/.config/kronos/qt/kronos.ini" ).arg( QDir::homePath() );
 	QString oldinifile = QString( "%1/.%2/%2.ini" ).arg( QDir::homePath() ).arg( s );
 
 	if ( not QFile::exists( xdginifile ) )
 	{
-		QString xdgpath = QString( "%1/.config/yabause/qt" ).arg( QDir::homePath() );
+		QString xdgpath = QString( "%1/.config/kronos/qt" ).arg( QDir::homePath() );
 		if ( ! QFile::exists( xdgpath ) )
 		{
 			// for some reason, Qt doesn't provide a static mkpath method O_o
