@@ -203,6 +203,7 @@ Gun/Mouse Sensitivity|
 Hex value(s)|
 Hide Menubar|
 Hide Toolbar|
+Improved|
 Information...|
 Inline Assembly|
 Input|
@@ -243,7 +244,8 @@ Memory Breakpoints|
 Memory Editor|
 Memory &Editor|
 Memory Search|
-Memory Transfer
+Memory Transfer|
+Mesh Mode :|
 Middle|
 Mission Stick|Mission Stick
 Mission Stick Configuration|Configuration du Mission Stick
@@ -280,6 +282,7 @@ Open&Tray|
 OpenGL size :|
 OpenGL Video Interface|
 Options|
+Original|
 Original (original resolution of the Saturn)|
 Original aspect ratio|
 OSD Core|
