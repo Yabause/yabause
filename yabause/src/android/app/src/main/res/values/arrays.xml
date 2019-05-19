@@ -59,6 +59,21 @@
         <item>3</item>
     </string-array>
 
+    <string-array name="entries_rbg_resolution_list_preference" translatable="false" >
+        <item>@string/res_original</item>
+        <item>@string/res_2x</item>
+        <item>@string/res_720p</item>
+        <item>@string/res_1080p</item>
+        <item>@string/res_native</item>
+    </string-array>
+    <string-array name="entryvalues_rbg_resolution_list_preference" translatable="false">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
     <string-array name="entries_cpu_sync_per_line">
         <item>@string/speed</item>
         <item>@string/accuracy</item>

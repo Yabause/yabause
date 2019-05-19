@@ -141,13 +141,15 @@
     <string name="invite">Introduce</string>
     <string name="invite_message">Would you like to introduce this app?</string>
     <string name="video_resolution">Rendering Resolution</string>
+    <string name="rbg_resolution">RBG Resolution</string>
     <string name="choose_video_resolution">Choose Rendering Resolution</string>
+    <string name="choose_rbg_resolution">Choose RBG(Rotate Background) Screen Resolution</string>
     <string name="open_cd_tray">Open CD Tray</string>
     <string name="close_cd_tray">Close CD Tray</string>
     <string name="menu_analog">Enable Analog Control</string>
     <string name="menu_cheat">Cheat</string>
     <string name="add_new_code">Add New Code</string>
-
+    <string name="str_use_compute_shader">Use Compute Shader</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
     <string name="edit">Edit</string>

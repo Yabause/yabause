@@ -108,6 +108,19 @@
             android:entryValues="@array/entryvalues_video_resolution_list_preference"
             android:defaultValue="0" />
 
+        <ListPreference
+            android:key="pref_rbg_resolution"
+            android:title="@string/rbg_resolution"
+            android:dialogTitle="@string/choose_rbg_resolution"
+            android:entries="@array/entries_rbg_resolution_list_preference"
+            android:entryValues="@array/entryvalues_rbg_resolution_list_preference"
+            android:defaultValue="0" />
+
+        <CheckBoxPreference
+            android:key="pref_use_compute_shader"
+            android:title="@string/str_use_compute_shader"
+            android:defaultValue="false" />
+
      </PreferenceCategory>        
     
     <PreferenceCategory android:title="@string/input_device_title">
