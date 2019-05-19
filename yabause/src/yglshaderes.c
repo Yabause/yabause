@@ -1472,6 +1472,8 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "      if( colindex != 0 || prinumber != 0) {\n"
 "        colindex = colindex + u_color_ram_offset; \n"
 "        txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
+"        if (txcol.a != 0.0) msb = 1;\n" //linked to VDP2 ColorRam alpha management
+"        else msb = 0;\n"
 "        tmpColor = txcol;\n"
 "      } else { \n"
 "        tmpColor = vec4(0.0);\n"
