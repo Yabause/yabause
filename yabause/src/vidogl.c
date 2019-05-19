@@ -3636,7 +3636,7 @@ void VIDOGLVdp1Draw()
 #define IS_LESS(A,V) ((A) < (V))
 #define IS_MORE(A,V) ((A) > (V))
 
-#define BORDER 0.5f
+#define BORDER 1.0f
 
 #define CW (1)
 #define CCW (-1)
@@ -4328,13 +4328,20 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 //////////////////////////////////////////////////////////////////////////////
 int isSquare(float *vert) {
-  float vec1x = vert[2] - vert[0];
-  float vec1y = vert[3] - vert[1];
-  float vec2x = vert[4] - vert[6];
-  float vec2y = vert[5] - vert[7];
-  if ((vec1x != vec2x) || (vec1y != vec2y)) return 0;
-  if (((vec1x*vec1x)+(vec1y*vec1y)) == ((vec2x*vec2x)+(vec2y*vec2y))) return 0;
-  return 1;
+  float vec1x = fabs(vert[6] - vert[0]);
+  float vec1y = fabs(vert[3] - vert[1]);
+  float vec2x = fabs(vert[4] - vert[2]);
+  float vec2y = fabs(vert[5] - vert[7]);
+  if ((vec1x == 0) && (vec2x == 0) && (vec1y == 0) && (vec2y == 0)) return 1;
+  return 0;
+}
+
+int isTriangle(float *vert) {
+  if ((vert[0] == vert[2]) && (vert[1] == vert[3])) return 1;
+  if ((vert[2] == vert[4]) && (vert[3] == vert[5])) return 1;
+  if ((vert[4] == vert[6]) && (vert[5] == vert[7])) return 1;
+  if ((vert[6] == vert[0]) && (vert[7] == vert[1])) return 1;
+  return 0;
 }
 
 void fixVerticesSize(float *vert) {
@@ -4417,6 +4424,8 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int i;
   float col[4 * 4];
   float vert[8];
+  int square = 0;
+  int triangle = 0;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -4458,9 +4467,11 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
 
-  sprite.dst = !isSquare(vert);
+  square = isSquare(vert);
+  triangle = isTriangle(vert);
+  sprite.dst = !square && !triangle;
 
-  expandVertices(vert, sprite.vertices, ((cmd.CMDPMOD>>12)&0x1)==0);
+  expandVertices(vert, sprite.vertices, !square);
 
   fixVerticesSize(sprite.vertices);
 
