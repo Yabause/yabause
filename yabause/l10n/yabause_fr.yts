@@ -16,12 +16,10 @@
 &Delete|&Effacer
 &Emulation|&Emulation
 &File|&Fichier
-&Frame Skip/Limiter|&Saut d'Image/Limiteur
 &Fullscreen|&Plein Ecran
 &Help|&Aide
 &Layer|&Couche
 &Load From File|&Charger à Partir d'un Fichier
-&Log|&Journal
 &Master SH2|SH2 &Maître
 &Memory Transfer|&Transfert de Mémoire
 &OK|&OK
@@ -177,6 +175,7 @@ Enable Bios Emulation|Activer l'Emulation du Bios
 Enable Code : %1 %2|Activer le Code : %1 %2
 Enable Frame Skip/Limiter|Active le Saut  d'Image/Limitateur
 Enable Multithreading|Activer les Processus Multiples
+Enable vertical synchronization|Activer la Synchronisation Verticale
 Enabled|Activé
 End Address:|Adresse de Fin :
 English|Anglais
@@ -232,7 +231,6 @@ Left Stick Axis Throttle|Accélèrer l'Axe du Stick Gauche
 Left Stick Throttle Down|Manette d'accélération du manche Gauche en Bas
 Left trigger|Gâchette Gauche
 Less than|Moins que
-Log|Journal
 Long|Long
 Long Write|Ecrire un Long
 Long Write : %1 %2|Ecrire un Long : %1 %2
@@ -416,6 +414,7 @@ VDP1 Command Info|Info Commande VDP1
 VDP1 Command List|Liste Commande VDP1
 VDP2|VDP2
 VDP2Viewer Viewer|Visualiseur VDP2Viewer
+Vertical synchronization|Synchronisation Verticale
 Video|Vidéo
 Video Core|Noyau Vidéo :
 Video Driver|Pilote Vidéo
