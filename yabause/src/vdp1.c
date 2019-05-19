@@ -106,7 +106,7 @@ u16 FASTCALL Vdp1FrameBufferReadWord(SH2_struct *context, u8* mem, u32 addr) {
      u16 val;
      VIDCore->Vdp1ReadFrameBuffer(1, addr, &val);
      return val;
-   } 
+   }
    return 0;
 }
 
@@ -326,7 +326,7 @@ void updateFBMode() {
     //Manual erase shall not be reseted but need to save its current value
     // Only at frame change the order is executed.
     //This allows to have both a manual clear and a manual change at the same frame without continuously clearing the VDP1
-    //The mechanism is used by the official bios animation 
+    //The mechanism is used by the official bios animation
     Vdp1External.onecyclemode = ((Vdp1Regs->FBCR & 3) == 0) || ((Vdp1Regs->FBCR & 3) == 1);
     Vdp1External.manualerase |= ((Vdp1Regs->FBCR & 3) == 2);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
@@ -471,7 +471,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    }
 }
 
-//ensure that registers are set correctly 
+//ensure that registers are set correctly
 void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 {
    u16 command = T1ReadWord(ram, regs->addr);
@@ -540,7 +540,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    }
 }
 
-void Vdp1Draw(void) 
+void Vdp1Draw(void)
 {
   FRAMELOG("Vdp1Draw");
   Vdp1Regs->EDSR >>= 1;
@@ -682,7 +682,7 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
          case 2: // CALL, call a subroutine
             if (returnAddr == 0xFFFFFFFF)
                returnAddr = addr + 0x20;
-	
+
             addr = T1ReadWord(Vdp1Ram, addr + 2) * 8;
             break;
          case 3: // RETURN, return from subroutine
@@ -698,7 +698,7 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
       if (addr > 0x7FFE0)
          return 0xFFFFFFFF;
       command = T1ReadWord(Vdp1Ram, addr);
-      commandCounter++;    
+      commandCounter++;
    }
 
    if (commandCounter == number)
@@ -783,6 +783,16 @@ void Vdp1DebugCommand(u32 number, char *outstring)
    }
 
    Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
+
+   if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
+   if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
+   if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
+   if ((cmd.CMDYD & 0x400)) cmd.CMDYD |= 0xFC00; else cmd.CMDYD &= ~(0xFC00);
+
+   if ((cmd.CMDXA & 0x400)) cmd.CMDXA |= 0xFC00; else cmd.CMDXA &= ~(0xFC00);
+   if ((cmd.CMDXC & 0x400)) cmd.CMDXC |= 0xFC00; else cmd.CMDXC &= ~(0xFC00);
+   if ((cmd.CMDXB & 0x400)) cmd.CMDXB |= 0xFC00; else cmd.CMDXB &= ~(0xFC00);
+   if ((cmd.CMDXD & 0x400)) cmd.CMDXD |= 0xFC00; else cmd.CMDXD &= ~(0xFC00);
 
    switch (cmd.CMDCTRL & 0x000F)
    {
@@ -908,7 +918,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
             AddString(outstring, "Reversed horizontal and vertical\r\n");
             break;
          default: break;
-      }      
+      }
    }
 
    // Only draw commands use CMDPMOD
@@ -1110,7 +1120,7 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
    u32 dot;
    u8 SPD;
    u32 alpha;
-   u32 *textdata;   
+   u32 *textdata;
    int isendcode=0;
    int code=0;
    int ret;
@@ -1653,7 +1663,7 @@ void Vdp1HBlankOUT(void)
       Vdp1Draw();
     } else {
       Vdp1External.plot_trigger_done = 0;
-    }  
+    }
     if (yabsys.LineCount == 0){
       startField();
     }
@@ -1662,7 +1672,7 @@ void Vdp1HBlankOUT(void)
       startField();
     }
     else if (yabsys.wait_line_count != -1 && yabsys.LineCount == yabsys.wait_line_count) {
-      
+
       Vdp1Draw();
       FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
     }
@@ -1684,8 +1694,3 @@ void Vdp1VBlankOUT(void)
   }
   Vdp1External.vblank_erase = 0;
 }
-
-
-
-
-
