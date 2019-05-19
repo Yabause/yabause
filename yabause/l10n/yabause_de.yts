@@ -16,12 +16,10 @@
 &Delete|&Löschen
 &Emulation|&Emulation
 &File|&Datei
-&Frame Skip/Limiter|&Frames Überspringen/Limitieren
 &Fullscreen|&Vollbild
 &Help|&Hilfe
 &Layer|&Schicht
 &Load From File|&Von Datei laden
-&Log|&Protokoll
 &Master SH2|&Master SH2
 &Memory Transfer|&Speichertransfer
 &OK|&OK
@@ -178,7 +176,8 @@ Enable|Aktivieren
 Enable Bios Emulation|Aktivieren Sie die Bios-Emulation
 Enable Code : %1 %2|			
 Enable Frame Skip/Limiter|Aktiviere Frame Überspringer/Limitierer
-Enable Multithreading|			 
+Enable Multithreading|Aktivieren Sie Multithreading	
+Enable vertical synchronization|Aktivieren sie die vertikale synchronisierung		 
 Enabled|Aktiviert		
 Enter new assembly code|Neuen Montagecode eingeben
 Enter New Value|Neuen Wert eingeben
@@ -233,7 +232,6 @@ Load State|Spielstand laden
 Load State As|Spielstand laden als
 Load as executable|Als ausführbar laden
 Local Coordinates|Local Coordinates
-Log|Protokoll
 Long|Long
 Long Write|Langes Schreiben
 Loop Track Clear|Loop Track Clear
@@ -416,6 +414,7 @@ VDP1 Command Info|VDP1 Command Info
 VDP1 Command List|VDP1 Command List
 VDP2|VDP2
 VDP2Viewer Viewer|
+Vertical synchronization|Vertikale synchronisation
 Video|Video
 Video Core|Video Kern
 Video Driver|Video Treiber
