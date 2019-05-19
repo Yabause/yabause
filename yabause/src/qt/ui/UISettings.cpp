@@ -597,10 +597,6 @@ void UISettings::loadSettings()
 	bgShowToolbar->setId( rbToolbarFullscreen, BD_HIDEFS );
 	bgShowToolbar->setId( rbToolbarAlways, BD_ALWAYSHIDE );
 	bgShowToolbar->button( s->value( "View/Toolbar", BD_HIDEFS ).toInt() )->setChecked( true );
-
-	bgShowLogWindow->setId( rbLogWindowNever, 0 );
-	bgShowLogWindow->setId( rbLogWindowMessage, 1 );
-	bgShowLogWindow->button( s->value( "View/LogWindow", 0 ).toInt() )->setChecked( true );
 }
 
 void UISettings::saveSettings()
@@ -678,7 +674,6 @@ void UISettings::saveSettings()
 	// view
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );
 	s->setValue( "View/Toolbar", bgShowToolbar->checkedId() );
-	s->setValue( "View/LogWindow", bgShowLogWindow->checkedId() );
 
 	// shortcuts
 	applyShortcuts();
