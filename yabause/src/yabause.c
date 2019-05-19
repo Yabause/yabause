@@ -1128,6 +1128,9 @@ int YabauseQuickLoadGame(void)
       if ((size % 2048) != 0) 
          blocks++;
 
+      // Lastbronx for 0x8000
+      size = 16 * 2048;
+      blocks = 16;
 
       // Figure out where to load the first program
       addr = (buffer[0xF0] << 24) |
