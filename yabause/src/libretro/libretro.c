@@ -655,7 +655,7 @@ VideoInterface_struct *VIDCoreList[] = {
 
 void YuiMsg(const char *format, ...)
 {
-  char buf[512]; 
+  char buf[512];
   va_list arglist;
   va_start( arglist, format );
   int rc = vsnprintf(buf, 512, format, arglist);
@@ -1275,8 +1275,7 @@ bool retro_load_game_common()
 #endif
    yinit.regionid                = REGION_AUTODETECT;
    yinit.mpegpath                = NULL;
-   // There was some misunderstanding about frameskip, disabling frameskip is actually just enabling a limiter, which is bad in the libretro ecosystem
-   yinit.frameskip               = 1;
+   yinit.vsyncon                 = 1;
    yinit.clocksync               = 0;
    yinit.basetime                = 0;
    yinit.usethreads              = 1;

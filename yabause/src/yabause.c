@@ -226,7 +226,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
-   yabsys.skipframe = init->skipframe;
+   yabsys.vsyncon = init->vsyncon;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
@@ -381,7 +381,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
-  yabsys.skipframe = init->skipframe;
+   yabsys.vsyncon = init->vsyncon;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
@@ -539,7 +539,7 @@ int YabauseInit(yabauseinit_struct *init)
 
    YabauseChangeTiming(CLKTYPE_26MHZ);
 
-   if (init->frameskip)
+   if (init->vsyncon == 0)
       EnableAutoFrameSkip();
 
 #ifdef YAB_PORT_OSD
