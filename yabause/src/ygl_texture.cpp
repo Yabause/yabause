@@ -28,7 +28,7 @@ extern vdp2rotationparameter_struct  paraB;
 extern Vdp2 * fixVdp2Regs;
 }
 
-#define YGLDEBUG printf
+#define YGLDEBUG LOG
 
 const char prg_generate_rbg[] =
 //#if defined(_OGLES3_)
@@ -139,9 +139,9 @@ const char prg_generate_rbg[] =
 "layout(std430, binding = 5) readonly buffer VDP2C { uint cram[]; };\n"
 " int GetKValue( int paramid, float posx, float posy, out float ky, out uint lineaddr ){ \n"
 "  uint kdata;\n"
-"  uint kindex = uint( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
+"  int kindex = int( ceil(para[paramid].deltaKAst*posy+(para[paramid].deltaKAx*posx)) ); \n"
 "  if (para[paramid].coefdatasize == 2) { \n"
-"    uint addr = ((para[paramid].coeftbladdr + (kindex<<1))&0x7FFFFu); "
+"    uint addr = ( uint( int(para[paramid].coeftbladdr) + (kindex<<1)) &0x7FFFFu); "
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
 "    }else{\n"
@@ -152,7 +152,7 @@ const char prg_generate_rbg[] =
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
 "	 if((kdata&0x4000u)!=0u) ky=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0; else ky=float(kdata&0x7FFFu)/1024.0;\n"
 "  }else{\n"
-"    uint addr = ((para[paramid].coeftbladdr + (kindex<<2))&0x7FFFFu);"
+"    uint addr = ( uint( int(para[paramid].coeftbladdr) + (kindex<<2))&0x7FFFFu);"
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
 "    }else{\n"
