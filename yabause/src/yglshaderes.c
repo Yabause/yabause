@@ -2819,6 +2819,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &mesh;
+     level->prg[level->prgcurrent].vaid = 2;
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH], (const GLchar *)"u_mvpMatrix");
@@ -2830,6 +2831,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &mesh_improve;
+     level->prg[level->prgcurrent].vaid = 2;
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH_IMPROVE], (const GLchar *)"u_mvpMatrix");
