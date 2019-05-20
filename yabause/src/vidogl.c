@@ -6421,6 +6421,8 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->cob = 0;
   info->specialcolorfunction = 0;
   info->enable = 0;
+  info->RotWin = NULL;
+  info->RotWinMode = 0;
 
   info->enable = ((varVdp2Regs->BGON & 0x10)!=0);
   if (!info->enable) {
@@ -6560,10 +6562,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
       // RPW1A( inside = 0, outside = 1 )
       info->RotWinMode = ((varVdp2Regs->WCTLD >> 2) & 0x01);
       // Bad Setting Both Window is disabled
-    }
-    else {
-      info->RotWin = _Ygl->win[0];
-      info->RotWinMode = (varVdp2Regs->WCTLD & 0x01);
     }
 
     if (rgb->paraA.coefenab == 0 && rgb->paraB.coefenab == 0)
