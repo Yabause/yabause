@@ -3263,6 +3263,7 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
 }
 int setupBlur(Vdp2 *varVdp2Regs, int layer) {
   int val = (varVdp2Regs->CCCTL & 0xF000) >> 12;
+  if (Vdp2Internal.ColorMode != 0) return 0;
   if ((val & 0x8) == 0) return 0;
   switch (layer) {
     case RBG0:
