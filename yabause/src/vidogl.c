@@ -3990,8 +3990,12 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
 
-  if (((cmd.CMDXA & 0xFC00) != 0x0) && ((cmd.CMDXA & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYA & 0xFC00) != 0x0) && ((cmd.CMDYA & 0xFC00) != 0xFC00)) return; //Bad geometry 
+  int badgeometry = 1;
+
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+
+  if (badgeometry == 1) return;
 
   x = cmd.CMDXA;
   y = cmd.CMDYA;
@@ -4130,15 +4134,19 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
 
-  if (((cmd.CMDXA & 0xFC00) != 0x0) && ((cmd.CMDXA & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYA & 0xFC00) != 0x0) && ((cmd.CMDYA & 0xFC00) != 0xFC00)) return; //Bad geometry
+  int badgeometry = 1;
+
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+
   if (((cmd.CMDCTRL & 0xF00) >> 8) == 0) {
-    if (((cmd.CMDXC & 0xFC00) != 0x0) && ((cmd.CMDXC & 0xFC00) != 0xFC00)) return; //Bad geometry
-    if (((cmd.CMDYC & 0xFC00) != 0x0) && ((cmd.CMDYC & 0xFC00) != 0xFC00)) return; //Bad geometry 
+    if ((((cmd.CMDXC+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXC + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+    if ((((cmd.CMDYC+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYC + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
   } else {
-    if (((cmd.CMDXB & 0xFC00) != 0x0) && ((cmd.CMDXB & 0xFC00) != 0xFC00)) return; //Bad geometry
-    if (((cmd.CMDYB & 0xFC00) != 0x0) && ((cmd.CMDYB & 0xFC00) != 0xFC00)) return; //Bad geometry 
+    if ((((cmd.CMDXB+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXB + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+    if ((((cmd.CMDYB+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYB + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
   }
+  if (badgeometry == 1) return;
 
   x = cmd.CMDXA + Vdp1Regs->localX;
   y = cmd.CMDYA + Vdp1Regs->localY;
@@ -4453,15 +4461,18 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-  if (((cmd.CMDXA & 0xFC00) != 0x0) && ((cmd.CMDXA & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYA & 0xFC00) != 0x0) && ((cmd.CMDYA & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDXB & 0xFC00) != 0x0) && ((cmd.CMDXB & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYB & 0xFC00) != 0x0) && ((cmd.CMDYB & 0xFC00) != 0xFC00)) return; //Bad geometry 
-  if (((cmd.CMDXC & 0xFC00) != 0x0) && ((cmd.CMDXC & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYC & 0xFC00) != 0x0) && ((cmd.CMDYC & 0xFC00) != 0xFC00)) return; //Bad geometry 
-  if (((cmd.CMDXD & 0xFC00) != 0x0) && ((cmd.CMDXD & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYD & 0xFC00) != 0x0) && ((cmd.CMDYD & 0xFC00) != 0xFC00)) return; //Bad geometry 
+  int badgeometry = 1;
 
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXB+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXB + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYB+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYB + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXC+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXC + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYC+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYC + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXD+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXD + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYD+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYD + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+
+  if (badgeometry == 1) return;
   
   vert[0] = (float)(s16)cmd.CMDXA;
   vert[1] = (float)(s16)cmd.CMDYA;
@@ -4684,14 +4695,18 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if (((cmd.CMDXA & 0xFC00) != 0x0) && ((cmd.CMDXA & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYA & 0xFC00) != 0x0) && ((cmd.CMDYA & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDXB & 0xFC00) != 0x0) && ((cmd.CMDXB & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYB & 0xFC00) != 0x0) && ((cmd.CMDYB & 0xFC00) != 0xFC00)) return; //Bad geometry 
-  if (((cmd.CMDXC & 0xFC00) != 0x0) && ((cmd.CMDXC & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYC & 0xFC00) != 0x0) && ((cmd.CMDYC & 0xFC00) != 0xFC00)) return; //Bad geometry 
-  if (((cmd.CMDXD & 0xFC00) != 0x0) && ((cmd.CMDXD & 0xFC00) != 0xFC00)) return; //Bad geometry
-  if (((cmd.CMDYD & 0xFC00) != 0x0) && ((cmd.CMDYD & 0xFC00) != 0xFC00)) return; //Bad geometry 
+  int badgeometry = 1;
+
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXB+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXB + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYB+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYB + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXC+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXC + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYC+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYC + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXD+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXD + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYD+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYD + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+
+  if (badgeometry == 1) return;
 
 
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
@@ -5230,10 +5245,6 @@ void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
 {
   Vdp1Regs->localX = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xC);
   Vdp1Regs->localY = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xE);
-
-  if (((Vdp1Regs->localX & 0xFC00) != 0x0) && ((Vdp1Regs->localX & 0xFC00) != 0xFC00)) Vdp1Regs->localX = 0; //Bad value
-  if (((Vdp1Regs->localY & 0xFC00) != 0x0) && ((Vdp1Regs->localY & 0xFC00) != 0xFC00)) Vdp1Regs->localY = 0; //Bad value
- 
 }
 
 //////////////////////////////////////////////////////////////////////////////
