@@ -59,6 +59,7 @@ static bool hle_bios_force = false;
 static int addon_cart_type = CART_NONE;
 static int filter_mode = AA_NONE;
 static int upscale_mode = UP_NONE;
+static int mesh_mode = ORIGINAL_MESH;
 static int scanlines = 0;
 #if !defined(_OGLES3_)
 static int opengl_version = 330;
@@ -114,6 +115,7 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
       { "kronos_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
       { "kronos_scanlines", "Scanlines; disabled|enabled" },
+      { "kronos_meshmode", "Improved mesh; disabled|enabled" },
       { "kronos_service_enabled", "ST-V Service/Test Buttons; disabled|enabled" },
       { NULL, NULL },
    };
@@ -1010,6 +1012,16 @@ void check_variables(void)
          polygon_mode = CPU_TESSERATION;
    }
 
+   var.key = "kronos_meshmode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         mesh_mode = ORIGINAL_MESH;
+      else if (strcmp(var.value, "enabled") == 0)
+         mesh_mode = IMPROVED_MESH;
+   }
+
    var.key = "kronos_scanlines";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1275,7 +1287,7 @@ bool retro_load_game_common()
 #endif
    yinit.regionid                = REGION_AUTODETECT;
    yinit.mpegpath                = NULL;
-   yinit.vsyncon                 = 1;
+   yinit.vsyncon                 = 0;
    yinit.clocksync               = 0;
    yinit.basetime                = 0;
    yinit.usethreads              = 1;
@@ -1292,6 +1304,7 @@ bool retro_load_game_common()
    yinit.stretch                 = 1;
    yinit.extend_backup           = 0;
    yinit.buppath                 = bup_path;
+   yinit.meshmode                = mesh_mode;
 
    return true;
 }
@@ -1462,6 +1475,7 @@ void retro_run(void)
       VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, polygon_mode);
       VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
       VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanlines);
+      VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, mesh_mode);
       YabauseSetVideoFormat(g_videoformattype);
    }
 
