@@ -563,7 +563,12 @@ void UIYabause::on_aFileSettings_triggered()
 			on_cbVideoDriver_currentIndexChanged(newhash["Video/VideoCore"].toInt());
 
 		if(newhash["General/ShowFPS"] != hash["General/ShowFPS"])
-			SetOSDToggle(newhash["General/ShowFPS"].toBool());
+      SetOSDToggle(newhash["General/ShowFPS"].toBool());
+
+		if(newhash["General/EnableVSync"] != hash["General/EnableVSync"]){
+			if(newhash["General/EnableVSync"].toBool()) DisableAutoFrameSkip();
+			else EnableAutoFrameSkip();
+		}
 
 		if (newhash["General/EnableMultiThreading"] != hash["General/EnableMultiThreading"] ||
 			 newhash["General/NumThreads"] != hash["General/NumThreads"])

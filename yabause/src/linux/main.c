@@ -196,7 +196,7 @@ void YuiInit() {
 #ifdef FORCE_CORE_SOFT
   yinit.vidcoretype = VIDCORE_SOFT;
 #else
-	yinit.vidcoretype = VIDCORE_OGL; //VIDCORE_SOFT  
+	yinit.vidcoretype = VIDCORE_OGL; //VIDCORE_SOFT
 #endif
 #ifdef HAVE_LIBSDL
 	yinit.sndcoretype = SNDCORE_SDL;
@@ -261,6 +261,7 @@ int main(int argc, char *argv[]) {
 
         yinit.stvbiospath = NULL;
         yinit.stvgamepath = NULL;
+        yinit.vsyncon = 1;
 //handle command line arguments
   for (i = 1; i < argc; ++i) {
     if (argv[i]) {
@@ -269,7 +270,7 @@ int main(int argc, char *argv[]) {
         print_usage(argv[0]);
         return 0;
       }
-			
+
       //set bios
       if (0 == strcmp(argv[i], "-b") && argv[i + 1]) {
         strncpy(biospath, argv[i + 1], 256);
@@ -357,7 +358,7 @@ int main(int argc, char *argv[]) {
 
       // Auto frame skip
       else if (strstr(argv[i], "--vsyncoff")) {
-        EnableAutoFrameSkip();
+        yinit.vsyncon = 0;
       }
     }
   }

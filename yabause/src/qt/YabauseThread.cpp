@@ -382,6 +382,7 @@ void YabauseThread::reloadSettings()
    mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
    mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
+	mYabauseConf.vsyncon = vs->value("General/EnableVSync", true).toBool(); 
 	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
 	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
