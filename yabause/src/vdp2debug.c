@@ -1555,6 +1555,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLC >> 8, 1);
 
       AddString(outstring, "Color RAM Offset = %X\r\n", (Vdp2Regs->CRAOFB >> 4) & 0x7);
+      AddString(outstring, "Color RAM Mode = %X\r\n", (Vdp2Regs->RAMCTL >> 12) & 0x3);
 
       if (Vdp2Regs->CCCTL & 0x40)
       {
