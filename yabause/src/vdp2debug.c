@@ -46,7 +46,7 @@ static INLINE void Vdp2GetPlaneSize(int planedata, int *planew, int *planeh)
          *planew = *planeh = 2;
          break;
       default:
-         *planew = *planeh = 1;         
+         *planew = *planeh = 1;
          break;
    }
 }
@@ -116,7 +116,7 @@ static INLINE char *AddBitmapInfoString(char *outstring, int wh, int palnum, int
       case 3:
          cellw = 1024;
          cellh = 512;
-         break;                                                           
+         break;
    }
 
    AddString(outstring, "Bitmap(%dx%d)\r\n", cellw, cellh);
@@ -270,7 +270,7 @@ static INLINE char *AddMapInfo(char *outstring, int patternwh, u16 PNC, u8 PLSZ,
          else
             addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
       }
-  
+
       AddString(outstring, "Plane %C Address = %08X\r\n", 0x41+i, (unsigned int)addr);
    }
 
@@ -378,7 +378,39 @@ static INLINE char *AddSpecialPriorityInfo(char *outstring, u16 spriority)
 
    return outstring;
 }
+//////////////////////////////////////////////////////////////////////////////
 
+static int getBlur(Vdp2 *varVdp2Regs, int layer) {
+  int val = (varVdp2Regs->CCCTL & 0xF000) >> 12;
+  if (Vdp2Internal.ColorMode != 0) return 0;
+  if ((val & 0x8) == 0) return 0;
+  switch (layer) {
+    case RBG0:
+      return ((val & 0x7) == 1);
+    break;
+    case RBG1:
+      return ((val & 0x7) == 2);
+    break;
+    case NBG0:
+      return ((val & 0x7) == 2);
+    break;
+    case NBG1:
+      return ((val & 0x7) == 4);
+    break;
+    case NBG2:
+      return ((val & 0x7) == 5);
+    break;
+    case NBG3:
+      return ((val & 0x7) == 6);
+    break;
+    case SPRITE:
+      return ((val & 0x7) == 0);
+    break;
+    default:
+      return 0;
+  }
+  return 0;
+}
 //////////////////////////////////////////////////////////////////////////////
 
 void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
@@ -469,7 +501,7 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
       else
       {
          // Tile mode
-         int patterndatasize; 
+         int patterndatasize;
          u16 supplementdata=Vdp2Regs->PNCR & 0x3FF;
          int planew=0, planeh=0;
 
@@ -494,7 +526,7 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
          AddString(outstring, "Plane Size = %dH x %dV\r\n", planew, planeh);
 
          // Pattern Name Control stuff
-         if (patterndatasize == 2) 
+         if (patterndatasize == 2)
          {
             AddString(outstring, "Pattern Name data size = 2 words\r\n");
          }
@@ -590,21 +622,21 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
             {
                unsigned short tmp1 = readWord(vram, addr);
                unsigned short tmp2 = readWord(vram, addr+2);
-   
+
                charAddr = tmp2 & 0x7FFF;
                break;
             }
          }
-   
+
          if (!(readWord(reg, 0x6) & 0x8000))
             charAddr &= 0x3FFF;
 
          charAddr *= 0x20; // selon Runik
-   
+
          AddString(outstring, "Cell Data Address = %X\r\n", charAddr);
 */
       }
-
+      AddString(outstring, "Gradation Calculation %s\n", (getBlur(Vdp2Regs, RBG0)==0)?"Disabled":"Enabled");
       // Window Control
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLC, 0);
 
@@ -612,7 +644,7 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 
       // Color Ram Address Offset
       AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFB & 0x7) << 8);
-       
+
       // Special Priority Mode
       outstring = AddSpecialPriorityInfo(outstring, Vdp2Regs->SFPRMD >> 8);
 
@@ -622,13 +654,13 @@ void Vdp2DebugStatsRBG0(char *outstring, int *isenabled)
 
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRIR & 0x7);
-        
+
       // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0010, 0x0001, Vdp2Regs->CCRR & 0x1F, (Vdp2Regs->SFCCMD >> 8) & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0010);
-      
+
       AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>8)&0x03);
    }
    else
@@ -646,6 +678,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
    int isbitmap=Vdp2Regs->CHCTLA & 0x2;
    int patternwh=(Vdp2Regs->CHCTLA & 0x1) + 1;
    u8 map[4];
+   int layer;
 
    if (Vdp2Regs->BGON & 0x1 || Vdp2Regs->BGON & 0x20)
    {
@@ -682,7 +715,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       else
       {
          // Tile
-         int patterndatasize; 
+         int patterndatasize;
          u16 supplementdata=Vdp2Regs->PNCN0 & 0x3FF;
          int planew=0, planeh=0;
 
@@ -697,7 +730,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          AddString(outstring, "Plane Size = %dH x %dV\r\n", planew, planeh);
 
          // Pattern Name Control stuff
-         if (patterndatasize == 2) 
+         if (patterndatasize == 2)
          {
             AddString(outstring, "Pattern Name data size = 2 words\r\n");
          }
@@ -724,7 +757,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
             case 1:
             {
                tmp = T1ReadWord(Vdp2Ram, addr);
-         
+
                switch(auxMode)
                {
                   case 0:
@@ -772,8 +805,9 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
 
       if (Vdp2Regs->BGON & 0x20)
       {
+        layer = RBG1;
 //         unsigned long mapOffsetReg=(readWord(reg, 0x3E) & 0x70) << 2;
-                                        
+
          // RBG1
 
          // Map Planes A-P here
@@ -796,7 +830,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          {
             AddString(outstring, "Read Yst Parameter = FALSE\r\n");
          }
- 
+
          if (Vdp2Regs->RPRCTL & 0x100)
          {
             AddString(outstring, "Read Xst Parameter = TRUE\r\n");
@@ -817,12 +851,13 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       else
       {
          // NBG0
+         layer = NBG0;
 /*
          // Screen scroll values
          AddString(outstring, "Screen Scroll x = %f, y = %f\r\n", (float)(reg->getLong(0x70) & 0x7FFFF00) / 65536, (float)(reg->getLong(0x74) & 0x7FFFF00) / 65536);
 */
          AddString(outstring, "Screen Scroll x = %d, y = %d\r\n", - ((Vdp2Regs->SCXIN0 & 0x7FF) % 512), - ((Vdp2Regs->SCYIN0 & 0x7FF) % 512));
-      
+
          // Coordinate Increments
          AddString(outstring, "Coordinate Increments x = %f, y = %f\r\n", (float) 65536 / (Vdp2Regs->ZMXN0.all & 0x7FF00), (float) 65536 / (Vdp2Regs->ZMYN0.all & 0x7FF00));
 
@@ -848,13 +883,13 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          {
             AddString(outstring, "Line Scroll Vertical enabled\r\n");
          }
-   
+
          if (lineVerticalScrollReg & 0x2)
          {
             AddString(outstring, "Line Scroll Horizontal enabled\r\n");
          }
 
-         if (lineVerticalScrollReg & 0x6) 
+         if (lineVerticalScrollReg & 0x6)
          {
             AddString(outstring, "Line Scroll Enabled\r\n");
             AddString(outstring, "Line Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->LSTA0.all & 0x7FFFE) << 1)));
@@ -877,12 +912,12 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
          }
 
          if (lineVerticalScrollReg & 0x1)
-         {      
+         {
             AddString(outstring, "Vertical Cell Scroll enabled\r\n");
             AddString(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->VCSTA.all & 0x7FFFE) << 1)));
          }
       }
-
+      AddString(outstring, "Gradation Calculation %s\n", (getBlur(Vdp2Regs, layer)==0)?"Disabled":"Enabled");
       // Window Control
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLA, 0);
 
@@ -890,7 +925,7 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
 
       // Color Ram Address Offset
       AddString(outstring, "Color Ram Address Offset = %X\r\n", (Vdp2Regs->CRAOFA & 0x7) << 8);
- 
+
       // Special Priority Mode
       outstring = AddSpecialPriorityInfo(outstring, Vdp2Regs->SFPRMD);
 
@@ -901,14 +936,14 @@ void Vdp2DebugStatsNBG0(char *outstring, int *isenabled)
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRINA & 0x7);
 
-      // Color Calculation 
+      // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0001, 0x0002, Vdp2Regs->CCRNA & 0x1F, Vdp2Regs->SFCCMD & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0001);
-      
+
       AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>0)&0x03);
-         
+
    }
    else
    {
@@ -937,7 +972,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       // BPP
       outstring = AddBppString(outstring, (Vdp2Regs->CHCTLA & 0x3000) >> 12);
 
-      // Bitmap or Tile mode?     
+      // Bitmap or Tile mode?
       if (isbitmap)
       {
          // Bitmap
@@ -961,7 +996,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
          AddString(outstring, "Plane Size = %dH x %dV\r\n", planew, planeh);
 
          // Pattern Name Control stuff
-         if (patterndatasize == 2) 
+         if (patterndatasize == 2)
          {
             AddString(outstring, "Pattern Name data size = 2 words\r\n");
          }
@@ -1029,11 +1064,11 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
             charAddr &= 0x3FFF;
 
          charAddr *= 0x20; // selon Runik
-  
+
          AddString(outstring, "Cell Data Address = %X\r\n", charAddr);
 */
       }
-     
+
 /*
       // Screen scroll values
       AddString(outstring, "Screen Scroll x = %f, y = %f\r\n", (float)(reg->getLong(0x80) & 0x7FFFF00) / 65536, (float)(reg->getLong(0x84) & 0x7FFFF00) / 65536);
@@ -1065,13 +1100,13 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
       {
          AddString(outstring, "Line Scroll Vertical enabled\r\n");
       }
-   
+
       if (lineVerticalScrollReg & 0x2)
       {
          AddString(outstring, "Line Scroll Horizontal enabled\r\n");
       }
 
-      if (lineVerticalScrollReg & 0x6) 
+      if (lineVerticalScrollReg & 0x6)
       {
          AddString(outstring, "Line Scroll Enabled\r\n");
          AddString(outstring, "Line Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->LSTA1.all & 0x7FFFE) << 1)));
@@ -1097,7 +1132,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
          AddString(outstring, "Vertical Cell Scroll enabled\r\n");
          AddString(outstring, "Vertical Cell Scroll Table Address = %08X\r\n", (int)(0x05E00000 + ((Vdp2Regs->VCSTA.all & 0x7FFFE) << 1)));
       }
-
+      AddString(outstring, "Gradation Calculation %s\n", (getBlur(Vdp2Regs, NBG1)==0)?"Disabled":"Enabled");
       // Window Control
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLA >> 8, 0);
 
@@ -1121,7 +1156,7 @@ void Vdp2DebugStatsNBG1(char *outstring, int *isenabled)
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0002);
-      
+
       AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>2)&0x03);
    }
    else
@@ -1162,7 +1197,7 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
       AddString(outstring, "Plane Size = %dH x %dV\r\n", planew, planeh);
 
       // Pattern Name Control stuff
-      if (patterndatasize == 2) 
+      if (patterndatasize == 2)
       {
          AddString(outstring, "Pattern Name data size = 2 words\r\n");
       }
@@ -1175,7 +1210,7 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
          AddString(outstring, "Supplementary Palette number = %d\r\n", (supplementdata >> 5) & 0x7);
          AddString(outstring, "Supplementary Color number = %d\r\n", supplementdata & 0x1f);
       }
-     
+
       map[0] = Vdp2Regs->MPABN2 & 0xFF;
       map[1] = Vdp2Regs->MPABN2 >> 8;
       map[2] = Vdp2Regs->MPCDN2 & 0xFF;
@@ -1234,6 +1269,7 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
       // Screen scroll values
       AddString(outstring, "Screen Scroll x = %d, y = %d\r\n", - ((Vdp2Regs->SCXN2 & 0x7FF) % 512), - ((Vdp2Regs->SCYN2 & 0x7FF) % 512));
 
+      AddString(outstring, "Gradation Calculation %s\n", (getBlur(Vdp2Regs, NBG2)==0)?"Disabled":"Enabled");
       // Window Control
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLB, 0);
 
@@ -1251,13 +1287,13 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled)
 
       // Priority Number
       AddString(outstring, "Priority = %d\r\n", Vdp2Regs->PRINB & 0x7);
-                       
+
       // Color Calculation
       outstring = AddColorCalcInfo(outstring, 0x0004, 0x0005, Vdp2Regs->CCRNB & 0x1F, (Vdp2Regs->SFCCMD >> 4) & 0x3);
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0004);
-      
+
       AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>4)&0x03);
    }
    else
@@ -1300,7 +1336,7 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
       AddString(outstring, "Plane Size = %dH x %dV\r\n", planew, planeh);
 
       // Pattern Name Control stuff
-      if (patterndatasize == 2) 
+      if (patterndatasize == 2)
       {
          AddString(outstring, "Pattern Name data size = 2 words\r\n");
       }
@@ -1375,6 +1411,7 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
       // Screen scroll values
       AddString(outstring, "Screen Scroll x = %d, y = %d\r\n", - ((Vdp2Regs->SCXN3 & 0x7FF) % 512), - ((Vdp2Regs->SCYN3 & 0x7FF) % 512));
 
+      AddString(outstring, "Gradation Calculation %s\n", (getBlur(Vdp2Regs, NBG3)==0)?"Disabled":"Enabled");
       // Window Control
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLB >> 8, 0);
 
@@ -1396,7 +1433,7 @@ void Vdp2DebugStatsNBG3(char *outstring, int *isenabled)
 
       // Color Offset
       outstring = AddColorOffsetInfo(outstring, 0x0008);
-      
+
       AddString(outstring, "Special Color Calculation %d\r\n",(Vdp2Regs->SFCCMD>>6)&0x03);
    }
    else
@@ -1433,12 +1470,12 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          case 2:
          case 6:
             AddString(outstring, "640");
-            break;                      
+            break;
          case 3:
          case 7:
             AddString(outstring, "704");
             break;
-         default: 
+         default:
             AddString(outstring, "Invalid");
             break;
       }
@@ -1456,7 +1493,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          case 2:
             AddString(outstring, "256");
             break;
-         default: 
+         default:
             AddString(outstring, "Invalid");
             break;
       }
@@ -1482,7 +1519,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          case 3:
             AddString(outstring, "Double-Density Interlace\r\n");
             break;
-         default: 
+         default:
             AddString(outstring, "Invalid\r\n");
             break;
       }
@@ -1550,6 +1587,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
       if (Vdp2Regs->SPCTL & 0x20)
       {
          AddString(outstring, "Sprite Window Enabled\r\n");
+         AddString(outstring, "Sprite Gradation Calculation %s\n", (getBlur(Vdp2Regs, SPRITE)==0)?"Disabled":"Enabled");
       }
 
       outstring = AddWindowInfoString(outstring, Vdp2Regs->WCTLC >> 8, 1);
@@ -1569,7 +1607,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          {
             AddString(outstring, "Extended Color Calculation Enabled\r\n");
          }
-         
+
          AddString(outstring, "Color Calculation Condition = ");
 
          switch ((Vdp2Regs->SPCTL >> 12) & 0x3)
@@ -1637,7 +1675,7 @@ static u32 FASTCALL DoNothing(UNUSED void *info, u32 pixel)
 static void ClearTextureToColor(u32 *texture, u32 color, int w, int h)
 {
    int i;
-   
+
    for (i = 0; i < (w * h); i++)
       texture[i] = color;
 }
@@ -1663,4 +1701,3 @@ pixel_t *Vdp2DebugTexture(u32 screen, int * w, int * h)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
