@@ -1598,9 +1598,9 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
          for (i = 0; i < 8; i++)
          {
 #ifdef WORDS_BIGENDIAN
-            int ratio = sprccrlist[i ^ 1] & 0x7;
+            u8 ratio = sprccrlist[i ^ 1] & 0x1F;
 #else
-            int ratio = sprccrlist[i] & 0x7;
+            u8 ratio = sprccrlist[i] & 0x1F;
 #endif
             AddString(outstring, "Color Calculation Ratio %d = %d:%d\r\n", i, 31 - ratio, 1 + ratio);
          }
