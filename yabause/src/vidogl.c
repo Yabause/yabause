@@ -4345,13 +4345,11 @@ int isSquare(float *vert) {
   float vec1y = fabs(vert[3] - vert[1]);
   float vec2x = fabs(vert[4] - vert[2]);
   float vec2y = fabs(vert[5] - vert[7]);
-  if (_Ygl->polygonmode != PERSPECTIVE_CORRECTION) return 1;
   if ((vec1x == 0) && (vec2x == 0) && (vec1y == 0) && (vec2y == 0)) return 1;
   return 0;
 }
 
 int isTriangle(float *vert) {
-  if (_Ygl->polygonmode != PERSPECTIVE_CORRECTION) return 1;
   if ((vert[0] == vert[2]) && (vert[1] == vert[3])) return 1;
   if ((vert[2] == vert[4]) && (vert[3] == vert[5])) return 1;
   if ((vert[4] == vert[6]) && (vert[5] == vert[7])) return 1;
