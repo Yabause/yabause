@@ -3277,11 +3277,21 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 	  if (info->LineColorBase != 0) {
 		  const float vstep = 1.0 / rbg->rotate_mval_v;
 		  j = 0.0f;
-		  for (int jj = 0; jj < rbg->vres; jj++) {
+      int vres = rbg->vres;
+      if (rbg->vres >= 480) {
+        vres >>= 1;
+      }
+      else {
+      }
+		  for (int jj = 0; jj < vres; jj++) {
 			  if ((fixVdp2Regs->LCTA.part.U & 0x8000) != 0) {
 				  rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc*(int)(j));
 				  *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
 				  line_texture->textdata++;
+          if (rbg->vres >= 480) {
+            *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
+            line_texture->textdata++;
+          }
 			  }
 			  else {
 				  *line_texture->textdata = rbg->LineColorRamAdress;
@@ -3373,12 +3383,12 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     i = 0.0;
     for( int ii=0; ii< rbg->hres; ii++ )
     {
-
+/*
       if (Vdp2CheckWindowDot( info, (int)i, (int)j) == 0) {
         *(texture->textdata++) = 0x00000000;
         continue; // may be faster than GPU
       }
-
+*/
       switch (fixVdp2Regs->RPMD | rgb_type ) {
       case 0:
         parameter = &paraA;
