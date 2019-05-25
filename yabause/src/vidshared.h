@@ -92,6 +92,7 @@ typedef struct
    u32 lineaddr;
    u32 k_mem_type;
    u32 over_pattern_name;
+   int linecoefenab;
    //void FASTCALL(*PlaneAddr)(void *, int, Vdp2*);
 } vdp2rotationparameter_struct;
 

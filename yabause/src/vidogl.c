@@ -3277,18 +3277,16 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
 	  if (info->LineColorBase != 0) {
 		  const float vstep = 1.0 / rbg->rotate_mval_v;
 		  j = 0.0f;
-      int vres = rbg->vres;
-      if (rbg->vres >= 480) {
-        vres >>= 1;
+      int lvres = rbg->vres;
+      if (vres >= 480) {
+        lvres >>= 1;
       }
-      else {
-      }
-		  for (int jj = 0; jj < vres; jj++) {
+		  for (int jj = 0; jj < lvres; jj++) {
 			  if ((fixVdp2Regs->LCTA.part.U & 0x8000) != 0) {
 				  rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc*(int)(j));
 				  *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
 				  line_texture->textdata++;
-          if (rbg->vres >= 480) {
+          if (vres >= 480) {
             *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
             line_texture->textdata++;
           }
@@ -3373,7 +3371,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         line_texture->textdata++;
       }
       else {
-        *line_texture->textdata = rbg->LineColorRamAdress;
+      *line_texture->textdata = rbg->LineColorRamAdress;
         line_texture->textdata++;
       }
     }
@@ -3654,7 +3652,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
       if (info->LineColorBase != 0 && VDP2_CC_NONE != (info->blendmode&0x03)) {
         if ((color & 0xFF000000) != 0 ) {
           color |= 0x8000;
-          if (parameter->lineaddr != 0xFFFFFFFF && parameter->lineaddr != 0x000000 ) {
+          if (parameter->linecoefenab && parameter->lineaddr != 0xFFFFFFFF && parameter->lineaddr != 0x000000 ) {
             color |= ((parameter->lineaddr & 0x7F) | 0x80) << 16;
           }
         }
