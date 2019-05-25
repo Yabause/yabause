@@ -384,6 +384,11 @@ int Ygl_uniformNormalCramSpecialPriority(void * p)
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+  if (prg->interuput_texture != 0) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(prg->interuput_texture));
+  }
+
   return 0;
 }
 
@@ -701,6 +706,11 @@ int Ygl_uniformPerLineAlpha(void * p)
     glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
 
+  if (prg->interuput_texture != 0) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(prg->interuput_texture));
+  }
+
   return 0;
 }
 
@@ -728,7 +738,10 @@ int Ygl_cleanupPerLineAlpha(void * p)
   YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
-
+  glActiveTexture(GL_TEXTURE0);
+  if (prg->interuput_texture != 0) {
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  }
   return 0;
 }
 
