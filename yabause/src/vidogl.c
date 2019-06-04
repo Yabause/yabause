@@ -409,7 +409,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs);
 
 INLINE u32 VDP1COLOR16TO24(u16 temp) {
-  return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7800) << 9| ((u32)temp & 0x8000) << 1); //Blue LSB is used for MSB bit.
+  return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9| ((u32)temp & 0x8000) << 1); //Blue LSB is used for MSB bit.
 }
 
 INLINE u32 VDP1MSB(u16 temp) {

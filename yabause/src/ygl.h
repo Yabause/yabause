@@ -664,6 +664,10 @@ typedef struct {
    int vpd1_running;
    int needVdp1Render;
    GLint m_viewport[4];
+   int min_fb_x;
+   int max_fb_x;
+   int min_fb_y;
+   int max_fb_y;
 
    GLuint cram_tex;
    GLuint cram_tex_pbo;

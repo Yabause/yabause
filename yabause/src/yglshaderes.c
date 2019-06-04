@@ -3383,7 +3383,8 @@ int YglBlitSimple(int texture, int blend) {
 
 
 //--------------------------------------------------------------------------------------------------------------
-static int vdp1_prg = -1;
+static int vdp1_write_prg = -1;
+static int vdp1_read_prg = -1;
 static GLint vdp1MtxModelView = 0;
 
 static const char vdp1_v[] =
@@ -3397,7 +3398,7 @@ static const char vdp1_v[] =
       "   v_texcoord  = a_texcoord; \n"
       "} ";
 
-static const char vdp1_f[] =
+static const char vdp1_write_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
 "precision highp float; \n"
@@ -3411,16 +3412,41 @@ SHADER_VERSION
 "  addr.x = int( v_texcoord.x);          \n"
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
-"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
+//"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
+"  if ((int(tex.r * 255.0)&0x80) == 0) discard;\n"
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
 "  fragColor.b = tex.g;         \n"
 "  fragColor.a = tex.r;         \n"
 "}  \n";
 
-int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
+static const char vdp1_read_f[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+"in highp vec2 v_texcoord; \n"
+"uniform sampler2D s_texture;  \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
+"  ivec2 addr; \n"
+"  addr.x = int( v_texcoord.x);          \n"
+"  addr.y = int(v_texcoord.y);          \n"
+"  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
+//"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
+"  if ((int(tex.a * 255.0)&0x80) == 0) discard;\n"
+"  fragColor.r = tex.a;         \n"
+"  fragColor.g = tex.b;         \n"
+"  fragColor.b = tex.g;         \n"
+"  fragColor.a = tex.r;         \n"
+"}  \n";
+
+int YglBlitVDP1(u32 srcTexture, float w, float h, int write) {
   const GLchar * fblit_vdp1_v[] = { vdp1_v, NULL };
-  const GLchar * fblit_vdp1_f[] = { vdp1_f, NULL };
+  const GLchar * fblit_vdp1_write_f[] = { vdp1_write_f, NULL };
+  const GLchar * fblit_vdp1_read_f[] = { vdp1_read_f, NULL };
+  const int flip = 0;
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3441,17 +3467,17 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
     0.0f, h
   };
 
-  if (vdp1_prg == -1){
+  if (vdp1_write_prg == -1){
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
-    if (vdp1_prg != -1) glDeleteProgram(vdp1_prg);
-    vdp1_prg = glCreateProgram();
-    if (vdp1_prg == 0){
+    if (vdp1_write_prg != -1) glDeleteProgram(vdp1_write_prg);
+    vdp1_write_prg = glCreateProgram();
+    if (vdp1_write_prg == 0){
       return -1;
     }
 
-    YGLLOG("BLIT_VDP1\n");
+    YGLLOG("BLIT_VDP1_WRITE\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -3462,36 +3488,85 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
       Ygl_printShaderError(vshader);
-      vdp1_prg = -1;
+      vdp1_write_prg = -1;
       return -1;
     }
 
-    glShaderSource(fshader, 1, fblit_vdp1_f, NULL);
+    glShaderSource(fshader, 1, fblit_vdp1_write_f, NULL);
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
       Ygl_printShaderError(fshader);
-      vdp1_prg = -1;
+      vdp1_write_prg = -1;
       abort();
     }
 
-    glAttachShader(vdp1_prg, vshader);
-    glAttachShader(vdp1_prg, fshader);
-    glLinkProgram(vdp1_prg);
-    glGetProgramiv(vdp1_prg, GL_LINK_STATUS, &linked);
+    glAttachShader(vdp1_write_prg, vshader);
+    glAttachShader(vdp1_write_prg, fshader);
+    glLinkProgram(vdp1_write_prg);
+    glGetProgramiv(vdp1_write_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(vdp1_prg);
-      vdp1_prg = -1;
+      Ygl_printShaderError(vdp1_write_prg);
+      vdp1_write_prg = -1;
+      abort();
+    }
+    glUniform1i(glGetUniformLocation(vdp1_write_prg, "s_texture"), 0);
+  }
+
+  if (vdp1_read_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (vdp1_read_prg != -1) glDeleteProgram(vdp1_read_prg);
+    vdp1_read_prg = glCreateProgram();
+    if (vdp1_read_prg == 0){
+      return -1;
+    }
+
+    YGLLOG("BLIT_VDP1_WRITE\n");
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_vdp1_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      vdp1_read_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_vdp1_read_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      vdp1_read_prg = -1;
       abort();
     }
 
-    GLUSEPROG(vdp1_prg);
-    glUniform1i(glGetUniformLocation(vdp1_prg, "s_texture"), 0);
+    glAttachShader(vdp1_read_prg, vshader);
+    glAttachShader(vdp1_read_prg, fshader);
+    glLinkProgram(vdp1_read_prg);
+    glGetProgramiv(vdp1_read_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(vdp1_read_prg);
+      vdp1_read_prg = -1;
+      abort();
+    }
+    glUniform1i(glGetUniformLocation(vdp1_read_prg, "s_texture"), 0);
   }
-  else{
-    GLUSEPROG(vdp1_prg);
+
+  if (write == 0){
+    GLUSEPROG(vdp1_read_prg);
+  } else {
+    GLUSEPROG(vdp1_write_prg);
   }
 
   glDisable(GL_DEPTH_TEST);
