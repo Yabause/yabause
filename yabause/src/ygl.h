@@ -283,6 +283,7 @@ void YglCacheDeInit(YglTextureManager * tm);
 int YglIsCached(YglTextureManager * tm, u64, YglCache *);
 void YglCacheAdd(YglTextureManager * tm, u64, YglCache *);
 void YglCacheReset(YglTextureManager * tm);
+void setupMaxSize();
 
 void YglCheckFBSwitch(int sync);
 
@@ -732,6 +733,10 @@ void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int d
 
 // 0.. no belnd, 1.. Alpha, 2.. Add
 int YglSetLevelBlendmode( int pri, int mode );
+
+extern int YglBlitSimple(int texture, int blend);
+extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
+extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 
 int Ygl_uniformVDP2DrawFramebuffer( void * p, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
 

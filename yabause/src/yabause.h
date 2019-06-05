@@ -142,6 +142,9 @@ extern yabsys_struct yabsys;
 int YabauseEmulate(void);
 extern void resetSyncVideo(void);
 
+extern void dropFrameDisplay();
+extern void resetFrameSkip();
+
 extern u32 saved_scsp_cycles;
 #define SCSP_FRACTIONAL_BITS 20
 u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);

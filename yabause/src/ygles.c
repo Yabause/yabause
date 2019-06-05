@@ -52,6 +52,12 @@ static void waitVdp1End(int id);
 static void executeTMVDP1(int in, int out);
 static void releaseVDP1FB(int i);
 
+static int YglGenerateBackBuffer();
+static int YglGenerateWindowBuffer();
+static int YglGenerateWindowCCBuffer();
+static int YglGenerateScreenBuffer();
+
+
 static void releaseVDP1DrawingFBMemRead(int id);
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
@@ -1218,7 +1224,7 @@ int YglGenerateScreenBuffer(){
 }
 
 //////////////////////////////////////////////////////////////////////////////
-int YglGenerateBackBuffer(){
+static int YglGenerateBackBuffer(){
 
   int status;
   GLuint error;
