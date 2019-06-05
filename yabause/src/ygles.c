@@ -52,6 +52,8 @@ static void waitVdp1End(int id);
 static void executeTMVDP1(int in, int out);
 static void releaseVDP1FB(int i);
 
+static void releaseVDP1DrawingFBMemRead(int id);
+
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
 u32 * YglGetColorRamPointer();
@@ -793,7 +795,7 @@ u32* getVdp1DrawingFBMemRead(int id) {
   return fbptr;
 }
 
-void releaseVDP1DrawingFBMemRead(int id) {
+static void releaseVDP1DrawingFBMemRead(int id) {
   if (_Ygl->vdp1fb_buf_read[id] == NULL) return;
   glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1_pbo[id]);
   glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
