@@ -1671,7 +1671,7 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    int i,j;
    size_t num_read = 0;
    track_info_struct *track=NULL;
-   ZipEntry *tr;
+   ZipEntry *tr = NULL;
    u8* zipBuffer;
 
    assert(disc.session);
@@ -1704,9 +1704,10 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
             break;
          }
       }
+      if (tr != NULL) break;
    }
 
-   if (track == NULL)
+   if (tr == NULL)
    {
       CDLOG("Warning: Sector not found in track list");
       return 0;
