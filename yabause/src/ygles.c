@@ -2122,6 +2122,9 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
     case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
       prg = PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS;
     break;
+    case VDP1_COLOR_CL_HALF_LUMINANCE:
+      prg = PG_VDP1_HALF_LUMINANCE_TESS;
+      break;
     case VDP1_COLOR_CL_MESH:
       if (_Ygl->meshmode == ORIGINAL_MESH)
         prg = PG_VDP1_MESH_TESS;

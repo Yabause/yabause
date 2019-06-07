@@ -1223,6 +1223,7 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "}  \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
 static YglVdp1CommonParam half_luminance = { 0 };
+static YglVdp1CommonParam half_luminance_tess = { 0 };
 
 
 /*------------------------------------------------------------------------------------
@@ -2576,6 +2577,19 @@ int YglTesserationProgramInit()
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS], &id_ght_tess);
 
     //---------------------------------------------------------------------------------------------------------
+    YGLLOG("PG_VDP1_HALF_LUMINANCE_TESS\n");
+    if (YglInitShader(PG_VDP1_HALF_LUMINANCE_TESS,
+      pYglprg_vdp1_gouraudshading_tess_v,
+      pYglprg_vdp1_half_luminance_f,
+      1,
+      pYglprg_vdp1_gouraudshading_tess_c,
+      pYglprg_vdp1_gouraudshading_tess_e,
+      pYglprg_vdp1_gouraudshading_tess_g) != 0)
+      return -1;
+
+    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALF_LUMINANCE_TESS], &half_luminance_tess);
+
+    //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VDP1_SHADOW_TESS\n");
     if (YglInitShader(PG_VDP1_SHADOW_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
@@ -2847,6 +2861,17 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE],(const GLchar *)"u_texMatrix");
       current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE], (const GLchar *)"s_texture");
+   }
+   else if( prgid == PG_VDP1_HALF_LUMINANCE_TESS )
+   {
+      current->setupUniform    = Ygl_uniformVdp1Normal;
+      current->cleanupUniform  = Ygl_cleanupVdp1Normal;
+      level->prg[level->prgcurrent].ids = &half_luminance_tess;
+      current->vertexp = 0;
+      current->texcoordp = 1;
+      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS],(const GLchar *)"u_mvpMatrix");
+      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS],(const GLchar *)"u_texMatrix");
+      current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS], (const GLchar *)"s_texture");
    }
    else if (prgid == PG_VDP1_MESH_TESS)
    {
