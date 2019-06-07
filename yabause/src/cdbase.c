@@ -1,7 +1,7 @@
 /*  Copyright 2004-2008, 2013 Theo Berkau
     Copyright 2005 Joost Peters
     Copyright 2005-2006 Guillaume Duhamel
-    
+
     This file is part of Yabause.
 
     Yabause is free software; you can redistribute it and/or modify
@@ -196,7 +196,7 @@ static s32 DummyCDReadTOC(UNUSED u32 *TOC)
 	//
 	// Any Unused tracks should be set to 0xFFFFFFFF
 	//
-	// TOC[99] - Point A0 information 
+	// TOC[99] - Point A0 information
 	// Uses the following format:
 	// bits 0 - 7: PFRAME(should always be 0)
 	// bits 7 - 15: PSEC(Program area format: 0x00 - CDDA or CDROM,
@@ -757,7 +757,7 @@ static ZipEntry* getZipFileLocalInfo(JZFile *zip, JZEndRecord* endRecord, char* 
    entry->filename = NULL;
    entry->zipBuffer = NULL;
    entry->size = 0;
-   if (filename != NULL) 
+   if (filename != NULL)
      entry->filename = strdup(filename);
    if (deflate != 0) {
      if(jzReadCentralDirectory(zip, endRecord, deflateFile, entry)) {
@@ -788,7 +788,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    int trackfp_size = 0;
    int fad = 0;
    int pos;
-  
+
    JZEndRecord* endRecord = (JZEndRecord*)malloc(sizeof(JZEndRecord));
    JZFileHeader header;
    u8* data;
@@ -1248,23 +1248,23 @@ int LoadParseCCD(FILE *ccd_fp, ccd_struct *ccd)
 	int lineno = 0, error = 0, max_size = 100;
 
 	ccd->dict = (ccd_dict_struct *)malloc(sizeof(ccd_dict_struct)*max_size);
-	if (ccd->dict == NULL) 
+	if (ccd->dict == NULL)
 		return -1;
 
 	ccd->num_dict = 0;
 
 	// Read CCD file
-	while (fgets(text, sizeof(text), ccd_fp) != NULL) 
+	while (fgets(text, sizeof(text), ccd_fp) != NULL)
 	{
 		lineno++;
 
 		start = StripPreSuffixWhitespace(text);
 
-		if (start[0] == '[') 
+		if (start[0] == '[')
 		{
 			// Section
 			end = strchr(start+1, ']');
-			if (end == NULL) 
+			if (end == NULL)
 			{
 				// ] missing from section
 				error = lineno;
@@ -1277,11 +1277,11 @@ int LoadParseCCD(FILE *ccd_fp, ccd_struct *ccd)
 				old_name[0] = '\0';
 			}
 		}
-		else if (start[0]) 
+		else if (start[0])
 		{
 			// Name/Value pair
 			end = strchr(start, '=');
-			if (end) 
+			if (end)
 			{
 				end[0] = '\0';
 				name = StripPreSuffixWhitespace(start);
@@ -1336,7 +1336,7 @@ static int GetIntCCD(ccd_struct *ccd, char *section, char *name)
 			 stricmp(ccd->dict[i].name, name) == 0)
 #endif
 			return strtol(ccd->dict[i].value, NULL, 0);
-        
+
 	}
 
 	return -1;
@@ -1578,7 +1578,7 @@ static int ISOCDInit(const char * iso) {
          fclose(iso_file);
       iso_file = NULL;
       return -1;
-   }   
+   }
 
    BuildTOC();
    return 0;
@@ -1602,14 +1602,14 @@ static void ISOCDDeInit(void) {
                  {
                    if (disc.session[i].track[j].tr->zipBuffer != NULL)
                      free(disc.session[i].track[j].tr->zipBuffer);
-                   disc.session[i].track[j].tr->zipBuffer = NULL;  
+                   disc.session[i].track[j].tr->zipBuffer = NULL;
                    if (disc.session[i].track[j].tr->filename != NULL)
                      free(disc.session[i].track[j].tr->filename);
                    disc.session[i].track[j].tr->filename = NULL;
                    free(disc.session[i].track[j].tr);
                  }
                  disc.session[i].track[j].tr = NULL;
-               } 
+               }
 
 
                if (disc.session[i].track[j].fp)
@@ -1670,9 +1670,9 @@ track_info_struct *currentTrack = NULL;
 static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    int i,j;
    size_t num_read = 0;
-   track_info_struct *track=NULL;
    ZipEntry *tr = NULL;
    u8* zipBuffer;
+   int found = 0;
 
    assert(disc.session);
 
@@ -1684,45 +1684,47 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
       {
          if (FAD >= disc.session[i].track[j].fad_start &&
              FAD <= disc.session[i].track[j].fad_end)
-         {             
-            track = &disc.session[i].track[j];
+         {
+            track_info_struct *track = &disc.session[i].track[j];
             if ((currentTrack != track) || (currentTrack == NULL)){
               currentTrack = track;
+              found = 1;
               if (currentTrack->isZip == 1) {
                 if (currentTrack->tr == NULL) {
                   //This should never happen, otherwise we might suffer some delay to deflation during game
                   printf("%s was not defalted!!!\n", currentTrack->filename);
-                  currentTrack->tr = getZipFileLocalInfo(disc.zip, disc.endRecord, currentTrack->filename, 1);
-                  if (currentTrack->tr == NULL) {
-                    CDLOG("Warning: Track is not found in zip");
-                    return 0;
-                  }
+                  return 0;
                 }
               }
             }
             tr = currentTrack->tr;
             break;
          }
+         if (found == 1) break;
       }
    }
 
-   if (tr == NULL)
+   if (currentTrack == NULL)
    {
-      CDLOG("Warning: Sector not found in track list");
+      CDLOG("Warning: Sector not found in track list\n");
       return 0;
    }
-   if (track->isZip != 1) {
-     fseek(track->fp, track->file_offset + (FAD-track->fad_start) * track->sector_size, SEEK_SET);
+   if ((currentTrack->isZip == 1) && (tr == NULL)) {
+     CDLOG("Warning Zip file: Sector not found in track list\n");
+     return 0;
+   }
+   if (currentTrack->isZip != 1) {
+     fseek(currentTrack->fp, currentTrack->file_offset + (FAD-currentTrack->fad_start) * currentTrack->sector_size, SEEK_SET);
    } else {
-     zipBuffer = &tr->zipBuffer[track->file_offset + (FAD-track->fad_start) * track->sector_size];
+     zipBuffer = &tr->zipBuffer[currentTrack->file_offset + (FAD-currentTrack->fad_start) * currentTrack->sector_size];
    }
 
-   if (track->sector_size == 2448)
+   if (currentTrack->sector_size == 2448)
    {
-      if (!track->interleaved_sub)
+      if (!currentTrack->interleaved_sub)
       {
-         if (track->isZip != 1) {
-           num_read = fread(buffer, 2448, 1, track->fp);
+         if (currentTrack->isZip != 1) {
+           num_read = fread(buffer, 2448, 1, currentTrack->fp);
          } else {
            memcpy(buffer, zipBuffer, 2448);
            zipBuffer+=2448;
@@ -1731,24 +1733,24 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
       else
       {
          const u16 deint_offsets[] = {
-            0, 66, 125, 191, 100, 50, 150, 175, 8, 33, 58, 83, 
-            108, 133, 158, 183, 16, 41, 25, 91, 116, 141, 166, 75, 
-            24, 90, 149, 215, 124, 74, 174, 199, 32, 57, 82, 107, 
-            132, 157, 182, 207, 40, 65, 49, 115, 140, 165, 190, 99, 
-            48, 114, 173, 239, 148, 98, 198, 223, 56, 81, 106, 131, 
-            156, 181, 206, 231, 64, 89, 73, 139, 164, 189, 214, 123, 
-            72, 138, 197, 263, 172, 122, 222, 247, 80, 105, 130, 155, 
+            0, 66, 125, 191, 100, 50, 150, 175, 8, 33, 58, 83,
+            108, 133, 158, 183, 16, 41, 25, 91, 116, 141, 166, 75,
+            24, 90, 149, 215, 124, 74, 174, 199, 32, 57, 82, 107,
+            132, 157, 182, 207, 40, 65, 49, 115, 140, 165, 190, 99,
+            48, 114, 173, 239, 148, 98, 198, 223, 56, 81, 106, 131,
+            156, 181, 206, 231, 64, 89, 73, 139, 164, 189, 214, 123,
+            72, 138, 197, 263, 172, 122, 222, 247, 80, 105, 130, 155,
             180, 205, 230, 255, 88, 113, 97, 163, 188, 213, 238, 147
          };
          u8 subcode_buffer[96 * 3];
-         if (track->isZip != 1) {
-           num_read = fread(buffer, 2352, 1, track->fp);
+         if (currentTrack->isZip != 1) {
+           num_read = fread(buffer, 2352, 1, currentTrack->fp);
 
-           num_read = fread(subcode_buffer, 96, 1, track->fp);
-           fseek(track->fp, 2352, SEEK_CUR);
-           num_read = fread(subcode_buffer + 96, 96, 1, track->fp);
-           fseek(track->fp, 2352, SEEK_CUR);
-           num_read = fread(subcode_buffer + 192, 96, 1, track->fp);
+           num_read = fread(subcode_buffer, 96, 1, currentTrack->fp);
+           fseek(currentTrack->fp, 2352, SEEK_CUR);
+           num_read = fread(subcode_buffer + 96, 96, 1, currentTrack->fp);
+           fseek(currentTrack->fp, 2352, SEEK_CUR);
+           num_read = fread(subcode_buffer + 192, 96, 1, currentTrack->fp);
          } else {
            memcpy(buffer, zipBuffer, 2352);
            zipBuffer+=2352;
@@ -1761,21 +1763,21 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
               ((u8 *)buffer)[2352+i] = subcode_buffer[deint_offsets[i]];
       }
    }
-   else if (track->sector_size == 2352)
+   else if (currentTrack->sector_size == 2352)
    {
-      if (track->isZip != 1) {
+      if (currentTrack->isZip != 1) {
         // Generate subcodes here
-        num_read = fread(buffer, 2352, 1, track->fp);
+        num_read = fread(buffer, 2352, 1, currentTrack->fp);
       } else {
         memcpy(buffer, zipBuffer, 2352);
         zipBuffer+=2352;
       }
    }
-   else if (track->sector_size == 2048)
+   else if (currentTrack->sector_size == 2048)
    {
       memcpy(buffer, syncHdr, 12);
-      if (track->isZip != 1) {
-        num_read = fread((char *)buffer + 0x10, 2048, 1, track->fp);
+      if (currentTrack->isZip != 1) {
+        num_read = fread((char *)buffer + 0x10, 2048, 1, currentTrack->fp);
       } else {
         memcpy((char *)buffer + 0x10, zipBuffer, 2048);
         zipBuffer+=2048;
