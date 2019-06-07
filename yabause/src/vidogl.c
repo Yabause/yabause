@@ -4628,7 +4628,7 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
   ey = ny * THICK;
 
   // offset
-  offset = 0.0f;
+  offset = THICK;
 
   // triangle
   outv[0] = v1[0] - ex - dx + offset;
