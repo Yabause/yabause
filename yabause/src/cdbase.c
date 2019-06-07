@@ -1704,7 +1704,6 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
             break;
          }
       }
-      if (tr != NULL) break;
    }
 
    if (tr == NULL)
