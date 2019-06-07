@@ -1643,6 +1643,7 @@ static int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * out
 
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm){
     _Ygl->needVdp1Render = 1;
+    if ((Vdp1Regs->TVMR & 0x1) == 1) colors = NULL;
     if (_Ygl->polygonmode == GPU_TESSERATION) {
       YglQuadGrowShading_tesselation_in(input, NULL, colors, cache, 0, tm);
     }
@@ -1661,6 +1662,7 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache
 
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm){
   _Ygl->needVdp1Render = 1;
+  if ((Vdp1Regs->TVMR & 0x1) == 1) colors = NULL;
   if (_Ygl->polygonmode == GPU_TESSERATION) {
     return YglQuadGrowShading_tesselation_in(input, output, colors, c, 1, tm);
   }
@@ -3186,7 +3188,7 @@ void YglUpdateVdp2Reg() {
 
 SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs) {
   SpriteMode ret = NONE;
-  if ((Vdp1Regs->TVMR & 0x7) == 1) return NONE;
+  if ((Vdp1Regs->TVMR & 0x1) == 1) return NONE;
   if (varVdp2Regs->CCCTL & (1<<6)) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
@@ -3396,7 +3398,7 @@ SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
   SpriteMode ret = NONE;
 
   const int enableBit[7] = {0, 1, 2, 3, 4, 0, 6};
-  if ((layer == 6) && ((Vdp1Regs->TVMR & 0x7) == 1)) return NONE;
+  if ((layer == 6) && ((Vdp1Regs->TVMR & 0x1) == 1)) return NONE;
   if (varVdp2Regs->CCCTL & (1<<enableBit[layer])) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
