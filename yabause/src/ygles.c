@@ -3186,6 +3186,7 @@ void YglUpdateVdp2Reg() {
 
 SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs) {
   SpriteMode ret = NONE;
+  if ((Vdp1Regs->TVMR & 0x7) == 1) return NONE;
   if (varVdp2Regs->CCCTL & (1<<6)) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
@@ -3393,7 +3394,9 @@ int setupColorMode(Vdp2 *varVdp2Regs, int layer) {
 
 SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
   SpriteMode ret = NONE;
+
   const int enableBit[7] = {0, 1, 2, 3, 4, 0, 6};
+  if ((layer == 6) && ((Vdp1Regs->TVMR & 0x7) == 1)) return NONE;
   if (varVdp2Regs->CCCTL & (1<<enableBit[layer])) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
