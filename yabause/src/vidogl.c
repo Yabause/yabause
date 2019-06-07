@@ -4382,7 +4382,7 @@ void fixVerticesSize(float *vert) {
     }
   }
 
-  if (square) {
+  //if (square) {
     float minx;
     float miny;
     int lt_index;
@@ -4422,7 +4422,7 @@ void fixVerticesSize(float *vert) {
         vert[(i << 1) + 1] += ny;
       }
     }
-  }
+  //}
 }
 
 void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
@@ -4721,8 +4721,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
 
-  expandVertices(vert, sprite.vertices, !isSquare(vert));
-
+  //expandVertices(vert, sprite.vertices, !isSquare(vert));
+  memcpy(sprite.vertices, vert, sizeof(float)*8);
   fixVerticesSize(sprite.vertices);
 
   for (int i = 0; i<4; i++) {
