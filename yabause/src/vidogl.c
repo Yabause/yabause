@@ -4721,7 +4721,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
 
-  expandVertices(vert, sprite.vertices, ((cmd.CMDPMOD>>12)&0x1)==0);
+  expandVertices(vert, sprite.vertices, !isSquare(vert));
 
   fixVerticesSize(sprite.vertices);
 
