@@ -1211,6 +1211,7 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "in vec4 v_texcoord; \n"
       "uniform sampler2D s_texture;  \n"
       "out vec4 fragColor; \n"
+      "out vec4 fragColorAttr; \n"
       "void main()   \n"
       "{  \n"
       "  ivec2 addr = ivec2(vec2(textureSize(s_texture, 0)) * v_texcoord.st / v_texcoord.q); \n"
@@ -1219,6 +1220,7 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "  fragColor.r = spriteColor.r * 0.5;\n "
       "  fragColor.g = spriteColor.g * 0.5;\n "
       "  fragColor.b = spriteColor.b * 0.5;\n "
+      "  fragColorAttr = vec4(0.0);\n"
       "  fragColor.a = spriteColor.a;\n "
       "}  \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
@@ -2864,8 +2866,8 @@ int YglProgramChange( YglLevel * level, int prgid )
    }
    else if( prgid == PG_VDP1_HALF_LUMINANCE_TESS )
    {
-      current->setupUniform    = Ygl_uniformVdp1Normal;
-      current->cleanupUniform  = Ygl_cleanupVdp1Normal;
+      current->setupUniform    = Ygl_uniformVdp1CommonParam;
+      current->cleanupUniform  = Ygl_cleanupVdp1CommonParam;
       level->prg[level->prgcurrent].ids = &half_luminance_tess;
       current->vertexp = 0;
       current->texcoordp = 1;
