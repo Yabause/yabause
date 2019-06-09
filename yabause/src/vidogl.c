@@ -4585,15 +4585,17 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
   float ey;
   float offset;
 
-  if (v1[0] == v2[0] && v1[1] == v2[1]) {
+  if ((v1[0] == v2[0]) && (v1[1] == v2[1])) {
+    v2[0] += 1;
+    v2[1] += 1;
     outv[0] = v1[0];
     outv[1] = v1[1];
     outv[2] = v2[0];
-    outv[3] = v2[1];
+    outv[3] = v1[1];
     outv[4] = v2[0];
     outv[5] = v2[1];
     outv[6] = v1[0];
-    outv[7] = v1[1];
+    outv[7] = v2[1];
     return;
   }
 
@@ -5098,11 +5100,6 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   v[1] = Vdp1Regs->localY + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x0E));
   v[2] = Vdp1Regs->localX + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x10));
   v[3] = Vdp1Regs->localY + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x12));
-
-  if ((v[0] == v[2]) && (v[1] == v[3])) {
-    v[2] += 1;
-    v[3] += 1;
-  }
 
   color = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x6);
   CMDPMOD = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x4);
