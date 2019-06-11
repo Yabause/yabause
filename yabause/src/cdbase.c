@@ -176,7 +176,7 @@ static int DummyCDGetStatus(void)
 	// player, etc. recognizes when you've ejected the tray and popped in
 	// another disc.
 
-	return 0;
+	return 2;
 }
 
 static void DummyCDSetStatus(int status){
