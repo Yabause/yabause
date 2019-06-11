@@ -842,6 +842,8 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         Log.d(TAG,"enable Extended Memory " + extmemory);
 
 
+    YabauseRunnable.enableComputeShader(sharedPref.getBoolean("pref_use_compute_shader", false) ? 1 : 0);
+
         YabauseRunnable.enableRotateScreen(sharedPref.getBoolean("pref_rotate_screen", false) ? 1 : 0);
 
         boolean fps = sharedPref.getBoolean("pref_fps", false);
@@ -914,6 +916,10 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         }
 
         Log.d(TAG, "video " + video);
+
+    Integer rbg_resolution_setting = new Integer(sharedPref.getString("pref_rbg_resolution", "0"));
+    YabauseRunnable.setRbgResolutionMode(rbg_resolution_setting);
+
 
         // InputDevice
     	String selInputdevice = sharedPref.getString("pref_player1_inputdevice", "65535");

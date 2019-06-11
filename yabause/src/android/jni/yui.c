@@ -87,8 +87,10 @@ int g_VideoFilter = 0;
 int g_PolygonGenerationMode = 0;
 static int g_SoundEngine = 0;
 static int g_resolution_mode = 0;
+static int g_rbg_resolution_mode = 0;
 static int g_extmemory = 1;
 static int g_rotate_screen = 0;
+static int g_use_compute_shader = 0;
 static int g_scsp_sync_count = 1;
 static int g_cpu_sync_shift = 1;
 static int g_scsp_sync_time_mode = 1;
@@ -1066,6 +1068,8 @@ int initEgl( ANativeWindow* window )
     yinit.scsp_sync_count_per_frame = g_scsp_sync_count;
     yinit.sync_shift = g_cpu_sync_shift;
     yinit.scsp_main_mode = g_scsp_sync_time_mode;
+    yinit.rbg_resolution_mode = g_rbg_resolution_mode;
+    yinit.rbg_use_compute_shader = g_use_compute_shader;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -1331,6 +1335,13 @@ Java_org_uoyabause_android_YabauseRunnable_enableRotateScreen( JNIEnv* env, jobj
 }
 
 void
+Java_org_uoyabause_android_YabauseRunnable_enableComputeShader( JNIEnv* env, jobject obj, jint enable )
+{
+    g_use_compute_shader = enable;
+}
+
+
+void
 Java_org_uoyabause_android_YabauseRunnable_setCpu( JNIEnv* env, jobject obj, jint cpu )
 {
     g_CpuType = cpu;
@@ -1353,6 +1364,13 @@ Java_org_uoyabause_android_YabauseRunnable_setResolutionMode( JNIEnv* env, jobje
 {
     g_resolution_mode = resolution_mode;
 }
+
+void
+Java_org_uoyabause_android_YabauseRunnable_setRbgResolutionMode( JNIEnv* env, jobject obj, jint resolution_mode )
+{
+    g_rbg_resolution_mode = resolution_mode;
+}
+
 
 void
 Java_org_uoyabause_android_YabauseRunnable_setScspSyncPerFrame( JNIEnv* env, jobject obj, jint scsp_sync_count )

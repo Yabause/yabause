@@ -3967,7 +3967,7 @@ u8 Cs2GetIP(int autoregion) {
    if ((gripartition = Cs2ReadUnFilteredSector(150)) != NULL)
    {
 	   int i;
-      char *buf=(char*)gripartition->block[gripartition->numblocks - 1]->data;
+      unsigned char *buf=(unsigned char*)gripartition->block[gripartition->numblocks - 1]->data;
 
       // Make sure we're dealing with a saturn game
       if (memcmp(buf, "SEGA SEGASATURN", 15) == 0)

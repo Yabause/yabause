@@ -52,7 +52,7 @@ extern vdp2rotationparameter_struct  paraA;
 
 #if (defined(__ANDROID__) || defined(IOS)) && !defined(__LIBRETRO__)
 PFNGLPATCHPARAMETERIPROC glPatchParameteri = NULL;
-PFNGLMEMORYBARRIERPROC glMemoryBarrier = NULL;
+//PFNGLMEMORYBARRIERPROC glMemoryBarrier = NULL;
 #endif
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz)
@@ -580,6 +580,7 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     if (tm->texture == NULL){
       abort();
     }
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   }
 }
 
@@ -1111,6 +1112,28 @@ int YglGenFrameBuffer() {
 	_Ygl->targetfbo = 0;
   glBindTexture(GL_TEXTURE_2D, 0);
   rebuild_frame_buffer = 0;
+
+  int base_texture_width = 512;
+  switch (_Ygl->rbg_resolution_mode) {
+  case RBG_RES_ORIGINAL:
+    base_texture_width = 512;
+    break;
+  case RBG_RES_2x:
+    base_texture_width = 1024;
+    break;
+  case RBG_RES_720P:
+    base_texture_width = 1280;
+    break;
+  case RBG_RES_1080P:
+    base_texture_width = 1920;
+    break;
+  case RBG_RES_FIT_TO_EMULATION:
+    base_texture_width = GlWidth;
+    break;
+  default:
+    break;
+  }
+
   return 0;
 }
 
@@ -1284,7 +1307,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
 #if defined(__ANDROID__) && !defined(__LIBRETRO__)
   glPatchParameteri = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glPatchParameteri");
-  glMemoryBarrier = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glMemoryBarrier");
+  //glMemoryBarrier = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glMemoryBarrier");
 #endif
 
   glGetError();
@@ -1466,7 +1489,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg )
       program->vertexAttribute = (float *) realloc(program->vertexAttribute, program->maxQuad * sizeof(float)*2);
     YglCacheReset(_Ygl->texture_manager);
    }
-
+   program->interuput_texture = 0;
    return program;
 }
 
@@ -2464,7 +2487,7 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 }
 
 
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line ) {
+int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, int rbg_type) {
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
@@ -2545,6 +2568,8 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   program->color_offset_val[1] = (float)(input->cog) / 255.0f;
   program->color_offset_val[2] = (float)(input->cob) / 255.0f;
   program->color_offset_val[3] = 0;
+
+ 
   //info->cor
   pos = program->quads + program->currentQuad;
   pos[0] = input->vertices[0];
@@ -2560,53 +2585,74 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   pos[10] = input->vertices[6];
   pos[11] = input->vertices[7];
 
-  // vtxa = (program->vertexAttribute + (program->currentQuad * 2));
-  // memset(vtxa,0,sizeof(float)*24);
+   //vtxa = (program->vertexAttribute + (program->currentQuad * 2));
+   //memset(vtxa,0,sizeof(float)*24);
 
-  tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
-  program->currentQuad += 12;
-  x = c->x;
-  y = c->y;
+  if (_Ygl->rbg_use_compute_shader) {
+	  
+	  if(rbg_type == 0 )
+		program->interuput_texture = 1;
+	  else
+		program->interuput_texture = 2;
 
+	  tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+	  program->currentQuad += 12;
+	  tmp[0].s = tmp[3].s = tmp[5].s = 0;
+	  tmp[1].s = tmp[2].s = tmp[4].s = (float)(input->cellw);
+	  tmp[0].t = tmp[1].t = tmp[3].t = 0;
+	  tmp[2].t = tmp[4].t = tmp[5].t = (float)(input->cellh);
+	  //tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
+	  //tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
 
-
-  /*
-  0 +---+ 1
-    |   |
-    +---+ 2
-  3 +---+
-    |   |
-  5 +---+ 4
-            */
-
-  tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-  tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
-  tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
-  tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
-
-  if (line == NULL) {
-    tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
-    tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
   }
   else {
-    tmp[0].r = (float)(line->x) + ATLAS_BIAS;
-    tmp[0].q = (float)(line->y) + ATLAS_BIAS;
 
-    tmp[1].r = (float)(line->x) + ATLAS_BIAS;
-    tmp[1].q = (float)(line->y+1) - ATLAS_BIAS;
+	  program->interuput_texture = 0;
 
-    tmp[2].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
-    tmp[2].q = (float)(line->y+1) - ATLAS_BIAS;
+	  tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+	  program->currentQuad += 12;
+	  x = c->x;
+	  y = c->y;
 
-    tmp[3].r = (float)(line->x) + ATLAS_BIAS;
-    tmp[3].q = (float)(line->y) + ATLAS_BIAS;
+	  /*
+	  0 +---+ 1
+		|   |
+		+---+ 2
+	  3 +---+
+		|   |
+	  5 +---+ 4
+				*/
 
-    tmp[4].r = (float)(line->x +input->cellh ) - ATLAS_BIAS;
-    tmp[4].q = (float)(line->y + 1 ) - ATLAS_BIAS;
-
-    tmp[5].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
-    tmp[5].q = (float)(line->y) + ATLAS_BIAS;
+	  tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+	  tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
+	  tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+	  tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
   }
+
+	  if (line == NULL) {
+		  tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
+		  tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
+	  }
+	  else {
+		  tmp[0].r = (float)(line->x) + ATLAS_BIAS;
+		  tmp[0].q = (float)(line->y) + ATLAS_BIAS;
+
+		  tmp[1].r = (float)(line->x) + ATLAS_BIAS;
+		  tmp[1].q = (float)(line->y + 1) - ATLAS_BIAS;
+
+		  tmp[2].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+		  tmp[2].q = (float)(line->y + 1) - ATLAS_BIAS;
+
+		  tmp[3].r = (float)(line->x) + ATLAS_BIAS;
+		  tmp[3].q = (float)(line->y) + ATLAS_BIAS;
+
+		  tmp[4].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+		  tmp[4].q = (float)(line->y + 1) - ATLAS_BIAS;
+
+		  tmp[5].r = (float)(line->x + input->cellh) - ATLAS_BIAS;
+		  tmp[5].q = (float)(line->y) + ATLAS_BIAS;
+	  }
+  
   return 0;
 }
 
@@ -4398,6 +4444,7 @@ void YglChangeResolution(int w, int h) {
     }
   }
 
+
   if (_Ygl->rotate_screen && _Ygl->resolution_mode == RES_NATIVE) {
     YglRotatef(&_Ygl->mtxModelView, 90.0, 0.0, 0.0, 1.0f);
   }
@@ -4425,6 +4472,7 @@ void VIDOGLSync(){
   //YglTmPull(YglTM_vdp1);
   YglTmPull(YglTM, GL_MAP_INVALIDATE_BUFFER_BIT);
   _Ygl->texture_manager = NULL;
+  RBGGenerator_onFinish();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

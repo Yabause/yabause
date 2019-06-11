@@ -895,10 +895,19 @@ void UIYabause::on_aFileSettings_triggered()
 
 		if (newhash["Video/WindowWidth"] != hash["Video/WindowWidth"] || newhash["Video/WindowHeight"] != hash["Video/WindowHeight"] ||
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
-			 newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
-			sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
+          newhash["Input/GunMouseSensitivity"] != hash["Input/GunMouseSensitivity"])
+        sizeRequested(QSize(newhash["Video/WindowWidth"].toInt(),newhash["Video/WindowHeight"].toInt()));
     fixAspectRatio(rect().width(), rect().height());
-		
+
+    if (newhash["Video/rbg_resolution_mode"] != hash["Video/rbg_resolution_mode"]) {
+      VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, newhash["Video/rbg_resolution_mode"].toInt());
+    }
+
+	if (newhash["Video/UseComputeShader"] != hash["Video/UseComputeShader"]) {
+		VideoSetSetting(VDP_SETTING_RBG_USE_COMPUTESHADER, newhash["Video/UseComputeShader"].toInt());
+	}
+
+
 		if (newhash["Video/FullscreenWidth"] != hash["Video/FullscreenWidth"] || 
 			newhash["Video/FullscreenHeight"] != hash["Video/FullscreenHeight"] ||
 			newhash["Video/Fullscreen"] != hash["Video/Fullscreen"])

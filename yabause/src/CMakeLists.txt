@@ -48,12 +48,12 @@ set(yabause_SOURCES
 	osdcore.c
 	peripheral.c profile.c
 	frameprofile.cpp
-        Counter.cpp
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
-        Counter.cpp
+	Counter.cpp
+	ygl_texture.cpp
 	sh2cache.c )
 	add_definitions(-DIMPROVED_SAVESTATES)
 if (ANDROID)

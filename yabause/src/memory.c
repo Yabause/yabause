@@ -486,7 +486,7 @@ static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
   else {
     addr = addr & 0x0000FFFF;
   }
-  printf("BupRamMemoryReadByte %08X\n",addr);
+  //printf("BupRamMemoryReadByte %08X\n",addr);
   return T1ReadByte(BupRam, addr);
 }
 
@@ -536,7 +536,7 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
   else {
     addr = addr & 0x0000FFFF;
   }
-  printf("BupRamMemoryWriteByte %08X\n",addr);
+  //printf("BupRamMemoryWriteByte %08X\n",addr);
   T1WriteByte(BupRam, addr|0x1, val);
 }
 
