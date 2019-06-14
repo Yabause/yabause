@@ -1638,13 +1638,16 @@ SHADER_VERSION
 
 "FBCol getFB(int x){ \n";
 
-static const char vdp2blit_filter_f[] =
+static const char vdp2blit_partial_end_f[] =
 " return ret;\n"
-"}\n"
+"}\n";
 
+static const char vdp2blit_filter_f[] =
 "vec4 getPixel(sampler2D tex, vec2 st) {\n"
 " ivec2 addr = ivec2(textureSize(tex, 0) * st);\n"
-" return texelFetch( tex, addr,0 );\n"
+" vec4 result = texelFetch( tex, addr,0 );\n"
+//" result.rgb = Filter( tex, st ).rgb;\n"
+" return result;\n"
 "}\n";
 
 static const char vdp2blit_end_f[] =
@@ -2049,103 +2052,103 @@ static const char vdp2blit_end_f[] =
 #endif
 "} \n";
 
-const GLchar * pYglprg_vdp2_blit_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
 
 
-const GLchar * pYglprg_vdp2_blit_less_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_less_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_less_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_less_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_less_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
 
-const GLchar * pYglprg_vdp2_blit_equal_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_equal_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_equal_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_equal_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_equal_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
 
-const GLchar * pYglprg_vdp2_blit_more_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_more_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_more_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_more_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_more_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
 
-const GLchar * pYglprg_vdp2_blit_msb_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_msb_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_msb_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_msb_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * pYglprg_vdp2_blit_msb_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
 
 void Ygl_initDrawFrameBuffershader(int id);
 
 int YglInitDrawFrameBufferShaders() {
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_none_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_as_is_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_src_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_dst_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_none_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_as_is_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_src_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_dst_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_none_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_as_is_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_src_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_dst_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_none_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_as_is_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_src_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_dst_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA);
 
 
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_NONE --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_none_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_as_is_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_src_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA);
 YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA --START--\n");
-  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_dst_alpha_f, 7, NULL, NULL, NULL) != 0) { return -1; }
+  if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
   Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA);
 
   _Ygl->renderfb.prgid = _prgid[PG_VDP2_DRAWFRAMEBUFF_NONE];
