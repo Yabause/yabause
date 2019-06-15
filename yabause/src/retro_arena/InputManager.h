@@ -18,6 +18,7 @@ struct MenuInput {
 	SDL_JoystickID select_device_ = -1;
 };
 
+typedef std::map<std::string, int *> pre_input_map;
 
 //you should only ever instantiate one of these, by the way
 class InputManager
@@ -46,6 +47,7 @@ private:
 	MenuScreen * menu_layer_ = nullptr;
 
   int convertFromEmustationFile( const std::string & fname );
+  pre_input_map joymap_;
 
 public:
 	virtual ~InputManager();
