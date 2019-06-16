@@ -131,6 +131,7 @@ ISOCDReadAheadFAD,
 ISOCDSetStatus,
 };
 
+static int dmy_status = 2;
 //////////////////////////////////////////////////////////////////////////////
 // Dummy Interface
 //////////////////////////////////////////////////////////////////////////////
@@ -168,10 +169,14 @@ static int DummyCDGetStatus(void)
 	// player, etc. recognizes when you've ejected the tray and popped in
 	// another disc.
 
-	return 2;
+	return dmy_status;
 }
 
 static void DummyCDSetStatus(int status){
+  dmy_status = status;
+  if (dmy_status != 3) {
+    dmy_status = 2;
+  }
 	return;
 }
 
