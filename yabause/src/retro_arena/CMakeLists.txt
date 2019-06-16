@@ -73,8 +73,8 @@ yab_port_success(yabause-retro-arena)
 set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)
 
 
-install(TARGETS yabause-retro-arena DESTINATION "/opt/retroarena/emulators/yabause/")
-install(FILES "README.md" DESTINATION "/opt/retroarena/emulators/yabause/" )
+install(TARGETS yabause-retro-arena DESTINATION ".")
+install(FILES "README.md" DESTINATION "." )
 
 #install(TARGETS yabause-retoro-arena DESTINATION "bin")
 #install(FILES "README.md" DESTINATION "." )
