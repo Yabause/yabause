@@ -908,7 +908,7 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
           normValue = -1;
       //window->input(getInputConfigByDevice(ev.jaxis.which), Input(ev.jaxis.which, TYPE_AXIS, ev.jaxis.axis, normValue, false));
       InputConfig* cfg = getInputConfigByDevice(ev.jbutton.which);
-      evstr = cfg->getMappedTo(Input(ev.jbutton.which, TYPE_BUTTON, ev.jbutton.button, normValue, false));
+      evstr = cfg->getMappedTo(Input(ev.jbutton.which, TYPE_AXIS, ev.jaxis.axis, normValue, false));
       if( evstr.size() > 0 ){
         menu_layer_->keyboardEvent(evstr[0],0,normValue,0);
       }
