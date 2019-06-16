@@ -609,9 +609,9 @@ int MenuScreen::onRawInputEvent( InputManager & imp, const std::string & deviceg
   // wait for key input?
   if( current_key_ != "l" && current_key_ != "r" ) {
     if( current_key_.find("analog") == std::string::npos  ){
-      if( type == "axis" ){
-        return -1;
-      }
+      //if( type == "axis" ){
+      //  return -1;
+      //}
     }else{
       if( type != "axis" ){
         return -1;
@@ -637,9 +637,9 @@ bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action
   if( swindow != nullptr && swindow->title() != "Select File"){ return false; }
 
   MENU_LOG("%s %d %d\n",keycode.c_str(),scancode,action);
-  if (action == 1) {
+  if (action != 0) {
           
-    if (keycode == "down") {
+    if ( keycode.find("down") != string::npos ) {
       nanogui::Button* btn = (nanogui::Button*)mFocus;
       //btn->setPushed(false);
       mFocus->mouseEnterEvent(mFocus->position(), false);
@@ -660,7 +660,7 @@ bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action
         }
       }
 
-    }else if (keycode == "up") {
+    }else if ( keycode.find("up") != string::npos ) {
       nanogui::Button* btn = (nanogui::Button*)mFocus;
       //btn->setPushed(false);
       mFocus->mouseEnterEvent(mFocus->position(), false);

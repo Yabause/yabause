@@ -228,6 +228,15 @@ int yabauseinit()
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
   yinit.scsp_main_mode = 1;
+  yinit.rbg_resolution_mode = 0;
+
+  std::string::size_type pos = std::string((const char*)glGetString(GL_VERSION)).find( std::string("3.2"));
+  if( pos != std::string::npos) {
+    yinit.rbg_use_compute_shader = 1;
+    printf("Compute shader is enabled!\n");
+  }else{
+    yinit.rbg_use_compute_shader = 0;
+  }
 
   res = YabauseInit(&yinit);
   if( res == -1) {
