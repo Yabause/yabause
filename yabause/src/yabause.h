@@ -62,6 +62,7 @@ typedef struct
    int video_upscale_type;
    int polygon_generation_mode;
    int stretch;
+   int use_cs;
    int scanline;
    int meshmode;
    int play_ssf;

@@ -29,15 +29,6 @@
 #include "bicubic_shader.h"
 #include "scanline_shader.h"
 
-// Keep a way to switch to gles shaders for embedded devices
-#if defined(_OGLES3_)
-#define SHADER_VERSION "#version 310 es \n"
-#define SHADER_VERSION_TESS "#version 310 es \n#extension GL_ANDROID_extension_pack_es31a : enable \n"
-#else
-#define SHADER_VERSION "#version 330 core \n"
-#define SHADER_VERSION_TESS "#version 420 core \n"
-#endif
-
 #define YGLLOG
 
 static int saveFB;

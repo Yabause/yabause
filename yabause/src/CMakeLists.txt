@@ -134,14 +134,14 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 	  sh2_dynarec_devmiyax/opcodes.h)
 
 		if (MSVC) # NASM
-	  	set(KRONOS_LIBRARIES 
-			  ${KRONOS_LIBRARIES} 
+	  	set(KRONOS_LIBRARIES
+			  ${KRONOS_LIBRARIES}
 			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib_w32.obj )
                 add_definitions(-DDYNAREC_X64=1)
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)
-				set(kronos_SOURCES 
+				set(kronos_SOURCES
 				  ${kronos_SOURCES}
 					sh2_dynarec_devmiyax/dynalib_arm.s)
                         else ()
@@ -151,11 +151,11 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 				enable_language(ASM_NASM)
 				set(CMAKE_ASM_NASM_FLAGS "${CMAKE_ASM_NASM_FLAGS} -O3 -l func.lst")
                         	if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
- 				  set(kronos_SOURCES 
+ 				  set(kronos_SOURCES
  				    ${kronos_SOURCES}
  				    sh2_dynarec_devmiyax/dynalib_x64.nasm)
                                 else ()
- 				  set(kronos_SOURCES 
+ 				  set(kronos_SOURCES
  				    ${kronos_SOURCES}
  				    sh2_dynarec_devmiyax/dynalib_i386.nasm)
 				endif ()
@@ -167,12 +167,12 @@ endif()
 option(YAB_USE_SSF "Include SSF player." ON)
 if (YAB_USE_SSF)
   add_definitions(-DYAB_WANT_SSF=1)
-  set(kronos_SOURCES ${kronos_SOURCES} 
+  set(kronos_SOURCES ${kronos_SOURCES}
       aosdk/corlett.c
       aosdk/eng_ssf.c
       aosdk/ssf.c)
 
-  set(kronos_HEADERS ${kronos_HEADERS} 
+  set(kronos_HEADERS ${kronos_HEADERS}
       aosdk/ao.h
       aosdk/corlett.h
       aosdk/ssf.h)
@@ -297,13 +297,13 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${OPENGL_LIBRARIES})
 
 		include_directories(./ ./nanovg)
-		set(kronos_SOURCES ${kronos_SOURCES} 
-			nanovg/nanovg.c 
-			nanovg/nanovg_osdcore.h 
+		set(kronos_SOURCES ${kronos_SOURCES}
+			nanovg/nanovg.c
+			nanovg/nanovg_osdcore.h
 			nanovg/nanovg_osdcore.c
 		)
 		add_definitions(-DYAB_PORT_OSD)
-		
+
 		include(FindGLUT)
 		if (GLUT_FOUND)
 			message (WARNING "Deprecated Glut found. Support will be removed in the future. ")
@@ -332,11 +332,12 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		endif()
 		add_definitions(-D_OGL3_)
 		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-			set(kronos_SOURCES ${kronos_SOURCES} 
+			set(kronos_SOURCES ${kronos_SOURCES}
 				yglcache.c
 				ygles.c
 				yglshaderes.c
-                                upscale_shader.c
+        upscale_shader.c
+				rbg_compute.cpp
 			)
 		endif()
         include(FindGLEW)
@@ -353,6 +354,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				yglcache.c
 				ygles.c
 				yglshaderes.c
+				rbg_compute.cpp
                                 upscale_shader.c )
 		endif()
 	endif(OPENGL_FOUND)
@@ -583,7 +585,7 @@ option(YAB_WANT_MUSASHI "Enable musashi 68k" ON)
 #TODO cross compile builds m68kmake for the target platform instead
 #of the native one, making it impossible to generate the core
 if (YAB_WANT_MUSASHI)
-    set (MUSASHI_GENERATED_SOURCES 
+    set (MUSASHI_GENERATED_SOURCES
         ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopac.c
         ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopdm.c
         ${CMAKE_CURRENT_BINARY_DIR}/musashi/m68kopnz.c
@@ -608,15 +610,15 @@ if (YAB_WANT_MUSASHI)
       ${CMAKE_CURRENT_SOURCE_DIR}/musashi
     )
 
-	set(kronos_SOURCES ${kronos_SOURCES} 
+	set(kronos_SOURCES ${kronos_SOURCES}
       ${MUSASHI_GENERATED_SOURCES}
       musashi/m68kdasm.c
       musashi/m68kcpu.c
       m68kmusashi.c
       )
 
-	set(kronos_HEADERS 
-      ${kronos_HEADERS} 
+	set(kronos_HEADERS
+      ${kronos_HEADERS}
       musashi/m68k.h
       musashi/m68kcpu.h
       ${MUSASHI_GENERATED_HEADERS}
@@ -859,6 +861,3 @@ option(YAB_TESTS "Build test programs for cores" OFF)
 if (YAB_TESTS)
 	add_subdirectory("tools")
 endif()
-
-
-

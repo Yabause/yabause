@@ -1186,6 +1186,8 @@ int YglGenerateScreenBuffer(){
 
   YGLDEBUG("YglGenerateScreenBuffer: %d,%d\n", _Ygl->rwidth, _Ygl->rheight);
 
+  //RBGGenerator_resize(_Ygl->rwidth, _Ygl->rheight);
+
   if (_Ygl->screen_fbotex[0] != 0) {
     glDeleteTextures(SPRITE,&_Ygl->screen_fbotex[0]);
   }
@@ -1396,6 +1398,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->rheight = 240;
   _Ygl->density = 1;
   _Ygl->resolution_mode = 1;
+  _Ygl->rbg_use_compute_shader = 0;
 
   initLevels(&_Ygl->vdp2levels, SPRITE);
   initLevels(&_Ygl->vdp1levels, 2);
@@ -1613,7 +1616,6 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
       program->vertexAttribute = (float *) realloc(program->vertexAttribute, program->maxQuad * sizeof(float)*2);
     YglCacheReset(tm);
    }
-
    return program;
 }
 
@@ -2518,10 +2520,11 @@ int YglQuad_in(vdp2draw_struct * input, YglTexture * output, YglCache * c, int c
 }
 
 
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, YglTextureManager *tm) {
+int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache * line, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs) {
   unsigned int x, y;
   YglProgram *program;
   texturecoordinate_struct *tmp;
+  vdp2draw_struct * input = &rbg->info;
   int prg;
   float * pos;
 
@@ -2573,27 +2576,64 @@ int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglC
   // vtxa = (program->vertexAttribute + (program->currentQuad * 2));
   // memset(vtxa,0,sizeof(float)*24);
 
-  tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
-  program->currentQuad += 12;
-  x = c->x;
-  y = c->y;
+  if (rbg->use_cs) {
+// printf("(%f %f) (%f %f) (%f %f) (%f %f)\n", input->vertices[0],input->vertices[1],input->vertices[2],input->vertices[3],input->vertices[4],input->vertices[5],input->vertices[6],input->vertices[7]);
+    if (varVdp2Regs == NULL) {
+      printf("varVdp2Regs is NULL %d\n", __LINE__);
+      abort();
+    }
+
+    if(rbg_type == 0 )
+    program->interuput_texture = 1;
+    else
+    program->interuput_texture = 2;
+
+    tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+    program->currentQuad += 12;
+
+    tmp[0].s = 0;
+    tmp[0].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount;
+    tmp[1].s = rbg->hres;
+    tmp[1].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount;
+    tmp[2].s = rbg->hres;
+    tmp[2].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount;
+    tmp[3].s = 0;
+    tmp[3].t = (rbg->vres * rbg->info.startLine)/yabsys.VBlankLineCount;
+    tmp[4].s = rbg->hres;
+    tmp[4].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount;
+    tmp[5].s = 0;
+    tmp[5].t = (rbg->vres * rbg->info.endLine)/yabsys.VBlankLineCount;
+
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(program->interuput_texture));
+
+    RBGGenerator_update(rbg, varVdp2Regs);
+  }
+  else {
+
+    program->interuput_texture = 0;
+
+    tmp = (texturecoordinate_struct *)(program->textcoords + (program->currentQuad * 2));
+    program->currentQuad += 12;
+    x = c->x;
+    y = c->y;
 
 
 
-  /*
-  0 +---+ 1
-    |   |
-    +---+ 2
-  3 +---+
-    |   |
-  5 +---+ 4
-            */
+    /*
+    0 +---+ 1
+      |   |
+      +---+ 2
+    3 +---+
+      |   |
+    5 +---+ 4
+              */
 
-  tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
-  tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
-  tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
-  tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
-
+    tmp[0].s = tmp[3].s = tmp[5].s = (float)(x)+ATLAS_BIAS;
+    tmp[1].s = tmp[2].s = tmp[4].s = (float)(x + input->cellw) - ATLAS_BIAS;
+    tmp[0].t = tmp[1].t = tmp[3].t = (float)(y)+ATLAS_BIAS;
+    tmp[2].t = tmp[4].t = tmp[5].t = (float)(y + input->cellh) - ATLAS_BIAS;
+  }
   if (line == NULL) {
     tmp[0].r = tmp[1].r = tmp[2].r = tmp[3].r = tmp[4].r = tmp[5].r = 0;
     tmp[0].q = tmp[1].q = tmp[2].q = tmp[3].q = tmp[4].q = tmp[5].q = 0;
@@ -3283,15 +3323,17 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
 
   if (level->prgcurrent == 0) return 0;
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
   glActiveTexture(GL_TEXTURE3);
   glBindTexture(GL_TEXTURE_2D, _Ygl->window_fbotex[id]);
 
   for (int j = 0; j < (level->prgcurrent + 1); j++)
   {
     if (level->prg[j].currentQuad != 0) {
-
+      glActiveTexture(GL_TEXTURE0);
+      if (level->prg[j].interuput_texture == 0)
+        glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
+      else
+        glBindTexture(GL_TEXTURE_2D, RBGGenerator_getTexture(level->prg[j].interuput_texture));
       ret = 1;
 
       if (level->prg[j].prgid != cprg)
@@ -3951,7 +3993,6 @@ void setupMaxSize() {
 
   if ((_Ygl->rwidth != 0) && (_Ygl->width > GlWidth)) _Ygl->width = _Ygl->rwidth * (GlWidth/_Ygl->rwidth + 1);
   if ((_Ygl->rheight != 0) && (_Ygl->height > GlHeight)) _Ygl->height = _Ygl->rheight * (GlHeight/_Ygl->rheight + 1);
-
   if (oldWidth != _Ygl->width) rebuild_frame_buffer = 1;
   if (oldHeight != _Ygl->height) rebuild_frame_buffer = 1;
 }

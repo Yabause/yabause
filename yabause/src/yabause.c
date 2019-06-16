@@ -486,6 +486,7 @@ int YabauseInit(yabauseinit_struct *init)
    VideoSetSetting(VDP_SETTING_ASPECT_RATIO, init->stretch);
    VideoSetSetting(VDP_SETTING_SCANLINE, init->scanline);
    VideoSetSetting(VDP_SETTING_MESH_MODE, init->meshmode);
+   VideoSetSetting(VDP_SETTING_COMPUTE_SHADER, init->use_cs);
 #endif
 
    // Initialize input core

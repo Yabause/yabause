@@ -424,6 +424,7 @@ typedef struct {
    float vheight;
    float emu_width;
    float vwidth;
+   GLuint interuput_texture;
 } YglProgram;
 
 typedef struct {
@@ -464,6 +465,12 @@ typedef enum
 
 typedef enum
 {
+    COMPUTE_RBG_OFF = 0,
+    COMPUTE_RBG_ON,
+} COMPUTESHADERMODE;
+
+typedef enum
+{
     ORIGINAL_MESH = 0,
     IMPROVED_MESH
 } MESHMODE;
@@ -491,7 +498,8 @@ typedef enum {
     VDP_SETTING_UPSCALMODE,
     VDP_SETTING_ASPECT_RATIO,
     VDP_SETTING_SCANLINE,
-    VDP_SETTING_MESH_MODE
+    VDP_SETTING_MESH_MODE,
+    VDP_SETTING_COMPUTE_SHADER
 } enSettings;
 
 
@@ -658,6 +666,7 @@ typedef struct {
    int scanline;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
+   COMPUTESHADERMODE use_cs;
    GLsync sync;
    GLsync syncVdp1[2];
    GLuint default_fbo;
@@ -698,15 +707,41 @@ typedef struct {
    int use_cc_win;
    int vdp1_stencil_mode;
 
+   int rbg_use_compute_shader;
+
 } Ygl;
 
 extern Ygl * _Ygl;
 extern int opengl_mode; // 0 => gles3 , 1 => gl3.3
 
+// Rotate Screen
+
+typedef struct {
+  int useb;
+  vdp2draw_struct info;
+  YglTexture texture;
+  int rgb_type;
+  int pagesize;
+  int patternshift;
+  u32 LineColorRamAdress;
+  vdp2draw_struct line_info;
+  YglTexture line_texture;
+  YglCache c;
+  YglCache cline;
+  int vres;
+  int hres;
+  int async;
+  volatile int vdp2_sync_flg;
+  vdp2rotationparameter_struct  paraA;
+  vdp2rotationparameter_struct  paraB;
+  Vdp2 *varVdp2Regs;
+  int use_cs;
+} RBGDrawInfo;
+
 int YglInit(int, int, unsigned int);
 void YglDeInit(void);
 float * YglQuad(vdp2draw_struct *, YglTexture *, YglCache * c, YglTextureManager *tm);
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, YglTextureManager *tm);
+int YglQuadRbg0(RBGDrawInfo * rbg, YglTexture * output, YglCache * c, YglCache * line, int rbg_type, YglTextureManager *tm, Vdp2 *varVdp2Regs);
 void YglQuadOffset(vdp2draw_struct * input, YglTexture * output, YglCache * c, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuadOffset(vdp2draw_struct * input, YglCache * cache, int cx, int cy, float sx, float sy, YglTextureManager *tm);
 void YglCachedQuad(vdp2draw_struct *, YglCache *, YglTextureManager *tm);
@@ -723,7 +758,6 @@ void YglEndWindow( vdp2draw_struct * info );
 
 void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
-int YglQuadRbg0(vdp2draw_struct * input, YglTexture * output, YglCache * c, YglCache * line, YglTextureManager *tm);
 int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
@@ -786,6 +820,24 @@ int YglSetupWindow(YglProgram * prg);
 void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
 
+extern void RBGGenerator_init(int width, int height);
+extern void RBGGenerator_resize(int width, int height);
+extern void RBGGenerator_update(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs );
+extern GLuint RBGGenerator_getTexture( int id );
+extern void RBGGenerator_onFinish();
+
+
+// Keep a way to switch to gles shaders for embedded devices
+#if defined(_OGLES3_)
+#define SHADER_VERSION "#version 310 es \n"
+#define SHADER_VERSION_TESS "#version 310 es \n#extension GL_ANDROID_extension_pack_es31a : enable \n"
+#define SHADER_VERSION_COMPUTE "#version 310 es \n"
+
+#else
+#define SHADER_VERSION "#version 330 core \n"
+#define SHADER_VERSION_TESS "#version 420 core \n"
+#define SHADER_VERSION_COMPUTE "#version 430 core \n"
+#endif
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_) && !defined(__LIBRETRO__)
 

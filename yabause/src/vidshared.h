@@ -37,6 +37,7 @@ typedef struct
 
 typedef struct
 {
+   u32 PlaneAddrv[16];
    float Xst;
    float Yst;
    float Zst;
@@ -74,12 +75,9 @@ typedef struct
    float dY;
    int screenover;
    int msb;
-
-   void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
    u32 charaddr;
    int planew, planew_bits, planeh, planeh_bits;
    int MaxH,MaxV;
-
    float Xsp;
    float Ysp;
    float dx;
@@ -92,10 +90,11 @@ typedef struct
    int MskH;
    int MskV;
    u32 lineaddr;
-   u32 PlaneAddrv[16];
-   u8 k_mem_type;
-   u16 over_pattern_name;
-
+   u32 k_mem_type;
+   u32 over_pattern_name;
+   int linecoefenab;
+   int padding;
+   //void FASTCALL(*PlaneAddr)(void *, int, Vdp2*);
 } vdp2rotationparameter_struct;
 
 

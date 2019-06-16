@@ -33,7 +33,7 @@ YabauseGL::YabauseGL( ) : QOpenGLWindow()
 		format.setAlphaBufferSize(8);
         format.setSwapInterval(0);
         format.setMajorVersion(4);
-        format.setMinorVersion(2);
+        format.setMinorVersion(3);
 		format.setRenderableType(QSurfaceFormat::OpenGL);
         format.setProfile(QSurfaceFormat::CoreProfile);
         setFormat(format);
@@ -63,12 +63,12 @@ void YabauseGL::updateView( const QSize& s )
 }
 
 void YabauseGL::keyPressEvent( QKeyEvent* e )
-{ 
-  PerKeyDown( e->key() ); 
+{
+  PerKeyDown( e->key() );
 }
 
 void YabauseGL::keyReleaseEvent( QKeyEvent* e )
-{ 
+{
   PerKeyUp( e->key() );
 }
 

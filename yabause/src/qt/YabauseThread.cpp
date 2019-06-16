@@ -382,7 +382,7 @@ void YabauseThread::reloadSettings()
    mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
    mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
-	mYabauseConf.vsyncon = vs->value("General/EnableVSync", true).toBool(); 
+	mYabauseConf.vsyncon = vs->value("General/EnableVSync", true).toBool();
 	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
 	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
@@ -400,7 +400,8 @@ void YabauseThread::reloadSettings()
         mYabauseConf.video_upscale_type = vs->value("Video/upscale_type", mYabauseConf.video_upscale_type).toInt();
 	mYabauseConf.polygon_generation_mode = vs->value("Video/polygon_generation_mode", mYabauseConf.polygon_generation_mode).toInt();
   mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
-  mYabauseConf.stretch = vs->value("Video/AspectRatio", mYabauseConf.stretch).toInt();
+  mYabauseConf.use_cs = vs->value("Video/compute_shader_mode", mYabauseConf.use_cs).toInt();
+	mYabauseConf.stretch = vs->value("Video/AspectRatio", mYabauseConf.stretch).toInt();
   mYabauseConf.scanline = vs->value("Video/ScanLine", mYabauseConf.scanline).toInt();
 	mYabauseConf.meshmode = vs->value("Video/MeshMode", mYabauseConf.meshmode).toInt();
 
@@ -466,6 +467,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.video_filter_type = 0;
 	mYabauseConf.video_upscale_type = 0;
 	mYabauseConf.polygon_generation_mode = 0;
+	mYabauseConf.use_cs = 0;
         mYabauseConf.resolution_mode = 1;
         mYabauseConf.stretch = 0;
 #ifdef SPRITE_CACHE
