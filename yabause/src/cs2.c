@@ -1699,7 +1699,7 @@ void Cs2PlayDisc(void) {
   pdpmode = Cs2Area->reg.CR3 >> 8;
 
   //CDLOG("[CDB] Command: Play; Start = 0x%06x, End = 0x%06x, Mode = 0x%02x", pdspos, pdepos, pdpmode);
-
+   u32 current_fad = Cs2Area->FAD;
   // Convert Start Position to playFAD
   if (pdspos == 0xFFFFFF || pdpmode == 0xFF) // This still isn't right
   {
@@ -1773,13 +1773,19 @@ void Cs2PlayDisc(void) {
   Cs2SetTiming(1);
 
   Cs2Area->_periodiccycles = 0;
+
+  u32 length = 0;
   // Calculate Seek time
-  int length = abs((int)Cs2Area->playendFAD - (int)Cs2Area->FAD);
+  length = abs((int)current_fad - (int)Cs2Area->FAD);
   CDLOG("cs2\t:Seek length = %d", length);
   Cs2Area->_periodictiming = length * 2000; // seektime
-  if (Cs2Area->_periodictiming > SEEK_TIME) {
-    Cs2Area->_periodictiming = SEEK_TIME;
+  if (Cs2Area->_periodictiming > (u32)SEEK_TIME) {
+     Cs2Area->_periodictiming = (u32)SEEK_TIME;
   }
+
+  printf("cs2\t:Seek length = %0d - %d = %d/%d %d\n", (int)current_fad, (int)Cs2Area->FAD, length, SEEK_TIME/2000, Cs2Area->_periodictiming );
+
+  //Cs2Area->_periodictiming = SEEK_TIME;
 
   Cs2Area->status = CDB_STAT_SEEK;      // need to be seek
   Cs2Area->options = 0;
