@@ -113,6 +113,14 @@ uint32_t genidjson( int user, int joyId, const json & result ){
   return MAKE_PAD(0,((joyId << 18)|result["id"].get<int>()));
 }
 
+uint32_t genidAnalogjson( int user, int joyId, const json & result ){
+  PADLOG("Keymap: user %d, joyid %d, type %s, id %d, val %d\n", 0, joyId, 
+  result["type"].get<string>().c_str(), 
+  result["id"].get<int>(),
+  result["value"].get<int>()
+  );
+  return MAKE_PAD(0,((joyId << 18)|SDL_MEDIUM_AXIS_VALUE|result["id"].get<int>() ));
+}
 
 int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
     if( player.find("up") != player.end()) PerSetKey(genidjson(user,joyId,player["up"]),PERPAD_UP, padbits);
@@ -128,10 +136,10 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
     if( player.find("z") != player.end()) PerSetKey(genidjson(user,joyId,player["z"]),PERPAD_Z, padbits);
     if( player.find("l") != player.end()) PerSetKey(genidjson(user,joyId,player["l"]),PERPAD_LEFT_TRIGGER, padbits);
     if( player.find("r") != player.end())PerSetKey(genidjson(user,joyId,player["r"]),PERPAD_RIGHT_TRIGGER, padbits);    
-    if( player.find("analogx") != player.end())  PerSetKey(genidjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
-    if( player.find("analogy") != player.end()) PerSetKey(genidjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
-    if( player.find("analogleft") != player.end()) PerSetKey(genidjson(user,joyId,player["analogleft"]), PERANALOG_AXIS3, padbits);
-    if( player.find("analogright") != player.end()) PerSetKey(genidjson(user,joyId,player["analogright"]), PERANALOG_AXIS4, padbits);  
+    if( player.find("analogx") != player.end())  PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
+    if( player.find("analogy") != player.end()) PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
+    if( player.find("analogleft") != player.end()) PerSetKey(genidAnalogjson(user,joyId,player["analogleft"]), PERANALOG_AXIS3, padbits);
+    if( player.find("analogright") != player.end()) PerSetKey(genidAnalogjson(user,joyId,player["analogright"]), PERANALOG_AXIS4, padbits);  
 }
 
 void InputManager::genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid ){
@@ -732,7 +740,7 @@ int InputManager::handleJoyEventsMenu(void) {
     if( pre_info == joymap_.end() ){
       joymap_[joy_name_and_guid] = new int[SDL_JoystickNumAxes(joy)];
       for( i=0; i< SDL_JoystickNumAxes(joy); i++ ){
-          joymap_[joy_name_and_guid][i]=0xFFFFFFFF;
+          joymap_[joy_name_and_guid][i]=0x7FFFFFFF;
       }
     }
      
@@ -740,20 +748,21 @@ int InputManager::handleJoyEventsMenu(void) {
     {
       cur = SDL_JoystickGetAxis( joy, i );
 
-      if( joymap_[joy_name_and_guid][i] == 0xFFFFFFFF ){
+      if( cur < -SDL_MEDIUM_AXIS_VALUE ){
+        cur = -1;
+      }else if( cur > SDL_MEDIUM_AXIS_VALUE ){
+        cur = 1;
+      }else{
+        cur = 0;
+      }
+
+      if( joymap_[joy_name_and_guid][i] == 0x7FFFFFFF ){
         joymap_[joy_name_and_guid][i] = cur;
         continue;
       }
       if( cur != joymap_[joy_name_and_guid][i] ) {
 	      joymap_[joy_name_and_guid][i] = cur; 
-	      if ( cur < -SDL_MEDIUM_AXIS_VALUE )
-	      {
-          menu_layer_->onRawInputEvent(*this, joy_name_and_guid.c_str(), "axis", i, -1);
-	      }
-	      else if ( cur > SDL_MEDIUM_AXIS_VALUE )
-	      {
-          menu_layer_->onRawInputEvent(*this, joy_name_and_guid.c_str(), "axis", i, 1);
-	      }     
+        menu_layer_->onRawInputEvent(*this, joy_name_and_guid.c_str(), "axis", i, cur);
       }
     }
     for ( i = 0; i < SDL_JoystickNumHats( joy ); i++ )
@@ -815,7 +824,7 @@ int InputManager::handleJoyEvents(void) {
       cur = SDL_JoystickGetAxis( joy, i );
       
       PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8));
-      
+
       if ( cur < -SDL_MEDIUM_AXIS_VALUE )
       {
         PerKeyUp( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
@@ -833,6 +842,7 @@ int InputManager::handleJoyEvents(void) {
         PerKeyUp( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
         PerKeyUp( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
       }
+
     }
     
     // check buttons
