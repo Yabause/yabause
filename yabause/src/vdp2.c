@@ -437,7 +437,7 @@ void VdpProc( void *arg ){
   }
 
   while( vdp_proc_running ){
-#if defined(__RP64__)	  
+#if defined(__RP64__) || defined(__N2__)	  
     YabThreadSetCurrentThreadAffinityMask(0x5);
 #else
     YabThreadSetCurrentThreadAffinityMask(0x1);
