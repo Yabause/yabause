@@ -76,6 +76,7 @@ Awaiting input for|Attente de l'entrée pour
 Axis|Axes
 Backtrace|Traceur
 Backup Ram Manager|Gestion des Sauvegardes
+Bilinear|Bilinèaire
 Bilinear Filtering (Restart required)|Filtrage Bilinéaire (Redémarrage nécessaire)
 Binary Files (*.bin)|Fichiers Binaires (*.bin)
 Bios|Bios :
@@ -127,8 +128,8 @@ Comment :|Commentaire :
 Common Control Registers|Registres de Contrôle Commun
 Compare Type|Type de Comparaison
 Compatibility List|Liste de Compatibilité
-CPU Tesseration|Tesselation CPU
-GPU Tesseration|Tesselation GPU
+CPU Tesselation|Tesselation CPU
+GPU Tesselation|Tesselation GPU
 DSP Control Registers|Registres de Contrôle DSP
 DSP Registers|Registres DSP
 Data Size|Taille Donnée
@@ -147,8 +148,8 @@ Delete|Effacer
 Description|Description
 Description :|Description :
 Device List|Liste des Périphériques
-DirectX Input Interface|Interface DirectX Input
-DirectX Sound Interface|Interface DirectX Sound
+DirectX Input Interface|Interface Contrôleur DirectX
+DirectX Sound Interface|Interface Son DirectX
 Disabled|Désactivé
 Disassembled Code|Code Désassemblé
 Display Enabled|Affichage Activé
@@ -187,7 +188,10 @@ File|Fichier
 File Name :|Nom du Fichier :
 File transfer|Transfert de Fichier
 File:|Fichier :
+Filter|Filtre
 Filter mode|Mode Filtre
+Fit to Emulation Resolution|Correspondre à la Résolution de l'Emulation 
+
 Fit to window|Correspond à la Fenêtre
 Fixed aspect ratio: 4:3|Correction des Propotions : 4:3
 Fixed aspect ratio: 16:9|Correction des Propotions : 16:9
@@ -269,7 +273,7 @@ NBG2 Info|Info NBG2
 NBG3|NBG3
 NBG3 Info|Info NBG3
 nanovg OSD Interface|Interface Nanovg OSD
-Native(native resolution of whindow)|Natif (résolution native de la fenêtre)
+Native (native resolution of Window)|Natif (résolution native de la fenêtre)
 Netlink|Réseau
 Never|Jamais
 None|Aucun
@@ -313,6 +317,7 @@ Right|Droite
 Right button:|Bouton Droit :
 Right Stick:|Stick Droit :
 Right trigger|Gâchette Droite
+Rotate 90 degree|Rotation à 90°
 Run|Lancer
 S&ave State|S&auvegarder un Etat
 SCSP|SCSP
@@ -325,7 +330,8 @@ SH1 Registers|Registres SH1
 SH1 Interpreter|Interpréteur SH1
 SH2 Debugger Interpreter|Interpréteur de Débugeur SH2
 SH2 Dynamic Recompiler|Recompileur Dynamique SH2
-SH2 Interpreter|Interpréteur SH2 :
+SH2 Dynamic Recompiler Debug|Recompileur Dynamique Débug SH2
+SH2 Interpreter|Interpréteur SH2
 SH2 Registers|Registres SH2
 SSH2|SSH2
 Save|Sauvegarder
@@ -355,8 +361,8 @@ Search Criteria|Critère de Recherche
 Search Memory|Rechercher dans la Mémoire
 Search Value:|Rechercher une Valeur :
 Search/Add Cheats|Rechercher/Ajouter un Cheat
-Select a file to load your state|Choisissez un fichier pour charger l'état
-Select your iso/cue/bin file|Choisissez votre fichier iso/cue/bin
+Select a file to load your state|Choisir un fichier pour Charger l'Etat
+Select your iso/cue/bin file|Choisir un Fichier ISO/CUE/BIN
 Set PC to Start Address|Sélection PC vers l'Adresse de Démarrage
 Settings|Paramètres
 Shortcut|Raccourcis
@@ -389,9 +395,12 @@ Stick trigger: same as C|GâchetteStick : pareil que C
 Stop|Arrêter
 Store|Stocker
 Synchronize Saturn internal clock with set time|Synchroniser l'Horloge Interne de la Saturn avec l'Heure
+Synchronize to CPU|Synchroniser avec le CPU
+Synchronize to the real time|Synchroniser en Temps Réel
 System Clipping Coordinates|Coordonnées Clippind Système
 Text|Texte
 Texture|Texture
+Time Synchronization Mode|Mode de Synchronisation du Temps
 To|Vers
 To File...|Vers un Fichier...
 Tools|Outils
@@ -399,7 +408,7 @@ Track Inf Loop Results|Résultats In Piste en Boucle
 Trace Logging|Enregistreur de Trace
 Transfer|Transfert
 Translation|Traduction :
-Triangles usin perspectiove correction|Triangles utilisant la correction de perspective
+Triangles using perspective correction|Triangles utilisant la correction de perspective
 Type:|Type :
 Unable to add code|Ne peut pas ajouter de Code
 Unable to change description|Ne peut pas changer la Description
@@ -413,6 +422,7 @@ Unsigned 32-bit value|Valeur Non Signé 32-bit
 Unsigned 8-bit value|Valeur Non Signé 8-bit
 Up|Haut
 Upload|Upload
+Use compute shader for RBG generation|Utiliser le shader de calcul pour la génération RBG
 Use integer pixel scaling|Utiliser l'échelle des pixels entier
 Use new scsp|Utiliser le nouveau SCSP
 Use System Locale|Utiliser les paramètres régionaux
