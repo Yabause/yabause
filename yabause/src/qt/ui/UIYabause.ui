@@ -576,7 +576,7 @@
   </action>
   <action name="aFileSaveState1">
    <property name="text">
-    <string>1</string>
+    <string>Save1</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+1</string>
@@ -584,7 +584,7 @@
   </action>
   <action name="aFileSaveState2">
    <property name="text">
-    <string>2</string>
+    <string>Save2</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+2</string>
@@ -592,7 +592,7 @@
   </action>
   <action name="aFileSaveState3">
    <property name="text">
-    <string>3</string>
+    <string>Save3</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+3</string>
@@ -600,7 +600,7 @@
   </action>
   <action name="aFileSaveState4">
    <property name="text">
-    <string>4</string>
+    <string>Save4</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+4</string>
@@ -608,7 +608,7 @@
   </action>
   <action name="aFileSaveState5">
    <property name="text">
-    <string>5</string>
+    <string>Save5</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+5</string>
@@ -616,7 +616,7 @@
   </action>
   <action name="aFileSaveState6">
    <property name="text">
-    <string>6</string>
+    <string>Save6</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+6</string>
@@ -624,7 +624,7 @@
   </action>
   <action name="aFileSaveState7">
    <property name="text">
-    <string>7</string>
+    <string>Save7</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+7</string>
@@ -632,7 +632,7 @@
   </action>
   <action name="aFileSaveState8">
    <property name="text">
-    <string>8</string>
+    <string>Save8</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+8</string>
@@ -640,7 +640,7 @@
   </action>
   <action name="aFileSaveState9">
    <property name="text">
-    <string>9</string>
+    <string>Save9</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+9</string>
@@ -648,7 +648,7 @@
   </action>
   <action name="aFileLoadState1">
    <property name="text">
-    <string>1</string>
+    <string>Load1</string>
    </property>
    <property name="shortcut">
     <string>Alt+1</string>
@@ -656,7 +656,7 @@
   </action>
   <action name="aFileLoadState2">
    <property name="text">
-    <string>2</string>
+    <string>Load2</string>
    </property>
    <property name="shortcut">
     <string>Alt+2</string>
@@ -664,7 +664,7 @@
   </action>
   <action name="aFileLoadState3">
    <property name="text">
-    <string>3</string>
+    <string>Load3</string>
    </property>
    <property name="shortcut">
     <string>Alt+3</string>
@@ -672,7 +672,7 @@
   </action>
   <action name="aFileLoadState4">
    <property name="text">
-    <string>4</string>
+    <string>Load4</string>
    </property>
    <property name="shortcut">
     <string>Alt+4</string>
@@ -680,7 +680,7 @@
   </action>
   <action name="aFileLoadState5">
    <property name="text">
-    <string>5</string>
+    <string>Load5</string>
    </property>
    <property name="shortcut">
     <string>Alt+5</string>
@@ -688,7 +688,7 @@
   </action>
   <action name="aFileLoadState6">
    <property name="text">
-    <string>6</string>
+    <string>Load6</string>
    </property>
    <property name="shortcut">
     <string>Alt+6</string>
@@ -696,7 +696,7 @@
   </action>
   <action name="aFileLoadState7">
    <property name="text">
-    <string>7</string>
+    <string>Load7</string>
    </property>
    <property name="shortcut">
     <string>Alt+7</string>
@@ -704,7 +704,7 @@
   </action>
   <action name="aFileLoadState8">
    <property name="text">
-    <string>8</string>
+    <string>Load8</string>
    </property>
    <property name="shortcut">
     <string>Alt+8</string>
@@ -712,7 +712,7 @@
   </action>
   <action name="aFileLoadState9">
    <property name="text">
-    <string>9</string>
+    <string>Load9</string>
    </property>
    <property name="shortcut">
     <string>Alt+9</string>
@@ -826,7 +826,7 @@
   </action>
   <action name="aFileSaveState0">
    <property name="text">
-    <string>0</string>
+    <string>Save0</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+0</string>
@@ -834,7 +834,7 @@
   </action>
   <action name="aFileLoadState0">
    <property name="text">
-    <string>0</string>
+    <string>Load0</string>
    </property>
    <property name="shortcut">
     <string>Alt+0</string>
