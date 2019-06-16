@@ -582,7 +582,10 @@ void InputManager::init( const std::string & fname )
     MenuInput tmp;
     Input result;
     it->second->getInputByName("select", &result);
-    tmp.select_device_ = it->second->getDeviceId();
+    if( result.id == -1 ){
+      it->second->getInputByName("hotkeyenable", &result);
+    }
+    tmp.select_device_ = it->second->getDeviceId();    
     tmp.select_button_ = result.id;
     printf("select_device_ = %d, select_button_ = %d\n", tmp.select_device_, tmp.select_button_ );
     menu_inputs_.push_back(tmp);
