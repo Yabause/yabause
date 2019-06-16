@@ -11,11 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string notr="true">Yaba Sanshiro</string>
+   <string>Yabause Qt GUI</string>
   </property>
   <property name="windowIcon">
-   <iconset>
-    <normaloff>../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png</normaloff>../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png</iconset>
+   <iconset resource="../resources/resources.qrc">
+    <normaloff>:/icons/icons/yabause.png</normaloff>:/icons/icons/yabause.png</iconset>
   </property>
   <property name="iconSize">
    <size>
@@ -178,7 +178,6 @@
     <addaction name="aFileOpenISO"/>
     <addaction name="aFileOpenCDRom"/>
     <addaction name="aFileOpenSSF"/>
-    <addaction name="actionOpen_Tray"/>
     <addaction name="separator"/>
     <addaction name="mFileSaveState"/>
     <addaction name="mFileLoadState"/>
@@ -227,6 +226,7 @@
     <addaction name="aViewDebugSCSP"/>
     <addaction name="aViewDebugSCSPChan"/>
     <addaction name="aViewDebugSCSPDSP"/>
+    <addaction name="aViewDebugSH1"/>
     <addaction name="separator"/>
     <addaction name="aViewDebugMemoryEditor"/>
     <addaction name="separator"/>
@@ -236,7 +236,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
-    <addaction name="aHelpReport"/>
+    <addaction name="aHelpDocumentation"/>
     <addaction name="aHelpCompatibilityList"/>
     <addaction name="aHelpAbout"/>
    </widget>
@@ -302,7 +302,6 @@
    <addaction name="separator"/>
    <addaction name="aFileQuit"/>
    <addaction name="aHelpAbout"/>
-   <addaction name="actionDonate"/>
   </widget>
   <action name="aFileQuit">
    <property name="icon">
@@ -860,28 +859,16 @@
     <string>Ctrl+C</string>
    </property>
   </action>
-  <action name="aHelpReport">
-   <property name="icon">
-    <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/compatibility.png</normaloff>:/actions/icons/actions/compatibility.png</iconset>
-   </property>
-   <property name="text">
-    <string>Bug report</string>
-   </property>
-   <property name="statusTip">
-    <string>https://github.com/devmiyax/yabause/issues</string>
-   </property>
-  </action>
   <action name="aHelpCompatibilityList">
    <property name="icon">
-    <iconset resource="../resources/resources.qrc">
+    <iconset>
      <normaloff>:/actions/icons/actions/compatibility.png</normaloff>:/actions/icons/actions/compatibility.png</iconset>
    </property>
    <property name="text">
     <string>Compatibility List</string>
    </property>
    <property name="statusTip">
-    <string>http://www.uoyabause.org/games</string>
+    <string>http://wiki.yabause.org/index.php5?title=Compatibility_list</string>
    </property>
   </action>
   <action name="aSound">
@@ -972,24 +959,21 @@
     <string>Open SSF</string>
    </property>
   </action>
-  <action name="actionOpen_Tray">
-   <property name="text">
-    <string>Open&amp;Tray</string>
-   </property>
-   <property name="toolTip">
-    <string>Open Tray</string>
-   </property>
-  </action>
-  <action name="actionDonate">
+  <action name="aViewDebugSH1">
    <property name="icon">
     <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/donate.png</normaloff>:/actions/icons/actions/donate.png</iconset>
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
    </property>
    <property name="text">
-    <string>donate</string>
+    <string>SH1</string>
    </property>
-   <property name="toolTip">
-    <string>Donate</string>
+  </action>
+  <action name="aHelpDocumentation">
+   <property name="text">
+    <string>Documentation</string>
+   </property>
+   <property name="statusTip">
+    <string>http://wiki.yabause.org/index.php5?title=Documentations</string>
    </property>
   </action>
  </widget>
