@@ -92,13 +92,13 @@ void FASTCALL Vdp1RamWriteLong(u32 addr, u32 val) {
 
 u8 FASTCALL Vdp1FrameBufferReadByte(u32 addr) {
    addr &= 0x3FFFF;
-   if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
-     u8 val;
-     VdpLockVram();
-     VIDCore->Vdp1ReadFrameBuffer(0, addr, &val);
-     VdpUnLockVram();
-     return val;
-   }
+   //if (VIDCore->Vdp1ReadFrameBuffer && addr < 0x30000 ){
+   //  u8 val;
+   //  VdpLockVram();
+   //  VIDCore->Vdp1ReadFrameBuffer(0, addr, &val);
+   //  VdpUnLockVram();
+   //  return val;
+   //}
    return T1ReadByte(Vdp1FrameBuffer[Vdp1External.current_frame], addr);
 }
 
@@ -665,7 +665,7 @@ int Vdp1SaveState(FILE *fp)
    IOCheck_struct check = { 0, 0 };
 #ifdef IMPROVED_SAVESTATES
    int i = 0;
-   u8 back_framebuffer[0x40000] = { 0 };
+   u16 back_framebuffer[0x20000] = { 0 };
 #endif
 
    offset = StateWriteHeader(fp, "VDP1", 1);
@@ -677,8 +677,8 @@ int Vdp1SaveState(FILE *fp)
    ywrite(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
 #ifdef IMPROVED_SAVESTATES
-   for (i = 0; i < 0x40000; i++)
-      back_framebuffer[i] = Vdp1FrameBufferReadByte(i);
+   for (i = 0; i < 0x20000; i++)
+      back_framebuffer[i] = Vdp1FrameBufferReadWord(i<<1);
 
    ywrite(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 #endif
@@ -692,7 +692,7 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    IOCheck_struct check = { 0, 0 };
 #ifdef IMPROVED_SAVESTATES
    int i = 0;
-   u8 back_framebuffer[0x40000] = { 0 };
+   u16 back_framebuffer[0x20000] = { 0 };
 #endif
 
    // Read registers
@@ -704,8 +704,8 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 #ifdef IMPROVED_SAVESTATES
    yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 
-   for (i = 0; i < 0x40000; i++)
-      Vdp1FrameBufferWriteByte(i, back_framebuffer[i]);
+   for (i = 0; i < 0x20000; i++)
+      Vdp1FrameBufferWriteWord(i<<1, back_framebuffer[i]);
 #endif
    return size;
 }
