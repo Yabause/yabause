@@ -193,7 +193,7 @@ private:
   CompileBlocks(){
     debug_mode_ = false;
     BuildInstructionList();
-    dCode = Init(dCode);
+    Init();
 #ifdef SET_DIRTY
     LookupParentTable = new addrs[0x100000 >> 1];
 #else
@@ -252,7 +252,7 @@ public:
     LookupParentTable[addr].clear();
   }
 
-  Block *Init(Block*);
+  void Init();
 
   Block * CompileBlock( u32 pc, addrs * ParentT );
 

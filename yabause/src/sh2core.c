@@ -2303,6 +2303,10 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
    IOCheck_struct check = { 0, 0 };
    sh2regs_struct regs;
 
+   SH2Reset(context);
+
+   LOG("*********** LOAD STATE *************");
+
    if (context->isslave == 1)
       yread(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
 

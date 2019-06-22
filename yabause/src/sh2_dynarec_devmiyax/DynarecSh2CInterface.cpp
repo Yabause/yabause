@@ -148,7 +148,7 @@ void SH2DynDeInit(void){
 
 void SH2DynReset(SH2_struct *context) {
 
-  if (context->ext == NULL){
+  if (context->ext == NULL) {
     DynarecSh2 * pctx = new DynarecSh2();
     context->ext = (void*)pctx;
     pctx->SetContext(context);
@@ -162,6 +162,7 @@ void SH2DynReset(SH2_struct *context) {
     pctx->SetSlave(false);
   }
   CompileBlocks * block = CompileBlocks::getInstance();
+  block->Init();
   block->SetDebugMode(false);
   pctx->ResetCPU();
 }
@@ -182,6 +183,7 @@ void SH2DynDebugReset(SH2_struct *context) {
     pctx->SetSlave(false);
   }
   CompileBlocks * block = CompileBlocks::getInstance();
+  block->Init();
   block->SetDebugMode(true);
   pctx->ResetCPU();
 }
@@ -224,7 +226,7 @@ void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrup
     dIntcTbl tmp;
     tmp.level = interrupts[i].level;
     tmp.Vector = interrupts[i].vector;
-    pctx->m_IntruptTbl.push_back(tmp);
+    pctx->AddInterrupt(interrupts[i].vector, interrupts[i].level );
   }
   return;
 }
@@ -284,7 +286,7 @@ u32 SH2DynGetPC(SH2_struct *context){
 void SH2DynSetRegisters(SH2_struct *context, const sh2regs_struct *regs){
   DynarecSh2 *pctx = (DynarecSh2*)context->ext;
   memcpy(pctx->GetGenRegPtr(), regs->R , sizeof(regs->R));
-  pctx->SET_MACH(regs->GBR);
+  pctx->SET_GBR(regs->GBR);
   pctx->SET_VBR(regs->VBR);
   pctx->SET_SR(regs->SR.all);
   pctx->SET_MACH(regs->MACH);

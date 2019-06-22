@@ -715,10 +715,10 @@ x86op_desc asm_list[] =
   opNULL
 }; 
 
-Block *CompileBlocks::Init(Block *dynaCode)
+void CompileBlocks::Init()
 {
-  dynaCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
-  memset((void*)dynaCode, 0, sizeof(Block)*NUMOFBLOCKS);
+  dCode = (Block*)ALLOCATE(sizeof(Block)*NUMOFBLOCKS);
+  memset((void*)dCode, 0, sizeof(Block)*NUMOFBLOCKS);
 
   memset(LookupTable, 0, sizeof(LookupTable));
   memset(LookupTableRom, 0, sizeof(LookupTableRom));
@@ -728,11 +728,11 @@ Block *CompileBlocks::Init(Block *dynaCode)
   blockCount = 0;
   LastMakeBlock = 0;
 
-  g_CompleBlock = dynaCode;
+  g_CompleBlock = dCode;
   for (int i = 0; i < NUMOFBLOCKS; i++ ) {
     g_CompleBlock[i].id = i;
   }
-  return dynaCode;
+  return;
 }
 
 int CompileBlocks::opcodeIndex(u16 op)
