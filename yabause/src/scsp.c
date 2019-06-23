@@ -5149,6 +5149,7 @@ ScspChangeSoundCore (int coreid)
 void
 ScspDeInit (void)
 {
+  ScspUnMuteAudio(1);
   scsp_mute_flags = 0;
   thread_running = 0; 
 #if defined(ASYNC_SCSP)
@@ -5498,7 +5499,7 @@ void ScspAsynMainCpuTime( void * p ){
   now = 0;
   before = 0;
   while (thread_running){
-    while (g_scsp_lock) { YabThreadUSleep(1); }
+    while (g_scsp_lock) { YabThreadUSleep(1000); }
     u64 m68k_done_counter = 0;
     u64 m68k_integer_part = 0;
     u64 m68k_cycle = 0;
@@ -5590,7 +5591,7 @@ void ScspAsynMainRealtime(void * p) {
   now = 0;
   before = 0;
   while (thread_running) {
-    while (g_scsp_lock) { YabThreadUSleep(1); }
+    while (g_scsp_lock) { YabThreadUSleep(1000); }
     // Run 1 sample(44100Hz)
     for (i = 0; i < samplecnt; i += step) {
       MM68KExec(step);
@@ -5878,6 +5879,8 @@ ScspMuteAudio (int flags)
   scsp_mute_flags |= flags;
   if (SNDCore && scsp_mute_flags)
     SNDCore->MuteAudio ();
+
+  g_scsp_lock = 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5888,6 +5891,8 @@ ScspUnMuteAudio (int flags)
   scsp_mute_flags &= ~flags;
   if (SNDCore && (scsp_mute_flags == 0))
     SNDCore->UnMuteAudio ();
+
+  g_scsp_lock = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////////

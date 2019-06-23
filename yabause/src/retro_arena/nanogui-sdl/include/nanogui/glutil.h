@@ -478,6 +478,7 @@ public:
 
     ~GLTexture();
 
+    void load( const unsigned char * buffer, int len ) ;
     void load(const std::string &filename);
 
     void createRGBTexture(int w, int h, GLubyte r, GLubyte g, GLubyte b);

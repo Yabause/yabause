@@ -556,6 +556,40 @@ GLTexture::GLTexture(GLTexture &&texture) :
 GLTexture::~GLTexture() {
 }
 
+void GLTexture::load( const unsigned char * buffer, int len ) {
+    mTextureFileName = "";
+    mPixelData = pixelData(stbi_load_from_memory((const stbi_uc*)buffer,len, &mWidth, &mHeight, &mBpp, 0), stbi_image_free);
+    if (!mPixelData) {
+        throw std::invalid_argument("Can't load from memory");
+    }
+    GLenum internalFormat, format;
+    switch (mBpp) {
+        case 4:
+            internalFormat = GL_RGBA8;
+            format = GL_RGBA;
+            break;
+        case 3:
+            internalFormat = GL_RGB8;
+            format = GL_RGB;
+            break;
+        case 2:
+            internalFormat = GL_RG8;
+            format = GL_RG;
+            break;
+        //case 1:
+            //internalFormat = GL_R8;
+            //format = GL_R;
+        //    break;
+        default:
+            throw std::runtime_error("Unknown image format");
+    }
+    mBpp = 8 * mBpp;
+    glBindTexture(GL_TEXTURE_2D, mTextureId->mTextureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, mWidth, mHeight, 0, format, GL_UNSIGNED_BYTE, mPixelData.get());
+}
+
 void GLTexture::load(const std::string &filename) {
     mTextureFileName = filename;
     mPixelData = pixelData(stbi_load(filename.c_str(), &mWidth, &mHeight, &mBpp, 0), stbi_image_free);
