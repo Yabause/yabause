@@ -68,7 +68,7 @@ after_build:
   #- cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
   #- appveyor PushArtifact %yab_name%.zip
 
-artifacts:	artifacts:
+artifacts:
   - path: 'C:\projects\yabause\win_template\*"
 
 deploy:
