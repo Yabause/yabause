@@ -127,7 +127,7 @@ void SH2Reset(SH2_struct *context)
    int i;
 
    SH2Core->Reset(context);
-   
+
    // Reset general registers
    for (i = 0; i < 15; i++)
       SH2Core->SetGPR(context, i, 0x00000000);
@@ -145,7 +145,7 @@ void SH2Reset(SH2_struct *context)
 
    context->frc.leftover = 0;
    context->frc.shift = 3;
- 
+
    context->wdt.isenable = 0;
    context->wdt.isinterval = 1;
    context->wdt.shift = 1;
@@ -336,7 +336,7 @@ u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
          return context->onchip.TIER;
       case 0x011:
          return context->onchip.FTCSR;
-      case 0x012:         
+      case 0x012:
          return context->onchip.FRC.part.H;
       case 0x013:
          return context->onchip.FRC.part.L;
@@ -544,7 +544,7 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
          return;
       case 0x004:
 //         LOG("Serial Status Register write: %02X\n", val);
-         
+
          if (context->onchip.SCR & 0x20)
          {
             // Transmitter Mode
@@ -557,7 +557,7 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
          }
          return;
       case 0x010:
-        
+
          context->onchip.TIER = (val & 0x8E) | 0x1;
          if ((val & 0x80) && (context == SSH2) && (SSH2->onchip.FTCSR & 0x80)){
             SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
@@ -579,7 +579,7 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
       case 0x014:
          if (!(context->onchip.TOCR & 0x10))
             context->onchip.OCRA = (val << 8) | (context->onchip.OCRA & 0xFF);
-         else                  
+         else
             context->onchip.OCRB = (val << 8) | (context->onchip.OCRB & 0xFF);
          return;
       case 0x015:
@@ -655,7 +655,7 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
                          enableCache(context);
 		 }
 		 else{
-                         disableCache(context);  
+                         disableCache(context);
 		 }
          return;
       case 0x0E0:
@@ -764,7 +764,7 @@ void FASTCALL OnchipWriteWord(SH2_struct *context, u32 addr, u16 val) {
                          enableCache(context);
 		 }
 		 else{
-                         disableCache(context);  
+                         disableCache(context);
 		 }
          return;
       case 0x0E0:
@@ -925,10 +925,10 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
          context->onchip.DVDNTUL = val;
          return;
       case 0x140:
-         context->onchip.BARA.all = val;         
+         context->onchip.BARA.all = val;
          return;
       case 0x144:
-         context->onchip.BAMRA.all = val;         
+         context->onchip.BAMRA.all = val;
          return;
       case 0x180:
          context->onchip.SAR0 = val;
@@ -1042,7 +1042,7 @@ static u8 getLRU(SH2_struct *context, u8 line) {
   if ((context->cacheLRU[line] & 0x04) != 0) way=1;
   if ((context->cacheLRU[line] & 0x02) != 0) way=1;
   if ((context->cacheLRU[line] & 0x01) != 0) way=2;
-  context->cacheLRU[line] = 0;  
+  context->cacheLRU[line] = 0;
   return way;
 }
 
@@ -1279,7 +1279,7 @@ void FRTExec(SH2_struct *context,u32 cycles)
 
    frcold = frctemp = (u32)context->onchip.FRC.all;
    mask = (1 << context->frc.shift) - 1;
-   
+
    // Increment FRC
    frctemp += ((cycles + context->frc.leftover) >> context->frc.shift);
    context->frc.leftover = (cycles + context->frc.leftover) & mask;
@@ -1612,6 +1612,8 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check = { 0, 0 };
    sh2regs_struct regs;
+
+   SH2Reset(context);
 
    if (context->isslave == 1)
       yread(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);

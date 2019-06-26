@@ -133,7 +133,7 @@ int SH2KronosInterpreterInit()
 
    for(j=0; j<0x80000; j++)
      cacheCode[6][j] = SH2undecoded;
-   
+
    for(j=0; j<0x80000; j++) //Special BAckupHandled case
      cacheCode[0][j] = biosDecode;
 
@@ -144,7 +144,7 @@ int SH2KronosInterpreterInit()
       if (((i>>8) == 0x0) || ((i>>8) == 0x2)) {
         switch (i&0xFF)
         {
-          case 0x000: // Bios              
+          case 0x000: // Bios
             krfetchlist[i] = FetchBios;
             cacheId[i] = 0;
             break;
@@ -161,20 +161,20 @@ int SH2KronosInterpreterInit()
             cacheId[i] = 3;
             break;
           case 0x060: // High Work Ram
-          case 0x061: 
-          case 0x062: 
-          case 0x063: 
-          case 0x064: 
-          case 0x065: 
-          case 0x066: 
-          case 0x067: 
-          case 0x068: 
-          case 0x069: 
-          case 0x06A: 
-          case 0x06B: 
-          case 0x06C: 
-          case 0x06D: 
-          case 0x06E: 
+          case 0x061:
+          case 0x062:
+          case 0x063:
+          case 0x064:
+          case 0x065:
+          case 0x066:
+          case 0x067:
+          case 0x068:
+          case 0x069:
+          case 0x06A:
+          case 0x06B:
+          case 0x06C:
+          case 0x06D:
+          case 0x06E:
           case 0x06F:
             krfetchlist[i] = SH2MappedMemoryReadWord;
             cacheId[i] = 4;
@@ -204,6 +204,7 @@ void SH2KronosInterpreterDeInit()
 
 void SH2KronosInterpreterReset(UNUSED SH2_struct *context)
 {
+  SH2KronosInterpreterInit();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -241,7 +242,7 @@ static void showCPUState(SH2_struct *context)
   for (int i = 0; i<16; i++)
     printf("R[%d] = 0x%x\n", i, context->regs.R[i]);
 
-   printf("Cs2Area HIRQ = 0%x\n",  Cs2Area->reg.HIRQ); 
+   printf("Cs2Area HIRQ = 0%x\n",  Cs2Area->reg.HIRQ);
    printf("Cs2Area Disc Changed = %d\n", Cs2Area->isdiskchanged);
    printf("Cs2Area CR1 = 0x%x\n", Cs2Area->reg.CR1);
    printf("Cs2Area CR2 = 0x%x\n", Cs2Area->reg.CR2);
@@ -292,7 +293,7 @@ FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
      }
 #endif
      if((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF]) != (opcodeTable[krfetchlist[id](context, context->regs.PC)]))
-        if ((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode)) 
+        if ((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode))
           printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
 
      if (enableTrace) {
@@ -449,7 +450,7 @@ void SH2KronosInterpreterSendInterrupt(SH2_struct *context, u8 vector, u8 level)
    interrupt_struct tmp;
    LOCK(context);
 
-   if ((context == SSH2) && (yabsys.IsSSH2Running == 0)) return; 
+   if ((context == SSH2) && (yabsys.IsSSH2Running == 0)) return;
    // Make sure interrupt doesn't already exist
    for (i = 0; i < context->NumberOfInterrupts; i++)
    {
