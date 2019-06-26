@@ -51,15 +51,25 @@ build_script:
 
 # make a distributable package of the build output
 after_build:
+  #- ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
+  #- ps: $git_hash_date += "-"
+  #- ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
+  #- ps: ${env:yab_name} = "yabasanhiro-${git_hash_date}-${env:compiler_type}"
   - cd C:\projects\yabause\yabause\build
+  - copy src/qt/Release/yabasanshiro.exe ../../win_template/
+  - cd ../../
+  #- rename win_template yab_name
 
   # zip all output files and push the artifact, name it with the commit, date and compiler type
-  - ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
-  - ps: $git_hash_date += "-"
-  - ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
-  - ps: ${env:yab_name} = "yabause-${git_hash_date}-${env:compiler_type}"
-  - cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
-  - appveyor PushArtifact %yab_name%.zip
+  #- ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
+  #- ps: $git_hash_date += "-"
+  #- ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
+  #- ps: ${env:yab_name} = "yabause-${git_hash_date}-${env:compiler_type}"
+  #- cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
+  #- appveyor PushArtifact %yab_name%.zip
+
+artifacts:	artifacts:
+  - path: 'C:\projects\yabause\win_template\*"
 
 deploy:
   release: YabaSanshiro-v$(appveyor_build_version)
