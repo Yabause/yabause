@@ -92,6 +92,16 @@ else ifeq ($(platform), jetson-nano)
 	HAVE_SSE = 0
 	FLAGS += -march=armv8-a+crc -mtune=cortex-a57
 
+# Switch Lakka (arm64)
+else ifeq ($(platform), arm64)
+	override platform += unix
+	TARGET := $(TARGET_NAME)_libretro.so
+	fpic := -fPIC
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+	LDFLAGS += -lpthread -lGL
+	ARCH_IS_LINUX = 1
+	HAVE_SSE = 0
+
 # RockPro64
 else ifneq (,$(findstring rockpro64,$(platform)))
 	override platform += unix
@@ -323,7 +333,7 @@ FLAGS += $(fpic)
 INCFLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 
 WARNINGS :=
-FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) -DVERSION=\"1.6.0\" \
+FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) $(WARNINGS) -DVERSION=\"1.7.0\" \
 	-DNO_CLI -DDYNAREC_KRONOS=1 -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 \
 	-DHAVE_FLOORF=1 -DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES \
 	-DSPRITE_CACHE=1 -DHAVE_LIBGL -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1

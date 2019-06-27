@@ -7343,7 +7343,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 #endif
           _Ygl->rbg_use_compute_shader = value;
       } else {
-        YuiMsg("Compute shader usage is not possible - fallback on CPU tesselation\n");
+        YuiMsg("Compute shader usage is not possible - disabling\n");
         _Ygl->rbg_use_compute_shader = COMPUTE_RBG_OFF;
       }
     } else {
