@@ -106,6 +106,12 @@ if (YAB_WANT_ASYNC_VDP1_TEXTURE)
 	add_definitions(-DVDP1_TEXTURE_ASYNC=1)
 endif()
 
+option(YAB_WANT_VDP2_BLIT_CS "Enable last blitting of vdp2 in compute shader" OFF)
+if (YAB_WANT_VDP2_BLIT_CS)
+	add_definitions(-DVDP2_BLIT_CS=1)
+endif()
+
+
 option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
 if (YAB_WANT_ASAN_DEBUG)
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
@@ -338,6 +344,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				yglshaderes.c
         upscale_shader.c
 				rbg_compute.cpp
+				vdp2_compute.cpp
 			)
 		endif()
         include(FindGLEW)
@@ -355,7 +362,8 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				ygles.c
 				yglshaderes.c
 				rbg_compute.cpp
-                                upscale_shader.c )
+				vdp2_compute.cpp
+        upscale_shader.c )
 		endif()
 	endif(OPENGL_FOUND)
 endif ()

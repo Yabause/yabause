@@ -3412,14 +3412,12 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   GlWidth = w;
   GlHeight = h;
 
-  setupMaxSize();
+  SetSaturnResolution(vdp2width, vdp2height);
 
   _Ygl->originx = originx;
   _Ygl->originy = originy;
 
   glViewport(originx, originy, GlWidth, GlHeight);
-
-//  SetSaturnResolution(vdp2width, vdp2height);
 
 }
 
@@ -7348,6 +7346,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
       }
     } else {
       _Ygl->rbg_use_compute_shader = value;
+      SetSaturnResolution(vdp2width, vdp2height);
     }
   break;
   case VDP_SETTING_ASPECT_RATIO:

@@ -600,6 +600,8 @@ typedef struct {
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
 
+   GLuint compute_tex;
+
    GLuint back_fbo;
    GLuint back_fbotex[2];
 
@@ -637,7 +639,6 @@ typedef struct {
    YglMatrix mtxModelView;
 
    YglProgram windowpg;
-   YglProgram renderfb;
 
    YglLevel * vdp1levels;
    YglLevel * vdp2levels;
@@ -652,7 +653,7 @@ typedef struct {
 
    u32 vdp2reg_tex;
    u32 vdp2reg_pbo;
-   u8 * vdp2reg_buf;
+   u8* vdp2reg_buf;
    u8 * vdp2buf;
 
    u32 back_tex;
@@ -671,7 +672,6 @@ typedef struct {
    GLsync syncVdp1[2];
    GLuint default_fbo;
    YglPerLineInfo bg[enBGMAX];
-   u32 targetfbo;
    int vpd1_running;
    int needVdp1Render;
    GLint m_viewport[4];
@@ -708,6 +708,7 @@ typedef struct {
    int vdp1_stencil_mode;
 
    int rbg_use_compute_shader;
+   int vdp2_use_compute_shader;
 
 } Ygl;
 
@@ -773,7 +774,9 @@ extern int YglBlitSimple(int texture, int blend);
 extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 
-int Ygl_uniformVDP2DrawFramebuffer( void * p, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
+extern u8 * YglGetVDP2RegPointer();
+
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
 void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);
@@ -825,6 +828,8 @@ extern void RBGGenerator_resize(int width, int height);
 extern void RBGGenerator_update(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs );
 extern GLuint RBGGenerator_getTexture( int id );
 extern void RBGGenerator_onFinish();
+
+extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
 
 
 // Keep a way to switch to gles shaders for embedded devices
