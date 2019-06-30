@@ -3724,6 +3724,7 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
 
   if (originx == 0 && originy == 0 && w == 0 && h == 0 && on == 0) {
     YglGLInit(8, 8); // Just rebuild texture
+    return;
   }
 
   _VIDOGLIsFullscreen = on;

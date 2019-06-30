@@ -69,12 +69,21 @@ public:
     std::function<void(bool)> changeCallback() const { return mChangeCallback; }
     void setChangeCallback(const std::function<void(bool)> &callback) { mChangeCallback = callback; }
 
+    /// On Focus
+    std::function<void()> onForcusCallback() const { return mOnFocusCallback; }
+    void setOnSetFocusCallback(const std::function<void()> &callback) { mOnFocusCallback = callback; }
+
+    /// On Focus
+    std::function<void()> onLeaveCallback() const { return mOnLeaveCallback; }
+    void setOnLeaveCallback(const std::function<void()> &callback) { mOnLeaveCallback = callback; }
+
     /// Set the button group (for radio buttons)
     void setButtonGroup(const std::vector<Button *> &buttonGroup) { mButtonGroup = buttonGroup; }
     const std::vector<Button *> &buttonGroup() const { return mButtonGroup; }
 
     virtual Vector2i preferredSize(NVGcontext *ctx) const override;
     virtual bool mouseButtonEvent(const Vector2i &p, int button, bool down, int modifiers) override;
+    virtual bool mouseEnterEvent(const Vector2i &p, bool enter) override;
     virtual void draw(NVGcontext *ctx) override;
 
     virtual void save(Serializer &s) const override;
@@ -95,6 +104,8 @@ protected:
     Color mTextColor;
     std::function<void()> mCallback;
     std::function<void(bool)> mChangeCallback;
+    std::function<void()> mOnFocusCallback;
+    std::function<void()> mOnLeaveCallback;
     std::vector<Button *> mButtonGroup;
 };
 

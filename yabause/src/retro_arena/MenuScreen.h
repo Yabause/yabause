@@ -64,13 +64,17 @@ public:
     std::map<SDL_JoystickID, SDL_Joystick*> joysticks_;
 
     int imageid_ = 0;
+    int imageid_tmp_ = 0;
     int imgw_ = 0;
     int imgh_ = 0;
     NVGpaint imgPaint_ = {};     
     void setBackGroundImage( const std::string & fname );
+    void setTmpBackGroundImage( const std::string & fname );
+    void setDefalutBackGroundImage();
 
     nanogui::Window *window;
     nanogui::Window *swindow;
+    nanogui::Window *imageWindow;
     
     
     MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname  );
@@ -101,6 +105,11 @@ public:
     std::string current_game_path_;
     void setCurrentGamePath( const char * path ){ current_game_path_ = path; }
 
+    uint32_t save_state_ = 0;
+    void setSaveStateEventCode( uint32_t code ){ save_state_ = code; }
+
+    uint32_t load_state_ = 0;
+    void setLoadStateEventCode( uint32_t code ){ load_state_ = code; }
 
     void showInputCheckDialog( const std::string & key );
 
@@ -122,6 +131,12 @@ public:
     }
     void getSelectedGUID( int user_index, std::string & selguid );
 
+
+    //void showSaveStateDialog( Widget * parent, Widget * toback );
+    void setCurrentGameId( const std::string & id ){ cuurent_game_id_ = id; }
+    void showSaveStateDialog( Popup *popup );
+    void showLoadStateDialog( Popup *popup );
+
 public:  // events
     int onBackButtonPressed();    
     int onShow();    
@@ -131,5 +146,6 @@ protected:
     std::string current_user_;    
     std::string current_key_; 
     std::string config_file_;
+    std::string cuurent_game_id_;
 
 };

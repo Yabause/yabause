@@ -220,6 +220,16 @@ void Button::draw(NVGcontext *ctx) {
     nvgText(ctx, textPos.x(), textPos.y() + 1, mCaption.c_str(), nullptr);
 }
 
+bool Button::mouseEnterEvent(const Vector2i &p, bool enter){
+    if( enter == true ){
+        if (mOnFocusCallback) mOnFocusCallback();
+    }else{
+        if (mOnLeaveCallback) mOnLeaveCallback();
+    }
+    return Widget::mouseEnterEvent(p, enter);
+}
+
+
 void Button::save(Serializer &s) const {
     Widget::save(s);
     s.set("caption", mCaption);
