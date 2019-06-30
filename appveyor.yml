@@ -8,18 +8,30 @@ environment:
   matrix:
     # Visual Studio build
     - generator: "Visual Studio 14 2015"
-      CMAKE_PREFIX_PATH: C:\Qt\5.8\msvc2015
+      QT_PATH: "C:/Qt/5.9.7/msvc2015"
+      CMAKE_PREFIX_PATH: "%QT_PATH%"
       compiler_type: "vs14-x32"
       sdl_filename: SDL2-devel-2.0.3-VC.zip
       sdl_arch: x86
       cmake_args: >
-        -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE -DYAB_WANT_DIRECTINPUT=TRUE -DYAB_WANT_DIRECTSOUND=TRUE -DYAB_WANT_SDL=TRUE
+        -DYAB_WANT_DYNAREC_DEVMIYAX=TRUE 
+        -DYAB_WANT_DIRECTINPUT=TRUE 
+        -DYAB_WANT_DIRECTSOUND=TRUE 
+        -DYAB_WANT_SDL=TRUE
         -DDirectX_ERR_LIBRARY="%DXSDK_DIR%/Lib/x86/DxErr.lib"
         -DDirectX_GUID_LIBRARY="%DXSDK_DIR%/Lib/x86/dxguid.lib"
         -DDirectX_INPUT8_LIBRARY="%DXSDK_DIR%/Lib/x86/dinput8.lib"
         -DDirectX_SOUND_LIBRARY="%DXSDK_DIR%/Lib/x86/dsound.lib"
         -DDirectX_XINPUT_LIBRARY="%DXSDK_DIR%/Lib/x86/XInput.lib"
         -DSH2_DYNAREC=FALSE
+        -DYAB_PORTS=qt
+        -DYAB_WANT_C68K=FALSE
+        -DSH2_DYNAREC=FALSE
+        -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib 
+        -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ 
+        -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib
+        -DMINI18N_INCLUDE_DIR=%APPVEYOR_BUILD_FOLDER%/mini18n/src
+        -DMINI18N_LIBRARY=%APPVEYOR_BUILD_FOLDER%/mini18n/build/src/Release/mini18n-static.lib
 
 shallow_clone: true
 
@@ -40,13 +52,19 @@ before_build:
   # decompress it, shorten 7z output with FIND
   - 7z x %sdl_filename%  | FIND /V "ing  "
 
-  # generate project files or makefiles
+
+build_script:
+  - cd C:\projects\yabause\mini18n
+  - mkdir build
+  - cd build
+  - cmake -G "%generator%" ..
+  - cd C:\projects\yabause\mini18n\build
+  - msbuild mini18n.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
   - cd C:\projects\yabause\yabause
   - mkdir build
   - cd build
-  - cmake -G "%generator%" %cmake_args% -DSDL2MAIN_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2main.lib -DSDL2_INCLUDE_DIR=C:/SDL2-2.0.3/include/ -DSDL2_LIBRARY=C:/SDL2-2.0.3/lib/%sdl_arch%/SDL2.lib ..
-
-build_script:
+  - cmake -G "%generator%" %cmake_args% ..
+  - cd C:\projects\yabause\yabause\build
   - msbuild YabaSanshiro.sln /p:configuration=Release /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 
 # make a distributable package of the build output
@@ -55,10 +73,22 @@ after_build:
   #- ps: $git_hash_date += "-"
   #- ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
   #- ps: ${env:yab_name} = "yabasanhiro-${git_hash_date}-${env:compiler_type}"
-  - cd C:\projects\yabause\yabause\build
-  - copy src/qt/Release/yabasanshiro.exe ../../win_template/
-  - cd ../../
-  #- rename win_template yab_name
+  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Core.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Gui.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Multimedia.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Network.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5OpenGL.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: Copy-Item ${env:QT_PATH}\bin\Qt5Widgets.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: Copy-Item ${env:QT_PATH}\plugins\platforms\*.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\platforms\
+  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\mini18n\build\src\Release\mini18n.dll ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\yabause\l10n\* ${env:APPVEYOR_BUILD_FOLDER}\win_template\trans\
+  - ps: Copy-Item ${env:APPVEYOR_BUILD_FOLDER}\yabause\build\src\qt\Release\yabasanshiro.exe ${env:APPVEYOR_BUILD_FOLDER}\win_template\
+  - ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
+  - ps: $git_hash_date += "-"
+  - ps: $git_hash_date += ${env:APPVEYOR_REPO_COMMIT_TIMESTAMP}.substring(0,10)
+  - ps: ${env:yab_name} = "yabasanshiro-${git_hash_date}-${env:compiler_type}"
+  - ps: Compress-Archive ${env:APPVEYOR_BUILD_FOLDER}\win_template\* ./${env:yab_name}.zip -Force
+  - appveyor PushArtifact %yab_name%.zip
 
   # zip all output files and push the artifact, name it with the commit, date and compiler type
   #- ps: $git_hash_date = ${env:APPVEYOR_REPO_COMMIT}.substring(0, 7)
@@ -68,8 +98,9 @@ after_build:
   #- cmd: cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=%yab_name%
   #- appveyor PushArtifact %yab_name%.zip
 
-artifacts:
-  - path: 'C:\projects\yabause\win_template\*"
+#artifacts:
+#  - path: 'C:\projects\yabause\win_template\*'
+#    name: yabasanshiro_win32
 
 deploy:
   release: YabaSanshiro-v$(appveyor_build_version)
