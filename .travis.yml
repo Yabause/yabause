@@ -20,6 +20,7 @@ matrix:
             - libgles2-mesa-dev  
             - libsdl2-dev
             - libcurl4-openssl-dev
+            - libboost-dev
     
       env:
        - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
