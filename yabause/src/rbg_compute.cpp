@@ -2470,8 +2470,8 @@ DEBUGWIP("Init\n");
 	ErrorHandle("glBufferSubData");
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_paraA_);
 
-	uniform.hres_scale = (float)_Ygl->rheight/(float)_Ygl->height;
-	uniform.vres_scale = (float)_Ygl->rwidth/(float)_Ygl->width;
+	uniform.vres_scale = (float)_Ygl->rheight/(float)_Ygl->height;
+	uniform.hres_scale = (float)_Ygl->rwidth/(float)_Ygl->width;
 	uniform.cellw = rbg->info.cellw;
 	uniform.cellh = rbg->info.cellh;
 	uniform.paladdr_ = rbg->info.paladdr;
