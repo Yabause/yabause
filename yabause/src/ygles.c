@@ -4068,12 +4068,12 @@ void YglChangeResolution(int w, int h) {
   _Ygl->width = w * _Ygl->resolution_mode;
   _Ygl->height = h * _Ygl->resolution_mode;
 
+  _Ygl->rwidth = w;
+  _Ygl->rheight = h;
+
   setupMaxSize();
 
   rebuild_frame_buffer = 1;
-
-  _Ygl->rwidth = w;
-  _Ygl->rheight = h;
 }
 
 void YglSetDensity(int d) {

@@ -7346,8 +7346,8 @@ void VIDOGLSetSettingValueMode(int type, int value) {
       }
     } else {
       _Ygl->rbg_use_compute_shader = value;
-      SetSaturnResolution(vdp2width, vdp2height);
     }
+    SetSaturnResolution(vdp2width, vdp2height);
   break;
   case VDP_SETTING_ASPECT_RATIO:
     _Ygl->stretch = value;
