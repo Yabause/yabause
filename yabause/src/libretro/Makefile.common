@@ -84,7 +84,8 @@ else
 	endif
 endif
 
-SOURCES_CXX := $(SOURCE_DIR)/rbg_compute.cpp
+SOURCES_CXX := $(SOURCE_DIR)/rbg_compute.cpp \
+	$(SOURCE_DIR)/vdp2_compute.cpp
 
 ifeq ($(HAVE_MUSASHI), 1)
 	SOURCES_C += $(SOURCE_DIR)/musashi/m68kcpu.c \
