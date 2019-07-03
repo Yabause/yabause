@@ -33,6 +33,7 @@ int main( int argc, char** argv )
 	QApplication app( argc, argv );
 	// init application
 	app.setApplicationName( QString( "Kronos v%1" ).arg( VERSION ) );
+	app.setAttribute(Qt::AA_UseDesktopOpenGL);
 	// init settings
 	Settings::setIniInformations();
 #ifdef HAVE_LIBMINI18N
