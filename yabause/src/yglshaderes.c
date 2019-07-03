@@ -915,7 +915,7 @@ SHADER_VERSION
 "  if( spriteColor.a == 0.0 ) discard;\n"
 "  int shadow = 0;\n"
 "  int additionnal = int(spriteColor.a * 255.0)&0xF8;\n"
-"  if (additionnal == 0x88) {\n"
+"  if (additionnal == 0xC0) {\n"
 "    if (((int(spriteColor.b * 255.0)&0xFE)==0x80) && (spriteColor.rg == vec2(0.0))) shadow = 1;\n"
 "  }\n"
 "  if (shadow != 0) {\n"
@@ -1467,7 +1467,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "        ret.meshPrio = int(texelFetch(s_vdp2reg, ivec2(primesh+8+line,0), 0).r*255.0);\n"
 "        return ret; \n"
 "      } // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
-"      if( colindex != 0 || prinumber != 0) {\n"
+"      if(( colindex != 0 || prinumber != 0) && ((additionalAttr & 0x80) == 0)){\n"
 "        colindex = colindex + u_color_ram_offset; \n"
 "        txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
 "        if (txcol.a != 0.0) msb = 1;\n" //linked to VDP2 ColorRam alpha management
@@ -2236,7 +2236,7 @@ int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* var
   pgid += mode-NONE;
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
-  
+
   if (_prgid[pgid] == 0) {
     if (YglInitDrawFrameBufferShaders(pgid) != 0) {
       return -1;
