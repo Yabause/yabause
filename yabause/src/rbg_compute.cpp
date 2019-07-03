@@ -129,15 +129,6 @@ SHADER_VERSION_COMPUTE
 "  uint specialprimode;\n"
 "  uint specialfunction;\n"
 "};\n"
-// " struct vdp2WindowInfo\n"
-// "{\n"
-// "  int WinShowLine;\n"
-// "  int WinHStart;\n"
-// "  int WinHEnd;\n"
-// "};\n"
-// "layout(std430, binding = 4) readonly buffer windowinfo { \n"
-// "  vdp2WindowInfo pWinInfo[];\n"
-// "};\n"
 "layout(std430, binding = 5) readonly buffer VDP2C { uint cram[]; };\n"
 "layout(std430, binding = 6) readonly buffer ROTW { uint  rotWin[]; };\n"
 " int GetKValue( int paramid, float posx, float posy, out float ky, out uint lineaddr ){ \n"
@@ -157,7 +148,7 @@ SHADER_VERSION_COMPUTE
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
 "	   if((kdata&0x4000u)!=0u) ky=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0; else ky=float(kdata&0x7FFFu)/1024.0;\n"
 "  }else{\n"
-//Revoir la gestion de la vram
+//powerslave
 "    uint addr = ( uint( int(para[paramid].coeftbladdr) + (kindex<<2))&0x7FFFFu); \n"
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
@@ -658,7 +649,7 @@ const char prg_generate_rbg_line_end[] =
 
 
 
-
+//Powerslave
 const GLchar * a_prg_rbg_0_2w_bitmap[] = {
 	prg_generate_rbg,
 	prg_rbg_rpmd0_2w,
@@ -1738,6 +1729,7 @@ DEBUGWIP("Init\n");
 						break;
 					}
 					case 1: { // SF3S1( Initial )
+						//Powerslave
 						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_bitmap_8bpp_);
 						break;
 					}
@@ -2011,6 +2003,7 @@ DEBUGWIP("Init\n");
 							break;
 						}
 						case 1: {
+							//Mass destruction
 							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_2_2w_bitmap_8bpp_);
 							break;
 						}
