@@ -810,7 +810,7 @@ void YglSetBackColor(int size);
 void YglGetWindowPointer(int id);
 void YglSetWindow(int id);
 
-int Ygl_uniformWindow(void * p );
+int Ygl_uniformWindow(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id);
 int YglProgramInit();
 int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );

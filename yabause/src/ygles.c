@@ -3051,7 +3051,7 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
            _Ygl->use_win[i] = 1;
            glDrawBuffers(1, &DrawBuffers[i]);
            glClearBufferfv(GL_COLOR, 0, col);
-           Ygl_uniformWindow(&_Ygl->windowpg);
+           Ygl_uniformWindow(&_Ygl->windowpg, NULL, NULL, 0);
 
            //Draw color///
            glActiveTexture(GL_TEXTURE0);
@@ -3110,7 +3110,7 @@ void YglSetCCWindow(Vdp2 *varVdp2Regs)
       _Ygl->use_cc_win = 1;
       glDrawBuffers(1, &DrawBuffers[0]);
       glClearBufferfv(GL_COLOR, 0, col);
-      Ygl_uniformWindow(&_Ygl->windowpg);
+      Ygl_uniformWindow(&_Ygl->windowpg, NULL, NULL, 0);
       glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
 
       //Draw color///
