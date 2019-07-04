@@ -1154,14 +1154,17 @@ SHADER_VERSION
 "out vec4 fragColorAttr; \n"
 "void main() {    \n"
 "  int alpha = 0x0;\n"
+"  int prio = 0;"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  if( spriteColor.a == 0.0 ) discard;         \n"
+"  prio = (int(spriteColor.a *255.0) & 0x7);\n"
 "  fragColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+"  fragColor.a = float((int(fragColor.a *255.0) & 0xF8)|prio)/255.0;\n"
 "  fragColorAttr.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));\n"
 "  fragColorAttr.b = float(int(fragColorAttr.b*255.0)&0xFE)/255.0;\n"
 "  if ((int(spriteColor.a * 255.0) & 0x40) == 0) alpha = 0x08;\n"
-"  alpha = alpha | 0x40 | (int(spriteColor.a *255.0) & 0x7);\n"
+"  alpha = alpha | 0x40 | prio;\n"
 "  fragColorAttr.a = float(alpha)/255.0;\n"
 "}\n";
 
