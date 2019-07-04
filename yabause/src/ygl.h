@@ -817,8 +817,10 @@ int YglProgramChange( YglLevel * level, int prgid );
 int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
 
 int YglGenerateOriginalBuffer();
+int YglGenerateComputeBuffer();
 
 int YglSetupWindow(YglProgram * prg);
+int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs);
 
 void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
@@ -829,7 +831,9 @@ extern void RBGGenerator_update(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs );
 extern GLuint RBGGenerator_getTexture( int id );
 extern void RBGGenerator_onFinish();
 
+extern void VDP2Generator_init(int width, int height);
 extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
+extern void VDP2Generator_resize(int width, int height);
 
 
 // Keep a way to switch to gles shaders for embedded devices
