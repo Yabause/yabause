@@ -688,7 +688,7 @@ const GLchar Yglprg_window_f[] =
       "}  \n";
 const GLchar * pYglprg_window_f[] = {Yglprg_window_f, NULL};
 
-int Ygl_uniformWindow(void * p )
+int Ygl_uniformWindow(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
    YglProgram * prg;
    prg = p;
