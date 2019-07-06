@@ -4072,8 +4072,6 @@ void YglChangeResolution(int w, int h) {
   _Ygl->rheight = h;
 
   setupMaxSize();
-
-  rebuild_frame_buffer = 1;
 }
 
 void YglSetDensity(int d) {
