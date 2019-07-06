@@ -299,6 +299,8 @@ static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
 static int id_normal_s_window = -1;
 static int id_normal_iswindow = -1;
+static int id_normal_vheight = -1;
+static int id_normal_emu_height = -1;
 
 
 int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
@@ -312,6 +314,8 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
   glUniform1i(id_normal_s_window, 3);
   glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
+  glUniform1i(id_normal_vheight, (float)_Ygl->rheight);
+  glUniform1i(id_normal_emu_height,  (float)_Ygl->rheight / (float)_Ygl->rheight);
   return 0;
 }
 
@@ -2387,6 +2391,8 @@ int YglProgramInit()
   id_normal_s_window = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_window");
   id_normal_iswindow = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"is_window");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_mvpMatrix");
+  id_normal_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_vheight");
+  id_normal_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_emu_height");
 
    YGLLOG("PG_VDP2_NORMAL_CRAM\n");
 
