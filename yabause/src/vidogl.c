@@ -2733,7 +2733,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
     rbg->vres *= _Ygl->heightRatio;
 
     RBGGenerator_init(_Ygl->width, _Ygl->height);
-  } 
+  }
 
   info->vertices[0] = 0;
   info->vertices[1] = (screenHeight * info->startLine)/yabsys.VBlankLineCount;
@@ -2975,8 +2975,12 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 	  return;
   }
 
-  const float vstep = 1.0 / _Ygl->heightRatio;
-  const float hstep = 1.0 /  _Ygl->widthRatio;
+  float vstep = 1.0;
+  float hstep = 1.0;
+  if (rbg->use_cs){
+    vstep /= _Ygl->heightRatio;
+    hstep /= _Ygl->widthRatio;
+  }
   j = 0.0f;
  // for (j = vstart; j < vstart+vres; j++)
   for (int jj = vstart; jj < vstart+rbg->vres; jj++)
