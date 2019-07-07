@@ -2716,33 +2716,33 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   int lineInc = varVdp2Regs->LCTA.part.U & 0x8000 ? 2 : 0;
   int linecl = 0xFF;
   Vdp2 * regs;
+  int screenHeight = _Ygl->rheight;
+  int screenWidth  = _Ygl->rwidth;
   if ((varVdp2Regs->CCCTL >> 5) & 0x01) {
     linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3);
   }
 
+    if (_Ygl->rheight >= 448) lineInc <<= 1;
+    if (_Ygl->rheight >= 448) rbg->vres = (_Ygl->rheight >> 1); else rbg->vres = _Ygl->rheight;
+    if (_Ygl->rwidth >= 640) rbg->hres = (_Ygl->rwidth >> 1); else rbg->hres = _Ygl->rwidth;
+
+
   if (rbg->use_cs) {
-    if (_Ygl->rheight >= 448) lineInc <<= 1;
-    if (_Ygl->rheight >= 448) rbg->vres = (_Ygl->height >> 1);
-    else rbg->vres = _Ygl->height;
-    if (_Ygl->rwidth >= 640) rbg->hres = (_Ygl->width >> 1);
-    else rbg->hres = _Ygl->width;
-	  RBGGenerator_init(_Ygl->width, _Ygl->height);
-  } else {
-    if (_Ygl->rheight >= 448) lineInc <<= 1;
-    if (_Ygl->rheight >= 448) rbg->vres = (_Ygl->rheight >> 1);
-    else rbg->vres = _Ygl->rheight;
-    if (_Ygl->rwidth >= 640) rbg->hres = (_Ygl->rwidth >> 1);
-    else rbg->hres = _Ygl->rwidth;
+    rbg->hres *= _Ygl->widthRatio;
+    rbg->vres *= _Ygl->heightRatio;
+    //screenHeight = _Ygl->height;
+    //screenWidth  = _Ygl->width;
+    RBGGenerator_init(_Ygl->width, _Ygl->height);
   }
 
   info->vertices[0] = 0;
-  info->vertices[1] = (_Ygl->rheight * info->startLine)/yabsys.VBlankLineCount;
-  info->vertices[2] = _Ygl->rwidth;
-  info->vertices[3] = (_Ygl->rheight * info->startLine)/yabsys.VBlankLineCount;
-  info->vertices[4] = _Ygl->rwidth;
-  info->vertices[5] = (_Ygl->rheight * info->endLine)/yabsys.VBlankLineCount;
+  info->vertices[1] = (screenHeight * info->startLine)/yabsys.VBlankLineCount;
+  info->vertices[2] = screenWidth;
+  info->vertices[3] = (screenHeight * info->startLine)/yabsys.VBlankLineCount;
+  info->vertices[4] = screenWidth;
+  info->vertices[5] = (screenHeight * info->endLine)/yabsys.VBlankLineCount;
   info->vertices[6] = 0;
-  info->vertices[7] = (_Ygl->rheight * info->endLine)/yabsys.VBlankLineCount;
+  info->vertices[7] = (screenHeight * info->endLine)/yabsys.VBlankLineCount;
   cellw = info->cellw;
   cellh = info->cellh;
   info->cellw = rbg->hres;
@@ -2884,7 +2884,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   YglTexture *texture = &rbg->texture;
   YglTexture *line_texture = &rbg->line_texture;
 
-  int i, j;
+  float i, j;
   int x, y;
   int cellw, cellh;
   int oldcellx = -1, oldcelly = -1;
@@ -2904,6 +2904,11 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   vres = rbg->vres * (rbg->info.endLine - rbg->info.startLine)/yabsys.VBlankLineCount;
   vstart = rbg->vres * rbg->info.startLine/yabsys.VBlankLineCount;
   hres = rbg->hres;
+
+  vres /= _Ygl->heightRatio;
+  vstart /= _Ygl->heightRatio;
+  hres /= _Ygl->widthRatio;
+
   cellw = rbg->info.cellw;
   cellh = rbg->info.cellh;
 
@@ -2943,10 +2948,10 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   if (rbg->use_cs) {
 
 	  if (info->LineColorBase != 0) {
-		  const float vstep = 1.0;
+		  const float vstep = 1.0 / _Ygl->heightRatio;
 		  j = 0.0f;
       int lvres = rbg->vres;
-      if (rbg->vres >= 480) {
+      if (vres >= 480) {
         lvres >>= 1;
       }
 		  for (int jj = 0; jj < lvres; jj++) {
@@ -2954,7 +2959,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 				  rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc*(int)(j));
 				  *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
 				  line_texture->textdata++;
-          if (rbg->vres >= 480) {
+          if (vres >= 480) {
             *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
             line_texture->textdata++;
           }
@@ -2970,7 +2975,11 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 	  return;
   }
 
-  for (j = vstart; j < vstart+vres; j++)
+  const float vstep = 1.0 / _Ygl->heightRatio;
+  const float hstep = 1.0 /  _Ygl->widthRatio;
+  j = 0.0f;
+ // for (j = vstart; j < vstart+vres; j++)
+  for (int jj = vstart; jj < vstart+rbg->vres; jj++)
   {
 
     if (rgb_type == 0) {
@@ -3012,7 +3021,9 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     }
 
     //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
-    for (i = 0; i < hres; i++)
+   // for (i = 0; i < hres; i++)
+    i = 0.0;
+    for( int ii=0; ii< rbg->hres; ii++ )
     {
       switch (varVdp2Regs->RPMD | rgb_type ) {
       case 0:
@@ -3055,7 +3066,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
         break;
       default:
-        parameter = info->GetRParam(rbg, i, j, varVdp2Regs);
+        parameter = info->GetRParam(rbg, (int)i, (int)j, varVdp2Regs);
         break;
       }
       if (parameter == NULL)
@@ -3064,9 +3075,10 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         continue;
       }
 
-      h = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
-      v = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
-
+      float fh = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
+      float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
+      h = fh;
+      v = fv;
       if (info->isbitmap)
       {
 
@@ -3276,8 +3288,10 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
       }
       *(texture->textdata++) = color; //Already in VDP2 format due to Vdp2RotationFetchPixel
+      i += hstep;
     }
     texture->textdata += texture->w;
+     j += vstep;
     }
 
     rbg->info.flipfunction = 0;

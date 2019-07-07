@@ -3622,10 +3622,14 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
   for (int i = 0; i < SPRITE; i++) {
     if ((i == RBG0) && (_Ygl->rbg_use_compute_shader)) {
+      glViewport(0, 0, _Ygl->width, _Ygl->height);
+      glScissor(0, 0, _Ygl->width, _Ygl->height);
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->rbg_compute_fbo);
       glDrawBuffers(1, &DrawBuffers[0]);
       glClearBufferfv(GL_COLOR, 0, col);
     } else {
+      glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+      glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
       glDrawBuffers(1, &DrawBuffers[i]);
       glClearBufferfv(GL_COLOR, 0, col);
