@@ -4125,6 +4125,9 @@ void YglChangeResolution(int w, int h) {
   _Ygl->widthRatio = (float)_Ygl->width/(float)_Ygl->rwidth;
   _Ygl->heightRatio = (float)_Ygl->height/(float)_Ygl->rheight;
 
+  if (_Ygl->rheight >= 448) _Ygl->heightRatio *= 2.0f;
+  if (_Ygl->rwidth >= 640) _Ygl->widthRatio *= 2.0f;
+
   YglOrtho(&_Ygl->rbgModelView, 0.0f, (float)_Ygl->width, (float)_Ygl->height, 0.0f, 10.0f, 0.0f);
 }
 
