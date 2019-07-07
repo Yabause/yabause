@@ -2901,9 +2901,9 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   }
 
   if (_Ygl->rheight >= 448) lineInc <<= 1;
-  vres = rbg->vres * ((float)_Ygl->rheight/(float)_Ygl->height) * (rbg->info.endLine - rbg->info.startLine)/yabsys.VBlankLineCount;
-  vstart = rbg->vres * ((float)_Ygl->rheight/(float)_Ygl->height) * rbg->info.startLine/yabsys.VBlankLineCount;
-  hres = rbg->hres * ((float)_Ygl->rwidth/(float)_Ygl->width);
+  vres = rbg->vres * (rbg->info.endLine - rbg->info.startLine)/yabsys.VBlankLineCount;
+  vstart = rbg->vres * rbg->info.startLine/yabsys.VBlankLineCount;
+  hres = rbg->hres;
   cellw = rbg->info.cellw;
   cellh = rbg->info.cellh;
 
@@ -2943,19 +2943,18 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   if (rbg->use_cs) {
 
 	  if (info->LineColorBase != 0) {
-      const float vstep = 1.0 / ((float)_Ygl->rheight/(float)_Ygl->height);
+		  const float vstep = 1.0;
 		  j = 0.0f;
       int lvres = rbg->vres;
-      if (vres >= 480) {
+      if (rbg->vres >= 480) {
         lvres >>= 1;
       }
-
 		  for (int jj = 0; jj < lvres; jj++) {
 			  if ((varVdp2Regs->LCTA.part.U & 0x8000) != 0) {
 				  rbg->LineColorRamAdress = T1ReadWord(Vdp2Ram, info->LineColorBase + lineInc*(int)(j));
 				  *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
 				  line_texture->textdata++;
-          if (vres >= 480) {
+          if (rbg->vres >= 480) {
             *line_texture->textdata = rbg->LineColorRamAdress | (linecl << 24);
             line_texture->textdata++;
           }
