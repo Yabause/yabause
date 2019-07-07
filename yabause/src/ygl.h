@@ -610,6 +610,9 @@ typedef struct {
    GLuint screen_fbo;
    GLuint screen_fbotex[SPRITE];
 
+   GLuint rbg_compute_fbo;
+   GLuint rbg_compute_fbotex;
+
    GLuint window_fbo;
    GLuint window_fbotex[enBGMAX];
 
