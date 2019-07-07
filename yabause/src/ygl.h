@@ -642,6 +642,7 @@ typedef struct {
    int Win_op[enBGMAX];
 
    YglMatrix mtxModelView;
+   YglMatrix rbgModelView;
 
    YglProgram windowpg;
 

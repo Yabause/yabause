@@ -4057,6 +4057,7 @@ void setupMaxSize() {
 
 void YglChangeResolution(int w, int h) {
   YglLoadIdentity(&_Ygl->mtxModelView);
+  YglLoadIdentity(&_Ygl->rbgModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
   releaseVDP1FB(0);
   releaseVDP1FB(1);
@@ -4123,6 +4124,8 @@ void YglChangeResolution(int w, int h) {
 
   _Ygl->widthRatio = (float)_Ygl->width/(float)_Ygl->rwidth;
   _Ygl->heightRatio = (float)_Ygl->height/(float)_Ygl->rheight;
+
+  YglOrtho(&_Ygl->rbgModelView, 0.0f, (float)_Ygl->width, (float)_Ygl->height, 0.0f, 10.0f, 0.0f);
 }
 
 void YglSetDensity(int d) {

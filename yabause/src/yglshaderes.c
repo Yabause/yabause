@@ -341,6 +341,8 @@ SHADER_VERSION
 "uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
+"uniform float u_emu_width;\n"
+"uniform float u_vwidth; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
 "uniform sampler2D s_window;  \n"
@@ -356,7 +358,7 @@ SHADER_VERSION
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
 "  if (is_window !=0) {\n"
-"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy),0 );\n"
+"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy * vec2(u_emu_width, u_emu_height)),0 );\n"
 "    if (win.a == 0.0) discard;\n"
 "  }\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
@@ -383,7 +385,9 @@ static int id_normal_cram_s_window = -1;
 static int id_normal_cram_isperline = -1;
 static int id_normal_cram_iswindow = -1;
 static int id_normal_cram_emu_height = -1;
+static int id_normal_cram_emu_width = -1;
 static int id_normal_cram_vheight = -1;
+static int id_normal_cram_vwidth = -1;
 static int id_normal_cram_s_color = -1;
 static int id_normal_cram_color_offset = -1;
 static int id_normal_cram_matrix = -1;
@@ -402,8 +406,17 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glUniform1i(id_normal_cram_s_window, 3);
   glUniform1i(id_normal_cram_iswindow, _Ygl->use_win[id] != 0);
   glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
-  glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->rheight);
-  glUniform1f(id_normal_cram_vheight, (float)_Ygl->rheight);
+  if ((id == RBG0) && (_Ygl->rbg_use_compute_shader)){
+    glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
+    glUniform1f(id_normal_cram_emu_width, (float)_Ygl->rwidth / (float)_Ygl->width);
+    glUniform1f(id_normal_cram_vheight, (float)_Ygl->height);
+    glUniform1f(id_normal_cram_vwidth, (float)_Ygl->width);
+  } else {
+    glUniform1f(id_normal_cram_emu_height, 1.0f);
+    glUniform1f(id_normal_cram_emu_width, 1.0f);
+    glUniform1f(id_normal_cram_vheight, (float)_Ygl->rheight);
+    glUniform1f(id_normal_cram_vwidth, (float)_Ygl->rwidth);
+  }
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
@@ -2409,6 +2422,8 @@ int YglProgramInit()
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
   id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");
   id_normal_cram_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vheight");
+  id_normal_cram_emu_width = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_width");
+  id_normal_cram_vwidth = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vwidth");
 
 
 #if 0

@@ -2718,6 +2718,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   Vdp2 * regs;
   int screenHeight = _Ygl->rheight;
   int screenWidth  = _Ygl->rwidth;
+
   if ((varVdp2Regs->CCCTL >> 5) & 0x01) {
     linecl = ((~varVdp2Regs->CCRLB & 0x1F) << 3);
   }
@@ -2730,10 +2731,9 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
   if (rbg->use_cs) {
     rbg->hres *= _Ygl->widthRatio;
     rbg->vres *= _Ygl->heightRatio;
-    //screenHeight = _Ygl->height;
-    //screenWidth  = _Ygl->width;
+
     RBGGenerator_init(_Ygl->width, _Ygl->height);
-  }
+  } 
 
   info->vertices[0] = 0;
   info->vertices[1] = (screenHeight * info->startLine)/yabsys.VBlankLineCount;
