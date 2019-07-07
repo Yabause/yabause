@@ -1428,7 +1428,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->rwidth = 320;
   _Ygl->rheight = 240;
   _Ygl->density = 1;
-  _Ygl->resolution_mode = 1;
+  _Ygl->resolution_mode = RES_ORIGINAL;
   _Ygl->rbg_use_compute_shader = 0;
   _Ygl->vdp2_use_compute_shader = getVdp2CSUsage(maj, min);
 
@@ -4028,9 +4028,6 @@ void setupMaxSize() {
 void YglChangeResolution(int w, int h) {
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
-#ifndef __LIBRETRO__
-  if (( h > 256) &&  (_Ygl->resolution_mode >= 4)) _Ygl->resolution_mode = _Ygl->resolution_mode>>1; //Do not use 4x rendering when original res is already 2x
-#endif
   releaseVDP1FB(0);
   releaseVDP1FB(1);
   releaseVDP1DrawingFBMemRead(0);
@@ -4065,13 +4062,32 @@ void YglChangeResolution(int w, int h) {
        _Ygl->upfbotex = 0;
      }
 
-  _Ygl->width = w * _Ygl->resolution_mode;
-  _Ygl->height = h * _Ygl->resolution_mode;
+     switch (_Ygl->resolution_mode) {
+       case RES_480p: //480p
+         _Ygl->width = 720;
+         _Ygl->height = 480;
+       break;
+       case RES_720p: //720p
+       _Ygl->width = 1280;
+       _Ygl->height = 720;
+       break;
+       case RES_1080p: //1080p
+       _Ygl->width = 1920;
+       _Ygl->height = 1080;
+       break;
+       case RES_NATIVE: //Native
+       _Ygl->width = GlWidth;
+       _Ygl->height = GlHeight;
+       break;
+       case RES_ORIGINAL: //Original
+       default:
+        _Ygl->width = w;
+        _Ygl->height = h;
+     }
 
   _Ygl->rwidth = w;
   _Ygl->rheight = h;
 
-  setupMaxSize();
 
   rebuild_frame_buffer = 1;
 

@@ -478,10 +478,10 @@ typedef enum
 typedef enum
 {
     RES_ORIGINAL = 1,
-    RES_2x = 2,
-    RES_4x = 4,
-    RES_8x = 8,
-    RES_16x = 16,
+    RES_480p = 2,
+    RES_720p = 4,
+    RES_1080p = 8,
+    RES_NATIVE = 16,
 } RESOLUTION_MODE;
 
 typedef enum
