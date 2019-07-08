@@ -2651,8 +2651,8 @@ DEBUGWIP("Init\n");
     int local_size_x = 4;
     int local_size_y = 4;
 
-    int work_groups_x = 1 + (tex_width_ - 1) / local_size_x;
-    int work_groups_y = 1 + (tex_height_ - 1) / local_size_y;
+    int work_groups_x = (tex_width_) / local_size_x;
+    int work_groups_y = (tex_height_) / local_size_y;
 
     error = glGetError();
 
