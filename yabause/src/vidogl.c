@@ -2885,6 +2885,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   YglTexture *line_texture = &rbg->line_texture;
 
   float i, j;
+  int k,l;
   int x, y;
   int cellw, cellh;
   int oldcellx = -1, oldcelly = -1;
@@ -2975,39 +2976,31 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 	  return;
   }
 
-  float vstep = 1.0;
-  float hstep = 1.0;
-  if (rbg->use_cs){
-    vstep /= _Ygl->heightRatio;
-    hstep /= _Ygl->widthRatio;
-  }
-  j = 0.0f;
- // for (j = vstart; j < vstart+vres; j++)
-  for (int jj = vstart; jj < vstart+rbg->vres; jj++)
+  for (k = vstart; k < vstart+vres; k++)
   {
 
     if (rgb_type == 0) {
-      rbg->paraA.Xsp = rbg->paraA.A * ((rbg->paraA.Xst + rbg->paraA.deltaXst * j) - rbg->paraA.Px) +
-        rbg->paraA.B * ((rbg->paraA.Yst + rbg->paraA.deltaYst * j) - rbg->paraA.Py) +
+      rbg->paraA.Xsp = rbg->paraA.A * ((rbg->paraA.Xst + rbg->paraA.deltaXst * k) - rbg->paraA.Px) +
+        rbg->paraA.B * ((rbg->paraA.Yst + rbg->paraA.deltaYst * k) - rbg->paraA.Py) +
         rbg->paraA.C * (rbg->paraA.Zst - rbg->paraA.Pz);
 
-      rbg->paraA.Ysp = rbg->paraA.D * ((rbg->paraA.Xst + rbg->paraA.deltaXst *j) - rbg->paraA.Px) +
-        rbg->paraA.E * ((rbg->paraA.Yst + rbg->paraA.deltaYst * j) - rbg->paraA.Py) +
+      rbg->paraA.Ysp = rbg->paraA.D * ((rbg->paraA.Xst + rbg->paraA.deltaXst *k) - rbg->paraA.Px) +
+        rbg->paraA.E * ((rbg->paraA.Yst + rbg->paraA.deltaYst * k) - rbg->paraA.Py) +
         rbg->paraA.F * (rbg->paraA.Zst - rbg->paraA.Pz);
 
-      rbg->paraA.KtablV = rbg->paraA.deltaKAst* j;
+      rbg->paraA.KtablV = rbg->paraA.deltaKAst* k;
     }
     if (rbg->useb)
     {
-      rbg->paraB.Xsp = rbg->paraB.A * ((rbg->paraB.Xst + rbg->paraB.deltaXst * j) - rbg->paraB.Px) +
-        rbg->paraB.B * ((rbg->paraB.Yst + rbg->paraB.deltaYst * j) - rbg->paraB.Py) +
+      rbg->paraB.Xsp = rbg->paraB.A * ((rbg->paraB.Xst + rbg->paraB.deltaXst * k) - rbg->paraB.Px) +
+        rbg->paraB.B * ((rbg->paraB.Yst + rbg->paraB.deltaYst * k) - rbg->paraB.Py) +
         rbg->paraB.C * (rbg->paraB.Zst - rbg->paraB.Pz);
 
-      rbg->paraB.Ysp = rbg->paraB.D * ((rbg->paraB.Xst + rbg->paraB.deltaXst * j) - rbg->paraB.Px) +
-        rbg->paraB.E * ((rbg->paraB.Yst + rbg->paraB.deltaYst * j) - rbg->paraB.Py) +
+      rbg->paraB.Ysp = rbg->paraB.D * ((rbg->paraB.Xst + rbg->paraB.deltaXst * k) - rbg->paraB.Px) +
+        rbg->paraB.E * ((rbg->paraB.Yst + rbg->paraB.deltaYst * k) - rbg->paraB.Py) +
         rbg->paraB.F * (rbg->paraB.Zst - rbg->paraB.Pz);
 
-      rbg->paraB.KtablV = rbg->paraB.deltaKAst * j;
+      rbg->paraB.KtablV = rbg->paraB.deltaKAst * k;
   }
 
     if (info->LineColorBase != 0)
@@ -3025,15 +3018,13 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     }
 
     //	  if (regs) ReadVdp2ColorOffset(regs, info, info->linecheck_mask);
-   // for (i = 0; i < hres; i++)
-    i = 0.0;
-    for( int ii=0; ii< rbg->hres; ii++ )
+    for (l = 0; l < hres; l++)
     {
       switch (varVdp2Regs->RPMD | rgb_type ) {
       case 0:
         parameter = &rbg->paraA;
         if (parameter->coefenab) {
-          if (vdp2rGetKValue(parameter, i) == 0) {
+          if (vdp2rGetKValue(parameter, l) == 0) {
             *(texture->textdata++) = 0x00000000;
             continue;
           }
@@ -3041,7 +3032,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         break;
       case 1:
         parameter = &rbg->paraB;
-        if (vdp2rGetKValue(parameter, i) == 0) {
+        if (vdp2rGetKValue(parameter, l) == 0) {
           *(texture->textdata++) = 0x00000000;
           continue;
         }
@@ -3052,9 +3043,9 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         } else {
           if (rbg->paraB.coefenab) {
             parameter = &rbg->paraA;
-            if (vdp2rGetKValue(parameter, i) == 0) {
+            if (vdp2rGetKValue(parameter, l) == 0) {
               parameter = &rbg->paraB;
-              if( vdp2rGetKValue(parameter, i) == 0) {
+              if( vdp2rGetKValue(parameter, l) == 0) {
                 *(texture->textdata++) = 0x00000000;
                 continue;
               }
@@ -3062,7 +3053,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
           }
           else {
             parameter = &rbg->paraA;
-            if (vdp2rGetKValue(parameter, i) == 0) {
+            if (vdp2rGetKValue(parameter, l) == 0) {
               rbg->paraB.lineaddr = rbg->paraA.lineaddr;
               parameter = &rbg->paraB;
             }
@@ -3070,7 +3061,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
         break;
       default:
-        parameter = info->GetRParam(rbg, (int)i, (int)j, varVdp2Regs);
+        parameter = info->GetRParam(rbg, l, k, varVdp2Regs);
         break;
       }
       if (parameter == NULL)
@@ -3079,10 +3070,8 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         continue;
       }
 
-      float fh = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
-      float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
-      h = fh;
-      v = fv;
+      h = (parameter->ky * (parameter->Xsp + parameter->dx * l) + parameter->Xp);
+      v = (parameter->ky * (parameter->Ysp + parameter->dy * l) + parameter->Yp);
       if (info->isbitmap)
       {
 
@@ -3292,10 +3281,8 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
       }
       *(texture->textdata++) = color; //Already in VDP2 format due to Vdp2RotationFetchPixel
-      i += hstep;
     }
     texture->textdata += texture->w;
-     j += vstep;
     }
 
     rbg->info.flipfunction = 0;
