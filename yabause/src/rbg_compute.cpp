@@ -2272,144 +2272,379 @@ DEBUGWIP("Init\n");
 	}
 
 	void updateRBG1( RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
-		if (rbg->info.isbitmap) {
-			switch (rbg->info.colornumber) {
-			case 0: {
-				if (prg_rbg_1_2w_bitmap_4bpp_ == 0) {
-					prg_rbg_1_2w_bitmap_4bpp_ = compile_color_dot(
-						S(a_prg_rbg_1_2w_bitmap),
-						prg_rbg_getcolor_4bpp,
-						prg_generate_rbg_end);
+		// Line color insersion
+		if (rbg->info.LineColorBase != 0 && VDP2_CC_NONE != (rbg->info.blendmode & 0x03)) {
+				if (rbg->info.isbitmap) {
+					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_8bpp_line_);
 				}
-				DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_4bpp_);
-				break;
-			}
-			case 1: {
-				DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_8bpp_);
-				break;
-			}
-			case 2: {
-				if (prg_rbg_1_2w_bitmap_16bpp_p_ == 0) {
-					prg_rbg_1_2w_bitmap_16bpp_p_ = compile_color_dot(
-						S(a_prg_rbg_1_2w_bitmap),
-						prg_rbg_getcolor_16bpp_palette,
-						prg_generate_rbg_end);
+				else {
+					if (rbg->info.patterndatasize == 1) {
+						switch (rbg->info.colornumber) {
+						case 0: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_4bpp_line_);
+							break;
+						}
+						case 1: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_8bpp_line_);
+							break;
+						}
+						case 2: {
+							if (prg_rbg_1_2w_p1_16bpp_p_line_ == 0) {
+								prg_rbg_1_2w_p1_16bpp_p_line_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p1_4bpp),
+									prg_rbg_getcolor_16bpp_palette,
+									prg_generate_rbg_line_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_16bpp_p_line_);
+							break;
+						}
+						case 3: {
+							if (prg_rbg_1_2w_p1_16bpp_line_ == 0) {
+								prg_rbg_1_2w_p1_16bpp_line_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p1_4bpp),
+									prg_rbg_getcolor_16bpp_rbg,
+									prg_generate_rbg_line_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_16bpp_line_);
+							break;
+						}
+						case 4: {
+							if (prg_rbg_1_2w_p1_32bpp_line_ == 0) {
+								prg_rbg_1_2w_p1_32bpp_line_ = compile_color_dot(
+									S(a_prg_rbg_0_2w_p1_4bpp),
+									prg_rbg_getcolor_32bpp_rbg,
+									prg_generate_rbg_line_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_32bpp_line_);
+							break;
+						}
+						}
+					}
+					else {
+						switch (rbg->info.colornumber) {
+						case 0: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_4bpp_line_);
+							break;
+						}
+						case 1: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_8bpp_line_);
+							break;
+						}
+						case 2: {
+							if (prg_rbg_1_2w_p2_16bpp_p_line_ == 0) {
+								prg_rbg_1_2w_p2_16bpp_p_line_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p2_4bpp),
+									prg_rbg_getcolor_16bpp_palette,
+									prg_generate_rbg_line_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_16bpp_p_line_);
+							break;
+						}
+						case 3: {
+							if (prg_rbg_1_2w_p2_16bpp_line_ == 0) {
+								prg_rbg_1_2w_p2_16bpp_line_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p2_4bpp),
+									prg_rbg_getcolor_16bpp_rbg,
+									prg_generate_rbg_line_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_16bpp_line_);
+							break;
+						}
+						case 4: {
+							if (prg_rbg_1_2w_p2_32bpp_line_ == 0) {
+								prg_rbg_1_2w_p2_32bpp_line_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p2_4bpp),
+									prg_rbg_getcolor_32bpp_rbg,
+									prg_generate_rbg_line_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_32bpp_line_);
+							break;
+						}
+						}
+					}
 				}
-				DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_16bpp_p_);
-				break;
 			}
-			case 3: {
-				if (prg_rbg_1_2w_bitmap_16bpp_ == 0) {
-					prg_rbg_1_2w_bitmap_16bpp_ = compile_color_dot(
-						S(a_prg_rbg_1_2w_bitmap),
-						prg_rbg_getcolor_16bpp_rbg,
-						prg_generate_rbg_end);
-				}
-				DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_16bpp_);
-				break;
-			}
-			case 4: {
-				if (prg_rbg_1_2w_bitmap_32bpp_ == 0) {
-					prg_rbg_1_2w_bitmap_32bpp_ = compile_color_dot(
-						S(a_prg_rbg_1_2w_bitmap),
-						prg_rbg_getcolor_32bpp_rbg,
-						prg_generate_rbg_end);
-				}
-				DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_32bpp_);
-				break;
-			}
-			}
-		}
+
+		// no line color insersion
 		else {
-			if (rbg->info.patterndatasize == 1) {
-				switch (rbg->info.colornumber) {
-				case 0: {
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_4bpp_);
-					break;
-				}
-				case 1: {
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_8bpp_);
-					break;
-				}
-				case 2: {
-					if (prg_rbg_1_2w_p1_16bpp_p_ == 0) {
-						prg_rbg_1_2w_p1_16bpp_p_ = compile_color_dot(
-							S(a_prg_rbg_1_2w_p1_4bpp),
-							prg_rbg_getcolor_16bpp_palette,
-							prg_generate_rbg_end);
+			if (varVdp2Regs->RPMD == 0 || (varVdp2Regs->RPMD == 3 && (varVdp2Regs->WCTLD & 0xA) == 0) ) {
+				if (rbg->info.isbitmap) {
+					switch (rbg->info.colornumber) {
+					case 0: {
+						if (prg_rbg_0_2w_bitmap_4bpp_ == 0) {
+							prg_rbg_0_2w_bitmap_4bpp_ = compile_color_dot(
+								S(a_prg_rbg_0_2w_bitmap),
+								prg_rbg_getcolor_4bpp,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_bitmap_4bpp_);
+						break;
 					}
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_16bpp_p_);
-					break;
-				}
-				case 3: {
-					if (prg_rbg_1_2w_p1_16bpp_ == 0) {
-						prg_rbg_1_2w_p1_16bpp_ = compile_color_dot(
-							S(a_prg_rbg_1_2w_p1_4bpp),
-							prg_rbg_getcolor_16bpp_rbg,
-							prg_generate_rbg_end);
+					case 1: { // SF3S1( Initial )
+						//Powerslave
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_bitmap_8bpp_);
+						break;
 					}
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_16bpp_);
-					break;
-				}
-				case 4: {
-					if (prg_rbg_1_2w_p1_32bpp_ == 0) {
-						prg_rbg_1_2w_p1_32bpp_ = compile_color_dot(
-							S(a_prg_rbg_0_2w_p1_4bpp),
-							prg_rbg_getcolor_32bpp_rbg,
-							prg_generate_rbg_end);
+					case 2: {
+						if (prg_rbg_0_2w_bitmap_16bpp_p_ == 0) {
+							prg_rbg_0_2w_bitmap_16bpp_p_ = compile_color_dot(
+								S(a_prg_rbg_0_2w_bitmap),
+								prg_rbg_getcolor_16bpp_palette,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_bitmap_16bpp_p_);
+						break;
 					}
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_32bpp_);
-					break;
+					case 3: { // NHL 97 Title, GRANDIA Title
+						if (prg_rbg_0_2w_bitmap_16bpp_ == 0) {
+							prg_rbg_0_2w_bitmap_16bpp_ = compile_color_dot(
+								S(a_prg_rbg_0_2w_bitmap),
+								prg_rbg_getcolor_16bpp_rbg,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_bitmap_16bpp_);
+						break;
+					}
+					case 4: {
+						if (prg_rbg_0_2w_bitmap_32bpp_ == 0) {
+							prg_rbg_0_2w_bitmap_32bpp_ = compile_color_dot(
+								S(a_prg_rbg_0_2w_bitmap),
+								prg_rbg_getcolor_32bpp_rbg,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_bitmap_32bpp_);
+						break;
+					}
+					}
 				}
+				else {
+					if (rbg->info.patterndatasize == 1) {
+						switch (rbg->info.colornumber) {
+							case 0: { // Dead or Alive, Radiant Silver Gun, Diehard
+								DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p1_4bpp_);
+								break;
+							}
+							case 1: { // Sakatuku 2 ( Initial Setting ), Virtua Fighter 2, Virtual-on
+								DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p1_8bpp_);
+								break;
+							}
+							case 2: {
+								if (prg_rbg_0_2w_p1_16bpp_p_ == 0) {
+									prg_rbg_0_2w_p1_16bpp_p_ = compile_color_dot(
+										S(a_prg_rbg_0_2w_p1_4bpp),
+										prg_rbg_getcolor_16bpp_palette,
+										prg_generate_rbg_end);
+								}
+								DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p1_16bpp_p_);
+								break;
+							}
+							case 3: {
+								if (prg_rbg_0_2w_p1_16bpp_ == 0) {
+									prg_rbg_0_2w_p1_16bpp_ = compile_color_dot(
+										S(a_prg_rbg_0_2w_p1_4bpp),
+										prg_rbg_getcolor_16bpp_rbg,
+										prg_generate_rbg_end);
+								}
+								DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p1_16bpp_);
+								break;
+							}
+							case 4: {
+								if (prg_rbg_0_2w_p1_32bpp_ == 0) {
+									prg_rbg_0_2w_p1_32bpp_ = compile_color_dot(
+										S(a_prg_rbg_0_2w_p1_4bpp),
+										prg_rbg_getcolor_32bpp_rbg,
+										prg_generate_rbg_end);
+								}
+								DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p1_32bpp_);
+								break;
+							}
+						}
+					}
+					else {
+						switch (rbg->info.colornumber) {
+						case 0: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p2_4bpp_);
+							break;
+						}
+						case 1: { // NHL97(In Game), BIOS
+							//ICI
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p2_8bpp_);
+							break;
+						}
+						case 2: {
+							if (prg_rbg_0_2w_p2_16bpp_p_ == 0) {
+								prg_rbg_0_2w_p2_16bpp_p_ = compile_color_dot(
+									S(a_prg_rbg_0_2w_p2_4bpp),
+									prg_rbg_getcolor_16bpp_palette,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p2_16bpp_p_);
+							break;
+						}
+						case 3: {
+							if (prg_rbg_0_2w_p2_16bpp_ == 0) {
+								prg_rbg_0_2w_p2_16bpp_ = compile_color_dot(
+									S(a_prg_rbg_0_2w_p2_4bpp),
+									prg_rbg_getcolor_16bpp_rbg,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p2_16bpp_);
+							break;
+						}
+						case 4: {
+							if (prg_rbg_0_2w_p2_32bpp_ == 0) {
+								prg_rbg_0_2w_p2_32bpp_ = compile_color_dot(
+									S(a_prg_rbg_0_2w_p2_4bpp),
+									prg_rbg_getcolor_32bpp_rbg,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_p2_32bpp_);
+							break;
+						}
+						}
+					}
 				}
 			}
-			else {
-				switch (rbg->info.colornumber) {
-				case 0: {
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_4bpp_);
-					break;
-				}
-				case 1: {
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_8bpp_);
-					break;
-				}
-				case 2: {
-					if (prg_rbg_1_2w_p2_16bpp_p_ == 0) {
-						prg_rbg_1_2w_p2_16bpp_p_ = compile_color_dot(
-							S(a_prg_rbg_1_2w_p2_4bpp),
-							prg_rbg_getcolor_16bpp_palette,
-							prg_generate_rbg_end);
+
+				if (rbg->info.isbitmap) {
+					switch (rbg->info.colornumber) {
+					case 0: {
+						if (prg_rbg_1_2w_bitmap_4bpp_ == 0) {
+							prg_rbg_1_2w_bitmap_4bpp_ = compile_color_dot(
+								S(a_prg_rbg_1_2w_bitmap),
+								prg_rbg_getcolor_4bpp,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_4bpp_);
+						break;
 					}
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_16bpp_p_);
-					break;
-				}
-				case 3: {
-					if (prg_rbg_1_2w_p2_16bpp_ == 0) {
-						prg_rbg_1_2w_p2_16bpp_ = compile_color_dot(
-							S(a_prg_rbg_1_2w_p2_4bpp),
-							prg_rbg_getcolor_16bpp_rbg,
-							prg_generate_rbg_end);
+					case 1: {
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_8bpp_);
+						break;
 					}
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_16bpp_);
-					break;
-				}
-				case 4: {
-					if (prg_rbg_1_2w_p2_32bpp_ == 0) {
-						prg_rbg_1_2w_p2_32bpp_ = compile_color_dot(
-							S(a_prg_rbg_1_2w_p2_4bpp),
-							prg_rbg_getcolor_32bpp_rbg,
-							prg_generate_rbg_end);
+					case 2: {
+						if (prg_rbg_1_2w_bitmap_16bpp_p_ == 0) {
+							prg_rbg_1_2w_bitmap_16bpp_p_ = compile_color_dot(
+								S(a_prg_rbg_1_2w_bitmap),
+								prg_rbg_getcolor_16bpp_palette,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_16bpp_p_);
+						break;
 					}
-					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_32bpp_);
-					break;
+					case 3: {
+						if (prg_rbg_1_2w_bitmap_16bpp_ == 0) {
+							prg_rbg_1_2w_bitmap_16bpp_ = compile_color_dot(
+								S(a_prg_rbg_1_2w_bitmap),
+								prg_rbg_getcolor_16bpp_rbg,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_16bpp_);
+						break;
+					}
+					case 4: {
+						if (prg_rbg_1_2w_bitmap_32bpp_ == 0) {
+							prg_rbg_1_2w_bitmap_32bpp_ = compile_color_dot(
+								S(a_prg_rbg_1_2w_bitmap),
+								prg_rbg_getcolor_32bpp_rbg,
+								prg_generate_rbg_end);
+						}
+						DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_32bpp_);
+						break;
+					}
+					}
 				}
+				else {
+					if (rbg->info.patterndatasize == 1) {
+						switch (rbg->info.colornumber) {
+						case 0: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_4bpp_);
+							break;
+						}
+						case 1: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_8bpp_);
+							break;
+						}
+						case 2: {
+							if (prg_rbg_1_2w_p1_16bpp_p_ == 0) {
+								prg_rbg_1_2w_p1_16bpp_p_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p1_4bpp),
+									prg_rbg_getcolor_16bpp_palette,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_16bpp_p_);
+							break;
+						}
+						case 3: {
+							if (prg_rbg_1_2w_p1_16bpp_ == 0) {
+								prg_rbg_1_2w_p1_16bpp_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p1_4bpp),
+									prg_rbg_getcolor_16bpp_rbg,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_16bpp_);
+							break;
+						}
+						case 4: {
+							if (prg_rbg_1_2w_p1_32bpp_ == 0) {
+								prg_rbg_1_2w_p1_32bpp_ = compile_color_dot(
+									S(a_prg_rbg_0_2w_p1_4bpp),
+									prg_rbg_getcolor_32bpp_rbg,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p1_32bpp_);
+							break;
+						}
+						}
+					}
+					else {
+						switch (rbg->info.colornumber) {
+						case 0: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_4bpp_);
+							break;
+						}
+						case 1: {
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_8bpp_);
+							break;
+						}
+						case 2: {
+							if (prg_rbg_1_2w_p2_16bpp_p_ == 0) {
+								prg_rbg_1_2w_p2_16bpp_p_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p2_4bpp),
+									prg_rbg_getcolor_16bpp_palette,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_16bpp_p_);
+							break;
+						}
+						case 3: {
+							if (prg_rbg_1_2w_p2_16bpp_ == 0) {
+								prg_rbg_1_2w_p2_16bpp_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p2_4bpp),
+									prg_rbg_getcolor_16bpp_rbg,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_16bpp_);
+							break;
+						}
+						case 4: {
+							if (prg_rbg_1_2w_p2_32bpp_ == 0) {
+								prg_rbg_1_2w_p2_32bpp_ = compile_color_dot(
+									S(a_prg_rbg_1_2w_p2_4bpp),
+									prg_rbg_getcolor_32bpp_rbg,
+									prg_generate_rbg_end);
+							}
+							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_p2_32bpp_);
+							break;
+						}
+						}
+					}
 				}
 			}
-		}
+
 	}
 
-	void update( RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
-
+ void update( RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
     if (prg_rbg_0_2w_p1_4bpp_line_ == 0) return;
 
     GLuint error;
@@ -2422,9 +2657,9 @@ DEBUGWIP("Init\n");
     error = glGetError();
 
     if (rbg->info.idScreen == RBG0) updateRBG0(rbg, varVdp2Regs);
-		else updateRBG1(rbg, varVdp2Regs);
+               else updateRBG1(rbg, varVdp2Regs);
 
-	ErrorHandle("glUseProgram");
+       ErrorHandle("glUseProgram");
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
   //glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
@@ -2435,39 +2670,44 @@ DEBUGWIP("Init\n");
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
   ErrorHandle("glBindBufferBase");
 
-	if (rbg->info.specialcolormode == 3 || rbg->paraA.k_mem_type != 0 || rbg->paraB.k_mem_type != 0 ) {
-		if (ssbo_cram_ == 0) {
-			glGenBuffers(1, &ssbo_cram_);
-			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
-			glBufferData(GL_SHADER_STORAGE_BUFFER, 0x1000, NULL, GL_DYNAMIC_DRAW);
-		}
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x1000, (void*)Vdp2ColorRam);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cram_);
-	}
+       if (rbg->info.specialcolormode == 3 || rbg->paraA.k_mem_type != 0 || rbg->paraB.k_mem_type != 0 ) {
+               if (ssbo_cram_ == 0) {
+                       glGenBuffers(1, &ssbo_cram_);
+                       glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
+                       glBufferData(GL_SHADER_STORAGE_BUFFER, 0x1000, NULL, GL_DYNAMIC_DRAW);
+               }
+               glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cram_);
+               glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x1000, (void*)Vdp2ColorRam);
+               glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cram_);
+       }
 
-	if (ssbo_rotwin_ == 0) {
-		glGenBuffers(1, &ssbo_rotwin_);
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rotwin_);
-		glBufferData(GL_SHADER_STORAGE_BUFFER, 0x800, NULL, GL_DYNAMIC_DRAW);
-	}
-	if (rbg->info.RotWin != NULL) {
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rotwin_);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x800, (void*)rbg->info.RotWin);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, ssbo_rotwin_);
+       if (ssbo_rotwin_ == 0) {
+               glGenBuffers(1, &ssbo_rotwin_);
+               glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rotwin_);
+               glBufferData(GL_SHADER_STORAGE_BUFFER, 0x800, NULL, GL_DYNAMIC_DRAW);
+       }
+       if (rbg->info.RotWin != NULL) {
+               glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rotwin_);
+               glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x800, (void*)rbg->info.RotWin);
+               glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, ssbo_rotwin_);
   }
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_paraA_);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2rotationparameter_struct), (void*)&rbg->paraA);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size_, sizeof(vdp2rotationparameter_struct), (void*)&rbg->paraB);
-	ErrorHandle("glBufferSubData");
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_paraA_);
+	if ( rbg->info.idScreen == RBG0 ) {
+       glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2rotationparameter_struct), (void*)&rbg->paraA);
+       glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size_, sizeof(vdp2rotationparameter_struct), (void*)&rbg->paraB);
+	} else {
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2rotationparameter_struct), (void*)&rbg->paraB);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size_, sizeof(vdp2rotationparameter_struct), (void*)&rbg->paraA);
+	}
+       ErrorHandle("glBufferSubData");
+       glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_paraA_);
 
-	uniform.vres_scale = (float)1.0f/_Ygl->heightRatio;
-	uniform.hres_scale = (float)1.0f/_Ygl->widthRatio;
-	uniform.cellw = rbg->info.cellw;
-	uniform.cellh = rbg->info.cellh;
-	uniform.paladdr_ = rbg->info.paladdr;
+       uniform.vres_scale = (float)1.0f/_Ygl->heightRatio;
+       uniform.hres_scale = (float)1.0f/_Ygl->widthRatio;
+       uniform.cellw = rbg->info.cellw;
+       uniform.cellh = rbg->info.cellh;
+       uniform.paladdr_ = rbg->info.paladdr;
   uniform.pagesize = rbg->pagesize;
   uniform.patternshift = rbg->patternshift;
   uniform.planew = rbg->info.planew;
@@ -2481,41 +2721,41 @@ DEBUGWIP("Init\n");
   uniform.specialcolormode = rbg->info.specialcolormode;
   uniform.specialcolorfunction = rbg->info.specialcolorfunction;
   uniform.specialcode = rbg->info.specialcode;
-	uniform.colornumber = rbg->info.colornumber;
-	uniform.window_area_mode = rbg->info.RotWinMode;
-	uniform.alpha = rbg->info.alpha;
-	uniform.priority = rbg->info.priority;
+       uniform.colornumber = rbg->info.colornumber;
+       uniform.window_area_mode = rbg->info.RotWinMode;
+       uniform.alpha = rbg->info.alpha;
+       uniform.priority = rbg->info.priority;
 
-	if (Vdp2Internal.ColorMode < 2) {
-		uniform.cram_shift = 1;
-	}
-	else {
-		uniform.cram_shift = 2;
-	}
+       if (Vdp2Internal.ColorMode < 2) {
+               uniform.cram_shift = 1;
+       }
+       else {
+               uniform.cram_shift = 2;
+       }
 
-	uniform.startLine = rbg->info.startLine;
-	uniform.endLine = rbg->info.endLine;
-	uniform.specialprimode = rbg->info.specialprimode;
-	uniform.specialfunction = rbg->info.specialfunction;
+       uniform.startLine = rbg->info.startLine;
+       uniform.endLine = rbg->info.endLine;
+       uniform.specialprimode = rbg->info.specialprimode;
+       uniform.specialfunction = rbg->info.specialfunction;
 
   glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(RBGUniform), (void*)&uniform);
-	ErrorHandle("glBufferSubData");
+       glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(RBGUniform), (void*)&uniform);
+       ErrorHandle("glBufferSubData");
   glBindBufferBase(GL_UNIFORM_BUFFER, 3, scene_uniform);
 
-	if (rbg->rgb_type == 0x04  ) {
-		DEBUGWIP("Draw RBG1\n");
-		glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
-		ErrorHandle("glBindImageTexture 1");
-	}
-	else {
-		DEBUGWIP("Draw RBG0\n");
-		glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
-		ErrorHandle("glBindImageTexture 0");
-	}
+       if (rbg->rgb_type == 0x04  ) {
+               DEBUGWIP("Draw RBG1\n");
+               glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+               ErrorHandle("glBindImageTexture 1");
+        }
+       else {
+               DEBUGWIP("Draw RBG0\n");
+               glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+               ErrorHandle("glBindImageTexture 0");
+       }
 
   glDispatchCompute(work_groups_x, work_groups_y, 1);
-	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+       // glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);

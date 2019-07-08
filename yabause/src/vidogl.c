@@ -5717,7 +5717,7 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
     if (!sameVDP2Reg(RBG1, &Vdp2Lines[line-1], &Vdp2Lines[line])) {
       rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
       rgb->rgb_type = 0x04;
-      rgb->use_cs = 0;
+      rgb->use_cs = _Ygl->rbg_use_compute_shader;
       rgb->info.startLine = lastLine;
       rgb->info.endLine = line;
       lastLine = line;
@@ -5727,7 +5727,7 @@ static void Vdp2DrawRBG1(Vdp2 *varVdp2Regs)
   }
   rgb = (RBGDrawInfo *)calloc(1, sizeof(RBGDrawInfo));
   rgb->rgb_type = 0x04;
-  rgb->use_cs = 0;
+  rgb->use_cs = _Ygl->rbg_use_compute_shader;
   rgb->info.startLine = lastLine;
   rgb->info.endLine = line;
   LOG_AREA("RBG1 Draw from %d to %d %x\n", rgb->info.startLine, rgb->info.endLine, varVdp2Regs->BGON);

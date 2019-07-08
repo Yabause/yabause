@@ -1230,10 +1230,16 @@ int YglGenerateScreenBuffer(){
 
   //Generate fbo and texture fr rbh compute shader
   if (_Ygl->rbg_compute_fbotex != 0) {
-    glDeleteTextures(1,&_Ygl->rbg_compute_fbotex);
+    glDeleteTextures(2,&_Ygl->rbg_compute_fbotex);
   }
-  glGenTextures(1, &_Ygl->rbg_compute_fbotex);
-  glBindTexture(GL_TEXTURE_2D, _Ygl->rbg_compute_fbotex);
+  glGenTextures(2, &_Ygl->rbg_compute_fbotex[0]);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->rbg_compute_fbotex[0]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->rbg_compute_fbotex[1]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width, _Ygl->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1244,7 +1250,8 @@ int YglGenerateScreenBuffer(){
   }
   glGenFramebuffers(1, &_Ygl->rbg_compute_fbo);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->rbg_compute_fbo);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->rbg_compute_fbotex, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->rbg_compute_fbotex[0], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _Ygl->rbg_compute_fbotex[1], 0);
   status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
   if (status != GL_FRAMEBUFFER_COMPLETE) {
     YGLDEBUG("YglGenerateOriginalBuffer: RBG Framebuffer status = %08X\n", status);
@@ -3621,11 +3628,14 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int allPrio = 0;
 
   for (int i = 0; i < SPRITE; i++) {
-    if ((i == RBG0) && (_Ygl->rbg_use_compute_shader)) {
+    if (((i == RBG0) || (i == RBG1)) && (_Ygl->rbg_use_compute_shader)) {
       glViewport(0, 0, _Ygl->width, _Ygl->height);
       glScissor(0, 0, _Ygl->width, _Ygl->height);
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->rbg_compute_fbo);
-      glDrawBuffers(1, &DrawBuffers[0]);
+      if ( i == RBG0)
+        glDrawBuffers(1, &DrawBuffers[0]);
+      else
+        glDrawBuffers(1, &DrawBuffers[1]);
       glClearBufferfv(GL_COLOR, 0, col);
     } else {
       glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
@@ -3656,8 +3666,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
   for (int j=0; j<6; j++) {
     if (drawScreen[vdp2screens[j]] != 0) {
-      if ((vdp2screens[j] == RBG0) && (_Ygl->rbg_use_compute_shader)) {
-        prioscreens[id] = _Ygl->rbg_compute_fbotex;
+      if (((vdp2screens[j] == RBG0) ||(vdp2screens[j] == RBG1)) && (_Ygl->rbg_use_compute_shader)) {
+        if (vdp2screens[j] == RBG0)
+        prioscreens[id] = _Ygl->rbg_compute_fbotex[0];
+        else
+        prioscreens[id] = _Ygl->rbg_compute_fbotex[1];
       } else {
         prioscreens[id] = _Ygl->screen_fbotex[vdp2screens[j]];
       }
