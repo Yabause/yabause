@@ -2905,10 +2905,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   vstart = rbg->vres * rbg->info.startLine/yabsys.VBlankLineCount;
   hres = rbg->hres;
 
-  vres /= _Ygl->heightRatio;
-  vstart /= _Ygl->heightRatio;
-  hres /= _Ygl->widthRatio;
-
   cellw = rbg->info.cellw;
   cellh = rbg->info.cellh;
 
@@ -2946,6 +2942,10 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   rbg->info.celly = (rbg->vres * info->startLine)/yabsys.VBlankLineCount;
 
   if (rbg->use_cs) {
+
+    vres /= _Ygl->heightRatio;
+    vstart /= _Ygl->heightRatio;
+    hres /= _Ygl->widthRatio;
 
 	  if (info->LineColorBase != 0) {
 		  const float vstep = 1.0 / _Ygl->heightRatio;
