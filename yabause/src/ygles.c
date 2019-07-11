@@ -3384,8 +3384,9 @@ void YglCheckFBSwitch(int sync) {
 static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   YglLevel * level;
   int cprg = -1;
-
+  int clear = 1;
   int ret = 0;
+  float col[4] = {0.0f,0.0f,0.0f,0.0f};
 
   level = &_Ygl->vdp2levels[id];
 
@@ -3397,6 +3398,8 @@ static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   for (int j = 0; j < (level->prgcurrent + 1); j++)
   {
     if (level->prg[j].currentQuad != 0) {
+      if (clear) glClearBufferfv(GL_COLOR, 0, col);
+      clear = 0;
       glActiveTexture(GL_TEXTURE0);
       if (level->prg[j].interuput_texture == 0)
         glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
@@ -3591,12 +3594,12 @@ void YglRender(Vdp2 *varVdp2Regs) {
   if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
-    glClearBufferfv(GL_COLOR, 0, col);
+    //glClearBufferfv(GL_COLOR, 0, col);
 #ifdef DEBUG_BLIT
-    glClearBufferfv(GL_COLOR, 1, col);
-    glClearBufferfv(GL_COLOR, 2, col);
-    glClearBufferfv(GL_COLOR, 3, col);
-    glClearBufferfv(GL_COLOR, 4, col);
+    //glClearBufferfv(GL_COLOR, 1, col);
+    //glClearBufferfv(GL_COLOR, 2, col);
+    //glClearBufferfv(GL_COLOR, 3, col);
+    //glClearBufferfv(GL_COLOR, 4, col);
 #endif
   }
    glDepthMask(GL_FALSE);
@@ -3636,13 +3639,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
         glDrawBuffers(1, &DrawBuffers[0]);
       else
         glDrawBuffers(1, &DrawBuffers[1]);
-      glClearBufferfv(GL_COLOR, 0, col);
     } else {
       glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
       glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->screen_fbo);
       glDrawBuffers(1, &DrawBuffers[i]);
-      glClearBufferfv(GL_COLOR, 0, col);
     }
     drawScreen[i] = DrawVDP2Screen(varVdp2Regs, i);
   }
@@ -3691,7 +3692,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   modescreens[6] =  setupBlend(varVdp2Regs, 6);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->back_fbo);
   glDrawBuffers(1, &DrawBuffers[0]);
-  glClearBufferfv(GL_COLOR, 0, col);
+  //glClearBufferfv(GL_COLOR, 0, col);
   if ((varVdp2Regs->BKTAU & 0x8000) != 0) {
     YglDrawBackScreen();
   }else{
