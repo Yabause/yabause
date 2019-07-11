@@ -33,7 +33,7 @@ SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
 "precision highp float; \n"
 "#endif\n"
-"layout(local_size_x = 4, local_size_y = 4) in;\n"
+"layout(local_size_x = 16, local_size_y = 16) in;\n"
 "layout(rgba8, binding = 14) writeonly highp uniform image2D outSurface;\n"
 "layout(std430, binding = 15) readonly buffer VDP2DrawInfo { \n"
 "  float u_emu_height;\n"
@@ -943,12 +943,12 @@ public:
 	void update( int outputTex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs) {
 
     GLuint error;
-    int local_size_x = 4;
-    int local_size_y = 4;
+    int local_size_x = 16;
+    int local_size_y = 16;
 	  int nbScreen = 6;
 
-    int work_groups_x = 1 + (tex_width_ - 1) / local_size_x;
-    int work_groups_y = 1 + (tex_height_ - 1) / local_size_y;
+		int work_groups_x = (tex_width_) / local_size_x;
+    int work_groups_y = (tex_height_) / local_size_y;
 
 		int gltext[6] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5};
 
