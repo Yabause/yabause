@@ -106,7 +106,7 @@ if (YAB_WANT_ASYNC_VDP1_TEXTURE)
 	add_definitions(-DVDP1_TEXTURE_ASYNC=1)
 endif()
 
-option(YAB_WANT_VDP2_BLIT_CS "Enable last blitting of vdp2 in compute shader" ON)
+option(YAB_WANT_VDP2_BLIT_CS "Enable last blitting of vdp2 in compute shader" OFF)
 if (YAB_WANT_VDP2_BLIT_CS)
 	add_definitions(-DVDP2_BLIT_CS=1)
 endif()
