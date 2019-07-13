@@ -1433,10 +1433,10 @@ int YglInit(int width, int height, unsigned int depth) {
 #ifndef __LIBRETRO__
   if (maj*10+min < 42) {
    YabSetError(YAB_ERR_CANNOTINIT, _("OpenGL context"));
-   YuiMsg("Using OpenGL %d.%d\n", maj, min);
    return -1;
   }
 #endif
+  YuiMsg("Using OpenGL %d.%d\n", maj, min);
 
   if ((_Ygl = (Ygl *)malloc(sizeof(Ygl))) == NULL) {
     return -1;
