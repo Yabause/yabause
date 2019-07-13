@@ -579,20 +579,6 @@ void YglTMReset(YglTextureManager * tm  ) {
   YabThreadUnLock(tm->mtx);
 }
 
-#if 0
-void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
-
-  if (tm->width < w){
-    YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
-    YglTMRealloc(tm, w, tm->height);
-  }
-  if ((tm->height - tm->currentY) < h) {
-    YGLDEBUG("can't allocate texture: %dx%d\n", w, h);
-    YglTMRealloc(tm, tm->width, tm->height + (h * 2));
-    return;
-  }
-}
-#endif
 void YglTmPush(YglTextureManager * tm){
 #ifdef VDP1_TEXTURE_ASYNC
   if ((tm == YglTM_vdp1[0]) || (tm == YglTM_vdp1[1]))
@@ -1419,10 +1405,13 @@ void initLevels(YglLevel** levels, int size) {
     }
   }
 }
-static int getVdp2CSUsage(int maj, int min) {
+static int getVdp2CSUsage() {
 #ifndef VDP2_BLIT_CS
   return 0;
 #endif
+  int min, maj;
+  glGetIntegerv(GL_MAJOR_VERSION, &maj);
+  glGetIntegerv(GL_MINOR_VERSION, &min);
   #if defined(_OGLES3_)
       if ((maj >=3) && (min >=1)) return 1;
   #else
@@ -1461,7 +1450,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->density = 1;
   _Ygl->resolution_mode = RES_ORIGINAL;
   _Ygl->rbg_use_compute_shader = 0;
-  _Ygl->vdp2_use_compute_shader = getVdp2CSUsage(maj, min);
+  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
 
   initLevels(&_Ygl->vdp2levels, SPRITE);
   initLevels(&_Ygl->vdp1levels, 2);
@@ -3792,6 +3781,7 @@ void YglShowTexture(void) {
 
 u32 * YglGetColorRamPointer() {
   int error;
+  glActiveTexture(GL_TEXTURE0);
   if (_Ygl->cram_tex == 0) {
     glGenTextures(1, &_Ygl->cram_tex);
 #if 0
@@ -4070,6 +4060,7 @@ void setupMaxSize() {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglChangeResolution(int w, int h) {
+  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglLoadIdentity(&_Ygl->rbgModelView);
   YglOrtho(&_Ygl->mtxModelView, 0.0f, (float)w, (float)h, 0.0f, 10.0f, 0.0f);
