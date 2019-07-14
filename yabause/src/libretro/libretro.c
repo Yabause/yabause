@@ -116,7 +116,7 @@ void retro_set_environment(retro_environment_t cb)
       { "kronos_multitap_port2", "6Player Adaptor on Port 2; disabled|enabled" },
       { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
       { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
-      { "kronos_resolution_mode", "Resolution Mode; original|2x|4x|8x|16x" },
+      { "kronos_resolution_mode", "Resolution Mode; original|480p|720p|1080p|4k" },
       { "kronos_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
       { "kronos_scanlines", "Scanlines; disabled|enabled" },
       { "kronos_meshmode", "Improved mesh; disabled|enabled" },
@@ -743,17 +743,32 @@ void retro_set_resolution()
    // If resolution_mode > initial_resolution_mode, we'll need a restart to reallocate the max size for buffer
    if (resolution_mode > initial_resolution_mode)
    {
-      log_cb(RETRO_LOG_INFO, "Restart the core for x%d resolution\n", resolution_mode);
+      log_cb(RETRO_LOG_INFO, "Restart the core for the new resolution\n", resolution_mode);
       resolution_mode = initial_resolution_mode;
    }
-   // Downscale x16 resolution_mode for Hi-Res games
-   if (game_height > 256 && resolution_mode > 8)
+   switch(resolution_mode)
    {
-      log_cb(RETRO_LOG_INFO, "Hi-Res games limited to x8\n", resolution_mode);
-      resolution_mode = 8;
+      case RES_ORIGINAL:
+         current_width = game_width;
+         current_height = game_height;
+         break;
+      case RES_480p:
+         current_width = 640;
+         current_height = 480;
+         break;
+      case RES_720p:
+         current_width = 1280;
+         current_height = 720;
+         break;
+      case RES_1080p:
+         current_width = 1920;
+         current_height = 1080;
+         break;
+      case RES_NATIVE:
+         current_width = 3840;
+         current_height = 2160;
+         break;
    }
-   current_width = game_width * resolution_mode;
-   current_height = game_height * resolution_mode;
    VIDCore->Resize(0, 0, current_width, current_height, 0);
    retro_reinit_av_info();
    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
@@ -1039,13 +1054,13 @@ void check_variables(void)
    {
       if (strcmp(var.value, "original") == 0)
          resolution_mode = 1;
-      else if (strcmp(var.value, "2x") == 0)
+      else if (strcmp(var.value, "480p") == 0)
          resolution_mode = 2;
-      else if (strcmp(var.value, "4x") == 0)
+      else if (strcmp(var.value, "720p") == 0)
          resolution_mode = 4;
-      else if (strcmp(var.value, "8x") == 0)
+      else if (strcmp(var.value, "1080p") == 0)
          resolution_mode = 8;
-      else if (strcmp(var.value, "16x") == 0)
+      else if (strcmp(var.value, "4k") == 0)
          resolution_mode = 16;
    }
 
@@ -1162,12 +1177,37 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
 
+   int max_width, max_height;
+
    if(initial_resolution_mode == 0)
    {
       // Get the initial resolution mode at start
       // It will be the resolution_mode limit until the core is restarted
       check_variables();
       initial_resolution_mode = resolution_mode;
+      switch(resolution_mode)
+      {
+         case RES_ORIGINAL:
+            max_width = 704;
+            max_height = 512;
+            break;
+         case RES_480p:
+            max_width = 640;
+            max_height = 480;
+            break;
+         case RES_720p:
+            max_width = 1280;
+            max_height = 720;
+            break;
+         case RES_1080p:
+            max_width = 1920;
+            max_height = 1080;
+            break;
+         case RES_NATIVE:
+            max_width = 3840;
+            max_height = 2160;
+            break;
+      }
    }
 
    info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60.0f : 50.0f;
@@ -1175,8 +1215,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    info->geometry.base_width   = game_width;
    info->geometry.base_height  = game_height;
    // No need to go above 8x what is needed by Hi-Res games, we disallow 16x for Hi-Res games
-   info->geometry.max_width    = 704 * (initial_resolution_mode == 16 ? 8 : initial_resolution_mode);
-   info->geometry.max_height   = 512 * (initial_resolution_mode == 16 ? 8 : initial_resolution_mode);
+   info->geometry.max_width    = max_width;
+   info->geometry.max_height   = max_height;
    info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
 }
 
