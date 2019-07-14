@@ -646,6 +646,9 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
    memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
 
+   // buffer is no longer needed
+   free(temp_buffer);
+
    fclose(iso_file);
    return 0;
 }
@@ -943,6 +946,10 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    }
 
    memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
+
+   // buffer is no longer needed
+   free(temp_buffer);
+
    return 0;
 }
 
