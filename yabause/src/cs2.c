@@ -3863,7 +3863,6 @@ u8 Cs2GetIP(int autoregion) {
                                (buf[0xF6] << 8) | buf[0xF7];
 //Real bios is copying data at the firstprogaddr which correspond to the entry point (MSH2->PC) of the game.
 // ST-040-R4-051795.pdf is describing a bit the mechanism, look at 1st READ ADDRESS
-
          if (cdip->msh2stack == 0 )
          {
             cdip->msh2stack = 0x6002000;
