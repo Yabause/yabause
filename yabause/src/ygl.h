@@ -716,6 +716,9 @@ typedef struct {
    int rbg_use_compute_shader;
    int vdp2_use_compute_shader;
 
+   float vdp1wratio;
+   float vdp1hratio;
+
 } Ygl;
 
 extern Ygl * _Ygl;

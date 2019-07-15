@@ -37,8 +37,6 @@ static void Ygl_releaseTmpBuffer(void);
 int YglBlitMosaic(u32 srcTexture, float w, float h, float * matrix, int * mosaic);
 int YglBlitPerLineAlpha(u32 srcTexture, float w, float h, float * matrix, u32 perline);
 
-extern float vdp1wratio;
-extern float vdp1hratio;
 extern int GlHeight;
 extern int GlWidth;
 static GLuint _prgid[PG_MAX] = { 0 };
@@ -1317,19 +1315,19 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
       glStencilOp(GL_REPLACE,GL_REPLACE,GL_REPLACE);
 
       // render
-      vertices[0] = (int)((float)prg->ux1 * vdp1wratio);
-      vertices[1] = (int)((float)prg->uy1 * vdp1hratio);
-      vertices[2] = (int)((float)(prg->ux2+1) * vdp1wratio);
-      vertices[3] = (int)((float)prg->uy1 * vdp1hratio);
-      vertices[4] = (int)((float)(prg->ux2+1) * vdp1wratio);
-      vertices[5] = (int)((float)(prg->uy2+1) * vdp1hratio);
+      vertices[0] = (int)((float)prg->ux1);
+      vertices[1] = (int)((float)prg->uy1);
+      vertices[2] = (int)((float)(prg->ux2+1));
+      vertices[3] = (int)((float)prg->uy1);
+      vertices[4] = (int)((float)(prg->ux2+1));
+      vertices[5] = (int)((float)(prg->uy2+1));
 
-      vertices[6] = (int)((float)prg->ux1 * vdp1wratio);
-      vertices[7] = (int)((float)prg->uy1 * vdp1hratio);
-      vertices[8] = (int)((float)(prg->ux2+1) * vdp1wratio);
-      vertices[9] = (int)((float)(prg->uy2+1) * vdp1hratio);
-      vertices[10] = (int)((float)prg->ux1 * vdp1wratio);
-      vertices[11] = (int)((float)(prg->uy2+1) * vdp1hratio);
+      vertices[6] = (int)((float)prg->ux1);
+      vertices[7] = (int)((float)prg->uy1);
+      vertices[8] = (int)((float)(prg->ux2+1));
+      vertices[9] = (int)((float)(prg->uy2+1));
+      vertices[10] = (int)((float)prg->ux1);
+      vertices[11] = (int)((float)(prg->uy2+1));
 
       glUniformMatrix4fv( prg->mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0]  );
       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertices_buf);
