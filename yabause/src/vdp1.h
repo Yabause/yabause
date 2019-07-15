@@ -38,7 +38,7 @@ typedef struct {
    u16 ENDR;
    u16 EDSR;
    u16 LOPR;
-   u16 COPR; // This one is not used, all values shall be spreaded all along a frame. it can not be only one frame since games like Scorcher are wainting for special command and games like noon are waiting the last command
+   u16 COPR;
    u16 MODR;
 
    u32 addr;

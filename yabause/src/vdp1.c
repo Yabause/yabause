@@ -274,9 +274,6 @@ u8 FASTCALL Vdp1ReadByte(SH2_struct *context, u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-u16 COPR[2000];
-int COPR_nb;
-
 u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0xFF;
    switch(addr) {
@@ -288,8 +285,7 @@ u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
          return Vdp1Regs->LOPR;
       case 0x14:
         FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
-         return COPR[COPR_nb * yabsys.LineCount/yabsys.VBlankLineCount];
-         //return Vdp1Regs->COPR;
+         return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
       default:
@@ -394,10 +390,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
 
-   COPR_nb = 0;
-
    regs->COPR = regs->addr >> 3;
-   COPR[COPR_nb] = regs->addr >> 3;
 
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       // First, process the command
@@ -476,7 +469,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
       command = T1ReadWord(ram, regs->addr);
       regs->COPR = regs->addr >> 3;
-      COPR[COPR_nb++] = regs->addr >> 3;
       commandCounter++;
    }
 }
