@@ -1630,7 +1630,7 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
          program->uClipMode = input->uclipmode;
       }
       level->uclipcurrent = input->uclipmode;
-
+      return program;
    }
 
    checkval = (float)(input->cor) / 255.0f;
@@ -2739,6 +2739,13 @@ void YglEraseWriteVDP1(void) {
   glDrawBuffers(2, &DrawBuffers[_Ygl->readframe*2]);
 
   _Ygl->vdp1_stencil_mode = 0;
+
+  _Ygl->vdp1levels[_Ygl->readframe].ux1 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].uy1 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].ux2 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].uy2 = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].uclipcurrent = 0;
+  _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
   priority = 0;
