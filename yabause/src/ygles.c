@@ -938,7 +938,6 @@ int YglGenFrameBuffer() {
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[0]);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-printf("%dx%d\n",  _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -3362,11 +3361,11 @@ void YglUpdateVDP1FB(void) {
 void YglCheckFBSwitch(int sync) {
   GLenum ret = GL_WAIT_FAILED;
   if (_Ygl->sync == 0) return;
-  ret = glClientWaitSync(_Ygl->sync, 0, 0);
+  ret = glClientWaitSync(_Ygl->sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
   if (sync != 0) {
     int end = 0;
     while (end == 0) {
-     ret = glClientWaitSync(_Ygl->sync, 0, 20000000);
+     ret = glClientWaitSync(_Ygl->sync, GL_SYNC_FLUSH_COMMANDS_BIT, 20000000);
      if ((ret == GL_CONDITION_SATISFIED) || (ret == GL_ALREADY_SIGNALED)) end = 1;
     }
   }
@@ -3765,7 +3764,6 @@ render_finish:
   OSDDisplayMessages(NULL,0,0);
 
   _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
-  glFlush();
   FrameProfileAdd("YglRender end");
   return;
 }
