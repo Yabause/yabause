@@ -1467,7 +1467,8 @@ bool retro_load_game(const struct retro_game_info *info)
    // Check if the path lead to a ST-V game
    // Store the game "id", if no game id found then this is most likely not a ST-V game
    int stvgame = -1;
-   STVGetSingle(full_path, stv_bios_path, &stvgame);
+   if (strcmp(path_get_extension(info->path), "zip") == 0)
+      STVGetSingle(full_path, stv_bios_path, &stvgame);
 
    if (stvgame != -1)
       stv_mode = true;
