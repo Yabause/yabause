@@ -1947,7 +1947,7 @@ const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
 "  int additional = int(fbColor.a * 255.0);\n"
 "  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
 "  highp float depth = u_pri[ (additional&0x07) ];\n"
-"  if( (additional & 0x40) != 0 && fbColor.b != 0.0 ){  // index color and shadow? \n"
+"  if( (additional & 0x40) != 0 && fbColor.b == 0.0 ){  // index color and shadow? \n"
 "    fragColor = vec4(0.0,0.0,0.0,0.5);\n"
 "  }else{ // direct color \n"
 "    discard;;\n"

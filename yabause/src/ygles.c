@@ -41,6 +41,7 @@ static int YglIsNeedFrameBuffer();
 static int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(void);;
 u32 * YglGetColorRamPointer();
+void YglRenderFrameBufferShadow();
 
 void Ygl_uniformVDP2DrawFramebuffer_perline(void * p, float from, float to, u32 linetexture);
 
@@ -2959,12 +2960,13 @@ void YglNeedToUpdateWindow()
 
 void YglSetVdp2Window()
 {
-    int bwin0,bwin1;
+    int bwin0,bwin1,bspwin;
    //if( _Ygl->bUpdateWindow && (_Ygl->win0_vertexcnt != 0 || _Ygl->win1_vertexcnt != 0 ) )
 
     bwin0 = (Vdp2Regs->WCTLC >> 9) &0x01;
     bwin1 = (Vdp2Regs->WCTLC >> 11) &0x01;
-   if( (_Ygl->win0_vertexcnt != 0 || _Ygl->win1_vertexcnt != 0 )  )
+    bspwin = ((Vdp2Regs->WCTLC >> 13) & 0x01); // ((Vdp2Regs->SPCTL >> 4) & 0x03) == 0x01;
+   if( (_Ygl->win0_vertexcnt != 0 || _Ygl->win1_vertexcnt != 0 || bspwin) )
    {
 
      Ygl_uniformWindow(&_Ygl->windowpg);
@@ -2995,6 +2997,13 @@ void YglSetVdp2Window()
           glStencilFunc(GL_ALWAYS,0x02,0x02);
           glVertexAttribPointer(_Ygl->windowpg.vertexp,2,GL_INT, GL_FALSE,0,(GLvoid *)_Ygl->win1v );
           glDrawArrays(GL_TRIANGLE_STRIP,0,_Ygl->win1_vertexcnt);
+      }
+
+      // 8. sprite window
+      if (bspwin) {
+        glStencilMask(0x04);
+        glStencilFunc(GL_ALWAYS, 0x04, 0x04);
+        YglRenderFrameBufferShadow();
       }
 
       glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
@@ -3155,7 +3164,7 @@ void YglRenderFrameBuffer(int from, int to) {
   GLint   vertices[12];
   GLfloat texcord[12];
   float offsetcol[4];
-  int bwin0, bwin1, logwin0, logwin1, winmode;
+  int bwin0, bwin1, logwin0, logwin1, bwinsp, logwinsp, winmode;
   int is_addcolor = 0;
   int cwidth = 0;
   int cheight = 0;
@@ -3233,15 +3242,19 @@ void YglRenderFrameBuffer(int from, int to) {
    // Window Mode
    bwin0 = (Vdp2Regs->WCTLC >> 9) &0x01;
    logwin0 = (Vdp2Regs->WCTLC >> 8) & 0x01;
-   bwin1 = (Vdp2Regs->WCTLC >> 11) &0x01;
-   logwin1 = (Vdp2Regs->WCTLC >> 10) & 0x01;
-   winmode    = (Vdp2Regs->WCTLC >> 15 ) & 0x01;
+   bwin1 = ((Vdp2Regs->WCTLC >> 11) &0x01) << 1;
+   logwin1 = ((Vdp2Regs->WCTLC >> 10) & 0x01) << 1;
+   bwinsp = ((Vdp2Regs->WCTLC >> 13) & 0x01) << 2;
+   logwinsp = (((Vdp2Regs->WCTLC >> 12) & 0x01)?0:1) << 2; // Invarse?
+      
+   winmode = (Vdp2Regs->WCTLC >> 15) & 0x01;
 
    int bwin_cc0 = (Vdp2Regs->WCTLD >> 9) & 0x01;
    int logwin_cc0 = (Vdp2Regs->WCTLD >> 8) & 0x01;
    int bwin_cc1 = (Vdp2Regs->WCTLD >> 11) & 0x01;
    int logwin_cc1 = (Vdp2Regs->WCTLD >> 10) & 0x01;
    int winmode_cc = (Vdp2Regs->WCTLD >> 15) & 0x01;
+   
 
    if (bwin_cc0 || bwin_cc1){
 
@@ -3310,61 +3323,25 @@ void YglRenderFrameBuffer(int from, int to) {
 
      glDisable(GL_STENCIL_TEST);
      glStencilFunc(GL_ALWAYS, 0, 0xFF);
-     if (bwin0 || bwin1)
+     if (bwin0 || bwin1 || bwinsp)
      {
        glEnable(GL_STENCIL_TEST);
        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
-       if (bwin0 && !bwin1)
-       {
-         if (logwin0)
-         {
-           glStencilFunc(GL_EQUAL, 0x01, 0x01);
-         }
-         else{
-           glStencilFunc(GL_NOTEQUAL, 0x01, 0x01);
-         }
+       int winmask = (bwin0 | bwin1 | bwinsp);
+       int winflag = 0;
+       if (winmode == 0) { // and
+         if (bwin0)  winflag = logwin0;
+         if (bwin1)  winflag |= logwin1;
+         if (bwinsp) winflag |= logwinsp;
+         glStencilFunc(GL_EQUAL, winflag, winmask);
        }
-       else if (!bwin0 && bwin1) {
-
-         if (logwin1)
-         {
-           glStencilFunc(GL_EQUAL, 0x02, 0x02);
-         }
-         else{
-           glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
-         }
-       }
-       else if (bwin0 && bwin1) {
-
-
-         // and
-         if (winmode == 0x0)
-         {
-           if (logwin0 == 1 && logwin1 == 1){
-             glStencilFunc(GL_EQUAL, 0x03, 0x03);
-           }
-           else if (logwin0 == 0 && logwin1 == 0){
-             glStencilFunc(GL_GREATER, 0x01, 0x03);
-           }
-           else{
-             glStencilFunc(GL_ALWAYS, 0, 0xFF);
-           }
-
-         }
-         // OR
-         else if (winmode == 0x01)
-         {
-           if (logwin0 == 1 && logwin1 == 1){
-             glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-           }
-           else if (logwin0 == 0 && logwin1 == 0){
-             glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-           }
-           else{
-             glStencilFunc(GL_ALWAYS, 0, 0xFF);
-           }
-         }
+       else { // or
+         winflag = winmask;
+         if (bwin0)  winflag &= ~logwin0;
+         if (bwin1)  winflag &= ~logwin1;
+         if (bwinsp) winflag &= ~logwinsp;
+         glStencilFunc(GL_NOTEQUAL, winflag, winmask);
        }
      }
 
@@ -3373,7 +3350,7 @@ void YglRenderFrameBuffer(int from, int to) {
 
      glDepthFunc(GL_GEQUAL);
      glEnable(GL_BLEND);
-     if (bwin0 || bwin1)
+     if (bwin0 || bwin1 || bwinsp)
      {
        glDisable(GL_STENCIL_TEST);
        glStencilFunc(GL_ALWAYS, 0, 0xFF);
@@ -3382,58 +3359,26 @@ void YglRenderFrameBuffer(int from, int to) {
    }
 
 
-   if( bwin0 || bwin1 )
+   if (bwin0 || bwin1 || bwinsp)
    {
       glEnable(GL_STENCIL_TEST);
       glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
 
-      if( bwin0 && !bwin1 )
-      {
-         if( logwin0 )
-         {
-            glStencilFunc(GL_EQUAL,0x01,0x01);
-         }else{
-            glStencilFunc(GL_NOTEQUAL,0x01,0x01);
-         }
-      }else if( !bwin0 && bwin1 ) {
-
-         if( logwin1 )
-         {
-            glStencilFunc(GL_EQUAL,0x02,0x02);
-         }else{
-            glStencilFunc(GL_NOTEQUAL,0x02,0x02);
-         }
-      }else if( bwin0 && bwin1 ) {
-
-
-      // and
-      if (winmode == 0x0)
-      {
-        if (logwin0 == 1 && logwin1 == 1){
-          glStencilFunc(GL_EQUAL, 0x03, 0x03);
-        }
-        else if (logwin0 == 0 && logwin1 == 0){
-          glStencilFunc(GL_GREATER, 0x01, 0x03);
-        }
-        else{
-          glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        }
-
+      int winmask = (bwin0 | bwin1 | bwinsp);
+      int winflag = 0;
+      if (winmode == 0) { // and
+        if (bwin0)  winflag = logwin0;
+        if (bwin1)  winflag |= logwin1;
+        if (bwinsp) winflag |= logwinsp;
+        glStencilFunc(GL_EQUAL, winflag, winmask);
       }
-      // OR
-      else if (winmode == 0x01)
-      {
-        if (logwin0 == 1 && logwin1 == 1){
-          glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-        }
-        else if (logwin0 == 0 && logwin1 == 0){
-          glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-        }
-        else{
-          glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        }
+      else { // or
+        winflag = winmask;
+        if (bwin0)  winflag &= ~logwin0;
+        if (bwin1)  winflag &= ~logwin1;
+        if (bwinsp) winflag &= ~logwinsp;
+        glStencilFunc(GL_NOTEQUAL, winflag, winmask);
       }
-     }
    }
 
    glUniformMatrix4fv(_Ygl->renderfb.mtxModelView, 1, GL_FALSE, (GLfloat*)result.m);
@@ -3451,7 +3396,7 @@ void YglRenderFrameBuffer(int from, int to) {
    }
 #endif
 
-   if( bwin0 || bwin1 )
+   if( bwin0 || bwin1 || bwinsp)
    {
       glDisable(GL_STENCIL_TEST);
       glStencilFunc(GL_ALWAYS,0,0xFF);
@@ -3770,7 +3715,8 @@ int YglSetupWindow(YglProgram * prg){
   // no window = 0
   // win0      = 1
   // win1      = 2
-  // both		 = 3
+  // SP        = 4
+  // both		   = 3
 
   if (prg->bwin0 == 0 && prg->bwin1 == 0) {
     // Color Clcuaraion Window
@@ -3829,57 +3775,29 @@ int YglSetupWindow(YglProgram * prg){
   }
 
   // Transparent Window
-  if (prg->bwin0 && !prg->bwin1)
+  if (prg->bwin0 || prg->bwin1 || prg->bwinsp)
   {
-    if (prg->logwin0)
-    {
-      glStencilFunc(GL_EQUAL, 0x01, 0x01);
+    prg->bwin1 <<= 1;
+    prg->logwin1 <<= 1;
+    prg->bwinsp <<= 2;
+    prg->logwinsp <<= 2;
+
+    int winmask = (prg->bwin0 | prg->bwin1 | prg->bwinsp);
+    int winflag = 0;
+    if (prg->winmode == 0) { // and
+      if (prg->bwin0)  winflag = prg->logwin0;
+      if (prg->bwin1)  winflag |= prg->logwin1;
+      if (prg->bwinsp) winflag |= prg->logwinsp;
+      glStencilFunc(GL_EQUAL, winflag, winmask);
     }
-    else{
-      glStencilFunc(GL_NOTEQUAL, 0x01, 0x01);
+    else { // or
+      winflag = winmask;
+      if (prg->bwin0)  winflag &= ~prg->logwin0;
+      if (prg->bwin1)  winflag &= ~prg->logwin1;
+      if (prg->bwinsp) winflag &= ~prg->logwinsp;
+      glStencilFunc(GL_NOTEQUAL, winflag, winmask);
     }
   }
-  else if (!prg->bwin0 && prg->bwin1) {
-
-    if (prg->logwin1)
-    {
-      glStencilFunc(GL_EQUAL, 0x02, 0x02);
-    }
-    else{
-      glStencilFunc(GL_NOTEQUAL, 0x02, 0x02);
-    }
-  }
-  else if (prg->bwin0 && prg->bwin1) {
-    // and
-    if (prg->winmode == 0x0)
-    {
-      if (prg->logwin0 == 1 && prg->logwin1 == 1){
-        glStencilFunc(GL_EQUAL, 0x03, 0x03);
-      }
-      else if (prg->logwin0 == 0 && prg->logwin1 == 0){
-        glStencilFunc(GL_GREATER, 0x01, 0x03);
-      }
-      else{
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-      }
-      
-    }
-    // OR
-    else if (prg->winmode == 0x01)
-    {
-      if (prg->logwin0 == 1 && prg->logwin1 == 1){
-        glStencilFunc(GL_LEQUAL, 0x01, 0x03);
-      }
-      else if (prg->logwin0 == 0 && prg->logwin1 == 0){
-        glStencilFunc(GL_NOTEQUAL, 0x03, 0x03);
-      }
-      else{
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-      }
-    }
-  }
-
-
   return 0;
 }
 
@@ -4529,3 +4447,6 @@ void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int d
   glBindTexture(GL_TEXTURE_2D, 0);
   return;
 }
+
+
+

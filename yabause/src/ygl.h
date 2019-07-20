@@ -416,7 +416,7 @@ typedef struct {
    short ux1,uy1,ux2,uy2;
    int blendmode;
    int preblendmode;
-   int bwin0,logwin0,bwin1,logwin1,winmode;
+   int bwin0,logwin0,bwin1,logwin1, bwinsp, logwinsp, winmode;
    GLuint vertexp;
    GLuint texcoordp;
    GLuint mtxModelView;
