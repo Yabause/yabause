@@ -3237,7 +3237,13 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
     linecl = ((~fixVdp2Regs->CCRLB & 0x1F) << 3) + 0x7;
   }
 
-  if (vdp2height >= 448) lineInc <<= 1;
+  if (vdp2height >= 448) {
+    lineInc <<= 1;
+    info->hres_shift = 1;
+  }
+  else {
+    info->hres_shift = 0;
+  }
   vres = rbg->vres/ rbg->rotate_mval_v;
   hres = rbg->hres/ rbg->rotate_mval_h;
   cellw = rbg->info.cellw;
@@ -3441,7 +3447,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         continue;
       }
 
-      float fh = (parameter->ky * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
+      float fh = (parameter->kx * (parameter->Xsp + parameter->dx * i) + parameter->Xp);
       float fv = (parameter->ky * (parameter->Ysp + parameter->dy * i) + parameter->Yp);
       h = fh;
       v = fv;
@@ -7090,6 +7096,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03NoK(vdp2draw_struct *
     return (&paraA);
   }
 
+  v <= info->hres_shift;
   if (info->WindwAreaMode == WA_INSIDE)  // Inside is B, Outside is A
   {
     // Outside is A
@@ -7142,6 +7149,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKA(vdp2draw_struc
     return info->GetKValueA(&paraA, h);
   }
 
+  v <<= info->hres_shift;
   if (info->WindwAreaMode == WA_INSIDE)  // Inside is B, Outside is A
   {
     // Outside A
@@ -7196,6 +7204,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithKB(vdp2draw_struc
     return &paraA;
   }
 
+  v <<= info->hres_shift;
   if (info->WindwAreaMode == WA_INSIDE)  // Inside is B, Outside is A
   {
     // Outside A
@@ -7255,6 +7264,8 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(vdp2draw_struct
     h = ceilf(paraB.KtablV + (paraB.deltaKAx * h));
     return info->GetKValueB(&paraB, h);
   }
+
+  v <<= info->hres_shift;
 
   // Final Fight Revenge
   if (info->WindwAreaMode == WA_INSIDE) {

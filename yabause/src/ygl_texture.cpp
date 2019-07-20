@@ -127,6 +127,7 @@ const char prg_generate_rbg[] =
 "  int window_area_mode;"
 "  float alpha_;"
 "  int cram_shift;"
+"  int hires_shift;"
 "};\n"
 " struct vdp2WindowInfo\n"
 "{\n"
@@ -170,6 +171,7 @@ const char prg_generate_rbg[] =
 " }\n"
 
 " bool isWindowInside(int posx, int posy) {\n"
+" posy <<= hires_shift;"
 "	if (window_area_mode == 0) {\n"
 "		if (pWinInfo[posy].WinShowLine == 0) {\n"
 "			return true;\n"
@@ -261,7 +263,7 @@ const char prg_rbg_rpmd2_2w[] =
 
 
 const char prg_get_param_mode03[] =
-"  if( isWindowInside( int(posx), int(posy) ) ) { "
+"  if( isWindowInside( int(posx), int(posy)) ) { "
 "    paramid = 0; \n"
 "    if( para[paramid].coefenab != 0 ){ \n"
 "      if( GetKValue(paramid,posx,posy,ky,lineaddr ) == -1 ) { \n"
@@ -828,6 +830,7 @@ struct RBGUniform {
 	window_area_mode = 0;
 	alpha_ = 0.0;
 	cram_shift = 1;
+  hires_shift = 0;
   }
   float hres_scale;
   float vres_scale;
@@ -851,6 +854,7 @@ struct RBGUniform {
   int window_area_mode;
   float alpha_;
   int cram_shift;
+  int hires_shift;
 };
 
 class RBGGenerator{
@@ -1646,7 +1650,7 @@ public:
 				}
 			}
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_window_);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2WindowInfo)*int(rbg->vres / rbg->rotate_mval_v), (void*)rbg->info.pWinInfo);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2WindowInfo)*(int(rbg->vres / rbg->rotate_mval_v)<<rbg->info.hres_shift) , (void*)rbg->info.pWinInfo);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_window_);
 		}
 
@@ -2201,7 +2205,7 @@ public:
 				}
 			}
 			glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_window_);
-			glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2WindowInfo)*int(rbg->vres / rbg->rotate_mval_v), (void*)rbg->info.pWinInfo);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(vdp2WindowInfo)*(int(rbg->vres / rbg->rotate_mval_v)<<rbg->info.hres_shift) , (void*)rbg->info.pWinInfo);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_window_);
 		}
 	}
@@ -2262,6 +2266,7 @@ public:
 	else {
 		uniform.cram_shift = 2;
 	}
+  uniform.hires_shift = rbg->info.hres_shift;
 
   glBindBuffer(GL_UNIFORM_BUFFER, scene_uniform);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(RBGUniform), (void*)&uniform);

@@ -188,7 +188,7 @@ typedef struct
    vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);   
    vdp2rotationparameter_struct * FASTCALL (*GetRParam)(void *, int h,int v);
    u32 LineColorBase;
-   
+   u32 hres_shift;
    void (*LoadLineParams)(void *, void *, int line, Vdp2* lines);
 
    int bad_cycle_setting;
@@ -369,8 +369,8 @@ static INLINE void CalcPlaneAddr(vdp2draw_struct *info, u32 tmp)
    int deca = info->planeh + info->planew - 2;
    int multi = info->planeh * info->planew;
      
-   //if (Vdp2Regs->VRSIZE & 0x8000)
-   //{
+   if (Vdp2Regs->VRSIZE & 0x8000)
+   {
       if (info->patterndatasize == 1)
       {
          if (info->patternwh == 1)
@@ -385,7 +385,7 @@ static INLINE void CalcPlaneAddr(vdp2draw_struct *info, u32 tmp)
          else
             info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
       }
-   /*}
+   }
    else
    {
       if (info->patterndatasize == 1)
@@ -393,16 +393,16 @@ static INLINE void CalcPlaneAddr(vdp2draw_struct *info, u32 tmp)
          if (info->patternwh == 1)
             info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
          else
-            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x800);
+            info->addr = ((tmp & 0xFF) >> deca) * (multi * 0x800);
       }
       else
       {
          if (info->patternwh == 1)
             info->addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
          else
-            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x1000);
+            info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
       }
-   }*/
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
