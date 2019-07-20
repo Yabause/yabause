@@ -6893,6 +6893,7 @@ void VIDOGLVdp2DrawScreens(void)
   memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
   fixVdp2Regs = &baseVdp2Regs;
 
+  
   AC_VRAM[0][0] = (fixVdp2Regs->CYCA0L >> 12) & 0x0F;
   AC_VRAM[0][1] = (fixVdp2Regs->CYCA0L >> 8) & 0x0F;
   AC_VRAM[0][2] = (fixVdp2Regs->CYCA0L >> 4) & 0x0F;
@@ -6902,14 +6903,26 @@ void VIDOGLVdp2DrawScreens(void)
   AC_VRAM[0][6] = (fixVdp2Regs->CYCA0U >> 4) & 0x0F;
   AC_VRAM[0][7] = (fixVdp2Regs->CYCA0U >> 0) & 0x0F;
 
-  AC_VRAM[1][0] = (fixVdp2Regs->CYCA1L >> 12) & 0x0F;
-  AC_VRAM[1][1] = (fixVdp2Regs->CYCA1L >> 8) & 0x0F;
-  AC_VRAM[1][2] = (fixVdp2Regs->CYCA1L >> 4) & 0x0F;
-  AC_VRAM[1][3] = (fixVdp2Regs->CYCA1L >> 0) & 0x0F;
-  AC_VRAM[1][4] = (fixVdp2Regs->CYCA1U >> 12) & 0x0F;
-  AC_VRAM[1][5] = (fixVdp2Regs->CYCA1U >> 8) & 0x0F;
-  AC_VRAM[1][6] = (fixVdp2Regs->CYCA1U >> 4) & 0x0F;
-  AC_VRAM[1][7] = (fixVdp2Regs->CYCA1U >> 0) & 0x0F;
+  if (fixVdp2Regs->RAMCTL & 0x100) {
+    AC_VRAM[1][0] = (fixVdp2Regs->CYCA1L >> 12) & 0x0F;
+    AC_VRAM[1][1] = (fixVdp2Regs->CYCA1L >> 8) & 0x0F;
+    AC_VRAM[1][2] = (fixVdp2Regs->CYCA1L >> 4) & 0x0F;
+    AC_VRAM[1][3] = (fixVdp2Regs->CYCA1L >> 0) & 0x0F;
+    AC_VRAM[1][4] = (fixVdp2Regs->CYCA1U >> 12) & 0x0F;
+    AC_VRAM[1][5] = (fixVdp2Regs->CYCA1U >> 8) & 0x0F;
+    AC_VRAM[1][6] = (fixVdp2Regs->CYCA1U >> 4) & 0x0F;
+    AC_VRAM[1][7] = (fixVdp2Regs->CYCA1U >> 0) & 0x0F;
+  }
+  else {
+    AC_VRAM[1][0] = AC_VRAM[0][0];
+    AC_VRAM[1][1] = AC_VRAM[0][1];
+    AC_VRAM[1][2] = AC_VRAM[0][2];
+    AC_VRAM[1][3] = AC_VRAM[0][3];
+    AC_VRAM[1][4] = AC_VRAM[0][4];
+    AC_VRAM[1][5] = AC_VRAM[0][5];
+    AC_VRAM[1][6] = AC_VRAM[0][6];
+    AC_VRAM[1][7] = AC_VRAM[0][7];
+  }
 
   AC_VRAM[2][0] = (fixVdp2Regs->CYCB0L >> 12) & 0x0F;
   AC_VRAM[2][1] = (fixVdp2Regs->CYCB0L >> 8) & 0x0F;
@@ -6920,14 +6933,26 @@ void VIDOGLVdp2DrawScreens(void)
   AC_VRAM[2][6] = (fixVdp2Regs->CYCB0U >> 4) & 0x0F;
   AC_VRAM[2][7] = (fixVdp2Regs->CYCB0U >> 0) & 0x0F;
 
-  AC_VRAM[3][0] = (fixVdp2Regs->CYCB1L >> 12) & 0x0F;
-  AC_VRAM[3][1] = (fixVdp2Regs->CYCB1L >> 8) & 0x0F;
-  AC_VRAM[3][2] = (fixVdp2Regs->CYCB1L >> 4) & 0x0F;
-  AC_VRAM[3][3] = (fixVdp2Regs->CYCB1L >> 0) & 0x0F;
-  AC_VRAM[3][4] = (fixVdp2Regs->CYCB1U >> 12) & 0x0F;
-  AC_VRAM[3][5] = (fixVdp2Regs->CYCB1U >> 8) & 0x0F;
-  AC_VRAM[3][6] = (fixVdp2Regs->CYCB1U >> 4) & 0x0F;
-  AC_VRAM[3][7] = (fixVdp2Regs->CYCB1U >> 0) & 0x0F;
+  if (fixVdp2Regs->RAMCTL & 0x200) {
+    AC_VRAM[3][0] = (fixVdp2Regs->CYCB1L >> 12) & 0x0F;
+    AC_VRAM[3][1] = (fixVdp2Regs->CYCB1L >> 8) & 0x0F;
+    AC_VRAM[3][2] = (fixVdp2Regs->CYCB1L >> 4) & 0x0F;
+    AC_VRAM[3][3] = (fixVdp2Regs->CYCB1L >> 0) & 0x0F;
+    AC_VRAM[3][4] = (fixVdp2Regs->CYCB1U >> 12) & 0x0F;
+    AC_VRAM[3][5] = (fixVdp2Regs->CYCB1U >> 8) & 0x0F;
+    AC_VRAM[3][6] = (fixVdp2Regs->CYCB1U >> 4) & 0x0F;
+    AC_VRAM[3][7] = (fixVdp2Regs->CYCB1U >> 0) & 0x0F;
+  }
+  else {
+    AC_VRAM[3][0] = AC_VRAM[2][0];
+    AC_VRAM[3][1] = AC_VRAM[2][1];
+    AC_VRAM[3][2] = AC_VRAM[2][2];
+    AC_VRAM[3][3] = AC_VRAM[2][3];
+    AC_VRAM[3][4] = AC_VRAM[2][4];
+    AC_VRAM[3][5] = AC_VRAM[2][5];
+    AC_VRAM[3][6] = AC_VRAM[2][6];
+    AC_VRAM[3][7] = AC_VRAM[2][7];
+  }
 
 
   YglUpdateColorRam();
