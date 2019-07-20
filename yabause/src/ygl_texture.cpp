@@ -658,7 +658,7 @@ const GLchar * a_prg_rbg_1_2w_bitmap[] = {
 
 const GLchar * a_prg_rbg_1_2w_p1_4bpp[] = {
 	prg_generate_rbg,
-	prg_rbg_rpmd0_2w,
+	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
 	prg_rbg_get_patternaddr,
@@ -669,7 +669,7 @@ const GLchar * a_prg_rbg_1_2w_p1_4bpp[] = {
 
 const GLchar * a_prg_rbg_1_2w_p2_4bpp[] = {
 	prg_generate_rbg,
-	prg_rbg_rpmd0_2w,
+	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
 	prg_rbg_get_patternaddr,
@@ -680,7 +680,7 @@ const GLchar * a_prg_rbg_1_2w_p2_4bpp[] = {
 
 const GLchar * a_prg_rbg_1_2w_p1_8bpp[] = {
 	prg_generate_rbg,
-	prg_rbg_rpmd0_2w,
+	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
 	prg_rbg_get_patternaddr,
@@ -691,7 +691,7 @@ const GLchar * a_prg_rbg_1_2w_p1_8bpp[] = {
 
 const GLchar * a_prg_rbg_1_2w_p2_8bpp[] = {
 	prg_generate_rbg,
-	prg_rbg_rpmd0_2w,
+	prg_rbg_rpmd1_2w,
 	prg_rbg_xy,
 	prg_rbg_overmode_repeat,
 	prg_rbg_get_patternaddr,

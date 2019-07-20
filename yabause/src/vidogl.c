@@ -3419,9 +3419,11 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg) {
         break;
       case 1:
         parameter = &paraB;
-        if (vdp2rGetKValue(parameter, i) == 0) {
-          *(texture->textdata++) = 0x00000000;
-          continue;
+        if (parameter->coefenab) {
+          if (vdp2rGetKValue(parameter, i) == 0) {
+            *(texture->textdata++) = 0x00000000;
+            continue;
+          }
         }
         break;
       case 2:
