@@ -391,14 +391,14 @@ static INLINE void CalcPlaneAddr(vdp2draw_struct *info, u32 tmp)
       if (info->patterndatasize == 1)
       {
          if (info->patternwh == 1)
-            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x2000);
+            info->addr = ((tmp & 0x3F) >> deca) * (multi * 0x2000);
          else
             info->addr = ((tmp & 0xFF) >> deca) * (multi * 0x800);
       }
       else
       {
          if (info->patternwh == 1)
-            info->addr = ((tmp & 0xF) >> deca) * (multi * 0x4000);
+            info->addr = ((tmp & 0x1F) >> deca) * (multi * 0x4000);
          else
             info->addr = ((tmp & 0x7F) >> deca) * (multi * 0x1000);
       }
