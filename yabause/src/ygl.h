@@ -689,6 +689,7 @@ int YglExpandVertexBuffer( int addsize, void ** vpos, void **tcpos, void **vapos
 intptr_t YglGetOffset( void* address );
 int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h);
 int YglBlitFXAA(u32 sourceTexture, float w, float h);
+int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float ww, float hh);
 
 void YglRenderVDP1(void);
 
@@ -714,7 +715,6 @@ int YglCleanUpWindow(YglProgram * prg);
 
 void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
-
 
 #if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_) && !defined(__LIBRETRO__) &&  !defined(NX)
 

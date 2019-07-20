@@ -791,7 +791,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   }
 
   if( _Ygl->cpu_framebuffer_write[_Ygl->drawframe] == 0 ){
-     FRAMELOG("FB: CPU write framebuffer %d:1\n",_Ygl->drawframe );
+     FRAMELOG("VIDOGLVdp1WriteFrameBuffer: CPU write framebuffer %d:1\n",_Ygl->drawframe );
   }
   _Ygl->cpu_framebuffer_write[_Ygl->drawframe]++;
 
@@ -882,7 +882,10 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
       glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
       glGetError();
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+      char * buf = malloc(_Ygl->rwidth * _Ygl->rheight * 4);
+      memset(buf, 0, _Ygl->rwidth * _Ygl->rheight * 4);
+      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+      free(buf);
       if ((error = glGetError()) != GL_NO_ERROR) {
         YGLDEBUG("Fail on VIDOGLVdp1ReadFrameBuffer at %d %04X %d %d", __LINE__, error, _Ygl->rwidth, _Ygl->rheight);
         abort();
@@ -2730,7 +2733,7 @@ void YglFrameChangeVDP1(){
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
   _Ygl->readframe = current_drawframe;
-  FRAMELOG("FB: YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
+  FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 
 void YglDrawCpuFramebufferWrite( int target ){
@@ -2738,7 +2741,7 @@ void YglDrawCpuFramebufferWrite( int target ){
 
   u32 drawFboId;
   glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &drawFboId);
-  FRAMELOG("FB: write YglDrawCpuFrameBufferWrite %d:%d\n",target,_Ygl->cpu_framebuffer_write[target]) ; 
+  FRAMELOG("YglDrawCpuFramebufferWrite: write %d:%d w:%d h:%d\n",target,_Ygl->cpu_framebuffer_write[target], _Ygl->max_fb_x, _Ygl->max_fb_y ) ;
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[target], 0);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _Ygl->rboid_depth);
@@ -2762,9 +2765,9 @@ void YglDrawCpuFramebufferWrite( int target ){
   }
 
   if( _Ygl->smallfbotex != 0 ) {
-    const u32 width = _Ygl->max_fb_x;
-    const u32 height = _Ygl->max_fb_y; 
-    u32 * texbuf = malloc( (width+1) * (height+1) * 4 );
+    const u32 width = _Ygl->max_fb_x+1;
+    const u32 height = _Ygl->max_fb_y+1; 
+    u32 * texbuf = malloc( width * height * 4 );
     int tvmode = (Vdp1Regs->TVMR & 0x7);
     switch( tvmode ) {
       case 0: // 16bit 512x256
@@ -2819,7 +2822,7 @@ void YglDrawCpuFramebufferWrite( int target ){
     glBindTexture(GL_TEXTURE_2D, _Ygl->smallfbotex);
     glTexSubImage2D(GL_TEXTURE_2D,0,0,0,width,height,GL_RGBA, GL_UNSIGNED_BYTE,texbuf);
     glViewport(0,0,_Ygl->width,_Ygl->height);
-    YglBlitFramebuffer(_Ygl->smallfbotex,_Ygl->vdp1fbo,1,1);
+    YglWindowFramebuffer(_Ygl->smallfbotex,_Ygl->vdp1fbo, width, height, _Ygl->rwidth, _Ygl->rheight);
     free(texbuf);
   }
   _Ygl->min_fb_x = 1024;
@@ -2849,7 +2852,7 @@ void YglRenderVDP1(void) {
     YglOrtho(&m, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
   }
 
-  FRAMELOG("FB: YglRenderVDP1: drawframe =%d:%d", _Ygl->drawframe, _Ygl->cpu_framebuffer_write[_Ygl->drawframe]);
+  FRAMELOG("YglRenderVDP1: drawframe =%d:%d", _Ygl->drawframe, _Ygl->cpu_framebuffer_write[_Ygl->drawframe]);
 
   if (_Ygl->pFrameBuffer != NULL) {
     _Ygl->pFrameBuffer = NULL;
@@ -3169,7 +3172,7 @@ void YglRenderFrameBuffer(int from, int to) {
   int cwidth = 0;
   int cheight = 0;
 
-  if(_Ygl->cpu_framebuffer_write[_Ygl->readframe]!=0) FRAMELOG("FB: CPU write to readframe FB %d:%d %d to %d\n", _Ygl->readframe, _Ygl->cpu_framebuffer_write[_Ygl->readframe] , from, to, _Ygl->readframe);
+  if(_Ygl->cpu_framebuffer_write[_Ygl->readframe]!=0) FRAMELOG("YglRenderFrameBuffer: CPU write to readframe FB %d:%d %d to %d\n", _Ygl->readframe, _Ygl->cpu_framebuffer_write[_Ygl->readframe] , from, to, _Ygl->readframe);
 
   YglGenFrameBuffer();
   YglDrawCpuFramebufferWrite(_Ygl->readframe);

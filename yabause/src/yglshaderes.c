@@ -3703,6 +3703,136 @@ int YglBlitFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h) {
   return 0;
 }
 
+int YglWindowFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float ww, float hh ) {
+
+  float aspectRatio = 1.0;
+  float vb[] = { 0, 0,
+    2.0, 0.0,
+    2.0, 2.0,
+    0, 2.0, };
+
+  float tb[] = { 0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0 };
+
+  glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
+
+
+  if (blit_prg == -1) {
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+
+    const GLchar * vblit_img_v[] = { vblit_img, NULL };
+    const GLchar * fblit_img_v[] = { fblit_img, NULL };
+
+    blit_prg = glCreateProgram();
+    if (blit_prg == 0) {
+      return -1;
+    }
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, vblit_img_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      blit_prg = -1;
+      return -1;
+    }
+    glShaderSource(fshader, 1, fblit_img_v, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      blit_prg = -1;
+      return -1;
+    }
+
+    glAttachShader(blit_prg, vshader);
+    glAttachShader(blit_prg, fshader);
+    glLinkProgram(blit_prg);
+    glGetProgramiv(blit_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(blit_prg);
+      blit_prg = -1;
+      return -1;
+    }
+
+    glUseProgram(blit_prg);
+    glUniform1i(glGetUniformLocation(blit_prg, "u_Src"), 0);
+  }
+  else {
+    glUseProgram(blit_prg);
+  }
+
+
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_BLEND);
+
+  float hrate = h / hh;
+  float wrate = w / ww;
+
+
+  float const vertexPosition[] = {
+    (wrate*2.0f - 1.0f), -1.0f,
+    -1.0f, -1.0f,
+    (wrate*2.0f - 1.0f),  (hrate*2.0f-1.0f) ,
+    -1.0f, (hrate*2.0f-1.0f) };
+
+
+  float textureCoord[] = {
+    wrate, 0.0f,
+    0.0f, 0.0f,
+    wrate, hrate,
+    0.0f, hrate };
+
+  if (_Ygl->rotate_screen) {
+    textureCoord[0] = 0.0f;
+    textureCoord[1] = 0.0f;
+    textureCoord[2] = 0.0f;
+    textureCoord[3] = 1.0f;
+    textureCoord[4] = 1.0f;
+    textureCoord[5] = 0.0f;
+    textureCoord[6] = 1.0f;
+    textureCoord[7] = 1.0f;
+  }
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, vertexPosition);
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, textureCoord);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, srcTexture);
+  if (_Ygl->aamode == AA_BILNEAR_FILTER) {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  }
+  else {
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  // Clean up
+  glActiveTexture(GL_TEXTURE0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+
+  return 0;
+}
+
 
 
 //----------------------------------------------------------------------------------------
