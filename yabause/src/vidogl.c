@@ -2350,6 +2350,7 @@ static void Vdp2PatternAddrUsingPatternname(vdp2draw_struct *info, u16 paternnam
 
 static void Vdp2PatternAddr(vdp2draw_struct *info)
 {
+  info->addr &= 0x7FFFF;
   switch (info->patterndatasize)
   {
   case 1:
