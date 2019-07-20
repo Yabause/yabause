@@ -179,7 +179,7 @@ static int nbg2priority = 0;
 static int nbg3priority = 0;
 static int rbg0priority = 0;
 
-
+u8 AC_VRAM[4][8];
 
 RBGDrawInfo g_rgb0;
 RBGDrawInfo g_rgb1;
@@ -1867,7 +1867,7 @@ static INLINE u32 Vdp2GetPixel8bpp(vdp2draw_struct *info, u32 addr, YglTexture *
   u16 dotw = T1ReadWord(Vdp2Ram, addr & 0x7FFFF);
   u8 dot;
   u32 alpha = info->alpha;
-  
+
   alpha = info->alpha;
   dot = (dotw & 0xFF00)>>8;
   if (!(dot & 0xFF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
@@ -1924,6 +1924,19 @@ static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr) {
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 {
   int i, j;
+
+  // Access Denied(Wizardry - Llylgamyn Saga)
+  if (info->char_bank[info->charaddr>>17] == 0) {
+    for (i = 0; i < info->cellh; i++)
+    {
+      for (j = 0; j < info->cellw; j++)
+      {
+        *texture->textdata++ = 0x00000000;
+      }
+      texture->textdata += texture->w;
+    }
+    return;
+  }
 
   switch (info->colornumber)
   {
@@ -5614,6 +5627,16 @@ static void Vdp2DrawNBG0(void)
   info.cellh = 256;
   info.specialcolorfunction = 0;
 
+  for (int i=0; i < 4; i++) {
+    info.char_bank[i] = 0;
+    info.pname_bank[i] = 0;
+    for (int j=0; j < 8; j++) {
+      if (AC_VRAM[i][j] == 0x04) 
+        info.char_bank[i] = 1;
+      if (AC_VRAM[i][j] == 0x00)
+        info.pname_bank[i] = 1;
+    }
+  }
 
   if (fixVdp2Regs->BGON & 0x20)
   {
@@ -5988,6 +6011,18 @@ static void Vdp2DrawNBG1(void)
 
   info.enable = fixVdp2Regs->BGON & 0x2;
   if (!info.enable) return;
+
+  for (int i = 0; i < 4; i++) {
+    info.char_bank[i] = 0;
+    info.pname_bank[i] = 0;
+    for (int j = 0; j < 8; j++) {
+      if (AC_VRAM[i][j] == 0x05)
+        info.char_bank[i] = 1;
+      if (AC_VRAM[i][j] == 0x01)
+        info.pname_bank[i] = 1;
+    }
+  }
+
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x200);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 2) & 0x3;
 
@@ -6253,6 +6288,18 @@ static void Vdp2DrawNBG2(void)
 
   info.enable = fixVdp2Regs->BGON & 0x4;
   if (!info.enable) return;
+
+  for (int i = 0; i < 4; i++) {
+    info.char_bank[i] = 0;
+    info.pname_bank[i] = 0;
+    for (int j = 0; j < 8; j++) {
+      if (AC_VRAM[i][j] == 0x06)
+        info.char_bank[i] = 1;
+      if (AC_VRAM[i][j] == 0x02)
+        info.pname_bank[i] = 1;
+    }
+  }
+  
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x400);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 4) & 0x3;
 
@@ -6365,6 +6412,18 @@ static void Vdp2DrawNBG3(void)
 
   info.enable = fixVdp2Regs->BGON & 0x8;
   if (!info.enable) return;
+
+  for (int i = 0; i < 4; i++) {
+    info.char_bank[i] = 0;
+    info.pname_bank[i] = 0;
+    for (int j = 0; j < 8; j++) {
+      if (AC_VRAM[i][j] == 0x07)
+        info.char_bank[i] = 1;
+      if (AC_VRAM[i][j] == 0x03)
+        info.pname_bank[i] = 1;
+    }
+  }
+
   info.transparencyenable = !(fixVdp2Regs->BGON & 0x800);
   info.specialprimode = (fixVdp2Regs->SFPRMD >> 6) & 0x3;
 
@@ -6483,6 +6542,13 @@ static void Vdp2DrawRBG0(void)
       Vdp2ReadRotationTable(0, &paraA, fixVdp2Regs, Vdp2Ram);
     }
     return;
+  }
+
+  for (int i = 0; i < 4; i++) {
+    g_rgb0.info.char_bank[i]  = 1;
+    g_rgb0.info.pname_bank[i] = 1;
+    g_rgb1.info.char_bank[i]  = 1;
+    g_rgb1.info.pname_bank[i] = 1;
   }
 
   Vdp2GeneratePerLineColorCalcuration(info, RBG0);
@@ -6824,6 +6890,43 @@ void VIDOGLVdp2DrawScreens(void)
   if (fixVdp2Regs == NULL) fixVdp2Regs = Vdp2Regs;
   memcpy(&baseVdp2Regs, fixVdp2Regs, sizeof(Vdp2));
   fixVdp2Regs = &baseVdp2Regs;
+
+  AC_VRAM[0][0] = (fixVdp2Regs->CYCA0L >> 12) & 0x0F;
+  AC_VRAM[0][1] = (fixVdp2Regs->CYCA0L >> 8) & 0x0F;
+  AC_VRAM[0][2] = (fixVdp2Regs->CYCA0L >> 4) & 0x0F;
+  AC_VRAM[0][3] = (fixVdp2Regs->CYCA0L >> 0) & 0x0F;
+  AC_VRAM[0][4] = (fixVdp2Regs->CYCA0U >> 12) & 0x0F;
+  AC_VRAM[0][5] = (fixVdp2Regs->CYCA0U >> 8) & 0x0F;
+  AC_VRAM[0][6] = (fixVdp2Regs->CYCA0U >> 4) & 0x0F;
+  AC_VRAM[0][7] = (fixVdp2Regs->CYCA0U >> 0) & 0x0F;
+
+  AC_VRAM[1][0] = (fixVdp2Regs->CYCA1L >> 12) & 0x0F;
+  AC_VRAM[1][1] = (fixVdp2Regs->CYCA1L >> 8) & 0x0F;
+  AC_VRAM[1][2] = (fixVdp2Regs->CYCA1L >> 4) & 0x0F;
+  AC_VRAM[1][3] = (fixVdp2Regs->CYCA1L >> 0) & 0x0F;
+  AC_VRAM[1][4] = (fixVdp2Regs->CYCA1U >> 12) & 0x0F;
+  AC_VRAM[1][5] = (fixVdp2Regs->CYCA1U >> 8) & 0x0F;
+  AC_VRAM[1][6] = (fixVdp2Regs->CYCA1U >> 4) & 0x0F;
+  AC_VRAM[1][7] = (fixVdp2Regs->CYCA1U >> 0) & 0x0F;
+
+  AC_VRAM[2][0] = (fixVdp2Regs->CYCB0L >> 12) & 0x0F;
+  AC_VRAM[2][1] = (fixVdp2Regs->CYCB0L >> 8) & 0x0F;
+  AC_VRAM[2][2] = (fixVdp2Regs->CYCB0L >> 4) & 0x0F;
+  AC_VRAM[2][3] = (fixVdp2Regs->CYCB0L >> 0) & 0x0F;
+  AC_VRAM[2][4] = (fixVdp2Regs->CYCB0U >> 12) & 0x0F;
+  AC_VRAM[2][5] = (fixVdp2Regs->CYCB0U >> 8) & 0x0F;
+  AC_VRAM[2][6] = (fixVdp2Regs->CYCB0U >> 4) & 0x0F;
+  AC_VRAM[2][7] = (fixVdp2Regs->CYCB0U >> 0) & 0x0F;
+
+  AC_VRAM[3][0] = (fixVdp2Regs->CYCB1L >> 12) & 0x0F;
+  AC_VRAM[3][1] = (fixVdp2Regs->CYCB1L >> 8) & 0x0F;
+  AC_VRAM[3][2] = (fixVdp2Regs->CYCB1L >> 4) & 0x0F;
+  AC_VRAM[3][3] = (fixVdp2Regs->CYCB1L >> 0) & 0x0F;
+  AC_VRAM[3][4] = (fixVdp2Regs->CYCB1U >> 12) & 0x0F;
+  AC_VRAM[3][5] = (fixVdp2Regs->CYCB1U >> 8) & 0x0F;
+  AC_VRAM[3][6] = (fixVdp2Regs->CYCB1U >> 4) & 0x0F;
+  AC_VRAM[3][7] = (fixVdp2Regs->CYCB1U >> 0) & 0x0F;
+
 
   YglUpdateColorRam();
 
