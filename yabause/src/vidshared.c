@@ -280,19 +280,19 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
    addr += 2;
 
    i = T1ReadWord(ram, addr);
-   parameter->Pz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
+   parameter->Pz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFFFC000 : 0x00000000));
    addr += 4;
 
    i = T1ReadWord(ram, addr);
-   parameter->Cx = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
+   parameter->Cx = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFFFC000 : 0x00000000));
    addr += 2;
 
    i = T1ReadWord(ram, addr);
-   parameter->Cy = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
+   parameter->Cy = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFFFC000 : 0x00000000));
    addr += 2;
 
    i = T1ReadWord(ram, addr);
-   parameter->Cz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFF80000 : 0x00000000));
+   parameter->Cz = (float) (signed) ((i & 0x3FFF) | (i & 0x2000 ? 0xFFFFC000 : 0x00000000));
    addr += 4;
 
    i = T1ReadLong(ram, addr);

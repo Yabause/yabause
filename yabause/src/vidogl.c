@@ -3195,7 +3195,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, float
     if (parameter->k_mem_type == 0) { // vram
       kdata = T1ReadWord(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 1)) & 0x7FFFF);
     } else { // cram
-      kdata = T2ReadWord((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (int)(h << 1)) & 0xFFF);
+      kdata = Vdp2ColorRamReadWord(((parameter->coeftbladdr + (int)(h << 1)) & 0x7FF) + 0x800);
     }
     if (kdata & 0x8000) { return 0; }
     kval = (float)(signed)((kdata & 0x7FFF) | (kdata & 0x4000 ? 0x8000 : 0x0000)) / 1024.0f;
@@ -3210,11 +3210,11 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, float
     if (parameter->k_mem_type == 0) { // vram
       kdata = T1ReadLong(Vdp2Ram, (parameter->coeftbladdr + (int)(h << 2)) & 0x7FFFF);
     } else { // cram
-      kdata = T2ReadLong((Vdp2ColorRam + 0x800), (parameter->coeftbladdr + (int)(h << 2)) & 0xFFF);
+      kdata = Vdp2ColorRamReadLong( ((parameter->coeftbladdr + (int)(h << 2)) & 0x7FF) + 0x800 );
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) { return 0; }
-    kval = (float)(int)((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / 65536.0f;
+    kval = (float)(int)((kdata & 0x00FFFFFF) | (kdata & 0x00800000 ? 0xFF800000 : 0x00000000)) / (65536.0f);
     switch (parameter->coefmode) {
     case 0:  parameter->kx = kval; parameter->ky = kval; break;
     case 1:  parameter->kx = kval; break;
