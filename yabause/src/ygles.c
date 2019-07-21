@@ -3655,7 +3655,7 @@ void YglRender(void) {
   }
 
    if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || _Ygl->msb_shadow_count_[_Ygl->readframe] != 0 ) {
-     YglRenderFrameBufferShadow();
+     //YglRenderFrameBufferShadow();
    }
 
 
