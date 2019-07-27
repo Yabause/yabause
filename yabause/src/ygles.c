@@ -501,6 +501,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
+  glGetError();
   glGenTextures(1, &tm->textureID);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -532,8 +533,12 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglTMDeInit(YglTextureManager * tm) {
+  glBindTexture(GL_TEXTURE_2D, tm->textureID);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   glDeleteTextures(1, &tm->textureID);
+  tm->textureID = 0;
   glDeleteBuffers(1, &tm->pixelBufferID);
+  tm->pixelBufferID = 0;
   free(tm);
 }
 
@@ -1354,7 +1359,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glPixelStorei(GL_PACK_ALIGNMENT, 1);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-  YglTM = YglTMInit(512, 512);
+  YglTM = YglTMInit(714, 512);
 
   _Ygl->smallfbo = 0;
   _Ygl->smallfbotex = 0;
