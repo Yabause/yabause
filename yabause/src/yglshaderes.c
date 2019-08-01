@@ -221,10 +221,10 @@ const GLchar * pYglprg_normal_v[] = {Yglprg_normal_v, NULL};
 const GLchar Yglprg_normal_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                            \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                            \n"
 "in highp vec4 v_texcoord;                            \n"
 "uniform vec4 u_color_offset;    \n"
 "uniform sampler2D s_texture;                        \n"
@@ -284,11 +284,11 @@ int Ygl_cleanupNormal(void * p)
 const GLchar Yglprg_normal_cram_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;\n"
+"precision highp int;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
-"precision highp int;\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -306,11 +306,11 @@ const GLchar Yglprg_normal_cram_f[] =
 const GLchar Yglprg_normal_cram_special_priority_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;\n"
+"precision highp int;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
-"precision highp int;\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -397,11 +397,11 @@ int Ygl_uniformNormalCramSpecialPriority(void * p)
 const GLchar Yglprg_normal_cram_addcol_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;\n"
+"precision highp int;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
-"precision highp int;\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -481,11 +481,11 @@ void Ygl_setNormalshader(YglProgram * prg) {
 const GLchar Yglprg_rgb_cram_line_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;\n"
+"precision highp int;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
-"precision highp int;\n"
 "in vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform highp sampler2D s_texture;\n"
@@ -824,10 +824,10 @@ int Ygl_cleanupNormal_blur(void * p)
 const GLchar Yglprg_DestinationAlpha_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                                  \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                                  \n"
 "in highp vec4 v_texcoord;                               \n"
 "uniform vec4 u_color_offset;                            \n"
 "uniform sampler2D s_texture;                            \n"
@@ -870,10 +870,10 @@ const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
 const GLchar Yglprg_window_f[] =
 #if defined(_OGLES3_)
       "#version 300 es \n"
+      "precision highp float;                            \n"
 #else
       "#version 330 \n"
 #endif
-      "precision highp float;                            \n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
       "{                                                   \n"
@@ -925,10 +925,10 @@ const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
 const GLchar Yglprg_vpd1_normal_f[] =
 #if defined(_OGLES3_)
       "#version 300 es \n"
+      "precision highp float;                            \n"
 #else
       "#version 330 \n"
 #endif
-      "precision highp float;                            \n"
       "in vec4 v_texcoord;                            \n"
       "uniform sampler2D s_texture;                        \n"
       "out vec4 fragColor;            \n"
@@ -1124,10 +1124,10 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                                                 \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                                                 \n"
 "uniform sampler2D u_sprite;                                              \n"
 "in vec4 v_texcoord;                                                 \n"
 "in vec4 v_vtxcolor;                                                 \n"
@@ -1147,10 +1147,10 @@ const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, 
 const GLchar Yglprg_vdp1_gouraudshading_spd_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                                                 \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                                                 \n"
 "uniform sampler2D u_sprite;                                              \n"
 "in vec4 v_texcoord;                                                 \n"
 "in vec4 v_vtxcolor;                                                 \n"
@@ -1197,10 +1197,10 @@ const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
 #if defined(_OGLES3_)
       "#version 300 es \n"
+      "precision highp float;                                                                     \n"
 #else
       "#version 330 \n"
 #endif
-      "precision highp float;                                                                     \n"
       "uniform highp sampler2D u_sprite;                                                                  \n"
       "uniform highp sampler2D u_fbo;                                                                     \n"
       "uniform int u_fbowidth;                                                                      \n"
@@ -1263,10 +1263,10 @@ const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
 const GLchar Yglprg_vdp1_halftrans_f[] =
 #if defined(_OGLES3_)
       "#version 300 es \n"
+      "precision highp float;                                                                     \n"
 #else
       "#version 330 \n"
 #endif
-      "precision highp float;                                                                     \n"
       "uniform highp sampler2D u_sprite;                                                           \n"
       "uniform highp sampler2D u_fbo;                                                               \n"
       "uniform int u_fbowidth;                                                                      \n"
@@ -1324,10 +1324,10 @@ const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
 const GLchar Yglprg_vdp1_mesh_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                                                                     \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                                                                     \n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
 "uniform int u_fbowidth;                                                                      \n"
@@ -1357,10 +1357,10 @@ const GLchar Yglprg_vdp1_mesh_f[] =
 const GLchar Yglprg_vdp1_mesh_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                                                                     \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                                                                     \n"
 "uniform sampler2D u_sprite;                                                                  \n"
 "uniform sampler2D u_fbo;                                                                     \n"
 "uniform int u_fbowidth;                                                                      \n"
@@ -1423,10 +1423,10 @@ const GLchar * pYglprg_vdp1_half_luminance_v[] = {Yglprg_vdp1_half_luminance_v, 
 const GLchar Yglprg_vpd1_half_luminance_f[] =
 #if defined(_OGLES3_)
       "#version 300 es \n"
+      "precision highp float;                            \n"
 #else
       "#version 330 \n"
 #endif
-      "precision highp float;                            \n"
       "in vec4 v_texcoord;                            \n"
       "uniform sampler2D s_texture;                        \n"
       "out vec4 fragColor;            \n"
@@ -1476,10 +1476,10 @@ const GLchar * pYglprg_vdp1_shadow_v[] = { Yglprg_vdp1_shadow_v, NULL };
 const GLchar Yglprg_vdp1_shadow_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
 "uniform sampler2D u_sprite;\n"
 "uniform highp sampler2D u_fbo;\n"
 "uniform int u_fbowidth;\n"
@@ -1630,10 +1630,10 @@ const GLchar Yglprg_vdp2_drawfb_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
 "precision highp sampler2D; \n"
+"precision highp float;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -1678,10 +1678,10 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
 "precision highp sampler2D; \n"
+"precision highp float;\n"
 #else
 "#version 430 \n"
 #endif
-"precision highp float;\n"
 "layout(std140) uniform vdp2regs { \n"
 " float u_pri[8]; \n"
 " float u_alpha[8]; \n"
@@ -1794,10 +1794,10 @@ const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
 "precision highp sampler2D; \n"
+"precision highp float;\n"
 #else
 "#version 430 \n"
 #endif
-"precision highp float;\n"
 "layout(std140) uniform vdp2regs { \n"
 " float u_pri[8]; \n"
 " float u_alpha[8]; \n"
@@ -1925,10 +1925,10 @@ const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
 "precision highp sampler2D; \n"
+"precision highp float;\n"
 #else
 "#version 430 \n"
 #endif
-"precision highp float;\n"
 "layout(std140) uniform vdp2regs { \n"
 " float u_pri[8]; \n"
 " float u_alpha[8]; \n"
@@ -2386,10 +2386,10 @@ const GLchar Yglprg_vdp2_drawfb_addcolor_shadow_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
 "precision highp sampler2D; \n"
+"precision highp float;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
 "in vec2 v_texcoord;\n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
 "uniform float u_from;\n"
@@ -2472,10 +2472,10 @@ const GLchar * pYglprg_linecol_v[] = { Yglprg_normal_v, NULL };
 const GLchar Yglprg_linecol_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;\n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;\n"
 "in highp vec4 v_texcoord;\n"
 "uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
@@ -3425,10 +3425,10 @@ static const char vclear_img[] =
 static const char fclear_img[] =
 #if defined (_OGLES3_)
 "#version 300 es \n"
+"precision highp float;       \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;       \n"
 "uniform float u_emu_height; \n"
 "uniform float u_vheight; \n"
 "uniform sampler2D u_Clear;     \n"
@@ -3564,11 +3564,11 @@ static const char vblit_img[] =
 
 static const char fblit_img[] =
 #if defined (_OGLES3_)
-      "#version 300 es \n"
-#else
-      "#version 330 \n"
-#endif
+  "#version 300 es \n"
   "precision highp float;       \n"
+#else
+  "#version 330 \n"
+#endif
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
   "out vec4 fragColor;            \n"
@@ -3867,10 +3867,10 @@ const GLchar blur_blit_v[] =
 const GLchar blur_blit_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                            \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                            \n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
 "uniform float u_tw; \n"
@@ -4035,10 +4035,10 @@ const GLchar mosaic_blit_v[] =
 const GLchar mosaic_blit_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                            \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                            \n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
 "uniform float u_tw; \n"
@@ -4194,10 +4194,10 @@ const GLchar perlinealpha_blit_v[] =
 const GLchar perlinealpha_blit_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;                            \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;                            \n"
 "in highp vec2 v_texcoord;                            \n"
 "uniform sampler2D u_Src;                        \n"
 "uniform sampler2D u_Line;                        \n"
@@ -4373,10 +4373,10 @@ const GLchar scanline_filter_v[] =
 const GLchar scanline_filter_f[] =
 #if defined(_OGLES3_)
 "#version 300 es \n"
+"precision highp float;       \n"
 #else
 "#version 330 \n"
 #endif
-"precision highp float;       \n"
 "in highp vec2 vTexCoord;     \n"
 "uniform sampler2D u_Src;     \n"
 "uniform float u_th;  // 1080 \n"

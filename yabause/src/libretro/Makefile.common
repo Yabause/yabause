@@ -63,14 +63,15 @@ else
 	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c \
 		$(LIBRETRO_COMM_DIR)/glsym/rglgen.c \
 		$(CORE_DIR)/glsym_private.c
-	ifeq ($(HAVE_GLES), 1)
+	ifeq ($(FORCE_GLES), 1)
 		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
 	else
 		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
 	endif
 endif
 
-SOURCES_CXX := $(SOURCE_DIR)/Counter.cpp
+SOURCES_CXX := $(SOURCE_DIR)/Counter.cpp \
+	$(SOURCE_DIR)/ygl_texture.cpp
 
 ifeq ($(HAVE_MUSASHI), 1)
 	SOURCES_C += $(SOURCE_DIR)/musashi/m68kcpu.c \
@@ -96,12 +97,17 @@ ifeq ($(DYNAREC_DEVMIYAX), 1)
 		$(SOURCE_DIR)/sh2_dynarec_devmiyax/DynarecSh2.cpp
 endif
 
-ifeq ($(ARCH_IS_LINUX), 1)
-	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
-else ifeq ($(ARCH_IS_MACOSX), 1)
-	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+ifeq ($(USE_RTHREADS), 1)
+	SOURCES_C += $(SOURCE_DIR)/thr-rthreads.c \
+		$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 else
-	SOURCES_C += $(SOURCE_DIR)/thr-windows.c
+	ifeq ($(ARCH_IS_LINUX), 1)
+		SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+	else ifeq ($(ARCH_IS_MACOSX), 1)
+		SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+	else
+		SOURCES_C += $(SOURCE_DIR)/thr-windows.c
+	endif
 endif
 
 M68KMAKE_EXE = m68kmake$(EXE_EXT)
