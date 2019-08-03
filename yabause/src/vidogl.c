@@ -2505,7 +2505,7 @@ static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int pla
   case 2: {
     u16 tmp1 = T1ReadWord(Vdp2Ram, addr);
     u16 tmp2 = T1ReadWord(Vdp2Ram, addr + 2);
-    info->charaddr = tmp2 & 0x7FFF;
+    info->charaddr = tmp2 &0x7FFF;
     info->flipfunction = (tmp1 & 0xC000) >> 14;
     switch (info->colornumber) {
     case 0:
@@ -2593,13 +2593,16 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
       targetv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl) >> 16;
     }
 
-    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
-    if (info->coordincx == 0) {
-      info->coordincx = vdp2width;
+    if (VDPLINE_SZ(info->islinescroll)) {
+      info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
+      if (info->coordincx == 0) {
+        info->coordincx = vdp2width;
+      }
+      else {
+        info->coordincx = 1.0f / info->coordincx;
+      }
     }
-    else {
-      info->coordincx = 1.0f / info->coordincx;
-    }
+
     if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
     info->draww = (int)((float)vdp2width / info->coordincx);
 
