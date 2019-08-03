@@ -317,4 +317,6 @@ void ScuDspClearCodeBreakpoints(void);
 int ScuSaveState(FILE *fp);
 int ScuLoadState(FILE *fp, int version, int size);
 
+const char * ScuGetVectorString(u32 vec);
+
 #endif

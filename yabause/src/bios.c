@@ -1544,8 +1544,9 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    sh->regs.PR = 0x00000480;
 
    // Now execute the interrupt
+   u32 old_pc = sh->regs.PC;
    sh->regs.PC = MappedMemoryReadLongNocache(0x06000900+(vector << 2));
-//   LOG("Interrupt PC = %08X. Read from %08X\n", sh->regs.PC, 0x06000900+(vector << 2));
+   LOG("Interrupt from: %08X to %08X", old_pc, sh->regs.PC );
 
    sh->cycles += 33;
    SH2SetRegisters(sh, &sh->regs);
@@ -1591,6 +1592,8 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
    sh->regs.R[15] += 4;
    sh->regs.SR.all = MappedMemoryReadLongNocache(sh->regs.R[15]) & 0x000003F3;
    sh->regs.R[15] += 4;
+
+   LOG("Interrupt return PC = %08X\n", sh->regs.PC);
 
    sh->cycles += 24;
    SH2SetRegisters(sh, &sh->regs);

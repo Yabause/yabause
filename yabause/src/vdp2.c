@@ -494,8 +494,8 @@ void vdp2VBlankIN(void) {
 
    ScuSendVBlankIN();
 
-   if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x43, 0x6);
+   //if (yabsys.IsSSH2Running)
+   //   SH2SendInterrupt(SSH2, 0x43, 0x6);
    FrameProfileAdd("VIN flag");
    FRAMELOG("**** VIN(T) *****\n");
    YabAddEventQueue(rcv_evqueue, 0);
@@ -541,8 +541,8 @@ void Vdp2VBlankIN(void) {
 
    ScuSendVBlankIN();
 
-   if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x40, 0x0F);
+   //if (yabsys.IsSSH2Running)
+   //   SH2SendInterrupt(SSH2, 0x40, 0x0F);
 
    FrameProfileAdd("VIN end");
 #endif
@@ -557,8 +557,8 @@ void Vdp2HBlankIN(void) {
   if (yabsys.LineCount < yabsys.VBlankLineCount) {
     Vdp2Regs->TVSTAT |= 0x0004;
     ScuSendHBlankIN();
-    if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x41, 0x2);
+    //if (yabsys.IsSSH2Running)
+    //  SH2SendInterrupt(SSH2, 0x42, 0x2);
   }
 }
 

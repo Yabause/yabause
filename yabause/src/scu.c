@@ -192,7 +192,7 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
                   u32 WriteAddress, unsigned int WriteAdd,
                   u32 TransferSize)
 {
-  LOG("DoDMA src=%08X,dst=%08X,size=%d, line=%d\n", ReadAddress, WriteAddress, TransferSize, yabsys.LineCount );
+  LOG("DoDMA src=%08X,dst=%08X,size=%d, flame=%d:%d\n", ReadAddress, WriteAddress, TransferSize, yabsys.frame_count,yabsys.LineCount );
    if (ReadAdd == 0) {
       // DMA fill
 
@@ -2595,11 +2595,12 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          break;
       case 0xA0:
          ScuRegs->IMS = val;
-         //LOG("scu\t: IMS = %X", val);
+         LOG("scu\t: IMS = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count,yabsys.LineCount);
          ScuTestInterruptMask();
          break;
       case 0xA4:
          ScuRegs->IST &= val;
+         LOG("scu\t: IST = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
          ScuTestInterruptMask();
          break;
       case 0xA8:
@@ -2677,6 +2678,7 @@ void ScuRemoveInterrupt(u8 vector, u8 level) {
       ScuRegs->interrupts[i].level = 0;
       ScuRegs->interrupts[i].vector = 0;
       hit = i;
+      LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(vector), yabsys.frame_count, yabsys.LineCount );
       break;
     }
   }
@@ -2731,6 +2733,8 @@ static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 
+  //LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+
   // A-BUS?
   if ((mask & 0xFFFF0000) ){
     if (ScuRegs->AIACK){
@@ -2742,6 +2746,11 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
   }else if (!(ScuRegs->IMS & mask)){
     //if (vector != 0x41) LOG("INT %d", vector);
     SH2SendInterrupt(MSH2, vector, level);
+    if (yabsys.IsSSH2Running) {
+      if (vector == 0x41 || vector == 0x42 || vector == 0x43) {
+          SH2SendInterrupt(SSH2, vector, level);
+      }
+    }
   }
   else
    {
@@ -2794,6 +2803,34 @@ void ScuRemoveVBlankIN();
 void ScuRemoveTimer0();
 void ScuRemoveTimer1();
 
+
+const char * ScuGetVectorString(u32 vec) {
+  switch (vec) {
+  case 0x40:
+    return "VBlankIN";
+    break;
+  case 0x41:
+    return "VBlankOUT";
+    break;
+  case 0x42:
+    return "HBlankIN";
+    break;
+  case 0x43:
+    return "Timer0";
+    break;
+  case 0x44:
+    return "Timer1";
+    break;
+  case 0x45:
+    return "DSP End";
+    break;
+  case 0x4d:
+    return "DrawEnd";
+    break;
+
+  }
+  return "Unknown";
+}
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
@@ -2841,6 +2878,7 @@ void ScuRemoveHBlankIN() {
 
 
 void ScuSendHBlankIN(void) {
+   ScuRemoveVBlankOut();
    SendInterrupt(0x42, 0xD, 0x0004, 0x0004);
    ScuRegs->timer0++;
    if (ScuRegs->T1MD & 0x1)
