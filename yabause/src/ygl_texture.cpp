@@ -1658,7 +1658,7 @@ public:
 
 	// no line color insersion
 	else {
-		if (fixVdp2Regs->RPMD == 0 || (fixVdp2Regs->RPMD == 3 && (fixVdp2Regs->WCTLD & 0xA) == 0) ) {
+		if ( rbg->rgb_type == 0 && (fixVdp2Regs->RPMD == 0 || (fixVdp2Regs->RPMD == 3 && (fixVdp2Regs->WCTLD & 0xA) == 0)) ) {
 			if (rbg->info.isbitmap) {
 				switch (rbg->info.colornumber) {
 				case 0: {
@@ -1794,7 +1794,7 @@ public:
 				}
 			}
 		}
-		else if (fixVdp2Regs->RPMD == 1) {
+		else if ( (fixVdp2Regs->RPMD == 1 && rbg->rgb_type == 0)  || rbg->rgb_type == 0x04 ) {
 			if (rbg->info.isbitmap) {
 				switch (rbg->info.colornumber) {
 				case 0: {
@@ -2276,6 +2276,7 @@ public:
 	if (rbg->rgb_type == 0x04  ) {
 		if (tex_surface_1 == 0) {
 			glActiveTexture(GL_TEXTURE0);
+      glGenTextures(1, &tex_surface_1);
 			glBindTexture(GL_TEXTURE_2D, tex_surface_1);
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 			ErrorHandle("glBindTexture");
@@ -2286,6 +2287,7 @@ public:
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			ErrorHandle("glTexParameteri");
+      glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 		}
 		else {
 			glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);

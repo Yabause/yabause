@@ -3180,6 +3180,7 @@ static void Vdp2DrawRotationSync() {
 		curret_rbg->info.cellh = curret_rbg->vres;
 		curret_rbg->info.flipfunction = 0;
 		YglQuadRbg0(&curret_rbg->info, NULL, &curret_rbg->c, &curret_rbg->cline, curret_rbg->rgb_type);
+    curret_rbg = NULL;
 		return;
 	}
 
@@ -6007,6 +6008,7 @@ static void Vdp2DrawNBG0(void)
   }
   else
   {
+    Vdp2DrawRotationSync();
     // RBG1 draw
     memcpy(&g_rgb1.info, &info, sizeof(info));
     Vdp2DrawRotation(&g_rgb1);
