@@ -3521,7 +3521,14 @@ void YglRender(void) {
      glViewport(0, 0, _Ygl->width, _Ygl->height);
    }
    else{
-     glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
+     float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+     if (  (int)(((float)_Ygl->height / (float)_Ygl->width)*100.0f)  == 56 ) {
+       hrate = hrate * 0.5625 / 0.75;
+       glViewport(_Ygl->originx, _Ygl->originy + (_Ygl->height - _Ygl->width * hrate) / 2.0f, _Ygl->width, _Ygl->width * hrate);
+     }
+     else {
+       glViewport(_Ygl->originx, _Ygl->originy + (_Ygl->height - _Ygl->width * hrate) / 2.0f, _Ygl->width, _Ygl->width * hrate);
+     }
    }
 
    if (_Ygl->aamode == AA_FXAA){
@@ -3670,16 +3677,43 @@ void YglRender(void) {
   if (_Ygl->aamode == AA_FXAA){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+
+    float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+    if ((int)(((float)GlHeight / (float)GlWidth)*100.0f) == 56) {
+      hrate = hrate * 0.5625 / 0.75;
+      glViewport(_Ygl->originx, _Ygl->originy + (GlHeight - GlWidth * hrate) / 2.0f, GlWidth, GlWidth * hrate);
+    }
+    else {
+      glViewport(_Ygl->originx, _Ygl->originy + (GlHeight - GlWidth * hrate) / 2.0f, GlWidth, GlWidth * hrate);
+
+    }
     _Ygl->targetfbo = 0;
-    YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlHeight);
+    YglBlitFXAA(_Ygl->fxaa_fbotex, GlWidth, GlWidth * hrate);
   }
   else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-    glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+    if ((int)(((float)GlHeight / (float)GlWidth)*100.0f) == 56) {
+      hrate = hrate * 0.5625 / 0.75;
+      glViewport(_Ygl->originx, _Ygl->originy + (GlHeight - GlWidth * hrate) / 2.0f, GlWidth, GlWidth * hrate);
+    }
+    else {
+      glViewport(_Ygl->originx, _Ygl->originy + (GlHeight - GlWidth * hrate) / 2.0f, GlWidth, GlWidth * hrate);
+
+    }
+
     YglBlitScanlineFilter(_Ygl->fxaa_fbotex, GlHeight, _Ygl->rheight);
   }
   else if (_Ygl->resolution_mode != RES_NATIVE ) {
-    glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+    if ((int)(((float)GlHeight / (float)GlWidth)*100.0f) == 56) {
+      hrate = hrate * 0.5625 / 0.75;
+      glViewport(_Ygl->originx, _Ygl->originy + (GlHeight - GlWidth * hrate) / 2.0f, GlWidth, GlWidth * hrate);
+    }
+    else {
+      glViewport(_Ygl->originx, _Ygl->originy + (GlHeight - GlWidth * hrate) / 2.0f, GlWidth, GlWidth * hrate);
+
+    }
     YglBlitFramebuffer(_Ygl->fxaa_fbotex, _Ygl->default_fbo, GlWidth, GlHeight);
   }
   else{

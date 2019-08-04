@@ -326,8 +326,8 @@ void UIYabause::resizeEvent( QResizeEvent* event )
   mYabauseGL->viewport_origin_x_ = 0;
   mYabauseGL->viewport_origin_y_ = 0;
 
-	if (event->oldSize().width() != event->size().width())
-    fixAspectRatio(event->size().width(), event->size().height());
+	//if (event->oldSize().width() != event->size().width())
+  fixAspectRatio(event->size().width(), event->size().height());
 
 	QMainWindow::resizeEvent( event );
 }
