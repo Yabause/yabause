@@ -680,6 +680,8 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
 
 void UIYabause::fullscreenRequested( bool f )
 {
+  mYabauseGL->setFullscren(f);
+
 	if ( isFullScreen() && !f )
 	{
 #ifdef USE_UNIFIED_TITLE_TOOLBAR
@@ -724,6 +726,7 @@ void UIYabause::fullscreenRequested( bool f )
 			toolBar->hide();
 
 		hideMouseTimer->start(3 * 1000);
+
 	}
 	if ( aViewFullscreen->isChecked() != f )
 		aViewFullscreen->setChecked( f );

@@ -97,7 +97,7 @@ void OSDPushMessageDirect(char * msg) {
 
 int VIDOGLInit(void);
 void VIDOGLDeInit(void);
-void VIDOGLResize(int, int, unsigned int, unsigned int, int);
+void VIDOGLResize(int, int, unsigned int, unsigned int, int, int);
 int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
 void VIDOGLVdp1DrawStart(void);
@@ -3759,7 +3759,7 @@ void VIDOGLDeInit(void)
 
 int _VIDOGLIsFullscreen;
 
-void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on)
+void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on, int keep_aspect)
 {
 
   if (originx == 0 && originy == 0 && w == 0 && h == 0 && on == 0) {
@@ -3772,19 +3772,43 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   GlWidth = w;
   GlHeight = h;
 
+  _Ygl->originx = originx;
+  _Ygl->originy = originy;
+
+  YglGLInit(2048, 1024);
+  SetSaturnResolution(vdp2width, vdp2height);
+
+  if (keep_aspect == 1) {
+
+    if (_VIDOGLIsFullscreen) {
+      if (GlHeight > GlWidth) {
+        float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+        _Ygl->originy = _Ygl->originy + (GlHeight - GlWidth  * hrate);
+        GlHeight = GlWidth * hrate;
+      }
+      else {
+        float wrate = (float)_Ygl->rwidth / (float)_Ygl->rheight;
+        _Ygl->originx = _Ygl->originx + (GlWidth - GlHeight * wrate) / 2.0f;
+        GlWidth = GlHeight * wrate;
+      }
+    }
+    else {
+      float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+      _Ygl->originy = _Ygl->originy + (GlHeight - GlWidth  * hrate) / 2.0f;
+      GlHeight = GlWidth * hrate;
+    }
+  }
+  else {
+
+  }
+
   if (_Ygl->resolution_mode == RES_NATIVE && (_Ygl->width != GlWidth || _Ygl->height != GlHeight)) {
     _Ygl->width = GlWidth;
     _Ygl->height = GlHeight;
   }
 
-  _Ygl->originx = originx;
-  _Ygl->originy = originy;
-
-  YglGLInit(2048, 1024);
   glViewport(originx, originy, GlWidth, GlHeight);
   YglNeedToUpdateWindow();
-
-  SetSaturnResolution(vdp2width, vdp2height);
 
 }
 

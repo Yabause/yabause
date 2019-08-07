@@ -64,7 +64,7 @@ typedef struct
    const char *Name;
    int (*Init)(void);
    void (*DeInit)(void);
-   void (*Resize)(int,int,unsigned int, unsigned int, int);
+   void (*Resize)(int,int,unsigned int, unsigned int, int, int);
    int (*IsFullscreen)(void);
    // VDP1 specific
    int (*Vdp1Reset)(void);

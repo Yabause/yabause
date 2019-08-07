@@ -870,6 +870,13 @@ public class Yabause extends AppCompatActivity implements  FileDialog.FileSelect
         Log.d(TAG, "setPolygonGenerationMode " + iPg.toString());
 
 
+    boolean keep_aspectrate = sharedPref.getBoolean("pref_keepaspectrate", true);
+
+    if(keep_aspectrate) {
+      YabauseRunnable.setKeepAspect(1);
+    }else {
+      YabauseRunnable.setKeepAspect(0);
+    }
 
         boolean audioout = sharedPref.getBoolean("pref_audio", true);
         if (audioout) {

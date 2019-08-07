@@ -49,6 +49,11 @@ public:
   int viewport_height_;
   int viewport_origin_x_;
   int viewport_origin_y_;
+  bool fullscreen;
+
+  void setFullscren(bool f) {
+    fullscreen = f;
+  }
 
 protected:
 	virtual void showEvent( QShowEvent* event );

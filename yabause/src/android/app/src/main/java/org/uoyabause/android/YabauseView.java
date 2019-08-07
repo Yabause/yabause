@@ -44,14 +44,14 @@ import android.view.View.OnKeyListener;
 public class YabauseView extends SurfaceView implements Callback {
     private static String TAG = "YabauseView";
     private static final boolean DEBUG = false;
-
+/*
     private int axisX = 0;
     private int axisY = 0;
 
     public boolean[] pointers = new boolean[256];
     public int[] pointerX = new int[256];
     public int[] pointerY = new int[256];
-
+*/
     Context _context;
     
     public YabauseView(Context context, AttributeSet attrs) {
@@ -95,9 +95,9 @@ public class YabauseView extends SurfaceView implements Callback {
     public void surfaceDestroyed(SurfaceHolder holder) {
 
     }
-
+/*
     @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    	
+    	/*
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(_context);
         boolean keep_aspectrate = sharedPref.getBoolean("pref_keepaspectrate", false);
 
@@ -124,5 +124,5 @@ public class YabauseView extends SurfaceView implements Callback {
         	super.onMeasure(widthMeasureSpec,heightMeasureSpec);
         }
     }
-
+*/
 }

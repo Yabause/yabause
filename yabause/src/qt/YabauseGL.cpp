@@ -57,11 +57,21 @@ void YabauseGL::updateView( const QSize& s )
 {
   VolatileSettings* vs = QtYabause::volatileSettings();
   VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, vs->value("Video/RotateScreen", false).toBool());
+  int aspectRatio = QtYabause::volatileSettings()->value("Video/AspectRatio", 1).toInt();
+
+  int full = 0;
+  if (fullscreen) {
+    full = 1;
+  }
+  else {
+    full = 0;
+  }
 
 	const QSize size = s.isValid() ? s : this->size();
 	glViewport( 0, 0, size.width(), size.height() );
-	if ( VIDCore )
-    VIDCore->Resize(viewport_origin_x_, viewport_origin_y_, viewport_width_, viewport_height_, 0);
+  if (VIDCore) {
+    VIDCore->Resize(viewport_origin_x_, viewport_origin_y_, viewport_width_, viewport_height_, full, aspectRatio);
+  }
 }
 
 

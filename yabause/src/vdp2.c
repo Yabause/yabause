@@ -1662,7 +1662,7 @@ int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
    // Read internal variables
    yread(&check, (void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
 
-   if(VIDCore) VIDCore->Resize(0,0,0,0,0);
+   if(VIDCore) VIDCore->Resize(0,0,-1,-1,0,0);
 
    for (int i = 0; i < 0x1000; i += 2) {
      YglOnUpdateColorRamWord(i);
@@ -1712,11 +1712,11 @@ void ToggleFullScreen(void)
 {
    if (VIDCore->IsFullscreen())
    {
-      VIDCore->Resize(0,0,320, 224, 0);
+      VIDCore->Resize(0,0,320, 224, 0, 0);
    }
    else
    {
-      VIDCore->Resize(0,0,640, 480, 1);
+      VIDCore->Resize(0,0,640, 480, 1, 0);
    }
 }
 

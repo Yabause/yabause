@@ -1457,7 +1457,7 @@ void ToggleVDP1(void)
 //////////////////////////////////////////////////////////////////////////////
 int VIDDummyInit(void);
 void VIDDummyDeInit(void);
-void VIDDummyResize(int, int, unsigned int, unsigned int, int);
+void VIDDummyResize(int, int, unsigned int, unsigned int, int, int );
 int VIDDummyIsFullscreen(void);
 int VIDDummyVdp1Reset(void);
 void VIDDummyVdp1DrawStart(void);
@@ -1532,7 +1532,7 @@ void VIDDummyDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on)
+void VIDDummyResize(int x, int y, UNUSED unsigned int i, UNUSED unsigned int j, UNUSED int on, int keep_aspect)
 {
 }
 

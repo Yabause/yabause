@@ -75,7 +75,7 @@ static INLINE u32 COLSATSTRIPPRIORITY(u32 pixel) { return (0xFF000000 | pixel); 
 int VIDSoftInit(void);
 void VIDSoftSetupGL(void);
 void VIDSoftDeInit(void);
-void VIDSoftResize(int,int,unsigned int, unsigned int, int);
+void VIDSoftResize(int,int,unsigned int, unsigned int, int, int);
 int VIDSoftIsFullscreen(void);
 int VIDSoftVdp1Reset(void);
 void VIDSoftVdp1DrawStart(void);
@@ -2352,7 +2352,7 @@ void VIDSoftDeInit(void)
 
 static int IsFullscreen = 0;
 
-void VIDSoftResize(int x, int y, unsigned int w, unsigned int h, int on)
+void VIDSoftResize(int x, int y, unsigned int w, unsigned int h, int on, int keep)
 {
 #ifdef USE_OPENGL
    IsFullscreen = on;

@@ -94,6 +94,7 @@ static int g_use_compute_shader = 0;
 static int g_scsp_sync_count = 1;
 static int g_cpu_sync_shift = 1;
 static int g_scsp_sync_time_mode = 1;
+static int g_keep_aspect_rate = 1;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -828,6 +829,9 @@ int YuiRevokeOGLOnThisThread(){
          }
     }	
 #endif
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+    glClear( GL_COLOR_BUFFER_BIT );
     return 0;
 }
 
@@ -858,6 +862,12 @@ int YuiUseOGLOnThisThread(){
          }
     }
 #endif
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+    glClear( GL_COLOR_BUFFER_BIT );
+    eglSwapBuffers(g_Display, g_Surface);
+    glClear( GL_COLOR_BUFFER_BIT );
+    eglSwapBuffers(g_Display, g_Surface);
     return 0;
 }
 
@@ -1087,8 +1097,14 @@ int initEgl( ANativeWindow* window )
 	   {
 		  if (VIDCoreList[i]->id == s_vidcoretype)
 		  {
-			 VIDCoreList[i]->Resize(0,0,width,height,0);
-			 break;
+			 VIDCoreList[i]->Resize(0,0,width,height,1,g_keep_aspect_rate);
+            glDisable(GL_SCISSOR_TEST);
+            glClearColor( 0.0f, 0.0f,0.0f,1.0f);
+            glClear( GL_COLOR_BUFFER_BIT );
+            eglSwapBuffers(g_Display, surface);
+            glClear( GL_COLOR_BUFFER_BIT );
+            eglSwapBuffers(g_Display, surface);
+    		break;
 		  }
 	   }
     }else{
@@ -1142,7 +1158,13 @@ int switchWindow( ANativeWindow* window ){
 	  if (VIDCoreList[i]->id == s_vidcoretype)
 	  {
 		YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,width,height);
-		 VIDCoreList[i]->Resize(0,0,width,height,0);
+		 VIDCoreList[i]->Resize(0,0,width,height,1,g_keep_aspect_rate);
+         glDisable(GL_SCISSOR_TEST);
+         glClearColor( 0.0f,0.0f,0.0f,1.0f);
+         glClear( GL_COLOR_BUFFER_BIT );
+         eglSwapBuffers(g_Display, surface);
+         glClear( GL_COLOR_BUFFER_BIT );
+         eglSwapBuffers(g_Display, surface);
 		 break;
 	  }
    }
@@ -1407,15 +1429,17 @@ Java_org_uoyabause_android_YabauseRunnable_setCpuSyncPerLine( JNIEnv* env, jobje
 
 }
 
-
-
-
 void
 Java_org_uoyabause_android_YabauseRunnable_setPolygonGenerationMode(JNIEnv* env, jobject obj, jint pgm )
 {
 	g_PolygonGenerationMode = pgm;
 }
 
+void
+Java_org_uoyabause_android_YabauseRunnable_setKeepAspect(JNIEnv* env, jobject obj, jint ka )
+{
+	g_keep_aspect_rate = ka;
+}
 
 void
 Java_org_uoyabause_android_YabauseRunnable_enableFrameskip( JNIEnv* env, jobject obj, jint enable )
