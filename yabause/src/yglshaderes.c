@@ -617,6 +617,7 @@ int Ygl_uniformMosaic(void * p)
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+  glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -656,8 +657,14 @@ int Ygl_cleanupMosaic(void * p)
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
   // Restore Default Matrix
-  glViewport(0, 0, _Ygl->width, _Ygl->height);
-
+  if (_Ygl->resolution_mode != RES_NATIVE) {
+    glViewport(0, 0, _Ygl->width, _Ygl->height);
+    glScissor(0, 0, _Ygl->width, _Ygl->height);
+  }
+  else {
+    glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+  }
   // call blit method
   YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
 
@@ -677,6 +684,7 @@ int Ygl_uniformPerLineAlpha(void * p)
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+  glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
   prg->preblendmode = prg->blendmode;
@@ -724,7 +732,14 @@ int Ygl_cleanupPerLineAlpha(void * p)
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
   // Restore Default Matrix
-  glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
+  if (_Ygl->resolution_mode != RES_NATIVE) {
+    glViewport(0, 0, _Ygl->width, _Ygl->height);
+    glScissor(0, 0, _Ygl->width, _Ygl->height);
+  }
+  else {
+    glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+  }
 
   if ( (prg->blendmode & 0x03) == VDP2_CC_RATE ) {
     glEnable(GL_BLEND);
@@ -756,6 +771,7 @@ int Ygl_uniformNormal_blur(void * p)
 
   Ygl_useTmpBuffer();
   glViewport(0, 0, _Ygl->rwidth, _Ygl->rheight);
+  glScissor(0, 0, _Ygl->rwidth, _Ygl->rheight);
   glClearColor(0.0f,0.0f,0.0f,0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -800,8 +816,15 @@ int Ygl_cleanupNormal_blur(void * p)
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->targetfbo);
 
   // Restore Default Matrix
-  glViewport(_Ygl->originx, _Ygl->originy, _Ygl->width, _Ygl->height);
-
+  // Restore Default Matrix
+  if (_Ygl->resolution_mode != RES_NATIVE) {
+    glViewport(0, 0, _Ygl->width, _Ygl->height);
+    glScissor(0, 0, _Ygl->width, _Ygl->height);
+  }
+  else {
+    glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+    glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+  }
   if ((prg->blendmode & 0x03) == VDP2_CC_RATE) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1690,6 +1713,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 " float u_emu_height; \n"
 " float u_vheight; \n"
 " int u_color_ram_offset; \n"
+" float u_viewport_offset; \n"
 "}; \n"
 "uniform highp sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_color; \n"
@@ -1741,42 +1765,42 @@ const GLchar Yglprg_vdp2_drawfb_cram_msb_color_add_f[]   = " if( txcol.a != 0.0 
 const GLchar Yglprg_vdp2_drawfb_line_blend_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset ) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );\n"
 "  fragColor = (fragColor*fragColor.a) + lncol*(1.0-fragColor.a); \n";
 
 const GLchar Yglprg_vdp2_drawfb_line_add_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );\n"
 "  fragColor =  fragColor + lncol * fragColor.a ;  \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
 "  if( depth <= u_cctl ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
 "  if( depth == u_cctl ){ fragColor = (lncol*lncol.a) + fragColor*(1.0-lncol.a); } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
 "  if( depth >= u_cctl ){ fragColor =(fragColor*lncol.a) + lncol*(1.0-lncol.a); } \n";
 
 const GLchar Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
 "  if( txcol.a != 0.0 ){ fragColor = (fragColor*lncol.a) + lncol*(1.0-lncol.a); }\n";
 
@@ -1806,6 +1830,7 @@ const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 " float u_emu_height; \n"
 " float u_vheight; \n"
 " int u_color_ram_offset; \n"
+" float u_viewport_offset; \n"
 "}; \n"
 "uniform highp sampler2D s_vdp1FrameBuffer;\n"
 "uniform sampler2D s_color; \n"
@@ -1818,7 +1843,7 @@ const GLchar Yglprg_vdp2_drawfb_hblank_f[] =
 "{\n"
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int((u_vheight - gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int((u_vheight - gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 linetex = texelFetch( s_line, linepos,0 ); "
 "  vec2 addr = v_texcoord;\n"
 "  highp vec4 fbColor = texture(s_vdp1FrameBuffer,addr);\n"
@@ -1936,6 +1961,7 @@ const GLchar Yglprg_vdp2_drawfb_shadow_f[] =
 " float u_cctl; \n"
 " float u_emu_height; \n"
 " float u_vheight; \n"
+" float u_viewport_offset; \n"
 "}; \n"
 "uniform highp sampler2D s_vdp1FrameBuffer;\n"
 "in vec2 v_texcoord;\n"
@@ -2480,6 +2506,7 @@ const GLchar Yglprg_linecol_f[] =
 "uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
+"uniform float u_viewport_offset;\n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_color;\n"
 "uniform sampler2D s_line;\n"
@@ -2491,7 +2518,7 @@ const GLchar Yglprg_linecol_f[] =
 "  addr.y = int(v_texcoord.y);\n"
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
-"  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
+"  linepos.x = int( (u_vheight-gl_FragCoord.y-u_viewport_offset) * u_emu_height);\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );      \n"
 "  vec4 lncol = texelFetch( s_line, linepos,0 );      \n"
 "  if(txcol.a > 0.0){\n";
@@ -2534,6 +2561,7 @@ typedef struct _LinecolUniform{
   int color_offset;
   int emu_height;
   int vheight;
+  int viewport_offset;
 } LinecolUniform;
 
 LinecolUniform linecol = { 0 };
@@ -2572,6 +2600,12 @@ int Ygl_uniformLinecolorInsert(void * p)
   glUniform1f(param->emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
   //glUniform1f(param->height_ratio, (float)_Ygl->rheight/((float)_Ygl->height * (float)_Ygl->density));  
   glUniform1f(param->vheight, (float)_Ygl->height);
+  if (_Ygl->resolution_mode == RES_NATIVE) {
+    glUniform1f(param->viewport_offset, (float)_Ygl->originy);
+  }
+  else {
+    glUniform1f(param->viewport_offset, 0.0f);
+  }
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
   glActiveTexture(GL_TEXTURE0);
@@ -2874,6 +2908,7 @@ int YglProgramInit()
    linecol.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_color_offset");
    linecol.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_emu_height");
    linecol.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_vheight");
+   linecol.viewport_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT], (const GLchar *)"u_viewport_offset");
 
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_f, 3, NULL, NULL, NULL) != 0)
      return -1;
@@ -2883,6 +2918,7 @@ int YglProgramInit()
    linecol_destalpha.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_color_offset");
    linecol_destalpha.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_emu_height");
    linecol_destalpha.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_vheight");
+   linecol_destalpha.viewport_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA], (const GLchar *)"u_viewport_offset");
 
    if (YglInitShader(PG_LINECOLOR_INSERT_CRAM, pYglprg_linecol_v, pYglprg_linecol_cram_f, 3, NULL, NULL, NULL) != 0)
      return -1;
@@ -2893,6 +2929,7 @@ int YglProgramInit()
    linecol_cram.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_CRAM], (const GLchar *)"u_color_offset");
    linecol_cram.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_CRAM], (const GLchar *)"u_emu_height");
    linecol_cram.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_CRAM], (const GLchar *)"u_vheight");
+   linecol_cram.viewport_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_CRAM], (const GLchar *)"u_viewport_offset");
 
    if (YglInitShader(PG_LINECOLOR_INSERT_DESTALPHA_CRAM, pYglprg_linecol_v, pYglprg_linecol_dest_alpha_cram_f, 3, NULL, NULL, NULL) != 0)
      return -1;
@@ -2903,7 +2940,7 @@ int YglProgramInit()
    linecol_destalpha_cram.color_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA_CRAM], (const GLchar *)"u_color_offset");
    linecol_destalpha_cram.emu_height = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA_CRAM], (const GLchar *)"u_emu_height");
    linecol_destalpha_cram.vheight = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA_CRAM], (const GLchar *)"u_vheight");
-
+   linecol_destalpha_cram.viewport_offset = glGetUniformLocation(_prgid[PG_LINECOLOR_INSERT_DESTALPHA_CRAM], (const GLchar *)"u_viewport_offset");
 
    //
    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_ADDCOLOR_SHADOW, pYglprg_vdp2_drawfb_v, pYglprg_vdp2_drawfb_addcolor_shadow_f, 1,NULL, NULL, NULL) != 0)
@@ -3431,13 +3468,14 @@ static const char fclear_img[] =
 #endif
 "uniform float u_emu_height; \n"
 "uniform float u_vheight; \n"
+"uniform float u_viewport_offset; \n"
 "uniform sampler2D u_Clear;     \n"
 "out vec4 fragColor;            \n"
 "void main()                                         \n"
 "{                                                   \n"
 "    ivec2 linepos; \n "
 "    linepos.y = 0; \n "
-"    linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
+"    linepos.x = int( (u_vheight-(gl_FragCoord.y-u_viewport_offset)) * u_emu_height);\n"
 "  fragColor = texelFetch( u_Clear, linepos,0 ); \n"
 "} \n";
 
@@ -3497,6 +3535,12 @@ int YglDrawBackScreen(float w, float h) {
   }
   glUniform1f(glGetUniformLocation(clear_prg, "u_emu_height"), (float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(clear_prg, "u_vheight"), (float)_Ygl->height);
+  if (_Ygl->resolution_mode == RES_NATIVE) {
+    glUniform1f(glGetUniformLocation(clear_prg, "u_viewport_offset"), (float)_Ygl->originy);
+  }
+  else {
+    glUniform1f(glGetUniformLocation(clear_prg, "u_viewport_offset"), 0.0f);
+  }
 
   glDisable(GL_STENCIL_TEST);
   glDisable(GL_DEPTH_TEST);

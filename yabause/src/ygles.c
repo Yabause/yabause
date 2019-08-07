@@ -2904,6 +2904,7 @@ void YglRenderVDP1(void) {
   glCullFace(GL_FRONT_AND_BACK);
   glDisable(GL_CULL_FACE);
   glViewport(0,0,_Ygl->width,_Ygl->height);
+  glScissor(0, 0, _Ygl->width, _Ygl->height);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
@@ -3163,6 +3164,12 @@ void YglUpdateVdp2Reg() {
   _Ygl->fbu_.u_emu_height = (float)_Ygl->rheight / (float)_Ygl->height;
   _Ygl->fbu_.u_vheight = (float)_Ygl->height;
   _Ygl->fbu_.u_color_ram_offset = (fixVdp2Regs->CRAOFB & 0x70) << 4;
+  if (_Ygl->resolution_mode == RES_NATIVE) {
+    _Ygl->fbu_.u_viewport_offset = (float)_Ygl->originy;
+  }
+  else {
+    _Ygl->fbu_.u_viewport_offset = 0.0f;
+  }
 
   if (_Ygl->framebuffer_uniform_id_ == 0) {
     glGenBuffers(1, &_Ygl->framebuffer_uniform_id_);
