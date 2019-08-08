@@ -31,8 +31,11 @@ set(kronos_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
+if (WIN32)
+set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
+else()
 set(YAB_PORTS "qt;linux" CACHE STRING "List of ports to build")
-
+endif(WIN32)
 
 set(kronos_SOURCES
 	bios.c
@@ -323,18 +326,6 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		check_function_exists(glXGetProcAddress GLXGETPROCADDRESS_OK)
 		if (GLXGETPROCADDRESS_OK)
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
-		endif()
-		string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
-		if( glfw )
-			if (WIN32)
-				set( GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
-			else()
-				find_package(PkgConfig REQUIRED)
-				pkg_search_module(GLFW REQUIRED glfw3)
-			endif()
-				include_directories( ${GLFW_INCLUDE_DIRS} )
-
-			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
 		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
