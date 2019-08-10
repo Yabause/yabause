@@ -477,12 +477,18 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     for (i = 0; i < sprite->h; i++) {
       u16 j;
       j = 0;
+      endcnt = 0;
       while (j < sprite->w) {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
 
         // Pixel 1
-        if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if (((dot >> 4) == 0x0F) && !END) *texture->textdata++ = 0x00;
+        if ( endcnt >= 2) {
+          *texture->textdata++ = 0;
+        }else if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if (((dot >> 4) == 0x0F) && !END) {
+          *texture->textdata++ = 0x00;
+          endcnt++;
+        }
         else if (MSB_SHADOW) {
           *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
         }
@@ -500,8 +506,13 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
         j += 1;
 
         // Pixel 2
-        if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if (((dot & 0xF) == 0x0F) && !END) *texture->textdata++ = 0x00;
+        if (endcnt >= 2) {
+          *texture->textdata++ = 0;
+        }else if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if (((dot & 0xF) == 0x0F) && !END) {
+          *texture->textdata++ = 0x00;
+          endcnt++;
+        }
         else if (MSB_SHADOW) {
           *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
         }
@@ -649,17 +660,21 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
   {
     // 8 bpp(64 color) Bank mode
     u32 colorBank = cmd->CMDCOLR & 0xFFC0;
-
     u16 i, j;
-
     for (i = 0; i < sprite->h; i++)
     {
+      endcnt = 0;
       for (j = 0; j < sprite->w; j++)
       {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
-        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x00;
+        if (endcnt >= 2) {
+          *texture->textdata++ = 0x0;
+        }else if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if ((dot == 0xFF) && !END) {
+          *texture->textdata++ = 0x00;
+          endcnt++;
+        }
         else if (MSB_SHADOW) {
           *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
         }
@@ -685,16 +700,20 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     // 8 bpp(128 color) Bank mode
     u32 colorBank = cmd->CMDCOLR & 0xFF80;
     u16 i, j;
-
     for (i = 0; i < sprite->h; i++)
     {
+      endcnt = 0;
       for (j = 0; j < sprite->w; j++)
       {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
-
-        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
-        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x00;
+        if (endcnt >= 2) {
+          *texture->textdata++ = 0x0;
+        }else if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if ((dot == 0xFF) && !END) {
+          *texture->textdata++ = 0x00;
+          endcnt++;
+        }
         else if (MSB_SHADOW) {
           *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
         }
@@ -723,13 +742,17 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
     u16 i, j;
 
     for (i = 0; i < sprite->h; i++) {
+      endcnt = 0;
       for (j = 0; j < sprite->w; j++) {
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
-        if ((dot == 0) && !SPD) {
+        if (endcnt >= 2) {
+          *texture->textdata++ = 0x0;
+        }else if ((dot == 0) && !SPD) {
           *texture->textdata++ = 0x00;
         } else if ((dot == 0xFF) && !END) {
           *texture->textdata++ = 0x0;
+          endcnt++;
         } else if (MSB_SHADOW) {
           *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
         } else if ((dot | colorBank) == nromal_shadow) {
@@ -760,16 +783,20 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
     for (i = 0; i < sprite->h; i++)
     {
+      endcnt = 0;
       for (j = 0; j < sprite->w; j++)
       {
         dot = T1ReadWord(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr += 2;
 
-        if (!(dot & 0x8000) && !SPD) {
+        if (endcnt == 2) {
+          *texture->textdata++ = 0x0;
+        }else if (!(dot & 0x8000) && !SPD) {
           *texture->textdata++ = 0x00;
         }
         else if ((dot == 0x7FFF) && !END) {
           *texture->textdata++ = 0x0;
+          endcnt++;
         }
         else if (MSB_SHADOW || (nromal_shadow!=0 && dot == nromal_shadow) ) {
           *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
