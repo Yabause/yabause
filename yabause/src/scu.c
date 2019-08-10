@@ -2824,6 +2824,9 @@ const char * ScuGetVectorString(u32 vec) {
   case 0x45:
     return "DSP End";
     break;
+  case 0x47:
+    return "SmpcINTBACK";
+    break;
   case 0x4d:
     return "DrawEnd";
     break;

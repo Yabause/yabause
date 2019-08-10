@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include "error.h"
 #include "yui.h"
+#include "debug.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -98,6 +99,7 @@ void YabSetError(int type, const void *extra)
                           (long)sh->regs.R[9], (long)sh->regs.PR,
                           (long)sh->regs.R[10], (long)sh->regs.PC,
                           (long)sh->regs.R[11]);
+         LOG(tempstr);
          YuiErrorMsg(tempstr);
          break;
       case YAB_ERR_SH2READ:
