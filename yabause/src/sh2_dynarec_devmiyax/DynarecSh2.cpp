@@ -1503,7 +1503,6 @@ inline int DynarecSh2::Execute(){
         fflush(fp);
     }
 #endif
-//  u32 prepc  = GET_PC();
 //  if(yabsys.frame_count == 7){
 //    logenable_ = true;
 //  }
@@ -1511,7 +1510,8 @@ inline int DynarecSh2::Execute(){
 //    LOG("[%s] dynaExecute start %08X %08X", (is_slave_ == false) ? "M" : "S", GET_PC(), GET_PR());
 //  }
 #if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
-  if (is_slave_) { //statics_trigger_ == COLLECTING) {
+    u32 prepc = GET_PC();
+    if (is_slave_) { //statics_trigger_ == COLLECTING) {
     u64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
     compie_statics_[prepc].count++;
