@@ -43,7 +43,12 @@ Ater that you are ready to run ```./src/retro_arena/yabasanshiro``` .
 |-----------|-------------------------------|----------------------------------------------|
 | -b STRING | --bios STRING                 | bios file                                    |
 | -i STRING | --iso STRING                  | iso/cue file                                 |
-| -r NUMBER | --resolution_mode NUMBER      | 0 .. Native, 1 .. 4x, 2 .. 2x, 3 .. Original |
+| -r NUMBER | --resolution_mode NUMBER      | 0 .. Native                                  |
+|           |                               | 1 .. 4x                                      |                                      
+|           |                               | 2 .. 2x                                      | 
+|           |                               | 3 .. Original                                |
+|           |                               | 4 .. 720p                                    | 
+|           |                               | 5 .. 1080p                                   |
 | -a        | --keep_aspect_rate            | |
 | -s NUMBER | --scps_sync_per_frame NUMBER  | |
 | -nf        | --no_frame_skip              |  disable frame skip |
