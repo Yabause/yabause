@@ -3809,18 +3809,18 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
 
     if (_VIDOGLIsFullscreen) {
       if (GlHeight > GlWidth) {
-        float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+        float hrate = (float)_Ygl->rheight / (float)((_Ygl->rwidth > 352)? _Ygl->rwidth/2: _Ygl->rwidth);
         _Ygl->originy = _Ygl->originy + (GlHeight - GlWidth  * hrate);
         GlHeight = GlWidth * hrate;
       }
       else {
-        float wrate = (float)_Ygl->rwidth / (float)_Ygl->rheight;
+        float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)_Ygl->rheight;
         _Ygl->originx = _Ygl->originx + (GlWidth - GlHeight * wrate) / 2.0f;
         GlWidth = GlHeight * wrate;
       }
     }
     else {
-      float hrate = (float)_Ygl->rheight / (float)_Ygl->rwidth;
+      float hrate = (float)_Ygl->rheight / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
       _Ygl->originy = _Ygl->originy + (GlHeight - GlWidth  * hrate) / 2.0f;
       GlHeight = GlWidth * hrate;
     }
