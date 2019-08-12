@@ -608,6 +608,11 @@ typedef struct {
 
    int rotate_screen;
 
+   int screen_width;
+   int screen_height;
+   int keep_aspect;
+   int isFullScreen;
+
 }  Ygl;
 
 extern Ygl * _Ygl;

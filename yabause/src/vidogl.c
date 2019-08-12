@@ -3739,8 +3739,41 @@ static void SetSaturnResolution(int width, int height)
   YglChangeResolution(width, height);
   YglSetDensity((vdp2_interlace == 0) ? 1 : 2);
 
-  vdp2width = width;
-  vdp2height = height;
+  if (vdp2width != width || vdp2height != height) {
+    vdp2width = width;
+    vdp2height = height;
+    if (_Ygl->screen_width != 0 && _Ygl->screen_height != 0) {
+      GlWidth = _Ygl->screen_width;
+      GlHeight = _Ygl->screen_height;
+      _Ygl->originx = 0;
+      _Ygl->originy = 0;
+      if (_Ygl->keep_aspect == 1) {
+
+        if (_Ygl->isFullScreen) {
+          if (GlHeight > GlWidth) {
+            float hrate = (float)_Ygl->rheight / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+            _Ygl->originy = (GlHeight - GlWidth  * hrate);
+            GlHeight = _Ygl->screen_width * hrate;
+          }
+          else {
+            float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)_Ygl->rheight;
+            _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
+            GlWidth = GlHeight * wrate;
+          }
+        }
+        else {
+          float hrate = (float)_Ygl->rheight / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+          _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
+          GlHeight = GlWidth * hrate;
+        }
+      }
+    }
+    if (_Ygl->resolution_mode == RES_NATIVE && (_Ygl->width != GlWidth || _Ygl->height != GlHeight)) {
+      _Ygl->width = GlWidth;
+      _Ygl->height = GlHeight;
+    }
+    YglNeedToUpdateWindow();
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -3784,7 +3817,6 @@ void VIDOGLDeInit(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-int _VIDOGLIsFullscreen;
 
 void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int on, int keep_aspect)
 {
@@ -3794,55 +3826,30 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
     return;
   }
 
-  _VIDOGLIsFullscreen = on;
+  if( w != -1 && h != -1 ){
+    GlWidth = w;
+    GlHeight = h;
+  }
 
-  GlWidth = w;
-  GlHeight = h;
-
+  _Ygl->isFullScreen = on;
   _Ygl->originx = originx;
   _Ygl->originy = originy;
-
+  _Ygl->screen_width = w;
+  _Ygl->screen_height = h;
+  _Ygl->keep_aspect = keep_aspect;
   YglGLInit(2048, 1024);
-  SetSaturnResolution(vdp2width, vdp2height);
 
-  if (keep_aspect == 1) {
-
-    if (_VIDOGLIsFullscreen) {
-      if (GlHeight > GlWidth) {
-        float hrate = (float)_Ygl->rheight / (float)((_Ygl->rwidth > 352)? _Ygl->rwidth/2: _Ygl->rwidth);
-        _Ygl->originy = _Ygl->originy + (GlHeight - GlWidth  * hrate);
-        GlHeight = GlWidth * hrate;
-      }
-      else {
-        float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)_Ygl->rheight;
-        _Ygl->originx = _Ygl->originx + (GlWidth - GlHeight * wrate) / 2.0f;
-        GlWidth = GlHeight * wrate;
-      }
-    }
-    else {
-      float hrate = (float)_Ygl->rheight / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
-      _Ygl->originy = _Ygl->originy + (GlHeight - GlWidth  * hrate) / 2.0f;
-      GlHeight = GlWidth * hrate;
-    }
-  }
-  else {
-
-  }
-
-  if (_Ygl->resolution_mode == RES_NATIVE && (_Ygl->width != GlWidth || _Ygl->height != GlHeight)) {
-    _Ygl->width = GlWidth;
-    _Ygl->height = GlHeight;
-  }
-
-  glViewport(originx, originy, GlWidth, GlHeight);
-  YglNeedToUpdateWindow();
-
+  int tmpw = vdp2width;
+  int tmph = vdp2height;
+  vdp2width = 0;   // to force update 
+  vdp2height = 0;
+  SetSaturnResolution(tmpw, tmph);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 int VIDOGLIsFullscreen(void) {
-  return _VIDOGLIsFullscreen;
+  return _Ygl->isFullScreen;
 }
 
 //////////////////////////////////////////////////////////////////////////////

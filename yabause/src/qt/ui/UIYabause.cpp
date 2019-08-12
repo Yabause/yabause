@@ -477,6 +477,11 @@ void UIYabause::fixAspectRatio( int width , int height )
       if (this->isFullScreen()) {
 
         if (aspectRatio == 1) {
+          mYabauseGL->viewport_width_ = width;
+          mYabauseGL->viewport_height_ = height;
+          mYabauseGL->viewport_origin_x_ = 0;
+          mYabauseGL->viewport_origin_y_ = 0;
+#if 0
           float specratio = (float)width / (float)height;
           int saturnw = 4;
           int saturnh = 3;
@@ -518,8 +523,8 @@ void UIYabause::fixAspectRatio( int width , int height )
             mYabauseGL->viewport_origin_x_ = (width - mYabauseGL->viewport_width_) / 2.0;
             mYabauseGL->viewport_origin_y_ = (height - mYabauseGL->viewport_height_) / 2.0;
           }
+#endif
         }
-
       }
       else{
         int heightOffset = toolBar->height();
