@@ -380,31 +380,8 @@ int main(int argc, char** argv)
       return -1;
   }
 
-  if( g_keep_aspect_rate ){
-    int originx = 0;
-    int originy = 0;
-    int specw = width;
-    int spech = height;
-    float specratio = (float)specw / (float)spech;
-    int saturnw = 4;
-    int saturnh = 3;
-    float saturnraito = (float)saturnw/ (float)saturnh;
-    float revraito = (float) saturnh/ (float)saturnw;
-    if( specratio > saturnraito ){
-            width = spech * saturnraito;
-            height = spech;
-            originx = (dsp.w - width)/2.0;
-            originy = 0;
-    }else{
-        width = specw ;
-        height = specw * revraito;
-        originx = 0;
-        originy = spech - height;
-    }
-    VIDCore->Resize(originx,originy,width,height,0);
-  }else{
-    VIDCore->Resize(0,0,width,height,0);
-  }
+  VIDCore->Resize(0,0,width,height,1,g_keep_aspect_rate);
+  
   SDL_GL_MakeCurrent(wnd,nullptr);
 #if defined(__RP64__) || defined(__N2__)
   YabThreadSetCurrentThreadAffinityMask(0x4);
