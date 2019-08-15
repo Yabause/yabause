@@ -943,7 +943,7 @@ void UIYabause::on_actionOpen_Tray_triggered()
 		mIsCdIn = false;
 	}
 	else{
-		const QString fn = CommonDialogs::getOpenFileName(QtYabause::volatileSettings()->value("Recents/ISOs").toString(), QtYabause::translate("Select your iso/cue/bin file"), QtYabause::translate("CD Images (*.iso *.cue *.bin *.mds *.ccd)"));
+		const QString fn = CommonDialogs::getOpenFileName(QtYabause::volatileSettings()->value("Recents/ISOs").toString(), QtYabause::translate("Select your iso/cue/bin file"), QtYabause::translate("CD Images (*.chd *.iso *.cue *.bin *.mds *.ccd)"));
 		if (!fn.isEmpty())
 		{
 			VolatileSettings* vs = QtYabause::volatileSettings();
@@ -968,7 +968,7 @@ void UIYabause::on_actionOpen_Tray_triggered()
 void UIYabause::on_aFileOpenISO_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.iso *.cue *.bin *.mds *.ccd)" ) );
+	const QString fn = CommonDialogs::getOpenFileName( QtYabause::volatileSettings()->value( "Recents/ISOs" ).toString(), QtYabause::translate( "Select your iso/cue/bin file" ), QtYabause::translate( "CD Images (*.chd *.iso *.cue *.bin *.mds *.ccd)" ) );
 	if ( !fn.isEmpty() )
 	{
 		VolatileSettings* vs = QtYabause::volatileSettings();

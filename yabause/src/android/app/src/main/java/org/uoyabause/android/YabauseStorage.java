@@ -61,7 +61,9 @@ class GameFilter implements FilenameFilter {
         if (filename.endsWith(".BIN")) return true;
         if (filename.endsWith(".CUE")) return true;
         if (filename.endsWith(".ISO")) return true;
-        if (filename.endsWith(".MDS")) return true;        
+        if (filename.endsWith(".MDS")) return true;
+        if (filename.endsWith(".CHD")) return true;
+        if (filename.endsWith(".chd")) return true;
         return false;
     }
 }
@@ -271,7 +273,7 @@ public class YabauseStorage {
     }
 
     void generateGameListFromDirectory( String dir ){
-        String[] extensions = new String[] {"img", "bin", "ccd","CCD", "cue","mds","iso","IMG","BIN", "CUE","MDS","ISO" };
+        String[] extensions = new String[] {"img", "bin", "ccd","CCD", "cue","mds","iso","IMG","BIN", "CUE","MDS","ISO","CHD","chd" };
         IOFileFilter filter = new SuffixFileFilter(extensions, IOCase.INSENSITIVE);
         boolean recursive = true;
 
@@ -304,6 +306,11 @@ public class YabauseStorage {
                 GameInfo tmp = GameInfo.getFromFileName(gamefile_name);
                 if (tmp == null) {
                     gameinfo = GameInfo.genGameInfoFromCCD(gamefile_name);
+                }
+            }else if( gamefile_name.endsWith("CHD") || gamefile_name.endsWith("chd") ) {
+                GameInfo tmp = GameInfo.getFromFileName(gamefile_name);
+                if (tmp == null) {
+                    gameinfo = GameInfo.genGameInfoFromCHD(gamefile_name);
                 }
             }
             if( gameinfo != null ) {

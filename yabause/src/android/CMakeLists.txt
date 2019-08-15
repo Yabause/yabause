@@ -53,6 +53,8 @@ set( SOURCES
  jni/sndopensl.c
  jni/BackupManager.cpp
  jni/jsoncpp.cpp
+ jni/ChdFileInfo.cpp
+ jni/ChdFileInfo.h
 )
 
 
@@ -74,14 +76,20 @@ set( LIBRARY_OUTPUT_PATH  ${PROJECT_SOURCE_DIR}/app/src/main/jniLibs/${ANDROID_N
 #include(AndroidNdkGdb)
 #android_ndk_gdb_enable()
 
+link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
+
 add_library(${LIBRARY_NAME} SHARED ${SOURCES}  )
 #android_ndk_gdb_debuggable(${LIBRARY_NAME})
+add_dependencies(${LIBRARY_NAME} libchdr)
+
 
 include_directories( ${YABAUSE_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/../ ${PROJECT_SOURCE_DIR}/../ )
 target_link_libraries(${LIBRARY_NAME} yabause ${YABAUSE_LIBRARIES} 
 	${PORT_LIBRARIES}
-#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
-   )
-
+  ${LIBCHDR_LIBRARIES}	
+	#${zlib_STATIC_LIBRARIES}
+	#    ${PROJECT_SOURCE_DIR}/debuglib/libNvidia_gfx_debugger_stub.a
+)
+ 
 
 

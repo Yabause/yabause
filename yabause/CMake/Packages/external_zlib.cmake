@@ -29,13 +29,7 @@ else()
       ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/lib/libz.a)
 endif()
 
-set(ZLIB_HEADERS
-    "${ZLIB_INSTALL}/include/zconf.h"
-    "${ZLIB_INSTALL}/include/zlib.h"
-)
-
 if(ANDROID)
-
 get_filename_component(TOOL_CHAIN_ABSOLUTE_PATH "${CMAKE_TOOLCHAIN_FILE}"
                        REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
 
@@ -45,9 +39,15 @@ set( ADDITIONAL_CMAKE_ARGS
  -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}
  -DCMAKE_TOOLCHAIN_FILE=${TOOL_CHAIN_ABSOLUTE_PATH}
 )
+
 else()
   set(ADDITIONAL_CMAKE_ARGS "")
 endif()
+
+set(ZLIB_HEADERS
+    "${ZLIB_INSTALL}/include/zconf.h"
+    "${ZLIB_INSTALL}/include/zlib.h"
+)
 
 ExternalProject_Add(
     zlib
@@ -58,12 +58,10 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     DOWNLOAD_DIR "${DOWNLOAD_LOCATION}"
     CMAKE_CACHE_ARGS
-        ${ADDITIONAL_CMAKE_ARGS}
 		-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
         -DCMAKE_BUILD_TYPE:STRING=Release
         -DCMAKE_INSTALL_PREFIX:STRING=${ZLIB_INSTALL}
-        -DCMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}
-        -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS}        
+        ${ADDITIONAL_CMAKE_ARGS}        
 )
 
 # put zlib includes in the directory where they are expected

@@ -913,6 +913,14 @@ else()
 	add_library(yabause ${yabause_SOURCES} ${yabause_HEADERS})
 endif()
 
+#-----------------------------------------------------------------------
+# libCHD
+include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libchdr.cmake )
+include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_zlib.cmake )
+add_dependencies(yabause libchdr)
+add_dependencies(yabause zlib)
+
+
 if (YAB_WANT_C68K)
 	add_dependencies(yabause c68kinc)
 endif(YAB_WANT_C68K)
@@ -945,7 +953,6 @@ set(YAB_MAN_DIR "share/man")
 if (NOT $ENV{PKGMANDIR} STREQUAL "")
     set(YAB_MAN_DIR $ENV{PKGMANDIR})
 endif ()
-
 
 foreach(PORT IN LISTS YAB_PORTS)
 	add_subdirectory(${PORT})

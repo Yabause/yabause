@@ -1,0 +1,13 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 34df19c..b9de994 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -116,7 +116,7 @@ list(APPEND CHDR_LIBS lzma-static)
+ # zlib
+ add_subdirectory(deps/zlib-1.2.11 EXCLUDE_FROM_ALL)
+ list(APPEND CHDR_INCLUDES deps/zlib-1.2.11 ${CMAKE_CURRENT_BINARY_DIR}/deps/zlib-1.2.11)
+-list(APPEND CHDR_LIBS zlibstatic)
++#list(APPEND CHDR_LIBS zlibstatic)
+ 
+ #--------------------------------------------------
+ # chdr

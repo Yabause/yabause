@@ -56,7 +56,7 @@ public class YabauseRunnable implements Runnable
     public static native String getFile( int index  );
     public static native String putFile( );
     public static native int copy( int target_device, int file_index );
-
+    public static native String getGameinfoFromChd( String path );
 
     private boolean inited;
     private boolean paused;

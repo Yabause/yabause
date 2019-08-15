@@ -58,6 +58,10 @@ import java.util.regex.Pattern;
 @Table(name = "GameInfo")
 public class GameInfo extends Model {
 
+    static {
+        System.loadLibrary("yabause_native");
+    }
+
     public GameInfo() {
         super();
     }
@@ -204,8 +208,44 @@ public class GameInfo extends Model {
         return tmp;
     }
 
-    static public GameInfo genGameInfoFromIso(String file_path) {
+    static GameInfo getGimeInfoFromBuf( String file_path, String header ){
         GameInfo tmp = null;
+        int startindex = header.indexOf("SEGA SEGASATURN");
+        if( startindex == -1) return null;
+
+        if( startindex != 0 )
+            header = header.substring(startindex);
+
+        tmp = new GameInfo();
+        tmp.file_path = file_path;
+        tmp.iso_file_path = file_path.toUpperCase();
+        tmp.maker_id = header.substring(0x10, 0x20);
+        tmp.maker_id = tmp.maker_id.trim();
+        tmp.product_number = header.substring(0x20, 0x2A);
+        tmp.product_number = tmp.product_number.trim();
+        tmp.version = header.substring(0x2A, 0x30);
+        tmp.version = tmp.version.trim();
+        tmp.release_date = header.substring(0x30, 0x38);
+        tmp.release_date = tmp.release_date.trim();
+        tmp.area = header.substring(0x40, 0x4A);
+        tmp.area = tmp.area.trim();
+        tmp.input_device = header.substring(0x50, 0x60);
+        tmp.input_device = tmp.input_device.trim();
+        tmp.device_infomation = header.substring(0x38, 0x40);
+        tmp.device_infomation = tmp.device_infomation.trim();
+        tmp.game_title = header.substring(0x60, 0xD0);
+        tmp.game_title = tmp.game_title.trim();
+
+        return tmp;
+
+    }
+
+    static public  GameInfo genGameInfoFromCHD(String file_path) {
+        String header = YabauseRunnable.getGameinfoFromChd(file_path);
+        return getGimeInfoFromBuf(file_path,header);
+    }
+
+    static public GameInfo genGameInfoFromIso(String file_path) {
         try {
 
             byte[] buff = new byte[0xFF];
@@ -215,31 +255,7 @@ public class GameInfo extends Model {
             dataInStream.close();
 
             String header = new String(buff);
-            int startindex = header.indexOf("SEGA SEGASATURN");
-            if( startindex == -1) return null;
-
-            if( startindex != 0 )
-                header = header.substring(startindex);
-
-            tmp = new GameInfo();
-            tmp.file_path = file_path;
-            tmp.iso_file_path = file_path.toUpperCase();
-            tmp.maker_id = header.substring(0x10, 0x20);
-            tmp.maker_id = tmp.maker_id.trim();
-            tmp.product_number = header.substring(0x20, 0x2A);
-            tmp.product_number = tmp.product_number.trim();
-            tmp.version = header.substring(0x2A, 0x30);
-            tmp.version = tmp.version.trim();
-            tmp.release_date = header.substring(0x30, 0x38);
-            tmp.release_date = tmp.release_date.trim();
-            tmp.area = header.substring(0x40, 0x4A);
-            tmp.area = tmp.area.trim();
-            tmp.input_device = header.substring(0x50, 0x60);
-            tmp.input_device = tmp.input_device.trim();
-            tmp.device_infomation = header.substring(0x38, 0x40);
-            tmp.device_infomation = tmp.device_infomation.trim();
-            tmp.game_title = header.substring(0x60, 0xD0);
-            tmp.game_title = tmp.game_title.trim();
+            return getGimeInfoFromBuf(file_path,header);
 
         } catch (FileNotFoundException e) {
             System.out.println(e);
@@ -248,7 +264,6 @@ public class GameInfo extends Model {
             System.out.println(e);
             return null;
         }
-        return tmp;
     }
 
 

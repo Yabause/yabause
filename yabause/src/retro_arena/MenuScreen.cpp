@@ -390,7 +390,7 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const s
       while ((ent = readdir (dir)) != NULL) {
         string dname = ent->d_name;
         std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
-        if( ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") ){
+        if( ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd") ){
             Button *tmp = new Button(wrapper, ent->d_name );
             string path = base_path + "/" + string(ent->d_name);
             tmp->setCallback([this,path]() { 
