@@ -3522,27 +3522,20 @@ void YglRender(void) {
      }
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->fxaa_fbo);
      _Ygl->targetfbo = _Ygl->fxaa_fbo;
+     glClearDepthf(0.0f);
+     glDepthMask(GL_TRUE);
+     glEnable(GL_DEPTH_TEST);
+     glDisable(GL_SCISSOR_TEST);
+     glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
    } else {
      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
      _Ygl->targetfbo = _Ygl->default_fbo;
-   }
-
-   //glDisable(GL_SCISSOR_TEST);
-   //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-   //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-
-   glClearDepthf(0.0f);
-   glDepthMask(GL_TRUE);
-   glEnable(GL_DEPTH_TEST);
-
-   glDisable(GL_SCISSOR_TEST);
-   if ((fixVdp2Regs->BKTAU & 0x8000) != 0) {
+     glClearDepthf(0.0f);
+     glDepthMask(GL_TRUE);
+     glEnable(GL_DEPTH_TEST);
+     glDisable(GL_SCISSOR_TEST);
      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-   }
-   else {
-     glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
    }
 
@@ -3568,6 +3561,10 @@ void YglRender(void) {
 
    if ((fixVdp2Regs->BKTAU & 0x8000) != 0) {
      YglDrawBackScreen(GlWidth, GlHeight);
+   }
+   else {
+     glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
+     glClear(GL_COLOR_BUFFER_BIT);
    }
    
    if (_Ygl->texture_manager == NULL) goto render_finish;
@@ -3693,6 +3690,10 @@ void YglRender(void) {
   
   if (_Ygl->aamode == AA_FXAA){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glEnable(GL_SCISSOR_TEST);
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
     glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
@@ -3701,12 +3702,23 @@ void YglRender(void) {
   }
   else if (_Ygl->aamode == AA_SCANLINE_FILTER && _Ygl->rheight <= 256 ){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glEnable(GL_SCISSOR_TEST);
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
     glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
     YglBlitScanlineFilter(_Ygl->fxaa_fbotex, GlHeight, _Ygl->rheight);
   }
   else if (_Ygl->resolution_mode != RES_NATIVE ) {
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
     glEnable(GL_SCISSOR_TEST);
     glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
     glScissor(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
