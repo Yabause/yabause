@@ -18,6 +18,7 @@ environment:
         -DYAB_WANT_DIRECTINPUT=TRUE 
         -DYAB_WANT_DIRECTSOUND=TRUE 
         -DYAB_WANT_SDL=TRUE
+        -DGIT_EXECUTABLE="C:\Program Files\Git\cmd\git.exe"
         -DDirectX_ERR_LIBRARY="%DXSDK_DIR%/Lib/x86/DxErr.lib"
         -DDirectX_GUID_LIBRARY="%DXSDK_DIR%/Lib/x86/dxguid.lib"
         -DDirectX_INPUT8_LIBRARY="%DXSDK_DIR%/Lib/x86/dinput8.lib"
@@ -38,7 +39,7 @@ shallow_clone: true
 init:
   # cmake errors if sh on the path
   # - rm "C:\Program Files (x86)\Git\bin\sh.exe"
-  - rm "C:\Program Files\Git\usr\bin\sh.exe"
+  #- rm "C:\Program Files\Git\usr\bin\sh.exe"
   # cpack won't work because of chocolatey sharing the same name
   - rm "C:\ProgramData\chocolatey\bin\cpack.exe"
   - set Path=%MINGW%\bin;%Path%
@@ -51,6 +52,8 @@ before_build:
 
   # decompress it, shorten 7z output with FIND
   - 7z x %sdl_filename%  | FIND /V "ing  "
+
+  - git --version
 
 
 build_script:
