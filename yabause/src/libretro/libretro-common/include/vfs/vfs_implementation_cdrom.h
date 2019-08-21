@@ -1,7 +1,7 @@
-/* Copyright  (C) 2010-2015 The RetroArch team
+/* Copyright  (C) 2010-2019 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (rsemaphore.h).
+ * The following license statement only applies to this file (vfs_implementation_cdrom.h).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,35 +20,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __LIBRETRO_SDK_SEMAPHORE_H
-#define __LIBRETRO_SDK_SEMAPHORE_H
+#ifndef __LIBRETRO_SDK_VFS_IMPLEMENTATION_CDROM_H
+#define __LIBRETRO_SDK_VFS_IMPLEMENTATION_CDROM_H
 
-#ifdef __cplusplus
-extern "C" {
+#include <vfs/vfs.h>
+#include <cdrom/cdrom.h>
+
+RETRO_BEGIN_DECLS
+
+int64_t retro_vfs_file_seek_cdrom(libretro_vfs_implementation_file *stream, int64_t offset, int whence);
+
+void retro_vfs_file_open_cdrom(
+      libretro_vfs_implementation_file *stream,
+      const char *path, unsigned mode, unsigned hints);
+
+int retro_vfs_file_close_cdrom(libretro_vfs_implementation_file *stream);
+
+int64_t retro_vfs_file_tell_cdrom(libretro_vfs_implementation_file *stream);
+
+int64_t retro_vfs_file_read_cdrom(libretro_vfs_implementation_file *stream,
+      void *s, uint64_t len);
+
+int retro_vfs_file_error_cdrom(libretro_vfs_implementation_file *stream);
+
+const cdrom_toc_t* retro_vfs_file_get_cdrom_toc(void);
+
+const vfs_cdrom_t* retro_vfs_file_get_cdrom_position(const libretro_vfs_implementation_file *stream);
+
+RETRO_END_DECLS
+
 #endif
-
-typedef struct ssem ssem_t;
-
-/**
- * ssem_create:
- * @value                   : initial value for the semaphore
- *
- * Create a new semaphore.
- *
- * Returns: pointer to new semaphore if successful, otherwise NULL.
- */
-ssem_t *ssem_new(int value);
-
-void ssem_free(ssem_t *semaphore);
-
-int ssem_get(ssem_t *semaphore);
-
-void ssem_wait(ssem_t *semaphore);
-
-void ssem_signal(ssem_t *semaphore);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __LIBRETRO_SDK_SEMAPHORE_H */
