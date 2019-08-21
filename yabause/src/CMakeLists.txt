@@ -61,6 +61,7 @@ set(kronos_SOURCES
 add_definitions(-DIMPROVED_SAVESTATES)
 
 set(kronos_SOURCES
+  ${kronos_SOURCES}
 	deps/chdr/chd.c
 	deps/chdr/bitstream.c
 	deps/chdr/huffman.c
