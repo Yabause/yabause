@@ -33,6 +33,7 @@
 #define CDCORE_DUMMY    0
 #define CDCORE_ISO      1
 #define CDCORE_ARCH     2
+#define CDCORE_CHD      3
 
 #define CDCORE_NORMAL 0
 #define CDCORE_NODISC 2

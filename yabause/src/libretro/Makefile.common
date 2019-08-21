@@ -1,17 +1,22 @@
 SOURCE_DIR := $(CORE_DIR)/..
 LIBRETRO_COMM_DIR := $(CORE_DIR)/libretro-common
+DEPS_DIR := $(SOURCE_DIR)/deps
 
 INCLUDE_DIRS := $(CORE_DIR) \
 	$(SOURCE_DIR) \
 	$(LIBRETRO_COMM_DIR)/include \
 	$(SOURCE_DIR)/musashi \
-	$(SOURCE_DIR)/sh2_kronos
+	$(SOURCE_DIR)/sh2_kronos \
+	$(DEPS_DIR)/chdr \
+	$(DEPS_DIR)/lzma \
+	$(DEPS_DIR)/crypto \
+	$(DEPS_DIR)/flac/include
 
 SOURCES_S :=
 
 SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/bios.c \
-	$(SOURCE_DIR)/cdbase.c \
+	$(SOURCE_DIR)/cd-libretro.c \
 	$(SOURCE_DIR)/cheat.c \
 	$(SOURCE_DIR)/coffelf.c \
 	$(SOURCE_DIR)/cs0.c \
@@ -68,6 +73,24 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(LIBRETRO_COMM_DIR)/file/file_path.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
+	$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
+	$(DEPS_DIR)/chdr/chd.c \
+	$(DEPS_DIR)/chdr/bitstream.c \
+	$(DEPS_DIR)/chdr/huffman.c \
+	$(DEPS_DIR)/chdr/flac.c \
+	$(DEPS_DIR)/chdr/cdrom.c \
+	$(DEPS_DIR)/flac/stream_decoder.c \
+	$(DEPS_DIR)/flac/format.c \
+	$(DEPS_DIR)/flac/bitreader.c \
+	$(DEPS_DIR)/flac/crc.c \
+	$(DEPS_DIR)/flac/memory.c \
+	$(DEPS_DIR)/flac/lpc.c \
+	$(DEPS_DIR)/flac/cpu.c \
+	$(DEPS_DIR)/flac/md5.c \
+	$(DEPS_DIR)/flac/fixed.c \
+	$(DEPS_DIR)/lzma/LzmaEnc.c \
+	$(DEPS_DIR)/lzma/LzFind.c \
+	$(DEPS_DIR)/lzma/LzmaDec.c \
 	$(CORE_DIR)/libretro.c
 
 ifeq ($(FORCE_GLEW), 1)
