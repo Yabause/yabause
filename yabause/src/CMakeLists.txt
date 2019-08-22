@@ -60,31 +60,11 @@ set(kronos_SOURCES
 	)
 add_definitions(-DIMPROVED_SAVESTATES)
 
-set(kronos_SOURCES
-  ${kronos_SOURCES}
-	deps/chdr/chd.c
-	deps/chdr/bitstream.c
-	deps/chdr/huffman.c
-	deps/chdr/flac.c
-	deps/chdr/cdrom.c
-	deps/flac/stream_decoder.c
-	deps/flac/format.c
-	deps/flac/bitreader.c
-	deps/flac/crc.c
-	deps/flac/memory.c
-	deps/flac/lpc.c
-	deps/flac/cpu.c
-	deps/flac/md5.c
-	deps/flac/fixed.c
-	deps/lzma/LzmaEnc.c
-	deps/lzma/LzFind.c
-	deps/lzma/LzmaDec.c
-	)
-add_definitions(-DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/chdr/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/lzma/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/crypto/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/flac/include/)
+add_subdirectory(libchdr)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libchdr/src)
+set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} chdr-static)
 
-add_subdirectory(zlib)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/zlib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libchdr/deps/zlib-1.2.11)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
 
 include_directories(nanovg)

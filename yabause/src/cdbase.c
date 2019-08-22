@@ -36,7 +36,8 @@
 #include "error.h"
 #include "debug.h"
 #include "junzip.h"
-#include "zlib/zlib.h"
+#include "zlib.h"
+#include "chd.h"
 
 #ifndef HAVE_STRICMP
 #ifdef HAVE_STRCASECMP
@@ -1827,8 +1828,6 @@ static void ISOCDReadAheadFAD(UNUSED u32 FAD)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-#include "chd.h"
 
 #define CD_MAX_SECTOR_DATA      (2352)
 #define CD_MAX_SUBCODE_DATA     (96)

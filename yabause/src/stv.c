@@ -15,7 +15,7 @@
 #include "yabause.h"
 #include "eeprom.h"
 #include "decrypt.h"
-#include "zlib/zlib.h"
+#include "zlib.h"
 
 #define LOGSTV
 //YuiMsg
