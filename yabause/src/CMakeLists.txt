@@ -80,10 +80,11 @@ set(kronos_SOURCES
 	deps/lzma/LzFind.c
 	deps/lzma/LzmaDec.c
 	)
-add_definitions(-DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0)
+add_definitions(-DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/chdr/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/lzma/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/crypto/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/flac/include/)
 
 add_subdirectory(zlib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/zlib)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
 
 include_directories(nanovg)
