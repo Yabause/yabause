@@ -1634,7 +1634,6 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
          program->uClipMode = input->uclipmode;
       }
       level->uclipcurrent = input->uclipmode;
-      return program;
    }
 
    checkval = (float)(input->cor) / 255.0f;
