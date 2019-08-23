@@ -207,6 +207,7 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "core.h"
 #include "threads.h"
 #include "vidshared.h"
+#include "vdp1.h"
 
 //#define DEBUG_BLIT
 
@@ -555,6 +556,7 @@ typedef struct {
 	u32 lincolor_tex;
 	u32 linecolor_pbo;
 	u32 * lincolor_buf;
+  u32 depth;
 } YglPerLineInfo;
 
 typedef struct {
@@ -588,6 +590,7 @@ typedef struct {
    GLuint vdp1fbo;
    GLuint vdp1fbowin;
    GLuint vdp1FrameBuff[6];
+   GLuint* vdp1Tex; //Texture for VDP1 CS
    GLuint smallfbo;
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
@@ -766,6 +769,8 @@ void YglSetClearColor(float r, float g, float b);
 void YglStartWindow( vdp2draw_struct * info, int win0, int logwin0, int win1, int logwin1, int mode );
 void YglEndWindow( vdp2draw_struct * info );
 
+int YglVDP1AllocateTexture(vdp1cmd_struct * input, YglTexture * output, YglTextureManager *tm);
+
 void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
 int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
@@ -833,6 +838,9 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs);
 
 void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
+
+void YglEraseWriteCSVDP1();
+void YglFrameChangeCSVDP1();
 
 extern void RBGGenerator_init(int width, int height);
 extern void RBGGenerator_resize(int width, int height);

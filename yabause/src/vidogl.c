@@ -128,6 +128,7 @@ void VIDOGLSetSettingValueMode(int type, int value);
 void VIDOGLSync();
 void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 void VIDOGLVdp2DispOff(void);
+void waitVdp2DrawScreensEnd(int sync, int abort);
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -157,7 +158,8 @@ YglGetGlSize,
 VIDOGLSetSettingValueMode,
 VIDOGLSync,
 VIDOGLGetNativeResolution,
-VIDOGLVdp2DispOff
+VIDOGLVdp2DispOff,
+YglRender
 };
 
 static int vdp1_interlace = 0;
@@ -195,9 +197,9 @@ typedef struct {
 } vdp1TextureTask;
 
 #ifdef RGB_ASYNC
-YabEventQueue *rotq = NULL;
-YabEventQueue *rotq_end = NULL;
-YabEventQueue *rotq_end_task = NULL;
+static YabEventQueue *rotq = NULL;
+static YabEventQueue *rotq_end = NULL;
+static YabEventQueue *rotq_end_task = NULL;
 static int rotation_run = 0;
 #endif
 
@@ -229,8 +231,8 @@ typedef struct {
   int order;
 } drawCellTask;
 
-int nbLoop = 0;
-int nbClear = 0;
+static int nbLoop = 0;
+static int nbClear = 0;
 
 YglTexture *textureTable[NB_MSG];
 vdp2draw_struct *infoTable[NB_MSG];
@@ -392,7 +394,7 @@ INLINE u32 VDP1MSB(u16 temp) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
+u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
 {
   int shadow = 0;
   int normalshadow = 0;
@@ -3474,6 +3476,7 @@ void VIDOGLVdp1Draw()
   FrameProfileAdd("Vdp1Command start");
 
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
+  vdp1_setup();
 
   maxpri = 0x00;
   minpri = 0x07;
@@ -3992,6 +3995,10 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   if (badgeometry == 1) return;
 
+  cmd.CMDXA = (s16)cmd.CMDXA;
+  cmd.CMDYA = (s16)cmd.CMDYA;
+
+
   x = cmd.CMDXA;
   y = cmd.CMDYA;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
@@ -4142,6 +4149,13 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
   }
   if (badgeometry == 1) return;
+
+  cmd.CMDXA = (s16)cmd.CMDXA;
+  cmd.CMDYA = (s16)cmd.CMDYA;
+  cmd.CMDXB = (s16)cmd.CMDXB;
+  cmd.CMDYB = (s16)cmd.CMDYB;
+  cmd.CMDXC = (s16)cmd.CMDXC;
+  cmd.CMDYC = (s16)cmd.CMDYC;
 
   x = cmd.CMDXA + Vdp1Regs->localX;
   y = cmd.CMDYA + Vdp1Regs->localY;
@@ -6822,7 +6836,7 @@ void waitVdp2DrawScreensEnd(int sync, int abort) {
         //YuiUseOGLOnThisThread();
         YglUpdateVDP1FB();
         //YuiRevokeOGLOnThisThread();
-        YglRender(&Vdp2Lines[0]);
+        if (VIDCore != NULL) VIDCore->composeFB(&Vdp2Lines[0]);
       }
     }
   }

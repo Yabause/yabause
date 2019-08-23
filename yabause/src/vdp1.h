@@ -22,8 +22,9 @@
 #define VDP1_H
 
 #include "memory.h"
+//#define USE_VDP1_TEX
 
-#define VIDCORE_DEFAULT         -1  
+#define VIDCORE_DEFAULT         -1
 #define VIDCORE_DUMMY           0
 
 //#define YAB_ASYNC_RENDERING 1
@@ -89,12 +90,16 @@ typedef struct
    void(*Sync)();
    void (*GetNativeResolution)(int *width, int *height, int * interlace);
    void(*Vdp2DispOff)(void);
+   void (*composeFB)(void *regs);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
 extern VideoInterface_struct VIDDummy;
 
 extern u8 * Vdp1Ram;
+extern int vdp1Ram_update_start;
+extern int vdp1Ram_update_end;
+
 
 u8 FASTCALL	Vdp1RamReadByte(SH2_struct *context, u8*, u32);
 u16 FASTCALL	Vdp1RamReadWord(SH2_struct *context, u8*, u32);
@@ -131,21 +136,34 @@ extern Vdp1External_struct Vdp1External;
 
 typedef struct
 {
-   u16 CMDCTRL;
-   u16 CMDLINK;
-   u16 CMDPMOD;
-   u16 CMDCOLR;
-   u16 CMDSRCA;
-   u16 CMDSIZE;
-   s16 CMDXA;
-   s16 CMDYA;
-   s16 CMDXB;
-   s16 CMDYB;
-   s16 CMDXC;
-   s16 CMDYC;
-   s16 CMDXD;
-   s16 CMDYD;
-   u16 CMDGRDA;   
+  float G[16];
+  u32 priority;
+  u32 w;
+  u32 h;
+  u32 flip;
+  u32 cor;
+  u32 cog;
+  u32 cob;
+  u32 type;
+  u32 CMDCTRL;
+  u32 CMDLINK;
+  u32 CMDPMOD;
+  u32 CMDCOLR;
+  u32 CMDSRCA;
+  u32 CMDSIZE;
+  s32 CMDXA;
+  s32 CMDYA;
+  s32 CMDXB;
+  s32 CMDYB;
+  s32 CMDXC;
+  s32 CMDYC;
+  s32 CMDXD;
+  s32 CMDYD;
+  s32 P[8];
+  s32 B[4];
+  u32 COLOR[4];
+  u32 CMDGRDA;
+  u32 SPCTL;
 } vdp1cmd_struct;
 
 int Vdp1Init(void);

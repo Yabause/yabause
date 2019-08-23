@@ -51,7 +51,7 @@ set(kronos_SOURCES
 	frameprofile.cpp
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2int.c smpc.c snddummy.c
 	titan/titan.c
-	vdp1.c vdp2.c vdp2debug.c vidogl.c vidshared.c vidsoft.c
+	vdp1.c vdp2.c vdp2debug.c vidshared.c vidsoft.c
 	yabause.c
         eeprom.c
         decrypt.c
@@ -332,34 +332,29 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
 		endif()
 		add_definitions(-D_OGL3_)
-		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-			set(kronos_SOURCES ${kronos_SOURCES}
-				yglcache.c
-				ygles.c
-				yglshaderes.c
-        upscale_shader.c
-				rbg_compute.cpp
-				vdp2_compute.cpp
-			)
-		endif()
-        include(FindGLEW)
-        add_definitions(-D_USEGLEW_)
-        if (GLEW_FOUND)
-            include_directories( ${GLEW_INCLUDE_DIRS})
-            set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${GLEW_LIBRARIES})
-        else()
-		    add_definitions(-DGLEW_STATIC)
-		    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
-			set(kronos_SOURCES
-				${kronos_SOURCES}
-				gllibs/glew/glew.c
-				yglcache.c
-				ygles.c
-				yglshaderes.c
-				rbg_compute.cpp
-				vdp2_compute.cpp
-        upscale_shader.c )
-		endif()
+    include(FindGLEW)
+    add_definitions(-D_USEGLEW_)
+    add_definitions(-DGLEW_STATIC)
+    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+		set(kronos_SOURCES
+			${kronos_SOURCES}
+			gllibs/glew/glew.c
+			yglcache.c
+			ygles.c
+			vidogl.c
+			yglshaderes.c
+			rbg_compute.cpp
+			vdp2_compute.cpp
+			upscale_shader.c
+			yglcs.c
+			vidcs.c
+			vdp1/vdp1_compute.c
+		)
+		set(kronos_HEADERS
+			${kronos_HEADERS}
+			vdp1/vdp1_compute.h
+			vdp1/vdp1_prog_compute.h
+		)
 	endif(OPENGL_FOUND)
 endif ()
 option(SPRITE_CACHE "Vdp1 sprite cache" ON)

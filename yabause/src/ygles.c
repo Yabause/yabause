@@ -28,7 +28,7 @@
 #include "debug.h"
 #include "frameprofile.h"
 #include "error.h"
-
+#include "vdp1/vdp1_compute.h"
 
 //#define __USE_OPENGL_DEBUG__
 
@@ -90,11 +90,9 @@ static void MessageCallback( GLenum source,
                       const GLchar* message,
                       const void* userParam )
 {
-#ifndef __WIN32__
-  printf("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+  YuiMsg("GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
            ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
             type, severity, message );
-#endif
 }
 #endif
 
@@ -783,6 +781,7 @@ u32* getVdp1DrawingFBMemRead(int id) {
   glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1_pbo[id]);
   glReadPixels(0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, 0);
   fbptr = (u32 *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, 0x40000*2, GL_MAP_READ_BIT );
+  glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   return fbptr;
 }
@@ -919,6 +918,8 @@ int YglGenFrameBuffer() {
   if (rebuild_frame_buffer == 0){
     return 0;
   }
+
+  vdp1_compute_init(_Ygl->rwidth, _Ygl->rheight, (float)(_Ygl->width)/(float)(_Ygl->rwidth), (float)(_Ygl->height)/(float)(_Ygl->rheight));
 
   if (_Ygl->upfbo != 0){
     glDeleteFramebuffers(1, &_Ygl->upfbo);
@@ -1446,6 +1447,8 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->depth = depth;
   _Ygl->rwidth = 320;
   _Ygl->rheight = 240;
+  _Ygl->widthRatio = 1.0f;
+  _Ygl->heightRatio = 1.0f;
   _Ygl->density = 1;
   _Ygl->resolution_mode = RES_ORIGINAL;
   _Ygl->rbg_use_compute_shader = 0;
@@ -1533,6 +1536,8 @@ int YglInit(int width, int height, unsigned int depth) {
 
   _Ygl->vdp1fb_exactbuf[0] = (u8*)malloc(512*704*2);
   _Ygl->vdp1fb_exactbuf[1] = (u8*)malloc(512*704*2);
+
+  vdp1_compute_init(_Ygl->rwidth, _Ygl->rheight, _Ygl->widthRatio, _Ygl->heightRatio);
 
   _Ygl->vdp2buf = (u32*)malloc(512 * sizeof(int)* NB_VDP2_REG);
 
@@ -3376,7 +3381,7 @@ void YglCheckFBSwitch(int sync) {
   }
 }
 
-static int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
+int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
   YglLevel * level;
   int cprg = -1;
   int clear = 1;
@@ -4000,7 +4005,6 @@ void YglGetWindowPointer(int id) {
 void YglSetWindow(int id) {
   glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[id]);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 1, GL_RGBA, GL_UNSIGNED_BYTE, _Ygl->win[id] );
-
   glBindTexture(GL_TEXTURE_2D, 0);
   return;
 }
@@ -4159,7 +4163,12 @@ void VIDOGLSync(){
 // Per line operation
 u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount, int depth ){
   int error;
-  if (perline->lincolor_tex == 0){
+  if ((perline->lincolor_tex == 0) || (perline->depth != depth)){
+    if (perline->lincolor_tex != 0){
+       glDeleteTextures(1, &perline->lincolor_tex);
+       glDeleteBuffers(1,&perline->linecolor_pbo);
+    }
+    perline->depth = depth;
     glGenTextures(1, &perline->lincolor_tex);
 
     glGenBuffers(1, &perline->linecolor_pbo);
@@ -4186,6 +4195,7 @@ u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount, int depth ){
 
 void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int depth){
 
+  if (perline->depth != depth) return;
   glBindTexture(GL_TEXTURE_2D, perline->lincolor_tex);
   //if (_Ygl->lincolor_buf == pbuf) {
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, perline->linecolor_pbo);

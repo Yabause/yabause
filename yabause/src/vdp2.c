@@ -60,7 +60,6 @@ Vdp2 Vdp2Lines[270];
 int vdp2_is_odd_frame = 0;
 
 static void startField(void);// VBLANK-OUT handler
-extern void waitVdp2DrawScreensEnd(int sync, int abort);
 
 int g_frame_count = 0;
 
@@ -490,7 +489,7 @@ void Vdp2HBlankIN(void) {
   } else {
 // Fix : Function doesn't exist without those defines
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-  waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, isSkipped );
+  if(VIDCore) waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, isSkipped );
 #endif
   }
 }

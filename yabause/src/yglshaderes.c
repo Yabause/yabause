@@ -312,8 +312,8 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
   glUniform1i(id_normal_s_window, 3);
   glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-  glUniform1i(id_normal_vheight, (float)_Ygl->rheight);
-  glUniform1i(id_normal_emu_height,  (float)_Ygl->rheight / (float)_Ygl->rheight);
+  glUniform1f(id_normal_vheight, (float)_Ygl->rheight);
+  glUniform1f(id_normal_emu_height,  (float)_Ygl->rheight / (float)_Ygl->rheight);
   return 0;
 }
 
@@ -935,7 +935,7 @@ SHADER_VERSION
 "  }\n"
 "  if (shadow != 0) {\n"
 "    fragColorAttr.rgb = vec3(0.0);\n"
-"    fragColorAttr.a = 0.5;\n"
+"    fragColorAttr.a = float(0x80)/255.0;\n"
 "    fragColor.rgb = vec3(0.0);\n"
 "  } else { \n"
 "    fragColorAttr = vec4(0.0);\n"
