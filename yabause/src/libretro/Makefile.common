@@ -4,6 +4,7 @@ LIBCHDR_DIR := $(SOURCE_DIR)/libchdr
 LZMA_DIR := $(LIBCHDR_DIR)/deps/lzma-16.04
 CRYPTO_DIR := $(LIBCHDR_DIR)/deps/crypto
 FLAC_DIR := $(LIBCHDR_DIR)/deps/flac-1.3.2
+ZLIB_DIR := $(LIBCHDR_DIR)/deps/zlib-1.2.11
 
 INCLUDE_DIRS := $(CORE_DIR) \
 	$(SOURCE_DIR) \
@@ -13,7 +14,8 @@ INCLUDE_DIRS := $(CORE_DIR) \
 	$(LIBCHDR_DIR)/src \
 	$(LZMA_DIR)/C \
 	$(CRYPTO_DIR) \
-	$(FLAC_DIR)/include
+	$(FLAC_DIR)/include \
+	$(FLAC_DIR)/src/libFLAC/include
 
 SOURCES_S :=
 
@@ -50,12 +52,6 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/m68kd.c \
 	$(SOURCE_DIR)/sh2_kronos/sh2int.c \
 	$(SOURCE_DIR)/sh2_kronos/sh2_opcodes.c \
-	$(SOURCE_DIR)/zlib/adler32.c \
-	$(SOURCE_DIR)/zlib/crc32.c \
-	$(SOURCE_DIR)/zlib/inffast.c \
-	$(SOURCE_DIR)/zlib/inflate.c \
-	$(SOURCE_DIR)/zlib/inftrees.c \
-	$(SOURCE_DIR)/zlib/zutil.c \
 	$(SOURCE_DIR)/vidogl.c \
 	$(SOURCE_DIR)/yglcache.c \
 	$(SOURCE_DIR)/ygles.c \
@@ -82,18 +78,24 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(LIBCHDR_DIR)/src/huffman.c \
 	$(LIBCHDR_DIR)/src/flac.c \
 	$(LIBCHDR_DIR)/src/cdrom.c \
-	$(FLAC_DIR)/src/stream_decoder.c \
-	$(FLAC_DIR)/src/format.c \
-	$(FLAC_DIR)/src/bitreader.c \
-	$(FLAC_DIR)/src/crc.c \
-	$(FLAC_DIR)/src/memory.c \
-	$(FLAC_DIR)/src/lpc.c \
-	$(FLAC_DIR)/src/cpu.c \
-	$(FLAC_DIR)/src/md5.c \
-	$(FLAC_DIR)/src/fixed.c \
-	$(LZMA_DIR)/C/lzma/LzmaEnc.c \
-	$(LZMA_DIR)/C/lzma/LzFind.c \
-	$(LZMA_DIR)/C/lzma/LzmaDec.c \
+	$(FLAC_DIR)/src/libFLAC/stream_decoder.c \
+	$(FLAC_DIR)/src/libFLAC/format.c \
+	$(FLAC_DIR)/src/libFLAC/bitreader.c \
+	$(FLAC_DIR)/src/libFLAC/crc.c \
+	$(FLAC_DIR)/src/libFLAC/memory.c \
+	$(FLAC_DIR)/src/libFLAC/lpc.c \
+	$(FLAC_DIR)/src/libFLAC/cpu.c \
+	$(FLAC_DIR)/src/libFLAC/md5.c \
+	$(FLAC_DIR)/src/libFLAC/fixed.c \
+	$(LZMA_DIR)/C/LzmaEnc.c \
+	$(LZMA_DIR)/C/LzFind.c \
+	$(LZMA_DIR)/C/LzmaDec.c \
+	$(ZLIB_DIR)/adler32.c \
+	$(ZLIB_DIR)/crc32.c \
+	$(ZLIB_DIR)/inffast.c \
+	$(ZLIB_DIR)/inflate.c \
+	$(ZLIB_DIR)/inftrees.c \
+	$(ZLIB_DIR)/zutil.c \
 	$(CORE_DIR)/libretro.c
 
 ifeq ($(FORCE_GLEW), 1)

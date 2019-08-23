@@ -31,7 +31,7 @@
 #include "error.h"
 #include "debug.h"
 #include "junzip.h"
-#include "zlib/zlib.h"
+#include "zlib.h"
 
 #include "streams/file_stream.h"
 #include "compat/posix_string.h"
