@@ -1090,6 +1090,12 @@ static const char vdp1_improved_mesh_f[] =
 "      if ((int(newColor.a * 255.0) & 0x40) == 0) alpha = 0x08;\n"
 "      alpha = alpha | 0x40 | prio;\n"
 "      finalColorAttr.a = float(alpha)/255.0;\n"
+"      finalColorAttr.rgb = newColor.rgb;\n"
+"      if (useGouraud) {\n"
+"        finalColorAttr.r = clamp(finalColorAttr.r + mix(mix(pixcmd.G[0],pixcmd.G[4],texcoord.x), mix(pixcmd.G[12],pixcmd.G[8],texcoord.x), texcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.g = clamp(finalColorAttr.g + mix(mix(pixcmd.G[1],pixcmd.G[5],texcoord.x), mix(pixcmd.G[13],pixcmd.G[9],texcoord.x), texcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.b = clamp(finalColorAttr.b + mix(mix(pixcmd.G[2],pixcmd.G[6],texcoord.x), mix(pixcmd.G[14],pixcmd.G[10],texcoord.x), texcoord.y), 0.0, 1.0);\n"
+"      }\n"
 "      finalColorAttr.b = float(int(finalColorAttr.b*255.0)&0xFE)/255.0;\n"
 "      newColor = finalColor;\n"
 "      newColor.a = float((int(newColor.a *255.0) & 0xF8)|prio)/255.0;\n";
