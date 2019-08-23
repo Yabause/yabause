@@ -58,29 +58,6 @@ int fount = 0;
 FILE *ppfp = NULL;
 #endif
 
-#ifdef _WINDOWS
-int yprintf(const char * fmt, ...)
-{
-  static FILE * dbugfp = NULL;
-  if (dbugfp == NULL) {
-    dbugfp = fopen("debug.txt", "w");
-  }
-  if (dbugfp) {
-    va_list ap;
-    va_start(ap, fmt);
-    vfprintf(dbugfp, fmt, ap);
-    va_end(ap);
-    fflush(dbugfp);
-  }
-  return 0;
-}
-
-
-void OSDPushMessageDirect(char * msg) {
-}
-
-#endif
-
 #define YGL_THREAD_DEBUG
 //#define YGL_THREAD_DEBUG yprintf
 
