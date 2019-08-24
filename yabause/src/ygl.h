@@ -585,6 +585,7 @@ typedef struct {
    int rbg_use_compute_shader;
    YglTextureManager * texture_manager;
    GLsync sync;
+   GLsync frame_sync;
     GLuint default_fbo;
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;

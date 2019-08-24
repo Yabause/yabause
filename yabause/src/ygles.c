@@ -4444,6 +4444,13 @@ void VIDOGLSync(){
   YglTmPull(YglTM, GL_MAP_INVALIDATE_BUFFER_BIT);
   _Ygl->texture_manager = NULL;
   RBGGenerator_onFinish();
+  //glFinish();
+  glFlush();
+  if (_Ygl->frame_sync != 0) {
+    glDeleteSync(_Ygl->frame_sync);
+    _Ygl->frame_sync = 0;
+  }
+  _Ygl->frame_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

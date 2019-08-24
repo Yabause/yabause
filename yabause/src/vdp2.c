@@ -274,6 +274,8 @@ int Vdp2Init(void) {
    if ((Vdp2ColorRam = T2MemoryInit(0x1000)) == NULL)
       return -1;
 
+   memset(Vdp2Lines, 0, sizeof(Vdp2) * 270);
+
    Vdp2Reset();
 
 #if defined(YAB_ASYNC_RENDERING)
