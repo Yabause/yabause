@@ -103,8 +103,8 @@ extern void VIDOGLVdp2Draw(void);
 extern void VIDOGLVdp2SetResolution(u16 TVMD);
 extern void YglGetGlSize(int *width, int *height);
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
-extern void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
-extern void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
+extern void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
+extern void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 extern void VIDOGLSetSettingValueMode(int type, int value);
 extern void VIDOGLSync();
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
@@ -130,8 +130,8 @@ VIDCSVdp1LineDraw,
 VIDCSVdp1UserClipping,
 VIDCSVdp1SystemClipping,
 VIDOGLVdp1LocalCoordinate,
-VIDOGLVdp1ReadFrameBuffer,
-VIDOGLVdp1WriteFrameBuffer,
+YglCSVdp1ReadFrameBuffer,
+YglCSVdp1WriteFrameBuffer,
 YglEraseWriteCSVDP1,
 YglFrameChangeCSVDP1,
 VIDOGLVdp2Reset,

@@ -906,7 +906,6 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
         break;
       }
     }
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
