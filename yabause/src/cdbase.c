@@ -576,6 +576,10 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].file_id = current_file_id;
 
+         if (track_num == 1) {
+           fad += 150; // lead-in
+         }
+
          if (track_num > 1) {
            fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
            trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
@@ -594,6 +598,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
             trk[track_num-1].sector_size = 2352;
             trk[track_num-1].ctl_addr = 0x01;
          }
+         trk[track_num - 1].fad_start = 0;
       }
       else if (strncmp(temp_buffer, "INDEX", 5) == 0)
       {
@@ -602,13 +607,21 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          if (fscanf(iso_file, "%d %d:%d:%d\r\n", &indexnum, &min, &sec, &frame) == EOF)
             break;
 
-         if (indexnum == 1)
-         {
-            // Update toc entry
-            fad += MSF_TO_FAD(min, sec, frame) + pregap + 150;
-            trk[track_num-1].fad_start = fad;
-            trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
+         // Data tracks (except first track) ignore pregap
+         if (indexnum == 0 && trk[track_num - 1].ctl_addr == 0x41) { 
+           fad += MSF_TO_FAD(min, sec, frame) + pregap;
+           trk[track_num - 1].fad_start = fad;
+           trk[track_num - 1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num - 1].sector_size;
          }
+
+         // Audio tracks jump to pregap
+         if (indexnum == 1 && trk[track_num - 1].fad_start == 0 )
+         {
+            fad += MSF_TO_FAD(min, sec, frame) + pregap;
+            trk[track_num - 1].fad_start = fad;
+            trk[track_num - 1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num - 1].sector_size;
+         }
+         
       }
       else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
       {
@@ -1376,6 +1389,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    {
       for (j = 0; j < disc.session[i].track_num; j++)
       {
+        if (j == 1) {
+          int a = 0;
+        }
          if (FAD >= disc.session[i].track[j].fad_start &&
              FAD <= disc.session[i].track[j].fad_end)
          {
@@ -1607,13 +1623,14 @@ static int LoadCHD(const char *chd_filename, FILE *iso_file)
     {
       trk[num_tracks].ctl_addr = 0x01;
       trk[num_tracks].sector_size = 2352;
+      //trk[num_tracks].pregap = 0;
     }
    
-    trk[num_tracks].fad_start = trk[num_tracks].fad_start + pregap;
-    trk[num_tracks].fad_end = trk[num_tracks].fad_start + (frame - 1) - pregap;
-    frame = trk[num_tracks].fad_end+1;
+    //trk[num_tracks].fad_start = trk[num_tracks].fad_start + pregap;
+    //trk[num_tracks].fad_end = trk[num_tracks].fad_start + (frame - 1) + postgap;
+    //frame = trk[num_tracks].fad_end+1;
     num_tracks++;
-    trk[num_tracks].fad_start = frame;
+    //trk[num_tracks].fad_start = frame;
   }
   free(buf);
 
@@ -1622,17 +1639,20 @@ static int LoadCHD(const char *chd_filename, FILE *iso_file)
 
   u32 chdofs = 0;
   u32 physofs = 0;
-  u32 logofs = 0;
+  u32 logofs = 150;
   int i;
   for (i = 0; i < num_tracks; i++)
   {
-    trk[i].logframeofs = logofs;
+    trk[i].fad_start = logofs;
+    
     trk[i].physframeofs = physofs;
     trk[i].chdframeofs = chdofs;
+    trk[i].logframeofs = logofs;
 
-    logofs += trk[i].pregap;
-    logofs += trk[i].postgap;
+    //logofs += trk[i].pregap;
+    //logofs += trk[i].postgap;
     logofs += trk[i].frames;
+    trk[i].fad_end = logofs-1;
 
     physofs += trk[i].frames;
 
@@ -1680,18 +1700,24 @@ static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer) {
   track_info_struct *track = NULL;
   u32 chdlba;
   u32 physlba;
-  u32 loglba = FAD - 150;
+  u32 loglba = FAD;
 
   chdlba = loglba;
   for (i = 0; i < disc.session_num; i++)
   {
     for (j = 0; j < disc.session[i].track_num; j++)
     {
+      if (j == 1) {
+        int a = 0;
+      }
       if (loglba < disc.session[i].track[j+1].logframeofs) {
         if ((loglba > disc.session[i].track[j].pregap)) {
-          loglba -= disc.session[i].track[j].pregap;
+          //loglba -= disc.session[i].track[j].pregap;
         }
         physlba = disc.session[i].track[j].physframeofs + (loglba - disc.session[i].track[j].logframeofs);
+        if (disc.session[i].track[j].ctl_addr == 0x01) {
+          physlba += disc.session[i].track[j].pregap;
+        }
         chdlba = physlba - disc.session[i].track[j].physframeofs + disc.session[i].track[j].chdframeofs;
         track = &disc.session[i].track[j];
         break;
