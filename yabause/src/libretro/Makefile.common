@@ -15,7 +15,8 @@ INCLUDE_DIRS := $(CORE_DIR) \
 	$(LZMA_DIR)/C \
 	$(CRYPTO_DIR) \
 	$(FLAC_DIR)/include \
-	$(FLAC_DIR)/src/libFLAC/include
+	$(FLAC_DIR)/src/libFLAC/include \
+	$(ZLIB_DIR)
 
 SOURCES_S :=
 
@@ -53,13 +54,16 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/sh2_kronos/sh2int.c \
 	$(SOURCE_DIR)/sh2_kronos/sh2_opcodes.c \
 	$(SOURCE_DIR)/vidogl.c \
+	$(SOURCE_DIR)/vidcs.c \
 	$(SOURCE_DIR)/yglcache.c \
 	$(SOURCE_DIR)/ygles.c \
 	$(SOURCE_DIR)/yglshaderes.c \
+	$(SOURCE_DIR)/yglcs.c \
 	$(SOURCE_DIR)/patternManager.c \
 	$(SOURCE_DIR)/upscale_shader.c \
 	$(SOURCE_DIR)/snddummy.c \
 	$(SOURCE_DIR)/vdp1.c \
+	$(SOURCE_DIR)/vdp1/vdp1_compute.c \
 	$(SOURCE_DIR)/vdp2.c \
 	$(SOURCE_DIR)/vidshared.c \
 	$(SOURCE_DIR)/vidsoft.c \

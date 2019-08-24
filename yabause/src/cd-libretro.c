@@ -36,49 +36,6 @@
 #include "streams/file_stream.h"
 #include "compat/posix_string.h"
 
-#ifndef HAVE_WFOPEN
-static char * wcsdupstr(const wchar_t * path)
-{
-   char * mbs;
-   size_t len = wcstombs(NULL, path, 0);
-   if (len == (size_t) -1) return NULL;
-
-   mbs = malloc(len);
-   len = wcstombs(mbs, path, len);
-   if (len == (size_t) -1)
-   {
-      free(mbs);
-      return NULL;
-   }
-
-   return mbs;
-}
-
-static RFILE* _wfopen(const wchar_t *wpath, const wchar_t *wmode)
-{
-   RFILE *fd;
-   char * path;
-   char * mode;
-
-   path = wcsdupstr(wpath);
-   if (path == NULL) return NULL;
-
-   mode = wcsdupstr(wmode);
-   if (mode == NULL)
-   {
-      free(path);
-      return NULL;
-   }
-
-   fd = filestream_open(path, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
-
-   free(path);
-   free(mode);
-
-   return fd;
-}
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 
 // Contains the Dummy and ISO CD Interfaces

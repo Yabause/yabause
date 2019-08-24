@@ -30,9 +30,11 @@
 
 #include "m68kcore.h"
 #include "vidogl.h"
+#include "vidcs.h"
 #include "vidsoft.h"
 #include "ygl.h"
 #include "sh2int_kronos.h"
+#include "libretro_core_options.h"
 
 yabauseinit_struct yinit;
 
@@ -65,6 +67,7 @@ static int scanlines = 0;
 static int opengl_version = 330;
 #endif
 
+static int g_vidcoretype = VIDCORE_OGL;
 static int g_sh2coretype = 8;
 static int g_videoformattype = VIDEOFORMATTYPE_NTSC;
 static int resolution_mode = 1;
@@ -72,7 +75,7 @@ static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
 static int numthreads = 4;
 static int use_beetle_saves = 0;
-static int auto_select_cart = 1;
+static int auto_select_cart = 0;
 static int use_cs = COMPUTE_RBG_OFF;
 static bool service_enabled = false;
 static bool stv_mode = false;
@@ -102,28 +105,9 @@ extern struct retro_hw_render_callback hw_render;
 
 void retro_set_environment(retro_environment_t cb)
 {
-   static const struct retro_variable vars[] = {
-      { "kronos_force_hle_bios", "Force HLE BIOS (restart, deprecated, debug only); disabled|enabled" },
-      { "kronos_videoformattype", "Video format; NTSC|PAL" },
-      { "kronos_sh2coretype", "SH2 Core (restart); kronos|interpreter" },
-#if !defined(_OGLES3_)
-      { "kronos_opengl_version", "OpenGL version; 3.3|4.2|4.3|4.5" },
-#endif
-      { "kronos_use_beetle_saves", "Share saves with beetle (restart); disabled|enabled" },
-      { "kronos_addon_cart", "Addon Cartridge (restart); none|1M_extended_ram|4M_extended_ram|512K_backup_ram|1M_backup_ram|2M_backup_ram|4M_backup_ram" },
-      { "kronos_auto_select_cart", "Automatic Addon Cartridge (restart); enabled|disabled" },
-      { "kronos_multitap_port1", "6Player Adaptor on Port 1; disabled|enabled" },
-      { "kronos_multitap_port2", "6Player Adaptor on Port 2; disabled|enabled" },
-      { "kronos_filter_mode", "Filter Mode; none|bilinear|bicubic" },
-      { "kronos_upscale_mode", "Upscale Mode; none|hq4x|4xbrz|2xbrz" },
-      { "kronos_resolution_mode", "Resolution Mode; original|480p|720p|1080p|4k" },
-      { "kronos_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
-      { "kronos_scanlines", "Scanlines; disabled|enabled" },
-      { "kronos_meshmode", "Improved mesh; disabled|enabled" },
-      { "kronos_use_cs", "Use compute shaders; disabled|enabled" },
-      { "kronos_service_enabled", "ST-V Service/Test Buttons; disabled|enabled" },
-      { NULL, NULL },
-   };
+   environ_cb = cb;
+
+   libretro_set_core_options(environ_cb);
 
    static const struct retro_controller_description peripherals[] = {
        { "Saturn Pad", RETRO_DEVICE_JOYPAD },
@@ -147,9 +131,6 @@ void retro_set_environment(retro_environment_t cb)
       { NULL, 0 },
    };
 
-   environ_cb = cb;
-
-   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
    environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 }
 void retro_set_video_refresh(retro_video_refresh_t cb) { video_cb = cb; }
@@ -686,9 +667,8 @@ SoundInterface_struct *SNDCoreList[] = {
 };
 
 VideoInterface_struct *VIDCoreList[] = {
-    //&VIDDummy,
     &VIDOGL,
-    &VIDSoft,
+    &VIDCS,
     NULL
 };
 
@@ -958,6 +938,16 @@ void check_variables(void)
       else if (strcmp(var.value, "4.5") == 0)
          opengl_version = 450;
    }
+
+   var.key = "kronos_videocoretype";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "opengl") == 0)
+         g_vidcoretype = VIDCORE_OGL;
+      else if (strcmp(var.value, "opengl_cs") == 0)
+         g_vidcoretype = VIDCORE_CS;
+   }
 #endif
 
    var.key = "kronos_use_beetle_saves";
@@ -970,36 +960,26 @@ void check_variables(void)
          use_beetle_saves = 1;
    }
 
-   var.key = "kronos_addon_cart";
+   var.key = "kronos_addon_cartridge";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "auto") == 0 && addon_cart_type != -1)
-         addon_cart_type = -1;
-      else if (strcmp(var.value, "none") == 0 && addon_cart_type != CART_NONE)
-         addon_cart_type = CART_NONE;
-      else if (strcmp(var.value, "1M_extended_ram") == 0 && addon_cart_type != CART_DRAM8MBIT)
-         addon_cart_type = CART_DRAM8MBIT;
-      else if (strcmp(var.value, "4M_extended_ram") == 0 && addon_cart_type != CART_DRAM32MBIT)
-         addon_cart_type = CART_DRAM32MBIT;
-      else if (strcmp(var.value, "512K_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM4MBIT)
-         addon_cart_type = CART_BACKUPRAM4MBIT;
-      else if (strcmp(var.value, "1M_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM8MBIT)
-         addon_cart_type = CART_BACKUPRAM8MBIT;
-      else if (strcmp(var.value, "2M_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM16MBIT)
-         addon_cart_type = CART_BACKUPRAM16MBIT;
-      else if (strcmp(var.value, "4M_backup_ram") == 0 && addon_cart_type != CART_BACKUPRAM32MBIT)
-         addon_cart_type = CART_BACKUPRAM32MBIT;
-   }
-
-   var.key = "kronos_auto_select_cart";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "enabled") == 0)
+      if (strcmp(var.value, "auto") == 0)
          auto_select_cart = 1;
-      else if (strcmp(var.value, "disabled") == 0)
-         auto_select_cart = 0;
+      else if (strcmp(var.value, "none") == 0)
+         addon_cart_type = CART_NONE;
+      else if (strcmp(var.value, "1M_extended_ram") == 0)
+         addon_cart_type = CART_DRAM8MBIT;
+      else if (strcmp(var.value, "4M_extended_ram") == 0 )
+         addon_cart_type = CART_DRAM32MBIT;
+      else if (strcmp(var.value, "512K_backup_ram") == 0)
+         addon_cart_type = CART_BACKUPRAM4MBIT;
+      else if (strcmp(var.value, "1M_backup_ram") == 0)
+         addon_cart_type = CART_BACKUPRAM8MBIT;
+      else if (strcmp(var.value, "2M_backup_ram") == 0)
+         addon_cart_type = CART_BACKUPRAM16MBIT;
+      else if (strcmp(var.value, "4M_backup_ram") == 0)
+         addon_cart_type = CART_BACKUPRAM32MBIT;
    }
 
    var.key = "kronos_multitap_port1";
@@ -1387,7 +1367,7 @@ bool retro_load_game_common()
    if (!retro_init_hw_context())
       return false;
 
-   yinit.vidcoretype             = VIDCORE_OGL;
+   yinit.vidcoretype             = g_vidcoretype;
    yinit.percoretype             = PERCORE_LIBRETRO;
    yinit.sh2coretype             = g_sh2coretype;
    yinit.sndcoretype             = SNDCORE_LIBRETRO;

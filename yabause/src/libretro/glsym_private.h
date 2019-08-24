@@ -19,19 +19,6 @@ typedef void (GL_APIENTRYP RGLSYMGLBINDIMAGETEXTUREPROC) (GLuint unit, GLuint te
 #define glDispatchCompute __rglgen_glDispatchCompute
 #define glBindImageTexture __rglgen_glBindImageTexture
 
-#define GL_PATCHES                         0x000E
-#define GL_FRAMEBUFFER_BARRIER_BIT         0x00000400
-#define GL_TEXTURE_UPDATE_BARRIER_BIT      0x00000100
-#define GL_TEXTURE_FETCH_BARRIER_BIT       0x00000008
-#define GL_TESS_CONTROL_SHADER             0x8E88
-#define GL_TESS_EVALUATION_SHADER          0x8E87
-#define GL_GEOMETRY_SHADER                 0x8DD9
-#define GL_PATCH_VERTICES                  0x8E72
-#define GL_COMPUTE_SHADER                  0x91B9
-#define GL_SHADER_STORAGE_BUFFER           0x90D2
-#define GL_WRITE_ONLY                      0x88B9
-#define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
-
 extern RGLSYMGLMEMORYBARRIERPROC __rglgen_glMemoryBarrier;
 extern RGLSYMGLBINDFRAGDATALOCATIONPROC __rglgen_glBindFragDataLocation;
 extern RGLSYMGLPATCHPARAMETERIPROC __rglgen_glPatchParameteri;
@@ -46,6 +33,43 @@ typedef void (APIENTRYP RGLSYMGLTEXTUREBARRIERPROC) (void);
 
 extern RGLSYMGLTEXTUREBARRIERNVPROC __rglgen_glTextureBarrierNV;
 extern RGLSYMGLTEXTUREBARRIERPROC __rglgen_glTextureBarrier;
+#endif
+
+#ifndef GL_PATCHES
+#define GL_PATCHES                         0x000E
+#endif
+#ifndef GL_FRAMEBUFFER_BARRIER_BIT
+#define GL_FRAMEBUFFER_BARRIER_BIT         0x00000400
+#endif
+#ifndef GL_TEXTURE_UPDATE_BARRIER_BIT
+#define GL_TEXTURE_UPDATE_BARRIER_BIT      0x00000100
+#endif
+#ifndef GL_TEXTURE_FETCH_BARRIER_BIT
+#define GL_TEXTURE_FETCH_BARRIER_BIT       0x00000008
+#endif
+#ifndef GL_TESS_CONTROL_SHADER
+#define GL_TESS_CONTROL_SHADER             0x8E88
+#endif
+#ifndef GL_TESS_EVALUATION_SHADER
+#define GL_TESS_EVALUATION_SHADER          0x8E87
+#endif
+#ifndef GL_GEOMETRY_SHADER
+#define GL_GEOMETRY_SHADER                 0x8DD9
+#endif
+#ifndef GL_PATCH_VERTICES
+#define GL_PATCH_VERTICES                  0x8E72
+#endif
+#ifndef GL_COMPUTE_SHADER
+#define GL_COMPUTE_SHADER                  0x91B9
+#endif
+#ifndef GL_SHADER_STORAGE_BUFFER
+#define GL_SHADER_STORAGE_BUFFER           0x90D2
+#endif
+#ifndef GL_WRITE_ONLY
+#define GL_WRITE_ONLY                      0x88B9
+#endif
+#ifndef GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
+#define GL_SHADER_IMAGE_ACCESS_BARRIER_BIT 0x00000020
 #endif
 
 #ifdef __cplusplus
