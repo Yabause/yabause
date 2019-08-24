@@ -4445,11 +4445,11 @@ void VIDOGLSync(){
   _Ygl->texture_manager = NULL;
   RBGGenerator_onFinish();
   //glFinish();
-  glFlush();
   if (_Ygl->frame_sync != 0) {
     glDeleteSync(_Ygl->frame_sync);
     _Ygl->frame_sync = 0;
   }
+  glFlush();
   _Ygl->frame_sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }
 

@@ -3891,11 +3891,11 @@ void VIDOGLVdp1DrawStart(void)
 
   FrameProfileAdd("Vdp1Command start");
 
-  if (_Ygl->frame_sync != 0) {
-    glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
-    glDeleteSync(_Ygl->frame_sync);
-    _Ygl->frame_sync = 0;
-  }
+  //if (_Ygl->frame_sync != 0) {
+  //  glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
+  //  glDeleteSync(_Ygl->frame_sync);
+  //  _Ygl->frame_sync = 0;
+  //}
   
   if (_Ygl->texture_manager == NULL) {
     _Ygl->texture_manager = YglTM;
@@ -5432,11 +5432,11 @@ void VIDOGLVdp2DrawStart(void)
     YglTM = YglTMInit(new_width, new_height);
   }
   YglReset();
-  if (_Ygl->sync != 0) {
-    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
-    glDeleteSync(_Ygl->sync);
-    _Ygl->sync = 0;
-  }
+  //if (_Ygl->sync != 0) {
+  //  glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
+  //  glDeleteSync(_Ygl->sync);
+  //  _Ygl->sync = 0;
+  //}
   if (_Ygl->frame_sync != 0) {
     glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
     glDeleteSync(_Ygl->frame_sync);
