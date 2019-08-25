@@ -36,6 +36,11 @@
 #include "error.h"
 #include "debug.h"
 
+static int LoadCHD(const char *chd_filename, FILE *iso_file);
+static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer);
+static int LoadBinCueMultiFile(const char *cuefilename, FILE *iso_file);
+static int LoadBinCue(const char *cuefilename, FILE *iso_file);
+
 // Remove this for now, execution on windows fails because of it
 // #include "streams/file_stream_transforms.h"
 #ifndef HAVE_STRICMP
@@ -500,10 +505,7 @@ static FILE* OpenFile(char* buffer, const char* cue) {
    return ret_file;
 }
 
-static int LoadCHD(const char *chd_filename, FILE *iso_file);
-static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer);
-
-static int LoadBinCueSingleFile(const char *cuefilename, FILE *iso_file)
+static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
   long size;
   char *temp_buffer, *temp_buffer2;
@@ -604,9 +606,10 @@ static int LoadBinCueSingleFile(const char *cuefilename, FILE *iso_file)
     }
     else if (strncmp(temp_buffer, "FILE", 4) == 0)
     {
-      YabSetError(YAB_ERR_OTHER, "Unsupported cue format");
+      //YabSetError(YAB_ERR_OTHER, "Unsupported cue format");
       free(temp_buffer);
-      return -1;
+      fseek(iso_file, 0, SEEK_SET);
+      return LoadBinCueMultiFile(cuefilename, iso_file);
     }
   }
 
@@ -711,7 +714,7 @@ static int LoadBinCueSingleFile(const char *cuefilename, FILE *iso_file)
 }
 
 
-static int LoadBinCue(const char *cuefilename, FILE *iso_file)
+static int LoadBinCueMultiFile(const char *cuefilename, FILE *iso_file)
 {
    long size;
    char* temp_buffer;
@@ -1476,17 +1479,11 @@ static int ISOCDInit(const char * iso) {
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
-   if (stricmp(ext, ".CUE") == 0 && strncmp(header, "FILE \"", 6) == 0)
+   if (stricmp(ext, ".CUE") == 0 )
    {
      // It's a Single BIN/CUE
      imgtype = IMG_BINCUE;
-     ret = LoadBinCueSingleFile(iso, iso_file);
-   }
-   else if (stricmp(ext, ".CUE") == 0 && strncmp(header, "CATALO", 6) == 0)
-   {
-      // It's a Multifile BIN/CUE
-      imgtype = IMG_BINCUE;
-      ret = LoadBinCue(iso, iso_file);
+     ret = LoadBinCue(iso, iso_file);
    }
    else if (stricmp(ext, ".MDS") == 0 && strncmp(header, "MEDIA ", sizeof(header)) == 0)
    {
