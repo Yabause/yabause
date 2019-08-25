@@ -271,7 +271,7 @@ int Ygl_cleanupNormal(void * p)
   prg = p;
   if (prg->interuput_texture != 0) {
 	  glActiveTexture(GL_TEXTURE0);
-	  glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+	  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
   return 0;
 }
@@ -366,7 +366,7 @@ int Ygl_cleanupNormalCram(void * p)
   prg = p;
   glActiveTexture(GL_TEXTURE0);
   if (prg->interuput_texture != 0) {
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
   return 0;
 }
@@ -556,7 +556,7 @@ int Ygl_uniformNormalCramLine(void * p)
   glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
   glActiveTexture(GL_TEXTURE2);
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
 
   // Disable blend mode if extend Color calcuration  is not enabled
@@ -572,7 +572,7 @@ int Ygl_cleanupNormalCramLine(void * p)
   YglProgram * prg = p;
   glActiveTexture(GL_TEXTURE0);
   if (prg->interuput_texture != 0) {
-	  glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+	  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
   return 0;
 }
@@ -633,7 +633,7 @@ int Ygl_uniformMosaic(void * p)
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   }
   else {
@@ -642,7 +642,7 @@ int Ygl_uniformMosaic(void * p)
     glDisableVertexAttribArray(2);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
 
   return 0;
@@ -668,7 +668,7 @@ int Ygl_cleanupMosaic(void * p)
   // call blit method
   YglBlitMosaic(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->mosaic);
 
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   return 0;
 }
@@ -702,7 +702,7 @@ int Ygl_uniformPerLineAlpha(void * p)
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   }
   else {
@@ -711,7 +711,7 @@ int Ygl_uniformPerLineAlpha(void * p)
     glDisableVertexAttribArray(2);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
 
   if (prg->interuput_texture != 0) {
@@ -752,10 +752,10 @@ int Ygl_cleanupPerLineAlpha(void * p)
   // call blit method
   YglBlitPerLineAlpha(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix, prg->lineTexture);
 
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   glActiveTexture(GL_TEXTURE0);
   if (prg->interuput_texture != 0) {
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
   return 0;
 }
@@ -787,7 +787,7 @@ int Ygl_uniformNormal_blur(void * p)
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   }
   else {
@@ -796,7 +796,7 @@ int Ygl_uniformNormal_blur(void * p)
     glDisableVertexAttribArray(2);
     glUniform1i(id_normal_s_texture, 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
-    glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+    glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
   }
 
   //glEnableVertexAttribArray(prg->vertexp);
@@ -837,7 +837,7 @@ int Ygl_cleanupNormal_blur(void * p)
    // call blit method
   YglBlitBlur(_Ygl->tmpfbotex, _Ygl->targetfbo, _Ygl->rwidth, _Ygl->rheight, prg->matrix);
 
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
+  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
 
   return 0;
 }

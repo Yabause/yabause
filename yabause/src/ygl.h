@@ -252,15 +252,8 @@ typedef struct {
 	YglCacheHash *HashTable[HASHSIZE];
 	YglCacheHash CashLink[HASHSIZE * 2];
 	u32 CashLink_index;
-
-	//GLuint textureID;
-	//GLuint pixelBufferID;
-
-  int current;
-  GLuint textureID_in[2];
-  GLuint pixelBufferID_in[2];
-  unsigned int * texture_in[2];
-
+	GLuint textureID;
+	GLuint pixelBufferID;
 } YglTextureManager;
 
 extern YglTextureManager * YglTM;

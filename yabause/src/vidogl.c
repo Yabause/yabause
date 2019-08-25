@@ -5436,11 +5436,11 @@ void VIDOGLVdp2DrawStart(void)
     glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
     glDeleteSync(_Ygl->sync);
     _Ygl->sync = 0;
-  //if (_Ygl->frame_sync != 0) {
-  //  glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
-  //  glDeleteSync(_Ygl->frame_sync);
-  //  _Ygl->frame_sync = 0;
-  //}
+  if (_Ygl->frame_sync != 0) {
+    glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
+    glDeleteSync(_Ygl->frame_sync);
+    _Ygl->frame_sync = 0;
+  }
   YglTmPull(YglTM, 0);
   YglTMReset(YglTM);
   YglCacheReset(YglTM);
