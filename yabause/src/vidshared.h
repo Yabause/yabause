@@ -200,8 +200,8 @@ typedef struct
       int flipfunction;
    }pipe[2];
 
-   u8 char_bank[4];
-   u8 pname_bank[4];
+   u16 char_bank[4];
+   u16 pname_bank[4];
 
 } vdp2draw_struct;
 
