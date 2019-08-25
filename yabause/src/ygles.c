@@ -49,7 +49,6 @@ extern int YglDrawBackScreen();
 static int YglCalcTextureQ( float   *pnts,float *q);
 
 static void waitVdp1End(int id);
-static void executeTMVDP1(int in, int out);
 static void releaseVDP1FB(int i);
 
 static int YglGenerateBackBuffer();
@@ -736,7 +735,7 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
   YabThreadUnLock(tm->mtx);
 }
 
-u32* getVdp1DrawingFBMemWrite(int id) {
+static u32* getVdp1DrawingFBMemWrite(int id) {
   //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
   u32* fbptr = NULL;
   GLuint error;
@@ -2791,7 +2790,7 @@ static void waitVdp1End(int id) {
   }
 }
 
-static void executeTMVDP1(int in, int out) {
+void executeTMVDP1(int in, int out) {
   if (_Ygl->needVdp1Render != 0){
     YglTmPush(YglTM_vdp1[in]);
     //YuiUseOGLOnThisThread();

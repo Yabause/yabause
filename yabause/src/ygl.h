@@ -787,6 +787,7 @@ int YglSetLevelBlendmode( int pri, int mode );
 extern int YglBlitSimple(int texture, int blend);
 extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
+extern void executeTMVDP1(int in, int out);
 
 extern u8 * YglGetVDP2RegPointer();
 

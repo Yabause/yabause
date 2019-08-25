@@ -311,8 +311,10 @@ static void releaseVDP1FB(int i) {
   //Ne pas ecrire au dela de l'adresse...
   //Faire un read du FB avant un write pour recuperer le contenu.
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
-  if (_Ygl->vdp1FrameBuff[i*2] != 0) {
+  if (_Ygl->vdp1Tex[0] != 0) {
     if (_Ygl->vdp1fb_buf[i] != NULL) {
+      //Faire une foncion vdp1 qui redessine le buufer sur la texture
+
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[i]);
@@ -350,6 +352,33 @@ static void YglSetVDP1FB(int i){
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
     _Ygl->vdp1IsNotEmpty[i] = 0;
   }
+}
+
+static u32* getVdp1DrawingFBMemWrite(int id) {
+  //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
+  u32* fbptr = NULL;
+  GLuint error;
+  u32 tmp[512*256];
+  YglGenFrameBuffer();
+  releaseVDP1DrawingFBMemRead(id);
+  executeTMVDP1(id, id);
+  if (_Ygl->vdp1fb_buf_read[id] == NULL) {
+    _Ygl->vdp1fb_buf_read[id] =  getVdp1DrawingFBMemRead(id);
+  }
+  memcpy((u8*)tmp, _Ygl->vdp1fb_buf_read[id], 512*256*4);
+  releaseVDP1DrawingFBMemRead(id);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
+  glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
+  YglBlitVDP1(_Ygl->vdp1Tex[0], _Ygl->width, _Ygl->height, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+
+  glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[id]);
+  fbptr = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 0x40000*2, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  memcpy(fbptr, tmp, 512*256*4);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  return fbptr;
 }
 
 void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
