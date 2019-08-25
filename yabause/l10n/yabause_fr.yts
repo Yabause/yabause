@@ -32,6 +32,7 @@
 &Slave SH2|SH2 E&sclave
 &Tools|Ou&tils
 &Transfer|&Transfert
+&Vertical synchronization|Synchronisation Verticale
 &View|&Visualiser
 16-bit|16-bit
 16-bit Relative value(s)|Valeur(s) Relatives 16-bit
@@ -80,6 +81,7 @@ Axis Y|Axe Y
 Axis L Trigger|Axe Gâchette G
 Axis R Trigger|Axe Gâchette D
 Backup Ram Manager|Gestion des Sauvegardes
+BiCubic|BiCubique
 Bilinear|Bilinéaire
 Bilinear Filtering (Restart required)|Filtrage Bilinéaire (Redémarrer l'émulateur)
 Binary Files (*.bin)|Fichiers Binaire (*.bin)
@@ -129,6 +131,7 @@ Comment :|Commentaire :
 Common Control Registers|Registres de Contrôle Commun
 Compatibility List|Liste de Compatibilité
 Compare Type|Type de Comparaison
+Compute Shader Video Interface|Interface Vidéo Compute Shader
 Couldn't save state file|Ne peut pas sauvegarder un fichier d'état
 Couldn't load state file|Ne peut pas charger un fichier d'état
 CPU Tesselation|Tesselation CPU
@@ -252,7 +255,7 @@ Mouse Configuration|Configuration de la Souris
 Mpeg ROM|ROM MPEG :
 Musashi Interface|Interface Musashi
 nanovg OSD Interface|Interface Nanovg OSD
-Native (native resolution of Window)|Natif (Résolution Native de la Fenêtre)
+Native (current resolution of the window)|Natif (Résolution en cours de la Fenêtre)
 NBG0|NBG0
 NBG0/RBG1 Info|Info NBG0/RBG1
 NBG1|NBG1
@@ -354,7 +357,6 @@ Signed 32-bit value|Valeur Signé 32-bit
 Slot Info|Info Emplacement
 Slot Number:|Numéro d'Emplacement :
 Software OSD Interface|Interface OSD Logiciel
-Software Video Interface|Interface Vidéo Logiciel
 Sound...|Son...
 Sound|Son
 Sound Core|Noyau Son :
@@ -414,7 +416,6 @@ VDP1 Command Info|Info Commande VDP1
 VDP1 Command List|Liste Commande VDP1
 VDP2|VDP2
 VDP2Viewer Viewer|Visualiseur VDP2Viewer
-Vertical synchronization|Synchronisation Verticale
 Video|Vidéo
 Video Core|Noyau Vidéo :
 Video Driver|Pilote Vidéo
