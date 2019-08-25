@@ -493,38 +493,43 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   memset(tm, 0, sizeof(YglTextureManager));
   tm->width = w;
   tm->height = h;
+  tm->current = 0;
 
   YglTMReset(tm);
 
-  glGenBuffers(1, &tm->pixelBufferID);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-  glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_DYNAMIC_DRAW);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  for (int i = 0; i < 2; i++) {
 
-  glGetError();
-  glGenTextures(1, &tm->textureID);
-  glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  if ((error = glGetError()) != GL_NO_ERROR)
-  {
-    YGLDEBUG("Fail to init YglTM->textureID %04X", error);
-    abort();
+    glGenBuffers(1, &tm->pixelBufferID_in[i]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[i]);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+    glGetError();
+    glGenTextures(1, &tm->textureID_in[i]);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[i]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    if ((error = glGetError()) != GL_NO_ERROR)
+    {
+      YGLDEBUG("Fail to init YglTM->textureID %04X", error);
+      abort();
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  
+    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[i]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[i]);
+    tm->texture_in[i] = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    if ((error = glGetError()) != GL_NO_ERROR)
+    {
+      YGLDEBUG("Fail to init YglTM->texture %04X", error);
+      abort();
+    }
+   
   }
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-  tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
-  if ((error = glGetError()) != GL_NO_ERROR)
-  {
-    YGLDEBUG("Fail to init YglTM->texture %04X", error);
-    abort();
-  }
+  tm->texture = tm->texture_in[tm->current];
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
   YglGetColorRamPointer();
 
   return tm;
@@ -533,15 +538,19 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglTMDeInit(YglTextureManager * tm) {
-  glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-  glFinish();
 
-  glDeleteTextures(1, &tm->textureID);
-  tm->textureID = 0;
-  glDeleteBuffers(1, &tm->pixelBufferID);
-  tm->pixelBufferID = 0;
+  for (int i = 0; i < 2; i++) {
+    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[i]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glFinish();
+
+    glDeleteTextures(1, &tm->textureID_in[i]);
+    tm->textureID_in[i] = 0;
+    glDeleteBuffers(1, &tm->pixelBufferID_in[i]);
+    tm->pixelBufferID_in[i] = 0;
+  }
+
   free(tm);
 }
 
@@ -570,9 +579,9 @@ void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h){
 
 void YglTmPush(YglTextureManager * tm){
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, tm->textureID);
+  glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current] );
   if (tm->texture != NULL ) {
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[tm->current] );
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, tm->width, tm->yMax, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -582,88 +591,114 @@ void YglTmPush(YglTextureManager * tm){
 
 void YglTmPull(YglTextureManager * tm, u32 flg){
   if (tm->texture == NULL) {
+
+    int prev = tm->current;
+
+    if (tm->current == 0) {
+      tm->current = 1;
+    }
+    else {
+      tm->current = 0;
+    }
+
+    tm->texture = tm->texture_in[tm->current];
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tm->textureID);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-    tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
-    if (tm->texture == NULL){
+    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[prev]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[prev]);
+    tm->texture_in[prev] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
+    if (tm->texture_in[prev] == NULL){
       abort();
     }
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+	  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+    glFlush();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current]);
+
   }
 }
 
 
 void YglTMRealloc(YglTextureManager * tm, unsigned int width, unsigned int height ){
 
-  GLuint new_textureID;
-  GLuint new_pixelBufferID;
-  unsigned int * new_texture;
+  GLuint new_textureID[2];
+  GLuint new_pixelBufferID[2];
+  unsigned int * new_texture[2];
   GLuint error;
 
   Vdp2RgbTextureSync();
 
-  if (tm->texture != NULL) {
+  if (tm->texture_in[tm->current] != NULL) {
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tm->textureID);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current] );
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[tm->current]);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    tm->texture = NULL;
+    tm->texture_in[tm->current] = NULL;
   }
 
   glGetError();
 
-
-  glGenTextures(1, &new_textureID);
-  glBindTexture(GL_TEXTURE_2D, new_textureID);
+  for (int i = 0; i < 2; i++) {
+    glGenTextures(1, &new_textureID[i]);
+    glBindTexture(GL_TEXTURE_2D, new_textureID[i]);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  if ((error = glGetError()) != GL_NO_ERROR){
-    YGLDEBUG("Fail to init new_textureID %d, %04X(%d,%d)\n", new_textureID, error,width, height);
-    abort();
-  }
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      YGLDEBUG("Fail to init new_textureID %d, %04X(%d,%d)\n", new_textureID, error, width, height);
+      abort();
+    }
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 
-  glGenBuffers(1, &new_pixelBufferID);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
-  glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_DYNAMIC_DRAW);
+    glGenBuffers(1, &new_pixelBufferID[i]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID[i]);
+    glBufferData(GL_PIXEL_UNPACK_BUFFER, width * height * 4, NULL, GL_DYNAMIC_DRAW);
 
-  int dh = tm->height;
-  if (dh > height) dh = height;
+    int dh = tm->height;
+    if (dh > height) dh = height;
 
-  glBindBuffer(GL_COPY_READ_BUFFER, tm->pixelBufferID);
-  glBindBuffer(GL_COPY_WRITE_BUFFER, new_pixelBufferID);
-  glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, tm->width * dh * 4);
-  if ((error = glGetError()) != GL_NO_ERROR){
-    YGLDEBUG("Fail to init new_texture %04X", error);
-    abort();
+    glBindBuffer(GL_COPY_READ_BUFFER, tm->pixelBufferID_in[tm->current]);
+    glBindBuffer(GL_COPY_WRITE_BUFFER, new_pixelBufferID[i]);
+    glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, tm->width * dh * 4);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      YGLDEBUG("Fail to init new_texture %04X", error);
+      abort();
+    }
   }
 
   glBindBuffer(GL_COPY_READ_BUFFER, 0);
   glBindBuffer(GL_COPY_WRITE_BUFFER, 0);
 
+  for (int i = 0; i < 2; i++) {
 
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID);
-  new_texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
-  if ((error = glGetError()) != GL_NO_ERROR){
-    YGLDEBUG("Fail to init new_texture %04X", error);
-    abort();
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, new_pixelBufferID[i]);
+    new_texture[i] = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, width * height * 4, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    if ((error = glGetError()) != GL_NO_ERROR) {
+      YGLDEBUG("Fail to init new_texture %04X", error);
+      abort();
+    }
+
+    // Free textures
+    glDeleteTextures(1, &tm->textureID_in[i]);
+    glDeleteBuffers(1, &tm->pixelBufferID_in[i]);
+    
+    tm->texture_in[i] = new_texture[i];
+    tm->textureID_in[i] = new_textureID[i];
+    tm->pixelBufferID_in[i] = new_pixelBufferID[i];
+
   }
 
-  // Free textures
-  glDeleteTextures(1, &tm->textureID);
-  glDeleteBuffers(1, &tm->pixelBufferID);
-
   // user new texture
-    tm->width = width;
+  tm->width = width;
   tm->height = height;
-  tm->texture = new_texture;
-  tm->textureID = new_textureID;
-  tm->pixelBufferID = new_pixelBufferID;
+  tm->texture = tm->texture_in[tm->current];
+  //tm->textureID = new_textureID;
+  //tm->pixelBufferID = new_pixelBufferID;
 
   return;
 
@@ -2906,7 +2941,7 @@ void YglRenderVDP1(void) {
   glViewport(0,0,_Ygl->width,_Ygl->height);
   glScissor(0, 0, _Ygl->width, _Ygl->height);
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+  glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current] );
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
     if( level->prg[j].prgid != cprg ) {
@@ -3568,7 +3603,7 @@ void YglRender(void) {
    }
    
    if (_Ygl->texture_manager == NULL) goto render_finish;
-   glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+   glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
    YglUpdateVdp2Reg();
@@ -3610,7 +3645,7 @@ void YglRender(void) {
         // clean up
         cprg = -1;
         glUseProgram(0);
-        glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+        glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
                 glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
       }
@@ -3946,7 +3981,7 @@ void YglRenderDestinationAlpha(void) {
       // clean up
       cprg = -1;
       glUseProgram(0);
-      glBindTexture(GL_TEXTURE_2D, YglTM->textureID);
+      glBindTexture(GL_TEXTURE_2D, YglTM->textureID_in[YglTM->current]);
             glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     }
     glDisable(GL_STENCIL_TEST);
