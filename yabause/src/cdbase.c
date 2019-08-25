@@ -503,6 +503,214 @@ static FILE* OpenFile(char* buffer, const char* cue) {
 static int LoadCHD(const char *chd_filename, FILE *iso_file);
 static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer);
 
+static int LoadBinCueSingleFile(const char *cuefilename, FILE *iso_file)
+{
+  long size;
+  char *temp_buffer, *temp_buffer2;
+  unsigned int track_num;
+  unsigned int indexnum, min, sec, frame;
+  unsigned int pregap = 0;
+  char *p, *p2;
+  track_info_struct trk[100];
+  int file_size;
+  int i;
+  FILE * bin_file;
+  int matched = 0;
+
+  memset(trk, 0, sizeof(trk));
+  disc.session_num = 1;
+  disc.session = malloc(sizeof(session_info_struct) * disc.session_num);
+  if (disc.session == NULL)
+  {
+    YabSetError(YAB_ERR_MEMORYALLOC, NULL);
+    return -1;
+  }
+
+  fseek(iso_file, 0, SEEK_END);
+  size = ftell(iso_file);
+
+  if (size <= 0)
+  {
+    YabSetError(YAB_ERR_FILEREAD, cuefilename);
+    return -1;
+  }
+
+  fseek(iso_file, 0, SEEK_SET);
+
+  // Allocate buffer with enough space for reading cue
+  if ((temp_buffer = (char *)calloc(size, 1)) == NULL)
+    return -1;
+
+  // Skip image filename
+  if (fscanf(iso_file, "FILE \"%*[^\"]\" %*s\r\n") == EOF)
+  {
+    free(temp_buffer);
+    return -1;
+  }
+
+  // Time to generate TOC
+  for (;;)
+  {
+    // Retrieve a line in cue
+    if (fscanf(iso_file, "%s", temp_buffer) == EOF)
+      break;
+
+    // Figure out what it is
+    if (strncmp(temp_buffer, "TRACK", 5) == 0)
+    {
+      // Handle accordingly
+      if (fscanf(iso_file, "%d %[^\r\n]\r\n", &track_num, temp_buffer) == EOF)
+        break;
+
+      if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
+        strncmp(temp_buffer, "MODE2", 5) == 0)
+      {
+        // Figure out the track sector size
+        trk[track_num - 1].sector_size = atoi(temp_buffer + 6);
+        trk[track_num - 1].ctl_addr = 0x41;
+      }
+      else if (strncmp(temp_buffer, "AUDIO", 5) == 0)
+      {
+        // Update toc entry
+        trk[track_num - 1].sector_size = 2352;
+        trk[track_num - 1].ctl_addr = 0x01;
+      }
+    }
+    else if (strncmp(temp_buffer, "INDEX", 5) == 0)
+    {
+      // Handle accordingly
+
+      if (fscanf(iso_file, "%d %d:%d:%d\r\n", &indexnum, &min, &sec, &frame) == EOF)
+        break;
+
+      if (indexnum == 1)
+      {
+        // Update toc entry
+        trk[track_num - 1].fad_start = (MSF_TO_FAD(min, sec, frame) + pregap + 150);
+        trk[track_num - 1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num - 1].sector_size;
+      }
+    }
+    else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
+    {
+      if (fscanf(iso_file, "%d:%d:%d\r\n", &min, &sec, &frame) == EOF)
+        break;
+
+      pregap += MSF_TO_FAD(min, sec, frame);
+    }
+    else if (strncmp(temp_buffer, "POSTGAP", 7) == 0)
+    {
+      if (fscanf(iso_file, "%d:%d:%d\r\n", &min, &sec, &frame) == EOF)
+        break;
+    }
+    else if (strncmp(temp_buffer, "FILE", 4) == 0)
+    {
+      YabSetError(YAB_ERR_OTHER, "Unsupported cue format");
+      free(temp_buffer);
+      return -1;
+    }
+  }
+
+  trk[track_num].file_offset = 0;
+  trk[track_num].fad_start = 0xFFFFFFFF;
+
+  // Go back, retrieve image filename
+  fseek(iso_file, 0, SEEK_SET);
+  matched = fscanf(iso_file, "FILE \"%[^\"]\" %*s\r\n", temp_buffer);
+
+  // Now go and open up the image file, figure out its size, etc.
+  if ((bin_file = fopen(temp_buffer, "rb")) == NULL)
+  {
+    // Ok, exact path didn't work. Let's trim the path and try opening the
+    // file from the same directory as the cue.
+
+    // find the start of filename
+    p = temp_buffer;
+
+    for (;;)
+    {
+      if (strcspn(p, "/\\") == strlen(p))
+        break;
+
+      p += strcspn(p, "/\\") + 1;
+    }
+
+    // append directory of cue file with bin filename
+    if ((temp_buffer2 = (char *)calloc(strlen(cuefilename) + strlen(p) + 1, 1)) == NULL)
+    {
+      free(temp_buffer);
+      return -1;
+    }
+
+    // find end of path
+    p2 = (char *)cuefilename;
+
+    for (;;)
+    {
+      if (strcspn(p2, "/\\") == strlen(p2))
+        break;
+      p2 += strcspn(p2, "/\\") + 1;
+    }
+
+    // Make sure there was at least some kind of path, otherwise our
+    // second check is pretty useless
+    if (cuefilename == p2 && temp_buffer == p)
+    {
+      free(temp_buffer);
+      free(temp_buffer2);
+      return -1;
+    }
+
+    strncpy(temp_buffer2, cuefilename, p2 - cuefilename);
+    strcat(temp_buffer2, p);
+
+    // Let's give it another try
+    bin_file = fopen(temp_buffer2, "rb");
+    free(temp_buffer2);
+
+    if (bin_file == NULL)
+    {
+      YabSetError(YAB_ERR_FILENOTFOUND, temp_buffer);
+      free(temp_buffer);
+      return -1;
+    }
+  }
+
+  fseek(bin_file, 0, SEEK_END);
+  file_size = ftell(bin_file);
+  fseek(bin_file, 0, SEEK_SET);
+
+  for (i = 0; i < track_num; i++)
+  {
+    trk[i].fad_end = trk[i + 1].fad_start - 1;
+    trk[i].file_id = 0;
+    trk[i].fp = bin_file;
+    trk[i].file_size = file_size;
+  }
+
+  trk[track_num - 1].fad_end = trk[track_num - 1].fad_start + (file_size - trk[track_num - 1].file_offset) / trk[track_num - 1].sector_size;
+
+  disc.session[0].fad_start = 150;
+  disc.session[0].fad_end = trk[track_num - 1].fad_end;
+  disc.session[0].track_num = track_num;
+  disc.session[0].track = malloc(sizeof(track_info_struct) * disc.session[0].track_num);
+  if (disc.session[0].track == NULL)
+  {
+    YabSetError(YAB_ERR_MEMORYALLOC, NULL);
+    free(disc.session);
+    disc.session = NULL;
+    return -1;
+  }
+
+  memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
+
+  // buffer is no longer needed
+  free(temp_buffer);
+
+  fclose(iso_file);
+  return 0;
+}
+
+
 static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
    long size;
@@ -641,6 +849,10 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    trk[track_num].fad_start = 0xFFFFFFFF;
 
    trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
+
+   for (int i = 0; i < track_num - 1; i++) {
+     trk[i].fad_end = trk[i + 1].fad_start - 1;
+   }
 
    //for (int i =0; i<track_num; i++) printf("Track %d [%d - %d]\n", i+1, trk[i].fad_start, trk[i].fad_end);
 
@@ -1264,9 +1476,15 @@ static int ISOCDInit(const char * iso) {
    ext = strrchr(iso, '.');
 
    // Figure out what kind of image format we're dealing with
-   if (stricmp(ext, ".CUE") == 0)
+   if (stricmp(ext, ".CUE") == 0 && strncmp(header, "FILE \"", 6) == 0)
    {
-      // It's a BIN/CUE
+     // It's a Single BIN/CUE
+     imgtype = IMG_BINCUE;
+     ret = LoadBinCueSingleFile(iso, iso_file);
+   }
+   else if (stricmp(ext, ".CUE") == 0 && strncmp(header, "CATALO", 6) == 0)
+   {
+      // It's a Multifile BIN/CUE
       imgtype = IMG_BINCUE;
       ret = LoadBinCue(iso, iso_file);
    }
@@ -1389,9 +1607,6 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    {
       for (j = 0; j < disc.session[i].track_num; j++)
       {
-        if (j == 1) {
-          int a = 0;
-        }
          if (FAD >= disc.session[i].track[j].fad_start &&
              FAD <= disc.session[i].track[j].fad_end)
          {
