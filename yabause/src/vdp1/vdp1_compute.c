@@ -201,69 +201,72 @@ static int generateComputeBuffer(int w, int h) {
 }
 
 int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
-	int minx, miny, maxx, maxy;
+	int minx = 1024;
+	int miny = 1024;
+	int maxx = 0;
+	int maxy = 0;
 
   int *C = &cmd->CMDXA;
 	for (int i = 0; i<4; i++) C[i*2] = (C[i*2] * _Ygl->vdp1wratio);
 	for (int i = 0; i<4; i++) C[i*2+1] = (C[i*2+1] * _Ygl->vdp1hratio);
 	if (clipcmd == 0) {
 
-	memcpy(cmd->P,&cmd->CMDXA,8*sizeof(int));
+		memcpy(cmd->P,&cmd->CMDXA,8*sizeof(int));
 
-	for (int i = 0; i<8; i++) cmd->P[i] = cmd->P[i] * 2 - 1;
+		for (int i = 0; i<8; i++) cmd->P[i] = cmd->P[i] * 2 - 1;
 
-	int right = 0;
-	int rightindex = -1;
-	int top = 0;
-	int topindex = -1;
+		int right = 0;
+		int rightindex = -1;
+		int top = 0;
+		int topindex = -1;
 
-	for (int i = 0; i<4; i++) {
-		if ((cmd->P[i*2]+cmd->P[((i+1)%4)*2]) > right) {
-			right = (cmd->P[i*2]+cmd->P[((i+1)%4)*2]);
-			rightindex = i;
+		for (int i = 0; i<4; i++) {
+			if ((cmd->P[i*2]+cmd->P[((i+1)%4)*2]) > right) {
+				right = (cmd->P[i*2]+cmd->P[((i+1)%4)*2]);
+				rightindex = i;
+			}
 		}
-	}
-	cmd->P[rightindex*2] += 2;
-	cmd->P[((rightindex+1)%4)*2] += 2;
+		cmd->P[rightindex*2] += 2;
+		cmd->P[((rightindex+1)%4)*2] += 2;
 
-	for (int i = 0; i<4; i++) {
-		if ((cmd->P[i*2+1]+cmd->P[((i+1)%4)*2+1]) > top) {
-			top = (cmd->P[i*2+1]+cmd->P[((i+1)%4)*2+1]);
-			topindex = i;
+		for (int i = 0; i<4; i++) {
+			if ((cmd->P[i*2+1]+cmd->P[((i+1)%4)*2+1]) > top) {
+				top = (cmd->P[i*2+1]+cmd->P[((i+1)%4)*2+1]);
+				topindex = i;
+			}
 		}
+		cmd->P[topindex*2+1] += 2;
+		cmd->P[((topindex+1)%4)*2+1] += 2;
+
+	  float Ax = cmd->P[0]/2.0;
+		float Ay = cmd->P[1]/2.0;
+		float Bx = cmd->P[2]/2.0;
+		float By = cmd->P[3]/2.0;
+		float Cx = cmd->P[4]/2.0;
+		float Cy = cmd->P[5]/2.0;
+		float Dx = cmd->P[6]/2.0;
+		float Dy = cmd->P[7]/2.0;
+
+	  minx = (Ax < Bx)?Ax:Bx;
+	  miny = (Ay < By)?Ay:By;
+	  maxx = (Ax > Bx)?Ax:Bx;
+	  maxy = (Ay > By)?Ay:By;
+
+	  minx = (minx < Cx)?minx:Cx;
+	  minx = (minx < Dx)?minx:Dx;
+	  miny = (miny < Cy)?miny:Cy;
+	  miny = (miny < Dy)?miny:Dy;
+	  maxx = (maxx > Cx)?maxx:Cx;
+	  maxx = (maxx > Dx)?maxx:Dx;
+	  maxy = (maxy > Cy)?maxy:Cy;
+	  maxy = (maxy > Dy)?maxy:Dy;
+
+	//Add a bounding box
+	  cmd->B[0] = minx*tex_ratiow;
+	  cmd->B[1] = maxx*tex_ratiow;
+	  cmd->B[2] = miny*tex_ratioh;
+	  cmd->B[3] = maxy*tex_ratioh;
 	}
-	cmd->P[topindex*2+1] += 2;
-	cmd->P[((topindex+1)%4)*2+1] += 2;
-
-  float Ax = cmd->P[0]/2.0;
-	float Ay = cmd->P[1]/2.0;
-	float Bx = cmd->P[2]/2.0;
-	float By = cmd->P[3]/2.0;
-	float Cx = cmd->P[4]/2.0;
-	float Cy = cmd->P[5]/2.0;
-	float Dx = cmd->P[6]/2.0;
-	float Dy = cmd->P[7]/2.0;
-
-  minx = (Ax < Bx)?Ax:Bx;
-  miny = (Ay < By)?Ay:By;
-  maxx = (Ax > Bx)?Ax:Bx;
-  maxy = (Ay > By)?Ay:By;
-
-  minx = (minx < Cx)?minx:Cx;
-  minx = (minx < Dx)?minx:Dx;
-  miny = (miny < Cy)?miny:Cy;
-  miny = (miny < Dy)?miny:Dy;
-  maxx = (maxx > Cx)?maxx:Cx;
-  maxx = (maxx > Dx)?maxx:Dx;
-  maxy = (maxy > Cy)?maxy:Cy;
-  maxy = (maxy > Dy)?maxy:Dy;
-
-//Add a bounding box
-  cmd->B[0] = minx*tex_ratiow;
-  cmd->B[1] = maxx*tex_ratiow;
-  cmd->B[2] = miny*tex_ratioh;
-  cmd->B[3] = maxy*tex_ratioh;
-}
   int intersectX = -1;
   int intersectY = -1;
   for (int i = 0; i<NB_COARSE_RAST_X; i++) {
