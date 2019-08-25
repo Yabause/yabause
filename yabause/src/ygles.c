@@ -71,7 +71,7 @@ int YglGenFrameBuffer();
 extern int waitVdp1Textures( int sync);
 #endif
 
-u32* getVdp1DrawingFBMemRead(int id);
+static u32* getVdp1DrawingFBMemRead(int id);
 
 #define ATLAS_BIAS (0.025f)
 
@@ -762,7 +762,7 @@ static u32* getVdp1DrawingFBMemWrite(int id) {
   return fbptr;
 }
 
-u32* getVdp1DrawingFBMemRead(int id) {
+static u32* getVdp1DrawingFBMemRead(int id) {
   //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
   u32* fbptr = NULL;
   GLuint error;

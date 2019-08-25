@@ -22,6 +22,23 @@
 
 //#define SHOW_QUAD
 
+static const char vdp1_blit_f[] =
+SHADER_VERSION_COMPUTE
+"#ifdef GL_ES\n"
+"precision highp float;\n"
+"#endif\n"
+"layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
+"layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
+"layout(binding = 1) uniform sampler2D s_texture;  \n"
+"layout(location = 2) uniform vec2 upscale;\n"
+"void main()\n"
+"{\n"
+"  ivec2 size = imageSize(outSurface);\n"
+"  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
+"  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
+"  imageStore(outSurface,texel,texelFetch( s_texture, ivec2(vec2(texel.x,size.y - 1.0 - texel.y)*upscale),0 ).abgr);\n"
+"}\n";
+
 static const char vdp1_clear_f[] =
 SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"

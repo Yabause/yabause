@@ -54,6 +54,13 @@ static const GLchar * a_prg_vdp1[NB_PRG][4] = {
 		vdp1_continue_f,
 		vdp1_end_f
 	},
+	//BLIT
+	{
+		vdp1_blit_f,
+		NULL,
+		NULL,
+		NULL
+	},
 	//CLEAR
 	{
 		vdp1_clear_f,
@@ -296,6 +303,24 @@ void vdp1_clear(int id) {
 	glBindImageTexture(1, compute_tex[id*2+1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 }
+
+void vdp1_blit(int tex, int id) {
+	int progId = BLIT;
+	//printf("USe Prog %d\n", progId);
+	if (prg_vdp1[progId] == 0)
+    prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
+  glUseProgram(prg_vdp1[progId]);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, tex);
+
+	glBindImageTexture(0, compute_tex[id*2], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glUniform1i(1, 0);
+	glUniform2f(2, (float)_Ygl->rwidth/(float)(tex_width*tex_ratiow), (float)_Ygl->rheight/(float)(tex_height*tex_ratioh));
+
+	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
+}
+
 
 void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
 {
