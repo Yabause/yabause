@@ -592,28 +592,25 @@ void YglTmPush(YglTextureManager * tm){
 void YglTmPull(YglTextureManager * tm, u32 flg){
   if (tm->texture == NULL) {
 
-    int prev = tm->current;
-
-    if (tm->current == 0) {
-      tm->current = 1;
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current]);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[tm->current]);
+    tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    if (tm->texture_in[tm->current] == NULL) {
+      abort();
     }
-    else {
-      tm->current = 0;
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+
+    if (flg == 0) {
+      if (tm->current == 0) {
+        tm->current = 1;
+      }
+      else {
+        tm->current = 0;
+      }
     }
 
     tm->texture = tm->texture_in[tm->current];
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[prev]);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[prev]);
-    tm->texture_in[prev] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
-    if (tm->texture_in[prev] == NULL){
-      abort();
-    }
-	  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-    glFlush();
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current]);
 
@@ -4476,7 +4473,7 @@ void YglOnScreenDebugMessage(char *string, ...) {
 
 void VIDOGLSync(){
   //YglTmPull(YglTM_vdp1);
-  YglTmPull(YglTM, GL_MAP_INVALIDATE_BUFFER_BIT);
+  YglTmPull(YglTM, 0);
   _Ygl->texture_manager = NULL;
   RBGGenerator_onFinish();
   //glFinish();

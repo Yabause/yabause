@@ -3798,6 +3798,9 @@ int VIDOGLInit(void)
   vdp1wratio = 1;
   vdp1hratio = 1;
 
+  if (_Ygl->rbg_use_compute_shader) {
+    RBGGenerator_init(320, 224);
+  }
 
   return 0;
 }
@@ -3902,7 +3905,7 @@ void VIDOGLVdp1DrawStart(void)
     YglTMReset(YglTM);
     YglCacheReset(YglTM);
   }
-  YglTmPull(YglTM, 0);
+  YglTmPull(YglTM, 1);
 
   maxpri = 0x00;
   minpri = 0x07;
@@ -5432,15 +5435,17 @@ void VIDOGLVdp2DrawStart(void)
     YglTM = YglTMInit(new_width, new_height);
   }
   YglReset();
-  if (_Ygl->sync != 0) {
-    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
-    glDeleteSync(_Ygl->sync);
-    _Ygl->sync = 0;
+//  if (_Ygl->sync != 0) {
+    //glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
+//    glDeleteSync(_Ygl->sync);
+//    _Ygl->sync = 0;
+//  }
   //if (_Ygl->frame_sync != 0) {
   //  glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
   //  glDeleteSync(_Ygl->frame_sync);
   //  _Ygl->frame_sync = 0;
   //}
+
   YglTmPull(YglTM, 0);
   YglTMReset(YglTM);
   YglCacheReset(YglTM);
