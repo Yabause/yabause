@@ -42,7 +42,6 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/netlink.c \
 	$(SOURCE_DIR)/peripheral.c \
 	$(SOURCE_DIR)/profile.c \
-	$(SOURCE_DIR)/scsp.c \
 	$(SOURCE_DIR)/scspdsp.c \
 	$(SOURCE_DIR)/scu.c \
 	$(SOURCE_DIR)/sh2cache.c \
@@ -90,6 +89,13 @@ ifeq ($(HAVE_MUSASHI), 1)
 else
 	SOURCES_C += $(SOURCE_DIR)/c68k/c68k.c \
 	$(SOURCE_DIR)/m68kc68k.c
+endif
+
+ifeq ($(USE_SCSP2), 1)
+	FLAGS += -DUSE_SCSP2=1
+	SOURCES_C += $(SOURCE_DIR)/scsp2.c
+else
+	SOURCES_C += $(SOURCE_DIR)/scsp.c
 endif
 
 ifeq ($(ARCH_IS_WINDOWS), 1)
@@ -159,7 +165,16 @@ SOURCES_C += $(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 endif
 
 ifeq ($(HAVE_THREADS),1)
-FLAGS += -DHAVE_THREADS=1
+	FLAGS += -DHAVE_THREADS=1
+endif
+
+ifeq ($(USE_PLAY_JIT),1)
+	FLAGS += -DHAVE_PLAY_JIT=1
+	SOURCES_CXX += $(SOURCE_DIR)/scsp_dsp_jit.cpp \
+		$(SOURCE_DIR)/scu_dsp_jit.cpp \
+		$(SOURCE_DIR)/sh2_jit.cpp \
+		$(wildcard $(SOURCE_DIR)/play/src/*.cpp)
+	INCLUDE_DIRS += $(SOURCE_DIR)/play/include
 endif
 
 M68KMAKE_EXE = m68kmake$(EXE_EXT)

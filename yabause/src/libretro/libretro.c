@@ -32,6 +32,9 @@
 #include "vidogl.h"
 #include "vidsoft.h"
 #include "libretro_core_options.h"
+#ifdef HAVE_PLAY_JIT
+#include "sh2_jit.h"
+#endif
 
 yabauseinit_struct yinit;
 
@@ -416,6 +419,9 @@ M68K_struct *M68KCoreList[] = {
 SH2Interface_struct *SH2CoreList[] = {
     &SH2Interpreter,
     &SH2DebugInterpreter,
+#ifdef HAVE_PLAY_JIT
+    &SH2Jit,
+#endif
     NULL
 };
 
@@ -955,37 +961,39 @@ bool retro_load_game(const struct retro_game_info *info)
 
    environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
 
-   yinit.cdcoretype      = CDCORE_ISO;
-   yinit.cdpath          = full_path;
+   yinit.cdcoretype           = CDCORE_ISO;
+   yinit.cdpath               = full_path;
    /* Emulate BIOS */
-   yinit.biospath        = (bios_path[0] != '\0' && does_file_exist(bios_path) && !hle_bios_force) ? bios_path : NULL;
-   yinit.percoretype     = PERCORE_LIBRETRO;
-#ifdef SH2_DYNAREC
-   yinit.sh2coretype     = 2;
+   yinit.biospath             = (bios_path[0] != '\0' && does_file_exist(bios_path) && !hle_bios_force) ? bios_path : NULL;
+   yinit.percoretype          = PERCORE_LIBRETRO;
+#ifdef HAVE_PLAY_JIT
+   yinit.sh2coretype          = SH2CORE_JIT;
+   yinit.use_scu_dsp_jit      = 1;
+   yinit.use_scsp_dsp_dynarec = 1;
 #else
-   yinit.sh2coretype     = SH2CORE_INTERPRETER;
+   yinit.sh2coretype          = SH2CORE_INTERPRETER;
 #endif
-   yinit.vidcoretype     = VIDCORE_SOFT;
-   yinit.sndcoretype     = SNDCORE_LIBRETRO;
+   yinit.vidcoretype          = VIDCORE_SOFT;
+   yinit.sndcoretype          = SNDCORE_LIBRETRO;
 #ifdef HAVE_MUSASHI
-   yinit.m68kcoretype    = M68KCORE_MUSASHI;
+   yinit.m68kcoretype         = M68KCORE_MUSASHI;
 #else
-   yinit.m68kcoretype    = M68KCORE_C68K;
+   yinit.m68kcoretype         = M68KCORE_C68K;
 #endif
-   yinit.carttype        = addon_cart_type;
-   yinit.regionid        = REGION_AUTODETECT;
-   yinit.buppath         = bup_path;
-   yinit.use_new_scsp    = 0;
-   yinit.mpegpath        = NULL;
-   yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
-   yinit.frameskip       = frameskip_enable;
-   yinit.clocksync       = 0;
-   yinit.basetime        = 0;
+   yinit.carttype             = addon_cart_type;
+   yinit.regionid             = REGION_AUTODETECT;
+   yinit.buppath              = bup_path;
+   yinit.use_new_scsp         = 0;
+   yinit.mpegpath             = NULL;
+   yinit.videoformattype      = VIDEOFORMATTYPE_NTSC;
+   yinit.frameskip            = frameskip_enable;
+   yinit.clocksync            = 0;
+   yinit.basetime             = 0;
 #ifdef HAVE_THREADS
-   yinit.usethreads      = 1;
-   yinit.numthreads      = numthreads;
+   yinit.usethreads           = 1;
+   yinit.numthreads           = numthreads;
 #else
-   yinit.usethreads      = 0;
+   yinit.usethreads           = 0;
 #endif
 
    ret = YabauseInit(&yinit);
