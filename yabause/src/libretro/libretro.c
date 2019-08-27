@@ -14,6 +14,7 @@
 #include <libretro.h>
 
 #include <file/file_path.h>
+#include <retro_miscellaneous.h>
 
 #include "vdp1.h"
 #include "vdp2.h"
@@ -40,13 +41,13 @@ yabauseinit_struct yinit;
 
 static char slash = path_default_slash_c();
 
-static char g_save_dir[PATH_MAX];
-static char g_system_dir[PATH_MAX];
-static char full_path[PATH_MAX];
-static char bios_path[PATH_MAX];
-static char bup_path[PATH_MAX];
+static char g_save_dir[PATH_MAX_LENGTH];
+static char g_system_dir[PATH_MAX_LENGTH];
+static char full_path[PATH_MAX_LENGTH];
+static char bios_path[PATH_MAX_LENGTH];
+static char bup_path[PATH_MAX_LENGTH];
 
-static char game_basename[PATH_MAX];
+static char game_basename[PATH_MAX_LENGTH];
 
 int game_width;
 int game_height;

@@ -6,6 +6,9 @@ FLAGS        :=
 DYNAREC      := 0
 HAVE_THREADS := 1
 HAVE_MUSASHI := 1
+# The following is broken upstream ?
+USE_PLAY_JIT := 0
+USE_SCSP2    := 0
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
   #DYNAREC := 3
@@ -15,7 +18,7 @@ endif
 
 include $(CORE_DIR)/Makefile.common
 
-COREFLAGS := -D__LIBRETRO__ -DVERSION=\"0.9.15\" -DNO_CLI -DHAVE_GETTIMEOFDAY -DHAVE_STRCASECMP -DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_SYS_PARAM_H -DHAVE_MUSASHI=1 $(FLAGS)
+COREFLAGS := -D__LIBRETRO__ -DVERSION=\"0.9.15\" -DNO_CLI -DHAVE_GETTIMEOFDAY -DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_SYS_PARAM_H $(FLAGS)
 
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")

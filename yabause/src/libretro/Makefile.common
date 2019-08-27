@@ -208,3 +208,9 @@ C68KEXEC_OBJECT := $(C68KEXEC_SOURCE:.c=.c.o)
 
 OBJECTS_C += $(SOURCES_C:.c=.c.o)
 OBJECTS_CXX += $(SOURCES_CXX:.cpp=.cpp.o)
+
+ifeq ($(HAVE_MUSASHI), 1)
+	FLAGS += -DHAVE_MUSASHI=1
+else
+	OBJECTS_C += $(C68KEXEC_OBJECT)
+endif
