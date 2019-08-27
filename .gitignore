@@ -1,0 +1,13 @@
+*.o
+*.so
+*.dll
+*.lib
+*.pdb
+*.exp
+*.manifest
+Makefile
+.cproject
+.project
+.settings/
+**/*~
+*.a

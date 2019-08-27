@@ -33,6 +33,11 @@
 #define CDCORE_DUMMY    0
 #define CDCORE_ISO      1
 #define CDCORE_ARCH     2
+#define CDCORE_CHD      3
+
+#define CDCORE_NORMAL 0
+#define CDCORE_NODISC 2
+#define CDCORE_OPEN   3
 
 typedef struct
 {
@@ -59,7 +64,15 @@ typedef struct
         s32 (*ReadTOC10)(CDInterfaceToc10 *TOC);
         int (*ReadSectorFAD)(u32 FAD, void *buffer);
         void (*ReadAheadFAD)(u32 FAD);
+		void(*SetStatus)(int status);
 } CDInterface;
+
+typedef struct
+{
+  char* filename;
+  u8* zipBuffer;
+  u32 size;
+} ZipEntry;
 
 extern CDInterface DummyCD;
 
