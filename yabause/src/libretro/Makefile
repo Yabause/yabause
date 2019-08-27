@@ -68,6 +68,27 @@ ifneq (,$(findstring unix,$(platform)))
 	#DYNAREC = 2
 	FLAGS += -pthread
 	LDFLAGS += -pthread
+	ARCH_IS_LINUX = 1
+	# ARM
+	ifneq (,$(findstring armv,$(platform)))
+		ifneq (,$(findstring cortexa8,$(platform)))
+			FLAGS += -marm -mcpu=cortex-a8
+		else ifneq (,$(findstring cortexa9,$(platform)))
+			FLAGS += -marm -mcpu=cortex-a9
+		endif
+		FLAGS += -marm
+		ifneq (,$(findstring neon,$(platform)))
+			FLAGS += -mfpu=neon
+			HAVE_NEON = 1
+		endif
+		ifneq (,$(findstring softfloat,$(platform)))
+			FLAGS += -mfloat-abi=softfp
+		else ifneq (,$(findstring hardfloat,$(platform)))
+			FLAGS += -mfloat-abi=hard
+		endif
+		HAVE_SSE = 0
+		FLAGS += -DARM
+	endif
 
 else ifneq (,$(findstring linux-portable,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
@@ -76,6 +97,7 @@ else ifneq (,$(findstring linux-portable,$(platform)))
 	#DYNAREC = 2
 	FLAGS += -pthread
 	LDFLAGS += -pthread
+	ARCH_IS_LINUX = 1
 
 # OS X
 else ifneq (,$(findstring osx,$(platform)))
@@ -94,6 +116,7 @@ endif
 	#DYNAREC = 2
 	FLAGS += -pthread
 	LDFLAGS += -pthread
+	ARCH_IS_MACOSX = 1
 
 LIBRARY_NAME = $(TARGET_NAME)_libretro_ios
 
@@ -212,31 +235,6 @@ else ifeq ($(platform), libnx)
 	CXXFLAGS := $(ASFLAGS) $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 	CFLAGS += -std=gnu11
 	STATIC_LINKING = 1
-	HAVE_SSE = 0
-
-# ARM
-else ifneq (,$(findstring armv,$(platform)))
-	TARGET := $(TARGET_NAME)_libretro.so
-	fpic := -fPIC
-	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
-	FLAGS += -pthread
-	LDFLAGS += -pthread
-	ifneq (,$(findstring cortexa8,$(platform)))
-		FLAGS += -marm -mcpu=cortex-a8
-	else ifneq (,$(findstring cortexa9,$(platform)))
-		FLAGS += -marm -mcpu=cortex-a9
-	endif
-	FLAGS += -marm
-	ifneq (,$(findstring neon,$(platform)))
-		FLAGS += -mfpu=neon
-		HAVE_NEON = 1
-	endif
-	ifneq (,$(findstring softfloat,$(platform)))
-		FLAGS += -mfloat-abi=softfp
-	else ifneq (,$(findstring hardfloat,$(platform)))
-		FLAGS += -mfloat-abi=hard
-	endif
-	FLAGS += -DARM
 	HAVE_SSE = 0
 
 # Emscripten
@@ -387,7 +385,7 @@ INCFLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 WARNINGS :=
 FLAGS += $(INCFLAGS) -D__LIBRETRO__ $(ENDIANNESS_DEFINES) -DSIZEOF_DOUBLE=8 $(WARNINGS) -DUSE_16BPP=1 -DUSE_RGB_565=1 \
 	-DNO_CLI -DHAVE_SYS_TIME_H -DHAVE_GETTIMEOFDAY -DHAVE_STDINT_H=1 -DVERSION=\"0.9.15\" \
-	-DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL -DHAVE_C99_VARIADIC_MACROS=1
+	-DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL
 
 CXXFLAGS += $(FLAGS)
 CFLAGS += $(FLAGS)
