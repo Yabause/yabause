@@ -39,8 +39,8 @@
 //#define YGLLOG
 
 extern u8 * Vdp1FrameBuffer[];
-static int rebuild_frame_buffer = 0;
-static int rebuild_windows = 0;
+int rebuild_frame_buffer = 0;
+int rebuild_windows = 0;
 int opengl_mode = 1;
 
 extern int WaitVdp2Async(int sync);
@@ -50,12 +50,14 @@ static int YglCalcTextureQ( float   *pnts,float *q);
 
 static void waitVdp1End(int id);
 static void releaseVDP1FB(int i);
+static void YglUpdateVDP1FB(void);
 
-static int YglGenerateBackBuffer();
-static int YglGenerateWindowBuffer();
-static int YglGenerateWindowCCBuffer();
-static int YglGenerateScreenBuffer();
+int YglGenerateBackBuffer();
+int YglGenerateWindowBuffer();
+int YglGenerateWindowCCBuffer();
+int YglGenerateScreenBuffer();
 
+static int YglGenFrameBuffer();
 
 static void releaseVDP1DrawingFBMemRead(int id);
 
@@ -908,7 +910,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-int YglGenFrameBuffer() {
+static int YglGenFrameBuffer() {
   int status;
   GLuint error;
   float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -1246,7 +1248,7 @@ int YglGenerateScreenBuffer(){
 }
 
 //////////////////////////////////////////////////////////////////////////////
-static int YglGenerateBackBuffer(){
+int YglGenerateBackBuffer(){
 
   int status;
   GLuint error;
@@ -3354,7 +3356,7 @@ static void releaseVDP1FB(int i) {
   }
 }
 
-void YglUpdateVDP1FB(void) {
+static void YglUpdateVDP1FB(void) {
   waitVdp1End(_Ygl->readframe);
   YglSetVDP1FB(_Ygl->readframe);
   releaseVDP1DrawingFBMemRead(_Ygl->readframe);
@@ -3547,6 +3549,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
+
+   YglUpdateVDP1FB();
 
    glDepthMask(GL_FALSE);
    glDisable(GL_DEPTH_TEST);

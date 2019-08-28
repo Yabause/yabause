@@ -8,7 +8,8 @@ enum
 {
   VDP1_MESH_STANDARD = 0,
   VDP1_MESH_IMPROVED,
-  BLIT,
+  WRITE,
+  READ,
   CLEAR,
   NB_PRG
 };
@@ -16,8 +17,9 @@ enum
 extern void vdp1_compute_init(int width, int height, float ratiow, float ratioh);
 extern int* vdp1_compute(Vdp2 *varVdp2Regs, int id);
 extern int vdp1_add(vdp1cmd_struct* cmd, int clipcmd);
-extern void vdp1_clear(int id);
-extern void vdp1_blit(int tex, int id);
+extern void vdp1_clear(int id, float *col);
+extern u8* vdp1_get_directFB(Vdp2 *varVdp2Regs, int id);
+extern void vdp1_set_directFB(int id);
 extern void vdp1_setup(void);
 
 #endif //VDP1_COMPUTE_H

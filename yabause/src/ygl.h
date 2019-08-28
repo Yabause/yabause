@@ -372,7 +372,6 @@ typedef struct {
 void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param);
 int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id);
 int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm);
-void YglUpdateVDP1FB(void);
 
 // std140
 typedef struct  {

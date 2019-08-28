@@ -6831,11 +6831,7 @@ void waitVdp2DrawScreensEnd(int sync, int abort) {
     if ((vdp2busy == 1)) {
       int empty = WaitVdp2Async(sync);
       if (empty == 0) {
-        //Vdp2 has been evaluated we can render
         YglTmPush(YglTM_vdp2);
-        //YuiUseOGLOnThisThread();
-        YglUpdateVDP1FB();
-        //YuiRevokeOGLOnThisThread();
         if (VIDCore != NULL) VIDCore->composeFB(&Vdp2Lines[0]);
       }
     }
