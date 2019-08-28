@@ -59,7 +59,7 @@ SHADER_VERSION_COMPUTE
 "  ivec2 size = imageSize(s_texture);\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  int idx = int(texel.x * upscale.x) + int((size.y - 1.0 - texel.y)*512 * upscale.y);\n"
+"  int idx = int(texel.x * upscale.x) + int((size.y - texel.y)*512 * upscale.y);\n"
 "  vec4 pix = imageLoad(s_texture, ivec2(vec2(texel.x,texel.y)*upscale));\n"
 "  uint val = (uint(pix.r*255.0)<<24) | (uint(pix.g*255.0)<<16) | (uint(pix.b*255.0)<<8) | (uint(pix.a*255.0)<<0);\n"
 "  if ((int(pix.a * 255.0)&0x80) != 0)\n"
