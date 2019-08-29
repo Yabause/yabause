@@ -238,10 +238,11 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	for (int i = 0; i<4; i++) C[i*2] = (C[i*2] * _Ygl->vdp1wratio);
 	for (int i = 0; i<4; i++) C[i*2+1] = (C[i*2+1] * _Ygl->vdp1hratio);
 	if (clipcmd == 0) {
-
+    int border = 1;
+		if (cmd->type == NORMAL) border = 0;
 		memcpy(cmd->P,&cmd->CMDXA,8*sizeof(int));
 
-		for (int i = 0; i<8; i++) cmd->P[i] = cmd->P[i] * 2 - 1;
+		for (int i = 0; i<8; i++) cmd->P[i] = cmd->P[i] * 2 - border;
 
 		int right = 0;
 		int rightindex = -1;
@@ -254,8 +255,8 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 				rightindex = i;
 			}
 		}
-		cmd->P[rightindex*2] += 2;
-		cmd->P[((rightindex+1)%4)*2] += 2;
+		cmd->P[rightindex*2] += 2*border;
+		cmd->P[((rightindex+1)%4)*2] += 2*border;
 
 		for (int i = 0; i<4; i++) {
 			if ((cmd->P[i*2+1]+cmd->P[((i+1)%4)*2+1]) > top) {
@@ -263,8 +264,8 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 				topindex = i;
 			}
 		}
-		cmd->P[topindex*2+1] += 2;
-		cmd->P[((topindex+1)%4)*2+1] += 2;
+		cmd->P[topindex*2+1] += 2*border;
+		cmd->P[((topindex+1)%4)*2+1] += 2*border;
 
 	  float Ax = cmd->P[0]/2.0;
 		float Ay = cmd->P[1]/2.0;
