@@ -41,10 +41,10 @@ extern int rebuild_windows;
 extern int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id);
 
 static int YglGenFrameBuffer();
-static int YglGenerateBackBuffer();
-static int YglGenerateWindowBuffer();
-static int YglGenerateWindowCCBuffer();
-static int YglGenerateScreenBuffer();
+extern int YglGenerateBackBuffer();
+extern int YglGenerateWindowBuffer();
+extern int YglGenerateWindowCCBuffer();
+extern int YglGenerateScreenBuffer();
 
 static void releaseVDP1DrawingFBMem(int id);
 
