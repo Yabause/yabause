@@ -51,6 +51,10 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
 
+ifneq (,$(findstring armv,$(platform)))
+	override platform += unix
+endif
+
 CORE_DIR := .
 
 TARGET_NAME = yabause
