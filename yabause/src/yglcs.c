@@ -48,6 +48,16 @@ extern int YglGenerateScreenBuffer();
 
 static void releaseVDP1DrawingFBMem(int id);
 
+static u16 COLOR24TO16(u32 temp) {
+  if (((temp >> 31)&0x1) == 0) return 0x0000;
+  if (((temp >> 30)&0x1) == 0) {
+    return 0x8000 | ((u32)(temp >> 3)& 0x1F) | ((u32)(temp >> 6)& 0x3E0) | ((u32)(temp >> 9)& 0x7C00);
+  }
+  else {
+    return (temp & 0xFFFF);
+  }
+}
+
 //////////////////////////////////////////////////////////////////////////////
 void YglEraseWriteCSVDP1(void) {
   //REvoir le vdp1_clear
