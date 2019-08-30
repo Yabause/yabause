@@ -139,6 +139,83 @@ struct retro_core_option_definition option_defs_us[] = {
 
 /* RETRO_LANGUAGE_TURKISH */
 
+struct retro_core_option_definition option_defs_tr[] = {
+   {
+      "yabause_frameskip",
+      "Kare Atlama",
+      "Kare atlamayı etkinleştirir, performansa yardımcı olması gerekir.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_force_hle_bios",
+      "HLE BIOS'u zorla",
+      "Kendi sorumluluğunuzda kullanın, çözdüğünden daha fazla soruna neden oluyor. Yeniden başlatma gerektirir.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_addon_cartridge",
+      "Kartuş Eklentisi",
+      "Ek kartuşu seçin. Yeniden başlatma gerektirir.",
+      {
+         { "none", NULL },
+         { "1M_ram", NULL },
+         { "4M_ram", NULL },
+         { NULL, NULL},
+      },
+      "none"
+   },
+   {
+      "yabause_multitap_port1",
+      "Bağlantı Noktası 1'deki 6Player Adaptörü",
+      "1. bağlantı noktasında multitap'ı etkinleştir",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "yabause_multitap_port2",
+      "Bağlantı Noktası 2'deki 6Player Adaptörü",
+      "2. bağlantı noktasında multitap'ı etkinleştir",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+#ifdef HAVE_THREADS
+   {
+      "yabause_numthreads",
+      "İş Parçacığı Sayısı",
+      "CPU'nuza bağlı olarak, bu değeri değiştirmek performansa yardımcı olabilir. Yeniden başlatma gerektirir.",
+      {
+         { "1", NULL },
+         { "2", NULL },
+         { "4", NULL },
+         { "8", NULL },
+         { "16", NULL },
+         { "32", NULL },
+         { NULL, NULL},
+      },
+      "4"
+   },
+#endif
+   { NULL, NULL, NULL, {{0}}, NULL },
+};
+
 /*
  ********************************
  * Language Mapping
@@ -164,7 +241,7 @@ struct retro_core_option_definition *option_defs_intl[RETRO_LANGUAGE_LAST] = {
    NULL,           /* RETRO_LANGUAGE_VIETNAMESE */
    NULL,           /* RETRO_LANGUAGE_ARABIC */
    NULL,           /* RETRO_LANGUAGE_GREEK */
-   NULL,           /* RETRO_LANGUAGE_TURKISH */
+   option_defs_tr, /* RETRO_LANGUAGE_TURKISH */
 };
 
 /*
