@@ -316,7 +316,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 
 void vdp1_clear(int id, float *col) {
 	int progId = CLEAR;
-	//printf("USe Prog %d\n", progId);
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
@@ -329,7 +328,6 @@ void vdp1_clear(int id, float *col) {
 
 static void vdp1_write(int id) {
 	int progId = WRITE;
-	//printf("USe Prog %d\n", progId);
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
@@ -345,7 +343,6 @@ static u32* vdp1_read(int id) {
 	if (vdp1_fb_map[id] != NULL) return vdp1_fb_map[id];
 	else {
 		int progId = READ;
-		//printf("USe Prog %d\n", progId);
 		if (prg_vdp1[progId] == 0)
 	    prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
 	  glUseProgram(prg_vdp1[progId]);
@@ -401,12 +398,15 @@ u32* vdp1_get_directFB(Vdp2 *varVdp2Regs, int id) {
 }
 
 void vdp1_set_directFB(int id) {
-	int is_exported = (vdp1_fb_map[id] == NULL);
-	vdp1_fb_map[id] = NULL;
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1access_[id]);
-	glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-	if ((is_exported) && (_Ygl->vdp1IsNotEmpty[id] == 1)) {
-		vdp1_write(id);
+	int is_exported = (vdp1_fb_map[id] != NULL);
+	if (is_exported != 0) {
+		vdp1_fb_map[id] = NULL;
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1access_[id]);
+		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+		if (_Ygl->vdp1IsNotEmpty[id] == 1) {
+			vdp1_write(id);
+			_Ygl->vdp1IsNotEmpty[id] = 0;
+		}
 	}
 }
 
@@ -423,9 +423,7 @@ void vdp1_setup(void) {
 int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
   GLuint error;
 	int progId = getProgramId();
-	int needRender = 0;
-	vdp1_set_directFB(id);
-	//printf("USe Prog %d\n", progId);
+	int needRender = _Ygl->vdp1IsNotEmpty[id];
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
@@ -442,7 +440,7 @@ int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
 
   if (needRender == 0) return &compute_tex[id*2];
 
-	_Ygl->vdp1On[_Ygl->drawframe] = 1;
+	_Ygl->vdp1On[id] = 1;
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
   glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(int)*NB_COARSE_RAST, (void*)nbCmd);
@@ -463,8 +461,10 @@ int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
 	glUniform4i(8, Vdp1Regs->userclipX1, Vdp1Regs->userclipY1, Vdp1Regs->userclipX2, Vdp1Regs->userclipY2);
 
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
-	// glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
+
+		vdp1_set_directFB(id);
 	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BI
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
