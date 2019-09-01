@@ -389,8 +389,7 @@ static u32* getVdp1DrawingFBMem(Vdp2 *varVdp2Regs, int id) {
 
 void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   u8 priority = Vdp2Regs->PRISA &0x7;
-  Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-  int ispalette = !((val & 0x8000) && (varVdp2Regs->SPCTL & 0x20));
+  int ispalette = !((val & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
   u16 full = 0;
   u16 cc = 0;
   int shadow = 0;
@@ -417,7 +416,7 @@ void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
       y = (addr >> 9) & 0x1FF;
       x = addr & 0x1FF;
       break;
-    defalut:
+    default:
       y = 0;
       x = 0;
       break;
@@ -427,9 +426,9 @@ void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   case 0:
     T1WriteByte((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
     full = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe],addr&(~0x1));
-    ispalette = !((full & 0x8000) && (varVdp2Regs->SPCTL & 0x20));
+    ispalette = !((full & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
     if (!ispalette) {
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, 0, 0, 0, COLOR16TO24(full&0xFFFF)));
+      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(full&0xFFFF)));
     }
     else{
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &full, &shadow, &normalshadow, &priority, &cc);
@@ -443,21 +442,21 @@ void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
       T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(val&0xFFFF)));
     }
     else
-      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, 0, 0, COLOR16TO24(val&0xFFFF)));
+      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     break;
   case 2:
     T1WriteLong((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
     if (!ispalette) {
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, 0, 0, 0, COLOR16TO24(val&0xFFFF)));
+      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     }
     else{
       u16 temp = (val & 0xFFFF);
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &cc);
       T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(temp&0xFFFF)));
     }
-    ispalette = !(((val>>16) & 0x8000) && (varVdp2Regs->SPCTL & 0x20));
+    ispalette = !(((val>>16) & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
     if (!ispalette) {
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, 0, 0, COLOR16TO24((val>>16)&0xFFFF)));
+      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
     }
     else{
       u16 temp = (val>>16);
@@ -471,6 +470,108 @@ void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   if (val != 0) {
     _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 1;
   }
+}
+
+u16 getVdp1PixelColor(u32 col){
+  int istransparent = ((col>>24) & 0x80)==0;
+  int ispalette = ((col>>24) & 0x40)!=0;
+  int priority = (col>>24) & 0x7;
+  int cc = (col>>27) & 0x7;
+  if (istransparent) return 0x0;
+  if (!ispalette) {
+    return COLOR24TO16(col);
+  }
+  else{
+    int idx = (col & 0x7FFF) | ((col >> 1)&0x8000);
+    int type = 5;//Vdp2Lines[0].SPCTL & 0xF;
+    switch(type)
+    {
+       case 0x0:
+       {
+          // Type 0(2-bit priority, 3-bit color calculation, 11-bit color data)
+          u16 ret = (priority & 0x3)<<14 | (cc & 0x7)<<11 | (idx & 0x7FF);
+          return ret;
+       }
+       case 0x1:
+       {
+          // Type 1(3-bit priority, 2-bit color calculation, 11-bit color data)
+          return (priority & 0x7)<<13 | (cc & 0x3)<<11 | (idx & 0x7FF);
+       }
+       case 0x2:
+       {
+          // Type 2(1-bit shadow, 1-bit priority, 3-bit color calculation, 11-bit color data)
+          return (priority & 0x1)<<14 | (cc & 0x7)<<11 | (idx & 0x7FF);
+       }
+       case 0x3:
+       {
+          // Type 3(1-bit shadow, 2-bit priority, 2-bit color calculation, 11-bit color data)
+          return (priority & 0x3)<<13 | (cc & 0x3)<<11 | (idx & 0x7FF);
+       }
+       case 0x4:
+       {
+          // Type 4(1-bit shadow, 2-bit priority, 3-bit color calculation, 10-bit color data)
+          return (priority & 0x3)<<13 | (cc & 0x7)<<10 | (idx & 0x3FF);
+       }
+       case 0x5:
+       {
+          // Type 5(1-bit shadow, 3-bit priority, 1-bit color calculation, 11-bit color data)
+          return (priority & 0x7)<<12 | (cc & 0x1)<<11 | (idx & 0x7FF);
+       }
+       case 0x6:
+       {
+          // Type 6(1-bit shadow, 3-bit priority, 2-bit color calculation, 10-bit color data)
+          return (priority & 0x7)<<12 | (cc & 0x3)<<10 | (idx & 0x3FF);
+       }
+       case 0x7:
+       {
+          // Type 7(1-bit shadow, 3-bit priority, 3-bit color calculation, 9-bit color data)
+          return (priority & 0x7)<<12 | (cc & 0x7)<<9 | (idx & 0x1FF);
+       }
+       case 0x8:
+       {
+          // Type 8(1-bit priority, 7-bit color data)
+          return (priority & 0x1)<<7 | (idx & 0x7F);
+       }
+       case 0x9:
+       {
+          // Type 9(1-bit priority, 1-bit color calculation, 6-bit color data)
+          return (priority & 0x1)<<7 | (cc & 0x1)<<6 | (idx & 0x3F);
+       }
+       case 0xA:
+       {
+          // Type A(2-bit priority, 6-bit color data)
+          return (priority & 0x3)<<6 | (idx & 0x3F);
+       }
+       case 0xB:
+       {
+          // Type B(2-bit color calculation, 6-bit color data)
+          return (cc & 0x3)<<6 | (idx & 0x3F);
+       }
+       case 0xC:
+       {
+          // Type C(1-bit special priority, 8-bit color data - bit 7 is shared)
+          return (priority & 0x1)<<7 | (idx & 0xFF);
+       }
+       case 0xD:
+       {
+          // Type D(1-bit special priority, 1-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
+          return (priority & 0x3)<<7 | (cc & 0x1)<<6 | (idx & 0xFF);
+       }
+       case 0xE:
+       {
+          // Type E(2-bit special priority, 8-bit color data - bits 6 and 7 are shared)
+          return (priority & 0x3)<<6 | (idx & 0xFF);
+       }
+       case 0xF:
+       {
+          // Type F(2-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
+          return (cc & 0x3)<<6 | (idx & 0xFF);
+       }
+       default:
+          return 0;
+      }
+    }
+  return 0;
 }
 
 void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
@@ -495,7 +596,7 @@ void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
         y = (addr >> 9) & 0x1FF;
         x = addr & 0x1FF;
         break;
-      defalut:
+      default:
         y = 0;
         x = 0;
         break;
@@ -507,10 +608,10 @@ void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
         *(u8*)out = 0x0;
         break;
       case 1:
-        *(u16*)out = COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2));
+        *(u16*)out = getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2));
         break;
       case 2:
-        *(u32*)out = (COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2))<<16)|(COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4)));
+        *(u32*)out = (getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2))<<16)|(getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4)));
         break;
       default:
         break;
