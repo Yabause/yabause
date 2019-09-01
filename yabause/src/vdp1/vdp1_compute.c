@@ -310,6 +310,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*2000 + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(vdp1cmd_struct));
           nbCmd[i+j*NB_COARSE_RAST_X]++;
 					if (nbCmd[i+j*NB_COARSE_RAST_X] == 2000) {
+						YuiMsg("This game is processing a lot of graphic commands on the same frame. It might introduce graphical artifacts\n");
 						vdp1_compute(&Vdp2Lines[0], _Ygl->drawframe);
 					}
       }
