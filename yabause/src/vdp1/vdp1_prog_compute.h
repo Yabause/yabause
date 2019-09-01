@@ -141,6 +141,7 @@ SHADER_VERSION_COMPUTE
 "layout(location = 6) uniform vec2 upscale;\n"
 "layout(location = 7) uniform ivec2 sysClip;\n"
 "layout(location = 8) uniform ivec4 usrClip;\n"
+"layout(location = 9) uniform mat4 rot;\n"
 // from here http://geomalgorithms.com/a03-_inclusion.html
 // a Point is defined by its coordinates {int x, y;}
 //===================================================================
@@ -1213,8 +1214,9 @@ static const char vdp1_continue_f[] =
 #endif
 "  if ((finalColor == vec4(0.0)) && (finalColorAttr == vec4(0.0))) return;\n";
 static const char vdp1_end_f[] =
-"  imageStore(outSurface,ivec2(texel.x,size.y - 1.0 - texel.y),finalColor);\n"
-"  imageStore(outSurfaceAttr,ivec2(texel.x,size.y - 1.0 -texel.y),finalColorAttr);\n"
+"    vec4 pos = vec4(float(texel.x),float(texel.y), 1.0, 1.0) * rot;\n"
+"    imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
+"    imageStore(outSurfaceAttr,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColorAttr);\n"
 "}\n";
 
 #endif //VDP1_PROG_COMPUTE_H

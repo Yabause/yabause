@@ -14,6 +14,8 @@
 
 #define NB_COARSE_RAST (NB_COARSE_RAST_X * NB_COARSE_RAST_Y)
 
+extern vdp2rotationparameter_struct  Vdp1ParaA;
+
 static int local_size_x = LOCAL_SIZE_X;
 static int local_size_y = LOCAL_SIZE_Y;
 
@@ -463,6 +465,34 @@ int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
 	glUniform2f(6, tex_ratiow, tex_ratioh);
 	glUniform2i(7, Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2);
 	glUniform4i(8, Vdp1Regs->userclipX1, Vdp1Regs->userclipY1, Vdp1Regs->userclipX2, Vdp1Regs->userclipY2);
+	YglMatrix m, mat;
+	YglLoadIdentity(&m);
+	if (Vdp1Regs->TVMR & 0x02) {
+    YglMatrix rotate, scale;
+    int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
+    int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
+    YglLoadIdentity(&rotate);
+		printf("%f %f %f %f %f %f\n", Vdp1ParaA.deltaX,Vdp1ParaA.deltaY,Vdp1ParaA.deltaXst,Vdp1ParaA.deltaYst,Vdp1ParaA.Xst,Vdp1ParaA.Yst);
+    rotate.m[0][0] = Vdp1ParaA.deltaX;
+    rotate.m[0][1] = Vdp1ParaA.deltaY;
+    rotate.m[1][0] = Vdp1ParaA.deltaXst;
+    rotate.m[1][1] = Vdp1ParaA.deltaYst;
+    YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
+    YglMatrixMultiply(&mat, &m, &rotate);
+    YglLoadIdentity(&scale);
+    scale.m[0][0] = 1.0;
+    scale.m[1][1] = 1.0 / (1.0 + Vdp1ParaA.deltaY);
+    scale.m[0][3] = 0.0;
+    scale.m[1][3] = 1.0 - scale.m[1][1];
+    YglMatrixMultiply(&m, &scale, &mat);
+	}
+	// printf("*********************\n");
+	// printf("%f %f %f\n", m.m[0][0], m.m[0][1], m.m[0][2]);
+  // printf("%f %f %f\n", m.m[1][0], m.m[1][1], m.m[1][2]);
+	// printf("%f %f %f\n", m.m[2][0], m.m[2][1], m.m[2][2]);
+  glUniformMatrix4fv(9, 1, 0, m.m);
+
+
 
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
