@@ -503,7 +503,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       addr[commandCounter] = regs->addr >> 3;
       commandCounter++;
    }
-   setupCOPR(&addr[0], commandCounter);
+   setupCOPR(&addr[0], commandCounter-1);
 }
 
 //ensure that registers are set correctly
