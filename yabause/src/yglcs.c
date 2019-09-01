@@ -483,7 +483,7 @@ u16 getVdp1PixelColor(u32 col){
   }
   else{
     int idx = (col & 0x7FFF) | ((col >> 1)&0x8000);
-    int type = 5;//Vdp2Lines[0].SPCTL & 0xF;
+    int type = Vdp2Lines[0].SPCTL & 0xF;
     switch(type)
     {
        case 0x0:
