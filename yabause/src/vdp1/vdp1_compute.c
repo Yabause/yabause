@@ -472,7 +472,7 @@ int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
     int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
     int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
     YglLoadIdentity(&rotate);
-		printf("%f %f %f %f %f %f\n", Vdp1ParaA.deltaX,Vdp1ParaA.deltaY,Vdp1ParaA.deltaXst,Vdp1ParaA.deltaYst,Vdp1ParaA.Xst,Vdp1ParaA.Yst);
+		VDP1CPRINT("%f %f %f %f %f %f\n", Vdp1ParaA.deltaX,Vdp1ParaA.deltaY,Vdp1ParaA.deltaXst,Vdp1ParaA.deltaYst,Vdp1ParaA.Xst,Vdp1ParaA.Yst);
     rotate.m[0][0] = Vdp1ParaA.deltaX;
     rotate.m[0][1] = Vdp1ParaA.deltaY;
     rotate.m[1][0] = Vdp1ParaA.deltaXst;
