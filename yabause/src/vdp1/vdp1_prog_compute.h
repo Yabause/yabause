@@ -62,8 +62,7 @@ SHADER_VERSION_COMPUTE
 "  int idx = int(texel.x * upscale.x) + int((size.y - 1.0 - texel.y)*512 * upscale.y);\n"
 "  vec4 pix = imageLoad(s_texture, ivec2(vec2(texel.x,texel.y)*upscale));\n"
 "  uint val = (uint(pix.r*255.0)<<24) | (uint(pix.g*255.0)<<16) | (uint(pix.b*255.0)<<8) | (uint(pix.a*255.0)<<0);\n"
-"  if ((int(pix.a * 255.0)&0x80) != 0)\n"
-"    Vdp1FB[idx] = val;\n"
+"  Vdp1FB[idx] = val;\n"
 "}\n";
 
 static const char vdp1_clear_f[] =
