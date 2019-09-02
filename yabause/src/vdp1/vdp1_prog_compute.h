@@ -1171,7 +1171,7 @@ static const char vdp1_continue_f[] =
 "      int oldmsb = (int(finalColorAttr.a * 255.0))>>7;\n"
 "      int prio = int(newColor.a * 255.0) & 0x7;\n"
 "      if ((int(newColor.a * 255.0) & 0xC0) == 0xC0) {\n"
-"        msb = (int(newColor.b*255.0)&0x1);\n"
+"        msb = (int(newColor.b*255.0)>>7);\n"
 "      }\n"
 "      if (msb == 0) {\n"
 "        newColor = vec4(0.0);\n"
