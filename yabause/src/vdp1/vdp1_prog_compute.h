@@ -235,8 +235,22 @@ SHADER_VERSION_COMPUTE
 
 "float cross( in vec2 a, in vec2 b ) { return a.x*b.y - a.y*b.x; }\n"
 
+"vec2 bary(ivec2 p, vec2 a, vec2 b, vec2 c, vec2 auv, vec2 buv, vec2 cuv) {\n"
+"  vec2 v0 = b - a;\n"
+"  vec2 v1 = c - a;\n"
+"  vec2 v2 = p - a;\n"
+"  float den = v0.x * v1.y - v1.x * v0.y;\n"
+"  float v = (v2.x * v1.y - v1.x * v2.y) / den;\n"
+"  float w = (v0.x * v2.y - v2.x * v0.y) / den;\n"
+"  float u = 1.0f - v - w;\n"
+"  return (u*auv+v*buv+w*cuv);\n"
+"}\n"
 
 "vec2 getTexCoord(ivec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
+"  if (all(lessThanEqual(abs(a-b),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(b-c),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(c-d),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(d-a),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
 "  vec2 p = vec2(texel)/upscale;\n"
 "  vec2 e = b-a;\n"
 "  vec2 f = d-a;\n"
@@ -254,6 +268,10 @@ SHADER_VERSION_COMPUTE
 
 "vec2 getTexCoordDistorted(ivec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
 //http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
+"  if (all(lessThanEqual(abs(a-b),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(b-c),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(c-d),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(d-a),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
 "  vec2 p = vec2(texel)/upscale;\n"
 "  vec2 e = b-a;\n"
 "  vec2 f = d-a;\n"
@@ -284,6 +302,10 @@ SHADER_VERSION_COMPUTE
 
 "vec2 getTexCoordPolygon(ivec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
 //http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
+"  if (all(lessThanEqual(abs(a-b),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(b-c),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(c-d),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(d-a),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
 "  vec2 p = vec2(texel)/upscale;\n"
 "  vec2 e = b-a;\n"
 "  vec2 f = d-a;\n"
