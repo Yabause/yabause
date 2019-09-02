@@ -45,6 +45,14 @@ extern int YglGenerateBackBuffer();
 extern int YglGenerateWindowBuffer();
 extern int YglGenerateWindowCCBuffer();
 extern int YglGenerateScreenBuffer();
+extern void YglUpdateVdp2Reg();
+extern void YglSetVdp2Window(Vdp2 *varVdp2Regs);
+extern void YglSetCCWindow(Vdp2 *varVdp2Regs);
+extern SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer);
+extern int setupColorMode(Vdp2 *varVdp2Regs, int layer);
+extern int setupBlur(Vdp2 *varVdp2Regs, int layer);
+extern int YglDrawBackScreen();
+extern u32 COLOR16TO24(u16 temp);
 
 static void releaseVDP1DrawingFBMem(int id);
 
@@ -428,11 +436,11 @@ void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     full = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe],addr&(~0x1));
     ispalette = !((full & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
     if (!ispalette) {
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(full&0xFFFF)));
+      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(full&0xFFFF)));
     }
     else{
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &full, &shadow, &normalshadow, &priority, &cc);
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(full&0xFFFF)));
+      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(full&0xFFFF)));
     }
     break;
   case 1:
@@ -447,21 +455,21 @@ void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   case 2:
     T1WriteLong((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
     if (!ispalette) {
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
+      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
     }
     else{
       u16 temp = (val & 0xFFFF);
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &cc);
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(temp&0xFFFF)));
+      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(temp&0xFFFF)));
     }
     ispalette = !(((val>>16) & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
     if (!ispalette) {
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
+      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
     }
     else{
       u16 temp = (val>>16);
       Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &cc);
-      T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(temp&0xFFFF)));
+      T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(temp&0xFFFF)));
     }
     break;
   default:
@@ -601,7 +609,7 @@ void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
         x = 0;
         break;
     }
-    if ((x<=_Ygl->rwidth) && (y<=_Ygl->rheight)) {
+    if ((x<_Ygl->rwidth) && (y<_Ygl->rheight)) {
       switch (type)
       {
       case 0:
