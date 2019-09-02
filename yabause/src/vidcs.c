@@ -184,12 +184,12 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
   cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
 
-  cmd.CMDXB = cmd.CMDXA + cmd.w - 1;
+  cmd.CMDXB = cmd.CMDXA + cmd.w;
   cmd.CMDYB = cmd.CMDYA;
-  cmd.CMDXC = cmd.CMDXA + cmd.w - 1;
-  cmd.CMDYC = cmd.CMDYA + cmd.h - 1;
+  cmd.CMDXC = cmd.CMDXA + cmd.w;
+  cmd.CMDYC = cmd.CMDYA + cmd.h;
   cmd.CMDXD = cmd.CMDXA;
-  cmd.CMDYD = cmd.CMDYA + cmd.h - 1;
+  cmd.CMDYD = cmd.CMDYA + cmd.h;
 
   if ((cmd.CMDPMOD >> 3) & 0x7u == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
@@ -349,7 +349,7 @@ if ((cmd.CMDPMOD & 4))
 }
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = NORMAL;
+  cmd.type = SCALED;
   vdp1_add(&cmd,0);
 
   LOG_CMD("%d\n", __LINE__);
