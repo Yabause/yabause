@@ -1030,8 +1030,9 @@ SHADER_VERSION_COMPUTE
 "  uint discarded = 0;\n"
 "  vec2 texcoord = vec2(0);\n"
 "  ivec2 size = imageSize(outSurface);\n"
-"  ivec2 texel = ivec2(gl_GlobalInvocationID.xy);\n"
-"  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
+"  ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n"
+"  if (pos.x >= size.x || pos.y >= size.y ) return;\n"
+"  ivec2 texel = ivec2((vec4(float(pos.x),float(pos.y), 1.0, 1.0) * inverse(rot)).xy);\n"
 "  ivec2 index = ivec2((texel.x*"Stringify(NB_COARSE_RAST_X)")/size.x, (texel.y*"Stringify(NB_COARSE_RAST_Y)")/size.y);\n"
 "  ivec2 syslimit = sysClip;\n"
 "  ivec4 userlimit = usrClip;\n"
@@ -1057,10 +1058,10 @@ SHADER_VERSION_COMPUTE
 "      userlimit = ivec4(pixcmd.CMDXA,pixcmd.CMDYA,pixcmd.CMDXC,pixcmd.CMDYC);\n"
 "      continue;\n"
 "    }\n"
-"    if (any(greaterThan(texel,syslimit*upscale))) continue;\n"
+"    if (any(greaterThan(pos,syslimit*upscale))) continue;\n"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
 //Draw inside
-"      if (any(lessThan(texel,userlimit.xy*upscale)) || any(greaterThan(texel,userlimit.zw*upscale))) continue;\n"
+"      if (any(lessThan(pos,userlimit.xy*upscale)) || any(greaterThan(texel,userlimit.zw*upscale))) continue;\n"
 "    }\n"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 3u) {\n"
 //Draw outside
@@ -1214,7 +1215,6 @@ static const char vdp1_continue_f[] =
 #endif
 "  if ((finalColor == vec4(0.0)) && (finalColorAttr == vec4(0.0))) return;\n";
 static const char vdp1_end_f[] =
-"    vec4 pos = vec4(float(texel.x),float(texel.y), 1.0, 1.0) * rot;\n"
 "    imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
 "    imageStore(outSurfaceAttr,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColorAttr);\n"
 "}\n";
