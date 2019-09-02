@@ -1031,6 +1031,7 @@ SHADER_VERSION_COMPUTE
 "  cmdparameter_struct pixcmd;\n"
 "  uint discarded = 0;\n"
 "  vec2 texcoord = vec2(0);\n"
+"  vec2 gouraudcoord = vec2(0);\n"
 "  ivec2 size = imageSize(outSurface);\n"
 "  ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n"
 "  if (pos.x >= size.x || pos.y >= size.y ) return;\n"
@@ -1072,6 +1073,7 @@ SHADER_VERSION_COMPUTE
 "    useGouraud = ((pixcmd.CMDPMOD & 0x4u) == 0x4u);\n"
 "    if (pixcmd.type == "Stringify(POLYGON)") {\n"
 "      texcoord = getTexCoordPolygon(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1080,6 +1082,7 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(POLYLINE)") {\n"
 "      texcoord = getTexCoordPolygon(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1088,6 +1091,7 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(LINE)") {\n"
 "      texcoord = getTexCoordPolygon(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1096,6 +1100,7 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(DISTORTED)") {\n"
 "      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1108,6 +1113,7 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(SCALED)") {\n"
 "      texcoord = getTexCoord(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
 #ifdef USE_VDP1_TEX
@@ -1117,6 +1123,7 @@ SHADER_VERSION_COMPUTE
 #endif
 "    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
 "      texcoord = vec2(float(texel.x-pixcmd.CMDXA+1)/float(pixcmd.CMDXB-pixcmd.CMDXA), float(texel.y-pixcmd.CMDYA+1)/float(pixcmd.CMDYD-pixcmd.CMDYA));\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
 #ifdef USE_VDP1_TEX
@@ -1150,9 +1157,9 @@ static const char vdp1_improved_mesh_f[] =
 "      finalColorAttr.a = float(alpha)/255.0;\n"
 "      finalColorAttr.rgb = newColor.rgb;\n"
 "      if (useGouraud) {\n"
-"        finalColorAttr.r = clamp(finalColorAttr.r + mix(mix(pixcmd.G[0],pixcmd.G[4],texcoord.x), mix(pixcmd.G[12],pixcmd.G[8],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"        finalColorAttr.g = clamp(finalColorAttr.g + mix(mix(pixcmd.G[1],pixcmd.G[5],texcoord.x), mix(pixcmd.G[13],pixcmd.G[9],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"        finalColorAttr.b = clamp(finalColorAttr.b + mix(mix(pixcmd.G[2],pixcmd.G[6],texcoord.x), mix(pixcmd.G[14],pixcmd.G[10],texcoord.x), texcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.r = clamp(finalColorAttr.r + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.g = clamp(finalColorAttr.g + mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.b = clamp(finalColorAttr.b + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
 "      }\n"
 "      finalColorAttr.b = float(int(finalColorAttr.b*255.0)&0xFE)/255.0;\n"
 "      newColor = finalColor;\n"
@@ -1215,9 +1222,9 @@ static const char vdp1_continue_f[] =
 "      newColor.b = float((int(newColor.b*255.0)&0xF8)|mode)/255.0; \n"
 "    }\n"
 "    if (useGouraud) {\n"
-"      newColor.r = clamp(newColor.r + mix(mix(pixcmd.G[0],pixcmd.G[4],texcoord.x), mix(pixcmd.G[12],pixcmd.G[8],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"      newColor.g = clamp(newColor.g + mix(mix(pixcmd.G[1],pixcmd.G[5],texcoord.x), mix(pixcmd.G[13],pixcmd.G[9],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"      newColor.b = clamp(newColor.b + mix(mix(pixcmd.G[2],pixcmd.G[6],texcoord.x), mix(pixcmd.G[14],pixcmd.G[10],texcoord.x), texcoord.y), 0.0, 1.0);\n"
+"      newColor.r = clamp(newColor.r + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"      newColor.g = clamp(newColor.g + mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"      newColor.b = clamp(newColor.b + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
 "    }\n"
 "    finalColor = newColor;\n"
 "  }\n"
