@@ -756,6 +756,7 @@ int Cs2ForceCloseTray( int coreid, const char * cdpath ){
 		  return -2;
 	  }
   }
+  Cs2Area->cdi->ReadTOC(Cs2Area->TOC);
   return 0;
 };
 
@@ -828,6 +829,7 @@ void Cs2Exec(u32 timing) {
                case 0:
                   // Sector Read OK
                   Cs2Area->FAD++;
+                  Cs2Area->track = Cs2FADToTrack(Cs2Area->FAD);
                   Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
 
                   if (playpartition != NULL)
@@ -1422,7 +1424,7 @@ void Cs2InitializeCDSystem(void) {
     Cs2Area->blockfreespace = MAX_BLOCKS;
 
     // initialize TOC
-    memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
+   // memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
 
     // clear filesystem stuff
     Cs2Area->curdirsect = 0;
