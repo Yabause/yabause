@@ -2422,13 +2422,16 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
       targetv += Vdp2RamReadWord(NULL, Vdp2Ram, info->verticalscrolltbl) >> 16;
     }
 
-    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
-    if (info->coordincx == 0) {
-      info->coordincx = _Ygl->rwidth;
+    if (VDPLINE_SZ(info->islinescroll)) {
+      info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
+      if (info->coordincx == 0) {
+        info->coordincx = _Ygl->rwidth;;
+      }
+      else {
+        info->coordincx = 1.0f / info->coordincx;
+      }
     }
-    else {
-      info->coordincx = 1.0f / info->coordincx;
-    }
+
     if (info->coordincx < info->maxzoom) info->coordincx = info->maxzoom;
     info->draww = (int)((float)_Ygl->rwidth / info->coordincx);
 
