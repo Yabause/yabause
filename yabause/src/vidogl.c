@@ -353,7 +353,7 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs);
 
 static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha);
 static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs);
-static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, Vdp2 *varVdp2Regs);
+static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy,  int lines, Vdp2 *varVdp2Regs);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
 static INLINE u16 Vdp2ColorRamGetColorRaw(u32 colorindex);
 static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs);
@@ -2057,7 +2057,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
   }
 }
 
-static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, Vdp2 *varVdp2Regs)
+static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, int lines, Vdp2 *varVdp2Regs)
 {
   u64 cacheaddr = ((u32)(info->alpha >> 3) << 27) |
     (info->paladdr << 20) | info->charaddr | info->transparencyenable |
@@ -2091,9 +2091,9 @@ static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x
   tile.vertices[2] = (x + tile.cellw);
   tile.vertices[3] = y;
   tile.vertices[4] = (x + tile.cellh);
-  tile.vertices[5] = (y + (float)info->lineinc);
+  tile.vertices[5] = (y + lines /*(float)info->lineinc*/);
   tile.vertices[6] = x;
-  tile.vertices[7] = (y + (float)info->lineinc);
+  tile.vertices[7] = (y + lines/*(float)info->lineinc*/ );
 
   // Screen culling
   //if (tile.vertices[0] >= _Ygl->rwidth || tile.vertices[1] >= _Ygl->rheight || tile.vertices[2] < 0 || tile.vertices[5] < 0)
@@ -2388,11 +2388,27 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
   int res_shift = 0;
   if (_Ygl->rheight >= 440) res_shift = 1;
 
-  for (v = 0; v < info->drawh; v += info->lineinc) {  // ToDo: info->coordincy
+  int linemask = 0;
+  switch (info->lineinc) {
+  case 1:
+    linemask = 0;
+    break;
+  case 2:
+    linemask = 0x01;
+    break;
+  case 4:
+    linemask = 0x03;
+    break;
+  case 8:
+    linemask = 0x07;
+    break;
+  }
+
+  for (v = 0; v < info->drawh; v += 1) {  // ToDo: info->coordincy
     int targetv = 0;
     sx = info->x + info->lineinfo[(int)(lineindex*info->coordincy)].LineScrollValH;
     if (VDPLINE_SY(info->islinescroll)) {
-      targetv = info->y + info->lineinfo[(int)(lineindex*info->coordincy)].LineScrollValV;
+      targetv = info->y + (v & linemask) + info->lineinfo[(int)(lineindex*info->coordincy)].LineScrollValV;
     }
     else {
       targetv = info->y + v;
@@ -2406,7 +2422,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
       targetv += Vdp2RamReadWord(NULL, Vdp2Ram, info->verticalscrolltbl) >> 16;
     }
 
-    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 255.0f;
+    info->coordincx = info->lineinfo[(int)(lineindex*info->coordincy)].CoordinateIncH / 256.0f;
     if (info->coordincx == 0) {
       info->coordincx = _Ygl->rwidth;
     }
@@ -2453,11 +2469,10 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
 
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
       Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs);
-      Vdp2DrawPatternPos(info, texture, h, v, charx, chary, varVdp2Regs);
+      Vdp2DrawPatternPos(info, texture, h, v, charx, chary, 1, varVdp2Regs);
 
     }
-
-    lineindex++;
+    if((v & linemask) == linemask) lineindex++;
   }
 
 }
@@ -2560,7 +2575,7 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
 
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
       Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs);
-      Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, varVdp2Regs);
+      Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, info->lineinc, varVdp2Regs);
     }
 
     lineindex++;
