@@ -3062,9 +3062,11 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         break;
       case 1:
         parameter = &rbg->paraB;
-        if (vdp2rGetKValue(parameter, l) == 0) {
-          *(texture->textdata++) = 0x00000000;
-          continue;
+        if (parameter->coefenab) {
+          if (vdp2rGetKValue(parameter, l) == 0) {
+            *(texture->textdata++) = 0x00000000;
+            continue;
+          }
         }
         break;
       case 2:
