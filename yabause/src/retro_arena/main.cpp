@@ -381,7 +381,7 @@ int main(int argc, char** argv)
   }
 
   VIDCore->Resize(0,0,width,height,1,g_keep_aspect_rate);
-  
+
   SDL_GL_MakeCurrent(wnd,nullptr);
 #if defined(__RP64__) || defined(__N2__)
   YabThreadSetCurrentThreadAffinityMask(0x4);

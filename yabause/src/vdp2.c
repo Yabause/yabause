@@ -274,6 +274,8 @@ int Vdp2Init(void) {
    if ((Vdp2ColorRam = T2MemoryInit(0x1000)) == NULL)
       return -1;
 
+   memset(Vdp2Lines, 0, sizeof(Vdp2) * 270);
+
    Vdp2Reset();
 
 #if defined(YAB_ASYNC_RENDERING)
@@ -834,6 +836,7 @@ void vdp2VBlankOUT(void) {
   static int framestoskip = 0;
   static int framesskipped = 0;
   static int skipnextframe = 0;
+  static int previous_skipped = 0;
   static u64 curticks = 0;
   static u64 diffticks = 0;
   static u32 framecount = 0;
@@ -855,6 +858,13 @@ void vdp2VBlankOUT(void) {
 
   if (pre_swap_frame_buffer == 0 && skipnextframe && Vdp1External.swap_frame_buffer ){
     skipnextframe = 0;
+    previous_skipped = 0;
+    framestoskip = 1;
+  }
+
+  if (previous_skipped != 0 && skipnextframe != 0) {
+    skipnextframe = 0;
+    previous_skipped = 0;
     framestoskip = 1;
   }
 
@@ -866,9 +876,8 @@ void vdp2VBlankOUT(void) {
     skipped_frame++;
     saved = VIDCore;
     //VIDCore = &VIDDummy;
-
-
     
+    previous_skipped = 1;
     VIDCore->Vdp2DrawStart = VIDDummy.Vdp2DrawStart;
     VIDCore->Vdp2DrawEnd   = VIDDummy.Vdp2DrawEnd;
     VIDCore->Vdp2DrawScreens = VIDDummy.Vdp2DrawScreens;
@@ -876,6 +885,8 @@ void vdp2VBlankOUT(void) {
   }
   else if (saved && (!skipnextframe))
   {
+    skipnextframe = 0;
+    previous_skipped = 0;
     //VIDCore = saved;
     if( saved != NULL ){
 
@@ -953,7 +964,7 @@ void vdp2VBlankOUT(void) {
    //if ((Vdp1Regs->FBCR & 2) && (Vdp1Regs->TVMR & 8))
    //   Vdp1External.manualerase = 1;
 
-   if (!skipnextframe)
+   if ( skipnextframe == 0)
    {
       framesskipped = 0;
 
@@ -964,7 +975,7 @@ void vdp2VBlankOUT(void) {
    {
       framestoskip--;
 
-      if (framestoskip < 1)
+      if (framestoskip < 1) 
          skipnextframe = 0;
       else
          skipnextframe = 1;

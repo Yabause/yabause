@@ -209,7 +209,7 @@ static int m_b1WindowChg;
 static vdp2Lineinfo lineNBG0[512];
 static vdp2Lineinfo lineNBG1[512];
 
-
+int Vdp2DrawLineColorScreen(void);
 
 vdp2rotationparameter_struct  paraA = { 0 };
 vdp2rotationparameter_struct  paraB = { 0 };
@@ -3798,6 +3798,9 @@ int VIDOGLInit(void)
   vdp1wratio = 1;
   vdp1hratio = 1;
 
+  if (_Ygl->rbg_use_compute_shader) {
+    RBGGenerator_init(320, 224);
+  }
 
   return 0;
 }
@@ -3891,12 +3894,18 @@ void VIDOGLVdp1DrawStart(void)
 
   FrameProfileAdd("Vdp1Command start");
 
+  //if (_Ygl->frame_sync != 0) {
+  //  glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
+  //  glDeleteSync(_Ygl->frame_sync);
+  //  _Ygl->frame_sync = 0;
+  //}
+  
   if (_Ygl->texture_manager == NULL) {
     _Ygl->texture_manager = YglTM;
     YglTMReset(YglTM);
     YglCacheReset(YglTM);
   }
-  YglTmPull(YglTM, 0);
+  YglTmPull(YglTM, 1);
 
   maxpri = 0x00;
   minpri = 0x07;
@@ -5426,11 +5435,17 @@ void VIDOGLVdp2DrawStart(void)
     YglTM = YglTMInit(new_width, new_height);
   }
   YglReset();
-  if (_Ygl->sync != 0) {
-    glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
-    glDeleteSync(_Ygl->sync);
-    _Ygl->sync = 0;
-  }
+//  if (_Ygl->sync != 0) {
+    //glClientWaitSync(_Ygl->sync, 0, GL_TIMEOUT_IGNORED);
+//    glDeleteSync(_Ygl->sync);
+//    _Ygl->sync = 0;
+//  }
+  //if (_Ygl->frame_sync != 0) {
+  //  glClientWaitSync(_Ygl->frame_sync, 0, GL_TIMEOUT_IGNORED);
+  //  glDeleteSync(_Ygl->frame_sync);
+  //  _Ygl->frame_sync = 0;
+  //}
+
   YglTmPull(YglTM, 0);
   YglTMReset(YglTM);
   YglCacheReset(YglTM);
@@ -5563,21 +5578,21 @@ static void Vdp2DrawBackScreen(void)
 //////////////////////////////////////////////////////////////////////////////
 // 11.3 Line Color insertion
 //  7.1 Line Color Screen
-static void Vdp2DrawLineColorScreen(void)
+int Vdp2DrawLineColorScreen(void)
 {
 
   u32 cacheaddr = 0xFFFFFFFF;
   int inc = 0;
   int line_cnt = vdp2height;
-  int i;
-  u32 * line_pixel_data;
-  u32 addr;
+  int i = 0;
+  u32 * line_pixel_data = NULL;
+  u32 addr = 0;
 
-  if (fixVdp2Regs->LNCLEN == 0) return;
+  if (fixVdp2Regs->LNCLEN == 0) return 0;
 
   line_pixel_data = YglGetLineColorPointer();
   if (line_pixel_data == NULL) {
-    return;
+    return 0;
   }
 
   if ((fixVdp2Regs->LCTA.part.U & 0x8000)) {
@@ -5603,6 +5618,8 @@ static void Vdp2DrawLineColorScreen(void)
   }
 
   YglSetLineColor(line_pixel_data, line_cnt);
+
+  return 1;
 
 }
 
@@ -5855,6 +5872,7 @@ static void Vdp2DrawNBG0(void)
     return;
   }
 
+  
 
 
   ReadMosaicData(&info, 0x1, fixVdp2Regs);
@@ -7041,7 +7059,7 @@ void VIDOGLVdp2DrawScreens(void)
   
   Vdp2DrawBackScreen();
   Vdp2DrawLineColorScreen();
-
+    
   Vdp2DrawNBG3();
   FrameProfileAdd("NBG3 end");
   Vdp2DrawNBG2();

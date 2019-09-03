@@ -252,8 +252,15 @@ typedef struct {
 	YglCacheHash *HashTable[HASHSIZE];
 	YglCacheHash CashLink[HASHSIZE * 2];
 	u32 CashLink_index;
-	GLuint textureID;
-	GLuint pixelBufferID;
+
+	//GLuint textureID;
+	//GLuint pixelBufferID;
+
+  int current;
+  GLuint textureID_in[2];
+  GLuint pixelBufferID_in[2];
+  unsigned int * texture_in[2];
+
 } YglTextureManager;
 
 extern YglTextureManager * YglTM;
@@ -585,6 +592,7 @@ typedef struct {
    int rbg_use_compute_shader;
    YglTextureManager * texture_manager;
    GLsync sync;
+   GLsync frame_sync;
     GLuint default_fbo;
    YglPerLineInfo bg[enBGMAX];
    u32 targetfbo;
