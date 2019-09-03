@@ -154,7 +154,7 @@ SHADER_VERSION_COMPUTE
 "	     kdata = vram[ addr>>2 ]; \n"
 "      kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFF00u) | ((kdata) & 0xFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
 "    }else{\n"
-"      kdata = cram[ ((0x800u + (addr&0x7FFu) )>>2) ]; \n"
+"      kdata = cram[ ((0x800u + (addr&0x7FFFu) )>>2) ]; \n"
 "      kdata = ((kdata&0xFFFF0000u)>>16|(kdata&0x0000FFFFu)<<16);\n"
 "    }\n"
 "	 if( para[paramid].linecoefenab != 0) lineaddr = (kdata >> 24) & 0x7Fu; else lineaddr = 0u;\n"
@@ -1342,7 +1342,7 @@ DEBUGWIP("Init\n");
   void updateRBG0( RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 		// Line color insersion
 		if (rbg->info.LineColorBase != 0 && VDP2_CC_NONE != (rbg->info.blendmode & 0x03)) {
-			if (varVdp2Regs->RPMD == 0 || (varVdp2Regs->RPMD == 3 && (varVdp2Regs->WCTLD & 0xA) == 0)) {
+			if ( rbg->rgb_type == 0 && (varVdp2Regs->RPMD == 0 || (varVdp2Regs->RPMD == 3 && (varVdp2Regs->WCTLD & 0xA) == 0)) ) {
 				if (rbg->info.isbitmap) {
 					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_0_2w_bitmap_8bpp_line_);
 				}
@@ -1433,7 +1433,7 @@ DEBUGWIP("Init\n");
 					}
 				}
 			}
-			else if (varVdp2Regs->RPMD == 1) {
+			else if ( (varVdp2Regs->RPMD == 1 && rbg->rgb_type == 0)  || rbg->rgb_type == 0x04 ) {
 				if (rbg->info.isbitmap) {
 					DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_1_2w_bitmap_8bpp_line_);
 				}
@@ -1853,7 +1853,7 @@ DEBUGWIP("Init\n");
 					}
 				}
 			}
-			else if (varVdp2Regs->RPMD == 1) {
+			else if ( (varVdp2Regs->RPMD == 1 && rbg->rgb_type == 0)  || rbg->rgb_type == 0x04 ) {
 				if (rbg->info.isbitmap) {
 					switch (rbg->info.colornumber) {
 					case 0: {
