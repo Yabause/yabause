@@ -469,8 +469,8 @@ void Vdp2VBlankIN(void) {
 
    ScuSendVBlankIN();
 
-   if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x43, 0x6);
+   //if (yabsys.IsSSH2Running)
+   //   SH2SendInterrupt(SSH2, 0x43, 0x6);
 
    FrameProfileAdd("VIN end");
 }
@@ -484,8 +484,8 @@ void Vdp2HBlankIN(void) {
   if (yabsys.LineCount < yabsys.VBlankLineCount) {
     Vdp2Regs->TVSTAT |= 0x0004;
     ScuSendHBlankIN();
-    if (yabsys.IsSSH2Running)
-      SH2SendInterrupt(SSH2, 0x41, 0x2);
+    //if (yabsys.IsSSH2Running)
+    //  SH2SendInterrupt(SSH2, 0x41, 0x2);
   } else {
 // Fix : Function doesn't exist without those defines
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
