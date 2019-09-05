@@ -928,11 +928,8 @@ P priority
 s Shadow Flag
 
 */
-INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
-  u32 col = color;
-  if (C == 1) col &= 0x17FFF;
-  else col &= 0xFFFFFF;
-  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | ((Vdp2Lines[0].SPCTL & 0xF) << 17) | col;
+INLINE u32 VDP1COLOR(u16 CMDPMOD, u16 CMDCOLR) {
+  return CMDCOLR | (CMDPMOD<<16);
 }
 
 INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cc_on, u32 cramindex) {
