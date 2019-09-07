@@ -914,6 +914,21 @@ SHADER_VERSION
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, NULL};
 
+
+#define QuoteIdent(ident) #ident
+#define Stringify(macro) QuoteIdent(macro)
+
+// we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
+#define GOURAUD_PROCESS(A) \
+"if ((int("Stringify(A)".b*255.0) & 0x4) == 0x4) {\n \
+  int colindex = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8))&0x7FFF;\n \
+  int R = int((float(colindex & 0x1F)/31.0 + v_vtxcolor.r)*31.0);\n \
+  int G = int((float(((colindex & 0x3E0) >> 5) & 0x1F)/31.0 + v_vtxcolor.g)*31.0);\n \
+  int B = int((float(((colindex & 0x7C00) >> 5) & 0x1F)/31.0 + v_vtxcolor.b)*31.0);\n \
+  "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((G>>3) | (B<<2) | 0x80)/255.0;\n \
+}\n"
+
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
@@ -927,21 +942,9 @@ SHADER_VERSION
 "void main() {\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;\n"
-"  int shadow = 0;\n"
-"  int additionnal = int(spriteColor.a * 255.0)&0xF8;\n"
-"  if (additionnal == 0xC0) {\n"
-"    if (((int(spriteColor.b * 255.0)&0xFE)==0x80) && (spriteColor.rg == vec2(0.0))) shadow = 1;\n"
-"  }\n"
-"  if (shadow != 0) {\n"
-"    fragColorAttr.rgb = vec3(0.0);\n"
-"    fragColorAttr.a = float(0x80)/255.0;\n"
-"    fragColor.rgb = vec3(0.0);\n"
-"  } else { \n"
-"    fragColorAttr = vec4(0.0);\n"
-"    fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
-"  }\n"
-"  fragColor.a = spriteColor.a;  \n"
+//Gouraud still does not work
+//GOURAUD_PROCESS(spriteColor)
+"  fragColor = spriteColor;"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
 
@@ -1396,7 +1399,7 @@ typedef struct  {
   int idline;
 } DrawFrameBufferUniform;
 
-#define MAX_FRAME_BUFFER_UNIFORM (48)
+#define MAX_FRAME_BUFFER_UNIFORM (128*5)
 
 DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
@@ -1428,18 +1431,19 @@ refrence:
 */
 
 const GLchar Yglprg_vdp2_drawfb_cram_f[] =
+"  FBCol getFB(int x){ \n"
 "  FBCol ret;\n"
 "  ret.color = vec4(0.0);\n"
 "  ret.prio = 0;\n"
 "  ret.meshColor = vec4(0.0);\n"
 "  ret.mesh = 0;\n"
+"  ret.code = 0;\n"
+"  ret.valid = 0;\n"
 "  if (fbon != 1) return ret;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
-"  vec4 fbColor = texelFetch(s_vdp1FrameBuffer, ivec2(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+ivec2(x, 0)), 0);\n"
-"  vec4 fbColorAttr = texelFetch(s_vdp1FrameBufferAttr, ivec2(v_texcoord.st * textureSize(s_vdp1FrameBufferAttr, 0)+ivec2(x, 0)), 0);\n"
+"  FBCol fb = getVDP1PixelCode(s_vdp1FrameBuffer, ivec2(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+ivec2(x, 0)));\n"
 "  vec4 tmpColor = vec4(0.0);\n"
-"  vec4 tmpmeshColor = vec4(0.0);\n"
 "  int line = int((u_vheight-gl_FragCoord.y) * u_emu_height)*24;\n"
 "  vec3 u_coloroffset = vec3(texelFetch(s_vdp2reg, ivec2(17 + line,0), 0).r, texelFetch(s_vdp2reg, ivec2(18+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(19+line,0), 0).r);\n"
 "  vec3 u_coloroffset_sign = vec3(texelFetch(s_vdp2reg, ivec2(20 + line, 0), 0).r, texelFetch(s_vdp2reg, ivec2(21+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(22+line,0), 0).r);\n"
@@ -1448,87 +1452,25 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  if (u_coloroffset_sign.b != 0.0) u_coloroffset.b = float(int(u_coloroffset.b*255.0)-256.0)/255.0;\n"
 "  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0)<<8;\n"
 "  int u_cctl = int(texelFetch(s_vdp2reg, ivec2(16+line,0), 0).r*255.0);\n"
-"  int additional = int(fbColor.a * 255.0);\n"
-"  int additionalAttr = int(fbColorAttr.a * 255.0);\n"
-"  int additionalAlpha = int(fbColorAttr.r * 255.0);\n"
-"  if( ((additional & 0x80) == 0) && ((additionalAttr & 0xC0) == 0) ){ return ret;} // show? \n"
-"  int prinumber = (additional&0x07); \n"
-"  int primesh = additionalAttr&0x7;\n"
-"  int tmpmeshprio = 0;\n"
-"  int depth = int(texelFetch(s_vdp2reg, ivec2(prinumber+8+line,0), 0).r*255.0);\n"
-"  int alpha = int(texelFetch(s_vdp2reg, ivec2(((additional>>3)&0x07)+line,0), 0).r*255.0)<<3; \n"
+"  if(fb.valid == 0){ return ret;} // show? \n"
+"  int depth = int(texelFetch(s_vdp2reg, ivec2(fb.prio+8+line,0), 0).r*255.0);\n"
+"  int alpha = int(texelFetch(s_vdp2reg, ivec2((fb.cc)+line,0), 0).r*255.0)<<3; \n"
 "  int opaque = 0xF8;\n"
 "  int tmpmesh = 0;\n"
-"  int msb = int(fbColor.b*255.0)&0x1;\n"
-"  fbColor.b = float(int(fbColor.b * 255.0)&0xFE)/255.0;\n"
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
-"  if((additional & 0x80) != 0) {\n"
-"    if( (additional & 0x40) != 0 ){  // index color? \n"
-"      int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
-"      if( colindex == 0 && prinumber == 0 && ((additionalAttr & 0x80) == 0)) { \n"
-"        if ((additionalAttr & 0x40) != 0) {\n"
-"          if ((additionalAttr & 0x08) != 0) {\n"
-"            ret.meshColor.rgb = fbColorAttr.rgb;\n"
-"          } else { \n"
-"            colindex = ( int(fbColorAttr.g*255.0)<<8 | int(fbColorAttr.r*255.0)); \n"
-"            if( colindex != 0) {\n"
-"              colindex = colindex + u_color_ram_offset; \n"
-"              txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"              ret.meshColor.rgb = txcol.rgb;\n"
-"            } else { \n"
-"              ret.meshColor.rgb = vec3(0.0);\n"
-"            }\n"
-"          }\n"
-"          ret.meshColor.a = fbColor.a;\n"
-"          ret.mesh = 1;\n"
-"        }\n"
-"        ret.meshPrio = int(texelFetch(s_vdp2reg, ivec2(primesh+8+line,0), 0).r*255.0);\n"
-"        return ret; \n"
-"      } // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
-"      if(( colindex != 0 || prinumber != 0) && ((additionalAttr & 0x80) == 0)){\n"
-"        colindex = colindex + u_color_ram_offset; \n"
-"        txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"        if (txcol.a != 0.0) msb = 1;\n" //linked to VDP2 ColorRam alpha management
-"        else msb = 0;\n"
-"        tmpColor = txcol;\n"
-"      } else { \n"
-"        tmpColor = vec4(0.0);\n"
-"      }\n"
-"    }else{ // direct color \n"
-"      tmpColor = fbColor;\n"
-"    } \n"
-"    tmpColor.rgb = clamp(tmpColor.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
-"  } else { \n"
-"    tmpColor = fbColor;\n"
-"  } \n"
-"  if ((additionalAttr & 0x80) != 0) {\n"
-"    if (tmpColor.rgb == vec3(0.0)) {\n"
-"      alpha = 0x78;\n"
-"      vdp1mode = 5;\n"
-"      fbmode = 0;\n"
+"  if (fb.valid == 0) return ret;\n"
+"  if( fb.isRGB == 0 ){  // index color? \n"
+"    if( fb.code != 0 || fb.prio != 0){\n"
+"      fb.code = fb.code + u_color_ram_offset; \n"
+"      txcol = texelFetch( s_color,  ivec2( fb.code ,0 )  , 0 );\n"
+"      tmpColor = txcol;\n"
 "    } else { \n"
-"      if (int(texelFetch(s_vdp2reg, ivec2((additionalAttr & 0x7)+8+line,0), 0).r*255.0)-1 == depth) {\n"
-"        tmpColor.rgb = tmpColor.rgb * 0.5;\n"
-"      }\n"
+"      tmpColor = vec4(0.0);\n"
 "    }\n"
+"  }else{ // direct color \n"
+"    tmpColor = fb.color;\n"
 "  } \n"
-"  if ((additionalAttr & 0x40) != 0) {\n"
-"    if ((additionalAttr & 0x08) != 0) {\n"
-"      tmpmeshColor.rgb = fbColorAttr.rgb;\n"
-"    } else { \n"
-"      int colindex = ( int(fbColorAttr.g*255.0)<<8 | int(fbColorAttr.r*255.0)); \n"
-"      if( colindex != 0) {\n"
-"        colindex = colindex + u_color_ram_offset; \n"
-"        txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"        tmpmeshColor.rgb = txcol.rgb;\n"
-"      } else { \n"
-"        tmpmeshColor.rgb = vec3(0.0);\n"
-"      }\n"
-"    }\n"
-"    tmpmeshColor.a = fbColor.a;\n"
-"    tmpmeshprio = int(texelFetch(s_vdp2reg, ivec2(primesh+8+line,0), 0).r*255.0);"
-"    tmpmesh = 1;\n"
-"  }\n"
+"  tmpColor.rgb = clamp(tmpColor.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
 "  if (fbmode != 0) {\n";
 /*
  Color calculation option
@@ -1542,6 +1484,45 @@ const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl 
 const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ alpha = opaque; fbmode = 0;} \n ";
 
 
+const GLchar Yglprg_vdp2_sprite_palette_only[] =
+"bool isRGBCode(int index) {"
+" return false;\n"
+"}\n";
+const GLchar Yglprg_vdp2_sprite_palette_rgb[] =
+"bool isRGBCode(int index) {"
+" return ((index & 0x8000)!=0);\n"
+"}\n";
+const GLchar Yglprg_vdp2_sprite_type_0[] =
+"FBCol getVDP1PixelCode(sampler2D fb, ivec2 coord) {\n"
+"  FBCol ret;\n"
+"  ret.color = vec4(0.0);\n"
+"  ret.meshColor = vec4(0.0);\n"
+"  ret.mesh = 0;\n"
+"  ret.prio = 0; \n"
+"  ret.meshPrio = 0;\n"
+"  ret.cc = 0;\n"
+"  ret.code = 0;\n"
+"  ret.valid = 0;\n"
+"  ret.isRGB = 0;\n"
+"  vec4 col = texelFetch(fb, coord, 0);\n"
+"  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
+"  else return ret;\n"
+"  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
+"  if (isRGBCode(ret.code)) {\n"
+"    ret.prio = 0;\n"
+"    ret.isRGB = 1;\n"
+"    ret.cc = 0;\n"
+"    ret.color.rgb = getRGB(ret.code).rgb;\n"
+"  } else {\n"
+"    ret.prio = (ret.code >> 14) & 0x3;\n"
+"    ret.cc = (ret.code >> 11) & 0x7;\n"
+"    ret.code = ret.code & 0x7FF;\n"
+"    ret.color.rg = getVec2(ret.code).xy;\n"
+"    ret.color.b = 0.0;\n"
+"  }\n"
+"  return ret;\n"
+"}\n";
+
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
 "\n";
 const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
@@ -1553,15 +1534,11 @@ const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
 
 const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
 " }\n"
-" if(additionalAlpha != 0) {\n"
-"   alpha = 0x78;\n"
-"   vdp1mode = 3;\n"
-" }\n"
 " tmpColor.a = float(alpha|vdp1mode)/255.0; \n"
 " ret.color = tmpColor;\n"
-" ret.meshColor = tmpmeshColor;\n"
+" ret.meshColor = vec4(0.0);\n"
 " ret.mesh = tmpmesh;\n"
-" ret.meshPrio = tmpmeshprio;\n"
+" ret.meshPrio = 0;\n"
 " ret.prio = depth;\n";
 
 
@@ -1643,9 +1620,25 @@ SHADER_VERSION
 "  int mesh;\n"
 "  int prio; \n"
 "  int meshPrio;\n"
+"  int cc;\n"
+"  int code;\n"
+"  int valid;\n"
+"  int isRGB;\n"
 "}; \n"
 
-"FBCol getFB(int x){ \n";
+"vec3 getRGB(int colindex) {\n"
+" vec3 ret;\n"
+" ret.r = float(((colindex & 0x1F)) & 0x1F)/31.0;\n"
+" ret.g = float(((colindex & 0x3E0) >> 5) & 0x1F)/31.0;\n"
+" ret.b = float(((colindex & 0x7C00) >> 10) & 0x1F)/31.0;\n"
+" return ret;\n"
+"}\n"
+"vec2 getVec2(int colindex) {\n"
+" vec2 ret;\n"
+" ret.x = float(colindex & 0xFF)/255.0;\n"
+" ret.y = float((colindex & 0xFF00) >> 8)/255.0;\n"
+" return ret;\n"
+"}\n";
 
 static const char vdp2blit_partial_end_f[] =
 " return ret;\n"
@@ -1813,6 +1806,8 @@ static const char vdp2blit_end_f[] =
 "  return ret; \n"
 "}  \n"
 
+"vec4 testFB;\n"
+
 "void main()   \n"
 "{  \n"
 "  vec4 topImage = vec4(0.0);; \n"
@@ -1847,6 +1842,7 @@ static const char vdp2blit_end_f[] =
 "  isRGBtop = 1; \n"
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
 "  FBCol tmp = getFB(0); \n"
+"  testFB = tmp.color;\n"
 "  FBColor = tmp.color;\n"
 "  FBPrio = tmp.prio;\n"
 "  FBShadow = tmp.meshColor;\n"
@@ -2046,150 +2042,85 @@ static const char vdp2blit_end_f[] =
 #ifdef DEBUG_BLIT
 "  topColor = topImage;\n"
 "  secondColor = secondImage;\n"
-"  thirdColor = colortop;\n"
+"  thirdColor = testFB;\n"
 "  fourthColor.rgb = FBShadow.rgb;\n"
 "  fourthColor.a = (FBMeshPrio*8.0+mesh*128.0)/255.0;\n"
 #endif
 "} \n";
 
-const GLchar * pYglprg_vdp2_blit_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+GLchar * pYglprg_vdp2_blit_f[128*5][11];
 
-
-const GLchar * pYglprg_vdp2_blit_less_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-
-const GLchar * pYglprg_vdp2_blit_equal_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-
-const GLchar * pYglprg_vdp2_blit_more_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-
-const GLchar * pYglprg_vdp2_blit_msb_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-
+const GLchar * vdp2blit_palette_mode_f[2]= {
+  Yglprg_vdp2_sprite_palette_only,
+  Yglprg_vdp2_sprite_palette_rgb
+};
+const GLchar * vdp2blit_srite_type_f[16] = {
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0,
+  Yglprg_vdp2_sprite_type_0
+};
+const GLchar * Yglprg_color_condition_f[5] = {
+  Yglprg_vdp2_drawfb_cram_no_color_col_f,
+  Yglprg_vdp2_drawfb_cram_less_color_col_f,
+  Yglprg_vdp2_drawfb_cram_equal_color_col_f,
+  Yglprg_vdp2_drawfb_cram_more_color_col_f,
+  Yglprg_vdp2_drawfb_cram_msb_color_col_f
+};
+const GLchar * Yglprg_color_mode_f[4] = {
+  Yglprg_vdp2_drawfb_cram_epiloge_none_f,
+  Yglprg_vdp2_drawfb_cram_epiloge_as_is_f,
+  Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f,
+  Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f,
+};
 void Ygl_initDrawFrameBuffershader(int id);
 
+int initDrawShaderCode() {
+  for (int i = 0; i<5; i++) {
+     // Sprite color calculation condition are separated by 128
+    for (int j = 0; j<4; j++) {
+     // 4 Sprite color calculation mode
+      for (int k = 0; k<2; k++) {
+        // Palette only mode or palette/RGB mode
+        for (int l = 0; l<16; l++) {
+          //16 sprite typed
+          int index = 16*(2*(4*i+j)+k)+l;
+          pYglprg_vdp2_blit_f[index][0] = vdp2blit_start_f;
+          pYglprg_vdp2_blit_f[index][1] = vdp2blit_palette_mode_f[k];
+          pYglprg_vdp2_blit_f[index][2] = vdp2blit_srite_type_f[l];
+          pYglprg_vdp2_blit_f[index][3] = Yglprg_vdp2_drawfb_cram_f;
+          pYglprg_vdp2_blit_f[index][4] = Yglprg_color_condition_f[i];
+          pYglprg_vdp2_blit_f[index][5] = Yglprg_color_mode_f[j];
+          pYglprg_vdp2_blit_f[index][6] = Yglprg_vdp2_drawfb_cram_eiploge_f;
+          pYglprg_vdp2_blit_f[index][7] = vdp2blit_partial_end_f;
+          pYglprg_vdp2_blit_f[index][8] = vdp2blit_filter_f;
+          pYglprg_vdp2_blit_f[index][9] = vdp2blit_end_f;
+          pYglprg_vdp2_blit_f[index][10] =  NULL;
+        }
+      }
+    }
+  }
+}
+
 int YglInitDrawFrameBufferShaders(int id) {
-
-  if (id == PG_VDP2_DRAWFRAMEBUFF_NONE) {
+ printf ("Use prog %d\n", id); //16
+ int arrayid = id-PG_VDP2_DRAWFRAMEBUFF_NONE;
+ printf ("getArray %d\n", arrayid); //16
     YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA);
-
-
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA);
-
-
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA);
-
-
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA);
-
-
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA);
-  }
+    if (YglInitShader(id, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_f[arrayid], 10, NULL, NULL, NULL) != 0) { printf("Error init prog %d\n",id); abort(); }
+    Ygl_initDrawFrameBuffershader(id);
   return 0;
 }
 
@@ -2200,7 +2131,6 @@ void Ygl_initDrawFrameBuffershader(int id) {
   if ( arrayid < 0 || arrayid >= MAX_FRAME_BUFFER_UNIFORM) {
     abort();
   }
-
   g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBuffer");
   g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBufferAttr = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBufferAttr");
   g_draw_framebuffer_uniforms[arrayid].idvdp2regs = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp2reg");
@@ -2242,7 +2172,10 @@ int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* var
          break;
     }
   }
-  pgid += mode-NONE;
+  int colormode =  (varVdp2Regs->SPCTL & 0x20) != 0;
+  int spritetype =  (varVdp2Regs->SPCTL & 0xF);
+
+  pgid += (mode-NONE)*16*2 + colormode*16 + spritetype;
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
 
@@ -2392,6 +2325,8 @@ int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fc
 int YglProgramInit()
 {
    YGLLOG("PG_VDP2_NORMAL\n");
+
+   initDrawShaderCode();
    //
    if (YglInitShader(PG_VDP2_NORMAL, pYglprg_vdp2_normal_v, pYglprg_vdp2_normal_f, 1, NULL, NULL, NULL) != 0)
       return -1;
