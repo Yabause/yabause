@@ -191,7 +191,6 @@ File:|Fichier :
 Filter|Filtre
 Filter mode|Mode Filtre
 Fit to Emulation Resolution|Correspondre à la Résolution de l'Emulation 
-
 Fit to window|Correspond à la Fenêtre
 Fixed aspect ratio: 4:3|Correction des Propotions : 4:3
 Fixed aspect ratio: 16:9|Correction des Propotions : 16:9
@@ -221,6 +220,7 @@ ISO-File Virtual Drive|Lecteur de Fichier ISO Virtuel
 Information...|Information...
 Inline Assembly|Assembleur En Ligne
 Input|Contrôleur
+Internal Resolution|Résolution Interne
 Invalid Address|Adresse Invalide
 Invalid Value|Valeur Invalide
 Italian|Italien
@@ -231,9 +231,8 @@ Korea (NTSC)|Corée (NTSC)
 L&oad State|&Charger un Etat
 Language :|Langage :
 Layer|Couche
-Left button:|Bouton Gauche :
 Left|Gauche
-Left Stick:|Stick Gauche :
+Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|Stick Gauche :\nGâchette:      X\nBouton Gauche :  Y\nBouton Droit : Z
 Left trigger|Gâchette Gauche
 Less than|Moins que
 Linux CD Drive|Lecteur CD Linux
@@ -305,8 +304,9 @@ Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Interface Qt du Clavier
 Quit|Quitter
 R&un|L&ancer
-RBG0|RGB0
+RBG0|RBG0
 RBG0 Info|Info RBG0
+RBG Resolution|Résolution RBG
 Read|Lecture
 Region|Région :
 Registers|Registres
@@ -314,8 +314,7 @@ Remove Peripheral|Supprime le Périphérique
 Reset|Redémarrer
 Resolution|Résolution :
 Right|Droite
-Right button:|Bouton Droit :
-Right Stick:|Stick Droit :
+Right Stick:\nTrigger:      A\nLeft button:  B\nRight button: C|Stick Droit :\nGâchette :      A\nBouton Gauche :  B\nBouton Droite : C
 Right trigger|Gâchette Droite
 Rotate 90 degree|Rotation à 90°
 Run|Lancer
@@ -389,9 +388,7 @@ Status|Statut
 Step Into|Entrer Dans
 Step Out|Sortir
 Step Over|Sauter
-Stick left button: same as A|Bouton Gauche Stick : pareil que A
-Stick right button: same as B|Bouton Droite Stick : pareil que B
-Stick trigger: same as C|GâchetteStick : pareil que C
+Stick left button: same as A \nStick right button: same as B \nStick trigger: same as C|Bouton Gauche Stick : pareil que A \nBouton Droite Stick : pareil que B \nGâchette : pareil que C
 Stop|Arrêter
 Store|Stocker
 Synchronize Saturn internal clock with set time|Synchroniser l'Horloge Interne de la Saturn avec l'Heure
@@ -444,12 +441,17 @@ View|Visualiser
 Viewer|Visualiseur
 Waiting Input...|En Attente du Contrôleur
 Warning...|Avertissement...
+Wheel|Volant
+Wheel Configuration|Configutation du Volant
 Width|Largeur :
 Window Resolution|Résolution Fenêtrée
 Windows SPTI Driver|Pilote Windows SPTI
 Word|Word
 Word Write|Ecrire un Word
 Write|Ecrire
+Yaba Sanshiro ver.%1|Yaba Sanshiro ver.%1
+is developed by devMiyax|est développé par devMiyax
+Based on Yabause|est basé sur Yabause
 Yabause Cheat Files (*.yct);;All Files (*)|Fichiers de  Cheat Yabause (*ycf);;Tous les Fichiers (*)
 Yabause Qt GUI|Interface Graphique Qt pour Yabause
 Yabause Qt Gui<br />Based on Yabause %1<br /><a href="http://yabause.org">http://yabause.org</a><br />The Yabause Team<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>|Yabause Qt Gui<br />Basé sur Yabause %1 :<br /><a href="http://yabause.org">http://yabause.org</a><br />L'équipe de Yabause :<br /><a href="mailto:pasnox@gmail.com">Filipe AZEVEDO</a>
