@@ -2106,6 +2106,7 @@ SHADER_VERSION
 "  int code;\n"
 "  int valid;\n"
 "  int isRGB;\n"
+"  int shadow;\n"
 "}; \n"
 
 "vec3 getRGB(int colindex) {\n"
