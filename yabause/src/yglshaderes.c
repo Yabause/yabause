@@ -921,12 +921,13 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 // we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
 #define GOURAUD_PROCESS(A) \
 "if ((int("Stringify(A)".b*255.0) & 0x4) == 0x4) {\n \
-  int colindex = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8))&0x7FFF;\n \
-  int R = int((float(colindex & 0x1F)/31.0 + v_vtxcolor.r)*31.0);\n \
-  int G = int((float(((colindex & 0x3E0) >> 5) & 0x1F)/31.0 + v_vtxcolor.g)*31.0);\n \
-  int B = int((float(((colindex & 0x7C00) >> 5) & 0x1F)/31.0 + v_vtxcolor.b)*31.0);\n \
+  int colindex = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n \
+  int R = int(clamp((float((colindex >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
+  int G = int(clamp((float((colindex >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
+  int B = int(clamp((float((colindex >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
+  int MSB = (colindex & 0x8000) >> 8;\n \
   "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((G>>3) | (B<<2) | 0x80)/255.0;\n \
+  "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n \
 }\n"
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
@@ -942,8 +943,7 @@ SHADER_VERSION
 "void main() {\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-//Gouraud still does not work
-//GOURAUD_PROCESS(spriteColor)
+GOURAUD_PROCESS(spriteColor)
 "  fragColor = spriteColor;"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
