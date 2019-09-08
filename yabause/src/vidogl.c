@@ -475,9 +475,13 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
       j = 0;
       while (j < spritew) {
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
-        *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot >> 4) | colorBank));
+        if (((dot >> 4) == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if (((dot >> 4) == 0x0F) && !END) *texture->textdata++ = 0x00;
+        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot >> 4) | colorBank));
         j += 1;
-        *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0xF) | colorBank));
+        if (((dot & 0xF) == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if (((dot & 0xF) == 0x0F) && !END) *texture->textdata++ = 0x00;
+        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0xF) | colorBank));
         j += 1;
         charAddr += 1;
       }
@@ -500,9 +504,40 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
       while (j < spritew)
       {
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
-        *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot >> 4) * 2 + colorLut));
+        if (!END && endcnt >= 2) {
+          *texture->textdata++ = 0;
+        }
+        else if (((dot >> 4) == 0) && !SPD)
+        {
+          *texture->textdata++ = 0;
+        }
+        else if (((dot >> 4) == 0x0F) && !END) // 6. Commandtable end code
+        {
+          *texture->textdata++ = 0;
+          endcnt++;
+        }
+        else {
+          u16 temp = Vdp1RamReadWord(NULL, Vdp1Ram, ((dot >> 4) * 2 + colorLut));
+          *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, temp);
+        }
         j += 1;
-        *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0xF) * 2 + colorLut));
+        if (!END && endcnt >= 2)
+        {
+          *texture->textdata++ = 0x00;
+        }
+        else if (((dot & 0xF) == 0) && !SPD)
+        {
+          *texture->textdata++ = 0x00;
+        }
+        else if (((dot & 0x0F) == 0x0F) && !END)
+        {
+          *texture->textdata++ = 0x0;
+          endcnt++;
+        }
+        else {
+          temp = Vdp1RamReadWord(NULL, Vdp1Ram, ((dot & 0xF) * 2 + colorLut));
+          *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, temp);
+        }
         j += 1;
         charAddr += 1;
       }
@@ -523,7 +558,9 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
       {
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0x3F) | colorBank));
+        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x00;
+        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0x3F) | colorBank));
       }
       texture->textdata += texture->w;
     }
@@ -541,7 +578,9 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
       {
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0x7F) | colorBank));
+        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x00;
+        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, ((dot & 0x7F) | colorBank));
       }
       texture->textdata += texture->w;
     }
@@ -557,7 +596,9 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
       for (j = 0; j < spritew; j++) {
         dot = Vdp1RamReadByte(NULL, Vdp1Ram, charAddr);
         charAddr++;
-        *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, (dot | colorBank));
+        if ((dot == 0) && !SPD) *texture->textdata++ = 0x00;
+        else if ((dot == 0xFF) && !END) *texture->textdata++ = 0x0;
+        else *texture->textdata++ = VDP1COLOR(cmd->CMDPMOD, (dot | colorBank));
       }
       texture->textdata += texture->w;
     }
@@ -4431,19 +4472,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     }
     gouraud = 1;
   }
-//Ca semble inutile ce bout de code
-  if (color & 0x8000)
-    priority = varVdp2Regs->PRISA & 0x7;
-  else
-  {
-    Vdp1ProcessSpritePixel(varVdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
-#ifdef WORDS_BIGENDIAN
-    priority = ((u8 *)&varVdp2Regs->PRISA)[priority ^ 1] & 0x7;
-#else
-    priority = ((u8 *)&varVdp2Regs->PRISA)[priority] & 0x7;
-#endif
-  }
-
 
   sprite.priority = 0;
   sprite.w = 1;

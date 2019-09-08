@@ -921,14 +921,30 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 // we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
 #define GOURAUD_PROCESS(A) \
 "if ((int("Stringify(A)".b*255.0) & 0x4) == 0x4) {\n \
-  int colindex = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n \
-  int R = int(clamp((float((colindex >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
-  int G = int(clamp((float((colindex >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
-  int B = int(clamp((float((colindex >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
-  int MSB = (colindex & 0x8000) >> 8;\n \
+  int R = int(clamp((float((col"Stringify(A)" >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
+  int G = int(clamp((float((col"Stringify(A)" >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
+  int B = int(clamp((float((col"Stringify(A)" >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
+  int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
   "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
   "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n \
 }\n"
+
+#define HALF_TRANPARENT_MIX(A, B) \
+"int R = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+int G = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+int B = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
+
+#define COLINDEX(A) \
+"int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
+#define COLZERO(A) \
+"if (col"Stringify(A)" == 0) discard;\n"
+
+#define CMDPMOD(A) \
+"int mod"Stringify(A)" = (int("Stringify(A)".b*255.0) | (int("Stringify(A)".a*255.0)<<8));\n"
 
 const GLchar Yglprg_vdp1_gouraudshading_f[] =
 SHADER_VERSION
@@ -943,6 +959,11 @@ SHADER_VERSION
 "void main() {\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+COLINDEX(spriteColor)
+COLZERO(spriteColor)
+CMDPMOD(spriteColor)
+// SPD_CODE(spriteColor)
+// END_CODE(spriteColor)
 GOURAUD_PROCESS(spriteColor)
 "  fragColor = spriteColor;"
 "}\n";
@@ -1019,34 +1040,30 @@ const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
 const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
 
 const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
-      SHADER_VERSION
-      "#ifdef GL_ES\n"
-      "precision highp float;         \n"
-      "#endif\n"
-      "uniform highp sampler2D u_sprite;      \n"
-      "uniform highp sampler2D u_fbo;         \n"
-      "in vec4 v_texcoord;         \n"
-      "in vec4 v_vtxcolor;         \n"
-      "out vec4 fragColor; \n "
-      "void main() {    \n"
-      "  int mode;\n"
-      "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-      "  if( spriteColor.a == 0.0 ) discard;         \n"
-      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-      "  int additional = int(fboColor.a * 255.0);\n"
-      "  mode = int(spriteColor.b*255.0)&0x7; \n"
-      "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-      "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
-      "  if( (additional & 0x40) == 0 ) \n"
-      "  { \n"
-      "    fragColor = spriteColor*0.5 + fboColor*0.5;     \n"
-      "    fragColor.a = spriteColor.a; \n"
-      "  }else{         \n"
-      "    fragColor = spriteColor;  \n"
-      "  }   \n"
-      "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-      "}\n";
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float;\n"
+"#endif\n"
+"uniform sampler2D u_sprite;\n"
+"uniform sampler2D u_fbo;         \n"
+"in vec4 v_texcoord;\n"
+"in vec4 v_vtxcolor;\n"
+"out vec4 fragColor; \n"
+"out vec4 fragColorAttr; \n"
+"void main() {\n"
+"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+COLINDEX(spriteColor)
+COLZERO(spriteColor)
+COLINDEX(fboColor)
+CMDPMOD(spriteColor)
+// SPD_CODE(spriteColor)
+// END_CODE(spriteColor)
+HALF_TRANPARENT_MIX(spriteColor, fboColor)
+GOURAUD_PROCESS(spriteColor)
+"  fragColor = spriteColor;"
+"}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_f[] = {Yglprg_vdp1_gouraudshading_hf_f, NULL};
 
 
@@ -1132,18 +1149,14 @@ const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
 const GLchar Yglprg_vdp1_mesh_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
-"precision highp float;         \n"
+"precision highp float;\n"
 "#endif\n"
-"uniform sampler2D u_sprite;      \n"
-"uniform sampler2D u_fbo;         \n"
-"in vec4 v_texcoord;         \n"
-"in vec4 v_vtxcolor;         \n"
-"out vec4 fragColor; \n "
+"uniform sampler2D u_sprite;\n"
+"in vec4 v_texcoord;\n"
+"in vec4 v_vtxcolor;\n"
+"out vec4 fragColor; \n"
 "out vec4 fragColorAttr; \n"
-"void main() {    \n"
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;         \n"
+"void main() {\n"
 "  if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n"
 "    if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n"
 "       discard;"
@@ -1153,9 +1166,15 @@ SHADER_VERSION
 "       discard;"
 "    } \n"
 "  } \n"
-"  fragColorAttr = vec4(0.0);\n"
-"  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
-"  fragColor.a = spriteColor.a;  \n"
+"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+COLINDEX(spriteColor)
+COLZERO(spriteColor)
+CMDPMOD(spriteColor)
+// SPD_CODE(spriteColor)
+// END_CODE(spriteColor)
+GOURAUD_PROCESS(spriteColor)
+"  fragColor = spriteColor;"
 "}\n";
 
 //utiliser un bit dans la caouche attribut pour ameliorer le blend et faire une couche a 50%
@@ -1433,6 +1452,7 @@ refrence:
 const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  FBCol getFB(int x){ \n"
 "  FBCol ret;\n"
+"  int msb = 0;\n"
 "  ret.color = vec4(0.0);\n"
 "  ret.prio = 0;\n"
 "  ret.meshColor = vec4(0.0);\n"
@@ -1443,6 +1463,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
 "  FBCol fb = getVDP1PixelCode(s_vdp1FrameBuffer, ivec2(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+ivec2(x, 0)));\n"
+"  msb = fb.msb;\n"
 "  vec4 tmpColor = vec4(0.0);\n"
 "  int line = int((u_vheight-gl_FragCoord.y) * u_emu_height)*24;\n"
 "  vec3 u_coloroffset = vec3(texelFetch(s_vdp2reg, ivec2(17 + line,0), 0).r, texelFetch(s_vdp2reg, ivec2(18+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(19+line,0), 0).r);\n"
@@ -1506,16 +1527,20 @@ const GLchar Yglprg_vdp2_sprite_type_0[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
+"    ret.code = ret.code & 0x7FFF;\n"
 "    ret.prio = (ret.code >> 14) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
 "    ret.code = ret.code & 0x7FF;\n"
@@ -1538,16 +1563,19 @@ const GLchar Yglprg_vdp2_sprite_type_1[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 13) & 0x7;\n"
 "    ret.cc = (ret.code >> 11) & 0x3;\n"
 "    ret.code = ret.code & 0x7FF;\n"
@@ -1570,16 +1598,19 @@ const GLchar Yglprg_vdp2_sprite_type_2[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+// "    ret.msb = ret.code >> 15;\n"
 "    ret.shadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 14) & 0x1;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
@@ -1603,16 +1634,19 @@ const GLchar Yglprg_vdp2_sprite_type_3[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+// "    ret.msb = ret.code >> 15;\n"
 "    ret.shadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 13) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x3;\n"
@@ -1636,16 +1670,19 @@ const GLchar Yglprg_vdp2_sprite_type_4[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+// "    ret.msb = ret.code >> 15;\n"
 "    ret.shadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 13) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
@@ -1669,16 +1706,19 @@ const GLchar Yglprg_vdp2_sprite_type_5[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+// "    ret.msb = ret.code >> 15;\n"
 "    ret.shadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 11) & 0x1;\n"
@@ -1702,16 +1742,19 @@ const GLchar Yglprg_vdp2_sprite_type_6[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+// "    ret.msb = ret.code >> 15;\n"
 "    ret.shadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 10) & 0x3;\n"
@@ -1735,16 +1778,19 @@ const GLchar Yglprg_vdp2_sprite_type_7[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+// "    ret.msb = ret.code >> 15;\n"
 "    ret.shadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 9) & 0x7;\n"
@@ -1768,16 +1814,19 @@ const GLchar Yglprg_vdp2_sprite_type_8[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 7) & 0x1;\n"
 "    ret.code = ret.code & 0x7F;\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
@@ -1799,16 +1848,19 @@ const GLchar Yglprg_vdp2_sprite_type_9[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 7) & 0x1;\n"
 "    ret.cc = (ret.code >> 6) & 0x1;\n"
 "    ret.code = ret.code & 0x3F;\n"
@@ -1831,16 +1883,19 @@ const GLchar Yglprg_vdp2_sprite_type_A[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 6) & 0x3;\n"
 "    ret.code = ret.code & 0x3F;\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
@@ -1862,16 +1917,19 @@ const GLchar Yglprg_vdp2_sprite_type_B[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.cc = (ret.code >> 6) & 0x3;\n"
 "    ret.code = ret.code & 0x3F;\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
@@ -1893,16 +1951,19 @@ const GLchar Yglprg_vdp2_sprite_type_C[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 7) & 0x1;\n"
 "    ret.code = ret.code & 0xFF;\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
@@ -1924,16 +1985,19 @@ const GLchar Yglprg_vdp2_sprite_type_D[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 7) & 0x1;\n"
 "    ret.cc = (ret.code >> 6) & 0x1;\n"
 "    ret.code = ret.code & 0xFF;\n"
@@ -1956,16 +2020,19 @@ const GLchar Yglprg_vdp2_sprite_type_E[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 6) & 0x3;\n"
 "    ret.code = ret.code & 0xFF;\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
@@ -1987,16 +2054,19 @@ const GLchar Yglprg_vdp2_sprite_type_F[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.shadow = 0;\n"
+"  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
 "  ret.code = int(col.r*255.0) | (int(col.g*255.0) << 8);\n"
 "  if (isRGBCode(ret.code)) {\n"
+"    ret.msb = 1;\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
+"    ret.msb = ret.code >> 15;\n"
 "    ret.cc = (ret.code >> 6) & 0x3;\n"
 "    ret.code = ret.code & 0xFF;\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
@@ -2055,7 +2125,9 @@ SHADER_VERSION
 "vec4 FBShadow = vec4(0.0);\n"
 "int FBPrio = 0;\n"
 "int FBMesh = 0;\n"
+"int FBRgb = 0;\n"
 "int FBMeshPrio = 0;\n"
+"int FBMsb = 0;\n"
 "int NoVdp1 = 0;\n"
 
 #ifdef DEBUG_BLIT
@@ -2093,6 +2165,7 @@ SHADER_VERSION
 "  int isRGB; \n"
 "  int isSprite; \n"
 "  int layer; \n"
+"  int msb; \n"
 "}; \n"
 
 "struct FBCol \n"
@@ -2107,6 +2180,7 @@ SHADER_VERSION
 "  int valid;\n"
 "  int isRGB;\n"
 "  int shadow;\n"
+"  int msb;\n"
 "}; \n"
 
 "vec3 getRGB(int colindex) {\n"
@@ -2148,6 +2222,7 @@ static const char vdp2blit_end_f[] =
 "  empty.layer = -1;\n"
 "  empty.meshColor = vec4(0.0);\n"
 "  empty.mesh = 0;\n"
+"  empty.msb = 0;\n"
 "  ret = empty;\n"
 "  int priority; \n"
 "  int alpha; \n"
@@ -2155,10 +2230,11 @@ static const char vdp2blit_end_f[] =
 "    ret.mode = int(FBColor.a*255.0)&0x7; \n"
 "    ret.lncl = u_lncl[6];\n"
 "    ret.Color = FBColor; \n"
+"    ret.msb = FBMsb;\n"
 "    remPrio = remPrio - 1;\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.isRGB = 0;\n" //Shall not be the case always... Need to get RGB format per pixel
+"    ret.isRGB = FBRgb;\n" //Shall not be the case always... Need to get RGB format per pixel
 "    ret.isSprite = 1;\n"
 "    ret.layer = 6;\n"
 "    if (remPrio == 0) return ret;\n"
@@ -2328,6 +2404,8 @@ static const char vdp2blit_end_f[] =
 "  testFB = tmp.color;\n"
 "  FBColor = tmp.color;\n"
 "  FBPrio = tmp.prio;\n"
+"  FBRgb = tmp.isRGB;\n"
+"  FBMsb = tmp.msb;\n"
 "  FBShadow = tmp.meshColor;\n"
 "  FBMeshPrio = tmp.meshPrio;\n"
 "  FBMesh = tmp.mesh;\n"
@@ -2357,7 +2435,7 @@ static const char vdp2blit_end_f[] =
 "          if (foundColor1 == 0) { \n"
 "            prio.mode = (prio.mode & 0x7); \n"
 "            if (prio.isSprite == 0) {\n"
-"              if ((int(prio.Color.b*255.0)&0x1) == 0) {\n"
+"              if (prio.msb == 0) {\n"
                  //Special color calulation mode => CC is off on this pixel
 "                prio.mode = 1;\n"
 "                prio.Color.a = 1.0;\n"
@@ -2598,9 +2676,9 @@ int initDrawShaderCode() {
 }
 
 int YglInitDrawFrameBufferShaders(int id) {
- printf ("Use prog %d\n", id); //16
+ //printf ("Use prog %d\n", id); //16
  int arrayid = id-PG_VDP2_DRAWFRAMEBUFF_NONE;
- printf ("getArray %d\n", arrayid); //16
+ //printf ("getArray %d\n", arrayid); //16
     YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
     if (YglInitShader(id, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_f[arrayid], 10, NULL, NULL, NULL) != 0) { printf("Error init prog %d\n",id); abort(); }
     Ygl_initDrawFrameBuffershader(id);
