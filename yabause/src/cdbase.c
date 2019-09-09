@@ -1776,9 +1776,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
          if (currentTrack->isZip != 1) {
            num_read = fread(buffer, 2448, 1, currentTrack->fp);
          } else {
-           if ((tr->size - offset) < 2448) return 0;
-           memcpy(buffer, zipBuffer, 2448);
-           zipBuffer+=2448;
+           int delta = ((tr->size - offset) < 2448)?(tr->size - offset):2448;
+           memcpy(buffer, zipBuffer, delta);
+           zipBuffer+=delta;
          }
       }
       else
@@ -1803,9 +1803,10 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
            fseek(currentTrack->fp, 2352, SEEK_CUR);
            num_read = fread(subcode_buffer + 192, 96, 1, currentTrack->fp);
          } else {
-           if ((tr->size - offset) < 2352) return 0;
-           memcpy(buffer, zipBuffer, 2352);
-           zipBuffer+=2352;
+           int delta = ((tr->size - offset) < 2352)?(tr->size - offset):2352;
+           //if ((tr->size - offset) < 2352) return 0;
+           memcpy(buffer, zipBuffer, delta);
+           zipBuffer+=delta;
            memcpy(&subcode_buffer[0], zipBuffer, 96);
            memcpy(&subcode_buffer[96], zipBuffer, 96);
            memcpy(&subcode_buffer[192], zipBuffer, 96);
@@ -1821,9 +1822,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
         // Generate subcodes here
         num_read = fread(buffer, 2352, 1, currentTrack->fp);
       } else {
-        if ((tr->size - offset) < 2352) return 0;
-        memcpy(buffer, zipBuffer, 2352);
-        zipBuffer+=2352;
+        int delta = ((tr->size - offset) < 2352)?(tr->size - offset):2352;
+        memcpy(buffer, zipBuffer, delta);
+        zipBuffer+=delta;
       }
    }
    else if (currentTrack->sector_size == 2048)
@@ -1832,9 +1833,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
       if (currentTrack->isZip != 1) {
         num_read = fread((char *)buffer + 0x10, 2048, 1, currentTrack->fp);
       } else {
-        if ((tr->size - offset) < 2048) return 0;
-        memcpy((char *)buffer + 0x10, zipBuffer, 2048);
-        zipBuffer+=2048;
+        int delta = ((tr->size - offset) < 2048)?(tr->size - offset):2048;
+        memcpy((char *)buffer + 0x10, zipBuffer, delta);
+        zipBuffer+=delta;
       }
    }
 	return 1;
