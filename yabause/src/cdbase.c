@@ -566,6 +566,10 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          trackfp_size = ftell(trackfp);
          fseek(trackfp, 0, SEEK_SET);
          current_file_id++;
+         if(track_num>0) {
+           trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
+           fad = trk[track_num-1].fad_end;
+         }
          continue;
       }
 
@@ -579,11 +583,6 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          trk[track_num-1].fp = trackfp;
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].file_id = current_file_id;
-
-         if (track_num > 1) {
-           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)
@@ -612,6 +611,12 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
             fad += MSF_TO_FAD(min, sec, frame) + pregap;
             trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
+            CDLOG("Start[%d] %d\n", track_num, trk[track_num-1].fad_start);
+            if (track_num > 1) {
+              trk[track_num-2].fad_end = trk[track_num-1].fad_start-1;
+              CDLOG("End[%d] %d\n", track_num-1, trk[track_num-2].fad_end);
+            }
+
          }
       }
       else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
