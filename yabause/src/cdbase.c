@@ -512,7 +512,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
    long size;
    char* temp_buffer;
-   unsigned int track_num;
+   unsigned int track_num = 0;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
    track_info_struct trk[100];
@@ -521,6 +521,8 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    FILE *trackfp = NULL;
    int trackfp_size = 0;
    int fad = 150;
+   int offset;
+   int cumulatedfad = 0;
 
 	memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
@@ -555,6 +557,9 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
       if (strncmp(temp_buffer, "FILE", 4) == 0)
       {
+         if (track_num>0) {
+           cumulatedfad += trackfp_size/trk[track_num-1].sector_size;
+         }
          matched = fscanf(iso_file, " \"%[^\"]\"", temp_buffer);
          trackfp = OpenFile(temp_buffer, cuefilename);
          if (trackfp == NULL) {
@@ -566,6 +571,8 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          trackfp_size = ftell(trackfp);
          fseek(trackfp, 0, SEEK_SET);
          current_file_id++;
+         pregap = 0;
+         fad = cumulatedfad;
          continue;
       }
 
@@ -579,11 +586,6 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          trk[track_num-1].fp = trackfp;
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].file_id = current_file_id;
-
-         if (track_num > 1) {
-           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)
@@ -605,13 +607,18 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 
          if (fscanf(iso_file, "%d %d:%d:%d\r\n", &indexnum, &min, &sec, &frame) == EOF)
             break;
-
          if (indexnum == 1)
          {
             // Update toc entry
             fad += MSF_TO_FAD(min, sec, frame) + pregap;
             trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
+            offset = trk[track_num-1].file_offset;
+
+            if (track_num > 1) {
+                //fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+                trk[track_num-2].fad_end = fad;//trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+            }
          }
       }
       else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
@@ -628,7 +635,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
       }
    }
 
-   trk[track_num].file_offset = 0;
+   trk[track_num].file_offset = offset;
    trk[track_num].fad_start = 0xFFFFFFFF;
 
    trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
@@ -653,6 +660,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    free(temp_buffer);
 
    fclose(iso_file);
+
    return 0;
 }
 
@@ -791,7 +799,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
 {
    long size;
    char* temp_buffer;
-   unsigned int track_num;
+   unsigned int track_num = 0;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
    track_info_struct trk[100];
@@ -800,6 +808,8 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    char *trackfp = NULL;
    int trackfp_size = 0;
    int fad = 150;
+   int offset;
+   int cumulatedfad = 0;
    int pos;
 
    JZEndRecord* endRecord = (JZEndRecord*)malloc(sizeof(JZEndRecord));
@@ -809,6 +819,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    JZFile *zip;
    FILE *iso_file;
    ZipEntry *cue;
+
 
 
   zip = jzfile_from_stdio_file(fp);
@@ -856,6 +867,11 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
       if (strncmp(temp_buffer, "FILE", 4) == 0)
       {
          ZipEntry *f;
+         if (track_num>0) {
+           YuiMsg("Ok %d\n", trk[track_num-1].sector_size);
+           cumulatedfad += trackfp_size/trk[track_num-1].sector_size;
+           YuiMsg("Cum %d\n", cumulatedfad);
+         }
          matched = sscanf(&data[index], " \"%[^\"]\"%n", temp_buffer, &pos);
          index+= pos;
          f = getZipFileLocalInfo(zip, endRecord, temp_buffer, 1);
@@ -864,6 +880,8 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
          current_file_id++;
          trackfp = strdup(temp_buffer);
          tracktr = f;
+         pregap = 0;
+         fad = cumulatedfad;
          continue;
       }
 
@@ -880,10 +898,6 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].tr = tracktr;
          trk[track_num-1].file_id = current_file_id;
-         if (track_num > 1) {
-           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)
@@ -913,6 +927,11 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
             fad += MSF_TO_FAD(min, sec, frame) + pregap;
             trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
+            offset = trk[track_num-1].file_offset;
+            if (track_num > 1) {
+                //fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+                trk[track_num-2].fad_end = fad;//trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
+            }
          }
       }
       else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
@@ -930,7 +949,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
       }
    }
 
-   trk[track_num].file_offset = 0;
+   trk[track_num].file_offset = offset;
    trk[track_num].fad_start = 0xFFFFFFFF;
 
    trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
