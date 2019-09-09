@@ -512,7 +512,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
 {
    long size;
    char* temp_buffer;
-   unsigned int track_num;
+   unsigned int track_num = 0;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
    track_info_struct trk[100];
@@ -583,11 +583,6 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          trk[track_num-1].fp = trackfp;
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].file_id = current_file_id;
-
-         if (track_num > 1) {
-           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)
@@ -807,7 +802,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
 {
    long size;
    char* temp_buffer;
-   unsigned int track_num;
+   unsigned int track_num = 0;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
    track_info_struct trk[100];
@@ -897,10 +892,6 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].tr = tracktr;
          trk[track_num-1].file_id = current_file_id;
-         if (track_num > 1) {
-           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)

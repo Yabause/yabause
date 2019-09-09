@@ -747,7 +747,7 @@ static u32* getVdp1DrawingFBMemWrite() {
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo);
   fbptr = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 0x40000*2, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
-  memcpy(fbptr, tmp, 512*256*4);
+  // memcpy(fbptr, tmp, 512*256*4);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   return fbptr;
 }
