@@ -450,7 +450,7 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
 {
    long size;
    char* temp_buffer;
-   unsigned int track_num;
+   unsigned int track_num = 0;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
    track_info_struct trk[100];
@@ -505,6 +505,10 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
          trackfp_size = filestream_tell(trackfp);
          filestream_seek(trackfp, 0, RETRO_VFS_SEEK_POSITION_START);
          current_file_id++;
+         if(track_num>0) {
+           trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
+           fad = trk[track_num-1].fad_end;
+         }
          continue;
       }
 
@@ -518,11 +522,6 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
          trk[track_num-1].fp = trackfp;
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].file_id = current_file_id;
-
-         if (track_num > 1) {
-           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)
@@ -551,6 +550,11 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
             fad += MSF_TO_FAD(min, sec, frame) + pregap;
             trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
+            CDLOG("Start[%d] %d\n", track_num, trk[track_num-1].fad_start);
+            if (track_num > 1) {
+              trk[track_num-2].fad_end = trk[track_num-1].fad_start-1;
+              CDLOG("End[%d] %d\n", track_num-1, trk[track_num-2].fad_end);
+            }
          }
       }
       else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
@@ -569,6 +573,13 @@ static int LoadBinCue(const char *cuefilename, RFILE *iso_file)
 
    trk[track_num].file_offset = 0;
    trk[track_num].fad_start = 0xFFFFFFFF;
+
+   if (track_num == 0) {
+     YabSetError(YAB_ERR_FILENOTFOUND, NULL);
+     free(disc.session);
+     disc.session = NULL;
+     return -1;
+   }
 
    trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
 
@@ -730,7 +741,7 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
 {
    long size;
    char* temp_buffer;
-   unsigned int track_num;
+   unsigned int track_num = 0;
    unsigned int indexnum, min, sec, frame;
    unsigned int pregap=0;
    track_info_struct trk[100];
@@ -802,6 +813,10 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
          current_file_id++;
          trackfp = strdup(temp_buffer);
          tracktr = f;
+         if(track_num > 0) {
+           trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
+           fad = trk[track_num-1].fad_end;
+         }
          continue;
       }
 
@@ -818,10 +833,6 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
          trk[track_num-1].file_size = trackfp_size;
          trk[track_num-1].tr = tracktr;
          trk[track_num-1].file_id = current_file_id;
-         if (track_num > 1) {
-           fad += (trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-           trk[track_num-2].fad_end = trk[track_num-2].fad_start+(trk[track_num-2].file_size-trk[track_num-2].file_offset)/trk[track_num-2].sector_size;
-         }
 
          if (strncmp(temp_buffer, "MODE1", 5) == 0 ||
             strncmp(temp_buffer, "MODE2", 5) == 0)
@@ -851,6 +862,11 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
             fad += MSF_TO_FAD(min, sec, frame) + pregap;
             trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
+            CDLOG("Start[%d] %d\n", track_num, trk[track_num-1].fad_start);
+            if (track_num > 1) {
+              trk[track_num-2].fad_end = trk[track_num-1].fad_start-1;
+              CDLOG("End[%d] %d\n", track_num-1, trk[track_num-2].fad_end);
+            }
          }
       }
       else if (strncmp(temp_buffer, "PREGAP", 6) == 0)
@@ -870,6 +886,13 @@ static int LoadBinCueInZip(const char *filename, RFILE *fp)
 
    trk[track_num].file_offset = 0;
    trk[track_num].fad_start = 0xFFFFFFFF;
+
+   if (track_num == 0) {
+     YabSetError(YAB_ERR_FILENOTFOUND, NULL);
+     free(disc.session);
+     disc.session = NULL;
+     return -1;
+   }
 
    trk[track_num-1].fad_end = trk[track_num-1].fad_start+(trk[track_num-1].file_size-trk[track_num-1].file_offset)/trk[track_num-1].sector_size;
 
@@ -1374,6 +1397,18 @@ static int LoadCCD(const char *ccd_filename, RFILE *iso_file)
 		int point;
 
 		sprintf(sect_name, "Entry %d", i);
+
+		isoTOC10[i].ctrladr = (GetIntCCD(&ccd, sect_name, "Control") << 4) | GetIntCCD(&ccd, sect_name, "ADR");
+		isoTOC10[i].tno = GetIntCCD(&ccd, sect_name, "TrackNo");
+		isoTOC10[i].point = GetIntCCD(&ccd, sect_name, "Point");
+		isoTOC10[i].min = GetIntCCD(&ccd, sect_name, "AMin");
+		isoTOC10[i].sec = 2;
+		isoTOC10[i].frame = 0;
+		isoTOC10[i].zero = GetIntCCD(&ccd, sect_name, "Zero");
+		isoTOC10[i].pmin = GetIntCCD(&ccd, sect_name, "PMin");
+		isoTOC10[i].psec = GetIntCCD(&ccd, sect_name, "PSec");
+		isoTOC10[i].pframe = GetIntCCD(&ccd, sect_name, "PFrame");
+
 		point = GetIntCCD(&ccd, sect_name, "Point");
 
 		if (point == 0xA1)
@@ -1586,6 +1621,8 @@ static int ISOCDInit(const char * iso) {
    }
 
    BuildTOC();
+   if (imgtype != IMG_CCD)
+      BuildTOC10();
    return 0;
 }
 
@@ -1650,10 +1687,6 @@ static int ISOCDGetStatus(void) {
 
 	return iso_cd_status;
 }
-
-//#define CDCORE_NORMAL 0
-//#define CDCORE_NODISC 2
-//#define CDCORE_OPEN   3
 
 static void ISOCDSetStatus(int status){
 	iso_cd_status = status;
@@ -1731,8 +1764,10 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
    offset = currentTrack->file_offset + (FAD-currentTrack->fad_start) * currentTrack->sector_size;
    
    if (currentTrack->isZip != 1) {
+      if (offset > currentTrack->file_size) offset = currentTrack->file_size;
       filestream_seek(currentTrack->fp, offset, RETRO_VFS_SEEK_POSITION_START);
    } else {
+     if (offset > tr->size) offset = tr->size;
      zipBuffer = &tr->zipBuffer[offset];
    }
 
@@ -1743,9 +1778,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
          if (currentTrack->isZip != 1) {
            num_read = filestream_read(currentTrack->fp, buffer, 2448);
          } else {
-           if ((tr->size - offset) < 2448) return 0;
-           memcpy(buffer, zipBuffer, 2448);
-           zipBuffer+=2448;
+           int delta = ((tr->size - offset) < 2448)?(tr->size - offset):2448;
+           memcpy(buffer, zipBuffer, delta);
+           zipBuffer+=delta;
          }
       }
       else
@@ -1771,9 +1806,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
             filestream_seek(currentTrack->fp, 2352, RETRO_VFS_SEEK_POSITION_CURRENT);
             num_read = filestream_read(currentTrack->fp, subcode_buffer + 192, 96);
          } else {
-            if ((tr->size - offset) < 2352) return 0;
-            memcpy(buffer, zipBuffer, 2352);
-            zipBuffer+=2352;
+            int delta = ((tr->size - offset) < 2352)?(tr->size - offset):2352;
+            memcpy(buffer, zipBuffer, delta);
+            zipBuffer+=delta;
             memcpy(&subcode_buffer[0], zipBuffer, 96);
             memcpy(&subcode_buffer[96], zipBuffer, 96);
             memcpy(&subcode_buffer[192], zipBuffer, 96);
@@ -1789,9 +1824,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
         // Generate subcodes here
         num_read = filestream_read(currentTrack->fp, buffer, 2352);
       } else {
-        if ((tr->size - offset) < 2352) return 0;
-        memcpy(buffer, zipBuffer, 2352);
-        zipBuffer+=2352;
+        int delta = ((tr->size - offset) < 2352)?(tr->size - offset):2352;
+        memcpy(buffer, zipBuffer, delta);
+        zipBuffer+=delta;
       }
    }
    else if (currentTrack->sector_size == 2048)
@@ -1800,9 +1835,9 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
       if (currentTrack->isZip != 1) {
         num_read = filestream_read(currentTrack->fp, (char *)buffer + 0x10, 2048);
       } else {
-        if ((tr->size - offset) < 2048) return 0;
-        memcpy((char *)buffer + 0x10, zipBuffer, 2048);
-        zipBuffer+=2048;
+        int delta = ((tr->size - offset) < 2048)?(tr->size - offset):2048;
+        memcpy((char *)buffer + 0x10, zipBuffer, delta);
+        zipBuffer+=delta;
       }
    }
 	return 1;
