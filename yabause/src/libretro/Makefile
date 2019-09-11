@@ -17,6 +17,8 @@ ARCH_IS_WINDOWS = 0
 # The following is broken upstream ?
 USE_PLAY_JIT = 0
 USE_SCSP2 = 0
+# debug tools, unneeded ?
+ENABLE_TSUNAMI = 0
 
 SPACE :=
 SPACE := $(SPACE) $(SPACE)

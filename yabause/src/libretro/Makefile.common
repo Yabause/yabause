@@ -53,8 +53,6 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/sh7034.c \
 	$(SOURCE_DIR)/smpc.c \
 	$(SOURCE_DIR)/ygr.c \
-	$(SOURCE_DIR)/tsunami/yab_tsunami.c \
-	$(SOURCE_DIR)/tsunami/Tsunami.c \
 	$(LIBCHDR_DIR)/src/chd.c \
 	$(LIBCHDR_DIR)/src/bitstream.c \
 	$(LIBCHDR_DIR)/src/huffman.c \
@@ -78,6 +76,12 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(ZLIB_DIR)/inflate.c \
 	$(ZLIB_DIR)/inftrees.c \
 	$(ZLIB_DIR)/zutil.c
+
+ifeq ($(ENABLE_TSUNAMI), 1)
+	FLAGS += -DENABLE_TSUNAMI=1
+	SOURCES_C += $(SOURCE_DIR)/tsunami/yab_tsunami.c \
+	$(SOURCE_DIR)/tsunami/Tsunami.c
+endif
 
 ifeq ($(HAVE_MUSASHI), 1)
 	SOURCES_C += $(SOURCE_DIR)/musashi/m68kcpu.c \

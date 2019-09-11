@@ -31,7 +31,9 @@
 #include "cs2.h"
 #include "ygr.h"
 #include <stdarg.h>
+#ifdef ENABLE_TSUNAMI
 #include "tsunami/yab_tsunami.h"
+#endif
 
 static INLINE u8 num2bcd(u8 num);
 static INLINE void fad2msf_bcd(s32 fad, u8 *msf);
@@ -166,7 +168,9 @@ void cd_drive_set_serial_bit(u8 bit)
 
    if (cdd_cxt.bit_counter == 8)
    {
+#ifdef ENABLE_TSUNAMI
       tsunami_log_value("CMD", cdd_cxt.received_data[cdd_cxt.byte_counter], 8);
+#endif
 
       cdd_cxt.byte_counter++;
       cdd_cxt.bit_counter = 0;
