@@ -16,3 +16,11 @@ yabause/.vs/yabause/v15/Browse.VC.opendb
 yabause/.vs/yabause/v15/ipch/AutoPCH/ac374fd6e6518240/YGLES.ipch
 yabause/.vs/slnx.sqlite-journal
 yabause/.vs/ProjectSettings.json
+*.ipch
+yabause/.vs/yabause/v15/.suo
+*.cache
+*.cache
+yabause/src/libchdr/deps/lzma-16.04/CS/7zip/Compress/LzmaAlone/obj/Debug/LzmaAlone.csprojAssemblyReference.cache
+yabause/src/libchdr/deps/lzma-16.04/CS/7zip/Compress/LzmaAlone/obj/Debug/LzmaAlone.csproj.CoreCompileInputs.cache
+yabause/src/libchdr/deps/lzma-16.04/CS/7zip/Compress/LzmaAlone/obj/Release/LzmaAlone.csproj.CoreCompileInputs.cache
+*.cache

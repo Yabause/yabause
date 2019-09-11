@@ -1763,10 +1763,11 @@ static int ISOCDReadSectorFAD(u32 FAD, void *buffer) {
      return 0;
    }
    offset = currentTrack->file_offset + (FAD-currentTrack->fad_start) * currentTrack->sector_size;
-   if (offset > tr->size) offset = tr->size;
    if (currentTrack->isZip != 1) {
+	 if (offset > currentTrack->file_size) offset = currentTrack->file_size;
      fseek(currentTrack->fp, offset, SEEK_SET);
    } else {
+	 if (offset > tr->size) offset = tr->size;
      zipBuffer = &tr->zipBuffer[offset];
 
    }
