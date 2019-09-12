@@ -2952,16 +2952,9 @@ void YglRenderVDP1(void) {
     glDisable(GL_STENCIL_TEST);
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
-    if ((level->prg[j].prgid == PG_VDP1_MSB_SHADOW) || (level->prg[j].prgid == PG_VDP1_MSB_SHADOW_TESS)) {
-      if (drawAttr != 1) {
-        glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe*2+1]);
-        drawAttr = 1;
-      }
-    } else {
-      if (drawAttr != 0) {
-        glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
-        drawAttr = 0;
-      }
+    if (drawAttr != 0) {
+      glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
+      drawAttr = 0;
     }
     _Ygl->vdp1On[_Ygl->drawframe] |= renderVDP1Level(level, j, &cprg, mat, varVdp2Regs);
   }

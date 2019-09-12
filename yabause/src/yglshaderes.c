@@ -172,11 +172,6 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   glEnableVertexAttribArray(prg->vertexp);
   glEnableVertexAttribArray(prg->texcoordp);
 
-  glStencilFunc(GL_GREATER,1,0x01);
-  glStencilMask(0x01);
-  glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-  glEnable(GL_STENCIL_TEST);
-
   if (param == NULL) return 0;
 
   glUniform2f(param->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
@@ -193,10 +188,10 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
   }
 
-  if (param->fbo_attr != -1){
-    glUniform1i(param->fbo_attr, 1);
+  if (param->fbo != -1){
+    glUniform1i(param->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
     #if !defined(_OGLES3_)
         if (glTextureBarrier) glTextureBarrier();
         else if (glTextureBarrierNV) glTextureBarrierNV();
@@ -209,7 +204,6 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     #endif
     glActiveTexture(GL_TEXTURE0);
   }
-
 
   return 0;
 }
@@ -226,7 +220,6 @@ int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
 }
 
 int Ygl_cleanupVdp1ShadowParam(void * p, YglTextureManager *tm){
-  glDisable(GL_STENCIL_TEST);
   return 0;
 }
 
@@ -995,23 +988,17 @@ SHADER_VERSION
 "precision highp float;\n"
 "#endif\n"
 "uniform sampler2D u_sprite;\n"
-"uniform highp sampler2D u_fbo_attr;\n"
+"uniform sampler2D u_fbo;\n"
 "in  vec4 v_texcoord;    \n"
-"out vec4 fragColorAttr; \n"
+"out vec4 fragColor; \n"
 "void main() {\n"
 "  int mode;\n"
 "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
 "  if( spriteColor.a == 0.0 ) discard;\n"
-"  int msb = 0;\n"
-"  fragColorAttr = texelFetch(u_fbo_attr,ivec2(gl_FragCoord.xy),0);\n"
-"  int oldmsb = (int(fragColorAttr.a * 255.0))>>7;\n"
-"  int prio = int(spriteColor.a * 255.0) & 0x7;\n"
-"  if ((int(spriteColor.a * 255.0) & 0xC0) == 0xC0) {\n"
-"    msb = (int(spriteColor.b*255.0)>>7);\n"
-"  }\n"
-"  if (msb == 0) discard;\n"
-"  fragColorAttr.a = float((msb | oldmsb)<<7 | prio)/255.0;\n"
+"  vec4 currentColor = texelFetch(u_fbo,addr,0);\n"
+"  currentColor.g = float(int(currentColor.g * 255.0)|0x80)/255.0;\n"
+"  fragColor = currentColor;\n"
 "}\n";
 const GLchar * pYglprg_vdp1_msb_shadow_f[] = {Yglprg_vdp1_msb_shadow_f, NULL};
 
@@ -1526,7 +1513,7 @@ const GLchar Yglprg_vdp2_sprite_type_0[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1562,7 +1549,7 @@ const GLchar Yglprg_vdp2_sprite_type_1[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1597,7 +1584,7 @@ const GLchar Yglprg_vdp2_sprite_type_2[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1611,7 +1598,7 @@ const GLchar Yglprg_vdp2_sprite_type_2[] =
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
 // "    ret.msb = ret.code >> 15;\n"
-"    ret.shadow = (ret.code >> 15) & 0x1;\n"
+"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 14) & 0x1;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
 "    ret.code = ret.code & 0x7FF;\n"
@@ -1633,7 +1620,7 @@ const GLchar Yglprg_vdp2_sprite_type_3[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1647,7 +1634,7 @@ const GLchar Yglprg_vdp2_sprite_type_3[] =
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
 // "    ret.msb = ret.code >> 15;\n"
-"    ret.shadow = (ret.code >> 15) & 0x1;\n"
+"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 13) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x3;\n"
 "    ret.code = ret.code & 0x7FF;\n"
@@ -1669,7 +1656,7 @@ const GLchar Yglprg_vdp2_sprite_type_4[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1683,7 +1670,7 @@ const GLchar Yglprg_vdp2_sprite_type_4[] =
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
 // "    ret.msb = ret.code >> 15;\n"
-"    ret.shadow = (ret.code >> 15) & 0x1;\n"
+"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 13) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
 "    ret.code = ret.code & 0x3FF;\n"
@@ -1705,7 +1692,7 @@ const GLchar Yglprg_vdp2_sprite_type_5[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1719,7 +1706,7 @@ const GLchar Yglprg_vdp2_sprite_type_5[] =
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
 // "    ret.msb = ret.code >> 15;\n"
-"    ret.shadow = (ret.code >> 15) & 0x1;\n"
+"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 11) & 0x1;\n"
 "    ret.code = ret.code & 0x7FF;\n"
@@ -1741,7 +1728,7 @@ const GLchar Yglprg_vdp2_sprite_type_6[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1755,7 +1742,7 @@ const GLchar Yglprg_vdp2_sprite_type_6[] =
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
 // "    ret.msb = ret.code >> 15;\n"
-"    ret.shadow = (ret.code >> 15) & 0x1;\n"
+"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 10) & 0x3;\n"
 "    ret.code = ret.code & 0x3FF;\n"
@@ -1777,7 +1764,7 @@ const GLchar Yglprg_vdp2_sprite_type_7[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1791,7 +1778,7 @@ const GLchar Yglprg_vdp2_sprite_type_7[] =
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
 // "    ret.msb = ret.code >> 15;\n"
-"    ret.shadow = (ret.code >> 15) & 0x1;\n"
+"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 9) & 0x7;\n"
 "    ret.code = ret.code & 0x1FF;\n"
@@ -1813,7 +1800,7 @@ const GLchar Yglprg_vdp2_sprite_type_8[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1847,7 +1834,7 @@ const GLchar Yglprg_vdp2_sprite_type_9[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1882,7 +1869,7 @@ const GLchar Yglprg_vdp2_sprite_type_A[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1916,7 +1903,7 @@ const GLchar Yglprg_vdp2_sprite_type_B[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1950,7 +1937,7 @@ const GLchar Yglprg_vdp2_sprite_type_C[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1984,7 +1971,7 @@ const GLchar Yglprg_vdp2_sprite_type_D[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -2019,7 +2006,7 @@ const GLchar Yglprg_vdp2_sprite_type_E[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -2053,7 +2040,7 @@ const GLchar Yglprg_vdp2_sprite_type_F[] =
 "  ret.code = 0;\n"
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
-"  ret.shadow = 0;\n"
+"  ret.MSBshadow = 0;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -2179,7 +2166,7 @@ SHADER_VERSION
 "  int code;\n"
 "  int valid;\n"
 "  int isRGB;\n"
-"  int shadow;\n"
+"  int MSBshadow;\n"
 "  int msb;\n"
 "}; \n"
 
