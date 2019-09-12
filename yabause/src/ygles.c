@@ -818,27 +818,27 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
     _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMemWrite(_Ygl->drawframe);
   }
 
-  // switch (type)
-  // {
-  // case 0:
-  //   T1WriteByte((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
-  //   full = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe],addr&(~0x1));
-  //   rgb = !((full>>15)&0x1);
-  //   T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(full&0xFFFF)));
-  //   break;
-  // case 1:
-  //   T1WriteWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
-  //   T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
-  //   break;
-  // case 2:
-  //   T1WriteLong((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
-  //   T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
-  //   rgb = !(((val>>16)>>15)&0x1);
-  //   T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(rgb, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
-  //   break;
-  // default:
-  //   break;
-  // }
+  switch (type)
+  {
+  case 0:
+    T1WriteByte((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
+    full = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe],addr&(~0x1));
+    rgb = !((full>>15)&0x1);
+    T1WriteLong(_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(0, (full&0xFFFF)));
+    break;
+  case 1:
+    T1WriteWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(0, (val&0xFFFF)));
+    break;
+  case 2:
+    T1WriteLong((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(0, (val&0xFFFF)));
+    rgb = !(((val>>16)>>15)&0x1);
+    T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(0, ((val>>16)&0xFFFF)));
+    break;
+  default:
+    break;
+  }
   if (val != 0) {
     _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 1;
   }
@@ -883,10 +883,10 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
         *(u8*)out = 0x0;
         break;
       case 1:
-        *(u16*)out = COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2));
+        *(u16*)out = T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2) & 0xFFFF;
         break;
       case 2:
-        *(u32*)out = (COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2))<<16)|(COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2+4)));
+        *(u32*)out = ((T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2)&0xFFFF)<<16)|((T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2+4)&0xFFFF));
         break;
       default:
         break;
@@ -1743,8 +1743,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   float *colv;
   texturecoordinate_struct texv[6];
   texturecoordinate_struct * tpos;
-
-//Ajouter un blend mode MSB_SHADOW et faire le rendu en deux passe de programme
 
   // Select Program
   switch (input->blendmode) {

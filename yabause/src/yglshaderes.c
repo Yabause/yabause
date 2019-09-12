@@ -2115,6 +2115,7 @@ SHADER_VERSION
 "int FBRgb = 0;\n"
 "int FBMeshPrio = 0;\n"
 "int FBMsb = 0;\n"
+"int FBMSBShadow = 0;\n"
 "int NoVdp1 = 0;\n"
 
 #ifdef DEBUG_BLIT
@@ -2393,6 +2394,7 @@ static const char vdp2blit_end_f[] =
 "  FBPrio = tmp.prio;\n"
 "  FBRgb = tmp.isRGB;\n"
 "  FBMsb = tmp.msb;\n"
+"  FBMSBShadow = tmp.MSBshadow;\n"
 "  FBShadow = tmp.meshColor;\n"
 "  FBMeshPrio = tmp.meshPrio;\n"
 "  FBMesh = tmp.mesh;\n"
@@ -3962,7 +3964,6 @@ SHADER_VERSION
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
 //"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
-"  if ((int(tex.r * 255.0)&0x80) == 0) discard;\n"
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
 "  fragColor.b = tex.g;         \n"
@@ -3984,7 +3985,6 @@ SHADER_VERSION
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
 //"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
-"  if ((int(tex.a * 255.0)&0x80) == 0) discard;\n"
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
 "  fragColor.b = tex.g;         \n"
