@@ -1743,7 +1743,6 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   float *colv;
   texturecoordinate_struct texv[6];
   texturecoordinate_struct * tpos;
-
   // Select Program
   switch (input->blendmode) {
     case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
@@ -1991,7 +1990,6 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    float q[4];
    int prg = PG_VDP1_GOURAUDSHADING;
    float * pos;
-
 
   switch (input->blendmode) {
     case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
@@ -2866,7 +2864,6 @@ void YglRenderVDP1(void) {
   GLuint cprg=0;
   int i,j;
   int status;
-  int drawAttr = -1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[Vdp1External.plot_trigger_line];
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   //YabThreadLock(_Ygl->mutex);
@@ -2950,13 +2947,7 @@ void YglRenderVDP1(void) {
     glDisable(GL_STENCIL_TEST);
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
-    if (drawAttr != 0) {
-      glDrawBuffers(2, &DrawBuffers[_Ygl->drawframe*2]);
-      drawAttr = 0;
-    }
     _Ygl->vdp1On[_Ygl->drawframe] |= renderVDP1Level(level, j, &cprg, mat, varVdp2Regs);
-  }
-  for( j=0;j<(level->prgcurrent+1); j++ ) {
     level->prg[j].currentQuad = 0;
   }
 

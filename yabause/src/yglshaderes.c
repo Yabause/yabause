@@ -77,10 +77,10 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
   param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
+
 }
 
 int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id){
-
   YglProgram * prg;
   YglVdp1CommonParam * param;
 
@@ -117,32 +117,12 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1i(param->fbo_attr, 2);
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
-    #if !defined(_OGLES3_)
-        if (glTextureBarrier) glTextureBarrier();
-        else if (glTextureBarrierNV) glTextureBarrierNV();
-    #else
-        if( glMemoryBarrier ){
-          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-        }else{
-          //glFinish();
-        }
-    #endif
   }
 
   if (param->fbo != -1){
     glUniform1i(param->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
-    #if !defined(_OGLES3_)
-        if (glTextureBarrier) glTextureBarrier();
-        else if (glTextureBarrierNV) glTextureBarrierNV();
-    #else
-        if( glMemoryBarrier ){
-          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-        }else{
-          //glFinish();
-        }
-    #endif
   }
 
   if ((param->fbo_attr != -1) || (param->fbo != -1)){
@@ -995,8 +975,9 @@ SHADER_VERSION
 "  int mode;\n"
 "  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;\n"
-"  vec4 currentColor = texelFetch(u_fbo,addr,0);\n"
+COLINDEX(spriteColor)
+COLZERO(spriteColor)
+"  vec4 currentColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
 "  currentColor.g = float(int(currentColor.g * 255.0)|0x80)/255.0;\n"
 "  fragColor = currentColor;\n"
 "}\n";
@@ -1275,7 +1256,7 @@ SHADER_VERSION
 "precision highp float;\n"
 "#endif\n"
 "uniform sampler2D u_sprite;\n"
-"uniform highp sampler2D u_fbo;\n"
+"uniform sampler2D u_fbo;\n"
 "in vec4 v_texcoord;\n"
 "out vec4 fragColor; \n "
 "void main() { \n"
@@ -1477,6 +1458,17 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "    }\n"
 "  }else{ // direct color \n"
 "    tmpColor = fb.color;\n"
+"  } \n"
+"  if ((fb.MSBshadow) != 0) {\n"
+"    if (tmpColor.rgb == vec3(0.0)) {\n"
+"      alpha = 0x78;\n"
+"      vdp1mode = 5;\n"
+"      fbmode = 0;\n"
+//"    } else { \n"
+//"      if (int(texelFetch(s_vdp2reg, ivec2((additionalAttr & 0x7)+8+line,0), 0).r*255.0)-1 == depth) {\n"
+//"        tmpColor.rgb = tmpColor.rgb * 0.5;\n"
+//"      }\n"
+"    }\n"
 "  } \n"
 "  tmpColor.rgb = clamp(tmpColor.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
 "  if (fbmode != 0) {\n";
@@ -2969,10 +2961,6 @@ int YglProgramInit()
 
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_SHADOW], &shadow);
 
-   shadow.sprite = glGetUniformLocation(_prgid[PG_VDP1_SHADOW], (const GLchar *)"u_sprite");
-   shadow.fbo = glGetUniformLocation(_prgid[PG_VDP1_SHADOW], (const GLchar *)"u_fbo");
-
-
    //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VDP1_GOURAUDSHADING_HALFTRANS\n");
 
@@ -3261,8 +3249,8 @@ int YglProgramChange( YglLevel * level, int prgid )
    }
    else if (prgid == PG_VDP1_MSB_SHADOW)
    {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1ShadowParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1ShadowParam;
+     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
+     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &id_msb_s;
      current->vertexp = 0;
      current->texcoordp = 1;

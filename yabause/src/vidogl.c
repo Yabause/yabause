@@ -4013,9 +4013,6 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
   }
 
-
-
-
   if ((CMDPMOD & 4))
   {
     for (i = 0; i < 4; i++)
