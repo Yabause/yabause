@@ -910,6 +910,14 @@ int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
 "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
 "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
 
+#define HALF_LUMINANCE(A) \
+"int R = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+int G = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+int B = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
+
 #define COLINDEX(A) \
 "int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
 
@@ -1192,9 +1200,11 @@ const GLchar Yglprg_vdp1_half_luminance_v[] =
       "uniform vec2 u_texsize;    \n"
       "layout (location = 0) in vec4 a_position;   \n"
       "layout (location = 1) in vec4 a_texcoord;   \n"
-      "out   vec4 v_texcoord;     \n"
-      "void main()       \n"
-      "{ \n"
+      "layout (location = 2) in vec4 a_grcolor;     \n"
+      "out  vec4 v_texcoord;    \n"
+      "out  vec4 v_vtxcolor;    \n"
+      "void main() { \n"
+      "   v_vtxcolor  = a_grcolor;   \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
       "   v_texcoord  = a_texcoord; \n"
       "   v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
@@ -1208,19 +1218,19 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "precision highp float; \n"
       "#endif\n"
       "in vec4 v_texcoord; \n"
+      "in vec4 v_vtxcolor;\n"
       "uniform sampler2D s_texture;  \n"
       "out vec4 fragColor; \n"
-      "out vec4 fragColorAttr; \n"
       "void main()   \n"
       "{  \n"
       "  ivec2 addr = ivec2(vec2(textureSize(s_texture, 0)) * v_texcoord.st / v_texcoord.q); \n"
       "  vec4 spriteColor = texelFetch(s_texture,addr,0);\n"
-      "  if( spriteColor.a == 0.0 ) discard;         \n"
-      "  fragColor.r = spriteColor.r * 0.5;\n "
-      "  fragColor.g = spriteColor.g * 0.5;\n "
-      "  fragColor.b = spriteColor.b * 0.5;\n "
-      "  fragColorAttr = vec4(0.0);\n"
-      "  fragColor.a = spriteColor.a;\n "
+      COLINDEX(spriteColor)
+      COLZERO(spriteColor)
+      CMDPMOD(spriteColor)
+      HALF_LUMINANCE(spriteColor)
+      GOURAUD_PROCESS(spriteColor)
+      "  fragColor = spriteColor;"
       "}  \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
 static YglVdp1CommonParam half_luminance = { 0 };
