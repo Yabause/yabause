@@ -563,31 +563,19 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           endcnt++;
         }
         else {
-          temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
-          if (temp & 0x8000) {
-            if (MSB_SHADOW) {
+          const int colorindex = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
+          if ( (colorindex & 0x8000) && MSB_SHADOW) {
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          } else if (colorindex != 0x0000) {
+            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
             } else {
-              alpha = 0x80 | (colorcl << 3) | 0;
-              *texture->textdata++ = SAT2YAB1(alpha, temp);
-            }
-          } else if (temp != 0x0000) {
-            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
-            if (shadow != 0) {
-              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-            }
-            else {
-              if (normalshadow) {
+              temp = colorindex;
+              Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
+              if (shadow || normalshadow) {
                 *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-              }
-              else {
-                const int colorindex = temp;
-                if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-                  *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-                }
-                else {
-                  *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
-                }
+              } else {
+                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp);
               }
             }
           } else {
@@ -611,37 +599,22 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           endcnt++;
         }
         else {
-          temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
-
-          if (temp & 0x8000)
+          const int colorindex = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
+          if ( (colorindex & 0x8000) && MSB_SHADOW )
           {
-            if (MSB_SHADOW) {
-              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-            }
-            else {
-              alpha = 0x80 | (colorcl << 3) | 0;
-              *texture->textdata++ = SAT2YAB1(alpha, temp);
-            }
+             *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
           }
-          else if (temp != 0x0000)
+          else if (colorindex != 0x0000)
           {
-            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
-            if (shadow != 0)
-            {
-              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-            }
-            else {
-              if (normalshadow) {
+            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+            } else {
+              temp = colorindex;
+              Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
+              if (shadow || normalshadow) {
                 *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-              }
-              else {
-                const int colorindex = temp;
-                if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-                  *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-                }
-                else {
-                  *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
-                }
+              } else {
+                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp);
               }
             }
           }
