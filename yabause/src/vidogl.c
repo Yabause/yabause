@@ -1921,6 +1921,129 @@ static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr) {
   return color;
 }
 
+static void FASTCALL Vdp2DrawBitmap(vdp2draw_struct *info, YglTexture *texture)
+{
+  int i, j;
+
+  switch (info->colornumber)
+  {
+  case 0: // 4 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j += 4)
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          *texture->textdata = 0;
+          *texture->textdata++;
+          *texture->textdata = 0;
+          *texture->textdata++;
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j += 4)
+        {
+          Vdp2GetPixel4bpp(info, info->charaddr, texture);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 1: // 8 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j += 2)
+        {
+          *texture->textdata = 0x00000000;
+          texture->textdata++;
+          *texture->textdata = 0x00000000;
+          texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j += 2)
+        {
+          Vdp2GetPixel8bpp(info, info->charaddr, texture);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 2: // 16 BPP(palette)
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j++ )
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bpp(info, info->charaddr);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 3: // 16 BPP(RGB)
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j++ )
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 4: // 32 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 4;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
+          info->charaddr += 4;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  }
+}
+
+
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 {
   int i, j;
@@ -1956,8 +2079,8 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
     {
       for (j = 0; j < info->cellw; j += 2)
       {
-        Vdp2GetPixel8bpp(info, info->charaddr, texture);
-        info->charaddr += 2;
+          Vdp2GetPixel8bpp(info, info->charaddr, texture);
+          info->charaddr += 2;
       }
       texture->textdata += texture->w;
     }
@@ -2030,46 +2153,96 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
     switch (info->colornumber) {
     case 0:
       baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
-      for (j = 0; j < vdp2width; j += 4)
-      {
-        Vdp2GetPixel4bpp(info, baseaddr, texture);
-        baseaddr += 2;
+
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j += 4)
+        {
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j += 4)
+        {
+          Vdp2GetPixel4bpp(info, baseaddr, texture);
+          baseaddr += 2;
+        }
       }
       break;
     case 1:
       baseaddr += sh + sv * info->cellw;
-      for (j = 0; j < vdp2width; j += 2)
-      {
-        Vdp2GetPixel8bpp(info, baseaddr, texture);
-        baseaddr += 2;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j += 2)
+        {
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j += 2)
+        {
+          Vdp2GetPixel8bpp(info, baseaddr, texture);
+          baseaddr += 2;
+        }
       }
       break;
     case 2:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
-      {
-        *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
-        baseaddr += 2;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
+          baseaddr += 2;
 
+        }
       }
       break;
     case 3:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
-      {
-        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
-        baseaddr += 2;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
+          baseaddr += 2;
+        }
       }
       break;
     case 4:
       baseaddr += ((sh + sv * info->cellw) << 2);
-      for (j = 0; j < vdp2width; j++)
-      {
-        //if (info->isverticalscroll){
-        //	sv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl+(j>>3) ) >> 16;
-        //}
-        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr);
-        baseaddr += 4;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = 0;
+          baseaddr += 4;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j++)
+        {
+          //if (info->isverticalscroll){
+          //	sv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl+(j>>3) ) >> 16;
+          //}
+          *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr);
+          baseaddr += 4;
+        }
       }
       break;
     }
@@ -6027,7 +6200,7 @@ static void Vdp2DrawNBG0(void)
                   Vdp2DrawBitmapLineScroll(&info, &texture);
                 }
                 else {
-                  Vdp2DrawCell(&info, &texture);
+                  Vdp2DrawBitmap(&info, &texture);
                 }
                 isCached = 1;
               }
@@ -6311,7 +6484,7 @@ static void Vdp2DrawNBG1(void)
                 Vdp2DrawBitmapLineScroll(&info, &texture);
               }
               else {
-                Vdp2DrawCell(&info, &texture);
+                Vdp2DrawBitmap(&info, &texture);
               }
               isCached = 1;
             }
