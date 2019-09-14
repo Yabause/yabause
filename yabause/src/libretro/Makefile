@@ -131,9 +131,23 @@ else ifneq (,$(findstring ios,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro_ios.dylib
 	fpic := -fPIC
 	SHARED := -dynamiclib
-	CC = clang -arch armv7 -isysroot $(IOSSDK)
 	CC_AS =  perl ./libretro/gas-preprocessor.pl $(CC)
-	CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
+	ifeq ($(platform), ios-arm64)
+	  CC = clang -arch arm64 -isysroot $(IOSSDK)
+	  CXX = clang++ -arch arm64 -isysroot $(IOSSDK)
+        else
+	  CC = clang -arch armv7 -isysroot $(IOSSDK)
+	  CXX = clang++ -arch armv7 -isysroot $(IOSSDK)
+	endif
+
+	HAVE_SSE = 0
+
+else ifeq ($(platform), tvos-arm64)
+	# tvOS
+	TARGET := $(TARGET_NAME)_libretro_tvos.dylib
+	fpic := -fPIC
+	SHARED := -dynamiclib
+	CC_AS =  perl ./libretro/gas-preprocessor.pl $(CC)
 	HAVE_SSE = 0
 
 # Classic Platforms ####################
