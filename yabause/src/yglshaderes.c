@@ -903,12 +903,14 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 }\n"
 
 #define HALF_TRANPARENT_MIX(A, B) \
-"int R = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-int G = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-int B = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
-"Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
+" if ((col"Stringify(B)" & 0x8000) != 0) { \
+  int R = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int G = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int B = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n \
+}\n"
 
 #define HALF_LUMINANCE(A) \
 "int R = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
@@ -1036,8 +1038,8 @@ COLINDEX(fboColor)
 CMDPMOD(spriteColor)
 // SPD_CODE(spriteColor)
 // END_CODE(spriteColor)
-HALF_TRANPARENT_MIX(spriteColor, fboColor)
 GOURAUD_PROCESS(spriteColor)
+HALF_TRANPARENT_MIX(spriteColor, fboColor)
 "  fragColor = spriteColor;"
 "}\n";
 const GLchar * pYglprg_vdp1_gouraudshading_hf_f[] = {Yglprg_vdp1_gouraudshading_hf_f, NULL};
