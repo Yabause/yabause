@@ -903,7 +903,7 @@ const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, 
 }\n"
 
 #define HALF_TRANPARENT_MIX(A, B) \
-" if ((col"Stringify(B)" & 0x8000) != 0) { \
+"if ((col"Stringify(B)" & 0x8000) != 0) { \
   int R = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
   int G = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
   int B = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
@@ -919,6 +919,17 @@ int B = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
 int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
 "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
 "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
+
+#define SHADOW(A) \
+"if ((col"Stringify(A)" & 0x8000) != 0) { \
+  int R = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+  int G = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+  int B = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+  int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n \
+}\n"
+
 
 #define COLINDEX(A) \
 "int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
@@ -1272,20 +1283,14 @@ SHADER_VERSION
 "in vec4 v_texcoord;\n"
 "out vec4 fragColor; \n "
 "void main() { \n"
-"  int mode;\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;         \n"
-"  mode = int(spriteColor.b*255.0)&0x7; \n"
-"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
 "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-"  int additional = int(fboColor.a * 255.0);\n"
-"  if( ((additional & 0xC0)==0x80) ) { \n"
-"    fragColor = vec4(fboColor.r*0.5,fboColor.g*0.5,fboColor.b*0.5,fboColor.a);\n"
-"    fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-"  }else{\n"
-"    discard;"
-"  }\n"
+COLINDEX(spriteColor)
+COLZERO(spriteColor)
+COLINDEX(fboColor)
+SHADOW(fboColor)
+"  fragColor = fboColor;"
 "}\n";
 const GLchar * pYglprg_vdp1_shadow_f[] = { Yglprg_vdp1_shadow_f, NULL };
 
