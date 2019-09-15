@@ -115,7 +115,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   if (param->fbo != -1){
     glUniform1i(param->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
   }
 
   if ((param->fbo != -1)){
@@ -164,7 +164,7 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   if (param->fbo != -1){
     glUniform1i(param->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
     #if !defined(_OGLES3_)
         if (glTextureBarrier) glTextureBarrier();
         else if (glTextureBarrierNV) glTextureBarrierNV();
@@ -241,7 +241,7 @@ SHADER_VERSION
 "  addr.y = int(v_texcoord.y);  \n"
 "  if (is_window !=0) {\n"
 "    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy), 0 );\n"
-"    if (win.a == 0.0) discard;\n"
+"    if (all(equal(win.rg, vec2(0.0)))) discard;\n"
 "  }\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  int msb = int(txcol.b * 255.0)&0x1; \n"
@@ -323,7 +323,7 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
 "  if (is_window !=0) {\n"
 "    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy * vec2(u_emu_width, u_emu_height)),0 );\n"
-"    if (win.a == 0.0) discard;\n"
+"    if (all(equal(win.rg, vec2(0.0)))) discard;\n"
 "  }\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
@@ -660,10 +660,10 @@ const GLchar Yglprg_window_f[] =
       "    }\n"
       "  } else validw1 = valid;\n"
       "  if (winOp != 0) { \n"
-      "    if ((validw0 == 1) && (validw1 == 1)) fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
+      "    if ((validw0 == 1) && (validw1 == 1)) fragColor = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
       "    else discard;\n"
       "  } else { \n"
-      "    if ((validw0 == 1) || (validw1 == 1)) fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
+      "    if ((validw0 == 1) || (validw1 == 1)) fragColor = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
       "    else discard;\n"
       "  }\n"
       "}  \n";
@@ -1668,7 +1668,7 @@ const GLchar Yglprg_vdp2_sprite_type_4[] =
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
 "    ret.MSBshadow = (((ret.code >> 15) & 0x1) == 1);\n"
 "    ret.code = ret.code & 0x3FF;\n"
-"    ret.normalShadow = (ret.code == 0x3EuFE);\n"
+"    ret.normalShadow = (ret.code == 0x3FE);\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
 "    ret.color.b = 0.0;\n"
 "  }\n"
@@ -2670,7 +2670,6 @@ const GLchar * Yglprg_color_mode_f[4] = {
   Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f,
   Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f,
 };
-void Ygl_initDrawFrameBuffershader(int id);
 
 int initDrawShaderCode() {
   for (int i = 0; i<5; i++) {
@@ -2703,16 +2702,9 @@ int YglInitDrawFrameBufferShaders(int id) {
  //printf ("Use prog %d\n", id); //16
  int arrayid = id-PG_VDP2_DRAWFRAMEBUFF_NONE;
  //printf ("getArray %d\n", arrayid); //16
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
-    if (YglInitShader(id, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_f[arrayid], 10, NULL, NULL, NULL) != 0) { printf("Error init prog %d\n",id); abort(); }
-    Ygl_initDrawFrameBuffershader(id);
-  return 0;
-}
+  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
+  if (YglInitShader(id, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_f[arrayid], 10, NULL, NULL, NULL) != 0) { printf("Error init prog %d\n",id); abort(); }
 
-
-void Ygl_initDrawFrameBuffershader(int id) {
-
-  int arrayid = id- PG_VDP2_DRAWFRAMEBUFF_NONE;
   if ( arrayid < 0 || arrayid >= MAX_FRAME_BUFFER_UNIFORM) {
     abort();
   }
@@ -3856,7 +3848,7 @@ SHADER_VERSION
 "{  \n"
 "  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
 "  fragColor = texelFetch( s_texture, addr,0 );         \n"
-"  if (fragColor.a == 0.0) discard;  \n"
+"  if (all(equal(fragColor.rg,vec2(0.0)))) discard;  \n"
 //"  fragColor.a = 1.0;  \n"
 "}  \n";
 
