@@ -73,7 +73,6 @@ void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
   param->tessLevelInner = glGetUniformLocation(pgid, (const GLchar *)"TessLevelInner");
   param->tessLevelOuter = glGetUniformLocation(pgid, (const GLchar *)"TessLevelOuter");
   param->fbo = glGetUniformLocation(pgid, (const GLchar *)"u_fbo");
-  param->fbo_attr = glGetUniformLocation(pgid, (const GLchar *)"u_fbo_attr");
   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
   param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
@@ -113,19 +112,13 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
   }
 
-  if (param->fbo_attr != -1){
-    glUniform1i(param->fbo_attr, 2);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
-  }
-
   if (param->fbo != -1){
     glUniform1i(param->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
   }
 
-  if ((param->fbo_attr != -1) || (param->fbo != -1)){
+  if ((param->fbo != -1)){
     #if !defined(_OGLES3_)
         if (glTextureBarrier) glTextureBarrier();
         else if (glTextureBarrierNV) glTextureBarrierNV();
@@ -949,7 +942,6 @@ SHADER_VERSION
 "in vec4 v_texcoord;\n"
 "in vec4 v_vtxcolor;\n"
 "out vec4 fragColor; \n"
-"out vec4 fragColorAttr; \n"
 "void main() {\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
@@ -1038,7 +1030,6 @@ SHADER_VERSION
 "in vec4 v_texcoord;\n"
 "in vec4 v_vtxcolor;\n"
 "out vec4 fragColor; \n"
-"out vec4 fragColorAttr; \n"
 "void main() {\n"
 "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
 "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
@@ -1144,7 +1135,6 @@ SHADER_VERSION
 "in vec4 v_texcoord;\n"
 "in vec4 v_vtxcolor;\n"
 "out vec4 fragColor; \n"
-"out vec4 fragColorAttr; \n"
 "void main() {\n"
 "  if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n"
 "    if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n"
@@ -1177,7 +1167,6 @@ SHADER_VERSION
 "in vec4 v_texcoord;         \n"
 "in vec4 v_vtxcolor;         \n"
 "out vec4 fragColor; \n "
-"out vec4 fragColorAttr; \n"
 "void main() {    \n"
 "  int alpha = 0x0;\n"
 "  int prio = 0;"
@@ -1187,11 +1176,8 @@ SHADER_VERSION
 "  prio = (int(spriteColor.a *255.0) & 0x7);\n"
 "  fragColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
 "  fragColor.a = float((int(fragColor.a *255.0) & 0xF8)|prio)/255.0;\n"
-"  fragColorAttr.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));\n"
-"  fragColorAttr.b = float(int(fragColorAttr.b*255.0)&0xFE)/255.0;\n"
 "  if ((int(spriteColor.a * 255.0) & 0x40) == 0) alpha = 0x08;\n"
 "  alpha = alpha | 0x40 | prio;\n"
-"  fragColorAttr.a = float(alpha)/255.0;\n"
 "}\n";
 
 const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
@@ -1397,7 +1383,6 @@ int Ygl_cleanupEndUserClip(void * p, YglTextureManager *tm ){return 0;}
 
 typedef struct  {
   int idvdp1FrameBuffer;
-  int idvdp1FrameBufferAttr;
   int idvdp2regs;
   int idcram;
   int idline;
@@ -1481,10 +1466,6 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "      alpha = 0x78;\n"
 "      vdp1mode = 5;\n"
 "      fbmode = 0;\n"
-//"    } else { \n"
-//"      if (int(texelFetch(s_vdp2reg, ivec2((additionalAttr & 0x7)+8+line,0), 0).r*255.0)-1 == depth) {\n"
-//"        tmpColor.rgb = tmpColor.rgb * 0.5;\n"
-//"      }\n"
 "    }\n"
 "  } \n"
 "  tmpColor.rgb = clamp(tmpColor.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
@@ -1523,6 +1504,7 @@ const GLchar Yglprg_vdp2_sprite_type_0[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1535,7 +1517,6 @@ const GLchar Yglprg_vdp2_sprite_type_0[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-"    ret.msb = ret.code >> 15;\n"
 "    ret.code = ret.code & 0x7FFF;\n"
 "    ret.prio = (ret.code >> 14) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
@@ -1559,6 +1540,7 @@ const GLchar Yglprg_vdp2_sprite_type_1[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1571,7 +1553,6 @@ const GLchar Yglprg_vdp2_sprite_type_1[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-"    ret.msb = ret.code >> 15;\n"
 "    ret.prio = (ret.code >> 13) & 0x7;\n"
 "    ret.cc = (ret.code >> 11) & 0x3;\n"
 "    ret.code = ret.code & 0x7FF;\n"
@@ -1594,6 +1575,7 @@ const GLchar Yglprg_vdp2_sprite_type_2[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1606,11 +1588,10 @@ const GLchar Yglprg_vdp2_sprite_type_2[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-// "    ret.msb = ret.code >> 15;\n"
-"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 14) & 0x1;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
 "    ret.code = ret.code & 0x7FF;\n"
+"    ret.SD = (((ret.code >> 15) & 0x1) == 1) && (ret.code == 0x7FE);\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
 "    ret.color.b = 0.0;\n"
 "  }\n"
@@ -1630,6 +1611,7 @@ const GLchar Yglprg_vdp2_sprite_type_3[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1642,11 +1624,10 @@ const GLchar Yglprg_vdp2_sprite_type_3[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-// "    ret.msb = ret.code >> 15;\n"
-"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 13) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x3;\n"
 "    ret.code = ret.code & 0x7FF;\n"
+"    ret.SD = (((ret.code >> 15) & 0x1) == 1) && (ret.code == 0x7FE);\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
 "    ret.color.b = 0.0;\n"
 "  }\n"
@@ -1666,6 +1647,7 @@ const GLchar Yglprg_vdp2_sprite_type_4[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1678,11 +1660,10 @@ const GLchar Yglprg_vdp2_sprite_type_4[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-// "    ret.msb = ret.code >> 15;\n"
-"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 13) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
 "    ret.code = ret.code & 0x3FF;\n"
+"    ret.SD = (((ret.code >> 15) & 0x1) == 1) && (ret.code == 0x3FE);\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
 "    ret.color.b = 0.0;\n"
 "  }\n"
@@ -1702,6 +1683,7 @@ const GLchar Yglprg_vdp2_sprite_type_5[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1714,11 +1696,10 @@ const GLchar Yglprg_vdp2_sprite_type_5[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-// "    ret.msb = ret.code >> 15;\n"
-"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 11) & 0x1;\n"
 "    ret.code = ret.code & 0x7FF;\n"
+"    ret.SD = (((ret.code >> 15) & 0x1) == 1) && (ret.code == 0x7FE);\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
 "    ret.color.b = 0.0;\n"
 "  }\n"
@@ -1738,6 +1719,7 @@ const GLchar Yglprg_vdp2_sprite_type_6[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1750,11 +1732,10 @@ const GLchar Yglprg_vdp2_sprite_type_6[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-// "    ret.msb = ret.code >> 15;\n"
-"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 10) & 0x3;\n"
 "    ret.code = ret.code & 0x3FF;\n"
+"    ret.SD = (((ret.code >> 15) & 0x1) == 1) && (ret.code == 0x3FE);\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
 "    ret.color.b = 0.0;\n"
 "  }\n"
@@ -1774,6 +1755,7 @@ const GLchar Yglprg_vdp2_sprite_type_7[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1786,11 +1768,10 @@ const GLchar Yglprg_vdp2_sprite_type_7[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-// "    ret.msb = ret.code >> 15;\n"
-"    ret.MSBshadow = (ret.code >> 15) & 0x1;\n"
 "    ret.prio = (ret.code >> 12) & 0x7;\n"
 "    ret.cc = (ret.code >> 9) & 0x7;\n"
 "    ret.code = ret.code & 0x1FF;\n"
+"    ret.SD = (((ret.code >> 15) & 0x1) == 1) && (ret.code == 0x1FE);\n"
 "    ret.color.rg = getVec2(ret.code).xy;\n"
 "    ret.color.b = 0.0;\n"
 "  }\n"
@@ -1810,6 +1791,7 @@ const GLchar Yglprg_vdp2_sprite_type_8[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1844,6 +1826,7 @@ const GLchar Yglprg_vdp2_sprite_type_9[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1879,6 +1862,7 @@ const GLchar Yglprg_vdp2_sprite_type_A[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1913,6 +1897,7 @@ const GLchar Yglprg_vdp2_sprite_type_B[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1947,6 +1932,7 @@ const GLchar Yglprg_vdp2_sprite_type_C[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -1981,6 +1967,7 @@ const GLchar Yglprg_vdp2_sprite_type_D[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -2016,6 +2003,7 @@ const GLchar Yglprg_vdp2_sprite_type_E[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -2050,6 +2038,7 @@ const GLchar Yglprg_vdp2_sprite_type_F[] =
 "  ret.valid = 0;\n"
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = 0;\n"
+"  ret.SD = false;\n"
 "  ret.msb = 0;\n"
 "  vec4 col = texelFetch(fb, coord, 0);\n"
 "  if (any(notEqual(col.rg,vec2(0.0)))) ret.valid = 1;\n"
@@ -2105,7 +2094,6 @@ SHADER_VERSION
 "out vec4 finalColor; \n"
 "uniform sampler2D s_vdp2reg; \n"
 "uniform sampler2D s_vdp1FrameBuffer;\n"
-"uniform sampler2D s_vdp1FrameBufferAttr;\n"
 "uniform sampler2D s_color; \n"
 "uniform sampler2D s_line; \n"
 "int fbmode = 1;\n"
@@ -2123,6 +2111,7 @@ SHADER_VERSION
 "int FBMesh = 0;\n"
 "int FBRgb = 0;\n"
 "int FBMeshPrio = 0;\n"
+"bool FBNormalShadow = false;\n"
 "int FBMsb = 0;\n"
 "int FBMSBShadow = 0;\n"
 "int NoVdp1 = 0;\n"
@@ -2147,6 +2136,7 @@ SHADER_VERSION
 "uniform int mode[7];  \n"
 "uniform int isRGB[6]; \n"
 "uniform int isBlur[7]; \n"
+"uniform int isShadow[6]; \n"
 "uniform int ram_mode; \n"
 "uniform int extended_cc; \n"
 "uniform int use_cc_win; \n"
@@ -2161,6 +2151,7 @@ SHADER_VERSION
 "  int mode; \n"
 "  int isRGB; \n"
 "  int isSprite; \n"
+"  bool normalShadow; \n"
 "  int layer; \n"
 "  int msb; \n"
 "}; \n"
@@ -2177,6 +2168,7 @@ SHADER_VERSION
 "  int valid;\n"
 "  int isRGB;\n"
 "  int MSBshadow;\n"
+"  bool SD;\n"
 "  int msb;\n"
 "}; \n"
 
@@ -2220,8 +2212,10 @@ static const char vdp2blit_end_f[] =
 "  empty.meshColor = vec4(0.0);\n"
 "  empty.mesh = 0;\n"
 "  empty.msb = 0;\n"
+"  empty.normalShadow = false;\n"
 "  ret = empty;\n"
 "  int priority; \n"
+"  ret.normalShadow = false;\n"
 "  int alpha; \n"
 "  if ((fbon == 1) && (prio == FBPrio)) {\n"
 "    ret.mode = int(FBColor.a*255.0)&0x7; \n"
@@ -2234,6 +2228,7 @@ static const char vdp2blit_end_f[] =
 "    ret.isRGB = FBRgb;\n" //Shall not be the case always... Need to get RGB format per pixel
 "    ret.isSprite = 1;\n"
 "    ret.layer = 6;\n"
+"    ret.normalShadow = FBNormalShadow;\n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
 "  if (screen_nb == 0) return empty;\n"
@@ -2245,6 +2240,7 @@ static const char vdp2blit_end_f[] =
 "    ret.lncl=u_lncl[0];\n"
 "    ret.Color = tmpColor; \n"
 "    ret.isRGB = isRGB[0];\n"
+"    ret.normalShadow = (isShadow[0] != 0);\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[0]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
@@ -2258,6 +2254,7 @@ static const char vdp2blit_end_f[] =
 "    remPrio = remPrio - 1;\n"
 "    ret.lncl=u_lncl[1];\n"
 "    ret.isRGB = isRGB[1];\n"
+"    ret.normalShadow = (isShadow[1] != 0);\n"
 "    ret.Color = tmpColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[1]; \n"
@@ -2272,6 +2269,7 @@ static const char vdp2blit_end_f[] =
 "    remPrio = remPrio - 1;\n"
 "    ret.lncl=u_lncl[2];\n"
 "    ret.isRGB = isRGB[2];\n"
+"    ret.normalShadow = (isShadow[2] != 0);\n"
 "    ret.Color = tmpColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[2]; \n"
@@ -2286,6 +2284,7 @@ static const char vdp2blit_end_f[] =
 "    remPrio = remPrio - 1;\n"
 "    ret.lncl=u_lncl[3];\n"
 "    ret.isRGB = isRGB[3];\n"
+"    ret.normalShadow = (isShadow[3] != 0);\n"
 "    ret.Color = tmpColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[3]; \n"
@@ -2301,6 +2300,7 @@ static const char vdp2blit_end_f[] =
 "    ret.Color = tmpColor; \n"
 "    ret.lncl=u_lncl[4];\n"
 "    ret.isRGB = isRGB[4];\n"
+"    ret.normalShadow = (isShadow[4] != 0);\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[4]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
@@ -2315,6 +2315,7 @@ static const char vdp2blit_end_f[] =
 "    ret.Color = tmpColor; \n"
 "    ret.lncl=u_lncl[5];\n"
 "    ret.isRGB = isRGB[5];\n"
+"    ret.normalShadow = (isShadow[5] != 0);\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[5]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
@@ -2403,6 +2404,8 @@ static const char vdp2blit_end_f[] =
 "  FBPrio = tmp.prio;\n"
 "  FBRgb = tmp.isRGB;\n"
 "  FBMsb = tmp.msb;\n"
+"  bool isNormalShadow = false;\n"
+"  FBNormalShadow = tmp.SD;\n"
 "  FBMSBShadow = tmp.MSBshadow;\n"
 "  FBShadow = tmp.meshColor;\n"
 "  FBMeshPrio = tmp.meshPrio;\n"
@@ -2439,6 +2442,9 @@ static const char vdp2blit_end_f[] =
 "                prio.Color.a = 1.0;\n"
 "              }\n"
 "            }\n"
+"            if ((prio.isSprite == 1) && (prio.normalShadow)) {\n"
+"                isNormalShadow = true;\n"
+"            }\n"
 "            if (prio.lncl == 0) { \n"
 "              colorsecond = colortop;\n"
 "              alphasecond = alphatop;\n"
@@ -2470,6 +2476,9 @@ static const char vdp2blit_end_f[] =
 //le mesh mode deconne dans steep slope
 "            }\n"
 "          } else if (foundColor2 == 0) { \n" // A revoir du coup
+"            if (isNormalShadow && !prio.normalShadow) {\n"
+"                isNormalShadow = false;\n"
+"            }\n"
 "            if (prio.lncl == 0) { \n"
 "              colorthird = colorsecond;\n"
 "              alphathird = alphasecond;\n"
@@ -2538,63 +2547,71 @@ static const char vdp2blit_end_f[] =
 "    if (tmp.a == 0.0) cc_enabled = 0;\n"
 "  }\n"
 "  if (cc_enabled == 0) {\n"
-"  if (extended_cc != 0) { \n"
-"    if (ram_mode == 0) { \n"
-"      if (use_lncl == 0) { \n"
-"        if (modesecond == 1) \n"
-"          secondImage.rgb = vec3(colorsecond.rgb); \n"
-"        else \n"
-"          secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"      } else {\n"
-"        if (modesecond == 1) \n"
-"          secondImage.rgb = vec3(colorsecond.rgb); \n"
-"        else {\n"
-"          if (modethird == 1) \n"
-"            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
+"    if (extended_cc != 0) { \n"
+"      if (ram_mode == 0) { \n"
+"        if (use_lncl == 0) { \n"
+"          if (modesecond == 1) \n"
+"            secondImage.rgb = vec3(colorsecond.rgb); \n"
 "          else \n"
-"            secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n"
+"            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
+"        } else {\n"
+"          if (modesecond == 1) \n"
+"            secondImage.rgb = vec3(colorsecond.rgb); \n"
+"          else {\n"
+"            if (modethird == 1) \n"
+"              secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
+"            else \n"
+"              secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n"
+"          }\n"
 "        }\n"
-"      }\n"
-"    } else {\n"
-"      if (use_lncl == 0) { \n"
-"       if (isRGBthird == 0) { \n"
-"          secondImage.rgb = vec3(colorsecond.rgb); \n"
-"       } else { \n"
-"         if (modesecond == 1) { \n"
-"           secondImage.rgb = vec3(colorsecond.rgb); \n"
-"         } else {\n"
-"           secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"         } \n"
-"       }\n"
 "      } else {\n"
-"       if (isRGBthird == 0) { \n"
-"           secondImage.rgb = vec3(colorsecond.rgb); \n"
-"       } else { \n"
-"         if (isRGBfourth == 0) {\n"
-"           if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
-"           else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
-"         } else { \n"
-"           if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
-"           else { \n"
-"             if (modethird == 1) secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
-"             else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n"
-"           }\n"
-"         }\n"
-"       }\n"
-"      }\n"
+"        if (use_lncl == 0) { \n"
+"          if (isRGBthird == 0) { \n"
+"            secondImage.rgb = vec3(colorsecond.rgb); \n"
+"          } else { \n"
+"            if (modesecond == 1) { \n"
+"              secondImage.rgb = vec3(colorsecond.rgb); \n"
+"            } else {\n"
+"              secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
+"            } \n"
+"          }\n"
+"        } else {\n"
+"          if (isRGBthird == 0) { \n"
+"            secondImage.rgb = vec3(colorsecond.rgb); \n"
+"          } else { \n"
+"            if (isRGBfourth == 0) {\n"
+"              if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
+"              else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
+"            } else { \n"
+"              if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
+"              else { \n"
+"                if (modethird == 1) secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
+"                else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n"
+"              }\n"
+"            }\n"
+"          }\n"
+"        }\n"
+"      } \n"
+"    } else { \n"
+"      secondImage.rgb = vec3(colorsecond.rgb); \n"
 "    } \n"
-"  } else { \n"
-"    secondImage.rgb = vec3(colorsecond.rgb); \n"
-"  } \n"
-
-"  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n"
-"  if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
-"  if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
-
-"  finalColor = vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
+"    if (isNormalShadow) {\n"
+"      topImage.rgb = vec3(0.0);\n"
+"      topImage.a = 0.5;\n"
+"      modetop = 3;\n"
+"    } else {\n"
+"      if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
+"      if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n"
+"      if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
+"      if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
+"    }\n"
+"    finalColor = vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
 "  } else {\n"
-"  finalColor = vec4(colortop.rgb, 1.0);\n"
+"    if (isNormalShadow) {\n"
+"      finalColor = vec4(colorsecond.rgb*0.5, 1.0);\n"
+"    } else {\n"
+"      finalColor = vec4(colortop.rgb, 1.0);\n"
+"    }\n"
 "  }\n"
 "  if (shadow == 1) finalColor.rgb = finalColor.rgb * 0.5;\n"
 "  if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n"
@@ -2691,7 +2708,6 @@ void Ygl_initDrawFrameBuffershader(int id) {
     abort();
   }
   g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBuffer");
-  g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBufferAttr = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBufferAttr");
   g_draw_framebuffer_uniforms[arrayid].idvdp2regs = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp2reg");
   g_draw_framebuffer_uniforms[arrayid].idcram = glGetUniformLocation(_prgid[id], (const GLchar *)"s_color");
   g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
@@ -2758,7 +2774,6 @@ int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* var
   glActiveTexture(GL_TEXTURE12);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
 
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBufferAttr, 10);
   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 9);
   return _prgid[pgid];
 }
@@ -3135,7 +3150,6 @@ int YglTesserationProgramInit()
     shadow_tess.tessLevelInner = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"TessLevelInner");
     shadow_tess.tessLevelOuter = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"TessLevelOuter");
     shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"u_fbo");
-    shadow_tess.fbo_attr = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"u_fbo_attr");
 
     //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VDP1_HALFTRANS_TESS\n");
@@ -3570,7 +3584,7 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -3623,6 +3637,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );

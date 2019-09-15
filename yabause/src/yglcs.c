@@ -50,6 +50,7 @@ extern void YglSetVdp2Window(Vdp2 *varVdp2Regs);
 extern void YglSetCCWindow(Vdp2 *varVdp2Regs);
 extern SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer);
 extern int setupColorMode(Vdp2 *varVdp2Regs, int layer);
+extern int setupShadow(Vdp2 *varVdp2Regs, int layer);
 extern int setupBlur(Vdp2 *varVdp2Regs, int layer);
 extern int YglDrawBackScreen();
 extern u32 COLOR16TO24(u16 temp);
@@ -264,6 +265,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
   int modescreens[7];
   int isRGB[6];
   int isBlur[7];
+  int isShadow[7];
   glDisable(GL_BLEND);
   int id = 0;
 
@@ -288,12 +290,14 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
+      isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
       id++;
     }
   }
   isBlur[6] = setupBlur(varVdp2Regs, SPRITE);
   lncl_draw[6] = lncl[6];
+  isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
   glViewport(0, 0, _Ygl->width, _Ygl->height);
   glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
@@ -350,10 +354,10 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, lncl_draw, VDP1fb, varVdp2Regs);
+    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
-    VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, lncl_draw, VDP1fb, varVdp2Regs);
+    VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
     srcTexture = _Ygl->compute_tex;
   }
    glViewport(x, y, w, h);

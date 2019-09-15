@@ -1039,7 +1039,7 @@ extern "C" {
 	  VDP2Generator * instance = VDP2Generator::getInstance();
 	  instance->resize(width, height);
   }
-  void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs ) {
+  void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs ) {
     if (_Ygl->vdp2_use_compute_shader == 0) return;
     VDP2Generator * instance = VDP2Generator::getInstance();
     instance->update(tex, bg, prioscreens, modescreens, isRGB, isBlur, lncl, vdp1fb, varVdp2Regs);

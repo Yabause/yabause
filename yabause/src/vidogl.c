@@ -461,7 +461,6 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     }
   }
 #endif
-
   switch ((cmd->CMDPMOD >> 3) & 0x7)
   {
   case 0:

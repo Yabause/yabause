@@ -765,6 +765,7 @@ static u32* getVdp1DrawingFBMemWrite(int id) {
 }
 
 static u32* getVdp1DrawingFBMemRead(int id) {
+  // Marche pas
   //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
   u32* fbptr = NULL;
   GLuint error;
@@ -3489,6 +3490,34 @@ int setupColorMode(Vdp2 *varVdp2Regs, int layer) {
   return 0;
 }
 
+int setupShadow(Vdp2 *varVdp2Regs, int layer) {
+  //Return 1 if color format is RGB / 0 otherwise
+  switch (layer) {
+    case NBG0:
+    case RBG1:
+       return ((varVdp2Regs->SDCTL)&0x1);
+    break;
+    case NBG1:
+       return ((varVdp2Regs->SDCTL >> 1)&0x1);
+    break;
+    case NBG2:
+        return ((varVdp2Regs->SDCTL >> 2)&0x1);
+    break;
+    case NBG3:
+        return ((varVdp2Regs->SDCTL >> 3)&0x1);
+    break;
+    case RBG0:
+        return ((varVdp2Regs->SDCTL >> 4)&0x1);
+    break;
+    case SPRITE:
+        return ((varVdp2Regs->SDCTL >> 5)&0x1);
+    break;
+    default:
+       return 0;
+  }
+  return 0;
+}
+
 SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
   SpriteMode ret = NONE;
 
@@ -3638,6 +3667,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int modescreens[7];
   int isRGB[6];
   int isBlur[7];
+  int isShadow[7];
   glDisable(GL_BLEND);
   int id = 0;
 
@@ -3662,12 +3692,15 @@ void YglRender(Vdp2 *varVdp2Regs) {
       modescreens[id] =  setupBlend(varVdp2Regs, vdp2screens[j]);
       isRGB[id] = setupColorMode(varVdp2Regs, vdp2screens[j]);
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
+      isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
       id++;
     }
   }
   isBlur[6] = setupBlur(varVdp2Regs, SPRITE);
   lncl_draw[6] = lncl[6];
+
+  isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
   glViewport(0, 0, _Ygl->width, _Ygl->height);
   glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
@@ -3724,10 +3757,10 @@ void YglRender(Vdp2 *varVdp2Regs) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, lncl_draw, VDP1fb, varVdp2Regs);
+    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
-    VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, lncl_draw, VDP1fb, varVdp2Regs);
+    VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
     srcTexture = _Ygl->compute_tex;
   }
    glViewport(x, y, w, h);
