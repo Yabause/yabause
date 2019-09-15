@@ -2436,11 +2436,11 @@ static const char vdp2blit_end_f[] =
 "          if (foundColor1 == 0) { \n"
 "            prio.mode = (prio.mode & 0x7); \n"
 "            if (prio.isSprite == 0) {\n"
-"              if (prio.msb == 0) {\n"
-                 //Special color calulation mode => CC is off on this pixel
-"                prio.mode = 1;\n"
-"                prio.Color.a = 1.0;\n"
-"              }\n"
+// "              if (prio.msb == 0) {\n"
+//                  //Special color calulation mode => CC is off on this pixel
+// "                prio.mode = 1;\n"
+// "                prio.Color.a = 1.0;\n"
+// "              }\n"
 "            }\n"
 "            if ((prio.isSprite == 1) && (prio.normalShadow)) {\n"
 "                isNormalShadow = true;\n"
