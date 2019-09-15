@@ -140,7 +140,6 @@ void FASTCALL Vdp1FrameBufferWriteByte(u32 addr, u8 val) {
       VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
       VdpUnLockVram();
-      return;
    }
 
    T1WriteByte(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
@@ -156,7 +155,6 @@ void FASTCALL Vdp1FrameBufferWriteWord(u32 addr, u16 val) {
       VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
       VdpUnLockVram();
-      return;
    }
 
    T1WriteWord(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
@@ -172,7 +170,6 @@ void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
       VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
       VdpUnLockVram();
-      return;
    }
 
    T1WriteLong(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
@@ -677,8 +674,18 @@ int Vdp1SaveState(FILE *fp)
    ywrite(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
 #ifdef IMPROVED_SAVESTATES
+
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
+   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
+
+   VIDCore->Vdp1ReadFrameBuffer = NULL;
+   VIDCore->Vdp1WriteFrameBuffer = NULL;
+
    for (i = 0; i < 0x20000; i++)
       back_framebuffer[i] = Vdp1FrameBufferReadWord(i<<1);
+
+   VIDCore->Vdp1ReadFrameBuffer = Vdp1ReadFrameBuffer;
+   VIDCore->Vdp1WriteFrameBuffer = Vdp1WriteFrameBuffer;
 
    ywrite(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 #endif
@@ -702,10 +709,21 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
 #ifdef IMPROVED_SAVESTATES
+
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
+   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
+
+   VIDCore->Vdp1ReadFrameBuffer = NULL;
+   VIDCore->Vdp1WriteFrameBuffer = NULL;
+
    yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 
    for (i = 0; i < 0x20000; i++)
       Vdp1FrameBufferWriteWord(i<<1, back_framebuffer[i]);
+
+   VIDCore->Vdp1ReadFrameBuffer = Vdp1ReadFrameBuffer;
+   VIDCore->Vdp1WriteFrameBuffer = Vdp1WriteFrameBuffer;
+
 #endif
    return size;
 }
