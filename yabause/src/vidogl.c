@@ -289,7 +289,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       color = VDP1COLOR(1, 0, priority, 1, 0);
     } else {
       const int colorindex = (colorBank);
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       } else {
         color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
@@ -316,19 +316,19 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       else color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(temp));
     }
     else if (temp != 0x0000) {
-      Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
       u32 colorBank = temp;
       if (colorBank == 0x0000 && !SPD ) {
         color = VDP1COLOR(0, 1, priority, 0, 0);
       } else if (MSB || shadow) {
-        color = VDP1COLOR(0, 1, priority, 1, 0);
+        color = VDP1COLOR(1, 0, priority, 1, 0);
       }
       else {
         const int colorindex = (colorBank);
-        if (colorindex & 0x8000) {
+        if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
           color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
         }
         else {
+          Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
           color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
         }
       }
@@ -345,10 +345,10 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       color = 0;
     }
     else if ( MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, 0);
     } else {
       const int colorindex = colorBank;
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       }
       else {
@@ -363,10 +363,10 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     if (colorBank == 0 && !SPD) {
       color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
     } else if (MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, 0);
     } else {
       const int colorindex = (colorBank);
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       }
       else {
@@ -382,12 +382,12 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     if ((colorBank == 0x0000) && !SPD) {
       color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
     }
-    else if ( MSB || color == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+    else if ( MSB || colorBank == nromal_shadow) {
+      color = VDP1COLOR(1, 0, priority, 1, 0); 
     }
     else {
       const int colorindex = (colorBank);
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       }
       else {
@@ -413,10 +413,11 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       color = VDP1COLOR(0, 1, priority, 1, 0);
     }
     else {
-      if (dot & 0x8000) {
+      if ((dot & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
       }
       else {
+        Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &shadow, &normalshadow, &priority, &colorcl);
         color = VDP1COLOR(1, colorcl, priority, 0, dot);
       }
     }
@@ -4452,7 +4453,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int i;
   float col[4 * 4];
   int isSquare;
-
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   if (cmd.CMDSIZE == 0) {
