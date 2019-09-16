@@ -130,52 +130,6 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
   return 0;
 }
 
-int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id){
-
-  YglProgram * prg;
-  YglVdp1CommonParam * param;
-
-  prg = p;
-  param = prg->ids;
-
-  glEnableVertexAttribArray(prg->vertexp);
-  glEnableVertexAttribArray(prg->texcoordp);
-
-  if (param == NULL) return 0;
-
-  glUniform2f(param->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
-
-  if (param->sprite != -1){
-    glUniform1i(param->sprite, 0);
-  }
-
-  if (param->tessLevelInner != -1) {
-    glUniform1f(param->tessLevelInner, (float)TESS_COUNT);
-  }
-
-  if (param->tessLevelOuter != -1) {
-    glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
-  }
-
-  if (param->fbo != -1){
-    glUniform1i(param->fbo, 1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
-    #if !defined(_OGLES3_)
-        if (glTextureBarrier) glTextureBarrier();
-        else if (glTextureBarrierNV) glTextureBarrierNV();
-    #else
-        if( glMemoryBarrier ){
-          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-        }else{
-          //glFinish();
-        }
-    #endif
-  }
-
-  return 0;
-}
-
 int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
   YglProgram * prg;
   prg = p;
@@ -186,11 +140,6 @@ int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
   glBindTexture(GL_TEXTURE_2D, 0);
   return 0;
 }
-
-int Ygl_cleanupVdp1ShadowParam(void * p, YglTextureManager *tm){
-  return 0;
-}
-
 
 /*------------------------------------------------------------------------------------
  *  Normal Draw
@@ -3130,8 +3079,8 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"s_texture");
    }
    else if (prgid == PG_VDP1_MSB_SHADOW_TESS){
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1ShadowParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1ShadowParam;
+     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
+     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &id_msb_tess;
      current->vertexp = 0;
      current->texcoordp = 1;
