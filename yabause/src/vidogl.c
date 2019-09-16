@@ -415,7 +415,61 @@ u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     return 0;
   }
 
-  color = VDP1COLOR(cmd->CMDPMOD, cmd->CMDCOLR);
+  switch ((cmd->CMDPMOD >> 3) & 0x7)
+  {
+  case 0:
+  {
+    // 4 bpp Bank mode
+    u32 colorBank = cmd->CMDCOLR;
+    const int colorindex = (colorBank);
+    color = VDP1COLOR(cmd->CMDPMOD, colorindex);
+    break;
+  }
+  case 1:
+  {
+    // 4 bpp LUT mode
+    u16 temp;
+    u32 colorLut = cmd->CMDCOLR * 8;
+
+    if (cmd->CMDCOLR == 0) return 0;
+
+    temp = Vdp1RamReadWord(NULL, Vdp1Ram, colorLut);
+    color = VDP1COLOR(cmd->CMDPMOD, temp);
+    break;
+  }
+  case 2: {
+    // 8 bpp(64 color) Bank mode
+    u32 colorBank = cmd->CMDCOLR & 0xFFC0;
+    const int colorindex = colorBank;
+    color = VDP1COLOR(cmd->CMDPMOD, colorindex);
+    break;
+  }
+  case 3: {
+    // 8 bpp(128 color) Bank mode
+    u32 colorBank = cmd->CMDCOLR & 0xFF80;
+    color = VDP1COLOR(cmd->CMDPMOD, colorBank);
+    break;
+  }
+  case 4: {
+    // 8 bpp(256 color) Bank mode
+    u32 colorBank = cmd->CMDCOLR;
+    color = VDP1COLOR(cmd->CMDPMOD, colorBank);
+    break;
+  }
+  case 5:
+  case 6:
+  {
+    // 16 bpp Bank mode
+    u16 dot = cmd->CMDCOLR;
+    color = VDP1COLOR(cmd->CMDPMOD, dot);
+  }
+  break;
+  default:
+    VDP1LOG("Unimplemented sprite color mode: %X\n", (cmd->CMDPMOD >> 3) & 0x7);
+    color = 0;
+    break;
+  }
+
   return color;
 }
 

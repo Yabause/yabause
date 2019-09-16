@@ -116,9 +116,6 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1i(param->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
-  }
-
-  if ((param->fbo != -1)){
     #if !defined(_OGLES3_)
         if (glTextureBarrier) glTextureBarrier();
         else if (glTextureBarrierNV) glTextureBarrierNV();
@@ -129,7 +126,6 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
           //glFinish();
         }
     #endif
-    glActiveTexture(GL_TEXTURE0);
   }
   return 0;
 }
@@ -175,7 +171,6 @@ int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
           //glFinish();
         }
     #endif
-    glActiveTexture(GL_TEXTURE0);
   }
 
   return 0;
