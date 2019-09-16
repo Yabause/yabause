@@ -867,6 +867,9 @@ void SyncCPUtoSCSP() {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseStartSlave(void) {
+
+  LOG("YabauseStartSlave");
+
    if (yabsys.emulatebios)
    {
       CurrentSH2 = SSH2;
@@ -896,6 +899,9 @@ void YabauseStartSlave(void) {
       if (MappedMemoryReadLong(0x060002AC) != 0)
          SSH2->regs.R[15] = MappedMemoryReadLong(0x060002AC);
       SH2SetRegisters(SSH2, &SSH2->regs);
+
+      SSH2->regs.SR.part.I = 0;
+      SH2HandleInterrupts(SSH2);
    }
    else {
      SH2PowerOn(SSH2);
@@ -1047,6 +1053,7 @@ void YabauseSpeedySetup(void)
    MSH2->regs.MACH = 0x00000000;
    MSH2->regs.MACL = 0x00000000;
    MSH2->regs.PR = 0x00000000;
+   MSH2->onchip.TIER = 0x81;
    SH2SetRegisters(MSH2, &MSH2->regs);
 
    // Set SCU registers to sane states
