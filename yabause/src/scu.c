@@ -2403,6 +2403,7 @@ u32 FASTCALL ScuReadLong(u32 addr) {
          else
             return 0;
       case 0xA4:
+         LOG("Read IST %08X", ScuRegs->IST);
          return ScuRegs->IST;
       case 0xA8:
          return ScuRegs->AIACK;
@@ -2653,6 +2654,10 @@ void ScuTestInterruptMask()
          }
        }
      }else if (!(ScuRegs->IMS & mask)) {
+
+       u8 vector = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector;
+         LOG("%s(%0X) delay at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+
          SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
          ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].statusbit;
 
@@ -2670,15 +2675,12 @@ void ScuTestInterruptMask()
 
 void ScuRemoveInterrupt(u8 vector, u8 level) {
   u32 i, i2;
-  interrupt_struct tmp;
   int hit = -1;
 
   for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
     if (ScuRegs->interrupts[i].vector == vector) {
-      ScuRegs->interrupts[i].level = 0;
-      ScuRegs->interrupts[i].vector = 0;
       hit = i;
-      LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(vector), yabsys.frame_count, yabsys.LineCount );
+      LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount );
       break;
     }
   }
@@ -2687,8 +2689,7 @@ void ScuRemoveInterrupt(u8 vector, u8 level) {
     i2 = 0;
     for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
       if (i != hit) {
-        ScuRegs->interrupts[i2].level = ScuRegs->interrupts[i].level;
-        ScuRegs->interrupts[i2].vector = ScuRegs->interrupts[i].vector;
+        memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i], sizeof(scuinterrupt_struct));
         i2++;
       }
     }
@@ -2733,8 +2734,6 @@ static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 
 static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
 
-  //LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
-
   // A-BUS?
   if ((mask & 0xFFFF0000) ){
     if (ScuRegs->AIACK){
@@ -2745,6 +2744,7 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
     }
   }else if (!(ScuRegs->IMS & mask)){
     //if (vector != 0x41) LOG("INT %d", vector);
+    LOG("%s(%x) at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
     SH2SendInterrupt(MSH2, vector, level);
     if (yabsys.IsSSH2Running) {
       if (vector == 0x41 || vector == 0x42 || vector == 0x43) {
@@ -2754,6 +2754,7 @@ static INLINE void SendInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit) {
   }
   else
    {
+      LOG("%s(%x) is Queued %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
       ScuQueueInterrupt(vector, level, mask, statusbit);
       ScuRegs->IST |= statusbit;
    }
@@ -2827,6 +2828,12 @@ const char * ScuGetVectorString(u32 vec) {
   case 0x47:
     return "SmpcINTBACK";
     break;
+  case 0x49:
+    return "DMA2 End";
+  case 0x4A:
+    return "DMA1 End";
+  case 0x4B:
+    return "DMA0 End";
   case 0x4d:
     return "DrawEnd";
     break;
@@ -2837,20 +2844,21 @@ const char * ScuGetVectorString(u32 vec) {
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankIN(void) {
-   ScuRemoveVBlankOut();
+   //ScuRemoveVBlankOut();
+   //ScuRemoveHBlankIN();
    SendInterrupt(0x40, 0xF, 0x0001, 0x0001);
    ScuChekIntrruptDMA(0);
 }
 
 void ScuRemoveVBlankIN() {
-  ScuRemoveInterrupt(0x40, 0x0F);
-  SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
+  //ScuRemoveInterrupt(0x40, 0x0F);
+  //SH2RemoveInterrupt(MSH2, 0x40, 0x0F);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuSendVBlankOUT(void) {
-   ScuRemoveVBlankIN();
+   //ScuRemoveVBlankIN();
    SendInterrupt(0x41, 0xE, 0x0002, 0x0002);
    ScuRegs->timer0 = 0;
    if (ScuRegs->T1MD & 0x1)
@@ -2868,20 +2876,20 @@ void ScuSendVBlankOUT(void) {
 }
 
 void ScuRemoveVBlankOut() {
-  ScuRemoveInterrupt(0x41, 0x0E);
-  SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
+  //ScuRemoveInterrupt(0x41, 0x0E);
+  //SH2RemoveInterrupt(MSH2, 0x41, 0x0E);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void ScuRemoveHBlankIN() {
-  ScuRemoveInterrupt(0x42, 0x0D);
-  SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
+  //ScuRemoveInterrupt(0x42, 0x0D);
+  //SH2RemoveInterrupt(MSH2, 0x42, 0x0D);
 }
 
 
 void ScuSendHBlankIN(void) {
-   ScuRemoveVBlankOut();
+   //if(yabsys.LineCount == 0) ScuRemoveVBlankOut();
    SendInterrupt(0x42, 0xD, 0x0004, 0x0004);
    ScuRegs->timer0++;
    if (ScuRegs->T1MD & 0x1)
