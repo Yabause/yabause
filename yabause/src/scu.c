@@ -2646,7 +2646,7 @@ void ScuRemoveInterruptByCPU(u32 pre, u32 after) {
       for (ii = 0; ii < ScuRegs->NumberOfInterrupts; ii++) {
         if (ScuRegs->interrupts[i].statusbit == (1<<i)) {
           hit = ii;
-          LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+          LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(ScuRegs->interrupts[i].vector), ScuRegs->interrupts[i].vector, yabsys.frame_count, yabsys.LineCount);
           break;
         }
       }
