@@ -2765,6 +2765,7 @@ static void waitVdp1End(int id) {
 
 void executeTMVDP1(int in, int out) {
   if (_Ygl->needVdp1Render != 0){
+    _Ygl->needVdp1Render = 0;
     YglTmPush(YglTM_vdp1[in]);
     //YuiUseOGLOnThisThread();
     YglRenderVDP1();
@@ -2772,7 +2773,7 @@ void executeTMVDP1(int in, int out) {
     _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
     YglReset(_Ygl->vdp1levels[out]);
     YglTmPull(YglTM_vdp1[out], 0);
-    _Ygl->needVdp1Render = 0;
+
   }
 }
 
