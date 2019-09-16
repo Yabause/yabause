@@ -2263,12 +2263,17 @@ static const char vdp2blit_end_f[] =
 "              }\n"
 "            } else {\n"
 "              if (FBNormalShadow) {\n"
+//Normal shadow is always a transparent shadow. It does not have to be processed
+//As a top image. But the shadow process shall be processed
 "                processShadow = true;\n"
 "                continue;\n"
 "              }\n"
 "              if (FBMSBShadow &&(use_sp_win == 0)) {\n"
+//The MSB shadow is only effetive when the sprite window is not used
 "                processShadow = true;\n"
+//The shadow process shall be processed for any of color code
 "                if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n"
+//In case of a code of zero and if the traparent shadow code is enabled, then we do not process as a top image
 "                  continue;\n"
 "                }"
 "              }\n"
