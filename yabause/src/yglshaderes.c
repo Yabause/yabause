@@ -1950,6 +1950,7 @@ SHADER_VERSION
 "uniform int extended_cc; \n"
 "uniform int use_cc_win; \n"
 "uniform int use_sp_win; \n"
+"uniform int use_trans_shadow; \n"
 "int cc_enabled; \n"
 
 "struct Col \n"
@@ -2237,7 +2238,7 @@ static const char vdp2blit_end_f[] =
 "    processShadow = true;\n"
 "  }\n"
 "  if (FBMSBShadow &&(use_sp_win == 0)) {\n"
-"    if (tmp.code == 0) FBPrio = 0;\n"
+"    if ((tmp.code == 0) && (use_trans_shadow == 1)) FBPrio = 0;\n"
 "    processShadow = true;\n"
 "  }\n"
 "  if (screen_nb > 0) vdp2col0 = getPixel( s_texture0, v_texcoord.st ); \n"
@@ -3446,6 +3447,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_cc_win"), (_Ygl->use_cc_win != 0) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
 
