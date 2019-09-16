@@ -898,9 +898,9 @@ void YabauseStartSlave(void) {
       SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
       if (MappedMemoryReadLong(0x060002AC) != 0)
          SSH2->regs.R[15] = MappedMemoryReadLong(0x060002AC);
-      SH2SetRegisters(SSH2, &SSH2->regs);
 
       SSH2->regs.SR.part.I = 0;
+      SH2SetRegisters(SSH2, &SSH2->regs);
       SH2HandleInterrupts(SSH2);
    }
    else {
