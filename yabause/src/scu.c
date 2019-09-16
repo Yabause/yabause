@@ -44,6 +44,8 @@ scubp_struct * ScuBP;
 static int incFlg[4] = { 0 };
 static void ScuTestInterruptMask(void);
 
+void ScuRemoveInterruptByCPU(u32 pre, u32 after);
+
 //#define DSPLOG
 
 #ifdef DSPLOG
@@ -2423,7 +2425,12 @@ void FASTCALL ScuWriteByte(u32 addr, u8 val) {
    addr &= 0xFF;
    switch(addr) {
       case 0xA7:
-         ScuRegs->IST &= (0xFFFFFF00 | val); // double check this
+      {
+        u32 after = ScuRegs->IST & (0xFFFFFF00 | val);
+        ScuRemoveInterruptByCPU(ScuRegs->IST, after);
+        ScuRegs->IST = after; // double check this
+        ScuTestInterruptMask();
+      }
          return;
       default:
          LOG("Unhandled SCU Register byte write %08X\n", addr);
@@ -2599,10 +2606,13 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
          LOG("scu\t: IMS = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count,yabsys.LineCount);
          ScuTestInterruptMask();
          break;
-      case 0xA4:
-         ScuRegs->IST &= val;
-         LOG("scu\t: IST = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount );
-         ScuTestInterruptMask();
+      case 0xA4: {
+        u32 after = ScuRegs->IST & val;
+        ScuRemoveInterruptByCPU(ScuRegs->IST, after);
+        ScuRegs->IST = after;
+        LOG("scu\t: IST = %X PC=%X frame=%d:%d", val, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+        ScuTestInterruptMask();
+      }
          break;
       case 0xA8:
          ScuRegs->AIACK = val;
@@ -2627,6 +2637,32 @@ void FASTCALL ScuWriteLong(u32 addr, u32 val) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+void ScuRemoveInterruptByCPU(u32 pre, u32 after) {
+  for (int i = 0; i < 16; i++) {
+    if (((pre >> i) & 0x01) && ((after >> i) & 0x01 == 0)) {
+      u32 ii, i2;
+      int hit = -1;
+      for (ii = 0; ii < ScuRegs->NumberOfInterrupts; ii++) {
+        if (ScuRegs->interrupts[i].statusbit == (1<<i)) {
+          hit = ii;
+          LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
+          break;
+        }
+      }
+      if (hit != -1) {
+        i2 = 0;
+        for (ii = 0; ii < ScuRegs->NumberOfInterrupts; ii++) {
+          if (ii != hit) {
+            memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[ii], sizeof(scuinterrupt_struct));
+            i2++;
+          }
+        }
+        ScuRegs->NumberOfInterrupts--;
+      }
+    }
+  }
+}
 
 void ScuTestInterruptMask()
 {
@@ -2655,48 +2691,31 @@ void ScuTestInterruptMask()
        }
      }else if (!(ScuRegs->IMS & mask)) {
 
-       u8 vector = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector;
+       // removed manually
+       if ( (ScuRegs->IST & ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit) == 0) {
+
+         printf("removed");
+
+       }
+       else {
+         u8 vector = ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector;
          LOG("%s(%0X) delay at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount);
 
-         SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].level);
-         ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts-1-i].statusbit;
+         SH2SendInterrupt(MSH2, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].vector, ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].level);
+         ScuRegs->IST &= ~ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit;
 
          // Shorten list
-         for (i2 = ScuRegs->NumberOfInterrupts-1-i; i2 < (ScuRegs->NumberOfInterrupts-1); i2++)
-            memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2+1], sizeof(scuinterrupt_struct));
+         for (i2 = ScuRegs->NumberOfInterrupts - 1 - i; i2 < (ScuRegs->NumberOfInterrupts - 1); i2++)
+           memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i2 + 1], sizeof(scuinterrupt_struct));
 
          ScuRegs->NumberOfInterrupts--;
          break;
+       }
       }
    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-void ScuRemoveInterrupt(u8 vector, u8 level) {
-  u32 i, i2;
-  int hit = -1;
-
-  for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
-    if (ScuRegs->interrupts[i].vector == vector) {
-      hit = i;
-      LOG("%s(%0X) is removed at frame %d:%d", ScuGetVectorString(vector), vector, yabsys.frame_count, yabsys.LineCount );
-      break;
-    }
-  }
-
-  if (hit != -1) {
-    i2 = 0;
-    for (i = 0; i < ScuRegs->NumberOfInterrupts; i++) {
-      if (i != hit) {
-        memcpy(&ScuRegs->interrupts[i2], &ScuRegs->interrupts[i], sizeof(scuinterrupt_struct));
-        i2++;
-      }
-    }
-    ScuRegs->NumberOfInterrupts--;
-  }
-}
-
 static void ScuQueueInterrupt(u8 vector, u8 level, u16 mask, u32 statusbit)
 {
    u32 i, i2;
@@ -2869,7 +2888,7 @@ void ScuSendVBlankOUT(void) {
      }
      else {
        ScuRegs->timer0_set = 0;
-       ScuRemoveTimer0();
+       //ScuRemoveTimer0();
      }
    }
    ScuChekIntrruptDMA(1);
@@ -2901,13 +2920,13 @@ void ScuSendHBlankIN(void) {
      }
      else {
        ScuRegs->timer0_set = 0;
-       ScuRemoveTimer0();
+       //ScuRemoveTimer0();
      }
 
      if (ScuRegs->timer1_set == 1) {
         ScuRegs->timer1_set = 0;
         ScuRegs->timer1_counter = ScuRegs->timer1_preset;
-        ScuRemoveTimer1();
+        //ScuRemoveTimer1();
       }
    }
    ScuChekIntrruptDMA(2);
@@ -2928,14 +2947,14 @@ void ScuSendTimer1(void) {
 }
 
 void ScuRemoveTimer0(void) {
-  ScuRemoveInterrupt(0x43, 0x0C);
-  SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
+  //ScuRemoveInterrupt(0x43, 0x0C);
+  //SH2RemoveInterrupt(MSH2, 0x43, 0x0C);
 }
 
 
 void ScuRemoveTimer1(void) {
-  ScuRemoveInterrupt(0x44, 0x0B);
-  SH2RemoveInterrupt(MSH2, 0x44, 0xB);
+  //ScuRemoveInterrupt(0x44, 0x0B);
+  //SH2RemoveInterrupt(MSH2, 0x44, 0xB);
 }
 
 //////////////////////////////////////////////////////////////////////////////
