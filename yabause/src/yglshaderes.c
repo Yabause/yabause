@@ -3111,7 +3111,8 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-    level->prg[level->prgcurrent].ids = &hf;
+     level->prg[level->prgcurrent].ids = &hf;
+     level->prg[level->prgcurrent].vaid = 2;
       current->vertexp = 0;
       current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS],(const GLchar *)"u_mvpMatrix");
@@ -3123,6 +3124,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &hf_tess;
+     level->prg[level->prgcurrent].vaid = 2;
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS_TESS], (const GLchar *)"u_mvpMatrix");
@@ -3177,8 +3179,9 @@ int YglProgramChange( YglLevel * level, int prgid )
    }
    else if( prgid == PG_VDP1_HALF_LUMINANCE )
    {
-      current->setupUniform    = Ygl_uniformVdp1Normal;
-      current->cleanupUniform  = Ygl_cleanupVdp1Normal;
+      current->setupUniform    = Ygl_uniformVdp1CommonParam;
+      current->cleanupUniform  = Ygl_cleanupVdp1CommonParam;
+      level->prg[level->prgcurrent].vaid = 2;
       current->vertexp = 0;
       current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE],(const GLchar *)"u_mvpMatrix");
@@ -3190,6 +3193,7 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->setupUniform    = Ygl_uniformVdp1CommonParam;
       current->cleanupUniform  = Ygl_cleanupVdp1CommonParam;
       level->prg[level->prgcurrent].ids = &half_luminance_tess;
+      level->prg[level->prgcurrent].vaid = 2;
       current->vertexp = 0;
       current->texcoordp = 1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS],(const GLchar *)"u_mvpMatrix");
@@ -3201,6 +3205,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &mesh_tess;
+     level->prg[level->prgcurrent].vaid = 2;
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH_TESS], (const GLchar *)"u_mvpMatrix");
@@ -3211,6 +3216,7 @@ int YglProgramChange( YglLevel * level, int prgid )
      level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
      level->prg[level->prgcurrent].ids = &mesh_tess_improve;
+     level->prg[level->prgcurrent].vaid = 2;
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH_TESS_IMPROVE], (const GLchar *)"u_mvpMatrix");
