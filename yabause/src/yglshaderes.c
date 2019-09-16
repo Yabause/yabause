@@ -1616,7 +1616,7 @@ const GLchar Yglprg_vdp2_sprite_type_4[] =
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
 "    ret.prio = (ret.code >> 13) & 0x3;\n"
-"    ret.cc = (ret.code >> 11) & 0x7;\n"
+"    ret.cc = (ret.code >> 10) & 0x7;\n"
 "    ret.MSBshadow = (((ret.code >> 15) & 0x1) == 1);\n"
 "    ret.code = ret.code & 0x3FF;\n"
 "    ret.normalShadow = (ret.code == 0x3FE);\n"
