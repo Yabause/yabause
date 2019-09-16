@@ -2309,6 +2309,17 @@ static const char vdp2blit_end_f[] =
 //le mesh mode deconne dans steep slope
 "            }\n"
 "          } else if (foundColor2 == 0) { \n" // A revoir du coup
+"            if (prio.isSprite == 1) {\n"
+"              if (FBNormalShadow) {\n"
+                 //shadow are transparent and not computed when on lower priority
+"                continue;\n"
+"              }\n"
+"              if (FBMSBShadow &&(use_sp_win == 0)) {\n"
+"                if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n"
+"                  continue;\n"
+"                }"
+"              }\n"
+"            }\n"
 "            if (prio.lncl == 0) { \n"
 "              colorthird = colorsecond;\n"
 "              alphathird = alphasecond;\n"
@@ -2339,6 +2350,18 @@ static const char vdp2blit_end_f[] =
 "              foundColor2 = 1; \n"
 "            }\n"
 "          } else if (foundColor3 == 0) { \n"
+"            if (prio.isSprite == 1) {\n"
+"              if (FBNormalShadow) {\n"
+                 //shadow are transparent and not computed when on lower priority
+"                continue;\n"
+"              }\n"
+"              if (FBMSBShadow &&(use_sp_win == 0)) {\n"
+"                if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n"
+"                  continue;\n"
+"                }"
+"              }\n"
+"            }\n"
+
 "            if (prio.lncl == 0) { \n"
 "              colorfourth = colorthird;\n"
 "              alphafourth = alphathird;\n"
@@ -2436,9 +2459,8 @@ static const char vdp2blit_end_f[] =
 "  if (processShadow) finalColor.rgb = finalColor.rgb * 0.5;\n"
 "  if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n"
 #ifdef DEBUG_BLIT
-"  topColor = topImage;\n"
-"  if(FBMSBShadow) secondColor = vec4(1.0);\n"
-"  else secondColor = vec4(0.0);\n"
+"  topColor = colortop;\n"
+"  secondColor = colorsecond;\n"
 "  thirdColor = testFB;\n"
 "  fourthColor.rgb = FBShadow.rgb;\n"
 "  fourthColor.a = (FBMeshPrio*8.0+mesh*128.0)/255.0;\n"
