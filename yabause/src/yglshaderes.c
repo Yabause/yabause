@@ -2754,16 +2754,6 @@ int YglProgramInit()
    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_MSB_SHADOW], &id_msb_s);
 
    //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_HALFTRANS\n");
-
-   //
-   if (YglInitShader(PG_VDP1_HALFTRANS, pYglprg_vdp1_halftrans_v, pYglprg_vdp1_halftrans_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALFTRANS], &hf);
-
-
-   //-----------------------------------------------------------------------------------------------------------
    YGLLOG("PG_VDP1_SHADOW\n");
 
    //
@@ -2930,19 +2920,6 @@ int YglTesserationProgramInit()
     shadow_tess.tessLevelOuter = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"TessLevelOuter");
     shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"u_fbo");
 
-    //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_HALFTRANS_TESS\n");
-    if (YglInitShader(PG_VDP1_HALFTRANS_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_halftrans_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-  Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALFTRANS_TESS], &hf_tess);
-
   return 0;
 }
 
@@ -3107,30 +3084,6 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->texcoordp       = -1;
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_ENDUSERCLIP],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = -1; //glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
-   }
-   else if( prgid == PG_VDP1_HALFTRANS )
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &hf;
-     level->prg[level->prgcurrent].vaid = 2;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS],(const GLchar *)"u_texMatrix");
-
-   }
-   else if (prgid == PG_VDP1_HALFTRANS_TESS)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &hf_tess;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS_TESS], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-
    }
    else if (prgid == PG_VDP1_SHADOW_TESS)
    {
