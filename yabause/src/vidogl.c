@@ -2147,7 +2147,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 
     sv &= (info->cellh - 1);
     sh &= (info->cellw - 1);
-    if (line->LineScrollValH >= 0 && line->LineScrollValH < sh) {
+    if (line->LineScrollValH >= 0 && line->LineScrollValH < sh && sv > 0) {
       sv -= 1;
     }
 
