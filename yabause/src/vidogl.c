@@ -384,6 +384,14 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * r
 static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl, int * normal_shadow, Vdp2 *varVdp2Regs);
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs);
 
+#define IS_MESH(a) (a&0x100)
+#define IS_GLOWSHADING(a) (a&0x04)
+#define IS_REPLACE(a) ((a&0x03)==0x00)
+#define IS_DONOT_DRAW_OR_SHADOW(a) ((a&0x03)==0x01)
+#define IS_HALF_LUMINANCE(a)   ((a&0x03)==0x02)
+#define IS_REPLACE_OR_HALF_TRANSPARENT(a) ((a&0x03)==0x03)
+#define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
+
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
@@ -415,61 +423,8 @@ u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     return 0;
   }
 
-  switch ((cmd->CMDPMOD >> 3) & 0x7)
-  {
-  case 0:
-  {
-    // 4 bpp Bank mode
-    u32 colorBank = cmd->CMDCOLR;
-    const int colorindex = (colorBank);
-    color = VDP1COLOR(cmd->CMDPMOD, colorindex);
-    break;
-  }
-  case 1:
-  {
-    // 4 bpp LUT mode
-    u16 temp;
-    u32 colorLut = cmd->CMDCOLR * 8;
-
-    if (cmd->CMDCOLR == 0) return 0;
-
-    temp = Vdp1RamReadWord(NULL, Vdp1Ram, colorLut);
-    color = VDP1COLOR(cmd->CMDPMOD, temp);
-    break;
-  }
-  case 2: {
-    // 8 bpp(64 color) Bank mode
-    u32 colorBank = cmd->CMDCOLR & 0xFFC0;
-    const int colorindex = colorBank;
-    color = VDP1COLOR(cmd->CMDPMOD, colorindex);
-    break;
-  }
-  case 3: {
-    // 8 bpp(128 color) Bank mode
-    u32 colorBank = cmd->CMDCOLR & 0xFF80;
-    color = VDP1COLOR(cmd->CMDPMOD, colorBank);
-    break;
-  }
-  case 4: {
-    // 8 bpp(256 color) Bank mode
-    u32 colorBank = cmd->CMDCOLR;
-    color = VDP1COLOR(cmd->CMDPMOD, colorBank);
-    break;
-  }
-  case 5:
-  case 6:
-  {
-    // 16 bpp Bank mode
-    u16 dot = cmd->CMDCOLR;
-    color = VDP1COLOR(cmd->CMDPMOD, dot);
-  }
-  break;
-  default:
-    VDP1LOG("Unimplemented sprite color mode: %X\n", (cmd->CMDPMOD >> 3) & 0x7);
-    color = 0;
-    break;
-  }
-
+  if (IS_MSB_SHADOW(cmd->CMDPMOD) && (cmd->CMDCOLR == 0))cmd->CMDCOLR = 1; //Dirty patch shall be replace y a duplicate of shader dedicated to polygon
+  color = VDP1COLOR(cmd->CMDPMOD, cmd->CMDCOLR);
   return color;
 }
 
@@ -3388,14 +3343,6 @@ void VIDOGLVdp1Draw()
 }
 
 //////////////////////////////////////////////////////////////////////////////
-
-#define IS_MESH(a) (a&0x100)
-#define IS_GLOWSHADING(a) (a&0x04)
-#define IS_REPLACE(a) ((a&0x03)==0x00)
-#define IS_DONOT_DRAW_OR_SHADOW(a) ((a&0x03)==0x01)
-#define IS_HALF_LUMINANCE(a)   ((a&0x03)==0x02)
-#define IS_REPLACE_OR_HALF_TRANSPARENT(a) ((a&0x03)==0x03)
-#define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
 
 #define IS_ZERO(A) (((A) < EPSILON)&&((A) > -EPSILON))
 

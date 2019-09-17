@@ -2216,10 +2216,11 @@ static const char vdp2blit_end_f[] =
 //The MSB shadow is only effetive when the sprite window is not used
 "                processShadow = true;\n"
 //The shadow process shall be processed for any of color code
-"                if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n"
-//In case of a code of zero and if the traparent shadow code is enabled, then we do not process as a top image
-"                  continue;\n"
-"                }"
+"                if (tmp.code == 0) {\n"
+//In case of a code of zero and if the transparent shadow code is enabled, then we do not process as a top image
+"                    processShadow = (use_trans_shadow != 0);\n"
+"                    continue;\n"
+"                  }\n"
 "              }\n"
 "            }\n"
 "            if (prio.lncl == 0) { \n"
