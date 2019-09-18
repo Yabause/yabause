@@ -1718,28 +1718,7 @@ int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * co
   texturecoordinate_struct texv[6];
   texturecoordinate_struct * tpos;
   // Select Program
-  switch (input->blendmode) {
-    case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
-      prg = PG_VDP1_GOURAUDSHADING_HALFTRANS;
-      break;
-    case VDP1_COLOR_CL_HALF_LUMINANCE:
-      prg = PG_VDP1_HALF_LUMINANCE;
-      break;
-    case VDP1_COLOR_CL_MESH:
-      if (_Ygl->meshmode == ORIGINAL_MESH)
-        prg = PG_VDP1_MESH;
-      else
-        prg = PG_VDP1_MESH_IMPROVE;
-      break;
-    case VDP1_COLOR_CL_SHADOW:
-      prg = PG_VDP1_SHADOW;
-      break;
-    case VDP1_COLOR_CL_MSB_SHADOW:
-      prg = PG_VDP1_MSB_SHADOW;
-      break;
-    default:
-      prg = PG_VDP1_GOURAUDSHADING;
-  }
+  prg = input->blendmode;
 
   program = YglGetProgram(input, prg, tm, input->priority);
   if (program == NULL || program->quads == NULL) return -1;
@@ -1965,28 +1944,7 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    int prg = PG_VDP1_GOURAUDSHADING;
    float * pos;
 
-  switch (input->blendmode) {
-    case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
-      prg = PG_VDP1_GOURAUDSHADING_HALFTRANS;
-      break;
-    case VDP1_COLOR_CL_HALF_LUMINANCE:
-      prg = PG_VDP1_HALF_LUMINANCE;
-      break;
-    case VDP1_COLOR_CL_MESH:
-      if (_Ygl->meshmode == ORIGINAL_MESH)
-        prg = PG_VDP1_MESH;
-      else
-        prg = PG_VDP1_MESH_IMPROVE;
-      break;
-    case VDP1_COLOR_CL_SHADOW:
-      prg = PG_VDP1_SHADOW;
-      break;
-    case VDP1_COLOR_CL_MSB_SHADOW:
-      prg = PG_VDP1_MSB_SHADOW;
-      break;
-    default:
-      prg = PG_VDP1_GOURAUDSHADING;
-  }
+  prg = input->blendmode;
 
    program = YglGetProgram(input,prg,tm,input->priority);
    if( program == NULL ) return -1;
@@ -2147,28 +2105,7 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   int prg;
   float * pos;
 
-  switch (input->blendmode) {
-    case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
-      prg = PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS;
-    break;
-    case VDP1_COLOR_CL_HALF_LUMINANCE:
-      prg = PG_VDP1_HALF_LUMINANCE_TESS;
-      break;
-    case VDP1_COLOR_CL_MESH:
-      if (_Ygl->meshmode == ORIGINAL_MESH)
-        prg = PG_VDP1_MESH_TESS;
-      else
-        prg = PG_VDP1_MESH_TESS_IMPROVE;
-    break;
-    case VDP1_COLOR_CL_SHADOW:
-      prg = PG_VDP1_SHADOW_TESS;
-    break;
-    case VDP1_COLOR_CL_MSB_SHADOW:
-      prg = PG_VDP1_MSB_SHADOW_TESS;
-      break;
-    default:
-      prg = PG_VDP1_GOURAUDSHADING_TESS;
-  }
+  prg = input->blendmode - PG_VDP1_REPLACE + PG_VDP1_REPLACE_TESS;
 
   program = YglGetProgram(input, prg, tm,input->priority);
   if (program == NULL) return -1;
@@ -2811,7 +2748,7 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
       glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].textcoords, GL_STREAM_DRAW);
       glVertexAttribPointer(level->prg[j].texcoordp,4,GL_FLOAT,GL_FALSE,0,0);
       glEnableVertexAttribArray(level->prg[j].texcoordp);
-      if( level->prg[j].vaid != 0 ) {
+      if( level->prg[j].vaid > 0 ) {
         glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
         glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
         glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, 0);
@@ -3385,7 +3322,7 @@ int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id) {
       glVertexAttribPointer(level->prg[j].texcoordp, 4, GL_FLOAT, GL_FALSE, 0, 0);
       glEnableVertexAttribArray(level->prg[j].texcoordp);
 
-      if (level->prg[j].vaid != 0) {
+      if (level->prg[j].vaid > 0) {
         glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexAttribute_buf);
         glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float) * 2, level->prg[j].vertexAttribute, GL_STREAM_DRAW);
         glVertexAttribPointer(level->prg[j].vaid, 4, GL_FLOAT, GL_FALSE, 0, 0);

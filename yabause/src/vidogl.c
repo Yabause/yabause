@@ -242,6 +242,97 @@ int orderTable[NB_MSG];
 #define CELL_SINGLE 0x1
 #define CELL_QUAD   0x2
 
+#define IS_MESH(a) (a&0x100)
+#define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
+
+static int getCCTypeNonTextured(int CMDPMOD){
+  int ret = 0;
+  int cctype = CMDPMOD & 0x7;
+  switch(cctype) {
+    case 0x0:
+      ret = PG_VDP1_REPLACE;
+      break;
+    case 0x1:
+      ret = PG_VDP1_SHADOW;
+      break;
+    case 0x2:
+      ret = PG_VDP1_HALF_LUMINANCE;
+      break;
+    case 0x3:
+      ret = PG_VDP1_HALFTRANS;
+      break;
+    case 0x4:
+      ret = PG_VDP1_GOURAUDSHADING;
+      break;
+    case 0x5:
+      ret = 0;
+      break;
+    case 0x6:
+      ret = PG_VDP1_GOURAUDSHADING_HALF_LUMINANCE;
+      break;
+    case 0x7:
+      ret = PG_VDP1_GOURAUDSHADING_HALFTRANS;
+      break;
+    default:
+      ret = 0;
+  }
+
+  if (ret != 0) {
+    if (IS_MESH(CMDPMOD)) {
+      ret += PG_VDP1_REPLACE_MESH - PG_VDP1_REPLACE; // zzzz
+    }
+    else if (IS_MSB_SHADOW(CMDPMOD)) {
+      ret += PG_VDP1_REPLACE_MSB - PG_VDP1_REPLACE;
+    }
+  }
+
+  return ret;
+}
+
+static int getCCTypeTextured(int CMDPMOD) {
+  int ret = 0;
+  int cctype = CMDPMOD & 0x7;
+  switch(cctype) {
+    case 0x0:
+      ret = PG_VDP1_REPLACE;
+      break;
+    case 0x1:
+      ret = PG_VDP1_SHADOW;
+      break;
+    case 0x2:
+      ret = PG_VDP1_HALF_LUMINANCE;
+      break;
+    case 0x3:
+      ret = PG_VDP1_HALFTRANS;
+      break;
+    case 0x4:
+      ret = PG_VDP1_GOURAUDSHADING;
+      break;
+    case 0x5:
+      ret = 0;
+      break;
+    case 0x6:
+      ret = PG_VDP1_GOURAUDSHADING_HALF_LUMINANCE;
+      break;
+    case 0x7:
+      ret = PG_VDP1_GOURAUDSHADING_HALFTRANS;
+      break;
+    default:
+      ret = 0;
+  }
+
+  if (ret != 0) {
+    if (IS_MESH(CMDPMOD)) {
+      ret += PG_VDP1_REPLACE_MESH - PG_VDP1_REPLACE; // zzzz
+    }
+    else if (IS_MSB_SHADOW(CMDPMOD)) {
+      ret += PG_VDP1_REPLACE_MSB - PG_VDP1_REPLACE;
+    }
+  }
+
+  return ret;
+}
+
 void Vdp2DrawCell_in_async(void *p)
 {
    while(drawcell_run != 0){
@@ -383,14 +474,6 @@ vdp2rotationparameter_struct * FASTCALL vdp2RGetParamMode03WithK(RBGDrawInfo * r
 
 static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int * colorcl, int * normal_shadow, Vdp2 *varVdp2Regs);
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs);
-
-#define IS_MESH(a) (a&0x100)
-#define IS_GLOWSHADING(a) (a&0x04)
-#define IS_REPLACE(a) ((a&0x03)==0x00)
-#define IS_DONOT_DRAW_OR_SHADOW(a) ((a&0x03)==0x01)
-#define IS_HALF_LUMINANCE(a)   ((a&0x03)==0x02)
-#define IS_REPLACE_OR_HALF_TRANSPARENT(a) ((a&0x03)==0x03)
-#define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -3701,7 +3784,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   sprite.dst = 0;
-  sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+  sprite.blendmode = 0;
 
   int badgeometry = 1;
 
@@ -3760,26 +3843,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00020000;
   }
 
-  if (IS_REPLACE(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  }
-  else if (IS_DONOT_DRAW_OR_SHADOW(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_SHADOW;
-  }
-  else if (IS_HALF_LUMINANCE(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
-  }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(cmd.CMDPMOD)) {
-    tmp |= 0x00010000;
-    sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
-  }
-  if (IS_MESH(cmd.CMDPMOD)) {
-    tmp |= 0x00010000;
-    sprite.blendmode = VDP1_COLOR_CL_MESH;
-  }
-  else if (IS_MSB_SHADOW(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
-  }
+  sprite.blendmode = getCCTypeTextured(cmd.CMDPMOD);
 
   if ((cmd.CMDPMOD & 4))
   {
@@ -3849,7 +3913,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   sprite.dst = 0;
-  sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+  sprite.blendmode = 0;
 
   int badgeometry = 1;
 
@@ -3987,31 +4051,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00020000;
   }
 
-  if (IS_REPLACE(CMDPMOD)) {
-    if ((CMDPMOD & 0x8000))
-      //sprite.blendmode = VDP1_COLOR_CL_MESH;
-      sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-    else {
-      sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-    }
-  }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_SHADOW;
-  }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
-  }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    tmp |= 0x00010000;
-    sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
-  }
-  if (IS_MESH(CMDPMOD)) {
-    tmp |= 0x00010000;
-    sprite.blendmode = VDP1_COLOR_CL_MESH;
-  }
-  else if (IS_MSB_SHADOW(CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
-  }
+  sprite.blendmode = getCCTypeTextured(CMDPMOD);
 
   if ((CMDPMOD & 4))
   {
@@ -4167,7 +4207,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     return; // BAD Command
   }
 
-  sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+  sprite.blendmode = 0;
   sprite.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   sprite.h = cmd.CMDSIZE & 0xFF;
   sprite.cor = 0;
@@ -4233,26 +4273,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00020000;
   }
 
-  if (IS_REPLACE(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  }
-  else if (IS_DONOT_DRAW_OR_SHADOW(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_SHADOW;
-  }
-  else if (IS_HALF_LUMINANCE(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
-  }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(cmd.CMDPMOD)) {
-    tmp |= 0x00010000;
-    sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
-  }
-  if (IS_MESH(cmd.CMDPMOD)) {
-    tmp |= 0x00010000;
-    sprite.blendmode = VDP1_COLOR_CL_MESH;
-  }
-  else if (IS_MSB_SHADOW(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
-  }
+  sprite.blendmode = getCCTypeTextured(cmd.CMDPMOD);
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
   if ((cmd.CMDPMOD & 4))
@@ -4432,7 +4453,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   if (badgeometry == 1) return;
 
 
-  sprite.blendmode = VDP1_COLOR_CL_REPLACE;
+  sprite.blendmode = 0;
   sprite.dst = 0;
 
   vert[0] = (float)(s16)cmd.CMDXA;
@@ -4479,25 +4500,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.cob = 0x00;
 
   int spd = ((cmd.CMDPMOD & 0x40) != 0);
-  if (IS_REPLACE(cmd.CMDPMOD)) {
-      sprite.blendmode = VDP1_COLOR_CL_REPLACE;
-  }
-  else if (IS_DONOT_DRAW_OR_SHADOW(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_SHADOW;
-  }
-  else if (IS_HALF_LUMINANCE(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
-  }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
-  }
 
-  if (IS_MESH(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_MESH; // zzzz
-  }
-  else if (IS_MSB_SHADOW(cmd.CMDPMOD)) {
-    sprite.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
-  }
+  sprite.blendmode = getCCTypeTextured(cmd.CMDPMOD);
 
   if (gouraud == 1)
   {
@@ -4530,7 +4534,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int normalshadow = 0;
   int colorcalc = 0;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
-  polygon.blendmode = VDP1_COLOR_CL_REPLACE;
+  polygon.blendmode = 0;
   polygon.dst = 0;
   v[0] = Vdp1Regs->localX + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x0C));
   v[1] = Vdp1Regs->localY + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x0E));
@@ -4589,24 +4593,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.vertices[6] = line_poygon[6] * _Ygl->vdp1wratio;
   polygon.vertices[7] = line_poygon[7] * _Ygl->vdp1hratio;
 
-  if (IS_REPLACE(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_REPLACE;
-  }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_SHADOW;
-  }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
-  }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
-  }
-  if (IS_MESH(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_MESH;
-  }
-  else if (IS_MSB_SHADOW(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
-  }
+  polygon.blendmode = getCCTypeNonTextured(CMDPMOD);
 
   if (gouraud) {
     linecol[0] = col[(0 << 2) + 0];
@@ -4802,7 +4789,6 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.cob = 0x00;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  polygon.blendmode = VDP1_COLOR_CL_REPLACE;
   polygon.dst = 0;
   v[0] = Vdp1Regs->localX + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x0C));
   v[1] = Vdp1Regs->localY + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x0E));
@@ -4861,24 +4847,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.h = 1;
   polygon.flip = 0;
 
-  if (IS_REPLACE(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_REPLACE;
-  }
-  else if (IS_DONOT_DRAW_OR_SHADOW(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_SHADOW;
-  }
-  else if (IS_HALF_LUMINANCE(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_HALF_LUMINANCE;
-  }
-  else if (IS_REPLACE_OR_HALF_TRANSPARENT(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_GROW_HALF_TRANSPARENT;
-  }
-  if (IS_MESH(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_MESH;
-  }
-  else if (IS_MSB_SHADOW(CMDPMOD)) {
-    polygon.blendmode = VDP1_COLOR_CL_MSB_SHADOW;
-  }
+  polygon.blendmode = getCCTypeNonTextured(cmd.CMDPMOD);
 
   if (gouraud == 1) {
     YglQuadGrowShading(&polygon, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
