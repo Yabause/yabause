@@ -1117,7 +1117,7 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
       case 0x010:
          return CurrentSH2->onchip.TIER;
       case 0x011:
-        if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80"); }
+       // if (CurrentSH2->onchip.FTCSR & 0x80) { LOG("Read FTCSR = 0x80"); }
          return CurrentSH2->onchip.FTCSR;
       case 0x012:         
          return CurrentSH2->onchip.FRC.part.H;
