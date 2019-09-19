@@ -1566,6 +1566,8 @@ void YglDeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+static int progNew = 0;
+
 YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, int prio)
 {
    YglLevel   *level;
@@ -1582,7 +1584,13 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
    } else {
      level = &_Ygl->vdp2levels[input->idScreen];
    }
-   level->blendmode |= (input->blendmode&0x03);
+
+    if (progNew == 0){
+      YglProgramChange(level, prg);
+      progNew = 1;
+    }
+
+  // level->blendmode |= (input->blendmode&0x03);
    if( input->uclipmode != level->uclipcurrent ||
      (input->uclipmode !=0 &&
     (level->ux1 != Vdp1Regs->userclipX1 || level->uy1 != Vdp1Regs->userclipY1 ||
@@ -1944,7 +1952,7 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    int prg = PG_VDP1_GOURAUDSHADING;
    float * pos;
 
-  prg = input->blendmode;
+   prg = input->blendmode;
 
    program = YglGetProgram(input,prg,tm,input->priority);
    if( program == NULL ) return -1;
@@ -2739,7 +2747,7 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
     }
     if( level->prg[j].currentQuad != 0 ) {
       ret = 1;
-      glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
+      if(level->prg[j].mtxModelView>0) glUniformMatrix4fv(level->prg[j].mtxModelView, 1, GL_FALSE, (GLfloat*)&mat->m[0][0]);
       glBindBuffer(GL_ARRAY_BUFFER, _Ygl->quads_buf);
       glBufferData(GL_ARRAY_BUFFER, level->prg[j].currentQuad * sizeof(float), level->prg[j].quads, GL_STREAM_DRAW);
       glVertexAttribPointer(level->prg[j].vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -2754,7 +2762,7 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
         glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(level->prg[j].vaid);
       }
-      if ( level->prg[j].prgid >= PG_VDP1_GOURAUDSHADING_TESS ) {
+      if ( level->prg[j].prgid >= PG_VDP1_REPLACE_TESS ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }else{
