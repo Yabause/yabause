@@ -30,7 +30,7 @@
 #include "error.h"
 #include "vdp1/vdp1_compute.h"
 
-//#define __USE_OPENGL_DEBUG__
+#define __USE_OPENGL_DEBUG__
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -1640,10 +1640,6 @@ YglProgram * YglGetProgram( YglSprite * input, int prg, YglTextureManager *tm, i
      level->prg[level->prgcurrent].id = input->idScreen;
      level->prg[level->prgcurrent].blendmode = input->blendmode;
    }
-// for polygon debug
-  //else if (prg == PG_VDP1_GOURAUDSHADING ){
-  //   YglProgramChange(level, prg);
-  //}
    program = &level->prg[level->prgcurrent];
 
    if ((program->currentQuad + YGL_MAX_NEED_BUFFER) >= program->maxQuad) {
@@ -1719,7 +1715,7 @@ int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, Y
 int YglTriangleGrowShading_in(YglSprite * input, YglTexture * output, float * colors, YglCache * c, int cash_flg, YglTextureManager *tm ) {
   unsigned int x, y;
   YglProgram *program;
-  int prg = PG_VDP1_GOURAUDSHADING;
+  int prg = -1;
   float * pos;
   int u, v;
   float *colv;
@@ -1949,7 +1945,7 @@ int YglQuadGrowShading_in(YglSprite * input, YglTexture * output, float * colors
    texturecoordinate_struct *tmp;
    float * vtxa;
    float q[4];
-   int prg = PG_VDP1_GOURAUDSHADING;
+   int prg = -1;
    float * pos;
 
    prg = input->blendmode;
@@ -2112,8 +2108,6 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   float * vtxa;
   int prg;
   float * pos;
-
-  prg = input->blendmode - PG_VDP1_REPLACE + PG_VDP1_REPLACE_TESS;
 
   program = YglGetProgram(input, prg, tm,input->priority);
   if (program == NULL) return -1;
@@ -2762,7 +2756,7 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
         glVertexAttribPointer(level->prg[j].vaid,4, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(level->prg[j].vaid);
       }
-      if ( level->prg[j].prgid >= PG_VDP1_REPLACE_TESS ) {
+      if ( level->prg[j].prgid >= (PG_VDP1_VDP2>>1) ) {
         if (glPatchParameteri) glPatchParameteri(GL_PATCH_VERTICES, 4);
         glDrawArrays(GL_PATCHES, 0, level->prg[j].currentQuad / 2);
       }else{

@@ -242,95 +242,22 @@ int orderTable[NB_MSG];
 #define CELL_SINGLE 0x1
 #define CELL_QUAD   0x2
 
-#define IS_MESH(a) (a&0x100)
+#define IS_MESH(a) ((a&0x100) == 0x100)
+#define IS_SPD(a) ((a&0x40) == 0x40)
 #define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
 
-static int getCCTypeNonTextured(int CMDPMOD){
-  int ret = 0;
+static int getCCProgramId(int CMDPMOD) {
   int cctype = CMDPMOD & 0x7;
-  switch(cctype) {
-    case 0x0:
-      ret = PG_VDP1_REPLACE;
-      break;
-    case 0x1:
-      ret = PG_VDP1_SHADOW;
-      break;
-    case 0x2:
-      ret = PG_VDP1_HALF_LUMINANCE;
-      break;
-    case 0x3:
-      ret = PG_VDP1_HALFTRANS;
-      break;
-    case 0x4:
-      ret = PG_VDP1_GOURAUDSHADING;
-      break;
-    case 0x5:
-      ret = 0;
-      break;
-    case 0x6:
-      ret = PG_VDP1_GOURAUDSHADING_HALF_LUMINANCE;
-      break;
-    case 0x7:
-      ret = PG_VDP1_GOURAUDSHADING_HALFTRANS;
-      break;
-    default:
-      ret = 0;
-  }
+  int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
+  int Mesh = IS_MESH(CMDPMOD)?1:0;
+  int SPD = IS_SPD(CMDPMOD)?1:0;
+  int TESS = (_Ygl->polygonmode == GPU_TESSERATION)?1:0;
+  if (cctype == 5) return -1;
+  if (cctype > 5) cctype +=1;
 
-  if (ret != 0) {
-    if (IS_MESH(CMDPMOD)) {
-      ret += PG_VDP1_REPLACE_MESH - PG_VDP1_REPLACE; // zzzz
-    }
-    else if (IS_MSB_SHADOW(CMDPMOD)) {
-      ret += PG_VDP1_REPLACE_MSB - PG_VDP1_REPLACE;
-    }
-  }
+  YGLLOG("Setup program %d %d %d %d %d\n", cctype, SPD, Mesh, MSB, TESS);
 
-  return ret;
-}
-
-static int getCCTypeTextured(int CMDPMOD) {
-  int ret = 0;
-  int cctype = CMDPMOD & 0x7;
-  switch(cctype) {
-    case 0x0:
-      ret = PG_VDP1_REPLACE;
-      break;
-    case 0x1:
-      ret = PG_VDP1_SHADOW;
-      break;
-    case 0x2:
-      ret = PG_VDP1_HALF_LUMINANCE;
-      break;
-    case 0x3:
-      ret = PG_VDP1_HALFTRANS;
-      break;
-    case 0x4:
-      ret = PG_VDP1_GOURAUDSHADING;
-      break;
-    case 0x5:
-      ret = 0;
-      break;
-    case 0x6:
-      ret = PG_VDP1_GOURAUDSHADING_HALF_LUMINANCE;
-      break;
-    case 0x7:
-      ret = PG_VDP1_GOURAUDSHADING_HALFTRANS;
-      break;
-    default:
-      ret = 0;
-  }
-
-  if (ret != 0) {
-    if (IS_MESH(CMDPMOD)) {
-      ret += PG_VDP1_REPLACE_MESH - PG_VDP1_REPLACE; // zzzz
-    }
-    else if (IS_MSB_SHADOW(CMDPMOD)) {
-      ret += PG_VDP1_REPLACE_MSB - PG_VDP1_REPLACE;
-    }
-  }
-
-  return ret;
+  return cctype+7*(SPD+2*(Mesh+3*(MSB+2*TESS)))+PG_VDP1_START;
 }
 
 void Vdp2DrawCell_in_async(void *p)
@@ -3843,7 +3770,7 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00020000;
   }
 
-  sprite.blendmode = getCCTypeTextured(cmd.CMDPMOD);
+  sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
 
   if ((cmd.CMDPMOD & 4))
   {
@@ -4051,7 +3978,7 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00020000;
   }
 
-  sprite.blendmode = getCCTypeTextured(CMDPMOD);
+  sprite.blendmode = getCCProgramId(CMDPMOD);
 
   if ((CMDPMOD & 4))
   {
@@ -4273,7 +4200,7 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     tmp |= 0x00020000;
   }
 
-  sprite.blendmode = getCCTypeTextured(cmd.CMDPMOD);
+  sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
   if ((cmd.CMDPMOD & 4))
@@ -4501,7 +4428,7 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   int spd = ((cmd.CMDPMOD & 0x40) != 0);
 
-  sprite.blendmode = getCCTypeTextured(cmd.CMDPMOD);
+  sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
 
   if (gouraud == 1)
   {
@@ -4593,7 +4520,7 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.vertices[6] = line_poygon[6] * _Ygl->vdp1wratio;
   polygon.vertices[7] = line_poygon[7] * _Ygl->vdp1hratio;
 
-  polygon.blendmode = getCCTypeNonTextured(CMDPMOD);
+  polygon.blendmode = getCCProgramId(CMDPMOD);
 
   if (gouraud) {
     linecol[0] = col[(0 << 2) + 0];
@@ -4847,7 +4774,7 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.h = 1;
   polygon.flip = 0;
 
-  polygon.blendmode = getCCTypeNonTextured(cmd.CMDPMOD);
+  polygon.blendmode = getCCProgramId(cmd.CMDPMOD);
 
   if (gouraud == 1) {
     YglQuadGrowShading(&polygon, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
@@ -6991,7 +6918,6 @@ void VIDOGLSetSettingValueMode(int type, int value) {
       if ((maj >=4) && (min >=2)) {
 #endif
         if (glPatchParameteri) {
-          YglTesserationProgramInit();
           _Ygl->polygonmode = value;
         } else {
           YuiMsg("GPU tesselation is not possible - fallback on CPU tesselation\n");
