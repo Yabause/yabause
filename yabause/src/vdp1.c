@@ -492,12 +492,23 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          break;
       case 1: // ASSIGN, jump to CMDLINK
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
+
+         // Badd adress. it causes infinity loop 
+         if (regs->addr == 0) {
+           LOG("VDP1: BAD jump to 0, forced to finish");
+           return;
+         }
+
          break;
       case 2: // CALL, call a subroutine
          if (returnAddr == 0xFFFFFFFF)
             returnAddr = regs->addr + 0x20;
-
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
+         // Badd adress. it causes infinity loop 
+         if (regs->addr == 0) {
+           LOG("VDP1: BAD jump to 0, forced to finish");
+           return;
+         }
          break;
       case 3: // RETURN, return from subroutine
          if (returnAddr != 0xFFFFFFFF) {
@@ -506,6 +517,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          }
          else
             regs->addr += 0x20;
+         // Badd adress. it causes infinity loop 
+         if (regs->addr == 0) {
+           LOG("VDP1: BAD jump to 0, forced to finish");
+           return;
+         }
          break;
       }
 
