@@ -406,22 +406,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
 u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
 {
-  int shadow = 0;
-  int normalshadow = 0;
-  int priority = 0;
-  int colorcl = 0;
-
-  int endcnt = 0;
-  int normal_shadow = 0;
-
-  // hard/vdp1/hon/p06_35.htm#6_35
-  // \93\A7\96\BE\83s\83N\83Z\83\8B\96\B3\8C\F8\83r\83b\83g\82̓L\83\83\83\89\83N\83^\83p\83^\81[\83\93\82̂\A0\82\E9\83X\83v\83\89\83C\83g\95`\89\E6\82ɂ̂ݗL\8C\F8\82ł\B7\81B\83|\83\8A\83S\83\93\81A\83|\83\8A\83\89\83C\83\93\81A\83\89\83C\83\93\82ł́A\82\B1\82̃r\83b\83g\82͕K\82\B81\82ɐݒ肵\82Ă\AD\82\BE\82\B3\82\A2\81B
-  u8 END = ((cmd->CMDPMOD & 0x80) != 0);    // end-code disable(ECD) hard/vdp1/hon/p06_34.htm
-  u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
-  u32 alpha = 0xF8;
-  u32 color = 0x00;
-  int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-
   // Check if transparent sprite window
   // hard/vdp2/hon/p08_12.htm#SPWINEN_
   if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
@@ -433,9 +417,7 @@ u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
     return 0;
   }
 
-  if (IS_MSB_SHADOW(cmd->CMDPMOD) && (cmd->CMDCOLR == 0))cmd->CMDCOLR = 1; //Dirty patch shall be replace y a duplicate of shader dedicated to polygon
-  color = VDP1COLOR(cmd->CMDPMOD, cmd->CMDCOLR);
-  return color;
+  return VDP1COLOR(cmd->CMDPMOD, cmd->CMDCOLR);
 }
 
 static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, int spriteh, YglTexture *texture, Vdp2 *varVdp2Regs)
