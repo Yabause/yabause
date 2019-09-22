@@ -3100,8 +3100,8 @@ SHADER_VERSION
 //"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
-"  fragColor.b = tex.g;         \n"
-"  fragColor.a = tex.r;         \n"
+"  fragColor.b = 0.0;         \n"
+"  fragColor.a = 0.0;         \n"
 "}  \n";
 
 static const char vdp1_read_f[] =
@@ -3119,8 +3119,8 @@ SHADER_VERSION
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
 //"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
-"  fragColor.r = tex.a;         \n"
-"  fragColor.g = tex.b;         \n"
+"  fragColor.r = 0.0;         \n"
+"  fragColor.g = 0.0;         \n"
 "  fragColor.b = tex.g;         \n"
 "  fragColor.a = tex.r;         \n"
 "}  \n";

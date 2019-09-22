@@ -743,13 +743,13 @@ static u32* getVdp1DrawingFBMemWrite(int id) {
   GLuint error;
   u32 tmp[512*256];
   YglGenFrameBuffer();
-  releaseVDP1DrawingFBMemRead(id);
+  releaseVDP1DrawingFBMemRead((id+1)%2);
   executeTMVDP1(id, id);
-  if (_Ygl->vdp1fb_buf_read[id] == NULL) {
-    _Ygl->vdp1fb_buf_read[id] =  getVdp1DrawingFBMemRead(id);
+  if (_Ygl->vdp1fb_buf_read[(id+1)%2] == NULL) {
+    _Ygl->vdp1fb_buf_read[(id+1)%2] =  getVdp1DrawingFBMemRead((id+1)%2);
   }
-  memcpy((u8*)tmp, _Ygl->vdp1fb_buf_read[id], 512*256*4);
-  releaseVDP1DrawingFBMemRead(id);
+  memcpy((u8*)tmp, _Ygl->vdp1fb_buf_read[(id+1)%2], 512*256*4);
+  releaseVDP1DrawingFBMemRead((id+1)%2);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
@@ -776,7 +776,7 @@ static u32* getVdp1DrawingFBMemRead(int id) {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
   glClearBufferfv(GL_COLOR, 0, col);
-  YglBlitVDP1(_Ygl->vdp1FrameBuff[id], _Ygl->width, _Ygl->height, 0);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[(id+1)%2], _Ygl->width, _Ygl->height, 0);
   //glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
