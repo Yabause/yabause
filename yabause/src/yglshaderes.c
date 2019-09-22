@@ -528,26 +528,21 @@ int Ygl_cleanupMosaic(void * p, YglTextureManager *tm)
  *  UserClip Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_userclip_v[] =
-      SHADER_VERSION
       "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;               \n"
       "void main()                  \n"
       "{                            \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
-      "} ";
-const GLchar * pYglprg_userclip_v[] = {Yglprg_userclip_v, NULL};
+      "}\n";
 
 const GLchar Yglprg_userclip_f[] =
-      SHADER_VERSION
       "#ifdef GL_ES\n"
       "precision highp float;                            \n"
       "#endif\n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
       "{                                                   \n"
-      "  fragColor = vec4( 0.0 );\n"
-      "}                                                   \n";
-const GLchar * pYglprg_userclip_f[] = {Yglprg_userclip_f, NULL};
+      "  fragColor = vec4( 0.0 );\n";
 
 /*------------------------------------------------------------------------------------
  *  Window Operation
@@ -991,14 +986,18 @@ const GLchar gouraud_half_trans_mode[] = {
   "fragColor = spriteColor;\n"
 };
 
-const GLchar* vdp1drawmode[7]= {
+const GLchar nothing_mode[] =
+{"//No CC mode\n"};
+
+const GLchar* vdp1drawmode[8]= {
   replace_mode,
   shadow_mode,
   half_luminance_mode,
   half_trans_mode,
   gouraud_mode,
   gouraud_half_luminance_mode,
-  gouraud_half_trans_mode
+  gouraud_half_trans_mode,
+  nothing_mode
 };
 
 //ENd of shaders
@@ -2140,11 +2139,11 @@ static const char vdp2blit_end_f[] =
 "} \n";
 
 GLchar * pYglprg_vdp2_blit_f[128*5][10];
-GLchar * prg_input_f[2*3*2*7*2][8];
-GLchar * prg_input_v[2*3*2*7*2][3];
-GLchar * prg_input_c[2*3*2*7*2][2];
-GLchar * prg_input_e[2*3*2*7*2][2];
-GLchar * prg_input_g[2*3*2*7*2][2];
+GLchar * prg_input_f[PG_MAX][8];
+GLchar * prg_input_v[PG_MAX][3];
+GLchar * prg_input_c[PG_MAX][2];
+GLchar * prg_input_e[PG_MAX][2];
+GLchar * prg_input_g[PG_MAX][2];
 
 const GLchar * vdp2blit_palette_mode_f[2]= {
   Yglprg_vdp2_sprite_palette_only,
@@ -2253,6 +2252,50 @@ int initDrawShaderCode() {
       }
     }
   }
+  //Handle start and end user clip
+
+  //Start user clip
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_f;
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][2] = vdp1drawcheck[1];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][3] = vdp1drawmesh[0];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][6] = vdp1drawend;
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][7] = NULL;
+
+  prg_input_v[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_v[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_v;
+  prg_input_v[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][2] = NULL;
+
+  prg_input_c[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_c[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_e[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_e[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_g[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_g[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = NULL;
+
+  //End user clip
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_f;
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][2] = vdp1drawcheck[1];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][3] = vdp1drawmesh[0];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][6] = vdp1drawend;
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = NULL;
+
+  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_v;
+  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = NULL;
+
+  prg_input_c[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_c[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_e[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_e[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_g[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_g[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = NULL;
+
 }
 
 int YglInitDrawFrameBufferShaders(int id) {
