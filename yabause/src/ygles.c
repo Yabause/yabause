@@ -3194,7 +3194,7 @@ void YglUpdateVdp2Reg() {
 
 SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs) {
   SpriteMode ret = NONE;
-  if ((Vdp1Regs->TVMR & 0x1) == 1) return NONE;
+  // if ((Vdp1Regs->TVMR & 0x1) == 1) return NONE;
   if (varVdp2Regs->CCCTL & (1<<6)) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
