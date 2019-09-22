@@ -1032,7 +1032,7 @@ const GLchar vdp1drawvertex_tess[] = {
   "out vec4 v_texcoord; \n"
   "out vec4 v_vtxcolor; \n"
   "void main() {     \n"
-  "   v_position  = (a_position*u_mvpMatrix).xyz; \n"
+  "   v_position  = a_position.xyz; \n"
   "   v_vtxcolor  = a_grcolor;  \n"
   "   v_texcoord  = a_texcoord; \n"
   "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
