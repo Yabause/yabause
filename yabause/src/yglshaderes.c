@@ -2142,9 +2142,9 @@ static const char vdp2blit_end_f[] =
 GLchar * pYglprg_vdp2_blit_f[128*5][10];
 GLchar * prg_input_f[2*3*2*7*2][8];
 GLchar * prg_input_v[2*3*2*7*2][3];
-GLchar * prg_input_c[2*3*2*7*2];
-GLchar * prg_input_e[2*3*2*7*2];
-GLchar * prg_input_g[2*3*2*7*2];
+GLchar * prg_input_c[2*3*2*7*2][2];
+GLchar * prg_input_e[2*3*2*7*2][2];
+GLchar * prg_input_g[2*3*2*7*2][2];
 
 const GLchar * vdp2blit_palette_mode_f[2]= {
   Yglprg_vdp2_sprite_palette_only,
@@ -2234,13 +2234,19 @@ int initDrawShaderCode() {
             prg_input_v[index][2] = NULL;
 
             if(m!=1) {
-              prg_input_c[index] = NULL;
-              prg_input_e[index] = NULL;
-              prg_input_g[index] = NULL;
+              prg_input_c[index][0] = NULL;
+              prg_input_c[index][1] = NULL;
+              prg_input_e[index][0] = NULL;
+              prg_input_e[index][1] = NULL;
+              prg_input_g[index][0] = NULL;
+              prg_input_g[index][1] = NULL;
             } else {
-              prg_input_c[index] = Yglprg_gouraud_tess_c;
-              prg_input_e[index] = Yglprg_gouraud_tess_e;
-              prg_input_g[index] = Yglprg_gouraud_tess_g;
+              prg_input_c[index][0] = Yglprg_gouraud_tess_c;
+              prg_input_c[index][1] = NULL;
+              prg_input_e[index][0] = Yglprg_gouraud_tess_e;
+              prg_input_e[index][1] = NULL;
+              prg_input_g[index][0] = Yglprg_gouraud_tess_g;
+              prg_input_g[index][1] = NULL;
             }
           }
         }

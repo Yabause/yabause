@@ -2106,8 +2106,10 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
   YglProgram *program;
   texturecoordinate_struct *tmp;
   float * vtxa;
-  int prg;
+  int prg = -1;;
   float * pos;
+
+  prg = input->blendmode;
 
   program = YglGetProgram(input, prg, tm,input->priority);
   if (program == NULL) return -1;
