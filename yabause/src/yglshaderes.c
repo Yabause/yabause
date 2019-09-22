@@ -2302,9 +2302,9 @@ int YglInitDrawFrameBufferShaders(int id) {
  //printf ("Use prog %d\n", id); //16
  int arrayid = id-PG_VDP2_DRAWFRAMEBUFF_NONE;
  //printf ("getArray %d\n", arrayid); //16
-  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
+  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
   if (YglInitShader(id, pYglprg_vdp2_blit_v, 1, pYglprg_vdp2_blit_f[arrayid], 9, NULL, NULL, NULL) != 0) { printf("Error init prog %d\n",id); abort(); }
-
+  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", arrayid);
   if ( arrayid < 0 || arrayid >= MAX_FRAME_BUFFER_UNIFORM) {
     abort();
   }
@@ -2312,6 +2312,7 @@ int YglInitDrawFrameBufferShaders(int id) {
   g_draw_framebuffer_uniforms[arrayid].idvdp2regs = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp2reg");
   g_draw_framebuffer_uniforms[arrayid].idcram = glGetUniformLocation(_prgid[id], (const GLchar *)"s_color");
   g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
+  return 0;
 }
 
 
