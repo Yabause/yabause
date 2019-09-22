@@ -892,8 +892,11 @@ P priority
 s Shadow Flag
 
 */
+
+extern int VDP1_MASK;
+
 INLINE u32 VDP1COLOR(u16 CMDPMOD, u16 CMDCOLR) {
-  return CMDCOLR | (CMDPMOD<<16);
+  return CMDCOLR & VDP1_MASK;
 }
 
 INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cc_on, u32 cramindex) {

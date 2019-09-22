@@ -38,6 +38,7 @@
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;
+int VDP1_MASK = 0xFFFF;
 
 VideoInterface_struct *VIDCore=NULL;
 extern VideoInterface_struct *VIDCoreList[];
@@ -183,6 +184,8 @@ int Vdp1Init(void) {
    Vdp1Regs->FBCR = 0;
    Vdp1Regs->PTMR = 0;
 
+   VDP1_MASK = 0xFFFF;
+
    vdp1Ram_update_start = 0x0;
    vdp1Ram_update_end = 0x80000;
 
@@ -265,6 +268,7 @@ void Vdp1Reset(void) {
    Vdp1Regs->EWLR = 0;
    Vdp1Regs->EWRR = 0;
    Vdp1Regs->ENDR = 0;
+   VDP1_MASK = 0xFFFF;
    VIDCore->Vdp1Reset();
 }
 

@@ -864,6 +864,8 @@ static void Vdp1SetTextureRatio(int vdp2widthratio, int vdp2heightratio)
   float vdp1h = 1;
 
   // may need some tweaking
+  if (Vdp1Regs->TVMR & 0x1) VDP1_MASK = 0xFF;
+  else VDP1_MASK = 0xFFFF;
 
   // Figure out which vdp1 screen mode to use
   switch (Vdp1Regs->TVMR & 7)
