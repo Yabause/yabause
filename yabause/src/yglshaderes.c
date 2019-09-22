@@ -2385,52 +2385,58 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     glAttachShader(_prgid[id], vshader);
     glAttachShader(_prgid[id], fshader);
   if (tc != NULL){
-    tcsHandle = glCreateShader(GL_TESS_CONTROL_SHADER);
-    if (tcsHandle == 0){
-      YGLLOG("GL_TESS_CONTROL_SHADER is not supported\n");
+    if (tc[0] != NULL){
+      tcsHandle = glCreateShader(GL_TESS_CONTROL_SHADER);
+      if (tcsHandle == 0){
+        YGLLOG("GL_TESS_CONTROL_SHADER is not supported\n");
+      }
+      glShaderSource(tcsHandle, 1, tc, NULL);
+      glCompileShader(tcsHandle);
+      glGetShaderiv(tcsHandle, GL_COMPILE_STATUS, &compiled);
+      if (compiled == GL_FALSE) {
+        YGLLOG("Compile error in GL_TESS_CONTROL_SHADER shader.\n");
+        Ygl_printShaderError(tcsHandle);
+        _prgid[id] = 0;
+        return -1;
+      }
+      glAttachShader(_prgid[id], tcsHandle);
     }
-    glShaderSource(tcsHandle, 1, tc, NULL);
-    glCompileShader(tcsHandle);
-    glGetShaderiv(tcsHandle, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in GL_TESS_CONTROL_SHADER shader.\n");
-      Ygl_printShaderError(tcsHandle);
-      _prgid[id] = 0;
-      return -1;
-    }
-    glAttachShader(_prgid[id], tcsHandle);
   }
   if (te != NULL){
-    tesHandle = glCreateShader(GL_TESS_EVALUATION_SHADER);
-    if (tesHandle == 0){
-      YGLLOG("GL_TESS_EVALUATION_SHADER is not supported\n");
+    if (te[0] != NULL){
+      tesHandle = glCreateShader(GL_TESS_EVALUATION_SHADER);
+      if (tesHandle == 0){
+        YGLLOG("GL_TESS_EVALUATION_SHADER is not supported\n");
+      }
+      glShaderSource(tesHandle, 1, te, NULL);
+      glCompileShader(tesHandle);
+      glGetShaderiv(tesHandle, GL_COMPILE_STATUS, &compiled);
+      if (compiled == GL_FALSE) {
+        YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
+        Ygl_printShaderError(tesHandle);
+        _prgid[id] = 0;
+        return -1;
+      }
+      glAttachShader(_prgid[id], tesHandle);
     }
-    glShaderSource(tesHandle, 1, te, NULL);
-    glCompileShader(tesHandle);
-    glGetShaderiv(tesHandle, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-      Ygl_printShaderError(tesHandle);
-      _prgid[id] = 0;
-      return -1;
-    }
-    glAttachShader(_prgid[id], tesHandle);
   }
   if (g != NULL){
-    gsHandle = glCreateShader(GL_GEOMETRY_SHADER);
-    if (gsHandle == 0){
-      YGLLOG("GL_GEOMETRY_SHADER is not supported\n");
+    if (g[0] != NULL){
+      gsHandle = glCreateShader(GL_GEOMETRY_SHADER);
+      if (gsHandle == 0){
+        YGLLOG("GL_GEOMETRY_SHADER is not supported\n");
+      }
+      glShaderSource(gsHandle, 1, g, NULL);
+      glCompileShader(gsHandle);
+      glGetShaderiv(gsHandle, GL_COMPILE_STATUS, &compiled);
+      if (compiled == GL_FALSE) {
+        YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
+        Ygl_printShaderError(gsHandle);
+        _prgid[id] = 0;
+        return -1;
+      }
+      glAttachShader(_prgid[id], gsHandle);
     }
-    glShaderSource(gsHandle, 1, g, NULL);
-    glCompileShader(gsHandle);
-    glGetShaderiv(gsHandle, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-      Ygl_printShaderError(gsHandle);
-      _prgid[id] = 0;
-      return -1;
-    }
-    glAttachShader(_prgid[id], gsHandle);
   }
     glLinkProgram(_prgid[id]);
     glGetProgramiv(_prgid[id], GL_LINK_STATUS, &linked);
