@@ -646,15 +646,13 @@ int Ygl_cleanupWindow(void * p, YglTextureManager *tm )
 } \n"
 
 // we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
-#define GOURAUD_PROCESS(A) \
-"if ((int("Stringify(A)".b*255.0) & 0x4) == 0x4) {\n \
-  int R = int(clamp((float((col"Stringify(A)" >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
-  int G = int(clamp((float((col"Stringify(A)" >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
-  int B = int(clamp((float((col"Stringify(A)" >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
-  int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
-  "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n \
-}\n"
+#define GOURAUD_PROCESS(A) "\
+int R = int(clamp((float((col"Stringify(A)" >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
+int G = int(clamp((float((col"Stringify(A)" >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
+int B = int(clamp((float((col"Stringify(A)" >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
+int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
 
 #define HALF_TRANPARENT_MIX(A, B) \
 "if ((col"Stringify(B)" & 0x8000) != 0) { \
