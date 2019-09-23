@@ -683,6 +683,8 @@ void YglTMCheck()
 {
   YglTextureManager * tm = YglTM_vdp1[_Ygl->drawframe];
   if ((tm->width > 2048) || (tm->height > 2048)) {
+    YglUpdateVDP1FB();
+    releaseVDP1DrawingFBMemRead();
     executeTMVDP1(_Ygl->drawframe,_Ygl->drawframe);
     YglTMRealloc(tm, 1024, 1024);
   }
@@ -745,11 +747,7 @@ static u32* getVdp1DrawingFBMemWrite() {
   YglGenFrameBuffer();
   releaseVDP1DrawingFBMemRead();
   executeTMVDP1(_Ygl->drawframe, _Ygl->drawframe);
-  if (_Ygl->vdp1fb_buf_read == NULL) {
-    _Ygl->vdp1fb_buf_read =  getVdp1DrawingFBMemRead();
-  }
-  memcpy((u8*)tmp, _Ygl->vdp1fb_buf_read, 512*256*4);
-  releaseVDP1DrawingFBMemRead();
+  waitVdp1End(_Ygl->drawframe);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex, 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
@@ -815,6 +813,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   u8 priority = Vdp2Regs->PRISA &0x7;
   int rgb = !((val>>15)&0x1);
   u16 full = 0;
+  releaseVDP1DrawingFBMemRead();
   if (_Ygl->vdp1fb_buf == NULL) {
     _Ygl->vdp1fb_buf =  getVdp1DrawingFBMemWrite();
   }
@@ -840,18 +839,16 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   default:
     break;
   }
-  if (val != 0) {
+  // if (val != 0) {
     _Ygl->vdp1IsNotEmpty = 1;
-  }
+  // }
 }
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   //releaseVDP1DrawingFBMemRead(_Ygl->drawframe);
     if (_Ygl->vdp1fb_buf_read == NULL) {
-      if(_Ygl->vdp1fb_buf != NULL) {
-        releaseVDP1FB();
-      }
-      _Ygl->vdp1IsNotEmpty = 0;
+      YglUpdateVDP1FB();
+      // _Ygl->vdp1IsNotEmpty = 0;
       _Ygl->vdp1fb_buf_read =  getVdp1DrawingFBMemRead();
     }
     u32 x = 0;
@@ -2629,12 +2626,11 @@ void YglEraseWriteVDP1(void) {
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
   memset(_Ygl->vdp1fb_exactbuf, 0x0, 512*704*2);
-  releaseVDP1DrawingFBMemRead();
 
   if(_Ygl->vdp1fb_buf != NULL) {
     releaseVDP1FB();
   }
-  _Ygl->vdp1IsNotEmpty = 0;
+  // _Ygl->vdp1IsNotEmpty = 0;
   releaseVDP1DrawingFBMemRead();
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
@@ -2709,6 +2705,8 @@ void executeTMVDP1(int in, int out) {
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
+  YglUpdateVDP1FB();
+  releaseVDP1DrawingFBMemRead();
   executeTMVDP1(_Ygl->drawframe, _Ygl->readframe);
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
@@ -2787,6 +2785,7 @@ void YglRenderVDP1(void) {
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   }
+  YglUpdateVDP1FB();
   releaseVDP1DrawingFBMemRead();
 
   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
@@ -3205,42 +3204,35 @@ void YglSetClearColor(float r, float g, float b){
   _Ygl->clear[3] = (float)(0xF8|NONE)/255.0f;
 }
 
-static void YglSetVDP1FB(){
+static void releaseVDP1FB() {
+  if (_Ygl->vdp1fb_buf != NULL) {
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo);
+    glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    _Ygl->vdp1fb_buf = NULL;
+  }
+}
+
+static void YglUpdateVDP1FB(void) {
+  waitVdp1End(_Ygl->drawframe);
   if (_Ygl->vdp1IsNotEmpty != 0) {
+    GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
+    printf("Update VDP1 write\n");
     _Ygl->vdp1On[_Ygl->drawframe] = 1;
     YglGenFrameBuffer();
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
+    glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
     releaseVDP1FB();
-    releaseVDP1DrawingFBMemRead();
     glViewport(0,0, _Ygl->width, _Ygl->height);
     YglBlitVDP1(_Ygl->vdp1AccessTex, _Ygl->rwidth, _Ygl->rheight, 1);
     // clean up
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
     _Ygl->vdp1IsNotEmpty = 0;
   }
-}
-
-static void releaseVDP1FB() {
-  if (_Ygl->vdp1FrameBuff != 0) {
-    if (_Ygl->vdp1fb_buf != NULL) {
-      glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
-      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo);
-      glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-      glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-      glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-      _Ygl->vdp1fb_buf = NULL;
-      YglSetVDP1FB();
-    }
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  }
-}
-
-static void YglUpdateVDP1FB(void) {
-  waitVdp1End(_Ygl->readframe);
-  YglSetVDP1FB();
-  releaseVDP1DrawingFBMemRead();
 }
 
 void YglCheckFBSwitch(int sync) {
@@ -3458,8 +3450,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
-
-   YglUpdateVDP1FB();
 
    glDepthMask(GL_FALSE);
    glDisable(GL_DEPTH_TEST);
