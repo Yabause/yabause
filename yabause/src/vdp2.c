@@ -46,6 +46,8 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+extern void waitVdp2DrawScreensEnd(int sync, int abort);
+
 int isSkipped = 0;
 
 u8 Vdp2ColorRamUpdated = 0;

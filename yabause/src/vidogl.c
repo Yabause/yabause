@@ -36,6 +36,7 @@
 #include "ygl.h"
 #include "yui.h"
 #include "frameprofile.h"
+#include "vdp1/vdp1_compute.h"
 #ifdef SPRITE_CACHE
 #include "patternManager.h"
 #endif
@@ -2086,6 +2087,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
       // info->verticalscrolltbl should be incremented by info->verticalscrollinc
       // each time there's a cell change and reseted at the end of the line...
       // or something like that :)
+		//On ne peut pas decaler de 16 un word de 16 bits...
       targetv += Vdp2RamReadWord(NULL, Vdp2Ram, info->verticalscrolltbl) >> 16;
     }
 
@@ -3528,7 +3530,7 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
 #endif
   }
 
-  if (isQuad) dst == 1;
+  if (isQuad) dst = 1;
   if ((isQuad || isTriangle) && distorted) {
     int disp = 0;
     int isSquare = 1;

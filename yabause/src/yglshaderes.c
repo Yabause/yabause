@@ -2184,7 +2184,7 @@ const GLchar * Yglprg_color_mode_f[4] = {
   Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f,
 };
 
-int initDrawShaderCode() {
+void initDrawShaderCode() {
   //VDP2 programs
   for (int i = 0; i<5; i++) {
      // Sprite color calculation condition are separated by 128

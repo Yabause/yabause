@@ -318,6 +318,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
       }
     }
   }
+  return 0;
 }
 
 void vdp1_clear(int id, float *col) {
@@ -490,7 +491,7 @@ int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
 	// printf("%f %f %f\n", m.m[0][0], m.m[0][1], m.m[0][2]);
   // printf("%f %f %f\n", m.m[1][0], m.m[1][1], m.m[1][2]);
 	// printf("%f %f %f\n", m.m[2][0], m.m[2][1], m.m[2][2]);
-  glUniformMatrix4fv(9, 1, 0, m.m);
+  glUniformMatrix4fv(9, 1, 0, (GLfloat*)m.m);
 
 
 

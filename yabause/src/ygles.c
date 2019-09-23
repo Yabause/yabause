@@ -30,7 +30,7 @@
 #include "error.h"
 #include "vdp1/vdp1_compute.h"
 
-//#define __USE_OPENGL_DEBUG__
+#define __USE_OPENGL_DEBUG__
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -541,7 +541,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
   glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
+  YuiMsg("%s %d\n", __FUNCTION__, __LINE__);
   glGenTextures(1, &tm->textureID);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -549,13 +549,15 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-  tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
-  YglGetColorRamPointer();
+YuiMsg("%s %d %d %d\n", __FUNCTION__, __LINE__, tm->width, tm->height);
+  // glBindTexture(GL_TEXTURE_2D, tm->textureID);
+  // glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
+  // tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  // glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+// YuiMsg("%s %d\n", __FUNCTION__, __LINE__);
+//   YglGetColorRamPointer();
+// YuiMsg("%s %d\n", __FUNCTION__, __LINE__);
+  YuiMsg("End Init\n");
 
   return tm;
 }
@@ -683,8 +685,6 @@ void YglTMCheck()
 {
   YglTextureManager * tm = YglTM_vdp1[_Ygl->drawframe];
   if ((tm->width > 2048) || (tm->height > 2048)) {
-    YglUpdateVDP1FB();
-    releaseVDP1DrawingFBMemRead();
     executeTMVDP1(_Ygl->drawframe,_Ygl->drawframe);
     YglTMRealloc(tm, 1024, 1024);
   }
@@ -745,13 +745,12 @@ static u32* getVdp1DrawingFBMemWrite() {
   GLuint error;
   u32 tmp[512*256];
   YglGenFrameBuffer();
-  releaseVDP1DrawingFBMemRead();
   executeTMVDP1(_Ygl->drawframe, _Ygl->drawframe);
   waitVdp1End(_Ygl->drawframe);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex, 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
-  YglBlitVDP1(_Ygl->vdp1FrameBuff, _Ygl->width, _Ygl->height, 0);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[_Ygl->drawframe], _Ygl->width, _Ygl->height, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
@@ -767,6 +766,7 @@ static u32* getVdp1DrawingFBMemRead() {
   //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
   u32* fbptr = NULL;
   GLuint error;
+  int FBToRead = _Ygl->drawframe;
   float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   executeTMVDP1(_Ygl->drawframe, _Ygl->drawframe);
   YglGenFrameBuffer();
@@ -774,7 +774,7 @@ static u32* getVdp1DrawingFBMemRead() {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex, 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
   glClearBufferfv(GL_COLOR, 0, col);
-  YglBlitVDP1(_Ygl->vdp1FrameBuff, _Ygl->width, _Ygl->height, 0);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[FBToRead], _Ygl->width, _Ygl->height, 0);
   //glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
@@ -1175,8 +1175,8 @@ int YglGenerateScreenBuffer(){
   }
 
   //Generate fbo and texture fr rbh compute shader
-  if (_Ygl->rbg_compute_fbotex != 0) {
-    glDeleteTextures(2,&_Ygl->rbg_compute_fbotex);
+  if (_Ygl->rbg_compute_fbotex[0] != 0) {
+    glDeleteTextures(2, _Ygl->rbg_compute_fbotex);
   }
   glGenTextures(2, &_Ygl->rbg_compute_fbotex[0]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->rbg_compute_fbotex[0]);
@@ -2621,8 +2621,8 @@ void YglEraseWriteVDP1(void) {
   u32 alpha = 0;
   int status = 0;
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
-  if (_Ygl->vdp1On[_Ygl->readframe] == 0) return; //No update on the fb, no need to clear
-  _Ygl->vdp1On[_Ygl->readframe] = 0;
+  if (_Ygl->vdp1On[_Ygl->drawframe] == 0) return; //No update on the fb, no need to clear
+  _Ygl->vdp1On[_Ygl->drawframe] = 0;
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
   memset(_Ygl->vdp1fb_exactbuf, 0x0, 512*704*2);
@@ -2634,16 +2634,16 @@ void YglEraseWriteVDP1(void) {
   releaseVDP1DrawingFBMemRead();
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  glDrawBuffers(1, &DrawBuffers[_Ygl->readframe]);
+  glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
 
   _Ygl->vdp1_stencil_mode = 0;
 
-  _Ygl->vdp1levels[_Ygl->readframe].ux1 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uy1 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].ux2 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uy2 = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].uclipcurrent = 0;
-  _Ygl->vdp1levels[_Ygl->readframe].blendmode = 0;
+  _Ygl->vdp1levels[_Ygl->drawframe].ux1 = 0;
+  _Ygl->vdp1levels[_Ygl->drawframe].uy1 = 0;
+  _Ygl->vdp1levels[_Ygl->drawframe].ux2 = 0;
+  _Ygl->vdp1levels[_Ygl->drawframe].uy2 = 0;
+  _Ygl->vdp1levels[_Ygl->drawframe].uclipcurrent = 0;
+  _Ygl->vdp1levels[_Ygl->drawframe].blendmode = 0;
 
   color = Vdp1Regs->EWDR;
   priority = 0;
@@ -2667,7 +2667,7 @@ void YglEraseWriteVDP1(void) {
   glClearBufferfv(GL_COLOR, 0, col);
   glClearBufferfv(GL_COLOR, 1, colclear);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->readframe);
+  FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", _Ygl->drawframe);
   //Get back to drawframe
   glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
 
@@ -2689,6 +2689,7 @@ static void waitVdp1End(int id) {
 }
 
 void executeTMVDP1(int in, int out) {
+  YglUpdateVDP1FB();
   if (_Ygl->needVdp1Render != 0){
     _Ygl->needVdp1Render = 0;
     YglTmPush(YglTM_vdp1[in]);
@@ -2698,15 +2699,13 @@ void executeTMVDP1(int in, int out) {
     _Ygl->syncVdp1[in] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
     YglReset(_Ygl->vdp1levels[out]);
     YglTmPull(YglTM_vdp1[out], 0);
-
   }
+  releaseVDP1DrawingFBMemRead();
 }
 
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
-  YglUpdateVDP1FB();
-  releaseVDP1DrawingFBMemRead();
   executeTMVDP1(_Ygl->drawframe, _Ygl->readframe);
   current_drawframe = _Ygl->drawframe;
   _Ygl->drawframe = _Ygl->readframe;
@@ -2785,8 +2784,6 @@ void YglRenderVDP1(void) {
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
   }
-  YglUpdateVDP1FB();
-  releaseVDP1DrawingFBMemRead();
 
   YGLLOG("YglRenderVDP1 %d, PTMR = %d\n", _Ygl->drawframe, Vdp1Regs->PTMR);
 
@@ -3221,7 +3218,6 @@ static void YglUpdateVDP1FB(void) {
   waitVdp1End(_Ygl->drawframe);
   if (_Ygl->vdp1IsNotEmpty != 0) {
     GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
-    printf("Update VDP1 write\n");
     _Ygl->vdp1On[_Ygl->drawframe] = 1;
     YglGenFrameBuffer();
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
