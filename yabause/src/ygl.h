@@ -560,12 +560,12 @@ typedef struct {
    GLuint vdp1pixelBufferID;
    void * pFrameBuffer;
    GLuint vdp1AccessFB;
-   GLuint vdp1AccessTex[2];
-   GLuint vdp1_pbo[2];
-   GLuint vdp1IsNotEmpty[2];
-   u32* vdp1fb_buf[2];
-   u8* vdp1fb_exactbuf[2];
-   u32* vdp1fb_buf_read[2];
+   GLuint vdp1AccessTex;
+   GLuint vdp1_pbo;
+   GLuint vdp1IsNotEmpty;
+   u32* vdp1fb_buf;
+   u8* vdp1fb_exactbuf;
+   u32* vdp1fb_buf_read;
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
 

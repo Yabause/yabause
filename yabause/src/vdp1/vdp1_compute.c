@@ -409,9 +409,9 @@ void vdp1_set_directFB(int id) {
 		vdp1_fb_map[id] = NULL;
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1access_[id]);
 		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-		if (_Ygl->vdp1IsNotEmpty[id] == 1) {
+		if (_Ygl->vdp1IsNotEmpty == 1) {
 			vdp1_write(id);
-			_Ygl->vdp1IsNotEmpty[id] = 0;
+			_Ygl->vdp1IsNotEmpty = 0;
 		}
 	}
 }
@@ -429,7 +429,7 @@ void vdp1_setup(void) {
 int* vdp1_compute(Vdp2 *varVdp2Regs, int id) {
   GLuint error;
 	int progId = getProgramId();
-	int needRender = _Ygl->vdp1IsNotEmpty[id];
+	int needRender = _Ygl->vdp1IsNotEmpty;
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
