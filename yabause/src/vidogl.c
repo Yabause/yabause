@@ -3896,22 +3896,45 @@ static void SetSaturnResolution(int width, int height)
       _Ygl->originy = 0;
       if (_Ygl->keep_aspect == 1) {
 
-        if (_Ygl->isFullScreen) {
-          if (GlHeight > GlWidth) {
-            float hrate = (float)((_Ygl->rheight > 256)?_Ygl->rheight/2:_Ygl->rheight) / (float)((_Ygl->rwidth > 352)?_Ygl->rwidth/2:_Ygl->rwidth);
-            _Ygl->originy = (GlHeight - GlWidth  * hrate);
-            GlHeight = _Ygl->screen_width * hrate;
+        if (_Ygl->rotate_screen) {
+          if (_Ygl->isFullScreen) {
+            if (GlHeight > GlWidth) {
+              float hrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
+              _Ygl->originy = (GlHeight - GlWidth  * hrate);
+              GlHeight = _Ygl->screen_width * hrate;
+            }
+            else {
+              float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
+              GlWidth = GlHeight * wrate;
+            }
           }
           else {
-            float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 :_Ygl->rwidth) / (float)((_Ygl->rheight > 256)?_Ygl->rheight/2:_Ygl->rheight);
+            float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
             _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
             GlWidth = GlHeight * wrate;
           }
         }
         else {
-          float hrate = (float)((_Ygl->rheight > 256)?_Ygl->rheight/2:_Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
-          _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
-          GlHeight = GlWidth * hrate;
+
+          if (_Ygl->isFullScreen) {
+            if (GlHeight > GlWidth) {
+              float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+              _Ygl->originy = (GlHeight - GlWidth  * hrate);
+              GlHeight = _Ygl->screen_width * hrate;
+            }
+            else {
+              float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
+              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
+              GlWidth = GlHeight * wrate;
+            }
+          }
+          else {
+            float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+            _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
+            GlHeight = GlWidth * hrate;
+          }
+
         }
       }
     }
