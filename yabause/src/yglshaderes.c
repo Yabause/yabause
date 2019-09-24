@@ -1189,7 +1189,6 @@ const GLchar Yglprg_vdp2_sprite_type_0[] =
 "    ret.cc = 0;\n"
 "    ret.color.rgb = getRGB(ret.code).rgb;\n"
 "  } else {\n"
-"    ret.code = ret.code & 0x7FFF;\n"
 "    ret.prio = (ret.code >> 14) & 0x3;\n"
 "    ret.cc = (ret.code >> 11) & 0x7;\n"
 "    ret.code = ret.code & 0x7FF;\n"
