@@ -30,7 +30,7 @@
 #include "error.h"
 #include "vdp1/vdp1_compute.h"
 
-#define __USE_OPENGL_DEBUG__
+//#define __USE_OPENGL_DEBUG__
 
 #define YGLDEBUG
 //#define YGLDEBUG printf
@@ -541,7 +541,6 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
   glBufferData(GL_PIXEL_UNPACK_BUFFER, tm->width * tm->height * 4, NULL, GL_DYNAMIC_DRAW);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-  YuiMsg("%s %d\n", __FUNCTION__, __LINE__);
   glGenTextures(1, &tm->textureID);
   glBindTexture(GL_TEXTURE_2D, tm->textureID);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tm->width, tm->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -549,15 +548,7 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-YuiMsg("%s %d %d %d\n", __FUNCTION__, __LINE__, tm->width, tm->height);
-  // glBindTexture(GL_TEXTURE_2D, tm->textureID);
-  // glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-  // tm->texture = (unsigned int *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
-  // glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-// YuiMsg("%s %d\n", __FUNCTION__, __LINE__);
-//   YglGetColorRamPointer();
-// YuiMsg("%s %d\n", __FUNCTION__, __LINE__);
-  YuiMsg("End Init\n");
+  YglGetColorRamPointer();
 
   return tm;
 }
