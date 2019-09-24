@@ -2618,9 +2618,7 @@ void YglEraseWriteVDP1(void) {
 
   memset(_Ygl->vdp1fb_exactbuf, 0x0, 512*704*2);
 
-  if(_Ygl->vdp1fb_buf != NULL) {
-    releaseVDP1FB();
-  }
+  releaseVDP1FB();
   // _Ygl->vdp1IsNotEmpty = 0;
   releaseVDP1DrawingFBMemRead();
 
@@ -3194,8 +3192,6 @@ void YglSetClearColor(float r, float g, float b){
 
 static void releaseVDP1FB() {
   if (_Ygl->vdp1fb_buf != NULL) {
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
@@ -3211,10 +3207,12 @@ static void YglUpdateVDP1FB(void) {
     GLenum DrawBuffers[2]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1};
     _Ygl->vdp1On[_Ygl->drawframe] = 1;
     YglGenFrameBuffer();
+
+    releaseVDP1FB();
+
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glDrawBuffers(1, &DrawBuffers[_Ygl->drawframe]);
-    releaseVDP1FB();
-    glViewport(0,0, _Ygl->width, _Ygl->height);
+    glViewport(0,0, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
     YglBlitVDP1(_Ygl->vdp1AccessTex, _Ygl->rwidth, _Ygl->rheight, 1);
     // clean up
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
