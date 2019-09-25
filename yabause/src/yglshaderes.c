@@ -686,6 +686,9 @@ int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
 #define COLINDEX(A) \
 "int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
 
+#define RECOLINDEX(A) \
+"col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
 #define COLZERO(A) \
 "if (col"Stringify(A)" == 0) discard;\n"
 
@@ -972,12 +975,14 @@ const GLchar gouraud_mode[] = {
 
 const GLchar gouraud_half_luminance_mode[] = {
   GOURAUD_PROCESS(spriteColor)
+  RECOLINDEX(spriteColor)
   HALF_LUMINANCE(spriteColor)
   "fragColor = spriteColor;\n"
 };
 
 const GLchar gouraud_half_trans_mode[] = {
   GOURAUD_PROCESS(spriteColor)
+  RECOLINDEX(spriteColor)
   "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
   COLINDEX(fboColor)
   HALF_TRANPARENT_MIX(spriteColor, fboColor)
