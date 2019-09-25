@@ -254,7 +254,7 @@ static int getCCProgramId(int CMDPMOD) {
   int SPD = IS_SPD(CMDPMOD)?1:0;
   int TESS = (_Ygl->polygonmode == GPU_TESSERATION)?1:0;
   if (cctype == 5) return -1;
-  if (cctype > 5) cctype +=1;
+  if (cctype > 5) cctype -=1;
 
   YGLLOG("Setup program %d %d %d %d %d\n", cctype, SPD, Mesh, MSB, TESS);
 
