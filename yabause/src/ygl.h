@@ -899,6 +899,11 @@ INLINE u32 VDP1COLOR(u16 CMDPMOD, u16 CMDCOLR) {
   return CMDCOLR & VDP1_MASK;
 }
 
+INLINE u32 VDP1COLORFB(u16 CMDCOLR) {
+  return (0xFF<<16)|(CMDCOLR & VDP1_MASK);
+}
+
+
 INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cc_on, u32 cramindex) {
   return (((alpha & 0xF8) | priority) << 24 | ((cc_on & 0x1)<<16) | (cramindex& 0xFEFFFF));
   //In 32 bit rgb mode, the Blue LSB is always considered as 0.
