@@ -4412,8 +4412,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.cog = 0x00;
   sprite.cob = 0x00;
 
-  int spd = ((cmd.CMDPMOD & 0x40) != 0);
-
   sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
 
   if (gouraud == 1)
