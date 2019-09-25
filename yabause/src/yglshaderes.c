@@ -647,39 +647,39 @@ int Ygl_cleanupWindow(void * p, YglTextureManager *tm )
 
 // we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
 #define GOURAUD_PROCESS(A) "\
-int R = int(clamp((float((col"Stringify(A)" >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
-int G = int(clamp((float((col"Stringify(A)" >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
-int B = int(clamp((float((col"Stringify(A)" >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
-int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
-"Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
+int Rg = int(clamp((float((col"Stringify(A)" >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
+int Gg = int(clamp((float((col"Stringify(A)" >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
+int Bg = int(clamp((float((col"Stringify(A)" >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
+int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(Rg | ((Gg & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((Gg>>3) | (Bg<<2) | MSBg)/255.0;\n"
 
 #define HALF_TRANPARENT_MIX(A, B) \
 "if ((col"Stringify(B)" & 0x8000) != 0) { \
-  int R = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int G = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int B = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
-  "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n \
+  int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Ght = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Bht = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int MSBht = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rht | ((Ght & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Ght>>3) | (Bht<<2) | MSBht)/255.0;\n \
 }\n"
 
 #define HALF_LUMINANCE(A) \
-"int R = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
-int G = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
-int B = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
-int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
-"Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n"
+"int Rhl = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+int Ghl = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+int Bhl = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(Rhl | ((Ghl & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
 
 #define SHADOW(A) \
 "if ((col"Stringify(A)" & 0x8000) != 0) { \
-  int R = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
-  int G = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
-  int B = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
-  int MSB = (col"Stringify(A)" & 0x8000) >> 8;\n \
-  "Stringify(A)".r = float(R | ((G & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((G>>3) | (B<<2) | MSB)/255.0;\n \
+  int Rs = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+  int Gs = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+  int Bs = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+  int MSBs = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rs | ((Gs & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Gs>>3) | (Bs<<2) | MSBs)/255.0;\n \
 } else discard;\n"
 
 
