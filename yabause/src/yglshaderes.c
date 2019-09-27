@@ -604,10 +604,10 @@ const GLchar Yglprg_window_f[] =
       "    }\n"
       "  } else validw1 = valid;\n"
       "  if (winOp != 0) { \n"
-      "    if ((validw0 == 1) && (validw1 == 1)) fragColor = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
+      "    if ((validw0 == 1) && (validw1 == 1)) fragColor.argb = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
       "    else discard;\n"
       "  } else { \n"
-      "    if ((validw0 == 1) || (validw1 == 1)) fragColor = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
+      "    if ((validw0 == 1) || (validw1 == 1)) fragColor.argb = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
       "    else discard;\n"
       "  }\n"
       "}  \n";
