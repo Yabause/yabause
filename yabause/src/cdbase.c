@@ -1855,7 +1855,7 @@ static int LoadCHD(const char *chd_filename, FILE *iso_file)
   int i;
   for (i = 0; i < num_tracks; i++)
   {
-    trk[i].fad_start = logofs;
+    trk[i].fad_start = logofs + trk[i].pregap;
     
     trk[i].physframeofs = physofs;
     trk[i].chdframeofs = chdofs;
@@ -1864,7 +1864,7 @@ static int LoadCHD(const char *chd_filename, FILE *iso_file)
     //logofs += trk[i].pregap;
     //logofs += trk[i].postgap;
     logofs += trk[i].frames;
-    trk[i].fad_end = logofs-1;
+    trk[i].fad_end = logofs;
 
     physofs += trk[i].frames;
 
@@ -1919,17 +1919,17 @@ static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer) {
   {
     for (j = 0; j < disc.session[i].track_num; j++)
     {
-      if (j == 1) {
-        int a = 0;
-      }
+      //if (j == 1) {
+      //  int a = 0;
+      //}
       if (loglba < disc.session[i].track[j+1].logframeofs) {
-        if ((loglba > disc.session[i].track[j].pregap)) {
-          //loglba -= disc.session[i].track[j].pregap;
-        }
+        //if ((loglba > disc.session[i].track[j].pregap)) {
+       //   loglba -= disc.session[i].track[j].pregap;
+       // }
         physlba = disc.session[i].track[j].physframeofs + (loglba - disc.session[i].track[j].logframeofs);
-        if (disc.session[i].track[j].ctl_addr == 0x01) {
-          physlba += disc.session[i].track[j].pregap;
-        }
+        //if (disc.session[i].track[j].ctl_addr == 0x01) {
+        //  physlba += disc.session[i].track[j].pregap;
+        //}
         chdlba = physlba - disc.session[i].track[j].physframeofs + disc.session[i].track[j].chdframeofs;
         track = &disc.session[i].track[j];
         break;

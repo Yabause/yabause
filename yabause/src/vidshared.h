@@ -924,6 +924,7 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
       {
          // Type C(1-bit special priority, 8-bit color data - bit 7 is shared)
          spi->priority = (*pixel >> 7) & 0x1;
+         *pixel &= 0xFF;
          spi->normalshadow = (*pixel == 0xFE);
          break;
       }
@@ -932,6 +933,7 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
          // Type D(1-bit special priority, 1-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
          spi->priority = (*pixel >> 7) & 0x1;
          spi->colorcalc = (*pixel >> 6) & 0x1;
+         *pixel &= 0xFF;
          spi->normalshadow = (*pixel == 0xFE);
          break;
       }
@@ -939,6 +941,7 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
       {
          // Type E(2-bit special priority, 8-bit color data - bits 6 and 7 are shared)
          spi->priority = (*pixel >> 6) & 0x3;
+         *pixel &= 0xFF;
          spi->normalshadow = (*pixel == 0xFE);
          break;
       }
@@ -946,6 +949,7 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
       {
          // Type F(2-bit special color calculation, 8-bit color data - bits 6 and 7 are shared)
          spi->colorcalc = (*pixel >> 6) & 0x3;
+         *pixel &= 0xFF;
          spi->normalshadow = (*pixel == 0xFE);
          break;
       }
@@ -957,7 +961,7 @@ static INLINE void Vdp1GetSpritePixelInfo(int type, u16 * pixel, spritepixelinfo
 
 static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int *normalshadow, int *priority, int *colorcalc)
 {
-   spritepixelinfo_struct spi;
+  spritepixelinfo_struct spi = { 0 };
 
    Vdp1GetSpritePixelInfo(type, pixel, &spi);
    *shadow = spi.msbshadow;

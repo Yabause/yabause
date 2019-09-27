@@ -289,7 +289,7 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       color = VDP1COLOR(1, 0, priority, 1, 0);
     } else {
       const int colorindex = (colorBank);
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       } else {
         color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
@@ -316,19 +316,19 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       else color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(temp));
     }
     else if (temp != 0x0000) {
-      Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
       u32 colorBank = temp;
       if (colorBank == 0x0000 && !SPD ) {
         color = VDP1COLOR(0, 1, priority, 0, 0);
       } else if (MSB || shadow) {
-        color = VDP1COLOR(0, 1, priority, 1, 0);
+        color = VDP1COLOR(1, 0, priority, 1, 0);
       }
       else {
         const int colorindex = (colorBank);
-        if (colorindex & 0x8000) {
+        if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
           color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
         }
         else {
+          Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
           color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
         }
       }
@@ -345,10 +345,10 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       color = 0;
     }
     else if ( MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, 0);
     } else {
       const int colorindex = colorBank;
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       }
       else {
@@ -363,10 +363,10 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     if (colorBank == 0 && !SPD) {
       color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
     } else if (MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, 0);
     } else {
       const int colorindex = (colorBank);
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       }
       else {
@@ -382,12 +382,12 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
     if ((colorBank == 0x0000) && !SPD) {
       color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
     }
-    else if ( MSB || color == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+    else if ( MSB || colorBank == nromal_shadow) {
+      color = VDP1COLOR(1, 0, priority, 1, 0); 
     }
     else {
       const int colorindex = (colorBank);
-      if (colorindex & 0x8000) {
+      if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
       }
       else {
@@ -413,10 +413,11 @@ static u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd)
       color = VDP1COLOR(0, 1, priority, 1, 0);
     }
     else {
-      if (dot & 0x8000) {
+      if ((dot & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
         color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
       }
       else {
+        Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &shadow, &normalshadow, &priority, &colorcl);
         color = VDP1COLOR(1, colorcl, priority, 0, dot);
       }
     }
@@ -563,31 +564,19 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           endcnt++;
         }
         else {
-          temp = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
-          if (temp & 0x8000) {
-            if (MSB_SHADOW) {
+          const int colorindex = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
+          if ( (colorindex & 0x8000) && MSB_SHADOW) {
               *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          } else if (colorindex != 0x0000) {
+            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
             } else {
-              alpha = 0x80 | (colorcl << 3) | 0;
-              *texture->textdata++ = SAT2YAB1(alpha, temp);
-            }
-          } else if (temp != 0x0000) {
-            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
-            if (shadow != 0) {
-              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-            }
-            else {
-              if (normalshadow) {
+              temp = colorindex;
+              Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
+              if (shadow || normalshadow) {
                 *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-              }
-              else {
-                const int colorindex = temp;
-                if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-                  *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-                }
-                else {
-                  *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
-                }
+              } else {
+                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp);
               }
             }
           } else {
@@ -611,37 +600,22 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
           endcnt++;
         }
         else {
-          temp = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
-
-          if (temp & 0x8000)
+          const int colorindex = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
+          if ( (colorindex & 0x8000) && MSB_SHADOW )
           {
-            if (MSB_SHADOW) {
-              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-            }
-            else {
-              alpha = 0x80 | (colorcl << 3) | 0;
-              *texture->textdata++ = SAT2YAB1(alpha, temp);
-            }
+             *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
           }
-          else if (temp != 0x0000)
+          else if (colorindex != 0x0000)
           {
-            Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
-            if (shadow != 0)
-            {
-              *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-            }
-            else {
-              if (normalshadow) {
+            if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
+              *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+            } else {
+              temp = colorindex;
+              Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
+              if (shadow || normalshadow) {
                 *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
-              }
-              else {
-                const int colorindex = temp;
-                if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-                  *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
-                }
-                else {
-                  *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
-                }
+              } else {
+                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp);
               }
             }
           }
@@ -1948,6 +1922,129 @@ static INLINE u32 Vdp2GetPixel32bppbmp(vdp2draw_struct *info, u32 addr) {
   return color;
 }
 
+static void FASTCALL Vdp2DrawBitmap(vdp2draw_struct *info, YglTexture *texture)
+{
+  int i, j;
+
+  switch (info->colornumber)
+  {
+  case 0: // 4 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j += 4)
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          *texture->textdata = 0;
+          *texture->textdata++;
+          *texture->textdata = 0;
+          *texture->textdata++;
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j += 4)
+        {
+          Vdp2GetPixel4bpp(info, info->charaddr, texture);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 1: // 8 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j += 2)
+        {
+          *texture->textdata = 0x00000000;
+          texture->textdata++;
+          *texture->textdata = 0x00000000;
+          texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j += 2)
+        {
+          Vdp2GetPixel8bpp(info, info->charaddr, texture);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 2: // 16 BPP(palette)
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j++ )
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bpp(info, info->charaddr);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 3: // 16 BPP(RGB)
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j++ )
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr);
+          info->charaddr += 2;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  case 4: // 32 BPP
+    for (i = 0; i < info->cellh; i++)
+    {
+      if (info->char_bank[info->charaddr >> 17] == 0) {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata = 0;
+          *texture->textdata++;
+          info->charaddr += 4;
+        }
+      }
+      else {
+        for (j = 0; j < info->cellw; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
+          info->charaddr += 4;
+        }
+      }
+      texture->textdata += texture->w;
+    }
+    break;
+  }
+}
+
+
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
 {
   int i, j;
@@ -1983,8 +2080,8 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture)
     {
       for (j = 0; j < info->cellw; j += 2)
       {
-        Vdp2GetPixel8bpp(info, info->charaddr, texture);
-        info->charaddr += 2;
+          Vdp2GetPixel8bpp(info, info->charaddr, texture);
+          info->charaddr += 2;
       }
       texture->textdata += texture->w;
     }
@@ -2050,53 +2147,103 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
 
     sv &= (info->cellh - 1);
     sh &= (info->cellw - 1);
-    if (line->LineScrollValH >= 0 && line->LineScrollValH < sh) {
+    if (line->LineScrollValH >= 0 && line->LineScrollValH < sh && sv > 0) {
       sv -= 1;
     }
 
     switch (info->colornumber) {
     case 0:
       baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
-      for (j = 0; j < vdp2width; j += 4)
-      {
-        Vdp2GetPixel4bpp(info, baseaddr, texture);
-        baseaddr += 2;
+
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j += 4)
+        {
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j += 4)
+        {
+          Vdp2GetPixel4bpp(info, baseaddr, texture);
+          baseaddr += 2;
+        }
       }
       break;
     case 1:
       baseaddr += sh + sv * info->cellw;
-      for (j = 0; j < vdp2width; j += 2)
-      {
-        Vdp2GetPixel8bpp(info, baseaddr, texture);
-        baseaddr += 2;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j += 2)
+        {
+          *texture->textdata++ = 0;
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j += 2)
+        {
+          Vdp2GetPixel8bpp(info, baseaddr, texture);
+          baseaddr += 2;
+        }
       }
       break;
     case 2:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
-      {
-        *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
-        baseaddr += 2;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bpp(info, baseaddr);
+          baseaddr += 2;
 
+        }
       }
       break;
     case 3:
       baseaddr += ((sh + sv * info->cellw) << 1);
-      for (j = 0; j < vdp2width; j++)
-      {
-        *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
-        baseaddr += 2;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = 0;
+          baseaddr += 2;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = Vdp2GetPixel16bppbmp(info, baseaddr);
+          baseaddr += 2;
+        }
       }
       break;
     case 4:
       baseaddr += ((sh + sv * info->cellw) << 2);
-      for (j = 0; j < vdp2width; j++)
-      {
-        //if (info->isverticalscroll){
-        //	sv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl+(j>>3) ) >> 16;
-        //}
-        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr);
-        baseaddr += 4;
+      if (info->char_bank[baseaddr >> 17] == 0) {
+        for (j = 0; j < vdp2width; j++)
+        {
+          *texture->textdata++ = 0;
+          baseaddr += 4;
+        }
+      }
+      else {
+        for (j = 0; j < vdp2width; j++)
+        {
+          //if (info->isverticalscroll){
+          //	sv += T1ReadLong(Vdp2Ram, info->verticalscrolltbl+(j>>3) ) >> 16;
+          //}
+          *texture->textdata++ = Vdp2GetPixel32bppbmp(info, baseaddr);
+          baseaddr += 4;
+        }
       }
       break;
     }
@@ -3749,22 +3896,45 @@ static void SetSaturnResolution(int width, int height)
       _Ygl->originy = 0;
       if (_Ygl->keep_aspect == 1) {
 
-        if (_Ygl->isFullScreen) {
-          if (GlHeight > GlWidth) {
-            float hrate = (float)((_Ygl->rheight > 256)?_Ygl->rheight/2:_Ygl->rheight) / (float)((_Ygl->rwidth > 352)?_Ygl->rwidth/2:_Ygl->rwidth);
-            _Ygl->originy = (GlHeight - GlWidth  * hrate);
-            GlHeight = _Ygl->screen_width * hrate;
+        if (_Ygl->rotate_screen) {
+          if (_Ygl->isFullScreen) {
+            if (GlHeight > GlWidth) {
+              float hrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
+              _Ygl->originy = (GlHeight - GlWidth  * hrate);
+              GlHeight = _Ygl->screen_width * hrate;
+            }
+            else {
+              float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
+              GlWidth = GlHeight * wrate;
+            }
           }
           else {
-            float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 :_Ygl->rwidth) / (float)((_Ygl->rheight > 256)?_Ygl->rheight/2:_Ygl->rheight);
+            float wrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
             _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
             GlWidth = GlHeight * wrate;
           }
         }
         else {
-          float hrate = (float)((_Ygl->rheight > 256)?_Ygl->rheight/2:_Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
-          _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
-          GlHeight = GlWidth * hrate;
+
+          if (_Ygl->isFullScreen) {
+            if (GlHeight > GlWidth) {
+              float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+              _Ygl->originy = (GlHeight - GlWidth  * hrate);
+              GlHeight = _Ygl->screen_width * hrate;
+            }
+            else {
+              float wrate = (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth) / (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight);
+              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
+              GlWidth = GlHeight * wrate;
+            }
+          }
+          else {
+            float hrate = (float)((_Ygl->rheight > 256) ? _Ygl->rheight / 2 : _Ygl->rheight) / (float)((_Ygl->rwidth > 352) ? _Ygl->rwidth / 2 : _Ygl->rwidth);
+            _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
+            GlHeight = GlWidth * hrate;
+          }
+
         }
       }
     }
@@ -4306,7 +4476,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int i;
   float col[4 * 4];
   int isSquare;
-
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
   if (cmd.CMDSIZE == 0) {
@@ -6054,7 +6223,7 @@ static void Vdp2DrawNBG0(void)
                   Vdp2DrawBitmapLineScroll(&info, &texture);
                 }
                 else {
-                  Vdp2DrawCell(&info, &texture);
+                  Vdp2DrawBitmap(&info, &texture);
                 }
                 isCached = 1;
               }
@@ -6338,7 +6507,7 @@ static void Vdp2DrawNBG1(void)
                 Vdp2DrawBitmapLineScroll(&info, &texture);
               }
               else {
-                Vdp2DrawCell(&info, &texture);
+                Vdp2DrawBitmap(&info, &texture);
               }
               isCached = 1;
             }

@@ -140,7 +140,6 @@ void FASTCALL Vdp1FrameBufferWriteByte(u32 addr, u8 val) {
       VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
       VdpUnLockVram();
-      return;
    }
 
    T1WriteByte(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
@@ -156,7 +155,6 @@ void FASTCALL Vdp1FrameBufferWriteWord(u32 addr, u16 val) {
       VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
       VdpUnLockVram();
-      return;
    }
 
    T1WriteWord(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
@@ -172,7 +170,6 @@ void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
       VdpLockVram();
       VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
       VdpUnLockVram();
-      return;
    }
 
    T1WriteLong(Vdp1FrameBuffer[Vdp1External.current_frame], addr, val);
@@ -436,7 +433,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
 
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   while (!(command & 0x8000) && commandCounter < 4096) { // fix me
       regs->COPR = regs->addr >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
@@ -495,12 +492,23 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          break;
       case 1: // ASSIGN, jump to CMDLINK
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
+
+         // Badd adress. it causes infinity loop 
+         if (regs->addr == 0) {
+           LOG("VDP1: BAD jump to 0, forced to finish");
+           return;
+         }
+
          break;
       case 2: // CALL, call a subroutine
          if (returnAddr == 0xFFFFFFFF)
             returnAddr = regs->addr + 0x20;
-
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
+         // Badd adress. it causes infinity loop 
+         if (regs->addr == 0) {
+           LOG("VDP1: BAD jump to 0, forced to finish");
+           return;
+         }
          break;
       case 3: // RETURN, return from subroutine
          if (returnAddr != 0xFFFFFFFF) {
@@ -509,6 +517,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          }
          else
             regs->addr += 0x20;
+         // Badd adress. it causes infinity loop 
+         if (regs->addr == 0) {
+           LOG("VDP1: BAD jump to 0, forced to finish");
+           return;
+         }
          break;
       }
 
@@ -677,8 +690,18 @@ int Vdp1SaveState(FILE *fp)
    ywrite(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
 #ifdef IMPROVED_SAVESTATES
+
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
+   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
+
+   VIDCore->Vdp1ReadFrameBuffer = NULL;
+   VIDCore->Vdp1WriteFrameBuffer = NULL;
+
    for (i = 0; i < 0x20000; i++)
       back_framebuffer[i] = Vdp1FrameBufferReadWord(i<<1);
+
+   VIDCore->Vdp1ReadFrameBuffer = Vdp1ReadFrameBuffer;
+   VIDCore->Vdp1WriteFrameBuffer = Vdp1WriteFrameBuffer;
 
    ywrite(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 #endif
@@ -702,10 +725,21 @@ int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
 #ifdef IMPROVED_SAVESTATES
+
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
+   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
+
+   VIDCore->Vdp1ReadFrameBuffer = NULL;
+   VIDCore->Vdp1WriteFrameBuffer = NULL;
+
    yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 
    for (i = 0; i < 0x20000; i++)
       Vdp1FrameBufferWriteWord(i<<1, back_framebuffer[i]);
+
+   VIDCore->Vdp1ReadFrameBuffer = Vdp1ReadFrameBuffer;
+   VIDCore->Vdp1WriteFrameBuffer = Vdp1WriteFrameBuffer;
+
 #endif
    return size;
 }

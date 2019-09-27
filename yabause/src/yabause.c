@@ -252,6 +252,8 @@ int YabauseInit(yabauseinit_struct *init)
    VideoSetSetting(VDP_SETTING_POLYGON_MODE, init->polygon_generation_mode);
    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, init->resolution_mode);
    VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, init->rotate_screen);
+   VideoSetSetting(VDP_SETTING_RBG_USE_COMPUTESHADER, init->rbg_use_compute_shader);
+   VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, init->rbg_resolution_mode);
 
 
    // Initialize input core
@@ -865,6 +867,9 @@ void SyncCPUtoSCSP() {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseStartSlave(void) {
+
+  LOG("YabauseStartSlave");
+
    if (yabsys.emulatebios)
    {
       CurrentSH2 = SSH2;
@@ -893,7 +898,10 @@ void YabauseStartSlave(void) {
       SSH2->regs.PC = MappedMemoryReadLong(0x06000250);
       if (MappedMemoryReadLong(0x060002AC) != 0)
          SSH2->regs.R[15] = MappedMemoryReadLong(0x060002AC);
+
+      SSH2->regs.SR.part.I = 0;
       SH2SetRegisters(SSH2, &SSH2->regs);
+      SH2HandleInterrupts(SSH2);
    }
    else {
      SH2PowerOn(SSH2);
@@ -1045,6 +1053,7 @@ void YabauseSpeedySetup(void)
    MSH2->regs.MACH = 0x00000000;
    MSH2->regs.MACL = 0x00000000;
    MSH2->regs.PR = 0x00000000;
+   MSH2->onchip.TIER = 0x81;
    SH2SetRegisters(MSH2, &MSH2->regs);
 
    // Set SCU registers to sane states
@@ -1110,6 +1119,7 @@ int YabauseQuickLoadGame(void)
 
    Cs2Area->outconcddev = Cs2Area->filter + 0;
    Cs2Area->outconcddevnum = 0;
+   Cs2Area->cdi->ReadTOC(Cs2Area->TOC);
 
    // read in lba 0/FAD 150
    if ((lgpartition = Cs2ReadUnFilteredSector(150)) == NULL)

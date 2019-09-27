@@ -595,7 +595,13 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current]);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID_in[tm->current]);
-    tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+
+    if (flg) {
+      tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT /*| GL_MAP_INVALIDATE_BUFFER_BIT*/ | GL_MAP_UNSYNCHRONIZED_BIT);
+    }
+    else {
+      tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    }
     if (tm->texture_in[tm->current] == NULL) {
       abort();
     }
@@ -2745,7 +2751,7 @@ void YglEraseWriteVDP1(void) {
     //priority = Vdp2Regs->PRISA & 0x7;
   }
   else{
-    int shadow, normalshadow, colorcalc;
+    int shadow, normalshadow, colorcalc = 0;
     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &color, &shadow, &normalshadow, &priority, &colorcalc);
 #if 0
     priority = ((u8 *)&Vdp2Regs->PRISA)[priority] & 0x7;
@@ -3716,7 +3722,7 @@ void YglRender(void) {
   }
 
    if ((fixVdp2Regs->SDCTL & 0xFF) != 0 || _Ygl->msb_shadow_count_[_Ygl->readframe] != 0 ) {
-     //YglRenderFrameBufferShadow();
+     YglRenderFrameBufferShadow();
    }
 
   
