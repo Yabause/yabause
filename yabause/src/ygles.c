@@ -2965,10 +2965,10 @@ void YglSetCCWindow(Vdp2 *varVdp2Regs)
 {
   float col[4] = {0.0f,0.0f,0.0f,0.0f};
   float const vertexPosition[] = {
-    _Ygl->rwidth, 0.0f,
-    0.0f, 0.0f,
-    _Ygl->rwidth, _Ygl->rheight,
-    0.0f, _Ygl->rheight };
+    -_Ygl->rwidth, -_Ygl->rheight,
+    _Ygl->rwidth, -_Ygl->rheight,
+    -_Ygl->rwidth, _Ygl->rheight,
+    _Ygl->rwidth, _Ygl->rheight };
 
   int Win0;
   int Win0_mode;
