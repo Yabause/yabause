@@ -81,6 +81,7 @@ enum CDB_DATATRANSTYPE
 #define ToBCD(val) ((val % 10 ) + ((val / 10 ) << 4))
 
 #define SEEK_TIME (60000*5)
+#define SEEK_TIME_MIN (60000)
 
 Cs2 * Cs2Area = NULL;
 ip_struct *cdip = NULL;
@@ -1631,7 +1632,11 @@ void Cs2PlayDisc(void) {
   // Calculate Seek time
   int length = abs((int)Cs2Area->playendFAD - (int)Cs2Area->FAD);
   CDLOG("cs2\t:Seek length = %d", length);
-  Cs2Area->_periodictiming = length; // seektime 2856 is the minimum for athlete king
+  // A CD is 74 min = 74*4500 = 333000 FAD Max
+  // Max SEEK_TIME = 300000 us
+  // Assume min seek time is then constant at 60000 ms
+  // SEEK_TIME
+  Cs2Area->_periodictiming = SEEK_TIME_MIN + (SEEK_TIME-SEEK_TIME_MIN)*length / 333000; // seektime 2856 is the minimum for athlete king
   if (Cs2Area->_periodictiming > SEEK_TIME) {
     Cs2Area->_periodictiming = SEEK_TIME;
   }
