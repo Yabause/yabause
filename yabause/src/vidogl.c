@@ -615,10 +615,10 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
     u8 *cclist = (u8 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1F;
 
-    endcnt = 0;
 
     for (i = 0; i < spriteh; i++)
     {
+      endcnt = 0;
       for (j = 0; j < spritew; j++)
       {
         temp = Vdp1RamReadWord(NULL, Vdp1Ram, charAddr);
