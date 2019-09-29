@@ -1635,7 +1635,6 @@ void Cs2PlayDisc(void) {
   // A CD is 74 min = 74*4500 = 333000 FAD Max
   // Max SEEK_TIME = 300000 us
   // Assume min seek time is then constant at 60000 ms
-  // SEEK_TIME
   Cs2Area->_periodictiming = SEEK_TIME_MIN + (SEEK_TIME-SEEK_TIME_MIN)*length / 333000; // seektime 2856 is the minimum for athlete king
   if (Cs2Area->_periodictiming > SEEK_TIME) {
     Cs2Area->_periodictiming = SEEK_TIME;

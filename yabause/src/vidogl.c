@@ -3772,6 +3772,8 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
 
+  if (sprite.blendmode == -1) return; //Invalid color mode
+
   if ((cmd.CMDPMOD & 4))
   {
     for (int i = 0; i < 4; i++)
@@ -3979,6 +3981,8 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   sprite.blendmode = getCCProgramId(CMDPMOD);
+
+  if (sprite.blendmode == -1) return; //Invalid color mode
 
   if ((CMDPMOD & 4))
   {
@@ -4201,6 +4205,8 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
 
   sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
+
+  if (sprite.blendmode == -1) return; //Invalid color mode
 
   // Check if the Gouraud shading bit is set and the color mode is RGB
   if ((cmd.CMDPMOD & 4))
@@ -4428,6 +4434,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.blendmode = getCCProgramId(cmd.CMDPMOD);
 
+  if (sprite.blendmode == -1) return; //Invalid color mode
+
   if (gouraud == 1)
   {
     YglQuadGrowShading(&sprite, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
@@ -4519,6 +4527,8 @@ void VIDOGLVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.vertices[7] = line_poygon[7] * _Ygl->vdp1hratio;
 
   polygon.blendmode = getCCProgramId(CMDPMOD);
+
+  if (polygon.blendmode == -1) return; //Invalid color mode
 
   if (gouraud) {
     linecol[0] = col[(0 << 2) + 0];
@@ -4773,6 +4783,8 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   polygon.flip = 0;
 
   polygon.blendmode = getCCProgramId(cmd.CMDPMOD);
+
+  if (polygon.blendmode == -1) return; //Invalid color mode
 
   if (gouraud == 1) {
     YglQuadGrowShading(&polygon, &texture, col, NULL, YglTM_vdp1[_Ygl->drawframe]);
