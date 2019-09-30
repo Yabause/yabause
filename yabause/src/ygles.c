@@ -606,7 +606,7 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
       abort();
     }
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-
+    
     if (flg == 0) {
       if (tm->current == 0) {
         tm->current = 1;
@@ -615,11 +615,8 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
         tm->current = 0;
       }
     }
-
+    
     tm->texture = tm->texture_in[tm->current];
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tm->textureID_in[tm->current]);
-
   }
 }
 
@@ -3601,8 +3598,11 @@ void YglRender(void) {
      YglDrawBackScreen(GlWidth, GlHeight);
    }
    else {
-     glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
-     glClear(GL_COLOR_BUFFER_BIT);
+
+     if (_Ygl->clear_r != 0.0 &&  _Ygl->clear_g != 0.0 && _Ygl->clear_b != 0.0) {
+       glClearColor(_Ygl->clear_r, _Ygl->clear_g, _Ygl->clear_b, 1.0f);
+       glClear(GL_COLOR_BUFFER_BIT);
+     }
    }
    
    if (_Ygl->texture_manager == NULL) goto render_finish;
