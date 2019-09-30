@@ -134,11 +134,11 @@ u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
-   addr &= 0x3FFFF;
+   addr &= 0x7FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
-      VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
+      if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
       return;
    }
 }
@@ -146,11 +146,11 @@ void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8* mem, u32 addr, u
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-   addr &= 0x3FFFF;
+  addr &= 0x7FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
-      VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
+      if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
       return;
    }
 }
@@ -158,12 +158,12 @@ void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8* mem, u32 addr, u
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-   addr &= 0x3FFFF;
+  addr &= 0x7FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
-      VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
-      return;
+     if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
+     return;
    }
 }
 
