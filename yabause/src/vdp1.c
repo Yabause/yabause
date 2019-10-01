@@ -1000,41 +1000,39 @@ void Vdp1DebugCommand(u32 number, char *outstring)
          AddString(outstring, "Transparent Pixel Enabled\r\n");
       }
 
-      AddString(outstring, "Color mode: ");
+      if (cmd.CMDCTRL & 0x0004){
+          AddString(outstring, "Non-textured color: %04X\r\n", cmd.CMDCOLR);
+      } else {
+          AddString(outstring, "Color mode: ");
 
-      switch ((cmd.CMDPMOD >> 3) & 0x7)
-      {
-         case 0:
-            AddString(outstring, "4 BPP(16 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 1:
-            AddString(outstring, "4 BPP(16 color LUT)\r\n");
-            AddString(outstring, "Color lookup table: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 2:
-            AddString(outstring, "8 BPP(64 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 3:
-            AddString(outstring, "8 BPP(128 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 4:
-            AddString(outstring, "8 BPP(256 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 5:
-            AddString(outstring, "15 BPP(RGB)\r\n");
-
-            // Only non-textured commands
-            if (cmd.CMDCTRL & 0x0004)
-            {
-               AddString(outstring, "Non-textured color: %04X\r\n", cmd.CMDCOLR);
-            }
-            break;
-         default: break;
-      }
+          switch ((cmd.CMDPMOD >> 3) & 0x7)
+          {
+             case 0:
+                AddString(outstring, "4 BPP(16 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 1:
+                AddString(outstring, "4 BPP(16 color LUT)\r\n");
+                AddString(outstring, "Color lookup table: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 2:
+                AddString(outstring, "8 BPP(64 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 3:
+                AddString(outstring, "8 BPP(128 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 4:
+                AddString(outstring, "8 BPP(256 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 5:
+                AddString(outstring, "15 BPP(RGB)\r\n");
+                break;
+             default: break;
+          }
+        }
 
       AddString(outstring, "Color Calc. mode: ");
 
