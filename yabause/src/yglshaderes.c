@@ -1116,7 +1116,7 @@ const GLchar Yglprg_vdp2_drawfb_cram_f[] =
 "  int msb = 0;\n" //RGB will have msb set
 "  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
 "  if( ret.isRGB == 0 ){  // index color? \n"
-"    if( ret.code != 0 || ret.prio != 0){\n"
+"    if( ret.code != 0 || depth != 0){\n"
 "      ret.code = ret.code + u_color_ram_offset; \n"
 "      txcol = texelFetch( s_color,  ivec2( ret.code ,0 )  , 0 );\n"
 "      tmpColor = txcol;\n"
