@@ -82,7 +82,6 @@ void YglEraseWriteCSVDP1(void) {
   if (_Ygl->vdp1On[_Ygl->readframe] == 0) return; //No update on the fb, no need to clear
   _Ygl->vdp1On[_Ygl->readframe] = 0;
 
-  memset(_Ygl->vdp1fb_exactbuf, 0x0, 512*704*2);
   _Ygl->vdp1IsNotEmpty = 0;
 
   _Ygl->vdp1_stencil_mode = 0;
@@ -401,88 +400,6 @@ static u32* getVdp1DrawingFBMem(Vdp2 *varVdp2Regs) {
 }
 
 void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
-  u8 priority = Vdp2Regs->PRISA &0x7;
-  int ispalette = !((val & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
-  u16 full = 0;
-  u16 cc = 0;
-  int shadow = 0;
-  int normalshadow = 0;
-  if (_Ygl->vdp1fb_buf == NULL) {
-    _Ygl->vdp1fb_buf =  getVdp1DrawingFBMem(&Vdp2Lines[0]);
-  }
-  //Est ce qu'il ne faura pas voir si la prio ne change pas par pixel???
-  u32 x = 0;
-  u32 y = 0;
-  int tvmode = (Vdp1Regs->TVMR & 0x7);
-  switch( tvmode ) {
-    case 0: // 16bit 512x256
-    case 2: // 16bit 512x256
-    case 4: // 16bit 512x256
-      y = (addr >> 10)&0xFF;
-      x = (addr & 0x3FF) >> 1;
-      break;
-    case 1: // 8bit 1024x256
-      y = (addr >> 10) & 0xFF;
-      x = addr & 0x3FF;
-      break;
-    case 3: // 8bit 512x512
-      y = (addr >> 9) & 0x1FF;
-      x = addr & 0x1FF;
-      break;
-    default:
-      y = 0;
-      x = 0;
-      break;
-  }
-  // switch (type)
-  // {
-  // case 0:
-  //   T1WriteByte((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
-  //   full = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe],addr&(~0x1));
-  //   ispalette = !((full & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
-  //   if (!ispalette) {
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(full&0xFFFF)));
-  //   }
-  //   else{
-  //     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &full, &shadow, &normalshadow, &priority, &cc);
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], (addr&(~0x1))*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(full&0xFFFF)));
-  //   }
-  //   break;
-  // case 1:
-  //   T1WriteWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
-  //   if (ispalette) {
-  //     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &val, &shadow, &normalshadow, &priority, &cc);
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(val&0xFFFF)));
-  //   }
-  //   else
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
-  //   break;
-  // case 2:
-  //   T1WriteLong((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr, val);
-  //   if (!ispalette) {
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24(val&0xFFFF)));
-  //   }
-  //   else{
-  //     u16 temp = (val & 0xFFFF);
-  //     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &cc);
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2+4, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(temp&0xFFFF)));
-  //   }
-  //   ispalette = !(((val>>16) & 0x8000) && (Vdp2Regs->SPCTL & 0x20));
-  //   if (!ispalette) {
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, 0, priority, 0, COLOR16TO24((val>>16)&0xFFFF)));
-  //   }
-  //   else{
-  //     u16 temp = (val>>16);
-  //     Vdp1ProcessSpritePixel(Vdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &cc);
-  //     T1WriteLong((u8*)_Ygl->vdp1fb_buf[_Ygl->drawframe], addr*2, VDP1COLOR(ispalette, cc, priority, 0, VDP1MSB(temp&0xFFFF)));
-  //   }
-  //   break;
-  // default:
-  //   break;
-  // }
-  if (val != 0) {
-    _Ygl->vdp1IsNotEmpty = 1;
-  }
 }
 
 u16 getVdp1PixelColor(u32 col){
@@ -591,60 +508,20 @@ void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
   if (_Ygl->vdp1fb_buf == NULL) {
     _Ygl->vdp1fb_buf =  getVdp1DrawingFBMem(&Vdp2Lines[0]);
   }
-    u32 x = 0;
-    u32 y = 0;
-    int tvmode = (Vdp1Regs->TVMR & 0x7);
-    switch( tvmode ) {
-      case 0: // 16bit 512x256
-      case 2: // 16bit 512x256
-      case 4: // 16bit 512x256
-        y = (addr >> 10)&0xFF;
-        x = (addr & 0x3FF) >> 1;
-        break;
-      case 1: // 8bit 1024x256
-        y = (addr >> 10) & 0xFF;
-        x = addr & 0x3FF;
-        break;
-      case 3: // 8bit 512x512
-        y = (addr >> 9) & 0x1FF;
-        x = addr & 0x1FF;
-        break;
-      default:
-        y = 0;
-        x = 0;
-        break;
-    }
-    if ((x<_Ygl->rwidth) && (y<_Ygl->rheight)) {
-      switch (type)
-      {
-      case 0:
-        *(u8*)out = 0x0;
-        break;
-      case 1:
-        *(u16*)out = getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2));
-        break;
-      case 2:
-        *(u32*)out = (getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2))<<16)|(getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2+4)));
-        break;
-      default:
-        break;
-      }
-    } else {
-      switch (type)
-      {
-      case 0:
-        *(u8*)out = T1ReadByte((u8*)_Ygl->vdp1fb_exactbuf, addr);
-        break;
-      case 1:
-        *(u16*)out = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf, addr);
-        break;
-      case 2:
-        *(u32*)out = T1ReadLong((u8*)_Ygl->vdp1fb_exactbuf, addr);
-        break;
-      default:
-        break;
-      }
-    }
+  switch (type)
+  {
+  case 0:
+    *(u8*)out = 0x0;
+    break;
+  case 1:
+    *(u16*)out = getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2));
+    break;
+  case 2:
+    *(u32*)out = (getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2))<<16)|(getVdp1PixelColor(T1ReadLong((u8*)_Ygl->vdp1fb_buf, addr*2+4)));
+    break;
+  default:
+    break;
+  }
 }
 
 //////////////////////////////////////////////////////////////////////////////

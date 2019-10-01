@@ -1654,15 +1654,16 @@ static void startField(void) {
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
-    VIDCore->Vdp1FrameChange();
-    Vdp1External.current_frame = !Vdp1External.current_frame;
-    Vdp1Regs->EDSR >>= 1;
-
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
       VIDCore->Vdp1EraseWrite();
       Vdp1External.manualerase = 0;
     }
+    
+    VIDCore->Vdp1FrameChange();
+    Vdp1External.current_frame = !Vdp1External.current_frame;
+    Vdp1Regs->EDSR >>= 1;
+
     FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
 
     Vdp1External.swap_frame_buffer = 0;
