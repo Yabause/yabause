@@ -766,10 +766,13 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   u8 priority = Vdp2Regs->PRISA &0x7;
   u16 full = 0;
   _Ygl->vdp1fb_buf =  getVdp1DrawingFBMem();
+  YuiMsg("write %d\n",type);
   switch (type)
   {
   case 0:
-    full = T1ReadWord((u8*)_Ygl->vdp1fb_buf,addr&(~0x1));
+    full = T1ReadLong((u8*)_Ygl->vdp1fb_buf, (addr&(~0x1))*2);
+    if (addr & 0x1) full = (full & 0xFF) | ((val& 0xFF) << 8);
+    else full = (full & 0xFF00) | (val& 0xFF);
     T1WriteLong(_Ygl->vdp1fb_buf, (addr&(~0x1))*2, VDP1COLORFB(full&0xFFFF));
     break;
   case 1:
@@ -787,9 +790,11 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     _Ygl->vdp1fb_buf_read =  getVdp1DrawingFBMem();
+    YuiMsg("read %d\n",type);
     switch (type)
     {
     case 0:
+    YuiMsg("Damned\n");
       *(u8*)out = 0x0;
       break;
     case 1:
