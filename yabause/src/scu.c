@@ -2694,7 +2694,7 @@ void ScuTestInterruptMask()
        // removed manually
        if ( (ScuRegs->IST & ScuRegs->interrupts[ScuRegs->NumberOfInterrupts - 1 - i].statusbit) == 0) {
 
-         printf("removed");
+         //LOG("removed");
 
        }
        else {
