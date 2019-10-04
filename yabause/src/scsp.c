@@ -5641,7 +5641,7 @@ void ScspAsynMainRealtime(void * p) {
           initbefore = before;
         }
         if( sleeptime < 0 ) break;
-#if 0 //defined(ANDROID)
+#if defined(ANDROID)
         //tm.tv_sec = 0;
         //tm.tv_nsec = sleeptime;
 
