@@ -2808,6 +2808,8 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
   int preplaney = -1;
   int prepagex = -1;
   int prepagey = -1;
+  int mapid = 0;
+  int premapid = -1;
   
   info->patternpixelwh = 8 * info->patternwh;
   info->draww = vdp2width;
@@ -2905,6 +2907,13 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
       //int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
       dot_on_planex = (h + sx) - (mapx << planew_shift);
       mapx = mapx & 0x01;
+
+      mapid = info->mapwh * mapy + mapx;
+      if (mapid != premapid) {
+        info->PlaneAddr(info, mapid, fixVdp2Regs);
+        premapid = mapid;
+      }
+
       //planex = dot_on_planex / 512;
       planex = dot_on_planex >> plane_shift;
       //int dot_on_pagex = dot_on_planex - planex * 512;
@@ -2915,8 +2924,6 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture) {
       //charx = dot_on_pagex - pagex*(512 / info->pagewh);
       charx = dot_on_pagex & page_mask;
       if (pagex < 0) pagex = info->pagewh - 1 + pagex;
-
-      info->PlaneAddr(info, info->mapwh * mapy + mapx, fixVdp2Regs);
 
       if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
         Vdp2PatternAddrPos(info, planex, pagex, planey, pagey);
