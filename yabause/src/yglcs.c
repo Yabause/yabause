@@ -131,6 +131,9 @@ void YglFrameChangeCSVDP1(){
   FRAMELOG("YglFrameChangeVDP1: swap drawframe =%d readframe = %d\n", _Ygl->drawframe, _Ygl->readframe);
 }
 
+extern int WinS[enBGMAX];
+extern int WinS_mode[enBGMAX];
+
 static void YglSetVDP1FB(int i){
   if (_Ygl->vdp1IsNotEmpty != 0) {
     _Ygl->vdp1On[i] = 1;
@@ -161,6 +164,8 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    int img[6] = {0};
    int lncl[7] = {0};
    int lncl_draw[7] = {0};
+   int winS_draw[7] = {0};
+   int winS_mode_draw[7] = {0};
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
@@ -291,11 +296,17 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
       isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
+      winS_draw[id] = WinS[vdp2screens[j]];
+      winS_mode_draw[id] = WinS_mode[vdp2screens[j]];
       id++;
     }
   }
   isBlur[6] = setupBlur(varVdp2Regs, SPRITE);
   lncl_draw[6] = lncl[6];
+
+  winS_draw[6] = WinS[6];
+  winS_mode_draw[6] = WinS_mode[6];
+
   isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
   glViewport(0, 0, _Ygl->width, _Ygl->height);
@@ -353,7 +364,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
+    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
     VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);

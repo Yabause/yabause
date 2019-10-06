@@ -409,17 +409,6 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
 
 u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs)
 {
-  // Check if transparent sprite window
-  // hard/vdp2/hon/p08_12.htm#SPWINEN_
-  if ((cmd->CMDCOLR & 0x8000) && // Sprite Window Color
-      (varVdp2Regs->SPCTL & 0x10) && // Sprite Window is enabled
-      !(cmd->CMDPMOD & 4) &&
-      (((cmd->CMDPMOD >> 3) & 0x7) < 5)  && //Is palette
-      ((varVdp2Regs->SPCTL & 0xF)  >=2 && (varVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
-  {
-    return 0;
-  }
-
   return VDP1COLOR(cmd->CMDPMOD, cmd->CMDCOLR);
 }
 

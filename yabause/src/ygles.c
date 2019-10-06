@@ -2758,6 +2758,8 @@ void YglDmyRenderVDP1(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 static int useRotWin = 0;
+int WinS[enBGMAX];
+int WinS_mode[enBGMAX];
 void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 {
   float col[4] = {0.0f,0.0f,0.0f,0.0f};
@@ -2786,33 +2788,45 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 
   Win0[NBG0] = (varVdp2Regs->WCTLA >> 1) & 0x01;
   Win1[NBG0] = (varVdp2Regs->WCTLA >> 3) & 0x01;
+  WinS[NBG0] = (varVdp2Regs->WCTLA >> 5) & 0x01;
   Win0[NBG1] = (varVdp2Regs->WCTLA >> 9) & 0x01;
   Win1[NBG1] = (varVdp2Regs->WCTLA >> 11) & 0x01;
+  WinS[NBG1] = (varVdp2Regs->WCTLA >> 1) & 0x01;
 
   Win0[NBG2] = (varVdp2Regs->WCTLB >> 1) & 0x01;
   Win1[NBG2] = (varVdp2Regs->WCTLB >> 3) & 0x01;
+  WinS[NBG2] = (varVdp2Regs->WCTLB >> 5) & 0x01;
   Win0[NBG3] = (varVdp2Regs->WCTLB >> 9) & 0x01;
   Win1[NBG3] = (varVdp2Regs->WCTLB >> 11) & 0x01;
+  WinS[NBG3] = (varVdp2Regs->WCTLB >> 13) & 0x01;
 
   Win0[RBG0] = (varVdp2Regs->WCTLC >> 1) & 0x01;
   Win1[RBG0] = (varVdp2Regs->WCTLC >> 3) & 0x01;
+  WinS[RBG0] = (varVdp2Regs->WCTLC >> 5) & 0x01;
   Win0[SPRITE] = (varVdp2Regs->WCTLC >> 9) & 0x01;
   Win1[SPRITE] = (varVdp2Regs->WCTLC >> 11) & 0x01;
+  WinS[SPRITE] = (varVdp2Regs->WCTLC >> 13) & 0x01;
 
   Win0_mode[NBG0] = (varVdp2Regs->WCTLA) & 0x01;
   Win1_mode[NBG0] = (varVdp2Regs->WCTLA >> 2) & 0x01;
+  WinS_mode[NBG0] = (varVdp2Regs->WCTLA >> 4) & 0x01;
   Win0_mode[NBG1] = (varVdp2Regs->WCTLA >> 8) & 0x01;
   Win1_mode[NBG1] = (varVdp2Regs->WCTLA >> 10) & 0x01;
+  WinS_mode[NBG1] = (varVdp2Regs->WCTLA >> 12) & 0x01;
 
   Win0_mode[NBG2] = (varVdp2Regs->WCTLB) & 0x01;
   Win1_mode[NBG2] = (varVdp2Regs->WCTLB >> 2) & 0x01;
+  WinS_mode[NBG2] = (varVdp2Regs->WCTLB >> 4) & 0x01;
   Win0_mode[NBG3] = (varVdp2Regs->WCTLB >> 8) & 0x01;
   Win1_mode[NBG3] = (varVdp2Regs->WCTLB >> 10) & 0x01;
+  WinS_mode[NBG3] = (varVdp2Regs->WCTLB >> 12) & 0x01;
 
   Win0_mode[RBG0] = (varVdp2Regs->WCTLC) & 0x01;
   Win1_mode[RBG0] = (varVdp2Regs->WCTLC >> 2) & 0x01;
+  WinS_mode[RBG0] = (varVdp2Regs->WCTLC >> 4) & 0x01;
   Win0_mode[SPRITE] = (varVdp2Regs->WCTLC >> 8) & 0x01;
   Win1_mode[SPRITE] = (varVdp2Regs->WCTLC >> 10) & 0x01;
+  WinS_mode[SPRITE] = (varVdp2Regs->WCTLC >> 12) & 0x01;
 
   Win_op[NBG0] = (varVdp2Regs->WCTLA >> 7) & 0x01;
   Win_op[NBG1] = (varVdp2Regs->WCTLA >> 15) & 0x01;
@@ -2825,6 +2839,8 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   Win0_mode[RBG1] = Win0_mode[NBG0];
   Win1[RBG1] = Win1[NBG0];
   Win1_mode[RBG1] = Win1_mode[NBG0];
+  WinS[RBG1] = WinS[NBG0];
+  WinS_mode[RBG1] = WinS_mode[NBG0];
   Win_op[RBG1] = Win_op[NBG0];
 
   for (int i=0; i<enBGMAX; i++) {
@@ -2833,6 +2849,13 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
     if (Win0_mode[i] != _Ygl->Win0_mode[i]) needUpdate |= 1;
     if (Win1_mode[i] != _Ygl->Win1_mode[i]) needUpdate |= 1;
     if (Win_op[i] != _Ygl->Win_op[i]) needUpdate |= 1;
+    //DEBUG
+    if (WinS[i] == 1)
+      if ((Win0[i] == 1) || (Win1[i] == 1))
+        if (Win_op[i] == 0)
+          YuiMsg("Sprite window OR any windows is not supported yet, there is an issue on layer %d\n", i);
+    if ((Win0[i] == 1) || (Win1[i] == 1))
+      YuiMsg("Normal window are used on layer %d\n", i);
   }
 
   //needUpdate |= 1;
@@ -3327,6 +3350,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
    int img[6] = {0};
    int lncl[7] = {0};
    int lncl_draw[7] = {0};
+   int winS_draw[7] = {0};
+   int winS_mode_draw[7] = {0};
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
@@ -3461,11 +3486,16 @@ void YglRender(Vdp2 *varVdp2Regs) {
       isBlur[id] = setupBlur(varVdp2Regs, vdp2screens[j]);
       isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
+      winS_draw[id] = WinS[vdp2screens[j]];
+      winS_mode_draw[id] = WinS_mode[vdp2screens[j]];
       id++;
     }
   }
   isBlur[6] = setupBlur(varVdp2Regs, SPRITE);
   lncl_draw[6] = lncl[6];
+
+  winS_draw[6] = WinS[6];
+  winS_mode_draw[6] = WinS_mode[6];
 
   isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
@@ -3521,7 +3551,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
+    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
     VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
