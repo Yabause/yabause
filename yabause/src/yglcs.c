@@ -43,11 +43,9 @@ extern int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id);
 static int YglGenFrameBuffer();
 extern int YglGenerateBackBuffer();
 extern int YglGenerateWindowBuffer();
-extern int YglGenerateWindowCCBuffer();
 extern int YglGenerateScreenBuffer();
 extern void YglUpdateVdp2Reg();
 extern void YglSetVdp2Window(Vdp2 *varVdp2Regs);
-extern void YglSetCCWindow(Vdp2 *varVdp2Regs);
 extern SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer);
 extern int setupColorMode(Vdp2 *varVdp2Regs, int layer);
 extern int setupShadow(Vdp2 *varVdp2Regs, int layer);
@@ -166,6 +164,11 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    int lncl_draw[7] = {0};
    int winS_draw[7] = {0};
    int winS_mode_draw[7] = {0};
+   int win0_draw[7] = {0};
+   int win0_mode_draw[7] = {0};
+   int win1_draw[7] = {0};
+   int win1_mode_draw[7] = {0};
+   int win_op_draw[7] = {0};
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
@@ -232,7 +235,6 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    YglUpdateVdp2Reg();
    YglSetVdp2Window(varVdp2Regs);
-   YglSetCCWindow(varVdp2Regs);
    cprg = -1;
 
    glActiveTexture(GL_TEXTURE0);
@@ -298,6 +300,11 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       lncl_draw[id] = lncl[vdp2screens[j]];
       winS_draw[id] = WinS[vdp2screens[j]];
       winS_mode_draw[id] = WinS_mode[vdp2screens[j]];
+      win0_draw[id] = _Ygl->Win0[vdp2screens[j]];
+      win0_mode_draw[id] = _Ygl->Win0_mode[vdp2screens[j]];
+      win1_draw[id] = _Ygl->Win1[vdp2screens[j]];
+      win1_mode_draw[id] = _Ygl->Win1_mode[vdp2screens[j]];
+      win_op_draw[id] = _Ygl->Win_op[vdp2screens[j]];
       id++;
     }
   }
@@ -306,6 +313,11 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
   winS_draw[6] = WinS[6];
   winS_mode_draw[6] = WinS_mode[6];
+  win0_draw[6] = _Ygl->Win0[6];
+  win0_mode_draw[6] = _Ygl->Win0_mode[6];
+  win1_draw[6] = _Ygl->Win1[6];
+  win1_mode_draw[6] = _Ygl->Win1_mode[6];
+  win_op_draw[6] = _Ygl->Win_op[6];
 
   isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
@@ -323,48 +335,13 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
   }
 
-
-  //Ici si use_win[SPRITE] est a 1, il faut faire un blit simple avec test stencil
-  if (_Ygl->use_win[SPRITE] == 1) {
-    glViewport(0, 0, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
-    glScissor(0, 0, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbowin);
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-
-    YglBlitSimple(_Ygl->window_fbotex[SPRITE], 0);
-
-    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glStencilFunc(GL_EQUAL, 1, 0xFF);
-
-    glDrawBuffers(1, &DrawBuffers[0]);
-    glClearBufferfv(GL_COLOR, 0, col);
-    YglBlitSimple(_Ygl->vdp1Tex[0], 0);
-    glDrawBuffers(1, &DrawBuffers[1]);
-    glClearBufferfv(GL_COLOR, 0, col);
-    YglBlitSimple(_Ygl->vdp1Tex[1], 0); //VDP1 CS need to handle additional texture
-    glDisable(GL_STENCIL_TEST);
-    VDP1fb = &_Ygl->vdp1FrameBuff[0];
-
-    glViewport(0, 0, _Ygl->width, _Ygl->height);
-    glScissor(0, 0, _Ygl->width, _Ygl->height);
-  } else {
-    VDP1fb = _Ygl->vdp1Tex;
-  }
+  VDP1fb = _Ygl->vdp1Tex;
 
   if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, varVdp2Regs);
+    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
     VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);
@@ -636,7 +613,6 @@ static int YglGenFrameBuffer() {
 
   YglGenerateBackBuffer();
   YglGenerateWindowBuffer();
-  YglGenerateWindowCCBuffer();
   YglGenerateScreenBuffer();
 
   YGLDEBUG("YglGenFrameBuffer OK\n");

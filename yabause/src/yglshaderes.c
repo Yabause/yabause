@@ -174,9 +174,7 @@ SHADER_VERSION
 "uniform float u_vheight; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
-"uniform sampler2D s_window;  \n"
 "uniform int is_perline; \n"
-"uniform int is_window; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()   \n"
@@ -188,10 +186,6 @@ SHADER_VERSION
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
-"  if (is_window !=0) {\n"
-"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy), 0 );\n"
-"    if (all(equal(win.rg, vec2(0.0)))) discard;\n"
-"  }\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  int msb = int(txcol.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
@@ -210,8 +204,6 @@ const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
-static int id_normal_s_window = -1;
-static int id_normal_iswindow = -1;
 static int id_normal_vheight = -1;
 static int id_normal_emu_height = -1;
 
@@ -224,8 +216,6 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform1i(id_normal_s_window, 3);
-  glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glUniform1f(id_normal_vheight, (float)_Ygl->rheight);
   glUniform1f(id_normal_emu_height,  (float)_Ygl->rheight / (float)_Ygl->rheight);
@@ -258,9 +248,7 @@ SHADER_VERSION
 "uniform float u_vwidth; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
-"uniform sampler2D s_window;  \n"
 "uniform int is_perline; \n"
-"uniform int is_window; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()\n"
@@ -270,10 +258,6 @@ SHADER_VERSION
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
-"  if (is_window !=0) {\n"
-"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy * vec2(u_emu_width, u_emu_height)),0 );\n"
-"    if (all(equal(win.rg, vec2(0.0)))) discard;\n"
-"  }\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) ,0 )  , 0 );\n"
@@ -294,9 +278,7 @@ SHADER_VERSION
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
 static int id_normal_cram_s_texture = -1;
 static int id_normal_cram_s_perline = -1;
-static int id_normal_cram_s_window = -1;
 static int id_normal_cram_isperline = -1;
-static int id_normal_cram_iswindow = -1;
 static int id_normal_cram_emu_height = -1;
 static int id_normal_cram_emu_width = -1;
 static int id_normal_cram_vheight = -1;
@@ -316,8 +298,6 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glUniform1i(id_normal_cram_s_texture, 0);
   glUniform1i(id_normal_cram_s_color, 1);
   glUniform1i(id_normal_cram_s_perline, 2);
-  glUniform1i(id_normal_cram_s_window, 3);
-  glUniform1i(id_normal_cram_iswindow, _Ygl->use_win[id] != 0);
   glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
   if ((id == RBG0) && (_Ygl->rbg_use_compute_shader)){
     glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
@@ -495,8 +475,6 @@ int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_s_texture, 0);
-    glUniform1i(id_normal_s_window, 3);
-    glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
   }
@@ -543,96 +521,6 @@ const GLchar Yglprg_userclip_f[] =
       "void main()                                         \n"
       "{                                                   \n"
       "  fragColor = vec4( 0.0 );\n";
-
-/*------------------------------------------------------------------------------------
- *  Window Operation
- * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_window_v[] =
-      SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;    \n"
-      "layout (location = 0) in vec4 a_position;    \n"
-      "void main()       \n"
-      "{ \n"
-      "   gl_Position = a_position; \n"
-      "} ";
-const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
-
-const GLchar Yglprg_window_f[] =
-      SHADER_VERSION
-      "#ifdef GL_ES\n"
-      "precision highp float; \n"
-      "#endif\n"
-      "out vec4 fragColor; \n"
-      "uniform sampler2D s_win0;  \n"
-      "uniform sampler2D s_win1;  \n"
-      "uniform float u_vheight; \n"
-      "uniform int win0; \n"
-      "uniform int win1; \n"
-      "uniform int winOp; \n"
-      "uniform int win0mode;  \n"
-      "uniform int win1mode;  \n"
-      "void main()   \n"
-      "{  \n"
-      "  ivec2 linepos; \n "
-      "  int validw0 = 1; \n"
-      "  int validw1 = 1; \n"
-      "  linepos.y = 0; \n "
-      "  linepos.x = int(u_vheight-gl_FragCoord.y);\n"
-      "  int pos = int(gl_FragCoord.x);\n"
-      "  int valid = 0; \n"
-      "  if (winOp != 0) valid = 1;\n"
-      "  if (win0 != 0) {\n"
-      "    vec4 lineW0 = texelFetch(s_win0,linepos,0);\n"
-      "    int startW0 = int(lineW0.r*255.0) | (int(lineW0.g*255.0)<<8);\n"
-      "    int endW0 = int(lineW0.b*255.0) | (int(lineW0.a*255.0)<<8);\n"
-      "    if (win0mode != 0) { \n"
-      "      if ((startW0 < endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
-      "      if (startW0 == endW0) validw0 = 0;\n"
-      "    } else { \n"
-      "      if ((startW0 < endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
-      "    }\n"
-      "  } else validw0 = valid;\n"
-      "  if (win1 != 0) {\n"
-      "    vec4 lineW1 = texelFetch(s_win1,linepos,0);\n"
-      "    int startW1 = int(lineW1.r*255.0) | (int(lineW1.g*255.0)<<8);\n"
-      "    int endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
-      "    if (win1mode != 0) { \n"
-      "      if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
-      "      if (startW1 == endW1) validw1 = 0;\n"
-      "    } else { \n"
-      "      if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
-      "    }\n"
-      "  } else validw1 = valid;\n"
-      "  if (winOp != 0) { \n"
-      "    if ((validw0 == 1) && (validw1 == 1)) fragColor.argb = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
-      "    else discard;\n"
-      "  } else { \n"
-      "    if ((validw0 == 1) || (validw1 == 1)) fragColor.argb = vec4( 1.0, 1.0, 0.0, 0.0 );\n"
-      "    else discard;\n"
-      "  }\n"
-      "}  \n";
-const GLchar * pYglprg_window_f[] = {Yglprg_window_f, NULL};
-
-int Ygl_uniformWindow(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
-{
-   YglProgram * prg;
-   prg = p;
-   GLUSEPROG(prg->prgid );
-   glUniform1i(_Ygl->windowpg.tex0, 0);
-   glUniform1i(_Ygl->windowpg.tex1, 1);
-   glUniform1f(_Ygl->windowpg.vheight, (float)_Ygl->rheight);
-   glEnableVertexAttribArray(0);
-   glDisableVertexAttribArray(1);
-   glDisableVertexAttribArray(2);
-   return 0;
-}
-
-int Ygl_cleanupWindow(void * p, YglTextureManager *tm )
-{
-   YglProgram * prg;
-   prg = p;
-   return 0;
-}
 
 #define MESH_PROCESS \
 "if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n \
@@ -1595,7 +1483,7 @@ SHADER_VERSION
 "vec4 vdp2col5 = vec4(0.0);\n"
 "vec4 FBShadow = vec4(0.0);\n"
 "int FBPrio = 0;\n"
-"bool FBSPwin = false;\n"
+"bool FBSPwin = true;\n"
 "int FBMesh = 0;\n"
 "int FBRgb = 0;\n"
 "int FBMeshPrio = 0;\n"
@@ -1618,20 +1506,25 @@ SHADER_VERSION
 "uniform sampler2D s_texture3;  \n"
 "uniform sampler2D s_texture4;  \n"
 "uniform sampler2D s_texture5;  \n"
+"uniform sampler2D s_win0;  \n"
+"uniform sampler2D s_win1;  \n"
 "uniform int fbon;  \n"
 "uniform int screen_nb;  \n"
 "uniform int mode[7];  \n"
 "uniform int isRGB[6]; \n"
 "uniform int isBlur[7]; \n"
 "uniform int isShadow[6]; \n"
-"uniform int win_s[7]; \n"
-"uniform int win_s_mode[7]; \n"
+"uniform int win_s[8]; \n"
+"uniform int win_s_mode[8]; \n"
+"uniform int win0[8]; \n"
+"uniform int win0_mode[8]; \n"
+"uniform int win1[8]; \n"
+"uniform int win1_mode[8]; \n"
+"uniform int win_op[8]; \n"
 "uniform int ram_mode; \n"
 "uniform int extended_cc; \n"
-"uniform int use_cc_win; \n"
 "uniform int use_sp_win; \n"
 "uniform int use_trans_shadow; \n"
-"int cc_enabled; \n"
 
 "struct Col \n"
 "{ \n"
@@ -1675,7 +1568,7 @@ SHADER_VERSION
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = false;\n"
 "  ret.normalShadow = false;\n"
-"  ret.spwin = false;\n"
+"  ret.spwin = true;\n"
 "  return ret;"
 "}\n"
 
@@ -1702,11 +1595,60 @@ static const char vdp2blit_filter_f[] =
 "}\n";
 
 static const char vdp2blit_end_f[] =
-"bool inWindow(int id) {\n"
+"int startW0 = 0;\n"
+"int startW1 = 0;\n"
+"int endW0 = 0;\n"
+"int endW1 = 0;\n"
+"void initLineWindow() {\n"
+"  ivec2 linepos; \n "
+"  linepos.y = 0; \n "
+"  linepos.x = int(u_vheight-gl_FragCoord.y);\n"
+"  vec4 lineW0 = texelFetch(s_win0,linepos,0);\n" //A mettre ensemble
+"  startW0 = int(lineW0.r*255.0) | (int(lineW0.g*255.0)<<8);\n"
+"  endW0 = int(lineW0.b*255.0) | (int(lineW0.a*255.0)<<8);\n"
+"  vec4 lineW1 = texelFetch(s_win1,linepos,0);\n"
+"  startW1 = int(lineW1.r*255.0) | (int(lineW1.g*255.0)<<8);\n"
+"  endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
+"}\n"
+
+"bool inNormalWindow(int id) {\n"
+"  int validw0 = 1; \n"
+"  int validw1 = 1; \n"
+"  int pos = int(gl_FragCoord.x);\n"
+"  int valid = 0; \n"
+"  if (win_op[id] != 0) valid = 1;\n"
+"  if (win0[id] != 0) {\n"
+"    if (win0_mode[id] != 0) { \n"
+"      if ((startW0 < endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
+"      if (startW0 == endW0) validw0 = 0;\n"
+"    } else { \n"
+"      if ((startW0 < endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
+"    }\n"
+"  } else validw0 = valid;\n"
+"  if (win1[id] != 0) {\n"
+"    if (win1_mode[id] != 0) { \n"
+"      if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
+"      if (startW1 == endW1) validw1 = 0;\n"
+"    } else { \n"
+"      if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
+"    }\n"
+"  } else validw1 = valid;\n"
+"  if (win_op[id] != 0) { \n"
+"    return ((validw0 == 1) && (validw1 == 1));\n"
+"  } else { \n"
+"    return ((validw0 == 1) || (validw1 == 1));\n"
+"  }\n"
+"  return true;\n"
+"}\n"
+"bool inSpriteWindow(int id) {\n"
 " if (win_s[id] == 0) return true;\n"
 " if (win_s_mode[id] == 0) return FBSPwin;\n"
 " if (win_s_mode[id] == 1) return !FBSPwin;\n"
 " return true;\n"
+"}\n"
+"bool inWindow(int id) {\n"
+" if (win_op[id] == 0) return (inNormalWindow(id) || inSpriteWindow(id));\n"
+" else return (inNormalWindow(id) && inSpriteWindow(id));\n"
 "}\n"
 "Col getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
@@ -1901,6 +1843,7 @@ static const char vdp2blit_end_f[] =
 "  ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
 "  addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
+"  initLineWindow();\n"
 "  colortop = colorback; \n"
 "  isRGBtop = 1; \n"
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
@@ -2077,13 +2020,7 @@ static const char vdp2blit_end_f[] =
 "    meshCol = FBShadow.rgb;\n"
 "  }\n"
 //Take care  of the extended coloration mode
-"  cc_enabled = use_cc_win;\n"
-"  if (use_cc_win != 0) {\n"
-"    ivec2 cc_addr = ivec2(textureSize(s_cc_win, 0) * v_texcoord.st); \n"
-"    vec4 tmp = texelFetch( s_cc_win, cc_addr ,0 ); \n"
-"    if (tmp.a == 0.0) cc_enabled = 0;\n"
-"  }\n"
-"  if (cc_enabled == 0) {\n"
+"  if (!inWindow(7)) {\n"
 "    if (extended_cc != 0) { \n"
 "      if (ram_mode == 0) { \n"
 "        if (use_lncl == 0) { \n"
@@ -2519,8 +2456,6 @@ int YglProgramInit()
   id_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_texture");
   //id_normal_s_texture_size = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_texsize");
   id_normal_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_color_offset");
-  id_normal_s_window = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_window");
-  id_normal_iswindow = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"is_window");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_mvpMatrix");
   id_normal_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_vheight");
   id_normal_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_emu_height");
@@ -2533,9 +2468,7 @@ int YglProgramInit()
   id_normal_cram_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_texture");
   id_normal_cram_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_color");
   id_normal_cram_s_perline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_perline");
-  id_normal_cram_s_window = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_window");
   id_normal_cram_isperline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_perline");
-  id_normal_cram_iswindow = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_window");
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
   id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");
@@ -2556,25 +2489,6 @@ int YglProgramInit()
    _prgid[PG_VDP2_MOSAIC] = _prgid[PG_VDP2_NORMAL];
 
    _prgid[PG_VDP2_MOSAIC_CRAM] = _prgid[PG_VDP2_NORMAL_CRAM];
-
-   YGLLOG("PG_WINDOW\n");
-   //
-   if (YglInitShader(PG_WINDOW, pYglprg_window_v, 1, pYglprg_window_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   _Ygl->windowpg.prgid=_prgid[PG_WINDOW];
-   _Ygl->windowpg.setupUniform    = Ygl_uniformWindow;
-   _Ygl->windowpg.cleanupUniform  = Ygl_cleanupWindow;
-   _Ygl->windowpg.vertexp         = glGetAttribLocation(_prgid[PG_WINDOW],(const GLchar *)"a_position");
-   _Ygl->windowpg.mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
-   _Ygl->windowpg.vheight    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_vheight");
-   _Ygl->windowpg.var1   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0");
-   _Ygl->windowpg.var2   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0mode");
-   _Ygl->windowpg.var3   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win1");
-   _Ygl->windowpg.var4   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win1mode");
-   _Ygl->windowpg.var5   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"winOp");
-   _Ygl->windowpg.tex0 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win0");
-   _Ygl->windowpg.tex1 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win1");
 
    return 0;
 }
@@ -2834,7 +2748,7 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -2860,7 +2774,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     glActiveTexture(GL_TEXTURE9);
     glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
 
-  int gltext[14] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13};
+  int gltext[16] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15};
 
 
 #ifdef DEBUG_BLIT
@@ -2880,6 +2794,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_back"), 7);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 13);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_window"), 14);
 
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
@@ -2888,14 +2803,17 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_cc_win"), (_Ygl->use_cc_win != 0) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), 7, Win_s);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), 7, Win_s_mode);
-
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), 8, Win_s);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), 8, Win_s_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), 8, Win0);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0_mode"), 8, Win0_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1"), 8, Win1);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1_mode"), 8, Win1_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_op"), 8, Win_op);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -2911,10 +2829,15 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
 
-  if (_Ygl->use_cc_win != 0) {
-    glActiveTexture(GL_TEXTURE13);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
-  }
+  // if (_Ygl->use_cc_win != 0) {
+  //   glActiveTexture(GL_TEXTURE13);
+  //   glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
+  // }
+
+  glActiveTexture(GL_TEXTURE14);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+  glActiveTexture(GL_TEXTURE15);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
 
   int id = 0;
   for (int i=0; i<nbScreen; i++) {

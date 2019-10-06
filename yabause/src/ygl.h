@@ -302,8 +302,6 @@ enum
    PG_VDP1_ENDUSERCLIP=201,
 
 
-   PG_WINDOW=202,
-
    PG_VDP2_NORMAL=203,
    PG_VDP2_MOSAIC=204,
    PG_VDP2_NORMAL_CRAM=205,
@@ -675,8 +673,6 @@ typedef struct {
    GLuint textcoords_buf;
    GLuint vertexAttribute_buf;
 
-   int use_win[enBGMAX];
-   int use_cc_win;
    int vdp1_stencil_mode;
 
    int rbg_use_compute_shader;
@@ -748,7 +744,7 @@ void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int d
 int YglSetLevelBlendmode( int pri, int mode );
 
 extern int YglBlitSimple(int texture, int blend);
-extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, Vdp2 *varVdp2Regs);
+extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 extern void executeTMVDP1(int in, int out);
 

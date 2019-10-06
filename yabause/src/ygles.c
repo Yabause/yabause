@@ -54,7 +54,6 @@ static void YglUpdateVDP1FB(void);
 
 int YglGenerateBackBuffer();
 int YglGenerateWindowBuffer();
-int YglGenerateWindowCCBuffer();
 int YglGenerateScreenBuffer();
 
 static int YglGenFrameBuffer();
@@ -929,7 +928,6 @@ static int YglGenFrameBuffer() {
 
   YglGenerateBackBuffer();
   YglGenerateWindowBuffer();
-  YglGenerateWindowCCBuffer();
   YglGenerateScreenBuffer();
 
   YGLDEBUG("YglGenFrameBuffer OK\n");
@@ -985,44 +983,6 @@ int YglGenerateWindowBuffer(){
   }
 
   _Ygl->window_tex[0] = _Ygl->window_tex[1] = 0;
-  return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-int YglGenerateWindowCCBuffer(){
-
-  int status;
-  GLuint error;
-
-  YGLDEBUG("YglGenerateWindowCCBuffer: %d,%d\n", _Ygl->width, _Ygl->height);
-
-  if (_Ygl->window_cc_fbotex != 0) {
-    glDeleteTextures(1,&_Ygl->window_cc_fbotex);
-  }
-  glGenTextures(1, &_Ygl->window_cc_fbotex);
-
-  glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
-
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _Ygl->rwidth, _Ygl->rheight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-  if (_Ygl->window_cc_fbo != 0){
-    glDeleteFramebuffers(1, &_Ygl->window_cc_fbo);
-  }
-
-  glGenFramebuffers(1, &_Ygl->window_cc_fbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_cc_fbo);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->window_cc_fbotex, 0);
-  status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-  if (status != GL_FRAMEBUFFER_COMPLETE) {
-    YGLDEBUG("YglGenerateOriginalBuffer:Framebuffer status = %08X\n", status);
-    abort();
-  }
-
   return 0;
 }
 
@@ -2758,8 +2718,8 @@ void YglDmyRenderVDP1(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 static int useRotWin = 0;
-int WinS[enBGMAX];
-int WinS_mode[enBGMAX];
+int WinS[enBGMAX+1];
+int WinS_mode[enBGMAX+1];
 void YglSetVdp2Window(Vdp2 *varVdp2Regs)
 {
   float col[4] = {0.0f,0.0f,0.0f,0.0f};
@@ -2770,11 +2730,11 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
     -_Ygl->rwidth, _Ygl->rheight,
     _Ygl->rwidth, _Ygl->rheight };
 
-  int Win0[enBGMAX];
-  int Win0_mode[enBGMAX];
-  int Win1[enBGMAX];
-  int Win1_mode[enBGMAX];
-  int Win_op[enBGMAX];
+  int Win0[enBGMAX+1];
+  int Win0_mode[enBGMAX+1];
+  int Win1[enBGMAX+1];
+  int Win1_mode[enBGMAX+1];
+  int Win_op[enBGMAX+1];
   int needUpdate = rebuild_windows;
 
   rebuild_windows = 0;
@@ -2835,6 +2795,14 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
   Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
 
+  Win0_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 8) & 0x01 == 0);
+  Win0[SPRITE+1] = (varVdp2Regs->WCTLD >> 9) & 0x01;
+  Win1_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 10) & 0x01 == 0);
+  Win1[SPRITE+1] = (varVdp2Regs->WCTLD >> 11) & 0x01;
+  WinS_mode[SPRITE+1] = ((varVdp2Regs->WCTLD >> 12) & 0x01 == 0);
+  WinS[SPRITE+1] = (varVdp2Regs->WCTLD >> 13) & 0x01;
+  Win_op[SPRITE+1] = (varVdp2Regs->WCTLD >> 15) & 0x01;
+
   Win0[RBG1] = Win0[NBG0];
   Win0_mode[RBG1] = Win0_mode[NBG0];
   Win1[RBG1] = Win1[NBG0];
@@ -2843,12 +2811,14 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
   WinS_mode[RBG1] = WinS_mode[NBG0];
   Win_op[RBG1] = Win_op[NBG0];
 
-  for (int i=0; i<enBGMAX; i++) {
+
+  for (int i=0; i<enBGMAX+1; i++) {
     if (Win0[i] != _Ygl->Win0[i]) needUpdate |= 1;
     if (Win1[i] != _Ygl->Win1[i]) needUpdate |= 1;
     if (Win0_mode[i] != _Ygl->Win0_mode[i]) needUpdate |= 1;
     if (Win1_mode[i] != _Ygl->Win1_mode[i]) needUpdate |= 1;
     if (Win_op[i] != _Ygl->Win_op[i]) needUpdate |= 1;
+  #ifdef WINDOW_DEBUG
     //DEBUG
     if (WinS[i] == 1)
       if ((Win0[i] == 1) || (Win1[i] == 1))
@@ -2856,110 +2826,12 @@ void YglSetVdp2Window(Vdp2 *varVdp2Regs)
           YuiMsg("Sprite window OR any windows is not supported yet, there is an issue on layer %d\n", i);
     if ((Win0[i] == 1) || (Win1[i] == 1) || (WinS[i] == 1))
       YuiMsg("Windows are used on layer %d (%d, %d, %d, mode %s, op %s)\n", i, Win0[i], Win1[i], WinS[i], (WinS_mode[i]==0)?"INSIDE":"OUTSIDE", (Win_op[i]==0)?"OR":"AND");
+  #endif
   }
 
-  //needUpdate |= 1;
   needUpdate |= Vdp2GenerateWindowInfo(varVdp2Regs);
-
-   if (needUpdate) {
-
-     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_fbo);
-     memcpy(&_Ygl->Win0[0], &Win0[0], enBGMAX*sizeof(int));
-     memcpy(&_Ygl->Win1[0], &Win1[0], enBGMAX*sizeof(int));
-     memcpy(&_Ygl->Win0_mode[0], &Win0_mode[0], enBGMAX*sizeof(int));
-     memcpy(&_Ygl->Win1_mode[0], &Win1_mode[0], enBGMAX*sizeof(int));
-     memcpy(&_Ygl->Win_op[0], &Win_op[0], enBGMAX*sizeof(int));
-     for (int i = 0; i< enBGMAX; i++) {
-       _Ygl->use_win[i] = 0;
-       if(needUpdate && (_Ygl->Win0[i] || _Ygl->Win1[i] || useRotWin))
-       {
-         if(_Ygl->Win0[i] || _Ygl->Win1[i])
-         {
-           _Ygl->use_win[i] = 1;
-           glDrawBuffers(1, &DrawBuffers[i]);
-           glClearBufferfv(GL_COLOR, 0, col);
-           Ygl_uniformWindow(&_Ygl->windowpg, NULL, NULL, 0);
-
-           //Draw color///
-           glActiveTexture(GL_TEXTURE0);
-           glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
-           glActiveTexture(GL_TEXTURE1);
-           glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
-           glUniform1i(_Ygl->windowpg.var1, _Ygl->Win0[i]);
-           glUniform1i(_Ygl->windowpg.var2, _Ygl->Win0_mode[i]);
-           glUniform1i(_Ygl->windowpg.var3, _Ygl->Win1[i]);
-           glUniform1i(_Ygl->windowpg.var4, _Ygl->Win1_mode[i]);
-           glUniform1i(_Ygl->windowpg.var5, _Ygl->Win_op[i]);
-           glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
-           glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
-           glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-           glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-           glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-         }
-       }
-     }
-  }
   return;
 }
-
-void YglSetCCWindow(Vdp2 *varVdp2Regs)
-{
-  float col[4] = {0.0f,0.0f,0.0f,0.0f};
-  float const vertexPosition[] = {
-    -_Ygl->rwidth, -_Ygl->rheight,
-    _Ygl->rwidth, -_Ygl->rheight,
-    -_Ygl->rwidth, _Ygl->rheight,
-    _Ygl->rwidth, _Ygl->rheight };
-
-  int Win0;
-  int Win0_mode;
-  int Win1;
-  int Win1_mode;
-
-  int Win_op;
-
-  //Manque la sprite window
-
-  Win0 = (varVdp2Regs->WCTLD >> 9) & 0x01;
-  Win1 = (varVdp2Regs->WCTLD >> 11) & 0x01;
-
-  Win0_mode = ((varVdp2Regs->WCTLD >> 8) & 0x01 == 0);
-  Win1_mode = ((varVdp2Regs->WCTLD >> 10) & 0x01 == 0);
-
-  Win_op = (varVdp2Regs->WCTLD >> 15) & 0x01;
-
-   GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->window_cc_fbo);
-   _Ygl->use_cc_win = 0;
-   if(Win0 || Win1)
-   {
-      Vdp2GenerateWindowInfo(varVdp2Regs);
-      _Ygl->use_cc_win = 1;
-      glDrawBuffers(1, &DrawBuffers[0]);
-      glClearBufferfv(GL_COLOR, 0, col);
-      Ygl_uniformWindow(&_Ygl->windowpg, NULL, NULL, 0);
-      glUniformMatrix4fv( _Ygl->windowpg.mtxModelView, 1, GL_FALSE, (GLfloat*) &_Ygl->mtxModelView.m[0][0] );
-
-      //Draw color///
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
-      glUniform1i(_Ygl->windowpg.var1, Win0);
-      glUniform1i(_Ygl->windowpg.var2, Win0_mode);
-      glUniform1i(_Ygl->windowpg.var3, Win1);
-      glUniform1i(_Ygl->windowpg.var4, Win1_mode);
-      glUniform1i(_Ygl->windowpg.var5, Win_op);
-      glBindBuffer(GL_ARRAY_BUFFER, _Ygl->win0v_buf);
-      glBufferData(GL_ARRAY_BUFFER, 4 * 2 *sizeof(float), vertexPosition, GL_STREAM_DRAW);
-      glVertexAttribPointer(_Ygl->windowpg.vertexp, 2, GL_FLOAT, GL_FALSE, 0, 0 );
-      glEnableVertexAttribArray(_Ygl->windowpg.vertexp);
-      glDrawArrays(GL_TRIANGLE_STRIP,0,4);
-    }
-  return;
-}
-
-
 
 static void updateColorOffset(Vdp2 *varVdp2Regs) {
   if (varVdp2Regs->CLOFEN & 0x40)
@@ -3352,6 +3224,11 @@ void YglRender(Vdp2 *varVdp2Regs) {
    int lncl_draw[7] = {0};
    int winS_draw[7] = {0};
    int winS_mode_draw[7] = {0};
+   int win0_draw[7] = {0};
+   int win0_mode_draw[7] = {0};
+   int win1_draw[7] = {0};
+   int win1_mode_draw[7] = {0};
+   int win_op_draw[7] = {0};
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
@@ -3363,12 +3240,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
   if (_Ygl->vdp2_use_compute_shader != 0)
     VDP2Generator_init(_Ygl->width, _Ygl->height);
 
-#if 0
-   if ( (varVdp2Regs->CCCTL & 0x400) != 0 ) {
-     printf("Extended Color calculation!\n");
-   }
-   printf("Ram mode %d\n", Vdp2Internal.ColorMode);
-#endif
    glBindVertexArray(_Ygl->vao);
 
    if (_Ygl->stretch == 0) {
@@ -3422,7 +3293,6 @@ void YglRender(Vdp2 *varVdp2Regs) {
 
    YglUpdateVdp2Reg();
    YglSetVdp2Window(varVdp2Regs);
-   YglSetCCWindow(varVdp2Regs);
    cprg = -1;
 
    glActiveTexture(GL_TEXTURE0);
@@ -3488,14 +3358,27 @@ void YglRender(Vdp2 *varVdp2Regs) {
       lncl_draw[id] = lncl[vdp2screens[j]];
       winS_draw[id] = WinS[vdp2screens[j]];
       winS_mode_draw[id] = WinS_mode[vdp2screens[j]];
+      win0_draw[id] = _Ygl->Win0[vdp2screens[j]];
+      win0_mode_draw[id] = _Ygl->Win0_mode[vdp2screens[j]];
+      win1_draw[id] = _Ygl->Win1[vdp2screens[j]];
+      win1_mode_draw[id] = _Ygl->Win1_mode[vdp2screens[j]];
+      win_op_draw[id] = _Ygl->Win_op[vdp2screens[j]];
       id++;
     }
   }
   isBlur[6] = setupBlur(varVdp2Regs, SPRITE);
   lncl_draw[6] = lncl[6];
 
-  winS_draw[6] = WinS[6];
-  winS_mode_draw[6] = WinS_mode[6];
+  for (int i = 6; i < 8; i++) {
+    //Update dedicated sprite window and Color calculation window
+    winS_draw[i] = WinS[i];
+    winS_mode_draw[i] = WinS_mode[i];
+    win0_draw[i] = _Ygl->Win0[i];
+    win0_mode_draw[i] = _Ygl->Win0_mode[i];
+    win1_draw[i] = _Ygl->Win1[i];
+    win1_mode_draw[i] = _Ygl->Win1_mode[i];
+    win_op_draw[i] = _Ygl->Win_op[i];
+  }
 
   isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
 
@@ -3513,45 +3396,13 @@ void YglRender(Vdp2 *varVdp2Regs) {
     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
   }
 
-
-  //Ici si use_win[SPRITE] est a 1, il faut faire un blit simple avec test stencil
-  if (_Ygl->use_win[SPRITE] == 1) {
-    glViewport(0, 0, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
-    glScissor(0, 0, _Ygl->width/_Ygl->vdp1wratio, _Ygl->height/_Ygl->vdp1hratio);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbowin);
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-
-    YglBlitSimple(_Ygl->window_fbotex[SPRITE], 0);
-
-    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
-
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glStencilFunc(GL_EQUAL, 1, 0xFF);
-
-    glDrawBuffers(1, &DrawBuffers[0]);
-    glClearBufferfv(GL_COLOR, 0, col);
-    YglBlitSimple(_Ygl->vdp1FrameBuff[_Ygl->readframe], 0);
-    glDisable(GL_STENCIL_TEST);
-    VDP1fb = &_Ygl->vdp1FrameBuff[2];
-
-    glViewport(0, 0, _Ygl->width, _Ygl->height);
-    glScissor(0, 0, _Ygl->width, _Ygl->height);
-  } else {
-    VDP1fb = &_Ygl->vdp1FrameBuff[_Ygl->readframe];
-  }
+  VDP1fb = &_Ygl->vdp1FrameBuff[_Ygl->readframe];
 
   if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, varVdp2Regs);
+    YglBlitTexture( _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
     srcTexture = _Ygl->original_fbotex[0];
   } else {
     VDP2Generator_update(_Ygl->compute_tex, _Ygl->bg, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, varVdp2Regs);

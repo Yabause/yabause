@@ -747,7 +747,6 @@ struct VDP2DrawInfo {
 	int screen_nb;
 	int ram_mode;
 	int extended_cc;
-	int use_cc_win;
 	int u_lncl[7];
 	int mode[7];
 	int isRGB[6];
@@ -962,7 +961,6 @@ public:
 		uniform.fbon = (_Ygl->vdp1On[_Ygl->readframe] != 0);
 		uniform.ram_mode = Vdp2Internal.ColorMode;
 		uniform.extended_cc = ((varVdp2Regs->CCCTL & 0x400) != 0);
-		uniform.use_cc_win = (_Ygl->use_cc_win != 0);
 
 		glActiveTexture(GL_TEXTURE7);
 	  glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);
@@ -987,10 +985,6 @@ public:
 		glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 512*sizeof(int)*NB_VDP2_REG,(void*)vdp2buf);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, ssbo_vdp2reg_);
 #endif
-		if (_Ygl->use_cc_win != 0) {
-	    glActiveTexture(GL_TEXTURE13);
-	    glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
-	  }
 
 		int id = 0;
 	  for (int i=0; i<nbScreen; i++) {
