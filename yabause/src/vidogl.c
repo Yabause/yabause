@@ -2023,6 +2023,7 @@ static void FASTCALL Vdp2DrawBitmap(vdp2draw_struct *info, YglTexture *texture)
   case 4: // 32 BPP
     for (i = 0; i < info->cellh; i++)
     {
+/*
       if (info->char_bank[info->charaddr >> 17] == 0) {
         for (j = 0; j < info->cellw; j++)
         {
@@ -2037,6 +2038,12 @@ static void FASTCALL Vdp2DrawBitmap(vdp2draw_struct *info, YglTexture *texture)
           *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
           info->charaddr += 4;
         }
+      }
+*/
+      for (j = 0; j < info->cellw; j++)
+      {
+        *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr);
+        info->charaddr += 4;
       }
       texture->textdata += texture->w;
     }
