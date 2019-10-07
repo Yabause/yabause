@@ -6357,6 +6357,8 @@ static void Vdp2DrawNBG0(void)
           infotmp.cellh = (vdp2height >> 1);
         else
           infotmp.cellh = vdp2height;
+
+        infotmp.flipfunction = 0;
         YglQuad(&infotmp, &texture, &tmpc);
         Vdp2DrawMapPerLine(&info, &texture);
       }
