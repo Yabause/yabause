@@ -1483,7 +1483,7 @@ SHADER_VERSION
 "vec4 vdp2col5 = vec4(0.0);\n"
 "vec4 FBShadow = vec4(0.0);\n"
 "int FBPrio = 0;\n"
-"bool FBSPwin = true;\n"
+"bool FBSPwin = false;\n"
 "int FBMesh = 0;\n"
 "int FBRgb = 0;\n"
 "int FBMeshPrio = 0;\n"
@@ -1568,7 +1568,7 @@ SHADER_VERSION
 "  ret.isRGB = 0;\n"
 "  ret.MSBshadow = false;\n"
 "  ret.normalShadow = false;\n"
-"  ret.spwin = true;\n"
+"  ret.spwin = false;\n"
 "  return ret;"
 "}\n"
 
@@ -1603,17 +1603,18 @@ static const char vdp2blit_end_f[] =
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
 "  linepos.x = int(u_vheight-gl_FragCoord.y);\n"
-"  vec4 lineW0 = texelFetch(s_win0,linepos,0);\n" //A mettre ensemble
-"  startW0 = int(lineW0.r*255.0) | (int(lineW0.g*255.0)<<8);\n"
-"  endW0 = int(lineW0.b*255.0) | (int(lineW0.a*255.0)<<8);\n"
+"  vec4 lineW0 = texelFetch(s_win0,linepos,0);\n"
+"  startW0 = int(lineW0.r*255.0) + (int(lineW0.g*255.0)<<8);\n"
+"  endW0 = int(lineW0.b*255.0) + (int(lineW0.a*255.0)<<8);\n"
 "  vec4 lineW1 = texelFetch(s_win1,linepos,0);\n"
-"  startW1 = int(lineW1.r*255.0) | (int(lineW1.g*255.0)<<8);\n"
-"  endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
+"  startW1 = int(lineW1.r*255.0) + (int(lineW1.g*255.0)<<8);\n"
+"  endW1 = int(lineW1.b*255.0) + (int(lineW1.a*255.0)<<8);\n"
 "}\n"
 
 "bool inNormalWindow(int id) {\n"
 "  int validw0 = 1; \n"
 "  int validw1 = 1; \n"
+"  if ((win0[id] == 0) && (win1[id] == 0)) return true;\n"
 "  int pos = int(gl_FragCoord.x);\n"
 "  int valid = 0; \n"
 "  if (win_op[id] != 0) valid = 1;\n"
@@ -1638,17 +1639,20 @@ static const char vdp2blit_end_f[] =
 "  } else { \n"
 "    return ((validw0 == 1) || (validw1 == 1));\n"
 "  }\n"
-"  return true;\n"
 "}\n"
 "bool inSpriteWindow(int id) {\n"
-" if (win_s[id] == 0) return true;\n"
 " if (win_s_mode[id] == 0) return FBSPwin;\n"
-" if (win_s_mode[id] == 1) return !FBSPwin;\n"
-" return true;\n"
+" else return !FBSPwin;\n"
 "}\n"
 "bool inWindow(int id) {\n"
-" if (win_op[id] == 0) return (inNormalWindow(id) || inSpriteWindow(id));\n"
-" else return (inNormalWindow(id) && inSpriteWindow(id));\n"
+" if ((use_sp_win == 0) || (win_s[id] == 0)) return inNormalWindow(id);\n"
+" else {\n"
+"   if (win_op[id] == 0) return (inNormalWindow(id) || inSpriteWindow(id));\n"
+"   else return (inNormalWindow(id) && inSpriteWindow(id));\n"
+" }\n"
+"}\n"
+"bool inCCWindow() {\n"
+"  return inWindow(7);\n"
 "}\n"
 "Col getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
@@ -2020,7 +2024,7 @@ static const char vdp2blit_end_f[] =
 "    meshCol = FBShadow.rgb;\n"
 "  }\n"
 //Take care  of the extended coloration mode
-"  if (!inWindow(7)) {\n"
+"  if (inCCWindow()) {\n"
 "    if (extended_cc != 0) { \n"
 "      if (ram_mode == 0) { \n"
 "        if (use_lncl == 0) { \n"
@@ -2794,7 +2798,8 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_back"), 7);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 13);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_window"), 14);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
 
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
   glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);

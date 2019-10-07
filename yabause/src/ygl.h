@@ -598,12 +598,13 @@ typedef struct {
    u32* win[2];
    u32 window_tex[2];
 
-   int Win0[enBGMAX];
-   int Win0_mode[enBGMAX];
-   int Win1[enBGMAX];
-   int Win1_mode[enBGMAX];
-
-   int Win_op[enBGMAX];
+   int Win0[enBGMAX+1];
+   int Win0_mode[enBGMAX+1];
+   int Win1[enBGMAX+1];
+   int Win1_mode[enBGMAX+1];
+   int WinS[enBGMAX+1];
+   int WinS_mode[enBGMAX+1];
+   int Win_op[enBGMAX+1];
 
    YglMatrix mtxModelView;
    YglMatrix rbgModelView;

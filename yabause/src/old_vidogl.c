@@ -1335,8 +1335,6 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       }
     }
   }
-  YglSetWindow(0);
-  YglSetWindow(1);
   return update;
 }
 
