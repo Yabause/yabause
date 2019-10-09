@@ -45,13 +45,15 @@
 #define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
 
+#define DEBUG_BAD_COORD
+
 #define  CONVERTCMD(A) {\
-  ((A) = (s16)(A));\
-  if (((s16)(A)) < -1024) { printf("Bad(-1024) %x (%d)\n", (s16)(A)); (A) = -1024;}\
-  if (((s16)(A)) > 1023) { printf("Bad(1023) %x (%d)\n", (s16)(A)); (A) = 1023;}\
+  if (((A)&0xF000) != 0) (A) |= 0xF000;\
+  ((A) = (s32)(s16)(A));\
+  if (((A)) < -1024) { DEBUG_BAD_COORD("Bad(-1024) %x (%d)\n", (A), (A)); (A) = -1024;}\
+  if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d)\n", (A), (A)); (A) = 1023;}\
 }
 //#define  CONVERTCMD(A) ((A) = (s16)(((A) & 0xFFFF)))
-#define DEBUG_BAD_GEOMETRY
 
 #define CLAMP(A,LOW,HIGH) ((A)<(LOW)?(LOW):((A)>(HIGH))?(HIGH):(A))
 
@@ -3710,16 +3712,6 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.dst = 0;
   sprite.blendmode = 0;
 
-  // int badgeometry = 1;
-  //
-  // if (((cmd.CMDXA & 0x0C00) == 0x0) || ((cmd.CMDXA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYA & 0x0C00) == 0x0) || ((cmd.CMDYA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  //
-  // if (badgeometry == 1) {
-  //   DEBUG_BAD_GEOMETRY("(%xx%x)(%xx%x)(%xx%x)(%xx%x)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
-  //   return;
-  // }
-
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
 
@@ -3842,23 +3834,6 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.dst = 0;
   sprite.blendmode = 0;
-
-  // int badgeometry = 1;
-  //
-  // if (((cmd.CMDXA & 0x0C00) == 0x0) || ((cmd.CMDXA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYA & 0x0C00) == 0x0) || ((cmd.CMDYA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  //
-  // if (((cmd.CMDCTRL & 0xF00) >> 8) == 0) {
-  //   if (((cmd.CMDXC & 0x0C00) == 0x0) || ((cmd.CMDXC & 0x0C00) == 0x0C00)) badgeometry = 0;
-  //   if (((cmd.CMDYC & 0x0C00) == 0x0) || ((cmd.CMDYC & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // } else {
-  //   if (((cmd.CMDXB & 0x0C00) == 0x0) || ((cmd.CMDXB & 0x0C00) == 0x0C00)) badgeometry = 0;
-  //   if (((cmd.CMDYB & 0x0C00) == 0x0) || ((cmd.CMDYB & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // }
-  // if (badgeometry == 1) {
-  //   DEBUG_BAD_GEOMETRY("scaled (%xx%x)(%xx%x)(%xx%x)(%xx%x)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
-  //   return;
-  // }
 
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
@@ -4155,22 +4130,6 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-  // int badgeometry = 1;
-  //
-  // if (((cmd.CMDXA & 0x0C00) == 0x0) || ((cmd.CMDXA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYA & 0x0C00) == 0x0) || ((cmd.CMDYA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDXB & 0x0C00) == 0x0) || ((cmd.CMDXB & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYB & 0x0C00) == 0x0) || ((cmd.CMDYB & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDXC & 0x0C00) == 0x0) || ((cmd.CMDXC & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYC & 0x0C00) == 0x0) || ((cmd.CMDYC & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDXD & 0x0C00) == 0x0) || ((cmd.CMDXD & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYD & 0x0C00) == 0x0) || ((cmd.CMDYD & 0x0C00) == 0x0C00)) badgeometry = 0;
-  //
-  // if (badgeometry == 1) {
-  //   DEBUG_BAD_GEOMETRY("(%xx%x)(%xx%x)(%xx%x)(%xx%x)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
-  //   return;
-  // }
-
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
   CONVERTCMD(cmd.CMDXB);
@@ -4385,22 +4344,6 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-
-  // int badgeometry = 1;
-  //
-  // if (((cmd.CMDXA & 0x0C00) == 0x0) || ((cmd.CMDXA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYA & 0x0C00) == 0x0) || ((cmd.CMDYA & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDXB & 0x0C00) == 0x0) || ((cmd.CMDXB & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYB & 0x0C00) == 0x0) || ((cmd.CMDYB & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDXC & 0x0C00) == 0x0) || ((cmd.CMDXC & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYC & 0x0C00) == 0x0) || ((cmd.CMDYC & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDXD & 0x0C00) == 0x0) || ((cmd.CMDXD & 0x0C00) == 0x0C00)) badgeometry = 0;
-  // if (((cmd.CMDYD & 0x0C00) == 0x0) || ((cmd.CMDYD & 0x0C00) == 0x0C00)) badgeometry = 0;
-  //
-  // if (badgeometry == 1) {
-  //   DEBUG_BAD_GEOMETRY("bad polygon (%xx%x)(%xx%x)(%xx%x)(%xx%x)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
-  //   return;
-  // }
 
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
