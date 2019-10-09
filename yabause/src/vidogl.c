@@ -50,10 +50,9 @@
 #define  CONVERTCMD(A) {\
   if (((A)&0xF000) != 0) (A) |= 0xF000;\
   ((A) = (s32)(s16)(A));\
-  if (((A)) < -1024) { DEBUG_BAD_COORD("Bad(-1024) %x (%d)\n", (A), (A)); (A) = -1024;}\
-  if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d)\n", (A), (A)); (A) = 1023;}\
 }
-//#define  CONVERTCMD(A) ((A) = (s16)(((A) & 0xFFFF)))
+// if (((A)) < -1024) { DEBUG_BAD_COORD("Bad(-1024) %x (%d)\n", (A), (A)); (A) = -1024;}\
+// if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d)\n", (A), (A)); (A) = 1023;}\
 
 #define CLAMP(A,LOW,HIGH) ((A)<(LOW)?(LOW):((A)>(HIGH))?(HIGH):(A))
 
